@@ -46,7 +46,7 @@ parameters:
         description:
             de: 'Zeitraum in Sekunden zwischen zwei Auflistungen aller Sensoren. Wenn dieser Wert zu stark gesenkt wird, kann das den Bus durch erhöhten Stromverbrauch destabilisieren.'
             en: 'Time period in seconds between two discovery cycles. If you decrease the cycle to much you could destabilise the bus, because of the increased power consumption.'
-            en: "Période en secondes entre deux cycles de découverte. Si vous diminuez trop le cycle, vous risquez de déstabiliser le bus, en raison de l'augmentation de la consommation d'énergie."
+            fr: "Période en secondes entre deux cycles de découverte. Si vous diminuez trop le cycle, vous risquez de déstabiliser le bus, en raison de l'augmentation de la consommation d'énergie."
 
     io_wait:
         type: num
@@ -54,7 +54,7 @@ parameters:
         description:
             de: 'Zeitraum zwischen zwei Anfragen an den 1-wire I/O Chip.'
             en: 'Time period between two requests of 1-wire I/O chip.'
-            en: 'Délai entre deux demandes de puce 1-wire I/O.'
+            fr: 'Délai entre deux demandes de puce 1-wire I/O.'
 
     button_wait:
         type: num
@@ -62,7 +62,7 @@ parameters:
         description:
             de: 'Zeitraum zwischen zwei Anfragen an einen iButton Busmaster'
             en: 'Time period between two requests of ibutton busmaster.'
-            en: 'Délai entre deux demandes de ibutton busmaster.'
+            fr: 'Délai entre deux demandes de ibutton busmaster.'
 
 item_attributes:
     ow_addr:
