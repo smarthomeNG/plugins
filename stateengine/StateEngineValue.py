@@ -440,7 +440,7 @@ class SeValue(StateEngineTools.SeItemChild):
                 except Exception as ex:
                     self._log_info("Problem evaluating '{0}': {1}.", StateEngineTools.get_eval_name(self.__eval), ex)
                     return None
-        
+
         return values
 
     # Determine value from item
@@ -476,14 +476,25 @@ class SeValue(StateEngineTools.SeItemChild):
         if isinstance(self.__varname, list):
             values = []
             for var in self.__varname:
-                self._log_info("Checking variable '{0}': {1}.", self.__varname, var)
                 value = self._abitem.get_variable(var)
                 _newvalue = self.__do_cast(value)
+                _newvalue = 'var:{}'.format(self.__varname) if _newvalue == '' else _newvalue
+                if isinstance(_newvalue, str) and 'Unknown variable' in _newvalue:
+                    self._log_warning("There is a problem with your variable: {}", _newvalue)
+                    _newvalue = ''
                 values.append(_newvalue)
                 if 'var:{}'.format(var) in self.__listorder:
+                    self._log_debug("Checking variable in loop '{0}', value {1}, listorder {2}",
+                                    self.__varname, _newvalue, self.__listorder)
                     self.__listorder[self.__listorder.index('var:{}'.format(var))] = _newvalue
         else:
             _newvalue = self._abitem.get_variable(self.__varname)
+            _newvalue = 'var:{}'.format(self.__varname) if _newvalue == '' else _newvalue
+            if isinstance(_newvalue, str) and 'Unknown variable' in _newvalue:
+                self._log_warning("There is a problem with your variable: {}", _newvalue)
+                _newvalue = ''
+            self._log_debug("Checking variable '{0}', value {1}, listorder {2}",
+                            self.__varname, _newvalue, self.__listorder)
             if 'var:{}'.format(self.__varname) in self.__listorder:
                 self.__listorder[self.__listorder.index('var:{}'.format(self.__varname))] = _newvalue
             values = _newvalue
