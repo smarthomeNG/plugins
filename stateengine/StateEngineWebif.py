@@ -151,9 +151,10 @@ class WebInterface(StateEngineTools.SeItemChild):
         #cond1 = i >= list(self.__states.keys()).index(self.__active_state)
         #cond2 = j > list(self.__states[state]['conditionsets'].keys()).index(self.__active_conditionset) or i > list(self.__states.keys()).index(self.__active_state)
         cond4 = conditionset == self.__active_conditionset and state == self.__active_state
-        color_enter = "gray" if (cond1 and cond2) or (type == 'actions_enter' and self.__states[state].get('enter') is False and cond4)\
+        cond5 = self.__states[state]['conditionsets'].get(conditionset) is not None
+        color_enter = "gray" if (cond1 and cond2 and cond5) or (type == 'actions_enter' and self.__states[state].get('enter') is False and cond4 and cond5)\
                       else "chartreuse3" if cond4 else "indianred2"
-        color_stay = "gray" if (cond1 and cond2) or (type == 'actions_stay' and self.__states[state].get('stay') is False and cond4)\
+        color_stay = "gray" if (cond1 and cond2 and cond5) or (type == 'actions_stay' and self.__states[state].get('stay') is False and cond4 and cond5)\
                      else "chartreuse3" if cond4 else "indianred2"
 
         label = 'first enter' if type == 'actions_enter' else 'staying at state'
