@@ -118,5 +118,6 @@ plugin_functions:
             item:
                 type: str
                 description:
-                de: 'Item des Busmasters an dem der iButton genutzt wurde'
-                en: 'item of the busmaster at which the ibutton was used'
+                    de: 'Item des Busmasters an dem der iButton genutzt wurde'
+                    en: 'item of the busmaster at which the ibutton was used'
+
