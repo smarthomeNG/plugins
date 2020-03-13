@@ -11,10 +11,13 @@ $.widget("sv.stateengine", $.sv.widget, {
     // get list of values and images
     list_val = this.element.attr('data-vals').explode();
     list_img = this.element.attr('data-img').explode();
-
     // get the index of the value received
-    idx = list_val.indexOf(response.toString());
-
+    try {
+      idx = list_val.indexOf(response.toString());
+    }
+    catch {
+      idx = list_val[0];
+    }
     // update the image
     $('#' + this.element.attr("id") + ' img').attr('src', list_img[idx]);
 
@@ -34,6 +37,16 @@ $.widget("sv.stateengine", $.sv.widget, {
         return false;
     },
   'tap': function (event, response) {
+        // get list of values and images
+        list_val = this.element.attr('data-vals').explode();
+        list_img = this.element.attr('data-img').explode();
+        // get the index of the value received
+        try {
+          idx = list_val.indexOf(response.toString());
+        }
+        catch {
+          idx = list_val[0];
+        }
         if (this.element.attr('lock-item') == '' && this.element.attr('release-item') == '') {
         $("#"+this.element.attr('rel')).popup( "open" );
         }
@@ -49,7 +62,7 @@ $.widget("sv.stateengine", $.sv.widget, {
             io.write(this.element.attr('lock-item'), (this.element.val() == this.element.attr('data-val-on') ? this.element.attr('data-val-off') : this.element.attr('data-val-on')) );
             console.log('Short press else '+this.element.val()+', setting lock item '+ this.element.attr('lock-item'));
         }
-  }
+      }
     }
 
 });
