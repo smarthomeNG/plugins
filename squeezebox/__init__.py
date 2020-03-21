@@ -233,10 +233,14 @@ class Squeezebox(SmartPlugin,lib.connection.Client):
                 elif (data[1] == 'stop'):
                     self._update_items_with_data([data[0], 'play', '0'])
                     self._update_items_with_data([data[0], 'stop', '1'])
+                    self._update_items_with_data([data[0], 'pause', '0'])
                     self._update_items_with_data([data[0], 'mode', 'stop'])
                     self._send(data[0] + ' time ?')
                     return
                 elif (data[1] == 'pause'):
+                    self._update_items_with_data([data[0], 'play', '0'])
+                    self._update_items_with_data([data[0], 'stop', '0'])
+                    self._update_items_with_data([data[0], 'pause', '1'])
                     self._update_items_with_data([data[0], 'mode', 'pause'])
                     self._send(data[0] + ' mixer muting ?')
                     self._send(data[0] + ' time ?')
@@ -276,6 +280,9 @@ class Squeezebox(SmartPlugin,lib.connection.Client):
                         self._send(data[0] + ' time ?')
                         return
                     elif (data[2] == 'pause' and data[3] == '1'):
+                        self._update_items_with_data([data[0], 'play', '0'])
+                        self._update_items_with_data([data[0], 'stop', '0'])
+                        self._update_items_with_data([data[0], 'pause', '1'])
                         self._update_items_with_data([data[0], 'mode', 'pause'])
                         self._send(data[0] + ' mixer muting ?')
                         self._send(data[0] + ' time ?')
