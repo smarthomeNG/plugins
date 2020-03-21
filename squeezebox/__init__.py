@@ -259,7 +259,7 @@ class Squeezebox(SmartPlugin,lib.connection.Client):
                     self._update_items_with_data([data[0], 'mute', '1'])
                     data[-1] = data[-1][1:]
                 elif (data[1] == 'playlist'):
-                    if (data[2] == 'play'):
+                    if (data[2] == 'play' and data[3] == '1'):
                         self._update_items_with_data([data[0], 'play', '1'])
                         self._update_items_with_data([data[0], 'stop', '0'])
                         self._update_items_with_data([data[0], 'pause', '0'])
@@ -268,14 +268,14 @@ class Squeezebox(SmartPlugin,lib.connection.Client):
                         # play also overrules mute
                         self._update_items_with_data([data[0], 'mute', '0'])
                         return
-                    elif (data[2] == 'stop'):
+                    elif (data[2] == 'stop' and data[3] == '1'):
                         self._update_items_with_data([data[0], 'play', '0'])
                         self._update_items_with_data([data[0], 'stop', '1'])
                         self._update_items_with_data([data[0], 'pause', '0'])
                         self._update_items_with_data([data[0], 'mode', 'stop'])
                         self._send(data[0] + ' time ?')
                         return
-                    elif (data[2] == 'pause'):
+                    elif (data[2] == 'pause' and data[3] == '1'):
                         self._update_items_with_data([data[0], 'mode', 'pause'])
                         self._send(data[0] + ' mixer muting ?')
                         self._send(data[0] + ' time ?')
@@ -319,7 +319,9 @@ class Squeezebox(SmartPlugin,lib.connection.Client):
 
     def _update_items_with_data(self, data):
         cmd = ' '.join(data_str for data_str in data[:-1])
+
         if (cmd in self._val):
+
             for item in self._val[cmd]['items']:
                 if re.match("[+-][0-9]+$", data[-1]) and not isinstance(item(), str):
                     data[-1] = int(data[-1]) + item()
