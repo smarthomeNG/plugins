@@ -27,9 +27,9 @@ logger = logging.getLogger(__name__)
 
 ITEM_TAG = ['apcups']
 class APCUPS(SmartPlugin):
-    PLUGIN_VERSION = "1.3.1"
+    PLUGIN_VERSION = "1.3.2"
     ALLOW_MULTIINSTANCE = True
-  
+
     def __init__(self, smarthome, host='127.0.0.1', port=3551, cycle=300):
         self._sh = smarthome
         self._host = host
@@ -70,8 +70,7 @@ class APCUPS(SmartPlugin):
             (key,spl,val) = line.partition(': ')
             key = key.rstrip().lower()
             val = val.strip()
-            val = val.split(' ',1)[0] # ignore anything after 1st space
- 
+
             if key in self._items:
                  logger.debug("update item {0} with {1}".format(self._items[key],val))
                  item = self._items[key]
@@ -79,6 +78,7 @@ class APCUPS(SmartPlugin):
                  if item.type() == 'str':
                      item (val, 'apcups')
                  else:
+                     val = val.split(' ', 1)[0]  # ignore anything after 1st space
                      item (float(val), 'apcups')
         return
 
