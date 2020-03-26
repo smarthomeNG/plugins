@@ -11,9 +11,12 @@
 */
 {% macro state(id, item, lock, release, pic, val, popup) %}
   {% import "basic.html" as basic %}
+    <a style="display:none"></a>
     <span id="{{ uid(page, id) }}" data-widget="stateengine.state" data-item="{{ item }}" lock-item="{{ lock }}" release-item="{{ release }}"
         data-vals="{{ implode(val) }}"  data-img="{{ implode(pic|deficon) }}" data-val-on="1" data-val-off="0"
         class="symbol {{ lock == '' ? '' : 'ui-link' }}" data-role="symbol" data-inline="true" data-iconpos="center" data-mode="{{ mode|default('or') }}" rel="{{ popup }}">
+    <a data-widget="stateengine.state">
     {{ basic.icon(pic[0]|deficon('time_automatic'), 'icon0') }}
+    </a>
     </span>
 {% endmacro %}
