@@ -1,18 +1,15 @@
 /**
 * -----------------------------------------------------------------------------
 * @package     smartVISU
-* @author      Martin Gleiß
-* @copyright   2012 - 2015
+* @author      Onkel Andy
+* @copyright   2018 - 2020
 * @license     GPL [http://www.gnu.de]
 * -----------------------------------------------------------------------------
 */
-{% extends "base.html" %}
+{% extends "custom/widget_custom.html" %}
 
 
-{% import "widgets/stateengine.html" as stateengine %}
-{% import "basic.html" as basic %}
-
-{% block content %}
+{% block example %}
 <div id="popupstuff" display="hidden" style="height:200px;">Here you could define any basic widget you want</div>
 <div>
   <p>Changing the state via menu changes the icon of the stateengine widget. This demo is limited but in a real world scenario the widget would work like followed. Of course you can set either the locked item or the release item to empty to change the behaviour of the widget.</p><p>
