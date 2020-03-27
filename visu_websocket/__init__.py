@@ -51,7 +51,7 @@ class WebSocket(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = "1.5.0"
+    PLUGIN_VERSION = "1.5.1"
 
 
     def __init__(self, sh, *args, **kwargs):
@@ -629,7 +629,10 @@ class websockethandler(lib.connection.Stream):
                         else:
                             self.logger.info("WebSocket: no entries for series {} {}".format(path, series))
                 else:
-                    self.logger.warning("Client {0} requested invalid series: {1}.".format(self.addr, path))
+                    if path.startswith('env.'):
+                        self.logger.warning("Client {0} requested invalid series: {1}. Probably not database plugin is configured".format(self.addr, path))
+                    else:
+                        self.logger.warning("Client {0} requested invalid series: {1}.".format(self.addr, path))
 
         elif command == 'log':
             self.log = True
