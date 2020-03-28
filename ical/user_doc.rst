@@ -28,6 +28,7 @@ Kalenderdateien können in der etc/plugin.yaml als "Alias" hinterlegt werden. Au
 		    #	- example:http://server.com/test.ics
 		    #cycle: 3600
 
+
 Außerdem können Kalender Items zugewiesen werden, indem das entsprechende Attribut im gewünschten Item angegeben wird. Das Item wird auf wahr gesetzt, sobald aktuell ein Event stattfindet.
 
 .. code-block:: yaml
@@ -50,6 +51,7 @@ Beispiel
 ========
 
 .. code-block:: python
+
 	today = sh.now().date()
 
 	# To check a calendar file use one of the following three options:
