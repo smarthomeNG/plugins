@@ -12,7 +12,7 @@ plugin:
 #    keywords: iot xyz
     documentation: http://smarthomeng.de/user/plugins/knx/user_doc.html
 
-    version: 1.6.1                 # Plugin version
+    version: 1.6.2                 # Plugin version
     sh_minversion: 1.5e            # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
