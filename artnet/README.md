@@ -6,6 +6,7 @@ You need a device understanding Artnet.
 I suggest to use the software OLA http://www.opendmx.net/index.php/Open_Lighting_Architecture to translate the ArtNet packets into DMX Signals.
 Alternatively you can use any Art-Net to DMX Adapter. (Tested with https://www.ulrichradig.de/home/index.php/dmx/art-net-box)
 OLA supports most USB -> DMX Adapters available at the moment.
+For specifications of the Art-Net look at https://art-net.org.uk/resources/art-net-specification/
 
 ## Supported Hardware
 
