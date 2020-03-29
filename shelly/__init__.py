@@ -37,7 +37,7 @@ class Shelly(MqttPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.1.0'
+    PLUGIN_VERSION = '1.1.1'
 
 
     def __init__(self, sh):
@@ -57,6 +57,8 @@ class Shelly(MqttPlugin):
 
         # Call init code of parent class (MqttPlugin)
         super().__init__()
+        if self._init_complete == False:
+            return
 
         # get the parameters for the plugin (as defined in metadata plugin.yaml):
         # self.param1 = self.get_parameter_value('param1')
