@@ -265,8 +265,10 @@ class KNX(lib.connection.Client,SmartPlugin):
             self.terminator = struct.unpack(">H", length)[0]
         except:
             self.logger.error("problem unpacking length: {}".format(length))
-            self.logger.critical("plugin closes connection to knxd/eibd. Please restart SmartHomeNG")
+            self.logger.critical("plugin closes connection to knxd/eibd. Restarting SmartHomeNG")
             self.close()
+            self._sh.restart('SmartHomeNG (KNX plugin stalled)')
+            exit(0)
 
     def encode(self, data, dpt):
         return dpts.encode[str(dpt)](data)
