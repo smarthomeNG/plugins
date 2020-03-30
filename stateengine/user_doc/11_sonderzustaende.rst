@@ -1,4 +1,4 @@
-.. index:: Plugins; Stateengine
+
 .. index:: Stateengine; Besondere Zustände
 .. _Besondere Zustände:
 

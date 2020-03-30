@@ -1,9 +1,9 @@
-.. index:: Plugins; Stateengine
+
 .. index:: Stateengine; Sonstiges
 .. _Sonstiges:
 
 Sonstiges
-#########
+=========
 
 .. rubric:: Zustandsnamen
    :name: sonstigeszustandsnamen

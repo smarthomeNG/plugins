@@ -1,9 +1,8 @@
-.. index:: Plugins; Stateengine
+
 .. index:: Stateengine; Funktionen und Variablen
-.. Funktionen und Variablen:
 
 Funktionen und Variablen
-########################
+========================
 
 .. rubric:: Vordefinierte Funktionen
   :name: vordefiniertefunktionen

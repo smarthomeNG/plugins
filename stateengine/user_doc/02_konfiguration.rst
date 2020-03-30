@@ -1,8 +1,8 @@
-.. index:: Plugins; Stateengine
+
 .. index:: Stateengine; Konfiguration
 
 Konfiguration
-#############
+=============
 
 .. important::
 

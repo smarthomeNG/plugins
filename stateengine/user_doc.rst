@@ -1,8 +1,11 @@
-.. index:: Plugins; stateengine
-.. index:: stateengine
 
+.. index:: Plugins; stateengine
+.. index:: stateengine; Plugin
+
+===========
 stateengine
-###########
+===========
+
 
 Dokumentation
 =============

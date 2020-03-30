@@ -1,8 +1,8 @@
-.. index:: Plugins; Stateengine
+
 .. index:: Stateengine; Zustand-Item
 
 Zustand-Item
-############
+============
 
 .. rubric:: Zustände
    :name: daszustandsitem

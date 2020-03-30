@@ -1,9 +1,9 @@
-.. index:: Plugins; Stateengine
+
 .. index:: Stateengine; Aktionen
 .. _Aktionen:
 
 Aktionen
-########
+========
 
 Es gibt zwei Möglichkeiten, Aktionen zu definieren. Die :ref:`Aktionen - einzeln`
 Variante wird am Ende der Dokumentation der Vollständigkeit halber beschrieben,

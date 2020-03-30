@@ -1,9 +1,9 @@
-.. index:: Plugins; Stateengine
+
 .. index:: Stateengine; Zustand-Templates
 .. _Zustand-Templates:
 
 Zustand-Templates
-##################
+=================
 
 .. rubric:: Struktur Templates
    :name: strukturtemplates

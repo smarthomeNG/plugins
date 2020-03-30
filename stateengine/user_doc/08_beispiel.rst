@@ -1,8 +1,8 @@
-.. index:: Plugins; Stateengine
+
 .. index:: Stateengine; Beispiel
 
 Beispiel
-########
+========
 
 Die wichtigsten Elemente und Funktionen des Plugins sind soweit
 vorgestellt. Zusätzliche Features werden abschließend in den folgenden Kapiteln

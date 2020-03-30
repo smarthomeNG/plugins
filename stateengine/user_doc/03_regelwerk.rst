@@ -1,4 +1,4 @@
-.. index:: Plugins; Stateengine
+
 .. index:: Stateengine; Regelwerk-Item
 
 Regelwerk-Item
