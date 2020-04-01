@@ -136,6 +136,8 @@ class EventServerThread(threading.Thread):
         #: `tuple`: The (ip, port) address on which the server is
         #: configured to listen.
         self.address = address
+        debugName = 'SonosEventServerThread_{0}'.format(address) 
+        self.setName(debugName)
 
     def run(self):
         """Start the server on `address`.
@@ -331,6 +333,9 @@ class Subscription(SubscriptionBase):
                 self.subscription = sub
                 self.stop_flag = stop_flag
                 self.daemon = True
+                debugName = 'SonosAutoRenewDebug' 
+                self.setName(debugName)
+
 
             def run(self):
                 subscription = self.subscription

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# pylint: disable=not-context-manager
+# pylint: disable=not-context-manager,import-error,wrong-import-position
 
 # NOTE: The pylint not-content-manager warning is disabled pending the fix of
 # a bug in pylint. See https://github.com/PyCQA/pylint/issues/782
@@ -65,28 +65,33 @@ twisted.python.failure.Failure.html
 
 from __future__ import unicode_literals
 
+import sys
 import logging
 
-# pylint: disable=import-error
-from twisted.internet import reactor
-from twisted.web.server import Site
-from twisted.web.resource import Resource
-import twisted.internet.error
-from twisted.internet import task, defer
-from twisted.python.failure import Failure
-from twisted.web.client import Agent, BrowserLikeRedirectAgent
-from twisted.web.http_headers import Headers
+# Hack to make docs build without twisted installed
+if "sphinx" in sys.modules:
+    class Resource(object):  # pylint: disable=no-init
+        """Fake Resource class to use when building docs"""
+else:
+    from twisted.internet import reactor
+    from twisted.web.server import Site
+    from twisted.web.resource import Resource
+    import twisted.internet.error
+    from twisted.internet import task, defer
+    from twisted.python.failure import Failure
+    from twisted.web.client import Agent, BrowserLikeRedirectAgent
+    from twisted.web.http_headers import Headers
 
 # Event is imported for compatibility with events.py
 # pylint: disable=unused-import
 from .events_base import Event  # noqa: F401
 
-from .events_base import (
+from .events_base import (  # noqa: E402
     EventNotifyHandlerBase, EventListenerBase, SubscriptionBase,
     SubscriptionsMap
 )
 
-from .exceptions import SoCoException
+from .exceptions import SoCoException  # noqa: E402
 
 log = logging.getLogger(__name__)  # pylint: disable=C0103
 
