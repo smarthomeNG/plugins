@@ -1,2 +1,3 @@
 setuptools
-python-miio
+python-miio==0.4.6 ; python_version < 3.6
+python-miio ; python_version >= 3.6
