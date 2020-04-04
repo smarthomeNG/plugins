@@ -145,7 +145,7 @@ class ThreadedHTTPServer(socketserver.ThreadingMixIn, HTTPServer):
 class SimpleHttpServer:
     def __init__(self, ip, port, tts_folder, snippet_folder):
         self.server = ThreadedHTTPServer((ip, port), WebserviceHttpHandler)
-        self.thread = threading.Thread(target=self.server.serve_forever)
+        self.thread = threading.Thread(target=self.server.serve_forever, name='SonosTTSServer')
         self.thread.daemon = True
         WebserviceHttpHandler.webroot = tts_folder
         WebserviceHttpHandler.snippet_folder = snippet_folder
@@ -399,7 +399,7 @@ class Speaker(object):
         if not self._check_property():
             return
 
-        # do this only for the coordinator, don't tress the network
+        # do this only for the coordinator, don't stress the network
         if self.is_coordinator:
             if self.snooze > 0:
                 self.snooze = self.get_snooze()
@@ -2297,7 +2297,7 @@ class Speaker(object):
 
 class Sonos(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.4.9"
+    PLUGIN_VERSION = "1.5.0"
 
     def __init__(self, sh, tts=False, local_webservice_path=None, local_webservice_path_snippet=None,
                  discover_cycle="120", webservice_ip=None, webservice_port=23500, speaker_ips=None, snippet_duration_offset=0.0, **kwargs):

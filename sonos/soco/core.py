@@ -31,7 +31,7 @@ from .music_library import MusicLibrary
 from .services import (
     DeviceProperties, ContentDirectory, RenderingControl, AVTransport,
     ZoneGroupTopology, AlarmClock, SystemProperties, MusicServices,
-    zone_group_state_shared_cache,
+    zone_group_state_shared_cache, GroupRenderingControl
 )
 from .utils import (
     really_utf8, camel_to_underscore, deprecated
@@ -133,6 +133,7 @@ class SoCo(_SocoSingletonBase):
         play_mode
         cross_fade
         ramp_to_volume
+        set_relative_volume
         get_current_track_info
         get_speaker_info
         get_current_transport_info
@@ -172,6 +173,7 @@ class SoCo(_SocoSingletonBase):
         bass
         treble
         loudness
+        balance
         night_mode
         dialog_mode
         status_light
@@ -248,6 +250,7 @@ class SoCo(_SocoSingletonBase):
         self.contentDirectory = ContentDirectory(self)
         self.deviceProperties = DeviceProperties(self)
         self.renderingControl = RenderingControl(self)
+        self.groupRenderingControl = GroupRenderingControl(self)
         self.zoneGroupTopology = ZoneGroupTopology(self)
         self.alarmClock = AlarmClock(self)
         self.systemProperties = SystemProperties(self)
@@ -478,6 +481,39 @@ class SoCo(_SocoSingletonBase):
             ('ProgramURI', '')
         ])
         return int(response['RampTime'])
+
+    def set_relative_volume(self, relative_volume):
+        """Adjust the volume up or down by a relative amount.
+
+        If the adjustment causes the volume to overshoot the maximum value
+        of 100, the volume will be set to 100. If the adjustment causes the
+        volume to undershoot the minimum value of 0, the volume will be set
+        to 0.
+
+        Note that this method is an alternative to using addition and
+        subtraction assignment operators (+=, -=) on the `volume` property
+        of a `SoCo` instance. These operators perform the same function as
+        `set_relative_volume()` but require two network calls per operation
+        instead of one.
+
+        Args:
+            relative_volume (int): The relative volume adjustment. Can be
+                positive or negative.
+
+        Returns:
+            int: The new volume setting.
+
+        Raises:
+            ValueError: If `relative_volume` cannot be cast as an integer.
+        """
+        relative_volume = int(relative_volume)
+        # Sonos will automatically handle out-of-range adjustments
+        response = self.renderingControl.SetRelativeVolume([
+            ('InstanceID', 0),
+            ('Channel', 'Master'),
+            ('Adjustment', relative_volume)
+        ])
+        return int(response['NewVolume'])
 
     @only_on_master
     def play_from_queue(self, index, start=True):
@@ -773,8 +809,9 @@ class SoCo(_SocoSingletonBase):
 
         True if on, False otherwise.
 
-        Loudness is a complicated topic. You can find a nice summary about this
-        feature here: http://forums.sonos.com/showthread.php?p=4698#post4698
+        Loudness is a complicated topic. You can read about it on
+        Wikipedia: https://en.wikipedia.org/wiki/Loudness
+
         """
         response = self.renderingControl.GetLoudness([
             ('InstanceID', 0),
@@ -791,6 +828,49 @@ class SoCo(_SocoSingletonBase):
             ('InstanceID', 0),
             ('Channel', 'Master'),
             ('DesiredLoudness', loudness_value)
+        ])
+
+    @property
+    def balance(self):
+        """The left/right balance for the speaker(s).
+
+        Returns:
+            tuple: A 2-tuple (left_channel, right_channel) of integers
+            between 0 and 100, representing the volume of each channel.
+            E.g., (100, 100) represents full volume to both channels,
+            whereas (100, 0) represents left channel at full volume,
+            right channel at zero volume.
+        """
+
+        response_lf = self.renderingControl.GetVolume([
+            ('InstanceID', 0),
+            ('Channel', 'LF'),
+        ])
+        response_rf = self.renderingControl.GetVolume([
+            ('InstanceID', 0),
+            ('Channel', 'RF'),
+        ])
+        volume_lf = response_lf['CurrentVolume']
+        volume_rf = response_rf['CurrentVolume']
+        return int(volume_lf), int(volume_rf)
+
+    @balance.setter
+    def balance(self, left_right_tuple):
+        """Set the left/right balance for the speaker(s)."""
+        left, right = left_right_tuple
+        left = int(left)
+        right = int(right)
+        left = max(0, min(left, 100))  # Coerce in range
+        right = max(0, min(right, 100))  # Coerce in range
+        self.renderingControl.SetVolume([
+            ('InstanceID', 0),
+            ('Channel', 'LF'),
+            ('DesiredVolume', left)
+        ])
+        self.renderingControl.SetVolume([
+            ('InstanceID', 0),
+            ('Channel', 'RF'),
+            ('DesiredVolume', right)
         ])
 
     @property
