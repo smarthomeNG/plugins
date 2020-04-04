@@ -41,7 +41,7 @@ import sys
 #########################################################################
 
 class SmartVisu(SmartPlugin):
-    PLUGIN_VERSION="1.3.4"
+    PLUGIN_VERSION="1.3.5"
     ALLOW_MULTIINSTANCE = True
 
 
