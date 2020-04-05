@@ -41,7 +41,7 @@ import sys
 #########################################################################
 
 class SmartVisu(SmartPlugin):
-    PLUGIN_VERSION="1.3.5"
+    PLUGIN_VERSION="1.3.4"
     ALLOW_MULTIINSTANCE = True
 
 
@@ -162,7 +162,7 @@ class SmartVisuGenerator:
 
         self.logger.info("Generating pages for smartVISU v{}".format(self.smartvisu_version))
 
-        self.outdir = os.path.join(self.smartvisu_dir, 'pages', 'smarthomeng')
+        self.outdir = os.path.join(self.smartvisu_dir, 'pages', 'smarthome')
         self.tpldir = os.path.join(self.smartvisu_dir, 'pages', 'base', 'tplNG')
         self.tmpdir = os.path.join(self.smartvisu_dir, 'temp')
         if self.smartvisu_version >= '2.9':
