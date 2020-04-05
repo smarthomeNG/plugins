@@ -23,14 +23,13 @@
  */
 'use strict';
 
-goog.provide('Blockly.Blocks.sh_items');
-
-goog.require('Blockly.Blocks');
+//goog.provide('Blockly.Blocks.sh_items');
+//goog.require('Blockly.Blocks');
 
 Blockly.Blocks['sh_item_obj'] = {
   init: function() {
     var hiddenFieldPath = new Blockly.FieldTextInput("Path");
-    hiddenFieldPath.setVisible(false);	  
+    hiddenFieldPath.setVisible(false);
     var hiddenFieldType = new Blockly.FieldTextInput("Type");
     hiddenFieldType.setVisible(false);
     var fixedFieldName = new Blockly.FieldTextInput("Name");
@@ -43,7 +42,7 @@ Blockly.Blocks['sh_item_obj'] = {
     this.setColour(210);
     this.setTooltip(this.getFieldValue('P'));
     this.setHelpUrl('http://www.example.com/');
-    this.setEditable(false);   
+    this.setEditable(false);
   }
 };
 
@@ -147,8 +146,35 @@ Blockly.Python['sh_item_set'] = function(block) {
   return code;
 };
 
+Blockly.Blocks['sh_item_hasattr'] = {
+  init: function() {
+    this.appendDummyInput()
+        .appendField("das Item");
+    this.appendValueInput("ITEM")
+        .setCheck("shItemType");
+    this.appendDummyInput()
+        .appendField("hat das Attribut")
+        .appendField(new Blockly.FieldTextInput("default"), "ATTR");
+    this.setInputsInline(true);
+    this.setOutput(true, "Boolean");
+    this.setColour(120);
+    this.setTooltip('');
+    this.setHelpUrl('http://www.example.com/');
+  }
+};
 
+Blockly.Python['sh_item_hasattr'] = function(block) {
+  var value_item = Blockly.Python.valueToCode(block, 'ITEM', Blockly.Python.ORDER_ATOMIC);
+  var text_attr = block.getFieldValue('ATTR');
+  // TODO: Assemble Python into code variable.
+  var code = '...';
+  // TODO: Change ORDER_NONE to the correct strength.
+  var code = 'sh.iHasAttr(' + value_item + ', ' + text_attr +' )';
+    return [code, Blockly.Python.ORDER_NONE];
 
+};
+
+/** 
 Blockly.Blocks['sh_item_attr'] = {
   init: function() {
     var attrlist = new Blockly.FieldTextInput('0');
@@ -182,31 +208,4 @@ Blockly.Python['sh_item_attr'] = function(block) {
   return [code, Blockly.Python.ORDER_NONE];
 };
 
-
-Blockly.Blocks['sh_item_hasattr'] = {
-  init: function() {
-    this.appendDummyInput()
-        .appendField("das Item");
-    this.appendValueInput("ITEM")
-        .setCheck("shItemType");
-    this.appendDummyInput()
-        .appendField("hat das Atribut")
-        .appendField(new Blockly.FieldTextInput("default"), "ATTR");
-    this.setInputsInline(true);
-    this.setOutput(true, "Boolean");
-    this.setColour(120);
-    this.setTooltip('');
-    this.setHelpUrl('http://www.example.com/');
-  }
-};
-
-Blockly.Python['sh_item_hasattr'] = function(block) {
-  var value_item = Blockly.Python.valueToCode(block, 'ITEM', Blockly.Python.ORDER_ATOMIC);
-  var text_attr = block.getFieldValue('ATTR');
-  // TODO: Assemble Python into code variable.
-  var code = '...';
-  // TODO: Change ORDER_NONE to the correct strength.
-  var code = 'sh.iHasAttr(' + value_item + ', ' + text_attr +' )';
-    return [code, Blockly.Python.ORDER_NONE];
-
-};
+*/

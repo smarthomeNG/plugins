@@ -2,22 +2,29 @@
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
 #  Copyright 2013 Mirko Hirsch                        mirko.hirsch@gmx.de
+#  Copyright 2019 Bernd Meiners                     Bernd.Meiners@mail.de
 #########################################################################
-#  Roomba/iRobot plugin for SmartHomeNG https://github.com/smarthomeNG//
+#  This file is part of SmartHomeNG.
 #
-#  This plugin is free software: you can redistribute it and/or modify
+#  Roomba/iRobot plugin for SmartHomeNG https://github.com/smarthomeNG/
+#
+#  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation, either version 3 of the License, or
 #  (at your option) any later version.
 #
-#  This plugin is distributed in the hope that it will be useful,
+#  SmartHomeNG is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License
-#  along with this plugin. If not, see <http://www.gnu.org/licenses/>.
+#  along with SmartHomeNG. If not, see <http://www.gnu.org/licenses/>.
+#
 #########################################################################
+
+from lib.module import Modules
+from lib.model.smartplugin import *
 
 import socket
 import time
@@ -46,64 +53,90 @@ cmd_dict=dict(
 # song = 140,                 #add 2n + 2 databytes
 # play = 141,                 #add 1 databyte
 
-class Roomba(object):
+
+class Roomba(SmartPlugin):
+    """
+    Main class of the Plugin. Does all plugin specific stuff and provides
+    the update functions for the items
+    """
+
+    PLUGIN_VERSION = '1.6.0'
     _items = []
-    
-    def __init__(self,smarthome,cycle,socket_type,socket_addr,socket_port = 0):
-        self._sh = smarthome
-        self._socket_type = socket_type
-        self._socket_addr = str(socket_addr)
-        print (self._socket_addr)
-        self._socket_port = socket_port
-        self._cycle = int(cycle)
+
+    def __init__(self, sh, *args, **kwargs):
+        """
+        Initalizes the plugin. The parameters describe for this method are pulled from the entry in plugin.conf.
+        """
+        from bin.smarthome import VERSION
+        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
+            self.logger = logging.getLogger(__name__)
+
+        self._sh = sh
+
+        # get the parameters for the plugin (as defined in metadata plugin.yaml):
+        self._socket_type = self.get_parameter_value('socket_type')
+        self._socket_addr = self.get_parameter_value('socket_addr')
+        self._socket_port = self.get_parameter_value('socket_port')
+        self._cycle = self.get_parameter_value('cycle')
+
+        # Initialization code goes here
         self.is_connected = 'False'
-     
+
+        # if plugin should start even without web interface
+        self.init_webinterface()
+
     def run(self):
+        """
+        Run method for the plugin
+        """
+        self.logger.debug("Run method called")
         self.alive = True
+        # setup scheduler for device poll loop   (disable the following line, if you don't need to poll the device. Rember to comment the self_cycle statement in __init__ as well)
         if self._cycle > 0:
-            self._sh.scheduler.add('Roomba', self.get_sensors, prio=5, cycle=self._cycle, offset=10)     
-            
+            self.scheduler_add('poll_device', self.poll_device, cycle=self._cycle, offset=10)
+
+
     def stop(self):
+        """
+        Stop method for the plugin
+        """
+        self.logger.debug("Stop method called")
         self.alive = False
         try:
             self._sh.scheduler.remove('Roomba')
         except:
-            logger.error(
-                "Roomba: Removing Roomba from scheduler failed: {}".format(sys.exc_info()))
+            self.logger.error("Roomba: Removing Roomba from scheduler failed: {}".format(sys.exc_info()))
         try:
             self._socket.close()
         except:
-            logger.error(
-                "Roomba: Closing connection failed: {}".format(sys.exc_info()))
-    
+            self.logger.error("Roomba: Closing connection failed: {}".format(sys.exc_info()))
+
     def init_command(self):
         self.send(128)  #start
         time.sleep(0.2)
         self.send(130)  #command
         time.sleep(0.2)
-        
+
     def send(self, raw):
         if self.is_connected == 'False':
             try:
                 self.connect()
             except:
-                logger.error("Roomba: (Re)connect failed in send")
+                self.logger.error("Roomba: (Re)connect failed in send")
         if self.is_connected == 'True':
             if type(raw) is list:
-                #print ("Send {0}".format(raw))
-                logger.debug("Roomba: Send List:{0}".format(raw))
+                self.logger.debug("Roomba: Send List:{0}".format(raw))
                 try:
                     self._socket.send(bytearray(raw))
                 except:
-                    logger.error("Roomba: Send failed for {}!".format(raw))
+                    self.logger.error("Roomba: Send failed for {}!".format(raw))
                     self.is_connected = 'False'
             else:
-                #print ("Send [{0}]".format(raw))
-                logger.debug("Roomba: Send Single:{0}".format([raw]))
+                self.logger.debug("Roomba: Send Single:{0}".format([raw]))
                 try:
                     self._socket.send(bytearray([raw]))
                 except:
-                    logger.error("Roomba: Send failed for {}!".format([raw]))
+                    self.logger.error("Roomba: Send failed for {}!".format([raw]))
                     self.is_connected = 'False'
 
     def connect(self):
@@ -126,37 +159,63 @@ class Roomba(object):
     def disconnect(self):
         if self.is_connected == 'True':
             pass
-        
+
     def parse_item(self, item):
-        if 'roomba_get' in item.conf:
-            sensor_string = item.conf['roomba_get']
+        """
+        Default plugin parse_item method. Is called when the plugin is initialized.
+        The plugin can, corresponding to its attribute keywords, decide what to do with
+        the item in future, like adding it to an internal array for future reference
+        :param item:    The item to process.
+        :return:        If the plugin needs to be informed of an items change self.update_item is returned
+        """
+        if self.has_iattr(item.conf, 'roomba_get'):
+            self.logger.debug("parse item: {}".format(item))
+            sensor_string = self.get_iattr(item.conf,'roomba_get')
             logger.debug("Roomba: {0} will get \'{1}\'".format(item, sensor_string))
             self._items.append(item)
-            return self.update_item      
-        if 'roomba_cmd' in item.conf:
-            cmd_string = item.conf['roomba_cmd']
+            return self.update_item
+
+        if self.has_iattr(item.conf, 'roomba_cmd'):
+            self.logger.debug("parse item: {}".format(item))
+            cmd_string = self.get_iattr(item.conf,'roomba_cmd')
             logger.debug("Roomba: {0} will drive \'{1}\'".format(item, cmd_string))
             self._items.append(item)
             return self.update_item
-        if 'roomba_raw' in item.conf:
-            raw_list = item.conf['roomba_raw']
+
+        if self.has_iattr(item.conf, 'roomba_raw'):
+            self.logger.debug("parse item: {}".format(item))
+            raw_list = self.get_iattr(item.conf,'roomba_raw')
             logger.debug("Roomba: {0} send raw \'{1}\'".format(item, raw_list))
             self._items.append(item)
-            return self.update_item	
-            
+            return self.update_item
+
     def update_item(self, item, caller=None, source=None, dest=None):
-        if caller != 'Roomba':
+        """
+        Item has been updated
+
+        This method is called, if the value of an item has been updated by SmartHomeNG.
+        It should write the changed value out to the device (hardware/interface) that
+        is managed by this plugin.
+
+        :param item: item to be updated towards the plugin
+        :param caller: if given it represents the callers name
+        :param source: if given it represents the source
+        :param dest: if given it represents the dest
+        """
+        if caller != self.get_shortname():
+            # code to execute, only if the item has not been changed by this this plugin:
+            self.logger.info("Update item: {}, item has been changed outside this plugin".format(item.id()))
+
             if item():
-                if 'roomba_cmd' in item.conf:
-                    cmd_string = item.conf['roomba_cmd']
+                if self.has_iattr(item.conf, 'roomba_cmd'):
+                    cmd_string = self.get_iattr(item.conf,'roomba_cmd')
                     logger.debug("Roomba: item = true")
                     self.drive(cmd_string)
-                if 'roomba_raw' in item.conf:
-                    raw_string = item.conf['roomba_raw']
+
+                if self.has_iattr(item.conf, 'roomba_raw'):
+                    raw_string = self.get_iattr(item.conf,'roomba_raw')
                     self.raw(raw_string)
-                else:
-                    pass
-       
+
     def drive(self,cmd_string):
         self.init_command()
         if type(cmd_string) is list:
@@ -172,7 +231,7 @@ class Roomba(object):
             #print (cmd_dict[cmd_string])
             self.send(cmd_dict[cmd_string])
         self.disconnect()
-        
+
     def raw(self,raw_string):
         self.init_command()
         full_raw_cmd = []
@@ -184,9 +243,14 @@ class Roomba(object):
         else:
             self.send(int(raw_string))
         self.disconnect()
-        
-    def get_sensors(self):
-        #self.send(128)
+
+
+    def poll_device(self):
+        """
+        Polls for updates of the Roomba
+        It is called by the scheduler which is set within run() method.
+        """
+
         time.sleep(0.2)
         self.send([142,0])
         i = 0
@@ -198,12 +262,11 @@ class Roomba(object):
                 data = int.from_bytes(data, byteorder='little')
                 answer.append(data)
             except socket.timeout:
-                logger.error("Roomba: Sensors not readable - Timeout")
+                self.logger.error("Roomba: Sensors not readable - Timeout")
                 return
         if len(answer) == 26:
             logger.debug("Roomba: Got sensor data.")
             answer = list(answer)
-            #print (answer)
             
             #create sensor_dict
             sensor_dict = dict()
@@ -285,14 +348,13 @@ class Roomba(object):
             sensor_dict['bumps_wheeldrops_wheeldrop_caster']=bool(_bumps_wheeldrops & 0x10) #bit 5
             
             for item in self._items:
-                if 'roomba_get' in item.conf:
-                    sensor = item.conf['roomba_get']
+                if self.has_iattr(item.conf, 'roomba_get'):
+                    sensor = self.get_iattr(item.conf,'roomba_get')
                     if sensor in sensor_dict:
                         value = sensor_dict[sensor]
-                        item(value, 'Roomba', 'get_sensors')
-                        #print ("SENSOR: {0}  VALUE: {1}".format(sensor,value))
+                        item(value, self.get_shortname(), 'poll_device')
         else:
-            logger.error("Roomba: Sensors not readable")
+            self.logger.error("Roomba: Sensors not readable")
         self.disconnect()
 
     def DecodeUnsignedShort(self, low, high):
@@ -324,3 +386,103 @@ class Roomba(object):
             angle /= math.pi
             #print ("{0} degrees".format(angle))
             return angle
+
+
+    def init_webinterface(self):
+        """"
+        Initialize the web interface for this plugin
+
+        This method is only needed if the plugin is implementing a web interface
+        """
+        try:
+            self.mod_http = Modules.get_instance().get_module(
+                'http')  # try/except to handle running in a core version that does not support modules
+        except:
+            self.mod_http = None
+        if self.mod_http == None:
+            self.logger.error("Not initializing the web interface")
+            return False
+
+        import sys
+        if not "SmartPluginWebIf" in list(sys.modules['lib.model.smartplugin'].__dict__):
+            self.logger.warning("Web interface needs SmartHomeNG v1.5 and up. Not initializing the web interface")
+            return False
+
+        # set application configuration for cherrypy
+        webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
+        config = {
+            '/': {
+                'tools.staticdir.root': webif_dir,
+            },
+            '/static': {
+                'tools.staticdir.on': True,
+                'tools.staticdir.dir': 'static'
+            }
+        }
+
+        # Register the web interface as a cherrypy app
+        self.mod_http.register_webif(WebInterface(webif_dir, self),
+                                     self.get_shortname(),
+                                     config,
+                                     self.get_classname(), self.get_instance_name(),
+                                     description='')
+
+        return True
+
+
+# ------------------------------------------
+#    Webinterface of the plugin
+# ------------------------------------------
+
+import cherrypy
+from jinja2 import Environment, FileSystemLoader
+
+
+class WebInterface(SmartPluginWebIf):
+
+    def __init__(self, webif_dir, plugin):
+        """
+        Initialization of instance of class WebInterface
+
+        :param webif_dir: directory where the webinterface of the plugin resides
+        :param plugin: instance of the plugin
+        :type webif_dir: str
+        :type plugin: object
+        """
+        self.logger = logging.getLogger(__name__)
+        self.webif_dir = webif_dir
+        self.plugin = plugin
+        self.tplenv = self.init_template_environment()
+
+    @cherrypy.expose
+    def index(self, reload=None):
+        """
+        Build index.html for cherrypy
+
+        Render the template and return the html file to be delivered to the browser
+
+        :return: contents of the template after beeing rendered
+        """
+        tmpl = self.tplenv.get_template('index.html')
+        # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
+        return tmpl.render(p=self.plugin)
+
+
+    @cherrypy.expose
+    def get_data_html(self, dataSet=None):
+        """
+        Return data to update the webpage
+
+        For the standard update mechanism of the web interface, the dataSet to return the data for is None
+
+        :param dataSet: Dataset for which the data should be returned (standard: None)
+        :return: dict with the data needed to update the web page.
+        """
+        if dataSet is None:
+            # get the new data
+            #self.plugin.beodevices.update_devices_info()
+
+            # return it as json the the web page
+            #return json.dumps(self.plugin.beodevices.beodeviceinfo)
+            pass
+        return

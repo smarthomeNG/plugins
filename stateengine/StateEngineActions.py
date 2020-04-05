@@ -20,10 +20,21 @@
 #########################################################################
 from . import StateEngineAction
 from . import StateEngineTools
+import ast
+import time
 
 
 # Class representing a list of actions
 class SeActions(StateEngineTools.SeItemChild):
+    @property
+    def dict_actions(self):
+        result = {}
+        for name in self.__actions:
+            self._abitem._initactionname = name
+            result.update({name: self.__actions[name].get()})
+            self._abitem._initactionname = None
+        return result
+
     # Initialize the set of actions
     # abitem: parent SeItem instance
     def __init__(self, abitem):
@@ -32,6 +43,8 @@ class SeActions(StateEngineTools.SeItemChild):
         self.__unassigned_delays = {}
         self.__unassigned_repeats = {}
         self.__unassigned_orders = {}
+        self.__unassigned_conditionsets = {}
+        self.__unassigned_modes = {}
 
     # Return number of actions in list
     def count(self):
@@ -60,6 +73,22 @@ class SeActions(StateEngineTools.SeItemChild):
                 else:
                     self.__actions[name].update_repeat(value)
                 return
+            elif func == "se_conditionset":
+                # set conditionset
+                if name not in self.__actions:
+                    # If we do not have the action yet (conditionset-attribute before action-attribute), ...
+                    self.__unassigned_conditionsets[name] = value
+                else:
+                    self.__actions[name].update_conditionsets(value)
+                return
+            elif func == "se_mode":
+                # set remove mode
+                if name not in self.__actions:
+                    # If we do not have the action yet (conditionset-attribute before action-attribute), ...
+                    self.__unassigned_modes[name] = value
+                else:
+                    self.__actions[name].update_modes(value)
+                return
             elif func == "se_order":
                 # set order
                 if name not in self.__actions:
@@ -76,8 +105,7 @@ class SeActions(StateEngineTools.SeItemChild):
         except ValueError as ex:
             if name in self.__actions:
                 del self.__actions[name]
-            self._log_warning("Ignoring action {0} because: {1} (2)".format(attribute, str(ex)))
-            #raise ValueError("Action {0}: {1}".format(attribute, str(ex)))
+            self._log_warning("Ignoring action {0} because: {1}", attribute, ex)
 
     # ensure that action exists and create if missing
     # func: action function
@@ -100,6 +128,14 @@ class SeActions(StateEngineTools.SeItemChild):
             action = StateEngineAction.SeActionRun(self._abitem, name)
         elif func == "se_special":
             action = StateEngineAction.SeActionSpecial(self._abitem, name)
+        elif func == "se_add":
+            action = StateEngineAction.SeActionAddItem(self._abitem, name)
+        elif func == "se_remove" or func == "se_removeall":
+            action = StateEngineAction.SeActionRemoveAllItem(self._abitem, name)
+        elif func == "se_removefirst":
+            action = StateEngineAction.SeActionRemoveFirstItem(self._abitem, name)
+        elif func == "se_removelast":
+            action = StateEngineAction.SeActionRemoveLastItem(self._abitem, name)
         else:
             return False
 
@@ -111,9 +147,17 @@ class SeActions(StateEngineTools.SeItemChild):
             action.update_repeat(self.__unassigned_repeats[name])
             del self.__unassigned_repeats[name]
 
+        if name in self.__unassigned_modes:
+            action.update_modes(self.__unassigned_modes[name])
+            del self.__unassigned_modes[name]
+
         if name in self.__unassigned_orders:
             action.update_order(self.__unassigned_orders[name])
             del self.__unassigned_orders[name]
+
+        if name in self.__unassigned_conditionsets:
+            action.update_conditionsets(self.__unassigned_conditionsets[name])
+            del self.__unassigned_conditionsets[name]
 
         self.__actions[name] = action
         return True
@@ -126,9 +170,14 @@ class SeActions(StateEngineTools.SeItemChild):
             raise ValueError("Attribute 'se_action_{0}': Value must be a string or a list!".format(name))
 
         # parse parameters
-        parameter = {'function': None, 'force': None, 'repeat': None, 'delay': 0, 'order': None}
+        parameter = {'function': None, 'force': None, 'repeat': None, 'delay': 0, 'order': None, 'conditionset': None, 'mode': None}
         for entry in value_list:
+            if isinstance(entry, dict):
+                entry = list("{!s}:{!s}".format(k, v) for (k, v) in entry.items())[0]
             key, val = StateEngineTools.partition_strip(entry, ":")
+            val = ":".join(map(str.strip, val.split(":")))
+            if val[:1] == '[' and val[-1:] == ']':
+                val = ast.literal_eval(val)
             if key == "function":
                 parameter[key] = StateEngineTools.cast_str(val)
             elif key == "force":
@@ -140,22 +189,40 @@ class SeActions(StateEngineTools.SeItemChild):
         # function given and valid?
         if parameter['function'] is None:
             raise ValueError("Attribute 'se_action_{0}: Parameter 'function' must be set!".format(name))
-        if parameter['function'] not in ('set', 'force', 'run', 'byattr', 'trigger', 'special'):
+        if parameter['function'] not in ('set', 'force', 'run', 'byattr', 'trigger', 'special',
+                                         'add', 'remove', 'removeall', 'removefirst', 'removelast'):
             raise ValueError("Attribute 'se_action_{0}: Invalid value '{1}' for parameter 'function'!".format(name, parameter['function']))
 
         # handle force
         if parameter['force'] is not None:
             # Parameter force is supported only for type "set" and type "force"
             if parameter['function'] != "set" and parameter['function'] != "force":
-                self._log_warning("Attribute 'se_action_{0}': Parameter 'force' not supported for function '{1}'".format(name, parameter['function']))
+                self._log_warning("Attribute 'se_action_{0}': Parameter 'force' not supported for function '{1}'", name, parameter['function'])
             elif parameter['force'] and parameter['function'] == "set":
                 # Convert type "set" with force=True to type "force"
-                self._log_info("Attribute 'se_action_{0}': Parameter 'function' changed from 'set' to 'force', because parameter 'force' is 'True'!".format(name))
+                self._log_info("Attribute 'se_action_{0}': Parameter 'function' changed from 'set' to 'force', "
+                               "because parameter 'force' is 'True'!", name)
                 parameter['function'] = "force"
             elif not parameter['force'] and parameter['function'] == "force":
                 # Convert type "force" with force=False to type "set"
-                self._log_info("Attribute 'se_action_{0}': Parameter 'function' changed from 'force' to 'set', because parameter 'force' is 'False'!".format(name))
+                self._log_info("Attribute 'se_action_{0}': Parameter 'function' changed from 'force' to 'set', "
+                               "because parameter 'force' is 'False'!", name)
                 parameter['function'] = "set"
+
+        possible_mode_list = ['first', 'last', 'all']
+        if parameter['mode'] is not None:
+            # Parameter mode is supported only for type "remove"
+            if parameter['function'] != "remove":
+                self._log_warning("Attribute 'se_action_{0}': Parameter 'mode' not supported for function '{1}'", name, parameter['function'])
+            elif parameter['mode'] and parameter['function'] == "remove":
+                # Convert type "remove" with mode to specific remove type
+                if parameter['mode'] in possible_mode_list:
+                    parameter['function'] = "remove{}".format(parameter['mode'])
+                    self._log_info("Attribute 'se_action_{0}': Function 'remove' changed to '{1}'", name, parameter['function'])
+                else:
+                    parameter['function'] = "remove"
+                    self._log_info("Attribute 'se_action_{0}': Parameter '{1}' for 'mode' is wrong - can only be {2}",
+                                   name, parameter['mode'], possible_mode_list)
 
         # create action based on function
         exists = False
@@ -193,12 +260,36 @@ class SeActions(StateEngineTools.SeItemChild):
                     self.__raise_missing_parameter_error(parameter, 'value')
                     self.__actions[name].update(parameter['value'])
                     exists = True
+            elif parameter['function'] == "add":
+                if self.__ensure_action_exists("se_add", name):
+                    self.__raise_missing_parameter_error(parameter, 'value')
+                    self.__actions[name].update(parameter['value'])
+                    exists = True
+            elif parameter['function'] == "remove":
+                if self.__ensure_action_exists("se_remove", name):
+                    self.__raise_missing_parameter_error(parameter, 'value')
+                    self.__actions[name].update(parameter['value'])
+                    exists = True
+            elif parameter['function'] == "removeall":
+                if self.__ensure_action_exists("se_removeall", name):
+                    self.__raise_missing_parameter_error(parameter, 'value')
+                    self.__actions[name].update(parameter['value'])
+                    exists = True
+            elif parameter['function'] == "removefirst":
+                if self.__ensure_action_exists("se_removefirst", name):
+                    self.__raise_missing_parameter_error(parameter, 'value')
+                    self.__actions[name].update(parameter['value'])
+                    exists = True
+            elif parameter['function'] == "removelast":
+                if self.__ensure_action_exists("se_removelast", name):
+                    self.__raise_missing_parameter_error(parameter, 'value')
+                    self.__actions[name].update(parameter['value'])
+                    exists = True
         except ValueError as ex:
             exists = False
             if name in self.__actions:
                 del self.__actions[name]
-            self._log_warning("Ignoring action {0} because: {1}".format(name, str(ex)))
-
+            self._log_warning("Ignoring action {0} because: {1}", name, ex)
 
         # add additional parameters
         if exists:
@@ -208,6 +299,10 @@ class SeActions(StateEngineTools.SeItemChild):
                 self.__actions[name].update_delay(parameter['delay'])
             if parameter['order'] is not None:
                 self.__actions[name].update_order(parameter['order'])
+            if parameter['conditionset'] is not None:
+                self.__actions[name].update_conditionsets(parameter['conditionset'])
+            if parameter['mode'] is not None:
+                self.__actions[name].update_modes(parameter['mode'])
 
     # noinspection PyMethodMayBeStatic
     def __raise_missing_parameter_error(self, parameter, param_name):
@@ -221,13 +316,14 @@ class SeActions(StateEngineTools.SeItemChild):
             try:
                 self.__actions[name].complete(item_state)
             except ValueError as ex:
-                raise ValueError("State '{0}', Action '{1}': {2}".format(item_state.id(), name, str(ex)))
+                raise ValueError("State '{0}', Action '{1}': {2}".format(item_state.property.path, name, ex))
 
     # Execute all actions
     # is_repeat: Inidicate if this is a repeated action without changing the state
     # item_allow_repeat: Is repeating actions generally allowed for the item?
+    # state: state item triggering the action
     # additional_actions: SeActions-Instance containing actions which should be executed, too
-    def execute(self, is_repeat: bool, allow_item_repeat: bool, additional_actions=None):
+    def execute(self, is_repeat: bool, allow_item_repeat: bool, state: str, additional_actions=None):
         actions = []
         for name in self.__actions:
             actions.append((self.__actions[name].get_order(), self.__actions[name]))
@@ -235,7 +331,24 @@ class SeActions(StateEngineTools.SeItemChild):
             for name in additional_actions.__actions:
                 actions.append((additional_actions.__actions[name].get_order(), additional_actions.__actions[name]))
         for order, action in sorted(actions, key=lambda x: x[0]):
-            action.execute(is_repeat, allow_item_repeat)
+            i = 0
+            while len(self._abitem.action_in_progress) > 0:
+                self._log_info("{} is already running. Postponing current action {} with order {} for one second", self._abitem.action_in_progress, action._name, order)
+                i += 1
+                time.sleep(1)
+                if i >= 10:
+                    self._log_warning("10 seconds wait time for action {} is over. Running it now.", action)
+                    break
+            action.execute(is_repeat, allow_item_repeat, state)
+
+    def get(self):
+        actions = []
+        for name in self.__actions:
+            actions.append((self.__actions[name].get_order(), {name: self.__actions[name].func}))
+        finalactions = []
+        for order, action in sorted(actions, key=lambda x: x[0]):
+            finalactions.append(action)
+        return finalactions
 
     # log all actions
     def write_to_logger(self):
@@ -246,5 +359,7 @@ class SeActions(StateEngineTools.SeItemChild):
             # noinspection PyProtectedMember
             self._log_info("Action '{0}':", action._name)
             self._log_increase_indent()
+            self._abitem._initactionname = action._name
             action.write_to_logger()
+            self._abitem._initactionname = None
             self._log_decrease_indent()

@@ -1,26 +1,128 @@
-# Metadata for the classic-plugin
+# Metadata for the plugin
 plugin:
     # Global plugin attributes
-    type: gateway                    # plugin type (gateway, interface, protocol, system, web)
+    type: gateway                   # plugin type (gateway, interface, protocol, system, web)
     description:
         de: 'Unterstützung von MiLight Leuchtmitteln'
-        en: ''
-    maintainer: '? (Stephan Schaade)'
-#    tester: efgh                   # Who tests this plugin?
-#    keywords: kwd1 kwd2            # keywords, where applicable
-    state: ready
-#    documentation: https://github.com/smarthomeNG/plugins/blob/develop/mqtt/README.md        # url of documentation (wiki) page
+        en: 'Support of Milight Lights'
+    maintainer: bmxp
+    tester: sisamiwe                # Who tests this plugin?
+    state: ready                    # change to ready when done with development
+    keywords: milight bulb 
+    documentation: http://smarthomeng.de/user/plugins/milight/user_doc.html
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1002464-support-thread-für-dlms-plugin
 
-# Following entries are for Smart-Plugins:
-#    version: 1.3.3                 # Plugin version
-#    sh_minversion: 1.3             # minimum shNG version to use this plugin
-#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
-#    multi_instance: False
-    classname: milight              # class containing the plugin
+    # Following entries are for Smart-Plugins:
+    version: 1.6.0                  # Plugin version
+    sh_minversion: 1.5              # minimum shNG version to use this plugin
+    # sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
+    multi_instance: True            # plugin supports multi instance
+    restartable: unknown
+    classname: Milight              # class containing the plugin
 
-#parameters:
-    # Definition of parameters to be configured in etc/plugin.yaml
+parameters:
+    udp_ip:
+        type: ip
+        default: 255.255.255.255
+        description:
+            de: 'Gibt die IP Adresse der miLight Schnittstelle an. Der default für zu einem Broadcast auf 255.255.255.255'
+            en: 'Specifies IP adress of miLight gateway - if not specified broadcast to 255.255.255.255 (all miLight gateways)'
 
-#item_attributes:
-    # Definition of item attributes defined by this plugin
+    udp_port:
+        type: int
+        default: 8899
+        description:
+            de: 'Gibt den Port der miLight Schnittstelle an. Version 3 nutzt 8899 als Standard'
+            en: 'specifies Communication port - V3 is using 8899 by default'
+
+    bricontrol:
+        type: str
+        default: HUE_AND_LUM
+        valid_list:
+            - HUE
+            - HUE_AND_LUM
+        description:
+            de: 'Gibt an ob RGB Einstellungen nur den Farbton (HUE) oder Farbton und Helligkeit (HUE_AND_LUM) beeinflussen sollen'
+            en: 'specifies if RGB settings should only impact hue (HUE) or hue and brightness (HUE_AND_LUM)'
+
+    hue_calibrate:
+        type: float
+        default: 0
+        description:
+            de: 'Feinkalibration des Farbtons um Übereinstimmung zwischen verschiedenen Farbkreise oder Tabellen zu erreichen'
+            en: 'Fine calibrating of color (HUE) to match with different color wheels or tables as input'
+
+    white_calibrate:
+        type: int
+        default: 0
+        description:
+            de: 'Verschiebung des Weisspunktes'
+            en: 'Shift of whitepoint'
+
+    cutoff:
+        type: float
+        default: 10
+        description:
+            de: 'Definiert eine Schwelle für Helligkeit. Sinkt der Wert darunter, wird das Licht ausgeschaltet'
+            en: 'This value specifies threshold level for turn off the light (e.g. below brightness 10 turn off)'
+
+
+item_attributes:
+    # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)
+    milight_sw:
+        type: list(int)
+        description:
+            de: 'Spezifiziert den Kanal der geschaltet werden soll'
+            en: 'Specifies channel that should be SWITCHED(on/off)'
+            
+    milight_dim:
+        type: list(int)
+        description:
+            de: 'Spezifiziert den Kanal der gedimmt werden soll'
+            en: 'Specifies channel that should be dimmed'
+        
+    milight_col:
+        type: list(int)
+        description:
+            de: 'Spezifiziert den Kanal dessen Farbton geändert werden soll'
+            en: 'Specifies channel to change hue color ring'
+
+    milight_rgb:
+        type: list(int)
+        description:
+            de: 'Spezifiziert den Kanal der auf definierten RGB Wert gesetzt werden soll'
+            en: 'Specifies channel that should be switched to defined RGB value'
+
+    milight_white:
+        type: list(int)
+        description:
+            de: 'Spezifiziert den Kanal der auf weiß gesetzt werden soll'
+            en: 'Specifies channel that should be switched to white'
+        
+    milight_disco:
+        type: list(int)
+        description:
+            de: 'Aktiviert und invertiert Disco Modus'
+            en: 'Activates and toggles DISCO modes'
+        
+    milight_disco_up:
+        type: list(int)
+        description:
+            de: 'Erhöht die Geschwindigkeit des Disco Modus'
+            en: 'Increases Speed of DISCO mode'
+
+    milight_disco_down:
+        type: list(int)
+        description:
+            de: 'Vermindert die Geschwindigkeit des Disco Modus'
+            en: 'Decreases Speed of DISCO mode'
+    
+item_structs: NONE
+    # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
+
+plugin_functions: NONE
+    # Definition of plugin functions defined by this plugin (enter 'plugin_functions: NONE', if section should be empty)
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)
 

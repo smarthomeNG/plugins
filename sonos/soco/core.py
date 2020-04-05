@@ -31,7 +31,7 @@ from .music_library import MusicLibrary
 from .services import (
     DeviceProperties, ContentDirectory, RenderingControl, AVTransport,
     ZoneGroupTopology, AlarmClock, SystemProperties, MusicServices,
-    zone_group_state_shared_cache,
+    zone_group_state_shared_cache, GroupRenderingControl
 )
 from .utils import (
     really_utf8, camel_to_underscore, deprecated
@@ -91,7 +91,6 @@ class _SocoSingletonBase(  # pylint: disable=too-few-public-methods,no-init
     here: http://www.artima.com/weblogs/viewpost.jsp?thread=236234 and
     here: http://mikewatkins.ca/2008/11/29/python-2-and-3-metaclasses/
     """
-    pass
 
 
 def only_on_master(function):
@@ -134,6 +133,7 @@ class SoCo(_SocoSingletonBase):
         play_mode
         cross_fade
         ramp_to_volume
+        set_relative_volume
         get_current_track_info
         get_speaker_info
         get_current_transport_info
@@ -169,9 +169,11 @@ class SoCo(_SocoSingletonBase):
         is_visible
         is_bridge
         is_coordinator
+        is_soundbar
         bass
         treble
         loudness
+        balance
         night_mode
         dialog_mode
         status_light
@@ -248,6 +250,7 @@ class SoCo(_SocoSingletonBase):
         self.contentDirectory = ContentDirectory(self)
         self.deviceProperties = DeviceProperties(self)
         self.renderingControl = RenderingControl(self)
+        self.groupRenderingControl = GroupRenderingControl(self)
         self.zoneGroupTopology = ZoneGroupTopology(self)
         self.alarmClock = AlarmClock(self)
         self.systemProperties = SystemProperties(self)
@@ -260,6 +263,7 @@ class SoCo(_SocoSingletonBase):
         self._groups = set()
         self._is_bridge = None
         self._is_coordinator = False
+        self._is_soundbar = None
         self._player_name = None
         self._uid = None
         self._household_id = None
@@ -372,6 +376,18 @@ class SoCo(_SocoSingletonBase):
         return self._is_coordinator
 
     @property
+    def is_soundbar(self):
+        """bool: Is this zone a soundbar (i.e. has night mode etc.)?"""
+        if self._is_soundbar is None:
+            if not self.speaker_info:
+                self.get_speaker_info()
+
+            model_name = self.speaker_info['model_name'].lower()
+            self._is_soundbar = any(model_name.endswith(s) for s in SOUNDBARS)
+
+        return self._is_soundbar
+
+    @property
     def play_mode(self):
         """str: The queue's play mode.
 
@@ -414,7 +430,7 @@ class SoCo(_SocoSingletonBase):
             ('InstanceID', 0),
         ])
         cross_fade_state = response['CrossfadeMode']
-        return True if int(cross_fade_state) else False
+        return bool(int(cross_fade_state))
 
     @cross_fade.setter
     @only_on_master
@@ -465,6 +481,39 @@ class SoCo(_SocoSingletonBase):
             ('ProgramURI', '')
         ])
         return int(response['RampTime'])
+
+    def set_relative_volume(self, relative_volume):
+        """Adjust the volume up or down by a relative amount.
+
+        If the adjustment causes the volume to overshoot the maximum value
+        of 100, the volume will be set to 100. If the adjustment causes the
+        volume to undershoot the minimum value of 0, the volume will be set
+        to 0.
+
+        Note that this method is an alternative to using addition and
+        subtraction assignment operators (+=, -=) on the `volume` property
+        of a `SoCo` instance. These operators perform the same function as
+        `set_relative_volume()` but require two network calls per operation
+        instead of one.
+
+        Args:
+            relative_volume (int): The relative volume adjustment. Can be
+                positive or negative.
+
+        Returns:
+            int: The new volume setting.
+
+        Raises:
+            ValueError: If `relative_volume` cannot be cast as an integer.
+        """
+        relative_volume = int(relative_volume)
+        # Sonos will automatically handle out-of-range adjustments
+        response = self.renderingControl.SetRelativeVolume([
+            ('InstanceID', 0),
+            ('Channel', 'Master'),
+            ('Adjustment', relative_volume)
+        ])
+        return int(response['NewVolume'])
 
     @only_on_master
     def play_from_queue(self, index, start=True):
@@ -669,7 +718,7 @@ class SoCo(_SocoSingletonBase):
             ('Channel', 'Master')
         ])
         mute_state = response['CurrentMute']
-        return True if int(mute_state) else False
+        return bool(int(mute_state))
 
     @mute.setter
     def mute(self, mute):
@@ -760,15 +809,16 @@ class SoCo(_SocoSingletonBase):
 
         True if on, False otherwise.
 
-        Loudness is a complicated topic. You can find a nice summary about this
-        feature here: http://forums.sonos.com/showthread.php?p=4698#post4698
+        Loudness is a complicated topic. You can read about it on
+        Wikipedia: https://en.wikipedia.org/wiki/Loudness
+
         """
         response = self.renderingControl.GetLoudness([
             ('InstanceID', 0),
             ('Channel', 'Master'),
         ])
         loudness = response["CurrentLoudness"]
-        return True if int(loudness) else False
+        return bool(int(loudness))
 
     @loudness.setter
     def loudness(self, loudness):
@@ -781,14 +831,55 @@ class SoCo(_SocoSingletonBase):
         ])
 
     @property
+    def balance(self):
+        """The left/right balance for the speaker(s).
+
+        Returns:
+            tuple: A 2-tuple (left_channel, right_channel) of integers
+            between 0 and 100, representing the volume of each channel.
+            E.g., (100, 100) represents full volume to both channels,
+            whereas (100, 0) represents left channel at full volume,
+            right channel at zero volume.
+        """
+
+        response_lf = self.renderingControl.GetVolume([
+            ('InstanceID', 0),
+            ('Channel', 'LF'),
+        ])
+        response_rf = self.renderingControl.GetVolume([
+            ('InstanceID', 0),
+            ('Channel', 'RF'),
+        ])
+        volume_lf = response_lf['CurrentVolume']
+        volume_rf = response_rf['CurrentVolume']
+        return int(volume_lf), int(volume_rf)
+
+    @balance.setter
+    def balance(self, left_right_tuple):
+        """Set the left/right balance for the speaker(s)."""
+        left, right = left_right_tuple
+        left = int(left)
+        right = int(right)
+        left = max(0, min(left, 100))  # Coerce in range
+        right = max(0, min(right, 100))  # Coerce in range
+        self.renderingControl.SetVolume([
+            ('InstanceID', 0),
+            ('Channel', 'LF'),
+            ('DesiredVolume', left)
+        ])
+        self.renderingControl.SetVolume([
+            ('InstanceID', 0),
+            ('Channel', 'RF'),
+            ('DesiredVolume', right)
+        ])
+
+    @property
     def night_mode(self):
         """bool: The speaker's night mode.
 
         True if on, False if off, None if not supported.
         """
-        if not self.speaker_info:
-            self.get_speaker_info()
-        if 'PLAYBAR' not in self.speaker_info['model_name']:
+        if not self.is_soundbar:
             return None
 
         response = self.renderingControl.GetEQ([
@@ -806,9 +897,7 @@ class SoCo(_SocoSingletonBase):
         :raises NotSupportedException: If the device does not support
         night mode.
         """
-        if not self.speaker_info:
-            self.get_speaker_info()
-        if 'PLAYBAR' not in self.speaker_info['model_name']:
+        if not self.is_soundbar:
             message = 'This device does not support night mode'
             raise NotSupportedException(message)
 
@@ -824,9 +913,7 @@ class SoCo(_SocoSingletonBase):
 
         True if on, False if off, None if not supported.
         """
-        if not self.speaker_info:
-            self.get_speaker_info()
-        if 'PLAYBAR' not in self.speaker_info['model_name']:
+        if not self.is_soundbar:
             return None
 
         response = self.renderingControl.GetEQ([
@@ -844,9 +931,7 @@ class SoCo(_SocoSingletonBase):
         :raises NotSupportedException: If the device does not support
         dialog mode.
         """
-        if not self.speaker_info:
-            self.get_speaker_info()
-        if 'PLAYBAR' not in self.speaker_info['model_name']:
+        if not self.is_soundbar:
             message = 'This device does not support dialog mode'
             raise NotSupportedException(message)
 
@@ -920,8 +1005,7 @@ class SoCo(_SocoSingletonBase):
             zone._player_name = member_attribs['ZoneName']
             # add the zone to the set of all members, and to the set
             # of visible members if appropriate
-            is_visible = False if member_attribs.get(
-                'Invisible') == '1' else True
+            is_visible = (member_attribs.get('Invisible') != '1')
             if is_visible:
                 self._visible_zones.add(zone)
             self._all_zones.add(zone)
@@ -943,7 +1027,6 @@ class SoCo(_SocoSingletonBase):
         self._all_zones.clear()
         self._visible_zones.clear()
         # Loop over each ZoneGroup Element
-        #for group_element in tree.findall('ZoneGroup'):
         for group_element in tree.find('ZoneGroups').findall('ZoneGroup'):
             coordinator_uid = group_element.attrib['Coordinator']
             group_uid = group_element.attrib['ID']
@@ -964,8 +1047,8 @@ class SoCo(_SocoSingletonBase):
                 # is_bridge doesn't change, but it does no real harm to
                 # set/reset it here, just in case the zone has not been seen
                 # before
-                zone._is_bridge = True if member_element.attrib.get(
-                    'IsZoneBridge') == '1' else False
+                zone._is_bridge = (
+                    member_element.attrib.get('IsZoneBridge') == '1')
                 # add the zone to the members for this group
                 members.add(zone)
                 # Loop over Satellite elements if present, and process as for
@@ -1128,7 +1211,7 @@ class SoCo(_SocoSingletonBase):
         """
         result = self.deviceProperties.GetLEDState()
         LEDState = result["CurrentLEDState"]  # pylint: disable=invalid-name
-        return True if LEDState == "On" else False
+        return LEDState == "On"
 
     @status_light.setter
     def status_light(self, led_on):
@@ -1705,8 +1788,7 @@ class SoCo(_SocoSingletonBase):
             if 'Error 402 received' in str(err):
                 raise ValueError('invalid sleep_time_seconds, must be integer \
                     value between 0 and 86399 inclusive or None')
-            else:
-                raise
+            raise
         except ValueError:
             raise ValueError('invalid sleep_time_seconds, must be integer \
                 value between 0 and 86399 inclusive or None')
@@ -1984,6 +2066,8 @@ NS = {'dc': '{http://purl.org/dc/elements/1.1/}',
 # Valid play modes
 PLAY_MODES = ('NORMAL', 'SHUFFLE_NOREPEAT', 'SHUFFLE', 'REPEAT_ALL',
               'SHUFFLE_REPEAT_ONE', 'REPEAT_ONE')
+# soundbar product names
+SOUNDBARS = ('playbase', 'playbar', 'beam')
 
 if config.SOCO_CLASS is None:
     config.SOCO_CLASS = SoCo

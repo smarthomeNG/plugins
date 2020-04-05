@@ -1,0 +1,56 @@
+/** 
+* Widget for usage of uzsu plugin
+* (c) Michael Würtenberger 2014
+* 
+* Displays a numer or an text input
+* 
+* @param unique id for this widget
+* @param a gad/item
+* @param value value
+*/
+{% macro textinput(id, gad, value) %}
+
+
+	<div>
+		<input type="text" data-clear-btn='false' style = "width:100px" id="{{ uid(page, id) }}" data-widget="basic.textinput" data-item="{{ gad }}" />
+	</div>
+	
+	<script type="text/javascript">
+	$(document).delegate('input[data-widget="basic.textinput"]', {
+	    'update': function (event, response) {
+	        $('#' + this.id).prop('value', response );
+	    },
+	    'change': function (event) {
+	        // DEBUG: console.log("[basic.textinput] change '" + this.id + "':", $(this).prop("value")); 
+	        io.write($('#' + this.id).attr('data-item'), $('#' + this.id).prop('value') );
+	    }
+	});		
+	</script>
+{% endmacro %}
+
+
+/**
+* Displays a textinput
+*
+* @param unique id for this widget
+* @param a gad/item
+* @param value value
+*/
+{% macro numberinput(id, gad, value) %}
+
+	<div>
+		<input type="number" data-clear-btn='false' style = "width:100%" id="{{ uid(page, id) }}" data-widget="basic.numberinput" data-item="{{ gad }}" />
+	</div>
+	
+	<script type="text/javascript">
+	$(document).delegate('input[data-widget="basic.numberinput"]', {
+	    'update': function (event, response) {
+	        $('#' + this.id).prop('value', response );
+	    },
+	    'change': function (event) {
+	        // DEBUG: console.log("[basic.textinput] change '" + this.id + "':", $(this).prop("value")); 
+	        io.write($('#' + this.id).attr('data-item'), $('#' + this.id).prop('value') );
+	    }
+	});		
+	</script>
+{% endmacro %}

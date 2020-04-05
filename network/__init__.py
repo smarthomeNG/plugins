@@ -28,6 +28,7 @@ import lib.connection
 
 from lib.model.smartplugin import SmartPlugin
 
+
 class TCPHandler(lib.connection.Stream):
 
     def __init__(self, parser, dest, sock, source):
@@ -47,7 +48,7 @@ class TCPDispatcher(lib.connection.Server):
     def __init__(self, parser, ip, port):
         lib.connection.Server.__init__(self, ip, port)
         self.parser = parser
-        self.dest = 'tcp:' + ip + ':' + port
+        self.dest = "tcp:%s:%s" % (ip, port)
         self.connect()
 
     def handle_connection(self):
@@ -84,7 +85,7 @@ class HTTPDispatcher(lib.connection.Server):
     def __init__(self, parser, ip, port):
         lib.connection.Server.__init__(self, ip, port)
         self.parser = parser
-        self.dest = 'http:' + ip + ':' + port
+        self.dest = "http:%s:%s" % (ip, port)
         self.connect()
 
     def handle_connection(self):
@@ -99,7 +100,7 @@ class UDPDispatcher(lib.connection.Server):
     def __init__(self, parser, ip, port):
         self.logger = logging.getLogger(__name__)
         lib.connection.Server.__init__(self, ip, port, proto='UDP')
-        self.dest = 'udp:' + ip + ':' + port
+        self.dest = "udp:%s:%s" % (ip, port)
         self.parser = parser
         self.connect()
 
@@ -117,7 +118,7 @@ class UDPDispatcher(lib.connection.Server):
 
 class Network(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.3.1"
+    PLUGIN_VERSION = "1.4.0"
 
     generic_listeners = {}
     special_listeners = {}
@@ -125,18 +126,19 @@ class Network(SmartPlugin):
     socket_warning = 10
     socket_warning = 2
 
-    def __init__(self, smarthome, ip='0.0.0.0', port='2727', udp='no', tcp='no', http='no', udp_acl='*', tcp_acl='*', http_acl='*'):
-        self._sh = smarthome
-        self.logger = logging.getLogger(__name__)
-        self.tcp_acl = self.parse_acl(tcp_acl)
-        self.udp_acl = self.parse_acl(udp_acl)
-        self.http_acl = self.parse_acl(http_acl)
-        if tcp == 'yes':
-            self.add_listener('tcp', ip, port, tcp_acl, generic=True)
-        if udp == 'yes':
-            self.add_listener('udp', ip, port, udp_acl, generic=True)
-        if http != 'no':
-            self.add_listener('http', ip, http, http_acl, generic=True)
+    def __init__(self, sh, *args, **kwargs):
+        self.tcp_acl = self.parse_acl(self.get_parameter_value('tcp_acl'))
+        self.udp_acl = self.parse_acl(self.get_parameter_value('udp_acl'))
+        self.http_acl = self.parse_acl(self.get_parameter_value('http_acl'))
+        if self.get_parameter_value('tcp') == 'yes':
+            self.add_listener('tcp', self.get_parameter_value('ip'), self.get_parameter_value('port'), self.tcp_acl,
+                              generic=True)
+        if self.get_parameter_value('udp') == 'yes':
+            self.add_listener('udp', self.get_parameter_value('ip'), self.get_parameter_value('port'), self.udp_acl,
+                              generic=True)
+        if self.get_parameter_value('http') != 'no':
+            self.add_listener('http', self.get_parameter_value('ip'), self.get_parameter_value('http'), self.http_acl,
+                              generic=True)
 
     def udp(self, host, port, data):
         try:
@@ -144,7 +146,7 @@ class Network(SmartPlugin):
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             sock.sendto(data.encode(), (sockaddr[0], sockaddr[1]))
             sock.close()
-            del(sock)
+            del (sock)
         except Exception as e:
             self.logger.warning("UDP: Problem sending data to {}:{}: {}".format(host, port, e))
             pass
@@ -152,7 +154,7 @@ class Network(SmartPlugin):
             self.logger.debug("UDP: Sending data to {}:{}: {}".format(host, port, data))
 
     def add_listener(self, proto, ip, port, acl='*', generic=False):
-        dest = proto + ':' + ip + ':' + port
+        dest = "%s:%s:%s" % (proto, ip, port)
         self.logger.debug("Adding listener on: {}".format(dest))
         if proto == 'tcp':
             dispatcher = TCPDispatcher(self.parse_input, ip, port)
@@ -161,6 +163,7 @@ class Network(SmartPlugin):
         elif proto == 'http':
             dispatcher = HTTPDispatcher(self.parse_input, ip, port)
         else:
+
             return
         if not dispatcher.connected:
             return False
@@ -172,7 +175,7 @@ class Network(SmartPlugin):
         return True
 
     def parse_acl(self, acl):
-        if acl == '*':
+        if acl == ['*']:
             return False
         if isinstance(acl, str):
             return [acl]
@@ -249,7 +252,8 @@ class Network(SmartPlugin):
                 logic = self.special_listeners[dest]['logics'][entry]['logic']
                 if lacl:
                     if source not in lacl:
-                        self.logger.error("Logic '{}' acl doesn't permit triggering from {}.".format(logic.name, source))
+                        self.logger.error(
+                            "Logic '{}' acl doesn't permit triggering from {}.".format(logic.name, source))
                         return False
                 elif gacl:
                     if source not in gacl:

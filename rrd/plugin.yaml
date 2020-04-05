@@ -1,26 +1,89 @@
-# Metadata for the classic-plugin
+# Metadata for the plugin
 plugin:
     # Global plugin attributes
-    type: system                    # plugin type (gateway, interface, protocol, system, web)
+    type: system                   # plugin type (gateway, interface, protocol, system, web)
     description:
-        de: 'Unterstützung für RRD. Kann nicht zusammen mit dem sqlite Plugin genutzt werden.'
-        en: ''
-    maintainer: '? (mknx)'
-#    tester: efgh                   # Who tests this plugin?
-#    keywords: kwd1 kwd2            # keywords, where applicable
-    state: ready
-#    documentation: https://github.com/smarthomeNG/plugins/blob/develop/mqtt/README.md        # url of documentation (wiki) page
+        de: 'Unterstützung für Round Robin Datenbanken (rrdtool)'
+        en: 'Support for round robin databases (rrdtool)'
+    maintainer: bmxp
+    tester: nobody                  # Who tests this plugin?
+    state: develop                  # change to ready when done with development
+    keywords: database round robin time slice counter gauge rrdtool
+    documentation: https://github.com/smarthomeNG/plugins/blob/develop/rrd/README.md        # url of documentation (wiki) page
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/rrd-plugin
 
-# Following entries are for Smart-Plugins:
-#    version: 1.3.3                 # Plugin version
-#    sh_minversion: 1.3             # minimum shNG version to use this plugin
-#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
-#    multi_instance: False
-    classname: RRD                 # class containing the plugin
+    version: 1.6.0                  # Plugin version
+    sh_minversion: 1.5              # minimum shNG version to use this plugin
+    #sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    multi_instance: False           # plugin supports multi instance
+    restartable: True
+    classname: RRD                  # class containing the plugin
 
-#parameters:
-    # Definition of parameters to be configured in etc/plugin.yaml
+parameters:
+    step:
+        type: int
+        default: 300
+        description:
+            de: 'Zeit zwischen zwei Datenpunkten. Default ist 300 Sekunden.'
+            en: 'Time period between two data points. Default is 300 seconds.'
 
-#item_attributes:
-    # Definition of item attributes defined by this plugin
+    rrddir:
+        type: str
+        description:
+            de: 'Verzeichnis der rrd Datenbanken. Wenn leer, wird der SmartHomeNG Basis Pfad + /var/rrd genutzt'
+            en: 'Specifies the rrd storage location if empty the SmartHomeNG base path + /var/rrd will be used'
+
+item_attributes:
+    rrd:
+        type: str
+        valid_list: ['', 'yes', 'init']
+        description:
+            de: "Wenn auf 'yes' gesetzt, werden die Werte des Items in die rrd Datenbank geschrieben. Wenn auf 'init' gesetzt, wird zusätzlich beim Start von SmartHomeNG der Wert aus rrd gelesen."
+            en: "This attribute enables the database logging when set (just use value 'yes'). If value 'init' is used, an item will be initalized from rrd after SmartHomeNG is restarted."
+
+    rrd_step:
+        type: int
+        description:
+            de: 'Zeit zwischen zwei Datenpunkten. Default ist der Wert vom Plugin Parameter rrd_step'
+            en: 'Time period between two data points. Default is value from plugin parameter rrd_step.'
+
+    rrd_no_series:
+        type: bool
+        default: false
+        description:
+            de: 'Wird dieses Attribut auf True gesetzt, werden Daten in die Datenbank geschrieben, können aber nicht durch eine Visu abgerufen werden.'
+            en: 'Setting this item attribute to True will log data but to return data series for a visu. Default is false'
+
+    rrd_type:
+        type: str
+        valid_list: ['', 'gauge', 'counter' ]
+        description:
+            de: "Gibt die Art der Datenreihe in der Datenbank an: gauge für Temperaturen, counter für Zähler"
+            en: "Set the type of data samples in rrd: gauge for temperatures etc. and counter for continuous smartmeter readings"
+
+    rrd_ds_name:
+        type: str
+        description:
+            de: 'Alternativen Datenquellennamen festlegen. Wird dieser Name festgelegt, so wird nicht der Item Name für den Datenquellennamen verwendet'
+            en: 'alternative data source name. If set then the item`s name will not be used for data source but this name instead.'
+            
+    rrd_min:
+        type: bool
+        default: false
+        description:
+            de: 'Wird dieses Attribut auf True gesetzt, wird auch der Minimumwert in die Datenbank geschrieben. Standard ist False'
+            en: 'Setting this item attribute to True will also log the minimum as well. Default is false'
+
+    rrd_max:
+        type: bool
+        default: false
+        description:
+            de: 'Wird dieses Attribut auf True gesetzt, wird auch der Maximumwert in die Datenbank geschrieben. Standard ist False'
+            en: 'Setting this item attribute to True will also log the maximum as well. Default is false'
+
+item_structs: NONE
+
+plugin_functions: NONE
+
+logic_parameters: NONE
 

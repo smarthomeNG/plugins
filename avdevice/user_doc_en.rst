@@ -9,7 +9,7 @@ Configuration
 
 .. important::
 
-    You can find the configuration information at :doc:`/plugins_doc/config/avdevice`.
+    You can find the configuration information in the user documentation.
 
 .. code-block:: yaml
 
@@ -65,7 +65,7 @@ Full item examples are included as separate yaml files for Pioneer and
 Denon devices. The examples include the tested items/commands and
 allow easy copy/paste.
 
-Special attribute values (statusupdate and reload) are described at :doc:`/plugins_doc/config/avdevice`.
+Special attribute values (statusupdate and reload) are described in the user documentation.
 
 
 avdevice_zone[0-4]_speakers@[instance]: [function]

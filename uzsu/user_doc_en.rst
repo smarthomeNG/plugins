@@ -9,7 +9,7 @@ Configuration
 
 .. important::
 
-      Please find detailed information on the configuration at :doc:`/plugins_doc/config/uzsu`.
+      Please find detailed information on the configuration in the user documentation.
 
 
 .. code-block:: yaml
@@ -41,7 +41,7 @@ Configuration
 SmartVISU
 =========
 
-There is a widget available which gives an interface to the UZSU. If you have problems please consult the corresponding forum. It is recommended to use the widget to create UZSU entries. The following information on data format can be skipped.
+In the latest SmartVISU 2.9 there is a widget called *device.uzsu* available which gives an interface to the UZSU. If you have problems please consult the corresponding forum. It is recommended to use the widget to create UZSU entries. The following information on data format can be skipped.
 
 Data format
 ===========
@@ -83,7 +83,7 @@ Functions
 
 .. important::
 
-      Detaillierte Informationen zu den Funktionen des Plugins sind unter :doc:`/plugins_doc/config/uzsu` zu finden.
+      Detaild information about the functions of the plugin can be found in the user documentaion.
 
 
 Webinterface

@@ -1,0 +1,232 @@
+# Metadata for the plugin
+plugin:
+    # Global plugin attributes
+    type: gateway                   # plugin type (gateway, interface, protocol, system, web)
+    description:
+        de: 'Plugin zur Integration von Bose Soundtouch Systemen.'
+        en: 'Plugin for integration of Bose Soundtouch systems.'
+    maintainer: sebastianfaulhaber
+    state: ready                  # change to ready when done with development
+    keywords: bose soundtouch multimedia
+    documentation: https://github.com/smarthomeNG/plugins/tree/master/bose_soundtouch # url of documentation (wiki) page
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
+
+    version: 1.0.0                  # Plugin version
+    sh_minversion: 1.6              # minimum shNG version to use this plugin
+    multi_instance: False           # plugin supports multi instance
+    restartable: True
+    classname: BoseSoundtouch         # class containing the plugin
+
+parameters:
+
+  ip:
+    type: ip
+    description:
+      de: "IP Adresse des Bose Soundtouch Systems"
+      en: "IP address of Bose Soundtouch system"
+
+  port:
+    type: int
+    default: 8090
+    description:
+      de: "Port des Bose Soundtouch Systems"
+      en: "Port of Bose Soundtouch system"
+
+  cycle_time:
+    type: int
+    default: 5
+    description:
+      de: "Alle X Sekunden wird das Bose Soundtouch System abgefragt."
+      en: "Bose Soundtouch system will we queried every X seconds."
+
+item_attributes:
+    
+    bose_soundtouch_action:
+        type: str
+        mandatory: True
+        description:
+            de: 'Aktion die auf dem Bose Soundtouch System ausgeführt werden soll.'
+            en: 'Action to be executed on Bose Soundtouch System.'
+
+item_structs:
+
+  status:
+    album:
+      type: str
+      visu_acl: ro
+      bose_soundtouch_action: status.album
+    artist:
+      type: str
+      visu_acl: ro
+      bose_soundtouch_action: status.artist
+    description:
+      type: str
+      visu_acl: ro
+      bose_soundtouch_action: status.description
+    image:
+      type: str
+      visu_acl: ro
+      bose_soundtouch_action: status.image
+    source:
+      type: str
+      visu_acl: ro
+      bose_soundtouch_action: status.source
+    standby:
+      type: bool
+      visu_acl: rw
+      bose_soundtouch_action: status.standby
+    track:
+      type: str
+      visu_acl: ro
+      bose_soundtouch_action: status.track
+
+  presets:
+    "0":
+      name:
+        type: str
+        visu_acl: ro
+        bose_soundtouch_action: presets.0.name
+      preset_id:
+        type: num
+        visu_acl: ro
+        bose_soundtouch_action: presets.0.preset_id
+      source:
+        type: str
+        visu_acl: ro
+        bose_soundtouch_action: presets.0.source
+    "1":
+      name:
+        type: str
+        visu_acl: ro
+        bose_soundtouch_action: presets.1.name
+      preset_id:
+        type: num
+        visu_acl: ro
+        bose_soundtouch_action: presets.1.preset_id
+      source:
+        type: str
+        visu_acl: ro
+        bose_soundtouch_action: presets.1.source
+    "2":
+      name:
+        type: str
+        visu_acl: ro
+        bose_soundtouch_action: presets.2.name
+      preset_id:
+        type: num
+        visu_acl: ro
+        bose_soundtouch_action: presets.2.preset_id
+      source:
+        type: str
+        visu_acl: ro
+        bose_soundtouch_action: presets.2.source
+    "3":
+      name:
+        type: str
+        visu_acl: ro
+        bose_soundtouch_action: presets.3.name
+      preset_id:
+        type: num
+        visu_acl: ro
+        bose_soundtouch_action: presets.3.preset_id
+      source:
+        type: str
+        visu_acl: ro
+        bose_soundtouch_action: presets.3.source
+    "4":
+      name:
+        type: str
+        visu_acl: ro
+        bose_soundtouch_action: presets.4.name
+      preset_id:
+        type: num
+        visu_acl: ro
+        bose_soundtouch_action: presets.4.preset_id
+      source:
+        type: str
+        visu_acl: ro
+        bose_soundtouch_action: presets.4.source
+    "5":
+      name:
+        type: str
+        visu_acl: ro
+        bose_soundtouch_action: presets.5.name
+      preset_id:
+        type: num
+        visu_acl: ro
+        bose_soundtouch_action: presets.5.preset_id
+      source:
+        type: str
+        visu_acl: ro
+        bose_soundtouch_action: presets.5.source
+
+  volume:
+    actual:
+      type: num
+      visu_acl: rw
+      enforce_updates: True
+      bose_soundtouch_action: volume.actual
+    muted:
+      type: bool
+      visu_acl: ro
+      bose_soundtouch_action: volume.muted
+
+  actions:
+    power_on:
+      type: bool
+      visu_acl: rw
+      enforce_updates: True
+      bose_soundtouch_action: actions.power_on
+    power_off:
+      type: bool
+      visu_acl: rw
+      enforce_updates: True
+      bose_soundtouch_action: actions.power_off
+    select_preset:
+      type: num
+      visu_acl: rw
+      enforce_updates: True
+      bose_soundtouch_action: actions.select_preset
+    play:
+      type: bool
+      visu_acl: rw
+      enforce_updates: True
+      bose_soundtouch_action: actions.play
+    pause:
+      type: bool
+      visu_acl: rw
+      enforce_updates: True
+      bose_soundtouch_action: actions.pause
+    mute:
+      type: bool
+      visu_acl: rw
+      enforce_updates: True
+      bose_soundtouch_action: actions.mute
+    next_track:
+      type: bool
+      visu_acl: rw
+      enforce_updates: True
+      bose_soundtouch_action: actions.next_track
+    previous_track:
+      type: bool
+      visu_acl: rw
+      enforce_updates: True
+      bose_soundtouch_action: actions.previous_track
+    shuffle:
+      type: bool
+      visu_acl: rw
+      enforce_updates: True
+      bose_soundtouch_action: actions.shuffle
+    repeat_all:
+      type: bool
+      visu_acl: rw
+      enforce_updates: True
+      bose_soundtouch_action: actions.repeat_all
+    repeat_off:
+      type: bool
+      visu_acl: rw
+      enforce_updates: True
+      bose_soundtouch_action: actions.repeat_off
+
+plugin_functions: NONE
+logic_parameters: NONE

@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+import sys
+print(sys.path)
+
 from tests import common
 import cherrypy
 from bs4 import BeautifulSoup

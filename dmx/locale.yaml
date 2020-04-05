@@ -1,0 +1,9 @@
+# translations for the web interface
+plugin_translations:
+    # Translations for the plugin specially for the web interface
+    'Instanz':                  {'de': '=', 'en': 'Instance'}
+    'Serielle Schnittstelle':   {'de': '=', 'en': 'Serial Port'}
+    'DMX Gateway':              {'de': '=', 'en': '='}
+    'Keine Items definiert':    {'de': '=', 'en': 'No Items defined'}
+    'Item':                     {'de': '=', 'en': '='}
+    'Kanäle':                   {'de': '=', 'en': 'channels'}

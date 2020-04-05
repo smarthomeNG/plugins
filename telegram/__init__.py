@@ -65,7 +65,7 @@ MESSAGE_TAG_DEST          = '[DEST]'
 
 
 class Telegram(SmartPlugin):
-    PLUGIN_VERSION = "1.6.0"
+    PLUGIN_VERSION = "1.6.2"
 
     _items = []              # Storage Array for all items using telegram attributes ITEM_ATTR_MESSAGE
     _items_info = {}         # dict used whith the info-command: key = attribute_value, val= item_list ITEM_ATTR_INFO
@@ -103,28 +103,33 @@ class Telegram(SmartPlugin):
 
 
         # the Updater class continuously fetches new updates from telegram and passes them on to the Dispatcher class.
-        self._updater = Updater(token=self._token) 
-        self._bot = self._updater.bot
+        try:
+            self._updater = Updater(token=self._token) 
+            self._bot = self._updater.bot
 
-        self.logger.info("Telegram bot is listening: {0}".format(self._bot.getMe()))
-        
-        # Dispatcher that handles the updates and dispatches them to the handlers.
-        dispatcher = self._updater.dispatcher
-        dispatcher.add_error_handler(self.eHandler)
-        dispatcher.add_handler(CommandHandler('time', self.cHandler_time))
-        dispatcher.add_handler(CommandHandler('help', self.cHandler_help))
-        dispatcher.add_handler(CommandHandler('hide', self.cHandler_hide))
-        dispatcher.add_handler(CommandHandler('list', self.cHandler_list))
-        dispatcher.add_handler(CommandHandler('info', self.cHandler_info))
-        dispatcher.add_handler(CommandHandler('start', self.cHandler_start))
-        dispatcher.add_handler(CommandHandler('lo', self.cHandler_lo))
-        dispatcher.add_handler(CommandHandler('tr', self.cHandler_tr, pass_args=True))
+            self.logger.info("Telegram bot is listening: {0}".format(self._bot.getMe()))
+        except TelegramError as e:
+            # catch Unauthorized errors due to an invalid token
+            self.logger.error("Unable to start up Telegram conversation. Maybe an invalid token? {}".format(e))
+        else:
+            
+            # Dispatcher that handles the updates and dispatches them to the handlers.
+            dispatcher = self._updater.dispatcher
+            dispatcher.add_error_handler(self.eHandler)
+            dispatcher.add_handler(CommandHandler('time', self.cHandler_time))
+            dispatcher.add_handler(CommandHandler('help', self.cHandler_help))
+            dispatcher.add_handler(CommandHandler('hide', self.cHandler_hide))
+            dispatcher.add_handler(CommandHandler('list', self.cHandler_list))
+            dispatcher.add_handler(CommandHandler('info', self.cHandler_info))
+            dispatcher.add_handler(CommandHandler('start', self.cHandler_start))
+            dispatcher.add_handler(CommandHandler('lo', self.cHandler_lo))
+            dispatcher.add_handler(CommandHandler('tr', self.cHandler_tr, pass_args=True))
 
-        dispatcher.add_handler( MessageHandler(Filters.text, self.mHandler))
-        self.init_webinterface()
+            dispatcher.add_handler( MessageHandler(Filters.text, self.mHandler))
+            self.init_webinterface()
 
-        self.logger.debug("init done")
-        self._init_complete = True
+            self.logger.debug("init done")
+            self._init_complete = True
 
     def __call__(self, msg, chat_id=None):
         """
@@ -157,21 +162,29 @@ class Telegram(SmartPlugin):
                   *_, num = t.name.split('_')
                   t.name = 'Telegram Worker {}'.format(num) if num.isnumeric() else num
 
-            except:
-                self.logger.warning("Could not assign pretty names to Telegrams threads, maybe object model of python-telegram-bot module has changed? Please inform the author of plugin!")
+                # from telegram.jobqueue.py @ line 301 thread is named
+                # name="Bot:{}:job_queue".format(self._dispatcher.bot.id)
+                t = self._updater.job_queue._JobQueue__thread
+                if t.name.startswith('Bot'):
+                    _, id, _ = t.name.split(':')
+                    self._updater.job_queue._JobQueue__thread.name = "Telegram JobQueue for id {}".format(id)
+            except Exception as e:
+                self.logger.warning("Error '{}' occurred. Could not assign pretty names to Telegrams threads, maybe object model of python-telegram-bot module has changed? Please inform the author of plugin!".format(e))
         self.logger.debug("started polling the updater, Queue is {}".format(q))
-        self.msg_broadcast(self._welcome_msg)
-        self.logger.debug("sent welcome message {}")
+        if self._welcome_msg:
+          self.msg_broadcast(self._welcome_msg)
+          self.logger.debug("sent welcome message {}")
 
     def stop(self):
-        self.alive = False
         """
         This is called when the plugins thread is about to stop
         """
+        self.alive = False
         try:
             self.logger.debug("stop telegram plugin")
-            self.msg_broadcast(self._bye_msg)
-            self.logger.debug("sent bye message")
+            if self._bye_msg:
+              self.msg_broadcast(self._bye_msg)
+              self.logger.debug("sent bye message")
             self._updater.stop()
             self.logger.debug("telegram plugin stopped")
         except:

@@ -85,6 +85,7 @@ class RTR(SmartPlugin):
 
         self.logger.debug("rtr: init method called")
 
+        self.alive = None
         sh = self.get_sh()
         self.path = sh.base_dir + '/var/rtr/timer/'
         self._items = Items.get_instance()
@@ -108,11 +109,6 @@ class RTR(SmartPlugin):
         self.alive = True
         self.scheduler_add('cycle', self.update_items, prio=5, cycle=int(self._cycle_time))
         self.scheduler_add('protect', self.valve_protect, prio=5, cron='0 2 * 0')
-
-        try:
-            self._restoreTimer()
-        except Exception as e:
-            self.logger.error("Error in 'self._restoreTimer()': {}".format(e))
 
         return
 
@@ -306,7 +302,7 @@ class RTR(SmartPlugin):
                 # store stopItems into controller
                 if self._controller[c]['stopItems'] is None:
                     self._controller[c]['stopItems'] = []
-                self._controller[c]['stopItems'].append(item)
+                self._controller[c]['stopItems'].append(item.id())
 
                 # listen to item events
                 item.add_method_trigger(self.stop_Controller)
@@ -326,12 +322,12 @@ class RTR(SmartPlugin):
         """
         for c in self._controller.keys():
             if self._controller[c]['stopItems'] is not None and len(self._controller[c]['stopItems']) > 0:
-                for item in self._controller[c]['stopItems']:
+                for i in self._controller[c]['stopItems']:
+                    item = self._items.return_item(i)
                     if item():
                        if self._items.return_item(self._controller[c]['actuatorItem'])() > 0:
-                           logger.info("rtr: controller {0} stopped, because of item {1}".format(c, item.id()))
+                           self.logger.info("rtr: controller {0} stopped, because of item {1}".format(c, item.id()))
                        self._items.return_item(self._controller[c]['actuatorItem'])(0)
-
 
     def update_HVACMode(self, item, caller=None, source=None, dest=None):
         """
@@ -375,13 +371,13 @@ class RTR(SmartPlugin):
         if item() and caller != 'plugin':
             if self.has_iattr(item.conf, 'rtr_setpoint'):
                 c = 'c' + item.conf['rtr_setpoint']
-                if self._controller[c]['validated']:
+                if self._controller[c]['validated'] and self.alive:
                     self.pi_controller(c)
 
     def update_items(self):
         """ this is the callback function for the scheduler """
         for c in self._controller.keys():
-            if self._controller[c]['validated'] and not self._controller[c]['valveProtectActive']:
+            if self._controller[c]['validated'] and self.alive and not self._controller[c]['valveProtectActive']:
                 self.pi_controller(c)
 
     def validate_controller(self, c):
@@ -398,12 +394,9 @@ class RTR(SmartPlugin):
         if self._controller[c]['actuatorItem'] is None:
             return
 
-        self._controller[c]['HVACMode'] = self.HVACMode_Standby
-        if self._controller[c]['HVACModeItem'] is not None:
-            self._items.return_item(self._controller[c]['HVACModeItem'])(self._controller[c]['HVACMode'])
-
         self.logger.info("rtr: all needed params are set, controller {0} validated".format(c))
         self._controller[c]['validated'] = True
+        self._restoreTimer(c)
 
     def pi_controller(self, c):
         """
@@ -431,11 +424,13 @@ class RTR(SmartPlugin):
 
         # check if controller is currently deactivated
         if self._controller[c]['stopItems'] is not None and len(self._controller[c]['stopItems']) > 0:
-            for item in self._controller[c]['stopItems']:
+            for i in self._controller[c]['stopItems']:
+                item = self._items.return_item(i)
                 if item():
                    if self._items.return_item(self._controller[c]['actuatorItem'])() > 0:
                        self.logger.info("rtr: controller {0} currently deactivated, because of item {1}".format(c, item.id()))
                    self._items.return_item(self._controller[c]['actuatorItem'])(0)
+                   self.logger.debug("{0} | skipped because of item {1}".format(c, item.id()))
                    return
 
         # calculate scanning time
@@ -476,46 +471,46 @@ class RTR(SmartPlugin):
 
         self._items.return_item(self._controller[c]['actuatorItem'])(y)
 
-    def _restoreTimer(self):
-        """
-        scans folder for saved timer to restore them at startup
-        """
-        self.logger.info("check if we need to restore timer")
+    def _restoreTimer(self, c):
 
-        if os.path.isdir(self.path):
-            for filename in os.listdir(self.path):
-                self.logger.info("need to restore '{}'".format(filename))
+        if os.path.exists(self.path + 'boost_' + c):
+            name = 'boost'
+        elif os.path.exists(self.path + 'boost_' + c):
+            name = 'drop'
+        else:
+            name = 'default'
 
-                if not re.match(r"boost_c[0-9]+", filename) and not re.match(r"drop_c[0-9]+", filename):
-                    self.logger.error("file looks invalid! Skip it..")
-                    return
+        if name == "boost" or name == "drop":
 
-                try:
-                    f = open(self.path + filename, "r")
-                    ts = f.read()
-                    f.close()
+            filename = name + '_' + c
+            self.logger.info("need to restore '{}'".format(filename))
 
-                except OSError as e:
-                    self.logger.error("cannot read '{}', error: {}".format(self.path + filename, e.args))
-                    continue
+            try:
+                f = open(self.path + filename)
+                ts = f.read()
+                f.close()
+            except OSError as e:
+                self.logger.error("cannot read '{}', error: {}".format(self.path + filename, e.args))
 
-                try:
-                    ts = int(ts)
-                except ValueError:
-                    self.logger.error("file content '{}' is no timestamp".format(ts))
+            try:
+                ts = int(ts)
+            except ValueError:
+                self.logger.error("file content '{}' is no timestamp".format(ts))
 
-                name, c = filename.split('_')
+            shtime = Shtime.get_instance()
+            dt = datetime.datetime.fromtimestamp(ts)
+            dt = dt.replace(tzinfo=shtime.tzinfo())
 
-                shtime = Shtime.get_instance()
-                dt = datetime.datetime.fromtimestamp(ts)
-                dt = dt.replace(tzinfo=shtime.tzinfo())
-
-                if dt < shtime.now():
-                    self.logger.info("timer '{}' is already expired - restore default = {}".format(filename, self._defaultOnExpiredTimer))
-                    if self._defaultOnExpiredTimer:
-                        self.default(c)
-                else:
-                    self._createTimer(filename, c, dt)
+            if dt < shtime.now() and self._defaultOnExpiredTimer:
+                self.logger.info("timer from '{}' is already expired - keep default".format(filename))
+                self.default(c)
+            else:
+                if name == 'drop':
+                    self.drop(c, True, dt)
+                elif name == 'boost':
+                    self.boost(c, True, dt)
+        else:
+            self.default(c)
 
     def _createTimer(self, name, c, edt):
         """

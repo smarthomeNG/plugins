@@ -3,8 +3,8 @@ plugin:
     # Global plugin attributes
     type: system                  # plugin type (gateway, interface, protocol, system, web)
     description:                  # Alternative: description in multiple languages
-        de: 'Database plugin, **seit SmartHomeNG v1.3**'
-        en: 'Database plugin, **since SmartHomeNG v1.3**'
+        de: 'Database plugin, mit Unterstützung für SQLite 3 und MySQL'
+        en: 'Database plugin, with support for SQLite 3 and MySQL'
     maintainer: ohinckel
     tester: psilo909, onkelandy, brandst
     state: ready
@@ -12,7 +12,7 @@ plugin:
     documentation: http://smarthomeng.de/user/plugins/database/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1021844-neues-database-plugin
 
-    version: 1.5.7                 # Plugin version
+    version: 1.5.8                 # Plugin version
     sh_minversion: 1.5b            # minimum shNG version to use this plugin
 #    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
@@ -49,13 +49,6 @@ parameters:
         description:
             de: 'Genauigkeit der aus der Datenbank ausgelesenen Werte (Nachkommastellen).'
             en: 'Precision of values read from database (digits after comma).'
-    instance:
-        type: str
-        default: ''
-        description:
-            de: 'Eindeutiger Identifier für die Instanz des Plugins. Kann bei nur einer konfigurierten Instanz des Plugins entfallen.'
-            en: 'Unique identifier for each instance of the plugin. Can be omitted if only one device instance of the plugin is configured.'
-
 
 item_attributes:
     # Definition of item attributes defined by this plugin

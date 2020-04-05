@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
+#########################################################################
+#  Copyright 2013 Niko Will             2ndsky @ http://knx-user-forum.de
+#  Copyright 2019 Bernd Meiners					    Bernd.Meiners@mail.de
+#########################################################################
+#  This file is part of SmartHomeNG.
 #
-# Copyright 2013 KNX-User-Forum e.V.            http://knx-user-forum.de/
-#
-#  This file is part of SmartHomeNG.    https://github.com/smarthomeNG//
+#  Sample plugin for new plugins to run with SmartHomeNG version 1.4 and
+#  upwards.
 #
 #  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -18,117 +22,161 @@
 #  You should have received a copy of the GNU General Public License
 #  along with SmartHomeNG. If not, see <http://www.gnu.org/licenses/>.
 #
+#########################################################################
 
+from lib.module import Modules
+from lib.model.smartplugin import *
 import re
 import logging
 
+from lib.shtime import Shtime
+shtime = Shtime.get_instance()
 
-logger = logging.getLogger('')
 
+class SolarLog(SmartPlugin):
+    """
+    Main class of the Plugin. Does all plugin specific stuff and provides
+    the update functions for the items
+    """
 
-class SolarLog():
+    PLUGIN_VERSION = '1.6.0'
 
-    def __init__(self, smarthome, host):
-        self._sh = smarthome
-        self._host = host
+    def __init__(self, sh, *args, **kwargs):
+        """
+        Initalizes the plugin. The parameters describe for this method are pulled from the entry in plugin.conf.
+        """
+
+        from bin.smarthome import VERSION
+        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
+            self.logger = logging.getLogger(__name__)
+
+        self._sh = sh
+
+        # get the parameters for the plugin (as defined in metadata plugin.yaml):
+        self.host = self.get_parameter_value('host')
+        self.cycle = self.get_parameter_value('cycle')
+
+        # Initialization code goes here
         self._count_inverter = 0
         self._count_strings = []
         self._items = {}
         self._last_datetime = None
         self._is_online = True
+        self.first_poll = True
+
+        # if plugin should start even without web interface
+        self.init_webinterface()
 
     def run(self):
+        """
+        Run method for the plugin
+        """
+        self.logger.debug("Run method called")
+        # setup scheduler for device poll loop
+        self.scheduler_add(self.get_shortname(), self.poll_device, cycle=self.cycle, next=shtime.now())
         self.alive = True
-        self._refresh(True)
-
-        cycle = 300
-        if 'Intervall' in vars(self):
-            cycle = int(vars(self)['Intervall'])
-        self._sh.scheduler.add('solarlog', self._refresh, cycle=cycle)
 
     def stop(self):
+        """
+        Stop method for the plugin
+        """
+        self.logger.debug("Stop method called")
         self.alive = False
 
     def parse_item(self, item):
-        if 'solarlog' in item.conf:
-            self._items[item.conf['solarlog']] = item
-
+        """
+        Default plugin parse_item method. Is called when the plugin is initialized.
+        The plugin can, corresponding to its attribute keywords, decide what to do with
+        the item in future, like adding it to an internal array for future reference
+        :param item:    The item to process.
+        :return:        always None as no update from SmartHomeNG core is needed
+        """
+        if self.has_iattr(item.conf, 'solarlog'):
+            self.logger.debug("parse item: {}".format(item))
+            index = get_iattr_value(item.conf, 'solarlog')
+            self._items[ index ] = item
+        
         return None
 
-    def parse_logic(self, logic):
-        pass
-
-    def _refresh(self, init=False):
+    def poll_device(self):
+        """
+        Polls for updates of the SolarLog device
+        """
         now = self._sh.now()
 
-        if not init:
-            time_start = int(vars(self)['time_start'][now.month - 1])
-            time_end = int(vars(self)['time_end'][now.month - 1])
+        try:
+            if not self.first_poll:
+                time_start = int(vars(self)['time_start'][now.month - 1])
+                time_end = int(vars(self)['time_end'][now.month - 1])
 
-            # reset all out values at midnight
-            if now.hour is 0:
-                for name in list(self._items.keys()):
-                    if 'out_' in name:
-                        self._items[name](0)
+                # reset all out values at midnight
+                if now.hour is 0:
+                    for name in list(self._items.keys()):
+                        if 'out_' in name:
+                            self._items[name](0)
 
-            # we start refreshing one hour earlier as set by the device
-            if now.hour < (time_start - 1):
-                return
+                # we start refreshing one hour earlier as set by the device
+                if now.hour < (time_start - 1):
+                    return
 
-            # in the evening we stop refreshing when the device is offline
-            if now.hour >= time_end and not self._is_online:
-                return
+                # in the evening we stop refreshing when the device is offline
+                if now.hour >= time_end and not self._is_online:
+                    return
 
-        self._read_base_vars()
+            self._read_base_vars()
 
-        if init:
-            self._count_inverter = int(vars(self)['AnzahlWR'])
+            if self.first_poll:
+                self._count_inverter = int(vars(self)['AnzahlWR'])
+                for x in range(0, self._count_inverter):
+                    self._count_strings.append(int(vars(self)['WRInfo'][x][5]))
+
+            self._read_min_cur()
+
+            # set state and error messages
             for x in range(0, self._count_inverter):
-                self._count_strings.append(int(vars(self)['WRInfo'][x][5]))
-
-        self._read_min_cur()
-
-        # set state and error messages
-        for x in range(0, self._count_inverter):
-            if 'curStatusCode_{0}'.format(x) in self._items:
-                item = self._items['curStatusCode_{0}'.format(x)]
-                status = int(vars(self)['curStatusCode'][x])
-                if isinstance(item(), str):
-                    if status is 255:
-                        item('Offline')
-                    elif status >= len(vars(self)['StatusCodes'][x]):
-                        item('unbekannt')
+                if 'curStatusCode_{0}'.format(x) in self._items:
+                    item = self._items['curStatusCode_{0}'.format(x)]
+                    status = int(vars(self)['curStatusCode'][x])
+                    if isinstance(item(), str):
+                        if status is 255:
+                            item('Offline')
+                        elif status >= len(vars(self)['StatusCodes'][x]):
+                            item('unbekannt')
+                        else:
+                            item(vars(self)['StatusCodes'][x][status])
                     else:
-                        item(vars(self)['StatusCodes'][x][status])
-                else:
-                    item(status)
-            if 'curFehlerCode_{0}'.format(x) in self._items:
-                item = self._items['curFehlerCode_{0}'.format(x)]
-                error = int(vars(self)['curFehlerCode'][x])
-                if isinstance(item(), str):
-                    if error >= len(vars(self)['FehlerCodes'][x]):
-                        item('unbekannt')
+                        item(status)
+                if 'curFehlerCode_{0}'.format(x) in self._items:
+                    item = self._items['curFehlerCode_{0}'.format(x)]
+                    error = int(vars(self)['curFehlerCode'][x])
+                    if isinstance(item(), str):
+                        if error >= len(vars(self)['FehlerCodes'][x]):
+                            item('unbekannt')
+                        else:
+                            item(vars(self)['FehlerCodes'][x][error])
                     else:
-                        item(vars(self)['FehlerCodes'][x][error])
-                else:
-                    item(error)
+                        item(error)
 
-        self._is_online = vars(self)['isOnline'] == 'true'
+            self._is_online = vars(self)['isOnline'] == 'true'
 
-        groups = self._read_min_day()
-        if groups:
-            for name in list(groups.keys()):
+            groups = self._read_min_day()
+            if groups:
+                for name in list(groups.keys()):
+                    if name in self._items:
+                        if not self._is_online and ('pdc_' in name or 'udc_' in name or 'pac_' in name):
+                            self._items[name](0)
+                        elif now.hour is 0 and 'out_' in name:
+                            self._items[name](0)
+                        else:
+                            self._items[name](groups[name])
+
+            for name in list(vars(self).keys()):
                 if name in self._items:
-                    if not self._is_online and ('pdc_' in name or 'udc_' in name or 'pac_' in name):
-                        self._items[name](0)
-                    elif now.hour is 0 and 'out_' in name:
-                        self._items[name](0)
-                    else:
-                        self._items[name](groups[name])
-
-        for name in list(vars(self).keys()):
-            if name in self._items:
-                self._items[name](vars(self)[name])
+                    self._items[name](vars(self)[name])
+        except Exception as e:
+            self.logger.error("An error '{}' occurred while polling data from host '{}'".format(e, self.host))
+        finally:
+            self.first_poll = False
 
     def _read_base_vars(self):
         self._read_javascript('base_vars.js')
@@ -301,5 +349,106 @@ class SolarLog():
         return groups if read_all else None
 
     def _read(self, filename):
-        url = self._host + filename
+        url = self.host + filename
         return self._sh.tools.fetch_url(url).decode(encoding='latin_1')
+
+
+
+    def init_webinterface(self):
+        """"
+        Initialize the web interface for this plugin
+
+        This method is only needed if the plugin is implementing a web interface
+        """
+        try:
+            self.mod_http = Modules.get_instance().get_module(
+                'http')  # try/except to handle running in a core version that does not support modules
+        except:
+            self.mod_http = None
+        if self.mod_http == None:
+            self.logger.error("Not initializing the web interface")
+            return False
+
+        import sys
+        if not "SmartPluginWebIf" in list(sys.modules['lib.model.smartplugin'].__dict__):
+            self.logger.warning("Web interface needs SmartHomeNG v1.5 and up. Not initializing the web interface")
+            return False
+
+        # set application configuration for cherrypy
+        webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
+        config = {
+            '/': {
+                'tools.staticdir.root': webif_dir,
+            },
+            '/static': {
+                'tools.staticdir.on': True,
+                'tools.staticdir.dir': 'static'
+            }
+        }
+
+        # Register the web interface as a cherrypy app
+        self.mod_http.register_webif(WebInterface(webif_dir, self),
+                                     self.get_shortname(),
+                                     config,
+                                     self.get_classname(), self.get_instance_name(),
+                                     description='')
+
+        return True
+
+
+# ------------------------------------------
+#    Webinterface of the plugin
+# ------------------------------------------
+
+import cherrypy
+from jinja2 import Environment, FileSystemLoader
+
+
+class WebInterface(SmartPluginWebIf):
+
+    def __init__(self, webif_dir, plugin):
+        """
+        Initialization of instance of class WebInterface
+
+        :param webif_dir: directory where the webinterface of the plugin resides
+        :param plugin: instance of the plugin
+        :type webif_dir: str
+        :type plugin: object
+        """
+        self.logger = logging.getLogger(__name__)
+        self.webif_dir = webif_dir
+        self.plugin = plugin
+        self.tplenv = self.init_template_environment()
+
+    @cherrypy.expose
+    def index(self, reload=None):
+        """
+        Build index.html for cherrypy
+
+        Render the template and return the html file to be delivered to the browser
+
+        :return: contents of the template after beeing rendered
+        """
+        tmpl = self.tplenv.get_template('index.html')
+        # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
+        return tmpl.render(p=self.plugin)
+
+
+    @cherrypy.expose
+    def get_data_html(self, dataSet=None):
+        """
+        Return data to update the webpage
+
+        For the standard update mechanism of the web interface, the dataSet to return the data for is None
+
+        :param dataSet: Dataset for which the data should be returned (standard: None)
+        :return: dict with the data needed to update the web page.
+        """
+        if dataSet is None:
+            # get the new data
+            #self.plugin.beodevices.update_devices_info()
+
+            # return it as json the the web page
+            #return json.dumps(self.plugin.beodevices.beodeviceinfo)
+            pass
+        return

@@ -24,9 +24,8 @@
  */
 'use strict';
 
-goog.provide('Blockly.Blocks.sh_trigger');
-
-goog.require('Blockly.Blocks');
+//goog.provide('Blockly.Blocks.sh_trigger');
+//goog.require('Blockly.Blocks');
 
 
 /**

@@ -5,15 +5,15 @@ plugin:
         de: '1-Wire Unterstützung über owserver'
         en: '1-Wire support via owserver'
         fr: 'Support de 1-Wire à travers owserver'
-    maintainer: cmalo (mknx)
-    tester: '?'
+    maintainer: bmxp
+    tester: 'henfri, chester4444'
     state: ready
-    keywords: 1wire onewire
-    version: 1.3.2                 # Plugin version
-    sh_minversion: 1.3             # minimum shNG version to use this plugin
+    keywords: 1wire onewire dallas ibutton sensor temperature humidity
+    version: 1.6.0                 # Plugin version
+    sh_minversion: 1.4             # minimum shNG version to use this plugin
     multi_instance: False
     restartable: unknown
-    classname: OneWire              # class containing the plugin
+    classname: OneWire             # class containing the plugin
 
 parameters:
     host:
@@ -36,30 +36,40 @@ parameters:
         type: int
         default: 300
         description:
-            de: 'Zeitraum zwischen zwei Sensor-Abfragezyklen. Wenn dieser Wert zu stark gesenkt wird, kann das den Bus durch erhöhten Stromverbrauch destabilisieren.'
-            en: 'timeperiod between two sensor cycles. If you decrease the cycle to much you could destabilise the bus, because of the increased power consumption.'
+            de: 'Zeitraum in Sekunden zwischen zwei Sensor-Abfragezyklen. Wenn dieser Wert zu stark gesenkt wird, kann das den Bus durch erhöhten Stromverbrauch destabilisieren.'
+            en: 'Time period in seconds between two sensor cycles. If you decrease the cycle to much you could destabilise the bus, because of the increased power consumption.'
+            fr: "Période en secondes entre deux cycles de capteur. Si vous diminuez trop le cycle, vous risquez de déstabiliser le bus, en raison de l'augmentation de la consommation d'énergie."
+
+    cycle_discovery:
+        type: int
+        default: 600
+        description:
+            de: 'Zeitraum in Sekunden zwischen zwei Auflistungen aller Sensoren. Wenn dieser Wert zu stark gesenkt wird, kann das den Bus durch erhöhten Stromverbrauch destabilisieren.'
+            en: 'Time period in seconds between two discovery cycles. If you decrease the cycle to much you could destabilise the bus, because of the increased power consumption.'
+            fr: "Période en secondes entre deux cycles de découverte. Si vous diminuez trop le cycle, vous risquez de déstabiliser le bus, en raison de l'augmentation de la consommation d'énergie."
 
     io_wait:
         type: num
         default: 5
         description:
             de: 'Zeitraum zwischen zwei Anfragen an den 1-wire I/O Chip.'
-            en: 'timeperiod between two requests of 1-wire I/O chip.'
+            en: 'Time period between two requests of 1-wire I/O chip.'
+            fr: 'Délai entre deux demandes de puce 1-wire I/O.'
 
     button_wait:
         type: num
         default: 0.5
         description:
             de: 'Zeitraum zwischen zwei Anfragen an einen iButton Busmaster'
-            en: 'timeperiod between two requests of ibutton-busmaster.'
-
+            en: 'Time period between two requests of ibutton busmaster.'
+            fr: 'Délai entre deux demandes de ibutton busmaster.'
 
 item_attributes:
     ow_addr:
         type: str
         description:
-            de: 'Sensoradresse im Format xx.yyyyyyyyyyyy (Bitte darauf achten, dass bei rein numerischen Sensoradressen diese in '' eingeschlossen werden müssen)'
-            en: 'Sensor address in xx.yyyyyyyyyyyy format (Please note: If the sensor address is numerical , it has to be enclosed in quotes)'
+            de: 'Sensoradresse im Format xx.yyyyyyyyyyyy (Bitte darauf achten, dass bei rein numerischen Sensoradressen diese in '' eingeschlossen werden müssen) oder ein Alias (use_ow_aliases muss dafür True sein)'
+            en: 'Sensor address in xx.yyyyyyyyyyyy format (Please note: If the sensor address is numerical, it has to be enclosed in quotes) or an alias (use_ow_aliases must be true)'
             fr: 'Adresse du capteur au format xx.yyyyyyyyyyyy'
 
     ow_sensor:
@@ -102,11 +112,12 @@ plugin_functions:
         parameter:
             ibutton:
                 type: str
-            description:
-                de: 'Id des iButten der benutzt wurde'
-                en: 'Id of the iButton that was used'
+                description:
+                    de: 'Id des iButten der benutzt wurde'
+                    en: 'Id of the iButton that was used'
             item:
                 type: str
-            description:
-            de: 'Item des Busmasters an dem der iButton genutzt wurde'
-            en: 'item of the busmaster at which the ibutton was used'
+                description:
+                    de: 'Item des Busmasters an dem der iButton genutzt wurde'
+                    en: 'item of the busmaster at which the ibutton was used'
+

@@ -1,8 +1,10 @@
-# Onewire
+# OneWire
 
 ## Requirements
 
-This plugin needs an running owserver from owfs. I have tested owfs-2.7p34 and owfs-2.8p15.
+This plugin needs an running owserver (see at owfs.org) on a linux based SmartHomeNG.
+
+Versions tested are owfs-2.7p34, owfs-2.8p15 and owfs-3.2p3
 
 Hint: To run the owserver as non root you have to add a udev rule for the usb busmasters.
 
@@ -44,9 +46,31 @@ This is a name for the defined sensor information.
 This is the type of the sensor data. Currently 'num' and 'bool' are supported.
 
 #### ow_addr
-'ow_addr' defines the 1wire adress of the sensor (formerly 'ow_id'). If 'ow_addr' is specified, the 1wire plugin monitors this sensor.
+'ow_addr' defines the 1wire adress of the sensor.
+If 'ow_addr' is specified, the Onewire plugin monitors this sensor.
+Every Onewire address starts with a type specifier. This is documented at https://owfs.org/index_php_page_family-code-list.html
+
+It is possible for the owfs to define alias for an ow address. This can be done with including
+a link within ``/etc/owfs.conf`` to a file containing definitions as shown below:
+
+```
+server: alias = /usr/smarthome/items/ow_aliases
+``` 
+
+The corresponding file ``ow_aliases`` then might contain definitions like
+
+```
+28.XXXXXXXXXXXX = kitchen
+28.XXXXXXXXXXXX = bathroom
+```
+
+If aliases are defined this way, the plugin is able to use an alias instead of a device id.
 
 #### ow_sensor
+
+Since devices are available which provide multiple data providers it is not sufficient to 
+know the specifier on its own to treat the data right.
+
 'ow_sensor' defines the particular data of the sensor. Currently are supported:
 
 * 'T' - temperature - could be T, T9, T10, T11, T12
@@ -81,12 +105,12 @@ Currently the following 1wire devices are tested by users:
 
 ```yaml
 test-1wire:
-    bm-ibutton:
+    bm_ibutton:
         name: ibutton busmaster to identify ibutton buses
         type: bool
         ow_addr: '81.75172D000000'
         ow_sensor: BM
-    ib-guest:
+    ib_guest:
         name: ibutton guest
         type: bool
         ow_addr: '01.787D58130000'

@@ -80,7 +80,7 @@ class NukiTCPDispatcher(lib.connection.Server):
 
 
 class Nuki(SmartPlugin):
-    PLUGIN_VERSION = "1.5.0.5"
+    PLUGIN_VERSION = "1.5.0.6"
     ALLOW_MULTIINSTANCE = False
 
     def __init__(self, sh, *args, **kwargs):
@@ -421,3 +421,33 @@ class WebInterface(SmartPluginWebIf):
         item = self.plugin.items.return_item(path)
         item(int(value), caller=self.plugin.get_shortname(), source='triggerAction()')
         return
+
+    @cherrypy.expose
+    def get_data_html(self, dataSet=None):
+        """
+        Return data to update the webpage
+
+        For the standard update mechanism of the web interface, the dataSet to return the data for is None
+
+        :param dataSet: Dataset for which the data should be returned (standard: None)
+        :return: dict with the data needed to update the web page.
+        """
+        if dataSet is None:
+        # get the new data
+            data = {}
+            for item, value in self.plugin.get_event_items().items():
+                data[item.id() + "_value"] = item()
+                data[item.id() + "_last_update"] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
+                data[item.id() + "_last_change"] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
+            for item, value in self.plugin.get_action_items().items():
+                data[item.id() + "_value"] = item()
+                data[item.id() + "_last_update"] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
+                data[item.id() + "_last_change"] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
+            for item, value in self.plugin.get_battery_items().items():
+                data[item.id() + "_value"] = item()
+                data[item.id() + "_last_update"] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
+                data[item.id() + "_last_change"] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
+            # return it as json the the web page
+            return json.dumps(data)
+        else:
+            return

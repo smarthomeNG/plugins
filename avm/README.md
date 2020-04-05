@@ -420,19 +420,19 @@ avm:
                 # these items need to be child items from network_device
                 ip:
                     type: str
-                    avm_data_type@fritzbox_7490: device_ip
+                    avm_data_type@wlan_repeater_1750: device_ip
                     visu_acl: ro
 
                 # these items need to be child items from network_device
                 connection_type:
                     type: str
-                    avm_data_type@fritzbox_7490: device_connection_type
+                    avm_data_type@wlan_repeater_1750: device_connection_type
                     visu_acl: ro
 
                 # these items need to be child items from network_device
                 hostname:
                     type: str
-                    avm_data_type@fritzbox_7490: device_hostname
+                    avm_data_type@wlan_repeater_1750: device_hostname
                     visu_acl: ro
 
             iPhone:
@@ -445,19 +445,19 @@ avm:
                 # these items need to be child items from network_device
                 ip:
                     type: str
-                    avm_data_type@fritzbox_7490: device_ip
+                    avm_data_type@wlan_repeater_1750: device_ip
                     visu_acl: ro
 
                 # these items need to be child items from network_device
                 connection_type:
                     type: str
-                    avm_data_type@fritzbox_7490: device_connection_type
+                    avm_data_type@wlan_repeater_1750: device_connection_type
                     visu_acl: ro
 
                 # these items need to be child items from network_device
                 hostname:
                     type: str
-                    avm_data_type@fritzbox_7490: device_hostname
+                    avm_data_type@wlan_repeater_1750: device_hostname
                     visu_acl: ro
 
         fritzbox_7490:
@@ -641,41 +641,38 @@ avm:
                 visu_acl: ro
 
     hkr_bathroom:
-            # Current hkr state: 0 = closed, 1: open, 2: temperature controlled
+            # Current hkr state: 0 = closed, 1: open, 2: temperature controlled, 3: error
             type: num
             value: 3
             avm_data_type@fritzbox_7490: hkr_device
             ain: 09995 0191234 # has to be identical to id in fritzbox (also with spaces!)
             visu_acl: ro
 
-            # these items need to be child items from hkr_device
+            # these items need to be child items from hkr_device. They are read only items.
             is_temperature:
                 value: -1
                 avm_data_type@fritzbox_7490: temperature
                 type: num
                 visu_acl: ro
-                eval: value / 10
             
-            set_temperature:
-                value: -1
-                avm_data_type@fritzbox_7490: set_temperature
-                type: num
-                visu_acl: ro
-                eval: value / 10
-
             set_temperature_reduced:
                 value: -1
                 avm_data_type@fritzbox_7490: set_temperature_reduced
                 type: num
                 visu_acl: ro
-                eval: value / 10
 
             set_temperature_comfort:
                 value: -1
                 avm_data_type@fritzbox_7490: set_temperature_comfort
                 type: num
                 visu_acl: ro
-                eval: value / 10
+
+            # these items are also mandatory and used to read and write the setpoint temperature
+            set_temperature:
+                value: -1
+                avm_data_type@fritzbox_7490: set_temperature
+                type: num
+                visu_acl: rw
 
 ```
 

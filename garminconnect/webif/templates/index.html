@@ -1,0 +1,206 @@
+{% extends "base_plugin.html" %}
+
+{% if day and month and year %}
+    {% set stats = p.get_stats(day+"."+month+"."+year) %}
+    {% set heart_rates = p.get_heart_rates(day+"."+month+"."+year) %}
+{% else %}
+    {% set stats = p.get_stats() %}
+    {% set heart_rates = p.get_heart_rates() %}
+{% endif %}
+
+{%- block scripts %}
+{{ super() }}
+<script src="/gstatic/bootstrap-datepicker/dist/js/bootstrap-datepicker.min.js"></script>
+<script src="/gstatic/bootstrap-datepicker/dist/locales/bootstrap-datepicker.de.min.js"></script>
+<script src="/gstatic/bootstrap-datepicker/dist/locales/bootstrap-datepicker.fr.min.js"></script>
+<script src="/gstatic/chartjs/Chart.min.js"></script>
+{%- endblock scripts %}
+
+{%- block styles %}
+{{ super() }}
+<link rel="stylesheet" href="/gstatic/bootstrap-datepicker/dist/css/bootstrap-datepicker.min.css" type="text/css"/>
+    <script src="/gstatic/chartjs/Chart.min.css"></script>
+{%- endblock styles %}
+
+{% set logo_frame = false %}
+{% set use_bodytabs = true %}
+{% set language = p.get_sh().get_defaultlanguage() %}
+{% set tab1title = _('Tagesüberblick') %}
+{% set tab2title = _('Plugin-API') %}
+{% set tab3title = _('Rohdaten') %}
+
+{% block headtable %}
+<table class="table table-striped table-hover">
+	<tbody>
+		<tr>
+			<td class="py-1" style="width: 50%"><strong>{{ _('E-Mail') }}</strong></td>
+			<td class="py-1">
+				{{ p.get_parameter_value_for_display('email') }}
+			</td>
+        </tr>
+        <tr>
+			<td class="py-1" style="width: 50%"><strong>{{ _('Passwort') }}</strong></td>
+			<td class="py-1">
+				{% for c in p.get_parameter_value_for_display('password') %}*{% endfor %}
+			</td>
+        </tr>
+	</tbody>
+</table>
+{% endblock %}
+
+{% block bodytab1 %}
+<div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
+	<div class="col-sm-12 pt-3">
+        <div class="tab-content" id="myTabContent">
+            <div style="float:right; width:220px;" id="datepicker">
+            </div>
+            <div style="margin-right: 220px;">
+                <h4 style="margin-left: 10px;">{{ _('Daten vom') }} {{ stats['calendarDate'][8:10] }}.{{ stats['calendarDate'][5:7] }}.{{ stats['calendarDate'][0:4] }}</h4>
+                <table class="table table-striped table-hover pluginList" style="width:500px; float:left;">
+                    <tbody>
+                        {% if stats %}
+                        <tr>
+                            <td class="py-1" style="font-weight: bold;">{{ _('Kilokalorien') }}</td><td class="py-1">{% if stats['totalKilocalories'] is not none %}{{ stats['totalKilocalories'] }} {{ _('kcal') }}{% else %}-{% endif %}</td>
+                        </tr>
+                        <tr>
+                            <td class="py-1" style="font-weight: bold;">{{ _('Aktivkilokalorien') }}</td><td class="py-1">{% if stats['activeKilocalories'] is not none %}{{ stats['activeKilocalories'] }} {{ _('kcal') }}{% else %}-{% endif %}</td>
+                        </tr>
+                        <tr>
+                            <td class="py-1" style="font-weight: bold;">{{ _('Schritte') }}</td><td class="py-1">{% if stats['totalSteps'] is not none %}{{ stats['totalSteps'] }}{% else %}-{% endif %}</td>
+                        </tr>
+                        <tr>
+                            <td class="py-1" style="font-weight: bold;">{{ _('Gesamtdistanz') }}</td><td class="py-1">{% if stats['totalDistanceMeters'] is not none %}{{ stats['totalDistanceMeters'] }} {{ _('m') }}{% else %}-{% endif %}</td>
+                        </tr>
+                        <tr>
+                            <td class="py-1" style="font-weight: bold;">{{ _('Hochaktive Zeit') }}</td><td class="py-1">{% if stats['highlyActiveSeconds'] is not none %}{{ p.shtime.seconds_to_displaysting(stats['highlyActiveSeconds']) }}{% else %}-{% endif %}</td>
+                        </tr>
+                        <tr>
+                            <td class="py-1" style="font-weight: bold;">{{ _('Aktivzeit') }}</td><td class="py-1">{% if stats['activeSeconds'] is not none %}{{ p.shtime.seconds_to_displaysting(stats['activeSeconds']) }}{% else %}-{% endif %}</td>
+                        </tr>
+                        <tr>
+                            <td class="py-1" style="font-weight: bold;">{{ _('Sitzzeit') }}</td><td class="py-1">{% if stats['sedentarySeconds'] is not none %}{{ p.shtime.seconds_to_displaysting(stats['sedentarySeconds']) }}{% else %}-{% endif %}</td>
+                        </tr>
+                        <tr>
+                            <td class="py-1" style="font-weight: bold;">{{ _('Schlafdauer') }}</td><td class="py-1">{% if stats['sleepingSeconds'] is not none %}{{ p.shtime.seconds_to_displaysting(stats['sleepingSeconds']) }}{% else %}-{% endif %}</td>
+                        </tr>
+                        <tr>
+                            <td class="py-1" style="font-weight: bold;">{{ _('Stresslevel') }}</td><td class="py-1">{% if stats['averageStressLevel'] is not none %}{{ stats['averageStressLevel'] }}{% else %}-{% endif %}</td>
+                        </tr>
+                        {% else %}
+                        <td colspan="9"></td>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<br style="clear:both;"/>
+<div class="ml-4" style="width:90%; height:200px;">
+    <canvas id="myChart" width="500" height="150"></canvas>
+</div>
+
+<script>
+	$('#datepicker').datepicker({
+		language: "{{ language }}",
+		autoclose: true,
+		todayHighlight: true,
+		todayBtn: "linked",
+		endDate: "{% if language == 'en' %}{{ now.strftime('%m/%d/%Y') }}{% else %}{{ now.strftime('%d.%m.%Y') }}{% endif %}"
+	});
+	$('#datepicker').datepicker().on('changeDate', function(e) {
+		date = $('#datepicker').datepicker('getDate');
+		location.href='?day='+date.getDate()+'&month='+(date.getMonth()+1)+'&year='+date.getFullYear();
+    });
+    $('#datepicker').datepicker('update', '{% if day and month and year %}{% if language == 'en' %}{{ month }}/{{ day }}/{{ year }}{% else %}{{ day }}.{{ month }}.{{ year }}{% endif %}{% else %}{% if language == 'en' %}{{ now.strftime('%-m/%-d/%Y') }}{% else %}{{ now.strftime('%-d.%-m.%Y') }}{% endif %}{% endif %}');
+
+    var ctx = document.getElementById('myChart').getContext('2d');
+    var myChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [{% for heart_rate in heart_rates['heartRateValues'] %}{% if heart_rate[1] is not none %}'{{ (p.shtime.datetime_transform(p.shtime.tzinfo().utcoffset(now).total_seconds()+(heart_rate[0]/1000))).strftime('%H:%M') }}',{% endif %}{% endfor %}],
+            datasets: [{
+                label: '{{ stats['calendarDate'][8:10] }}.{{ stats['calendarDate'][5:7] }}.{{ stats['calendarDate'][0:4] }}',
+                backgroundColor: 'rgb(255, 99, 132)',
+                borderColor: 'rgb(255, 99, 132)',
+                data: [{% for heart_rate in heart_rates['heartRateValues'] %}{% if heart_rate[1] is not none %}{{ heart_rate[1] }},{% endif %}{% endfor %}],
+                fill: false,
+            }]
+        },
+        options: {
+            elements: {
+                point:{
+                    radius: 0
+                }
+            },
+            responsive: true,
+            title: {
+                display: true,
+                text: '{{ _('Heart Rate Chart') }}'
+            },
+            tooltips: {
+                mode: 'index',
+                intersect: false,
+            },
+            hover: {
+                mode: 'nearest',
+                intersect: true
+            },
+            scales: {
+                xAxes: [{
+                    display: true,
+                    scaleLabel: {
+                        display: true,
+                        labelString: '{{ _('Uhrzeit') }}'
+                    }
+                }],
+                yAxes: [{
+                    display: true,
+                    scaleLabel: {
+                        display: true,
+                        labelString: '{{ _('Puls') }}'
+                    }
+                }]
+            }
+        }
+    });
+</script>
+{% endblock %}
+
+{% block bodytab2 %}
+    <div class="container ml-1 pl-1 mr-1 pr-1 pt-3">
+    {%  for function, dict in p.metadata.plugin_functions.items() %}
+        <div class="card mb-2">
+          <div class="card-header p-2">
+              <strong>{{ dict['type'] }} {{ function }}({% if dict['parameters'] is not none %}{%  for name, paramdict in dict['parameters'].items() %}{% if loop.index > 1 %}, {% endif %}{{  name }}: {{ paramdict['type'] }}{% endfor %}{% endif %})</strong>
+          </div>
+          <div class="card-body p-2">
+              {{ dict['description'][language] }}<br/>
+              {% if dict['parameters'] is not none %}
+                  <div class="card mt-2">
+                      <div class="card-header p-2">
+                        <strong>{{ _('Parameter') }}:</strong>
+                      </div>
+                      <div class="card-body p-2">
+                          <ul class="list-group">
+                          {%  for name, paramdict in dict['parameters'].items() %}
+                            <li class="list-group-item p-2">
+                                <strong>{{  name }}: {{ paramdict['type'] }}</strong><br/>
+                                {{ paramdict['description'][language] }}
+                            </li>
+                          {% endfor %}
+                          </ul>
+                      </div>
+                  </div>
+              {% endif %}
+          </div>
+        </div>
+    {% endfor %}
+    </div>
+{% endblock %}
+
+{% block bodytab3 %}
+    <div class="container ml-1 pl-1 mr-1 pr-1 pt-3">
+    {{ stats }}<hr>{{ heart_rates }}
+    </div>
+{% endblock %}

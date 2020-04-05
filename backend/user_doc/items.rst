@@ -1,4 +1,4 @@
-.. index:: Administrations GUI; Items
+.. index:: backend Plugin; Items
 
 #####
 Items

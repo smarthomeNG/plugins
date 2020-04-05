@@ -74,7 +74,7 @@ DPT='dpt'
 
 class KNX(lib.connection.Client,SmartPlugin):
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = "1.6.0"
+    PLUGIN_VERSION = "1.6.2"
 
 
     # tags actually used by the plugin are shown here
@@ -265,7 +265,10 @@ class KNX(lib.connection.Client,SmartPlugin):
             self.terminator = struct.unpack(">H", length)[0]
         except:
             self.logger.error("problem unpacking length: {}".format(length))
+            self.logger.critical("plugin closes connection to knxd/eibd. Restarting SmartHomeNG")
             self.close()
+            self._sh.restart('SmartHomeNG (KNX plugin stalled)')
+            exit(0)
 
     def encode(self, data, dpt):
         return dpts.encode[str(dpt)](data)
@@ -822,10 +825,9 @@ class WebInterface(SmartPluginWebIf):
         :return: contents of the template after beeing rendered
         """
         plgitems = []
+
         for item in self.items.return_items():
-            if (self.plugin.has_iattr(item.conf, KNX_DPT) or self.plugin.has_iattr(item.conf, KNX_STATUS) or self.plugin.has_iattr(item.conf, KNX_SEND) or
-                self.plugin.has_iattr(item.conf, KNX_REPLY) or self.plugin.has_iattr(item.conf, KNX_CACHE) or self.plugin.has_iattr(item.conf, KNX_INIT) or
-                self.plugin.has_iattr(item.conf, KNX_LISTEN) or self.plugin.has_iattr(item.conf, KNX_POLL)):
+            if any(elem in item.property.attributes  for elem in [KNX_DPT,KNX_STATUS,KNX_SEND,KNX_REPLY,KNX_CACHE,KNX_INIT,KNX_LISTEN,KNX_POLL]):
                 plgitems.append(item)
 
         tmpl = self.tplenv.get_template('index.html')

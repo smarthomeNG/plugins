@@ -1,0 +1,95 @@
+# Metadata for the Indego plugin
+plugin:
+    # Global plugin attributes
+    type: interface                # plugin type (gateway, interface, protocol, system, web)
+    description:
+        de: 'Indego Plugin zum Auslesen von Bosch Indego Mährobotern mit Connect Ausstattung'
+        en: 'Indego Plugin to read outBosch Indego mower robots with Connect interface'
+    maintainer: marcov
+#    tester:                        # Who tests this plugin?
+    state: develop                  # change to ready when done with development
+    keywords: Indego smartmower
+#    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
+
+    version: 1.6.0                  # Plugin version
+    sh_minversion: 1.4              # minimum shNG version to use this plugin
+#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    multi_instance: False           # plugin supports multi instance
+    restartable: yes
+    classname: Indego         # class containing the plugin
+
+parameters:
+    # Definition of parameters to be configured in etc/plugin.yaml
+    instance:
+        type: foo
+        default: 0
+        description:
+            de: 'Instanz des Plugins'
+            en: 'Plugin instance'
+    update_cycle:
+        type: int
+        default: 30
+        description:
+            de: 'Zeitlicher Abstand zwischen zwei Verbindungen zur Website'
+            en: 'Time between two connects to the website'
+    user:
+        type: str
+        default: ''
+        description:
+            de: 'Benutzername wie in der Indego App angegeben'
+            en: 'username like used in Indego App'
+    password:
+        type: str
+        default: ''
+        description:
+            de: 'Passwort wie in der Indego App angegeben'
+            en: 'password like used in Indego App'
+    img_pfad:
+        type: str
+        default: '/tmp/garden.svg'
+        description:
+            de: 'Pfad und Dateiname, wo die Kartendatei gespeichert werden soll. Es müssen Schreibrechte für SmartHomeNG bestehen'
+            en: 'Path and filename where to save the mapfile. Write access for SmartHomeNG must be granted'
+    indego_url:
+        type: str
+        default: 'https://api.indego.iot.bosch-si.com/api/v1/'
+        description:
+            de: 'Indego Webseite für den Servicezugriff'
+            en: 'indego website for service access'
+    parent_item:
+        type: str
+        default: 'indego'
+        description:
+            de: 'Das Eltern Item für alle Kinditems, die diese Instanz betreffen'
+            en: 'The parent item for all children relating to this instance'
+
+item_attributes:
+    # Definition of item attributes defined by this plugin
+    indego_command:
+        type: str
+        description:
+            de: 'Todo Beschreibung ergänzen'
+            en: 'Todo needs description'
+    indego_smart:
+        type: str
+        description:
+            de: 'Todo Beschreibung ergänzen'
+            en: 'Todo needs description'
+    indego_frequency:
+        type: str
+        description:
+            de: 'Todo Beschreibung ergänzen'
+            en: 'Todo needs description'
+    indego_add_key:
+        type: str
+        description:
+            de: 'Todo Beschreibung ergänzen'
+            en: 'Todo needs description'
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin
+
+plugin_functions: NONE
+    # Definition of function interface of the plugin
+

@@ -7,8 +7,8 @@
             <block type="shtime_auto"></block>
  */
 'use strict';
-goog.provide('Blockly.Blocks.sh_logic');
-goog.require('Blockly.Blocks');
+//goog.provide('Blockly.Blocks.sh_logic');
+//goog.require('Blockly.Blocks');
 
 
 /**

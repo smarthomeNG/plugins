@@ -51,7 +51,7 @@ class WebSocket(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = "1.5.0"
+    PLUGIN_VERSION = "1.5.1"
 
 
     def __init__(self, sh, *args, **kwargs):
@@ -572,15 +572,21 @@ class websockethandler(lib.connection.Stream):
                     try:
                         items.append([path, self.items[path]['item']()])
                     except KeyError as e:
-                        self.logger.warning("Client {0} requested to monitor item {1} which can not be found".format(self.addr, path_parts[0]))
+                        self.logger.warning("KeyError: Client {0} requested to monitor item {1} which can not be found".format(self.addr, path_parts[0]))
                     else:
                         newmonitor_items.append(path)
                 elif len(path_parts) == 2:
                     self.logger.debug("Client {0} requested to monitor item {2} with property {1}".format(self.addr, path_parts[1], path_parts[0]))
-                    prop = self.items[path_parts[0]]['item'].property
-                    prop_attr = getattr(prop,path_parts[1])
-                    items.append([path, prop_attr])
-                    newmonitor_items.append(path)
+                    try:
+                        prop = self.items[path_parts[0]]['item'].property
+                        prop_attr = getattr(prop,path_parts[1])
+                        items.append([path, prop_attr])
+                        newmonitor_items.append(path)
+                    except KeyError as e:
+                        self.logger.warning("Property KeyError: Client {0} requested to monitor item {2} with property {1}".format(self.addr, path_parts[1], path_parts[0]))
+                    except AttributeError as e:
+                        self.logger.warning("Property AttributeError: Client {0} requested to monitor property {1} of item {2}".format(self.addr, path_parts[1], path_parts[0]))
+
                 else:
                     self.logger.warning("Client {0} requested invalid item: {1}".format(self.addr, path))
             self.logger.debug("json_parse: send to {0}: {1}".format(self.addr, ({'cmd': 'item', 'items': items})))	# MSinn
@@ -623,7 +629,10 @@ class websockethandler(lib.connection.Stream):
                         else:
                             self.logger.info("WebSocket: no entries for series {} {}".format(path, series))
                 else:
-                    self.logger.warning("Client {0} requested invalid series: {1}.".format(self.addr, path))
+                    if path.startswith('env.'):
+                        self.logger.warning("Client {0} requested invalid series: {1}. Probably not database plugin is configured".format(self.addr, path))
+                    else:
+                        self.logger.warning("Client {0} requested invalid series: {1}.".format(self.addr, path))
 
         elif command == 'log':
             self.log = True

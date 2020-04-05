@@ -25,6 +25,8 @@ plugin:
         de: 'Das Plugin benötigt die folgende Software:\n
              \n
              - libatlas-base-dev: Zumindest auf einem Raspberry Pi mit Debian Stretch ist der Befehl nötig: ``sudo apt install libatlas-base-dev``\n
+             - Bei neueren SciPy Versionen kann auf einem Raspi der Build trotzdem scheitern. Es ist dann empfohlen, die aktuellste passende Datei (armv6 = Raspi1, armv7 = Rest)
+             von hier herunterzuladen und ``pip3 install scipy*.whl`` zu starten: https://www.piwheels.org/simple/scipy/\n
              - Python Modul scipy: ``pip3 install scipy``. Es wird empfohlen, zuerst die Pythonmodule zu aktualisieren,
              aber unbedingt darauf zu achten, dass die Requirements von SmarthomeNG erfüllt bleiben!
              Sollte die Installation via pip nicht funktionieren: ``sudo apt update && sudo apt install -y python3-scipy``\n
@@ -32,6 +34,8 @@ plugin:
         en: 'This plugin needs the following software to be installed and running:\n
              \n
              - libatlas-base-dev: On Raspberry Pi debian stretch you also have to run ``sudo apt install libatlas-base-dev``\n
+             - With newer SciPy versions build can still fail on Raspis. It is recommended to download the most recent file (armv6 = Raspi1, armv7 = others) from here and run
+             ``pip3 install scipy*.whl``: https://www.piwheels.org/simple/scipy/\n
              - Python module scipy: ``pip3 install scipy``. Update your Python packages first
              (but make sure they still meet the requirements for smarthomeng)!
              If that does not work you can use: ``sudo apt update && sudo apt install -y python3-scipy``\n
@@ -41,7 +45,7 @@ plugin:
     state: ready
 #    keywords: iot xyz
     documentation: https://www.smarthomeng.de/user/plugins/uzsu/user_doc.html
-    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1270230-uzsu-neue-version-von-onkelandy
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1364692-supportthread-für-uzsu-plugin
 
     version: 1.5.3                 # Plugin version
     sh_minversion: 1.5             # minimum shNG version to use this plugin
@@ -58,6 +62,42 @@ parameters:
         description:
             de: 'Falls True, werden Einträge mit exakt den selben Einstellungen, aber unterschiedlichem Wert durch einen neu getätigten Eintrag ersetzt'
             en: 'If True, existing entries with exactly the same settings except the value get replaced by the new entry'
+
+    interpolation_interval:
+        type: int
+        default: 5
+        valid_min: 0
+        description:
+            de: 'Standardintervall in Minuten, in dem ein interpolierter Wert erneut errechnet werden soll. Kann pro UZSU individuell konfiguriert werden.'
+            en: 'Standard interval in minutes that is used to re-calculate an interpolated value. Can be configured for each UZSU individually.'
+
+    interpolation_type:
+        type: str
+        default: 'none'
+        valid_list:
+          - 'none'
+          - 'cubic'
+          - 'linear'
+        description:
+            de: 'Standardintervall in Minuten, in dem ein interpolierter Wert erneut errechnet werden soll. Kann pro UZSU individuell konfiguriert werden.'
+            en: 'Standard interval in minutes that is used to re-calculate an interpolated value. Can be configured for each UZSU individually.'
+
+    backintime:
+        type: int
+        default: 0
+        valid_min: 0
+        description:
+            de: 'Standardmaximalalter eines UZSU Eintrags in Minuten, um beim Plugin-Start versäumte Einträge nachzuholen. Kann pro UZSU individuell konfiguriert werden.'
+            en: 'Standard maximum age of an uzsu entry in minutes to be catched up at the plugin start. Can be configured for each UZSU individually'
+
+    interpolation_precision:
+        type: int
+        default: 2
+        valid_min: 0
+        valid_max: 4
+        description:
+            de: 'Anzahl an Dezimalstellen bei der Berechnung der Interpolation'
+            en: 'Amount of decimal places when calculating interpolation values'
 
 item_attributes:
     # Definition of item attributes defined by this plugin
@@ -89,15 +129,32 @@ item_structs:
 
         uzsu:
             type: dict
-            uzsu_item: '..'
-            cache: 'True'
+            uzsu_item: ..
+            cache: True
             visu_acl: rw
+
+            last:
+                remark: The last set value if UZSU is active
+                type: foo
+                visu_acl: ro
+                eval: "'None' if sh...lastvalue() is None else sh...lastvalue()"
+                crontab: init = 'None'
+                eval_trigger: ..
 
             active:
                 remark: Use this item to easily turn on or off your UZSU
                 type: bool
                 eval: sh...activate(value)
                 visu_acl: rw
+
+                status:
+                    type: bool
+                    eval: sh....activate()
+                    eval_trigger:
+                      - ..
+                      - ...
+                    on_change: .. = value
+                    crontab: init = 0
 
 logic_parameters: NONE
     # Definition of logic parameters defined by this plugin
@@ -117,6 +174,18 @@ plugin_functions:
             en: 'Query the next scheduled value and time. If no update is planned, e.g. if the UZSU item
                 is not active, the result is None, otherwise a dictionary containing entries for time and value.
                 '
+
+    resume:
+        type: foo
+        description:
+            de: 'Fortsetzen der UZSU Evaluierung: Aktivieren des Items und Setzen des zuletzt festgelegten Wertes.'
+            en: 'Resuming the UZSU evaluation: activating the item and setting the last defined value.'
+
+    lastvalue:
+        type: foo
+        description:
+            de: 'Abfrage des zuletzt gesetzten Werts. Kann z.B. beim Aktivieren der UZSU genutzt werden, um sofort auf den gewünschten Wert zu schalten.'
+            en: 'Query the last value. Can be used to immediately set the correct value after activating an UZSU.'
 
     clear:
         type: bool
@@ -177,12 +246,11 @@ plugin_functions:
                 type: int
                 default: 5
                 description:
-                    de: 'Intervall in Minuten, in dem der Wert aktualisiert werden soll'
-                    en: 'interval in minutes to update the value'
+                    de: 'Intervall in Minuten, in dem der interpolierte Wert aktualisiert werden soll'
+                    en: 'Interval in minutes to re-calculate the interpolated value'
             backintime:
                 type: int
                 default: 0
                 description:
                     de: 'Maximales Alter eines UZSU Eintrags in Minuten, um beim Plugin-Start versäumte Einträge nachzuholen.'
                     en: 'maximum age of an uzsu entry in minutes to be catched up at the plugin start'
-

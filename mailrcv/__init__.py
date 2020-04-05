@@ -29,19 +29,20 @@ from bin.smarthome import VERSION
 
 class IMAP(SmartPlugin):
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = "1.4.0"
+    PLUGIN_VERSION = "1.4.1"
 
-    def __init__(self, smarthome, host, username, password, cycle=300, port=993, tls=True):
-        self._sh = smarthome
-        self._host = host
-        self._port = port
-        self._username = username
-        self._password = password
-        self.cycle = int(cycle)
+    def __init__(self, sh, *args, **kwargs):
+        self._host = self.get_parameter_value('host')
+        self._port = self.get_parameter_value('port')
+        self._username = self.get_parameter_value('username')
+        self._password = self.get_parameter_value('password')
+        self.cycle = self.get_parameter_value('cycle')
+        self._tls = self.get_parameter_value('tls')
+        self._trashfolder = self.get_parameter_value('trashfolder')
         self._mail_sub = {}
         self._mail_to = {}
         self._mail = False
-        self._tls = self.to_bool(tls)
+
         if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
             self.logger = logging.getLogger(__name__)
 
@@ -93,6 +94,10 @@ class IMAP(SmartPlugin):
                         self.logger.warning("IMAP: problem getting message {} from data: data-list has length {} and data[0] = '{}'".format(uid, len(data), data[0]))
                     if len(data) > 1:
                         self.logger.warning("data[1] = '{}'".format(data[1]))
+                # If a (non standard-conforming) mail without content-transfer-encoding is received, decoding the mail content fails.
+                # In this case we set the encoding to the official standard, which should be a good guess.
+                if not 'content-transfer-encoding' in mail:
+                    mail['content-transfer-encoding'] = '7BIT'
                 to = email.utils.parseaddr(mail['To'])[1]
                 fo = email.utils.parseaddr(mail['From'])[1]
                 if mail['Subject'] is None:
@@ -124,12 +129,15 @@ class IMAP(SmartPlugin):
                     else:
                         logger.warning("Could not move mail to trash. {0} => {1}: {2}".format(fo, to, subject))
                 else:
-                    rsp, data = imap.uid('copy', uid, 'Trash')
+                    rsp, data = imap.uid('copy', uid, self._trashfolder)
                     if rsp == 'OK':
                         typ, data = imap.uid('store', uid, '+FLAGS', '(\Deleted)')
                         self.logger.debug("Moving mail to trash. {0} => {1}: {2}".format(fo, to, subject))
                     else:
                         self.logger.warning("Could not move mail to trash. {0} => {1}: {2}".format(fo, to, subject))
+                        self.logger.info("Consider setting the trashfolder option to the name of your trash mailbox. Available mailboxes are:")
+                        for mb in imap.list()[1]:
+                            self.logger.info(mb.decode("utf-8"))
             else:
                 self.logger.info("Ignoring mail. {0} => {1}: {2}".format(fo, to, subject))
         imap.close()
@@ -137,7 +145,7 @@ class IMAP(SmartPlugin):
 
     def run(self):
         self.alive = True
-        self._sh.scheduler.add('IMAP', self._cycle, cycle=self.cycle)
+        self.scheduler_add('IMAP', self._cycle, cycle=self.cycle)
 
     def stop(self):
         self.alive = False
