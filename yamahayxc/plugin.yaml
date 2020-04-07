@@ -18,6 +18,7 @@ plugin:
                 - Wiedergabesteuerung (Play/Pause/Stop/nächster,vorheriger Titel/Vor-,Zurückspulen),\n
                 - Lautstärkesteuerung\n,
                 - Anwahl von Favoriten und Presets (geräteabhängig)\n
+                - Stellen und De-/Aktivieren des Weckers (geräteabhängig)\n
             \n
             Die Möglichkeiten, Statusinformationen abzurufen, umfassen (derzeit) u.a.\n
                 \n
@@ -42,6 +43,7 @@ plugin:
                 - playback control (play/pause/stop/skip forward,backward/fast forward,reverse),\n
                 - volume control,\n
                 - selection of favorites and presets (device dependent)\n
+                - setting and de-/activating the alarm clock (device dependent)\n
              \n
              Status information implemented (so far) include:\n
                 \n
@@ -61,8 +63,8 @@ plugin:
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1174064-plugin-yamaha-musiccast-geräte-neuere-generation
 
-    version: 1.0.5                 # Plugin version
-    sh_minversion: 1.3             # minimum shNG version to use this plugin
+    version: 1.0.6                 # Plugin version
+    sh_minversion: 1.7             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
     restartable: False
@@ -70,7 +72,107 @@ plugin:
 
 parameters:
     # Definition of parameters to be configured in etc/plugin.yaml
-    
+
 item_attributes:
     # Definition of item attributes defined by this plugin
-    
+
+item_structs:
+    # Definition of item structs to be used for use with this plugin
+
+    basic:
+        # basic media player setup
+
+        yamahayxc_zone: main
+
+        wakeup:
+            type: bool
+            enforce_updates: 'True'
+
+        power:
+            type: bool
+            yamahayxc_cmd: power
+            enforce_updates: 'True'
+
+        volume:
+            type: num
+            yamahayxc_cmd: volume
+            enforce_updates: 'True'
+
+        mute:
+            type: bool
+            yamahayxc_cmd: mute
+            enforce_updates: 'True'
+
+        input:
+            type: str
+            yamahayxc_cmd: input
+            enforce_updates: 'True'
+
+        track:
+            type: str
+            yamahayxc_cmd: track
+
+        albumart:
+            type: str
+            yamahayxc_cmd: albumart
+
+        albumarturl:
+            type: str
+            visu_acl: rw
+
+        update:
+            type: bool
+            yamahayxc_cmd: state
+            enforce_updates: 'True'
+
+        preset:
+            type: num
+            yamahayxc_cmd: preset
+            enforce_updates: 'True'
+
+        sleep:
+            type: num
+            yamahayxc_cmd: sleep
+            enforce_updates: 'True'
+
+        artist:
+            type: str
+            yamahayxc_cmd: artist
+
+        curtime:
+            type: num
+            yamahayxc_cmd: play_time
+
+        totaltime:
+            type: num
+            yamahayxc_cmd: total_time
+
+        playback:
+            type: str
+            yamahayxc_cmd: playback
+            enforce_updates: 'True'
+
+        passthru:
+            type: str
+            yamahayxc_cmd: passthru
+            enforce_updates: 'True'
+
+
+    alarm:
+        # media player setup with alarm clock functions
+        struct: yamahayxc.basic
+
+        alarm_on:
+            type: bool
+            yamahayxc_cmd: alarm_on
+            enforce_updates: 'True'
+
+        alarm_time:
+            type: str
+            yamahayxc_cmd: alarm_time
+            enforce_updates: 'True'
+
+        alarm_beep:
+            type: bool
+            yamahayxc_cmd: alarm_beep
+            enforce_updates: 'True'
