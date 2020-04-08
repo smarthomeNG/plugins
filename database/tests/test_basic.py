@@ -162,7 +162,7 @@ class TestDatabaseBasic(TestDatabaseBase):
         name = self.create_tmpfile()
         plugin = self.plugin()
         plugin.dump(name)
-        self.assertEquals(
+        self.assertEqual(
           "item_id;item_name;time;duration;val_str;val_num;val_bool;changed;time_date;changed_date\n",
           self.read_tmpfile(name)
         )
