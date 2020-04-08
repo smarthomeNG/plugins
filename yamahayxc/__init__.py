@@ -56,6 +56,10 @@ class YamahaYXC(SmartPlugin):
     PLUGIN_VERSION = "1.0.6"
     ALLOW_MULTIINSTANCE = False
 
+    #
+    # public functions
+    #
+
     def __init__(self, smarthome):
         """
         Default init function
@@ -91,7 +95,8 @@ class YamahaYXC(SmartPlugin):
         Default run function
 
         Initializes class and sets up UDP listener.
-        Main loop receives notifications and dispatches item/status updates.
+        Main loop receives notifications and dispatches item updates
+        based on notifications and triggers status updates.
         """
         self._sh.trigger('YamahaYXC', self._initialize)
         self.logger.info("YamahaYXC starting listener")
@@ -106,20 +111,21 @@ class YamahaYXC(SmartPlugin):
                     "Error receiving data - host/port not readable")
                 return
             if host not in list(self._yamaha_dev.keys()):
-                self.logger.warn(
-                    "Yamaha received notify from unknown host {}".format(host))
-            else:
-                # careful - connected device sends updates every second for
-                #           about 10 minutes without interaction
                 self.logger.debug(
-                    "Yamaha unicast received {} bytes from {}: {}".format(
-                    len(data), host, data))
+                    "Received notify from unknown host {}".format(host))
+            else:
+                # connected device sends updates every second for
+                # about 10 minutes without further interaction
+                # self.logger.debug(
+                #     "Yamaha unicast received {} bytes from {}: {}".format(
+                #     len(data), host, data))
                 data = json.loads(data.decode('utf-8'))
+
                 # need to find lowest-level cmds in nested dicts
                 # nesting is done by current zone and player
                 # for now, assemble all relevant keys (main, netusb)
                 # in non-nested dict. this is quite a kludge as of now...
-                data_flat = data
+                data_flat = {}
                 try:
                     data_flat.update(data['main'])
                 except:
@@ -130,20 +136,23 @@ class YamahaYXC(SmartPlugin):
                     pass
 
                 # try all known command words...
+                # this is relevant e.g. for "play_time" updates or song changes
                 for cmd in self._yamaha_cmds:
                     # found it in data package?
                     if cmd in data_flat:
                         try:
                             # try to get command value and set item
-                            notify_val = self._process_value(data_flat[cmd], cmd, host)
+                            notify_val = self._convert_value_yxc_to_plugin(data_flat[cmd], cmd, host)
                             item = self._yamaha_dev[host][cmd]
                             item(notify_val, "YamahaYXC")
                         except:
                             pass
+
                 # device told us new info is available?
                 if 'status_updated' in data_flat or 'play_info_updated' in data_flat:
                     # pull (full) status update from device
                     self._update_state(host)
+
                 # log possible play errors
                 if 'play_error' in data_flat:
                     if data_flat['play_error'] > 0:
@@ -165,6 +174,80 @@ class YamahaYXC(SmartPlugin):
         except:
             pass
 
+    def parse_item(self, item):
+        """
+        parse all items at startup
+
+        This function is called by the SmartPlugin manager in sh.py for every
+        item. If item config "yamahayxc_cmd" is present, item ist stored together
+        with associated host and zone.
+        Returns update function for the item (update_item())
+        """
+        if 'yamahayxc_cmd' in item.conf:
+            yamaha_host = self._lookup_host(item)
+            self._add_host_info(yamaha_host)
+            yamaha_zone = self._lookup_zone(item)
+            self._yamaha_zone = yamaha_zone
+            yamaha_cmd = item.conf['yamahayxc_cmd'].lower()
+            if yamaha_cmd not in self._yamaha_cmds:
+                self.logger.warn("{} not in valid commands: {}".format(
+                    yamaha_cmd, self._yamaha_cmds))
+                return None
+            else:
+                try:
+                    self._yamaha_dev[yamaha_host][yamaha_cmd] = item
+                except KeyError:
+                    self._yamaha_dev[yamaha_host] = {}
+                    self._yamaha_dev[yamaha_host][yamaha_cmd] = item
+
+            return self.update_item
+
+    def update_item(self, item, caller=None, source=None, dest=None):
+        """
+        recall function if item is modified in sh.py
+
+        Only for "write" commands: calls function to build cmd string
+        for given item and runs network query to execute cmd
+        In any case _update_state is called afterwards to update sh.py items
+        """
+        if caller != "YamahaYXC" and self.alive:
+            yamaha_cmd = item.conf['yamahayxc_cmd']
+            yamaha_host = self._lookup_host(item)
+            yamaha_payload = None
+
+            if yamaha_cmd == 'power':
+                yamaha_payload = self._build_cmd_power(item())
+            elif yamaha_cmd == 'volume':
+                yamaha_payload = self._build_cmd_volume(item())
+            elif yamaha_cmd == 'mute':
+                yamaha_payload = self._build_cmd_mute(item())
+            elif yamaha_cmd == 'input':
+                yamaha_payload = self._build_cmd_input(item())
+            elif yamaha_cmd == 'playback':
+                yamaha_payload = self._build_cmd_playback(item())
+            elif yamaha_cmd == 'preset':
+                yamaha_payload = self._build_cmd_preset(item())
+            elif yamaha_cmd == "sleep":
+                yamaha_payload = self._build_cmd_sleep(item())
+            elif yamaha_cmd == "alarm_on":
+                yamaha_payload = self._build_cmd_alarm_on(item())
+            elif yamaha_cmd == "alarm_time":
+                yamaha_payload = self._build_cmd_alarm_time(item())
+            elif yamaha_cmd == "alarm_beep":
+                yamaha_payload = self._build_cmd_alarm_beep(item())
+            elif yamaha_cmd == "passthru":
+                yamaha_payload = item()
+            # no more check for "update" or "state" -> after updating item
+            # _update_state is called anyway, would only duplicate update
+            if yamaha_payload:
+                self._submit_payload(yamaha_host, yamaha_payload)
+            self._update_state(yamaha_host)
+            return None
+
+    #
+    # initialization functions
+    #
+
     def _initialize(self):
         """
         Default initialization function
@@ -177,177 +260,140 @@ class YamahaYXC(SmartPlugin):
                 "Initializing items for host: {}".format(yamaha_host))
             self._update_state(yamaha_host, False)
 
-    def _power(self, value, cmd='PUT'):
+    def _lookup_host(self, item):
         """
-        return cmd string for "set power"
+        get host IP stored for submitted item
 
-        value is boolean:
-            True means "power on"
-            False means "standby"
+        this does not work with nested items in item config, so don't nest items!
         """
-        if value is True:
-            cmdarg = 'on'
-        elif value is False:
-            cmdarg = 'standby'
-        cmd = "v1/{}/setPower?power={}".format(self._yamaha_zone, cmdarg)
-        return cmd
+        parent = item.return_parent()
+        yamaha_host = socket.gethostbyname(parent.conf['yamahayxc_host'])
+        return yamaha_host
 
-    def _input(self, value, cmd='PUT'):
+    def _lookup_zone(self, item):
         """
-        return cmd string for "set input"
+        get zone config for item
 
-        value is string and device-dependent, e.g.
-            - tuner
-            - cd
-            - bluetooth
-            - net_radio (internet radio stream)
-            - server (UPNP client)
+        again, don't nest items.
+        This is a stub function in preparation for later extension of the plugin
+        to multiple zones. Maybe flexible config of multiple zones for items
+        might become necessary -> rethink this approach then
         """
-        cmd = "v1/{}/setInput?input={}".format(self._yamaha_zone, value)
-        return cmd
+        parent = item.return_parent()
+        yamaha_zone = parent.conf['yamahayxc_zone']
+        return yamaha_zone
 
-    def _volume(self, value, cmd='PUT'):
+    def _add_host_info(self, host):
         """
-        return cmd string for "set volume"
+        store local interface IP for connection to a given host
 
-        volume is numeric from 0..60
+        just exists in case the server is multihomed. in most cases not necessary
         """
-        cmd = "v1/{}/setVolume?volume={}".format(self._yamaha_zone, value)
-        return cmd
+        try:
+            local_ip = self._yamaha_hosts[host]
+            return
+        except:
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            s.connect((host, 80))
+            local_ip = s.getsockname()[0]
+            s.close()
+            self._yamaha_hosts[host] = local_ip
 
-    def _mute(self, value, cmd='PUT'):
-        """
-        return cmd string for "set mute"
-        """
-        if value is True:
-            cmdarg = 'true'
-        elif value is False:
-            cmdarg = 'false'
-        cmd = "v1/{}/setMute?enable={}".format(self._yamaha_zone, cmdarg)
-        return cmd
+    #
+    # process not individually accessible items
+    #
 
-    def _playback(self, value, cmd="PUT"):
+    def _update_state(self, yamaha_host, update_items=True):
         """
-        return cmd string for "set playback"
+        retrieve state from device via cmd get_state and get_play_state
 
-        value is string and can be (for netusb)
-            - play
-            - stop
-            - pause
-            - play_pause (toggle)
-            - previous
-            - next
-            - fast_reverse_start
-            - fast_reverse_stop
-            - fast_forward_start
-            - fast_forward_stop
+        As many items cannot be queried via yamahayxc by themselves, this
+        function simply sends two state update commands and joins both
+        state replies into one dict (this will probably not work with more
+        than one input source and one zone!)
+        Then for all relevant commands suitable return values are extracted
+        and processed (items are updated)
+        Return None prematurely if no network response was received
+        Silently ignores invalid (None) values for commands
         """
-        cmd = "v1/netusb/setPlayback?playback={}".format(value)
-        return cmd
+        state = self._submit_payload(yamaha_host, self._build_cmd_get_state())
+        if state is None:
+            return
+        state2 = self._submit_payload(yamaha_host, self._build_cmd_get_play_state())
+        state.update(state2)
 
-    def _get_state(self):
+        # retrieving only single items from device is not possible
+        # so just get everything and update sh.py items
+        if update_items:
+            for yamaha_cmd, item in self._yamaha_dev[yamaha_host].items():
+                if yamaha_cmd not in self._yamaha_ignore_cmds_upd:
+                    value = self._get_value_from_response(state, yamaha_cmd, yamaha_host)
+                    if value is not None:
+                        item(value, "YamahaYXC")
+
+        # try updating the alarm clock state
+        self._update_alarm_state(yamaha_host, update_items)
+
+        return state
+
+    def _update_alarm_state(self, yamaha_host, update_items=True):
         """
-        return cmd string for "get status" -> get general status for zone
+        parses alarm status from query response 'state'
+
+        as alarm configuration is too complex to mirror in item configuration,
+        this is excluded from the loop in _update_state()
+        As alarm handling might be expanded later, this is a separate function.
+        At the moment it will only be called from _update_state()
         """
-        cmd = "v1/{}/getStatus".format(self._yamaha_zone)
-        return cmd
-
-    def _get_play_state(self):
-        """
-        return cmd string for "get playstatus" -> get playing status
-
-        at the moment only netusb zone is supported, no other device to test
-        """
-        cmd = "v1/netusb/getPlayInfo"
-        return cmd
-
-    def _get_alarm_state(self):
-        """
-        return cmd string for "get alarm status" -> get alarm clock info
-        return empty result if alarm not supported
-        """
-        cmd = "v1/clock/getSettings"
-        return cmd
-
-    def _preset(self, value):
-        """
-        return cmd string for "set preset"
-
-        value is integer preset index (1..)
-
-        at the moment only netusb zone is supported (see above)
-        """
-        cmd = "v1/netusb/recallPreset?zone=main&num={}".format(value)
-        return cmd
-
-    def _sleep(self, value, cmd='PUT'):
-        """
-        return cmd string for "set sleep"
-
-        volume is numeric 0 / 30 / 60 / 90 / 120 (minutes)
-        """
-        cmd = "v1/{}/setSleep?sleep={}".format(self._yamaha_zone, value)
-        return cmd
-
-    def _alarm_on(self, value, cmd='PUT'):
-        """
-        return cmd string for "switch alarm on/off"
-
-        value is bool
-        """
-        cmd = "v1/clock/setAlarmSettings"
-        data = json.dumps({"alarm_on": "true" if value else "false"})
-        return ([cmd, data])
-
-    def _alarm_time(self, value, cmd='PUT'):
-        """
-        return cmd string for "set alarm_time"
-
-        value is string in 4 digit 24 hour time, e.g. "1430"
-        """
-        cmd = "v1/clock/setAlarmSettings"
-        data = json.dumps({"detail": {"day": "oneday", "time": value}})
-        return ([cmd, data])
-
-    def _alarm_beep(self, value, cmd='PUT'):
-        """
-        return cmd string for "set alarm beep"
-
-        value is bool
-        """
-        cmd = "v1/clock/setAlarmSettings"
-        data = json.dumps({"detail": {"day": "oneday", "beep": "true" if value else "false"}})
-        return ([cmd, data])
-
-    def _get_value(self, notify_cmd, yamaha_host):
-        """
-        gets value for notify_cmd from yamaha_host
-
-        builds cmd string and runs network query
-        calls _return_value to process value and assigns to item
-
-        returns without further action if no network response is received
-        """
-        yamaha_payload = None
-        if notify_cmd in ['power', 'volume', 'mute', 'input', 'sleep']:
-            yamaha_payload = self._get_state()
-        elif notify_cmd in ['track', 'artist', 'albumart',
-                            'play_time', 'total_time', 'playback']:
-            yamaha_payload = self._get_play_state()
-
-        if yamaha_payload:
-            res = self._submit_payload(yamaha_host, yamaha_payload)
-            if res is None:
+        state = self._submit_payload(yamaha_host, self._build_cmd_get_alarm_state())
+        if state:
+            try:
+                alarm = state["alarm"]
+            except KeyError:
                 return
-            value = self._return_value(res, notify_cmd, yamaha_host)
-            if notify_cmd == "play_time" and value < 0:
-                return
-            else:
-                item = self._yamaha_dev[yamaha_host][notify_cmd]
-                item(value, "YamahaYXC")
+            
+            alarm_on = alarm["alarm_on"]
+            alarm_time = alarm["oneday"]["time"]
+            alarm_beep = alarm["oneday"]["beep"]
 
-    def _process_value(self, value, cmd, host):
+            if update_items:
+                for yamaha_cmd, item in self._yamaha_dev[yamaha_host].items():
+                    if yamaha_cmd == "alarm_on":
+                        item(alarm_on, "YamahaYXC")
+                    if yamaha_cmd == "alarm_time":
+                        item(alarm_time, "YamahaYXC")
+                    if yamaha_cmd == "alarm_beep":
+                        item(alarm_beep, "YamahaYXC")
+
+        return
+
+    #
+    # handle and format data values
+    #
+
+    def _get_value_from_response(self, state, cmd, host):
         """
+        return value for selected command from response data
+
+        tries to extract value for requested cmd
+        returns None if state is None (network error), returns value otherwise
+        returns error string if value is invalid or missing (this shoudn't happen
+        and documents configuration or code error on my side - might lead to funny
+        error logging)
+        """
+        if state is None:
+            return None
+        if cmd == "albumart":
+            cmd = "albumart_url"
+        try:
+            value = state[cmd]
+        except:
+            return "Invalid data received (required item not found) - contact plugin author"
+        return self._convert_value_yxc_to_plugin(value, cmd, host)
+
+    def _convert_value_yxc_to_plugin(self, value, cmd, host):
+        """
+        convert network values to python format and
         return processed value depending on command
 
         formats and returns value from raw input value
@@ -395,41 +441,28 @@ class YamahaYXC(SmartPlugin):
             else:
                 return False
 
-    def _return_value(self, state, cmd, host):
-        """
-        return selected value from response data
-
-        transforms "state" response to json and extracts requested value
-        returns None if state is None (network error), returns value otherwise
-        returns error string if value is invalid or missing (this shoudn't happen
-        and documents configuration or code error on my side)
-        """
-        if state is None:
-            return None
-        if cmd == "albumart":
-            cmd = "albumart_url"
-        try:
-            jdata = json.loads(state)
-        except Exception:
-            return "Invalid data received (not JSON)"
-        try:
-            value = jdata[cmd]
-        except:
-            return "Invalid data received (required item not found)"
-        return self._process_value(value, cmd, host)
+    #
+    # send network commands and receive responses
+    #
 
     def _submit_payload(self, host, payload):
         """
-        send cmd string to device and return response data
+        send cmd string to device and return response data as dict
 
         returns None on network error (no connection, device not plugged in?)
         always subscribes to unicast notification service
         log message "No payload received" probably indicates coding error or
         improper use of cmd 'passthru'
 
-        payload can be a string, will then be sent via HTTP GET
-        payload can be a list (2 items needed), will be sent via
-        HTTP POST, payload[0] as URL, payload[1] as POST data
+        payload can be
+        - a string, will then be sent via HTTP GET
+        - a list, will be sent via HTTP POST, needs
+          payload[0] as URL, payload[1] as POST data
+          Careful: POST data needs to be in proper JSON format
+          MusicCast devices are quite picky about double quotes;
+          single-quoted data is rewarded with errors!
+
+        return data is None or a dict with json response data
         """
         if payload:
 
@@ -443,11 +476,11 @@ class YamahaYXC(SmartPlugin):
                     response = res.text
                     del res
                 except:
-                    self.logger.warn("Device not answering: {}.".format(host))
+                    self.logger.info("Device not answering: {}.".format(host))
                     response = None
             elif type(payload) is list:
                 if len(payload) < 2:
-                    self.logger.warn("Payload in list format, but insufficient arguments")
+                    self.logger.debug("Payload in list format, but insufficient arguments")
                     response = None
                 else:
                     url = "http://{}/YamahaExtendedControl/{}".format(host, payload[0])
@@ -459,182 +492,162 @@ class YamahaYXC(SmartPlugin):
                         response = res.text
                         del res
                     except:
-                        self.logger.warn("Device not answering: {}.".format(host))
+                        self.logger.info("Device not answering: {}.".format(host))
                         response = None
-            return response
+            try:
+                jdata = json.loads(response)
+            except Exception:
+                self.logger.debug("Invalid data received (not JSON). Data discarded.")
+                jdata = None
+
+            return jdata
         else:
             self.logger.warn("No payload received. Used 'passthru' without argument?")
             return None
 
-    def _lookup_host(self, item):
+    #
+    # functions to create network commands
+    #
+
+    def _build_cmd_power(self, value, cmd='PUT'):
         """
-        get host IP stored for submitted item
+        return cmd string for "set power"
 
-        this does not work with nested items in item config, so don't nest items!
+        value is boolean:
+            True means "power on"
+            False means "standby"
         """
-        parent = item.return_parent()
-        yamaha_host = socket.gethostbyname(parent.conf['yamahayxc_host'])
-        return yamaha_host
+        if value is True:
+            cmdarg = 'on'
+        elif value is False:
+            cmdarg = 'standby'
+        cmd = "v1/{}/setPower?power={}".format(self._yamaha_zone, cmdarg)
+        return cmd
 
-    def _lookup_zone(self, item):
+    def _build_cmd_input(self, value, cmd='PUT'):
         """
-        get zone config for item
+        return cmd string for "set input"
 
-        again, don't nest items.
-        This is a stub function in preparation for later extension of the plugin
-        to multiple zones. Maybe flexible config of multiple zones for items
-        might become necessary -> rethink this approach then
+        value is string and device-dependent, e.g.
+            - tuner
+            - cd
+            - bluetooth
+            - net_radio (internet radio stream)
+            - server (UPNP client)
         """
-        parent = item.return_parent()
-        yamaha_zone = parent.conf['yamahayxc_zone']
-        return yamaha_zone
+        cmd = "v1/{}/setInput?input={}".format(self._yamaha_zone, value)
+        return cmd
 
-    def _add_host_info(self, host):
+    def _build_cmd_volume(self, value, cmd='PUT'):
         """
-        store local interface IP for connection to a given host
+        return cmd string for "set volume"
 
-        just exists in case the server is multihomed. in most cases not necessary
+        volume is numeric from 0..60
         """
-        try:
-            local_ip = self._yamaha_hosts[host]
-            return
-        except:
-            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            s.connect((host, 80))
-            local_ip = s.getsockname()[0]
-            s.close()
-            self._yamaha_hosts[host] = local_ip
+        cmd = "v1/{}/setVolume?volume={}".format(self._yamaha_zone, value)
+        return cmd
 
-    def parse_item(self, item):
+    def _build_cmd_mute(self, value, cmd='PUT'):
         """
-        parse all items at startup
-
-        This function is called by the SmartPlugin manager in sh.py for every
-        item. If item config "yamahayxc_cmd" is present, item ist stored together
-        with associated host and zone.
-        Returns update function for the item (update_item())
+        return cmd string for "set mute"
         """
-        if 'yamahayxc_cmd' in item.conf:
-            yamaha_host = self._lookup_host(item)
-            self._add_host_info(yamaha_host)
-            yamaha_zone = self._lookup_zone(item)
-            self._yamaha_zone = yamaha_zone
-            yamaha_cmd = item.conf['yamahayxc_cmd'].lower()
-            if yamaha_cmd not in self._yamaha_cmds:
-                self.logger.warning("{} not in valid commands: {}".format(
-                    yamaha_cmd, self._yamaha_cmds))
-                return None
-            else:
-                try:
-                    self._yamaha_dev[yamaha_host][yamaha_cmd] = item
-                except KeyError:
-                    self._yamaha_dev[yamaha_host] = {}
-                    self._yamaha_dev[yamaha_host][yamaha_cmd] = item
+        if value is True:
+            cmdarg = 'true'
+        elif value is False:
+            cmdarg = 'false'
+        cmd = "v1/{}/setMute?enable={}".format(self._yamaha_zone, cmdarg)
+        return cmd
 
-            return self.update_item
-
-    def update_item(self, item, caller=None, source=None, dest=None):
+    def _build_cmd_playback(self, value, cmd="PUT"):
         """
-        recall function if item is modified in sh.py
+        return cmd string for "set playback"
 
-        Only for "write" commands: calls function to build cmd string
-        for given item and runs network query to execute cmd
-        In any case _update_state is called afterwards to update sh.py items
+        value is string and can be (for netusb)
+            - play
+            - stop
+            - pause
+            - play_pause (toggle)
+            - previous
+            - next
+            - fast_reverse_start
+            - fast_reverse_stop
+            - fast_forward_start
+            - fast_forward_stop
         """
-        if caller != "YamahaYXC":
-            yamaha_cmd = item.conf['yamahayxc_cmd']
-            yamaha_host = self._lookup_host(item)
-            yamaha_payload = None
+        cmd = "v1/netusb/setPlayback?playback={}".format(value)
+        return cmd
 
-            if yamaha_cmd == 'power':
-                yamaha_payload = self._power(item())
-            elif yamaha_cmd == 'volume':
-                yamaha_payload = self._volume(item())
-            elif yamaha_cmd == 'mute':
-                yamaha_payload = self._mute(item())
-            elif yamaha_cmd == 'input':
-                yamaha_payload = self._input(item())
-            elif yamaha_cmd == 'playback':
-                yamaha_payload = self._playback(item())
-            elif yamaha_cmd == 'preset':
-                yamaha_payload = self._preset(item())
-            elif yamaha_cmd == "sleep":
-                yamaha_payload = self._sleep(item())
-            elif yamaha_cmd == "alarm_on":
-                yamaha_payload = self._alarm_on(item())
-            elif yamaha_cmd == "alarm_time":
-                yamaha_payload = self._alarm_time(item())
-            elif yamaha_cmd == "alarm_beep":
-                yamaha_payload = self._alarm_beep(item())
-            elif yamaha_cmd == "passthru":
-                yamaha_payload = item()
-            # no more check for "update" or "state" -> after updating item
-            # _update_state is called in any way, would only duplicate update
-            if yamaha_payload:
-                self._submit_payload(yamaha_host, yamaha_payload)
-            self._update_state(yamaha_host)
-            return None
-
-    def _update_alarm_state(self, yamaha_host, update_items=True):
+    def _build_cmd_get_state(self):
         """
-        parses alarm status from query response 'state'
-
-        as alarm configuration is too complex to mirror in item configuration,
-        this is excluded from the loop in _update_state()
+        return cmd string for "get status" -> get general status for zone
         """
-        state = self._submit_payload(yamaha_host, self._get_alarm_state())
-        if state:
-            jstate = json.loads(state)["alarm"]
+        cmd = "v1/{}/getStatus".format(self._yamaha_zone)
+        return cmd
 
-            alarm_on = jstate["alarm_on"]
-            alarm_time = jstate["oneday"]["time"]
-            alarm_beep = jstate["oneday"]["beep"]
-
-            if update_items:
-                for yamaha_cmd, item in self._yamaha_dev[yamaha_host].items():
-                    if yamaha_cmd == "alarm_on":
-                        item(alarm_on, "YamahaYXC")
-                    if yamaha_cmd == "alarm_time":
-                        item(alarm_time, "YamahaYXC")
-                    if yamaha_cmd == "alarm_beep":
-                        item(alarm_beep, "YamahaYXC")
-
-        return
-
-    def _update_state(self, yamaha_host, update_items=True):
+    def _build_cmd_get_play_state(self):
         """
-        retrieve state from device via cmd _get_state and _get_play_state
+        return cmd string for "get playstatus" -> get playing status
 
-        As many items cannot be queried via yamahayxc by themselves, this
-        function simply sends two state update commands and flattens both
-        state replies into one flat dict (this is a kludge and does only work
-        with netusb and a single zone!!!1!!)
-        Then for all relevant commands suitable return values are extracted
-        and processed (items are updated)
-        Return None prematurely if no network response was received
-        Silently ignores invalid (None) values for commands
+        at the moment only netusb zone is supported, no other device to test
         """
-        state1 = self._submit_payload(yamaha_host, self._get_state())
-        if state1 is None:
-            return
-        state2 = self._submit_payload(yamaha_host, self._get_play_state())
-        ostate = json.loads(state1)
-        ostate.update(json.loads(state2))
+        cmd = "v1/netusb/getPlayInfo"
+        return cmd
 
-        state = json.dumps(ostate)
+    def _build_cmd_get_alarm_state(self):
+        """
+        return cmd string for "get alarm status" -> get alarm clock info
 
-        # retrieving only single items from device is not possible
-        # so just get everything and update sh.py items
-        if update_items:
-            for yamaha_cmd, item in self._yamaha_dev[yamaha_host].items():
-                # self.logger.debug(
-                #    "Updating cmd {} for item {}".format(yamaha_cmd, item))
-                if yamaha_cmd not in self._yamaha_ignore_cmds_upd:
-                    value = self._return_value(state, yamaha_cmd, yamaha_host)
-                    if value is not None:
-                        item(value, "YamahaYXC")
+        cmd will return empty result if alarm not supported
+        """
+        cmd = "v1/clock/getSettings"
+        return cmd
 
-        # try updating the alarm clock state
-        self._update_alarm_state(yamaha_host, update_items)
+    def _build_cmd_preset(self, value):
+        """
+        return cmd string for "set preset"
 
-        return state
+        value is integer preset index (1..)
+
+        at the moment only netusb zone is supported (see above)
+        """
+        cmd = "v1/netusb/recallPreset?zone=main&num={}".format(value)
+        return cmd
+
+    def _build_cmd_sleep(self, value, cmd='PUT'):
+        """
+        return cmd string for "set sleep"
+
+        volume is numeric 0 / 30 / 60 / 90 / 120 (minutes)
+        """
+        cmd = "v1/{}/setSleep?sleep={}".format(self._yamaha_zone, value)
+        return cmd
+
+    def _build_cmd_alarm_on(self, value, cmd='PUT'):
+        """
+        return cmd string for "switch alarm on/off"
+
+        value is bool
+        """
+        cmd = "v1/clock/setAlarmSettings"
+        data = json.dumps({"alarm_on": "true" if value else "false"})
+        return ([cmd, data])
+
+    def _build_cmd_alarm_time(self, value, cmd='PUT'):
+        """
+        return cmd string for "set alarm_time"
+
+        value is string in 4 digit 24 hour time, e.g. "1430"
+        """
+        cmd = "v1/clock/setAlarmSettings"
+        data = json.dumps({"detail": {"day": "oneday", "time": value}})
+        return ([cmd, data])
+
+    def _build_cmd_alarm_beep(self, value, cmd='PUT'):
+        """
+        return cmd string for "set alarm beep"
+
+        value is bool
+        """
+        cmd = "v1/clock/setAlarmSettings"
+        data = json.dumps({"detail": {"day": "oneday", "beep": "true" if value else "false"}})
+        return ([cmd, data])
