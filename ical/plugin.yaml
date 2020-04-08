@@ -20,7 +20,7 @@ plugin:
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1352089-support-thread-zum-ical-plugin
 
-    version: 1.5.2                 # Plugin version
+    version: 1.5.3                 # Plugin version
     sh_minversion: 1.5             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
@@ -91,11 +91,13 @@ plugin_functions:
         description_long:
             de: "Es wird ein dictionary mit einem datetime.date Objekt als Key und folgenden Arraywerten zurückgeliefert:\n
             die Event Startzeit, die Event Endzeit, die Eventkategorie (z.B. privat), die Eventzusammenfassung (z.B. die Notizen)\n
+            Start- und Endzeit werden durch das Plugin von der im Kalender verwendeten Zeitzone in die lokale smarthomeNG Zeitzone konvertiert.\n
             \n
             Wenn ein Kalender öfters verwendet werden soll, wird empfohlen, diesen in der etc/plugin.yaml zu konfigurieren.
             "
             en: "It returns a dictonary with a datetime.date object as key and an array including\n
             the event start time, the event end time, the event's class type (e.g. private calendar entry), the event's summary, i.e. content\n
+            The plugin converts start and end times from calendar based timezones in local smarthomeNG timezone.\n
             \n
             If you want to use a calendar more regularly it could be helpful to configure this calendar in the plugin configuration.
             "

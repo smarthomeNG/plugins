@@ -1,6 +1,9 @@
 # iCal
 
 ## Changelog
+1.5.3:
+- fixed conversion from calendar defined timezones in smarthomeNG configured timezone.
+
 1.5.2:
 - Use domain name as filename if no alias is defined
 - Parse calendars in plugin.yaml more robust
