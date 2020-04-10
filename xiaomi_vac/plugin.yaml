@@ -3,7 +3,7 @@ plugin:
     # Global plugin attributes
     type: gateway                  # plugin type (gateway, interface, protocol, system, web)
     description:                  # Alternative: description in multiple languages
-        de: 'Zugriff auf Xiaomi Saugroboter'
+        de: 'Zugriff und Steuern eines Xiaomi Saugroboter'
         en: 'Control the Xioami Vacuum Robot'
     maintainer: Bonze
     state: develop 
@@ -16,8 +16,6 @@ plugin:
     multi_instance: False          # plugin supports multi instance
     classname: Robvac                # class containing the plugin
     restartable: unknown
-    
-
 
 plugin_functions: NONE
     # Definition of plugin functions defined by this plugin (enter 'plugin_functions: NONE', if section should be empty)
@@ -29,15 +27,24 @@ logic_parameters: NONE
 
 # Definition of parameters to be configured in etc/plugin.yaml
 parameters:
-    ip: 
-        de: 'IP Adresse des Roboters '
-        en: 'IP Adress of the Vakuum'
-    read_cycle: 
-        de: 'Standart Zyklus 12'
-        en: 'default cycle time 12'
-    token: 
-        de: 'Token für die Kommunikation'
-        en: 'Token for Communication'  
+    ip:
+        type: ipv4
+        default: mandatory
+        description:
+            de: 'IP Adresse des Saug-Roboters '
+            en: 'IP Adress of the Vakuum Cleaner'
+    read_cycle:
+        type: int
+        default: 12
+        description:
+            de: 'Standart Zyklus zum Lesen der Paramter vom Gerät'
+            en: 'Default cycle time for reading'
+    token:
+        type: str
+        default: mandatory
+        description:
+            de: 'Token für die Kommunikation'
+            en: 'Token for Communication'  
         
 item_structs: #saugroboter
 saugroboter:
