@@ -35,7 +35,7 @@ from lib.model.smartplugin import SmartPlugin
 
 class CO2Meter(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.3.1"
+    PLUGIN_VERSION = "1.3.2"
 
     CO2METER_CO2 = 0x50
     CO2METER_TEMP = 0x42
@@ -47,8 +47,7 @@ class CO2Meter(SmartPlugin):
     _values = {}
     _file = ""
     _running = True
-
-    def __init__(self, smarthome, device="/dev/hidraw0", time_sleep=5):
+    def __init__(self, sh, *args, **kwargs):
         """
         Initalizes the plugin. The parameters described for this method are pulled from the entry in plugin.conf.
 
@@ -56,13 +55,14 @@ class CO2Meter(SmartPlugin):
         :param device: Path where the raw usb data is retreived from (default: /dev/hidraw0)
         :param time_sleep: The time in seconds to sleep after a multicast was received
         """
-        self._sh = smarthome
-        self.logger = logging.getLogger(__name__)
-        self._items = {}
-        self._time_sleep = int(time_sleep)
+        # Call init code of parent class (SmartPlugin or MqttPlugin)
+        super().__init__()
 
-        self._device = device
-        self._file = open(device, "a+b", 0)
+        self._items = {}
+        self._time_sleep = self.get_parameter_value('time_sleep')
+
+        self._device = self.get_parameter_value('device')
+        self._file = open(self.get_parameter_value('device'), "a+b", 0)
 
         set_report = [0] + self._key
         fcntl.ioctl(self._file, self.HIDIOCSFEATURE_9, bytearray(set_report))
