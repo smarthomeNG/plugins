@@ -124,7 +124,7 @@ class Enigma2(SmartPlugin):
     Main class of the Plugin. Does all plugin specific stuff and provides the update functions for the Enigma2Device
     """
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = "1.4.11"
+    PLUGIN_VERSION = "1.4.12"
 
     _url_suffix_map = dict([('about', '/web/about'),
                             ('deviceinfo', '/web/deviceinfo'),
@@ -145,8 +145,7 @@ class Enigma2(SmartPlugin):
     _key_event_information = ['current_eventtitle', 'current_eventdescription', 'current_eventdescriptionextended',
                               'e2servicereference', 'e2servicename']
 
-    def __init__(self, smarthome, username='', password='', host='dreambox', port='80', ssl='True', verify='False',
-                 cycle=300, fast_cycle=10):  # , device_id='enigma2'
+    def __init__(self, sh, *args, **kwargs):
         """
         Initalizes the plugin. The parameters describe for this method are pulled from the entry in plugin.conf.
 
@@ -158,24 +157,26 @@ class Enigma2(SmartPlugin):
         :param verify:             True or False => verification of SSL certificate
         :param cycle:              Update cycle in seconds
         """
-        # self.logger = logging.getLogger(__name__)
-        # self.logger.info('Init Enigma2 Plugin with device_id %s' % )
+        # Call init code of parent class (SmartPlugin or MqttPlugin)
+        super().__init__()
 
         self._session = requests.Session()
         self._timeout = 10
-        self._verify = self.to_bool(verify)
+        self._verify = self.to_bool(self.get_parameter_value('verify'))
 
-        ssl = self.to_bool(ssl)
+        ssl = self.to_bool(self.get_parameter_value('ssl'))
         if ssl and not self._verify:
             urllib3.disable_warnings()
 
-        self._enigma2_device = Enigma2Device(host, port, ssl, username, password)
+        self._enigma2_device = Enigma2Device(self.get_parameter_value('host'), self.get_parameter_value('port'),
+                                             self.get_parameter_value('ssl'), self.get_parameter_value('username'),
+                                             self.get_parameter_value('password'))
 
-        self._cycle = int(cycle)
-        self._fast_cycle = int(fast_cycle)
-        self._sh = smarthome
+        self._cycle = int(self.get_parameter_value('cycle'))
+        self._fast_cycle = int(self.get_parameter_value('fast_cycle'))
 
-        # Response Cache: Dictionary for storing the result of requests which is used for several different items, refreshed each update cycle. Please use distinct keys!
+        # Response Cache: Dictionary for storing the result of requests which is used for several different items,
+        # refreshed each update cycle. Please use distinct keys!
         self._response_cache = dict()
         self._response_cache_fast = dict()
 
@@ -183,8 +184,6 @@ class Enigma2(SmartPlugin):
         """
         Run method for the plugin
         """
-#        self._sh.scheduler.add(__name__, self._update_loop, cycle=self._cycle)
-#        self._sh.scheduler.add(__name__ + "_fast", self._update_loop_fast, cycle=self._fast_cycle)
         self.scheduler_add('update', self._update_loop, cycle=self._cycle)
         self.scheduler_add('update_fast', self._update_loop_fast, cycle=self._fast_cycle)
         self.alive = True
