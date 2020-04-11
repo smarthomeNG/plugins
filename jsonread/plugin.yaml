@@ -7,6 +7,7 @@ plugin:
         en: 'json parser plugin based on jq'
     maintainer: Torsten Dreyer
     tester: none (yet)
+    state: develop
     keywords: json
     documentation: http://smarthomeng.de/user/plugins_doc/config/not-yet.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/not-yet
@@ -39,4 +40,4 @@ item_attributes:
     # Definition of item attributes defined by this plugin
     jsonread_filter:
         type: str
-    
+

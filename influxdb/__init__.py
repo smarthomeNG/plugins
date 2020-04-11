@@ -26,7 +26,7 @@ from lib.model.smartplugin import SmartPlugin
 
 
 class InfluxDB(SmartPlugin):
-    PLUGIN_VERSION = "1.0.0"
+    PLUGIN_VERSION = "1.0.1"
     ALLOW_MULTIINSTANCE = False
 
     def __init__(self, smarthome, host='localhost', udp_port=8089, keyword='influxdb', tags={}, fields={}, value_field='value'):
@@ -34,7 +34,7 @@ class InfluxDB(SmartPlugin):
         self.logger.info('Init InfluxDB')
 
         self.host = host
-        self.udp_port = udp_port
+        self.udp_port = int(udp_port)
         self.keyword = keyword
         self.tags = tags
         self.fields = fields

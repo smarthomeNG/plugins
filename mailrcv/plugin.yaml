@@ -7,7 +7,7 @@ plugin:
         en: 'Receive emails via imap'
     maintainer: msinn
     tester: psilo909, onkelandy, Sandman60
-    state: develop
+    state: ready
 #    keywords: iot xyz
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
 #    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
@@ -66,7 +66,7 @@ parameters:
         description:
             de: 'Passwort für die Anmeldung am IMAP host'
             en: 'Password for login to the IMAP host'
-            
+
     trashfolder:
         type: str
         default: 'Trash'

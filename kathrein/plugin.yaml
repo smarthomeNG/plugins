@@ -7,7 +7,7 @@ plugin:
         en: 'Plugin to control Kathrein receiver'
     maintainer: bmxp
     tester: mayrjohannes, waldmeister68   # Who tests this plugin?
-    state: develop                  # change to ready when done with development
+    state: ready                    # change to ready when done with development
     keywords: kathrein receiver ufd
     documentation: https://github.com/smarthomeNG/smarthome/Kathrein/Readme.md        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py

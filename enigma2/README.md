@@ -210,7 +210,7 @@ enigma2:
             servicestream:
                 type: str
                 visu_acl: rw
-                eval: "'<a href=\"http://'+sh.vusolo2._enigma2_device._host+':'+sh.vusolo2._enigma2_device._port+'/web/stream.m3u?ref='+sh.enigma2.vusolo2.current.servicereference()+'\"><img class=\"ui-corner-all\" id=\"mjpgImage\" style=\"width:95%\" alt=\"Processing...\" src=\"http://'+sh.vusolo2._enigma2_device._host+':'+sh.vusolo2._enigma2_device._port+'/grab?format=png&r=720&'+sh.enigma2.vusolo2.current.servicereference()+'\"></a>'"
+                eval: "'<a href=\"http://'+sh.vusolo2._enigma2_device.get_host()+':'+str(sh.vusolo2._enigma2_device.get_port())+'/web/stream.m3u?ref='+sh.enigma2.vusolo2.current.servicereference()+'\"><img class=\"ui-corner-all\" id=\"mjpgImage\" style=\"width:95%\" alt=\"Processing...\" src=\"http://'+sh.vusolo2._enigma2_device.get_host()+':'+str(sh.vusolo2._enigma2_device.get_port())+'/grab?format=png&r=720&'+sh.enigma2.vusolo2.current.servicereference()+'\"></a>'"
                 eval_trigger:
                   - init
                   - enigma2.vusolo2.current.servicereference

@@ -423,3 +423,12 @@ item_attributes:
                 '
             en: 'When set to True, the MQTT message is sent with the retain flag set.\n
                 '
+
+item_structs: NONE
+  # Definition of item-structure templates for this plugin
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin
+
+plugin_functions:
+    # Definition of function interface of the plugin
