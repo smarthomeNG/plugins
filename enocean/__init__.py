@@ -168,17 +168,18 @@ class EnOcean(SmartPlugin):
     PLUGIN_VERSION = "1.3.4"
 
     
-    def __init__(self, smarthome, serialport, tx_id=''):
-        self._sh = smarthome
-        self.port = serialport
+    def __init__(self, sh, *args, **kwargs):
+        self._sh = sh
+        self.port = self.get_parameter_value("serialport")
         self.logger = logging.getLogger(__name__)
+        tx_id = self.get_parameter_value("tx_id")
         if (len(tx_id) < 8):
             self.tx_id = 0
             self.logger.warning('enocean: No valid enocean stick ID configured. Transmitting is not supported')
         else:
             self.tx_id = int(tx_id, 16)
             self.logger.info('enocean: Stick TX ID configured via plugin.conf to: {0}'.format(tx_id))
-        self._tcm = serial.Serial(serialport, 57600, timeout=0.5)
+        self._tcm = serial.Serial(self.port, 57600, timeout=0.5)
         self._cmd_lock = threading.Lock()
         self._response_lock = threading.Condition()
         self._rx_items = {}
