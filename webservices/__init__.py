@@ -39,6 +39,10 @@ class WebServices(SmartPlugin):
 
     def __init__(self, sh, *args, **kwargs):
         self.logger.debug("Plugin '{}': '__init__'".format(self.get_fullname()))
+
+        # Call init code of parent class (SmartPlugin or MqttPlugin)
+        super().__init__()
+
         self._mode = self.get_parameter_value('mode')
         self.items = Items.get_instance()
 
