@@ -17,6 +17,9 @@ NOTE: The library libnodave runs only on 32-bit machines!!
 Version 1.2.1
 The version is not tested with new multi-instance functionality of SmartHomeNG.
 
+There is a new plugin in development which uses snap7. Details can be found 
+in support thread at https://knx-user-forum.de/forum/supportforen/smarthome-py/36372-plugin-siemens-logo-0ba7
+
 ## Supported Hardware
 
 Siemens LOGO version 0BA7
