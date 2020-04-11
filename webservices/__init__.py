@@ -37,9 +37,9 @@ class WebServices(SmartPlugin):
     PLUGIN_VERSION = '1.5.0.5'
     ALLOWED_FOO_PATHS = ['env.location.moonrise', 'env.location.moonset', 'env.location.sunrise', 'env.location.sunset']
 
-    def __init__(self, smarthome, mode="all"):
+    def __init__(self, sh, *args, **kwargs):
         self.logger.debug("Plugin '{}': '__init__'".format(self.get_fullname()))
-        self._mode = mode
+        self._mode = self.get_parameter_value('mode')
         self.items = Items.get_instance()
 
         if not self.init_webinterfaces():
