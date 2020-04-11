@@ -47,6 +47,7 @@ class CO2Meter(SmartPlugin):
     _values = {}
     _file = ""
     _running = True
+
     def __init__(self, sh, *args, **kwargs):
         """
         Initalizes the plugin. The parameters described for this method are pulled from the entry in plugin.conf.
