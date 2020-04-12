@@ -34,6 +34,7 @@ parameters:
             en: 'specifies the connection parameters which is directly used to invoke the connect() function of the DB API 2 implementation (for SQLite lookup here, other databases depends on implementation). An example connect string for pymysql could be connect = host:127.0.0.1 | user:db_user | passwd:db_password | db:smarthome'
     prefix:
         type: str
+        default: ''
         description:
             de: 'Enthält ein Prefix welches vor die Datenbanktabellen des Plugins geschrieben wird'
             en: "if you want to log into an existing database with other tables you can specify a prefix for the plugins' tables"
