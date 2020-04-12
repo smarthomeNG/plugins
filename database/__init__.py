@@ -88,7 +88,8 @@ class Database(SmartPlugin):
         self._dump_cycle = self.get_parameter_value('cycle')
         self._precision = self.get_parameter_value('precision')
         self._name = self.get_instance_name()
-        self._replace = {table: table if self.get_parameter_value('prefix') == "" else self.get_parameter_value(
+        self._replace = {table: table if (self.get_parameter_value('prefix') == "" or self.get_parameter_value(
+            'prefix') is None) else self.get_parameter_value(
             'prefix') + "_" + table for table in ["log", "item"]}
         self._replace['item_columns'] = ", ".join(COL_ITEM)
         self._replace['log_columns'] = ", ".join(COL_LOG)
@@ -96,14 +97,16 @@ class Database(SmartPlugin):
         self._buffer_lock = threading.Lock()
         self._dump_lock = threading.Lock()
 
-        self._db = lib.db.Database(("" if self.get_parameter_value('prefix') == "" else self.get_parameter_value(
+        self._db = lib.db.Database(("" if (self.get_parameter_value('prefix') == "" or self.get_parameter_value(
+            'prefix') is None) else self.get_parameter_value(
             'prefix').capitalize() + "_") + "Database", self.get_parameter_value('driver'),
                                    Utils.string_to_list(self.get_parameter_value('connect')))
         self._initialized = False
         self._initialize()
 
         self.scheduler_add('Database dump ' + self._name + (
-            "" if self.get_parameter_value('prefix') == "" else " [" + self.get_parameter_value('prefix') + "]"),
+            "" if (self.get_parameter_value('prefix') == "" or self.get_parameter_value(
+                'prefix') is None) else " [" + self.get_parameter_value('prefix') + "]"),
                            self._dump, cycle=self._dump_cycle, prio=5)
 
         self.init_webinterface()
