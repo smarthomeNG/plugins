@@ -1,0 +1,97 @@
+# Metadata for the plugin
+plugin:
+    # Global plugin attributes
+    type: interface                # plugin type (gateway, interface, protocol, system, web)
+    description:
+        de: 'Plugin zur Steuerung von Amazon Echo Geräten Zugriff via Web-Browser API und Cookie'
+        en: 'Plugin to remote control Echo Show/Spot/Fire'
+    maintainer: AndreK
+    tester: henfri, juergen, psilo
+    documentation: https://github.com/Andrek01  # url of documentation (wiki) page    
+    version: 1.0.2                              # Plugin version
+    sh_minversion: 1.5.2                        # minimum shNG version to use this plugin
+    multi_instance: False                       # plugin supports multi instance
+    classname: AlexaRc4shNG                     # class containing the plugin
+    keywords: Alexa Amazon Remote Control
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1336416-alexa-text-to-speach
+    state: develop                   # State of the Plugin
+    restartable: True                # Plugin is restartable 
+
+plugin_functions:
+    # Definition of function interface of the plugin
+
+    send_cmd:
+        type: str
+        description:
+            de: "Sendet einen Befehl an Alexa."
+            en: "Sends a command to Alexa."
+        parameters:
+            dvName:
+                type: str
+                description:
+                    de: "Name des Alexa Devices."
+                    en: "Name of Alexa device."
+            cmdName:
+                type: str
+                description:
+                    de: "Name des Befehls, z.b. Text2Speech."
+                    en: "Name of command, e.g. Text2Speech."
+            mValue:
+                type: str
+                description:
+                    de: "Wert, der gesendet werden soll, numerische Werte ohne Hochkomma als Zahl"
+                    en: "Value to send, numeric Values without Quotes as Num"
+
+    get_last_alexa:
+        type: str
+        description:
+            de: "Liefert die Geräte-ID des zuletzt verwendeten Alexa-Gerätes zurück"
+            en: "delivers the Device-ID of the last used Alexa-Device"
+
+logic_parameters: NONE               # No logic parameters for this plugin
+item_structs: NONE                   # no item structure needed
+item_attributes:
+    # Definition of item attributes defined by this plugin
+    alexa_cmd_XX:
+        type: str
+        mandatory: True
+        description:
+            de: 'String um die Befehle zu definieren'
+            en: 'string to define orders'  
+
+parameters:
+    # Definition of parameters to be configured in etc/plugin.yaml
+    cookiefile:
+        type: str
+        default: ''
+        description:
+            de: 'Cookiefile mit komplettem Pfad'
+            en: 'Cookiefile with complete path'
+    host:
+        type: str
+        default: 'alexa.amazon.de'
+        description:
+            de: 'Amazon-Host z.b. alexa.amazon.de ohne Protokoll (https)'
+            en: 'Amazon-Host a.e. alexa.amazon.de without protocoll (https)'
+
+    item_2_enable_alexa_rc:
+        type: str
+        default: ''
+        description:
+            de: 'Ein Item welches verwendet wird um die Freigabe für die Kommunikation zu erteilen (USZU)'
+            en: 'An Item to give the plugin permission to remote control the echo-devices (USZU)'
+
+    alexa_credentials:
+        type: str
+        default: ''
+        description:
+            de: 'Zugangsdaten für das Amazon-Alexa-Web-Site <USER>:<PWD>, base64 encodiert'
+            en: 'credentials for the amazon-alexa-website <USER>:<PWD>, base64 encoded'
+
+    login_update_cycle:
+        type: num
+        default: 432000
+        description:
+            de: 'Sekunden bis zum automatischen refreshen des Cookie-files'
+            en: 'seconds till the next automatic login to get a new cookie'
+
