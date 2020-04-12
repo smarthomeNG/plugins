@@ -58,7 +58,7 @@ class RCswitch(SmartPlugin):
 		if (rcswitch_host and (self.is_hostname(rcswitch_host) or self.is_ipv4(rcswitch_host))):
 			# then check if user defined its own local host -> error
 			if ((rcswitch_host == gethostname()) or (rcswitch_host == '127.0.0.1')):
-				self.logger.error('RCswitch: rcswitch_host is defined as your own machine, not the remote adress! Please check the parameter rcswitch_host, >>{}<< seems to be not correct!'.format(rcswitch_host))
+				self.logger.error('RCswitch: rcswitch_host is defined as your own machine, not the remote address! Please check the parameter rcswitch_host, >>{}<< it seems to be not correct!'.format(rcswitch_host))
 
 			#check connection to remote host and accept fingerprint
 			try:
