@@ -12,13 +12,14 @@ import sys
 action_func_registry = []
 
 # action-func decorator
-def alexa(action_name, directive_type, response_type, namespace, properties ):
+def alexa(action_name, directive_type, response_type, namespace, properties,payload_version ):
     def store_metadata(func):
         func.alexa_action_name = action_name
         func.alexa_directive_type = directive_type
         func.alexa_response_type = response_type
         func.alexa_namespace = namespace
         func.alexa_properties = properties
+        func.alexa_payload_version = payload_version
 
         action_func_registry.append( func )
         return func
@@ -31,7 +32,7 @@ class AlexaActions(object):
         self.actions_by_directive = {}
         for func in action_func_registry:
             logger.debug("Alexa: initializing action {}".format(func.alexa_action_name))
-            action = AlexaAction(sh, logger, devices, func, func.alexa_action_name, func.alexa_directive_type, func.alexa_response_type,func.alexa_namespace, func.alexa_properties)
+            action = AlexaAction(sh, logger, devices, func, func.alexa_action_name, func.alexa_directive_type, func.alexa_response_type,func.alexa_namespace, func.alexa_properties,func.alexa_payload_version)
             self.actions[action.name] = action
             self.actions_by_directive[action.directive_type] = action
 
@@ -44,7 +45,7 @@ class AlexaActions(object):
     
 
 class AlexaAction(object):
-    def __init__(self, sh, logger, devices, func, action_name, directive_type, response_type, namespace,properties):
+    def __init__(self, sh, logger, devices, func, action_name, directive_type, response_type, namespace,properties,payload_version):
         self.sh = sh
         self.logger = logger
         self.devices = devices
@@ -56,6 +57,7 @@ class AlexaAction(object):
         self.namespace = namespace
         self.response_Value = None
         self.properties = properties
+        self.payload_version = payload_version
 
     def __call__(self, payload):
         return self.func(self, payload)
@@ -162,7 +164,6 @@ class AlexaAction(object):
         return orgDirective
     
     def p3_respond(self, Request):
-        
         myEndpoint = self.search(Request,'endpoint')
         myScope = self.search(Request,'scope')
         myEndPointID = self.search(Request,'endpointId')
