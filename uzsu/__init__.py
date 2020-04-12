@@ -490,8 +490,11 @@ class UZSU(SmartPlugin):
         _value = None
         self._update_sun(item, caller='schedule')
         if self._items[item].get('interpolation') is None:
-            self.logger.error("Something is wrong with your UZSU item. You most likely use a wrong smartVISU widget version! Use the latest device.uzsu from SV 2.9")
-        if not self._items[item]['interpolation'].get('itemtype'):
+            self.logger.error("Something is wrong with your UZSU item. You most likely use a wrong smartVISU widget version!"
+                              " Use the latest device.uzsu from SV 2.9. "
+                              "If you write your uzsu dict directly please use the format given in the documentation: "
+                              "https://www.smarthomeng.de/user/plugins/uzsu/user_doc.html and include the interpolation array correctly!")
+        elif not self._items[item]['interpolation'].get('itemtype'):
             self.logger.error("item '{}' to be set by uzsu does not exist.".format(
                 self.get_iattr_value(item.conf, ITEM_TAG[0])))
         elif not self._items[item].get('list') and self._items[item].get('active') is True:
