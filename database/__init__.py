@@ -85,8 +85,8 @@ class Database(SmartPlugin):
         self.shtime = Shtime.get_instance()
         self.items = Items.get_instance()
         # driver, connect, prefix="", cycle=60, precision=2
-        self._dump_cycle = int(self.get_parameter_value('cycle'))
-        self._precision = int(self.get_parameter_value('precision'))
+        self._dump_cycle = self.get_parameter_value('cycle')
+        self._precision = self.get_parameter_value('precision')
         self._name = self.get_instance_name()
         self._replace = {table: table if self.get_parameter_value('prefix') == "" else self.get_parameter_value(
             'prefix') + "_" + table for table in ["log", "item"]}
