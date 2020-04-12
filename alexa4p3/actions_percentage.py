@@ -18,7 +18,7 @@ def clamp_percentage(percent, range):
     _min, _max = range
     return min(_max, max(_min, percent))
     
-@alexa('setPercentage', 'SetPercentageRequest', 'SetPercentageConfirmation','',[])
+@alexa('setPercentage', 'SetPercentageRequest', 'SetPercentageConfirmation','',[],"2")
 def set_percentage(self, payload):
     device_id = payload['appliance']['applianceId']
     items = self.items(device_id)
@@ -32,7 +32,7 @@ def set_percentage(self, payload):
 
     return self.respond()
 
-@alexa('incrementPercentage', 'IncrementPercentageRequest', 'IncrementPercentageConfirmation','',[])
+@alexa('incrementPercentage', 'IncrementPercentageRequest', 'IncrementPercentageConfirmation','',[],"2")
 def incr_percentage(self, payload):
     device_id = payload['appliance']['applianceId']
     items = self.items(device_id)
@@ -49,7 +49,7 @@ def incr_percentage(self, payload):
 
     return self.respond()
 
-@alexa('decrementPercentage', 'DecrementPercentageRequest', 'DecrementPercentageConfirmation','',[])
+@alexa('decrementPercentage', 'DecrementPercentageRequest', 'DecrementPercentageConfirmation','',[],"2")
 def decr_percentage(self, payload):
     device_id = payload['appliance']['applianceId']
     items = self.items(device_id)
