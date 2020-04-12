@@ -1,0 +1,10 @@
+plugin_translations:
+    # Translations for the plugin specially for the web interface
+    'vorgegebene Zykluszeit':         {'de': '=', 'en': 'Defined cycle time'}
+    'Verbunden':                      {'de': '=', 'en': 'Connected'}
+    'Wert':                           {'de': '=', 'en': 'Value'}
+    'Typ':                            {'de': '=', 'en': 'Type'}
+    'Visu Zugriff':                   {'de': '=', 'en': 'Visu Access'}
+    'Host':                           {'de': '=', 'en': '='}
+    'Token':                          {'de': '=', 'en': '='}
+    'Item':                           {'de': '=', 'en': '='}
