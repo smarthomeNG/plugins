@@ -60,7 +60,7 @@ COL_LOG_CHANGED = 6
 
 class Database(SmartPlugin):
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = '1.5.8'
+    PLUGIN_VERSION = '1.5.9'
 
     # SQL queries: {item} = item table name, {log} = log table name
     # time, item_id, val_str, val_num, val_bool, changed
@@ -78,28 +78,33 @@ class Database(SmartPlugin):
         '6': ["CREATE INDEX {item}_name ON {item} (name);", "DROP INDEX {item}_name;"]
     }
 
-    def __init__(self, smarthome, driver, connect, prefix="", cycle=60, precision=2):
-        self._sh = smarthome
+    def __init__(self, sh, *args, **kwargs):
+        # Call init code of parent class (SmartPlugin or MqttPlugin)
+        super().__init__()
+
         self.shtime = Shtime.get_instance()
         self.items = Items.get_instance()
-
-        self._dump_cycle = int(cycle)
-        self._precision = int(precision)
+        # driver, connect, prefix="", cycle=60, precision=2
+        self._dump_cycle = int(self.get_parameter_value('cycle'))
+        self._precision = int(self.get_parameter_value('precision'))
         self._name = self.get_instance_name()
-        self._replace = {table: table if prefix == "" else prefix + "_" + table for table in ["log", "item"]}
+        self._replace = {table: table if self.get_parameter_value('prefix') == "" else self.get_parameter_value(
+            'prefix') + "_" + table for table in ["log", "item"]}
         self._replace['item_columns'] = ", ".join(COL_ITEM)
         self._replace['log_columns'] = ", ".join(COL_LOG)
         self._buffer = {}
         self._buffer_lock = threading.Lock()
         self._dump_lock = threading.Lock()
 
-        self._db = lib.db.Database(("" if prefix == "" else prefix.capitalize() + "_") + "Database", driver,
-                                   Utils.string_to_list(connect))
+        self._db = lib.db.Database(("" if self.get_parameter_value('prefix') == "" else self.get_parameter_value(
+            'prefix').capitalize() + "_") + "Database", self.get_parameter_value('driver'),
+                                   Utils.string_to_list(self.get_parameter_value('connect')))
         self._initialized = False
         self._initialize()
 
-        smarthome.scheduler.add('Database dump ' + self._name + ("" if prefix == "" else " [" + prefix + "]"),
-                                self._dump, cycle=self._dump_cycle, prio=5)
+        self.scheduler_add('Database dump ' + self._name + (
+            "" if self.get_parameter_value('prefix') == "" else " [" + self.get_parameter_value('prefix') + "]"),
+                           self._dump, cycle=self._dump_cycle, prio=5)
 
         self.init_webinterface()
         return
@@ -150,7 +155,7 @@ class Database(SmartPlugin):
             start = self._timestamp(item.prev_change())
             end = self._timestamp(item.last_change())
             last = None if len(self._buffer[item]) == 0 or self._buffer[item][-1][1] is not None else \
-            self._buffer[item][-1]
+                self._buffer[item][-1]
             if last:  # update current value with duration
                 self._buffer[item][-1] = (last[0], end - start, last[2])
             else:  # append new value with none duration
@@ -226,7 +231,7 @@ class Database(SmartPlugin):
         params.update(self._item_value_tuple(it, val))
         self._execute(self._prepare(
             "UPDATE {item} SET time = :time, val_str = :val_str, val_num = :val_num, val_bool = :val_bool, changed = :changed WHERE id = :id;"),
-                      params, cur=cur)
+            params, cur=cur)
 
     def readItem(self, id, cur=None):
         params = {'id': id}
@@ -247,14 +252,14 @@ class Database(SmartPlugin):
         params.update(self._item_value_tuple(it, val))
         self._execute(self._prepare(
             "INSERT INTO {log}(item_id, time, val_str, val_num, val_bool, duration, changed) VALUES (:id,:time,:val_str,:val_num,:val_bool,:duration,:changed);"),
-                      params, cur=cur)
+            params, cur=cur)
 
     def updateLog(self, id, time, duration=0, val=None, it=None, changed=None, cur=None):
         params = {'id': id, 'time': time, 'changed': changed, 'duration': duration}
         params.update(self._item_value_tuple(it, val))
         self._execute(self._prepare(
             "UPDATE {log} SET duration = :duration, val_str = :val_str, val_num = :val_num, val_bool = :val_bool, changed = :changed WHERE item_id = :id AND time = :time;"),
-                      params, cur=cur)
+            params, cur=cur)
 
     def readLog(self, id, time, cur=None):
         params = {'id': id, 'time': time}
@@ -465,9 +470,9 @@ class Database(SmartPlugin):
         queries = {
             'avg': 'MIN(time), ' + self._precision_query('AVG(val_num * duration) / AVG(duration)'),
             'avg.order': 'ORDER BY time ASC',
-            'integrate' : 'MIN(time), SUM(val_num * duration)',
+            'integrate': 'MIN(time), SUM(val_num * duration)',
             'count': 'MIN(time), SUM(CASE WHEN val_num{op}{value} THEN 1 ELSE 0 END)'.format(**expression['params']),
-            'countall' : 'MIN(time), COUNT(*)',
+            'countall': 'MIN(time), COUNT(*)',
             'min': 'MIN(time), MIN(val_num)',
             'max': 'MIN(time), MAX(val_num)',
             'on': 'MIN(time), ' + self._precision_query('SUM(val_bool * duration) / SUM(duration)'),
@@ -515,9 +520,9 @@ class Database(SmartPlugin):
         func, expression = self._expression(func)
         queries = {
             'avg': self._precision_query('AVG(val_num * duration) / AVG(duration)'),
-            'integrate' : 'SUM(val_num * duration)',
+            'integrate': 'SUM(val_num * duration)',
             'count': 'SUM(CASE WHEN val_num{op}{value} THEN 1 ELSE 0 END)'.format(**expression['params']),
-            'countall' : 'COUNT(*)',
+            'countall': 'COUNT(*)',
             'min': 'MIN(val_num)',
             'max': 'MAX(val_num)',
             'on': self._precision_query('SUM(val_bool * duration) / SUM(duration)'),
@@ -832,7 +837,7 @@ class WebInterface(SmartPluginWebIf):
                 log_array.append(value_dict)
             reversed_arr = log_array[::-1]
             csv_file_path = '%s/var/db/%s_item_%s.csv' % (
-            self.plugin._sh.base_dir, self.plugin.get_instance_name(), item_id)
+                self.plugin._sh.base_dir, self.plugin.get_instance_name(), item_id)
 
             with open(csv_file_path, 'w', encoding='utf-8') as f:
                 writer = csv.writer(f, dialect="excel")
