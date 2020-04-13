@@ -25,7 +25,7 @@ plugin:
         en: 'pyserial python module'
     maintainer: onkelandy
     tester: Foxi352                     # Who tests this plugin?
-    state: develop
+    state: ready
 
     keywords: av denon pioneer epson oppo player amp receiver projector rs232 telnet tcpip remote control
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page

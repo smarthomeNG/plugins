@@ -6,8 +6,8 @@ plugin:
         de: 'Plugin zur Steuerung von Shelly Devices, welches das MQTT Module von SmartHomeNG zur Kommunikation nutzt.'
         en: 'Plugin to control Shelly devices which utilizes the MQTT module of SmartHomeNG for communication'
     maintainer: msinn
-#    tester:                         # Who tests this plugin?
-    state: develop                  # change to ready when done with development
+    tester: msinn                  # Who tests this plugin?
+    state: ready                   # change to ready when done with development
     keywords: iot
 #    documentation: http://smarthomeng.de/user/plugins/mqtt2/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1451853-support-thread-für-das-shelly-plugin
@@ -19,7 +19,7 @@ plugin:
     restartable: unknown
     classname: Shelly              # class containing the plugin
 
-parameters:
+parameters: NONE
     # Definition of parameters to be configured in etc/plugin.yaml (enter 'parameters: NONE', if section should be empty)
 
 item_attributes:
@@ -69,12 +69,12 @@ item_attributes:
             de: "Nummer des zu schaltenden Relais"
             en: "Number of the relay to use for switching"
 
-item_structs:
+item_structs: NONE
     # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
 
-plugin_functions:
+plugin_functions: NONE
     # Definition of plugin functions defined by this plugin (enter 'plugin_functions: NONE', if section should be empty)
 
-logic_parameters:
+logic_parameters: NONE
     # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)
 

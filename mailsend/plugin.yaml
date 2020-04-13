@@ -7,7 +7,7 @@ plugin:
         en: 'Send emails via smtp. This plugin allows to send emails from logics by calling a function.'
     maintainer: msinn
     tester: psilo909, onkelandy, Sandman60
-    state: develop
+    state: ready
 #    keywords: iot xyz
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
 #    support: https://knx-user-forum.de/forum/supportforen/smarthome-py

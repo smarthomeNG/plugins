@@ -34,12 +34,16 @@ from lib.module import Modules
 
 
 class WebServices(SmartPlugin):
-    PLUGIN_VERSION = '1.5.0.5'
+    PLUGIN_VERSION = '1.6.0'
     ALLOWED_FOO_PATHS = ['env.location.moonrise', 'env.location.moonset', 'env.location.sunrise', 'env.location.sunset']
 
-    def __init__(self, smarthome, mode="all"):
+    def __init__(self, sh, *args, **kwargs):
         self.logger.debug("Plugin '{}': '__init__'".format(self.get_fullname()))
-        self._mode = mode
+
+        # Call init code of parent class (SmartPlugin or MqttPlugin)
+        super().__init__()
+
+        self._mode = self.get_parameter_value('mode')
         self.items = Items.get_instance()
 
         if not self.init_webinterfaces():

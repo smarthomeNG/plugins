@@ -7,7 +7,7 @@ plugin:
         en: 'Supports eBus heating systems (e.g. Vailant, Wolf, Kromschroeder) - The plugin connects to a ebusd damon (http://www.cometvisu.de/wiki/Ebusd) which is communicating with eBus heatings. Requirements: running ebusd deamon on the network (note: ebusd also requires an ebus-interface)'
     maintainer: '? (msinn)'
     tester: Sandman60
-    state: develop
+    state: ready
 #    keywords: kwd1 kwd2            # keywords, where applicable
 #    documentation: https://github.com/smarthomeNG/plugins/blob/develop/mqtt/README.md        # url of documentation (wiki) page
 #    support: https://knx-user-forum.de/forum/supportforen/smarthome-py

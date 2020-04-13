@@ -36,7 +36,7 @@ parameters:
             de: 'Netzwerverbindung: Hostname/IP des KWL Systems'
             en: 'Network connection: Hostname/IP of KWL system'
     port:
-        type: num
+        type: int
         description:
             de: 'Netzwerkverbindung: Port des KWL Systems'
             en: 'Network connection: Port of KWL system'

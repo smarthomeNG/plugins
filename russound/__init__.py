@@ -178,7 +178,7 @@ class Russound(SmartPlugin,lib.connection.Client):
         if self.alive and caller != self.get_shortname():
             # code to execute if the plugin is not stopped
             # and only, if the item has not been changed by this this plugin:
-            self.logger.info("Update item: {}, item has been changed outside this plugin".format(item.id()))
+            self.logger.info("Update item: {}, item has been changed outside this plugin (caller={}, source={}, dest={})".format(item.id(),caller, source, dest))
 
             if self.has_iattr(item.conf, 'rus_path'):
                 path = self.get_iattr_value(item.conf, 'rus_path')
@@ -282,7 +282,7 @@ class Russound(SmartPlugin,lib.connection.Client):
                     path = '{0}.{1}.{2}'.format(c, z, cmd)
                     if path in list(self.params.keys()):
                         self.params[path]['item'](
-                            self._decode(cmd, value), 'Russound')
+                            self._decode(cmd, value), self.get_shortname())
                 elif resp.startswith('System.status'):
                     return
                 elif resp[0] == 'S':
@@ -295,7 +295,7 @@ class Russound(SmartPlugin,lib.connection.Client):
 #                    if s in self.sources.keys():
 #                        for child in self.sources[s]['item'].return_children():
 #                            if str(child).lower() == cmd.lower():
-#                                child(unicode(value, 'utf-8'), 'Russound')
+#                                child(unicode(value, 'utf-8'), self.get_shortname())
                     return
         except Exception as e:
             self.logger.error(e)

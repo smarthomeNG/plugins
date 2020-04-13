@@ -6,7 +6,7 @@ def clamp_temp(temp, range):
     _min, _max = range
     return min(_max, max(_min, temp))
 
-@alexa('setTargetTemperature', 'SetTargetTemperatureRequest', 'SetTargetTemperatureConfirmation','',[])
+@alexa('setTargetTemperature', 'SetTargetTemperatureRequest', 'SetTargetTemperatureConfirmation','',[],"2")
 def set_target_temp(self, payload):
     device_id = payload['appliance']['applianceId']
     items = self.items(device_id)
@@ -39,7 +39,7 @@ def set_target_temp(self, payload):
         }
     })
 
-@alexa('incrementTargetTemperature', 'IncrementTargetTemperatureRequest', 'IncrementTargetTemperatureConfirmation','',[])
+@alexa('incrementTargetTemperature', 'IncrementTargetTemperatureRequest', 'IncrementTargetTemperatureConfirmation','',[],"2")
 def incr_target_temp(self, payload):
     device_id = payload['appliance']['applianceId']
     items = self.items(device_id)
@@ -73,7 +73,7 @@ def incr_target_temp(self, payload):
         }
     })
 
-@alexa('decrementTargetTemperature', 'DecrementTargetTemperatureRequest', 'DecrementTargetTemperatureConfirmation','',[])
+@alexa('decrementTargetTemperature', 'DecrementTargetTemperatureRequest', 'DecrementTargetTemperatureConfirmation','',[],"2")
 def decr_target_temp(self, payload):
     device_id = payload['appliance']['applianceId']
     items = self.items(device_id)

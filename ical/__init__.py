@@ -23,6 +23,10 @@ import logging
 import datetime
 import os
 import errno
+import re
+#from datetime import timezone, timedelta
+from datetime import timezone
+
 
 import dateutil.tz
 import dateutil.rrule
@@ -34,7 +38,7 @@ from bin.smarthome import VERSION
 
 
 class iCal(SmartPlugin):
-    PLUGIN_VERSION = "1.5.2"
+    PLUGIN_VERSION = "1.5.4"
     ALLOW_MULTIINSTANCE = False
     DAYS = ("MO", "TU", "WE", "TH", "FR", "SA", "SU")
     FREQ = ("YEARLY", "MONTHLY", "WEEKLY", "DAILY", "HOURLY", "MINUTELY", "SECONDLY")
@@ -56,6 +60,7 @@ class iCal(SmartPlugin):
             cycle = self.get_parameter_value('cycle')
             calendars = self.get_parameter_value('calendars')
             config_dir = self.get_parameter_value('directory')
+            self.handle_login = self.get_parameter_value('handle_login')
         except Exception as err:
             self.logger.error('Problems initializing: {}'.format(err))
             self._init_complete = False
@@ -79,10 +84,10 @@ class iCal(SmartPlugin):
             if ':' in calendar and 'http' != calendar[:4]:
                 name, _, cal = calendar.partition(':')
                 calendar = cal.strip()
-                self.logger.info('Registering calendar {} with alias {}.'.format(calendar, name))
+                self.logger.info('Registering calendar {} with alias {}.'.format(self._clean_uri(calendar), name))
                 self._ical_aliases[name.strip()] = calendar
             else:
-                self.logger.info('Registering calendar {} without alias.'.format(calendar))
+                self.logger.info('Registering calendar {} without alias.'.format(self._clean_uri(calendar)))
             calendar = calendar.strip()
             self._icals[calendar] = self._read_events(calendar)
 
@@ -151,7 +156,7 @@ class iCal(SmartPlugin):
     def _update_calendars(self):
         for uri in self._icals:
             self._icals[uri] = self._read_events(uri)
-            self.logger.debug('Updated calendar {0}'.format(uri))
+            self.logger.debug('Updated calendar {0}'.format(self._clean_uri(uri)))
 
         if len(self._icals):
             self._update_items()
@@ -220,18 +225,44 @@ class iCal(SmartPlugin):
 
         return self._parse_ical(ical, ics, prio)
 
+    #parse different date formats used in google calendar. Timezone is either coded in time field cointaining ('T') or in separate TZID field.
     def _parse_date(self, val, dtzinfo, par=''):
-        if par.startswith('TZID='):
-            tmp, par, timezone = par.partition('=')
+
         if 'T' in val:  # ISO datetime
             val, sep, off = val.partition('Z')
             dt = datetime.datetime.strptime(val, "%Y%m%dT%H%M%S")
+            # 'Z' indicates 'Zulu', thus UTC time, therefore specify time zone utc:
+            dt = dt.replace(tzinfo=datetime.timezone.utc)
+
+        # the following condition occurs for complete day schedules. They do not have the 'T' lettre in start/end times. 
         else:  # date
             y = int(val[0:4])
             m = int(val[4:6])
             d = int(val[6:8])
             dt = datetime.datetime(y, m, d)
-        dt = dt.replace(tzinfo=dtzinfo)
+            # Using timestamp configured in smarthome as reference for all complete day timestamps:
+            dt = dt.replace(tzinfo=dtzinfo)
+
+        # handling of series calendar entries:
+        if par.startswith('TZID='):
+            tmp, par, timezoneFromCalendar = par.partition('=')
+            #self.logger.debug('Decoding series entry with time zone: {0}'.format(timezoneFromCalendar))
+            #self.logger.debug('Datetime before conversion: {0}'.format(dt))
+
+            calendar_tz = dateutil.tz.gettz(timezoneFromCalendar)
+            
+            dt = dt.replace(tzinfo=calendar_tz)
+
+            #self.logger.debug('Datetime after conversion for series entries: {}'.format(dt))
+
+        # convert all time stamps to local timezone, configured in smarthome
+        dt = dt.astimezone(self.sh.tzinfo())
+        #self.logger.debug('Datetime after final conversion in plugin ical: {}'.format(dt))
+
+        
+        #convert time based on time zone info which has been extracted on a higher level:
+        #dt = dt.astimezone(dtzinfo)
+        
         return dt
 
     def _parse_ical(self, ical, ics, prio):
@@ -276,14 +307,16 @@ class iCal(SmartPlugin):
                 key, sep, val = line.partition(':')
                 key, sep, par = key.partition(';')
                 key = key.upper()
+                # why does the folowing code overwrite the time zone info configured in smarthomeNG?
                 if key == 'TZID':
                     tzinfo = dateutil.tz.gettz(val)
+                    self.logger.warning('Debug time zone: {0}'.format(val))
                 elif key in ['UID', 'SUMMARY', 'SEQUENCE', 'RRULE', 'CLASS', 'DESCRIPTION']:
                     if event.get(key) is None or prio_count[key] == prio:
                         prio_count[key] = prio_count.get(key) + 1
                         event[key] = val
                     else:
-                        self.logger.info('Value {} for entry {} ignored because of prio setting'.format(val, key))
+                        self.logger.debug('Value {} for entry {} ignored because of prio setting'.format(val, key))
                 elif key in ['DTSTART', 'DTEND', 'EXDATE', 'RECURRENCE-ID']:
                     try:
                         date = self._parse_date(val, tzinfo, par)
@@ -354,3 +387,15 @@ class iCal(SmartPlugin):
             args[par.lower()] = rrule[par]
 
         return dateutil.rrule.rrule(freq, **args)
+
+    def _clean_uri(self, uri):
+        # check for http[s]?://user:password@domain.tld/... style uris and strip name/pass
+        pattern = re.compile('http([s]?)://([^:]+:[^@]+@)')
+        if self.handle_login == 'show' or not pattern.match(uri):
+            return uri
+
+        replacement = {
+            'strip': 'http\g<1>://',
+            'mask': 'http\g<1>://***:***@'
+        }
+        return pattern.sub(replacement[self.handle_login], uri)
