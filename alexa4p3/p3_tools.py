@@ -12,6 +12,7 @@ from .device import AlexaDevices, AlexaDevice
 import json
 
 
+
 def CreateStreamSettings(myItemConf):
     myRetVal = []
     for k,v in myItemConf.camera_setting.items():
@@ -39,8 +40,13 @@ def CreateStreamPayLoad(myItemConf):
     
     i=0
     for k,v in myItemConf.camera_setting.items():
-        if myItemConf.alexa_auth_cred != '':
+        
+        if myItemConf.alexa_auth_cred != '' and myItemConf.alexa_proxy_credentials == '':
             uri = v['protocols'][0].lower()+"://"+myItemConf.alexa_auth_cred+'@'+cameraUri[i]
+        
+        elif myItemConf.alexa_proxy_credentials != '':
+            uri = v['protocols'][0].lower()+"://"+myItemConf.alexa_proxy_credentials+'@'+cameraUri[i]
+        
         else:
             uri = v['protocols'][0].lower()+"://"+cameraUri[i]
         # Find highest resolution
@@ -67,6 +73,8 @@ def CreateStreamPayLoad(myItemConf):
         i +=1
     response = {"cameraStreams": cameraStream}
     response.update({ "imageUri":imageuri})
+    # only interesting for debugging 
+    #DumpStreamInfo(response)
     return response
 
 def DumpStreamInfo(directive):

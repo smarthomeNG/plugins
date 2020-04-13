@@ -23,6 +23,7 @@ import logging
 import datetime
 import os
 import errno
+import re
 #from datetime import timezone, timedelta
 from datetime import timezone
 
@@ -37,7 +38,7 @@ from bin.smarthome import VERSION
 
 
 class iCal(SmartPlugin):
-    PLUGIN_VERSION = "1.5.3"
+    PLUGIN_VERSION = "1.5.4"
     ALLOW_MULTIINSTANCE = False
     DAYS = ("MO", "TU", "WE", "TH", "FR", "SA", "SU")
     FREQ = ("YEARLY", "MONTHLY", "WEEKLY", "DAILY", "HOURLY", "MINUTELY", "SECONDLY")
@@ -59,6 +60,7 @@ class iCal(SmartPlugin):
             cycle = self.get_parameter_value('cycle')
             calendars = self.get_parameter_value('calendars')
             config_dir = self.get_parameter_value('directory')
+            self.handle_login = self.get_parameter_value('handle_login')
         except Exception as err:
             self.logger.error('Problems initializing: {}'.format(err))
             self._init_complete = False
@@ -82,10 +84,10 @@ class iCal(SmartPlugin):
             if ':' in calendar and 'http' != calendar[:4]:
                 name, _, cal = calendar.partition(':')
                 calendar = cal.strip()
-                self.logger.info('Registering calendar {} with alias {}.'.format(calendar, name))
+                self.logger.info('Registering calendar {} with alias {}.'.format(self._clean_uri(calendar), name))
                 self._ical_aliases[name.strip()] = calendar
             else:
-                self.logger.info('Registering calendar {} without alias.'.format(calendar))
+                self.logger.info('Registering calendar {} without alias.'.format(self._clean_uri(calendar)))
             calendar = calendar.strip()
             self._icals[calendar] = self._read_events(calendar)
 
@@ -154,7 +156,7 @@ class iCal(SmartPlugin):
     def _update_calendars(self):
         for uri in self._icals:
             self._icals[uri] = self._read_events(uri)
-            self.logger.debug('Updated calendar {0}'.format(uri))
+            self.logger.debug('Updated calendar {0}'.format(self._clean_uri(uri)))
 
         if len(self._icals):
             self._update_items()
@@ -385,3 +387,15 @@ class iCal(SmartPlugin):
             args[par.lower()] = rrule[par]
 
         return dateutil.rrule.rrule(freq, **args)
+
+    def _clean_uri(self, uri):
+        # check for http[s]?://user:password@domain.tld/... style uris and strip name/pass
+        pattern = re.compile('http([s]?)://([^:]+:[^@]+@)')
+        if self.handle_login == 'show' or not pattern.match(uri):
+            return uri
+
+        replacement = {
+            'strip': 'http\g<1>://',
+            'mask': 'http\g<1>://***:***@'
+        }
+        return pattern.sub(replacement[self.handle_login], uri)

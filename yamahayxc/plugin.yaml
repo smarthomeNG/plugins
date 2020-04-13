@@ -6,7 +6,7 @@ plugin:
         de: 'Plugin, um Yamaha MusicCast-Geräte zu kontrollieren'
         en: 'plugin to control Yamaha MusicCast devices'
 
-    description_lone:
+    description_long:
         de: 'Dieses Plugin ermöglicht, Yamaha MusicCast-Geräte in SmartHomeNG einzubinden.\n
              \n
              Dabei ist es möglich, verschiedene Geräte aus SmartHomeNG aus anzusprechen und zu steuern, als auch über SmartHomeNG auszulesen.\n

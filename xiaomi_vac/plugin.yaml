@@ -74,6 +74,7 @@ item_attributes:
 
 item_structs: #saugroboter
     saugroboter:
+        name: 'Vorlage-Struktur für die Ansteuerung eines Xiaomi Saugroboters'
         serial:
             type: str
             robvac: 'serial'
