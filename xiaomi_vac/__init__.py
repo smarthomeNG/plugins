@@ -49,10 +49,10 @@ class Robvac(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
     PLUGIN_VERSION="1.0.0"
 
-    def __init__(self, smarthome,ip='127.0.0.1', token='', read_cycle=20):
-        self._ip = str(ip)
-        self._token = str(token)
-        self._cycle = int(read_cycle)
+    def __init__(self, smarthome):
+        self._ip = self.get_parameter_value("ip")
+        self._token = self.get_parameter_value("token")
+        self._cycle = self.get_parameter_value("read_cycle")
         self._sh = smarthome
         self.logger = logging.getLogger(__name__)
 
@@ -114,139 +114,150 @@ class Robvac(SmartPlugin):
             clean_history = self.vakuum.clean_history()
             self._data['clean_total_count'] =     int(clean_history.count)
             self._data['clean_total_area'] =      round(clean_history.total_area,2)
-            self._data['clean_total_duration'] =  clean_history.total_duration.total_seconds() // 3600
+            self._data['clean_total_duration'] =  clean_history.total_duration.total_seconds() / 60
             self._data['clean_ids'] =             clean_history.ids
-            self.logger.debug("Xiaomi_Robvac: Reingungsstatistik Anzahl {0}, Fläche {1}², Dauer {2}, clean ids {3}".format(
-                                                                                                    self._data['clean_total_count'],
-                                                                                                    self._data['clean_total_area'],
-                                                                                                    self._data['clean_total_duration'],
-                                                                                                    self._data['clean_ids']))
+            self.logger.debug("Xiaomi_Robvac: Reingungsstatistik Anzahl {0}, Fläche {1}², "
+                              "Dauer {2}, clean ids {3}".format(
+                                                                self._data['clean_total_count'],
+                                                                self._data['clean_total_area'],
+                                                                self._data['clean_total_duration'],
+                                                                self._data['clean_ids']))
 
             #letzte reinigung
             #funktioniert nur mit übergebener id
             if self._data['clean_ids'] != None:
                 #self._data['clean_ids'] = self._data['clean_ids'].sort(reverse=True)
-                self._data['clean_details_last0'] = self.vakuum.clean_details(self._data['clean_ids'][0],return_list=True)
-                self._data['last0_area'] =          round(self._data['clean_details_last0'][0].area,2)
-                self._data['last0_complete'] =      self._data['clean_details_last0'][0].complete
-                self._data['last0_duration'] =      round(self._data['clean_details_last0'][0].duration.total_seconds()/ 3600,2)
-                self._data['last0_start_date'] =    self._data['clean_details_last0'][0].start.strftime("%d.%m.%Y")
-                self._data['last0_start_time'] =    self._data['clean_details_last0'][0].start.strftime("%H:%M")
-                self._data['last0_end_date'] =      self._data['clean_details_last0'][0].start.strftime("%d.%m.%Y")
-                self._data['last0_end_time'] =      (self._data['clean_details_last0'][0].start+self._data['clean_details_last0'][0].duration).strftime("%H:%M")
+                self._data['clean_details_last0'] = self.vakuum.clean_details(self._data['clean_ids'][0],return_list=False)
+                self._data['last0_area'] =          round(self._data['clean_details_last0'].area,2)
+                self._data['last0_complete'] =      self._data['clean_details_last0'].complete
+                self._data['last0_duration'] =      round(self._data['clean_details_last0'].duration.total_seconds() / 60, 2)
+                self._data['last0_start_date'] =    self._data['clean_details_last0'].start.strftime("%d.%m.%Y")
+                self._data['last0_start_time'] =    self._data['clean_details_last0'].start.strftime("%H:%M")
+                self._data['last0_end_date'] =      self._data['clean_details_last0'].start.strftime("%d.%m.%Y")
+                self._data['last0_end_time'] =      (self._data['clean_details_last0'].start+self._data['clean_details_last0'].duration).strftime("%H:%M")
 
-                self._data['clean_details_last1'] = self.vakuum.clean_details(self._data['clean_ids'][1],return_list=True)
-                self._data['last1_area'] =          round(self._data['clean_details_last1'][0].area,2)
-                self._data['last1_complete'] =      self._data['clean_details_last1'][0].complete
-                self._data['last1_duration'] =      round(self._data['clean_details_last1'][0].duration.total_seconds()/ 3600,2)
-                self._data['last1_start_date'] =    self._data['clean_details_last1'][0].start.strftime("%d.%m.%Y")
-                self._data['last1_start_time'] =    self._data['clean_details_last1'][0].start.strftime("%H:%M")
-                self._data['last1_end_date'] =      self._data['clean_details_last1'][0].start.strftime("%d.%m.%Y")
-                self._data['last1_end_time'] =      (self._data['clean_details_last1'][0].start+self._data['clean_details_last1'][0].duration).strftime("%H:%M")
+                self._data['clean_details_last1'] = self.vakuum.clean_details(self._data['clean_ids'][1],return_list=False)
+                self._data['last1_area'] =          round(self._data['clean_details_last1'].area,2)
+                self._data['last1_complete'] =      self._data['clean_details_last1'].complete
+                self._data['last1_duration'] =      round(self._data['clean_details_last1'].duration.total_seconds() / 60, 2)
+                self._data['last1_start_date'] =    self._data['clean_details_last1'].start.strftime("%d.%m.%Y")
+                self._data['last1_start_time'] =    self._data['clean_details_last1'].start.strftime("%H:%M")
+                self._data['last1_end_date'] =      self._data['clean_details_last1'].start.strftime("%d.%m.%Y")
+                self._data['last1_end_time'] =      (self._data['clean_details_last1'].start+self._data['clean_details_last1'].duration).strftime("%H:%M")
 
-                self._data['clean_details_last2'] = self.vakuum.clean_details(self._data['clean_ids'][2],return_list=True)
-                self._data['last2_area'] =          round(self._data['clean_details_last2'][0].area,2)
-                self._data['last2_complete'] =      self._data['clean_details_last2'][0].complete
-                self._data['last2_duration'] =      round(self._data['clean_details_last2'][0].duration.total_seconds()/ 3600,2)
-                self._data['last2_start_date'] =    self._data['clean_details_last2'][0].start.strftime("%d.%m.%Y")
-                self._data['last2_start_time'] =    self._data['clean_details_last2'][0].start.strftime("%H:%M")
-                self._data['last2_end_date'] =      self._data['clean_details_last2'][0].start.strftime("%d.%m.%Y")
-                self._data['last2_end_time'] =      (self._data['clean_details_last2'][0].start+self._data['clean_details_last2'][0].duration).strftime("%H:%M")
+                self._data['clean_details_last2'] = self.vakuum.clean_details(self._data['clean_ids'][2],return_list=False)
+                self._data['last2_area'] =          round(self._data['clean_details_last2'].area,2)
+                self._data['last2_complete'] =      self._data['clean_details_last2'].complete
+                self._data['last2_duration'] =      round(self._data['clean_details_last2'].duration.total_seconds() / 60, 2)
+                self._data['last2_start_date'] =    self._data['clean_details_last2'].start.strftime("%d.%m.%Y")
+                self._data['last2_start_time'] =    self._data['clean_details_last2'].start.strftime("%H:%M")
+                self._data['last2_end_date'] =      self._data['clean_details_last2'].start.strftime("%d.%m.%Y")
+                self._data['last2_end_time'] =      (self._data['clean_details_last2'].start+self._data['clean_details_last2'].duration).strftime("%H:%M")
 
-                self._data['clean_details_last3'] = self.vakuum.clean_details(self._data['clean_ids'][3],return_list=True)
-                self._data['last3_area'] =          round(self._data['clean_details_last3'][0].area,2)
-                self._data['last3_complete'] =      self._data['clean_details_last3'][0].complete
-                self._data['last3_duration'] =      round(self._data['clean_details_last3'][0].duration.total_seconds()/ 3600,2)
-                self._data['last3_start_date'] =    self._data['clean_details_last3'][0].start.strftime("%d.%m.%Y")
-                self._data['last3_start_time'] =    self._data['clean_details_last3'][0].start.strftime("%H:%M")
-                self._data['last3_end_date'] =      self._data['clean_details_last3'][0].start.strftime("%d.%m.%Y")
-                self._data['last3_end_time'] =      (self._data['clean_details_last3'][0].start+self._data['clean_details_last3'][0].duration).strftime("%H:%M")
+                self._data['clean_details_last3'] = self.vakuum.clean_details(self._data['clean_ids'][3],return_list=False)
+                self._data['last3_area'] =          round(self._data['clean_details_last3'].area,2)
+                self._data['last3_complete'] =      self._data['clean_details_last3'].complete
+                self._data['last3_duration'] =      round(self._data['clean_details_last3'].duration.total_seconds() / 60, 2)
+                self._data['last3_start_date'] =    self._data['clean_details_last3'].start.strftime("%d.%m.%Y")
+                self._data['last3_start_time'] =    self._data['clean_details_last3'].start.strftime("%H:%M")
+                self._data['last3_end_date'] =      self._data['clean_details_last3'].start.strftime("%d.%m.%Y")
+                self._data['last3_end_time'] =      (self._data['clean_details_last3'].start+self._data['clean_details_last3'].duration).strftime("%H:%M")
 
-                self.logger.debug("Xiaomi_Robvac: Historische id1 {}, id2{}, id3 {}".format(self._data['clean_details_last0'],
+                self.logger.debug("Xiaomi_Robvac: Historische id1 {}, id2{}, id3 {}".format(
+                                                                                            self._data['clean_details_last0'],
                                                                                             self._data['clean_details_last1'],
                                                                                             self._data['clean_details_last2']))
 
-                self.logger.debug("Xiaomi_Robvac: Clean Run complete id1 {}, id2{}, id3 {}".format(self._data['last1_complete'],
-                                                                                            self._data['last2_complete'],
-                                                                                            self._data['last3_complete'],))
+                self.logger.debug("Xiaomi_Robvac: Clean Run complete id1 {}, id2{}, id3 {}".format(
+                                                                                                   self._data['last1_complete'],
+                                                                                                   self._data['last2_complete'],
+                                                                                                   self._data['last3_complete'],))
             carpet_mode = self.vakuum.carpet_mode()
             self._data['carpetmode_high'] =       carpet_mode.current_high
-            self._data['carpetmode_integral'] =  carpet_mode.current_integral
+            self._data['carpetmode_integral'] =   carpet_mode.current_integral
             self._data['carpetmode_low'] =        carpet_mode.current_low
             self._data['carpetmode_enabled'] =    carpet_mode.enabled
             self._data['carpetmode_stall_time'] = carpet_mode.stall_time
-            self.logger.debug("Xiaomi_Robvac: Carpet Mode high: {}, integral: {}, low: {}, enabled: {}, , stall_time: {}".format(self._data['carpetmode_high'],
-                                                                                                    self._data['carpetmode_integral'],
-                                                                                                    self._data['carpetmode_low'],
-                                                                                                    self._data['carpetmode_enabled'],
-                                                                                                    self._data['carpetmode_stall_time']))
+            self.logger.debug("Xiaomi_Robvac: Carpet Mode high: {}, integral: {}, low: {}, "
+                              "enabled: {}, stall_time: {}".format(
+                                                                   self._data['carpetmode_high'],
+                                                                   self._data['carpetmode_integral'],
+                                                                   self._data['carpetmode_low'],
+                                                                   self._data['carpetmode_enabled'],
+                                                                   self._data['carpetmode_stall_time']))
 
             #status
-            self._data['serial'] =    self.vakuum.serial_number()
-            self._data['vol'] =       self.vakuum.sound_volume()
-            self._data['volume'] =       self.vakuum.sound_volume()
+            self._data['serial'] =     self.vakuum.serial_number()
+            self._data['volume'] =     self.vakuum.sound_volume()
             self._data['dnd_status'] = self.vakuum.dnd_status().enabled
-            self._data['dnd_start'] = self.vakuum.dnd_status().start
-            self._data['dnd_end'] =   self.vakuum.dnd_status().end
-            self.logger.debug("Xiaomi_Robvac: Serial{}, vol {}, dnd status {}, dnd start {},dnd end {},".format(self._data['serial'],
-                                                                                                    self._data['vol'],
-                                                                                                    self._data['dnd_status'],
-                                                                                                    self._data['dnd_start'],
-                                                                                                    self._data['dnd_end']))
+            self._data['dnd_start'] =  self.vakuum.dnd_status().start
+            self._data['dnd_end'] =    self.vakuum.dnd_status().end
+            self.logger.debug("Xiaomi_Robvac: Serial{}, vol {}, dnd status {}, dnd start {},dnd end {},".format(
+                                                                                                                self._data['serial'],
+                                                                                                                self._data['volume'],
+                                                                                                                self._data['dnd_status'],
+                                                                                                                self._data['dnd_start'],
+                                                                                                                self._data['dnd_end']))
 
-            self._data['device_group'] = self.vakuum.get_device_group()
-            self._data['segment_status'] = self.vakuum.get_segment_status()
-            self._data['fanspeed'] =  self.vakuum.status().fanspeed
-            self._data['batt'] =      self.vakuum.status().battery
-            self._data['battery'] =      self.vakuum.status().battery
-            self._data['area'] =      round(self.vakuum.status().clean_area,2)
-            self._data['cleaning_history'] = self.vakuum.cleaning_history()
-            self._data['cleantime'] = self.vakuum.status().total_seconds() // 3600
-            self._data['aktiv'] =     self.vakuum.status().is_on #reinigt?
-            self._data['active'] =     self.vakuum.status().is_on #reinigt?
-            self._data['zone_cleaning'] = self.vakuum.status().in_zone_cleaning #reinigt?
-            self._data['is_error'] = self.vakuum.status().got_error
-            self.logger.debug("Xiaomi_Robvac: segment_status, fanspeed {},batt {}, area {}, cleantime {}, aktiv {} zonen_reinigung {} , device group{}".format(self._data['segment_status'], self._data['fanspeed'],
-                                                                                                    self._data['batt'],
+            self._data['device_group'] =    self.vakuum.get_device_group()
+            self._data['segment_status'] =  self.vakuum.get_segment_status()
+            self._data['fanspeed'] =        self.vakuum.status().fanspeed
+            self._data['batt'] =            self.vakuum.status().battery
+            self._data['battery'] =         self.vakuum.status().battery
+            self._data['area'] =            round(self.vakuum.status().clean_area,2)
+            self._data['clean_time'] =      self.vakuum.status().clean_time.total_seconds() / 60
+            self._data['active'] =          self.vakuum.status().is_on #reinigt?
+            self._data['zone_cleaning'] =   self.vakuum.status().in_zone_cleaning #reinigt?
+            self._data['is_error'] =        self.vakuum.status().got_error
+            self.logger.debug("Xiaomi_Robvac: segment_status {}, fanspeed {}, battery {}, area {}, "
+                              "clean_time {}, active {}, zonen_reinigung {}, device group {}".format(
+                                                                                                    self._data['segment_status'],
+                                                                                                    self._data['fanspeed'],
+                                                                                                    self._data['battery'],
                                                                                                     self._data['area'],
-                                                                                                    self._data['cleantime'],
-                                                                                                    self._data['aktiv'],
+                                                                                                    self._data['clean_time'],
+                                                                                                    self._data['active'],
                                                                                                     self._data['zone_cleaning'],
                                                                                                     self._data['device_group']))
             self._data['error'] =     self.vakuum.status().error_code
             self._data['pause'] =     self.vakuum.status().is_paused #reinigt?
-            self._data['status'] =    self.vakuum.status().state #status charging
-            self._data['timer'] =     self.vakuum.timer()#[self.vakuum.timer()[0]['id'], self.vakuum.timer()[0]['action'], self.vakuum.timer()[0]['enabled'], self.vakuum.timer()[0]['ts']]
+            self._data['state'] =     self.vakuum.status().state #status charging
+            self._data['timer'] =     self.vakuum.timer()
+            #[self.vakuum.timer()[0]['id'], self.vakuum.timer()[0]['action'], self.vakuum.timer()[0]['enabled'], self.vakuum.timer()[0]['ts']]
             self._data['timezone'] =  self.vakuum.timezone()
 
             #bekannet States: Charging, Pause, Charging Disconnected
-            if self._data['status'] == 'Charging':
+            if self._data['state'] == 'Charging':
                 self._data['charging'] = True
             else:
                 self._data['charging'] = False
 
             #->2018-12-26  11:10:37 DEBUG    plugins.xiaomi_vac Xiaomi_Robvac: Lese batt 100 area0.0 time 0:00:15 status False stateCharging
-            self.logger.debug("Xiaomi_Robvac: error {}, pause {}, status{} , timer {}, timezone{}".format(   self._data['error'],
-                                                                                                       self._data['pause'],
-                                                                                                       self._data['status'],
-                                                                                                       self._data['timer'],
-                                                                                                       self._data['timezone']))
+            self.logger.debug("Xiaomi_Robvac: error {}, pause {}, status {} , timer {}, timezone {}".format(
+                                                                                                            self._data['error'],
+                                                                                                            self._data['pause'],
+                                                                                                            self._data['state'],
+                                                                                                            self._data['timer'],
+                                                                                                            self._data['timezone']))
             #buerste
             #consumable_status()
             self._data['sensor_dirty'] =      self.vakuum.consumable_status().sensor_dirty.total_seconds() // 3600
-            self._data['sensor_dirty_left'] = self.vakuum.consumable_status().sensor_dirty_left.total_seconds()// 3600
+            self._data['sensor_dirty_left'] = self.vakuum.consumable_status().sensor_dirty_left.total_seconds() // 3600
             self._data['side_brush'] =        self.vakuum.consumable_status().side_brush.total_seconds() // 3600
             self._data['side_brush_left'] =   self.vakuum.consumable_status().side_brush_left.total_seconds() // 3600
             self._data['main_brush'] =        self.vakuum.consumable_status().main_brush.total_seconds() // 3600
             self._data['main_brush_left'] =   self.vakuum.consumable_status().main_brush_left.total_seconds() // 3600
             self._data['filter'] =            self.vakuum.consumable_status().filter.total_seconds() // 3600
             self._data['filter_left'] =       self.vakuum.consumable_status().filter_left.total_seconds() // 3600
-            self.logger.debug("Xiaomi_Robvac: buerste seite {0}/{1} Buerste Haupt {2}/{3} filter{4}/{5}".format(self._data['side_brush'],
+            self.logger.debug("Xiaomi_Robvac: Buerste Seite {0}/{1}, Buerste Haupt {2}/{3}, Filter{4}/{5}, Sensor{6}/{7}".format(
+                                                                                                                self._data['side_brush'],
                                                                                                                 self._data['side_brush_left'],
                                                                                                                 self._data['main_brush'],
                                                                                                                 self._data['main_brush_left'],
                                                                                                                 self._data['filter'],
-                                                                                                                self._data['filter_left']))
+                                                                                                                self._data['filter_left'],
+                                                                                                                self._data['sensor_dirty'],
+                                                                                                                self._data['sensor_dirty_left']))
             self.logger.debug("Xiaomi_Robvac:{}".format(self._data))
         except Exception as e:
                 self.logger.error("Xiaomi_Robvac: Error {}".format(e))
@@ -271,12 +282,12 @@ class Robvac(SmartPlugin):
                 #bei boolischem item Item zurücksetzen, damit enforce_updates nicht nötig!
 
                 message = self.get_iattr_value(item.conf, 'robvac')
-                self.logger.debug("Xiaomi_Robvac: Tu dies und das ! Keyword {0} , weil item {1} geändert wurde   ".format(message, item))
+                self.logger.debug("Xiaomi_Robvac: Keyword {0}, item {1} wurde geändert".format(message, item))
 
                 if message == 'fanspeed':
                     self.vakuum.set_fan_speed(item())
-                    self.logger.debug("Xiaomi_Robvac: {0} geaendert wurde ".format(self.vakuum.fan_speed()))
-                elif message == 'vol' or message == 'volume':
+                    self.logger.debug("Xiaomi_Robvac: {0} wurde geaendert.".format(self.vakuum.fan_speed()))
+                elif message == 'volume':
                     if item() > 100:
                         vol = 100
                     else:
@@ -328,7 +339,17 @@ class Robvac(SmartPlugin):
                     self.vakuum.goto(item()[0], item()[1])
                 elif message == "create_nogo_zones":
                     self.vakuum.create_nogo_zone(item()[0], item()[1])
-                    pass
+                elif message == "reset":
+                    if item().lower() == "sensor_dirty" or item().lower() == "sensor_reinigen":
+                        self.vakuum.consumable_reset(miio.vacuum.Consumable.SensorDirty)
+                    elif item().lower() == "main_brush" or item().lower() == "buerste_haupt":
+                        self.vakuum.consumable_reset(miio.vacuum.Consumable.MainBrush)
+                    elif item().lower() == "side_brush" or item().lower() == "buerste_seite":
+                        self.vakuum.consumable_reset(miio.vacuum.Consumable.SideBrush)
+                    elif item().lower() == "filter":
+                        self.vakuum.consumable_reset(miio.vacuum.Consumable.Filter)
+                    else:
+                        self.logger.warning("Consumable {} does not exit. Please use only sensor_dirty/sensor_reinigen, main_brush/buerste_haupt, side_brush/buerste_seite, filter.".format(item()))
 
     def run(self):
         self.alive = True
@@ -350,7 +371,6 @@ class Robvac(SmartPlugin):
     def update_item_read(self, item, caller=None, source=None, dest=None):
         if self.has_iattr(item.conf, 'robvac'):
             for message in item.get_iattr_value(item.conf, 'robvac'):
-            #for message in item.conf['robvac']:  # send status update
                 self.logger.debug("Xiaomi_Robvac: update_item_read {0}".format(message))
 # ------------------------------------------
 #    Webinterface Methoden
