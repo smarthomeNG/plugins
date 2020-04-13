@@ -74,56 +74,60 @@ item_attributes:
 
 item_structs: #saugroboter
     saugroboter:
+        serial:
+            type: str
+            robvac: 'serial'
+            visu_acl: ro
+        struct:
+          - xiaomi_vac.live
+          - xiaomi_vac.befehl
+          - xiaomi_vac.statistik
+          - xiaomi_vac.einstellungen
+          - xiaomi_vac.stundenzaehler
+
+    live:
         live:
             name: 'Aktuelle Werte des Saugroboters'
             batterie_status:
                 name: 'Batterie Status'
                 type: num
-                robvac: 'batt'
+                robvac: 'battery'
                 visu_acl: ro
             reinigt:
                 name: 'aktuell am reinigen?'
                 type: bool
-                robvac: 'state'
+                robvac: 'active'
                 visu_acl: ro
             zustand:
                 name: 'Betriebszustand'
                 type: str
-                robvac: 'status'
-                visu_acl: ro
-            aktiv:
-                type: bool
-                robvac: 'active'
+                robvac: 'state'
                 visu_acl: ro
             flaeche:
                 name: 'gereinigte Fläche'
                 type: num
                 robvac: 'area'
                 visu_acl: ro
-            gereinigt:
-                type: num
-                robvac: 'cleaning_history'
-                visu_acl: ro
             reinigungszeit:
                 type: num
-                robvac: 'cleantime'
+                robvac: 'clean_time'
                 visu_acl: ro
             carpetmode_high:
                 type: num
                 robvac: 'carpetmode_high'
-                visu_acl: rw
+                visu_acl: ro
             carpetmode_integral:
                 type: num
                 robvac: 'carpetmode_integral'
-                visu_acl: rw
+                visu_acl: ro
             carpetmode_low:
                 type: num
                 robvac: 'carpetmode_low'
-                visu_acl: rw
+                visu_acl: ro
             carpetmode_enabled:
                 type: num
                 robvac: 'carpetmode_enabled'
-                visu_acl: rw
+                visu_acl: ro
             carpetmode_stall_time:
                 type: num
                 robvac: 'carpetmode_stall_time'
@@ -157,9 +161,10 @@ item_structs: #saugroboter
                 robvac: 'pause'
                 visu_acl: ro
             segment_status:
-                type: bool
+                type: list
                 robvac: 'segment_status'
                 visu_acl: ro
+    befehl:
         befehl:
             name: 'Befehle zum Saugroboter'
             start:
@@ -202,6 +207,7 @@ item_structs: #saugroboter
                 type: list
                 robvac: 'go_to'
                 visu_acl: rw
+    statistik:
         statistik:
             name: 'Reinigungsstatistiken'
             anzahl_reinigungen:
@@ -352,6 +358,7 @@ item_structs: #saugroboter
                     type: str
                     robvac: 'last3_end_time'
                     visu_acl: ro
+    einstellungen:
         einstellungen:
             name: 'Einstellbare Parameter'
             luefter_speed:
@@ -362,17 +369,13 @@ item_structs: #saugroboter
                 type: bool
                 robvac: 'carpet_mode'
                 visu_acl: rw
-            vol:
+            volume:
                 type: num
-                robvac: 'vol'
+                robvac: 'volume'
                 visu_acl: rw
             dnd:
                 type: bool
                 robvac: 'dnd_onoff'
-                visu_acl: rw
-            serial:
-                type: str
-                robvac: 'serial'
                 visu_acl: rw
             timezone:
                 type: str
@@ -382,6 +385,13 @@ item_structs: #saugroboter
                 type: foo
                 robvac: 'timer'
                 visu_acl: rw
+            reset:
+                remark: Use these values to reset consumables - main_brush, side_brush, filter, sensor_dirty
+                type: str
+                robvac: 'reset'
+                visu_acl: rw
+                enforce_updates: True
+    stundenzaehler:
         stundenzaehler:
             buerste_seite:
                 type: num
