@@ -157,7 +157,7 @@ item_structs: #saugroboter
                 robvac: 'pause'
                 visu_acl: ro
             segment_status:
-                type: bool
+                type: list
                 robvac: 'segment_status'
                 visu_acl: ro
         befehl:
