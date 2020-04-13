@@ -5,7 +5,7 @@
 The plugin gives the possibilty to control an Alexa-Echo-Device remote by smartHomeNG. So its possible to switch on an TuneIn-Radio Channel, send some messages via Text2Speech when an event happens on the knx-bus or on the Visu. On the Web-Interface you can define your own commandlets (functions). The follwing functions are available on the Web-Interface :
 
 - Store a cookie-file to get access to the Alexa-WebInterface
-- manually Login with your credentials (sored in the /etc/plugin.yaml)
+- manually Login with your credentials (stored in the /etc/plugin.yaml)
 - See all available devices, select one to send Test-Functions
 - define Commandlets - you can load,store,delete, check and test Commandlets
 - the Commandlets can be loaded to the webinterface by clicking on the list
@@ -28,7 +28,7 @@ Special thanks to Jonofe from the [Edomi-Forum](https://knx-user-forum.de/forum/
 5. [Configuration](#config)
 6. [functions](#functions)
 7. [Web-Interface](#webinterface)
-8. [How to implmentend new Commands](#newCommand)
+8. [How to implement new Commands](#newCommand)
 9. [Tips for existing Command-Lets](#tipps)
 
 ### Existing Command-Lets
@@ -59,10 +59,10 @@ Special thanks to Jonofe from the [Edomi-Forum](https://knx-user-forum.de/forum/
 
 #### 2020.03.20 Version 1.0.2
 
+- <strong>changed public function "send_cmd_by_curl" to "send_cmd"</strong>
 - removed pycurl
 - changed Communication to Python Requests
 - added translation for the Web-Interface
-- changed public function "send_cmd_by_curl" to "send_cmd"
 - added public function "get_last_alexa"
 
 #### 2018.07.26  Version 1.0.1
@@ -75,7 +75,7 @@ Special thanks to Jonofe from the [Edomi-Forum](https://knx-user-forum.de/forum/
 - changed version to 1.0.1
 - changed to lib.item and lib.scheduler
 - the credentials have to be stored in base64 encoded
-- Login / LogOff Button to the Web-Interface
+- added Login / LogOff Button to the Web-Interface
 - added Auto-Login function - when there is no cookie-file with correct values and credentials are specicified, the plugin automaticaly logs in
 - the log-in (the cookie) will be refreshed after the login_update_cycle
 - changed methods-names and parameters to lower case and underscore separated names
@@ -102,6 +102,7 @@ Special thanks to Jonofe from the [Edomi-Forum](https://knx-user-forum.de/forum/
 ### Needed software
 
 * smarthomeNg 1.5.2 and above for the web-interface
+* needs Python requests
 * a valid [Cookie](#cookie) from an alexa.amazon-Web-Site Session
 * if you work with Autologin the credentials have to be entered "base64"-encoded. You can encode you credentials on the web-interface of the plugin <strong>"user.test@gmail.com:your_pwd"</strong> you will get <strong>```dXNlci50ZXN0QGdtYWlsLmNvbTp5b3VyX3B3ZA==``` </strong>.
 So please enter <strong>```dXNlci50ZXN0QGdtYWlsLmNvbTp5b3VyX3B3ZA==```</strong> in the /etc/plugin.yaml

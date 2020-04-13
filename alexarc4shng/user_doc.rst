@@ -1,7 +1,7 @@
 .. index:: Plugins; Remote Control for Alexa devices
-.. index:: AlexaRc4shNG
+.. index:: alexarc4shng
 
-alexarc4shng
+AlexaRc4shNG
 ###
 
 Konfiguration
@@ -18,7 +18,7 @@ Es können neue Kommandos erstellt werden
 
 .. important:: 
 
-   Das Webinterface des Plugins kann mit SmartHomeNG v1.4.2 und davor **nicht** genutzt werden.
+   Das Webinterface des Plugins kann mit SmartHomeNG v1.5.2 und davor **nicht** genutzt werden.
    Es wird dann nicht geladen. Diese Einschränkung gilt nur für das Webinterface. Ansonsten gilt 
    für das Plugin die in den Metadaten angegebene minimale SmartHomeNG Version.
 
@@ -44,12 +44,12 @@ Im ersten Tab kann das Cookie File gespeichert werden - in die Textarea via Cut 
 .. image:: assets/webif1.jpg
    :class: screenshot
 
-Im zweiten Tab werden die verfügbaren Geräte angezeigt - Durch click auf eine Gerät wird dieses selektiert und steht für Tests zur Verfügung:
+Im zweiten Tab werden die verfügbaren Geräte angezeigt - Durch click auf ein Gerät wird dieses selektiert und steht für Tests zur Verfügung:
 
 .. image:: assets/webif2.jpg
    :class: screenshot
 
-Im dritten Tab werden die Commandlets verwaltet - mit Clickauf die Liste der Commandlets wird dieses ins WebIF geladen:
+Im dritten Tab werden die Commandlets verwaltet - mit Click auf die Liste der Commandlets wird dieses ins WebIF geladen:
 
 .. image:: assets/webif3.jpg
    :class: screenshot
