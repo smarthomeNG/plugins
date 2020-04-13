@@ -1,7 +1,7 @@
 def plugin_release():
-    return '1.7.1'
+    return '1.7b'
 
 
 def plugin_branch():
-    return 'master'
+    return 'develop'
 
