@@ -441,7 +441,7 @@ class OneWire(SmartPlugin):
                         
                         if keys is None:
                             if self.logger.isEnabledFor(logging.DEBUG):
-                                self.logger.debug("1-Wire: Skipping sensor {} for bus: {0}".format(sensor, bus))
+                                self.logger.debug("1-Wire: Skipping sensor {0} for bus: {1}".format(sensor, bus))
                             continue
                         self._buses[bus].append(addr)
                         if self.logger.isEnabledFor(logging.INFO):
