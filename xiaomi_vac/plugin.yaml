@@ -208,6 +208,13 @@ item_structs: #saugroboter
                 type: list
                 robvac: 'go_to'
                 visu_acl: rw
+            clean_zone:
+               type: list
+               robvac: 'clean_zone'
+            segment_clean:
+               type: list
+               robvac: 'segment_clean'
+               enforce_updates: true                
     statistik:
         statistik:
             name: 'Reinigungsstatistiken'
