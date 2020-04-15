@@ -335,6 +335,8 @@ class Robvac(SmartPlugin):
                 elif message == "clean_zone":
                 #Clean zones. :param List zones: List of zones to clean: [[x1,y1,x2,y2, iterations],[x1,y1,x2,y2, iterations]]
                     self.vakuum.zoned_clean(item()[0], item()[1],item()[2], item()[3], item()[4])
+                elif message == "segment_clean":
+                    self.vakuum.segment_clean(item())                    
                 elif message == "go_to":
                     self.vakuum.goto(item()[0], item()[1])
                 elif message == "create_nogo_zones":
