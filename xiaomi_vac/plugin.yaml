@@ -156,7 +156,7 @@ item_structs: #saugroboter
             zonen_reinigung:
                 type: bool
                 robvac: 'zone_cleaning'
-                visu_acl: rw
+                visu_acl: ro
             pausiert:
                 type: bool
                 robvac: 'pause'
