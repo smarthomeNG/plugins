@@ -171,50 +171,63 @@ item_structs: #saugroboter
             start:
                 type: bool
                 robvac: 'set_start'
+                enforce_updates: true
                 visu_acl: rw
             stop:
                 type: bool
                 robvac: 'set_stop'
+                enforce_updates: true
                 visu_acl: rw
             pause:
                 type: bool
                 robvac: 'set_pause'
+                enforce_updates: true
                 visu_acl: rw
             basis:
                 type: bool
                 robvac: 'set_home'
+                enforce_updates: true
                 visu_acl: rw
             spot_cleaner:
                 type: bool
                 robvac: 'set_spot'
+                enforce_updates: true
                 visu_acl: rw
             find:
                 type: bool
                 robvac: 'set_find'
+                enforce_updates: true
                 visu_acl: rw
             reset_filtertimer:
                 type: bool
                 robvac: 'reset_filtertimer'
+                enforce_updates: true
                 visu_acl: rw
             disable_dnd:
                 type: bool
                 robvac: 'disbale_dnd'
+                enforce_updates: true
                 visu_acl: rw
             set_dnd:
                 type: list
                 robvac: 'set_dnd'
+                enforce_updates: true
                 visu_acl: rw
             goto:
                 type: list
                 robvac: 'go_to'
+                enforce_updates: true
                 visu_acl: rw
             clean_zone:
                type: list
                robvac: 'clean_zone'
+               enforce_updates: true
+               visu_acl: rw
             segment_clean:
                type: list
                robvac: 'segment_clean'
-               enforce_updates: true                
+               enforce_updates: true
+               visu_acl: rw
     statistik:
         statistik:
             name: 'Reinigungsstatistiken'
