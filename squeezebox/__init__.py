@@ -272,7 +272,7 @@ class Squeezebox(SmartPlugin,lib.connection.Client):
                         # play also overrules mute
                         self._update_items_with_data([data[0], 'mute', '0'])
                         return
-                    elif (data[2] == 'stop' and data[3] == '1'):
+                    elif (data[2] == 'stop'):
                         self._update_items_with_data([data[0], 'play', '0'])
                         self._update_items_with_data([data[0], 'stop', '1'])
                         self._update_items_with_data([data[0], 'pause', '0'])
