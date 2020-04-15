@@ -383,7 +383,7 @@ item_structs:
             squeezebox_init: <playerid> power ?
 
         button:
-            type: bool
+            type: str
             visu_acl: rw
             squeezebox_send: <playerid> button {}
             squeezebox_recv: <playerid> button
