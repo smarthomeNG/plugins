@@ -384,7 +384,7 @@ class SeValue(StateEngineTools.SeItemChild):
             self._log_debug("Checking eval: {0}.", self.__eval)
             self._log_increase_indent()
             try:
-                _newvalue = eval(self.__eval)
+                _newvalue = self.__do_cast(eval(self.__eval))
                 if 'eval:{}'.format(self.__eval) in self.__listorder:
                     self.__listorder[self.__listorder.index('eval:{}'.format(self.__eval))] = _newvalue
                 values = _newvalue
@@ -409,7 +409,7 @@ class SeValue(StateEngineTools.SeItemChild):
                             stateengine_eval = StateEngineEval.SeEval(self._abitem)
                             se_eval = StateEngineEval.SeEval(self._abitem)
                         try:
-                            _newvalue = eval(val)
+                            _newvalue = self.__do_cast(eval(val))
                             if 'eval:{}'.format(val) in self.__listorder:
                                 self.__listorder[self.__listorder.index('eval:{}'.format(val))] = _newvalue
                             value = _newvalue
@@ -418,7 +418,7 @@ class SeValue(StateEngineTools.SeItemChild):
                             value = None
                     else:
                         try:
-                            _newvalue = val()
+                            _newvalue = self.__do_cast(val())
                             if 'eval:{}'.format(val) in self.__listorder:
                                 self.__listorder[self.__listorder.index('eval:{}'.format(val))] = _newvalue
                             value = _newvalue
@@ -432,7 +432,7 @@ class SeValue(StateEngineTools.SeItemChild):
                 self._log_debug("Checking eval (no str, no list): {0}.", val)
                 try:
                     self._log_increase_indent()
-                    _newvalue = self.__eval()
+                    _newvalue = self.__do_cast(self.__eval())
                     if 'eval:{}'.format(self.__eval) in self.__listorder:
                         self.__listorder[self.__listorder.index('eval:{}'.format(self.__eval))] = _newvalue
                     values = _newvalue
