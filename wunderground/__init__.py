@@ -46,11 +46,10 @@ class Wunderground(SmartPlugin):
     the update functions for the items
     """
 
-    ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION='1.4.8'
+    PLUGIN_VERSION='1.4.9'
 
 
-    def __init__(self, sh, apikey='', language='de', location='', cycle='600', item_subtree=''):
+    def __init__(self, sh):
         """
         Initalizes the plugin. The parameters described for this method are pulled from the entry in plugin.yaml.
 
@@ -62,25 +61,26 @@ class Wunderground(SmartPlugin):
         :param item_subtree:       subtree of items in which the plugin looks for items to update
         :param log_start:          x
         """
-        from bin.smarthome import VERSION
-        if '.'.join(VERSION.split('.',2)[:2]) <= '1.5':
-            self.logger = logging.getLogger(__name__)
+        # Call init code of parent class (SmartPlugin)
+        super().__init__()
 
-        self.__sh = sh
+        from bin.smarthome import VERSION
+        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
+            self.logger = logging.getLogger(__name__)
 
         self.items = Items.get_instance()
 
         languagedict = {"de": "DL", "en": "EN", 'fr': "FR"}
-        self.apikey = str(apikey)
+        self.apikey = self.get_parameter_value('apikey')
         if self.apikey == '':
             self.logger.error("Wunderground: No api key specified, plugin is not starting")
 
         self.language = ''
-        self.language = languagedict.get( str(language).lower() )
+        self.language = languagedict.get( self.get_parameter_value('language').lower() )
         if self.language == None:
-            self.language = str(language).upper()
+            self.language = self.get_parameter_value('language').upper()
 
-        self.location = str(location)
+        self.location = self.get_parameter_value('location')
         if self.location == '':
             self.logger.error("Wunderground: No location specified, plugin is not starting")
 
@@ -88,13 +88,11 @@ class Wunderground(SmartPlugin):
 
         self.logger.info("Wunderground: url={}".format(str(self.url)))
 
-        if self.is_int(cycle):
-            self._cycle = int(cycle)
-        else:
-            self._cycle = 600
-            self.logger.error("Wunderground: Invalid value '"+str(cycle)+"' configured for attribute cycle in plugin.conf, using '"+str(self._cycle)+"' instead")
+        self._cycle = self.get_parameter_value('cycle')
+        #self._cycle = 600
+        #self.logger.error("Wunderground: Invalid value '"+str(cycle)+"' configured for attribute cycle in plugin.conf, using '"+str(self._cycle)+"' instead")
 
-        self.item_subtree = str(item_subtree)
+        self.item_subtree = self.get_parameter_value('item_subtree')
         if self.item_subtree == '':
             self.logger.warning("Wunderground: item_subtree is not configured, searching complete item-tree instead. Please configure item_subtree to reduce processing overhead" )   
 
@@ -102,7 +100,7 @@ class Wunderground(SmartPlugin):
         self.init_webinterface()
 
         return
-        
+
 
     def run(self):
         """
@@ -110,7 +108,7 @@ class Wunderground(SmartPlugin):
         """
         if (self.apikey != '') and (self.language != ''):
             self.alive = True
-            self.__sh.scheduler.add(__name__, self._update_items, prio=5, cycle=self._cycle, offset=2)
+            self.scheduler.add(__name__, self._update_items, prio=5, cycle=self._cycle, offset=2)
             self._update_items()
 
 
@@ -275,13 +273,12 @@ class Wunderground(SmartPlugin):
         
         This routine is started by the scheduler
         """
-#        weatheritems = self.__sh.return_item(self.item_subtree)
         weatheritems = self.items.return_item(self.item_subtree)
         if (self.item_subtree != '') and (weatheritems == None):
             self.logger.warning("_update_items: configured item_subtree '{}' not found, searching complete item-tree instead".format(self.item_subtree) )   
 
         try:
-            wugjson = self.__sh.tools.fetch_url(self.url, timeout=5)
+            wugjson = self.get_sh().tools.fetch_url(self.url, timeout=5)
         except:
             self.logger.warning('_update_items: sh.tools.fetch_url() timed out' )   
             wugjson = False

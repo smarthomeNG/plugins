@@ -30,15 +30,21 @@ class Join(SmartPlugin):
     URL_PREFIX = 'https://joinjoaomgcd.appspot.com/_ah/api/'
     SEND_URL = URL_PREFIX+'messaging/v1/sendPush?apikey='
     LIST_URL = URL_PREFIX+'registration/v1/listDevices?apikey='
-    PLUGIN_VERSION = "1.4.1.0"
-    ALLOW_MULTIINSTANCE = False
 
-    def __init__(self, smarthome, api_key=None, device_id=None):
-        logging.getLogger("requests").setLevel(logging.WARNING)
-        self.logger = logging.getLogger(__name__)
-        self._api_key = api_key
-        self._device_id = device_id
-        self._sh = smarthome
+    PLUGIN_VERSION = "1.4.2"
+
+
+    def __init__(self, sh):
+        # Call init code of parent class (SmartPlugin)
+        super().__init__()
+
+        from bin.smarthome import VERSION
+        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
+            self.logger = logging.getLogger(__name__)
+
+
+        self._api_key = self.get_parameter_value('api_key')
+        self._device_id = self.get_parameter_value('device_id')
 
     def run(self):
         self.alive = True
