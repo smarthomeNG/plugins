@@ -13,28 +13,24 @@ when the alarm system is activated.
 ## Prerequisite
 
 The following python packages need to be installed on your system:
-- urllib
-- crypto
+
+pycryptodome
+
+This package is included in requirements.txt and will be installed automatically
+at start of SmartHomeNG with Version 1.7 and higher
 
 A key needs to be generated from
 a) device password, printed on a sticker and
 b) from user defined password used to access EasyControl App.
 
-## Installation
-
-```
-cd smarthome.py directory
-cd plugins
-git clone https://github.com/rthill/buderus.git
-```
 
 ### plugin.yaml
 
-```
+```yaml
 buderus:
     class_name: Buderus
     class_path: plugins.buderus
-    host: <ip_address>
+    host: <ip_address> or hostname
     key: <key generated from https://ssl-account.com/km200.andreashahn.info/>
     cycle: 900    # default every 15 minutes
 ```

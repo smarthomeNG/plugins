@@ -25,31 +25,57 @@ import json
 import binascii
 import urllib.request, urllib.error, urllib.parse
 from io import StringIO
-from Crypto.Cipher import AES
 from lib.model.smartplugin import SmartPlugin
 
-logger = logging.getLogger('')
+try:
+    from Crypto.Cipher import AES
+    REQUIRED_PACKAGE_IMPORTED = True
+except:
+    REQUIRED_PACKAGE_IMPORTED = False
+
 
 
 class Buderus(SmartPlugin):
-    PLUGIN_VERSION = "1.0.0"
-    ALLOW_MULTIINSTANCE = False
+
+    PLUGIN_VERSION = "1.0.1"
+
     BS = AES.block_size
     INTERRUPT = '\u0001'
     PAD = '\u0000'
 
-    def __init__(self, smarthome, host, key, cycle=900):
-        self.logger = logging.getLogger(__name__)
+    def __init__(self, sh):
+
+        # Call init code of parent class (SmartPlugin)
+        super().__init__()
+
+        from bin.smarthome import VERSION
+        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
+            self.logger = logging.getLogger(__name__)
+
         self.logger.info("Init Buderus")
+        # Exit if the required package(s) could not be imported
+        if not REQUIRED_PACKAGE_IMPORTED:
+            self.logger.error("{}: Unable to import Python package 'Crypto.Cipher'".format(self.get_fullname()))
+            return
+
         self.__ua = "TeleHeater/2.2.3"
         self.__content_type = "application/json"
-        self._sh = smarthome
-        self._host = host
-        self._key = binascii.unhexlify(key)
+
+        self._host = self.get_parameter_value('host')
+        self._key = binascii.unhexlify(self.get_parameter_value('key'))
+        self._cycle = self.get_parameter_value('cycle')
+        
         self._ids = {}
         self.opener = urllib.request.build_opener()
         self.opener.addheaders = [('User-agent', self.__ua), ('Accept', self.__content_type)]
-        self._sh.scheduler.add('Buderus', self._cycle, cycle=int(cycle))
+
+    def run(self):
+        self.alive = True
+        self.scheduler_add('Buderus', self._poll_device, cycle=self._cycle))
+
+    def stop(self):
+        self.alive = False
+        self.scheduler_remove('Buderus')
 
     def _decrypt(self, enc):
         decobj = AES.new(self._key, AES.MODE_ECB)
@@ -129,30 +155,25 @@ class Buderus(SmartPlugin):
         self.logger.debug(payload)
         req = self._set_data(id, self._encrypt(str(payload)))
 
-    def run(self):
-        self.alive = True
-
-    def stop(self):
-        self.alive = False
-
-    def _cycle(self):
+    def _poll_device(self):
         self.logger.info("Buderus fetching data...")
         for id, item in self._ids.items():
             plain = self._get_data(id)
             if plain is not None:
                 data = self._get_json(plain)
-                item(self._get_value(data), "Buderus")
+                item(self._get_value(data), self.get_shortname())
         self.logger.info("Buderus fetching data done.")
 
     def parse_item(self, item):
+        if self.has_iattr(item.conf, 'km_id'):
         if "km_id" in item.conf:
-            id = item.conf['km_id']
+            id = self.get_iattr_value(item.conf, 'km_id')
             self._ids[id] = item
             return self.update_item
 
     def update_item(self, item, caller=None, source=None, dest=None):
-        if caller != "Buderus":
-            id = item.conf['km_id']
+        if self.alive and caller != self.get_shortname():
+            id = self.get_iattr_value(item.conf, 'km_id')
             plain = self._get_data(id)
             data = self._get_json(plain)
             if self._get_writeable(data):
@@ -167,7 +188,7 @@ class Buderus(SmartPlugin):
                     return
                 else:
                     self.logger.error("Buderus value {} not allowed [{}]".format(item(), allowed_values))
-                    item(item.prev_value(), "Buderus")
+                    item(item.prev_value(), self.get_shortname())
             else:
                 self.logger.error("Buderus item {} not writeable!".format(item))
-                item(item.prev_value(), "Buderus")
+                item(item.prev_value(), self.get_shortname())
