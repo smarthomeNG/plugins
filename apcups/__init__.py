@@ -45,7 +45,7 @@ class APCUPS(SmartPlugin):
 
     def run(self):
         self.alive = True
-        self.scheduler.add('APCups', self.update_status, cycle=self._cycle)
+        self.scheduler_add('APCups', self.update_status, cycle=self._cycle)
 
     def stop(self):
         self.alive = False

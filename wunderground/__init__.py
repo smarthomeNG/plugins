@@ -108,7 +108,7 @@ class Wunderground(SmartPlugin):
         """
         if (self.apikey != '') and (self.language != ''):
             self.alive = True
-            self.scheduler.add(__name__, self._update_items, prio=5, cycle=self._cycle, offset=2)
+            self.scheduler_add(__name__, self._update_items, prio=5, cycle=self._cycle, offset=2)
             self._update_items()
 
 
