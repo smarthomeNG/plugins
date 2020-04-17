@@ -29,24 +29,28 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.base import MIMEBase
 from email.mime.image import MIMEImage
 
-from lib.model.smartplugin import SmartPlugin
-from bin.smarthome import VERSION
-
+from lib.module import Modules
+from lib.model.smartplugin import *
+from lib.item import Items
 
 class SMTP(SmartPlugin):
-    ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = "1.4.0"
 
-    def __init__(self, smarthome, host, mail_from, username='', password='', port=25, tls=False):
-        self._sh = smarthome
-        self._tls = self.to_bool(tls)
-        self._host = host
-        self._port = int(port)
-        self._from = mail_from
-        self._username = username
-        self._password = password
+    PLUGIN_VERSION = "1.4.1"
+
+    def __init__(self, sh):
+        # Call init code of parent class (SmartPlugin)
+        super().__init__()
+
+        from bin.smarthome import VERSION
         if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
             self.logger = logging.getLogger(__name__)
+
+        self._tls = self.get_parameter_value('tls')
+        self._host = self.get_parameter_value('host')
+        self._port = self.get_parameter_value('port')
+        self._from = self.get_parameter_value('mail_from')
+        self._username = self.get_parameter_value('username')
+        self._password = self.get_parameter_value('password')
 
 
     def send(self, to, sub, msg):
@@ -66,6 +70,7 @@ class SMTP(SmartPlugin):
             msg['To'] = to
             msg['Message-ID'] = email.utils.make_msgid('SmartHomeNG')
             to = [x.strip() for x in to.split(',')]
+            self.logger.debug("email prepared for sending")
             smtp.sendmail(self._from, to, msg.as_string())
         except Exception as e:
             self.logger.warning("Could not send message {} to {}: {}".format(sub, to, e))
@@ -75,6 +80,7 @@ class SMTP(SmartPlugin):
                 del (smtp)
             except:
                 pass
+            self.logger.debug("email was sent")
 
     def extended(self, to, sub, msg, sender_name: str, img_list: list=[], attachments: list=[]):
         try:
@@ -160,9 +166,11 @@ class SMTP(SmartPlugin):
         return smtp
 
     def run(self):
+        self.logger.debug("Run method called")
         self.alive = True
 
     def stop(self):
+        self.logger.debug("Stop method called")
         self.alive = False
 
     def parse_item(self, item):
