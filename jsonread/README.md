@@ -1,8 +1,8 @@
 # The jsonread plugin
 
-This is a generic JSON to smarthome plugin. Fetch any JSON encoded
+This is a generic JSON to SmartHomeNG plugin. Fetch any JSON encoded
 data via http(s) or from a file, extract the interesting data and feed
-the values to smarthome items.
+the values to SmartHomeNG items.
 
 It uses the lightweight and flexible JSON processor jq [https://stedolan.github.io/jq/]
 

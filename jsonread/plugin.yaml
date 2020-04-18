@@ -12,9 +12,10 @@ plugin:
     documentation: http://smarthomeng.de/user/plugins_doc/config/not-yet.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/not-yet
 
-    version: 1.0.0                 # Plugin version
+    version: 1.0.1                 # Plugin version
     sh_minversion: 1.4             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    restartable: True
     multi_instance: True          # plugin supports multi instance
     classname: JSONREAD             # class containing the plugin
 
@@ -28,7 +29,6 @@ parameters:
             en: 'URL of the json input (e.g. http://foo.bar/input.json or file:///path/to/data.json)'
     cycle:
         type: int
-        mandatory: False
         default: 30
         valid_min: 0
         description:
@@ -40,4 +40,16 @@ item_attributes:
     # Definition of item attributes defined by this plugin
     jsonread_filter:
         type: str
+        description:
+            de: 'Pfad zum Element innerhalb eines Abfrageergebnisses dessen Wert dem Item zugewiesen werden soll'
+            en: 'Path to an element with the JSON result that should be assigned as item value'
+
+item_structs: NONE
+    # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin
+
+plugin_functions: NONE
+    # Definition of function interface of the plugin
 
