@@ -58,7 +58,7 @@ receiver:
         name: Media
         type: bool
         visu_acl: rw
-        katrhein: media
+        kathrein: media
         kathreinid: 1
         enforce_updates: 'true'
         knx_dpt: 1

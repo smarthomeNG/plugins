@@ -12,9 +12,9 @@ plugin:
     documentation: https://github.com/smarthomeNG/smarthome/Kathrein/Readme.md        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py
 
-    version: 1.6.0                  # Plugin version
+    version: 1.6.1                  # Plugin version
     sh_minversion: 1.5              # minimum shNG version to use this plugin
-#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    #sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False           # plugin supports multi instance
     restartable: True
     classname: Kathrein             # class containing the plugin
@@ -34,6 +34,7 @@ parameters:
             de: 'Kathrein Port'
             en: 'Kathrein port'
             fr: "Port de Kathrein"
+
     kathreinid:
         type: int
         default: 1
@@ -43,14 +44,108 @@ parameters:
             fr: "ID de Kathrein"
 
 item_attributes:
-    # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)
+    kathrein:
+        type: str
+        description:
+            de: 'Kathrein Kommando'
+            en: 'Kathrein command'
+            fr: "commande pour Kathrein"
+        valid_list:
+            - tvr
+            - 0
+            - 1
+            - 2
+            - 3
+            - 4
+            - 5
+            - 6
+            - 7
+            - 8
+            - 9
+            - menu
+            - p+
+            - p-
+            - mute
+            - epg
+            - up
+            - down
+            - right
+            - left
+            - exit
+            - standby
+            - text
+            - vol+
+            - vol-
+            - info
+            - fav
+            - pip
+            - opt
+            - tvr
+            - archiv
+            - media
+            - fback
+            - play
+            - fforward
+            - pause
+            - rec
+            - stop
 
-item_structs:
+item_structs: NONE
     # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
 
 plugin_functions:
-    # Definition of plugin functions defined by this plugin (enter 'plugin_functions: NONE', if section should be empty)
+    push:
+        type: None
+        description:
+            de: 'Ein Kommando an das Kathrein Gerät senden'
+            en: 'Send a command to the Kathrein device'
+        parameters:
+            key:
+                type: str
+                default: 1234
+                description:
+                    de: 'Kommando'
+                    en: 'Command'
+                valid_list:
+                    - tvr
+                    - 0
+                    - 1
+                    - 2
+                    - 3
+                    - 4
+                    - 5
+                    - 6
+                    - 7
+                    - 8
+                    - 9
+                    - menu
+                    - p+
+                    - p-
+                    - mute
+                    - epg
+                    - up
+                    - down
+                    - right
+                    - left
+                    - exit
+                    - standby
+                    - text
+                    - vol+
+                    - vol-
+                    - info
+                    - fav
+                    - pip
+                    - opt
+                    - tvr
+                    - archiv
+                    - media
+                    - fback
+                    - play
+                    - fforward
+                    - pause
+                    - rec
+                    - stop
 
-logic_parameters:
+logic_parameters: NONE
     # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)
 
