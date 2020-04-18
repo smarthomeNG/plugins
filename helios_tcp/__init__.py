@@ -113,15 +113,19 @@ VARLIST = {
 
 
 class HeliosTCP(SmartPlugin):
-    PLUGIN_VERSION = "1.0.0"
+
+    PLUGIN_VERSION = "1.0.1"
     MODBUS_SLAVE = 180
     PORT = 502
     START_REGISTER = 1
 
     _items = {}
 
-    def __init__(self, sh, *args, **kwargs):
-        self.logger = logging.getLogger(__name__)
+    def __init__(self, sh):
+        from bin.smarthome import VERSION
+        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
+            self.logger = logging.getLogger(__name__)
+
         self._helios_ip = self.get_parameter_value('helios_ip')
         self._client = ModbusTcpClient(self._helios_ip)
         self.alive = False
@@ -130,6 +134,10 @@ class HeliosTCP(SmartPlugin):
 
 
     def run(self):
+        """
+        Run method for the plugin
+        """
+        self.logger.debug("Run method called")
         self._is_connected = self._client.connect()
         if not self._is_connected:
             self.logger.error("Helios TCP: Failed to connect to Modbus Server at {0}".format(self._helios_ip))
@@ -138,6 +146,11 @@ class HeliosTCP(SmartPlugin):
 
 
     def stop(self):
+        """
+        Stop method for the plugin
+        """
+        self.logger.debug("Stop method called")
+        self.scheduler_remove('Helios TCP')
         self._client.close()
         self.alive = False
 

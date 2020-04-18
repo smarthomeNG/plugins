@@ -6,13 +6,13 @@ plugin:
         de: 'Ausführen von Python Statements im Kontext von SmartHomeNG v1.5 und höher'
         en: 'Execute Python statements in the context of SmartHomeNG v1.5 and up'
     maintainer: bmxp
-#    tester:                         # Who tests this plugin?
-    state: develop                  # change to ready when done with development
-    keywords: Python eval code
-#    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
+    tester: nobody                  # Who tests this plugin?
+    state: ready                    # change to ready when done with development
+    keywords: Python eval exec code test
+    documentation: https://www.smarthomeng.de/user/plugins/executor/README.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1425152-support-thread-plugin-executor
 
-    version: 0.0.2                  # Plugin version
+    version: 1.0.3                  # Plugin version
     sh_minversion: 1.4              # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False           # plugin supports multi instance

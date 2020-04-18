@@ -83,7 +83,7 @@ item_structs: NONE
 plugin_functions: NONE
     # Definition of plugin functions defined by this plugin
 
-logic_parameters:
+logic_parameters: NONE
 # Definition of logic parameters defined by this plugin
 
 
