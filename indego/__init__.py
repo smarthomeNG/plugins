@@ -51,24 +51,11 @@ class Indego(SmartPlugin):
     Main class of the Indego Plugin. Does all plugin specific stuff and provides
     the update functions for the items
     """
-    PLUGIN_VERSION = '1.6.0'
+    PLUGIN_VERSION = '1.6.1'
 
-    def __init__(self, sh, *args, **kwargs):
+    def __init__(self, sh):
         """
         Initalizes the plugin. The parameters describe for this method are pulled from the entry in plugin.conf.
-
-        :param sh:  **Deprecated**: The instance of the smarthome object. For SmartHomeNG versions 1.4 and up: **Don't use it**!
-        :param *args: **Deprecated**: Old way of passing parameter values. For SmartHomeNG versions 1.4 and up: **Don't use it**!
-        :param **kwargs:**Deprecated**: Old way of passing parameter values. For SmartHomeNG versions 1.4 and up: **Don't use it**!
-
-        If you need the sh object at all, use the method self.get_sh() to get it. There should be almost no need for
-        a reference to the sh object any more.
-
-        The parameters *args and **kwargs are the old way of passing parameters. They are deprecated. They are imlemented
-        to support oder plugins. Plugins for SmartHomeNG v1.4 and beyond should use the new way of getting parameter values:
-        use the SmartPlugin method get_parameter_value(parameter_name) instead. Anywhere within the Plugin you can get
-        the configured (and checked) value for a parameter by calling self.get_parameter_value(parameter_name). It
-        returns the value in the datatype that is defined in the metadata.
         """
         from bin.smarthome import VERSION
         if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
@@ -131,11 +118,11 @@ class Indego(SmartPlugin):
         """
         Stop method for the plugin
         """
+        self.logger.debug("Stop method called")
         self.get_sh().scheduler.remove('state')
         self.get_sh().scheduler.remove('device_date')
         #self.get_sh().scheduler.remove('alert')
         self.get_url(self.indego_url + 'authenticate',self.context_id,5,'DELETE')
-        self.logger.debug("Stop method called")
         self.alive = False
 
     def parse_item(self, item):

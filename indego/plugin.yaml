@@ -6,17 +6,17 @@ plugin:
         de: 'Indego Plugin zum Auslesen von Bosch Indego Mährobotern mit Connect Ausstattung'
         en: 'Indego Plugin to read outBosch Indego mower robots with Connect interface'
     maintainer: marcov
-#    tester:                        # Who tests this plugin?
+    tester: nobody                  # Who tests this plugin?
     state: develop                  # change to ready when done with development
     keywords: Indego smartmower
-#    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
-    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
+    documentation: https://www.smarthomeng.de/user/plugins/indego/README.htm
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/96661 2-indego-connect
 
-    version: 1.6.0                  # Plugin version
+    version: 1.6.1                  # Plugin version
     sh_minversion: 1.4              # minimum shNG version to use this plugin
-#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    #sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False           # plugin supports multi instance
-    restartable: yes
+    restartable: True
     classname: Indego         # class containing the plugin
 
 parameters:
@@ -86,6 +86,9 @@ item_attributes:
         description:
             de: 'Todo Beschreibung ergänzen'
             en: 'Todo needs description'
+
+item_structs: NONE
+    # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
 
 logic_parameters: NONE
     # Definition of logic parameters defined by this plugin
