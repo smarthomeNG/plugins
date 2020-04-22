@@ -12,7 +12,7 @@ plugin:
     documentation: http://smarthomeng.de/user/plugins/wunderground/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1059124-neues-wunderground-plugin
 
-    version: 1.4.8                 # Plugin version
+    version: 1.4.9                 # Plugin version
     sh_minversion: 1.4c             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance

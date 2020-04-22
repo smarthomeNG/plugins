@@ -511,7 +511,7 @@ class AVM(SmartPlugin):
     Main class of the Plugin. Does all plugin specific stuff and provides the update functions for the different TR-064 services on the FritzDevice
     """
 
-    PLUGIN_VERSION = "1.5.8"
+    PLUGIN_VERSION = "1.5.9"
 
     _header = {'SOAPACTION': '', 'CONTENT-TYPE': 'text/xml; charset="utf-8"'}
     _envelope = """
@@ -1813,36 +1813,93 @@ class AVM(SmartPlugin):
                                 child(int(is_temperature[0].firstChild.data) / 10)
                             else:
                                 self.logger.error(
-                                    "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf,
-                                                                                                           'avm_data_type'))
+                                    'Argument {} of Attribute {} not available on the FritzDevice with AIN {}.'
+                                    .format(self.get_iattr_value(child.conf,'avm_data_type'), self.get_iattr_value(item.conf,'avm_data_type'), item.conf['ain'].strip()))
                         elif self.get_iattr_value(child.conf, 'avm_data_type') == 'set_temperature':
                             set_temperature = xml.getElementsByTagName('NewHkrSetTemperature')
                             if len(set_temperature) > 0:
                                 child(int(set_temperature[0].firstChild.data) / 10, self.get_shortname())
                             else:
                                 self.logger.error(
-                                    "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf,
-                                                                                                           'avm_data_type'))
+                                    'Argument {} of Attribute {} not available on the FritzDevice with AIN {}.'
+                                    .format(self.get_iattr_value(child.conf,'avm_data_type'), self.get_iattr_value(item.conf,'avm_data_type'), item.conf['ain'].strip()))
                         elif self.get_iattr_value(child.conf, 'avm_data_type') == 'set_temperature_reduced':
                             set_temperature_reduced = xml.getElementsByTagName('NewHkrReduceTemperature')
                             if len(set_temperature_reduced) > 0:
                                 child(int(set_temperature_reduced[0].firstChild.data) / 10, self.get_shortname())
                             else:
                                 self.logger.error(
-                                    "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf,
-                                                                                                           'avm_data_type'))
+                                    'Argument {} of Attribute {} not available on the FritzDevice with AIN {}.'
+                                    .format(self.get_iattr_value(child.conf,'avm_data_type'), self.get_iattr_value(item.conf,'avm_data_type'), item.conf['ain'].strip()))
                         elif self.get_iattr_value(child.conf, 'avm_data_type') == 'set_temperature_comfort':
                             set_temperature_comfort = xml.getElementsByTagName('NewHkrComfortTemperature')
                             if len(set_temperature_comfort) > 0:
                                 child(int(set_temperature_comfort[0].firstChild.data) / 10, self.get_shortname())
                             else:
                                 self.logger.error(
-                                    "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf,
-                                                                                                           'avm_data_type'))
+                                    'Argument {} of Attribute {} not available on the FritzDevice with AIN {}.'
+                                    .format(self.get_iattr_value(child.conf,'avm_data_type'), self.get_iattr_value(item.conf,'avm_data_type'), item.conf['ain'].strip()))
+                        elif self.get_iattr_value(child.conf, 'avm_data_type') == 'firmware_version':
+                            firmware_version = xml.getElementsByTagName('NewFirmwareVersion')
+                            if len(firmware_version) > 0:
+                                child(str(firmware_version[0].firstChild.data), self.get_shortname())
+                            else:
+                                self.logger.error(
+                                    'Argument {} of Attribute {} not available on the FritzDevice with AIN {}.'
+                                    .format(self.get_iattr_value(child.conf,'avm_data_type'), self.get_iattr_value(item.conf,'avm_data_type'), item.conf['ain'].strip()))
+                        elif self.get_iattr_value(child.conf, 'avm_data_type') == 'manufacturer':
+                            manufacturer = xml.getElementsByTagName('NewManufacturer')
+                            if len(manufacturer) > 0:
+                                child(str(manufacturer[0].firstChild.data), self.get_shortname())
+                            else:
+                                self.logger.error(
+                                    'Argument {} of Attribute {} not available on the FritzDevice with AIN {}.'
+                                    .format(self.get_iattr_value(child.conf,'avm_data_type'), self.get_iattr_value(item.conf,'avm_data_type'), item.conf['ain'].strip()))
+                        elif self.get_iattr_value(child.conf, 'avm_data_type') == 'product_name':
+                            product_name = xml.getElementsByTagName('NewProductName')
+                            if len(product_name) > 0:
+                                child(str(product_name[0].firstChild.data), self.get_shortname())
+                            else:
+                                self.logger.error(
+                                    'Argument {} of Attribute {} not available on the FritzDevice with AIN {}.'
+                                    .format(self.get_iattr_value(child.conf,'avm_data_type'), self.get_iattr_value(item.conf,'avm_data_type'), item.conf['ain'].strip()))
+                        elif self.get_iattr_value(child.conf, 'avm_data_type') == 'device_name':
+                            device_name = xml.getElementsByTagName('NewDeviceName')
+                            if len(device_name) > 0:
+                                child(str(device_name[0].firstChild.data), self.get_shortname())
+                            else:
+                                self.logger.error(
+                                    'Argument {} of Attribute {} not available on the FritzDevice with AIN {}.'
+                                    .format(self.get_iattr_value(child.conf,'avm_data_type'), self.get_iattr_value(item.conf,'avm_data_type'), item.conf['ain'].strip()))
+                        elif self.get_iattr_value(child.conf, 'avm_data_type') == 'connection_status':
+                            connection_status = xml.getElementsByTagName('NewPresent')
+                            if len(connection_status) > 0:
+                                child(str(connection_status[0].firstChild.data), self.get_shortname())
+                            else:
+                                self.logger.error(
+                                    'Argument {} of Attribute {} not available on the FritzDevice with AIN {}.'
+                                    .format(self.get_iattr_value(child.conf,'avm_data_type'), self.get_iattr_value(item.conf,'avm_data_type'), item.conf['ain'].strip()))
+                        elif self.get_iattr_value(child.conf, 'avm_data_type') == 'device_id':
+                            device_id = xml.getElementsByTagName('NewDeviceId')
+                            if len(device_id) > 0:
+                                child(str(device_id[0].firstChild.data), self.get_shortname())
+                            else:
+                                self.logger.error(
+                                    'Argument {} of Attribute {} not available on the FritzDevice with AIN {}.'
+                                    .format(self.get_iattr_value(child.conf,'avm_data_type'), self.get_iattr_value(item.conf,'avm_data_type'), item.conf['ain'].strip()))
+                        elif self.get_iattr_value(child.conf, 'avm_data_type') == 'device_function':
+                            device_function = xml.getElementsByTagName('NewFunctionBitMask')
+                            if len(device_function) > 0:
+                                child(str(device_function[0].firstChild.data), self.get_shortname())
+                            else:
+                                self.logger.error(
+                                    'Argument {} of Attribute {} not available on the FritzDevice with AIN {}.'
+                                    .format(self.get_iattr_value(child.conf,'avm_data_type'), self.get_iattr_value(item.conf,'avm_data_type'), item.conf['ain'].strip()))
 
             else:
                 self.logger.error(
-                    "Attribute %s not available on the FritzDevice" % self.get_iattr_value(item.conf, 'avm_data_type'))
+                    'Argument {} of Attribute {} not available on the FritzDevice with AIN {}.'
+                    .format(self.get_iattr_value(child.conf,'avm_data_type'), self.get_iattr_value(item.conf,'avm_data_type'), item.conf['ain'].strip()))
 
     def _update_fritz_device_info(self, item):
         """
