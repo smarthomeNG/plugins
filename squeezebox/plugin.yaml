@@ -509,23 +509,31 @@ item_structs:
                 type: num
                 enforce_updates: True
                 visu_acl: rw
+                cache: True
                 squeezebox_send: <playerid> mixer volume +{}
 
             down:
                 type: num
                 enforce_updates: True
                 visu_acl: rw
+                cache: True
                 squeezebox_send: <playerid> mixer volume -{}
 
             low:
                 type: num
-                value: 60
+                visu_acl: rw
+                enforce_updates: True
+                initial_value: 60
+                cache: True
                 remark: Sets the volume to a given (low) value
                 squeezebox_send: <playerid> mixer volume {}
 
             high:
                 type: num
-                value: 80
+                visu_acl: rw
+                enforce_updates: True
+                initial_value: 80
+                cache: True
                 remark: Sets the volume to a given (high) value
                 squeezebox_send: <playerid> mixer volume {}
 
