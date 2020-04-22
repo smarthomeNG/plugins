@@ -174,9 +174,9 @@ class Squeezebox(SmartPlugin,lib.connection.Client):
                 return
             if (len(cmd) >= 2) and not item():
                 if (cmd[1] == 'play'):
-                    # if 'play' was set to false, send 'stop' to allow
+                    # if 'play' was set to false, send 'pause' to allow
                     # single-item-operation
-                    cmd[1] = 'stop'
+                    cmd[1] = 'pause'
                     value = 1
                 if condition1:
                     # if a boolean item of [...] was set to false, send '0' to disable the option whatsoever
