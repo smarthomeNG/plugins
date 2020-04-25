@@ -70,6 +70,14 @@ parameters:
         description:
             de: "Bei True werden die Werte mit HTTP und bei False mit UDP in die Datenbank geschrieben."
             en: "If True values into the database are written with HTTP, if False with UDP."
+    http_port:
+        type: int
+        default: 8086
+        valid_min: 0
+        valid_max: 65535
+        description:
+            de: "Portnummer der InfluxData Datenbank für HTTP-Zugriff"
+            en: "Port of the InfluxData database for HTTP access"    
 
 item_attributes:
     # Definition of item attributes defined by this plugin
