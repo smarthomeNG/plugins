@@ -120,8 +120,8 @@ item_structs:
         albumarturl:
             type: str
             visu_acl: rw
-        eval: "'<img class=\"ui-corner-all\" width=\"100\" height=\"100\" id=\"albumImage\" src=\"{}\" />'.format(sh...albumart())"
-        eval_trigger: ..albumart
+        eval: "'<img class=\"ui-corner-all\" width=\"100\" height=\"100\" id=\"albumImage\" src=\"{}\" />'.format(sh..albumart())"
+        eval_trigger: .albumart
 
         update:
             type: bool
