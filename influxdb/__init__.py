@@ -34,7 +34,7 @@ class InfluxDB(SmartPlugin):
         self.logger.info('Init InfluxDB')
 
         self.host = self.get_parameter_value('host')
-        self.udp_port = self.get_parameter_value('interpolation_type')
+        self.udp_port = self.get_parameter_value('udp_port')
         self.keyword = self.get_parameter_value('keyword')
         self.tags = self.get_parameter_value('tags')
         self.fields = self.get_parameter_value('fields')
