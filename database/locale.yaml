@@ -1,17 +1,18 @@
 plugin_translations:
     # Translations for the plugin specially for the web interface
-    'Aktionen':        {'de': 'Aktionen', 'en': 'Actions'}
-    'Verbunden':       {'de': 'Verbunden', 'en': 'Connected'}
-    'Ja':              {'de': 'Ja', 'en': 'Yes'}
-    'Nein':            {'de': 'Nein', 'en': 'No'}
-    'Datenbank-Dump':  {'de': 'Datenbank-Dump', 'en': 'Database Dump'}
-    'Zeit':            {'de': 'Zeit', 'en': 'Time'}
-    'Item ID':         {'de': 'Item ID', 'en': 'Item ID'}
-    'Dauer':           {'de': 'Dauer', 'en': 'Duration'}
-    'Geändert':        {'de': 'Geändert', 'en': 'Changed'}
-    'Übersicht':       {'de': 'Übersicht', 'en': 'Overview'}
-    'am':              {'de': 'am', 'en': 'on the'}
-    'Datensätze':      {'de': 'Datensätze', 'en': 'Data Sets'}
+    'Aktionen':        {'de': '=', 'en': 'Actions'}
+    'Verbunden':       {'de': '=', 'en': 'Connected'}
+    'Treiber  ':       {'de': '=', 'en': 'Driver'}
+    'Ja':              {'de': '=', 'en': 'Yes'}
+    'Nein':            {'de': '=', 'en': 'No'}
+    'Datenbank-Dump':  {'de': '=', 'en': 'Database Dump'}
+    'Zeit':            {'de': '=', 'en': 'Time'}
+    'Item ID':         {'de': '=', 'en': '='}
+    'Dauer':           {'de': '=', 'en': 'Duration'}
+    'Geändert':        {'de': '=', 'en': 'Changed'}
+    'Übersicht':       {'de': '=', 'en': 'Overview'}
+    'am':              {'de': '=', 'en': 'on the'}
+    'Datensätze':      {'de': '=', 'en': 'Data Sets'}
     'Aktueller Wert':  {'de': '=', 'en': 'Recent Value'}
     'Typ':             {'de': '=', 'en': 'Type'}
     'Tabelle':         {'de': '=', 'en': 'Table'}
