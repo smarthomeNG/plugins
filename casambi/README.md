@@ -58,10 +58,10 @@ Please refer to the documentation generated from plugin.yaml metadata.
 
 
 ## Examples
-Example for dimmer (Occhio Sento) with dimming and additional up/down fading.
+Example for dimmer (Occhio Sento) with dimming and additional up/down fading feature.
 Item tree:
 
-readinglight:
+    readinglight:
         casambi_id: 2
         enforce_updates: True
         

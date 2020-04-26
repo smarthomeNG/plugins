@@ -29,6 +29,7 @@ from lib.module import Modules
 from lib.model.smartplugin import *
 from lib.item import Items
 
+import threading
 import requests
 import json
 import time
@@ -63,6 +64,7 @@ class Casambi(SmartPlugin):
         self.wire = 1                     # Connection ID, incremental value to identify messages of network/connection
         self.websocket = None
         self.casambiBackendStatus = False
+        self.thread = None
 
 
         # get the parameters for the plugin (as defined in metadata plugin.yaml):
@@ -192,12 +194,16 @@ class Casambi(SmartPlugin):
         dimValue = 0
         if key == 'ON':
             dimValue = int(item() == True)
-        elif key == 'DIMMER':
+        elif key == 'DIMMER' or key == 'VERTICAL':
             dimValue = item() / 100.0
         else:
             self.logger.error("Invalid key: {0}".format(key))
-        
-        targetControls = {"Dimmer": {"value": dimValue}} # Dimmer value can be anything from 0 to 1
+
+        targetControls = ''
+        if key == 'ON' or key == 'DIMMER':
+            targetControls = {"Dimmer": {"value": dimValue}} # Dimmer value can be anything from 0 to 1
+        elif key == 'VERTICAL':
+            targetControls = {"Vertical": {"value": dimValue}} # Vertical fader value can be anything from 0 to 1
 
         controlMsg = {
                 "wire": self.wire,
@@ -211,9 +217,9 @@ class Casambi(SmartPlugin):
         if self.websocket and self.websocket.connected:
             self.websocket.send(controlMsgJson)
             if self.casambiBackendStatus == False:
-                self.logger.warning("Dim command sent but backend is not online.")
+                self.logger.warning("Command sent but backend is not online.")
             else:
-                self.logger.debug("Dim command with value {0} sent out via open websocket".format(dimValue))
+                self.logger.debug("Command with value {0} sent out via open websocket".format(dimValue))
         else:
             self.logger.error("Unable to send command. Websocket is not open")
 
@@ -225,6 +231,12 @@ class Casambi(SmartPlugin):
             return
 
         dataJson = json.loads(receivedData.decode('utf-8'))
+
+        if 'wireStatus' in dataJson:
+            wireStatus = str(dataJson['wireStatus']) 
+            if not (wireStatus == 'openWireSucceed'):
+                self.logger.warning("Event: Wirestatus {0} received".format(wireStatus))
+
         method = ''
         if dataJson:
             if 'method' in dataJson :
@@ -302,6 +314,13 @@ class Casambi(SmartPlugin):
         # if you need to create child threads, do not make them daemon = True!
         # They will not shutdown properly. (It's a python bug)
 
+        self.thread = threading.Thread(target=self.eventHandler, name='CasambiEventHandler')
+        self.thread.daemon = False
+        self.thread.start()
+
+
+    def eventHandler(self):
+        self.logger.debug("EventHandler thread started")
         if self.networkID:
             self.openWebsocket(self.networkID)
 
@@ -313,7 +332,7 @@ class Casambi(SmartPlugin):
                 self.logger.debug("Received data: {0}".format(receivedData))
                 errorCount = 0
             except Exception as e:
-                self.logger.error("Error during data reception: {0}".format(e))
+                self.logger.info("Error during data reception: {0}".format(e))
                 errorCount = errorCount  + 1
                 doReconnect = True
 
@@ -321,6 +340,9 @@ class Casambi(SmartPlugin):
                 errorCount = 1
                 time.sleep(60)
        
+            if not self.alive:
+                break
+
             if doReconnect and self.networkID:
                 self.openWebsocket(self.networkID)
                 doReconnect = False
@@ -329,13 +351,17 @@ class Casambi(SmartPlugin):
             
         if self.websocket:
             self.websocket.close()
-        pass
+
+        self.logger.debug("EventHandler thread stopped")
+
 
     def stop(self):
         """
         Stop method for the plugin
         """
         self.logger.debug("Stop method called")
+        if self.thread:
+            self.thread.join(2)
         self.alive = False
 
     def parse_item(self, item):
