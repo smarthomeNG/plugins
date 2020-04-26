@@ -1,8 +1,8 @@
 # Influxdb
 
-## Logging to InfluxDB over UDP
+## Logging to InfluxDB over UDP or HTTP
 
-Logging items to the time-series database [InfluxDB](https://www.influxdata.com/time-series-platform/influxdb/)
+Logging items to the time-series database [InfluxDB](https://www.influxdata.com/time-series-platform/)
 
 This started as a fork of the plugin `influxdata` with the following enhancements:
 - proper naming
@@ -14,18 +14,18 @@ The special smarthomeNG attributes `caller`, `source` and `dest` are always logg
 Only if a measurement name is specified, the item's ID is automatically logged as well (tag `item`) - if you don't specify a measurement-name, the name will fallback to the item's ID which makes the item-tag redundant
 
 ## Proper Logging
-Please read the [Key Concepts](https://docs.influxdata.com/influxdb/v1.1/concepts/key_concepts/) and [Schema Design](https://docs.influxdata.com/influxdb/v1.1/concepts/schema_and_data_layout/)
+Please read the [Key Concepts](https://docs.influxdata.com/influxdb/v1.8/concepts/key_concepts/) and [Schema Design](https://docs.influxdata.com/influxdb/v1.8/concepts/schema_and_data_layout/)
 
 Especially these:
-- [Encode meta data in tags](https://docs.influxdata.com/influxdb/v1.1/concepts/schema_and_data_layout/#encode-meta-data-in-tags)
-- [Don’t encode data in measurement names](https://docs.influxdata.com/influxdb/v1.1/concepts/schema_and_data_layout/#don-t-encode-data-in-measurement-names)
-- [Don’t put more than one piece of information in one tag](https://docs.influxdata.com/influxdb/v1.1/concepts/schema_and_data_layout/#don-t-put-more-than-one-piece-of-information-in-one-tag)
+- [Encode meta data in tags](https://docs.influxdata.com/influxdb/v1.8/concepts/schema_and_data_layout/#encode-meta-data-in-tags)
+- [Avoid encoding data in measurement names](https://docs.influxdata.com/influxdb/v1.8/concepts/schema_and_data_layout/#avoid-encoding-data-in-measurement-names)
+- [Avoid putting more than one piece of information in one tag](https://docs.influxdata.com/influxdb/v1.8/concepts/schema_and_data_layout/#avoid-putting-more-than-one-piece-of-information-in-one-tag)
 
 ## Setup
 
 ### /etc/influxdb/influxdb.conf
 
-You have to explicitly enable the UDP endpoint in influxdb. The UDP endpoint cannot be auth-protected and is bound to a specific database
+If you use UDP, you have to explicitly enable the UDP endpoint in influxdb. The UDP endpoint cannot be auth-protected and is bound to a specific database
 
 ```
 [[udp]]
@@ -34,6 +34,8 @@ You have to explicitly enable the UDP endpoint in influxdb. The UDP endpoint can
   database = "smarthome"
   # retention-policy = ""
 ```
+
+If you want to use HTTP access no additional configuration is needed as HTTP access to the influxdb is enabled by default.
 
 ### plugin.yaml
 
@@ -44,9 +46,11 @@ influxdb:
     class_name: InfluxDB
     class_path: plugins.influxdb
     # host: localhost
-    # port: 8089
+    # udp_port: 8089
     # keyword: influxdb
     # value_field: value
+    # write_http: True
+    # http_port: 8086
     tags: '{"key": "value", "foo": "bar"}'
     fields: '{"key": "value", "foo": "bar"}'
 ```
