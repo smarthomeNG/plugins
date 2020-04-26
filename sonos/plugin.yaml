@@ -59,8 +59,8 @@ parameters:
   discover_cycle:
       type: int
       description:
-        de: "Zeitintervall, in dem (erneut) nach (neuen) Lautsprechern im Netzwerk gesucht wird."
-        en: "Time interval in which (again) searches are made for (new) speakers in the network."
+        de: "Zeitintervall, nach dem (erneut) nach (neuen) Lautsprechern im Netzwerk gesucht wird."
+        en: "Time interval to search again for (new) speakers in the network."
 
   snippet_duration_offset:
     type: num

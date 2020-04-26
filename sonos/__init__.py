@@ -2299,17 +2299,17 @@ class Sonos(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
     PLUGIN_VERSION = "1.5.0"
 
-    def __init__(self, sh, tts=False, local_webservice_path=None, local_webservice_path_snippet=None,
-                 discover_cycle="120", webservice_ip=None, webservice_port=23500, speaker_ips=None, snippet_duration_offset=0.0, **kwargs):
+    def __init__(self, sh, *args, **kwargs):
         super().__init__(**kwargs)
+
         self._sh = sh
         #self.logger = logging.getLogger('sonos')  # get a unique logger for the plugin and provide it internally
         self.zero_zone = False  # sometime a discovery scan fails, so try it two times; we need to save the state
         self._sonos_dpt3_step = 2  # default value for dpt3 volume step (step(s) per time period)
         self._sonos_dpt3_time = 1  # default value for dpt3 volume time (time period per step in seconds)
-        self._tts = self.to_bool(tts, default=False)
-        self._local_webservice_path = local_webservice_path
-        self._snippet_duration_offset = float(snippet_duration_offset)
+        self._tts = self.to_bool(self.get_parameter_value("tts"), default=False)
+        self._local_webservice_path = self.get_parameter_value("local_webservice_path")
+        self._snippet_duration_offset = float(self.get_parameter_value("snippet_duration_offset"))
 		
         from bin.smarthome import VERSION
         if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
@@ -2325,7 +2325,8 @@ class Sonos(SmartPlugin):
             return
 
         # see documentation: if no exclusive snippet path is set, we use the global one
-        if local_webservice_path_snippet is None:
+        local_webservice_path_snippet = self.get_parameter_value("local_webservice_path_snippet")
+        if local_webservice_path_snippet == '':
             self._local_webservice_path_snippet = self._local_webservice_path
         else:
             self._local_webservice_path_snippet = local_webservice_path_snippet
@@ -2351,7 +2352,8 @@ class Sonos(SmartPlugin):
         self._speaker_ips = utils.unique_list(self._speaker_ips)
         auto_ip = utils.get_local_ip_address()
 
-        if webservice_ip is not None:
+        webservice_ip = self.get_parameter_value("webservice_ip")
+        if not webservice_ip == '':
             if self.is_ip(webservice_ip):
                 self._webservice_ip = webservice_ip
             else:
@@ -2361,6 +2363,7 @@ class Sonos(SmartPlugin):
         else:
             self._webservice_ip = auto_ip
 
+        webservice_port = self.get_parameter_value("webservice_port")
         if utils.is_valid_port(str(webservice_port)):
             self._webservice_port = int(webservice_port)
             if not utils.is_open_port(self._webservice_port):
@@ -2374,6 +2377,7 @@ class Sonos(SmartPlugin):
 
         discover_cycle_default = 120
 
+        self.webservice = None
         if self._tts:
             if self._local_webservice_path_snippet:
                 # we just need an existing path with read rights, this can be done by the user while shNG is running
@@ -2424,23 +2428,26 @@ class Sonos(SmartPlugin):
         else:
             self.logger.debug("Sonos: TTS disabled")
         try:
-            self._discover_cycle = int(discover_cycle)
+            self._discover_cycle = int(self.get_parameter_value("discover_cycle"))
         except:
             self.logger.error("Sonos: Parameter 'discover_cycle' [{val}] invalid, must be int.".format(
-                val=discover_cycle
+                val= self.get_parameter_value("discover_cycle")
             ))
             self._discover_cycle = discover_cycle_default
 
         self.logger.info("Sonos: Setting discover cycle to {val} seconds.".format(val=self._discover_cycle))
 
     def run(self):
-        self.logger.debug("Sonos: run method called")
+        self.logger.debug("Run method called")
         self._sh.scheduler.add("sonos_discover_scheduler", self._discover, prio=3, cron=None,
                                cycle=self._discover_cycle, value=None, offset=None, next=None)
         self.alive = True
 
     def stop(self):
         self.logger.debug("Sonos: stop method called")
+        if self.webservice:
+            self.webservice.stop() 
+        self.scheduler_remove('sonos_discover_scheduler')
         for uid, speaker in sonos_speaker.items():
             speaker.dispose()
         event_listener.stop()
