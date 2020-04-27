@@ -28,6 +28,7 @@ import datetime
 import functools
 import time
 import threading
+
 import lib.db
 
 from lib.shtime import Shtime
@@ -48,7 +49,7 @@ class Database(SmartPlugin):
     """
 
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = '1.5.10'
+    PLUGIN_VERSION = '1.5.11'
 
     # SQL queries: {item} = item table name, {log} = log table name
     # time, item_id, val_str, val_num, val_bool, changed
@@ -86,33 +87,28 @@ class Database(SmartPlugin):
         self.shtime = Shtime.get_instance()
         self.items = Items.get_instance()
 
-        # driver, connect, prefix="", cycle=60, precision=2
+        # parameters: driver, connect, prefix="", cycle=60, precision=2
         self.driver = self.get_parameter_value('driver')
+        self._connect = self.get_parameter_value('connect')  # list of connection parameters
+        self._prefix = self.get_parameter_value('prefix')
         self._dump_cycle = self.get_parameter_value('cycle')
         self._precision = self.get_parameter_value('precision')
-        self._name = self.get_instance_name()
-        self._replace = {table: table if (self.get_parameter_value('prefix') == "" or self.get_parameter_value(
-            'prefix') is None) else self.get_parameter_value(
-            'prefix') + "_" + table for table in ["log", "item"]}
+
+        self._replace = {table: table if self._prefix == "" else self._prefix + "_" + table for table in ["log", "item"]}
         self._replace['item_columns'] = ", ".join(COL_ITEM)
         self._replace['log_columns'] = ", ".join(COL_LOG)
         self._buffer = {}
         self._buffer_lock = threading.Lock()
         self._dump_lock = threading.Lock()
 
-        self._db = lib.db.Database(("" if (self.get_parameter_value('prefix') == "" or self.get_parameter_value(
-            'prefix') is None) else self.get_parameter_value(
-            'prefix').capitalize() + "_") + "Database", self.driver,
-                                   Utils.string_to_list(self.get_parameter_value('connect')))
-        self._initialized = False
-        self._initialize()
+        # Setup db and test if connection is possible
+        self._db = lib.db.Database(("" if self._prefix == ""  else self._prefix.capitalize() + "_") + "Database", self.driver, self._connect)
+        self._db_initialized = False
+        if not self._initialize_db():
+            self._init_complete = False
+            return
 
-        self.scheduler_add('Database dump ' + self._name + (
-            "" if (self.get_parameter_value('prefix') == "" or self.get_parameter_value(
-                'prefix') is None) else " [" + self.get_parameter_value('prefix') + "]"),
-                           self._dump, cycle=self._dump_cycle, prio=5)
-
-        self.init_webinterface()
+        self.init_webinterface(WebInterface)
         return
 
 
@@ -121,6 +117,8 @@ class Database(SmartPlugin):
         Run method for the plugin
         """
         self.logger.debug("Run method called")
+        self._initialize_db()
+        self.scheduler_add('Database dump', self._dump, cycle=self._dump_cycle, prio=5)
         self.alive = True
 
 
@@ -130,6 +128,7 @@ class Database(SmartPlugin):
         """
         self.logger.debug("Stop method called")
         self.alive = False
+        self.scheduler_remove('Database dump')
         self._dump(True)
         self._db.close()
 
@@ -148,14 +147,13 @@ class Database(SmartPlugin):
                         can be sent to the knx with a knx write function within the knx plugin.
         """
 
-        self.logger.debug(item.conf)
         if self.has_iattr(item.conf, 'database'):
+            self.logger.debug(item.conf)
             self._buffer_insert(item, [])
-            item.series = functools.partial(self._series, item=item.id())
-            item.db = functools.partial(self._single, item=item.id())
-            item.dbplugin = self
+            item.series = functools.partial(self._series, item=item.id())   # Zur Nutzung im Websocket Plugin
+            #item.db = functools.partial(self._single, item=item.id())   # Nie genutzt???
 
-            if self._initialized and self.get_iattr_value(item.conf, 'database') == 'init':
+            if self._db_initialized and self.get_iattr_value(item.conf, 'database') == 'init':
                 if not self._db.lock(5):
                     self.logger.error("Can not acquire lock for database to read value for item {}".format(item.id()))
                     return
@@ -232,41 +230,41 @@ class Database(SmartPlugin):
             self.logger.info("Not writing item '{}' value because database_acl = {}".format(item,  acl))
 
 
-    def init_webinterface(self):
-        """"
-        Initialize the web interface for this plugin
-
-        This method is only needed if the plugin is implementing a web interface
-        """
-        try:
-            self.mod_http = Modules.get_instance().get_module(
-                'http')  # try/except to handle running in a core version that does not support modules
-        except:
-            self.mod_http = None
-        if self.mod_http == None:
-            self.logger.error("Plugin '{}': Not initializing the web interface".format(self.get_shortname()))
-            return False
-
-        # set application configuration for cherrypy
-        webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
-        config = {
-            '/': {
-                'tools.staticdir.root': webif_dir,
-            },
-            '/static': {
-                'tools.staticdir.on': True,
-                'tools.staticdir.dir': 'static'
-            }
-        }
-
-        # Register the web interface as a cherrypy app
-        self.mod_http.register_webif(WebInterface(webif_dir, self),
-                                     self.get_shortname(),
-                                     config,
-                                     self.get_classname(), self.get_instance_name(),
-                                     description='')
-
-        return True
+    # def init_webinterface(self):
+    #     """"
+    #     Initialize the web interface for this plugin
+    #
+    #     This method is only needed if the plugin is implementing a web interface
+    #     """
+    #     try:
+    #         self.mod_http = Modules.get_instance().get_module(
+    #             'http')  # try/except to handle running in a core version that does not support modules
+    #     except:
+    #         self.mod_http = None
+    #     if self.mod_http == None:
+    #         self.logger.error("Plugin '{}': Not initializing the web interface".format(self.get_shortname()))
+    #         return False
+    #
+    #     # set application configuration for cherrypy
+    #     webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
+    #     config = {
+    #         '/': {
+    #             'tools.staticdir.root': webif_dir,
+    #         },
+    #         '/static': {
+    #             'tools.staticdir.on': True,
+    #             'tools.staticdir.dir': 'static'
+    #         }
+    #     }
+    #
+    #     # Register the web interface as a cherrypy app
+    #     self.mod_http.register_webif(WebInterface(webif_dir, self),
+    #                                  self.get_shortname(),
+    #                                  config,
+    #                                  self.get_classname(), self.get_instance_name(),
+    #                                  description='')
+    #
+    #     return True
 
 
     # ------------------------------------------------------
@@ -525,7 +523,7 @@ class Database(SmartPlugin):
     def deleteLog(self, id, time=None, time_start=None, time_end=None, changed=None, changed_start=None,
                   changed_end=None, cur=None):
         """
-        Delete database log records for given database ID
+        Delete database log records for given item (database ID)
 
         This is a public function of the plugin
 
@@ -542,12 +540,14 @@ class Database(SmartPlugin):
         condition, params = self._slice_condition(id, time=time, time_start=time_start, time_end=time_end,
                                                   changed=changed, changed_start=changed_start, changed_end=changed_end)
         self._execute(self._prepare("DELETE FROM {log} WHERE " + condition), params, cur=cur)
+        self._db.commit()
         return
 
 
     def cleanup(self):
         """
-        Cleanup database (deletes unused item/log records in the database)
+        Cleanup database
+        deletes item/log records in the database if the corresponding item does not exist any more
 
         This is a public function of the plugin
 
@@ -568,10 +568,6 @@ class Database(SmartPlugin):
         self._db.release()
         return
 
-
-    # ------------------------------------------
-    #    Database specific stuff
-    # ------------------------------------------
 
     def _slice_condition(self, id, time=None, time_start=None, time_end=None, changed=None, changed_start=None,
                          changed_end=None):
@@ -595,48 +591,275 @@ class Database(SmartPlugin):
         return (condition, params)
 
 
-    def _item_value_tuple(self, item_type, item_val):
-        if item_type == 'num':
-            val_str = None
-            val_num = float(item_val)
-            val_bool = int(bool(item_val))
-        elif item_type == 'bool':
-            val_str = None
-            val_num = float(item_val)
-            val_bool = int(bool(item_val))
+    # ------------------------------------------------------
+    #    Database specific stuff to support websocket/visu
+    # ------------------------------------------------------
+
+    def _series(self, func, start, end='now', count=100, ratio=1, update=False, step=None, sid=None, item=None):
+        """
+        This method is called (via the item object) from the websocket plugin,
+        when a data series for an item is requested for the visu
+
+        It returns the data structure in the form needed by the websocket plugin to directly
+        return it to the visu
+
+        :param func:
+        :param start:
+        :param end:
+        :param count:
+        :param ratio:
+        :param update:
+        :param step:
+        :param sid:
+        :param item:
+
+        :return: data structure in the form needed by the websocket plugin return it to the visu
+        """
+        init = not update
+        if sid is None:
+            sid = item + '|' + func + '|' + str(start) + '|' + str(end) + '|' + str(count)
+        func, expression = self._expression(func)
+        queries = {
+            'avg': 'MIN(time), ' + self._precision_query('AVG(val_num * duration) / AVG(duration)'),
+            'avg.order': 'ORDER BY time ASC',
+            'integrate': 'MIN(time), SUM(val_num * duration)',
+            'count': 'MIN(time), SUM(CASE WHEN val_num{op}{value} THEN 1 ELSE 0 END)'.format(**expression['params']),
+            'countall': 'MIN(time), COUNT(*)',
+            'min': 'MIN(time), MIN(val_num)',
+            'max': 'MIN(time), MAX(val_num)',
+            'on': 'MIN(time), ' + self._precision_query('SUM(val_bool * duration) / SUM(duration)'),
+            'on.order': 'ORDER BY time ASC',
+            'sum': 'MIN(time), SUM(val_num)',
+            'raw': 'time, val_num',
+            'raw.order': 'ORDER BY time ASC',
+            'raw.group': ''
+        }
+        if func not in queries:
+            raise NotImplementedError
+
+        order = '' if func + '.order' not in queries else queries[func + '.order']
+        group = 'GROUP BY ROUND(time / :step)' if func + '.group' not in queries else queries[func + '.group']
+        logs = self._fetch_log(item, queries[func], start, end, step=step, count=count, group=group, order=order)
+        tuples = logs['tuples']
+        if tuples:
+            if logs['istart'] > tuples[0][0]:
+                tuples[0] = (logs['istart'], tuples[0][1])
+            if end != 'now':
+                tuples.append((logs['iend'], tuples[-1][1]))
         else:
-            val_str = str(item_val)
-            val_num = None
-            val_bool = int(bool(item_val))
+            tuples = []
+        item_change = self._timestamp(logs['item'].last_change())
+        if item_change < logs['iend']:
+            value = float(logs['item']())
+            if item_change < logs['istart']:
+                tuples.append((logs['istart'], value))
+            elif init:
+                tuples.append((item_change, value))
+            if init:
+                tuples.append((logs['iend'], value))
 
-        return {'val_str': val_str, 'val_num': val_num, 'val_bool': val_bool}
+        if expression['finalizer']:
+            tuples = self._finalize(expression['finalizer'], tuples)
+
+        return {
+            'cmd': 'series', 'series': tuples, 'sid': sid,
+            'params': {'update': True, 'item': item, 'func': func, 'start': logs['iend'], 'end': end,
+                       'step': logs['step'], 'sid': sid},
+            'update': self.shtime.now() + datetime.timedelta(seconds=int(logs['step'] / 1000))
+        }
 
 
-    def _item_value_tuple_rev(self, item_type, item_val_tuple):
-        if item_type == 'num':
-            return None if item_val_tuple[1] is None else float(item_val_tuple[1])
-        elif item_type == 'bool':
-            return None if item_val_tuple[2] is None else bool(int(item_val_tuple[2]))
+    # def _single(self, func, start, end='now', item=None):
+    #     """
+    #     As far as it has been checked, this method is never called.
+    #     It is attached to the item object but no other plugin is known that calls this method.
+    #
+    #     :param func:
+    #     :param start:
+    #     :param end:
+    #     :param item:
+    #     :return:
+    #     """
+    #     func, expression = self._expression(func)
+    #     queries = {
+    #         'avg': self._precision_query('AVG(val_num * duration) / AVG(duration)'),
+    #         'integrate': 'SUM(val_num * duration)',
+    #         'count': 'SUM(CASE WHEN val_num{op}{value} THEN 1 ELSE 0 END)'.format(**expression['params']),
+    #         'countall': 'COUNT(*)',
+    #         'min': 'MIN(val_num)',
+    #         'max': 'MAX(val_num)',
+    #         'on': self._precision_query('SUM(val_bool * duration) / SUM(duration)'),
+    #         'sum': 'SUM(val_num)',
+    #         'raw': 'val_num',
+    #         'raw.order': 'ORDER BY time DESC',
+    #         'raw.group': ''
+    #     }
+    #     if func not in queries:
+    #         self.logger.warning("Unknown export function: {0}".format(func))
+    #         return
+    #     order = '' if func + '.order' not in queries else queries[func + '.order']
+    #     logs = self._fetch_log(item, queries[func], start, end, order=order)
+    #     if logs['tuples'] is None:
+    #         return
+    #     return logs['tuples'][0][0]
+
+
+    def _expression(self, func):
+        expression = {'params': {'op': '!=', 'value': '0'}, 'finalizer': None}
+        if ':' in func:
+            expression['finalizer'] = func[:func.index(":")]
+            func = func[func.index(":") + 1:]
+        if func is 'count' or func.startswith('count'):
+            parts = re.match('(count)((<>|!=|<|=|>)(\d+))?', func)
+            func = 'count'
+            if parts and parts.group(3) is not None:
+                expression['params']['op'] = parts.group(3)
+            if parts and parts.group(4) is not None:
+                expression['params']['value'] = parts.group(4)
+        return func, expression
+
+
+    def _finalize(self, func, tuples):
+        if func == 'diff':
+            final_tuples = []
+            for i in range(1, len(tuples) - 1):
+                final_tuples.append((tuples[i][0], tuples[i][1] - tuples[i - 1][1]))
+            return final_tuples
         else:
-            return None if item_val_tuple[0] is None else str(item_val_tuple[0])
+            return tuples
 
 
-    def _datetime(self, ts):
-        return datetime.datetime.fromtimestamp(ts / 1000, self.shtime.tzinfo())
+    def _precision_query(self, query):
+        if self._precision >= 0:
+            return 'ROUND({}, {})'.format(query, self._precision)
+        return query
 
 
-    def _prepare(self, query):
-        return query.format(**self._replace)
+    def _fetch_log(self, item, columns, start, end, step=None, count=100, group='', order=''):
+        _item = self.items.return_item(item)
 
+        istart = self._parse_ts(start)
+        iend = self._parse_ts(end)
+        inow = self._parse_ts('now')
+        id = self.id(_item, create=False)
+
+        if inow > iend:
+            inow = iend
+
+        if step is None:
+            if count != 0:
+                step = int((iend - istart) / int(count))
+            else:
+                step = iend - istart
+
+        if self._buffer[_item] != []:
+            self._dump(items=[_item])
+
+        params = {'id': id, 'time_start': istart, 'time_end': iend, 'inow': inow, 'step': step}
+        duration_now = "COALESCE(duration, :inow - time)"
+
+        # Duration calculation (S=Start, E=End):
+        duration = (
+            "("
+            #    ----------|<--------------------------->|---------->
+            # 1. Duration for items within the given start/end range
+            #    -----------------[S]======[E]---------------------->
+            "COALESCE(duration * (time >= :time_start) * (time + duration <= :time_end), 0) + "
+            # 2. Duration for items partially before start but ends after start
+            #    -----[S]======[E]---------------------------------->
+            "COALESCE(duration / duration * (time + duration - :time_start) * (time < :time_start) * (time + duration >= :time_start), 0) + "
+            #    ----------------------------------[S]======[E]----->
+            # 3. Duration for items partially after end but starts before end
+            "COALESCE(duration_now / duration_now * (:time_end - time) * (time + duration_now >= :time_end), 0)"
+            ")"
+        )
+
+        # Replace duration fields with calculated durations from previous
+        # generated expressions to include all three cases.
+        columns = columns.replace('duration', duration)
+
+        # Create base query including the replaced columns
+        query = (
+                "SELECT " + columns + " FROM {log} WHERE "
+                                      "item_id = :id AND "
+                                      "time >= (SELECT COALESCE(MAX(time), 0) FROM {log} WHERE item_id = :id AND time < :time_start) AND "
+                                      "time <= :time_end AND "
+                                      "time + duration_now > (SELECT COALESCE(MAX(time), 0) FROM {log} WHERE item_id = :id AND time < :time_start) "
+                                      "" + group + " " + order
+        )
+
+        # Replace duration_now with value from start time til current time to
+        # get a duration value referring to the current timestamp - if required.
+        query = query.replace('duration_now', duration_now)
+
+        logs = self._fetchall(query, params)
+
+        return {
+            'tuples': logs,
+            'item': _item,
+            'istart': istart,
+            'iend': iend,
+            'step': step,
+            'count': count
+        }
+
+
+    def _parse_ts(self, frame):
+        """
+        Parse frame to timestamp
+
+        :param frame:
+        :return:
+        """
+        minute = 60 * 1000
+        hour = 60 * minute
+        day = 24 * hour
+        week = 7 * day
+        month = 30 * day
+        year = 365 * day
+
+        _frames = {'i': minute, 'h': hour, 'd': day, 'w': week, 'm': month, 'y': year}
+        try:
+            return int(frame)
+        except:
+            pass
+        ts = self._timestamp(self.shtime.now())
+        if frame == 'now':
+            fac = 0
+            frame = 0
+        elif frame[-1] in _frames:
+            fac = _frames[frame[-1]]
+            frame = frame[:-1]
+        else:
+            return frame
+        try:
+            ts = ts - int(float(frame) * fac)
+        except:
+            self.logger.warning("Database: Unknown time frame '{0}'".format(frame))
+        return ts
+
+
+    # --------------------------------------------------------
+    #    Database buffer routines (dump, insert and remove)
+    # --------------------------------------------------------
 
     def _dump(self, finalize=False, items=None):
+        """
+        Dump data to database file
+
+        This method is periodically called by the sheduler of SmartHomeNG
+
+        :param finalize:
+        :param items:
+        :return:
+        """
         if self._dump_lock.acquire(timeout=60) == False:
             self.logger.warning('Skipping dump, since other dump running!')
             return
 
         self.logger.debug('Starting dump')
 
-        if not self._initialize():
+        if not self._initialize_db():
             self._dump_lock.release()
             return
 
@@ -722,14 +945,6 @@ class Database(SmartPlugin):
         self._dump_lock.release()
 
 
-    def _buffer_remove(self, item):
-        self._buffer_lock.acquire()
-        tuples = self._buffer[item]
-        self._buffer[item] = self._buffer[item][len(tuples):]
-        self._buffer_lock.release()
-        return tuples
-
-
     def _buffer_insert(self, item, tuples):
         self._buffer_lock.acquire()
         if item in self._buffer:
@@ -740,184 +955,38 @@ class Database(SmartPlugin):
         return tuples
 
 
-    def _expression(self, func):
-        expression = {'params': {'op': '!=', 'value': '0'}, 'finalizer': None}
-        if ':' in func:
-            expression['finalizer'] = func[:func.index(":")]
-            func = func[func.index(":") + 1:]
-        if func is 'count' or func.startswith('count'):
-            parts = re.match('(count)((<>|!=|<|=|>)(\d+))?', func)
-            func = 'count'
-            if parts and parts.group(3) is not None:
-                expression['params']['op'] = parts.group(3)
-            if parts and parts.group(4) is not None:
-                expression['params']['value'] = parts.group(4)
-        return func, expression
+    def _buffer_remove(self, item):
+        self._buffer_lock.acquire()
+        tuples = self._buffer[item]
+        self._buffer[item] = self._buffer[item][len(tuples):]
+        self._buffer_lock.release()
+        return tuples
 
 
-    def _finalize(self, func, tuples):
-        if func == 'diff':
-            final_tuples = []
-            for i in range(1, len(tuples) - 1):
-                final_tuples.append((tuples[i][0], tuples[i][1] - tuples[i - 1][1]))
-            return final_tuples
-        else:
-            return tuples
+    # ------------------------------------------
+    #    Database specific stuff
+    # ------------------------------------------
+
+    def _initialize_db(self):
+        try:
+            if not self._db.connected():
+                self._db.connect()
+            if not self._db_initialized:
+                self._db.setup(
+                    {i: [self._prepare(query[0]), self._prepare(query[1])] for i, query in self._setup.items()})
+                self._db_initialized = True
+        except Exception as e:
+            self.logger.error("Database: Initialization failed: {}".format(e))
+            return False
+        return True
 
 
-    def _series(self, func, start, end='now', count=100, ratio=1, update=False, step=None, sid=None, item=None):
-        init = not update
-        if sid is None:
-            sid = item + '|' + func + '|' + str(start) + '|' + str(end) + '|' + str(count)
-        func, expression = self._expression(func)
-        queries = {
-            'avg': 'MIN(time), ' + self._precision_query('AVG(val_num * duration) / AVG(duration)'),
-            'avg.order': 'ORDER BY time ASC',
-            'integrate': 'MIN(time), SUM(val_num * duration)',
-            'count': 'MIN(time), SUM(CASE WHEN val_num{op}{value} THEN 1 ELSE 0 END)'.format(**expression['params']),
-            'countall': 'MIN(time), COUNT(*)',
-            'min': 'MIN(time), MIN(val_num)',
-            'max': 'MIN(time), MAX(val_num)',
-            'on': 'MIN(time), ' + self._precision_query('SUM(val_bool * duration) / SUM(duration)'),
-            'on.order': 'ORDER BY time ASC',
-            'sum': 'MIN(time), SUM(val_num)',
-            'raw': 'time, val_num',
-            'raw.order': 'ORDER BY time ASC',
-            'raw.group': ''
-        }
-        if func not in queries:
-            raise NotImplementedError
-
-        order = '' if func + '.order' not in queries else queries[func + '.order']
-        group = 'GROUP BY ROUND(time / :step)' if func + '.group' not in queries else queries[func + '.group']
-        logs = self._fetch_log(item, queries[func], start, end, step=step, count=count, group=group, order=order)
-        tuples = logs['tuples']
-        if tuples:
-            if logs['istart'] > tuples[0][0]:
-                tuples[0] = (logs['istart'], tuples[0][1])
-            if end != 'now':
-                tuples.append((logs['iend'], tuples[-1][1]))
-        else:
-            tuples = []
-        item_change = self._timestamp(logs['item'].last_change())
-        if item_change < logs['iend']:
-            value = float(logs['item']())
-            if item_change < logs['istart']:
-                tuples.append((logs['istart'], value))
-            elif init:
-                tuples.append((item_change, value))
-            if init:
-                tuples.append((logs['iend'], value))
-
-        if expression['finalizer']:
-            tuples = self._finalize(expression['finalizer'], tuples)
-
-        return {
-            'cmd': 'series', 'series': tuples, 'sid': sid,
-            'params': {'update': True, 'item': item, 'func': func, 'start': logs['iend'], 'end': end,
-                       'step': logs['step'], 'sid': sid},
-            'update': self.shtime.now() + datetime.timedelta(seconds=int(logs['step'] / 1000))
-        }
+    def _prepare(self, query):
+        return query.format(**self._replace)
 
 
-    def _single(self, func, start, end='now', item=None):
-        func, expression = self._expression(func)
-        queries = {
-            'avg': self._precision_query('AVG(val_num * duration) / AVG(duration)'),
-            'integrate': 'SUM(val_num * duration)',
-            'count': 'SUM(CASE WHEN val_num{op}{value} THEN 1 ELSE 0 END)'.format(**expression['params']),
-            'countall': 'COUNT(*)',
-            'min': 'MIN(val_num)',
-            'max': 'MAX(val_num)',
-            'on': self._precision_query('SUM(val_bool * duration) / SUM(duration)'),
-            'sum': 'SUM(val_num)',
-            'raw': 'val_num',
-            'raw.order': 'ORDER BY time DESC',
-            'raw.group': ''
-        }
-        if func not in queries:
-            self.logger.warning("Unknown export function: {0}".format(func))
-            return
-        order = '' if func + '.order' not in queries else queries[func + '.order']
-        logs = self._fetch_log(item, queries[func], start, end, order=order)
-        if logs['tuples'] is None:
-            return
-        return logs['tuples'][0][0]
-
-
-    def _precision_query(self, query):
-        if self._precision >= 0:
-            return 'ROUND({}, {})'.format(query, self._precision)
-        return query
-
-
-    def _fetch_log(self, item, columns, start, end, step=None, count=100, group='', order=''):
-        _item = self.items.return_item(item)
-
-        istart = self._parse_ts(start)
-        iend = self._parse_ts(end)
-        inow = self._parse_ts('now')
-        id = self.id(_item, create=False)
-
-        if inow > iend:
-            inow = iend
-
-        if step is None:
-            if count != 0:
-                step = int((iend - istart) / int(count))
-            else:
-                step = iend - istart
-
-        if self._buffer[_item] != []:
-            self._dump(items=[_item])
-
-        params = {'id': id, 'time_start': istart, 'time_end': iend, 'inow': inow, 'step': step}
-        duration_now = "COALESCE(duration, :inow - time)"
-
-        # Duration calculation (S=Start, E=End):
-        duration = (
-            "("
-            #    ----------|<--------------------------->|---------->
-            # 1. Duration for items within the given start/end range
-            #    -----------------[S]======[E]---------------------->
-            "COALESCE(duration * (time >= :time_start) * (time + duration <= :time_end), 0) + "
-            # 2. Duration for items partially before start but ends after start
-            #    -----[S]======[E]---------------------------------->
-            "COALESCE(duration / duration * (time + duration - :time_start) * (time < :time_start) * (time + duration >= :time_start), 0) + "
-            #    ----------------------------------[S]======[E]----->
-            # 3. Duration for items partially after end but starts before end
-            "COALESCE(duration_now / duration_now * (:time_end - time) * (time + duration_now >= :time_end), 0)"
-            ")"
-        )
-
-        # Replace duration fields with calculated durations from previous
-        # generated expressions to include all three cases.
-        columns = columns.replace('duration', duration)
-
-        # Create base query including the replaced columns
-        query = (
-                "SELECT " + columns + " FROM {log} WHERE "
-                                      "item_id = :id AND "
-                                      "time >= (SELECT COALESCE(MAX(time), 0) FROM {log} WHERE item_id = :id AND time < :time_start) AND "
-                                      "time <= :time_end AND "
-                                      "time + duration_now > (SELECT COALESCE(MAX(time), 0) FROM {log} WHERE item_id = :id AND time < :time_start) "
-                                      "" + group + " " + order
-        )
-
-        # Replace duration_now with value from start time til current time to
-        # get a duration value referring to the current timestamp - if required.
-        query = query.replace('duration_now', duration_now)
-
-        logs = self._fetchall(query, params)
-
-        return {
-            'tuples': logs,
-            'item': _item,
-            'istart': istart,
-            'iend': iend,
-            'step': step,
-            'count': count
-        }
+    def _execute(self, query, params, cur=None):
+        self._query(self._db.execute, query, params, cur)
 
 
     def _fetchone(self, query, params={}, cur=None):
@@ -930,12 +999,8 @@ class Database(SmartPlugin):
         return None if tuples is None else list(tuples)
 
 
-    def _execute(self, query, params, cur=None):
-        self._query(self._db.execute, query, params, cur)
-
-
     def _query(self, func, query, params, cur=None):
-        if not self._initialize():
+        if not self._initialize_db():
             return None
         if cur is None:
             if self._db.verify(5) == 0:
@@ -959,49 +1024,67 @@ class Database(SmartPlugin):
         return tuples
 
 
-    def _initialize(self):
-        try:
-            if not self._db.connected():
-                self._db.connect()
-            if not self._initialized:
-                self._db.setup(
-                    {i: [self._prepare(query[0]), self._prepare(query[1])] for i, query in self._setup.items()})
-                self._initialized = True
-        except Exception as e:
-            self.logger.error("Database: Initialization failed: {}".format(e))
-            return False
-        return True
+    # ------------------------------------------
+    #    conversion routines
+    # ------------------------------------------
 
+    def _item_value_tuple(self, item_type, item_val):
+        """
+        Convert item type and value to tuple for database
 
-    def _parse_ts(self, frame):
-        minute = 60 * 1000
-        hour = 60 * minute
-        day = 24 * hour
-        week = 7 * day
-        month = 30 * day
-        year = 365 * day
-
-        _frames = {'i': minute, 'h': hour, 'd': day, 'w': week, 'm': month, 'y': year}
-        try:
-            return int(frame)
-        except:
-            pass
-        ts = self._timestamp(self.shtime.now())
-        if frame == 'now':
-            fac = 0
-            frame = 0
-        elif frame[-1] in _frames:
-            fac = _frames[frame[-1]]
-            frame = frame[:-1]
+        :param item_type:
+        :param item_val:
+        :return:
+        """
+        if item_type == 'num':
+            val_str = None
+            val_num = float(item_val)
+            val_bool = int(bool(item_val))
+        elif item_type == 'bool':
+            val_str = None
+            val_num = float(item_val)
+            val_bool = int(bool(item_val))
         else:
-            return frame
-        try:
-            ts = ts - int(float(frame) * fac)
-        except:
-            self.logger.warning("Database: Unknown time frame '{0}'".format(frame))
-        return ts
+            val_str = str(item_val)
+            val_num = None
+            val_bool = int(bool(item_val))
+
+        return {'val_str': val_str, 'val_num': val_num, 'val_bool': val_bool}
+
+
+    def _item_value_tuple_rev(self, item_type, item_val_tuple):
+        """
+        Convert tuple to item value
+
+        :param item_type:
+        :param item_val_tuple:
+        :return:
+        """
+        if item_type == 'num':
+            return None if item_val_tuple[1] is None else float(item_val_tuple[1])
+        elif item_type == 'bool':
+            return None if item_val_tuple[2] is None else bool(int(item_val_tuple[2]))
+        else:
+            return None if item_val_tuple[0] is None else str(item_val_tuple[0])
+
+
+    def _datetime(self, ts):
+        """
+        Get datetime from timestamp
+
+        :param ts:
+        :return:
+        """
+        return datetime.datetime.fromtimestamp(ts / 1000, self.shtime.tzinfo())
 
 
     def _timestamp(self, dt):
+        """
+        Get timestamp from datetime
+
+        :param dt:
+        :return:
+        """
         return int(time.mktime(dt.timetuple())) * 1000 + int(dt.microsecond / 1000)
+
 

@@ -26,6 +26,7 @@
 
 import datetime
 import time
+import os
 
 from lib.item import Items
 from lib.model.smartplugin import SmartPluginWebIf
