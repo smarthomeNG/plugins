@@ -311,7 +311,7 @@ class Russound(SmartPlugin,lib.connection.Client):
         elif cmd == 'currentsource':
             return value
         elif cmd == 'name':
-            return str(value, 'utf-8')
+            return str(value)
 
     def handle_connect(self):
         self.discard_buffers()
