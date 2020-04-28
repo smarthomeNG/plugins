@@ -49,7 +49,7 @@ class Database(SmartPlugin):
     """
 
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = '1.5.11'
+    PLUGIN_VERSION = '1.5.12'
 
     # SQL queries: {item} = item table name, {log} = log table name
     # time, item_id, val_str, val_num, val_bool, changed
@@ -518,6 +518,38 @@ class Database(SmartPlugin):
         condition, params = self._slice_condition(id, time=time, time_start=time_start, time_end=time_end,
                                                   changed=changed, changed_start=changed_start, changed_end=changed_end)
         return self._fetchall("SELECT {log_columns} FROM {log} WHERE " + condition, params, cur=cur)
+
+
+    def readOldestLog(self, id, cur=None):
+        """
+        Read the oldest log record for given database ID
+
+        This is a public function of the plugin
+
+        :param id: Database ID of item to read the record for
+        :param time: Time for the given value
+        :param cur: A database cursor object if available (optional)
+
+        :return: Log record for the database ID
+        """
+        params = {'id': id}
+        return self._fetchall("SELECT min(time) FROM {log} WHERE item_id = :id;", params, cur=cur)[0][0]
+
+
+    def readLogCount(self, id, cur=None):
+        """
+        Read database log record for given database ID
+
+        This is a public function of the plugin
+
+        :param id: Database ID of item to read the record for
+        :param time: Time for the given value
+        :param cur: A database cursor object if available (optional)
+
+        :return: Log record for the database ID
+        """
+        params = {'id': id}
+        return self._fetchall("SELECT count() FROM {log} WHERE item_id = :id;", params, cur=cur)[0][0]
 
 
     def deleteLog(self, id, time=None, time_start=None, time_end=None, changed=None, changed_start=None,
@@ -1087,4 +1119,16 @@ class Database(SmartPlugin):
         """
         return int(time.mktime(dt.timetuple())) * 1000 + int(dt.microsecond / 1000)
 
+
+    def _seconds(self, ms):
+        """
+        Get seconds (rounded) from milliseconds
+
+        :param dt:
+        :return:
+        """
+        if ms:
+            return round(ms/1000, 1)
+        else:
+            return ms
 

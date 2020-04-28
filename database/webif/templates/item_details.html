@@ -34,7 +34,7 @@ function confirmDelete(url, text) {
 {% endif %}
 <div class="mb-2">
 	{{ _('Die folgenden Einträge entstammen der log Tabelle mit historischen Daten für das Item') }} <strong>{{ item_path }}</strong> {{ _('am') }} <strong>{% if day and month and year %}{% if language == 'en' %}{{ month }}/{{ day }}/{{ year }}{% else %}{{ day }}.{{ month }}.{{ year }}{% endif %}{% else %}{% if language == 'en' %}{{ now.strftime('%-m/%-d/%Y') }}{% else %}{{ now.strftime('%-d.%-m.%Y') }}{% endif %}{% endif %}</strong>
-	<br/>({{_('Datenbank-ID') }}: {{ item_id }}, {{ _('Typ') }}: {{ item.type() }}, {{ log_array | length }} {{_('Datensätze')}}, {{_('Aktueller Wert')}}: {{ item() }} )
+	<br/>({{_('Datenbank-ID') }}: {{ item_id }}, {{ _('Typ') }}: {{ item.type() }}, {{ log_array | length }} {{_('Datensätze')}}, {{_('Aktueller Wert')}}: {{ item() }}  -  {{_('Gesamt')}}: <strong>{{ p.readLogCount(item_id) }} {{_('Datensätze')}}</strong>, {{_('ältester Wert')}}: <strong>{{ p._datetime(p.readOldestLog(item_id)).strftime('%d.%m.%Y %H:%M:%S') }}</strong>)
 </div>
 <div style="float:right; width:220px;" id="datepicker">
 </div>
@@ -43,13 +43,13 @@ function confirmDelete(url, text) {
 	<thead>
 	<tr>
 		<th style="width: 90px;">{{ _('Item ID') }}</th>
-		<th style="width: 180px;">{{ _('Zeit') }}</th>
-		<th style="width: 120px;">{{ _('Dauer') }} (ms)</th>
+		<th style="width: 190px;">{{ _('Zeit') }}</th>
+		<th style="width: 120px; text-align:right">{{ _('Dauer') }} (sec)</th>
 		{% if item.property.type == 'num' %}<th style="width: 120px;">VAL_NUM</th>{% endif %}
 		{% if item.property.type == 'bool' %}<th style="width: 120px;">VAL_BOOL</th>{% endif %}
 		{% if item.property.type == 'str' %}<th>VAL_STR</th>{% endif %}
 		{% if item.property.type == 'foo' %}<th>VAL_STR</th>{% endif %}
-		<th style="width: 180px;">{{ _('Geändert') }}</th>
+		<th style="width: 190px;">{{ _('Geändert') }}</th>
 		<th>{{ _('Aktionen') }}</th>
 	</tr>
 	</thead>
@@ -58,7 +58,7 @@ function confirmDelete(url, text) {
 			<tr>
 				<td class="py-1">{{ dataset[1] }}</td>
 				<td class="py-1">{{ dataset[0].strftime('%d.%m.%Y %H:%M:%S') }}</td>
-				<td class="py-1">{{ dataset[2] }}</td>
+				<td class="py-1" style="text-align:right">{{ p._seconds(dataset[2]) }}</td>
 				{% if item.property.type == 'num' %}<td class="py-1">{{ dataset[4] }}</td>{% endif %}
 				{% if item.property.type == 'bool' %}<td class="py-1">{{ dataset[5] }}</td>{% endif %}
 				{% if item.property.type == 'str' %}<td class="py-1">{{ dataset[3] }}</td>{% endif %}
