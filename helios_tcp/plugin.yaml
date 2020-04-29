@@ -7,7 +7,7 @@ plugin:
         en: 'Enables the communication over TCP with Helios KWL devices that use Helios Easy Controls'
     maintainer: freget (Thilo Schneider)
     tester: nobody
-    version: 1.0.1                 # Plugin version
+    version: 1.0.2                 # Plugin version
     state: ready
     sh_minversion: 1.6             # minimum shNG version to use this plugin
 #   sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
