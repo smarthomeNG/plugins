@@ -28,10 +28,10 @@
     </button>
 </div>
 
+<!--
 <div id="countall" class="mb-2 alert alert-success alert-dismissible fade show" role="alert">
     {{ _('Anzahl Einträge in LOG Tabelle für Item') }} <span id="countall_item"></span>:&nbsp;
     <span id="countall_value"></span>
-    <span id="countall_value_loading"><i id="spinner" class="fas fa-circle-notch fa-spin fa-fw"></i> {{  _('Loading...') }}</span>
     <button type="button" class="close" data-hide="alert" aria-label="Close">
         <span aria-hidden="true">&times;</span>
     </button>
@@ -58,6 +58,15 @@
         });
     }
 </script>
+-->
+<script>
+    $('#cleanup').hide();
+    $(function(){
+        $("[data-hide]").on("click", function(){
+            $("." + $(this).attr("data-hide")).hide();
+        });
+    });
+</script>
 
 <div class="mb-2">
 	{{ _('Die folgenden Items sind dieser Instanz des Database Plugins zugewiesen') }} {{ p._handled_items | length }} Items ({{ p._items_with_maxage | length }} with maxage):
@@ -69,6 +78,7 @@
 		<th>{{ _('Typ') }}</th>
 		<th>{{ _('Wert') }}</th>
 		<th>{{ _('Item-ID in der Datenbank') }}</th>
+		<th>{{ _('Anzahl Einträge') }}</th>
 		<th>{{ _('max. Alter') }}</th>
 		<th>{{ _('Aktionen') }}</th>
 	</tr>
@@ -80,6 +90,7 @@
 				<td class="py-1">{{ item.property.type }}</td>
 				<td class="py-1">{{ item.property.value }}</td>
 				<td class="py-1">{{ p.id(item, create=False) }}</td>
+				<td class="py-1">{{ p._item_logcount[p.id(item, create=False)] }}</td>
 				{%  if p.get_iattr_value(item.conf, 'database_maxage') %}
 					<td class="py-1">{{ p.get_maxage_ts(item).strftime('%d.%m.%Y %H:%M:%S') }} ({{ p.get_iattr_value(item.conf, 'database_maxage') + '  ' +  _('Tage') }})</td>
 				{% else %}
@@ -88,9 +99,11 @@
 				<td class="py-1">
 					<button type="button" class="btn btn-shng btn-sm" title="{{ _('CSV Export der Werte') }}" onclick="window.open('item.csv?item_id={{ p.id(item, create=False) }}')">CSV</button>
 					<button type="button" class="btn btn-shng btn-sm" title="{{ _('Historische Daten') }}" onclick="location.href='?action=item_details&item_id={{ p.id(item, create=False) }}&item_path={{ item.property.path }}';"><i class="fas fa-search"></i></button>
+<!--
 					<button type="button" class="btn btn-shng btn-sm" title="{{ _('Anzahl Datensätze in LOG Tabelle') }}" onclick="countAll('{{ item.property.path }}')" data-container="body" data-toggle="popover" data-placement="right"><i class="fas fa-calculator"></i></button>
+-->
 					<button type="button" class="btn btn-danger btn-sm" title="{{ _('Wertehistorie löschen') }}" onclick="confirmDelete('?action=delete_log&item_id={{ p.id(item, create=False) }}&item_path={{ item.property.path }}','{{ _('Wollen Sie die historischen Daten (Tabelle log) dieses Items wirklich löschen?') }}')"><i class="fas fa-history"></i></button>
-					{%  if p.get_iattr_value(item.conf, 'database_maxage') %}
+					{%  if p.get_iattr_value(item.conf, 'database_maxage') and false %}
 					<button type="button" class="btn btn-warning btn-sm" title="{{ _('Älter als maxage löschen') }}" onclick="confirmDelete('?action=delete_log&item_id={{ p.id(item, create=False) }}&time_end={{ p._timestamp(p.get_maxage_ts(item)) }}&item_path={{ item.property.path }}','{{ _('Wollen Sie die historischen Daten (älter als '+ p.get_maxage_ts(item).strftime('%d.%m.%Y %H:%M:%S')+') dieses Items wirklich löschen?') }}')"><i class="fas fa-history"></i></button>
 					{% endif %}
 				</td>

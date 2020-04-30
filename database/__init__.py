@@ -104,9 +104,11 @@ class Database(SmartPlugin):
         self._buffer_lock = threading.Lock()
         self._dump_lock = threading.Lock()
 
-        self._handled_items = []
-        self._items_with_maxage = []
-        self._maxage_worklist = []
+        self._handled_items = []        # items that have a 'database' attribute set
+        self._items_with_maxage = []    # items that have a 'database_maxage' attribute set
+        self._maxage_worklist = []      # work copy of self._items_with_maxage
+        self._item_logcount = {}        # dict to store the number of log records for an item
+        self.logs_counted = False
 
         # Setup db and test if connection is possible
         self._db = lib.db.Database(("" if self._prefix == ""  else self._prefix.capitalize()) + "Database", self.driver, self._connect)
@@ -116,6 +118,7 @@ class Database(SmartPlugin):
             return
 
         self.init_webinterface(WebInterface)
+
         return
 
 
@@ -247,6 +250,8 @@ class Database(SmartPlugin):
         """
         Start jobs that maintain buffer and database
         """
+        if self.logs_counted == False:
+            self.scheduler_add('Count logs', self._count_logentries, cycle=3600, prio=6)
         self.scheduler_add('Buffer dump', self._dump, cycle=self._dump_cycle, prio=5)
         if len(self._items_with_maxage) > 0:
             self.scheduler_add('Remove old', self.remove_older_than_maxage, cycle=91, prio=6)
@@ -260,6 +265,7 @@ class Database(SmartPlugin):
         if len(self._items_with_maxage) > 0:
             self.scheduler_remove('Remove old')
         self.scheduler_remove('Buffer dump')
+        self.scheduler_remove('Count logs')
         return
 
 
@@ -534,7 +540,7 @@ class Database(SmartPlugin):
 
     def readLogCount(self, id, cur=None):
         """
-        Read database log record for given database ID
+        Read database log count for given database ID
 
         This is a public function of the plugin
 
@@ -542,7 +548,7 @@ class Database(SmartPlugin):
         :param time: Time for the given value
         :param cur: A database cursor object if available (optional)
 
-        :return: Log record for the database ID
+        :return: Number of log records for the database ID
         """
         params = {'id': id}
         return self._fetchall("SELECT count() FROM {log} WHERE item_id = :id;", params, cur=cur)[0][0]
@@ -998,7 +1004,11 @@ class Database(SmartPlugin):
     # ------------------------------------------
 
     def remove_older_than_maxage(self):
+        """
+        Remove log entries older than maxage of an item
 
+        Calls by scheduler
+        """
         if self._maxage_worklist == []:
             # Fill work list, if it is empty
             self._maxage_worklist = [i for i in self._items_with_maxage]
@@ -1014,6 +1024,7 @@ class Database(SmartPlugin):
         # delete Log entries, no direct commit - Commmit is done by the next call to _dump (to preserve SD cards)
         self.deleteLog(item_id, time_end=timestamp_end, with_commit=False)
 
+        self._item_logcount[item_id] = self.readLogCount(item_id)
         return
 
     def get_maxage_ts(self, item):
@@ -1030,6 +1041,23 @@ class Database(SmartPlugin):
             dt = dt - datetime.timedelta(float(maxage))
             return dt
         return None
+
+
+    def _count_logentries(self):
+        """
+        count number of log entries for all items in database
+
+        called by scheduler once on start
+        """
+        self.logger.info("_count_logentries: # handled items = {}".format(len(self._handled_items)))
+        for item in self._handled_items:
+            item_id = self.id(item)
+            self._item_logcount[item_id] = self.readLogCount(item_id)
+
+        # don't start scheduler again, if this job has finished
+        self.logs_counted == True
+        self.scheduler_remove('Count logs')
+        return
 
 
     # ------------------------------------------
