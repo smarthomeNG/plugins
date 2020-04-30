@@ -61,7 +61,7 @@ class WebInterface(SmartPluginWebIf):
         self.tplenv = self.init_template_environment()
 
     @cherrypy.expose
-    def index(self, reload=None, action=None, item_id=None, item_path=None, day=None, month=None, year=None,
+    def index(self, reload=None, action=None, item_id=None, item_path=None, time_end=None, day=None, month=None, year=None,
               time_orig=None, changed_orig=None):
         """
         Build index.html for cherrypy
@@ -79,7 +79,7 @@ class WebInterface(SmartPluginWebIf):
                     self.plugin.deleteLog(item_id, time=time_orig, changed=changed_orig)
                     action = "item_details"
                 else:
-                    self.plugin.deleteLog(item_id)
+                    self.plugin.deleteLog(item_id, time_end=time_end)
                 delete_triggered = True
             if action == "item_details" and item_id is not None:
                 if day is not None and month is not None and year is not None:

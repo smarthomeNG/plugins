@@ -23,6 +23,7 @@
 #
 #########################################################################
 
+import copy
 import re
 import datetime
 import functools
@@ -91,18 +92,24 @@ class Database(SmartPlugin):
         self.driver = self.get_parameter_value('driver')
         self._connect = self.get_parameter_value('connect')  # list of connection parameters
         self._prefix = self.get_parameter_value('prefix')
+        if self._prefix != '':
+            self._prefix += '_'
         self._dump_cycle = self.get_parameter_value('cycle')
         self._precision = self.get_parameter_value('precision')
 
-        self._replace = {table: table if self._prefix == "" else self._prefix + "_" + table for table in ["log", "item"]}
+        self._replace = {table: table if self._prefix == "" else self._prefix + table for table in ["log", "item"]}
         self._replace['item_columns'] = ", ".join(COL_ITEM)
         self._replace['log_columns'] = ", ".join(COL_LOG)
         self._buffer = {}
         self._buffer_lock = threading.Lock()
         self._dump_lock = threading.Lock()
 
+        self._handled_items = []
+        self._items_with_maxage = []
+        self._maxage_worklist = []
+
         # Setup db and test if connection is possible
-        self._db = lib.db.Database(("" if self._prefix == ""  else self._prefix.capitalize() + "_") + "Database", self.driver, self._connect)
+        self._db = lib.db.Database(("" if self._prefix == ""  else self._prefix.capitalize()) + "Database", self.driver, self._connect)
         self._db_initialized = False
         if not self._initialize_db():
             self._init_complete = False
@@ -118,7 +125,7 @@ class Database(SmartPlugin):
         """
         self.logger.debug("Run method called")
         self._initialize_db()
-        self.scheduler_add('Database dump', self._dump, cycle=self._dump_cycle, prio=5)
+        self._start_schedulers()
         self.alive = True
 
 
@@ -128,7 +135,7 @@ class Database(SmartPlugin):
         """
         self.logger.debug("Stop method called")
         self.alive = False
-        self.scheduler_remove('Database dump')
+        self._stop_schedulers()
         self._dump(True)
         self._db.close()
 
@@ -148,10 +155,16 @@ class Database(SmartPlugin):
         """
 
         if self.has_iattr(item.conf, 'database'):
+            self._handled_items.append(item)
+            if self.has_iattr(item.conf, 'database_maxage'):
+                maxage = self.get_iattr_value(item.conf, 'database_maxage')
+                if float(maxage) > 0:
+                    self._items_with_maxage.append(item)
+
             self.logger.debug(item.conf)
             self._buffer_insert(item, [])
             item.series = functools.partial(self._series, item=item.id())   # Zur Nutzung im Websocket Plugin
-            #item.db = functools.partial(self._single, item=item.id())   # Nie genutzt???
+            item.db = functools.partial(self._single, item=item.id())      # Nie genutzt??? -> Doch
 
             if self._db_initialized and self.get_iattr_value(item.conf, 'database') == 'init':
                 if not self._db.lock(5):
@@ -230,41 +243,24 @@ class Database(SmartPlugin):
             self.logger.info("Not writing item '{}' value because database_acl = {}".format(item,  acl))
 
 
-    # def init_webinterface(self):
-    #     """"
-    #     Initialize the web interface for this plugin
-    #
-    #     This method is only needed if the plugin is implementing a web interface
-    #     """
-    #     try:
-    #         self.mod_http = Modules.get_instance().get_module(
-    #             'http')  # try/except to handle running in a core version that does not support modules
-    #     except:
-    #         self.mod_http = None
-    #     if self.mod_http == None:
-    #         self.logger.error("Plugin '{}': Not initializing the web interface".format(self.get_shortname()))
-    #         return False
-    #
-    #     # set application configuration for cherrypy
-    #     webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
-    #     config = {
-    #         '/': {
-    #             'tools.staticdir.root': webif_dir,
-    #         },
-    #         '/static': {
-    #             'tools.staticdir.on': True,
-    #             'tools.staticdir.dir': 'static'
-    #         }
-    #     }
-    #
-    #     # Register the web interface as a cherrypy app
-    #     self.mod_http.register_webif(WebInterface(webif_dir, self),
-    #                                  self.get_shortname(),
-    #                                  config,
-    #                                  self.get_classname(), self.get_instance_name(),
-    #                                  description='')
-    #
-    #     return True
+    def _start_schedulers(self):
+        """
+        Start jobs that maintain buffer and database
+        """
+        self.scheduler_add('Buffer dump', self._dump, cycle=self._dump_cycle, prio=5)
+        if len(self._items_with_maxage) > 0:
+            self.scheduler_add('Remove old', self.remove_older_than_maxage, cycle=91, prio=6)
+        return
+
+
+    def _stop_schedulers(self):
+        """
+        Stop jobs that maintain buffer and database
+        """
+        if len(self._items_with_maxage) > 0:
+            self.scheduler_remove('Remove old')
+        self.scheduler_remove('Buffer dump')
+        return
 
 
     # ------------------------------------------------------
@@ -553,7 +549,7 @@ class Database(SmartPlugin):
 
 
     def deleteLog(self, id, time=None, time_start=None, time_end=None, changed=None, changed_start=None,
-                  changed_end=None, cur=None):
+                  changed_end=None, cur=None, with_commit=True):
         """
         Delete database log records for given item (database ID)
 
@@ -572,7 +568,8 @@ class Database(SmartPlugin):
         condition, params = self._slice_condition(id, time=time, time_start=time_start, time_end=time_end,
                                                   changed=changed, changed_start=changed_start, changed_end=changed_end)
         self._execute(self._prepare("DELETE FROM {log} WHERE " + condition), params, cur=cur)
-        self._db.commit()
+        if with_commit:
+            self._db.commit()
         return
 
 
@@ -601,8 +598,8 @@ class Database(SmartPlugin):
         return
 
 
-    def _slice_condition(self, id, time=None, time_start=None, time_end=None, changed=None, changed_start=None,
-                         changed_end=None):
+    def _slice_condition(self, id, time=None, time_start=None, time_end=None, changed=None,
+                         changed_start=None, changed_end=None):
         params = {
             'id': id,
             'time': time, 'time_flag': 1 if time == None else 0,
@@ -701,39 +698,39 @@ class Database(SmartPlugin):
         }
 
 
-    # def _single(self, func, start, end='now', item=None):
-    #     """
-    #     As far as it has been checked, this method is never called.
-    #     It is attached to the item object but no other plugin is known that calls this method.
-    #
-    #     :param func:
-    #     :param start:
-    #     :param end:
-    #     :param item:
-    #     :return:
-    #     """
-    #     func, expression = self._expression(func)
-    #     queries = {
-    #         'avg': self._precision_query('AVG(val_num * duration) / AVG(duration)'),
-    #         'integrate': 'SUM(val_num * duration)',
-    #         'count': 'SUM(CASE WHEN val_num{op}{value} THEN 1 ELSE 0 END)'.format(**expression['params']),
-    #         'countall': 'COUNT(*)',
-    #         'min': 'MIN(val_num)',
-    #         'max': 'MAX(val_num)',
-    #         'on': self._precision_query('SUM(val_bool * duration) / SUM(duration)'),
-    #         'sum': 'SUM(val_num)',
-    #         'raw': 'val_num',
-    #         'raw.order': 'ORDER BY time DESC',
-    #         'raw.group': ''
-    #     }
-    #     if func not in queries:
-    #         self.logger.warning("Unknown export function: {0}".format(func))
-    #         return
-    #     order = '' if func + '.order' not in queries else queries[func + '.order']
-    #     logs = self._fetch_log(item, queries[func], start, end, order=order)
-    #     if logs['tuples'] is None:
-    #         return
-    #     return logs['tuples'][0][0]
+    def _single(self, func, start, end='now', item=None):
+        """
+        As far as it has been checked, this method is never called.
+        It is attached to the item object but no other plugin is known that calls this method.
+
+        :param func:
+        :param start:
+        :param end:
+        :param item:
+        :return:
+        """
+        func, expression = self._expression(func)
+        queries = {
+            'avg': self._precision_query('AVG(val_num * duration) / AVG(duration)'),
+            'integrate': 'SUM(val_num * duration)',
+            'count': 'SUM(CASE WHEN val_num{op}{value} THEN 1 ELSE 0 END)'.format(**expression['params']),
+            'countall': 'COUNT(*)',
+            'min': 'MIN(val_num)',
+            'max': 'MAX(val_num)',
+            'on': self._precision_query('SUM(val_bool * duration) / SUM(duration)'),
+            'sum': 'SUM(val_num)',
+            'raw': 'val_num',
+            'raw.order': 'ORDER BY time DESC',
+            'raw.group': ''
+        }
+        if func not in queries:
+            self.logger.warning("Unknown export function: {0}".format(func))
+            return
+        order = '' if func + '.order' not in queries else queries[func + '.order']
+        logs = self._fetch_log(item, queries[func], start, end, order=order)
+        if logs['tuples'] is None:
+            return
+        return logs['tuples'][0][0]
 
 
     def _expression(self, func):
@@ -896,6 +893,7 @@ class Database(SmartPlugin):
             return
 
         if items == None:
+            # No item given on method call -> dump content of the buffer
             self._buffer_lock.acquire()
             items = list(self._buffer.keys())
             self._buffer_lock.release()
@@ -908,7 +906,7 @@ class Database(SmartPlugin):
                 # Test connectivity
                 if self._db.verify(5) == 0:
                     self._buffer_insert(item, tuples)
-                    self.logger.error("Database: Connection not recovered, skipping dump");
+                    self.logger.error("Connection not recovered, skipping dump");
                     self._dump_lock.release()
                     return
 
@@ -917,10 +915,10 @@ class Database(SmartPlugin):
                     self._buffer_insert(item, tuples)
                     if finalize:
                         self.logger.error(
-                            "Database: can't dump {} items due to fail to acquire lock!".format(len(self._buffer)))
+                            "Can't dump {} items due to fail to acquire lock!".format(len(self._buffer)))
                     else:
                         self.logger.error(
-                            "Database: can't dump {} items due to fail to acquire lock - will try on next dump".format(
+                            "Can't dump {} items due to fail to acquire lock - will try on next dump".format(
                                 len(self._buffer)))
                     self._dump_lock.release()
                     return
@@ -963,12 +961,12 @@ class Database(SmartPlugin):
 
                     self._db.commit()
                 except Exception as e:
-                    self.logger.warning("Database: Problem dumping {}: {}".format(item.id(), e))
+                    self.logger.warning("Problem dumping {}: {}".format(item.id(), e))
                     try:
                         self._db.rollback()
                     except Exception as er:
                         self._buffer_insert(item, tuples)
-                        self.logger.warning("Database: Error rolling back: {}".format(er))
+                        self.logger.warning("Error rolling back: {}".format(er))
                 finally:
                     if cur is not None:
                         cur.close()
@@ -993,6 +991,45 @@ class Database(SmartPlugin):
         self._buffer[item] = self._buffer[item][len(tuples):]
         self._buffer_lock.release()
         return tuples
+
+
+    # ------------------------------------------
+    #    Database maintenance stuff
+    # ------------------------------------------
+
+    def remove_older_than_maxage(self):
+
+        if self._maxage_worklist == []:
+            # Fill work list, if it is empty
+            self._maxage_worklist = [i for i in self._items_with_maxage]
+            self.logger.info("remove_older_than_maxage: Worklist filled with {} items".format(len(self._items_with_maxage)))
+
+        item = self._maxage_worklist.pop(0)
+
+        item_id = self.id(item)
+        time_end = self.get_maxage_ts(item)
+        timestamp_end = self._timestamp(time_end)
+        self.logger.debug("remove_older_than_maxage: item = {} remove older than {}".format(item, time_end))
+
+        # delete Log entries, no direct commit - Commmit is done by the next call to _dump (to preserve SD cards)
+        self.deleteLog(item_id, time_end=timestamp_end, with_commit=False)
+
+        return
+
+    def get_maxage_ts(self, item):
+        """
+        Get the actual maxage-timestamp for a given item
+
+        :param item:
+
+        :return:
+        """
+        maxage = self.get_iattr_value(item.conf, 'database_maxage')
+        if maxage:
+            dt = self.shtime.now()
+            dt = dt - datetime.timedelta(float(maxage))
+            return dt
+        return None
 
 
     # ------------------------------------------
