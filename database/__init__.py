@@ -112,6 +112,12 @@ class Database(SmartPlugin):
 
         # Setup db and test if connection is possible
         self._db = lib.db.Database(("" if self._prefix == ""  else self._prefix.capitalize()) + "Database", self.driver, self._connect)
+        if self._db.api_initialized == False:
+            # Error initializeng the database driver (e.g.: Python module for database driver not found)
+            self.logger.error("Initialization of database API failed")
+            self._init_complete = False
+            return
+
         self._db_initialized = False
         if not self._initialize_db():
             self._init_complete = False
