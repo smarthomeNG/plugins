@@ -50,7 +50,7 @@ class Database(SmartPlugin):
     """
 
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = '1.5.12'
+    PLUGIN_VERSION = '1.5.13'
 
     # SQL queries: {item} = item table name, {log} = log table name
     # time, item_id, val_str, val_num, val_bool, changed
@@ -96,6 +96,7 @@ class Database(SmartPlugin):
             self._prefix += '_'
         self._dump_cycle = self.get_parameter_value('cycle')
         self._precision = self.get_parameter_value('precision')
+        self.count_logentries = self.get_parameter_value('count_logentries')
 
         self._replace = {table: table if self._prefix == "" else self._prefix + table for table in ["log", "item"]}
         self._replace['item_columns'] = ", ".join(COL_ITEM)
@@ -108,7 +109,6 @@ class Database(SmartPlugin):
         self._items_with_maxage = []    # items that have a 'database_maxage' attribute set
         self._maxage_worklist = []      # work copy of self._items_with_maxage
         self._item_logcount = {}        # dict to store the number of log records for an item
-        self.logs_counted = False
 
         # Setup db and test if connection is possible
         self._db = lib.db.Database(("" if self._prefix == ""  else self._prefix.capitalize()) + "Database", self.driver, self._connect)
@@ -250,8 +250,8 @@ class Database(SmartPlugin):
         """
         Start jobs that maintain buffer and database
         """
-        if self.logs_counted == False:
-            self.scheduler_add('Count logs', self._count_logentries, cycle=3600, prio=6)
+        if self.count_logentries:
+            self.scheduler_add('Count logs', self._count_logentries, cycle=6*3600, prio=6)
         self.scheduler_add('Buffer dump', self._dump, cycle=self._dump_cycle, prio=5)
         if len(self._items_with_maxage) > 0:
             self.scheduler_add('Remove old', self.remove_older_than_maxage, cycle=91, prio=6)
@@ -265,7 +265,8 @@ class Database(SmartPlugin):
         if len(self._items_with_maxage) > 0:
             self.scheduler_remove('Remove old')
         self.scheduler_remove('Buffer dump')
-        self.scheduler_remove('Count logs')
+        if self.count_logentries:
+            self.scheduler_remove('Count logs')
         return
 
 
@@ -1055,8 +1056,6 @@ class Database(SmartPlugin):
             self._item_logcount[item_id] = self.readLogCount(item_id)
 
         # don't start scheduler again, if this job has finished
-        self.logs_counted == True
-        self.scheduler_remove('Count logs')
         return
 
 
