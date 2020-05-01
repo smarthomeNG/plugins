@@ -12,7 +12,7 @@ plugin:
     documentation: https://github.com/smarthomeNG/plugins/blob/develop/rrd/README.md        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/rrd-plugin
 
-    version: 1.6.0                  # Plugin version
+    version: 1.6.2                  # Plugin version
     sh_minversion: 1.5              # minimum shNG version to use this plugin
     #sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False           # plugin supports multi instance
@@ -31,7 +31,7 @@ parameters:
         type: str
         description:
             de: 'Verzeichnis der rrd Datenbanken. Wenn leer, wird der SmartHomeNG Basis Pfad + /var/rrd genutzt'
-            en: 'Specifies the rrd storage location if empty the SmartHomeNG base path + /var/rrd will be used'
+            en: 'Specifies the rrd storage location. If empty the SmartHomeNG base path + /var/rrd will be used'
 
 item_attributes:
     rrd:
