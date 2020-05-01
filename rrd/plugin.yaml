@@ -27,7 +27,7 @@ parameters:
             de: 'Zeit zwischen zwei Datenpunkten. Default ist 300 Sekunden.'
             en: 'Time period between two data points. Default is 300 seconds.'
 
-    rrddir:
+    rrd_dir:
         type: str
         description:
             de: 'Verzeichnis der rrd Datenbanken. Wenn leer, wird der SmartHomeNG Basis Pfad + /var/rrd genutzt'
