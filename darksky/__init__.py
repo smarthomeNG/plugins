@@ -34,7 +34,7 @@ from lib.model.smartplugin import *
 class DarkSky(SmartPlugin):
 
 
-    PLUGIN_VERSION = "1.6.0"
+    PLUGIN_VERSION = "1.7.0"
 
     _base_forecast_url = 'https://api.darksky.net/forecast/%s/%s,%s'
 
