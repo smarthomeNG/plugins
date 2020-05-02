@@ -120,8 +120,9 @@ class Database(SmartPlugin):
 
         self._db_initialized = False
         if not self._initialize_db():
-            self._init_complete = False
-            return
+            #self._init_complete = False
+            #return
+            pass
 
         self.init_webinterface(WebInterface)
 
@@ -237,16 +238,16 @@ class Database(SmartPlugin):
                 self._buffer[item][-1]
             if last:  # update current value with duration
                 if item.property.path.startswith('test.'):
-                    self.logger.info("Setting value {} to item '{}' value because database_acl = {}".format(end-start, item, acl))
+                    self.logger.debug("Setting value {} to item '{}' value because database_acl = {}".format(end-start, item, acl))
                 self._buffer[item][-1] = (last[0], end - start, last[2])
             else:  # append new value with none duration
                 if item.property.path.startswith('test.'):
-                    self.logger.info("(last is None) Setting value {} to item '{}' value because database_acl = {}".format(end-start, item, acl))
+                    self.logger.debug("(last is None) Setting value {} to item '{}' value because database_acl = {}".format(end-start, item, acl))
                 self._buffer[item].append((start, end - start, item.prev_value()))
 
             # add current value with None duration
             if item.property.path.startswith('test.'):
-                self.logger.info("Appending value {} to item '{}' value because database_acl = {}".format(end, item, acl))
+                self.logger.debug("Appending value {} to item '{}' value because database_acl = {}".format(end, item, acl))
             self._buffer[item].append((end, None, item()))
         else:
             self.logger.info("Not writing item '{}' value because database_acl = {}".format(item,  acl))
@@ -432,6 +433,22 @@ class Database(SmartPlugin):
         return self._fetchall("SELECT {item_columns} from {item};", cur=cur)
 
 
+    def readItemCount(self, cur=None):
+        """
+        Read database log count for given database ID
+
+        This is a public function of the plugin
+
+        :param cur: A database cursor object if available (optional)
+
+        :return: Number of log records for the database ID
+        """
+        if self._db.connected():
+            params = {}
+            return self._fetchall("SELECT count() FROM {item};", params, cur=cur)[0][0]
+        return '-'
+
+
     def deleteItem(self, id, cur=None):
         """
         Delete database item record for given database ID
@@ -552,7 +569,6 @@ class Database(SmartPlugin):
         This is a public function of the plugin
 
         :param id: Database ID of item to read the record for
-        :param time: Time for the given value
         :param cur: A database cursor object if available (optional)
 
         :return: Number of log records for the database ID
@@ -936,6 +952,10 @@ class Database(SmartPlugin):
                     self._dump_lock.release()
                     return
 
+#                if self.has_iattr(item.conf, 'database_acl'):
+#                    acl = self.get_iattr_value(item.conf, 'database_acl').lower()
+#                    self.logger.info("_dump: Dumping item '{}', database_acl = {}".format(item, acl))
+
                 cur = None
                 try:
                     changed = self._timestamp(self.shtime.now())
@@ -1023,7 +1043,11 @@ class Database(SmartPlugin):
 
         item = self._maxage_worklist.pop(0)
 
-        item_id = self.id(item)
+        #item_id = self.id(item, create=False)
+        try:
+            item_id = self.id(item)
+        except:
+            logger.critical("remove_older_than_maxage: no id for item {}".format(item))
         time_end = self.get_maxage_ts(item)
         timestamp_end = self._timestamp(time_end)
         self.logger.debug("remove_older_than_maxage: item = {} remove older than {}".format(item, time_end))
@@ -1061,7 +1085,6 @@ class Database(SmartPlugin):
             item_id = self.id(item)
             self._item_logcount[item_id] = self.readLogCount(item_id)
 
-        # don't start scheduler again, if this job has finished
         return
 
 
@@ -1201,4 +1224,7 @@ class Database(SmartPlugin):
             return round(ms/1000, 1)
         else:
             return ms
+
+    def _len(self, l):
+        return len(l)
 

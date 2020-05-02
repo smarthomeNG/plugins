@@ -27,9 +27,12 @@ plugin_translations:
     'Item-ID in der Datenbank':
         'de': 'Item-ID in der DB'
         'en': 'Item ID in db'
-    'Die folgenden Items sind dieser Instanz des Database Plugins zugewiesen':
+    'Die folgenden {items} Items sind dieser Instanz des Database Plugins zugewiesen, {with_maxage} Items haben ein maxage.':
         'de': '='
-        'en': 'The following items are assigned to this instance of the database plugin'
+        'en': 'The following {items} items are assigned to this instance of the database plugin, {with_maxage} items have a  maxage.'
+    'Die Datenbank enthält Daten zu {dbitems} Items':
+        'de': '='
+        'en': ' The database contains data for {dbitems} items'
     'konfiguriertes max. Altermax. Alter':
         'de': '='
         'en': 'configured max. age'
