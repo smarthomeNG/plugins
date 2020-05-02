@@ -94,7 +94,7 @@ VARLIST = {
     "fan_out_voltage_level3"    : {"var": "v00016", "length": 6, "type": float, "read": True, "write": True, "min": 1.6, "max": 10},
     "fan_in_voltage_level4"     : {"var": "v00019", "length": 6, "type": float, "read": True, "write": True, "min": 1.6, "max": 10},
     "fan_out_voltage_level4"    : {"var": "v00018", "length": 6, "type": float, "read": True, "write": True, "min": 1.6, "max": 10},
-    "manual_mode"               : {"var": "v00101", "length": 5, "type": bool,  "read": True, "write": True, "min": 0, "max": 1},
+    "manual_mode"               : {"var": "v00101", "length": 5, "type": int,   "read": True, "write": True, "min": 0, "max": 1},
     "filter_change"             : {"var": "v01031", "length": 5, "type": bool,  "read": True, "write": True, "min": 0, "max": 1},
     "filter_changeinterval"     : {"var": "v01032", "length": 5, "type": int,   "read": True, "write": True, "min": 0, "max": 12},
     "bypass_roomtemperature"    : {"var": "v01035", "length": 5, "type": int,   "read": True, "write": True, "min": 10, "max": 40},
