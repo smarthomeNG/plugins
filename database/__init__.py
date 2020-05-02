@@ -1047,7 +1047,7 @@ class Database(SmartPlugin):
         try:
             item_id = self.id(item)
         except:
-            logger.critical("remove_older_than_maxage: no id for item {}".format(item))
+            self.logger.critical("remove_older_than_maxage: no id for item {}".format(item))
         time_end = self.get_maxage_ts(item)
         timestamp_end = self._timestamp(time_end)
         self.logger.debug("remove_older_than_maxage: item = {} remove older than {}".format(item, time_end))
