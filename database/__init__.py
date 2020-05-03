@@ -110,6 +110,8 @@ class Database(SmartPlugin):
         self._maxage_worklist = []      # work copy of self._items_with_maxage
         self._item_logcount = {}        # dict to store the number of log records for an item
 
+        self.cleanup_active = False
+
         # Setup db and test if connection is possible
         self._db = lib.db.Database(("" if self._prefix == ""  else self._prefix.capitalize()) + "Database", self.driver, self._connect)
         if self._db.api_initialized == False:
@@ -611,9 +613,12 @@ class Database(SmartPlugin):
 
         :return:
         """
+        self.cleanup_active = True
+        self.logger.info("Database cleanup started (removal of entries without defined item)")
         items = [item.id() for item in self._buffer]
         if not self._db.lock(60):
             self.logger.error("Can not acquire lock for database cleanup")
+            self.cleanup_active = False
             return
         cur = self._db.cursor()
         try:
@@ -624,6 +629,8 @@ class Database(SmartPlugin):
             self.logger.error("Database cleanup failed: {}".format(e))
         cur.close()
         self._db.release()
+        self.logger.info("Database cleanup finished")
+        self.cleanup_active = False
         return
 
 

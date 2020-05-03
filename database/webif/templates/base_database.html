@@ -1,5 +1,7 @@
 {% extends "base_plugin.html" %}
-{% set tab2title = _('Plugin-API') %}
+
+{% set logo_frame = false %}
+
 
 {%- block scripts %}
 {{ super() }}
@@ -45,6 +47,7 @@
 </table>
 {% endblock headtable %}
 
+{% set tab2title = _('Plugin-API') %}
 {% block bodytab2 %}
     <div class="container ml-1 pl-1 mr-1 pr-1">
     {%  for function, dict in p.metadata.plugin_functions.items() %}
