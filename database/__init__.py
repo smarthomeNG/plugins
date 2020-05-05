@@ -178,7 +178,7 @@ class Database(SmartPlugin):
             item.series = functools.partial(self._series, item=item.id())   # Zur Nutzung im Websocket Plugin
             item.db = functools.partial(self._single, item=item.id())      # Nie genutzt??? -> Doch
 
-            if self._db_initialized and self.get_iattr_value(item.conf, 'database') == 'init':
+            if self._db_initialized and self.get_iattr_value(item.conf, 'database').lower() == 'init':
                 if not self._db.lock(5):
                     self.logger.error("Can not acquire lock for database to read value for item {}".format(item.id()))
                     return
@@ -193,7 +193,8 @@ class Database(SmartPlugin):
                         if value is not None and prev_change is not None:
                             item.set(value, 'Database', prev_change=self._datetime(prev_change[0]),
                                      last_change=last_change)
-                        self._buffer_insert(item, [(self._timestamp(self.shtime.now()), None, value)])
+                        if self.get_iattr_value(item.conf, 'database_acl').lower() == 'ro':
+                            self._buffer_insert(item, [(self._timestamp(self.shtime.now()), None, value)])
                 except Exception as e:
                     self.logger.error("Reading cache value from database for {} failed: {}".format(item.id(), e))
                 cur.close()
@@ -601,6 +602,7 @@ class Database(SmartPlugin):
         self._execute(self._prepare("DELETE FROM {log} WHERE " + condition), params, cur=cur)
         if with_commit:
             self._db.commit()
+        self._item_logcount[id] = self.readLogCount(id)
         return
 
 
