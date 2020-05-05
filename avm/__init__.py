@@ -952,8 +952,9 @@ class AVM(SmartPlugin):
                     switch_state = "ON"
                 else:
                     switch_state = "OFF"
+                ain = self.get_iattr_value(item.conf, 'ain')
                 soap_data = self._assemble_soap_data(action, self._urn_map['Homeauto'],
-                                                     {'NewAIN': item.conf['ain'].strip(),
+                                                     {'NewAIN': ain.strip(),
                                                       'NewSwitchState': switch_state})
 
             if self.get_iattr_value(item.conf, 'avm_data_type') == 'wlanconfig':
@@ -972,8 +973,9 @@ class AVM(SmartPlugin):
                 self.logger.info("Debug cmd_temp is: {0}".format(cmd_temperature))
                 parentItem = item.return_parent()
                 ainDevice = '0'
-                if isinstance(parentItem.conf['ain'], str):
-                    ainDevice = parentItem.conf['ain']
+                parent_ain = self.get_iattr_value(parentItem.conf, 'ain')
+                if isinstance(parent_ain, str):
+                    ainDevice = parent_ain
                 else:
                     self.logger.error('hkrt ain is not a string value')
 
@@ -1722,10 +1724,14 @@ class AVM(SmartPlugin):
 
         if self.get_iattr_value(item.conf, 'avm_data_type') == 'aha_device' or self.get_iattr_value(item.conf,
                                                                                                     'avm_data_type') == 'hkr_device':
+            if not self.has_iattr(item.conf, 'ain'):
+                self.logger.error("Cannot update AVM item {0} as AIN is not specified.".format(item))
+                return
+            ain = self.get_iattr_value(item.conf, 'ain')
             action = 'GetSpecificDeviceInfos'
             headers['SOAPACTION'] = "%s#%s" % (self._urn_map['Homeauto'], action)
             soap_data = self._assemble_soap_data(action, self._urn_map['Homeauto'],
-                                                 {'NewAIN': item.conf['ain'].strip()})
+                                                 {'NewAIN': ain.strip()})
         else:
             self.logger.error(
                 "Attribute %s not supported by plugin method (home automation)" % self.get_iattr_value(item.conf,

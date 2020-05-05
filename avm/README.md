@@ -645,7 +645,7 @@ avm:
             type: num
             value: 3
             avm_data_type@fritzbox_7490: hkr_device
-            ain: 09995 0191234 # has to be identical to id in fritzbox (also with spaces!)
+            ain@fritzbox_7490: 09995 0191234 # has to be identical to id in fritzbox (also with spaces!)
             visu_acl: ro
 
             # these items need to be child items from hkr_device. They are read only items.
