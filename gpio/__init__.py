@@ -33,7 +33,7 @@ except:
     REQUIRED_PACKAGE_IMPORTED = False
 
 class Raspi_GPIO(SmartPlugin):
-    PLUGIN_VERSION = "1.4.1"
+    PLUGIN_VERSION = "1.4.2"
     ALLOW_MULTIINSTANCE = False
 
     def __init__(self, sh):
@@ -51,6 +51,14 @@ class Raspi_GPIO(SmartPlugin):
             self._initdict = {}
             self._mode = self.get_parameter_value('mode').upper()
             self._bouncetime = self.get_parameter_value('bouncetime')
+            pud_param = self.get_parameter_value('pullupdown')
+            if pud_param.upper() == 'UP':
+                self._pullupdown = GPIO.PUD_UP
+            elif pud_param.upper() == 'DOWN':
+                self._pullupdown = GPIO.PUD_DOWN
+            else:
+                self._pullupdown = None
+
             GPIO.setwarnings(False)
             if self._mode == "BCM":
                 GPIO.setmode(GPIO.BCM)
@@ -62,7 +70,6 @@ class Raspi_GPIO(SmartPlugin):
         except Exception:
             self._init_complete = False
             return
-
 
     def get_sensors(self, sensor):
         try:
@@ -87,15 +94,15 @@ class Raspi_GPIO(SmartPlugin):
                 for attempt in range(10):
                     try:
                         GPIO.add_event_detect(sensor, GPIO.BOTH, callback=self.get_sensors, bouncetime=self._bouncetime)
-                        self.logger.info("{}: Adding Event Detection for Output Pin {}. Initial value is {}".format(
+                        self.logger.info("{}: Adding Event Detection for Input Pin {}. Initial value is {}".format(
                             self._name, sensor, value))
                     except Exception as err:
-                        self.logger.debug("{}: Adding Event Detection for Output Pin {} problem: {}. Retry {}/10".format(self._name, sensor, err, attempt))
+                        self.logger.debug("{}: Adding Event Detection for Input Pin {} problem: {}. Retry {}/10".format(self._name, sensor, err, attempt))
                         time.sleep(3)
                     else:
                         break
                 else:
-                    self.logger.error("{}: Adding Event Detection for Output Pin {} given up: {}".format(self._name, sensor, err))
+                    self.logger.error("{}: Adding Event Detection for Input Pin {} given up: {}".format(self._name, sensor, err))
 
     def stop(self):
         self.alive = False
@@ -104,52 +111,69 @@ class Raspi_GPIO(SmartPlugin):
 
 
     def parse_item(self, item):
+
+        # preset with global preset
+        pullupdown = self._pullupdown
+        if self.has_iattr(item.conf, 'gpio_pud'):
+            pud_param = self.get_iattr_value(item.conf, 'gpio_pud')
+            if pud_param.upper() == 'UP':
+                pullupdown = GPIO.PUD_UP
+            elif pud_param.upper() == 'DOWN':
+                pullupdown = GPIO.PUD_DOWN
+            else:
+                pullupdown = None
+
         if self.has_iattr(item.conf, 'gpio_in'):
-            in_pin = int(item.conf['gpio_in'])
-            GPIO.setup(in_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+            in_pin = int(self.get_iattr_value(item.conf, 'gpio_in'))
+
+            # if set, include pullupdown parameter
+            if pullupdown:
+                GPIO.setup(in_pin, GPIO.IN, pull_up_down=pullupdown)
+            else:
+                GPIO.setup(in_pin, GPIO.IN)
             self.logger.debug("{}: INPUT {} assigned to pin \'{}\'".format(self._name, item, in_pin))
             self._items.append(item)
             self._itemsdict[in_pin] = item
             return self.update_item
+
         if self.has_iattr(item.conf, 'gpio_out'):
             out_pin = int(self.get_iattr_value(item.conf, 'gpio_out'))
-            GPIO.setup(out_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-            self._itemsdict[out_pin] = item
+            # test if initial value is set
+            if self.has_iattr(item.conf, 'initial_value'):
+                initval = self.get_iattr_value(item.conf, 'initial_value')
+            else:
+                initval = None
+
+            # if initial_value is specified in item config, assign this first as
+            # this has precedence to prevent unwanted reactions to GPIO levels
+            if initval:
+                GPIO.setup(out_pin, GPIO.OUT, initial=initval)
+            else:
+                GPIO.setup(out_pin, GPIO.OUT)
+
+            # if initial_value was not set, get current pin level. if initial_value was set,
+            # this assigns the value anyway
             value = GPIO.input(out_pin)
             item(value, 'GPIO Plugin', 'parse')
-            for attempt in range(10):
-                try:
-                    GPIO.add_event_detect(out_pin, GPIO.BOTH, callback=self.get_sensors, bouncetime=self._bouncetime)
-                    self.logger.info("{}: Adding Event Detection for Output Pin {}. Initial value is {}".format(
-                        self._name, out_pin, value))
-                except Exception as err:
-                    self.logger.debug("{}: Adding Event Detection for Output Pin {} problem: {}. Retry {}/10".format(self._name, out_pin, err, attempt))
-                    time.sleep(3)
-                else:
-                    break
-            else:
-                self.logger.error("{}: Adding Event Detection for Output Pin {} given up: {}".format(self._name, out_pin, err))
-            GPIO.setup(out_pin, GPIO.OUT)
+
             self.logger.debug("{}: OUTPUT {} assigned to \'{}\'".format(self._name, item, out_pin))
-            if (out_pin is None):
-                return None
-                self.logger.debug("{}: No out_pin set for item {}".format(self._name, item))
-            else:
-                self._items.append(item)
+            self._items.append(item)
+            self._itemsdict[out_pin] = item
             return self.update_item
 
     def parse_logic(self, logic):
         pass
 
     def update_item(self, item, caller=None, source=None, dest=None):
-        self.logger.debug("{}: Trying to update {}.".format(self._name, item))
-        if self.has_iattr(item.conf, 'gpio_out'):
-            out_pin = int(self.get_iattr_value(item.conf, 'gpio_out'))
-            value = item()
-            self.logger.debug("{}: OUTPUT Setting pin {} ({}) to {}.".format(self._name, out_pin, value, item.id()))
-            self.send(out_pin, value)
-        else:
-            self.logger.debug("{}: No gpio_out".format(self._name))
+        if item is not None and caller != self.get_shortname():
+            if self.has_iattr(item.conf, 'gpio_out'):
+                self.logger.debug("{}: Trying to update {} by {}.".format(self._name, item, caller))
+                out_pin = int(self.get_iattr_value(item.conf, 'gpio_out'))
+                value = item()
+                self.logger.debug("{}: OUTPUT Setting pin {} ({}) to {}.".format(self._name, out_pin, value, item.id()))
+                self.send(out_pin, value)
+            else:
+                self.logger.debug("{}: Item {} has no gpio_out".format(self._name, item))
 
     def send(self, pin, value):
         self._lock.acquire()
@@ -211,7 +235,6 @@ from jinja2 import Environment, FileSystemLoader
 
 class WebInterface(SmartPluginWebIf):
 
-
     def __init__(self, webif_dir, plugin):
         """
         Initialization of instance of class WebInterface
@@ -226,7 +249,6 @@ class WebInterface(SmartPluginWebIf):
         self.plugin = plugin
         self.tplenv = self.init_template_environment()
 
-
     @cherrypy.expose
     def index(self, action=None, item_id=None, item_path=None, reload=None):
         """
@@ -236,7 +258,7 @@ class WebInterface(SmartPluginWebIf):
 
         :return: contents of the template after beeing rendered
         """
-        item = self.plugin.get_sh().return_item(item_path)
+        # item = self.plugin.get_sh().return_item(item_path)
 
         tmpl = self.tplenv.get_template('index.html')
         # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)

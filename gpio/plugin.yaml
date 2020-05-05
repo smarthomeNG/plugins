@@ -22,14 +22,14 @@ plugin:
             sensor or other hardware providing analog signals you have to use additional hardware.
             '
     maintainer: onkelandy
-    tester: cmalo, ohinckel
+    tester: cmalo, ohinckel, morg
     state: ready
     requirements:
         de: 'RPi.GPIO Python Modul'
         en: 'RPi.GPIO python module'
     keywords: iot gpio raspberrypi
 
-    version: 1.4.1                 # Plugin version
+    version: 1.4.2                 # Plugin version
     sh_minversion: 1.4             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
@@ -41,7 +41,6 @@ parameters:
     mode:
         type: str
         default: 'BOARD'
-        mandatory: True
         valid_list:
           - 'board'
           - 'bcm'
@@ -63,11 +62,32 @@ parameters:
     bouncetime:
         type: int
         default: 300
-        mandatory: False
         description:
             de: 'Prellzeit in ms, um Änderungen innerhalb kurzer Zeit zu verhindern.'
             en: 'bouncetime in ms to avoid multiple events in a short time period.'
 
+    pullupdown:
+        type: str
+        default: 'up'
+        valid list:
+            - 'up'
+            - 'UP'
+            - 'down'
+            - 'DOWN'
+            - 'none'
+            - 'NONE'
+        description:
+            de: 'Globale Pullup-/Pulldown-Konfiguration'
+            en: 'Global pullup/pulldown preset'
+        description_long:
+            de: '**Globale Pullup-/Pulldown-Konfiguration**\n
+                Hier wird festgelegt, was die systemweite Vorgabe der Pullup-/Pulldown-Konfiguration
+                sein soll. Diese Einstellung kann je Item individuell überschrieben werden.
+                '
+            en: '**Global pullup/pulldown preset**\n
+                Define the global preset for pullup/pulldown settings. This can be overridden
+                individually by the corresponding item option.
+                '
 item_attributes:
     # Definition of item attributes defined by this plugin
     gpio_in:
@@ -96,6 +116,29 @@ item_attributes:
                 Define the pin number of your Raspberry Pi that should be written, i.e. where a LED is attached. Beware that the number has to follow the rules of the "mode" you have defined in the plugin.yaml (Board or BCM). The Output-Pin will also automatically be read by the plugin as Input.
                         '
 
+    gpio_pud:
+        type: str
+        valid_list:
+            - 'up'
+            - 'UP'
+            - 'down'
+            - 'DOWN'
+            - 'none'
+            - 'NONE'
+        description:
+            de: 'Pullup-/Pulldown-Konfiguration'
+            en: 'Pullup/pulldown setting'
+        description_long:
+            de: '**Pullup-/Pulldown-Konfiguration**\n
+                Hier wird festgelegt, ob der jeweilige Pin den Software-Pullup bzw. -Pulldown
+                aktivieren soll oder nicht. Wenn keine Angabe erfolgt, wird die globale Voreinstellung
+                übernommen (vgl. Plugin-Parameter "pullupdown").
+                '
+            en: '**Pullup/pulldown setting**\n
+                Define the pin setting for software pullup/pulldown. If this is not set, the global
+                preset will be applied (see plugin parameter "pullupdown").
+                '
+
 item_structs: NONE
   # Definition of item-structure templates for this plugin
 
@@ -104,4 +147,3 @@ plugin_functions: NONE
 
 logic_parameters: NONE
 # Definition of logic parameters defined by this plugin
-
