@@ -152,6 +152,21 @@ item_attributes:
                 The GPIO output is initialized to this value on plugin startup.
                 '
 
+    gpio_invert:
+        type: bool
+        description:
+            de: 'Ein-/Ausgabewerte an/aus invertieren'
+            en: 'Swap high/low on input/output'
+        description_long:
+            de: '**Ein-/Ausgabewerte an/aus invertieren**\n
+                Vertauscht die Zuordnung von Itemwert zu GPIO-Ein-/Ausgabe zu True->low/0, False->high/1. 
+                Beachte: ein konfigurierter Initialwert wird auch invertiert.
+                '
+            en: '**Swap high/low on input/output**\n
+                Swaps relation of item value to input/output level to True->low/0, False->high/1
+                Take note: a configured initial value will also be inverted.
+                '
+
 item_structs: NONE
   # Definition of item-structure templates for this plugin
 

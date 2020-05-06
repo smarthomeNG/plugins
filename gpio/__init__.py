@@ -74,7 +74,7 @@ class Raspi_GPIO(SmartPlugin):
     def get_sensors(self, sensor):
         try:
             value = GPIO.input(sensor)
-            self._itemsdict[sensor](value, 'GPIO', 'get_sensors')
+            self._itemsdict[sensor](value ^ self._is_item_inverted(None, sensor), 'GPIO', 'get_sensors')
             self.logger.info("{}: SENSOR READ: {}  VALUE: {}".format(self._name, sensor, value))
         except Exception as e:
             self.logger.warning("{}: Problem reading sensor: {}".format(self._name, e))
@@ -109,6 +109,9 @@ class Raspi_GPIO(SmartPlugin):
         GPIO.cleanup()
         self.logger.debug("{}: cleaned up".format(self._name))
 
+    def get_iattr_bool(self, item, attr):
+        val = self.get_iattr_value(item, attr)
+        return str(val).upper() in ['TRUE', '1', 'ON']
 
     def parse_item(self, item):
 
@@ -131,7 +134,7 @@ class Raspi_GPIO(SmartPlugin):
                 GPIO.setup(in_pin, GPIO.IN, pull_up_down=pullupdown)
             else:
                 GPIO.setup(in_pin, GPIO.IN)
-            self.logger.debug("{}: INPUT {} assigned to pin \'{}\'".format(self._name, item, in_pin))
+            self.logger.debug("{}: INPUT {} assigned to pin {}".format(self._name, item, in_pin))
             self._items.append(item)
             self._itemsdict[in_pin] = item
             return self.update_item
@@ -143,8 +146,10 @@ class Raspi_GPIO(SmartPlugin):
             if self.has_iattr(item.conf, 'gpio_init'):
 
                 # as gpio_init is set, force output to initial_value
-                value = self.get_iattr_value(item.conf, 'gpio_init')
-                GPIO.setup(out_pin, GPIO.OUT, initial=value)
+                value = self.get_iattr_bool(item.conf, 'gpio_init')
+                pin_value = self._get_gpio_value(value, self._is_item_inverted(item))
+                GPIO.setup(out_pin, GPIO.OUT, initial=pin_value)
+                self.logger.debug("{}: OUTPUT {} (pin {}) set to initial value {}".format(self._name, item, out_pin, value))
             else:
 
                 # no initial value set, try to read the current value from pin
@@ -153,12 +158,12 @@ class Raspi_GPIO(SmartPlugin):
                     GPIO.setup(out_pin, GPIO.IN, pull_up_down=pullupdown)
                 else:
                     GPIO.setup(out_pin, GPIO.IN)
-                value = GPIO.input(out_pin)
+                value = self._get_gpio_value(GPIO.input(out_pin), self._is_item_inverted(item))
                 GPIO.setup(out_pin, GPIO.OUT)
             # set item to initial value or current pin value
             item(value, 'GPIO Plugin', 'parse')
 
-            self.logger.debug("{}: OUTPUT {} assigned to \'{}\'".format(self._name, item, out_pin))
+            self.logger.debug("{}: OUTPUT {} assigned to pin {}".format(self._name, item, out_pin))
             self._items.append(item)
             self._itemsdict[out_pin] = item
             return self.update_item
@@ -171,13 +176,33 @@ class Raspi_GPIO(SmartPlugin):
             if self.has_iattr(item.conf, 'gpio_out'):
                 self.logger.debug("{}: Trying to update {} by {}.".format(self._name, item, caller))
                 out_pin = int(self.get_iattr_value(item.conf, 'gpio_out'))
-                value = item()
-                self.logger.debug("{}: OUTPUT Setting pin {} ({}) to {}.".format(self._name, out_pin, value, item.id()))
-                self.send(out_pin, value)
+                value = self._get_gpio_value(item(), self._is_item_inverted(item))
+                self.logger.debug("{}: OUTPUT Setting pin {} ({}) to {}.".format(self._name, out_pin, item.id(), value))
+                self._set_gpio(out_pin, value)
             else:
                 self.logger.debug("{}: Item {} has no gpio_out".format(self._name, item))
 
-    def send(self, pin, value):
+    def _is_item_inverted(self, item, pin=None):
+        '''
+        return if item has gpio_invert set
+        when in doubt, return False
+        '''
+        if item is None:
+            if pin is None:
+                # maybe later switch to exception?
+                return False
+            item = self._itemsdict[pin]
+        value = self.has_iattr(item.conf, 'gpio_invert') and self.get_iattr_bool(item.conf, 'gpio_invert')
+        return value
+
+    def _get_gpio_value(self, value, inverted=False):
+        if value ^ inverted:
+            return 1
+        else:
+            return 0
+
+    def _set_gpio(self, pin, value):
+
         self._lock.acquire()
         try:
             GPIO.output(pin, value)
