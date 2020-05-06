@@ -138,22 +138,24 @@ class Raspi_GPIO(SmartPlugin):
 
         if self.has_iattr(item.conf, 'gpio_out'):
             out_pin = int(self.get_iattr_value(item.conf, 'gpio_out'))
+
             # test if initial value is set
-            if self.has_iattr(item.conf, 'initial_value'):
-                initval = self.get_iattr_value(item.conf, 'initial_value')
-            else:
-                initval = None
+            if self.has_iattr(item.conf, 'gpio_init'):
 
-            # if initial_value is specified in item config, assign this first as
-            # this has precedence to prevent unwanted reactions to GPIO levels
-            if initval:
-                GPIO.setup(out_pin, GPIO.OUT, initial=initval)
+                # as gpio_init is set, force output to initial_value
+                value = self.get_iattr_value(item.conf, 'gpio_init')
+                GPIO.setup(out_pin, GPIO.OUT, initial=value)
             else:
+
+                # no initial value set, try to read the current value from pin
+                # by setting up as input, reading, and setting up as output
+                if pullupdown:
+                    GPIO.setup(out_pin, GPIO.IN, pull_up_down=pullupdown)
+                else:
+                    GPIO.setup(out_pin, GPIO.IN)
+                value = GPIO.input(out_pin)
                 GPIO.setup(out_pin, GPIO.OUT)
-
-            # if initial_value was not set, get current pin level. if initial_value was set,
-            # this assigns the value anyway
-            value = GPIO.input(out_pin)
+            # set item to initial value or current pin value
             item(value, 'GPIO Plugin', 'parse')
 
             self.logger.debug("{}: OUTPUT {} assigned to \'{}\'".format(self._name, item, out_pin))

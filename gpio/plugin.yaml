@@ -139,6 +139,19 @@ item_attributes:
                 preset will be applied (see plugin parameter "pullupdown").
                 '
 
+    gpio_init:
+        type: bool
+        description:
+            de: 'Startwert für GPIO Ausgang'
+            en: 'Starting value for GPIO output'
+        description_long:
+            de: '**Startwert für GPIO Ausgang**\n
+                Dieser Wert wird bei Initialisierung des Plugins auf dem Ausgang gesetzt.
+                '
+            en: '**Starting value for GPIO output**\n
+                The GPIO output is initialized to this value on plugin startup.
+                '
+
 item_structs: NONE
   # Definition of item-structure templates for this plugin
 
