@@ -203,6 +203,7 @@ class Raspi_GPIO(SmartPlugin, Utils):
                 else:
                     GPIO.setup(out_pin, GPIO.IN)
                 value = self._get_gpio_value(GPIO.input(out_pin), item)
+                self.log_debug('OUTPUT {} (pin {}) has current value {}'.format(item, out_pin, value))
                 GPIO.setup(out_pin, GPIO.OUT)
             # set item to initial value or current pin value
             item(value, 'GPIO Plugin', 'parse')
