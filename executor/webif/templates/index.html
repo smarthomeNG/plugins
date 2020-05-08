@@ -35,7 +35,7 @@
 	Content block for the first tab of the Webinterface
 -->
 
-{% set tab1title = "<strong>" ~ _('Eval Ausdrücke') ~ "</strong>" %}
+{% set tab1title = "<strong>" ~ _('Eval Ausdruck') ~ "</strong>" %}
 {% block bodytab1 %}
 
 <script>
@@ -44,9 +44,9 @@ function geteval(){
     param = $('#pycode').val();
     console.log('Param ='+encodeURIComponent(param));
     $.get('evaluate', { eline: param}, function(data){
-        $('result').html(data); 
+        $('result').html(data);
         console.log('Data:'+data);
-    }); 
+    });
     console.log('Evaluation of a line is done');
 };
 
@@ -81,17 +81,17 @@ result {
 
 <div class="container-fluid m-2">
     <div id="section1">
-        <label for="pycode">{{ _('Zeile zum Ausführen in Python eingeben:') }}</label> <br>
+        <label for="pycode">{{ _('Evalausdruck eingeben:') }}</label> <br>
         <input type="text" name="pycode" id="pycode" />
         <br>
         <button onclick="geteval()" id="doeval">{{ _('Ausführen!') }}</button>
-        <label for="result">Ergebnis</label><br>
+        <label for="result">{{ _('Ergebnis') }}</label><br>
         <result></result>
     </div>
 </div>
 {% endblock bodytab1 %}
 
-{% set tab2title = "<strong>" ~ _('Python Code ausführen') ~ "</strong>" %}
+{% set tab2title = "<strong>" ~ _('Python Code') ~ "</strong>" %}
 {% block bodytab2 %}
 
 <script>
@@ -106,7 +106,7 @@ function getexecution() {
     param = cmPython.doc.getValue();
     console.log('Param ='+encodeURIComponent(param));
     $.get('evaluatetext', { eline: param}, function(data){
-        cmResult.doc.setValue(data); 
+        cmResult.doc.setValue(data);
         console.log('Data:'+data);
     }); console.log('erledigt');    console.log('Execution of code is done');
 };
@@ -164,10 +164,10 @@ resulttext {
 
 <div class="container-fluid m-2">
     <div id="section2">
-        <label for="pycodetext">{{ _('Python zur Ausführung:') }}</label> <br>
+        <label for="pycodetext">{{ _('Zeile zum Ausführen in Python eingeben:') }}</label> <br>
         <textarea id="pycodetext"></textarea>
         <button onclick="getexecution()" id="doexec">{{ _('Ausführen!') }}</button><br>
-        <label for="resulttext">Ergebnis</label><br>
+        <label for="resulttext">{{ _('Ergebnis') }}</label><br>
         <textarea id="resulttext" placeholder="Ergebnisse erscheinen hier"></textarea>
     </div>
 </div>
