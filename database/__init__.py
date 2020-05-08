@@ -193,7 +193,7 @@ class Database(SmartPlugin):
                         if value is not None and prev_change is not None:
                             item.set(value, 'Database', prev_change=self._datetime(prev_change[0]),
                                      last_change=last_change)
-                        if self.get_iattr_value(item.conf, 'database_acl').lower() == 'ro':
+                        if self.get_iattr_value(item.conf, 'database_acl') is not None and self.get_iattr_value(item.conf, 'database_acl').lower() == 'ro':
                             self._buffer_insert(item, [(self._timestamp(self.shtime.now()), None, value)])
                 except Exception as e:
                     self.logger.error("Reading cache value from database for {} failed: {}".format(item.id(), e))
@@ -1054,9 +1054,10 @@ class Database(SmartPlugin):
 
         #item_id = self.id(item, create=False)
         try:
-            item_id = self.id(item)
+            item_id = self.id(item, create=False)
         except:
             self.logger.critical("remove_older_than_maxage: no id for item {}".format(item))
+            return
         time_end = self.get_maxage_ts(item)
         timestamp_end = self._timestamp(time_end)
         self.logger.debug("remove_older_than_maxage: item = {} remove older than {}".format(item, time_end))
