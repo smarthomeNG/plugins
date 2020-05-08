@@ -3,15 +3,15 @@ plugin:
     # Global plugin attributes
     type: interface                 # plugin type (gateway, interface, protocol, system, web)
     description:
-        de: 'GPIO Unterstützung für Rasberry Pi, **seit SmartHomeNG v1.3**'
+        de: 'GPIO-Unterstützung für Rasberry Pi, **seit SmartHomeNG v1.3**'
         en: 'GPIO support for Raspberry Pi, **since SmarthomeNG v1.3**'
     description_long:
-        de: 'GPIO Unterstützung für den Rasberry Pi.\n
-            Dieses Plugin unterstützt über das RPi.GPIO Modul das Einbinden von externen Sensoren und Aktoren,
+        de: 'GPIO-Unterstützung für den Rasberry Pi.\n
+            Dieses Plugin unterstützt über das RPi.GPIO-Modul das Einbinden von externen Sensoren und Aktoren,
             die direkt am Raspberry Pi angeschlossen werden. Damit ist es beispielsweise möglich,
             den Zustand von Reedkontakten einzulesen oder LEDs zu aktivieren und beispielsweise eine
             `Posteinwurferkennung <https://redaktion.knx-user-forum.de/posteinwurferkennung/>`_ zu basteln.
-            Leider sind die GPIOs für die Raspberry Pi <=3+ rein digital, sodass anaolge Signale z.B.
+            Leider sind die GPIOs für die Raspberry Pi <=3+ rein digital, sodass analoge Signale z.B.
             eines Distanzsensors nur über Umwege abgegriffen werden können.
             '
         en: 'GPIO support for the Raspberry Pi.\n
@@ -29,12 +29,11 @@ plugin:
         en: 'RPi.GPIO python module'
     keywords: iot gpio raspberrypi
 
-    version: 1.4.2                 # Plugin version
+    version: 1.5.0                 # Plugin version
     sh_minversion: 1.4             # minimum shNG version to use this plugin
-#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
-    multi_instance: False          # plugin supports multi instance
+    multi_instance: false          # plugin supports multi instance
     restartable: unknown
-    classname: Raspi_GPIO          # class containing the plugin
+    classname: GPIO                # class containing the plugin
 
 parameters:
     # Definition of parameters to be configured in etc/plugin.yaml
@@ -137,6 +136,34 @@ item_attributes:
             en: '**Pullup/pulldown setting**\n
                 Define the pin setting for software pullup/pulldown. If this is not set, the global
                 preset will be applied (see plugin parameter "pullupdown").
+                '
+
+    gpio_init:
+        type: bool
+        description:
+            de: 'Startwert für GPIO Ausgang'
+            en: 'Starting value for GPIO output'
+        description_long:
+            de: '**Startwert für GPIO Ausgang**\n
+                Dieser Wert wird bei Initialisierung des Plugins auf dem Ausgang gesetzt.
+                '
+            en: '**Starting value for GPIO output**\n
+                The GPIO output is initialized to this value on plugin startup.
+                '
+
+    gpio_invert:
+        type: bool
+        description:
+            de: 'Ein-/Ausgabewerte an/aus invertieren'
+            en: 'Swap high/low on input/output'
+        description_long:
+            de: '**Ein-/Ausgabewerte an/aus invertieren**\n
+                Vertauscht die Zuordnung von Itemwert zu GPIO-Ein-/Ausgabe zu True->low/0, False->high/1. 
+                Beachte: ein konfigurierter Initialwert wird auch invertiert.
+                '
+            en: '**Swap high/low on input/output**\n
+                Swaps relation of item value to input/output level to True->low/0, False->high/1
+                Take note: a configured initial value will also be inverted.
                 '
 
 item_structs: NONE
