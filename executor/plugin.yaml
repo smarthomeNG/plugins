@@ -9,10 +9,10 @@ plugin:
     tester: nobody                  # Who tests this plugin?
     state: ready                    # change to ready when done with development
     keywords: Python eval exec code test
-    documentation: https://www.smarthomeng.de/user/plugins/executor/README.html
+    documentation: https://www.smarthomeng.de/user/plugins/executor/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1425152-support-thread-plugin-executor
 
-    version: 1.0.3                  # Plugin version
+    version: 1.0.4                  # Plugin version
     sh_minversion: 1.4              # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False           # plugin supports multi instance
@@ -33,4 +33,3 @@ plugin_functions: NONE
 
 logic_parameters: NONE
     # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)
-
