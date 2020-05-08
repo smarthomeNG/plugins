@@ -7,3 +7,4 @@ plugin_translations:
     'Python Code':                                      {'de': '=', 'en': '='}
     'Evalausdruck eingeben:':                           {'de': '=', 'en': 'Eval term to execute:'}
     'Eval Ausdruck':                                    {'de': '=', 'en': 'Eval term'}
+    'Itempfad angeben (optional zum Testen relativer Itemangaben):': {'de': '=', 'en': 'Item path (optional to check relative item evaluation)'}

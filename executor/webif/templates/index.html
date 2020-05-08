@@ -42,8 +42,9 @@
 function geteval(){
     console.log("Evaluate a line ...");
     param = $('#pycode').val();
-    console.log('Param ='+encodeURIComponent(param));
-    $.get('evaluate', { eline: param}, function(data){
+		itempath = $('#itempath').val();
+    console.log('Param = '+encodeURIComponent(param) + ', Item path = '+encodeURIComponent(itempath));
+    $.get('evaluate', { eline: param, path: itempath}, function(data){
         $('result').html(data);
         console.log('Data:'+data);
     });
@@ -64,6 +65,9 @@ input#pycode{
     width: 100%;
 }
 
+input#itempath{
+    width: 100%;
+}
 button#doeval {
     margin-top: 1em;
     margin-bottom: 1em;
@@ -81,9 +85,13 @@ result {
 
 <div class="container-fluid m-2">
     <div id="section1">
+				<p>
         <label for="pycode">{{ _('Evalausdruck eingeben:') }}</label> <br>
         <input type="text" name="pycode" id="pycode" />
-        <br>
+        </p><p>
+				<label for="itempath">{{ _('Itempfad angeben (optional zum Testen relativer Itemangaben):') }}</label> <br>
+        <input type="text" name="itempath" id="itempath" />
+        </p>
         <button onclick="geteval()" id="doeval">{{ _('Ausführen!') }}</button>
         <label for="result">{{ _('Ergebnis') }}</label><br>
         <result></result>
@@ -102,7 +110,6 @@ var cmResult;
 
 function getexecution() {
     console.log("Sending code for execution ...");
-    /* param = $('#pycodetext').val();*/
     param = cmPython.doc.getValue();
     console.log('Param ='+encodeURIComponent(param));
     $.get('evaluatetext', { eline: param}, function(data){
