@@ -3,15 +3,15 @@ plugin:
     # Global plugin attributes
     type: interface                 # plugin type (gateway, interface, protocol, system, web)
     description:
-        de: 'GPIO Unterstützung für Rasberry Pi, **seit SmartHomeNG v1.3**'
+        de: 'GPIO-Unterstützung für Rasberry Pi, **seit SmartHomeNG v1.3**'
         en: 'GPIO support for Raspberry Pi, **since SmarthomeNG v1.3**'
     description_long:
-        de: 'GPIO Unterstützung für den Rasberry Pi.\n
-            Dieses Plugin unterstützt über das RPi.GPIO Modul das Einbinden von externen Sensoren und Aktoren,
+        de: 'GPIO-Unterstützung für den Rasberry Pi.\n
+            Dieses Plugin unterstützt über das RPi.GPIO-Modul das Einbinden von externen Sensoren und Aktoren,
             die direkt am Raspberry Pi angeschlossen werden. Damit ist es beispielsweise möglich,
             den Zustand von Reedkontakten einzulesen oder LEDs zu aktivieren und beispielsweise eine
             `Posteinwurferkennung <https://redaktion.knx-user-forum.de/posteinwurferkennung/>`_ zu basteln.
-            Leider sind die GPIOs für die Raspberry Pi <=3+ rein digital, sodass anaolge Signale z.B.
+            Leider sind die GPIOs für die Raspberry Pi <=3+ rein digital, sodass analoge Signale z.B.
             eines Distanzsensors nur über Umwege abgegriffen werden können.
             '
         en: 'GPIO support for the Raspberry Pi.\n
@@ -33,7 +33,7 @@ plugin:
     sh_minversion: 1.4             # minimum shNG version to use this plugin
     multi_instance: false          # plugin supports multi instance
     restartable: unknown
-    classname: Raspi_GPIO          # class containing the plugin
+    classname: GPIO                # class containing the plugin
 
 parameters:
     # Definition of parameters to be configured in etc/plugin.yaml
