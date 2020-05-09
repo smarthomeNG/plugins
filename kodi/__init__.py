@@ -363,6 +363,8 @@ class Kodi(SmartPlugin):
                     self._set_all_items('player', 0)
                     self._set_all_items('title', '')
                     self._set_all_items('media', '')
+                    self._set_all_items('stop', True)
+                    self._set_all_items('playpause', False)
                     self._playerid = 0
                     self.log_debug('Received GetActivePlayers, reset playerid to 0')
 
@@ -415,11 +417,15 @@ class Kodi(SmartPlugin):
             if data['method'] == 'Player.OnResume':
                 self.log_debug('Received: resumed player')
                 self._set_all_items('state', 'Playing')
+                self._set_all_items('stop', False)
+                self._set_all_items('playpause', True)
                 query_playerinfo.append(data['params']['data']['player']['playerid'])
 
             elif data['method'] == 'Player.OnPause':
                 self.log_debug('Received: paused player')
                 self._set_all_items('state', 'Paused')
+                self._set_all_items('stop', False)
+                self._set_all_items('playpause', False)
                 query_playerinfo.append(data['params']['data']['player']['playerid'])
 
             elif data['method'] == 'Player.OnStop':
@@ -428,6 +434,8 @@ class Kodi(SmartPlugin):
                 self._set_all_items('media', '')
                 self._set_all_items('title', '')
                 self._set_all_items('player', 0)
+                self._set_all_items('stop', True)
+                self._set_all_items('playpause', False)
                 self._activeplayers = []
                 self._playerid = 0
 
