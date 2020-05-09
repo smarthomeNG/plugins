@@ -365,6 +365,10 @@ class Kodi(SmartPlugin):
                     self._set_all_items('media', '')
                     self._set_all_items('stop', True)
                     self._set_all_items('playpause', False)
+                    self._set_all_items('streams', None)
+                    self._set_all_items('subtitles', None)
+                    self._set_all_items('audio', '')
+                    self._set_all_items('subtitle', '')
                     self._playerid = 0
                     self.log_debug('Received GetActivePlayers, reset playerid to 0')
 
@@ -419,6 +423,7 @@ class Kodi(SmartPlugin):
                 self._set_all_items('state', 'Playing')
                 self._set_all_items('stop', False)
                 self._set_all_items('playpause', True)
+                self._send_command('get_actplayer', None)
                 query_playerinfo.append(data['params']['data']['player']['playerid'])
 
             elif data['method'] == 'Player.OnPause':
@@ -436,6 +441,10 @@ class Kodi(SmartPlugin):
                 self._set_all_items('player', 0)
                 self._set_all_items('stop', True)
                 self._set_all_items('playpause', False)
+                self._set_all_items('streams', None)
+                self._set_all_items('subtitles', None)
+                self._set_all_items('audio', '')
+                self._set_all_items('subtitle', '')
                 self._activeplayers = []
                 self._playerid = 0
 
@@ -446,6 +455,7 @@ class Kodi(SmartPlugin):
             elif data['method'] in ['Player.OnPlay', 'Player.OnAVChange']:
                 self.log_debug('Received: started/changed playback')
                 self._set_all_items('state', 'Playing')
+                self._send_command('get_actplayer', None)
                 query_playerinfo.append(data['params']['data']['player']['playerid'])
 
             elif data['method'] == 'Application.OnVolumeChanged':
