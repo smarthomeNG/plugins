@@ -138,16 +138,40 @@ item_structs:
 
         play:
             type: bool
-            eval: sh...input('play')
+            eval: sh...playpause() and not sh...stop()
             enforce_updates: true
+            eval_trigger:
+                - ..stop
+                - ..playpause
+
+            play_cmd:
+                type: bool
+                enforce_updates: true
+                eval: sh....input('play') if not (sh...property.last_update_by.lower().startswith('kodi') or sh...property.last_update_by.lower().startswith('eval')) else None
+                eval_trigger: ..
 
         pause:
             type: bool
-            eval: sh...input('pause')
+            eval: not sh...playpause() and not sh...stop()
             enforce_updates: true
+            eval_trigger:
+                - ..stop
+                - ..playpause
+
+            pause_cmd:
+                type: bool
+                enforce_updates: true
+                eval: sh....input('pause') if not (sh...property.last_update_by.lower().startswith('kodi') or sh...property.last_update_by.lower().startswith('eval')) else None
+                eval_trigger: ..
 
         stop:
             kodi_item@instance: stop
+            type: bool
+            visu_acl: rw
+            enforce_updates: true
+
+        playpause:
+            kodi_item@instance: playpause
             type: bool
             visu_acl: rw
             enforce_updates: true

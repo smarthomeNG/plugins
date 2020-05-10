@@ -42,7 +42,7 @@ class Kodi(SmartPlugin):
     '''
     PLUGIN_VERSION = '1.6.0'
     ALLOW_MULTIINSTANCE = True
-    _initcommands = ['ping', 'get_actplayer', 'get_status_au']
+    _initcommands = ['get_actplayer', 'get_status_au']
 
     def __init__(self, sh, *args, **kwargs):
         '''
@@ -50,7 +50,7 @@ class Kodi(SmartPlugin):
         '''
         # init logger
         self.logger = logging.getLogger(__name__)
-        self.log_info('Init Plugin')
+        self.logger.info('Init Plugin')
         self._host = self.get_parameter_value('host')
         self._port = self.get_parameter_value('port')
         self._autoreconnect = self.get_parameter_value('autoreconnect')
@@ -95,7 +95,7 @@ class Kodi(SmartPlugin):
         '''
         Run method for the plugin
         '''
-        self.log_debug('run method called')
+        self.logger.debug('run method called')
         self._connect('run')
         self.alive = True
         self._next_stale_check = time.time() + self._check_stale_cycle
@@ -105,7 +105,7 @@ class Kodi(SmartPlugin):
         Stop method for the plugin
         '''
         self.alive = False
-        self.log_debug('stop method called')
+        self.logger.debug('stop method called')
         self._kodi_tcp_connection.close()
         self._kodi_server_alive = False
 
@@ -122,11 +122,11 @@ class Kodi(SmartPlugin):
         '''
         if self.has_iattr(item.conf, 'kodi_item'):
             command = self.get_iattr_value(item.conf, 'kodi_item')
-            self.log_debug('Registering item: {}'.format(item))
+            self.logger.debug('Registering item: {}'.format(item))
             if command in self._registered_items:
                 self._registered_items[command].append(item)
             else:
-                self.log_warn('I do not know the kodi_item {}, skipping!'.format(command))
+                self.logger.warning('I do not know the kodi_item {}, skipping!'.format(command))
             if self._CMD[command]['set']:
                 return self.update_item
 
@@ -151,7 +151,7 @@ class Kodi(SmartPlugin):
             # update item was triggered by something other than this plugin -> send to Kodi
 
             kodi_item = self.get_iattr_value(item.conf, 'kodi_item')
-            self.log_debug('Updating item {} using kodi command {} with value {}'.format(item, kodi_item, item()))
+            self.logger.debug('Updating item {} using kodi command {} with value {}, called by {}'.format(item, kodi_item, item(), caller))
 
             # power is handled specially as it is not a command for kodi per se
             if kodi_item == 'power' and item():
@@ -170,11 +170,13 @@ class Kodi(SmartPlugin):
 
             # writable item
             elif kodi_item in self._CMD and self._CMD[kodi_item]['set']:
-                # !! self.log_debug('Running send_command({}, {}, False)'.format(kodi_item, item()))
+                # !! self.logger.debug('Running send_command({}, {}, False)'.format(kodi_item, item()))
                 self._send_command(kodi_item, item())
 
             else:
-                self.log_info('kodi_item "%s" not in send_keys, skipping!', kodi_item)
+                self.logger.info('kodi_item "%s" not in send_keys, skipping!', kodi_item)
+        elif self.has_iattr(item.conf, 'kodi_item'):
+            self.logger.debug('Not updating item {}, value is {}, called by {}'.format(item, item(), caller))
 
     def notify(self, title, message, image=None, display_time=10000):
         '''
@@ -202,17 +204,17 @@ class Kodi(SmartPlugin):
         self._kodi_server_alive = True
         if isinstance(by, (dict, Tcp_client)):
             by = 'TCP_Connect'
-        self.log_info('Connected to {}, onconnect called by {}, send queue size: {}'.format(self._host, by, self._send_queue.qsize()))
+        self.logger.info('Connected to {}, onconnect called by {}, send queue size: {}'.format(self._host, by, self._send_queue.qsize()))
         if self._send_queue.qsize() == 0:
             for command in self._initcommands:
-                self.log_debug('Sending command after connect: {}'.format(command))
+                self.logger.debug('Sending command after connect: {}'.format(command))
                 self._send_command(command, None)
 
     def _on_disconnect(self, obj=None):
         '''
         Recall method for TCP disconnect
         '''
-        self.log_info('Received disconnect from {}'.format(self._host))
+        self.logger.info('Received disconnect from {}'.format(self._host))
         self._kodi_server_alive = False
         for item in self._registered_items['power']:
             item(False, caller=self.get_shortname())
@@ -222,7 +224,7 @@ class Kodi(SmartPlugin):
         This method is called by the TCP connection object whenever data is received from the host.
         '''
 
-        self.log_debug('Received data from TCP: {}'.format(response))
+        self.logger.debug('Received data from TCP: {}'.format(response))
 
         # split multi-response data into list items
         try:
@@ -233,12 +235,12 @@ class Kodi(SmartPlugin):
 
         # process all response items
         for data in datalist:
-            self.log_debug('Processing received data item #{} ({})'.format(datalist.index(data), data))
+            self.logger.debug('Processing received data item #{} ({})'.format(datalist.index(data), data))
 
             try:
                 jdata = json.loads(data)
             except Exception as err:
-                self.log_warn('Could not json.load data item {} with error {}'.format(data, err))
+                self.logger.warning('Could not json.load data item {} with error {}'.format(data, err))
                 continue
 
             # formerly there was a check for error responses, which triggered up to <param>
@@ -258,9 +260,9 @@ class Kodi(SmartPlugin):
 
                 # log possible errors
                 if 'error' in jdata:
-                    self.log_err('Received error {} in response to command {}'.format(jdata, cmd))
+                    self.logger.error('Received error {} in response to command {}'.format(jdata, cmd))
                 elif cmd:
-                    self.log_debug('Command sent successfully: {}'.format(cmd))
+                    self.logger.debug('Command sent successfully: {}'.format(cmd))
 
             # process data
             self._parse_response(jdata)
@@ -277,24 +279,24 @@ class Kodi(SmartPlugin):
                 remove_ids = []
 
                 # self._message_archive[message_id] = [time.time(), method, params, repeat]
-                self.log_debug('Checking for unanswered commands, last check was {} seconds ago, {} commands saved'.format(int(time.time()) - self._next_stale_check - self._check_stale_cycle, len(self._message_archive)))
-                # self.log_debug('Stale commands: {}'.format(stale_cmds))
+                self.logger.debug('Checking for unanswered commands, last check was {} seconds ago, {} commands saved'.format(int(time.time()) - self._next_stale_check - self._check_stale_cycle, len(self._message_archive)))
+                # self.logger.debug('Stale commands: {}'.format(stale_cmds))
                 for (message_id, (send_time, method, params, repeat)) in stale_cmds.items():
 
                     if send_time + self._command_timeout < time.time():
 
                         # message older than _command_timeout seconds without answer
-                        self.log_debug('Found unanswered command older than {} seconds: ({}, {}, #{})'.format(self._command_timeout, message_id, method, repeat))
+                        self.logger.debug('Found unanswered command older than {} seconds: ({}, {}, #{})'.format(self._command_timeout, message_id, method, repeat))
                         remove_ids.append(message_id)
 
                         # not numeric: format error in msgid, not able to process repeat count, discard
                         if repeat < self._command_repeat:
 
                             # send again, increase counter
-                            self.log_info('Repeating unanswered command {} ({}), try {}'.format(method, params, repeat + 1))
+                            self.logger.info('Repeating unanswered command {} ({}), try {}'.format(method, params, repeat + 1))
                             self._send_rpc_message(method, params, message_id, repeat + 1)
                         else:
-                            self.log_info('Unanswered command {} ({}) repeated {} times, giving up.'.format(method, params, repeat))
+                            self.logger.info('Unanswered command {} ({}) repeated {} times, giving up.'.format(method, params, repeat))
 
                 # set next stale check time
                 self._next_stale_check = time.time() + self._check_stale_cycle
@@ -303,7 +305,7 @@ class Kodi(SmartPlugin):
                     # it is possible that while processing stale commands, a reply arrived
                     # and the command was removed. So just to be sure, 'try' and delete...
                     try:
-                        self.log_debug('Removing stale msgid {} from archive'.format(msgid))
+                        self.logger.debug('Removing stale msgid {} from archive'.format(msgid))
                         del self._message_archive[msgid]
                     except KeyError:
                         pass
@@ -344,10 +346,10 @@ class Kodi(SmartPlugin):
                     # one active player
                     query_playerinfo = self._activeplayers = [result_data[0].get('playerid')]
                     self._playerid = self._activeplayers[0]
-                    self.log_debug('Received GetActivePlayers, set playerid to {}'.format(self._playerid))
+                    self.logger.debug('Received GetActivePlayers, set playerid to {}'.format(self._playerid))
                     self._set_all_items('player', self._playerid)
                     self._set_all_items('media', result_data[0].get('type').capitalize())
-                    self._set_all_items('state', 'Playing')
+                    # self._set_all_items('state', 'Playing')
                 elif len(result_data) > 1:
                     # multiple active players. Have not yet seen this happen
                     self._activeplayers = []
@@ -355,7 +357,7 @@ class Kodi(SmartPlugin):
                         self._activeplayers.append(player.get('playerid'))
                         query_playerinfo.append(player.get('playerid'))
                     self._playerid = min(self._activeplayers)
-                    self.log_debug('Received GetActivePlayers, set playerid to {}'.format(self._playerid))
+                    self.logger.debug('Received GetActivePlayers, set playerid to {}'.format(self._playerid))
                 else:
                     # no active players
                     self._activeplayers = []
@@ -370,23 +372,23 @@ class Kodi(SmartPlugin):
                     self._set_all_items('audio', '')
                     self._set_all_items('subtitle', '')
                     self._playerid = 0
-                    self.log_debug('Received GetActivePlayers, reset playerid to 0')
+                    self.logger.debug('Received GetActivePlayers, reset playerid to 0')
 
             # got status info
             elif response_method == 'Application.GetProperties':
                 muted = result_data.get('muted')
                 volume = result_data.get('volume')
-                self.log_debug('Received GetProperties: Change mute to {} and volume to {}'.format(muted, volume))
+                self.logger.debug('Received GetProperties: Change mute to {} and volume to {}'.format(muted, volume))
                 self._set_all_items('mute', muted)
                 self._set_all_items('volume', volume)
 
             # got favourites
             elif response_method == 'Favourites.GetFavourites':
                 if not result_data.get('favourites'):
-                    self.log_debug('No favourites found.')
+                    self.logger.debug('No favourites found.')
                 else:
                     item_dict = {item['title']: item for item in result_data.get('favourites')}
-                    self.log_debug('Favourites found: {}'.format(item_dict))
+                    self.logger.debug('Favourites found: {}'.format(item_dict))
                     self._set_all_items('get_favourites', item_dict)
 
             # got item info
@@ -400,11 +402,11 @@ class Kodi(SmartPlugin):
                     artist = 'unknown' if len(result_data['item'].get('artist')) == 0 else result_data['item'].get('artist')[0]
                     title = artist + ' - ' + title
                 self._set_all_items('title', title)
-                self.log_debug('Received GetItem: update player info to title={}, type={}'.format(title, player_type))
+                self.logger.debug('Received GetItem: update player info to title={}, type={}'.format(title, player_type))
 
             # got player status
             elif response_method == 'Player.GetProperties':
-                self.log_debug('Received Player.GetProperties, update media data')
+                self.logger.debug('Received Player.GetProperties, update media data')
                 self._set_all_items('speed', result_data.get('speed'))
                 self._set_all_items('seek', result_data.get('percentage'))
                 self._set_all_items('streams', result_data.get('audiostreams'))
@@ -416,10 +418,20 @@ class Kodi(SmartPlugin):
                     subtitle = 'Off'
                 self._set_all_items('subtitle', subtitle)
 
+                # speed != 0 -> play; speed == 0 -> pause
+                if result_data.get('speed') == 0:
+                    self._set_all_items('state', 'Paused')
+                    self._set_all_items('stop', False)
+                    self._set_all_items('playpause', False)
+                else:
+                    self._set_all_items('state', 'Playing')
+                    self._set_all_items('stop', False)
+                    self._set_all_items('playpause', True)
+
         elif 'method' in data:
             # no id, notification or other
             if data['method'] == 'Player.OnResume':
-                self.log_debug('Received: resumed player')
+                self.logger.debug('Received: resumed player')
                 self._set_all_items('state', 'Playing')
                 self._set_all_items('stop', False)
                 self._set_all_items('playpause', True)
@@ -427,14 +439,14 @@ class Kodi(SmartPlugin):
                 query_playerinfo.append(data['params']['data']['player']['playerid'])
 
             elif data['method'] == 'Player.OnPause':
-                self.log_debug('Received: paused player')
+                self.logger.debug('Received: paused player')
                 self._set_all_items('state', 'Paused')
                 self._set_all_items('stop', False)
                 self._set_all_items('playpause', False)
                 query_playerinfo.append(data['params']['data']['player']['playerid'])
 
             elif data['method'] == 'Player.OnStop':
-                self.log_debug('Received: stopped player, set playerid to 0')
+                self.logger.debug('Received: stopped player, set playerid to 0')
                 self._set_all_items('state', 'No active player')
                 self._set_all_items('media', '')
                 self._set_all_items('title', '')
@@ -449,25 +461,25 @@ class Kodi(SmartPlugin):
                 self._playerid = 0
 
             elif data['method'] == 'GUI.OnScreensaverActivated':
-                self.log_debug('Received: activated screensaver')
+                self.logger.debug('Received: activated screensaver')
                 self._set_all_items('state', 'Screensaver')
 
             elif data['method'] in ['Player.OnPlay', 'Player.OnAVChange']:
-                self.log_debug('Received: started/changed playback')
+                self.logger.debug('Received: started/changed playback')
                 self._set_all_items('state', 'Playing')
                 self._send_command('get_actplayer', None)
                 query_playerinfo.append(data['params']['data']['player']['playerid'])
 
             elif data['method'] == 'Application.OnVolumeChanged':
-                self.log_debug('Received: volume changed, got new values mute: {} and volume: {}'.format(data['params']['data']['muted'], data['params']['data']['volume']))
+                self.logger.debug('Received: volume changed, got new values mute: {} and volume: {}'.format(data['params']['data']['muted'], data['params']['data']['volume']))
                 self._set_all_items('mute', data['params']['data']['muted'])
                 self._set_all_items('volume', data['params']['data']['volume'])
 
         # if active playerid(s) was changed, update status for active player(s)
         if query_playerinfo:
-            self.log_debug('Player info query requested for playerid(s) {}'.format(query_playerinfo))
+            self.logger.debug('Player info query requested for playerid(s) {}'.format(query_playerinfo))
             for player_id in query_playerinfo:
-                self.log_debug('Getting player info for player #{}'.format(player_id))
+                self.logger.debug('Getting player info for player #{}'.format(player_id))
                 self._send_rpc_message('Player.GetItem', {'properties': ['title', 'artist'], 'playerid': player_id})
                 self._send_rpc_message('Player.GetProperties', {'properties': ['speed', 'percentage', 'currentaudiostream', 'audiostreams', 'subtitleenabled', 'currentsubtitle', 'subtitles'], 'playerid': player_id})
 
@@ -532,15 +544,15 @@ class Kodi(SmartPlugin):
         # found any errors?
         if len(no_method + wrong_keys + unmatched + bounds + values) > 0:
             if len(wrong_keys) > 0:
-                self.log_err('Commands data not consistent: commands "' + '", "'.join(wrong_keys) + '" have wrong keys')
+                self.logger.error('Commands data not consistent: commands "' + '", "'.join(wrong_keys) + '" have wrong keys')
             if len(no_method) > 0:
-                self.log_err('Commands data not consistent: commands "' + '", "'.join(no_method) + '" have no method')
+                self.logger.error('Commands data not consistent: commands "' + '", "'.join(no_method) + '" have no method')
             if len(unmatched) > 0:
-                self.log_err('Commands data not consistent: commands "' + '", "'.join(unmatched) + '" have unmatched params/values')
+                self.logger.error('Commands data not consistent: commands "' + '", "'.join(unmatched) + '" have unmatched params/values')
             if len(bounds) > 0:
-                self.log_err('Commands data not consistent: commands "' + '", "'.join(bounds) + '" have erroneous bounds')
+                self.logger.error('Commands data not consistent: commands "' + '", "'.join(bounds) + '" have erroneous bounds')
             if len(values) > 0:
-                self.log_err('Commands data not consistent: commands "' + '", "'.join(values) + '" have more than one "VAL" field')
+                self.logger.error('Commands data not consistent: commands "' + '", "'.join(values) + '" have more than one "VAL" field')
 
             return False
 
@@ -554,7 +566,7 @@ class Kodi(SmartPlugin):
                         macros.append(macro)
 
         if len(macros) > 0:
-            self.log_err('Macro data not consistent for macros "' + '", "'.join(macros) + '"')
+            self.logger.error('Macro data not consistent for macros "' + '", "'.join(macros) + '"')
             # errors in macro definition don't hinder normal plugin functionality, so just
             # refill self._MACRO omitting erroneous entries. With bad luck, _MACRO is empty ;)
             self._MACRO = {}
@@ -573,14 +585,14 @@ class Kodi(SmartPlugin):
         :param by: caller information
         :type by: str
         '''
-        self.log_debug('Initializing connection, initiated by {}'.format(by))
+        self.logger.debug('Initializing connection, initiated by {}'.format(by))
         if not self._kodi_tcp_connection.connected():
             self._kodi_tcp_connection.connect()
             # we allow for 2 seconds to connect
             time.sleep(2)
         if not self._kodi_tcp_connection.connected():
             # no connection could be established, Kodi may be offline
-            self.log_info('Could not establish a connection to Kodi at {}'.format(self._host))
+            self.logger.info('Could not establish a connection to Kodi at {}'.format(self._host))
             self._kodi_server_alive = False
         else:
             self._kodi_server_alive = True
@@ -603,22 +615,22 @@ class Kodi(SmartPlugin):
             # custom/dynamic macro seq provided as item()
             for step in item():
                 if not isinstance(step, list) or len(step) != 2:
-                    self.log_err('Custom macro "{}" from item {} is not a valid macro sequence'.format(item(), item))
+                    self.logger.error('Custom macro "{}" from item {} is not a valid macro sequence'.format(item(), item))
                     return
             macro = '(custom {})'.format(item)
             macroseq = item()
         else:
-            self.log_err('Macro "{}"" not in macro definitions and no valid macro itself'.format(item()))
+            self.logger.error('Macro "{}"" not in macro definitions and no valid macro itself'.format(item()))
             return
 
         for [command, value] in macroseq:
             if command == 'wait':
-                self.log_debug('Macro {} waiting for {} second(s)'.format(item(), value))
+                self.logger.debug('Macro {} waiting for {} second(s)'.format(item(), value))
                 time.sleep(value)
             else:
-                self.log_debug('Macro {} calling command {} with value {}'.format(command, value))
+                self.logger.debug('Macro {} calling command {} with value {}'.format(command, value))
                 self._send_command(command, value)
-        self.log_debug('Macro {} finished'.format(item()))
+        self.logger.debug('Macro {} finished'.format(item()))
 
     def _build_command_params(self, command, data):
         '''
@@ -632,13 +644,13 @@ class Kodi(SmartPlugin):
         :rtype: dict
         '''
         if command not in self._CMD:
-            self.log_err('Command unknown: {}'.format(command))
+            self.logger.error('Command unknown: {}'.format(command))
             return False
 
         if self._CMD[command]['params'] is None:
             return None
 
-        self.log_debug('Building params set for {}'.format(data))
+        self.logger.debug('Building params set for {}'.format(data))
 
         cmdset = self._CMD[command]
         cmd_params = cmdset['params']
@@ -658,14 +670,14 @@ class Kodi(SmartPlugin):
                 if cmd_bounds is not None:
                     if isinstance(cmd_bounds, list):
                         if data not in cmd_bounds:
-                            self.log_debug('Invalid data: value {} not in list {}'.format(data, cmd_bounds))
+                            self.logger.debug('Invalid data: value {} not in list {}'.format(data, cmd_bounds))
                             return False
                     elif isinstance(cmd_bounds[idx], tuple):
                         if not isinstance(data[idx], int):
-                            self.log_err('Invalid data: type {} ({}) given for int bounds {}'.format(type(data), data, cmd_bounds))
+                            self.logger.error('Invalid data: type {} ({}) given for int bounds {}'.format(type(data), data, cmd_bounds))
                             return False
                         if not cmd_bounds[0] <= data <= cmd_bounds[1]:
-                            self.log_err('Invalid data: int {} out of bounds ({})'.format(data, cmd_bounds))
+                            self.logger.error('Invalid data: int {} out of bounds ({})'.format(data, cmd_bounds))
                             return False
                 params[cmd_params[idx]] = data
 
@@ -679,7 +691,7 @@ class Kodi(SmartPlugin):
                     expr = str(cmd_values[idx][0]).replace('VAL', str(data))
                     result = eval(expr)
                 except Exception as e:
-                    self.log_err('Invalid data: eval expression {} with argument {} raised error: {}'.format(cmd_values[idx][0], data, e.message))
+                    self.logger.error('Invalid data: eval expression {} with argument {} raised error: {}'.format(cmd_values[idx][0], data, e.message))
                     return False
                 params[cmd_params[idx]] = result
 
@@ -687,7 +699,7 @@ class Kodi(SmartPlugin):
             else:
                 params[cmd_params[idx]] = cmd_values[idx]
 
-        self.log_debug('Built params array {}'.format(params))
+        self.logger.debug('Built params array {}'.format(params))
 
         return params
 
@@ -704,7 +716,7 @@ class Kodi(SmartPlugin):
         '''
 
         if command not in self._CMD:
-            self.log_err('Command unknown: {}'.format(command))
+            self.logger.error('Command unknown: {}'.format(command))
             return False
 
         params = self._build_command_params(command, data)
@@ -713,7 +725,7 @@ class Kodi(SmartPlugin):
         if params is False:
             return False
 
-        # !! self.log_debug('Calling send_rpc method for command {} with method={} and params={}'.format(command, self._CMD[command]['method'], params))
+        # !! self.logger.debug('Calling send_rpc method for command {} with method={} and params={}'.format(command, self._CMD[command]['method'], params))
         self._send_rpc_message(self._CMD[command]['method'], params)
 
     def _send_rpc_message(self, method, params=None, message_id=None, repeat=0):
@@ -725,17 +737,17 @@ class Kodi(SmartPlugin):
         :param params: parameters dictionary
         :param message_id: the message ID to be used. If none, use the internal counter
         '''
-        self.log_debug('Preparing message to send method {} with data {}, try #{}, connection is {}'.format(method, params, repeat, self._kodi_server_alive))
+        self.logger.debug('Preparing message to send method {} with data {}, try #{}, connection is {}'.format(method, params, repeat, self._kodi_server_alive))
 
         if message_id is None:
             # safely acquire next message_id
-            # !! self.log_debug('Locking message id access ({})'.format(self._message_id))
+            # !! self.logger.debug('Locking message id access ({})'.format(self._message_id))
             self._msgid_lock.acquire()
             self._message_id += 1
             new_msgid = self._message_id
             self._msgid_lock.release()
             message_id = str(new_msgid) + '#' + method
-            # !! self.log_debug('Releasing message id access ({})'.format(self._message_id))
+            # !! self.logger.debug('Releasing message id access ({})'.format(self._message_id))
 
         # create message packet
         data = {'jsonrpc': '2.0', 'id': message_id, 'method': method}
@@ -744,23 +756,23 @@ class Kodi(SmartPlugin):
         try:
             send_command = json.dumps(data, separators=(',', ':'))
         except Exception as err:
-            self.log_err('Problem with json.dumps: {}'.format(err))
+            self.logger.error('Problem with json.dumps: {}'.format(err))
             send_command = data
 
         # push message in queue
-        # !! self.log_debug('Queuing message {}'.format(send_command))
+        # !! self.logger.debug('Queuing message {}'.format(send_command))
         self._send_queue.put([message_id, send_command, method, params, repeat])
-        # !! self.log_debug('Queued message {}'.format(send_command))
+        # !! self.logger.debug('Queued message {}'.format(send_command))
 
         # try to actually send all queued messages
-        # !! self.log_debug('Processing queue - {} elements'.format(self._send_queue.qsize()))
+        # !! self.logger.debug('Processing queue - {} elements'.format(self._send_queue.qsize()))
         while not self._send_queue.empty():
             (message_id, data, method, params, repeat) = self._send_queue.get()
-            self.log_debug('Sending queued msg {} - {} (#{})'.format(message_id, data, repeat))
+            self.logger.debug('Sending queued msg {} - {} (#{})'.format(message_id, data, repeat))
             self._kodi_tcp_connection.send((data + '\r\n').encode())
             self._message_archive[message_id] = [time.time(), method, params, repeat]
-            # !! self.log_debug('Sent msg {} - {}'.format(message_id, data))
-        # !! self.log_debug('Processing queue finished - {} elements remaining'.format(self._send_queue.qsize()))
+            # !! self.logger.debug('Sent msg {} - {}'.format(message_id, data))
+        # !! self.logger.debug('Processing queue finished - {} elements remaining'.format(self._send_queue.qsize()))
 
     def _update_status(self):
         '''
@@ -770,15 +782,3 @@ class Kodi(SmartPlugin):
         if self._playerid:
             self._send_command('get_status_play', None)
             self._send_command('get_item', None)
-
-    def log_debug(self, text):
-        self.logger.debug('{}: {}'.format(self.get_shortname(), text))
-
-    def log_info(self, text):
-        self.logger.info('{}: {}'.format(self.get_shortname(), text))
-
-    def log_err(self, text):
-        self.logger.error('{}: {}'.format(self.get_shortname(), text))
-
-    def log_warn(self, text):
-        self.logger.warning('{}: {}'.format(self.get_shortname(), text))
