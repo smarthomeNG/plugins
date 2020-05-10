@@ -37,7 +37,7 @@ class OneWire(SmartPlugin):
     """
 
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = '1.6.0'
+    PLUGIN_VERSION = '1.6.2'
 
     _flip = {0: '1', False: '1', 1: '0', True: '0', '0': True, '1': False}
 
@@ -268,7 +268,7 @@ class OneWire(SmartPlugin):
                         value = self._flip[self.owbase.read('/uncached' + path).decode()]
                 except Exception as e:
                     if self.logger.isEnabledFor(logging.WARNING):
-                        self.logger.warning("1-Wire: problem reading {0}, error {}".format(addr,e))
+                        self.logger.warning("1-Wire: problem reading {}, error {}".format(addr,e))
                     continue
                 item(value, '1-Wire', path)
 
@@ -406,7 +406,7 @@ class OneWire(SmartPlugin):
                 self.logger.debug("1-Wire: listing did not change")
         else:
             if self.logger.isEnabledFor(logging.DEBUG):
-                self.logger.debug("1-Wire: listing changed, save for next discovery cycle".format(listing))
+                self.logger.debug("1-Wire: listing changed: '{}'. Save for next discovery cycle".format(listing))
             self._last_discovery = listing
 
         for path in listing:
