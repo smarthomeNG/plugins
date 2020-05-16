@@ -176,7 +176,7 @@ class Kodi(SmartPlugin):
             else:
                 self.logger.info('kodi_item "%s" not in send_keys, skipping!', kodi_item)
         elif self.has_iattr(item.conf, 'kodi_item'):
-            self.logger.debug('Not updating item {}, value is {}, called by {}'.format(item, item(), caller))
+            self.logger.debug('Not acting on item update: {} has set item {} to {}'.format(caller, item, item()))
 
     def notify(self, title, message, image=None, display_time=10000):
         '''
@@ -596,8 +596,9 @@ class Kodi(SmartPlugin):
             self._kodi_server_alive = False
         else:
             self._kodi_server_alive = True
-        for item in self._registered_items['power']:
-            item(True, caller=self.get_shortname())
+        if self._kodi_server_alive:
+            for item in self._registered_items['power']:
+                item(True, caller=self.get_shortname())
 
     def _process_macro(self, item):
         '''
@@ -657,8 +658,11 @@ class Kodi(SmartPlugin):
         cmd_values = cmdset['values']
         cmd_bounds = cmdset['bounds']
 
-        if isinstance(data, str) and data.isnumeric():
-            data = int(data)
+        if (isinstance(data, str) and data.isnumeric()):
+            data = self._str2num(data)
+            if data is None:
+                self.logger.error('Invalid data: value {} is not numeric for command {}'.format(data, command))
+                return False
 
         params = {}
         for idx in range(len(cmd_params)):
@@ -672,12 +676,15 @@ class Kodi(SmartPlugin):
                         if data not in cmd_bounds:
                             self.logger.debug('Invalid data: value {} not in list {}'.format(data, cmd_bounds))
                             return False
-                    elif isinstance(cmd_bounds[idx], tuple):
-                        if not isinstance(data[idx], int):
-                            self.logger.error('Invalid data: type {} ({}) given for int bounds {}'.format(type(data), data, cmd_bounds))
-                            return False
+                    elif isinstance(cmd_bounds, tuple):
+                        if not isinstance(data, type(cmd_bounds[0])):
+                            if type(data) is float and type(cmd_bounds[0]) is int:
+                                data = int(data)
+                            else:
+                                self.logger.error('Invalid data: type {} ({}) given for {} bounds {}'.format(type(data), data, type(cmd_bounds[0]), cmd_bounds))
+                                return False
                         if not cmd_bounds[0] <= data <= cmd_bounds[1]:
-                            self.logger.error('Invalid data: int {} out of bounds ({})'.format(data, cmd_bounds))
+                            self.logger.error('Invalid data: value {} out of bounds ({})'.format(data, cmd_bounds))
                             return False
                 params[cmd_params[idx]] = data
 
@@ -780,9 +787,20 @@ class Kodi(SmartPlugin):
         '''
         if self.alive:
             if not self._kodi_server_alive:
-                self.connect_to_kodi('update')
-            else
+                self._connect('update')
+            else:
                 self._send_command('get_status_au', None)
                 if self._playerid:
                     self._send_command('get_status_play', None)
                     self._send_command('get_item', None)
+
+    def _str2num(self, s):
+        try:
+            val = int(s)
+            return(val)
+        except ValueError:
+            try:
+                val = float(s)
+                return(val)
+            except ValueError:
+                return None

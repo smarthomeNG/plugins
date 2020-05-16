@@ -201,7 +201,6 @@ item_structs:
         volume:
             kodi_item@instance: volume
             type: num
-            eval: round(value, 0)
             visu_acl: rw
             enforce_updates: true
 

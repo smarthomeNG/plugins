@@ -19,7 +19,7 @@ commands = {
     'get_favourites': {'method': 'Favourites.GetFavourites',  'set': False,   'get': True,    'params': ['properties'],                     'values': [['window', 'path', 'thumbnail', 'windowparameter']],'bounds': None},
 
     'playpause':      {'method': 'Player.PlayPause',          'set': True,    'get': False,   'params': ['playerid', 'play'],               'values': ['ID', 'toggle'],                                    'bounds': None},
-    'seek':           {'method': 'Player.Seek',               'set': True,    'get': False,   'params': ['playerid', 'value'],              'values': ['ID', 'VAL'],                                       'bounds': (0, 100)},
+    'seek':           {'method': 'Player.Seek',               'set': True,    'get': False,   'params': ['playerid', 'value'],              'values': ['ID', 'VAL'],                                       'bounds': (0.0, 100.0)},
     'audio':          {'method': 'Player.SetAudioStream',     'set': True,    'get': False,   'params': ['playerid', 'stream'],             'values': ['ID', 'VAL'],                                       'bounds': None},
     'speed':          {'method': 'Player.SetSpeed',           'set': True,    'get': False,   'params': ['playerid', 'speed'],              'values': ['ID', 'VAL'],                                       'bounds': [-32,-16,-8,-4,-2,-1,1,2,4,8,16,32]},
     'subtitle':       {'method': 'Player.SetSubtitle',        'set': True,    'get': False,   'params': ['playerid', 'subtitle', 'enable'], 'values': ['ID', 'VAL', ('False if "VAL"=="off" else True',)],    'bounds': None},
