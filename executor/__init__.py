@@ -3,7 +3,7 @@
 #########################################################################
 #  Copyright 2019 Bernd Meiners                     Bernd.Meiners@mail.de
 #########################################################################
-#  This file is part of SmartHomeNG.   
+#  This file is part of SmartHomeNG.
 #
 #  This is the executor plugin to run with SmartHomeNG version 1.4 and
 #  upwards.
@@ -24,6 +24,7 @@
 #########################################################################
 
 from lib.module import Modules
+from lib.item import Items
 from lib.model.smartplugin import *
 import urllib
 import time
@@ -42,7 +43,7 @@ class Executor(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.0.3'
+    PLUGIN_VERSION = '1.0.4'
 
     def __init__(self, sh):
         """
@@ -56,6 +57,7 @@ class Executor(SmartPlugin):
         # If an package import with try/except is done, handle an import error like this:
 
         self.logger.debug("init {}".format(__name__))
+
         self._init_complete = False
 
         # Exit if the required package(s) could not be imported
@@ -168,7 +170,7 @@ class Stub():
 
 # e.g. logger = Stub(warning=print, info=print, debug=print)
 
-        
+
 class WebInterface(SmartPluginWebIf):
 
     def __init__(self, webif_dir, plugin):
@@ -183,6 +185,7 @@ class WebInterface(SmartPluginWebIf):
         self.logger = logging.getLogger(__name__)
         self.webif_dir = webif_dir
         self.plugin = plugin
+        self.itemsApi = Items.get_instance()
         self.tplenv = self.init_template_environment()
 
     @cherrypy.expose
@@ -192,7 +195,7 @@ class WebInterface(SmartPluginWebIf):
 
         Render the template and return the html file to be delivered to the browser
 
-        :return: contents of the template after beeing rendered 
+        :return: contents of the template after beeing rendered
         """
         tmpl = self.tplenv.get_template('index.html')
         # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
@@ -200,7 +203,7 @@ class WebInterface(SmartPluginWebIf):
 
     """
     According to SmartHomeNG documentation the following modules are loaded for the
-    logic environment: 
+    logic environment:
     - sys
     - os
     - time
@@ -209,26 +212,36 @@ class WebInterface(SmartPluginWebIf):
     - ephem
     - Queue
     - subprocess
-    
+
     The usage of sys and os is a potential risk for eval and exec as they can remove files in reach of SmartHomeNG user.
     There should be however no need for ephem, Queue or subprocess
     """
 
-    
+
     @cherrypy.expose
-    def evaluate(self, eline, reload=None):
+    def evaluate(self, eline, path, reload=None):
         """
-        evaluate expression in eline and return the result 
+        evaluate expression in eline and return the result
 
         :return: result of the evaluation
         """
         result = ""
-        
+
         g = {}
         l = { 'sh': self.plugin.get_sh() }
-        self.logger.warning("Got request to evaluate {} (raw)".format(eline))
+        self.logger.debug("Got request to evaluate {} (raw) for item path {}".format(eline, path))
         eline = urllib.parse.unquote(eline)
-        self.logger.warning("Got request to evaluate {} (unquoted)".format(eline))
+        if path != '':
+            try:
+                path = self.itemsApi.return_item(path)
+                eline = path.get_stringwithabsolutepathes(eline, 'sh.', '(')
+                eline = path.get_stringwithabsolutepathes(eline, 'sh.', '.property')
+                self.logger.debug("Got request to evaluate {} (unquoted)".format(eline))
+            except Exception as e:
+                res = "Error '{}' while evaluating".format(e)
+                result = "{}".format(res)
+                return result
+
         try:
             if eline:
                 res = eval(eline,g,l)
@@ -252,9 +265,9 @@ class WebInterface(SmartPluginWebIf):
         import json
         import pprint
         stub_logger = Stub(warning=print, info=print, debug=print, error=print)
-        
+
         g = {}
-        l = { 'sh': self.plugin.get_sh(), 
+        l = { 'sh': self.plugin.get_sh(),
             'time': time,
             'datetime': datetime,
             'random': random,
@@ -275,4 +288,3 @@ class WebInterface(SmartPluginWebIf):
                 res = "Error '{}' while evaluating".format(e)
 
         return ''.join(p.data) + res
-
