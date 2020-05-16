@@ -778,7 +778,11 @@ class Kodi(SmartPlugin):
         '''
         This method requests several status infos
         '''
-        self._send_command('get_status_au', None)
-        if self._playerid:
-            self._send_command('get_status_play', None)
-            self._send_command('get_item', None)
+        if self.alive:
+            if not self._kodi_server_alive:
+                self.connect_to_kodi('update')
+            else
+                self._send_command('get_status_au', None)
+                if self._playerid:
+                    self._send_command('get_status_play', None)
+                    self._send_command('get_item', None)
