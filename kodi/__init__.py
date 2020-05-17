@@ -205,6 +205,7 @@ class Kodi(SmartPlugin):
         if isinstance(by, (dict, Tcp_client)):
             by = 'TCP_Connect'
         self.logger.info('Connected to {}, onconnect called by {}, send queue size: {}'.format(self._host, by, self._send_queue.qsize()))
+        self._set_all_items('power', True)
         if self._send_queue.qsize() == 0:
             for command in self._initcommands:
                 self.logger.debug('Sending command after connect: {}'.format(command))
@@ -215,6 +216,7 @@ class Kodi(SmartPlugin):
         Recall method for TCP disconnect
         '''
         self.logger.info('Received disconnect from {}'.format(self._host))
+        self._set_all_items('power', False)
         self._kodi_server_alive = False
         for item in self._registered_items['power']:
             item(False, caller=self.get_shortname())
