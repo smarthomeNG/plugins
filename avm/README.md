@@ -589,7 +589,7 @@ avm:
         socket_living:
             type: bool
             avm_data_type@fritzbox_7490: aha_device
-            ain: 14324 0432601    # has to be identical to id in fritzbox (also with spaces!)
+            ain@fritzbox_7490: 14324 0432601    # has to be identical to id in fritzbox (also with spaces!)
             visu_acl: rw
 
             # these items need to be child items from aha_device
@@ -616,7 +616,7 @@ avm:
         socket_office:
             type: bool
             avm_data_type@fritzbox_7490: aha_device
-            ain: 03456 0221393    # has to be identical to id in fritzbox (also with spaces!)
+            ain@fritzbox_7490: 03456 0221393    # has to be identical to id in fritzbox (also with spaces!)
             visu_acl: rw
 
             # these items need to be child items from aha_device

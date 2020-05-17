@@ -193,7 +193,7 @@ class Database(SmartPlugin):
                         if value is not None and prev_change is not None:
                             item.set(value, 'Database', prev_change=self._datetime(prev_change[0]),
                                      last_change=last_change)
-                        if self.get_iattr_value(item.conf, 'database_acl').lower() == 'ro':
+                        if self.get_iattr_value(item.conf, 'database_acl') is not None and self.get_iattr_value(item.conf, 'database_acl').lower() == 'ro':
                             self._buffer_insert(item, [(self._timestamp(self.shtime.now()), None, value)])
                 except Exception as e:
                     self.logger.error("Reading cache value from database for {} failed: {}".format(item.id(), e))
@@ -230,7 +230,7 @@ class Database(SmartPlugin):
 
         if self.has_iattr(item.conf, 'database_acl'):
             acl = self.get_iattr_value(item.conf, 'database_acl').lower()
-            self.logger.info("item '{}', database_acl = {}".format(item,  acl))
+            self.logger.debug("item '{}', database_acl = {}".format(item,  acl))
         else:
             acl = 'rw'
 
@@ -253,7 +253,7 @@ class Database(SmartPlugin):
                 self.logger.debug("Appending value {} to item '{}' value because database_acl = {}".format(end, item, acl))
             self._buffer[item].append((end, None, item()))
         else:
-            self.logger.info("Not writing item '{}' value because database_acl = {}".format(item,  acl))
+            self.logger.debug("Not writing item '{}' value because database_acl = {}".format(item,  acl))
 
 
     def _start_schedulers(self):
@@ -577,7 +577,12 @@ class Database(SmartPlugin):
         :return: Number of log records for the database ID
         """
         params = {'id': id}
-        return self._fetchall("SELECT count() FROM {log} WHERE item_id = :id;", params, cur=cur)[0][0]
+        result = self._fetchall("SELECT count() FROM {log} WHERE item_id = :id;", params, cur=cur)
+        try:
+            return result[0][0]
+        except Exception as e:
+            self.logger.error("readLogCount: result={} - Exception: {}".format(result, e))
+        return 0
 
 
     def deleteLog(self, id, time=None, time_start=None, time_end=None, changed=None, changed_start=None,
@@ -1054,9 +1059,10 @@ class Database(SmartPlugin):
 
         #item_id = self.id(item, create=False)
         try:
-            item_id = self.id(item)
+            item_id = self.id(item, create=False)
         except:
             self.logger.critical("remove_older_than_maxage: no id for item {}".format(item))
+            return
         time_end = self.get_maxage_ts(item)
         timestamp_end = self._timestamp(time_end)
         self.logger.debug("remove_older_than_maxage: item = {} remove older than {}".format(item, time_end))
@@ -1091,7 +1097,7 @@ class Database(SmartPlugin):
         """
         self.logger.info("_count_logentries: # handled items = {}".format(len(self._handled_items)))
         for item in self._handled_items:
-            item_id = self.id(item)
+            item_id = self.id(item, create=False)
             self._item_logcount[item_id] = self.readLogCount(item_id)
 
         return

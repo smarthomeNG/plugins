@@ -1,0 +1,2 @@
+#Only needed when using the plugin with MySQL databases
+#pymysql
