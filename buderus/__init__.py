@@ -166,7 +166,7 @@ class Buderus(SmartPlugin):
 
     def parse_item(self, item):
         if self.has_iattr(item.conf, 'km_id'):
-        if "km_id" in item.conf:
+        #if "km_id" in item.conf:
             id = self.get_iattr_value(item.conf, 'km_id')
             self._ids[id] = item
             return self.update_item
