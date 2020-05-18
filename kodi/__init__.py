@@ -88,6 +88,8 @@ class Kodi(SmartPlugin):
         self._activeplayers = []
         self._playerid = 0
 
+        self._shutdown_active = False
+
         if not self._check_commands_data():
             self._init_complete = False
 
@@ -147,6 +149,7 @@ class Kodi(SmartPlugin):
         :param source: if given it represents the source
         :param dest: if given it represents the dest
         '''
+        # !! self.logger.debug('update_item called for item {} by {} with value {}'.format(item, caller, item()))
         if item() is not None and caller != self.get_shortname() and self.has_iattr(item.conf, 'kodi_item'):
             # update item was triggered by something other than this plugin -> send to Kodi
 
@@ -156,13 +159,14 @@ class Kodi(SmartPlugin):
             # power is handled specially as it is not a command for kodi per se
             if kodi_item == 'power' and item():
                 # if item is set to True, try to (re)establish a connection to Kodi
-                self.connect_to_kodi('update')
+                self._connect('update')
                 # if item is set to False, send shutdown command to Kodi.
                 # This is handled in the standard block below though
 
             # trigger status update mechanism
             elif kodi_item == 'update':
-                self._update_status()
+                if item():
+                    self._update_status()
 
             # macros
             elif kodi_item == 'macro':
@@ -175,6 +179,11 @@ class Kodi(SmartPlugin):
 
             else:
                 self.logger.info('kodi_item "%s" not in send_keys, skipping!', kodi_item)
+
+            # set flag if shutdown of kodi server was ordered
+            if kodi_item == 'power' and not item():
+                self._shutdown_active = True
+
         elif self.has_iattr(item.conf, 'kodi_item'):
             self.logger.debug('Not acting on item update: {} has set item {} to {}'.format(caller, item, item()))
 
@@ -204,7 +213,7 @@ class Kodi(SmartPlugin):
         self._kodi_server_alive = True
         if isinstance(by, (dict, Tcp_client)):
             by = 'TCP_Connect'
-        self.logger.info('Connected to {}, onconnect called by {}, send queue size: {}'.format(self._host, by, self._send_queue.qsize()))
+        self.logger.info('Connected to {}, onconnect called by {}, send queue contains {} commands'.format(self._host, by, self._send_queue.qsize()))
         self._set_all_items('power', True)
         if self._send_queue.qsize() == 0:
             for command in self._initcommands:
@@ -220,6 +229,16 @@ class Kodi(SmartPlugin):
         self._kodi_server_alive = False
         for item in self._registered_items['power']:
             item(False, caller=self.get_shortname())
+
+        # did we power down kodi? then clear queues
+        if self._shutdown_active:
+            old_queue = self._send_queue
+            self._send_queue = queue.Queue()
+            del old_queue
+            self._stale_lock.acquire()
+            self._message_archive = {}
+            self._stale_lock.release()
+            self._shutdown_active = False
 
     def _on_received_data(self, connection, response):
         '''
@@ -285,13 +304,14 @@ class Kodi(SmartPlugin):
                 # self.logger.debug('Stale commands: {}'.format(stale_cmds))
                 for (message_id, (send_time, method, params, repeat)) in stale_cmds.items():
 
+                    remove_ids.append(message_id)
                     if send_time + self._command_timeout < time.time():
 
-                        # message older than _command_timeout seconds without answer
+                        # message older than _command_timeout seconds without answer, delete
                         self.logger.debug('Found unanswered command older than {} seconds: ({}, {}, #{})'.format(self._command_timeout, message_id, method, repeat))
-                        remove_ids.append(message_id)
 
-                        # not numeric: format error in msgid, not able to process repeat count, discard
+                    else:
+                        # in repeat timeframe, check repeat count
                         if repeat < self._command_repeat:
 
                             # send again, increase counter
@@ -779,6 +799,7 @@ class Kodi(SmartPlugin):
             (message_id, data, method, params, repeat) = self._send_queue.get()
             self.logger.debug('Sending queued msg {} - {} (#{})'.format(message_id, data, repeat))
             self._kodi_tcp_connection.send((data + '\r\n').encode())
+            # !! self.logger.debug('Adding cmd to message archive: {} - {} (try #{})'.format(message_id, data, repeat))
             self._message_archive[message_id] = [time.time(), method, params, repeat]
             # !! self.logger.debug('Sent msg {} - {}'.format(message_id, data))
         # !! self.logger.debug('Processing queue finished - {} elements remaining'.format(self._send_queue.qsize()))

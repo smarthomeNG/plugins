@@ -41,19 +41,12 @@ parameters:
             de: 'Netzwerkport für die Steuerung des Kodi-Systems'
             en: 'Network port for remote controlling the Kodi system'
 
-    instance:
-        type: str
-        default: ''
-        description:
-            de: 'Eindeutiger Identifier für die Instanz des Plugins. Kann bei nur einer konfigurierten Instanz des Plugins entfallen.'
-            en: 'Unique identifier for each instance of the plugin. Can be omitted if only one device instance of the plugin is configured.'
-
     autoreconnect:
         type: bool
         default: False
         description:
-            de: 'Erneuter Verbindungsversuch bei Verlust der Verbindung.'
-            en: 'Try to reconnect after connection loss.'
+            de: 'Erneute Verbindungsversuche bei Verlust der Verbindung alle 30 Sekunden'
+            en: 'Try to reconnect after connection loss every 30 seconds.'
 
     connect_retries:
         type: int
@@ -135,6 +128,7 @@ item_structs:
             type: bool
             visu_acl: rw
             enforce_updates: true
+            autotimer: 1 = false = latest
 
         play:
             type: bool
@@ -147,7 +141,7 @@ item_structs:
             play_cmd:
                 type: bool
                 enforce_updates: true
-                eval: sh....input('play') if not (sh...property.last_update_by.lower().startswith('kodi') or sh...property.last_update_by.lower().startswith('eval')) else None
+                eval: sh....input('play') if not (sh...property.last_update_by.lower()[:4] in ('kodi', 'init', 'eval')) else None
                 eval_trigger: ..
 
         pause:
@@ -161,7 +155,7 @@ item_structs:
             pause_cmd:
                 type: bool
                 enforce_updates: true
-                eval: sh....input('pause') if not (sh...property.last_update_by.lower().startswith('kodi') or sh...property.last_update_by.lower().startswith('eval')) else None
+                eval: sh....input('pause') if not (sh...property.last_update_by.lower()[:4] in ('kodi', 'init', 'eval')) else None
                 eval_trigger: ..
 
         stop:
