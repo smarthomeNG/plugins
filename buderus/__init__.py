@@ -64,14 +64,14 @@ class Buderus(SmartPlugin):
         self._host = self.get_parameter_value('host')
         self._key = binascii.unhexlify(self.get_parameter_value('key'))
         self._cycle = self.get_parameter_value('cycle')
-        
+
         self._ids = {}
         self.opener = urllib.request.build_opener()
         self.opener.addheaders = [('User-agent', self.__ua), ('Accept', self.__content_type)]
 
     def run(self):
         self.alive = True
-        self.scheduler_add('Buderus', self._poll_device, cycle=self._cycle))
+        self.scheduler_add('Buderus', self._poll_device, cycle=self._cycle)
 
     def stop(self):
         self.alive = False
