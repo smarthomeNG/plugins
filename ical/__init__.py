@@ -24,10 +24,6 @@ import datetime
 import os
 import errno
 import re
-#from datetime import timezone, timedelta
-from datetime import timezone
-
-
 import dateutil.tz
 import dateutil.rrule
 import dateutil.relativedelta
@@ -35,7 +31,8 @@ from lib.model.smartplugin import SmartPlugin
 from lib.shtime import Shtime
 from lib.network import Http
 from bin.smarthome import VERSION
-
+#from datetime import timezone, timedelta
+from datetime import timezone
 
 class iCal(SmartPlugin):
     PLUGIN_VERSION = "1.5.4"
@@ -91,6 +88,7 @@ class iCal(SmartPlugin):
             calendar = calendar.strip()
             self._icals[calendar] = self._read_events(calendar)
 
+        self.shtime = Shtime.get_instance()
         smarthome.scheduler.add('iCalUpdate', self._update_items, cron='* * * *', prio=5)
         smarthome.scheduler.add('iCalRefresh', self._update_calendars, cycle=int(cycle), prio=5)
 
@@ -256,7 +254,7 @@ class iCal(SmartPlugin):
             #self.logger.debug('Datetime after conversion for series entries: {}'.format(dt))
 
         # convert all time stamps to local timezone, configured in smarthome
-        dt = dt.astimezone(self.sh.tzinfo())
+        dt = dt.astimezone(self.shtime.tzinfo())
         #self.logger.debug('Datetime after final conversion in plugin ical: {}'.format(dt))
 
         
