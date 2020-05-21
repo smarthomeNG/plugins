@@ -21,7 +21,7 @@ die Helligkeit (über se_item_brightness definiert) über 500 Lux liegt.
                    se_item_brightness: beispiel.wetterstation.helligkeit
                    Daemmerung:
                        name: Dämmerung
-                       <Aktionen>
+                       remark: <Aktionen>
                        enter:
                           se_min_brightness: 500
 
@@ -199,7 +199,8 @@ zulässige Werte sind "true", "1", "yes", "on" bzw. "false", "0",
 
 Die Bedingung ist erfüllt, wenn das Alter des Items, das zur
 Ermittlung des Werts angegeben ist, größer als das angegebene
-Mindestalter ist.
+Mindestalter ist. Die age Bedingungen sollten immer mit einer value Bedingung verknüpft werden
+(z.B. ``se_value_<Bedingungsname>: True``)
 
 **Höchstalter**
 
@@ -209,7 +210,8 @@ Mindestalter ist.
 
 Die Bedingung ist erfüllt, wenn das Alter des Items, das zur
 Ermittlung des Werts angegeben ist, kleiner als das angegebene
-Höchstalter ist.
+Höchstalter ist. Die age Bedingungen sollten immer mit einer value Bedingung verknüpft werden
+(z.B. ``se_value_<Bedingungsname>: True``)
 
 **Altersbedingung negieren**
 
@@ -289,7 +291,7 @@ Das Alter wird über die letzte Änderung des Items, das als
 **random**
 *Zufallszahl zwischen 0 und 100*
 Wenn etwas zufällig mit einer Wahrscheinlichkeit von 60% passieren
-soll, kan beispielsweise die Bedingung ``max_random: 60``
+soll, kan beispielsweise die Bedingung ``se_max_random: 60``
 verwendet werden.
 
 **laststate**

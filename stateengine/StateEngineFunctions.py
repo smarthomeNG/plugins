@@ -89,6 +89,11 @@ class SeFunctions:
 
             original = self.get_original_caller(elog, caller, source)
             elog.debug("original trigger by '{0}'", original)
+            entry = re.compile("Stateengine Plugin", re.IGNORECASE)
+            result = entry.match(original)
+            if result is not None:
+                elog.debug("Manual item updated by Stateengine Plugin. Ignoring change and writing value {}", retval_no_trigger)
+                return retval_no_trigger
 
             if "se_manual_on" in item.conf:
                 # get list of include entries
