@@ -448,11 +448,6 @@ item_structs:
             lock:
                 name: gesperrt
 
-                on_leave:
-                    se_action_lock:
-                      - 'function: set'
-                      - 'to: False'
-
                 enter:
                     se_value_lock: True
 
@@ -478,6 +473,7 @@ item_structs:
             #se_manual_include: KNX:* Force manual mode based on source
             se_manual_exclude:
               - database:*
+              - init:*
 
         retrigger:
             remark: Item to retrigger the rule set evaluation
@@ -505,6 +501,7 @@ item_structs:
             settings_edited:
                 type: bool
                 name: settings editiert
+                cache: True
                 eval_trigger: ...settings.*
                 eval: not sh..self()
                 on_update: ...retrigger = True
