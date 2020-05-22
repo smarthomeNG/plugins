@@ -243,8 +243,9 @@ You can specify a MQTT topic to trigger a logic. The logic is triggered every ti
 
 ```yaml
 Alarm:
-    mqtt_watch_topic: alarm_in	# monitor for changes
-#    mqtt_payload_type: str
+    # monitor for changes
+    mqtt_watch_topic: alarm_in
+    # mqtt_payload_type: str
 ```
 
 **`mqtt_watch_topic`** specifies the MQTT topic which triggers the logic. A logic that is triggered by the MQTT plugin gets the following information:

@@ -93,4 +93,5 @@ würde in folgendem Ergebnis münden.
           1573232535421,
           21.2
         ]
+      ]
     }

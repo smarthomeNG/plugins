@@ -13,10 +13,10 @@ plugin:
              \n
              Die Steuerungsmöglichkeiten umfassen (derzeit) unter Anderem:\n
                 \n
-                - Gerät ein-/ausschalten, Standby, Sleep-Timer,\n
-                - Wiedergabequelle auswählen (geräteabhängig, z.B. NetRadio, Radio, NetUSB, Streamingdienste),\n
-                - Wiedergabesteuerung (Play/Pause/Stop/nächster,vorheriger Titel/Vor-,Zurückspulen),\n
-                - Lautstärkesteuerung\n,
+                - Gerät ein-/ausschalten, Standby, Sleep-Timer\n
+                - Wiedergabequelle auswählen (geräteabhängig, z.B. NetRadio, Radio, NetUSB, Streamingdienste)\n
+                - Wiedergabesteuerung (Play/Pause/Stop/nächster,vorheriger Titel/Vor-,Zurückspulen)\n
+                - Lautstärkesteuerung\n
                 - Anwahl von Favoriten und Presets (geräteabhängig)\n
                 - Stellen und De-/Aktivieren des Weckers (geräteabhängig)\n
             \n

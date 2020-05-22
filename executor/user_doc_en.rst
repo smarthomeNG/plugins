@@ -1,8 +1,9 @@
 .. index:: Plugins; executor
 .. index:: executor
 
+========
 executor
-########
+========
 
 Introduction
 ============
@@ -92,4 +93,5 @@ would result in
           1573232535421,
           21.2
         ]
+      ]
     }
