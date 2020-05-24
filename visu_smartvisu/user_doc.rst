@@ -38,7 +38,7 @@ Seiten ausgewählt werden.
 smartVISU prüft dann, ob eine angeforderte Seite unter ``manuell`` vorhanden ist und benutzt diese Seite. Falls
 die angeforderte Seite unter ``manuell`` nicht gefunden wird, wird sie aus den ``smarthome`` Seiten geladen.
 
-Das Vorgehen hierzu ist auch unter :doc:`/visualisierung/visu_partlyauto` beschrieben.
+Das Vorgehen hierzu ist auch unter **Visualisierung/Manuell erstellte Seiten** beschrieben.
 
 
 Empfohlenes Vorgehen für manuell erstellte Seiten
