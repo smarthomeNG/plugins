@@ -1,8 +1,16 @@
 .. index:: Plugins; uzsu
 .. index:: uzsu
 
+====
 uzsu
-####
+====
+
+Dieses Plugin ermöglicht gezielte Schaltvorgänge von Items zu bestimmten Uhrzeiten oder abhängig vom
+Sonnenstand. Die automatischen Schaltungen können dabei pro Wochentag separat definiert werden.
+
+Außerdem ermöglicht eine Interpolationsfunktion das Errechnen von Werten zwischen zwei manuell
+angelegten Schaltzeiten, wodurch z.B. Lichtkurven über den Tagesverlauf umgesetzt werden können
+
 
 Einführung
 ==========

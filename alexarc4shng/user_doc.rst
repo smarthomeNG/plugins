@@ -5,6 +5,9 @@
 alexarc4shng
 ============
 
+Plugin zur Steuerung von Amazon Echo Geräten Zugriff via Web-Browser API und Cookie.
+
+
 Konfiguration
 =============
 
