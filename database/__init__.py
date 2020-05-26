@@ -447,7 +447,7 @@ class Database(SmartPlugin):
         """
         if self._db.connected():
             params = {}
-            return self._fetchall("SELECT count() FROM {item};", params, cur=cur)[0][0]
+            return self._fetchall("SELECT count(*) FROM {item};", params, cur=cur)[0][0]
         return '-'
 
 
@@ -576,7 +576,7 @@ class Database(SmartPlugin):
         :return: Number of log records for the database ID
         """
         params = {'id': id}
-        result = self._fetchall("SELECT count() FROM {log} WHERE item_id = :id;", params, cur=cur)
+        result = self._fetchall("SELECT count(*) FROM {log} WHERE item_id = :id;", params, cur=cur)
         try:
             return result[0][0]
         except Exception as e:
