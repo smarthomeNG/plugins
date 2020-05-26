@@ -183,20 +183,19 @@ class Database(SmartPlugin):
                     self.logger.error("Can not acquire lock for database to read value for item {}".format(item.id()))
                     return
                 cur = self._db.cursor()
-                try:
-                    cache = self.readItem(str(item.id()), cur=cur)
-                    if cache is not None:
+                cache = self.readItem(str(item.id()), cur=cur)
+                if cache is not None:
+                    try:
                         value = self._item_value_tuple_rev(item.type(), cache[COL_ITEM_VAL_STR:COL_ITEM_VAL_BOOL + 1])
                         last_change = self._datetime(cache[COL_ITEM_TIME])
                         prev_change = self._fetchone('SELECT MAX(time) from {log} WHERE item_id = :id',
                                                      {'id': cache[COL_ITEM_ID]}, cur=cur)
-                        if value is not None and prev_change is not None:
-                            item.set(value, 'Database', prev_change=self._datetime(prev_change[0]),
-                                     last_change=last_change)
-                        if self.get_iattr_value(item.conf, 'database_acl') is not None and self.get_iattr_value(item.conf, 'database_acl').lower() == 'ro':
+                        if (value is not None) and (prev_change is not None) and (prev_change[0] is not None):
+                            item.set(value, 'Database', prev_change=self._datetime(prev_change[0]), last_change=last_change)
+                        if value is not None and self.get_iattr_value(item.conf, 'database_acl') is not None and self.get_iattr_value(item.conf, 'database_acl').lower() == 'ro':
                             self._buffer_insert(item, [(self._timestamp(self.shtime.now()), None, value)])
-                except Exception as e:
-                    self.logger.error("Reading cache value from database for {} failed: {}".format(item.id(), e))
+                    except Exception as e:
+                        self.logger.error("Reading cache value from database for {} failed: {}".format(item.id(), e))
                 cur.close()
                 self._db.release()
             return self.update_item
