@@ -925,7 +925,7 @@ class Database(SmartPlugin):
         :return:
         """
         if self._dump_lock.acquire(timeout=60) == False:
-            self.logger.warning('Skipping dump, since other dump running!')
+            self.logger.warning('Skipping dump, since an other database operation running! Data is buffered and dumped later.')
             return
 
         self.logger.debug('Starting dump')
