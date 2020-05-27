@@ -62,6 +62,7 @@ class Kodi(SmartPlugin):
 
         self._check_stale_cycle = float(self._command_timeout) / 2
         self._next_stale_check = 0
+        self._last_stale_check = 0
 
         self._kodi_tcp_connection = Tcp_client(host=self._host,
                                                port=self._port,
@@ -83,6 +84,7 @@ class Kodi(SmartPlugin):
         self._send_queue = queue.Queue()
         self._stale_lock = threading.Lock()
 
+        # self._message_archive[str message_id] = [time.time() sendtime, str method, str params or None, int repeat]
         self._message_archive = {}
 
         self._activeplayers = []
@@ -274,8 +276,13 @@ class Kodi(SmartPlugin):
 
                 # reply or error received, remove command
                 if response_id in self._message_archive:
-                    cmd = self._message_archive[response_id][1]
-                    del self._message_archive[response_id]
+                    # possibly the command was resent and removed before processing the reply
+                    # so let's 'try' at least...
+                    try:
+                        cmd = self._message_archive[response_id][1]
+                        del self._message_archive[response_id]
+                    except KeyError:
+                        cmd = '(deleted)' if '#' not in response_id else response_id[response_id.find('#')+1:]
                 else:
                     cmd = None
 
@@ -291,50 +298,58 @@ class Kodi(SmartPlugin):
         # check _message_archive for old commands - check time reached?
         if self._next_stale_check < time.time():
 
-            # try to lock access, fail quickly if already locked
+            # try to lock check routine, fail quickly if already locked = running
             if self._stale_lock.acquire(False):
 
                 # we cannot deny access to self._message_archive as this would block sending
                 # instead, copy it and check the copy
                 stale_cmds = self._message_archive.copy()
                 remove_ids = []
+                requeue_cmds = []
 
                 # self._message_archive[message_id] = [time.time(), method, params, repeat]
-                self.logger.debug('Checking for unanswered commands, last check was {} seconds ago, {} commands saved'.format(int(time.time()) - self._next_stale_check - self._check_stale_cycle, len(self._message_archive)))
-                # self.logger.debug('Stale commands: {}'.format(stale_cmds))
+                self.logger.debug('Checking for unanswered commands, last check was {} seconds ago, {} commands saved'.format(int(time.time()) - self._last_stale_check, len(self._message_archive)))
+                # !! self.logger.debug('Stale commands: {}'.format(stale_cmds))
                 for (message_id, (send_time, method, params, repeat)) in stale_cmds.items():
 
-                    remove_ids.append(message_id)
                     if send_time + self._command_timeout < time.time():
 
-                        # message older than _command_timeout seconds without answer, delete
-                        self.logger.debug('Found unanswered command older than {} seconds: ({}, {}, #{})'.format(self._command_timeout, message_id, method, repeat))
-
-                    else:
-                        # in repeat timeframe, check repeat count
-                        if repeat < self._command_repeat:
+                        # reply timeout reached, check repeat count
+                        if repeat <= self._command_repeat:
 
                             # send again, increase counter
                             self.logger.info('Repeating unanswered command {} ({}), try {}'.format(method, params, repeat + 1))
-                            self._send_rpc_message(method, params, message_id, repeat + 1)
+                            requeue_cmds.append([method, params, message_id, repeat + 1])
                         else:
                             self.logger.info('Unanswered command {} ({}) repeated {} times, giving up.'.format(method, params, repeat))
-
-                # set next stale check time
-                self._next_stale_check = time.time() + self._check_stale_cycle
+                            remove_ids.append(message_id)
 
                 for msgid in remove_ids:
                     # it is possible that while processing stale commands, a reply arrived
                     # and the command was removed. So just to be sure, 'try' and delete...
+                    self.logger.debug('Removing stale msgid {} from archive'.format(msgid))
                     try:
-                        self.logger.debug('Removing stale msgid {} from archive'.format(msgid))
                         del self._message_archive[msgid]
                     except KeyError:
                         pass
 
+                # resend pending repeats - after original
+                for (method, params, message_id, repeat) in requeue_cmds:
+                    self._send_rpc_message(method, params, message_id, repeat)
+
+                # set next stale check time
+                self._last_stale_check = time.time()
+                self._next_stale_check = self._last_stale_check + self._check_stale_cycle
+
                 del stale_cmds
+                del requeue_cmds
                 del remove_ids
                 self._stale_lock.release()
+
+# !!
+            else:
+# !!
+                self.logger.debug('Skipping stale check {} seconds after last check'.format(time.time() - self._last_stale_check))
 
     def _parse_response(self, data):
         '''
@@ -457,7 +472,6 @@ class Kodi(SmartPlugin):
                 self._set_all_items('state', 'Playing')
                 self._set_all_items('stop', False)
                 self._set_all_items('playpause', True)
-                self._send_command('get_actplayer', None)
                 query_playerinfo.append(data['params']['data']['player']['playerid'])
 
             elif data['method'] == 'Player.OnPause':
@@ -489,7 +503,6 @@ class Kodi(SmartPlugin):
             elif data['method'] in ['Player.OnPlay', 'Player.OnAVChange']:
                 self.logger.debug('Received: started/changed playback')
                 self._set_all_items('state', 'Playing')
-                self._send_command('get_actplayer', None)
                 query_playerinfo.append(data['params']['data']['player']['playerid'])
 
             elif data['method'] == 'Application.OnVolumeChanged':
@@ -794,7 +807,8 @@ class Kodi(SmartPlugin):
         # !! self.logger.debug('Queued message {}'.format(send_command))
 
         # try to actually send all queued messages
-        # !! self.logger.debug('Processing queue - {} elements'.format(self._send_queue.qsize()))
+# !!
+        self.logger.debug('Processing queue - {} elements'.format(self._send_queue.qsize()))
         while not self._send_queue.empty():
             (message_id, data, method, params, repeat) = self._send_queue.get()
             self.logger.debug('Sending queued msg {} - {} (#{})'.format(message_id, data, repeat))
