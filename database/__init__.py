@@ -875,13 +875,37 @@ class Database(SmartPlugin):
         }
 
 
-    def _parse_ts(self, frame):
+    def _parse_ts(self, dts):
         """
-        Parse frame to timestamp
+        Parse a duration-timestamp in the form '1w 2y 3h 1d 39i 15s' and return the duration in seconds as
+        an interger value
+
+        :return:
+        """
+        ts = self._timestamp(self.shtime.now())
+
+        duration = 0
+        if isinstance(dts, str):
+            if dts.find('now') >= 0:
+                duration = self._parse_single('now')
+            else:
+                for frame in dts.split(' '):
+                    duration += self._parse_single(frame)
+        else:
+            duration = self._parse_single(dts)
+
+        ts = ts - int(duration)
+        return ts
+
+
+    def _parse_single(self, frame):
+        """
+        Parse one frame of a duration-timestamp to a duration (in seconds)
 
         :param frame:
         :return:
         """
+        second = 1000
         minute = 60 * 1000
         hour = 60 * minute
         day = 24 * hour
@@ -889,7 +913,7 @@ class Database(SmartPlugin):
         month = 30 * day
         year = 365 * day
 
-        _frames = {'i': minute, 'h': hour, 'd': day, 'w': week, 'm': month, 'y': year}
+        _frames = {'s': second, 'i': minute, 'h': hour, 'd': day, 'w': week, 'm': month, 'y': year}
         try:
             return int(frame)
         except:
@@ -902,12 +926,49 @@ class Database(SmartPlugin):
             fac = _frames[frame[-1]]
             frame = frame[:-1]
         else:
+            # return parameter unchaned
             return frame
         try:
-            ts = ts - int(float(frame) * fac)
+            ts = int(float(frame) * fac)
         except:
             self.logger.warning("Database: Unknown time frame '{0}'".format(frame))
         return ts
+
+
+    # def _parse_ts(self, frame):
+    #     """
+    #     Parse one frame of a duration-timestamp to a duration (in seconds)
+    #
+    #     :param frame:
+    #     :return:
+    #     """
+    #     minute = 60 * 1000
+    #     hour = 60 * minute
+    #     day = 24 * hour
+    #     week = 7 * day
+    #     month = 30 * day
+    #     year = 365 * day
+    #
+    #     _frames = {'i': minute, 'h': hour, 'd': day, 'w': week, 'm': month, 'y': year}
+    #     try:
+    #         return int(frame)
+    #     except:
+    #         pass
+    #     ts = self._timestamp(self.shtime.now())
+    #     if frame == 'now':
+    #         fac = 0
+    #         frame = 0
+    #     elif frame[-1] in _frames:
+    #         fac = _frames[frame[-1]]
+    #         frame = frame[:-1]
+    #     else:
+    #         # return parameter unchaned
+    #         return frame
+    #     try:
+    #         ts = ts - int(float(frame) * fac)
+    #     except:
+    #         self.logger.warning("Database: Unknown time frame '{0}'".format(frame))
+    #     return ts
 
 
     # --------------------------------------------------------
