@@ -7,7 +7,7 @@ plugin_translations:
     'Letzter Change':   {'de': '=', 'en': 'Last Change', 'fr': ''}
     'Robonect Datentyp':  {'de': '=', 'en': 'Robonect Data Type', 'fr': ''}
     'Batterie-Informationen':  {'de': '=', 'en': 'Information About Battery', 'fr': ''}
-    'Status-Informationen':  {'de': '=', 'en': 'Information About Status ', 'fr': ''}
+    'Mower/Robonect-Informationen':  {'de': '=', 'en': 'Information About Mower and Robonect', 'fr': ''}
     'Benutzer':  {'de': '=', 'en': 'User', 'fr': ''}
     'Passwort':  {'de': '=', 'en': 'Password', 'fr': ''}
     'Status':  {'de': '=', 'en': 'Status', 'fr': ''}
