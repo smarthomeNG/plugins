@@ -31,6 +31,7 @@ from lib.item import Items
 from requests.auth import HTTPBasicAuth
 import requests
 
+
 # If a needed package is imported, which might be not installed in the Python environment,
 # add it to a requirements.txt file within the plugin's directory
 
@@ -40,7 +41,7 @@ class Robonect(SmartPlugin):
     Main class of the Plugin. Does all plugin specific stuff and provides
     the update functions for the items
     """
-    PLUGIN_VERSION = '1.0.0'    # (must match the version specified in plugin.yaml)
+    PLUGIN_VERSION = '1.0.0'  # (must match the version specified in plugin.yaml)
 
     def __init__(self, sh):
         """
@@ -64,10 +65,9 @@ class Robonect(SmartPlugin):
         self._base_url = 'http://%s/json?cmd=' % self.get_ip()
         self._cycle = 60
         self._items = {}
-
+        self._battery_items = {}
         self._session = requests.Session()
         self.init_webinterface()
-
         # if plugin should not start without web interface
         # if not self.init_webinterface():
         #     self._init_complete = False
@@ -83,10 +83,7 @@ class Robonect(SmartPlugin):
         self._base_url = 'http://%s/json?cmd=' % self.get_ip()
         # setup scheduler for device poll loop   (disable the following line, if you don't need to poll the device. Rember to comment the self_cycle statement in __init__ as well)
         self.scheduler_add('poll_device', self.poll_device, cycle=self._cycle)
-
         self.alive = True
-        # if you need to create child threads, do not make them daemon = True!
-        # They will not shutdown properly. (It's a python bug)
 
     def stop(self):
         """
@@ -111,8 +108,13 @@ class Robonect(SmartPlugin):
         """
         if self.has_iattr(item.conf, 'robonect_data_type'):
             self.logger.debug("parse item: {}".format(item))
-            self._items[self.get_iattr_value(item.conf, 'robonect_data_type')] = item
-
+            if not self.get_iattr_value(item.conf, 'robonect_data_type') in self._battery_items and \
+                    self.has_iattr(item.conf, 'robonect_battery_index'):
+                self._battery_items[self.get_iattr_value(item.conf, 'robonect_data_type')] = []
+            if self.get_iattr_value(item.conf, 'robonect_data_type') in self._battery_items:
+                self._battery_items[self.get_iattr_value(item.conf, 'robonect_data_type')].append(item)
+            else:
+                self._items[self.get_iattr_value(item.conf, 'robonect_data_type')] = item
         # todo
         # if interesting item for sending values:
         #   return self.update_item
@@ -180,7 +182,7 @@ class Robonect(SmartPlugin):
 
     def get_battery_data(self):
         try:
-            response = self._session.get(self._base_url+'battery', auth=HTTPBasicAuth(self._user, self._password))
+            response = self._session.get(self._base_url + 'battery', auth=HTTPBasicAuth(self._user, self._password))
         except Exception as e:
             self.logger.error(
                 "Plugin '{}': Exception when sending GET request for get_status: {}".format(
@@ -188,26 +190,35 @@ class Robonect(SmartPlugin):
             return
 
         json_obj = response.json()
-        self.logger.error(json_obj)
-        if 'battery_id' in self._items:
-            self._items['battery_id'](json_obj['batteries'][0]['id'])
-        if 'battery_charge' in self._items:
-            self._items['battery_charge'](json_obj['batteries'][0]['charge'])
-        if 'battery_voltage' in self._items:
-            self._items['battery_voltage'](json_obj['batteries'][0]['voltage'])
-        if 'battery_current' in self._items:
-            self._items['battery_current'](json_obj['batteries'][0]['current'])
-        if 'battery_temperature' in self._items:
-            self._items['battery_temperature'](json_obj['batteries'][0]['temperature'])
-        if 'battery_capacity_full' in self._items:
-            self._items['battery_capacity_full'](json_obj['batteries'][0]['capacity']['full'])
-        if 'battery_capacity_remaining' in self._items:
-            self._items['battery_capacity_remaining'](json_obj['batteries'][0]['capacity']['remaining'])
+
+        if 'battery_id' in self._battery_items:
+            for item in self._battery_items['battery_id']:
+                item(json_obj['batteries'][int(self.get_iattr_value(item.conf, 'robonect_battery_index'))]['id'])
+        if 'battery_charge' in self._battery_items:
+            for item in self._battery_items['battery_charge']:
+                item(json_obj['batteries'][int(self.get_iattr_value(item.conf, 'robonect_battery_index'))]['charge'])
+        if 'battery_voltage' in self._battery_items:
+            for item in self._battery_items['battery_voltage']:
+                item(json_obj['batteries'][int(self.get_iattr_value(item.conf, 'robonect_battery_index'))]['voltage'])
+        if 'battery_current' in self._battery_items:
+            for item in self._battery_items['battery_current']:
+                item(json_obj['batteries'][int(self.get_iattr_value(item.conf, 'robonect_battery_index'))]['current'])
+        if 'battery_temperature' in self._battery_items:
+            for item in self._battery_items['battery_temperature']:
+                item(json_obj['batteries'][int(self.get_iattr_value(item.conf, 'robonect_battery_index'))]['temperature'])
+        if 'battery_capacity_full' in self._battery_items:
+            for item in self._battery_items['battery_capacity_full']:
+                item(json_obj['batteries'][int(self.get_iattr_value(item.conf, 'robonect_battery_index'))]['capacity'][
+                         'full'])
+        if 'battery_capacity_remaining' in self._battery_items:
+            for item in self._battery_items['battery_capacity_remaining']:
+                item(json_obj['batteries'][int(self.get_iattr_value(item.conf, 'robonect_battery_index'))]['capacity'][
+                         'remaining'])
         return
 
     def get_status(self):
         try:
-            response = self._session.get(self._base_url+'status', auth=HTTPBasicAuth(self._user, self._password))
+            response = self._session.get(self._base_url + 'status', auth=HTTPBasicAuth(self._user, self._password))
         except Exception as e:
             self.logger.error(
                 "Plugin '{}': Exception when sending GET request for get_status: {}".format(
@@ -301,6 +312,10 @@ class Robonect(SmartPlugin):
     def get_items(self):
         return self._items
 
+    def get_battery_items(self):
+        return self._battery_items
+
+
 # ------------------------------------------
 #    Webinterface of the plugin
 # ------------------------------------------
@@ -364,4 +379,3 @@ class WebInterface(SmartPluginWebIf):
             # except Exception as e:
             #     self.logger.error("get_data_html exception: {}".format(e))
         return {}
-

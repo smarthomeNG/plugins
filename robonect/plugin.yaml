@@ -29,14 +29,12 @@ parameters:
         description:
             de: 'IP des Mähroboters.'
             en: 'IP of the robotic lawnmower.'
-
     user:
         type: str
         default: ''
         description:
             de: 'User der Robonect HX Weboberfläche.'
             en: 'User of the Robonect HX web gui.'
-
     password:
         type: str
         default: ''
@@ -47,6 +45,18 @@ parameters:
 
 item_attributes:
     # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)
+    robonect_data_type:
+        type: str
+        mandatory: True
+        description:
+            de: 'Robonect Datentyp. Für mögliche Werte in die "struct" schauen.'
+            en: 'Robonect data type. See struct for possible values.'
+    robonect_battery_index:
+        type: num
+        mandatory: False
+        description:
+            de: 'Index der Batterie, falls nur eine verbaut ist: 0.'
+            en: 'Index of the battery. If only one is present: 0.'
 
 item_structs:
     main:
