@@ -72,12 +72,24 @@ item_structs:
             robonect_data_type: robonect_id
             type: str
 
+        robonect_version:
+            robonect_data_type: robonect_version
+            type: str
+
+        robonect_version_comment:
+            robonect_data_type: robonect_version_comment
+            type: str
+
+        robonect_version_compiled:
+            robonect_data_type: robonect_version_compiled
+            type: str
+
+        serial:
+            robonect_data_type: serial
+            type: str
+
         mower:
             name: Information About the Hardware and Software of the Mower
-
-            serial:
-                robonect_data_type: mower_serial
-                type: str
 
             hardware:
                 serial:
@@ -96,6 +108,14 @@ item_structs:
                     type: str
                 compiled:
                     robonect_data_type: msw_compiled
+                    type: str
+
+            wlan:
+                at-version:
+                    robonect_data_type: wlan_at-version
+                    type: str
+                sdk-version:
+                    robonect_data_type: wlan_sdk-version
                     type: str
 
         status:

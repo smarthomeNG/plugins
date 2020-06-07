@@ -241,9 +241,21 @@ class Robonect(SmartPlugin):
         if 'msw_compiled' in self._items:
             self._items['msw_compiled'](json_obj['mower']['msw']['compiled'])
 
-        if 'mower_serial' in self._items:
-            self._items['mower_serial'](json_obj['serial'])
+        if 'serial' in self._items:
+            self._items['serial'](json_obj['serial'])
 
+        if 'wlan_sdk-version' in self._items:
+            self._items['wlan_sdk-version'](json_obj['wlan']['sdk-version'])
+        if 'wlan_at-version' in self._items:
+            self._items['wlan_sdk-version'](json_obj['wlan']['at-version'])
+
+        if 'robonect_version' in self._items:
+            self._items['robonect_version'](json_obj['application']['version'])
+        if 'robonect_version_comment' in self._items:
+            self._items['robonect_version_comment'](json_obj['application']['comment'])
+        if 'robonect_version_compiled' in self._items:
+            self._items['robonect_version_compiled'](json_obj['application']['compiled'])
+        return
 
     def get_status(self):
         try:
