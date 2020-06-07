@@ -193,11 +193,11 @@ class Squeezebox(SmartPlugin,lib.connection.Client):
             cmd = cmd.replace(*r)
         i = 0
         while not self.connected or self._listen is False:
-            self.logger.debug("Waiting to send command {} as connection is not yet established. Count: {}", cmd, i)
+            self.logger.debug("Waiting to send command {} as connection is not yet established. Count: {}".format(cmd, i))
             i += 1
             time.sleep(1)
             if i >= 10:
-                self.logger.warning("10 seconds wait time for sending {} is over. Sending it now.", cmd)
+                self.logger.warning("10 seconds wait time for sending {} is over. Sending it now.".format(cmd))
                 break
         self.logger.debug("Sending request: {0}".format(cmd))
         self.send(bytes(cmd + '\r\n', 'utf-8'))
