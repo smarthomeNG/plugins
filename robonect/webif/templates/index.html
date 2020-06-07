@@ -32,7 +32,7 @@
 		<tr>
 			<td class="py-1"><strong>IP</strong></td>
 			<td class="py-1">{{ p.get_ip() }}</td>
-            <td class="py-1">{% if 'status_code' in p.get_items() %}<strong>Status</strong>{% endif %}</td>
+            <td class="py-1">{% if 'status_code' in p.get_items() %}<strong>{{ _('Status') }}</strong>{% endif %}</td>
             <td class="py-1">{% if 'status_code' in p.get_items() %}
                 {% if p.get_items()['status_code']() == 0 %}Status wird ermittelt
                 {% elif p.get_items()['status_code']() == 1 %}Automower parkt
@@ -48,9 +48,9 @@
             </td>
         </tr>
         <tr>
-            <td class="py-1"><strong>User</strong></td>
+            <td class="py-1"><strong>{{ _('Benutzer') }}</strong></td>
 			<td class="py-1">{{ p.get_user() }}</td>
-            <td class="py-1"><strong>Password</strong></td>
+            <td class="py-1"><strong>{{ _('Passwort') }}</strong></td>
 			<td class="py-1">{{ p.get_parameter_value_for_display('password') }}
 		</tr>
 	</tbody>
@@ -62,11 +62,10 @@
 	Define the number of tabs for the body of the web interface (1 - 3)
 -->
 {% set tabcount = 1 %}
-{% set item_count = p.get_items()|length %}
 <!--
 	Content block for the first tab of the Webinterface
 -->
-{% set tab1title = "<strong>" ~ p.get_shortname() ~ " Items</strong> (" ~ item_count ~ ")" %}
+{% set tab1title = "<strong>" ~ p.get_shortname() ~ " Items</strong>" %}
 {% block bodytab1 %}
 <div class="container-fluid m-2">
     <table class="table table-striped table-hover pluginList">
@@ -81,7 +80,7 @@
             </tr>
         </thead>
         <tbody>
-        <tr><td colspan="6"><strong>Status Items</strong></td></tr>
+        <tr><td colspan="6"><strong>{{ _('Status-Informationen') }}</strong></td></tr>
         {% for key, item in p.get_items().items() %}
             <tr>
                 <td class="py-1">{{ item.property.path }}</td>
@@ -113,7 +112,7 @@
                 <td id="{{ item.id() }}_last_change" class="py-1">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
             </tr>
         {% endfor %}
-        <tr><td colspan="6"><strong>Battery Items</strong></td></tr>
+        <tr><td colspan="6"><strong>{{ _('Batterie-Informationen') }}</strong></td></tr>
         {% for key, items in p.get_battery_items().items() %}
             {% for item in items %}
             <tr>

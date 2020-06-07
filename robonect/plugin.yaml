@@ -68,15 +68,41 @@ item_structs:
             type: str
 
         robonect_id:
-            name: Robonect HX ID
+            name: Robonect ID
             robonect_data_type: robonect_id
             type: str
+
+        mower:
+            name: Information About the Hardware and Software of the Mower
+
+            serial:
+                robonect_data_type: mower_serial
+                type: str
+
+            hardware:
+                serial:
+                    robonect_data_type: hardware_serial
+                    type: str
+
+                production_date:
+                    robonect_data_type: production_date
+                    type: str
+            msw:
+                title:
+                    robonect_data_type: msw_title
+                    type: str
+                version:
+                    robonect_data_type: msw_version
+                    type: str
+                compiled:
+                    robonect_data_type: msw_compiled
+                    type: str
 
         status:
             name: Information About the Status of the Robonect HX Module
 
             status:
-                name: 'Status Code'
+                name: Status Code
                 robonect_data_type: status_code
                 type: num
 

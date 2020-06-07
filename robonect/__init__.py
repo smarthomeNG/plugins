@@ -162,6 +162,7 @@ class Robonect(SmartPlugin):
         changes on it's own, but has to be polled to get the actual status.
         It is called by the scheduler which is set within run() method.
         """
+        self.get_mower_information()
         self.get_status()
         self.get_battery_data()
         # # get the value from the device
@@ -215,6 +216,34 @@ class Robonect(SmartPlugin):
                 item(json_obj['batteries'][int(self.get_iattr_value(item.conf, 'robonect_battery_index'))]['capacity'][
                          'remaining'])
         return
+
+    def get_mower_information(self):
+        try:
+            response = self._session.get(self._base_url + 'version', auth=HTTPBasicAuth(self._user, self._password))
+        except Exception as e:
+            self.logger.error(
+                "Plugin '{}': Exception when sending GET request for get_status: {}".format(
+                    self.get_fullname(), str(e)))
+            return
+
+        json_obj = response.json()
+
+        if 'hardware_serial' in self._items:
+            self._items['hardware_serial'](str(json_obj['mower']['hardware']['serial']))
+
+        if 'production_date' in self._items:
+            self._items['production_date'](json_obj['mower']['hardware']['production'])
+
+        if 'msw_title' in self._items:
+            self._items['msw_title'](json_obj['mower']['msw']['title'])
+        if 'msw_version' in self._items:
+            self._items['msw_version'](json_obj['mower']['msw']['version'])
+        if 'msw_compiled' in self._items:
+            self._items['msw_compiled'](json_obj['mower']['msw']['compiled'])
+
+        if 'mower_serial' in self._items:
+            self._items['mower_serial'](json_obj['serial'])
+
 
     def get_status(self):
         try:
