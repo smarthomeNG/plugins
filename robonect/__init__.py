@@ -247,7 +247,7 @@ class Robonect(SmartPlugin):
         if 'wlan_sdk-version' in self._items:
             self._items['wlan_sdk-version'](json_obj['wlan']['sdk-version'])
         if 'wlan_at-version' in self._items:
-            self._items['wlan_sdk-version'](json_obj['wlan']['at-version'])
+            self._items['wlan_at-version'](json_obj['wlan']['at-version'])
 
         if 'robonect_version' in self._items:
             self._items['robonect_version'](json_obj['application']['version'])
