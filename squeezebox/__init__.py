@@ -174,9 +174,9 @@ class Squeezebox(SmartPlugin,lib.connection.Client):
                 return
             if (len(cmd) >= 2) and not item():
                 if (cmd[1] == 'play'):
-                    # if 'play' was set to false, send 'stop' to allow
+                    # if 'play' was set to false, send 'pause' to allow
                     # single-item-operation
-                    cmd[1] = 'stop'
+                    cmd[1] = 'pause'
                     value = 1
                 if condition1:
                     # if a boolean item of [...] was set to false, send '0' to disable the option whatsoever
@@ -272,7 +272,7 @@ class Squeezebox(SmartPlugin,lib.connection.Client):
                         # play also overrules mute
                         self._update_items_with_data([data[0], 'mute', '0'])
                         return
-                    elif (data[2] == 'stop' and data[3] == '1'):
+                    elif (data[2] == 'stop'):
                         self._update_items_with_data([data[0], 'play', '0'])
                         self._update_items_with_data([data[0], 'stop', '1'])
                         self._update_items_with_data([data[0], 'pause', '0'])
