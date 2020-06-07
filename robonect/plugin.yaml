@@ -1,0 +1,160 @@
+# Metadata for the plugin
+plugin:
+    # Global plugin attributes
+    type: interface                   # plugin type (gateway, interface, protocol, system, web)
+    description:
+        de: 'Plugin zum Auslesen von Daten bzw. zum Ansteuern eines Mähroboters mit Robonect HX Modul (https://robonect.de/).'
+        en: 'Plugin to read data / to control a robotic lawnmower with Robonect HX module (https://robonect.de/).'
+    maintainer: psilo
+#    tester:                         # Who tests this plugin?
+    state: develop                  # change to ready when done with development
+    keywords: robonect, lawnmower
+#    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
+#    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
+
+    version: 1.0.0                  # Plugin version (must match the version specified in __init__.py)
+    sh_minversion: 1.6              # minimum shNG version to use this plugin
+#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+#    py_minversion: 3.6             # minimum Python version to use this plugin
+#    py_maxversion:                 # maximum Python version to use this plugin (leave empty if latest)
+    multi_instance: False           # plugin supports multi instance
+    restartable: unknown
+    classname: Robonect             # class containing the plugin
+
+parameters:
+    # Definition of parameters to be configured in etc/plugin.yaml (enter 'parameters: NONE', if section should be empty)
+    ip:
+        type: ip
+        mandatory: True
+        description:
+            de: 'IP des Mähroboters.'
+            en: 'IP of the robotic lawnmower.'
+
+    user:
+        type: str
+        default: ''
+        description:
+            de: 'User der Robonect HX Weboberfläche.'
+            en: 'User of the Robonect HX web gui.'
+
+    password:
+        type: str
+        default: ''
+        hide: True
+        description:
+            de: 'Passwort des Users der Robonect HX Weboberfläche.'
+            en: 'Password of the user of the Robonect HX web gui.'
+
+item_attributes:
+    # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)
+
+item_structs:
+    main:
+        name: Main Data From Robonect HX Module
+
+        robonect_name:
+            name: Lawnmower Nickname
+            robonect_data_type: robonect_name
+            type: str
+
+        robonect_id:
+            name: Robonect HX ID
+            robonect_data_type: robonect_id
+            type: str
+
+        status:
+            name: Information About the Status of the Robonect HX Module
+
+            status:
+                name: 'Status Code'
+                robonect_data_type: status_code
+                type: num
+
+            distance:
+                robonect_data_type: status_distance
+                type: num
+
+            stopped:
+                robonect_data_type: status_stopped
+                type: bool
+
+            duration:
+                robonect_data_type: status_duration
+                type: num
+
+            mode:
+                robonect_data_type: status_mode
+                type: num
+
+            battery:
+                name: 'Battery Level in %'
+                robonect_data_type: status_battery
+                type: num
+
+            hours:
+                robonect_data_type: status_hours
+                type: num
+        wlan:
+            signal:
+                name: 'Wifi Signal Strength'
+                robonect_data_type: wlan_signal
+                type: num
+        health:
+            temperature:
+                name: 'Internal Temperature'
+                robonect_data_type: health_temperature
+                type: num
+
+            humidity:
+                name: 'Internal Humidity'
+                robonect_data_type: health_humidity
+                type: num
+        clock:
+            date:
+                robonect_data_type: date
+                type: str
+
+            time:
+                robonect_data_type: time
+                type: str
+
+            unix:
+                robonect_data_type: unix
+                type: num
+
+    batteries:
+        battery_0_id:
+            robonect_data_type: battery_id
+            robonect_battery_index: 0
+            type: num
+        battery_0_charge:
+            robonect_data_type: battery_charge
+            robonect_battery_index: 0
+            type: num
+        battery_0_voltage:
+            robonect_data_type: battery_voltage
+            robonect_battery_index: 0
+            type: num
+        battery_0_current:
+            robonect_data_type: battery_current
+            robonect_battery_index: 0
+            type: num
+        battery_0_temperature:
+            robonect_data_type: battery_temperature
+            robonect_battery_index: 0
+            type: num
+        battery_0_capacity_full:
+            robonect_data_type: battery_capacity_full
+            robonect_battery_index: 0
+            type: num
+        battery_0_capacity_remaining:
+            robonect_data_type: battery_capacity_remaining
+            robonect_battery_index: 0
+            type: num
+
+plugin_functions:
+    # Definition of plugin functions defined by this plugin (enter 'plugin_functions: NONE', if section should be empty)
+
+logic_parameters:
+    # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)
+
