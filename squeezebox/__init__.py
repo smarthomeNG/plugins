@@ -174,9 +174,9 @@ class Squeezebox(SmartPlugin,lib.connection.Client):
                 return
             if (len(cmd) >= 2) and not item():
                 if (cmd[1] == 'play'):
-                    # if 'play' was set to false, send 'pause' to allow
+                    # if 'play' was set to false, send 'stop' to allow
                     # single-item-operation
-                    cmd[1] = 'pause'
+                    cmd[1] = 'stop'
                     value = 1
                 if condition1:
                     # if a boolean item of [...] was set to false, send '0' to disable the option whatsoever
@@ -193,11 +193,11 @@ class Squeezebox(SmartPlugin,lib.connection.Client):
             cmd = cmd.replace(*r)
         i = 0
         while not self.connected or self._listen is False:
-            self.logger.debug("Waiting to send command {} as connection is not yet established. Count: {}", cmd, i)
+            self.logger.debug("Waiting to send command {} as connection is not yet established. Count: {}".format(cmd, i))
             i += 1
             time.sleep(1)
             if i >= 10:
-                self.logger.warning("10 seconds wait time for sending {} is over. Sending it now.", cmd)
+                self.logger.warning("10 seconds wait time for sending {} is over. Sending it now.".format(cmd))
                 break
         self.logger.debug("Sending request: {0}".format(cmd))
         self.send(bytes(cmd + '\r\n', 'utf-8'))
@@ -272,7 +272,7 @@ class Squeezebox(SmartPlugin,lib.connection.Client):
                         # play also overrules mute
                         self._update_items_with_data([data[0], 'mute', '0'])
                         return
-                    elif (data[2] == 'stop'):
+                    elif (data[2] == 'stop' and data[3] == '1'):
                         self._update_items_with_data([data[0], 'play', '0'])
                         self._update_items_with_data([data[0], 'stop', '1'])
                         self._update_items_with_data([data[0], 'pause', '0'])
