@@ -185,7 +185,11 @@ class Robonect(SmartPlugin):
     def get_battery_data(self):
         try:
             response = self._session.get(self._base_url + 'battery', auth=HTTPBasicAuth(self._user, self._password))
-            self._mower_offline = False
+            if self._mower_offline:
+                self.logger.debug(
+                    "Plugin '{}': Mower reachable again: {}".format(
+                        self.get_fullname()))
+                self._mower_offline = False
         except Exception as e:
             if not self._mower_offline:
                 self.logger.error(
@@ -224,7 +228,11 @@ class Robonect(SmartPlugin):
     def get_mower_information(self):
         try:
             response = self._session.get(self._base_url + 'version', auth=HTTPBasicAuth(self._user, self._password))
-            self._mower_offline = False
+            if self._mower_offline:
+                self.logger.debug(
+                    "Plugin '{}': Mower reachable again: {}".format(
+                        self.get_fullname()))
+                self._mower_offline = False
         except Exception as e:
             if not self._mower_offline:
                 self.logger.error(
@@ -267,7 +275,11 @@ class Robonect(SmartPlugin):
     def get_status(self):
         try:
             response = self._session.get(self._base_url + 'status', auth=HTTPBasicAuth(self._user, self._password))
-            self._mower_offline = False
+            if self._mower_offline:
+                self.logger.debug(
+                    "Plugin '{}': Mower reachable again: {}".format(
+                        self.get_fullname()))
+                self._mower_offline = False
         except Exception as e:
             if not self._mower_offline:
                 self.logger.error(
