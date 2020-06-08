@@ -187,20 +187,21 @@ class Squeezebox(SmartPlugin,lib.connection.Client):
                        for cmd_str in cmd))
 
     def _send(self, cmd):
-        # replace german umlauts
-        repl = (('%FC', '%C3%BC'), ('%F6', '%C3%B6'), ('%E4', '%C3%A4'), ('%DC', '%C3%9C'), ('%D6', '%C3%96'), ('%C4', '%C3%84'))
-        for r in repl:
-            cmd = cmd.replace(*r)
-        i = 0
-        while not self.connected or self._listen is False:
-            self.logger.debug("Waiting to send command {} as connection is not yet established. Count: {}".format(cmd, i))
-            i += 1
-            time.sleep(1)
-            if i >= 10:
-                self.logger.warning("10 seconds wait time for sending {} is over. Sending it now.".format(cmd))
-                break
-        self.logger.debug("Sending request: {0}".format(cmd))
-        self.send(bytes(cmd + '\r\n', 'utf-8'))
+        if self.connected:
+            # replace german umlauts
+            repl = (('%FC', '%C3%BC'), ('%F6', '%C3%B6'), ('%E4', '%C3%A4'), ('%DC', '%C3%9C'), ('%D6', '%C3%96'), ('%C4', '%C3%84'))
+            for r in repl:
+                cmd = cmd.replace(*r)
+            i = 0
+            while not cmd == "listen 1" and self._listen is False:
+                self.logger.debug("Waiting to send command {} as connection is not yet established. Count: {}/10".format(cmd, i))
+                i += 1
+                time.sleep(1)
+                if i >= 10:
+                    self.logger.warning("10 seconds wait time for sending {} is over. Sending it now.".format(cmd))
+                    break
+            self.logger.debug("Sending request: {0}".format(cmd))
+            self.send(bytes(cmd + '\r\n', 'utf-8'))
 
     def found_terminator(self, response):
         data = [urllib.parse.unquote(data_str)
