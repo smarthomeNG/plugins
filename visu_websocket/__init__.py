@@ -566,7 +566,7 @@ class websockethandler(lib.connection.Stream):
             items = []
             newmonitor_items = []
             for path in list(data['items']):
-                path_parts = path.split('.property.')
+                path_parts = 0 if path is None else path.split('.property.')
                 if len(path_parts) == 1:
                     self.logger.debug("Client {0} requested to monitor item {1}".format(self.addr, path_parts[0]))
                     try:
