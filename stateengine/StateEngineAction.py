@@ -117,7 +117,7 @@ class SeActionBase(StateEngineTools.SeItemChild):
         for cond in condition_to_meet:
             try:
                 cond = re.compile(cond)
-                matching = cond.match(current_condition)
+                matching = cond.fullmatch(current_condition)
                 if matching:
                     self._log_debug("Given conditionset matches current one: {}", matching)
                     condition_met = True
