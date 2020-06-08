@@ -64,6 +64,7 @@ class Robonect(SmartPlugin):
         self._password = self.get_parameter_value('password')
         self._base_url = 'http://%s/json?cmd=' % self.get_ip()
         self._cycle = 60
+        self._mower_offline = False
         self._items = {}
         self._battery_items = {}
         self._session = requests.Session()
@@ -184,10 +185,13 @@ class Robonect(SmartPlugin):
     def get_battery_data(self):
         try:
             response = self._session.get(self._base_url + 'battery', auth=HTTPBasicAuth(self._user, self._password))
+            self._mower_offline = False
         except Exception as e:
-            self.logger.error(
-                "Plugin '{}': Exception when sending GET request for get_status: {}".format(
-                    self.get_fullname(), str(e)))
+            if not self._mower_offline:
+                self.logger.error(
+                    "Plugin '{}': Exception when sending GET request for get_battery_data: {}".format(
+                        self.get_fullname(), str(e)))
+            self._mower_offline = True
             return
 
         json_obj = response.json()
@@ -220,10 +224,13 @@ class Robonect(SmartPlugin):
     def get_mower_information(self):
         try:
             response = self._session.get(self._base_url + 'version', auth=HTTPBasicAuth(self._user, self._password))
+            self._mower_offline = False
         except Exception as e:
-            self.logger.error(
-                "Plugin '{}': Exception when sending GET request for get_status: {}".format(
-                    self.get_fullname(), str(e)))
+            if not self._mower_offline:
+                self.logger.error(
+                    "Plugin '{}': Exception when sending GET request for get_mower_information: {}".format(
+                        self.get_fullname(), str(e)))
+            self._mower_offline = True
             return
 
         json_obj = response.json()
@@ -260,10 +267,13 @@ class Robonect(SmartPlugin):
     def get_status(self):
         try:
             response = self._session.get(self._base_url + 'status', auth=HTTPBasicAuth(self._user, self._password))
+            self._mower_offline = False
         except Exception as e:
-            self.logger.error(
-                "Plugin '{}': Exception when sending GET request for get_status: {}".format(
-                    self.get_fullname(), str(e)))
+            if not self._mower_offline:
+                self.logger.error(
+                    "Plugin '{}': Exception when sending GET request for get_status: {}".format(
+                        self.get_fullname(), str(e)))
+            self._mower_offline = True
             return
 
         json_obj = response.json()
