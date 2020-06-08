@@ -166,30 +166,14 @@ class Robonect(SmartPlugin):
         self.get_mower_information()
         self.get_status()
         self.get_battery_data()
-        # # get the value from the device
-        # device_value = ...
-        #
-        # # find the item(s) to update:
-        # for item in self.sh.find_items('...'):
-        #
-        #     # update the item by calling item(value, caller, source=None, dest=None)
-        #     # - value and caller must be specified, source and dest are optional
-        #     #
-        #     # The simple case:
-        #     item(device_value, self.get_shortname())
-        #     # if the plugin is a gateway plugin which may receive updates from several external sources,
-        #     # the source should be included when updating the the value:
-        #     item(device_value, self.get_shortname(), source=device_source_id)
         return
 
     def get_battery_data(self):
         try:
-            response = self._session.get(self._base_url + 'battery', auth=HTTPBasicAuth(self._user, self._password))
-            if self._mower_offline:
-                self.logger.debug(
-                    "Plugin '{}': Mower reachable again: {}".format(
+            self.logger.debug("Plugin '{}': Requesting battery data".format(
                         self.get_fullname()))
-                self._mower_offline = False
+            response = self._session.get(self._base_url + 'battery', auth=HTTPBasicAuth(self._user, self._password))
+            self.logger.debug(response.content)
         except Exception as e:
             if not self._mower_offline:
                 self.logger.error(
@@ -199,6 +183,11 @@ class Robonect(SmartPlugin):
             return
 
         json_obj = response.json()
+        if self._mower_offline:
+            self.logger.debug(
+                "Plugin '{}': Mower reachable again.".format(
+                    self.get_fullname()))
+            self._mower_offline = False
 
         if 'battery_id' in self._battery_items:
             for item in self._battery_items['battery_id']:
@@ -227,12 +216,10 @@ class Robonect(SmartPlugin):
 
     def get_mower_information(self):
         try:
+            self.logger.debug("Plugin '{}': Requesting mower data".format(
+                self.get_fullname()))
             response = self._session.get(self._base_url + 'version', auth=HTTPBasicAuth(self._user, self._password))
-            if self._mower_offline:
-                self.logger.debug(
-                    "Plugin '{}': Mower reachable again: {}".format(
-                        self.get_fullname()))
-                self._mower_offline = False
+            self.logger.debug(response.content)
         except Exception as e:
             if not self._mower_offline:
                 self.logger.error(
@@ -242,19 +229,25 @@ class Robonect(SmartPlugin):
             return
 
         json_obj = response.json()
+        if self._mower_offline:
+            self.logger.debug(
+                "Plugin '{}': Mower reachable again.".format(
+                    self.get_fullname()))
+            self._mower_offline = False
 
-        if 'hardware_serial' in self._items:
-            self._items['hardware_serial'](str(json_obj['mower']['hardware']['serial']))
+        if 'mower' in json_obj:
+            if 'hardware_serial' in self._items:
+                self._items['hardware_serial'](str(json_obj['mower']['hardware']['serial']))
 
-        if 'production_date' in self._items:
-            self._items['production_date'](json_obj['mower']['hardware']['production'])
+            if 'production_date' in self._items:
+                self._items['production_date'](json_obj['mower']['hardware']['production'])
 
-        if 'msw_title' in self._items:
-            self._items['msw_title'](json_obj['mower']['msw']['title'])
-        if 'msw_version' in self._items:
-            self._items['msw_version'](json_obj['mower']['msw']['version'])
-        if 'msw_compiled' in self._items:
-            self._items['msw_compiled'](json_obj['mower']['msw']['compiled'])
+            if 'msw_title' in self._items:
+                self._items['msw_title'](json_obj['mower']['msw']['title'])
+            if 'msw_version' in self._items:
+                self._items['msw_version'](json_obj['mower']['msw']['version'])
+            if 'msw_compiled' in self._items:
+                self._items['msw_compiled'](json_obj['mower']['msw']['compiled'])
 
         if 'serial' in self._items:
             self._items['serial'](json_obj['serial'])
@@ -274,12 +267,10 @@ class Robonect(SmartPlugin):
 
     def get_status(self):
         try:
+            self.logger.debug("Plugin '{}': Requesting status data".format(
+                self.get_fullname()))
             response = self._session.get(self._base_url + 'status', auth=HTTPBasicAuth(self._user, self._password))
-            if self._mower_offline:
-                self.logger.debug(
-                    "Plugin '{}': Mower reachable again: {}".format(
-                        self.get_fullname()))
-                self._mower_offline = False
+            self.logger.debug(response.content)
         except Exception as e:
             if not self._mower_offline:
                 self.logger.error(
@@ -289,6 +280,11 @@ class Robonect(SmartPlugin):
             return
 
         json_obj = response.json()
+        if self._mower_offline:
+            self.logger.debug(
+                "Plugin '{}': Mower reachable again.".format(
+                    self.get_fullname()))
+            self._mower_offline = False
 
         if 'robonect_name' in self._items:
             self._items['robonect_name'](json_obj['name'])
