@@ -1,0 +1,216 @@
+# Metadata for the plugin
+plugin:
+    # Global plugin attributes
+    type: interface                   # plugin type (gateway, interface, protocol, system, web)
+    description:
+        de: 'Plugin für Deebot Ozmo 920 / 950 / 960'
+        en: 'Plugin for Deebot Ozmo 920 / 950 / 960'
+        fr: 'Extension pour Deebot Ozmo 920 / 950 / 960'
+    maintainer: Foxi352
+#    tester:                         # Who tests this plugin?
+    state: develop                  # change to ready when done with development
+    keywords: iot vacuum robot clean
+#    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
+#    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
+
+    version: 1.7.1                  # Plugin version (must match the version specified in __init__.py)
+    sh_minversion: 1.5              # minimum shNG version to use this plugin
+#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    multi_instance: True            # plugin supports multi instance
+    restartable: true
+    classname: DeebotOzmo         # class containing the plugin
+
+parameters:
+    # Definition of parameters to be configured in etc/plugin.yaml (enter 'parameters: NONE', if section should be empty)
+    account:
+        type: str
+        mandatory: True
+        description:
+            de: 'Ecovacs Konto Login (Email addresse)'
+            en: 'Ecovacs account login (email address)'
+            fr: "Nom d'utilisateur du compte Ecovacs (adresse courriel)"
+
+    password:
+        type: str
+        mandatory: True
+        description:
+            de: 'Ecovacs Konto Passwort'
+            en: 'Ecovacs accounts password'
+            fr: "Mot de pass du compte Ecovacs"
+
+    device:
+        type: str
+        mandatory: False
+        default: NONE
+        description:
+            de: 'Roboter Name für diese Instanz. Default ist erster in der Liste'
+            en: 'Robot name for this instance. Default is first in list'
+            fr: 'Nom du robot pour cette instance. Premier dans liste par défaut'
+    
+    interval:
+        type: int
+        mandatory: False
+        default: 60
+        description:
+            de: 'Interval der API Abfragen (Karten updates, Lifespan updates, ...)'
+            en: 'Interval for API updates (map updates, lifespan updates, ...)'
+            fr: 'Intervale des requetes API (MAJ des cartes, durée de vie des composantes, ...)'
+    
+    country:
+        type: str
+        mandatory: False
+        description:
+            de: 'Land für API. Autodetect falls leer'
+            en: 'Country for API. Autodetected if empty'
+            fr: "Pays pour l'API. Détection automatique si vide"
+
+    continent:
+        type: str
+        mandatory: False
+        description:
+            de: 'Kontinent für API. Autodetect falls leer'
+            en: 'Continent for API. Autodetected if empty'
+            fr: "Continent pour l'API. Détection automatique si vide"
+
+item_attributes:
+    # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)
+
+item_structs:
+    general:
+        name: General information
+        nick:
+            type: str
+            visu_acl: ro
+            cache: True
+            deebot_ozmo@instance: nick
+
+        did:
+            type: str
+            visu_acl: ro
+            cache: True
+            deebot_ozmo@instance: did
+    
+        model:
+            type: str
+            visu_acl: ro
+            cache: True
+            deebot_ozmo@instance: model
+    
+        icon_URL:
+            type: str
+            visu_acl: ro
+            cache: True
+            deebot_ozmo@instance: iconURL
+    
+        available:
+            type: bool
+            visu_acl: ro
+            deebot_ozmo@instance: available
+        
+        state:
+            type: str
+            visu_acl: ro
+            deebot_ozmo@instance: state
+    
+        state_text:
+            type: str
+            visu_acl: ro
+            deebot_ozmo@instance: state_text
+        
+        battery_level:
+            type: num
+            visu_acl: ro
+            deebot_ozmo@instance: battery_level
+    
+    settings:
+        name: Modifiable settings
+        water_level:
+            type: str
+            visu_acl: rw
+            cache: True
+            deebot_ozmo@instance: water_level
+        
+        fan_speed:
+            type: str
+            visu_acl: rw
+            cache: True
+            deebot_ozmo@instance: fan_speed
+    
+    components:
+        name: Components lifespan item_structs
+        brush:
+            type: num
+            visu_acl: ro
+            cache: True
+            deebot_ozmo@instance: brush
+    
+        sideBrush:
+            type: num
+            visu_acl: ro
+            cache: True
+            deebot_ozmo@instance: sideBrush
+    
+        filter:
+            type: num
+            visu_acl: ro
+            cache: True
+            deebot_ozmo@instance: filter
+
+    maps:
+        name: Maps and rooms
+        live_map_base64:
+            type: str
+            visu_acl: ro
+            cache: True
+            deebot_ozmo@instance: live_map
+
+        last_clean_map_URL:
+            type: str
+            visu_acl: ro
+            cache: True
+            deebot_ozmo@instance: last_clean_map
+
+        rooms:
+            type: list
+            visu_acl: ro
+            cache: True
+            deebot_ozmo@instance: rooms
+    
+    history:
+        name: Logs
+        last_clean_logs:
+            type: list
+            visu_acl: ro
+            cache: True
+            deebot_ozmo@instance: last_clean_logs
+
+    controls:
+        name: Remote control items
+        clean:
+            type: bool
+            visu_acl: rw
+            deebot_ozmo@instance: cmd_clean
+        pause:
+            type: bool
+            visu_acl: rw
+            deebot_ozmo@instance: cmd_pause
+        stop:
+            type: bool
+            visu_acl: rw
+            deebot_ozmo@instance: cmd_stop
+        charge:
+            type: bool
+            visu_acl: rw
+            deebot_ozmo@instance: cmd_charge
+        locate:
+            type: bool
+            visu_acl: rw
+            deebot_ozmo@instance: cmd_locate
+    
+
+plugin_functions: NONE
+    # Definition of plugin functions defined by this plugin (enter 'plugin_functions: NONE', if section should be empty)
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)
+

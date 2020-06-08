@@ -1,0 +1,382 @@
+{% extends "base_plugin.html" %}
+
+{% set logo_frame = false %}
+
+<!-- set update_interval to a value > 0 (in milliseconds) to enable periodic data updates -->
+{% set update_interval = 3000 %}
+
+<!--
+	Additional script tag for plugin specific javascript code go into this block
+-->
+{% block pluginscripts %}
+<script>
+    function handleUpdatedData(response, dataSet = null) {
+        if (dataSet === null) {
+            var response = JSON.parse(response);
+            mybot = response['mybot'];
+
+            // Bot actual state
+            shngInsertText('header_state', mybot['state_text']);
+
+            // Bot component lifespan
+            shngInsertText('lifespan_brush', Math.round(mybot['components']['brush'])+"%");
+            shngInsertText('lifespan_sidebrushes', Math.round(mybot['components']['sideBrush'])+"%");
+            shngInsertText('lifespan_filter', Math.round(mybot['components']['heap'])+"%");
+
+            // Bot availability
+            if (mybot['available']) {
+                shngInsertText('header_available', "<i class='fas fa-power-off' style='color:green;'></i>&nbsp;{{ _('True') }}");
+            } else {
+                shngInsertText('header_available', "<i class='fas fa-power-off' style='color:red;'></i>&nbsp;{{ _('False') }}");
+            }
+
+            // Battery level
+            var battery_level = mybot['battery_level'];
+            var battery_icon = '';
+            if (battery_level == 100) battery_icon = 'fa-battery-full';
+            else if (battery_level > 75) battery_icon = 'fa-battery-three-quarters';
+            else if (battery_level > 50) battery_icon = 'fa-battery-half';
+            else if (battery_level > 25) battery_icon = 'fa-battery-quarter';
+            else battery_icon = 'fa-battery-empty';
+            var battery_text = '<i class="fas ' + battery_icon + '"></i>' + '&nbsp;' + battery_level + '%';
+            shngInsertText('header_battery', battery_text);
+            shngInsertText('properties_battery', battery_text);
+
+            // Live map
+            if ( mybot['live_map']) {
+                shngInsertText('live_map_2', '<img src="data:image/;base64,' + mybot['live_map'] + '" style="width: 80%; display: block; margin: auto;">');
+                shngInsertText('live_map', '<img src="data:image/;base64,' + mybot['live_map'] + '" style="height: 60vh; display: block; margin: auto;">');
+            }
+        }
+    }
+</script>
+{% endblock pluginscripts %}
+
+
+{% block headtable %}
+<table class="table table-striped table-hover">
+    <tbody>
+        <tr>
+            <td class="py-1"><strong>{{ _('Model') }}</strong></td>
+            <td class="py-1">{{ p.mybot['model'] }}</td>
+            <td class="py-1" width="50px"></td>
+            <td class="py-1"><strong>{{ _('Battery') }}</strong></td>
+            <td class="py-1" id="header_battery">
+                {% if p.mybot['battery_level'] is not none %}
+                {% if p.mybot['battery_level'] == 100 %}
+                <i class="fas fa-battery-full"></i>
+                {% elif p.mybot['battery_level'] > 75 %}
+                <i class="fas fa-battery-three-quarters"></i>
+                {% elif p.mybot['battery_level'] > 50 %}
+                <i class="fas fa-battery-half"></i>
+                {% elif p.mybot['battery_level'] > 25 %}
+                <i class="fas fa-battery-quarter"></i>
+                {% else %}
+                <i class="fas fa-battery-empty"></i>
+                {% endif %}
+                {% endif %}
+                &nbsp;{{ _(p.mybot['battery_level']) }}%
+            </td>
+            <td class="py-1" width="50px"></td>
+        </tr>
+        <tr>
+            <td class="py-1"><strong>{{ _('Name') }}</strong></td>
+            <td class="py-1">{{ p.mybot['nick'] }}</td>
+            <td></td>
+            <td class="py-1"><strong>{{ _('Status') }}</strong></td>
+            <td class="py-1" id="header_state">{{ p.mybot['state_text'] }}</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td class="py-1"><strong>{{ _('Reachable') }}</strong></td>
+            <td class="py-1" id="header_available">
+                <i class="fas fa-power-off" {% if p.mybot['available']  %} style="color:green;" {% else %}
+                    style="color:red;" {% endif %}></i>
+                {{ _(p.mybot['available']) }}
+            </td>
+            <td></td>
+            <td class="py-1"><strong></strong></td>
+            <td class="py-1"></td>
+            <td></td>
+        </tr>
+    </tbody>
+</table>
+{% endblock headtable %}
+
+
+<!--
+	Additional buttons for the web interface (if any are needed) - displayed below the headtable-section
+-->
+{% block buttons %}
+<div>
+    <button id="clean" class="btn btn-shng btn-sm" onclick="shngPost('', {cmd: 'clean'})"><i
+            class="fas fa-play"></i>&nbsp;&nbsp;&nbsp;{{ _('Start') }}&nbsp;</button>
+
+    {% if p.mybot['state'] == 'STATE_PAUSED' %}
+    <button id="resume" class="btn btn-shng btn-sm" onclick="shngPost('', {cmd: 'resume'})"><i
+            class="fas fa-play"></i>&nbsp;&nbsp;&nbsp;{{ _('Resume') }}&nbsp;</button>
+    {% else %}
+    <button id="pause" class="btn btn-shng btn-sm" onclick="shngPost('', {cmd: 'pause'})"><i
+            class="fas fa-pause"></i>&nbsp;&nbsp;&nbsp;{{ _('Pause') }}&nbsp;</button>
+    {% endif %}
+
+    <button id="charge" class="btn btn-shng btn-sm" onclick="shngPost('', {cmd: 'charge'})"><i
+            class="fas fa-charging-station"></i>&nbsp;&nbsp;&nbsp;{{ _('Charge') }}&nbsp;</button>
+    <button id="locate" class="btn btn-shng btn-sm" onclick="shngPost('', {cmd: 'locate'})"><i
+            class="fas fa-search-location"></i>&nbsp;&nbsp;&nbsp;{{ _('Locate') }}&nbsp;</button>
+</div>
+{% endblock %}
+
+{% set tabcount = 4 %}
+
+<!--
+	Content block for the first tab of the Webinterface
+-->
+{% set tab1title = "<i class='fas fa-tools'></i>&nbsp;<strong>" ~ _('Properties') ~ "</strong>" %}
+{% block bodytab1 %}
+<div class="container-fluid m-2">
+    <div class="row">
+        <div class="col-sm-4">
+            <img src="{{ p.mybot['iconURL'] }}" style="height: 200px; display: block; margin: auto;"><br />
+            <div id="live_map_2">
+                {% if p.mybot['live_map'] %}
+                <img src="data:image/;base64,{{ p.mybot['live_map'] | safe }}" style="width: 80%; display: block; margin: auto;">
+                {% else %}
+                <img src="static/img/no-map.png" style="width: 80%; display: block; margin: auto;">
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="col-sm">
+            <table class="table table-striped table-hover">
+                <tbody>
+                    <tr>
+                        <td class="py-1"><strong>{{ _('Model') }}</strong></td>
+                        <td class="py-1">{{ p.mybot['model'] }}</td>
+                        <td class="py-1" width="50px"></td>
+                        <td class="py-1"><strong>{{ _('Battery') }}</strong></td>
+                        <td class="py-1" id="properties_battery">
+                            {% if p.mybot['battery_level'] is not none %}
+                            {% if p.mybot['battery_level'] == 100 %}<i class="fas fa-battery-full"></i>
+                            {% elif p.mybot['battery_level'] > 75 %}<i class="fas fa-battery-three-quarters"></i>
+                            {% elif p.mybot['battery_level'] > 50 %}<i class="fas fa-battery-half"></i>
+                            {% elif p.mybot['battery_level'] > 25 %}<i class="fas fa-battery-quarter"></i>
+                            {% else %}<i class="fas fa-battery-empty"></i>
+                            {% endif %}
+                            {% endif %}
+                            &nbsp;{{ _(p.mybot['battery_level']) }}%
+                        </td>
+                        <td class="py-1" width="50px"></td>
+                    </tr>
+                    <tr>
+                        <td class="py-1"><strong>{{ _('Name') }}</strong></td>
+                        <td class="py-1">{{ p.mybot['nick'] }}</td>
+                        <td></td>
+                        <td class="py-1"><strong>{{ _('fan_speed') }}</strong></td>
+                        <td class="py-1">
+                            <select class="form-control form-control-sm" id="fan_speed"
+                                onchange="shngPost('', {cmd: 'set_fan_speed', speed: $('#fan_speed').val()})">
+                                <option value="quiet" {% if p.mybot['fan_speed'] == 'quiet'%}selected="selected"
+                                    {% endif %}>{{ _('quiet') }}</option>
+                                <option value="normal" {% if p.mybot['fan_speed'] == 'normal'%}selected="selected"
+                                    {% endif %}>{{ _('normal') }}</option>
+                                <option value="max" {% if p.mybot['fan_speed'] == 'max'%}selected="selected"
+                                    {% endif %}>
+                                    {{ _('max') }}</option>
+                                <option value="max+" {% if p.mybot['fan_speed'] == 'max+'%}selected="selected"
+                                    {% endif %}>{{ _('max+') }}</option>
+                            </select>
+                        </td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td class="py-1"><strong>{{ _('ID') }}</strong></td>
+                        <td class="py-1">{{ p.mybot['did'] }}</td>
+                        <td></td>
+                        <td class="py-1"><strong>{{ _('water_level') }}</strong></td>
+                        <td class="py-1">
+                            <select class="form-control form-control-sm" id="water_level"
+                                onchange="shngPost('', {cmd: 'set_water_level', level: $('#water_level').val()})">
+                                <option value="low" {% if p.mybot['water_level'] == 'low'%}selected="selected"
+                                    {% endif %}>{{ _('low') }}</option>
+                                <option value="medium" {% if p.mybot['water_level'] == 'medium'%}selected="selected"
+                                    {% endif %}>{{ _('medium') }}</option>
+                                <option value="high" {% if p.mybot['water_level'] == 'high'%}selected="selected"
+                                    {% endif %}>{{ _('high') }}</option>
+                                <option value="ultrahigh"
+                                    {% if p.mybot['water_level'] == 'ultrahigh'%}selected="selected" {% endif %}>
+                                    {{ _('ultrahigh') }}</option>
+                            </select>
+
+                        </td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td class="py-1"><strong>{{ _('Continent') }}</strong></td>
+                        <td class="py-1">{{ p.mybot['continent'] }}</td>
+                        <td></td>
+                        <td class="py-1"><strong>{{ _('Brush') }}</strong></td>
+                        <td class="py-1" id="lifespan_brush">
+                            {% if p.mybot['components']['brush'] is defined %}{{ p.mybot['components']['brush']|round|int }}%{% endif %}
+                        </td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td class="py-1"><strong>{{ _('Country') }}</strong></td>
+                        <td class="py-1">{{ p.mybot['country'] }}</td>
+                        <td></td>
+                        <td class="py-1"><strong>{{ _('Sidebrushes') }}</strong></td>
+                        <td class="py-1" id="lifespan_sidebrushes">
+                            {% if p.mybot['components']['sideBrush'] is defined %}{{ p.mybot['components']['sideBrush']|round|int }}%{% endif %}
+                        </td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td class="py-1"><strong>{{ _('Account') }}</strong></td>
+                        <td class="py-1">{{ p._account }}</td>
+                        <td></td>
+                        <td class="py-1"><strong>{{ _('Filter') }}</strong></td>
+                        <td class="py-1" id="lifespan_filter">
+                            {% if p.mybot['components']['heap'] is defined %}{{ p.mybot['components']['heap']|round|int }}%{% endif %}
+                        </td>
+                        <td></td>
+                    </tr>
+                </tbody>
+            </table>
+            <br />
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>{{ _('Room type') }}</th>
+                        <th>{{ _('Room ID') }}</th>
+                        <th>&nbsp;</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for room in p.mybot['rooms'] %}
+                    <tr>
+                        <td class="py-1"><strong>{{ room.subtype }}</strong></td>
+                        <td class="py-1">{{ room.id }}</td>
+                        <td class="py-1"><button id="" class="btn btn-shng btn-sm" onclick="shngPost('', {cmd: 'clean_room', type: '{{ room.subtype }}', id:'{{ room.id }}' })"><i
+                            class="fas fa-play"></i>&nbsp;&nbsp;&nbsp;{{ _('Clean Room') }}&nbsp;</button></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+
+
+
+</div>
+{% endblock bodytab1 %}
+
+<!--
+	Content block for the live map tab of the Webinterface
+-->
+{% set tab2title = "<i class='fas fa-map-marked-alt'></i>&nbsp;<strong>" ~ _('Live map') ~ "</strong>" %}
+{% block bodytab2 %}
+<div class="container-fluid m-2" id="live_map">
+    {% if p.mybot['live_map'] %}
+    <img src="data:image/;base64,{{ p.mybot['live_map'] | safe }}" style="height: 60vh; display: block; margin: auto;">
+    {% else %}
+    <img src="static/img/no-map.png" style="display: block; margin: auto;">
+    {% endif %}
+</div>
+{% endblock bodytab2 %}
+
+<!--
+	Content block for the last clean logs of the Webinterface
+-->
+{% set tab3title = "<i class='fas fa-map'></i>&nbsp;<strong>" ~ _('Cleaning log') ~ "</strong>" %}
+{% block bodytab3 %}
+
+<div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
+    <div class="col-sm-12">
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>{{ _('Date') }}</th>
+                    <th>{{ _('Time') }}</th>
+                    <th>{{ _('Type') }}</th>
+                    <th>{{ _('Preview') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in p.mybot['last_clean_logs'] %}
+                <tr>
+                    <td class="py-1">{{ loop.index}}</td>
+                    <td class="py-1"><strong>{{ log.timestamp | dateformat }}</strong></td>
+                    <td class="py-1"><strong>{{ log.timestamp | timeformat }}</strong></td>
+                    <td class="py-1">{{ _(log.type) }}</td>
+                    <td class="py-1">
+                        <a href="{{ log.imageUrl }}" target="_blank">
+                            <img src="{{ log.imageUrl }}" style="height: 75px;">
+                        </a>
+                    <td><button type="button" class="btn btn-info btn-sm" data-toggle="modal"
+                            data-target="#picture_{{ loop.index}}">{{ _('View') }}</button></td>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% for log in p.mybot['last_clean_logs'] %}
+<!-- Modal -->
+<div class="modal fade" id="picture_{{ loop.index}}" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <!-- Modal content-->
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">{{ _('Cleaning log') }} {{ log.timestamp | dateformat }} @{{ log.timestamp | timeformat }}</h4>
+            </div>
+            <div class="modal-body">
+                <img src="{{ log.imageUrl }}" style="width: 700px; display: block; margin: auto;">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">{{ _('Close') }}</button>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endfor %}
+
+{% endblock bodytab3 %}
+
+<!--
+	Content block for the item list tab of the Webinterface
+-->
+{% set tab4title = "<i class='fas fa-sitemap'></i>&nbsp;<strong>" ~ _('Items') ~ "</strong>" %}
+{% block bodytab4 %}
+<div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
+    <div class="col-sm-12">
+        <table class="table table-striped table-hover pluginList">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>{{ _('Item') }}</th>
+                    <th>{{ _('Wert') }}</th>
+                    <th>{{ _('Typ') }}</th>
+                    <th>{{ _('Visu Zugriff') }}</th>
+                </tr>
+            </thead>
+            {% for item in items %}
+            <tr>
+                <td class="py-1">{{ loop.index}}</td>
+                <td class="py-1">{{ item._path }}</td>
+
+                <td class="py-1">
+                    <strong> {{ item() }}</strong></td>
+                <td class="py-1">{{ item._type }}</td>
+                <td class="py-1">{{ item.conf['visu_acl'] }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+</div>
+{% endblock bodytab4 %}
