@@ -32,8 +32,8 @@
 		<tr>
 			<td class="py-1"><strong>IP</strong></td>
 			<td class="py-1">{{ p.get_ip() }}</td>
-            <td class="py-1">{% if 'status_code' in p.get_items() %}<strong>{{ _('Status') }}</strong>{% endif %}</td>
-            <td class="py-1">{% if 'status_code' in p.get_items() %}
+            <td class="py-1">{% if 'mower/status' in p.get_items() %}<strong>{{ _('Status') }}</strong>{% endif %}</td>
+            <td class="py-1">{% if 'mower/status' in p.get_items() %}
                 {% if p.get_items()['status_code']() == 0 %}Status wird ermittelt
                 {% elif p.get_items()['status_code']() == 1 %}Automower parkt
                 {% elif p.get_items()['status_code']() == 2 %}Automower mäht
@@ -94,7 +94,7 @@
                 <td class="py-1">{{ key }}</td>
                 <td id="{{ item.id() }}_value" class="py-1">
                     {{ item()}}
-                    {% if key == 'status_code' %}
+                    {% if key == 'mower/status' %}
                         : {% if item() == 0 %}Status wird ermittelt
                         {% elif item() == 1 %}Automower parkt
                         {% elif item() == 2 %}Automower mäht
@@ -106,7 +106,7 @@
                         {% elif item() == 16 %}Automower abgeschaltet
                         {% elif item() == 17 %}Automower schläft
                         {% endif %}
-                    {% elif key == 'status_mode' %}
+                    {% elif key == 'mower/mode' %}
                         : {% if item() == 0 %}Auto
                         {% elif item() == 1 %}Manuell
                         {% elif item() == 2 %}Home
