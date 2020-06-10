@@ -26,7 +26,7 @@
 #########################################################################
 
 from lib.module import Modules
-from lib.model.smartplugin import *
+from lib.model.mqttplugin import *
 from lib.item import Items
 from requests.auth import HTTPBasicAuth
 import requests
@@ -36,7 +36,7 @@ import requests
 # add it to a requirements.txt file within the plugin's directory
 
 
-class Robonect(SmartPlugin):
+class Robonect(MqttPlugin):
     """
     Main class of the Plugin. Does all plugin specific stuff and provides
     the update functions for the items
@@ -66,7 +66,9 @@ class Robonect(SmartPlugin):
         self._cycle = 60
         self._mower_offline = False
         self._items = {}
+        self._mode = self.get_parameter_value('mode')
         self._battery_items = {}
+        #if self._mode == 'api':
         self._session = requests.Session()
         self.init_webinterface()
         # if plugin should not start without web interface
@@ -82,9 +84,10 @@ class Robonect(SmartPlugin):
         self.logger.debug("Run method called")
         # overwrite base url in case of a restart
         self._base_url = 'http://%s/json?cmd=' % self.get_ip()
-        # setup scheduler for device poll loop   (disable the following line, if you don't need to poll the device. Rember to comment the self_cycle statement in __init__ as well)
         self.scheduler_add('poll_device', self.poll_device, cycle=self._cycle)
         self.alive = True
+        if self._mode == 'mqtt':
+            self.start_subscriptions()
 
     def stop(self):
         """
@@ -93,6 +96,8 @@ class Robonect(SmartPlugin):
         self.logger.debug("Stop method called")
         self.scheduler_remove('poll_device')
         self.alive = False
+        if self._mode == 'mqtt':
+            self.stop_subscriptions()
 
     def parse_item(self, item):
         """
@@ -109,6 +114,13 @@ class Robonect(SmartPlugin):
         """
         if self.has_iattr(item.conf, 'robonect_data_type'):
             self.logger.debug("parse item: {}".format(item))
+
+            if self._mode == 'mqtt':
+                mqtt_id = self.get_iattr_value(item.conf, 'robonect_data_type')
+                payload_type = item.property.type
+                topic = 'Robonect/' + mqtt_id
+                self.add_subscription(topic, payload_type, item=item)
+
             if not self.get_iattr_value(item.conf, 'robonect_data_type') in self._battery_items and \
                     self.has_iattr(item.conf, 'robonect_battery_index'):
                 self._battery_items[self.get_iattr_value(item.conf, 'robonect_data_type')] = []
@@ -116,9 +128,6 @@ class Robonect(SmartPlugin):
                 self._battery_items[self.get_iattr_value(item.conf, 'robonect_data_type')].append(item)
             else:
                 self._items[self.get_iattr_value(item.conf, 'robonect_data_type')] = item
-        # todo
-        # if interesting item for sending values:
-        #   return self.update_item
         return
 
     def parse_logic(self, logic):
@@ -191,27 +200,27 @@ class Robonect(SmartPlugin):
 
         if 'battery_id' in self._battery_items:
             for item in self._battery_items['battery_id']:
-                item(json_obj['batteries'][int(self.get_iattr_value(item.conf, 'robonect_battery_index'))]['id'])
+                item(json_obj['batteries'][int(self.get_iattr_value(item.conf, 'robonect_battery_index'))]['id'], self.get_shortname())
         if 'battery_charge' in self._battery_items:
             for item in self._battery_items['battery_charge']:
-                item(json_obj['batteries'][int(self.get_iattr_value(item.conf, 'robonect_battery_index'))]['charge'])
+                item(json_obj['batteries'][int(self.get_iattr_value(item.conf, 'robonect_battery_index'))]['charge'], self.get_shortname())
         if 'battery_voltage' in self._battery_items:
             for item in self._battery_items['battery_voltage']:
-                item(json_obj['batteries'][int(self.get_iattr_value(item.conf, 'robonect_battery_index'))]['voltage'])
+                item(json_obj['batteries'][int(self.get_iattr_value(item.conf, 'robonect_battery_index'))]['voltage'], self.get_shortname())
         if 'battery_current' in self._battery_items:
             for item in self._battery_items['battery_current']:
-                item(json_obj['batteries'][int(self.get_iattr_value(item.conf, 'robonect_battery_index'))]['current'])
+                item(json_obj['batteries'][int(self.get_iattr_value(item.conf, 'robonect_battery_index'))]['current'], self.get_shortname())
         if 'battery_temperature' in self._battery_items:
             for item in self._battery_items['battery_temperature']:
-                item(json_obj['batteries'][int(self.get_iattr_value(item.conf, 'robonect_battery_index'))]['temperature'])
+                item(json_obj['batteries'][int(self.get_iattr_value(item.conf, 'robonect_battery_index'))]['temperature'], self.get_shortname())
         if 'battery_capacity_full' in self._battery_items:
             for item in self._battery_items['battery_capacity_full']:
                 item(json_obj['batteries'][int(self.get_iattr_value(item.conf, 'robonect_battery_index'))]['capacity'][
-                         'full'])
+                         'full'], self.get_shortname())
         if 'battery_capacity_remaining' in self._battery_items:
             for item in self._battery_items['battery_capacity_remaining']:
                 item(json_obj['batteries'][int(self.get_iattr_value(item.conf, 'robonect_battery_index'))]['capacity'][
-                         'remaining'])
+                         'remaining'], self.get_shortname())
         return
 
     def get_mower_information(self):
@@ -237,32 +246,32 @@ class Robonect(SmartPlugin):
 
         if 'mower' in json_obj:
             if 'hardware_serial' in self._items:
-                self._items['hardware_serial'](str(json_obj['mower']['hardware']['serial']))
+                self._items['hardware_serial'](str(json_obj['mower']['hardware']['serial']), self.get_shortname())
 
             if 'production_date' in self._items:
-                self._items['production_date'](json_obj['mower']['hardware']['production'])
+                self._items['production_date'](json_obj['mower']['hardware']['production'], self.get_shortname())
 
             if 'msw_title' in self._items:
-                self._items['msw_title'](json_obj['mower']['msw']['title'])
+                self._items['msw_title'](json_obj['mower']['msw']['title'], self.get_shortname())
             if 'msw_version' in self._items:
-                self._items['msw_version'](json_obj['mower']['msw']['version'])
+                self._items['msw_version'](json_obj['mower']['msw']['version'], self.get_shortname())
             if 'msw_compiled' in self._items:
-                self._items['msw_compiled'](json_obj['mower']['msw']['compiled'])
+                self._items['msw_compiled'](json_obj['mower']['msw']['compiled'], self.get_shortname())
 
         if 'serial' in self._items:
-            self._items['serial'](json_obj['serial'])
+            self._items['serial'](json_obj['serial'], self.get_shortname())
 
         if 'wlan_sdk-version' in self._items:
-            self._items['wlan_sdk-version'](json_obj['wlan']['sdk-version'])
+            self._items['wlan_sdk-version'](json_obj['wlan']['sdk-version'], self.get_shortname())
         if 'wlan_at-version' in self._items:
-            self._items['wlan_at-version'](json_obj['wlan']['at-version'])
+            self._items['wlan_at-version'](json_obj['wlan']['at-version'], self.get_shortname())
 
         if 'robonect_version' in self._items:
-            self._items['robonect_version'](json_obj['application']['version'])
+            self._items['robonect_version'](json_obj['application']['version'], self.get_shortname())
         if 'robonect_version_comment' in self._items:
-            self._items['robonect_version_comment'](json_obj['application']['comment'])
+            self._items['robonect_version_comment'](json_obj['application']['comment'], self.get_shortname())
         if 'robonect_version_compiled' in self._items:
-            self._items['robonect_version_compiled'](json_obj['application']['compiled'])
+            self._items['robonect_version_compiled'](json_obj['application']['compiled'], self.get_shortname())
         return
 
     def get_status(self):
@@ -286,36 +295,36 @@ class Robonect(SmartPlugin):
                     self.get_fullname()))
             self._mower_offline = False
 
-        if 'robonect_name' in self._items:
-            self._items['robonect_name'](json_obj['name'])
+        if 'device/name' in self._items:
+            self._items['device/name'](json_obj['name'], self.get_shortname())
         if 'robonect_id' in self._items:
-            self._items['robonect_id'](json_obj['id'])
-        if 'status_code' in self._items:
-            self._items['status_code'](json_obj['status']['status'])
+            self._items['robonect_id'](json_obj['id'], self.get_shortname())
+        if 'mower/status' in self._items:
+            self._items['mower/status'](json_obj['status']['status'], self.get_shortname())
         if 'status_distance' in self._items:
-            self._items['status_distance'](json_obj['status']['distance'])
-        if 'status_stopped' in self._items:
-            self._items['status_stopped'](json_obj['status']['stopped'])
-        if 'status_duration' in self._items:
-            self._items['status_duration'](json_obj['status']['duration'])
-        if 'status_mode' in self._items:
-            self._items['status_mode'](json_obj['status']['mode'])
+            self._items['status_distance'](json_obj['status']['distance'], self.get_shortname())
+        if 'mower/stopped' in self._items:
+            self._items['mower/stopped'](json_obj['status']['stopped'], self.get_shortname())
+        if 'mower/status/duration' in self._items:
+            self._items['mower/status/duration'](json_obj['status']['duration'], self.get_shortname())
+        if 'mode' in self._items:
+            self._items['mode'](json_obj['status']['mode'], self.get_shortname())
         if 'status_battery' in self._items:
-            self._items['status_battery'](json_obj['status']['battery'])
+            self._items['status_battery'](json_obj['status']['battery'], self.get_shortname())
         if 'status_hours' in self._items:
-            self._items['status_hours'](json_obj['status']['hours'])
-        if 'wlan_signal' in self._items:
-            self._items['wlan_signal'](json_obj['wlan']['signal'])
-        if 'health_temperature' in self._items:
-            self._items['health_temperature'](json_obj['health']['temperature'])
-        if 'health_humidity' in self._items:
-            self._items['health_humidity'](json_obj['health']['humidity'])
+            self._items['status_hours'](json_obj['status']['hours'], self.get_shortname())
+        if 'wlan/rssi' in self._items:
+            self._items['wlan/rssi'](json_obj['wlan']['signal'], self.get_shortname())
+        if 'health/climate/temperature' in self._items:
+            self._items['health/climate/temperature'](json_obj['health']['temperature'], self.get_shortname())
+        if 'health/climate/humidity' in self._items:
+            self._items['health/climate/humidity'](json_obj['health']['humidity'], self.get_shortname())
         if 'date' in self._items:
-            self._items['date'](json_obj['clock']['date'])
+            self._items['date'](json_obj['clock']['date'], self.get_shortname())
         if 'time' in self._items:
-            self._items['time'](json_obj['clock']['time'])
+            self._items['time'](json_obj['clock']['time'], self.get_shortname())
         if 'unix' in self._items:
-            self._items['unix'](json_obj['clock']['unix'])
+            self._items['unix'](json_obj['clock']['unix'], self.get_shortname())
         return
 
     def init_webinterface(self):
