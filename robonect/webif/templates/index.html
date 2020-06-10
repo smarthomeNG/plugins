@@ -45,6 +45,13 @@
             shngInsertText ('{{ item.id() }}_last_update', objResponse['{{ item.id() }}_last_update'])
             shngInsertText ('{{ item.id() }}_last_change', objResponse['{{ item.id() }}_last_change'])
             {% endfor %}
+            {% for key, items in p.get_battery_items().items() %}
+                {%  for item in items %}
+                    shngInsertText('{{ item.id() }}_value', objResponse['{{ item.id() }}_value'])
+                    shngInsertText ('{{ item.id() }}_last_update', objResponse['{{ item.id() }}_last_update'])
+                    shngInsertText ('{{ item.id() }}_last_change', objResponse['{{ item.id() }}_last_change'])
+                {% endfor %}
+            {% endfor %}
         }
     }
 </script>

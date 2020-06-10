@@ -431,8 +431,11 @@ class WebInterface(SmartPluginWebIf):
                 data[item.id() + "_value"] = item()
                 data[item.id() + "_last_update"] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
                 data[item.id() + "_last_change"] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
-
-            # return it as json the the web page
+            for key, items in self.plugin.get_battery_items().items():
+                for item in items:
+                    data[item.id() + "_value"] = item()
+                    data[item.id() + "_last_update"] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
+                    data[item.id() + "_last_change"] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
             return json.dumps(data)
         else:
             return
