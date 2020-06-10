@@ -127,7 +127,7 @@
                 <td class="py-1">{{ key }}</td>
                 <td id="{{ item.id() }}_value" class="py-1">
                     {{ item()}}
-                    {% if key == 'status_code' %}
+                    {% if key == 'mower/status' %}
                         : {% if item() == 0 %}Status wird ermittelt
                         {% elif item() == 1 %}Automower parkt
                         {% elif item() == 2 %}Automower mäht
@@ -139,7 +139,7 @@
                         {% elif item() == 16 %}Automower abgeschaltet
                         {% elif item() == 17 %}Automower schläft
                         {% endif %}
-                    {% elif key == 'status_mode' %}
+                    {% elif key == 'mower/mode' %}
                         : {% if item() == 0 %}Auto
                         {% elif item() == 1 %}Manuell
                         {% elif item() == 2 %}Home
