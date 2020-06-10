@@ -55,10 +55,7 @@ class Robonect(MqttPlugin):
         the configured (and checked) value for a parameter by calling self.get_parameter_value(parameter_name). It
         returns the value in the datatype that is defined in the metadata.
         """
-
-        # Call init code of parent class (SmartPlugin)
         super().__init__()
-
         self._ip = self.get_parameter_value('ip')
         self._user = self.get_parameter_value('user')
         self._password = self.get_parameter_value('password')
@@ -68,13 +65,8 @@ class Robonect(MqttPlugin):
         self._items = {}
         self._mode = self.get_parameter_value('mode')
         self._battery_items = {}
-        #if self._mode == 'api':
         self._session = requests.Session()
         self.init_webinterface()
-        # if plugin should not start without web interface
-        # if not self.init_webinterface():
-        #     self._init_complete = False
-
         return
 
     def run(self):
@@ -82,7 +74,6 @@ class Robonect(MqttPlugin):
         Run method for the plugin
         """
         self.logger.debug("Run method called")
-        # overwrite base url in case of a restart
         self._base_url = 'http://%s/json?cmd=' % self.get_ip()
         self.scheduler_add('poll_device', self.poll_device, cycle=self._cycle)
         self.alive = True
@@ -389,6 +380,7 @@ class Robonect(MqttPlugin):
 # ------------------------------------------
 
 import cherrypy
+import json
 from jinja2 import Environment, FileSystemLoader
 
 
@@ -434,16 +426,13 @@ class WebInterface(SmartPluginWebIf):
         :return: dict with the data needed to update the web page.
         """
         if dataSet is None:
-            # get the new data
             data = {}
+            for key, item in self.plugin.get_items().items():
+                data[item.id() + "_value"] = item()
+                data[item.id() + "_last_update"] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
+                data[item.id() + "_last_change"] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
 
-            # data['item'] = {}
-            # for i in self.plugin.items:
-            #     data['item'][i]['value'] = self.plugin.getitemvalue(i)
-            #
             # return it as json the the web page
-            # try:
-            #     return json.dumps(data)
-            # except Exception as e:
-            #     self.logger.error("get_data_html exception: {}".format(e))
-        return {}
+            return json.dumps(data)
+        else:
+            return
