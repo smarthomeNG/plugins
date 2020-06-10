@@ -18,10 +18,14 @@
             // Bot actual state
             shngInsertText('header_state', mybot['state_text']);
 
+            // Properties
+            shngInsertText('properties_model', mybot['model']); shngInsertText('header_model', mybot['model']);
+            shngInsertText('properties_nick', mybot['nick']);   shngInsertText('header_nick', mybot['nick']);
+            shngInsertText('properties_did', mybot['did']);
             // Bot component lifespan
-            shngInsertText('lifespan_brush', Math.round(mybot['components']['brush'])+"%");
-            shngInsertText('lifespan_sidebrushes', Math.round(mybot['components']['sideBrush'])+"%");
-            shngInsertText('lifespan_filter', Math.round(mybot['components']['heap'])+"%");
+            shngInsertText('lifespan_brush', Math.round(mybot['components']['brush']) + "%");
+            shngInsertText('lifespan_sidebrushes', Math.round(mybot['components']['sideBrush']) + "%");
+            shngInsertText('lifespan_filter', Math.round(mybot['components']['heap']) + "%");
 
             // Bot availability
             if (mybot['available']) {
@@ -32,20 +36,39 @@
 
             // Battery level
             var battery_level = mybot['battery_level'];
-            var battery_icon = '';
-            if (battery_level == 100) battery_icon = 'fa-battery-full';
-            else if (battery_level > 75) battery_icon = 'fa-battery-three-quarters';
-            else if (battery_level > 50) battery_icon = 'fa-battery-half';
-            else if (battery_level > 25) battery_icon = 'fa-battery-quarter';
-            else battery_icon = 'fa-battery-empty';
-            var battery_text = '<i class="fas ' + battery_icon + '"></i>' + '&nbsp;' + battery_level + '%';
-            shngInsertText('header_battery', battery_text);
-            shngInsertText('properties_battery', battery_text);
+            if (battery_level) {
+                var battery_icon = '';
+                if (battery_level == 100) battery_icon = 'fa-battery-full';
+                else if (battery_level > 75) battery_icon = 'fa-battery-three-quarters';
+                else if (battery_level > 50) battery_icon = 'fa-battery-half';
+                else if (battery_level > 25) battery_icon = 'fa-battery-quarter';
+                else battery_icon = 'fa-battery-empty';
+                var battery_text = '<i class="fas ' + battery_icon + '"></i>' + '&nbsp;' + battery_level + '%';
+                shngInsertText('header_battery', battery_text);
+                shngInsertText('properties_battery', battery_text);
+            }
+
+            // Fan speed
+            if (mybot['fan_speed']) {
+                document.querySelector('#fan_speed [value="' + mybot['fan_speed'] + '"]').selected = true;
+            }           
+
+           // Water level
+           if (mybot['water_level']) {
+                document.querySelector('#water_level [value="' + mybot['water_level'] + '"]').selected = true;
+            }           
 
             // Live map
-            if ( mybot['live_map']) {
+            if (mybot['live_map']) {
                 shngInsertText('live_map_2', '<img src="data:image/;base64,' + mybot['live_map'] + '" style="width: 80%; display: block; margin: auto;">');
                 shngInsertText('live_map', '<img src="data:image/;base64,' + mybot['live_map'] + '" style="height: 60vh; display: block; margin: auto;">');
+            }
+            // Robot icon
+            if (mybot['iconURL']) {
+                var img = document.getElementById("robot_icon");
+                if (img.getAttribute("src") == 'static/img/no-icon.png') {
+                    img.src = mybot['iconURL'];
+                }
             }
         }
     }
@@ -58,7 +81,7 @@
     <tbody>
         <tr>
             <td class="py-1"><strong>{{ _('Model') }}</strong></td>
-            <td class="py-1">{{ p.mybot['model'] }}</td>
+            <td id="header_model" class="py-1">{{ p.mybot['model'] }}</td>
             <td class="py-1" width="50px"></td>
             <td class="py-1"><strong>{{ _('Battery') }}</strong></td>
             <td class="py-1" id="header_battery">
@@ -81,7 +104,7 @@
         </tr>
         <tr>
             <td class="py-1"><strong>{{ _('Name') }}</strong></td>
-            <td class="py-1">{{ p.mybot['nick'] }}</td>
+            <td id="header_nick" class="py-1">{{ p.mybot['nick'] }}</td>
             <td></td>
             <td class="py-1"><strong>{{ _('Status') }}</strong></td>
             <td class="py-1" id="header_state">{{ p.mybot['state_text'] }}</td>
@@ -137,10 +160,17 @@
 <div class="container-fluid m-2">
     <div class="row">
         <div class="col-sm-4">
-            <img src="{{ p.mybot['iconURL'] }}" style="height: 200px; display: block; margin: auto;"><br />
+            <div id="r">
+                {% if p.mybot['iconURL']  %}
+                <img id="robot_icon" src="{{ p.mybot['iconURL'] }}" style="height: 200px; display: block; margin: auto;"><br />
+                {% else %}
+                <img id="robot_icon" src="static/img/no-icon.png" style="height: 200px; display: block; margin: auto;"><br />
+                {% endif %}
+            </div>
             <div id="live_map_2">
                 {% if p.mybot['live_map'] %}
-                <img src="data:image/;base64,{{ p.mybot['live_map'] | safe }}" style="width: 80%; display: block; margin: auto;">
+                <img src="data:image/;base64,{{ p.mybot['live_map'] | safe }}"
+                    style="width: 80%; display: block; margin: auto;">
                 {% else %}
                 <img src="static/img/no-map.png" style="width: 80%; display: block; margin: auto;">
                 {% endif %}
@@ -152,7 +182,7 @@
                 <tbody>
                     <tr>
                         <td class="py-1"><strong>{{ _('Model') }}</strong></td>
-                        <td class="py-1">{{ p.mybot['model'] }}</td>
+                        <td id="properties_model" class="py-1">{{ p.mybot['model'] }}</td>
                         <td class="py-1" width="50px"></td>
                         <td class="py-1"><strong>{{ _('Battery') }}</strong></td>
                         <td class="py-1" id="properties_battery">
@@ -170,7 +200,7 @@
                     </tr>
                     <tr>
                         <td class="py-1"><strong>{{ _('Name') }}</strong></td>
-                        <td class="py-1">{{ p.mybot['nick'] }}</td>
+                        <td id="properties_nick" class="py-1">{{ p.mybot['nick'] }}</td>
                         <td></td>
                         <td class="py-1"><strong>{{ _('fan_speed') }}</strong></td>
                         <td class="py-1">
@@ -191,7 +221,7 @@
                     </tr>
                     <tr>
                         <td class="py-1"><strong>{{ _('ID') }}</strong></td>
-                        <td class="py-1">{{ p.mybot['did'] }}</td>
+                        <td id="properties_did" class="py-1">{{ p.mybot['did'] }}</td>
                         <td></td>
                         <td class="py-1"><strong>{{ _('water_level') }}</strong></td>
                         <td class="py-1">
@@ -255,10 +285,11 @@
                 <tbody>
                     {% for room in p.mybot['rooms'] %}
                     <tr>
-                        <td class="py-1"><strong>{{ room.subtype }}</strong></td>
+                        <td class="py-1"><strong>{{ _(room.subtype) }}</strong></td>
                         <td class="py-1">{{ room.id }}</td>
-                        <td class="py-1"><button id="" class="btn btn-shng btn-sm" onclick="shngPost('', {cmd: 'clean_room', type: '{{ room.subtype }}', id:'{{ room.id }}' })"><i
-                            class="fas fa-play"></i>&nbsp;&nbsp;&nbsp;{{ _('Clean Room') }}&nbsp;</button></td>
+                        <td class="py-1"><button id="" class="btn btn-shng btn-sm"
+                                onclick="shngPost('', {cmd: 'clean_room', type: '{{ room.subtype }}', id:'{{ room.id }}' })"><i
+                                    class="fas fa-play"></i>&nbsp;&nbsp;&nbsp;{{ _('Clean Room') }}&nbsp;</button></td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -315,8 +346,9 @@
                         <a href="{{ log.imageUrl }}" target="_blank">
                             <img src="{{ log.imageUrl }}" style="height: 75px;">
                         </a>
-                    <td><button type="button" class="btn btn-info btn-sm" data-toggle="modal"
-                            data-target="#picture_{{ loop.index}}">{{ _('View') }}</button></td>
+                    <td><button class="btn btn-shng btn-sm" data-toggle="modal"
+                            data-target="#picture_{{ loop.index}}"><i
+                                class="fas fa-search"></i>&nbsp;&nbsp;&nbsp;{{ _('View') }}</button></td>
                     </td>
                 </tr>
                 {% endfor %}
@@ -332,13 +364,15 @@
         <!-- Modal content-->
         <div class="modal-content">
             <div class="modal-header">
-                <h4 class="modal-title">{{ _('Cleaning log') }} {{ log.timestamp | dateformat }} @{{ log.timestamp | timeformat }}</h4>
+                <h4 class="modal-title">{{ _('Cleaning log') }} {{ log.timestamp | dateformat }}
+                    @{{ log.timestamp | timeformat }}</h4>
             </div>
             <div class="modal-body">
                 <img src="{{ log.imageUrl }}" style="width: 700px; display: block; margin: auto;">
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">{{ _('Close') }}</button>
+                <button class="btn btn-shng btn-sm" data-dismiss="modal"><i
+                    class="fas fa-window-close"></i>&nbsp;&nbsp;&nbsp;{{ _('Close') }}</button>
             </div>
         </div>
 
@@ -369,9 +403,7 @@
             <tr>
                 <td class="py-1">{{ loop.index}}</td>
                 <td class="py-1">{{ item._path }}</td>
-
-                <td class="py-1">
-                    <strong> {{ item() }}</strong></td>
+                <td class="py-1" style="word-break: break-all;">{{ item() }}</td>
                 <td class="py-1">{{ item._type }}</td>
                 <td class="py-1">{{ item.conf['visu_acl'] }}</td>
             </tr>

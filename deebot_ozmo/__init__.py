@@ -364,7 +364,9 @@ class DeebotOzmo(SmartPlugin):
         self._update_items('state_text', self.translate(self.vacbot.vacuum_status))
         self._update_items('battery_level', self.vacbot.battery_status)
         self._update_items('fan_speed', self.vacbot.fan_speed)
+        self._update_items('fan_speed_text', self.translate(self.vacbot.fan_speed))
         self._update_items('water_level', self.vacbot.water_level)
+        self._update_items('water_level_text', self.translate(self.vacbot.water_level))
         self._update_items('rooms', self.vacbot.getSavedRooms())
         self._update_items('last_clean_logs', self.vacbot.lastCleanLogs)
         self._update_items('last_clean_map', self.vacbot.last_clean_image)
@@ -422,16 +424,21 @@ class WebInterface(SmartPluginWebIf):
                 self.plugin.clean()
             elif cmd == 'clean_room':
                 self.logger.info("WebIf: Start cleaning {} (id: {})".format(type, id))
-                #self.plugin.clean(id)
+                self.plugin.clean(id)
             elif cmd == 'pause':
+                self.logger.info("WebIf: Pause cleaning")
                 self.plugin.pause()
             elif cmd == 'charge':
+                self.logger.info("WebIf: Return to charging station")
                 self.plugin.charge()
             elif cmd == 'locate':
+                self.logger.info("WebIf: Locating robot")
                 self.plugin.locate()
             elif cmd == 'set_fan_speed':
+                self.logger.info("WebIf: Update fan speed to {}".format(speed))
                 self.plugin.set_fan_speed(speed)
             elif cmd == 'set_water_level':
+                self.logger.info("WebIf: Update water level to {}".format(level))
                 self.plugin.set_water_level(level)
             else:
                 self.logger.warning('Unknown command: {}'.format(cmd))

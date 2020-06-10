@@ -81,25 +81,25 @@ item_structs:
         nick:
             type: str
             visu_acl: ro
-            cache: True
+            cache: Yes
             deebot_ozmo@instance: nick
 
         did:
             type: str
             visu_acl: ro
-            cache: True
+            cache: Yes
             deebot_ozmo@instance: did
     
         model:
             type: str
             visu_acl: ro
-            cache: True
+            cache: Yes
             deebot_ozmo@instance: model
     
         icon_URL:
             type: str
             visu_acl: ro
-            cache: True
+            cache: Yes
             deebot_ozmo@instance: iconURL
     
         available:
@@ -127,33 +127,45 @@ item_structs:
         water_level:
             type: str
             visu_acl: rw
-            cache: True
+            cache: Yes
             deebot_ozmo@instance: water_level
-        
+
+        water_level_text:
+            type: str
+            visu_acl: ro
+            cache: Yes
+            deebot_ozmo@instance: water_level_text
+    
         fan_speed:
             type: str
             visu_acl: rw
-            cache: True
+            cache: Yes
             deebot_ozmo@instance: fan_speed
+    
+        fan_speed_text:
+            type: str
+            visu_acl: ro
+            cache: Yes
+            deebot_ozmo@instance: fan_speed_text
     
     components:
         name: Components lifespan item_structs
         brush:
             type: num
             visu_acl: ro
-            cache: True
+            cache: Yes
             deebot_ozmo@instance: brush
     
         sideBrush:
             type: num
             visu_acl: ro
-            cache: True
+            cache: Yes
             deebot_ozmo@instance: sideBrush
     
         filter:
             type: num
             visu_acl: ro
-            cache: True
+            cache: Yes
             deebot_ozmo@instance: filter
 
     maps:
@@ -161,19 +173,19 @@ item_structs:
         live_map_base64:
             type: str
             visu_acl: ro
-            cache: True
+            cache: Yes
             deebot_ozmo@instance: live_map
 
         last_clean_map_URL:
             type: str
             visu_acl: ro
-            cache: True
+            cache: Yes
             deebot_ozmo@instance: last_clean_map
 
         rooms:
             type: list
             visu_acl: ro
-            cache: True
+            cache: Yes
             deebot_ozmo@instance: rooms
     
     history:
@@ -181,7 +193,7 @@ item_structs:
         last_clean_logs:
             type: list
             visu_acl: ro
-            cache: True
+            cache: Yes
             deebot_ozmo@instance: last_clean_logs
 
     controls:

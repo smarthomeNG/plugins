@@ -46,6 +46,14 @@ plugin_translations:
     'high': { 'de' : 'hoch', 'en': '=', 'fr': 'haute'}
     'ultrahigh': { 'de' : 'ultra hoch', 'en': '=', 'fr': 'très haute'}
 
+    'Room type': { 'de' : 'Raumart', 'en': =', 'fr': 'Type de chambre'}
+    'Room ID': { 'de' : 'Raum ID', 'en': '=', 'fr': 'ID'}
+    'Clean room': { 'de' : 'Raum putzen', 'en': '=', 'fr': 'Nettoyer salle'}
+    'Dining Room': { 'de' : 'Esszimmer', 'en': '=', 'fr': 'Salle à manger'}
+    'Kitchen': { 'de' : 'Küche', 'en': '=', 'fr': 'Cuisine'}
+    'Study': { 'de' : 'Büro', 'en': '=', 'fr': 'Bureau'}
+    'Living Room': { 'de' : 'Wohnzimmer', 'en': '=', 'fr': 'Salon'}
+
     'Date': { 'de' : 'Datum', 'en': '=', 'fr': '='}
     'Time': { 'de' : 'Uhrzeit', 'en': '=', 'fr': 'Heure'}
     'Type': { 'de' : 'Typ', 'en': '=', 'fr': '='}
