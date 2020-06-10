@@ -56,30 +56,22 @@
 		<tr>
 			<td class="py-1"><strong>IP</strong></td>
 			<td class="py-1">{{ p.get_ip() }}</td>
-            <td class="py-1">{% if 'mower/status' in p.get_items() %}<strong>{{ _('Status') }}</strong>{% endif %}</td>
-            <td class="py-1">{% if 'mower/status' in p.get_items() %}
-                {% if p.get_items()['mower/status']() == 0 %}Status wird ermittelt
-                {% elif p.get_items()['mower/status']() == 1 %}Automower parkt
-                {% elif p.get_items()['mower/status']() == 2 %}Automower mäht
-                {% elif p.get_items()['mower/status']() == 3 %}Automower sucht die Ladestation
-                {% elif p.get_items()['mower/status']() == 4 %}Automower lädt
-                {% elif p.get_items()['mower/status']() == 5 %}Automower sucht (wartet auf das Umsetzen im manuellen Modus)
-                {% elif p.get_items()['mower/status']() == 7 %}Fehlerstatus
-                {% elif p.get_items()['mower/status']() == 8 %}Schleifensignal verloren
-                {% elif p.get_items()['mower/status']() == 16 %}Automower abgeschaltet
-                {% elif p.get_items()['mower/status']() == 17 %}Automower schläft
-                {% endif %}{% endif %}
-            </td>
-        </tr>
-        <tr>
             <td class="py-1"><strong>{{ _('Benutzer') }}</strong></td>
 			<td class="py-1">{{ p.get_user() }}</td>
-            <td class="py-1"><strong>{{ _('Passwort') }}</strong></td>
-			<td class="py-1">{{ p.get_parameter_value_for_display('password') }}
-		</tr>
+        </tr>
         <tr>
             <td class="py-1"><strong>{{ _('Mower an?') }}</strong></td>
 			<td class="py-1">{{ not p._mower_offline }}</td>
+            <td class="py-1"><strong>{{ _('Passwort') }}</strong></td>
+			<td class="py-1">{{ p.get_parameter_value_for_display('password') }}</td>
+		</tr>
+        <tr>
+            <td class="py-1"><strong>{{ _('Modus') }}</strong></td>
+			<td class="py-1">
+                {% if p._mode == 'api' %}Web API
+                {% elif p._mode == 'mqtt' %}Web API + MQTT
+                {% endif %}
+            </td>
             <td class="py-1"></td>
 			<td class="py-1"></td>
 		</tr>
