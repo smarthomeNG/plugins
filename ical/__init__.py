@@ -27,7 +27,7 @@ import re
 import dateutil.tz
 import dateutil.rrule
 import dateutil.relativedelta
-from lib.model.smartplugin import SmartPlugin
+from lib.model.smartplugin import *
 from lib.shtime import Shtime
 from lib.network import Http
 from bin.smarthome import VERSION
