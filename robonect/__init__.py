@@ -29,6 +29,7 @@ from lib.module import Modules
 from lib.model.mqttplugin import *
 from lib.item import Items
 from requests.auth import HTTPBasicAuth
+import math
 import requests
 
 
@@ -297,7 +298,8 @@ class Robonect(MqttPlugin):
         if 'mower/stopped' in self._items:
             self._items['mower/stopped'](json_obj['status']['stopped'], self.get_shortname())
         if 'mower/status/duration' in self._items:
-            self._items['mower/status/duration'](json_obj['status']['duration'], self.get_shortname())
+            # round to minutes, as mqtt is also returning minutes instead of seconds
+            self._items['mower/status/duration'](math.floor(json_obj['status']['duration']/60), self.get_shortname())
         if 'mode' in self._items:
             self._items['mode'](json_obj['status']['mode'], self.get_shortname())
         if 'status_battery' in self._items:

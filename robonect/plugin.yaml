@@ -72,7 +72,7 @@ item_structs:
         name: Main Data From Robonect HX Module
 
         robonect_name:
-            name: Lawnmower Nickname
+            name: 'Lawnmower Nickname'
             robonect_data_type: device/name
             type: str
 
@@ -98,7 +98,7 @@ item_structs:
             type: str
 
         mower:
-            name: Information About the Hardware and Software of the Mower
+            name: 'Information About the Hardware and Software of the Mower'
 
             hardware:
                 serial:
@@ -200,14 +200,17 @@ item_structs:
             robonect_data_type: battery_voltage
             robonect_battery_index: 0
             type: num
+            eval: value/1000
         battery_0_current:
             robonect_data_type: battery_current
             robonect_battery_index: 0
             type: num
         battery_0_temperature:
+            name: 'Battery Temperature in °C'
             robonect_data_type: battery_temperature
             robonect_battery_index: 0
             type: num
+            eval: value/10
         battery_0_capacity_full:
             robonect_data_type: battery_capacity_full
             robonect_battery_index: 0
