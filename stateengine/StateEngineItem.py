@@ -471,9 +471,10 @@ class SeItem:
             self.__item._eval = "1"
 
         # Check scheduler settings and update if requred
-        job = self.__sh.scheduler._scheduler.get(self.id)
+
+        job = self.__sh.scheduler._scheduler.get("items.{}".format(self.id))
         if job is None:
-            # We do not have an scheduler job so there is nothing to check and update
+            # We do not have a scheduler job so there is nothing to check and update
             return
 
         changed = False
@@ -525,7 +526,8 @@ class SeItem:
         crons = ""
 
         # noinspection PyProtectedMember
-        job = self.__sh.scheduler._scheduler.get(self.__item.id)
+        job = self.__sh.scheduler._scheduler.get("items.{}".format(self.id))
+
         if job is not None:
             if "cycle" in job and job["cycle"] is not None:
                 cycle = list(job["cycle"].keys())[0]
