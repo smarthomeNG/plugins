@@ -514,7 +514,7 @@ class SeItem:
                            old_cycle, new_cycle, old_cron, new_cron)
         # change scheduler settings if cycle or cron have been changed
         if changed:
-            self.__se_plugin.scheduler_change(self.id, cycle=new_cycle, cron=new_cron)
+            self.__sh.scheduler.change("items.{}".format(self.id), cycle=new_cycle, cron=new_cron)
 
     # get triggers in readable format
     def __verbose_triggers(self):
