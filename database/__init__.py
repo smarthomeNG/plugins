@@ -882,6 +882,10 @@ class Database(SmartPlugin):
 
         :return:
         """
+        try:
+            return int(dts)
+        except:
+            pass
         ts = self._timestamp(self.shtime.now())
 
         duration = 0
