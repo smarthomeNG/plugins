@@ -108,10 +108,16 @@ class Robonect(MqttPlugin):
             self.logger.debug("parse item: {}".format(item))
 
             if self._mode == 'mqtt':
+                bool_values = None
+                callback = None
                 mqtt_id = self.get_iattr_value(item.conf, 'robonect_data_type')
                 payload_type = item.property.type
                 topic = 'Robonect/' + mqtt_id
-                self.add_subscription(topic, payload_type, item=item)
+                #if mqtt_id == 'mower/stopped':
+                #    bool_values = ['false','true']
+                if mqtt_id == 'mower/status':
+                    callback = self.on_mode_change
+                self.add_subscription(topic, payload_type, item=item, bool_values=bool_values, callback=callback)
 
             if not self.get_iattr_value(item.conf, 'robonect_data_type') in self._battery_items and \
                     self.has_iattr(item.conf, 'robonect_battery_index'):
@@ -168,6 +174,43 @@ class Robonect(MqttPlugin):
         self.get_status()
         self.get_battery_data()
         return
+
+    def on_mode_change(self, topic, payload, qos=None, retain=None):
+        if payload is not None:
+            self.logger.debug("on_mode_change: setting mode as %s" %self.get_mode_as_text(payload))
+            self._items['mode_text'](self.get_mode_as_text(payload))
+
+    def get_mode_as_text(self, mode):
+        """
+        Returns the mode as short english text.
+
+        :param mode: Mode as integer
+        :return: Mode as string
+        """
+        if mode == 0:
+            return 'DETECTING_STATUS'
+        elif mode == 1:
+            return 'PARKING'
+        elif mode == 2:
+            return 'MOWING'
+        elif mode == 3:
+            return 'SEARCH_CHARGING_STATION'
+        elif mode == 4:
+            return 'CHARGING'
+        elif mode == 5:
+            return 'SEARCHING'
+        elif mode == 6:
+            return 'UNKNOWN_6'
+        elif mode == 7:
+            return 'ERROR_STATUS'
+        elif mode == 16:
+            return 'OFF'
+        elif mode == 17:
+            return 'SLEEPING'
+        elif mode == 98:
+            return 'OFFLINE(Binding cannot connect to mower)'
+        elif mode == 99:
+            return 'UNKNOWN'
 
     def get_battery_data(self):
         try:
@@ -293,15 +336,16 @@ class Robonect(MqttPlugin):
             self._items['robonect_id'](json_obj['id'], self.get_shortname())
         if 'mower/status' in self._items:
             self._items['mower/status'](json_obj['status']['status'], self.get_shortname())
+            self._items['status_text'](self.get_mode_as_text(self._items['mower/status']()))
         if 'status_distance' in self._items:
             self._items['status_distance'](json_obj['status']['distance'], self.get_shortname())
         if 'mower/stopped' in self._items:
-            self._items['mower/stopped'](json_obj['status']['stopped'], self.get_shortname())
+            self._items['mower/stopped'](self.to_bool(json_obj['status']['stopped'], self.get_shortname()))
         if 'mower/status/duration' in self._items:
             # round to minutes, as mqtt is also returning minutes instead of seconds
             self._items['mower/status/duration'](math.floor(json_obj['status']['duration']/60), self.get_shortname())
-        if 'mode' in self._items:
-            self._items['mode'](json_obj['status']['mode'], self.get_shortname())
+        if 'mower/mode' in self._items:
+            self._items['mower/mode'](json_obj['status']['mode'], self.get_shortname())
         if 'status_battery' in self._items:
             self._items['status_battery'](json_obj['status']['battery'], self.get_shortname())
         if 'status_hours' in self._items:
@@ -430,7 +474,10 @@ class WebInterface(SmartPluginWebIf):
         if dataSet is None:
             data = {}
             for key, item in self.plugin.get_items().items():
-                data[item.id() + "_value"] = item()
+                if item.property.type == 'bool':
+                    data[item.id() + "_value"] = str(item())
+                else:
+                    data[item.id() + "_value"] = item()
                 data[item.id() + "_last_update"] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
                 data[item.id() + "_last_change"] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
             for key, items in self.plugin.get_battery_items().items():

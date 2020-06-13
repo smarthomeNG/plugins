@@ -135,6 +135,11 @@ item_structs:
                 robonect_data_type: mower/status
                 type: num
 
+            status_text:
+                name: 'Mode of the Mower as Text'
+                type: str
+                robonect_data_type: mode_text
+
             distance:
                 robonect_data_type: status_distance
                 type: num
@@ -144,10 +149,12 @@ item_structs:
                 type: bool
 
             duration:
+                name: 'Duration of Mode in Minutes'
                 robonect_data_type: mower/status/duration
                 type: num
 
             mode:
+                name: 'Mode of the Mower'
                 robonect_data_type: mower/mode
                 type: num
 
@@ -222,6 +229,18 @@ item_structs:
 
 plugin_functions:
     # Definition of plugin functions defined by this plugin (enter 'plugin_functions: NONE', if section should be empty)
+    get_mode_as_text:
+        type: str
+        description:
+            de: "Gibt den Mode des Rasenmähers als String zurück."
+            en: "Returns the mode of the mower as string."
+        parameters:
+            index:
+                type: int
+                description:
+                    de: "mode"
+                    en: "mode"
+
 
 logic_parameters:
     # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)
