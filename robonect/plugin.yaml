@@ -138,7 +138,7 @@ item_structs:
             status_text:
                 name: 'Mode of the Mower as Text'
                 type: str
-                robonect_data_type: mode_text
+                robonect_data_type: status_text
 
             distance:
                 robonect_data_type: status_distance
