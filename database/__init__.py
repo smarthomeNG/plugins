@@ -882,12 +882,16 @@ class Database(SmartPlugin):
 
         :return:
         """
+        try:
+            return int(dts)
+        except:
+            pass
         ts = self._timestamp(self.shtime.now())
 
         duration = 0
         if isinstance(dts, str):
             if dts.find('now') >= 0:
-                duration = self._parse_single('now')
+                duration = 0
             else:
                 for frame in dts.split(' '):
                     duration += self._parse_single(frame)
@@ -919,10 +923,10 @@ class Database(SmartPlugin):
         except:
             pass
         ts = self._timestamp(self.shtime.now())
-        if frame == 'now':
-            fac = 0
-            frame = 0
-        elif frame[-1] in _frames:
+        # if frame == 'now':
+        #     fac = 0
+        #     frame = 0
+        if frame[-1] in _frames:
             fac = _frames[frame[-1]]
             frame = frame[:-1]
         else:
