@@ -51,7 +51,7 @@ class WebSocket(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = "1.5.1"
+    PLUGIN_VERSION = "1.5.2"
 
 
     def __init__(self, sh, *args, **kwargs):
@@ -633,6 +633,22 @@ class websockethandler(lib.connection.Stream):
                         self.logger.warning("Client {0} requested invalid series: {1}. Probably not database plugin is configured".format(self.addr, path))
                     else:
                         self.logger.warning("Client {0} requested invalid series: {1}.".format(self.addr, path))
+
+        elif command == 'series_cancel':
+            path = data['item']
+            series = data['series']
+
+            try:
+                reply = self.items[path]['item'].series(series, 'now', 'now', 10)
+            except Exception as e:
+                self.logger.error("Problem fetching series for {0}: {1} - Wrong sqlite plugin?".format(path, e))
+            else:
+                self._series_lock.acquire()
+                try:
+                    del (self._update_series[reply['sid']])
+                except:
+                    self.logger.error("Series cancelation: No series for path {} found in list".format(path))
+                self._series_lock.release()
 
         elif command == 'log':
             self.log = True
