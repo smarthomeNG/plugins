@@ -178,7 +178,7 @@ class Robonect(MqttPlugin):
     def on_mode_change(self, topic, payload, qos=None, retain=None):
         if payload is not None:
             self.logger.debug("on_mode_change: setting mode as %s" %self.get_mode_as_text(payload))
-            self._items['mode_text'](self.get_mode_as_text(payload))
+            self._items['status_text'](self.get_mode_as_text(payload))
 
     def get_mode_as_text(self, mode):
         """
