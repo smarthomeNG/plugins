@@ -29,6 +29,8 @@ from . import StateEngineValue
 from lib.item import Items
 from lib.shtime import Shtime
 import time
+import threading
+import queue
 
 
 # Class representing a blind item
@@ -82,24 +84,14 @@ class SeItem:
     def lastconditionset_name(self):
         return self.__lastconditionset_item_name.property.value
 
-    @property
-    def action_in_progress(self):
-        return self.__action_in_progress
-
-    @property
-    def update_in_progress(self):
-        return self.__update_in_progress
-
-    @property
-    def stateeval_in_progress(self):
-        return self.__stateeval_in_progress
-
     # Constructor
     # smarthome: instance of smarthome.py
     # item: item to use
     def __init__(self, smarthome, item, se_plugin):
         self.items = Items.get_instance()
         self.shtime = Shtime.get_instance()
+        self._update_lock = threading.Lock()
+        self.__queue = queue.Queue()
         self.__sh = smarthome
         self.__item = item
         self.__se_plugin = se_plugin
@@ -145,9 +137,6 @@ class SeItem:
         self.__update_trigger_caller = None
         self.__update_trigger_source = None
         self.__update_trigger_dest = None
-        self.__update_in_progress = False
-        self.__stateeval_in_progress = False
-        self.__action_in_progress = []
         self.__update_original_item = None
         self.__update_original_caller = None
         self.__update_original_source = None
@@ -195,23 +184,150 @@ class SeItem:
     def __repr__(self):
         return self.__id
 
-    def set_action_state(self, value, listaction):
-        if listaction == 'add':
-            # self.__logger.debug("Adding {} to action list", value)
-            self.__action_in_progress.append(value)
-        elif value in self.__action_in_progress:
-            # self.__logger.debug("Removing {} from action list", value)
-            self.__action_in_progress.reverse()
-            self.__action_in_progress.remove(value)
-            self.__action_in_progress.reverse()
-        else:
-            self.__logger.debug("Nothing to do with {} (listaction: {}).", value, listaction)
-
     def updatetemplates(self, template, value):
         if value is None:
             self.__templates.pop(template)
         else:
             self.__templates[template] = value
+
+    def run_queue(self):
+        self._update_lock.acquire()
+        while not self.__queue.empty():
+            job = self.__queue.get()
+            if job is None:
+                break
+            elif job[0] == "delayedaction":
+                (_, action, actionname, namevar, repeat_text, value) = job
+                action.real_execute(actionname, namevar, repeat_text, value)
+            else:
+                (_, item, caller, source, dest) = job
+
+                item_id = item.property.path if item is not None else "(no item)"
+
+                self.__logger.update_logfile()
+                self.__logger.header("Update state of item {0}".format(self.__name))
+                #time.sleep(2)
+                if caller:
+                    self.__logger.debug("Update triggered by {0} (item={1} source={2} dest={3})", caller, item_id, source, dest)
+
+                # Find out what initially caused the update to trigger if the caller is "Eval"
+                orig_caller, orig_source, orig_item = StateEngineTools.get_original_caller(self.sh, caller, source, item)
+                if orig_caller != caller:
+                    text = "Eval initially triggered by {0} (item={1} source={2} value={3})"
+                    self.__logger.debug(text, orig_caller, orig_item.property.path, orig_source, orig_item.property.value)
+                cond1 = orig_caller == StateEngineDefaults.plugin_identification
+                cond2 = caller == StateEngineDefaults.plugin_identification
+                cond1_2 = orig_source == item_id
+                cond2_2 = source == item_id
+                if (cond1 and cond1_2) or (cond2 and cond2_2):
+                    self.__logger.debug("Ignoring changes from {0}", StateEngineDefaults.plugin_identification)
+                    if self._update_lock.locked():
+                        self._update_lock.release()
+                    return
+
+                self.__update_trigger_item = item.property.path
+                self.__update_trigger_caller = caller
+                self.__update_trigger_source = source
+                self.__update_trigger_dest = dest
+                self.__update_original_item = orig_item.property.path
+                self.__update_original_caller = orig_caller
+                self.__update_original_source = orig_source
+
+                # Update current values
+                StateEngineCurrent.update()
+                self.__variables["item.suspend_time"] = self.__suspend_time.get()
+                self.__variables["item.suspend_remaining"] = -1
+
+                # get last state
+                last_state = self.__laststate_get()
+                if last_state is not None:
+                    self.__logger.info("Last state: {0} ('{1}')", last_state.id, last_state.name)
+
+                _last_conditionset_id = self.__lastconditionset_get_id()
+                _last_conditionset_name = self.__lastconditionset_get_name()
+                if _last_conditionset_id not in ['', None]:
+                    self.__logger.info("Last Conditionset: {0} ('{1}')", _last_conditionset_id, _last_conditionset_name)
+                _original_conditionset_id = _last_conditionset_id
+                _original_conditionset_name = _last_conditionset_name
+
+                # find new state
+                new_state = None
+                _leaveactions_run = False
+                for state in self.__states:
+                    result = self.__update_check_can_enter(state)
+                    # New state is different from last state
+                    if result is False and last_state == state and StateEngineDefaults.instant_leaveaction is True:
+                        self.__logger.info("Leaving {0} ('{1}'). Running actions immediately.", last_state.id, last_state.name)
+                        last_state.run_leave(self.__repeat_actions.get())
+                        _leaveactions_run = True
+                    if result is True:
+                        new_state = state
+                        break
+
+                # no new state -> stay
+                if new_state is None:
+                    if last_state is None:
+                        self.__logger.info("No matching state found, no previous state available. Doing nothing.")
+                    else:
+                        if _last_conditionset_id in ['', None]:
+                            text = "No matching state found, staying at {0} ('{1}')"
+                            self.__logger.info(text, last_state.id, last_state.name)
+                        else:
+                            text = "No matching state found, staying at {0} ('{1}') based on conditionset {2} ('{3}')"
+                            self.__logger.info(text, last_state.id, last_state.name, _last_conditionset_id, _last_conditionset_name)
+                        last_state.run_stay(self.__repeat_actions.get())
+                    if self._update_lock.locked():
+                        self._update_lock.release()
+                    return
+                _last_conditionset_id = self.__lastconditionset_get_id()
+                _last_conditionset_name = self.__lastconditionset_get_name()
+                # get data for new state
+                if last_state is not None and new_state.id == last_state.id:
+                    if _last_conditionset_id in ['', None]:
+                        self.__logger.info("Staying at {0} ('{1}')", new_state.id, new_state.name)
+                    else:
+                        self.__logger.info("Staying at {0} ('{1}') based on conditionset {2} ('{3}')",
+                                           new_state.id, new_state.name, _last_conditionset_id, _last_conditionset_name)
+                    # New state is last state
+                    if self.__laststate_internal_name != new_state.name:
+                        self.__laststate_set(new_state)
+                    new_state.run_stay(self.__repeat_actions.get())
+
+                else:
+                    if last_state is not None and _leaveactions_run is True:
+                        self.__logger.info("Left {0} ('{1}')", last_state.id, last_state.name)
+                        if last_state.leaveactions.count() > 0:
+                            self.__logger.info("Maybe some actions were performed directly after leave - see log above.")
+                    elif last_state is not None:
+                        self.lastconditionset_set(_original_conditionset_id, _original_conditionset_name)
+                        self.__logger.info("Leaving {0} ('{1}'). Condition set was: {2}", last_state.id, last_state.name, _original_conditionset_id)
+                        last_state.run_leave(self.__repeat_actions.get())
+                        _leaveactions_run = True
+                    if new_state.conditions.count() == 0:
+                        self.lastconditionset_set('', '')
+                        _last_conditionset_id = ''
+                        _last_conditionset_name = ''
+                    else:
+                        self.lastconditionset_set(_last_conditionset_id, _last_conditionset_name)
+                    if _last_conditionset_id in ['', None]:
+                        self.__logger.info("Entering {0} ('{1}')", new_state.id, new_state.name)
+                    else:
+                        self.__logger.info("Entering {0} ('{1}') based on conditionset {2} ('{3}')",
+                                           new_state.id, new_state.name, _last_conditionset_id, _last_conditionset_name)
+                    self.__laststate_set(new_state)
+                    new_state.run_enter(self.__repeat_actions.get())
+                if _leaveactions_run is True:
+                    _key_leave = ['{}'.format(last_state.id), 'leave']
+                    _key_stay = ['{}'.format(last_state.id), 'stay']
+                    _key_enter = ['{}'.format(last_state.id), 'enter']
+                    self.update_webif(_key_leave, True)
+                    self.update_webif(_key_stay, False)
+                    self.update_webif(_key_enter, False)
+
+                self.__logger.info("State evaluation finished")
+        self.__logger.info("State evaluation queue empty.")
+        if self._update_lock.locked():
+            self._update_lock.release()
 
     def update_webif(self, key, value):
         def _nested_set(dic, keys, val):
@@ -239,152 +355,12 @@ class SeItem:
     # caller: Caller that triggered the update
     # noinspection PyCallingNonCallable,PyUnusedLocal
     def update_state(self, item, caller=None, source=None, dest=None):
-        if self.__update_in_progress or not self.__startup_delay_over:
+        if not self.__startup_delay_over:
+            self.__logger.debug("Startup delay not over yet. Skipping state evaluation")
             return
 
-        i = 0
-        item_id = item.property.path if item is not None else "(no item)"
-        while len(self.__action_in_progress) > 0:
-            self.__logger.info("Action {} is still running. Postponing current state evaluation for {} for one second", self.__action_in_progress, item_id)
-            i += 1
-            time.sleep(1)
-            if i >= 10:
-                self.__logger.warning("10 seconds wait time for item {} is over. Running state evaluation now.", item_id)
-                break
-
-        self.__update_in_progress = True
-        self.__stateeval_in_progress = True
-
-        self.__logger.update_logfile()
-        postponed = " (postponed {}s)".format(i) if i > 0 else ""
-        i = 0
-        self.__logger.header("Update state of item {0}{1}".format(self.__name, postponed))
-        if caller:
-            self.__logger.debug("Update triggered by {0} (item={1} source={2} dest={3})", caller, item_id, source, dest)
-
-        # Find out what initially caused the update to trigger if the caller is "Eval"
-        orig_caller, orig_source, orig_item = StateEngineTools.get_original_caller(self.sh, caller, source, item)
-        if orig_caller != caller:
-            text = "Eval initially triggered by {0} (item={1} source={2})"
-            self.__logger.debug(text, orig_caller, orig_item.property.path, orig_source)
-        cond1 = orig_caller == StateEngineDefaults.plugin_identification
-        cond2 = caller == StateEngineDefaults.plugin_identification
-        cond1_2 = orig_source == item_id
-        cond2_2 = source == item_id
-        if (cond1 and cond1_2) or (cond2 and cond2_2):
-            self.__logger.debug("Ignoring changes from {0}", StateEngineDefaults.plugin_identification)
-            self.__update_in_progress = False
-            self.__stateeval_in_progress = False
-            return
-
-        self.__update_trigger_item = item.property.path
-        self.__update_trigger_caller = caller
-        self.__update_trigger_source = source
-        self.__update_trigger_dest = dest
-        self.__update_original_item = orig_item.property.path
-        self.__update_original_caller = orig_caller
-        self.__update_original_source = orig_source
-
-        # Update current values
-        StateEngineCurrent.update()
-        self.__variables["item.suspend_time"] = self.__suspend_time.get()
-        self.__variables["item.suspend_remaining"] = -1
-
-        # get last state
-        last_state = self.__laststate_get()
-        if last_state is not None:
-            self.__logger.info("Last state: {0} ('{1}')", last_state.id, last_state.name)
-
-        _last_conditionset_id = self.__lastconditionset_get_id()
-        _last_conditionset_name = self.__lastconditionset_get_name()
-        if _last_conditionset_id not in ['', None]:
-            self.__logger.info("Last Conditionset: {0} ('{1}')", _last_conditionset_id, _last_conditionset_name)
-        _original_conditionset_id = _last_conditionset_id
-        _original_conditionset_name = _last_conditionset_name
-
-        # find new state
-        new_state = None
-        _leaveactions_run = False
-        for state in self.__states:
-            result = self.__update_check_can_enter(state)
-            # New state is different from last state
-            if result is False and last_state == state and StateEngineDefaults.instant_leaveaction is True:
-                self.__logger.info("Leaving {0} ('{1}'). Running actions immediately.", last_state.id, last_state.name)
-                self.__stateeval_in_progress = False
-                last_state.run_leave(self.__repeat_actions.get())
-                self.__stateeval_in_progress = True
-                _leaveactions_run = True
-            if result is True:
-                new_state = state
-                break
-
-        # no new state -> stay
-        if new_state is None:
-            if last_state is None:
-                self.__logger.info("No matching state found, no previous state available. Doing nothing.")
-            else:
-                if _last_conditionset_id in ['', None]:
-                    text = "No matching state found, staying at {0} ('{1}')"
-                    self.__logger.info(text, last_state.id, last_state.name)
-                else:
-                    text = "No matching state found, staying at {0} ('{1}') based on conditionset {2} ('{3}')"
-                    self.__logger.info(text, last_state.id, last_state.name, _last_conditionset_id, _last_conditionset_name)
-                last_state.run_stay(self.__repeat_actions.get())
-            self.__update_in_progress = False
-            self.__stateeval_in_progress = False
-            return
-        _last_conditionset_id = self.__lastconditionset_get_id()
-        _last_conditionset_name = self.__lastconditionset_get_name()
-        # get data for new state
-        if last_state is not None and new_state.id == last_state.id:
-            if _last_conditionset_id in ['', None]:
-                self.__logger.info("Staying at {0} ('{1}')", new_state.id, new_state.name)
-            else:
-                self.__logger.info("Staying at {0} ('{1}') based on conditionset {2} ('{3}')",
-                                   new_state.id, new_state.name, _last_conditionset_id, _last_conditionset_name)
-            self.__stateeval_in_progress = False
-            # New state is last state
-            if self.__laststate_internal_name != new_state.name:
-                self.__laststate_set(new_state)
-            new_state.run_stay(self.__repeat_actions.get())
-
-        else:
-            if last_state is not None and _leaveactions_run is True:
-                self.__logger.info("Left {0} ('{1}')", last_state.id, last_state.name)
-                if last_state.leaveactions.count() > 0:
-                    self.__logger.info("Maybe some actions were performed directly after leave - see log above.")
-            elif last_state is not None:
-                self.lastconditionset_set(_original_conditionset_id, _original_conditionset_name)
-                self.__logger.info("Leaving {0} ('{1}'). Condition set was: {2}", last_state.id, last_state.name, _original_conditionset_id)
-                self.__stateeval_in_progress = False
-                last_state.run_leave(self.__repeat_actions.get())
-                self.__stateeval_in_progress = True
-                _leaveactions_run = True
-            if new_state.conditions.count() == 0:
-                self.lastconditionset_set('', '')
-                _last_conditionset_id = ''
-                _last_conditionset_name = ''
-            else:
-                self.lastconditionset_set(_last_conditionset_id, _last_conditionset_name)
-            if _last_conditionset_id in ['', None]:
-                self.__logger.info("Entering {0} ('{1}')", new_state.id, new_state.name)
-            else:
-                self.__logger.info("Entering {0} ('{1}') based on conditionset {2} ('{3}')",
-                                   new_state.id, new_state.name, _last_conditionset_id, _last_conditionset_name)
-            self.__laststate_set(new_state)
-            self.__stateeval_in_progress = False
-            new_state.run_enter(self.__repeat_actions.get())
-        if _leaveactions_run is True:
-            _key_leave = ['{}'.format(last_state.id), 'leave']
-            _key_stay = ['{}'.format(last_state.id), 'stay']
-            _key_enter = ['{}'.format(last_state.id), 'enter']
-            self.update_webif(_key_leave, True)
-            self.update_webif(_key_stay, False)
-            self.update_webif(_key_enter, False)
-            #self.__logger.debug('set leave for {} to true', last_state.id)
-
-        self.__update_in_progress = False
-        self.__stateeval_in_progress = False
+        self.__queue.put(["stateevaluation", item, caller, source, dest])
+        self.run_queue()
 
     # check if state can be entered after setting state-specific variables
     # state: state to check
