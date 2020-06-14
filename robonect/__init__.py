@@ -113,7 +113,7 @@ class Robonect(MqttPlugin):
                 mqtt_id = self.get_iattr_value(item.conf, 'robonect_data_type')
                 payload_type = item.property.type
                 topic = 'Robonect/' + mqtt_id
-                #if mqtt_id == 'mower/stopped':
+                # if mqtt_id == 'mower/stopped':
                 #    bool_values = ['false','true']
                 if mqtt_id == 'mower/status':
                     callback = self.on_mode_change
@@ -177,8 +177,9 @@ class Robonect(MqttPlugin):
 
     def on_mode_change(self, topic, payload, qos=None, retain=None):
         if payload is not None:
-            self.logger.debug("on_mode_change: setting mode as %s" %self.get_mode_as_text(payload))
-            self._items['status_text'](self.get_mode_as_text(payload))
+            self.logger.debug(
+                "on_mode_change: setting mode via mqtt as %s: %s" % (payload, self.get_mode_as_text(int(payload))))
+            self._items['status_text'](self.get_mode_as_text(int(payload)))
 
     def get_mode_as_text(self, mode):
         """
@@ -215,7 +216,7 @@ class Robonect(MqttPlugin):
     def get_battery_data(self):
         try:
             self.logger.debug("Plugin '{}': Requesting battery data".format(
-                        self.get_fullname()))
+                self.get_fullname()))
             response = self._session.get(self._base_url + 'battery', auth=HTTPBasicAuth(self._user, self._password))
             self.logger.debug(response.content)
         except Exception as e:
@@ -235,19 +236,24 @@ class Robonect(MqttPlugin):
 
         if 'battery_id' in self._battery_items:
             for item in self._battery_items['battery_id']:
-                item(json_obj['batteries'][int(self.get_iattr_value(item.conf, 'robonect_battery_index'))]['id'], self.get_shortname())
+                item(json_obj['batteries'][int(self.get_iattr_value(item.conf, 'robonect_battery_index'))]['id'],
+                     self.get_shortname())
         if 'battery_charge' in self._battery_items:
             for item in self._battery_items['battery_charge']:
-                item(json_obj['batteries'][int(self.get_iattr_value(item.conf, 'robonect_battery_index'))]['charge'], self.get_shortname())
+                item(json_obj['batteries'][int(self.get_iattr_value(item.conf, 'robonect_battery_index'))]['charge'],
+                     self.get_shortname())
         if 'battery_voltage' in self._battery_items:
             for item in self._battery_items['battery_voltage']:
-                item(json_obj['batteries'][int(self.get_iattr_value(item.conf, 'robonect_battery_index'))]['voltage'], self.get_shortname())
+                item(json_obj['batteries'][int(self.get_iattr_value(item.conf, 'robonect_battery_index'))]['voltage'],
+                     self.get_shortname())
         if 'battery_current' in self._battery_items:
             for item in self._battery_items['battery_current']:
-                item(json_obj['batteries'][int(self.get_iattr_value(item.conf, 'robonect_battery_index'))]['current'], self.get_shortname())
+                item(json_obj['batteries'][int(self.get_iattr_value(item.conf, 'robonect_battery_index'))]['current'],
+                     self.get_shortname())
         if 'battery_temperature' in self._battery_items:
             for item in self._battery_items['battery_temperature']:
-                item(json_obj['batteries'][int(self.get_iattr_value(item.conf, 'robonect_battery_index'))]['temperature'], self.get_shortname())
+                item(json_obj['batteries'][int(self.get_iattr_value(item.conf, 'robonect_battery_index'))][
+                         'temperature'], self.get_shortname())
         if 'battery_capacity_full' in self._battery_items:
             for item in self._battery_items['battery_capacity_full']:
                 item(json_obj['batteries'][int(self.get_iattr_value(item.conf, 'robonect_battery_index'))]['capacity'][
@@ -343,7 +349,7 @@ class Robonect(MqttPlugin):
             self._items['mower/stopped'](self.to_bool(json_obj['status']['stopped'], self.get_shortname()))
         if 'mower/status/duration' in self._items:
             # round to minutes, as mqtt is also returning minutes instead of seconds
-            self._items['mower/status/duration'](math.floor(json_obj['status']['duration']/60), self.get_shortname())
+            self._items['mower/status/duration'](math.floor(json_obj['status']['duration'] / 60), self.get_shortname())
         if 'mower/mode' in self._items:
             self._items['mower/mode'](json_obj['status']['mode'], self.get_shortname())
         if 'status_battery' in self._items:
