@@ -195,6 +195,8 @@ class Robonect(MqttPlugin):
             return 'HOME'
         elif mode == 3:
             return 'DEMO'
+        else:
+            return None
 
     def get_status_as_text(self, status):
         """
@@ -225,10 +227,8 @@ class Robonect(MqttPlugin):
             return 'OFF'
         elif status == 17:
             return 'SLEEPING'
-        elif status == 98:
-            return 'OFFLINE'
-        elif status == 99:
-            return 'UNKNOWN'
+        else:
+            return None
 
     def get_battery_data(self):
         try:

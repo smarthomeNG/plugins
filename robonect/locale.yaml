@@ -11,3 +11,18 @@ plugin_translations:
     'Benutzer':  {'de': '=', 'en': 'User', 'fr': ''}
     'Passwort':  {'de': '=', 'en': 'Password', 'fr': ''}
     'Status':  {'de': '=', 'en': 'Status', 'fr': ''}
+    'AUTO':  {'de': 'Auto', 'en': 'Auto', 'fr': ''}
+    'MANUAL':  {'de': 'Manuell', 'en': 'Manual', 'fr': ''}
+    'HOME':  {'de': 'Home', 'en': 'Home', 'fr': ''}
+    'DEMO':  {'de': 'Demo', 'en': 'Demo', 'fr': ''}
+    'DETECTING_STATUS':  {'de': 'Status wird ermittelt', 'en': '=', 'fr': ''}
+    'PARKING':  {'de': 'Automower parkt', 'en': 'Automower parking', 'fr': ''}
+    'MOWING':  {'de': 'Automower mäht', 'en': 'Automower mowing', 'fr': ''}
+    'SEARCH_CHARGING_STATION':  {'de': 'Automower sucht die Ladestation', 'en': 'Automower searching charging station', 'fr': ''}
+    'CHARGING':  {'de': 'Automower lädt', 'en': 'Automower charging', 'fr': ''}
+    'SEARCHING':  {'de': 'Automower sucht (wartet auf das Umsetzen im manuellen Modus)', 'en': '=', 'fr': ''}
+    'UNKNOWN_6':  {'de': '=', 'en': '=', 'fr': '='}
+    'ERROR_STATUS':  {'de': 'Fehlerstatus', 'en': 'Error status', 'fr': ''}
+    'LOST_SIGNAL':  {'de': 'Schleifensignal verloren', 'en': 'Lost Signal', 'fr': ''}
+    'OFF':  {'de': 'Automower abgeschaltet', 'en': 'Automower turned off', 'fr': ''}
+    'SLEEPING':  {'de': 'Automower schläft', 'en': 'Automower Sleeping', 'fr': ''}

@@ -116,22 +116,9 @@
                 <td class="py-1">{{ item.property.type }}</td>
                 <td class="py-1">{{ key }}</td>
                 <td id="{{ item.id() }}_value" class="py-1">
-                    {{ item() }}{% if key == 'mower/status' %}: {% if item() == 0 %}Status wird ermittelt
-                        {% elif item() == 1 %}Automower parkt
-                        {% elif item() == 2 %}Automower mäht
-                        {% elif item() == 3 %}Automower sucht die Ladestation
-                        {% elif item() == 4 %}Automower lädt
-                        {% elif item() == 5 %}Automower sucht (wartet auf das Umsetzen im manuellen Modus)
-                        {% elif item() == 7 %}Fehlerstatus
-                        {% elif item() == 8 %}Schleifensignal verloren
-                        {% elif item() == 16 %}Automower abgeschaltet
-                        {% elif item() == 17 %}Automower schläft
-                        {% endif %}
-                    {% elif key == 'mower/mode' %}: {% if item() == 0 %}Auto
-                        {% elif item() == 1 %}Manuell
-                        {% elif item() == 2 %}Home
-                        {% elif item() == 3 %}Demo
-                        {% endif %}
+                    {{ item() }}
+                    {% if key in ['mower/mode', 'mower/status'] %}
+                        {{ _(p.get_items()[key+'/text']()) }}
                     {% endif %}
                 </td>
                 <td id="{{ item.id() }}_last_update" class="py-1">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
@@ -147,25 +134,6 @@
                 <td class="py-1">{{ key }}</td>
                 <td id="{{ item.id() }}_value" class="py-1">
                     {{ item() }}
-                    {% if key == 'mower/status' %}
-                        : {% if item() == 0 %}Status wird ermittelt
-                        {% elif item() == 1 %}Automower parkt
-                        {% elif item() == 2 %}Automower mäht
-                        {% elif item() == 3 %}Automower sucht die Ladestation
-                        {% elif item() == 4 %}Automower lädt
-                        {% elif item() == 5 %}Automower sucht (wartet auf das Umsetzen im manuellen Modus)
-                        {% elif item() == 7 %}Fehlerstatus
-                        {% elif item() == 8 %}Schleifensignal verloren
-                        {% elif item() == 16 %}Automower abgeschaltet
-                        {% elif item() == 17 %}Automower schläft
-                        {% endif %}
-                    {% elif key == 'mower/mode' %}
-                        : {% if item() == 0 %}Auto
-                        {% elif item() == 1 %}Manuell
-                        {% elif item() == 2 %}Home
-                        {% elif item() == 3 %}Demo
-                        {% endif %}
-                    {% endif %}
                 </td>
                 <td id="{{ item.id() }}_last_update" class="py-1">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
                 <td id="{{ item.id() }}_last_change" class="py-1">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
