@@ -204,12 +204,14 @@ class Robonect(MqttPlugin):
             return 'UNKNOWN_6'
         elif mode == 7:
             return 'ERROR_STATUS'
+        elif mode == 8:
+            return 'LOST_SIGNAL'
         elif mode == 16:
             return 'OFF'
         elif mode == 17:
             return 'SLEEPING'
         elif mode == 98:
-            return 'OFFLINE(Binding cannot connect to mower)'
+            return 'OFFLINE'
         elif mode == 99:
             return 'UNKNOWN'
 
