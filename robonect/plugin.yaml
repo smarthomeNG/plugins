@@ -136,7 +136,7 @@ item_structs:
                 type: num
 
             status_text:
-                name: 'Mode of the Mower as Text'
+                name: 'Status of the Mower as Text'
                 type: str
                 robonect_data_type: status_text
 
@@ -157,6 +157,11 @@ item_structs:
                 name: 'Mode of the Mower'
                 robonect_data_type: mower/mode
                 type: num
+
+            mode_text:
+                name: 'Mode of the Mower as Text'
+                type: str
+                robonect_data_type: mode_text
 
             battery:
                 name: 'Battery Level in %'

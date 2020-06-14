@@ -175,44 +175,59 @@ class Robonect(MqttPlugin):
         self.get_battery_data()
         return
 
-    def on_mode_change(self, topic, payload, qos=None, retain=None):
+    def on_change(self, topic, payload, qos=None, retain=None):
         if payload is not None:
-            self.logger.debug(
-                "on_mode_change: setting mode via mqtt as %s: %s" % (payload, self.get_mode_as_text(int(payload))))
-            self._items['status_text'](self.get_mode_as_text(int(payload)))
+            if topic == '':
+                self.logger.debug(
+                    "on_change: setting mode via mqtt as %s: %s" % (payload, self.get_status_as_text(int(payload))))
+                self._items['status_text'](self.get_status_as_text(int(payload)))
+            elif topic == '':
+                self.logger.debug(
+                    "on_change: setting mode via mqtt as %s: %s" % (payload, self.get_status_as_text(int(payload))))
+                self._items['mode_text'](self.get_mode_as_text(int(payload)))
 
     def get_mode_as_text(self, mode):
+        if mode == 0:
+            return 'HOME'
+        elif mode == 1:
+            return 'AUTO'
+        elif mode == 2:
+            return 'MANUAL'
+        elif mode == 3:
+            return 'EOD'
+
+    def get_status_as_text(self, status):
         """
         Returns the mode as short english text.
 
         :param mode: Mode as integer
         :return: Mode as string
         """
-        if mode == 0:
+        if status == 0:
             return 'DETECTING_STATUS'
-        elif mode == 1:
+        elif status == 1:
             return 'PARKING'
-        elif mode == 2:
+        elif status == 2:
             return 'MOWING'
-        elif mode == 3:
+        elif status == 3:
             return 'SEARCH_CHARGING_STATION'
-        elif mode == 4:
+        elif status == 4:
             return 'CHARGING'
-        elif mode == 5:
+        elif status == 5:
             return 'SEARCHING'
-        elif mode == 6:
+        elif status == 6:
             return 'UNKNOWN_6'
-        elif mode == 7:
+        elif status == 7:
             return 'ERROR_STATUS'
-        elif mode == 8:
+        elif status == 8:
             return 'LOST_SIGNAL'
-        elif mode == 16:
+        elif status == 16:
             return 'OFF'
-        elif mode == 17:
+        elif status == 17:
             return 'SLEEPING'
-        elif mode == 98:
+        elif status == 98:
             return 'OFFLINE'
-        elif mode == 99:
+        elif status == 99:
             return 'UNKNOWN'
 
     def get_battery_data(self):
@@ -344,7 +359,7 @@ class Robonect(MqttPlugin):
             self._items['robonect_id'](json_obj['id'], self.get_shortname())
         if 'mower/status' in self._items:
             self._items['mower/status'](json_obj['status']['status'], self.get_shortname())
-            self._items['status_text'](self.get_mode_as_text(self._items['mower/status']()))
+            self._items['status_text'](self.get_status_as_text(self._items['mower/status']()))
         if 'status_distance' in self._items:
             self._items['status_distance'](json_obj['status']['distance'], self.get_shortname())
         if 'mower/stopped' in self._items:
@@ -354,6 +369,7 @@ class Robonect(MqttPlugin):
             self._items['mower/status/duration'](math.floor(json_obj['status']['duration'] / 60), self.get_shortname())
         if 'mower/mode' in self._items:
             self._items['mower/mode'](json_obj['status']['mode'], self.get_shortname())
+            self._items['mode_text'](self.get_status_as_text(self._items['mower/mode']()))
         if 'status_battery' in self._items:
             self._items['status_battery'](json_obj['status']['battery'], self.get_shortname())
         if 'status_hours' in self._items:
