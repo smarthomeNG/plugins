@@ -50,7 +50,7 @@ class Database(SmartPlugin):
     """
 
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = '1.5.13'
+    PLUGIN_VERSION = '1.5.14'
 
     # SQL queries: {item} = item table name, {log} = log table name
     # time, item_id, val_str, val_num, val_bool, changed
@@ -895,8 +895,9 @@ class Database(SmartPlugin):
             else:
                 for frame in dts.split(' '):
                     duration += self._parse_single(frame)
-        else:
-            duration = self._parse_single(dts)
+
+        if duration < 0:
+            duration = 0
 
         ts = ts - int(duration)
         return ts
