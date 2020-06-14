@@ -245,7 +245,7 @@ In den Beispielen wurden also die relativen Items suspend, manuell und retrigger
 .. rubric:: Zusätzliche Parameter
    :name: parameter
 
-**delay: <delay>**
+**delay: <int>**
 
 Über den optionalen Parameter ``<delay>`` wird die Verzögerung angegeben, nach der die
 Aktion ausgeführt werden soll.
@@ -261,7 +261,30 @@ Der Timer zur Ausführung der Aktion nach der angegebenen
 Verzögerung wird entfernt, wenn eine gleichartige Aktion
 ausgeführt werden soll (egal ob verzögert oder nicht).
 
-**repeat: <repeat>**
+**instanteval: <bool>**
+
+Über den optionalen Parameter ``<instanteval>`` wird für verzögerte Aktionen angegeben,
+ob etwaige eval Ausdrücke sofort evaluiert und gespeichert werden sollen oder
+die Evaluierung erst zum Ausführungszeitpunkt stattfinden soll.
+
+.. code-block:: yaml
+
+       'instanteval: [True|False]'
+
+Beispiel: Ein Item soll auf einen Wert aus einem Item gesetzt werden. Das Item wird
+anhand des gerade aktuellen Zustands durch ein eval eruiert:
+
+.. code-block:: yaml
+
+        eval:sh.return_item(se_eval.get_relative_itemid('..settings.{}'.format(se_eval.get_relative_itemvalue('..state_name'))))()
+
+Angenommen, der aktuelle Zustand heißt ``regen``, so wird durch den obigen Code das Item
+auf den Wert aus ``settings.regen`` gesetzt. Ändert sich aber während der Verzögerungszeit (delay)
+der Zustand auf ``sonne``, würde zum Ausführungszeitpunkt der Aktion der Wert aus dem Item ``settings.sonne``
+herangezogen werden. Wenn dies nicht erwünscht ist und das Item also auf den Vorgabewert des
+ursprünglichen Zustands (regen) gesetzt werden soll, kann der Parameter ``instanteval: True`` gesetzt werden.
+
+**repeat: <bool>**
 
 .. code-block:: yaml
 
@@ -271,7 +294,7 @@ ausgeführt werden soll (egal ob verzögert oder nicht).
 stateengine Item festgelegt, ob eine Aktion auch beim erneuten
 Eintritt in den Status ausgeführt wird oder nicht.
 
-**order: <order>**
+**order: <int>**
 
 Die Reihenfolge, in der die Aktionen ausgeführt werden, ist nicht
 zwingend die Reihenfolge in der die Attribute definiert sind. In
