@@ -188,13 +188,13 @@ class Robonect(MqttPlugin):
 
     def get_mode_as_text(self, mode):
         if mode == 0:
-            return 'HOME'
-        elif mode == 1:
             return 'AUTO'
-        elif mode == 2:
+        elif mode == 1:
             return 'MANUAL'
+        elif mode == 2:
+            return 'HOME'
         elif mode == 3:
-            return 'EOD'
+            return 'DEMO'
 
     def get_status_as_text(self, status):
         """
