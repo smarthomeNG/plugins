@@ -369,7 +369,7 @@ class Robonect(MqttPlugin):
             self._items['mower/status/duration'](math.floor(json_obj['status']['duration'] / 60), self.get_shortname())
         if 'mower/mode' in self._items:
             self._items['mower/mode'](json_obj['status']['mode'], self.get_shortname())
-            self._items['mower/mode/text'](self.get_status_as_text(self._items['mower/mode']()))
+            self._items['mower/mode/text'](self.get_mode_as_text(self._items['mower/mode']()))
         if 'status_battery' in self._items:
             self._items['status_battery'](json_obj['status']['battery'], self.get_shortname())
         if 'status_hours' in self._items:
