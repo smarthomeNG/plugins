@@ -138,7 +138,7 @@ item_structs:
             status_text:
                 name: 'Status of the Mower as Text'
                 type: str
-                robonect_data_type: status_text
+                robonect_data_type: mower/status/text
 
             distance:
                 robonect_data_type: status_distance
@@ -161,7 +161,7 @@ item_structs:
             mode_text:
                 name: 'Mode of the Mower as Text'
                 type: str
-                robonect_data_type: mode_text
+                robonect_data_type: mower/mode/text
 
             battery:
                 name: 'Battery Level in %'

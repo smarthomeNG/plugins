@@ -180,11 +180,11 @@ class Robonect(MqttPlugin):
             if topic == '':
                 self.logger.debug(
                     "on_change: setting mode via mqtt as %s: %s" % (payload, self.get_status_as_text(int(payload))))
-                self._items['status_text'](self.get_status_as_text(int(payload)))
+                self._items['mower/status/text'](self.get_status_as_text(int(payload)))
             elif topic == '':
                 self.logger.debug(
                     "on_change: setting mode via mqtt as %s: %s" % (payload, self.get_status_as_text(int(payload))))
-                self._items['mode_text'](self.get_mode_as_text(int(payload)))
+                self._items['mower/mode/text'](self.get_mode_as_text(int(payload)))
 
     def get_mode_as_text(self, mode):
         if mode == 0:
@@ -359,7 +359,7 @@ class Robonect(MqttPlugin):
             self._items['robonect_id'](json_obj['id'], self.get_shortname())
         if 'mower/status' in self._items:
             self._items['mower/status'](json_obj['status']['status'], self.get_shortname())
-            self._items['status_text'](self.get_status_as_text(self._items['mower/status']()))
+            self._items['mower/status/text'](self.get_status_as_text(self._items['mower/status']()))
         if 'status_distance' in self._items:
             self._items['status_distance'](json_obj['status']['distance'], self.get_shortname())
         if 'mower/stopped' in self._items:
@@ -369,7 +369,7 @@ class Robonect(MqttPlugin):
             self._items['mower/status/duration'](math.floor(json_obj['status']['duration'] / 60), self.get_shortname())
         if 'mower/mode' in self._items:
             self._items['mower/mode'](json_obj['status']['mode'], self.get_shortname())
-            self._items['mode_text'](self.get_status_as_text(self._items['mower/mode']()))
+            self._items['mower/mode/text'](self.get_status_as_text(self._items['mower/mode']()))
         if 'status_battery' in self._items:
             self._items['status_battery'](json_obj['status']['battery'], self.get_shortname())
         if 'status_hours' in self._items:
