@@ -419,8 +419,6 @@ item_structs:
             type: bool
             se_plugin: active
             eval: True
-            eval_trigger:
-                - ..retrigger
 
             # se_startup_delay: 30
             # se_repeat_actions: true
