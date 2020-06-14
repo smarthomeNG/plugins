@@ -1,6 +1,8 @@
 {% extends "base_plugin.html" %}
 {% set update_interval = 3000 %}
 {% set logo_frame = false %}
+{% set status_array = [0,1,2,3,4,5,6,7,8,16,17] %}
+{% set mode_array = [0,1,2,3] %}
 
 {% block pluginscripts %}
 <script>
@@ -8,50 +10,20 @@
         if (dataSet === null) {
             var objResponse = JSON.parse(response);
             {% for key, item in p.get_items().items() %}
-                if ('{{key}}' == 'mower/status') {
-                    if (objResponse['{{ item.id() }}_value'] == 0)
-                        shngInsertText('{{ item.id() }}_value', objResponse['{{ item.id() }}_value'] + ': Status wird ermittelt');
-                    if (objResponse['{{ item.id() }}_value'] == 1)
-                        shngInsertText('{{ item.id() }}_value', objResponse['{{ item.id() }}_value'] + ': Automower parkt');
-                    if (objResponse['{{ item.id() }}_value'] == 2)
-                        shngInsertText('{{ item.id() }}_value', objResponse['{{ item.id() }}_value'] + ': Automower mäht');
-                    if (objResponse['{{ item.id() }}_value'] == 3)
-                        shngInsertText('{{ item.id() }}_value', objResponse['{{ item.id() }}_value'] + ': Automower sucht die Ladestation');
-                    if (objResponse['{{ item.id() }}_value'] == 4)
-                        shngInsertText('{{ item.id() }}_value', objResponse['{{ item.id() }}_value'] + ': Automower lädt');
-                    if (objResponse['{{ item.id() }}_value'] == 5)
-                        shngInsertText('{{ item.id() }}_value', objResponse['{{ item.id() }}_value'] + ': Automower sucht (wartet auf das Umsetzen im manuellen Modus)');
-                    if (objResponse['{{ item.id() }}_value'] == 7)
-                        shngInsertText('{{ item.id() }}_value', objResponse['{{ item.id() }}_value'] + ': Fehlerstatus');
-                    if (objResponse['{{ item.id() }}_value'] == 8)
-                        shngInsertText('{{ item.id() }}_value', objResponse['{{ item.id() }}_value'] + ': Schleifensignal verloren');
-                    if (objResponse['{{ item.id() }}_value'] == 16)
-                        shngInsertText('{{ item.id() }}_value', objResponse['{{ item.id() }}_value'] + ': Automower abgeschaltet');
-                    if (objResponse['{{ item.id() }}_value'] == 17)
-                        shngInsertText('{{ item.id() }}_value', objResponse['{{ item.id() }}_value'] + ': Automower schläft');
-
-                } else if ('{{key}}' == 'mower/mode') {
-                    if (objResponse['{{ item.id() }}_value'] == 0)
-                        shngInsertText('{{ item.id() }}_value', objResponse['{{ item.id() }}_value'] + ': Auto');
-                    if (objResponse['{{ item.id() }}_value'] == 1)
-                        shngInsertText('{{ item.id() }}_value', objResponse['{{ item.id() }}_value'] + ': Manuell');
-                    if (objResponse['{{ item.id() }}_value'] == 2)
-                        shngInsertText('{{ item.id() }}_value', objResponse['{{ item.id() }}_value'] + ': Home');
-                    if (objResponse['{{ item.id() }}_value'] == 3)
-                        shngInsertText('{{ item.id() }}_value', objResponse['{{ item.id() }}_value'] + ': Demo');
-                } else {
-                    shngInsertText('{{ item.id() }}_value', objResponse['{{ item.id() }}_value'])
-                }
+                {% if key == 'mower/status' %}{%  for i in status_array %}
+                        if (objResponse['{{ item.id() }}_value'] == {{ i }}) {
+                            shngInsertText('{{ item.id() }}_value', objResponse['{{ item.id() }}_value'] + ' ({{ _(p.get_status_as_text(i)) }})'); }
+                {% endfor %}{% elif key == 'mower/mode' %}{%  for i in mode_array %}
+                        if (objResponse['{{ item.id() }}_value'] == {{ i }}) {
+                            shngInsertText('{{ item.id() }}_value', objResponse['{{ item.id() }}_value'] + ' ({{ _(p.get_mode_as_text(i)) }})'); }
+                {% endfor %}{% else %}shngInsertText('{{ item.id() }}_value', objResponse['{{ item.id() }}_value']){% endif %}
             shngInsertText ('{{ item.id() }}_last_update', objResponse['{{ item.id() }}_last_update'])
             shngInsertText ('{{ item.id() }}_last_change', objResponse['{{ item.id() }}_last_change'])
-            {% endfor %}
-            {% for key, items in p.get_battery_items().items() %}
-                {%  for item in items %}
-                    shngInsertText('{{ item.id() }}_value', objResponse['{{ item.id() }}_value'])
-                    shngInsertText ('{{ item.id() }}_last_update', objResponse['{{ item.id() }}_last_update'])
-                    shngInsertText ('{{ item.id() }}_last_change', objResponse['{{ item.id() }}_last_change'])
-                {% endfor %}
-            {% endfor %}
+            {% endfor %}{% for key, items in p.get_battery_items().items() %}{%  for item in items %}
+                shngInsertText('{{ item.id() }}_value', objResponse['{{ item.id() }}_value'])
+                shngInsertText ('{{ item.id() }}_last_update', objResponse['{{ item.id() }}_last_update'])
+                shngInsertText ('{{ item.id() }}_last_change', objResponse['{{ item.id() }}_last_change'])
+            {% endfor %}{% endfor %}
         }
     }
 </script>
@@ -116,9 +88,7 @@
                 <td class="py-1">{{ item.property.type }}</td>
                 <td class="py-1">{{ key }}</td>
                 <td id="{{ item.id() }}_value" class="py-1">
-                    {{ item() }}
-                    {% if key in ['mower/mode', 'mower/status'] %}
-                        {{ _(p.get_items()[key+'/text']()) }}
+                    {{ item() }}{% if key in ['mower/mode', 'mower/status'] %} ({{ _(p.get_items()[key+'/text']()) }})
                     {% endif %}
                 </td>
                 <td id="{{ item.id() }}_last_update" class="py-1">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
