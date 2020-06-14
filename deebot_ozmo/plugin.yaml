@@ -227,7 +227,6 @@ plugin_functions:
             de: "Deebot lokalisieren"
             en: "Locate Deebot"
             fr: "Trouver Deebot"
-        parameters: NONE
 
     clean:
         type: bool
@@ -235,7 +234,6 @@ plugin_functions:
             de: "Reinigung starten"
             en: "Start cleaning"
             fr: "Démarrer le nettoyage"
-        parameters: NONE
 
     clean_spot_area:
         type: bool
@@ -257,7 +255,7 @@ plugin_functions:
             de: "Reinigung pausieren"
             en: "Pause cleaning"
             fr: "Mettre en pause le nettoyage"
-        parameters: NONE
+
 
     resume:
         type: bool
@@ -265,7 +263,7 @@ plugin_functions:
             de: "Reinigung fortführen"
             en: "Resume cleaning"
             fr: "Continuer le nettoyage"
-        parameters: NONE
+
 
     charge:
         type: bool
