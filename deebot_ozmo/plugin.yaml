@@ -220,8 +220,85 @@ item_structs:
             deebot_ozmo@instance: cmd_locate
     
 
-plugin_functions: NONE
-    # Definition of plugin functions defined by this plugin (enter 'plugin_functions: NONE', if section should be empty)
+plugin_functions:
+    locate:
+        type: bool
+        description:
+            de: "Deebot lokalisieren"
+            en: "Locate Deebot"
+            fr: "Trouver Deebot"
+
+    clean:
+        type: bool
+        description:
+            de: "Reinigung starten"
+            en: "Start cleaning"
+            fr: "Démarrer le nettoyage"
+
+    clean_spot_area:
+        type: bool
+        description:
+            de: "Reinigung starten"
+            en: "Start cleaning"
+            fr: "Démarrer le nettoyage"
+        parameters:
+            area:
+                type: num
+                description:
+                    de: 'ID des Raumes der geputzt werden soll'
+                    en: 'ID of room to be cleaned'
+                    fr: 'ID de la pièce à nettoyer'
+
+    pause:
+        type: bool
+        description:
+            de: "Reinigung pausieren"
+            en: "Pause cleaning"
+            fr: "Mettre en pause le nettoyage"
+
+
+    resume:
+        type: bool
+        description:
+            de: "Reinigung fortführen"
+            en: "Resume cleaning"
+            fr: "Continuer le nettoyage"
+
+
+    charge:
+        type: bool
+        description:
+            de: "Zur Ladestation zurückkehren"
+            en: "Return to charging station"
+            fr: "Retourner au chargeur"
+
+    set_fan_speed:
+        type: bool
+        description:
+            de: "Saugstärke einstellen"
+            en: "Set suction power"
+            fr: "Regler la puissance d'aspiration"
+        parameters:
+            speed:
+                type: num
+                description:
+                    de: "Saugstärke"
+                    en: "Suction power"
+                    fr: "Puissance d'aspiration"   
+            
+    set_water_level:
+        type: bool
+        description:
+            de: "Wasser Quantität einstellen"
+            en: "Set water quantity"
+            fr: "Regler la quantité d'eau"
+        parameters:
+            level:
+                type: num
+                description:
+                    de: "Wasser Quanittät"
+                    en: "Water quantity"
+                    fr: "Quantité d'eau"   
 
 logic_parameters: NONE
     # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)
