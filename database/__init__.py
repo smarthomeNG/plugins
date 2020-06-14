@@ -92,7 +92,7 @@ class Database(SmartPlugin):
         self.driver = self.get_parameter_value('driver')
         self._connect = self.get_parameter_value('connect')  # list of connection parameters
         self._prefix = self.get_parameter_value('prefix')
-        if self._prefix != '':
+        if self._prefix and self._prefix != '':
             self._prefix += '_'
         self._dump_cycle = self.get_parameter_value('cycle')
         self._precision = self.get_parameter_value('precision')
