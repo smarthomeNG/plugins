@@ -177,13 +177,13 @@ class Robonect(MqttPlugin):
 
     def on_change(self, topic, payload, qos=None, retain=None):
         if payload is not None:
-            if topic == '':
+            if topic == 'mower/status':
                 self.logger.debug(
-                    "on_change: setting mode via mqtt as %s: %s" % (payload, self.get_status_as_text(int(payload))))
+                    "on_change: setting mode for topic %s via mqtt as %s: %s" % (topic, payload, self.get_status_as_text(int(payload))))
                 self._items['mower/status/text'](self.get_status_as_text(int(payload)))
-            elif topic == '':
+            elif topic == 'mower/mode':
                 self.logger.debug(
-                    "on_change: setting mode via mqtt as %s: %s" % (payload, self.get_status_as_text(int(payload))))
+                    "on_change: setting mode for topic %s via mqtt as %s: %s" % (topic, payload, self.get_mode_as_text(int(payload))))
                 self._items['mower/mode/text'](self.get_mode_as_text(int(payload)))
 
     def get_mode_as_text(self, mode):
