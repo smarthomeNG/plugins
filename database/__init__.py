@@ -890,11 +890,12 @@ class Database(SmartPlugin):
 
         duration = 0
         if isinstance(dts, str):
-            if dts.find('now') >= 0:
+            if dts == 'now':
                 duration = 0
             else:
                 for frame in dts.split(' '):
-                    duration += self._parse_single(frame)
+                    if frame != 'now':
+                        duration += self._parse_single(frame)
 
         if duration < 0:
             duration = 0
