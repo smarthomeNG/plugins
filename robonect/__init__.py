@@ -115,8 +115,8 @@ class Robonect(MqttPlugin):
                 topic = 'Robonect/' + mqtt_id
                 # if mqtt_id == 'mower/stopped':
                 #    bool_values = ['false','true']
-                if mqtt_id == 'mower/status':
-                    callback = self.on_mode_change
+                if mqtt_id in ['mower/status', 'mower/mode']:
+                    callback = self.on_change
                 self.add_subscription(topic, payload_type, item=item, bool_values=bool_values, callback=callback)
 
             if not self.get_iattr_value(item.conf, 'robonect_data_type') in self._battery_items and \
