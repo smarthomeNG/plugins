@@ -280,36 +280,42 @@ class DeebotOzmo(SmartPlugin):
         Play a sound to locate your Deebot
         """
         self.vacbot.PlaySound()
+        return True
 
     def clean(self):
         """
         Start cleaning
         """
         self.vacbot.Clean()
+        return True
     
     def clean_spot_area(self, area):
         """
         Start cleaning predefined area
         """
         self.vacbot.SpotArea(area)
+        return True
 
     def pause(self):
         """
         Pause cleaning
         """
         self.vacbot.CleanPause()
+        return True
 
     def resume(self):
         """
         Resume cleaning
         """
         self.vacbot.CleanResume()
+        return True
 
     def charge(self):
         """
         Send Deebot back to charger
         """
         self.vacbot.Charge()
+        return True
 
     def set_fan_speed(self, speed):
         """
@@ -321,6 +327,8 @@ class DeebotOzmo(SmartPlugin):
             self.vacbot.SetFanSpeed(speed)
         except KeyError:
             self.logger.warning('Unknown speed {}'.format(speed))
+            return False
+        return True
 
     def set_water_level(self, level):
         """
@@ -332,6 +340,8 @@ class DeebotOzmo(SmartPlugin):
             self.vacbot.SetWaterLevel(level)
         except KeyError:
             self.logger.warning('Unknown water level {}'.format(level))
+            return False
+        return True
 
 # ----------------------------------------------------
 #    Methods to poll robot and update items
