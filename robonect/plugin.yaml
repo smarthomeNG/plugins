@@ -144,20 +144,17 @@ item_structs:
                     type: str
 
         status:
-            name: Information About the Status of the Robonect HX Module
+            name: 'Status Code'
+            robonect_data_type: mower/status
+            type: num
 
-            status:
-                name: Status Code
-                robonect_data_type: mower/status
-                type: num
-
-            status_text:
+            text:
                 name: 'Status of the Mower as Text'
                 type: str
                 robonect_data_type: mower/status/text
 
             distance:
-                robonect_data_type: status_distance
+                robonect_data_type: mower/distance
                 type: num
 
             stopped:
