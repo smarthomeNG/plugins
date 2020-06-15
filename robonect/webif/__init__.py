@@ -1,7 +1,7 @@
 import datetime
 import time
 import os
-import logging
+
 from lib.item import Items
 from lib.model.smartplugin import SmartPluginWebIf
 
@@ -25,11 +25,10 @@ class WebInterface(SmartPluginWebIf):
         :type webif_dir: str
         :type plugin: object
         """
-        self.logger = logging.getLogger(__name__)
         self.webif_dir = webif_dir
         self.plugin = plugin
         self.tplenv = self.init_template_environment()
-
+        self.logger = plugin.logger
         self.items = Items.get_instance()
 
     @cherrypy.expose

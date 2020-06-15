@@ -93,7 +93,8 @@ item_structs:
             robonect_data_type: robonect_version_compiled
             type: str
 
-        serial:
+        robonect_serial:
+            name: 'Serial number of the Robonect module'
             robonect_data_type: device/serial
             type: str
 
