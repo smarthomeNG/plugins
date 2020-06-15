@@ -63,6 +63,11 @@ class SeItem:
     def se_plugin(self):
         return self.__se_plugin
 
+    # return instance of queue
+    @property
+    def queue(self):
+        return self.__queue
+
     # return instance of logger class
     @property
     def logger(self):
