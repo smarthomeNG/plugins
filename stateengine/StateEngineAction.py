@@ -235,7 +235,6 @@ class SeActionBase(StateEngineTools.SeItemChild):
         return True
 
     def _waitforexecute(self, actionname: str, namevar: str = "", repeat_text: str = "", delay: int = 0):
-        self._abitem.set_variable('current.action_name', namevar)
         if delay == 0:
             self._log_debug("Running action '{}'.", namevar)
             self.real_execute(actionname, namevar, repeat_text)
@@ -259,7 +258,6 @@ class SeActionBase(StateEngineTools.SeItemChild):
                                                  'repeat_text': repeat_text, 'value': value}, next=next_run)
 
     def _delayed_execute(self, actionname: str, namevar: str = "", repeat_text: str = "", value = None):
-        self._abitem.set_variable('current.action_name', namevar)
         self._log_debug("Putting delayed action '{}' into queue.", namevar)
         self.__queue.put(["delayedaction", self, actionname, namevar, repeat_text, value])
         self._abitem.run_queue()
@@ -360,6 +358,7 @@ class SeActionSetItem(SeActionBase):
 
     # Really execute the action (needs to be implemented in derived classes)
     def real_execute(self, actionname: str, namevar: str = "", repeat_text: str = "", value = None, returnvalue = False):
+        self._abitem.set_variable('current.action_name', namevar)
         self._log_increase_indent()
         if value is None:
             value = self.__value.get()
@@ -427,6 +426,7 @@ class SeActionSetByattr(SeActionBase):
 
     # Really execute the action
     def real_execute(self, actionname: str, namevar: str = "", repeat_text: str = "", value = None, returnvalue = False):
+        self._abitem.set_variable('current.action_name', namevar)
         if returnvalue:
             return value
         self._log_info("{0}: Setting values by attribute '{1}'.{2}", actionname, self.__byattr, repeat_text)
@@ -473,6 +473,7 @@ class SeActionTrigger(SeActionBase):
 
     # Really execute the action
     def real_execute(self, actionname: str, namevar: str = "", repeat_text: str = "", value = None, returnvalue = False):
+        self._abitem.set_variable('current.action_name', namevar)
         if value is None:
             try:
                 value = self.__value.get()
@@ -526,6 +527,7 @@ class SeActionRun(SeActionBase):
 
     # Really execute the action
     def real_execute(self, actionname: str, namevar: str = "", repeat_text: str = "", value = None, returnvalue = False):
+        self._abitem.set_variable('current.action_name', namevar)
         self._log_increase_indent()
         if isinstance(self.__eval, str):
             # noinspection PyUnusedLocal
@@ -651,6 +653,7 @@ class SeActionForceItem(SeActionBase):
     # Really execute the action (needs to be implemented in derived classes)
     # noinspection PyProtectedMember
     def real_execute(self, actionname: str, namevar: str = "", repeat_text: str = "", value = None, returnvalue = False):
+        self._abitem.set_variable('current.action_name', namevar)
         self._log_increase_indent()
         if value is None:
             value = self.__value.get()
@@ -752,6 +755,7 @@ class SeActionSpecial(SeActionBase):
 
     # Really execute the action
     def real_execute(self, actionname: str, namevar: str = "", repeat_text: str = "", value = None, returnvalue = False):
+        self._abitem.set_variable('current.action_name', namevar)
         if returnvalue:
             return None
         try:
