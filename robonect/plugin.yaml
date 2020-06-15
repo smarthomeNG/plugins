@@ -41,6 +41,7 @@ parameters:
     cycle:
         type: int
         default: 60
+        mandatory: False
         description:
             de: '(optional) Zeit zwischen zwei Updateläufen. Default ist 60 Sekunden.'
             en: '(optional) Time period between two update cycles. Default is 60 seconds.'
@@ -309,6 +310,11 @@ plugin_functions:
                 description:
                     de: "status"
                     en: "status"
+    is_mower_offline:
+        type: bool
+        description:
+            de: "Gibt zurück, ob der Automower gerade via API erreicht werden kann."
+            en: "Returns if the automower is reachable via API."
 
 logic_parameters:
     # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)

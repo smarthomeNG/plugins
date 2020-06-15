@@ -529,3 +529,9 @@ class Robonect(MqttPlugin):
 
     def get_battery_items(self):
         return self._battery_items
+
+    def is_mower_offline(self):
+        return self._mower_offline
+
+    def get_cycle(self):
+        return self._cycle

@@ -44,7 +44,7 @@
         </tr>
         <tr>
             <td class="py-1"><strong>{{ _('Mower an?') }}</strong></td>
-			<td class="py-1">{{ not p._mower_offline }}</td>
+			<td class="py-1">{{ not p.is_mower_offline() }}</td>
             <td class="py-1"><strong>{{ _('Passwort') }}</strong></td>
 			<td class="py-1">{{ p.get_parameter_value_for_display('password') }}</td>
 		</tr>
@@ -55,8 +55,8 @@
                 {% elif p._mode == 'mqtt' %}Web API + MQTT
                 {% endif %}
             </td>
-            <td class="py-1"></td>
-			<td class="py-1"></td>
+            <td class="py-1"><strong>{{ _('Cycle') }}</strong></td>
+			<td class="py-1">{{ p.get_cycle() }}</td>
 		</tr>
 	</tbody>
 </table>
