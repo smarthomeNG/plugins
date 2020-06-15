@@ -188,11 +188,11 @@ class Robonect(MqttPlugin):
             if topic == 'mower/status':
                 self.logger.debug(
                     "on_change: setting mode for topic %s via mqtt as %s: %s" % (topic, payload, self.get_status_as_text(int(payload))))
-                self._items['mower/status/text'](self.get_status_as_text(int(payload)))
+                self._status_items['mower/status/text'](self.get_status_as_text(int(payload)))
             elif topic == 'mower/mode':
                 self.logger.debug(
                     "on_change: setting mode for topic %s via mqtt as %s: %s" % (topic, payload, self.get_mode_as_text(int(payload))))
-                self._items['mower/mode/text'](self.get_mode_as_text(int(payload)))
+                self._status_items['mower/mode/text'](self.get_mode_as_text(int(payload)))
 
     def get_api_error_code_as_text(self, error_code):
         """
@@ -445,23 +445,25 @@ class Robonect(MqttPlugin):
             self._items['device/name'](json_obj['name'], self.get_shortname())
         if 'robonect_id' in self._items:
             self._items['robonect_id'](json_obj['id'], self.get_shortname())
-        if 'mower/status' in self._items:
-            self._items['mower/status'](json_obj['status']['status'], self.get_shortname())
-            self._items['mower/status/text'](self.get_status_as_text(self._items['mower/status']()))
-        if 'status_distance' in self._items:
-            self._items['status_distance'](json_obj['status']['distance'], self.get_shortname())
-        if 'mower/stopped' in self._items:
-            self._items['mower/stopped'](self.to_bool(json_obj['status']['stopped'], self.get_shortname()))
-        if 'mower/status/duration' in self._items:
+        if 'mower/status' in self._status_items:
+            self._status_items['mower/status'](json_obj['status']['status'], self.get_shortname())
+            if 'mower/status/text' in self._status_items:
+                self._status_items['mower/status/text'](self.get_status_as_text(self._status_items['mower/status']()))
+        if 'status_distance' in self._status_items:
+            self._status_items['status_distance'](json_obj['status']['distance'], self.get_shortname())
+        if 'mower/stopped' in self._status_items:
+            self._status_items['mower/stopped'](self.to_bool(json_obj['status']['stopped'], self.get_shortname()))
+        if 'mower/status/duration' in self._status_items:
             # round to minutes, as mqtt is also returning minutes instead of seconds
-            self._items['mower/status/duration'](math.floor(json_obj['status']['duration'] / 60), self.get_shortname())
-        if 'mower/mode' in self._items:
-            self._items['mower/mode'](json_obj['status']['mode'], self.get_shortname())
-            self._items['mower/mode/text'](self.get_mode_as_text(self._items['mower/mode']()))
-        if 'status_battery' in self._items:
-            self._items['status_battery'](json_obj['status']['battery'], self.get_shortname())
-        if 'status_hours' in self._items:
-            self._items['status_hours'](json_obj['status']['hours'], self.get_shortname())
+            self._status_items['mower/status/duration'](math.floor(json_obj['status']['duration'] / 60), self.get_shortname())
+        if 'mower/mode' in self._status_items:
+            self._status_items['mower/mode'](json_obj['status']['mode'], self.get_shortname())
+            if 'mower/mode/text' in self._status_items:
+                self._status_items['mower/mode/text'](self.get_mode_as_text(self._status_items['mower/mode']()))
+        if 'status_battery' in self._status_items:
+            self._status_items['status_battery'](json_obj['status']['battery'], self.get_shortname())
+        if 'status_hours' in self._status_items:
+            self._status_items['status_hours'](json_obj['status']['hours'], self.get_shortname())
         if 'wlan/rssi' in self._items:
             self._items['wlan/rssi'](json_obj['wlan']['signal'], self.get_shortname())
         if 'health/climate/temperature' in self._items:

@@ -92,8 +92,7 @@
                 <td class="py-1">{{ item.property.type }}</td>
                 <td class="py-1">{{ key }}</td>
                 <td id="{{ item.id() }}_value" class="py-1">
-                    {{ item() }}{% if key in ['mower/mode', 'mower/status'] %} ({{ _(p.get_items()[key+'/text']()) }})
-                    {% endif %}
+                    {{ item() }}
                 </td>
                 <td id="{{ item.id() }}_last_update" class="py-1">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
                 <td id="{{ item.id() }}_last_change" class="py-1">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
@@ -106,7 +105,7 @@
                 <td class="py-1">{{ item.property.type }}</td>
                 <td class="py-1">{{ key }}</td>
                 <td id="{{ item.id() }}_value" class="py-1">
-                    {{ item() }}
+                    {{ item() }}{% if key in ['mower/mode', 'mower/status'] %} ({{ _(p.get_status_items()[key+'/text']()) }}){% endif %}
                 </td>
                 <td id="{{ item.id() }}_last_update" class="py-1">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
                 <td id="{{ item.id() }}_last_change" class="py-1">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
