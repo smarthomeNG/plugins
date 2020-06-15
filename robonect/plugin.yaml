@@ -142,6 +142,50 @@ item_structs:
                 sdk-version:
                     robonect_data_type: wlan_sdk-version
                     type: str
+        remote:
+            remotestart_1:
+                name:
+                    type: str
+                    robonect_data_type: remotestart_name
+                    robonect_remote_index: 1
+                visible:
+                    type: bool
+                    robonect_data_type: remotestart_visible
+                    robonect_remote_index: 1
+                path:
+                    type: num
+                    robonect_data_type: remotestart_path
+                    robonect_remote_index: 1
+                proportion:
+                    type: num
+                    robonect_data_type: remotestart_proportion
+                    robonect_remote_index: 1
+                distance:
+                    type: num
+                    robonect_data_type: remotestart_distance
+                    robonect_remote_index: 1
+
+            remotestart_2:
+                name:
+                    type: str
+                    robonect_data_type: remotestart_name
+                    robonect_remote_index: 2
+                visible:
+                    type: bool
+                    robonect_data_type: remotestart_visible
+                    robonect_remote_index: 2
+                path:
+                    type: num
+                    robonect_data_type: remotestart_path
+                    robonect_remote_index: 2
+                proportion:
+                    type: num
+                    robonect_data_type: remotestart_proportion
+                    robonect_remote_index: 2
+                distance:
+                    type: num
+                    robonect_data_type: remotestart_distance
+                    robonect_remote_index: 2
 
         status:
             name: 'Status Code'
