@@ -298,7 +298,17 @@ plugin_functions:
                 description:
                     de: "mode"
                     en: "mode"
-
+    get_status_as_text:
+        type: str
+        description:
+            de: "Gibt den Status des Rasenmähers als String zurück."
+            en: "Returns the status of the automower as string."
+        parameters:
+            index:
+                type: int
+                description:
+                    de: "status"
+                    en: "status"
 
 logic_parameters:
     # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)
