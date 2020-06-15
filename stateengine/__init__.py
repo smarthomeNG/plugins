@@ -39,7 +39,7 @@ class StateEngine(SmartPlugin):
     # Constructor
     # noinspection PyUnusedLocal,PyMissingConstructor
     def __init__(self, sh):
-
+        super().__init__()
         if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
             self.logger = logging.getLogger(__name__)
         self.items = Items.get_instance()
@@ -104,8 +104,8 @@ class StateEngine(SmartPlugin):
         for item in self.items.find_items("se_plugin"):
             if item.conf["se_plugin"] == "active":
                 try:
-                    ab_item = StateEngineItem.SeItem(self.get_sh(), item, self)
-                    self.__items[ab_item.id] = ab_item
+                    abitem = StateEngineItem.SeItem(self.get_sh(), item, self)
+                    self.__items[abitem.id] = abitem
                 except ValueError as ex:
                     self.logger.error("Problem with Item: {0}: {1}".format(item.property.path, ex))
 
@@ -121,6 +121,13 @@ class StateEngine(SmartPlugin):
 
     # Stopping of plugin
     def stop(self):
+        self.logger.debug("stop method called")
+        self.scheduler_remove('StateEngine: Remove old logfiles')
+        for item in self.__items:
+            self.scheduler_remove('{}'.format(item))
+            self.scheduler_remove('{}-Startup Delay'.format(item))
+            self.__items[item].remove_all_schedulers()
+
         self.alive = False
 
     # Determine if caller/source are contained in changed_by list

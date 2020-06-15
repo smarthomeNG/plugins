@@ -178,6 +178,10 @@ class SeActionBase(StateEngineTools.SeItemChild):
             if plan_next is not None and plan_next > self.shtime.now():
                 self._log_info("Action '{0}: Removing previous delay timer '{1}'.", self._name, self._scheduler_name)
                 self._se_plugin.scheduler_remove(self._scheduler_name)
+                try:
+                    self._abitem.remove_scheduler_entry(self._scheduler_name)
+                except Exception:
+                    pass
 
             delay = 0 if self.__delay.is_empty() else self.__delay.get()
             actionname = "Action '{0}'".format(self._name) if delay == 0 else "Delayed Action ({0} seconds) '{1}'".format(
@@ -249,6 +253,7 @@ class SeActionBase(StateEngineTools.SeItemChild):
                 self._log_decrease_indent()
             else:
                 value = None
+            self._abitem.add_scheduler_entry(self._scheduler_name)
             self._se_plugin.scheduler_add(self._scheduler_name, self._delayed_execute,
                                           value={'actionname': actionname, 'namevar': self._name,
                                                  'repeat_text': repeat_text, 'value': value}, next=next_run)

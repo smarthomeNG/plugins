@@ -68,6 +68,11 @@ class SeItem:
     def queue(self):
         return self.__queue
 
+    # return all schedulers for item
+    @property
+    def schedulers(self):
+        return self.__active_schedulers
+
     # return instance of logger class
     @property
     def logger(self):
@@ -100,6 +105,7 @@ class SeItem:
         self.__sh = smarthome
         self.__item = item
         self.__se_plugin = se_plugin
+        self.__active_schedulers = []
         try:
             self.__id = self.__item.property.path
         except Exception:
@@ -194,6 +200,17 @@ class SeItem:
             self.__templates.pop(template)
         else:
             self.__templates[template] = value
+
+    def add_scheduler_entry(self, name):
+        if name not in self.__active_schedulers:
+            self.__active_schedulers.append(name)
+
+    def remove_scheduler_entry(self, name):
+        self.__active_schedulers.remove(name)
+
+    def remove_all_schedulers(self):
+        for entry in self.__active_schedulers:
+            self.__se_plugin.scheduler_remove('{}'.format(entry))
 
     def run_queue(self):
         self._update_lock.acquire()
