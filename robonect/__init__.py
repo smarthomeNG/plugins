@@ -479,37 +479,37 @@ class Robonect(MqttPlugin):
 
         if 'blades' in json_obj:
             if 'blades_quality' in self._items:
-                self._items['blades_quality'](json_obj['blades']['quality'], self.get_shortname())
+                self._status_items['blades_quality'](json_obj['blades']['quality'], self.get_shortname())
             if 'blades_days' in self._items:
-                self._items['blades_days'](json_obj['blades']['days'], self.get_shortname())
+                self._status_items['blades_days'](json_obj['blades']['days'], self.get_shortname())
             if 'blades_hours' in self._items:
-                self._items['blades_hours'](json_obj['blades']['hours'], self.get_shortname())
+                self._status_items['blades_hours'](json_obj['blades']['hours'], self.get_shortname())
 
-        if 'error_code' in self._items:
+        if 'error_code' in self._status_items:
             if 'error' in json_obj:
-                self._items['error_code'](json_obj['error']['error_code'])
+                self._status_items['error_code'](json_obj['error']['error_code'])
             else:
-                self._items['error_code']('')
-        if 'error_message' in self._items:
+                self._status_items['error_code']('')
+        if 'error_message' in self._status_items:
             if 'error' in json_obj:
-                self._items['error_message'](json_obj['error']['error_message'])
+                self._status_items['error_message'](json_obj['error']['error_message'])
             else:
-                self._items['error_message']('')
-        if 'error_date' in self._items:
+                self._status_items['error_message']('')
+        if 'error_date' in self._status_items:
             if 'error' in json_obj:
-                self._items['error_date'](json_obj['error']['date'])
+                self._status_items['error_date'](json_obj['error']['date'])
             else:
-                self._items['error_date']('')
-        if 'error_time' in self._items:
+                self._status_items['error_date']('')
+        if 'error_time' in self._status_items:
             if 'error' in json_obj:
-                self._items['error_time'](json_obj['error']['time'])
+                self._status_items['error_time'](json_obj['error']['time'])
             else:
-                self._items['error_time']('')
-        if 'error_unix' in self._items:
+                self._status_items['error_time']('')
+        if 'error_unix' in self._status_items:
             if 'error' in json_obj:
-                self._items['error_unix'](json_obj['error']['unix'])
+                self._status_items['error_unix'](json_obj['error']['unix'])
             else:
-                self._items['error_unix']('')
+                self._status_items['error_unix']('')
         return
 
     def get_ip(self):
