@@ -686,6 +686,9 @@ class SeItem:
     # noinspection PyUnusedLocal
     def __startup_delay_callback(self, item, caller=None, source=None, dest=None):
         self.__startup_delay_over = True
+        scheduler_name = self.__id + "-Startup Delay"
+        self.__se_plugin.scheduler_remove(scheduler_name)
+        self.__logger.debug('Startup Delay over. Removed scheduler {}', scheduler_name)
         self.update_state(item, "Startup Delay", source, dest)
         self.__add_triggers()
 
