@@ -38,6 +38,12 @@ parameters:
         valid_list:
             - 'api'
             - 'mqtt'
+    cycle:
+        type: int
+        default: 60
+        description:
+            de: '(optional) Zeit zwischen zwei Updateläufen. Default ist 60 Sekunden.'
+            en: '(optional) Time period between two update cycles. Default is 60 seconds.'
     user:
         type: str
         default: ''

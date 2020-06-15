@@ -60,7 +60,7 @@ class Robonect(MqttPlugin):
         self._user = self.get_parameter_value('user')
         self._password = self.get_parameter_value('password')
         self._base_url = 'http://%s/json?cmd=' % self.get_ip()
-        self._cycle = 60
+        self._cycle = self.get_parameter_value('cycle')
         self._mower_offline = False
         self._items = {}
         self._mode = self.get_parameter_value('mode')
