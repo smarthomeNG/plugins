@@ -39,6 +39,9 @@ class Robonect(MqttPlugin):
     the update functions for the items
     """
     PLUGIN_VERSION = '1.0.0'  # (must match the version specified in plugin.yaml)
+    STATUS_TYPES = ['mower/status','mower/status/text','status_distance','mower/status/duration','status_hours',
+                    'mower/stopped','mower/mode','mower/mode/text','mower/battery/charge','blades_quality',
+                    'blades_hours','blades_days','error_code','error_message','error_date','error_time','error_unix']
 
     def __init__(self, sh):
         """
@@ -62,6 +65,7 @@ class Robonect(MqttPlugin):
         self._items = {}
         self._mode = self.get_parameter_value('mode')
         self._battery_items = {}
+        self._status_items = {}
         self._session = requests.Session()
         self.init_webinterface(WebInterface)
         return
@@ -120,6 +124,8 @@ class Robonect(MqttPlugin):
                 self._battery_items[self.get_iattr_value(item.conf, 'robonect_data_type')] = []
             if self.get_iattr_value(item.conf, 'robonect_data_type') in self._battery_items:
                 self._battery_items[self.get_iattr_value(item.conf, 'robonect_data_type')].append(item)
+            elif self.get_iattr_value(item.conf, 'robonect_data_type') in self.STATUS_TYPES:
+                self._status_items[self.get_iattr_value(item.conf, 'robonect_data_type')] = item
             else:
                 self._items[self.get_iattr_value(item.conf, 'robonect_data_type')] = item
         return
@@ -515,6 +521,9 @@ class Robonect(MqttPlugin):
 
     def get_items(self):
         return self._items
+
+    def get_status_items(self):
+        return self._status_items
 
     def get_battery_items(self):
         return self._battery_items

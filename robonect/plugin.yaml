@@ -69,7 +69,7 @@ item_attributes:
 
 item_structs:
     main:
-        name: Main Data From Robonect HX Module
+        name: 'Main Data From Robonect HX Module'
 
         robonect_name:
             name: 'Lawnmower Nickname'
@@ -77,24 +77,27 @@ item_structs:
             type: str
 
         robonect_id:
-            name: Robonect ID
+            name: 'Robonect ID'
             robonect_data_type: robonect_id
             type: str
 
         robonect_version:
+            name: 'Firmware Version of the Robonect Module'
             robonect_data_type: robonect_version
             type: str
 
         robonect_version_comment:
+            name: 'Firmware Version Comment (e.g. Sub Version) of the Robonect Module'
             robonect_data_type: robonect_version_comment
             type: str
 
         robonect_version_compiled:
+            name: 'Firmware Compilation Date of the Robonect Module'
             robonect_data_type: robonect_version_compiled
             type: str
 
         robonect_serial:
-            name: 'Serial number of the Robonect module'
+            name: 'Serial Number of the Robonect Module'
             robonect_data_type: device/serial
             type: str
 
@@ -103,20 +106,25 @@ item_structs:
 
             hardware:
                 serial:
+                    name: 'Serial of the Robotic Lawnmower'
                     robonect_data_type: hardware_serial
                     type: str
 
                 production_date:
+                    name: 'Production Date of the Robotic Lawnmower'
                     robonect_data_type: production_date
                     type: str
             msw:
                 title:
+                    name: 'Model Name of the Automower'
                     robonect_data_type: msw_title
                     type: str
                 version:
+                    name: 'Firmware Version of the Automower'
                     robonect_data_type: msw_version
                     type: str
                 compiled:
+                    name: 'Firmware Compilation Date of the Automower'
                     robonect_data_type: msw_compiled
                     type: str
 
