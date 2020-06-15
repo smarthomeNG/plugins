@@ -42,6 +42,7 @@ class iCal(SmartPlugin):
     PROPERTIES = ("SUMMARY", "DESCRIPTION", "LOCATION", "CATEGORIES", "CLASS")
 
     def __init__(self, smarthome):
+        super().__init__()
         if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
             self.logger = logging.getLogger(__name__)
         try:
@@ -95,6 +96,8 @@ class iCal(SmartPlugin):
         self.alive = True
 
     def stop(self):
+        self.scheduler_remove('iCalUpdate')
+        self.scheduler_remove('iCalRefresh')
         self.alive = False
 
     def parse_item(self, item):
