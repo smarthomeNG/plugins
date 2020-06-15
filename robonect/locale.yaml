@@ -6,7 +6,7 @@ plugin_translations:
     'Letztes Update':   {'de': '=', 'en': 'Last Update', 'fr': ''}
     'Letzter Change':   {'de': '=', 'en': 'Last Change', 'fr': ''}
     'Robonect Datentyp':  {'de': '=', 'en': 'Robonect Data Type', 'fr': ''}
-    'Batterie-Informationen':  {'de': '=', 'en': 'Information About Battery', 'fr': ''}
+    'Batterie-(Detail)Informationen':  {'de': '=', 'en': '(Detail) Information About Battery', 'fr': ''}
     'Mower/Robonect-Informationen':  {'de': '=', 'en': 'Information About Mower and Robonect', 'fr': ''}
     'Benutzer':  {'de': '=', 'en': 'User', 'fr': ''}
     'Passwort':  {'de': '=', 'en': 'Password', 'fr': ''}
@@ -26,3 +26,4 @@ plugin_translations:
     'LOST_SIGNAL':  {'de': 'Schleifensignal verloren', 'en': 'Lost Signal', 'fr': ''}
     'OFF':  {'de': 'Automower abgeschaltet', 'en': 'Automower turned off', 'fr': ''}
     'SLEEPING':  {'de': 'Automower schläft', 'en': 'Automower sleeping', 'fr': ''}
+    'Fehlercodes': {'de': '=', 'en': 'Error Codes'}

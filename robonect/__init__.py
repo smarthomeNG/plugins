@@ -342,6 +342,35 @@ class Robonect(MqttPlugin):
                          'remaining'], self.get_shortname())
         return json_obj
 
+    def get_full_error_list(self):
+        """
+        Requests the full list of possible errors of the automower.
+
+        :return: JSON object with the overall error list
+        """
+        try:
+            self.logger.debug("Plugin '{}': Requesting battery data".format(
+                self.get_fullname()))
+            response = self._session.get(self._base_url + 'error&list', auth=HTTPBasicAuth(self._user, self._password))
+            self.logger.debug(response.content)
+        except Exception as e:
+            if not self._mower_offline:
+                self.logger.error(
+                    "Plugin '{}': Exception when sending GET request for get_battery_data: {}".format(
+                        self.get_fullname(), str(e)))
+            self._mower_offline = True
+            return
+
+        json_obj = response.json()
+        if self._mower_offline:
+            self.logger.debug(
+                "Plugin '{}': Mower reachable again.".format(
+                    self.get_fullname()))
+            self._mower_offline = False
+
+        if 'errors' in json_obj:
+            return json_obj['errors']
+
     def get_remote(self):
         """
         Requests remote starting point data from the api and assigns it to items (if available).
