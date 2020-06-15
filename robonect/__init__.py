@@ -469,6 +469,14 @@ class Robonect(MqttPlugin):
         if 'unix' in self._items:
             self._items['unix'](json_obj['clock']['unix'], self.get_shortname())
 
+        if 'blades' in json_obj:
+            if 'blades_quality' in self._items:
+                self._items['blades_quality'](json_obj['blades']['quality'], self.get_shortname())
+            if 'blades_days' in self._items:
+                self._items['blades_days'](json_obj['blades']['days'], self.get_shortname())
+            if 'blades_hours' in self._items:
+                self._items['blades_hours'](json_obj['blades']['hours'], self.get_shortname())
+
         if 'error_code' in self._items:
             if 'error' in json_obj:
                 self._items['error_code'](json_obj['error']['error_code'])

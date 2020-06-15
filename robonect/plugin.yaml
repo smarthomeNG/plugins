@@ -172,6 +172,22 @@ item_structs:
                 robonect_data_type: status_hours
                 type: num
 
+            blades:
+                quality:
+                    name: 'Quality of Blades in %'
+                    robonect_data_type: blades_quality
+                    type: num
+
+                hours:
+                    name: 'Runtime of Blades in hours'
+                    robonect_data_type: blades_hours
+                    type: num
+
+                days:
+                    name: 'Age of Blades in days'
+                    robonect_data_type: blades_days
+                    type: num
+
             error:
                 error_code:
                     robonect_data_type: error_code
