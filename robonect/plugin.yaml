@@ -178,7 +178,7 @@ item_structs:
                 type: num
 
             hours:
-                robonect_data_type: status_hours
+                robonect_data_type: mower/statistic/hours
                 type: num
 
             blades:
@@ -199,11 +199,11 @@ item_structs:
 
             error:
                 error_code:
-                    robonect_data_type: error_code
+                    robonect_data_type: mower/error/code
                     type: num
 
                 error_message:
-                    robonect_data_type: error_message
+                    robonect_data_type: mower/error/message
                     type: str
 
                 date:

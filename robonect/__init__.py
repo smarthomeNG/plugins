@@ -39,9 +39,9 @@ class Robonect(MqttPlugin):
     the update functions for the items
     """
     PLUGIN_VERSION = '1.0.0'  # (must match the version specified in plugin.yaml)
-    STATUS_TYPES = ['mower/status','mower/status/text','status_distance','mower/status/duration','status_hours',
+    STATUS_TYPES = ['mower/status','mower/status/text','mower/distance','mower/status/duration','mower/statistic/hours',
                     'mower/stopped','mower/mode','mower/mode/text','mower/battery/charge','blades_quality',
-                    'blades_hours','blades_days','error_code','error_message','error_date','error_time','error_unix']
+                    'blades_hours','blades_days','mower/error/code','mower/error/message','error_date','error_time','error_unix']
 
     def __init__(self, sh):
         """
@@ -449,8 +449,8 @@ class Robonect(MqttPlugin):
             self._status_items['mower/status'](json_obj['status']['status'], self.get_shortname())
             if 'mower/status/text' in self._status_items:
                 self._status_items['mower/status/text'](self.get_status_as_text(self._status_items['mower/status']()))
-        if 'status_distance' in self._status_items:
-            self._status_items['status_distance'](json_obj['status']['distance'], self.get_shortname())
+        if 'mower/distance' in self._status_items:
+            self._status_items['mower/distance'](json_obj['status']['distance'], self.get_shortname())
         if 'mower/stopped' in self._status_items:
             self._status_items['mower/stopped'](self.to_bool(json_obj['status']['stopped'], self.get_shortname()))
         if 'mower/status/duration' in self._status_items:
@@ -462,8 +462,8 @@ class Robonect(MqttPlugin):
                 self._status_items['mower/mode/text'](self.get_mode_as_text(self._status_items['mower/mode']()))
         if 'status_battery' in self._status_items:
             self._status_items['status_battery'](json_obj['status']['battery'], self.get_shortname())
-        if 'status_hours' in self._status_items:
-            self._status_items['status_hours'](json_obj['status']['hours'], self.get_shortname())
+        if 'mower/statistic/hours' in self._status_items:
+            self._status_items['mower/statistic/hours'](json_obj['status']['hours'], self.get_shortname())
         if 'wlan/rssi' in self._items:
             self._items['wlan/rssi'](json_obj['wlan']['signal'], self.get_shortname())
         if 'health/climate/temperature' in self._items:
@@ -485,16 +485,16 @@ class Robonect(MqttPlugin):
             if 'blades_hours' in self._status_items:
                 self._status_items['blades_hours'](json_obj['blades']['hours'], self.get_shortname())
 
-        if 'error_code' in self._status_items:
+        if 'mower/error/code' in self._status_items:
             if 'error' in json_obj:
-                self._status_items['error_code'](json_obj['error']['error_code'])
+                self._status_items['mower/error/code'](json_obj['error']['error_code'])
             else:
-                self._status_items['error_code']('')
-        if 'error_message' in self._status_items:
+                self._status_items['mower/error/code'](0)
+        if 'mower/error/message' in self._status_items:
             if 'error' in json_obj:
-                self._status_items['error_message'](json_obj['error']['error_message'])
+                self._status_items['mower/error/message'](json_obj['error']['error_message'])
             else:
-                self._status_items['error_message']('')
+                self._status_items['mower/error/message']('')
         if 'error_date' in self._status_items:
             if 'error' in json_obj:
                 self._status_items['error_date'](json_obj['error']['date'])
