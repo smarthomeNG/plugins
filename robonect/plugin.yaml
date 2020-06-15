@@ -38,6 +38,13 @@ parameters:
         valid_list:
             - 'api'
             - 'mqtt'
+    cycle:
+        type: int
+        default: 60
+        mandatory: False
+        description:
+            de: '(optional) Zeit zwischen zwei Updateläufen. Default ist 60 Sekunden.'
+            en: '(optional) Time period between two update cycles. Default is 60 seconds.'
     user:
         type: str
         default: ''
@@ -69,7 +76,7 @@ item_attributes:
 
 item_structs:
     main:
-        name: Main Data From Robonect HX Module
+        name: 'Main Data From Robonect HX Module'
 
         robonect_name:
             name: 'Lawnmower Nickname'
@@ -77,23 +84,27 @@ item_structs:
             type: str
 
         robonect_id:
-            name: Robonect ID
+            name: 'Robonect ID'
             robonect_data_type: robonect_id
             type: str
 
         robonect_version:
+            name: 'Firmware Version of the Robonect Module'
             robonect_data_type: robonect_version
             type: str
 
         robonect_version_comment:
+            name: 'Firmware Version Comment (e.g. Sub Version) of the Robonect Module'
             robonect_data_type: robonect_version_comment
             type: str
 
         robonect_version_compiled:
+            name: 'Firmware Compilation Date of the Robonect Module'
             robonect_data_type: robonect_version_compiled
             type: str
 
-        serial:
+        robonect_serial:
+            name: 'Serial Number of the Robonect Module'
             robonect_data_type: device/serial
             type: str
 
@@ -102,20 +113,25 @@ item_structs:
 
             hardware:
                 serial:
+                    name: 'Serial of the Robotic Lawnmower'
                     robonect_data_type: hardware_serial
                     type: str
 
                 production_date:
+                    name: 'Production Date of the Robotic Lawnmower'
                     robonect_data_type: production_date
                     type: str
             msw:
                 title:
+                    name: 'Model Name of the Automower'
                     robonect_data_type: msw_title
                     type: str
                 version:
+                    name: 'Firmware Version of the Automower'
                     robonect_data_type: msw_version
                     type: str
                 compiled:
+                    name: 'Firmware Compilation Date of the Automower'
                     robonect_data_type: msw_compiled
                     type: str
 
@@ -128,20 +144,17 @@ item_structs:
                     type: str
 
         status:
-            name: Information About the Status of the Robonect HX Module
+            name: 'Status Code'
+            robonect_data_type: mower/status
+            type: num
 
-            status:
-                name: Status Code
-                robonect_data_type: mower/status
-                type: num
-
-            status_text:
+            text:
                 name: 'Status of the Mower as Text'
                 type: str
                 robonect_data_type: mower/status/text
 
             distance:
-                robonect_data_type: status_distance
+                robonect_data_type: mower/distance
                 type: num
 
             stopped:
@@ -169,8 +182,46 @@ item_structs:
                 type: num
 
             hours:
-                robonect_data_type: status_hours
+                robonect_data_type: mower/statistic/hours
                 type: num
+
+            blades:
+                quality:
+                    name: 'Quality of Blades in %'
+                    robonect_data_type: blades_quality
+                    type: num
+
+                hours:
+                    name: 'Runtime of Blades in hours'
+                    robonect_data_type: blades_hours
+                    type: num
+
+                days:
+                    name: 'Age of Blades in days'
+                    robonect_data_type: blades_days
+                    type: num
+
+            error:
+                error_code:
+                    robonect_data_type: mower/error/code
+                    type: num
+
+                error_message:
+                    robonect_data_type: mower/error/message
+                    type: str
+
+                date:
+                    robonect_data_type: error_date
+                    type: str
+
+                time:
+                    robonect_data_type: error_time
+                    type: str
+
+                unix:
+                    robonect_data_type: error_unix
+                    type: str
+
         wlan:
             signal:
                 name: 'Wifi Signal Strength'
@@ -245,7 +296,22 @@ plugin_functions:
                 description:
                     de: "mode"
                     en: "mode"
-
+    get_status_as_text:
+        type: str
+        description:
+            de: "Gibt den Status des Rasenmähers als String zurück."
+            en: "Returns the status of the automower as string."
+        parameters:
+            index:
+                type: int
+                description:
+                    de: "status"
+                    en: "status"
+    is_mower_offline:
+        type: bool
+        description:
+            de: "Gibt zurück, ob der Automower gerade via API erreicht werden kann."
+            en: "Returns if the automower is reachable via API."
 
 logic_parameters:
     # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)

@@ -10,16 +10,20 @@
         if (dataSet === null) {
             var objResponse = JSON.parse(response);
             {% for key, item in p.get_items().items() %}
-                {% if key == 'mower/status' %}{%  for i in status_array %}
+            shngInsertText('{{ item.id() }}_value', objResponse['{{ item.id() }}_value'])
+            shngInsertText ('{{ item.id() }}_last_update', objResponse['{{ item.id() }}_last_update'])
+            shngInsertText ('{{ item.id() }}_last_change', objResponse['{{ item.id() }}_last_change'])
+            {% endfor %}
+            {% for key, item in p.get_status_items().items() %}
+                {% if key == 'mower/status' %}{% for i in status_array %}
                         if (objResponse['{{ item.id() }}_value'] == {{ i }}) {
                             shngInsertText('{{ item.id() }}_value', objResponse['{{ item.id() }}_value'] + ' ({{ _(p.get_status_as_text(i)) }})'); }
                 {% endfor %}{% elif key == 'mower/mode' %}{%  for i in mode_array %}
                         if (objResponse['{{ item.id() }}_value'] == {{ i }}) {
                             shngInsertText('{{ item.id() }}_value', objResponse['{{ item.id() }}_value'] + ' ({{ _(p.get_mode_as_text(i)) }})'); }
                 {% endfor %}{% else %}shngInsertText('{{ item.id() }}_value', objResponse['{{ item.id() }}_value']){% endif %}
-            shngInsertText ('{{ item.id() }}_last_update', objResponse['{{ item.id() }}_last_update'])
-            shngInsertText ('{{ item.id() }}_last_change', objResponse['{{ item.id() }}_last_change'])
-            {% endfor %}{% for key, items in p.get_battery_items().items() %}{%  for item in items %}
+            {% endfor %}
+            {% for key, items in p.get_battery_items().items() %}{%  for item in items %}
                 shngInsertText('{{ item.id() }}_value', objResponse['{{ item.id() }}_value'])
                 shngInsertText ('{{ item.id() }}_last_update', objResponse['{{ item.id() }}_last_update'])
                 shngInsertText ('{{ item.id() }}_last_change', objResponse['{{ item.id() }}_last_change'])
@@ -40,7 +44,7 @@
         </tr>
         <tr>
             <td class="py-1"><strong>{{ _('Mower an?') }}</strong></td>
-			<td class="py-1">{{ not p._mower_offline }}</td>
+			<td class="py-1">{{ not p.is_mower_offline() }}</td>
             <td class="py-1"><strong>{{ _('Passwort') }}</strong></td>
 			<td class="py-1">{{ p.get_parameter_value_for_display('password') }}</td>
 		</tr>
@@ -51,8 +55,8 @@
                 {% elif p._mode == 'mqtt' %}Web API + MQTT
                 {% endif %}
             </td>
-            <td class="py-1"></td>
-			<td class="py-1"></td>
+            <td class="py-1"><strong>{{ _('Cycle') }}</strong></td>
+			<td class="py-1">{{ p.get_cycle() }}</td>
 		</tr>
 	</tbody>
 </table>
@@ -62,7 +66,7 @@
 <!--
 	Define the number of tabs for the body of the web interface (1 - 3)
 -->
-{% set tabcount = 1 %}
+{% set tabcount = 2 %}
 <!--
 	Content block for the first tab of the Webinterface
 -->
@@ -88,14 +92,26 @@
                 <td class="py-1">{{ item.property.type }}</td>
                 <td class="py-1">{{ key }}</td>
                 <td id="{{ item.id() }}_value" class="py-1">
-                    {{ item() }}{% if key in ['mower/mode', 'mower/status'] %} ({{ _(p.get_items()[key+'/text']()) }})
-                    {% endif %}
+                    {{ item() }}
                 </td>
                 <td id="{{ item.id() }}_last_update" class="py-1">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
                 <td id="{{ item.id() }}_last_change" class="py-1">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
             </tr>
         {% endfor %}
-        <tr><td colspan="6"><strong>{{ _('Batterie-Informationen') }}</strong></td></tr>
+        <tr><td colspan="6"><strong>{{ _('Status-Informationen') }}</strong></td></tr>
+        {% for key, item in p.get_status_items().items()|sort() %}
+            <tr>
+                <td class="py-1">{{ item.property.path }}</td>
+                <td class="py-1">{{ item.property.type }}</td>
+                <td class="py-1">{{ key }}</td>
+                <td id="{{ item.id() }}_value" class="py-1">
+                    {{ item() }}{% if key in ['mower/mode', 'mower/status'] %} ({{ _(p.get_status_items()[key+'/text']()) }}){% endif %}
+                </td>
+                <td id="{{ item.id() }}_last_update" class="py-1">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                <td id="{{ item.id() }}_last_change" class="py-1">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+            </tr>
+        {% endfor %}
+        <tr><td colspan="6"><strong>{{ _('Batterie-(Detail)Informationen') }}</strong></td></tr>
         {% for key, items in p.get_battery_items().items() %}
             {% for item in items %}
             <tr>
@@ -114,3 +130,16 @@
     </table>
 </div>
 {% endblock bodytab1 %}
+
+
+{% set tab2title = "<strong>"+_('Fehlercodes')+"</strong>" %}
+{% block bodytab2 %}
+    <div class="ml-4 mt-4 mb-4">
+    {% for entry in p.get_full_error_list() %}
+        <div>
+        {{  entry['error_code'] }}:&nbsp;
+        {{  entry['error_message'] }}
+        </div>
+    {% endfor %}
+    </div>
+{% endblock bodytab2 %}
