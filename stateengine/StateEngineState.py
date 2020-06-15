@@ -187,7 +187,7 @@ class SeState(StateEngineTools.SeItemChild):
             self._abitem.update_webif(_key_leave, False)
             #self._log_debug('set leave for {} to false', elem)
         self.__actions_leave.execute(False, allow_item_repeat, self)
-        self._log_debug("Update web interface stay {}", self.id)
+        self._log_debug("Update web interface leave {}", self.id)
         self._log_increase_indent()
         self._abitem.update_webif([self.id, 'actions_leave'], self.__actions_leave.dict_actions)
         self._log_decrease_indent()
