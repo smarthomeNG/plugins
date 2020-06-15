@@ -92,6 +92,8 @@ class Database(SmartPlugin):
         self.driver = self.get_parameter_value('driver')
         self._connect = self.get_parameter_value('connect')  # list of connection parameters
         self._prefix = self.get_parameter_value('prefix')
+        if self._prefix is None:
+            self._prefix = ''
         if self._prefix != '':
             self._prefix += '_'
         self._dump_cycle = self.get_parameter_value('cycle')
@@ -890,11 +892,12 @@ class Database(SmartPlugin):
 
         duration = 0
         if isinstance(dts, str):
-            if dts.find('now') >= 0:
+            if dts == 'now':
                 duration = 0
             else:
                 for frame in dts.split(' '):
-                    duration += self._parse_single(frame)
+                    if frame != 'now':
+                        duration += self._parse_single(frame)
 
         if duration < 0:
             duration = 0
