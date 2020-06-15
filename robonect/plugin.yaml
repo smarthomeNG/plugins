@@ -351,6 +351,38 @@ plugin_functions:
                 description:
                     de: "status"
                     en: "status"
+    set_remote:
+        type: foo
+        description:
+            de: "Setzt Informationen für den jeweiligen Fernstart."
+            en: "Sets data for remote start."
+        parameters:
+            index:
+                type: int
+                description:
+                    de: "Fernstart-Index (normal 1 oder 2)"
+                    en: "Remote start index (normally 1 or 2)"
+            name:
+                type: str
+                description:
+                    de: "Name des Fernstart-Ortes."
+                    en: "Name of the remote start location."
+            distance:
+                type: int
+                description:
+                    de: "Distance zum Führungsdraht."
+                    en: "Distance to keep to the wire."
+            visible:
+                type: bool
+                description:
+                    de: "Fernstart-Punkt sichtbar?"
+                    en: "Remote start location visible?"
+            proportion:
+                type: int
+                description:
+                    de: "Häufigkeit."
+                    en: "Proportion."
+
     is_mower_offline:
         type: bool
         description:

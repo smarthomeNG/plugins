@@ -380,6 +380,46 @@ class Robonect(MqttPlugin):
         if 'errors' in json_obj:
             return json_obj['errors']
 
+    def set_remote(self, index, name=None, distance=None, visible=None, proportion=None):
+        param = ''
+        if name is not None:
+            param += '&name%s=%s' % (index,name)
+        if distance is not None:
+            param += '&distance%s=%s' % (index,distance)
+        if visible is not None:
+            param += '&visible%s=%s' % (index, int(visible))
+        if proportion is not None:
+            param += '&proportion%s=%s' % (index, proportion)
+        if param == '':
+            self.logger.error("Plugin '{}': set_remote did not have any parameters.".format(
+                self.get_fullname()))
+        try:
+            self.logger.debug("Plugin '{}': Requesting battery data".format(
+                self.get_fullname()))
+            response = self._session.get(self._base_url + 'remote' + param, auth=HTTPBasicAuth(self._user, self._password))
+            self.logger.debug(response.content)
+        except Exception as e:
+            if not self._mower_offline:
+                self.logger.error(
+                    "Plugin '{}': Exception when sending GET request for get_battery_data: {}".format(
+                        self.get_fullname(), str(e)))
+            self._mower_offline = True
+            return
+
+        json_obj = response.json()
+        if self._mower_offline:
+            self.logger.debug(
+                "Plugin '{}': Mower reachable again.".format(
+                    self.get_fullname()))
+            self._mower_offline = False
+
+        if not json_obj['successful']:
+            self.logger.error("Plugin '{}': Error when trying to set remote data.".format(
+                self.get_fullname()))
+        else:
+            self.get_remote()
+            return
+
     def get_remote(self):
         """
         Requests remote starting point data from the api and assigns it to items (if available).
