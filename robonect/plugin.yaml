@@ -171,6 +171,28 @@ item_structs:
             hours:
                 robonect_data_type: status_hours
                 type: num
+
+            error:
+                error_code:
+                    robonect_data_type: error_code
+                    type: num
+
+                error_message:
+                    robonect_data_type: error_message
+                    type: str
+
+                date:
+                    robonect_data_type: error_date
+                    type: str
+
+                time:
+                    robonect_data_type: error_time
+                    type: str
+
+                unix:
+                    robonect_data_type: error_unix
+                    type: str
+
         wlan:
             signal:
                 name: 'Wifi Signal Strength'

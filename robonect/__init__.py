@@ -27,15 +27,11 @@
 
 from lib.module import Modules
 from lib.model.mqttplugin import *
+from .webif import WebInterface
 from lib.item import Items
 from requests.auth import HTTPBasicAuth
 import math
 import requests
-
-
-# If a needed package is imported, which might be not installed in the Python environment,
-# add it to a requirements.txt file within the plugin's directory
-
 
 class Robonect(MqttPlugin):
     """
@@ -67,7 +63,7 @@ class Robonect(MqttPlugin):
         self._mode = self.get_parameter_value('mode')
         self._battery_items = {}
         self._session = requests.Session()
-        self.init_webinterface()
+        self.init_webinterface(WebInterface)
         return
 
     def run(self):
@@ -176,6 +172,12 @@ class Robonect(MqttPlugin):
         return
 
     def on_change(self, topic, payload, qos=None, retain=None):
+        """
+        Custom callback method for MQTT changes in items
+
+        :param topic: MQTT topic taken from item, e.g. 'mower/status'
+        :param payload: Payload received via MQTT
+        """
         if payload is not None:
             if topic == 'mower/status':
                 self.logger.debug(
@@ -186,7 +188,55 @@ class Robonect(MqttPlugin):
                     "on_change: setting mode for topic %s via mqtt as %s: %s" % (topic, payload, self.get_mode_as_text(int(payload))))
                 self._items['mower/mode/text'](self.get_mode_as_text(int(payload)))
 
+    def get_api_error_code_as_text(self, error_code):
+        """
+        Returns the api error code as short english string.
+
+        :param error_code: API error code as integer
+        :return: API error code as string
+        """
+        if error_code == 0:
+            return 'APIERROR_NO'
+        elif error_code == 1:
+            return 'APIERROR_INVALIDCMD'
+        elif error_code == 2:
+            return 'APIERROR_MISSINGPARAMETER'
+        elif error_code == 3:
+            return 'APIERROR_INVALIDPARAMETER'
+        elif error_code == 4:
+            return 'APIERROR_CMDFAILED'
+        elif error_code == 5:
+            return 'APIERROR_FAILURESTATE'
+        elif error_code == 6:
+            return 'APIERROR_ALREADYRUNNING'
+        elif error_code == 7:
+            return 'APIERROR_ALREADYSTOPPED'
+        elif error_code == 8:
+            return 'APIERROR_TIMEOUT'
+        elif error_code == 9:
+            return 'APIERROR_BUMPED'
+        elif error_code == 10:
+            return 'APIERROR_SHOCK'
+        elif error_code == 11:
+            return 'APIERROR_NOSIGNAL'
+        elif error_code == 12:
+            return 'APIERROR_NOTHINGCHANGED'
+        elif error_code == 13:
+            return 'APIERROR_NOTINFAILURESTATE'
+        elif error_code == 254:
+            return 'APIERROR_NOTIMPLEMENTED'
+        elif error_code == 255:
+            return 'APIERROR_UNSPECIFIED'
+        else:
+            return None
+
     def get_mode_as_text(self, mode):
+        """
+        Returns the mode as short english string.
+
+        :param mode: Mode as integer
+        :return: Mode as string
+        """
         if mode == 0:
             return 'AUTO'
         elif mode == 1:
@@ -200,10 +250,10 @@ class Robonect(MqttPlugin):
 
     def get_status_as_text(self, status):
         """
-        Returns the mode as short english text.
+        Returns the status as short english string.
 
-        :param mode: Mode as integer
-        :return: Mode as string
+        :param status: Status as integer
+        :return: Status as string
         """
         if status == 0:
             return 'DETECTING_STATUS'
@@ -231,6 +281,11 @@ class Robonect(MqttPlugin):
             return None
 
     def get_battery_data(self):
+        """
+        Requests battery data from the api and assigns it to items (if available).
+
+        :return: JSON object with battery data
+        """
         try:
             self.logger.debug("Plugin '{}': Requesting battery data".format(
                 self.get_fullname()))
@@ -279,14 +334,17 @@ class Robonect(MqttPlugin):
             for item in self._battery_items['battery_capacity_remaining']:
                 item(json_obj['batteries'][int(self.get_iattr_value(item.conf, 'robonect_battery_index'))]['capacity'][
                          'remaining'], self.get_shortname())
-        return
+        return json_obj
 
-    def get_mower_information(self):
+    def get_remote(self):
+        """
+        Requests remote starting point data from the api and assigns it to items (if available).
+
+        :return: JSON object with remote starting point data
+        """
         try:
-            self.logger.debug("Plugin '{}': Requesting mower data".format(
-                self.get_fullname()))
-            response = self._session.get(self._base_url + 'version', auth=HTTPBasicAuth(self._user, self._password))
-            self.logger.debug(response.content)
+            self.logger.debug("Plugin '{}': get_remote.")
+            response = self._session.get(self._base_url + 'remote', auth=HTTPBasicAuth(self._user, self._password))
         except Exception as e:
             if not self._mower_offline:
                 self.logger.error(
@@ -296,6 +354,30 @@ class Robonect(MqttPlugin):
             return
 
         json_obj = response.json()
+        self.logger.debug(json_obj)
+        if self._mower_offline:
+            self.logger.debug(
+                "Plugin '{}': Mower reachable again.".format(
+                    self.get_fullname()))
+            self._mower_offline = False
+
+        return json_obj
+
+    def get_mower_information(self):
+        try:
+            self.logger.debug("Plugin '{}': get_mower_information.".format(
+                self.get_fullname()))
+            response = self._session.get(self._base_url + 'version', auth=HTTPBasicAuth(self._user, self._password))
+        except Exception as e:
+            if not self._mower_offline:
+                self.logger.error(
+                    "Plugin '{}': Exception when sending GET request for get_mower_information: {}".format(
+                        self.get_fullname(), str(e)))
+            self._mower_offline = True
+            return
+
+        json_obj = response.json()
+        self.logger.debug(json_obj)
         if self._mower_offline:
             self.logger.debug(
                 "Plugin '{}': Mower reachable again.".format(
@@ -334,10 +416,9 @@ class Robonect(MqttPlugin):
 
     def get_status(self):
         try:
-            self.logger.debug("Plugin '{}': Requesting status data".format(
+            self.logger.debug("Plugin '{}': get_status.".format(
                 self.get_fullname()))
             response = self._session.get(self._base_url + 'status', auth=HTTPBasicAuth(self._user, self._password))
-            self.logger.debug(response.content)
         except Exception as e:
             if not self._mower_offline:
                 self.logger.error(
@@ -347,6 +428,7 @@ class Robonect(MqttPlugin):
             return
 
         json_obj = response.json()
+        self.logger.debug(json_obj)
         if self._mower_offline:
             self.logger.debug(
                 "Plugin '{}': Mower reachable again.".format(
@@ -386,48 +468,33 @@ class Robonect(MqttPlugin):
             self._items['time'](json_obj['clock']['time'], self.get_shortname())
         if 'unix' in self._items:
             self._items['unix'](json_obj['clock']['unix'], self.get_shortname())
+
+        if 'error_code' in self._items:
+            if 'error' in json_obj:
+                self._items['error_code'](json_obj['error']['error_code'])
+            else:
+                self._items['error_code']('')
+        if 'error_message' in self._items:
+            if 'error' in json_obj:
+                self._items['error_message'](json_obj['error']['error_message'])
+            else:
+                self._items['error_message']('')
+        if 'error_date' in self._items:
+            if 'error' in json_obj:
+                self._items['error_date'](json_obj['error']['date'])
+            else:
+                self._items['error_date']('')
+        if 'error_time' in self._items:
+            if 'error' in json_obj:
+                self._items['error_time'](json_obj['error']['time'])
+            else:
+                self._items['error_time']('')
+        if 'error_unix' in self._items:
+            if 'error' in json_obj:
+                self._items['error_unix'](json_obj['error']['unix'])
+            else:
+                self._items['error_unix']('')
         return
-
-    def init_webinterface(self):
-        """"
-        Initialize the web interface for this plugin
-
-        This method is only needed if the plugin is implementing a web interface
-        """
-        try:
-            self.mod_http = Modules.get_instance().get_module(
-                'http')  # try/except to handle running in a core version that does not support modules
-        except:
-            self.mod_http = None
-        if self.mod_http == None:
-            self.logger.error("Not initializing the web interface")
-            return False
-
-        import sys
-        if not "SmartPluginWebIf" in list(sys.modules['lib.model.smartplugin'].__dict__):
-            self.logger.warning("Web interface needs SmartHomeNG v1.5 and up. Not initializing the web interface")
-            return False
-
-        # set application configuration for cherrypy
-        webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
-        config = {
-            '/': {
-                'tools.staticdir.root': webif_dir,
-            },
-            '/static': {
-                'tools.staticdir.on': True,
-                'tools.staticdir.dir': 'static'
-            }
-        }
-
-        # Register the web interface as a cherrypy app
-        self.mod_http.register_webif(WebInterface(webif_dir, self),
-                                     self.get_shortname(),
-                                     config,
-                                     self.get_classname(), self.get_instance_name(),
-                                     description='')
-
-        return True
 
     def get_ip(self):
         return self._ip
@@ -443,72 +510,3 @@ class Robonect(MqttPlugin):
 
     def get_battery_items(self):
         return self._battery_items
-
-
-# ------------------------------------------
-#    Webinterface of the plugin
-# ------------------------------------------
-
-import cherrypy
-import json
-from jinja2 import Environment, FileSystemLoader
-
-
-class WebInterface(SmartPluginWebIf):
-
-    def __init__(self, webif_dir, plugin):
-        """
-        Initialization of instance of class WebInterface
-
-        :param webif_dir: directory where the webinterface of the plugin resides
-        :param plugin: instance of the plugin
-        :type webif_dir: str
-        :type plugin: object
-        """
-        self.logger = logging.getLogger(__name__)
-        self.webif_dir = webif_dir
-        self.plugin = plugin
-        self.tplenv = self.init_template_environment()
-
-        self.items = Items.get_instance()
-
-    @cherrypy.expose
-    def index(self, reload=None):
-        """
-        Build index.html for cherrypy
-
-        Render the template and return the html file to be delivered to the browser
-
-        :return: contents of the template after beeing rendered
-        """
-        tmpl = self.tplenv.get_template('index.html')
-        # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
-        return tmpl.render(p=self.plugin, items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path'])))
-
-    @cherrypy.expose
-    def get_data_html(self, dataSet=None):
-        """
-        Return data to update the webpage
-
-        For the standard update mechanism of the web interface, the dataSet to return the data for is None
-
-        :param dataSet: Dataset for which the data should be returned (standard: None)
-        :return: dict with the data needed to update the web page.
-        """
-        if dataSet is None:
-            data = {}
-            for key, item in self.plugin.get_items().items():
-                if item.property.type == 'bool':
-                    data[item.id() + "_value"] = str(item())
-                else:
-                    data[item.id() + "_value"] = item()
-                data[item.id() + "_last_update"] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
-                data[item.id() + "_last_change"] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
-            for key, items in self.plugin.get_battery_items().items():
-                for item in items:
-                    data[item.id() + "_value"] = item()
-                    data[item.id() + "_last_update"] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
-                    data[item.id() + "_last_change"] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
-            return json.dumps(data)
-        else:
-            return
