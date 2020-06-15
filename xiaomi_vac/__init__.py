@@ -73,7 +73,7 @@ class Robvac(SmartPlugin):
             if self._cycle > 10:
                 self.scheduler_add('Xiaomi_Robvac Read cycle', self._read, prio=5, cycle=self._cycle)
             else:
-                self.logger.warning("Xiaomi_Robvac: Read Cycle is to fast! < 10s, not starting!")
+                self.logger.warning("Xiaomi_Robvac: Read Cycle is too fast! < 10s, not starting!")
     # ----------------------------------------------------------------------------------------------
     # Verbinden zum Roboter
     # ----------------------------------------------------------------------------------------------
@@ -274,7 +274,7 @@ class Robvac(SmartPlugin):
     # Befehl senden, wird aufgerufen wenn sich item  mit robvac ändert!
     # ----------------------------------------------------------------------------------------------
     def update_item(self, item, caller=None, source=None, dest=None):
-        if caller != 'Robvac':
+        if caller != 'Robvac' and self.alive:
             #if 'robvac' in item.conf:
             #    message = item.conf['robvac']
             if self.has_iattr(item.conf, 'robvac'):
@@ -357,6 +357,7 @@ class Robvac(SmartPlugin):
         self.logger.debug("Xiaomi_Robvac: Found items{}".format(self.messages))
 
     def stop(self):
+        self.scheduler_remove('Xiaomi_Robvac Read cycle')
         self.alive = False
 
     def parse_item(self, item):
