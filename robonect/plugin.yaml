@@ -339,7 +339,7 @@ plugin_functions:
         type: foo
         description:
             de: "Stoppt den Automower."
-            en: "Stopps the automower."
+            en: "Stops the automower."
 
     get_mode_as_text:
         type: str
