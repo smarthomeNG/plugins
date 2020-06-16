@@ -403,6 +403,7 @@ class Robonect(MqttPlugin):
             self.logger.error(
                 "Plugin '{}': set_mode - invalid mode supplied: '{}' must be one of 'home','eod','man','auto','job'.".
                     format(self.get_fullname(), mode))
+            return
         else:
             param += '&mode=%s' % mode
             if mode == 'job':
