@@ -460,7 +460,7 @@ class Robonect(MqttPlugin):
             self._mower_offline = False
 
         if not json_obj['successful']:
-            self.logger.error("Plugin '{}': Error when trying to set mode %s.".format(
+            self.logger.error("Plugin '{}': Error when trying to set mode {}.".format(
                 self.get_fullname(), mode))
         else:
             return #self.get_remote()
