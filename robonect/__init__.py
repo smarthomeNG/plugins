@@ -387,7 +387,7 @@ class Robonect(MqttPlugin):
         :param distance: Distance to keep to the wire as integer (leave out if not needed to change)
         :param visible: Shall location be visible (boolean)?
         :param proportion: Proportion in percent as integer (leave out if not needed to change)
-        :return: Status as string
+        :return: Newly set remote location data as json (items are also auto-updated
         """
         param = ''
         if name is not None:
@@ -424,8 +424,7 @@ class Robonect(MqttPlugin):
             self.logger.error("Plugin '{}': Error when trying to set remote data.".format(
                 self.get_fullname()))
         else:
-            self.get_remote()
-            return
+            return self.get_remote()
 
     def get_remote(self):
         """
