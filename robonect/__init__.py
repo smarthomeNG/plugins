@@ -322,11 +322,7 @@ class Robonect(MqttPlugin):
             return
 
         json_obj = response.json()
-        if self._mower_offline:
-            self.logger.debug(
-                "Plugin '{}': Mower reachable again.".format(
-                    self.get_fullname()))
-            self._mower_offline = False
+        self.set_mower_online()
 
         if 'battery_id' in self._battery_items and 'batteries' in json_obj:
             for item in self._battery_items['battery_id']:
@@ -358,6 +354,13 @@ class Robonect(MqttPlugin):
                          'remaining'], self.get_shortname())
         return json_obj
 
+    def set_mower_online(self):
+        if self._mower_offline:
+            self.logger.debug(
+                "Plugin '{}': Mower reachable again.".format(
+                    self.get_fullname()))
+            self._mower_offline = False
+
     def get_full_error_list(self):
         """
         Requests the full list of possible errors of the automower.
@@ -377,6 +380,8 @@ class Robonect(MqttPlugin):
             return
 
         json_obj = response.json()
+        self.set_mower_online()
+
         if self._mower_offline:
             self.logger.debug(
                 "Plugin '{}': Mower reachable again.".format(
@@ -385,6 +390,53 @@ class Robonect(MqttPlugin):
 
         if 'errors' in json_obj:
             return json_obj['errors']
+
+    def start_mower(self):
+        """
+        Starts the automower.
+        :return json response
+        """
+        try:
+            self.logger.debug("Plugin '{}': Starting mower".format(
+                self.get_fullname()))
+            response = self._session.get(self._base_url + 'start',
+                                         auth=HTTPBasicAuth(self._user, self._password))
+        except Exception as e:
+            if not self._mower_offline:
+                self.logger.error(
+                    "Plugin '{}': Exception when sending GET request for get_battery_data: {}".format(
+                        self.get_fullname(), str(e)))
+            self._mower_offline = True
+            return
+
+        json_obj = response.json()
+
+        self.set_mower_online()
+
+        return json_obj
+
+    def stop_mower(self):
+        """
+        Stops the automower.
+        :return json response
+        """
+        try:
+            self.logger.debug("Plugin '{}': Stopping mower.".format(
+                self.get_fullname()))
+            response = self._session.get(self._base_url + 'stop',
+                                         auth=HTTPBasicAuth(self._user, self._password))
+        except Exception as e:
+            if not self._mower_offline:
+                self.logger.error(
+                    "Plugin '{}': Exception when sending GET request for get_battery_data: {}".format(
+                        self.get_fullname(), str(e)))
+            self._mower_offline = True
+            return
+
+        json_obj = response.json()
+        self.set_mower_online()
+
+        return json_obj
 
     def set_mode(self, mode, remotestart=None, after=None):
         """
@@ -454,11 +506,7 @@ class Robonect(MqttPlugin):
             return
 
         json_obj = response.json()
-        if self._mower_offline:
-            self.logger.debug(
-                "Plugin '{}': Mower reachable again.".format(
-                    self.get_fullname()))
-            self._mower_offline = False
+        self.set_mower_online()
 
         if not json_obj['successful']:
             self.logger.error("Plugin '{}': Error when trying to set mode {} - {}: '{}'.".format(
@@ -503,11 +551,7 @@ class Robonect(MqttPlugin):
             return
 
         json_obj = response.json()
-        if self._mower_offline:
-            self.logger.debug(
-                "Plugin '{}': Mower reachable again.".format(
-                    self.get_fullname()))
-            self._mower_offline = False
+        self.set_mower_online()
 
         if not json_obj['successful']:
             self.logger.error("Plugin '{}': Error when trying to set remote data.".format(
@@ -534,11 +578,7 @@ class Robonect(MqttPlugin):
 
         json_obj = response.json()
         self.logger.debug(json_obj)
-        if self._mower_offline:
-            self.logger.debug(
-                "Plugin '{}': Mower reachable again.".format(
-                    self.get_fullname()))
-            self._mower_offline = False
+        self.set_mower_online()
 
         for item in self._remote_items['remotestart_name']:
             key = 'remotestart_%s' % self.get_iattr_value(item.conf, 'robonect_remote_index')
@@ -581,12 +621,7 @@ class Robonect(MqttPlugin):
             return
 
         json_obj = response.json()
-        self.logger.debug(json_obj)
-        if self._mower_offline:
-            self.logger.debug(
-                "Plugin '{}': Mower reachable again.".format(
-                    self.get_fullname()))
-            self._mower_offline = False
+        self.set_mower_online()
 
         if 'mower' in json_obj:
             if 'hardware_serial' in self._items:
@@ -632,12 +667,7 @@ class Robonect(MqttPlugin):
             return
 
         json_obj = response.json()
-        self.logger.debug(json_obj)
-        if self._mower_offline:
-            self.logger.debug(
-                "Plugin '{}': Mower reachable again.".format(
-                    self.get_fullname()))
-            self._mower_offline = False
+        self.set_mower_online()
 
         if 'device/name' in self._items:
             self._items['device/name'](json_obj['name'], self.get_shortname())

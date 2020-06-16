@@ -329,6 +329,18 @@ item_structs:
 
 plugin_functions:
     # Definition of plugin functions defined by this plugin (enter 'plugin_functions: NONE', if section should be empty)
+    start_mower:
+        type: foo
+        description:
+            de: "Startet den Automower."
+            en: "Starts the automower."
+
+    stop_mower:
+        type: foo
+        description:
+            de: "Stoppt den Automower."
+            en: "Stopps the automower."
+
     get_mode_as_text:
         type: str
         description:
