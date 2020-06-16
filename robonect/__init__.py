@@ -305,7 +305,6 @@ class Robonect(MqttPlugin):
             self.logger.debug("Plugin '{}': Requesting battery data".format(
                 self.get_fullname()))
             response = self._session.get(self._base_url + 'battery', auth=HTTPBasicAuth(self._user, self._password))
-            self.logger.debug(response.content)
         except Exception as e:
             if not self._mower_offline:
                 self.logger.error(
@@ -361,7 +360,6 @@ class Robonect(MqttPlugin):
             self.logger.debug("Plugin '{}': Requesting battery data".format(
                 self.get_fullname()))
             response = self._session.get(self._base_url + 'error&list', auth=HTTPBasicAuth(self._user, self._password))
-            self.logger.debug(response.content)
         except Exception as e:
             if not self._mower_offline:
                 self.logger.error(
@@ -381,6 +379,16 @@ class Robonect(MqttPlugin):
             return json_obj['errors']
 
     def set_remote(self, index, name=None, distance=None, visible=None, proportion=None):
+        """
+        Sets data for the remote start location.
+
+        :param index: Index of the location as integer (starting with 1)
+        :param name: Name of the location as string (leave out if not needed to change)
+        :param distance: Distance to keep to the wire as integer (leave out if not needed to change)
+        :param visible: Shall location be visible (boolean)?
+        :param proportion: Proportion in percent as integer (leave out if not needed to change)
+        :return: Status as string
+        """
         param = ''
         if name is not None:
             param += '&name%s=%s' % (index,name)
@@ -397,7 +405,6 @@ class Robonect(MqttPlugin):
             self.logger.debug("Plugin '{}': Requesting battery data".format(
                 self.get_fullname()))
             response = self._session.get(self._base_url + 'remote' + param, auth=HTTPBasicAuth(self._user, self._password))
-            self.logger.debug(response.content)
         except Exception as e:
             if not self._mower_offline:
                 self.logger.error(
