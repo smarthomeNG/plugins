@@ -142,6 +142,50 @@ item_structs:
                 sdk-version:
                     robonect_data_type: wlan_sdk-version
                     type: str
+        remote:
+            remotestart_1:
+                name:
+                    type: str
+                    robonect_data_type: remotestart_name
+                    robonect_remote_index: 1
+                visible:
+                    type: bool
+                    robonect_data_type: remotestart_visible
+                    robonect_remote_index: 1
+                path:
+                    type: num
+                    robonect_data_type: remotestart_path
+                    robonect_remote_index: 1
+                proportion:
+                    type: num
+                    robonect_data_type: remotestart_proportion
+                    robonect_remote_index: 1
+                distance:
+                    type: num
+                    robonect_data_type: remotestart_distance
+                    robonect_remote_index: 1
+
+            remotestart_2:
+                name:
+                    type: str
+                    robonect_data_type: remotestart_name
+                    robonect_remote_index: 2
+                visible:
+                    type: bool
+                    robonect_data_type: remotestart_visible
+                    robonect_remote_index: 2
+                path:
+                    type: num
+                    robonect_data_type: remotestart_path
+                    robonect_remote_index: 2
+                proportion:
+                    type: num
+                    robonect_data_type: remotestart_proportion
+                    robonect_remote_index: 2
+                distance:
+                    type: num
+                    robonect_data_type: remotestart_distance
+                    robonect_remote_index: 2
 
         status:
             name: 'Status Code'
@@ -285,6 +329,18 @@ item_structs:
 
 plugin_functions:
     # Definition of plugin functions defined by this plugin (enter 'plugin_functions: NONE', if section should be empty)
+    start_mower:
+        type: foo
+        description:
+            de: "Startet den Automower."
+            en: "Starts the automower."
+
+    stop_mower:
+        type: foo
+        description:
+            de: "Stoppt den Automower."
+            en: "Stops the automower."
+
     get_mode_as_text:
         type: str
         description:
@@ -307,6 +363,95 @@ plugin_functions:
                 description:
                     de: "status"
                     en: "status"
+    set_remote:
+        type: foo
+        description:
+            de: "Setzt Informationen für den jeweiligen Fernstart."
+            en: "Sets data for remote start."
+        parameters:
+            index:
+                type: int
+                description:
+                    de: "Fernstart-Index (normal 1 oder 2)"
+                    en: "Remote start index (normally 1 or 2)"
+            name:
+                type: str
+                description:
+                    de: "Name des Fernstart-Ortes."
+                    en: "Name of the remote start location."
+            distance:
+                type: int
+                description:
+                    de: "Fernstartabstand."
+                    en: "Distance of remote start location."
+            visible:
+                type: bool
+                description:
+                    de: "Fernstart-Punkt sichtbar?"
+                    en: "Remote start location visible?"
+            proportion:
+                type: int
+                description:
+                    de: "Häufigkeit."
+                    en: "Proportion."
+    set_mode:
+        type: foo
+        description:
+            de: "Setzt den aktuellen modus."
+            en: "Sets the mode."
+        parameters:
+            mode:
+                type: str
+                description:
+                    de: "Modus, der gesetzt werden soll ('home','eod','man','auto','job')"
+                    en: "Mode to set ('home','eod','man','auto','job')"
+                mandatory: True
+                valid_list:
+                    - 'home'
+                    - 'eod'
+                    - 'man'
+                    - 'auto'
+                    - 'job'
+            remotestart:
+                type: int
+                description:
+                    de: 'Fernstartpunkt, entweder 0 (Standard), 1 (Fernstart 1), oder 2 (Fernstart 2) - nur mit mode=job nutzbar.'
+                    en: 'Remote start location, either 0 (standard), 1 (remote start  1), or 2 (remote start 2), only used when mode=job'
+                valid_list:
+                    - 0
+                    - 1
+                    - 2
+            after:
+                type: str
+                description:
+                    de: "Modus, der nach dem Mähauftrag aktiviert werden soll (Standard: letzter Modus). Mögliche Werte 1,2,3,4 (vor V1.0 Beta 8) oder 'home','eod','man','auto','job' - nur mit mode=job nutzbar."
+                    en: "Mode to activate after the automower has finished mowing (if not set, return to recent mode). Possible values 1,2,3,4 (needed before V1.0 Beta 8) or 'home','eod','man','auto','job'"
+                valid_list:
+                    - '1'
+                    - '2'
+                    - '3'
+                    - '4'
+                    - 'home'
+                    - 'eod'
+                    - 'man'
+                    - 'auto'
+                    - 'job'
+            start:
+                type: str
+                description:
+                    de: "Startzeit für den Mähauftrag, als String im Format 'HH:MM' (Wenn nicht gesetzt: 0) - nur mit mode=job nutzbar."
+                    en: "Time, as string in the format 'HH:MM', when the mower should start (if not set: 0)"
+            end:
+                type: str
+                description:
+                    de: "Endzeit für den Mähauftrag, als String im Format 'HH:MM' (Wenn nicht gesetzt: +1h) - nur mit mode=job nutzbar."
+                    en: "Time, as string in the format 'HH:MM', when the mower should start (if not set: +1h)"
+            duration:
+                type: int
+                description:
+                    de: "Zeitdauer des Mähauftrags in Minuten (nur kombiniert mit dem start oder end Parameter)"
+                    en: "Duration, as minutes (integer), of the mowing order (in combination with either the start or end parameter)"
+
     is_mower_offline:
         type: bool
         description:

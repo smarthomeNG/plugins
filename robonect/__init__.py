@@ -31,7 +31,9 @@ from .webif import WebInterface
 from lib.item import Items
 from requests.auth import HTTPBasicAuth
 import math
+import time
 import requests
+
 
 class Robonect(MqttPlugin):
     """
@@ -39,9 +41,14 @@ class Robonect(MqttPlugin):
     the update functions for the items
     """
     PLUGIN_VERSION = '1.0.0'  # (must match the version specified in plugin.yaml)
-    STATUS_TYPES = ['mower/status','mower/status/text','mower/distance','mower/status/duration','mower/statistic/hours',
-                    'mower/stopped','mower/mode','mower/mode/text','mower/battery/charge','blades_quality',
-                    'blades_hours','blades_days','mower/error/code','mower/error/message','error_date','error_time','error_unix']
+    STATUS_TYPES = ['mower/status', 'mower/status/text', 'mower/distance', 'mower/status/duration',
+                    'mower/statistic/hours',
+                    'mower/stopped', 'mower/mode', 'mower/mode/text', 'mower/battery/charge', 'blades_quality',
+                    'blades_hours', 'blades_days', 'mower/error/code', 'mower/error/message', 'error_date',
+                    'error_time', 'error_unix']
+    REMOTE_TYPES = ['remotestart_name', 'remotestart_visible', 'remotestart_path', 'remotestart_proportion',
+                    'remotestart_distance']
+    MODE_TYPES = ['home', 'eod', 'man', 'auto', 'job']
 
     def __init__(self, sh):
         """
@@ -66,6 +73,7 @@ class Robonect(MqttPlugin):
         self._mode = self.get_parameter_value('mode')
         self._battery_items = {}
         self._status_items = {}
+        self._remote_items = {}
         self._session = requests.Session()
         self.init_webinterface(WebInterface)
         return
@@ -122,10 +130,16 @@ class Robonect(MqttPlugin):
             if not self.get_iattr_value(item.conf, 'robonect_data_type') in self._battery_items and \
                     self.has_iattr(item.conf, 'robonect_battery_index'):
                 self._battery_items[self.get_iattr_value(item.conf, 'robonect_data_type')] = []
+            if not self.get_iattr_value(item.conf, 'robonect_data_type') in self._remote_items and \
+                    self.has_iattr(item.conf, 'robonect_remote_index'):
+                self._remote_items[self.get_iattr_value(item.conf, 'robonect_data_type')] = []
+
             if self.get_iattr_value(item.conf, 'robonect_data_type') in self._battery_items:
                 self._battery_items[self.get_iattr_value(item.conf, 'robonect_data_type')].append(item)
             elif self.get_iattr_value(item.conf, 'robonect_data_type') in self.STATUS_TYPES:
                 self._status_items[self.get_iattr_value(item.conf, 'robonect_data_type')] = item
+            elif self.get_iattr_value(item.conf, 'robonect_data_type') in self.REMOTE_TYPES:
+                self._remote_items[self.get_iattr_value(item.conf, 'robonect_data_type')].append(item)
             else:
                 self._items[self.get_iattr_value(item.conf, 'robonect_data_type')] = item
         return
@@ -175,6 +189,7 @@ class Robonect(MqttPlugin):
         self.get_mower_information()
         self.get_status()
         self.get_battery_data()
+        self.get_remote()
         return
 
     def on_change(self, topic, payload, qos=None, retain=None):
@@ -187,11 +202,13 @@ class Robonect(MqttPlugin):
         if payload is not None:
             if topic == 'mower/status':
                 self.logger.debug(
-                    "on_change: setting mode for topic %s via mqtt as %s: %s" % (topic, payload, self.get_status_as_text(int(payload))))
+                    "on_change: setting mode for topic %s via mqtt as %s: %s" % (
+                    topic, payload, self.get_status_as_text(int(payload))))
                 self._status_items['mower/status/text'](self.get_status_as_text(int(payload)))
             elif topic == 'mower/mode':
                 self.logger.debug(
-                    "on_change: setting mode for topic %s via mqtt as %s: %s" % (topic, payload, self.get_mode_as_text(int(payload))))
+                    "on_change: setting mode for topic %s via mqtt as %s: %s" % (
+                    topic, payload, self.get_mode_as_text(int(payload))))
                 self._status_items['mower/mode/text'](self.get_mode_as_text(int(payload)))
 
     def get_api_error_code_as_text(self, error_code):
@@ -296,7 +313,6 @@ class Robonect(MqttPlugin):
             self.logger.debug("Plugin '{}': Requesting battery data".format(
                 self.get_fullname()))
             response = self._session.get(self._base_url + 'battery', auth=HTTPBasicAuth(self._user, self._password))
-            self.logger.debug(response.content)
         except Exception as e:
             if not self._mower_offline:
                 self.logger.error(
@@ -306,41 +322,44 @@ class Robonect(MqttPlugin):
             return
 
         json_obj = response.json()
+        self.set_mower_online()
+
+        if 'battery_id' in self._battery_items and 'batteries' in json_obj:
+            for item in self._battery_items['battery_id']:
+                item(json_obj['batteries'][int(self.get_iattr_value(item.conf, 'robonect_battery_index'))]['id'],
+                     self.get_shortname())
+        if 'battery_charge' in self._battery_items and 'batteries' in json_obj:
+            for item in self._battery_items['battery_charge']:
+                item(json_obj['batteries'][int(self.get_iattr_value(item.conf, 'robonect_battery_index'))]['charge'],
+                     self.get_shortname())
+        if 'battery_voltage' in self._battery_items and 'batteries' in json_obj:
+            for item in self._battery_items['battery_voltage']:
+                item(json_obj['batteries'][int(self.get_iattr_value(item.conf, 'robonect_battery_index'))]['voltage'],
+                     self.get_shortname())
+        if 'battery_current' in self._battery_items and 'batteries' in json_obj:
+            for item in self._battery_items['battery_current']:
+                item(json_obj['batteries'][int(self.get_iattr_value(item.conf, 'robonect_battery_index'))]['current'],
+                     self.get_shortname())
+        if 'battery_temperature' in self._battery_items and 'batteries' in json_obj:
+            for item in self._battery_items['battery_temperature']:
+                item(json_obj['batteries'][int(self.get_iattr_value(item.conf, 'robonect_battery_index'))][
+                         'temperature'], self.get_shortname())
+        if 'battery_capacity_full' in self._battery_items and 'batteries' in json_obj:
+            for item in self._battery_items['battery_capacity_full']:
+                item(json_obj['batteries'][int(self.get_iattr_value(item.conf, 'robonect_battery_index'))]['capacity'][
+                         'full'], self.get_shortname())
+        if 'battery_capacity_remaining' in self._battery_items and 'batteries' in json_obj:
+            for item in self._battery_items['battery_capacity_remaining']:
+                item(json_obj['batteries'][int(self.get_iattr_value(item.conf, 'robonect_battery_index'))]['capacity'][
+                         'remaining'], self.get_shortname())
+        return json_obj
+
+    def set_mower_online(self):
         if self._mower_offline:
             self.logger.debug(
                 "Plugin '{}': Mower reachable again.".format(
                     self.get_fullname()))
             self._mower_offline = False
-
-        if 'battery_id' in self._battery_items:
-            for item in self._battery_items['battery_id']:
-                item(json_obj['batteries'][int(self.get_iattr_value(item.conf, 'robonect_battery_index'))]['id'],
-                     self.get_shortname())
-        if 'battery_charge' in self._battery_items:
-            for item in self._battery_items['battery_charge']:
-                item(json_obj['batteries'][int(self.get_iattr_value(item.conf, 'robonect_battery_index'))]['charge'],
-                     self.get_shortname())
-        if 'battery_voltage' in self._battery_items:
-            for item in self._battery_items['battery_voltage']:
-                item(json_obj['batteries'][int(self.get_iattr_value(item.conf, 'robonect_battery_index'))]['voltage'],
-                     self.get_shortname())
-        if 'battery_current' in self._battery_items:
-            for item in self._battery_items['battery_current']:
-                item(json_obj['batteries'][int(self.get_iattr_value(item.conf, 'robonect_battery_index'))]['current'],
-                     self.get_shortname())
-        if 'battery_temperature' in self._battery_items:
-            for item in self._battery_items['battery_temperature']:
-                item(json_obj['batteries'][int(self.get_iattr_value(item.conf, 'robonect_battery_index'))][
-                         'temperature'], self.get_shortname())
-        if 'battery_capacity_full' in self._battery_items:
-            for item in self._battery_items['battery_capacity_full']:
-                item(json_obj['batteries'][int(self.get_iattr_value(item.conf, 'robonect_battery_index'))]['capacity'][
-                         'full'], self.get_shortname())
-        if 'battery_capacity_remaining' in self._battery_items:
-            for item in self._battery_items['battery_capacity_remaining']:
-                item(json_obj['batteries'][int(self.get_iattr_value(item.conf, 'robonect_battery_index'))]['capacity'][
-                         'remaining'], self.get_shortname())
-        return json_obj
 
     def get_full_error_list(self):
         """
@@ -352,7 +371,6 @@ class Robonect(MqttPlugin):
             self.logger.debug("Plugin '{}': Requesting battery data".format(
                 self.get_fullname()))
             response = self._session.get(self._base_url + 'error&list', auth=HTTPBasicAuth(self._user, self._password))
-            self.logger.debug(response.content)
         except Exception as e:
             if not self._mower_offline:
                 self.logger.error(
@@ -362,6 +380,8 @@ class Robonect(MqttPlugin):
             return
 
         json_obj = response.json()
+        self.set_mower_online()
+
         if self._mower_offline:
             self.logger.debug(
                 "Plugin '{}': Mower reachable again.".format(
@@ -370,6 +390,174 @@ class Robonect(MqttPlugin):
 
         if 'errors' in json_obj:
             return json_obj['errors']
+
+    def start_mower(self):
+        """
+        Starts the automower.
+        :return json response
+        """
+        try:
+            self.logger.debug("Plugin '{}': Starting mower".format(
+                self.get_fullname()))
+            response = self._session.get(self._base_url + 'start',
+                                         auth=HTTPBasicAuth(self._user, self._password))
+        except Exception as e:
+            if not self._mower_offline:
+                self.logger.error(
+                    "Plugin '{}': Exception when sending GET request for get_battery_data: {}".format(
+                        self.get_fullname(), str(e)))
+            self._mower_offline = True
+            return
+
+        json_obj = response.json()
+
+        self.set_mower_online()
+
+        return json_obj
+
+    def stop_mower(self):
+        """
+        Stops the automower.
+        :return json response
+        """
+        try:
+            self.logger.debug("Plugin '{}': Stopping mower.".format(
+                self.get_fullname()))
+            response = self._session.get(self._base_url + 'stop',
+                                         auth=HTTPBasicAuth(self._user, self._password))
+        except Exception as e:
+            if not self._mower_offline:
+                self.logger.error(
+                    "Plugin '{}': Exception when sending GET request for get_battery_data: {}".format(
+                        self.get_fullname(), str(e)))
+            self._mower_offline = True
+            return
+
+        json_obj = response.json()
+        self.set_mower_online()
+
+        return json_obj
+
+    def set_mode(self, mode, remotestart=None, after=None):
+        """
+        Sets data for the remote start location.
+
+        :param mode: mode to set ('home','eod','man','auto','job')
+        :param remotestart: remote start location, either 0 (standard), 1 (remote start  1), or 2 (remote start 2), only used when mode=job
+        :param after: mode to activate after the automower has finished mowing (if not set, return to recent mode). Possible values 1,2,3,4 (needed before V1.0 Beta 8) or 'home','eod','man','auto','job'
+        :param start: time, as string in the format 'HH:MM', when the mower should start (if not set: 0)
+        :param end: time, as string in the format 'HH:MM', when the mower should start (if not set: +1h)
+        :param duration: duration, as minutes (integer), of the mowing order (in combination with either the start or end parameter)
+        :return:
+        """
+        param = ''
+        if mode not in self.MODE_TYPES:
+            self.logger.error(
+                "Plugin '{}': set_mode - invalid mode supplied: '{}' must be one of 'home','eod','man','auto','job'.".
+                    format(self.get_fullname(), mode))
+            return
+        else:
+            param += '&mode=%s' % mode
+            if mode == 'job':
+                if remotestart is not None:
+                    if 0 <= remotestart <= 2:
+                        param += '&remotestart=%s' % remotestart
+                    else:
+                        self.logger.error(
+                            "Plugin '{}': set_mode - invalid remotestart value supplied: '{}' must be 1, 2, or 3.".
+                                format(self.get_fullname(), remotestart))
+                if after is not None:
+                    if (0 <= after <= 4) or (after in self.MODE_TYPES):
+                        param += '&after=%s' % after
+                    else:
+                        self.logger.error(
+                            "Plugin '{}': set_mode - invalid after value supplied: '{}' must be 1, 2, 3, or 4 or "
+                            "one of the values 'home','eod','man','auto','job'.".
+                                format(self.get_fullname(), after))
+                if start is not None:
+                    if self.is_time_format(start):
+                        param += '&start=%s' % start
+                    else:
+                        self.logger.error(
+                            "Plugin '{}': set_mode - invalid start value supplied: '{}' must be 'HH:MM'.".
+                                format(self.get_fullname(), start))
+                if end is not None:
+                    if self.is_time_format(end):
+                        param += '&end=%s' % end
+                    else:
+                        self.logger.error(
+                            "Plugin '{}': set_mode - invalid end value supplied: '{}' must be 'HH:MM'.".
+                                format(self.get_fullname(), end))
+                if (start is not None and duration is not None) or (end is not None and duration is not None):
+                    param += '&duration=%s' % duration
+
+
+        try:
+            self.logger.debug("Plugin '{}': Requesting battery data".format(
+                self.get_fullname()))
+            response = self._session.get(self._base_url + 'mode' + param,
+                                         auth=HTTPBasicAuth(self._user, self._password))
+        except Exception as e:
+            if not self._mower_offline:
+                self.logger.error(
+                    "Plugin '{}': Exception when sending GET request for get_battery_data: {}".format(
+                        self.get_fullname(), str(e)))
+            self._mower_offline = True
+            return
+
+        json_obj = response.json()
+        self.set_mower_online()
+
+        if not json_obj['successful']:
+            self.logger.error("Plugin '{}': Error when trying to set mode {} - {}: '{}'.".format(
+                self.get_fullname(), mode, str(json_obj['error_code']), json_obj['error_message']))
+        else:
+            return #self.get_remote()
+
+    def set_remote(self, index, name=None, distance=None, visible=None, proportion=None):
+        """
+        Sets data for the remote start location.
+
+        :param index: Index of the location as integer (starting with 1)
+        :param name: Name of the location as string (leave out if not needed to change)
+        :param distance: Distance to keep to the wire as integer (leave out if not needed to change)
+        :param visible: Shall location be visible (boolean)?
+        :param proportion: Proportion in percent as integer (leave out if not needed to change)
+        :return: Newly set remote location data as json (items are also auto-updated
+        """
+        param = ''
+        if name is not None:
+            param += '&name%s=%s' % (index, name)
+        if distance is not None:
+            param += '&distance%s=%s' % (index, distance)
+        if visible is not None:
+            param += '&visible%s=%s' % (index, int(visible))
+        if proportion is not None:
+            param += '&proportion%s=%s' % (index, proportion)
+        if param == '':
+            self.logger.error("Plugin '{}': set_remote did not have any parameters.".format(
+                self.get_fullname()))
+        try:
+            self.logger.debug("Plugin '{}': Requesting battery data".format(
+                self.get_fullname()))
+            response = self._session.get(self._base_url + 'remote' + param,
+                                         auth=HTTPBasicAuth(self._user, self._password))
+        except Exception as e:
+            if not self._mower_offline:
+                self.logger.error(
+                    "Plugin '{}': Exception when sending GET request for get_battery_data: {}".format(
+                        self.get_fullname(), str(e)))
+            self._mower_offline = True
+            return
+
+        json_obj = response.json()
+        self.set_mower_online()
+
+        if not json_obj['successful']:
+            self.logger.error("Plugin '{}': Error when trying to set remote data.".format(
+                self.get_fullname()))
+        else:
+            return self.get_remote()
 
     def get_remote(self):
         """
@@ -390,11 +578,32 @@ class Robonect(MqttPlugin):
 
         json_obj = response.json()
         self.logger.debug(json_obj)
-        if self._mower_offline:
-            self.logger.debug(
-                "Plugin '{}': Mower reachable again.".format(
-                    self.get_fullname()))
-            self._mower_offline = False
+        self.set_mower_online()
+
+        for item in self._remote_items['remotestart_name']:
+            key = 'remotestart_%s' % self.get_iattr_value(item.conf, 'robonect_remote_index')
+            if key in json_obj:
+                item(json_obj[key]['name'], self.get_shortname())
+
+        for item in self._remote_items['remotestart_visible']:
+            key = 'remotestart_%s' % self.get_iattr_value(item.conf, 'robonect_remote_index')
+            if key in json_obj:
+                item(json_obj[key]['visible'], self.get_shortname())
+
+        for item in self._remote_items['remotestart_path']:
+            key = 'remotestart_%s' % self.get_iattr_value(item.conf, 'robonect_remote_index')
+            if key in json_obj:
+                item(json_obj[key]['path'], self.get_shortname())
+
+        for item in self._remote_items['remotestart_proportion']:
+            key = 'remotestart_%s' % self.get_iattr_value(item.conf, 'robonect_remote_index')
+            if key in json_obj:
+                item(json_obj[key]['proportion'], self.get_shortname())
+
+        for item in self._remote_items['remotestart_distance']:
+            key = 'remotestart_%s' % self.get_iattr_value(item.conf, 'robonect_remote_index')
+            if key in json_obj:
+                item(json_obj[key]['distance'], self.get_shortname())
 
         return json_obj
 
@@ -412,12 +621,7 @@ class Robonect(MqttPlugin):
             return
 
         json_obj = response.json()
-        self.logger.debug(json_obj)
-        if self._mower_offline:
-            self.logger.debug(
-                "Plugin '{}': Mower reachable again.".format(
-                    self.get_fullname()))
-            self._mower_offline = False
+        self.set_mower_online()
 
         if 'mower' in json_obj:
             if 'hardware_serial' in self._items:
@@ -436,16 +640,16 @@ class Robonect(MqttPlugin):
         if 'serial' in self._items:
             self._items['serial'](json_obj['serial'], self.get_shortname())
 
-        if 'wlan_sdk-version' in self._items:
+        if 'wlan_sdk-version' in self._items and 'wlan' in json_obj:
             self._items['wlan_sdk-version'](json_obj['wlan']['sdk-version'], self.get_shortname())
-        if 'wlan_at-version' in self._items:
+        if 'wlan_at-version' in self._items and 'wlan' in json_obj:
             self._items['wlan_at-version'](json_obj['wlan']['at-version'], self.get_shortname())
 
-        if 'robonect_version' in self._items:
+        if 'robonect_version' in self._items and 'application' in json_obj:
             self._items['robonect_version'](json_obj['application']['version'], self.get_shortname())
-        if 'robonect_version_comment' in self._items:
+        if 'robonect_version_comment' in self._items and 'application' in json_obj:
             self._items['robonect_version_comment'](json_obj['application']['comment'], self.get_shortname())
-        if 'robonect_version_compiled' in self._items:
+        if 'robonect_version_compiled' in self._items and 'application' in json_obj:
             self._items['robonect_version_compiled'](json_obj['application']['compiled'], self.get_shortname())
         return
 
@@ -463,12 +667,7 @@ class Robonect(MqttPlugin):
             return
 
         json_obj = response.json()
-        self.logger.debug(json_obj)
-        if self._mower_offline:
-            self.logger.debug(
-                "Plugin '{}': Mower reachable again.".format(
-                    self.get_fullname()))
-            self._mower_offline = False
+        self.set_mower_online()
 
         if 'device/name' in self._items:
             self._items['device/name'](json_obj['name'], self.get_shortname())
@@ -484,7 +683,8 @@ class Robonect(MqttPlugin):
             self._status_items['mower/stopped'](self.to_bool(json_obj['status']['stopped'], self.get_shortname()))
         if 'mower/status/duration' in self._status_items:
             # round to minutes, as mqtt is also returning minutes instead of seconds
-            self._status_items['mower/status/duration'](math.floor(json_obj['status']['duration'] / 60), self.get_shortname())
+            self._status_items['mower/status/duration'](math.floor(json_obj['status']['duration'] / 60),
+                                                        self.get_shortname())
         if 'mower/mode' in self._status_items:
             self._status_items['mower/mode'](json_obj['status']['mode'], self.get_shortname())
             if 'mower/mode/text' in self._status_items:
@@ -559,8 +759,18 @@ class Robonect(MqttPlugin):
     def get_battery_items(self):
         return self._battery_items
 
+    def get_remote_items(self):
+        return self._remote_items
+
     def is_mower_offline(self):
         return self._mower_offline
 
     def get_cycle(self):
         return self._cycle
+
+    def is_time_format(input):
+        try:
+            time.strptime(input, '%H:%M')
+            return True
+        except ValueError:
+            return False
