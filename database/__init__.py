@@ -884,11 +884,11 @@ class Database(SmartPlugin):
 
         :return:
         """
+        ts = self._timestamp(self.shtime.now())
         try:
-            return int(dts)
+            return min(ts, int(dts))    # rts, if dts is an integer value, return now, if dts is a timestamp in th future
         except:
             pass
-        ts = self._timestamp(self.shtime.now())
 
         duration = 0
         if isinstance(dts, str):
