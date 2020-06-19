@@ -36,7 +36,7 @@ class Shelly(MqttPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.1.1'
+    PLUGIN_VERSION = '1.1.2'
 
 
     def __init__(self, sh):
@@ -333,6 +333,9 @@ class WebInterface(SmartPluginWebIf):
         :return: contents of the template after beeing rendered
         """
         self.plugin.get_broker_info()
+
+        # sort shelly_items for display in web interface
+        self.plugin.shelly_items = sorted(self.plugin.shelly_items, key=lambda k: str.lower(k['_path']))
 
         tmpl = self.tplenv.get_template('index.html')
         # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)

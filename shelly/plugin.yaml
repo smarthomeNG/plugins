@@ -12,7 +12,7 @@ plugin:
 #    documentation: http://smarthomeng.de/user/plugins/mqtt2/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1451853-support-thread-für-das-shelly-plugin
 
-    version: 1.1.1                 # Plugin version
+    version: 1.1.2                 # Plugin version
     sh_minversion: 1.6a            # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
@@ -69,8 +69,44 @@ item_attributes:
             de: "Nummer des zu schaltenden Relais"
             en: "Number of the relay to use for switching"
 
-item_structs: NONE
+item_structs:
     # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
+    shellyplug:
+        type: bool
+        # shelly_id: xxxxxx
+        shelly_type: shellyplug
+#        shelly_attr: relay
+#        shelly_relay: '0'
+
+        online:
+            type: bool
+            shelly_id: ..:.
+            shelly_type: ..:.
+            shelly_attr: online
+        power:
+            type: num
+            shelly_id: ..:.
+            shelly_type: ..:.
+            shelly_attr: power
+        energy:
+            type: num
+            shelly_id: ..:.
+            shelly_type: ..:.
+            shelly_attr: energy
+
+    shellyplug_s:
+        shelly_type: shellyplug-s
+        struct: shelly.shellyplug
+        temp:
+            type: num
+            shelly_id: ..:.
+            shelly_type: ..:.
+            shelly_attr: temp
+        temp_f:
+            type: num
+            shelly_id: ..:.
+            shelly_type: ..:.
+            shelly_attr: temp_f
 
 plugin_functions: NONE
     # Definition of plugin functions defined by this plugin (enter 'plugin_functions: NONE', if section should be empty)
