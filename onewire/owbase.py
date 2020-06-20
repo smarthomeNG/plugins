@@ -73,6 +73,7 @@ class OwBase(object):
 
         self._lock = threading.Lock()
         self._flag = OWFLAG_OWNET_REQUEST + OWFLAG_PERSISTENCE + OWFLAG_INCLUDE_SPECIAL_DIRS
+        self._unknown_sensor_already_warned = []
 
 
     def connect(self):
@@ -303,6 +304,8 @@ class OwBase(object):
         elif typ == 'DS2408':           # I/O
             return {'I0': 'sensed.0', 'I1': 'sensed.1', 'I2': 'sensed.2', 'I3': 'sensed.3', 'I4': 'sensed.4', 'I5': 'sensed.5', 'I6': 'sensed.6', 'I7': 'sensed.7', 'O0': 'PIO.0', 'O1': 'PIO.1', 'O2': 'PIO.2', 'O3': 'PIO.3', 'O4': 'PIO.4', 'O5': 'PIO.5', 'O6': 'PIO.6', 'O7': 'PIO.7'}
         else:
-            if self.logger.isEnabledFor(logging.WARNING):
+            # unknown sensor type found, warn but only once
+            if self.logger.isEnabledFor(logging.WARNING) and addr not in self._unknown_sensor_already_warned:
+                self._unknown_sensor_already_warned.append(addr)
                 self.logger.warning("1-Wire: unknown sensor {0} {1}".format(addr, typ))
             return
