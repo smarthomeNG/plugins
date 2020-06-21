@@ -28,3 +28,4 @@ plugin_translations:
     'SLEEPING':  {'de': 'Automower schläft', 'en': 'Automower sleeping', 'fr': ''}
     'Fehlercodes': {'de': '=', 'en': 'Error Codes'}
     'Leitdraht': {'de': '=', 'en': 'Guide', 'fr': 'Guide'}
+    'Plugin-API': {'de': '=', 'en': '=', 'fr': ''}

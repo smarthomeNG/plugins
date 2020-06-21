@@ -579,7 +579,6 @@ class Robonect(MqttPlugin):
             return
 
         json_obj = response.json()
-        self.logger.debug(json_obj)
         self.set_mower_online()
 
         for item in self._remote_items['remotestart_name']:
