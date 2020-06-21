@@ -9,7 +9,10 @@
     function handleUpdatedData(response, dataSet=null) {
         if (dataSet === null) {
             var objResponse = JSON.parse(response);
-            shngInsertText('plugin_status', objResponse['plugin_status'])
+            {% for i in status_array %}
+                if (objResponse['plugin_status'] == {{ i }}) {
+                    shngInsertText('plugin_status', objResponse['plugin_status'] + ' ({{ _(p.get_status_as_text(i)) }})'); }
+            {% endfor %}
             {% for key, item in p.get_items().items() %}
             shngInsertText('{{ item.id() }}_value', objResponse['{{ item.id() }}_value'])
             shngInsertText ('{{ item.id() }}_last_update', objResponse['{{ item.id() }}_last_update'])
@@ -52,7 +55,7 @@
             <td class="py-1"><strong>{{ _('Mower an?') }}</strong></td>
 			<td class="py-1">{{ not p.is_mower_offline() }}</td>
             <td class="py-1"><strong>{{ _('Status') }}</strong></td>
-			<td class="py-1" id="plugin_status">{{ p.get_status() }}</td>
+			<td class="py-1" id="plugin_status">{{ p.get_status() }} ({{ _(p.get_status_as_text(p.get_status())) }})</td>
 		</tr>
         <tr>
             <td class="py-1"><strong>{{ _('Modus') }}</strong></td>
