@@ -74,6 +74,7 @@ class Robonect(MqttPlugin):
         self._battery_items = {}
         self._status_items = {}
         self._remote_items = {}
+        self._status = 0
         self._session = requests.Session()
         self.init_webinterface(WebInterface)
         return
@@ -186,10 +187,11 @@ class Robonect(MqttPlugin):
         changes on it's own, but has to be polled to get the actual status.
         It is called by the scheduler which is set within run() method.
         """
-        self.get_mower_information()
-        self.get_status()
-        self.get_battery_data()
-        self.get_remote()
+        self.get_status_from_api()
+        if self._status != 17:
+            self.get_mower_information_from_api()
+            self.get_battery_data_from_api()
+            self.get_remote_from_api()
         return
 
     def on_change(self, topic, payload, qos=None, retain=None):
@@ -303,7 +305,7 @@ class Robonect(MqttPlugin):
         else:
             return None
 
-    def get_battery_data(self):
+    def get_battery_data_from_api(self):
         """
         Requests battery data from the api and assigns it to items (if available).
 
@@ -559,7 +561,7 @@ class Robonect(MqttPlugin):
         else:
             return self.get_remote()
 
-    def get_remote(self):
+    def get_remote_from_api(self):
         """
         Requests remote starting point data from the api and assigns it to items (if available).
 
@@ -607,7 +609,7 @@ class Robonect(MqttPlugin):
 
         return json_obj
 
-    def get_mower_information(self):
+    def get_mower_information_from_api(self):
         try:
             self.logger.debug("Plugin '{}': get_mower_information.".format(
                 self.get_fullname()))
@@ -653,7 +655,7 @@ class Robonect(MqttPlugin):
             self._items['robonect_version_compiled'](json_obj['application']['compiled'], self.get_shortname())
         return
 
-    def get_status(self):
+    def get_status_from_api(self):
         try:
             self.logger.debug("Plugin '{}': get_status.".format(
                 self.get_fullname()))
@@ -673,26 +675,30 @@ class Robonect(MqttPlugin):
             self._items['device/name'](json_obj['name'], self.get_shortname())
         if 'robonect_id' in self._items:
             self._items['robonect_id'](json_obj['id'], self.get_shortname())
-        if 'mower/status' in self._status_items:
-            self._status_items['mower/status'](json_obj['status']['status'], self.get_shortname())
-            if 'mower/status/text' in self._status_items:
-                self._status_items['mower/status/text'](self.get_status_as_text(self._status_items['mower/status']()))
-        if 'mower/distance' in self._status_items:
-            self._status_items['mower/distance'](json_obj['status']['distance'], self.get_shortname())
-        if 'mower/stopped' in self._status_items:
-            self._status_items['mower/stopped'](self.to_bool(json_obj['status']['stopped'], self.get_shortname()))
-        if 'mower/status/duration' in self._status_items:
-            # round to minutes, as mqtt is also returning minutes instead of seconds
-            self._status_items['mower/status/duration'](math.floor(json_obj['status']['duration'] / 60),
-                                                        self.get_shortname())
-        if 'mower/mode' in self._status_items:
-            self._status_items['mower/mode'](json_obj['status']['mode'], self.get_shortname())
-            if 'mower/mode/text' in self._status_items:
-                self._status_items['mower/mode/text'](self.get_mode_as_text(self._status_items['mower/mode']()))
-        if 'status_battery' in self._status_items:
-            self._status_items['status_battery'](json_obj['status']['battery'], self.get_shortname())
-        if 'mower/statistic/hours' in self._status_items:
-            self._status_items['mower/statistic/hours'](json_obj['status']['hours'], self.get_shortname())
+
+        if 'status' in json_obj:
+            self._status = int(json_obj['status']['status'])
+            if 'mower/status' in self._status_items:
+                self._status_items['mower/status'](json_obj['status']['status'], self.get_shortname())
+                if 'mower/status/text' in self._status_items:
+                    self._status_items['mower/status/text'](self.get_status_as_text(self._status_items['mower/status']()))
+            if 'mower/distance' in self._status_items:
+                self._status_items['mower/distance'](json_obj['status']['distance'], self.get_shortname())
+            if 'mower/stopped' in self._status_items:
+                self._status_items['mower/stopped'](self.to_bool(json_obj['status']['stopped'], self.get_shortname()))
+            if 'mower/status/duration' in self._status_items:
+                # round to minutes, as mqtt is also returning minutes instead of seconds
+                self._status_items['mower/status/duration'](math.floor(json_obj['status']['duration'] / 60),
+                                                            self.get_shortname())
+            if 'mower/mode' in self._status_items:
+                self._status_items['mower/mode'](json_obj['status']['mode'], self.get_shortname())
+                if 'mower/mode/text' in self._status_items:
+                    self._status_items['mower/mode/text'](self.get_mode_as_text(self._status_items['mower/mode']()))
+            if 'status_battery' in self._status_items:
+                self._status_items['status_battery'](json_obj['status']['battery'], self.get_shortname())
+            if 'mower/statistic/hours' in self._status_items:
+                self._status_items['mower/statistic/hours'](json_obj['status']['hours'], self.get_shortname())
+
         if 'wlan/rssi' in self._items:
             self._items['wlan/rssi'](json_obj['wlan']['signal'], self.get_shortname())
         if 'health/climate/temperature' in self._items:
@@ -740,6 +746,9 @@ class Robonect(MqttPlugin):
             else:
                 self._status_items['error_unix']('')
         return
+
+    def get_status(self):
+        return self._status
 
     def get_ip(self):
         return self._ip

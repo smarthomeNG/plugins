@@ -9,6 +9,7 @@
     function handleUpdatedData(response, dataSet=null) {
         if (dataSet === null) {
             var objResponse = JSON.parse(response);
+            shngInsertText('plugin_status', objResponse['plugin_status'])
             {% for key, item in p.get_items().items() %}
             shngInsertText('{{ item.id() }}_value', objResponse['{{ item.id() }}_value'])
             shngInsertText ('{{ item.id() }}_last_update', objResponse['{{ item.id() }}_last_update'])
@@ -44,14 +45,14 @@
 		<tr>
 			<td class="py-1"><strong>IP</strong></td>
 			<td class="py-1">{{ p.get_ip() }}</td>
-            <td class="py-1"><strong>{{ _('Benutzer') }}</strong></td>
-			<td class="py-1">{{ p.get_user() }}</td>
+            <td class="py-1"><strong>{{ _('Benutzer') }} / {{ _('Passwort') }}</strong></td>
+			<td class="py-1">{{ p.get_user() }} / {{ p.get_parameter_value_for_display('password') }}</td>
         </tr>
         <tr>
             <td class="py-1"><strong>{{ _('Mower an?') }}</strong></td>
 			<td class="py-1">{{ not p.is_mower_offline() }}</td>
-            <td class="py-1"><strong>{{ _('Passwort') }}</strong></td>
-			<td class="py-1">{{ p.get_parameter_value_for_display('password') }}</td>
+            <td class="py-1"><strong>{{ _('Status') }}</strong></td>
+			<td class="py-1" id="plugin_status">{{ p.get_status() }}</td>
 		</tr>
         <tr>
             <td class="py-1"><strong>{{ _('Modus') }}</strong></td>

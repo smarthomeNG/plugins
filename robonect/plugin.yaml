@@ -329,6 +329,12 @@ item_structs:
 
 plugin_functions:
     # Definition of plugin functions defined by this plugin (enter 'plugin_functions: NONE', if section should be empty)
+    service:
+        type: foo
+        description:
+            de: "Triggert Servicefunktionen."
+            en: "Triggers service functions."
+
     start_mower:
         type: foo
         description:
