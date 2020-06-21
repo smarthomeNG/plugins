@@ -12,8 +12,8 @@ plugin:
 #    documentation: http://smarthomeng.de/user/plugins/mqtt2/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1451853-support-thread-für-das-shelly-plugin
 
-    version: 1.1.2                 # Plugin version
-    sh_minversion: 1.6a            # minimum shNG version to use this plugin
+    version: 1.1.3                 # Plugin version
+    sh_minversion: 1.7             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
     restartable: unknown
@@ -27,7 +27,7 @@ item_attributes:
     shelly_id:
         type: str
         description:
-            de: 'ID des Shelly devices'
+            de: 'ID des Shelly Devices'
             en: 'ID of the Shelly device'
 
     shelly_type:

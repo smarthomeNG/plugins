@@ -36,7 +36,7 @@ class Shelly(MqttPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.1.2'
+    PLUGIN_VERSION = '1.1.3'
 
 
     def __init__(self, sh):
@@ -69,6 +69,9 @@ class Shelly(MqttPlugin):
         # add subscription to get device announces
         self.add_subscription('shellies/announce', 'dict', callback=self.on_mqtt_announce)
 
+        # start subscription to all topics
+        self.add_subscription('shellies/+/online', 'bool', bool_values=['false', 'true'], callback=self.on_mqtt_online)
+
         # if plugin should start even without web interface
         self.init_webinterface()
 
@@ -82,16 +85,14 @@ class Shelly(MqttPlugin):
         self.logger.debug("Run method called")
         self.alive = True
 
-        # start subscription to all topics
-        for shelly_id in self.shelly_devices:
-            self.add_subscription('shellies/' + shelly_id + '/online', 'bool', bool_values=['false', 'true'], callback=self.on_mqtt_online)
-
         self.start_subscriptions()
+
+        self.publish_topic('shellies/command', 'announce')
 
         for shelly_id in self.shelly_devices:
             topic = 'shellies/' + shelly_id + '/command'
             self.publish_topic(topic, 'update')
-            self.publish_topic(topic, 'announce')
+            #self.publish_topic(topic, 'announce')
         return
 
 
@@ -248,6 +249,7 @@ class Shelly(MqttPlugin):
 
         if not self.shelly_devices.get(shelly_id, None):
             self.shelly_devices[shelly_id] = {}
+            self.shelly_devices[shelly_id]['connected_to_item'] = False
 
         self.shelly_devices[shelly_id]['online'] = payload
 
