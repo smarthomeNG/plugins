@@ -424,13 +424,13 @@ plugin_functions:
     set_mode_via_api:
         type: foo
         description:
-            de: "Setzt den aktuellen modus."
+            de: "Setzt den Betriebsmodus."
             en: "Sets the mode."
         parameters:
             mode:
                 type: str
                 description:
-                    de: "Modus, der gesetzt werden soll ('home','eod','man','auto','job')"
+                    de: "Betriebsmodus, der gesetzt werden soll ('home','eod','man','auto','job')"
                     en: "Mode to set ('home','eod','man','auto','job')"
                 mandatory: True
                 valid_list:
