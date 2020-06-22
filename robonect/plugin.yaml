@@ -38,6 +38,12 @@ parameters:
         valid_list:
             - 'api'
             - 'mqtt'
+    topic_prefix:
+        type: str
+        default: 'Robonect'
+        description:
+            de: 'Prefix für die Topics, wie es in der GUI von Robonect unter MQTT-Client als "Topic" eingestellt wurde. Default: Robonect'
+            en: 'Prefix for all topics, as being set in the GUI of Robonect under MQTT-Client as "Topic". Default: Robonect'
     cycle:
         type: int
         default: 60

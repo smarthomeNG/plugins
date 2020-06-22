@@ -70,7 +70,8 @@ class Robonect(MqttPlugin):
         self._cycle = self.get_parameter_value('cycle')
         self._mower_offline = False
         self._items = {}
-        self._mode = self.get_parameter_value('mode')
+        self._plugin_mode = self.get_parameter_value('mode')
+        self._topic_prefix = self.get_parameter_value('topic_prefix')
         self._battery_items = {}
         self._status_items = {}
         self._remote_items = {}
@@ -88,7 +89,7 @@ class Robonect(MqttPlugin):
         self._base_url = 'http://%s/json?cmd=' % self.get_ip()
         self.scheduler_add('poll_device', self.poll_device, cycle=self._cycle)
         self.alive = True
-        if self._mode == 'mqtt':
+        if self._plugin_mode == 'mqtt':
             self.start_subscriptions()
 
     def stop(self):
@@ -98,7 +99,7 @@ class Robonect(MqttPlugin):
         self.logger.debug("Stop method called")
         self.scheduler_remove('poll_device')
         self.alive = False
-        if self._mode == 'mqtt':
+        if self._plugin_mode == 'mqtt':
             self.stop_subscriptions()
 
     def parse_item(self, item):
@@ -117,12 +118,12 @@ class Robonect(MqttPlugin):
         if self.has_iattr(item.conf, 'robonect_data_type'):
             self.logger.debug("parse item: {}".format(item))
 
-            if self._mode == 'mqtt':
+            if self._plugin_mode == 'mqtt':
                 bool_values = None
                 callback = None
                 mqtt_id = self.get_iattr_value(item.conf, 'robonect_data_type')
                 payload_type = item.property.type
-                topic = 'Robonect/' + mqtt_id
+                topic = '%s/%s' % (self._topic_prefix, mqtt_id)
                 # if mqtt_id == 'mower/stopped':
                 #    bool_values = ['false','true']
                 if mqtt_id in ['mower/status', 'mower/mode']:
@@ -757,6 +758,9 @@ class Robonect(MqttPlugin):
 
     def get_status(self):
         return self._status
+
+    def get_plugin_modeget_plugin_mode(self):
+        return self._plugin_mode
 
     def get_mode(self):
         return self._mode

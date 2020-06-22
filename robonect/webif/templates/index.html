@@ -61,8 +61,8 @@
         <tr>
             <td class="py-1"><strong>{{ _('Modus') }}</strong></td>
 			<td class="py-1">
-                {% if p._mode == 'api' %}Web API
-                {% elif p._mode == 'mqtt' %}Web API + MQTT
+                {% if p.get_plugin_mode() == 'api' %}Web API
+                {% elif p.get_plugin_mode() == 'mqtt' %}Web API + MQTT
                 {% endif %}
             </td>
             <td class="py-1"><strong>{{ _('Cycle') }}</strong></td>
