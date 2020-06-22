@@ -192,6 +192,8 @@ class Robonect(MqttPlugin):
             self.get_mower_information_from_api()
             self.get_battery_data_from_api()
             self.get_remote_from_api()
+        else:
+            self.logger.debug("Poll Device: Automower is sleeping, so only status is polled to avoid beeping!")
         return
 
     def on_change(self, topic, payload, qos=None, retain=None):
@@ -206,11 +208,13 @@ class Robonect(MqttPlugin):
                 self.logger.debug(
                     "on_change: setting mode for topic %s via mqtt as %s: %s" % (
                     topic, payload, self.get_status_as_text(int(payload))))
+                self._status_items['mower/status'](int(payload))
                 self._status_items['mower/status/text'](self.get_status_as_text(int(payload)))
             elif topic == 'mower/mode':
                 self.logger.debug(
                     "on_change: setting mode for topic %s via mqtt as %s: %s" % (
                     topic, payload, self.get_mode_as_text(int(payload))))
+                self._status_items['mower/mode'](int(payload))
                 self._status_items['mower/mode/text'](self.get_mode_as_text(int(payload)))
 
     def get_api_error_code_as_text(self, error_code):
