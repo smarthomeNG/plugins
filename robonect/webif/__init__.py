@@ -57,6 +57,7 @@ class WebInterface(SmartPluginWebIf):
         if dataSet is None:
             data = {}
             data['plugin_status'] = self.plugin.get_status()
+            data['plugin_mode'] = self.plugin.get_mode()
             for key, item in self.plugin.get_items().items():
                 if item.property.type == 'bool':
                     data[item.id() + "_value"] = str(item())

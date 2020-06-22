@@ -29,3 +29,6 @@ plugin_translations:
     'Fehlercodes': {'de': '=', 'en': 'Error Codes'}
     'Leitdraht': {'de': '=', 'en': 'Guide', 'fr': 'Guide'}
     'Plugin-API': {'de': '=', 'en': '=', 'fr': ''}
+    'Mower per Netzwerk erreichbar?': {'de': '=', 'en': 'Mower reachable via network?', 'fr': ''}
+    'Plugin-Modus': {'de': '=', 'en': 'Plugin Mode', 'fr': ''}
+    'Modus': {'de': '=', 'en': 'Mode', 'fr': ''}

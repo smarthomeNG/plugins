@@ -12,7 +12,10 @@
             var objResponse = JSON.parse(response);
             {% for i in status_array %}
                 if (objResponse['plugin_status'] == {{ i }}) {
-                    shngInsertText('plugin_status', objResponse['plugin_status'] + ' ({{ _(p.get_status_as_text(i)) }})'); }
+                    {% for j in mode_array %}
+                        if (objResponse['plugin_mode'] == {{ j }}) {
+                            shngInsertText('plugin_status', objResponse['plugin_status'] + ' ({{ _(p.get_status_as_text(i)) }}) / '+objResponse['plugin_mode'] + ' ({{ _(p.get_mode_as_text(j)) }})'); }
+                    {% endfor %}
             {% endfor %}
             {% for key, item in p.get_items().items() %}
             shngInsertText('{{ item.id() }}_value', objResponse['{{ item.id() }}_value'])
@@ -53,13 +56,13 @@
 			<td class="py-1">{{ p.get_user() }} / {{ p.get_parameter_value_for_display('password') }}</td>
         </tr>
         <tr>
-            <td class="py-1"><strong>{{ _('Mower an?') }}</strong></td>
+            <td class="py-1"><strong>{{ _('Mower per Netzwerk erreichbar?') }}</strong></td>
 			<td class="py-1">{{ not p.is_mower_offline() }}</td>
-            <td class="py-1"><strong>{{ _('Status') }}</strong></td>
-			<td class="py-1" id="plugin_status">{{ p.get_status() }} ({{ _(p.get_status_as_text(p.get_status())) }})</td>
+            <td class="py-1"><strong>{{ _('Status') }} / {{  _('Modus') }}</strong></td>
+			<td class="py-1" id="plugin_status">{{ p.get_status() }} ({{ _(p.get_status_as_text(p.get_status())) }}) / {{ p.get_mode() }} ({{ _(p.get_mode_as_text(p.get_mode())) }})</td>
 		</tr>
         <tr>
-            <td class="py-1"><strong>{{ _('Modus') }}</strong></td>
+            <td class="py-1"><strong>{{ _('Plugin-Modus') }}</strong></td>
 			<td class="py-1">
                 {% if p.get_plugin_mode() == 'api' %}Web API
                 {% elif p.get_plugin_mode() == 'mqtt' %}Web API + MQTT
