@@ -396,12 +396,6 @@ class Robonect(MqttPlugin):
         json_obj = response.json()
         self.set_mower_online()
 
-        if self._mower_offline:
-            self.logger.debug(
-                "Plugin '{}': Mower reachable again.".format(
-                    self.get_fullname()))
-            self._mower_offline = False
-
         if 'errors' in json_obj:
             return json_obj['errors']
 
@@ -424,9 +418,11 @@ class Robonect(MqttPlugin):
                 self._mower_offline = True
                 return
         else:
-            self.logger.error("Plugin '{}': Name parameter is None")
+            self.logger.error("Plugin '{}': Name parameter is None".format(
+                            self.get_fullname()))
 
         json_obj = response.json()
+        self.set_mower_online()
 
         if not json_obj['successful']:
             self.logger.error("Plugin '{}': Error when trying to set name via API {} - {}: '{}'.".format(
