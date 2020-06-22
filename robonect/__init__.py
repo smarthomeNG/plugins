@@ -203,14 +203,15 @@ class Robonect(MqttPlugin):
         :param topic: MQTT topic taken from item, e.g. 'mower/status'
         :param payload: Payload received via MQTT
         """
+        self.logger.debug("on_change: called with topic \"%s\" and payload \"%s\"" %(topic, payload))
         if payload is not None:
-            if topic == 'mower/status':
+            if topic == 'Robonect/mower/status':
                 self.logger.debug(
                     "on_change: setting mode for topic %s via mqtt as %s: %s" % (
                     topic, payload, self.get_status_as_text(int(payload))))
                 self._status_items['mower/status'](int(payload))
                 self._status_items['mower/status/text'](self.get_status_as_text(int(payload)))
-            elif topic == 'mower/mode':
+            elif topic == 'Robonect/mower/mode':
                 self.logger.debug(
                     "on_change: setting mode for topic %s via mqtt as %s: %s" % (
                     topic, payload, self.get_mode_as_text(int(payload))))
