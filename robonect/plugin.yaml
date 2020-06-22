@@ -344,14 +344,14 @@ plugin_functions:
     start_mower_via_api:
         type: foo
         description:
-            de: "Startet den Automower."
-            en: "Starts the automower."
+            de: "Startet den Automower über die Web-API."
+            en: "Starts the automower via the Web-API."
 
     stop_mower_via_api:
         type: foo
         description:
-            de: "Stoppt den Automower."
-            en: "Stops the automower."
+            de: "Stoppt den Automower über die Web-API."
+            en: "Stops the automower via the Web-API."
 
     get_mode_as_text:
         type: str
@@ -359,22 +359,24 @@ plugin_functions:
             de: "Gibt den Mode des Rasenmähers als String zurück."
             en: "Returns the mode of the mower as string."
         parameters:
-            index:
+            mode:
                 type: int
                 description:
-                    de: "mode"
-                    en: "mode"
+                    de: "Mode als Integer."
+                    en: "Mode as integer."
+
     get_status_as_text:
         type: str
         description:
             de: "Gibt den Status des Rasenmähers als String zurück."
             en: "Returns the status of the automower as string."
         parameters:
-            index:
+            status:
                 type: int
                 description:
-                    de: "status"
-                    en: "status"
+                    de: "Status als Integer."
+                    en: "Status as integer."
+
     set_remote_via_api:
         type: foo
         description:
@@ -404,8 +406,9 @@ plugin_functions:
             proportion:
                 type: int
                 description:
-                    de: "Häufigkeit."
-                    en: "Proportion."
+                    de: "Häufigkeit in %, die der Fernstartpunkt selektiert werden soll."
+                    en: "Proportion in %, how often the remote start location shall be selected."
+
     set_mode_via_api:
         type: foo
         description:

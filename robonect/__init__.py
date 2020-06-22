@@ -89,6 +89,9 @@ class Robonect(MqttPlugin):
         self._base_url = 'http://%s/json?cmd=' % self.get_ip()
         self.scheduler_add('poll_device', self.poll_device, cycle=self._cycle)
         self.alive = True
+
+        # initially request all values from API, automower may beep shortly, if sleeping
+        self.poll_device(ignore_status=True)
         if self._plugin_mode == 'mqtt':
             self.start_subscriptions()
 
@@ -181,7 +184,7 @@ class Robonect(MqttPlugin):
                                                                                                                dest))
             pass
 
-    def poll_device(self):
+    def poll_device(self, ignore_status = False):
         """
         Polls for updates of the device
 
@@ -189,9 +192,8 @@ class Robonect(MqttPlugin):
         changes on it's own, but has to be polled to get the actual status.
         It is called by the scheduler which is set within run() method.
         """
-        prev_status = self.get_status()
         self.get_status_from_api()
-        if self._status != 17 or prev_status == 0:
+        if self._status != 17 or ignore_status:
             self.get_mower_information_from_api()
             self.get_battery_data_from_api()
             self.get_remote_from_api()
@@ -380,7 +382,7 @@ class Robonect(MqttPlugin):
         :return: JSON object with the overall error list
         """
         try:
-            self.logger.debug("Plugin '{}': Requesting battery data".format(
+            self.logger.debug("Plugin '{}': Requesting full error list data".format(
                 self.get_fullname()))
             response = self._session.get(self._base_url + 'error&list', auth=HTTPBasicAuth(self._user, self._password))
         except Exception as e:
