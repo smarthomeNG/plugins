@@ -363,8 +363,13 @@ plugin_functions:
             mode:
                 type: int
                 description:
-                    de: "Mode als Integer."
+                    de: "Betriebsmodus als Integer."
                     en: "Mode as integer."
+                valid_list:
+                    - 1
+                    - 2
+                    - 3
+                    - 4
 
     get_status:
         type: int
