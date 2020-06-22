@@ -423,33 +423,33 @@ plugin_functions:
             tu:
                 type: bool
                 description:
-                    de: "True: Montag aktiviert, False: deaktiviert."
-                    en: "True: Monday gets enabled, False: disabled."
+                    de: "True: Dienstag aktiviert, False: deaktiviert."
+                    en: "True: Tuesday gets enabled, False: disabled."
             we:
                 type: bool
                 description:
-                    de: "True: Montag aktiviert, False: deaktiviert."
-                    en: "True: Monday gets enabled, False: disabled."
+                    de: "True: Mittwoch aktiviert, False: deaktiviert."
+                    en: "True: Wednesday gets enabled, False: disabled."
             th:
                 type: bool
                 description:
-                    de: "True: Montag aktiviert, False: deaktiviert."
-                    en: "True: Monday gets enabled, False: disabled."
+                    de: "True: Donnerstag aktiviert, False: deaktiviert."
+                    en: "True: Thursday gets enabled, False: disabled."
             fr:
                 type: bool
                 description:
-                    de: "True: Montag aktiviert, False: deaktiviert."
-                    en: "True: Monday gets enabled, False: disabled."
+                    de: "True: Freitag aktiviert, False: deaktiviert."
+                    en: "True: Friday gets enabled, False: disabled."
             sa:
                 type: bool
                 description:
-                    de: "True: Montag aktiviert, False: deaktiviert."
-                    en: "True: Monday gets enabled, False: disabled."
+                    de: "True: Samstag aktiviert, False: deaktiviert."
+                    en: "True: Saturday gets enabled, False: disabled."
             su:
                 type: bool
                 description:
-                    de: "True: Montag aktiviert, False: deaktiviert."
-                    en: "True: Monday gets enabled, False: disabled."
+                    de: "True: Sonntag aktiviert, False: deaktiviert."
+                    en: "True: Sunday gets enabled, False: disabled."
 
     set_remote_via_api:
         type: foo
