@@ -339,14 +339,14 @@ plugin_functions:
     start_mower_via_api:
         type: foo
         description:
-            de: "Startet den Automower über die Web-API."
-            en: "Starts the automower via the Web-API."
+            de: "Startet den derzeit gewählten Modus des Automowers über die Web-API."
+            en: "Starts the currently set mode of the automower via the Web-API."
 
     stop_mower_via_api:
         type: foo
         description:
-            de: "Stoppt den Automower über die Web-API."
-            en: "Stops the automower via the Web-API."
+            de: "Stoppt den derzeit gewählten Modus des Automowers über die Web-API."
+            en: "Stops the currently set mode of the automower via the Web-API."
 
     get_mode:
         type: int
