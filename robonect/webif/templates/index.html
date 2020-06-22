@@ -14,8 +14,10 @@
                 if (objResponse['plugin_status'] == {{ i }}) {
                     {% for j in mode_array %}
                         if (objResponse['plugin_mode'] == {{ j }}) {
-                            shngInsertText('plugin_status', objResponse['plugin_status'] + ' ({{ _(p.get_status_as_text(i)) }}) / '+objResponse['plugin_mode'] + ' ({{ _(p.get_mode_as_text(j)) }})'); }
+                            shngInsertText('plugin_status', objResponse['plugin_status'] + ' ({{ _(p.get_status_as_text(i)) }}) / ' + objResponse['plugin_mode'] + ' ({{ _(p.get_mode_as_text(j)) }})');
+                        }
                     {% endfor %}
+                }
             {% endfor %}
             {% for key, item in p.get_items().items() %}
             shngInsertText('{{ item.id() }}_value', objResponse['{{ item.id() }}_value'])
@@ -29,7 +31,11 @@
                 {% endfor %}{% elif key == 'mower/mode' %}{%  for i in mode_array %}
                         if (objResponse['{{ item.id() }}_value'] == {{ i }}) {
                             shngInsertText('{{ item.id() }}_value', objResponse['{{ item.id() }}_value'] + ' ({{ _(p.get_mode_as_text(i)) }})'); }
-                {% endfor %}{% else %}shngInsertText('{{ item.id() }}_value', objResponse['{{ item.id() }}_value']){% endif %}
+                {% endfor %}{% else %}
+                shngInsertText('{{ item.id() }}_value', objResponse['{{ item.id() }}_value'])
+                shngInsertText ('{{ item.id() }}_last_update', objResponse['{{ item.id() }}_last_update'])
+               shngInsertText ('{{ item.id() }}_last_change', objResponse['{{ item.id() }}_last_change'])
+                {% endif %}
             {% endfor %}
             {% for key, items in p.get_battery_items().items() %}{%  for item in items %}
                 shngInsertText('{{ item.id() }}_value', objResponse['{{ item.id() }}_value'])
