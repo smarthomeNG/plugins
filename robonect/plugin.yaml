@@ -421,6 +421,19 @@ plugin_functions:
                     de: "Häufigkeit in %, die der Fernstartpunkt selektiert werden soll."
                     en: "Proportion in %, how often the remote start location shall be selected."
 
+    set_name_via_api:
+        type: foo
+        description:
+            de: "Setzt den Namen des Automowers."
+            en: "Sets the name of the automower."
+        parameters:
+            name:
+                type: str
+                description:
+                    de: "Name, der gesetzt werden soll."
+                    en: "Name to be set."
+                mandatory: True
+
     set_mode_via_api:
         type: foo
         description:
@@ -430,8 +443,8 @@ plugin_functions:
             mode:
                 type: str
                 description:
-                    de: "Betriebsmodus, der gesetzt werden soll ('home','eod','man','auto','job')"
-                    en: "Mode to set ('home','eod','man','auto','job')"
+                    de: "Betriebsmodus, der gesetzt werden soll ('home','eod','man','auto','job')."
+                    en: "Mode to set ('home','eod','man','auto','job')."
                 mandatory: True
                 valid_list:
                     - 'home'

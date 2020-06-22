@@ -388,7 +388,7 @@ class Robonect(MqttPlugin):
         except Exception as e:
             if not self._mower_offline:
                 self.logger.error(
-                    "Plugin '{}': Exception when sending GET request for get_battery_data: {}".format(
+                    "Plugin '{}': Exception when sending GET request for get_full_error_list: {}".format(
                         self.get_fullname(), str(e)))
             self._mower_offline = True
             return
@@ -405,9 +405,38 @@ class Robonect(MqttPlugin):
         if 'errors' in json_obj:
             return json_obj['errors']
 
+    def set_name_via_api(self, name):
+        """
+        Sets the name of the automower via API.
+        :return json response
+        """
+        if name is not None:
+            try:
+                self.logger.debug("Plugin '{}': Setting mower name to %s".format(
+                    self.get_fullname()), name)
+                response = self._session.get(self._base_url + 'name&name=%s'%name,
+                                             auth=HTTPBasicAuth(self._user, self._password))
+            except Exception as e:
+                if not self._mower_offline:
+                    self.logger.error(
+                        "Plugin '{}': Exception when sending GET request for set_name_via_api: {}".format(
+                            self.get_fullname(), str(e)))
+                self._mower_offline = True
+                return
+        else:
+            self.logger.error("Plugin '{}': Name parameter is None")
+
+        json_obj = response.json()
+
+        if not json_obj['successful']:
+            self.logger.error("Plugin '{}': Error when trying to set name via API {} - {}: '{}'.".format(
+                self.get_fullname(), mode, str(json_obj['error_code']), json_obj['error_message']))
+        else:
+            return json_obj
+
     def start_mower_via_api(self):
         """
-        Starts the automower.
+        Starts the automower via API.
         :return json response
         """
         try:
@@ -418,7 +447,7 @@ class Robonect(MqttPlugin):
         except Exception as e:
             if not self._mower_offline:
                 self.logger.error(
-                    "Plugin '{}': Exception when sending GET request for get_battery_data: {}".format(
+                    "Plugin '{}': Exception when sending GET request for start_mower_via_api: {}".format(
                         self.get_fullname(), str(e)))
             self._mower_offline = True
             return
@@ -431,7 +460,7 @@ class Robonect(MqttPlugin):
 
     def stop_mower_via_api(self):
         """
-        Stops the automower.
+        Stops the automower via API.
         :return json response
         """
         try:
@@ -442,7 +471,7 @@ class Robonect(MqttPlugin):
         except Exception as e:
             if not self._mower_offline:
                 self.logger.error(
-                    "Plugin '{}': Exception when sending GET request for get_battery_data: {}".format(
+                    "Plugin '{}': Exception when sending GET request for stop_mower_via_api: {}".format(
                         self.get_fullname(), str(e)))
             self._mower_offline = True
             return
@@ -514,7 +543,7 @@ class Robonect(MqttPlugin):
         except Exception as e:
             if not self._mower_offline:
                 self.logger.error(
-                    "Plugin '{}': Exception when sending GET request for get_battery_data: {}".format(
+                    "Plugin '{}': Exception when sending GET request for set_mode_via_api: {}".format(
                         self.get_fullname(), str(e)))
             self._mower_offline = True
             return
@@ -526,7 +555,7 @@ class Robonect(MqttPlugin):
             self.logger.error("Plugin '{}': Error when trying to set mode {} - {}: '{}'.".format(
                 self.get_fullname(), mode, str(json_obj['error_code']), json_obj['error_message']))
         else:
-            return #self.get_remote()
+            return #todo
 
     def set_remote_via_api(self, index, name=None, distance=None, visible=None, proportion=None):
         """
@@ -559,7 +588,7 @@ class Robonect(MqttPlugin):
         except Exception as e:
             if not self._mower_offline:
                 self.logger.error(
-                    "Plugin '{}': Exception when sending GET request for get_battery_data: {}".format(
+                    "Plugin '{}': Exception when sending GET request for set_remote_via_api: {}".format(
                         self.get_fullname(), str(e)))
             self._mower_offline = True
             return
@@ -585,7 +614,7 @@ class Robonect(MqttPlugin):
         except Exception as e:
             if not self._mower_offline:
                 self.logger.error(
-                    "Plugin '{}': Exception when sending GET request for get_mower_information: {}".format(
+                    "Plugin '{}': Exception when sending GET request for get_remote_from_api: {}".format(
                         self.get_fullname(), str(e)))
             self._mower_offline = True
             return
@@ -628,7 +657,7 @@ class Robonect(MqttPlugin):
         except Exception as e:
             if not self._mower_offline:
                 self.logger.error(
-                    "Plugin '{}': Exception when sending GET request for get_mower_information: {}".format(
+                    "Plugin '{}': Exception when sending GET request for get_mower_information_from_api: {}".format(
                         self.get_fullname(), str(e)))
             self._mower_offline = True
             return
@@ -674,7 +703,7 @@ class Robonect(MqttPlugin):
         except Exception as e:
             if not self._mower_offline:
                 self.logger.error(
-                    "Plugin '{}': Exception when sending GET request for get_status: {}".format(
+                    "Plugin '{}': Exception when sending GET request for get_status_from_api: {}".format(
                         self.get_fullname(), str(e)))
             self._mower_offline = True
             return
