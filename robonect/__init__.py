@@ -75,6 +75,7 @@ class Robonect(MqttPlugin):
         self._status_items = {}
         self._remote_items = {}
         self._status = 0
+        self._mode = 0
         self._session = requests.Session()
         self.init_webinterface(WebInterface)
         return
@@ -210,12 +211,14 @@ class Robonect(MqttPlugin):
                     "on_change: setting mode for topic %s via mqtt as %s: %s" % (
                     topic, payload, self.get_status_as_text(int(payload))))
                 self._status_items['mower/status'](int(payload))
+                self._status = int(payload)
                 self._status_items['mower/status/text'](self.get_status_as_text(int(payload)))
             elif topic == 'Robonect/mower/mode':
                 self.logger.debug(
                     "on_change: setting mode for topic %s via mqtt as %s: %s" % (
                     topic, payload, self.get_mode_as_text(int(payload))))
                 self._status_items['mower/mode'](int(payload))
+                self._mode = int(payload)
                 self._status_items['mower/mode/text'](self.get_mode_as_text(int(payload)))
 
     def get_api_error_code_as_text(self, error_code):
@@ -398,7 +401,7 @@ class Robonect(MqttPlugin):
         if 'errors' in json_obj:
             return json_obj['errors']
 
-    def start_mower(self):
+    def start_mower_via_api(self):
         """
         Starts the automower.
         :return json response
@@ -422,7 +425,7 @@ class Robonect(MqttPlugin):
 
         return json_obj
 
-    def stop_mower(self):
+    def stop_mower_via_api(self):
         """
         Stops the automower.
         :return json response
@@ -445,7 +448,7 @@ class Robonect(MqttPlugin):
 
         return json_obj
 
-    def set_mode(self, mode, remotestart=None, after=None):
+    def set_mode_via_api(self, mode, remotestart=None, after=None):
         """
         Sets data for the remote start location.
 
@@ -521,7 +524,7 @@ class Robonect(MqttPlugin):
         else:
             return #self.get_remote()
 
-    def set_remote(self, index, name=None, distance=None, visible=None, proportion=None):
+    def set_remote_via_api(self, index, name=None, distance=None, visible=None, proportion=None):
         """
         Sets data for the remote start location.
 
@@ -682,6 +685,7 @@ class Robonect(MqttPlugin):
 
         if 'status' in json_obj:
             self._status = int(json_obj['status']['status'])
+            self._mode = int(json_obj['status']['mode'])
             if 'mower/status' in self._status_items:
                 self._status_items['mower/status'](json_obj['status']['status'], self.get_shortname())
                 if 'mower/status/text' in self._status_items:
@@ -753,6 +757,9 @@ class Robonect(MqttPlugin):
 
     def get_status(self):
         return self._status
+
+    def get_mode(self):
+        return self._mode
 
     def get_ip(self):
         return self._ip

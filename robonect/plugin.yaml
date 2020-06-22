@@ -335,13 +335,13 @@ plugin_functions:
             de: "Triggert Servicefunktionen."
             en: "Triggers service functions."
 
-    start_mower:
+    start_mower_via_api:
         type: foo
         description:
             de: "Startet den Automower."
             en: "Starts the automower."
 
-    stop_mower:
+    stop_mower_via_api:
         type: foo
         description:
             de: "Stoppt den Automower."
@@ -369,7 +369,7 @@ plugin_functions:
                 description:
                     de: "status"
                     en: "status"
-    set_remote:
+    set_remote_via_api:
         type: foo
         description:
             de: "Setzt Informationen für den jeweiligen Fernstart."
@@ -400,7 +400,7 @@ plugin_functions:
                 description:
                     de: "Häufigkeit."
                     en: "Proportion."
-    set_mode:
+    set_mode_via_api:
         type: foo
         description:
             de: "Setzt den aktuellen modus."
