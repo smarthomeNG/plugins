@@ -389,6 +389,68 @@ plugin_functions:
                     de: "Status als Integer."
                     en: "Status as integer."
 
+    set_timer_via_api:
+        type: foo
+        description:
+            de: "Setzt die Informationen für einen Timer."
+            en: "Sets data for a timer."
+        parameters:
+            index:
+                type: int
+                description:
+                    de: "Index des Timers (beginnend bei 1)."
+                    en: "Index of the timer as integer (starting with 1)."
+            enabled:
+                type: bool
+                description:
+                    de: "True: der Timer wird aktiviert, False: deaktiviert."
+                    en: "True: timer gets enabled, False: disabled."
+            start:
+                type: str
+                description:
+                    de: "Startzeit für den Timer, als String im Format 'HH:MM'."
+                    en: "Time, as string in the format 'HH:MM', when the timer should start."
+            end:
+                type: str
+                description:
+                    de: "Endzeit für den Timer, als String im Format 'HH:MM'."
+                    en: "Time, as string in the format 'HH:MM', when the timer should start."
+            mo:
+                type: bool
+                description:
+                    de: "True: Montag aktiviert, False: deaktiviert."
+                    en: "True: Monday gets enabled, False: disabled."
+            tu:
+                type: bool
+                description:
+                    de: "True: Montag aktiviert, False: deaktiviert."
+                    en: "True: Monday gets enabled, False: disabled."
+            we:
+                type: bool
+                description:
+                    de: "True: Montag aktiviert, False: deaktiviert."
+                    en: "True: Monday gets enabled, False: disabled."
+            th:
+                type: bool
+                description:
+                    de: "True: Montag aktiviert, False: deaktiviert."
+                    en: "True: Monday gets enabled, False: disabled."
+            fr:
+                type: bool
+                description:
+                    de: "True: Montag aktiviert, False: deaktiviert."
+                    en: "True: Monday gets enabled, False: disabled."
+            sa:
+                type: bool
+                description:
+                    de: "True: Montag aktiviert, False: deaktiviert."
+                    en: "True: Monday gets enabled, False: disabled."
+            su:
+                type: bool
+                description:
+                    de: "True: Montag aktiviert, False: deaktiviert."
+                    en: "True: Monday gets enabled, False: disabled."
+
     set_remote_via_api:
         type: foo
         description:
