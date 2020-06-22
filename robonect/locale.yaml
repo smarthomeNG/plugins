@@ -32,3 +32,4 @@ plugin_translations:
     'Mower per Netzwerk erreichbar?': {'de': '=', 'en': 'Mower reachable via network?', 'fr': ''}
     'Plugin-Modus': {'de': '=', 'en': 'Plugin Mode', 'fr': ''}
     'Modus': {'de': '=', 'en': 'Mode', 'fr': ''}
+    'Wetter-Informationen': {'de': '=', 'en': 'Weather', 'fr': ''}
