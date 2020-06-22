@@ -348,17 +348,29 @@ plugin_functions:
             de: "Stoppt den Automower über die Web-API."
             en: "Stops the automower via the Web-API."
 
+    get_mode:
+        type: int
+        description:
+            de: "Gibt den aktuellen Betriebsmodus des Automowers als Integer zurück."
+            en: "Returns the current mode of the automower as Integer."
+
     get_mode_as_text:
         type: str
         description:
-            de: "Gibt den Mode des Rasenmähers als String zurück."
-            en: "Returns the mode of the mower as string."
+            de: "Gibt den aktuellen Betriebsmodus des Automowers als String zurück."
+            en: "Returns the current mode of the mower as string."
         parameters:
             mode:
                 type: int
                 description:
                     de: "Mode als Integer."
                     en: "Mode as integer."
+
+    get_status:
+        type: int
+        description:
+            de: "Gibt den aktuellen Status des Automowers als Integer zurück."
+            en: "Returns the current status of the automower as Integer."
 
     get_status_as_text:
         type: str
