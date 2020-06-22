@@ -197,6 +197,7 @@ class Robonect(MqttPlugin):
             self.get_mower_information_from_api()
             self.get_battery_data_from_api()
             self.get_remote_from_api()
+            self.get_weather_from_api()
         else:
             self.logger.debug("Poll Device: Automower is sleeping, so only status is polled to avoid beeping!")
         return
@@ -769,9 +770,45 @@ class Robonect(MqttPlugin):
             self._items['robonect_version_compiled'](json_obj['application']['compiled'], self.get_shortname())
         return
 
+    def get_weather_from_api(self):
+        try:
+            self.logger.debug("Plugin '{}': get_weather_from_api.".format(
+                self.get_fullname()))
+            response = self._session.get(self._base_url + 'weather', auth=HTTPBasicAuth(self._user, self._password))
+        except Exception as e:
+            if not self._mower_offline:
+                self.logger.error(
+                    "Plugin '{}': Exception when sending GET request for get_status_from_api: {}".format(
+                        self.get_fullname(), str(e)))
+            self._mower_offline = True
+            return
+
+        json_obj = response.json()
+        self.set_mower_online()
+
+        if 'service' in json_obj:
+            if 'location' in json_obj['service']:
+                if 'location_zip' in self._items:
+                    self._items['location_zip'](json_obj['service']['location']['zip'], self.get_shortname())
+                if 'location_country' in self._items:
+                    self._items['location_country'](json_obj['service']['location']['country'], self.get_shortname())
+
+            if 'weather' in json_obj['service']:
+                if 'weather_rain' in self._items:
+                    self._items['weather_temperature'](json_obj['service']['weather']['rain'],
+                                                       self.get_shortname())
+                if 'weather_temperature' in self._items:
+                    self._items['weather_temperature'](json_obj['service']['weather']['temperature'],
+                                                       self.get_shortname())
+                if 'weather_humidity' in self._items:
+                    self._items['weather_humidity'](json_obj['service']['weather']['humidity'],
+                                                       self.get_shortname())
+
+        return json_obj
+
     def get_status_from_api(self):
         try:
-            self.logger.debug("Plugin '{}': get_status.".format(
+            self.logger.debug("Plugin '{}': get_status_from_api.".format(
                 self.get_fullname()))
             response = self._session.get(self._base_url + 'status', auth=HTTPBasicAuth(self._user, self._password))
         except Exception as e:
@@ -861,7 +898,7 @@ class Robonect(MqttPlugin):
                 self._status_items['error_unix'](json_obj['error']['unix'])
             else:
                 self._status_items['error_unix']('')
-        return
+        return json_obj
 
     def get_status(self):
         return self._status

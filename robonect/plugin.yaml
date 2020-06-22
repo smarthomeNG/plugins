@@ -271,7 +271,6 @@ item_structs:
                 unix:
                     robonect_data_type: error_unix
                     type: str
-
         wlan:
             signal:
                 name: 'Wifi Signal Strength'
@@ -299,7 +298,6 @@ item_structs:
             unix:
                 robonect_data_type: unix
                 type: num
-
     batteries:
         battery_0_id:
             robonect_data_type: battery_id
@@ -332,6 +330,24 @@ item_structs:
             robonect_data_type: battery_capacity_remaining
             robonect_battery_index: 0
             type: num
+    weather:
+        location:
+            zip:
+                robonect_data_type: location_zip
+                type: str
+            country:
+                robonect_data_type: location_country
+                type: str
+        weather_data:
+            rain:
+                robonect_data_type: weather_rain
+                type: num
+            temperature:
+                robonect_data_type: weather_temperature
+                type: num
+            humidity:
+                robonect_data_type: weather_humidity
+                type: num
 
 plugin_functions:
     # Definition of plugin functions defined by this plugin (enter 'plugin_functions: NONE', if section should be empty)
