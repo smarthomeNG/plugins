@@ -759,7 +759,7 @@ class Robonect(MqttPlugin):
     def get_status(self):
         return self._status
 
-    def get_plugin_modeget_plugin_mode(self):
+    def get_plugin_mode(self):
         return self._plugin_mode
 
     def get_mode(self):
