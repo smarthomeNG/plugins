@@ -189,8 +189,7 @@ class Robonect(MqttPlugin):
         changes on it's own, but has to be polled to get the actual status.
         It is called by the scheduler which is set within run() method.
         """
-        if self.get_status() == 0:
-            prev_status = 0
+        prev_status = self.get_status()
         self.get_status_from_api()
         if self._status != 17 or prev_status == 0:
             self.get_mower_information_from_api()
