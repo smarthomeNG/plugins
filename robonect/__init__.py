@@ -75,6 +75,7 @@ class Robonect(MqttPlugin):
         self._battery_items = {}
         self._status_items = {}
         self._remote_items = {}
+        self._weather_items = {}
         self._status = 0
         self._mode = 0
         self._session = requests.Session()
@@ -146,6 +147,8 @@ class Robonect(MqttPlugin):
                 self._status_items[self.get_iattr_value(item.conf, 'robonect_data_type')] = item
             elif self.get_iattr_value(item.conf, 'robonect_data_type') in self.REMOTE_TYPES:
                 self._remote_items[self.get_iattr_value(item.conf, 'robonect_data_type')].append(item)
+            elif 'weather' in self.get_iattr_value(item.conf, 'robonect_data_type'):
+                self._weather_items[self.get_iattr_value(item.conf, 'robonect_data_type')] = item
             else:
                 self._items[self.get_iattr_value(item.conf, 'robonect_data_type')] = item
         return
@@ -630,7 +633,7 @@ class Robonect(MqttPlugin):
             self.logger.error("Plugin '{}': Error when trying to set remote data.".format(
                 self.get_fullname()))
         else:
-            return #todo
+            return  # todo
 
     def set_remote_via_api(self, index, name=None, distance=None, visible=None, proportion=None):
         """
@@ -788,22 +791,66 @@ class Robonect(MqttPlugin):
 
         if 'service' in json_obj:
             if 'location' in json_obj['service']:
-                if 'location_zip' in self._items:
-                    self._items['location_zip'](json_obj['service']['location']['zip'], self.get_shortname())
-                if 'location_country' in self._items:
-                    self._items['location_country'](json_obj['service']['location']['country'], self.get_shortname())
+                if 'weather_location_zip' in self._weather_items:
+                    self._weather_items['weather_location_zip'](json_obj['service']['location']['zip'], self.get_shortname())
+                if 'weather_location_country' in self._weather_items:
+                    self._weather_items['weather_location_country'](json_obj['service']['location']['country'],
+                                                            self.get_shortname())
 
-            if 'weather' in json_obj['service']:
-                if 'weather_rain' in self._items:
-                    self._items['weather_temperature'](json_obj['service']['weather']['rain'],
-                                                       self.get_shortname())
-                if 'weather_temperature' in self._items:
-                    self._items['weather_temperature'](json_obj['service']['weather']['temperature'],
-                                                       self.get_shortname())
-                if 'weather_humidity' in self._items:
-                    self._items['weather_humidity'](json_obj['service']['weather']['humidity'],
-                                                       self.get_shortname())
-
+        if 'weather' in json_obj:
+            if 'weather_rain' in self._weather_items:
+                self._weather_items['weather_temperature'](json_obj['weather']['rain'],
+                                                   self.get_shortname())
+            if 'weather_temperature' in self._weather_items:
+                self._weather_items['weather_temperature'](json_obj['weather']['temperature'],
+                                                   self.get_shortname())
+            if 'weather_humidity' in self._weather_items:
+                self._weather_items['weather_humidity'](json_obj['weather']['humidity'],
+                                                self.get_shortname())
+            if 'weather_sunrise' in self._weather_items:
+                self._weather_items['weather_sunrise'](json_obj['weather']['sunrise'],
+                                               self.get_shortname())
+            if 'weather_sunset' in self._weather_items:
+                self._weather_items['weather_sunset'](json_obj['weather']['sunset'],
+                                              self.get_shortname())
+            if 'weather_day' in self._weather_items:
+                self._weather_items['weather_day'](json_obj['weather']['day'],
+                                           self.get_shortname())
+            if 'weather_icon' in self._weather_items:
+                self._weather_items['weather_icon'](json_obj['weather']['icon'],
+                                            self.get_shortname())
+            if 'condition' in json_obj['weather']:
+                if 'weather_condition_toorainy' in self._weather_items:
+                    self._weather_items['weather_condition_toorainy'](json_obj['weather']['condition']['toorainy'],
+                                                              self.get_shortname())
+                if 'weather_condition_toocold' in self._weather_items:
+                    self._weather_items['weather_condition_toocold'](json_obj['weather']['condition']['toocold'],
+                                                             self.get_shortname())
+                if 'weather_condition_toowarm' in self._weather_items:
+                    self._weather_items['weather_condition_toowarm'](json_obj['weather']['condition']['toowarm'],
+                                                             self.get_shortname())
+                if 'weather_condition_toodry' in self._weather_items:
+                    self._weather_items['weather_condition_toodry'](json_obj['weather']['condition']['toodry'],
+                                                            self.get_shortname())
+                if 'weather_condition_toowet' in self._weather_items:
+                    self._weather_items['weather_condition_toowet'](json_obj['weather']['condition']['toowet'],
+                                                            self.get_shortname())
+                if 'weather_condition_day' in self._weather_items:
+                    self._weather_items['weather_condition_day'](json_obj['weather']['condition']['day'],
+                                                         self.get_shortname())
+                if 'weather_condition_night' in self._weather_items:
+                    self._weather_items['weather_condition_night'](json_obj['weather']['condition']['night'],
+                                                           self.get_shortname())
+            if 'timestamp' in json_obj['weather']:
+                if 'weather_date' in self._weather_items:
+                    self._weather_items['weather_date'](json_obj['weather']['timestamp']['date'],
+                                                           self.get_shortname())
+                if 'weather_time' in self._weather_items:
+                    self._weather_items['weather_time'](json_obj['weather']['timestamp']['time'],
+                                                           self.get_shortname())
+                if 'weather_unix' in self._weather_items:
+                    self._weather_items['weather_unix'](json_obj['weather']['timestamp']['unix'],
+                                                           self.get_shortname())
         return json_obj
 
     def get_status_from_api(self):
@@ -926,6 +973,9 @@ class Robonect(MqttPlugin):
 
     def get_battery_items(self):
         return self._battery_items
+
+    def get_weather_items(self):
+        return self._weather_items
 
     def get_remote_items(self):
         return self._remote_items

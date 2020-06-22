@@ -45,19 +45,25 @@
                 shngInsertText ('{{ item.id() }}_last_change', objResponse['{{ item.id() }}_last_change'])
             {% endfor %}
 
+            {% for key, item in p.get_weather_items().items() %}
+                shngInsertText('{{ item.id() }}_value', objResponse['{{ item.id() }}_value'])
+                shngInsertText('{{ item.id() }}_last_update', objResponse['{{ item.id() }}_last_update'])
+                shngInsertText('{{ item.id() }}_last_change', objResponse['{{ item.id() }}_last_change'])
+            {% endfor %}
+
             {% for key, items in p.get_battery_items().items() %}
                 {%  for item in items %}
                     shngInsertText('{{ item.id() }}_value', objResponse['{{ item.id() }}_value'])
-                    shngInsertText ('{{ item.id() }}_last_update', objResponse['{{ item.id() }}_last_update'])
-                    shngInsertText ('{{ item.id() }}_last_change', objResponse['{{ item.id() }}_last_change'])
+                    shngInsertText('{{ item.id() }}_last_update', objResponse['{{ item.id() }}_last_update'])
+                    shngInsertText('{{ item.id() }}_last_change', objResponse['{{ item.id() }}_last_change'])
                 {% endfor %}
             {% endfor %}
 
             {% for key, items in p.get_remote_items().items() %}
                 {%  for item in items %}
                     shngInsertText('{{ item.id() }}_value', objResponse['{{ item.id() }}_value']{% if key in ['remotestart_path'] and item() == 2%}+' ({{ _('Leitdraht') }})'{% endif %})
-                    shngInsertText ('{{ item.id() }}_last_update', objResponse['{{ item.id() }}_last_update'])
-                    shngInsertText ('{{ item.id() }}_last_change', objResponse['{{ item.id() }}_last_change'])
+                    shngInsertText('{{ item.id() }}_last_update', objResponse['{{ item.id() }}_last_update'])
+                    shngInsertText('{{ item.id() }}_last_change', objResponse['{{ item.id() }}_last_change'])
                 {% endfor %}
             {% endfor %}
         }
@@ -139,6 +145,17 @@
                 <td id="{{ item.id() }}_value" class="py-1">
                     {{ item() }}{% if key in ['mower/mode', 'mower/status'] %} ({{ _(p.get_status_items()[key+'/text']()) }}){% endif %}
                 </td>
+                <td id="{{ item.id() }}_last_update" class="py-1">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                <td id="{{ item.id() }}_last_change" class="py-1">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+            </tr>
+        {% endfor %}
+        <tr><td colspan="6"><strong>{{ _('Wetter-Informationen') }}</strong></td></tr>
+        {% for key, item in p.get_weather_items().items()|sort(attribute='1.property.path') %}
+            <tr>
+                <td class="py-1">{{ item.property.path }}</td>
+                <td class="py-1">{{ item.property.type }}</td>
+                <td class="py-1">{{ key }}</td>
+                <td id="{{ item.id() }}_value" class="py-1">{{ item() }}</td>
                 <td id="{{ item.id() }}_last_update" class="py-1">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
                 <td id="{{ item.id() }}_last_change" class="py-1">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
             </tr>

@@ -333,10 +333,10 @@ item_structs:
     weather:
         location:
             zip:
-                robonect_data_type: location_zip
+                robonect_data_type: weather_location_zip
                 type: str
             country:
-                robonect_data_type: location_country
+                robonect_data_type: weather_location_country
                 type: str
         weather_data:
             rain:
@@ -347,6 +347,50 @@ item_structs:
                 type: num
             humidity:
                 robonect_data_type: weather_humidity
+                type: num
+            sunrise:
+                robonect_data_type: weather_sunrise
+                type: num
+            sunset:
+                robonect_data_type: weather_sunset
+                type: num
+            day:
+                robonect_data_type: weather_day
+                type: bool
+            icon:
+                robonect_data_type: weather_icon
+                type: str
+        weather_condition:
+            toorainy:
+                robonect_data_type: weather_condition_toorainy
+                type: bool
+            toocold:
+                robonect_data_type: weather_condition_toocold
+                type: bool
+            toowarm:
+                robonect_data_type: weather_condition_toowarm
+                type: bool
+            toodry:
+                robonect_data_type: weather_condition_toodry
+                type: bool
+            toowet:
+                robonect_data_type: weather_condition_toowet
+                type: bool
+            day:
+                robonect_data_type: weather_condition_day
+                type: bool
+            night:
+                robonect_data_type: weather_condition_night
+                type: bool
+        weather_timestamp:
+            date:
+                robonect_data_type: weather_date
+                type: str
+            time:
+                robonect_data_type: weather_time
+                type: str
+            unix:
+                robonect_data_type: weather_unix
                 type: num
 
 plugin_functions:
