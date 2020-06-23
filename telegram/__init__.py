@@ -65,7 +65,8 @@ MESSAGE_TAG_DEST          = '[DEST]'
 
 
 class Telegram(SmartPlugin):
-    PLUGIN_VERSION = "1.6.2"
+
+    PLUGIN_VERSION = "1.6.3"
 
     _items = []              # Storage Array for all items using telegram attributes ITEM_ATTR_MESSAGE
     _items_info = {}         # dict used whith the info-command: key = attribute_value, val= item_list ITEM_ATTR_INFO
@@ -125,7 +126,7 @@ class Telegram(SmartPlugin):
             dispatcher.add_handler(CommandHandler('lo', self.cHandler_lo))
             dispatcher.add_handler(CommandHandler('tr', self.cHandler_tr, pass_args=True))
 
-            dispatcher.add_handler( MessageHandler(Filters.text, self.mHandler))
+            dispatcher.add_handler(MessageHandler(Filters.text, self.mHandler))
             self.init_webinterface()
 
             self.logger.debug("init done")
@@ -135,11 +136,11 @@ class Telegram(SmartPlugin):
         """
         Provide a way to use the plugin to easily send a message
         """
-
-        if chat_id == None:
-            self.msg_broadcast(msg)
-        else:
-            self.msg_broadcast(msg, chat_id)
+        if self.alive:
+            if chat_id == None:
+                self.msg_broadcast(msg)
+            else:
+                self.msg_broadcast(msg, chat_id)
 
     def run(self):
         """
@@ -172,24 +173,24 @@ class Telegram(SmartPlugin):
                 self.logger.warning("Error '{}' occurred. Could not assign pretty names to Telegrams threads, maybe object model of python-telegram-bot module has changed? Please inform the author of plugin!".format(e))
         self.logger.debug("started polling the updater, Queue is {}".format(q))
         if self._welcome_msg:
-          self.msg_broadcast(self._welcome_msg)
-          self.logger.debug("sent welcome message {}")
+            self.msg_broadcast(self._welcome_msg)
+            self.logger.debug("sent welcome message {}")
 
     def stop(self):
         """
         This is called when the plugins thread is about to stop
         """
         self.alive = False
+        self.logger.debug("stop telegram plugin")
         try:
-            self.logger.debug("stop telegram plugin")
             if self._bye_msg:
               self.msg_broadcast(self._bye_msg)
               self.logger.debug("sent bye message")
             self._updater.stop()
-            self.logger.debug("telegram plugin stopped")
         except:
             pass
-        
+        self.logger.debug("stop telegram plugin ")
+
     def parse_item(self, item):
         """
         Default plugin parse_item method. Is called when the plugin is initialized.
@@ -206,16 +207,26 @@ class Telegram(SmartPlugin):
             self._items.append(item)
             return self.update_item
 
+        """
+        For valid commands also see https://core.telegram.org/bots#commands
+        In general they are allowed to have 32 characters, use latin letters, numbers or an underscore
+        It does not work to use upper case letters which is undocumented but the code checks for it.
+        """
         if self.has_iattr(item.conf, ITEM_ATTR_INFO):
             key = self.get_iattr_value(item.conf, ITEM_ATTR_INFO)
-            self.logger.debug("parse item: {0} {1}".format(item, key))
-            if key in self._items_info:
-                self._items_info[key].append(item)
+            if self.is_valid_command(key):
+                self.logger.debug("parse item: {0} {1}".format(item, key))
+                if key in self._items_info:
+                    self._items_info[key].append(item)
+                    self.logger.debug("Append a new item '{}' to command {}".format(item,key))
+                else:
+                    self._items_info[key] = [item]  # dem dict neue Liste hinzufuegen
+                    self.logger.debug("Register new command '{}', add item '{}' and register a handler".format(key, item))
+                    # add a handler for each info-attribute
+                    self._updater.dispatcher.add_handler(CommandHandler(key, self.cHandler_info_attr))
+                return self.update_item
             else:
-                self._items_info[key] = [item]  # dem dict neue Liste hinzufuegen
-                # add a handler for each info-attribute
-                self._updater.dispatcher.add_handler(CommandHandler(key, self.cHandler_info_attr))
-            return self.update_item
+                self.logger.error("Command '{}' chosen for item '{}' is invalid for telegram botfather".format(key,item))
 
         if self.has_iattr(item.conf, ITEM_ATTR_TEXT):
             self.logger.debug("parse item: {0}".format(item))
@@ -225,6 +236,14 @@ class Telegram(SmartPlugin):
             return self.update_item
 
         return None
+
+    def is_valid_command(self, cmd):
+        if not isinstance(cmd, str):
+            return False
+        if len(cmd)>32:
+            return False
+        rec = re.compile(r'[^a-z0-9_]')
+        return not bool(rec.search(cmd))
 
     #def parse_logic(self, logic):
     #    if 'xxx' in logic.conf:
@@ -425,6 +444,8 @@ class Telegram(SmartPlugin):
         if self._chat_ids_item:
             ids = self._chat_ids_item()
             text=self.translate("Your chat id is")+' {}'.format( update.message.chat_id)
+            self.logger.debug('update.message.chat_id={} with type={}'.format(update.message.chat_id, type(update.message.chat_id)))
+            self.logger.debug('ids dict={}'.format(ids))
             if update.message.chat_id in ids:
                 if ids[update.message.chat_id]:
                     text=text+", you have write access"
@@ -441,16 +462,21 @@ class Telegram(SmartPlugin):
 
     def cHandler_info_attr(self, bot, update):
         """
-        /xx show registered items and value with specific attribute/key
-        where xx is the value from an item with ``telegram_info`` attribute
+        /command show registered items and value with specific attribute/key
+        where command is the value from an item with ``telegram_info`` attribute
         """
+        self.logger.warning("Enter cHandler_info_attr")
         if self.has_access_right( update.message.chat_id ):
+            self.logger.debug("Gathering items to fulfill command {}".format(update.message.text))
             c_key = update.message.text.replace("/", "", 1)
             if c_key in self._items_info:
                 self.logger.debug("info-command: {0}".format(c_key))
                 self.list_items_info(update.message.chat_id, c_key)
             else:    
                 self._bot.sendMessage(chat_id=update.message.chat_id, text=self.translate("unknown command %s") % (c_key))
+        else:
+            self.logger.debug("Chat with id {} has no right to use command {}".format(update.message.chat_id,update.message.text))
+        self.logger.warning("Leave cHandler_info_attr")
 
     def cHandler_lo(self, bot, update):
         """
@@ -517,7 +543,8 @@ class Telegram(SmartPlugin):
             if not text:
                 text = self.translate("no items found with the attribute %s") % ITEM_ATTR_INFO
             self._bot.sendMessage(chat_id=chat_id, text=text)
-        
+        else:
+            self.logger.debug("Chat with id {} has no right to list items with key {}".format(chat_id,key))
 
     def create_info_reply_markup(self):
         """

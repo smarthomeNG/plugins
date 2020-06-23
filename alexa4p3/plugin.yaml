@@ -3,8 +3,8 @@ plugin:
     # Global plugin attributes
     type: web                     # plugin type (gateway, interface, protocol, system, web)
     description:
-        de: 'Plugin zur Ansteuerung von SmartHomeNG via Amazon Echo bzw. Alexa, ** seit SmartHomeNG v1.3 **'
-        en: 'Plugin to connect SmartHomeNG via Amazon Echo bzw. Alexa, ** since SmartHomeNG v1.3 **'
+        de: 'Plugin zur Ansteuerung von SmartHomeNG via Amazon Echo bzw. Alexa'
+        en: 'Plugin to connect SmartHomeNG via Amazon Echo bzw. Alexa'
     maintainer: andrek
     tester: psilo909, cannon, ASSR85, Juergen
     keywords: Amazon Echo Alexa Voicecontrol Sprachsteuerung Show Spot FireTV

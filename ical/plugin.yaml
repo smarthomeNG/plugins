@@ -71,8 +71,8 @@ parameters:
             de: "Umgang mit Login-Daten (http://user:pass@domain.tld/path) in Kalender-URIs in Logs."
             en: "Handling of login data (http://user:pass@domain.tld/path) in calendar uris in logs."
         description_long:
-            de: "Umgang mit Login-Daten (http://user:pass@domain.tld/path) in Kalender-URIs in Logs. 'mask' ersetzt die Login-Daten durch '***', 'show' gibt sie ins Log aus und 'strip' löscht den jeweiligen Teil der URI vor Ausgabe ins Log."
-            en: "Handling of login data (http://user:pass@domain.tld/path) in calendar uris in logs. 'mask' replaces login data with '***', 'show' prints login data to the log, 'strip' removes login data before logging."
+            de: "Umgang mit Login-Daten (http://user:pass@domain.tld/path) in Kalender-URIs in Logs. 'mask' ersetzt die Login-Daten durch Sternchen, 'show' gibt sie ins Log aus und 'strip' löscht den jeweiligen Teil der URI vor Ausgabe ins Log."
+            en: "Handling of login data (http://user:pass@domain.tld/path) in calendar uris in logs. 'mask' replaces login data with Sternchen, 'show' prints login data to the log, 'strip' removes login data before logging."
 
 item_attributes:
     # Definition of item attributes defined by this plugin

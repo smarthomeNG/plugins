@@ -5,11 +5,13 @@ plugin:
         de: 'Raum Temperatur Regler'
         en: 'Room Temperatur controller'
     maintainer: Thomas Creutz / bmxp
+    tester: bmxp
     state: ready
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/31450-rtr-heizungs-plugin
-
-    version: 1.2.3                 # Plugin version
+    documentation: https://www.smarthomeng.de/dev/user/plugins/rtr/README.html
+    version: 1.2.4                 # Plugin version
     sh_minversion: 1.2             # minimum shNG version to use this plugin
+    restartable: True
     multi_instance: False          # plugin supports multi instance
     classname: RTR                 # class containing the plugin
 
@@ -52,6 +54,9 @@ parameters:
     defaultValveProtect:
         type: bool
         default: true
+        description:
+            de: "Wenn Wahr wird für alle Regler Ventilschutz voreingestellt"
+            en: "If True, all controller will preset to protect valves"
 
 item_attributes:
     rtr_current:
@@ -101,8 +106,8 @@ item_attributes:
     rtr_temp_boost_time:
         type: int
         description:
-            de: "Ordnet dem Regler eine Standard Zeit für den Boost in Minten zu und überschreibt somit den globalen Standard defaultBoostTime. Muss auf dem selben Item wie rtr_setpoint gesetzt werden"
-            en: "Defines a default boost time in minutes for this controller and so overrides the global defaultBoostTime. Only valid in the same Item where rtr_setpoint is defined"
+            de: 'Ordnet dem Regler eine Standard Zeit für den Boost in Minten zu und überschreibt somit den globalen Standard defaultBoostTime. Muss auf dem selben Item wie rtr_setpoint gesetzt werden'
+            en: 'Defines a default boost time in minutes for this controller and so overrides the global defaultBoostTime. Only valid in the same Item where rtr_setpoint is defined'
 
     rtr_actuator:
         type: int
@@ -113,12 +118,28 @@ item_attributes:
 
     rtr_valve_protect:
         type: bool
+        description:
+            de: 'Aktiviert den Ventilschutz für diesen Controller'
+            en: 'Activates the valve protection for this controller ID'
 
     rtr_hvac_mode:
         type: int
+        description:
+            de: 'Setzt den Modus'
+            en: 'Sets the mode'
 
     rtr_stops:
         type: list(int)
         description:
             de: 'Ordnet das Item dem einen oder mehreren Controllern per ID als Stop-Objekt zu. Kann nur auf einem Item vom Typ Bool gesetzt werden. Ist der Item Wert True, Pausiert die Regelung'
             en: 'Defines the Item as stop item for the given controller IDs. Only valid on Item-Type Bool. If Item is True, the controller gets paused'
+
+item_structs: NONE
+    # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin
+
+plugin_functions: NONE
+    # Definition of function interface of the plugin
+

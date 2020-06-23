@@ -5,15 +5,15 @@ plugin:
     description:                  # Alternative: description in multiple languages
         de: 'Database plugin, mit Unterstützung für SQLite 3 und MySQL'
         en: 'Database plugin, with support for SQLite 3 and MySQL'
-    maintainer: ohinckel
+    maintainer: ohinckel, msinn
     tester: psilo909, onkelandy, brandst
     state: ready
     keywords: database
     documentation: http://smarthomeng.de/user/plugins/database/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1021844-neues-database-plugin
 
-    version: 1.5.9                 # Plugin version
-    sh_minversion: 1.6             # minimum shNG version to use this plugin
+    version: 1.5.14                # Plugin version
+    sh_minversion: 1.7.2           # minimum shNG version to use this plugin
 #    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
     restartable: unknown
@@ -51,6 +51,13 @@ parameters:
             de: 'Genauigkeit der aus der Datenbank ausgelesenen Werte (Nachkommastellen).'
             en: 'Precision of values read from database (digits after comma).'
 
+    count_logentries:
+        type: bool
+        default: False
+        descriptrion:
+            de: "Auf True setzen, um für das Web Interface die Anzahl der Logeinträge für jedes Item zu zählen und als extra Spalte anzuzeigen"
+            en: "Set to True to count the number of log entries for each item for the web interface and show as extra coulmn"
+
 item_attributes:
     # Definition of item attributes defined by this plugin
     database:
@@ -60,6 +67,20 @@ item_attributes:
             de: "Wenn auf 'yes' gesetzt, werden die Werte des Items in die Datenbank geschrieben. Wenn auf 'init' gesetzt, wird zusätzlich beim Start von SmartHomeNG der Wert in die Datenbank geschrieben."
             en: "This attribute enables the database logging when set (just use value 'yes'). If value 'init' is used, an item will be initalized from the database after SmartHomeNG is restarted."
 
+    database_maxage:
+        type: num
+        valid_min: 0
+        description:
+            de: "Maximales Alter (in Tagen) der Logeinträge, die für dieses Item gespeichert werden sollen. Falls nicht angegeben, werden die Werte unbegrenzt gespeichert."
+            en: "Maximum age (in days) of the log entries to be saved for this item. If not specified, the values are saved indefinitely."
+
+    database_acl:
+        type: str
+        valid_list: ['rw', 'ro']
+        default: 'rw'
+        description:
+            de: "Muss normalerweise nicht konfiguriert werden, dann wird der Standard 'rw' genutzt. Es kann nützlich sein Werte als 'ro' zu deklarieren, falls die Datenbank Daten aus anderen Quellen enthält, die durch SmartNomeNG nicht verändert werden sollen."
+            en: "Usually does not need to be configured, in this case the standard 'rw' is used. It can be useful to declare values as 'ro' if the database contains data from other sources that SmartNomeNG should not change."
 
 item_structs: NONE
   # Definition of item-structure templates for this plugin
@@ -70,6 +91,7 @@ logic_parameters: NONE
 plugin_functions:
     # Definition of function interface of the plugin
     id:
+        type: int
         description:
             de: 'Liefert für das angegebene Item die Datenbank-ID zurück'
             en: 'Return the database ID for the given item'
@@ -81,10 +103,13 @@ plugin_functions:
                     en: "An item object"
 
     db:
+        type: foo
         description:
             de: 'Liefert das Lowlevel Datenbank-Objekt zurück'
             en: 'Returns the low-level database object'
+
     dump:
+        type: void
         description:
             de: 'Erzeugt einen Datenbank-Dump für angegebene Kriterien'
             en: 'Creates a database dump for given criterias'
@@ -134,7 +159,114 @@ plugin_functions:
                 description:
                     de: "Ein Datenbankcursor Objekt, falls vorhanden (optional)"
                     en: "A database cursor object if available (optional)"
+
+    insertItem:
+        type: int
+        description:
+            de: 'Item-Datenbankeintrag für angegebene Datenbank-ID anlegen'
+            en: 'Create database item record for given database ID'
+        parameters:
+            name:
+                type: str
+                description:
+                    de: "Name des Items für das ein Eintrag angelegt werden soll"
+                    en: "name of item to create a record for"
+            cur:
+                type: foo
+                description:
+                    de: "Ein Datenbankcursor Objekt, falls vorhanden (optional)"
+                    en: "A database cursor object if available (optional)"
+
+    updateItem:
+        type: void
+        description:
+            de: 'Item-Datenbankeintrag für angegebene Datenbank-ID aktualisieren'
+            en: 'Update database item record for given database ID'
+        parameters:
+            id:
+                type: int
+                description:
+                    de: "Datenbank-ID des Items für das der Eintrag aktualisiert werden soll"
+                    en: "Database ID of item to update the record for"
+            time:
+                type: int
+                description:
+                    de: "Zeitpunkt an dem der Wert aktiv war"
+                    en: "Time for the given value"
+            duration:
+                type: int
+                description:
+                    de: "Zeitintervall für den der Wert aktiv war"
+                    en: "Time duration for the given value"
+            val:
+                type: str
+                description:
+                    de: "Der Wert der in die Datenbank geschrieben werden soll"
+                    en: "The value to write to the database"
+            it:
+                type: str
+                description:
+                    de: "Der Item-Typ des Wertes ('str', 'num', 'bool')"
+                    en: "The item type of the value ('str', 'num', 'bool')"
+            changed:
+                type: int
+                description:
+                    de: "Zeitstempel der Änderung"
+                    en: "Time of change"
+            cur:
+                type: foo
+                description:
+                    de: "Ein Datenbankcursor Objekt, falls vorhanden (optional)"
+                    en: "A database cursor object if available (optional)"
+
+    readItem:
+        type: foo
+        description:
+            de: 'Item-Datenbankeintrag für angegebene Datenbank-ID auslesen'
+            en: 'Read database item record for given database ID'
+        parameters:
+            id:
+                type: int
+                description:
+                    de: "Datenbank-ID des Items für das der Eintrag ausgelesen werden soll"
+                    en: "Database ID of item to read the record for"
+            cur:
+                type: foo
+                description:
+                    de: "Ein Datenbankcursor Objekt, falls vorhanden (optional)"
+                    en: "A database cursor object if available (optional)"
+
+    readItems:
+        type: foo
+        description:
+            de: 'Item-Datenbankeinträge auslesen'
+            en: 'Read database item records'
+        parameters:
+            id:
+                type: int
+                description:
+                    de: "Datenbank-ID des Items für das der Eintrag ausgelesen werden soll"
+                    en: "Database ID of item to read the record for"
+            cur:
+                type: foo
+                description:
+                    de: "Ein Datenbankcursor Objekt, falls vorhanden (optional)"
+                    en: "A database cursor object if available (optional)"
+
+    deleteItem:
+        type: void
+        description:
+            de: 'Item-Datenbankeintrag für angegebene Datenbank-ID löschen'
+            en: 'Delete database item record for given database ID'
+        parameters:
+            id:
+                type: int
+                description:
+                    de: "Datenbank-ID des Items für das der Eintrag gelöscht werden soll"
+                    en: "Database ID of item to delete the record for"
+
     insertLog:
+        type: void
         description:
             de: 'Log-Datenbankeintrag für angegebene Datenbank-ID anlegen'
             en: 'Create database log record for given database ID'
@@ -174,7 +306,9 @@ plugin_functions:
                 description:
                     de: "Ein Datenbankcursor Objekt, falls vorhanden (optional)"
                     en: "A database cursor object if available (optional)"
+
     updateLog:
+        type: void
         description:
             de: 'Log-Datenbankeintrag für angegebene Datenbank-ID aktualisieren'
             en: 'Update database log record for given database ID'
@@ -214,7 +348,9 @@ plugin_functions:
                 description:
                     de: "Ein Datenbankcursor Objekt, falls vorhanden (optional)"
                     en: "A database cursor object if available (optional)"
+
     readLog:
+        type: foo
         description:
             de: 'Log-Datenbankeintrag für angegebene Datenbank-ID auslesen'
             en: 'Read database log record for given database ID'
@@ -222,14 +358,63 @@ plugin_functions:
             id:
                 type: int
                 description:
-                    de: "Datenbank-ID des Items für das der Eintrag aktualisiert werden soll"
-                    en: "Database ID of item to update the record for"
+                    de: "Datenbank-ID des Logs für das der Eintrag gelesen werden soll"
+                    en: "Database ID of log to read the record for"
             time:
                 type: int
                 description:
                     de: "Zeitpunkt an dem der Wert aktiv war"
                     en: "Time for the given value"
+
+    readLogs:
+        type: foo
+        description:
+            de: 'Log-Datenbankeinträge für angegebene Datenbank-ID auslesen'
+            en: 'Read database log records for given database ID'
+        parameters:
+            id:
+                type: int
+                description:
+                    de: "Datenbank-ID des Logs für das der Eintrag aktualisiert werden soll"
+                    en: "Database ID of log to read the records for"
+            time:
+                type: int
+                description:
+                    de: "Auslesen auf angegebene Zeit eingeschränken (optional)"
+                    en: "Restrict reading of records to given time (optional)"
+            time_start:
+                type: int
+                description:
+                    de: "Auslesen auf angegebene Startzeit eingeschränken eingeschränken (optional)"
+                    en: "Restrict reading of records to given start time (optional)"
+            time_end:
+                type: int
+                description:
+                    de: "Auslesen auf angegebene Endzeit eingeschränken eingeschränken (optional)"
+                    en: "Restrict reading of records to given end time (optional)"
+            changed:
+                type: int
+                description:
+                    de: "Auslesen auf angegebene Änderungszeit eingeschränken (optional)"
+                    en: "Restrict reading of records to given change time (optional)"
+            changed_start:
+                type: int
+                description:
+                    de: "Auslesen auf angegebene Start der Änderungszeit eingeschränken eingeschränken (optional)"
+                    en: "Restrict reading of records to given start time of changes (optional)"
+            changed_end:
+                type: int
+                description:
+                    de: "Auslesen auf angegebene Ende der Änderungszeit eingeschränken eingeschränken (optional)"
+                    en: "Restrict reading of records to given end time of changes (optional)"
+            cur:
+                type: foo
+                description:
+                    de: "Ein Datenbankcursor Objekt, falls vorhanden (optional)"
+                    en: "A database cursor object if available (optional)"
+
     deleteLog:
+        type: void
         description:
             de: 'Log-Datenbankeinträge für angegebene Datenbank-ID löschen'
             en: 'Delete database log records for given database ID'
@@ -274,148 +459,9 @@ plugin_functions:
                 description:
                     de: "Ein Datenbankcursor Objekt, falls vorhanden (optional)"
                     en: "A database cursor object if available (optional)"
-    readLogs:
-        description:
-            de: 'Log-Datenbankeinträge für angegebene Datenbank-ID auslesen'
-            en: 'Read database log records for given database ID'
-        parameters:
-            id:
-                type: int
-                description:
-                    de: "Datenbank-ID des Items für das der Eintrag aktualisiert werden soll"
-                    en: "Database ID of item to update the record for"
-            time:
-                type: int
-                description:
-                    de: "Auslesen auf angegebene Zeit eingeschränken (optional)"
-                    en: "Restrict reading of records to given time (optional)"
-            time_start:
-                type: int
-                description:
-                    de: "Auslesen auf angegebene Startzeit eingeschränken eingeschränken (optional)"
-                    en: "Restrict reading of records to given start time (optional)"
-            time_end:
-                type: int
-                description:
-                    de: "Auslesen auf angegebene Endzeit eingeschränken eingeschränken (optional)"
-                    en: "Restrict reading of records to given end time (optional)"
-            changed:
-                type: int
-                description:
-                    de: "Auslesen auf angegebene Änderungszeit eingeschränken (optional)"
-                    en: "Restrict reading of records to given change time (optional)"
-            changed_start:
-                type: int
-                description:
-                    de: "Auslesen auf angegebene Start der Änderungszeit eingeschränken eingeschränken (optional)"
-                    en: "Restrict reading of records to given start time of changes (optional)"
-            changed_end:
-                type: int
-                description:
-                    de: "Auslesen auf angegebene Ende der Änderungszeit eingeschränken eingeschränken (optional)"
-                    en: "Restrict reading of records to given end time of changes (optional)"
-            cur:
-                type: foo
-                description:
-                    de: "Ein Datenbankcursor Objekt, falls vorhanden (optional)"
-                    en: "A database cursor object if available (optional)"
-    insertItem:
-        description:
-            de: 'Item-Datenbankeintrag für angegebene Datenbank-ID anlegen'
-            en: 'Create database item record for given database ID'
-        parameters:
-            name:
-                type: str
-                description:
-                    de: "Name des Items für das ein Eintrag angelegt werden soll"
-                    en: "name of item to create a record for"
-            cur:
-                type: foo
-                description:
-                    de: "Ein Datenbankcursor Objekt, falls vorhanden (optional)"
-                    en: "A database cursor object if available (optional)"
-    updateItem:
-        description:
-            de: 'Item-Datenbankeintrag für angegebene Datenbank-ID aktualisieren'
-            en: 'Update database item record for given database ID'
-        parameters:
-            id:
-                type: int
-                description:
-                    de: "Datenbank-ID des Items für das der Eintrag aktualisiert werden soll"
-                    en: "Database ID of item to update the record for"
-            time:
-                type: int
-                description:
-                    de: "Zeitpunkt an dem der Wert aktiv war"
-                    en: "Time for the given value"
-            duration:
-                type: int
-                description:
-                    de: "Zeitintervall für den der Wert aktiv war"
-                    en: "Time duration for the given value"
-            val:
-                type: str
-                description:
-                    de: "Der Wert der in die Datenbank geschrieben werden soll"
-                    en: "The value to write to the database"
-            it:
-                type: str
-                description:
-                    de: "Der Item-Typ des Wertes ('str', 'num', 'bool')"
-                    en: "The item type of the value ('str', 'num', 'bool')"
-            changed:
-                type: int
-                description:
-                    de: "Zeitstempel der Änderung"
-                    en: "Time of change"
-            cur:
-                type: foo
-                description:
-                    de: "Ein Datenbankcursor Objekt, falls vorhanden (optional)"
-                    en: "A database cursor object if available (optional)"
 
-    readItem:
-        description:
-            de: 'Item-Datenbankeintrag für angegebene Datenbank-ID auslesen'
-            en: 'Read database item record for given database ID'
-        parameters:
-            id:
-                type: int
-                description:
-                    de: "Datenbank-ID des Items für das der Eintrag ausgelesen werden soll"
-                    en: "Database ID of item to read the record for"
-            cur:
-                type: foo
-                description:
-                    de: "Ein Datenbankcursor Objekt, falls vorhanden (optional)"
-                    en: "A database cursor object if available (optional)"
-    readItems:
-        description:
-            de: 'Item-Datenbankeinträge auslesen'
-            en: 'Read database item records'
-        parameters:
-            id:
-                type: int
-                description:
-                    de: "Datenbank-ID des Items für das der Eintrag ausgelesen werden soll"
-                    en: "Database ID of item to read the record for"
-            cur:
-                type: foo
-                description:
-                    de: "Ein Datenbankcursor Objekt, falls vorhanden (optional)"
-                    en: "A database cursor object if available (optional)"
-    deleteItem:
-        description:
-            de: 'Item-Datenbankeintrag für angegebene Datenbank-ID löschen'
-            en: 'Delete database item record for given database ID'
-        parameters:
-            id:
-                type: int
-                description:
-                    de: "Datenbank-ID des Items für das der Eintrag gelöscht werden soll"
-                    en: "Database ID of item to delete the record for"
     cleanup:
+        type: void
         description:
             de: 'Datenbank aufräumen (löscht ungenutzte Item/Log Einträge aus der Datenbank)'
             en: 'Cleanup database (deletes unused item/log records in the database)'

@@ -1,8 +1,11 @@
 .. index:: Plugins; Database (Database Unterstützung)
 .. index:: Database
 
+========
 database
-########
+========
+
+Database plugin, mit Unterstützung für SQLite 3 und MySQL.
 
 Konfiguration
 =============

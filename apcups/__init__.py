@@ -27,19 +27,25 @@ logger = logging.getLogger(__name__)
 
 ITEM_TAG = ['apcups']
 class APCUPS(SmartPlugin):
-    PLUGIN_VERSION = "1.3.2"
-    ALLOW_MULTIINSTANCE = True
 
-    def __init__(self, smarthome, host='127.0.0.1', port=3551, cycle=300):
-        self._sh = smarthome
-        self._host = host
-        self._port = port
-        self._cycle = int(cycle)
+    PLUGIN_VERSION = "1.3.3"
+
+    def __init__(self, sh):
+        # Call init code of parent class (SmartPlugin)
+        super().__init__()
+
+        from bin.smarthome import VERSION
+        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
+            self.logger = logging.getLogger(__name__)
+
+        self._host = self.get_parameter_value('host')
+        self._port = self.get_parameter_value('port')
+        self._cycle = self.get_parameter_value('cycle')
         self._items = {}
 
     def run(self):
         self.alive = True
-        self._sh.scheduler.add('APCups', self.update_status, cycle=self._cycle)
+        self.scheduler_add('APCups', self.update_status, cycle=self._cycle)
 
     def stop(self):
         self.alive = False
@@ -48,14 +54,14 @@ class APCUPS(SmartPlugin):
         if self.has_iattr(item.conf, ITEM_TAG[0]):
             apcups_key = (self.get_iattr_value(item.conf, ITEM_TAG[0])).lower()
             self._items[apcups_key]=item
-            logger.debug("item {0} added with apcupd_key {1}".format(item,apcups_key))
+            self.logger.debug("item {0} added with apcupd_key {1}".format(item,apcups_key))
             return self.update_item
         else:
             return None
 
     def update_item(self, item, caller=None, source=None, dest=None):
         if caller != 'plugin':
-            logger.debug("update item: {0}".format(item.id()))
+            self.logger.debug("update item: {0}".format(item.id()))
 
     def update_status(self):
         """
@@ -72,9 +78,9 @@ class APCUPS(SmartPlugin):
             val = val.strip()
 
             if key in self._items:
-                 logger.debug("update item {0} with {1}".format(self._items[key],val))
+                 self.logger.debug("update item {0} with {1}".format(self._items[key],val))
                  item = self._items[key]
-                 logger.debug("Item type {0}".format(item.type()))
+                 self.logger.debug("Item type {0}".format(item.type()))
                  if item.type() == 'str':
                      item (val, 'apcups')
                  else:

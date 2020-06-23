@@ -258,6 +258,7 @@ class SeItemChild:
     # abitem: parent SeItem instance
     def __init__(self, abitem):
         self._abitem = abitem
+        self.se_plugin = abitem.se_plugin
         self._sh = abitem.sh
 
     # wrapper method for logger.info

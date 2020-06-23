@@ -56,6 +56,11 @@ class SeItem:
     def sh(self):
         return self.__sh
 
+    # return instance of smartplugin class
+    @property
+    def se_plugin(self):
+        return self.__se_plugin
+
     # return instance of logger class
     @property
     def logger(self):
@@ -92,11 +97,12 @@ class SeItem:
     # Constructor
     # smarthome: instance of smarthome.py
     # item: item to use
-    def __init__(self, smarthome, item):
+    def __init__(self, smarthome, item, se_plugin):
         self.items = Items.get_instance()
         self.shtime = Shtime.get_instance()
         self.__sh = smarthome
         self.__item = item
+        self.__se_plugin = se_plugin
         try:
             self.__id = self.__item.property.path
         except Exception:
@@ -179,7 +185,7 @@ class SeItem:
             first_run = self.shtime.now() + datetime.timedelta(seconds=startup_delay)
             scheduler_name = self.__id + "-Startup Delay"
             value = {"item": self.__item, "caller": "Init"}
-            self.__sh.scheduler.add(scheduler_name, self.__startup_delay_callback, value=value, next=first_run)
+            self.__se_plugin.scheduler_add(scheduler_name, self.__startup_delay_callback, value=value, next=first_run)
         elif startup_delay == -1:
             self.__startup_delay_over = True
             self.__add_triggers()
@@ -471,9 +477,10 @@ class SeItem:
             self.__item._eval = "1"
 
         # Check scheduler settings and update if requred
-        job = self.__sh.scheduler._scheduler.get(self.id)
+
+        job = self.__sh.scheduler._scheduler.get("items.{}".format(self.id))
         if job is None:
-            # We do not have an scheduler job so there is nothing to check and update
+            # We do not have a scheduler job so there is nothing to check and update
             return
 
         changed = False
@@ -481,28 +488,33 @@ class SeItem:
         # inject value into cycle if required
         if "cycle" in job and job["cycle"] is not None:
             cycle = list(job["cycle"].keys())[0]
+            old_cycle = cycle
             value = job["cycle"][cycle]
             if value is None:
                 value = "1"
                 changed = True
             new_cycle = {cycle: value}
         else:
+            old_cycle = None
             new_cycle = None
 
         # inject value into cron if required
         if "cron" in job and job["cron"] is not None:
             new_cron = {}
+            old_cron = job["cron"]
             for entry, value in job['cron'].items():
                 if value is None:
                     value = 1
                     changed = True
                 new_cron[entry] = value
         else:
+            old_cron = None
             new_cron = None
-
+        self.__logger.info("Old cycle '{}' updated to '{}'. Old cron '{}' updated to '{}'",
+                           old_cycle, new_cycle, old_cron, new_cron)
         # change scheduler settings if cycle or cron have been changed
         if changed:
-            self.__sh.scheduler.change(self.id, cycle=new_cycle, cron=new_cron)
+            self.__sh.scheduler.change("items.{}".format(self.id), cycle=new_cycle, cron=new_cron)
 
     # get triggers in readable format
     def __verbose_triggers(self):
@@ -525,7 +537,8 @@ class SeItem:
         crons = ""
 
         # noinspection PyProtectedMember
-        job = self.__sh.scheduler._scheduler.get(self.__item.id)
+        job = self.__sh.scheduler._scheduler.get("items.{}".format(self.id))
+
         if job is not None:
             if "cycle" in job and job["cycle"] is not None:
                 cycle = list(job["cycle"].keys())[0]

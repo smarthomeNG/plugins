@@ -7,9 +7,6 @@ stateengine
 ===========
 
 
-Dokumentation
-=============
-
 .. toctree::
   :titlesonly:
 

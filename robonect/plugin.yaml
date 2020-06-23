@@ -1,0 +1,657 @@
+# Metadata for the plugin
+plugin:
+    # Global plugin attributes
+    type: interface                   # plugin type (gateway, interface, protocol, system, web)
+    description:
+        de: 'Plugin zum Auslesen von Daten bzw. zum Ansteuern eines Mähroboters mit Robonect HX Modul (https://robonect.de/).'
+        en: 'Plugin to read data / to control a robotic lawnmower with Robonect HX module (https://robonect.de/).'
+    maintainer: psilo
+#    tester:                         # Who tests this plugin?
+    state: develop                  # change to ready when done with development
+    keywords: robonect, lawnmower
+#    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1515205-support-thread-f%C3%BCr-das-robonect-plugin-erweiterung-f%C3%BCr-bestimmte-m%C3%A4hroboter
+
+    version: 1.0.0                  # Plugin version (must match the version specified in __init__.py)
+    sh_minversion: 1.6              # minimum shNG version to use this plugin
+#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+#    py_minversion: 3.6             # minimum Python version to use this plugin
+#    py_maxversion:                 # maximum Python version to use this plugin (leave empty if latest)
+    multi_instance: False           # plugin supports multi instance
+    restartable: unknown
+    classname: Robonect             # class containing the plugin
+
+parameters:
+    # Definition of parameters to be configured in etc/plugin.yaml (enter 'parameters: NONE', if section should be empty)
+    ip:
+        type: ip
+        mandatory: False
+        description:
+            de: 'IP des Mähroboters (only needed when API is used).'
+            en: 'IP of the robotic lawnmower (only needed whan API is used).'
+    mode:
+        type: str
+        default: 'api'
+        description:
+            de: 'Art der Anbindung: nur via API (nur Pollen von Daten) oder API + MQTT (für live updates - benötigt das konfigurierte MQTT Modul von SmartHomeNG!).'
+            en: 'Type of connection: only via API (only polling of data) or API + MQTT (for live updates - requires the configured MQTT module of SmartHomeNG!).'
+        valid_list:
+            - 'api'
+            - 'mqtt'
+    topic_prefix:
+        type: str
+        default: 'Robonect'
+        description:
+            de: 'Prefix für die Topics, wie es in der GUI von Robonect unter MQTT-Client als "Topic" eingestellt wurde. Default: Robonect'
+            en: 'Prefix for all topics, as being set in the GUI of Robonect under MQTT-Client as "Topic". Default: Robonect'
+    cycle:
+        type: int
+        default: 60
+        mandatory: False
+        description:
+            de: '(optional) Zeit zwischen zwei Updateläufen. Default ist 60 Sekunden.'
+            en: '(optional) Time period between two update cycles. Default is 60 seconds.'
+    user:
+        type: str
+        default: ''
+        description:
+            de: 'User der Robonect HX Weboberfläche.'
+            en: 'User of the Robonect HX web gui.'
+    password:
+        type: str
+        default: ''
+        hide: True
+        description:
+            de: 'Passwort des Users der Robonect HX Weboberfläche.'
+            en: 'Password of the user of the Robonect HX web gui.'
+
+item_attributes:
+    # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)
+    robonect_data_type:
+        type: str
+        mandatory: True
+        description:
+            de: 'Robonect Datentyp. Für mögliche Werte in die "struct" schauen.'
+            en: 'Robonect data type. See struct for possible values.'
+    robonect_battery_index:
+        type: num
+        mandatory: False
+        description:
+            de: 'Index der Batterie, falls nur eine verbaut ist: 0.'
+            en: 'Index of the battery. If only one is present: 0.'
+
+item_structs:
+    main:
+        name: 'Main Data From Robonect HX Module'
+
+        robonect_name:
+            name: 'Lawnmower Nickname'
+            robonect_data_type: device/name
+            type: str
+
+        robonect_id:
+            name: 'Robonect ID'
+            robonect_data_type: robonect_id
+            type: str
+
+        robonect_version:
+            name: 'Firmware Version of the Robonect Module'
+            robonect_data_type: robonect_version
+            type: str
+
+        robonect_version_comment:
+            name: 'Firmware Version Comment (e.g. Sub Version) of the Robonect Module'
+            robonect_data_type: robonect_version_comment
+            type: str
+
+        robonect_version_compiled:
+            name: 'Firmware Compilation Date of the Robonect Module'
+            robonect_data_type: robonect_version_compiled
+            type: str
+
+        robonect_serial:
+            name: 'Serial Number of the Robonect Module'
+            robonect_data_type: device/serial
+            type: str
+
+        mower:
+            name: 'Information About the Hardware and Software of the Mower'
+
+            hardware:
+                serial:
+                    name: 'Serial of the Robotic Lawnmower'
+                    robonect_data_type: hardware_serial
+                    type: str
+
+                production_date:
+                    name: 'Production Date of the Robotic Lawnmower'
+                    robonect_data_type: production_date
+                    type: str
+            msw:
+                title:
+                    name: 'Model Name of the Automower'
+                    robonect_data_type: msw_title
+                    type: str
+                version:
+                    name: 'Firmware Version of the Automower'
+                    robonect_data_type: msw_version
+                    type: str
+                compiled:
+                    name: 'Firmware Compilation Date of the Automower'
+                    robonect_data_type: msw_compiled
+                    type: str
+
+            wlan:
+                at-version:
+                    robonect_data_type: wlan_at-version
+                    type: str
+                sdk-version:
+                    robonect_data_type: wlan_sdk-version
+                    type: str
+        remote:
+            remotestart_1:
+                name:
+                    type: str
+                    robonect_data_type: remotestart_name
+                    robonect_remote_index: 1
+                visible:
+                    type: bool
+                    robonect_data_type: remotestart_visible
+                    robonect_remote_index: 1
+                path:
+                    type: num
+                    robonect_data_type: remotestart_path
+                    robonect_remote_index: 1
+                proportion:
+                    type: num
+                    robonect_data_type: remotestart_proportion
+                    robonect_remote_index: 1
+                distance:
+                    type: num
+                    robonect_data_type: remotestart_distance
+                    robonect_remote_index: 1
+
+            remotestart_2:
+                name:
+                    type: str
+                    robonect_data_type: remotestart_name
+                    robonect_remote_index: 2
+                visible:
+                    type: bool
+                    robonect_data_type: remotestart_visible
+                    robonect_remote_index: 2
+                path:
+                    type: num
+                    robonect_data_type: remotestart_path
+                    robonect_remote_index: 2
+                proportion:
+                    type: num
+                    robonect_data_type: remotestart_proportion
+                    robonect_remote_index: 2
+                distance:
+                    type: num
+                    robonect_data_type: remotestart_distance
+                    robonect_remote_index: 2
+
+        status:
+            name: 'Status Code'
+            robonect_data_type: mower/status
+            type: num
+
+            text:
+                name: 'Status of the Mower as Text'
+                type: str
+                robonect_data_type: mower/status/text
+
+            distance:
+                robonect_data_type: mower/distance
+                type: num
+
+            stopped:
+                robonect_data_type: mower/stopped
+                type: bool
+
+            duration:
+                name: 'Duration of Mode in Minutes'
+                robonect_data_type: mower/status/duration
+                type: num
+
+            mode:
+                name: 'Mode of the Mower'
+                robonect_data_type: mower/mode
+                type: num
+
+            mode_text:
+                name: 'Mode of the Mower as Text'
+                type: str
+                robonect_data_type: mower/mode/text
+
+            battery:
+                name: 'Battery Level in %'
+                robonect_data_type: mower/battery/charge
+                type: num
+
+            hours:
+                robonect_data_type: mower/statistic/hours
+                type: num
+
+            blades:
+                quality:
+                    name: 'Quality of Blades in %'
+                    robonect_data_type: blades_quality
+                    type: num
+
+                hours:
+                    name: 'Runtime of Blades in hours'
+                    robonect_data_type: blades_hours
+                    type: num
+
+                days:
+                    name: 'Age of Blades in days'
+                    robonect_data_type: blades_days
+                    type: num
+
+            error:
+                error_code:
+                    robonect_data_type: mower/error/code
+                    type: num
+
+                error_message:
+                    robonect_data_type: mower/error/message
+                    type: str
+
+                date:
+                    robonect_data_type: error_date
+                    type: str
+
+                time:
+                    robonect_data_type: error_time
+                    type: str
+
+                unix:
+                    robonect_data_type: error_unix
+                    type: str
+        wlan:
+            signal:
+                name: 'Wifi Signal Strength'
+                robonect_data_type: wlan/rssi
+                type: num
+        health:
+            temperature:
+                name: 'Internal Temperature'
+                robonect_data_type: health/climate/temperature
+                type: num
+
+            humidity:
+                name: 'Internal Humidity'
+                robonect_data_type: health/climate/humidity
+                type: num
+        clock:
+            date:
+                robonect_data_type: date
+                type: str
+
+            time:
+                robonect_data_type: time
+                type: str
+
+            unix:
+                robonect_data_type: unix
+                type: num
+    batteries:
+        battery_0_id:
+            robonect_data_type: battery_id
+            robonect_battery_index: 0
+            type: num
+        battery_0_charge:
+            robonect_data_type: battery_charge
+            robonect_battery_index: 0
+            type: num
+        battery_0_voltage:
+            robonect_data_type: battery_voltage
+            robonect_battery_index: 0
+            type: num
+            eval: value/1000
+        battery_0_current:
+            robonect_data_type: battery_current
+            robonect_battery_index: 0
+            type: num
+        battery_0_temperature:
+            name: 'Battery Temperature in °C'
+            robonect_data_type: battery_temperature
+            robonect_battery_index: 0
+            type: num
+            eval: value/10
+        battery_0_capacity_full:
+            robonect_data_type: battery_capacity_full
+            robonect_battery_index: 0
+            type: num
+        battery_0_capacity_remaining:
+            robonect_data_type: battery_capacity_remaining
+            robonect_battery_index: 0
+            type: num
+    motor:
+        drive:
+            left:
+                power:
+                    type: num
+                    robonect_data_type: motor_drive_left_power
+                speed:
+                    type: num
+                    robonect_data_type: motor_drive_left_speed
+                current:
+                    type: num
+                    robonect_data_type: motor_drive_left_current
+            right:
+                power:
+                    type: num
+                    robonect_data_type: motor_drive_right_power
+                speed:
+                    type: num
+                    robonect_data_type: motor_drive_right_speed
+                current:
+                    type: num
+                    robonect_data_type: motor_drive_right_current
+        blade:
+            speed:
+                type: num
+                robonect_data_type: motor_blade_speed
+            current:
+                type: num
+                robonect_data_type: motor_blade_current
+            average:
+                type: num
+                robonect_data_type: motor_blade_average
+    weather:
+        location:
+            zip:
+                robonect_data_type: weather_location_zip
+                type: str
+            country:
+                robonect_data_type: weather_location_country
+                type: str
+        weather_data:
+            rain:
+                robonect_data_type: weather_rain
+                type: num
+            temperature:
+                robonect_data_type: weather_temperature
+                type: num
+            humidity:
+                robonect_data_type: weather_humidity
+                type: num
+            sunrise:
+                robonect_data_type: weather_sunrise
+                type: num
+            sunset:
+                robonect_data_type: weather_sunset
+                type: num
+            day:
+                robonect_data_type: weather_day
+                type: bool
+            icon:
+                robonect_data_type: weather_icon
+                type: str
+        weather_condition:
+            toorainy:
+                robonect_data_type: weather_condition_toorainy
+                type: bool
+            toocold:
+                robonect_data_type: weather_condition_toocold
+                type: bool
+            toowarm:
+                robonect_data_type: weather_condition_toowarm
+                type: bool
+            toodry:
+                robonect_data_type: weather_condition_toodry
+                type: bool
+            toowet:
+                robonect_data_type: weather_condition_toowet
+                type: bool
+            day:
+                robonect_data_type: weather_condition_day
+                type: bool
+            night:
+                robonect_data_type: weather_condition_night
+                type: bool
+        weather_timestamp:
+            date:
+                robonect_data_type: weather_date
+                type: str
+            time:
+                robonect_data_type: weather_time
+                type: str
+            unix:
+                robonect_data_type: weather_unix
+                type: num
+
+plugin_functions:
+    # Definition of plugin functions defined by this plugin (enter 'plugin_functions: NONE', if section should be empty)
+
+    start_mower_via_api:
+        type: foo
+        description:
+            de: "Startet den derzeit gewählten Modus des Automowers über die Web-API."
+            en: "Starts the currently set mode of the automower via the Web-API."
+
+    stop_mower_via_api:
+        type: foo
+        description:
+            de: "Stoppt den derzeit gewählten Modus des Automowers über die Web-API."
+            en: "Stops the currently set mode of the automower via the Web-API."
+
+    get_mode:
+        type: int
+        description:
+            de: "Gibt den aktuellen Betriebsmodus des Automowers als Integer zurück."
+            en: "Returns the current mode of the automower as Integer."
+
+    get_mode_as_text:
+        type: str
+        description:
+            de: "Gibt den aktuellen Betriebsmodus des Automowers als String zurück."
+            en: "Returns the current mode of the mower as string."
+        parameters:
+            mode:
+                type: int
+                description:
+                    de: "Betriebsmodus als Integer."
+                    en: "Mode as integer."
+                valid_list:
+                    - 1
+                    - 2
+                    - 3
+                    - 4
+
+    get_status:
+        type: int
+        description:
+            de: "Gibt den aktuellen Status des Automowers als Integer zurück."
+            en: "Returns the current status of the automower as Integer."
+
+    get_status_as_text:
+        type: str
+        description:
+            de: "Gibt den Status des Rasenmähers als String zurück."
+            en: "Returns the status of the automower as string."
+        parameters:
+            status:
+                type: int
+                description:
+                    de: "Status als Integer."
+                    en: "Status as integer."
+
+    set_timer_via_api:
+        type: foo
+        description:
+            de: "Setzt die Informationen für einen Timer."
+            en: "Sets data for a timer."
+        parameters:
+            index:
+                type: int
+                description:
+                    de: "Index des Timers (beginnend bei 1)."
+                    en: "Index of the timer as integer (starting with 1)."
+            enabled:
+                type: bool
+                description:
+                    de: "True: der Timer wird aktiviert, False: deaktiviert."
+                    en: "True: timer gets enabled, False: disabled."
+            start:
+                type: str
+                description:
+                    de: "Startzeit für den Timer, als String im Format 'HH:MM'."
+                    en: "Time, as string in the format 'HH:MM', when the timer should start."
+            end:
+                type: str
+                description:
+                    de: "Endzeit für den Timer, als String im Format 'HH:MM'."
+                    en: "Time, as string in the format 'HH:MM', when the timer should start."
+            mo:
+                type: bool
+                description:
+                    de: "True: Montag aktiviert, False: deaktiviert."
+                    en: "True: Monday gets enabled, False: disabled."
+            tu:
+                type: bool
+                description:
+                    de: "True: Dienstag aktiviert, False: deaktiviert."
+                    en: "True: Tuesday gets enabled, False: disabled."
+            we:
+                type: bool
+                description:
+                    de: "True: Mittwoch aktiviert, False: deaktiviert."
+                    en: "True: Wednesday gets enabled, False: disabled."
+            th:
+                type: bool
+                description:
+                    de: "True: Donnerstag aktiviert, False: deaktiviert."
+                    en: "True: Thursday gets enabled, False: disabled."
+            fr:
+                type: bool
+                description:
+                    de: "True: Freitag aktiviert, False: deaktiviert."
+                    en: "True: Friday gets enabled, False: disabled."
+            sa:
+                type: bool
+                description:
+                    de: "True: Samstag aktiviert, False: deaktiviert."
+                    en: "True: Saturday gets enabled, False: disabled."
+            su:
+                type: bool
+                description:
+                    de: "True: Sonntag aktiviert, False: deaktiviert."
+                    en: "True: Sunday gets enabled, False: disabled."
+
+    set_remote_via_api:
+        type: foo
+        description:
+            de: "Setzt Informationen für den jeweiligen Fernstart."
+            en: "Sets data for remote start."
+        parameters:
+            index:
+                type: int
+                description:
+                    de: "Fernstart-Index (normal 1 oder 2)"
+                    en: "Remote start index (normally 1 or 2)"
+            name:
+                type: str
+                description:
+                    de: "Name des Fernstart-Ortes."
+                    en: "Name of the remote start location."
+            distance:
+                type: int
+                description:
+                    de: "Fernstartabstand."
+                    en: "Distance of remote start location."
+            visible:
+                type: bool
+                description:
+                    de: "Fernstart-Punkt sichtbar?"
+                    en: "Remote start location visible?"
+            proportion:
+                type: int
+                description:
+                    de: "Häufigkeit in %, die der Fernstartpunkt selektiert werden soll."
+                    en: "Proportion in %, how often the remote start location shall be selected."
+
+    set_name_via_api:
+        type: foo
+        description:
+            de: "Setzt den Namen des Automowers."
+            en: "Sets the name of the automower."
+        parameters:
+            name:
+                type: str
+                description:
+                    de: "Name, der gesetzt werden soll."
+                    en: "Name to be set."
+                mandatory: True
+
+    set_mode_via_api:
+        type: foo
+        description:
+            de: "Setzt den Betriebsmodus."
+            en: "Sets the mode."
+        parameters:
+            mode:
+                type: str
+                description:
+                    de: "Betriebsmodus, der gesetzt werden soll ('home','eod','man','auto','job')."
+                    en: "Mode to set ('home','eod','man','auto','job')."
+                mandatory: True
+                valid_list:
+                    - 'home'
+                    - 'eod'
+                    - 'man'
+                    - 'auto'
+                    - 'job'
+            remotestart:
+                type: int
+                description:
+                    de: 'Fernstartpunkt, entweder 0 (Standard), 1 (Fernstart 1), oder 2 (Fernstart 2) - nur mit mode=job nutzbar.'
+                    en: 'Remote start location, either 0 (standard), 1 (remote start  1), or 2 (remote start 2), only used when mode=job'
+                valid_list:
+                    - 0
+                    - 1
+                    - 2
+            after:
+                type: str
+                description:
+                    de: "Modus, der nach dem Mähauftrag aktiviert werden soll (Standard: letzter Modus). Mögliche Werte 1,2,3,4 (vor V1.0 Beta 8) oder 'home','eod','man','auto','job' - nur mit mode=job nutzbar."
+                    en: "Mode to activate after the automower has finished mowing (if not set, return to recent mode). Possible values 1,2,3,4 (needed before V1.0 Beta 8) or 'home','eod','man','auto','job'"
+                valid_list:
+                    - '1'
+                    - '2'
+                    - '3'
+                    - '4'
+                    - 'home'
+                    - 'eod'
+                    - 'man'
+                    - 'auto'
+                    - 'job'
+            start:
+                type: str
+                description:
+                    de: "Startzeit für den Mähauftrag, als String im Format 'HH:MM' (Wenn nicht gesetzt: 0) - nur mit mode=job nutzbar."
+                    en: "Time, as string in the format 'HH:MM', when the mower should start (if not set: 0)"
+            end:
+                type: str
+                description:
+                    de: "Endzeit für den Mähauftrag, als String im Format 'HH:MM' (Wenn nicht gesetzt: +1h) - nur mit mode=job nutzbar."
+                    en: "Time, as string in the format 'HH:MM', when the mower should start (if not set: +1h)"
+            duration:
+                type: int
+                description:
+                    de: "Zeitdauer des Mähauftrags in Minuten (nur kombiniert mit dem start oder end Parameter)"
+                    en: "Duration, as minutes (integer), of the mowing order (in combination with either the start or end parameter)"
+
+    is_mower_offline:
+        type: bool
+        description:
+            de: "Gibt zurück, ob der Automower gerade via API erreicht werden kann."
+            en: "Returns if the automower is reachable via API."
+
+logic_parameters:
+    # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)
+

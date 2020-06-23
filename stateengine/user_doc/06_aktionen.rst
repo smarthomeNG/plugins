@@ -6,8 +6,10 @@ Aktionen
 ========
 
 Es gibt zwei Möglichkeiten, Aktionen zu definieren. Die :ref:`Aktionen - einzeln`
-Variante wird am Ende der Dokumentation der Vollständigkeit halber beschrieben,
-kann aber ignoriert werden.
+Variante wird am Ende der Dokumentation der Vollständigkeit halber beschrieben.
+Für einfache Aktionen ohne Angabe zusätzlicher Attribute wie delay, order, repeat, etc.
+kann diese andere Möglichkeit der Aktionsangabe durchaus Sinn machen. Sie wurde
+allerdings in der weiteren Pluginentwicklung nicht mehr getestet.
 
 Bei der hier beschriebenen kombinierten Variante zur Definition von Aktionen werden
 alle Parameter einer Aktion in einem Attribut definiert. Der Aktionsname ``se_action_<Bedingungsname/Aktionsname>``
@@ -238,6 +240,8 @@ definiert. Aktuell gibt es zwei besondere Vorgänge:
 - suspend:<suspend_item>,<manuell_item> (z.B. suspend:..suspend,..manuell)
 - retrigger:<trigger_item> (z.B. retrigger:..retrigger)
 
+In den Beispielen wurden also die relativen Items suspend, manuell und retrigger referenziert.
+
 .. rubric:: Zusätzliche Parameter
    :name: parameter
 
@@ -300,6 +304,35 @@ Der gesamte Pfad könnte wie folgt evaluiert werden:
 .. code-block:: yaml
 
       "eval:se_eval.get_relative_itemid('{}.<bedingungsset>'.format(se_eval.get_relative_itemvalue('..state_id')))"
+
+Eine sinnvolle Anwendung hierfür wäre, anstelle von verschiedenen Zuständen mit
+leicht anderen Bedingungen, alles in einen Zustand zu packen und anhand des Conditionsets
+unterschiedliche Aktionen ausführen zu lassen. Ein ähnliches Setup könnte im gegebenen
+Beispiel zwar auch mittels ``se_use`` umgesetzt werden, allerdings gibt es auch
+andere Situationen, wo das komplizierter oder weniger zielführend wäre. Im Beispiel
+wird abends die Höhe des Raffstores auf 100 gesetzt, falls es regnet. Falls es nicht
+regnet hingegen auf den Wert, der in den Settings hinterlegt ist.
+
+.. code-block:: yaml
+
+    abend:
+        on_enter_or_stay:
+            se_action_hoehe:
+              - 'function: set'
+              - 'to: item:..settings.abend.hoehe'
+              - 'order: 1'
+              - 'conditionset: (.*)enter(?!_regen)(.*)'
+            se_action_hoehe_regen:
+              - 'function: set'
+              - 'to: 100'
+              - 'order: 1'
+              - 'conditionset: (.*)enter_regen'
+
+        enter_normal:
+            diverse Bedingungen
+
+        enter_regen:
+            diverse andere Bedingungen
 
 .. rubric:: Templates für Aktionen
    :name: aktionstemplates

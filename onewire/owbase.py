@@ -73,6 +73,8 @@ class OwBase(object):
 
         self._lock = threading.Lock()
         self._flag = OWFLAG_OWNET_REQUEST + OWFLAG_PERSISTENCE + OWFLAG_INCLUDE_SPECIAL_DIRS
+        self._unknown_sensor_already_warned = []
+        self._unsupported_sensor_already_warned = []
 
 
     def connect(self):
@@ -253,14 +255,16 @@ class OwBase(object):
             return {'T': 'temperature', 'T9': 'temperature9', 'T10': 'temperature10', 'T11': 'temperature11', 'T12': 'temperature12'}
         elif typ == 'DS18S20':          # Temperature
             return {'T': 'temperature'}
-        elif typ == 'DS2438':           # Multisensor
+        elif typ == 'DS2438':           # Multisensor (see at https://www.owfs.org/index_php_page_ds2438.html)
+            # sensor subtype needs to be further identified by page3 of its memory
             try:
                 page3 = self.read(path + 'pages/page.3')  # .encode('hex').upper()
             except Exception as e:
                 if self.logger.isEnabledFor(logging.WARNING):
                     self.logger.warning("1-Wire: sensor {0} problem reading page.3: {1}".format(addr, e))
                 return
-            try:
+            # check if a light sensor could be available, if so then path 'vis' is present
+            try: 
                 vis = float(self.read(path + 'vis').decode())
             except Exception:
                 vis = 0
@@ -268,6 +272,7 @@ class OwBase(object):
                 keys = {'T': 'temperature', 'H': 'HIH4000/humidity', 'L': 'vis'}
             else:
                 keys = {'T': 'temperature', 'H': 'HIH4000/humidity'}
+            # check if a voltage from 1-wire bus can be measured
             try:
                 vdd = float(self.read(path + 'VDD').decode())
             except Exception:
@@ -276,6 +281,7 @@ class OwBase(object):
                 if self.logger.isEnabledFor(logging.DEBUG):
                     self.logger.debug("1-Wire: sensor {0} voltage: {1}".format(addr, vdd))
                 keys['VDD'] = 'VDD'
+            # certain multisensors have also other infos to pass.
             if page3[0] == 0x19:
                 return keys
             elif page3[0] == 0xF2:      # BMS
@@ -284,6 +290,14 @@ class OwBase(object):
                 return keys
             elif page3[0] == 0xF4:      # AMSv2 V
                 return {'V': 'VAD'}
+            elif page3[0] == 0xF7:
+                # ToDo: check if this data here is valid
+                return keys
+                # 
+                #if self.logger.isEnabledFor(logging.WARNING) and not addr in self._unsupported_sensor_already_warned:
+                #    self.logger.warning("1-Wire: unsupported multisensor {0} {1} page3: {2}".format(addr, typ, page3))
+                #    self._unsupported_sensor_already_warned.append(addr)
+                #    return
             elif page3 == b'HUMIDIT3':  # DataNab
                 keys['H'] = 'humidity'
                 return keys
@@ -302,7 +316,19 @@ class OwBase(object):
             return {'CA': 'counter.A', 'CB': 'counter.B'}
         elif typ == 'DS2408':           # I/O
             return {'I0': 'sensed.0', 'I1': 'sensed.1', 'I2': 'sensed.2', 'I3': 'sensed.3', 'I4': 'sensed.4', 'I5': 'sensed.5', 'I6': 'sensed.6', 'I7': 'sensed.7', 'O0': 'PIO.0', 'O1': 'PIO.1', 'O2': 'PIO.2', 'O3': 'PIO.3', 'O4': 'PIO.4', 'O5': 'PIO.5', 'O6': 'PIO.6', 'O7': 'PIO.7'}
+        elif type == 'DS2431':          # 1K EEprom
+            if self.logger.isEnabledFor(logging.WARNING) and addr not in self._unsupported_sensor_already_warned:
+                self._unsupported_sensor_already_warned.append(addr)
+                self.logger.warning("1-Wire: unsupported device {0} {1}".format(addr, typ))
+            return
+        elif type == 'DS2433':          # 4K EEprom
+            if self.logger.isEnabledFor(logging.WARNING) and addr not in self._unsupported_sensor_already_warned:
+                self._unsupported_sensor_already_warned.append(addr)
+                self.logger.warning("1-Wire: unsupported device {0} {1}".format(addr, typ))
+            return
         else:
-            if self.logger.isEnabledFor(logging.WARNING):
+            # unknown sensor type found, warn but only once
+            if self.logger.isEnabledFor(logging.WARNING) and addr not in self._unknown_sensor_already_warned:
+                self._unknown_sensor_already_warned.append(addr)
                 self.logger.warning("1-Wire: unknown sensor {0} {1}".format(addr, typ))
             return

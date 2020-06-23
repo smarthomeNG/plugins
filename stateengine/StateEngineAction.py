@@ -53,6 +53,7 @@ class SeActionBase(StateEngineTools.SeItemChild):
     # name: Name of action
     def __init__(self, abitem, name: str):
         super().__init__(abitem)
+        self._se_plugin = abitem.se_plugin
         self._parent = abitem
         self._caller = StateEngineDefaults.plugin_identification
         self.shtime = Shtime.get_instance()
@@ -117,7 +118,7 @@ class SeActionBase(StateEngineTools.SeItemChild):
         for cond in condition_to_meet:
             try:
                 cond = re.compile(cond)
-                matching = cond.match(current_condition)
+                matching = cond.fullmatch(current_condition)
                 if matching:
                     self._log_debug("Given conditionset matches current one: {}", matching)
                     condition_met = True
@@ -167,10 +168,10 @@ class SeActionBase(StateEngineTools.SeItemChild):
             _validitem = False
             self._log_error("Action '{0}': Ignored because {1}", self._name, ex)
         if _validitem:
-            plan_next = self._sh.scheduler.return_next(self._scheduler_name)
+            plan_next = self._se_plugin.scheduler_return_next(self._scheduler_name)
             if plan_next is not None and plan_next > self.shtime.now():
                 self._log_info("Action '{0}: Removing previous delay timer '{1}'.", self._name, self._scheduler_name)
-                self._sh.scheduler.remove(self._scheduler_name)
+                self._se_plugin.scheduler_remove(self._scheduler_name)
 
             delay = 0 if self.__delay.is_empty() else self.__delay.get()
             actionname = "Action '{0}'".format(self._name) if delay == 0 else "Delayed Action ({0} seconds) '{1}'".format(
@@ -255,7 +256,7 @@ class SeActionBase(StateEngineTools.SeItemChild):
                                    self._scheduler_name, postponed, repeat_text)
             next_run = self.shtime.now() + datetime.timedelta(seconds=delay)
             _delay_info = delay
-            self._sh.scheduler.add(self._scheduler_name, self._waitforexecute,
+            self._se_plugin.scheduler_add(self._scheduler_name, self._waitforexecute,
                                    value={'actionname': actionname, 'namevar': self._name,
                                           'repeat_text': repeat_text, 'delay': 0}, next=next_run)
             self._abitem.set_action_state(namevar, 'remove')

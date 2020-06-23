@@ -34,7 +34,7 @@ from lib.model.smartplugin import *
 class DarkSky(SmartPlugin):
 
 
-    PLUGIN_VERSION = "1.6.0"
+    PLUGIN_VERSION = "1.7.0"
 
     _base_forecast_url = 'https://api.darksky.net/forecast/%s/%s,%s'
 
@@ -208,7 +208,9 @@ class DarkSky(SmartPlugin):
 
         # add mean values to each day and replace datetime object by day0, day1, day2, etc.
         i = 0
-        for entry in json_obj['daily']:
+        # for entry in json_obj['daily']:
+        json_keys = list(json_obj['daily'].keys())
+        for entry in json_keys:
             if isinstance(entry, datetime.date):
                 try:
                     precip_probability = json_obj['daily'][entry]['precipProbability_mean']

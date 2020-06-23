@@ -66,9 +66,9 @@ können in der logging.yaml Datei wie folgt deklariert werden:
           level: DEBUG
 
 Das obige Beispiel würde in die Datei var/log/stateengine_licht.log sämtliche
-Debug Information schreiben, die für das Item "licht" und dessen Unteritem
+Debug Information schreiben, die für das Item "licht" und dessen Unteritems
 relevant sind. Aufgrund des aktiven Filters "notfound" werden sämtliche
-Einträge zu nicht gefundenen Items übersprungen.
+Einträge zu nicht gefundenen Items ignoriert.
 
 Zusätzlich werden alle Fehler des Plugins in die Datei
 smarthome-details.log geschrieben. Da der Filter hier nicht aktiv ist,

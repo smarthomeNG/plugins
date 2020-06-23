@@ -12,7 +12,7 @@ plugin:
     documentation: http://smarthomeng.de/user/plugins/avm/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/934835-avm-plugin
 
-    version: 1.5.8                 # Plugin version
+    version: 1.5.9                 # Plugin version
     sh_minversion: 1.5b            # minimum shNG version to use this plugin
 #    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
@@ -144,6 +144,13 @@ item_attributes:
         - 'set_temperature_reduced'
         - 'set_temperature_compfort'
         - 'hkr_device'
+        - 'firmware_version'
+        - 'manufacturer'
+        - 'product_name'
+        - 'device_name'
+        - 'connection_status'
+        - 'device_id'
+        - 'device_function'
 
     avm_incoming_allowed:
         type: str

@@ -13,10 +13,10 @@ plugin:
              \n
              Die Steuerungsmöglichkeiten umfassen (derzeit) unter Anderem:\n
                 \n
-                - Gerät ein-/ausschalten, Standby, Sleep-Timer,\n
-                - Wiedergabequelle auswählen (geräteabhängig, z.B. NetRadio, Radio, NetUSB, Streamingdienste),\n
-                - Wiedergabesteuerung (Play/Pause/Stop/nächster,vorheriger Titel/Vor-,Zurückspulen),\n
-                - Lautstärkesteuerung\n,
+                - Gerät ein-/ausschalten, Standby, Sleep-Timer\n
+                - Wiedergabequelle auswählen (geräteabhängig, z.B. NetRadio, Radio, NetUSB, Streamingdienste)\n
+                - Wiedergabesteuerung (Play/Pause/Stop/nächster,vorheriger Titel/Vor-,Zurückspulen)\n
+                - Lautstärkesteuerung\n
                 - Anwahl von Favoriten und Presets (geräteabhängig)\n
                 - Stellen und De-/Aktivieren des Weckers (geräteabhängig)\n
             \n
@@ -58,8 +58,8 @@ plugin:
              New control functions will be implemented as requested and as far as suitable devices are available for testing. Generally, the plugins architecture allows adding any valid control sequence described in the standard. For not yet implemented control directived, a general pass-thru option is available for sending arbitrary control sequences to the device.\n
              '
     maintainer: Morg42
-#    tester: Morg42
-    state: develop
+    tester: Morg42
+    state: ready
     keywords: iot yxc yamaha media musiccast
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1174064-plugin-yamaha-musiccast-geräte-neuere-generation
@@ -74,7 +74,7 @@ plugin:
 parameters: NONE
     # Definition of parameters to be configured in etc/plugin.yaml (enter 'parameters: NONE', if section should be empty)
 
-item_attributes:
+item_attributes: NONE
     # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)
 
 item_structs:
@@ -120,6 +120,8 @@ item_structs:
         albumarturl:
             type: str
             visu_acl: rw
+        eval: "'<img class=\"ui-corner-all\" width=\"100\" height=\"100\" id=\"albumImage\" src=\"{}\" />'.format(sh..albumart())"
+        eval_trigger: .albumart
 
         update:
             type: bool

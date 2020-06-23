@@ -53,7 +53,6 @@ class Robvac(SmartPlugin):
         self._ip = self.get_parameter_value("ip")
         self._token = self.get_parameter_value("token")
         self._cycle = self.get_parameter_value("read_cycle")
-        self._sh = smarthome
         self.logger = logging.getLogger(__name__)
 
         self.messages = {}
@@ -72,9 +71,9 @@ class Robvac(SmartPlugin):
         else:
             self.logger.debug("Xiaomi_Robvac: Plugin Start!")
             if self._cycle > 10:
-                self._sh.scheduler.add('Xiaomi_Robvac Read cycle', self._read, prio=5, cycle=self._cycle)
+                self.scheduler_add('Xiaomi_Robvac Read cycle', self._read, prio=5, cycle=self._cycle)
             else:
-                self.logger.warning("Xiaomi_Robvac: Read Cycle is to fast! < 10s, not starting!")
+                self.logger.warning("Xiaomi_Robvac: Read Cycle is too fast! < 10s, not starting!")
     # ----------------------------------------------------------------------------------------------
     # Verbinden zum Roboter
     # ----------------------------------------------------------------------------------------------
@@ -275,7 +274,7 @@ class Robvac(SmartPlugin):
     # Befehl senden, wird aufgerufen wenn sich item  mit robvac ändert!
     # ----------------------------------------------------------------------------------------------
     def update_item(self, item, caller=None, source=None, dest=None):
-        if caller != 'Robvac':
+        if caller != 'Robvac' and self.alive:
             #if 'robvac' in item.conf:
             #    message = item.conf['robvac']
             if self.has_iattr(item.conf, 'robvac'):
@@ -335,6 +334,8 @@ class Robvac(SmartPlugin):
                 elif message == "clean_zone":
                 #Clean zones. :param List zones: List of zones to clean: [[x1,y1,x2,y2, iterations],[x1,y1,x2,y2, iterations]]
                     self.vakuum.zoned_clean(item()[0], item()[1],item()[2], item()[3], item()[4])
+                elif message == "segment_clean":
+                    self.vakuum.segment_clean(item())
                 elif message == "go_to":
                     self.vakuum.goto(item()[0], item()[1])
                 elif message == "create_nogo_zones":
@@ -356,6 +357,7 @@ class Robvac(SmartPlugin):
         self.logger.debug("Xiaomi_Robvac: Found items{}".format(self.messages))
 
     def stop(self):
+        self.scheduler_remove('Xiaomi_Robvac Read cycle')
         self.alive = False
 
     def parse_item(self, item):

@@ -1,0 +1,263 @@
+{% extends "base_plugin.html" %}
+{% set update_interval = 3000 %}
+{% set logo_frame = false %}
+{% set status_array = [0,1,2,3,4,5,6,7,8,16,17] %}
+{% set mode_array = [0,1,2,3] %}
+{% set language = p.get_sh().get_defaultlanguage() %}
+
+{% block pluginscripts %}
+<script>
+    function handleUpdatedData(response, dataSet=null) {
+        if (dataSet === null) {
+            var objResponse = JSON.parse(response);
+            {% for i in status_array %}
+                if (objResponse['plugin_status'] == {{ i }}) {
+                    {% for j in mode_array %}
+                        if (objResponse['plugin_mode'] == {{ j }}) {
+                            shngInsertText('plugin_status', objResponse['plugin_status'] + ' ({{ _(p.get_status_as_text(i)) }}) / ' + objResponse['plugin_mode'] + ' ({{ _(p.get_mode_as_text(j)) }})');
+                        }
+                    {% endfor %}
+                }
+            {% endfor %}
+            {% for key, item in p.get_items().items() %}
+                shngInsertText('{{ item.id() }}_value', objResponse['{{ item.id() }}_value'])
+                shngInsertText ('{{ item.id() }}_last_update', objResponse['{{ item.id() }}_last_update'])
+                shngInsertText ('{{ item.id() }}_last_change', objResponse['{{ item.id() }}_last_change'])
+            {% endfor %}
+
+            {% for key, item in p.get_status_items().items() %}
+                {% if key == 'mower/status' %}
+                    {% for i in status_array %}
+                        if (objResponse['{{ item.id() }}_value'] == {{ i }}) {
+                            shngInsertText('{{ item.id() }}_value', objResponse['{{ item.id() }}_value'] + ' ({{ _(p.get_status_as_text(i)) }})');
+                        }
+                    {% endfor %}
+                {% elif key == 'mower/mode' %}
+                    {%  for i in mode_array %}
+                        if (objResponse['{{ item.id() }}_value'] == {{ i }}) {
+                            shngInsertText('{{ item.id() }}_value', objResponse['{{ item.id() }}_value'] + ' ({{ _(p.get_mode_as_text(i)) }})');
+                        }
+                    {% endfor %}
+                {% else %}
+                    shngInsertText('{{ item.id() }}_value', objResponse['{{ item.id() }}_value'])
+                {% endif %}
+                shngInsertText ('{{ item.id() }}_last_update', objResponse['{{ item.id() }}_last_update'])
+                shngInsertText ('{{ item.id() }}_last_change', objResponse['{{ item.id() }}_last_change'])
+            {% endfor %}
+
+            {% for key, item in p.get_weather_items().items() %}
+                shngInsertText('{{ item.id() }}_value', objResponse['{{ item.id() }}_value'])
+                shngInsertText('{{ item.id() }}_last_update', objResponse['{{ item.id() }}_last_update'])
+                shngInsertText('{{ item.id() }}_last_change', objResponse['{{ item.id() }}_last_change'])
+            {% endfor %}
+
+            {% for key, item in p.get_motor_items().items() %}
+                shngInsertText('{{ item.id() }}_value', objResponse['{{ item.id() }}_value'])
+                shngInsertText('{{ item.id() }}_last_update', objResponse['{{ item.id() }}_last_update'])
+                shngInsertText('{{ item.id() }}_last_change', objResponse['{{ item.id() }}_last_change'])
+            {% endfor %}
+
+            {% for key, items in p.get_battery_items().items() %}
+                {%  for item in items %}
+                    shngInsertText('{{ item.id() }}_value', objResponse['{{ item.id() }}_value'])
+                    shngInsertText('{{ item.id() }}_last_update', objResponse['{{ item.id() }}_last_update'])
+                    shngInsertText('{{ item.id() }}_last_change', objResponse['{{ item.id() }}_last_change'])
+                {% endfor %}
+            {% endfor %}
+
+            {% for key, items in p.get_remote_items().items() %}
+                {%  for item in items %}
+                    shngInsertText('{{ item.id() }}_value', objResponse['{{ item.id() }}_value']{% if key in ['remotestart_path'] and item() == 2%}+' ({{ _('Leitdraht') }})'{% endif %})
+                    shngInsertText('{{ item.id() }}_last_update', objResponse['{{ item.id() }}_last_update'])
+                    shngInsertText('{{ item.id() }}_last_change', objResponse['{{ item.id() }}_last_change'])
+                {% endfor %}
+            {% endfor %}
+        }
+    }
+</script>
+{% endblock pluginscripts %}
+
+{% block headtable %}
+<table class="table table-striped table-hover">
+	<tbody>
+		<tr>
+			<td class="py-1"><strong>IP</strong></td>
+			<td class="py-1">{{ p.get_ip() }}</td>
+            <td class="py-1"><strong>{{ _('Benutzer') }} / {{ _('Passwort') }}</strong></td>
+			<td class="py-1">{{ p.get_user() }} / {{ p.get_parameter_value_for_display('password') }}</td>
+        </tr>
+        <tr>
+            <td class="py-1"><strong>{{ _('Mower per Netzwerk erreichbar?') }}</strong></td>
+			<td class="py-1">{{ not p.is_mower_offline() }}</td>
+            <td class="py-1"><strong>{{ _('Status') }} / {{  _('Modus') }}</strong></td>
+			<td class="py-1" id="plugin_status">{{ p.get_status() }} ({{ _(p.get_status_as_text(p.get_status())) }}) / {{ p.get_mode() }} ({{ _(p.get_mode_as_text(p.get_mode())) }})</td>
+		</tr>
+        <tr>
+            <td class="py-1"><strong>{{ _('Plugin-Modus') }}</strong></td>
+			<td class="py-1">
+                {% if p.get_plugin_mode() == 'api' %}Web API
+                {% elif p.get_plugin_mode() == 'mqtt' %}Web API + MQTT
+                {% endif %}
+            </td>
+            <td class="py-1"><strong>{{ _('Cycle') }}</strong></td>
+			<td class="py-1">{{ p.get_cycle() }}</td>
+		</tr>
+	</tbody>
+</table>
+{% endblock headtable %}
+
+
+<!--
+	Define the number of tabs for the body of the web interface (1 - 3)
+-->
+{% set tabcount = 3 %}
+<!--
+	Content block for the first tab of the Webinterface
+-->
+{% set tab1title = "<strong>" ~ p.get_shortname() ~ " Items</strong>" %}
+{% block bodytab1 %}
+<div class="container-fluid m-2">
+    <table class="table table-striped table-hover pluginList">
+        <thead>
+            <tr class="shng_heading">
+                <th>{{ _('Pfad') }}</th>
+                <th>{{ _('Typ') }}</th>
+                <th>{{ _('Robonect Datentyp') }}</th>
+                <th>{{ _('Wert') }}</th>
+                <th>{{ _('Letztes Update') }}</th>
+                <th>{{ _('Letzter Change') }}</th>
+            </tr>
+        </thead>
+        <tbody>
+        <tr><td colspan="6"><strong>{{ _('Mower/Robonect-Informationen') }}</strong></td></tr>
+        {% for key, item in p.get_items().items()|sort(attribute='1.property.path') %}
+            <tr>
+                <td class="py-1">{{ item.property.path }}</td>
+                <td class="py-1">{{ item.property.type }}</td>
+                <td class="py-1">{{ key }}</td>
+                <td id="{{ item.id() }}_value" class="py-1">
+                    {{ item() }}
+                </td>
+                <td id="{{ item.id() }}_last_update" class="py-1">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                <td id="{{ item.id() }}_last_change" class="py-1">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+            </tr>
+        {% endfor %}
+        <tr><td colspan="6"><strong>{{ _('Status-Informationen') }}</strong></td></tr>
+        {% for key, item in p.get_status_items().items()|sort(attribute='1.property.path') %}
+            <tr>
+                <td class="py-1">{{ item.property.path }}</td>
+                <td class="py-1">{{ item.property.type }}</td>
+                <td class="py-1">{{ key }}</td>
+                <td id="{{ item.id() }}_value" class="py-1">
+                    {{ item() }}{% if key in ['mower/mode', 'mower/status'] %} ({{ _(p.get_status_items()[key+'/text']()) }}){% endif %}
+                </td>
+                <td id="{{ item.id() }}_last_update" class="py-1">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                <td id="{{ item.id() }}_last_change" class="py-1">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+            </tr>
+        {% endfor %}
+        <tr><td colspan="6"><strong>{{ _('Wetter-Informationen') }}</strong></td></tr>
+        {% for key, item in p.get_weather_items().items()|sort(attribute='1.property.path') %}
+            <tr>
+                <td class="py-1">{{ item.property.path }}</td>
+                <td class="py-1">{{ item.property.type }}</td>
+                <td class="py-1">{{ key }}</td>
+                <td id="{{ item.id() }}_value" class="py-1">{{ item() }}</td>
+                <td id="{{ item.id() }}_last_update" class="py-1">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                <td id="{{ item.id() }}_last_change" class="py-1">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+            </tr>
+        {% endfor %}
+        <tr><td colspan="6"><strong>{{ _('Batterie-(Detail)Informationen') }}</strong></td></tr>
+        {% for key, items in p.get_battery_items().items() %}
+            {% for item in items %}
+            <tr>
+                <td class="py-1">{{ item.property.path }}</td>
+                <td class="py-1">{{ item.property.type }}</td>
+                <td class="py-1">{{ key }}</td>
+                <td id="{{ item.id() }}_value" class="py-1">
+                    {{ item() }}
+                </td>
+                <td id="{{ item.id() }}_last_update" class="py-1">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                <td id="{{ item.id() }}_last_change" class="py-1">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+            </tr>
+            {% endfor %}
+        {% endfor %}
+        <tr><td colspan="6"><strong>{{ _('Motor-Informationen') }}</strong></td></tr>
+        {% for key, item in p.get_motor_items().items() %}
+            <tr>
+                <td class="py-1">{{ item.property.path }}</td>
+                <td class="py-1">{{ item.property.type }}</td>
+                <td class="py-1">{{ key }}</td>
+                <td id="{{ item.id() }}_value" class="py-1">
+                    {{ item() }}
+                </td>
+                <td id="{{ item.id() }}_last_update" class="py-1">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                <td id="{{ item.id() }}_last_change" class="py-1">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+            </tr>
+        {% endfor %}
+        <tr><td colspan="6"><strong>{{ _('Fernstart-Informationen') }}</strong></td></tr>
+        {% for key, items in p.get_remote_items().items() %}
+            {% for item in items %}
+            <tr>
+                <td class="py-1">{{ item.property.path }}</td>
+                <td class="py-1">{{ item.property.type }}</td>
+                <td class="py-1">{{ key }}</td>
+                <td id="{{ item.id() }}_value" class="py-1">
+                    {{ item() }}{% if key in ['remotestart_path'] and item() == 2%} ({{ _('Leitdraht') }}){% endif %}
+                </td>
+                <td id="{{ item.id() }}_last_update" class="py-1">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                <td id="{{ item.id() }}_last_change" class="py-1">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+            </tr>
+            {% endfor %}
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock bodytab1 %}
+
+
+{% set tab2title = "<strong>"+_('Fehlercodes')+"</strong>" %}
+{% block bodytab2 %}
+    <div class="ml-4 mt-4 mb-4">
+    {% for entry in p.get_full_error_list() %}
+        <div>
+        {{  entry['error_code'] }}:&nbsp;
+        {{  entry['error_message'] }}
+        </div>
+    {% endfor %}
+    </div>
+{% endblock bodytab2 %}
+
+{% set tab3title = "<strong>"+_('Plugin-API')+"</strong>" %}
+{% block bodytab3 %}
+    <div class="container ml-1 pl-1 mr-1 pr-1">
+    {%  for function, dict in p.metadata.plugin_functions.items() %}
+        <div class="card mb-2">
+            <div class="card-header p-2">
+                <strong>{{ dict['type'] }} {{ function }}({% if 'parameters' in dict %}{% if dict['parameters'] is not none %}{%  for name, paramdict in dict['parameters'].items() %}{% if loop.index > 1 %}, {% endif %}{{  name }}: {{ paramdict['type'] }}{% endfor %}{% endif %}{% endif %})</strong>
+            </div>
+            <div class="card-body p-2">
+            {{ dict['description'][language] }}<br/>
+            {% if 'parameters' in dict %}
+                {% if dict['parameters'] is not none %}
+                <div class="card mt-2">
+                     <div class="card-header p-2">
+                         <strong>{{ _('Parameter') }}:</strong>
+                     </div>
+                     <div class="card-body p-2">
+                         <ul class="list-group">
+                         {%  for name, paramdict in dict['parameters'].items() %}
+                              <li class="list-group-item p-2">
+                                  <strong>{{  name }}: {{ paramdict['type'] }}</strong><br/>
+                                  {{ paramdict['description'][language] }}
+                              </li>
+                          {% endfor %}
+                          </ul>
+                     </div>
+                </div>
+                {% endif %}
+            {% endif %}
+            </div>
+        </div>
+    {% endfor %}
+    </div>
+{% endblock bodytab3 %}
