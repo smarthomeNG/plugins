@@ -42,16 +42,9 @@ item_attributes:
         default: relay
         valid_list:
             - relay
-            - power
-            - energy
-            - online
-            - temp
-            - temp_f
         description:
             de: "Zu lesendes/schreibendes Attribut des Tasmota Devices. Achtung: Nicht jedes Attribut ist auf allen Device-Typen vorhanden."
             en: "Attribute of Tasmota devcie that shall be read/written. Note: Not every attribute is available on all device types"
-
-
 
     tasmota_relay:
         type: str
@@ -64,20 +57,6 @@ item_attributes:
         description:
             de: "Nummer des zu schaltenden Relais im Tasmota Device"
             en: "Number of the relay in Tasmota device to use for switching command"
-
-
-    tasmota_type:
-        type: str
-        valid_list:
-            - shellyplug
-            - shellyplug-s
-            - shelly1pm
-            - shellyswitch
-            - shellyswitch25
-            - shelly4pro
-        description:
-            de: "Typ des Shelly Devices (z.B. Shellyplug, Shellyplug-s, Shelly1/pm, Shelly2, Shelly2.5, Shelly4Pro)"
-            en: "Type of Shelly device (e.g. Shellyplug, Shellyplug-s. Shelly1/pm, Shelly2, Shelly2.5, Shelly4Pro)"
 
 item_structs: NONE
     # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)

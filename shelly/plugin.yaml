@@ -72,6 +72,7 @@ item_attributes:
 item_structs:
     # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
     shellyplug:
+        name: WLAN Steckdose (Zwischenstecker)
         type: bool
         # shelly_id: xxxxxx
         shelly_type: shellyplug
@@ -95,6 +96,7 @@ item_structs:
             shelly_attr: energy
 
     shellyplug_s:
+        name: WLAN Steckdose (Zwischenstecker), mit Temperaturmessung
         shelly_type: shellyplug-s
         struct: shelly.shellyplug
         temp:
