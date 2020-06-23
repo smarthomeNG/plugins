@@ -330,6 +330,38 @@ item_structs:
             robonect_data_type: battery_capacity_remaining
             robonect_battery_index: 0
             type: num
+    motor:
+        drive:
+            left:
+                power:
+                    type: num
+                    robonect_data_type: motor_drive_left_power
+                speed:
+                    type: num
+                    robonect_data_type: motor_drive_left_speed
+                current:
+                    type: num
+                    robonect_data_type: motor_drive_left_current
+            right:
+                power:
+                    type: num
+                    robonect_data_type: motor_drive_right_power
+                speed:
+                    type: num
+                    robonect_data_type: motor_drive_right_speed
+                current:
+                    type: num
+                    robonect_data_type: motor_drive_right_current
+        blade:
+            speed:
+                type: num
+                robonect_data_type: motor_blade_speed
+            current:
+                type: num
+                robonect_data_type: motor_blade_current
+            average:
+                type: num
+                robonect_data_type: motor_blade_average
     weather:
         location:
             zip:

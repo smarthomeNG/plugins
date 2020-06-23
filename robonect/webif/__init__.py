@@ -85,6 +85,14 @@ class WebInterface(SmartPluginWebIf):
                 data[item.id() + "_last_update"] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
                 data[item.id() + "_last_change"] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
 
+            for key, item in self.plugin.get_motor_items().items():
+                if item.property.type == 'bool':
+                    data[item.id() + "_value"] = str(item())
+                else:
+                    data[item.id() + "_value"] = item()
+                data[item.id() + "_last_update"] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
+                data[item.id() + "_last_change"] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
+
             for key, item in self.plugin.get_weather_items().items():
                 if item.property.type == 'bool':
                     data[item.id() + "_value"] = str(item())

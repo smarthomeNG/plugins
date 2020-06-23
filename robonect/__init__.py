@@ -76,6 +76,7 @@ class Robonect(MqttPlugin):
         self._status_items = {}
         self._remote_items = {}
         self._weather_items = {}
+        self._motor_items = {}
         self._status = 0
         self._mode = 0
         self._session = requests.Session()
@@ -149,6 +150,8 @@ class Robonect(MqttPlugin):
                 self._remote_items[self.get_iattr_value(item.conf, 'robonect_data_type')].append(item)
             elif 'weather' in self.get_iattr_value(item.conf, 'robonect_data_type'):
                 self._weather_items[self.get_iattr_value(item.conf, 'robonect_data_type')] = item
+            elif 'motor' in self.get_iattr_value(item.conf, 'robonect_data_type'):
+                self._motor_items[self.get_iattr_value(item.conf, 'robonect_data_type')] = item
             else:
                 self._items[self.get_iattr_value(item.conf, 'robonect_data_type')] = item
         return
@@ -201,6 +204,7 @@ class Robonect(MqttPlugin):
             self.get_battery_data_from_api()
             self.get_remote_from_api()
             self.get_weather_from_api()
+            self.get_motor_data_from_api()
         else:
             self.logger.debug("Poll Device: Automower is sleeping, so only status is polled to avoid beeping!")
         return
@@ -321,6 +325,55 @@ class Robonect(MqttPlugin):
         else:
             return None
 
+    def get_motor_data_from_api(self):
+        """
+        Requests motor data from the api and assigns it to items (if available).
+
+        :return: JSON object with motor data
+        """
+        try:
+            self.logger.debug("Plugin '{}': Requesting motor data".format(
+                self.get_fullname()))
+            response = self._session.get(self._base_url + 'motor', auth=HTTPBasicAuth(self._user, self._password))
+        except Exception as e:
+            if not self._mower_offline:
+                self.logger.error(
+                    "Plugin '{}': Exception when sending GET request for get_motor_data_from_api:: {}".format(
+                        self.get_fullname(), str(e)))
+            self._mower_offline = True
+            return
+
+        json_obj = response.json()
+        self.set_mower_online()
+        self.logger.debug(json_obj)
+        if not json_obj['successful']:
+            self.logger.error("Plugin '{}': Error when trying to get motor data via API {} - {}: '{}'.".format(
+                self.get_fullname(), mode, str(json_obj['error_code']), json_obj['error_message']))
+
+        if 'drive' in json_obj:
+            if 'motor_drive_left_power' in self._motor_items:
+                self._motor_items['motor_drive_left_power'](str(json_obj['drive']['left']['power']), self.get_shortname())
+            if 'motor_drive_left_speed' in self._motor_items:
+                self._motor_items['motor_drive_left_speed'](str(json_obj['drive']['left']['speed']), self.get_shortname())
+            if 'motor_drive_left_current' in self._motor_items:
+                self._motor_items['motor_drive_left_current'](str(json_obj['drive']['left']['current']), self.get_shortname())
+            if 'motor_drive_right_power' in self._motor_items:
+                self._motor_items['motor_drive_right_power'](str(json_obj['drive']['right']['power']), self.get_shortname())
+            if 'motor_drive_right_speed' in self._motor_items:
+                self._motor_items['motor_drive_right_speed'](str(json_obj['drive']['right']['speed']), self.get_shortname())
+            if 'motor_drive_right_current' in self._motor_items:
+                self._motor_items['motor_drive_right_current'](str(json_obj['drive']['right']['current']), self.get_shortname())
+
+        if 'blade' in json_obj:
+            if 'motor_blade_speed' in self._motor_items:
+                self._motor_items['motor_blade_speed'](str(json_obj['blade']['speed']), self.get_shortname())
+            if 'motor_blade_current' in self._motor_items:
+                self._motor_items['motor_blade_current'](str(json_obj['blade']['current']), self.get_shortname())
+            if 'motor_blade_average' in self._motor_items:
+                self._motor_items['motor_blade_average'](str(json_obj['blade']['average']), self.get_shortname())
+
+        return json_obj
+
     def get_battery_data_from_api(self):
         """
         Requests battery data from the api and assigns it to items (if available).
@@ -334,13 +387,17 @@ class Robonect(MqttPlugin):
         except Exception as e:
             if not self._mower_offline:
                 self.logger.error(
-                    "Plugin '{}': Exception when sending GET request for get_battery_data: {}".format(
+                    "Plugin '{}': Exception when sending GET request for get_battery_data_from_api: {}".format(
                         self.get_fullname(), str(e)))
             self._mower_offline = True
             return
 
         json_obj = response.json()
         self.set_mower_online()
+
+        if not json_obj['successful']:
+            self.logger.error("Plugin '{}': Error when trying to get battery data via API {} - {}: '{}'.".format(
+                self.get_fullname(), mode, str(json_obj['error_code']), json_obj['error_message']))
 
         if 'battery_id' in self._battery_items and 'batteries' in json_obj:
             for item in self._battery_items['battery_id']:
@@ -976,6 +1033,9 @@ class Robonect(MqttPlugin):
 
     def get_weather_items(self):
         return self._weather_items
+
+    def get_motor_items(self):
+        return self._motor_items
 
     def get_remote_items(self):
         return self._remote_items

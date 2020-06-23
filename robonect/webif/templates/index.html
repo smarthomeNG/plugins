@@ -51,6 +51,12 @@
                 shngInsertText('{{ item.id() }}_last_change', objResponse['{{ item.id() }}_last_change'])
             {% endfor %}
 
+            {% for key, item in p.get_motor_items().items() %}
+                shngInsertText('{{ item.id() }}_value', objResponse['{{ item.id() }}_value'])
+                shngInsertText('{{ item.id() }}_last_update', objResponse['{{ item.id() }}_last_update'])
+                shngInsertText('{{ item.id() }}_last_change', objResponse['{{ item.id() }}_last_change'])
+            {% endfor %}
+
             {% for key, items in p.get_battery_items().items() %}
                 {%  for item in items %}
                     shngInsertText('{{ item.id() }}_value', objResponse['{{ item.id() }}_value'])
@@ -174,6 +180,19 @@
                 <td id="{{ item.id() }}_last_change" class="py-1">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
             </tr>
             {% endfor %}
+        {% endfor %}
+        <tr><td colspan="6"><strong>{{ _('Motor-Informationen') }}</strong></td></tr>
+        {% for key, item in p.get_motor_items().items() %}
+            <tr>
+                <td class="py-1">{{ item.property.path }}</td>
+                <td class="py-1">{{ item.property.type }}</td>
+                <td class="py-1">{{ key }}</td>
+                <td id="{{ item.id() }}_value" class="py-1">
+                    {{ item() }}
+                </td>
+                <td id="{{ item.id() }}_last_update" class="py-1">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                <td id="{{ item.id() }}_last_change" class="py-1">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+            </tr>
         {% endfor %}
         <tr><td colspan="6"><strong>{{ _('Fernstart-Informationen') }}</strong></td></tr>
         {% for key, items in p.get_remote_items().items() %}
