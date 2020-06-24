@@ -285,7 +285,12 @@ class EnOcean(SmartPlugin):
                 if eep.startswith("{:02X}".format(choice)):
                     # call parser for particular eep - returns dictionary with key-value pairs
                     results = self.eep_parser.Parse(eep, payload, status)
-                    self.logger.debug("enocean: radio message results = {}".format(results))
+                    self.logger.debug("Radio message results = {}".format(results))
+                    if 'DEBUG' in results:
+                        self.logger.warning("DEBUG Info: processing radio message with data = [{}] / optional = [{}]".format(', '.join(['0x%02x' % b for b in data]), ', '.join(['0x%02x' % b for b in optional])))
+                        self.logger.warning("Radio message results = {}".format(results))
+                        self.logger.warning("Radio message: choice = {:02x} / payload = [{}] / sender_id = {:08X} / status = {} / repeat = {}".format(choice, ', '.join(['0x%02x' % b for b in payload]), sender_id, status, repeater_cnt))
+
                     for item in items:
                         rx_key = item.conf['enocean_rx_key'].upper()
                         if rx_key in results:
@@ -405,7 +410,9 @@ class EnOcean(SmartPlugin):
         self.UTE_listen = False
         #self.learn_id = 0
         t = threading.Thread(target=self._startup, name="enocean-startup")
-        t.daemon = True
+        # if you need to create child threads, do not make them daemon = True!
+        # They will not shutdown properly. (It's a python bug)
+        t.daemon = False
         t.start()
         msg = []
         while self.alive:
@@ -450,11 +457,13 @@ class EnOcean(SmartPlugin):
                     else:
                         #self.logger.warning("enocean: consuming [0x{:02x}] from input buffer!".format(msg[0]))
                         msg.pop(0)
+        self._tcm.close()
+        self.logger.info("Thread stopped")
 
     def stop(self):
-        self.logger.debug("enocean: call function << stop >>")
+        self.logger.debug("Call function << stop >>")
         self.alive = False
-        self.logger.info("enocean: Thread stopped")
+        
 
     def get_tx_id_as_hex(self):
         hexstring = "{:08X}".format(self.tx_id)
