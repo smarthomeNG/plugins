@@ -198,6 +198,8 @@ class Database(SmartPlugin):
                             self._buffer_insert(item, [(self._timestamp(self.shtime.now()), None, value)])
                     except Exception as e:
                         self.logger.error("Reading cache value from database for {} failed: {}".format(item.id(), e))
+                else:
+                    self.logger.warning("Cache not available in database for item {}".format(item.id() ))        
                 cur.close()
                 self._db.release()
             return self.update_item
@@ -238,6 +240,8 @@ class Database(SmartPlugin):
         if acl == 'rw':
             start = self._timestamp(item.prev_change())
             end = self._timestamp(item.last_change())
+            if end - start < 0:
+                self.logger.warning("Negative duration: start: {0}, end {1}, prevChange: {2}, lastChange: {3}, item: {4}".format(start , end, item.prev_change(), item.last_change(), item ))
             last = None if len(self._buffer[item]) == 0 or self._buffer[item][-1][1] is not None else \
                 self._buffer[item][-1]
             if last:  # update current value with duration
@@ -1293,7 +1297,9 @@ class Database(SmartPlugin):
         :param dt:
         :return:
         """
-        return int(time.mktime(dt.timetuple())) * 1000 + int(dt.microsecond / 1000)
+        val = int(time.mktime(dt.timetuple())) * 1000 + int(dt.microsecond / 1000)
+        #self.logger.debug("Debug timestamp {0}, val {1}, epoche timestamp {2}, micrsec {3}".format(dt, val, time.mktime(dt.timetuple()), dt.microsecond) )
+        return val
 
 
     def _seconds(self, ms):
