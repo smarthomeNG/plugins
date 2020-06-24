@@ -2362,6 +2362,7 @@ class Sonos(SmartPlugin):
                 self._tts = False
         else:
             self._webservice_ip = auto_ip
+            self.logger.debug("Webservice IP is not specified. Using auto IP instead.")
 
         webservice_port = self.get_parameter_value("webservice_port")
         if utils.is_valid_port(str(webservice_port)):
@@ -2412,6 +2413,11 @@ class Sonos(SmartPlugin):
                                                                self._webservice_port,
                                                                self._local_webservice_path,
                                                                self._local_webservice_path_snippet)
+
+#                            self.logger.debug("Sonos Debug: ip {0}, port {1}, path {2}, snippet {3}".format(self._webservice_ip,
+#                                                               self._webservice_port,
+#                                                               self._local_webservice_path,
+#                                                               self._local_webservice_path_snippet))
                             self.webservice.start()
                         else:
                             self.logger.warning(
