@@ -151,6 +151,7 @@ item_attributes:
         - 'connection_status'
         - 'device_id'
         - 'device_function'
+        - 'set_hkrwindowopen'
 
     avm_incoming_allowed:
         type: str

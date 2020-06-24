@@ -25,6 +25,7 @@ import datetime
 import logging
 import socket
 import time
+from time import mktime
 import threading
 from xml.dom import minidom
 import requests
@@ -839,7 +840,7 @@ class AVM(SmartPlugin):
         elif self.has_iattr(item.conf, 'avm_data_type'):
             # normal items
             self._fritz_device._items.append(item)
-        if self.get_iattr_value(item.conf, 'avm_data_type') in ['wlanconfig', 'tam', 'aha_device', 'set_temperature']:
+        if self.get_iattr_value(item.conf, 'avm_data_type') in ['wlanconfig', 'tam', 'aha_device', 'set_temperature', 'set_hkrwindowopen']:
             # special items which can be changed outside the plugin context and need to be submitted to the FritzDevice
             return self.update_item
 
@@ -857,7 +858,7 @@ class AVM(SmartPlugin):
         # Doublecheck: Shall we send this request via self._session.get instead?
         response = requests.get("http://fritz.box/login_sid.lua")
         myXML = response.text
-        self.logger.info("Debug response text: {0}".format(myXML))
+        self.logger.debug("Session request response text: {0}".format(myXML))
         xml = minidom.parseString(myXML)
         challenge_xml = xml.getElementsByTagName('Challenge')
         sid_xml = xml.getElementsByTagName('SID')
@@ -889,7 +890,7 @@ class AVM(SmartPlugin):
         # r = self._session.get(url, timeout=self._timeout, verify=self._verify)
         # self.logger.info("Debug return: {0}".format(r))
 
-    def _assemble_aha_interface(self, ain='', aha_action='', aha_param='', sid=''):
+    def _assemble_aha_interface(self, ain='', aha_action='', aha_param='', sid='', endtimestamp=''):
         """
         Builds the AVM home automation (AHA) http interface command string
         https://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/AHA-HTTP-Interface.pdf
@@ -904,8 +905,11 @@ class AVM(SmartPlugin):
         # https://fritz.box/webservices/homeautoswitch.lua?ain=099950196524&switchcmd=sethkrtsoll&param=254&sid=9c977765016899f8
         #
         # Command string with session id parameter:
-        aha_string = "/webservices/homeautoswitch.lua?ain={0}&switchcmd={1}&param={2}&sid={3}".format(
-            ain.replace(" ", ""), aha_action, aha_param, sid)
+        if endtimestamp == '':
+            aha_string = "/webservices/homeautoswitch.lua?ain={0}&switchcmd={1}&param={2}&sid={3}".format(ain.replace(" ", ""), aha_action, aha_param, sid)
+        else:
+            aha_string = "/webservices/homeautoswitch.lua?ain={0}&switchcmd={1}&endtimestamp={2}&sid={3}".format(ain.replace(" ", ""), aha_action, endtimestamp, sid)
+
         return aha_string
 
     def update_item(self, item, caller=None, source=None, dest=None):
@@ -927,6 +931,8 @@ class AVM(SmartPlugin):
                 action = 'SetSwitch'
             elif self.get_iattr_value(item.conf, 'avm_data_type') == 'set_temperature':
                 action = 'sethkrtsoll'
+            elif self.get_iattr_value(item.conf, 'avm_data_type') == 'set_hkrwindowopen':
+                action = 'sethkrwindowopen'
             else:
                 self.logger.error("%s is not defined to be updated." % self.get_iattr_value(item.conf, 'avm_data_type'))
                 return
@@ -966,11 +972,40 @@ class AVM(SmartPlugin):
                 url = self._build_url("/upnp/control/x_tam")
             elif self.get_iattr_value(item.conf, 'avm_data_type') == 'aha_device':
                 url = self._build_url("/upnp/control/x_homeauto")
+            elif self.get_iattr_value(item.conf, 'avm_data_type') == 'set_hkrwindowopen':
+                self.logger.debug("hkrwindowopen caller is: {0}".format(caller))
+                cmd_enable = bool(item())
+                self.logger.debug("Debug enable is: {0}".format(cmd_enable))
+                parentItem = item.return_parent()
+                ainDevice = '0'
+                parent_ain = self.get_iattr_value(parentItem.conf, 'ain')
+                if isinstance(parent_ain, str):
+                    ainDevice = parent_ain
+                else:
+                    self.logger.error('hkrt ain is not a string value')
+                self.logger.info("Debug ain is {0}".format(ainDevice))
+
+                # request new session ID:
+                mySID = self._request_session_id()
+
+                #Assemble endtimestamp:
+                if cmd_enable == False:
+                    endtime = 0
+                else:
+                    now = self.shtime.now()
+                    unix_secs = mktime(now.timetuple())
+                    #set endtime to now + 12h:
+                    endtime = int(unix_secs + 12*3600)
+                self.logger.debug("HKR endtimestamp is: {0}".format(endtime ))
+                                    
+                aha_string = self._assemble_aha_interface(ain=ainDevice, aha_action=action, endtimestamp=endtime, sid=mySID)
+                self.logger.debug("Debug ahastring: {0}".format(aha_string))
+
             elif self.get_iattr_value(item.conf, 'avm_data_type') == 'set_temperature':
                 self.logger.info("Debug caller is: {0}".format(caller))
                 # Check commanded temperature range:
                 cmd_temperature = float(item())
-                self.logger.info("Debug cmd_temp is: {0}".format(cmd_temperature))
+                self.logger.debug("Debug cmd_temp is: {0}".format(cmd_temperature))
                 parentItem = item.return_parent()
                 ainDevice = '0'
                 parent_ain = self.get_iattr_value(parentItem.conf, 'ain')
@@ -999,6 +1034,11 @@ class AVM(SmartPlugin):
 
                 aha_string = self._assemble_aha_interface(ain=ainDevice, aha_action=action, aha_param=temp_scaled,
                                                           sid=mySID)
+
+            #Function used for AHA http interface only:
+            current_avm_data_type = self.get_iattr_value(item.conf, 'avm_data_type')
+            use_aha_interface = current_avm_data_type in ['set_temperature', 'set_hkrwindowopen']
+            if use_aha_interface:
                 # build_url method cannot be used because it uses another IP port.
                 # url = self._build_url(aha_string)
 
@@ -1011,16 +1051,26 @@ class AVM(SmartPlugin):
 
                 url = "%s://%s:%s%s" % (url_prefix, self._fritz_device.get_host(), 443, aha_string)
                 self.logger.debug("Debug param: {0}".format(aha_string))
-                self.logger.info("Debug url: {0}".format(url))
+                self.logger.debug("Debug url: {0}".format(url))
 
             try:
-                if self.get_iattr_value(item.conf, 'avm_data_type') == 'set_temperature':
+                
+                if use_aha_interface:
                     r = self._session.get(url, timeout=self._timeout, verify=self._verify)
-                    self.logger.info("Debug return: {0}".format(r))
+                    self.logger.debug("Return value aha interface: {0}".format(r))
+
+                    statusCode = r.status_code
+                    if statusCode == 200:
+                        self.logger.debug("Sending AHA command successful")
+                    else:
+                        self.logger.error("AHA command error code: {0}".format(statusCode))
+
                 else:
                     self._session.post(url, data=soap_data, timeout=self._timeout, headers=headers,
                                        auth=HTTPDigestAuth(self._fritz_device.get_user(),
                                                            self._fritz_device.get_password()), verify=self._verify)
+
+                
             except Exception as e:
                 if self._fritz_device.is_available():
                     self.logger.error(

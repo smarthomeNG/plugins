@@ -674,6 +674,13 @@ avm:
                 type: num
                 visu_acl: rw
 
+            set_hkrwindowopen:
+                value: False
+                avm_data_type@fritzbox_7490: set_hkrwindowopen
+                type: bool
+                visu_acl: rw
+                enforce_updates: true
+
 ```
 
 ## Functions
