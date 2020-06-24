@@ -205,9 +205,10 @@ class Robot:
             return ''
                 
         responseJson = access_token_response.json()
+        self.logger.debug("Robot Debug: responseTokenRequest: {0}".format(responseJson))
         if 'access_token' in responseJson:
             access_token = responseJson['access_token']
-            #self.logger.debug("Robot: Access token received")
+            self.logger.debug("Robot: Access token received")
         else:
             access_token = ''
             if 'message' in responseJson:

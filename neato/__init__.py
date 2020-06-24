@@ -38,7 +38,7 @@ class Neato(SmartPlugin):
 
         self.robot = Robot(self.get_parameter_value("account_email"), self.get_parameter_value("account_pass"), self.get_parameter_value("robot_vendor"))
 #        self.robot.update_robot()
-        self._sh = sh
+#        self._sh = sh
         self._cycle = 40
         self.logger.debug("Init completed.")
         return
