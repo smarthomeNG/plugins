@@ -128,7 +128,6 @@ someitem:
         type: bool
         inital_value: 0
         visu_acl: rw
-### Example 1
 ````
 ### Example 1 with Sensor-Name
 
