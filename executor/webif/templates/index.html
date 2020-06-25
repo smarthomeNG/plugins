@@ -35,18 +35,19 @@
 	Content block for the first tab of the Webinterface
 -->
 
-{% set tab1title = "<strong>" ~ _('Eval Ausdrücke') ~ "</strong>" %}
+{% set tab1title = "<strong>" ~ _('Eval Ausdruck') ~ "</strong>" %}
 {% block bodytab1 %}
 
 <script>
 function geteval(){
     console.log("Evaluate a line ...");
     param = $('#pycode').val();
-    console.log('Param ='+encodeURIComponent(param));
-    $.get('evaluate', { eline: param}, function(data){
-        $('result').html(data); 
+		itempath = $('#itempath').val();
+    console.log('Param = '+encodeURIComponent(param) + ', Item path = '+encodeURIComponent(itempath));
+    $.get('evaluate', { eline: param, path: itempath}, function(data){
+        $('result').html(data);
         console.log('Data:'+data);
-    }); 
+    });
     console.log('Evaluation of a line is done');
 };
 
@@ -64,6 +65,9 @@ input#pycode{
     width: 100%;
 }
 
+input#itempath{
+    width: 100%;
+}
 button#doeval {
     margin-top: 1em;
     margin-bottom: 1em;
@@ -81,17 +85,21 @@ result {
 
 <div class="container-fluid m-2">
     <div id="section1">
-        <label for="pycode">{{ _('Zeile zum Ausführen in Python eingeben:') }}</label> <br>
+				<p>
+        <label for="pycode">{{ _('Evalausdruck eingeben:') }}</label> <br>
         <input type="text" name="pycode" id="pycode" />
-        <br>
+        </p><p>
+				<label for="itempath">{{ _('Itempfad angeben (optional zum Testen relativer Itemangaben):') }}</label> <br>
+        <input type="text" name="itempath" id="itempath" />
+        </p>
         <button onclick="geteval()" id="doeval">{{ _('Ausführen!') }}</button>
-        <label for="result">Ergebnis</label><br>
+        <label for="result">{{ _('Ergebnis') }}</label><br>
         <result></result>
     </div>
 </div>
 {% endblock bodytab1 %}
 
-{% set tab2title = "<strong>" ~ _('Python Code ausführen') ~ "</strong>" %}
+{% set tab2title = "<strong>" ~ _('Python Code') ~ "</strong>" %}
 {% block bodytab2 %}
 
 <script>
@@ -102,11 +110,10 @@ var cmResult;
 
 function getexecution() {
     console.log("Sending code for execution ...");
-    /* param = $('#pycodetext').val();*/
     param = cmPython.doc.getValue();
     console.log('Param ='+encodeURIComponent(param));
     $.get('evaluatetext', { eline: param}, function(data){
-        cmResult.doc.setValue(data); 
+        cmResult.doc.setValue(data);
         console.log('Data:'+data);
     }); console.log('erledigt');    console.log('Execution of code is done');
 };
@@ -164,10 +171,10 @@ resulttext {
 
 <div class="container-fluid m-2">
     <div id="section2">
-        <label for="pycodetext">{{ _('Python zur Ausführung:') }}</label> <br>
+        <label for="pycodetext">{{ _('Zeile zum Ausführen in Python eingeben:') }}</label> <br>
         <textarea id="pycodetext"></textarea>
         <button onclick="getexecution()" id="doexec">{{ _('Ausführen!') }}</button><br>
-        <label for="resulttext">Ergebnis</label><br>
+        <label for="resulttext">{{ _('Ergebnis') }}</label><br>
         <textarea id="resulttext" placeholder="Ergebnisse erscheinen hier"></textarea>
     </div>
 </div>

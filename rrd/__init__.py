@@ -50,7 +50,7 @@ class RRD(SmartPlugin):
     Documentation can be found at `<https://pythonhosted.org/rrdtool/>`_
     """
 
-    PLUGIN_VERSION = '1.6.0'
+    PLUGIN_VERSION = '1.6.2'
 
     def __init__(self, sh):
         """
@@ -66,7 +66,7 @@ class RRD(SmartPlugin):
 
         # get the parameters for the plugin (as defined in metadata plugin.yaml):
         rrd_dir = self.get_parameter_value('rrd_dir')
-        if rrd_dir is None:
+        if not rrd_dir:
             rrd_dir = self.get_sh().base_dir + '/var/rrd/'
         self._rrd_dir = rrd_dir
         self._rrds = {}
@@ -101,6 +101,7 @@ class RRD(SmartPlugin):
         Stop method for the plugin
         """
         self.logger.debug("Stop method called")
+        self.scheduler_remove('RRDtool')
         self.alive = False
 
     def parse_item(self, item):

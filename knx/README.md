@@ -138,24 +138,25 @@ living_room:
         knx_dpt: 1
         knx_send: 1/1/3
         knx_listen:
-          - 1/1/4
-          - 1/1/5
-        knx_init: 1/1/4
+        - 1/1/4
+        - 1/1/5
+        knx_init: 1/1/6
 
     temperature:
         type: num
         knx_dpt: 9
         knx_send: 1/1/6
         knx_reply: 1/1/6
-        ow_addr: 28.BBBBB20000    # see 1-Wire plugin
-        ow_sensor: T              # see 1-Wire plugin
+        # see 1-Wire plugin
+        ow_addr: '28.BBBBB20000'
+        ow_sensor: T 
 
     window:
         type: bool
         knx_dpt: 1
         knx_poll: 
-		    - 1/1/9
-			- 60
+        - 1/1/9
+        - 60
 ```
 
 ### logic.yaml
@@ -170,8 +171,8 @@ logic1:
 logic2:
     knx_dpt: 9
     knx_reply:
-      - 1/1/8
-      - 1/1/8
+    - 1/1/8
+    - 1/1/8
 ```
 
 If there is a packet directed to the according group address, SmartHomeNG would trigger the logic and will pass the payload (via the trigger object) to the logic.

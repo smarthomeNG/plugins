@@ -53,7 +53,6 @@ class Robvac(SmartPlugin):
         self._ip = self.get_parameter_value("ip")
         self._token = self.get_parameter_value("token")
         self._cycle = self.get_parameter_value("read_cycle")
-        self._sh = smarthome
         self.logger = logging.getLogger(__name__)
 
         self.messages = {}
@@ -72,7 +71,7 @@ class Robvac(SmartPlugin):
         else:
             self.logger.debug("Xiaomi_Robvac: Plugin Start!")
             if self._cycle > 10:
-                self._sh.scheduler.add('Xiaomi_Robvac Read cycle', self._read, prio=5, cycle=self._cycle)
+                self.scheduler_add('Xiaomi_Robvac Read cycle', self._read, prio=5, cycle=self._cycle)
             else:
                 self.logger.warning("Xiaomi_Robvac: Read Cycle is to fast! < 10s, not starting!")
     # ----------------------------------------------------------------------------------------------
@@ -335,6 +334,8 @@ class Robvac(SmartPlugin):
                 elif message == "clean_zone":
                 #Clean zones. :param List zones: List of zones to clean: [[x1,y1,x2,y2, iterations],[x1,y1,x2,y2, iterations]]
                     self.vakuum.zoned_clean(item()[0], item()[1],item()[2], item()[3], item()[4])
+                elif message == "segment_clean":
+                    self.vakuum.segment_clean(item())
                 elif message == "go_to":
                     self.vakuum.goto(item()[0], item()[1])
                 elif message == "create_nogo_zones":

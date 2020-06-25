@@ -68,7 +68,7 @@ class WebInterface(StateEngineTools.SeItemChild):
 
                 for cond in condition_to_meet:
                     cond = re.compile(cond)
-                    matching = cond.match(conditionset)
+                    matching = cond.fullmatch(conditionset)
                     condition_met = True if matching else condition_met
                 fontcolor = "white" if not condition_met or (_repeat is False and originaltype == 'actions_stay')\
                             else "#5c5646" if _delay > 0 else "darkred" if _delay < 0 else "black"

@@ -2,7 +2,7 @@
 #
 #########################################################################
 #  Copyright 2019 Torsten Dreyer torsten (at) t3r (dot) de
-#  Version 1.0.0
+#  Version 1.0.1
 #########################################################################
 #
 #  This file is part of SmartHomeNG.
@@ -30,16 +30,18 @@ from lib.model.smartplugin import SmartPlugin
 
 
 class JSONREAD(SmartPlugin):
-    ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = "1.0.0"
+    PLUGIN_VERSION = "1.0.1"
 
-    def __init__(self, sh, *args, **kwargs):
+    def __init__(self, sh):
         """
         Initializes the plugin
         @param url: URL of the json data to fetch
         @param cycle: the polling interval in seconds
         """
-        self.logger = logging.getLogger(__name__)
+        from bin.smarthome import VERSION
+        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
+            self.logger = logging.getLogger(__name__)
+
         self._url = self.get_parameter_value('url')
         self._cycle = self.get_parameter_value('cycle')
         self._session = requests.Session()
@@ -47,10 +49,12 @@ class JSONREAD(SmartPlugin):
         self._items = {}
 
     def run(self):
+        self.logger.debug("Run method called")
         self.alive = True
         self.scheduler_add(__name__, self.poll_device, cycle=self._cycle)
 
     def stop(self):
+        self.logger.debug("Stop method called")
         self.scheduler_remove(__name__ )
         self.alive = False
 

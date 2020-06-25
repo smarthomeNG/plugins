@@ -36,8 +36,7 @@ class OneWire(SmartPlugin):
     the update functions for the items
     """
 
-    ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = '1.6.0'
+    PLUGIN_VERSION = '1.6.3'
 
     _flip = {0: '1', False: '1', 1: '0', True: '0', '0': True, '1': False}
 
@@ -268,9 +267,9 @@ class OneWire(SmartPlugin):
                         value = self._flip[self.owbase.read('/uncached' + path).decode()]
                 except Exception as e:
                     if self.logger.isEnabledFor(logging.WARNING):
-                        self.logger.warning("1-Wire: problem reading {0}, error {}".format(addr,e))
+                        self.logger.warning("1-Wire: problem reading {}, error {}".format(addr,e))
                     continue
-                item(value, '1-Wire', path)
+                item(value, self.get_shortname(), path)
 
     """
     The iButton loop is for iButton devices which are often used as extension to a key ring. 
@@ -371,7 +370,7 @@ class OneWire(SmartPlugin):
                             value = 0
                     elif key == 'VOC':
                         value = value * 310 + 450
-                    item(value, '1-Wire', path)
+                    item(value, self.get_shortname(), path)
                     
         cycletime = time.time() - start
         if self.logger.isEnabledFor(logging.DEBUG):
@@ -406,7 +405,7 @@ class OneWire(SmartPlugin):
                 self.logger.debug("1-Wire: listing did not change")
         else:
             if self.logger.isEnabledFor(logging.DEBUG):
-                self.logger.debug("1-Wire: listing changed, save for next discovery cycle".format(listing))
+                self.logger.debug("1-Wire: listing changed: '{}'. Save for next discovery cycle".format(listing))
             self._last_discovery = listing
 
         for path in listing:
@@ -441,7 +440,7 @@ class OneWire(SmartPlugin):
                         
                         if keys is None:
                             if self.logger.isEnabledFor(logging.DEBUG):
-                                self.logger.debug("1-Wire: Skipping sensor {} for bus: {0}".format(sensor, bus))
+                                self.logger.debug("1-Wire: Skipping sensor {0} for bus: {1}".format(sensor, bus))
                             continue
                         self._buses[bus].append(addr)
                         if self.logger.isEnabledFor(logging.INFO):

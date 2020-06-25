@@ -28,7 +28,7 @@ The following python packages need to be installed on your system:
 
 Those packages can be installed using:
 
-```bash
+``` bash
 # Debian based
 sudo apt-get install python3-requests
 
@@ -41,7 +41,7 @@ sudo dnf install python3-requests
 
 ## Installation
 
-```bash
+``` bash
 cd smarthome.py directory
 cd plugins
 git clone https://github.com/Morg42/yamahayxc.git
@@ -62,7 +62,7 @@ yamahayxc:
 
 ### items.yaml
 
-```yaml
+``` yaml
 media:
     
     wx010:
@@ -73,7 +73,7 @@ media:
 
 or without structs (results in identical item tree):
 
-```yaml
+``` yaml
 media:
 
     wx010:

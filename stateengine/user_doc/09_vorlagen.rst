@@ -37,7 +37,7 @@ können wie folgt eingebunden werden:
                        - beispiel.raffstore1.hoehe
                        - beispiel.raffstore1.lamelle
                     se_manual_exclude:
-                       - KNX:y.y.y:*
+                       - KNX:y.y.y:1/2/3 # konkrete Gruppenadresse eines konkreten KNX Geräts
                        - Init:*
 
                 rules:
@@ -50,8 +50,10 @@ können wie folgt eingebunden werden:
                   additional_state1:
                       type: foo
 
-Zumindest in der SmarthomeNG Version 1.6.0 werden die eval_trigger Angaben aus den einzelnen Struct-Vorgaben nicht
+Unter SmarthomeNG Version 1.7.0 werden die eval_trigger Angaben aus den einzelnen Struct-Vorgaben nicht
 kumuliert. Es ist daher wichtig, die eval_trigger Liste nochmals manuell im endgültigen Item anzulegen.
+Bei neueren Versionen kann man sich das erneute Listen der Trigger wie lock, suspend und release sparen,
+da diese bereits im struct des Plugins gelistet sind.
 
 Die Vorlagen beinhalten folgende Strukturen:
 

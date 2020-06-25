@@ -1,8 +1,16 @@
 .. index:: Plugins; uzsu
 .. index:: uzsu
 
+====
 uzsu
-####
+====
+
+Dieses Plugin ermöglicht gezielte Schaltvorgänge von Items zu bestimmten Uhrzeiten oder abhängig vom
+Sonnenstand. Die automatischen Schaltungen können dabei pro Wochentag separat definiert werden.
+
+Außerdem ermöglicht eine Interpolationsfunktion das Errechnen von Werten zwischen zwei manuell
+angelegten Schaltzeiten, wodurch z.B. Lichtkurven über den Tagesverlauf umgesetzt werden können
+
 
 Einführung
 ==========
@@ -60,8 +68,8 @@ Ab *smarthomeNG 1.6* ist das Anlegen der nötigen Items via ``struct`` besonders
 SmartVISU
 =========
 
-Das UZSU Plugin wird durch die smartVISU 2.9 sowohl in Form eines Popups als auch einer grafischen Darstellung mittels *device.uzsu Widget* unterstützt. 
-Bei Problemen bitte das entsprechende Supportforum konsultieren. Es wird empfohlen, die Visualisierung für das Einstellen der UZSU zu verwenden. 
+Das UZSU Plugin wird durch die smartVISU 2.9 sowohl in Form eines Popups als auch einer grafischen Darstellung mittels *device.uzsu Widget* unterstützt.
+Bei Problemen bitte das entsprechende Supportforum konsultieren. Es wird empfohlen, die Visualisierung für das Einstellen der UZSU zu verwenden.
 Die folgenden Informationen zum Datenformat können übersprungen werden.
 
 Datenformat
@@ -143,5 +151,5 @@ Folgender Python Aufruf bzw. Dictionary Eintrag schaltet das Licht jeden zweiten
    sh.eg.wohnen.leuchte.uzsu({'active':True, 'list':[
    {'value':100, 'active':True, 'rrule':'FREQ=DAILY;INTERVAL=2', 'time': '16:30'},
    {'value':0, 'active':True, 'rrule':'FREQ=DAILY;INTERVAL=2', 'time': '17:30'}],
-   {'interval': 5, 'type': 'cubic', 'initialized': False, 'itemtype': 'num', 'initage': 0}
+   'interpolation': {'interval': 5, 'type': 'cubic', 'initialized': False, 'itemtype': 'num', 'initage': 0}
    })

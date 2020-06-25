@@ -8,6 +8,9 @@
 darksky
 =======
 
+Wetterdaten von darksky.net lesen.
+
+
 Konfiguration
 =============
 

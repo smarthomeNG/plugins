@@ -42,8 +42,7 @@ class RTR(SmartPlugin):
     the update functions for the items
     """
 
-    ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.2.3"
+    PLUGIN_VERSION = "1.2.4"
 
     HVACMode_Auto = 0
     HVACMode_Comfort = 1
@@ -71,7 +70,7 @@ class RTR(SmartPlugin):
                 'valveProtectActive' : False,
                 'validated' : False}
 
-    def __init__(self, sh, *args, **kwargs):
+    def __init__(self, sh):
         """
         Initalizes the plugin. The parameters describe for this method are pulled from the entry in plugin.conf.
 
@@ -117,6 +116,8 @@ class RTR(SmartPlugin):
         Stop method for the plugin
         """
         self.logger.debug("rtr: stop method called")
+        self.scheduler_remove('cycle')
+        self.scheduler_remove('protect')
         self.alive = False
 
     def parse_item(self, item):

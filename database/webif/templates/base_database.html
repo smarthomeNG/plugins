@@ -1,5 +1,7 @@
 {% extends "base_plugin.html" %}
-{% set tab2title = _('Plugin-API') %}
+
+{% set logo_frame = false %}
+
 
 {%- block scripts %}
 {{ super() }}
@@ -19,32 +21,33 @@
 		<tr>
 			<td class="py-1" width="150px"><strong>{{ _('Verbunden') }}</strong></td>
 			<td class="py-1">{% if p._db._connected %}{{ _('Ja') }}{% else %}{{ _('Nein') }}{% endif %}</td>
-			<td class="py-1"></td>
-			<td class="py-1"></td>
+			<td class="py-1" width="150px"><strong>{{ _('Treiber') }}</strong></td>
+			<td class="py-1">{{ p.driver }}</td>
 			<td class="py-1"></td>
 			<td class="py-1"></td>
 		</tr>
 		{% set first = True %}
 		{% for key, value in p._db._params.items() %}
-		{% if loop.index % 4 == 0 %}
-		<tr>
-		{% endif %}
-			{% if key != "passwd" %}
-			<td class="py-1"><strong>{{ key }}</strong></td><td class="py-1">{{ value }}</td>
-			{% else %}
-			<td class="py-1"><strong>{{ key }}</strong></td><td class="py-1">{% for letter in value %}*{% endfor %}</td>
+			{% if loop.index % 4 == 0 %}
+				<tr>
+				{% endif %}
+					{% if key != "passwd" %}
+					<td class="py-1"><strong>{{ key }}</strong></td><td class="py-1">{{ value }}</td>
+					{% else %}
+					<td class="py-1"><strong>{{ key }}</strong></td><td class="py-1">{% for letter in value %}*{% endfor %}</td>
+					{% endif %}
+					{% if loop.index % 3 > 0 and loop.last %}
+						<td class="py-1" colspan="{{ loop.index % 3 }}"></td>
+					{% endif %}
+				{% if loop.index % 4 == 0 and not first %}
+				</tr>
 			{% endif %}
-			{% if loop.index % 3 > 0 and loop.last %}
-				<td class="py-1" colspan="{{ loop.index % 3 }}"></td>
-			{% endif %}
-		{% if loop.index % 4 == 0 and not first %}
-		</tr>
-		{% endif %}
 		{% endfor %}
 	</tbody>
 </table>
 {% endblock headtable %}
 
+{% set tab2title = _('Plugin-API') %}
 {% block bodytab2 %}
     <div class="container ml-1 pl-1 mr-1 pr-1">
     {%  for function, dict in p.metadata.plugin_functions.items() %}

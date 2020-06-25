@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
-# Copyright 2016-     Oliver Hinckel                   github@ollisnet.de
-# Based on ideas of sqlite plugin, provided by Marcus Popp marcus@popp.mx
+#  Copyright 2016-     Oliver Hinckel                  github@ollisnet.de
+#  Based on ideas of sqlite plugin by Marcus Popp marcus@popp.mx
 #########################################################################
-#  This file is part of SmartHomeNG
-#  https://github.com/smarthomeNG/smarthome
-#  http://knx-user-forum.de/
+#  This file is part of SmartHomeNG.
+#
+#  database plugin to run with SmartHomeNG version 1.7 and upwards.
 #
 #  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -20,47 +20,37 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with SmartHomeNG. If not, see <http://www.gnu.org/licenses/>.
+#
 #########################################################################
 
+import copy
 import re
-import logging
 import datetime
 import functools
 import time
 import threading
+
 import lib.db
 
 from lib.shtime import Shtime
 from lib.item import Items
 from lib.utils import Utils
 
-from lib.model.smartplugin import *
+from lib.model.smartplugin import SmartPlugin
 from lib.module import Modules
 
-# Constants for item table
-COL_ITEM = ('id', 'name', 'time', 'val_str', 'val_num', 'val_bool', 'changed')
-COL_ITEM_ID = 0
-COL_ITEM_NAME = 1
-COL_ITEM_TIME = 2
-COL_ITEM_VAL_STR = 3
-COL_ITEM_VAL_NUM = 4
-COL_ITEM_VAL_BOOL = 5
-COL_ITEM_CHANGED = 6
-
-# Constants for log table
-COL_LOG = ('time', 'item_id', 'duration', 'val_str', 'val_num', 'val_bool', 'changed')
-COL_LOG_TIME = 0
-COL_LOG_ITEM_ID = 1
-COL_LOG_DURATION = 2
-COL_LOG_VAL_STR = 3
-COL_LOG_VAL_NUM = 4
-COL_LOG_VAL_BOOL = 5
-COL_LOG_CHANGED = 6
+from .constants import *
+from .webif import WebInterface
 
 
 class Database(SmartPlugin):
+    """
+    Main class of the Plugin. Does all plugin specific stuff and provides
+    the update functions for the items
+    """
+
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = '1.5.9'
+    PLUGIN_VERSION = '1.5.14'
 
     # SQL queries: {item} = item table name, {log} = log table name
     # time, item_id, val_str, val_num, val_bool, changed
@@ -78,97 +68,272 @@ class Database(SmartPlugin):
         '6': ["CREATE INDEX {item}_name ON {item} (name);", "DROP INDEX {item}_name;"]
     }
 
+
     def __init__(self, sh, *args, **kwargs):
+        """
+        Initalizes the plugin.
+
+        If you need the sh object at all, use the method self.get_sh() to get it. There should be almost no need for
+        a reference to the sh object any more.
+
+        Plugins have to use the new way of getting parameter values:
+        use the SmartPlugin method get_parameter_value(parameter_name). Anywhere within the Plugin you can get
+        the configured (and checked) value for a parameter by calling self.get_parameter_value(parameter_name). It
+        returns the value in the datatype that is defined in the metadata.
+        """
+
         # Call init code of parent class (SmartPlugin or MqttPlugin)
         super().__init__()
 
         self.shtime = Shtime.get_instance()
         self.items = Items.get_instance()
-        # driver, connect, prefix="", cycle=60, precision=2
+
+        # parameters: driver, connect, prefix="", cycle=60, precision=2
+        self.driver = self.get_parameter_value('driver')
+        self._connect = self.get_parameter_value('connect')  # list of connection parameters
+        self._prefix = self.get_parameter_value('prefix')
+        if self._prefix != '':
+            self._prefix += '_'
         self._dump_cycle = self.get_parameter_value('cycle')
         self._precision = self.get_parameter_value('precision')
-        self._name = self.get_instance_name()
-        self._replace = {table: table if (self.get_parameter_value('prefix') == "" or self.get_parameter_value(
-            'prefix') is None) else self.get_parameter_value(
-            'prefix') + "_" + table for table in ["log", "item"]}
+        self.count_logentries = self.get_parameter_value('count_logentries')
+
+        self._replace = {table: table if self._prefix == "" else self._prefix + table for table in ["log", "item"]}
         self._replace['item_columns'] = ", ".join(COL_ITEM)
         self._replace['log_columns'] = ", ".join(COL_LOG)
         self._buffer = {}
         self._buffer_lock = threading.Lock()
         self._dump_lock = threading.Lock()
 
-        self._db = lib.db.Database(("" if (self.get_parameter_value('prefix') == "" or self.get_parameter_value(
-            'prefix') is None) else self.get_parameter_value(
-            'prefix').capitalize() + "_") + "Database", self.get_parameter_value('driver'),
-                                   Utils.string_to_list(self.get_parameter_value('connect')))
-        self._initialized = False
-        self._initialize()
+        self._handled_items = []        # items that have a 'database' attribute set
+        self._items_with_maxage = []    # items that have a 'database_maxage' attribute set
+        self._maxage_worklist = []      # work copy of self._items_with_maxage
+        self._item_logcount = {}        # dict to store the number of log records for an item
 
-        self.scheduler_add('Database dump ' + self._name + (
-            "" if (self.get_parameter_value('prefix') == "" or self.get_parameter_value(
-                'prefix') is None) else " [" + self.get_parameter_value('prefix') + "]"),
-                           self._dump, cycle=self._dump_cycle, prio=5)
+        self.cleanup_active = False
 
-        self.init_webinterface()
+        # Setup db and test if connection is possible
+        self._db = lib.db.Database(("" if self._prefix == ""  else self._prefix.capitalize()) + "Database", self.driver, self._connect)
+        if self._db.api_initialized == False:
+            # Error initializeng the database driver (e.g.: Python module for database driver not found)
+            self.logger.error("Initialization of database API failed")
+            self._init_complete = False
+            return
+
+        self._db_initialized = False
+        if not self._initialize_db():
+            #self._init_complete = False
+            #return
+            pass
+
+        self.init_webinterface(WebInterface)
+
         return
 
-    def parse_item(self, item):
-        self.logger.debug(item.conf)
-        if self.has_iattr(item.conf, 'database'):
-            self._buffer_insert(item, [])
-            item.series = functools.partial(self._series, item=item.id())
-            item.db = functools.partial(self._single, item=item.id())
-            item.dbplugin = self
 
-            if self._initialized and self.get_iattr_value(item.conf, 'database') == 'init':
+    def run(self):
+        """
+        Run method for the plugin
+        """
+        self.logger.debug("Run method called")
+        self._initialize_db()
+        self._start_schedulers()
+        self.alive = True
+
+
+    def stop(self):
+        """
+        Stop method for the plugin
+        """
+        self.logger.debug("Stop method called")
+        self.alive = False
+        self._stop_schedulers()
+        self._dump(True)
+        self._db.close()
+
+
+    def parse_item(self, item):
+        """
+        Default plugin parse_item method. Is called when the plugin is initialized.
+        The plugin can, corresponding to its attribute keywords, decide what to do with
+        the item in future, like adding it to an internal array for future reference
+        :param item:    The item to process.
+        :return:        If the plugin needs to be informed of an items change you should return a call back function
+                        like the function update_item down below. An example when this is needed is the knx plugin
+                        where parse_item returns the update_item function when the attribute knx_send is found.
+                        This means that when the items value is about to be updated, the call back function is called
+                        with the item, caller, source and dest as arguments and in case of the knx plugin the value
+                        can be sent to the knx with a knx write function within the knx plugin.
+        """
+
+        if self.has_iattr(item.conf, 'database'):
+            self._handled_items.append(item)
+            if self.has_iattr(item.conf, 'database_maxage'):
+                maxage = self.get_iattr_value(item.conf, 'database_maxage')
+                if float(maxage) > 0:
+                    self._items_with_maxage.append(item)
+
+            self.logger.debug(item.conf)
+            self._buffer_insert(item, [])
+            item.series = functools.partial(self._series, item=item.id())   # Zur Nutzung im Websocket Plugin
+            item.db = functools.partial(self._single, item=item.id())      # Nie genutzt??? -> Doch
+
+            if self._db_initialized and self.get_iattr_value(item.conf, 'database').lower() == 'init':
                 if not self._db.lock(5):
                     self.logger.error("Can not acquire lock for database to read value for item {}".format(item.id()))
                     return
                 cur = self._db.cursor()
-                try:
-                    cache = self.readItem(str(item.id()), cur=cur)
-                    if cache is not None:
+                cache = self.readItem(str(item.id()), cur=cur)
+                if cache is not None:
+                    try:
                         value = self._item_value_tuple_rev(item.type(), cache[COL_ITEM_VAL_STR:COL_ITEM_VAL_BOOL + 1])
                         last_change = self._datetime(cache[COL_ITEM_TIME])
                         prev_change = self._fetchone('SELECT MAX(time) from {log} WHERE item_id = :id',
                                                      {'id': cache[COL_ITEM_ID]}, cur=cur)
-                        if value is not None and prev_change is not None:
-                            item.set(value, 'Database', prev_change=self._datetime(prev_change[0]),
-                                     last_change=last_change)
-                        self._buffer_insert(item, [(self._timestamp(self.shtime.now()), None, value)])
-                except Exception as e:
-                    self.logger.error("Reading cache value from database for {} failed: {}".format(item.id(), e))
+                        if (value is not None) and (prev_change is not None) and (prev_change[0] is not None):
+                            item.set(value, 'Database', prev_change=self._datetime(prev_change[0]), last_change=last_change)
+                        if value is not None and self.get_iattr_value(item.conf, 'database_acl') is not None and self.get_iattr_value(item.conf, 'database_acl').lower() == 'ro':
+                            self._buffer_insert(item, [(self._timestamp(self.shtime.now()), None, value)])
+                    except Exception as e:
+                        self.logger.error("Reading cache value from database for {} failed: {}".format(item.id(), e))
                 cur.close()
                 self._db.release()
             return self.update_item
         else:
             return None
 
-    def run(self):
-        self.alive = True
 
-    def stop(self):
-        self.alive = False
-        self._dump(True)
-        self._db.close()
+    def parse_logic(self, logic):
+        """
+        Default plugin parse_logic method
+        """
+        #if 'xxx' in logic.conf:
+        #    # self.function(logic['name'])
+        #    pass
+        return
+
 
     def update_item(self, item, caller=None, source=None, dest=None):
-        acl = 'rw' if not self.has_iattr(item.conf, 'database_acl') else self.get_iattr_value(item.conf, 'database_acl')
-        if acl is 'rw':
+        """
+        Item has been updated
+
+        This method is called, if the value of an item has been updated by SmartHomeNG.
+        It should write the changed value out to the device (hardware/interface) that
+        is managed by this plugin.
+
+        :param item: item to be updated towards the plugin
+        :param caller: if given it represents the callers name
+        :param source: if given it represents the source
+        :param dest: if given it represents the dest
+        """
+
+        if self.has_iattr(item.conf, 'database_acl'):
+            acl = self.get_iattr_value(item.conf, 'database_acl').lower()
+            self.logger.debug("item '{}', database_acl = {}".format(item,  acl))
+        else:
+            acl = 'rw'
+
+        if acl == 'rw':
             start = self._timestamp(item.prev_change())
             end = self._timestamp(item.last_change())
             last = None if len(self._buffer[item]) == 0 or self._buffer[item][-1][1] is not None else \
                 self._buffer[item][-1]
             if last:  # update current value with duration
+                if item.property.path.startswith('test.'):
+                    self.logger.debug("Setting value {} to item '{}' value because database_acl = {}".format(end-start, item, acl))
                 self._buffer[item][-1] = (last[0], end - start, last[2])
             else:  # append new value with none duration
+                if item.property.path.startswith('test.'):
+                    self.logger.debug("(last is None) Setting value {} to item '{}' value because database_acl = {}".format(end-start, item, acl))
                 self._buffer[item].append((start, end - start, item.prev_value()))
 
             # add current value with None duration
+            if item.property.path.startswith('test.'):
+                self.logger.debug("Appending value {} to item '{}' value because database_acl = {}".format(end, item, acl))
             self._buffer[item].append((end, None, item()))
+        else:
+            self.logger.debug("Not writing item '{}' value because database_acl = {}".format(item,  acl))
+
+
+    def _start_schedulers(self):
+        """
+        Start jobs that maintain buffer and database
+        """
+        if self.count_logentries:
+            self.scheduler_add('Count logs', self._count_logentries, cycle=6*3600, prio=6)
+        self.scheduler_add('Buffer dump', self._dump, cycle=self._dump_cycle, prio=5)
+        if len(self._items_with_maxage) > 0:
+            self.scheduler_add('Remove old', self.remove_older_than_maxage, cycle=91, prio=6)
+        return
+
+
+    def _stop_schedulers(self):
+        """
+        Stop jobs that maintain buffer and database
+        """
+        if len(self._items_with_maxage) > 0:
+            self.scheduler_remove('Remove old')
+        self.scheduler_remove('Buffer dump')
+        if self.count_logentries:
+            self.scheduler_remove('Count logs')
+        return
+
+
+    # ------------------------------------------------------
+    #    Database specific public functions of the plugin
+    # ------------------------------------------------------
+
+    def id(self, item, create=True, cur=None):
+        """
+        Returns the ID of the given item
+
+        This is a public function of the plugin
+
+        :param item: Item to get the ID for
+        :param create: If True, the item is created within the database if it does not exist
+        :param cur: A database cursor object if available (optional)
+
+        :return: id of the item within the database
+        :rtype: int | None
+        """
+
+        id = self.readItem(str(item.id()), cur=cur)
+
+        if id is None and create == True:
+            id = [self.insertItem(item.id(), cur)]
+
+        return None if id == None else int(id[COL_ITEM_ID])
+
+
+    def db(self):
+        """
+        Returns the low-level database object
+
+        This is a public function of the plugin
+
+        :return: Database object
+        :rtype: object
+        """
+        return self._db
+
 
     def dump(self, dumpfile, id=None, time=None, time_start=None, time_end=None, changed=None, changed_start=None,
              changed_end=None, cur=None):
+        """
+        Creates a database dump for given criterias
+
+        This is a public function of the plugin
+
+        :param dumpfile: Name of the file to dump to
+        :param id: If given, item_id to restrict dump to (optional)
+        :param time: If given, time to restrict dump to (optional)
+        :param time_start: If given, start time to restrict dump to (optional)
+        :param time_end: If given, end time to restrict dump to (optional)
+        :param changed: Restrict dump to given time of change (optional)
+        :param changed_start: Restrict dump to given start time of changes (optional)
+        :param changed_end: Restrict dump to given end time of changes (optional)
+        :param cur: A database cursor object if available (optional)
+        """
         self.logger.info("Starting file dump to {} ...".format(dumpfile))
 
         item_ids = self.readItems(cur=cur) if id is None else [self.readItem(id, cur=cur)]
@@ -198,11 +363,268 @@ class Database(SmartPlugin):
                 f.write(s.join(cols) + "\n")
         f.close()
         self.logger.info("File dump completed ({} items) ...".format(len(item_ids)))
+        return
+
+
+    def insertItem(self, name, cur=None):
+        """
+        Create database item record for given database ID
+
+        This is a public function of the plugin
+
+        :param name: name of item to create a record for
+        :param cur: A database cursor object if available (optional)
+
+        :return: ID within the database
+        :rtype: int
+        """
+        id = self._fetchone("SELECT MAX(id) FROM {item};", cur=cur)
+        self._execute(self._prepare("INSERT INTO {item}(id, name) VALUES(:id, :name);"),
+                      {'id': 1 if id[0] == None else id[0] + 1, 'name': name}, cur=cur)
+        id = self._fetchone("SELECT id FROM {item} where name = :name;", {'name': name}, cur=cur)
+        return int(id[0])
+
+
+    def updateItem(self, id, time, duration=0, val=None, it=None, changed=None, cur=None):
+        """
+        Update database item record for given database ID
+
+        This is a public function of the plugin
+
+        :param id: Id of the item within the database
+        :param time: Time for the given value
+        :param duration: Time duration for the given value
+        :param val: The value to write to the database
+        :param it: The item type of the value ('str', 'num', 'bool')
+        :param changed: Time of change
+        :param cur: A database cursor object if available (optional)
+        """
+        params = {'id': id, 'time': time, 'changed': changed}
+        params.update(self._item_value_tuple(it, val))
+        self._execute(self._prepare(
+            "UPDATE {item} SET time = :time, val_str = :val_str, val_num = :val_num, val_bool = :val_bool, changed = :changed WHERE id = :id;"),
+            params, cur=cur)
+
+
+    def readItem(self, id, cur=None):
+        """
+
+        This is a public function of the plugin
+
+        :param id: Id of the item within the database
+        :param cur: A database cursor object if available (optional)
+
+        :return: Data for the selected item
+        """
+        params = {'id': id}
+        if type(id) == str:
+            return self._fetchone("SELECT {item_columns} from {item} WHERE name = :id;", params, cur=cur)
+        return self._fetchone("SELECT {item_columns} from {item} WHERE id = :id;", params, cur=cur)
+
+
+    def readItems(self, cur=None):
+        """
+        Read database item records
+
+        This is a public function of the plugin
+
+        :param cur: A database cursor object if available (optional)
+
+        :return: selected items
+        """
+        return self._fetchall("SELECT {item_columns} from {item};", cur=cur)
+
+
+    def readItemCount(self, cur=None):
+        """
+        Read database log count for given database ID
+
+        This is a public function of the plugin
+
+        :param cur: A database cursor object if available (optional)
+
+        :return: Number of log records for the database ID
+        """
+        if self._db.connected():
+            params = {}
+            return self._fetchall("SELECT count(*) FROM {item};", params, cur=cur)[0][0]
+        return '-'
+
+
+    def deleteItem(self, id, cur=None):
+        """
+        Delete database item record for given database ID
+
+        This is a public function of the plugin
+
+        :param id: Database ID of item to delete the record for
+        :param cur: A database cursor object if available (optional)
+        """
+        params = {'id': id}
+        self.deleteLog(id, cur=cur)
+        self._execute(self._prepare("DELETE FROM {item} WHERE id = :id;"), params, cur=cur)
+
+
+    def insertLog(self, id, time, duration=0, val=None, it=None, changed=None, cur=None):
+        """
+        Create database log record for given database ID
+
+        This is a public function of the plugin
+
+        :param id: Database ID of item to create a record for
+        :param time: Time for the given value
+        :param duration: Time duration for the given value
+        :param val: The value to write to the database
+        :param it: The item type of the value ('str', 'num', 'bool')
+        :param changed: Time of change
+        :param cur: A database cursor object if available (optional)
+        """
+        params = {'id': id, 'time': time, 'changed': changed, 'duration': duration}
+        params.update(self._item_value_tuple(it, val))
+        self._execute(self._prepare(
+            "INSERT INTO {log}(item_id, time, val_str, val_num, val_bool, duration, changed) VALUES (:id,:time,:val_str,:val_num,:val_bool,:duration,:changed);"),
+            params, cur=cur)
+        return
+
+
+    def updateLog(self, id, time, duration=0, val=None, it=None, changed=None, cur=None):
+        """
+        Update database log record for given database ID
+
+        This is a public function of the plugin
+
+        :param id: Database ID of item to update the record for
+        :param time: Time for the given value
+        :param duration: Time duration for the given value
+        :param val: The value to write to the database
+        :param it: The item type of the value ('str', 'num', 'bool')
+        :param changed: Time of change
+        :param cur: A database cursor object if available (optional)
+        """
+        params = {'id': id, 'time': time, 'changed': changed, 'duration': duration}
+        params.update(self._item_value_tuple(it, val))
+        self._execute(self._prepare(
+            "UPDATE {log} SET duration = :duration, val_str = :val_str, val_num = :val_num, val_bool = :val_bool, changed = :changed WHERE item_id = :id AND time = :time;"),
+            params, cur=cur)
+        return
+
+
+    def readLog(self, id, time, cur=None):
+        """
+        Read database log record for given database ID
+
+        This is a public function of the plugin
+
+        :param id: Database ID of item to read the record for
+        :param time: Time for the given value
+        :param cur: A database cursor object if available (optional)
+
+        :return: Log record for the database ID
+        """
+        params = {'id': id, 'time': time}
+        return self._fetchall("SELECT {log_columns} FROM {log} WHERE item_id = :id AND time = :time;", params, cur=cur)
+
+
+    def readLogs(self, id, time=None, time_start=None, time_end=None, changed=None, changed_start=None,
+                 changed_end=None, cur=None):
+        """
+        Read database log records for given database ID
+
+        This is a public function of the plugin
+
+        :param id: Database ID of item to read the records for
+        :param time: Restrict reading of records to given time (optional)
+        :param time_start: Restrict reading of records to given start time (optional)
+        :param time_end: Restrict reading of records to given end time (optional)
+        :param changed: Restrict reading of records to given change time (optional)
+        :param changed_start: Restrict reading of records to given start time of changes (optional)
+        :param changed_end: Restrict reading of records to given end time of changes (optional)
+        :param cur: A database cursor object if available (optional)
+
+        :return: log records
+        """
+        condition, params = self._slice_condition(id, time=time, time_start=time_start, time_end=time_end,
+                                                  changed=changed, changed_start=changed_start, changed_end=changed_end)
+        return self._fetchall("SELECT {log_columns} FROM {log} WHERE " + condition, params, cur=cur)
+
+
+    def readOldestLog(self, id, cur=None):
+        """
+        Read the oldest log record for given database ID
+
+        This is a public function of the plugin
+
+        :param id: Database ID of item to read the record for
+        :param time: Time for the given value
+        :param cur: A database cursor object if available (optional)
+
+        :return: Log record for the database ID
+        """
+        params = {'id': id}
+        return self._fetchall("SELECT min(time) FROM {log} WHERE item_id = :id;", params, cur=cur)[0][0]
+
+
+    def readLogCount(self, id, cur=None):
+        """
+        Read database log count for given database ID
+
+        This is a public function of the plugin
+
+        :param id: Database ID of item to read the record for
+        :param cur: A database cursor object if available (optional)
+
+        :return: Number of log records for the database ID
+        """
+        params = {'id': id}
+        result = self._fetchall("SELECT count(*) FROM {log} WHERE item_id = :id;", params, cur=cur)
+        try:
+            return result[0][0]
+        except Exception as e:
+            self.logger.error("readLogCount: result={} - Exception: {}".format(result, e))
+        return 0
+
+
+    def deleteLog(self, id, time=None, time_start=None, time_end=None, changed=None, changed_start=None,
+                  changed_end=None, cur=None, with_commit=True):
+        """
+        Delete database log records for given item (database ID)
+
+        This is a public function of the plugin
+
+        :param id: Database ID of item to delete the records for
+        :param time: Restrict deletion of records to given time (optional)
+        :param time_start: Restrict deletion of records to given start time (optional)
+        :param time_end: Restrict deletion of records to given end time (optional)
+        :param changed: Restrict deletion of records to given change time (optional)
+        :param changed_start: Restrict deletion of records to given start time of changes (optional)
+        :param changed_end: Restrict deletion of records to given end time of changes (optional)
+        :param cur: A database cursor object if available (optional)
+        :return:
+        """
+        condition, params = self._slice_condition(id, time=time, time_start=time_start, time_end=time_end,
+                                                  changed=changed, changed_start=changed_start, changed_end=changed_end)
+        self._execute(self._prepare("DELETE FROM {log} WHERE " + condition), params, cur=cur)
+        if with_commit:
+            self._db.commit()
+        self._item_logcount[id] = self.readLogCount(id)
+        return
+
 
     def cleanup(self):
+        """
+        Cleanup database
+        deletes item/log records in the database if the corresponding item does not exist any more
+
+        This is a public function of the plugin
+
+        :return:
+        """
+        self.cleanup_active = True
+        self.logger.info("Database cleanup started (removal of entries without defined item)")
         items = [item.id() for item in self._buffer]
         if not self._db.lock(60):
             self.logger.error("Can not acquire lock for database cleanup")
+            self.cleanup_active = False
             return
         cur = self._db.cursor()
         try:
@@ -213,75 +635,13 @@ class Database(SmartPlugin):
             self.logger.error("Database cleanup failed: {}".format(e))
         cur.close()
         self._db.release()
+        self.logger.info("Database cleanup finished")
+        self.cleanup_active = False
+        return
 
-    def id(self, item, create=True, cur=None):
-        id = self.readItem(str(item.id()), cur=cur)
 
-        if id is None and create == True:
-            id = [self.insertItem(item.id(), cur)]
-
-        return None if id == None else int(id[COL_ITEM_ID])
-
-    def insertItem(self, name, cur=None):
-        id = self._fetchone("SELECT MAX(id) FROM {item};", cur=cur)
-        self._execute(self._prepare("INSERT INTO {item}(id, name) VALUES(:id, :name);"),
-                      {'id': 1 if id[0] == None else id[0] + 1, 'name': name}, cur=cur)
-        id = self._fetchone("SELECT id FROM {item} where name = :name;", {'name': name}, cur=cur)
-        return int(id[0])
-
-    def updateItem(self, id, time, duration=0, val=None, it=None, changed=None, cur=None):
-        params = {'id': id, 'time': time, 'changed': changed}
-        params.update(self._item_value_tuple(it, val))
-        self._execute(self._prepare(
-            "UPDATE {item} SET time = :time, val_str = :val_str, val_num = :val_num, val_bool = :val_bool, changed = :changed WHERE id = :id;"),
-            params, cur=cur)
-
-    def readItem(self, id, cur=None):
-        params = {'id': id}
-        if type(id) == str:
-            return self._fetchone("SELECT {item_columns} from {item} WHERE name = :id;", params, cur=cur)
-        return self._fetchone("SELECT {item_columns} from {item} WHERE id = :id;", params, cur=cur)
-
-    def readItems(self, cur=None):
-        return self._fetchall("SELECT {item_columns} from {item};", cur=cur)
-
-    def deleteItem(self, id, cur=None):
-        params = {'id': id}
-        self.deleteLog(id, cur=cur)
-        self._execute(self._prepare("DELETE FROM {item} WHERE id = :id;"), params, cur=cur)
-
-    def insertLog(self, id, time, duration=0, val=None, it=None, changed=None, cur=None):
-        params = {'id': id, 'time': time, 'changed': changed, 'duration': duration}
-        params.update(self._item_value_tuple(it, val))
-        self._execute(self._prepare(
-            "INSERT INTO {log}(item_id, time, val_str, val_num, val_bool, duration, changed) VALUES (:id,:time,:val_str,:val_num,:val_bool,:duration,:changed);"),
-            params, cur=cur)
-
-    def updateLog(self, id, time, duration=0, val=None, it=None, changed=None, cur=None):
-        params = {'id': id, 'time': time, 'changed': changed, 'duration': duration}
-        params.update(self._item_value_tuple(it, val))
-        self._execute(self._prepare(
-            "UPDATE {log} SET duration = :duration, val_str = :val_str, val_num = :val_num, val_bool = :val_bool, changed = :changed WHERE item_id = :id AND time = :time;"),
-            params, cur=cur)
-
-    def readLog(self, id, time, cur=None):
-        params = {'id': id, 'time': time}
-        return self._fetchall("SELECT {log_columns} FROM {log} WHERE item_id = :id AND time = :time;", params, cur=cur)
-
-    def readLogs(self, id, time=None, time_start=None, time_end=None, changed=None, changed_start=None,
-                 changed_end=None, cur=None):
-        condition, params = self._slice_condition(id, time=time, time_start=time_start, time_end=time_end,
-                                                  changed=changed, changed_start=changed_start, changed_end=changed_end)
-        return self._fetchall("SELECT {log_columns} FROM {log} WHERE " + condition, params, cur=cur)
-
-    def deleteLog(self, id, time=None, time_start=None, time_end=None, changed=None, changed_start=None,
-                  changed_end=None, cur=None):
-        condition, params = self._slice_condition(id, time=time, time_start=time_start, time_end=time_end,
-                                                  changed=changed, changed_start=changed_start, changed_end=changed_end)
-        self._execute(self._prepare("DELETE FROM {log} WHERE " + condition), params, cur=cur)
-
-    def _slice_condition(self, id, time=None, time_start=None, time_end=None, changed=None, changed_start=None,
-                         changed_end=None):
+    def _slice_condition(self, id, time=None, time_start=None, time_end=None, changed=None,
+                         changed_start=None, changed_end=None):
         params = {
             'id': id,
             'time': time, 'time_flag': 1 if time == None else 0,
@@ -301,171 +661,31 @@ class Database(SmartPlugin):
                     "(changed < :changed_end   OR 1 = :changed_end_flag  );    "
         return (condition, params)
 
-    def db(self):
-        return self._db
 
-    def _item_value_tuple(self, item_type, item_val):
-        if item_type == 'num':
-            val_str = None
-            val_num = float(item_val)
-            val_bool = int(bool(item_val))
-        elif item_type == 'bool':
-            val_str = None
-            val_num = float(item_val)
-            val_bool = int(bool(item_val))
-        else:
-            val_str = str(item_val)
-            val_num = None
-            val_bool = int(bool(item_val))
-
-        return {'val_str': val_str, 'val_num': val_num, 'val_bool': val_bool}
-
-    def _item_value_tuple_rev(self, item_type, item_val_tuple):
-        if item_type == 'num':
-            return None if item_val_tuple[1] is None else float(item_val_tuple[1])
-        elif item_type == 'bool':
-            return None if item_val_tuple[2] is None else bool(int(item_val_tuple[2]))
-        else:
-            return None if item_val_tuple[0] is None else str(item_val_tuple[0])
-
-    def _datetime(self, ts):
-        return datetime.datetime.fromtimestamp(ts / 1000, self.shtime.tzinfo())
-
-    def _prepare(self, query):
-        return query.format(**self._replace)
-
-    def _dump(self, finalize=False, items=None):
-        if self._dump_lock.acquire(timeout=60) == False:
-            self.logger.warning('Skipping dump, since other dump running!')
-            return
-
-        self.logger.debug('Starting dump')
-
-        if not self._initialize():
-            self._dump_lock.release()
-            return
-
-        if items == None:
-            self._buffer_lock.acquire()
-            items = list(self._buffer.keys())
-            self._buffer_lock.release()
-
-        for item in items:
-            tuples = self._buffer_remove(item)
-
-            if len(tuples) or finalize:
-
-                # Test connectivity
-                if self._db.verify(5) == 0:
-                    self._buffer_insert(item, tuples)
-                    self.logger.error("Database: Connection not recovered, skipping dump");
-                    self._dump_lock.release()
-                    return
-
-                # Can't lock, restore data
-                if not self._db.lock(300):
-                    self._buffer_insert(item, tuples)
-                    if finalize:
-                        self.logger.error(
-                            "Database: can't dump {} items due to fail to acquire lock!".format(len(self._buffer)))
-                    else:
-                        self.logger.error(
-                            "Database: can't dump {} items due to fail to acquire lock - will try on next dump".format(
-                                len(self._buffer)))
-                    self._dump_lock.release()
-                    return
-
-                cur = None
-                try:
-                    changed = self._timestamp(self.shtime.now())
-
-                    # Get current values of item
-                    start = self._timestamp(item.last_change())
-                    end = changed
-                    val = item()
-
-                    # When finalizing (e.g. plugin shutdown) add current value to item and log
-                    if finalize:
-                        _update = (end, val, changed)
-
-                        current = (start, end - start, val)
-                        tuples.append(current)
-
-                    else:
-                        _update = (start, val, changed)
-
-                    cur = self._db.cursor()
-                    id = self.id(item, cur=cur)
-
-                    # Dump tuples
-                    self.logger.debug('Dumping {}/{} with {} values'.format(item.id(), id, len(tuples)))
-
-                    for t in tuples:
-                        if len(self.readLog(id, t[0], cur)):
-                            self.updateLog(id, t[0], t[1], t[2], item.type(), changed, cur)
-                        else:
-                            self.insertLog(id, t[0], t[1], t[2], item.type(), changed, cur)
-
-                    self.updateItem(id, _update[0], None, _update[1], item.type(), _update[2], cur)
-
-                    cur.close()
-                    cur = None
-
-                    self._db.commit()
-                except Exception as e:
-                    self.logger.warning("Database: Problem dumping {}: {}".format(item.id(), e))
-                    try:
-                        self._db.rollback()
-                    except Exception as er:
-                        self._buffer_insert(item, tuples)
-                        self.logger.warning("Database: Error rolling back: {}".format(er))
-                finally:
-                    if cur is not None:
-                        cur.close()
-                self._db.release()
-        self.logger.debug('Dump completed')
-        self._dump_lock.release()
-
-    def _buffer_remove(self, item):
-        self._buffer_lock.acquire()
-        tuples = self._buffer[item]
-        self._buffer[item] = self._buffer[item][len(tuples):]
-        self._buffer_lock.release()
-        return tuples
-
-    def _buffer_insert(self, item, tuples):
-        self._buffer_lock.acquire()
-        if item in self._buffer:
-            self._buffer[item] = tuples + self._buffer[item]
-        else:
-            self._buffer[item] = tuples
-        self._buffer_lock.release()
-        return tuples
-
-    def _expression(self, func):
-        expression = {'params': {'op': '!=', 'value': '0'}, 'finalizer': None}
-        if ':' in func:
-            expression['finalizer'] = func[:func.index(":")]
-            func = func[func.index(":") + 1:]
-        if func is 'count' or func.startswith('count'):
-            parts = re.match('(count)((<>|!=|<|=|>)(\d+))?', func)
-            func = 'count'
-            if parts and parts.group(3) is not None:
-                expression['params']['op'] = parts.group(3)
-            if parts and parts.group(4) is not None:
-                expression['params']['value'] = parts.group(4)
-        return func, expression
-
-    def _finalize(self, func, tuples):
-        if func == 'diff':
-            final_tuples = []
-            for i in range(1, len(tuples) - 1):
-                final_tuples.append((tuples[i][0], tuples[i][1] - tuples[i - 1][1]))
-            return final_tuples
-        else:
-            return tuples
+    # ------------------------------------------------------
+    #    Database specific stuff to support websocket/visu
+    # ------------------------------------------------------
 
     def _series(self, func, start, end='now', count=100, ratio=1, update=False, step=None, sid=None, item=None):
+        """
+        This method is called (via the item object) from the websocket plugin,
+        when a data series for an item is requested for the visu
+
+        It returns the data structure in the form needed by the websocket plugin to directly
+        return it to the visu
+
+        :param func:
+        :param start:
+        :param end:
+        :param count:
+        :param ratio:
+        :param update:
+        :param step:
+        :param sid:
+        :param item:
+
+        :return: data structure in the form needed by the websocket plugin return it to the visu
+        """
         init = not update
         if sid is None:
             sid = item + '|' + func + '|' + str(start) + '|' + str(end) + '|' + str(count)
@@ -519,7 +739,18 @@ class Database(SmartPlugin):
             'update': self.shtime.now() + datetime.timedelta(seconds=int(logs['step'] / 1000))
         }
 
+
     def _single(self, func, start, end='now', item=None):
+        """
+        As far as it has been checked, this method is never called.
+        It is attached to the item object but no other plugin is known that calls this method.
+
+        :param func:
+        :param start:
+        :param end:
+        :param item:
+        :return:
+        """
         func, expression = self._expression(func)
         queries = {
             'avg': self._precision_query('AVG(val_num * duration) / AVG(duration)'),
@@ -543,10 +774,37 @@ class Database(SmartPlugin):
             return
         return logs['tuples'][0][0]
 
+
+    def _expression(self, func):
+        expression = {'params': {'op': '!=', 'value': '0'}, 'finalizer': None}
+        if ':' in func:
+            expression['finalizer'] = func[:func.index(":")]
+            func = func[func.index(":") + 1:]
+        if func is 'count' or func.startswith('count'):
+            parts = re.match('(count)((<>|!=|<|=|>)(\d+))?', func)
+            func = 'count'
+            if parts and parts.group(3) is not None:
+                expression['params']['op'] = parts.group(3)
+            if parts and parts.group(4) is not None:
+                expression['params']['value'] = parts.group(4)
+        return func, expression
+
+
+    def _finalize(self, func, tuples):
+        if func == 'diff':
+            final_tuples = []
+            for i in range(1, len(tuples) - 1):
+                final_tuples.append((tuples[i][0], tuples[i][1] - tuples[i - 1][1]))
+            return final_tuples
+        else:
+            return tuples
+
+
     def _precision_query(self, query):
         if self._precision >= 0:
             return 'ROUND({}, {})'.format(query, self._precision)
         return query
+
 
     def _fetch_log(self, item, columns, start, end, step=None, count=100, group='', order=''):
         _item = self.items.return_item(item)
@@ -616,19 +874,338 @@ class Database(SmartPlugin):
             'count': count
         }
 
+
+    def _parse_ts(self, dts):
+        """
+        Parse a duration-timestamp in the form '1w 2y 3h 1d 39i 15s' and return the duration in seconds as
+        an interger value
+
+        :return:
+        """
+        try:
+            return int(dts)
+        except:
+            pass
+        ts = self._timestamp(self.shtime.now())
+
+        duration = 0
+        if isinstance(dts, str):
+            if dts.find('now') >= 0:
+                duration = 0
+            else:
+                for frame in dts.split(' '):
+                    duration += self._parse_single(frame)
+
+        if duration < 0:
+            duration = 0
+
+        ts = ts - int(duration)
+        return ts
+
+
+    def _parse_single(self, frame):
+        """
+        Parse one frame of a duration-timestamp to a duration (in seconds)
+
+        :param frame:
+        :return:
+        """
+        second = 1000
+        minute = 60 * 1000
+        hour = 60 * minute
+        day = 24 * hour
+        week = 7 * day
+        month = 30 * day
+        year = 365 * day
+
+        _frames = {'s': second, 'i': minute, 'h': hour, 'd': day, 'w': week, 'm': month, 'y': year}
+        try:
+            return int(frame)
+        except:
+            pass
+        ts = self._timestamp(self.shtime.now())
+        # if frame == 'now':
+        #     fac = 0
+        #     frame = 0
+        if frame[-1] in _frames:
+            fac = _frames[frame[-1]]
+            frame = frame[:-1]
+        else:
+            # return parameter unchaned
+            return frame
+        try:
+            ts = int(float(frame) * fac)
+        except:
+            self.logger.warning("Database: Unknown time frame '{0}'".format(frame))
+        return ts
+
+
+    # def _parse_ts(self, frame):
+    #     """
+    #     Parse one frame of a duration-timestamp to a duration (in seconds)
+    #
+    #     :param frame:
+    #     :return:
+    #     """
+    #     minute = 60 * 1000
+    #     hour = 60 * minute
+    #     day = 24 * hour
+    #     week = 7 * day
+    #     month = 30 * day
+    #     year = 365 * day
+    #
+    #     _frames = {'i': minute, 'h': hour, 'd': day, 'w': week, 'm': month, 'y': year}
+    #     try:
+    #         return int(frame)
+    #     except:
+    #         pass
+    #     ts = self._timestamp(self.shtime.now())
+    #     if frame == 'now':
+    #         fac = 0
+    #         frame = 0
+    #     elif frame[-1] in _frames:
+    #         fac = _frames[frame[-1]]
+    #         frame = frame[:-1]
+    #     else:
+    #         # return parameter unchaned
+    #         return frame
+    #     try:
+    #         ts = ts - int(float(frame) * fac)
+    #     except:
+    #         self.logger.warning("Database: Unknown time frame '{0}'".format(frame))
+    #     return ts
+
+
+    # --------------------------------------------------------
+    #    Database buffer routines (dump, insert and remove)
+    # --------------------------------------------------------
+
+    def _dump(self, finalize=False, items=None):
+        """
+        Dump data to database file
+
+        This method is periodically called by the sheduler of SmartHomeNG
+
+        :param finalize:
+        :param items:
+        :return:
+        """
+        if self._dump_lock.acquire(timeout=60) == False:
+            self.logger.warning('Skipping dump, since an other database operation running! Data is buffered and dumped later.')
+            return
+
+        self.logger.debug('Starting dump')
+
+        if not self._initialize_db():
+            self._dump_lock.release()
+            return
+
+        if items == None:
+            # No item given on method call -> dump content of the buffer
+            self._buffer_lock.acquire()
+            items = list(self._buffer.keys())
+            self._buffer_lock.release()
+
+        for item in items:
+            tuples = self._buffer_remove(item)
+
+            if len(tuples) or finalize:
+
+                # Test connectivity
+                if self._db.verify(5) == 0:
+                    self._buffer_insert(item, tuples)
+                    self.logger.error("Connection not recovered, skipping dump");
+                    self._dump_lock.release()
+                    return
+
+                # Can't lock, restore data
+                if not self._db.lock(300):
+                    self._buffer_insert(item, tuples)
+                    if finalize:
+                        self.logger.error(
+                            "Can't dump {} items due to fail to acquire lock!".format(len(self._buffer)))
+                    else:
+                        self.logger.error(
+                            "Can't dump {} items due to fail to acquire lock - will try on next dump".format(
+                                len(self._buffer)))
+                    self._dump_lock.release()
+                    return
+
+#                if self.has_iattr(item.conf, 'database_acl'):
+#                    acl = self.get_iattr_value(item.conf, 'database_acl').lower()
+#                    self.logger.info("_dump: Dumping item '{}', database_acl = {}".format(item, acl))
+
+                cur = None
+                try:
+                    changed = self._timestamp(self.shtime.now())
+
+                    # Get current values of item
+                    start = self._timestamp(item.last_change())
+                    end = changed
+                    val = item()
+
+                    # When finalizing (e.g. plugin shutdown) add current value to item and log
+                    if finalize:
+                        _update = (end, val, changed)
+
+                        current = (start, end - start, val)
+                        tuples.append(current)
+
+                    else:
+                        _update = (start, val, changed)
+
+                    cur = self._db.cursor()
+                    id = self.id(item, cur=cur)
+
+                    # Dump tuples
+                    self.logger.debug('Dumping {}/{} with {} values'.format(item.id(), id, len(tuples)))
+
+                    for t in tuples:
+                        if len(self.readLog(id, t[0], cur)):
+                            self.updateLog(id, t[0], t[1], t[2], item.type(), changed, cur)
+                        else:
+                            self.insertLog(id, t[0], t[1], t[2], item.type(), changed, cur)
+
+                    self.updateItem(id, _update[0], None, _update[1], item.type(), _update[2], cur)
+
+                    cur.close()
+                    cur = None
+
+                    self._db.commit()
+                except Exception as e:
+                    self.logger.warning("Problem dumping {}: {}".format(item.id(), e))
+                    try:
+                        self._db.rollback()
+                    except Exception as er:
+                        self._buffer_insert(item, tuples)
+                        self.logger.warning("Error rolling back: {}".format(er))
+                finally:
+                    if cur is not None:
+                        cur.close()
+                self._db.release()
+        self.logger.debug('Dump completed')
+        self._dump_lock.release()
+
+
+    def _buffer_insert(self, item, tuples):
+        self._buffer_lock.acquire()
+        if item in self._buffer:
+            self._buffer[item] = tuples + self._buffer[item]
+        else:
+            self._buffer[item] = tuples
+        self._buffer_lock.release()
+        return tuples
+
+
+    def _buffer_remove(self, item):
+        self._buffer_lock.acquire()
+        tuples = self._buffer[item]
+        self._buffer[item] = self._buffer[item][len(tuples):]
+        self._buffer_lock.release()
+        return tuples
+
+
+    # ------------------------------------------
+    #    Database maintenance stuff
+    # ------------------------------------------
+
+    def remove_older_than_maxage(self):
+        """
+        Remove log entries older than maxage of an item
+
+        Calls by scheduler
+        """
+        if self._maxage_worklist == []:
+            # Fill work list, if it is empty
+            self._maxage_worklist = [i for i in self._items_with_maxage]
+            self.logger.info("remove_older_than_maxage: Worklist filled with {} items".format(len(self._items_with_maxage)))
+
+        item = self._maxage_worklist.pop(0)
+
+        #item_id = self.id(item, create=False)
+        try:
+            item_id = self.id(item, create=False)
+        except:
+            self.logger.critical("remove_older_than_maxage: no id for item {}".format(item))
+            return
+        time_end = self.get_maxage_ts(item)
+        timestamp_end = self._timestamp(time_end)
+        self.logger.debug("remove_older_than_maxage: item = {} remove older than {}".format(item, time_end))
+
+        # delete Log entries, no direct commit - Commmit is done by the next call to _dump (to preserve SD cards)
+        self.deleteLog(item_id, time_end=timestamp_end, with_commit=False)
+
+        self._item_logcount[item_id] = self.readLogCount(item_id)
+        return
+
+    def get_maxage_ts(self, item):
+        """
+        Get the actual maxage-timestamp for a given item
+
+        :param item:
+
+        :return:
+        """
+        maxage = self.get_iattr_value(item.conf, 'database_maxage')
+        if maxage:
+            dt = self.shtime.now()
+            dt = dt - datetime.timedelta(float(maxage))
+            return dt
+        return None
+
+
+    def _count_logentries(self):
+        """
+        count number of log entries for all items in database
+
+        called by scheduler once on start
+        """
+        self.logger.info("_count_logentries: # handled items = {}".format(len(self._handled_items)))
+        for item in self._handled_items:
+            item_id = self.id(item, create=False)
+            self._item_logcount[item_id] = self.readLogCount(item_id)
+
+        return
+
+
+    # ------------------------------------------
+    #    Database specific stuff
+    # ------------------------------------------
+
+    def _initialize_db(self):
+        try:
+            if not self._db.connected():
+                self._db.connect()
+            if not self._db_initialized:
+                self._db.setup(
+                    {i: [self._prepare(query[0]), self._prepare(query[1])] for i, query in self._setup.items()})
+                self._db_initialized = True
+        except Exception as e:
+            self.logger.error("Database: Initialization failed: {}".format(e))
+            return False
+        return True
+
+
+    def _prepare(self, query):
+        return query.format(**self._replace)
+
+
+    def _execute(self, query, params, cur=None):
+        self._query(self._db.execute, query, params, cur)
+
+
     def _fetchone(self, query, params={}, cur=None):
         tuples = self._query(self._db.fetchone, query, params, cur)
         return tuples
+
 
     def _fetchall(self, query, params={}, cur=None):
         tuples = self._query(self._db.fetchall, query, params, cur)
         return None if tuples is None else list(tuples)
 
-    def _execute(self, query, params, cur=None):
-        self._query(self._db.execute, query, params, cur)
 
     def _query(self, func, query, params, cur=None):
-        if not self._initialize():
+        if not self._initialize_db():
             return None
         if cur is None:
             if self._db.verify(5) == 0:
@@ -651,235 +1228,83 @@ class Database(SmartPlugin):
         self.logger.debug("Database: Fetch {}: {}".format(query_readable, tuples))
         return tuples
 
-    def _initialize(self):
-        try:
-            if not self._db.connected():
-                self._db.connect()
-            if not self._initialized:
-                self._db.setup(
-                    {i: [self._prepare(query[0]), self._prepare(query[1])] for i, query in self._setup.items()})
-                self._initialized = True
-        except Exception as e:
-            self.logger.error("Database: Initialization failed: {}".format(e))
-            return False
-        return True
 
-    def _parse_ts(self, frame):
-        minute = 60 * 1000
-        hour = 60 * minute
-        day = 24 * hour
-        week = 7 * day
-        month = 30 * day
-        year = 365 * day
+    # ------------------------------------------
+    #    conversion routines
+    # ------------------------------------------
 
-        _frames = {'i': minute, 'h': hour, 'd': day, 'w': week, 'm': month, 'y': year}
-        try:
-            return int(frame)
-        except:
-            pass
-        ts = self._timestamp(self.shtime.now())
-        if frame == 'now':
-            fac = 0
-            frame = 0
-        elif frame[-1] in _frames:
-            fac = _frames[frame[-1]]
-            frame = frame[:-1]
+    def _item_value_tuple(self, item_type, item_val):
+        """
+        Convert item type and value to tuple for database
+
+        :param item_type:
+        :param item_val:
+        :return:
+        """
+        if item_type == 'num':
+            val_str = None
+            val_num = float(item_val)
+            val_bool = int(bool(item_val))
+        elif item_type == 'bool':
+            val_str = None
+            val_num = float(item_val)
+            val_bool = int(bool(item_val))
         else:
-            return frame
-        try:
-            ts = ts - int(float(frame) * fac)
-        except:
-            self.logger.warning("Database: Unknown time frame '{0}'".format(frame))
-        return ts
+            val_str = str(item_val)
+            val_num = None
+            val_bool = int(bool(item_val))
+
+        return {'val_str': val_str, 'val_num': val_num, 'val_bool': val_bool}
+
+
+    def _item_value_tuple_rev(self, item_type, item_val_tuple):
+        """
+        Convert tuple to item value
+
+        :param item_type:
+        :param item_val_tuple:
+        :return:
+        """
+        if item_type == 'num':
+            return None if item_val_tuple[1] is None else float(item_val_tuple[1])
+        elif item_type == 'bool':
+            return None if item_val_tuple[2] is None else bool(int(item_val_tuple[2]))
+        else:
+            return None if item_val_tuple[0] is None else str(item_val_tuple[0])
+
+
+    def _datetime(self, ts):
+        """
+        Get datetime from timestamp
+
+        :param ts:
+        :return:
+        """
+        return datetime.datetime.fromtimestamp(ts / 1000, self.shtime.tzinfo())
+
 
     def _timestamp(self, dt):
+        """
+        Get timestamp from datetime
+
+        :param dt:
+        :return:
+        """
         return int(time.mktime(dt.timetuple())) * 1000 + int(dt.microsecond / 1000)
 
-    def init_webinterface(self):
-        """"
-        Initialize the web interface for this plugin
 
-        This method is only needed if the plugin is implementing a web interface
+    def _seconds(self, ms):
         """
-        try:
-            self.mod_http = Modules.get_instance().get_module(
-                'http')  # try/except to handle running in a core version that does not support modules
-        except:
-            self.mod_http = None
-        if self.mod_http == None:
-            self.logger.error("Plugin '{}': Not initializing the web interface".format(self.get_shortname()))
-            return False
+        Get seconds (rounded) from milliseconds
 
-        # set application configuration for cherrypy
-        webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
-        config = {
-            '/': {
-                'tools.staticdir.root': webif_dir,
-            },
-            '/static': {
-                'tools.staticdir.on': True,
-                'tools.staticdir.dir': 'static'
-            }
-        }
-
-        # Register the web interface as a cherrypy app
-        self.mod_http.register_webif(WebInterface(webif_dir, self),
-                                     self.get_shortname(),
-                                     config,
-                                     self.get_classname(), self.get_instance_name(),
-                                     description='')
-
-        return True
-
-
-# ------------------------------------------
-#    Webinterface of the plugin
-# ------------------------------------------
-
-import cherrypy
-import csv
-from jinja2 import Environment, FileSystemLoader
-
-
-class WebInterface(SmartPluginWebIf):
-
-    def __init__(self, webif_dir, plugin):
+        :param dt:
+        :return:
         """
-        Initialization of instance of class WebInterface
-
-        :param webif_dir: directory where the webinterface of the plugin resides
-        :param plugin: instance of the plugin
-        :type webif_dir: str
-        :type plugin: object
-        """
-        self.logger = plugin.logger
-        self.webif_dir = webif_dir
-        self.plugin = plugin
-        self.items = Items.get_instance()
-
-        self.tplenv = self.init_template_environment()
-
-    @cherrypy.expose
-    def index(self, reload=None, action=None, item_id=None, item_path=None, day=None, month=None, year=None,
-              time_orig=None, changed_orig=None):
-        """
-        Build index.html for cherrypy
-
-        Render the template and return the html file to be delivered to the browser
-
-        :return: contents of the template after beeing rendered
-        """
-        if item_path is not None:
-            item = self.plugin.items.return_item(item_path)
-        delete_triggered = False
-        if action is not None:
-            if action == "delete_log" and item_id is not None:
-                if time_orig is not None and changed_orig is not None:
-                    self.plugin.deleteLog(item_id, time=time_orig, changed=changed_orig)
-                    action = "item_details"
-                else:
-                    self.plugin.deleteLog(item_id)
-                delete_triggered = True
-            if action == "item_details" and item_id is not None:
-                if day is not None and month is not None and year is not None:
-                    time_start = time.mktime(datetime.datetime.strptime("%s/%s/%s" % (month, day, year),
-                                                                        "%m/%d/%Y").timetuple()) * 1000
-                else:
-                    now = self.plugin.shtime.now()
-                    time_start = time.mktime(datetime.datetime.strptime("%s/%s/%s" % (now.month, now.day, now.year),
-                                                                        "%m/%d/%Y").timetuple()) * 1000
-                time_end = time_start + 24 * 60 * 60 * 1000
-                tmpl = self.tplenv.get_template('item_details.html')
-
-                rows = self.plugin.readLogs(item_id, time_start=time_start, time_end=time_end)
-                log_array = []
-                for row in rows:
-                    value_dict = {}
-                    for key in [COL_LOG_TIME, COL_LOG_ITEM_ID, COL_LOG_DURATION, COL_LOG_VAL_STR, COL_LOG_VAL_NUM,
-                                COL_LOG_VAL_BOOL, COL_LOG_CHANGED]:
-                        if key not in [COL_LOG_TIME, COL_LOG_CHANGED]:
-                            value_dict[key] = row[key]
-                        else:
-                            value_dict[key] = datetime.datetime.fromtimestamp(row[key] / 1000,
-                                                                              tz=self.plugin.shtime.tzinfo())
-                            value_dict["%s_orig" % key] = row[key]
-
-                    log_array.append(value_dict)
-                reversed_arr = log_array[::-1]
-                return tmpl.render(p=self.plugin,
-                                   items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path']),
-                                                reverse=False), item=item,
-                                   tabcount=2, action=action, item_id=item_id, item_path=item_path,
-                                   language=self.plugin.get_sh().get_defaultlanguage(), now=self.plugin.shtime.now(),
-                                   log_array=reversed_arr, day=day, month=month, year=year,
-                                   delete_triggered=delete_triggered)
-
-        tmpl = self.tplenv.get_template('index.html')
-        return tmpl.render(p=self.plugin,
-                           items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path']), reverse=False),
-                           tabcount=2, action=action, item_id=item_id, delete_triggered=delete_triggered,
-                           language=self.plugin.get_sh().get_defaultlanguage())
-
-    @cherrypy.expose
-    def item_csv(self, item_id):
-        """
-        Returns CSV Output for item log data
-
-        :return: item log data as CSV
-        """
-        if item_id is None:
-            return None
+        if ms:
+            return round(ms/1000, 1)
         else:
-            rows = self.plugin.readLogs(item_id)
-            log_array = []
-            for row in rows:
-                value_dict = {}
-                for key in [COL_LOG_TIME, COL_LOG_ITEM_ID, COL_LOG_DURATION, COL_LOG_VAL_STR, COL_LOG_VAL_NUM,
-                            COL_LOG_VAL_BOOL, COL_LOG_CHANGED]:
-                    value_dict[key] = row[key]
-                log_array.append(value_dict)
-            reversed_arr = log_array[::-1]
-            csv_file_path = '%s/var/db/%s_item_%s.csv' % (
-                self.plugin._sh.base_dir, self.plugin.get_instance_name(), item_id)
+            return ms
 
-            with open(csv_file_path, 'w', encoding='utf-8') as f:
-                writer = csv.writer(f, dialect="excel")
-                writer.writerow(['time', 'item_id', 'duration', 'val_str', 'val_num', 'val_bool', 'changed'])
-                for dataset in reversed_arr:
-                    writer.writerow(
-                        [dataset[0], dataset[1], dataset[2], dataset[3], dataset[4], dataset[5], dataset[6]])
+    def _len(self, l):
+        return len(l)
 
-            cherrypy.request.fileName = csv_file_path
-            cherrypy.request.hooks.attach('on_end_request', self.download_complete)
-            return cherrypy.lib.static.serve_download(csv_file_path)
-
-    def download_complete(self):
-        os.unlink(cherrypy.request.fileName)
-
-    @cherrypy.expose
-    def db_dump(self):
-        """
-        returns the smarthomeNG sqlite database as download
-        """
-
-        self.plugin.dump(
-            '%s/var/db/smarthomedb_%s.dump' % (self.plugin.get_sh().base_dir, self.plugin.get_instance_name()))
-        mime = 'application/octet-stream'
-        return cherrypy.lib.static.serve_file(
-            "%s/var/db/smarthomedb_%s.dump" % (self.plugin.get_sh().base_dir, self.plugin.get_instance_name()),
-            mime, "%s/var/db/" % self.plugin.get_sh().base_dir)
-
-    @cherrypy.expose
-    def cleanup(self):
-        self.plugin.cleanup()
-
-    @cherrypy.expose
-    @cherrypy.tools.json_out()
-    def countall(self, item_path):
-        if item_path is not None:
-            item = self.plugin.items.return_item(item_path)
-            count = item.db('countall', 0)
-            if count is not None:
-                return int(count)
-            else:
-                return 0

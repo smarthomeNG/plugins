@@ -44,10 +44,10 @@ class Pushover(SmartPlugin):
         self._po = Http()
 
     def run(self):
-        pass
+        self.alive = True
 
     def stop(self):
-        pass
+        self.alive = False
 
     def __call__(self, title=None, message='', priority=None, retry=None, expire=None, sound=None, url=None, url_title=None, device=None, userKey=None, apiKey=None, attachment=None):
         data = {}

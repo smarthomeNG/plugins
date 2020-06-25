@@ -96,7 +96,6 @@ some:
     item:
         type: num
         database: 'yes' # or 'init'
-        # database_acl: rw
 ```
 
 #### database_acl

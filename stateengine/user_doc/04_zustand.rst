@@ -55,9 +55,10 @@ Beispielsweise wird man alle Items mit den identen Sperr- und Aussetz/Suspendfun
 ausstatten wollen. Außerdem werden vermutlich mehrere Jalousien auf die selbe Weise
 auf den aktuellen Sonnenstand reagieren oder mehrere Lichter in der Nacht gemeinsam abgedunkelt.
 
-Neben der vom Plugin bereitgestellten Möglichkeit, :ref:`Zustand-Templates` zu definieren,
-bietet sich ab **smarthomeNG 1.6** das ``struct`` Attribut an. Zum einen können in der Datei ``etc/struct.yaml``
-eigene Vorlagen definiert werden, zum anderen stellt das Plugin folgende Vorlagen fix fertig bereit:
+Neben der vom Plugin bereitgestellten Möglichkeit, :ref:`Zustand-Templates` zu definieren
+und mittels ``se_use`` zu referenzieren, bietet sich ab **smarthomeNG 1.6** das ``struct`` Attribut an.
+Zum einen können in der Datei ``etc/struct.yaml`` eigene Vorlagen definiert werden,
+zum anderen stellt das Plugin folgende Vorlagen fix fertig bereit:
 
 - stateengine.state_lock: Sperren der Zustandsevaluierung, sobald das Sperritem "lock" aktiv ist.
 - stateengine.state_suspend: Aussetzen der Evaluierung für eine bestimmte Zeit bei manueller Betätigung (z.B. Taster)
