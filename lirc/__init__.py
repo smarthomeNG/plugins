@@ -3,7 +3,7 @@
 #########################################################################
 #  Copyright 2017 Nino Coric                       mail2n.coric@gmail.com
 #########################################################################
-#  This file is part of SmartHomeNG.   
+#  This file is part of SmartHomeNG.
 #
 #  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -27,7 +27,7 @@ import lib.connection
 from lib.model.smartplugin import SmartPlugin
 
 REMOTE_ATTRS = ['lirc_remote', 'lirc_key']
-class LIRC(lib.connection.Client,SmartPlugin):
+class LIRC(SmartPlugin, lib.connection.Client):
 
     ALLOW_MULTIINSTANCE = True
     PLUGIN_VERSION = "1.4.1"

@@ -28,7 +28,7 @@ import lib.log
 from lib.model.smartplugin import SmartPlugin
 
 
-class Asterisk(lib.connection.Client,SmartPlugin):
+class Asterisk(SmartPlugin, lib.connection.Client):
     ALLOW_MULTIINSTANCE = False
     PLUGIN_VERSION = "1.3.0"
 

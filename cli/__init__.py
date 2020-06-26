@@ -180,7 +180,7 @@ class CLIHandler(lib.connection.Stream):
         self.__prompt_type = 'command'
 
 
-class CLI(lib.connection.Server, SmartPlugin):
+class CLI(SmartPlugin, lib.connection.Server):
 
     PLUGIN_VERSION = '1.4.2'     # is checked against version in plugin.yaml
 
@@ -305,7 +305,7 @@ class CLICommands:
         self.add_command('rr', self._cli_lrr, 'logic', None)
         self.add_command('lt', self._cli_lt, 'logic', 'lt [logic]: trigger a logic - command alias: tr')
         self.add_command('tr', self._cli_lt, 'logic', None)
-        
+
         self.add_command('sl', self._cli_sl, 'scheduler', 'sl: list all scheduler tasks by name')
         self.add_command('st', self._cli_sl, 'scheduler', 'st: list all scheduler tasks by execution time')
         self.add_command('si', self._cli_si, 'scheduler', 'si [task]: show details for given scheduler task')
@@ -517,7 +517,7 @@ class CLICommands:
         if idle_threads > 0:
             threads.append(self.thread_sum("idle", idle_threads))
             threads_count += idle_threads
-        
+
         threads_sorted = sorted(threads, key=lambda k: k['sort'])
 
         handler.push("{0} Threads:\n".format(threads_count))

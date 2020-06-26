@@ -28,9 +28,9 @@ import datetime
 import lib.connection
 from lib.model.smartplugin import SmartPlugin
 
-ITEM_TAG = ['mpd_status','mpd_songinfo','mpd_statistic','mpd_command', 'mpd_url', 
+ITEM_TAG = ['mpd_status','mpd_songinfo','mpd_statistic','mpd_command', 'mpd_url',
             'mpd_localplaylist', 'mpd_rawcommand', 'mpd_database']
-class MPD(lib.connection.Client,SmartPlugin):
+class MPD(SmartPlugin, lib.connection.Client):
 
     ALLOW_MULTIINSTANCE = True
     PLUGIN_VERSION = "1.4.1"
