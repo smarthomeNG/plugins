@@ -2298,6 +2298,42 @@ item_structs:
                     database: init
                     database_maxage: 92
 
+                precipProbability_max:
+                    type: num
+                    ds_matchstring@instance: daily/day0/precipProbability_max
+                    database: init
+                    database_maxage: 92
+
+                precipIntensity_max:
+                    type: num
+                    ds_matchstring@instance: daily/day0/precipIntensity_max
+                    database: init
+                    database_maxage: 92
+
+                temperature_max:
+                    type: num
+                    ds_matchstring@instance: daily/day0/temperature_max
+                    database: init
+                    database_maxage: 92
+
+                precipProbability_min:
+                    type: num
+                    ds_matchstring@instance: daily/day0/precipProbability_min
+                    database: init
+                    database_maxage: 92
+
+                precipIntensity_min:
+                    type: num
+                    ds_matchstring@instance: daily/day0/precipIntensity_min
+                    database: init
+                    database_maxage: 92
+
+                temperature_min:
+                    type: num
+                    ds_matchstring@instance: daily/day0/temperature_min
+                    database: init
+                    database_maxage: 92
+
                 hours:
                     type: dict
                     ds_matchstring@instance: daily/day0/hours
@@ -2499,6 +2535,42 @@ item_structs:
                     database: init
                     database_maxage: 92
 
+                precipProbability_max:
+                    type: num
+                    ds_matchstring@instance: daily/day1/precipProbability_max
+                    database: init
+                    database_maxage: 92
+
+                precipIntensity_max:
+                    type: num
+                    ds_matchstring@instance: daily/day1/precipIntensity_max
+                    database: init
+                    database_maxage: 92
+
+                temperature_max:
+                    type: num
+                    ds_matchstring@instance: daily/day1/temperature_max
+                    database: init
+                    database_maxage: 92
+
+                precipProbability_min:
+                    type: num
+                    ds_matchstring@instance: daily/day1/precipProbability_min
+                    database: init
+                    database_maxage: 92
+
+                precipIntensity_min:
+                    type: num
+                    ds_matchstring@instance: daily/day1/precipIntensity_min
+                    database: init
+                    database_maxage: 92
+
+                temperature_min:
+                    type: num
+                    ds_matchstring@instance: daily/day1/temperature_min
+                    database: init
+                    database_maxage: 92
+
                 hours:
                     type: dict
                     ds_matchstring@instance: daily/day1/hours
@@ -2697,6 +2769,42 @@ item_structs:
                 temperature_mean:
                     type: num
                     ds_matchstring@instance: daily/day2/temperature_mean
+                    database: init
+                    database_maxage: 92
+
+                precipProbability_max:
+                    type: num
+                    ds_matchstring@instance: daily/day2/precipProbability_max
+                    database: init
+                    database_maxage: 92
+
+                precipIntensity_max:
+                    type: num
+                    ds_matchstring@instance: daily/day2/precipIntensity_max
+                    database: init
+                    database_maxage: 92
+
+                temperature_max:
+                    type: num
+                    ds_matchstring@instance: daily/day2/temperature_max
+                    database: init
+                    database_maxage: 92
+
+                precipProbability_min:
+                    type: num
+                    ds_matchstring@instance: daily/day2/precipProbability_min
+                    database: init
+                    database_maxage: 92
+
+                precipIntensity_min:
+                    type: num
+                    ds_matchstring@instance: daily/day2/precipIntensity_min
+                    database: init
+                    database_maxage: 92
+
+                temperature_min:
+                    type: num
+                    ds_matchstring@instance: daily/day2/temperature_min
                     database: init
                     database_maxage: 92
 

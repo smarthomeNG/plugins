@@ -174,14 +174,18 @@ class DarkSky(SmartPlugin):
         json_obj['hourly'].update({'icon_visu': self.map_icon(json_obj['hourly']['icon'])})
 
         # add icon_visu, date and day to each day
+        firstdate = None
         for day in json_obj['daily'].get('data'):
+            getdate = datetime.datetime.fromtimestamp(day['time']).date()
+            if firstdate is None or firstdate > getdate:
+                firstdate = getdate
             date_entry = datetime.datetime.fromtimestamp(day['time']).strftime('%d.%m.%Y')
             day_entry = datetime.datetime.fromtimestamp(day['time']).strftime('%A')
             day.update({'date': date_entry, 'weekday': day_entry, 'icon_visu': self.map_icon(day['icon'])})
             daily_data.update({datetime.datetime.fromtimestamp(day['time']).date(): day})
         json_obj['daily'].update(daily_data)
         json_obj['daily'].pop('data')
-
+        
         # add icon_visu, date and day to each hour. Add the hours to the corresponding day as well as map to hour0, hour1, etc.
         for number, hour in enumerate(json_obj['hourly'].get('data')):
             date_entry = datetime.datetime.fromtimestamp(hour['time']).strftime('%d.%m.%Y')
@@ -204,25 +208,46 @@ class DarkSky(SmartPlugin):
             json_obj['daily'][date_key]['precipProbability_mean'].append(hour.get('precipProbability'))
             json_obj['daily'][date_key]['precipIntensity_mean'].append(hour.get('precipIntensity'))
             json_obj['daily'][date_key]['temperature_mean'].append(hour.get('temperature'))
+            if json_obj['daily'][date_key].get('precipProbability_max') is None:
+                json_obj['daily'][date_key].update({'precipProbability_max': []})
+            if json_obj['daily'][date_key].get('precipIntensity_max') is None:
+                json_obj['daily'][date_key].update({'precipIntensity_max': []})
+            if json_obj['daily'][date_key].get('temperature_max') is None:
+                json_obj['daily'][date_key].update({'temperature_max': []})
+            json_obj['daily'][date_key]['precipProbability_max'].append(hour.get('precipProbability'))
+            json_obj['daily'][date_key]['precipIntensity_max'].append(hour.get('precipIntensity'))
+            json_obj['daily'][date_key]['temperature_max'].append(hour.get('temperature'))
+            if json_obj['daily'][date_key].get('precipProbability_min') is None:
+                json_obj['daily'][date_key].update({'precipProbability_min': []})
+            if json_obj['daily'][date_key].get('precipIntensity_min') is None:
+                json_obj['daily'][date_key].update({'precipIntensity_min': []})
+            if json_obj['daily'][date_key].get('temperature_min') is None:
+                json_obj['daily'][date_key].update({'temperature_min': []})
+            json_obj['daily'][date_key]['precipProbability_min'].append(hour.get('precipProbability'))
+            json_obj['daily'][date_key]['precipIntensity_min'].append(hour.get('precipIntensity'))
+            json_obj['daily'][date_key]['temperature_min'].append(hour.get('temperature'))
         json_obj['hourly'].pop('data')
 
         # add mean values to each day and replace datetime object by day0, day1, day2, etc.
-        i = 0
-        # for entry in json_obj['daily']:
-        json_keys = list(json_obj['daily'].keys())
-        for entry in json_keys:
+        for entry in json_obj['daily']:
             if isinstance(entry, datetime.date):
                 try:
                     precip_probability = json_obj['daily'][entry]['precipProbability_mean']
                     json_obj['daily'][entry]['precipProbability_mean'] = round(sum(precip_probability)/len(precip_probability), 2)
+                    json_obj['daily'][entry]['precipProbability_max'] = round(max(precip_probability), 2)
+                    json_obj['daily'][entry]['precipProbability_min'] = round(min(precip_probability), 2)
                     precip_intensity = json_obj['daily'][entry]['precipIntensity_mean']
                     json_obj['daily'][entry]['precipIntensity_mean'] = round(sum(precip_intensity)/len(precip_intensity), 2)
+                    json_obj['daily'][entry]['precipIntensity_max'] = round(max(precip_intensity), 2)
+                    json_obj['daily'][entry]['precipIntensity_min'] = round(min(precip_intensity), 2)
                     temperature = json_obj['daily'][entry]['temperature_mean']
                     json_obj['daily'][entry]['temperature_mean'] = round(sum(temperature)/len(temperature), 2)
+                    json_obj['daily'][entry]['temperature_max'] = round(max(temperature), 2)
+                    json_obj['daily'][entry]['temperature_min'] = round(min(temperature), 2)
                 except Exception:
                     pass
-                json_obj['daily']['day{}'.format(i)] = json_obj['daily'].pop(entry)
-                i += 1
+                day_entry = (entry - firstdate).days
+                json_obj['daily']['day{}'.format(day_entry)] = json_obj['daily'].pop(entry)
         return json_obj
 
     def map_icon(self, icon):
