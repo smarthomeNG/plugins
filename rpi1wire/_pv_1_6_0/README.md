@@ -9,9 +9,7 @@ We tested the plugin with the Raspberry Pi B and the temperature sensor DS18B20.
 ### Supported Hardware
 
 Tested with:
-Raspberry Pi Model B, 
-Raspberry Pi 2B, 
-Raspberry Pi 3B, 
+Raspberry Pi Model B
 1-Wire - Sensor DS18B20
 
 ## Configuration
@@ -69,28 +67,19 @@ rpi1wire:
 ## Items
 
 ```yaml
-someitem:
-    somelist:
-        rpi1wire_sys: list
+rpi1wire:
+    sensor_list:
         name: Sensor-List
         type: str
         visu_acl: ro
-    somecount:
-        rpi1wire_sys: count
-        name: Sensors
-        type: num
-        visu_acl: ro
-    someupdate:
-        rpi1wire: update
-        name: Update Sensors
-        type: bool
-        value: 0
-        visu_acl: rw
+    sensors:
+       name: Sensors
+       type: num
+       visu_acl: ro
 ```
 
-``rpi1wire_sys: list`` - contains a list of all found sensors
-``rpi1wire_sys: count`` - contains the number of sensors found
-``rpi1wire_sys: update`` - Item for searching sensors and update list and count
+``sh.rpi1wire.sensor_list()`` - contains a list of all found sensors
+``sh.rpi1wire.sensors()`` - contains the number of sensors found
 
 ### rpi1wire_id  or  rpi1wire_name
 
@@ -146,6 +135,8 @@ rpi1wire:
 
 ## Web Interfaces
 
-The Webinterface is reachable on you smarthomeNG server here :
-yourserver:8383/rpi1wire/
+A Big ToDo here: 
+- List found sensors
+- List Items affected with rpi1wire_id or rpi1wire_name
+- Show Items with rpi1wire_update
 
