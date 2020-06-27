@@ -38,7 +38,7 @@ class Rpi1Wire(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.7.0'
+    PLUGIN_VERSION = '1.6.0'
 
     def __init__(self, sh, *args, **kwargs):
         """
@@ -55,13 +55,11 @@ class Rpi1Wire(SmartPlugin):
             self.logger = logging.getLogger(__name__)
 
         self.logger.info('Init rpi1wire')
+
         # get the parameters for the plugin (as defined in metadata plugin.yaml):
         try:
             self.dirname = self.get_parameter_value('dirname')
-            if self.get_parameter_value('cycle') != None:
-                self.cycle = self.get_parameter_value('cycle')
-            else:
-                self.cycle = 120
+            self.cycle = self.get_parameter_value('cycle')
         except KeyError as e:
             self.logger.critical(
                 "Plugin '{}': Inconsistent plugin (invalid metadata definition: {} not defined)".format(self.get_shortname(), e))
@@ -72,7 +70,6 @@ class Rpi1Wire(SmartPlugin):
         self.sensors = {}
         self._sensordaten = {}
         self.values = {}
-        self.sysitems = {}
         self.update = False
         self.get_sensors()
         self.anz_sensors = len(self.sensors)
@@ -106,13 +103,16 @@ class Rpi1Wire(SmartPlugin):
         self.update_basics()
 
     def update_basics(self):
-        anz = self.get_sh().return_item(self.sysitems['count'])
-        ids = self.get_sh().return_item(self.sysitems['list'])
+        # ToDo:
+        # using "rpi1wire" is a bad idea since this is also likely used as plugin name
+        # better make it an item attribute and search for that
+        anz = self.get_sh().return_item("rpi1wire.sensors")
+        ids = self.get_sh().return_item("rpi1wire.sensor_list")
         if anz != None:
             anz(int(self.anz_sensors),'rpi1wire')
             self.logger.debug("rpi1wire-item sensors value = {0}".format(self.anz_sensors))
         if ids != None:
-            ids(str(self.sensors).replace("\'",""),'rpi1wire')
+            ids(str(self.sensors),'rpi1wire')
             self.logger.debug("rpi1wire-item sensor_list value = {0}".format(self.sensors))
 
     def stop(self):
@@ -135,23 +135,18 @@ class Rpi1Wire(SmartPlugin):
                         with the item, caller, source and dest as arguments and in case of the knx plugin the value
                         can be sent to the knx with a knx write function within the knx plugin.
         """
-            
-        if self.has_iattr(item.conf, 'rpi1wire_sys'):
-            type = self.get_iattr_value( item.conf, 'rpi1wire_sys')
-            if type == 'update':
-                self.logger.info("parse item: {}".format(item))
-                return self.update_item
-            try:
-                sitem = item._path
-                self.sysitems[type] = str(sitem)
-                self.logger.info("Item {0} zuweisung erfolgt auf Item{1}".format(item,sitem))
-            except:
-                self.logger.warning("Item {0} zuweisung fehlgeschlgen auf Item{1}".format(item,sitem))
-            return None
+        if self.has_iattr(item.conf, 'rpi1wire_update'):
+            self.logger.debug("parse item: {}".format(item))
+            ad = self.get_iattr_value( item.conf,'rpi1wire_update')
+            return self.update_item
 
         if not self.has_iattr(item.conf, 'rpi1wire_id'):
             if not self.has_iattr(item.conf, 'rpi1wire_name'):
                 return None
+
+        if not self.has_iattr(item.conf, 'rpi1wire_unit'):
+            self.logger.warning("rpi1wire_unit for {0} not defined".format(item.id()))
+            return None
 
         not_found = False
         if self.has_iattr(item.conf, 'rpi1wire_id'):
@@ -162,7 +157,7 @@ class Rpi1Wire(SmartPlugin):
                         name = sn
                         break
             except:
-                self.logger.warning("Sensor {0} as Item defind but Hardware not found".format(self.get_iattr_value( item.conf,'rpi1wire_id')))
+                self.logger.warning("Sensor {0} Hardware not found".format(self.get_iattr_value( item.conf,'rpi1wire_id')))
                 not_found = True
         else:
             if self.has_iattr(item.conf, 'rpi1wire_name'):
@@ -204,6 +199,11 @@ class Rpi1Wire(SmartPlugin):
                 self.update_sensors()
                 return None
 
+        # ToDo: Do we need the following? two lines?
+        if caller != 'plugin':
+            self.logger.info("update item: {0}".format(item.id()))
+
+
     def update_values(self):
          for sensor in self.sensors:
             id = self.sensors[sensor]
@@ -220,7 +220,7 @@ class Rpi1Wire(SmartPlugin):
             except:
                 self.logger.info("sensor {0} has no item".format(id))
 
-    def get_sensors(self): #Hier werden die angeschlossenen Sensoren gesucht und in self.sensors, self.values und self._sensordaten eingetragen
+    def get_sensors(self):
         """
         If successful returns a list of sensors starting at given param dirname
         """
@@ -247,7 +247,7 @@ class Rpi1Wire(SmartPlugin):
         else:
             self.logger.warning("rpi1wire did not find directory at {0}".format(self.dirname))
 
-    def folder_objects(self, dirname, otype="all"):  # Sucht im übergebenen Verzeichnis nach Sensoren und übergibt diese als object
+    def folder_objects(self, dirname, otype="all"):
         """
         If successful returns a list of sensors starting at given param dirname
         """
@@ -269,7 +269,7 @@ class Rpi1Wire(SmartPlugin):
             return result
 
 
-    def getvalue(self, id): #Liest den Wert des Sensors mit der übergebenen id
+    def getvalue(self, id):
         """
         reads a single sensor for a given id
         Source like here https://www.raspberrypi-spy.co.uk/2013/03/raspberry-pi-1-wire-digital-thermometer-sensor/
@@ -302,13 +302,13 @@ class Rpi1Wire(SmartPlugin):
         self.search_item()
         self.update_basics()
         self.update_values()
-        upd = self.get_sh().return_item(self.sysitems['update']) # Item zum Updaten der Sensoren
+        upd = self.get_sh().return_item("rpi1wire.update")
         if upd != None:
             upd(False,'rpi1wire')
-            self.logger.warning("{0} update value done, {1} sensors found".format(self.sysitems['update'],self.anz_sensors))
+            self.logger.info("rpi1wire-item update value done, {0} sensors found".format(self.anz_sensors))
         self.update = False
 
-    def search_item(self): #Durchsucht die items nach den Attributen des Plugins
+    def search_item(self):
         items = self.get_sh().return_items()
         for item in items:
             if self.has_iattr(item.conf, 'rpi1wire_id'):
@@ -329,25 +329,7 @@ class Rpi1Wire(SmartPlugin):
                     self._sensordaten[addr]['item'] = item
                 except:
                     self.logger.warning("Sensor {0} Hardware not found".format(name))
-            if self.has_iattr(item.conf, 'rpi1wire_sys'):
-                type = self.get_iattr_value( item.conf, 'rpi1wire_sys')
-                try:
-                    sitem = item._path
-                    self.sysitems[type] = str(sitem)
-                    self.logger.warning("Item {0} zuweisung erfolgt auf {1}".format(item,sitem))
-                except:
-                    self.logger.warning("Item {0} zuweisung fehlgeschlgen auf {1}".format(item,sitem))
         self.logger.info("{0} rpi1wire-items registriert".format(len(self._sensordaten)))
-
-
-
-    def save_sysitems(item):
-        type = self.get_iattr_value( item.conf, 'rpi1wire_sys')
-        try:
-            path = item._path
-            self.sysitems[type]['item'] = path
-        except:
-            self.logger.warning("Item {0} zuweisung fehlgeschlgen".format(item))
 
 
     def init_webinterface(self):
@@ -429,16 +411,8 @@ class WebInterface(SmartPluginWebIf):
         """
         tmpl = self.tplenv.get_template('index.html')
         # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
-        plgitems = []
-        
-        for item in self.items.return_items():
-            if any(elem in item.property.attributes  for elem in ["rpi1wire_id","rpi1wire_name","rpi1wire_sys"]):
-                plgitems.append(item)
-        return tmpl.render(p=self.plugin, items=sorted(plgitems, key=lambda k: str.lower(k['_path'])),
-                           sensors = self.plugin.sensors,
-                           classname = self.plugin._classname,
-                           cycle = self.plugin.cycle,
-                           dirname = self.plugin.dirname)
+        return tmpl.render(p=self.plugin, items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path'])))
+
 
     @cherrypy.expose
     def get_data_html(self, dataSet=None):
