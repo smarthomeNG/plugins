@@ -279,7 +279,7 @@ class Tasmota(MqttPlugin):
         :param qos:
         :param retain:
         """
-        self.logger.warning("tasmota.on_mqtt_announce: topic = '{}', payload = '{}'".format(topic, payload))
+        self.logger.info("tasmota.on_mqtt_announce: topic = '{}', payload = '{}'".format(topic, payload))
         wrk = topic.split('/')
         tasmota_topic = wrk[1]
         info_topic = wrk[2]
