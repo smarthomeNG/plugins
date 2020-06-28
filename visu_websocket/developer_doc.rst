@@ -237,6 +237,7 @@ updates for series values after a defined period of time. For example:
       "sid": "wohnung.verteilung.zaehler.wirkleistung|avg|48h|now"
     }
 
+
 series_cancel
 ~~~~~~~~~~~~~
 
@@ -249,8 +250,28 @@ subscribed to earlier.
    "cmd":"series_cancel",
    "item":"wohnung.verteilung.zaehler.wirkleistung",
    "series":"avg",
+   "start":"48h",
+   "end":"now",
+   "count":100
   }
 
+The plugin answers with:
+
+.. code-block:: JSON
+
+  {
+   "cmd":"series_cancel",
+   "result": "..."
+  }
+
+or
+
+.. code-block:: JSON
+
+  {
+   "cmd":"series_cancel",
+   "error": "..."
+  }
 
 log
 ~~~
