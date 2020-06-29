@@ -153,12 +153,11 @@ class SeState(StateEngineTools.SeItemChild):
         self._abitem.update_webif(_key_stay, False)
         self._abitem.update_webif(_key_enter, True)
         self.__actions_enter.execute(False, allow_item_repeat, self, self.__actions_enter_or_stay)
-        self._abitem.set_action_state("Webif enter_action", "add")
         self._log_debug("Update web interface enter {}", self.id)
         self._log_increase_indent()
         self._abitem.update_webif([self.id, 'actions_enter_or_stay'], self.__actions_enter_or_stay.dict_actions)
         self._abitem.update_webif([self.id, 'actions_enter'], self.__actions_enter.dict_actions)
-        self._abitem.set_action_state("Webif enter_action", "remove")
+        self._log_decrease_indent()
         self._log_decrease_indent()
 
     # run actions when staying at the state
@@ -172,12 +171,11 @@ class SeState(StateEngineTools.SeItemChild):
         self._abitem.update_webif(_key_stay, True)
         self._abitem.update_webif(_key_enter, False)
         self.__actions_stay.execute(True, allow_item_repeat, self, self.__actions_enter_or_stay)
-        self._abitem.set_action_state("Webif stay_action", "add")
         self._log_debug("Update web interface stay {}", self.id)
         self._log_increase_indent()
         self._abitem.update_webif([self.id, 'actions_enter_or_stay'], self.__actions_enter_or_stay.dict_actions)
         self._abitem.update_webif([self.id, 'actions_stay'], self.__actions_stay.dict_actions)
-        self._abitem.set_action_state("Webif stay_action", "remove")
+        self._log_decrease_indent()
         self._log_decrease_indent()
 
     # run actions when leaving the state
@@ -189,11 +187,10 @@ class SeState(StateEngineTools.SeItemChild):
             self._abitem.update_webif(_key_leave, False)
             #self._log_debug('set leave for {} to false', elem)
         self.__actions_leave.execute(False, allow_item_repeat, self)
-        self._abitem.set_action_state("Webif leave_action", "add")
-        self._log_debug("Update web interface stay {}", self.id)
+        self._log_debug("Update web interface leave {}", self.id)
         self._log_increase_indent()
         self._abitem.update_webif([self.id, 'actions_leave'], self.__actions_leave.dict_actions)
-        self._abitem.set_action_state("Webif leave_action", "remove")
+        self._log_decrease_indent()
         self._log_decrease_indent()
 
     # Read configuration from item and populate data in class

@@ -239,10 +239,10 @@ def get_original_caller(smarthome, caller, source, item=None):
         original_item = itemsApi.return_item(original_source)
         if original_item is None:
             break
-        original_changed_by = original_item.changed_by()
-        if ":" not in original_changed_by:
+        original_updated_by = original_item.property.last_update_by
+        if ":" not in original_updated_by:
             break
-        original_caller, __, original_source = original_changed_by.partition(":")
+        original_caller, __, original_source = original_updated_by.partition(":")
     if item is None:
         return original_caller, original_source
     else:

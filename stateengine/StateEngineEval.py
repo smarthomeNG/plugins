@@ -24,6 +24,7 @@ from random import randint
 import subprocess
 import datetime
 from lib.shtime import Shtime
+import threading
 
 
 class SeEval(StateEngineTools.SeItemChild):
@@ -31,10 +32,12 @@ class SeEval(StateEngineTools.SeItemChild):
     # abitem: parent SeItem instance
     def __init__(self, abitem):
         super().__init__(abitem)
+        self._eval_lock = threading.Lock()
         self.shtime = Shtime.get_instance()
 
     # Get lamella angle based on sun_altitute for sun tracking
     def sun_tracking(self):
+        self._eval_lock.acquire()
         self._log_debug("Executing method 'SunTracking()'")
         self._log_increase_indent()
 
@@ -45,6 +48,7 @@ class SeEval(StateEngineTools.SeItemChild):
         self._log_debug("Blinds at right angle to the sun at {0}°", value)
 
         self._log_decrease_indent()
+        self._eval_lock.release()
         return value
 
     # Return random integer
@@ -66,6 +70,7 @@ class SeEval(StateEngineTools.SeItemChild):
     # Return a variable
     # varname: name of variable to return
     def get_variable(self, varname):
+        self._eval_lock.acquire()
         self._log_debug("Executing method 'get_variable({0})'", varname)
         try:
             if self._abitem._initactionname and varname == 'current.action_name':
@@ -74,15 +79,19 @@ class SeEval(StateEngineTools.SeItemChild):
             else:
                 returnvalue = self._abitem.get_variable(varname)
                 self._log_debug("Return '{}' for variable {}", returnvalue, varname)
-            return returnvalue
         except Exception as ex:
+            returnvalue = None
             self._log_exception(ex)
+        finally:
+            self._eval_lock.release()
+        return returnvalue
 
     # Return the absolute id of an item related to the StateEngine Object Item
     # item_id: Relative id of item whose absolute id should be returned
     #
     # See description of StateEngineItem.SeItem.return_item for details
     def get_relative_itemid(self, subitem_id):
+        self._eval_lock.acquire()
         self._log_debug("Executing method 'get_relative_itemid({0})'", subitem_id)
         try:
             if self._abitem._initstate and subitem_id == '..state_name':
@@ -91,15 +100,19 @@ class SeEval(StateEngineTools.SeItemChild):
             else:
                 returnvalue = self._abitem.return_item(subitem_id).property.path
                 self._log_info("Return item path '{0}'", returnvalue)
-            return returnvalue
         except Exception as ex:
+            returnvalue = None
             self._log_warning("Problem evaluating name of {0}: {1}", subitem_id, ex)
+        finally:
+            self._eval_lock.release()
+        return returnvalue
 
     # Return the item object related to the StateEngine Object Item
     # item_id: Relative id of item whose absolute item object should be returned
     #
     # See description of StateEngineItem.SeItem.return_item for details
     def get_relative_item(self, subitem_id):
+        self._eval_lock.acquire()
         self._log_debug("Executing method 'get_relative_item({0})'", subitem_id)
         try:
             if self._abitem._initstate and subitem_id == '..state_name':
@@ -108,15 +121,19 @@ class SeEval(StateEngineTools.SeItemChild):
             else:
                 returnvalue = self._abitem.return_item(subitem_id)
                 self._log_info("Return item '{0}'", returnvalue)
-            return returnvalue
         except Exception as ex:
+            returnvalue = None
             self._log_warning("Problem evaluating item {0}: {1}", subitem_id, ex)
-
+        finally:
+            self._eval_lock.release()
+        return returnvalue
+        
     # Return the value of an item related to the StateEngine Object Item
     # item_id: Relative id of item whose value should be returned
     #
     # See description of StateEngineItem.SeItem.return_item for details
     def get_relative_itemvalue(self, subitem_id):
+        self._eval_lock.acquire()
         self._log_debug("Executing method 'get_relative_itemvalue({0})'", subitem_id)
         try:
             if self._abitem._initstate and subitem_id == '..state_name':
@@ -126,40 +143,49 @@ class SeEval(StateEngineTools.SeItemChild):
                 item = self._abitem.return_item(subitem_id)
                 returnvalue = item.property.value
                 self._log_info("Return item value '{0}' for item {1}", returnvalue, item.property.path)
-            return returnvalue
         except Exception as ex:
+            returnvalue = None
             self._log_warning("Problem evaluating value of '{0}': {1}", subitem_id, ex)
-
+        finally:
+            self._eval_lock.release()
+        return returnvalue
+        
     # Return the property of an item related to the StateEngine Object Item
     # item_id: Relative id of item whose property should be returned
     # prop: name of property, e.g. last_change. See https://www.smarthomeng.de/user/konfiguration/items_properties.html?highlight=property
     #
     # See description of StateEngineItem.SeItem.return_item for details
     def get_relative_itemproperty(self, subitem_id, prop):
+        self._eval_lock.acquire()
         self._log_debug("Executing method 'get_relative_itemproperty({0}, {1})'", subitem_id, prop)
         try:
             item = self._abitem.return_item(subitem_id)
         except Exception as ex:
             self._log_warning("Problem evaluating property of {0} - relative item might not exist. Error: {1}", subitem_id, ex)
+            self._eval_lock.release()
             return
         try:
             if self._abitem._initstate and subitem_id == '..state_name':
-                propvalue = getattr(self._abitem.return_item(self._abitem._initstate).property, prop)
+                returnvalue = getattr(self._abitem.return_item(self._abitem._initstate).property, prop)
                 self._log_info("Return item property '{0}' from {1}: {2} during init", prop,
-                               self._abitem.return_item(self._abitem._initstate).property.path, propvalue)
+                               self._abitem.return_item(self._abitem._initstate).property.path, returnvalue)
             else:
-                propvalue = getattr(item.property, prop)
-                self._log_debug("Return item property {0} from {1}: {2}", prop, item.property.path, propvalue)
-            return propvalue
+                returnvalue = getattr(item.property, prop)
+                self._log_debug("Return item property {0} from {1}: {2}", prop, item.property.path, returnvalue)
         except Exception as ex:
+            returnvalue = None
             self._log_warning("Problem evaluating property {0} of {1} - property might not exist. Error: {2}", prop, subitem_id, ex)
-
+        finally:
+            self._eval_lock.release()
+        return returnvalue
+        
     # Return an attribute of the current state declaration
     # item: can be a (relative) item or a stateengine variable
     # attrib: name of attribute, can actually be any attribute name you can think of ;)
     #
     # See description of StateEngineItem.SeItem.return_item for details
     def get_attributevalue(self, item, attrib):
+        self._eval_lock.acquire()
         self._log_debug("Executing method 'get_attributevalue({0}, {1})'", item, attrib)
         if ":" in item:
             type, item = StateEngineTools.partition_strip(item, ":")
@@ -168,23 +194,27 @@ class SeEval(StateEngineTools.SeItemChild):
             item = self._abitem.return_item(item)
         try:
             if self._abitem._initstate and item == '..state_name':
-                attribvalue = self._abitem.return_item(self._abitem._initstate).conf[attrib]
+                returnvalue = self._abitem.return_item(self._abitem._initstate).conf[attrib]
                 self._log_info("Return item attribute '{0}' from {1}: {2} during init",
-                               attrib, self._abitem.return_item(self._abitem._initstate).property.path, attribvalue)
+                               attrib, self._abitem.return_item(self._abitem._initstate).property.path, returnvalue)
             else:
-                attribvalue = item.conf[attrib]
-                #attribvalue = getattr(item.property.attributes, attrib)
-                self._log_debug("Return item attribute {0} from {1}: {2}", attrib, item.property.path, attribvalue)
-            return attribvalue
+                returnvalue = item.conf[attrib]
+                #returnvalue = getattr(item.property.attributes, attrib)
+                self._log_debug("Return item attribute {0} from {1}: {2}", attrib, item.property.path, returnvalue)
         except Exception as ex:
+            returnvalue = None
             self._log_warning("Problem evaluating attribute {0} of {1} - attribute might not exist. "
                               "Existing item attributes are: {3}. Error: {2}.", attrib, item, ex, getattr(item.property, 'attributes'))
-
+        finally:
+            self._eval_lock.release()
+        return returnvalue
+        
     # Insert end time of suspension into text
     # suspend_item_id: Item whose age is used to determine how much of the suspend time is already over
     # suspend_text: Text to insert end time of suspension into. Use strftime/strptime format codes for the end time
     #               (see https://docs.python.org/3/library/datetime.html#strftime-strptime-behavior)
     def insert_suspend_time(self, suspend_item_id, suspend_text="Ausgesetzt bis %X"):
+        self._eval_lock.acquire()
         self._log_debug("Executing method 'insert_suspend_time({0}, {1})'", suspend_item_id, suspend_text)
         self._log_increase_indent()
         try:
@@ -193,6 +223,7 @@ class SeEval(StateEngineTools.SeItemChild):
             suspend_item = self._abitem.return_item(suspend_item_id)
             if suspend_item is None:
                 text = "Eval-Method 'insert_suspend_time': Suspend Item {0} not found!"
+                self._eval_lock.release()
                 raise ValueError(text.format(suspend_item_id))
             self._log_debug("Suspend item is {0}", suspend_item.property.path)
             suspend_over = suspend_item.age()
@@ -201,12 +232,17 @@ class SeEval(StateEngineTools.SeItemChild):
             self._log_debug("Remaining suspend time: {0}", suspend_remaining)
             if suspend_remaining < 0:
                 self._log_debug("Eval-Method 'insert_suspend_time': Suspend should alredy be finished!")
+                self._eval_lock.release()
                 return "Suspend already over."
             suspend_until = self._abitem.shtime.now() + datetime.timedelta(seconds=suspend_remaining)
             self._log_debug("Suspend finished at {0}", suspend_until)
-            return suspend_until.strftime(suspend_text)
         except Exception as ex:
             self._log_exception(ex)
+            if self._eval_lock.locked():
+                self._eval_lock.release()
             return "(Error while determining text. Check log)"
         finally:
             self._log_decrease_indent()
+            if self._eval_lock.locked():
+                self._eval_lock.release()
+        return suspend_until.strftime(suspend_text)

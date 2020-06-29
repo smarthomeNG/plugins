@@ -388,8 +388,13 @@ class SeValue(StateEngineTools.SeItemChild):
                 if 'eval:{}'.format(self.__eval) in self.__listorder:
                     self.__listorder[self.__listorder.index('eval:{}'.format(self.__eval))] = _newvalue
                 values = _newvalue
+                self._log_decrease_indent()
+                self._log_info("Eval result: {0}.", values)
+                self._log_increase_indent()
             except Exception as ex:
+                self._log_decrease_indent()
                 self._log_info("Problem evaluating '{0}': {1}.", StateEngineTools.get_eval_name(self.__eval), ex)
+                self._log_increase_indent()
                 values = None
             finally:
                 self._log_decrease_indent()
@@ -413,8 +418,13 @@ class SeValue(StateEngineTools.SeItemChild):
                             if 'eval:{}'.format(val) in self.__listorder:
                                 self.__listorder[self.__listorder.index('eval:{}'.format(val))] = _newvalue
                             value = _newvalue
+                            self._log_decrease_indent()
+                            self._log_info("Eval result from list: {0}.", value)
+                            self._log_increase_indent()
                         except Exception as ex:
+                            self._log_decrease_indent()
                             self._log_info("Problem evaluating from list '{0}': {1}.", StateEngineTools.get_eval_name(val), ex)
+                            self._log_increase_indent()
                             value = None
                     else:
                         try:
@@ -423,6 +433,7 @@ class SeValue(StateEngineTools.SeItemChild):
                                 self.__listorder[self.__listorder.index('eval:{}'.format(val))] = _newvalue
                             value = _newvalue
                         except Exception as ex:
+                            self._log_decrease_indent()
                             self._log_info("Problem evaluating '{0}': {1}.", StateEngineTools.get_eval_name(val), ex)
                             value = None
                     if value is not None:
@@ -437,8 +448,12 @@ class SeValue(StateEngineTools.SeItemChild):
                         self.__listorder[self.__listorder.index('eval:{}'.format(self.__eval))] = _newvalue
                     values = _newvalue
                     self._log_decrease_indent()
+                    self._log_info("Eval result (no str, no list): {0}.", values)
+                    self._log_increase_indent()
                 except Exception as ex:
+                    self._log_decrease_indent()
                     self._log_info("Problem evaluating '{0}': {1}.", StateEngineTools.get_eval_name(self.__eval), ex)
+                    self._log_increase_indent()
                     return None
 
         return values
@@ -498,5 +513,6 @@ class SeValue(StateEngineTools.SeItemChild):
             if 'var:{}'.format(self.__varname) in self.__listorder:
                 self.__listorder[self.__listorder.index('var:{}'.format(self.__varname))] = _newvalue
             values = _newvalue
+            self._log_debug("Variable result: {0}", values)
 
         return values

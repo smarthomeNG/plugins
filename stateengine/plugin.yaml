@@ -40,7 +40,7 @@ plugin:
     documentation: https://www.smarthomeng.de/user/plugins/stateengine/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1303071-stateengine-plugin-support
 
-    version: 1.6.2
+    version: 1.7.0
     sh_minversion: 1.6
     multi_instance: False
     classname: StateEngine
@@ -419,8 +419,6 @@ item_structs:
             type: bool
             se_plugin: active
             eval: True
-            eval_trigger:
-                - ..retrigger
 
             # se_startup_delay: 30
             # se_repeat_actions: true
