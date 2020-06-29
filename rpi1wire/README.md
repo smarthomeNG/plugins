@@ -81,10 +81,10 @@ someitem:
         type: num
         visu_acl: ro
     someupdate:
-        rpi1wire: update
+        rpi1wire_sys: update
         name: Update Sensors
         type: bool
-        value: 0
+        inital_value: 0
         visu_acl: rw
 ```
 
@@ -98,7 +98,7 @@ The id or name of the 1-wire - sensor. Both attributes serve the same purpose.
 The Item having one of these attributes will receive the temperature measurement.
 The Item thus needs to be of type num.
 
-### rpi1wire_update
+### rpi1wire_sys: update
 
 If this item is triggered, the sensors are re-searched without restarting the server
 
@@ -110,8 +110,27 @@ Please refer to the documentation generated from plugin.yaml metadata.
 update_sensors() can be called to force a reread of all sensors.
 
 ## Examples
-
+```yaml
+someitem:
+    somelist:
+        rpi1wire_sys: list
+        name: Sensor-List
+        type: str
+        visu_acl: ro
+    somecount:
+        rpi1wire_sys: count
+        name: Sensors
+        type: num
+        visu_acl: ro
+    someupdate:
+        rpi1wire_sys: update
+        name: Update Sensors
+        type: bool
+        inital_value: 0
+        visu_acl: rw
 ### Example 1
+````
+### Example 1 with Sensor-Name
 
 ```yaml
 someroom:
@@ -120,28 +139,22 @@ someroom:
         type: num
         visu_acl: ro
         rpi1wire_name: rpi_temp1
-        sqlite: yes
+        database: yes
 ```
 
-### Example 2
+### Example 2 with Sensor-ID
 
 ```yaml
 someroom:
      mytemperature:
         name: my Name
-        name: Wohnzimme Raumtemperatur
         type: num
         visu_acl: ro
         rpi1wire_id: 28-0215018970ff
-        sqlite: yes
+        database: yes
 
-rpi1wire:
-     update:
-        name: Update Sensor-List
-        type: bool
-        visu_acl: rw
-        rpi1wire_update: 1
-```
+
+...
 
 
 ## Web Interfaces
