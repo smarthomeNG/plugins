@@ -2,7 +2,7 @@
 plugin_translations:
     # Translations for the plugin specially for the web interface
     'Wert':         {'de': '=', 'en': 'Value'}
-    'Aktualisiert': {'de': '=', 'en': 'Update'}
+    'Aktualisiert': {'de': '=', 'en': 'Updated'}
     'Pfad': {'de': '=', 'en': 'Directory'}
 
     # Alternative format for translations of longer texts:
