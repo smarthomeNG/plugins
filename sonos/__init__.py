@@ -47,7 +47,7 @@ except:
 
 from plugins.sonos.soco.exceptions import SoCoUPnPException
 from plugins.sonos.soco.music_services import MusicService
-from lib.item import Item
+from lib.item import Items
 from plugins.sonos.soco import *
 from lib.model.smartplugin import SmartPlugin
 from plugins.sonos.soco.data_structures import to_didl_string, DidlItem, DidlMusicTrack
@@ -2459,7 +2459,7 @@ class Sonos(SmartPlugin):
         event_listener.stop()
         self.alive = False
 
-    def parse_item(self, item: Item) -> object:
+    def parse_item(self, item: Items) -> object:
         """
         Parses an item
         :param item: item to parse
@@ -2573,7 +2573,7 @@ class Sonos(SmartPlugin):
     def parse_logic(self, logic):
         pass
 
-    def update_item(self, item: Item, caller: object = str, source: object = str, dest: object = str) -> None:
+    def update_item(self, item: Items, caller: object = str, source: object = str, dest: object = str) -> None:
         """
         Write items values
         :param item: item to be updated towards the plugin
@@ -2675,7 +2675,7 @@ class Sonos(SmartPlugin):
                     sonos_speaker[uid].play_snippet(item(), self._local_webservice_path_snippet, self._webservice_url, volume, self._snippet_duration_offset,
                                                     fade_in)
 
-    def _resolve_child_command_str(self, item: Item, child_command, default_value="") -> str:
+    def _resolve_child_command_str(self, item: Items, child_command, default_value="") -> str:
         """
         Resolves a child command of type str for an item
         :type child_command: The sonos_attrib name for the child
@@ -2692,7 +2692,7 @@ class Sonos(SmartPlugin):
                     return child()
         return default_value
 
-    def _resolve_child_command_bool(self, item: Item, child_command) -> bool:
+    def _resolve_child_command_bool(self, item: Items, child_command) -> bool:
         """
         Resolves a child command of type bool for an item
         :type child_command: The sonos_attrib name for the child
@@ -2706,7 +2706,7 @@ class Sonos(SmartPlugin):
                     return child()
         return False
 
-    def _resolve_child_command_int(self, item: Item, child_command, default_value=0) -> int:
+    def _resolve_child_command_int(self, item: Items, child_command, default_value=0) -> int:
         """
         Resolves a child command of type int for an item
         :type default_value: the default value, if the child not exists or an error occurred
@@ -2725,7 +2725,7 @@ class Sonos(SmartPlugin):
             self.logger.warning("Sonos: Could not cast value [{val}] to 'int', using default value '0'")
             return default_value
 
-    def _resolve_group_command(self, item: Item) -> bool:
+    def _resolve_group_command(self, item: Items) -> bool:
         """
         Resolves a group_command child for an item
         :rtype: bool
@@ -2744,7 +2744,7 @@ class Sonos(SmartPlugin):
                     return child()
         return False
 
-    def _resolve_max_volume_command(self, item: Item) -> int:
+    def _resolve_max_volume_command(self, item: Items) -> int:
 
         if self.get_iattr_value(item.conf, 'sonos_attrib') == 'vol_dpt3':
             volume_item = self.get_iattr_value(item.conf, 'volume_parent')
@@ -2761,7 +2761,7 @@ class Sonos(SmartPlugin):
                         return -1
         return -1
 
-    def _resolve_uid(self, item: Item) -> str:
+    def _resolve_uid(self, item: Items) -> str:
         """
         Tries to find the uuid (typically the parent item) of an item
         :rtype: str
