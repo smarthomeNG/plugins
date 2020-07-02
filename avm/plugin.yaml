@@ -165,6 +165,11 @@ item_attributes:
         description:
             de: '(optional) Definition der erlaubten angerufenen Rufnummer in Items vom avm_data_type `monitor_trigger`.'
             en: '(optional) Definition of the allowed called number. Only in items of avm_data_type `monitor_trigger`.'
+    avm_wlan_index:
+        type: num
+        desctiption:
+            de: '?'
+            en: '?'
     mac:
         type: mac
         mandatory: False
