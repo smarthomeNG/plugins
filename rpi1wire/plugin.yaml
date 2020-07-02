@@ -51,23 +51,23 @@ item_attributes:
             de: 'Alternativ zu Sensoradresse kann auch ein Name in der Form rpi-temp1 vergeben werden, wobei die Zahl am Ende die laufende Nummer der gefundenen Sensoren bestimmt.'
             en: 'As an alternative to the sensor address, a name in the form rpi-temp1 can also be assigned, with the number at the end determining the serial number of the sensors found.'
 
-    rpi1wire_sys:
-        type: bool
-        description:
-            de: 'Started bei Triggerung ein Update der Sensorliste'
-            en: 'Rereads the sensor list after being triggered'
+#    rpi1wire_sys: update
+#        type: bool
+#        description:
+#            de: 'Started bei Triggerung ein Update der Sensorliste'
+#            en: 'Rereads the sensor list after being triggered'
 
-    rpi1wire_sys:
-        type: int
-        description:
-            de: 'Es wird die Anzahl der gefundenen Sensoren dem item.value als Integer übergeben'
-            en: 'Returns the number of sensors found is transferred to item.value as an integer'
+#    rpi1wire_sys: cout
+#        type: int
+#        description:
+#            de: 'Es wird die Anzahl der gefundenen Sensoren dem item.value als Integer übergeben'
+#            en: 'Returns the number of sensors found is transferred to item.value as an integer'
 
-    rpi1wire_sys:
-        type: str
-        description:
-            de: 'Es wird eine Liste der gefundenen Sensoren als String übergeben'
-            en: 'Returns a list of the sensors found is transferred as a string'
+#    rpi1wire_sys: list
+#        type: str
+#        description:
+#            de: 'Es wird eine Liste der gefundenen Sensoren als String übergeben'
+#            en: 'Returns a list of the sensors found is transferred as a string'
 
 
 item_structs: NONE
