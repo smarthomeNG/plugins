@@ -202,6 +202,9 @@ class Database(SmartPlugin):
                     self.logger.warning("Cache not available in database for item {}".format(item.id() ))        
                 cur.close()
                 self._db.release()
+            elif self.get_iattr_value(item.conf, 'database').lower() == 'init':
+                self.logger.warning("Db not initialized. Cannot read database value for item {}".format(item.id()))
+
             return self.update_item
         else:
             return None
@@ -250,7 +253,9 @@ class Database(SmartPlugin):
                 self._buffer[item][-1] = (last[0], end - start, last[2])
             else:  # append new value with none duration
                 if item.property.path.startswith('test.'):
-                    self.logger.debug("(last is None) Setting value {} to item '{}' value because database_acl = {}".format(end-start, item, acl))
+                    #self.logger.debug("(last is None) Setting value {} to item '{}' value because database_acl = {}".format(end-start, item, acl))
+                    self.logger.warning("(last is None) Setting value {} to item '{}' value because database_acl = {}".format(end-start, item, acl))
+
                 self._buffer[item].append((start, end - start, item.prev_value()))
 
             # add current value with None duration
