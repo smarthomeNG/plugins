@@ -70,5 +70,31 @@ parameters:
       en: "(optional) Extend snippet duration by a fixed offset specified in seconds"
 
 item_attributes:
-    # Definition of item attributes defined by this plugin
+    # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)
+    sonos_uid:
+        type: str
+        description:
+            de: "Eindeutige Id des Sonos Players"
+            en: "Unique id of the Sonos player"
+
+    sonos_send:
+        type: str
+        description:
+            de: "An den Player zu sendender Befehl"
+            en: "Command to send to the the Sonos player"
+
+    sonos_recv:
+        type: str
+        description:
+            de: "Vom Sonos Player zu lesender Status"
+            en: "Status information to be read from the Sonos player"
+
+item_structs:
+    # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
+
+plugin_functions:
+    # Definition of plugin functions defined by this plugin (enter 'plugin_functions: NONE', if section should be empty)
+
+logic_parameters:
+    # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)
 
