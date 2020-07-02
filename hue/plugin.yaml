@@ -69,3 +69,39 @@ parameters:
 item_attributes:
 # Definition of item attributes defined by this plugin
 
+    hue_listen:
+        type: str
+
+    hue_send:
+        type: str
+
+    hue_lamp_id:
+        type: num
+
+    hue_lamp_type:
+        type: num
+
+    hue_bridge_id:
+        type: num
+
+    hue_listen_group:
+        type: str
+
+    hue_send_group:
+        type: str
+
+    hue_group_id:
+        type: num
+
+    hue_transitiontime:
+        type: num
+
+    hue_dim_max:
+        type: num
+
+    hue_dim_step:
+        type: num
+
+    hue_dim_time:
+        type: num
+
