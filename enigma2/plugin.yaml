@@ -78,6 +78,12 @@ item_attributes:
             de: 'Datentyp für Plugin-Items. Siehe README.'
             en: 'Data type for plugin items. See README.'
 
+    enigma2_remote_command_id:
+        type: num
+        description:
+            de: 'Notwendig für bestimmte Plugin-Items. Siehe README.'
+            en: 'Required for specific plugin items. See README.'
+
     enigma2_page:
         type: str
         description:
