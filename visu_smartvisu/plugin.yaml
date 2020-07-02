@@ -79,6 +79,16 @@ item_attributes:
             de: "Setzen Sie 'sv_page' auf einen der angegebenen Werte, um eine Seite für dieses Item zu generieren. Jedes Widget unterhalb dieses Elements wird auf der Seite angezeigt"
             en: 'Set sv_page to to one of the listed values generate a page for this item. Every widget beneath this item will be included in the page'
 
+    sv_blocksize:
+        type: str
+        valid_list:
+            - '1'
+            - '2'
+            - '3'
+        description:
+            de: "Größe des Widget-Blocks auf der smartVISU Seite"
+            en: 'Size of the widget-block on the smartVISU page'
+
     sv_overview:
         type: str
         description:
