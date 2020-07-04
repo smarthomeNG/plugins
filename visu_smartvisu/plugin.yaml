@@ -113,11 +113,23 @@ item_attributes:
             de: 'Definition des Widgets, welches für das Item verwendet wird'
             en: 'allows the specification of a widget. You could define multiple widgets. The widget(s) is/are shown by being encapsulated in a block of type 2 (Collapsable Block) - Relative item references are supported'
 
+    sv_name1:
+        type: str
+        description:
+            de: 'Name des Widgets'
+            en: 'Name of the widget'
+
     sv_widget2:
         type: str
         description:
             de: 'Definition des zweiten Widgets, welches für das Item verwendet wird'
             en: 'Definition of the secondary widget which is used for the item'
+
+    sv_name2:
+        type: str
+        description:
+            de: 'Name des zweiten Widgets'
+            en: 'Name of the second widget'
 
     sv_nav_aside:
         type: str
