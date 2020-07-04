@@ -202,7 +202,7 @@ parameters:
             again. By default the actions are triggered directly before entering a new state.'
 
 item_attributes:
-    # Definition of item attributes defined by this plugin
+    # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)
     type:
         type: str
         valid_list:
@@ -372,6 +372,7 @@ item_attributes:
                  '
 
 item_structs:
+    # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
     general:
         name: Vorlage-Struktur für einen Zustandsautomaten
 
@@ -598,8 +599,68 @@ item_structs:
                 enter:
                     se_value_release: True
 
+item_attribute_prefixes:
+    # Definition of item attributes that only have a common prefix (enter 'item_attribute_prefixes: NONE' or ommit this section, if section should be empty)
+    # NOTE: This section should only be used, if really nessesary (e.g. for the stateengine plugin)
+    se_item_:
+        type: str
+        description:
+            de: ''
+            en: ''
+
+    se_eval_:
+        type: str
+        description:
+            de: ''
+            en: ''
+
+    se_mindelta_:
+        description:
+            de: 'Definiert um welchen Wert sich das Item mindestens geändert haben muss, um neu gesetzt zu werden'
+            en: ''
+
+    se_min_:
+        description:
+            de: ''
+            en: ''
+
+    se_max_:
+        description:
+            de: ''
+            en: ''
+
+    se_value_:
+        description:
+            de: ''
+            en: ''
+
+    se_negate_:
+        description:
+            de: ''
+            en: ''
+
+    se_agemin_:
+        description:
+            de: ''
+            en: ''
+
+    se_agemax_:
+        description:
+            de: ''
+            en: ''
+
+    se_agenegate_:
+        description:
+            de: ''
+            en: ''
+
+    se_action_:
+        description:
+            de: ''
+            en: ''
+
 plugin_functions: NONE
-# Definition of plugin functions defined by this plugin
+    # Definition of plugin functions defined by this plugin (enter 'plugin_functions: NONE', if section should be empty)
 
 logic_parameters: NONE
-# Definition of logic parameters defined by this plugin
+    # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)
