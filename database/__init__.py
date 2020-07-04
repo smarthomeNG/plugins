@@ -253,8 +253,7 @@ class Database(SmartPlugin):
                 self._buffer[item][-1] = (last[0], end - start, last[2])
             else:  # append new value with none duration
                 if item.property.path.startswith('test.'):
-                    #self.logger.debug("(last is None) Setting value {} to item '{}' value because database_acl = {}".format(end-start, item, acl))
-                    self.logger.warning("(last is None) Setting value {} to item '{}' value because database_acl = {}".format(end-start, item, acl))
+                    self.logger.debug("(last is None) Setting value {} to item '{}' value because database_acl = {}".format(end-start, item, acl))
 
                 self._buffer[item].append((start, end - start, item.prev_value()))
 
