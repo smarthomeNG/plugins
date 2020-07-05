@@ -193,15 +193,18 @@ class Database(SmartPlugin):
                         prev_change = self._fetchone('SELECT MAX(time) from {log} WHERE item_id = :id',
                                                      {'id': cache[COL_ITEM_ID]}, cur=cur)
                         if (value is not None) and (prev_change is not None) and (prev_change[0] is not None):
-                            item.set(value, 'Database', prev_change=self._datetime(prev_change[0]), last_change=last_change)
+                            item.set(value, 'Database', source='Init', prev_change=self._datetime(prev_change[0]), last_change=last_change)
                         if value is not None and self.get_iattr_value(item.conf, 'database_acl') is not None and self.get_iattr_value(item.conf, 'database_acl').lower() == 'ro':
                             self._buffer_insert(item, [(self._timestamp(self.shtime.now()), None, value)])
                     except Exception as e:
                         self.logger.error("Reading cache value from database for {} failed: {}".format(item.id(), e))
                 else:
-                    self.logger.warning("Cache not available in database for item {}".format(item.id() ))        
+                    self.logger.warning("Cache not available in database for item {}".format(item.id() ))
                 cur.close()
                 self._db.release()
+            elif self.get_iattr_value(item.conf, 'database').lower() == 'init':
+                self.logger.warning("Db not initialized. Cannot read database value for item {}".format(item.id()))
+
             return self.update_item
         else:
             return None
@@ -251,6 +254,7 @@ class Database(SmartPlugin):
             else:  # append new value with none duration
                 if item.property.path.startswith('test.'):
                     self.logger.debug("(last is None) Setting value {} to item '{}' value because database_acl = {}".format(end-start, item, acl))
+
                 self._buffer[item].append((start, end - start, item.prev_value()))
 
             # add current value with None duration
@@ -1188,8 +1192,13 @@ class Database(SmartPlugin):
                     {i: [self._prepare(query[0]), self._prepare(query[1])] for i, query in self._setup.items()})
                 self._db_initialized = True
         except Exception as e:
-            self.logger.error("Database: Initialization failed: {}".format(e))
-            return False
+            #self.logger.error("Database: Initialization failed: {}".format(e))
+            #return False
+
+            self.logger.critical("Database: Initialization failed: {}".format(e))
+            self._sh.restart('SmartHomeNG (Database plugin stalled)')
+            exit(0)
+
         return True
 
 

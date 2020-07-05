@@ -38,18 +38,10 @@
 			<td class="py-1" width="50px"></td>
 		</tr>
 		<tr>
-			<td class="py-1"><strong>Prompt 2</strong></td>
-			<td class="py-1">{{ _('Wert 2') }}</td>
-			<td></td>
-			<td class="py-1"><strong>Prompt 5</strong></td>
+			<td class="py-1"><strong> </strong></td>
 			<td class="py-1">-</td>
 			<td></td>
-		</tr>
-		<tr>
-			<td class="py-1"><strong>Prompt 3</strong></td>
-			<td class="py-1">-</td>
-			<td></td>
-			<td class="py-1"><strong>Prompt 6</strong></td>
+			<td class="py-1"><strong> </strong></td>
 			<td class="py-1">-</td>
 			<td></td>
 		</tr>
@@ -72,14 +64,14 @@
 <!--
 	Define the number of tabs for the body of the web interface (1 - 3)
 -->
-{% set tabcount = 4 %}
+{% set tabcount = 1 %}
 
 
 <!--
 	Set the tab that will be visible on start, if another tab that 1 is wanted (1 - 3)
 -->
 {% if item_count==0 %}
-	{% set start_tab = 2 %}
+	{% set start_tab = 1 %}
 {% endif %}
 
 
@@ -89,36 +81,25 @@
 {% set tab1title = "<strong>" ~ p.get_shortname() ~ " Items</strong> (" ~ item_count ~ ")" %}
 {% block bodytab1 %}
 <div class="container-fluid m-2">
-	{{ _('Hier kommt der Inhalt des Webinterfaces hin.') }}
+	{{ _('Liste der Casambi Items:') }}
+<table class="table table-striped table-hover pluginList">
+	<thead>
+	<tr>
+		<th>{{ _('Item') }}</th>
+		<th>{{ _('Casambi ID') }}</th>
+	</tr>
+	</thead>
+	{% for item in items %}
+		{% if p.has_iattr(item.conf, 'casambi_id') %}
+			<tr>
+				<td class="py-1">{{ item._path }}</td>
+				<td class="py-1">{{ item.conf['casambi_id']}}</td>
+			</tr>
+		{% endif %}
+	{% endfor %}
+</table>
+
 </div>
 {% endblock bodytab1 %}
 
 
-<!--
-	Content block for the second tab of the Webinterface
--->
-{% set tab2title = "<strong>" ~ p.get_shortname() ~ " Geräte</strong> (" ~ device_count ~ ")" %}
-{% block bodytab2 %}
-{% endblock bodytab2 %}
-
-
-<!--
-	Content block for the third tab of the Webinterface
-	If wanted, a title for the tab can be defined as:
-		{% set tab3title = "<strong>" ~ p.get_shortname() ~ " Geräte</strong>" %}
-
-	It has to be defined before (and outside) the block bodytab3
--->
-{% block bodytab3 %}
-{% endblock bodytab3 %}
-
-
-<!--
-	Content block for the fourth tab of the Webinterface
-	If wanted, a title for the tab can be defined as:
-		{% set tab4title = "<strong>" ~ p.get_shortname() ~ " Geräte</strong>" %}
-
-	It has to be defined before (and outside) the block bodytab4
--->
-{% block bodytab4 %}
-{% endblock bodytab4 %}
