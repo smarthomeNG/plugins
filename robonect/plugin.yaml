@@ -79,6 +79,12 @@ item_attributes:
         description:
             de: 'Index der Batterie, falls nur eine verbaut ist: 0.'
             en: 'Index of the battery. If only one is present: 0.'
+    robonect_remote_index:
+        type: num
+            mandatory: False
+            description:
+                de: 'Index des Fernstart-Punkts. Normal: 1 oder 2. Wird nur für Items mit robonect_data_type: remotestart_<...> benötigt.'
+                en: 'Index of the remote starting location, normally 1 or 2. Only needed for items with robonect_data_type: remotestart_<...>.'
 
 item_structs:
     main:
