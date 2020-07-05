@@ -30,7 +30,7 @@ from nokia import NokiaAuth, NokiaApi, NokiaCredentials
 
 class WithingsHealth(SmartPlugin):
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = "1.6.4"
+    PLUGIN_VERSION = "1.7.0"
     ALLOWED_MEASURE_TYPES = [1, 4, 5, 6, 8, 11]
 
     def __init__(self, sh, *args, **kwargs):
