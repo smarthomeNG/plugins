@@ -233,7 +233,7 @@ avm:
                 cache: 'yes'
 
     tam:
-        index: 1
+        index@fritzbox_7490: 1
         type: bool
         visu_acl: rw
         avm_data_type@fritzbox_7490: tam
