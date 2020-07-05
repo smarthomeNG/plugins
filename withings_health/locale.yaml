@@ -34,3 +34,27 @@ plugin_translations:
     'Hier zuerst registrieren:':
         'de': 'Hier zuerst registrieren:'
         'en': 'Register here first:'
+    'starkes Untergewicht':
+        'de': '='
+        'en': 'Severely underweight'
+    'mäßiges Untergewicht':
+        'de': '='
+        'en': 'Underweight'
+    'leichtes Untergewicht':
+        'de': '='
+        'en': 'Light underweight'
+    'Normalgewicht':
+        'de': '='
+        'en': 'Normal (healthy weight)'
+    'Präadipositas (Übergewicht)':
+        'de': '='
+        'en': 'Pre-obesity (Overweight)'
+    'Adipositas Grad I':
+        'de': '='
+        'en': 'Obesity Class I (Moderately obese)'
+    'Adipositas Grad II':
+        'de': '='
+        'en': 'Obesity Class II (Severely obese)'
+    'Adipositas Grad III':
+        'de': '='
+        'en': 'Obesity Class III (Very severely obese)'
