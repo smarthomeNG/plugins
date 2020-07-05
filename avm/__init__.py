@@ -2056,7 +2056,7 @@ class AVM(SmartPlugin):
 
         index = 0
         if self.has_iattr(item.conf, 'index'):
-            index = self.get_iattr_value('index')-1
+            index = self.get_iattr_value(item.conf, 'index')-1
 
         soap_data = self._assemble_soap_data(action, self._urn_map['TAM'], {'NewIndex': index})
 
