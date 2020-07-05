@@ -54,7 +54,7 @@ parameters:
 item_attributes:
     # Definition of item attributes defined by this plugin
 
-    nh_type:
+    withings_type:
         type: str
         description:
             de: 'nh_type kann folgende Werte annehmen: Zwingend für OAuth2: access_token, token_expiry, token_type, refresh_token | Optional: weight, height (wird von Nokia Health nur beim allerersten Messwert geliefert), bmi, bmi_text, fat_ratio, fat_free_mass, fat_mass_weight, diastolic_blood_pressure, systolic_blood_pressure, temperature, body_temperature, skin_temperature, spo2, heart_pulse, hydration, bone_mass, pulse_wave_velocity.'
