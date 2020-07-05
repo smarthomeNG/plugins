@@ -178,6 +178,14 @@ item_attributes:
             de: 'Definition der Aktor Identifikationsnummer (AIN)Items vom avm_data_type `aha_device`. Nur für diese Items mandatory!'
             en: 'Definition of the actor identification number (AIN) for items of avm_data_type `aha_device`. Only mandatory for these items!'
 
+    index:
+        type: num
+        mandatory: False
+        description:
+            de: 'Index für den Anrufbeantworter, normalerweise für den ersten eine "1". Es werden bis zu 5 Anrufbeantworter vom Gerät unterstützt.'
+            en: 'Index für the answering machine, normally a "1" for the first one. Supported are up to 5 answering machines.'
+
+
 item_structs: NONE
   # Definition of item-structure templates for this plugin
 
