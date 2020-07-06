@@ -66,7 +66,11 @@ class IMAP(SmartPlugin):
         except Exception as e:
             self.logger.warning("Could not connect to {0}: {1}".format(self._host, e))
             return
-        rsp, data = imap.select()
+        try:
+            rsp, data = imap.select()
+        except Exception as e:
+            self.logger.warning("Problems receiving  {0}: {1}".format(self._host, e))
+            return
         if rsp != 'OK':
             self.logger.warning("IMAP: Could not select mailbox")
             imap.close()
@@ -163,4 +167,3 @@ class IMAP(SmartPlugin):
 
     def update_item(self, item, caller=None, source=None, dest=None):
         pass
-
