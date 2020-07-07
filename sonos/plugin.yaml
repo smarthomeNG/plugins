@@ -57,10 +57,10 @@ parameters:
       en: "(optional) You can set static IP addresses for your Sonos speaker. This will disable auto-discovery. This is useful if you're using a containerized environment with restricted network access."
 
   discover_cycle:
-      type: int
-      description:
-        de: "Zeitintervall, nach dem (erneut) nach (neuen) Lautsprechern im Netzwerk gesucht wird."
-        en: "Time interval to search again for (new) speakers in the network."
+    type: int
+    description:
+      de: "Zeitintervall, nach dem (erneut) nach (neuen) Lautsprechern im Netzwerk gesucht wird."
+      en: "Time interval to search again for (new) speakers in the network."
 
   snippet_duration_offset:
     type: num
@@ -70,31 +70,60 @@ parameters:
       en: "(optional) Extend snippet duration by a fixed offset specified in seconds"
 
 item_attributes:
-    # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)
-    sonos_uid:
-        type: str
-        description:
-            de: "Eindeutige Id des Sonos Players"
-            en: "Unique id of the Sonos player"
+  # Definition of item attributes defined by this plugin
+  sonos_uid:
+    type: str
+    description:
+      de: 'Sonos unique device ID'
+      en: 'Sonos unique device ID'
+    mandatory: 'False'
 
-    sonos_send:
-        type: str
-        description:
-            de: "An den Player zu sendender Befehl"
-            en: "Command to send to the the Sonos player"
 
-    sonos_recv:
-        type: str
-        description:
-            de: "Vom Sonos Player zu lesender Status"
-            en: "Status information to be read from the Sonos player"
+  sonos_recv:
+    type: str
+    description:
+      de: 'Empfangsattribut'
+      en: 'Receive attribute'
+    mandatory: 'False'
+    valid_list:
+    - 'is_initialized'
+    - 'volume'
+    - 'play'
 
-item_structs:
-    # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
+  sonos_send:
+    type: str
+    description:
+      de: 'Sendeattribut'
+      en: 'Sending attribute'
+    mandatory: 'False'
+    valid_list:
+    - 'volume'
+    - 'play'
+    - 'pause'
+    - 'stop'
+    - 'mute'
+    - 'cross_fade'
+    - 'snooze'
+    - 'play_mode'
+    - 'next'
+    - 'previous'
+    - 'play_tunein'
+    - 'play_url'
+    - 'load_sonos_playlist'
+    - 'play_snippet'
+    - 'play_tts'
 
-plugin_functions:
-    # Definition of plugin functions defined by this plugin (enter 'plugin_functions: NONE', if section should be empty)
-
-logic_parameters:
-    # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)
-
+  sonos_attrib:
+    type: str
+    description:
+      de: 'Empfangsattribut'
+      en: 'Receive attribute'
+    mandatory: 'False'
+    valid_list:
+    - 'group'
+    - 'dpt3_helper'
+    - 'vol_dpt3'
+    - 'max_volume'
+    - 'tts_language'
+    - 'tts_volume'
+    - 'tts_fade_in'
