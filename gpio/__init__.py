@@ -278,11 +278,9 @@ class GPIO(SmartPlugin, Utils):
         :return: Value safe for GPIO output/setup methods
         '''
         inverted = self._is_item_inverted(item, pin)
+        self.logger.debug('Pin {0}, inverted: {1}, value:{2}'.format(pin, inverted, value))
 
-        if value ^ inverted:
-            return 1
-        else:
-            return 0
+        return (inverted ^ value)
 
     def _set_gpio(self, pin, value):
         '''
