@@ -1196,8 +1196,11 @@ class Database(SmartPlugin):
             #return False
 
             self.logger.critical("Database: Initialization failed: {}".format(e))
-            self._sh.restart('SmartHomeNG (Database plugin stalled)')
-            exit(0)
+            if self.driver.lower() == "sqlite3":
+                self._sh.restart('SmartHomeNG (Database plugin stalled)')
+                exit(0)
+            else:
+                return False
 
         return True
 
