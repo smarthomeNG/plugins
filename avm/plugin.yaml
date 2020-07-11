@@ -168,8 +168,8 @@ item_attributes:
     avm_wlan_index:
         type: num
         desctiption:
-            de: '?'
-            en: '?'
+            de: '(optional) Index des WLANs, meist: 1 für 2,4ghz, 2 für 5ghz, 3 für Gäste-WLAN.'
+            en: '(optional) Index of the WiFi, usually 1 for 2.4ghz, 2 for 5ghz and 3 for guest wifi.'
     mac:
         type: mac
         mandatory: False
@@ -182,7 +182,6 @@ item_attributes:
         description:
             de: 'Definition der Aktor Identifikationsnummer (AIN)Items vom avm_data_type `aha_device`. Nur für diese Items mandatory!'
             en: 'Definition of the actor identification number (AIN) for items of avm_data_type `aha_device`. Only mandatory for these items!'
-
     index:
         type: num
         mandatory: False
