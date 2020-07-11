@@ -82,6 +82,23 @@ item_attributes:
             en: 'actor button name of the EnOcean device'
         mandatory: 'False'
 
+    enocean_rocker_action:
+        type: str
+        description:
+            de: 'Tasteraktion'
+            en: 'actor action'
+        mandatory: 'False'
+        valid_list:
+        - 'UNSET'
+        - 'TOGGLE'
+
+    enocean_rocker_sequence:
+        type: str
+        description:
+            de: 'Tastersequenz'
+            en: 'Rocker action sequence'
+        mandatory: 'False'
+
     block_switch:
         type: str
         default: 'False'

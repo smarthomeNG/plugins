@@ -119,6 +119,11 @@ item_attributes:
         description:
             de: 'Roboter Nachricht'
             en: 'Robot message'
+    neato_commandGoToBaseAvailable:
+        type: bool
+        description:
+            de: 'Roboter Befehl zur Basis verfuegbar'
+            en: 'Robot command return to base available'
 
 item_structs: NONE
     # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)

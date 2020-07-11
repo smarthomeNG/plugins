@@ -205,10 +205,9 @@ class Robot:
             return ''
                 
         responseJson = access_token_response.json()
-        self.logger.debug("Robot Debug: responseTokenRequest: {0}".format(responseJson))
         if 'access_token' in responseJson:
             access_token = responseJson['access_token']
-            self.logger.debug("Robot: Access token received")
+            #self.logger.debug("Robot: Access token received")
         else:
             access_token = ''
             if 'message' in responseJson:
@@ -233,7 +232,22 @@ class Robot:
                                            headers={'Authorization': 'Bearer ' + access_token}, timeout=self._timeout)
         except Exception as e:
             self.logger.error("Robot: Exception during secret key request: %s" % str(e))
+            return secret_key
+
+        statusCode = secret_key_response.status_code
+        if statusCode == 200:
+            self.logger.debug("Sending secret key request successful")
+        else:
+            self.logger.error("Sending secret key request error: {0}".format(statusCode))
             return ''
+
+        if not secret_key_response.json():
+            return ''
+
+        self.logger.debug("secretkeyresponse: {0}".format(secret_key_response.json()))        
+        self.logger.debug("secretkeyresponse0: {0}".format(secret_key_response.json()[0]))        
+
+
 
         secret_key = secret_key_response.json()[0]['secret_key']
         self.serial = secret_key_response.json()[0]['serial']
