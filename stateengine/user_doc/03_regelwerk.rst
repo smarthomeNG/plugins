@@ -25,6 +25,20 @@ Zuerst wird also der erste Status getestet. Kann dieser nicht aktiviert werden,
 folgt der darunter angegebene, etc. Details hierzu finden sich im nächsten Teil
 der Dokumentation.
 
+Möchte man die Evaluierung eines Items deaktivieren, ist unter rules
+das Attribute ``se_plugin`` auf inactive zu setzen:
+
+.. code-block:: yaml
+
+   #items/item.yaml
+   raffstore1:
+       automatik:
+           struct: stateengine.general
+
+           rules:
+              se_plugin: inactive
+
+
 .. rubric:: Item-Definitionen
    :name: itemdefinitionen
 
@@ -60,6 +74,7 @@ und Aktionen folgen auf den nächsten Seiten.
         automatik:
             struct: stateengine.general
             rules:
+                se_log_level: 2
                 se_item_height: beispiel.raffstore1.hoehe
                 se_item_brightness: beispiel.wetterstation.helligkeit
 

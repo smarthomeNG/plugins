@@ -34,7 +34,7 @@ from lib.item import Items
 
 
 class StateEngine(SmartPlugin):
-    PLUGIN_VERSION = '1.7.0'
+    PLUGIN_VERSION = '1.7.1'
 
     # Constructor
     # noinspection PyUnusedLocal,PyMissingConstructor
@@ -48,9 +48,10 @@ class StateEngine(SmartPlugin):
         self.alive = False
         self.__cli = None
         self.init_webinterface()
+        self.__log_directory = self.get_parameter_value("log_directory")
         try:
             log_level = self.get_parameter_value("log_level")
-            log_directory = self.get_parameter_value("log_directory")
+            log_directory = self.__log_directory
             self.logger.info("Init StateEngine (log_level={0}, log_directory={1})".format(log_level, log_directory))
 
             StateEngineDefaults.startup_delay = self.get_parameter_value("startup_delay_default")
@@ -61,17 +62,12 @@ class StateEngine(SmartPlugin):
             StateEngineCurrent.init(self.get_sh())
 
             if log_level > 0:
-                if log_directory[0] != "/":
-                    base = self.get_sh().get_basedir()
-                    if base[-1] != "/":
-                        base += "/"
-                    log_directory = base + log_directory
-                if not os.path.exists(log_directory):
-                    os.makedirs(log_directory)
+                base = self.get_sh().get_basedir()
+                log_directory = SeLogger.create_logdirectory(base, log_directory)
                 text = "StateEngine extended logging is active. Logging to '{0}' with loglevel {1}."
                 self.logger.info(text.format(log_directory, log_level))
             log_maxage = self.get_parameter_value("log_maxage")
-            if log_level > 0 and log_maxage > 0:
+            if log_maxage > 0:
                 self.logger.info("StateEngine extended log files will be deleted after {0} days.".format(log_maxage))
                 SeLogger.set_logmaxage(log_maxage)
                 cron = ['init', '30 0 * *']
@@ -94,7 +90,9 @@ class StateEngine(SmartPlugin):
             item._eval = "sh.stateengine_plugin_functions.manual_item_update_eval('" + item.id() + "', caller, source)"
         elif self.has_iattr(item.conf, "se_manual_invert"):
             item._eval = "not sh." + item.id() + "()"
-
+        if self.has_iattr(item.conf, "se_log_level"):
+            base = self.get_sh().get_basedir()
+            SeLogger.create_logdirectory(base, self.__log_directory)
         return None
 
     # Initialization of plugin

@@ -113,7 +113,11 @@ class SeItem:
         self.__name = str(self.__item)
         # initialize logging
         self.__logger = SeLogger.create(self.__item)
-        self.__logger.header("Initialize Item {0}".format(self.id))
+        if self.se_plugin.has_iattr(item.conf, "se_log_level"):
+            ll = self.se_plugin.get_iattr_value(item.conf, "se_log_level")
+            self.__logger.override_loglevel(ll, self.__item)
+        self.__logger.header("Initialize Item {0} (Log Level set"
+                             " to {1})".format(self.id, self.__logger.get_loglevel()))
 
         # get startup delay
         self.__startup_delay = StateEngineValue.SeValue(self, "Startup Delay", False, "num")
