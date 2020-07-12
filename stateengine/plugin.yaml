@@ -40,7 +40,7 @@ plugin:
     documentation: https://www.smarthomeng.de/user/plugins/stateengine/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1303071-stateengine-plugin-support
 
-    version: 1.7.0
+    version: 1.7.1
     sh_minversion: 1.6
     multi_instance: False
     classname: StateEngine
@@ -369,6 +369,18 @@ item_attributes:
                 '
             en: '**Id of the item that saves the suspend end time:**\n
                 To visualize the end time of the suspend state.
+                '
+    se_log_level:
+        type: int
+        description:
+            de: 'Loglevel für ein konkretes Stateengine Item'
+            en: 'Log level for a distinct stateengine item'
+        description_long:
+            de: 'Das global angegebene Loglevel kann für jedes SE item individuell überschrieben werden.
+                 Somit ist es einfacher möglich, bestimme State Engines zu debuggen.
+                '
+            en: 'The globally defined log level can be overwritten for each SE item individually.
+                 Therefore it is easier to debug specific state engines.
                 '
 
     se_use:

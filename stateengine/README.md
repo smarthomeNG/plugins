@@ -13,6 +13,11 @@ Copy stateengine.example.html from the sv_widgets folder to your smartvisu/dropi
 http://URL/index.php?page=widgets/stateengine.example
 
 ## Changelog
+### v1.7.1
+* Implemented item attributes and prefixes in plugin.yaml
+* Option to set log level for each SE item individually
+
+## Changelog
 ### v1.7.0
 * Improved struct in plugin.yaml
 * Improved suspend item evaluation

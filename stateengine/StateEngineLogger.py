@@ -42,6 +42,18 @@ class SeLogger:
     def set_logdirectory(logdirectory):
         SeLogger.__logdirectory = logdirectory
 
+    # Create log directory
+    # logdirectory: Target directory for StateEngine log files
+    @staticmethod
+    def create_logdirectory(base, log_directory):
+        if log_directory[0] != "/":
+            if base[-1] != "/":
+                base += "/"
+            log_directory = base + log_directory
+        if not os.path.exists(log_directory):
+            os.makedirs(log_directory)
+        return log_directory
+
     # Set max age for log files
     # logmaxage: Maximum age for log files (days)
     @staticmethod
@@ -53,6 +65,7 @@ class SeLogger:
             logger = logging.getLogger('plugins.stateengine')
             logger.error("Das maximale Alter der Logdateien muss numerisch angegeben werden.")
 
+    # Remove old log files (by scheduler)
     @staticmethod
     def remove_old_logfiles():
         if SeLogger.__logmaxage == 0:
@@ -90,9 +103,21 @@ class SeLogger:
         self.logger = logging.getLogger('{}.{}'.format(__name__.replace(".StateEngineLogger", ""), item.property.path))
         self.__section = item.property.path.replace(".", "_").replace("/", "")
         self.__indentlevel = 0
+        self.__loglevel = 0
         self.__date = None
         self.__filename = ""
         self.update_logfile()
+
+    # override log level for specific items by using se_log_level attribute
+    def override_loglevel(self, loglevel, item=None):
+        logger = logging.getLogger('plugins.stateengine')
+        self.__loglevel = int(loglevel)
+        logger.info("Das Log-Level ist für das Item {0}"
+                    " individuell auf Level {1} gesetzt.".format(item, loglevel))
+
+    # get current log level of abitem
+    def get_loglevel(self):
+        return self.__loglevel
 
     # Update name logfile if required
     def update_logfile(self):
@@ -119,7 +144,7 @@ class SeLogger:
     # text: text to log
     def log(self, level, text, *args):
         # Section givn: Check level
-        if level <= SeLogger.__loglevel:
+        if level <= self.__loglevel:
             indent = "\t" * self.__indentlevel
             text = text.format(*args)
             logtext = "{0}{1} {2}\r\n".format(datetime.datetime.now(), indent, text)
