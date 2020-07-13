@@ -25,6 +25,17 @@ import os
 
 class SeLogger:
 
+    # Set global log level
+    # loglevel: current loglevel
+    @staticmethod
+    def set_loglevel(loglevel):
+        try:
+            SeLogger.__loglevel = int(loglevel)
+        except ValueError:
+            SeLogger.__loglevel = 0
+            logger = logging.getLogger('plugins.stateengine')
+            logger.error("Loglevel has to be an int number!")
+
     # Set log directory
     # logdirectory: Target directory for StateEngine log files
     @staticmethod
@@ -92,19 +103,10 @@ class SeLogger:
         self.logger = logging.getLogger('{}.{}'.format(__name__.replace(".StateEngineLogger", ""), item.property.path))
         self.__section = item.property.path.replace(".", "_").replace("/", "")
         self.__indentlevel = 0
-        self.__loglevel = 0
+        self.__loglevel = SeLogger.__loglevel
         self.__date = None
         self.__filename = ""
         self.update_logfile()
-
-    # Set log level
-    # loglevel: current loglevel
-    def set_loglevel(self, loglevel):
-        try:
-            self.__loglevel = int(loglevel)
-        except ValueError:
-            logger = logging.getLogger('plugins.stateengine')
-            logger.error("Loglevel has to be an int number!")
 
     # override log level for specific items by using se_log_level attribute
     def override_loglevel(self, loglevel, item=None):

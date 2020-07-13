@@ -389,11 +389,11 @@ class SeValue(StateEngineTools.SeItemChild):
                     self.__listorder[self.__listorder.index('eval:{}'.format(self.__eval))] = _newvalue
                 values = _newvalue
                 self._log_decrease_indent()
-                self._log_info("Eval result: {0}.", values)
+                self._log_debug("Eval result: {0}.", values)
                 self._log_increase_indent()
             except Exception as ex:
                 self._log_decrease_indent()
-                self._log_info("Problem evaluating '{0}': {1}.", StateEngineTools.get_eval_name(self.__eval), ex)
+                self._log_warning("Problem evaluating '{0}': {1}.", StateEngineTools.get_eval_name(self.__eval), ex)
                 self._log_increase_indent()
                 values = None
             finally:
@@ -419,11 +419,12 @@ class SeValue(StateEngineTools.SeItemChild):
                                 self.__listorder[self.__listorder.index('eval:{}'.format(val))] = _newvalue
                             value = _newvalue
                             self._log_decrease_indent()
-                            self._log_info("Eval result from list: {0}.", value)
+                            self._log_debug("Eval result from list: {0}.", value)
                             self._log_increase_indent()
                         except Exception as ex:
                             self._log_decrease_indent()
-                            self._log_info("Problem evaluating from list '{0}': {1}.", StateEngineTools.get_eval_name(val), ex)
+                            self._log_warning("Problem evaluating from list '{0}': {1}.",
+                                              StateEngineTools.get_eval_name(val), ex)
                             self._log_increase_indent()
                             value = None
                     else:
@@ -448,11 +449,11 @@ class SeValue(StateEngineTools.SeItemChild):
                         self.__listorder[self.__listorder.index('eval:{}'.format(self.__eval))] = _newvalue
                     values = _newvalue
                     self._log_decrease_indent()
-                    self._log_info("Eval result (no str, no list): {0}.", values)
+                    self._log_debug("Eval result (no str, no list): {0}.", values)
                     self._log_increase_indent()
                 except Exception as ex:
                     self._log_decrease_indent()
-                    self._log_info("Problem evaluating '{0}': {1}.", StateEngineTools.get_eval_name(self.__eval), ex)
+                    self._log_warning("Problem evaluating '{0}': {1}.", StateEngineTools.get_eval_name(self.__eval), ex)
                     self._log_increase_indent()
                     return None
 
