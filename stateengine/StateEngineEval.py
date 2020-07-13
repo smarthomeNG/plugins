@@ -96,10 +96,10 @@ class SeEval(StateEngineTools.SeItemChild):
         try:
             if self._abitem._initstate and subitem_id == '..state_name':
                 returnvalue = self._abitem.return_item(self._abitem._initstate).property.path
-                self._log_info("Return item path '{0}' during init", returnvalue)
+                self._log_debug("Return item path '{0}' during init", returnvalue)
             else:
                 returnvalue = self._abitem.return_item(subitem_id).property.path
-                self._log_info("Return item path '{0}'", returnvalue)
+                self._log_debug("Return item path '{0}'", returnvalue)
         except Exception as ex:
             returnvalue = None
             self._log_warning("Problem evaluating name of {0}: {1}", subitem_id, ex)
@@ -117,17 +117,17 @@ class SeEval(StateEngineTools.SeItemChild):
         try:
             if self._abitem._initstate and subitem_id == '..state_name':
                 returnvalue = self._abitem.return_item(self._abitem._initstate)
-                self._log_info("Return item '{0}' during init", returnvalue)
+                self._log_debug("Return item '{0}' during init", returnvalue)
             else:
                 returnvalue = self._abitem.return_item(subitem_id)
-                self._log_info("Return item '{0}'", returnvalue)
+                self._log_debug("Return item '{0}'", returnvalue)
         except Exception as ex:
             returnvalue = None
             self._log_warning("Problem evaluating item {0}: {1}", subitem_id, ex)
         finally:
             self._eval_lock.release()
         return returnvalue
-        
+
     # Return the value of an item related to the StateEngine Object Item
     # item_id: Relative id of item whose value should be returned
     #
@@ -138,18 +138,18 @@ class SeEval(StateEngineTools.SeItemChild):
         try:
             if self._abitem._initstate and subitem_id == '..state_name':
                 returnvalue = self._abitem.return_item(self._abitem._initstate).property.name
-                self._log_info("Return item value '{0}' during init", returnvalue)
+                self._log_debug("Return item value '{0}' during init", returnvalue)
             else:
                 item = self._abitem.return_item(subitem_id)
                 returnvalue = item.property.value
-                self._log_info("Return item value '{0}' for item {1}", returnvalue, item.property.path)
+                self._log_debug("Return item value '{0}' for item {1}", returnvalue, item.property.path)
         except Exception as ex:
             returnvalue = None
             self._log_warning("Problem evaluating value of '{0}': {1}", subitem_id, ex)
         finally:
             self._eval_lock.release()
         return returnvalue
-        
+
     # Return the property of an item related to the StateEngine Object Item
     # item_id: Relative id of item whose property should be returned
     # prop: name of property, e.g. last_change. See https://www.smarthomeng.de/user/konfiguration/items_properties.html?highlight=property
@@ -167,7 +167,7 @@ class SeEval(StateEngineTools.SeItemChild):
         try:
             if self._abitem._initstate and subitem_id == '..state_name':
                 returnvalue = getattr(self._abitem.return_item(self._abitem._initstate).property, prop)
-                self._log_info("Return item property '{0}' from {1}: {2} during init", prop,
+                self._log_debug("Return item property '{0}' from {1}: {2} during init", prop,
                                self._abitem.return_item(self._abitem._initstate).property.path, returnvalue)
             else:
                 returnvalue = getattr(item.property, prop)
@@ -178,7 +178,7 @@ class SeEval(StateEngineTools.SeItemChild):
         finally:
             self._eval_lock.release()
         return returnvalue
-        
+
     # Return an attribute of the current state declaration
     # item: can be a (relative) item or a stateengine variable
     # attrib: name of attribute, can actually be any attribute name you can think of ;)
@@ -195,7 +195,7 @@ class SeEval(StateEngineTools.SeItemChild):
         try:
             if self._abitem._initstate and item == '..state_name':
                 returnvalue = self._abitem.return_item(self._abitem._initstate).conf[attrib]
-                self._log_info("Return item attribute '{0}' from {1}: {2} during init",
+                self._log_debug("Return item attribute '{0}' from {1}: {2} during init",
                                attrib, self._abitem.return_item(self._abitem._initstate).property.path, returnvalue)
             else:
                 returnvalue = item.conf[attrib]
@@ -208,7 +208,7 @@ class SeEval(StateEngineTools.SeItemChild):
         finally:
             self._eval_lock.release()
         return returnvalue
-        
+
     # Insert end time of suspension into text
     # suspend_item_id: Item whose age is used to determine how much of the suspend time is already over
     # suspend_text: Text to insert end time of suspension into. Use strftime/strptime format codes for the end time

@@ -25,16 +25,16 @@ import os
 
 class SeLogger:
 
-    # Set log level
+    # Set global log level
     # loglevel: current loglevel
     @staticmethod
     def set_loglevel(loglevel):
         try:
             SeLogger.__loglevel = int(loglevel)
         except ValueError:
-            SeLogger.__loglevel = 2
+            SeLogger.__loglevel = 0
             logger = logging.getLogger('plugins.stateengine')
-            logger.error("Das Log-Level muss numerisch angegeben werden.")
+            logger.error("Loglevel has to be an int number!")
 
     # Set log directory
     # logdirectory: Target directory for StateEngine log files
@@ -63,7 +63,7 @@ class SeLogger:
         except ValueError:
             SeLogger.__logmaxage = 0
             logger = logging.getLogger('plugins.stateengine')
-            logger.error("Das maximale Alter der Logdateien muss numerisch angegeben werden.")
+            logger.error("The maximum age of the log files has to be an int number.")
 
     # Remove old log files (by scheduler)
     @staticmethod
@@ -103,7 +103,7 @@ class SeLogger:
         self.logger = logging.getLogger('{}.{}'.format(__name__.replace(".StateEngineLogger", ""), item.property.path))
         self.__section = item.property.path.replace(".", "_").replace("/", "")
         self.__indentlevel = 0
-        self.__loglevel = 0
+        self.__loglevel = SeLogger.__loglevel
         self.__date = None
         self.__filename = ""
         self.update_logfile()
@@ -112,8 +112,7 @@ class SeLogger:
     def override_loglevel(self, loglevel, item=None):
         logger = logging.getLogger('plugins.stateengine')
         self.__loglevel = int(loglevel)
-        logger.info("Das Log-Level ist für das Item {0}"
-                    " individuell auf Level {1} gesetzt.".format(item, loglevel))
+        logger.info("Loglevel for item {0} got individually set to {1}.".format(item, loglevel))
 
     # get current log level of abitem
     def get_loglevel(self):
