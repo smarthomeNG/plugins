@@ -165,6 +165,7 @@ parameters:
                 '
     log_maxage:
         type: int
+        valid_min: 0
         default: 0
         description:
             de: 'Erweiterte Protokollierung: Anzahl der Tage, nach der die Dateien im Verzeichnis für die Protokolldateien wieder gelöscht werden sollen'
@@ -372,6 +373,13 @@ item_attributes:
                 '
     se_log_level:
         type: int
+        valid_list:
+          - 0
+          - 1
+          - 2
+        valid_list_description:
+            de: ['deaktiviert', 'Info', 'Debug']
+            en: ['deactivated', 'Info', 'Debug']
         description:
             de: 'Loglevel für ein konkretes Stateengine Item'
             en: 'Log level for a distinct stateengine item'
