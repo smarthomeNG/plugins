@@ -206,7 +206,7 @@ class SeCondition(StateEngineTools.SeItemChild):
     # Write condition to logger
     def write_to_logger(self):
         if self.__error is not None:
-            self._log_debug("error: {0}", self.__error)
+            self._log_warning("error: {0}", self.__error)
         if self.__item is not None:
             if isinstance(self.__item, list):
                 for i in self.__item:
@@ -258,8 +258,9 @@ class SeCondition(StateEngineTools.SeItemChild):
                 value = str(value)
                 current = str(current)
             if not type(_oldvalue) == type(value):
-                self._log_info("Value {} was type {} and therefore not the same type as item value {}. It got converted to {}.",
-                               _oldvalue, type(_oldvalue), current, type(value))
+                self._log_debug("Value {} was type {} and therefore not the same "
+                                " type as item value {}. It got converted to {}.",
+                                _oldvalue, type(_oldvalue), current, type(value))
             return value, current
 
         current = self.__get_current()
@@ -373,7 +374,8 @@ class SeCondition(StateEngineTools.SeItemChild):
                     self._log_debug("given limits ok -> matching")
                     return True
             else:
-                self._log_warning("Neither value nor min/max given. This might result in unexpected evalutions. Min {}, max {}, value {}",
+                self._log_warning("Neither value nor min/max given. This might result in unexpected"
+                                  " evalutions. Min {}, max {}, value {}",
                                   self.__min.get(), self.__max.get(), self.__value.get())
                 self._log_increase_indent()
                 return True
@@ -387,12 +389,12 @@ class SeCondition(StateEngineTools.SeItemChild):
     def __check_age(self):
         # No limits given -> OK
         if self.__agemin.is_empty() and self.__agemax.is_empty():
-            self._log_info("Age of '{0}': No limits given", self.__name)
+            self._log_debug("Age of '{0}': No limits given", self.__name)
             return True
 
         # Ignore if no current value can be determined
         if self.__item is None and self.__eval is None:
-            self._log_info("Age of '{0}': No item found! Considering condition as matching!", self.__name)
+            self._log_warning("Age of '{0}': No item found! Considering condition as matching!", self.__name)
             return True
 
         try:
@@ -400,14 +402,14 @@ class SeCondition(StateEngineTools.SeItemChild):
         except Exception:
             cond_evalitem = False
         if self.__item is None and cond_evalitem is False:
-            self._log_info("Make sure your se_eval '{}' really contains an item and not an ID. If the age "
-                           "condition does not work though, please check your eval!", self.__eval)
+            self._log_warning("Make sure your se_eval '{}' really contains an item and not an ID. If the age "
+                              "condition does not work though, please check your eval!", self.__eval)
 
         try:
             current = self.__get_current(type='age')
         except Exception as ex:
-            self._log_info("Age of '{0}': Not possible to get age from eval {1}! "
-                           "Considering condition as matching: {2}", self.__name, self.__eval, ex)
+            self._log_warning("Age of '{0}': Not possible to get age from eval {1}! "
+                              "Considering condition as matching: {2}", self.__name, self.__eval, ex)
             return True
         agemin = None if self.__agemin.is_empty() else self.__agemin.get()
         agemax = None if self.__agemax.is_empty() else self.__agemax.get()
@@ -423,7 +425,8 @@ class SeCondition(StateEngineTools.SeItemChild):
             text = "Age of '{0}': min={1} max={2} negate={3} current={4}"
             self._log_debug(text, self.__name, agemin, agemax, self.__agenegate, current)
             if diff_len != 0:
-                self._log_debug("Min and max age are always evaluated as valuepairs. If needed you can also provide 'novalue' as a list value")
+                self._log_warning("Min and max age are always evaluated as valuepairs."
+                                  " If needed you can also provide 'novalue' as a list value")
             self._log_increase_indent()
             _notmatching = 0
             for i, _ in enumerate(agemin):
