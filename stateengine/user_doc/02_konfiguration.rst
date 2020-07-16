@@ -16,11 +16,29 @@ Konfiguration
    #etc/plugin.yaml
    stateengine:
        plugin_name: stateengine
+       plugin_enabled: True
        #startup_delay_default: 10
        #suspend_time_default: 3600
        #log_level: 0
        #log_directory: var/log/StateEngine/
        #log_maxage: 0
+
+.. rubric:: Aktivieren
+ :name: aktivieren
+
+Um für ein Item das Stateengine Plugin zu aktivieren, ist das Attribut ``se_plugin``
+auf ``active`` zu setzen. Dies ist in der generellen struct Vorlage bereits
+hinterlegt, muss aber manuell gesetzt werden, falls das ``struct: stateengine.general``
+nicht eingesetzt wird.
+
+.. code-block:: yaml
+
+  #items/item.yaml
+  raffstore1:
+      automatik:
+          rules:
+             se_plugin: active
+             se_log_level: 2
 
 .. rubric:: Logging
   :name: logging
@@ -28,7 +46,9 @@ Konfiguration
 Es gibt zwei Möglichkeiten, den Output des Plugins zu loggen:
 **intern**
 Hierbei werden, sofern das Loglevel 1 oder 2 beträgt, sämtliche Logeinträge in
-eigene Dateien in einem selbst definierten Verzeichnis geschrieben.
+eigene Dateien in einem selbst definierten Verzeichnis geschrieben. Das Loglevel
+kann sowohl global in der etc/plugin.yaml Datei deklariert, als auch individuell
+pro Item mittels ``se_log_level`` (dort wo auch se_plugin: active steht) überschrieben werden.
 
 **logging.yaml**
 Sowohl der Output des Plugins generell, als auch der Einträge für bestimmte Items

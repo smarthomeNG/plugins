@@ -40,7 +40,7 @@ plugin:
     documentation: https://www.smarthomeng.de/user/plugins/stateengine/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1303071-stateengine-plugin-support
 
-    version: 1.7.0
+    version: 1.7.1
     sh_minversion: 1.6
     multi_instance: False
     classname: StateEngine
@@ -165,6 +165,7 @@ parameters:
                 '
     log_maxage:
         type: int
+        valid_min: 0
         default: 0
         description:
             de: 'Erweiterte Protokollierung: Anzahl der Tage, nach der die Dateien im Verzeichnis für die Protokolldateien wieder gelöscht werden sollen'
@@ -368,8 +369,43 @@ item_attributes:
                 noch ausgesetzt wird.
                 '
             en: '**Id of the item that saves the suspend end time:**\n
-                 To visualize the end time of the suspend state.
-                 '
+                To visualize the end time of the suspend state.
+                '
+    se_log_level:
+        type: int
+        valid_list:
+          - 0
+          - 1
+          - 2
+        valid_list_description:
+            de: ['deaktiviert', 'Info', 'Debug']
+            en: ['deactivated', 'Info', 'Debug']
+        description:
+            de: 'Loglevel für ein konkretes Stateengine Item'
+            en: 'Log level for a distinct stateengine item'
+        description_long:
+            de: 'Das global angegebene Loglevel kann für jedes SE item individuell überschrieben werden.
+                 Somit ist es einfacher möglich, bestimme State Engines zu debuggen.
+                '
+            en: 'The globally defined log level can be overwritten for each SE item individually.
+                 Therefore it is easier to debug specific state engines.
+                '
+
+    se_use:
+        type: str
+        description:
+            de: 'Nutzen eines Vorgabezustands (veraltet - Nutze stattdessen das struct Feature)'
+            en: 'Using a default template (deprecated - Use the struct feature instead)'
+        description_long:
+            de: 'Vorgabezustände werden als Item an beliebiger Stelle innerhalb der
+                Item-Struktur definiert. Im konkreten Zustands-Item kann das Vorgabezustand-Item
+                über das Attribut se_use referenziert werden. Es wird empfohlen,
+                stattdessen das **struct** Feature zu nutzen.
+                '
+            en: 'Template states are defined as an item at any given position in the item tree.
+                In the specific state item the template can get referenced by using the attribute
+                se_use. It is recommended, however, to use the **struct** feature instead.
+                '
 
 item_structs:
     # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
@@ -605,59 +641,142 @@ item_attribute_prefixes:
     se_item_:
         type: str
         description:
-            de: ''
-            en: ''
+            de: 'Definiert das Item, das in einem konkreten Zustand evaluiert oder geändert werden soll'
+            en: 'Definition of an item that should be evaluated or changed in a specific state'
 
     se_eval_:
         type: str
         description:
-            de: ''
-            en: ''
+            de: 'Wie se_item, allerdings wird anstatt des konkreten Items das Item durch einen eval Ausdruck bestimmt'
+            en: 'Like se_item but instead of a specific item the item gets defined by an eval expression'
 
     se_mindelta_:
+        type: int
         description:
             de: 'Definiert um welchen Wert sich das Item mindestens geändert haben muss, um neu gesetzt zu werden'
-            en: ''
+            en: 'Definition of a threshold the item has to surpass to be newly set'
 
     se_min_:
+        type: int
         description:
-            de: ''
-            en: ''
+            de: 'Bedingung: Der Wert eines Items muss mindestens so hoch wie durch se_min angegeben sein'
+            en: 'Condition: The value of the item has to be at least as high as defined by se_min'
 
     se_max_:
+        type: int
         description:
-            de: ''
-            en: ''
+            de: 'Bedingung: Der Wert eines Items muss niedriger als der durch se_max angegebene Wert sein'
+            en: 'Condition: The value of the item has to be lower than defined by se_max'
 
     se_value_:
         description:
-            de: ''
-            en: ''
+            de: 'Bedingung: Das Item muss exakt dem durch se_value angegebenem Wert entsprechen'
+            en: 'Condition: The item has to have the exact same value as defined by se_value'
 
     se_negate_:
+        type: bool
         description:
-            de: ''
-            en: ''
+            de: 'Bedingung: Invertieren eines zuvor (mittels min, max oder value) definierten Bedingungswertes'
+            en: 'Condition: Invert a condition value previously defined (by min, max or value)'
 
     se_agemin_:
+        type: int
         description:
-            de: ''
-            en: ''
+            de: 'Bedingung: Mindestalter des Items (äquivalent zu se_minage)'
+            en: 'Condition: Minimum age of an item (same as se_minage)'
 
     se_agemax_:
+        type: int
         description:
-            de: ''
-            en: ''
+            de: 'Bedingung: Maximalalter des Items (äquivalent zu se_maxage)'
+            en: 'Condition: Maximum age of an item (same as se_maxage)'
+
+    se_minage_:
+        type: int
+        description:
+            de: 'Bedingung: Mindestalter des Items (äquivalent zu se_agemin)'
+            en: 'Condition: Minimum age of an item (same as se_agemin)'
+
+    se_maxage_:
+        type: int
+        description:
+            de: 'Bedingung: Maximalalter des Items (äquivalent zu se_agemax)'
+            en: 'Condition: Maximum age of an item (same as se_agemax)'
 
     se_agenegate_:
+        type: bool
         description:
-            de: ''
-            en: ''
+            de: 'Bedingung: Invertieren des zuvor definierten Alterswerts'
+            en: 'Condition: Invert a previously defined age value'
 
     se_action_:
+        type: list
         description:
-            de: ''
-            en: ''
+            de: 'Definiert eine Aktion wie Setzen von Items, Ausführen von Logiken, etc.'
+            en: 'Definition of an action like setting an item, running logics, etc.'
+
+    se_special_:
+        type: str
+        description:
+            de: 'Sonderaktion wie Suspend oder Retrigger'
+            en: 'Special action like suspend or retrigger'
+
+    se_set_:
+        description:
+            de: 'Setzen eines Items auf einen bestimmten Wert (veraltet - Nutze stattdessen se_action)'
+            en: 'Setting an item to a specific value (deprecated - use se_action instead)'
+
+    se_force_:
+        description:
+            de: 'Setzen eines Items auf einen bestimmten Wert, egal ob sich der Wert geändert hat oder nicht (veraltet - Nutze stattdessen se_action)'
+            en: 'Setting an item to a specific value no matter whether the value has changed or not (deprecated - use se_action instead)'
+
+    se_run_:
+        type: str
+        description:
+            de: 'Ausführen eines eval Ausdrucks (veraltet - Nutze stattdessen se_action)'
+            en: 'Running an eval expression (deprecated - use se_action instead)'
+
+    se_trigger_:
+        type: str
+        description:
+            de: 'Ausführen einer Logik (veraltet - Nutze stattdessen se_action)'
+            en: 'Running a logic (deprecated - use se_action instead)'
+
+    se_byattr_:
+        type: str
+        description:
+            de: 'Setzen aller Items mit dem entsprechend angegebenen Attribut (veraltet - Nutze stattdessen se_action)'
+            en: 'Setting all items having the respective attribute (deprecated - use se_action instead)'
+
+    se_delay_:
+        type: int
+        description:
+            de: 'Verzögern einer Aktion (veraltet - Nutze stattdessen se_action)'
+            en: 'Delaying an action (deprecated - use se_action instead)'
+
+    se_repeat_:
+        type: bool
+        description:
+            de: 'Definiert, ob eine Aktion beim erneuten Eintritt in den gleichen Status wiederholt werden soll oder nicht (veraltet - Nutze stattdessen se_action)'
+            en: 'Definition wether an action should be repeated or not when reentering the same state (deprecated - use se_action instead)'
+
+    se_order_:
+        type: int
+        description:
+            de: 'Definiert die Reihenfolge einer Aktion (veraltet - Nutze stattdessen se_action)'
+            en: 'Definition of the running order of an action (deprecated - use se_action instead)'
+
+    se_manual_:
+        description:
+            de: 'Diverse Funktion für den Suspendmodus wie include, exclude, invert, logitem.'
+            en: 'Some functions relevant for the suspend mode like include, exclude, invert, logitem.'
+
+    se_template_:
+        type: str
+        description:
+            de: 'Definiert eine Vorlage, auf die per template:<name> zurückgegriffen werden kann.'
+            en: 'Definition of a template that can be referenced by template:<name>.'
 
 plugin_functions: NONE
     # Definition of plugin functions defined by this plugin (enter 'plugin_functions: NONE', if section should be empty)
