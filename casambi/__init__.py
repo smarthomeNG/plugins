@@ -114,9 +114,12 @@ class Casambi(SmartPlugin):
         statusCode = sessionrequest_response.status_code
         if statusCode == 200:
             self.logger.debug("Sending session request command successful")
+        elif statusCode == 401:
+            self.logger.error("Sending session request results in: Unauthorized. Invalid API key or credentials given.") 
+            return '','',''
         else:
             self.logger.error("Server error: {0}".format(statusCode))
-            return ''
+            return '', '', ''
 
         responseJson = sessionrequest_response.json()
                 
