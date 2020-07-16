@@ -4,15 +4,15 @@ plugin:
     type: interface                 # plugin type (gateway, interface, protocol, system, web)
     description:
         de: 'Plugin um Yamaha RX-V und RX-S Receiver zu kontrollieren, **seit SmartHomeNG v1.3**'
-        en: 'Plugin to control Yamaha RX-V and RX-S receiver, **since SmartHomeNG v1.3**'
+        en: ''
     maintainer: rthill
     tester: Sandman60
     state: ready
-    keywords: Yamaha receiver music 
-    documentation: http://smarthomeng.de/user/plugins/yamaha/user_doc.html
-    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/896468-plugin-yamaha
+#    keywords: iot xyz
+#    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
+#    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
 
-    version: 1.0.1                 # Plugin version
+    version: 1.0.0                 # Plugin version
     sh_minversion: 1.1             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
@@ -22,23 +22,7 @@ parameters: NONE
     # Definition of parameters to be configured in etc/plugin.yaml
 
 item_attributes:
-    yamaha_host:
-        type: ip
-        description:
-            de: 'Hostname oder IP-Adresse des Yamaha Receivers mit dem kommuniziert werden soll'
-            en: 'Hostname or ip of Yamaha receiver to communicate with'
-
-    yamaha_cmd:
-        type: str
-        description:
-            de: 'Kommando das an den Yamaha Receiver gesendet werden soll'
-            en: 'Command to send to Yamaha receiver'
-        valid_list:
-            - 'state'
-            - 'power'
-            - 'input'
-            - 'volume'
-            - 'mute'
+    # Definition of item attributes defined by this plugin
 
 plugin_functions: NONE
 # Definition of plugin functions defined by this plugin

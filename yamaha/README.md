@@ -3,44 +3,35 @@
 Plugin to control Yamaha RX-V and RX-S receivers, e.g.: Power On / Off, select input, set volume and mute.
 
 ## Notes
-This plugin is still under development, but for myself in daily use. I use the plugin to switch on the Yamaha RX-S600 and RX-V475 series and to change the input. Depending on the input I also adapt the volume which works fine for me. Mute is unused in my logics.
+This plugin is still under development, but for the author in daily use. 
+There the plugin is used to switch on the Yamaha RX-S600 and RX-V475 series and to change the input.
+Depending on the input the volume is also adapted which works fine for the author but mute is not used in his logics.
+
 The plugin makes use of the Yamaha Network Control (YNC) which is an XML format protocol.
-Event notifications are received over UDP Multicast (SSDP), so be aware to keep the Yamaha RX-V in the same subnet as sh.py.
+Event notifications are received over UDP Multicast (SSDP) if the device sends them out.
+To receive the notifications the Yamaha device needs to share the same subnet as the SmartHomeNG host.
 
-Feel free to comment and to fill issues.
-Only main zone is supported for the moment, if you wish to use multi zone feature please open a new issue on github.
+Currently only the main zone is supported.
 
-As far as I know all RX-V4xx, RX-V5xx, RX-V6xx, RX-V7xx and RX-Sxxx series share the same API, so they should be ok with this plugin.
+## Supported devices
 
-After installation of the plugin, you might not receive event notifications over multicast. To enable event notifications please power on the device at least once using sh.py, see examples below to power on using CLI.
+All RX-V4xx, RX-V5xx, RX-V6xx, RX-V7xx and RX-Sxxx series share the same API, so they should be ok with this plugin.
+
+RXS-602D is also tested and basically it works, except for the notifications which are not broadcasted at all.
+Since this device also supports MusicCast, alternatively the Yamahaxyc plugin might be used.
+
+After installation of the plugin it might be that no event notifications over multicast are received.
+To enable event notifications it is needed to power on the device at least once using SmartHomeNG.
 
 ## Requirements
 
-The following python packages need to be installed on your system:
+The following python packages are part of requirements.txt and will be installed upon start with SmartHomeNG Version 1.7 and later.
 
-- requests
 - lxml
 
-Those packages can be installed using:
-
-```bash
-# Debian based
-sudo apt-get install python3-lxml python3-requests
-
-# Arch Linux
-sudo pacman -S python-lxml python-requests
-
-# Fedora
-sudo dnf install python3-lxml python3-requests
-```
+They can also be installed by ``pip3 install -r requirements.txt --user`` from within the ``plugins/yamaha`` directory.
 
 ## Installation
-
-```bash
-cd smarthome.py directory
-cd plugins
-git clone https://github.com/rthill/yamaha.git
-```
 
 ### plugin.yaml
 
@@ -53,44 +44,30 @@ yamaha:
 ### items.yaml
 
 ```yaml
-mm:
+livingroom:
 
-    gf:
+    yamaha:
+        yamaha_host: 192.168.178.186
 
-        living:
+        power:
+            type: bool
+            yamaha_cmd: power
+            enforce_updates: 'True'
 
-            yamaha:
-                yamaha_host: 192.168.178.186
+        volume:
+            type: num
+            yamaha_cmd: volume
+            enforce_updates: 'True'
 
-                power:
-                    type: bool
-                    yamaha_cmd: power
-                    enforce_updates: 'True'
+        mute:
+            type: bool
+            yamaha_cmd: mute
+            enforce_updates: 'True'
 
-                volume:
-                    type: num
-                    yamaha_cmd: volume
-                    enforce_updates: 'True'
-
-                mute:
-                    type: bool
-                    yamaha_cmd: mute
-                    enforce_updates: 'True'
-
-                input:
-                    type: str
-                    yamaha_cmd: input
-                    enforce_updates: 'True'
+        input:
+            type: str
+            yamaha_cmd: input
+            enforce_updates: 'True'
 ```
 
-### Example CLI usage
-
-```
-> up mm.gf.living.yamaha.power=True
-> up mm.gf.living.yamaha.input=AV4
-> up mm.gf.living.yamaha.volume=-600 # This is equivalent for -60.0dB
-> up mm.gf.living.yamaha.input=HDMI1
-> up mm.gf.living.yamaha.mute=True
-> up mm.gf.living.yamaha.mute=False
-> up mm.gf.living.yamaha.power=False
-```
+Attention: A top level item name will interfere with plugin names.
