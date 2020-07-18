@@ -6,8 +6,7 @@
 
 ```yaml
 sql:
-    class_name: SQL
-    class_path: plugins.sqlite_visu2_8
+    plugin_name: sqlite_visu2_8
     # path: None
     # dumpfile: /tmp/smarthomedb.dump
 ```

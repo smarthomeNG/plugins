@@ -1,5 +1,5 @@
 
-# 2N-Intercom Plugin
+# Intercom-2N Plugin
 
 ## Requirements
 
@@ -60,8 +60,7 @@ Edit your ```plugin.yaml``` and add following lines:
 
 ```yaml
 intercom_2n:
-    class_name: Intercom2n
-    class_path: plugins.intercom_2n
+    plugin_name: intercom_2n
     intercom_ip: 192.168.0.10
     ssl: 'True'
     auth_type: 2
