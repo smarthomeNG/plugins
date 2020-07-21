@@ -2,7 +2,6 @@
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
 #  Copyright 2016 Raoul Thill                       raoul.thill@gmail.com
-#  Copyright 2020 Bernd Meiners                     Bernd.Meiners@mail.de
 #########################################################################
 #  This file is part of SmartHomeNG.
 #
@@ -21,24 +20,11 @@
 #########################################################################
 
 import logging
+import requests
 import socket
-
+from lxml import etree
 from io import StringIO
-from lib.model.smartplugin import *
-from lib.item import Items
-
-from .webif import WebInterface
-
-# If a package is needed, which might be not installed in the Python environment,
-# import it like this:
-
-try:
-    from lxml import etree
-    import requests
-    REQUIRED_PACKAGE_IMPORTED = True
-except:
-    REQUIRED_PACKAGE_IMPORTED = False
-
+from lib.model.smartplugin import SmartPlugin
 
 
 class Mcast(socket.socket):
@@ -55,16 +41,11 @@ class Mcast(socket.socket):
 
 
 class Yamaha(SmartPlugin):
-    PLUGIN_VERSION = "1.0.1"
+    PLUGIN_VERSION = "1.0.0"
+    ALLOW_MULTIINSTANCE = False
 
     def __init__(self, smarthome):
-        # Call init code of parent class (SmartPlugin)
-        super().__init__()
-
-        from bin.smarthome import VERSION
-        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
-            self.logger = logging.getLogger(__name__)
-
+        self.logger = logging.getLogger(__name__)
         self.logger.info("Init Yamaha")
         self._sh = smarthome
         self._yamaha_cmds = ['state', 'power', 'input', 'volume', 'mute']
@@ -76,47 +57,26 @@ class Yamaha(SmartPlugin):
         self.mcast_buffer = 1024
         self.mcast_service = "urn:schemas-yamaha-com:service:X_YamahaRemoteControl:1"
 
-        # On initialization error use:
-        if not REQUIRED_PACKAGE_IMPORTED:
-            self._init_complete = False
-            return
-
-        # if plugin should start even without web interface
-        self.init_webinterface()
-
     def run(self):
+        self._sh.trigger('Yamaha', self._initialize)
         self.logger.info("Yamaha starting listener")
-        try:
-            self.sock = Mcast(self.mcast_port)
-            self.sock.mcast_add(self.mcast_addr)
-        except OSError:
-            self.logger.error("Could not create a socket to Yamaha Receiver")
-            return
-
-        ## Todo: why not call initialize directly?
-        #self.scheduler_trigger('Yamaha', self._initialize)
-
-        ## test to call initialize directly
-        if self._initialize():
-            self.alive = True
-
-        # Todo
-        # need to reconnect when disconnected. Maybe lib/network.py has a solution
+        self.alive = True
+        self.sock = Mcast(self.mcast_port)
+        self.sock.mcast_add(self.mcast_addr)
         while self.alive:
             data, addr = self.sock.recvfrom(self.mcast_buffer)
             try:
                 host, port = addr
             except TypeError:
                 pass
-            notification = data.decode('utf-8')
-            #self.logger.debug("Received '{}' from {}".format(notification,addr))
-            if self.mcast_service in notification:
+            if self.mcast_service in data.decode('utf-8'):
                 if host not in list(self._yamaha_rxv.keys()):
                     self.logger.warn("Yamaha received notify from unknown host {}".format(host))
                 else:
                     self.logger.info("Yamaha multicast received {} bytes from {}".format(len(data), host))
+                    data = data.decode('utf-8')
                     self.logger.debug(data)
-                    for line in notification.split('\r\n'):
+                    for line in data.split('\r\n'):
                         if line.startswith('<'):
                             line = line.split('?>')[1]
                             events = self._return_value(line, 'event')
@@ -135,41 +95,23 @@ class Yamaha(SmartPlugin):
                 self.logger.debug("Yamaha sending ack to {}:{}".format(host, port))
                 self.sock.sendto(b'ack', addr)
         else:
-            if self.sock:
-                self.sock.close()
-            self.sock = None
-            
+            self.sock.close()
 
     def stop(self):
         self.alive = False
-        try:
-            if self.sock:
-                self.sock.shutdown(socket.SHUT_RDWR)
-                self.sock.close()
-        except OSError as e:
-            self.logger.error("OSError '{}' occurred while stopping plugin".format(e))
-        except Exception as e:
-            self.logger.error("Unknown error '{}' occurred while stopping plugin".format(e))
-        finally:
-            self.sock = None
+        self.sock.shutdown(socket.SHUT_RDWR)
 
     def _initialize(self):
-        try:
-            self.logger.info("Yamaha now initializing current state")
-            for yamaha_host, yamaha_cmd in self._yamaha_rxv.items():
-                self.logger.info("Initializing items for host: {}".format(yamaha_host))
-                state = self._update_state(yamaha_host)
-                self.logger.debug(state)
-                for yamaha_cmd, item in yamaha_cmd.items():
-                    if yamaha_cmd != 'state':
-                        self.logger.info("Initializing cmd {} for item {}".format(yamaha_cmd, item))
-                        value = self._return_value(state, yamaha_cmd)
-                        item(value, self.get_shortname())
-        except Exception as e:
-            self.logger.error("Exception '{}' occurred".format(e))
-            return
-        self.logger.info("Yamaha finished initializing current state")
-        return True
+        self.logger.info("Yamaha now initializing current state")
+        for yamaha_host, yamaha_cmd in self._yamaha_rxv.items():
+            self.logger.info("Initializing items for host: {}".format(yamaha_host))
+            state = self._update_state(yamaha_host)
+            self.logger.debug(state)
+            for yamaha_cmd, item in yamaha_cmd.items():
+                if yamaha_cmd != 'state':
+                    self.logger.info("Initializing cmd {} for item {}".format(yamaha_cmd, item))
+                    value = self._return_value(state, yamaha_cmd)
+                    item(value, "Yamaha")
 
     def _return_document(self, doc):
         return etree.tostring(doc, xml_declaration=True, encoding='UTF-8', pretty_print=False)
@@ -279,7 +221,7 @@ class Yamaha(SmartPlugin):
         self.logger.debug(res)
         value = self._return_value(res, notify_cmd)
         item = self._yamaha_rxv[yamaha_host][notify_cmd]
-        item(value, self.get_shortname())
+        item(value, "Yamaha")
 
     def _return_value(self, state, cmd):
         try:
@@ -340,31 +282,26 @@ class Yamaha(SmartPlugin):
             res = requests.post("http://%s/YamahaRemoteControl/ctrl" % host,
                                 headers={
                                     "Accept": "text/xml",
-                                    "User-Agent": "SmartHomeNG"
+                                    "User-Agent": "sh.py"
                                 },
                                 timeout=4,
                                 data=payload)
             response = res.text
             del res
-            if response == "":
-                self.logger.warn("No response received.")
-            else:
-                self.logger.debug("Response received: '{}'".format(response))
             return response
         else:
-            self.logger.warn("No payload given")
+            self.logger.warn("No payload received.")
             return None
 
     def _lookup_host(self, item):
         parent = item.return_parent()
-        yamaha_host = self.get_iattr_value(parent.conf,'yamaha_host')
+        yamaha_host = parent.conf['yamaha_host']
         return yamaha_host
 
     def parse_item(self, item):
-        if self.has_iattr(item.conf, 'yamaha_cmd'):
-            self.logger.debug("parse item: {}".format(item))
+        if 'yamaha_cmd' in item.conf:
             yamaha_host = self._lookup_host(item)
-            yamaha_cmd = self.get_iattr_value(item.conf, 'yamaha_cmd').lower()
+            yamaha_cmd = item.conf['yamaha_cmd'].lower()
             if not yamaha_cmd in self._yamaha_cmds:
                 self.logger.warning("{} not in valid commands: {}".format(yamaha_cmd, self._yamaha_cmds))
                 return None
@@ -377,24 +314,8 @@ class Yamaha(SmartPlugin):
             return self.update_item
 
     def update_item(self, item, caller=None, source=None, dest=None):
-        """
-        Item has been updated
-
-        This method is called, if the value of an item has been updated by SmartHomeNG.
-        It should write the changed value out to the device (hardware/interface) that
-        is managed by this plugin.
-
-        :param item: item to be updated towards the plugin
-        :param caller: if given it represents the callers name
-        :param source: if given it represents the source
-        :param dest: if given it represents the dest
-        """
-        if self.alive and caller != self.get_shortname():
-            # code to execute if the plugin is not stopped
-            # and only, if the item has not been changed by this this plugin:
-            self.logger.info("Update item: {}, item has been changed outside this plugin".format(item.id()))
-
-            yamaha_cmd = self.get_iattr_value(item.conf, 'yamaha_cmd')
+        if caller != "Yamaha":
+            yamaha_cmd = item.conf['yamaha_cmd']
             yamaha_host = self._lookup_host(item)
             yamaha_payload = None
             yamaha_notify = False
@@ -419,44 +340,3 @@ class Yamaha(SmartPlugin):
     def _update_state(self, yamaha_host):
         state = self._submit_payload(yamaha_host, self._get_state())
         return state
-
-    def init_webinterface(self):
-        """"
-        Initialize the web interface for this plugin
-
-        This method is only needed if the plugin is implementing a web interface
-        """
-        try:
-            self.mod_http = Modules.get_instance().get_module(
-                'http')  # try/except to handle running in a core version that does not support modules
-        except:
-            self.mod_http = None
-        if self.mod_http == None:
-            self.logger.error("Not initializing the web interface")
-            return False
-
-        import sys
-        if not "SmartPluginWebIf" in list(sys.modules['lib.model.smartplugin'].__dict__):
-            self.logger.warning("Web interface needs SmartHomeNG v1.5 and up. Not initializing the web interface")
-            return False
-
-        # set application configuration for cherrypy
-        webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
-        config = {
-            '/': {
-                'tools.staticdir.root': webif_dir,
-            },
-            '/static': {
-                'tools.staticdir.on': True,
-                'tools.staticdir.dir': 'static'
-            }
-        }
-
-        # Register the web interface as a cherrypy app
-        self.mod_http.register_webif(WebInterface(webif_dir, self),
-                                     self.get_shortname(),
-                                     config,
-                                     self.get_classname(), self.get_instance_name(),
-                                     description='')
-
-        return True

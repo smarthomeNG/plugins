@@ -1,4 +1,6 @@
-# Alexa4PayloadV3
+# alexa4p3
+
+Alexa4PayloadV3
 
 ## Table of Content
 
@@ -52,8 +54,7 @@ Das ursprünglich Plugin kann deaktiviertwerden :
 
 <pre><code>
 #alexa:
-#    class_name: Alexa
-#    class_path: plugins.alexa
+#    plugin_name: alexa4p3
 #    service_port: 9000
 </code></pre>
 

@@ -16,15 +16,13 @@ For more information about lircd and the remotes database see http://www.lirc.or
 
 ```
 lirc1:
-    class_name: LIRC
-    class_path: plugins.lirc
+    plugin_name: lirc
     instance: "livingroom"
     lirc_host: "127.0.0.1"
 #    lirc_port: 6610
 
 lirc2:
-    class_name: LIRC
-    class_path: plugins.lirc
+    plugin_name: lirc
     instance: "hifisystem"
     lirc_host: "192.168.1.10"
 #    lirc_port: 6610

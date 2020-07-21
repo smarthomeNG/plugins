@@ -31,8 +31,7 @@ As other plugin some additional attributes are to be put to the item structure.
 
 ```yaml
 visu:
-    class_name: WebSocket
-    class_path: plugins.visu_websocket
+    plugin_name: visu_websocket
     # ip: '0.0.0.0'
     # port: 2424
     # tls: no
