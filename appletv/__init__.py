@@ -3,7 +3,7 @@
 #########################################################################
 #  Copyright 2018- Serge Wagener                     serge@wagener.family
 #########################################################################
-#  This file is part of SmartHomeNG.   
+#  This file is part of SmartHomeNG.
 #
 #  Sample plugin for new plugins to run with SmartHomeNG version 1.4 and
 #  upwards.
@@ -23,53 +23,53 @@
 #
 #########################################################################
 
+from jinja2 import Environment, FileSystemLoader
+import cherrypy
 from lib.module import Modules
 from lib.model.smartplugin import *
+from lib.item import Items
 
 import asyncio
 import datetime
 import os
-import pyatv
 import threading
+import base64
+import json
 from random import randint
+import pyatv
+from pyatv.const import Protocol
 
-KNOWN_ATTRIBUTES = ['play_state', 'play_state_string', 'playing'
-                    , 'media_type', 'media_type_string'
-                    , 'title', 'album', 'artist', 'genre'
-                    , 'position', 'total_time', 'position_percent'
-                    , 'repeat', 'repeat_string', 'shuffle'
-                    , 'artwork_url', 'name']
-
-KNOWN_COMMANDS = ['rc_top_menu', 'rc_menu'
-                    , 'rc_select', 'rc_left', 'rc_up', 'rc_down', 'rc_right'
-                    , 'rc_previous', 'rc_play', 'rc_pause', 'rc_stop', 'rc_next']
-
-MEDIA_TYPE = {1:'Unknown', 2:'Video', 3:'Music', 4:'TV'}
-PLAY_STATE = {0:'idle', 1:'no media', 2:'loading', 3:'paused', 4:'playing', 5:'fast forward', 6:'fast backward'}
-REPEAT_STATE = {0:'Off', 1:'Track', 2:'All'}
+KNOWN_COMMANDS = ['rc_top_menu', 'rc_home', 'rc_home_hold', 'rc_menu', 'rc_select', 'rc_next', 'rc_previous', 'rc_play', 'rc_pause',
+                    'rc_play_pause', 'rc_stop', 'rc_up', 'rc_down', 'rc_right', 'rc_left', 'rc_volume_up', 'rc_volume_down',
+                    'rc_suspend', 'rc_wakeup', 'rc_skip_forward', 'rc_skip_backward', 'rc_set_position', 'rc_set_shuffle', 'rc_set_repear']
 
 class AppleTV(SmartPlugin):
+    """
+    Main class of the Plugin. Does all plugin specific stuff and provides
+    the update functions for the items
+    """
 
-    PLUGIN_VERSION='1.5.1'
+    PLUGIN_VERSION = '1.6.1'
 
-    def __init__(self, sh, *args, **kwargs):
+    def __init__(self, sh):
         """
-        Initalizes the plugin. The parameters describe for this method are pulled from the entry in plugin.yaml.
+        Initalizes the plugin.
         """
-        self.logger = logging.getLogger(__name__)
+        # Call init code of parent class (SmartPlugin)
+        super().__init__()
 
         # get the parameters for the plugin (as defined in metadata plugin.yaml):
-        self._name = 'Unknown'
-        self._device_id = None
         self._ip = self.get_parameter_value('ip')
-        self._login_id = self.get_parameter_value('login_id')
+        self._atv_scan_timeout = self.get_parameter_value('scan_timeout')
 
-        self._atv_scan_timeout = 5
         self._atv_reconnect_timeout = 10
-        self._atv_device = pyatv.AppleTVDevice(self._name, self._ip, self._login_id)
+        # All devices
+        self._atvs = None
+        # Device used in this instance
         self._atv = None
-        
+
         self._items = {}
+        self._state = {}
         self._loop = asyncio.get_event_loop()
         self._push_listener_loop = None
         self._cycle = 5
@@ -77,11 +77,16 @@ class AppleTV(SmartPlugin):
         self._playstatus = None
         self._is_playing = False
         self._position = 0
-        self._position_timestamp = None 
+        self._position_timestamp = datetime.datetime.now()
         self._credentials = None
         self._credentialsfile = None
-        self._credentials_verified = False
+        self._paired = False
         self.__push_listener_thread = None
+
+        # Remote control and power control API
+        self._atv_rc = None
+        self._atv_pwc = None
+
 
         self.init_webinterface()
         return
@@ -89,16 +94,18 @@ class AppleTV(SmartPlugin):
     def run(self):
         """
         Run method for the plugin
-        """        
+        """
+        self.logger.debug("Run method called")
+        self.alive = True
         self._loop.run_until_complete(self.discover())
         self._loop.run_until_complete(self.connect())
-        self.alive = True
 
     def stop(self):
         """
         Stop method for the plugin
         """
-        self.logger.debug("Plugin '{}': stop method called".format(self.get_fullname()))
+        self.logger.debug(
+            "Plugin '{}': stop method called".format(self.get_fullname()))
         self._loop.stop()
         while self._loop.is_running():
             pass
@@ -107,17 +114,18 @@ class AppleTV(SmartPlugin):
         self.alive = False
 
     def parse_item(self, item):
-        if self.has_iattr(item.conf, 'atv'):
-            attribute = self.get_iattr_value(item.conf, 'atv')
-            self.logger.debug("Plugin '{}': parse item: {} info: {}".format(self.get_fullname(), item, attribute))
-            if (attribute is None):
-                return None
-            elif (attribute not in KNOWN_ATTRIBUTES and attribute not in KNOWN_COMMANDS):
-                self.logger.info("Unknown attribute {} for item {}".format(attribute, item))
-                return None
-            else:
-                self._items[attribute] = item
-                return self.update_item
+        """
+        Parse items into internal array on plugin startup
+        """
+
+        if self.has_iattr(item.conf, 'appletv'):
+            self.logger.debug("parse item: {}".format(item.id()))
+            _item = self.get_iattr_value(item.conf, 'appletv')
+            # Add items to internal array
+            if not _item in self._items:
+                self._items[_item] = []
+            self._items[_item].append(item)
+            return self.update_item
 
     def parse_logic(self, logic):
         """
@@ -127,146 +135,202 @@ class AppleTV(SmartPlugin):
             # self.function(logic['name'])
             pass
 
-    def execute_rc(self, command):
+    async def execute_rc(self, command):
+
         if (command in KNOWN_COMMANDS):
             command = command[3:]
-            self.logger.info("Sending remote command {} to Apple TV {}".format(command, self._name))
+            self.logger.info(
+                "Sending remote command {} to Apple TV {}".format(command, self._atv.name))
             if hasattr(self._atv_rc, command):
-                self._loop.create_task(getattr(self._atv_rc, command)())
+                try:
+                    result = await getattr(self._atv_rc, command)()
+                except:
+                    self.logger.error("Error launching coroutine {}".format(command))
             else:
                 self.logger.error("Coroutine {} not found".format(command))
         else:
-            self.logger.warning("Unknown remote command {}, ignoring".format(command))
+            self.logger.warning(
+                "Unknown remote command {}, ignoring".format(command))
             return
- 
+
     def update_item(self, item, caller=None, source=None, dest=None):
-      if caller != self.get_shortname():
-            if self.has_iattr(item.conf, 'atv'):
-                # Plugin 'update_item was called with item 'atv.wohnzimmer.position_percent' and value 22 from caller 'Visu',
-                self.logger.debug("update_item was called with item '{}' and value {} from caller '{}', source '{}' and dest '{}'".format(item, item(), caller, source, dest))
-                attribute = self.get_iattr_value(item.conf, 'atv')  
-                if (attribute == 'position_percent'):
-                    if self._playstatus.total_time and self._playstatus.total_time > 0:
-                        percentage = item()
-                        playtime = self._playstatus.total_time
-                        position = playtime * percentage / 100
-                        self.logger.debug("Setting position to {}% = {}/{}".format(percentage, position, playtime))
-                        self._loop.create_task(self._atv_rc.set_position(position))
+        """
+        Item has been updated
+
+        :param item: item to be updated towards the plugin
+        :param caller: if given it represents the callers name
+        :param source: if given it represents the source
+        :param dest: if given it represents the dest
+        """
+        if self.alive and caller != self.get_shortname():
+            if self.has_iattr(item.conf, 'appletv'):
+                _value = self.get_iattr_value(item.conf,'appletv')
+                self.logger.debug('Value: {}'.format(_value))
+                if (_value == 'power'):
+                    if item():
+                        self._loop.create_task(self._atv_pwc.turn_on())
                     else:
-                        if 'position_percent' in self._items:
-                            self._items['position_percent'](0, self.get_shortname(), self._name)
-                elif (attribute == 'shuffle'):
+                        self._loop.create_task(self._atv_pwc.turn_off())
+                elif (_value == 'playing_position_percent'):
+                    _position_percent = item()
+                    if not 'playing_total_time' in self._state or not self._state['playing_total_time']:
+                        _total_time = 0
+                    else:
+                        _total_time = self._state['playing_total_time']
+                    _position = _total_time * _position_percent / 100
+                    self.logger.debug("Setting position to {}% = {}/{}".format(_position_percent, _position, _total_time))
+                    self._update_position(_position, False)
+                    self._loop.create_task(self._atv_rc.set_position(_position))
+                elif (_value == 'playing_shuffle'):
+                    self.logger.debug('Setting shuffle to {}'.format(item()))
                     self._loop.create_task(self._atv_rc.set_shuffle(item()))
-                elif (attribute == 'repeat'):
+                    #self._update_items('playing_shuffle_text', pyatv.convert.shuffle_str(item()))
+                elif (_value == 'playing_repeat'):
+                    self.logger.debug('Setting repeat to {}'.format(item()))
                     self._loop.create_task(self._atv_rc.set_repeat(item()))
-                elif (attribute in KNOWN_COMMANDS):
-                    self.execute_rc(attribute)
-                    item(False, self.get_shortname(), self._name)     
-            pass
+                elif (_value in KNOWN_COMMANDS):
+                    item(False, self.get_shortname(), self._atv.name)
+                    self._loop.create_task(self.execute_rc(_value))
+                else:
+                    self.logger.warning('Unknown command {}'.format(_value))
+
+    def save_credentials(self):
+        self.logger.debug('Saving credentials: {}'.format(self._credentials))
+        self._credentialsfile = os.path.join(os.path.dirname(__file__), '{}.credentials'.format(self._atv.identifier))
+        _credentials = open(self._credentialsfile, 'w')
+        _credentials.write(self._credentials)
+        _credentials.close()
+
+    def load_credentials(self):
+        self._paired = False
+        self._credentialsfile = os.path.join(os.path.dirname(__file__), '{}.credentials'.format(self._atv.identifier))
+        try:
+            _credentials = open(self._credentialsfile, 'r')
+            self._credentials = _credentials.read()
+            _credentials.close()
+            self.logger.debug('Stored credentials found')
+            result = self._atv.set_credentials(self._atv.main_service().protocol, self._credentials)
+            if result:
+                self.logger.debug('Credentials successfully set')
+                self._paired = True
+            else:
+                self.logger.warning('Error setting credentials, please re-pair !')
+        except:
+            self.logger.warning('No credentials found, you must pair this device !')
+            return False
+        return True
 
     async def discover(self):
         """
         Discovers Apple TV's on local mdns domain       
         """
-        self.logger.debug("Discovering Apple TV's in your network")
-        self._atvs = await pyatv.scan_for_apple_tvs(self._loop, timeout=self._atv_scan_timeout, only_home_sharing=False)
-                
+        self.logger.debug("Discovering Apple TV's in your network for {} seconds...".format(
+            int(self._atv_scan_timeout)))
+        self._atvs = await pyatv.scan(self._loop, timeout=self._atv_scan_timeout)
+
         if not self._atvs:
             self.logger.warning("No Apple TV found")
         else:
-            self._atvs = sorted(self._atvs)
             self.logger.info("Found {} Apple TV's:".format(len(self._atvs)))
             for _atv in self._atvs:
-                self.logger.info(" - {}, IP: {}, Login ID: {}".format(_atv.name, _atv.address, _atv.login_id))
+                _markup = '-'
                 if str(_atv.address) == str(self._ip):
-                    self._name = _atv.name
-                    if self._login_id is None:
-                        self._login_id = _atv.login_id
-        
+                    _markup = '*'
+                    self._atv = _atv
+                self.logger.info(" {} {}, IP: {}".format(_markup, _atv.name, _atv.address))
+
     async def connect(self):
         """
         Connects to this instance's Apple TV     
         """
-        if str(self._ip) == '0.0.0.0':
+        if not self._atv:
             if len(self._atvs) > 0:
-                self.logger.debug("No device given in plugin.yaml, using first autodetected device")
-                self._atv_device = self._atvs[0]
-                self._name = self._atv_device.name
-                self._login_id = self._atv_device.login_id
-                self._ip = self._atv_device.address
+                self.logger.debug("No device given in plugin.yaml or device not found, using first autodetected device")
+                self._atv = self._atvs[0]
+                self._ip = str(self._atv.address)
             else:
                 return False
-        self.logger.info("Connecting to '{0}' on ip '{1}'".format(self._name, self._ip))
-        if 'name' in self._items:
-            self._items['name'](self._name, self.get_shortname(), self._name)
-        if self._login_id is None:
-            self.logger.error("Cannot connect to Apple TV {}, homesharing seems to be disabled ?".format(self._name))
-            return False
+        if self._atv.name:
+                self._update_items('name', self._atv.name)
+        if self._ip:
+            self._update_items('ip', self._ip)
+        if self._atv.device_info.mac:
+            self._update_items('mac', self._atv.device_info.mac)
+        if self._atv.device_info.model:
+            self._update_items('model', str(self._atv.device_info.model).replace('DeviceModel.',''))
+        if self._atv.device_info.operating_system.TvOS:
+            self._update_items('os', 'TvOS ' + self._atv.device_info.version)
         else:
-            self._atv = pyatv.connect_to_apple_tv(self._atv_device, self._loop)
-            self._atv_rc = self._atv.remote_control
-            self._device_id = self._atv.metadata.device_id
-            self._credentialsfile = os.path.join(os.path.dirname(__file__), '{}.credentials'.format(self._device_id))
-            try:
-                _credentials = open(self._credentialsfile, 'r')
-                self._credentials = _credentials.read()
-                await self._atv.airplay.load_credentials(self._credentials)
-                self.logger.debug("Credentials read: {}".format(self._credentials))
-            except:
-                _credentials = open(self._credentialsfile, 'w')
-                self._credentials = await self._atv.airplay.generate_credentials()
-                await self._atv.airplay.load_credentials(self._credentials)
-                _credentials.write(self._credentials)
-                self.logger.debug("Credentials written: {}".format(self._credentials))
-            finally:
-                try:
-                    await self._atv.airplay.verify_authenticated()
-                    self._credentials_verified = True
-                except:
-                    self._credentials_verified = False
-                    self.logger.info("Credentials for {} are not yet verified, airplay not possible".format(self._name))
-                _credentials.close()
-            self._push_listener_thread = threading.Thread(target=self._push_listener_thread_worker, name='ATV listener')
-            self._push_listener_thread.start()
+            self._update_items('os', self._atv.device_info.version)
+        self.load_credentials()
+        self.logger.info("Connecting to '{0}' on ip '{1}'".format(self._atv.name, self._ip))
+        self._device = await pyatv.connect(self._atv, self._loop)
+        self._atv_rc = self._device.remote_control
+        self._atv_pwc = self._device.power
+        if self._atv_pwc.power_state == pyatv.const.PowerState.On:
+            self._update_items('power', True)
+        else:
+            self._update_items('power', False)
+        self._push_listener_thread = threading.Thread(
+            target=self._push_listener_thread_worker, name='ATV listener')
+        self._push_listener_thread.start()
         return True
-    
-    async def update_artwork(self):
-        _url = await self._atv.metadata.artwork_url()
-        self.logger.debug("Artwork: {}".format(_url))
-        if 'artwork_url' in self._items:
-            if self._items['play_state']() == pyatv.const.PLAY_STATE_PLAYING:
-                self._items['artwork_url'](_url + '&rand=' + str(randint(10000, 99999)), self.get_shortname(), self._name)
-            else:
-                self._items['artwork_url']('//:0?rand=' + str(randint(10000, 99999)), self.get_shortname(), self._name)
 
     async def disconnect(self):
         """
         Stop listening to push updates and logout of this istances Apple TV     
         """
-        self.logger.info("Disconnecting from '{0}'".format(self._name))
-        await self._atv.push_updater.stop()
-        await self._atv.logout()
+        self.logger.info("Disconnecting from '{0}'".format(self._atv.name))
+        self._device.push_updater.stop()
+        self._device.close()
 
+    async def update_artwork(self):
+        try:
+            _artwork = await self._device.metadata.artwork() # width=512
+            self.logger.debug("Artwork {}x{} type {}".format(_artwork.width, _artwork.height, _artwork.mimetype))
+            self._update_items("artwork_width", _artwork.width)
+            self._update_items("artwork_height", _artwork.height)
+            self._update_items("artwork_mimetype", _artwork.mimetype)
+            self._update_items("artwork_base64", base64.b64encode(_artwork.bytes).decode())
+        except:
+            pass
 
-    def update_position(self, new_position, from_device):
-        self._position = new_position
+    def _update_items(self, attribute, value):
+        #self.logger.debug('Updating {} with value {}'.format(attribute, value))
+        self._state[attribute] = value
+        if attribute in self._items:
+            for _item in self._items[attribute]:
+                _item(value, self.get_shortname())
+
+    def _update_position(self, new_position, from_device):
+        if not new_position:
+            new_position = 0
+        if not 'playing_total_time' in self._state or not self._state['playing_total_time']:
+            self._update_items('playing_total_time', 0)
         if from_device:
-            self._position_timestamp = datetime.datetime.now()            
-        if 'position' in self._items:
-            self._items['position'](self._position, self.get_shortname(), self._name)
-        if 'position_percent' in self._items:
-            if self._position > 0:
-                self._items['position_percent'](int(round(self._position / self._playstatus.total_time * 100)), self.get_shortname(), self._name)
-            else:
-                self._items['position_percent'](0, self.get_shortname(), self._name)
+            self._position = new_position
+            self._position_timestamp = datetime.datetime.now()
+        self._update_items('playing_position', new_position)
+        if new_position > 0 and self._state['playing_total_time'] > 0:   
+            self._update_items('playing_position_percent', int(round(new_position / self._state['playing_total_time'] * 100)))
+        else:
+            self._update_items('playing_position_percent', 0)
+
+    def handle_async_exception(self, loop, context):
+        self.logger.error('*** ASYNC EXCEPTIONM ***')
+        self.logger.error('Context: {}'.format(context))
+        raise
 
     def _push_listener_thread_worker(self):
         """
         Thread to run asyncio loop. This avoids blocking the main plugin thread
         """
         asyncio.set_event_loop(self._loop)
-        self._atv.push_updater.listener = self
-        self._atv.push_updater.start()
+        self._loop.set_exception_handler(self.handle_async_exception)
+        self._device.push_updater.listener = self
+        self._device.push_updater.start()
+        self._device.power.listener = self
+        self._device.listener = self
         while self._loop.is_running():
             pass
         try:
@@ -275,60 +339,93 @@ class AppleTV(SmartPlugin):
             while True:
                 self._loop.run_until_complete(asyncio.sleep(0.25))
                 _cycle += 1
-                if _cycle >= 5:
-                    if self._is_playing:
-                        time_passed = int(round((datetime.datetime.now() - self._position_timestamp).total_seconds()))
-                        self.update_position(self._playstatus.position + time_passed, False)
+                if _cycle >= 2:
+                    if self._state['playing_state'] == 3:
+                        _time_passed = int(round((datetime.datetime.now() - self._position_timestamp).total_seconds()))
+                        self._update_position(self._position + _time_passed, False)
                     _cycle = 0
         except:
+            #self.logger.error('*** DEBUG ***')
             return
-            self.logger.debug('*** Error in loop.run_forever()')
-            raise
+
+# ------------------------------------------
+#    Callbacks from AppleTV push listener
+# ------------------------------------------
 
     def playstatus_update(self, updater, playstatus):
         """
         Callback for pyatv, is called on currently playing update
         """
+        #self.logger.debug('playstatus_update: {}'.format(playstatus))
         self._loop.create_task(self.update_artwork())
         self._playstatus = playstatus
-        if 'play_state' in self._items:
-            self._items['play_state'](playstatus.play_state, self.get_shortname(), self._name)
-        if 'play_state_string' in self._items:
-            self._items['play_state_string'](PLAY_STATE[playstatus.play_state], self.get_shortname(), self._name)
-        if 'media_type' in self._items:
-            self._items['media_type'](playstatus.media_type, self.get_shortname(), self._name)
-        if 'media_type_string' in self._items:
-            self._items['media_type_string'](MEDIA_TYPE[playstatus.media_type], self.get_shortname(), self._name)
-        if 'album' in self._items:
-            self._items['album'](playstatus.album if playstatus.album is not None else 'No album', self.get_shortname(), self._name)
-        if 'artist' in self._items:
-            self._items['artist'](playstatus.artist if playstatus.artist is not None else 'No artist', self.get_shortname(), self._name)
-        if 'genre' in self._items:
-            self._items['genre'](playstatus.genre if playstatus.genre is not None else 'No genre', self.get_shortname(), self._name)
-        if 'title' in self._items:
-            self._items['title'](playstatus.title if playstatus.title is not None else 'No title', self.get_shortname(), self._name)
-        if 'total_time' in self._items:
-            self._items['total_time'](playstatus.total_time, self.get_shortname(), self._name)
-        if 'repeat' in self._items:
-            self._items['repeat'](playstatus.repeat, self.get_shortname(), self._name)
-        if 'repeat_string' in self._items and playstatus.repeat is not None:
-            self._items['repeat_string'](REPEAT_STATE[playstatus.repeat], self.get_shortname(), self._name)
-        if 'shuffle' in self._items:
-            self._items['shuffle'](playstatus.shuffle, self.get_shortname(), self._name)      
-        if 'playing' in self._items:
-            if playstatus.play_state == pyatv.const.PLAY_STATE_PLAYING:
-                self._is_playing = True
-            else:
-                self._is_playing = False
-            self._items['playing'](self._is_playing, self.get_shortname(), self._name)
-        self.update_position(self._playstatus.position, True)
+        _app = self._device.metadata.app
+        self._update_items('playing_app_name', _app.name if _app.name else '---')
+        self._update_items('playing_app_identifier', _app.identifier if _app.identifier else '---')
+        self._update_items('playing_state', playstatus.device_state.value)
+        self._update_items('playing_state_text', pyatv.convert.device_state_str(playstatus.device_state))
+        self._update_items('playing_fingerprint', playstatus.hash)
+        self._update_items('playing_genre', playstatus.genre if playstatus.genre else '---')
+        self._update_items('playing_album', playstatus.album if playstatus.album else '---')
+        self._update_items('playing_title', playstatus.title if playstatus.title else '---')
+        self._update_items('playing_artist', playstatus.artist if playstatus.artist else '---')
+        self._update_items('playing_type', playstatus.media_type.value)
+        self._update_items('playing_type_text', pyatv.convert.media_type_str(playstatus.media_type))
+        self._update_position(playstatus.position, True)
+        self._update_items('playing_total_time', playstatus.total_time)
+        if playstatus.position and playstatus.total_time:
+            self._update_items('playing_position_percent', round(playstatus.position / playstatus.total_time * 100))
+        else:
+            self._update_items('playing_position_percent', 0)
+        self._update_items('playing_repeat', playstatus.repeat.value)
+        self._update_items('playing_repeat_text', pyatv.convert.repeat_str(playstatus.repeat))
+        self._update_items('playing_shuffle', playstatus.shuffle.value)
+        self._update_items('playing_shuffle_text', pyatv.convert.shuffle_str(playstatus.shuffle))
 
     def playstatus_error(self, updater, exception):
         """
         Callback for pyatv, is called on push update error
         """
-        self.logger.warning("PushListener error, retrying in {0} seconds".format(self._atv_reconnect_timeout))
+        self.logger.warning("PushListener error, retrying in {0} seconds".format(
+            self._atv_reconnect_timeout))
         updater.start(initial_delay=self._atv_reconnect_timeout)
+
+    def powerstate_update(self, old_state, new_state):
+        self.logger.debug('Power state changed from {0:s} to {1:s}'.format(old_state, new_state))
+        if new_state == pyatv.const.PowerState.On:
+            self._update_items('power', True)
+        else:
+            self._update_items('power', False)
+
+    def connection_lost(self, exception):
+        self.logger.warning("Lost connection:", str(exception))
+
+    def connection_closed(self):
+        self.logger.warning("Connection closed!")
+
+# ------------------------------------------
+#    Methods to be used in logics
+# ------------------------------------------
+
+    def is_on(self):
+        return self._state['power']
+
+    def is_playing(self):
+        if self._state['playing_state'] == pyatv.const.DeviceState.Playing.value:
+            return True
+        else:
+            return False
+
+    def pause(self):
+        self._loop.create_task(self.execute_rc('rc_pause'))
+
+    def play(self):
+        self.logger.warning('Playing, sending command !!')
+        self._loop.create_task(self.execute_rc('rc_play'))
+
+# ------------------------------------------
+#    Webinterface of the plugin
+# ------------------------------------------
 
     def init_webinterface(self):
         """"
@@ -337,16 +434,19 @@ class AppleTV(SmartPlugin):
         This method is only needed if the plugin is implementing a web interface
         """
         try:
-            self.mod_http = Modules.get_instance().get_module('http')   # try/except to handle running in a core version that does not support modules
+            # try/except to handle running in a core version that does not support modules
+            self.mod_http = Modules.get_instance().get_module('http')
         except:
-             self.mod_http = None
+            self.mod_http = None
         if self.mod_http == None:
-            self.logger.error("Plugin '{}': Not initializing the web interface".format(self.get_shortname()))
+            self.logger.error(
+                "Plugin '{}': Not initializing the web interface".format(self.get_shortname()))
             return False
-        
+
         import sys
         if not "SmartPluginWebIf" in list(sys.modules['lib.model.smartplugin'].__dict__):
-            self.logger.warning("Plugin '{}': Web interface needs SmartHomeNG v1.5 and up. Not initializing the web interface".format(self.get_shortname()))
+            self.logger.warning(
+                "Plugin '{}': Web interface needs SmartHomeNG v1.5 and up. Not initializing the web interface".format(self.get_shortname()))
             return False
 
         # set application configuration for cherrypy
@@ -360,51 +460,22 @@ class AppleTV(SmartPlugin):
                 'tools.staticdir.dir': 'static'
             }
         }
-        
+
         # Register the web interface as a cherrypy app
-        self.mod_http.register_webif(WebInterface(webif_dir, self), 
-                                     self.get_shortname(), 
-                                     config, 
+        self.mod_http.register_webif(WebInterface(webif_dir, self),
+                                     self.get_shortname(),
+                                     config,
                                      self.get_classname(), self.get_instance_name(),
                                      description='')
-                                   
+
         return True
 
-    # ------------------------------------------
-    #    Methods to be used in logics
-    # ------------------------------------------
-
-    def is_playing(self):
-        return self._is_playing
-
-    def pause(self):
-        self._loop.create_task(self._atv_rc.pause())
-
-    def play(self):
-        self._loop.create_task(self._atv_rc.play())
-
-    def play_url(self, url):
-        self.logger.info('Playing {}'.format(url))
-        try:
-            self._loop.create_task(self._atv.airplay.play_url(url))
-        except:
-            pass
-
-
-# ------------------------------------------
-#    Webinterface of the plugin
-# ------------------------------------------
-
-import cherrypy
-from jinja2 import Environment, FileSystemLoader
-
 class WebInterface(SmartPluginWebIf):
-
 
     def __init__(self, webif_dir, plugin):
         """
         Initialization of instance of class WebInterface
-        
+
         :param webif_dir: directory where the webinterface of the plugin resides
         :param plugin: instance of the plugin
         :type webif_dir: str
@@ -413,46 +484,88 @@ class WebInterface(SmartPluginWebIf):
         self.logger = logging.getLogger(__name__)
         self.webif_dir = webif_dir
         self.plugin = plugin
+        self.items = Items.get_instance()
         self.tplenv = self.init_template_environment()
         self.pinentry = False
 
-    def auth_callback(self, future):
-        try:
-            accepted = future.result()
-            if accepted:
-                self.plugin._credentials_verified = True
-                self.plugin.logger.info("Authentication done")
-        except  pyatv.exceptions.DeviceAuthenticationError as e:
-            self.plugin._credentials_verified = False
-            self.plugin.logger.error("Authentication error, wrong PIN ?")
-        except Exception as e:
-            self.plugin._credentials_verified = False
-            self.plugin.logger.error("Authentication error: {}".format(str(e)))
- 
     @cherrypy.expose
     def index(self, reload=None):
         """
         Build index.html for cherrypy
-        
+
         Render the template and return the html file to be delivered to the browser
-            
+
         :return: contents of the template after beeing rendered 
         """
+        # get list of items with the attribute knx_dpt
+        plgitems = []
+        _instance = self.plugin.get_instance_name()
+        if _instance:
+            _keyword = 'appletv@{}'.format(_instance)
+        else:
+            _keyword = 'appletv'
+        for item in self.items.return_items():
+            if _keyword in item.conf:
+                plgitems.append(item)
         tmpl = self.tplenv.get_template('index.html')
-        # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
-        return tmpl.render(p=self.plugin, pinentry=self.pinentry)
+        return tmpl.render(p=self.plugin, items=sorted(plgitems, key=lambda k: str.lower(k['_path'])), pinentry=self.pinentry)
 
     @cherrypy.expose
-    def button_pressed(self, button = None, pin = None):
+    def get_data_html(self, dataSet=None):
+        """
+        Return data to update the webpage
+
+        For the standard update mechanism of the web interface, the dataSet to return the data for is None
+
+        :param dataSet: Dataset for which the data should be returned (standard: None)
+        :return: dict with the data needed to update the web page.
+        """
+        if dataSet is None:
+            data = {}
+            data['state'] = self.plugin._state
+            # return it as json the the web page
+            try:
+                return json.dumps(data)
+            except Exception as e:
+                self.logger.error("get_data_html exception: {}".format(e))
+                #self.logger.debug(data)
+        return {}
+
+    @cherrypy.expose
+    def button_pressed(self, button=None, pin=None):
         if button == "discover":
+            self.logger.debug('Discover button pressed')
             self.plugin._loop.create_task(self.plugin.discover())
         elif button == "start_authorization":
+            self.logger.debug('Start authentication')
             self.pinentry = True
-            self.plugin._loop.create_task(self.plugin._atv.airplay.start_authentication())
+
+            _protocol = self.plugin._atv_device.main_service().protocol
+            self._pairing = self.plugin._loop.run_until_complete(
+                pyatv.pair(self.plugin._atv_device, _protocol, self.plugin._loop)
+            )
+            if self._pairing.device_provides_pin:
+                self._pin = None
+                self.logger.info('Device provides pin')
+            else:
+                self._pin = randint(1111,9999)
+                self.logger.info('SHNG must provide pin: {}'.format(self._pin))
+                
+            self.plugin._loop.run_until_complete(self._pairing.begin())
+
         elif button == "finish_authorization":
+            self.logger.debug('Finish authentication')
             self.pinentry = False
-            task = self.plugin._loop.create_task(self.plugin._atv.airplay.finish_authentication(pin))
-            task.add_done_callback(self.auth_callback)
+            self._pairing.pin(pin)
+            self.plugin._loop.run_until_complete(self._pairing.finish())
+            if self._pairing.has_paired:
+                self.logger.info('Pairing successfull !')
+                self.plugin._credentials = self._pairing.service.credentials
+                self.plugin.save_credentials()
+            else:
+                self.logger.error('Unable to pair, wrong Pin ?')
+            self.plugin._loop.run_until_complete(self._pairing.close())
         else:
-            self.logger.warning("Unknown button pressed in webif: {}".format(button))
+            self.logger.warning(
+                "Unknown button pressed in webif: {}".format(button))
         raise cherrypy.HTTPRedirect('index')

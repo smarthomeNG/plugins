@@ -1,21 +1,33 @@
 plugin_translations:
     # Translations for the plugin specially for the web interface
-    'Finden':               {'de': '=', 'en': 'Discover', 'fr': 'Découvrir'}
-    'Autorisieren':         {'de': '=', 'en': 'Authorize', 'fr': 'Autoriser'}
-    'Geräte':               {'de': '=', 'en': 'Devices', 'fr': 'Appareils'}
-    'Aktuelles Gerät':      {'de': '=', 'en': 'Actual device', 'fr': 'Appareil actuellement utilisé'}
-    'Gerät nutzbar':        {'de': '=', 'en': 'Device usable', 'fr': 'Appareil utilisable'}
-    'Gerät nicht nutzbar':  {'de': '=', 'en': 'Device not usable', 'fr': 'Appareil non utilisable'}
-    'IP Adresse':           {'de': '=', 'en': 'IP address', 'fr': 'Adresse IP'}
-    'Login ID':             {'de': '=', 'en': 'Login ID', 'fr': 'ID de connexion'}
-    'Validieren':           {'de': '=', 'en': 'Validate', 'fr': 'Valider'}
+    'Discover':             {'de': 'Finden', 'en': '=', 'fr': 'Découvrir'}
+    'Pair':                 {'de': 'Koppeln', 'en': '=', 'fr': 'Coupler'}
+    'Devices':              {'de': 'Geräte', 'en': '=', 'fr': 'Appareils'}
+    'Detected devices':     {'de': 'Erkannte Geräte', 'en': '=', 'fr': 'Appareils détectés'}
+    'Actual device':        {'de': 'Aktuelles Gerät', 'en': '=', 'fr': 'Appareil actuellement utilisé'}
+    'Identifier':           {'de': 'Kennung', 'en': '=', 'fr': 'Identifiant'}
     
-    'PIN eingeben':
+    'IP address':           {'de': 'IP Adresse', 'en': '=', 'fr': 'Adresse IP'}
+    'MAC':                  {'de': 'MAC', 'en': '=', 'fr': 'MAC'}
+    'Model':                {'de': 'Modell', 'en': '=', 'fr': 'Modèle'}
+    'OS':                   {'de': 'BS', 'en': '=', 'fr': 'SE'}
+    'Version':              {'de': '=', 'en': '=', 'fr': '='}
+    'Build':                {'de': '=', 'en': '=', 'fr': '='}
+    'Device':               {'de': 'Gerät', 'en': '=', 'fr': 'Appareil'}
+    'Protocol':             {'de': 'Protokoll', 'en': '=', 'fr': 'Protocole'}
+    'Port':                 {'de': '=', 'en': '=', 'fr': '='}
+
+    'Artist':               {'de': 'Künstler', 'en': '=', 'fr': 'Artiste'}
+    'Genre':                {'de': '=', 'en': '=', 'fr': '='}
+    'Album':                {'de': '=', 'en': '=', 'fr': '='}
+    'Title':                {'de': 'Titel', 'en': '=', 'fr': 'Titre'}
+    'Position':             {'de': '=', 'en': '=', 'fr': '='}
+    'State':                {'de': 'Status', 'en': '=', 'fr': 'Etat'}
+
+    'Visu access':          {'de': 'Visu Zugriff', 'en': '=', 'fr': 'Accès visualisation'}
+
+    'Validate':             {'de': 'Validieren', 'en': '=', 'fr': 'Valider'}
+    'Enter PIN':
         de: 'Auf dem Fernseher angezeigte PIN eingeben'
         en: 'Input PIN as seen on TV'
         fr: 'Entrer le code PIN affiché sur votre TV'
-
-    'Wenn ein Gerät nicht nutzbar ist bitte überprüfen op Homesharing eingeschaltet ist.':
-        de: '='
-        en: 'If a device appears unusable, please check if homesharing has been enabled.'
-        fr: 'Si un appareil apparait non utilisable veuillez vérifier que le "Homesharing" est activé.'
