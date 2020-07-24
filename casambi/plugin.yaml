@@ -7,7 +7,7 @@ plugin:
         en: 'Gateway plugin for Casambi devices'
     maintainer: aschwith
 #   tester:                         # Who tests this plugin?
-    state: develop                  # change to ready when done with development
+    state: ready                    # change to ready when done with development
 #   keywords: iot xyz
 #   documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1496182-supportthread-f%C3%BCr-casambi-plugin
@@ -46,6 +46,7 @@ item_attributes:
     # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)
     casambi_id:
         type: num
+        valid_min: 0
         description:
             de: 'Casambi Geraete ID'
             en: 'Casambi device id'
