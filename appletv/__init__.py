@@ -36,6 +36,7 @@ import threading
 import base64
 import json
 from random import randint
+from time import sleep
 import pyatv
 from pyatv.const import Protocol
 
@@ -359,9 +360,12 @@ class AppleTV(SmartPlugin):
         #self.logger.debug('playstatus_update: {}'.format(playstatus))
         self._loop.create_task(self.update_artwork())
         self._playstatus = playstatus
-        _app = self._device.metadata.app
-        self._update_items('playing_app_name', _app.name if _app.name else '---')
-        self._update_items('playing_app_identifier', _app.identifier if _app.identifier else '---')
+        try:
+            _app = self._device.metadata.app
+            self._update_items('playing_app_name', _app.name if _app.name else '---')
+            self._update_items('playing_app_identifier', _app.identifier if _app.identifier else '---')
+        except:
+            pass
         self._update_items('playing_state', playstatus.device_state.value)
         self._update_items('playing_state_text', pyatv.convert.device_state_str(playstatus.device_state))
         self._update_items('playing_fingerprint', playstatus.hash)
@@ -540,10 +544,13 @@ class WebInterface(SmartPluginWebIf):
             self.logger.debug('Start authentication')
             self.pinentry = True
 
-            _protocol = self.plugin._atv_device.main_service().protocol
-            self._pairing = self.plugin._loop.run_until_complete(
-                pyatv.pair(self.plugin._atv_device, _protocol, self.plugin._loop)
+            _protocol = self.plugin._atv.main_service().protocol
+            _task = self.plugin._loop.create_task(
+                pyatv.pair(self.plugin._atv, _protocol, self.plugin._loop)
             )
+            while not _task.done():
+                sleep(0.1)
+            self._pairing = _task.result()
             if self._pairing.device_provides_pin:
                 self._pin = None
                 self.logger.info('Device provides pin')
@@ -551,20 +558,22 @@ class WebInterface(SmartPluginWebIf):
                 self._pin = randint(1111,9999)
                 self.logger.info('SHNG must provide pin: {}'.format(self._pin))
                 
-            self.plugin._loop.run_until_complete(self._pairing.begin())
+            self.plugin._loop.create_task(self._pairing.begin())
 
         elif button == "finish_authorization":
             self.logger.debug('Finish authentication')
             self.pinentry = False
             self._pairing.pin(pin)
-            self.plugin._loop.run_until_complete(self._pairing.finish())
+            _task = self.plugin._loop.create_task(self._pairing.finish())
+            while not _task.done():
+                sleep(0.1)
             if self._pairing.has_paired:
                 self.logger.info('Pairing successfull !')
                 self.plugin._credentials = self._pairing.service.credentials
                 self.plugin.save_credentials()
             else:
                 self.logger.error('Unable to pair, wrong Pin ?')
-            self.plugin._loop.run_until_complete(self._pairing.close())
+            self.plugin._loop.create_task(self._pairing.close())
         else:
             self.logger.warning(
                 "Unknown button pressed in webif: {}".format(button))

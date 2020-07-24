@@ -49,7 +49,22 @@
 
         }
     }
+
+	$(document).ready(function() {
+        $('#pincode-input').pincodeInput({hidedigits:false,inputs:4});
+        {% if pinentry %}
+            $('#pinEntry').modal();
+        {% endif %}
+        $('#pinEntry').on('hidden.bs.modal', function (e) {
+            $('#button').val('finish_authorization');
+            $('#pin').val($('#pincode-input').val());
+            $('#button_pressed').submit();
+        })
+    });
+
 </script>
+<script src="static/js/bootstrap-pincode-input.js"></script>
+
 {% endblock pluginscripts %}
 
 {% block headtable %}	
@@ -94,6 +109,30 @@
 
 {% set tab1title = "<i class='fab fa-apple'></i>&nbsp;<strong>" ~ p._state['name'] ~ "</strong>" %}
 {% block bodytab1 %}
+<!--
+	PIN entry modal dialog
+-->
+
+<link rel="stylesheet" type="text/css" href="static/css/bootstrap-pincode-input.css">
+<div class="modal fade" id="pinEntry" role="dialog">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">{{ _('Enter PIN') }}</h4>
+            </div>
+            <div class="modal-body">
+                <p>{{ _('Enter PIN') }}: <input type="text" id="pincode-input"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">{{ _('Validate') }}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!--
+	Rest of container 1
+-->
 <div class="container-fluid m-2">
     <div class="row">
         <div class="col-sm-4">
@@ -167,44 +206,9 @@
 </div>
 {% endblock bodytab1 %}
 
+
 {% set tab2title = "<i class='fas fa-tools'></i>&nbsp;<strong>" ~ _('Detected devices') ~ "</strong>" %}
 {% block bodytab2 %}
-
-<!--
-	PIN entry modal dialog
--->
-<script src="static/js/bootstrap-pincode-input.js"></script>
-<link rel="stylesheet" type="text/css" href="static/css/bootstrap-pincode-input.css">
-<script>
-   $(document).ready(function() {
-        $('#pincode-input').pincodeInput({hidedigits:false,inputs:4});
-        {% if pinentry %}
-            $('#pinEntry').modal();
-        {% endif %}
-        $('#pinEntry').on('hidden.bs.modal', function (e) {
-            $('#button').val('finish_authorization');
-            $('#pin').val($('#pincode-input').val());
-            $('#button_pressed').submit();
-        })
-    });
-</script>
-
-<div class="modal fade" id="pinEntry" role="dialog">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h4 class="modal-title">{{ _('Enter PIN') }}</h4>
-            </div>
-            <div class="modal-body">
-                <p>{{ _('Enter PIN') }}: <input type="text" id="pincode-input"></p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">{{ _('Validate') }}</button>
-            </div>
-        </div>
-    </div>
-</div>
-
 
 <!--
 	Discovered devices table
