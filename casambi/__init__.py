@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
-#  Copyright 2019-      <AUTHOR>                                  <EMAIL>
+#  Copyright 2020 - Alexander Schwithal          alex.schwithal(a)web.de
 #########################################################################
 #  This file is part of SmartHomeNG.
 #  https://www.smarthomeNG.de
@@ -57,6 +57,7 @@ class Casambi(SmartPlugin):
             self.logger = logging.getLogger(__name__)
 
         self.session = requests.Session()
+        self.exit_event = threading.Event()
         self._rx_items = {}
         self.sessionID = ''
         self.networkID = ''
@@ -341,7 +342,8 @@ class Casambi(SmartPlugin):
 
             if errorCount > 2:
                 errorCount = 1
-                time.sleep(60)
+                self.logger.debug("Waiting for 60 seconds")
+                self.exit_event.wait(timeout=60)
        
             if not self.alive:
                 break
@@ -363,8 +365,9 @@ class Casambi(SmartPlugin):
         Stop method for the plugin
         """
         self.logger.debug("Stop method called")
-        if self.thread:
-            self.thread.join(2)
+        self.exit_event.set()
+#        if self.thread:
+#            self.thread.join(2)
         self.alive = False
 
     def parse_item(self, item):
