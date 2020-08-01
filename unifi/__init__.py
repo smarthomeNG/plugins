@@ -56,7 +56,7 @@ class UniFiConst(object):
     TYPE_DV_IP = 'device_ip'
     TYPE_DV_NAME = 'device_name'
 
-    ATTR_MAC = 'mac'
+    ATTR_MAC = 'unify_mac'
     ATTR_SW_MAC = 'unifi_switch_mac'
     ATTR_DV_MAC = 'unifi_device_mac'
     ATTR_AP_MAC = 'unifi_ap_mac'
@@ -289,7 +289,7 @@ class UniFiControllerClient(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.6.1'
+    PLUGIN_VERSION = '1.6.2'
 
     def __init__(self, sh, *args, **kwargs):
         """
