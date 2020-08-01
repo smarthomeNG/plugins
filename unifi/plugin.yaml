@@ -77,7 +77,7 @@ item_attributes:
             - 'ap_enabled'
             - 'device_ip'
             - 'device_name'
-    unifi_mac:
+    unifi_client_mac:
         type: mac
         description:
             de: 'Definition der MAC Adresse für Items vom unifi_type `client_*`. Nur für diese Items mandatory!'

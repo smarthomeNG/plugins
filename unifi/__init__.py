@@ -56,7 +56,7 @@ class UniFiConst(object):
     TYPE_DV_IP = 'device_ip'
     TYPE_DV_NAME = 'device_name'
 
-    ATTR_MAC = 'unify_mac'
+    ATTR_MAC = 'unifi_client_mac'
     ATTR_SW_MAC = 'unifi_switch_mac'
     ATTR_DV_MAC = 'unifi_device_mac'
     ATTR_AP_MAC = 'unifi_ap_mac'
