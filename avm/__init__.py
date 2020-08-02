@@ -939,11 +939,11 @@ class AVM(SmartPlugin):
 
             headers = self._header.copy()
             if self.get_iattr_value(item.conf, 'avm_data_type') == 'wlanconfig':
-                if int(item.conf['avm_wlan_index']) > 0:
+                if int(self.get_iattr_value(item.conf, 'avm_wlan_index')) > 0:
                     headers['SOAPACTION'] = "%s#%s" % (
-                        self._urn_map['WLANConfiguration'] % str(item.conf['avm_wlan_index']), action)
+                        self._urn_map['WLANConfiguration'] % str(self.get_iattr_value(item.conf, 'avm_wlan_index')), action)
                     soap_data = self._assemble_soap_data(action, self._urn_map['WLANConfiguration'] % str(
-                        item.conf['avm_wlan_index']), {'NewEnable': int(item())})
+                        self.get_iattr_value(item.conf, 'avm_wlan_index')), {'NewEnable': int(item())})
                 else:
                     self.logger.error(
                         'No wlan_index attribute provided: %s' % self.get_iattr_value(item.conf, 'avm_data_type'))
@@ -965,7 +965,7 @@ class AVM(SmartPlugin):
 
             if self.get_iattr_value(item.conf, 'avm_data_type') == 'wlanconfig':
                 param = "%s%s%s" % (
-                    "/upnp/control/", self.get_iattr_value(item.conf, 'avm_data_type'), item.conf['avm_wlan_index'])
+                    "/upnp/control/", self.get_iattr_value(item.conf, 'avm_data_type'), self.get_iattr_value(item.conf, 'avm_wlan_index'))
                 url = self._build_url(param)
 
             elif self.get_iattr_value(item.conf, 'avm_data_type') == 'tam':
@@ -1084,10 +1084,10 @@ class AVM(SmartPlugin):
                                     'avm_data_type') == 'wlanconfig':  # check if item was guest wifi item and remaining time is set as item..
                 for citem in self._fritz_device.get_items():  # search for guest time remaining item.
                     if self.get_iattr_value(citem.conf,
-                                            'avm_data_type') == 'wlan_guest_time_remaining' and citem.conf[
-                        'avm_wlan_index'] == item.conf['avm_wlan_index']:
+                                            'avm_data_type') == 'wlan_guest_time_remaining' and self.get_iattr_value(citem.conf,
+                        'avm_wlan_index') == self.get_iattr_value(item.conf, 'avm_wlan_index'):
                         self._response_cache.pop("wlanconfig_%s_%s" % (
-                            citem.conf['avm_wlan_index'], "X_AVM-DE_GetWLANExtInfo"),
+                            cself.get_iattr_value(item.conf, 'avm_wlan_index'), "X_AVM-DE_GetWLANExtInfo"),
                                                  None)  # reset response cache
                         self._update_wlan_config(citem)  # immediately update remaining guest time
 
@@ -2146,9 +2146,9 @@ class AVM(SmartPlugin):
 
         :param item: item to be updated (Supported item avm_data_types: wlanconfig, wlan_guest_time_remaining
         """
-        if item.conf['avm_wlan_index']:
-            if int(item.conf['avm_wlan_index']) > 0:
-                url = self._build_url("/upnp/control/wlanconfig%s" % item.conf['avm_wlan_index'])
+        if self.has_iattr(item.conf, 'avm_wlan_index'):
+            if int(self.get_iattr_value(item.conf, 'avm_wlan_index')) > 0:
+                url = self._build_url("/upnp/control/wlanconfig%s" % self.get_iattr_value(item.conf, 'avm_wlan_index'))
             else:
                 self.logger.error('No wlan_index attribute provided')
         else:
@@ -2165,11 +2165,11 @@ class AVM(SmartPlugin):
             return
 
         headers['SOAPACTION'] = "%s#%s" % (
-            self._urn_map['WLANConfiguration'] % str(item.conf['avm_wlan_index']), action)
+            self._urn_map['WLANConfiguration'] % str(self.get_iattr_value(item.conf, 'avm_wlan_index')), action)
         soap_data = self._assemble_soap_data(action,
-                                             self._urn_map['WLANConfiguration'] % str(item.conf['avm_wlan_index']))
+                                             self._urn_map['WLANConfiguration'] % str(self.get_iattr_value(item.conf, 'avm_wlan_index')))
 
-        if not "wlanconfig_%s_%s" % (item.conf['avm_wlan_index'], action) in self._response_cache:
+        if not "wlanconfig_%s_%s" % (self.get_iattr_value(item.conf, 'avm_wlan_index'), action) in self._response_cache:
             try:
                 response = self._session.post(url, data=soap_data, timeout=self._timeout, headers=headers,
                                               auth=HTTPDigestAuth(self._fritz_device.get_user(),
@@ -2183,12 +2183,12 @@ class AVM(SmartPlugin):
                 return
             if not self._fritz_device.is_available():
                 self.set_device_availability(True)
-            self._response_cache["wlanconfig_%s_%s" % (item.conf['avm_wlan_index'], action)] = response.content
+            self._response_cache["wlanconfig_%s_%s" % (self.get_iattr_value(item.conf, 'avm_wlan_index'), action)] = response.content
         else:
             self.logger.debug("Accessing wlanconfig response cache for action %s and item %s!" % (action, item.property.path))
 
         try:
-            xml = minidom.parseString(self._response_cache["wlanconfig_%s_%s" % (item.conf['avm_wlan_index'], action)])
+            xml = minidom.parseString(self._response_cache["wlanconfig_%s_%s" % (self.get_iattr_value(item.conf, 'avm_wlan_index'), action)])
         except Exception as e:
             self.logger.error("Exception when parsing response: %s" % str(e))
             return
