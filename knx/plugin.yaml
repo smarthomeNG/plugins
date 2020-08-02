@@ -12,7 +12,7 @@ plugin:
 #    keywords: iot xyz
     documentation: http://smarthomeng.de/user/plugins/knx/user_doc.html
 
-    version: 1.6.2                 # Plugin version
+    version: 1.6.3                 # Plugin version
     sh_minversion: 1.6             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
@@ -208,13 +208,13 @@ item_attributes:
             en: "Group address (or list of group addresses) to listen for. KNX messages to this group address(es) will change the item's value"
 
     knx_init:
-        type: list(knx_ga)
+        type: knx_ga
         description:
             de: 'Gruppenadresse für die Initialisierung des Items. Der KNX-Bus wird nach dem Wert abgefragt. Die Angabe impliziert knx_listen, also muss knx_listen nicht für diese Gruppenadresse angegeben werden. Wie bei knx_listen kann eine Liste von GAs angegeben werden. Dann wird der erste Eintrag der Liste für die Initialisierung verwendet.'
             en: 'Group address to use for initialization of the item. The KNX bus is queried for the value. It implies knx_listen, so knx_listen need not to be specified for this group address. Like for knx_listen a list of GAs can be specified. In this case, the first list entry is used to read the KNX cache.'
 
     knx_cache:
-        type: list(knx_ga)
+        type: knx_ga
         description:
             de: 'Gruppenadresse für die Initialisierung des Items. Der Wert wird aus dem Cache von KNXD/EIBD gelesen. Wenn kein Cache-Wert vorhanden ist, wird der KNX-Bus nach dem Wert abgefragt. Die Angabe impliziert knx_listen, also muss knx_listen nicht für diese Gruppenadresse angegeben werden. Wie bei knx_listen kann eine Liste von GAs angegeben werden. Dann wird der erste Eintrag der Liste für die Initialisierung verwendet.'
             en: 'Group address to use for initialization of the item. The value is read from the cache of KNXD/EIBD. If no cached value exists, the KNX bus is queried for the value. It implies knx_listen, so knx_listen need not to be specified for this group address. Like for knx_listen a list of GAs can be specified. In this case, the first list entry is used to read the KNX cache.'

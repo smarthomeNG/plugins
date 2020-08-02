@@ -89,6 +89,33 @@ item_attributes:
     - 'is_initialized'
     - 'volume'
     - 'play'
+    - is_coordiantor
+    - mute
+    - stop
+    - seek
+    - pause
+    - track_title
+    - track_artist
+    - track_uri
+    - trackalbumart
+    - bass
+    - treble
+    - loudness
+    - playmode
+    - radio_show
+    - radio_station
+    - serial_number
+    - software_version
+    - hardware_version
+    - model
+    - uid
+    - ip
+    - mac_address
+    - status
+    - additional_zone_members
+    - alarms
+    - is_coordinator
+    - tts_local_mode
 
   sonos_send:
     type: str
@@ -112,6 +139,20 @@ item_attributes:
     - 'load_sonos_playlist'
     - 'play_snippet'
     - 'play_tts'
+    - join
+    - unjoin
+    - volume_up
+    - volume_down
+    - partymode
+    - bass
+    - treble
+    - loudness
+    - playmode
+    - seek
+    - status
+    - alarms
+    - get_playlist
+    - set_playlist
 
   sonos_attrib:
     type: str

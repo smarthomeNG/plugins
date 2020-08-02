@@ -74,7 +74,7 @@ DPT='dpt'
 
 class KNX(lib.connection.Client,SmartPlugin):
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = "1.6.2"
+    PLUGIN_VERSION = "1.6.3"
 
 
     # tags actually used by the plugin are shown here
@@ -454,7 +454,7 @@ class KNX(lib.connection.Client,SmartPlugin):
             ga = self.get_iattr_value(item.conf, KNX_INIT)
             self.logger.debug("{} listen on and init with {}".format(item, ga))
             if Utils.get_type(ga) == 'list':
-                self.logger.warning("{} Problem while doing knx_init: Multiple GA specified in item definition, using first GA ({}) for reading value".format(item, ga))
+                self.logger.warning("{} Problem while doing knx_init: Multiple GA specified in item definition, using first GA ({}) for reading value".format(item.id(), ga))
                 ga = ga[0]
             if not ga in self.gal:
                 self.gal[ga] = {DPT: dpt, ITEMS: [item], LOGICS: []}
@@ -467,7 +467,7 @@ class KNX(lib.connection.Client,SmartPlugin):
             ga = self.get_iattr_value(item.conf, KNX_CACHE)
             self.logger.debug("{} listen on and init with cache {}".format(item, ga))
             if Utils.get_type(ga) == 'list':
-                self.logger.warning("{} Problem while reading KNX cache: Multiple GA specified in item definition, using first GA ({}) for reading cache".format(item, ga))
+                self.logger.warning("{} Problem while reading KNX cache: Multiple GA specified in item definition, using first GA ({}) for reading cache".format(item.id(), ga))
                 ga = ga[0]
             if not ga in self.gal:
                 self.gal[ga] = {DPT: dpt, ITEMS: [item], LOGICS: []}
