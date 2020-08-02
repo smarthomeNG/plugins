@@ -463,7 +463,7 @@ avm:
         fritzbox_7490:
 
             iPad:
-                avm_mac@wlan_repeater_1750: xx:xx:xx:xx:xx:xx
+                avm_mac@fritzbox_7490: xx:xx:xx:xx:xx:xx
                 avm_data_type@fritzbox_7490: network_device
                 type: bool
                 visu_acl: ro
