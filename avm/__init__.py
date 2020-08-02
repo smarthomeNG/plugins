@@ -2192,7 +2192,6 @@ class AVM(SmartPlugin):
         except Exception as e:
             self.logger.error("Exception when parsing response: %s" % str(e))
             return
-
         if self.get_iattr_value(item.conf, 'avm_data_type') == 'wlanconfig':
             newEnable = self._get_value_from_xml_node(xml, 'NewEnable')
             if newEnable is not None:

@@ -166,7 +166,7 @@ item_attributes:
             de: '(optional) Definition der erlaubten angerufenen Rufnummer in Items vom avm_data_type `monitor_trigger`.'
             en: '(optional) Definition of the allowed called number. Only in items of avm_data_type `monitor_trigger`.'
     avm_wlan_index:
-        type: num
+        type: int
         description:
             de: '(optional) Definition des Wlans ueber index: (1: 2.4Ghz, 2: 5Ghz, 3: Gaeste).'
             en: '(optional) Definition of WiFi via index: (1: 2.4GHz, 2: 5GHz, 3: Guest)'
