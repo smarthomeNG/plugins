@@ -1691,13 +1691,14 @@ class AVM(SmartPlugin):
         headers = self._header.copy()
 
         if self.get_iattr_value(item.conf, 'avm_data_type') == 'network_device':
-            if 'mac' not in item.conf:
+            if not self.has_iattr(item.conf, 'avm_mac'):
                 self.logger.error("No mac attribute provided in network_device item %s" % item.property.path)
                 return
             action = 'GetSpecificHostEntry'
             headers['SOAPACTION'] = "%s#%s" % (self._urn_map['Hosts'], action)
             soap_data = self._assemble_soap_data(action, self._urn_map['Hosts'],
-                                                 {'NewMACAddress': item.conf['mac']})
+                                                 {'NewMACAddress': self.get_iattr_value(item.conf,
+                                                                                             'avm_mac')})
         else:
             self.logger.error(
                 "Attribute %s not supported by plugin (update hosts)" % self.get_iattr_value(item.conf,
@@ -1757,7 +1758,7 @@ class AVM(SmartPlugin):
             item(0)
             self.logger.debug(
                 "MAC Address %s for item %s not available on the FritzDevice - ID: %s" % (
-                item.conf['mac'], item.property.path, self._fritz_device.get_identifier()))
+                self.get_iattr_value(item.conf, 'mac'), item.property.path, self._fritz_device.get_identifier()))
 
     def _update_home_automation(self, item):
         """

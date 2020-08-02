@@ -411,7 +411,7 @@ avm:
         wlan_repeater_1750:
 
             GalaxyS5:
-                mac: xx:xx:xx:xx:xx:xx
+                avm_mac@wlan_repeater_1750: xx:xx:xx:xx:xx:xx
                 avm_data_type@wlan_repeater_1750: network_device
                 type: bool
                 cache: 'yes'
@@ -436,7 +436,7 @@ avm:
                     visu_acl: ro
 
             iPhone:
-                mac: xx:xx:xx:xx:xx:xx
+                avm_mac@wlan_repeater_1750: xx:xx:xx:xx:xx:xx
                 avm_data_type@wlan_repeater_1750: network_device
                 type: bool
                 cache: 'yes'
@@ -463,7 +463,7 @@ avm:
         fritzbox_7490:
 
             iPad:
-                mac: xx:xx:xx:xx:xx:xx
+                avm_mac@wlan_repeater_1750: xx:xx:xx:xx:xx:xx
                 avm_data_type@fritzbox_7490: network_device
                 type: bool
                 visu_acl: ro
