@@ -787,13 +787,15 @@ class WebInterface(SmartPluginWebIf):
         self.items = Items.get_instance()
 
         self.knxdeamon = ''
-        if self.get_process_info("ps cax|grep eibd") != '':
-            self.knxdeamon = 'eibd'
-        if self.get_process_info("ps cax|grep knxd") != '':
-            if self.knxdeamon != '':
-                self.knxdeamon += ' and '
-            self.knxdeamon += 'knxd'
-
+        if os.name != 'nt':
+            if self.get_process_info("ps cax|grep eibd") != '':
+                self.knxdeamon = 'eibd'
+            if self.get_process_info("ps cax|grep knxd") != '':
+                if self.knxdeamon != '':
+                    self.knxdeamon += ' and '
+                self.knxdeamon += 'knxd'
+        else:
+            self.knxdeamon = 'can not be determined when running on Windows'
 
     def get_process_info(self, command):
         """
