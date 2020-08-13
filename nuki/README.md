@@ -44,8 +44,10 @@ To get the Nuki functionality working, an item has to be type of `num` and  must
 #### nuki_id
 This attribute connects the related item with the corresponding Nuki Smart Lock.
 The `nuki_id` can be figured out via the REST API of the Nuki Bridge (see API documentation) or by just (re)starting
-SmarthomeNG with the configured Nuki plugin. The `name` and the `nuki_id` of all paired Nuki Locks will be written to
+SmarthomeNG with the configured Nuki plugin in the log level INFO / DEBUG. The `name` and the `nuki_id` of all paired Nuki Locks will be written to
 the log file of SmarthomeNG.
+
+Additionally, the IDs of all paired Nuki Locks are now also shown in the web interface of the plugin!
 
 #### nuki_trigger
 
