@@ -1087,7 +1087,7 @@ class AVM(SmartPlugin):
                                             'avm_data_type') == 'wlan_guest_time_remaining' and self.get_iattr_value(citem.conf,
                         'avm_wlan_index') == self.get_iattr_value(item.conf, 'avm_wlan_index'):
                         self._response_cache.pop("wlanconfig_%s_%s" % (
-                            cself.get_iattr_value(item.conf, 'avm_wlan_index'), "X_AVM-DE_GetWLANExtInfo"),
+                            self.get_iattr_value(citem.conf, 'avm_wlan_index'), "X_AVM-DE_GetWLANExtInfo"),
                                                  None)  # reset response cache
                         self._update_wlan_config(citem)  # immediately update remaining guest time
 
