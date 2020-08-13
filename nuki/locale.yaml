@@ -1,4 +1,6 @@
 plugin_translations:
+    'Nuki Items':  {'de': '=', 'en': '='}
+    'Erkannte Nuki IDs':  {'de': '=', 'en': 'Detected Nuki IDs'}
     'Token':  {'de': '=', 'en': '='}
     'Callback URL (SHNG)':     {'de': '=', 'en': '='}
     'NoWait':  {'de': '=', 'en': '='}

@@ -405,7 +405,7 @@ class WebInterface(SmartPluginWebIf):
                            interface=None,
                            item_count=len(self.plugin.get_event_items()) + len(self.plugin.get_action_items()) + len(
                                self.plugin.get_battery_items()),
-                           plugin_info=self.plugin.get_info(), tabcount=1,
+                           plugin_info=self.plugin.get_info(), paired_nukis=paired_nukis, tabcount=1,
                            p=self.plugin)
 
     @cherrypy.expose

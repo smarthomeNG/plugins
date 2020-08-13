@@ -8,7 +8,7 @@ You need a [Nuki Bridge](https://nuki.io/de/bridge/) which is already paired wit
 
 ## Support
 
-You can find the offical support thread for this plugin in the [KNX-User-Forum](https://knx-user-forum.de/forum/supportforen/smarthome-py/1052437-nuki-smartlock-plugin-support-thread).
+You can find the official support thread for this plugin in the [KNX-User-Forum](https://knx-user-forum.de/forum/supportforen/smarthome-py/1052437-nuki-smartlock-plugin-support-thread).
 
 ## Configuration
 
