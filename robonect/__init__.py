@@ -41,9 +41,9 @@ class Robonect(MqttPlugin):
     the update functions for the items
     """
     PLUGIN_VERSION = '1.0.0'  # (must match the version specified in plugin.yaml)
-    STATUS_TYPES = ['mower/status', 'mower/status/text', 'mower/distance', 'mower/status/duration',
+    STATUS_TYPES = ['mower/status', 'mower/status/text', 'status_text_translated', 'mower/distance', 'mower/status/duration',
                     'mower/statistic/hours',
-                    'mower/stopped', 'mower/mode', 'mower/mode/text', 'mower/battery/charge', 'blades_quality',
+                    'mower/stopped', 'mower/mode', 'mower/mode/text', 'mode_text_translated', 'mower/battery/charge', 'blades_quality',
                     'blades_hours', 'blades_days', 'mower/error/code', 'mower/error/message', 'error_date',
                     'error_time', 'error_unix']
     REMOTE_TYPES = ['remotestart_name', 'remotestart_visible', 'remotestart_path', 'remotestart_proportion',
@@ -225,6 +225,8 @@ class Robonect(MqttPlugin):
                 self._status_items['mower/status'](int(payload))
                 self._status = int(payload)
                 self._status_items['mower/status/text'](self.get_status_as_text(int(payload)))
+                self.logger.error(self.translate(self._status_items['mower/status/text']))
+                self._status_items['status_text_translated'](self.translate(self._status_items['mower/status/text']()))
             elif topic == 'Robonect/mower/mode':
                 self.logger.debug(
                     "on_change: setting mode for topic %s via mqtt as %s: %s" % (
@@ -232,6 +234,7 @@ class Robonect(MqttPlugin):
                 self._status_items['mower/mode'](int(payload))
                 self._mode = int(payload)
                 self._status_items['mower/mode/text'](self.get_mode_as_text(int(payload)))
+                self._status_items['mode_text_translated'](self.translate(self._status_items['mower/status/text']()))
 
     def get_api_error_code_as_text(self, error_code):
         """
@@ -939,6 +942,8 @@ class Robonect(MqttPlugin):
                 if 'mower/status/text' in self._status_items:
                     self._status_items['mower/status/text'](
                         self.get_status_as_text(self._status_items['mower/status']()))
+                    if 'status_text_translated' in self._status_items:
+                        self._status_items['status_text_translated'](self.translate(self._status_items['mower/status/text']()))
             if 'mower/distance' in self._status_items:
                 self._status_items['mower/distance'](json_obj['status']['distance'], self.get_shortname())
             if 'mower/stopped' in self._status_items:
@@ -951,6 +956,8 @@ class Robonect(MqttPlugin):
                 self._status_items['mower/mode'](json_obj['status']['mode'], self.get_shortname())
                 if 'mower/mode/text' in self._status_items:
                     self._status_items['mower/mode/text'](self.get_mode_as_text(self._status_items['mower/mode']()))
+                    if 'mode_text_translated' in self._status_items:
+                        self._status_items['mode_text_translated'](self.translate(self._status_items['mower/mode/text']()))
             if 'status_battery' in self._status_items:
                 self._status_items['status_battery'](json_obj['status']['battery'], self.get_shortname())
             if 'mower/statistic/hours' in self._status_items:
