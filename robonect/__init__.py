@@ -225,7 +225,6 @@ class Robonect(MqttPlugin):
                 self._status_items['mower/status'](int(payload))
                 self._status = int(payload)
                 self._status_items['mower/status/text'](self.get_status_as_text(int(payload)))
-                self.logger.error(self.translate(self._status_items['mower/status/text']))
                 self._status_items['status_text_translated'](self.translate(self._status_items['mower/status/text']()))
             elif topic == 'Robonect/mower/mode':
                 self.logger.debug(
