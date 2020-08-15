@@ -345,7 +345,14 @@ class Robonect(MqttPlugin):
             self._mower_offline = True
             return
 
-        json_obj = response.json()
+        try:
+            json_obj = response.json()
+        except Exception as e:
+            self.logger.error(
+                "Plugin '{}': Exception when sending parsing json response get_motor_data_from_api: {}".format(
+                    self.get_fullname(), str(e)))
+            return
+
         self.set_mower_online()
         self.logger.debug(json_obj)
         if not json_obj['successful']:
@@ -394,7 +401,14 @@ class Robonect(MqttPlugin):
             self._mower_offline = True
             return
 
-        json_obj = response.json()
+        try:
+            json_obj = response.json()
+        except Exception as e:
+            self.logger.error(
+                "Plugin '{}': Exception when sending parsing json response get_battery_data_from_api: {}".format(
+                    self.get_fullname(), str(e)))
+            return
+
         self.set_mower_online()
 
         if not json_obj['successful']:
@@ -456,7 +470,14 @@ class Robonect(MqttPlugin):
             self._mower_offline = True
             return
 
-        json_obj = response.json()
+        try:
+            json_obj = response.json()
+        except Exception as e:
+            self.logger.error(
+                "Plugin '{}': Exception when sending parsing json response get_full_error_list: {}".format(
+                    self.get_fullname(), str(e)))
+            return
+
         self.set_mower_online()
 
         if 'errors' in json_obj:
@@ -484,7 +505,14 @@ class Robonect(MqttPlugin):
             self.logger.error("Plugin '{}': Name parameter is None".format(
                 self.get_fullname()))
 
-        json_obj = response.json()
+        try:
+            json_obj = response.json()
+        except Exception as e:
+            self.logger.error(
+                "Plugin '{}': Exception when sending parsing json response set_name_via_api: {}".format(
+                    self.get_fullname(), str(e)))
+            return
+
         self.set_mower_online()
 
         if not json_obj['successful']:
@@ -511,7 +539,13 @@ class Robonect(MqttPlugin):
             self._mower_offline = True
             return
 
-        json_obj = response.json()
+        try:
+            json_obj = response.json()
+        except Exception as e:
+            self.logger.error(
+                "Plugin '{}': Exception when sending parsing json response start_mower_via_api: {}".format(
+                    self.get_fullname(), str(e)))
+            return
 
         self.set_mower_online()
 
@@ -535,7 +569,14 @@ class Robonect(MqttPlugin):
             self._mower_offline = True
             return
 
-        json_obj = response.json()
+        try:
+            json_obj = response.json()
+        except Exception as e:
+            self.logger.error(
+                "Plugin '{}': Exception when sending parsing json response stop_mower_via_api: {}".format(
+                    self.get_fullname(), str(e)))
+            return
+
         self.set_mower_online()
 
         return json_obj
@@ -606,7 +647,14 @@ class Robonect(MqttPlugin):
             self._mower_offline = True
             return
 
-        json_obj = response.json()
+        try:
+            json_obj = response.json()
+        except Exception as e:
+            self.logger.error(
+                "Plugin '{}': Exception when sending parsing json response set_mode_via_api: {}".format(
+                    self.get_fullname(), str(e)))
+            return
+
         self.set_mower_online()
 
         if not json_obj['successful']:
@@ -685,7 +733,14 @@ class Robonect(MqttPlugin):
             self._mower_offline = True
             return
 
-        json_obj = response.json()
+        try:
+            json_obj = response.json()
+        except Exception as e:
+            self.logger.error(
+                "Plugin '{}': Exception when sending parsing json response set_timer_via_api: {}".format(
+                    self.get_fullname(), str(e)))
+            return
+
         self.set_mower_online()
 
         if not json_obj['successful']:
@@ -730,7 +785,14 @@ class Robonect(MqttPlugin):
             self._mower_offline = True
             return
 
-        json_obj = response.json()
+        try:
+            json_obj = response.json()
+        except Exception as e:
+            self.logger.error(
+                "Plugin '{}': Exception when sending parsing json response set_remote_via_api: {}".format(
+                    self.get_fullname(), str(e)))
+            return
+
         self.set_mower_online()
 
         if not json_obj['successful']:
@@ -756,7 +818,14 @@ class Robonect(MqttPlugin):
             self._mower_offline = True
             return
 
-        json_obj = response.json()
+        try:
+            json_obj = response.json()
+        except Exception as e:
+            self.logger.error(
+                "Plugin '{}': Exception when sending parsing json response get_remote_from_api: {}".format(
+                    self.get_fullname(), str(e)))
+            return
+
         self.set_mower_online()
 
         for item in self._remote_items['remotestart_name']:
@@ -798,8 +867,14 @@ class Robonect(MqttPlugin):
                         self.get_fullname(), str(e)))
             self._mower_offline = True
             return
+        try:
+            json_obj = response.json()
+        except Exception as e:
+            self.logger.error(
+                "Plugin '{}': Exception when sending parsing json response get_mower_information_from_api: {}".format(
+                    self.get_fullname(), str(e)))
+            return
 
-        json_obj = response.json()
         self.set_mower_online()
 
         if 'mower' in json_obj:
@@ -840,12 +915,19 @@ class Robonect(MqttPlugin):
         except Exception as e:
             if not self._mower_offline:
                 self.logger.error(
-                    "Plugin '{}': Exception when sending GET request for get_status_from_api: {}".format(
+                    "Plugin '{}': Exception when sending GET request for get_weather_from_api: {}".format(
                         self.get_fullname(), str(e)))
             self._mower_offline = True
             return
 
-        json_obj = response.json()
+        try:
+            json_obj = response.json()
+        except Exception as e:
+            self.logger.error(
+                "Plugin '{}': Exception when sending parsing json response get_weather_from_api: {}".format(
+                    self.get_fullname(), str(e)))
+            return
+
         self.set_mower_online()
 
         if 'service' in json_obj:
@@ -925,7 +1007,14 @@ class Robonect(MqttPlugin):
             self._mower_offline = True
             return
 
-        json_obj = response.json()
+        try:
+            json_obj = response.json()
+        except Exception as e:
+            self.logger.error(
+                "Plugin '{}': Exception when sending parsing json response get_status_from_api: {}".format(
+                    self.get_fullname(), str(e)))
+            return
+
         self.set_mower_online()
 
         if 'device/name' in self._items:
