@@ -2152,7 +2152,7 @@ class AVM(SmartPlugin):
             else:
                 self.logger.error('No wlan_index attribute provided')
         else:
-            self.logger.error('No wlan_index attribute provided')
+            self.logger.error('No avm_wlan_index attribute provided for {}'.format(item))
 
         headers = self._header.copy()
 
