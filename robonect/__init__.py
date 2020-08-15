@@ -858,25 +858,25 @@ class Robonect(MqttPlugin):
                                                             self.get_shortname())
 
         if 'weather' in json_obj:
-            if 'weather_rain' in self._weather_items:
+            if 'weather_rain' in self._weather_items and 'rain' in json_obj['weather']:
                 self._weather_items['weather_temperature'](json_obj['weather']['rain'],
                                                    self.get_shortname())
-            if 'weather_temperature' in self._weather_items:
+            if 'weather_temperature' in self._weather_items and 'temperature' in json_obj['weather']:
                 self._weather_items['weather_temperature'](json_obj['weather']['temperature'],
                                                    self.get_shortname())
-            if 'weather_humidity' in self._weather_items:
+            if 'weather_humidity' in self._weather_items and 'humidity' in json_obj['weather']:
                 self._weather_items['weather_humidity'](json_obj['weather']['humidity'],
                                                 self.get_shortname())
-            if 'weather_sunrise' in self._weather_items:
+            if 'weather_sunrise' in self._weather_items and 'sunrise' in json_obj['weather']:
                 self._weather_items['weather_sunrise'](json_obj['weather']['sunrise'],
                                                self.get_shortname())
-            if 'weather_sunset' in self._weather_items:
+            if 'weather_sunset' in self._weather_items and 'sunset' in json_obj['weather']:
                 self._weather_items['weather_sunset'](json_obj['weather']['sunset'],
                                               self.get_shortname())
-            if 'weather_day' in self._weather_items:
+            if 'weather_day' in self._weather_items and 'day' in json_obj['weather']:
                 self._weather_items['weather_day'](json_obj['weather']['day'],
                                            self.get_shortname())
-            if 'weather_icon' in self._weather_items:
+            if 'weather_icon' in self._weather_items and 'icon' in json_obj['weather']:
                 self._weather_items['weather_icon'](json_obj['weather']['icon'],
                                             self.get_shortname())
             if 'condition' in json_obj['weather']:
