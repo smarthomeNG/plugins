@@ -790,7 +790,7 @@ class Database(SmartPlugin):
         if ':' in func:
             expression['finalizer'] = func[:func.index(":")]
             func = func[func.index(":") + 1:]
-        if func is 'count' or func.startswith('count'):
+        if func == 'count' or func.startswith('count'):
             parts = re.match('(count)((<>|!=|<|=|>)(\d+))?', func)
             func = 'count'
             if parts and parts.group(3) is not None:

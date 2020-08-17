@@ -69,7 +69,7 @@
 					<td class="py-1" style="width: 120px; text-align:right">{{ p._item_logcount[p.id(item, create=False)] }}</td>
 				{% endif %}
 				{%  if p.get_iattr_value(item.conf, 'database_maxage') %}
-					<td class="py-1">{{ p.get_maxage_ts(item).strftime('%d.%m.%Y %H:%M:%S') }} ({{ p.get_iattr_value(item.conf, 'database_maxage') + '  ' +  _('Tage') }})</td>
+					<td class="py-1">{{ p.get_maxage_ts(item).strftime('%d.%m.%Y %H:%M:%S') }} ({{ p.get_iattr_value(item.conf, 'database_maxage') }} {{ _('Tage') }})</td>
 				{% else %}
 					<td class="py-1">-</td>
 				{% endif %}
