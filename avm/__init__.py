@@ -997,7 +997,7 @@ class AVM(SmartPlugin):
                     #set endtime to now + 12h:
                     endtime = int(unix_secs + 12*3600)
                 self.logger.debug("HKR endtimestamp is: {0}".format(endtime ))
-                                    
+
                 aha_string = self._assemble_aha_interface(ain=ainDevice, aha_action=action, endtimestamp=endtime, sid=mySID)
                 self.logger.debug("Debug ahastring: {0}".format(aha_string))
 
@@ -1054,7 +1054,7 @@ class AVM(SmartPlugin):
                 self.logger.debug("Debug url: {0}".format(url))
 
             try:
-                
+
                 if use_aha_interface:
                     r = self._session.get(url, timeout=self._timeout, verify=self._verify)
                     self.logger.debug("Return value aha interface: {0}".format(r))
@@ -1070,7 +1070,7 @@ class AVM(SmartPlugin):
                                        auth=HTTPDigestAuth(self._fritz_device.get_user(),
                                                            self._fritz_device.get_password()), verify=self._verify)
 
-                
+
             except Exception as e:
                 if self._fritz_device.is_available():
                     self.logger.error(
@@ -1692,7 +1692,7 @@ class AVM(SmartPlugin):
 
         if self.get_iattr_value(item.conf, 'avm_data_type') == 'network_device':
             if not self.has_iattr(item.conf, 'avm_mac'):
-                self.logger.error("No mac attribute provided in network_device item %s" % item.property.path)
+                self.logger.error("No avm_mac attribute provided in network_device item %s" % item.property.path)
                 return
             action = 'GetSpecificHostEntry'
             headers['SOAPACTION'] = "%s#%s" % (self._urn_map['Hosts'], action)
@@ -1758,7 +1758,7 @@ class AVM(SmartPlugin):
             item(0)
             self.logger.debug(
                 "MAC Address %s for item %s not available on the FritzDevice - ID: %s" % (
-                self.get_iattr_value(item.conf, 'mac'), item.property.path, self._fritz_device.get_identifier()))
+                self.get_iattr_value(item.conf, 'avm_mac'), item.property.path, self._fritz_device.get_identifier()))
 
     def _update_home_automation(self, item):
         """
@@ -2537,7 +2537,7 @@ class WebInterface(SmartPluginWebIf):
     def __init__(self, webif_dir, plugin):
         """
         Initialization of instance of class WebInterface
-        
+
         :param webif_dir: directory where the webinterface of the plugin resides
         :param plugin: instance of the plugin
         :type webif_dir: str

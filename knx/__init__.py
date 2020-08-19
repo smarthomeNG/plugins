@@ -74,7 +74,7 @@ DPT='dpt'
 
 class KNX(lib.connection.Client,SmartPlugin):
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = "1.6.3"
+    PLUGIN_VERSION = "1.6.4"
 
 
     # tags actually used by the plugin are shown here
@@ -262,9 +262,13 @@ class KNX(lib.connection.Client,SmartPlugin):
         # self.found_terminator is introduced in lib/connection.py
         self.found_terminator = self.parse_telegram
         try:
-            self.terminator = struct.unpack(">H", length)[0]
-        except:
-            self.logger.error("problem unpacking length: {}".format(length))
+            if len(length) > 2:
+                self.terminator = struct.unpack(">H", length[0: 2])[0]
+                self.logger.error("problem unpacking length (trying with first 2 bytes): {}".format(length))
+            else:
+                self.terminator = struct.unpack(">H", length)[0]
+        except Exception as e:
+            self.logger.error("problem unpacking length: {} ({})".format(length, e))
             self.logger.critical("plugin closes connection to knxd/eibd. Restarting SmartHomeNG")
             self.close()
             self._sh.restart('SmartHomeNG (KNX plugin stalled)')
