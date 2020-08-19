@@ -80,7 +80,7 @@ class NukiTCPDispatcher(lib.connection.Server):
 
 
 class Nuki(SmartPlugin):
-    PLUGIN_VERSION = "1.5.0.6"
+    PLUGIN_VERSION = "1.5.0.7"
     ALLOW_MULTIINSTANCE = False
 
     def __init__(self, sh, *args, **kwargs):
@@ -405,7 +405,7 @@ class WebInterface(SmartPluginWebIf):
                            interface=None,
                            item_count=len(self.plugin.get_event_items()) + len(self.plugin.get_action_items()) + len(
                                self.plugin.get_battery_items()),
-                           plugin_info=self.plugin.get_info(), tabcount=1,
+                           plugin_info=self.plugin.get_info(), paired_nukis=paired_nukis, tabcount=1,
                            p=self.plugin)
 
     @cherrypy.expose

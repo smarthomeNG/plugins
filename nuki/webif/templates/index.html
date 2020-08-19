@@ -3,7 +3,7 @@
 {% set logo_frame = false %}
 {% set use_bodytabs = true %}
 
-{% set tab1title = "GFGFDG" %}
+{% set tab1title = _('Nuki Items') %}
 
 {% block headtable %}
 <table class="table table-striped table-hover">
@@ -21,6 +21,10 @@
 			<td class="py-1"><strong>{{ _('Base URL (Nuki Bridge)') }}</strong></td>
 			<td class="py-1">{{ p._base_url }}</td>
 		</tr>
+        <tr>
+            <td class="py-1"><strong>{{  _('Erkannte Nuki IDs') }}</strong></td>
+            <td class="py-1" colspan="3">{% for item in paired_nukis %}{{ item }}{% if not loop.last %}, {% endif %}{% endfor %}</td>
+        </tr>
 	</tbody>
 </table>
 {% endblock %}
@@ -114,9 +118,8 @@
     }
 </script>
 {% endblock pluginscripts %}
-
 {% block bodytab1 %}
-<div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
+ <div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
 	<div class="col-sm-12">
 		<h5>{{ _('Nuki Event Items') }} ({{ p.get_event_items()|length }})</h5>
 

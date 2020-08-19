@@ -512,7 +512,7 @@ class AVM(SmartPlugin):
     Main class of the Plugin. Does all plugin specific stuff and provides the update functions for the different TR-064 services on the FritzDevice
     """
 
-    PLUGIN_VERSION = "1.5.9"
+    PLUGIN_VERSION = "1.5.10"
 
     _header = {'SOAPACTION': '', 'CONTENT-TYPE': 'text/xml; charset="utf-8"'}
     _envelope = """
@@ -946,7 +946,7 @@ class AVM(SmartPlugin):
                         self.get_iattr_value(item.conf, 'avm_wlan_index')), {'NewEnable': int(item())})
                 else:
                     self.logger.error(
-                        'No wlan_index attribute provided: %s' % self.get_iattr_value(item.conf, 'avm_data_type'))
+                        'No avm_wlan_index attribute provided: %s' % self.get_iattr_value(item.conf, 'avm_data_type'))
             elif self.get_iattr_value(item.conf, 'avm_data_type') == 'tam':
                 headers['SOAPACTION'] = "%s#%s" % (self._urn_map['TAM'], action)
                 soap_data = self._assemble_soap_data(action, self._urn_map['TAM'],
@@ -1087,7 +1087,7 @@ class AVM(SmartPlugin):
                                             'avm_data_type') == 'wlan_guest_time_remaining' and self.get_iattr_value(citem.conf,
                         'avm_wlan_index') == self.get_iattr_value(item.conf, 'avm_wlan_index'):
                         self._response_cache.pop("wlanconfig_%s_%s" % (
-                            cself.get_iattr_value(item.conf, 'avm_wlan_index'), "X_AVM-DE_GetWLANExtInfo"),
+                            self.get_iattr_value(citem.conf, 'avm_wlan_index'), "X_AVM-DE_GetWLANExtInfo"),
                                                  None)  # reset response cache
                         self._update_wlan_config(citem)  # immediately update remaining guest time
 
@@ -2150,9 +2150,9 @@ class AVM(SmartPlugin):
             if int(self.get_iattr_value(item.conf, 'avm_wlan_index')) > 0:
                 url = self._build_url("/upnp/control/wlanconfig%s" % self.get_iattr_value(item.conf, 'avm_wlan_index'))
             else:
-                self.logger.error('No wlan_index attribute provided')
+                self.logger.error('No avm_wlan_index attribute provided')
         else:
-            self.logger.error('No wlan_index attribute provided')
+            self.logger.error('No avm_wlan_index attribute provided for {}'.format(item))
 
         headers = self._header.copy()
 
