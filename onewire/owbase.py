@@ -242,6 +242,7 @@ class OwBase(object):
         Reads from owserver a path like '/bus.0/2816971B03000059/  and gets the type of an attached sensor.
         Then returns a dict of possible types and the subpath for evaluating them or 
         None if an error occurred or if there is no way found to read out
+        Details for most sensor types can be found at http://owfs.sourceforge.net/family.html
         """
         try:
             typ = self.read(path + 'type').decode()
