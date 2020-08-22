@@ -859,7 +859,7 @@ class Robonect(MqttPlugin):
         try:
             self.logger.debug("Plugin '{}': get_mower_information.".format(
                 self.get_fullname()))
-            response = self._session.get(self._base_url + 'version', auth=HTTPBasicAuth(self._user, self._password))
+            response = self._session.get(self._base_url + 'version', auth=HTTPBasicAuth(self._user, self._password), timeout=15)
         except Exception as e:
             if not self._mower_offline:
                 self.logger.error(
