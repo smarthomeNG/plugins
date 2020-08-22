@@ -180,7 +180,6 @@ class Database(SmartPlugin):
             item.series = functools.partial(self._series, item=item.id())   # Zur Nutzung im Websocket Plugin
             item.db = functools.partial(self._single, item=item.id())      # Nie genutzt??? -> Doch
 
-            self._initialize_db()
             if self._db_initialized and self.get_iattr_value(item.conf, 'database').lower() == 'init':
                 if not self._db.lock(5):
                     self.logger.error("Can not acquire lock for database to read value for item {}".format(item.id()))
@@ -200,7 +199,7 @@ class Database(SmartPlugin):
                     except Exception as e:
                         self.logger.error("Reading cache value from database for {} failed: {}".format(item.id(), e))
                 else:
-                    self.logger.warning("Cache not available in database for item {}".format(item.id() ))
+                    self.logger.info("Cache not available in database for item {}".format(item.id() ))
                 cur.close()
                 self._db.release()
             elif self.get_iattr_value(item.conf, 'database').lower() == 'init':
