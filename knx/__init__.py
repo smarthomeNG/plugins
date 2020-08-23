@@ -262,11 +262,12 @@ class KNX(lib.connection.Client,SmartPlugin):
         # self.found_terminator is introduced in lib/connection.py
         self.found_terminator = self.parse_telegram
         try:
-            if len(length) > 2:
-                self.terminator = struct.unpack(">H", length[0: 2])[0]
-                self.logger.error("problem unpacking length (trying with first 2 bytes): {}".format(length))
-            else:
-                self.terminator = struct.unpack(">H", length)[0]
+            #if len(length) > 2:
+            #    self.terminator = struct.unpack(">H", length[0: 2])[0]
+            #    self.logger.error("problem unpacking length (trying with first 2 bytes): {}".format(length))
+            #else:
+            #    self.terminator = struct.unpack(">H", length)[0]
+            self.terminator = struct.unpack(">H", length)[0]
         except Exception as e:
             self.logger.error("problem unpacking length: {} ({})".format(length, e))
             self.logger.critical("plugin closes connection to knxd/eibd. Restarting SmartHomeNG")
