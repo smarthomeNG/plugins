@@ -337,7 +337,7 @@ item_attributes:
                  '
 
     se_suspend_time:
-        type: int
+        type: foo
         valid_min: 1
         valid_max: 86400
         description:
@@ -456,11 +456,8 @@ item_structs:
             type: bool
             se_plugin: active
             eval: True
-
-            # se_startup_delay: 30
-            # se_repeat_actions: true
-            # se_suspend_time: 7200
-
+            eval_trigger:
+                - ..retrigger
             se_laststate_item_id: ..state_id
             se_laststate_item_name: ..state_name
             se_lastconditionset_item_id: ..conditionset_id
@@ -639,31 +636,31 @@ item_attribute_prefixes:
     # Definition of item attributes that only have a common prefix (enter 'item_attribute_prefixes: NONE' or ommit this section, if section should be empty)
     # NOTE: This section should only be used, if really nessesary (e.g. for the stateengine plugin)
     se_item_:
-        type: str
+        type: foo
         description:
             de: 'Definiert das Item, das in einem konkreten Zustand evaluiert oder geändert werden soll'
             en: 'Definition of an item that should be evaluated or changed in a specific state'
 
     se_eval_:
-        type: str
+        type: foo
         description:
             de: 'Wie se_item, allerdings wird anstatt des konkreten Items das Item durch einen eval Ausdruck bestimmt'
             en: 'Like se_item but instead of a specific item the item gets defined by an eval expression'
 
     se_mindelta_:
-        type: int
+        type: foo
         description:
             de: 'Definiert um welchen Wert sich das Item mindestens geändert haben muss, um neu gesetzt zu werden'
             en: 'Definition of a threshold the item has to surpass to be newly set'
 
     se_min_:
-        type: int
+        type: foo
         description:
             de: 'Bedingung: Der Wert eines Items muss mindestens so hoch wie durch se_min angegeben sein'
             en: 'Condition: The value of the item has to be at least as high as defined by se_min'
 
     se_max_:
-        type: int
+        type: foo
         description:
             de: 'Bedingung: Der Wert eines Items muss niedriger als der durch se_max angegebene Wert sein'
             en: 'Condition: The value of the item has to be lower than defined by se_max'
@@ -680,25 +677,25 @@ item_attribute_prefixes:
             en: 'Condition: Invert a condition value previously defined (by min, max or value)'
 
     se_agemin_:
-        type: int
+        type: foo
         description:
             de: 'Bedingung: Mindestalter des Items (äquivalent zu se_minage)'
             en: 'Condition: Minimum age of an item (same as se_minage)'
 
     se_agemax_:
-        type: int
+        type: foo
         description:
             de: 'Bedingung: Maximalalter des Items (äquivalent zu se_maxage)'
             en: 'Condition: Maximum age of an item (same as se_maxage)'
 
     se_minage_:
-        type: int
+        type: foo
         description:
             de: 'Bedingung: Mindestalter des Items (äquivalent zu se_agemin)'
             en: 'Condition: Minimum age of an item (same as se_agemin)'
 
     se_maxage_:
-        type: int
+        type: foo
         description:
             de: 'Bedingung: Maximalalter des Items (äquivalent zu se_agemax)'
             en: 'Condition: Maximum age of an item (same as se_agemax)'

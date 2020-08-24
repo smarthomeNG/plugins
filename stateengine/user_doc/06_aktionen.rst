@@ -292,7 +292,10 @@ ursprünglichen Zustands (regen) gesetzt werden soll, kann der Parameter ``insta
 
 Über das Attribut wird unabhängig vom globalen Setting für das
 stateengine Item festgelegt, ob eine Aktion auch beim erneuten
-Eintritt in den Status ausgeführt wird oder nicht.
+Eintritt in den Status ausgeführt wird oder nicht. Das globale Setting
+kann im Regelwerk Item unter rules durch ``se_repeat_actions: false`` dezidiert
+auf False gesetzt werden. Standardmäßig, wenn das Attribut also nicht angegeben wird,
+werden Aktionen wiederholt ausgeführt.
 
 **order: <int>**
 
