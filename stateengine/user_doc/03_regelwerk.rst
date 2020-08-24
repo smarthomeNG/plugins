@@ -55,6 +55,10 @@ als auch für das Setzen von "dynamischen" Items möglich.
 An dieser Stelle ist es auch möglich, über ``se_mindelta_`` zu definieren, um welchen Wert
 sich ein Item mindestens geändert haben muss, um neu gesetzt zu werden. Siehe auch :ref:`Aktionen`.
 
+Außerdem ist es möglich, über ``se_repeat_actions`` generell zu definieren,
+ob Aktionen für die Stateengine wiederholt ausgeführt werden sollen oder nicht. Diese Konfiguration
+kann für einzelne Aktionen individuell über die Angabe ``repeat`` überschrieben werden. Siehe auch :ref:`Aktionen`.
+
 .. rubric:: Beispiel se_item
    :name: beispielregelwerk
 

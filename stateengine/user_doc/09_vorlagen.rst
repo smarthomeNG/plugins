@@ -95,7 +95,7 @@ se_plugin. Dieser Codeblock wird zwingend von jedem Zustandsautomaten benötigt.
        eval: True
 
        # se_startup_delay: 30
-       # se_repeat_actions: true     # Ist das nicht eine Doublette zu anderen Möglichkeiten das zu konfigurieren?
+       # se_repeat_actions: true
        # se_suspend_time: 7200
 
        se_laststate_item_id: ..state_id
