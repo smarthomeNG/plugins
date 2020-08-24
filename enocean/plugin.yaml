@@ -34,11 +34,11 @@ parameters:
 
     tx_id:
         type: str
-        default: FFFF4680
+        default: 0
         description:
             de: 'Unique-ID oder Base-ID des EnOcean Moduls (8-stelliger hex Wert, z.B. FFFF4680)'
             en: 'Unique-ID or Base-ID of the EnOcean Module (8-digit hex value, e.g. FFFF4680)'
-        mandatory: 'True'
+        mandatory: 'False'
 
 item_attributes:
     # Definition of item attributes defined by this plugin
@@ -69,6 +69,8 @@ item_attributes:
     enocean_tx_id_offset:
         type: int
         default: 0
+        valid_min: 0
+        valid_max: 127
         description:
             de: 'Offset zur Base-ID, auf welche der Aktor reagiert'
             en: 'offset to the Base-ID on which the actor responds to'

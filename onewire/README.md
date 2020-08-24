@@ -27,14 +27,18 @@ ow:
 #    port: 4304
 ```
 
-This plugins is looking by default for the owserver on 127.0.0.1 port 4304. You could change this in your plugin.yaml.
+This plugin is looking by default for the owserver on 127.0.0.1 port 4304
 
 Advanced options in plugin.yaml are:
 
 * 'cycle' = timeperiod between two sensor cycles. Default: 300 seconds.
   If you decrease the cycle too much you could destabilise the bus,
   because of the increased power consumption.
+* 'log_counter_cycle_time' = Count of measurements of actual sensor cycles time. The counter is decremented until it reaches 0, then logging will be turned off. If set to -1, logging cycle time is always on
+* 'cycle_discovery' = Time period in seconds between two discovery cycles. If you decrease the cycle to much you could destabilise the bus, because of the increased power consumption.'
+* 'log_counter_cycle_discovery_time' = Count of measurements of actual discovery cycles time. The counter is decremented until it reaches 0, then logging will be turned off. If set to -1, logging cycle time is always on
 * 'io_wait' = timeperiod between two requests of 1-wire I/O chip. Default 5 seconds.
+* 'log_counter_io_loop_time' = Count of measurements of actual IO loop time. The counter is decremented until it reaches 0, then logging will be turned off. If set to -1, logging cycle time is always on
 * 'button_wait' = timeperiod between two requests of ibutton-busmaster. Default 0.5 seconds.
 
 ### Item config

@@ -199,7 +199,7 @@ class Database(SmartPlugin):
                     except Exception as e:
                         self.logger.error("Reading cache value from database for {} failed: {}".format(item.id(), e))
                 else:
-                    self.logger.warning("Cache not available in database for item {}".format(item.id() ))
+                    self.logger.info("Cache not available in database for item {}".format(item.id() ))
                 cur.close()
                 self._db.release()
             elif self.get_iattr_value(item.conf, 'database').lower() == 'init':
