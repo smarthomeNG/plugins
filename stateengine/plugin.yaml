@@ -747,7 +747,7 @@ item_attribute_prefixes:
             en: 'Setting all items having the respective attribute (deprecated - use se_action instead)'
 
     se_delay_:
-        type: int
+        type: foo
         description:
             de: 'Verzögern einer Aktion (veraltet - Nutze stattdessen se_action)'
             en: 'Delaying an action (deprecated - use se_action instead)'
