@@ -209,10 +209,10 @@ class Nuki(SmartPlugin):
 
         for item, key in nuki_event_items.items():
             if key == nuki_id:
-                item(nuki_state, 'NUKI')
+                item(nuki_state, self.get_shortname())
         for item, key in nuki_battery_items.items():
             if key == nuki_id:
-                item(nuki_battery, 'NUKI')
+                item(nuki_battery, self.get_shortname())
 
     def _get_paired_nukis(self):
         # reset list of nukis
