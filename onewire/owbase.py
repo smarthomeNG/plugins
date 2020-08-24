@@ -317,12 +317,12 @@ class OwBase(object):
             return {'CA': 'counter.A', 'CB': 'counter.B'}
         elif typ == 'DS2408':           # I/O
             return {'I0': 'sensed.0', 'I1': 'sensed.1', 'I2': 'sensed.2', 'I3': 'sensed.3', 'I4': 'sensed.4', 'I5': 'sensed.5', 'I6': 'sensed.6', 'I7': 'sensed.7', 'O0': 'PIO.0', 'O1': 'PIO.1', 'O2': 'PIO.2', 'O3': 'PIO.3', 'O4': 'PIO.4', 'O5': 'PIO.5', 'O6': 'PIO.6', 'O7': 'PIO.7'}
-        elif type == 'DS2431':          # 1K EEprom
+        elif typ == 'DS2431':          # 1K EEprom
             if self.logger.isEnabledFor(logging.WARNING) and addr not in self._unsupported_sensor_already_warned:
                 self._unsupported_sensor_already_warned.append(addr)
                 self.logger.warning("1-Wire: unsupported device {0} {1}".format(addr, typ))
             return
-        elif type == 'DS2433':          # 4K EEprom
+        elif typ == 'DS2433':          # 4K EEprom
             if self.logger.isEnabledFor(logging.WARNING) and addr not in self._unsupported_sensor_already_warned:
                 self._unsupported_sensor_already_warned.append(addr)
                 self.logger.warning("1-Wire: unsupported device {0} {1}".format(addr, typ))
