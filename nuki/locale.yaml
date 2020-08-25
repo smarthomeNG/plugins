@@ -12,6 +12,7 @@ plugin_translations:
     'Nuki Action Items':  {'de': '=', 'en': '='}
     'Nuki Battery Items':  {'de': '=', 'en': '='}
     'Nuki Event Items':  {'de': '=', 'en': '='}
+    'Nuki Door Items':  {'de': '=', 'en': '='}
     'Possible Lock Actions':  {'de': 'Mögliche Aktionen des Schlosses', 'en': '='}
     'unlock':  {'de': 'Aufsperren', 'en': '='}
     'lock':  {'de': 'Abschließen', 'en': '='}
@@ -29,6 +30,11 @@ plugin_translations:
     'unlatching':  {'de': 'aufklinkend', 'en': '='}
     'motor blocked':  {'de': 'Motor blockiert', 'en': '='}
     'undefined':  {'de': 'undefiniert', 'en': '='}
+    'deactivated': {'de': 'deaktiviert', 'en': '='}
+    'door closed': {'de': 'Tür geschlossen', 'en': '='}
+    'door opened': {'de': 'Tür geöffnet', 'en': '='}
+    'door state unknown': {'de': 'Türstatus unbekannt', 'en': '='}
+    'calibrating': {'de': 'kalibriert', 'en': '='}
     'Enforce Updates':  {'de': '=', 'en': '='}
     'Possible Battery Values':  {'de': 'Mögliche Werte für die Batterie', 'en': '='}
     'Batteries are good. No need to replace it.':  {'de': 'Die Batterien sind gut, sie müssen nicht getauscht werden.', 'en': '='}
