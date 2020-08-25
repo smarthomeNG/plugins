@@ -416,8 +416,8 @@ class WebInterface(SmartPluginWebIf):
         tmpl = self.tplenv.get_template('index.html')
         return tmpl.render(plugin_shortname=self.plugin.get_shortname(), plugin_version=self.plugin.get_version(),
                            interface=None,
-                           item_count=len(self.plugin.get_event_items()) + len(self.plugin.get_action_items()) + len(
-                               self.plugin.get_battery_items()),
+                           item_count=len(self.plugin.get_event_items()) + len(self.plugin.get_door_items()) + 
+                                      len(self.plugin.get_action_items()) + len(self.plugin.get_battery_items()),
                            plugin_info=self.plugin.get_info(), tabcount=1,
                            p=self.plugin)
 
@@ -449,6 +449,10 @@ class WebInterface(SmartPluginWebIf):
         # get the new data
             data = {}
             for item, value in self.plugin.get_event_items().items():
+                data[item.id() + "_value"] = item()
+                data[item.id() + "_last_update"] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
+                data[item.id() + "_last_change"] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
+            for item, value in self.plugin.get_door_items().items():
                 data[item.id() + "_value"] = item()
                 data[item.id() + "_last_update"] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
                 data[item.id() + "_last_change"] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
