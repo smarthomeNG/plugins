@@ -371,8 +371,10 @@ class KNX(lib.connection.Client,SmartPlugin):
                     src_wrk += ':'
                 src_wrk += src + ':ga=' + dst
                 for item in self.gal[dst][ITEMS]:
+                    self.logger.debug("Set Item '{}' to value '{}' caller='{}', source='{}', dest='{}'".format(item, val, self.get_shortname(), src, dst))
                     item(val, self.get_shortname(), src_wrk, dst)
                 for logic in self.gal[dst][LOGICS]:
+                    self.logger.debug("Trigger Logic '{}' from caller='{}', source='{}', value '{}', dest='{}'".format(logic, self.get_shortname(), src_wrk, val, dst))
                     logic.trigger(self.get_shortname(), src_wrk, val, dst)
             else:
                 self.logger.warning("Wrong payload '{2}' for ga '{1}' with dpt '{0}'.".format(dpt, dst, binascii.hexlify(payload).decode()))
@@ -382,18 +384,20 @@ class KNX(lib.connection.Client,SmartPlugin):
                 else:
                     self.stats_last_response = self.shtime.now()
         elif flg == 'read':
-            self.logger.debug("{} read {}".format(src, dst))
+            self.logger.debug("Device with physical address '{}' requests read for ga '{}'".format(src, dst))
             if self.enable_stats:
                 self.stats_last_read = self.shtime.now()
             if dst in self.gar:  # read item
                 if self.gar[dst][ITEM] is not None:
                     item = self.gar[dst][ITEM]
+                    self.logger.debug("groupwrite value '{}' to ga '{}' as DPT '{}' as response".format(dst, item(), self.get_iattr_value(item.conf,KNX_DPT)))
                     self.groupwrite(dst, item(), self.get_iattr_value(item.conf,KNX_DPT), 'response')
                 if self.gar[dst][LOGIC] is not None:
                     src_wrk = self.get_instance_name()
                     if src_wrk != '':
                         src_wrk += ':'
                     src_wrk += src + ':ga=' + dst
+                    self.logger.debug("Trigger Logic '{}' from caller='{}', source='{}', dest='{}'".format(self.gar[dst][LOGIC], self.get_shortname(), src_wrk, dst))
                     self.gar[dst][LOGIC].trigger(self.get_shortname(), src_wrk, None, dst)
 
 
@@ -582,7 +586,7 @@ class KNX(lib.connection.Client,SmartPlugin):
         :param dest: if given it represents the dest
         """
         if self.has_iattr(item.conf, KNX_SEND):
-            if caller != 'knx':
+            if caller != self.get_shortname():
                 for ga in self.get_iattr_value(item.conf, KNX_SEND):
                     self.groupwrite(ga, item(), self.get_iattr_value(item.conf, KNX_DPT))
         if self.has_iattr(item.conf, KNX_STATUS):
