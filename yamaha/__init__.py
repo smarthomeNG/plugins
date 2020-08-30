@@ -55,7 +55,7 @@ class Mcast(socket.socket):
 
 
 class Yamaha(SmartPlugin):
-    PLUGIN_VERSION = "1.0.1"
+    PLUGIN_VERSION = "1.0.2"
 
     def __init__(self, smarthome):
         # Call init code of parent class (SmartPlugin)
@@ -66,7 +66,6 @@ class Yamaha(SmartPlugin):
             self.logger = logging.getLogger(__name__)
 
         self.logger.info("Init Yamaha")
-        self._sh = smarthome
         self._yamaha_cmds = ['state', 'power', 'input', 'volume', 'mute']
         self._yamaha_ignore_cmds = ['play_info', 'list_info']
         self._yamaha_rxv = {}

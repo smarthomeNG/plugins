@@ -12,10 +12,11 @@ plugin:
     documentation: http://smarthomeng.de/user/plugins/yamaha/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/896468-plugin-yamaha
 
-    version: 1.0.1                 # Plugin version
+    version: 1.0.2                 # Plugin version
     sh_minversion: 1.1             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
+    restartable: True
     classname: Yamaha              # class containing the plugin
 
 parameters: NONE
@@ -39,6 +40,9 @@ item_attributes:
             - 'input'
             - 'volume'
             - 'mute'
+
+item_structs: NONE
+# Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
 
 plugin_functions: NONE
 # Definition of plugin functions defined by this plugin
