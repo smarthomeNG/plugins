@@ -2,6 +2,7 @@
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
 #  Copyright 2012-2013 Marcus Popp                         marcus@popp.mx
+#  Copyright 2020 Bernd Meiners                     Bernd.Meiners@mail.de
 #########################################################################
 #  This file is part of SmartHomeNG.    https://github.com/smarthomeNG//
 #
@@ -29,24 +30,56 @@ from lib.model.smartplugin import SmartPlugin
 
 
 class Asterisk(SmartPlugin, lib.connection.Client):
-    ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.3.0"
 
-    def __init__(self, smarthome, username, password, host='127.0.0.1', port=5038):
-        self.logger = logging.getLogger(__name__)
-        lib.connection.Client.__init__(self, host, port, monitor=True)
+    PLUGIN_VERSION = "1.3.1"
+
+    DB = 'ast_db'
+    DEV = 'ast_dev'
+    BOX ='ast_box'
+    USEREVENT = 'ast_userevent'
+    # use e.g. as Asterisk.BOX to keep in namespace
+
+    def __init__(self, sh):
+        """
+        Initalizes the plugin.
+
+        If you need the sh object at all, use the method self.get_sh() to get it. There should be almost no need for
+        a reference to the sh object any more.
+
+        Plugins have to use the new way of getting parameter values:
+        use the SmartPlugin method get_parameter_value(parameter_name). Anywhere within the Plugin you can get
+        the configured (and checked) value for a parameter by calling self.get_parameter_value(parameter_name). It
+        returns the value in the datatype that is defined in the metadata.
+        """
+
+        # Call init code of parent class (SmartPlugin)
+        super().__init__()
+
+        from bin.smarthome import VERSION
+        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
+            self.logger = logging.getLogger(__name__)
+
+        # get the parameters for the plugin (as defined in metadata plugin.yaml):
+        self.host = self.get_parameter_value('host')
+        self.port = self.get_parameter_value('port')
+        self.username = self.get_parameter_value('username')
+        self.password = self.get_parameter_value('password')
+
+        lib.connection.Client.__init__(self, self.host, self.port, monitor=True)
         self.terminator = b'\r\n\r\n'
-        self._init_cmd = {'Action': 'Login', 'Username': username, 'Secret': password, 'Events': 'call,user,cdr'}
-        self._sh = smarthome
+        self._init_cmd = {'Action': 'Login', 'Username': self.username, 'Secret': self.password, 'Events': 'call,user,cdr'}
         self._reply_lock = threading.Condition()
         self._cmd_lock = threading.Lock()
         self._aid = 0
         self._devices = {}
         self._mailboxes = {}
         self._trigger_logics = {}
-        self._log_in = lib.log.Log(smarthome, 'env.asterisk.log.in', ['start', 'name', 'number', 'duration', 'direction'])
+        self._log_in = lib.log.Log(self.get_sh(), 'env.asterisk.log.in', ['start', 'name', 'number', 'duration', 'direction'])
 
     def _command(self, d, reply=True):
+        """
+        This function sends a command to the Asterisk Server
+        """
         if not self.connected:
             return
         self._cmd_lock.acquire()
@@ -72,6 +105,7 @@ class Asterisk(SmartPlugin, lib.connection.Client):
         return reply
 
     def db_read(self, key):
+        """ Read from Asterisk database """
         fam, sep, key = key.partition('/')
         try:
             return self._command({'Action': 'DBGet', 'Family': fam, 'Key': key})
@@ -79,6 +113,7 @@ class Asterisk(SmartPlugin, lib.connection.Client):
             self.logger.warning("Asterisk: Problem reading {0}/{1}.".format(fam, key))
 
     def db_write(self, key, value):
+        """ Write to Asterisk database """
         fam, sep, key = key.partition('/')
         try:
             return self._command({'Action': 'DBPut', 'Family': fam, 'Key': key, 'Val': value})
@@ -86,6 +121,7 @@ class Asterisk(SmartPlugin, lib.connection.Client):
             self.logger.warning("Asterisk: Problem updating {0}/{1} to {2}: {3}.".format(fam, key, value, e))
 
     def mailbox_count(self, mailbox, context='default'):
+        """ get mailbox count tuple """
         try:
             return self._command({'Action': 'MailboxCount', 'Mailbox': mailbox + '@' + context})
         except Exception as e:
@@ -142,7 +178,7 @@ class Asterisk(SmartPlugin, lib.connection.Client):
             if device in self._devices:
                 self._devices[device](True, 'Asterisk')
         elif event['Event'] == 'Hangup':
-            self._sh.scheduler.trigger('Ast.UpDev', self._update_devices, by='Asterisk')
+            self.scheduler_trigger('Ast.UpDev', self._update_devices, by='Asterisk')
         elif event['Event'] == 'CoreShowChannel':
             if self._reply is None:
                 self._reply = [event['Channel']]
@@ -181,7 +217,7 @@ class Asterisk(SmartPlugin, lib.connection.Client):
                 else:
                     self._mailboxes[mb](0)
         elif event['Event'] == 'Cdr':
-            end = self._sh.now()
+            end = self.get_sh().now()
             start = end - datetime.timedelta(seconds=int(event['Duration']))
             duration = event['BillableSeconds']
             if len(event['Source']) <= 4:
@@ -208,29 +244,62 @@ class Asterisk(SmartPlugin, lib.connection.Client):
         return channel
 
     def parse_item(self, item):
-        if 'ast_dev' in item.conf:
-            self._devices[item.conf['ast_dev']] = item
-        if 'ast_box' in item.conf:
-            self._mailboxes[item.conf['ast_box']] = item
-        if 'ast_db' in item.conf:
+        """
+        Default plugin parse_item method. Is called when the plugin is initialized.
+        The plugin can, corresponding to its attribute keywords, decide what to do with
+        the item in future, like adding it to an internal array for future reference
+        :param item:    The item to process.
+        :return:        If the plugin needs to be informed of an items change you should return a call back function
+                        like the function update_item down below. An example when this is needed is the knx plugin
+                        where parse_item returns the update_item function when the attribute knx_send is found.
+                        This means that when the items value is about to be updated, the call back function is called
+                        with the item, caller, source and dest as arguments and in case of the knx plugin the value
+                        can be sent to the knx with a knx write function within the knx plugin.
+        """
+        if self.has_iattr(item.conf, Asterisk.DEV):
+            self._devices[self.get_iattr_value(item.conf, Asterisk.DEV)] = item
+        if self.has_iattr(item.conf, Asterisk.BOX):
+            self._mailboxes[self.get_iattr_value(item.conf, Asterisk.BOX)] = item
+        if self.has_iattr(item.conf, Asterisk.DB):
             return self.update_item
 
     def update_item(self, item, caller=None, source=None, dest=None):
-        if 'ast_db' in item.conf:
-            value = item()
-            if isinstance(value, bool):
-                value = int(item())
-            self.db_write(item.conf['ast_db'], value)
+        """
+        Item has been updated
+
+        This method is called, if the value of an item has been updated by SmartHomeNG.
+        It should write the changed value out to the device (hardware/interface) that
+        is managed by this plugin.
+
+        :param item: item to be updated towards the plugin
+        :param caller: if given it represents the callers name
+        :param source: if given it represents the source
+        :param dest: if given it represents the dest
+        """
+        if self.alive and caller != self.get_shortname():
+            self.logger.debug("Update item: {}, item has been changed outside this plugin".format(item.id()))
+            if self.has_iattr(item.conf, Asterisk.DB):
+                value = item()
+                if isinstance(value, bool):
+                    value = int(item())
+                self.db_write(self.get_iattr_value(item.conf, Asterisk.DB), value)
 
     def parse_logic(self, logic):
-        if 'ast_userevent' in logic.conf:
-            event = logic.conf['ast_userevent']
+        """
+        Default plugin parse_logic method
+        """
+        if Asterisk.USEREVENT in logic.conf:
+            event = logic.conf[Asterisk.USEREVENT]
             if event not in self._trigger_logics:
                 self._trigger_logics[event] = [logic]
             else:
                 self._trigger_logics[event].append(logic)
 
     def run(self):
+        """
+        Run method for the plugin
+        """
+        self.logger.debug("Run method called")
         self.alive = True
 
     def handle_connect(self):
@@ -241,6 +310,10 @@ class Asterisk(SmartPlugin, lib.connection.Client):
                 self._mailboxes[mb](mbc[1])
 
     def stop(self):
+        """
+        Stop method for the plugin
+        """
+        self.logger.debug("Stop method called")
         self.alive = False
         self._reply_lock.acquire()
         self._reply_lock.notify()

@@ -4,29 +4,178 @@ plugin:
     type: interface                 # plugin type (gateway, interface, protocol, system, web)
     description:
         de: 'Ansteuerung einer Asterisk Telefonanlage'
-        en: ''
-    maintainer: '? (mknx)'
-#    tester:                        # Who tests this plugin?
-#    keywords: iot xyz
+        en: 'Control of an Asterisk PBX'
+    maintainer: 'Nobody'
+    tester: 'Nobody'                 # Who tests this plugin?
+    keywords: PBX Asterisk VOIP ISDN
     state: ready
-#    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
-#    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
-
-    version: 1.3.0                 # Plugin version
+    documentation: https://www.smarthomeng.de/user/plugins/asterisk/README.html
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/
+    version: 1.3.1                 # Plugin version
     sh_minversion: 1.3             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
-    multi_instance: False          # plugin supports multi instance
+#    py_minversion: 3.6             # minimum Python version to use for this plugin
+#    py_maxversion:                 # maximum Python version to use for this plugin (leave empty if latest)
+    multi_instance: True           # plugin supports multi instance
+    restartable: unknown                    
     classname: Asterisk            # class containing the plugin
 
 parameters:
     # Definition of parameters to be configured in etc/plugin.yaml
+    username: admin
+    password: secret
+
+    host:
+        type: ip
+        default: 127.0.0.1
+        description:
+            de: 'IP oder Hostname'
+            en: 'IP or hostname'
+
+    port:
+        type: int
+        default: 5038
+        description:
+            de: 'Der Port für den Zugriff aus Asterisk'
+            en: 'The port that is used for communication with Asterisk.'
+
+    username:
+        type: str
+        default: admin
+        description:
+            de: 'Benutzername für die Authentifizierung'
+            en: 'Username for authentification'
+
+    password:
+        type: str
+        description:
+            de: 'Passwort für die Authentifizierung'
+            en: 'Password for authentification'
+
 
 item_attributes:
-    # Definition of item attributes defined by this plugin
+    ast_dev:
+        type: str
+        description:
+            de: 'Asterisk Gerät wie in der ``sip.conf`` eingetragen'
+            en: 'Asterisk device as found in ``sip.conf``'
 
-logic_parameters:
-    # Definition of logic parameters defined by this plugin
+    ast_box:
+        type: str
+        description:
+            de: 'Die Mailbox Nummer dieses Gerätes.'
+            en: 'The mailbox number of this phone. It will be set to the number of new messages in this mailbox.'
+
+    ast_db:
+        type: str
+        description:
+            de: 'Datenbank Eintrag der geändert wird bei einer Änderung des Items.'
+            en: 'Specify the database entry which will be updated at an item change.'
+
+item_structs: NONE
+    # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
+
+#item_attribute_prefixes:
+    # Definition of item attributes that only have a common prefix (enter 'item_attribute_prefixes: NONE' or ommit this section, if section should be empty)
+    # NOTE: This section should only be used, if really nessesary (e.g. for the stateengine plugin)
 
 plugin_functions:
-    # Definition of function interface of the plugin
+    # Definition of plugin functions defined by this plugin (enter 'plugin_functions: NONE', if section should be empty)
+    call:
+        description:
+            de: 'Einen Anruf starten mit einem Kontext und einer optionalen Caller ID'
+            en: 'Initiate a call with context and optional caller id'
+        parameters:
+            source:
+                type: str
+                description:
+                    de: "Quelle des Anrufes, z.B. 'SIP/200'"
+                    en: "Source of call, e.g. 'SIP/200'"
+            dest:
+                type: str
+                description:
+                    de: "Ziel des Anrufes, z.B. '240'"
+                    en: "Destination of call, e.g. '240'"
+            context:
+                type: str
+                description:
+                    de: "Kontext des Anrufes, z.B. 'Tür'"
+                    en: "Context of call, e.g. 'door'"
+            callerid:
+                type: str
+                description:
+                    de: "Optionale Caller ID des Anrufes"
+                    en: "Optional Caller ID of call"
 
+    db_write:
+        description:
+            de: 'Ein Schlüssel/Wertepaar in die Asterisk Datenbank schreiben'
+            en: 'Write a key/value pair into Asterisk database'
+        parameters:
+            key:
+                type: str
+                description:
+                    de: "Schlüssel in der Asterisk Datenbank"
+                    en: "Key to set in Asterisk database"
+            value:
+                type: str
+                description:
+                    de: "Wert in der Asterisk Datenbank"
+                    en: "Value to set in Asterisk database"
+    db_read:
+        type: str
+        description:
+            de: 'Einen Werte aus der Asterisk Datenbank lesen'
+            en: 'Read a value from Asterisk database'
+        parameters:
+            key:
+                type: str
+                description:
+                    de: "Schlüssel in der Asterisk Datenbank"
+                    en: "Key to set in Asterisk database"
+
+    mailbox_count:
+        type: foo
+        description:
+            de: 'Fragt die Anzahl der Nachrichten einer Mailbox ab, Rückgabewert is ein Tupel (alte Mitteilungen, neue Mitteilungen)'
+            en: 'Queries Mailbox for number of messages, returns a tuple (old_messages, new_messages).'
+        parameters:
+            mailbox:
+                type: str
+                description:
+                    de: "Mailbox die abgefragt werden soll"
+                    en: "Mailbox to query"
+            context:
+                type: str
+                description:
+                    de: "Kontext der Mailbox Abfrage"
+                    en: "Context of mailbox query"
+
+    hangup:
+        description:
+            de: 'Verbindungen für ein Gerät beenden'
+            en: 'Close connection for given device'
+        parameters:
+            device:
+                type: str
+                description:
+                    de: "Gerätekennung"
+                    en: "Device ID"
+
+logic_parameters:
+    # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)
+    ast_userevent:
+        type: str
+        description:
+            de: 'Triggert eine Logik wenn ein UserEvent bei der Asterisk auftritt. Dazu muß ein passender Eintrag in der ``extensions.conf`` bei Asterisk vorhanden sein.'
+            en: 'Triggers a logic when a UserEvent Occurs at Asterisk. A matching entry in ``extensions.conf`` needs to be configured with Asterisk'
+        valid_list:
+            - 'Call'
+            - 'Action'
+        valid_list_description:
+            de:
+                - ''
+                - ''
+            en:
+                - 'In the asterisk extensions.conf ``exten => _X.,n,UserEvent(Call,Source: ${CALLERID(num)},Value: ${CALLERID(name)})`` would trigger the logic every time, this UserEvent is sent.'
+                - 'A specified destination for the logic will be triggered e.g. ``exten => _X.,n,UserEvent(Call,Source: ${CALLERID(num)},Destination: Office,Value: ${CALLERID(name)})``'
