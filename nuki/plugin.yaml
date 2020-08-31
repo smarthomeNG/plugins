@@ -92,11 +92,12 @@ item_attributes:
         type: str
         mandatory: True
         description:
-            de: 'Es gibt drei Typen von NUKI Triggern, `action`, `state` und `battery`. Ein Item kann nur einen Trigger gleichzeitig haben..'
-            en: 'There are three types of nuki triggers, `action`, `state` and `battery`. An item can only have one trigger
+            de: 'Es gibt vier Typen von NUKI Triggern, `action`, `state`, `doorstate` (nur Nuki 2.0!) und `battery`. Ein Item kann nur einen Trigger gleichzeitig haben..'
+            en: 'There are four types of nuki triggers, `action`, `state`, `doorstate` (only Nuki 2.0!) and `battery`. An item can only have one trigger
                  attribute at once.'
         valid_list:
             - 'state'
+            - 'doorstate'
             - 'battery'
             - 'action'
 
