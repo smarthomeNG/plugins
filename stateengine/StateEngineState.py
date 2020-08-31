@@ -97,13 +97,18 @@ class SeState(StateEngineTools.SeItemChild):
     def write_to_log(self):
         self._abitem._initstate = self.id
         self._log_info("State {0}:", self.id)
-        self._abitem.update_webif(self.id, {'name': self.name, 'conditionsets': self.__conditions.get(),
+        self._log_increase_indent()
+        self._log_info("Updating Web Interface...")
+        self._log_increase_indent()
+        self._abitem.update_webif(self.id, {'name': self.name,
+                                            'conditionsets': self.__conditions.get(),
                                             'actions_enter': {},
                                             'actions_enter_or_stay': {},
                                             'actions_stay': {},
                                             'actions_leave': {},
                                             'leave': False, 'enter': False, 'stay': False})
-        self._log_increase_indent()
+        self._log_decrease_indent()
+        self._log_info("Finished Web Interface Update")
         self._log_info("Name: {0}", self.name)
         self.__text.write_to_logger()
         if self.__conditions.count() > 0:

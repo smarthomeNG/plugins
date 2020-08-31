@@ -60,6 +60,8 @@ def flatten_list(changelist):
                     flat_list.append(item)
             else:
                 flat_list.append(sublist)
+    elif isinstance(changelist, str) and changelist.startswith("["):
+        flat_list = ast.literal_eval(changelist)
     else:
         flat_list = changelist
     return flat_list

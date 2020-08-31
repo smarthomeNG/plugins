@@ -236,7 +236,7 @@ class SeActionBase(StateEngineTools.SeItemChild):
 
     def _waitforexecute(self, actionname: str, namevar: str = "", repeat_text: str = "", delay: int = 0):
         if delay == 0:
-            self._log_debug("Running action '{}'.", namevar)
+            self._log_info("Running action '{}'.", namevar)
             self.real_execute(actionname, namevar, repeat_text)
         else:
             instanteval = None if self.__instanteval is None else self.__instanteval.get()
