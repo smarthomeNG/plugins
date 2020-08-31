@@ -34,6 +34,7 @@ from bin.smarthome import VERSION
 
 nuki_action_items = {}
 nuki_event_items = {}
+nuki_door_items = {}
 nuki_battery_items = {}
 paired_nukis = []
 lock = False
@@ -80,7 +81,7 @@ class NukiTCPDispatcher(lib.connection.Server):
 
 
 class Nuki(SmartPlugin):
-    PLUGIN_VERSION = "1.5.0.7"
+    PLUGIN_VERSION = "1.5.0.6"
     ALLOW_MULTIINSTANCE = False
 
     def __init__(self, sh, *args, **kwargs):
@@ -88,6 +89,7 @@ class Nuki(SmartPlugin):
         global paired_nukis
         global nuki_event_items
         global nuki_action_items
+        global nuki_door_items
         global nuki_battery_items
         global lock
         global request_queue
@@ -156,13 +158,15 @@ class Nuki(SmartPlugin):
 
             if self.has_iattr(item.conf, 'nuki_trigger'):
                 nuki_trigger = self.get_iattr_value(item.conf, "nuki_trigger")
-                if nuki_trigger.lower() not in ['state', 'action', 'battery']:
+                if nuki_trigger.lower() not in ['state', 'doorstate', 'action', 'battery']:
                     self.logger.warning("Plugin '{pluginname}': Item {item} defines an invalid Nuki trigger {trigger}! "
-                                        "It has to be 'state' or 'action'.".format(pluginname=self.get_shortname(),
-                                                                                   item=item, trigger=nuki_trigger))
+                                        "It has to be 'state', 'doorstate' or 'action'.".format(pluginname=self.get_shortname(),
+                                                                                                item=item, trigger=nuki_trigger))
                     return
                 if nuki_trigger.lower() == 'state':
                     nuki_event_items[item] = int(nuki_id)
+                elif nuki_trigger.lower() == 'doorstate':
+                    nuki_door_items[item] = int(nuki_id)
                 elif nuki_trigger.lower() == 'action':
                     nuki_action_items[item] = int(nuki_id)
                 else:
@@ -201,15 +205,21 @@ class Nuki(SmartPlugin):
 
         nuki_battery = None
         nuki_state = None
+        nuki_doorstate = None
 
         if 'state' in lock_state:
             nuki_state = lock_state['state']
+        if 'doorsensorState' in lock_state:
+            nuki_doorstate = lock_state['doorsensorState']
         if 'batteryCritical' in lock_state:
             nuki_battery = 0 if not lock_state['batteryCritical'] else 1
 
         for item, key in nuki_event_items.items():
             if key == nuki_id:
                 item(nuki_state, 'NUKI')
+        for item, key in nuki_door_items.items():
+            if key == nuki_id:
+                item(nuki_doorstate, 'NUKI')
         for item, key in nuki_battery_items.items():
             if key == nuki_id:
                 item(nuki_battery, 'NUKI')
@@ -318,6 +328,9 @@ class Nuki(SmartPlugin):
     def get_event_items(self):
         return nuki_event_items
 
+    def get_door_items(self):
+        return nuki_door_items
+
     def get_battery_items(self):
         return nuki_battery_items
 
@@ -403,8 +416,8 @@ class WebInterface(SmartPluginWebIf):
         tmpl = self.tplenv.get_template('index.html')
         return tmpl.render(plugin_shortname=self.plugin.get_shortname(), plugin_version=self.plugin.get_version(),
                            interface=None,
-                           item_count=len(self.plugin.get_event_items()) + len(self.plugin.get_action_items()) + len(
-                               self.plugin.get_battery_items()),
+                           item_count=len(self.plugin.get_event_items()) + len(self.plugin.get_door_items()) + 
+                                      len(self.plugin.get_action_items()) + len(self.plugin.get_battery_items()),
                            plugin_info=self.plugin.get_info(), paired_nukis=paired_nukis, tabcount=1,
                            p=self.plugin)
 
@@ -436,6 +449,10 @@ class WebInterface(SmartPluginWebIf):
         # get the new data
             data = {}
             for item, value in self.plugin.get_event_items().items():
+                data[item.id() + "_value"] = item()
+                data[item.id() + "_last_update"] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
+                data[item.id() + "_last_change"] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
+            for item, value in self.plugin.get_door_items().items():
                 data[item.id() + "_value"] = item()
                 data[item.id() + "_last_update"] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
                 data[item.id() + "_last_change"] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
