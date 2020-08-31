@@ -20,6 +20,7 @@
 #########################################################################
 
 import re
+import ast
 from collections import OrderedDict
 from . import StateEngineTools
 try:
@@ -61,14 +62,18 @@ class WebInterface(StateEngineTools.SeItemChild):
         for type in types:
             for action in self.__states[state].get(type):
                 condition_to_meet = self.__states[state][type][action].get('conditionset')
+                condition_to_meet = StateEngineTools.flatten_list(condition_to_meet)
                 condition_met = True if condition_to_meet == 'None' else False
                 condition_to_meet = condition_to_meet if isinstance(condition_to_meet, list) else [condition_to_meet]
                 _repeat = self.__states[state][type][action].get('repeat')
                 _delay = self.__states[state][type][action].get('delay') or 0
-
+                matching = False
                 for cond in condition_to_meet:
-                    cond = re.compile(cond)
-                    matching = cond.fullmatch(conditionset)
+                    try:
+                        cond = re.compile(cond)
+                        matching = cond.fullmatch(conditionset)
+                    except Exception:
+                        matching = True
                     condition_met = True if matching else condition_met
                 fontcolor = "white" if not condition_met or (_repeat is False and originaltype == 'actions_stay')\
                             else "#5c5646" if _delay > 0 else "darkred" if _delay < 0 else "black"
@@ -87,7 +92,7 @@ class WebInterface(StateEngineTools.SeItemChild):
                     action2 = 'None'
                     action3 = ''
                 if format == 'table' and not action2 == 'None':
-                    actionlabel += '<tr><td align="left"><font color={}>{}</font></td><td align="left">{}</td><td align="left">{}</td></tr>'.format(fontcolor, action1, action2, action3)
+                    actionlabel += '<tr><td align="center"><font color={}>{}</font></td><td align="center">{}</td><td align="center">{}</td></tr>'.format(fontcolor, action1, action2, action3)
                 elif not action2 == 'None':
                     actionlabel += '<font color="{}">{} {} {}{}</font><br />'.format(fontcolor, action1, action2, action3, additionaltext)
         actionlabel += '</table>>' if format == 'table' else '>'
@@ -111,6 +116,8 @@ class WebInterface(StateEngineTools.SeItemChild):
             max_none = condition_dict.get('max') == 'None'
             agemin_none = condition_dict.get('agemin') == 'None'
             agemax_none = condition_dict.get('agemax') == 'None'
+            changedby_none = condition_dict.get('changedby') == 'None'
+            updatedby_none = condition_dict.get('updatedby') == 'None'
 
             for compare in condition_dict:
                 cond1 = not condition_dict.get(compare) == 'None'
@@ -118,8 +125,10 @@ class WebInterface(StateEngineTools.SeItemChild):
                 cond3 = not compare == 'eval'
                 cond4 = not compare == 'negate'
                 cond5 = not compare == 'agenegate'
-                if cond1 and cond2 and cond3 and cond4 and cond5:
-                    conditionlist += '<tr><td align="left" width="260"><b>'
+                cond6 = not compare == 'changedbynegate'
+                cond7 = not compare == 'updatedbynegate'
+                if cond1 and cond2 and cond3 and cond4 and cond5 and cond6 and cond7:
+                    conditionlist += '<tr><td align="center" width="260"><b>'
                     textlength = len(str(condition_dict.get('item')))
                     condition_tooltip += '{}&#13;&#10;&#13;&#10;'.format(condition_dict.get('item')) if textlength > self.__textlimit else ''
                     info = str(condition_dict.get('item'))[:self.__textlimit] + '.. &nbsp;' * (textlength > self.__textlimit)
@@ -129,12 +138,20 @@ class WebInterface(StateEngineTools.SeItemChild):
                     info = str(condition_dict.get('eval'))[:self.__textlimit] + '.. &nbsp;' * (textlength > self.__textlimit)
                     conditionlist += '{}'.format(info) if not eval_none and item_none else ''
                     conditionlist += '</b></td>'
-                    comparison = "&#62;=" if not min_none and compare == "min" else "&#60;=" if not max_none and compare == "max"\
+                    comparison = "&#62;=" if not min_none and compare == "min"\
+                                 else "&#60;=" if not max_none and compare == "max"\
                                  else "older" if not agemin_none and compare == "agemin"\
                                  else "younger" if not agemax_none and compare == "agemax"\
+                                 else "not changed by" if (not changedby_none and compare == "changedby"
+                                                           and condition_dict.get('changedbynegate') == 'True')\
+                                 else "changed by" if not changedby_none and compare == "changedby"\
+                                 else "not updated by" if (not updatedby_none and compare == "updatedby"
+                                                           and condition_dict.get('updatedbynegate') == 'True')\
+                                 else "updated by" if not updatedby_none and compare == "updatedby"\
                                  else "!=" if (not value_none and compare == "value"
-                                               and condition_dict.get('negate') == 'True') else "=="
-                    conditionlist += '<td align="left" width="5">{}</td><td align="left">'.format(comparison)
+                                               and condition_dict.get('negate') == 'True')\
+                                 else "=="
+                    conditionlist += '<td align="center" width="5">{}</td><td align="center">'.format(comparison)
                     conditionlist += '"{}"'.format(info) if not item_none and not eval_none else ''
                     textlength = len(str(condition_dict.get(compare)))
                     condition_tooltip += '{}&#13;&#10;&#13;&#10;'.format(condition_dict.get(compare)) if textlength > self.__textlimit else ''
@@ -320,7 +337,7 @@ class WebInterface(StateEngineTools.SeItemChild):
 
                     position = '{},{}!'.format(new_x, new_y)
                     #self._log_debug('action leave: {}', position)
-                    self.__nodes['{}_actions_leave'.format(state)] = pydotplus.Node('{}_actions_leave'.format(state), style="filled", fillcolor=color, shape="rectangle", label=actionlist_leave, pos=position, align="left")
+                    self.__nodes['{}_actions_leave'.format(state)] = pydotplus.Node('{}_actions_leave'.format(state), style="filled", fillcolor=color, shape="rectangle", label=actionlist_leave, pos=position, align="center")
                     self.__graph.add_node(self.__nodes['{}_actions_leave'.format(state)])
                     self.__graph.add_edge(pydotplus.Edge(self.__nodes['{}_leave'.format(state)], self.__nodes['{}_actions_leave'.format(state)], style='bold', color='blue', taillabel="    True"))
 
