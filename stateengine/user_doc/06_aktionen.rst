@@ -318,13 +318,13 @@ der zugewiesenen Zahlen ausgeführt.
 
 .. code-block:: yaml
 
-      'conditionset: ["enter_(.*)_test", "eval:sh.itemX.property.name"]'
+      'conditionset: ["regex:enter_(.*)_test", "eval:sh.itemX.property.name"]'
 
 Über das Attribut wird festgelegt, dass die Aktion nur dann ausgeführt werden
 soll, wenn der Zustand durch die angegebene Bedingungsgruppe eingenommen wurde.
 Zum Vergleich wird immer der volle Pfad der Bedingungsgruppe herangezogen.
-Conditionset erlaubt sowohl eine Liste als auch reguläre Ausdrücke, wodurch
-nicht zwingend der komplette Pfad der Bedingungsgruppe bekannt sein muss.
+Conditionset erlaubt sowohl einzelne Werte mittels value, regex oder eval, als auch eine Liste.
+Wichtig ist, reguläre Ausdrücke unter Anführungszeichen zu setzen (und dann Hochkomma um den gesamten Eintrag).
 Der gesamte Pfad könnte wie folgt evaluiert werden:
 
 .. code-block:: yaml
@@ -347,12 +347,12 @@ regnet hingegen auf den Wert, der in den Settings hinterlegt ist.
               - 'function: set'
               - 'to: item:..settings.abend.hoehe'
               - 'order: 1'
-              - 'conditionset: (.*)enter(?!_regen)(.*)'
+              - 'conditionset: regex:(.*)enter(?!_regen)(.*)'
             se_action_hoehe_regen:
               - 'function: set'
               - 'to: 100'
               - 'order: 1'
-              - 'conditionset: (.*)enter_regen'
+              - 'conditionset: regex:(.*)enter_regen'
 
         enter_normal:
             diverse Bedingungen
