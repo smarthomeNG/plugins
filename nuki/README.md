@@ -51,7 +51,7 @@ Additionally, the IDs of all paired Nuki Locks are now also shown in the web int
 
 #### nuki_trigger
 
-There are three types of nuki triggers, `action`, `state` and `battery`. An item can only have one trigger
+There are four types of nuki triggers, `action`, `state`, `doorstate` (only Nuki 2.0!) and `battery`. An item can only have one trigger
 attribute at once.
 
 ##### action
@@ -82,6 +82,16 @@ whenever these lock state was changed. Find the list with the possible values be
 * 254   (motor blocked)
 * 255   (undefined)
 
+
+##### doorstate
+If you declare an item with the attribute `nuki_trigger: doorstate`, this item will be set to the actual door state,
+whenever these door state was changed (only Nuki 2.0!). Find the list with the possible values below:
+
+* 1     (deactivated)
+* 2     (door closed)
+* 3     (door opened)
+* 4     (door state unknown)
+* 5     (calibrating)
 
 
 ##### battery
