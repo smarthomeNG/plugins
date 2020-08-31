@@ -40,7 +40,7 @@ plugin:
     documentation: https://www.smarthomeng.de/user/plugins/stateengine/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1303071-stateengine-plugin-support
 
-    version: 1.7.1
+    version: 1.7.2
     sh_minversion: 1.6
     multi_instance: False
     classname: StateEngine
@@ -705,6 +705,30 @@ item_attribute_prefixes:
         description:
             de: 'Bedingung: Invertieren des zuvor definierten Alterswerts'
             en: 'Condition: Invert a previously defined age value'
+
+    se_changedby_:
+        type: list
+        description:
+            de: 'Bedingung: Item wurde geändert durch..'
+            en: 'Condition: Item was changed by..'
+
+    se_changedbynegate_:
+        type: bool
+        description:
+            de: 'Bedingung: Invertieren des zuvor definierten changedby Werts'
+            en: 'Condition: Invert a previously defined changedby value'
+
+    se_updatedby_:
+        type: list
+        description:
+            de: 'Bedingung: Item wurde aktualisiert durch..'
+            en: 'Condition: Item was updated by..'
+
+    se_updatedbynegate_:
+        type: bool
+        description:
+            de: 'Bedingung: Invertieren des zuvor definierten updatedby Werts'
+            en: 'Condition: Invert a previously defined updatedby value'
 
     se_action_:
         type: list
