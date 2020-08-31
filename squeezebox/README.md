@@ -1,5 +1,10 @@
 # Squeezebox
 
+## New in version 1.3.3
+
+* Switch from lib.connection to lib.network
+* Added autoreconnect option
+
 ## New in version 1.3.2
 
 * Remove the automatic '?' addition to init commands

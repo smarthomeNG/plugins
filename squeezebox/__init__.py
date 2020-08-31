@@ -23,15 +23,15 @@ import logging
 import urllib.request
 import urllib.error
 import urllib.parse
-import lib.connection
+from lib.network import Tcp_client
 import re
 import time
 from lib.model.smartplugin import SmartPlugin
 from bin.smarthome import VERSION
 
-class Squeezebox(SmartPlugin,lib.connection.Client):
+class Squeezebox(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.3.2"
+    PLUGIN_VERSION = "1.3.3"
 
     def __init__(self, smarthome):
         if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
@@ -39,8 +39,22 @@ class Squeezebox(SmartPlugin,lib.connection.Client):
         try:
             self._host = self.get_parameter_value('host')
             self._port = self.get_parameter_value('port')
+            self._autoreconnect = self.get_parameter_value('autoreconnect')
+            self._connect_retries = self.get_parameter_value('connect_retries')
+            self._connect_cycle = self.get_parameter_value('connect_cycle')
+            self._squeezebox_server_alive = False
             self._web_port = self.get_parameter_value('web_port')
-            lib.connection.Client.__init__(self, self._host, self._port, monitor=True)
+            self._squeezebox_tcp_connection = Tcp_client(host=self._host,
+                                                         port=self._port,
+                                                         name='SqueezboxTCPConnection',
+                                                         autoreconnect=self._autoreconnect,
+                                                         connect_retries=self._connect_retries,
+                                                         connect_cycle=self._connect_cycle,
+                                                         binary=True,
+                                                         terminator=b'\r\n')
+            self._squeezebox_tcp_connection.set_callbacks(connected=self._on_connect,
+                                                          data_received=self._on_received_data,
+                                                          disconnected=self._on_disconnect)
             self._val = {}
             self._obj = {}
             self._init_cmds = []
@@ -187,7 +201,7 @@ class Squeezebox(SmartPlugin,lib.connection.Client):
                        for cmd_str in cmd))
 
     def _send(self, cmd):
-        if self.connected:
+        if self._squeezebox_tcp_connection.connected():
             # replace german umlauts
             repl = (('%FC', '%C3%BC'), ('%F6', '%C3%B6'), ('%E4', '%C3%A4'), ('%DC', '%C3%9C'), ('%D6', '%C3%96'), ('%C4', '%C3%84'))
             for r in repl:
@@ -201,11 +215,13 @@ class Squeezebox(SmartPlugin,lib.connection.Client):
                     self.logger.warning("10 seconds wait time for sending {} is over. Sending it now.".format(cmd))
                     break
             self.logger.debug("Sending request: {0}".format(cmd))
-            self.send(bytes(cmd + '\r\n', 'utf-8'))
+            self._squeezebox_tcp_connection.send(bytes(cmd + '\r\n', 'utf-8'))
+        else:
+            self.logger.warning("Can not send because squeezebox is not connected.")
 
-    def found_terminator(self, response):
-        data = [urllib.parse.unquote(data_str)
-                for data_str in response.decode().split()]
+    def _on_received_data(self, connection, response):
+        data = [urllib.parse.unquote(data_str) for data_str in response.decode().split()]
+
         self.logger.debug("Got: {0}".format(data))
 
         try:
@@ -214,6 +230,10 @@ class Squeezebox(SmartPlugin,lib.connection.Client):
                 if (value == 1):
                     self.logger.info("Listen-mode enabled")
                     self._listen = True
+                    if self._init_cmds != []:
+                        self.logger.debug('squeezebox: init read')
+                        for cmd in self._init_cmds:
+                            self._send(cmd)
                 else:
                     self.logger.info("Listen-mode disabled. The plugin won't receive any info!")
                     self._listen = False
@@ -322,8 +342,7 @@ class Squeezebox(SmartPlugin,lib.connection.Client):
                 return
             self._update_items_with_data(data)
         except Exception as e:
-            self.logger.error("exception while parsing \'{0}\'".format(data))
-            self.logger.error("exception: {}".format(e))
+            self.logger.error("exception while parsing \'{0}\'. Exception: {1}".format(data, e))
 
     def _update_items_with_data(self, data):
         cmd = ' '.join(data_str for data_str in data[:-1])
@@ -333,22 +352,56 @@ class Squeezebox(SmartPlugin,lib.connection.Client):
             for item in self._val[cmd]['items']:
                 if re.match("[+-][0-9]+$", data[-1]) and not isinstance(item(), str):
                     data[-1] = int(data[-1]) + item()
-                item(data[-1], 'LMS', self.address)
+                item(data[-1], 'LMS', self._host)
             for logic in self._val[cmd]['logics']:
                 logic.trigger('squeezebox', cmd, data[-1])
 
-    def handle_connect(self):
-        self.discard_buffers()
-        # enable listen-mode to get notified of changes
+    def _connect(self, by):
+        '''
+        Method to try to establish a new connection to squeezebox
+
+        :note: While this method is called during the start-up phase of the plugin, it can also be used to establish a connection to the squeezebox server if the plugin was initialized before the server went up or the connection is interrupted.
+
+        :param by: caller information
+        :type by: str
+        '''
+        self.logger.debug('Initializing connection, initiated by {}'.format(by))
+        if not self._squeezebox_tcp_connection.connected():
+            self._squeezebox_tcp_connection.connect()
+            # we allow for 2 seconds to connect
+            time.sleep(2)
+        if not self._squeezebox_tcp_connection.connected():
+            # no connection could be established, squeezebox may be offline
+            self.logger.info('Could not establish a connection to squeezebox at {}'.format(self._host))
+            self._squeezebox_server_alive = False
+        else:
+            self._squeezebox_server_alive = True
+
+    def _on_connect(self, by=None):
+        '''
+        Recall method for succesful connect to squeezebox
+        On a connect first check if the JSON-RPC API is available.
+        If this is the case query squeezebox to initialize all items
+
+        :param by: caller information
+        :type by: str
+        '''
+        self._squeezebox_server_alive = True
+        if isinstance(by, (dict, Tcp_client)):
+            by = 'TCP_Connect'
+        self.logger.info('Connected to {}, onconnect called by {}.'.format(self._host, by))
         self._send('listen 1')
-        if self._init_cmds != []:
-            if self.connected:
-                self.logger.debug('squeezebox: init read')
-                for cmd in self._init_cmds:
-                    self._send(cmd)
+
+    def _on_disconnect(self, obj=None):
+        '''
+        Recall method for TCP disconnect
+        '''
+        self.logger.info('Received disconnect from {}'.format(self._host))
+        self._squeezebox_server_alive = False
 
     def run(self):
         self.alive = True
+        self._connect('run')
         self.logger.debug("run method called")
 
     def stop(self):
