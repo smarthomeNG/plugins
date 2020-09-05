@@ -125,8 +125,8 @@ The plugin answers with:
 logic
 ~~~~~
 
-With the **``logic``** command a client requests a logic to be
-triggered. **``name``** is the name of the logic, as defined in
+With the **``logic``** command a client requests a logic to be triggered
+or enabled/disabled. **``name``** is the name of the logic, as defined in
 **``etc/logic.yaml``**. Furthermore, in **``etc/logic.yaml``** the
 attribute **``visu_acl``** for that logic has to be set to **True**.
 
@@ -134,7 +134,13 @@ attribute **``visu_acl``** for that logic has to be set to **True**.
 
   {"cmd":"logic",  "name":"az_licht",  "val":0}
 
-**Optional**: **enabled** can be used to disable or enable logics.
+or
+
+.. code-block:: JSON
+
+  {"cmd":"logic",  "name":"az_licht",  "enabled":1}
+  {"cmd":"logic",  "name":"az_licht",  "enabled":0}
+
 
 Following information is passed to the logic via the trigger variable:
 
@@ -409,6 +415,21 @@ accessible logics.
 
 Requests sent from SmartHomeNG to the Visu
 ------------------------------------------
+
+dialog
+~~~~~~
+
+**``dialog``** is a command sent from the plugin to the smartVISU clients.
+With the **``dialog``** command the smartVISU client can be instructed to
+display a dialog.
+
+The following command instructs smartVISU to display a dialog:
+
+.. code-block:: JSON
+
+  {"cmd": "dialog", "header": "This is the dialog header", "content": "This is the dialog message"}
+
+The smartVISU client does not send an answer to the **``dialog``** command.
 
 url
 ~~~
