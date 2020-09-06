@@ -182,21 +182,21 @@ item_attributes:
             - 'playtime'
         valid_list_description:
             de:
-                -'num,  Anzahl der Künstler'
-                -'num,  Anzahl der Alben'
-                -'num,  Anzahl der Musikstücke'
-                -'num,  bisherige Laufzeit des Daemons in Sekunden'
-                -'num,  Summe der Dauer aller Musikstücke in der Datenbank'
-                -'num,  Letztes Datenbankupdate in UNIX time'
-                -'num,  Länge der gespielten Musik'
+                - 'num,  Anzahl der Künstler'
+                - 'num,  Anzahl der Alben'
+                - 'num,  Anzahl der Musikstücke'
+                - 'num,  bisherige Laufzeit des Daemons in Sekunden'
+                - 'num,  Summe der Dauer aller Musikstücke in der Datenbank'
+                - 'num,  Letztes Datenbankupdate in UNIX time'
+                - 'num,  Länge der gespielten Musik'
             en:
-                -'num,  number of artists'
-                -'num,  number of albums'
-                -'num,  number of songs'
-                -'num,  daemon uptime in seconds'
-                -'num,  sum of all song times in the db'
-                -'num,  last db update in UNIX time'
-                -'num,  time length of music played'
+                - 'num,  number of artists'
+                - 'num,  number of albums'
+                - 'num,  number of songs'
+                - 'num,  daemon uptime in seconds'
+                - 'num,  sum of all song times in the db'
+                - 'num,  last db update in UNIX time'
+                - 'num,  time length of music played'
 
     mpd_command:
         description:
