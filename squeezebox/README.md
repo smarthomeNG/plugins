@@ -1,6 +1,6 @@
 # Squeezebox
 
-## New in version 1.3.3
+## New in version 1.4
 
 * Switch from lib.connection to lib.network
 * Added autoreconnect option
