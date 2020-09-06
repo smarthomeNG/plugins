@@ -69,7 +69,7 @@ parameters:
 
     connect_retries:
         type: int
-        default: 0
+        default: 2
         valid_min: 0
         description:
             de: 'Anzahl Versuche, die Verbindung erneut aufzubauen'
