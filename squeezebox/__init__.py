@@ -407,7 +407,8 @@ class Squeezebox(SmartPlugin):
     def stop(self):
         self.alive = False
         self.logger.debug("stop method called")
-        self.close()
+        self._squeezebox_tcp_connection.close()
+        self._squeezebox_server_alive = False
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG, format='%(relativeCreated)6d %(threadName)s %(message)s')
