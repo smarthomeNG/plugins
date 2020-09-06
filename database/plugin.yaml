@@ -62,11 +62,11 @@ item_attributes:
     # Definition of item attributes defined by this plugin
     database:
         type: str
-        valid_list: ['', 'yes', 'init']
+        valid_list: ['', 'yes', 'init', 'true']
         description:
-            de: "Wenn auf 'yes' gesetzt, werden die Werte des Items in die Datenbank geschrieben. Wenn auf 'init' gesetzt, wird zusätzlich beim Start von SmartHomeNG der Wert in die Datenbank geschrieben."
-            en: "This attribute enables the database logging when set (just use value 'yes'). If value 'init' is used, an item will be initalized from the database after SmartHomeNG is restarted."
-
+            de: "Wenn auf 'yes' oder 'true' gesetzt, werden die Werte des Items in die Datenbank geschrieben. Wenn auf 'init' gesetzt, wird zusätzlich beim Start von SmartHomeNG der Wert in die Datenbank geschrieben."
+            en: "This attribute enables the database logging when set (just use value 'yes' or 'true'). If value 'init' is used, an item will be initalized from the database after SmartHomeNG is restarted."
+            
     database_maxage:
         type: num
         valid_min: 0
