@@ -31,7 +31,7 @@ from bin.smarthome import VERSION
 
 class Squeezebox(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.3.3"
+    PLUGIN_VERSION = "1.4"
 
     def __init__(self, smarthome):
         if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
