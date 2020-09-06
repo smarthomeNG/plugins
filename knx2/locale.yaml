@@ -103,3 +103,75 @@ plugin_translations:
         de: '='
         en: 'Service daemon for the KNX support'
         fr: ''
+
+    'Ja':
+        de: '='
+        en: 'Yes'
+        fr: 'Qui'
+
+    'Nein':
+        de: '='
+        en: 'No'
+        fr: 'Non'
+
+    'Keine ETS5 Projektdatei gefunden':
+        de: '='
+        en: 'No ETS5 project file found'
+        fr: 'Pas trouvée un file ETS projet'
+
+    'nicht zugewiesen':
+        de: '='
+        en: 'not assigned'
+        fr: 'pas assignee'
+
+    'Gruppenadresse':
+        de: '='
+        en: 'Group address'
+        fr: ''
+
+    'Name':
+        de: '='
+        en: 'Name'
+        fr: 'Nom'
+
+    'Kommentar':
+        de: '='
+        en: 'Comment'
+        fr: ''
+
+    'Beschreibung':
+        de: '='
+        en: 'Description'
+        fr: ''
+
+    'Datenpunkt':
+        de: '='
+        en: 'Datapoint'
+        fr: ''
+
+    'Pfad zur KNX Projektdatei':
+        de: '='
+        en: 'Path to KNX project file'
+        fr: ''
+
+    'gültig':
+        de: '='
+        en: 'valid'
+        fr: ''
+
+    'Projektdatei hochladen':
+        de: '='
+        en: 'Upload project file'
+        fr: ''
+
+    'ETS5 Projektdatei (*.knxproj) auswählen':
+        de: '='
+        en: 'Select ETS5 projekt file(*.knxproj)'
+        fr: ''
+
+    'hochladen':
+        de: '='
+        en: 'upload'
+        fr: ''
+
+
