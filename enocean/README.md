@@ -329,6 +329,7 @@ EnOcean_Item:
             enforce_updates: 'True'
             cache: 'True'
             visu_acl: rw
+            eval: min(max(value, 0), 255)
             on_update:
                 - EnOcean_Item.sunblind = 'stopped'
         Run:
