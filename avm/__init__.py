@@ -80,9 +80,8 @@ class MonitoringService:
         self.conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             self.conn.connect((self._host, self._port))
-            self._listen_thread = threading.Thread(target=self._listen,
-                                                   name="AVM Monitoring Service {}".format(
-                                                       self._plugin_instance.get_fullname())).start()
+            _name = 'plugins.' + self._plugin_instance.get_fullname() + '.Monitoring_Service'
+            self._listen_thread = threading.Thread(target=self._listen, name=_name).start()
             self._plugin_instance.logger.debug("MonitoringService: connection established")
         except Exception as e:
             self.conn = None
