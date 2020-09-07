@@ -7,7 +7,7 @@ This plugin adds EnOcean support to SmarthomeNG.
 If you have special hardware not supported yet, please feel free to improve and contribute!
 
 ## Version / Change History
-Version: 1.3.4
+Version: 1.3.5
 
 Change History: currently not maintained.
 
@@ -308,18 +308,56 @@ EnOcean_Item:
         remark: Eltako FSB14, FSB61, FSB71 - actor for Shutter
         type: str
         enocean_rx_id: 1A869C3
-        enocean_rx_eep: F6_02_03_01
+        enocean_rx_eep: F6_0G_03
         enocean_rx_key: STATUS
-        move:
+        # runtime Range [0 - 255] s
+        enocean_rtime: 80
+        Tgt_Position:
+            remark: Pos. 0...255
             type: num
-            enocean_tx_eep: A5_3F_7F
-            enocean_tx_id_offset: 0
-            enocean_rx_key: B
-            enocean_rtime: 60
-            block_switch: 'False'
+            enocean_rx_id: ..:.
+            enocean_rx_eep: F6_0G_03
             enforce_updates: 'True'
             cache: 'True'
             visu_acl: rw
+        Act_Position:
+            remark: Ist-Pos. 0...255 berechnet aus (letzer Pos. + Fahrzeit * 255/rtime)
+            type: num
+            enocean_rx_id: ..:.
+            enocean_rx_eep: F6_0G_03
+            enocean_rx_key: POSITION
+            enforce_updates: 'True'
+            cache: 'True'
+            visu_acl: rw
+            on_update:
+                - EnOcean_Item.sunblind = 'stopped'
+        Run:
+            remark: Ansteuerbefehl 0x00, 0x01, 0x02
+            type: num
+            enocean_rx_id: ..:.
+            enocean_rx_eep: F6_0G_03
+            enocean_tx_eep: A5_3F_7F
+            enocean_tx_id_offset: 0
+            enocean_rx_key: B
+            enocean_rtime: ..:.
+            # block actuator
+            block_switch: 'True'
+            enforce_updates: 'True'
+            cache: 'True'
+            visu_acl: rw
+            struct: uzsu.child
+        Movement:
+            remark: Wenn Rolladen gestoppt wurde steht hier die gefahrene Zeit in s und die Richtung
+            type: num
+            enocean_rx_id: ..:.
+            enocean_rx_eep: A5_0G_03
+            enocean_rx_key: MOVE
+            cache: 'False'
+            enforce_updates: 'True'
+            eval: value * 255/int(sh.EnOcean_Item.sunblind.property.enocean_rtime)
+            on_update:
+                - EnOcean_Item.sunblind = 'stopped'
+                - EnOcean_Item.sunblind.Act_Position = EnOcean_Item.sunblind.Act_Position() + value
 
     RGBdimmer:
         type: num
@@ -379,6 +417,7 @@ The following status EEPs are supported:
 * A5_08_01		Brightness and movement sensor
 * A5_11_04		Dimmer status feedback
 * A5_12_01		Power Measurement, e.g. Eltako FSVA-230V
+* A5_0G_03		shutter feedback in s if actor is stopped before reaching his position (for calculation of new position)
 * D2_01_07		Simple electronic switch
 * D2_01_12		Simple electronic switch with 2 channels, like NodOn In-Wall module
 * D5_00_01		Door/Window Contact, e.g. Eltako FTK, FTKB
@@ -386,6 +425,7 @@ The following status EEPs are supported:
 * F6_02_02		2-Button-Rocker
 * F6_02_03		2-Button-Rocker, Status feedback from manual buttons on different actors, e.g. Eltako FT55, FSUD-230, FSVA-230V, FSB61NP-230V or Gira switches.
 * F6_10_00		Mechanical Handle (value: 0(closed), 1(open), 2(tilted)
+* F6_0G_03		Feedback of shutter actor (e.g.: Eltako FSB71) if reaching the endposition and if motor is active 
 ```
 A complete list of available EEPs is accessible at [EnOcean Alliance](http://www.enocean-alliance.org/eep/)
 
