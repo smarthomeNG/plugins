@@ -90,7 +90,7 @@ parameters:
 
     base_knxproj:
         type: str
-        default: 'var/knx'
+        #default: 'var/knx'
         description:
             de: 'Legt den Pfad fest, wo das Plugin eine hochgeladene ETS Projektdatei speichert. Wenn der Pfad relativ ist, wird dazu als Basis das Startverzeichnis von SmartHomeNG genommen'
             en: 'Set the path where the plugin will save an uploaded knxproj file. If path is relative, the base directory of SmartHomeNG will serve as basis.'

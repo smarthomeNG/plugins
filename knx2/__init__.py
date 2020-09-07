@@ -6,7 +6,7 @@
 #  Copyright 2017- Serge Wagener                     serge@wagener.family
 #  Copyright 2017- Bernd Meiners                    Bernd.Meiners@mail.de
 #########################################################################
-#  This file is part of SmartHomeNG.py.  
+#  This file is part of SmartHomeNG.py.
 #  Visit:  https://github.com/smarthomeNG/
 #          https://knx-user-forum.de/forum/supportforen/smarthome-py
 #
@@ -45,9 +45,9 @@ from . import knxproj
 # types from knxd\src\include\eibtypes.h
 KNXD_OPEN_GROUPCON  = 38     # 0x26
 KNXD_GROUP_PACKET   = 39     # 0x27 ‭
-KNXD_CACHE_ENABLE   = 112    # 0x70 
+KNXD_CACHE_ENABLE   = 112    # 0x70
 KNXD_CACHE_DISABLE  = 113    # 0x71
-KNXD_CACHE_READ     = 116    # 0x74 
+KNXD_CACHE_READ     = 116    # 0x74
 
 KNXD_CACHEREAD_DELAY  = 0.35
 KNXD_CACHEREAD_DELAY  = 0.0
@@ -87,18 +87,19 @@ class KNX2(SmartPlugin):
     def __init__(self, smarthome):
         self.host = self.get_parameter_value('host')
         self.port = self.get_parameter_value('port')
-        
+
         from bin.smarthome import VERSION
         if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
             self.logger = logging.getLogger(__name__)
-        
+
         # old lib.connection.Client.__init__(self, self.host, self.port, monitor=True)
-        self._client = Tcp_client(name='KNX', host=self.host, port=self.port, binary=True, autoreconnect=True, connect_cycle=5, retry_cycle=30)
+        name = 'plugins.' + self.get_fullname()
+        self._client = Tcp_client(name=name, host=self.host, port=self.port, binary=True, autoreconnect=True, connect_cycle=5, retry_cycle=30)
         self._client.set_callbacks(connected=self.handle_connect, data_received=self.parse_telegram)  # , disconnected=disconnected_callback, data_received=receive_callback
 
-        self.logger.debug("init knx")        
+        self.logger.debug("init knx")
         self.shtime = Shtime.get_instance()
-        
+
         busmonitor = self.get_parameter_value('busmonitor')
 
         self.gal = {}                   # group addresses to listen to {DPT: dpt, ITEMS: [item 1, item 2, ..., item n], LOGICS: [ logic 1, logic 2, ..., logic n]}
@@ -111,7 +112,7 @@ class KNX2(SmartPlugin):
         send_time = self.get_parameter_value('send_time')
         self._bm_separatefile = False
         self._bm_format= "BM': {1} set {2} to {3}"
-        
+
         # following needed for statistics
         self.enable_stats = self.get_parameter_value('enable_stats')
         self.stats_ga = {}              # statistics for used group addresses on the BUS
@@ -138,7 +139,7 @@ class KNX2(SmartPlugin):
             self._sh.scheduler.add('KNX[{0}] time'.format(self.get_instance_name()), self._send_time, prio=5, cycle=int(send_time))
 
         self.readonly = self.get_parameter_value('readonly')
-        if self.readonly: 
+        if self.readonly:
             self.logger.warning(self.translate("!!! KNX Plugin in READONLY mode !!!"))
 
         self.base_knxproj_filename = "SmartHome.knxproj"
@@ -321,7 +322,7 @@ class KNX2(SmartPlugin):
     def parse_telegram(self, client, data):
         """
         inspects a received eibd/knxd compatible telegram
-        
+
         :param client: Tcp_client
         :param data: expected is a bytearray with
             2 byte type   --> see eibtypes.h
@@ -454,7 +455,7 @@ class KNX2(SmartPlugin):
     def run(self):
         """
         Run method for the plugin
-        """        
+        """
         self.logger.debug("Plugin '{}': run method called".format(self.get_fullname()))
         self.alive = True
         self._client.connect()
@@ -659,7 +660,7 @@ class KNX2(SmartPlugin):
         if self.mod_http == None:
             self.logger.error("Not initializing the web interface")
             return False
-        
+
         import sys
         if not "SmartPluginWebIf" in list(sys.modules['lib.model.smartplugin'].__dict__):
             self.logger.warning("Web interface needs SmartHomeNG v1.5 and up. Not initializing the web interface")
@@ -676,14 +677,14 @@ class KNX2(SmartPlugin):
                 'tools.staticdir.dir': 'static'
             }
         }
-        
+
         # Register the web interface as a cherrypy app
-        self.mod_http.register_webif(WebInterface(webif_dir, self), 
-                                     self.get_shortname(), 
-                                     config, 
+        self.mod_http.register_webif(WebInterface(webif_dir, self),
+                                     self.get_shortname(),
+                                     config,
                                      self.get_classname(), self.get_instance_name(),
                                      description='')
-                                   
+
         return True
 
 
@@ -928,7 +929,7 @@ class WebInterface(SmartPluginWebIf):
                         if item not in ga_usage_by_Item[ga]:
                             ga_usage_by_Item[ga][item] = {}
                         ga_usage_by_Item[ga][item][elem] = True
-                        
+
                         # create ga_usage_by_Attrib entries
                         if ga not in ga_usage_by_Attrib:
                             ga_usage_by_Attrib[ga] = {}
