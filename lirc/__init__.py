@@ -44,9 +44,10 @@ class LIRC(SmartPlugin):
         self._autoreconnect = self.get_parameter_value('autoreconnect')
         self._connect_retries = self.get_parameter_value('connect_retries')
         self._connect_cycle = self.get_parameter_value('connect_cycle')
+        name = 'plugins.' + self.get_fullname()
         self._lirc_tcp_connection = Tcp_client(host=self._host,
                                                port=self._port,
-                                               name='LircTCPConnection',
+                                               name=name,
                                                autoreconnect=self._autoreconnect,
                                                connect_retries=self._connect_retries,
                                                connect_cycle=self._connect_cycle,
