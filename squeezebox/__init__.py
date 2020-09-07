@@ -44,9 +44,10 @@ class Squeezebox(SmartPlugin):
             self._connect_cycle = self.get_parameter_value('connect_cycle')
             self._squeezebox_server_alive = False
             self._web_port = self.get_parameter_value('web_port')
+            name = 'plugins.' + self.get_fullname()
             self._squeezebox_tcp_connection = Tcp_client(host=self._host,
                                                          port=self._port,
-                                                         name='SqueezboxTCPConnection',
+                                                         name=name,
                                                          autoreconnect=self._autoreconnect,
                                                          connect_retries=self._connect_retries,
                                                          connect_cycle=self._connect_cycle,
