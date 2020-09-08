@@ -77,7 +77,6 @@ class LIRC(SmartPlugin):
         self._reply_lock.notify()
         self._reply_lock.release()
         self._cmd_lock.acquire()
-        self._cmd_lock.notify()
         self._cmd_lock.release()
         self._lirc_tcp_connection.close()
         self._lirc_server_alive = False
