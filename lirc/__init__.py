@@ -76,10 +76,11 @@ class LIRC(SmartPlugin):
         self._reply_lock.acquire()
         self._reply_lock.notify()
         self._reply_lock.release()
-        self._cmd_lock.acquire()
-        self._cmd_lock.release()
-        self._lirc_tcp_connection.close()
+        if self._cmd_lock.locked():
+            self._cmd_lock.release()
         self._lirc_server_alive = False
+        self.logger.debug("Threads released")
+        self._lirc_tcp_connection.close()
         self.logger.debug("Connection closed")
 
     def parse_item(self, item):
