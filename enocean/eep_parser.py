@@ -270,7 +270,7 @@ class EEP_Parser():
         If actor is stopped during run it sends the feedback of runtime and the direction
         This enables to calculate the actual shutter position
         Key Description:
-            MOVE: runtime of movement in s (with direction: "+" = up; "-" = down)
+            MOVE: runtime of movement in s (with direction: "-" = up; "+" = down)
         '''
         self.logger.debug("enocean: eep-parser processing A5_0G_03 4BS telegram: shutter movement feedback")
         self.logger.debug("enocean: eep-parser input payload = [{}]".format(', '.join(['0x%02X' % b for b in payload])))
