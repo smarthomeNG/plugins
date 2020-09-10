@@ -49,17 +49,17 @@ b) Via the logfiles created by the Enocean plugin.
 For a) 
 1. Configure Enocean plugin in plugin.yaml file with empty tx_id (or tx_id = 0).
 2. Restart SmarthomeNG.
-1. Open the plugin's webinterface under: http://localip:8383/enocean/
-2. Read the Transceiver's BaseID, which is displayed on the upper right side.
-3. Insert the Base-ID in the plugin.yaml file as tx_id parameter.
+3. Open the plugin's webinterface under: http://localip:8383/enocean/
+4. Read the Transceiver's BaseID, which is displayed on the upper right side.
+5. Insert the Base-ID in the plugin.yaml file as tx_id parameter.
 
 For b)
 1. Configure Enocean plugin in plugin.yaml file with empty tx_id (or tx_id = 0).
 2. Configure loglevel INFO in logger.yaml for enocean plugin.
-2: Restart smarthomeNG
-2. Wait until all plugins came up
-3. Open the logfile (Enocean or general smarthomeNG logfile) and search for `enocean: Base ID = 0xYYYYZZZZ`
-4. Insert the Base-ID in the plugin.yaml file as tx_id parameter..
+3. Restart smarthomeNG
+4. Wait until all plugins came up
+5. Open the logfile (Enocean or general smarthomeNG logfile) and search for `enocean: Base ID = 0xYYYYZZZZ`
+6. Insert the Base-ID in the plugin.yaml file as tx_id parameter..
 
 #### Example plugin.yaml
 ```yaml
