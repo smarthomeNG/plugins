@@ -6,7 +6,7 @@
 #  Copyright 2017- Serge Wagener                     serge@wagener.family
 #  Copyright 2017- Bernd Meiners                    Bernd.Meiners@mail.de
 #########################################################################
-#  This file is part of SmartHomeNG.py.  
+#  This file is part of SmartHomeNG.py.
 #  Visit:  https://github.com/smarthomeNG/
 #          https://knx-user-forum.de/forum/supportforen/smarthome-py
 #
@@ -30,6 +30,7 @@ import binascii
 import random
 import time
 from datetime import timedelta
+import pathlib
 
 # old import lib.connection
 from lib.network import Tcp_client
@@ -39,13 +40,14 @@ from lib.model.smartplugin import *
 from lib.shtime import Shtime
 
 from . import dpts
+from . import knxproj
 
 # types from knxd\src\include\eibtypes.h
 KNXD_OPEN_GROUPCON  = 38     # 0x26
 KNXD_GROUP_PACKET   = 39     # 0x27 ‭
-KNXD_CACHE_ENABLE   = 112    # 0x70 
+KNXD_CACHE_ENABLE   = 112    # 0x70
 KNXD_CACHE_DISABLE  = 113    # 0x71
-KNXD_CACHE_READ     = 116    # 0x74 
+KNXD_CACHE_READ     = 116    # 0x74
 
 KNXD_CACHEREAD_DELAY  = 0.35
 KNXD_CACHEREAD_DELAY  = 0.0
@@ -74,8 +76,8 @@ DPT='dpt'
 
 # old class KNX(lib.connection.Client,SmartPlugin):
 class KNX2(SmartPlugin):
-    ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = "1.7.0"
+
+    PLUGIN_VERSION = "1.7.1"
 
     # tags actually used by the plugin are shown here
     # can be used later for backend item editing purposes, to check valid item attributes
@@ -85,18 +87,19 @@ class KNX2(SmartPlugin):
     def __init__(self, smarthome):
         self.host = self.get_parameter_value('host')
         self.port = self.get_parameter_value('port')
-        
+
         from bin.smarthome import VERSION
         if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
             self.logger = logging.getLogger(__name__)
-        
+
         # old lib.connection.Client.__init__(self, self.host, self.port, monitor=True)
-        self._client = Tcp_client(name='KNX', host=self.host, port=self.port, binary=True, autoreconnect=True, connect_cycle=5, retry_cycle=30)
+        name = 'plugins.' + self.get_fullname()
+        self._client = Tcp_client(name=name, host=self.host, port=self.port, binary=True, autoreconnect=True, connect_cycle=5, retry_cycle=30)
         self._client.set_callbacks(connected=self.handle_connect, data_received=self.parse_telegram)  # , disconnected=disconnected_callback, data_received=receive_callback
 
-        self.logger.debug("init knx")        
+        self.logger.debug("init knx")
         self.shtime = Shtime.get_instance()
-        
+
         busmonitor = self.get_parameter_value('busmonitor')
 
         self.gal = {}                   # group addresses to listen to {DPT: dpt, ITEMS: [item 1, item 2, ..., item n], LOGICS: [ logic 1, logic 2, ..., logic n]}
@@ -109,7 +112,7 @@ class KNX2(SmartPlugin):
         send_time = self.get_parameter_value('send_time')
         self._bm_separatefile = False
         self._bm_format= "BM': {1} set {2} to {3}"
-        
+
         # following needed for statistics
         self.enable_stats = self.get_parameter_value('enable_stats')
         self.stats_ga = {}              # statistics for used group addresses on the BUS
@@ -136,11 +139,41 @@ class KNX2(SmartPlugin):
             self._sh.scheduler.add('KNX[{0}] time'.format(self.get_instance_name()), self._send_time, prio=5, cycle=int(send_time))
 
         self.readonly = self.get_parameter_value('readonly')
-        if self.readonly: 
+        if self.readonly:
             self.logger.warning(self.translate("!!! KNX Plugin in READONLY mode !!!"))
+
+        self.base_knxproj_filename = "SmartHome.knxproj"
+        self.base_knxproj = pathlib.Path(self.get_parameter_value('base_knxproj'))
+        if self.base_knxproj.is_absolute():
+            self.base_knxproj = self.base_knxproj / self.base_knxproj_filename
+            self.logger.warning(self.translate("Given path is absolute, using {}").format(self.base_knxproj))
+        else:
+            self.base_knxproj = pathlib.Path(self.get_sh().get_basedir()) / self.base_knxproj / self.base_knxproj_filename
+            self.logger.warning(self.translate("Given path is relative, using {}").format(self.base_knxproj))
+
+        self._parse_projectfile()
 
         self.init_webinterface()
         return
+
+    def _parse_projectfile(self):
+        self._check_projectfile_destination()
+        if self.base_knxproj.is_file():
+            self.knxproj_ga = knxproj.parse_projectfile(self.base_knxproj)
+        else:
+            self.knxproj_ga = None
+
+    def _check_projectfile_destination(self):
+        if not self.base_knxproj.exists():
+            self.logger.warning(self.translate("File at given path {} does not exist").format(self.base_knxproj))
+            if not self.base_knxproj.parent.exists():
+                self.logger.warning(self.translate("try to create directory {}").format(self.base_knxproj.parent))
+                try:
+                    self.base_knxproj.parent.mkdir(parents=True, exist_ok=True)
+                    self.logger.warning(self.translate("directory {} was created").format(self.base_knxproj.parent))
+                except:
+                    self.logger.warning(self.translate("could not create directory {}").format(self.base_knxproj.parent))
+
 
     def _send(self, data):
         if len(data) < 2 or len(data) > 0xffff:
@@ -227,7 +260,7 @@ class KNX2(SmartPlugin):
             self.groupwrite(date_ga, now.date(), '11')
 
     def handle_connect(self, client):
-    	# old def handle_connect(self):
+        # old def handle_connect(self):
         # old if not self.connected:
         # old     self.logger.error('connection was unexpectedly lost')
         # old     return
@@ -289,7 +322,7 @@ class KNX2(SmartPlugin):
     def parse_telegram(self, client, data):
         """
         inspects a received eibd/knxd compatible telegram
-        
+
         :param client: Tcp_client
         :param data: expected is a bytearray with
             2 byte type   --> see eibtypes.h
@@ -422,7 +455,7 @@ class KNX2(SmartPlugin):
     def run(self):
         """
         Run method for the plugin
-        """        
+        """
         self.logger.debug("Plugin '{}': run method called".format(self.get_fullname()))
         self.alive = True
         self._client.connect()
@@ -627,7 +660,7 @@ class KNX2(SmartPlugin):
         if self.mod_http == None:
             self.logger.error("Not initializing the web interface")
             return False
-        
+
         import sys
         if not "SmartPluginWebIf" in list(sys.modules['lib.model.smartplugin'].__dict__):
             self.logger.warning("Web interface needs SmartHomeNG v1.5 and up. Not initializing the web interface")
@@ -644,14 +677,14 @@ class KNX2(SmartPlugin):
                 'tools.staticdir.dir': 'static'
             }
         }
-        
+
         # Register the web interface as a cherrypy app
-        self.mod_http.register_webif(WebInterface(webif_dir, self), 
-                                     self.get_shortname(), 
-                                     config, 
+        self.mod_http.register_webif(WebInterface(webif_dir, self),
+                                     self.get_shortname(),
+                                     config,
                                      self.get_classname(), self.get_instance_name(),
                                      description='')
-                                   
+
         return True
 
 
@@ -813,17 +846,18 @@ class WebInterface(SmartPluginWebIf):
         self.tplenv = self.init_template_environment()
 
         self.items = Items.get_instance()
+        self.last_upload = ""
 
-        self.knxdeamon = ''
+        self.knxdaemon = ''
         if os.name != 'nt':
             if self.get_process_info("ps cax|grep eibd") != '':
-                self.knxdeamon = 'eibd'
+                self.knxdaemon = 'eibd'
             if self.get_process_info("ps cax|grep knxd") != '':
-                if self.knxdeamon != '':
-                    self.knxdeamon += ' and '
-                self.knxdeamon += 'knxd'
+                if self.knxdaemon != '':
+                    self.knxdaemon += ' and '
+                self.knxdaemon += 'knxd'
         else:
-            self.knxdeamon = 'can not be determined when running on Windows'
+            self.knxdaemon = 'can not be determined when running on Windows'
 
     def get_process_info(self, command):
         """
@@ -846,7 +880,7 @@ class WebInterface(SmartPluginWebIf):
 
 
     @cherrypy.expose
-    def index(self, reload=None):
+    def index(self, reload=None, knxprojfile=None):
         """
         Build index.html for cherrypy
 
@@ -854,18 +888,90 @@ class WebInterface(SmartPluginWebIf):
 
         :return: contents of the template after beeing rendered
         """
+        if knxprojfile is not None:
+            sh = self.plugin.get_sh()
+            size = 0
+            with open(self.plugin.base_knxproj, 'wb') as out:
+                while True:
+                    data = knxprojfile.file.read(8192)
+                    if not data:
+                        break
+                    out.write(data)
+                    size += len(data)
+            self.last_upload = "File received.\nFilename: {}\nLength: {}\nMime-type: {}\n".format(knxprojfile.filename, size, knxprojfile.content_type, data)
+            self.plugin._parse_projectfile()
+
         plgitems = []
         for item in self.items.return_items():
             if any(elem in item.property.attributes  for elem in [KNX_DPT,KNX_STATUS,KNX_SEND,KNX_REPLY,KNX_CACHE,KNX_INIT,KNX_LISTEN,KNX_POLL]):
                 plgitems.append(item)
 
+        # build a dict with groupaddress as key to items and their attributes
+        # ga_usage_by_Item = { '0/1/2' : { ItemA : { attribute1 : True, attribute2 : True },
+        #                                  ItemB : { attribute1 : True, attribute2 : True }}, ...}
+        # ga_usage_by_Attrib={ '0/1/2' : { attribut1 : { ItemA : True, ItemB : True },
+        #                                  attribut2 : { ItemC : True, ItemD : True }}, ...}
+        ga_usage_by_Item = {}
+        ga_usage_by_Attrib = {}
+        for item in plgitems:
+            for elem in [KNX_DPT,KNX_STATUS,KNX_SEND,KNX_REPLY,KNX_CACHE,KNX_INIT,KNX_LISTEN,KNX_POLL]:
+                if elem in item.property.attributes:
+                    value = self.plugin.get_iattr_value(item.conf,elem)
+                    # value might be a list or a string here
+                    if isinstance( value, str):
+                        values = [value]
+                    else:
+                        values = value
+                    for ga in values:
+                        # create ga_usage_by_Item entries
+                        if ga not in ga_usage_by_Item:
+                            ga_usage_by_Item[ga] = {}
+                        if item not in ga_usage_by_Item[ga]:
+                            ga_usage_by_Item[ga][item] = {}
+                        ga_usage_by_Item[ga][item][elem] = True
+
+                        # create ga_usage_by_Attrib entries
+                        if ga not in ga_usage_by_Attrib:
+                            ga_usage_by_Attrib[ga] = {}
+                        if item not in ga_usage_by_Attrib[ga]:
+                            ga_usage_by_Attrib[ga][elem] = {}
+                        ga_usage_by_Attrib[ga][elem][item] = True
+
         tmpl = self.tplenv.get_template('index.html')
         # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
         return tmpl.render(p=self.plugin,
                            items=sorted(plgitems, key=lambda k: str.lower(k['_path'])),
-                           knxdeamon=self.knxdeamon,
+                           knxdaemon=self.knxdaemon,
                            stats_ga=self.plugin.get_stats_ga(), stats_ga_list=sorted(self.plugin.get_stats_ga(), key=lambda k: str(int(k.split('/')[0])+100)+str(int(k.split('/')[1])+100)+str(int(k.split('/')[2])+1000) ),
-                           stats_pa=self.plugin.get_stats_pa(), stats_pa_list=sorted(self.plugin.get_stats_pa(), key=lambda k: str(int(k.split('.')[0])+100)+str(int(k.split('.')[1])+100)+str(int(k.split('.')[2])+1000) )
+                           stats_pa=self.plugin.get_stats_pa(), stats_pa_list=sorted(self.plugin.get_stats_pa(), key=lambda k: str(int(k.split('.')[0])+100)+str(int(k.split('.')[1])+100)+str(int(k.split('.')[2])+1000) ),
+                           last_upload=self.last_upload,
+                           ga_usage_by_Item=ga_usage_by_Item,
+                           ga_usage_by_Attrib=ga_usage_by_Attrib,
+                           knx_attribs = [KNX_DPT,KNX_STATUS,KNX_SEND,KNX_REPLY,KNX_CACHE,KNX_INIT,KNX_LISTEN,KNX_POLL]
                           )
 
+    @cherrypy.expose
+    def get_data_html(self, dataSet=None):
+        """
+        Return data to update the webpage
+
+        For the standard update mechanism of the web interface, the dataSet to return the data for is None
+
+        :param dataSet: Dataset for which the data should be returned (standard: None)
+        :return: dict with the data needed to update the web page.
+        """
+        if dataSet is None:
+            # get the new data
+            data = {}
+
+            # data['item'] = {}
+            # for i in self.plugin.items:
+            #     data['item'][i]['value'] = self.plugin.getitemvalue(i)
+            #
+            # return it as json the the web page
+            # try:
+            #     return json.dumps(data)
+            # except Exception as e:
+            #     self.logger.error("get_data_html exception: {}".format(e))
+        return {}
 

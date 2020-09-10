@@ -165,7 +165,7 @@ SENT_ENCAPSULATED_RADIO_PACKET = 0xA6
 
 class EnOcean(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.3.4"
+    PLUGIN_VERSION = "1.3.5"
 
 
     def __init__(self, sh, *args, **kwargs):

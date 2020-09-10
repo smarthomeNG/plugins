@@ -113,7 +113,7 @@ class Homematic(SmartPlugin):
 
 
         # set the name of the thread that got created by pyhomematic to something meaningfull
-        self.hm._server.name = self.get_fullname()
+        self.hm._server.name = 'plugins.' + self.get_fullname() + '.server'
 
         # start communication with HomeMatic ccu
         try:

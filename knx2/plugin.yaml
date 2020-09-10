@@ -12,7 +12,7 @@ plugin:
 #    keywords: iot xyz
     documentation: http://smarthomeng.de/user/plugins/knx/user_doc.html
 
-    version: 1.7.0                 # Plugin version
+    version: 1.7.1                 # Plugin version
     sh_minversion: 1.6             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
@@ -88,7 +88,12 @@ parameters:
             de: 'Wenn diese Option auf "True" gesetzt ist, werden die Statistikfunktionen aktiviert um Daten erfassen'
             en: 'if set to True, the statistic functions are enabled to collect data'
 
-
+    base_knxproj:
+        type: str
+        #default: 'var/knx'
+        description:
+            de: 'Legt den Pfad fest, wo das Plugin eine hochgeladene ETS Projektdatei speichert. Wenn der Pfad relativ ist, wird dazu als Basis das Startverzeichnis von SmartHomeNG genommen'
+            en: 'Set the path where the plugin will save an uploaded knxproj file. If path is relative, the base directory of SmartHomeNG will serve as basis.'
 
 item_attributes:
     # Definition of item attributes defined by this plugin
