@@ -177,8 +177,9 @@ class Database(SmartPlugin):
 
             self.logger.debug(item.conf)
             self._buffer_insert(item, [])
-            item.series = functools.partial(self._series, item=item.id())   # Zur Nutzung im Websocket Plugin
+            item.series = functools.partial(self._series, item=item.id())  # Zur Nutzung im Websocket Plugin
             item.db = functools.partial(self._single, item=item.id())      # Nie genutzt??? -> Doch
+            item.dbplugin = self                                           # genutzt zum Zugriff auf die Plugin Instanz z.B. durch Logiken
 
             if self._db_initialized and self.get_iattr_value(item.conf, 'database').lower() == 'init':
                 if not self._db.lock(5):
@@ -696,6 +697,7 @@ class Database(SmartPlugin):
 
         :return: data structure in the form needed by the websocket plugin return it to the visu
         """
+        #self.logger.warning("_series: item={}, func={}, start={}, end={}, count={}".format(item, func, start, end, count))
         init = not update
         if sid is None:
             sid = item + '|' + func + '|' + str(start) + '|' + str(end) + '|' + str(count)
@@ -742,12 +744,14 @@ class Database(SmartPlugin):
         if expression['finalizer']:
             tuples = self._finalize(expression['finalizer'], tuples)
 
-        return {
+        result = {
             'cmd': 'series', 'series': tuples, 'sid': sid,
             'params': {'update': True, 'item': item, 'func': func, 'start': logs['iend'], 'end': end,
                        'step': logs['step'], 'sid': sid},
             'update': self.shtime.now() + datetime.timedelta(seconds=int(logs['step'] / 1000))
         }
+        #self.logger.warning("_series: result={}".format(result))
+        return result
 
 
     def _single(self, func, start, end='now', item=None):
