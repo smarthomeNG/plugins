@@ -27,11 +27,17 @@ from lib.item import Items
 
 class SmartVisuGenerator:
 
-    def __init__(self, plugin_instance):
+    valid_sv_page_entries = ['room', 'overview', 'separator', 'seperator',
+                             'category', 'cat_overview', 'cat_separator','cat_seperator',
+                             'room_lite', 'sv_overview']
+
+
+    def __init__(self, plugin_instance, visu_definition=None):
+        self.items = Items.get_instance()
+
+        self.plugin_instance = plugin_instance
         self.logger = plugin_instance.logger
         self._sh = plugin_instance._sh
-        self.items = Items.get_instance()
-        self.plugin_instance = plugin_instance
 
         self.smartvisu_dir = plugin_instance.smartvisu_dir
         self.smartvisu_version = plugin_instance.smartvisu_version
@@ -57,8 +63,43 @@ class SmartVisuGenerator:
 
         self.copy_templates()
 
+        self.navigation = {'room': [], 'category': [], 'room_lite': []}          # dict of list of dicts
+        if visu_definition is not None:
+            self.initialize_visu_navigation(visu_definition.get('navigation', None))
+
         self.pages()
         self.logger.info("Generating pages for smartVISU v{} End".format(self.smartvisu_version))
+
+    def initialize_visu_navigation(self, nav_config):
+        """
+        Initialize the navigation structure from the given nav_config,
+        which is read from the configuration file ../etc/visu.yaml
+
+        :param nav_config: dict with configuration info
+        """
+        if nav_config is None:
+            return
+
+        self.initialize_visu_menu(nav_config, 'room')
+        self.initialize_visu_menu(nav_config, 'category')
+        self.initialize_visu_menu(nav_config, 'room_lite')
+        return
+
+    def initialize_visu_menu(self, nav_config, menu):
+        """
+
+        :param nav_config: dict with configuration info
+        :param menu: 'room', 'category' or 'room_lite'
+        """
+        for entry in nav_config.get(menu, {}):
+            self.logger.debug("initialize_visu_menu: '{}' entry={}".format(menu, entry))
+            name = entry.get('name', '')
+            separator = entry.get('separator', False)
+            img = entry.get('img', None)
+            if name != '':
+                menu_entry = self.create_menuentry(menu, name, separator, img, entry.get('nav_aside', None), entry.get('nav_aside2', None), True)
+                self.add_menuentry_to_list(menu, menu_entry)
+            self.logger.debug("initialize_visu_menu: '{}' menu_entry={}".format(menu, menu_entry))
 
 
     def handle_heading_attributes(self, room):
@@ -107,7 +148,7 @@ class SmartVisuGenerator:
         return attrvalue
 
 
-    def room(self, room):
+    def create_page(self, room, menu_entry):
         """
         Interpretation of the room-specific item-attributes.
         This routine is called once per 'sv_page'.
@@ -122,7 +163,6 @@ class SmartVisuGenerator:
         widgetblocktemplate2 = 'widgetblock2_' + self.visu_style + '_' + block_style + '.html'
         widgets = ''
 
-        rimg = self.get_attribute('sv_img', room)
         heading = self.handle_heading_attributes(room)
 
         if 'sv_widget' in room.conf:
@@ -131,13 +171,10 @@ class SmartVisuGenerator:
             items = []
 
         if (room.conf['sv_page'] == 'room') or (room.conf['sv_page'] == 'room_lite'):
-#            items.extend(self._sh.find_children(room, 'sv_widget'))
             items.extend(self.items.find_children(room, 'sv_widget'))
         elif room.conf['sv_page'] == 'category':
-#            items.extend(self._sh.find_children(room, 'sv_widget'))
             items.extend(self.items.find_children(room, 'sv_widget'))
         elif room.conf['sv_page'] == 'overview':
-#            items.extend(self._sh.find_items('sv_item_type'))
             items.extend(self.items.find_items('sv_item_type'))
 
         r = ''
@@ -170,14 +207,8 @@ class SmartVisuGenerator:
                     name2 = self.get_attribute('sv_name2', item)
                     widgets += self.parse_tpl(widgetblocktemplate2, [('{{ visu_name }}', str(name1)), ('{{ visu_name2 }}', str(name2)), ('{{ visu_img }}', img), ('{{ visu_widget }}', widget), ('{{ visu_widget2 }}', widget2), ('item.name', str(item)), ("'item", "'" + item.id())])
 
-            if room.conf['sv_page'] == 'room':
-                r = self.parse_tpl('room.html', [('{{ visu_name }}', str(room)), ('{{ visu_widgets }}', widgets), ('{{ visu_img }}', rimg), ('{{ visu_heading }}', heading)])
-            elif room.conf['sv_page'] == 'overview':
-                r = self.parse_tpl('room.html', [('{{ visu_name }}', str(room)), ('{{ visu_widgets }}', widgets), ('{{ visu_img }}', rimg), ('{{ visu_heading }}', heading)])
-            elif room.conf['sv_page'] == 'category':
-                r = self.parse_tpl('category_page.html', [('{{ visu_name }}', str(room)), ('{{ visu_widgets }}', widgets), ('{{ visu_img }}', rimg), ('{{ visu_heading }}', heading)])
-            elif room.conf['sv_page'] == 'room_lite':
-                r = self.parse_tpl('roomlite.html', [('{{ visu_name }}', str(room)), ('{{ visu_widgets }}', widgets), ('{{ visu_img }}', rimg), ('{{ visu_heading }}', heading)])
+        menu_entry['heading'] = heading
+        menu_entry['content'] += widgets
         return r
 
 
@@ -185,73 +216,171 @@ class SmartVisuGenerator:
         if not self.remove_oldpages():
             return
 
-        nav_lis = ''
-        cat_lis = ''
-        lite_lis = ''
-
         for item in self.items.find_items('sv_page'):
-            if item.conf['sv_page'] in ['separator', 'seperator']:
-                nav_lis += self.parse_tpl('navi_sep.html', [('{{ name }}', str(item))])
-                continue
-            elif item.conf['sv_page'] in ['cat_separator', 'cat_seperator']:
-                cat_lis += self.parse_tpl('navi_sep.html', [('{{ name }}', str(item))])
-                continue
-            elif ((item.conf['sv_page'] == 'overview') or (item.conf['sv_page'] == 'cat_overview')) and (not 'sv_overview' in item.conf):
+            if ((item.conf['sv_page'] == 'overview') or (item.conf['sv_page'] == 'cat_overview')) and (not 'sv_overview' in item.conf):
                 self.logger.error("missing sv_overview for {0}".format(item.id()))
                 continue
 
-            r = self.room(item)
-
-            img = self.get_attribute('sv_img', item)
-
             self.plugin_instance.test_item_for_deprecated_widgets(item)
 
-            if 'sv_nav_aside' in item.conf:
-                if isinstance(item.conf['sv_nav_aside'], list):
-                    nav_aside = ', '.join(item.conf['sv_nav_aside'])
-                else:
-                    nav_aside = item.conf['sv_nav_aside']
-            else:
-                nav_aside = ''
-            if 'sv_nav_aside2' in item.conf:
-                if isinstance(item.conf['sv_nav_aside2'], list):
-                    nav_aside2 = ', '.join(item.conf['sv_nav_aside2'])
-                else:
-                    nav_aside2 = item.conf['sv_nav_aside2']
-            else:
-                nav_aside2 = ''
-            if (item.conf['sv_page'] == 'category') or (item.conf['sv_page'] == 'cat_overview'):
-                cat_lis += self.parse_tpl('navi.html', [('{{ visu_page }}', item.id()), ('{{ visu_name }}', str(item)), ('{{ visu_img }}', img), ('{{ visu_aside }}', nav_aside), ('{{ visu_aside2 }}', nav_aside2), ('item.name', str(item)), ("'item", "'" + item.id())])
-            elif item.conf['sv_page'] == 'room':
-                nav_lis += self.parse_tpl('navi.html', [('{{ visu_page }}', item.id()), ('{{ visu_name }}', str(item)), ('{{ visu_img }}', img), ('{{ visu_aside }}', nav_aside), ('{{ visu_aside2 }}', nav_aside2), ('item.name', str(item)), ("'item", "'" + item.id())])
-            elif item.conf['sv_page'] == 'overview':
-                nav_lis += self.parse_tpl('navi.html', [('{{ visu_page }}', item.id()), ('{{ visu_name }}', str(item)), ('{{ visu_img }}', img), ('{{ visu_aside }}', nav_aside), ('{{ visu_aside2 }}', nav_aside2), ('item.name', str(item)), ("'item", "'" + item.id())])
-            elif item.conf['sv_page'] == 'room_lite':
-                lite_lis += self.parse_tpl('navi.html', [('{{ visu_page }}', item.id()), ('{{ visu_name }}', str(item)), ('{{ visu_img }}', img), ('{{ visu_aside }}', nav_aside), ('{{ visu_aside2 }}', nav_aside2), ('item.name', str(item)), ("'item", "'" + item.id())])
-            else:
+            # Add entry to navigation list for page
+
+            if not item.conf['sv_page'] in self.valid_sv_page_entries:
                 self.logger.warning("{}: 'sv_page' attribute contains unknown value '{}'".format(item.id(), item.conf['sv_page']))
-            self.write_parseresult(item.id()+'.html', r)
+            else:
+                separator = False
+                menu = item.conf['sv_page']
+                if menu == 'overview':
+                    menu = 'room'
+                elif menu == 'cat_overview':
+                    menu = 'category'
+                elif menu in ['separator', 'seperator']:
+                    menu = 'room'
+                    separator = True
+                elif menu in ['cat_separator', 'cat_seperator']:
+                    menu = 'category'
+                    separator = True
 
-        nav = self.parse_tpl('navigation.html', [('{{ visu_navis }}', nav_lis)])
-        self.write_parseresult('rooms_menu.html', nav)
+                # build nav_aside code
 
-        nav = self.parse_tpl('navigation.html', [('{{ visu_navis }}', cat_lis)])
-        self.write_parseresult('category_nav.html', nav)
+                nav_aside = ''
+                nav_aside2 = ''
+                if 'sv_nav_aside' in item.conf:
+                    if isinstance(item.conf['sv_nav_aside'], list):
+                        nav_aside += ', '.join(item.conf['sv_nav_aside'])
+                    else:
+                        nav_aside += item.conf['sv_nav_aside']
+                if 'sv_nav_aside2' in item.conf:
+                    if isinstance(item.conf['sv_nav_aside2'], list):
+                        nav_aside2 += ', '.join(item.conf['sv_nav_aside2'])
+                    else:
+                        nav_aside2 += item.conf['sv_nav_aside2']
 
-        nav = self.parse_tpl('navigation.html', [('{{ visu_navis }}', lite_lis)])
-        self.write_parseresult('roomlite_nav.html', nav)
+                menu_entry = self.create_menuentry(menu=menu, entry_name=str(item), separator=separator,
+                                                   img_name=self.get_attribute('sv_img', item), nav_aside=nav_aside, nav_aside2=nav_aside2)
 
-        # copy templates from
+                self.create_page(item, menu_entry)
+                self.add_menuentry_to_list(menu, menu_entry)
 
+        # after processing all pages: write navigation files
+        self.write_navigation_and_pages('room', 'rooms_menu.html')
+        self.write_navigation_and_pages('category', 'category_menu.html')
+        self.write_navigation_and_pages('room_lite', 'roomlite_nav.html')
+
+        # copy templates from plugin's template folder to pages folder for templates
         self.copy_tpl('rooms.html')
-        self.copy_tpl('roomslite.html')
+        self.copy_tpl('rooms_lite.html')
         self.copy_tpl('category.html')
         self.copy_tpl('index.html')
 
 
 #########################################################################
 
+    def create_menuentry(self, menu, entry_name, separator, img_name, nav_aside, nav_aside2, from_navconfig=False):
+        for menu_entry in self.navigation[menu]:
+            if menu_entry['name'] == entry_name:
+                if menu_entry.get('img', '') == ''and menu_entry['img_set'] == False:
+                    menu_entry['img'] = img_name
+                if menu_entry.get('nav_aside', '') == ''and menu_entry['nav_aside_set'] == False:
+                    menu_entry['nav_aside'] = nav_aside
+                if menu_entry.get('nav_aside2', '') == '' and menu_entry['nav_aside2_set'] == False:
+                    menu_entry['nav_aside2'] = nav_aside2
+                return menu_entry
+
+        menu_entry = {}
+        menu_entry['name'] = entry_name
+        menu_entry['separator'] = separator
+        menu_entry['page'] = menu + '.' + entry_name
+        for ch in [' ',':','/','\\']:
+            if ch in menu_entry['page']:
+                menu_entry['page'] = menu_entry['page'].replace(ch, '_')
+        menu_entry['heading'] = ''
+        menu_entry['content'] = ''
+
+        if not from_navconfig:
+            menu_entry['img'] = img_name
+            menu_entry['nav_aside'] = nav_aside
+            menu_entry['nav_aside2'] = nav_aside2
+        else:
+            menu_entry['img'] = ''
+            menu_entry['img_set'] = False
+            menu_entry['nav_aside'] = ''
+            menu_entry['nav_aside_set'] = False
+            menu_entry['nav_aside2'] = ''
+            menu_entry['nav_aside2_set'] = False
+
+            if img_name is not None:
+                menu_entry['img'] = img_name
+                menu_entry['img_set'] = True
+            if nav_aside is not None:
+                menu_entry['nav_aside'] = nav_aside
+                menu_entry['nav_aside_set'] = True
+            if nav_aside2 is not None:
+                menu_entry['nav_aside2'] = nav_aside2
+                menu_entry['nav_aside2_set'] = True
+
+        return menu_entry
+
+
+    def add_menuentry_to_list(self, menu, menu_entry):
+        for entry in self.navigation[menu]:
+            if entry['name'] == menu_entry['name']:
+                self.logger.debug("{}: add_menuentry_to_list: Found menu {}, entry {}".format(self.plugin_instance.get_instance_name(), menu, menu_entry['name']))
+                return
+
+        self.navigation[menu].append(menu_entry)
+        return
+
+#########################################################################
+
+    def write_navigation_and_pages(self, menu, navigation_file):
+
+        nav_list = ''
+        for menu_entry in self.navigation[menu]:
+            parse_list = [('{{ visu_page }}', menu_entry['page']), ('{{ visu_name }}', menu_entry['name']),
+                          ('{{ visu_img }}', menu_entry['img']),
+                          ('{{ visu_aside }}', menu_entry['nav_aside']),
+                          ('{{ visu_aside2 }}', menu_entry['nav_aside2']),
+                          ('item.name', menu_entry['name']), ("'item", "'" + menu_entry['page'])
+                          ]
+            if menu_entry['separator'] == True:
+                nav_list += self.parse_tpl('navi_sep.html', [('{{ name }}', menu_entry['name'])])
+            else:
+                #menu_entry['html'] = self.parse_tpl('navi.html', parse_list)
+                nav_list += self.parse_tpl('navi.html', parse_list)
+
+            # build page code
+            if menu_entry['separator'] == False:
+                r = self.parse_tpl(menu+'_page.html', [('{{ visu_name }}', menu_entry['name']), ('{{ visu_widgets }}', menu_entry['content']),
+                                                       ('{{ visu_img }}', menu_entry['img']), ('{{ visu_heading }}', menu_entry['heading'])])
+                # write page file
+                self.logger.debug("write_navigation_and_pages: Writing page '{}'".format(menu_entry['page'] + '.html'))
+                self.write_parseresult(menu_entry['page'] + '.html', r)
+
+        # write navigation menu file
+        self.write_parseresult(navigation_file, self.parse_tpl('navigation.html', [('{{ visu_navis }}', nav_list)]))
+
+        return
+
+    # def write_navigation_file(self, menu, template_file, navigation_file):
+    #
+    #     nav_lis = ''
+    #     for entry in self.navigation[menu]:
+    #         nav_lis += entry['html']
+    #
+    #     nav = self.parse_tpl(template_file, [('{{ visu_navis }}', nav_lis)])
+    #     self.write_parseresult(navigation_file, nav)
+    #     return
+
     def parse_tpl(self, template, replace):
+        """
+        Replace strings in a template
+
+        :param template: template filename
+        :param replace: list of sets, where each set contains the string to replace and the replacement string
+
+        :return: resulting string with replacement(s)
+        """
         self.logger.debug("try to parse template file '{0}'".format(template))
         try:
             with open(self.gen_tpldir + '/' + template, 'r', encoding='utf-8') as f:
@@ -277,9 +406,9 @@ class SmartVisuGenerator:
         if destname == '':
             destname = tplname
         try:
-            shutil.copy(self.gen_tpldir + '/' + tplname, self.pages_dir + '/' + destname)
+            shutil.copy(os.path.join(self.gen_tpldir, tplname), os.path.join(self.pages_dir, destname))
         except Exception as e:
-            self.logger.error("Could not copy {0} from {1} to {2}".format(tplname, self.gen_tpldir, self.destdir))
+            self.logger.error("Could not copy {0} from {1} to {2}".format(tplname, self.gen_tpldir, self.pages_dir))
 
 
 #########################################################################
@@ -316,6 +445,7 @@ class SmartVisuGenerator:
                 self.logger.warning("Could not delete file {0}: {1}".format(fp, e))
         return True
 
+
 #########################################################################
 
     def copy_templates(self):
@@ -331,7 +461,8 @@ class SmartVisuGenerator:
         if self.smartvisu_version >= '2.9':
             for fn in os.listdir(self.shng_tpldir):
                 if (self.overwrite_templates) or (not os.path.isfile(os.path.join(self.gen_tpldir, fn)) ):
-                    self.logger.debug("copy_templates: Copying template '{}' from plugin to smartVISU v{}".format(fn, self.smartvisu_version))
+                    self.logger.debug("copy_templates: Copying template '{}' from plugin to smartVISU v{} ({})".format(fn, self.smartvisu_version, self.gen_tpldir))
+                    shutil.copy2(os.path.join(self.shng_tpldir, fn), self.gen_tpldir)
             shutil.copy2(os.path.join(self.sv_tpldir, 'index.html'), self.gen_tpldir)
             shutil.copy2(os.path.join(self.sv_tpldir, 'rooms.html'), self.gen_tpldir)
 
@@ -350,5 +481,4 @@ class SmartVisuGenerator:
                     except Exception as e:
                         self.logger.error("Could not copy {0} from {1} to {2}".format(fn, self.shng_tpldir, self.gen_tpldir))
         return
-
 

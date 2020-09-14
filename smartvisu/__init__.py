@@ -44,6 +44,7 @@ class SmartVisu(SmartPlugin):
     PLUGIN_VERSION="1.8.0"
     ALLOW_MULTIINSTANCE = True
 
+    visu_definition = None
     deprecated_widgets = []
     removed_widgets = []
     deprecated_plugin_widgets = []       # List of plugin-widgets that use deprecated widgets
@@ -51,18 +52,10 @@ class SmartVisu(SmartPlugin):
     d_usage = {}
     r_usage = {}
 
-    def my_to_bool(self, value, attr='', default=False):
-        try:
-            result = self.to_bool(value)
-        except:
-            result = default
-            self.logger.error("smartVISU: Invalid value '"+str(value)+"' configured for attribute "+attr+" in plugin.conf, using '"+str(result)+"' instead")
-        return result
 
-
-    def __init__(self, smarthome, smartvisu_dir='', generate_pages='True', overwrite_templates='Yes', visu_style = 'std', handle_widgets='True' ):
+    def __init__(self, sh):
         self.logger = logging.getLogger(__name__)
-        self._sh = smarthome
+        self._sh = sh
 
         self.smartvisu_dir = self.get_parameter_value('smartvisu_dir')
         self._generate_pages = self.get_parameter_value('generate_pages')
@@ -74,21 +67,9 @@ class SmartVisu(SmartPlugin):
         self._handle_widgets = self.get_parameter_value('handle_widgets')
         self.list_deprecated_warnings = self.get_parameter_value('list_deprecated_warnings')
 
-        #self.smartvisu_dir = str(smartvisu_dir)
-        #self._generate_pages = self.my_to_bool(generate_pages, 'generate_pages', True)
-        #self.overwrite_templates = self.my_to_bool(overwrite_templates, 'overwrite_templates', True)
-        #if visu_style.lower() in ['std','blk']:
-        #    self.visu_style = visu_style.lower()
-        #else:
-        #    self.visu_style = 'std'
-        #    self.logger.error("smartVISU: Invalid value '"+str(visu_style)+"' configured for attribute visu_style in plugin.conf, using '"+str(self.visu_style)+"' instead")
-        #self._handle_widgets = self.my_to_bool(handle_widgets, "handle_widgets", False)
-
         self.smartvisu_version = self.get_smartvisu_version()
         if self.smartvisu_version == '':
             self.logger.error("Could not determine smartVISU version!")
-#        else:
-#            self.logger.log(logging.WARNING, "Handling for smartVISU v{} in directory {}".format(self.smartvisu_version, self.smartvisu_dir))
 
         self.deprecated_widgets = []
         self.removed_widgets = []
@@ -97,6 +78,7 @@ class SmartVisu(SmartPlugin):
         self.d_usage = {}
         self.r_usage = {}
 
+        self.read_visu_definition()
         self.load_deprecated_info()
 
 
@@ -119,7 +101,7 @@ class SmartVisu(SmartPlugin):
 
                 if self._generate_pages:
                     try:
-                        svgen = SmartVisuGenerator(self)
+                        svgen = SmartVisuGenerator(self, self.visu_definition)
                     except Exception as e:
                         self.logger.exception("SmartVisuGenerator: Exception: {}".format(e))
 
@@ -315,3 +297,13 @@ class SmartVisu(SmartPlugin):
                     self.logger.error("Plugin-widget that needs update is used in item {} '{}': '{}'".format(item.id(), widget_name, dep_widget))
         return
 
+
+    def read_visu_definition(self):
+
+        from pprint import pformat
+
+        self.etc_dir = self._sh._etc_dir
+
+        filename = os.path.join(self.etc_dir, 'visu.yaml')
+        self.visu_definition = shyaml.yaml_load(filename, ordered=False, ignore_notfound=True)
+        return
