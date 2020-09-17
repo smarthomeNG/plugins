@@ -249,6 +249,7 @@ item_structs:
             visu_acl: rw
             squeezebox_send: rescan {}
             squeezebox_recv: rescan
+            on_update: .progress.scantpye = value
 
             query:
                 type: bool
@@ -256,24 +257,31 @@ item_structs:
                 enforce_updates: True
                 squeezebox_send: rescan ?
                 crontab: init = True
+                autotimer: 1s = False
 
             progress:
-                type: num
+                type: str
                 visu_acl: ro
                 squeezebox_send: rescanprogress
                 squeezebox_recv: scanner notify
+                on_update:
+                    - .time = 0 if len(value.split(":")) == 1 else value.split(":")[1].split("||")[0]
+                    - .scantype = value if len(value.split(":")) == 1 else value.split(":")[1].split("||")[1] if len(value.split(":")[1].split("||")) > 1 else ""
+                    - .directory = "" if len(value.split(":")) == 1 else value.split(":")[1].split("||")[2].split("|")[0] if (len(value.split(":")[1].split("||")) > 1 and len(value.split(":")[1].split("||")[2].split("|")) > 1) else ""
+                    - .action = "" if len(value.split(":")) == 1 else value.split(":")[1].split("||")[2].split("|")[1] if (len(value.split(":")[1].split("||")) > 1 and len(value.split(":")[1].split("||")[2].split("|")) > 1) else value.split(":")[1].split("||")[2] if len(value.split(":")[1].split("||")) > 1 else ""
 
-                result:
+                time:
+                    type: num
+                    visu_acl: ro
+                scantype:
                     type: str
-                    squeezebox_recv: rescanprogress
-                    on_update: .. = value.split(":")[1]
-
-                query:
-                    type: bool
-                    visu_acl: rw
-                    enforce_updates: True
-                    squeezebox_send: rescanprogress
-                    crontab: init = True
+                    visu_acl: ro
+                directory:
+                    type: str
+                    visu_acl: ro
+                action:
+                    type: str
+                    visu_acl: ro
 
     server:
         name: Vorlage-Struktur für Squeezebox Server
