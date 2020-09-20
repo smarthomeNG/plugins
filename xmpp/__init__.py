@@ -24,7 +24,7 @@
 #########################################################################
 
 import logging
-import sleekxmpp
+import slixmpp
 
 from lib.plugin import Plugins
 from lib.model.smartplugin import *
@@ -53,7 +53,7 @@ class XMPP(SmartPlugin):
         if len(joins) and 'xep_0045' not in plugins:
             plugins.append('xep_0045')
 
-        self.xmpp = sleekxmpp.ClientXMPP(jid, password)
+        self.xmpp = slixmpp.ClientXMPP(jid, password)
         for plugin in plugins:
             self.xmpp.register_plugin(plugin)
         self.xmpp.use_ipv6 = self.get_parameter_value('use_ipv6')
@@ -69,13 +69,13 @@ class XMPP(SmartPlugin):
             self.xmpp.connect(address=self._server)
         else:
             self.xmpp.connect()
-        self.xmpp.process(threaded=True)
+        self.xmpp.process()
 
     def stop(self):
         self._run = False
         self.alive = False
         for chat in self._join:
-            self.xmpp.plugin['xep_0045'].leaveMUC(chat, self.xmpp.boundjid.bare)
+            self.xmpp.plugin['xep_0045'].leave_muc(chat, self.xmpp.boundjid.bare)
         self.logger.info("Shutting Down XMPP Client")
         self.xmpp.disconnect(wait=False)
 
@@ -98,10 +98,10 @@ class XMPP(SmartPlugin):
 
     def handleXMPPConnected(self, event):
         try:
-            self.xmpp.sendPresence(pstatus="Send me a message")
+            self.xmpp.send_presence(pstatus="Send me a message")
             self.xmpp.get_roster()
             for chat in self._join:
-                self.xmpp.plugin['xep_0045'].joinMUC(chat, self.xmpp.boundjid.bare, wait=True)
+                self.xmpp.plugin['xep_0045'].join_muc(chat, self.xmpp.boundjid.bare, wait=True)
         except Exception as e:
             self.logger.error("XMPP: Reconnecting, because can not set/get presence/roster: {}".format(e))
             self.xmpp.reconnect()
