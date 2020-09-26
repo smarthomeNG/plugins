@@ -68,10 +68,11 @@ logic_parameters: NONE
 plugin_functions:
     # Definition of function interface of the plugin
     send:
+        type: void
         description:
             de: 'Eine Messgae via xmpp senden'
             en: 'Send a message via xmpp'
-        parameter:
+        parameters:
             to:
                 type: str
                 description:
