@@ -82,20 +82,23 @@
                     newValue = objResponse['{{ item.id() }}_value'] + ' ({{ _('none') }})';
                     break;
                 case 1:
-                    newValue = objResponse['{{ item.id() }}_value']+' ({{ _('deactivated') }})';
+                    newValue = objResponse['{{ item.id() }}_value'] + ' ({{ _('deactivated') }})';
                     break;
                 case 2:
-                    newValue = objResponse['{{ item.id() }}_value']+' ({{ _('door closed') }})';
+                    newValue = objResponse['{{ item.id() }}_value'] + ' ({{ _('door closed') }})';
                     break;
                 case 3:
-                    newValue = objResponse['{{ item.id() }}_value']+' ({{ _('door opened') }})';
+                    newValue = objResponse['{{ item.id() }}_value'] + ' ({{ _('door opened') }})';
                     break;
                 case 4:
-                    newValue = objResponse['{{ item.id() }}_value']+' ({{ _('door state unknown') }})';
+                    newValue = objResponse['{{ item.id() }}_value'] + ' ({{ _('door state unknown') }})';
                     break;
                 case 5:
-                    newValue = objResponse['{{ item.id() }}_value']+' ({{ _('calibrating') }})';
+                    newValue = objResponse['{{ item.id() }}_value'] + ' ({{ _('calibrating') }})';
                     break;
+                default:
+                    break;
+            }
             shngInsertText ('{{ item.id() }}_value', newValue);
             shngInsertText ('{{ item.id() }}_last_update', objResponse['{{ item.id() }}_last_update']);
             shngInsertText ('{{ item.id() }}_last_change', objResponse['{{ item.id() }}_last_change']);
@@ -121,6 +124,8 @@
                 case 5:
                     newValue = objResponse['{{ item.id() }}_value'] + ' ({{ _('lockAndGoWithUnlatch') }})';
                     break;
+                default:
+                    break;
             }
             shngInsertText ('{{ item.id() }}_value', newValue);
             shngInsertText ('{{ item.id() }}_last_update', objResponse['{{ item.id() }}_last_update']);
@@ -134,6 +139,8 @@
                     break;
                 case 1:
                     newValue = objResponse['{{ item.id() }}_value'] + ' ({{ _('Batteries are low. Please replace as soon as possible!') }})';
+                    break;
+                default:
                     break;
             }
             shngInsertText ('{{ item.id() }}_value', newValue);
