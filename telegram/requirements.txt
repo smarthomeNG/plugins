@@ -1,1 +1,1 @@
-python-telegram-bot>=9.0.0
+python-telegram-bot>=12.8.0
