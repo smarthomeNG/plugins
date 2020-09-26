@@ -12,7 +12,7 @@ plugin:
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1052437-nuki-smartlock-plugin-support-thread
 
-    version: 1.5.0.7               # Plugin version
+    version: 1.5.0.8               # Plugin version
     sh_minversion: 1.6             # minimum shNG version to use this plugin
 #    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
@@ -92,11 +92,12 @@ item_attributes:
         type: str
         mandatory: True
         description:
-            de: 'Es gibt drei Typen von NUKI Triggern, `action`, `state` und `battery`. Ein Item kann nur einen Trigger gleichzeitig haben..'
-            en: 'There are three types of nuki triggers, `action`, `state` and `battery`. An item can only have one trigger
+            de: 'Es gibt vier Typen von NUKI Triggern, `action`, `state`, `doorstate` (nur Nuki 2.0!) und `battery`. Ein Item kann nur einen Trigger gleichzeitig haben..'
+            en: 'There are four types of nuki triggers, `action`, `state`, `doorstate` (only Nuki 2.0!) and `battery`. An item can only have one trigger
                  attribute at once.'
         valid_list:
             - 'state'
+            - 'doorstate'
             - 'battery'
             - 'action'
 
