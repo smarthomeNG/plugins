@@ -245,7 +245,7 @@ class OneWire(SmartPlugin):
                 if self.log_counter_io_loop_time > 0:
                     self.log_counter_io_loop_time -= 1
                 if self.logger.isEnabledFor(logging.DEBUG):
-                    self.logger.debug("cycle takes {0} seconds, now waiting for {1} seconds".format(cycletime,self._io_wait))
+                    self.logger.debug("IO loop takes {0:.2f} seconds, now waiting for {1} seconds".format(cycletime,self._io_wait))
                 if self.log_counter_io_loop_time == 0:
                     if self.logger.isEnabledFor(logging.DEBUG):
                         self.logger.debug("Logging counter for cycle I/O detection time reached zero and stops now")
@@ -397,7 +397,7 @@ class OneWire(SmartPlugin):
         cycletime = time.time() - start
         if self.log_counter_cycle_time > 0 or self.log_counter_cycle_time == -1:
             if self.logger.isEnabledFor(logging.DEBUG):
-                self.logger.debug("1-Wire: sensor cycle takes {0} seconds".format(cycletime))
+                self.logger.debug("1-Wire: sensor cycle takes {0:.2f} seconds for {1} sensors, average is {2:.2f} per sensor".format(cycletime, len(self._sensors),cycletime/len(self._sensors)))
             if self.log_counter_cycle_time > 0:
                 self.log_counter_cycle_time -= 1
             if self.log_counter_cycle_time == 0 and self.logger.isEnabledFor(logging.DEBUG):
