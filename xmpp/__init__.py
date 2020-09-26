@@ -5,6 +5,7 @@
 #########################################################################
 # Copyright 2015 KNX-User-Forum e.V.            http://knx-user-forum.de/
 # By Skender Haxhimolla 2015
+# By Oliver Hinckel 2020-
 #########################################################################
 #  This file is part of SmartHomeNG.   https://github.com/smarthomeNG/
 #
@@ -31,7 +32,7 @@ from lib.model.smartplugin import *
 
 class XMPP(SmartPlugin):
 
-    PLUGIN_VERSION = "1.4.0"
+    PLUGIN_VERSION = "1.4.1"
     ALLOW_MULTIINSTANCE = False
 
     def __init__(self, smarthome, jid, password, logic='XMPP'):
