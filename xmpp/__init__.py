@@ -25,6 +25,7 @@
 #########################################################################
 
 import logging
+import asyncio
 import slixmpp
 
 from lib.plugin import Plugins
@@ -63,6 +64,7 @@ class XMPP(SmartPlugin):
         self._logic = logic
         self._sh = smarthome
         self._join = joins
+        self.xmpp.loop = asyncio.get_event_loop()
 
     def run(self):
         self.alive = True
@@ -73,12 +75,15 @@ class XMPP(SmartPlugin):
         self.xmpp.process()
 
     def stop(self):
-        self._run = False
-        self.alive = False
         for chat in self._join:
             self.xmpp.plugin['xep_0045'].leave_muc(chat, self.xmpp.boundjid.bare)
         self.logger.info("Shutting Down XMPP Client")
-        self.xmpp.disconnect(wait=False)
+        self.xmpp.disconnect(wait=True, ignore_send_queue=True)
+        self.xmpp.loop.stop()
+        while self.xmpp.loop.is_running():
+          pass
+        self.xmpp.loop.close()
+        self.alive = False
 
     def parse_item(self, item):
         return None
