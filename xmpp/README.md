@@ -2,10 +2,13 @@
 
 ## Requirements/Description
 
-This Plugin uses sleekxmpp as basis to connect to XMPP etc services: https://pypi.python.org/pypi/sleekxmpp
+This Plugin uses slixmpp as basis to connect to XMPP etc services: https://pypi.org/project/slixmpp/
 
-At this stage the XMPP plugin module only supports in sending messages. Recevied messages are ignored. OTR not supported
-as the sleekxmpp libraries do not support this as yet.
+At this stage the XMPP plugin module only supports sending messages.
+Recevied messages are ignored.
+
+In case you want some OTR you have to install https://pypi.org/project/slixmpp-omemo/
+and use this XEP-384 from there (currently only possible via manual installation).
 
 This Plugin can also be used to setup a standard logger category which
 can be used to log messages using XMPP to some chat or groupchat contact.
