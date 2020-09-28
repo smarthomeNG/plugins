@@ -72,22 +72,30 @@ class WebServices(SmartPlugin):
                 'tools.staticdir.dir': 'static'
             }
         }
+        config_callback_rest = {
+            '/': {}
+        }
+        config_callback_ws = {
+            '/': {}
+        }
 
         # Register the REST interface as a cherrypy app
         self.mod_http.register_service(RESTWebServicesInterface(webif_dir, self),
                                        self.get_shortname(),
-                                       config,
+                                       config_callback_rest,
                                        self.get_classname(), self.get_instance_name(),
                                        description='WebService Plugin für SmartHomeNG (REST)',
-                                       servicename='rest')
+                                       servicename='rest',
+                                       use_global_basic_auth=False)
 
         # Register the simple WebService interface as a cherrypy app
         self.mod_http.register_service(SimpleWebServiceInterface(webif_dir, self),
                                        self.get_shortname(),
-                                       config,
+                                       config_callback_ws,
                                        self.get_classname(), self.get_instance_name(),
                                        description='Webservice-Plugin für SmartHomeNG (simple)',
-                                       servicename='ws')
+                                       servicename='ws',
+                                       use_global_basic_auth=False)
 
         # Register the web overview of the webservices interfaces as a cherrypy app
         self.mod_http.register_webif(WebInterface(webif_dir, self),

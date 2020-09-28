@@ -19,7 +19,7 @@ Basic configuration for the webservices plugin needs to be done in etc/module.ya
 The Hash for the password can be generated via the Backend plugin! If user and password are left empty, none are set. This may be e.g. suitable in case a reverse proxy is used.
 
 The webservice plugin is one functionality that builds upon the service layer configured in module.yaml, but there may be more in the future.
-
+It currently does not utilize a configured service user and password. Hence, access is only possible without credentials.
 ```yaml
     servicesport: 8384
     service_user: serviceuser
