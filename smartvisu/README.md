@@ -1,52 +1,62 @@
 # Visualisation (smartVISU support)
 
 ```
-Copyright 2016- Martin Sinn                      m.sinn@gmx.de
-Copyright 2012-2013 Marcus Popp                  marcus@popp.mx
+  Copyright 2016- Martin Sinn                              m.sinn@gmx.de
+  Parts Copyright 2012-2013 Marcus Popp                   marcus@popp.mx
 
-This plugin is part of SmartHomeNG.
-
-Visit:  https://github.com/smarthomeNG/
-        https://knx-user-forum.de/forum/supportforen/smarthome-py
-
+  This file is part of SmartHomeNG.
+  Visit:  https://github.com/smarthomeNG/
+          https://knx-user-forum.de/forum/supportforen/smarthome-py
 ```
 
 This plugin does the smartVISU specific handling. It installs widgets from the plugin directories to smartVISU and it auto-generates pages for smartVISU.
 
-This plugin (**```visu_smartvisu```**) does not do the communication with the browser. The websocket protocol for the browser communication is implemented in **```visu_websocket```**.
-
-The plugins **```visu_websocket```** and **```visu_smartvisu```** replace the old visu plugin.
+This plugin (**```smartvisu```**) does not do the communication with the browser. The websocket protocol for the browser communication is implemented in the **websocket** module (or in the deprecated plugin**```visu_websocket```**).
 
 
 ## Requirements
 
 None.
 
-**But**: For the visualization to work, the websocket protocol must be configured. This is done by configuring the visu_websocket plugin.
+**But**: For the visualization to work, the websocket protocol must be configured. This is done by configuring the websocket module.
 
 
 ## Configuration
 
 The configuration of the plugin itself is done in the file **`etc/plugin.yaml`**. The configuration of the visualization of the items is done by defining additional attributes of the item in the file **`items/*.yaml`**.
 
+Optionally it is possible to configure the structure of the visu navigation in the file **`etc/visu.yaml`**.
+
+
 ### plugin.yaml
 
 ```yaml
 smartvisu:
-    plugin_name: visu_smartvisu
-    # smartvisu_dir: False
+    plugin_name: smartvisu
+    # smartvisu_dir: /var/www/html/smartvisu
+    # generate_pages: True
+    # overwrite_templates: True
+    # visu_style: std
     # handle_widgets: True
+    # list_deprecated_warnings: False
 ```
-
-#### visu_dir
-** Only used for **old visu** (not for smartVISU) **
-
-Directory in which the generated web pages of the old visa are stored.
 
 #### smartvisu_dir
 You could generate pages for the smartVISU visualisation if you specify the **`smartvisu_dir`** which should be set to the root directory of your smartVISU installation.
 
 In the examples directory you could find a configuration with every supported element. `examples/items/smartvisu.yaml`
+
+#### generate_pages
+
+...
+
+#### overwrite_templates
+
+...
+
+#### visu_style
+
+Possible visu_styles are **`std`** and **`blk`**.
 
 #### handle_widgets
 
@@ -55,6 +65,11 @@ By default, the visu plugin handles smartVISU widgets. If your run into problems
 Widgets that come with a plugin are stored in in a subdirectory to the plugin folder. These widgets are installed into smartVISU upon start of smarthomeNG. These widgets can be used in smartVISU without manually adding include startements to smartVISU.
 
 These widgets can be used in auto-generation of visu pages. Therefor they can be included in the **`sv_widget`** attribute of an item.
+
+#### list_deprecated_warnings
+
+If True, every use of deprecated or removed widgets is listed with the item name in the smartohme_warnings.log.
+
 
 
 ### items.yaml
