@@ -35,7 +35,7 @@ IMPORTANT: This plugin release (and following) uses the http module (services) e
 the callback from the Nuki Bridge. Therefore this module must be configured to use the plugin.
 Configuring IP and Port for the Callback is not possible within the plugin anymore.
 Also note, that the service_user and service_password of the http module cannot be used with
-the Nuki bridge (limitation of the bridge, basic auth not supported. Even when configuring them, 
+the Nuki bridge (limitation of the bridge, basic auth not supported). Even when configuring them, 
 the Nuki callback service won't use it.
 
 ### item.yaml
