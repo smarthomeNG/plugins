@@ -34,7 +34,7 @@ from lib.module import Modules
 
 
 class WebServices(SmartPlugin):
-    PLUGIN_VERSION = '1.6.0'
+    PLUGIN_VERSION = '1.6.1'
     ALLOWED_FOO_PATHS = ['env.location.moonrise', 'env.location.moonset', 'env.location.sunrise', 'env.location.sunset']
 
     def __init__(self, sh, *args, **kwargs):
