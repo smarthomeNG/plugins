@@ -382,7 +382,7 @@ class NukiWebServiceInterface:
                 "Plugin '{}' - NukiWebServiceInterface: Getting JSON String".format(self.plugin.get_shortname()))
             nuki_id = input_json['nukiId']
             state_name = input_json['stateName']
-            self.plugin.logger.error(
+            self.plugin.logger.debug(
                 "Plugin '{pluginname}' - NukiWebServiceInterface: Status Smartlock: ID: {nuki_id} Status: {state_name}".
                     format(pluginname=self.plugin.get_shortname(), nuki_id=nuki_id, state_name=state_name))
 
