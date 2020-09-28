@@ -21,9 +21,6 @@ nuki:
     bridge_ip: 192.168.1.10
     bridge_port: 8080
     bridge_api_token: q1W2e3
-
-    # bridge_callback_ip: 192.168.0.2
-    # bridge_callback_port: 8090
 ```
 
 #### Attributes
@@ -31,10 +28,15 @@ nuki:
 * `bridge_ip` : IP address of the Nuki Bridge
 * `bridge_port` : Port number of the Nuki Bridge
 * `bridge_api_token` : Token for authentification of the API connection
-* `bridge_callback_ip`: IP address of the TCP dispatcher which is handling the Bridge callback requests. By default, the local IP address is used
-* `bridge_callback_port` : Port number of the TCP dispatcher. By default, port number 8090 is used.
 
-*This information can be set via the Nuki App
+This information can be set via the Nuki App. 
+
+IMPORTANT: This plugin release (and following) uses the http module (services) extension for
+the callback from the Nuki Bridge. Therefore this module must be configured to use the plugin.
+Configuring IP and Port for the Callback is not possible within the plugin anymore.
+Also note, that the service_user and service_password of the http module cannot be used with
+the Nuki bridge (limitation of the bridge, basic auth not supported. Even when configuring them, 
+the Nuki callback service won't use it.
 
 ### item.yaml
 
