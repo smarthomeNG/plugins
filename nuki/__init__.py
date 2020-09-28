@@ -322,7 +322,8 @@ class Nuki(SmartPlugin):
         except:
             self.mod_http = None
         if self.mod_http == None:
-            self.logger.error("Plugin '{}': Not initializing the web interface".format(self.get_fullname()))
+            self.logger.error("Plugin '{}': Not initializing the web interface. If not already done so, please configure "
+                              "http module in etc/module.yaml.".format(self.get_fullname()))
             return False
 
         webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
