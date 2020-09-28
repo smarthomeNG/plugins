@@ -11,7 +11,7 @@ plugin:
     keywords: REST, API, Webservice
     documentation: https://www.smarthomeng.de/?category_name=plugins&s=webservices
 #    documentation: http://smarthomeng.de/user/plugins/webservices/user_doc.html
-    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1163886-support-thread-f%C3%BCr-das-webservices-plugin
+    support: https://knx-user-forum.de/node/1163886
 
     version: 1.6.1                 # Plugin version
     sh_minversion: 1.6             # minimum shNG version to use this plugin
