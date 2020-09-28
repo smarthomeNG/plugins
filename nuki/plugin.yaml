@@ -10,7 +10,7 @@ plugin:
     state: ready
     keywords: Smart Lock, Nuki
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
-    support: https://knx-user-forum.de/node/1149875
+    support: https://knx-user-forum.de/node/1052437
 
     version: 1.6.0                 # Plugin version
     sh_minversion: 1.7             # minimum shNG version to use this plugin
