@@ -34,7 +34,7 @@ from lib.module import Modules
 
 
 class WebServices(SmartPlugin):
-    PLUGIN_VERSION = '1.6.1'
+    PLUGIN_VERSION = '1.6.2'
     ALLOWED_FOO_PATHS = ['env.location.moonrise', 'env.location.moonset', 'env.location.sunrise', 'env.location.sunset']
 
     def __init__(self, sh, *args, **kwargs):
@@ -43,6 +43,7 @@ class WebServices(SmartPlugin):
         # Call init code of parent class (SmartPlugin or MqttPlugin)
         super().__init__()
 
+        self._use_service_auth = self.get_parameter_value('use_service_auth')
         self._mode = self.get_parameter_value('mode')
         self.items = Items.get_instance()
 
@@ -86,7 +87,7 @@ class WebServices(SmartPlugin):
                                        self.get_classname(), self.get_instance_name(),
                                        description='WebService Plugin für SmartHomeNG (REST)',
                                        servicename='rest',
-                                       use_global_basic_auth=False)
+                                       use_global_basic_auth=self._use_service_auth)
 
         # Register the simple WebService interface as a cherrypy app
         self.mod_http.register_service(SimpleWebServiceInterface(webif_dir, self),
@@ -95,7 +96,7 @@ class WebServices(SmartPlugin):
                                        self.get_classname(), self.get_instance_name(),
                                        description='Webservice-Plugin für SmartHomeNG (simple)',
                                        servicename='ws',
-                                       use_global_basic_auth=False)
+                                       use_global_basic_auth=self._use_service_auth)
 
         # Register the web overview of the webservices interfaces as a cherrypy app
         self.mod_http.register_webif(WebInterface(webif_dir, self),

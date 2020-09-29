@@ -19,7 +19,6 @@ Basic configuration for the webservices plugin needs to be done in etc/module.ya
 The Hash for the password can be generated via the Backend plugin! If user and password are left empty, none are set. This may be e.g. suitable in case a reverse proxy is used.
 
 The webservice plugin is one functionality that builds upon the service layer configured in module.yaml, but there may be more in the future.
-It currently does not utilize a configured service user and password. Hence, access is only possible without credentials.
 ```yaml
     servicesport: 8384
     service_user: serviceuser
@@ -33,11 +32,12 @@ It currently does not utilize a configured service user and password. Hence, acc
 WebServices:
     class_name: WebServices
     class_path: plugins.webservices
+    use_service_auth: True
     mode: all
 ```
 #### Attributes
   * `mode`: Optional mode for the plugin - "all" (default) means you can access all your items via the API. "set" means only defined item sets are accessible.
-
+  * `use_service_auth`: Optional bool flag, if the configured credentials for service_user and service_password in mod_http shall be used for accessing the webservices.
 ### items.yaml
 
 Currently access to all items is provided via the REST api in case the plugin is set via mode attribute to "all". In case that is not wanted, the attribute "webservices_set" can be used to group selected items to be accessible.
