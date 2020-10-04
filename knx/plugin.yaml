@@ -12,12 +12,12 @@ plugin:
 #    keywords: iot xyz
     documentation: http://smarthomeng.de/user/plugins/knx/user_doc.html
 
-    version: 1.6.4                 # Plugin version
+    version: 1.7.3                 # Plugin version
     sh_minversion: 1.6             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
     restartable: unknown
-    classname: KNX                 # class containing the plugin
+    classname: KNX2                 # class containing the plugin
     attribute_prefix: knx          # prefix of the item-attributes, so attributes have to start with 'knx_'
 
 parameters:
@@ -58,12 +58,26 @@ parameters:
             de: "Wenn auf 'on'/'true' gesetzt, wird jedes KNX-Paket im Standard-Logger protokolliert. Wenn 'logger' eingestellt ist, werden alle KNX-Meldungen in einem separaten Logger 'knx_busmonitor' protokolliert."
             en: "If set to 'on'/'true' every KNX packet will be logged to the default plugin logger. If set to 'logger', all knx messages will be logged to a separate logger 'knx_busmonitor'"
 
+    provider:
+        type: str
+        default: 'knxd'
+        valid_list:
+            - 'knxd'
+            - 'IP Interface'
+            - 'IP Router'
+        valid_list_description:
+            de: ['eib oder knxd', 'IP Schnittstelle', 'IP Router mit Multicast']
+            en: ['eib or knxd', 'IP Interface', 'IP Router with multicast']
+        description:
+            de: 'Dienst, der die Schnittstelle zum KNX bereitstellt. Das kann der eibd/knxd sein, aber auch eine IP Schnittstelle oder ein IP Router'
+            en: 'Service to provide an interface to KNX. This could be either eibd/knx but also an IP interface or an IP Router'
+
     host:
         type: ip
         default: '127.0.0.1'
         description:
-            de: 'IP Adresse oder Hostname des Computers auf dem der EIB Daemon bzw. KNX Daemon läuft. Standard: Auf dem Computer auf dem SmartHomeNG läuft.'
-            en: 'IP address or hostname of the computer the eib daemon or knx daemon is running on. Default: The Daemon is running on the computer SmartHomeNG is running on.'
+            de: 'IP Adresse oder Hostname des KNX Schnittstellen Dienstes'
+            en: 'IP address or hostname of KNX service provider'
 
     port:
         type: int
@@ -71,8 +85,8 @@ parameters:
         valid_max: 65535
         default: 6720
         description:
-            de: 'Port, der bei der Kommunikation mit dem Eibd- oder Knxd-Daemon verwendet wird'
-            en: 'Port to be used when communicating to eibd or knxd daemon'
+            de: 'Port, der bei der Kommunikation mit dem KNX Schnittstellen Dienst verwendet wird'
+            en: 'Port to be used when communicating to KNX interface service'
 
     readonly:
         type: bool
@@ -88,8 +102,21 @@ parameters:
             de: 'Wenn diese Option auf "True" gesetzt ist, werden die Statistikfunktionen aktiviert um Daten erfassen'
             en: 'if set to True, the statistic functions are enabled to collect data'
 
+    projectpath:
+        type: str
+        default: 'var/knx'
+        description:
+            de: 'Legt den Pfad fest, wo das Plugin eine hochgeladene ETS Projektdatei speichert. Wenn der Pfad relativ ist, wird dazu als Basis das Startverzeichnis von SmartHomeNG genommen'
+            en: 'Set the path where the plugin will save an uploaded knxproj file. If path is relative, the base directory of SmartHomeNG will serve as basis.'
 
+    use_project_file:
+        type: bool
+        default: False
+        description:
+            de: 'Wenn diese Option auf "True" gesetzt ist, kann eine ETS Projektdatei hochgeladen und die enthaltenen Gruppenadressen angezeigt werden'
+            en: 'if set to True, an ETS project file might be uploaded and contained group addresses shown'
 
+        
 item_attributes:
     # Definition of item attributes defined by this plugin
     knx_dpt:

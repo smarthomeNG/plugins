@@ -16,6 +16,9 @@ Web Interface
 Das knx Plugin verfügt über ein Webinterface, mit dessen Hilfe die Items die das Plugin nutzen
 übersichtlich dargestellt werden. Außerdem können Statistiken über die KNX Aktivität angezeigt
 werden.
+Mit der neuesten Release ist noch die Möglichkeit dazugekommen eine Projektdatei hochzuladen, 
+entweder als Export aus der ETS5 *.knxproj oder *.esf (OPC). Die darin enthaltenen Gruppenadressen
+werden in einem weiteren Tab dargestellt.
 
 .. important:: 
 

@@ -28,7 +28,7 @@ import logging
 from pathlib import Path
 from lxml import etree
 
-logger = logging.getLogger("knxproj")
+logger = logging.getLogger("knxproject")
 
 #import dpts
 """
@@ -84,40 +84,19 @@ def Datatype(name):
     '275.100' : de275100,
 """
 
-def processRange(rng, lvl, name = []):
-    names = copy.copy(name)
-    new_names = rng.attrib['Name'].title().replace("/","").split()
-    for i in names:
-        for s in i:
-            if s in new_names:
-                new_names.remove(s)
-    names.append(new_names)
-    if "GroupRange" in rng.tag:
-        for r in rng.getchildren():
-            processRange(r,lvl + 1, names)
-    elif "GroupAddress" in rng.tag:
-        idname = "_".join([  "".join(s) for s in names])
-        if "DatapointType" in rng.attrib.keys():
-            datatype = Datatype(rng.attrib['DatapointType'])
-        else:
-            datatype = None
-        addr = int(rng.attrib['Address'])
-        addrs = []
-        for mask in address_mask[lvl]:
-            addrs.append("%i"%((addr & mask) >> ffs(mask)))
-        gad = "/".join(addrs)
-        objectlist.append( (idname, datatype, gad) )
-    else:
-        print("TYPE %s NOT SUPPORTED"%rng.tag)
-
-
 def int_to_lvl3_groupaddress(ga):
     """ converts an given integer into a string representing a three level group address """
     if ga <= 0 or ga > 32767:
         raise ValueError("Given Integer not in range for a valid group address")
     return "{0}/{1}/{2}".format((ga >> 11) & 0x1f, (ga >> 8) & 0x07, (ga) & 0xff)
 
-def strip_ns_prefix(tree):
+def strip_namespace_prefix(tree):
+    """
+    removes namespace prefixes from any element matching the xpath query that returns a prefixed element
+
+    :param tree: a
+    :return: tree without namespace prefixes
+    """
     #xpath query for selecting all element nodes in namespace
     query = "descendant-or-self::*[namespace-uri()!='']"
     #for each element returned by the above xpath query...
@@ -125,6 +104,21 @@ def strip_ns_prefix(tree):
         #replace element name with its local name
         element.tag = etree.QName(element).localname
     return tree
+
+def is_knxproject(filename):
+    """
+    check if given file is a valid knxproj file from ETS5
+    """
+    if not zipfile.is_zipfile(filename):
+        return False
+
+    knxproj = zipfile.ZipFile(filename, 'r')
+    for file in knxproj.filelist:
+        if file.filename == "knx_master.xml":
+            break
+    else:
+        return False
+    return True
 
 def parse_projectfile(filename):
     """
@@ -134,22 +128,96 @@ def parse_projectfile(filename):
     }
     so this dictionary can be walked through by ga as key
     """
-    if not zipfile.is_zipfile(filename):
-        logger.error("this is not a valid *.knxproj file")
-        return None
+    if is_knxproject(filename):
+        return _parse_knxproject(filename)
 
+    return _parse_esfproject(filename)
+
+def _parse_esfproject(filename):
+    """
+    Parses the content from a esf file which is a result of an export from ETS
+    
+    File structure is like the following:
+    ```
+    Projectname
+    main.middle.ga       \t    name        \t   type description        \t priority  \t    listen to
+    ```
+    example 
+    ```
+    central.lights.0/0/1            \t lights hallway                   \t EIS 1 'Switching' (1 Bit)            \t Low  \t
+    central.dimming.1/2/40          \t main lights parents              \t EIS 2 'Dimming - control' (4 Bit)    \t Low  \t
+    blinds.feedback height.3/3/100  \t kitchen sink blinds feedback pos \t Uncertain (1 Byte)                   \t Low  \t
+    heating.set temperature.4/0/25  \t floor set temp feedback          \t Uncertain (2 Byte)                   \t Low  \t
+    helper.time & date.8/0/0        \t time                             \t Uncertain (3 Byte)                   \t Low  \t
+    helper.time & date.8/0/1        \t date                             \t Uncertain (3 Byte)                   \t Low  \t
+    helper.counter.8/6/1            \t current inbound                  \t Uncertain (4 Byte)                   \t Low  \t
+    ```
+
+    Types are as follows:
+    OPC-Typ     EIS-Format
+    0           EIS 1 'Schalten' (1 Bit)
+    1           EIS 8 'Skalieren – Steuerung' (2 Bit)
+    2           Unbekannt
+    3           EIS 2 'Dimmen – Steuerung' (4 Bit)
+    4           Unbekannt
+    5           Unbekannt
+    6           Unbekannt
+    7           Unbestimmt (1 Byte)
+    8           Unbestimmt (2 Byte)
+    9           Unbestimmt (3 Byte)
+    10          Unbestimmt (4 Byte)
+    11          Unbekannt
+    12          Unbekannt
+    13          Unbekannt
+    14          EIS 15 'Zeichenkette' (14 Byte)
+    15          Unbekannt
+    """
+    f = open(filename, 'r', encoding="iso-8859-15")
+    projectname = f.readline()
+    logger.debug("Start parsing Project '{0}' from file {1}".format(projectname, filename))
+    GAs = {}
+
+    for line in f.readlines():
+        columns = line.split('\t')
+
+        # now in the first column there is a compound object main.middle.ga
+        # unfortunately we can not be sure that within main or middle there are no more  . or /
+        # thus we need to find the rightmost . and separate the main and middle from the ga
+        subcolumn = columns[0].split('.')
+        if len(subcolumn) == 3 and len(columns) >= 4:
+            ga = subcolumn[2]
+            GAs[ga] = { "Id":"", 
+                "HG" : subcolumn[0], 
+                "MG" : subcolumn[1], 
+                "Name": columns[1], 
+                "Description": "", 
+                "Comment": "", 
+                "DatapointType": columns[2], 
+                "Puid": "",
+                "Priority": columns[3],
+                "Listen": columns[4] }      # keep as string if present
+        else:
+            logger.debug("Codierungsfehler in {} gefunden --> ignoriert!".format(columns[0]))
+    f.close()
+    return GAs
+
+
+
+def _parse_knxproject(filename):
+    """
+    Details can be found in ``KNX-XML Project-Schema-v17 - Description.pdf`` [1]
+    As of ETS 5.x the zipfile contains one file named ``knx_master.xml`` which is not interesting for parsing the structure
+    Then there are a couple of subdirectories named M-<1234> where <1234> is a placeholder for a manufacturer ID and
+    also a subdirectory named P-<ABCD> which contains the relevant information, e.g.:
+    P-03B3
+        BinaryData    <subdirectory with binary data for ETS>
+        ExtraData     <subdirectory with extra data for ETS>
+        UserFiles     <subdirectory with user supplied files>
+        project.xml   <description of the contained (up to 16) projects as well as
+                      further ProjectInformation like ``GroupAddressStyle`` which must be ``ThreeLevel`` here to work
+        0.xml         <a project description file that we need to examine
+    """
     knxproj = zipfile.ZipFile(filename, 'r')
-    # Details can be found in ``KNX-XML Project-Schema-v17 - Description.pdf`` [1]
-    # As of ETS 5.x the zipfile contains one file named ``knx_master.xml`` which is not interesting for parsing the structure
-    # Then there are a couple of subdirectories named M-<1234> where <1234> is a placeholder for a manufacturer ID and
-    # also a subdirectory named P-<ABCD> which contains the relevant information, e.g.:
-    # P-03B3
-    #   BinaryData    <subdirectory with binary data for ETS>
-    #   ExtraData     <subdirectory with extra data for ETS>
-    #   UserFiles     <subdirectory with user supplied files>
-    #   project.xml   <description of the contained (up to 16) projects as well as
-    #                   further ProjectInformation like ``GroupAddressStyle`` which must be ``ThreeLevel`` here to work
-    #   0.xml         <a project description file that we need to examine
 
     # see which project files can be found
     subprojects = []
@@ -157,8 +225,7 @@ def parse_projectfile(filename):
         if file.filename[0] != 'P':
             continue
 
-        # ToDo: According to [1] page 41 future files can be named [0...16].xml
-        # we stick with the basics here
+        # According to Project Schema Description, page 41 future files can be named [0...16].xml
         if file.filename.split("/")[-1] != '0.xml':
             continue
         subprojects.append(file)
@@ -172,42 +239,24 @@ def parse_projectfile(filename):
         logger.error("More than one project file found to examine, giving up!")
         return None
 
-    # everything is fine, exactly one project is found
-    # ToDo: ETS5 itself allows for different character sets such as windows native one but the xml files seem to have utf-8 only
     xmlfile = knxproj.open(subprojects[0].filename)
     xmldoc = etree.fromstring(xmlfile.read())
-    xmlroot = strip_ns_prefix( xmldoc )
+    xmlroot = strip_namespace_prefix( xmldoc )
     
-    #print(80*"*")
-    #print(etree.tostring(xmlroot, pretty_print=True, encoding='unicode'))
-    #print(80*"*")
-    
-    #level = 0
     GroupRanges = xmlroot.find("{*}Project/{*}Installations/{*}Installation/{*}GroupAddresses/{*}GroupRanges")
-
-    #print(etree.tostring(GroupRanges, pretty_print=True, encoding='unicode'))
-    #print(80*"*")
-
-    #print(GroupRanges.tag,len(GroupRanges),GroupRanges.values)
-
-    #for gr in list(GroupRanges):
-    #    print(gr.tag)
-    #print(80*"*")
 
     GAs = {}
 
+    # SmartHomeNG only supports Groupaddresses with 3 levels
+    # ToDo: Abort on encountering other level constellation or support them
     main_ga_elem = GroupRanges.findall('GroupRange')
     for level1 in main_ga_elem:
-        #print(level1,level1.attrib["Id"])
         for level2 in level1:
-            #print(".",level2,level2.attrib["Id"])
             for level3 in level2:
                 ga = level3.attrib.get("Address")
                 if ga:
                     ga = int_to_lvl3_groupaddress(int(ga))
                     GAs[ga] = { "Id":level3.attrib.get("Id"), "HG" : level1.attrib.get("Name"), "MG" : level2.attrib.get("Name"), "Name": level3.attrib.get("Name"), "Description":level3.attrib.get("Description"), "Comment":level3.attrib.get("Comment"), "DatapointType":level3.attrib.get("DatapointType"), "Puid":level3.attrib.get("Puid") }
-                #print("..",level3,level3.attrib["Id"],ga)
-                #print("..",level3,GAs[ga])
 
     return GAs
 
