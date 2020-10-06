@@ -6,18 +6,19 @@ plugin:
         de: 'Anbindung von KNX Bussystemen via EIBD/KNXD Daemon'
         en: 'Establishes connections to KNX bus systems via EIBD/KNXD daemon'
         fr: 'Connexion de systèmes KNX via EIBD/KNXD'
-    maintainer: msinn, (cmalo)
+    maintainer: msinn, bmxp
     tester: psilo909, onkelandy, Sandman60, brandst
     state: qa-passed
-#    keywords: iot xyz
+    keywords: KNX knxd listen cache bus 
     documentation: http://smarthomeng.de/user/plugins/knx/user_doc.html
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1552531-support-thread-zum-knx-plugin
 
-    version: 1.7.3                 # Plugin version
-    sh_minversion: 1.6             # minimum shNG version to use this plugin
-#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    version: 1.7.4                 # Plugin version
+    sh_minversion: 1.7             # minimum shNG version to use this plugin
+#    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
     restartable: unknown
-    classname: KNX2                 # class containing the plugin
+    classname: KNX                 # class containing the plugin
     attribute_prefix: knx          # prefix of the item-attributes, so attributes have to start with 'knx_'
 
 parameters:
