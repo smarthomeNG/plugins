@@ -14,6 +14,15 @@ erstellt. Das Plugin unterstützt smartVISU Versionen von v2.8 bis zur releasten
 v2.9.2 (master branch).
 
 
+Konfiguration
+=============
+
+Die Informationen zur Konfiguration des Plugins sind unter :doc:`/plugins_doc/config/smartvisu` beschrieben.
+
+
+Weiterführende Informationen
+============================
+
 Mischung von generierten und manuell erstellten Seiten
 ------------------------------------------------------
 
@@ -29,73 +38,67 @@ die angeforderte Seite unter ``manuell`` nicht gefunden wird, wird sie aus den `
 Das Vorgehen hierzu ist auch unter :doc:`/visualisierung/automatic_generation` im Abschnitt
 **Manuell erstellte Seiten** beschrieben.
 
-
-
-Konfiguration
-=============
-
-Die Informationen zur Konfiguration des Plugins sind unter :doc:`/plugins_doc/config/smartvisu` beschrieben.
-
-
-Weiterführende Informationen
-============================
+Weitere Dokumentation
+---------------------
 
 Alle weiteren Informationen zur Visualisierung mit smartVISU sind unter :doc:`/visualisierung/visualisierung`
 beschrieben.
 
 
+
 Informationen für Entwickler
 ============================
 
-```
-  Copyright 2016- Martin Sinn                              m.sinn@gmx.de
-  Parts Copyright 2012-2013 Marcus Popp                   marcus@popp.mx
-
-  This file is part of SmartHomeNG.
-  Visit:  https://github.com/smarthomeNG/
-          https://knx-user-forum.de/forum/supportforen/smarthome-py
-```
-
-This file gives **smarthomeNG** developers additional information about the smartvisu plugin. For information about the configuration of the plugin refer to **README.md**.
+This section gives **smarthomeNG** developers additional information about the smartvisu plugin. For information
+about the configuration of the plugin refer to **README.md**.
 
 This file describes the widget handling for smartVISU widgets and the autogeneration of smartVISU pages.
 
 
-Files of the Plugin
+Dateien des Plugins
 -------------------
-The plugin is made up by several files, which are described below.
+
+Das Plugin besteht aus mehreren Dateien, die im folgenden kurz beschrieben werden.
 
 
-\__init\__.py
-~~~~~~~~~~~~~
+init.py
+~~~~~~~
 Main file of the plugin.
 
 sv_widgets subdirectory
 ~~~~~~~~~~~~~~~~~~~~~~~
-This directory stores general-use widgets, which are not specific to a plugin. These plugins are installed together with widgets from different plugins.
+This directory stores general-use widgets, which are not specific to a plugin. These plugins are installed
+together with widgets from different plugins.
 
 tplNG subdirectory
 ~~~~~~~~~~~~~~~~~~
-This directory stores template files, that are used while auto-generating pages for smartVISU. The files in this directory are copied to the pages/base/tplNG directory, which is created.
+This directory stores template files, that are used while auto-generating pages for smartVISU. The files in this
+directory are copied to the pages/base/tplNG directory, which is created.
 
 
 Handling of smartVISU widgets
 -----------------------------
-The visu plugin handles widgets, which a plugin developer delivers with the plugin he has written. For this to work, the attribute **`smartvisu_dir`** in the visu section of **`plugin.yaml`** must be set to the base directory of smartVISU.
+The visu plugin handles widgets, which a plugin developer delivers with the plugin he has written. For this
+to work, the attribute **`smartvisu_dir`** in the visu section of **`plugin.yaml`** must be set to the base
+directory of smartVISU.
 
-It handles widgets that define their own Javascript or css. The Javascript and css files must follow the same naming convention as the html file.
+It handles widgets that define their own Javascript or css. The Javascript and css files must follow the same
+naming convention as the html file.
 
 Add a widget to a plugin
 ~~~~~~~~~~~~~~~~~~~~~~~~
-A developer of a plugin can add widgets to the plugin. He has to create a directory named **sv_widgets** in his plugin directory and add the file(s) of the widget to that directory.
+A developer of a plugin can add widgets to the plugin. He has to create a directory named **sv_widgets** in
+his plugin directory and add the file(s) of the widget to that directory.
 
 All files in the **sv_widgets** directory are copied to the smartVISU installation.
 
 A widget html-file may contain multiple widgets.
 
-For further automatic integration the widget must follow a name convention. It must be named **`widget_<class>.html`**. Where **`<class>`** is the class name for the import statement in smartVISU. If this convention is followed, a statement in the form of
+For further automatic integration the widget must follow a name convention. It must be named **`widget_<class>.html`**.
+Where **`<class>`** is the class name for the import statement in smartVISU. If this convention is followed,
+a statement in the form of
 
-.. code:: jinja
+.. code-block:: jinja
 
 	{% import "widget_<class>.html" as <class> %}
 
@@ -104,7 +107,7 @@ is generated.
 **Example**:
     For a file **`widget_hue.html`** the statement
 
-    .. code:: jinja
+    .. code-block:: jinja
 
         {% import "widget_hue.html" as hue %}
 
@@ -112,20 +115,20 @@ is generated.
 
 The widgets in that file can be called by the directives
 
-.. code:: jinja
+.. code-block:: jinja
 
-	{{ hue.control( ... ) }}
+	{{ hue.control( '...' ) }}
 
  or
 
-.. code:: jinja
+.. code-block:: jinja
 
-	{{ hue.control_group( ... ) }}
+	{{ hue.control_group( '...' ) }}
 
 If a Javascript file would exist for the hue widget, it would have to have the name  **`widget_hue.js`**. To
 include this file in smartVISU, the following lines are added to root.html:
 
-.. code:: jinja
+.. code-block:: jinja
 
     {% if isfile('widgets/sh_widgets/widget_hue.js') %}
         <script type="text/javascript" src="widgets/sh_widgets/widget_hue.js"></script>
