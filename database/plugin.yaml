@@ -13,7 +13,7 @@ plugin:
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1021844-neues-database-plugin
 
     version: 1.5.14                # Plugin version
-    sh_minversion: 1.7.2           # minimum shNG version to use this plugin
+    sh_minversion: 1.7.2b           # minimum shNG version to use this plugin
 #    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
     restartable: unknown
@@ -62,7 +62,7 @@ item_attributes:
     # Definition of item attributes defined by this plugin
     database:
         type: str
-        valid_list: ['', 'yes', 'init', 'true']
+        valid_list_ci: ['', 'yes', 'init', 'true']
         description:
             de: "Wenn auf 'yes' oder 'true' gesetzt, werden die Werte des Items in die Datenbank geschrieben. Wenn auf 'init' gesetzt, wird zusätzlich beim Start von SmartHomeNG der Wert des Items aus der Datenbank gelesen."
             en: "This attribute enables the database logging when set (just use value 'yes' or 'true'). If value 'init' is used, an item will be initalized from the database after SmartHomeNG is restarted."
@@ -76,7 +76,7 @@ item_attributes:
 
     database_acl:
         type: str
-        valid_list: ['rw', 'ro']
+        valid_list_ci: ['rw', 'ro']
         default: 'rw'
         description:
             de: "Muss normalerweise nicht konfiguriert werden, dann wird der Standard 'rw' genutzt. Es kann nützlich sein Werte als 'ro' zu deklarieren, falls die Datenbank Daten aus anderen Quellen enthält, die durch SmartNomeNG nicht verändert werden sollen."
