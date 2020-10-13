@@ -10,7 +10,7 @@ from lib.model.smartplugin import *
 
 
 class Robot:
-    def __init__(self, email, password, vendor):
+    def __init__(self, email, password, vendor, token = ''):
         self.logger = logging.getLogger(__name__)
         self.__email = email
         self.__password = password
@@ -30,6 +30,7 @@ class Robot:
 
         self._session = requests.Session()
         self._timeout = 10
+        self._token = token
 
 
         # Cleaning
@@ -94,18 +95,11 @@ class Robot:
         message = self.serial.lower() + '\n' + self.__get_current_date() + '\n' + n
         h = hmac.new(self.__secretKey.encode('utf-8'), message.encode('utf8'), hashlib.sha256)
 
-#        start_cleaning_response = requests.post(
-#            self.__urlNucleo + "/vendors/"+self.__vendor+"/robots/" + self.serial + "/messages", data=n,
-#            headers={'X-Date': self.__get_current_date(), 'X-Agent': 'ios-7|iPhone 4|0.11.3-142',
-#                     'Date': self.__get_current_date(), 'Accept': 'application/vnd.neato.nucleo.v1',
-#                     'Authorization': 'NEATOAPP ' + h.hexdigest()}, )
-
         start_cleaning_response = self._session.post(
             self.__urlNucleo + "/vendors/"+self.__vendor+"/robots/" + self.serial + "/messages", data=n,
             headers={'X-Date': self.__get_current_date(), 'X-Agent': 'ios-7|iPhone 4|0.11.3-142',
                      'Date': self.__get_current_date(), 'Accept': 'application/vnd.neato.nucleo.v1',
                      'Authorization': 'NEATOAPP ' + h.hexdigest()}, timeout=self._timeout )
-        
 
         #error handling
         responseJson = start_cleaning_response.json()
@@ -126,10 +120,19 @@ class Robot:
     def update_robot(self):
         #self.logger.debug("Robot: Starting update_robot")
 
-        self.__secretKey = self.__get_secret_key()
-        if not self.__secretKey:
-            self.logger.error("Robot: Could not obtain valid secret key")
-            return 'error'
+        # Authentication via email and passwort:
+        if self._token == '':
+            self.__secretKey = self.__get_secret_key()
+            if not self.__secretKey:
+                self.logger.error("Robot: Could not obtain valid secret key")
+                return 'error'
+
+        # Oauth2 Authentication via email and token (for Vorwerk only):    
+        else:
+            #self.logger.debug("Robot: Using oAuth2 interface")
+            self.__secretKey = self.get_secretKey_viaOauth()
+
+        #self.logger.debug("Returned secret key is {0}".format(self.__secretKey))
 
         m = '{"reqId":"77","cmd":"getRobotState"}'
         message = self.serial.lower() + '\n' + self.__get_current_date() + '\n' + m
@@ -142,10 +145,20 @@ class Robot:
                                                                      'Accept': 'application/vnd.neato.nucleo.v1',
                                                                      'Authorization': 'NEATOAPP ' + h.hexdigest()}, timeout=self._timeout )
  
-        except:
-            self.logger.warning("Robot: Error during API request unknown '{}'")
-            # todo error handling_
+        except Exception as e:
+            self.logger.error("Robot: Exception during cloud state request: %s" % str(e))
             return 'error'
+
+        statusCode = robot_cloud_state_response.status_code
+        if statusCode == 200:
+            self.logger.debug("Sending cloud state request successful")
+        elif statusCode == 403:
+            self.logger.debug("Sending cloud state request returned: Forbidden. Aquire new session key.")
+        else:
+            self.logger.error("Sending cloud state request successful error: {0}".format(statusCode))
+            return 'error'
+
+
 
         response = robot_cloud_state_response.json()
 
@@ -286,3 +299,107 @@ class Robot:
         if self.houseCleaning == 'basic-4':
             return '{"reqId": "77","cmd": "startCleaning","params": {"category": ' + str(
                 self.category) + ',"mode": ' + str(self.mode) + ', "navigationMode": ' + str(self.navigationMode) + '}}'
+
+    ########################
+    # Oauth2 functions for new login feature with Vorwerk's myKobold APP
+    #
+    
+    # Requesting authentication code to be send to email account:
+    def request_oauth2_code(self):
+        self.logger.info("Requesting authentication code for {0}".format(self.__email))
+        usedata = {"send": "code", "email": self.__email, "client_id": "KY4YbVAvtgB7lp8vIbWQ7zLk3hssZlhR", "connection": "email"}
+
+        try:
+            request_code_response = self._session.post("https://mykobold.eu.auth0.com/passwordless/start", json=usedata, headers={'Content-Type': 'application/json'}, timeout=self._timeout )
+
+        except Exception as e:
+            self.logger.error("Robot: Exception during code request: %s" % str(e))
+            return
+
+        self.logger.info("Send code request command response: {0}".format(request_code_response.text))
+
+        statusCode = request_code_response.status_code
+        if statusCode == 200:
+            self.logger.debug("Sending authetication code request request successful")
+        else:
+            self.logger.error("Error during auth code request: {0}".format(statusCode))
+            return
+
+    def request_oauth2_token(self, code):
+        self.logger.info("Requesting authentication token for {0}".format(self.__email))
+
+        usedata = {"prompt": "login",
+           "grant_type": "http://auth0.com/oauth/grant-type/passwordless/otp",
+           "scope": "openid email profile read:current_user",
+           "locale": "en",
+           "otp": str(code),
+           "source": "vorwerk_auth0",
+           "platform": "ios",
+           "audience": "https://mykobold.eu.auth0.com/userinfo",
+           "username": self.__email,
+           "client_id": "KY4YbVAvtgB7lp8vIbWQ7zLk3hssZlhR",
+           "realm": "email",
+           "country_code": "DE"}
+
+        try:
+            request_token_response = self._session.post("https://mykobold.eu.auth0.com/oauth/token", json=usedata, headers={'Content-Type': 'application/json'}, timeout=localtimeout )
+
+        except Exception as e:
+            self.logger.error("Robot: Exception during token request: %s" % str(e))
+            return ''
+        
+        self.logger.info("Send token request command returned: {0}".format(request_token_response.text))
+
+        statusCode = request_token_response.status_code
+        if statusCode == 200:
+            self.logger.warning("Sending auth token request request successful")
+        else:
+            self.logger.error("Error during auth token request: {0}".format(statusCode))
+            return ''
+
+        responseJson = request_token_response.json()
+        if 'id_token' in responseJson:
+            id_token = responseJson['id_token']
+            self.logger.info("Robot: Authentication token is {0}".format(id_token))
+
+    def get_secretKey_viaOauth(self):
+        secretKey = ''
+        #self.logger.debug("Start function get secretKey via Oauth2")
+
+        request_robots_response = self._session.get(self.__urlBeehive + "/dashboard", headers={'Authorization': 'Auth0Bearer ' + str(self._token)}, timeout=self._timeout)
+        #self.logger.debug("Response: {0}".format(request_robots_response.text))
+        
+        responseJson = request_robots_response.json()
+
+        if 'robots' in responseJson:
+            robots = responseJson['robots']
+            self.logger.debug("{0} robots found".format(len(robots)))
+    
+            #Pick first robot in robot list:
+            if 'nucleo_url' in robots[0]:
+                self.__urlNucleo = robots[0]['nucleo_url']
+                #self.logger.debug("NucleoUrl is {0}".format(self.__urlNucleo))
+
+            if 'serial' in robots[0]:
+                self.serial  = robots[0]['serial']
+                #self.logger.debug("Serial number via oauth2 is {0}".format(self.serial))
+
+            if 'name' in robots[0]:
+                self.name  = robots[0]['name']
+                #self.logger.debug("Name via oauth2 is {0}".format(self.name))
+
+            if 'model' in robots[0]:
+                self.modelname = robots[0]['model']
+                #self.logger.debug("Model via oauth2 is {0}".format(self.modelname))
+
+            if 'firmware ' in robots[0]:
+                self.firmware = robots[0]['firmware']
+                #self.logger.debug("Firmware via oauth2 is {0}".format(self.firmware))
+
+            if 'secret_key' in robots[0]:
+                secretKey  = robots[0]['secret_key']
+                #self.logger.debug("Secret key via oauth2 is {0}".format(secretKey))
+                self.__secretKey = secretKey
+                return secretKey
+
+        return ''

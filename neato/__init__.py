@@ -29,16 +29,16 @@ from .robot import Robot
 
 
 class Neato(SmartPlugin):
-    PLUGIN_VERSION = '1.6.0'
+    PLUGIN_VERSION = '1.6.1'
     robot = 'None'
     _items = []
 
     def __init__(self, sh, *args, **kwargs):
         from bin.smarthome import VERSION
 
-        self.robot = Robot(self.get_parameter_value("account_email"), self.get_parameter_value("account_pass"), self.get_parameter_value("robot_vendor"))
+        self.robot = Robot(self.get_parameter_value("account_email"), self.get_parameter_value("account_pass"), self.get_parameter_value("robot_vendor"), token=self.get_parameter_value("token"))
 #        self.robot.update_robot()
-#        self._sh = sh
+        self._sh = sh
         self._cycle = 40
         self.logger.debug("Init completed.")
         return
@@ -213,6 +213,12 @@ class Neato(SmartPlugin):
         elif state_action == '15':
             return 'Suspended Exploration'
 
+
+    # Oauth2 functions for new login feature with Vorwerk's myKobold APP
+    
+    # Requesting authentication code to be send to email account:
+    def request_oauth2_code(self):
+        self.robot.request_oauth2_code()
 
 
 
