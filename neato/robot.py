@@ -31,6 +31,8 @@ class Robot:
         self._session = requests.Session()
         self._timeout = 10
         self._token = token
+        self._clientIDHash = 'KY4YbVAvtgB7lp8vIbWQ7zLk3hssZlhR'
+        self._numberRobots = 0
 
 
         # Cleaning
@@ -70,6 +72,15 @@ class Robot:
         self.softwareUpdate = ''
         self.spotCleaning = ''
         self.wifi = ''
+
+    def numberRobots(self):
+        return self._numberRobots
+
+    def clientIDHash(self):
+        return self._clientIDHash 
+
+    def setClientIDHash(self, hash):
+        self._clientIDHash = hash
 
     # Neato Available Commands
     def robot_command(self, command):
@@ -304,30 +315,44 @@ class Robot:
     # Oauth2 functions for new login feature with Vorwerk's myKobold APP
     #
     
-    # Requesting authentication code to be send to email account:
-    def request_oauth2_code(self):
-        self.logger.info("Requesting authentication code for {0}".format(self.__email))
-        usedata = {"send": "code", "email": self.__email, "client_id": "KY4YbVAvtgB7lp8vIbWQ7zLk3hssZlhR", "connection": "email"}
+    # Requesting authentication code to be sent to email account
+    # Returns True on success and False otherwise
+    def request_oauth2_code(self, hash = ''):
+
+        if not hash == '':
+            self.logger.debug("Robot: Overwriting clientIDHash with {0}.".format(str(hash)))
+            self._clientIDHash = str(hash)
+        self.logger.info("Requesting authentication code for {0} with challenge {1}".format(self.__email, self._clientIDHash))
+
+        usedata = {"send": "code", "email": self.__email, "client_id": str(self._clientIDHash), "connection": "email"}
+        self.logger.debug("Robot usedata: {0}".format(usedata))
 
         try:
             request_code_response = self._session.post("https://mykobold.eu.auth0.com/passwordless/start", json=usedata, headers={'Content-Type': 'application/json'}, timeout=self._timeout )
 
         except Exception as e:
             self.logger.error("Robot: Exception during code request: %s" % str(e))
-            return
+            return False
 
         self.logger.info("Send code request command response: {0}".format(request_code_response.text))
 
         statusCode = request_code_response.status_code
         if statusCode == 200:
-            self.logger.debug("Sending authetication code request request successful")
+            self.logger.debug("Sending authetication code request successful")
         else:
             self.logger.error("Error during auth code request: {0}".format(statusCode))
-            return
+            return False
+        
+        return True
 
-    def request_oauth2_token(self, code):
-        self.logger.info("Requesting authentication token for {0}".format(self.__email))
+    # Requesting oauth2 token with the help of obtained code
+    # Returns authentication token as as string on success and an empty string otherwise
+    def request_oauth2_token(self, code, hash = ''):
 
+        if not hash == '':
+            self._clientIDHash = str(hash)
+        self.logger.info("Requesting authentication token for {0} with code {1} and challenge {2}".format(self.__email, code, self._clientIDHash))
+     
         usedata = {"prompt": "login",
            "grant_type": "http://auth0.com/oauth/grant-type/passwordless/otp",
            "scope": "openid email profile read:current_user",
@@ -337,12 +362,12 @@ class Robot:
            "platform": "ios",
            "audience": "https://mykobold.eu.auth0.com/userinfo",
            "username": self.__email,
-           "client_id": "KY4YbVAvtgB7lp8vIbWQ7zLk3hssZlhR",
+           "client_id": str(self._clientIDHash),
            "realm": "email",
            "country_code": "DE"}
 
         try:
-            request_token_response = self._session.post("https://mykobold.eu.auth0.com/oauth/token", json=usedata, headers={'Content-Type': 'application/json'}, timeout=localtimeout )
+            request_token_response = self._session.post("https://mykobold.eu.auth0.com/oauth/token", json=usedata, headers={'Content-Type': 'application/json'}, timeout=self._timeout )
 
         except Exception as e:
             self.logger.error("Robot: Exception during token request: %s" % str(e))
@@ -352,16 +377,18 @@ class Robot:
 
         statusCode = request_token_response.status_code
         if statusCode == 200:
-            self.logger.warning("Sending auth token request request successful")
+            self.logger.debug("Sending authentication token request successful")
         else:
-            self.logger.error("Error during auth token request: {0}".format(statusCode))
+            self.logger.error("Error during authentication token request: {0}".format(statusCode))
             return ''
 
         responseJson = request_token_response.json()
         if 'id_token' in responseJson:
             id_token = responseJson['id_token']
             self.logger.info("Robot: Authentication token is {0}".format(id_token))
-
+            return id_token
+   
+    # read secretKey and robot specific data with the help of obtained oauth2 token:
     def get_secretKey_viaOauth(self):
         secretKey = ''
         #self.logger.debug("Start function get secretKey via Oauth2")
@@ -373,7 +400,8 @@ class Robot:
 
         if 'robots' in responseJson:
             robots = responseJson['robots']
-            self.logger.debug("{0} robots found".format(len(robots)))
+            self.logger.debug("{0} robots found".format(len(robots))) 
+            self._numberRobots = len(robots)
     
             #Pick first robot in robot list:
             if 'nucleo_url' in robots[0]:
