@@ -24,26 +24,27 @@
 import logging
 import threading
 
+import lib.connection
 from lib.logic import Logics
 from lib.item import Items
 from lib.model.smartplugin import SmartPlugin
 from lib.utils import Utils
-from lib.network import Tcp_server
 
 
-class CLIHandler:
+class CLIHandler(lib.connection.Stream):
     terminator = '\n'.encode()
 
-    def __init__(self, smarthome, client, source, updates, hashed_password, commands, plugin):
+    def __init__(self, smarthome, sock, source, updates, hashed_password, commands, plugin):
         """
         Constructor
         :param smarthome: SmartHomeNG instance
-        :param client: lib.network.__Client
+        :param sock: Socket
         :param source: Source
         :param updates: Flag: Updates allowed
         :param hashed_password: Hashed password that is required to logon
         :param commands: CLICommands instance containing available commands
         """
+        lib.connection.Stream.__init__(self, sock, source)
         self.logger = logging.getLogger(__name__)
         self.source = source
         self.updates_allowed = updates
@@ -51,9 +52,6 @@ class CLIHandler:
         self.hashed_password = hashed_password
         self.commands = commands
         self.__prompt_type = ''
-        self.__client = client
-        self.__socket = self.__client.socket
-        self.__client.set_callbacks(data_received=self.data_received)
         self.push("SmartHomeNG v{0}\n".format(self.sh.version))
 
         if hashed_password is None:
@@ -68,14 +66,17 @@ class CLIHandler:
         Send data to client
         :param data: String to send
         """
-        self.__client.send(data)
+        self.send(data.encode())
 
-    def data_received(self, server, client, cmd):
+    def found_terminator(self, data):
         """
         Received data and found terminator (newline) in data
         :param data: Received data up to terminator
         """
+        if not self.plugin.alive:
+            self.close()
         # Call process methods based on prompt type
+        cmd = data.decode().strip()
         if self.__prompt_type == 'password':
             self.__process_password(cmd)
         elif self.__prompt_type == 'command':
@@ -95,7 +96,7 @@ class CLIHandler:
         else:
             self.logger.debug("CLI: {0} Authorization failed".format(self.source))
             self.push("Authorization failed. Bye\n")
-            self.__client.close()
+            self.close()
             return
 
     def __process_command(self, cmd):
@@ -105,7 +106,7 @@ class CLIHandler:
         """
         if cmd in ('quit', 'q', 'exit', 'x'):
             self.push('bye\n')
-            self.__client.close()
+            self.close()
             return
         else:
             if not self.commands.execute(self, cmd, self.source):
@@ -121,7 +122,7 @@ class CLIHandler:
         """
         Push 'echo off' and password prompt to client.
         """
-        self.__client.send_echo_off()
+        self.__echo_off()
         self.push("Password: ")
         self.__prompt_type = 'password'
 
@@ -130,8 +131,48 @@ class CLIHandler:
         Push 'echo on' and newline to client
         :return:
         """
-        self.__client.send_echo_on()
+        self.__echo_on()
         self.push("\n")
+
+    def __echo_off(self):
+        """
+        Send 'IAC WILL ECHO' to client, telling the client that we will echo.
+        Check that reply is 'IAC DO ECHO', meaning that the client has understood.
+        As we are not echoing entered text will be invisible
+        """
+        try:
+            self.socket.settimeout(2)
+            self.send(bytearray([0xFF, 0xFB, 0x01]))  # IAC WILL ECHO
+            data = self.socket.recv(3)
+            self.socket.setblocking(0)
+            if data != bytearray([0xFF, 0xFD, 0x01]):  # IAC DO ECHO
+                self.logger.error("Error at 'echo off': Sent b'\\xff\\xfb\\x01 , Expected reply b'\\xff\\xfd\\x01, received {0}".format(data))
+                self.push("'echo off' failed. Bye")
+                self.close()
+        except Exception as e:
+            self.push("\nException at 'echo off'. See log for details.")
+            self.logger.exception(e)
+            self.close()
+
+    def __echo_on(self):
+        """
+        Send 'IAC WONT ECHO' to client, telling the client that we wont echo.
+        Check that reply is 'IAC DONT ECHO', meaning that the client has understood.
+        Now the client should be echoing and we do not have to care about this
+        """
+        try:
+            self.socket.settimeout(2)
+            self.send(bytearray([0xFF, 0xFC, 0x01]))  # IAC WONT ECHO
+            data = self.socket.recv(3)
+            self.socket.setblocking(0)
+            if data != bytearray([0xFF, 0xFE, 0x01]):  # IAC DONT ECHO
+                self.logger.error("Error at 'echo on': Sent b'\\xff\\xfc\\x01 , Expected reply b'\\xff\\xfe\\x01, received {0}".format(data))
+                self.push("'echo off' failed. Bye")
+                self.close()
+        except Exception as e:
+            self.push("\nException at 'echo on'. See log for details.")
+            self.logger.exception(e)
+            self.close()
 
     def __push_command_prompt(self):
         """Push command prompt to client"""
@@ -139,9 +180,9 @@ class CLIHandler:
         self.__prompt_type = 'command'
 
 
-class CLI(SmartPlugin):
+class CLI(SmartPlugin, lib.connection.Server):
 
-    PLUGIN_VERSION = '1.5.1'     # is checked against version in plugin.yaml
+    PLUGIN_VERSION = '1.4.2'     # is checked against version in plugin.yaml
 
     def __init__(self, smarthome, update='False', ip='127.0.0.1', port=2323, hashed_password=''):
         """
@@ -164,8 +205,7 @@ class CLI(SmartPlugin):
         elif not Utils.is_hash(hashed_password):
             self.logger.error("CLI: Value given for 'hashed_password' is not a valid hash value. Login will not be possible")
 
-        self.server = Tcp_server(interface=ip, port=port, name='CLI', mode=Tcp_server.MODE_TEXT_LINE)
-        self.server.set_callbacks(incoming_connection=self.handle_connection)
+        lib.connection.Server.__init__(self, ip, port)
         self.sh = smarthome
         self.updates_allowed = Utils.to_bool(update)
         self.hashed_password = hashed_password
@@ -173,26 +213,31 @@ class CLI(SmartPlugin):
         self.alive = False
 
 
-    def handle_connection(self, server, client):
+    def handle_connection(self):
         """
         Handle incoming connection
         """
-        self.logger.debug("Incoming connection from {}".format(client.name))
-        CLIHandler(self.sh, client, client.name, self.updates_allowed, self.hashed_password, self.commands, self)
+        if self.alive:
+            sock, address = self.accept()
+            if sock is None:
+                return
+            self.logger.debug("{}: incoming connection from {} to {}".format(self._name, address, self.address))
+            CLIHandler(self.sh, sock, address, self.updates_allowed, self.hashed_password, self.commands, self)
+        else:
+            self.close()
 
     def run(self):
         """
         Called by SmartHomeNG to start plugin
         """
         self.alive = True
-        self.server.start()
 
     def stop(self):
         """
         Called by SmarthomeNG to stop plugin
         """
         self.alive = False
-        self.server.close()
+        self.close()
 
     def add_command(self, command, function, usage):
         """
@@ -260,7 +305,7 @@ class CLICommands:
         self.add_command('rr', self._cli_lrr, 'logic', None)
         self.add_command('lt', self._cli_lt, 'logic', 'lt [logic]: trigger a logic - command alias: tr')
         self.add_command('tr', self._cli_lt, 'logic', None)
-        
+
         self.add_command('sl', self._cli_sl, 'scheduler', 'sl: list all scheduler tasks by name')
         self.add_command('st', self._cli_sl, 'scheduler', 'st: list all scheduler tasks by execution time')
         self.add_command('si', self._cli_si, 'scheduler', 'si [task]: show details for given scheduler task')
@@ -472,7 +517,7 @@ class CLICommands:
         if idle_threads > 0:
             threads.append(self.thread_sum("idle", idle_threads))
             threads_count += idle_threads
-        
+
         threads_sorted = sorted(threads, key=lambda k: k['sort'])
 
         handler.push("{0} Threads:\n".format(threads_count))
