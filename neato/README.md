@@ -1,6 +1,6 @@
 # Neato/Vorwerk Vacuum Robot
 
-#### Version 1.0.0
+#### Version 1.6.2
 
 This plugin connects your Neato (https://www.neatorobotics.com/) or Vorwerk Robot with SmarthomeNG.
 - Command start, stop, pause, resume cleaning and trigger sendToBase and FindMe mode.
@@ -9,7 +9,9 @@ This plugin connects your Neato (https://www.neatorobotics.com/) or Vorwerk Robo
 ## Change history
 
 V 1.6.2    Added webinterface
+
 V 1.6.1    Added new Vorwerk Oauth2 based authentication feature (compatible with myKobold APP)
+
 V 1.6.0    Initial working version
 
 ## Requirements
@@ -66,12 +68,18 @@ Neato:
 
 In order to obtain a token, use the plugin's webinterface on the Vorwerk OAuth2 tab.
 
-If you cannot operate the webinterface, do the following steps manually: 
+If you cannot operate the webinterface, do the following steps manually:
+ 
 a) Enable Neato plugin and configure Vorwerk account email address
+
 b) Enable logging at INFO level for neato plugin in logger.yaml
+
 c) Execute plugin function request_oauth2_code. This will request a code from neato to be sent by email to the above address.
+
 d) After reception of the code, execute the plugin function request_oauth2_token(code) with the received code as argument
+
 e) Read the generated ASCII hex token from the logging file
+
 f) Insert the token to the neato plugin section of the plugin.yaml configuration file
 
 

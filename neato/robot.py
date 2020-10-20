@@ -82,8 +82,14 @@ class Robot:
     def setClientIDHash(self, hash):
         self._clientIDHash = hash
 
-    # Neato Available Commands
+    # Send command to robot. Return None if not successful   
     def robot_command(self, command):
+
+        if self.__secretKey == '':
+            self.logger.warning("Robot: Cannot execute command. SecretKey still invalid. Aborting.")
+            return None
+
+        # Neato Available Commands
         if command == 'start':
             n = self.__cleaning_start_string()
         elif command == 'pause':
@@ -106,11 +112,15 @@ class Robot:
         message = self.serial.lower() + '\n' + self.__get_current_date() + '\n' + n
         h = hmac.new(self.__secretKey.encode('utf-8'), message.encode('utf8'), hashlib.sha256)
 
-        start_cleaning_response = self._session.post(
-            self.__urlNucleo + "/vendors/"+self.__vendor+"/robots/" + self.serial + "/messages", data=n,
-            headers={'X-Date': self.__get_current_date(), 'X-Agent': 'ios-7|iPhone 4|0.11.3-142',
+        try:
+            start_cleaning_response = self._session.post(
+                self.__urlNucleo + "/vendors/"+self.__vendor+"/robots/" + self.serial + "/messages", data=n,
+                headers={'X-Date': self.__get_current_date(), 'X-Agent': 'ios-7|iPhone 4|0.11.3-142',
                      'Date': self.__get_current_date(), 'Accept': 'application/vnd.neato.nucleo.v1',
                      'Authorization': 'NEATOAPP ' + h.hexdigest()}, timeout=self._timeout )
+        except Exception as e:
+            self.logger.error("Robot: Exception during command request: %s" % str(e))
+            return None
 
         #error handling
         responseJson = start_cleaning_response.json()
@@ -133,15 +143,20 @@ class Robot:
 
         # Authentication via email and passwort:
         if self._token == '':
+            self.logger.debug("Robot: Using user/password interface")
             self.__secretKey = self.__get_secret_key()
-            if not self.__secretKey:
-                self.logger.error("Robot: Could not obtain valid secret key")
-                return 'error'
 
         # Oauth2 Authentication via email and token (for Vorwerk only):    
         else:
-            #self.logger.debug("Robot: Using oAuth2 interface")
-            self.__secretKey = self.get_secretKey_viaOauth()
+            self.logger.debug("Robot: Using oAuth2 interface")
+            if self.__secretKey == '':
+                self.logger.info("Robot: Secret key is invalid. Requesting new one via token")
+                self.__secretKey = self.get_secretKey_viaOauth()
+                self.logger.debug("Robot: SecretKey is {0}".format(self.__secretKey))
+
+        if self.__secretKey == '':
+            self.logger.warning("Robot: Still no valid secret key. Aborting update fct.")
+            return 'error'
 
         #self.logger.debug("Returned secret key is {0}".format(self.__secretKey))
 
@@ -166,7 +181,7 @@ class Robot:
         elif statusCode == 403:
             self.logger.debug("Sending cloud state request returned: Forbidden. Aquire new session key.")
         else:
-            self.logger.error("Sending cloud state request successful error: {0}".format(statusCode))
+            self.logger.error("Sending cloud state request error: {0}".format(statusCode))
             return 'error'
 
 
@@ -393,9 +408,14 @@ class Robot:
         secretKey = ''
         #self.logger.debug("Start function get secretKey via Oauth2")
 
-        request_robots_response = self._session.get(self.__urlBeehive + "/dashboard", headers={'Authorization': 'Auth0Bearer ' + str(self._token)}, timeout=self._timeout)
+        try:
+            request_robots_response = self._session.get(self.__urlBeehive + "/dashboard", headers={'Authorization': 'Auth0Bearer ' + str(self._token)}, timeout=self._timeout, verify=False)
+
+        except Exception as e:
+            self.logger.error("Robot: Exception during secret key via token request: %s" % str(e))
+            return ''
+
         #self.logger.debug("Response: {0}".format(request_robots_response.text))
-        
         responseJson = request_robots_response.json()
 
         if 'robots' in responseJson:
