@@ -24,6 +24,7 @@
 #
 #########################################################################
 
+import io
 import os
 import logging
 import re
@@ -2297,7 +2298,7 @@ class Speaker(object):
 
 class Sonos(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.5.0"
+    PLUGIN_VERSION = "1.5.1"
 
     def __init__(self, sh, *args, **kwargs):
         super().__init__(**kwargs)
@@ -2442,6 +2443,12 @@ class Sonos(SmartPlugin):
             self._discover_cycle = discover_cycle_default
 
         self.logger.info("Sonos: Setting discover cycle to {val} seconds.".format(val=self._discover_cycle))
+
+        # Read SoCo Version:
+        src = io.open('plugins/sonos/soco/__init__.py', encoding='utf-8').read()
+        metadata = dict(re.findall("__([a-z]+)__ = \"([^\"]+)\"", src))
+        VERSION = metadata['version']
+        self.logger.info("Loading SoCo version {0}.".format(VERSION))
 
     def run(self):
         self.logger.debug("Run method called")
