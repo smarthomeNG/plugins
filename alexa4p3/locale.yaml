@@ -1,0 +1,48 @@
+plugin_translations:
+    # Translations for the plugin specially for the web interface
+    'allowed IP':                    {'de': 'erlaubte IP', 'en': '=', 'fr': ''}
+    'last Session':                  {'de': 'letzte Sitzung', 'en': '=', 'fr': ''}
+    'Stream-Modifiers':              {'de': 'Stream-Modikatoren', 'en': '=', 'fr': ''}
+    'last Session duration':         {'de': 'letzte Sitzungs- dauer', 'en': '=', 'fr': ''}
+    'Sessions total':                {'de': 'Sitzungen gesamt', 'en': '=', 'fr': ''}
+    'Settings':                      {'de': 'Einstellungen', 'en': '=', 'fr': ''}
+    'Credentials:':                  {'de': 'Zugangsdaten:', 'en': '=', 'fr': ''}
+    'delete Protocol':               {'de': 'Protokoll löschen:', 'en': '=', 'fr': ''}
+    'Real-URL':                      {'de': 'tatsächliche URL', 'en': '=', 'fr': ''}
+    'Commit Changes':                {'de': 'Änderungen speichern', 'en': '=', 'fr': ''}
+    'Store to Config':               {'de': 'in Konfiguration speichern', 'en': '=', 'fr': ''}
+    'Settings / Cam-Info':           {'de': 'Einstellungen / Kamera-Infos', 'en': '=', 'fr': ''}
+    'Communication-Log':             {'de': 'Kommunikations-Log', 'en': '=', 'fr': ''}
+    'active Camera Threads':         {'de': 'aktive Kamera-Threads', 'en': '=', 'fr': ''}
+    'SSL Certificate Info':          {'de': 'SSL Zertifikas Info', 'en': '=', 'fr': ''}
+    'Proxy-Credentials':             {'de': 'Proxy-Zugangsdaten', 'en': '=', 'fr': ''}
+    'Proxy-Authorization':           {'de': 'Proxy-Authorisierungs-Typ', 'en': '=', 'fr': ''}
+    'Video-Buffer-Size :':           {'de': 'Video-Puffer-Grösse', 'en': '=', 'fr': ''}
+    'Authorization :':               {'de': 'Authorisierungs-Typ', 'en': '=', 'fr': ''}
+    'Encode':                        {'de': 'enkodieren', 'en': '=', 'fr': ''}
+    'encoded Cred.:':                {'de': 'enkodierte Zugangsdaten', 'en': '=', 'fr': ''}
+    'Result :':                      {'de': 'Ergebnis', 'en': '=', 'fr': ''}
+    'Value':                         {'de': 'Wert', 'en': '=', 'fr': ''}
+    'Property':                      {'de': 'Eigenschaft', 'en': '=', 'fr': ''}
+    'Threads existing ...':          {'de': 'existierende Threads', 'en': '=', 'fr': ''}
+    'Auto Update ( 2 sec.)':         {'de': 'Auto Update ( 2 Sek.)', 'en': '=', 'fr': ''}
+    'last/next Auto-Login' :         {'de': 'letztes/nächstes Auto-Login', 'en': '=', 'fr': ''}
+    'selected Device'      :         {'de': 'gwähltes Gerät', 'en': '=', 'fr': ''}
+    'No. of Alexa-Devices':          {'de': 'Anzahl Alexa-Geräte', 'en': '=', 'fr': ''}
+    'LogOff':                        {'de': 'Ausloggen', 'en': '=', 'fr': ''}
+    'LogIn':                         {'de': 'Einloggen', 'en': '=', 'fr': ''}
+    'Store Cookie':                  {'de': 'Cookie speichern', 'en': '=', 'fr': ''}
+    'Paste the Cookie-File here':    {'de': 'Cookie File hier einfügen', 'en': '=', 'fr': ''}
+    'existing Commands':             {'de': 'existierende Kommandos', 'en': '=', 'fr': ''}
+    'Command-Name':                  {'de': 'Kommando-Name', 'en': '=', 'fr': ''}
+
+
+#    '':      {'de': 'Proxy-Authorisierungs-Typ', 'en': '=', 'fr': ''}
+
+
+
+
+
+
+
+
