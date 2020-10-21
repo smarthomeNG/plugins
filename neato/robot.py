@@ -181,7 +181,7 @@ class Robot:
         elif statusCode == 403:
             self.logger.debug("Sending cloud state request returned: Forbidden. Aquire new session key.")
         else:
-            self.logger.error("Sending cloud state request error: {0}".format(statusCode))
+            self.logger.error("Sending cloud state request error: {0}, msg: {1}".format(statusCode,robot_cloud_state_response.text ))
             return 'error'
 
 
