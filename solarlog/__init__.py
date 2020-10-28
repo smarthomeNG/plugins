@@ -2,7 +2,7 @@
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
 #  Copyright 2013 Niko Will             2ndsky @ http://knx-user-forum.de
-#  Copyright 2019 Bernd Meiners					    Bernd.Meiners@mail.de
+#  Copyright 2019-2020 Bernd Meiners    Bernd.Meiners@mail.de
 #########################################################################
 #  This file is part of SmartHomeNG.
 #
@@ -32,14 +32,13 @@ import logging
 from lib.shtime import Shtime
 shtime = Shtime.get_instance()
 
-
 class SolarLog(SmartPlugin):
     """
     Main class of the Plugin. Does all plugin specific stuff and provides
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.6.0'
+    PLUGIN_VERSION = '1.6.1'
 
     def __init__(self, sh, *args, **kwargs):
         """
@@ -102,7 +101,7 @@ class SolarLog(SmartPlugin):
         """
         Polls for updates of the SolarLog device
         """
-        now = self._sh.now()
+        now = shtime.now()
 
         try:
             if not self.first_poll:
