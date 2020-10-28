@@ -35,10 +35,16 @@ parameters:
     robot_vendor:
         type: str
         mandatory: True
-        default: 'neato'
+        default: 'neato
+        valid_list:
+          - neato
+          - vorwerk
+        valid_list_description:
+            de: ['Neato Roboter', 'Vorwerk Roboter']
+            en: ['Neato robot', 'Vorwerk robot']
         description:
-            de: 'Hersteller des Neato/Vorwerk Roboters'
-            en: 'Vendor of your Neato/Vorwerk robot'
+            de: 'Hersteller des Roboters'
+            en: 'Vendor of your robot'
     token:
         type: str
         default: ''
