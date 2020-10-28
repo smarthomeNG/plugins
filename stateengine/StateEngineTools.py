@@ -262,6 +262,7 @@ class SeItemChild:
         self._abitem = abitem
         self.se_plugin = abitem.se_plugin
         self._sh = abitem.sh
+        self._shtime = abitem.shtime
 
     # wrapper method for logger.info
     def _log_info(self, text, *args):
