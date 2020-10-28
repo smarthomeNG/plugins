@@ -40,7 +40,7 @@ plugin:
     documentation: https://www.smarthomeng.de/user/plugins/stateengine/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1303071-stateengine-plugin-support
 
-    version: 1.7.2
+    version: 1.7.3
     sh_minversion: 1.6
     multi_instance: False
     classname: StateEngine
@@ -371,6 +371,22 @@ item_attributes:
             en: '**Id of the item that saves the suspend end time:**\n
                 To visualize the end time of the suspend state.
                 '
+
+    se_item_suspend_start:
+        type: str
+        description:
+            de: 'Id des Items, in dem der Start der Suspendzeit abgelegt werden soll'
+            en: 'Id of the item that saves the suspend start time'
+        description_long:
+            de: '**Id des Items, in dem der Start der Suspendzeit abgelegt werden soll:**\n
+                Für Visualisierungszwecke kann der Inhalt des hier verknüpften Items
+                z.B. im clock.countdown Widget der SmartVisu genutzt werden.
+                '
+            en: '**Id of the item that saves the suspend start time:**\n
+                To visualize the start time of the suspend state can be used
+                for example for the clock.countdown widget.
+                '
+
     se_log_level:
         type: int
         valid_list:
@@ -495,7 +511,42 @@ item_structs:
         suspend_end:
             type: str
             visu_acl: ro
-            cache: True
+            eval: sh..self.date_time.property.value.split(' ')[1].split('.')[0]
+            eval_trigger: .date_time
+            crontab: init
+
+            date_time:
+                type: str
+                visu_acl: ro
+                cache: True
+
+            unix_timestamp:
+                type: num
+                visu_acl: ro
+                eval: value if sh...date_time.property.value in ['', ' '] else sh.tools.dt2ts(shtime.datetime_transform(sh...date_time.property.value)) * 1000
+                eval_trigger: ..date_time
+                crontab: init
+
+
+        suspend_start:
+            type: str
+            visu_acl: ro
+            eval: sh..self.date_time.property.value.split(' ')[1].split('.')[0]
+            eval_trigger: .date_time
+            crontab: init
+
+            date_time:
+                type: str
+                visu_acl: ro
+                cache: True
+
+            unix_timestamp:
+                remark: Can be used for the clock.countdown widget
+                type: num
+                visu_acl: ro
+                eval: value if sh...date_time.property.value in ['', ' '] else sh.tools.dt2ts(shtime.datetime_transform(sh...date_time.property.value)) * 1000
+                eval_trigger: ..date_time
+                crontab: init
 
         manuell:
             type: bool
@@ -517,11 +568,19 @@ item_structs:
             remark: Use these settings for your condition values
 
             suspendduration:
-                remark: duration of suspend mode
+                remark: duration of suspend mode in minutes (gets converted automatically)
                 type: num
                 visu_acl: rw
                 cache: True
                 initial_value: 60
+
+                duration_format:
+                    remark: Can be used for the clock.countdown widget
+                    type: str
+                    visu_acl: ro
+                    eval: "'{}d {}h {}i 0s'.format(int(sh...() //1440), int((sh...()%3600)//60), round((sh...()%3600)%60))"
+                    eval_trigger: ..
+                    crontab: init
 
             suspend_active:
                 remark: Use this to (de)activate suspend mode in general
@@ -540,7 +599,8 @@ item_structs:
 
         rules:
             se_item_suspend: ..suspend
-            se_item_suspend_end: ..suspend_end
+            se_item_suspend_end: ..suspend_end.date_time
+            se_item_suspend_start: ..suspend_start.date_time
             se_item_suspend_active: ..settings.suspend_active
             se_suspend_time: eval:se_eval.get_relative_itemproperty('..settings.suspendduration', 'value') * 60
             eval_trigger:
@@ -558,23 +618,36 @@ item_structs:
                       - 'order: 1'
                     se_action_suspend_end:
                       - 'function: set'
-                      - "to: eval:se_eval.insert_suspend_time('..suspend', suspend_text='%X')"
+                      - "to: eval:se_eval.insert_suspend_time('..suspend', suspend_text='%Y-%m-%d %H:%M:%S.%f%z')"
                       - 'repeat: True'
                       - 'order: 2'
+                    se_action_suspend_start:
+                      - 'function: set'
+                      - "to: eval:str(shtime.now())"
+                      - 'repeat: True'
+                      - 'order: 3'
+                      - 'conditionset: (.*)enter_manuell'
                     se_action_retrigger:
                       - 'function: special'
                       - 'value: retrigger:..retrigger'
                       - 'delay: var:item.suspend_remaining'
                       - 'repeat: True'
-                      - 'order: 3'
+                      - 'order: 4'
 
                 on_leave:
                     se_action_suspend:
                       - 'function: set'
                       - 'to: False'
+                      - 'order: 1'
                     se_action_suspend_end:
                       - 'function: set'
                       - 'to:  '
+                      - 'order: 2'
+                    se_action_suspend_start:
+                      - 'function: set'
+                      - 'to:  '
+                      - 'order: 3'
+                      - 'delay: 1'
 
                 enter_manuell:
                     se_value_trigger_source: eval:se_eval.get_relative_itemproperty('..manuell', 'path')
@@ -600,6 +673,7 @@ item_structs:
             se_item_suspend: ..suspend
             se_item_release: ..release
             se_item_suspend_end: ..suspend_end
+            se_item_suspend_start: ..suspend_start
             eval_trigger:
                 - ..release
 
@@ -615,7 +689,7 @@ item_structs:
                       - 'function: set'
                       - 'to: False'
                       - 'order: 2'
-                    se_action_suspend_end:
+                    se_action_suspend_start:
                       - 'function: set'
                       - 'to: '
                       - 'order: 3'

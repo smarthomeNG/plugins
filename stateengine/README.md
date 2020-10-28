@@ -13,6 +13,10 @@ Copy stateengine.example.html from the sv_widgets folder to your smartvisu/dropi
 http://URL/index.php?page=widgets/stateengine.example
 
 ## Changelog
+### v1.7.3
+* Implement new items for suspend_end (date_time and unix timestamp) as well as for suspend_start
+* Update some functions to use shtime instead of sh lib
+
 ### v1.7.2
 * Implemented changedyby and updatedby conditions
 * Implemented regular expression possibility
