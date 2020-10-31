@@ -113,7 +113,7 @@ Currently are three different keys supported:
 
   * `item|item.path|value`
   * `logic|logic_name|value`
-  * `log|loglevel|message` # loglevel coud be info, warning or error
+  * `log|loglevel|message` # loglevel could be info, warning or error
 
 ```bash
 # send a udp message to set the item 'network.incoming' to '123'

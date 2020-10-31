@@ -25,7 +25,7 @@ plugin:
         en: 'pyserial python module'
     maintainer: onkelandy
     tester: Foxi352                     # Who tests this plugin?
-    state: develop
+    state: ready
 
     keywords: av denon pioneer epson oppo player amp receiver projector rs232 telnet tcpip remote control
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
@@ -255,13 +255,6 @@ parameters:
         description_long:
             de: "Verbindet sich das Plugin, werden die Werte automatisch abgefragt, auch wenn kein Depend=Init im Item angegeben ist. Sollen nur Items abgefragt werden, bei denen das depend-Attribut auf init gesetzt ist, sollte dieser Wert auf False gestellt werden."
             en: "As soon as the plugin connects to the device the values get queried automatically even if the Depend=Init is not set in the items. If you want to query only those items that are set explicitly change this value to False."
-
-    instance:
-        type: str
-        default: ''
-        description:
-            de: 'Eindeutiger Identifier für die Instanz des Plugins. Kann bei nur einer konfigurierten Instanz des Plugins entfallen.'
-            en: 'Unique identifier for each instance of the plugin. Can be omitted if only one device instance of the plugin is configured.'
 
 item_attributes:
 
@@ -745,12 +738,6 @@ item_structs:
             enforce_updates: True
             avdevice_zone1_depend@instance: tone
 
-        dialog:
-            type: num
-            visu_acl: rw
-            avdevice_zone1@instance: dialog
-            avdevice_zone1_depend@instance: power
-
         trebble:
             type: num
             visu_acl: rw
@@ -965,7 +952,6 @@ item_structs:
             type: num
             visu_acl: ro
             avdevice_zone1@instance: hdmi
-            avdevice_zone1_depend@instance: power
             avdevice_zone1_depend@instance: power
 
         videoinput:

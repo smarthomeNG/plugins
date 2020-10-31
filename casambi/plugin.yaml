@@ -1,0 +1,111 @@
+# Metadata for the plugin
+plugin:
+    # Global plugin attributes
+    type: gateway                   # plugin type (gateway, interface, protocol, system, web)
+    description:
+        de: 'Gateway plugin fuer Casambi'
+        en: 'Gateway plugin for Casambi devices'
+    maintainer: aschwith
+#   tester:                         # Who tests this plugin?
+    state: ready                    # change to ready when done with development
+#   keywords: iot xyz
+#   documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1496182-supportthread-f%C3%BCr-casambi-plugin
+
+    version: 1.7.1                  # Plugin version (must match the version specified in __init__.py)
+    sh_minversion: 1.7              # minimum shNG version to use this plugin
+#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    multi_instance: False           # plugin supports multi instance
+    restartable: unknown
+    classname: Casambi         # class containing the plugin
+
+parameters:
+    # Definition of parameters to be configured in etc/plugin.yaml (enter 'parameters: NONE', if section should be empty)
+    api_key:
+        type: str
+        mandatory: True
+        description:
+            de: 'Casambi API key'
+            en: 'Casambi API key'
+
+    email:
+        type: str
+        mandatory: True
+        description:
+            de: 'Emailadresse des Casambi Accounts'
+            en: 'Email adress of Casambi account'
+
+    password:
+        type: str
+        mandatory: True
+        hide: True
+        description:
+            de: 'Passwort des Casambi Accounts'
+            en: 'Password of Casambi account'
+
+item_attributes:
+    # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)
+    casambi_id:
+        type: num
+        valid_min: 0
+        description:
+            de: 'Casambi Geraete ID'
+            en: 'Casambi device id'
+
+    casambi_tx_key:
+        type: str
+        description:
+            de: 'Key fuer das Senden von Kommandos ins Casambi Netzwerk'
+            en: 'Key for sending commands into the Casambi network'
+        valid_list:
+        - 'ON'
+        - 'DIMMER'
+        - 'VERTICAL'
+
+    casambi_rx_key:
+        type: str
+        description:
+            de: 'Key fuer den Empfang von Statusinformationen'
+            en: 'Key for receiving status informations'
+        valid_list:
+        - 'ON'
+        - 'DIMMER'
+        - 'VERTICAL'
+
+item_structs:
+    # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
+    dimmerdevice:
+        casambi_id: 2
+        enforce_updates: True
+        name: Occhio light
+
+        light:
+            type: bool
+            casambi_rx_key: ON
+            casambi_tx_key: ON
+            visu_acl: rw
+            enforce_updates: True
+
+            level:
+                type: num
+                value: 0
+                casambi_rx_key: DIMMER
+                casambi_tx_key: DIMMER
+                visu_acl: rw
+                enforce_updates: True
+
+            vertical:
+                type: num
+                value: 0
+                casambi_rx_key: VERTICAL
+                casambi_tx_key: VERTICAL
+                visu_acl: rw
+                enforce_updates: True
+
+
+plugin_functions: NONE
+    # Definition of plugin functions defined by this plugin (enter 'plugin_functions: NONE', if section should be empty)
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)
+

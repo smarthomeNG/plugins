@@ -2,23 +2,90 @@
 
 {% set logo_frame = false %}
 
+{% set update_interval = 1000 %}
+
+{% block pluginscripts %}
+<script>
+    function handleUpdatedData(response, dataSet = null) {
+        if (dataSet === null) {
+            var response = JSON.parse(response);
+            state = response['state'];
+
+            shngInsertText('header_power', "<i class='fas fa-power-off' style='color:" + (state['power'] ? 'green' : 'red') + ";'></i>&nbsp;{{ p._atv.name }}");
+
+			if (state['playing_state']) {
+				switch(state['playing_state']) {
+					case 1:
+						content = '<i class="fas fa-spinner"></i>'
+						break;
+					case 2:
+						content = '<i class="far fa-pause-circle" style="color:orange;""></i>'
+						break;
+					case 3:
+						content = '<i class="far fa-play-circle" style="color:green;""></i>'
+						break;
+					case 4:
+						content = '<i class="far fa-stop-circle" style="color:red;""></i>'
+						break;
+					default:
+						content = '<i class="far fa-question-circle" style="color:red;""></i>'
+						break;
+				}
+				shngInsertText('tab1_device_state', content + '&nbsp;');
+			}
+
+			shngInsertText('tab1_type_text', (state['playing_type_text'] ? state['playing_type_text'] : '---'));
+			shngInsertText('tab1_artist', (state['playing_artist'] ? state['playing_artist'] : '---'));
+			shngInsertText('tab1_album', (state['playing_album'] ? state['playing_album'] : '---'));
+			shngInsertText('tab1_title', (state['playing_title'] ? state['playing_title'] : '---'));
+			shngInsertText('tab1_genre', (state['playing_genre'] ? state['playing_genre'] : '---'));
+			shngInsertText('tab1_playing_position', state['playing_position'] + ' / ' + state['playing_total_time'] + ' (' + state['playing_position_percent'] + '%)');
+			shngInsertText('tab1_repeat', (state['playing_repeat_text'] ? state['playing_repeat_text'] : '---'));
+			shngInsertText('tab1_shuffle', (state['playing_shuffle_text'] ? state['playing_shuffle_text'] : '---'));
+            // Artwork
+            if (state['artwork_base64']) {
+                shngInsertText('tab1_artwork', '<img src="data:' + state['artwork_mimetype'] + ';base64,' + state['artwork_base64'] + '"style="width: 80%; display: block; margin: auto;">');
+            }
+
+        }
+    }
+
+	$(document).ready(function() {
+        $('#pincode-input').pincodeInput({hidedigits:false,inputs:4});
+        {% if pinentry %}
+            $('#pinEntry').modal();
+        {% endif %}
+        $('#pinEntry').on('hidden.bs.modal', function (e) {
+            $('#button').val('finish_authorization');
+            $('#pin').val($('#pincode-input').val());
+            $('#button_pressed').submit();
+        })
+    });
+
+</script>
+<script src="static/js/bootstrap-pincode-input.js"></script>
+
+{% endblock pluginscripts %}
+
 {% block headtable %}	
 <table class="table table-striped table-hover">
 	<tbody>
 		<tr>
 			<td class="py-1"><strong>{{ _('Name') }}</strong></td>
-			<td class="py-1">{{ p._name }}</td>
+			<td id="header_power" class="py-1"><i class="fas fa-power-off" style="color:{% if p._state['power'] %}green{% else %}red{% endif %};"></i>&nbsp;{{ p._atv.name }}</td>
 			<td class="py-1" width="50px"></td>
-		</tr>
+			<td class="py-1"><strong>{{ _('Model') }} - {{ _('OS') }}</strong></td>
+			<td class="py-1">{{ p._state['model'] }} - {{ p._state['os'] }}</td>		</tr>
 		<tr>
 			<td class="py-1"><strong>{{ _('IP') }}</strong></td>
 			<td class="py-1">{{ p._ip }}</td>
 			<td></td>
+			<td class="py-1"><strong>{{ _('MAC') }}</strong></td>
+			<td class="py-1">{{ p._state['mac'] }}</td>
 		</tr>
 		<tr>
-			<td class="py-1"><strong>{{ _('Login ID') }}</strong></td>
-			<td class="py-1">{{ p._login_id }}</td>
-			<td></td>
+			<td class="py-1"><strong>{{ _('Identifier') }}</strong></td>
+			<td colspan="4" class="py-1">{{ p._atv.identifier }}</td>
 		</tr>
 	</tbody>
 </table>
@@ -32,50 +99,116 @@
 	    <input type="hidden" id="button" name="button" value="">
 	    <input type="hidden" id="pin" name="pin" value="">
         <button class="btn btn-shng btn-sm" type="button" onclick="$('#button').val('discover');$('#button_pressed').submit();">
-        <i class="fas fa-search"></i>&nbsp;&nbsp;&nbsp;{{ _('Finden') }}&nbsp;</button>
+        <i class="fas fa-search"></i>&nbsp;&nbsp;&nbsp;{{ _('Discover') }}&nbsp;</button>
         <button class="btn btn-shng btn-sm" type="button" onclick="$('#button').val('start_authorization');$('#button_pressed').submit();" {% if p._credentials_verified %}disabled="True"{% endif %}>
-        <i class="fas fa-key"></i>&nbsp;&nbsp;&nbsp;{{ _('Autorisieren') }}&nbsp;</button>
+        <i class="fas fa-key"></i>&nbsp;&nbsp;&nbsp;{{ _('Pair') }}&nbsp;</button>
 	</form>
 {% endblock %}
 
-{% set tabcount = 1 %}
-{% block bodytab1 %}
+{% set tabcount = 3 %}
 
+{% set tab1title = "<i class='fab fa-apple'></i>&nbsp;<strong>" ~ p._state['name'] ~ "</strong>" %}
+{% block bodytab1 %}
 <!--
 	PIN entry modal dialog
 -->
-<script src="static/js/bootstrap-pincode-input.js"></script>
-<link rel="stylesheet" type="text/css" href="static/css/bootstrap-pincode-input.css">
-<script>
-   $(document).ready(function() {
-        $('#pincode-input').pincodeInput({hidedigits:false,inputs:4});
-        {% if pinentry %}
-            $('#pinEntry').modal();
-        {% endif %}
-        $('#pinEntry').on('hidden.bs.modal', function (e) {
-            $('#button').val('finish_authorization');
-            $('#pin').val($('#pincode-input').val());
-            $('#button_pressed').submit();
-        })
-    });
-</script>
 
+<link rel="stylesheet" type="text/css" href="static/css/bootstrap-pincode-input.css">
 <div class="modal fade" id="pinEntry" role="dialog">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h4 class="modal-title">{{ _('PIN eingeben') }}</h4>
+                <h4 class="modal-title">{{ _('Enter PIN') }}</h4>
             </div>
             <div class="modal-body">
-                <p>{{ _('PIN eingeben') }}: <input type="text" id="pincode-input"></p>
+                <p>{{ _('Enter PIN') }}: <input type="text" id="pincode-input"></p>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">{{ _('Validieren') }}</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">{{ _('Validate') }}</button>
             </div>
         </div>
     </div>
 </div>
 
+<!--
+	Rest of container 1
+-->
+<div class="container-fluid m-2">
+    <div class="row">
+        <div class="col-sm-4">
+            <div id="tab1_artwork">
+				{% if p._state['artwork_base64'] %}
+                <img src="data:{{ p._state['artwork_mimetype'] }};base64,{{ p._state['artwork_base64'] | safe }}"
+                    style="width: 80%; display: block; margin: auto;">
+                {% else %}
+                	<img src="static/img/no-artwork.png" style="width: 80%; display: block; margin: auto;">
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="col-sm">
+            <table class="table table-striped table-hover">
+                <tbody>
+					<tr>
+                        <td class="py-1"><strong>{{ _('State') }}</strong></td>
+                        <td class="py-1">
+							<div style="float: left;" id="tab1_device_state">
+								{% if p._state['playing_state'] == 1 %}
+									<i class="fas fa-spinner"></i>
+								{% elif p._state['playing_state'] == 2 %}
+								<i class="far fa-pause-circle" style='color:orange;'></i>
+								{% elif p._state['playing_state'] == 3 %}
+									<i class="far fa-play-circle" style='color:green;'></i>
+								{% elif p._state['playing_state'] == 4 %}
+									<i class="far fa-stop-circle" style='color:red;'></i>
+								{% endif %}
+								&nbsp;
+							</div>
+							<div id="tab1_type_text">{{ p._state['playing_type_text'] }}</div>
+						</td>
+                        <td></td>
+                        <td class="py-1"><strong>{{ _('Position') }}</strong></td>
+                        <td class="py-1" id="tab1_playing_position">
+							{{ p._state['playing_position'] }} / {{ p._state['playing_total_time'] }} ({{ p._state['playing_position_percent'] }}%)
+                        <td></td>
+					</tr>
+					
+                    <tr>
+                        <td class="py-1"><strong>{{ _('Artist') }}</strong></td>
+                        <td class="py-1" id="tab1_artist">{{ p._state['playing_artist'] }}</td>
+                        <td class="py-1" width="50px"></td>
+                        <td class="py-1"><strong>{{ _('Genre') }}</strong></td>
+                        <td class="py-1" id="tab1_genre">{{ p._state['playing_genre'] }}</td>
+                        <td class="py-1" width="50px"></td>
+                    </tr>
+
+                    <tr>
+                        <td class="py-1"><strong>{{ _('Album') }}</strong></td>
+                        <td class="py-1" id="tab1_album">{{ p._state['playing_album'] }}</td>
+                        <td></td>
+                        <td class="py-1"><strong>{{ _('Title') }}</strong></td>
+                        <td class="py-1" id="tab1_title">{{ p._state['playing_title'] }}</td>
+                        <td></td>
+					</tr>
+					
+                    <tr>
+                        <td class="py-1"><strong>{{ _('Repeat') }}</strong></td>
+                        <td class="py-1" id="tab1_repeat">{{ p._state['playing_repeat_text'] }}</td>
+                        <td></td>
+                        <td class="py-1"><strong>{{ _('Shuffle') }}</strong></td>
+                        <td class="py-1" id="tab1_shuffle">{{ p._state['playing_shuffle_text'] }}</td>
+                        <td></td>
+					</tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock bodytab1 %}
+
+
+{% set tab2title = "<i class='fas fa-tools'></i>&nbsp;<strong>" ~ _('Detected devices') ~ "</strong>" %}
+{% block bodytab2 %}
 
 <!--
 	Discovered devices table
@@ -87,38 +220,80 @@
 				<tr>
 				    <th>&nbsp;</th>
 					<th>{{ _('Name') }}</th>
-					<th>{{ _('IP Adresse') }}</th>
-					<th>{{ _('Login ID') }}</th>
-					<th>{{ _('DMAP Port') }}</th>
-					<th>{{ _('Airplay Port') }}</th>
+					<th>{{ _('IP address') }}</th>
+					<th>{{ _('MAC') }}</th>
+					<th>{{ _('Model') }}</th>
+					<th>{{ _('OS') }}</th>
+					<th>{{ _('Version') }}</th>
+					<th>{{ _('Build') }}</th>
+					<th>{{ _('Device') }}</th>
+					<th>{{ _('Protocol') }}</th>
+					<th>{{ _('Port') }}</th>
     			</tr>
 			</thead>
 			<tbody>
 			{% for atv in p._atvs %}
 				<tr>  
-				    <td class="py-1" style="color: {% if atv.login_id %}green{% else %}red{% endif %}">
+				    <td class="py-1" style="color: green">
 				        {% if atv.address|string() == p._ip|string() %}
-				            <i class="fas fa-play-circle" title="{{ _('Aktuelles Gerät') }}"></i>
-				        {% elif atv.login_id %}
-                            <i class="fas fa-check-circle" title="{{ _('Gerät nutzbar') }}"></i>
-                        {% else %}
-                            <i class="fas fa-exclamation-circle" title="{{ _('Gerät nicht nutzbar') }}"></i>
+				            <i class="fas fa-play-circle" title="{{ _('Actual device') }}"></i>
                         {% endif %}
 				    </td>
 					<td class="py-1">{{ atv.name }}</td>
 					<td class="py-1">{{ atv.address }}</td>
-					<td class="py-1">{{ atv.login_id }}</td>
-					<td class="py-1">{{ atv.port }}</td>
-					<td class="py-1">{{ atv.airplay_port }}</td>
+					<td class="py-1">{{ atv.device_info.mac }}</td>
+					<td class="py-1">{{ atv.device_info.model | replace("DeviceModel.", "") }}</td>
+					<td class="py-1">{{ atv.device_info.operating_system | replace("OperatingSystem.", "") }}</td>
+					<td class="py-1">{{ atv.device_info.version }}</td>
+					{% if atv.device_info.build_number %}
+						<td class="py-1">{{ atv.device_info.build_number }}</td>
+					{% else %}
+					<td class="py-1">-</td>
+					{% endif %}
+					<td class="py-1">{{ atv.identifier }}</td>
+					{% set service = atv.main_service() %}
+					<td class="py-1">{{ service.protocol | replace("Protocol.", "") }}</td>
+					<td class="py-1">{{ service.port }}</td>
 				</tr>
 			{% endfor %}
 			</tbody>
 		</table>
 	</div>
 </div>
-<div>
-    * {{ _('Wenn ein Gerät nicht nutzbar ist bitte überprüfen op Homesharing eingeschaltet ist.') }} 
+
+{% endblock bodytab2 %}
+
+<!--
+	Items list
+-->
+{% set tab3title = "<i class='fas fa-sitemap'></i>&nbsp;<strong>" ~ _('Items') ~ "</strong>" %}
+{% block bodytab3 %}
+<div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
+    <div class="col-sm-12">
+        <table class="table table-striped table-hover pluginList">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>{{ _('Item') }}</th>
+                    <th>{{ _('Wert') }}</th>
+                    <th>{{ _('Typ') }}</th>
+                    <th>{{ _('Visu access') }}</th>
+                </tr>
+            </thead>
+			{% for item in items %}
+				<tr>
+					<td class="py-1">{{ loop.index}}</td>
+					<td class="py-1">{{ item._path }}</td>
+					{% if item._type != 'foo' %}
+						<td class="py-1" style="word-break: break-all;">{{ item() }}</td>
+					{% else %}
+						<td class="py-1">&lt;binary object&gt;</td>
+					{% endif %}
+					<td class="py-1">{{ item._type }}</td>
+					<td class="py-1">{{ item.conf['visu_acl'] }}</td>
+				</tr>
+            {% endfor %}
+        </table>
+    </div>
 </div>
-
-{% endblock bodytab1 %}
-
+{% endblock bodytab3 %}

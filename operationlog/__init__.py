@@ -33,7 +33,7 @@ from .AutoBlindLoggerOLog import AbLogger
 
 
 
-class OperationLog(AbLogger, SmartPlugin):
+class OperationLog(SmartPlugin, AbLogger):
     _log = None
     _items = {}
     PLUGIN_VERSION = "1.3.0"
@@ -293,7 +293,7 @@ class OperationLog(AbLogger, SmartPlugin):
             olog_txt = self._logic_conf[logic.name]['olog_txt']
             olog_eval = self._logic_conf[logic.name]['olog_eval']
             eval_res = [eval(expr) for expr in olog_eval]
-            logvalues = [olog_txt.format(*eval_res, **{'plugin' : self, 'logic' : logic, 'by' : by, 'source' : source, 'dest' : dest})] 
+            logvalues = [olog_txt.format(*eval_res, **{'plugin' : self, 'logic' : logic, 'by' : by, 'source' : source, 'dest' : dest})]
             self.log(logvalues, 'INFO' if 'olog_level' not in logic.conf else logic.conf['olog_level'])
 
     def log(self, logvalues, level='INFO'):

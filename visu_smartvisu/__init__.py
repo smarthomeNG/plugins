@@ -4,7 +4,7 @@
 #  Copyright 2016- Martin Sinn                              m.sinn@gmx.de
 #  Parts Copyright 2012-2013 Marcus Popp                   marcus@popp.mx
 #########################################################################
-#  This file is part of SmartHomeNG.  
+#  This file is part of SmartHomeNG.
 #  Visit:  https://github.com/smarthomeNG/
 #          https://knx-user-forum.de/forum/supportforen/smarthome-py
 #
@@ -57,7 +57,7 @@ class SmartVisu(SmartPlugin):
     def __init__(self, smarthome, smartvisu_dir='', generate_pages='True', overwrite_templates='Yes', visu_style = 'std', handle_widgets='True' ):
         self.logger = logging.getLogger(__name__)
         self._sh = smarthome
-        
+
         self.smartvisu_dir = str(smartvisu_dir)
         self._generate_pages = self.my_to_bool(generate_pages, 'generate_pages', True)
         self.overwrite_templates = self.my_to_bool(overwrite_templates, 'overwrite_templates', True)
@@ -121,7 +121,7 @@ class SmartVisu(SmartPlugin):
     def get_smartvisu_version(self):
         """
         Determine which smartVISU version is installed in 'smartvisu_dir'
-        
+
         :return: version
         :rtype: str
         """
@@ -138,7 +138,7 @@ class SmartVisu(SmartPlugin):
         if os.path.isdir(os.path.join(self.smartvisu_dir, 'pages')):
             return '2.7'
         return ''
-        
+
 
 #########################################################################
 #       Visu page generator
@@ -165,12 +165,12 @@ class SmartVisuGenerator:
         self.outdir = os.path.join(self.smartvisu_dir, 'pages', 'smarthome')
         self.tpldir = os.path.join(self.smartvisu_dir, 'pages', 'base', 'tplNG')
         self.tmpdir = os.path.join(self.smartvisu_dir, 'temp')
-        if self.smartvisu_version == '2.9':
+        if self.smartvisu_version >= '2.9':
             self.tpldir = os.path.join(self.smartvisu_dir, 'dropins')
-        
+
         self.thisplgdir = os.path.dirname(os.path.abspath(__file__))
         self.copy_templates()
-        
+
         self.pages()
         self.logger.info("Generating pages for smartVISU v{} End".format(self.smartvisu_version))
 
@@ -197,7 +197,7 @@ class SmartVisuGenerator:
 
     def get_widgetblocksize(self, item):
         """
-        Returns the blocksize for the block in which the item is to be displayed. 
+        Returns the blocksize for the block in which the item is to be displayed.
 
         :param item: Item to be displayed
 
@@ -211,24 +211,24 @@ class SmartVisuGenerator:
         else:
             blocksize = '2'
         return blocksize
-        
-        
+
+
     def get_attribute(self, attr, item):
         if attr in item.conf:
             attrvalue = item.conf[attr]
         else:
             attrvalue = ''
         return attrvalue
-    
-    
+
+
     def room(self, room):
         """
-        Interpretation of the room-specific item-attributes. 
+        Interpretation of the room-specific item-attributes.
         This routine is called once per 'sv_page'.
 
         :param room: Items (with room configuration)
         :param tpldir: Directory where the template files are stored (within smartVISU)
-        
+
         :return: html code to be included in the visu file for the room
         :rtype: str
         """
@@ -300,7 +300,7 @@ class SmartVisuGenerator:
         nav_lis = ''
         cat_lis = ''
         lite_lis = ''
-                
+
 #        for item in self._sh.find_items('sv_page'):
         for item in self.items.find_items('sv_page'):
             if item.conf['sv_page'] in ['separator', 'seperator']:
@@ -356,7 +356,7 @@ class SmartVisuGenerator:
         self.copy_tpl('roomslite.html')
         self.copy_tpl('category.html')
         self.copy_tpl('index.html')
-        
+
 
 #########################################################################
 
@@ -445,9 +445,9 @@ class SmartVisuGenerator:
                 os.mkdir(self.tpldir)
             except:
                 pass
-            
+
 #            self.logger.warning("copy_templates: Copying templates from plugin-dir '{0}' to smartVISU-dir '{1}'".format(srcdir, self.tpldir))
-        
+
             # Open file for twig import statements (for root.html)
             for fn in os.listdir(srcdir):
                 if (self.overwrite_templates) or (not os.path.isfile(os.path.join(self.tpldir, fn)) ):
@@ -472,7 +472,7 @@ class SmartVisuInstallWidgets:
         self.smartvisu_dir = smartvisu_dir
         self.smartvisu_version = smartvisu_version
         self.logger.info("Installing widgets into smartVISU v{}".format(self.smartvisu_version))
-        
+
         # sv directories
         self.shwdgdir = 'sh_widgets'
         self.outdir = self.smartvisu_dir + '/widgets/' + self.shwdgdir
@@ -491,7 +491,7 @@ class SmartVisuInstallWidgets:
     def install_widgets(self, smarthome):
         if not self.remove_oldfiles():
             return
-    
+
         if self.smartvisu_version == '2.7' or self.smartvisu_version == '2.8':
             # make a backup copy of root.html if it doesn't exist (for full integeration)
             if not os.path.isfile( self.pgbdir + '/root_master.html' ):
@@ -512,7 +512,7 @@ class SmartVisuInstallWidgets:
             iln_html = self.findinsertline( root_contents, '{% import "plot.html" as plot %}' )
             iln_js = self.findinsertline( root_contents, "{% if isfile('pages/'~config_pages~'/visu.js') %}" )
             iln_css = self.findinsertline( root_contents, "{% if isfile('pages/'~config_pages~'/visu.css') %}" )
-    
+
         # copy widgets from plugin directories of configured plugins
         # read plungin.conf
         _conf = lib.config.parse(smarthome._plugin_conf)
@@ -551,7 +551,7 @@ class SmartVisuInstallWidgets:
         if iln == '':
             self.logger.warning("findinsertline: No insert point for pattern {0}".format(searchstring))
         return( iln )
-    
+
 
     def copy_widgets(self, plgdir, root_contents='', iln_html='', iln_js='', iln_css=''):
         wdgdir = 'sv_widgets'
@@ -577,7 +577,7 @@ class SmartVisuInstallWidgets:
                             shutil.copy2( os.path.join(srcdir, fn), os.path.join(self.outdir, dn) )
                         else:
                             shutil.copy2( os.path.join(srcdir, fn), self.outdir )
-                            
+
                 else:
                     # v2.7 & v2.8
                     shutil.copy2( srcdir + '/' + fn, self.outdir )
@@ -594,7 +594,7 @@ class SmartVisuInstallWidgets:
                         if iln_css != '':
                             self.create_cssinclude(fn, fn[7:-4] , root_contents, iln_css)
         return
-        
+
 
     def create_htmlinclude(self, filename, classname, root_contents, iln_html):
         insertln = root_contents.index(iln_html) +1
@@ -645,7 +645,7 @@ class SmartVisuInstallWidgets:
                     shutil.rmtree(fp)
             except Exception as e:
                 self.logger.warning("Could not delete directory {0}: {1}".format(fp, e))
-            
+
         # create destination directory for widgets
         self.logger.debug("install_widgets: Creating directory for widgets")
         try:

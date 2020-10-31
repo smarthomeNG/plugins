@@ -1,10 +1,10 @@
-.. index:: Administrations GUI; Logiken
+.. index:: backend Plugin; Logiken
 
 #######
 Logiken
 #######
 
-Ab SmartHomeNG v1.4 stehen in der graphischen Oberfläche Funktionen zur Verfügung, mit der 
+Ab SmartHomeNG v1.4 stehen in der graphischen Oberfläche Funktionen zur Verfügung, mit der
 Logiken vollständig verwaltet (erstellt, geändert und konfiguriert) werden können.
 
 
@@ -18,7 +18,7 @@ Die Logik Liste zeigt die Übersicht aller Logiken mit Informationen zu ihrer Ko
 .. image:: assets/backend_logikliste.jpg
    :class: screenshot
 
-Aus dieser Liste heraus kann man die Logiken triggern, neu laden, aktivieren bzw. deaktivieren, 
+Aus dieser Liste heraus kann man die Logiken triggern, neu laden, aktivieren bzw. deaktivieren,
 entladen und löschen. Ein Klick auf den Dateinamen führt in den Logik Editor.
 
 

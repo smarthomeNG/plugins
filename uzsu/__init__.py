@@ -102,6 +102,10 @@ class UZSU(SmartPlugin):
         self.itemsApi = Items.get_instance()
         self._timezone = Shtime.get_instance().tzinfo()
         self._remove_duplicates = self.get_parameter_value('remove_duplicates')
+        self._interpolation_interval = self.get_parameter_value('interpolation_interval')
+        self._interpolation_type = self.get_parameter_value('interpolation_type')
+        self._interpolation_precision = self.get_parameter_value('interpolation_precision')
+        self._backintime = self.get_parameter_value('backintime')
         self._sh = smarthome
         self._uzsu_sun = None
         self._items = {}
@@ -126,12 +130,13 @@ class UZSU(SmartPlugin):
 
         for item in self._items:
             self._items[item]['interpolation']['itemtype'] = self._add_type(item)
-            item(self._items[item], 'UZSU Plugin', 'itemtype')
+            self._items[item]['lastvalue'] = None
+            item(self._items[item], 'UZSU Plugin', 'run')
             cond1 = self._items[item].get('active') and self._items[item]['active'] is True
             cond2 = self._items[item].get('list')
             if cond1 and cond2:
                 self._update_count['todo'] = self._update_count.get('todo') + 1
-        self.logger.debug("Going to update {} items: {}".format(self._update_count['todo'], list(self._items.keys())))
+        self.logger.debug("Going to update {} items from {}".format(self._update_count['todo'], list(self._items.keys())))
 
         for item in self._items:
             cond1 = self._items[item].get('active') is True
@@ -245,6 +250,21 @@ class UZSU(SmartPlugin):
                 self.logger.warning("Item to be set by uzsu '{}' does not have a type attribute. Error: {}".format(_itemforuzsu, err))
         return _itemtype
 
+    def _logics_lastvalue(self, item=None):
+        if self._items.get(item):
+            lastvalue = self._items[item].get('lastvalue')
+        else:
+            lastvalue = None
+        self.logger.debug("Last value of item {} is: {}.".format(item, lastvalue))
+        return lastvalue
+
+    def _logics_resume(self, activevalue=True, item=None):
+        self._logics_activate(True, item)
+        lastvalue = self._logics_lastvalue(item)
+        self._set(item=item, value=lastvalue, caller='logic')
+        self.logger.info("Resuming item {}: Acitivated and value set to {}".format(item, lastvalue))
+        return lastvalue
+
     def _logics_activate(self, activevalue=None, item=None):
         if isinstance(activevalue, str):
             if activevalue.lower() in ['1', 'yes', 'true', 'on']:
@@ -265,7 +285,9 @@ class UZSU(SmartPlugin):
         if activevalue is None:
             return self._items[item].get('active')
 
-    def _logics_interpolation(self, type=None, interval=5, backintime=0, item=None):
+    def _logics_interpolation(self, type=None, interval=None, backintime=None, item=None):
+        interval = self._interpolation_interval if interval is None else interval
+        backintime = self._backintime if backintime is None else backintime
         if type is None:
             return self._items[item].get('interpolation')
         else:
@@ -344,6 +366,8 @@ class UZSU(SmartPlugin):
 
             # add functions for use in logics and webif
             item.activate = functools.partial(self._logics_activate, item=item)
+            item.lastvalue = functools.partial(self._logics_lastvalue, item=item)
+            item.resume = functools.partial(self._logics_resume, item=item)
             item.interpolation = functools.partial(self._logics_interpolation, item=item)
             item.clear = functools.partial(self._logics_clear, item=item)
             item.planned = functools.partial(self._logics_planned, item=item)
@@ -443,6 +467,10 @@ class UZSU(SmartPlugin):
         # Removing Duplicates
         if self._remove_duplicates is True and self._items[item].get('list') and cond:
             self._remove_dupes(item)
+        if cond and self._items[item].get('active') is False and not source == 'update_sun':
+            self._items[item]['lastvalue'] = None
+            self.logger.debug('lastvalue for item {} set to None because UZSU is deactivated'.format(item))
+            item(self._items[item], 'UZSU Plugin', 'item_deactivated')
         if cond:
             self._schedule(item, caller='update')
 
@@ -462,8 +490,11 @@ class UZSU(SmartPlugin):
         _value = None
         self._update_sun(item, caller='schedule')
         if self._items[item].get('interpolation') is None:
-            self.logger.error("Something is wrong with your UZSU item. You most likely use a wrong smartVISU widget version! Use the latest device.uzsu from SV 2.9")
-        if not self._items[item]['interpolation'].get('itemtype'):
+            self.logger.error("Something is wrong with your UZSU item. You most likely use a wrong smartVISU widget version!"
+                              " Use the latest device.uzsu from SV 2.9. "
+                              "If you write your uzsu dict directly please use the format given in the documentation: "
+                              "https://www.smarthomeng.de/user/plugins/uzsu/user_doc.html and include the interpolation array correctly!")
+        elif not self._items[item]['interpolation'].get('itemtype'):
             self.logger.error("item '{}' to be set by uzsu does not exist.".format(
                 self.get_iattr_value(item.conf, ITEM_TAG[0])))
         elif not self._items[item].get('list') and self._items[item].get('active') is True:
@@ -497,13 +528,13 @@ class UZSU(SmartPlugin):
         if _next and _value is not None and self._items[item].get('active') is True:
             _reset_interpolation = False
             _interval = self._items[item]['interpolation'].get('interval')
-            _interval = 5 if not _interval else int(_interval)
+            _interval = self._interpolation_interval if not _interval else int(_interval)
             if _interval < 0:
                 _interval = abs(int(_interval))
                 self._items[item]['interpolation']['interval'] = _interval
                 item(self._items[item], 'UZSU Plugin', 'intervalchange')
             _interpolation = self._items[item]['interpolation'].get('type')
-            _interpolation = 'none' if not _interpolation else _interpolation
+            _interpolation = self._interpolation_type if not _interpolation else _interpolation
             _initage = self._items[item]['interpolation'].get('initage')
             _initage = 0 if not _initage else int(_initage)
             _initialized = self._items[item]['interpolation'].get('initialized')
@@ -516,6 +547,8 @@ class UZSU(SmartPlugin):
             _initvalue = itpl_list[entry_index - min(1, entry_index)][1]
             itpl_list = itpl_list[entry_index - min(2, entry_index):entry_index + min(3, len(itpl_list))]
             itpl_list.remove((entry_now, 'NOW'))
+            self._items[item]['lastvalue'] = _initvalue
+            item(self._items[item], 'UZSU Plugin', 'lastvalue')
             _timediff = datetime.now(self._timezone) - timedelta(minutes=_initage)
             try:
                 _value = float(_value)
@@ -553,8 +586,8 @@ class UZSU(SmartPlugin):
                     tck = interpolate.PchipInterpolator(list(self._itpl[item].keys()), list(self._itpl[item].values()))
                     _nextinterpolation = datetime.now(self._timezone) + timedelta(minutes=_interval)
                     _next = _nextinterpolation if _next > _nextinterpolation else _next
-                    _value = round(float(tck(_next.timestamp() * 1000.0)), 2)
-                    _value_now = round(float(tck(entry_now)), 2)
+                    _value = round(float(tck(_next.timestamp() * 1000.0)), self._interpolation_precision)
+                    _value_now = round(float(tck(entry_now)), self._interpolation_precision)
                     self._set(item=item, value=_value_now, caller='scheduler')
                     self.logger.info("Updated: {}, cubic interpolation value: {}, based on dict: {}."
                                      " Next: {}, value: {}".format(item, _value_now, self._itpl[item], _next, _value))
@@ -566,8 +599,8 @@ class UZSU(SmartPlugin):
                     tck = interpolate.interp1d(list(self._itpl[item].keys()), list(self._itpl[item].values()))
                     _nextinterpolation = datetime.now(self._timezone) + timedelta(minutes=_interval)
                     _next = _nextinterpolation if _next > _nextinterpolation else _next
-                    _value = round(float(tck(_next.timestamp() * 1000.0)), 2)
-                    _value_now = round(float(tck(entry_now)), 2)
+                    _value = round(float(tck(_next.timestamp() * 1000.0)), self._interpolation_precision)
+                    _value_now = round(float(tck(entry_now)), self._interpolation_precision)
                     self._set(item=item, value=_value_now, caller='scheduler')
                     self.logger.info("Updated: {}, linear interpolation value: {}, based on dict: {}."
                                      " Next: {}, value: {}".format(item, _value_now, self._itpl[item], _next, _value))

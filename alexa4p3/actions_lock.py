@@ -3,7 +3,7 @@ from .action import alexa
 
 DEFAULT_RANGE = (True, False)
 
-@alexa('getLockState', 'GetLockStateRequest', 'GetLockStateResponse','',[])
+@alexa('getLockState', 'GetLockStateRequest', 'GetLockStateResponse','',[],"2")
 def get_lock_state(self, payload):
     items = self.items( payload['appliance']['applianceId'] )
 
@@ -18,7 +18,7 @@ def get_lock_state(self, payload):
         'applianceResponseTimestamp': date.today().isoformat()
     })
 
-@alexa('setLockState', 'SetLockStateRequest', 'SetLockStateConfirmation','',[])
+@alexa('setLockState', 'SetLockStateRequest', 'SetLockStateConfirmation','',[],"2")
 def set_lock_state(self, payload):
     items = self.items( payload['appliance']['applianceId'] )
     requested_state = payload['lockState']

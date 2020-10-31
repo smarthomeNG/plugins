@@ -22,6 +22,7 @@
 import logging
 from lib.model.smartplugin import SmartPlugin
 from datetime import datetime, timedelta
+from socket import gethostname
 import time
 import threading
 import subprocess
@@ -32,13 +33,13 @@ import shlex
 class RCswitch(SmartPlugin):
 
 	ALLOW_MULTIINSTANCE = False
-	PLUGIN_VERSION = "1.2.0.3"
+	PLUGIN_VERSION = "1.2.1"
 
-	def __init__(self, smarthome, rcswitch_dir='/usr/local/bin/rcswitch-pi', rcswitch_sendDuration='0.5', rcswitch_host='', rcswitch_user='', rcswitch_password=''):
+	def __init__(self, smarthome, rcswitch_dir='/usr/local/bin/rcswitch-pi', rcswitch_sendDuration='0.5', rcswitch_host=None, rcswitch_user=None, rcswitch_password=None):
 		self.logger = logging.getLogger(__name__)
 		self.setupOK = True
 		self.mapping = {'a':1,'A':1,'b':2,'B':2,'c':3,'C':3,'d':4,'D':4,'e':5,'E':5}
-		self._sh=smarthome
+		self._sh = smarthome
 		
 		# format path: cut possible '/' at end of rcswitch_dir parameter
 		if rcswitch_dir[len(rcswitch_dir)-1] == '/':
@@ -53,8 +54,12 @@ class RCswitch(SmartPlugin):
 			self.sendDuration = float(0.5)
 			self.logger.warning('RCswitch: Argument {} for rcswitch_sendDuration is not a valid number. Using default value instead.'.format(rcswitch_sendDuration))
 		
-		# Handle host
-		if self.is_ip(rcswitch_host) and rcswitch_host != '127.0.0.1':
+		# Handle host, check if anything is defined in rcswitch_host parameter and if is valid hostname or valid IPv4 adress
+		if (rcswitch_host and (self.is_hostname(rcswitch_host) or self.is_ipv4(rcswitch_host))):
+			# then check if user defined its own local host -> error
+			if ((rcswitch_host == gethostname()) or (rcswitch_host == '127.0.0.1')):
+				self.logger.error('RCswitch: rcswitch_host is defined as your own machine, not the remote address! Please check the parameter rcswitch_host, >>{}<< it seems to be not correct!'.format(rcswitch_host))
+
 			#check connection to remote host and accept fingerprint
 			try:
 				# following line shall raise an error in case connection is not possible. 

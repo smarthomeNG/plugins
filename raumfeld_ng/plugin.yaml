@@ -1,0 +1,86 @@
+# Metadata for the plugin
+plugin:
+    # Global plugin attributes
+    type: gateway                   # plugin type (gateway, interface, protocol, system, web)
+    description:
+        de: 'Ansteuerung von Teufel Raumfeld Geräten via Raumserver und NodeRED'
+        en: 'Control Teufel Raumfeld devices via Raumserver and NodeRED'
+    maintainer: greentux
+    tester: nobody                  # Who tests this plugin?
+    state: develop                  # change to ready when done with development
+#    keywords: iot xyz
+#    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
+#    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
+
+    version: 1.5.1                  # Plugin version
+    sh_minversion: 1.5              # minimum shNG version to use this plugin
+#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    multi_instance: False           # plugin supports multi instance
+    restartable: True
+    classname: Raumfeld_ng          # class containing the plugin
+
+parameters:
+    # Definition of parameters to be configured in etc/plugin.yaml (enter 'parameters: NONE', if section should be empty)
+    host:
+        type: ip
+        description:
+            de: 'Raumserver Hostname oder IP Adresse'
+            en: 'Raumserver hostname or ip address'
+            fr: "Nom de l'hôte ou adresse IP de Raumfeld"
+
+    port:
+        type: int
+        description:
+            de: 'Raumfeld Port'
+            en: 'Raumfeld port'
+            fr: "Port de Raumfeld"
+
+    cycle:
+        type: int
+        default: 60
+        description:
+            de: 'Zeitraum in Sekunden zwischen zwei Abfragezyklen.'
+            en: 'Time period in seconds between two cycles.'
+            fr: "Période en secondes entre deux cycles de capteur."
+
+
+item_attributes:
+    rf_renderer_name:
+        type: str
+        description: 
+            de: "ToDo: rf_renderer_name"
+            en: "ToDo: rf_renderer_name"
+    
+    rf_scope:
+        type: str
+        description:
+            de: "Beschreibung auf welchen Bereich sich die Aktion bezieht"
+            en: "Description which scope an action has"
+    
+    rf_attr:
+        type: str
+        valid_list:
+            - power_state
+            - play_state
+            - set_mute
+            - load_playlist
+            - load_track
+            - set_volume
+        description:
+            de: "Kennzeichnet die Verwendung des Items z.B. um die Lautstärke einzustellen, ein Plpaylist zu laden, ..."
+            en: "Attribut to mark usage of item, e.g. set volume, load a playlist, ..."
+    rf_mode:
+        type: str
+        description:
+            de: "Kann verwendet werden um den Wert der Lautstärkeeinstellung als relativ zu deklarieren"
+            en: "Can be used to make volume change relative"
+
+item_structs: NONE
+    # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
+
+plugin_functions: NONE
+    # Definition of plugin functions defined by this plugin (enter 'plugin_functions: NONE', if section should be empty)
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)
+

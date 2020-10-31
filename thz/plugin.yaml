@@ -70,7 +70,7 @@ item_attributes:
     thz:
         type: str
         description:
-            en: 'Beschreibt einen Parameter Typ als Zeichenkette (z.B. comPortStatus, logRegister, logFullScan)'
+            de: 'Beschreibt einen Parameter Typ als Zeichenkette (z.B. comPortStatus, logRegister, logFullScan)'
             en: 'contains a parameter type as string (e.g.  comPortStatus, logRegister, logFullScan)'
 
 plugin_functions: NONE
@@ -82,7 +82,6 @@ logic_parameters: NONE
 item_structs: 
     # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
     thz:
-
         comPortStatus:
             comment: |
                 port status:

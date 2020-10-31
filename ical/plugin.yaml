@@ -20,7 +20,7 @@ plugin:
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1352089-support-thread-zum-ical-plugin
 
-    version: 1.5.2                 # Plugin version
+    version: 1.5.4                 # Plugin version
     sh_minversion: 1.5             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
@@ -60,6 +60,20 @@ parameters:
             en: "list of calendars to automatically keep up to date and provided via `sh.ical()` function. Configures an alias (optional) and the URI of calendar, which can be a local file or a remote file when starting with `https://`. Online calendars are downloaded in the folder var/ical and updated depending on the cycle attribute.\n
             Example: holidays:https://cal.server/holidays.ics"
 
+    handle_login:
+        type: str
+        default: 'mask'
+        valid_list:
+            - 'mask'
+            - 'show'
+            - 'strip'
+        description:
+            de: "Umgang mit Login-Daten (http://user:pass@domain.tld/path) in Kalender-URIs in Logs."
+            en: "Handling of login data (http://user:pass@domain.tld/path) in calendar uris in logs."
+        description_long:
+            de: "Umgang mit Login-Daten (http://user:pass@domain.tld/path) in Kalender-URIs in Logs. 'mask' ersetzt die Login-Daten durch Sternchen, 'show' gibt sie ins Log aus und 'strip' löscht den jeweiligen Teil der URI vor Ausgabe ins Log."
+            en: "Handling of login data (http://user:pass@domain.tld/path) in calendar uris in logs. 'mask' replaces login data with Sternchen, 'show' prints login data to the log, 'strip' removes login data before logging."
+
 item_attributes:
     # Definition of item attributes defined by this plugin
     ical_calendar:
@@ -91,11 +105,13 @@ plugin_functions:
         description_long:
             de: "Es wird ein dictionary mit einem datetime.date Objekt als Key und folgenden Arraywerten zurückgeliefert:\n
             die Event Startzeit, die Event Endzeit, die Eventkategorie (z.B. privat), die Eventzusammenfassung (z.B. die Notizen)\n
+            Start- und Endzeit werden durch das Plugin von der im Kalender verwendeten Zeitzone in die lokale smarthomeNG Zeitzone konvertiert.\n
             \n
             Wenn ein Kalender öfters verwendet werden soll, wird empfohlen, diesen in der etc/plugin.yaml zu konfigurieren.
             "
             en: "It returns a dictonary with a datetime.date object as key and an array including\n
             the event start time, the event end time, the event's class type (e.g. private calendar entry), the event's summary, i.e. content\n
+            The plugin converts start and end times from calendar based timezones in local smarthomeNG timezone.\n
             \n
             If you want to use a calendar more regularly it could be helpful to configure this calendar in the plugin configuration.
             "

@@ -1,9 +1,8 @@
-.. index:: Plugins; Stateengine
+
 .. index:: Stateengine; Funktionen und Variablen
-.. Funktionen und Variablen:
 
 Funktionen und Variablen
-########################
+========================
 
 .. rubric:: Vordefinierte Funktionen
   :name: vordefiniertefunktionen
@@ -12,7 +11,7 @@ Funktionen und Variablen
 Das stateengine Plugin stellt verschiedene vordefinierte
 Funktionen zur Verfügung, die einfach für
 ``se_set_<Aktionsname>`` und ``se_run_<Aktionsname>`` Aktionen
-verwendet werden können:
+mittels ``eval:`` verwendet werden können:
 
 **Sonnenstandsabhängige Lamellenausrichtung**
 *Die Neigung der Lamellen wird automatisch von der Höhe der Sonne bestimmt.*
@@ -112,7 +111,7 @@ verwendet werden. Alternativ ist es auch möglich, die aus SmarthomeNG bekannte 
 
 Statt dieser Funktion kann se_eval.get_relative_itemproperty('..suspend', 'value')
 verwendet werden. Alternativ ist es auch möglich, die aus SmarthomeNG bekannte Syntax
-``sh...suspend.property.value`` oder ``sh...suspend()`` zu verwenden.
+``sh...suspend.property.value`` oder ``sh...suspend()`` im eval zu verwenden.
 Insofern hat diese Funktion nur wenig Relevanz.
 
 **Item-Property relativ zum Regelwerk-Item ermitteln**
@@ -252,21 +251,20 @@ deutlich vereinfacht.
 
 Das Beispiel zeigt einen Windzustand. Dieser übernimmt keine Funktionen,
 sondern dient lediglich der Visualisierung (Sicherheitsrelevante Features
-sollten unbedingt z.B. über den KNX Bus erfolgen!).
+sollten unbedingt z.B. über den KNX Bus erfolgen!). Außerdem wird davon
+ausgegangen, dass es einen untergeordneten Zustand names x gibt.
 
 - enter_normal wird angenommen, sobald das Wind-Item aktiv ist, zuvor aber
-  nicht der Lock-Zustand aktiv war.
+  nicht der x-Zustand aktiv war.
 
-- enter_afterlock wird angenommen, sobald das Wind-Item aktiv ist und zuvor
-  der Sperr-Zustand aktiv war.
+- enter_after_x wird angenommen, sobald das Wind-Item aktiv ist und zuvor
+  der x-Zustand aktiv war.
 
-- enter_stayafterlock wird Dank des se_value_conditionset_name dann angenommen,
-  solange das Wind-Item noch aktiv ist und der Zustand aufgrund des enter_afterlock
-  aktiviert wurde.
+- enter_stayafter_x wird angenommen, sobald das Wind-Item aktiv ist und zuvor
+  der x-Zustand aktiv war.
 
-Da bei der on_leave Aktion der Lock-Zustand nur dann aktiviert wird, wenn der
-Zustand auf Grund eines "lock" Bedingungssets eingenommen wurde, kann nun der
-Sperrzustand wieder hergestellt werden.
+Beim Verlassen des Windzustands (on_leave) wird nun ein bestimmtes Item (y)
+auf True gesetzt - aber nur, wenn zuvor der x-Zustand aktiv war.
 
 .. code-block:: yaml
 
@@ -279,23 +277,21 @@ Sperrzustand wieder hergestellt werden.
                 wind:
                     name: wind
                     on_leave:
-                        se_action_lock:
+                        se_action_y:
                           - function:set
                           - to:True
-                          - conditionset:(.*)enter_(.*)lock
+                          - conditionset:(.*)enter_(.*)_x
 
-                    enter_normal:
+                    enter_after_x:
                         se_value_wind: True
-                        se_value_laststate: eval:stateengine_eval.get_relative_itemid('..rules.lock')
-                        se_negate_laststate: True
+                        se_value_laststate: eval:stateengine_eval.get_relative_itemid('..rules.x')
 
-                    enter_afterlock:
-                        se_value_wind: True
-                        se_value_laststate: eval:stateengine_eval.get_relative_itemid('..rules.lock')
-
-                    enter_stayafterlock:
+                    enter_stayafter_x:
                         se_value_wind: True
                         se_value_laststate: var:current.state_id
                         se_value_lastconditionset_name:
                             - 'var:current.conditionset_name'
-                            - 'enter_afterlock'
+                            - 'enter_after_x'
+
+                    enter_normal:
+                        se_value_wind: True

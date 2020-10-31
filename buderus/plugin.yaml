@@ -7,17 +7,19 @@ plugin:
         fr: "Contrôle d'un chauffage Buderus via un module Logamatic web KM200 (en développement)"
         en: 'Control Buderus heating through a Logamatic web KM200 module (still under development)'
     maintainer: rthill
-#    tester:                        # Who tests this plugin?
-    state: develop
+    tester: '?'                    # Who tests this plugin?
+    state: ready
 #    keywords: iot xyz
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
 #    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
 
-    version: 1.0.0                 # Plugin version
+    version: 1.0.1                 # Plugin version
     sh_minversion: 1.1             # minimum shNG version to use this plugin
-#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    #sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    restartable: True
     multi_instance: False          # plugin supports multi instance
     classname: Buderus             # class containing the plugin
+
 
 parameters:
     # Definition of parameters to be configured in etc/plugin.yaml
@@ -48,7 +50,37 @@ parameters:
 
 
 item_attributes:
-    # Definition of item attributes defined by this plugin
+    # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)
+    km_id:
+        type: str
+        #Todo: Maybe make the following a valid_list
+        #km_id: /gateway/DateTime
+        #km_id: /gateway/versionFirmware
+        #km_id: /gateway/versionHardware
+        #km_id: /system/brand
+        #km_id: /system/healthStatus
+        #km_id: /system/sensors/temperatures/outdoor_t1
+        #km_id: /system/sensors/temperatures/supply_t1
+        #km_id: /system/sensors/temperatures/hotWater_t2
+        #km_id: /heatSources/flameStatus
+        #km_id: /heatSources/hs1/numberOfStarts
+        #km_id: /heatingCircuits/hc1/currentRoomSetpoint
+        #km_id: /heatingCircuits/hc1/manualRoomSetpoint
+        #km_id: /heatingCircuits/hc1/temporaryRoomSetpoint
+        #km_id: /heatingCircuits/hc1/temperatureLevels/eco
+        #km_id: /heatingCircuits/hc1/temperatureLevels/comfort2
+        #km_id: /heatingCircuits/hc1/activeSwitchProgram
+        #km_id: /heatingCircuits/hc1/operationMode
+        #km_id: /dhwCircuits/dhw1/actualTemp
+        #km_id: /dhwCircuits/dhw1/currentSetpoint
+        #km_id: /dhwCircuits/dhw1/waterFlow
+        #km_id: /dhwCircuits/dhw1/workingTime
+        description:
+            de: 'Pfad zum Datenpunkt des Buderus Gerätes'
+            en: 'Path of the datapoint within Buderus device'
+
+item_structs: NONE
+    # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
 
 logic_parameters: NONE
     # Definition of logic parameters defined by this plugin

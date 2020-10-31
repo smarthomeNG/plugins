@@ -3,18 +3,18 @@ plugin:
     # Global plugin attributes
     type: interface                # plugin type (gateway, interface, protocol, system, web)
     description:
-        de: 'Ansteuerung einer Siemens LOGO PLC'
-        en: 'Control a Siemens LOGO PLC'
-    maintainer: '?'
-    tester: '?'                    # Who tests this plugin?
+        de: 'Ansteuerung einer LOGO SPS'
+        en: 'Control a LOGO PLC'
+    maintainer: 'ivande'
+    tester: ''                    # Who tests this plugin?
     state: ready
-#    keywords: iot xyz
-#    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
-#    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
+    keywords: LOGO 0BA7 0BA8 PLC SPS libnodave
+    documentation: https://www.smarthomeng.de/dev/user/plugins/logo/README.html
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/36372-plugin-siemens-logo-0ba7
 
-    version: 1.2.3                 # Plugin version
+    version: 1.2.4                 # Plugin version
     sh_minversion: 1.2             # minimum shNG version to use this plugin
-#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    #sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
     restartable: unknown
     classname: LOGO                # class containing the plugin
@@ -28,15 +28,15 @@ parameters:
         valid_min: 1
         valid_max: 600
         description:
-            de: 'Zeit zwischen zwei read requests'
-            en: 'timeperiod between two read requests'
+            de: 'Zeit zwischen zwei Leseanforderungen'
+            en: 'time period between two read requests'
 
     host:
-        type: str
-        default: '192.168.0.76'
+        type: ip
+        default: ''
         description:
-            de: 'Adresse der Siemens LOGO'
-            en: 'Address of the Siemens LOGO'
+            de: 'IP-Adresse oder Hostname der LOGO'
+            en: 'Hostname or ip address of the LOGO'
 
     port:
         type: int
@@ -44,8 +44,8 @@ parameters:
         valid_min: 0
         valid_max: 65535
         description:
-            de: 'Von Siemens LOGO benutzter Port'
-            en: 'Port used Siemens LOGO'
+            de: 'Kommunikationsport der LOGO'
+            en: 'Communication port used by LOGO'
 
     version:
         type: str
@@ -54,8 +54,8 @@ parameters:
           - '0BA7'
           - '0BA8'
         description:
-            de: 'Siemens Hardware Version'
-            en: 'Hardware version of the Siemens LOGO'
+            de: 'Hardware Version der LOGO'
+            en: 'Hardware version of the LOGO'
 
 item_attributes:
     # Definition of item attributes defined by this plugin
@@ -63,13 +63,13 @@ item_attributes:
     logo_read:
         type: str
         description:
-            de: "Lesebefehl für die Siemens LOGO PLC"
-            en: "Read command for the Siemens LOGO PLC"
+            de: "Lesebefehl für die LOGO SPS"
+            en: "Read command for the LOGO PLC"
     logo_write:
         type: str
         description:
-            de: "Schreibbefehl für die Siemens LOGO PLC"
-            en: "Write command for the Siemens LOGO PLC"
+            de: "Schreibbefehl für die LOGO SPS"
+            en: "Write command for the LOGO PLC"
 
 
 item_structs: NONE

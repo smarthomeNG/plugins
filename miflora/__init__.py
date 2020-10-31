@@ -37,6 +37,12 @@ class Miflora(SmartPlugin):
         self._bt_library = self.get_parameter_value('bt_library')
         self._cycle = self.get_parameter_value('cycle')
         self._items = []
+        if self._bt_library == 'gatttool':
+            self.poller = MiFloraPoller(self._bt_addr, GatttoolBackend)
+        elif self._bt_library == 'pygatt':
+            self.poller = MiFloraPoller(self._bt_addr, PygattBackend)
+        else:
+            self.poller = MiFloraPoller(self._bt_addr, BluepyBackend)
 
         self.init_webinterface()
 
@@ -73,27 +79,21 @@ class Miflora(SmartPlugin):
 
     def _update_loop(self):
         try:
-            if self._bt_library == 'gatttool':
-                poller = MiFloraPoller(self._bt_addr, GatttoolBackend)
-            elif self._bt_library == 'pygatt':
-                poller = MiFloraPoller(self._bt_addr, PygattBackend)
-            else:
-                poller = MiFloraPoller(self._bt_addr, BluepyBackend)
             for item in self._items:
                 if self.get_iattr_value(item.conf, 'miflora_data_type') == 'temperature':
-                    item(poller.parameter_value('temperature'))
+                    item(self.poller.parameter_value('temperature'))
                 elif self.get_iattr_value(item.conf, 'miflora_data_type') == 'light':
-                    item(poller.parameter_value(MI_LIGHT))
+                    item(self.poller.parameter_value(MI_LIGHT))
                 elif self.get_iattr_value(item.conf, 'miflora_data_type') == 'moisture':
-                    item(poller.parameter_value(MI_MOISTURE))
+                    item(self.poller.parameter_value(MI_MOISTURE))
                 elif self.get_iattr_value(item.conf, 'miflora_data_type') == 'conductivity':
-                    item(poller.parameter_value(MI_CONDUCTIVITY))
+                    item(self.poller.parameter_value(MI_CONDUCTIVITY))
                 elif self.get_iattr_value(item.conf, 'miflora_data_type') == 'battery':
-                    item(poller.parameter_value(MI_BATTERY))
+                    item(self.poller.parameter_value(MI_BATTERY))
                 elif self.get_iattr_value(item.conf, 'miflora_data_type') == 'name':
-                    item(poller.name())
+                    item(self.poller.name())
                 elif self.get_iattr_value(item.conf, 'miflora_data_type') == 'firmware':
-                    item(poller.firmware_version())
+                    item(self.poller.firmware_version())
         except Exception as e:
             self.logger.error(str(e))
 

@@ -12,8 +12,8 @@ plugin:
     documentation: 'https://www.smarthomeng.de/user/plugins/darksky/user_doc.html'
     support: 'https://knx-user-forum.de/forum/supportforen/smarthome-py/1244744-neues-plugin-wetterdaten-via-darksky-net-forecast-io'
     keywords: weather
-    version: 1.6.0                # Plugin version
-    sh_minversion: 1.4c           # minimum shNG version to use this plugin
+    version: 1.7.0                # Plugin version
+    sh_minversion: 1.7            # minimum shNG version to use this plugin
 #    sh_maxversion:               # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True          # plugin supports multi instance
     restartable: True
@@ -76,7 +76,7 @@ item_attributes:
 
 item_structs:
     weather:
-        name: Weather report from darksky.net
+        name: Complete weather report from darksky.net - Current weather and forecasts are written to database
 
         latitude:
             type: num
@@ -90,6 +90,167 @@ item_structs:
             type: str
             ds_matchstring@instance: timezone
 
+        struct:
+            - darksky.current_weather
+            - darksky.forecast_hourly
+            - darksky.forecast_daily
+
+        minutely:
+
+            summary:
+                type: str
+                ds_matchstring@instance: minutely/summary
+
+            icon:
+                type: str
+                ds_matchstring@instance: minutely/icon
+
+            icon_visu:
+                type: str
+                ds_matchstring@instance: minutely/icon_visu
+
+        alerts:
+
+            list:
+                type: list
+                ds_matchstring@instance: alerts
+
+            string_detail:
+                type: str
+                ds_matchstring@instance: alerts_string
+
+        flags:
+
+            sources:
+                type: str
+                ds_matchstring@instance: flags/sources
+
+            units:
+                type: str
+                ds_matchstring@instance: flags/units
+
+            nearest_station:
+                type: num
+                ds_matchstring@instance: flags/nearest-station
+
+    weather_current_db:
+        name: Complete weather report from darksky.net - Only current weather is written to database
+
+        latitude:
+            type: num
+            ds_matchstring@instance: latitude
+
+        longitude:
+            type: num
+            ds_matchstring@instance: longitude
+
+        timezone:
+            type: str
+            ds_matchstring@instance: timezone
+
+        struct:
+            - darksky.current_weather
+            - darksky.forecast_hourly_nodb
+            - darksky.forecast_daily_nodb
+
+        minutely:
+
+            summary:
+                type: str
+                ds_matchstring@instance: minutely/summary
+
+            icon:
+                type: str
+                ds_matchstring@instance: minutely/icon
+
+            icon_visu:
+                type: str
+                ds_matchstring@instance: minutely/icon_visu
+
+        alerts:
+
+            list:
+                type: list
+                ds_matchstring@instance: alerts
+
+            string_detail:
+                type: str
+                ds_matchstring@instance: alerts_string
+
+        flags:
+
+            sources:
+                type: str
+                ds_matchstring@instance: flags/sources
+
+            units:
+                type: str
+                ds_matchstring@instance: flags/units
+
+            nearest_station:
+                type: num
+                ds_matchstring@instance: flags/nearest-station
+
+    weather_current_nodb:
+        name: Complete weather report from darksky.net - No data is written to database
+
+        latitude:
+            type: num
+            ds_matchstring@instance: latitude
+
+        longitude:
+            type: num
+            ds_matchstring@instance: longitude
+
+        timezone:
+            type: str
+            ds_matchstring@instance: timezone
+
+        struct:
+            - darksky.current_weather_nodb
+            - darksky.forecast_hourly_nodb
+            - darksky.forecast_daily_nodb
+
+        minutely:
+
+            summary:
+                type: str
+                ds_matchstring@instance: minutely/summary
+
+            icon:
+                type: str
+                ds_matchstring@instance: minutely/icon
+
+            icon_visu:
+                type: str
+                ds_matchstring@instance: minutely/icon_visu
+
+        alerts:
+
+            list:
+                type: list
+                ds_matchstring@instance: alerts
+
+            string_detail:
+                type: str
+                ds_matchstring@instance: alerts_string
+
+        flags:
+
+            sources:
+                type: str
+                ds_matchstring@instance: flags/sources
+
+            units:
+                type: str
+                ds_matchstring@instance: flags/units
+
+            nearest_station:
+                type: num
+                ds_matchstring@instance: flags/nearest-station
+
+    current_weather:
+        name: Current weather of Weather report from darksky.net - Data is written do database
         currently:
 
             time_epoch:
@@ -205,20 +366,8 @@ item_structs:
                 ds_matchstring@instance: currently/day
                 database: init
 
-        minutely:
-
-            summary:
-                type: str
-                ds_matchstring@instance: minutely/summary
-
-            icon:
-                type: str
-                ds_matchstring@instance: minutely/icon
-
-            icon_visu:
-                type: str
-                ds_matchstring@instance: minutely/icon_visu
-
+    forecast_hourly:
+        name: Hourly forcast of Weather report from darksky.net - Data is written do database
         hourly:
 
             summary:
@@ -264,6 +413,7 @@ item_structs:
                     type: num
                     ds_matchstring@instance: hourly/hour0/precipIntensity
                     database: init
+                    database_maxage: 92
 
                 precipIntensityError:
                     type: num
@@ -273,6 +423,7 @@ item_structs:
                     type: num
                     ds_matchstring@instance: hourly/hour0/precipProbability
                     database: init
+                    database_maxage: 92
 
                 precipType:
                     type: str
@@ -282,71 +433,85 @@ item_structs:
                     type: num
                     ds_matchstring@instance: hourly/hour0/temperature
                     database: init
+                    database_maxage: 92
 
                 apparenttemperature:
                     type: num
                     ds_matchstring@instance: hourly/hour0/apparentTemperature
                     database: init
+                    database_maxage: 92
 
                 dewpoint:
                     type: num
                     ds_matchstring@instance: hourly/hour0/dewPoint
                     database: init
+                    database_maxage: 92
 
                 humidity:
                     type: num
                     ds_matchstring@instance: hourly/hour0/humidity
                     database: init
+                    database_maxage: 92
 
                 pressure:
                     type: num
                     ds_matchstring@instance: hourly/hour0/pressure
                     database: init
+                    database_maxage: 92
 
                 windSpeed:
                     type: num
                     ds_matchstring@instance: hourly/hour0/windSpeed
                     database: init
+                    database_maxage: 92
 
                 windGust:
                     type: num
                     ds_matchstring@instance: hourly/hour0/windGust
                     database: init
+                    database_maxage: 92
 
                 windBearing:
                     type: num
                     ds_matchstring@instance: hourly/hour0/windBearing
                     database: init
+                    database_maxage: 92
 
                 cloudCover:
                     type: num
                     ds_matchstring@instance: hourly/hour0/cloudCover
                     database: init
+                    database_maxage: 92
 
                 uvIndex:
                     type: num
                     ds_matchstring@instance: hourly/hour0/uvIndex
                     database: init
+                    database_maxage: 92
 
                 visibility:
                     type: num
                     ds_matchstring@instance: hourly/hour0/visibility
                     database: init
+                    database_maxage: 92
 
                 ozone:
                     type: num
                     ds_matchstring@instance: hourly/hour0/ozone
                     database: init
+                    database_maxage: 92
 
                 date:
                     type: str
                     ds_matchstring@instance: hourly/hour0/date
                     database: init
+                    database_maxage: 92
 
                 weekday:
                     type: str
                     ds_matchstring@instance: hourly/hour0/weekday
                     database: init
+                    database_maxage: 92
 
             hour1:
 
@@ -379,6 +544,7 @@ item_structs:
                     type: num
                     ds_matchstring@instance: hourly/hour1/precipIntensity
                     database: init
+                    database_maxage: 92
 
                 precipIntensityError:
                     type: num
@@ -388,6 +554,7 @@ item_structs:
                     type: num
                     ds_matchstring@instance: hourly/hour1/precipProbability
                     database: init
+                    database_maxage: 92
 
                 precipType:
                     type: str
@@ -397,71 +564,85 @@ item_structs:
                     type: num
                     ds_matchstring@instance: hourly/hour1/temperature
                     database: init
+                    database_maxage: 92
 
                 apparenttemperature:
                     type: num
                     ds_matchstring@instance: hourly/hour1/apparentTemperature
                     database: init
+                    database_maxage: 92
 
                 dewpoint:
                     type: num
                     ds_matchstring@instance: hourly/hour1/dewPoint
                     database: init
+                    database_maxage: 92
 
                 humidity:
                     type: num
                     ds_matchstring@instance: hourly/hour1/humidity
                     database: init
+                    database_maxage: 92
 
                 pressure:
                     type: num
                     ds_matchstring@instance: hourly/hour1/pressure
                     database: init
+                    database_maxage: 92
 
                 windSpeed:
                     type: num
                     ds_matchstring@instance: hourly/hour1/windSpeed
                     database: init
+                    database_maxage: 92
 
                 windGust:
                     type: num
                     ds_matchstring@instance: hourly/hour1/windGust
                     database: init
+                    database_maxage: 92
 
                 windBearing:
                     type: num
                     ds_matchstring@instance: hourly/hour1/windBearing
                     database: init
+                    database_maxage: 92
 
                 cloudCover:
                     type: num
                     ds_matchstring@instance: hourly/hour1/cloudCover
                     database: init
+                    database_maxage: 92
 
                 uvIndex:
                     type: num
                     ds_matchstring@instance: hourly/hour1/uvIndex
                     database: init
+                    database_maxage: 92
 
                 visibility:
                     type: num
                     ds_matchstring@instance: hourly/hour1/visibility
                     database: init
+                    database_maxage: 92
 
                 ozone:
                     type: num
                     ds_matchstring@instance: hourly/hour1/ozone
                     database: init
+                    database_maxage: 92
 
                 date:
                     type: str
                     ds_matchstring@instance: hourly/hour1/date
                     database: init
+                    database_maxage: 92
 
                 weekday:
                     type: str
                     ds_matchstring@instance: hourly/hour1/weekday
                     database: init
+                    database_maxage: 92
 
             hour2:
 
@@ -494,6 +675,7 @@ item_structs:
                     type: num
                     ds_matchstring@instance: hourly/hour2/precipIntensity
                     database: init
+                    database_maxage: 92
 
                 precipIntensityError:
                     type: num
@@ -503,6 +685,7 @@ item_structs:
                     type: num
                     ds_matchstring@instance: hourly/hour2/precipProbability
                     database: init
+                    database_maxage: 92
 
                 precipType:
                     type: str
@@ -512,71 +695,85 @@ item_structs:
                     type: num
                     ds_matchstring@instance: hourly/hour2/temperature
                     database: init
+                    database_maxage: 92
 
                 apparenttemperature:
                     type: num
                     ds_matchstring@instance: hourly/hour2/apparentTemperature
                     database: init
+                    database_maxage: 92
 
                 dewpoint:
                     type: num
                     ds_matchstring@instance: hourly/hour2/dewPoint
                     database: init
+                    database_maxage: 92
 
                 humidity:
                     type: num
                     ds_matchstring@instance: hourly/hour2/humidity
                     database: init
+                    database_maxage: 92
 
                 pressure:
                     type: num
                     ds_matchstring@instance: hourly/hour2/pressure
                     database: init
+                    database_maxage: 92
 
                 windSpeed:
                     type: num
                     ds_matchstring@instance: hourly/hour2/windSpeed
                     database: init
+                    database_maxage: 92
 
                 windGust:
                     type: num
                     ds_matchstring@instance: hourly/hour2/windGust
                     database: init
+                    database_maxage: 92
 
                 windBearing:
                     type: num
                     ds_matchstring@instance: hourly/hour2/windBearing
                     database: init
+                    database_maxage: 92
 
                 cloudCover:
                     type: num
                     ds_matchstring@instance: hourly/hour2/cloudCover
                     database: init
+                    database_maxage: 92
 
                 uvIndex:
                     type: num
                     ds_matchstring@instance: hourly/hour2/uvIndex
                     database: init
+                    database_maxage: 92
 
                 visibility:
                     type: num
                     ds_matchstring@instance: hourly/hour2/visibility
                     database: init
+                    database_maxage: 92
 
                 ozone:
                     type: num
                     ds_matchstring@instance: hourly/hour2/ozone
                     database: init
+                    database_maxage: 92
 
                 date:
                     type: str
                     ds_matchstring@instance: hourly/hour2/date
                     database: init
+                    database_maxage: 92
 
                 weekday:
                     type: str
                     ds_matchstring@instance: hourly/hour2/weekday
                     database: init
+                    database_maxage: 92
 
             hour3:
 
@@ -609,6 +806,7 @@ item_structs:
                     type: num
                     ds_matchstring@instance: hourly/hour3/precipIntensity
                     database: init
+                    database_maxage: 92
 
                 precipIntensityError:
                     type: num
@@ -618,6 +816,7 @@ item_structs:
                     type: num
                     ds_matchstring@instance: hourly/hour3/precipProbability
                     database: init
+                    database_maxage: 92
 
                 precipType:
                     type: str
@@ -627,71 +826,85 @@ item_structs:
                     type: num
                     ds_matchstring@instance: hourly/hour3/temperature
                     database: init
+                    database_maxage: 92
 
                 apparenttemperature:
                     type: num
                     ds_matchstring@instance: hourly/hour3/apparentTemperature
                     database: init
+                    database_maxage: 92
 
                 dewpoint:
                     type: num
                     ds_matchstring@instance: hourly/hour3/dewPoint
                     database: init
+                    database_maxage: 92
 
                 humidity:
                     type: num
                     ds_matchstring@instance: hourly/hour3/humidity
                     database: init
+                    database_maxage: 92
 
                 pressure:
                     type: num
                     ds_matchstring@instance: hourly/hour3/pressure
                     database: init
+                    database_maxage: 92
 
                 windSpeed:
                     type: num
                     ds_matchstring@instance: hourly/hour3/windSpeed
                     database: init
+                    database_maxage: 92
 
                 windGust:
                     type: num
                     ds_matchstring@instance: hourly/hour3/windGust
                     database: init
+                    database_maxage: 92
 
                 windBearing:
                     type: num
                     ds_matchstring@instance: hourly/hour3/windBearing
                     database: init
+                    database_maxage: 92
 
                 cloudCover:
                     type: num
                     ds_matchstring@instance: hourly/hour3/cloudCover
                     database: init
+                    database_maxage: 92
 
                 uvIndex:
                     type: num
                     ds_matchstring@instance: hourly/hour3/uvIndex
                     database: init
+                    database_maxage: 92
 
                 visibility:
                     type: num
                     ds_matchstring@instance: hourly/hour3/visibility
                     database: init
+                    database_maxage: 92
 
                 ozone:
                     type: num
                     ds_matchstring@instance: hourly/hour3/ozone
                     database: init
+                    database_maxage: 92
 
                 date:
                     type: str
                     ds_matchstring@instance: hourly/hour3/date
                     database: init
+                    database_maxage: 92
 
                 weekday:
                     type: str
                     ds_matchstring@instance: hourly/hour3/weekday
                     database: init
+                    database_maxage: 92
 
             hour4:
 
@@ -724,6 +937,7 @@ item_structs:
                     type: num
                     ds_matchstring@instance: hourly/hour4/precipIntensity
                     database: init
+                    database_maxage: 92
 
                 precipIntensityError:
                     type: num
@@ -733,6 +947,7 @@ item_structs:
                     type: num
                     ds_matchstring@instance: hourly/hour4/precipProbability
                     database: init
+                    database_maxage: 92
 
                 precipType:
                     type: str
@@ -742,71 +957,85 @@ item_structs:
                     type: num
                     ds_matchstring@instance: hourly/hour4/temperature
                     database: init
+                    database_maxage: 92
 
                 apparenttemperature:
                     type: num
                     ds_matchstring@instance: hourly/hour4/apparentTemperature
                     database: init
+                    database_maxage: 92
 
                 dewpoint:
                     type: num
                     ds_matchstring@instance: hourly/hour4/dewPoint
                     database: init
+                    database_maxage: 92
 
                 humidity:
                     type: num
                     ds_matchstring@instance: hourly/hour4/humidity
                     database: init
+                    database_maxage: 92
 
                 pressure:
                     type: num
                     ds_matchstring@instance: hourly/hour4/pressure
                     database: init
+                    database_maxage: 92
 
                 windSpeed:
                     type: num
                     ds_matchstring@instance: hourly/hour4/windSpeed
                     database: init
+                    database_maxage: 92
 
                 windGust:
                     type: num
                     ds_matchstring@instance: hourly/hour4/windGust
                     database: init
+                    database_maxage: 92
 
                 windBearing:
                     type: num
                     ds_matchstring@instance: hourly/hour4/windBearing
                     database: init
+                    database_maxage: 92
 
                 cloudCover:
                     type: num
                     ds_matchstring@instance: hourly/hour4/cloudCover
                     database: init
+                    database_maxage: 92
 
                 uvIndex:
                     type: num
                     ds_matchstring@instance: hourly/hour4/uvIndex
                     database: init
+                    database_maxage: 92
 
                 visibility:
                     type: num
                     ds_matchstring@instance: hourly/hour4/visibility
                     database: init
+                    database_maxage: 92
 
                 ozone:
                     type: num
                     ds_matchstring@instance: hourly/hour4/ozone
                     database: init
+                    database_maxage: 92
 
                 date:
                     type: str
                     ds_matchstring@instance: hourly/hour4/date
                     database: init
+                    database_maxage: 92
 
                 weekday:
                     type: str
                     ds_matchstring@instance: hourly/hour4/weekday
                     database: init
+                    database_maxage: 92
 
             hour5:
 
@@ -839,6 +1068,7 @@ item_structs:
                     type: num
                     ds_matchstring@instance: hourly/hour5/precipIntensity
                     database: init
+                    database_maxage: 92
 
                 precipIntensityError:
                     type: num
@@ -848,6 +1078,7 @@ item_structs:
                     type: num
                     ds_matchstring@instance: hourly/hour5/precipProbability
                     database: init
+                    database_maxage: 92
 
                 precipType:
                     type: str
@@ -857,71 +1088,85 @@ item_structs:
                     type: num
                     ds_matchstring@instance: hourly/hour5/temperature
                     database: init
+                    database_maxage: 92
 
                 apparenttemperature:
                     type: num
                     ds_matchstring@instance: hourly/hour5/apparentTemperature
                     database: init
+                    database_maxage: 92
 
                 dewpoint:
                     type: num
                     ds_matchstring@instance: hourly/hour5/dewPoint
                     database: init
+                    database_maxage: 92
 
                 humidity:
                     type: num
                     ds_matchstring@instance: hourly/hour5/humidity
                     database: init
+                    database_maxage: 92
 
                 pressure:
                     type: num
                     ds_matchstring@instance: hourly/hour5/pressure
                     database: init
+                    database_maxage: 92
 
                 windSpeed:
                     type: num
                     ds_matchstring@instance: hourly/hour5/windSpeed
                     database: init
+                    database_maxage: 92
 
                 windGust:
                     type: num
                     ds_matchstring@instance: hourly/hour5/windGust
                     database: init
+                    database_maxage: 92
 
                 windBearing:
                     type: num
                     ds_matchstring@instance: hourly/hour5/windBearing
                     database: init
+                    database_maxage: 92
 
                 cloudCover:
                     type: num
                     ds_matchstring@instance: hourly/hour5/cloudCover
                     database: init
+                    database_maxage: 92
 
                 uvIndex:
                     type: num
                     ds_matchstring@instance: hourly/hour5/uvIndex
                     database: init
+                    database_maxage: 92
 
                 visibility:
                     type: num
                     ds_matchstring@instance: hourly/hour5/visibility
                     database: init
+                    database_maxage: 92
 
                 ozone:
                     type: num
                     ds_matchstring@instance: hourly/hour5/ozone
                     database: init
+                    database_maxage: 92
 
                 date:
                     type: str
                     ds_matchstring@instance: hourly/hour5/date
                     database: init
+                    database_maxage: 92
 
                 weekday:
                     type: str
                     ds_matchstring@instance: hourly/hour5/weekday
                     database: init
+                    database_maxage: 92
 
             hour6:
 
@@ -954,6 +1199,7 @@ item_structs:
                     type: num
                     ds_matchstring@instance: hourly/hour6/precipIntensity
                     database: init
+                    database_maxage: 92
 
                 precipIntensityError:
                     type: num
@@ -963,6 +1209,7 @@ item_structs:
                     type: num
                     ds_matchstring@instance: hourly/hour6/precipProbability
                     database: init
+                    database_maxage: 92
 
                 precipType:
                     type: str
@@ -972,71 +1219,85 @@ item_structs:
                     type: num
                     ds_matchstring@instance: hourly/hour6/temperature
                     database: init
+                    database_maxage: 92
 
                 apparenttemperature:
                     type: num
                     ds_matchstring@instance: hourly/hour6/apparentTemperature
                     database: init
+                    database_maxage: 92
 
                 dewpoint:
                     type: num
                     ds_matchstring@instance: hourly/hour6/dewPoint
                     database: init
+                    database_maxage: 92
 
                 humidity:
                     type: num
                     ds_matchstring@instance: hourly/hour6/humidity
                     database: init
+                    database_maxage: 92
 
                 pressure:
                     type: num
                     ds_matchstring@instance: hourly/hour6/pressure
                     database: init
+                    database_maxage: 92
 
                 windSpeed:
                     type: num
                     ds_matchstring@instance: hourly/hour6/windSpeed
                     database: init
+                    database_maxage: 92
 
                 windGust:
                     type: num
                     ds_matchstring@instance: hourly/hour6/windGust
                     database: init
+                    database_maxage: 92
 
                 windBearing:
                     type: num
                     ds_matchstring@instance: hourly/hour6/windBearing
                     database: init
+                    database_maxage: 92
 
                 cloudCover:
                     type: num
                     ds_matchstring@instance: hourly/hour6/cloudCover
                     database: init
+                    database_maxage: 92
 
                 uvIndex:
                     type: num
                     ds_matchstring@instance: hourly/hour6/uvIndex
                     database: init
+                    database_maxage: 92
 
                 visibility:
                     type: num
                     ds_matchstring@instance: hourly/hour6/visibility
                     database: init
+                    database_maxage: 92
 
                 ozone:
                     type: num
                     ds_matchstring@instance: hourly/hour6/ozone
                     database: init
+                    database_maxage: 92
 
                 date:
                     type: str
                     ds_matchstring@instance: hourly/hour6/date
                     database: init
+                    database_maxage: 92
 
                 weekday:
                     type: str
                     ds_matchstring@instance: hourly/hour6/weekday
                     database: init
+                    database_maxage: 92
 
             hour7:
 
@@ -1069,6 +1330,7 @@ item_structs:
                     type: num
                     ds_matchstring@instance: hourly/hour7/precipIntensity
                     database: init
+                    database_maxage: 92
 
                 precipIntensityError:
                     type: num
@@ -1078,6 +1340,7 @@ item_structs:
                     type: num
                     ds_matchstring@instance: hourly/hour7/precipProbability
                     database: init
+                    database_maxage: 92
 
                 precipType:
                     type: str
@@ -1087,71 +1350,85 @@ item_structs:
                     type: num
                     ds_matchstring@instance: hourly/hour7/temperature
                     database: init
+                    database_maxage: 92
 
                 apparenttemperature:
                     type: num
                     ds_matchstring@instance: hourly/hour7/apparentTemperature
                     database: init
+                    database_maxage: 92
 
                 dewpoint:
                     type: num
                     ds_matchstring@instance: hourly/hour7/dewPoint
                     database: init
+                    database_maxage: 92
 
                 humidity:
                     type: num
                     ds_matchstring@instance: hourly/hour7/humidity
                     database: init
+                    database_maxage: 92
 
                 pressure:
                     type: num
                     ds_matchstring@instance: hourly/hour7/pressure
                     database: init
+                    database_maxage: 92
 
                 windSpeed:
                     type: num
                     ds_matchstring@instance: hourly/hour7/windSpeed
                     database: init
+                    database_maxage: 92
 
                 windGust:
                     type: num
                     ds_matchstring@instance: hourly/hour7/windGust
                     database: init
+                    database_maxage: 92
 
                 windBearing:
                     type: num
                     ds_matchstring@instance: hourly/hour7/windBearing
                     database: init
+                    database_maxage: 92
 
                 cloudCover:
                     type: num
                     ds_matchstring@instance: hourly/hour7/cloudCover
                     database: init
+                    database_maxage: 92
 
                 uvIndex:
                     type: num
                     ds_matchstring@instance: hourly/hour7/uvIndex
                     database: init
+                    database_maxage: 92
 
                 visibility:
                     type: num
                     ds_matchstring@instance: hourly/hour7/visibility
                     database: init
+                    database_maxage: 92
 
                 ozone:
                     type: num
                     ds_matchstring@instance: hourly/hour7/ozone
                     database: init
+                    database_maxage: 92
 
                 date:
                     type: str
                     ds_matchstring@instance: hourly/hour7/date
                     database: init
+                    database_maxage: 92
 
                 weekday:
                     type: str
                     ds_matchstring@instance: hourly/hour7/weekday
                     database: init
+                    database_maxage: 92
 
             hour8:
 
@@ -1184,6 +1461,7 @@ item_structs:
                     type: num
                     ds_matchstring@instance: hourly/hour8/precipIntensity
                     database: init
+                    database_maxage: 92
 
                 precipIntensityError:
                     type: num
@@ -1193,6 +1471,7 @@ item_structs:
                     type: num
                     ds_matchstring@instance: hourly/hour8/precipProbability
                     database: init
+                    database_maxage: 92
 
                 precipType:
                     type: str
@@ -1202,71 +1481,85 @@ item_structs:
                     type: num
                     ds_matchstring@instance: hourly/hour8/temperature
                     database: init
+                    database_maxage: 92
 
                 apparenttemperature:
                     type: num
                     ds_matchstring@instance: hourly/hour8/apparentTemperature
                     database: init
+                    database_maxage: 92
 
                 dewpoint:
                     type: num
                     ds_matchstring@instance: hourly/hour8/dewPoint
                     database: init
+                    database_maxage: 92
 
                 humidity:
                     type: num
                     ds_matchstring@instance: hourly/hour8/humidity
                     database: init
+                    database_maxage: 92
 
                 pressure:
                     type: num
                     ds_matchstring@instance: hourly/hour8/pressure
                     database: init
+                    database_maxage: 92
 
                 windSpeed:
                     type: num
                     ds_matchstring@instance: hourly/hour8/windSpeed
                     database: init
+                    database_maxage: 92
 
                 windGust:
                     type: num
                     ds_matchstring@instance: hourly/hour8/windGust
                     database: init
+                    database_maxage: 92
 
                 windBearing:
                     type: num
                     ds_matchstring@instance: hourly/hour8/windBearing
                     database: init
+                    database_maxage: 92
 
                 cloudCover:
                     type: num
                     ds_matchstring@instance: hourly/hour8/cloudCover
                     database: init
+                    database_maxage: 92
 
                 uvIndex:
                     type: num
                     ds_matchstring@instance: hourly/hour8/uvIndex
                     database: init
+                    database_maxage: 92
 
                 visibility:
                     type: num
                     ds_matchstring@instance: hourly/hour8/visibility
                     database: init
+                    database_maxage: 92
 
                 ozone:
                     type: num
                     ds_matchstring@instance: hourly/hour8/ozone
                     database: init
+                    database_maxage: 92
 
                 date:
                     type: str
                     ds_matchstring@instance: hourly/hour8/date
                     database: init
+                    database_maxage: 92
 
                 weekday:
                     type: str
                     ds_matchstring@instance: hourly/hour8/weekday
                     database: init
+                    database_maxage: 92
 
             hour9:
 
@@ -1299,6 +1592,7 @@ item_structs:
                     type: num
                     ds_matchstring@instance: hourly/hour9/precipIntensity
                     database: init
+                    database_maxage: 92
 
                 precipIntensityError:
                     type: num
@@ -1308,6 +1602,7 @@ item_structs:
                     type: num
                     ds_matchstring@instance: hourly/hour9/precipProbability
                     database: init
+                    database_maxage: 92
 
                 precipType:
                     type: str
@@ -1317,71 +1612,85 @@ item_structs:
                     type: num
                     ds_matchstring@instance: hourly/hour9/temperature
                     database: init
+                    database_maxage: 92
 
                 apparenttemperature:
                     type: num
                     ds_matchstring@instance: hourly/hour9/apparentTemperature
                     database: init
+                    database_maxage: 92
 
                 dewpoint:
                     type: num
                     ds_matchstring@instance: hourly/hour9/dewPoint
                     database: init
+                    database_maxage: 92
 
                 humidity:
                     type: num
                     ds_matchstring@instance: hourly/hour9/humidity
                     database: init
+                    database_maxage: 92
 
                 pressure:
                     type: num
                     ds_matchstring@instance: hourly/hour9/pressure
                     database: init
+                    database_maxage: 92
 
                 windSpeed:
                     type: num
                     ds_matchstring@instance: hourly/hour9/windSpeed
                     database: init
+                    database_maxage: 92
 
                 windGust:
                     type: num
                     ds_matchstring@instance: hourly/hour9/windGust
                     database: init
+                    database_maxage: 92
 
                 windBearing:
                     type: num
                     ds_matchstring@instance: hourly/hour9/windBearing
                     database: init
+                    database_maxage: 92
 
                 cloudCover:
                     type: num
                     ds_matchstring@instance: hourly/hour9/cloudCover
                     database: init
+                    database_maxage: 92
 
                 uvIndex:
                     type: num
                     ds_matchstring@instance: hourly/hour9/uvIndex
                     database: init
+                    database_maxage: 92
 
                 visibility:
                     type: num
                     ds_matchstring@instance: hourly/hour9/visibility
                     database: init
+                    database_maxage: 92
 
                 ozone:
                     type: num
                     ds_matchstring@instance: hourly/hour9/ozone
                     database: init
+                    database_maxage: 92
 
                 date:
                     type: str
                     ds_matchstring@instance: hourly/hour9/date
                     database: init
+                    database_maxage: 92
 
                 weekday:
                     type: str
                     ds_matchstring@instance: hourly/hour9/weekday
                     database: init
+                    database_maxage: 92
 
             hour10:
 
@@ -1414,6 +1723,7 @@ item_structs:
                     type: num
                     ds_matchstring@instance: hourly/hour10/precipIntensity
                     database: init
+                    database_maxage: 92
 
                 precipIntensityError:
                     type: num
@@ -1423,6 +1733,7 @@ item_structs:
                     type: num
                     ds_matchstring@instance: hourly/hour10/precipProbability
                     database: init
+                    database_maxage: 92
 
                 precipType:
                     type: str
@@ -1432,71 +1743,85 @@ item_structs:
                     type: num
                     ds_matchstring@instance: hourly/hour10/temperature
                     database: init
+                    database_maxage: 92
 
                 apparenttemperature:
                     type: num
                     ds_matchstring@instance: hourly/hour10/apparentTemperature
                     database: init
+                    database_maxage: 92
 
                 dewpoint:
                     type: num
                     ds_matchstring@instance: hourly/hour10/dewPoint
                     database: init
+                    database_maxage: 92
 
                 humidity:
                     type: num
                     ds_matchstring@instance: hourly/hour10/humidity
                     database: init
+                    database_maxage: 92
 
                 pressure:
                     type: num
                     ds_matchstring@instance: hourly/hour10/pressure
                     database: init
+                    database_maxage: 92
 
                 windSpeed:
                     type: num
                     ds_matchstring@instance: hourly/hour10/windSpeed
                     database: init
+                    database_maxage: 92
 
                 windGust:
                     type: num
                     ds_matchstring@instance: hourly/hour10/windGust
                     database: init
+                    database_maxage: 92
 
                 windBearing:
                     type: num
                     ds_matchstring@instance: hourly/hour10/windBearing
                     database: init
+                    database_maxage: 92
 
                 cloudCover:
                     type: num
                     ds_matchstring@instance: hourly/hour10/cloudCover
                     database: init
+                    database_maxage: 92
 
                 uvIndex:
                     type: num
                     ds_matchstring@instance: hourly/hour10/uvIndex
                     database: init
+                    database_maxage: 92
 
                 visibility:
                     type: num
                     ds_matchstring@instance: hourly/hour10/visibility
                     database: init
+                    database_maxage: 92
 
                 ozone:
                     type: num
                     ds_matchstring@instance: hourly/hour10/ozone
                     database: init
+                    database_maxage: 92
 
                 date:
                     type: str
                     ds_matchstring@instance: hourly/hour10/date
                     database: init
+                    database_maxage: 92
 
                 weekday:
                     type: str
                     ds_matchstring@instance: hourly/hour10/weekday
                     database: init
+                    database_maxage: 92
 
             hour11:
 
@@ -1529,6 +1854,7 @@ item_structs:
                     type: num
                     ds_matchstring@instance: hourly/hour11/precipIntensity
                     database: init
+                    database_maxage: 92
 
                 precipIntensityError:
                     type: num
@@ -1538,6 +1864,7 @@ item_structs:
                     type: num
                     ds_matchstring@instance: hourly/hour11/precipProbability
                     database: init
+                    database_maxage: 92
 
                 precipType:
                     type: str
@@ -1547,71 +1874,85 @@ item_structs:
                     type: num
                     ds_matchstring@instance: hourly/hour11/temperature
                     database: init
+                    database_maxage: 92
 
                 apparenttemperature:
                     type: num
                     ds_matchstring@instance: hourly/hour11/apparentTemperature
                     database: init
+                    database_maxage: 92
 
                 dewpoint:
                     type: num
                     ds_matchstring@instance: hourly/hour11/dewPoint
                     database: init
+                    database_maxage: 92
 
                 humidity:
                     type: num
                     ds_matchstring@instance: hourly/hour11/humidity
                     database: init
+                    database_maxage: 92
 
                 pressure:
                     type: num
                     ds_matchstring@instance: hourly/hour11/pressure
                     database: init
+                    database_maxage: 92
 
                 windSpeed:
                     type: num
                     ds_matchstring@instance: hourly/hour11/windSpeed
                     database: init
+                    database_maxage: 92
 
                 windGust:
                     type: num
                     ds_matchstring@instance: hourly/hour11/windGust
                     database: init
+                    database_maxage: 92
 
                 windBearing:
                     type: num
                     ds_matchstring@instance: hourly/hour11/windBearing
                     database: init
+                    database_maxage: 92
 
                 cloudCover:
                     type: num
                     ds_matchstring@instance: hourly/hour11/cloudCover
                     database: init
+                    database_maxage: 92
 
                 uvIndex:
                     type: num
                     ds_matchstring@instance: hourly/hour11/uvIndex
                     database: init
+                    database_maxage: 92
 
                 visibility:
                     type: num
                     ds_matchstring@instance: hourly/hour11/visibility
                     database: init
+                    database_maxage: 92
 
                 ozone:
                     type: num
                     ds_matchstring@instance: hourly/hour11/ozone
                     database: init
+                    database_maxage: 92
 
                 date:
                     type: str
                     ds_matchstring@instance: hourly/hour11/date
                     database: init
+                    database_maxage: 92
 
                 weekday:
                     type: str
                     ds_matchstring@instance: hourly/hour11/weekday
                     database: init
+                    database_maxage: 92
 
             hour12:
 
@@ -1644,6 +1985,7 @@ item_structs:
                     type: num
                     ds_matchstring@instance: hourly/hour12/precipIntensity
                     database: init
+                    database_maxage: 92
 
                 precipIntensityError:
                     type: num
@@ -1653,6 +1995,7 @@ item_structs:
                     type: num
                     ds_matchstring@instance: hourly/hour12/precipProbability
                     database: init
+                    database_maxage: 92
 
                 precipType:
                     type: str
@@ -1662,73 +2005,88 @@ item_structs:
                     type: num
                     ds_matchstring@instance: hourly/hour12/temperature
                     database: init
+                    database_maxage: 92
 
                 apparenttemperature:
                     type: num
                     ds_matchstring@instance: hourly/hour12/apparentTemperature
                     database: init
+                    database_maxage: 92
 
                 dewpoint:
                     type: num
                     ds_matchstring@instance: hourly/hour12/dewPoint
                     database: init
+                    database_maxage: 92
 
                 humidity:
                     type: num
                     ds_matchstring@instance: hourly/hour12/humidity
                     database: init
+                    database_maxage: 92
 
                 pressure:
                     type: num
                     ds_matchstring@instance: hourly/hour12/pressure
                     database: init
+                    database_maxage: 92
 
                 windSpeed:
                     type: num
                     ds_matchstring@instance: hourly/hour12/windSpeed
                     database: init
+                    database_maxage: 92
 
                 windGust:
                     type: num
                     ds_matchstring@instance: hourly/hour12/windGust
                     database: init
+                    database_maxage: 92
 
                 windBearing:
                     type: num
                     ds_matchstring@instance: hourly/hour12/windBearing
                     database: init
+                    database_maxage: 92
 
                 cloudCover:
                     type: num
                     ds_matchstring@instance: hourly/hour12/cloudCover
                     database: init
+                    database_maxage: 92
 
                 uvIndex:
                     type: num
                     ds_matchstring@instance: hourly/hour12/uvIndex
                     database: init
+                    database_maxage: 92
 
                 visibility:
                     type: num
                     ds_matchstring@instance: hourly/hour12/visibility
                     database: init
+                    database_maxage: 92
 
                 ozone:
                     type: num
                     ds_matchstring@instance: hourly/hour12/ozone
                     database: init
+                    database_maxage: 92
 
                 date:
                     type: str
                     ds_matchstring@instance: hourly/hour12/date
                     database: init
+                    database_maxage: 92
 
                 weekday:
                     type: str
                     ds_matchstring@instance: hourly/hour12/weekday
                     database: init
+                    database_maxage: 92
 
-
+    forecast_daily:
+        name: Daily forcast of Weather report from darksky.net - Data is written do database
         daily:
 
             summary:
@@ -1774,6 +2132,7 @@ item_structs:
                     type: num
                     ds_matchstring@instance: daily/day0/precipIntensity
                     database: init
+                    database_maxage: 92
 
                 precipIntensityError:
                     type: num
@@ -1783,6 +2142,7 @@ item_structs:
                     type: num
                     ds_matchstring@instance: daily/day0/precipProbability
                     database: init
+                    database_maxage: 92
 
                 precipType:
                     type: str
@@ -1792,126 +2152,151 @@ item_structs:
                     type: num
                     ds_matchstring@instance: daily/day0/temperature
                     database: init
+                    database_maxage: 92
 
                 apparenttemperature:
                     type: num
                     ds_matchstring@instance: daily/day0/apparentTemperature
                     database: init
+                    database_maxage: 92
 
                 dewpoint:
                     type: num
                     ds_matchstring@instance: daily/day0/dewPoint
                     database: init
+                    database_maxage: 92
 
                 humidity:
                     type: num
                     ds_matchstring@instance: daily/day0/humidity
                     database: init
+                    database_maxage: 92
 
                 pressure:
                     type: num
                     ds_matchstring@instance: daily/day0/pressure
                     database: init
+                    database_maxage: 92
 
                 windSpeed:
                     type: num
                     ds_matchstring@instance: daily/day0/windSpeed
                     database: init
+                    database_maxage: 92
 
                 windGust:
                     type: num
                     ds_matchstring@instance: daily/day0/windGust
                     database: init
+                    database_maxage: 92
 
                 windBearing:
                     type: num
                     ds_matchstring@instance: daily/day0/windBearing
                     database: init
+                    database_maxage: 92
 
                 cloudCover:
                     type: num
                     ds_matchstring@instance: daily/day0/cloudCover
                     database: init
+                    database_maxage: 92
 
                 uvIndex:
                     type: num
                     ds_matchstring@instance: daily/day0/uvIndex
                     database: init
+                    database_maxage: 92
 
                 visibility:
                     type: num
                     ds_matchstring@instance: daily/day0/visibility
                     database: init
+                    database_maxage: 92
 
                 ozone:
                     type: num
                     ds_matchstring@instance: daily/day0/ozone
                     database: init
+                    database_maxage: 92
 
                 temperatureMin:
                     type: num
                     ds_matchstring@instance: daily/day0/temperatureMin
                     database: init
+                    database_maxage: 92
 
                 temperatureMinTime:
                     type: num
                     ds_matchstring@instance: daily/day0/temperatureMinTime
                     database: init
+                    database_maxage: 92
 
                 temperatureMax:
                     type: num
                     ds_matchstring@instance: daily/day0/temperatureMax
                     database: init
+                    database_maxage: 92
 
                 temperatureMaxTime:
                     type: num
                     ds_matchstring@instance: daily/day0/temperatureMaxTime
                     database: init
+                    database_maxage: 92
 
                 apparentTemperatureMin:
                     type: num
                     ds_matchstring@instance: daily/day0/apparentTemperatureMin
                     database: init
+                    database_maxage: 92
 
                 apparentTemperatureMinTime:
                     type: num
                     ds_matchstring@instance: daily/day0/apparentTemperatureMinTime
                     database: init
+                    database_maxage: 92
 
                 apparentTemperatureMax:
                     type: num
                     ds_matchstring@instance: daily/day0/apparentTemperatureMax
                     database: init
+                    database_maxage: 92
 
                 apparentTemperatureMaxTime:
                     type: num
                     ds_matchstring@instance: daily/day0/apparentTemperatureMaxTime
                     database: init
+                    database_maxage: 92
 
                 date:
                     type: str
                     ds_matchstring@instance: daily/day0/date
                     database: init
+                    database_maxage: 92
 
                 weekday:
                     type: str
                     ds_matchstring@instance: daily/day0/weekday
                     database: init
+                    database_maxage: 92
 
                 precipProbability_mean:
                     type: num
                     ds_matchstring@instance: daily/day0/precipProbability_mean
                     database: init
+                    database_maxage: 92
 
                 precipIntensity_mean:
                     type: num
                     ds_matchstring@instance: daily/day0/precipIntensity_mean
                     database: init
+                    database_maxage: 92
 
                 temperature_mean:
                     type: num
                     ds_matchstring@instance: daily/day0/temperature_mean
                     database: init
+                    database_maxage: 92
 
                 hours:
                     type: dict
@@ -1948,6 +2333,7 @@ item_structs:
                     type: num
                     ds_matchstring@instance: daily/day1/precipIntensity
                     database: init
+                    database_maxage: 92
 
                 precipIntensityError:
                     type: num
@@ -1957,6 +2343,7 @@ item_structs:
                     type: num
                     ds_matchstring@instance: daily/day1/precipProbability
                     database: init
+                    database_maxage: 92
 
                 precipType:
                     type: str
@@ -1966,126 +2353,151 @@ item_structs:
                     type: num
                     ds_matchstring@instance: daily/day1/temperature
                     database: init
+                    database_maxage: 92
 
                 apparenttemperature:
                     type: num
                     ds_matchstring@instance: daily/day1/apparentTemperature
                     database: init
+                    database_maxage: 92
 
                 dewpoint:
                     type: num
                     ds_matchstring@instance: daily/day1/dewPoint
                     database: init
+                    database_maxage: 92
 
                 humidity:
                     type: num
                     ds_matchstring@instance: daily/day1/humidity
                     database: init
+                    database_maxage: 92
 
                 pressure:
                     type: num
                     ds_matchstring@instance: daily/day1/pressure
                     database: init
+                    database_maxage: 92
 
                 windSpeed:
                     type: num
                     ds_matchstring@instance: daily/day1/windSpeed
                     database: init
+                    database_maxage: 92
 
                 windGust:
                     type: num
                     ds_matchstring@instance: daily/day1/windGust
                     database: init
+                    database_maxage: 92
 
                 windBearing:
                     type: num
                     ds_matchstring@instance: daily/day1/windBearing
                     database: init
+                    database_maxage: 92
 
                 cloudCover:
                     type: num
                     ds_matchstring@instance: daily/day1/cloudCover
                     database: init
+                    database_maxage: 92
 
                 uvIndex:
                     type: num
                     ds_matchstring@instance: daily/day1/uvIndex
                     database: init
+                    database_maxage: 92
 
                 visibility:
                     type: num
                     ds_matchstring@instance: daily/day1/visibility
                     database: init
+                    database_maxage: 92
 
                 ozone:
                     type: num
                     ds_matchstring@instance: daily/day1/ozone
                     database: init
+                    database_maxage: 92
 
                 temperatureMin:
                     type: num
                     ds_matchstring@instance: daily/day1/temperatureMin
                     database: init
+                    database_maxage: 92
 
                 temperatureMinTime:
                     type: num
                     ds_matchstring@instance: daily/day1/temperatureMinTime
                     database: init
+                    database_maxage: 92
 
                 temperatureMax:
                     type: num
                     ds_matchstring@instance: daily/day1/temperatureMax
                     database: init
+                    database_maxage: 92
 
                 temperatureMaxTime:
                     type: num
                     ds_matchstring@instance: daily/day1/temperatureMaxTime
                     database: init
+                    database_maxage: 92
 
                 apparentTemperatureMin:
                     type: num
                     ds_matchstring@instance: daily/day1/apparentTemperatureMin
                     database: init
+                    database_maxage: 92
 
                 apparentTemperatureMinTime:
                     type: num
                     ds_matchstring@instance: daily/day1/apparentTemperatureMinTime
                     database: init
+                    database_maxage: 92
 
                 apparentTemperatureMax:
                     type: num
                     ds_matchstring@instance: daily/day1/apparentTemperatureMax
                     database: init
+                    database_maxage: 92
 
                 apparentTemperatureMaxTime:
                     type: num
                     ds_matchstring@instance: daily/day1/apparentTemperatureMaxTime
                     database: init
+                    database_maxage: 92
 
                 date:
                     type: str
                     ds_matchstring@instance: daily/day1/date
                     database: init
+                    database_maxage: 92
 
                 weekday:
                     type: str
                     ds_matchstring@instance: daily/day1/weekday
                     database: init
+                    database_maxage: 92
 
                 precipProbability_mean:
                     type: num
                     ds_matchstring@instance: daily/day1/precipProbability_mean
                     database: init
+                    database_maxage: 92
 
                 precipIntensity_mean:
                     type: num
                     ds_matchstring@instance: daily/day1/precipIntensity_mean
                     database: init
+                    database_maxage: 92
 
                 temperature_mean:
                     type: num
                     ds_matchstring@instance: daily/day1/temperature_mean
                     database: init
+                    database_maxage: 92
 
                 hours:
                     type: dict
@@ -2122,6 +2534,7 @@ item_structs:
                     type: num
                     ds_matchstring@instance: daily/day2/precipIntensity
                     database: init
+                    database_maxage: 92
 
                 precipIntensityError:
                     type: num
@@ -2131,6 +2544,7 @@ item_structs:
                     type: num
                     ds_matchstring@instance: daily/day2/precipProbability
                     database: init
+                    database_maxage: 92
 
                 precipType:
                     type: str
@@ -2140,126 +2554,151 @@ item_structs:
                     type: num
                     ds_matchstring@instance: daily/day2/temperature
                     database: init
+                    database_maxage: 92
 
                 apparenttemperature:
                     type: num
                     ds_matchstring@instance: daily/day2/apparentTemperature
                     database: init
+                    database_maxage: 92
 
                 dewpoint:
                     type: num
                     ds_matchstring@instance: daily/day2/dewPoint
                     database: init
+                    database_maxage: 92
 
                 humidity:
                     type: num
                     ds_matchstring@instance: daily/day2/humidity
                     database: init
+                    database_maxage: 92
 
                 pressure:
                     type: num
                     ds_matchstring@instance: daily/day2/pressure
                     database: init
+                    database_maxage: 92
 
                 windSpeed:
                     type: num
                     ds_matchstring@instance: daily/day2/windSpeed
                     database: init
+                    database_maxage: 92
 
                 windGust:
                     type: num
                     ds_matchstring@instance: daily/day2/windGust
                     database: init
+                    database_maxage: 92
 
                 windBearing:
                     type: num
                     ds_matchstring@instance: daily/day2/windBearing
                     database: init
+                    database_maxage: 92
 
                 cloudCover:
                     type: num
                     ds_matchstring@instance: daily/day2/cloudCover
                     database: init
+                    database_maxage: 92
 
                 uvIndex:
                     type: num
                     ds_matchstring@instance: daily/day2/uvIndex
                     database: init
+                    database_maxage: 92
 
                 visibility:
                     type: num
                     ds_matchstring@instance: daily/day2/visibility
                     database: init
+                    database_maxage: 92
 
                 ozone:
                     type: num
                     ds_matchstring@instance: daily/day2/ozone
                     database: init
+                    database_maxage: 92
 
                 temperatureMin:
                     type: num
                     ds_matchstring@instance: daily/day2/temperatureMin
                     database: init
+                    database_maxage: 92
 
                 temperatureMinTime:
                     type: num
                     ds_matchstring@instance: daily/day2/temperatureMinTime
                     database: init
+                    database_maxage: 92
 
                 temperatureMax:
                     type: num
                     ds_matchstring@instance: daily/day2/temperatureMax
                     database: init
+                    database_maxage: 92
 
                 temperatureMaxTime:
                     type: num
                     ds_matchstring@instance: daily/day2/temperatureMaxTime
                     database: init
+                    database_maxage: 92
 
                 apparentTemperatureMin:
                     type: num
                     ds_matchstring@instance: daily/day2/apparentTemperatureMin
                     database: init
+                    database_maxage: 92
 
                 apparentTemperatureMinTime:
                     type: num
                     ds_matchstring@instance: daily/day2/apparentTemperatureMinTime
                     database: init
+                    database_maxage: 92
 
                 apparentTemperatureMax:
                     type: num
                     ds_matchstring@instance: daily/day2/apparentTemperatureMax
                     database: init
+                    database_maxage: 92
 
                 apparentTemperatureMaxTime:
                     type: num
                     ds_matchstring@instance: daily/day2/apparentTemperatureMaxTime
                     database: init
+                    database_maxage: 92
 
                 date:
                     type: str
                     ds_matchstring@instance: daily/day2/date
                     database: init
+                    database_maxage: 92
 
                 weekday:
                     type: str
                     ds_matchstring@instance: daily/day2/weekday
                     database: init
+                    database_maxage: 92
 
                 precipProbability_mean:
                     type: num
                     ds_matchstring@instance: daily/day2/precipProbability_mean
                     database: init
+                    database_maxage: 92
 
                 precipIntensity_mean:
                     type: num
                     ds_matchstring@instance: daily/day2/precipIntensity_mean
                     database: init
+                    database_maxage: 92
 
                 temperature_mean:
                     type: num
                     ds_matchstring@instance: daily/day2/temperature_mean
                     database: init
+                    database_maxage: 92
 
                 hours:
                     type: dict
@@ -2296,6 +2735,7 @@ item_structs:
                     type: num
                     ds_matchstring@instance: daily/day3/precipIntensity
                     database: init
+                    database_maxage: 92
 
                 precipIntensityError:
                     type: num
@@ -2305,6 +2745,7 @@ item_structs:
                     type: num
                     ds_matchstring@instance: daily/day3/precipProbability
                     database: init
+                    database_maxage: 92
 
                 precipType:
                     type: str
@@ -2314,111 +2755,133 @@ item_structs:
                     type: num
                     ds_matchstring@instance: daily/day3/temperature
                     database: init
+                    database_maxage: 92
 
                 apparenttemperature:
                     type: num
                     ds_matchstring@instance: daily/day3/apparentTemperature
                     database: init
+                    database_maxage: 92
 
                 dewpoint:
                     type: num
                     ds_matchstring@instance: daily/day3/dewPoint
                     database: init
+                    database_maxage: 92
 
                 humidity:
                     type: num
                     ds_matchstring@instance: daily/day3/humidity
                     database: init
+                    database_maxage: 92
 
                 pressure:
                     type: num
                     ds_matchstring@instance: daily/day3/pressure
                     database: init
+                    database_maxage: 92
 
                 windSpeed:
                     type: num
                     ds_matchstring@instance: daily/day3/windSpeed
                     database: init
+                    database_maxage: 92
 
                 windGust:
                     type: num
                     ds_matchstring@instance: daily/day3/windGust
                     database: init
+                    database_maxage: 92
 
                 windBearing:
                     type: num
                     ds_matchstring@instance: daily/day3/windBearing
                     database: init
+                    database_maxage: 92
 
                 cloudCover:
                     type: num
                     ds_matchstring@instance: daily/day3/cloudCover
                     database: init
+                    database_maxage: 92
 
                 uvIndex:
                     type: num
                     ds_matchstring@instance: daily/day3/uvIndex
                     database: init
+                    database_maxage: 92
 
                 visibility:
                     type: num
                     ds_matchstring@instance: daily/day3/visibility
                     database: init
+                    database_maxage: 92
 
                 ozone:
                     type: num
                     ds_matchstring@instance: daily/day3/ozone
                     database: init
+                    database_maxage: 92
 
                 temperatureMin:
                     type: num
                     ds_matchstring@instance: daily/day3/temperatureMin
                     database: init
+                    database_maxage: 92
 
                 temperatureMinTime:
                     type: num
                     ds_matchstring@instance: daily/day3/temperatureMinTime
                     database: init
+                    database_maxage: 92
 
                 temperatureMax:
                     type: num
                     ds_matchstring@instance: daily/day3/temperatureMax
                     database: init
+                    database_maxage: 92
 
                 temperatureMaxTime:
                     type: num
                     ds_matchstring@instance: daily/day3/temperatureMaxTime
                     database: init
+                    database_maxage: 92
 
                 apparentTemperatureMin:
                     type: num
                     ds_matchstring@instance: daily/day3/apparentTemperatureMin
                     database: init
+                    database_maxage: 92
 
                 apparentTemperatureMinTime:
                     type: num
                     ds_matchstring@instance: daily/day3/apparentTemperatureMinTime
                     database: init
+                    database_maxage: 92
 
                 apparentTemperatureMax:
                     type: num
                     ds_matchstring@instance: daily/day3/apparentTemperatureMax
                     database: init
+                    database_maxage: 92
 
                 apparentTemperatureMaxTime:
                     type: num
                     ds_matchstring@instance: daily/day3/apparentTemperatureMaxTime
                     database: init
+                    database_maxage: 92
 
                 date:
                     type: str
                     ds_matchstring@instance: daily/day3/date
                     database: init
+                    database_maxage: 92
 
                 weekday:
                     type: str
                     ds_matchstring@instance: daily/day3/weekday
                     database: init
+                    database_maxage: 92
 
             day4:
 
@@ -2451,6 +2914,7 @@ item_structs:
                     type: num
                     ds_matchstring@instance: daily/day4/precipIntensity
                     database: init
+                    database_maxage: 92
 
                 precipIntensityError:
                     type: num
@@ -2460,6 +2924,7 @@ item_structs:
                     type: num
                     ds_matchstring@instance: daily/day4/precipProbability
                     database: init
+                    database_maxage: 92
 
                 precipType:
                     type: str
@@ -2469,111 +2934,133 @@ item_structs:
                     type: num
                     ds_matchstring@instance: daily/day4/temperature
                     database: init
+                    database_maxage: 92
 
                 apparenttemperature:
                     type: num
                     ds_matchstring@instance: daily/day4/apparentTemperature
                     database: init
+                    database_maxage: 92
 
                 dewpoint:
                     type: num
                     ds_matchstring@instance: daily/day4/dewPoint
                     database: init
+                    database_maxage: 92
 
                 humidity:
                     type: num
                     ds_matchstring@instance: daily/day4/humidity
                     database: init
+                    database_maxage: 92
 
                 pressure:
                     type: num
                     ds_matchstring@instance: daily/day4/pressure
                     database: init
+                    database_maxage: 92
 
                 windSpeed:
                     type: num
                     ds_matchstring@instance: daily/day4/windSpeed
                     database: init
+                    database_maxage: 92
 
                 windGust:
                     type: num
                     ds_matchstring@instance: daily/day4/windGust
                     database: init
+                    database_maxage: 92
 
                 windBearing:
                     type: num
                     ds_matchstring@instance: daily/day4/windBearing
                     database: init
+                    database_maxage: 92
 
                 cloudCover:
                     type: num
                     ds_matchstring@instance: daily/day4/cloudCover
                     database: init
+                    database_maxage: 92
 
                 uvIndex:
                     type: num
                     ds_matchstring@instance: daily/day4/uvIndex
                     database: init
+                    database_maxage: 92
 
                 visibility:
                     type: num
                     ds_matchstring@instance: daily/day4/visibility
                     database: init
+                    database_maxage: 92
 
                 ozone:
                     type: num
                     ds_matchstring@instance: daily/day4/ozone
                     database: init
+                    database_maxage: 92
 
                 temperatureMin:
                     type: num
                     ds_matchstring@instance: daily/day4/temperatureMin
                     database: init
+                    database_maxage: 92
 
                 temperatureMinTime:
                     type: num
                     ds_matchstring@instance: daily/day4/temperatureMinTime
                     database: init
+                    database_maxage: 92
 
                 temperatureMax:
                     type: num
                     ds_matchstring@instance: daily/day4/temperatureMax
                     database: init
+                    database_maxage: 92
 
                 temperatureMaxTime:
                     type: num
                     ds_matchstring@instance: daily/day4/temperatureMaxTime
                     database: init
+                    database_maxage: 92
 
                 apparentTemperatureMin:
                     type: num
                     ds_matchstring@instance: daily/day4/apparentTemperatureMin
                     database: init
+                    database_maxage: 92
 
                 apparentTemperatureMinTime:
                     type: num
                     ds_matchstring@instance: daily/day4/apparentTemperatureMinTime
                     database: init
+                    database_maxage: 92
 
                 apparentTemperatureMax:
                     type: num
                     ds_matchstring@instance: daily/day4/apparentTemperatureMax
                     database: init
+                    database_maxage: 92
 
                 apparentTemperatureMaxTime:
                     type: num
                     ds_matchstring@instance: daily/day4/apparentTemperatureMaxTime
                     database: init
+                    database_maxage: 92
 
                 date:
                     type: str
                     ds_matchstring@instance: daily/day4/date
                     database: init
+                    database_maxage: 92
 
                 weekday:
                     type: str
                     ds_matchstring@instance: daily/day4/weekday
                     database: init
+                    database_maxage: 92
 
             day5:
 
@@ -2606,7 +3093,7 @@ item_structs:
                     type: num
                     ds_matchstring@instance: daily/day5/precipIntensity
                     database: init
-
+                    database_maxage: 92
                 precipIntensityError:
                     type: num
                     ds_matchstring@instance: daily/day5/precipIntensityError
@@ -2615,6 +3102,7 @@ item_structs:
                     type: num
                     ds_matchstring@instance: daily/day5/precipProbability
                     database: init
+                    database_maxage: 92
 
                 precipType:
                     type: str
@@ -2624,111 +3112,133 @@ item_structs:
                     type: num
                     ds_matchstring@instance: daily/day5/temperature
                     database: init
+                    database_maxage: 92
 
                 apparenttemperature:
                     type: num
                     ds_matchstring@instance: daily/day5/apparentTemperature
                     database: init
+                    database_maxage: 92
 
                 dewpoint:
                     type: num
                     ds_matchstring@instance: daily/day5/dewPoint
                     database: init
+                    database_maxage: 92
 
                 humidity:
                     type: num
                     ds_matchstring@instance: daily/day5/humidity
                     database: init
+                    database_maxage: 92
 
                 pressure:
                     type: num
                     ds_matchstring@instance: daily/day5/pressure
                     database: init
+                    database_maxage: 92
 
                 windSpeed:
                     type: num
                     ds_matchstring@instance: daily/day5/windSpeed
                     database: init
+                    database_maxage: 92
 
                 windGust:
                     type: num
                     ds_matchstring@instance: daily/day5/windGust
                     database: init
+                    database_maxage: 92
 
                 windBearing:
                     type: num
                     ds_matchstring@instance: daily/day5/windBearing
                     database: init
+                    database_maxage: 92
 
                 cloudCover:
                     type: num
                     ds_matchstring@instance: daily/day5/cloudCover
                     database: init
+                    database_maxage: 92
 
                 uvIndex:
                     type: num
                     ds_matchstring@instance: daily/day5/uvIndex
                     database: init
+                    database_maxage: 92
 
                 visibility:
                     type: num
                     ds_matchstring@instance: daily/day5/visibility
                     database: init
+                    database_maxage: 92
 
                 ozone:
                     type: num
                     ds_matchstring@instance: daily/day5/ozone
                     database: init
+                    database_maxage: 92
 
                 temperatureMin:
                     type: num
                     ds_matchstring@instance: daily/day5/temperatureMin
                     database: init
+                    database_maxage: 92
 
                 temperatureMinTime:
                     type: num
                     ds_matchstring@instance: daily/day5/temperatureMinTime
                     database: init
+                    database_maxage: 92
 
                 temperatureMax:
                     type: num
                     ds_matchstring@instance: daily/day5/temperatureMax
                     database: init
+                    database_maxage: 92
 
                 temperatureMaxTime:
                     type: num
                     ds_matchstring@instance: daily/day5/temperatureMaxTime
                     database: init
+                    database_maxage: 92
 
                 apparentTemperatureMin:
                     type: num
                     ds_matchstring@instance: daily/day5/apparentTemperatureMin
                     database: init
+                    database_maxage: 92
 
                 apparentTemperatureMinTime:
                     type: num
                     ds_matchstring@instance: daily/day5/apparentTemperatureMinTime
                     database: init
+                    database_maxage: 92
 
                 apparentTemperatureMax:
                     type: num
                     ds_matchstring@instance: daily/day5/apparentTemperatureMax
                     database: init
+                    database_maxage: 92
 
                 apparentTemperatureMaxTime:
                     type: num
                     ds_matchstring@instance: daily/day5/apparentTemperatureMaxTime
                     database: init
+                    database_maxage: 92
 
                 date:
                     type: str
                     ds_matchstring@instance: daily/day5/date
                     database: init
+                    database_maxage: 92
 
                 weekday:
                     type: str
                     ds_matchstring@instance: daily/day5/weekday
                     database: init
+                    database_maxage: 92
 
             day6:
 
@@ -2761,6 +3271,7 @@ item_structs:
                     type: num
                     ds_matchstring@instance: daily/day6/precipIntensity
                     database: init
+                    database_maxage: 92
 
                 precipIntensityError:
                     type: num
@@ -2770,6 +3281,7 @@ item_structs:
                     type: num
                     ds_matchstring@instance: daily/day6/precipProbability
                     database: init
+                    database_maxage: 92
 
                 precipType:
                     type: str
@@ -2779,111 +3291,133 @@ item_structs:
                     type: num
                     ds_matchstring@instance: daily/day6/temperature
                     database: init
+                    database_maxage: 92
 
                 apparenttemperature:
                     type: num
                     ds_matchstring@instance: daily/day6/apparentTemperature
                     database: init
+                    database_maxage: 92
 
                 dewpoint:
                     type: num
                     ds_matchstring@instance: daily/day6/dewPoint
                     database: init
+                    database_maxage: 92
 
                 humidity:
                     type: num
                     ds_matchstring@instance: daily/day6/humidity
                     database: init
+                    database_maxage: 92
 
                 pressure:
                     type: num
                     ds_matchstring@instance: daily/day6/pressure
                     database: init
+                    database_maxage: 92
 
                 windSpeed:
                     type: num
                     ds_matchstring@instance: daily/day6/windSpeed
                     database: init
+                    database_maxage: 92
 
                 windGust:
                     type: num
                     ds_matchstring@instance: daily/day6/windGust
                     database: init
+                    database_maxage: 92
 
                 windBearing:
                     type: num
                     ds_matchstring@instance: daily/day6/windBearing
                     database: init
+                    database_maxage: 92
 
                 cloudCover:
                     type: num
                     ds_matchstring@instance: daily/day6/cloudCover
                     database: init
+                    database_maxage: 92
 
                 uvIndex:
                     type: num
                     ds_matchstring@instance: daily/day6/uvIndex
                     database: init
+                    database_maxage: 92
 
                 visibility:
                     type: num
                     ds_matchstring@instance: daily/day6/visibility
                     database: init
+                    database_maxage: 92
 
                 ozone:
                     type: num
                     ds_matchstring@instance: daily/day6/ozone
                     database: init
+                    database_maxage: 92
 
                 temperatureMin:
                     type: num
                     ds_matchstring@instance: daily/day6/temperatureMin
                     database: init
+                    database_maxage: 92
 
                 temperatureMinTime:
                     type: num
                     ds_matchstring@instance: daily/day6/temperatureMinTime
                     database: init
+                    database_maxage: 92
 
                 temperatureMax:
                     type: num
                     ds_matchstring@instance: daily/day6/temperatureMax
                     database: init
+                    database_maxage: 92
 
                 temperatureMaxTime:
                     type: num
                     ds_matchstring@instance: daily/day6/temperatureMaxTime
                     database: init
+                    database_maxage: 92
 
                 apparentTemperatureMin:
                     type: num
                     ds_matchstring@instance: daily/day6/apparentTemperatureMin
                     database: init
+                    database_maxage: 92
 
                 apparentTemperatureMinTime:
                     type: num
                     ds_matchstring@instance: daily/day6/apparentTemperatureMinTime
                     database: init
+                    database_maxage: 92
 
                 apparentTemperatureMax:
                     type: num
                     ds_matchstring@instance: daily/day6/apparentTemperatureMax
                     database: init
+                    database_maxage: 92
 
                 apparentTemperatureMaxTime:
                     type: num
                     ds_matchstring@instance: daily/day6/apparentTemperatureMaxTime
                     database: init
+                    database_maxage: 92
 
                 date:
                     type: str
                     ds_matchstring@instance: daily/day6/date
                     database: init
+                    database_maxage: 92
 
                 weekday:
                     type: str
                     ds_matchstring@instance: daily/day6/weekday
                     database: init
+                    database_maxage: 92
 
             day7:
 
@@ -2916,6 +3450,7 @@ item_structs:
                     type: num
                     ds_matchstring@instance: daily/day7/precipIntensity
                     database: init
+                    database_maxage: 92
 
                 precipIntensityError:
                     type: num
@@ -2925,6 +3460,7 @@ item_structs:
                     type: num
                     ds_matchstring@instance: daily/day7/precipProbability
                     database: init
+                    database_maxage: 92
 
                 precipType:
                     type: str
@@ -2934,135 +3470,3042 @@ item_structs:
                     type: num
                     ds_matchstring@instance: daily/day7/temperature
                     database: init
+                    database_maxage: 92
 
                 apparenttemperature:
                     type: num
                     ds_matchstring@instance: daily/day7/apparentTemperature
                     database: init
+                    database_maxage: 92
 
                 dewpoint:
                     type: num
                     ds_matchstring@instance: daily/day7/dewPoint
                     database: init
+                    database_maxage: 92
 
                 humidity:
                     type: num
                     ds_matchstring@instance: daily/day7/humidity
                     database: init
+                    database_maxage: 92
 
                 pressure:
                     type: num
                     ds_matchstring@instance: daily/day7/pressure
                     database: init
+                    database_maxage: 92
 
                 windSpeed:
                     type: num
                     ds_matchstring@instance: daily/day7/windSpeed
                     database: init
+                    database_maxage: 92
 
                 windGust:
                     type: num
                     ds_matchstring@instance: daily/day7/windGust
                     database: init
+                    database_maxage: 92
 
                 windBearing:
                     type: num
                     ds_matchstring@instance: daily/day7/windBearing
                     database: init
+                    database_maxage: 92
 
                 cloudCover:
                     type: num
                     ds_matchstring@instance: daily/day7/cloudCover
                     database: init
+                    database_maxage: 92
 
                 uvIndex:
                     type: num
                     ds_matchstring@instance: daily/day7/uvIndex
                     database: init
+                    database_maxage: 92
 
                 visibility:
                     type: num
                     ds_matchstring@instance: daily/day7/visibility
                     database: init
+                    database_maxage: 92
 
                 ozone:
                     type: num
                     ds_matchstring@instance: daily/day7/ozone
                     database: init
+                    database_maxage: 92
 
                 temperatureMin:
                     type: num
                     ds_matchstring@instance: daily/day7/temperatureMin
                     database: init
+                    database_maxage: 92
 
                 temperatureMinTime:
                     type: num
                     ds_matchstring@instance: daily/day7/temperatureMinTime
                     database: init
+                    database_maxage: 92
 
                 temperatureMax:
                     type: num
                     ds_matchstring@instance: daily/day7/temperatureMax
                     database: init
+                    database_maxage: 92
 
                 temperatureMaxTime:
                     type: num
                     ds_matchstring@instance: daily/day7/temperatureMaxTime
                     database: init
+                    database_maxage: 92
 
                 apparentTemperatureMin:
                     type: num
                     ds_matchstring@instance: daily/day7/apparentTemperatureMin
                     database: init
+                    database_maxage: 92
 
                 apparentTemperatureMinTime:
                     type: num
                     ds_matchstring@instance: daily/day7/apparentTemperatureMinTime
                     database: init
+                    database_maxage: 92
 
                 apparentTemperatureMax:
                     type: num
                     ds_matchstring@instance: daily/day7/apparentTemperatureMax
                     database: init
+                    database_maxage: 92
 
                 apparentTemperatureMaxTime:
                     type: num
                     ds_matchstring@instance: daily/day7/apparentTemperatureMaxTime
                     database: init
+                    database_maxage: 92
 
                 date:
                     type: str
                     ds_matchstring@instance: daily/day7/date
                     database: init
+                    database_maxage: 92
 
                 weekday:
                     type: str
                     ds_matchstring@instance: daily/day7/weekday
                     database: init
+                    database_maxage: 92
 
-        alerts:
+    current_weather_nodb:
+        name: Current weather of Weather report from darksky.net - Data is NOT written do database
+        currently:
 
-            list:
-                type: list
-                ds_matchstring@instance: alerts
-
-            string_detail:
-                type: str
-                ds_matchstring@instance: alerts_string
-
-        flags:
-
-            sources:
-                type: str
-                ds_matchstring@instance: flags/sources
-
-            units:
-                type: str
-                ds_matchstring@instance: flags/units
-
-            nearest_station:
+            time_epoch:
                 type: num
-                ds_matchstring@instance: flags/nearest-station
+                ds_matchstring@instance: currently/time
+
+            time:
+                type: str
+                eval_trigger: ..time_epoch
+                eval: datetime.datetime.fromtimestamp(sh...time_epoch()).strftime('%HH:%MM')
+
+            summary:
+                type: str
+                ds_matchstring@instance: currently/summary
+
+            icon:
+                type: str
+                ds_matchstring@instance: currently/icon
+
+            icon_visu:
+                type: str
+                ds_matchstring@instance: currently/icon_visu
+
+            nearestStormDistance:
+                type: num
+                ds_matchstring@instance: currently/nearestStormDistance
+
+            precipIntensity:
+                type: num
+                ds_matchstring@instance: currently/precipIntensity
+
+            precipIntensityError:
+                type: num
+                ds_matchstring@instance: currently/precipIntensityError
+
+            precipProbability:
+                type: num
+                ds_matchstring@instance: currently/precipProbability
+
+            precipType:
+                type: str
+                ds_matchstring@instance: currently/precipType
+
+            temperature:
+                type: num
+                ds_matchstring@instance: currently/temperature
+
+            apparenttemperature:
+                type: num
+                ds_matchstring@instance: currently/apparentTemperature
+
+            dewpoint:
+                type: num
+                ds_matchstring@instance: currently/dewPoint
+
+            humidity:
+                type: num
+                ds_matchstring@instance: currently/humidity
+
+            pressure:
+                type: num
+                ds_matchstring@instance: currently/pressure
+
+            windSpeed:
+                type: num
+                ds_matchstring@instance: currently/windSpeed
+
+            windGust:
+                type: num
+                ds_matchstring@instance: currently/windGust
+
+            windBearing:
+                type: num
+                ds_matchstring@instance: currently/windBearing
+
+            cloudCover:
+                type: num
+                ds_matchstring@instance: currently/cloudCover
+
+            uvIndex:
+                type: num
+                ds_matchstring@instance: currently/uvIndex
+
+            visibility:
+                type: num
+                ds_matchstring@instance: currently/visibility
+
+            ozone:
+                type: num
+                ds_matchstring@instance: currently/ozone
+
+            date:
+                type: str
+                ds_matchstring@instance: currently/date
+
+            day:
+                type: num
+                ds_matchstring@instance: currently/day
+
+    forecast_hourly_nodb:
+        name: Hourly forcast of Weather report from darksky.net - Data is NOT written do database
+        hourly:
+
+            summary:
+                type: str
+                ds_matchstring@instance: hourly/summary
+
+            icon:
+                type: str
+                ds_matchstring@instance: hourly/icon
+
+            icon_visu:
+                type: str
+                ds_matchstring@instance: hourly/icon_visu
+
+            hour0:
+
+                time_epoch:
+                    type: num
+                    ds_matchstring@instance: hourly/hour0/time
+
+                time:
+                    type: str
+                    eval_trigger: ..time_epoch
+                    eval: datetime.datetime.fromtimestamp(sh...time_epoch()).strftime('%HH:%MM')
+
+                summary:
+                    type: str
+                    ds_matchstring@instance: hourly/hour0/summary
+
+                icon:
+                    type: str
+                    ds_matchstring@instance: hourly/hour0/icon
+
+                icon_visu:
+                    type: str
+                    ds_matchstring@instance: hourly/hour0/icon_visu
+
+                nearestStormDistance:
+                    type: num
+                    ds_matchstring@instance: hourly/hour0/nearestStormDistance
+
+                precipIntensity:
+                    type: num
+                    ds_matchstring@instance: hourly/hour0/precipIntensity
+
+                precipIntensityError:
+                    type: num
+                    ds_matchstring@instance: hourly/hour0/precipIntensityError
+
+                precipProbability:
+                    type: num
+                    ds_matchstring@instance: hourly/hour0/precipProbability
+
+                precipType:
+                    type: str
+                    ds_matchstring@instance: hourly/hour0/precipType
+
+                temperature:
+                    type: num
+                    ds_matchstring@instance: hourly/hour0/temperature
+
+                apparenttemperature:
+                    type: num
+                    ds_matchstring@instance: hourly/hour0/apparentTemperature
+
+                dewpoint:
+                    type: num
+                    ds_matchstring@instance: hourly/hour0/dewPoint
+
+                humidity:
+                    type: num
+                    ds_matchstring@instance: hourly/hour0/humidity
+
+                pressure:
+                    type: num
+                    ds_matchstring@instance: hourly/hour0/pressure
+
+                windSpeed:
+                    type: num
+                    ds_matchstring@instance: hourly/hour0/windSpeed
+
+                windGust:
+                    type: num
+                    ds_matchstring@instance: hourly/hour0/windGust
+
+                windBearing:
+                    type: num
+                    ds_matchstring@instance: hourly/hour0/windBearing
+
+                cloudCover:
+                    type: num
+                    ds_matchstring@instance: hourly/hour0/cloudCover
+
+                uvIndex:
+                    type: num
+                    ds_matchstring@instance: hourly/hour0/uvIndex
+
+                visibility:
+                    type: num
+                    ds_matchstring@instance: hourly/hour0/visibility
+
+                ozone:
+                    type: num
+                    ds_matchstring@instance: hourly/hour0/ozone
+
+                date:
+                    type: str
+                    ds_matchstring@instance: hourly/hour0/date
+
+
+                weekday:
+                    type: str
+                    ds_matchstring@instance: hourly/hour0/weekday
+
+
+            hour1:
+
+                time_epoch:
+                    type: num
+                    ds_matchstring@instance: hourly/hour1/time
+
+                time:
+                    type: str
+                    eval_trigger: ..time_epoch
+                    eval: datetime.datetime.fromtimestamp(sh...time_epoch()).strftime('%HH:%MM')
+
+                summary:
+                    type: str
+                    ds_matchstring@instance: hourly/hour1/summary
+
+                icon:
+                    type: str
+                    ds_matchstring@instance: hourly/hour1/icon
+
+                icon_visu:
+                    type: str
+                    ds_matchstring@instance: hourly/hour1/icon_visu
+
+                nearestStormDistance:
+                    type: num
+                    ds_matchstring@instance: hourly/hour1/nearestStormDistance
+
+                precipIntensity:
+                    type: num
+                    ds_matchstring@instance: hourly/hour1/precipIntensity
+
+
+                precipIntensityError:
+                    type: num
+                    ds_matchstring@instance: hourly/hour1/precipIntensityError
+
+                precipProbability:
+                    type: num
+                    ds_matchstring@instance: hourly/hour1/precipProbability
+
+
+                precipType:
+                    type: str
+                    ds_matchstring@instance: hourly/hour1/precipType
+
+                temperature:
+                    type: num
+                    ds_matchstring@instance: hourly/hour1/temperature
+
+
+                apparenttemperature:
+                    type: num
+                    ds_matchstring@instance: hourly/hour1/apparentTemperature
+
+
+                dewpoint:
+                    type: num
+                    ds_matchstring@instance: hourly/hour1/dewPoint
+
+
+                humidity:
+                    type: num
+                    ds_matchstring@instance: hourly/hour1/humidity
+
+
+                pressure:
+                    type: num
+                    ds_matchstring@instance: hourly/hour1/pressure
+
+
+                windSpeed:
+                    type: num
+                    ds_matchstring@instance: hourly/hour1/windSpeed
+
+
+                windGust:
+                    type: num
+                    ds_matchstring@instance: hourly/hour1/windGust
+
+
+                windBearing:
+                    type: num
+                    ds_matchstring@instance: hourly/hour1/windBearing
+
+
+                cloudCover:
+                    type: num
+                    ds_matchstring@instance: hourly/hour1/cloudCover
+
+
+                uvIndex:
+                    type: num
+                    ds_matchstring@instance: hourly/hour1/uvIndex
+
+
+                visibility:
+                    type: num
+                    ds_matchstring@instance: hourly/hour1/visibility
+
+
+                ozone:
+                    type: num
+                    ds_matchstring@instance: hourly/hour1/ozone
+
+
+                date:
+                    type: str
+                    ds_matchstring@instance: hourly/hour1/date
+
+
+                weekday:
+                    type: str
+                    ds_matchstring@instance: hourly/hour1/weekday
+
+
+            hour2:
+
+                time_epoch:
+                    type: num
+                    ds_matchstring@instance: hourly/hour2/time
+
+                time:
+                    type: str
+                    eval_trigger: ..time_epoch
+                    eval: datetime.datetime.fromtimestamp(sh...time_epoch()).strftime('%HH:%MM')
+
+                summary:
+                    type: str
+                    ds_matchstring@instance: hourly/hour2/summary
+
+                icon:
+                    type: str
+                    ds_matchstring@instance: hourly/hour2/icon
+
+                icon_visu:
+                    type: str
+                    ds_matchstring@instance: hourly/hour2/icon_visu
+
+                nearestStormDistance:
+                    type: num
+                    ds_matchstring@instance: hourly/hour2/nearestStormDistance
+
+                precipIntensity:
+                    type: num
+                    ds_matchstring@instance: hourly/hour2/precipIntensity
+
+
+                precipIntensityError:
+                    type: num
+                    ds_matchstring@instance: hourly/hour2/precipIntensityError
+
+                precipProbability:
+                    type: num
+                    ds_matchstring@instance: hourly/hour2/precipProbability
+
+
+                precipType:
+                    type: str
+                    ds_matchstring@instance: hourly/hour2/precipType
+
+                temperature:
+                    type: num
+                    ds_matchstring@instance: hourly/hour2/temperature
+
+
+                apparenttemperature:
+                    type: num
+                    ds_matchstring@instance: hourly/hour2/apparentTemperature
+
+
+                dewpoint:
+                    type: num
+                    ds_matchstring@instance: hourly/hour2/dewPoint
+
+
+                humidity:
+                    type: num
+                    ds_matchstring@instance: hourly/hour2/humidity
+
+
+                pressure:
+                    type: num
+                    ds_matchstring@instance: hourly/hour2/pressure
+
+
+                windSpeed:
+                    type: num
+                    ds_matchstring@instance: hourly/hour2/windSpeed
+
+
+                windGust:
+                    type: num
+                    ds_matchstring@instance: hourly/hour2/windGust
+
+
+                windBearing:
+                    type: num
+                    ds_matchstring@instance: hourly/hour2/windBearing
+
+
+                cloudCover:
+                    type: num
+                    ds_matchstring@instance: hourly/hour2/cloudCover
+
+
+                uvIndex:
+                    type: num
+                    ds_matchstring@instance: hourly/hour2/uvIndex
+
+
+                visibility:
+                    type: num
+                    ds_matchstring@instance: hourly/hour2/visibility
+
+
+                ozone:
+                    type: num
+                    ds_matchstring@instance: hourly/hour2/ozone
+
+
+                date:
+                    type: str
+                    ds_matchstring@instance: hourly/hour2/date
+
+
+                weekday:
+                    type: str
+                    ds_matchstring@instance: hourly/hour2/weekday
+
+
+            hour3:
+
+                time_epoch:
+                    type: num
+                    ds_matchstring@instance: hourly/hour3/time
+
+                time:
+                    type: str
+                    eval_trigger: ..time_epoch
+                    eval: datetime.datetime.fromtimestamp(sh...time_epoch()).strftime('%HH:%MM')
+
+                summary:
+                    type: str
+                    ds_matchstring@instance: hourly/hour3/summary
+
+                icon:
+                    type: str
+                    ds_matchstring@instance: hourly/hour3/icon
+
+                icon_visu:
+                    type: str
+                    ds_matchstring@instance: hourly/hour3/icon_visu
+
+                nearestStormDistance:
+                    type: num
+                    ds_matchstring@instance: hourly/hour3/nearestStormDistance
+
+                precipIntensity:
+                    type: num
+                    ds_matchstring@instance: hourly/hour3/precipIntensity
+
+
+                precipIntensityError:
+                    type: num
+                    ds_matchstring@instance: hourly/hour3/precipIntensityError
+
+                precipProbability:
+                    type: num
+                    ds_matchstring@instance: hourly/hour3/precipProbability
+
+
+                precipType:
+                    type: str
+                    ds_matchstring@instance: hourly/hour3/precipType
+
+                temperature:
+                    type: num
+                    ds_matchstring@instance: hourly/hour3/temperature
+
+
+                apparenttemperature:
+                    type: num
+                    ds_matchstring@instance: hourly/hour3/apparentTemperature
+
+
+                dewpoint:
+                    type: num
+                    ds_matchstring@instance: hourly/hour3/dewPoint
+
+
+                humidity:
+                    type: num
+                    ds_matchstring@instance: hourly/hour3/humidity
+
+
+                pressure:
+                    type: num
+                    ds_matchstring@instance: hourly/hour3/pressure
+
+
+                windSpeed:
+                    type: num
+                    ds_matchstring@instance: hourly/hour3/windSpeed
+
+
+                windGust:
+                    type: num
+                    ds_matchstring@instance: hourly/hour3/windGust
+
+
+                windBearing:
+                    type: num
+                    ds_matchstring@instance: hourly/hour3/windBearing
+
+
+                cloudCover:
+                    type: num
+                    ds_matchstring@instance: hourly/hour3/cloudCover
+
+
+                uvIndex:
+                    type: num
+                    ds_matchstring@instance: hourly/hour3/uvIndex
+
+
+                visibility:
+                    type: num
+                    ds_matchstring@instance: hourly/hour3/visibility
+
+
+                ozone:
+                    type: num
+                    ds_matchstring@instance: hourly/hour3/ozone
+
+
+                date:
+                    type: str
+                    ds_matchstring@instance: hourly/hour3/date
+
+
+                weekday:
+                    type: str
+                    ds_matchstring@instance: hourly/hour3/weekday
+
+
+            hour4:
+
+                time_epoch:
+                    type: num
+                    ds_matchstring@instance: hourly/hour4/time
+
+                time:
+                    type: str
+                    eval_trigger: ..time_epoch
+                    eval: datetime.datetime.fromtimestamp(sh...time_epoch()).strftime('%HH:%MM')
+
+                summary:
+                    type: str
+                    ds_matchstring@instance: hourly/hour4/summary
+
+                icon:
+                    type: str
+                    ds_matchstring@instance: hourly/hour4/icon
+
+                icon_visu:
+                    type: str
+                    ds_matchstring@instance: hourly/hour4/icon_visu
+
+                nearestStormDistance:
+                    type: num
+                    ds_matchstring@instance: hourly/hour4/nearestStormDistance
+
+                precipIntensity:
+                    type: num
+                    ds_matchstring@instance: hourly/hour4/precipIntensity
+
+
+                precipIntensityError:
+                    type: num
+                    ds_matchstring@instance: hourly/hour4/precipIntensityError
+
+                precipProbability:
+                    type: num
+                    ds_matchstring@instance: hourly/hour4/precipProbability
+
+
+                precipType:
+                    type: str
+                    ds_matchstring@instance: hourly/hour4/precipType
+
+                temperature:
+                    type: num
+                    ds_matchstring@instance: hourly/hour4/temperature
+
+
+                apparenttemperature:
+                    type: num
+                    ds_matchstring@instance: hourly/hour4/apparentTemperature
+
+
+                dewpoint:
+                    type: num
+                    ds_matchstring@instance: hourly/hour4/dewPoint
+
+
+                humidity:
+                    type: num
+                    ds_matchstring@instance: hourly/hour4/humidity
+
+
+                pressure:
+                    type: num
+                    ds_matchstring@instance: hourly/hour4/pressure
+
+
+                windSpeed:
+                    type: num
+                    ds_matchstring@instance: hourly/hour4/windSpeed
+
+
+                windGust:
+                    type: num
+                    ds_matchstring@instance: hourly/hour4/windGust
+
+
+                windBearing:
+                    type: num
+                    ds_matchstring@instance: hourly/hour4/windBearing
+
+
+                cloudCover:
+                    type: num
+                    ds_matchstring@instance: hourly/hour4/cloudCover
+
+
+                uvIndex:
+                    type: num
+                    ds_matchstring@instance: hourly/hour4/uvIndex
+
+
+                visibility:
+                    type: num
+                    ds_matchstring@instance: hourly/hour4/visibility
+
+
+                ozone:
+                    type: num
+                    ds_matchstring@instance: hourly/hour4/ozone
+
+
+                date:
+                    type: str
+                    ds_matchstring@instance: hourly/hour4/date
+
+
+                weekday:
+                    type: str
+                    ds_matchstring@instance: hourly/hour4/weekday
+
+
+            hour5:
+
+                time_epoch:
+                    type: num
+                    ds_matchstring@instance: hourly/hour5/time
+
+                time:
+                    type: str
+                    eval_trigger: ..time_epoch
+                    eval: datetime.datetime.fromtimestamp(sh...time_epoch()).strftime('%HH:%MM')
+
+                summary:
+                    type: str
+                    ds_matchstring@instance: hourly/hour5/summary
+
+                icon:
+                    type: str
+                    ds_matchstring@instance: hourly/hour5/icon
+
+                icon_visu:
+                    type: str
+                    ds_matchstring@instance: hourly/hour5/icon_visu
+
+                nearestStormDistance:
+                    type: num
+                    ds_matchstring@instance: hourly/hour5/nearestStormDistance
+
+                precipIntensity:
+                    type: num
+                    ds_matchstring@instance: hourly/hour5/precipIntensity
+
+
+                precipIntensityError:
+                    type: num
+                    ds_matchstring@instance: hourly/hour5/precipIntensityError
+
+                precipProbability:
+                    type: num
+                    ds_matchstring@instance: hourly/hour5/precipProbability
+
+
+                precipType:
+                    type: str
+                    ds_matchstring@instance: hourly/hour5/precipType
+
+                temperature:
+                    type: num
+                    ds_matchstring@instance: hourly/hour5/temperature
+
+
+                apparenttemperature:
+                    type: num
+                    ds_matchstring@instance: hourly/hour5/apparentTemperature
+
+
+                dewpoint:
+                    type: num
+                    ds_matchstring@instance: hourly/hour5/dewPoint
+
+
+                humidity:
+                    type: num
+                    ds_matchstring@instance: hourly/hour5/humidity
+
+
+                pressure:
+                    type: num
+                    ds_matchstring@instance: hourly/hour5/pressure
+
+
+                windSpeed:
+                    type: num
+                    ds_matchstring@instance: hourly/hour5/windSpeed
+
+
+                windGust:
+                    type: num
+                    ds_matchstring@instance: hourly/hour5/windGust
+
+
+                windBearing:
+                    type: num
+                    ds_matchstring@instance: hourly/hour5/windBearing
+
+
+                cloudCover:
+                    type: num
+                    ds_matchstring@instance: hourly/hour5/cloudCover
+
+
+                uvIndex:
+                    type: num
+                    ds_matchstring@instance: hourly/hour5/uvIndex
+
+
+                visibility:
+                    type: num
+                    ds_matchstring@instance: hourly/hour5/visibility
+
+
+                ozone:
+                    type: num
+                    ds_matchstring@instance: hourly/hour5/ozone
+
+
+                date:
+                    type: str
+                    ds_matchstring@instance: hourly/hour5/date
+
+
+                weekday:
+                    type: str
+                    ds_matchstring@instance: hourly/hour5/weekday
+
+
+            hour6:
+
+                time_epoch:
+                    type: num
+                    ds_matchstring@instance: hourly/hour6/time
+
+                time:
+                    type: str
+                    eval_trigger: ..time_epoch
+                    eval: datetime.datetime.fromtimestamp(sh...time_epoch()).strftime('%HH:%MM')
+
+                summary:
+                    type: str
+                    ds_matchstring@instance: hourly/hour6/summary
+
+                icon:
+                    type: str
+                    ds_matchstring@instance: hourly/hour6/icon
+
+                icon_visu:
+                    type: str
+                    ds_matchstring@instance: hourly/hour6/icon_visu
+
+                nearestStormDistance:
+                    type: num
+                    ds_matchstring@instance: hourly/hour6/nearestStormDistance
+
+                precipIntensity:
+                    type: num
+                    ds_matchstring@instance: hourly/hour6/precipIntensity
+
+
+                precipIntensityError:
+                    type: num
+                    ds_matchstring@instance: hourly/hour6/precipIntensityError
+
+                precipProbability:
+                    type: num
+                    ds_matchstring@instance: hourly/hour6/precipProbability
+
+
+                precipType:
+                    type: str
+                    ds_matchstring@instance: hourly/hour6/precipType
+
+                temperature:
+                    type: num
+                    ds_matchstring@instance: hourly/hour6/temperature
+
+
+                apparenttemperature:
+                    type: num
+                    ds_matchstring@instance: hourly/hour6/apparentTemperature
+
+
+                dewpoint:
+                    type: num
+                    ds_matchstring@instance: hourly/hour6/dewPoint
+
+
+                humidity:
+                    type: num
+                    ds_matchstring@instance: hourly/hour6/humidity
+
+
+                pressure:
+                    type: num
+                    ds_matchstring@instance: hourly/hour6/pressure
+
+
+                windSpeed:
+                    type: num
+                    ds_matchstring@instance: hourly/hour6/windSpeed
+
+
+                windGust:
+                    type: num
+                    ds_matchstring@instance: hourly/hour6/windGust
+
+
+                windBearing:
+                    type: num
+                    ds_matchstring@instance: hourly/hour6/windBearing
+
+
+                cloudCover:
+                    type: num
+                    ds_matchstring@instance: hourly/hour6/cloudCover
+
+
+                uvIndex:
+                    type: num
+                    ds_matchstring@instance: hourly/hour6/uvIndex
+
+
+                visibility:
+                    type: num
+                    ds_matchstring@instance: hourly/hour6/visibility
+
+
+                ozone:
+                    type: num
+                    ds_matchstring@instance: hourly/hour6/ozone
+
+
+                date:
+                    type: str
+                    ds_matchstring@instance: hourly/hour6/date
+
+
+                weekday:
+                    type: str
+                    ds_matchstring@instance: hourly/hour6/weekday
+
+
+            hour7:
+
+                time_epoch:
+                    type: num
+                    ds_matchstring@instance: hourly/hour7/time
+
+                time:
+                    type: str
+                    eval_trigger: ..time_epoch
+                    eval: datetime.datetime.fromtimestamp(sh...time_epoch()).strftime('%HH:%MM')
+
+                summary:
+                    type: str
+                    ds_matchstring@instance: hourly/hour7/summary
+
+                icon:
+                    type: str
+                    ds_matchstring@instance: hourly/hour7/icon
+
+                icon_visu:
+                    type: str
+                    ds_matchstring@instance: hourly/hour7/icon_visu
+
+                nearestStormDistance:
+                    type: num
+                    ds_matchstring@instance: hourly/hour7/nearestStormDistance
+
+                precipIntensity:
+                    type: num
+                    ds_matchstring@instance: hourly/hour7/precipIntensity
+
+
+                precipIntensityError:
+                    type: num
+                    ds_matchstring@instance: hourly/hour7/precipIntensityError
+
+                precipProbability:
+                    type: num
+                    ds_matchstring@instance: hourly/hour7/precipProbability
+
+
+                precipType:
+                    type: str
+                    ds_matchstring@instance: hourly/hour7/precipType
+
+                temperature:
+                    type: num
+                    ds_matchstring@instance: hourly/hour7/temperature
+
+
+                apparenttemperature:
+                    type: num
+                    ds_matchstring@instance: hourly/hour7/apparentTemperature
+
+
+                dewpoint:
+                    type: num
+                    ds_matchstring@instance: hourly/hour7/dewPoint
+
+
+                humidity:
+                    type: num
+                    ds_matchstring@instance: hourly/hour7/humidity
+
+
+                pressure:
+                    type: num
+                    ds_matchstring@instance: hourly/hour7/pressure
+
+
+                windSpeed:
+                    type: num
+                    ds_matchstring@instance: hourly/hour7/windSpeed
+
+
+                windGust:
+                    type: num
+                    ds_matchstring@instance: hourly/hour7/windGust
+
+
+                windBearing:
+                    type: num
+                    ds_matchstring@instance: hourly/hour7/windBearing
+
+
+                cloudCover:
+                    type: num
+                    ds_matchstring@instance: hourly/hour7/cloudCover
+
+
+                uvIndex:
+                    type: num
+                    ds_matchstring@instance: hourly/hour7/uvIndex
+
+
+                visibility:
+                    type: num
+                    ds_matchstring@instance: hourly/hour7/visibility
+
+
+                ozone:
+                    type: num
+                    ds_matchstring@instance: hourly/hour7/ozone
+
+
+                date:
+                    type: str
+                    ds_matchstring@instance: hourly/hour7/date
+
+
+                weekday:
+                    type: str
+                    ds_matchstring@instance: hourly/hour7/weekday
+
+
+            hour8:
+
+                time_epoch:
+                    type: num
+                    ds_matchstring@instance: hourly/hour8/time
+
+                time:
+                    type: str
+                    eval_trigger: ..time_epoch
+                    eval: datetime.datetime.fromtimestamp(sh...time_epoch()).strftime('%HH:%MM')
+
+                summary:
+                    type: str
+                    ds_matchstring@instance: hourly/hour8/summary
+
+                icon:
+                    type: str
+                    ds_matchstring@instance: hourly/hour8/icon
+
+                icon_visu:
+                    type: str
+                    ds_matchstring@instance: hourly/hour8/icon_visu
+
+                nearestStormDistance:
+                    type: num
+                    ds_matchstring@instance: hourly/hour8/nearestStormDistance
+
+                precipIntensity:
+                    type: num
+                    ds_matchstring@instance: hourly/hour8/precipIntensity
+
+
+                precipIntensityError:
+                    type: num
+                    ds_matchstring@instance: hourly/hour8/precipIntensityError
+
+                precipProbability:
+                    type: num
+                    ds_matchstring@instance: hourly/hour8/precipProbability
+
+
+                precipType:
+                    type: str
+                    ds_matchstring@instance: hourly/hour8/precipType
+
+                temperature:
+                    type: num
+                    ds_matchstring@instance: hourly/hour8/temperature
+
+
+                apparenttemperature:
+                    type: num
+                    ds_matchstring@instance: hourly/hour8/apparentTemperature
+
+
+                dewpoint:
+                    type: num
+                    ds_matchstring@instance: hourly/hour8/dewPoint
+
+
+                humidity:
+                    type: num
+                    ds_matchstring@instance: hourly/hour8/humidity
+
+
+                pressure:
+                    type: num
+                    ds_matchstring@instance: hourly/hour8/pressure
+
+
+                windSpeed:
+                    type: num
+                    ds_matchstring@instance: hourly/hour8/windSpeed
+
+
+                windGust:
+                    type: num
+                    ds_matchstring@instance: hourly/hour8/windGust
+
+
+                windBearing:
+                    type: num
+                    ds_matchstring@instance: hourly/hour8/windBearing
+
+
+                cloudCover:
+                    type: num
+                    ds_matchstring@instance: hourly/hour8/cloudCover
+
+
+                uvIndex:
+                    type: num
+                    ds_matchstring@instance: hourly/hour8/uvIndex
+
+
+                visibility:
+                    type: num
+                    ds_matchstring@instance: hourly/hour8/visibility
+
+
+                ozone:
+                    type: num
+                    ds_matchstring@instance: hourly/hour8/ozone
+
+
+                date:
+                    type: str
+                    ds_matchstring@instance: hourly/hour8/date
+
+
+                weekday:
+                    type: str
+                    ds_matchstring@instance: hourly/hour8/weekday
+
+
+            hour9:
+
+                time_epoch:
+                    type: num
+                    ds_matchstring@instance: hourly/hour9/time
+
+                time:
+                    type: str
+                    eval_trigger: ..time_epoch
+                    eval: datetime.datetime.fromtimestamp(sh...time_epoch()).strftime('%HH:%MM')
+
+                summary:
+                    type: str
+                    ds_matchstring@instance: hourly/hour9/summary
+
+                icon:
+                    type: str
+                    ds_matchstring@instance: hourly/hour9/icon
+
+                icon_visu:
+                    type: str
+                    ds_matchstring@instance: hourly/hour9/icon_visu
+
+                nearestStormDistance:
+                    type: num
+                    ds_matchstring@instance: hourly/hour9/nearestStormDistance
+
+                precipIntensity:
+                    type: num
+                    ds_matchstring@instance: hourly/hour9/precipIntensity
+
+
+                precipIntensityError:
+                    type: num
+                    ds_matchstring@instance: hourly/hour9/precipIntensityError
+
+                precipProbability:
+                    type: num
+                    ds_matchstring@instance: hourly/hour9/precipProbability
+
+
+                precipType:
+                    type: str
+                    ds_matchstring@instance: hourly/hour9/precipType
+
+                temperature:
+                    type: num
+                    ds_matchstring@instance: hourly/hour9/temperature
+
+
+                apparenttemperature:
+                    type: num
+                    ds_matchstring@instance: hourly/hour9/apparentTemperature
+
+
+                dewpoint:
+                    type: num
+                    ds_matchstring@instance: hourly/hour9/dewPoint
+
+
+                humidity:
+                    type: num
+                    ds_matchstring@instance: hourly/hour9/humidity
+
+
+                pressure:
+                    type: num
+                    ds_matchstring@instance: hourly/hour9/pressure
+
+
+                windSpeed:
+                    type: num
+                    ds_matchstring@instance: hourly/hour9/windSpeed
+
+
+                windGust:
+                    type: num
+                    ds_matchstring@instance: hourly/hour9/windGust
+
+
+                windBearing:
+                    type: num
+                    ds_matchstring@instance: hourly/hour9/windBearing
+
+
+                cloudCover:
+                    type: num
+                    ds_matchstring@instance: hourly/hour9/cloudCover
+
+
+                uvIndex:
+                    type: num
+                    ds_matchstring@instance: hourly/hour9/uvIndex
+
+
+                visibility:
+                    type: num
+                    ds_matchstring@instance: hourly/hour9/visibility
+
+
+                ozone:
+                    type: num
+                    ds_matchstring@instance: hourly/hour9/ozone
+
+
+                date:
+                    type: str
+                    ds_matchstring@instance: hourly/hour9/date
+
+
+                weekday:
+                    type: str
+                    ds_matchstring@instance: hourly/hour9/weekday
+
+
+            hour10:
+
+                time_epoch:
+                    type: num
+                    ds_matchstring@instance: hourly/hour10/time
+
+                time:
+                    type: str
+                    eval_trigger: ..time_epoch
+                    eval: datetime.datetime.fromtimestamp(sh...time_epoch()).strftime('%HH:%MM')
+
+                summary:
+                    type: str
+                    ds_matchstring@instance: hourly/hour10/summary
+
+                icon:
+                    type: str
+                    ds_matchstring@instance: hourly/hour10/icon
+
+                icon_visu:
+                    type: str
+                    ds_matchstring@instance: hourly/hour10/icon_visu
+
+                nearestStormDistance:
+                    type: num
+                    ds_matchstring@instance: hourly/hour10/nearestStormDistance
+
+                precipIntensity:
+                    type: num
+                    ds_matchstring@instance: hourly/hour10/precipIntensity
+
+
+                precipIntensityError:
+                    type: num
+                    ds_matchstring@instance: hourly/hour10/precipIntensityError
+
+                precipProbability:
+                    type: num
+                    ds_matchstring@instance: hourly/hour10/precipProbability
+
+
+                precipType:
+                    type: str
+                    ds_matchstring@instance: hourly/hour10/precipType
+
+                temperature:
+                    type: num
+                    ds_matchstring@instance: hourly/hour10/temperature
+
+
+                apparenttemperature:
+                    type: num
+                    ds_matchstring@instance: hourly/hour10/apparentTemperature
+
+
+                dewpoint:
+                    type: num
+                    ds_matchstring@instance: hourly/hour10/dewPoint
+
+
+                humidity:
+                    type: num
+                    ds_matchstring@instance: hourly/hour10/humidity
+
+
+                pressure:
+                    type: num
+                    ds_matchstring@instance: hourly/hour10/pressure
+
+
+                windSpeed:
+                    type: num
+                    ds_matchstring@instance: hourly/hour10/windSpeed
+
+
+                windGust:
+                    type: num
+                    ds_matchstring@instance: hourly/hour10/windGust
+
+
+                windBearing:
+                    type: num
+                    ds_matchstring@instance: hourly/hour10/windBearing
+
+
+                cloudCover:
+                    type: num
+                    ds_matchstring@instance: hourly/hour10/cloudCover
+
+
+                uvIndex:
+                    type: num
+                    ds_matchstring@instance: hourly/hour10/uvIndex
+
+
+                visibility:
+                    type: num
+                    ds_matchstring@instance: hourly/hour10/visibility
+
+
+                ozone:
+                    type: num
+                    ds_matchstring@instance: hourly/hour10/ozone
+
+
+                date:
+                    type: str
+                    ds_matchstring@instance: hourly/hour10/date
+
+
+                weekday:
+                    type: str
+                    ds_matchstring@instance: hourly/hour10/weekday
+
+
+            hour11:
+
+                time_epoch:
+                    type: num
+                    ds_matchstring@instance: hourly/hour11/time
+
+                time:
+                    type: str
+                    eval_trigger: ..time_epoch
+                    eval: datetime.datetime.fromtimestamp(sh...time_epoch()).strftime('%HH:%MM')
+
+                summary:
+                    type: str
+                    ds_matchstring@instance: hourly/hour11/summary
+
+                icon:
+                    type: str
+                    ds_matchstring@instance: hourly/hour11/icon
+
+                icon_visu:
+                    type: str
+                    ds_matchstring@instance: hourly/hour11/icon_visu
+
+                nearestStormDistance:
+                    type: num
+                    ds_matchstring@instance: hourly/hour11/nearestStormDistance
+
+                precipIntensity:
+                    type: num
+                    ds_matchstring@instance: hourly/hour11/precipIntensity
+
+
+                precipIntensityError:
+                    type: num
+                    ds_matchstring@instance: hourly/hour11/precipIntensityError
+
+                precipProbability:
+                    type: num
+                    ds_matchstring@instance: hourly/hour11/precipProbability
+
+
+                precipType:
+                    type: str
+                    ds_matchstring@instance: hourly/hour11/precipType
+
+                temperature:
+                    type: num
+                    ds_matchstring@instance: hourly/hour11/temperature
+
+
+                apparenttemperature:
+                    type: num
+                    ds_matchstring@instance: hourly/hour11/apparentTemperature
+
+
+                dewpoint:
+                    type: num
+                    ds_matchstring@instance: hourly/hour11/dewPoint
+
+
+                humidity:
+                    type: num
+                    ds_matchstring@instance: hourly/hour11/humidity
+
+
+                pressure:
+                    type: num
+                    ds_matchstring@instance: hourly/hour11/pressure
+
+
+                windSpeed:
+                    type: num
+                    ds_matchstring@instance: hourly/hour11/windSpeed
+
+
+                windGust:
+                    type: num
+                    ds_matchstring@instance: hourly/hour11/windGust
+
+
+                windBearing:
+                    type: num
+                    ds_matchstring@instance: hourly/hour11/windBearing
+
+
+                cloudCover:
+                    type: num
+                    ds_matchstring@instance: hourly/hour11/cloudCover
+
+
+                uvIndex:
+                    type: num
+                    ds_matchstring@instance: hourly/hour11/uvIndex
+
+
+                visibility:
+                    type: num
+                    ds_matchstring@instance: hourly/hour11/visibility
+
+
+                ozone:
+                    type: num
+                    ds_matchstring@instance: hourly/hour11/ozone
+
+
+                date:
+                    type: str
+                    ds_matchstring@instance: hourly/hour11/date
+
+
+                weekday:
+                    type: str
+                    ds_matchstring@instance: hourly/hour11/weekday
+
+
+            hour12:
+
+                time_epoch:
+                    type: num
+                    ds_matchstring@instance: hourly/hour12/time
+
+                time:
+                    type: str
+                    eval_trigger: ..time_epoch
+                    eval: datetime.datetime.fromtimestamp(sh...time_epoch()).strftime('%HH:%MM')
+
+                summary:
+                    type: str
+                    ds_matchstring@instance: hourly/hour12/summary
+
+                icon:
+                    type: str
+                    ds_matchstring@instance: hourly/hour12/icon
+
+                icon_visu:
+                    type: str
+                    ds_matchstring@instance: hourly/hour12/icon_visu
+
+                nearestStormDistance:
+                    type: num
+                    ds_matchstring@instance: hourly/hour12/nearestStormDistance
+
+                precipIntensity:
+                    type: num
+                    ds_matchstring@instance: hourly/hour12/precipIntensity
+
+
+                precipIntensityError:
+                    type: num
+                    ds_matchstring@instance: hourly/hour12/precipIntensityError
+
+                precipProbability:
+                    type: num
+                    ds_matchstring@instance: hourly/hour12/precipProbability
+
+
+                precipType:
+                    type: str
+                    ds_matchstring@instance: hourly/hour12/precipType
+
+                temperature:
+                    type: num
+                    ds_matchstring@instance: hourly/hour12/temperature
+
+
+                apparenttemperature:
+                    type: num
+                    ds_matchstring@instance: hourly/hour12/apparentTemperature
+
+
+                dewpoint:
+                    type: num
+                    ds_matchstring@instance: hourly/hour12/dewPoint
+
+
+                humidity:
+                    type: num
+                    ds_matchstring@instance: hourly/hour12/humidity
+
+
+                pressure:
+                    type: num
+                    ds_matchstring@instance: hourly/hour12/pressure
+
+
+                windSpeed:
+                    type: num
+                    ds_matchstring@instance: hourly/hour12/windSpeed
+
+
+                windGust:
+                    type: num
+                    ds_matchstring@instance: hourly/hour12/windGust
+
+
+                windBearing:
+                    type: num
+                    ds_matchstring@instance: hourly/hour12/windBearing
+
+
+                cloudCover:
+                    type: num
+                    ds_matchstring@instance: hourly/hour12/cloudCover
+
+
+                uvIndex:
+                    type: num
+                    ds_matchstring@instance: hourly/hour12/uvIndex
+
+
+                visibility:
+                    type: num
+                    ds_matchstring@instance: hourly/hour12/visibility
+
+
+                ozone:
+                    type: num
+                    ds_matchstring@instance: hourly/hour12/ozone
+
+
+                date:
+                    type: str
+                    ds_matchstring@instance: hourly/hour12/date
+
+
+                weekday:
+                    type: str
+                    ds_matchstring@instance: hourly/hour12/weekday
+
+    forecast_daily_nodb:
+        name: Daily forcast of Weather report from darksky.net - Data is NOT written do database
+        daily:
+
+            summary:
+                type: str
+                ds_matchstring@instance: daily/summary
+
+            icon:
+                type: str
+                ds_matchstring@instance: daily/icon
+
+            icon_visu:
+                type: str
+                ds_matchstring@instance: daily/icon_visu
+
+            day0:
+
+                time_epoch:
+                    type: num
+                    ds_matchstring@instance: daily/day0/time
+
+                time:
+                    type: str
+                    eval_trigger: ..time_epoch
+                    eval: datetime.datetime.fromtimestamp(sh...time_epoch()).strftime('%HH:%MM')
+
+                summary:
+                    type: str
+                    ds_matchstring@instance: daily/day0/summary
+
+                icon:
+                    type: str
+                    ds_matchstring@instance: daily/day0/icon
+
+                icon_visu:
+                    type: str
+                    ds_matchstring@instance: daily/day0/icon_visu
+
+                nearestStormDistance:
+                    type: num
+                    ds_matchstring@instance: daily/day0/nearestStormDistance
+
+                precipIntensity:
+                    type: num
+                    ds_matchstring@instance: daily/day0/precipIntensity
+
+
+                precipIntensityError:
+                    type: num
+                    ds_matchstring@instance: daily/day0/precipIntensityError
+
+                precipProbability:
+                    type: num
+                    ds_matchstring@instance: daily/day0/precipProbability
+
+
+                precipType:
+                    type: str
+                    ds_matchstring@instance: daily/day0/precipType
+
+                temperature:
+                    type: num
+                    ds_matchstring@instance: daily/day0/temperature
+
+
+                apparenttemperature:
+                    type: num
+                    ds_matchstring@instance: daily/day0/apparentTemperature
+
+
+                dewpoint:
+                    type: num
+                    ds_matchstring@instance: daily/day0/dewPoint
+
+
+                humidity:
+                    type: num
+                    ds_matchstring@instance: daily/day0/humidity
+
+
+                pressure:
+                    type: num
+                    ds_matchstring@instance: daily/day0/pressure
+
+
+                windSpeed:
+                    type: num
+                    ds_matchstring@instance: daily/day0/windSpeed
+
+
+                windGust:
+                    type: num
+                    ds_matchstring@instance: daily/day0/windGust
+
+
+                windBearing:
+                    type: num
+                    ds_matchstring@instance: daily/day0/windBearing
+
+
+                cloudCover:
+                    type: num
+                    ds_matchstring@instance: daily/day0/cloudCover
+
+
+                uvIndex:
+                    type: num
+                    ds_matchstring@instance: daily/day0/uvIndex
+
+
+                visibility:
+                    type: num
+                    ds_matchstring@instance: daily/day0/visibility
+
+
+                ozone:
+                    type: num
+                    ds_matchstring@instance: daily/day0/ozone
+
+
+                temperatureMin:
+                    type: num
+                    ds_matchstring@instance: daily/day0/temperatureMin
+
+
+                temperatureMinTime:
+                    type: num
+                    ds_matchstring@instance: daily/day0/temperatureMinTime
+
+
+                temperatureMax:
+                    type: num
+                    ds_matchstring@instance: daily/day0/temperatureMax
+
+
+                temperatureMaxTime:
+                    type: num
+                    ds_matchstring@instance: daily/day0/temperatureMaxTime
+
+
+                apparentTemperatureMin:
+                    type: num
+                    ds_matchstring@instance: daily/day0/apparentTemperatureMin
+
+
+                apparentTemperatureMinTime:
+                    type: num
+                    ds_matchstring@instance: daily/day0/apparentTemperatureMinTime
+
+
+                apparentTemperatureMax:
+                    type: num
+                    ds_matchstring@instance: daily/day0/apparentTemperatureMax
+
+
+                apparentTemperatureMaxTime:
+                    type: num
+                    ds_matchstring@instance: daily/day0/apparentTemperatureMaxTime
+
+
+                date:
+                    type: str
+                    ds_matchstring@instance: daily/day0/date
+
+
+                weekday:
+                    type: str
+                    ds_matchstring@instance: daily/day0/weekday
+
+
+                precipProbability_mean:
+                    type: num
+                    ds_matchstring@instance: daily/day0/precipProbability_mean
+
+
+                precipIntensity_mean:
+                    type: num
+                    ds_matchstring@instance: daily/day0/precipIntensity_mean
+
+
+                temperature_mean:
+                    type: num
+                    ds_matchstring@instance: daily/day0/temperature_mean
+
+
+                hours:
+                    type: dict
+                    ds_matchstring@instance: daily/day0/hours
+
+            day1:
+
+                time_epoch:
+                    type: num
+                    ds_matchstring@instance: daily/day1/time
+
+                time:
+                    type: str
+                    eval_trigger: ..time_epoch
+                    eval: datetime.datetime.fromtimestamp(sh...time_epoch()).strftime('%HH:%MM')
+
+                summary:
+                    type: str
+                    ds_matchstring@instance: daily/day1/summary
+
+                icon:
+                    type: str
+                    ds_matchstring@instance: daily/day1/icon
+
+                icon_visu:
+                    type: str
+                    ds_matchstring@instance: daily/day1/icon_visu
+
+                nearestStormDistance:
+                    type: num
+                    ds_matchstring@instance: daily/day1/nearestStormDistance
+
+                precipIntensity:
+                    type: num
+                    ds_matchstring@instance: daily/day1/precipIntensity
+
+
+                precipIntensityError:
+                    type: num
+                    ds_matchstring@instance: daily/day1/precipIntensityError
+
+                precipProbability:
+                    type: num
+                    ds_matchstring@instance: daily/day1/precipProbability
+
+
+                precipType:
+                    type: str
+                    ds_matchstring@instance: daily/day1/precipType
+
+                temperature:
+                    type: num
+                    ds_matchstring@instance: daily/day1/temperature
+
+
+                apparenttemperature:
+                    type: num
+                    ds_matchstring@instance: daily/day1/apparentTemperature
+
+
+                dewpoint:
+                    type: num
+                    ds_matchstring@instance: daily/day1/dewPoint
+
+
+                humidity:
+                    type: num
+                    ds_matchstring@instance: daily/day1/humidity
+
+
+                pressure:
+                    type: num
+                    ds_matchstring@instance: daily/day1/pressure
+
+
+                windSpeed:
+                    type: num
+                    ds_matchstring@instance: daily/day1/windSpeed
+
+
+                windGust:
+                    type: num
+                    ds_matchstring@instance: daily/day1/windGust
+
+
+                windBearing:
+                    type: num
+                    ds_matchstring@instance: daily/day1/windBearing
+
+
+                cloudCover:
+                    type: num
+                    ds_matchstring@instance: daily/day1/cloudCover
+
+
+                uvIndex:
+                    type: num
+                    ds_matchstring@instance: daily/day1/uvIndex
+
+
+                visibility:
+                    type: num
+                    ds_matchstring@instance: daily/day1/visibility
+
+
+                ozone:
+                    type: num
+                    ds_matchstring@instance: daily/day1/ozone
+
+
+                temperatureMin:
+                    type: num
+                    ds_matchstring@instance: daily/day1/temperatureMin
+
+
+                temperatureMinTime:
+                    type: num
+                    ds_matchstring@instance: daily/day1/temperatureMinTime
+
+
+                temperatureMax:
+                    type: num
+                    ds_matchstring@instance: daily/day1/temperatureMax
+
+
+                temperatureMaxTime:
+                    type: num
+                    ds_matchstring@instance: daily/day1/temperatureMaxTime
+
+
+                apparentTemperatureMin:
+                    type: num
+                    ds_matchstring@instance: daily/day1/apparentTemperatureMin
+
+
+                apparentTemperatureMinTime:
+                    type: num
+                    ds_matchstring@instance: daily/day1/apparentTemperatureMinTime
+
+
+                apparentTemperatureMax:
+                    type: num
+                    ds_matchstring@instance: daily/day1/apparentTemperatureMax
+
+
+                apparentTemperatureMaxTime:
+                    type: num
+                    ds_matchstring@instance: daily/day1/apparentTemperatureMaxTime
+
+
+                date:
+                    type: str
+                    ds_matchstring@instance: daily/day1/date
+
+
+                weekday:
+                    type: str
+                    ds_matchstring@instance: daily/day1/weekday
+
+
+                precipProbability_mean:
+                    type: num
+                    ds_matchstring@instance: daily/day1/precipProbability_mean
+
+
+                precipIntensity_mean:
+                    type: num
+                    ds_matchstring@instance: daily/day1/precipIntensity_mean
+
+
+                temperature_mean:
+                    type: num
+                    ds_matchstring@instance: daily/day1/temperature_mean
+
+
+                hours:
+                    type: dict
+                    ds_matchstring@instance: daily/day1/hours
+
+            day2:
+
+                time_epoch:
+                    type: num
+                    ds_matchstring@instance: daily/day2/time
+
+                time:
+                    type: str
+                    eval_trigger: ..time_epoch
+                    eval: datetime.datetime.fromtimestamp(sh...time_epoch()).strftime('%HH:%MM')
+
+                summary:
+                    type: str
+                    ds_matchstring@instance: daily/day2/summary
+
+                icon:
+                    type: str
+                    ds_matchstring@instance: daily/day2/icon
+
+                icon_visu:
+                    type: str
+                    ds_matchstring@instance: daily/day2/icon_visu
+
+                nearestStormDistance:
+                    type: num
+                    ds_matchstring@instance: daily/day2/nearestStormDistance
+
+                precipIntensity:
+                    type: num
+                    ds_matchstring@instance: daily/day2/precipIntensity
+
+
+                precipIntensityError:
+                    type: num
+                    ds_matchstring@instance: daily/day2/precipIntensityError
+
+                precipProbability:
+                    type: num
+                    ds_matchstring@instance: daily/day2/precipProbability
+
+
+                precipType:
+                    type: str
+                    ds_matchstring@instance: daily/day2/precipType
+
+                temperature:
+                    type: num
+                    ds_matchstring@instance: daily/day2/temperature
+
+
+                apparenttemperature:
+                    type: num
+                    ds_matchstring@instance: daily/day2/apparentTemperature
+
+
+                dewpoint:
+                    type: num
+                    ds_matchstring@instance: daily/day2/dewPoint
+
+
+                humidity:
+                    type: num
+                    ds_matchstring@instance: daily/day2/humidity
+
+
+                pressure:
+                    type: num
+                    ds_matchstring@instance: daily/day2/pressure
+
+
+                windSpeed:
+                    type: num
+                    ds_matchstring@instance: daily/day2/windSpeed
+
+
+                windGust:
+                    type: num
+                    ds_matchstring@instance: daily/day2/windGust
+
+
+                windBearing:
+                    type: num
+                    ds_matchstring@instance: daily/day2/windBearing
+
+
+                cloudCover:
+                    type: num
+                    ds_matchstring@instance: daily/day2/cloudCover
+
+
+                uvIndex:
+                    type: num
+                    ds_matchstring@instance: daily/day2/uvIndex
+
+
+                visibility:
+                    type: num
+                    ds_matchstring@instance: daily/day2/visibility
+
+
+                ozone:
+                    type: num
+                    ds_matchstring@instance: daily/day2/ozone
+
+
+                temperatureMin:
+                    type: num
+                    ds_matchstring@instance: daily/day2/temperatureMin
+
+
+                temperatureMinTime:
+                    type: num
+                    ds_matchstring@instance: daily/day2/temperatureMinTime
+
+
+                temperatureMax:
+                    type: num
+                    ds_matchstring@instance: daily/day2/temperatureMax
+
+
+                temperatureMaxTime:
+                    type: num
+                    ds_matchstring@instance: daily/day2/temperatureMaxTime
+
+
+                apparentTemperatureMin:
+                    type: num
+                    ds_matchstring@instance: daily/day2/apparentTemperatureMin
+
+
+                apparentTemperatureMinTime:
+                    type: num
+                    ds_matchstring@instance: daily/day2/apparentTemperatureMinTime
+
+
+                apparentTemperatureMax:
+                    type: num
+                    ds_matchstring@instance: daily/day2/apparentTemperatureMax
+
+
+                apparentTemperatureMaxTime:
+                    type: num
+                    ds_matchstring@instance: daily/day2/apparentTemperatureMaxTime
+
+
+                date:
+                    type: str
+                    ds_matchstring@instance: daily/day2/date
+
+
+                weekday:
+                    type: str
+                    ds_matchstring@instance: daily/day2/weekday
+
+
+                precipProbability_mean:
+                    type: num
+                    ds_matchstring@instance: daily/day2/precipProbability_mean
+
+
+                precipIntensity_mean:
+                    type: num
+                    ds_matchstring@instance: daily/day2/precipIntensity_mean
+
+
+                temperature_mean:
+                    type: num
+                    ds_matchstring@instance: daily/day2/temperature_mean
+
+
+                hours:
+                    type: dict
+                    ds_matchstring@instance: daily/day2/hours
+
+            day3:
+
+                time_epoch:
+                    type: num
+                    ds_matchstring@instance: daily/day3/time
+
+                time:
+                    type: str
+                    eval_trigger: ..time_epoch
+                    eval: datetime.datetime.fromtimestamp(sh...time_epoch()).strftime('%HH:%MM')
+
+                summary:
+                    type: str
+                    ds_matchstring@instance: daily/day3/summary
+
+                icon:
+                    type: str
+                    ds_matchstring@instance: daily/day3/icon
+
+                icon_visu:
+                    type: str
+                    ds_matchstring@instance: daily/day3/icon_visu
+
+                nearestStormDistance:
+                    type: num
+                    ds_matchstring@instance: daily/day3/nearestStormDistance
+
+                precipIntensity:
+                    type: num
+                    ds_matchstring@instance: daily/day3/precipIntensity
+
+
+                precipIntensityError:
+                    type: num
+                    ds_matchstring@instance: daily/day3/precipIntensityError
+
+                precipProbability:
+                    type: num
+                    ds_matchstring@instance: daily/day3/precipProbability
+
+
+                precipType:
+                    type: str
+                    ds_matchstring@instance: daily/day3/precipType
+
+                temperature:
+                    type: num
+                    ds_matchstring@instance: daily/day3/temperature
+
+
+                apparenttemperature:
+                    type: num
+                    ds_matchstring@instance: daily/day3/apparentTemperature
+
+
+                dewpoint:
+                    type: num
+                    ds_matchstring@instance: daily/day3/dewPoint
+
+
+                humidity:
+                    type: num
+                    ds_matchstring@instance: daily/day3/humidity
+
+
+                pressure:
+                    type: num
+                    ds_matchstring@instance: daily/day3/pressure
+
+
+                windSpeed:
+                    type: num
+                    ds_matchstring@instance: daily/day3/windSpeed
+
+
+                windGust:
+                    type: num
+                    ds_matchstring@instance: daily/day3/windGust
+
+
+                windBearing:
+                    type: num
+                    ds_matchstring@instance: daily/day3/windBearing
+
+
+                cloudCover:
+                    type: num
+                    ds_matchstring@instance: daily/day3/cloudCover
+
+
+                uvIndex:
+                    type: num
+                    ds_matchstring@instance: daily/day3/uvIndex
+
+
+                visibility:
+                    type: num
+                    ds_matchstring@instance: daily/day3/visibility
+
+
+                ozone:
+                    type: num
+                    ds_matchstring@instance: daily/day3/ozone
+
+
+                temperatureMin:
+                    type: num
+                    ds_matchstring@instance: daily/day3/temperatureMin
+
+
+                temperatureMinTime:
+                    type: num
+                    ds_matchstring@instance: daily/day3/temperatureMinTime
+
+
+                temperatureMax:
+                    type: num
+                    ds_matchstring@instance: daily/day3/temperatureMax
+
+
+                temperatureMaxTime:
+                    type: num
+                    ds_matchstring@instance: daily/day3/temperatureMaxTime
+
+
+                apparentTemperatureMin:
+                    type: num
+                    ds_matchstring@instance: daily/day3/apparentTemperatureMin
+
+
+                apparentTemperatureMinTime:
+                    type: num
+                    ds_matchstring@instance: daily/day3/apparentTemperatureMinTime
+
+
+                apparentTemperatureMax:
+                    type: num
+                    ds_matchstring@instance: daily/day3/apparentTemperatureMax
+
+
+                apparentTemperatureMaxTime:
+                    type: num
+                    ds_matchstring@instance: daily/day3/apparentTemperatureMaxTime
+
+
+                date:
+                    type: str
+                    ds_matchstring@instance: daily/day3/date
+
+
+                weekday:
+                    type: str
+                    ds_matchstring@instance: daily/day3/weekday
+
+
+            day4:
+
+                time_epoch:
+                    type: num
+                    ds_matchstring@instance: daily/day4/time
+
+                time:
+                    type: str
+                    eval_trigger: ..time_epoch
+                    eval: datetime.datetime.fromtimestamp(sh...time_epoch()).strftime('%HH:%MM')
+
+                summary:
+                    type: str
+                    ds_matchstring@instance: daily/day4/summary
+
+                icon:
+                    type: str
+                    ds_matchstring@instance: daily/day4/icon
+
+                icon_visu:
+                    type: str
+                    ds_matchstring@instance: daily/day4/icon_visu
+
+                nearestStormDistance:
+                    type: num
+                    ds_matchstring@instance: daily/day4/nearestStormDistance
+
+                precipIntensity:
+                    type: num
+                    ds_matchstring@instance: daily/day4/precipIntensity
+
+
+                precipIntensityError:
+                    type: num
+                    ds_matchstring@instance: daily/day4/precipIntensityError
+
+                precipProbability:
+                    type: num
+                    ds_matchstring@instance: daily/day4/precipProbability
+
+
+                precipType:
+                    type: str
+                    ds_matchstring@instance: daily/day4/precipType
+
+                temperature:
+                    type: num
+                    ds_matchstring@instance: daily/day4/temperature
+
+
+                apparenttemperature:
+                    type: num
+                    ds_matchstring@instance: daily/day4/apparentTemperature
+
+
+                dewpoint:
+                    type: num
+                    ds_matchstring@instance: daily/day4/dewPoint
+
+
+                humidity:
+                    type: num
+                    ds_matchstring@instance: daily/day4/humidity
+
+
+                pressure:
+                    type: num
+                    ds_matchstring@instance: daily/day4/pressure
+
+
+                windSpeed:
+                    type: num
+                    ds_matchstring@instance: daily/day4/windSpeed
+
+
+                windGust:
+                    type: num
+                    ds_matchstring@instance: daily/day4/windGust
+
+
+                windBearing:
+                    type: num
+                    ds_matchstring@instance: daily/day4/windBearing
+
+
+                cloudCover:
+                    type: num
+                    ds_matchstring@instance: daily/day4/cloudCover
+
+
+                uvIndex:
+                    type: num
+                    ds_matchstring@instance: daily/day4/uvIndex
+
+
+                visibility:
+                    type: num
+                    ds_matchstring@instance: daily/day4/visibility
+
+
+                ozone:
+                    type: num
+                    ds_matchstring@instance: daily/day4/ozone
+
+
+                temperatureMin:
+                    type: num
+                    ds_matchstring@instance: daily/day4/temperatureMin
+
+
+                temperatureMinTime:
+                    type: num
+                    ds_matchstring@instance: daily/day4/temperatureMinTime
+
+
+                temperatureMax:
+                    type: num
+                    ds_matchstring@instance: daily/day4/temperatureMax
+
+
+                temperatureMaxTime:
+                    type: num
+                    ds_matchstring@instance: daily/day4/temperatureMaxTime
+
+
+                apparentTemperatureMin:
+                    type: num
+                    ds_matchstring@instance: daily/day4/apparentTemperatureMin
+
+
+                apparentTemperatureMinTime:
+                    type: num
+                    ds_matchstring@instance: daily/day4/apparentTemperatureMinTime
+
+
+                apparentTemperatureMax:
+                    type: num
+                    ds_matchstring@instance: daily/day4/apparentTemperatureMax
+
+
+                apparentTemperatureMaxTime:
+                    type: num
+                    ds_matchstring@instance: daily/day4/apparentTemperatureMaxTime
+
+
+                date:
+                    type: str
+                    ds_matchstring@instance: daily/day4/date
+
+
+                weekday:
+                    type: str
+                    ds_matchstring@instance: daily/day4/weekday
+
+
+            day5:
+
+                time_epoch:
+                    type: num
+                    ds_matchstring@instance: daily/day5/time
+
+                time:
+                    type: str
+                    eval_trigger: ..time_epoch
+                    eval: datetime.datetime.fromtimestamp(sh...time_epoch()).strftime('%HH:%MM')
+
+                summary:
+                    type: str
+                    ds_matchstring@instance: daily/day5/summary
+
+                icon:
+                    type: str
+                    ds_matchstring@instance: daily/day5/icon
+
+                icon_visu:
+                    type: str
+                    ds_matchstring@instance: daily/day5/icon_visu
+
+                nearestStormDistance:
+                    type: num
+                    ds_matchstring@instance: daily/day5/nearestStormDistance
+
+                precipIntensity:
+                    type: num
+                    ds_matchstring@instance: daily/day5/precipIntensity
+
+                precipIntensityError:
+                    type: num
+                    ds_matchstring@instance: daily/day5/precipIntensityError
+
+                precipProbability:
+                    type: num
+                    ds_matchstring@instance: daily/day5/precipProbability
+
+
+                precipType:
+                    type: str
+                    ds_matchstring@instance: daily/day5/precipType
+
+                temperature:
+                    type: num
+                    ds_matchstring@instance: daily/day5/temperature
+
+
+                apparenttemperature:
+                    type: num
+                    ds_matchstring@instance: daily/day5/apparentTemperature
+
+
+                dewpoint:
+                    type: num
+                    ds_matchstring@instance: daily/day5/dewPoint
+
+
+                humidity:
+                    type: num
+                    ds_matchstring@instance: daily/day5/humidity
+
+
+                pressure:
+                    type: num
+                    ds_matchstring@instance: daily/day5/pressure
+
+
+                windSpeed:
+                    type: num
+                    ds_matchstring@instance: daily/day5/windSpeed
+
+
+                windGust:
+                    type: num
+                    ds_matchstring@instance: daily/day5/windGust
+
+
+                windBearing:
+                    type: num
+                    ds_matchstring@instance: daily/day5/windBearing
+
+
+                cloudCover:
+                    type: num
+                    ds_matchstring@instance: daily/day5/cloudCover
+
+
+                uvIndex:
+                    type: num
+                    ds_matchstring@instance: daily/day5/uvIndex
+
+
+                visibility:
+                    type: num
+                    ds_matchstring@instance: daily/day5/visibility
+
+
+                ozone:
+                    type: num
+                    ds_matchstring@instance: daily/day5/ozone
+
+
+                temperatureMin:
+                    type: num
+                    ds_matchstring@instance: daily/day5/temperatureMin
+
+
+                temperatureMinTime:
+                    type: num
+                    ds_matchstring@instance: daily/day5/temperatureMinTime
+
+
+                temperatureMax:
+                    type: num
+                    ds_matchstring@instance: daily/day5/temperatureMax
+
+
+                temperatureMaxTime:
+                    type: num
+                    ds_matchstring@instance: daily/day5/temperatureMaxTime
+
+
+                apparentTemperatureMin:
+                    type: num
+                    ds_matchstring@instance: daily/day5/apparentTemperatureMin
+
+
+                apparentTemperatureMinTime:
+                    type: num
+                    ds_matchstring@instance: daily/day5/apparentTemperatureMinTime
+
+
+                apparentTemperatureMax:
+                    type: num
+                    ds_matchstring@instance: daily/day5/apparentTemperatureMax
+
+
+                apparentTemperatureMaxTime:
+                    type: num
+                    ds_matchstring@instance: daily/day5/apparentTemperatureMaxTime
+
+
+                date:
+                    type: str
+                    ds_matchstring@instance: daily/day5/date
+
+
+                weekday:
+                    type: str
+                    ds_matchstring@instance: daily/day5/weekday
+
+
+            day6:
+
+                time_epoch:
+                    type: num
+                    ds_matchstring@instance: daily/day6/time
+
+                time:
+                    type: str
+                    eval_trigger: ..time_epoch
+                    eval: datetime.datetime.fromtimestamp(sh...time_epoch()).strftime('%HH:%MM')
+
+                summary:
+                    type: str
+                    ds_matchstring@instance: daily/day6/summary
+
+                icon:
+                    type: str
+                    ds_matchstring@instance: daily/day6/icon
+
+                icon_visu:
+                    type: str
+                    ds_matchstring@instance: daily/day6/icon_visu
+
+                nearestStormDistance:
+                    type: num
+                    ds_matchstring@instance: daily/day6/nearestStormDistance
+
+                precipIntensity:
+                    type: num
+                    ds_matchstring@instance: daily/day6/precipIntensity
+
+
+                precipIntensityError:
+                    type: num
+                    ds_matchstring@instance: daily/day6/precipIntensityError
+
+                precipProbability:
+                    type: num
+                    ds_matchstring@instance: daily/day6/precipProbability
+
+
+                precipType:
+                    type: str
+                    ds_matchstring@instance: daily/day6/precipType
+
+                temperature:
+                    type: num
+                    ds_matchstring@instance: daily/day6/temperature
+
+
+                apparenttemperature:
+                    type: num
+                    ds_matchstring@instance: daily/day6/apparentTemperature
+
+
+                dewpoint:
+                    type: num
+                    ds_matchstring@instance: daily/day6/dewPoint
+
+
+                humidity:
+                    type: num
+                    ds_matchstring@instance: daily/day6/humidity
+
+
+                pressure:
+                    type: num
+                    ds_matchstring@instance: daily/day6/pressure
+
+
+                windSpeed:
+                    type: num
+                    ds_matchstring@instance: daily/day6/windSpeed
+
+
+                windGust:
+                    type: num
+                    ds_matchstring@instance: daily/day6/windGust
+
+
+                windBearing:
+                    type: num
+                    ds_matchstring@instance: daily/day6/windBearing
+
+
+                cloudCover:
+                    type: num
+                    ds_matchstring@instance: daily/day6/cloudCover
+
+
+                uvIndex:
+                    type: num
+                    ds_matchstring@instance: daily/day6/uvIndex
+
+
+                visibility:
+                    type: num
+                    ds_matchstring@instance: daily/day6/visibility
+
+
+                ozone:
+                    type: num
+                    ds_matchstring@instance: daily/day6/ozone
+
+
+                temperatureMin:
+                    type: num
+                    ds_matchstring@instance: daily/day6/temperatureMin
+
+
+                temperatureMinTime:
+                    type: num
+                    ds_matchstring@instance: daily/day6/temperatureMinTime
+
+
+                temperatureMax:
+                    type: num
+                    ds_matchstring@instance: daily/day6/temperatureMax
+
+
+                temperatureMaxTime:
+                    type: num
+                    ds_matchstring@instance: daily/day6/temperatureMaxTime
+
+
+                apparentTemperatureMin:
+                    type: num
+                    ds_matchstring@instance: daily/day6/apparentTemperatureMin
+
+
+                apparentTemperatureMinTime:
+                    type: num
+                    ds_matchstring@instance: daily/day6/apparentTemperatureMinTime
+
+
+                apparentTemperatureMax:
+                    type: num
+                    ds_matchstring@instance: daily/day6/apparentTemperatureMax
+
+
+                apparentTemperatureMaxTime:
+                    type: num
+                    ds_matchstring@instance: daily/day6/apparentTemperatureMaxTime
+
+
+                date:
+                    type: str
+                    ds_matchstring@instance: daily/day6/date
+
+
+                weekday:
+                    type: str
+                    ds_matchstring@instance: daily/day6/weekday
+
+
+            day7:
+
+                time_epoch:
+                    type: num
+                    ds_matchstring@instance: daily/day7/time
+
+                time:
+                    type: str
+                    eval_trigger: ..time_epoch
+                    eval: datetime.datetime.fromtimestamp(sh...time_epoch()).strftime('%HH:%MM')
+
+                summary:
+                    type: str
+                    ds_matchstring@instance: daily/day7/summary
+
+                icon:
+                    type: str
+                    ds_matchstring@instance: daily/day7/icon
+
+                icon_visu:
+                    type: str
+                    ds_matchstring@instance: daily/day7/icon_visu
+
+                nearestStormDistance:
+                    type: num
+                    ds_matchstring@instance: daily/day7/nearestStormDistance
+
+                precipIntensity:
+                    type: num
+                    ds_matchstring@instance: daily/day7/precipIntensity
+
+
+                precipIntensityError:
+                    type: num
+                    ds_matchstring@instance: daily/day7/precipIntensityError
+
+                precipProbability:
+                    type: num
+                    ds_matchstring@instance: daily/day7/precipProbability
+
+
+                precipType:
+                    type: str
+                    ds_matchstring@instance: daily/day7/precipType
+
+                temperature:
+                    type: num
+                    ds_matchstring@instance: daily/day7/temperature
+
+
+                apparenttemperature:
+                    type: num
+                    ds_matchstring@instance: daily/day7/apparentTemperature
+
+
+                dewpoint:
+                    type: num
+                    ds_matchstring@instance: daily/day7/dewPoint
+
+
+                humidity:
+                    type: num
+                    ds_matchstring@instance: daily/day7/humidity
+
+
+                pressure:
+                    type: num
+                    ds_matchstring@instance: daily/day7/pressure
+
+
+                windSpeed:
+                    type: num
+                    ds_matchstring@instance: daily/day7/windSpeed
+
+
+                windGust:
+                    type: num
+                    ds_matchstring@instance: daily/day7/windGust
+
+
+                windBearing:
+                    type: num
+                    ds_matchstring@instance: daily/day7/windBearing
+
+
+                cloudCover:
+                    type: num
+                    ds_matchstring@instance: daily/day7/cloudCover
+
+
+                uvIndex:
+                    type: num
+                    ds_matchstring@instance: daily/day7/uvIndex
+
+
+                visibility:
+                    type: num
+                    ds_matchstring@instance: daily/day7/visibility
+
+
+                ozone:
+                    type: num
+                    ds_matchstring@instance: daily/day7/ozone
+
+
+                temperatureMin:
+                    type: num
+                    ds_matchstring@instance: daily/day7/temperatureMin
+
+
+                temperatureMinTime:
+                    type: num
+                    ds_matchstring@instance: daily/day7/temperatureMinTime
+
+
+                temperatureMax:
+                    type: num
+                    ds_matchstring@instance: daily/day7/temperatureMax
+
+
+                temperatureMaxTime:
+                    type: num
+                    ds_matchstring@instance: daily/day7/temperatureMaxTime
+
+
+                apparentTemperatureMin:
+                    type: num
+                    ds_matchstring@instance: daily/day7/apparentTemperatureMin
+
+
+                apparentTemperatureMinTime:
+                    type: num
+                    ds_matchstring@instance: daily/day7/apparentTemperatureMinTime
+
+
+                apparentTemperatureMax:
+                    type: num
+                    ds_matchstring@instance: daily/day7/apparentTemperatureMax
+
+
+                apparentTemperatureMaxTime:
+                    type: num
+                    ds_matchstring@instance: daily/day7/apparentTemperatureMaxTime
+
+
+                date:
+                    type: str
+                    ds_matchstring@instance: daily/day7/date
+
+
+                weekday:
+                    type: str
+                    ds_matchstring@instance: daily/day7/weekday
+
 
 logic_parameters: NONE
     # Definition of logic parameters defined by this plugin

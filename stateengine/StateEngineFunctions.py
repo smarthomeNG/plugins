@@ -55,7 +55,7 @@ class SeFunctions:
     # source: Source that triggered the update
     # The Method will determine the original caller/source and then check if this original caller/source is not
     # contained in se_manual_exclude list (if given) and is contained in se_manual_include list (if given).
-    # If the original caller/source should be consiedered, the method returns the inverted value of the item.
+    # If the original caller/source should be considered, the method returns the inverted value of the item.
     # Otherwise, the method returns the current value of the item, so that no change will be made
     def manual_item_update_eval(self, item_id, caller=None, source=None):
         item = self.items.return_item(item_id)
@@ -81,14 +81,19 @@ class SeFunctions:
             else:
                 elog = StateEngineLogger.SeLoggerDummy()
             elog.header("manual_item_update_eval")
-            elog.debug("running for item '{0}' source '{1}' caller '{2}'", item_id, caller, source)
+            elog.info("running for item '{0}' source '{1}' caller '{2}'", item_id, caller, source)
 
             retval_no_trigger = item()
             retval_trigger = not item()
-            elog.debug("Current value of item {0} is {1}", item_id, retval_no_trigger)
+            elog.info("Current value of item {0} is {1}", item_id, retval_no_trigger)
 
             original = self.get_original_caller(elog, caller, source)
-            elog.debug("original trigger by '{0}'", original)
+            elog.info("original trigger by '{0}'", original)
+            entry = re.compile("Stateengine Plugin", re.IGNORECASE)
+            result = entry.match(original)
+            if result is not None:
+                elog.info("Manual item updated by Stateengine Plugin. Ignoring change and writing value {}", retval_no_trigger)
+                return retval_no_trigger
 
             if "se_manual_on" in item.conf:
                 # get list of include entries
@@ -98,18 +103,18 @@ class SeFunctions:
                 elif not isinstance(include, list):
                     elog.error("Item '{0}', Attribute 'se_manual_on': Value must be a string or a list!", item_id)
                     return retval_no_trigger
-                elog.debug("checking include values: {0}", include)
+                elog.info("checking manual on values: {0}", include)
                 elog.increase_indent()
 
                 # If current value is in list -> Return "Trigger"
                 for entry in include:
                     entry = re.compile(entry, re.IGNORECASE)
                     result = entry.match(original)
-                    elog.debug("Checking regex result {}", result)
+                    elog.info("Checking regex result {}", result)
                     if result is not None:
-                        elog.debug("{0}: matching. Writing value {1}", entry, retval_no_trigger)
+                        elog.info("{0}: matching. Writing value {1}", entry, retval_no_trigger)
                         return retval_no_trigger
-                    elog.debug("{0}: not matching", entry)
+                    elog.info("{0}: not matching", entry)
                 elog.decrease_indent()
 
             if "se_manual_exclude" in item.conf:
@@ -121,18 +126,18 @@ class SeFunctions:
                 elif not isinstance(exclude, list):
                     elog.error("Item '{0}', Attribute 'se_manual_exclude': Value must be a string or a list!", item_id)
                     return retval_no_trigger
-                elog.debug("checking exclude values: {0}", exclude)
+                elog.info("checking exclude values: {0}", exclude)
                 elog.increase_indent()
 
                 # If current value is in list -> Return "NoTrigger"
                 for entry in exclude:
                     entry = re.compile(entry, re.IGNORECASE)
                     result = entry.match(original)
-                    elog.debug("Checking regex result {}", result)
+                    elog.info("Checking regex result {}", result)
                     if result is not None:
-                        elog.debug("{0}: matching. Writing value {1}", entry, retval_no_trigger)
+                        elog.info("{0}: matching. Writing value {1}", entry, retval_no_trigger)
                         return retval_no_trigger
-                    elog.debug("{0}: not matching", entry)
+                    elog.info("{0}: not matching", entry)
                 elog.decrease_indent()
 
             if "se_manual_include" in item.conf:
@@ -143,26 +148,26 @@ class SeFunctions:
                 elif not isinstance(include, list):
                     elog.error("Item '{0}', Attribute 'se_manual_include': Value must be a string or a list!", item_id)
                     return retval_no_trigger
-                elog.debug("checking include values: {0}", include)
+                elog.info("checking include values: {0}", include)
                 elog.increase_indent()
 
                 # If current value is in list -> Return "Trigger"
                 for entry in include:
                     entry = re.compile(entry, re.IGNORECASE)
                     result = entry.match(original)
-                    elog.debug("Checking regex result {}", result)
+                    elog.info("Checking regex result {}", result)
                     if result is not None:
-                        elog.debug("{0}: matching. Writing value {1}", entry, retval_trigger)
+                        elog.info("{0}: matching. Writing value {1}", entry, retval_trigger)
                         return retval_trigger
-                    elog.debug("{0}: not matching", entry)
+                    elog.info("{0}: not matching", entry)
                 elog.decrease_indent()
 
                 # Current value not in list -> Return "No Trigger
-                elog.debug("No include values matching. Writing value {0}", retval_no_trigger)
+                elog.info("No include values matching. Writing value {0}", retval_no_trigger)
                 return retval_no_trigger
             else:
                 # No include-entries -> return "Trigger"
-                elog.debug("No include limitation. Writing value {0}", retval_trigger)
+                elog.info("No include limitation. Writing value {0}", retval_trigger)
                 return retval_trigger
         finally:
             lock.release()
@@ -171,21 +176,22 @@ class SeFunctions:
     # elog: instance of logging class
     # caller: caller
     # source: source
-    def get_original_caller(self, elog, caller, source):
+    def get_original_caller(self, elog, caller, source, type='update'):
         if isinstance(source, str):
-            original_changed_by = source
+            original_manipulated_by = source
         else:
-            original_changed_by = "None"
+            original_manipulated_by = "None"
         while caller == "Eval":
             original_item = self.items.return_item(source)
             if original_item is None:
-                elog.debug("get_caller({0}, {1}): original item not found", caller, source)
+                elog.info("get_caller({0}, {1}): original item not found", caller, source)
                 break
-            original_changed_by = original_item.changed_by()
+            original_manipulated_by = original_item.property.last_update_by if type == "update" else original_item.property.last_change_by
+            original_manipulated_time = original_item.property.last_update if type == "update" else original_item.property.last_change
             oc = caller
             os = source
-            caller, __, source = original_changed_by.partition(":")
-            elog.debug("get_caller({0}, {1}): changed by {2} at {3}", oc, os,
-                        original_changed_by, original_item.last_change())
+            caller, __, source = original_manipulated_by.partition(":")
+            elog.info("get_caller({0}, {1}): updated by {2} at {3}", oc, os,
+                        original_manipulated_by, original_manipulated_time)
 
-        return original_changed_by
+        return original_manipulated_by

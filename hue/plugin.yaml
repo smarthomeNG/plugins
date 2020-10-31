@@ -12,8 +12,8 @@ plugin:
 #    documentation: https://github.com/smarthomeNG/plugins/blob/develop/mqtt/README.md        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/41379-philips-hue-plugin-neu-v1-0-released
 
-    version: 1.4.4                 # Plugin version
-    sh_minversion: 1.3c            # minimum shNG version to use this plugin
+    version: 1.4.5                 # Plugin version
+    sh_minversion: 1.4             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False
     classname: HUE                  # class containing the plugin
@@ -68,4 +68,40 @@ parameters:
 
 item_attributes:
 # Definition of item attributes defined by this plugin
+
+    hue_listen:
+        type: str
+
+    hue_send:
+        type: str
+
+    hue_lamp_id:
+        type: num
+
+    hue_lamp_type:
+        type: num
+
+    hue_bridge_id:
+        type: num
+
+    hue_listen_group:
+        type: str
+
+    hue_send_group:
+        type: str
+
+    hue_group_id:
+        type: num
+
+    hue_transitiontime:
+        type: num
+
+    hue_dim_max:
+        type: num
+
+    hue_dim_step:
+        type: num
+
+    hue_dim_time:
+        type: num
 

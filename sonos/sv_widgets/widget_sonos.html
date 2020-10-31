@@ -1,21 +1,71 @@
+/**
+* Displas a Sonos title 
+*
+* @param {uid} unique id for this widget
+* @param {artist} artist item for sonos player
+* @param {stream_content} stream_content item for sonos player
+* @param {streamtype} streamtype item for sonos player
+*
+* @info  by Pfischi
+*/
 {% macro artist(uid, artist, stream_content, streamtype) %}
   <div id="{{ uid }}" class="artist" data-widget="sonos.artist" data-item="{{ artist }}, {{ stream_content }}, {{ streamtype }}" ></div>
 {% endmacro %}
 
+/**
+* Displas a Sonos title 
+*
+* @param {uid} unique id for this widget
+* @param {title} title item for sonos player
+* @param {track_uri} track_uri item for sonos player
+* @param {radio_station} radio_station item for sonos player
+* @param {streamtype} streamtype item for sonos player
+*
+* @info  by Pfischi
+*/
 {% macro title(uid, title, track_uri, radio_station, streamtype) %}
   <div id="{{ uid }}" data-widget="sonos.title" data-item="{{ title }}, {{ track_uri }}, {{ radio_station }}, {{ streamtype }}"></div>
 {% endmacro %}
 
+
+/**
+* Displas a Sonos cover 
+*
+* @param {uid} unique id for this widget
+* @param {cover} cover item for sonos player
+* @param {cover_default} cover_defaut item for sonos player
+*
+* @info  by Pfischi
+*/
 {% macro cover(uid, cover, cover_default) %}
 <div class="cover">
   <img id="{{ uid }}" data-widget="sonos.cover" data-item="{{ cover }}" data-default="{{ cover_default }}" src="{{ cover_default }}" />
 </div>
 {% endmacro %}
 
+
+/**
+* Displas a Sonos album name 
+*
+* @param {uid} unique id for this widget
+* @param {album} album item for sonos player
+*
+* @info  by Pfischi
+*/
 {% macro album(uid, album) %}
   <div id="{{ uid }}" class="album" data-widget="sonos.album" data-item="{{ album }}" ></div>
 {% endmacro %}
 
+
+/**
+* Displas a Sonos play button 
+*
+* @param {uid} unique id for this widget
+* @param {play} play item for sonos player
+* @param {current_transport_actions} current transport action item for sonos player
+*
+* @info  by Pfischi
+*/
 {% macro play(uid, play, current_transport_actions) %}
 	{% import "basic.html" as basic %}
   <div id="{{ uid }}" class="play" data-widget="sonos.play" data-item="{{ play }}, {{ current_transport_actions }}">
@@ -23,6 +73,16 @@
   </div>
 {% endmacro %}
 
+
+/**
+* Displas a Sonos previous button 
+*
+* @param {uid} unique id for this widget
+* @param {next} trigger next item for sonos player
+* @param {current_transport_actions} current transport action item for sonos player
+*
+* @info  by Pfischi
+*/
 {% macro next(uid, next, current_transport_actions) %}
 	{% import "basic.html" as basic %}
   <div id="{{ uid }}" class="next" data-widget="sonos.next" data-item="{{ next }}, {{ current_transport_actions }}">
@@ -30,6 +90,16 @@
   </div>
 {% endmacro %}
 
+
+/**
+* Displas a Sonos previous button 
+*
+* @param {uid} unique id for this widget
+* @param {previous} previous item for sonos player
+* @param {current_transport_actions} current transport action item for sonos player
+*
+* @info  by Pfischi
+*/
 {% macro previous(uid, previous, current_transport_actions) %}
 	{% import "basic.html" as basic %}
   <div id="{{ uid }}" class="previous" data-widget="sonos.previous" data-item="{{ previous }}, {{ current_transport_actions }}">
@@ -37,6 +107,14 @@
   </div>
 {% endmacro %}
 
+/**
+* Displas a Sonos volume slider 
+*
+* @param {uid} unique id for this widget
+* @param {volume} volume item for sonos player
+*
+* @info  by Pfischi
+*/
 {% macro volume(uid, volume) %}
   {% import "basic.html" as basic %}
   <div id="{{ uid }}" class="volslider">
@@ -44,6 +122,15 @@
   </div>
 {% endmacro %}
 
+
+/**
+* Displas a Sonos mute button 
+*
+* @param {uid} unique id for this widget
+* @param {mute} mute item for sonos player
+*
+* @info  by Pfischi
+*/
 {% macro mute(uid, mute) %}
   {% import "basic.html" as basic %}
   <div id="{{ uid }}" class="mute">
@@ -51,16 +138,35 @@
   </div>
 {% endmacro %}
 
-{% macro playlists(uid, sonos_playlists, load_sonos_playlist) %}
+
+/**
+* Displas a Sonos playlist 
+*
+* @param {uid} unique id for this widget
+* @param {sonos_playlist} item for sonos playlist
+* @param {load_sonos_playlist} item for loading sonos playlist
+*
+* @info  by Pfischi
+*/
+{% macro playlists(uid, sonos_playlists, load_sonos_playlist, popup_ref) %}
     <div class="playlist-content">
+	<h3>Playlists:</h3>
         <div class="playlist-scrollable" id="{{ uid }}" data-send="{{ load_sonos_playlist }}"
-             data-widget="sonos.playlists" data-item="{{ sonos_playlists }}" >
+             data-widget="sonos.playlists" data-item="{{ sonos_playlists }}" data-ref="{{ popup_ref }}" >
             <ul data-role="listview">
             </ul>
         </div>
     </div>
 {% endmacro %}
 
+/**
+* Displas a Sonos widget 
+*
+* @param {id} unique id for this widget
+* @param {gad} item of sonos player
+*
+* @info  by Pfischi
+*/
 {% macro player(id, gad) %}
   {% set uid                        = uid(page, id) %}
   {% set cover                      = '.track_album_art' %}
@@ -81,28 +187,28 @@
   {% set load_sonos_playlist        = '.load_sonos_playlist' %}
   {% set cover_default              = 'pages/base/pics/trans.png' %}
   {% import "basic.html" as basic %}
-  {% import _self as sonos %}
+  {% import _self as mysonos %}
 
 <div class="sonos">
-  {{ sonos.cover(uid~'-cover', gad~cover, cover_default) }}
-  {{ sonos.title(uid~'-title', gad~title, gad~track_uri, gad~radio_station, gad~streamtype) }}
-  {{ sonos.artist(uid~'-artist', gad~artist, gad~stream_content, gad~streamtype) }}
-  {{ sonos.album(uid~'-album', gad~album) }}
-  {{ sonos.previous(uid~'previous', gad~previous, gad~current_transport_actions) }}
-  {{ sonos.play(uid~'-play', gad~play, gad~current_transport_actions) }}
-  {{ sonos.next(uid~'-next', gad~next, gad~current_transport_actions) }}
-  {{ sonos.volume(uid~'-volume', gad~volume) }}
-  {{ sonos.mute(uid~'-mute', gad~mute) }}
+  {{ mysonos.cover(uid~'-cover', gad~cover, cover_default) }}
+  {{ mysonos.title(uid~'-title', gad~title, gad~track_uri, gad~radio_station, gad~streamtype) }}
+  {{ mysonos.artist(uid~'-artist', gad~artist, gad~stream_content, gad~streamtype) }}
+  {{ mysonos.album(uid~'-album', gad~album) }}
+  {{ mysonos.previous(uid~'previous', gad~previous, gad~current_transport_actions) }}
+  {{ mysonos.play(uid~'-play', gad~play, gad~current_transport_actions) }}
+  {{ mysonos.next(uid~'-next', gad~next, gad~current_transport_actions) }}
+  {{ mysonos.volume(uid~'-volume', gad~volume) }}
+  {{ mysonos.mute(uid~'-mute', gad~mute) }}
   <div class="playlists">
-    <a href="#popup_sonos_playlists" data-rel="popup">
+    <a href="#{{ uid }}-popup" data-rel="popup">
       <img class="icon icon0" style="fill:icon0; stroke:icon0;" src="{{ icon0 }}audio_playlist.svg" />
     </a>
   </div>
 </div>
 
-<div id="popup_sonos_playlists" data-role="popup" style="width:300px; min-height:200px;">
+<div id="{{ uid }}-popup" data-role="popup" style="width:300px; min-height:200px;">
   <a href="#" data-rel="back" data-role="button" data-icon="delete" data-iconpos="notext" class="ui-btn-right">Close</a>
-  {{ sonos.playlists(uid~'-playlists', gad~sonos_playlists, gad~load_sonos_playlist) }}
+  {{ mysonos.playlists(uid~'-playlists', gad~sonos_playlists, gad~load_sonos_playlist, '#'~uid~'-popup') }}
 </div>
 
 {% endmacro %}

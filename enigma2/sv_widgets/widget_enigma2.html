@@ -6,7 +6,7 @@ require_once const_path.'version-info.php';
 
 /**
  * Enigma2 ConfigurationInfo Widget
- * 
+ *
  * @param       unique id for this widget
  * @param       the gad/item for the receiver model
  * @param       the gad/item for the webinterface version
@@ -25,15 +25,15 @@ require_once const_path.'version-info.php';
 	{% set uid = uid(page, id) %}
 
 	<div id="{{ uid }}">
-		<table width=90%> 
-			{% if gad_model or gad_webif %} <tr><td align=left style="padding-left: 15px;">Type / WebIf:</td> <td align=right> {{ basic.value(id~'model', gad_model) }} / v{{ basic.value(id~'webif', gad_webif) }}</td></tr>{% endif %}
+		<table width=90%>
+			{% if gad_model or gad_webif %} <tr><td align=left style="padding-left: 15px;">Type / WebIf:</td> <td align=right> {{ basic.print(id~'model', gad_model) }} / v{{ basic.print(id~'webif', gad_webif) }}</td></tr>{% endif %}
 			{% if gad_dhcp or gad_ip or gad_gw or gad_mask %}<tr><td align=left style="padding-left: 15px;"><strong>LAN Config</strong></td> <td></td></tr>{% endif %}
-			{% if gad_dhcp or gad_ip %}<tr><td align=left style="padding-left: 30px;">DHCP / IP:</td> <td align=right> {{ basic.value(id~'dhcp', gad_dhcp) }} / {{ basic.value(id~'ip', gad_ip) }}</td></tr>{% endif %}
-			{% if gad_gw or gad_mask %}<tr><td align=left style="padding-left: 30px;">GW/Mask:</td> <td align=right> {{ basic.value(id~'gw', gad_gw) }} / {{ basic.value(id~'mask', gad_mask) }}</td></tr>{% endif %}
-			{% if gad_mac %}   <tr><td align=left style="padding-left: 30px;">MAC:</td> <td align=right> {{ basic.value(id~'mac', gad_mac) }}</td></tr>{% endif %}
+			{% if gad_dhcp or gad_ip %}<tr><td align=left style="padding-left: 30px;">DHCP / IP:</td> <td align=right> {{ basic.print(id~'dhcp', gad_dhcp) }} / {{ basic.print(id~'ip', gad_ip) }}</td></tr>{% endif %}
+			{% if gad_gw or gad_mask %}<tr><td align=left style="padding-left: 30px;">GW/Mask:</td> <td align=right> {{ basic.print(id~'gw', gad_gw) }} / {{ basic.print(id~'mask', gad_mask) }}</td></tr>{% endif %}
+			{% if gad_mac %}   <tr><td align=left style="padding-left: 30px;">MAC:</td> <td align=right> {{ basic.print(id~'mac', gad_mac) }}</td></tr>{% endif %}
 			{% if gad_enigma or gad_image %}<tr><td align=left style="padding-left: 15px;"><strong>Firmware</strong></td> <td></td></tr>{% endif %}
-			{% if gad_enigma %}<tr><td colspan="2" align=left style="padding-left: 30px;"> {{ basic.value(id~'enigma', gad_enigma) }}</td></tr>{% endif %}
-			{% if gad_image %} <tr><td colspan="2" align=left style="padding-left: 30px;"> {{ basic.value(id~'image', gad_image) }}</td></tr>{% endif %}
+			{% if gad_enigma %}<tr><td colspan="2" align=left style="padding-left: 30px;"> {{ basic.print(id~'enigma', gad_enigma) }}</td></tr>{% endif %}
+			{% if gad_image %} <tr><td colspan="2" align=left style="padding-left: 30px;"> {{ basic.print(id~'image', gad_image) }}</td></tr>{% endif %}
 		</table>
 
 	</div>
@@ -45,10 +45,10 @@ require_once const_path.'version-info.php';
 /**
  * Enigma2 ConfigurationInfo Widget (for standardconfiguration)
  *
- * This widget can be used, if the items for the enigma2 box are defined  
+ * This widget can be used, if the items for the enigma2 box are defined
  * following the naming conventions as defined in the README of the plugin
- * 
- * @param       unique id for this widget 
+ *
+ * @param       unique id for this widget
  * @param       the gad/item for the receiver (parent item of the enigma2 item definition tree)
  *
  */
@@ -58,15 +58,15 @@ require_once const_path.'version-info.php';
 	{% set uid = uid(page, id) %}
 
 	<div id="{{ uid }}">
-		<table width=90%> 
-			<tr><td align=left style="padding-left: 15px;">Type / WebIf:</td> <td align=right> {{ basic.value(id~'2model', gad_box~'.e2model') }} / v{{ basic.value(id~'2webif', gad_box~'.e2webifversion') }}</td></tr>
+		<table width=90%>
+			<tr><td align=left style="padding-left: 15px;">Type / WebIf:</td> <td align=right> {{ basic.print(id~'2model', gad_box~'.e2model') }} / v{{ basic.print(id~'2webif', gad_box~'.e2webifversion') }}</td></tr>
 			<tr><td align=left style="padding-left: 15px;"><strong>LAN Config</strong></td></tr>
-			<tr><td align=left style="padding-left: 30px;">DHCP / IP:</td> <td align=right> {{ basic.value(id~'2dhcp', gad_box~'.e2dhcp') }} / {{ basic.value(id~'2ip', gad_box~'.e2ip') }}</td></tr>
-			<tr><td align=left style="padding-left: 30px;">GW/Mask:</td> <td align=right> {{ basic.value(id~'2gw', gad_box~'.e2gateway') }} / {{ basic.value(id~'2mask', gad_box~'.e2netmask') }}</td></tr>
-			<tr><td align=left style="padding-left: 30px;">MAC:</td> <td align=right> {{ basic.value(id~'2mac', gad_box~'.e2mac') }}</td></tr>
+			<tr><td align=left style="padding-left: 30px;">DHCP / IP:</td> <td align=right> {{ basic.print(id~'2dhcp', gad_box~'.e2dhcp') }} / {{ basic.print(id~'2ip', gad_box~'.e2ip') }}</td></tr>
+			<tr><td align=left style="padding-left: 30px;">GW/Mask:</td> <td align=right> {{ basic.print(id~'2gw', gad_box~'.e2gateway') }} / {{ basic.print(id~'2mask', gad_box~'.e2netmask') }}</td></tr>
+			<tr><td align=left style="padding-left: 30px;">MAC:</td> <td align=right> {{ basic.print(id~'2mac', gad_box~'.e2mac') }}</td></tr>
 			<tr><td align=left style="padding-left: 15px;"><strong>Firmware</strong></td></tr>
-			<tr><td colspan="2" align=left style="padding-left: 30px;">{{ basic.value(id~'2enigma', gad_box~'.e2enigmaversion') }}</td></tr>
-			<tr><td colspan="2" align=left style="padding-left: 30px;"> {{ basic.value(id~'2image', gad_box~'.e2imageversion') }}</td></tr>
+			<tr><td colspan="2" align=left style="padding-left: 30px;">{{ basic.print(id~'2enigma', gad_box~'.e2enigmaversion') }}</td></tr>
+			<tr><td colspan="2" align=left style="padding-left: 30px;"> {{ basic.print(id~'2image', gad_box~'.e2imageversion') }}</td></tr>
 		</table>
 	</div>
 
@@ -75,7 +75,7 @@ require_once const_path.'version-info.php';
 
 /**
  * Enigma2 StatusInfo Widget
- * 
+ *
  * @param       unique id for this widget
  * @param       the gad/item for standby status
  * @param       the gad/item for servicename
@@ -92,15 +92,15 @@ require_once const_path.'version-info.php';
 	{% set uid = uid(page, id) %}
 
 	<div id="{{ uid }}">
-		<table width=90%> 
-			{% if gad_servicename %} <tr><td align=left style="padding-left: 15px;">Sender:</td> <td align=right> {{ basic.value(id~'servicename', gad_servicename) }} </td></tr>{% endif %}
+		<table width=90%>
+			{% if gad_servicename %} <tr><td align=left style="padding-left: 15px;">Sender:</td> <td align=right> {{ basic.print(id~'servicename', gad_servicename) }} </td></tr>{% endif %}
 			{% if gad_eventtitle or gad_eventdesc %} <tr><td align=left style="padding-left: 15px;"><strong>Sendung</strong></td></tr>{% endif %}
-			{% if gad_eventtitle %} <tr><td colspan="2" align=left style="padding-left: 30px;"> {{ basic.value(id~'eventtitle', gad_eventtitle) }} </td></tr>{% endif %}
-			{% if gad_eventdesc %} <tr><td colspan="2" align=left style="padding-left: 30px;"> {{ basic.value(id~'eventdesc', gad_eventdesc) }} </td></tr>{% endif %}
+			{% if gad_eventtitle %} <tr><td colspan="2" align=left style="padding-left: 30px;"> {{ basic.print(id~'eventtitle', gad_eventtitle) }} </td></tr>{% endif %}
+			{% if gad_eventdesc %} <tr><td colspan="2" align=left style="padding-left: 30px;"> {{ basic.print(id~'eventdesc', gad_eventdesc) }} </td></tr>{% endif %}
 			{% if gad_vwidth or gad_vheight or gad_apid %}<tr><td><br></td></tr>{% endif %}
-			{% if gad_vwidth or gad_vheight %}<tr><td align=left style="padding-left: 30px;">Auflösung:</td> <td align=right> {{ basic.value(id~'vwidth', gad_vwidth) }} x {{ basic.value(id~'vheight', gad_vheight) }}</td></tr>{% endif %}
-			{% if gad_apid %} <tr><td align=left style="padding-left: 30px;">Video-/Audio-Pid:</td> <td align=right> {{ basic.value(id~'vpid', gad_vpid) }} / {{ basic.value(id~'apid', gad_apid) }} </td></tr>{% endif %}
-			{% if gad_standby %} <tr><td align=left style="padding-left: 30px;">Standby:</td> <td align=right> {{ basic.value(id~'standby', gad_standby) }} </td></tr>{% endif %}
+			{% if gad_vwidth or gad_vheight %}<tr><td align=left style="padding-left: 30px;">Auflösung:</td> <td align=right> {{ basic.print(id~'vwidth', gad_vwidth) }} x {{ basic.print(id~'vheight', gad_vheight) }}</td></tr>{% endif %}
+			{% if gad_apid %} <tr><td align=left style="padding-left: 30px;">Video-/Audio-Pid:</td> <td align=right> {{ basic.print(id~'vpid', gad_vpid) }} / {{ basic.print(id~'apid', gad_apid) }} </td></tr>{% endif %}
+			{% if gad_standby %} <tr><td align=left style="padding-left: 30px;">Standby:</td> <td align=right> {{ basic.print(id~'standby', gad_standby) }} </td></tr>{% endif %}
 		</table>
 
 	</div>
@@ -111,10 +111,10 @@ require_once const_path.'version-info.php';
 /**
  * Enigma2 StatusInfo Widget (for standardconfiguration)
  *
- * This widget can be used, if the items for the enigma2 box are defined  
+ * This widget can be used, if the items for the enigma2 box are defined
  * following the naming conventions as defined in the README of the plugin
- * 
- * @param       unique id for this widget 
+ *
+ * @param       unique id for this widget
  * @param       the gad/item for the receiver (parent item of the enigma2 item definition tree)
  *
  */
@@ -124,15 +124,15 @@ require_once const_path.'version-info.php';
 	{% set uid = uid(page, id) %}
 
 	<div id="{{ uid }}">
-		<table width=90%> 
-			<tr><td align=left style="padding-left: 15px;">Sender:</td> <td align=right> {{ basic.value(id~'2servicename', gad_box~'.current.servicename') }} </td></tr>
+		<table width=90%>
+			<tr><td align=left style="padding-left: 15px;">Sender:</td> <td align=right> {{ basic.print(id~'2servicename', gad_box~'.current.servicename') }} </td></tr>
 			<tr><td align=left style="padding-left: 15px;"><strong>Sendung</strong></td></tr>
-			<tr><td colspan="2" align=left style="padding-left: 30px;"> {{ basic.value(id~'2eventtitle', gad_box~'.current.eventtitle') }} </td></tr>
-			<tr><td colspan="2" align=left style="padding-left: 30px;"> {{ basic.value(id~'2eventdesc', gad_box~'.current.eventdescription') }} </td></tr>
+			<tr><td colspan="2" align=left style="padding-left: 30px;"> {{ basic.print(id~'2eventtitle', gad_box~'.current.eventtitle') }} </td></tr>
+			<tr><td colspan="2" align=left style="padding-left: 30px;"> {{ basic.print(id~'2eventdesc', gad_box~'.current.eventdescription') }} </td></tr>
 			<tr><td><br></td></tr>
-			<tr><td align=left style="padding-left: 30px;">Auflösung:</td> <td align=right> {{ basic.value(id~'2vwidth', gad_box~'.current.e2videowidth') }} x {{ basic.value(id~'2vheight', gad_box~'.current.e2videoheight') }}</td></tr>
-			<tr><td align=left style="padding-left: 30px;">Video-/Audio-Pid:</td> <td align=right>{{ basic.value(id~'2vpid', gad_box~'.e2vpid') }} / {{ basic.value(id~'2apid', gad_box~'.e2apid') }} </td></tr>
-			<tr><td align=left style="padding-left: 30px;">Standby:</td> <td align=right> {{ basic.value(id~'2standby', gad_box~'.e2instandby') }} </td></tr>
+			<tr><td align=left style="padding-left: 30px;">Auflösung:</td> <td align=right> {{ basic.print(id~'2vwidth', gad_box~'.current.e2videowidth') }} x {{ basic.print(id~'2vheight', gad_box~'.current.e2videoheight') }}</td></tr>
+			<tr><td align=left style="padding-left: 30px;">Video-/Audio-Pid:</td> <td align=right>{{ basic.print(id~'2vpid', gad_box~'.e2vpid') }} / {{ basic.print(id~'2apid', gad_box~'.e2apid') }} </td></tr>
+			<tr><td align=left style="padding-left: 30px;">Standby:</td> <td align=right> {{ basic.print(id~'2standby', gad_box~'.e2instandby') }} </td></tr>
 		</table>
 
 	</div>
@@ -143,10 +143,10 @@ require_once const_path.'version-info.php';
 /**
  * Enigma2 StatusInfo Widget (only channel and program)
  *
- * This widget can be used, if the items for the enigma2 box are defined  
+ * This widget can be used, if the items for the enigma2 box are defined
  * following the naming conventions as defined in the README of the plugin
- * 
- * @param       unique id for this widget 
+ *
+ * @param       unique id for this widget
  * @param       the gad/item for the receiver (parent item of the enigma2 item definition tree)
  *
  */
@@ -156,11 +156,11 @@ require_once const_path.'version-info.php';
 	{% set uid = uid(page, id) %}
 
 	<div id="{{ uid }}">
-		<table width=90%> 
-			<tr><td align=left style="padding-left: 15px;">Sender:</td> <td align=right> {{ basic.value(id~'2servicename', gad_box~'.current.servicename') }} </td></tr>
+		<table width=90%>
+			<tr><td align=left style="padding-left: 15px;">Sender:</td> <td align=right> {{ basic.print(id~'2servicename', gad_box~'.current.servicename') }} </td></tr>
 			<tr><td align=left style="padding-left: 15px;"><strong>Sendung</strong></td></tr>
-			<tr><td colspan="2" align=left style="padding-left: 30px;"> {{ basic.value(id~'2eventtitle', gad_box~'.current.eventtitle') }} </td></tr>
-			<tr><td colspan="2" align=left style="padding-left: 30px;"> {{ basic.value(id~'2eventdesc', gad_box~'.current.eventdescription') }} </td></tr>
+			<tr><td colspan="2" align=left style="padding-left: 30px;"> {{ basic.print(id~'2eventtitle', gad_box~'.current.eventtitle') }} </td></tr>
+			<tr><td colspan="2" align=left style="padding-left: 30px;"> {{ basic.print(id~'2eventdesc', gad_box~'.current.eventdescription') }} </td></tr>
 		</table>
 
 	</div>
@@ -171,7 +171,7 @@ require_once const_path.'version-info.php';
 
 /**
  * Enigma2 Remote Widget
- * 
+ *
  * @param       unique id for this widget
  * @param       the gad/item for the receiver (parent item of the enigma2 item definition tree)
  *
@@ -180,7 +180,7 @@ require_once const_path.'version-info.php';
 {% macro remote2(id, gad_boxremote, gad_size, alternative) %}
 	{% import "basic.html" as basic %}
 	{% set uid = uid(page, id) %}
-	
+
 	{% if config_version == 2.9 %}
         {% set icon_path = '' %}
 	{% else %}
@@ -192,47 +192,47 @@ require_once const_path.'version-info.php';
 			<tr>
 				<td align="middle" width="70%">
 					<span data-role="controlgroup" data-type="horizontal">
-						{{ basic.button(id~'.VolDOWN', gad_boxremote~'.VolDOWN', ' Leiser ', 'minus', '', gad_size) }}
-						{{ basic.button(id~'.MUTE', gad_boxremote~'.MUTE', ' Mute ', icon0~'audio_volume_mute.png', '', gad_size) }}
-						{{ basic.button(id~'.VolUP', gad_boxremote~'.VolUP', ' Lauter ', 'plus', '', gad_size) }}
+						{{ basic.stateswitch(id~'.VolDOWN', gad_boxremote~'.VolDOWN', gad_size, '', 'minus', 'Leiser') }}
+						{{ basic.stateswitch(id~'.MUTE', 	gad_boxremote~'.MUTE', 	  gad_size, '', icon0~'audio_volume_mute.png', 'Mute') }}
+						{{ basic.stateswitch(id~'.VolUP', 	gad_boxremote~'.VolUP',   gad_size, '', 'plus', 'Lauter') }}
 					</span>
 					<span data-role="controlgroup" data-type="horizontal">
 						<span data-role="controlgroup" data-type="horizontal">
-						&nbsp;{{ basic.button(id~'.POWER', gad_boxremote~'.POWER', 'Power', icon0~'control_standby.png', '', gad_size) }}
+							{{ basic.stateswitch(id~'.POWER', gad_boxremote~'.POWER', gad_size, '', icon0~'control_standby.png', 'Power') }}
 						</span>
 					</span>
 				</td>
 			</tr>
-			 <tr>											 
+			 <tr>
 			  <td align="middle" width="70%">
 				<span data-role="controlgroup" data-type="horizontal">
-					 {{ basic.button(id~'.REWIND', gad_boxremote~'.REWIND', 'Rewind', icon0~'audio_rew.png', '', gad_size) }}
-					 {{ basic.button(id~'.STOP', gad_boxremote~'.STOP', ' Stop ', icon0~'audio_stop.png', '', gad_size) }}
-					 {{ basic.button(id~'.PLAY', gad_boxremote~'.PLAY', ' Play ', icon0~'audio_play.png', '', gad_size) }}
-					 {{ basic.button(id~'.PAUSE', gad_boxremote~'.PAUSE', ' Pause ', icon0~'audio_pause.png', '', gad_size) }}
-					 {{ basic.button(id~'.FF', gad_boxremote~'.FF', 'Forward', icon0~'audio_ff.png', '', gad_size) }} 
-				</span>												   
+					{{ basic.stateswitch(id~'.REWIND', gad_boxremote~'.REWIND', gad_size, '', icon0~'audio_rew.png', 'Rewind') }}
+					{{ basic.stateswitch(id~'.STOP',   gad_boxremote~'.STOP',   gad_size, '', icon0~'audio_stop.png', 'Stop') }}
+					{{ basic.stateswitch(id~'.PLAY',   gad_boxremote~'.PLAY',   gad_size, '', icon0~'audio_play.png', 'Play') }}
+					{{ basic.stateswitch(id~'.PAUSE',  gad_boxremote~'.PAUSE',  gad_size, '', icon0~'audio_pause.png', 'Pause') }}
+					{{ basic.stateswitch(id~'.FF',     gad_boxremote~'.FF',     gad_size, '', icon0~'audio_ff.png', 'Forward') }}
+				</span>
 			  </td>
-		  </tr>											
+		  </tr>
 		</table>
 
 		<table width="100%">
 			<tr>
 				<td align="middle" width="70%">
 					<span data-role="controlgroup" data-type="horizontal">
-					{{ basic.button(id~'.1', gad_boxremote~'.KEY_1', '1', 'grid', '', gad_size) }}
+					{{ basic.stateswitch(id~'.1',     gad_boxremote~'.1',     gad_size, '', grid, '1') }}
 					</span>
 					<span data-role="controlgroup" data-type="horizontal">
-					{{ basic.button(id~'.2', gad_boxremote~'.KEY_2', '2', 'grid', '', gad_size) }}
+					{{ basic.stateswitch(id~'.2',     gad_boxremote~'.2',     gad_size, '', grid, '2') }}
 					</span>
 					<span data-role="controlgroup" data-type="horizontal">
-					{{ basic.button(id~'.3', gad_boxremote~'.KEY_3', '3', 'grid', '', gad_size) }}
+					{{ basic.stateswitch(id~'.3',     gad_boxremote~'.3',     gad_size, '', grid, '3') }}
 					</span>
 					<span data-role="controlgroup" data-type="horizontal">
-					{{ basic.button(id~'.4', gad_boxremote~'.KEY_4', '4', 'grid', '', gad_size) }}
+					{{ basic.stateswitch(id~'.4',     gad_boxremote~'.4',     gad_size, '', grid, '4') }}
 					</span>
 					<span data-role="controlgroup" data-type="horizontal">
-					{{ basic.button(id~'.5', gad_boxremote~'.KEY_5', '5', 'grid', '', gad_size) }}
+					{{ basic.stateswitch(id~'.5',     gad_boxremote~'.5',     gad_size, '', grid, '5') }}
 					</span>
 				</td>
 			</tr>
@@ -242,19 +242,19 @@ require_once const_path.'version-info.php';
 			<tr>
 				<td align="middle" width="70%">
 					<span data-role="controlgroup" data-type="horizontal">
-					{{ basic.button(id~'.6', gad_boxremote~'.KEY_6', '6', 'grid', '', gad_size) }}
+					{{ basic.stateswitch(id~'.6',     gad_boxremote~'.6',     gad_size, '', grid, '6') }}
 					</span>
 					<span data-role="controlgroup" data-type="horizontal">
-					{{ basic.button(id~'.7', gad_boxremote~'.KEY_7', '7', 'grid', '', gad_size) }}
+					{{ basic.stateswitch(id~'.7',     gad_boxremote~'.7',     gad_size, '', grid, '7') }}
 					</span>
 					<span data-role="controlgroup" data-type="horizontal">
-					{{ basic.button(id~'.8', gad_boxremote~'.KEY_8', '8', 'grid', '', gad_size) }}
+					{{ basic.stateswitch(id~'.8',     gad_boxremote~'.8',     gad_size, '', grid, '8') }}
 					</span>
 					<span data-role="controlgroup" data-type="horizontal">
-					{{ basic.button(id~'.9', gad_boxremote~'.KEY_9', '9', 'grid', '', gad_size) }}
+					{{ basic.stateswitch(id~'.9',     gad_boxremote~'.9',     gad_size, '', grid, '9') }}
 					</span>
 					<span data-role="controlgroup" data-type="horizontal">
-					{{ basic.button(id~'.0', gad_boxremote~'.KEY_0', 'O', 'grid', '', gad_size) }}
+					{{ basic.stateswitch(id~'.0',     gad_boxremote~'.0',     gad_size, '', grid, '0') }}
 					</span>
 				</td>
 			</tr>
@@ -265,16 +265,16 @@ require_once const_path.'version-info.php';
 			<tr>
 				<td align="middle" width="70%">
 					<span data-role="controlgroup" data-type="horizontal">
-					{{ basic.button(id~'.TEXT', gad_boxremote~'.TEXT', 'Text', icon0~'audio_playlist.png', '', gad_size) }}
+					{{ basic.stateswitch(id~'.TEXT',     gad_boxremote~'.TEXT',     gad_size, '', icon0~'audio_playlist.png', 'Text') }}
 					</span>
 					<span data-role="controlgroup" data-type="horizontal">
-					{{ basic.button(id~'.AUDIO', gad_boxremote~'.AUDIO', 'Audio', icon0~'audio_sound.png', '', gad_size) }}
+					{{ basic.stateswitch(id~'.AUDIO',     gad_boxremote~'.AUDIO',     gad_size, '', icon0~'audio_sound.png', 'Audio') }}
 					</span>
 					<span data-role="controlgroup" data-type="horizontal">
-					{{ basic.button(id~'.SUBTITLE', gad_boxremote~'.SUBTITLE', 'Subtitle', 'home', '', gad_size) }}
+					{{ basic.stateswitch(id~'.SUBTITLE',     gad_boxremote~'.SUBTITLE',     gad_size, '', 'home', 'Subtitle') }}
 					</span>
 					<span data-role="controlgroup" data-type="horizontal">
-					{{ basic.button(id~'.VIDEO', gad_boxremote~'.VIDEO', 'Video', icon0~'it_camera.png', '', gad_size) }}
+					{{ basic.stateswitch(id~'.VIDEO',     gad_boxremote~'.VIDEO',     gad_size, '', icon0~'it_camera.png', 'Video') }}
 					</span>
 				</td>
 			</tr>
@@ -282,13 +282,13 @@ require_once const_path.'version-info.php';
 			<tr>
 				<td align="middle" width="70%">
 					<span data-role="controlgroup" data-type="horizontal">
-					 {{ basic.button(id~'.GREEN', gad_boxremote~'.GREEN', ' Green ', icon_path~'control_centr_arrow_up_left_green_fill.png', '', gad_size) }}
+					{{ basic.stateswitch(id~'.GREEN',     gad_boxremote~'.GREEN',     gad_size, '', icon0~'control_centr_arrow_up_left_green_fill.png', 'Green') }}
 					</span>
 					<span data-role="controlgroup" data-type="horizontal">
-					{{ basic.button(id~'.UpTV', gad_boxremote~'.UP', 'rauf', icon0~'control_centr_arrow_up.png', '', gad_size) }}
+					{{ basic.stateswitch(id~'.UpTV',     gad_boxremote~'.UpTV',     gad_size, '', icon0~'control_centr_arrow_up.png', 'rauf') }}
 					</span>
 					<span data-role="controlgroup" data-type="horizontal">
-					 {{ basic.button(id~'.YELLOW', gad_boxremote~'.YELLOW', ' Yellow ', icon_path~'control_centr_arrow_up_right_yellow_fill.png', '', gad_size) }}
+					{{ basic.stateswitch(id~'.YELLOW',     gad_boxremote~'.YELLOW',     gad_size, '', icon0~'control_centr_arrow_up_right_yellow_fill.png', 'Yellow') }}
 					</span>
 				</td>
 			</tr>
@@ -298,29 +298,29 @@ require_once const_path.'version-info.php';
 			<tr>
 				<td align="middle" width="70%">
 					<span data-role="controlgroup" data-type="horizontal">
-					{{ basic.button(id~'.MENU', gad_boxremote~'.MENU', 'Menu', 'home', '', gad_size) }}
+					{{ basic.stateswitch(id~'.MENU',     gad_boxremote~'.MENU',     gad_size, '', 'home', 'Menu') }}
 					</span>
 					<span data-role="controlgroup" data-type="horizontal">
-					{{ basic.button(id~'.TEXT', gad_boxremote~'.TEXT', 'Text', icon0~'audio_playlist.png', '', gad_size) }}
+					{{ basic.stateswitch(id~'.TEXT',     gad_boxremote~'.TEXT',     gad_size, '', icon0~'audio_playlist.png', 'Text') }}
 					</span>
 					<span data-role="controlgroup" data-type="horizontal">
-					{{ basic.button(id~'.INFO', gad_boxremote~'.INFO', 'Info', 'info', '', gad_size) }}
+					{{ basic.stateswitch(id~'.INFO',     gad_boxremote~'.INFO',     gad_size, '', 'info', 'Info') }}
 					</span>
 					<span data-role="controlgroup" data-type="horizontal">
-					{{ basic.button(id~'.EPG', gad_boxremote~'.EPG', 'EPG', icon0~'audio_playlist.png', '', gad_size) }}
+					{{ basic.stateswitch(id~'.EPG',     gad_boxremote~'.EPG',     gad_size, '', icon0~'audio_playlist.png', 'EPG') }}
 					</span>
 				</td>
 			</tr>
 			<tr>
 				<td align="middle" width="70%">
 					<span data-role="controlgroup" data-type="horizontal">
-					{{ basic.button(id~'.AUDIO', gad_boxremote~'.AUDIO', 'Audio', icon0~'audio_sound.png', '', gad_size) }}
+					{{ basic.stateswitch(id~'.AUDIO',     gad_boxremote~'.AUDIO',     gad_size, '', icon0~'audio_sound.png', 'Audio') }}
 					</span>
 					<span data-role="controlgroup" data-type="horizontal">
-					{{ basic.button(id~'.UpTV', gad_boxremote~'.UP', 'rauf', icon0~'control_centr_arrow_up.png', '', gad_size) }}
+					{{ basic.stateswitch(id~'.UpTV',     gad_boxremote~'.UpTV',     gad_size, '', icon0~'control_centr_arrow_up.png', 'rauf') }}
 					</span>
 					<span data-role="controlgroup" data-type="horizontal">
-					{{ basic.button(id~'.VIDEO', gad_boxremote~'.VIDEO', 'Video', icon0~'it_camera.png', '', gad_size) }}
+					{{ basic.stateswitch(id~'.VIDEO',     gad_boxremote~'.VIDEO',     gad_size, '', icon0~it_camera, 'Video') }}
 					</span>
 				</td>
 			</tr>
@@ -331,46 +331,46 @@ require_once const_path.'version-info.php';
 			<tr>
 				<td align="middle" width="70%">
 					<span data-role="controlgroup" data-type="horizontal">
-					{{ basic.button(id~'.Left', gad_boxremote~'.LEFT', 'links', icon0~'control_centr_arrow_left.png', '', gad_size) }}
+					{{ basic.stateswitch(id~'.LEFT',     gad_boxremote~'.LEFT',     gad_size, '', icon0~'control_centr_arrow_left.png', 'links') }}
 					</span>
 					<span data-role="controlgroup" data-type="horizontal">
-					{{ basic.button(id~'.OK', gad_boxremote~'.OK', 'OK', 'check', '', gad_size) }}
+					{{ basic.stateswitch(id~'.OK',     gad_boxremote~'.OK',     gad_size, '', 'check', 'OK') }}
 					</span>
 					<span data-role="controlgroup" data-type="horizontal">
-					{{ basic.button(id~'.RIGHT', gad_boxremote~'.RIGHT', 'rechts', icon0~'control_centr_arrow_right.png', '', gad_size) }}
+					{{ basic.stateswitch(id~'.RIGHT',     gad_boxremote~'.RIGHT',     gad_size, '', icon0~'control_centr_arrow_right.png', 'rechts') }}
 					</span>
 				</td>
 			</tr>
 		</table>
-		
+
 {% if alternative %}
 		<table width="100%">
 			<tr>
 				<td align="middle" width="70%">
 					<span data-role="controlgroup" data-type="horizontal">
-					 {{ basic.button(id~'.RED', gad_boxremote~'.RED', 'Red', icon_path~'control_centr_arrow_down_left_red_fill.png', '', gad_size) }}
+					{{ basic.stateswitch(id~'.RED',     gad_boxremote~'.RED',     gad_size, '', icon_path~'control_centr_arrow_down_left_red_fill.png', 'Red') }}
 					</span>
 					<span data-role="controlgroup" data-type="horizontal">
-					{{ basic.button(id~'.DOWN', gad_boxremote~'.DOWN', 'runter', icon0~'control_centr_arrow_down.png', '', gad_size) }}
+					{{ basic.stateswitch(id~'.DOWN',     gad_boxremote~'.DOWN',     gad_size, '', icon0~'control_centr_arrow_down.png', 'runter') }}
 					</span>
 					<span data-role="controlgroup" data-type="horizontal">
-					 {{ basic.button(id~'.BLUE', gad_boxremote~'.BLUE', ' Blue ', icon_path~'control_centr_arrow_down_right_blue_fill.png', '', gad_size) }}
+					{{ basic.stateswitch(id~'.BLUE',     gad_boxremote~'.BLUE',     gad_size, '', icon_path~'control_centr_arrow_down_right_blue_fill.png', 'Blue') }}
 					</span>
 				</td>
 			</tr>
 			<tr>
 				<td align="middle" width="70%">
 					<span data-role="controlgroup" data-type="horizontal">
-					{{ basic.button(id~'.MENU', gad_boxremote~'.MENU', 'Menu', 'home', '', gad_size) }}
+					{{ basic.stateswitch(id~'.MENU',     gad_boxremote~'.MENU',     gad_size, '', 'home', 'Menu') }}
 					</span>
 					<span data-role="controlgroup" data-type="horizontal">
-					{{ basic.button(id~'.INFO', gad_boxremote~'.INFO', 'Info', 'info', '', gad_size) }}
+					{{ basic.stateswitch(id~'.INFO',     gad_boxremote~'.INFO',     gad_size, '', 'info', 'Info') }}
 					</span>
 					<span data-role="controlgroup" data-type="horizontal">
-					{{ basic.button(id~'.EPG', gad_boxremote~'.EPG', 'EPG', icon0~'audio_playlist.png', '', gad_size) }}
-					</span>								   
+					{{ basic.stateswitch(id~'.EPG',     gad_boxremote~'.EPG',     gad_size, '', icon0~'audio_playlist.png', 'EPG') }}
+					</span>
 					<span data-role="controlgroup" data-type="horizontal">
-					{{ basic.button(id~'.EXIT', gad_boxremote~'.EXIT', 'Exit', 'delete', '', gad_size) }}
+					{{ basic.stateswitch(id~'.EXIT',     gad_boxremote~'.EXIT',     gad_size, '', 'delete', 'Exit') }}
 					</span>
 				</td>
 			</tr>
@@ -380,40 +380,40 @@ require_once const_path.'version-info.php';
 			<tr>
 				<td align="middle" width="70%">
 					<span data-role="controlgroup" data-type="horizontal">
-					{{ basic.button(id~'.SUBTITLE', gad_boxremote~'.SUBTITLE', 'Subtitle', 'home', '', gad_size) }}
+					{{ basic.stateswitch(id~'.SUBTITLE',     gad_boxremote~'.SUBTITLE',     gad_size, '', 'home', 'Subtitle') }}
 					</span>
 					<span data-role="controlgroup" data-type="horizontal">
-					{{ basic.button(id~'.DOWN', gad_boxremote~'.DOWN', 'runter', icon0~'control_centr_arrow_down.png', '', gad_size) }}
+					{{ basic.stateswitch(id~'.DOWN',     gad_boxremote~'.DOWN',     gad_size, '', icon0~'control_centr_arrow_down.png', 'runter') }}
 					</span>
 					<span data-role="controlgroup" data-type="horizontal">
-					{{ basic.button(id~'.EXIT', gad_boxremote~'.EXIT', 'Exit', 'delete', '', gad_size) }}
+					{{ basic.stateswitch(id~'.EXIT',     gad_boxremote~'.EXIT',     gad_size, '', 'delete', 'Exit') }}
 					</span>
 				</td>
 			</tr>
 		</table>
 
 		<table width="100%">
-			 <tr>											 
+			 <tr>
 			  <td align="middle" width="70%">
 				<span data-role="controlgroup" data-type="horizontal">
 					<span data-role="controlgroup" data-type="horizontal">
-					 {{ basic.button(id~'.RED', gad_boxremote~'.RED', 'Red', icon_path~'circle_red.png', '', gad_size) }}
+					{{ basic.stateswitch(id~'.RED',     gad_boxremote~'.RED',     gad_size, '', icon_path~'circle_red.png', 'Red') }}
 					</span>
 					<span data-role="controlgroup" data-type="horizontal">
-					 {{ basic.button(id~'.GREEN', gad_boxremote~'.GREEN', ' Green ', icon_path~'circle_green2.png', '', gad_size) }}
+					{{ basic.stateswitch(id~'.GREEN',     gad_boxremote~'.GREEN',     gad_size, '', icon_path~'circle_green2.png', 'Green') }}
 					</span>
 					<span data-role="controlgroup" data-type="horizontal">
-					 {{ basic.button(id~'.YELLOW', gad_boxremote~'.YELLOW', ' Yellow ', icon_path~'circle_yellow.png', '', gad_size) }}
+					{{ basic.stateswitch(id~'.YELLOW',     gad_boxremote~'.YELLOW',     gad_size, '', icon_path~'circle_yellow.png', 'Yellow') }}
 					</span>
 					<span data-role="controlgroup" data-type="horizontal">
-					 {{ basic.button(id~'.BLUE', gad_boxremote~'.BLUE', ' Blue ', icon_path~'circle_blue.png', '', gad_size) }}
+					{{ basic.stateswitch(id~'.BLUE',     gad_boxremote~'.BLUE',     gad_size, '', icon_path~'circle_blue.png', 'Blue') }}
 					</span>
 				</span>
 			  </td>
-		  </tr>											
+		  </tr>
 		</table>
 {% endif %}
 
 	</div>
-	
+
 {% endmacro %}

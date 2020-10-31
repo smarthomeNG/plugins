@@ -1,0 +1,20 @@
+plugin_translations:
+    # Translations for the plugin specially for the web interface
+    'Tagesüberblick':    {'de': '=', 'en': 'Daily Overview', 'fr': ''}
+    'Plugin-API':        {'de': '=', 'en': '=', 'fr': ''}
+    'Rohdaten':          {'de': '=', 'en': 'Raw Data', 'fr': ''}
+    'E-Mail':            {'de': '=', 'en': 'Email', 'fr': ''}
+    'Passwort':          {'de': '=', 'en': 'Password', 'fr': ''}
+    'Daten vom':         {'de': '=', 'en': 'Data from', 'fr': ''}
+    'Kilokalorien':      {'de': '=', 'en': 'Kilocalories', 'fr': ''}
+    'Aktivkilokalorien': {'de': '=', 'en': 'Active Kilocalories', 'fr': ''}
+    'Schritte':          {'de': '=', 'en': 'Steps', 'fr': ''}
+    'Gesamtdistanz':     {'de': '=', 'en': 'Total Distance', 'fr': ''}
+    'Hochaktive Zeit':   {'de': '=', 'en': 'Highly Active Time', 'fr': ''}
+    'Aktivzeit':         {'de': '=', 'en': 'Active Time', 'fr': ''}
+    'Sitzzeit':          {'de': '=', 'en': 'Sedentary Time', 'fr': ''}
+    'Schlafdauer':       {'de': '=', 'en': 'Sleeping Time', 'fr': ''}
+    'Stresslevel':       {'de': 'Durschn. Stresslevel', 'en': 'Avg. Stress Level', 'fr': ''}
+    'Heart Rate Chart':  {'de': '=', 'en': '=', 'fr': ''}
+    'Uhrzeit':           {'de': '=', 'en': 'Time', 'fr': ''}
+    'Puls':              {'de': '=', 'en': 'Heart Rate', 'fr': ''}

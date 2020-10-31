@@ -7,7 +7,7 @@ plugin:
         en: 'Supports DMX interfaces NanoDMX and DMXking (RS-232)'
     maintainer: 'bmx'
     tester: nobody                  # Who tests this plugin?
-    state: develop                  # change to ready when done with development
+    state: ready                    # change to ready when done with development
     keywords: dmx gateway channel dimmer
     documentation: http://smarthomeng.de/user/plugins/dmx/user_doc.html        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py

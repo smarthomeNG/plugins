@@ -21,6 +21,8 @@
 from . import StateEngineAction
 from . import StateEngineTools
 import ast
+import threading
+import queue
 
 
 # Class representing a list of actions
@@ -41,9 +43,12 @@ class SeActions(StateEngineTools.SeItemChild):
         self.__actions = {}
         self.__unassigned_delays = {}
         self.__unassigned_repeats = {}
+        self.__unassigned_instantevals = {}
         self.__unassigned_orders = {}
         self.__unassigned_conditionsets = {}
         self.__unassigned_modes = {}
+        self.__queue = queue.Queue()
+        self._action_lock = threading.Lock()
 
     # Return number of actions in list
     def count(self):
@@ -63,6 +68,14 @@ class SeActions(StateEngineTools.SeItemChild):
                     self.__unassigned_delays[name] = value
                 else:
                     self.__actions[name].update_delay(value)
+                return
+            elif func == "se_instanteval":
+                # set instant calculation
+                if name not in self.__actions:
+                    # If we do not have the action yet (repeat-attribute before action-attribute), ...
+                    self.__unassigned_instantevals[name] = value
+                else:
+                    self.__actions[name].update_instanteval(value)
                 return
             elif func == "se_repeat":
                 # set repeat
@@ -142,6 +155,10 @@ class SeActions(StateEngineTools.SeItemChild):
             action.update_delay(self.__unassigned_delays[name])
             del self.__unassigned_delays[name]
 
+        if name in self.__unassigned_instantevals:
+            action.update_instanteval(self.__unassigned_instantevals[name])
+            del self.__unassigned_instantevals[name]
+
         if name in self.__unassigned_repeats:
             action.update_repeat(self.__unassigned_repeats[name])
             del self.__unassigned_repeats[name]
@@ -169,7 +186,7 @@ class SeActions(StateEngineTools.SeItemChild):
             raise ValueError("Attribute 'se_action_{0}': Value must be a string or a list!".format(name))
 
         # parse parameters
-        parameter = {'function': None, 'force': None, 'repeat': None, 'delay': 0, 'order': None, 'conditionset': None, 'mode': None}
+        parameter = {'function': None, 'force': None, 'repeat': None, 'delay': 0, 'order': None, 'conditionset': None, 'mode': None, 'instanteval': None}
         for entry in value_list:
             if isinstance(entry, dict):
                 entry = list("{!s}:{!s}".format(k, v) for (k, v) in entry.items())[0]
@@ -292,6 +309,8 @@ class SeActions(StateEngineTools.SeItemChild):
 
         # add additional parameters
         if exists:
+            if parameter['instanteval'] is not None:
+                self.__actions[name].update_instanteval(parameter['instanteval'])
             if parameter['repeat'] is not None:
                 self.__actions[name].update_repeat(parameter['repeat'])
             if parameter['delay'] != 0:
@@ -330,7 +349,19 @@ class SeActions(StateEngineTools.SeItemChild):
             for name in additional_actions.__actions:
                 actions.append((additional_actions.__actions[name].get_order(), additional_actions.__actions[name]))
         for order, action in sorted(actions, key=lambda x: x[0]):
+            self.__queue.put([action, is_repeat, allow_item_repeat, state])
+
+        self._action_lock.acquire()
+        while not self.__queue.empty():
+            job = self.__queue.get()
+            if job is None:
+                break
+
+            (action, is_repeat, allow_item_repeat, state) = job
             action.execute(is_repeat, allow_item_repeat, state)
+
+        if self._action_lock.locked():
+            self._action_lock.release()
 
     def get(self):
         actions = []

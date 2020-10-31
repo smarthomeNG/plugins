@@ -1,26 +1,38 @@
-# Alexa4PayloadV3
+# alexa4p3
+
+Alexa4PayloadV3
 
 ## Table of Content
 
 1. [Generell](#generell)
 2. [Change Log](#changelog)
-3. [Icon / Display Categories](#Icons)
-4. [Entwicklung / Einbau von neuen Skills](#Entwicklung)
-5. [Alexa-ThermostatController](#ThermostatController) + [Thermosensor](#Thermostatsensor)
-6. [Alexa-PowerController](#PowerController)
-7. [Alexa-BrightnessController](#BrightnessController)
-8. [Alexa-PowerLevelController](#PowerLevelController)
-9. [Alexa-PercentageController](#PercentageController)
-10. [Alexa-LockController](#LockController) <sup><span style="color:blue"> **Update**</sup></span>
-11. [Alexa-CameraStreamController](#CameraStreamController) <sup><span style="color:blue"> **Update**</sup></span>
-12. [Alexa-SceneController](#SceneController)
-13. [Alexa-ContactSensor](#ContactSensor) <sup><span style="color:red"> **Neu**</sup></span>
-14. [Alexa-ColorController](#ColorController) <sup><span style="color:red"> **Neu**</sup></span>
+3. [Requrirements](#requirements)
+4. [Icon / Display Categories](#Icons)<sup><span style="color:blue"> **Update**</sup></span>
+5. [Entwicklung / Einbau von neuen Skills](#Entwicklung)
+6. [Alexa-ThermostatController](#ThermostatController) + [Thermosensor](#Thermostatsensor)
+7. [Alexa-PowerController](#PowerController)
+8. [Alexa-BrightnessController](#BrightnessController)
+9. [Alexa-PowerLevelController](#PowerLevelController)
+10. [Alexa-PercentageController](#PercentageController)
+11. [Alexa-LockController](#LockController)
+12. [Alexa-CameraStreamController](#CameraStreamController) <sup><span style="color:blue"> **Update**</sup></span>
+13. [Alexa-SceneController](#SceneController)
+14. [Alexa-ContactSensor](#ContactSensor)
+15. [Alexa-ColorController](#ColorController)
+16. [Alexa-RangeController](#RangeController) <sup><span style="color:red"> **Neu**</sup></span>
+17. [Alexa-ColorTemperaturController](#ColorTemperaturController) <sup><span style="color:red"> **Neu**</sup></span>
+18. [Alexa-PlaybackController](#PlaybackController) <sup><span style="color:red"> **Neu**</sup></span>
+19. [Web-Interface](#webinterface) <sup><span style="color:red"> **Neu**</sup></span>
 
 
+## [Beispiel-Konfigurationen](#Beispiel) <sup><span style="color:red"> **Neu**</sup></span>
+
+
+- [der fast perfekte Rolladen](#perfect_blind) <sup><span style="color:red"> **Neu**</sup></span>
+- [Items in Abhängikeit des letzten benutzten Echos-Devices schalten](#get_last_alexa)<sup><span style="color:red"> **Neu**</sup></span>
 # --------------------------------------
 
-##Generell <a name="generell"/></a>
+## Generell <a name="generell"/></a>
 
 Die Daten des Plugin müssen in den Ordner /usr/local/smarthome/plugins/alexa4p3/ (wie gewohnt)
 Die Rechte entsprechend setzen.
@@ -34,8 +46,7 @@ Das Plugin muss in der plugin.yaml eingefügt werden :
 
 <pre><code>
 Alexa4P3:
-    class_name: Alexa4P3
-    class_path: plugins.alexa4p3
+    plugin_name: Alexa4P3
     service_port: 9000
 </code></pre>
 
@@ -43,8 +54,7 @@ Das ursprünglich Plugin kann deaktiviertwerden :
 
 <pre><code>
 #alexa:
-#    class_name: Alexa
-#    class_path: plugins.alexa
+#    plugin_name: alexa4p3
 #    service_port: 9000
 </code></pre>
 
@@ -57,20 +67,48 @@ In den Items sind die "neuen" V3 Actions zu definieren :
 Zum Beispiel :
 
 PayloadV2 : turnon
+
 PayloadV3 : TurnOn
 
 Die Actions unterscheiden sich zwischen Payload V2 und V3 oft nur durch Gross/Klein-Schreibung
-##Change Log <a name="changelog"/></a>
-###17.02.2019
+
+## Change Log <a name="changelog"/></a>
+
+### 11.04.2020
+- Version auf 1.0.2 für shNG Release 1.7 erhöht
+
+### 12.03.2020
+- Ergänzung bei Wertänderung durch das Plugin wid der "Plugin Identifier" "alexa4p3" an die Change Item-Methode übegeben (PR #332)
+
+### 07.12.2019
+- Web-Interface um Protokoll-Log ergänzt 
+- PlaybackController realisiert 
+- bux-fix for alias-Devices, es wurden nicht alle Eigenschaften an das Alias-Device übergeben. Voice-Steuerung funktionierte, Darstellung in der App war nicht korrekt.
+
+### 06.12.2019 - zum Nikolaus :-)
+- RangeController mit global "utterances" für Rolladen realisiert - endlich "Alexa, mach den Rolladen zu/auf - hoch/runter"
+
+### 01.12.2019
+- Web-Interface ergänzt
+- Prüfung auf Verwendung von gemischtem Payload V2/V3 im Web-Interface
+- Bug-Fix bei falsch definierten Devices (alexa_name fehlt) - Issue #300 - diese werden entfernt und ein Log-Eintrag erfolgt
+- Bug-Fix alexa-description (PR #292) - die Beschreibung in der App lautet nun "device.name" + "by smarthomeNG"
+- alexa_description beim Geräte Discovery ergänzt
+
+### 20.04.2019
+- Authentifizierungsdaten (Credentials) für AlexaCamProxy eingebaut
+- Umbennung des Plugin-Pfades auf "alexa4p3" !! Hier die Einträge in der plugin.yaml anpassen.
+
+### 17.02.2019
 - Version erhöht aktuell 1.0.1
 - CameraStreamController Integration für Beta-Tests fertiggestellt
 
-###26.01.2019
+### 26.01.2019
 - ColorController eingebaut
 - Doku für ColorController erstellt
 - Neues Attribut für CameraStreamController (**alexa_csc_proxy_uri**) zum streamen von Kameras in lokalen Netzwerken in Verbindung mit CamProxy4AlexaP3
 
-###19.01.2019
+### 19.01.2019
 - Version auf 1.0.0.2 erhöht
 - ContactSensor Interface eingebaut
 - Doku für ContactSensor Interface ergänzt
@@ -79,7 +117,7 @@ Die Actions unterscheiden sich zwischen Payload V2 und V3 oft nur durch Gross/Kl
 - ReportLockState eingebaut
 - Doku für die Erstellung des Alexa-Skill´s auf Amazon als PDF erstellt
 
-###31.12.2018
+### 31.12.2018
 - Version auf 1.0.0.1 erhöht
 - CameraStreamController eingebaut
 - Dokumentation für CameraStreamController ergänzt
@@ -87,116 +125,177 @@ Die Actions unterscheiden sich zwischen Payload V2 und V3 oft nur durch Gross/Kl
 - Dokumentation für PowerLevelController ergänzt
 - Debugs und Testfunktionen kontrolliert und für Upload entfernt
 
-###24.12.2018
+### 24.12.2018
 - Doku für PercentageController erstellt
 - Bug Fix für fehlerhafte Testfunktionen aus der Lambda
 
-###12.12.2018
+### 12.12.2018
 - Scene Controller eingebaut
 - Doku für Scene Controller erstellt
 - PercentageController eingebaut
 
-##Icons / Catagories<a name="Icons"/></a>
+<a name="requirements"/></a>
+## Requrirements
+
+Das Plugin benötigt Modul Python-Requests. Dies sollte mit dem Core immer auf dem aktuellen Stand mitkommen.
+
+Ansonsten keine Requirements.
+
+## Icons / Catagories<a name="Icons"/></a>
 Optional kann im Item angegeben werden welches Icon in der Alexa-App verwendet werden soll :
 <pre><code>
 alexa_icon = "LIGHT"
 </code></pre>
 <pre>
 <table>
-  <thead>
+<colgroup>
+    <col width="30%">
+    <col width="70%">
+</colgroup>
+<thead>
     <tr>
-      <th>Value</th>
-      <th>Description</th>
-      <th>Notes</th>
+        <th>Value</th>
+        <th>Description</th>
     </tr>
-  </thead>
-  <tbody>
+</thead>
+<tbody>
     <tr>
-      <td>ACTIVITY_TRIGGER</td>
-      <td>Describes a combination of devices set to a specific state, when the state change must occur in a specific order. For example, a "watch Netflix" scene might require the: 1. TV to be powered on &amp; 2. Input set to HDMI1.</td>
-      <td>Applies to Scenes</td>
-    </tr>
-    <tr>
-      <td>CAMERA</td>
-      <td>Indicates media devices with video or photo capabilities.</td>
-      <td>&nbsp;</td>
+        <td>ACTIVITY_TRIGGER</td>
+        <td>A combination of devices set to a specific state.  Use activity triggers for scenes when the state changes must occur in a specific order. For example, for a scene named "watch Netflix" you might power on the TV first, and then set the input to HDMI1.</td>
     </tr>
     <tr>
-      <td>CONTACT_SENSOR</td>
-      <td>Indicates an endpoint that detects and reports changes in contact between two surfaces.</td>
-      <td>&nbsp;</td>
+        <td>CAMERA</td>
+        <td>A media device with video or photo functionality.</td>
     </tr>
     <tr>
-      <td>DOOR</td>
-      <td>Indicates a door.</td>
-      <td>&nbsp;</td>
+        <td>COMPUTER</td>
+        <td>A non-mobile computer, such as a desktop computer.</td>
     </tr>
     <tr>
-      <td>DOORBELL</td>
-      <td>Indicates a doorbell.</td>
-      <td>&nbsp;</td>
+        <td>CONTACT_SENSOR</td>
+        <td>An endpoint that detects and reports changes in contact between two surfaces.</td>
     </tr>
     <tr>
-      <td>LIGHT</td>
-      <td>Indicates light sources or fixtures.</td>
-      <td>&nbsp;</td>
+        <td>DOOR</td>
+        <td>A door.</td>
     </tr>
     <tr>
-      <td>MICROWAVE</td>
-      <td>Indicates a microwave oven endpoint.</td>
-      <td>&nbsp;</td>
+        <td>DOORBELL</td>
+        <td>A doorbell.</td>
     </tr>
     <tr>
-      <td>MOTION_SENSOR</td>
-      <td>Indicates an endpoint that detects and reports movement in an area.</td>
-      <td>&nbsp;</td>
+        <td>EXTERIOR_BLIND</td>
+        <td>A window covering on the outside of a structure.</td>
     </tr>
     <tr>
-      <td>OTHER</td>
-      <td>An endpoint that cannot be described in one of the other categories.</td>
-      <td>&nbsp;</td>
+        <td>FAN</td>
+        <td>A fan.</td>
     </tr>
     <tr>
-      <td>SCENE_TRIGGER</td>
-      <td>Describes a combination of devices set to a specific state, when the order of the state change is not important. For example a bedtime scene might include turning off lights and lowering the thermostat, but the order is unimportant.</td>
-      <td>Applies to Scenes</td>
+        <td>GAME_CONSOLE</td>
+        <td>A game console, such as Microsoft Xbox or Nintendo Switch</td>
     </tr>
     <tr>
-      <td>SMARTLOCK</td>
-      <td>Indicates an endpoint that locks.</td>
-      <td>&nbsp;</td>
+        <td>GARAGE_DOOR</td>
+        <td>A garage door. Garage doors must implement the <a href="../device-apis/alexa-modecontroller.html">ModeController</a> interface to open and close the door.</td>
     </tr>
     <tr>
-      <td>SMARTPLUG</td>
-      <td>Indicates modules that are plugged into an existing electrical outlet.</td>
-      <td>Can control a variety of devices.</td>
+        <td>INTERIOR_BLIND</td>
+        <td>A window covering on the inside of a structure.</td>
     </tr>
     <tr>
-      <td>SPEAKER</td>
-      <td>Indicates the endpoint is a speaker or speaker system.</td>
-      <td>&nbsp;</td>
+        <td>LAPTOP</td>
+        <td>A laptop or other mobile computer.</td>
     </tr>
     <tr>
-      <td>SWITCH</td>
-      <td>Indicates in-wall switches wired to the electrical system.</td>
-      <td>Can control a variety of devices.</td>
+        <td>LIGHT</td>
+        <td>A light source or fixture.</td>
     </tr>
     <tr>
-      <td>TEMPERATURE_SENSOR</td>
-      <td>Indicates endpoints that report the temperature only.</td>
-      <td>The endpoint's temperature data is not shown in the Alexa app.</td>
+        <td>MICROWAVE</td>
+        <td>A microwave oven.</td>
     </tr>
     <tr>
-      <td>THERMOSTAT</td>
-      <td>Indicates endpoints that control temperature, stand-alone air conditioners, or heaters with direct temperature control.</td>
-      <td>&nbsp;</td>
+        <td>MOBILE_PHONE</td>
+        <td>A mobile phone.</td>
     </tr>
     <tr>
-      <td>TV</td>
-      <td>Indicates the endpoint is a television.</td>
-      <td>&nbsp;</td>
+        <td>MOTION_SENSOR</td>
+        <td>An endpoint that detects and reports movement in an area.</td>
     </tr>
-  </tbody>
+    <tr>
+        <td>MUSIC_SYSTEM</td>
+        <td>A network-connected music system.</td>
+    </tr>
+    <tr>
+        <td>NETWORK_HARDWARE</td>
+        <td>A network router.</td>
+    </tr>
+    <tr>
+        <td>OTHER</td>
+        <td>An endpoint that doesn't belong to one of the other categories.</td>
+    </tr>
+    <tr>
+        <td>OVEN</td>
+        <td>An oven cooking appliance.</td>
+    </tr>
+    <tr>
+        <td>PHONE</td>
+        <td>A non-mobile phone, such as landline or an IP phone.</td>
+    </tr>
+    <tr>
+        <td>SCENE_TRIGGER</td>
+        <td>A combination of devices set to a specific state. Use scene triggers for scenes when the order of the state change is not important. For example, for a scene named "bedtime" you might turn off the lights and lower the thermostat, in any order.</td>
+    </tr>
+    <tr>
+        <td>SCREEN</td>
+        <td>A projector screen.</td>
+    </tr>
+    <tr>
+        <td>SECURITY_PANEL</td>
+        <td>A security panel.</td>
+    </tr>
+    <tr>
+        <td>SMARTLOCK</td>
+        <td>An endpoint that locks.</td>
+    </tr>
+    <tr>
+        <td>SMARTPLUG</td>
+        <td>A module that is plugged into an existing electrical outlet, and then has a device plugged into it.  For example, a user can plug a smart plug into an outlet, and then plug a lamp into the smart plug. A smart plug can control a variety of devices.</td>
+    </tr>
+    <tr>
+        <td>SPEAKER</td>
+        <td>A speaker or speaker system.</td>
+    </tr>
+    <tr>
+        <td>STREAMING_DEVICE</td>
+        <td>A streaming device such as Apple TV, Chromecast, or Roku.</td>
+    </tr>
+    <tr>
+        <td>SWITCH</td>
+        <td>A switch wired directly to the electrical system. A switch can control a variety of devices.</td>
+    </tr>
+    <tr>
+        <td>TABLET</td>
+        <td>A tablet computer.</td>
+    </tr>
+    <tr>
+        <td>TEMPERATURE_SENSOR</td>
+        <td>An endpoint that reports temperature, but does not control it. The temperature data of the endpoint is not shown in the Alexa app.</td>
+    </tr>
+    <tr>
+        <td>THERMOSTAT</td>
+        <td>An endpoint that controls temperature, stand-alone air conditioners, or heaters with direct temperature control.</td>
+    </tr>
+    <tr>
+        <td>TV</td>
+        <td>A television.</td>
+    </tr>
+    <tr>
+        <td>WEARABLE</td>
+        <td>A network-connected wearable device, such as an Apple Watch, Fitbit, or Samsung Gear.</td>
+    </tr>
+</tbody>
 </table>
 </pre>
 default = "Switch" (vergleiche : https://developer.amazon.com/docs/device-apis/alexa-discovery.html#display-categories )
@@ -294,7 +393,7 @@ OG:
             enforce_updates: 'true'
 </code></pre>
 
-##Entwicklung / Einbau von neuen Fähigkeiten <a name="Entwicklung"/></a>
+## Entwicklung / Einbau von neuen Fähigkeiten <a name="Entwicklung"/></a>
 Um weitere Actions hinzuzufügen muss die Datei p3_actions.py mit den entsprechenden Actions ergänzt werden.
 (wie ursprünglich als selbstregistrierende Funktion)
 
@@ -350,7 +449,7 @@ alexa_icon = "THERMOSTAT" = Thermostatcontroller
 alexa_icon = "TEMPERATURE_SENSOR" = Temperatursensor
 </code></pre>
 
-###Thermostatsensor<a name="Thermostatsensor"/></a>
+### Thermostatsensor<a name="Thermostatsensor"/></a>
 
 Der Temperartursensor wird beim Item der Ist-Temperatur hinterlegt.
 Der Thermostatconroller wird beim Thermostat-Item hinterlegt. An Amazon werden die Icons als Array übertragen.
@@ -362,7 +461,7 @@ alexa_actions : "ReportTemperature"
 
 Alexa wie ist die Temperatur in der Küche ?
 
-###Verändern der Temperatur (SetTargetTemperature AdjustTargetTemperature)
+### Verändern der Temperatur (SetTargetTemperature AdjustTargetTemperature)
 
 <pre><code>
 alexa_actions = "SetTargetTemperature AdjustTargetTemperature"
@@ -377,7 +476,7 @@ Alexa stelle die Temperatur in der Küche auf zweiundzwanzig Grad
 
 Alexa wie ist die Temperatur in der Küche eingestellt ?
 
-###Thermostatmode<a name="Thermostatmode"/></a>
+### Thermostatmode<a name="Thermostatmode"/></a>
 
 alexa_actions = "SetThermostatMode"
 
@@ -571,7 +670,7 @@ Beispiel :
 </code></pre>
 
 ## Alexa-PowerLevelController<a name="PowerLevelController"/></a>
-## !!!! erst ab Plugin-Version 1.0.0.0.1 oder höher !!!!
+## !!!! erst ab Plugin-Version 1.0.1 oder höher !!!!
 
 Alexa stelle Energie Licht Küche auf achtzig
 Alexa erhöhe Energie Licht Küche um zehn
@@ -647,7 +746,7 @@ Beispiel Konfiguration im yaml-Format:
 </code></pre>
 
 ## Alexa-LockController<a name="LockController"/></a>
-## !!!! erst ab Plugin-Version 1.0.0.0.2 oder höher !!!!
+## !!!! erst ab Plugin-Version 1.0.1 oder höher !!!!
 Die Probleme in der Amazon-Cloud mit dem LockController sind behoben.
 
 Die Funktion ist im Moment so realisiert, das bei "Unlock" ein "ON" (=1) auf
@@ -753,7 +852,7 @@ Beispiel mit einem Aktor-Kanal für öffnen, ein Aktor-Kanal für schliessen mit
 </code></pre>
 
 ## Alexa-CameraStreamContoller<a name="CameraStreamController"/></a>
-## !!!! erst ab Plugin-Version 1.0.0.0.1 oder höher !!!!
+## !!!! erst ab Plugin-Version 1.0.1 oder höher !!!!
 
 Alexa zeige die Haustür Kamera.
 
@@ -763,7 +862,7 @@ d.h. :
 - Kamera auf Port 443 erreichbar
 <span style="color:red">
 ##!! für Kameras im lokalen Netzwerk wird gerade noch ein Camera Proxy entwickelt - dieser gibt dann die Möglichkeit auch private Kameras einzubinden !!
-#Look out for : CamProxy4AlexpaP3
+#Look out for : AlexaCamProxy4P3
 
 </span>
 Aus den bereitgestellten Streams wird
@@ -771,12 +870,16 @@ immer der mit der höchsten Auflösung an Alexa übermittelt.
 
 Folgende Parameter sind anzugeben :
 
-#####alexa_csc_proxy_uri <sup><span style="color:blue"> **Update**</sup></span>: URL über DynDNS vergeben um die Kamera mittels CamProxy4AlexaP3 zu streamen
-#####alexa_camera_imageUri: die URL des Vorschau-Pictures der Kamera
+##### alexa_csc_proxy_uri <sup><span style="color:blue"> **Update**</sup></span>: URL über DynDNS vergeben um die Kamera mittels CamProxy4AlexaP3 zu streamen
 
-#####alexa_stream_1: Definition für den ersten Stream der Kamara, es werden bis zu 3 Streams unterstützt. Hier müssen die Details zum Stream definiert werden (protocol = rtsp, resolutions = Array mit der Auflösung, authorizationTypes = Autorisierung, videoCodecs = Array der VideoCodes, autoCodecs = Array der Audiocodes)
+##### alexa_proxy_credentials <sup><span style="color:blue"> **Update**</sup></span>: Zugangsdaten für den AlexaCamProxy falls dieser mit Authentication "Basic" oder "Digest" parametriert wird. Angabe in der Form "USER":"PWD"
 
-alexa_csc_uri: Auflistung der Stream-URL´s für Stream1: / Stream2: / Stream3
+
+##### alexa_camera_imageUri: die URL des Vorschau-Pictures der Kamera
+
+##### alexa_stream_1: Definition für den ersten Stream der Kamara, es werden bis zu 3 Streams unterstützt. Hier müssen die Details zum Stream definiert werden (protocol = rtsp, resolutions = Array mit der Auflösung, authorizationTypes = Autorisierung, videoCodecs = Array der VideoCodes, autoCodecs = Array der Audiocodes)
+
+##### alexa_csc_uri: Auflistung der Stream-URL´s für Stream1: / Stream2: / Stream3
 siehe Tabelle unten für mögliche Werte
 
 (Beispiel im YAML-Format):
@@ -809,6 +912,7 @@ siehe Tabelle unten für mögliche Werte
             alexa_stream_3: '{.......
             }'
             alexa_csc_proxy_uri: alexatestcam.ddns.de:443
+            alexa_proxy_credentials: user:pwd
 </code></pre>
 
 Als Action ist fix "alexa_actions: InitializeCameraStreams" anzugeben.
@@ -867,7 +971,7 @@ scene:
     alexa_retrievable : false
 </code></pre>
 
-##ContactSensor Interface <a name="ContactSensor"/></a>
+## ContactSensor Interface <a name="ContactSensor"/></a>
 
 Alexa ist das Küchenfenster geschlossen ?
 Alexa ist das Küchenfenster geöffnet ?
@@ -892,7 +996,7 @@ fensterkontakt:
 </code></pre>
 
 
-##ColorController <a name="ColorController"/></a>
+## ColorController <a name="ColorController"/></a>
 
 Alexa, setze Licht Speicher auf rot
 
@@ -943,3 +1047,217 @@ Speicher:
               - G_WERT = list[1]
               - B_WERT = list[2]
 </code></pre>
+
+
+## RangeController <a name="RangeController"/></a>
+
+
+Folgende Paramter sind anzugeben :
+
+<pre><code>
+alexa_actions: SetRangeValue AdjustRangeValue 
+alexa_range_delta: 20
+alexa_item_range: 0-255
+</code></pre>
+
+ergänzt um das entsprechende Categorie-Icon
+
+<pre><code>
+alexa_icon: EXTERIOR_BLIND
+</code></pre>
+
+oder
+
+<pre><code>
+alexa_icon: INTERIOR_BLIND
+</code></pre>
+
+Der RangeController kann mit dem Percentage-Controller kombiniert werden
+
+<pre><code>
+alexa_actions: SetRangeValue AdjustRangeValue SetPercentage 
+alexa_range_delta: 20
+alexa_item_range: 0-255
+</code></pre>
+
+
+## ColorTemperaturController <a name="ColorTemperaturController"/></a>
+
+Es müssen die Parameter für den einstellbaren Weiss-Bereich unter "alexa_item_range" in Kelvin von/bis angegeben werden.
+Da die Geräte der verschiedenen Hersteller unterschiedliche Weißbereiche abdecken ist wird dieser Wert benötigt.
+Falls ein Weißwert angefordert wird den das jeweilige Gerät nicht darstellen kann wird auf den Minimum bzw. den Maximumwert gestellt.
+
+Als Alexa-Actions müssen SetColorTemperature/IncreaseColorTemperature/DecreaseColorTemperature angegeben werden.
+Als Rückgabewert wird das entsprechende Item vom plugin auf den Wert von 0 (warmweiss) bis 255 (kaltweiss) gesetzt.
+
+Hinweis : Alexa unterstützt 1.000 Kelvin - 10.000 Kelvin
+
+<pre><code>
+alexa_item_range: 3000-6500
+alexa_actions: SetColorTemperature IncreaseColorTemperature DecreaseColorTemperature
+</code></pre>
+
+## PlaybackController <a name="PlaybackController"/></a>
+
+Eingebaut um fahrende Rolladen zu stoppen.
+
+#### Alexa, stoppe den Rolladen Büro
+
+Das funktioniert nur, wenn beim Rolladen/Jalousie kein TurnOn/TurnOff definiert sind. Die Rolladen müssen mittels "AdjustPercentage" und "SetPercentage" angesteuert werden. Dann kann mit dem "Stop" Befehl der Rolladen angehalten werden.
+
+Die Action lautet "Stop". Es wird an dieser Stelle der Alexa.PlaybackController zweck entfremded. Dieser Controller hat eine "Stop" Funktion implementiert welche hier genutzt wird.
+Beim ausführen des Befehls wird eine "1" an das Item übergeben. Das Item muss der Stopbefehl für den Rolladen sein. <b>enforce_update</b> muss auf True stehen.
+
+Alle Actions senden jeweils ein "True" bzw. "EIN" bzw. "1"
+
+implementierte Funktionen:
+
+alexa_actions: Stop / Play / Pause / FastForward / Next / Previous / Rewind / StartOver
+
+<a name="webinterface"/></a>
+# Web-Interface
+
+Das Plugin bietet ein Web-Interface an. 
+
+Auf der ersten Seite werden alle Alexa-Geräte, die definierten Actions sowie die jeweiligen Aliase angezeigt. Actions in Payload-Version 3 werden grün angezeigt. Actions in Payload-Version 2 werden in rot angezeigt.
+Eine Zusammenfassung wird oben rechts dargestellt. Durch anklicken eine Zeile kann ein Alexa-Geräte für die Testfunktionen auf Seite 3 des Web-Interfaces auswewählt werden
+![webif_Seite1](./assets/Alexa4P3_Seite1.jpg)
+
+Auf der Zweiten Seite wird ein Kommunikationsprotokoll zur Alexa-Cloud angezeigt.
+![webif_Seite2](./assets/Alexa4P3_Seite2.jpg)
+
+Auf Seite drei können "Directiven" ähnlich wie in der Lambda-Test-Funktion der Amazon-Cloud ausgeführt werden. Der jeweilige Endpunkt ist auf Seite 1 duch anklicken zu wählen. Die Kommunikation wird auf Seite 2 protokolliert.
+So könnne einzelne Geräte und "Actions" getestet werden.
+
+![webif_Seite3](./assets/Alexa4P3_Seite3.jpg)
+
+Auf Seite 4 kann interaktiv ein YAML-Eintrag für einen Alexa-Kamera erzeugt werden. Der fertige YAML-Eintrag wird unten erzeugt und kann via Cut & Paste in die Item-Definition von shNG übernommen werden.
+
+![webif_Seite4](./assets/Alexa4P3_Seite4.jpg)
+
+<a name="Beispiel"/></a>
+# Beispiele
+<a name="perfect_blind"/></a>
+## Der fast perfekte Rolladen
+
+Mit diesen Einstellungen kann ein Rolladen wie folgt gesteuert werden :
+
+Alexa,
+
+mache den Rolladen hoch
+
+mache den Rolladen runter
+
+öffne den Rolladen im Büro
+
+mache den Rolladen im Büro auf
+ 
+schliesse den Rolladen im Büro
+
+mache den Rolladen im Büro zu
+
+fahre Rolladen Büro auf siebzig Prozent
+
+stoppe Rolladen Büro
+
+
+
+Es wird zum einen der RangeController mit erweiterten Ausdrücken verwendet zum anderen wird
+der PlaybackController zweckentfremdet für das Stop-Signal verwendet.
+
+### !! Wichtig !!
+
+<b>
+Die erweiterten Ausdrücke (öffnen/schliessen - hoch/runter) werden durch das Plugin automatisch
+beim RangeController eingebunden wenn als Alexa-Icon "EXTERIOR_BLIND" oder "INTERIOR_BLIND" parametriert werden.
+
+Beim Stop des Rolladen-Items muss "alexa_actions: Stop" angegeben werden
+Um das Item automatisch zurückzusetzen empfiehlt sich der autotimer-Eintrag.
+
+
+Bei der Positionierung des Rolladen muss "alexa_range_delta: xx" angegeben werden.
+"xx" ist hier der Wert der beim Kommando hoch/runter gesendet wird.
+Bei xx=20 und "Rolladen runter" würde der Rolladen 20 Prozent nach unten fahren.
+Bei xx=20 und "Rolladen hoch" würde der Rolladen 20 Prozent nach oben fahren.
+Wenn der Rolladen bei "hoch/runter" komplett fahren soll kann hier auch 100 angegeben werden.
+
+Für die Positionierung ist "alexa_item_range: 0-255" anzugeben.
+</b>
+<pre><code>
+        Rolladen:
+            alexa_name: Rollladen Büro
+            alexa_device: rolladen_buero
+            alexa_description: Rollladen Büro
+            alexa_icon: EXTERIOR_BLIND
+            alexa_proactivelyReported: 'False'
+            alexa_retrievable: 'True'
+
+            move:
+                type: num
+                visu_acl: rw
+                knx_dpt: 1
+                knx_send: 3/2/23
+                enforce_updates: 'true'
+
+            stop:
+                type: num
+                visu_acl: rw
+                enforce_updates: 'true'
+                knx_dpt: 1
+                knx_send: 3/1/23
+                alexa_device: rolladen_buero
+                alexa_actions: Stop 
+                alexa_retrievable: 'False'
+                alexa_proactivelyReported: 'False'
+                autotimer: 1 = 0
+
+            pos:
+                type: num
+                visu_acl: rw
+                knx_dpt: 5
+                knx_listen: 3/3/23
+                knx_send: 3/4/23
+                knx_init: 3/3/23
+                enforce_updates: 'true'
+                alexa_actions: SetRangeValue AdjustRangeValue 
+                alexa_retrievable: 'True'
+                alexa_range_delta: 20
+                alexa_item_range: 0-255
+</code></pre>
+
+<a name="get_last_alexa"/></a>
+## Items in Abhängikeit des letzten benutzten Echos-Devices schalten
+
+Wenn das AlexaRc4shNG-Plugin aktiviert ist kann über eine Logik das letzte Echo-Gerät welches einen Sprachbefehl bekommen hat ermittelt werden und abhängig davon können Items geschalten werden. So kann z.b. eine raumabhängige Steuerung für das Licht und Rolladen erstellt werden.
+
+Es wird ein Item für Licht pauschal erstellt :
+```
+        Licht_pauschal:
+            alexa_name: Licht
+            alexa_device: Licht_pauschal
+            alexa_description: Licht Pauschal
+            alexa_icon: OTHER
+            alexa_actions: TurnOn TurnOff
+            alexa_proactivelyReported: 'False'
+            type: num
+            visu_acl: rw
+            enforce_updates: 'true'
+```
+
+eine entsprechende Logik welche durch das item "Licht_pauschal" getriggert wird schaltet dann die entsprechenden Items.
+```
+#!/usr/bin/env python3
+#last_alexa.py
+
+myAlexa = sh.alexarc4shng.get_last_alexa()
+if myAlexa != None:
+    triggeredItem=trigger['source']
+    triggerValue = trigger['value']
+    if triggeredItem == "test.testzimmer.Licht_pauschal":
+        if myAlexa == "ShowKueche":
+            sh.EG.Kueche.Spots_Sued(triggerValue)
+        if myAlexa == "Wohnzimmer":
+            sh.OG.Wohnzimmer.Spots_Nord(triggerValue)
+            sh.OG.Wohnzimmer.Spots_Sued(triggerValue)
+
+```

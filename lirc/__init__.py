@@ -3,7 +3,7 @@
 #########################################################################
 #  Copyright 2017 Nino Coric                       mail2n.coric@gmail.com
 #########################################################################
-#  This file is part of SmartHomeNG.   
+#  This file is part of SmartHomeNG.
 #
 #  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -22,68 +22,120 @@
 
 import threading
 import logging
-import lib.connection
+import time
+from lib.network import Tcp_client
 
 from lib.model.smartplugin import SmartPlugin
+from bin.smarthome import VERSION
 
 REMOTE_ATTRS = ['lirc_remote', 'lirc_key']
-class LIRC(lib.connection.Client,SmartPlugin):
+class LIRC(SmartPlugin):
 
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = "1.4.1"
+    PLUGIN_VERSION = "1.5.0"
 
-    def __init__(self, sh, lirc_host, lirc_port=8765):
-        self.instance = self.get_instance_name()
-        self.logger = logging.getLogger(__name__)
-        self.lircHost = lirc_host
-        self.lircPort = lirc_port
-        lib.connection.Client.__init__(self, self.lircHost, self.lircPort, monitor=True)
-        self._sh = sh
+    def __init__(self, smarthome):
+        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
+            self.logger = logging.getLogger(__name__)
+        self._host = self.get_parameter_value('host')
+        if self._host is None:
+            self._host = self.get_parameter_value('lirc_host')
+        self._port = self.get_parameter_value('port')
+        self._autoreconnect = self.get_parameter_value('autoreconnect')
+        self._connect_retries = self.get_parameter_value('connect_retries')
+        self._connect_cycle = self.get_parameter_value('connect_cycle')
+        name = 'plugins.' + self.get_fullname()
+        self._lirc_tcp_connection = Tcp_client(host=self._host,
+                                               port=self._port,
+                                               name=name,
+                                               autoreconnect=self._autoreconnect,
+                                               connect_retries=self._connect_retries,
+                                               connect_cycle=self._connect_cycle,
+                                               binary=True,
+                                               terminator=b'\n')
+        self._lirc_tcp_connection.set_callbacks(connected=self._on_connect,
+                                                data_received=self._on_received_data,
+                                                disconnected=self._on_disconnect)
         self._cmd_lock = threading.Lock()
         self._reply_lock = threading.Condition()
-        self.terminator = b'\n'
 
-        self.lircd_version = ''
+        self._lircd_version = ''
         self._responseStr = None
         self._parseLine = 0
         self._error = False
-
-    def loggercmd (self, logstr, level):
-        if not logstr:
-            return
-        logstr = 'lirc_' + self.instance + ': ' + logstr
-        if level == 'i' or level == 'info':
-            self.logger.info(logstr)
-        elif level == 'w' or level == 'warning':
-            self.logger.warning(logstr)
-        elif level == 'd' or level == 'debug':
-            self.logger.debug(logstr)
-        else:
-            self.logger.error(logstr)
+        self._lirc_server_alive = False
 
     def run(self):
         self.alive = True
+        self.logger.debug("run method called")
+        self._connect('run')
 
     def stop(self):
+        self.logger.debug("stop method called")
         self.alive = False
         self._reply_lock.acquire()
         self._reply_lock.notify()
         self._reply_lock.release()
-        self.close()
+        if self._cmd_lock.locked():
+            self._cmd_lock.release()
+        self._lirc_server_alive = False
+        self.logger.debug("Threads released")
+        self._lirc_tcp_connection.close()
+        self.logger.debug("Connection closed")
 
     def parse_item(self, item):
         if self.has_iattr(item.conf, REMOTE_ATTRS[0]) and \
            self.has_iattr(item.conf, REMOTE_ATTRS[1]):
-                self.loggercmd("{}: callback assigned".format(item),'d')
+                self.logger.debug("{}: callback assigned".format(item))
                 return self.update_item
         return None
 
-    def handle_connect(self):
-        self.found_terminator = self.parse_response
+    def _connect(self, by):
+        '''
+        Method to try to establish a new connection to lirc
+
+        :note: While this method is called during the start-up phase of the plugin, it can also be used to establish a connection to the lirc server if the plugin was initialized before the server went up or the connection is interrupted.
+
+        :param by: caller information
+        :type by: str
+        '''
+        self.logger.debug('Initializing connection to {}:{}, initiated by {}'.format(self._host, self._port, by))
+        if not self._lirc_tcp_connection.connected():
+            self._lirc_tcp_connection.connect()
+            # we allow for 2 seconds to connect
+            time.sleep(2)
+        if not self._lirc_tcp_connection.connected():
+            # no connection could be established, lirc may be offline
+            self.logger.info('Could not establish a connection to lirc at {}'.format(self._host))
+            self._lirc_server_alive = False
+        else:
+            self._lirc_server_alive = True
+
+    def _on_connect(self, by=None):
+        '''
+        Recall method for succesful connect to lirc
+        On a connect first check if the JSON-RPC API is available.
+        If this is the case query lirc to initialize all items
+
+        :param by: caller information
+        :type by: str
+        '''
+        self._lirc_server_alive = True
+        if isinstance(by, (dict, Tcp_client)):
+            by = 'TCP_Connect'
+        self.logger.info('Connected to {}, onconnect called by {}.'.format(self._host, by))
         self.request_version()
 
-    def parse_response(self, data):
-        data = data.decode()
+    def _on_disconnect(self, obj=None):
+        '''
+        Recall method for TCP disconnect
+        '''
+        self.logger.info('Received disconnect from {}'.format(self._host))
+        self._lirc_server_alive = False
+
+    def _on_received_data(self, connection, response):
+        data = response.decode()
+        #self.logger.debug("Got: {0}".format(data))
         if data.startswith('BEGIN'):
             return None
         elif data.startswith('END'):
@@ -114,44 +166,49 @@ class LIRC(lib.connection.Client,SmartPlugin):
             return None
         item(0)
         if val < 0:
-            self.loggercmd("ignoring invalid value {}".format(val),'w')
+            self.logger.warning("ignoring invalid value {}".format(val))
         else:
             remote = self.get_iattr_value(item.conf,REMOTE_ATTRS[0])
             key = self.get_iattr_value(item.conf,REMOTE_ATTRS[1])
-            self.loggercmd("update_item, val: {}".format(val),'d')
-            self.loggercmd("remote: {}".format(remote),'d')
-            self.loggercmd("key: {}".format(key),'d')
+            self.logger.debug("update_item {}, val: {}, remote: {}, key: {}".format(item, val, remote, key))
             command = "SEND_ONCE {} {} {}".format(remote,key,val)
-            self.loggercmd("command: {}".format(command),'d')
+            self.logger.debug("command: {}".format(command))
             self._send(command)
 
     def request_version(self):
-        self.lircd_version = self._send("VERSION")
-        if self.lircd_version:
-            self.loggercmd("connected to lircd {} on {}:{}".format( \
-            self.lircd_version.replace("VERSION\n","").replace("\n",""), \
-            self.lircHost,self.lircPort),'i')
+        self._lircd_version = self._send("VERSION", True)
+        if self._lircd_version:
+            self.logger.info("connected to lircd {} on {}:{}".format( \
+            self._lircd_version.replace("VERSION\n","").replace("\n",""), \
+            self._host,self._port))
             return True
         else:
-            self.loggercmd("lircd Version not detectable",'e')
+            self.logger.error("lircd Version not detectable")
             return False
 
     def _send(self, command, reply=True):
-        if not self.connected:
-            return
+        i = 0
+        while not self._lirc_server_alive:
+            self.logger.debug("Waiting to send command {} as connection is not yet established. Count: {}/10".format(command, i))
+            i += 1
+            time.sleep(1)
+            if i >= 10:
+                self.logger.warning("10 seconds wait time for sending {} is over. Sending it now.".format(command))
+                break
         self._responseStr = None
         self._cmd_lock.acquire()
-        self.loggercmd("send command: {}".format(command),'d')
+        self.logger.debug("send command: {}".format(command))
         self._reply_lock.acquire()
-        self.send((command + '\n').encode())
+        self._lirc_tcp_connection.send(bytes(command + '\n', 'utf-8'))
         if reply:
             self._reply_lock.wait(1)
         self._reply_lock.release()
         self._cmd_lock.release()
         if self._error:
-            self.loggercmd("error from lircd: {}".format(self._responseStr),'e')
+            self.logger.error("error from lircd: {}".format(self._responseStr.replace("\n"," ")))
             self._error = False
-        self.loggercmd("response: {}".format(self._responseStr),'d')
+        elif isinstance(self._responseStr, str):
+            self.logger.debug("response: {}".format(self._responseStr.replace("\n"," ")))
         return self._responseStr
 
 if __name__ == '__main__':

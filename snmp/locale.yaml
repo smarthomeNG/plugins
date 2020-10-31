@@ -1,0 +1,18 @@
+# translations for the web interface
+plugin_translations:
+    # Translations for the plugin specially for the web interface
+    'Host': { 'de': '=', 'en': 'host' }
+    'Port': { 'de': '=', 'en': 'port' }
+    'Cycle': { 'de': '=', 'en': 'cylce' }
+    'Ja': { 'de': '=', 'en': 'yes' }
+    'Nein': { 'de': '=', 'en': 'no' }
+    'OID': { 'de': '=', 'en': 'OID' }
+    'Item': { 'de': '=', 'en': 'item' }
+    'Wert': { 'de': '=', 'en': 'value' }
+    'Letzte Änderung': { 'de': '=', 'en': 'Last change' }
+
+    # Alternative format for translations of longer texts:
+    'Hier kommt der Inhalt des Webinterfaces hin.':
+        de: '='
+        en: 'Here goes the content of the web interface.'
+

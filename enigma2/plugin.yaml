@@ -12,9 +12,9 @@ plugin:
 #    documentation: http://smarthomeng.de/user/plugins/enigma2/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/943871-enigma2-plugin
 
-    version: 1.4.11                # Plugin version
-    sh_minversion: 1.3c            # minimum shNG version to use this plugin
-#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    version: 1.4.12                # Plugin version
+    sh_minversion: 1.6             # minimum shNG version to use this plugin
+#    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
     restartable: unknown
     classname: Enigma2             # class containing the plugin
@@ -77,6 +77,12 @@ item_attributes:
         description:
             de: 'Datentyp für Plugin-Items. Siehe README.'
             en: 'Data type for plugin items. See README.'
+
+    enigma2_remote_command_id:
+        type: num
+        description:
+            de: 'Notwendig für bestimmte Plugin-Items. Siehe README.'
+            en: 'Required for specific plugin items. See README.'
 
     enigma2_page:
         type: str

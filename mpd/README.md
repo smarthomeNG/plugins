@@ -27,9 +27,6 @@ mpd_kitchen:
 #    cycle: 2
 ```
 
-#### instance
-This attribute is mandatory. You have to provide an unique identifier for every instance.
-
 #### host
 This attribute is mandatory. You have to provide the IP adress or the hostname of the MPD.
 
@@ -39,10 +36,12 @@ You can specify a port to connect to. If not defined port 6600 will be used.
 #### cycle
 You can specify the update interval. If not defined cycle will be set to 2.
 
+#### instance
+This attribute is mandatory. You have to provide an unique identifier for every instance.
 
-###Command groups and commands
+### Command groups and commands
 ```
-There are 7 groups of commands tat can be used. Here's an overview of the available groups and their commands and datatypes
+There are 7 groups of commands that can be used. Here's an overview of the available groups and their commands and datatypes
 
 mpd_status
     Implements commands that are used to query MPD's status.
@@ -344,77 +343,77 @@ EG:
                 mpd_command@bathroom: next
                 enforce_updates: true
 
-            pause :
+            pause:
                 type: bool
                 mpd_command@bathroom: pause
                 enforce_updates: true
 
-            play :
+            play:
                 type: num
                 mpd_command@bathroom: play
                 enforce_updates: true
 
-            playid :
+            playid:
                 type: num
                 mpd_command@bathroom: playid
                 enforce_updates: true
 
-            previous :
+            previous:
                 type: bool
                 mpd_command@bathroom: previous
                 enforce_updates: true
 
-            seek :
+            seek:
                 type: str
                 mpd_command@bathroom: seek
                 enforce_updates: true
 
-            seekid :
+            seekid:
                 type: str
                 mpd_command@bathroom: seekid
                 enforce_updates: true
 
-            seekcur :
+            seekcur:
                 type: str
                 mpd_command@bathroom: seekcur
                 enforce_updates: true
 
-            stop :
+            stop:
                 type: bool
                 mpd_command@bathroom: stop
                 enforce_updates: true
 
-            rawcommand :
+            rawcommand:
                 type: str
                 mpd_rawcommand@bathroom: rawcommand
                 enforce_updates: true
 
-            radio1 :
+            radio1:
                 type: bool
                 mpd_url@bathroom: "http://streamurlofradio1.de/"
                 enforce_updates: true
 
-            radio2 :
+            radio2:
                 type: bool
                 mpd_url@bathroom: "http://streamurlofradio2.de/"
                 enforce_updates: true
 
-            plradio1 :
+            plradio1:
                 type: bool
                 mpd_localplaylist@bathroom: plradio1
                 enforce_updates: true
 
-            plradio2 :
+            plradio2:
                 type: bool
                 mpd_localplaylist@bathroom: plradio2
                 enforce_updates: true
 
-            playlist1 :
+            playlist1:
                 type: bool
                 mpd_localplaylist@bathroom: playlist1
                 enforce_updates: true
 
-            playlist2 :
+            playlist2:
                 type: bool
                 mpd_localplaylist@bathroom: playlist2
                 enforce_updates: true
@@ -495,12 +494,12 @@ EG:
                 mpd_command@kitchen: next
                 enforce_updates: true
 
-            previous :
+            previous:
                 type: bool
                 mpd_command@kitchen: previous
                 enforce_updates: true
 
-            stop :
+            stop:
                 type: bool
                 mpd_command@kitchen: stop
                 enforce_updates: true

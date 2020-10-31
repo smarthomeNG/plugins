@@ -6,13 +6,15 @@ plugin:
         en: '1-Wire support via owserver'
         fr: 'Support de 1-Wire à travers owserver'
     maintainer: bmxp
-    tester: '?'
-    state: develop
+    tester: 'henfri, chester4444'
+    state: ready
     keywords: 1wire onewire dallas ibutton sensor temperature humidity
-    version: 1.6.0                 # Plugin version
+    #documentation: http://smarthomeng.de/user/plugins/onewire/user_doc.html
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1493319-support-thread-zum-onewire-plugin
+    version: 1.6.7                 # Plugin version
     sh_minversion: 1.4             # minimum shNG version to use this plugin
-    multi_instance: False
-    restartable: unknown
+    multi_instance: True
+    restartable: True
     classname: OneWire             # class containing the plugin
 
 parameters:
@@ -40,13 +42,27 @@ parameters:
             en: 'Time period in seconds between two sensor cycles. If you decrease the cycle to much you could destabilise the bus, because of the increased power consumption.'
             fr: "Période en secondes entre deux cycles de capteur. Si vous diminuez trop le cycle, vous risquez de déstabiliser le bus, en raison de l'augmentation de la consommation d'énergie."
 
+    log_counter_cycle_time:
+        type: int
+        default: 5
+        description:
+            de: 'Anzahl der Messungen der tatsächlichen Abfragezeit für Sensor-Abfragezyklen. Der Zähler wird heruntergezählt und wenn er auf 0 steht wird nicht mehr geloggt. Wird er auf -1 gesetzt, wird dauerhaft geloggt.'
+            en: 'Count of measurements of actual sensor cycles time. The counter is decremented until it reaches 0, then logging will be turned off. If set to -1, logging cycle time is always on'
+
     cycle_discovery:
         type: int
         default: 600
         description:
             de: 'Zeitraum in Sekunden zwischen zwei Auflistungen aller Sensoren. Wenn dieser Wert zu stark gesenkt wird, kann das den Bus durch erhöhten Stromverbrauch destabilisieren.'
             en: 'Time period in seconds between two discovery cycles. If you decrease the cycle to much you could destabilise the bus, because of the increased power consumption.'
-            en: "Période en secondes entre deux cycles de découverte. Si vous diminuez trop le cycle, vous risquez de déstabiliser le bus, en raison de l'augmentation de la consommation d'énergie."
+            fr: "Période en secondes entre deux cycles de découverte. Si vous diminuez trop le cycle, vous risquez de déstabiliser le bus, en raison de l'augmentation de la consommation d'énergie."
+
+    log_counter_cycle_discovery_time:
+        type: int
+        default: 5
+        description:
+            de: 'Anzahl der Messungen der tatsächlichen Abfragezeit für Sensorauflistung. Der Zähler wird heruntergezählt und wenn er auf 0 steht wird nicht mehr geloggt. Wird er auf -1 gesetzt, wird dauerhaft geloggt.'
+            en: 'Count of measurements of actual discovery cycles time. The counter is decremented until it reaches 0, then logging will be turned off. If set to -1, logging cycle time is always on'
 
     io_wait:
         type: num
@@ -54,7 +70,14 @@ parameters:
         description:
             de: 'Zeitraum zwischen zwei Anfragen an den 1-wire I/O Chip.'
             en: 'Time period between two requests of 1-wire I/O chip.'
-            en: 'Délai entre deux demandes de puce 1-wire I/O.'
+            fr: 'Délai entre deux demandes de puce 1-wire I/O.'
+
+    log_counter_io_loop_time:
+        type: num
+        default: 10
+        description:
+            de: 'Anzahl der Messungen der tatsächlichen Abfragezeit für IO. Der Zähler wird heruntergezählt und wenn er auf 0 steht wird nicht mehr geloggt. Wird er auf -1 gesetzt, wird dauerhaft geloggt.'
+            en: 'Count of measurements of actual IO loop time. The counter is decremented until it reaches 0, then logging will be turned off. If set to -1, logging cycle time is always on'
 
     button_wait:
         type: num
@@ -62,7 +85,7 @@ parameters:
         description:
             de: 'Zeitraum zwischen zwei Anfragen an einen iButton Busmaster'
             en: 'Time period between two requests of ibutton busmaster.'
-            en: 'Délai entre deux demandes de ibutton busmaster.'
+            fr: 'Délai entre deux demandes de ibutton busmaster.'
 
 item_attributes:
     ow_addr:
@@ -118,5 +141,6 @@ plugin_functions:
             item:
                 type: str
                 description:
-                de: 'Item des Busmasters an dem der iButton genutzt wurde'
-                en: 'item of the busmaster at which the ibutton was used'
+                    de: 'Item des Busmasters an dem der iButton genutzt wurde'
+                    en: 'item of the busmaster at which the ibutton was used'
+

@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
-# Copyright 2013 KNX-User-Forum e.V.            http://knx-user-forum.de/
+#  Copyright 2013 KNX-User-Forum e.V.            http://knx-user-forum.de/
+#  Copyright 2016 - 2018 Bernd Meiners              Bernd.Meiners@mail.de
 #########################################################################
-#  This file is part of SmartHomeNG.    https://github.com/smarthomeNG//
+#  This file is part of SmartHomeNG.
+#  https://www.smarthomeNG.de
+#  https://knx-user-forum.de/forum/supportforen/smarthome-py
 #
 #  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -17,7 +20,9 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with SmartHomeNG. If not, see <http://www.gnu.org/licenses/>.
+#
 #########################################################################
+
 
 import ctypes
 import os
@@ -25,22 +30,30 @@ import string
 import time
 import logging
 import threading
-from lib.model.smartplugin import SmartPlugin
+
+from lib.module import Modules
+from lib.model.smartplugin import *
+from lib.item import Items
 
 class LOGO(SmartPlugin):
 
-    ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = "1.2.1"
-    def __init__(self, smarthome, io_wait=5, host='192.168.0.76', port=102, version='0BA7'):
-        self.logger = logging.getLogger(__name__)
-        self.host = str(host).encode('ascii')
-        self.port = int(port)
-        self._version = version
-        self._io_wait = float(io_wait)
+    PLUGIN_VERSION = "1.2.4"
+
+    def __init__(self, sh):
+        # Call init code of parent class (SmartPlugin)
+        super().__init__()
+
+        from bin.smarthome import VERSION
+        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
+            self.logger = logging.getLogger(__name__)
+
+        self.host = self.get_parameter_value('host')
+        self.port = self.get_parameter_value('port')
+        self._version = self.get_parameter_value('version')
+        self._io_wait = self.get_parameter_value('io_wait')
         self._sock = False
         self._lock = threading.Lock()
         self.connected = False
-        self._sh = smarthome
         self._connection_attempts = 0
         self._connection_errorlog = 2
 
@@ -58,7 +71,7 @@ class LOGO(SmartPlugin):
         'VM': {'VMaddr': 0, 'bytes': 850}}
         self.logger.info('LOGO: init {0}:{1} '.format(self.get_instance_name(), self.host))
 
-    # Hardware Version 0BA8
+        # Hardware Version 0BA8
         self._vmIO_0BA8 = 1024  # lesen der I Q M AI AQ AM ab VM-Adresse VM1024
         self._vmIO_len_0BA8 = 445  # Anzahl der zu lesenden Bytes 445
         self.table_VM_IO_0BA8 = {  # Address-Tab der I,Q,M,AI,AQ,AM im PLC-VM-Buffer
@@ -79,16 +92,16 @@ class LOGO(SmartPlugin):
             self.tableVM_IO = self.table_VM_IO_0BA8
             self._vmIO = self._vmIO_0BA8
             self._vmIO_len = self._vmIO_len_0BA8
-    # End Hardware Version 0BA8
+        # End Hardware Version 0BA8
 
         self.reads = {}
         self.writes = {}
         self.Dateipfad = '/lib'  # Dateipfad zur Bibliothek
         self.threadLastRead = 0  # verstrichene Zeit zwischen zwei LeseBefehlen
 
-        smarthome.connections.monitor(self)  # damit connect ausgeführt wird
+        self.get_sh().connections.monitor(self)  # damit connect ausgeführt wird
 
-    # libnodave Parameter zum lesen aus LOGO
+        # libnodave Parameter zum lesen aus LOGO
         self.ph = 0         # Porthandle
         self.di = 0         # Dave Interface Handle
         self.dc = 0

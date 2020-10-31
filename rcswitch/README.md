@@ -173,7 +173,7 @@ rc:
 #### Attributes
 * `rcswitch_dir`: has to point to the directory where the rcswitch-pi send command can be found.
 * `rcswitch_sendDuration`: intended for trouble shooting. Increase this parameter in case switching several power plugs at the same time does not work reliable. Background: In case several power plugs (with different codes / device numbers) shall be switched at the same time, there must be a short gap between sending the serval commands. Otherwise, the several send commands are executed in parallel, gernerating jam on the rc signal.
-* `rcswitch_host`: in case rcswitch is running on a remote machine, the IPv4 address has to be specified. Note: a SSH server has to be installed on the remote machine.
+* `rcswitch_host`: in case rcswitch is running on a remote machine, the IPv4 address or the HOSTNAME has to be specified. Note: a SSH server has to be installed on the remote machine.
 * `rcswitch_user`: user on the remote machine
 * `rcswitch_password`: password for the user on the remote machine
 
@@ -248,6 +248,9 @@ sudo reboot
 
 ### v0.3
 * add import os at the init
+
+### v1.2.0.4
+* add hostname support
 ----------------------------
 ## Further information
 For discussion see https://knx-user-forum.de/forum/supportforen/smarthome-py/39094-logic-und-howto-für-433mhz-steckdosen

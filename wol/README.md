@@ -10,8 +10,7 @@ none
 
 ```yaml
 wakeonlan:
-    class_name: WakeOnLan
-    class_path: plugins.wol
+    plugin_name: wol
 ```
 
 ### items.yaml

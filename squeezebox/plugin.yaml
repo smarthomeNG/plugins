@@ -31,9 +31,9 @@ plugin:
     state: ready
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/28692-√-neues-plugin-logitech-squeezebox-anregungen
 
-    version: 1.3.2                 # Plugin version
+    version: 1.4.0                 # Plugin version
     sh_minversion: 1.3             # minimum shNG version to use this plugin
-#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+#    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
     classname: Squeezebox          # class containing the plugin
 
@@ -59,6 +59,29 @@ parameters:
         description:
             de: 'IP des Logitech Media Servers'
             en: 'IP of the Logitech Media Server'
+
+    autoreconnect:
+        type: bool
+        default: False
+        description:
+            de: 'Erneuter Verbindungsaufbau, falls Verbindung unterbrochen'
+            en: 'Reconnect if connection is broken'
+
+    connect_retries:
+        type: int
+        default: 2
+        valid_min: 0
+        description:
+            de: 'Anzahl Versuche, die Verbindung erneut aufzubauen'
+            en: 'Number of retries to reconnect'
+
+    connect_cycle:
+        type: int
+        default: 10
+        valid_min: 0
+        description:
+            de: 'Pause zwischen automatischen Verbindungsversuchen.'
+            en: 'Pause between automatic connection retries'
 
 item_attributes:
     # Definition of item attributes defined by this plugin
@@ -226,25 +249,39 @@ item_structs:
             visu_acl: rw
             squeezebox_send: rescan {}
             squeezebox_recv: rescan
+            on_update: .progress.scantpye = value
 
             query:
                 type: bool
                 visu_acl: rw
                 enforce_updates: True
                 squeezebox_send: rescan ?
-                squeezebox_init: rescan ?
+                crontab: init = True
+                autotimer: 1s = False
 
             progress:
                 type: str
                 visu_acl: ro
                 squeezebox_send: rescanprogress
                 squeezebox_recv: scanner notify
+                on_update:
+                    - .time = 0 if len(value.split(":")) == 1 else value.split(":")[1].split("||")[0]
+                    - .scantype = value if len(value.split(":")) == 1 else value.split(":")[1].split("||")[1] if len(value.split(":")[1].split("||")) > 1 else ""
+                    - .directory = "" if len(value.split(":")) == 1 else value.split(":")[1].split("||")[2].split("|")[0] if (len(value.split(":")[1].split("||")) > 1 and len(value.split(":")[1].split("||")[2].split("|")) > 1) else ""
+                    - .action = "" if len(value.split(":")) == 1 else value.split(":")[1].split("||")[2].split("|")[1] if (len(value.split(":")[1].split("||")) > 1 and len(value.split(":")[1].split("||")[2].split("|")) > 1) else value.split(":")[1].split("||")[2] if len(value.split(":")[1].split("||")) > 1 else ""
 
-                query:
-                    type: bool
-                    visu_acl: rw
-                    enforce_updates: True
-                    squeezebox_send: rescanprogress
+                time:
+                    type: num
+                    visu_acl: ro
+                scantype:
+                    type: str
+                    visu_acl: ro
+                directory:
+                    type: str
+                    visu_acl: ro
+                action:
+                    type: str
+                    visu_acl: ro
 
     server:
         name: Vorlage-Struktur für Squeezebox Server
@@ -266,7 +303,7 @@ item_structs:
                 visu_acl: rw
                 enforce_updates: True
                 squeezebox_send: player count ?
-                squeezebox_init: player count ?
+                crontab: init = True
 
         favoritescount:
             type: num
@@ -282,7 +319,7 @@ item_structs:
                 visu_acl: rw
                 enforce_updates: True
                 squeezebox_send: favorites items
-                squeezebox_init: favorites items
+                crontab: init = True
 
     player:
         name: Vorlage-Struktur für Squeezebox Player
@@ -312,7 +349,7 @@ item_structs:
                 visu_acl: rw
                 enforce_updates: True
                 squeezebox_send: <playerid> syncgroups ?
-                squeezebox_init: <playerid> syncgroups ?
+                crontab: init = True
 
         signalstrength:
             type: num
@@ -325,7 +362,7 @@ item_structs:
                 visu_acl: rw
                 enforce_updates: True
                 squeezebox_send: <playerid> signalstrength ?
-                squeezebox_init: <playerid> signalstrength ?
+                crontab: init = True
 
         player_name:
             type: str
@@ -361,7 +398,7 @@ item_structs:
                 visu_acl: rw
                 enforce_updates: True
                 squeezebox_send: <playerid> sync ?
-                squeezebox_init: <playerid> sync ?
+                crontab: init = True
 
         unsync:
             type: bool
@@ -377,7 +414,7 @@ item_structs:
             squeezebox_init: <playerid> power ?
 
         button:
-            type: bool
+            type: str
             visu_acl: rw
             squeezebox_send: <playerid> button {}
             squeezebox_recv: <playerid> button
@@ -476,7 +513,7 @@ item_structs:
                 visu_acl: rw
                 enforce_updates: True
                 squeezebox_send: <playerid> mode ?
-                squeezebox_init: <playerid> mode ?
+                crontab: init = True
 
         mute:
             type: bool
@@ -503,23 +540,31 @@ item_structs:
                 type: num
                 enforce_updates: True
                 visu_acl: rw
+                cache: True
                 squeezebox_send: <playerid> mixer volume +{}
 
             down:
                 type: num
                 enforce_updates: True
                 visu_acl: rw
+                cache: True
                 squeezebox_send: <playerid> mixer volume -{}
 
             low:
                 type: num
-                value: 60
+                visu_acl: rw
+                enforce_updates: True
+                initial_value: 60
+                cache: True
                 remark: Sets the volume to a given (low) value
                 squeezebox_send: <playerid> mixer volume {}
 
             high:
                 type: num
-                value: 80
+                visu_acl: rw
+                enforce_updates: True
+                initial_value: 80
+                cache: True
                 remark: Sets the volume to a given (high) value
                 squeezebox_send: <playerid> mixer volume {}
 
@@ -626,7 +671,7 @@ item_structs:
                 type: bool
                 visu_acl: rw
                 squeezebox_send: <playerid> time ?
-                squeezebox_init: <playerid> time ?
+                crontab: init = True
                 cycle: 100
                 enforce_updates: True
                 remark: Queries current song time every 10 seconds and updates time item
@@ -674,7 +719,7 @@ item_structs:
                 visu_acl: rw
                 enforce_updates: True
                 squeezebox_send: <playerid> playlist index ?
-                squeezebox_init: <playerid> playlist index ?
+                crontab: init = True
 
         playlist_name:
             type: str
@@ -688,7 +733,7 @@ item_structs:
                 visu_acl: rw
                 enforce_updates: True
                 squeezebox_send: <playerid> playlist name ?
-                squeezebox_init: <playerid> playlist name ?
+                crontab: init = True
 
         save:
             type: str

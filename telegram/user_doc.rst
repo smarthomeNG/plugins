@@ -142,7 +142,7 @@ Beispiel
    TestBool:
        type: bool
        cache: True
-       telegram_message: TestBool: [VALUE]
+       telegram_message: "TestBool: [VALUE]"
        telegram_value_match_regex: 1            # nur Nachricht senden wenn 1 (True)
 
 telegram_info
@@ -215,8 +215,8 @@ Beispiel
        telegram_text: true
 
 Nach der Eingabe von ``Hello world!`` am Telegram wird das Item ``telegram_message``
-auf ``<Benutzername des chat Partners>:Hello world!`` gesetzt.
-Ein John Doe ergäbe also ``John Doe:Hello world!``
+auf ``<Benutzername des chat Partners>: Hello world!`` gesetzt.
+Ein John Doe ergäbe also ``John Doe: Hello world!``
 
 Funktionen
 ==========

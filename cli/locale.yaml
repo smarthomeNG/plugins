@@ -1,0 +1,11 @@
+# translations for the web interface
+plugin_translations:
+    # Translations for the plugin specially for the web interface
+    'Updates erlaubt':         {'de': '=', 'en': 'updates allowed'}
+    'Hörende IP':         {'de': '=', 'en': 'Listening IP'}
+
+    # Alternative format for translations of longer texts:
+    'Es gibt hier keine weiteren Funktionen ...':
+        de: '='
+        en: 'Sorry, no further functionality available here ...'
+

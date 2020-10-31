@@ -1,0 +1,88 @@
+{% extends "base_plugin.html" %}
+
+{% set logo_frame = false %}
+{% set use_bodytabs = true %}
+{% set tabcount = 1 %}
+{% set tab1title = 'aktive items' %}
+
+      <script type = " text/javascript">
+            // When the testform is submitted...
+           $("#stop").click(function() {
+				console.log( "Handler for .stop called." );
+				
+               // post the form values via AJAX...
+               $.post('action', {name: 'stop'}, function(data) {
+				console.log($("#id"));
+                  // and set the title with the result
+                  $("#title").html(data['title']) ;
+               });
+               return false ;
+            });
+			
+		function reload_table(){
+			$.post('reload', {reload: 'on'});
+		 }
+		setInterval( function () {
+			reload_table();
+		}, 30000 );
+      </script>
+
+
+{% block headtable %}
+<table class="table table-striped table-hover">
+	<tbody>
+		<tr>
+			<td class="py-1"><strong>{{ _('Host') }}</strong></td>
+			<td class="py-1">{{ connection.ip }}</td>
+			<td class="py-1"><strong>Verbunden</strong></td>
+			<td class="py-1">{%if connection.connected == True%}
+							<img src="static/img/green.png" height="24" width="24"/>
+						{% else %}
+							<img src="static/img/red.png" height="24" width="24"/>
+						{% endif %}
+			</td>
+		</tr>
+		<tr>
+			<td class="py-1"><strong>{{ _('Token') }} </strong></td>
+			<td class="py-1">{{ connection.token }} </td>
+			<td class="py-1"><strong>{{ _('vorgegebene Zykluszeit') }}</strong></td>
+			<td class="py-1">{{ connection.cycle }}s </td>
+		</tr>
+	</tbody>
+</table>
+{{ connection.info}}
+{% endblock headtable %}
+
+
+
+{% set tab1title = "<strong>" ~ p.get_shortname() ~ " " ~ _('Items') ~ "</strong> (" ~ items|length ~ ")" %}
+{% block bodytab1 %}
+<div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
+	<div class="col-sm-12">
+		<table class="table table-striped table-hover pluginList">
+			<thead>
+				<tr>
+					<th>#</th>
+					<th>{{ _('Item') }}</th>
+					
+					<th>{{ _('Wert') }}</th>
+					<th>{{ _('Typ') }}</th>
+					<th>{{ _('Visu Zugriff') }}</th>
+					</tr>
+			</thead>
+			{% for item in items %}
+				<tr>
+					<td class="py-1">{{ loop.index}}</td>
+					<td class="py-1">{{ item._path }}</td>
+					
+					<td class="py-1">
+						<strong> {{ item() }}</strong></td>
+					<td class="py-1">{{ item._type }}</td>
+					<td class="py-1">{{ item.conf['visu_acl'] }}</td>
+				</tr>
+			{% endfor %}
+		</table>
+	</div>
+</div>
+{% endblock bodytab1 %}
+

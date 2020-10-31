@@ -3,7 +3,7 @@
 #########################################################################
 #  Copyright 2020 Thilo Schneider                   freget@googlemail.com
 #########################################################################
-#  This file is part of SmartHomeNG.   
+#  This file is part of SmartHomeNG.
 #
 #  Sample plugin for new plugins to run with SmartHomeNG version 1.4 and
 #  upwards.
@@ -94,7 +94,7 @@ VARLIST = {
     "fan_out_voltage_level3"    : {"var": "v00016", "length": 6, "type": float, "read": True, "write": True, "min": 1.6, "max": 10},
     "fan_in_voltage_level4"     : {"var": "v00019", "length": 6, "type": float, "read": True, "write": True, "min": 1.6, "max": 10},
     "fan_out_voltage_level4"    : {"var": "v00018", "length": 6, "type": float, "read": True, "write": True, "min": 1.6, "max": 10},
-    "manual_mode"               : {"var": "v00101", "length": 5, "type": bool,  "read": True, "write": True, "min": 0, "max": 1},
+    "manual_mode"               : {"var": "v00101", "length": 5, "type": int,   "read": True, "write": True, "min": 0, "max": 1},
     "filter_change"             : {"var": "v01031", "length": 5, "type": bool,  "read": True, "write": True, "min": 0, "max": 1},
     "filter_changeinterval"     : {"var": "v01032", "length": 5, "type": int,   "read": True, "write": True, "min": 0, "max": 12},
     "bypass_roomtemperature"    : {"var": "v01035", "length": 5, "type": int,   "read": True, "write": True, "min": 10, "max": 40},
@@ -113,15 +113,19 @@ VARLIST = {
 
 
 class HeliosTCP(SmartPlugin):
-    PLUGIN_VERSION = "1.0.0"
+
+    PLUGIN_VERSION = "1.0.2"
     MODBUS_SLAVE = 180
     PORT = 502
     START_REGISTER = 1
 
     _items = {}
 
-    def __init__(self, sh, *args, **kwargs):
-        self.logger = logging.getLogger(__name__)
+    def __init__(self, sh):
+        from bin.smarthome import VERSION
+        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
+            self.logger = logging.getLogger(__name__)
+
         self._helios_ip = self.get_parameter_value('helios_ip')
         self._client = ModbusTcpClient(self._helios_ip)
         self.alive = False
@@ -130,6 +134,10 @@ class HeliosTCP(SmartPlugin):
 
 
     def run(self):
+        """
+        Run method for the plugin
+        """
+        self.logger.debug("Run method called")
         self._is_connected = self._client.connect()
         if not self._is_connected:
             self.logger.error("Helios TCP: Failed to connect to Modbus Server at {0}".format(self._helios_ip))
@@ -138,6 +146,11 @@ class HeliosTCP(SmartPlugin):
 
 
     def stop(self):
+        """
+        Stop method for the plugin
+        """
+        self.logger.debug("Stop method called")
+        self.scheduler_remove('Helios TCP')
         self._client.close()
         self.alive = False
 
@@ -200,50 +213,63 @@ class HeliosTCP(SmartPlugin):
 
         # Finally we may cast the result and return the obtained value:
         try:
-            item(varprop["type"](result))
+            item(varprop["type"](result), self.get_shortname())
         except ValueError:
             self.logger.warning("Helios TCP: Could not assign {0} to item {1}".format(varprop["type"](result), item.id()))
             return
 
 
     def update_item(self, item, caller=None, source=None, dest=None):
-        try:
-            var = item.conf['helios_tcp']
-        except ValueError:
-            return
+        """
+        Item has been updated
 
-        newval = item()
+        This method is called, if the value of an item has been updated by SmartHomeNG.
+        It should write the changed value out to the device (hardware/interface) that
+        is managed by this plugin.
 
-        try:
-            varprop = VARLIST[var]
-        except KeyError:
-            self.logger.error("Helios TCP: Failed to find variable '{0}'".format(var))
-            return None
+        :param item: item to be updated towards the plugin
+        :param caller: if given it represents the callers name
+        :param source: if given it represents the source
+        :param dest: if given it represents the dest
+        """
+        if self.alive and caller != self.get_shortname():
+            try:
+                var = item.conf['helios_tcp']
+            except ValueError:
+                return
 
-        if not varprop["write"]:
-            return None
+            newval = item()
 
-        if type(newval) != varprop["type"]:
-            self.logger.error("Helios TCP: Type mismatch for variable '{0}'".format(var))
-            return None
+            try:
+                varprop = VARLIST[var]
+            except KeyError:
+                self.logger.error("Helios TCP: Failed to find variable '{0}'".format(var))
+                return
 
-        if newval < varprop["min"] or newval > varprop["max"]:
-            self.logger.error("Helios TCP: Variable '{0}' out of bounds. The allowed range is [{1}, {2}]".format(var, varprop["min"], varprop["max"]))
-            return None
+            if not varprop["write"]:
+                return
 
-        if varprop["type"] == bool:
-            payload_string = "{0}={1}".format(varprop["var"], int(newval))
-        elif varprop["type"] == int:
-            payload_string = "{0}={1}".format(varprop["var"], int(newval))
-        elif varprop["type"] == float:
-            payload_string = "{0}={1:.1f}".format(varprop["var"], newval)
-        else:
-            self.logger.error("Helios TCP: Type {0} of varible '{1}' not known".format(varprop["type"], var))
-            return None
+            if type(newval) != varprop["type"]:
+                self.logger.error("Helios TCP: Type mismatch for variable '{0}'".format(var))
+                return
 
-        payload = self._string_to_registers(payload_string)
-        request = self._client.write_registers(self.START_REGISTER, payload, unit=self.MODBUS_SLAVE)
-        if request is None:
-            self.logger.warning("Helios TCP: Failed to send write request for variable '{0}'".format(var))
-            return None
+            if newval < varprop["min"] or newval > varprop["max"]:
+                self.logger.error("Helios TCP: Variable '{0}' out of bounds. The allowed range is [{1}, {2}]".format(var, varprop["min"], varprop["max"]))
+                return
+
+            if varprop["type"] == bool:
+                payload_string = "{0}={1}".format(varprop["var"], int(newval))
+            elif varprop["type"] == int:
+                payload_string = "{0}={1}".format(varprop["var"], int(newval))
+            elif varprop["type"] == float:
+                payload_string = "{0}={1:.1f}".format(varprop["var"], newval)
+            else:
+                self.logger.error("Helios TCP: Type {0} of varible '{1}' not known".format(varprop["type"], var))
+                return
+
+            payload = self._string_to_registers(payload_string)
+            request = self._client.write_registers(self.START_REGISTER, payload, unit=self.MODBUS_SLAVE)
+            if request is None:
+                self.logger.warning("Helios TCP: Failed to send write request for variable '{0}'".format(var))
+                return
 

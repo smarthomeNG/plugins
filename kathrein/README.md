@@ -3,6 +3,10 @@
 ## Requirements
 This plugin has no requirements or dependencies.
 
+## ToDo
+
+The webinterface needs to be implemented
+
 ## Configuration
 
 ### plugin.yaml
@@ -54,7 +58,7 @@ receiver:
         name: Media
         type: bool
         visu_acl: rw
-        katrhein: media
+        kathrein: media
         kathreinid: 1
         enforce_updates: 'true'
         knx_dpt: 1

@@ -39,7 +39,7 @@ from lib.model.smartplugin import SmartPlugin
 from requests.auth import HTTPBasicAuth
 
 class ODLInfo(SmartPlugin):
-    PLUGIN_VERSION = "1.4.1"
+    PLUGIN_VERSION = "1.4.3"
     _base_url = 'https://odlinfo.bfs.de/daten/json/stamm.json'
 
     def __init__(self, sh, *args, **kwargs):
@@ -48,6 +48,9 @@ class ODLInfo(SmartPlugin):
         @param user: For accessing the ODLINFO API you need a personal username
         @param password: For accessing the ODLINFO API you need a personal password
         """
+        # Call init code of parent class (SmartPlugin or MqttPlugin)
+        super().__init__()
+
         self._user = self.get_parameter_value('user')
         self._password = self.get_parameter_value('password')
         self._keys = ['ort', 'kenn', 'plz', 'status', 'kid', 'hoehe', 'lon', 'lat', 'mw']
@@ -77,8 +80,10 @@ class ODLInfo(SmartPlugin):
             self.logger.debug(json_obj[odlinfo_id])
             result_station = {}
             for key in self._keys:
-                result_station[key] = json_obj[odlinfo_id][key]
-
+                if key in result_station:
+                    result_station[key] = json_obj[odlinfo_id][key]
+                else:
+                    self.logger.debug("Key %s not found in resulting data. Please check manually."%key)
         return result_station
 
     def get_radiation_data_for_ids(self, odlinfo_ids):
@@ -109,5 +114,5 @@ class ODLInfo(SmartPlugin):
         Builds a request url, method included for a later use vs other data files of ODLINFO
         @return: string of the url
         """
-        url = (self._base_url)
+        url = self._base_url
         return url

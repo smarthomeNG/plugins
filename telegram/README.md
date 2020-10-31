@@ -9,6 +9,8 @@ Library ``python-telegram-bot`` and ``urllib3`` need to be installed prior to us
 Install it manually with either ``sudo pip install -r requirements.txt``    or    
 by using ``pip install -r requirements.txt``
 
+SmartHomeNG version 1.7 and later will install the necessary requirements at start of SmartHomeNG.
+
 ## Configuration
 
 * Send command "/newbot" to "BotFather" in order to create your new bot
@@ -23,6 +25,8 @@ by using ``pip install -r requirements.txt``
 
 ### plugin.yaml
 
+If configuration is done manually the following needs to be put into ``etc/plugin.yaml``
+
 ```
 telegram:
     name: My Home
@@ -31,17 +35,15 @@ telegram:
     token: 123456789:BBCCfd78dsf98sd9ds-_HJKShh4z5z4zh22
 ```
 
-The trusted chat ids need to put into an item, they can be changed then by backend and during runtime. 
-See example below.
-
-
 #### name
 
 Visible name of the bot in hello messages like ``my wonderful smarthome``
 
 #### token
 
-Shared secret key to authenticate to telegram network.
+Shared secret key to authenticate to telegram network. Botfather reveals this token upon creation of the bot.
+
+### items.yaml
 
 #### trusted_chat_ids
 
@@ -51,7 +53,20 @@ To get your current chat id, send a /start command to the bot, which will reply 
 
 By design negative chat ids are those belonging to a group.
 
-### items.yaml
+The trusted chat ids need to put into an item, they can be changed then by backend and during runtime. 
+See example:
+
+```yaml
+MyTelegramTest:
+    Chat_Ids:
+        type: dict
+        telegram_chat_ids: True
+        cache: 'True'
+        # e.g. value: "{ 3234123342: 1, 9234123341: 0 }"
+        # a dict with chat id and 1 for read and write access or 0 for readonly access
+        # the following grants r/w access to 3234123342 and readonly to 9234123341
+        value: "{ 3234123342: 1, 9234123341: 0 }"
+```
 
 #### telegram_message 
 
@@ -60,14 +75,14 @@ It is possible to use placeholder tags in the message string, to use a template 
 
 Available tags:
 
-[ID]
-[NAME]
-[VALUE]
-[CALLER]
-[SOURCE]
-[DEST]
+* [ID]
+* [NAME]
+* [VALUE]
+* [CALLER]
+* [SOURCE]
+* [DEST]
 
-##### Simple Example
+Example without tags
 
 ```yaml
 doorbell:
@@ -76,7 +91,7 @@ doorbell:
     telegram_message: Doorbell rings!
 ```
 
-The same example but extended to send a camera snapshot via telegram:
+The same example but extended with an additional item to send a camera snapshot via telegram:
 
 ```yaml
 doorbell:
@@ -89,30 +104,32 @@ doorbell:
     info:
         type: bool
         eval_trigger: doorbell
-        eval: sh.telegram.photo_broadcast("http://<IP-address>/cgi-bin/xxx&user=username&password=passwd","Türkamera") if sh.doorbell() == 1 else None
+        eval: sh.telegram.photo_broadcast("http://<IP-address>/cgi-bin/xxx&user=username&password=passwd","Door camera") if sh.doorbell() == 1 else None
 ```
 
 ``http://<IP-address>/cgi-bin/xxx&user=username&password=passwd`` needs to be set according to the camera URL of course.
 
-##### Example with tags
+Example with tags
 
-The following example shows an integration in AutoBlind.
+The following example shows an integration in Stateengine.
 If the state changes, a message with the current state name is broadcasted 
 
 ```yaml
 state_name:
-    name: Name des aktuellen Zustands
+    name: Name of current state
     type: str
     visu_acl: r
     cache: 'on'
-    telegram_message: 'New AutoBlind state: [VALUE]'
+    telegram_message: 'New Stateengine state: [VALUE]'
 ```
 
 #### telegram_value_match_regex
 
-In some cases it is usefull to check a value against a condition before sending the message. Messages are used to monitor defined value groups. Therefore messaging is limited with this attribute to matching regular expressions only.
+In some cases it is usefull to check a value against a condition before sending the message. 
+Messages are used to monitor defined value groups. Therefore messaging is limited with
+this attribute to matching regular expressions only.
 
-#### Simple Example
+Example:
 
 ```yaml
 TestNum:
@@ -124,17 +141,19 @@ TestBool:
     type: bool
     cache: True
     telegram_message: TestBool: [VALUE]
-    telegram_value_match_regex: (true|True|1)   # only senden wenn 1 (True)
+    telegram_value_match_regex: (true|True|1)   # only send if 1 (True)
 ```
 
 #### telegram_info
 
-read (broadcast) a list with specific item-values provided with the attribute.
+Read (broadcast) a list with specific item-values provided with the attribute.
 The attribute parameter is also the command. 
-e.g. /wetter
-All attribute parameters (commands) are listed with the /info-command in a keyboard menu
+e.g. ``/wetter``
+All attribute parameters (commands) are listed with the ``/info``-command in a keyboard menu
+Commands are limited to 32 characters, can consist of lower latin letters, digits and underscore.
+Thus the attribute parameter ``Light`` or ``Temps`` is not allowed, whilst ``light`` and ``temps`` are fine.
 
-Simple Example
+Example:
 
 ```yaml
 Aussentemperatur:
@@ -184,6 +203,7 @@ telegram_message:
     type: str
     telegram_text: true
 ```
+
 ## Example
 
 At first you need to put your token you got from **botfather** into the ``plugin.yaml`` 
@@ -196,13 +216,13 @@ MyTelegramTest:
         type: dict
         telegram_chat_ids: True
         cache: 'True'
-        # e.g. value: "{ '3234123342': 1, '9234123341': 0 }"
+        # e.g. value: "{ 3234123342: 1, 9234123341: 0 }"
         # a dict with chat id and 1 for read and write access or 0 for readonly access
         # the following grants r/w access to 3234123342
-        value: "{ '3234123342': 1 }"
+        value: "{ 3234123342: 1 }"
 ```
 
-After a restart create a logic within backend, admin interface or manually:
+After a restart create a logic within admin interface or manually:
 
 ```python
 # send a Hello world! message to all your trusted chat ids
@@ -229,8 +249,7 @@ sh.telegram.photo_broadcast(local_file, local_file)
 
 ## Todo and feature requests
 
-* Implement full /subscribe meachanism to join broadcast messages
+* Implement full /subscribe mechanism to join broadcast messages
 * Implement interface to operationlog plugin for message broadcast
-* Implement fast and menu based (read-only) navigation through item-tree
 * Implement r/w access to items
-
+* Implement fast and menu based (read-only) navigation through item-tree

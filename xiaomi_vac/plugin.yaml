@@ -1,0 +1,448 @@
+# Metadata for the Xiaomi Saugroboter
+plugin:
+    # Global plugin attributes
+    type: interface                  # plugin type (gateway, interface, protocol, system, web)
+    description:
+        de: 'Zugriff und Steuern eines Xiaomi Saugroboters'
+        en: 'Control a Xioami Vacuum Robot'
+    maintainer: Bonze
+    state: ready
+    tester: Bonze, henfri, onkelandy
+    keywords: communication, iot
+    requirements:
+        de: 'python-miio python Modul'
+        en: 'python-miio python module'
+    requirements_long:
+        de: 'Das Plugin benötigt das python-miio Modul. Die richtige Version wird automatisch beim Start von smarthomeNG installiert.\n
+             Die Bibliothek benötigt den Token des Roboters zur Kommunikation. Hierzu ist bitte die `Anleitung auf github <https://python-miio.readthedocs.io/en/latest/discovery.html#installation>`_ zu befolgen.
+             '
+        en: 'This plugin needs the python-miio module. The correct version is installed automatically at the smarthomeNG start.\n
+             The module needs the token of the robot for communication. Please follow the `instructions on github <https://python-miio.readthedocs.io/en/latest/discovery.html#installation>`_.
+             '
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1453597-support-thread-f%C3%BCr-xiaomi-saugroboter-plugin
+    version: 1.0.0             # Plugin version
+    sh_minversion: 1.4           # minimum shNG version to use this plugin
+    multi_instance: False          # plugin supports multi instance
+    classname: Robvac                # class containing the plugin
+    restartable: unknown
+
+plugin_functions: NONE
+    # Definition of plugin functions defined by this plugin (enter 'plugin_functions: NONE', if section should be empty)
+    #plugin_functions: NONE
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)
+    #logic_parameters: NONE
+
+# Definition of parameters to be configured in etc/plugin.yaml
+parameters:
+    ip:
+        type: ipv4
+        mandatory: True
+        description:
+            de: 'IP Adresse des Saug-Roboters '
+            en: 'IP Adress of the Vakuum Cleaner'
+    read_cycle:
+        type: int
+        default: 12
+        description:
+            de: 'Standart Zyklus zum Lesen der Paramter vom Gerät'
+            en: 'Default cycle time for reading'
+    token:
+        type: str
+        madnatory: True
+        description:
+            de: 'Token für die Kommunikation'
+            en: 'Token for Communication'
+
+item_attributes:
+    # Definition of item attributes defined by this plugin
+    robvac:
+        type: str
+        description:
+            de: 'Befehl oder Abfrage, die an den Roboter gesendet werden soll.'
+            en: 'Command or query to be sent to the robot.'
+        description_long:
+            de: '**Befehl oder Abfrage, die an den Roboter gesendet werden soll.**\n
+                 Die Befehle richten sich nach der python-miio Bibliothek. Es wird empfohlen,
+                 die im Plugin vorhandenen Befehle über ``struct: xiaomi_vac.saugroboter`` einzubinden.
+                '
+            en: '**Command or query to be sent to the robot.**\n
+                 The commands are based on the python-miio module. It is strongly recommended to implement
+                 the commands supported by the plugin via  ``struct: xiaomi_vac.saugroboter``.
+                 '
+
+item_structs: #saugroboter
+    saugroboter:
+        name: 'Vorlage-Struktur für die Ansteuerung eines Xiaomi Saugroboters'
+        serial:
+            type: str
+            robvac: 'serial'
+            visu_acl: ro
+        struct:
+          - xiaomi_vac.live
+          - xiaomi_vac.befehl
+          - xiaomi_vac.statistik
+          - xiaomi_vac.einstellungen
+          - xiaomi_vac.stundenzaehler
+
+    live:
+        live:
+            name: 'Aktuelle Werte des Saugroboters'
+            batterie_status:
+                name: 'Batterie Status'
+                type: num
+                robvac: 'battery'
+                visu_acl: ro
+            reinigt:
+                name: 'aktuell am reinigen?'
+                type: bool
+                robvac: 'active'
+                visu_acl: ro
+            zustand:
+                name: 'Betriebszustand'
+                type: str
+                robvac: 'state'
+                visu_acl: ro
+            flaeche:
+                name: 'gereinigte Fläche'
+                type: num
+                robvac: 'area'
+                visu_acl: ro
+            reinigungszeit:
+                type: num
+                robvac: 'clean_time'
+                visu_acl: ro
+            carpetmode_high:
+                type: num
+                robvac: 'carpetmode_high'
+                visu_acl: ro
+            carpetmode_integral:
+                type: num
+                robvac: 'carpetmode_integral'
+                visu_acl: ro
+            carpetmode_low:
+                type: num
+                robvac: 'carpetmode_low'
+                visu_acl: ro
+            carpetmode_enabled:
+                type: num
+                robvac: 'carpetmode_enabled'
+                visu_acl: ro
+            carpetmode_stall_time:
+                type: num
+                robvac: 'carpetmode_stall_time'
+                visu_acl: ro
+            errorcode:
+                type: num
+                robvac: 'error'
+                visu_acl: ro
+            error:
+                type: bool
+                robvac: 'is_error'
+                visu_acl: ro
+            dnd_status:
+                type: bool
+                robvac: 'dnd_status'
+                visu_acl: ro
+            dnd_start:
+                type: foo
+                robvac: 'dnd_start'
+                visu_acl: ro
+            dnd_end:
+                type: foo
+                robvac: 'dnd_end'
+                visu_acl: ro
+            zonen_reinigung:
+                type: bool
+                robvac: 'zone_cleaning'
+                visu_acl: ro
+            pausiert:
+                type: bool
+                robvac: 'pause'
+                visu_acl: ro
+            segment_status:
+                type: list
+                robvac: 'segment_status'
+                visu_acl: ro
+    befehl:
+        befehl:
+            name: 'Befehle zum Saugroboter'
+            start:
+                type: bool
+                robvac: 'set_start'
+                enforce_updates: true
+                visu_acl: rw
+            stop:
+                type: bool
+                robvac: 'set_stop'
+                enforce_updates: true
+                visu_acl: rw
+            pause:
+                type: bool
+                robvac: 'set_pause'
+                enforce_updates: true
+                visu_acl: rw
+            basis:
+                type: bool
+                robvac: 'set_home'
+                enforce_updates: true
+                visu_acl: rw
+            spot_cleaner:
+                type: bool
+                robvac: 'set_spot'
+                enforce_updates: true
+                visu_acl: rw
+            find:
+                type: bool
+                robvac: 'set_find'
+                enforce_updates: true
+                visu_acl: rw
+            reset_filtertimer:
+                type: bool
+                robvac: 'reset_filtertimer'
+                enforce_updates: true
+                visu_acl: rw
+            disable_dnd:
+                type: bool
+                robvac: 'disbale_dnd'
+                enforce_updates: true
+                visu_acl: rw
+            set_dnd:
+                type: list
+                robvac: 'set_dnd'
+                enforce_updates: true
+                visu_acl: rw
+            goto:
+                type: list
+                robvac: 'go_to'
+                enforce_updates: true
+                visu_acl: rw
+            clean_zone:
+               type: list
+               robvac: 'clean_zone'
+               enforce_updates: true
+               visu_acl: rw
+            segment_clean:
+               type: list
+               robvac: 'segment_clean'
+               enforce_updates: true
+               visu_acl: rw
+    statistik:
+        statistik:
+            name: 'Reinigungsstatistiken'
+            anzahl_reinigungen:
+                type: num
+                robvac: 'clean_total_count'
+                visu_acl: ro
+            gereinigte_flaeche:
+                type: num
+                robvac: 'clean_total_area'
+                visu_acl: ro
+            gesamtlaufzeit:
+                type: num
+                robvac: 'clean_total_duration'
+                visu_acl: ro
+            reinigungsids:
+                type: foo
+                robvac: 'clean_ids'
+                visu_acl: ro
+            reinigungsdetails0:
+                type: foo
+                robvac: 'clean_details_last0'
+                visu_acl: ro
+                flaeche:
+                    name: 'gereinigte Fläche'
+                    type: num
+                    robvac: 'last0_area'
+                    visu_acl: ro
+                complete:
+                    type: bool
+                    robvac: 'last0_complete'
+                    visu_acl: ro
+                reinigungszeit:
+                    type: num
+                    robvac: 'last0_duration'
+                    visu_acl: ro
+                start_date:
+                    type: str
+                    robvac: 'last0_start_date'
+                    visu_acl: ro
+                start_time:
+                    type: str
+                    robvac: 'last0_start_time'
+                    visu_acl: ro
+                end_date:
+                    type: str
+                    robvac: 'last0_end_date'
+                    visu_acl: ro
+                end_time:
+                    type: str
+                    robvac: 'last0_end_time'
+                    visu_acl: ro
+            reinigungsdetails1:
+                type: foo
+                robvac: 'clean_details_last1'
+                visu_acl: ro
+                flaeche:
+                    name: 'gereinigte Fläche'
+                    type: num
+                    robvac: 'last1_area'
+                    visu_acl: ro
+                complete:
+                    type: bool
+                    robvac: 'last1_complete'
+                    visu_acl: ro
+                reinigungszeit:
+                    type: num
+                    robvac: 'last1_duration'
+                    visu_acl: ro
+                start_date:
+                    type: str
+                    robvac: 'last1_start_date'
+                    visu_acl: ro
+                start_time:
+                    type: str
+                    robvac: 'last1_start_time'
+                    visu_acl: ro
+                end_date:
+                    type: str
+                    robvac: 'last1_end_date'
+                    visu_acl: ro
+                end_time:
+                    type: str
+                    robvac: 'last1_end_time'
+                    visu_acl: ro
+            reinigungsdetails2:
+                type: foo
+                robvac: 'clean_details_last2'
+                visu_acl: ro
+                flaeche:
+                    name: 'gereinigte Fläche'
+                    type: num
+                    robvac: 'last2_area'
+                    visu_acl: ro
+                complete:
+                    type: bool
+                    robvac: 'last2_complete'
+                    visu_acl: ro
+                reinigungszeit:
+                    type: num
+                    robvac: 'last2_duration'
+                    visu_acl: ro
+                start_date:
+                    type: str
+                    robvac: 'last2_start_date'
+                    visu_acl: ro
+                start_time:
+                    type: str
+                    robvac: 'last2_start_time'
+                    visu_acl: ro
+                end_date:
+                    type: str
+                    robvac: 'last2_end_date'
+                    visu_acl: ro
+                end_time:
+                    type: str
+                    robvac: 'last2_end_time'
+                    visu_acl: ro
+            reinigungsdetails3:
+                type: foo
+                robvac: 'clean_details_last3'
+                visu_acl: ro
+                flaeche:
+                    name: 'gereinigte Fläche'
+                    type: num
+                    robvac: 'last3_area'
+                    visu_acl: ro
+                complete:
+                    type: bool
+                    robvac: 'last3_complete'
+                    visu_acl: ro
+                reinigungszeit:
+                    type: num
+                    robvac: 'last3_duration'
+                    visu_acl: ro
+                start_date:
+                    type: str
+                    robvac: 'last3_start_date'
+                    visu_acl: ro
+                start_time:
+                    type: str
+                    robvac: 'last3_start_time'
+                    visu_acl: ro
+                end_date:
+                    type: str
+                    robvac: 'last3_end_date'
+                    visu_acl: ro
+                end_time:
+                    type: str
+                    robvac: 'last3_end_time'
+                    visu_acl: ro
+    einstellungen:
+        einstellungen:
+            name: 'Einstellbare Parameter'
+            luefter_speed:
+                type: num
+                robvac: 'fanspeed'
+                visu_acl: rw
+            teppichmodus:
+                type: bool
+                robvac: 'carpet_mode'
+                visu_acl: rw
+            volume:
+                type: num
+                robvac: 'volume'
+                visu_acl: rw
+            dnd:
+                type: bool
+                robvac: 'dnd_onoff'
+                visu_acl: rw
+            timezone:
+                type: str
+                robvac: 'timezone'
+                visu_acl: rw
+            timer:
+                type: foo
+                robvac: 'timer'
+                visu_acl: rw
+            reset:
+                remark: Use these values to reset consumables - main_brush, side_brush, filter, sensor_dirty
+                type: str
+                robvac: 'reset'
+                visu_acl: rw
+                enforce_updates: True
+    stundenzaehler:
+        stundenzaehler:
+            buerste_seite:
+                type: num
+                robvac: 'side_brush'
+                visu_acl: ro
+            buerste_seite_verbleibend:
+                type: num
+                robvac: 'side_brush_left'
+                visu_acl: ro
+            buerste_haupt:
+                type: num
+                robvac: 'main_brush'
+                visu_acl: ro
+            buerste_haupt_verbleibend:
+                type: num
+                robvac: 'main_brush_left'
+                visu_acl: ro
+            filter:
+                type: num
+                robvac: 'filter'
+                visu_acl: ro
+            filter_verbleibend:
+                type: num
+                robvac: 'filter_left'
+                visu_acl: ro
+            sensor_reinigen:
+                type: num
+                robvac: 'sensor_dirty'
+                visu_acl: ro
+            sensor_reinigen_verbleibend:
+                type: num
+                robvac: 'sensor_dirty_left'
+                visu_acl: ro
