@@ -41,7 +41,7 @@ class Neato(SmartPlugin):
         self.robot = Robot(self.get_parameter_value("account_email"), self.get_parameter_value("account_pass"), self.get_parameter_value("robot_vendor"), token=self.get_parameter_value("token"))
 #        self.robot.update_robot()
         self._sh = sh
-        self._cycle = 40
+        self._cycle = 60
         self.logger.debug("Init completed.")
         self.init_webinterface()
         return
@@ -138,6 +138,9 @@ class Neato(SmartPlugin):
                     self.robot.robot_command("disableSchedule")
                     self.logger.debug("disabling neato scheduler")
             pass
+
+    def start_robot(self):
+        self.robot.robot_command("start")
 
     def enable_schedule(self):
         self.robot.robot_command("enableSchedule")

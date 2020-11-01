@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
+# Copyright 2012-2013   Marcus Popp                        marcus@popp.mx
+# Copyright 2016        Thomas Ernst
 # Copyright 2017-       Martin Sinn                         m.sinn@gmx.de
-#           2016        Thomas Ernst
-#           2012-2013   Marcus Popp                        marcus@popp.mx
 # Copyright 2017-       Serge Wagener                serge@wagener.family
 # Copyright 2020        Bernd Meiners               Bernd.Meiners@mail.de
 #########################################################################
@@ -38,6 +38,9 @@ from .webif import WebInterface
 
 from lib.utils import Utils
 from lib.network import Tcp_server
+
+from lib.shtime import Shtime
+shtime = Shtime.get_instance()
 
 class CLIHandler:
     terminator = '\n'.encode()
@@ -151,7 +154,7 @@ class CLIHandler:
 
 class CLI(SmartPlugin):
 
-    PLUGIN_VERSION = '1.7.0'     # is checked against version in plugin.yaml
+    PLUGIN_VERSION = '1.7.1'     # is checked against version in plugin.yaml
 
     def __init__(self, sh):
         """
@@ -655,7 +658,7 @@ class CLICommands:
                 log = logs[parameter]
 
         if log is not None:
-            log.clean(self.sh.now())
+            log.clean(shtime.now())
 
     # noinspection PyUnusedLocal
     def _cli_il(self, handler, parameter, source):

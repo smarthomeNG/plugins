@@ -12,7 +12,7 @@ plugin:
   documentation: https://github.com/smarthomeNG/plugins/tree/master/sonos # url of documentation (wiki) page
   support: https://knx-user-forum.de/forum/supportforen/smarthome-py/25151-sonos-anbindung
 
-  version: 1.5.0                 # Plugin version
+  version: 1.5.1                 # Plugin version
   sh_minversion: 1.5.1           # minimum shNG version to use this plugin
   multi_instance: False          # plugin supports multi instance
   classname: Sonos               # class containing the plugin
@@ -89,33 +89,6 @@ item_attributes:
     - 'is_initialized'
     - 'volume'
     - 'play'
-    - is_coordiantor
-    - mute
-    - stop
-    - seek
-    - pause
-    - track_title
-    - track_artist
-    - track_uri
-    - trackalbumart
-    - bass
-    - treble
-    - loudness
-    - playmode
-    - radio_show
-    - radio_station
-    - serial_number
-    - software_version
-    - hardware_version
-    - model
-    - uid
-    - ip
-    - mac_address
-    - status
-    - additional_zone_members
-    - alarms
-    - is_coordinator
-    - tts_local_mode
 
   sonos_send:
     type: str
@@ -139,20 +112,6 @@ item_attributes:
     - 'load_sonos_playlist'
     - 'play_snippet'
     - 'play_tts'
-    - join
-    - unjoin
-    - volume_up
-    - volume_down
-    - partymode
-    - bass
-    - treble
-    - loudness
-    - playmode
-    - seek
-    - status
-    - alarms
-    - get_playlist
-    - set_playlist
 
   sonos_attrib:
     type: str

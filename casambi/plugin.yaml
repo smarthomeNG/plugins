@@ -38,6 +38,7 @@ parameters:
     password:
         type: str
         mandatory: True
+        hide: True
         description:
             de: 'Passwort des Casambi Accounts'
             en: 'Password of Casambi account'
