@@ -9,8 +9,8 @@ Es wird eine große Zahl von HomeMatic Geräten unterstützt. Wenn ein Gerät ni
 hilft evtl. ein einfaches Update des Python Packages **pyhomematic** mit dem folgenden Kommando:
 
     sudo pip3 install -U pyhomematic
-    
-    
+
+
 Die Unterstützung der einzelnen HomeMatic und HomeMatic IP Geräte ist in dem Python Package implementiert.
 
 .. important::
@@ -37,25 +37,25 @@ Web Interface
 =============
 
 Das homematic Plugin verfügt über ein Webinterface, mit dessen Hilfe die Items die das Plugin nutzen
-übersichtlich dargestellt werden. Außerdem können Informationen zu den Devices angezeigt werden, 
+übersichtlich dargestellt werden. Außerdem können Informationen zu den Devices angezeigt werden,
 die an der HomeMatic CCU2 angelernt sind. Ein Anlernen neuer Devices wird durch das Webinterface
 unterstützt.
 
-.. important:: 
+.. important::
 
    Das Webinterface des Plugins kann mit SmartHomeNG v1.4.2 und davor **nicht** genutzt werden.
-   Es wird dann nicht geladen. Diese Einschränkung gilt nur für das Webinterface. Ansonsten gilt 
+   Es wird dann nicht geladen. Diese Einschränkung gilt nur für das Webinterface. Ansonsten gilt
    für das Plugin die in den Metadaten angegebene minimale SmartHomeNG Version.
 
 
 Aufruf des Webinterfaces
 ------------------------
 
-Das Plugin kann aus dem backend aufgerufen werden. Dazu auf der Seite Plugins in der entsprechenden
-Zeile das Icon in der Spalte **Web Interface** anklicken.
+Das Plugin kann aus der Admin GUI (von der Seite Plugins/Plugin Liste aus) aufgerufen werden. Dazu auf der Seite
+in der entsprechenden Zeile das Icon in der Spalte **Web Interface** anklicken.
 
-Außerdem kann das Webinterface direkt über ``http://smarthome.local:8383/homematic`` bzw. 
-``http://smarthome.local:8383/homematic_<Instanz>`` aufgerufen werden.
+Außerdem kann das Webinterface direkt über ``http://smarthome.local:8383/plugin/homematic`` bzw.
+``http://smarthome.local:8383/plugin/homematic_<Instanz>`` aufgerufen werden.
 
 
 Beispiele
@@ -63,7 +63,7 @@ Beispiele
 
 Folgende Informationen können im Webinterface angezeigt werden:
 
-Oben rechts werden allgemeine Parameter zum Plugin angezeigt. 
+Oben rechts werden allgemeine Parameter zum Plugin angezeigt.
 
 Im ersten Tab werden die Items angezeigt, die das homematic Plugin nutzen. Falls Items so
 definiert sind, dass sie nicht zu den in der HomeMatic CCU2 angelernten Devices passen, wird
@@ -97,7 +97,7 @@ weitere Details zu den Devices angezeigt werden
 Auf dem dritten Reiter werden Informationen zu HomeMatic IP Geräten angezeigt, die an der CCU2
 angelernt sind.
 
-.. hint:: 
+.. hint::
 
    HomeMatic IP Geräte müssen direkt an der CCU2 angelernt werden. Ein Anlernen über das Web Interface
    des SmartHomeNG Plugins ist **nicht** möglich.
