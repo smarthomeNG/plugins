@@ -374,6 +374,12 @@ class Hue2(SmartPlugin):
             result = light['state'][function]
         elif function == 'name':
             result = light['name']
+        elif function == 'type':
+            result = light['type']
+        elif function == 'modelid':
+            result = light['modelid']
+        elif function == 'swversion':
+            result = light['swversion']
         return result
 
 
