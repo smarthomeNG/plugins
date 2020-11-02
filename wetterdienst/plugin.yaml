@@ -1,0 +1,91 @@
+# Metadata for the Smart-Plugin
+plugin:
+    # Global plugin attributes
+    type: web                      # plugin type (gateway, interface, protocol, system, web)
+    description:
+        de: 'Wetterdaten über OpenWeatherMap.'
+        en: 'Weather data via OpenWeatherMap.'
+    maintainer: psilo909
+    tester: psilo909
+    state: qa-passed
+#    keywords: iot xyz
+    documentation: 'http://smarthomeng.de/user/plugins/openweathermap/user_doc.html'
+    support: 'https://knx-user-forum.de/forum/supportforen/smarthome-py/1246998-support-thread-zum-openweathermap-plugin'
+    keywords: weather
+    version: 1.0.0                # Plugin version
+    sh_minversion: 1.6            # minimum shNG version to use this plugin
+#    sh_maxversion:               # maximum shNG version to use this plugin (leave empty if latest)
+    multi_instance: False         # plugin supports multi instance
+    restartable: unknown
+    classname: Wetterdienst       # class containing the plugin
+
+parameters:
+    # Definition of parameters to be configured in etc/plugin.yaml
+    latitude:
+        type: str
+        mandatory: False
+        default: ''
+        description:
+            de: 'Latitude des Ortes, für den die Wetterdaten abgerufen werden sollen. Default: SmartHomeNG Settings'
+            en: 'Latitude for the location, of which weather data is requested. Default: SmartHomeNG Settings'
+    longitude:
+        type: str
+        mandatory: False
+        default: ''
+        description:
+            de: 'Longitude des Ortes, für den die Wetterdaten abgerufen werden sollen. Default: SmartHomeNG Settings.'
+            en: 'Longitude for the location, of which weather data is requested. Default: SmartHomeNG Settings.'
+
+item_attributes:
+    # Definition of item attributes defined by this plugin
+    wetterdienst_station_id:
+        type: int
+        mandatory: True
+        description:
+            de: ''
+            en: ''
+
+    wetterdienst_time_resolution:
+        type: str
+        mandatory: True
+        valid-list:
+            - 'MINUTE_1'
+            - 'MINUTES_10'
+            - 'HOURLY'
+        description:
+            de: ''
+            en: ''
+
+    wetterdienst_period_type:
+        type: str
+        mandatory: True
+        valid-list:
+            - 'NOW'
+            - 'RECENT'
+        description:
+            de: ''
+            en: ''
+
+    wetterdienst_parameter:
+        type: str
+        mandatory: True
+        valid-list:
+            - 'PRECIPITATION'
+            - 'TEMPERATURE_AIR'
+            - 'TEMPERATURE_EXTREME'
+            - 'CLOUD_TYPE'
+            - 'CLOUDINESS'
+            - 'DEW_POINT'
+        description:
+            de: 'Parameter, der angefragt werden soll. Abhängig von Stations-ID, TimeResolution und PeriodType. Über das Web-Interface des Plugins können passende Kombinationen gefunden werden.'
+            en: 'Parameter, which shall be queries. Depends on station_id, time_resolution and period_type. Use WebIF to find correct combination.'
+
+item_structs: NONE
+  # Definition of item-structure templates for this plugin
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin
+
+plugin_functions: NONE
+    # Definition of function interface of the plugin
+

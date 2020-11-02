@@ -1,0 +1,243 @@
+{% extends "base_plugin.html" %}
+
+{% set logo_frame = false %}
+{% set use_bodytabs = true %}
+{% set tabcount = 2 %}
+{% set tab1title = 'Items' %}
+{% set tab2title = 'Stationssuche' %}
+{% if function == 'search_station' %}{% set start_tab=2 %}{% endif %}
+{% block headtable %}
+    <table class="table table-striped table-hover">
+        <tbody>
+        <tr>
+            <td class="py-1"><strong>{{ _('Lat') }}</strong></td>
+            <td class="py-1">{{ p._lat }}</td>
+            <td class="py-1"><strong>{{ _('Lon') }}</strong></td>
+            <td class="py-1">{{ p._lon }}</td>
+        </tr>
+        </tbody>
+    </table>
+{% endblock %}
+
+{% block bodytab1 %}
+    <div class="table-responsive" style="margin-left: 2px; margin-right: 2px; margin-top: 10px" class="row">
+        <strong>Update 1 Min:</strong>
+        <div class="col-sm-12 mt-1">
+            <table>
+            <tr>
+                <th style="width: 400px;">Item-Path</th>
+                <th>Station ID</th>
+                <th>Parameter</th>
+                <th>PeriodType</th>
+            </tr>
+            {% for key, item in p._items_1min.items() %}
+                <tr>
+                    <td style="width: 400px;">{{ item.property.path }}</td>
+                    <td>{{ item['conf']['wetterdienst_station_id'] }}</td>
+                    <td>{{ item['conf']['wetterdienst_period_type'] }}</td>
+                    <td>{{ item['conf']['wetterdienst_time_resolution'] }}</td>
+                </tr>
+            {%  endfor %}
+         </table>
+        </div>
+        <strong>Update 10 Min:</strong>
+        <div class="col-sm-12 mt-1">
+        <table>
+            <tr>
+                <th style="width: 400px;">Path</th>
+                <th>Station ID</th>
+                <th>Parameter</th>
+                <th>PeriodType</th>
+                <th>TimeResolution</th>
+            </tr>
+            {% for key, item in p._items_10min.items() %}
+                <tr>
+                    <td style="width: 400px;">{{ item.property.path }}</td>
+                    <td>{{ item['conf']['wetterdienst_station_id'] }}</td>
+                    <td>{{ item['conf']['wetterdienst_period_type'] }}</td>
+                    <td>{{ item['conf']['wetterdienst_time_resolution'] }}</td>
+                </tr>
+            {%  endfor %}
+         </table>
+        </div>
+    </div>
+{% endblock %}
+{% block bodytab2 %}
+
+    <div class="container-fluid m-2">
+        <form>
+            <table>
+                <thead>
+                <tr>
+                    <th>Parameter</th>
+                    <th>PeriodType</th>
+                    <th>TimeResolution</th>
+                    <th>Max. Distanz in KM</th>
+                    <th>Latitude</th>
+                    <th>Longitude</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td>
+                        <input type="hidden" name="function" value="search_station"/>
+                        <select name="parameter">
+                            <option value="PRECIPITATION"
+                                    {% if parameter == "PRECIPITATION" %}selected="selected"{% endif %}>PRECIPITATION
+                            </option>
+                            <option value="TEMPERATURE_AIR"
+                                    {% if parameter == "TEMPERATURE_AIR" %}selected="selected"{% endif %}>
+                                TEMPERATURE_AIR
+                            </option>
+                            <option value="TEMPERATURE_EXTREME"
+                                    {% if parameter == "TEMPERATURE_EXTREME" %}selected="selected"{% endif %}>
+                                TEMPERATURE_EXTREME
+                            </option>
+                            <option value="CLOUD_TYPE" {% if parameter == "CLOUD_TYPE" %}selected="selected"{% endif %}>
+                                CLOUD_TYPE
+                            </option>
+                            <option value="CLOUDINESS" {% if parameter == "CLOUDINESS" %}selected="selected"{% endif %}>
+                                CLOUDINESS
+                            </option>
+                            <option value="DEW_POINT" {% if parameter == "DEW_POINT" %}selected="selected"{% endif %}>
+                                DEW_POINT
+                            </option>
+                            <option value="PRESSURE" {% if parameter == "PRESSURE" %}selected="selected"{% endif %}>
+                                PRESSURE
+                            </option>
+                            <option value="TEMPERATURE_SOIL"
+                                    {% if parameter == "TEMPERATURE_SOIL" %}selected="selected"{% endif %}>
+                                TEMPERATURE_SOIL
+                            </option>
+                            <option value="SOLAR" {% if parameter == "SOLAR" %}selected="selected"{% endif %}>SOLAR
+                            </option>
+                            <option value="SUNSHINE_DURATION"
+                                    {% if parameter == "SUNSHINE_DURATION" %}selected="selected"{% endif %}>
+                                SUNSHINE_DURATION
+                            </option>
+                            <option value="VISIBILITY" {% if parameter == "VISIBILITY" %}selected="selected"{% endif %}>
+                                VISIBILITY
+                            </option>
+                            <option value="WIND" {% if parameter == "WIND" %}selected="selected"{% endif %}>WIND
+                            </option>
+                            <option value="WIND_SYNOPTIC"
+                                    {% if parameter == "WIND_SYNOPTIC" %}selected="selected"{% endif %}>WIND_SYNOPTIC
+                            </option>
+                            <option value="WIND_SYNOPTIC"
+                                    {% if parameter == "WIND_SYNOPTIC" %}selected="selected"{% endif %}>WIND_SYNOPTIC
+                            </option>
+                            <option value="MOISTURE" {% if parameter == "MOISTURE" %}selected="selected"{% endif %}>
+                                MOISTURE
+                            </option>
+                            <option value="PRESSURE" {% if parameter == "PRESSURE" %}selected="selected"{% endif %}>
+                                PRESSURE
+                            </option>
+                            <option value="SOIL" {% if parameter == "SOIL" %}selected="selected"{% endif %}>SOIL
+                            </option>
+                            <option value="CLIMATE_SUMMARY"
+                                    {% if parameter == "CLIMATE_SUMMARY" %}selected="selected"{% endif %}>
+                                CLIMATE_SUMMARY
+                            </option>
+                            <option value="PRECIPITATION_MORE"
+                                    {% if parameter == "PRECIPITATION_MORE" %}selected="selected"{% endif %}>
+                                PRECIPITATION_MORE
+                            </option>
+                            <option value="WATER_EQUIVALENT"
+                                    {% if parameter == "WATER_EQUIVALENT" %}selected="selected"{% endif %}>
+                                WATER_EQUIVALENT
+                            </option>
+                            <option value="WEATHER_PHENOMENA"
+                                    {% if parameter == "WEATHER_PHENOMENA" %}selected="selected"{% endif %}>
+                                WEATHER_PHENOMENA
+                            </option>
+                        </select>
+                    </td>
+                    <td>
+                        <select name="period_type">
+                            <option value="HISTORICAL"
+                                    {% if period_type == "HISTORICAL" %}selected="selected"{% endif %}>HISTORICAL
+                            </option>
+                            <option value="RECENT" {% if period_type == "RECENT" %}selected="selected"{% endif %}>
+                                RECENT
+                            </option>
+                            <option value="NOW" {% if period_type == "NOW" %}selected="selected"{% endif %}>NOW</option>
+                        </select>
+                    </td>
+                    <td>
+                        <select name="time_resolution">
+                            <option value="MINUTE_1"
+                                    {% if time_resolution == "MINUTE_1" %}selected="selected"{% endif %}>1 Minute
+                            </option>
+                            <option value="MINUTE_5"
+                                    {% if time_resolution == "MINUTE_5" %}selected="selected"{% endif %}>5 Minuten
+                            </option>
+                            <option value="MINUTE_10"
+                                    {% if time_resolution == "MINUTE_10" %}selected="selected"{% endif %}>10 Minuten
+                            </option>
+                            <option value="MINUTE_15"
+                                    {% if time_resolution == "MINUTE_15" %}selected="selected"{% endif %}>15 Minuten
+                            </option>
+                            <option value="HOURLY" {% if time_resolution == "HOURLY" %}selected="selected"{% endif %}>
+                                stündlich
+                            </option>
+                            <option value="SUBDAILY"
+                                    {% if time_resolution == "SUBDAILY" %}selected="selected"{% endif %}>subdaily
+                            </option>
+                            <option value="DAILY" {% if time_resolution == "DAILY" %}selected="selected"{% endif %}>
+                                täglich
+                            </option>
+                            <option value="MONTHLY" {% if time_resolution == "MONTHLY" %}selected="selected"{% endif %}>
+                                monatlich
+                            </option>
+                            <option value="ANNUAL" {% if time_resolution == "ANNUAL" %}selected="selected"{% endif %}>
+                                jährlich
+                            </option>
+                        </select>
+                    </td>
+                    <td>
+                        <input name="max_distance_in_km" min="1" step="1" type="number"
+                               value="{{ max_distance_in_km }}"/>
+                    </td>
+                    <td>
+                        <input name="lat" type="number" value="{{ lat }}"/>
+                    </td>
+                    <td>
+                        <input name="lon" type="number" value="{{ lon }}"/>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+            <button type="button" class="btn btn-shng btn-sm" onclick="submit()">{{ _('Suche') }}</button>
+        </form>
+        <table>
+            <thead>
+            <tr>
+                <th class="px-2">STATION_ID</th>
+                <th class="px-2">STATION_NAME</th>
+                <th class="px-2">LAT</th>
+                <th class="px-2">LON</th>
+                <th class="px-2">DISTANCE_TO_LOCATION</th>
+                <th class="px-2">FROM_DATE</th>
+                <th class="px-2">TO_DATE</th>
+                <th class="px-2">HAS_FILE</th>
+            </tr>
+            </thead>
+            {% set stations = p.get_nearby_stations(lat=lat, lon=lon, max_distance_in_km=max_distance_in_km, time_resolution=time_resolution, parameter=parameter, period_type=period_type) %}
+            {% if stations is not none %}
+                {% for key,value in stations.iterrows() %}
+                    <tr>
+                        <td class="px-2">{{ value['STATION_ID'] }}</td>
+                        <td class="px-2">{{ value['STATION_NAME'] }}</td>
+                        <td class="px-2">{{ value['LAT'] }}</td>
+                        <td class="px-2">{{ value['LON'] }}</td>
+                        <td class="px-2">{{ (value['DISTANCE_TO_LOCATION'])|round(2) }} km</td>
+                        <td class="px-2">{{ value['FROM_DATE'] }}</td>
+                        <td class="px-2">{{ value['TO_DATE'] }}</td>
+                        <td class="px-2">{{ value['HAS_FILE'] }}</td>
+                    </tr>
+                {% endfor %}
+            {% endif %}
+        </table>
+    </div>
+
+{% endblock %}
