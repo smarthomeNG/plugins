@@ -85,11 +85,8 @@ item_attributes:
         valid_list:
           - light
           - group
-        # - config
-        # - schedule
-        # - scene
-        # - sensor
-        # - rule
+          - scene
+          - sensor
 
     hue2_id:
         type: str

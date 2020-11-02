@@ -127,6 +127,46 @@ Das Struktur Template **hue2.light_extended** definiert zusätzlich noch die Sub
 ``colormode`` und ``xy``. ``reachable`` und ``colormode`` können nur aus der Bridge gelesen werden. Änderungen
 an dem Item werden von der Bridge ignoriert.
 
+
+Item Attribute
+--------------
+
+Das Plugin verwendet drei Item Attribute: ``hue2_resource``, ``hue2_id`` und ``hue2_function``.
+
+Mit ``hue2_resource`` wird festgelegt, auf welche Resource der Bridge zugegriffen werden soll: ``light``, ``group``,
+``scene`` oder ``sensor``.
+
+.. note::
+
+    Bisher ist nur der Resouce-Typ ``light`` implementiert.
+
+Mit ``hue2_id`` wird festgelegt auf welche Resource des gewählten Typs zugegriffen werden soll. Die Id kann im
+Web Interface im Tab des entsprechenden Resource-Typs nachgesehen werden.
+
+Mit ``hue2_function`` wird festgelegt, welche Funktion der gewählten Resource abgefragt oder gesteuert werden soll.
+Für den Resource-Typ ``light`` sind die folgenden Funktionen implementiert (einige erlauben nur die Abfrage):
+
+    - ``on``
+    - ``bri``
+    - ``hue``
+    - ``sat``
+    - ``ct``
+    - ``name``
+    - ``reachable``
+    - ``colormode``
+    - ``xy``
+
+Um den Namen der Leuchte mit der Id 3 abzufragen, muss ein Item folgendermaßen konfiguriert werden:
+
+.. code-block:: yaml
+
+    leuchten_helligkeit:
+        type: str
+        hue2_resource: light
+        hue2_id: 3
+        hue2_function: name
+
+
 |
 
 Web Interface
