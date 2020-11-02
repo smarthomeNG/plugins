@@ -83,35 +83,47 @@ class Hue2(SmartPlugin):
         super().__init__()
 
         # get the parameters for the plugin (as defined in metadata plugin.yaml):
-        # self.param1 = self.get_parameter_value('param1')
         self.bridge_serial = self.get_parameter_value('bridge_serial')
         self.bridge_ip = self.get_parameter_value('bridge_ip')
         self.bridge_user = self.get_parameter_value('bridge_user')
 
-        self.bridge = self.get_parameter_value('bridge')
-        self.get_bridgeinfo()
-        self.logger.info("Configured Bridge={}, type={}".format(self.bridge, type(self.bridge)))
+        # polled for value changes by adding a scheduler entry in the run method of this plugin
+        self.sensor_items_configured = False   # If no sensor items are configured, the sensor-scheduler is not started
+        self.light_items_configured = False   # If no sensor items are configured, the sensor-scheduler is not started
+        self._cycle_sensors = self.get_parameter_value('polltime_sensors')
+        self._cycle_lights = self.get_parameter_value('polltime_lights')
+        self._cycle_bridge = self.get_parameter_value('polltime_bridge')
 
+        # discover hue bridges on the network
         self.discovered_bridges = self.discover_bridges()
 
-        # cycle time in seconds, only needed, if hardware/interface needs to be
-        # polled for value changes by adding a scheduler entry in the run method of this plugin
-        # (maybe you want to make it a plugin parameter?)
-        self._cycle_lights = self.get_parameter_value('polltime_1')
-        self._cycle_bridge = self.get_parameter_value('polltime_2')
+        # self.bridge = self.get_parameter_value('bridge')
+        # self.get_bridgeinfo()
+        # self.logger.warning("Configured Bridge={}, type={}".format(self.bridge, type(self.bridge)))
 
-        # Initialization code goes here
+        if self.bridge_serial == '':
+            self.bridge = {}
+        else:
+            # if a bridge is configured
+            # find bridge using its serial number
+            self.bridge = self.get_data_from_discovered_bridges(self.bridge_serial)
+            if self.bridge.get('serialNumber', '') == '':
+                # if not discovered, use stored ip address
+                self.bridge['ip'] = self.bridge_ip
+                self.bridge['serialNumber'] = self.bridge_serial
+                self.logger.warning("Configured bridge {} is not in the list of discovered bridges, trying stored ip address {}".format(self.bridge_serial, self.bridge_ip))
+            self.bridge['username'] = self.bridge_user
+            if self.bridge['ip'] != self.bridge_ip:
+                # if ip address of bridge has changed, store new ip address in configuration data
+                self.update_plugin_config()
+        self.get_bridgeinfo()
+        self.logger.info("Bridgeinfo for configured bridge '{}' = {}".format(self.bridge_serial, self.bridge))
+
+
+        # dict to store information about items handled by this plugin
         self.plugin_items = {}
 
-        # On initialization error use:
-        #   self._init_complete = False
-        #   return
-
-        # if plugin should start even without web interface
         self.init_webinterface(WebInterface)
-        # if plugin should not start without web interface
-        # if not self.init_webinterface():
-        #     self._init_complete = False
 
         # read lights info from bridge
         self.poll_bridge_lights()
@@ -123,7 +135,10 @@ class Hue2(SmartPlugin):
         """
         self.logger.debug("Run method called")
         # setup scheduler for device poll loop   (disable the following line, if you don't need to poll the device. Rember to comment the self_cycle statement in __init__ as well)
-        self.scheduler_add('update_lights', self.poll_bridge_lights, cycle=self._cycle_lights)
+        if self.sensor_items_configured:
+            self.scheduler_add('update_sensors', self.poll_bridge_sensors, cycle=self._cycle_sensors)
+        if self.light_items_configured:
+            self.scheduler_add('update_lights', self.poll_bridge_lights, cycle=self._cycle_lights)
         self.scheduler_add('update_bridge', self.poll_bridge, cycle=self._cycle_bridge)
 
         self.alive = True
@@ -135,7 +150,10 @@ class Hue2(SmartPlugin):
         Stop method for the plugin
         """
         self.logger.debug("Stop method called")
-        self.scheduler_remove('update_lights')
+        if self.sensor_items_configured:
+            self.scheduler_remove('update_sensors')
+        if self.light_items_configured:
+            self.scheduler_remove('update_lights')
         self.scheduler_remove('update_bridge')
         self.alive = False
 
@@ -159,8 +177,13 @@ class Hue2(SmartPlugin):
             conf_data['resource'] = self.get_iattr_value(item.conf, 'hue2_resource')
             conf_data['function'] = self.get_iattr_value(item.conf, 'hue2_function')
             conf_data['item'] = item
-
             self.plugin_items[item.path()] = conf_data
+            if conf_data['resource'] == 'sensor':
+                # ensure that the scheduler for sensors will be started if items use sensor data
+                self.sensor_items_configured = True
+            if conf_data['resource'] == 'light':
+                # ensure that the scheduler for sensors will be started if items use sensor data
+                self.light_items_configured = True
 
             if conf_data['function'] != 'reachable':
                 return self.update_item
@@ -224,6 +247,29 @@ class Hue2(SmartPlugin):
         return
 
 
+    def get_data_from_discovered_bridges(self, serialno):
+        """
+        Get data from discovered bridges for a given serial number
+
+        :param serialno: serial number of the bridge to look for
+        :return: bridge info
+        """
+        result = {}
+        for db in self.discovered_bridges:
+            if db['serialNumber'] == serialno:
+                result = db
+                break
+        if result == {}:
+            # if bridge is not in list of discovered bridges, rediscover bridges and try again
+            self.discovered_bridges = self.discover_bridges()
+            for db in self.discovered_bridges:
+                if db['serialNumber'] == serialno:
+                    result = db
+                    break
+
+        return result
+
+
     def poll_bridge(self):
         """
         Polls for updates of the device
@@ -235,7 +281,7 @@ class Hue2(SmartPlugin):
         # # get the value from the device
         # device_value = ...
         #self.get_lights_info()
-        if self.bridge == {}:
+        if self.bridge.get('serialNumber','') == '':
             self.bridge_groups = {}
             self.bridge_config = {}
             self.bridge_scenes = {}
@@ -246,7 +292,10 @@ class Hue2(SmartPlugin):
                 self.bridge_groups = self.br.groups()
                 self.bridge_config = self.br.config()
                 self.bridge_scenes = self.br.scenes()
-                self.bridge_sensors = self.br.sensors()
+                if not self.light_items_configured:
+                    self.bridge_lights = self.br.lights()
+                if not self.sensor_items_configured:
+                    self.bridge_sensors = self.br.sensors()
         #
         # # find the item(s) to update:
         # for item in self.sh.find_items('...'):
@@ -269,13 +318,12 @@ class Hue2(SmartPlugin):
         It is called by the scheduler which is set within run() method.
         """
         # get the value from the device: poll data from bridge
-        if self.bridge == {}:
+        if self.bridge.get('serialNumber','') == '':
             self.bridge_lights = {}
             return
         else:
             if self.br is not None:
                 self.bridge_lights = self.br.lights()
-                self.bridge_sensors = self.br.sensors()
 
         # update items with polled data
         src = self.get_instance_name()
@@ -284,6 +332,32 @@ class Hue2(SmartPlugin):
         for pi in self.plugin_items:
             plugin_item = self.plugin_items[pi]
             plugin_item['item']( self._get_light_item_value(plugin_item['id'], plugin_item['function']), self.get_shortname(), src)
+        return
+
+
+    def poll_bridge_sensors(self):
+        """
+        Polls for updates of sensors of the device
+
+        This method is only needed, if the device (hardware/interface) does not propagate
+        changes on it's own, but has to be polled to get the actual status.
+        It is called by the scheduler which is set within run() method.
+        """
+        # get the value from the device: poll data from bridge
+        if self.bridge.get('serialNumber','') == '':
+            self.bridge_sensors = {}
+            return
+        else:
+            if self.br is not None:
+                self.bridge_sensors = self.br.sensors()
+
+        # # update items with polled data
+        # src = self.get_instance_name()
+        # if src == '':
+        #     src = None
+        # for pi in self.plugin_items:
+        #     plugin_item = self.plugin_items[pi]
+        #     plugin_item['item']( self._get_light_item_value(plugin_item['id'], plugin_item['function']), self.get_shortname(), src)
         return
 
 
@@ -311,17 +385,17 @@ class Hue2(SmartPlugin):
         and call the Method update_config_section()
         """
         conf_dict = {}
-        conf_dict['bridge'] = self.bridge
-        conf_dict['bridge_ip'] = self.bridge.get('ip','')
-        conf_dict['bridge_user'] = self.bridge.get('username','')
+        # conf_dict['bridge'] = self.bridge
         conf_dict['bridge_serial'] = self.bridge.get('serialNumber','')
+        conf_dict['bridge_user'] = self.bridge.get('username','')
+        conf_dict['bridge_ip'] = self.bridge.get('ip','')
         self.update_config_section(conf_dict)
         return
 
     # ============================================================================================
 
     def get_bridgeinfo(self):
-        if self.bridge == {}:
+        if self.bridge.get('serialNumber','') == '':
             self.br = None
             self.bridge_lights = {}
             self.bridge_groups = {}
@@ -329,6 +403,7 @@ class Hue2(SmartPlugin):
             self.bridge_scenes = {}
             self.bridge_sensors = {}
             return
+        self.logger.info("get_bridgeinfo: self.bridge = {}".format(self.bridge))
         self.br = qhue.Bridge(self.bridge['ip'], self.bridge['username'])
         self.bridge_lights = self.br.lights()
         self.bridge_groups = self.br.groups()

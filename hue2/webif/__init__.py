@@ -75,7 +75,7 @@ class WebInterface(SmartPluginWebIf):
             self.plugin.discovered_bridges = self.plugin.discover_bridges()
 
         if connect is not None:
-            self.logger.warning("Connect: connect={}".format(connect))
+            self.logger.info("Connect: connect={}".format(connect))
             for db in self.plugin.discovered_bridges:
                 if db['serialNumber'] == connect:
                     user = self.plugin.create_new_username(db['ip'])
@@ -86,7 +86,7 @@ class WebInterface(SmartPluginWebIf):
                         self.plugin.update_plugin_config()
 
         if disconnect is not None:
-            self.logger.warning("Disconnect: disconnect={}".format(disconnect))
+            self.logger.info("Disconnect: disconnect={}".format(disconnect))
             self.plugin.remove_username(self.plugin.bridge['ip'], self.plugin.bridge['username'])
             self.plugin.bridge = {}
             self.plugin.bridgeinfo = {}

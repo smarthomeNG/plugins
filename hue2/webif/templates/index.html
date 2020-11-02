@@ -33,24 +33,24 @@
 			<td class="py-1"><strong>Bridge Serial</strong></td>
 			<td class="py-1">{% if bridge.username == undeffined %}-{% else %}{{ p.bridge.serialNumber }}{% endif %}</td>
 			<td class="py-1" width="50px"></td>
-			<td class="py-1"><strong>Abfrage Zyklus 1</strong></td>
-			<td class="py-1">{{ p._cycle_lights }} {{ _('Sek.') }}</td>
-			<td class="py-1" width="50px"></td>
+			<td class="py-1"><strong>Leuchten Zyklus</strong></td>
+			<td class="py-1">{% if p.light_items_configured == true %}{{ p._cycle_lights }} {{ _('Sek.') }}{% else %}-{% endif %}</td>
+			<td class="py-1" width="10px"></td>
 		</tr>
 		<tr>
 			<td class="py-1"><strong>Bridge IP</strong></td>
 			<td class="py-1">{% if bridge.username == undeffined %}-{% else %}{{ p.bridge.ip }}{% endif %}</td>
 			<td></td>
-			<td class="py-1"><strong>Abfrage Zyklus 2</strong></td>
-			<td class="py-1">{{ p._cycle_bridge }} {{ _('Sek.') }}</td>
+			<td class="py-1"><strong>Sensor Zyklus</strong></td>
+			<td class="py-1">{% if p.sensor_items_configured == true %}{{ p._cycle_sensors }} {{ _('Sek.') }}{% else %}-{% endif %}</td>
 			<td></td>
 		</tr>
 		<tr>
 			<td class="py-1"><strong>Anwendungsschlüssel</strong></td>
 			<td class="py-1">{% if bridge.username == undeffined %}-{% else %}{{ _('konfiguriert') }}{% endif %}</td>
 			<td></td>
-			<td class="py-1"><strong></strong></td>   <!-- prompt 6 -->
-			<td class="py-1"></td>
+			<td class="py-1"><strong>Bridge Zyklus</strong></td>
+			<td class="py-1">{{ p._cycle_bridge }} {{ _('Sek.') }}</td>
 			<td></td>
 		</tr>
 	</tbody>
@@ -164,7 +164,6 @@
 							<th class="py-1">{{ _('Mode') }}</th>
 <!--						<th class="py-1">{{ _('Alarm') }}</th>  -->
 							<th class="py-1">{{ _('Erreichbar') }}</th>
-							<th class="py-1">{{ _('max. Lumen') }}</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -172,7 +171,7 @@
 							<tr id="{{ loop.index }}_clickip" style="cursor: pointer;">
 								<td class="py-1">{{ l }}</td>
 								<td class="py-1">{{ bridge_lights[l].name }}</td>
-								<td class="py-1">{{ bridge_lights[l].state.on }}</td>
+								<td class="py-1">{{ _(bridge_lights[l].state.on) }}</td>
 								<td class="py-1">{{ bridge_lights[l].state.bri }}</td>
 								<td class="py-1">{{ bridge_lights[l].state.hue }}</td>
 								<td class="py-1">{{ bridge_lights[l].state.sat }}</td>
@@ -181,7 +180,6 @@
 								<td class="py-1">{{ bridge_lights[l].state.colormode }}</td>
 <!--							<td class="py-1">{{ bridge_lights[l].state.alert }}</td>  -->
 								<td class="py-1">{{ _(bridge_lights[l].state.reachable) }}</td>
-								<td class="py-1">{{ bridge_lights[l].capabilities.control.maxlumen }}</td>
 							</tr>
 						{% endfor %}
 					</tbody>
@@ -209,7 +207,7 @@
 							<th class="py-1">{{ _('SW Version') }}</th>
 							<th class="py-1">{{ _('Startup') }}</th>
 							<th class="py-1">{{ _('Startup Settings') }}</th>
-							<th class="py-1" width="100px"></th>
+							<th class="py-1">{{ _('max. Lumen') }}</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -222,7 +220,7 @@
 								<td class="py-1">{{ bridge_lights[l].swversion }}</td>
 								<td class="py-1">{{ bridge_lights[l].config.startup.mode }}</td>
 								<td class="py-1">{{ bridge_lights[l].config.startup.customsettings }}</td>
-								<td class="py-1"></td>
+								<td class="py-1">{{ bridge_lights[l].capabilities.control.maxlumen }}</td>
 							</tr>
 						{% endfor %}
 					</tbody>
@@ -266,7 +264,6 @@
 							<th class="py-1">{{ _('Locked') }}</th>
 							<th class="py-1">{{ _('last updated') }}</th>
 							<th class="py-1">{{ _('Version') }}</th>
-						<th class="py-1" width="100px"></th>
 						</tr>
 					</thead>
 					<tbody>
@@ -277,11 +274,10 @@
 								<td class="py-1">{{ bridge_scenes[s].type }}</td>
 								<td class="py-1">{{ bridge_scenes[s].lights }}</td>
 								<td class="py-1">{{ bridge_scenes[s].owner }}</td>
-								<td class="py-1">{{ bridge_scenes[s].recycle }}</td>
-								<td class="py-1">{{ bridge_scenes[s].locked }}</td>
+								<td class="py-1">{{ _(bridge_scenes[s].recycle) }}</td>
+								<td class="py-1">{{ _(bridge_scenes[s].locked) }}</td>
 								<td class="py-1">{{ bridge_scenes[s].lastupdated }}</td>
 								<td class="py-1">{{ bridge_scenes[s].version }}</td>
-								<td class="py-1"></td>
 							</tr>
 						{% endfor %}
 					</tbody>
@@ -336,7 +332,7 @@
 								<td class="py-1">{{ bridge_groups[g].lights }}</td>
 								<td class="py-1">{{ bridge_groups[g].sensors }}</td>
 								<td class="py-1">{{ bridge_groups[g].state }}</td>
-								<td class="py-1">{{ bridge_groups[g].recycle }}</td>
+								<td class="py-1">{{ _(bridge_groups[g].recycle) }}</td>
 								<td class="py-1">{{ bridge_groups[g].class }}</td>
 								<td class="py-1">{{ bridge_groups[g].action }}</td>
 							</tr>

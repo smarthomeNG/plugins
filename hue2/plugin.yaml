@@ -24,47 +24,55 @@ plugin:
 
 parameters:
     # Definition of parameters to be configured in etc/plugin.yaml (enter 'parameters: NONE', if section should be empty)
-    bridge:
-        type: dict
-        gui_type: readonly
+    polltime_lights:
+        type: int
+        default: 5
+        valid_min: 1
         description:
-            de: 'Daten der verbundenen Hue Bridge - Für die verbundene Bridge wird ein dict mit den benötigten Daten durch das Webinterface des Plugins hier abgelegt'
-            en: 'Data of the connected hue bridge - Data will be filled by the web interface'
+            de: 'Zykluszeit in Sekunden (kurz) für die Abfrage von Informationen über Leuchten'
+            en: 'Polltime in seconds (short) for polling light information'
 
-    bridge_ip:
-        type: ip
-        gui_type: readonly
+    polltime_sensors:
+        type: int
+        default: 2
+        valid_min: 1
         description:
-            de: 'IP Adresse der Philips/Signify Hue Bridge'
-            en: 'ip address of the Philips/Signify hue bridge'
+            de: 'Zykluszeit in Sekunden (kurz) für die Abfrage von Sensoren'
+            en: 'Polltime in seconds (short) for polling sensor information'
 
-    bridge_user:
-        type: str
-        gui_type: readonly
+    polltime_bridge:
+        type: int
+        default: 90
         description:
-            de: 'Username/Anwendungsschlüssel um auf die Philips/Signify Hue Bridge zuzugreifen'
-            en: 'Username/application key to access to the Philips/Signify hue bridge'
+            de: 'Zykluszeit in Sekunden (lang) für die Abfrage der weiteren Informationen der Hue Bridge'
+            en: 'Polltime in seconds (long) for polling other informationen from the Hue bridge'
 
     bridge_serial:
         type: str
         gui_type: readonly
         description:
-            de: 'Seriennummer der Philips/Signify Hue Bridge'
-            en: 'Serial number of the Philips/Signify hue bridge'
+            de: 'Seriennummer der Philips/Signify Hue Bridge
+                 Dieser Parameter wird durch das Plugins in den Konfigurationsdaten abgelegt. Er ist in der Admin GUI nicht änderbar'
+            en: 'Serial number of the Philips/Signify hue bridge
+                 The plugin ist saving this dats to the configuration. This parameter cannot be changed in the admin GUI'
 
-    polltime_1:
-        type: int
-        default: 5
+    bridge_user:
+        type: str
+        gui_type: readonly
         description:
-            de: 'Zykluszeit (kurz) für die Abfrage von Leuchten und Sensoren'
-            en: 'Polltime (short) for polling light and sensor information'
+            de: 'Username/Anwendungsschlüssel um auf die Philips/Signify Hue Bridge zuzugreifen
+                 Dieser Parameter wird durch das Plugins in den Konfigurationsdaten abgelegt. Er ist in der Admin GUI nicht änderbar'
+            en: 'Username/application key to access to the Philips/Signify hue bridge
+                 The plugin ist saving this dats to the configuration. This parameter cannot be changed in the admin GUI'
 
-    polltime_2:
-        type: int
-        default: 90
+    bridge_ip:
+        type: ip
+        gui_type: readonly
         description:
-            de: 'Zykluszeit (lang) für die Abfrage der weiteren Informationen der Hue Bridge'
-            en: 'Polltime (long) for polling other informationen from the Hue bridge'
+            de: 'IP Adresse der Philips/Signify Hue Bridge
+                 Dieser Parameter wird durch das Plugins in den Konfigurationsdaten abgelegt. Er ist in der Admin GUI nicht änderbar'
+            en: 'ip address of the Philips/Signify hue bridge
+                 The plugin ist saving this dats to the configuration. This parameter cannot be changed in the admin GUI'
 
 item_attributes:
     # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)
