@@ -123,9 +123,9 @@ Das hat die selbe Wirkung, als hätte man ohne Struktur Template folgende Item-K
             hue2_function: ct
 
 
-Das Struktur Template **hue2.light_extended** definiert zusätzlich noch die Sub-Items ``hue_name``, ``reachable``,
-``colormode``, ``xy``, ``hue_type``, ``modelid`` und ``swversion``.
-``reachable``, ``colormode``, ``hue_type``, ``modelid`` und ``swversion`` können nur aus der Bridge gelesen
+Das Struktur Template **hue2.light_extended** definiert zusätzlich noch die Sub-Items ``light_name``, ``reachable``,
+``colormode``, ``xy``, ``light_type``, ``modelid`` und ``swversion``.
+``reachable``, ``colormode``, ``light_type``, ``modelid`` und ``swversion`` können nur aus der Bridge gelesen
 werden. Änderungen an dem Item werden von der Bridge ignoriert.
 
 
@@ -159,6 +159,11 @@ Für den Resource-Typ ``light`` sind die folgenden Funktionen implementiert (ein
     - ``type``
     - ``modelid``
     - ``swversion``
+
+Die vollständige Übersicht über die unterstützen Funktionen und die Datentypen dazu kann auf der
+Seite :doc:`/plugins_doc/config/hue2` in der Beschreibung des Item Attributes ``hue2_function`` nachgelesen
+werden.
+
 
 Um den Namen der Leuchte mit der Id 3 abzufragen, muss ein Item folgendermaßen konfiguriert werden:
 

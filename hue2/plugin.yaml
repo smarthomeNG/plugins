@@ -121,13 +121,13 @@ item_attributes:
               - "Farbton, 0 … 65535 -> num, r/w (resource: light)"
               - "Sättigung, 0 … 255 -> num, r/w (resource: light)"
               - "ct Wert -> num, r/w (resource: light)"
-              - "Name -> str, r/o (resource: light, group)"
+              - "Name -> str, r/w (resource: light, group, scene, sensor)"
               - "Erreichbar -> bool, r/o (resource: light)"
               - "Farb-Mode -> str (Werte: ct, hs, xy), r/o (resource: light)"
-              - "xy Werte -> list (resource: light)"
-              - "Typ des Leuchtmittels -> str (resource: light)"
-              - "Model Id des Leuchtmittels -> str (resource: light)"
-              - "Software Version des Leuchtmittels -> str (resource: light)"
+              - "xy Werte -> list, r/w (resource: light)"
+              - "Typ des Leuchtmittels -> str, r/o (resource: light)"
+              - "Model Id des Leuchtmittels -> str, r/o (resource: light)"
+              - "Software Version des Leuchtmittels -> str, r/o (resource: light)"
             en:
               - ""
               - ""
@@ -208,7 +208,7 @@ item_structs:
             hue2_id@instance: ..:.
             hue2_function@instance: xy
 
-        hue_type:
+        light_type:
             type: str
             hue2_resource@instance: ..:.
             hue2_id@instance: ..:.
