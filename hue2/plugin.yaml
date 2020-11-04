@@ -109,6 +109,11 @@ item_attributes:
           - reachable
           - colormode
           - xy
+          - type
+          - modelid
+          - swversion
+
+
         valid_list_description:
             de:
               - "Ein-/Ausschalten -> bool, r/w (resource: light)"
@@ -116,11 +121,17 @@ item_attributes:
               - "Farbton, 0 … 65535 -> num, r/w (resource: light)"
               - "Sättigung, 0 … 255 -> num, r/w (resource: light)"
               - "ct Wert -> num, r/w (resource: light)"
-              - "Name -> str, r/o (resource: light, group)"
+              - "Name -> str, r/w (resource: light, group, scene, sensor)"
               - "Erreichbar -> bool, r/o (resource: light)"
               - "Farb-Mode -> str (Werte: ct, hs, xy), r/o (resource: light)"
-              - "xy Werte -> list (resource: light)"
+              - "xy Werte -> list, r/w (resource: light)"
+              - "Typ des Leuchtmittels -> str, r/o (resource: light)"
+              - "Model Id des Leuchtmittels -> str, r/o (resource: light)"
+              - "Software Version des Leuchtmittels -> str, r/o (resource: light)"
             en:
+              - ""
+              - ""
+              - ""
               - ""
               - ""
               - ""
@@ -173,7 +184,7 @@ item_structs:
     light_extended:
         name: Vorlage-Struktur für eine Hue Leuchte mit erweiteten Attributen/Sub-Items
         struct: hue2.light
-        hue_name:
+        light_name:
             type: str
             hue2_resource@instance: ..:.
             hue2_id@instance: ..:.
@@ -196,6 +207,24 @@ item_structs:
             hue2_resource@instance: ..:.
             hue2_id@instance: ..:.
             hue2_function@instance: xy
+
+        light_type:
+            type: str
+            hue2_resource@instance: ..:.
+            hue2_id@instance: ..:.
+            hue2_function@instance: type
+
+        modelid:
+            type: str
+            hue2_resource@instance: ..:.
+            hue2_id@instance: ..:.
+            hue2_function@instance: modelid
+
+        swversion:
+            type: str
+            hue2_resource@instance: ..:.
+            hue2_id@instance: ..:.
+            hue2_function@instance: swversion
 
 #item_attribute_prefixes:
     # Definition of item attributes that only have a common prefix (enter 'item_attribute_prefixes: NONE' or ommit this section, if section should be empty)
