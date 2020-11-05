@@ -290,6 +290,7 @@ class SeActionSetItem(SeActionBase):
                 stateengine_eval = se_eval = StateEngineEval.SeEval(self._abitem)
             try:
                 item = self.__item.replace('sh', 'self._sh')
+                item = item.replace('shtime', 'self._shtime')
                 item = eval(item)
                 if item is not None:
                     self.__item = self._abitem.return_item(item)
@@ -532,6 +533,7 @@ class SeActionRun(SeActionBase):
         if isinstance(self.__eval, str):
             # noinspection PyUnusedLocal
             sh = self._sh
+            shtime = self._shtime
             if "stateengine_eval" in self.__eval or "se_eval" in self.__eval:
                 # noinspection PyUnusedLocal
                 stateengine_eval = se_eval = StateEngineEval.SeEval(self._abitem)
@@ -635,6 +637,7 @@ class SeActionForceItem(SeActionBase):
                 stateengine_eval = se_eval = StateEngineEval.SeEval(self._abitem)
             try:
                 item = self.__item.replace('sh', 'self._sh')
+                item = item.replace('shtime', 'self._shtime')
                 item = eval(item)
                 if item is not None:
                     self.__item = self._abitem.return_item(item)
