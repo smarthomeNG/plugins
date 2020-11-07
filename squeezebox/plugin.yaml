@@ -249,7 +249,7 @@ item_structs:
             visu_acl: rw
             squeezebox_send: rescan {}
             squeezebox_recv: rescan
-            on_update: .progress.scantpye = value
+            on_update: .progress.scantype = value
 
             query:
                 type: bool
