@@ -176,15 +176,6 @@ item_structs:
     manual_set:
         type: num
         km_id: /heatingCircuits/hc1/manualRoomSetpoint
-    temporary_set:
-        type: num
-        km_id: /heatingCircuits/hc1/temporaryRoomSetpoint
-    temp_eco:
-        type: num
-        km_id: /heatingCircuits/hc1/temperatureLevels/eco
-    temp_comfort:
-        type: num
-        km_id: /heatingCircuits/hc1/temperatureLevels/comfort2
     active_program:
         type: str
         km_id: /heatingCircuits/hc1/activeSwitchProgram
