@@ -8,6 +8,8 @@ This plugin connects your Neato (https://www.neatorobotics.com/) or Vorwerk Robo
 
 ## Change history
 
+V 1.6.3    changed attribute charge_percentage from string to integer
+
 V 1.6.2    Added webinterface
 
 V 1.6.1    Added new Vorwerk Oauth2 based authentication feature (compatible with myKobold APP)

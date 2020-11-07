@@ -31,7 +31,7 @@ from .robot import Robot
 
 
 class Neato(SmartPlugin):
-    PLUGIN_VERSION = '1.6.2'
+    PLUGIN_VERSION = '1.6.3'
     robot = 'None'
     _items = []
 
@@ -77,7 +77,7 @@ class Neato(SmartPlugin):
             self._items.append(item)
 
         if self.has_iattr(item.conf, 'neato_chargepercentage'):
-            item.property.value = str(self.robot.chargePercentage)
+            item.property.value = int(self.robot.chargePercentage)
             self._items.append(item)
 
         if self.has_iattr(item.conf, 'neato_isdocked'):
