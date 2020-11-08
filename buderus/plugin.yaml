@@ -13,7 +13,7 @@ plugin:
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
 #    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
 
-    version: 1.0.1                 # Plugin version
+    version: 1.0.2                 # Plugin version
     sh_minversion: 1.1             # minimum shNG version to use this plugin
     #sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     restartable: True
@@ -27,6 +27,7 @@ parameters:
     host:
         type: ip
         default: False
+        mandatory: True
         description:
             de: "IP Adresse"
             fr: "Adresse IP"
@@ -35,10 +36,11 @@ parameters:
     key:
         type: str
         default: False
+        mandatory: True
         description:
-            de: "key - zu erzeugen auf https://ssl-account.com/km200.andreashah"
-            fr: "clé - a générer sur https://ssl-account.com/km200.andreashah"
-            en: "key - generated from https://ssl-account.com/km200.andreashah"
+            de: "key - zu erzeugen auf https://ssl-account.com/km200.andreashahn.info/"
+            fr: "clé - a générer sur https://ssl-account.com/km200.andreashahn.info/"
+            en: "key - generated from https://ssl-account.com/km200.andreashahn.info/"
 
     cycle:
         type: int
@@ -50,37 +52,150 @@ parameters:
 
 
 item_attributes:
-    # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)
     km_id:
         type: str
-        #Todo: Maybe make the following a valid_list
-        #km_id: /gateway/DateTime
-        #km_id: /gateway/versionFirmware
-        #km_id: /gateway/versionHardware
-        #km_id: /system/brand
-        #km_id: /system/healthStatus
-        #km_id: /system/sensors/temperatures/outdoor_t1
-        #km_id: /system/sensors/temperatures/supply_t1
-        #km_id: /system/sensors/temperatures/hotWater_t2
-        #km_id: /heatSources/flameStatus
-        #km_id: /heatSources/hs1/numberOfStarts
-        #km_id: /heatingCircuits/hc1/currentRoomSetpoint
-        #km_id: /heatingCircuits/hc1/manualRoomSetpoint
-        #km_id: /heatingCircuits/hc1/temporaryRoomSetpoint
-        #km_id: /heatingCircuits/hc1/temperatureLevels/eco
-        #km_id: /heatingCircuits/hc1/temperatureLevels/comfort2
-        #km_id: /heatingCircuits/hc1/activeSwitchProgram
-        #km_id: /heatingCircuits/hc1/operationMode
-        #km_id: /dhwCircuits/dhw1/actualTemp
-        #km_id: /dhwCircuits/dhw1/currentSetpoint
-        #km_id: /dhwCircuits/dhw1/waterFlow
-        #km_id: /dhwCircuits/dhw1/workingTime
         description:
-            de: 'Pfad zum Datenpunkt des Buderus Gerätes'
-            en: 'Path of the datapoint within Buderus device'
+            de: 'Pfad zum Datenpunkt des Buderus Gerätes. Siehe /URLs.md für eine Liste der möglichen Werte.'
+            en: 'Path of the datapoint within Buderus device. See /URLs.md for a complete list of values.'
 
-item_structs: NONE
-    # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
+item_structs:
+
+  gateway:
+    uuid:
+        type: str
+        visu_acl: ro
+        km_id: /gateway/uuid
+    datetime:
+        type: str
+        visu_acl: ro
+        km_id: /gateway/DateTime
+    firmware:
+        type: str
+        visu_acl: ro
+        km_id: /gateway/versionFirmware
+    hardware:
+        type: str
+        visu_acl: ro
+        km_id: /gateway/versionHardware
+    
+  heating_system:
+    brand:
+        type: str
+        visu_acl: ro
+        km_id: /system/brand
+    type:
+        type: str
+        visu_acl: ro
+        km_id: /system/systemType
+    bus:
+        type: str
+        visu_acl: ro
+        km_id: /system/bus
+    health:
+        type: str
+        visu_acl: ro
+        km_id: /system/healthStatus
+#    info:
+#        type: dict
+#        km_id: /system/info
+    actualSupplyTemperature:
+        type: num
+        visu_acl: ro
+        km_id: /system/appliance/actualSupplyTemperature
+    powerSetpoint:
+        type: num
+        visu_acl: ro
+        km_id: /system/appliance/powerSetpoint
+    actualPower:
+        type: num
+        visu_acl: ro
+        km_id: /system/appliance/actualPower
+    pumpModulation:
+        type: num
+        visu_acl: ro
+        km_id: /system/appliance/CHpumpModulation
+    numberOfStarts:
+        type: num
+        visu_acl: ro
+        km_id: /system/appliance/numberOfStarts
+    gasAirPressure:
+        type: num
+        visu_acl: ro
+        km_id: /system/appliance/gasAirPressure
+    systemPressure:
+        type: num
+        visu_acl: ro
+        km_id: /system/appliance/systemPressure
+    workingTime:
+        totalSystem:
+            type: num
+            visu_acl: ro
+            km_id: /system/appliance/workingTime/totalSystem
+        secondBurner:
+            type: num
+            visu_acl: ro
+            km_id: /system/appliance/workingTime/secondBurner
+        centralHeating:
+            type: num
+            visu_acl: ro
+            km_id: /system/appliance/workingTime/centralHeating
+    nominalBurnerLoad:
+        type: num
+        visu_acl: ro
+        km_id: /system/appliance/nominalBurnerLoad
+    sensors:
+        outside:
+            type: num
+            visu_acl: ro
+            km_id: /system/sensors/temperatures/outdoor_t1
+        supply:
+            type: num
+            visu_acl: ro
+            km_id: /system/sensors/temperatures/supply_t1
+        return:
+            type: num
+            visu_acl: ro
+            km_id: /system/sensors/temperatures/return
+        hotwater:
+            type: num
+            visu_acl: ro
+            km_id: /system/sensors/temperatures/hotWater_t2
+        chimney:
+            type: num
+            visu_acl: ro
+            km_id: /system/sensors/temperatures/chimney
+        boiler_flame:
+            type: str
+            visu_acl: ro
+            km_id: /heatSources/flameStatus
+
+  heating_circuit_01:
+    room_set:
+        type: num
+        km_id: /heatingCircuits/hc1/currentRoomSetpoint
+    manual_set:
+        type: num
+        km_id: /heatingCircuits/hc1/manualRoomSetpoint
+    active_program:
+        type: str
+        km_id: /heatingCircuits/hc1/activeSwitchProgram
+    mode:
+        type: str
+        km_id: /heatingCircuits/hc1/operationMode
+
+  hot_water_circuit_01:
+    temp:
+        type: num
+        km_id: /dhwCircuits/dhw1/actualTemp
+    set:
+        type: num
+        km_id: /dhwCircuits/dhw1/currentSetpoint
+    flow:
+        type: num
+        km_id: /dhwCircuits/dhw1/waterFlow
+    time:
+        type: num
+        km_id: /dhwCircuits/dhw1/workingTime
 
 logic_parameters: NONE
     # Definition of logic parameters defined by this plugin

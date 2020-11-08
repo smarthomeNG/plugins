@@ -23,21 +23,22 @@ import logging
 import base64
 import json
 import binascii
-import urllib.request, urllib.error, urllib.parse
+import urllib.request
+import urllib.error
+import urllib.parse
 from io import StringIO
 from lib.model.smartplugin import SmartPlugin
 
 try:
     from Crypto.Cipher import AES
     REQUIRED_PACKAGE_IMPORTED = True
-except:
+except Exception:
     REQUIRED_PACKAGE_IMPORTED = False
-
 
 
 class Buderus(SmartPlugin):
 
-    PLUGIN_VERSION = "1.0.1"
+    PLUGIN_VERSION = "1.0.2"
 
     BS = AES.block_size
     INTERRUPT = '\u0001'
@@ -144,7 +145,7 @@ class Buderus(SmartPlugin):
         if value_type == "stringValue":
             try:
                 return j['allowedValues']
-            except:
+            except Exception:
                 return None
         elif value_type == "floatValue":
             return {"minValue": j['minValue'], "maxValue": j['maxValue']}
@@ -153,7 +154,7 @@ class Buderus(SmartPlugin):
         self.logger.info("Buderus SETTING {} to {}".format(item, item()))
         payload = self._json_encode(item())
         self.logger.debug(payload)
-        req = self._set_data(id, self._encrypt(str(payload)))
+        self._set_data(id, self._encrypt(str(payload)))
 
     def _poll_device(self):
         self.logger.info("Buderus fetching data...")
@@ -166,7 +167,6 @@ class Buderus(SmartPlugin):
 
     def parse_item(self, item):
         if self.has_iattr(item.conf, 'km_id'):
-        #if "km_id" in item.conf:
             id = self.get_iattr_value(item.conf, 'km_id')
             self._ids[id] = item
             return self.update_item
@@ -182,8 +182,7 @@ class Buderus(SmartPlugin):
                 if value_type == "stringValue" and item() in allowed_values or not allowed_values:
                     self._submit_data(item, id)
                     return
-                elif value_type == "floatValue" and item() >= allowed_values['minValue'] and item() <= allowed_values[
-                    'maxValue']:
+                elif value_type == "floatValue" and item() >= allowed_values['minValue'] and item() <= allowed_values['maxValue']:
                     self._submit_data(item, id)
                     return
                 else:
