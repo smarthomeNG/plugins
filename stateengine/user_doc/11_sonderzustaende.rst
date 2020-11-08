@@ -1,4 +1,4 @@
-.. index:: Plugins; Stateengine
+
 .. index:: Stateengine; Besondere Zustände
 .. _Besondere Zustände:
 
@@ -104,6 +104,12 @@ Suspend-Zustand auslösen sollen, zu kapseln. Dieses Item ist das
 "Manuell"-Item. Es wird so angelegt, dass der Wert dieses Items
 bei jeder manuellen Betätigung invertiert wird:
 
+Um etwaige Probleme mit dem Suspendzustand einfacher erkennen zu können,
+kann ein spezielles Logging aktiviert werden:
+
+**se_manual_logitem**
+*Der absolute Pfad des manuell Items*
+
 .. code-block:: yaml
 
    #items/item.yaml
@@ -136,10 +142,10 @@ Betätigung gewertet werden. Hierzu zählt zum Beispiel die
 Rückmeldung der Raffstore-Position nach dem Verfahren durch den
 Jalousieaktor. Hierfür stehen zwei weitere Attribute bereit:
 
-**as_manual_include**
+**se_manual_include**
 *Liste der Aufrufe, die als "manuelle Betätigung" gewertet werden sollen*
 
-**as_manual_exclude**
+**se_manual_exclude**
 *Liste der Aufrufe, die nicht als "manuelle Betätigung" gewertet werden sollen*
 
 Bei beiden Attributen wird eine Liste von Elementen angegeben. Die
@@ -165,9 +171,6 @@ Häufig verwendete ``Caller`` sind:
 
 Wenn ``se_manual_include`` oder ``se_manual_exclude`` angegeben
 sind, muss ``se_manual_invert`` nicht angegeben werden.
-
-Um etwaige Probleme mit den exclude und include Funktionen einfacher erkennen zu können,
-kann ein spezielles Logging aktiviert werden: ``se_manual_logitem: <dateiname>``
 
 Ein weiteres Beispiel mit Wildcards. Groß- und Kleinschreibung spielen generell keine Rolle.
 

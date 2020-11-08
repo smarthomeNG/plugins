@@ -8,7 +8,7 @@ You need a [Nuki Bridge](https://nuki.io/de/bridge/) which is already paired wit
 
 ## Support
 
-You can find the offical support thread for this plugin in the [KNX-User-Forum](https://knx-user-forum.de/forum/supportforen/smarthome-py/1052437-nuki-smartlock-plugin-support-thread).
+You can find the official support thread for this plugin in the [KNX-User-Forum](https://knx-user-forum.de/forum/supportforen/smarthome-py/1052437-nuki-smartlock-plugin-support-thread).
 
 ## Configuration
 
@@ -21,9 +21,6 @@ nuki:
     bridge_ip: 192.168.1.10
     bridge_port: 8080
     bridge_api_token: q1W2e3
-
-    # bridge_callback_ip: 192.168.0.2
-    # bridge_callback_port: 8090
 ```
 
 #### Attributes
@@ -31,10 +28,15 @@ nuki:
 * `bridge_ip` : IP address of the Nuki Bridge
 * `bridge_port` : Port number of the Nuki Bridge
 * `bridge_api_token` : Token for authentification of the API connection
-* `bridge_callback_ip`: IP address of the TCP dispatcher which is handling the Bridge callback requests. By default, the local IP address is used
-* `bridge_callback_port` : Port number of the TCP dispatcher. By default, port number 8090 is used.
 
-*This information can be set via the Nuki App
+This information can be set via the Nuki App. 
+
+IMPORTANT: This plugin release (and following) uses the http module (services) extension for
+the callback from the Nuki Bridge. Therefore this module must be configured to use the plugin.
+Configuring IP and Port for the Callback is not possible within the plugin anymore.
+Also note, that the service_user and service_password of the http module cannot be used with
+the Nuki bridge (limitation of the bridge, basic auth not supported). Even when configuring them, 
+the Nuki callback service won't use it.
 
 ### item.yaml
 
@@ -44,12 +46,14 @@ To get the Nuki functionality working, an item has to be type of `num` and  must
 #### nuki_id
 This attribute connects the related item with the corresponding Nuki Smart Lock.
 The `nuki_id` can be figured out via the REST API of the Nuki Bridge (see API documentation) or by just (re)starting
-SmarthomeNG with the configured Nuki plugin. The `name` and the `nuki_id` of all paired Nuki Locks will be written to
+SmarthomeNG with the configured Nuki plugin in the log level INFO / DEBUG. The `name` and the `nuki_id` of all paired Nuki Locks will be written to
 the log file of SmarthomeNG.
+
+Additionally, the IDs of all paired Nuki Locks are now also shown in the web interface of the plugin!
 
 #### nuki_trigger
 
-There are three types of nuki triggers, `action`, `state` and `battery`. An item can only have one trigger
+There are four types of nuki triggers, `action`, `state`, `doorstate` (only Nuki 2.0!) and `battery`. An item can only have one trigger
 attribute at once.
 
 ##### action
@@ -80,6 +84,16 @@ whenever these lock state was changed. Find the list with the possible values be
 * 254   (motor blocked)
 * 255   (undefined)
 
+
+##### doorstate
+If you declare an item with the attribute `nuki_trigger: doorstate`, this item will be set to the actual door state,
+whenever these door state was changed (only Nuki 2.0!). Find the list with the possible values below:
+
+* 1     (deactivated)
+* 2     (door closed)
+* 3     (door opened)
+* 4     (door state unknown)
+* 5     (calibrating)
 
 
 ##### battery

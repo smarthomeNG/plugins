@@ -80,18 +80,18 @@ above could look like this:
 
 .. code-block:: JSON
 
-    {
-        "items": [
-          ["wohnung.hauswirtschaft.deckenlicht", False],
-          ["wohnung.hauswirtschaft.waschmaschine", True],
-          ["wohnung.hauswirtschaft.waschmaschine.status", 1],
-          ["wohnung.hauswirtschaft.waschmaschine.ma", 37],
-          ["wohnung.hauswirtschaft.trockner", True],
-          ["wohnung.hauswirtschaft.trockner.status", 1],
-          ["wohnung.hauswirtschaft.trockner.ma", 0]
-        ]
-        "cmd": "item"
-    }
+  {
+    "items": [
+      ["wohnung.hauswirtschaft.deckenlicht", false],
+      ["wohnung.hauswirtschaft.waschmaschine", true],
+      ["wohnung.hauswirtschaft.waschmaschine.status", 1],
+      ["wohnung.hauswirtschaft.waschmaschine.ma", 37],
+      ["wohnung.hauswirtschaft.trockner", true],
+      ["wohnung.hauswirtschaft.trockner.status", 1],
+      ["wohnung.hauswirtschaft.trockner.ma", 0]
+    ],
+    "cmd": "item"
+  }
 
 Additionally, the plugin initiates an update routine, which sends
 updates for item values, if the item in smarthome.py has changed. For
@@ -125,8 +125,8 @@ The plugin answers with:
 logic
 ~~~~~
 
-With the **``logic``** command a client requests a logic to be
-triggered. **``name``** is the name of the logic, as defined in
+With the **``logic``** command a client requests a logic to be triggered
+or enabled/disabled. **``name``** is the name of the logic, as defined in
 **``etc/logic.yaml``**. Furthermore, in **``etc/logic.yaml``** the
 attribute **``visu_acl``** for that logic has to be set to **True**.
 
@@ -134,7 +134,13 @@ attribute **``visu_acl``** for that logic has to be set to **True**.
 
   {"cmd":"logic",  "name":"az_licht",  "val":0}
 
-**Optional**: **enabled** can be used to disable or enable logics.
+or
+
+.. code-block:: JSON
+
+  {"cmd":"logic",  "name":"az_licht",  "enabled":1}
+  {"cmd":"logic",  "name":"az_licht",  "enabled":0}
+
 
 Following information is passed to the logic via the trigger variable:
 
@@ -189,23 +195,23 @@ The answer to the request above could look like this:
 
   {
     "series": [
-        (1460636598495, 1831.97),
-        (1460637648422, 1458.14),
-        (1460639298307, 757.22),
-        (1460641098243, 577.38),
-        ... (102 values in total)
-        (1460802051217, 740.61),
-        (1460803884973, 637.61),
-        (1460805521319, 744.41),
-        (1460807229532, 718.03),
-        (1460808823757, 681.25),
-        (1460809294663, 681.25)
+        [1460636598495, 1831.97],
+        [1460637648422, 1458.14],
+        [1460639298307, 757.22],
+        [1460641098243, 577.38],
+        "... 102 values in total",
+        [1460802051217, 740.61],
+        [1460803884973, 637.61],
+        [1460805521319, 744.41],
+        [1460807229532, 718.03],
+        [1460808823757, 681.25],
+        [1460809294663, 681.25]
     ],
     "cmd": "series",
     "params": {
-      "end": 'now',
+      "end": "now",
       "start": 1460809294663,
-      "update": True,
+      "update": true,
       "item": "wohnung.verteilung.zaehler.wirkleistung",
       "step": 1728000.01,
       "func": "avg",
@@ -230,12 +236,48 @@ updates for series values after a defined period of time. For example:
 
     {
       "series": [
-        (1460810141323, 711.25),
-        (1460811024119, 711.25)
+        [1460810141323, 711.25],
+        [1460811024119, 711.25]
         ],
       "cmd": "series",
       "sid": "wohnung.verteilung.zaehler.wirkleistung|avg|48h|now"
     }
+
+
+series_cancel
+~~~~~~~~~~~~~
+
+With the **``series_cancel``** command a client requests the updates for a series that it has
+subscribed to earlier.
+
+.. code-block:: JSON
+
+  {
+   "cmd":"series_cancel",
+   "item":"wohnung.verteilung.zaehler.wirkleistung",
+   "series":"avg",
+   "start":"48h",
+   "end":"now",
+   "count":100
+  }
+
+The plugin answers with:
+
+.. code-block:: JSON
+
+  {
+   "cmd":"series_cancel",
+   "result": "..."
+  }
+
+or
+
+.. code-block:: JSON
+
+  {
+   "cmd":"series_cancel",
+   "error": "..."
+  }
 
 log
 ~~~
@@ -373,6 +415,21 @@ accessible logics.
 
 Requests sent from SmartHomeNG to the Visu
 ------------------------------------------
+
+dialog
+~~~~~~
+
+**``dialog``** is a command sent from the plugin to the smartVISU clients.
+With the **``dialog``** command the smartVISU client can be instructed to
+display a dialog.
+
+The following command instructs smartVISU to display a dialog:
+
+.. code-block:: JSON
+
+  {"cmd": "dialog", "header": "This is the dialog header", "content": "This is the dialog message"}
+
+The smartVISU client does not send an answer to the **``dialog``** command.
 
 url
 ~~~

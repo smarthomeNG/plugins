@@ -1,128 +1,86 @@
-# buderus
+# Buderus Plugin
 
-Plugin to control Buderus boilers using an additional Logamatic web KM200 module.
-Logamatic web KM50 and KM300 modules should also be supported.
+Plugin to control [Buderus heating systems](https://www.buderus.de/de) using an additional Logamatic web KM200 module. See section 'supported hardware' for more specific information.
 
+__Disclaimer__
 
-## Notes
-
-This plugin is still __under development__! The original author used this plugin
+This plugin is still *under development*! The original author used this plugin
 to lower heating when no presence is detected for longer period or
 when the alarm system is activated.
 
-## Prerequisite
+__Limitations__
+- Holiday modes are not available yet
+- Heating circuits switch program modification is not possible
 
-The following python packages need to be installed on your system:
-- urllib
-- crypto
+## Requirements
 
-A key needs to be generated from
-a) device password, printed on a sticker and
-b) from user defined password used to access EasyControl App.
+### Needed software
 
-## Installation
+* SmartHomeNG V1.6 or later
+* Python modules: see [requirements.txt](requirements.txt)
 
-```
-cd smarthome.py directory
-cd plugins
-git clone https://github.com/rthill/buderus.git
-```
+### Supported Hardware
+
+* Buderus Gateway KM200 (see https://www.buderus.com/ch/de/ocs/wohngebaeude/gateway-km200-632270-p/)
+* Logamatic web KM50 and KM300 modules should also be supported. (NOT TESTED)
+
+## Change history
+
+### Changes Since version 1.0.2
+
+- Improved the documentation
+- Introduced structs in `plugin.yaml` to ease the integration
+
+## Configuration 
 
 ### plugin.yaml
 
-```
+The plugin can be configured with the following parameters:
+
+| Parameter  | Description | Required
+| ------------- | ------------- | ------------- |
+| class_name  | Must be set to `Buderus`  | Yes  |
+| class_path  | Must be set to `plugins.buderus`  | Yes  |
+| host  | IP address of the KM200 gateway. e.g. `192.168.2.28`  | Yes  |
+| key  | Security key which must be created beforehand from your device password (printed on the KM200) and your user defined password (set in the EasyControl App): https://ssl-account.com/km200.andreashahn.info/  | Yes  |
+| cycle_time  | Information will be fetched from KM200 every X seconds. Defaults to 900, meaning an update will be pulled every 15 minutes.  | - |
+
+The following example can be used to setup a device:
+
+```yaml
 buderus:
     class_name: Buderus
     class_path: plugins.buderus
-    host: <ip_address>
-    key: <key generated from https://ssl-account.com/km200.andreashahn.info/>
-    cycle: 900    # default every 15 minutes
+    host: 192.168.2.28
+    key: 90ad52660ce1234551234579d89e25b70b5331ce0e82c5fd1254a317574ec807
 ```
 
 ### items.yaml
 
+The plugin provides ready to use structs for easy integration into your item configuration.
+
+| Item  | Description |
+| ------------- | ------------- |
+| gateway  | Information about the KM200 gateway itself.  |
+| heating_system  | Information about the connected heating system (e.g. current power, temperatures, ...)  |
+| heating_circuit_01  | Information about the heating circuit 01.   |
+| hot_water_circuit_01  | Information about the hot water circuit 01.   |
+
+Please see the following example:
+
 ```yaml
-
-buderus:
-
-    info:
-
-        datetime:
-            type: str
-            km_id: /gateway/DateTime
-
-        firmware:
-            type: str
-            km_id: /gateway/versionFirmware
-
-        hardware:
-            type: str
-            km_id: /gateway/versionHardware
-
-        brand:
-            type: str
-            km_id: /system/brand
-
-        health:
-            type: str
-            km_id: /system/healthStatus
-
-    sensors:
-        outside:
-            type: num
-            km_id: /system/sensors/temperatures/outdoor_t1
-        supply:
-            type: num
-            km_id: /system/sensors/temperatures/supply_t1
-        hotwater:
-            type: num
-            km_id: /system/sensors/temperatures/hotWater_t2
-    boiler:
-        flame:
-            type: str
-            km_id: /heatSources/flameStatus
-        starts:
-            type: num
-            km_id: /heatSources/hs1/numberOfStarts
-
-    # Heating circuit 1
-    hc1:
-        room_set:
-            type: num
-            km_id: /heatingCircuits/hc1/currentRoomSetpoint
-        manual_set:
-            type: num
-            km_id: /heatingCircuits/hc1/manualRoomSetpoint
-        temporary_set:
-            type: num
-            km_id: /heatingCircuits/hc1/temporaryRoomSetpoint
-        temp_eco:
-            type: num
-            km_id: /heatingCircuits/hc1/temperatureLevels/eco
-        temp_comfort:
-            type: num
-            km_id: /heatingCircuits/hc1/temperatureLevels/comfort2
-        active_program:
-            type: str
-            km_id: /heatingCircuits/hc1/activeSwitchProgram
-        mode:
-            type: str
-            km_id: /heatingCircuits/hc1/operationMode
-
-    # Hot water circuit 1
-    hw1:
-        temp:
-            type: num
-            km_id: /dhwCircuits/dhw1/actualTemp
-        set:
-            type: num
-            km_id: /dhwCircuits/dhw1/currentSetpoint
-        flow:
-            type: num
-            km_id: /dhwCircuits/dhw1/waterFlow
-        time:
-            type: num
-            km_id: /dhwCircuits/dhw1/workingTime
+Buderus:
+  gateway:
+    struct: buderus.gateway
+  heating_system:
+    struct: buderus.heating_system
+  heating_circuit_01:
+    struct: buderus.heating_circuit_01
+  hot_water_circuit_01:
+    struct: buderus.hot_water_circuit_01
 ```
 
-See [URLs](URLs.md) for more valid km_id's. 
+See [URLs](URLs.md) for additional km_id's. 
+
+# Appendix
+- [ioBroker Modul for KM200](https://github.com/frankjoke/ioBroker.km200)

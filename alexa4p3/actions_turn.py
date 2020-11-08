@@ -2,7 +2,7 @@ from .action import alexa
 
 DEFAULT_RANGE = (True, False)
 
-@alexa('turnOn', 'TurnOnRequest', 'TurnOnConfirmation','',[])
+@alexa('turnOn', 'TurnOnRequest', 'TurnOnConfirmation','',[],"2")
 def turn_on(self, payload):
     items = self.items( payload['appliance']['applianceId'] )
 
@@ -14,7 +14,7 @@ def turn_on(self, payload):
 
     return self.respond()
 
-@alexa('turnOff', 'TurnOffRequest', 'TurnOffConfirmation','',[])
+@alexa('turnOff', 'TurnOffRequest', 'TurnOffConfirmation','',[],"2")
 def turn_off(self, payload):
     items = self.items( payload['appliance']['applianceId'] )
 

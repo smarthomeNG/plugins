@@ -1,0 +1,187 @@
+# Metadata for the Smart-Plugin
+plugin:
+    # Global plugin attributes
+    type: interface                 # plugin type (gateway, interface, protocol, system, web)
+    description:
+        de: 'Erlaubt die Kommunikation über TCP mit Helios KWL Geräten mit Helios Easy Controls'
+        en: 'Enables the communication over TCP with Helios KWL devices that use Helios Easy Controls'
+    maintainer: freget (Thilo Schneider)
+    tester: nobody
+    version: 1.0.2                 # Plugin version
+    state: ready
+    sh_minversion: 1.6             # minimum shNG version to use this plugin
+#   sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    restartable: True
+    multi_instance: False          # plugin supports multi instance
+    classname: HeliosTCP           # class containing the plugin
+
+parameters:
+    helios_ip:
+      type: ipv4
+      mandatory: True
+      description:
+        de: "IP-Adresse des Lüftungsgerätes"
+        en: "IP Adress of the Helios device"
+
+    update_cycle:
+      type: int
+      default: 60
+      description:
+        de: "Dauer zwischen der Abfrage der Werte in der Lüftungsanlage in Sekunden"
+        en: "Time difference between two polls of the linked values in seconds"
+
+item_attributes:
+    helios_tcp:
+      type: str
+      description:
+        de: "Name des Attributs der Lüftungsanlage, welches auf das Item geschrieben wird"
+        en: "Name of the atribute of the ventilation system that is mapped to that item"
+      valid_list:
+        - outside_temp
+        - exhaust_temp
+        - inside_temp
+        - incoming_temp
+        - pre_heating_temp
+        - post_heating_temp
+        - post_heating_reflux_temp
+        - error_count
+        - warning_count
+        - info_count
+        - fan_in_rpm
+        - fan_out_rpm
+        - internal_humidity
+        - sensor1_humidity
+        - sensor2_humidity
+        - sensor3_humidity
+        - sensor4_humidity
+        - sensor5_humidity
+        - sensor6_humidity
+        - sensor7_humidity
+        - sensor8_humidity
+        - sensor1_temperature
+        - sensor2_temperature
+        - sensor3_temperature
+        - sensor4_temperature
+        - sensor5_temperature
+        - sensor6_temperature
+        - sensor7_temperature
+        - sensor8_temperature
+        - sensor1_co2
+        - sensor2_co2
+        - sensor3_co2
+        - sensor4_co2
+        - sensor5_co2
+        - sensor6_co2
+        - sensor7_co2
+        - sensor8_co2
+        - sensor1_voc
+        - sensor2_voc
+        - sensor3_voc
+        - sensor4_voc
+        - sensor5_voc
+        - sensor6_voc
+        - sensor7_voc
+        - sensor8_voc
+        - filter_remaining
+        - boost_remaining
+        - sleep_remaining
+        - fan_level_percent
+        - bypass_open
+        - humidity_control_status
+        - humidity_control_target
+        - co2_control_status
+        - co2_control_target
+        - voc_control_status
+        - voc_control_target
+        - comfort_temperature
+        - fan_in_voltage_level1
+        - fan_out_voltage_level1
+        - fan_in_voltage_level2
+        - fan_out_voltage_level2
+        - fan_in_voltage_level3
+        - fan_out_voltage_level3
+        - fan_in_voltage_level4
+        - fan_out_voltage_level4
+        - manual_mode
+        - filter_change
+        - filter_changeinterval
+        - bypass_roomtemperature
+        - bypass_minoutsidetemp
+        - fan_level
+        - fan_in_level
+        - fan_out_level
+        - boost_duration
+        - boost_level
+        - boost_on
+        - sleep_duration
+        - sleep_level
+        - sleep_on
+        - preheating_status
+
+
+item_structs:
+  Lueftung:
+    name: Lüftungsanlage
+    sv_page: category
+    sv_img: vent_ventilation.svg
+
+    Temperatur:
+      Frischluft:
+        type: num
+        visu_acl: r
+        helios_tcp: outside_temp
+
+      Zuluft:
+        type: num
+        visu_acl: r
+        helios_tcp: incoming_temp
+
+      Abluft:
+        type: num
+        visu_acl: r
+        helios_tcp: inside_temp
+
+      Fortluft:
+        type: num
+        visu_acl: r
+        helios_tcp: exhaust_temp
+
+    Luftfeuchtigkeit:
+      type: num
+      visu_acl: r
+      database: yes
+      helios_tcp: internal_humidity
+
+    Luefterstufe:
+      type: num
+      visu_acl: rw
+      database: yes
+      helios_tcp: fan_level
+
+    Manuell:
+      type: bool
+      visu_acl: rw
+      helios_tcp: manual_mode
+
+    Status:
+      AnzahlFehler:
+        type: num
+        visu_acl: r
+        helios_tcp: error_count
+
+    AnzahlWarnungen:
+        type: num
+        visu_acl: r
+        helios_tcp: warning_count
+
+    AnzahlInfos:
+        type: num
+        visu_acl: r
+        helios_tcp: info_count
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin
+
+plugin_functions: NONE
+    # Definition of function interface of the plugin
+

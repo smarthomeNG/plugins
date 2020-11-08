@@ -1,18 +1,17 @@
 # Apple TV plugin
 
-#### Version 1.5.1
+#### Version 1.7.1
 
 With this plugin you can control one or more Apple TV's. Each Apple TV needs an own plugin instance. It uses the fantastic [pyatv library](https://github.com/postlund/pyatv/tree/v0.3.9) from [Pierre Ståhl](https://github.com/postlund). It also provides a web interface to be used with the `http` module.
 
 
 ## Requirements
-This plugin is designed to work with future SHNG v1.5. It runs on current develop version, but using Python >= 3.5 is mandatory.
+This plugin is designed to work with SHNG v1.5. It runs on current develop version, but using Python >= 3.5 is mandatory.
 
 ### Needed software
 
-* Python >= 3.5
-* [pyatv package 0.3.9](https://github.com/postlund/pyatv/tree/v0.3.9 "pyatv 0.3.9 page on GitHub") (`pip install pyatv`)
-* Optional: [Backend plugin](https://www.smarthomeng.de/user/plugins/backend/user_doc.html) with [http module](https://www.smarthomeng.de/user/konfiguration/module_http.html)
+* Python >= 3.6
+* [pyatv package](https://github.com/postlund/pyatv "pyatv page on GitHub")
 
 ### Supported Hardware
 

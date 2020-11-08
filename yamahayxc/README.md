@@ -17,6 +17,8 @@ The 'update' item has no own function. Writing to this item triggers a pull of a
 Feel free to comment and to file issues.
 At the moment only the main zone and the netusb player are supported. Support for multiple zones should be possible on request. For other players supply test equipment :)
 
+Starting with sh.py release v1.7 item structs are available for basic media players and for devices with additional alarm clock functions.
+
 
 ## Requirements
 
@@ -26,7 +28,7 @@ The following python packages need to be installed on your system:
 
 Those packages can be installed using:
 
-```bash
+``` bash
 # Debian based
 sudo apt-get install python3-requests
 
@@ -39,7 +41,7 @@ sudo dnf install python3-requests
 
 ## Installation
 
-```bash
+``` bash
 cd smarthome.py directory
 cd plugins
 git clone https://github.com/Morg42/yamahayxc.git
@@ -60,7 +62,18 @@ yamahayxc:
 
 ### items.yaml
 
-```yaml
+``` yaml
+media:
+    
+    wx010:
+        struct: yamahayxc.basic
+
+        yamahayxc_host: 192.168.2.211
+```
+
+or without structs (results in identical item tree):
+
+``` yaml
 media:
 
     wx010:
@@ -150,6 +163,29 @@ media:
             yamahayxc_cmd: state
             enforce_updates: 'True'
 
+
+
+# the following items are only valid for devices with alarm clock functions
+# these are included in addition to the others from the 'alarm' struct:
+
+        # enable / disable alarm function
+        alarm_on:
+            type: bool
+            yamahayxc_cmd: alarm_on
+            enforce_updates: 'True'
+
+        # enable / disable alarm beep (solo or in addition to music)
+        alarm_beep:
+            type: bool
+            yamahayxc_cmd: alarm_beep
+            enforce_updates: 'True'
+
+        # get/set alarm time. Formatted as 4 digit 24 hour string
+        alarm_time:
+            type: str
+            yamahayxc_cmd: alarm_time
+            enforce_updates: 'True'
+
 ```
 
 ### Example CLI usage
@@ -163,4 +199,7 @@ media:
 > up media.wx010.playback=play
 > up media.wx010.power=False
 > up media.wx010.passthru='v1/Main/setPower?power=off'
+> up media.wx010.alarm_time='1430'
 ```
+
+Note: I cheated. The wx-010 doesn't have alarm functions...

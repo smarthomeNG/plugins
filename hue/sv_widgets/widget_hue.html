@@ -1,7 +1,7 @@
 /**
  * Hue Widget
  * (c) 2015 Michael Würtenberger
- * 
+ *
  * @param       unique id for this widget
  * @param       the gad/item for the power (optional)
  * @param       the gad/item for the volume (optional)
@@ -17,20 +17,20 @@
 <table height="90%" width="90%" align="center">
 	<tr>
 		<td width="15%" align="center">
-			{{basic.dual(id~'power',g_power)}}
+			{{ basic.stateswitch(id~'power',g_power, 'mini', ['0','1']) }}
 		</td>
 		<td width="15%" align="center">
 			{{basic.symbol(id~'reachon',g_reach,'',icon1~'it_wifi.png','1')}}
 			{{basic.symbol(id~'reachoff',g_reach,'',icon0~'it_wifi.png','0')}}
 		</td>
 		<td width="15%" align="center">
-			{{basic.rgb(id~'rgb',g_r,g_g,g_b,0,255,'',8)}}
+			{{basic.color(id~'rgb', g_r, g_g, g_b ,0, 255, '', 8)}}
 		</td>
 		<td width="25%" align="center">
-			Alert:{{basic.dual(id~'alert',g_alert,icon1~'audio_pause.png', icon1~'audio_play.png', 'lselect','none')}}
+			Alert:{{ basic.stateswitch(id~'alert',g_alert, 'mini', ['0','1'], [icon1~'audio_pause.png', icon1~'audio_play.png'], ['lselect','']) }}
 		</td>
 		<td width="25%" align="center">
-			Effect:{{basic.dual(id~'effect',g_effect,icon1~'audio_pause.png', icon1~'audio_play.png', 'colorloop',	'none')}}
+			Effect:{{ basic.stateswitch(id~'effect',g_effect, 'mini', ['0','1'], [icon1~'audio_pause.png', icon1~'audio_play.png'], ['colorloop','']) }}
 		</td>
 	</tr>
 </table>
@@ -65,7 +65,7 @@
 /**
  * Hue Widget
  * (c) 2015 Michael Würtenberger
- * 
+ *
  * @param       unique id for this widget
  * @param       the gad/item for the power (optional)
  * @param       the gad/item for the volume (optional)
@@ -81,13 +81,13 @@
 <table height="90%" width="90%" align="center">
 	<tr>
 		<td width="15%" align="center">
-			{{basic.dual(id~'power',g_power)}}
+			{{ basic.stateswitch(id~'power',g_power, 'icon', ['0','1']) }}
 		</td>
 		<td width="25%" align="center">
-			Alert:{{basic.dual(id~'alert',g_alert,icon1~'audio_pause.png', icon1~'audio_play.png', 'lselect','none')}}
+			Alert:{{ basic.stateswitch(id~'alert',g_alert, 'icon', ['0','1'], [icon1~'audio_pause.png', icon1~'audio_play.png'], ['lselect','none']) }}
 		</td>
 		<td width="25%" align="center">
-			Effect:{{basic.dual(id~'effect',g_effect,icon1~'audio_pause.png', icon1~'audio_play.png', 'colorloop',	'none')}}
+			Effect:{{ basic.stateswitch(id~'effect',g_effect, 'icon', ['0','1'], [icon1~'audio_pause.png', icon1~'audio_play.png'], ['colorloop','none']) }}
 		</td>
 	</tr>
 </table>

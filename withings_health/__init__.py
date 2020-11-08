@@ -30,7 +30,7 @@ from nokia import NokiaAuth, NokiaApi, NokiaCredentials
 
 class WithingsHealth(SmartPlugin):
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = "1.6.4"
+    PLUGIN_VERSION = "1.7.0"
     ALLOWED_MEASURE_TYPES = [1, 4, 5, 6, 8, 11]
 
     def __init__(self, sh, *args, **kwargs):
@@ -237,21 +237,21 @@ class WithingsHealth(SmartPlugin):
                     self._items['bmi'](bmi, self.get_shortname())
                 if 'bmi_text' in self._items:
                     if bmi < 16:
-                        self._items['bmi_text']('starkes Untergewicht', self.get_shortname())
+                        self._items['bmi_text'](self.translate('starkes Untergewicht'), self.get_shortname())
                     elif 16 <= bmi < 17:
-                        self._items['bmi_text']('mäßiges Untergewicht', self.get_shortname())
+                        self._items['bmi_text'](self.translate('mäßiges Untergewicht'), self.get_shortname())
                     elif 17 <= bmi < 18.5:
-                        self._items['bmi_text']('leichtes Untergewicht', self.get_shortname())
+                        self._items['bmi_text'](self.translate('leichtes Untergewicht'), self.get_shortname())
                     elif 18.5 <= bmi < 25:
-                        self._items['bmi_text']('Normalgewicht', self.get_shortname())
+                        self._items['bmi_text'](self.translate('Normalgewicht'), self.get_shortname())
                     elif 25 <= bmi < 30:
-                        self._items['bmi_text']('Präadipositas (Übergewicht)', self.get_shortname())
+                        self._items['bmi_text'](self.translate('Präadipositas (Übergewicht)'), self.get_shortname())
                     elif 30 <= bmi < 35:
-                        self._items['bmi_text']('Adipositas Grad I', self.get_shortname())
+                        self._items['bmi_text'](self.translate('Adipositas Grad I'), self.get_shortname())
                     elif 35 <= bmi < 40:
-                        self._items['bmi_text']('Adipositas Grad II', self.get_shortname())
+                        self._items['bmi_text'](self.translate('Adipositas Grad II'), self.get_shortname())
                     elif 40 <= bmi:
-                        self._items['bmi_text']('Adipositas Grad III', self.get_shortname())
+                        self._items['bmi_text'](self.translate('Adipositas Grad III'), self.get_shortname())
             else:
                 self.logger.error(
                     "Cannot calculate BMI: height is 0, please set height (in m) for height item manually.")

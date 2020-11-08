@@ -9,7 +9,8 @@ Some parameters have changed and are improved a little:
 * bri --> bricontrol, changed from Bool to String
 * off --> cutoff
 
-The best way to configure it is by using the Admin Interface
+The best way to configure it is by using the Admin Interface. It should also be possible
+to use multiple instances of the plugin although not tested so far.
 
 #### Todo:
 
@@ -21,8 +22,10 @@ The best way to configure it is by using the Admin Interface
 
 ### Supported Hardware
 
-miLight 2,4 GHz controlled Light Bulbs or LED RGB-W Strip Controller with WLAN Interface / WiFi Bridge receiver V3.0
+MiLight 2,4 GHz controlled Light Bulbs or LED RGB-W Strip Controller with WLAN Interface / WiFi Bridge receiver V3.0
 (V2.0 interfaces should be backward compatible but using different default UDP port)
+User also reported it works with the ESP8266 based replacement hub (https://github.com/sidoh/esp8266_milight_hub) which is
+based on this works here https://hackaday.io/project/5888-reverse-engineering-the-milight-on-air-protocol
 
 Lamps are sold under different brands MiLight, Easybulb, LimitlessLED
 The plugin was tested with recently released RGB-W Lamps
@@ -231,29 +234,45 @@ mylight:
 
 Hint: On and bricontrol are coupled, like a typical KNX dimmer.
 
-### logic.yaml
+### Example for RGB
 
-Since SmartVISU does not support table input for RGB selection, following logic 
-could be useful to calculate RGB table out of 3 seperate input for R; G and B values
-
-#### Example
-
-Entry for logics.yaml:
+Since SmartVISU does not support table input for RGB selection, following item construction
+could be useful to calculate RGB table out of 3 separate input for R, G and B values
 
 ```yaml
-rgb_conversion:
-  filename: rgb_conversion.py
-  watch_item:
-    - r
-    - g
-    - b
+living_room:
+    rgb:
+        name: RGB
+        type: list
+        milight_rgb: 1
+        cache: yes
+        eval: "[sh..r(), sh..g(), sh..b()]"
+        eval_trigger:
+          - .r
+          - .g
+          - .b
+        
+        r:
+            name: value for red
+            type: num
+            cache: yes
+            visu_acl: rw
+
+        g:
+            name: value for green
+            type: num
+            cache: yes
+            visu_acl: rw
+
+        b:
+            name: value for blue
+            type: num
+            cache: yes
+            visu_acl: rw
 ```
 
-The logic script code in ``logics/rgb.conversion.py``:
+If autogeneration plugin for SmartVISU is used, on ecan take the following code snippet as basis:
 
-```python
-r=sh.r()
-g=sh.g()
-b=sh.b()
-sh.rgb ([r,g,b])
+```html
+{{ basic.color('', 'living_room.rgb', '', '', [0,0,0], [255,255,255], '', '', 'rect', 'rgb') }}
 ```

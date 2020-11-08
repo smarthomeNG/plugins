@@ -2,7 +2,7 @@
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
 #  Copyright 2013 Thomas Creutz                      thomas.creutz@gmx.de
-#  Copyright 2016 Bernd Meiners                     Bernd.Meiners@mail.de
+#  Copyright 2016-2020 Bernd Meiners                Bernd.Meiners@mail.de
 #########################################################################
 #  This file is part of SmartHomeNG
 #  https://github.com/smarthomeNG/smarthome
@@ -36,14 +36,15 @@ from lib.item import Items
 from lib.shtime import Shtime
 from lib.model.smartplugin import *
 
+from .webif import WebInterface
+
 class RTR(SmartPlugin):
     """
     Main class of the rtr plugin. Does all plugin specific stuff and provides
     the update functions for the items
     """
 
-    ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.2.3"
+    PLUGIN_VERSION = "1.6.0"
 
     HVACMode_Auto = 0
     HVACMode_Comfort = 1
@@ -71,7 +72,7 @@ class RTR(SmartPlugin):
                 'valveProtectActive' : False,
                 'validated' : False}
 
-    def __init__(self, sh, *args, **kwargs):
+    def __init__(self, sh):
         """
         Initalizes the plugin. The parameters describe for this method are pulled from the entry in plugin.conf.
 
@@ -79,6 +80,10 @@ class RTR(SmartPlugin):
         :param *args: **Deprecated**: Old way of passing parameter values. For SmartHomeNG versions 1.4 and up: **Don't use it**!
         :param **kwargs:**Deprecated**: Old way of passing parameter values. For SmartHomeNG versions 1.4 and up: **Don't use it**!
         """
+
+        # Call init code of parent class (SmartPlugin)
+        super().__init__()
+
         from bin.smarthome import VERSION
         if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
             self.logger = logging.getLogger(__name__)
@@ -99,6 +104,16 @@ class RTR(SmartPlugin):
         self._cycle_time = self.get_parameter_value('cycle_time')
         self._defaultOnExpiredTimer = self.get_parameter_value('defaultOnExpiredTimer')
 
+        # On initialization error use:
+        #   self._init_complete = False
+        #   return
+
+        # if plugin should start even without web interface
+        self.init_webinterface(WebInterface)
+        # if plugin should not start without web interface
+        # if not self.init_webinterface():
+        #     self._init_complete = False
+
         return
 
     def run(self):
@@ -117,6 +132,8 @@ class RTR(SmartPlugin):
         Stop method for the plugin
         """
         self.logger.debug("rtr: stop method called")
+        self.scheduler_remove('cycle')
+        self.scheduler_remove('protect')
         self.alive = False
 
     def parse_item(self, item):
@@ -125,10 +142,11 @@ class RTR(SmartPlugin):
         :param item: The item to process.
         """
         if self.has_iattr(item.conf, 'rtr_current'):
-            if not item.conf['rtr_current'].isdigit():
+            rtr_current = self.get_iattr_value(item.conf,'rtr_current')
+            if rtr_current is None:
                 self.logger.error("rtr: error in item {0}, rtr_current need to be the controller number".format(item.id()))
                 return
-            c = 'c' + item.conf['rtr_current']
+            c = 'c{}'.format(rtr_current)
 
             # init controller with defaults when it not exist
             if c not in self._controller:
@@ -141,17 +159,20 @@ class RTR(SmartPlugin):
 
             # check for optional item attribute rtr_Kp (float)
             if self.has_iattr(item.conf, 'rtr_Kp'):
-                if item.conf['rtr_Kp'].replace(".", "", 1).isdigit():
-                    self._controller[c]['Kp'] = float(item.conf['rtr_Kp'])
-                else:
+                rtr_Kp = self.get_iattr_value(item.conf,'rtr_Kp')
+                if rtr_Kp is None:
                     self.logger.error("rtr: item {0}, rtr_Kp need to be a number".format(item.id()))
+                else:
+                    self._controller[c]['Kp'] = float(rtr_Kp)
 
             # check for optional item attribute rtr_Ki (float)
             if self.has_iattr(item.conf, 'rtr_Ki'):
-                if item.conf['rtr_Ki'].replace(".", "", 1).isdigit():
-                    self._controller[c]['Ki'] = float(item.conf['rtr_Ki'])
-                else:
+                rtr_Ki = self.get_iattr_value(item.conf,'rtr_Ki')
+                if rtr_Ki is None:
                     self.logger.error("rtr: item {0}, rtr_Ki need to be a number".format(item.id()))
+                else:
+                    self._controller[c]['Ki'] = float(rtr_Ki)
+
 
             if not self._controller[c]['validated']:
                 self.validate_controller(c)
@@ -159,11 +180,12 @@ class RTR(SmartPlugin):
             return
 
         if self.has_iattr(item.conf, 'rtr_setpoint'):
-            if not item.conf['rtr_setpoint'].isdigit():
+            rtr_setpoint =  self.get_iattr_value(item.conf,'rtr_setpoint')
+            if rtr_setpoint is None:
                 self.logger.error("rtr: error in item {0}, rtr_setpoint need to be the controller number".format(item.id()))
                 return
 
-            c = 'c' + item.conf['rtr_setpoint']
+            c = 'c{}'.format(rtr_setpoint)
 
             # init controller with defaults when it not exist
             if c not in self._controller:
@@ -175,32 +197,36 @@ class RTR(SmartPlugin):
             self.logger.info("rtr: bound item '{1}' to setpointItem for controller '{0}'".format(c, item.id()))
 
             # check for optional item attribute rtr_temp_default (float)
-            if self.has_iattr(item.conf, 'rtr_temp_default'):
-                if item.conf['rtr_temp_default'].replace(".", "", 1).isdigit():
-                    self._controller[c]['tempDefault'] = float(item.conf['rtr_temp_default'])
-                else:
-                    self.logger.error("rtr: item {0}, rtr_temp_default need to be a number".format(item.id()))
+            rtr_temp_default = self.has_iattr(item.conf, 'rtr_temp_default')
+            if rtr_temp_default is None:
+                self.logger.error("rtr: item {0}, rtr_temp_default need to be a number".format(item.id()))
+            else:
+                self._controller[c]['tempDefault'] = float(rtr_temp_default)
+
 
             # check for optional item attribute rtr_temp_drop (float)
-            if self.has_iattr(item.conf, 'rtr_temp_drop'):
-                if item.conf['rtr_temp_drop'].replace(".", "", 1).isdigit():
-                    self._controller[c]['tempDrop'] = float(item.conf['rtr_temp_drop'])
-                else:
-                    self.logger.error("rtr: item {0}, rtr_temp_drop need to be a number".format(item.id()))
+            rtr_temp_drop = self.has_iattr(item.conf, 'rtr_temp_drop')
+            if rtr_temp_drop is None:
+                self.logger.error("rtr: item {0}, rtr_temp_drop need to be a number".format(item.id()))
+            else:
+                self._controller[c]['tempDrop'] = float(rtr_temp_drop)
+
 
             # check for optional item attribute rtr_temp_boost (float)
             if self.has_iattr(item.conf, 'rtr_temp_boost'):
-                if item.conf['rtr_temp_boost'].replace(".", "", 1).isdigit():
-                    self._controller[c]['tempBoost'] = float(item.conf['rtr_temp_boost'])
-                else:
+                rtr_temp_boost = self.get_iattr_value(item.conf,'rtr_temp_boost')
+                if rtr_temp_boost is None:
                     self.logger.error("rtr: item {0}, rtr_temp_boost need to be a number".format(item.id()))
+                else:
+                    self._controller[c]['tempBoost'] = float(rtr_temp_boost)
 
             # check for optional item attribute rtr_temp_boost_time (float)
             if self.has_iattr(item.conf, 'rtr_temp_boost_time'):
-                if item.conf['rtr_temp_boost_time'].isdigit():
-                    self._controller[c]['tempBoostTime'] = int(item.conf['rtr_temp_boost_time'])
-                else:
+                rtr_temp_boost_time = self.get_iattr_value(item.conf,'rtr_temp_boost_time')
+                if rtr_temp_boost_time is None:
                     self.logger.error("rtr: item {0}, rtr_temp_boost_time need to be a number".format(item.id()))
+                else:
+                    self._controller[c]['tempBoostTime'] = int(rtr_temp_boost_time)
 
             if not self._controller[c]['validated']:
                 self.validate_controller(c)
@@ -208,11 +234,12 @@ class RTR(SmartPlugin):
             return self.update_setpoint
 
         if self.has_iattr(item.conf, 'rtr_actuator'):
-            if not item.conf['rtr_actuator'].isdigit():
+            rtr_actuator = self.get_iattr_value(item.conf,'rtr_actuator')
+            if rtr_actuator is None:
                 self.logger.error("rtr: error in item {0}, rtr_actuator need to be the controller number".format(item.id()))
                 return
 
-            c = 'c' + item.conf['rtr_actuator']
+            c = 'c{}'.format(rtr_actuator)
 
             # init controller with defaults when it not exist
             if c not in self._controller:
@@ -225,9 +252,9 @@ class RTR(SmartPlugin):
 
             # check for optional item attribute rtr_valve_protect (bool)
             if self.has_iattr(item.conf, 'rtr_valve_protect'):
-                if item.conf['rtr_valve_protect'].lower() in ['yes', 'true', 'on', '1']:
+                if self.get_iattr_value(item.conf,'rtr_valve_protect').lower() in ['yes', 'true', 'on', '1']:
                     self._controller[c]['valveProtect'] = True
-                elif item.conf['rtr_valve_protect'].lower() in ['no', 'false', 'off', '0']:
+                elif self.get_iattr_value(item.conf,'rtr_valve_protect').lower() in ['no', 'false', 'off', '0']:
                     self._controller[c]['valveProtect'] = False
                 else:
                     self.logger.error("rtr: item {0}, rtr_valve_protect need to be boolean".format(item.id()))
@@ -238,11 +265,12 @@ class RTR(SmartPlugin):
             return
 
         if self.has_iattr(item.conf, 'rtr_timer_end_text'):
-            if not item.conf['rtr_timer_end_text'].isdigit():
+            rtr_timer_end_text = self.get_iattr_value(item.conf,'rtr_timer_end_text')
+            if rtr_timer_end_text is None:
                 self.logger.error("rtr: error in item {0}, rtr_timer_end_text need to be the controller number".format(item.id()))
                 return
 
-            c = 'c' + item.conf['rtr_timer_end_text']
+            c = 'c{}'.format(rtr_timer_end_text)
 
             # init controller with defaults when it not exist
             if c not in self._controller:
@@ -254,13 +282,14 @@ class RTR(SmartPlugin):
             return
 
         if self.has_iattr(item.conf, 'rtr_hvac_mode'):
-            if not item.conf['rtr_hvac_mode'].isdigit():
+            rtr_hvac_mode = self.get_iattr_value(item.conf,'rtr_hvac_mode')
+            if rtr_hvac_mode is None:
                 self.logger.error("rtr: error in item {0}, rtr_hvac_mode need to be the controller number".format(item.id()))
                 return
 
-            c = 'c' + item.conf['rtr_hvac_mode']
+            c = 'c{}'.format(rtr_hvac_mode)
 
-            # init controller with defaults when it not exist
+            # init controller with defaults when it does not exist
             if c not in self._controller:
                 self.logger.debug("rtr: controller '{0}' does not exist yet. Init with default values".format(c))
                 self._controller[c] = self._defaults.copy()
@@ -275,24 +304,21 @@ class RTR(SmartPlugin):
 
         if self.has_iattr(item.conf, 'rtr_stops'):
             # validate this optional Item
+            rtr_stops = self.get_iattr_value(item.conf,'rtr_stops')
             if item.type() != 'bool':
-                self.logger.error("rtr: error in item {0}, rtr_stops Item need to be bool (current {1})".format(item.id(), item._type))
+                self.logger.error("rtr: error in item {0}, rtr_stops Item need to be bool (current {1})".format(item.id(), item.type()))
                 return
 
-            self.logger.debug("rtr: parse item {0}, found rtr_stops={1}".format(item.id(), item.conf['rtr_stops']))
+            self.logger.debug("rtr: parse item {0}, found rtr_stops={1}".format(item.id(), rtr_stops))
 
-            cList = item.conf['rtr_stops']
-            if isinstance(cList, str):
-                cList = [cList, ]
-
-            for cNum in cList:
+            for cNum in rtr_stops:
 
                 # validate controller number
-                if not cNum.isdigit():
+                if not isinstance( cNum, int) and not isinstance( cNum, float) :
                     self.logger.error("rtr: error in {0}, rtr_stops need to be the controller number(s) - skip {1}".format(item.id(), cNum))
                     continue
 
-                c = 'c' + cNum
+                c = 'c{}'.format(cNum)
 
                 # init controller with defaults when it not exist
                 if c not in self._controller:
@@ -340,7 +366,7 @@ class RTR(SmartPlugin):
         """
         if item() and caller != 'plugin':
             if self.has_iattr(item.conf, 'rtr_hvac_mode'):
-                c = 'c' + item.conf['rtr_hvac_mode']
+                c = 'c' + self.get_iattr_value(item.conf,'rtr_hvac_mode')
                 if self._controller[c]['validated']:
                     if item() == self.HVACMode_Auto:
                         self.default(c)
@@ -370,7 +396,8 @@ class RTR(SmartPlugin):
         self.logger.debug("rtr: update item {}, from caller = {}, with source={} and dest={}".format(item.id(), caller, source, dest))
         if item() and caller != 'plugin':
             if self.has_iattr(item.conf, 'rtr_setpoint'):
-                c = 'c' + item.conf['rtr_setpoint']
+                rtr_setpoint = self.get_iattr_value(item.conf,'rtr_setpoint')
+                c = 'c{}'.format(rtr_setpoint)
                 if self._controller[c]['validated'] and self.alive:
                     self.pi_controller(c)
 

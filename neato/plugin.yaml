@@ -9,10 +9,10 @@ plugin:
     tester: aschwith
     state: develop                  # change to ready when done with development
 #    keywords: iot xyz
-    documentation: https://github.com/thengsty/plugins/blob/develop/neato/README.md
+    documentation: https://github.com/smarthomeng/plugins/blob/develop/neato/README.md
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1417295-support-thread-plugin-neato
 
-    version: 1.6.0                  # Plugin version
+    version: 1.6.3                  # Plugin version
     sh_minversion: 1.6              # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False           # plugin supports multi instance
@@ -22,7 +22,7 @@ plugin:
 parameters:
     account_email:
         type: str
-        default: ''
+        mandatory: True
         description:
             de: 'E-Mail Adresse des Neato/Vorwerk Accounts'
             en: 'E-Mail Adresse of your Neato/Vorwerk account'
@@ -34,10 +34,23 @@ parameters:
             en: 'Password of your Neato/Vorwerk account'
     robot_vendor:
         type: str
+        mandatory: True
         default: 'neato'
+        valid_list:
+          - neato
+          - vorwerk
+        valid_list_description:
+            de: ['Neato Roboter', 'Vorwerk Roboter']
+            en: ['Neato robot', 'Vorwerk robot']
         description:
-            de: 'Hersteller des Neato/Vorwerk Roboters'
-            en: 'Vendor of your Neato/Vorwerk robot'
+            de: 'Hersteller des Roboters'
+            en: 'Vendor of your robot'
+    token:
+        type: str
+        default: ''
+        description:
+            de: 'Oauth token fuer Vorwerk Login (basierend auf MyKobold Anmeldeverfahren)'
+            en: 'Oauth token obtained for Vorwerk Login (based on MyKobold interface)'
 
 item_attributes:
     # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)
@@ -119,6 +132,11 @@ item_attributes:
         description:
             de: 'Roboter Nachricht'
             en: 'Robot message'
+    neato_commandGoToBaseAvailable:
+        type: bool
+        description:
+            de: 'Roboter Befehl zur Basis verfuegbar'
+            en: 'Robot command return to base available'
 
 item_structs: NONE
     # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)

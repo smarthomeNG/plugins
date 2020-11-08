@@ -240,6 +240,10 @@ class ArtNet(SmartPlugin):
         self.__ArtDMX_broadcast()
 
     def __ArtDMX_broadcast(self):
+        """
+        Assemble data according to ArtDmx packet definition, see at 
+        https://artisticlicence.com/WebSiteMaster/User Guides/art-net.pdf
+        """
         data = []
         # Fix ID 7byte + 0x00
         data.append("Art-Net\x00")
@@ -247,21 +251,27 @@ class ArtNet(SmartPlugin):
         data.append(struct.pack('<H', 0x5000))
         # ProtVerHi and ProtVerLo -> Protocol Version 14, High Byte first
         data.append(struct.pack('>H', 14))
+
         # Order 1 to 255
         data.append(struct.pack('B', self.packet_counter))
         self.packet_counter += 1
         if self.packet_counter > 255:
             self.packet_counter = 1
+
         # Physical Input Port
         data.append(struct.pack('B', 0))
+
         # Artnet source address
         data.append(
             struct.pack('<H', self._model._net << 8 | self._model._subnet << 4 | self._model._universe))
+
         # Length of DMX Data, High Byte First
         data.append(struct.pack('>H', len(self.dmxdata)))
+        
         # DMX Data
         for d in self.dmxdata:
-            data.append(struct.pack('B', d))
+            data.append(struct.pack('B', int(d)))
+
         # convert from list to string
         result = bytes()
         for token in data:
@@ -269,6 +279,7 @@ class ArtNet(SmartPlugin):
                 result = result + token.encode('utf-8', 'ignore')
             except:  # Handels all bytes
                 result = result + token
+
         # send over ethernet
         self.logger.debug("Sending %s channels to %s:%s as Net/SubNet/Unv: %s/%s/%s" % (len(self.dmxdata),
                                                                                         self._model._ip,

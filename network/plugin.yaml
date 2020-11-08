@@ -2,16 +2,16 @@
 plugin:
     # Global plugin attributes
     type: protocol                 # plugin type (gateway, interface, protocol, system, web)
-    description:                  # Alternative: description in multiple languages
-        de: 'UDP und TCP Protokoll Unterstützung'
-        en: 'Support for the protocols UDP and TCP'
-    maintainer: cmalo (mknx)
+    description:                   # Alternative: description in multiple languages
+        de: 'Daten per UDP und TCP Protokoll sowie HTTP GET empfangen und per UDP senden'
+        en: 'Receive data with UDP and TCP protocol as well as HTTP GET and send with UDP'
+    maintainer: bmxp
     tester: onkelandy, psilo909
     state: ready
-#    keywords: iot xyz
-    documentation: https://www.smarthomeng.de/developer/plugins/network/README.html       # url of documentation (wiki) page
+    keywords: network TCP UDP HTTP GET
+    documentation: https://www.smarthomeng.de/developer/plugins/network/user_doc.html       # url of documentation (wiki) page
 
-    version: 1.4.0                 # Plugin version
+    version: 1.4.1                 # Plugin version
     sh_minversion: 1.6             # minimum shNG version to use this plugin
 #    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
@@ -60,7 +60,7 @@ parameters:
         #  - no
         description:
             de: "Eingehende HTTP Verbindungen akzeptieren (no oder Portnummer)"
-            en: "Accept incoming HTTP connections (no or protnumber)"
+            en: "Accept incoming HTTP connections (no or port number)"
     udp_acl:
         type: list
         default: '*'
@@ -147,7 +147,7 @@ logic_parameters:
           - True
           - False
         valid_list_description:
-            de: ['Logik kann über TCP/UDP geupdated werden', 'Logik kann nicht über TCP/UDP geupdated werden']
+            de: ['Logik kann über TCP/UDP getriggert werden', 'Logik kann nicht über TCP/UDP getriggert werden']
             en: ['Logic can be triggered by TCP/UDP', 'Logic cannot be triggered by TCP/UDP']
         description:
             de: 'Wenn dieses Attribut auf "True" (oder "yes", etc.) gesetzt wird, kann diese Logik über den generischen Listener des Network Plugins über TCP und/oder UDP aufgerufen werden.'
@@ -169,3 +169,5 @@ logic_parameters:
         description:
             de: "Über die nw_tcp_listen Einstellung kann ein dedizierter Listener spezifiziert werden. Das Argument kann ein Port oder IP:Port sein (z.B.: nw_tcp_listen: 127.0.0.1:8888 or nw_tcp_listen: 7777)."
             en: "You could specify the nw_udp_listen attribute to an item to create a dedicated listener. The argument could be a port or ip:port. (e.g.: nw_tcp_listen: 127.0.0.1:8888 or nw_tcp_listen: 7777)"
+
+item_structs: NONE

@@ -13,6 +13,31 @@ Copy stateengine.example.html from the sv_widgets folder to your smartvisu/dropi
 http://URL/index.php?page=widgets/stateengine.example
 
 ## Changelog
+### v1.7.3
+* Implement new items for suspend_end (date_time and unix timestamp) as well as for suspend_start
+* Update some functions to use shtime instead of sh lib
+
+### v1.7.2
+* Implemented changedyby and updatedby conditions
+* Implemented regular expression possibility
+* Improved/fixed handling of mixed list definitions
+
+### v1.7.1
+* Implemented item attributes and prefixes in plugin.yaml
+* Option to set log level for each SE item individually
+
+## Changelog
+### v1.7.0
+* Improved struct in plugin.yaml
+* Improved suspend item evaluation
+* Improved logging
+* Added parameter instanteval for actions (see documentation)
+* conditionset regex now uses re.fullmatch instead of re.match and therefore allows for a more precise regular expression
+* Original caller now checks for the source of the item update instead of item change
+* Web interface translation
+* Eval result values are now cast correctly (type conversion based on the type of the relevant item)
+* The wait loop to avoid contemporaneous runs of actions and/or states is replaced by a threading queue. Therefore simultaneous triggers (like automatic evaluation and a suspend item at the same time) are now taken into concideration correctly.
+
 ### v1.6.2
 * Further fixes and improvements
 * Webinterface including StateEngine visualization

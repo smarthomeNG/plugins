@@ -1,8 +1,8 @@
-.. index:: Plugins; Stateengine
+
 .. index:: Stateengine; Allgemein
 
 Allgemein
-#########
+=========
 
 .. important::
 
@@ -20,7 +20,7 @@ Allgemein
    :name: einfuehrungstateengine
 
 Als Einstieg in das Plugin empfiehlt es sich, die `Blogeinträge <https://www.smarthomeng.de/tag/stateengine>`_
-auf der SmarthomeNG Seite zu lesen!
+auf der SmarthomeNG Seite zu lesen! Die Informationen zur Konfiguration des Plugins sind unter `Plugin stateengine <https://www.smarthomeng.de/user/plugins_doc/config/stateengine.html>`_ beschrieben.
 
 .. rubric:: Funktionalität
    :name: funktionalitaet

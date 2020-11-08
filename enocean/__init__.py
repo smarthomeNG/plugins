@@ -165,20 +165,21 @@ SENT_ENCAPSULATED_RADIO_PACKET = 0xA6
 
 class EnOcean(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.3.4"
+    PLUGIN_VERSION = "1.3.5"
 
-    
-    def __init__(self, smarthome, serialport, tx_id=''):
-        self._sh = smarthome
-        self.port = serialport
+
+    def __init__(self, sh, *args, **kwargs):
+        self._sh = sh
+        self.port = self.get_parameter_value("serialport")
         self.logger = logging.getLogger(__name__)
+        tx_id = self.get_parameter_value("tx_id")
         if (len(tx_id) < 8):
             self.tx_id = 0
             self.logger.warning('enocean: No valid enocean stick ID configured. Transmitting is not supported')
         else:
             self.tx_id = int(tx_id, 16)
             self.logger.info('enocean: Stick TX ID configured via plugin.conf to: {0}'.format(tx_id))
-        self._tcm = serial.Serial(serialport, 57600, timeout=0.5)
+        self._tcm = serial.Serial(self.port, 57600, timeout=0.5)
         self._cmd_lock = threading.Lock()
         self._response_lock = threading.Condition()
         self._rx_items = {}
@@ -237,7 +238,7 @@ class EnOcean(SmartPlugin):
         self.logger.debug("enocean: call function << _rocker_sequence >>")
         try:
             for step in sequence:
-                event, relation, delay = step.split()             
+                event, relation, delay = step.split()
                 #self.logger.debug("waiting for {} {} {}".format(event, relation, delay))
                 if item._enocean_rs_events[event.upper()].wait(float(delay)) != (relation.upper() == "WITHIN"):
                     self.logger.debug("NOT {} - aborting sequence!".format(step))
@@ -245,7 +246,7 @@ class EnOcean(SmartPlugin):
                 else:
                     self.logger.debug("{}".format(step))
                     item._enocean_rs_events[event.upper()].clear()
-                    continue          
+                    continue
             value = True
             if 'enocean_rocker_action' in item.conf:
                 if item.conf['enocean_rocker_action'].upper() == "UNSET":
@@ -254,7 +255,7 @@ class EnOcean(SmartPlugin):
                     value = not item()
             item(value, 'EnOcean', "{:08X}".format(sender_id))
         except Exception as e:
-            self.logger.error("enocean: error handling enocean_rocker_sequence \"{}\" - {}".format(sequence, e))        
+            self.logger.error("enocean: error handling enocean_rocker_sequence \"{}\" - {}".format(sequence, e))
 
     def _process_packet_type_radio(self, data, optional):
         self.logger.debug("enocean: call function << _process_packet_type_radio >>")
@@ -284,12 +285,17 @@ class EnOcean(SmartPlugin):
                 if eep.startswith("{:02X}".format(choice)):
                     # call parser for particular eep - returns dictionary with key-value pairs
                     results = self.eep_parser.Parse(eep, payload, status)
-                    self.logger.debug("enocean: radio message results = {}".format(results))
+                    self.logger.debug("Radio message results = {}".format(results))
+                    if 'DEBUG' in results:
+                        self.logger.warning("DEBUG Info: processing radio message with data = [{}] / optional = [{}]".format(', '.join(['0x%02x' % b for b in data]), ', '.join(['0x%02x' % b for b in optional])))
+                        self.logger.warning("Radio message results = {}".format(results))
+                        self.logger.warning("Radio message: choice = {:02x} / payload = [{}] / sender_id = {:08X} / status = {} / repeat = {}".format(choice, ', '.join(['0x%02x' % b for b in payload]), sender_id, status, repeater_cnt))
+
                     for item in items:
                         rx_key = item.conf['enocean_rx_key'].upper()
                         if rx_key in results:
                             if 'enocean_rocker_sequence' in item.conf:
-                                try:   
+                                try:
                                     if hasattr(item, '_enocean_rs_thread') and item._enocean_rs_thread.isAlive():
                                         if results[rx_key]:
                                             self.logger.debug("sending pressed event")
@@ -394,6 +400,7 @@ class EnOcean(SmartPlugin):
         self._send_common_command(CO_WR_RESET)
         self.logger.info("enocean: requesting id-base")
         self._send_common_command(CO_RD_IDBASE)
+
         self.logger.info("enocean: requesting version information")
         self._send_common_command(CO_RD_VERSION)
         self.logger.debug("enocean: ending connect-thread")
@@ -404,7 +411,9 @@ class EnOcean(SmartPlugin):
         self.UTE_listen = False
         #self.learn_id = 0
         t = threading.Thread(target=self._startup, name="enocean-startup")
-        t.daemon = True
+        # if you need to create child threads, do not make them daemon = True!
+        # They will not shutdown properly. (It's a python bug)
+        t.daemon = False
         t.start()
         msg = []
         while self.alive:
@@ -449,17 +458,19 @@ class EnOcean(SmartPlugin):
                     else:
                         #self.logger.warning("enocean: consuming [0x{:02x}] from input buffer!".format(msg[0]))
                         msg.pop(0)
+        self._tcm.close()
+        self.logger.info("Thread stopped")
 
     def stop(self):
-        self.logger.debug("enocean: call function << stop >>")
+        self.logger.debug("Call function << stop >>")
         self.alive = False
-        self.logger.info("enocean: Thread stopped")
+
 
     def get_tx_id_as_hex(self):
         hexstring = "{:08X}".format(self.tx_id)
         return hexstring
 
-    
+
     def _send_UTE_response(self, data, optional):
         self.logger.debug("enocean: call function << _send_UTE_response >>")
         choice = data[0]
@@ -652,8 +663,8 @@ class EnOcean(SmartPlugin):
         self._response_lock.release()
         self._cmd_lock.release()
 
-    
-        
+
+
 
 ####################################################
 ### --- START - Definitions of Learn Methods --- ###
@@ -662,7 +673,7 @@ class EnOcean(SmartPlugin):
         self.logger.debug("enocean: call function << send_learn_protocol >>")
         # define RORG
         rorg = 0xA5
-        
+
         # check offset range between 0 and 127
         if (id_offset < 0) or (id_offset > 127):
             self.logger.error('enocean: ID offset with value = {} out of range (0-127). Aborting.'.format(id_offset))
@@ -708,8 +719,8 @@ class EnOcean(SmartPlugin):
         self.UTE_listen = True
         self.learn_id = id_offset
         self.logger.info("enocean: Listening for UTE package ('D4')")
-        
-        
+
+
     def enter_learn_mode(self, onoff=1):
         self.logger.debug("enocean: call function << enter_learn_mode >>")
         if (onoff == 1):
@@ -721,7 +732,7 @@ class EnOcean(SmartPlugin):
             self.logger.info("enocean: leaving learning mode")
             return None
 
-            
+
     # This function enables/disables the controller's smart acknowledge mode
     def set_smart_ack_learn_mode(self, onoff=1):
         self.logger.debug("enocean: call function << set_smart_ack_learn_mode >>")
@@ -802,7 +813,7 @@ class WebInterface(SmartPluginWebIf):
     def __init__(self, webif_dir, plugin):
         """
         Initialization of instance of class WebInterface
-        
+
         :param webif_dir: directory where the webinterface of the plugin resides
         :param plugin: instance of the plugin
         :type webif_dir: str

@@ -1,0 +1,26 @@
+# translations for the web interface
+plugin_translations:
+    # Translations for the plugin specially for the web interface
+    'Bridge suchen':         {'de': '=', 'en': 'Look for Bridge'}
+    'Gefundene Bridges':     {'de': '=', 'en': 'Discovered Bridges'}
+    'Verbinden':             {'de': '=', 'en': 'Connect'}
+    'Serien-Nr.':            {'de': '=', 'en': 'Serial'}
+    'Hersteller':            {'de': '=', 'en': 'Manufacturer'}
+    'Version':               {'de': '=', 'en': '='}
+    'Modell Name':           {'de': '=', 'en': 'Model Name'}
+    'Modell Nr.':            {'de': '=', 'en': 'Model No'}
+    'IP':                    {'de': '=', 'en': 'IP address'}
+    'UDN':                   {'de': '=', 'en': '='}
+    'Konfigurierte Bridge':  {'de': '=', 'en': 'Configured Bridges'}
+    'Anwendungsschlüssel':   {'de': '=', 'en': 'Application Key'}
+    'True':                  {'de':'Ja', 'en': 'Yes'}
+    'False':                 {'de':'Nein', 'en': 'No'}
+
+    # Alternative format for translations of longer texts:
+    'Es ist keine Bridge mit dieser Plugin Instanz verbunden.':
+        de: '='
+        en: 'No bridge is commected to this plugin instance.'
+    'Zum Verbinden den Knopf an der Hue Bridge drücken und anschließend in der Liste der gefundenen Bridges den Button "Verbinden" drücken.':
+        de: '='
+        en: 'To connect first press the link button on the hue bridge and then press the button "Connect" in the list of found bridges.'
+

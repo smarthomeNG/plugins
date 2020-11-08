@@ -1,0 +1,72 @@
+# Metadata for the Smart-Plugin
+plugin:
+    # Global plugin attributes
+    type: web                     # plugin type (gateway, interface, protocol, system, web)
+    description:                  # Alternative: description in multiple languages
+        de: 'Ermöglicht den Abruf von Daten (Statistiken, Pulswerte) aus Garmin Connect.'
+        en: 'Enables the retrieval of data (stats, heart rates) from Garmin Connect.'
+    maintainer: Marc René Frieß
+#    tester:                        # Who tests this plugin?
+    state: develop
+    keywords: garmin
+    documentation: 'http://smarthomeng.de/user/plugins_doc/config/garminconnect.html'   # url of documentation (wiki) page
+    support: 'https://knx-user-forum.de/forum/supportforen/smarthome-py/1451496-support-thread-f%C3%BCr-das-garminconnect-pluginn'
+
+    version: 1.0.0                 # Plugin version
+    sh_minversion: 1.6             # minimum shNG version to use this plugin
+#    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
+    multi_instance: False          # plugin supports multi instance
+    classname: GarminConnect       # class containing the plugin
+
+parameters:
+    # Definition of parameters to be configured in etc/plugin.yaml
+    email:
+        type: str
+        mandatory: True
+        description:
+            de: 'E-Mail des Garmin Connect Users'
+            en: 'Email of the Garmin Connect user.'
+    password:
+        type: str
+        mandatory: True
+        description:
+            de: 'Passwort des Garmin Connect Users'
+            en: 'Password of the Garmin Connect user.'
+
+item_attributes: NONE
+    # Definition of item attributes defined by this plugin
+
+item_structs: NONE
+  # Definition of item-structure templates for this plugin
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin
+
+plugin_functions:
+    # Definition of function interface of the plugin
+
+    get_stats:
+        type: dict
+        description:
+            de: "Gibt die Statistiken von Garmin Connect zu einem Datum zurück. Default, wenn Parameter nicht genutzt wird: now()"
+            en: "Returns statistics from Garmin Connect to a given date (Default, if parameter is left empty: now())."
+        parameters:
+            date:
+                type: str
+                mandatory: False
+                description:
+                    de: "Zu prüfendes Datum als String in der Form \"yyyy-mm-ddd\", \"yy-mm-dd\", \"dd.mm.yyyy\" oder \"dd.mm.yy\". Default, wenn Parameter nicht genutzt wird: now()"
+                    en: "Date to check - in the form: \"yyyy-mm-ddd\", \"yy-mm-dd\", \"dd.mm.yyyy\" or \"dd.mm.yy\". (Default, if parameter is left empty: now())."
+
+    get_heart_rates:
+        type: dict
+        description:
+            de: "Gibt die Daten zum Puls an einem Datum zurück (aktuelles Datum, falls der Parameter leer gelassen wird)."
+            en: "Returns data about the heart rate to a given date (Default, if parameter is left empty: now())."
+        parameters:
+            date:
+                type: str
+                mandatory: False
+                description:
+                    de: "Zu prüfendes Datum als String in der Form \"yyyy-mm-ddd\", \"yy-mm-dd\", \"dd.mm.yyyy\" oder \"dd.mm.yy\". Default, wenn Parameter nicht genutzt wird: now()"
+                    en: "Date to check - in the form: \"yyyy-mm-ddd\", \"yy-mm-dd\", \"dd.mm.yyyy\" or \"dd.mm.yy\". (Default, if parameter is left empty: now())."

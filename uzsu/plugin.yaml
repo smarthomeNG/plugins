@@ -63,6 +63,42 @@ parameters:
             de: 'Falls True, werden Einträge mit exakt den selben Einstellungen, aber unterschiedlichem Wert durch einen neu getätigten Eintrag ersetzt'
             en: 'If True, existing entries with exactly the same settings except the value get replaced by the new entry'
 
+    interpolation_interval:
+        type: int
+        default: 5
+        valid_min: 0
+        description:
+            de: 'Standardintervall in Minuten, in dem ein interpolierter Wert erneut errechnet werden soll. Kann pro UZSU individuell konfiguriert werden.'
+            en: 'Standard interval in minutes that is used to re-calculate an interpolated value. Can be configured for each UZSU individually.'
+
+    interpolation_type:
+        type: str
+        default: 'none'
+        valid_list:
+          - 'none'
+          - 'cubic'
+          - 'linear'
+        description:
+            de: 'Standardintervall in Minuten, in dem ein interpolierter Wert erneut errechnet werden soll. Kann pro UZSU individuell konfiguriert werden.'
+            en: 'Standard interval in minutes that is used to re-calculate an interpolated value. Can be configured for each UZSU individually.'
+
+    backintime:
+        type: int
+        default: 0
+        valid_min: 0
+        description:
+            de: 'Standardmaximalalter eines UZSU Eintrags in Minuten, um beim Plugin-Start versäumte Einträge nachzuholen. Kann pro UZSU individuell konfiguriert werden.'
+            en: 'Standard maximum age of an uzsu entry in minutes to be catched up at the plugin start. Can be configured for each UZSU individually'
+
+    interpolation_precision:
+        type: int
+        default: 2
+        valid_min: 0
+        valid_max: 4
+        description:
+            de: 'Anzahl an Dezimalstellen bei der Berechnung der Interpolation'
+            en: 'Amount of decimal places when calculating interpolation values'
+
 item_attributes:
     # Definition of item attributes defined by this plugin
     uzsu_item:
@@ -97,6 +133,14 @@ item_structs:
             cache: True
             visu_acl: rw
 
+            last:
+                remark: The last set value if UZSU is active
+                type: foo
+                visu_acl: ro
+                eval: "'None' if sh...lastvalue() is None else sh...lastvalue()"
+                crontab: init = 'None'
+                eval_trigger: ..
+
             active:
                 remark: Use this item to easily turn on or off your UZSU
                 type: bool
@@ -130,6 +174,18 @@ plugin_functions:
             en: 'Query the next scheduled value and time. If no update is planned, e.g. if the UZSU item
                 is not active, the result is None, otherwise a dictionary containing entries for time and value.
                 '
+
+    resume:
+        type: foo
+        description:
+            de: 'Fortsetzen der UZSU Evaluierung: Aktivieren des Items und Setzen des zuletzt festgelegten Wertes.'
+            en: 'Resuming the UZSU evaluation: activating the item and setting the last defined value.'
+
+    lastvalue:
+        type: foo
+        description:
+            de: 'Abfrage des zuletzt gesetzten Werts. Kann z.B. beim Aktivieren der UZSU genutzt werden, um sofort auf den gewünschten Wert zu schalten.'
+            en: 'Query the last value. Can be used to immediately set the correct value after activating an UZSU.'
 
     clear:
         type: bool
@@ -190,8 +246,8 @@ plugin_functions:
                 type: int
                 default: 5
                 description:
-                    de: 'Intervall in Minuten, in dem der Wert aktualisiert werden soll'
-                    en: 'interval in minutes to update the value'
+                    de: 'Intervall in Minuten, in dem der interpolierte Wert aktualisiert werden soll'
+                    en: 'Interval in minutes to re-calculate the interpolated value'
             backintime:
                 type: int
                 default: 0

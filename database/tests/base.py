@@ -1,5 +1,7 @@
 import os
-import common
+import sys
+print(sys.path)
+from tests import common
 import datetime
 import tempfile
 import unittest
@@ -105,7 +107,7 @@ class TestDatabaseBase(unittest.TestCase):
             self.assertIn(line, expected)
 
     def assertSingle(self, expected, actual):
-        self.assertEquals(expected, actual)
+        self.assertEqual(expected, actual)
 
     def assertSeries(self, expected, actual):
         # Series result is (in actual):
@@ -130,8 +132,8 @@ class TestDatabaseBase(unittest.TestCase):
         result = []
         for (i, e) in enumerate(expected):
             result.append((self.t(e[0]), e[1]))
-        self.assertEquals(result, actual['series'])
+        self.assertEqual(result, actual['series'])
 
     def assertSeriesCount(self, expected, actual):
-        self.assertEquals(expected, len(actual['series']))
+        self.assertEqual(expected, len(actual['series']))
 

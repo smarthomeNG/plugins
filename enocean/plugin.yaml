@@ -12,11 +12,11 @@ plugin:
     state: ready
     keywords: EnOcean, Eltako
     # url of documentation (wiki) page
-    #documentation: https://...
-    # url oof the support thread
-    #support: https://...
+    documentation: https://github.com/smarthomeNG/plugins/tree/master/enocean
+    # url of the support thread
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/26542-featurewunsch-enocean-plugin/page13
 
-    version: 1.3.4                 # Plugin version
+    version: 1.3.5                 # Plugin version
     sh_minversion: 1.3             # minimum shNG version to use this plugin
     #sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
@@ -34,11 +34,11 @@ parameters:
 
     tx_id:
         type: str
-        default: FFFF4680
+        default: 0
         description:
             de: 'Unique-ID oder Base-ID des EnOcean Moduls (8-stelliger hex Wert, z.B. FFFF4680)'
             en: 'Unique-ID or Base-ID of the EnOcean Module (8-digit hex value, e.g. FFFF4680)'
-        mandatory: 'True'
+        mandatory: 'False'
 
 item_attributes:
     # Definition of item attributes defined by this plugin
@@ -69,6 +69,8 @@ item_attributes:
     enocean_tx_id_offset:
         type: int
         default: 0
+        valid_min: 0
+        valid_max: 127
         description:
             de: 'Offset zur Base-ID, auf welche der Aktor reagiert'
             en: 'offset to the Base-ID on which the actor responds to'
@@ -80,6 +82,23 @@ item_attributes:
         description:
             de: 'Knopf/Schalter-Bezeichnung des EnOcean Gerätes'
             en: 'actor button name of the EnOcean device'
+        mandatory: 'False'
+
+    enocean_rocker_action:
+        type: str
+        description:
+            de: 'Tasteraktion'
+            en: 'actor action'
+        mandatory: 'False'
+        valid_list:
+        - 'UNSET'
+        - 'TOGGLE'
+
+    enocean_rocker_sequence:
+        type: str
+        description:
+            de: 'Tastersequenz'
+            en: 'Rocker action sequence'
         mandatory: 'False'
 
     block_switch:

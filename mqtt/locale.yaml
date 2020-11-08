@@ -1,13 +1,11 @@
+# translations for the web interface
 plugin_translations:
     # Translations for the plugin specially for the web interface
-    'Broker Host': {'de': '=', 'en': '='}
-    'Broker Port': {'de': '=', 'en': '='}
-    'QoS':         {'de': '=', 'en': '=', 'fr': '='}
-    'acl':         {'de': '=', 'en': '=', 'fr': '='}
-    'Message Durchsatz':  {'de': '=', 'en': 'Message Throughput'}
-    'Durchschnittlich Messages je Minute empfangen': {'de': '=', 'en': 'Messages received in average per minute'}
-    'Durchschnittlich Messages je Minute gesendet':  {'de': '=', 'en': 'Messages send in average per minute'}
-    'letzte Minute':  {'de': '=', 'en': 'last minute'}
-    'letzte 5 Min.':  {'de': '=', 'en': 'last 5 min.'}
-    'letzte 15 Min.': {'de': '=', 'en': 'last 15 min.'}
+    'Wert 2':         {'de': '=', 'en': 'Value 2'}
+    'Wert 4':         {'de': '=', 'en': 'Value 4'}
+
+    # Alternative format for translations of longer texts:
+    'Hier kommt der Inhalt des Webinterfaces hin.':
+        de: '='
+        en: 'Here goes the content of the web interface.'
 

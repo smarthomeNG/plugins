@@ -50,7 +50,7 @@ Kostalmodbus:
 
 ### 2) /smarthome/items/kostal.yaml
 
-Create an item based on the [template](files/kostal_item_template.yaml)
+Create an item based on the template /files/kostal_item_template.yaml
 
 
 ## Examples

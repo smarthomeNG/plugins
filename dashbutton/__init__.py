@@ -1,22 +1,26 @@
 __author__ = 'pfischi'
 
 import threading
+import time
 from scapy.all import *
 import logging
 from lib.model.smartplugin import SmartPlugin
-import time
+
+from lib.shtime import Shtime
+shtime = Shtime.get_instance()
+
 from collections import namedtuple
+
 
 DashBtnItem = namedtuple('DashBtnItem', 'item threshold')
 start_time = time.time()
 
 
 class Dashbutton(SmartPlugin):
-    PLUGIN_VERSION = "1.3.0.3"
+    PLUGIN_VERSION = "1.3.1"
     ALLOW_MULTIINSTANCE = False
 
     def __init__(self, sh, *args, **kwargs):
-        self._sh = sh
         self._dashbuttons = {}
         self._logger = logging.getLogger(__name__)
         self._scapy_thread = threading.Thread(target=self.listen)
@@ -128,7 +132,7 @@ class Dashbutton(SmartPlugin):
                             if self.has_iattr(item.conf, 'dashbutton_reset'):
                                 try:
                                     reset_time = int(self.get_iattr_value(item.conf, 'dashbutton_reset'))
-                                    delta = (self._sh.now() - item.last_update()).total_seconds()
+                                    delta = (shtime.now() - item.last_update()).total_seconds()
                                     if reset_time <= delta:
                                         reset = True
                                         self._logger.debug("reset timer activated for item {item}".format(item=item))

@@ -76,6 +76,7 @@ Beispiel
 	for day in holidays:
         logger.info("Date: {0}".format(day))
         for event in holidays[day]:
+            #The folloging code extracts the start time in python datetime format, already converted into the local time zone configured for smarthomeNG.
             start = event['Start']
             summary = event['Summary']
             cal_class = event['Class']

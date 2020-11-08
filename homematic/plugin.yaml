@@ -11,11 +11,11 @@ plugin:
 #    tester: efgh                   # Who tests this plugin?
 #    keywords: kwd1 kwd2            # keywords, where applicable
     documentation: http://smarthomeng.de/user/plugins/homematic/user_doc.html
-#    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1501815-support-thread-zum-homematic-plugin
 
 # Following entries are for Smart-Plugins:
     version: 1.5.0                 # Plugin version
-    sh_minversion: 1.4d            # minimum shNG version to use this plugin
+    sh_minversion: 1.5             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True
     restartable: unknown

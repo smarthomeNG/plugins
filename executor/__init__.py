@@ -3,7 +3,7 @@
 #########################################################################
 #  Copyright 2019 Bernd Meiners                     Bernd.Meiners@mail.de
 #########################################################################
-#  This file is part of SmartHomeNG.   
+#  This file is part of SmartHomeNG.
 #
 #  This is the executor plugin to run with SmartHomeNG version 1.4 and
 #  upwards.
@@ -24,6 +24,7 @@
 #########################################################################
 
 from lib.module import Modules
+from lib.item import Items
 from lib.model.smartplugin import *
 import urllib
 import time
@@ -42,24 +43,12 @@ class Executor(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '0.0.2'
+    PLUGIN_VERSION = '1.0.4'
 
-    def __init__(self, sh, *args, **kwargs):
+    def __init__(self, sh):
         """
         Initalizes the plugin. The parameters describe for this method are pulled from the entry in plugin.conf.
 
-        :param sh:  **Deprecated**: The instance of the smarthome object. For SmartHomeNG versions 1.4 and up: **Don't use it**!
-        :param *args: **Deprecated**: Old way of passing parameter values. For SmartHomeNG versions 1.4 and up: **Don't use it**!
-        :param **kwargs:**Deprecated**: Old way of passing parameter values. For SmartHomeNG versions 1.4 and up: **Don't use it**!
-
-        If you need the sh object at all, use the method self.get_sh() to get it. There should be almost no need for
-        a reference to the sh object any more.
-
-        The parameters *args and **kwargs are the old way of passing parameters. They are deprecated. They are imlemented
-        to support oder plugins. Plugins for SmartHomeNG v1.4 and beyond should use the new way of getting parameter values:
-        use the SmartPlugin method get_parameter_value(parameter_name) instead. Anywhere within the Plugin you can get
-        the configured (and checked) value for a parameter by calling self.get_parameter_value(parameter_name). It
-        returns the value in the datatype that is defined in the metadata.
         """
         from bin.smarthome import VERSION
         if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
@@ -68,6 +57,7 @@ class Executor(SmartPlugin):
         # If an package import with try/except is done, handle an import error like this:
 
         self.logger.debug("init {}".format(__name__))
+
         self._init_complete = False
 
         # Exit if the required package(s) could not be imported
@@ -90,89 +80,24 @@ class Executor(SmartPlugin):
         """
         self.logger.debug("Plugin '{}': run method called".format(self.get_fullname()))
         self.alive = True
-        #self.scheduler_add('DLMS', self._update_values_callback, prio=5, cycle=self._update_cycle, next=shtime.now())
-        self.logger.debug("run dlms")
 
     def stop(self):
         """
         Stop method for the plugin
         """
         self.alive = False
-        #self.scheduler_remove('DLMS')
         self.logger.debug("Plugin '{}': stop method called".format(self.get_fullname()))
 
     def parse_item(self, item):
-        """
-        Default plugin parse_item method. Is called when the plugin is initialized.
-        The plugin can, corresponding to its attribute keywords, decide what to do with
-        the item in future, like adding it to an internal array for future reference
-        :param item:    The item to process.
-        :return:        If the plugin needs to be informed of an items change you should return a call back function
-                        like the function update_item down below. An example when this is needed is the knx plugin
-                        where parse_item returns the update_item function when the attribute knx_send is found.
-                        This means that when the items value is about to be updated, the call back function is called
-                        with the item, caller, source and dest as arguments and in case of the knx plugin the value
-                        can be sent to the knx with a knx write function within the knx plugin.
-        """
         pass
-        #if self.has_iattr(item.conf, 'foo_itemtag'):
-        #    self.logger.debug("parse item: {}".format(item))
-
-        # todo
-        # if interesting item for sending values:
-        #   return self.update_item
 
     def parse_logic(self, logic):
-        """
-        Default plugin parse_logic method
-        """
-        #if 'xxx' in logic.conf:
-        #    # self.function(logic['name'])
         pass
 
     def update_item(self, item, caller=None, source=None, dest=None):
-        """
-        Item has been updated
-
-        This method is called, if the value of an item has been updated by SmartHomeNG.
-        It should write the changed value out to the device (hardware/interface) that
-        is managed by this plugin.
-
-        :param item: item to be updated towards the plugin
-        :param caller: if given it represents the callers name
-        :param source: if given it represents the source
-        :param dest: if given it represents the dest
-        """
-        #if caller != self.get_shortname():
-        #    # code to execute, only if the item has not been changed by this this plugin:
-        #    self.logger.info("Update item: {}, item has been changed outside this plugin".format(item.id()))
-        #
-        #    if self.has_iattr(item.conf, 'foo_itemtag'):
-        #        self.logger.debug("update_item was called with item '{}' from caller '{}', source '{}' and dest '{}'".format(item, caller,source,dest))
         pass
 
     def poll_device(self):
-        """
-        Polls for updates of the device
-
-        This method is only needed, if the device (hardware/interface) does not propagate
-        changes on it's own, but has to be polled to get the actual status.
-        It is called by the scheduler.
-        """
-        # # get the value from the device
-        # device_value = ...
-        #
-        # # find the item(s) to update:
-        # for item in self.sh.find_items('...'):
-        #
-        #     # update the item by calling item(value, caller, source=None, dest=None)
-        #     # - value and caller must be specified, source and dest are optional
-        #     #
-        #     # The simple case:
-        #     item(device_value, self.get_shortname())
-        #     # if the plugin is a gateway plugin which may receive updates from several external sources,
-        #     # the source should be included when updating the the value:
-        #     item(device_value, self.get_shortname(), source=device_source_id)
         pass
 
     def init_webinterface(self):
@@ -182,8 +107,7 @@ class Executor(SmartPlugin):
         This method is only needed if the plugin is implementing a web interface
         """
         try:
-            self.mod_http = Modules.get_instance().get_module(
-                'http')  # try/except to handle running in a core version that does not support modules
+            self.mod_http = Modules.get_instance().get_module('http')
         except:
             self.mod_http = None
         if self.mod_http == None:
@@ -246,7 +170,7 @@ class Stub():
 
 # e.g. logger = Stub(warning=print, info=print, debug=print)
 
-        
+
 class WebInterface(SmartPluginWebIf):
 
     def __init__(self, webif_dir, plugin):
@@ -261,6 +185,7 @@ class WebInterface(SmartPluginWebIf):
         self.logger = logging.getLogger(__name__)
         self.webif_dir = webif_dir
         self.plugin = plugin
+        self.itemsApi = Items.get_instance()
         self.tplenv = self.init_template_environment()
 
     @cherrypy.expose
@@ -270,7 +195,7 @@ class WebInterface(SmartPluginWebIf):
 
         Render the template and return the html file to be delivered to the browser
 
-        :return: contents of the template after beeing rendered 
+        :return: contents of the template after beeing rendered
         """
         tmpl = self.tplenv.get_template('index.html')
         # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
@@ -278,7 +203,7 @@ class WebInterface(SmartPluginWebIf):
 
     """
     According to SmartHomeNG documentation the following modules are loaded for the
-    logic environment: 
+    logic environment:
     - sys
     - os
     - time
@@ -287,26 +212,36 @@ class WebInterface(SmartPluginWebIf):
     - ephem
     - Queue
     - subprocess
-    
+
     The usage of sys and os is a potential risk for eval and exec as they can remove files in reach of SmartHomeNG user.
     There should be however no need for ephem, Queue or subprocess
     """
 
-    
+
     @cherrypy.expose
-    def evaluate(self, eline, reload=None):
+    def evaluate(self, eline, path, reload=None):
         """
-        evaluate expression in eline and return the result 
+        evaluate expression in eline and return the result
 
         :return: result of the evaluation
         """
         result = ""
-        
+
         g = {}
         l = { 'sh': self.plugin.get_sh() }
-        self.logger.warning("Got request to evaluate {} (raw)".format(eline))
+        self.logger.debug("Got request to evaluate {} (raw) for item path {}".format(eline, path))
         eline = urllib.parse.unquote(eline)
-        self.logger.warning("Got request to evaluate {} (unquoted)".format(eline))
+        if path != '':
+            try:
+                path = self.itemsApi.return_item(path)
+                eline = path.get_stringwithabsolutepathes(eline, 'sh.', '(')
+                eline = path.get_stringwithabsolutepathes(eline, 'sh.', '.property')
+                self.logger.debug("Got request to evaluate {} (unquoted)".format(eline))
+            except Exception as e:
+                res = "Error '{}' while evaluating".format(e)
+                result = "{}".format(res)
+                return result
+
         try:
             if eline:
                 res = eval(eline,g,l)
@@ -330,9 +265,9 @@ class WebInterface(SmartPluginWebIf):
         import json
         import pprint
         stub_logger = Stub(warning=print, info=print, debug=print, error=print)
-        
+
         g = {}
-        l = { 'sh': self.plugin.get_sh(), 
+        l = { 'sh': self.plugin.get_sh(),
             'time': time,
             'datetime': datetime,
             'random': random,
@@ -353,4 +288,3 @@ class WebInterface(SmartPluginWebIf):
                 res = "Error '{}' while evaluating".format(e)
 
         return ''.join(p.data) + res
-

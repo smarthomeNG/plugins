@@ -1,9 +1,9 @@
-.. index:: Plugins; Stateengine
+
 .. index:: Stateengine; Aktionen - einzeln
 .. _Aktionen - einzeln:
 
 Aktionen - einzeln
-##################
+==================
 
 Es gibt zwei Möglichkeiten, Aktionen zu definieren.
 

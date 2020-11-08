@@ -34,12 +34,17 @@ from lib.module import Modules
 
 
 class WebServices(SmartPlugin):
-    PLUGIN_VERSION = '1.5.0.5'
+    PLUGIN_VERSION = '1.6.2'
     ALLOWED_FOO_PATHS = ['env.location.moonrise', 'env.location.moonset', 'env.location.sunrise', 'env.location.sunset']
 
-    def __init__(self, smarthome, mode="all"):
+    def __init__(self, sh, *args, **kwargs):
         self.logger.debug("Plugin '{}': '__init__'".format(self.get_fullname()))
-        self._mode = mode
+
+        # Call init code of parent class (SmartPlugin or MqttPlugin)
+        super().__init__()
+
+        self._use_service_auth = self.get_parameter_value('use_service_auth')
+        self._mode = self.get_parameter_value('mode')
         self.items = Items.get_instance()
 
         if not self.init_webinterfaces():
@@ -68,22 +73,30 @@ class WebServices(SmartPlugin):
                 'tools.staticdir.dir': 'static'
             }
         }
+        config_callback_rest = {
+            '/': {}
+        }
+        config_callback_ws = {
+            '/': {}
+        }
 
         # Register the REST interface as a cherrypy app
         self.mod_http.register_service(RESTWebServicesInterface(webif_dir, self),
                                        self.get_shortname(),
-                                       config,
+                                       config_callback_rest,
                                        self.get_classname(), self.get_instance_name(),
                                        description='WebService Plugin für SmartHomeNG (REST)',
-                                       servicename='rest')
+                                       servicename='rest',
+                                       use_global_basic_auth=self._use_service_auth)
 
         # Register the simple WebService interface as a cherrypy app
         self.mod_http.register_service(SimpleWebServiceInterface(webif_dir, self),
                                        self.get_shortname(),
-                                       config,
+                                       config_callback_ws,
                                        self.get_classname(), self.get_instance_name(),
                                        description='Webservice-Plugin für SmartHomeNG (simple)',
-                                       servicename='ws')
+                                       servicename='ws',
+                                       use_global_basic_auth=self._use_service_auth)
 
         # Register the web overview of the webservices interfaces as a cherrypy app
         self.mod_http.register_webif(WebInterface(webif_dir, self),

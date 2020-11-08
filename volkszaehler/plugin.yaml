@@ -6,18 +6,18 @@ plugin:
         de: 'Item Werte bei Änderung an einen Volkszähler Server senden'
         en: 'Send item values at change to a Volkszaehler Server'
     maintainer: 'bmxp'
-#    tester: none
+    tester: nobody
     keywords: Volkszähler Server vz_uuid     # keywords, where applicable
     state: ready
     documentation: https://www.smarthomeng.de/user/plugins/volkszaehler/README.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1357253-support-thread-zum-volkszähler-plugin
 
 # Following entries are for Smart-Plugins:
-    version: 1.6.0                 # Plugin version
+    version: 1.6.1                 # Plugin version
     sh_minversion: 1.3             # minimum shNG version to use this plugin
 #    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True
-    restartable: unknown
+    restartable: True
     classname: Volkszaehler        # class containing the plugin
 
 parameters:
@@ -51,4 +51,3 @@ plugin_functions: NONE
 
 logic_parameters: NONE
     # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)
-

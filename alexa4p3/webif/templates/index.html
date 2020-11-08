@@ -1,0 +1,560 @@
+<!-- Style definitions       -->
+
+<style>
+.CodeMirror {
+font-family: Arial, monospace;
+font-size: 12px;
+}
+</style>
+
+<!-- Functions in Scripts       -->
+
+<script src="./static/js/handler.js"></script>
+<script src="./static/js/test_handler.js"></script>
+
+
+
+{% extends "base_plugin.html" %}
+
+{% set logo_frame = false %}
+{% set use_bodytabs = true %}
+{% set tabcount = 4 %}
+{% set tab1title =  _('Alexa-Devices') ~ "(" ~ item_count ~ ")" %}
+{% set tab2title =  _('Protocol')  %}
+{% set tab3title =  _('Test-functions') %}
+{% set tab4title =  _('Create CamProxy Settings') %}
+
+
+
+{% block headtable %}
+<table class="table table-striped table-hover">
+	<tbody>
+		<tr>
+			<td class="py-1"><strong>{{ _('Service Port') }}</strong></td>
+			<td align="right" class="py-1">{{ p.service_port }}</td>
+		</tr>
+		<tr>
+			<td class="py-1"><strong>{{ _('used Actions') }}</strong></td>
+			<td align="right" class="py-1">{{ payload_action }}</td>
+		</tr>
+
+		<tr>
+			<td class="py-1"><strong>{{ _('selected Endpoint') }}</strong></td>
+			<td align="right" class="py-1" id="actDevice" align="right"> {{ _('no Device selected') }}</td>
+		</tr>
+	</tbody>
+</table>
+{% endblock headtable %}
+
+{% block buttons %}
+{% endblock buttons %}
+
+{% set tabcount = 4 %}
+
+{% block bodytab1 %}
+<div class="table-responsive" id="AlexaDevices" style="margin-left: 2px; margin-right: 2px;" class="row">
+        <div class="col-sm-12">
+            <table class="table table-striped table-hover pluginList">
+			    <thead>
+				    <tr>
+                        <th style="width: 200px;"><font size="-1">{{ _('Device-Name') }}</th>
+                        <th style="width: 200px;"><font size="-1">{{ _('Device-ID') }}</th>
+					    <th style="width: 600px;"><font size="-1">{{ _('implemented Actions') }}</th>
+					    <th style="width: 200px;"><font size="-1">{{ _('linked to Item') }}</th>
+					    <th style="width: 200px; text-align: right"><font size="-1">{{ _('alias for Device') }}</th>
+					</tr>
+			    </thead>
+			    <tbody>
+			    {% for item in items %}
+				    <tr>
+
+					    <td class="py-1"><font size="-1">{{ item.AlexaName }}</td>
+					    <td class="py-1"><font size="-1">{{ item.DeviceID }}</td>
+					    <td class="py-1"><font size="-1">{{ item.Actions }}</td>
+					    <td class="py-1"><font size="-1">{{ item.Items }}</td>
+					    <td class="py-1" style="text-align: right"><font size="-1">{{ item.Alias_for }}</td>																				
+
+				    </tr>
+			    {% endfor %}
+			    </tbody>
+	        </table>
+        </div>
+</div>
+
+<script>
+
+$('#AlexaDevices').on('click', 'tr',function()
+  {
+   var value = $(this).closest('tr').find('td').eq(1).text();
+
+   if (value != "") {
+        document.getElementById("selectedDevice").value= value;
+        selectedDevice = value;
+        // Set Value in Form
+        document.getElementById("actDevice").innerHTML = value;
+        document.getElementById("actDevice").Refresh();
+      }
+  });
+
+</script>
+
+{% endblock bodytab1 %}
+
+{% block bodytab2 %}
+<table class="table table-striped table-hover">
+	<tbody>
+    <tr>
+        <td>
+        	<button id="btn_clear_proto_states" class="btn btn-shng btn-sm" name="btn_clear_proto_states" value="on" onclick="DeleteProto(this.name)"><i class="fas fa-trash-alt"></i>&nbsp;&nbsp;&nbsp;{{ _('delete Protocol') }}&nbsp;</button>
+        </td>
+        <td>
+            <div class="custom-control custom-checkbox" style =" vertical-align:middle;align:left">
+                <input type="checkbox" class="custom-control-input" id="proto_states_check" name="proto_states_check">
+                <label class="custom-control-label" for="proto_states_check">{{ _('Auto Update ( 2 sec.)') }}</label>
+            </div>
+        </td>
+    </tr>
+    </tbody>
+</table>
+<div class="container-fluid" style="overflow: none; border-left: 1px solid #ccc;height: 60%">
+    <div style="margin-bottom: 10px;height: 100%">
+
+        {% if state_log_lines %}<textarea style="height: 100%" autocomplete="off" id="state_log_file" name="state_log_file">{% for line in state_log_lines %}{% if not loop.last %}{{ line }}{% else %}{{ line  | replace('\n', '') }}{% endif %}{% endfor %}</textarea>{% else %}{{ _('no data available') }}{% endif %}
+    </div>
+</div>
+        <div class="row" align="left" >
+          <input style="margin-bottom: 1px; margin-left: 34px; width: 90%;visibility:hidden;" class="form-control" name="txtButton" id="txtButton" value=""><br/>
+	</div>
+        <div class="row" align="left" >
+          <input style="margin-bottom: 1px; margin-left: 34px; width: 90%;visibility:hidden;" class="form-control" name="selectedDevice" id="selectedDevice" value="no Device selected"><br/>
+    	</div>
+
+<script type="text/javascript" language="javascript">
+var statelogCodeMirror = CodeMirror.fromTextArea(document.getElementById("state_log_file"),
+ {
+    lineNumbers: true,
+    readOnly: true,
+    indentUnit: 4,
+    lineSeparator: '\n',
+    mode: 'ttcn',
+    lineWrapping: false,
+    indentWithTabs: false,
+    autoRefresh : true
+});
+
+window.addEventListener("resize", function(){resizeCodeMirror(statelogCodeMirror, 10)}, false);
+resizeCodeMirror(statelogCodeMirror, 10);
+statelogCodeMirror.refresh();
+console.log ("refreshed CodeMirror StateLog")
+
+$('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+  var target = $(e.target).attr("href") // activated tab
+  if (target == "#bodytab_2")
+        { statelogCodeMirror.refresh(); }
+
+});
+
+</script>
+{% endblock bodytab2 %}
+
+{% block bodytab3 %}
+<style>
+li.L0, li.L1, li.L2, li.L3,
+li.L5, li.L6, li.L7, li.L8
+{ list-style-type: decimal !important }
+</style>
+
+
+
+<table style="width: 100%; align=left">
+<th style="width: 25%; align=left">
+</th>
+<th style="width: 50%; align=left">
+</th>
+<tr>
+<td valign=top>
+
+<div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
+	<div class="col-sm-12">
+                <div class="row">
+                    <div class="col" style="max-width: 100%;">
+                        <div class="card">
+                            <div class="card-header p-1 shng_heading">
+                                <a class="float-sm-right" href="#" onclick="reloadCmds();" title="{{ _('Neu Laden', 'button') }}"><span id="refresh-element" class="fas fa-sync"></span></a>
+                                <strong>{{ _('existing Directives') }}</strong>
+                            </div>
+                            <div class="card-body p-1">
+                                <div class="card-text" style="">
+                                    <div id="cardOverlay" class="cardOverlay">
+                                        <div style="position: relative; top: 45%; left:45%;">
+                                            <span id="reload-element" class="fas fa-sync fa-4x"/>
+                                        </div>
+                                    </div>
+                                    <div id="Cmds" class="data-container refresh-data pre-scrollable" style="overflow-x: auto;">
+                                    {{ cmd_list }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+</td>
+
+<td align"=left" valign="top">
+
+
+          <div class="row" align="left"  valign="top" style="margin-bottom: 15px">
+          <button onclick="BtnSave()" style="margin-left : 34px" type="submit" class="btn btn-shng btn-sm"  id="btn-save"> <i class="far fa-save"></i></i>&nbsp;{{ _('Save') }}</input>
+          <button onclick="BtnCheck()"style="margin-left : 5px" type="submit" class="btn btn-shng btn-sm" value="btnCheck" id="btn-check"><i class="far fa-check-square"></i></i>&nbsp;{{ _('Check Json') }}</input>
+          <button onclick="BtnTest()" style="margin-left : 5px" type="submit" class="btn btn-shng btn-sm" value="btnTest" id="btn-test"><i class="far fa-play-circle"></i></i>&nbsp;{{ _('Test') }}</input>
+          <button onclick="BtnDelete()" style="margin-left :5px" type="submit" class="btn btn-shng btn-sm" value="btnDelete" id="btn-delete"><i class="far fa-trash-alt"></i>&nbsp;{{ _('Delete') }}</input>
+
+	  <button id="resultOK" style="visibility:hidden; margin-left:20px; font-size: 35px;color:green"   class="far fa-check-circle"></button>
+	  <button id="resultNOK" style="visibility:hidden; margin-left:1px; font-size: 35px;color:red"   class="fas fa-exclamation-triangle"></button>
+
+	  <textarea type="input" style="width:350px;margin-bottom: 5px; margin-left : 5px;margin-right: 5px; height : 50px;font-size: 12px;" class="form-control" name="txtresult" id="txtresult" placeholder="{{ _('...') }}"  disabled>{{ txtResult }}</textarea><br/>
+
+
+	  </div>
+<form id="myForm" name="input" action="handleButtons.html" method="GET" enctype="multipart/form-data" align="left">
+          <div class="row" align="left" >
+          <input type="input" style="margin-bottom: 1px; margin-left: 34px; width: 90%" class="form-control" name="txtCmdName" id="txtCmdName" placeholder="{{ _('Command-Name...') }}" value=""><br/>
+          </div>
+          <div class="row" align="left" >
+          <input type="input" style="margin-bottom: 1px;;visibility:hidden; margin-left : 34px;width: 90%" class="form-control" name="txtApiUrl" id="txtApiUrl" placeholder="{{ _('API-URL (/api/..)') }}" value=""><br/>
+          </div>
+          <div class="row" align="left" >
+          <textarea type="input" style="margin-bottom: 5px; margin-left : 34px;width: 90%; height : 80px" class="form-control" name="txtDescription" id="txtDescription" placeholder="{{ _('Description...') }}" value=""></textarea><br/>
+          </div>
+
+          <div class="row" align="left" >
+          <input type="input" style="margin-bottom: 1px; margin-left : 34px;width: 90%" class="form-control" name="txtValue" id="txtValue" placeholder="{{ _('value') }}" value=""><br/>
+          </div>
+
+        <div style="width: 95%; float: left; border: 1px solid #ccc; margin-bottom: 10px; margin-right: 5px; margin-left: 20px;height: 60%"> 
+            <div style="margin-bottom: 10px;height: 100%">
+                <div style="font-weight: bold; margin-left : 30px; padding-left: 5px; border-bottom: 2px solid #ccc;">{{ _('(Payload for Api-Call in json-Format') }}</div>
+                <textarea  style="font-size: 12px" id="txt_payload" name="txt_payload">{{ txt_payload }}</textarea>
+            </div>
+
+        </div>
+
+        <div class="row" align="left" >
+          <input style="margin-bottom: 1px; margin-left: 34px; width: 90%;visibility:hidden;" class="form-control" name="txtButton" id="txtButton" value=""><br/>
+	</div>
+        <div class="row" align="left" >
+          <input style="margin-bottom: 1px; margin-left: 34px; width: 90%;visibility:hidden;" class="form-control" name="selectedDevice" id="selectedDevice" value="no Device selected"><br/>
+    	</div>
+	</div>
+   
+    <br>
+
+</form>
+</td>
+</tr>
+</table>
+<script>
+     reloadCmds();
+
+     var rulers = [];
+     for (var i = 1; i <= 100; i++) {
+        rulers.push({color: '#eee', column: i * 4, lineStyle: "dashed"});
+     }
+
+     var myCodeMirrorConf = CodeMirror.fromTextArea(document.getElementById("txt_payload"), {
+        lineNumbers: true,
+        lineSeparator: '\n',
+        indentUnit: 4,
+        rulers: rulers,
+        lineWrapping: true,
+        indentWithTabs: false,
+        height: 300,
+        name: "javascript", json: true
+     });
+
+     function resizeCodeMirrors() {
+        if (!myCodeMirrorConf.getOption("fullScreen")) {
+            var browserHeight = $( window ).height();
+            offsetTop = $('.CodeMirror').offset().top;
+            myCodeMirrorConf.getScrollerElement().style.maxHeight = ((-1)*(offsetTop) -300 + browserHeight)+ 'px';
+            myCodeMirrorConf.refresh();
+        }
+
+     }
+
+     window.addEventListener("resize", resizeCodeMirrors, false);
+     resizeCodeMirrors();
+</script>
+<script>
+ $(document).ready(function() {
+	  mycsrf = document.getElementById("csrfCookie").innerHTML;
+	  if (mycsrf != "N/A") //N/A
+	   {
+    	    $('.nav-tabs a[href="#bodytab_3"]').tab('show');
+	   }
+	  else
+	   {
+	    myTest= document.getElementById("bodytab_1").innerHTML;
+	   }
+    });
+</script>
+
+{% endblock bodytab3 %}
+
+{% block bodytab4 %}
+<div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
+	<div class="col-sm-12">
+
+
+                <table class="table table-striped table-hover">
+			    <thead>
+                    <tr>
+                        <th style="width: 20%;"><font size="+1"><strong>{{ _('Camera Properties') }}</strong></font></th>
+					    <th style="width: 10%;"><font size="-1"></font></th>
+					    <th style="width: 10%;"><font size="-1"></font></th>
+					    <th style="width: 60%;"><font size="-1"></font></th>
+					</tr>
+			    </thead>
+	                <tbody>
+		                <tr>
+			                <td class="py-1"> <strong>{{ _('Item-Name :') }}</strong></td>
+			                <td colspan="3" class="py-1"><input style="width: 600px;"  id="Cam_Name" placeholder="doorcam" onkeydown="setColor2White(this.id)"></td>
+                            <td> </td>
+                            <td> </td>
+		                </tr>
+		                <tr>
+			                <td class="py-1" style="width: 30%;"><strong>{{ _('Alexa-Name of the Camera :') }}</strong></td>
+			                <td colspan="3" style="width: 10%;" class="py-1"><input style="width: 600px;" id="Alexa_Name" placeholder="doorcam" onkeydown="setColor2White(this.id)"></td>
+                            <td style="width: 10%;"> </td>
+                            <td style="width: 10%;"> </td>
+		                </tr>
+		                <tr>
+			                <td class="py-1" style="width: 30%;"><strong>{{ _('Alexa-Device of the Camera :') }}</strong></td>
+			                <td colspan="3" style="width: 10%;" class="py-1"><input style="width: 600px;" id="Alexa_Device" placeholder="doorcam" onkeydown="setColor2White(this.id)"></td>
+                            <td style="width: 10%;"> </td>
+                            <td style="width: 10%;"> </td>
+		                </tr>
+		                <tr>
+			                <td class="py-1" style="width: 30%;"><strong>{{ _('Alexa-Description :') }}</strong></td>
+			                <td colspan="3" style="width: 10%;" class="py-1"><input style="width: 600px;" id="Alexa_Description" placeholder="doorcam" onkeydown="setColor2White(this.id)"></td>
+                            <td style="width: 10%;"> </td>
+                            <td style="width: 10%;"> </td>
+		                </tr>
+		                <tr>
+			                <td style="width: 30%;" class="py-1"><strong>Proxy-URL (https) :</strong></td>
+			                <td colspan="3" style="width: 10%;" class="py-1"><input style="width: 600px;" id="Proxy_Url" placeholder="testcam.dyndns.com" onkeydown="setColor2White(this.id)"></td>
+                            <td style="width: 10%;"> </td>
+                            <td style="width: 10%;"> </td>
+		                </tr>
+
+                        <tr>
+			                <td class="py-1"><strong>{{ _('Image-URL :') }}</strong></td>
+			                <td class="py-1" colspan=3><input style="width: 600px;" id="Image_Url" placeholder="http://192.168.178.9/snapshot/view0.jpg" onkeydown="setColor2White(this.id)"></td>
+		                </tr>
+                        <tr>
+			                <td class="py-1"><strong>{{ _('Credentials for the AlexaCamProxy4P3:') }}</strong></td>
+			                <td class="py-1" colspan=3>{{ _('User :' ) }}    <input id="user" placeholder="user" onkeydown="setColor2White(this.id)">{{ _('Password :') }}   <input id="pwd" placeholder="pwd" onkeydown="setColor2White(this.id)">
+                            </td>
+		                </tr>
+                        <tr>
+			                <td class="py-1"><strong>{{ _('Credentials for the Cam himself:') }}</strong></td>
+			                <td class="py-1" colspan=3>{{ _('User :') }}    <input id="user_cam" placeholder="user to access the cam" onkeydown="setColor2White(this.id)">{{ _('Password :') }}   <input id="pwd_cam" placeholder="password to acces the cam" onkeydown="setColor2White(this.id)">
+                            </td>
+		                </tr>
+                    </tbody>
+                </table>
+
+                <table class="table table-striped table-hover">
+			    <thead>
+				    <tr>
+                        <th style="width: 21%;"><font size="+1"><strong>{{ _('Stream -Properties') }}</strong></th>
+					    <th style="width: 23%;"><font size="-1"></th>
+					    <th style="width: 23%;"><font size="-1"></th>
+					    <th style="width: 23%;"><font size="-1"></th>
+					</tr>
+			    </thead>
+	                <tbody>
+
+                        <tr>
+                          <td></td>
+                          <td style="width: 23%;" class="py-1">
+				            <div class="custom-control custom-checkbox" style =" vertical-align:middle;align:left">
+				                <input type="checkbox" class="custom-control-input" id="enable_stream_1" name="enable_stream_1" checked="True">
+				                <label class="custom-control-label" for="enable_stream_1">Stream 1</label>
+				            </div>
+                          </td>
+                          <td style="width: 23%;" class="py-1">
+				            <div class="custom-control custom-checkbox" style =" vertical-align:middle;align:left">
+				                <input type="checkbox" class="custom-control-input" id="enable_stream_2" name="enable_stream_2">
+				                <label class="custom-control-label" for="enable_stream_2">Stream 2</label>
+				            </div>
+                          </td>
+                          <td style="width: 23%;" class="py-1">
+				            <div class="custom-control custom-checkbox" style =" vertical-align:middle;align:left">
+				                <input type="checkbox" class="custom-control-input" id="enable_stream_3" name="enable_stream_3">
+				                <label class="custom-control-label" for="enable_stream_3">Stream 3</label>
+				            </div>
+                          </td>
+                        </tr>
+                        <tr>
+			                <td style="width: 30%;" class="py-1"><strong>{{ _('Resolution of the Stream :' ) }}</strong></td>
+			                <td style="width: 10%;" class="py-1"><input id="width_1" style="width: 50%;" placeholder="width" onkeydown="setColor2White(this.id)"><input style="width: 50%;" id="height_1" placeholder="height" onkeydown="setColor2White(this.id)"></td>
+			                <td style="width: 10%;" class="py-1"><input id="width_2" style="width: 50%;" placeholder="width" onkeydown="setColor2White(this.id)"><input style="width: 50%;" id="height_2" placeholder="height" onkeydown="setColor2White(this.id)"></td>
+			                <td style="width: 10%;" class="py-1"><input id="width_3" style="width: 50%;" placeholder="width" onkeydown="setColor2White(this.id)"><input style="width: 50%;" id="height_3" placeholder="height" onkeydown="setColor2White(this.id)"></td>
+
+		                </tr>
+		                <tr>
+			                <td style="width: 30%;" class="py-1"><strong>{{ _('Stream URL in  your LAN :') }}</strong></td>
+			                <td style="width: 10%;" class="py-1"><input style="width: 250px;" id="real_IP_1" placeholder="192.168.178.9/0" onkeydown="setColor2White(this.id)"></td>
+			                <td style="width: 10%;" class="py-1"><input style="width: 250px;" id="real_IP_2" placeholder="192.168.178.9/1" onkeydown="setColor2White(this.id)"></td>
+			                <td style="width: 10%;" class="py-1"><input style="width: 250px;" id="real_IP_3" placeholder="192.168.178.9/2" onkeydown="setColor2White(this.id)"></td>
+		                </tr>
+                        <tr>
+			                <td class="py-1"><strong>Video-Codec :</strong></td>
+                            <td>
+                                <select name="video_1" id="video_1" style="width:100px">
+                                  <option value="H264">H264</option>
+                                  <option value="MPEG2">MPEG2</option>
+                                  <option value="MJPEG">MJPEG</option>
+                                  <option value="JPG">JPG</option>
+                                </select>
+                            </td>
+                            <td>
+                                <select name="video_2" id="video_2" style="width:100px">
+                                  <option value="H264">H264</option>
+                                  <option value="MPEG2">MPEG2</option>
+                                  <option value="MJPEG">MJPEG</option>
+                                  <option value="JPG">JPG</option>
+                                </select>
+                            </td>
+                            <td>
+                                <select name="video_3" id="video_3" style="width:100px">
+                                  <option value="H264">H264</option>
+                                  <option value="MPEG2">MPEG2</option>
+                                  <option value="MJPEG">MJPEG</option>
+                                  <option value="JPG">JPG</option>
+                                </select>
+                            </td>
+
+		                </tr>
+                        <tr>
+			                <td class="py-1"><strong>Audio-Codec :</strong></td>
+                            <td>
+                                <select name="audio_1" id="audio_1" style="width:100px">
+                                  <option value="NONE">NONE</option>
+                                  <option value="G711">G711</option>
+                                  <option value="AAC">AAC</option>
+                                </select>
+                            </td>
+                            <td>
+                                <select name="audio_2" id="audio_2" style="width:100px">
+                                  <option value="NONE">NONE</option>
+                                  <option value="G711">G711</option>
+                                  <option value="AAC">AAC</option>
+                                </select>
+                            </td>
+                            <td>
+                                <select name="audio_3" id="audio_3" style="width:100px">
+                                  <option value="NONE">NONE</option>
+                                  <option value="G711">G711</option>
+                                  <option value="AAC">AAC</option>
+                                </select>
+                            </td>
+
+		                </tr>
+                        <tr>
+			                <td class="py-1"><strong>{{ _('Stream-Protocol :' ) }}</strong></td>
+                            <td>
+                                <select name="protocol_1" id="protocol_1" style="width:100px">
+                                  <option value="RTSP">RTSP</option>
+                                </select>
+                            </td>
+                            <td>
+                                <select name="protocol_2" id="protocol_2" style="width:100px">
+                                  <option value="RTSP">RTSP</option>
+                                </select>
+                            </td>
+                            <td>
+                                <select name="protocol_3" id="protocol_3" style="width:100px">
+                                  <option value="RTSP">RTSP</option>
+                                </select>
+                            </td>
+		                </tr>
+                        <tr>
+			                <td class="py-1"><strong>{{ _('Authorization Type :') }}</strong></td>
+                            <td>
+                                <select name="authorization_1" id="authorization_1" style="width:100px">
+                                  <option value="NONE">NONE</option>
+                                  <option value="BASIC">BASIC</option>
+                                  <option value="DIGEST">DIGEST</option>
+                                </select>
+                            </td>
+                            <td>
+                                <select name="authorization_2" id="authorization_2" style="width:100px">
+                                  <option value="NONE">NONE</option>
+                                  <option value="BASIC">BASIC</option>
+                                  <option value="DIGEST">DIGEST</option>
+                                </select>
+                            </td>
+                            <td>
+                                <select name="authorization_3" id="authorization_3" style="width:100px">
+                                  <option value="NONE">NONE</option>
+                                  <option value="BASIC">BASIC</option>
+                                  <option value="DIGEST">DIGEST</option>
+                                </select>
+                            </td>
+		                </tr>
+
+
+	                </tbody>
+                </table>        
+    </div>
+   	<button id="create_yaml" class="btn btn-shng btn-sm" name="create_yaml" value="on" onclick="CreateYaml()"><i class="fas fa-random"></i>&nbsp;&nbsp;&nbsp;{{ _('Create YAML-Entry for shNG') }}&nbsp;</button>
+<br>
+<br>
+<div class="container-fluid" style="overflow: none; border-left: 1px solid #ccc;height: 60%">
+    <div style="margin-bottom: 10px;height: 100%">
+
+
+        {% if yaml_result %}<textarea style="height: 100%" autocomplete="off" id="yaml_result" name="yaml_result">{% for line in yaml_result %}{% if not loop.last %}{{ line }}{% else %}{{ line  | replace('\n', '') }}{% endif %}{% endfor %}</textarea>{% else %}{{ _('no data available') }}{% endif %}
+    </div>
+</div>
+</div>
+<script type="text/javascript" language="javascript">
+var yaml_resultCodeMirror = CodeMirror.fromTextArea(document.getElementById("yaml_result"),
+ {
+    lineNumbers: true,
+    readOnly: true,
+    indentUnit: 4,
+    lineSeparator: '\n',
+    mode: 'yaml',
+    lineWrapping: false,
+    indentWithTabs: false,
+    autoRefresh : true
+});
+
+window.addEventListener("resize", function(){resizeCodeMirror(yaml_result, 10)}, false);
+resizeCodeMirror(yaml_resultCodeMirror, 10);
+yaml_resultCodeMirror.refresh();
+console.log ("refreshed CodeMirror-YAML")
+
+
+function resizeCodeMirrors() {
+    if (!yaml_resultCodeMirror.getOption("fullScreen")) {
+        var browserHeight = $( window ).height();
+        offsetTop = $('.CodeMirror').offset().top;
+        yaml_resultCodeMirror.getScrollerElement().style.maxHeight = ((-1)*(offsetTop) -600 + browserHeight)+ 'px';
+        yaml_resultCodeMirror.refresh();
+    }
+
+ }
+
+ window.addEventListener("resize", resizeCodeMirrors, false);
+ resizeCodeMirrors();
+</script>
+{% endblock bodytab4 %}
+
+<!-- -->
+
+

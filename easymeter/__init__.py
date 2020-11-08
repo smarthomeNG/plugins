@@ -24,23 +24,29 @@ import serial
 import re
 import time
 
-logger = logging.getLogger('easymeter')
+from lib.model.smartplugin import *
+#from lib.item import Items
+
+#from .webif import WebInterface
+
+#logger = logging.getLogger('easymeter')
+
+PLUGIN_VERSION = '1.0.0'  # (must match the version specified in plugin.yaml), use '1.0.0' for your initial plugin Release
 
 
-class easymeter():
+class easymeter(SmartPlugin):
 
     def __init__(self, smarthome):
-        self._sh = smarthome
         self._cycle = 10
         self._timeout = 2
         self._codes = dict()
 
     def run(self):
-        self._sh.scheduler.add(
-            'easymeter', self.update_status, cycle=self._cycle)
+        self.scheduler_add('poll_device', self.update_status, cycle=self._cycle)
         self.alive = True
 
     def stop(self):
+        self.scheduler_remove('poll_device')
         self.alive = False
 
     # parse items, if item has parameter netio_port
@@ -97,4 +103,4 @@ class easymeter():
                             r.split(line[1])[1].split('*')[0])
 
             cycletime = time.time() - start
-            logger.debug("cycle takes %d seconds", cycletime)
+            self.logger.debug("cycle takes %d seconds", cycletime)

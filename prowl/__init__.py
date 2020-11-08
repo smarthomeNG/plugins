@@ -3,7 +3,9 @@
 #########################################################################
 #  Copyright 2012-2013 Marcus Popp                         marcus@popp.mx
 #########################################################################
-#  This file is part of SmartHomeNG.    https://github.com/smarthomeNG//
+#  This file is part of SmartHomeNG.
+#  https://www.smarthomeNG.de
+#  https://knx-user-forum.de/forum/supportforen/smarthome-py
 #
 #  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -22,31 +24,52 @@
 import logging
 import urllib.parse
 import http.client
-from lib.model.smartplugin import SmartPlugin
+from lib.module import Modules
+from lib.model.smartplugin import *
+from lib.item import Items
 
 
 class Prowl(SmartPlugin):
-    ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = "1.3.0"
+
+    PLUGIN_VERSION = "1.3.1"
 
     _host = 'api.prowlapp.com'
     _api = '/publicapi/add'
 
-    def __init__(self, smarthome, apikey=None):
-        self.logger = logging.getLogger(__name__)
-        self._apikey = apikey
-        self._sh = smarthome
+    def __init__(self, smarthome):
+        # Call init code of parent class (SmartPlugin)
+        super().__init__()
+
+        from bin.smarthome import VERSION
+        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
+            self.logger = logging.getLogger(__name__)
+
+        self._apikey = self.get_parameter_value('apikey')
 
     def run(self):
-        pass
+        """
+        Run method for the plugin
+        """
+        self.logger.debug("Run method called")
+        self.alive = True
 
     def stop(self):
-        pass
+        """
+        Stop method for the plugin
+        """
+        self.logger.debug("Stop method called")
+        self.alive = False
 
     def notify(self, event='', description='', priority=None, url=None, apikey=None, application='SmartHomeNG'):
+        """Provides an exposed function to send a notification"""
         self.__call__(self, event, description, priority, url, apikey, application)
 
     def __call__(self, event='', description='', priority=None, url=None, apikey=None, application='SmartHomeNG'):
+        """does the work to send a notification to prowl api"""
+        if not self.alive:
+            self.logger.warning("Could not send prowl notification, the plugin is not alive!")
+            return 
+
         data = {}
         origin = application
         if self.get_instance_name() != '':

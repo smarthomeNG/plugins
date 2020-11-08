@@ -7,7 +7,7 @@ plugin:
         en: 'Support of Milight Lights'
     maintainer: bmxp
     tester: sisamiwe                # Who tests this plugin?
-    state: develop                  # change to ready when done with development
+    state: ready                    # change to ready when done with development
     keywords: milight bulb 
     documentation: http://smarthomeng.de/user/plugins/milight/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1002464-support-thread-für-dlms-plugin
@@ -16,7 +16,7 @@ plugin:
     version: 1.6.0                  # Plugin version
     sh_minversion: 1.5              # minimum shNG version to use this plugin
     # sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
-    multi_instance: False           # plugin supports multi instance
+    multi_instance: True            # plugin supports multi instance
     restartable: unknown
     classname: Milight              # class containing the plugin
 

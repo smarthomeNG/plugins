@@ -2,6 +2,13 @@
 
 ## Changelog
 
+### v1.6.0
+* Konfiguration und Struktur grundlegend überarbeitet, Konfiguration von Befehlen über commands.py
+* Makros können als Wert auch eine Folge von Befehlen enthalten, [[Befehl1, Wert1],[Befehl2,Wert2],...]
+* Weitere Funktionen hinzugefügt
+* Abfrage von Wiedergabeinformationen hinzugefügt
+* Aktualisierung von Wiedergabeinformationen über neues Item 'update'
+
 ### v1.5.0
 * Einbinden von Makros (Abfolgen von Befehlen)
 * Befehle werden in eine Warteschleife gelegt, die in der korrekten Reihenfolge abgearbeitet werden

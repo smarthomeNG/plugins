@@ -8,54 +8,54 @@ import logging
 
 logger = logging.getLogger("")
 
-trigger_source 			= trigger['source']
-trigger_value  			= trigger['value']
+trigger_source          = trigger['source']
+trigger_value           = trigger['value']
 
 boost_mode              = sh.ventilation.logics_settings.boost_mode()     # 1 Helios, 2 fixed, 3 interactive
-boost_fanspeed 			= sh.ventilation.logics_settings.boost_fanspeed() # 1..8
-boost_time				= sh.ventilation.logics_settings.boost_time()     # eg 2700  ->   45 min * 60 sec
+boost_fanspeed          = sh.ventilation.logics_settings.boost_fanspeed() # 1..8
+boost_time              = sh.ventilation.logics_settings.boost_time()     # eg 2700  ->   45 min * 60 sec
 
 
 #1) Time-controlled fan speed adjustment including "on/off". Requires UZSU. ########################
 if trigger_source == "ventilation.uzsu.fanspeed_uzsu":
-	
-	if sh.ventilation.rs485._power_state() == 1:				# Ventilation is currently ON
+    
+    if sh.ventilation.rs485._power_state() == 1:        # Ventilation is currently ON
 
-		if trigger_value == 0:
-			sh.ventilation.rs485._power_state(0)
-			logger.debug("Ventilation switched OFF")
-		else: 
-			if trigger_value > 0 and trigger_value < 9:
-				sh.ventilation.rs485._fanspeed(trigger_value)
-				logger.debug("Fan speed set to " + str(trigger['value']))
+        if trigger_value == 0:
+            sh.ventilation.rs485._power_state(0)
+            logger.debug("Ventilation switched OFF")
+        else: 
+            if trigger_value > 0 and trigger_value < 9:
+                sh.ventilation.rs485._fanspeed(trigger_value)
+                logger.debug("Fan speed set to " + str(trigger['value']))
 
-	else: 												# Ventilation is on standby ("OFF")
+    else:                                               # Ventilation is on standby ("OFF")
 
-		sh.ventilation.rs485._power_state(1)
-		logger.debug("Ventilation switched ON")
-		time.sleep(10)
-		sh.ventilation.rs485._fanspeed(trigger_value)
-		logger.debug("Fan speed set to " + str(trigger['value']))
+        sh.ventilation.rs485._power_state(1)
+        logger.debug("Ventilation switched ON")
+        time.sleep(10)
+        sh.ventilation.rs485._fanspeed(trigger_value)
+        logger.debug("Fan speed set to " + str(trigger['value']))
 
-		
+        
 #2) Booster mode including timer and restoring of previous fan speed. ##############################
 elif trigger_source == "ventilation.booster.logics.switch":
 
-	if sh.ventilation.rs485._power_state() == 0:				# Switch it on first (if necessary)
-		sh.ventilation.rs485._power_state(1)
-		logger.debug("Ventilation switched ON")
-		time.sleep(10)	
-	
-	if trigger_value == True:							# Booster mode on
-		sh.ventilation.booster.logics.value_after_boost(sh.ventilation.rs485._fanspeed())
-		sh.ventilation.rs485._fanspeed(boost_fanspeed)
-		logic.trigger(dt=sh.now()+datetime.timedelta(seconds=boost_time), value="helios_boost_off")
-		logger.debug("Booster mode activated for " + str(boost_time) + " seconds")
+    if sh.ventilation.rs485._power_state() == 0:        # Switch it on first (if necessary)
+        sh.ventilation.rs485._power_state(1)
+        logger.debug("Ventilation switched ON")
+        time.sleep(10)	
+    
+    if trigger_value == True:                           # Booster mode on
+        sh.ventilation.booster.logics.value_after_boost(sh.ventilation.rs485._fanspeed())
+        sh.ventilation.rs485._fanspeed(boost_fanspeed)
+        logic.trigger(dt=shtime.now()+datetime.timedelta(seconds=boost_time), value="helios_boost_off")
+        logger.debug("Booster mode activated for " + str(boost_time) + " seconds")
 
-	else: 												# Booster mode off
-		# hier zur sicherheit 30 sekunden warten ---> einfach auf  item(age) warten
-		sh.ventilation.rs485._fanspeed(sh.ventilation.booster.logics.value_after_boost())
-		logger.debug("Ventilation switched back to fan speed " + str(sh.ventilation.booster.logics.value_after_boost()))
+    else:                                               # Booster mode off
+        # hier zur sicherheit 30 sekunden warten ---> einfach auf  item(age) warten
+        sh.ventilation.rs485._fanspeed(sh.ventilation.booster.logics.value_after_boost())
+        logger.debug("Ventilation switched back to fan speed " + str(sh.ventilation.booster.logics.value_after_boost()))
 
 
 #3) The heat is on - happy summer time! Temperature controlled mode. ###############################
@@ -63,31 +63,31 @@ elif trigger_source == "ventilation.booster.logics.switch":
 #   Optionale Idee: Luftaustausch (Stoßlüftung) nachts um 0x Uhr, aber noch kein Plan dafür
 #   Umsetzung noch nicht bis zum Ende durchdacht
 
-	
+    
 #4) Various items ##################################################################################
 else:
 
-	if trigger_value == "helios_boost_off":
-		logger.debug("Boost mode switched off by logic")
-		sh.ventilation.booster.logics.switch(False)
+    if trigger_value == "helios_boost_off":
+        logger.debug("Boost mode switched off by logic")
+        sh.ventilation.booster.logics.switch(False)
 
-		
-	else:		#### Starting point for new (yet unknown) items .... ###############################
-		logger.debug("Logic triggered by " + str(trigger_source) + " --> " + str(trigger_value))
+        
+    else:		#### Starting point for new (yet unknown) items .... ###############################
+        logger.debug("Logic triggered by " + str(trigger_source) + " --> " + str(trigger_value))
 
 
 # Known issues and limitations:
-# 1)	Currently there is no documentation on how to switch on the remote control after standby.
-#		So, when the ventilation is started by any bus member, the RC will remain OFF. When the RC
-#		is switched on manually afterwards, it will automatically adjust fan speed to default value.
-#		As the default value is usually not the same as the current fan speed, this behavior *will*
-#		break the logic until the next fan speed adjustment takes place (by RC, UZSU, SV, whatever).
-#		This problem is not related to this logic, but a general issue of ANY Helios plugin I found
-#		for the various home automation systems like sh, Lox, oh and others.		
-		
+# 1)    Currently there is no documentation on how to switch on the remote control after standby.
+#       So, when the ventilation is started by any bus member, the RC will remain OFF. When the RC
+#       is switched on manually afterwards, it will automatically adjust fan speed to default value.
+#       As the default value is usually not the same as the current fan speed, this behavior *will*
+#       break the logic until the next fan speed adjustment takes place (by RC, UZSU, SV, whatever).
+#       This problem is not related to this logic, but a general issue of ANY Helios plugin I found
+#       for the various home automation systems like sh, Lox, oh and others.		
+        
 
 ####################################################################################################		
-		
+        
 # Derzeit unbenutzte Variablen
 
 trigger_item   = str(sh.return_item(trigger_source))

@@ -23,23 +23,28 @@ import logging
 import socket
 import json
 from lib.model.smartplugin import SmartPlugin
-
+import requests
 
 class InfluxDB(SmartPlugin):
-    PLUGIN_VERSION = "1.0.0"
+    PLUGIN_VERSION = "1.0.2"
     ALLOW_MULTIINSTANCE = False
 
-    def __init__(self, smarthome, host='localhost', udp_port=8089, keyword='influxdb', tags={}, fields={}, value_field='value'):
+    def __init__(self, smarthome):
         self.logger = logging.getLogger(__name__)
         self.logger.info('Init InfluxDB')
 
-        self.host = host
-        self.udp_port = udp_port
-        self.keyword = keyword
-        self.tags = tags
-        self.fields = fields
-        self.value_field = value_field
+        self.host = self.get_parameter_value('host')
+        self.udp_port = self.get_parameter_value('udp_port')
+        self.keyword = self.get_parameter_value('keyword')
+        self.tags = self.get_parameter_value('tags')
+        self.fields = self.get_parameter_value('fields')
+        self.value_field = self.get_parameter_value('value_field')
+        self.http_port = self.get_parameter_value('http_port')
+        self.write_http = self.get_parameter_value('write_http')
+
         self.item_config = {}
+        self.influxdb = 'smarthome'
+
 
     def run(self):
         self.alive = True
@@ -112,7 +117,10 @@ class InfluxDB(SmartPlugin):
         fields[config['value_field']] = float( item() )
 
         line = self.create_line(name, tags, fields)
-        self.send( line )
+        if (self.write_http is False):
+            self.send( line )
+        else:
+            self.sendhttp( line )
         return None
 
     def send(self, data):
@@ -125,6 +133,17 @@ class InfluxDB(SmartPlugin):
         else:
             self.logger.debug("InfluxDB: sent UDP datagram [{}] to {}:{}".format(data, self.host, self.udp_port))
 
+    def sendhttp( self, data ):
+        try:
+            url_string = 'http://{}:{}/write?db={}'.format( self.host, self.http_port, self.influxdb )
+            r = requests.post(url_string, data=data)
+            if( r.status_code != 204 ):
+                self.logger.error( "InfluxDB: request returns http {} [{}]".format(r.status_code, r.text))
+        except Exception as e:
+            self.logger.error("InfluxDB: failed sending HTTP datagram [{}] to {}:{} with error: {}".format(data, self.host, self.http_port, e))
+        else:
+            self.logger.debug("InfluxDB: sent HTTP datagram [{}] to {}:{}".format(data, self.host, self.http_port))
+
     def create_line(self, name, tags, fields):
         # https://docs.influxdata.com/influxdb/v1.0/guides/writing_data/
 
@@ -133,6 +152,9 @@ class InfluxDB(SmartPlugin):
         for tag_key in sorted(tags.keys()):
             kvs.append("{k}={v}".format(k=tag_key, v=tags[tag_key]))
         lineproto_name_tags = ','.join(kvs)
+
+        # replace ":ga=" with ",ga=" to avoid "invalid tag format" error
+        lineproto_name_tags = lineproto_name_tags.replace(":ga=", ",ga=")
 
         # build fields (which include the actual value)
         kvs = []

@@ -6,9 +6,9 @@ plugin:
         de: 'Anbindung eines AVRMicrocontrollers. Das Protokoll gibt Zugriff auf 1wire Sensoren DS1820'
         en: ''
     maintainer: '? (Dirk Wallmeier)'
-#    tester: efgh                   # Who tests this plugin?
+#    tester: waldi                 # Who tests this plugin?
     keywords: 1wire onewire
-    state: ready
+    state: deprecated               # No user or tester for SmartPlugin conversion could be found
 #    documentation: https://github.com/smarthomeNG/plugins/blob/develop/mqtt/README.md        # url of documentation (wiki) page
 
 # Following entries are for Smart-Plugins:

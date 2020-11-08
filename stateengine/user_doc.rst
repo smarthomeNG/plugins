@@ -1,11 +1,11 @@
+
 .. index:: Plugins; stateengine
-.. index:: stateengine
+.. index:: stateengine; Plugin
 
+===========
 stateengine
-###########
+===========
 
-Dokumentation
-=============
 
 .. toctree::
   :titlesonly:

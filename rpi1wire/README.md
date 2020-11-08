@@ -5,177 +5,160 @@
 This plugin has been developed for the Raspberry Pi. It allows easy access to 1-Wire - sensors.
 We tested the plugin with the Raspberry Pi B and the temperature sensor DS18B20.
 
-## Supported Hardware
 
-Tested width:
-Raspberry Pi Model B
+### Supported Hardware
+
+Tested with:
+Raspberry Pi Model B, 
+Raspberry Pi 2B, 
+Raspberry Pi 3B, 
 1-Wire - Sensor DS18B20
 
-# Configuration
+## Configuration
 
-## Raspberry Pi
+### Raspberry Pi
 
-   see also: http://www.kompf.de/weather/pionewiremini.html
+See also: http://www.kompf.de/weather/pionewiremini.html
 
-### /boot/config.txt
-<pre>
-   # activating 1-wire without pullup (3-wire-Version)
-   dtoverlay=w1-gpio,gpiopin=4,pullup=off
-</pre>
-### /etc/modules
+Adjustment of ``/boot/config.txt`` according to 2- or 3-wire cabling:
 
-<pre>
-   #(3-wire-Version)
-   w1-gpio pullup=0  
-   w1-therm
-</pre>
+If the onewire devices are actively driven and thus use the 3-wire version
 
-# Smarthome
+```
+# activating 1-wire without pullup (3-wire-Version)
+dtoverlay=w1-gpio,gpiopin=4,pullup=off
+```
 
-## plugin.conf
+```
+# activating 1-wire with pullup (2-wire-Version)
+dtoverlay=w1-gpio,gpiopin=4,pullup=on
+```
 
-<pre>
-[rpi1wire]
-   class_name = Rpi1Wire
-   class_path = plugins.rpi1wire
-#   dirname = "/sys/bus/w1/devices"
-#   cycle = 120
-</pre>
+Adjustment of ``/etc/modules`` according to 2- or 3-wire cabling:
+
+```
+#(3-wire-Version)
+w1-gpio pullup=0  
+w1-therm
+```
+
+```
+#(2-wire-Version)
+w1-gpio pullup=1
+w1-therm
+```
+
+# SmarthomeNG
 
 ## plugin.yaml
 
-<pre>
+```yaml
 rpi1wire:
    class_name: Rpi1Wire
    class_path: plugins.rpi1wire
 #   dirname: "/sys/bus/w1/devices"
 #   cycle: 120
-</pre>
+```
 
-dirname
-<pre>
-   is the path where the Raspberry provides the values of the 1-wire - sensors
-   default "/sys/bus/w1/devices"
-</pre>
-cycle
-<pre>
-   is the period in which the values are updated
-   default 120 seconds
-</pre>   
+* ``dirname`` is the path where the Raspberry provides the values of the 1-wire - sensors
+  default "/sys/bus/w1/devices"
 
+* ``cycle`` is the period in which the values are updated
+   default is 120 seconds
 
-## items
-# .conf
+## Items
 
-<pre>
-   [rpi1wire]
-       [[sensor_list]]
-           name = Sensor-List
-           type = str
-           visu_acl = ro
-       [[sensors]]
-          name = Sensors
-          type = num
-          visu_acl = ro
-</pre>
+```yaml
+someitem:
+    somelist:
+        rpi1wire_sys: list
+        name: Sensor-List
+        type: str
+        visu_acl: ro
+    somecount:
+        rpi1wire_sys: count
+        name: Sensors
+        type: num
+        visu_acl: ro
+    someupdate:
+        rpi1wire_sys: update
+        name: Update Sensors
+        type: bool
+        inital_value: 0
+        visu_acl: rw
+```
 
-# .yaml
+``rpi1wire_sys: list`` - contains a list of all found sensors
+``rpi1wire_sys: count`` - contains the number of sensors found
+``rpi1wire_sys: update`` - Item for searching sensors and update list and count
 
-<pre>
-   rpi1wire:
-       sensor_list:
-           name: Sensor-List
-           type: str
-           visu_acl: ro
-       sensors:
-          name: Sensors
-          type: num
-          visu_acl: ro
-</pre>
-sh.rpi1wire.sensor_list()
-<pre>
-   - contains a list of all found sensors
-</pre>
-sh.rpi1wire.sensors()
-<pre>
-   - contains the number of sensors found
-</pre>
-### rpi1wire_name
-<pre>   
-   The name of the 1-wire - sensor
-    - rpi1wire_name or rpi1wire_id are possible
-</pre>   
-### rpi1wire_id
-<pre>   
-   The id of the 1-wire - sensor
-    - rpi1wire_name or rpi1wire_id are possible
-</pre>   
-### rpi1wire_update
-<pre>   
-   If you trigger this item, the sensors are re-searched without restart the server
-</pre>   
+### rpi1wire_id  or  rpi1wire_name
 
-### Example
+The id or name of the 1-wire - sensor. Both attributes serve the same purpose.
+The Item having one of these attributes will receive the temperature measurement.
+The Item thus needs to be of type num.
 
+### rpi1wire_sys: update
 
-<pre>
-# items/my.conf
+If this item is triggered, the sensors are re-searched without restarting the server
 
-[someroom]
-    [[mytemperature]]
-        name = my Name
-        type = num
-        visu_acl = ro
-        rpi1wire_name = rpi_temp1
-        sqlite = yes
+### logic.yaml
+Please refer to the documentation generated from plugin.yaml metadata.
 
-#or
+## Methods
 
-[someroom]
-    [[mytemperature]]
-        name = my Name
-        name = Wohnzimme Raumtemperatur
-        type = num
-        visu_acl = ro
-        rpi1wire_id = 28-0215018970ff
-        sqlite = yes
+update_sensors() can be called to force a reread of all sensors.
 
-[rpi1wire]
-    [[update]]
-        name = Update Sensor-List
-        type = bool
-        visu_acl = rw
-        rpi1wire_update = 1
+## Examples
+```yaml
+someitem:
+    somelist:
+        rpi1wire_sys: list
+        name: Sensor-List
+        type: str
+        visu_acl: ro
+    somecount:
+        rpi1wire_sys: count
+        name: Sensors
+        type: num
+        visu_acl: ro
+    someupdate:
+        rpi1wire_sys: update
+        name: Update Sensors
+        type: bool
+        inital_value: 0
+        visu_acl: rw
+### Example 1
+````
+### Example 1 with Sensor-Name
 
-</pre>
-# or in YAML
-<pre>
-# items/my.yaml
-
+```yaml
 someroom:
      mytemperature:
         name: my Name
         type: num
         visu_acl: ro
         rpi1wire_name: rpi_temp1
-        sqlite: yes
+        database: yes
+```
 
-#or
+### Example 2 with Sensor-ID
 
+```yaml
 someroom:
      mytemperature:
         name: my Name
-        name: Wohnzimme Raumtemperatur
         type: num
         visu_acl: ro
         rpi1wire_id: 28-0215018970ff
-        sqlite: yes
+        database: yes
 
-rpi1wire:
-     update:
-        name: Update Sensor-List
-        type: bool
-        visu_acl: rw
-        rpi1wire_update: 1
 
-</pre>
+...
+
+
+## Web Interfaces
+
+The Webinterface is reachable on you smarthomeNG server here :
+yourserver:8383/rpi1wire/
+

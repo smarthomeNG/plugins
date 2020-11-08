@@ -1,8 +1,10 @@
-# Onewire
+# OneWire
 
 ## Requirements
 
-This plugin needs an running owserver from owfs. I have tested owfs-2.7p34 and owfs-2.8p15.
+This plugin needs an running owserver (see at owfs.org) on a linux based SmartHomeNG.
+
+Versions tested are owfs-2.7p34, owfs-2.8p15 and owfs-3.2p3
 
 Hint: To run the owserver as non root you have to add a udev rule for the usb busmasters.
 
@@ -25,14 +27,18 @@ ow:
 #    port: 4304
 ```
 
-This plugins is looking by default for the owserver on 127.0.0.1 port 4304. You could change this in your plugin.yaml.
+This plugin is looking by default for the owserver on 127.0.0.1 port 4304
 
 Advanced options in plugin.yaml are:
 
 * 'cycle' = timeperiod between two sensor cycles. Default: 300 seconds.
   If you decrease the cycle too much you could destabilise the bus,
   because of the increased power consumption.
+* 'log_counter_cycle_time' = Count of measurements of actual sensor cycles time. The counter is decremented until it reaches 0, then logging will be turned off. If set to -1, logging cycle time is always on
+* 'cycle_discovery' = Time period in seconds between two discovery cycles. If you decrease the cycle to much you could destabilise the bus, because of the increased power consumption.'
+* 'log_counter_cycle_discovery_time' = Count of measurements of actual discovery cycles time. The counter is decremented until it reaches 0, then logging will be turned off. If set to -1, logging cycle time is always on
 * 'io_wait' = timeperiod between two requests of 1-wire I/O chip. Default 5 seconds.
+* 'log_counter_io_loop_time' = Count of measurements of actual IO loop time. The counter is decremented until it reaches 0, then logging will be turned off. If set to -1, logging cycle time is always on
 * 'button_wait' = timeperiod between two requests of ibutton-busmaster. Default 0.5 seconds.
 
 ### Item config
@@ -44,9 +50,31 @@ This is a name for the defined sensor information.
 This is the type of the sensor data. Currently 'num' and 'bool' are supported.
 
 #### ow_addr
-'ow_addr' defines the 1wire adress of the sensor (formerly 'ow_id'). If 'ow_addr' is specified, the 1wire plugin monitors this sensor.
+'ow_addr' defines the 1wire adress of the sensor.
+If 'ow_addr' is specified, the Onewire plugin monitors this sensor.
+Every Onewire address starts with a type specifier. This is documented at https://owfs.org/index_php_page_family-code-list.html
+
+It is possible for the owfs to define alias for an ow address. This can be done with including
+a link within ``/etc/owfs.conf`` to a file containing definitions as shown below:
+
+```
+server: alias = /usr/smarthome/items/ow_aliases
+``` 
+
+The corresponding file ``ow_aliases`` then might contain definitions like
+
+```
+28.XXXXXXXXXXXX = kitchen
+28.XXXXXXXXXXXX = bathroom
+```
+
+If aliases are defined this way, the plugin is able to use an alias instead of a device id.
 
 #### ow_sensor
+
+Since devices are available which provide multiple data providers it is not sufficient to 
+know the specifier on its own to treat the data right.
+
 'ow_sensor' defines the particular data of the sensor. Currently are supported:
 
 * 'T' - temperature - could be T, T9, T10, T11, T12
@@ -81,12 +109,12 @@ Currently the following 1wire devices are tested by users:
 
 ```yaml
 test-1wire:
-    bm-ibutton:
+    bm_ibutton:
         name: ibutton busmaster to identify ibutton buses
         type: bool
         ow_addr: '81.75172D000000'
         ow_sensor: BM
-    ib-guest:
+    ib_guest:
         name: ibutton guest
         type: bool
         ow_addr: '01.787D58130000'
