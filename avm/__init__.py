@@ -60,6 +60,8 @@ class MonitoringService:
         self._items_incoming = []  # items for incoming calls
         self._items_outgoing = []  # items for outgoing calls
         self._duration_item = dict()  # 2 items, on for counting the incoming, one for counting the outgoing call duration
+        self._duration_item['call_duration_outgoing'] = None
+        self._duration_item['call_duration_incoming'] = None
         self._call_active = dict()
         self._listen_active = False
         self._call_active['incoming'] = False
@@ -257,7 +259,7 @@ class MonitoringService:
                 self._trigger('', '', '', line[2], line[1], '')
         except Exception as e:
             self._plugin_instance.logger.error(
-                "MonitoringService: " + type(e) + " while handling Callmonitor response: " + str(e))
+                "MonitoringService: " + type(e).__name__ + " while handling Callmonitor response: " + str(e))
             return
 
     def _trigger(self, call_from, call_to, time, callid, event, branch):
@@ -298,7 +300,8 @@ class MonitoringService:
                 self._call_incoming_cid = callid
 
                 # reset duration for incoming calls
-                self._duration_item['call_duration_incoming'](0, self._plugin_instance.get_shortname())
+                if not self._duration_item['call_duration_incoming'] is None:
+                    self._duration_item['call_duration_incoming'](0, self._plugin_instance.get_shortname())
 
                 # process items specific to incoming calls
                 for item in self._items_incoming:  # update items for incoming calls
