@@ -429,12 +429,12 @@ class SeValue(StateEngineTools.SeItemChild):
     def __get_eval(self):
         # noinspection PyUnusedLocal
         sh = self._sh
+        shtime = self._shtime
         if isinstance(self.__eval, str):
             self.__eval = self.__parse_relative(self.__eval, 'sh.', ['()', '.property.'])
             if "stateengine_eval" in self.__eval or "se_eval" in self.__eval:
                 # noinspection PyUnusedLocal
-                stateengine_eval = StateEngineEval.SeEval(self._abitem)
-                se_eval = StateEngineEval.SeEval(self._abitem)
+                stateengine_eval = se_eval = StateEngineEval.SeEval(self._abitem)
             self._log_debug("Checking eval: {0} from list {1}", self.__eval, self.__listorder)
             self._log_increase_indent()
             try:
@@ -465,8 +465,7 @@ class SeValue(StateEngineTools.SeItemChild):
                     if isinstance(val, str):
                         if "stateengine_eval" in val or "se_eval" in val:
                             # noinspection PyUnusedLocal
-                            stateengine_eval = StateEngineEval.SeEval(self._abitem)
-                            se_eval = StateEngineEval.SeEval(self._abitem)
+                            stateengine_eval = se_eval = StateEngineEval.SeEval(self._abitem)
                         try:
                             _newvalue = self.__do_cast(eval(val))
                             if 'eval:{}'.format(val) in self.__listorder:

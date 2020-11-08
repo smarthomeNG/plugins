@@ -54,7 +54,7 @@ class Robot:
         self.isDocked = False
         self.isScheduleEnabled = False
         self.dockHasBeenSeen = None
-        self.chargePercentage = ''
+        self.chargePercentage = 0
         self.isCleaning = None
 
         self.state = '0'

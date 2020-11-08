@@ -601,6 +601,7 @@ class SeCondition(StateEngineTools.SeItemChild):
             # noinspection PyUnusedLocal
             self._log_debug("Trying to get {} of eval {}", type, self.__eval)
             sh = self._sh
+            shtime = self._shtime
             if isinstance(self.__eval, str):
                 # noinspection PyUnusedLocal
                 if "stateengine_eval" in self.__eval or "se_eval" in self.__eval:
