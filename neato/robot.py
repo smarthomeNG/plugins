@@ -286,7 +286,8 @@ class Robot:
         self.logger.debug("secretkeyresponse: {0}".format(secret_key_response.json()))        
         self.logger.debug("secretkeyresponse0: {0}".format(secret_key_response.json()[0]))        
 
-
+        # TODO readout number of robots. As a workaround set hardcoded to 1:
+	self._numberRobots = 1
 
         secret_key = secret_key_response.json()[0]['secret_key']
         self.serial = secret_key_response.json()[0]['serial']
