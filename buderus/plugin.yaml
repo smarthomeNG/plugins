@@ -6,7 +6,7 @@ plugin:
         de: 'Steuerung von Buderus Heizkesseln über ein Logamatic web KM200 Modul (noch in der Entwicklung), **seit SmartHomeNG v1.3**'
         fr: "Contrôle d'un chauffage Buderus via un module Logamatic web KM200 (en développement)"
         en: 'Control Buderus heating through a Logamatic web KM200 module (still under development)'
-    maintainer: rthill
+    maintainer: sebastianfaulhaber, rthill
     tester: '?'                    # Who tests this plugin?
     state: ready
 #    keywords: iot xyz
@@ -77,7 +77,7 @@ item_structs:
         type: str
         visu_acl: ro
         km_id: /gateway/versionHardware
-    
+
   heating_system:
     brand:
         type: str

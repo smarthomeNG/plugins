@@ -124,7 +124,7 @@ Das hat die selbe Wirkung, als hätte man ohne Struktur Template folgende Item-K
 
 
 Das Struktur Template **hue2.light_extended** definiert zusätzlich noch die Sub-Items ``light_name``, ``reachable``,
-``colormode``, ``xy``, ``light_type``, ``modelid`` und ``swversion``.
+``colormode``, ``xy``, ``light_type``, ``modelid`` und ``swversion``. Die Sub-Items
 ``reachable``, ``colormode``, ``light_type``, ``modelid`` und ``swversion`` können nur aus der Bridge gelesen
 werden. Änderungen an dem Item werden von der Bridge ignoriert.
 
@@ -169,7 +169,7 @@ Um den Namen der Leuchte mit der Id 3 abzufragen, muss ein Item folgendermaßen 
 
 .. code-block:: yaml
 
-    leuchten_helligkeit:
+    leuchten_name:
         type: str
         hue2_resource: light
         hue2_id: 3
