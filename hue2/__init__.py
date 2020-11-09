@@ -336,9 +336,12 @@ class Hue2(SmartPlugin):
         for pi in self.plugin_items:
             plugin_item = self.plugin_items[pi]
             if  plugin_item['resource'] == 'scene':
-                plugin_item['item'](self._get_scene_item_value(plugin_item['id'], plugin_item['function']), self.get_shortname(), src)
+                value = self._get_scene_item_value(plugin_item['id'], plugin_item['function'], plugin_item['item'].id())
+                if value is not None:
+                    plugin_item['item'](value, self.get_shortname(), src)
             if  plugin_item['resource'] == 'group':
-                plugin_item['item'](self._get_group_item_value(plugin_item['id'], plugin_item['function']), self.get_shortname(), src)
+                value = self._get_group_item_value(plugin_item['id'], plugin_item['function'], plugin_item['item'].id())
+                plugin_item['item'](value, self.get_shortname(), src)
         return
 
 
@@ -365,7 +368,9 @@ class Hue2(SmartPlugin):
         for pi in self.plugin_items:
             plugin_item = self.plugin_items[pi]
             if  plugin_item['resource'] == 'light':
-                plugin_item['item']( self._get_light_item_value(plugin_item['id'], plugin_item['function']), self.get_shortname(), src)
+                value = self._get_light_item_value(plugin_item['id'], plugin_item['function'], plugin_item['item'].id())
+                if value is not None:
+                    plugin_item['item'](value, self.get_shortname(), src)
         return
 
 
@@ -392,11 +397,13 @@ class Hue2(SmartPlugin):
         for pi in self.plugin_items:
             plugin_item = self.plugin_items[pi]
             if  plugin_item['resource'] == 'sensor':
-                plugin_item['item']( self._get_sensor_item_value(plugin_item['id'], plugin_item['function']), self.get_shortname(), src)
+                value = self._get_sensor_item_value(plugin_item['id'], plugin_item['function'], plugin_item['item'].id())
+                if value is not None:
+                    plugin_item['item'](value, self.get_shortname(), src)
         return
 
 
-    def _get_light_item_value(self, light_id, function):
+    def _get_light_item_value(self, light_id, function, item_path):
         """
         Update item that hat hue_resource == 'light'
         :param id:
@@ -404,7 +411,12 @@ class Hue2(SmartPlugin):
         :return:
         """
         result = ''
-        light = self.bridge_lights[light_id]
+        try:
+            light = self.bridge_lights[light_id]
+        except KeyError:
+            self.logger.error(f"poll_bridge_lights: Light '{light_id}' not defined on bridge (item '{item_path}')")
+            return None
+
         if function in self.hue_light_state_values:
             result = light['state'][function]
         elif function == 'name':
@@ -418,7 +430,7 @@ class Hue2(SmartPlugin):
         return result
 
 
-    def _get_group_item_value(self, group_id, function):
+    def _get_group_item_value(self, group_id, function, item_path):
         """
         Update item that hat hue_resource == 'light'
         :param id:
@@ -426,13 +438,18 @@ class Hue2(SmartPlugin):
         :return:
         """
         result = ''
-        group = self.bridge_groups[group_id]
+        try:
+            group = self.bridge_groups[group_id]
+        except KeyError:
+            self.logger.error(f"poll_bridge: Group '{group_id}' not defined on bridge (item '{item_path}')")
+            return None
+
         if function == 'name':
             result = group['name']
         return result
 
 
-    def _get_scene_item_value(self, scene_id, function):
+    def _get_scene_item_value(self, scene_id, function, item_path):
         """
         Update item that hat hue_resource == 'light'
         :param id:
@@ -440,13 +457,18 @@ class Hue2(SmartPlugin):
         :return:
         """
         result = ''
-        scene = self.bridge_scenes[scene_id]
+        try:
+            scene = self.bridge_scenes[scene_id]
+        except KeyError:
+            self.logger.error(f"poll_bridge: Scene '{scene_id}' not defined on bridge (item '{item_path}')")
+            return None
+
         if function == 'name':
             result = scene['name']
         return result
 
 
-    def _get_sensor_item_value(self, sensor_id, function):
+    def _get_sensor_item_value(self, sensor_id, function, item_path):
         """
         Update item that hat hue_resource == 'light'
         :param id:
@@ -454,7 +476,12 @@ class Hue2(SmartPlugin):
         :return:
         """
         result = ''
-        sensor = self.bridge_sensors[sensor_id]
+        try:
+            sensor = self.bridge_sensors[sensor_id]
+        except KeyError:
+            self.logger.error(f"poll_bridge_sensors: Sensor '{sensor_id}' not defined on bridge (item '{item_path}')")
+            return None
+
         if function == 'name':
             result = sensor['name']
         return result
