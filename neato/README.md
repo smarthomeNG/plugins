@@ -117,7 +117,7 @@ Neato:
       neato_isscheduleenabled: ''
       visu_acl: rw
     ChargePercentage:
-      type: str
+      type: num
       neato_chargepercentage: ''
       visu_acl: ro
 ```
