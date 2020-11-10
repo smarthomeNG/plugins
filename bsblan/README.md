@@ -1,18 +1,15 @@
 # Plugin for BSB-Lan-Adapter
 
-#### Version 1.0.0
+#### Version 1.0.1
 
-This plugin connects your BSB-LPB-LAN-Adapter (https://github.com/1coderookie/BSB-LPB-LAN/) to SmarthomeNG.
+This plugin connects your BSB-LPB-LAN-Adapter (https://github.com/1coderookie/BSB-LPB-LAN/) with SmarthomeNG.
 BSB-LPB-LAN is a LAN Interface for Boiler-System-Bus (BSB) that enables you to control heating systems from Elco or 
 Brötje and similar Systems. 
-- read out all available Boiler data.
+- read out all available boiler parameters.
+- write all accessible boiler parameters
 
 ## Change history
-
-### Changes Since version 1.x.x
-
-- No Changes so far
-
+1.0.1 added support for writing parameters
 
 ### Requirements needed software
 
@@ -39,6 +36,12 @@ A full list of supported parameters you can get from the BSB-LAN-Adapter Web int
 
 ```yaml
 bsblan:
+    Komfortsollwert_HK1:
+        type: num
+        bsb_lan: 710
+        visu_acl: rw
+        descr:
+            type: str
     Vorlauftemperatur_HK1:
         type: num
         bsb_lan: 8743
@@ -69,19 +72,13 @@ bsblan:
         visu_acl: ro
         descr:
             type: str
-    Trinkwasserdurchfluss:
-        type: num
-        bsb_lan: 8860
-        visu_acl: ro
-        descr:
-            type: str
     Kesseltemperatur:
         type: num
         bsb_lan: 8310
         visu_acl: ro
         descr:
             type: str
-    Kesselrücklauftemperatur:
+    Kesselruecklauftemperatur:
         type: num
         bsb_lan: 8314
         visu_acl: ro
@@ -90,6 +87,18 @@ bsblan:
     Wasserdruck:
         type: num
         bsb_lan: 8327
+        visu_acl: ro
+        descr:
+            type: str
+    Status_Trinkwasser:
+        type: num
+        bsb_lan: 8003
+        visu_acl: ro
+        descr:
+            type: str
+    Status_Kessel:
+        type: num
+        bsb_lan: 8005
         visu_acl: ro
         descr:
             type: str
