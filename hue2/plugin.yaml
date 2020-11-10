@@ -81,7 +81,7 @@ item_attributes:
         type: str
         description:
             de: "Anzusteuernde Resource, falls nicht angegeben wird 'light' angenommen"
-            en: ""
+            en: "Resource type to control/read"
         valid_list:
           - light
           - group
@@ -92,13 +92,13 @@ item_attributes:
         type: str
         description:
             de: "ID der anzusteuernden resouce. Der Typ der resource wird mit 'hue2_recource' festgelegt."
-            en: ""
+            en: "ID of the resource to conteol/read. The type of the resoucre is defined by 'hue2_recource' attribute"
 
     hue2_function:
         type: str
         description:
             de: "Anzusteuernde Funktion für die gewählte Resource/ID"
-            en: ""
+            en: "Function of the selected resource/id that shall be read/controlled"
         valid_list:
           - on
           - bri
@@ -129,18 +129,18 @@ item_attributes:
               - "Model Id des Leuchtmittels -> str, r/o (resource: light)"
               - "Software Version des Leuchtmittels -> str, r/o (resource: light)"
             en:
-              - ""
-              - ""
-              - ""
-              - ""
-              - ""
-              - ""
-              - ""
-              - ""
-              - ""
-              - ""
-              - ""
-              - ""
+              - "On/Off -> bool, r/w (resource: light)"
+              - "Brightness, 0 … 255 -> num, r/w (resource: light)"
+              - "Hue, 0 … 65535 -> num, r/w (resource: light)"
+              - "Saturation, 0 … 255 -> num, r/w (resource: light)"
+              - "ct value -> num, r/w (resource: light)"
+              - "Name -> str, r/w (resource: light, group, scene, sensor)"
+              - "Reachable -> bool, r/o (resource: light)"
+              - "Color-mode -> str (Werte: ct, hs, xy), r/o (resource: light)"
+              - "xy values -> list, r/w (resource: light)"
+              - "Typ of lamp -> str, r/o (resource: light)"
+              - "Model id of lamp -> str, r/o (resource: light)"
+              - "Software version lamp -> str, r/o (resource: light)"
 
 item_structs:
     # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
@@ -149,7 +149,7 @@ item_structs:
 
         type: foo
         hue2_resource@instance: light
-        #hue2_id@instance: 0
+        #hue2_id@instance: 1
 
         onoff:
             type: bool
@@ -184,7 +184,7 @@ item_structs:
     light_extended:
         name: Vorlage-Struktur für eine Hue Leuchte mit erweiteten Attributen/Sub-Items
         struct: hue2.light
-        light_name:
+        lightname:
             type: str
             hue2_resource@instance: ..:.
             hue2_id@instance: ..:.
@@ -208,7 +208,7 @@ item_structs:
             hue2_id@instance: ..:.
             hue2_function@instance: xy
 
-        light_type:
+        lighttype:
             type: str
             hue2_resource@instance: ..:.
             hue2_id@instance: ..:.
@@ -230,9 +230,9 @@ item_structs:
     # Definition of item attributes that only have a common prefix (enter 'item_attribute_prefixes: NONE' or ommit this section, if section should be empty)
     # NOTE: This section should only be used, if really nessesary (e.g. for the stateengine plugin)
 
-plugin_functions:
+plugin_functions: NONE
     # Definition of plugin functions defined by this plugin (enter 'plugin_functions: NONE', if section should be empty)
 
-logic_parameters:
+logic_parameters: NONE
     # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)
 
