@@ -54,7 +54,7 @@ class SeActionBase(StateEngineTools.SeItemChild):
     def __init__(self, abitem, name: str):
         super().__init__(abitem)
         self._se_plugin = abitem.se_plugin
-        self._parent = abitem
+        self._parent = self._abitem.id
         self._caller = StateEngineDefaults.plugin_identification
         self.shtime = Shtime.get_instance()
         self.items = Items.get_instance()
