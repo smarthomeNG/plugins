@@ -38,7 +38,7 @@ parameters:
       en: "(optional) The sniipet audio files can be stored separatly from the TTS audio files by activating this option. If 'tts' is enabled and this option is not set, the value 'local_webservice_path' is used for the audio snippet path."
 
   webservice_ip:
-    type: str
+    type: ip
     description:
       de: "(optional) Für TTS und die Audio-Snippet-Funktionalität wird ein simpler Webservice gestartet. Die IP-Adresse wird per default automatisch ermittelt, kann hier aber manuell gesetzt werden."
       en: "(optional) For the TTS and audio snippet functionality, a simple webservice is started. By default the IP is detected automatically and can be manually overridden here."
@@ -58,6 +58,8 @@ parameters:
 
   discover_cycle:
     type: int
+    default: 180
+    valid_min: 120
     description:
       de: "Zeitintervall, nach dem (erneut) nach (neuen) Lautsprechern im Netzwerk gesucht wird."
       en: "Time interval to search again for (new) speakers in the network."

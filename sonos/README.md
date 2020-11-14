@@ -22,7 +22,7 @@
 * Python3 libraries ```requests```, ```tinytag``` and ```xmltodict```
 * available ```ping``` executable on the host system
 * tested on Sonos software 10.3
-* SoCo 0.17 (it will be necessary to update the Sonos software to ≥10.1)
+* SoCo 0.20 (it will be necessary to update the Sonos software to ≥10.1)
 
 To install all necessary libraries for SmarthomeNG, you can run following bash command:
 
@@ -80,7 +80,7 @@ Sonos:
                                                     # If you're using a docker container, you have to set the host 
                                                     # ip address here.  
     # webservice_port: 23500                        # optional, default:  23500
-    # discover_cycle: 120                           # optional, default:  120 (in seconds)
+    # discover_cycle: 180                           # optional, default:  180 (in seconds)
     # snippet_duration_offset: 0.4                  # optional, default: 0.0 (in seconds)
     # speaker_ips:                                  # optional. You can set static IP addresses for your Sonos speaker. This
     #   - 192.168.1.10                              # will disable auto-discovery. This is useful if you're using a 
