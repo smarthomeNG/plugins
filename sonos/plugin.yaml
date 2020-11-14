@@ -15,7 +15,14 @@ plugin:
   version: 1.5.1                 # Plugin version
   sh_minversion: 1.5.1           # minimum shNG version to use this plugin
   multi_instance: False          # plugin supports multi instance
+  restartable: unknown
   classname: Sonos               # class containing the plugin
+
+plugin_functions: NONE
+
+logic_parameters: NONE
+
+item_structs: NONE
 
 parameters:
   tts:
@@ -66,7 +73,8 @@ parameters:
 
   snippet_duration_offset:
     type: num
-    default: 0.0
+    default: 0
+    valid_min: 0
     description:
       de: "(optional) Verlängert die Dauer von Snippet Audio Dateien um einen festen Offset in Sekunden."
       en: "(optional) Extend snippet duration by a fixed offset specified in seconds"
