@@ -54,9 +54,9 @@ parameters:
     count_logentries:
         type: bool
         default: False
-        descriptrion:
+        description:
             de: "Auf True setzen, um für das Web Interface die Anzahl der Logeinträge für jedes Item zu zählen und als extra Spalte anzuzeigen"
-            en: "Set to True to count the number of log entries for each item for the web interface and show as extra coulmn"
+            en: "Set to True to count the number of log entries for each item for the web interface and show as extra column"
 
 item_attributes:
     # Definition of item attributes defined by this plugin
