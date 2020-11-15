@@ -107,11 +107,12 @@ item_attributes:
     - track_title
     - track_artist
     - track_uri
-    - trackalbumart
+    - track_album
+    - track_album_art
     - bass
     - treble
     - loudness
-    - playmode
+    - play_mode
     - radio_show
     - radio_station
     - serial_number
@@ -126,6 +127,23 @@ item_attributes:
     - alarms
     - is_coordinator
     - tts_local_mode
+    - night_mode
+    - dialog_mode
+    - cross_fade
+    - coordinator
+    - snooze
+    - status_light
+    - zone_group_members
+    - player_name
+    - household_id
+    - streamtype
+    - current_track
+    - number_of_tracks
+    - current_transport_actions
+    - current_valid_play_modes
+    - sonos_playlists
+    - stream_content
+    - current_track_duration
 
   sonos_send:
     type: str
@@ -163,6 +181,13 @@ item_attributes:
     - alarms
     - get_playlist
     - set_playlist
+    - night_mode
+    - dialog_mode
+    - cross_fade
+    - snooze
+    - status_light
+    - switch_linein
+    - switch_tv
 
   sonos_attrib:
     type: str
@@ -178,3 +203,8 @@ item_attributes:
     - 'tts_language'
     - 'tts_volume'
     - 'tts_fade_in'
+    - 'start_after'
+    - snippet_fade_in
+    - snippet_volume
+    - clear_queue
+    - start_track
