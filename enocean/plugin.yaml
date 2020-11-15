@@ -8,7 +8,7 @@ plugin:
         en: 'EnOcean Interface'
     maintainer: Robert Budde / A. Schwithal
     # Who tests this plugin?
-    #tester:
+    tester:
     state: ready
     keywords: EnOcean, Eltako
     # url of documentation (wiki) page
@@ -20,6 +20,7 @@ plugin:
     sh_minversion: 1.3             # minimum shNG version to use this plugin
     #sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
+    restartable: unknown
     classname: EnOcean             # class containing the plugin
 
 parameters:
@@ -30,40 +31,35 @@ parameters:
         description:
             de: 'Name der Schnittstelle, an der sich der EnOcean Adapter befindet'
             en: 'name of the port where the EnOcean adapter is plugged in'
-        mandatory: 'True'
 
     tx_id:
         type: str
-        default: 0
         description:
             de: 'Unique-ID oder Base-ID des EnOcean Moduls (8-stelliger hex Wert, z.B. FFFF4680)'
             en: 'Unique-ID or Base-ID of the EnOcean Module (8-digit hex value, e.g. FFFF4680)'
-        mandatory: 'False'
+        mandatory: 'True'
 
 item_attributes:
     # Definition of item attributes defined by this plugin
     enocean_rx_id:
         type: str
-        default: 1A794D3
         description:
-            de: 'ID des EnOcean Gerätes (Aktor oder Sensor)'
-            en: 'ID of the EnOcean device (actor or sensor)'
+            de: 'ID des EnOcean Gerätes (Aktor oder Sensor), z.B. 1A794D3'
+            en: 'ID of the EnOcean device (actor or sensor), e.g. 1A794D3'
         mandatory: 'True'
 
     enocean_rx_eep:
         type: str
-        default: F6_02_03
         description:
-            de: 'EEP Profile des Response Telegramms'
-            en: 'EEP Profile of the response message'
+            de: 'EEP Profile des Response Telegramms, z.B. F6_02_03'
+            en: 'EEP Profile of the response message, e.g. F6_02_03'
         mandatory: 'True'
 
     enocean_tx_eep:
         type: str
-        default: A5_38_08
         description:
-            de: 'EEP Profile des Sende Telegramms'
-            en: 'EEP Profile of the send message'
+            de: 'EEP Profile des Sende Telegramms, z.B. A5_38_08'
+            en: 'EEP Profile of the send message, e.g. A5_38_08'
         mandatory: 'True'
 
     enocean_tx_id_offset:
@@ -74,7 +70,6 @@ item_attributes:
         description:
             de: 'Offset zur Base-ID, auf welche der Aktor reagiert'
             en: 'offset to the Base-ID on which the actor responds to'
-        mandatory: 'False'
 
     enocean_rx_key:
         type: str
@@ -82,7 +77,6 @@ item_attributes:
         description:
             de: 'Knopf/Schalter-Bezeichnung des EnOcean Gerätes'
             en: 'actor button name of the EnOcean device'
-        mandatory: 'False'
 
     enocean_rocker_action:
         type: str
@@ -93,13 +87,14 @@ item_attributes:
         valid_list:
         - 'UNSET'
         - 'TOGGLE'
+        - 'SET'
+
 
     enocean_rocker_sequence:
         type: str
         description:
             de: 'Tastersequenz'
             en: 'Rocker action sequence'
-        mandatory: 'False'
 
     block_switch:
         type: str
@@ -107,7 +102,6 @@ item_attributes:
         description:
             de: 'Wenn True, blockiert den Aktor, so dass dieser nur mit dem gleichen Schalter ausgeschaltet werden kann'
             en: 'If true, blocks the actor. The actor can only switched off with the same switch'
-        mandatory: 'False'
 
     block_dim_value:
         type: str
@@ -115,7 +109,6 @@ item_attributes:
         description:
             de: 'Wenn True, blockiert den Aktor, so dass der Dimm-Wert nur mit dem gleichen Dimmer verstellt werden kann'
             en: 'If true, blocks the actor. The dim value can only controlled with the same dimmer'
-        mandatory: 'False'
 
     dim_speed:
         type: str
@@ -125,7 +118,6 @@ item_attributes:
         description:
             de: 'Dimmgeschwindigkeit in %'
             en: 'dimm speed in %'
-        mandatory: 'False'
 
     ref_level:
         type: str
@@ -135,7 +127,6 @@ item_attributes:
         description:
             de: 'Referenzwert in % fuer Dimmwert beim Einschalten'
             en: 'reference dim value in % when switching on'
-        mandatory: 'False'
 
     color:
         type: str
@@ -143,7 +134,6 @@ item_attributes:
         description:
             de: 'Farbe für RGB-Dimmer'
             en: 'color for rgb dimmer'
-        mandatory: 'False'
 
     enocean_rtime:
         type: str
@@ -153,11 +143,12 @@ item_attributes:
         description:
             de: 'Rolladenverstellzeit (runtime) in s'
             en: 'shutter run time in s'
-        mandatory: 'False'
 
-plugin_functions:
+plugin_functions: NONE
 # Definition of plugin functions defined by this plugin
 
 logic_parameters: NONE
 # Definition of logic parameters defined by this plugin
+
+item_structs: NONE
 
