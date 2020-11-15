@@ -8,7 +8,7 @@ plugin:
     maintainer: Thomas Hengsberg (thengsty)
     tester: aschwith
     state: develop                  # change to ready when done with development
-#    keywords: iot xyz
+    keywords: vorwerk, neato
     documentation: https://github.com/smarthomeng/plugins/blob/develop/neato/README.md
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1417295-support-thread-plugin-neato
 
@@ -28,7 +28,6 @@ parameters:
             en: 'E-Mail Adresse of your Neato/Vorwerk account'
     account_pass:
         type: str
-        default: ''
         description:
             de: 'Kennwort des Neato/Vorwerk Accounts'
             en: 'Password of your Neato/Vorwerk account'
@@ -46,7 +45,6 @@ parameters:
             en: 'Vendor of your robot'
     token:
         type: str
-        default: ''
         description:
             de: 'Oauth token fuer Vorwerk Login (basierend auf MyKobold Anmeldeverfahren)'
             en: 'Oauth token obtained for Vorwerk Login (based on MyKobold interface)'
