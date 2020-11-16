@@ -142,7 +142,7 @@ item_attributes:
         - 'temperature'
         - 'set_temperature'
         - 'set_temperature_reduced'
-        - 'set_temperature_compfort'
+        - 'set_temperature_comfort'
         - 'hkr_device'
         - 'firmware_version'
         - 'manufacturer'

@@ -35,7 +35,6 @@ parameters:
     robot_vendor:
         type: str
         mandatory: True
-        default: 'neato'
         valid_list:
           - neato
           - vorwerk
@@ -71,7 +70,15 @@ item_attributes:
                 66   goToBase
                 67   enableSchedule
                 68   disableSchedule'
-            de: ''
+            de: 'Verfuegbare Kommandos:
+                61   start
+                62   stop
+                63   pause
+                64   fortsetzen
+                65   finde mich
+                66   fahre zur Basis
+                67   Reinigungsplan aktivieren
+                68   Reinigungsplan deaktivieren'
     neato_state:
         type: str
         description:
@@ -81,7 +88,13 @@ item_attributes:
                 2   Busy
                 3   Paused
                 4   Error'
-            de: ''
+            de: 'Gibt den Zustand des Roboters an.
+                0   Invalide
+                1   Idle
+                2   Beschaeftigt
+                3   Pausiert
+                4   Fehler'
+
     neato_state_action:
         type: str
         description:
@@ -105,7 +118,7 @@ item_attributes:
                 13	Acquiring Persistent Map IDs
                 14	Creating & Uploading Map
                 15	Suspended Exploration'
-            de: ''
+            de: 'Roboter Reinigungszustand'
     neato_isdocked:
         type: bool
         description:

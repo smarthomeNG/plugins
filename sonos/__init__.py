@@ -529,7 +529,10 @@ class Speaker(object):
                 try:
                     event = sub_handler.event.events.get(timeout=0.5)
                     if 'zone_name' in event.variables:
-                        self.player_name = event.variables['zone_name']
+                        if event.variables['zone_name']:
+                            self.player_name = event.variables['zone_name']
+                        else:
+                            self.player_name = "unknown"
                     sub_handler.event.events.task_done()
                     del event
                 except Empty:
@@ -1237,8 +1240,10 @@ class Speaker(object):
         if self.is_coordinator:
             for member in self._zone_group_members:
                 if member is not self:
+                    self.logger.warning("Debug: Unsubscribe in fct zone_group_members") 
                     member.av_subscription.unsubscribe()
                 else:
+                    self.logger.warning("Debug: Un/Subscribe in fct zone_group_members") 
                     member.av_subscription.unsubscribe()
                     member.av_subscription.subscribe()
 
@@ -2399,8 +2404,6 @@ class Sonos(SmartPlugin):
                                "1024-65535. TTS disabled!".format(port=webservice_port))
             self._tts = False
 
-        discover_cycle_default = 120
-
         self.webservice = None
         if self._tts:
             if self._local_webservice_path_snippet:
@@ -2456,14 +2459,8 @@ class Sonos(SmartPlugin):
                 self.logger.debug("Sonos: Local webservice path for TTS has to be set. TTS disabled!")
         else:
             self.logger.debug("Sonos: TTS disabled")
-        try:
-            self._discover_cycle = int(self.get_parameter_value("discover_cycle"))
-        except:
-            self.logger.error("Sonos: Parameter 'discover_cycle' [{val}] invalid, must be int.".format(
-                val= self.get_parameter_value("discover_cycle")
-            ))
-            self._discover_cycle = discover_cycle_default
-
+        
+        self._discover_cycle = int(self.get_parameter_value("discover_cycle"))
         self.logger.info("Sonos: Setting discover cycle to {val} seconds.".format(val=self._discover_cycle))
 
         # Read SoCo Version:
