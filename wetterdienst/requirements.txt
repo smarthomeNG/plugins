@@ -1,1 +1,0 @@
-wetterdienst>=0.10.0
