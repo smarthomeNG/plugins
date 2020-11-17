@@ -34,6 +34,7 @@ parameters:
     robot_vendor:
         type: str
         mandatory: True
+        default: 'neato'
         valid_list:
           - neato
           - vorwerk

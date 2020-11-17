@@ -320,7 +320,7 @@ class WebInterface(SmartPluginWebIf):
         self.items = Items.get_instance()
 
     @cherrypy.expose
-    def index(self, reload=None, action=None, email=None, hashInput=None, code=None):
+    def index(self, reload=None, action=None, email=None, hashInput=None, code=None, tokenInput=None):
         """
         Build index.html for cherrypy
 
@@ -331,6 +331,8 @@ class WebInterface(SmartPluginWebIf):
         calculatedHash = ''
         codeRequestSuccessfull = None
         token = ''
+        configWriteSuccessfull = None
+
 
         if action is not None:
             if action == "generateHash":
@@ -353,12 +355,25 @@ class WebInterface(SmartPluginWebIf):
                     self.logger.error("Request Vorwerk token: Email validation code missing.")
                 else:
                     self.logger.error("Request Vorwerk token: Missing argument.")
+            elif action =="writeToPluginConfig":
+                if (tokenInput is not None) and (not tokenInput == ''):
+                    self.logger.warning("Writing token to plugin.yaml")
+                    param_dict = {"token": str(tokenInput)}
+                    self.plugin.update_config_section(param_dict)
+                    configWriteSuccessfull = True
+                else:
+                    self.logger.error("writeToPluginConfig: Missing argument.")
+                    configWriteSuccessfull = False
             else:
                 self.logger.error("Unknown command received via webinterface")
 
         tmpl = self.tplenv.get_template('index.html')
         # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
-        return tmpl.render(p=self.plugin, calculatedHash=calculatedHash, token=token, codeRequestSuccessfull=codeRequestSuccessfull, items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path'])))
+        return tmpl.render(p=self.plugin, calculatedHash=calculatedHash,
+                           token=token,
+                           codeRequestSuccessfull=codeRequestSuccessfull,
+                           configWriteSuccessfull=configWriteSuccessfull,
+                           items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path'])))
 
 
     @cherrypy.expose
