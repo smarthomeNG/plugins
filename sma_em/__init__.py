@@ -44,49 +44,50 @@ sma_units = {
     "Hz": 1000,
 }
 
-sma_channels={
+sma_channels = {
     # totals
-    1:('pconsume','W','kWh'),
-    2:('psupply','W','kWh'),
-    3:('qconsume','VAr','kVArh'),
-    4:('qsupply','VAr','kVArh'),
-    9:('sconsume','VA','kVAh'),
-    10:('ssupply','VA','kVAh'),
-    13:('cosphi','°'),
-    14:('frequency','Hz'),
+    1: ('pconsume', 'W', 'kWh'),
+    2: ('psupply', 'W', 'kWh'),
+    3: ('qconsume', 'VAr', 'kVArh'),
+    4: ('qsupply', 'VAr', 'kVArh'),
+    9: ('sconsume', 'VA', 'kVAh'),
+    10: ('ssupply', 'VA', 'kVAh'),
+    13: ('cosphi', '°'),
+    14: ('frequency', 'Hz'),
     # phase 1
-    21:('p1consume','W','kWh'),
-    22:('p1supply','W','kWh'),
-    23:('q1consume','VAr','kVArh'),
-    24:('q1supply','VAr','kVArh'),
-    29:('s1consume','VA','kVAh'),
-    30:('s1supply','VA','kVAh'),
-    31:('i1','A'),
-    32:('u1','V'),
-    33:('cosphi1','°'),
+    21: ('p1consume', 'W', 'kWh'),
+    22: ('p1supply', 'W', 'kWh'),
+    23: ('q1consume', 'VAr', 'kVArh'),
+    24: ('q1supply', 'VAr', 'kVArh'),
+    29: ('s1consume', 'VA', 'kVAh'),
+    30: ('s1supply', 'VA', 'kVAh'),
+    31: ('i1', 'A'),
+    32: ('u1', 'V'),
+    33: ('cosphi1', '°'),
     # phase 2
-    41:('p2consume','W','kWh'),
-    42:('p2supply','W','kWh'),
-    43:('q2consume','VAr','kVArh'),
-    44:('q2supply','VAr','kVArh'),
-    49:('s2consume','VA','kVAh'),
-    50:('s2supply','VA','kVAh'),
-    51:('i2','A'),
-    52:('u2','V'),
-    53:('cosphi2','°'),
+    41: ('p2consume', 'W', 'kWh'),
+    42: ('p2supply', 'W', 'kWh'),
+    43: ('q2consume', 'VAr', 'kVArh'),
+    44: ('q2supply', 'VAr', 'kVArh'),
+    49: ('s2consume', 'VA', 'kVAh'),
+    50: ('s2supply', 'VA', 'kVAh'),
+    51: ('i2', 'A'),
+    52: ('u2', 'V'),
+    53: ('cosphi2', '°'),
     # phase 3
-    61:('p3consume','W','kWh'),
-    62:('p3supply','W','kWh'),
-    63:('q3consume','VAr','kVArh'),
-    64:('q3supply','VAr','kVArh'),
-    69:('s3consume','VA','kVAh'),
-    70:('s3supply','VA','kVAh'),
-    71:('i3','A'),
-    72:('u3','V'),
-    73:('cosphi3','°'),
+    61: ('p3consume', 'W', 'kWh'),
+    62: ('p3supply', 'W', 'kWh'),
+    63: ('q3consume', 'VAr', 'kVArh'),
+    64: ('q3supply', 'VAr', 'kVArh'),
+    69: ('s3consume', 'VA', 'kVAh'),
+    70: ('s3supply', 'VA', 'kVAh'),
+    71: ('i3', 'A'),
+    72: ('u3', 'V'),
+    73: ('cosphi3', '°'),
     # common
-    36864:('speedwire-version',''),
+    36864: ('speedwire-version', ''),
 }
+
 
 class SMA_EM(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
@@ -436,7 +437,8 @@ class SMA_EM(SmartPlugin):
             datatype = 'version'
         else:
             datatype = 'unknown'
-            self.logger.error('unknown datatype: measurement {} datatype {} raw_type {}'.format(measurement, datatype, raw_type))
+            self.logger.error(
+                'unknown datatype: measurement {} datatype {} raw_type {}'.format(measurement, datatype, raw_type))
         return measurement, datatype
 
     def decode_speedwire(self, datagram):
