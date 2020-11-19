@@ -28,6 +28,13 @@ parameters:
             de: "Beim Nutzen einer RS232/USB Schnittstelle ist die serielle Schnittstelle anzugeben."
             en: "If you use a RS232/USB cable to communicate with your device define the serial port."
 
+    PANEL_ID:
+        type: int
+        default: 120
+        description:
+            de: "ID für Touchpanel."
+            en: "ID for touch panel."
+
     LU_ID:
         type: int
         default: 130
@@ -77,6 +84,12 @@ item_attributes:
             de: 'Register für Lüftung entsprechend Textdatei'
             en: 'Register for ventilation based on text file'
 
+    DuW_PANEL_register:
+        type: int
+        description:
+            de: 'Register für Touch Panel entsprechend Textdatei'
+            en: 'Register for touch panel based on text file'
+
 item_structs: NONE
   # Definition of item-structure templates for this plugin
 
@@ -85,4 +98,3 @@ plugin_functions: NONE
 
 logic_parameters: NONE
     # Definition of logic parameters defined by this plugin
-

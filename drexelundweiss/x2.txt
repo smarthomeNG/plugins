@@ -272,7 +272,7 @@
 1274;EVU-Sperre Elektroheizstab aktiv;0;1;1;0;R;WP
 1272;EVU-Sperre Raumheizung aktiv;0;1;1;0;R;WP
 5036;Funktion BAD+;0;1;1;0;R/W;WP
-5492;Funktion HEIZUNG+;0;1;0;0;R/W;WP
+5492;Funktion HEIZUNG+;0;1;1;0;R/W;WP
 5000;Geraetetyp;1;90;1;0;R;WP
 2000;History: Datum 01;0;31249999;1;0;R;WP
 2002;History: Datum 02;0;31249999;1;0;R;WP
