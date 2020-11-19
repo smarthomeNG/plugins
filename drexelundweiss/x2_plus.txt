@@ -173,7 +173,7 @@
 5168;Pelletofen vorhanden?;0;1;1;0;R;LU
 5282;Pelletofen: Anlaufverzoegerung;1;60;1;0;R;LU
 5284;Pelletofen: Mindestlaufzeit;1;60;1;0;R;LU
-200;Raumtemperatur;-28000;100000;100;1;R/W;LU
+200;Raumtemperatur;-28000;100000;100;1;R;LU
 5016;Raum-Soll;14000;26000;100;1;R/W;LU
 5338;Raumtemperatur: Beschattung;20000;26000;100;1;R/W;LU
 252;Relaiskontakt: EXT;0;1;1;0;R;LU
@@ -272,7 +272,7 @@
 1274;EVU-Sperre Elektroheizstab aktiv;0;1;1;0;R;WP
 1272;EVU-Sperre Raumheizung aktiv;0;1;1;0;R;WP
 5036;Funktion BAD+;0;1;1;0;R/W;WP
-5492;Funktion HEIZUNG+;0;1;0;0;R/W;WP
+5492;Funktion HEIZUNG+;0;1;1;0;R/W;WP
 5000;Geraetetyp;1;90;1;0;R;WP
 2000;History: Datum 01;0;31249999;1;0;R;WP
 2002;History: Datum 02;0;31249999;1;0;R;WP
@@ -389,7 +389,7 @@
 5168;Pelletofen vorhanden?;0;1;1;0;R;WP
 5282;Pelletofen: Anlaufverzoegerung;1;60;1;0;R;WP
 5284;Pelletofen: Mindestlaufzeit;1;60;1;0;R;WP
-200;Raum;-28000;100000;100;1;R/W;WP
+200;Raum;-28000;100000;100;1;R;WP
 5016;Raum-Soll;14000;26000;100;1;R/W;WP
 5182;Raumtemperatur: Passive Kuehlung ein;20000;26000;100;1;R/W;WP
 226;Revisionstuere;0;1;1;0;R;WP
@@ -449,3 +449,5 @@
 1186;Drehzahl Abluft;0;3500;1;0;R;LU
 1082;Soll-Volumen Zuluft;0;350;1;0;R;LU
 1084;Soll-Volumen Abluft;0;350;1;0;R;LU
+200;Raumtemperatur;-28000;100000;100;1;R;PANEL
+5016;Raum-Soll;14000;26000;100;1;R/W;PANEL
