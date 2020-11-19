@@ -213,7 +213,7 @@ class DuW(SmartPlugin):
                 if not self._lock.acquire(timeout=2):
                     return
                 try:
-                    row = line.replace('\r\n', '').split(";")
+                    row = line.replace('\r\n', '').replace('\n', '').split(";")
                     # skip first row
                     if (row[1] == "<Description>"):
                         pass
