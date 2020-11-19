@@ -38,7 +38,7 @@ except Exception:
 
 class DuW(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.5.2"
+    PLUGIN_VERSION = "1.5.3"
 
     def __init__(self, smarthome):
         self._name = self.get_fullname()
