@@ -1,15 +1,15 @@
 plugin:
     type: interface               # Interface
     description:
-        de: 'Abfrage von Tecalor Wärmepumpen'
-        en: 'read values of a Tecalor heatpump'
-    maintainer: realhik
-    tester: realhik
+        de: 'Abfrage von Tecalor oder Stiebel Eltron Wärmepumpen'
+        en: 'read values of a Tecalor or Stiebel Eltron heatpump'
+    maintainer: zittho, bmxp
+    tester: arnix
     state: develop                # change to ready when done with development
-    keywords: THZ, Tecalor
-# Todo   documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
+    keywords: THZ, Tecalor, Stiebel, Eltron
+    documentation: https://www.smarthomeng.de/user/plugins/thz/README.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1358489-support-thread-zum-thz-lwz-30x-40x-plugin
-    version: 0.2.2                # Plugin version
+    version: 1.0.0                # Plugin version
     sh_minversion: 1.4
     multi_instance: False
     restartable: unknown
@@ -20,7 +20,7 @@ parameters:
         type: str
         default: /dev/ttyUSB0
         description:
-            de: "Serielle Schnittstelle an der der Wärmepumpe angeschlossen ist."
+            de: "Serielle Schnittstelle an der die Wärmepumpe angeschlossen ist."
             en: "serial port connected to the heatpump."
 
     baudrate: 
