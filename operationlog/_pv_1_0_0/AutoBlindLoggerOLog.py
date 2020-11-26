@@ -36,12 +36,12 @@ import os
 logger = logging.getLogger("")
 
 
-class AbLogger():
+class AbLogger:
     # Log-Level: (0=off 1=Info, 2=Debug)
     __loglevel = 2
 
     # Target directory for log files
-    __logdirectory = None
+    __logdirectory = "/usr/local/smarthome/var/log/AutoBlind/"
 
     # Max age for log files (days)
     __logmaxage = 0
@@ -101,10 +101,9 @@ class AbLogger():
     def create(item):
         return AbLogger(item)
 
+    # Constructor
+    # item: item for which the detailed log is (used as part of file name)
     def __init__(self, item):
-        """
-        item for which the detailed log is (used as part of file name)
-        """
         try:
             self.__section = item.id().replace(".", "_").replace("/", "")
         except (AttributeError, TypeError):

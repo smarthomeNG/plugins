@@ -3,19 +3,19 @@ plugin:
     # Global plugin attributes
     type: system                  # plugin type (gateway, interface, protocol, system, web)
     description:                  # Alternative: description in multiple languages
-        de: 'Implementierung seperater Logs'
+        de: 'Implementierung separater Logs'
         en: 'Implementation of additional logs'
-    maintainer: '? (JanT112)'
+    maintainer: 'bmxp'
     tester: Sandman60, onkelandy
-    keywords: logger, logging
+    keywords: Operation logging SmartVISU DEBUG CRITICAL INFO WARNING
     state: ready
-    documentation: https://github.com/smarthomeNG/plugins/tree/master/operationlog        
-
-    version: 1.3.0                 # Plugin version
+    documentation: https://www.smarthomeng.de/user/plugins/operationlog/README.html
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1496323-support-thread-für-operationlog-plugin
+    version: 1.3.3                 # Plugin version
     sh_minversion: 1.5             # minimum shNG version to use this plugin
-#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    # sh_maxversion:               # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
-    restartable: unknown
+    restartable: True
     classname: OperationLog        # class containing the plugin
 
 parameters:
@@ -25,6 +25,7 @@ parameters:
         description:
             de: 'Definiert den Namen des Logs'
             en: 'Defines the name of the log'
+
     maxlen:
         type: int
         default: 50
@@ -37,24 +38,92 @@ parameters:
         description:
             de: 'Aktiviert die Caching-Funktion für das Log (Log bleibt bei Neustart erhalten)'
             en: 'Activates the caching for the log (log will be restored on restarts)'
+
     logtofile:
         type: bool
         default: True
         description:
-            de: 'Aktiviert das Schreiben des Logs in eine Datei'
-            en: 'Activates logging to file'
+            de: 'Aktiviert das Schreiben von Logeinträgen in eine Datei'
+            en: 'Activates logging entries into to file'
+
     filepattern:
         type: str
         default: '{year:04}-{month:02}-{day:02}-{name}.log'
         description:
             de: 'Definiert das Namensformat für die Logdateien'
-            en: 'Defines the name patter for the log files'
+            en: 'Defines the name pattern for the log files'
+
     logger:
         type: str
         default: ''
         description:
-            de: 'Logt zusätzlich in den angegebenen Logger (z.B. "plugins.operationlog.logger")'
+            de: 'Schreibt zusätzlich in den angegebenen Python Standard Logger (z.B. "plugins.operationlog")'
             en: 'Additionally log to the given logger (e.g. "plugins.operationlog.logger")'
+
+    logdirectory:
+        type: str
+        default: "var/log/operationlog/"
+        description:
+            de: 'Vorgabe des Verzeichnisses für die Logfiles'
+            en: 'Preset the directory for the logfiles'
+
+    mapping:
+        type: list(str)
+        default: ["time","thread","level","message"]
+        #valid_list is not implemented in full for a list of strings.
+        #valid_list:
+        #  - time
+        #  - thread
+        #  - level
+        #  - message
+        # [time, thread, level, message]
+        description:
+            de: >
+                Definiert eine Liste mit kommagetrennten Werten die für jede Nachricht geloggt werden. 
+                Die folgenden internen Zuordnungen können benutzt werden:
+                
+                time - Zeitstempel des Eintrags
+                thread - Thread der die Daten erzeugt
+                level - Der log level (Standard ist INFO)
+                message - Die Nachricht
+                
+                Die Vorgabe sollte beibehalten werden, wenn das Log in SmartVISU angezeigt werden soll, 
+                sonst werden die Werte von der SmartVISU für die Darstellung nicht korrekt interpretiert.
+            en: >
+                This configures the list of values with comma separated values which are logged for each log message. 
+                The following internal mappings can be used and will be automatically set
+                if not given explicitely when logging data:
+                
+                time - the timestamp of log
+                thread - the thread logging data
+                level - the log level (defaults to INFO)
+                message - the message
+                
+                The default value should not be changed. Otherwise the SmartVISU might misinterpret the values for display.
+
+    items:
+        type: list(str)
+        description:
+            de: >
+                Jedes mal wenn ein Item aktualisiert wird, wird ein Logeintrag geschrieben unter der
+                Berücksichtigung der konfigurierten Items und deren Werte als Log Werte
+                
+                Wird dies nicht angegeben, dann werden die vorgegebenen Zuordnungswerte verwendet:
+                  - item_a --> now
+                  - item_b --> thread info
+                  - item_c --> log level
+                  - item_d --> message
+
+            en: >
+                Each time an item is updated using the memlog configuration setting, a log entry will be written
+                using the list of items configured in this attribute as log values.
+                
+                When this is not configured, the default mapping values will be used the associated item's value will
+                be logged. e.g.:
+                  - item_a --> now
+                  - item_b --> thread info
+                  - item_c --> log level
+                  - item_d --> message
 
 item_attributes:
     # Definition of item attributes defined by this plugin
