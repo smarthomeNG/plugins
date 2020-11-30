@@ -2,9 +2,12 @@
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
 #  Ported by toggle, 2014-2016
+#  Copyright 2019 - 2020 Bernd Meiners              Bernd.Meiners@mail.de
 #########################################################################
 #  This software is based on the FHEM implementation
 #  https://github.com/mhop/fhem-mirror/blob/master/fhem/FHEM/00_THZ.pm
+#  which is itself based upon hard work of Robert Penz
+#  http://robert.penz.name/heat-pump-lwz/
 #
 #  THZ plugin for SmartHomeNG
 #
@@ -1250,7 +1253,8 @@ class ThzProtocol():
               noResponseCount += 1
               if noResponseCount > 10:
                 # missing 10 responses in a row
-                self.logger.error('Heat pump did not respond for 10 seconds')
+                self.logger.error('Heat pump did not respond for 10 seconds.')
+                self.logger.debug('Status: isPortOpen: {}, request: {}, portErrorCount: {}, name: {}'.format(self._portHandler.isPortOpen(),request,self._portErrorCount,name))
                 self._portHandler.closePort()
                 break
         except:

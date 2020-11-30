@@ -2,9 +2,12 @@
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
 #  Ported and Copyright 2014 toggle
+#  Copyright 2019 - 2020 Bernd Meiners              Bernd.Meiners@mail.de
 #########################################################################
 #  This software is based on the FHEM implementation
 #  https://github.com/mhop/fhem-mirror/blob/master/fhem/FHEM/00_THZ.pm
+#  which is itself based upon hard work of Robert Penz
+#  http://robert.penz.name/heat-pump-lwz/
 #
 #  THZ plugin for SmartHomeNG
 #
@@ -26,8 +29,8 @@
 """
 This file provides the class PortHandler which 
 implements the low level protocol of the THZ serial port.
-The serial communication with the THZ/LWZ is time critical therefor the
-handling is done with a seperate worker thread.
+The serial communication with the THZ/LWZ is time critical therefore the
+handling is done with a separate worker thread.
 """
 
 import serial

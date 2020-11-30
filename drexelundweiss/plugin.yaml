@@ -12,7 +12,7 @@ plugin:
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/34582-drexel-weiss-plugin
 
-    version: 1.5.2                 # Plugin version
+    version: 1.5.3                 # Plugin version
     sh_minversion: 1.5             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
@@ -27,6 +27,13 @@ parameters:
         description:
             de: "Beim Nutzen einer RS232/USB Schnittstelle ist die serielle Schnittstelle anzugeben."
             en: "If you use a RS232/USB cable to communicate with your device define the serial port."
+
+    PANEL_ID:
+        type: int
+        default: 120
+        description:
+            de: "ID für Touchpanel."
+            en: "ID for touch panel."
 
     LU_ID:
         type: int
@@ -77,6 +84,12 @@ item_attributes:
             de: 'Register für Lüftung entsprechend Textdatei'
             en: 'Register for ventilation based on text file'
 
+    DuW_PANEL_register:
+        type: int
+        description:
+            de: 'Register für Touch Panel entsprechend Textdatei'
+            en: 'Register for touch panel based on text file'
+
 item_structs: NONE
   # Definition of item-structure templates for this plugin
 
@@ -85,4 +98,3 @@ plugin_functions: NONE
 
 logic_parameters: NONE
     # Definition of logic parameters defined by this plugin
-

@@ -40,6 +40,7 @@ from lib.utils import Utils
 from lib.network import Tcp_server
 
 from lib.shtime import Shtime
+
 shtime = Shtime.get_instance()
 
 class CLIHandler:
@@ -190,7 +191,8 @@ class CLI(SmartPlugin):
         elif not Utils.is_hash(self.hashed_password):
             self.logger.error("CLI: Value given for 'hashed_password' is not a valid hash value. Login will not be possible")
 
-        self.server = Tcp_server(interface=self.ip, port=self.port, name='CLI', mode=Tcp_server.MODE_TEXT_LINE)
+        name = 'plugins.' + self.get_fullname()
+        self.server = Tcp_server(interface=self.ip, port=self.port, name=name, mode=Tcp_server.MODE_TEXT_LINE)
         self.server.set_callbacks(incoming_connection=self.handle_connection)
         self.commands = CLICommands(self.get_sh(), self.updates_allowed, self)
         self.alive = False
@@ -296,7 +298,7 @@ class CLICommands:
         self.add_command('rr', self._cli_lrr, 'logic', None)
         self.add_command('lt', self._cli_lt, 'logic', 'lt [logic]: trigger a logic - command alias: tr')
         self.add_command('tr', self._cli_lt, 'logic', None)
-        
+
         self.add_command('sl', self._cli_sl, 'scheduler', 'sl: list all scheduler tasks by name')
         self.add_command('st', self._cli_sl, 'scheduler', 'st: list all scheduler tasks by execution time')
         self.add_command('si', self._cli_si, 'scheduler', 'si [task]: show details for given scheduler task')
@@ -510,7 +512,7 @@ class CLICommands:
         if idle_threads > 0:
             threads.append(self.thread_sum("idle", idle_threads))
             threads_count += idle_threads
-        
+
         threads_sorted = sorted(threads, key=lambda k: k['sort'])
 
         handler.push("{0} Threads:\n".format(threads_count))
