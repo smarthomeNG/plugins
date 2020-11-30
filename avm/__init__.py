@@ -1957,8 +1957,9 @@ class AVM(SmartPlugin):
 
             else:
                 self.logger.error(
-                    'Argument {} of Attribute {} not available on the FritzDevice with AIN {}.'
-                    .format(self.get_iattr_value(child.conf,'avm_data_type'), self.get_iattr_value(item.conf,'avm_data_type'), item.conf['ain'].strip()))
+                    'Attribute {} not available on the FritzDevice with AIN {}.'
+                    .format(self.get_iattr_value(item.conf,'avm_data_type'), item.conf['ain'].strip()))
+                    
 
     def _update_fritz_device_info(self, item):
         """
