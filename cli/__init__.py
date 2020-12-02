@@ -155,7 +155,7 @@ class CLIHandler:
 
 class CLI(SmartPlugin):
 
-    PLUGIN_VERSION = '1.7.1'     # is checked against version in plugin.yaml
+    PLUGIN_VERSION = '1.7.2'     # is checked against version in plugin.yaml
 
     def __init__(self, sh):
         """
