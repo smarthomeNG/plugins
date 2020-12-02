@@ -554,10 +554,10 @@ class CLICommands:
                 handler.push("{0}\n".format(item.id()))
         else:
             if match:
-                items = self.sh.match_items(parameter)
+                items = self.plugin.items.match_items(parameter)
                 childs = False
             else:
-                items = [self.sh.return_item(parameter)]
+                items = [self.plugin.items.return_item(parameter)]
                 childs = True
             if len(items):
                 for item in items:
@@ -581,9 +581,9 @@ class CLICommands:
         :param source: Source
         """
         if '*' in parameter or ':' in parameter:
-            items = self.sh.match_items(parameter)
+            items = self.plugin.items.match_items(parameter)
         else:
-            items = [self.sh.return_item(parameter)]
+            items = [self.plugin.items.return_item(parameter)]
         if len(items):
             for item in items:
                 # noinspection PyProtectedMember
@@ -674,7 +674,7 @@ class CLICommands:
 #        wrk = "Items ({}):".format(self.plugin.items.item_count())
 #        wrk += '\n'+'='*len(wrk)+'\n'
 #        handler.push(wrk)
-        for item in self.sh.return_items():
+        for item in self.plugin.items.return_items():
             if item.type():
                 handler.push("{0} = {1}\n".format(item.id(), item()))
             else:
@@ -699,7 +699,7 @@ class CLICommands:
         if not value:
             handler.push("You have to specify an item value. Syntax: up item = value\n")
             return
-        items = self.sh.match_items(path)
+        items = self.plugin.items.match_items(path)
         if len(items):
             for item in items:
                 if not item.type():
