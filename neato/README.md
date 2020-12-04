@@ -1,6 +1,6 @@
 # Neato/Vorwerk Vacuum Robot
 
-#### Version 1.6.2
+#### Version 1.6.3
 
 This plugin connects your Neato (https://www.neatorobotics.com/) or Vorwerk Robot with SmarthomeNG.
 - Command start, stop, pause, resume cleaning and trigger sendToBase and FindMe mode.
@@ -9,6 +9,8 @@ This plugin connects your Neato (https://www.neatorobotics.com/) or Vorwerk Robo
 ## Change history
 
 V 1.6.3    changed attribute charge_percentage from string to integer
+           added alert text output, e.g. dustbin full
+           Write obtained OAuth2 token obtained via web interface directly to config plugin.yaml
 
 V 1.6.2    Added webinterface
 
@@ -120,6 +122,11 @@ Neato:
       type: num
       neato_chargepercentage: ''
       visu_acl: ro
+    Alert:
+      type: str
+      neato_alert: ''
+      visu_acl: ro
+
 ```
 
 ## Examples

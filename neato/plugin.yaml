@@ -93,6 +93,11 @@ item_attributes:
                 2   Beschaeftigt
                 3   Pausiert
                 4   Fehler'
+    neato_alert:
+        type: str
+        description:
+            en: 'Alert string if active'
+            de: 'Alarmtext'
 
     neato_state_action:
         type: str
@@ -128,7 +133,6 @@ item_attributes:
         description:
             de: 'Roboter Status Reinigunsplan'
             en: 'Robot cleaning schedule status'
-
     neato_ischarging:
         type: bool
         description:

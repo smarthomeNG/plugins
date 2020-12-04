@@ -92,6 +92,10 @@ class Neato(SmartPlugin):
             item.property.value = self.robot.isCharging
             self._items.append(item)
 
+        if self.has_iattr(item.conf, 'neato_alert'):
+            item.property.value = self.robot.alert
+            self._items.append(item)
+
         if self.has_iattr(item.conf, 'neato_state'):
             item.property.value = self.__get_state_string(self.robot.state)
             self._items.append(item)
@@ -173,6 +177,10 @@ class Neato(SmartPlugin):
 
             if self.has_iattr(item.conf, 'neato_state'):
                 value = str(self.__get_state_string(self.robot.state))
+                item(value, self.get_shortname())
+
+            if self.has_iattr(item.conf, 'neato_alert'):
+                value = str(self.robot.alert)
                 item(value, self.get_shortname())
 
             if self.has_iattr(item.conf, 'neato_state_action'):

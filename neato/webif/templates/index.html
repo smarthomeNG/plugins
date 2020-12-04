@@ -66,9 +66,11 @@
 	}
 
 	function copyToPluginFunction() {
-		/* Get the text field */
-		tokenField = $('#input-token');
-		window.location.href='?action=writeToPluginConfig&tokenInput=' + tokenField.val();
+		if (confirm('{{ _('Wollen Sie den Vorwerk Token dauerhaft in die plugin.yaml Konfiguration uebernehmen?') }}')) {
+			tokenField = $('#input-token');
+			window.location.href='?action=writeToPluginConfig&tokenInput=' + tokenField.val();
+		}
+		return false;
 	}
 
 

@@ -59,6 +59,8 @@ class Robot:
 
         self.state = '0'
         self.state_action = '0'
+        self.alert = ''
+
 
         # Neato Available Services
         self.findMe = ''
@@ -184,14 +186,24 @@ class Robot:
             self.logger.error("Sending cloud state request error: {0}, msg: {1}".format(statusCode,robot_cloud_state_response.text ))
             return 'error'
 
-
-
         response = robot_cloud_state_response.json()
+        #self.logger.info("Robot update_robot: {0}".format(response))
 
         #Error message:
         if 'message' in response:
-            #self.logger.warning("Message: {0}".format(robot_cloud_state_response.text))
             self.logger.warning("Message: {0}".format(str(response['message'])))
+
+        if 'error' in response and response['error']:
+            self.logger.error("Robot: Error {0}".format(str(response['error'])))
+
+        # Readout alert messages, e.g. dustbin_full
+        if 'alert' in response:
+            if response['alert']:
+                if self.alert != str(response['alert']):
+                    self.logger.warning("Robot: Alert {0}".format(str(response['alert'])))
+                self.alert = str(response['alert'])
+            else:
+                self.alert = ''
         # Status
         if 'state' in response:
             self.state = str(response['state'])
@@ -311,6 +323,7 @@ class Robot:
         return date
 
     def __cleaning_start_string(self):
+        
         if self.houseCleaning == 'basic-1':
             return '{"reqId": "77","cmd": "startCleaning","params": {"category": ' + str(
                 self.category) + ',"mode": ' + str(self.mode) + ', "modifier": ' + str(self.modifier) + '}}'
