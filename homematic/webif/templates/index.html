@@ -93,7 +93,11 @@
 						{% elif not i[3] and 1 == 2 %}
 								<td colspan="3" class="py-1" style="color: red; font-weight: bold;">{{ _('Funktion') }} {{ i[4] }} {{ _('nicht gefunden') }} ({{ i[3] }})</td>
 						{% elif not i[5] %}
+							{% if (i[3] == None) and (i[4] == 'STATE') %}
+								<td colspan="3" class="py-1" style="color: red; font-weight: bold;"></td>
+							{% else %}
 								<td colspan="3" class="py-1" style="color: red; font-weight: bold;">{{ _('Funktion') }} {{ i[4] }} {{ _('existiert nicht für Kanal') }} {{ i[3] }}</td>
+							{% endif %}
 						{% else %}
 							<td class="py-1">{{ i[3] }}</td>
 							<td class="py-1">{{ i[4] }}</td>
