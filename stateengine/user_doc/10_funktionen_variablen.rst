@@ -148,7 +148,9 @@ Der Name der aktuellen Aktion, also der Teil hinter ``se_action_`` kann für
 das Setzen oder Eruieren von Werten herangezogen werden. Dies macht insbesondere
 dann Sinn, wenn auf Setting-Items in der Aktion Bezug genommen wird. Durch
 diese Variable ist es so je nach Setup möglich, ein Template für sämtliche
-Aktionen zu nutzen. Hier ein Beispiel. Das Template "setvalue" wird für das
+Aktionen zu nutzen. Sobald die Statusevaluierung
+abgeschlossen ist, ist diese Variable leer.
+Ein Beispiel: Das Template "setvalue" wird für das
 Setzen mehrerer Items herangezogen. Der eval Ausdruck schafft eine Referenz
 auf das passende Unteritem in licht1.automatik.settings.
 
@@ -198,8 +200,15 @@ auf das passende Unteritem in licht1.automatik.settings.
 **current.state_id:**
 *Die Id des Status, der gerade geprüft wird*
 
+Diese Variable wird leer, sobald die Statusevaluierung beendet wurde, noch bevor die Aktionen des
+zuletzt eingenommenen Zustands ausgeführt werden. Sie kann daher nur in der Evaluierung, nicht aber
+in on_enter(_or_stay) genutzt werden. Hierfür wird stattdessen ``se_eval.get_relative_itemvalue('..state_id')`` genutzt.
+
 **current.state_name:**
 *Der Name des Status, der gerade geprüft wird*
+
+Wie die state_id Variable wird diese nur während der Statusevaluierung entsprechend befüllt und sofort beim Eintritt
+in einen neuen Zustand geleert (noch vor dem Durchführen der Aktionen).
 
 Das angeführte Beispiel zeigt, wie eine Bedingung mit einem Wert abgeglichen
 werden kann, der in einem passenden Settingitem hinterlegt ist. Konkret
@@ -207,8 +216,8 @@ würde beim Evaluieren vom Zustand_Eins mit dem Namen "sueden" die maximale
 Helligkeit der Wetterstation mit dem Wert von automatik.settings.sueden.max_bright
 verglichen werden. Im Zustand_Zwei namens osten würde der Vergleich hingegen
 mit dem Item automatik.settings.osten.max_bright stattfinden. Zu beachten ist,
-dass die Eval Ausdrücke exakt gleich sind, was ein Anlegen von eigenen Templates
-deutlich vereinfacht.
+dass die Eval Ausdrücke exakt gleich sind, wodurch ein Anlegen von eigenen Templates
+die Situation deutlich vereinfachen würde.
 
 .. code-block:: yaml
 
@@ -248,6 +257,9 @@ deutlich vereinfacht.
 
 **current.conditionset_name:**
 *Der Name der Bedingungsgruppe, die gerade geprüft wird*
+
+Beide current.conditionset Variablen können ebenso wie die oben erwähnten current.state_id/name
+nur während der Prüfung der Bedingungen genutzt werden, nicht jedoch für Aktionen.
 
 Das Beispiel zeigt einen Windzustand. Dieser übernimmt keine Funktionen,
 sondern dient lediglich der Visualisierung (Sicherheitsrelevante Features
