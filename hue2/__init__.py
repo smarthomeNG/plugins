@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
-#  Copyright 2020-      <AUTHOR>                                  <EMAIL>
+#  Copyright 2020-      Martin Sinn                         m.sinn@gmx.de
 #########################################################################
 #  This file is part of SmartHomeNG.
 #  https://www.smarthomeNG.de
@@ -234,21 +234,23 @@ class Hue2(SmartPlugin):
     def update_light_from_item(self, plugin_item, value):
 
         self.logger.debug("update_light_from_item: plugin_item = {}".format(plugin_item))
-        if plugin_item['function'] == 'on':
-            self.br.lights(plugin_item['id'], 'state', on=value)
-        elif plugin_item['function'] == 'bri':
-            self.br.lights[plugin_item['id']]['state'](bri=value)
-        elif plugin_item['function'] == 'hue':
-            self.br.lights[plugin_item['id']]['state'](hue=value)
-        elif plugin_item['function'] == 'sat':
-            self.br.lights[plugin_item['id']]['state'](sat=value)
-        elif plugin_item['function'] == 'ct':
-            self.br.lights[plugin_item['id']]['state'](ct=value)
-        elif plugin_item['function'] == 'name':
-            self.br.lights[plugin_item['id']](name=value)
-        elif plugin_item['function'] == 'xy':
-            self.br.lights[plugin_item['id']]['state'](xy=value)
-
+        try:
+            if plugin_item['function'] == 'on':
+                self.br.lights(plugin_item['id'], 'state', on=value)
+            elif plugin_item['function'] == 'bri':
+                self.br.lights[plugin_item['id']]['state'](bri=value)
+            elif plugin_item['function'] == 'hue':
+                self.br.lights[plugin_item['id']]['state'](hue=value)
+            elif plugin_item['function'] == 'sat':
+                self.br.lights[plugin_item['id']]['state'](sat=value)
+            elif plugin_item['function'] == 'ct':
+                self.br.lights[plugin_item['id']]['state'](ct=value)
+            elif plugin_item['function'] == 'name':
+                self.br.lights[plugin_item['id']](name=value)
+            elif plugin_item['function'] == 'xy':
+                self.br.lights[plugin_item['id']]['state'](xy=value)
+        except qhue.qhue.QhueException as e:
+            self.logger.error(f"update_light_from_item: item {plugin_item['item'].id()} - qhue exception '{e}'")
         return
 
 
@@ -416,6 +418,9 @@ class Hue2(SmartPlugin):
         except KeyError:
             self.logger.error(f"poll_bridge_lights: Light '{light_id}' not defined on bridge (item '{item_path}')")
             return None
+        except Exception as e :
+            self.logger.exception(f"poll_bridge_lights: Light '{light_id}' on bridge (item '{item_path}') - exception: {e}")
+            return None
 
         if function in self.hue_light_state_values:
             result = light['state'][function]
@@ -480,6 +485,9 @@ class Hue2(SmartPlugin):
             sensor = self.bridge_sensors[sensor_id]
         except KeyError:
             self.logger.error(f"poll_bridge_sensors: Sensor '{sensor_id}' not defined on bridge (item '{item_path}')")
+            return None
+        except Exception as e :
+            self.logger.exception(f"poll_bridge_sensors: Sensor '{sensor_id}' on bridge (item '{item_path}') - exception: {e}")
             return None
 
         if function == 'name':
