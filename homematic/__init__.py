@@ -259,7 +259,11 @@ class Homematic(SmartPlugin):
                     value = dev.getWriteData(hm_function)
                 else:
                     init_error = True
-                    self.logger.error("Not initializing {}: Unknown hm_node='{}' for address={}:{}, function={}".format(item, hm_node, hm_address, hm_channel, hm_function))
+                    log_text = "Not initializing {}: Unknown hm_node='{}' for address={}:{}, function={}".format(item, hm_node, hm_address, hm_channel, hm_function)
+                    if hm_node is None and hm_function == 'STATE':
+                        self.logger.info(log_text)
+                    else:
+                        self.logger.error(log_text)
 
                 if value is not None:
                     self.logger.info("Initializing {} with '{}' from address={}:{}, function={}".format(item, value, hm_address, hm_channel, hm_function))
