@@ -1,7 +1,8 @@
 plugin_translations:
     # Translations for the plugin specially for the web interface
     'Statistiken':           {'de': '=', 'en': 'Statistics', 'fr': 'Statistiques'}
-    'Letzte KNX Aktivität':  {'de': '=', 'en': 'Last KNX activity', 'fr': 'Dernière activité KNX'}
+    'KNX Service':           {'de': '=', 'en': 'KNX daemon', 'fr': ''}
+    'Letzte Aktivität':      {'de': '=', 'en': 'Last activity', 'fr': 'Dernière activité'}
     '# gelesen':             {'de': '=', 'en': '# read', 'fr': ''}
     '# geschrieben':         {'de': '=', 'en': '# write', 'fr': ''}
     '# geantwortet':         {'de': '=', 'en': '# response', 'fr': ''}
@@ -37,7 +38,7 @@ plugin_translations:
         de: "groupwrite Telegramm für {} mit einem unbekanntem Flag: {}. Bitte entweder write oder response auswählen"
         en: '='
         fr: ''
-        
+
     "groupwrite telegram for: {} - Value: {} not send. Plugin in READONLY mode.":
         de: "groupwrite Telegram für {} - Wert {} wird nicht gesendet, das Plugin ist im READONLY Modus."
         en: '='
@@ -96,12 +97,6 @@ plugin_translations:
     "SmartHomeNG (KNX plugin stalled)":
         de: "SmartHomeNG (KNX plugin ist gestolpert)"
         en: '='
-        fr: ''
-
-        
-    'Service für den KNX Support':
-        de: '='
-        en: 'Service daemon for the KNX support'
         fr: ''
 
     'Ja':

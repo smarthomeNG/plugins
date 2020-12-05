@@ -152,7 +152,7 @@ class KNX(SmartPlugin):
         # extension to use knx project files from ETS5
         self.knxproj_ga = {}
         self.use_project_file = self.get_parameter_value('use_project_file')
-        
+
         if self.use_project_file:
             # don't bother people without project files
             self.base_project_filename = "projectfile"
@@ -162,7 +162,7 @@ class KNX(SmartPlugin):
                 self.logger.warning(self.translate("Given path is absolute, using {}").format(self.projectpath))
             else:
                 self.projectpath = pathlib.Path(self.get_sh().get_basedir()) / self.projectpath / self.base_project_filename
-                self.logger.warning(self.translate("Given path is relative, using {}").format(self.projectpath))
+                self.logger.info(self.translate("Given path is relative, using {}").format(self.projectpath))
 
             self._parse_projectfile()
 

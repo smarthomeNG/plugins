@@ -62,18 +62,18 @@ $(document).ready( function () {
 </script>
 {% endblock pluginscripts %}
 
-{% block headtable %}	
+{% block headtable %}
 	<table class="table table-striped table-hover">
 		<tbody>
 			<tr>
-				<td class="py-1"><strong>{{ _('Service für den KNX Support') }}</strong></td>
+				<td class="py-1"><strong>{{ _('KNX Service') }}</strong></td>
 				<td class="py-1">{{ knxdaemon }}</td>
 				<td></td>
 				<td class="py-1"><strong>{{ _('Statistiken') }}</strong></td>
 				<td class="py-1">{% if p.enable_stats %}{{ _('aktiviert') }}{% else %}{{ _('deaktiviert') }}{% endif %}</td>
 			</tr>
 			<tr>
-				<td class="py-1"><strong>{{ _('Letzte KNX Aktivität') }}</strong></td>
+				<td class="py-1"><strong>{{ _('Letzte Aktivität') }}</strong></td>
 				<td class="py-1">
 				{% if p.get_stats_last_action() %}
 					{{ p.get_stats_last_action().strftime('%d.%m.%Y %H:%M:%S %Z') }}
@@ -347,7 +347,7 @@ $(document).ready( function () {
 						<td>{{ p.knxproj_ga[ga]["Description"] }}</td>
 						<td>{{ p.knxproj_ga[ga]["Comment"] }}</td>
 						<td>{{ p.knxproj_ga[ga]["DatapointType"] }}</td>
-						{# 
+						{#
 							# build a dict with groupaddress as key to items and their attributes
 							# ga_usage_by_Item = { '0/1/2' : { ItemA : { attribute1 : True, attribute2 : True },
 							#                                  ItemB : { attribute1 : True, attribute2 : True }}, ...}
