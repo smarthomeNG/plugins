@@ -13,6 +13,13 @@ Hopefully several different AV devices based on TCP or Serial RS232 connections
 Tested with Pioneer (< 2016 models) and Denon AV receivers, Epson projector Oppo Bluray player
 
 ## Changelog
+### v1.6.2
+* implement lineending send and response parameters
+* fix struct visu_acl
+* show item path for dependson item instead of name
+* fix handling of negative number values
+* include model file for Anthem AV
+
 ### v1.6.1
 * use property.path instead of id()
 * fix folder for command files reading
