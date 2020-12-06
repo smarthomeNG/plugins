@@ -172,7 +172,7 @@ class Squeezebox(SmartPlugin):
                 # convert to get '0'/'1' instead of 'True'/'False'
                 value = int(value)
 
-            # special handling for bool-types who need other comands or values
+            # special handling for bool-types that need other commands or values
             # to behave intuitively
             if isinstance(source, str):
                 newsource = source.split(".")[-1:][0]
