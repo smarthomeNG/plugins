@@ -383,10 +383,21 @@ class CreateResponse(object):
                 value = min(value, int(self._commandinfo[8]))
             except Exception:
                 pass
-        value = max(min(value, int(re.sub('[^0-9]', '', re.sub('\*', '9', self._commandinfo[2])))), 0) \
-            if self._commandinfo[2].count('*') > 1 else \
-            max(min(value, 9), 0) if command.count('*') == 1 \
-            else value
+        condition1_7 = self._commandinfo[7].lstrip("-").isdigit()
+        condition2_7 = condition1_7 and int(self._commandinfo[7]) < 0
+        condition1_8 = self._commandinfo[8].lstrip("-").isdigit()
+        condition2_8 = condition1_8 and int(self._commandinfo[8]) < 0
+        if condition2_7 or condition2_8:
+            self.logger.log(VERBOSE2, "Updating Item {}: Min or max is negative number. No further adjustments for value {}".format(self._name, value))
+        else:
+            originalvalue = value
+            value = max(min(value, int(re.sub('[^0-9]', '', re.sub('\*', '9',
+                    self._commandinfo[2])))), 0) \
+                    if self._commandinfo[2].count('*') > 1 else \
+                    max(min(value, 9), 0) if command.count('*') == 1 \
+                    else value
+            if originalvalue != value:
+                self.logger.debug("Updating Item {}: Replaced number {} for command {} with {}. If you need a negative number please set a negative min/max value in the text file.".format(self._name, originalvalue, command, value))
         try:
             value = str(self._specialparse[dictentry]['update'].get(value) or value)[:command.count('*')]
         except Exception:
