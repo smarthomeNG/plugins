@@ -31,7 +31,7 @@ plugin:
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1097870-neues-plugin-av-device-f%C3%BCr-yamaha-pioneer-denon-etc
 
-    version: 1.6.2                # Plugin version
+    version: 1.6.1                # Plugin version
     sh_minversion: 1.6            # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True          # plugin supports multi instance
@@ -171,20 +171,6 @@ parameters:
         description_long:
             de: "Zurücksetzen des Items auf den vorigen Wert, wenn kein Update durchgeführt werden konnte, zB das Setzen der Lautstärke in einer abgeschalteten Zone. Sobald das dependson Item ausgeschaltet wird oder mehrere Verbindungs- und Sendeversuche fehlgeschlagen sind, wird das Item zurückgesetzt, damit keine falschen Werte in der Visu angezeigt werden."
             en: "Reset the value of the item that could not be updated. E.g. you set the volume of zone 2 when it is not powered on. If either the dependson item is off or the device sends an error response or after several connection and send retries the expected response is not received, the item gets set to the value it had before you sent the command. That way you avoid having a wrong value displayed in your Visu."
-
-    lineending_send:
-        type: str
-        default: "\r"
-        description:
-            de: "Zeichenfolge zum Beenden des Kommandos (z.B. Zeilenende)"
-            en: "Characters to finish a command line (e.g. line ending)"
-
-    lineending_response:
-        type: str
-        default: "\r\n"
-        description:
-            de: "Zeichnfolge am Ende einer Antwort"
-            en: "Characters at the end of a response"
 
     depend0_power0:
         type: bool
