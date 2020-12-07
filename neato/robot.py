@@ -59,7 +59,7 @@ class Robot:
 
         self.state = '0'
         self.state_action = '0'
-        self.alert = ''
+        self.alert = '-'
 
 
         # Neato Available Services
@@ -203,7 +203,7 @@ class Robot:
                     self.logger.warning("Robot: Alert {0}".format(str(response['alert'])))
                 self.alert = str(response['alert'])
             else:
-                self.alert = ''
+                self.alert = '-'
         # Status
         if 'state' in response:
             self.state = str(response['state'])
@@ -323,7 +323,8 @@ class Robot:
         return date
 
     def __cleaning_start_string(self):
-        
+        self.logger.debug("Robot: houseCleaning {0}, spotCleaning {1}".format(self.houseCleaning, self.spotCleaning ))
+
         if self.houseCleaning == 'basic-1':
             return '{"reqId": "77","cmd": "startCleaning","params": {"category": ' + str(
                 self.category) + ',"mode": ' + str(self.mode) + ', "modifier": ' + str(self.modifier) + '}}'
