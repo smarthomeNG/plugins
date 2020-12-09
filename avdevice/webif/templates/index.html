@@ -74,7 +74,7 @@ document.addEventListener("DOMContentLoaded", function() {
     </tr>
     <tr>
       <td class="py-1 header"><div class="oneliner"><strong>{{ _('Abhängig von') }}</strong></div></td>
-      <td class="py-1 content"><div>{{ p._dependson|default('nichts') }}
+      <td class="py-1 content"><div>{{ p._dependson.property.path|default('nichts') }}
         {% if p._dependson_value %} = {{ p._dependson_value }}{% endif %}</div></td>
       <td class="py-1 header"><div class="oneliner"><strong>{{ _('0 wenn') }}</strong></div></td>
       <td class="py-1 content"><div>
