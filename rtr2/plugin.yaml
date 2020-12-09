@@ -53,12 +53,14 @@ parameters:
 
     standby_reduction:
         type: num
+        default: 1.0
         description:
             de: 'Standard Vorgabe für die Temperatur im Standby Modus'
             en: '...'
 
     night_reduction:
         type: num
+        default: 3.0
         description:
             de: 'Standard Vorgabe für die Temperatur im Nacht Modus (bei Nachtabsenkung)'
             en: '...'

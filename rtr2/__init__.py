@@ -263,16 +263,18 @@ class Rtr2(SmartPlugin):
         info_dict = {}
         for r in self._rtr:
             info_dict[r] = {}
-            self.logger.warning(f"rtr {r} :")
-            self.logger.warning(f" - _mode: mode={self._rtr[r]._mode}, hvac={self._rtr[r]._mode.hvac}")
-            self.logger.warning(f" - _temp: comfort_temp={self._rtr[r]._temp._temp_comfort}, standby_reduction={self._rtr[r]._temp._standby_reduction}, night_reduction={self._rtr[r]._temp._night_reduction}, fixed_reduction={self._rtr[r]._temp._fixed_reduction}, frost={self._rtr[r]._temp._temp_frost}")
+            #self.logger.warning(f"rtr {r} :")
+            #self.logger.warning(f" - _mode: mode={self._rtr[r]._mode}, hvac={self._rtr[r]._mode.hvac}")
+            #self.logger.warning(f" - _temp: comfort_temp={self._rtr[r]._temp._temp_comfort}, standby_reduction={self._rtr[r]._temp._standby_reduction}, night_reduction={self._rtr[r]._temp._night_reduction}, fixed_reduction={self._rtr[r]._temp._fixed_reduction}, frost={self._rtr[r]._temp._temp_frost}")
             info_dict[r]['hvac'] = self._rtr[r]._mode.hvac
-            info_dict[r]['comfort_temp'] = self._rtr[r]._temp._temp_comfort
-            info_dict[r]['standby_reduction'] = self._rtr[r]._temp.standby_reduction
-            info_dict[r]['night_reduction'] = self._rtr[r]._temp.night_reduction
+            info_dict[r]['comfort_temp'] = round(self._rtr[r]._temp._temp_comfort, 2)
+            info_dict[r]['standby_reduction'] = round(self._rtr[r]._temp.standby_reduction, 2)
+            info_dict[r]['night_reduction'] = round(self._rtr[r]._temp.night_reduction, 2)
             info_dict[r]['fixed_reduction'] = self._rtr[r]._temp.fixed_reduction
-            info_dict[r]['frost_temp'] = self._rtr[r]._temp._temp_frost
-        self.logger.warning(f"info_dict = {info_dict}")
+            info_dict[r]['frost_temp'] = round(self._rtr[r]._temp._temp_frost, 2)
+            if (self._rtr[r].lock_status_item is not None):
+                info_dict[r]['locked'] = self._rtr[r].lock_status_item()
+        self.logger.warning(f"write_cacheinfo: info_dict = {info_dict}")
 
         filename = os.path.join(self.cache_path,'rtr2.json')
         # write thread list to ../var/run
@@ -290,8 +292,9 @@ class Rtr2(SmartPlugin):
         except:
             return
 
+        self.logger.warning(f"read_cacheinfo: info_dict = {info_dict}")
         for r in info_dict:
-            self.logger.warning(f"rtr {r} = {info_dict[r]}")
+            self.logger.info(f"rtr {r} = {info_dict[r]}")
             if self._rtr.get(r, None) is not None:
                 self._rtr[r]._mode.hvac = info_dict[r]['hvac']
                 self._rtr[r]._temp._temp_comfort = info_dict[r]['comfort_temp']
@@ -299,7 +302,12 @@ class Rtr2(SmartPlugin):
                 self._rtr[r]._temp.night_reduction = info_dict[r]['night_reduction']
                 self._rtr[r]._temp.fixed_reduction = info_dict[r]['fixed_reduction']
                 self._rtr[r]._temp._temp_frost = info_dict[r]['frost_temp']
+                if (self._rtr[r].lock_status_item is not None):
+                    self._rtr[r].lock_status_item(info_dict[r].get('locked', False))
 
+                self._rtr[r].update_rtr_items()
+            else:
+                self.logger.warning(f"Cannot restore cache for rtr '{r}'")
         return
 
 # ==================================================================================================
@@ -318,17 +326,17 @@ class Rtr_object():
 
         if temp_settings is not None and isinstance(temp_settings, list):
             if len(temp_settings) < 1:
-                temp_settings.append(self.default_comfort_temp)      # comfort temp
+                temp_settings.append(self.plugin.default_comfort_temp)      # comfort temp
             if len(temp_settings) < 2:
-                temp_settings.append(self.default_night_reduction)   # night reduction
+                temp_settings.append(self.plugin.default_night_reduction)   # night reduction
             if len(temp_settings) < 3:
-                temp_settings.append(self.default_standby_reduction) # standby_reduction
+                temp_settings.append(self.plugin.default_standby_reduction) # standby_reduction
             if len(temp_settings) < 4:
-                temp_settings.append(self.default_fixed_reduction)   # fixed_reduction
+                temp_settings.append(self.plugin.default_fixed_reduction)   # fixed_reduction
             if len(temp_settings) < 5:
-                temp_settings.append(self.default_hvac_mode)         # hvac mode
+                temp_settings.append(self.plugin.default_hvac_mode)         # hvac mode
             if len(temp_settings) < 6:
-                temp_settings.append(self.default_frost_temp)        # frost prevention temp
+                temp_settings.append(self.plugin.default_frost_temp)        # frost prevention temp
 
         self.logger.info(f"Rtr_object: Initial temp_settings = {temp_settings}")
 

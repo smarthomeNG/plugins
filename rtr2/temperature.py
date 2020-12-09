@@ -64,14 +64,14 @@ class Temperature():
         :rtype: str
         """
         if self.mode.hvac == 1:
-            return self._temp_comfort
+            return round(self._temp_comfort,2)
         elif self.mode.hvac == 2:
-            return self._temp_comfort - self._standby_reduction
+            return round(self._temp_comfort - self._standby_reduction, 2)
         elif self.mode.hvac == 3:
-            return self._temp_comfort - self._night_reduction
+            return round(self._temp_comfort - self._night_reduction, 2)
         elif self.mode.hvac == 4:
-            return self._temp_frost
-        return self._temp_frost
+            return round(self._temp_frost, 2)
+        return 0.0
 
     @set_temp.setter
     def set_temp(self, value):

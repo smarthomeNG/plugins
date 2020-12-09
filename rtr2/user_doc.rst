@@ -72,7 +72,6 @@ Für einige der Items ist das sogar notwendig, damit der RTR seine Aufgabe erfü
         rtr2_id: dusche
 
         ist_temp:
-            name: Temperatur Decke
             knx_dpt: 9
             knx_cache: 11/3/3
             database: init
@@ -96,7 +95,6 @@ Falls die Soll-Temperatur auch in der Datenbank gespeichert werden soll, so muu 
         rtr2_id: dusche
 
         ist_temp:
-            name: Temperatur Decke
             knx_dpt: 9
             knx_cache: 11/3/3
             database: init
