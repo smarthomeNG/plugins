@@ -88,7 +88,7 @@ class SmartVisu(SmartPlugin):
             if not os.path.isdir(os.path.join(self.smartvisu_dir, 'pages')):
                 self.logger.error("Could not find valid smartVISU directory: {}".format(self.smartvisu_dir))
             else:
-                self.logger.warning("Starting smartVISU v{} handling for visu in {}".format(self.smartvisu_version, self.smartvisu_dir))
+                self.logger.info("Starting smartVISU v{} handling for visu in {}".format(self.smartvisu_version, self.smartvisu_dir))
                 if self._handle_widgets:
                     try:
                         sv_iwdg = SmartVisuInstallWidgets(self)
