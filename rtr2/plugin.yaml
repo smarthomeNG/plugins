@@ -129,6 +129,7 @@ item_attributes:
 
         valid_list_description:
             de:
+              - "<noch keine Funktion gewählt>"
               - "Mode 'comfort' setzen -> bool, r/w"
               - "Mode 'standby' setzen -> bool, r/w"
               - "Mode 'night' setzen -> bool, r/w"
