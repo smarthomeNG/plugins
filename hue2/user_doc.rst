@@ -4,8 +4,8 @@
 hue2
 ####
 
-Das Plugin unterstützt Philips Hue Bridges. Es ist eine kompleete Neuentwicklung mit einem deutlich erweitertem
-Funktionsumfang gegenüber dem alten Hue Plugins:
+Das Plugin unterstützt Philips Hue Bridges. Es ist eine komplette Neuentwicklung mit einem deutlich erweiterten
+Funktionsumfang gegenüber dem alten Hue Plugin:
 
 - Die Authorisierung an der Hue Bride ist in das Plugin integriert und erfolgt über das Webinferface des Plugins.
 - Das Plugin hat eine Funktion um aktive Hue Bridges im lokalen Netzwerk zu finden.
@@ -25,7 +25,7 @@ im Web Interface.
 Konfiguration
 =============
 
-Die grundlegende Konfiguration des Plugins selbst, erfolgt durch das Web Interface des Plugins. Mit dem Wab Interface
+Die grundlegende Konfiguration des Plugins selbst, erfolgt durch das Web Interface des Plugins. Mit dem Web Interface
 kann die Verbindung zu einer Bridge hergestellt werden kann. Optionale weitere Einstellungen (z.B. Abfrage Zyklus)
 können über die Admin GUI vorgenommen werden. Diese Parameter und die Informationen zur Item-spezifischen
 Konfiguration des Plugins sind unter :doc:`/plugins_doc/config/hue2` beschrieben.

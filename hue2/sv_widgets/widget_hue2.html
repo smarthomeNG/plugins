@@ -76,9 +76,8 @@
 	Model: {{ basic.print(id~'.modelid', g_lamp~'.modelid') }} <br>
 	SW Vers.: {{ basic.print(id~'.swversion', g_lamp~'.swversion') }} <br>
 	colormode: {{ basic.print(id~'.colormode', g_lamp~'.colormode') }} <br>
-	reachable: {{ basic.text(id~'.reachable', g_lamp~'.reachable', 'Ja', 'Nein') }} <br>
+	reachable: {{ basic.symbol(id~'.reachable', g_lamp~'.reachable', ['Ja', 'Nein']) }} <br>
 	<br>
 	ct {{ basic.slider(id~'.ct', g_lamp~'.ct', 153, 500) }}
 
 {% endmacro %}
-
