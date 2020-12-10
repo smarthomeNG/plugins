@@ -8,7 +8,7 @@ plugin:
     maintainer: aschwith
 #   tester:                         # Who tests this plugin?
     state: ready                    # change to ready when done with development
-#   keywords: iot xyz
+    keywords: casambi, occhio air, 
 #   documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1496182-supportthread-f%C3%BCr-casambi-plugin
 

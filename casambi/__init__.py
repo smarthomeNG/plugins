@@ -109,7 +109,7 @@ class Casambi(SmartPlugin):
         sessionrequest_response = self.session.post(
             urlCasambi + functionURL, data=dataBodyJson,
             headers={'X-Casambi-Key': self.api_key, 
-                     'content-type': 'application/json'}, timeout=10)
+                     'content-type': 'application/json'}, timeout=10, verify=False)
         
         #self.logger.debug("Session request response: {0}".format(sessionrequest_response.text))
         statusCode = sessionrequest_response.status_code

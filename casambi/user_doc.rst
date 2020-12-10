@@ -41,7 +41,7 @@ Folgende Informationen können im Webinterface angezeigt werden:
 
 Oben rechts werden allgemeine Parameter zum Plugin wie die Verbindung zum Casambi Backend und die Anzahl der gefundenen Casambi Netzwerke angezeigt.
 
-Im ersten Tab werden die Items angezeigt, die das casambi Plugin nutzen:
+Im ersten Tab werden die Items angezeigt, die das Casambi Plugin nutzen:
 
 .. image:: assets/webif1.jpg
    :class: screenshot
