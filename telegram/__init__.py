@@ -167,10 +167,14 @@ class Telegram(SmartPlugin):
 
                 # from telegram.jobqueue.py @ line 301 thread is named
                 # name="Bot:{}:job_queue".format(self._dispatcher.bot.id)
-                t = self._updater.job_queue._JobQueue__thread
-                if t.name.startswith('Bot'):
-                    _, id, _ = t.name.split(':')
-                    self._updater.job_queue._JobQueue__thread.name = "Telegram JobQueue for id {}".format(id)
+                if hasattr(self._updater.job_queue, '_JobQueue__thread'):
+                    t = self._updater.job_queue._JobQueue__thread
+                    if t.name.startswith('Bot'):
+                        _, id, _ = t.name.split(':')
+                        self._updater.job_queue._JobQueue__thread.name = "Telegram JobQueue for id {}".format(id)
+                else:
+                    # model in telegram.ext.jobqueue.py might be changed now
+                    pass
             except Exception as e:
                 self.logger.warning("Error '{}' occurred. Could not assign pretty names to Telegrams threads, maybe object model of python-telegram-bot module has changed? Please inform the author of plugin!".format(e))
         if self.logger.isEnabledFor(logging.DEBUG):
