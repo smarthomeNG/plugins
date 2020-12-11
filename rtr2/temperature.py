@@ -77,7 +77,7 @@ class Temperature():
     def set_temp(self, value):
 
         if isinstance(value, int):
-            value = float(value)
+            value = round(float(value), 2)
         if isinstance(value, float):
             if self.mode.hvac == 1:
                 self.comfort = value
@@ -111,8 +111,8 @@ class Temperature():
             value = float(value)
         if isinstance(value, float):
             if not self._fixed_reduction:
-                self._night_reduction = self._night_reduction - self._temp_comfort + value
-                self._standby_reduction = self._standby_reduction - self._temp_comfort + value
+                self._night_reduction = round(self._night_reduction - self._temp_comfort + value, 2)
+                self._standby_reduction = round(self._standby_reduction - self._temp_comfort + value, 2)
             self._temp_comfort = value
             return
         else:
@@ -141,9 +141,9 @@ class Temperature():
             value = float(value)
         if isinstance(value, float):
             if self._fixed_reduction:
-                self._temp_comfort = value + self._standby_reduction
+                self._temp_comfort = round(value + self._standby_reduction, 2)
             else:
-                self._standby_reduction = self._standby_reduction - ((value + self._standby_reduction) - self._temp_comfort)
+                self._standby_reduction = round(self._standby_reduction - ((value + self._standby_reduction) - self._temp_comfort), 2)
             return
         else:
             self._type_error('non-float')
@@ -171,9 +171,9 @@ class Temperature():
             value = float(value)
         if isinstance(value, float):
             if self._fixed_reduction:
-                self._temp_comfort = value + self._night_reduction
+                self._temp_comfort = round(value + self._night_reduction, 2)
             else:
-                self._night_reduction = self._night_reduction - ((value + self._night_reduction) - self._temp_comfort)
+                self._night_reduction = round(self._night_reduction - ((value + self._night_reduction) - self._temp_comfort), 2)
             return
         else:
             self._type_error('non-float')

@@ -72,7 +72,7 @@
 <!--
 	Define the number of tabs for the body of the web interface (1 - 3)
 -->
-{% set tabcount = 4 %}
+{% set tabcount = 2 %}
 
 
 <!--
@@ -112,8 +112,8 @@
 					{% for r in rtr %}
 						<tr id="{{ loop.index }}_click" style="cursor: pointer;">
 							<td class="py-1">{{ r }}</td>
-							<td class="py-1">{% if rtr[r].temp_actual_item != None %}{{ rtr[r].temp_actual_item() }}°C{% endif %}</td>
-							<td class="py-1">{% if rtr[r].temp_set_item != None %}{{ rtr[r].temp_set_item() }}°C{% endif %}</td>
+							<td class="py-1">{% if rtr[r].temp_actual_item != None %}{{ rtr[r].temp_actual_item()|round(2) }}°C{% endif %}</td>
+							<td class="py-1">{% if rtr[r].temp_set_item != None %}{{ rtr[r].temp_set_item()|round(2) }}°C{% endif %}</td>
 							<td class="py-1">{% if rtr[r].control_output_item != None %}{{ rtr[r].control_output_item() }}%{% endif %}</td>
 							<td class="py-1">{{ rtr[r]._mode }}</td>
 							<td class="py-1">{% if rtr[r].lock_status_item != None %}{{ _(rtr[r].lock_status_item()) }}{% else %}-{% endif %}</td>
@@ -133,14 +133,14 @@
 									<table class="table mb-0">
 										<thead>
 											<tr>
-												<th class="p-0" width="150">Item Function</td>
-												<th class="p-0">{{ _('Pfad') }}</td>
-												<th class="p-0">{{ _('Wert') }}</td>
-												<td class="p-0" width="20" style="border-left: 1px solid var(--shng-border);"></td>
-												<th class="p-0" width="150">Item Function</td>
-												<th class="p-0">{{ _('Pfad') }}</td>
-												<th class="p-0">{{ _('Wert') }}</td>
-												<th class="p-0"></td>
+												<th class="p-0" width="150">Item Function</th>
+												<th class="p-0">{{ _('Pfad') }}</th>
+												<th class="p-0">{{ _('Wert') }}</th>
+												<th class="p-0" width="20" style="border-left: 1px solid var(--shng-border);"></th>
+												<th class="p-0" width="150">Item Function</th>
+												<th class="p-0">{{ _('Pfad') }}</th>
+												<th class="p-0">{{ _('Wert') }}</th>
+												<th class="p-0"></th>
 											</tr>
 										</thead>
 										<tbody>

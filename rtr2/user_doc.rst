@@ -148,6 +148,27 @@ Verwendung des ``crontab`` Attributes für die Modus-Items ``komfort`` und ``nac
 Hierdurch wird täglich um 4:30 Uhr der Komfort-Modus aktiviert und täglich um 21:00 Uhr die Nachtabsenkung.
 
 
+Frostschutz
+-----------
+
+Eine automatische Aktivierung des Frostschutzes kann für viele Zwescke nützlich sein. Im folgenden Beispiel wird
+der Frostschutz aktiviert, wenn das Fenster geöffnet wird, um Heizenergie zu sparen. Dazu wird das ``frost`` Attribut
+mit dem Item verbunden, welches den Status des Fensterkontaktes enthält.
+
+.. code-block:: yaml
+
+    test_rtr:
+        struct: rtr2.rtr
+        rtr2_id: dusche
+
+        frost:
+            eval: True if sh.wohnung.dusche.fenster.griff() > 0 else False
+            eval_trigger: wohnung.dusche.fenster.griff
+
+Es wird hierbei auf einen Wert größer 0 verglichen, da der Fenstergriff separate Stati für gekippt ond geöffnet
+liefert.
+
+
 Item Attribute
 --------------
 
@@ -192,6 +213,42 @@ Um den Heiz-Status eines RTR mit der Id **dusche** abzufragen, muss ein Item fol
 
 
 |
+
+Visualisierung
+==============
+
+Das Plugin liefert ein Widget für die smartVISU mit, welches auf das struct Template des Plugins abgestimmt ist und
+sich dadurch einfacher nutzen lässt. Außerdem zeigt das Widget zusätzlich an, falls der der Raumtemperatur Regler (RTR)
+über ein Item gesperrt wurde.
+
+Dieses Widget greift im Hintergrund auf das Widget **device.rtr** der smartVISU zurück.
+
+Das widget wird folgendermaßen genutzt:
+
+.. code-block:: yaml
+
+    visu_heizung:
+        name: Raumtemperaturregler Decke
+        sv_widget: "{{ rtr2.rtr('wohnung.dusche.heizung', '0.2', '') }}"
+
+Das Widget hat nur drei Parameter:
+
+  - Item, welches das struct Attribut enthält
+  - Schrittgröße für die Temperatur Verstellung (wenn der Wert leer gelassen wird, wird der Standardwert 0.5 genutzt)
+  - Text der vor dem Stellwert angezeigt wird. Falls leergelassen, wird 'heizt mit' angezeigt
+
+Die Darstellung des RTR in der Visu sieht folgendermaßen aus:
+
+.. image:: assets/widget_rtr.jpg
+   :class: screenshot
+
+Wenn der RTR gesperrt ist, wird zusätzlich ein Lock-Icon angezeigt:
+
+.. image:: assets/widget_rtr_locked.jpg
+   :class: screenshot
+
+|
+
 
 Web Interface
 =============

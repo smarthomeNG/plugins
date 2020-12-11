@@ -254,7 +254,7 @@ class Rtr2(SmartPlugin):
 
 
     def write_cacheinfo(self):
-        self.logger.warning("write_cacheinfo() called")
+        self.logger.info("write_cacheinfo() called")
         # get parameters from all rtrs to be written to cache file (e.g. to survive a restart)
         # Info to be written:
         #  - temp info (analog to setup parameters)
@@ -263,9 +263,6 @@ class Rtr2(SmartPlugin):
         info_dict = {}
         for r in self._rtr:
             info_dict[r] = {}
-            #self.logger.warning(f"rtr {r} :")
-            #self.logger.warning(f" - _mode: mode={self._rtr[r]._mode}, hvac={self._rtr[r]._mode.hvac}")
-            #self.logger.warning(f" - _temp: comfort_temp={self._rtr[r]._temp._temp_comfort}, standby_reduction={self._rtr[r]._temp._standby_reduction}, night_reduction={self._rtr[r]._temp._night_reduction}, fixed_reduction={self._rtr[r]._temp._fixed_reduction}, frost={self._rtr[r]._temp._temp_frost}")
             info_dict[r]['hvac'] = self._rtr[r]._mode.hvac
             info_dict[r]['comfort_temp'] = round(self._rtr[r]._temp._temp_comfort, 2)
             info_dict[r]['standby_reduction'] = round(self._rtr[r]._temp.standby_reduction, 2)
@@ -274,7 +271,7 @@ class Rtr2(SmartPlugin):
             info_dict[r]['frost_temp'] = round(self._rtr[r]._temp._temp_frost, 2)
             if (self._rtr[r].lock_status_item is not None):
                 info_dict[r]['locked'] = self._rtr[r].lock_status_item()
-        self.logger.warning(f"write_cacheinfo: info_dict = {info_dict}")
+        self.logger.info(f"write_cacheinfo: info_dict = {info_dict}")
 
         filename = os.path.join(self.cache_path,'rtr2.json')
         # write thread list to ../var/run
@@ -284,7 +281,7 @@ class Rtr2(SmartPlugin):
         return
 
     def read_cacheinfo(self):
-        self.logger.warning("read_cacheinfo() called")
+        self.logger.info("read_cacheinfo() called")
         filename = os.path.join(self.cache_path,'rtr2.json')
         try:
             with open(filename) as f:
@@ -292,7 +289,7 @@ class Rtr2(SmartPlugin):
         except:
             return
 
-        self.logger.warning(f"read_cacheinfo: info_dict = {info_dict}")
+        self.logger.info(f"read_cacheinfo: info_dict = {info_dict}")
         for r in info_dict:
             self.logger.info(f"rtr {r} = {info_dict[r]}")
             if self._rtr.get(r, None) is not None:
@@ -462,16 +459,16 @@ class Rtr_object():
         if ignore_function != 'hvac_mode':
             self._update_item(self.hvac_item, self._mode.hvac)
         if ignore_function != 'temp_set':
-            self._update_item(self.temp_set_item, self._temp.set_temp)
+            self._update_item(self.temp_set_item, round(self._temp.set_temp, 2))
 
         # self.temp_actual_item = None
 
         if ignore_function != 'setting_temp_comfort':
-            self._update_item(self.setting_temp_comfort_item, self._temp.comfort)
+            self._update_item(self.setting_temp_comfort_item, round(self._temp.comfort, 2))
         if ignore_function != 'setting_temp_standby':
-            self._update_item(self.setting_temp_standby_item, self._temp.standby)
+            self._update_item(self.setting_temp_standby_item, round(self._temp.standby, 2))
         if ignore_function != 'setting_temp_night':
-            self._update_item(self.setting_temp_night_item, self._temp.night)
+            self._update_item(self.setting_temp_night_item, round(self._temp.night, 2))
         if ignore_function != 'setting_night_reduction':
             self._update_item(self.setting_night_reduction_item, self._temp.night_reduction)
         if ignore_function != 'setting_standby_reduction':
@@ -479,7 +476,7 @@ class Rtr_object():
         if ignore_function != 'setting_fixed_reduction':
             self._update_item(self.setting_fixed_reduction_item, self._temp.fixed_reduction)
         if ignore_function != 'setting_temp_frost':
-            self._update_item(self.setting_temp_frost_item, self._temp.frost)
+            self._update_item(self.setting_temp_frost_item, round(self._temp.frost, 2))
 
         self._update_item(self.heating_status_item, self.heating)
 

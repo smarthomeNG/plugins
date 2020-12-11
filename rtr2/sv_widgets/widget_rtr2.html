@@ -2,12 +2,11 @@
 /**
 * Standard RTR (Room Temperatur Regulator) widget for rtr2 plugin
 *
-* @param {id=} unique id for this widget (optional)
 * @param {text=} name of the rtr
 * @param {item} an item for the rtr
 * @param {value=0.5} step for plus/minus buttons (optional, default: 0.5)
 */
-{% macro rtr(id, item_rtr, step, txt) %}
+{% macro rtr(item_rtr, step, txt) %}
 
 	{% import "device.html" as device %}
 	{% import "basic.html" as basic %}
@@ -16,6 +15,6 @@
 		{% set txt = "heizt mit" %}
 	{% endif %}
 
-	{{ device.rtr(item_rtr~"id", txt ~ " ", item_rtr~".ist_temp", item_rtr~".soll_temp", item_rtr~".komfort", item_rtr~".nacht", item_rtr~".frost", item_rtr~".heizt", item_rtr~".stellwert_text", step, '', [basic.symbol(item_rtr~"id2", item_rtr~".gesperrt", "", "secur_locked.svg", '1', '', 'icon1')]) }}
+	{{ device.rtr(item_rtr~"_id", txt ~ " ", item_rtr~".ist_temp", item_rtr~".soll_temp", item_rtr~".komfort", item_rtr~".nacht", item_rtr~".frost", item_rtr~".heizt", item_rtr~".stellwert_text", step, '', [basic.symbol(item_rtr~"_id2", item_rtr~".gesperrt", "", "secur_locked.svg", '1', '', 'icon1')]) }}
 
 {% endmacro %}
