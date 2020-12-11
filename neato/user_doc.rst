@@ -1,9 +1,9 @@
 .. index:: Plugins; Neato (Neato und Vorwerk Unterstützung)
 .. index:: Neato
 
-========
+=============
 neato/vorwerk
-========
+=============
 
 Neato plugin, mit Unterstützung für Neato und Vorwerk Saugroboter.
 
@@ -16,7 +16,7 @@ Die Informationen zur Konfiguration des Plugins sind unter :doc:`/plugins_doc/co
 Web Interface
 =============
 
-Das neato Plugin verfügt über ein Webinterface, um  für Vorwerk Saugroboter das OAuth2 Authentifizierungsverfahren direkt durchzuführen und bei Bedarf 
+Das neato Plugin verfügt über ein Webinterface, um  für Vorwerk Saugroboter das OAuth2 Authentifizierungsverfahren direkt durchzuführen und bei Bedarf
 den erhaltenen Token direkt in die Konfiguration (plugin.yaml) zu uebernehmen.
 
 .. important::
