@@ -153,15 +153,15 @@ $(document).ready( function () {
 		<table id="itemtable" class="table table-striped table-hover">
 			<thead>
 				<tr>
-					<th>{{ _('Item') }}</th>
-					<th>{{ _('Typ') }}</th>
-					<th style="width: 100;">{{ _('Wert') }}</th>
-					<th>{{ 'knx_dpt' }}</th>
-					<th>cache/init/listen</th>
-					<th>{{ 'knx_send' }}</th>
-					<th>{{ 'knx_reply' }}</th>
-					<th>{{ 'knx_status' }}</th>
-					<th>{{ 'knx_poll' }}</th>
+					<th style="border-bottom: 1px solid var(--shng-border);">{{ _('Item') }}</th>
+					<th style="border-bottom: 1px solid var(--shng-border);">{{ _('Typ') }}</th>
+					<th style="border-bottom: 1px solid var(--shng-border); width: 100;">{{ _('Wert') }}</th>
+					<th style="border-bottom: 1px solid var(--shng-border);">{{ 'knx_dpt' }}</th>
+					<th style="border-bottom: 1px solid var(--shng-border);">cache/init/listen</th>
+					<th style="border-bottom: 1px solid var(--shng-border);">{{ 'knx_send' }}</th>
+					<th style="border-bottom: 1px solid var(--shng-border);">{{ 'knx_reply' }}</th>
+					<th style="border-bottom: 1px solid var(--shng-border);">{{ 'knx_status' }}</th>
+					<th style="border-bottom: 1px solid var(--shng-border);">{{ 'knx_poll' }}</th>
 					</tr>
 			</thead>
 			<tbody>
@@ -213,13 +213,13 @@ $(document).ready( function () {
 		<table id="gatable" class="table table-striped table-hover">
 			<thead>
 				<tr>
-					<th>{{ _('Gruppen Adresse') }}</th>
-					<th>{{ _('# gelesen') }}</th>
-					<th>{{ _('# geschrieben') }}</th>
-					<th>{{ _('# geantwortet') }}</th>
-					<th>{{ _('last_read') }}</th>
-					<th>{{ _('last_write') }}</th>
-					<th>{{ _('last_response') }}</th>
+					<th style="border-bottom: 1px solid var(--shng-border);">{{ _('Gruppen Adresse') }}</th>
+					<th style="border-bottom: 1px solid var(--shng-border);">{{ _('# gelesen') }}</th>
+					<th style="border-bottom: 1px solid var(--shng-border);">{{ _('# geschrieben') }}</th>
+					<th style="border-bottom: 1px solid var(--shng-border);">{{ _('# geantwortet') }}</th>
+					<th style="border-bottom: 1px solid var(--shng-border);">{{ _('last_read') }}</th>
+					<th style="border-bottom: 1px solid var(--shng-border);">{{ _('last_write') }}</th>
+					<th style="border-bottom: 1px solid var(--shng-border);">{{ _('last_response') }}</th>
 					</tr>
 			</thead>
 			<tbody>
@@ -267,13 +267,13 @@ $(document).ready( function () {
 		<table id="patable" class="table table-striped table-hover">
 			<thead>
 				<tr>
-					<th>{{ _('Physische Adresse') }}</th>
-					<th>{{ _('# gelesen') }}</th>
-					<th>{{ _('# geschrieben') }}</th>
-					<th>{{ _('# geantwortet') }}</th>
-					<th>{{ _('last_read') }}</th>
-					<th>{{ _('last_write') }}</th>
-					<th>{{ _('last_response') }}</th>
+					<th style="border-bottom: 1px solid var(--shng-border);">{{ _('Physische Adresse') }}</th>
+					<th style="border-bottom: 1px solid var(--shng-border);">{{ _('# gelesen') }}</th>
+					<th style="border-bottom: 1px solid var(--shng-border);">{{ _('# geschrieben') }}</th>
+					<th style="border-bottom: 1px solid var(--shng-border);">{{ _('# geantwortet') }}</th>
+					<th style="border-bottom: 1px solid var(--shng-border);">{{ _('last_read') }}</th>
+					<th style="border-bottom: 1px solid var(--shng-border);">{{ _('last_write') }}</th>
+					<th style="border-bottom: 1px solid var(--shng-border);">{{ _('last_response') }}</th>
 					</tr>
 			</thead>
 			<tbody>
@@ -337,12 +337,12 @@ $(document).ready( function () {
 			<table id="knxprojtable" class="table table-striped table-hover" >
 				<thead>
 					<tr>
-						<th>{{ _('Gruppen Adresse') }}</th>
-						<th>{{ _('Name') }}</th>
-						<th>{{ _('Beschreibung') }}</th>
-						<th>{{ _('Kommentar') }}</th>
-						<th>{{ _('Datenpunkt') }}</th>
-						<th style="border-left: 1px solid">Item(s)</th>
+						<th style="border-bottom: 1px solid var(--shng-border);">{{ _('Gruppen Adresse') }}</th>
+						<th style="border-bottom: 1px solid var(--shng-border);">{{ _('Name') }}</th>
+						<th style="border-bottom: 1px solid var(--shng-border);">{{ _('Beschreibung') }}</th>
+						<th style="border-bottom: 1px solid var(--shng-border);">{{ _('Kommentar') }}</th>
+						<th style="border-bottom: 1px solid var(--shng-border);">{{ _('Datenpunkt') }}</th>
+						<th style="border-bottom: 1px solid var(--shng-border); border-left: 1px solid var(--shng-border);">Item(s)</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -359,7 +359,7 @@ $(document).ready( function () {
 							# ga_usage_by_Attrib={ '0/1/2' : { attribut1 : { ItemA : True, ItemB : True },
 							#                                  attribut2 : { ItemC : True, ItemD : True }}, ...}
 						#}
-						<td  style="border-left: 1px solid">
+						<td  style="border-left: 1px solid var(--shng-border);">
 							{% if ga in ga_usage_by_Item %}
 								{% set itemlist = ga_usage_by_Item[ga] %}
 								{% for item in itemlist %}
