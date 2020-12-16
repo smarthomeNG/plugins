@@ -217,11 +217,22 @@ Um den Heiz-Status eines RTR mit der Id **dusche** abzufragen, muss ein Item fol
 Visualisierung
 ==============
 
-Das Plugin liefert ein Widget für die smartVISU mit, welches auf das struct Template des Plugins abgestimmt ist und
+Das Plugin liefert zwei Widgets für die smartVISU mit, welches auf das struct Template des Plugins abgestimmt ist und
 sich dadurch einfacher nutzen lässt. Außerdem zeigt das Widget zusätzlich an, falls der der Raumtemperatur Regler (RTR)
 über ein Item gesperrt wurde.
 
-Dieses Widget greift im Hintergrund auf das Widget **device.rtr** der smartVISU zurück.
+RTR Widget
+----------
+Dieses Widget dient zur Bedienung des Raumtemperatur Reglers (RTR). Es greift im Hintergrund auf das
+Widget **device.rtr** der smartVISU zurück, ist jedoch einfacher zu konfigurieren, da es auf die Item Struktur
+des struct Templates abgestimmt ist. Außerdem wird zusätzlich zum **device.rtr** Widget auch der Sperr-Status
+des RTR angezeigt.
+
+Das Widget hat nur drei Parameter, von denen nur einer benötigt wird:
+
+  - Item, welches das struct Attribut enthält
+  - Schrittgröße für die Temperatur Verstellung (falls der Wert leer gelassen wird, wird der Standardwert 0.5 genutzt)
+  - Text der vor dem Stellwert angezeigt wird (falls der Wert leer gelassen wird, wird 'heizt mit' angezeigt)
 
 Das widget wird folgendermaßen genutzt:
 
@@ -231,24 +242,50 @@ Das widget wird folgendermaßen genutzt:
         name: Raumtemperaturregler Decke
         sv_widget: "{{ rtr2.rtr('wohnung.dusche.heizung', '0.2', '') }}"
 
-Das Widget hat nur drei Parameter:
-
-  - Item, welches das struct Attribut enthält
-  - Schrittgröße für die Temperatur Verstellung (wenn der Wert leer gelassen wird, wird der Standardwert 0.5 genutzt)
-  - Text der vor dem Stellwert angezeigt wird. Falls leergelassen, wird 'heizt mit' angezeigt
-
 Die Darstellung des RTR in der Visu sieht folgendermaßen aus:
 
 .. image:: assets/widget_rtr.jpg
    :class: screenshot
 
-Wenn der RTR gesperrt ist, wird zusätzlich ein Lock-Icon angezeigt:
+Wenn der RTR über ein Item gesperrt wurde, wird der Stellwert auf 0% gesetzt und zusätzlich ein Lock-Icon angezeigt:
 
 .. image:: assets/widget_rtr_locked.jpg
    :class: screenshot
 
 |
+Plot Widget
+-----------
+Dieses Widget dient zur Anzeige der Temperatur- und Stellwert Daten des Raumtemperatur Reglers (RTR). Es greift im
+Hintergrund auf das Widget **plot.multiaxis** der smartVISU zurück, ist jedoch einfacher zu konfigurieren, da es auf
+die Item Struktur des struct Templates abgestimmt ist. Voraussetzung ist, dass für die anzuzeigenden Items die
+Daten mit dem database Plugin gespeichert werden.
 
+Standardmäßig werden der Sollwert, die aktuelle Temperatur und der Stellwert angezeigt. Es können Kurven für bis
+zu zwei weitere Temperaturen angezeigt werden, falls dieses gewünscht wird.
+
+Das Widget hat sechs Parameter, von denen nur einer benötigt wird:
+
+  - Item, welches das struct Attribut enthält
+  - Beschriftung der Ist-Temperatur (falls der Wert leer gelassen wird, wird 'Ist Temp.' angezeigt)
+  - Item mit den Daten der 1. zusätzlichen Temperatur (falls der Wert leer gelassen wird, wird keine zusätzliche Temperatur angezeigt)
+  - Beschriftung für die 1. zusätzliche Temperatur
+  - Item mit den Daten der 2. zusätzlichen Temperatur (falls der Wert leer gelassen wird, wird keine 2. zusätzliche Temperatur angezeigt)
+  - Beschriftung für die 2. zusätzliche Temperatur
+
+Das widget wird folgendermaßen genutzt (incl. Anzeige einer zusätzlichen Temperatur):
+
+.. code-block:: yaml
+
+    visu_heizung:
+        name: Raumtemperaturregler Decke
+        sv_widget: "{{ rtr2.plot('wohnung.dusche.heizung', 'Decke', 'wohnung.dusche.heizung.ist_estrich', 'Estrich') }}"
+
+Die Darstellung der Daten in der Visu sieht folgendermaßen aus:
+
+.. image:: assets/widget_plot.jpg
+   :class: screenshot
+
+|
 
 Web Interface
 =============

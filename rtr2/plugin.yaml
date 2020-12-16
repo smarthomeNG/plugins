@@ -3,8 +3,8 @@ plugin:
     # Global plugin attributes
     type: system                   # plugin type (gateway, interface, protocol, system, web)
     description:
-        de: 'Anbindung des Philips/Signify Hue Systems über eine Hue Bridge (v1 oder v2)'
-        en: 'Gateway for connection to the Philips/Signify Hue system using one bridge (v1 or v2)'
+        de: 'Raum Temperatur Regler v2'
+        en: 'Room Temperature controller v2'
     maintainer: msinn
 #    tester:                         # Who tests this plugin?
     state: develop                  # change to ready when done with development
@@ -38,11 +38,11 @@ parameters:
             de: 'Gebäuchliche Werte: Wasserheizung=120 Min, Fußbodenheitzung=150 Min, Split Unit=60 Min'
             en: '...'
 
-    default_Kd:
-        type: num
-        description:
-            de: '(Zukünftige Erweiterung für PID-Regler)'
-            en: '...'
+    #default_Kd:
+    #    type: num
+    #    description:
+    #        de: '(Zukünftige Erweiterung für PID-Regler)'
+    #        en: '...'
 
     comfort_temp:
         type: num
@@ -95,6 +95,24 @@ parameters:
             de: "Standard Vorgabe für die Aktivierung der Ventilschutz Einstellung der Regler."
             en: "..."
 
+    max_output:
+        type: num
+        valid_min: 20
+        valid_max: 100
+        default: 100
+        description:
+            de: "Standard Vorgabe für den maximalen Stellwert der Regler."
+            en: "..."
+
+    min_output:
+        type: num
+        valid_min: 0
+        valid_max: 25
+        default: 0
+        description:
+            de: "Standard Vorgabe für den minimalen Stellwert der Regler."
+            en: "..."
+
 item_attributes:
     # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)
 
@@ -128,6 +146,8 @@ item_attributes:
           - setting_standby_reduction
           - setting_fixed_reduction
           - setting_temp_frost
+          - setting_min_output
+          - setting_max_output
 
         valid_list_description:
             de:
@@ -149,7 +169,11 @@ item_attributes:
               - "Setting: Standby-Absenkung setzen -> num, r/w"
               - "Setting: Feste Absenkung -> bool, r/w"
               - "Setting: Frostschutz Temp setzen -> num, r/w"
+              - "Setting: Minimaler Stellwert -> num(0-25), r/w"
+              - "Setting: Maximaler Stellwert -> num(25-100), r/w"
             en:
+              - "..."
+              - "..."
               - "..."
               - "..."
               - "..."
@@ -193,7 +217,7 @@ item_structs:
             rtr2_id@instance: ..:.
             rtr2_function@instance: comfort_mode
 
-        standby:
+        normal:
             type: bool
             rtr2_id@instance: ..:.
             rtr2_function@instance: standby_mode
@@ -278,6 +302,16 @@ item_structs:
                 type: num
                 rtr2_id@instance: ...:.
                 rtr2_function@instance: setting_temp_frost
+
+            min_stellwert:
+                type: num
+                rtr2_id@instance: ...:.
+                rtr2_function@instance: setting_min_output
+
+            max_stellwert:
+                type: num
+                rtr2_id@instance: ...:.
+                rtr2_function@instance: setting_max_output
 
 
 #item_attribute_prefixes:

@@ -41,7 +41,7 @@
 			<td class="py-1"><strong>Default Ki</strong></td>
 			<td class="py-1">{{ p.default_Ki }} Min</td>
 			<td></td>
-			<td class="py-1"><strong>Prompt 5</strong></td>
+			<td class="py-1"><strong>-</strong></td>
 			<td class="py-1">-</td>
 			<td></td>
 		</tr>
@@ -49,7 +49,7 @@
 			<td class="py-1"><strong>Default Kd</strong></td>
 			<td class="py-1">{{ p.default_Kd }}</td>
 			<td></td>
-			<td class="py-1"><strong>Prompt 6</strong></td>
+			<td class="py-1"><strong>-</strong></td>
 			<td class="py-1">-</td>
 			<td></td>
 		</tr>
@@ -102,10 +102,10 @@
 						<th class="py-1">{{ _('Modus') }}</th>
 						<th class="py-1">{{ _('Sperre') }}</th>
 						<th class="py-1">{{ _('Komfort Temp') }}</th>
-						<th class="py-1">{{ _('Standby Temp') }}</th>
+						<th class="py-1">{{ _('Normal Temp') }}</th>
 						<th class="py-1">{{ _('Nacht Temp') }}</th>
 						<th class="py-1">{{ _('Frost Temp') }}</th>
-					<th class="py-1" width="100px"></th>
+					<th class="py-1" width="50px"></th>
 					</tr>
 				</thead>
 				<tbody>
@@ -159,7 +159,7 @@
 												<td class="p-0">{{ rtr[r].standby_item }}</td>
 												<td class="p-0">{% if rtr[r].standby_item != None %}{{ rtr[r].standby_item() }}{% else %}./.{% endif %}</td>
 												<td class="p-0" style="border-left: 1px solid var(--shng-border);"></td>
-												<td class="p-0">{{ 'temp standby' }}</td>
+												<td class="p-0">{{ 'temp normal' }}</td>
 												<td class="p-0">{{ rtr[r].setting_temp_standby_item }}</td>
 												<td class="p-0">{% if rtr[r].setting_temp_standby_item != None %}{{ rtr[r].setting_temp_standby_item() }}°C{% else %}./.{% endif %}</td>
 												<td></td>
@@ -205,9 +205,9 @@
 												<td></td>
 											</tr>
 											<tr>
-												<td class="p-0">{{ 'lock status' }}</td>
-												<td class="p-0">{{ rtr[r].lock_status_item }}</td>
-												<td class="p-0">{% if rtr[r].lock_status_item != None %}{{ rtr[r].lock_status_item() }}{% else %}./.{% endif %}</td>
+												<td class="p-0">{{ 'temp actual' }}</td>
+												<td class="p-0">{{ rtr[r].temp_actual_item }}</td>
+												<td class="p-0">{% if rtr[r].temp_actual_item != None %}{{ rtr[r].temp_actual_item() }}°C{% else %}./.{% endif %}</td>
 												<td class="p-0" style="border-left: 1px solid var(--shng-border);"></td>
 												<td class="p-0">{{ 'fixed reduction' }}</td>
 												<td class="p-0">{{ rtr[r].setting_fixed_reduction_item }}</td>
@@ -215,23 +215,13 @@
 												<td></td>
 											</tr>
 											<tr>
-												<td class="p-0">{{ 'temp actual' }}</td>
-												<td class="p-0">{{ rtr[r].temp_actual_item }}</td>
-												<td class="p-0">{% if rtr[r].temp_actual_item != None %}{{ rtr[r].temp_actual_item() }}°C{% else %}./.{% endif %}</td>
-												<td class="p-0" style="border-left: 1px solid var(--shng-border);"></td>
-												<td class="p-0">{{ 'lock 1' }}</td>
-												<td class="p-0">{{ rtr[r].lock_items[0] }}</td>
-												<td class="p-0">{% if rtr[r].lock_items[0] != None %}{{ rtr[r].lock_items[0]() }}{% else %}./.{% endif %}</td>
-												<td></td>
-											</tr>
-											<tr>
 												<td class="p-0">{{ 'temp set' }}</td>
 												<td class="p-0">{{ rtr[r].temp_set_item }}</td>
 												<td class="p-0">{% if rtr[r].temp_set_item != None %}{{ rtr[r].temp_set_item() }}°C{% else %}./.{% endif %}</td>
 												<td class="p-0" style="border-left: 1px solid var(--shng-border);"></td>
-												<td class="p-0">{{ 'lock 2' }}</td>
-												<td class="p-0">{{ rtr[r].lock_items[1] }}</td>
-												<td class="p-0">{% if rtr[r].lock_items[1] != None %}{{ rtr[r].lock_items[1]() }}{% else %}./.{% endif %}</td>
+												<td class="p-0">{{ 'lock status' }}</td>
+												<td class="p-0">{{ rtr[r].lock_status_item }}</td>
+												<td class="p-0">{% if rtr[r].lock_status_item != None %}{{ rtr[r].lock_status_item() }}{% else %}./.{% endif %}</td>
 												<td></td>
 											</tr>
 											<tr>
@@ -239,11 +229,32 @@
 												<td class="p-0">{{ rtr[r].control_output_item }}</td>
 												<td class="p-0">{% if rtr[r].control_output_item != None %}{{ rtr[r].control_output_item() }}%{% else %}./.{% endif %}</td>
 												<td class="p-0" style="border-left: 1px solid var(--shng-border);"></td>
+												<td class="p-0">{{ 'lock 1' }}</td>
+												<td class="p-0">{{ rtr[r].lock_items[0] }}</td>
+												<td class="p-0">{% if rtr[r].lock_items[0] != None %}{{ rtr[r].lock_items[0]() }}{% else %}./.{% endif %}</td>
+												<td></td>
+											</tr>
+											<tr>
+												<td class="p-0">{{ 'min_output' }}</td>
+												<td class="p-0">{{ rtr[r].setting_min_output_item }}</td>
+												<td class="p-0">{% if rtr[r].setting_min_output_item != None %}{{ rtr[r].setting_min_output_item() }}%{% else %}./.{% endif %}</td>
+												<td class="p-0" style="border-left: 1px solid var(--shng-border);"></td>
+												<td class="p-0">{{ 'lock 2' }}</td>
+												<td class="p-0">{{ rtr[r].lock_items[1] }}</td>
+												<td class="p-0">{% if rtr[r].lock_items[1] != None %}{{ rtr[r].lock_items[1]() }}{% else %}./.{% endif %}</td>
+												<td></td>
+											</tr>
+											<tr>
+												<td class="p-0">{{ 'max_output' }}</td>
+												<td class="p-0">{{ rtr[r].setting_max_output_item }}</td>
+												<td class="p-0">{% if rtr[r].setting_max_output_item != None %}{{ rtr[r].setting_max_output_item() }}%{% else %}./.{% endif %}</td>
+												<td class="p-0" style="border-left: 1px solid var(--shng-border);"></td>
 												<td class="p-0">{{ 'lock 3' }}</td>
 												<td class="p-0">{{ rtr[r].lock_items[2] }}</td>
 												<td class="p-0">{% if rtr[r].lock_items[2] != None %}{{ rtr[r].lock_items[2]() }}{% else %}./.{% endif %}</td>
 												<td></td>
 											</tr>
+
 										</tbody>
 									</table>
 								</div>
@@ -290,10 +301,12 @@
 						<th class="py-1">{{ _('Ki') }}</th>
 						<th class="py-1">{{ _('Kd') }}</th>
 						<th class="py-1">{{ _('Ventil Schutz') }}</th>
-						<th class="py-1">{{ _('Standby Temp') }}</th>
-						<th class="py-1">{{ _('Nacht Temp') }}</th>
-						<th class="py-1">{{ _('Frost Temp') }}</th>
-					<th class="py-1" width="100px"></th>
+						<th class="py-1">{{ _('Normal Absenkung') }}</th>
+						<th class="py-1">{{ _('Nacht Absenkung') }}</th>
+						<th class="py-1">{{ _('Feste Absenkung') }}</th>
+						<th class="py-1">{{ _('Min. Stellwert') }}</th>
+						<th class="py-1">{{ _('Max. Stellwert') }}</th>
+					<th class="py-1" width="50px"></th>
 					</tr>
 				</thead>
 				<tbody>
@@ -305,9 +318,17 @@
 							<td class="py-1">{{ rtr[r].controller._Ki }}</td>
 							<td class="py-1">{% if rtr[r].controller.controller_type == 'PID' %}{{ rtr[r].controller._Kd }}{% else %}-{% endif %}</td>
 							<td class="py-1">{{ _(rtr[r].valve_protect) }}</td>
-							<td class="py-1">{% if rtr[r].setting_temp_standby_item != None %}{{ rtr[r].setting_temp_standby_item() }}°C{% endif %}</td>
-							<td class="py-1">{% if rtr[r].setting_temp_night_item != None %}{{ rtr[r].setting_temp_night_item() }}°C{% endif %}</td>
-							<td class="py-1">{% if rtr[r].setting_temp_frost_item != None %}{{ rtr[r].setting_temp_frost_item() }}°C{% endif %}</td>
+							{% if (rtr[r].setting_fixed_reduction_item != None) and (rtr[r].setting_fixed_reduction_item() == False) %}
+								<td class="py-1">{% if rtr[r].setting_standby_reduction_item != None %}({{ rtr[r].setting_standby_reduction_item() }}°C){% endif %}</td>
+								<td class="py-1">{% if rtr[r].setting_night_reduction_item != None %}({{ rtr[r].setting_night_reduction_item() }}°C){% endif %}</td>
+							{% else %}
+								<td class="py-1">{% if rtr[r].setting_standby_reduction_item != None %}{{ rtr[r].setting_standby_reduction_item() }}°C{% endif %}</td>
+								<td class="py-1">{% if rtr[r].setting_night_reduction_item != None %}{{ rtr[r].setting_night_reduction_item() }}°C{% endif %}</td>
+							{% endif %}
+							<td class="py-1">{% if rtr[r].setting_fixed_reduction_item != None %}{{ _(rtr[r].setting_fixed_reduction_item()) }}{% endif %}</td>
+
+							<td class="py-1">{% if rtr[r].setting_min_output_item != None %}{{ rtr[r].setting_min_output_item() }}%{% else %}-{% endif %}</td>
+							<td class="py-1">{% if rtr[r].setting_max_output_item != None %}{{ rtr[r].setting_max_output_item() }}%{% else %}-{% endif %}</td>
 							<td class="py-1"></td>
 						</tr>
 					{% endfor %}
@@ -317,6 +338,8 @@
 		</div>
 	</div>
 
+	<br>
+	<br>
 	<br>
 	{% for r in rtr %}
 		rtr <strong>{{ r }}</strong>: <br>

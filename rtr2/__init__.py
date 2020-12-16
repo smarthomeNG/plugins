@@ -76,6 +76,8 @@ class Rtr2(SmartPlugin):
         self.default_frost_temp = self.get_parameter_value('frost_temp')
         self.default_hvac_mode = self.get_parameter_value('hvac_mode')
         self.default_valve_protect = self.get_parameter_value('valve_protect')
+        self.default_min_output = self.get_parameter_value('min_output')
+        self.default_max_output = self.get_parameter_value('max_output')
 
         # cycle time in seconds, only needed, if hardware/interface needs to be
         # polled for value changes by adding a scheduler entry in the run method of this plugin
@@ -200,6 +202,14 @@ class Rtr2(SmartPlugin):
                     self._rtr[rtr_id].setting_fixed_reduction_item = item
                 elif rtr_func == 'setting_temp_frost':
                     self._rtr[rtr_id].setting_temp_frost_item = item
+                elif rtr_func == 'setting_min_output':
+                    self._rtr[rtr_id].setting_min_output_item = item
+                    if item() == 0:
+                        item(self.default_min_output)
+                elif rtr_func == 'setting_max_output':
+                    self._rtr[rtr_id].setting_max_output_item = item
+                    if item() == 0:
+                        item(self.default_max_output)
                 else:
                     return
 
@@ -271,6 +281,10 @@ class Rtr2(SmartPlugin):
             info_dict[r]['frost_temp'] = round(self._rtr[r]._temp._temp_frost, 2)
             if (self._rtr[r].lock_status_item is not None):
                 info_dict[r]['locked'] = self._rtr[r].lock_status_item()
+            if (self._rtr[r].setting_max_output_item is not None):
+                info_dict[r]['max_output'] = self._rtr[r].setting_max_output_item()
+            if (self._rtr[r].setting_min_output_item is not None):
+                info_dict[r]['min_output'] = self._rtr[r].setting_min_output_item()
         self.logger.info(f"write_cacheinfo: info_dict = {info_dict}")
 
         filename = os.path.join(self.cache_path,'rtr2.json')
@@ -299,12 +313,23 @@ class Rtr2(SmartPlugin):
                 self._rtr[r]._temp.night_reduction = info_dict[r]['night_reduction']
                 self._rtr[r]._temp.fixed_reduction = info_dict[r]['fixed_reduction']
                 self._rtr[r]._temp._temp_frost = info_dict[r]['frost_temp']
+
                 if (self._rtr[r].lock_status_item is not None):
-                    self._rtr[r].lock_status_item(info_dict[r].get('locked', False))
+                    value = info_dict[r].get('locked', None)
+                    if value is not None:
+                        self._rtr[r].lock_status_item(value)
+                if (self._rtr[r].setting_max_output_item is not None):
+                    value = info_dict[r].get('max_output', None)
+                    if value is not None:
+                        self._rtr[r].setting_max_output_item(value)
+                if (self._rtr[r].setting_min_output_item is not None):
+                    value = info_dict[r].get('min_output', None)
+                    if value is not None:
+                        self._rtr[r].setting_min_output_item(value)
 
                 self._rtr[r].update_rtr_items()
             else:
-                self.logger.warning(f"Cannot restore cache for rtr '{r}'")
+                self.logger.warning(f"Cannot restore cached values for rtr '{r}' (rtr not defined in items)")
         return
 
 # ==================================================================================================
@@ -343,8 +368,8 @@ class Rtr_object():
         #                         fixed_reduction=True, hvac_mode=True, frost_temp=None):
         self._temp = Temperature(self._mode, temp_settings[0], temp_settings[1], temp_settings[2],
                                  temp_settings[3], temp_settings[4], temp_settings[5])
-        self.controller = Pi_controller(self._temp, 3, 120)
-        # self.controller = Pi_controller(self._temp)
+        self.controller = Pi_controller(self._temp, self.plugin.default_Kp, self.plugin.default_Ki)
+        # self.controller = Pi_controller(self._temp, 3, 120)
 
         self.id = 'unknown_rtr'
         self.comfort_item = None
@@ -367,17 +392,23 @@ class Rtr_object():
         self.setting_standby_reduction_item = None
         self.setting_fixed_reduction_item = None
         self.setting_temp_frost_item = None
+        self.setting_min_output_item = None
+        self.setting_max_output_item = None
 
 
     def update(self):
         self.logger.info(f"update: Rtr update called")
         if self.temp_actual_item is not None:
+            # test if RTR is locked
             if (self.lock_status_item is not None) and self.lock_status_item:
+                # if RTR is locked, set output to 0
                 dummy = self.controller.update(self.temp_actual_item())
                 self._update_item(self.control_output_item, 0)
                 self._update_item(self.heating_status_item, False)
             else:
-                self._update_item(self.control_output_item, self.controller.update(self.temp_actual_item()))
+                output = self.controller.update(self.temp_actual_item())
+                # test if a min- od max output is set
+                self._update_item(self.control_output_item, output)
                 self._update_item(self.heating_status_item, self.heating)
         self.logger.info(f"update: Rtr update finished")
         return

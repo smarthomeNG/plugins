@@ -204,7 +204,7 @@ class Mode():
 
     def __repr__(self):
         if self._mode_hvac == 4:
-            return self.mode + f' (before: {self._get_modename(self._mode_before_frost)})'
+            return self.mode + f' ({self._get_modename(self._mode_before_frost)})'
         return self.mode
 
 

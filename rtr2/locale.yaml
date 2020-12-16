@@ -1,12 +1,15 @@
 # translations for the web interface
 plugin_translations:
     # Translations for the plugin specially for the web interface
-    'True':          {'de': 'EIN', 'en': 'ON'}
-    'False':         {'de': 'AUS', 'en': 'OFF'}
-    'Regler':        {'de': '=', 'en': 'Controller'}
-    'Ist Temp':      {'de': '=', 'en': 'Actual Temp'}
-    'Soll Temp':     {'de': '=', 'en': 'Set Temp'}
-    'Ventil Schutz': {'de': '=', 'en': 'Valve Protect'}
+    'True':             {'de': 'EIN', 'en': 'ON'}
+    'False':            {'de': 'AUS', 'en': 'OFF'}
+    'Regler':           {'de': '=', 'en': 'Controller'}
+    'Ist Temp':         {'de': '=', 'en': 'Actual Temp'}
+    'Soll Temp':        {'de': '=', 'en': 'Set Temp'}
+    'Ventil Schutz':    {'de': '=', 'en': 'Valve Protect'}
+    'Normal Temp':      {'de': '=', 'en': 'Standby Temp'}
+    'temp normal':      {'de': '=', 'en': 'temp standby'}
+    'Normal Absenkung': {'de': '=', 'en': 'Standby Reduction'}
 
     # Alternative format for translations of longer texts:
     'Hier kommt der Inhalt des Webinterfaces hin.':
