@@ -59,6 +59,7 @@ item_attributes:
     # Definition of item attributes defined by this plugin
     robvac:
         type: str
+        valid_list: ['fanspeed', 'volume', 'set_start', 'set_stop', 'set_pause', 'set_home', 'set_spot', 'set_find', 'reset_filtertimer', 'disable_dnd', 'set_dnd', 'clean_zone', 'segment_clean', 'go_to', 'create_nogo_zones', 'reset']
         description:
             de: 'Befehl oder Abfrage, die an den Roboter gesendet werden soll.'
             en: 'Command or query to be sent to the robot.'
