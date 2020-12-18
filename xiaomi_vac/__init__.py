@@ -21,11 +21,6 @@
 #  You should have received a copy of the GNU General Public License
 #  along with SmartHome.py. If not, see <http://www.gnu.org/licenses/>.
 #
-####################################################################################
-#
-#   VERSION - 2
-#
-####################################################################################
 #
 import logging
 import threading
@@ -48,7 +43,7 @@ from bin.smarthome import VERSION
 
 class Robvac(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.0.1"
+    PLUGIN_VERSION = "1.1.0"
 
     def __init__(self, smarthome):
         self._ip = self.get_parameter_value("ip")
