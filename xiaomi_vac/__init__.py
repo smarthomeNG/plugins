@@ -323,14 +323,18 @@ class Robvac(SmartPlugin):
         if caller != 'Robvac' and self.alive:
             # if 'robvac' in item.conf:
             #    message = item.conf['robvac']
-            if self.has_iattr(item.conf, 'robvac'):
+            if not self._connected:
+                message = self.get_iattr_value(item.conf, 'robvac')
+                self.logger.error("Xiaomi_Robvac: Keyword {0}, item {1}"
+                    " not changed - no connection! Resetting item".format(message, item))
+                item(item.property.last_value, 'Robvac', 'NoConnection')
+            elif self.has_iattr(item.conf, 'robvac'):
                 # bei boolischem item Item zurücksetzen, damit enforce_updates nicht nötig!
                 message = self.get_iattr_value(item.conf, 'robvac')
-                self.logger.debug("Xiaomi_Robvac: Keyword {0}, item {1} wurde geändert".format(message, item))
-
+                self.logger.debug("Xiaomi_Robvac: Keyword {0}, item {1} changed".format(message, item))
                 if message == 'fanspeed':
                     self.vakuum.set_fan_speed(item())
-                    self.logger.debug("Xiaomi_Robvac: {0} wurde geaendert.".format(self.vakuum.fan_speed()))
+                    self.logger.debug("Xiaomi_Robvac: {0} changed.".format(self.vakuum.fan_speed()))
                 elif message == 'volume':
                     if item() > 100:
                         vol = 100
@@ -369,9 +373,7 @@ class Robvac(SmartPlugin):
                     if item() is True:
                         item(False, 'Robvac')
                     self.vakuum.disable_dnd()
-
                 elif message == "set_dnd":
-
                     if item() is True:
                         item(False, 'Robvac')
                     # start_hr, start_min, end_hr, end_min
