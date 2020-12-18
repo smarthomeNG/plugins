@@ -303,15 +303,16 @@ class Robvac(SmartPlugin):
             self._discovererror = 0
             self.logger.debug("Xiaomi_Robvac: {}".format(self._data))
         except Exception as e:
-            if "Unable to discover the device" in e:
+            if str(e).startswith("Unable to discover"):
                 self._discovererror += 1
                 self.logger.error("Xiaomi_Robvac: Error {} for {} time(s) in a row.".format(e, self._discovererror))
-            self.logger.error("Xiaomi_Robvac: Error {}".format(e))
+            else:
+                self.logger.error("Xiaomi_Robvac: Error {}".format(e))
             self._connected = False
 
         for x in self._data:
             if x in self.messages:
-                self.logger.debug("Xiaomi_Robvac: Update item {1} mit key {0} = Wert {2}".format(x, self.messages[x], self._data[x]))
+                self.logger.debug("Xiaomi_Robvac: Update item {1} with key {0} = value {2}".format(x, self.messages[x], self._data[x]))
                 item = self.messages[x]
                 item(self._data[x], 'Xiaomi Robovac')
 
