@@ -265,12 +265,13 @@ class Robvac(SmartPlugin):
             else:
                 self._data['charging'] = False
 
-            self.logger.debug("Xiaomi_Robvac: error {}, pause {}, status {} , timer {}, timezone {}".format(
-                                                                                                            self._data['error'],
-                                                                                                            self._data['pause'],
-                                                                                                            self._data['state'],
-                                                                                                            self._data['timer'],
-                                                                                                            self._data['timezone']))
+            self.logger.debug("Xiaomi_Robvac: error {}, pause {}, "
+                "status {} , timer {}, timezone {}".format(
+                    self._data['error'],
+                    self._data['pause'],
+                    self._data['state'],
+                    self._data['timer'],
+                    self._data['timezone']))
             self._data['sensor_dirty'] = (
                 self.vakuum.consumable_status().sensor_dirty.total_seconds() // 3600)
             self._data['sensor_dirty_left'] = (
@@ -384,22 +385,25 @@ class Robvac(SmartPlugin):
                 elif message == "create_nogo_zones":
                     self.vakuum.create_nogo_zone(item()[0], item()[1])
                 elif message == "reset":
-                    if item().lower() == "sensor_dirty" or item().lower() == "sensor_reinigen":
+                    if item().lower() in ["sensor_dirty", "sensor_reinigen"]:
                         self.vakuum.consumable_reset(miio.vacuum.Consumable.SensorDirty)
-                    elif item().lower() == "main_brush" or item().lower() == "buerste_haupt":
+                    elif item().lower() in ["main_brush", "buerste_haupt"]:
                         self.vakuum.consumable_reset(miio.vacuum.Consumable.MainBrush)
-                    elif item().lower() == "side_brush" or item().lower() == "buerste_seite":
+                    elif item().lower() in ["side_brush", "buerste_seite"]:
                         self.vakuum.consumable_reset(miio.vacuum.Consumable.SideBrush)
                     elif item().lower() == "filter":
                         self.vakuum.consumable_reset(miio.vacuum.Consumable.Filter)
                     else:
                         self.logger.warning("Consumable {} does not exit. Please use only sensor_dirty/sensor_reinigen, main_brush/buerste_haupt, side_brush/buerste_seite, filter.".format(item()))
+                else:
+                    self.logger.warning("Command {} is no valid command. Ignoring".format(message))
 
     def run(self):
         self.alive = True
-        self.logger.debug("Xiaomi_Robvac: Found items{}".format(self.messages))
+        self.logger.debug("Xiaomi_Robvac: Run method. Found items {}".format(self.messages))
 
     def stop(self):
+        self.logger.debug("Xiaomi_Robvac: Stop method.")
         self.scheduler_remove('Xiaomi_Robvac Read cycle')
         self.alive = False
 
