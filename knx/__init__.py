@@ -219,6 +219,8 @@ class KNX(SmartPlugin):
         if self.readonly:
             self.logger.info(self.translate("groupwrite telegram for: {} - Value: {} not send. Plugin in READONLY mode.").format(ga,payload))
         else:
+            if self.logger.isEnabledFor(logging.DEBUG):
+                self.logger.debug(self.translate("groupwrite telegram for: {} - Value: {} sent.").format(ga,payload))
             self._send(pkt)
 
     def _cacheread(self, ga):
@@ -733,12 +735,12 @@ class KNX(SmartPlugin):
     The statistics functions were introduced to watch what is happening on the KNX.
     Mainly it is recorded which physical device sends data by write or response or requests data
     by read operation.
-    Whenever such a telegram is received, it is recorded 
+    Whenever such a telegram is received, it is recorded
     - which physical device sended the request (originator)
     - which kind of request (read, write, response)
     - target group address affected
     - a counter for the specific kind of request (read, write, response) is increased.
-    
+
     With an additional logic these statistics can be requested from the plugin and examined for
     - unknown group addresses which are not known to either ETS or to SmartHomeNG
     - unknown physical addresses which are new and unexpected
@@ -1011,4 +1013,3 @@ class WebInterface(SmartPluginWebIf):
             # except Exception as e:
             #     self.logger.error("get_data_html exception: {}".format(e))
         return {}
-
