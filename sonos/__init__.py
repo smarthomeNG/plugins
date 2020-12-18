@@ -1240,10 +1240,10 @@ class Speaker(object):
         if self.is_coordinator:
             for member in self._zone_group_members:
                 if member is not self:
-                    self.logger.warning("Debug: Unsubscribe in fct zone_group_members") 
+                    self.logger.info("Debug: Unsubscribe in fct zone_group_members") 
                     member.av_subscription.unsubscribe()
                 else:
-                    self.logger.warning("Debug: Un/Subscribe in fct zone_group_members") 
+                    self.logger.info("Debug: Un/Subscribe in fct zone_group_members") 
                     member.av_subscription.unsubscribe()
                     member.av_subscription.subscribe()
 
@@ -2863,7 +2863,7 @@ class Sonos(SmartPlugin):
                 self.logger.info("Debug: Speaker found: {zone}, {uid}".format(zone=zone.ip_address, uid=uid))
                 if uid in sonos_speaker:
                     if zone is not sonos_speaker[uid].soco:
-                        self.logger.warning("Debug: zone is not in speaker list jet. Adding and subscribing zone {0}".format(zone))
+                        self.logger.info("Debug: zone is not in speaker list jet. Adding and subscribing zone {0}".format(zone))
                         sonos_speaker[uid].soco = zone
                         sonos_speaker[uid].subscribe_base_events()
                     else:
@@ -2874,7 +2874,7 @@ class Sonos(SmartPlugin):
 #                        sonos_speaker[uid].check_subscriptions()
 
                 else:
-                    self.logger.warning("Debug: Initializing new speaker with uid={0}".format(uid))
+                    self.logger.info("Debug: Initializing new speaker with uid={0}".format(uid))
                     _initialize_speaker(uid, self.logger)
                     sonos_speaker[uid].soco = zone
 
@@ -2896,12 +2896,12 @@ class Sonos(SmartPlugin):
                 self.logger.info("Debug: setting {0}, uid {1} to handled speaker".format(zone.ip_address,uid))
                 handled_speaker[uid] = sonos_speaker[uid]
             else:
-                self.logger.warning("Debug: ip {0}, uid {1} is not in sonos_speaker".format(zone.ip_address, uid))
+                self.logger.info("Debug: ip {0}, uid {1} is not in sonos_speaker".format(zone.ip_address, uid))
 
         # dispose every speaker that was not found
         for uid in set(sonos_speaker.keys()) - set(handled_speaker.keys()):
             if sonos_speaker[uid].soco is not None:
-                self.logger.warning(
+                self.logger.info(
                     "Debug: Removing undiscovered speaker: {zone}, {uid}".format(zone=zone.ip_address, uid=uid))
                 sonos_speaker[uid].dispose()
 
