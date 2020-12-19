@@ -147,7 +147,7 @@ class UniFiControllerClientModel():
 
         if n['type'] == "wired_client":
             node_body[UniFiConst.ATTR_TYPE] = UniFiConst.TYPE_CL_PRESENT
-            node_body['mac'] = n['mac']
+            node_body[UniFiConst.ATTR_MAC] = n['mac']
             node_body['type'] = 'bool'
             node_body['hostname'] = {}
             node_body['hostname'][UniFiConst.ATTR_TYPE] = UniFiConst.TYPE_CL_HOSTNAME
