@@ -6,14 +6,16 @@ plugin:
         de: 'smartVISU Unterstützung: Autogenerierung von Seiten; Widget Handling'
         en: 'Support for smartVISU: Automatic generation of pages; widget handling'
     maintainer: msinn
-    tester: psilo909
-    state: qa-develop
+    tester: wvhn
+    state: ready
 #    keywords: iot xyz
     documentation: http://smarthomeng.de/user/plugins/visu_smartvisu/user_doc.html
 
     version: 1.8.0                 # Plugin version
     sh_minversion: 1.4             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    py_minversion: 3.6             # minimum Python version to use for this plugin
+#    py_maxversion:                 # maximum Python version to use for this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
     restartable: True
     classname: SmartVisu           # class containing the plugin
@@ -49,6 +51,20 @@ parameters:
         description:
             de: 'Benutzer Style für die generierten Visualisierungs-Seiten'
             en: 'Style used for the generated visualization'
+
+    default_acl:
+        type: str
+        default: rw
+        valid_list:
+          - rw
+          - ro
+          - deny
+        valid_list_description:
+            de: ['Lesen/Schreiben', 'Nur Lesen', 'Kein Zugriff']
+            en: ['Read/Write', 'Read Only', 'Deny access']
+        description:
+            de: Steuert den Zugriff über smartVISU Nutzdaten-Protokoll - Voreinstellung für alle Items
+            en: Configures the standard access to the defined items and logics over the smartVISU payload protocol
 
     handle_widgets:
         type: bool

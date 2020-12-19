@@ -7,11 +7,24 @@
 smartvisu
 =========
 
-Mit dem Plugin **smartvisu** können aus der Definition der Items
-in SmartHomeNG automatisch Visuseiten erstellt werden. Diese Visu Seiten
-werden im Verzeichnis ``smarthome`` des ``pages`` Verzeichnisses der smartVISU
-erstellt. Das Plugin unterstützt smartVISU Versionen von v2.8 bis zur releasten
-v2.9.2 (master branch).
+Das Plugin stellt das Bindeglied zur smartVISU dar. Es verfügt über folgende Feature:
+
+- es kann mit Hilfe einiger Item Attribute Seiten für die smartVISU generieren
+- es kann Widgets, die in Plugins enthalten sind in die smartVISU installieren
+- zur Unterstützung des Widget Assistenten der smartVISU erstellt es eine aktuelle Liste der SmartHomeNG Items
+  in der smartVISU
+- Es aktiviert das Nutzdatenprotoll für die smartVISU im neuen Websocket Modul. Wenn dieses Plugin nicht geladen ist,
+  reagiert das Websocket Modul nicht auf Kommandos von der smartVISU
+
+Mit dem Plugin **smartvisu** können aus der Definition der Items in SmartHomeNG automatisch Seiten für die
+smartVISU erstellt werden. Diese Visu Seiten werden im Verzeichnis ``smarthome`` des ``pages`` Verzeichnisses
+der smartVISU erstellt. Das Plugin unterstützt smartVISU Versionen ab v2.8.
+
+Das smartvisu Plugin ist der Ersatz für das Plugin visu_smartvisu, welches nun deprecated ist und in einem der
+kommenden Releases aus SmartHomeNG entfernt wird.
+
+Das smartvisu Plugin funktioniert sowohl mit dem neuen websocket Modul, als auch mit dem alten visu_websocket Plugin.
+Die default_acl Einstellung funktioniert nur im Zusammenspiel mit dem websocket Modul.
 
 
 Konfiguration
@@ -19,9 +32,17 @@ Konfiguration
 
 Die Informationen zur Konfiguration des Plugins sind unter :doc:`/plugins_doc/config/smartvisu` beschrieben.
 
-
 Weiterführende Informationen
 ============================
+
+.. note::
+
+    Das Plugin ist nur aktiv, wenn die Plugins gestartet werden. Nachdem es die Generierungs- und Kopier-Aktionen
+    abgeschlossen hat, stoppt es. Es wird in der Admin GUI in der Liste der Plugins daher als pausiert angezeigt.
+
+    Wird hier der Start Button für das Plugin gedrückt, werden die Visu Seiten erneut generiert und die Widgets
+    werden erneut kopiert. Das Plugin stoppt anschließend wieder.
+
 
 Mischung von generierten und manuell erstellten Seiten
 ------------------------------------------------------
@@ -48,6 +69,8 @@ beschrieben.
 
 Informationen für Entwickler
 ============================
+
+**Dieser Abschnitt ist veraltet und muss aktualisiert werden**
 
 This section gives **smarthomeNG** developers additional information about the smartvisu plugin. For information
 about the configuration of the plugin refer to **README.md**.
