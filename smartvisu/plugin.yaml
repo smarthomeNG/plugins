@@ -12,7 +12,7 @@ plugin:
     documentation: http://smarthomeng.de/user/plugins/visu_smartvisu/user_doc.html
 
     version: 1.8.0                 # Plugin version
-    sh_minversion: 1.4             # minimum shNG version to use this plugin
+    sh_minversion: 1.7.2            # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     py_minversion: 3.6             # minimum Python version to use for this plugin
 #    py_maxversion:                 # maximum Python version to use for this plugin (leave empty if latest)
@@ -24,8 +24,9 @@ parameters:
     # Definition of parameters to be configured in etc/plugin.yaml
     smartvisu_dir:
         type: str
+        default: /var/www/html/smartvisu
         description:
-            de: 'Basisverzeichnis der smartVISU. Nur wenn dieser Wert konfiguriert ist, kann das Plugin Seiten für die smartVISU generieren.'
+            de: 'Basisverzeichnis der smartVISU. Nur wenn dieser Wert richtig konfiguriert ist, kann das Plugin Seiten für die smartVISU generieren, Widgets installieren, etc.'
             en: 'You could generate pages for the smartVISU visualisation if you specify the smartvisu_dir which should be set to the root directory of your smartVISU installation.'
 
     generate_pages:
