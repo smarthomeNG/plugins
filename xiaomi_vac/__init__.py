@@ -296,7 +296,6 @@ class Robvac(SmartPlugin):
                                     self._data['sensor_dirty_left']))
 
             self._discovererror = 0
-            self.logger.debug("Xiaomi_Robvac: {}".format(self._data))
         except Exception as e:
             if str(e).startswith("Unable to discover"):
                 self._discovererror += 1
