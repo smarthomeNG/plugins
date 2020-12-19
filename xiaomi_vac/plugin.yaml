@@ -20,7 +20,7 @@ plugin:
              The module needs the token of the robot for communication. Please follow the `instructions on github <https://python-miio.readthedocs.io/en/latest/discovery.html#installation>`_.
              '
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1453597-support-thread-f%C3%BCr-xiaomi-saugroboter-plugin
-    version: 1.0.0             # Plugin version
+    version: 1.1.0            # Plugin version
     sh_minversion: 1.4           # minimum shNG version to use this plugin
     multi_instance: False          # plugin supports multi instance
     classname: Robvac                # class containing the plugin
@@ -59,6 +59,7 @@ item_attributes:
     # Definition of item attributes defined by this plugin
     robvac:
         type: str
+        valid_list: ['fanspeed', 'volume', 'set_start', 'set_stop', 'set_pause', 'pause', 'set_home', 'set_spot', 'set_find', 'reset_filtertimer', 'disable_dnd', 'set_dnd', 'dnd_status', 'dnd_start', 'dnd_end', 'dnd_onoff', 'clean_zone', 'zone_cleaning', 'segment_clean', 'segment_status', 'go_to', 'create_nogo_zones', 'reset', 'serial', 'battery', 'active', 'state', 'area', 'clean_time', 'carpet_mode', 'carpetmode_high', 'carpetmode_integral', 'carpetmode_low', 'carpetmode_enabled', 'carpetmode_stall_time', 'error', 'is_error', 'clean_total_count', 'clean_total_area', 'clean_total_duration', 'clean_ids', 'clean_details_last0', 'last0_area', 'last0_complete', 'last0_duration', 'last0_start_date', 'last0_start_time', 'last0_end_date', 'last0_end_time', 'clean_details_last1', 'last1_area', 'last1_complete', 'last1_duration', 'last1_start_date', 'last1_start_time', 'last1_end_date', 'last1_end_time', 'clean_details_last2', 'last2_area', 'last2_complete', 'last2_duration', 'last2_start_date', 'last2_start_time', 'last2_end_date', 'last2_end_time', 'clean_details_last3', 'last3_area', 'last3_complete', 'last3_duration', 'last3_start_date', 'last3_start_time', 'last3_end_date', 'last3_end_time', 'timezone', 'timer', 'side_brush', 'side_brush_left', 'main_brush', 'main_brush_left', 'filter', 'filter_left', 'sensor_dirty', 'sensor_dirty_left']
         description:
             de: 'Befehl oder Abfrage, die an den Roboter gesendet werden soll.'
             en: 'Command or query to be sent to the robot.'
@@ -205,7 +206,7 @@ item_structs: #saugroboter
                 visu_acl: rw
             disable_dnd:
                 type: bool
-                robvac: 'disbale_dnd'
+                robvac: 'disable_dnd'
                 enforce_updates: true
                 visu_acl: rw
             set_dnd:
