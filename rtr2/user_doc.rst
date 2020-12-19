@@ -267,6 +267,7 @@ Wenn der RTR über ein Item gesperrt wurde, wird der Stellwert auf 0% gesetzt un
    :class: screenshot
 
 |
+
 Plot Widget
 -----------
 Dieses Widget dient zur Anzeige der Temperatur- und Stellwert Daten des Raumtemperatur Reglers (RTR). Es kann
