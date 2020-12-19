@@ -206,7 +206,7 @@ item_structs: #saugroboter
                 visu_acl: rw
             disable_dnd:
                 type: bool
-                robvac: 'disbale_dnd'
+                robvac: 'disable_dnd'
                 enforce_updates: true
                 visu_acl: rw
             set_dnd:
