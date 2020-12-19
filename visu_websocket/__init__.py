@@ -524,7 +524,7 @@ class websockethandler(lib.connection.Stream):
                 del(reply['params'])
                 if reply['series'] is not None:
                     # self.logger.warning("Visu: update send to {0}: {1}".format(self.addr, reply))
-                    self.logger.warning(">SerUP {}: {}".format(self.addr, reply))
+                    self.logger.info(">SerUP {}: {}".format(self.addr, reply))
                     self.json_send(reply)
         for sid in remove:
             del(self._update_series[sid])
