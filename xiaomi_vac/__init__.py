@@ -118,7 +118,7 @@ class Robvac(SmartPlugin):
 
             # letzte reinigung
             # funktioniert nur mit übergebener id
-            if self._data['clean_ids'] is not None:
+            if self._data.get('clean_ids') is not None:
                 # self._data['clean_ids'] = self._data['clean_ids'].sort(reverse=True)
                 self._data['clean_details_last0'] = (
                     self.vakuum.clean_details(self._data['clean_ids'][0], return_list=False))
@@ -322,15 +322,16 @@ class Robvac(SmartPlugin):
             if not self._connected:
                 message = self.get_iattr_value(item.conf, 'robvac')
                 self.logger.error("Xiaomi_Robvac: Keyword {0}, item {1}"
-                    " not changed - no connection! Resetting item".format(message, item))
+                    " not changed - no connection! Resetting item to {2}".format(
+                        message, item, item.property.last_value))
                 item(item.property.last_value, 'Robvac', 'NoConnection')
             elif self.has_iattr(item.conf, 'robvac'):
                 # bei boolischem item Item zurücksetzen, damit enforce_updates nicht nötig!
                 message = self.get_iattr_value(item.conf, 'robvac')
-                self.logger.debug("Xiaomi_Robvac: Keyword {0}, item {1} changed".format(message, item))
+                self.logger.debug("Xiaomi_Robvac: Keyword {0}, item {1} "
+                    "changed to {2}".format(message, item, item.property.value))
                 if message == 'fanspeed':
-                    self.vakuum.set_fan_speed(item())
-                    self.logger.debug("Xiaomi_Robvac: {0} changed.".format(self.vakuum.fan_speed()))
+                    self.vakuum.set_fan_speed(item.property.value)
                 elif message == 'volume':
                     if item() > 100:
                         vol = 100
@@ -339,39 +340,39 @@ class Robvac(SmartPlugin):
                     self.vakuum.set_sound_volume(vol)
                 elif message == 'set_start':
                     if item() is True:
-                        item(False, 'Robvac')
+                        item(False, 'Robvac', 'AutoResetBool')
                     self.vakuum.start()
                 elif message == 'set_stop':
                     if item() is True:
-                        item(False, 'Robvac')
+                        item(False, 'Robvac', 'AutoResetBool')
                     self.vakuum.pause()
                 elif message == "set_home":
                     if item() is True:
-                        item(False, 'Robvac')
+                        item(False, 'Robvac', 'AutoResetBool')
                     self.vakuum.home()
                 elif message == "set_pause":
                     if item() is True:
-                        item(False, 'Robvac')
+                        item(False, 'Robvac', 'AutoResetBool')
                     self.vakuum.pause()
                 elif message == "set_spot":
                     if item() is True:
-                        item(False, 'Robvac')
+                        item(False, 'Robvac', 'AutoResetBool')
                     self.vakuum.spot()
                 elif message == "set_find":
                     if item() is True:
-                        item(False, 'Robvac')
+                        item(False, 'Robvac', 'AutoResetBool')
                     self.vakuum.find()
                 elif message == "reset_filtertimer":
                     if item() is True:
-                        item(False, 'Robvac')
+                        item(False, 'Robvac', 'AutoResetBool')
                     self.vakuum.reset_consumable()
                 elif message == "disable_dnd":
                     if item() is True:
-                        item(False, 'Robvac')
+                        item(False, 'Robvac', 'AutoResetBool')
                     self.vakuum.disable_dnd()
                 elif message == "set_dnd":
                     if item() is True:
-                        item(False, 'Robvac')
+                        item(False, 'Robvac', 'AutoResetBool')
                     # start_hr, start_min, end_hr, end_min
                     self.vakuum.set_dnd(item()[0], item()[1], item()[2], item()[3])
                 elif message == "clean_zone":
@@ -385,16 +386,18 @@ class Robvac(SmartPlugin):
                 elif message == "reset":
                     if item().lower() in ["sensor_dirty", "sensor_reinigen"]:
                         self.vakuum.consumable_reset(miio.vacuum.Consumable.SensorDirty)
+                        self.logger.debug("Xiaomi_Robvac: sensor_dirty reset")
                     elif item().lower() in ["main_brush", "buerste_haupt"]:
                         self.vakuum.consumable_reset(miio.vacuum.Consumable.MainBrush)
+                        self.logger.debug("Xiaomi_Robvac: main_brush reset")
                     elif item().lower() in ["side_brush", "buerste_seite"]:
                         self.vakuum.consumable_reset(miio.vacuum.Consumable.SideBrush)
+                        self.logger.debug("Xiaomi_Robvac: side_brush reset")
                     elif item().lower() == "filter":
                         self.vakuum.consumable_reset(miio.vacuum.Consumable.Filter)
+                        self.logger.debug("Xiaomi_Robvac: filter reset")
                     else:
-                        self.logger.warning("Consumable {} does not exit. Please use only sensor_dirty/sensor_reinigen, main_brush/buerste_haupt, side_brush/buerste_seite, filter.".format(item()))
-                else:
-                    self.logger.warning("Command {} is no valid command. Ignoring".format(message))
+                        self.logger.warning("Consumable {} does not exit. Please use only sensor_dirty/sensor_reinigen, main_brush/buerste_haupt, side_brush/buerste_seite, filter.".format(item.property.value))
 
     def run(self):
         self.alive = True
@@ -409,10 +412,8 @@ class Robvac(SmartPlugin):
         if self.has_iattr(item.conf, 'robvac'):
             message = self.get_iattr_value(item.conf, 'robvac')
             self.logger.debug("Xiaomi_Robvac: {0} keyword {1}".format(item, message))
-
             if message not in self.messages:
                 self.messages[message] = item
-
             return self.update_item
 
     def update_item_read(self, item, caller=None, source=None, dest=None):
@@ -438,8 +439,7 @@ class Robvac(SmartPlugin):
         This method is only needed if the plugin is implementing a web interface
         """
         try:
-            self.mod_http = Modules.get_instance().get_module(
-                'http')  # try/except to handle running in a core version that does not support modules
+            self.mod_http = Modules.get_instance().get_module('http')
         except Exception:
             self.mod_http = None
         if self.mod_http is None:
