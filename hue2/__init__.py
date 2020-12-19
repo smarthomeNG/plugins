@@ -108,10 +108,15 @@ class Hue2(SmartPlugin):
             # find bridge using its serial number
             self.bridge = self.get_data_from_discovered_bridges(self.bridge_serial)
             if self.bridge.get('serialNumber', '') == '':
-                # if not discovered, use stored ip address
-                self.bridge['ip'] = self.bridge_ip
-                self.bridge['serialNumber'] = self.bridge_serial
-                self.logger.warning("Configured bridge {} is not in the list of discovered bridges, trying stored ip address {}".format(self.bridge_serial, self.bridge_ip))
+                self.logger.warning("Configured bridge {} is not in the list of discovered bridges, starting second discovery")
+                self.discovered_bridges = self.discover_bridges()
+
+                if self.bridge.get('serialNumber', '') == '':
+                    # if not discovered, use stored ip address
+                    self.bridge['ip'] = self.bridge_ip
+                    self.bridge['serialNumber'] = self.bridge_serial
+                    self.logger.warning("Configured bridge {} is still not in the list of discovered bridges, trying with stored ip address {}".format(self.bridge_serial, self.bridge_ip))
+
             self.bridge['username'] = self.bridge_user
             if self.bridge['ip'] != self.bridge_ip:
                 # if ip address of bridge has changed, store new ip address in configuration data
@@ -238,7 +243,10 @@ class Hue2(SmartPlugin):
             if plugin_item['function'] == 'on':
                 self.br.lights(plugin_item['id'], 'state', on=value)
             elif plugin_item['function'] == 'bri':
-                self.br.lights[plugin_item['id']]['state'](bri=value)
+                if value > 0:
+                    self.br.lights[plugin_item['id']]['state'](on=True, bri=value)
+                else:
+                    self.br.lights[plugin_item['id']]['state'](bri=value)
             elif plugin_item['function'] == 'hue':
                 self.br.lights[plugin_item['id']]['state'](hue=value)
             elif plugin_item['function'] == 'sat':
