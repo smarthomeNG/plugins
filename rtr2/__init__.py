@@ -24,11 +24,13 @@
 #
 #########################################################################
 
+import datetime
 import os
 import json
 
 from lib.model.smartplugin import *
 from lib.item import Items
+from lib.shtime import Shtime
 
 from .webif import WebInterface
 
@@ -123,6 +125,8 @@ class Rtr2(SmartPlugin):
 
         # setup scheduler for device poll loop   (disable the following line, if you don't need to poll the device. Rember to comment the self_cycle statement in __init__ as well)
         self.scheduler_add('update_all_rtrs', self.update_all_rtrs, cycle=self._cycle)
+        self.scheduler_add('valve_protect', self.valve_protect, prio=5, cron='30 2 * 0')
+
 
         self.alive = True
         # if you need to create child threads, do not make them daemon = True!
@@ -133,6 +137,7 @@ class Rtr2(SmartPlugin):
         Stop method for the plugin
         """
         self.logger.debug("Stop method called")
+        self.scheduler_remove('valve_protect')
         self.scheduler_remove('update_all_rtrs')
         self.alive = False
         self.write_cacheinfo()
@@ -263,6 +268,15 @@ class Rtr2(SmartPlugin):
             self._rtr[r].update()
 
 
+    def valve_protect(self):
+        """
+        Open and close valves of all RTRs periodically to protect them
+        """
+        for r in self._rtr:
+            self._rtr[r].valve_protect()
+        return
+
+
     def write_cacheinfo(self):
         self.logger.info("write_cacheinfo() called")
         # get parameters from all rtrs to be written to cache file (e.g. to survive a restart)
@@ -345,6 +359,7 @@ class Rtr_object():
         self.plugin = plugin
         self.logger = self.plugin.logger
         self.valve_protect = False
+        self.valve_protect_active = False
 
         if temp_settings is not None and isinstance(temp_settings, list):
             if len(temp_settings) < 1:
@@ -360,7 +375,7 @@ class Rtr_object():
             if len(temp_settings) < 6:
                 temp_settings.append(self.plugin.default_frost_temp)        # frost prevention temp
 
-        self.logger.info(f"Rtr_object: Initial temp_settings = {temp_settings}")
+        self.logger.info(f"New Rtr_object: Initial temp_settings = {temp_settings}")
 
         self._mode = Mode()
 
@@ -397,20 +412,61 @@ class Rtr_object():
 
 
     def update(self):
-        self.logger.info(f"update: Rtr update called")
+        self.logger.info(f"rtr {self.id}: update called")
         if self.temp_actual_item is not None:
+            # If valve protection is active, overrule lock and controler values
+            if self.valve_protect_active:
+                dummy = self.controller.update(self.temp_actual_item())
+                output = 100
+                if (self.setting_max_output_item is not None) and (output > self.setting_max_output_item()):
+                    output = self.setting_max_output_item()
+                self._update_item(self.control_output_item, output)
+                self._update_item(self.heating_status_item, self.heating)
             # test if RTR is locked
-            if (self.lock_status_item is not None) and self.lock_status_item:
+            elif (self.lock_status_item is not None) and self.lock_status_item:
                 # if RTR is locked, set output to 0
                 dummy = self.controller.update(self.temp_actual_item())
                 self._update_item(self.control_output_item, 0)
                 self._update_item(self.heating_status_item, False)
             else:
+                # regular opertion: Set output to conroller result
                 output = self.controller.update(self.temp_actual_item())
-                # test if a min- od max output is set
-                self._update_item(self.control_output_item, output)
-                self._update_item(self.heating_status_item, self.heating)
-        self.logger.info(f"update: Rtr update finished")
+                # test if controller has been fully initialized
+                if output is not None:
+                    # test if a min- od max output is set
+                    if (self.setting_max_output_item is not None) and (output > self.setting_max_output_item()):
+                        output = self.setting_max_output_item()
+                    if (self.setting_min_output_item is not None) and (output < self.setting_min_output_item()):
+                        output = self.setting_min_output_item()
+                    # set output value
+                    self._update_item(self.control_output_item, output)
+                    self._update_item(self.heating_status_item, self.heating)
+        self.logger.info(f"rtr {self.id}: update finished")
+        return
+
+
+    def valve_protect(self):
+        """
+        Open and close valve periodically to protect them
+        """
+        if self.valve_protect:
+            self.logger.warning(f"rtr {self.id}: Valve protection is opening valve")
+            shtime = Shtime.get_instance()
+            close_time = shtime.now() + datetime.timedelta(minutes=5)
+            # add scheduler to turn protection off after 5 minutes
+            self.plugin.scheduler_add('prot_close_'+self.id, self._valve_protect_off, next=close_time)
+            self.valve_protect_active = True
+            self.update()
+        return
+
+    def _valve_protect_off(self):
+        """
+
+        :return:
+        """
+        self.logger.warning(f"rtr {self.id}: Valve protection is closing valve (returning to regular state)")
+        self.valve_protect_active = False
+        self.update()
         return
 
 

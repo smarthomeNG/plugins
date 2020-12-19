@@ -64,7 +64,7 @@
 		{% set label_values = ['Sollwert',label,'Stellwert', add_label, add_label2] %}
 	{% endif %}
 
-	{{ plot.multiaxis(item_rtr~"_plotid",
+	{{ plot.period(item_rtr~"_plotid",
 		temp_items,
 		mode_values, '96h', '', [17,-1], [32, 48], '',
 		label_values,
@@ -75,4 +75,3 @@
 	}}
 
 {% endmacro %}
-['#4972BF', '#f9a028', '#ab6e1b', '#ADA497', '#B53300']

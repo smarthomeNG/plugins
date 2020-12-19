@@ -169,10 +169,24 @@ Es wird hierbei auf einen Wert größer 0 verglichen, da der Fenstergriff separa
 liefert.
 
 
+Structure Template
+------------------
+
+Das vom Plugin mitgelieferte Template definiert die folgende Item Struktur:
+
+.. image:: assets/struct.jpg
+   :class: screenshot
+
+Die genaue Definition der einzelnen Items kann in der Admin GUI unter **Items/Struktur Templates** angesehen werden.
+
+
 Item Attribute
 --------------
 
-Das Plugin verwendet zwei Item Attribute: ``rtr2_id`` und ``rtr2_function``.
+Wenn man das struct Template nicht nutzen möchte kann man die Items natürlich auch einzeln einrichten. Dazu muss man
+bei jedem Item die zwei folgenden Attribute spezifizieren.
+
+Das Plugin verwendet die zwei Item Attribute: ``rtr2_id`` und ``rtr2_function``.
 
 Mit ``rtr2_id`` wird festgelegt auf welchen Raumtemperatur Regler (RTR) zugegriffen werden soll.
 
@@ -255,8 +269,9 @@ Wenn der RTR über ein Item gesperrt wurde, wird der Stellwert auf 0% gesetzt un
 |
 Plot Widget
 -----------
-Dieses Widget dient zur Anzeige der Temperatur- und Stellwert Daten des Raumtemperatur Reglers (RTR). Es greift im
-Hintergrund auf das Widget **plot.multiaxis** der smartVISU zurück, ist jedoch einfacher zu konfigurieren, da es auf
+Dieses Widget dient zur Anzeige der Temperatur- und Stellwert Daten des Raumtemperatur Reglers (RTR). Es kann
+anstelle des Widgets **plot.rtr** verwendet werden, wenn man mehr Informationen darstellen will. Es greift im
+Hintergrund auf das Widget **plot.period** der smartVISU zurück, ist jedoch einfacher zu konfigurieren, da es auf
 die Item Struktur des struct Templates abgestimmt ist. Voraussetzung ist, dass für die anzuzeigenden Items die
 Daten mit dem database Plugin gespeichert werden.
 
@@ -277,7 +292,7 @@ Das widget wird folgendermaßen genutzt (incl. Anzeige einer zusätzlichen Tempe
 .. code-block:: yaml
 
     visu_heizung:
-        name: Raumtemperaturregler Decke
+        name: Temperaturen in °C / Stellwert in %
         sv_widget: "{{ rtr2.plot('wohnung.dusche.heizung', 'Decke', 'wohnung.dusche.heizung.ist_estrich', 'Estrich') }}"
 
 Die Darstellung der Daten in der Visu sieht folgendermaßen aus:
