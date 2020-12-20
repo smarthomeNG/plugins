@@ -125,7 +125,7 @@ class Rtr2(SmartPlugin):
 
         # setup scheduler for device poll loop   (disable the following line, if you don't need to poll the device. Rember to comment the self_cycle statement in __init__ as well)
         self.scheduler_add('update_all_rtrs', self.update_all_rtrs, cycle=self._cycle)
-        self.scheduler_add('valve_protect', self.valve_protect, prio=5, cron='30 2 * 0')
+        self.scheduler_add('valve_protection', self.valve_protection, prio=5, cron='30 2 * 0')
 
 
         self.alive = True
@@ -137,7 +137,7 @@ class Rtr2(SmartPlugin):
         Stop method for the plugin
         """
         self.logger.debug("Stop method called")
-        self.scheduler_remove('valve_protect')
+        self.scheduler_remove('valve_protection')
         self.scheduler_remove('update_all_rtrs')
         self.alive = False
         self.write_cacheinfo()
@@ -268,12 +268,38 @@ class Rtr2(SmartPlugin):
             self._rtr[r].update()
 
 
-    def valve_protect(self):
+    def valve_protection(self):
         """
         Open and close valves of all RTRs periodically to protect them
         """
+        self.logger.info(f"Starting valve protection for all RTRs")
         for r in self._rtr:
-            self._rtr[r].valve_protect()
+            if self._rtr[r].valve_protect:
+                self.logger.info(f"- rtr {r}: Valve protection is opening valve")
+                self._rtr[r].valve_protect_active = True
+            else:
+                self.logger.info(f"- rtr {r}: Valve protection is disabled")
+
+        shtime = Shtime.get_instance()
+        close_time = shtime.now() + datetime.timedelta(minutes=5)
+        # add scheduler to turn protection off after 5 minutes
+        self.scheduler_add('valve_protection_close', self.valve_protection_close, next=close_time)
+
+        self.update_all_rtrs()
+        return
+
+
+    def valve_protection_close(self):
+        """
+
+        :return:
+        """
+        self.logger.info(f"Ending valve protection for all RTRs")
+        for r in self._rtr:
+            if self._rtr[r].valve_protect_active:
+                self.logger.info(f"- rtr {r}: Valve protection is closing valve (returning to regular state)")
+                self._rtr[r].valve_protect_active = False
+        self.update_all_rtrs()
         return
 
 
@@ -442,31 +468,6 @@ class Rtr_object():
                     self._update_item(self.control_output_item, output)
                     self._update_item(self.heating_status_item, self.heating)
         self.logger.info(f"rtr {self.id}: update finished")
-        return
-
-
-    def valve_protect(self):
-        """
-        Open and close valve periodically to protect them
-        """
-        if self.valve_protect:
-            self.logger.warning(f"rtr {self.id}: Valve protection is opening valve")
-            shtime = Shtime.get_instance()
-            close_time = shtime.now() + datetime.timedelta(minutes=5)
-            # add scheduler to turn protection off after 5 minutes
-            self.plugin.scheduler_add('prot_close_'+self.id, self._valve_protect_off, next=close_time)
-            self.valve_protect_active = True
-            self.update()
-        return
-
-    def _valve_protect_off(self):
-        """
-
-        :return:
-        """
-        self.logger.warning(f"rtr {self.id}: Valve protection is closing valve (returning to regular state)")
-        self.valve_protect_active = False
-        self.update()
         return
 
 
