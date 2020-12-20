@@ -132,7 +132,7 @@ class SmartVisuInstallWidgets:
                     self.plugin_instance.test_widget_for_deprecated_widgets(os.path.join(srcdir, fn))
 
                 if self.smartvisu_version >= '2.9':
-                    if os.path.splitext(fn)[1] == '.png':
+                    if os.path.splitext(fn)[1] == '.png' or os.path.splitext(fn)[1] == '.svg':
                         # copy icons to the icons directory
                         shutil.copy2( os.path.join(srcdir, fn), self.icndir )
                     else:
