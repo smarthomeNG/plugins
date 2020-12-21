@@ -338,23 +338,20 @@
 		</div>
 	</div>
 
-	<br>
-	<br>
-	<br>
-	{% for r in rtr %}
-		rtr <strong>{{ r }}</strong>: <br>
-		Settings:<br>
-		- night reduction: {{ rtr[r].setting_night_reduction_item }} = {% if rtr[r].setting_night_reduction_item != None %}{{ rtr[r].setting_night_reduction_item() }}{% endif %} <br>
-		- standby reduction: {{ rtr[r].setting_standby_reduction_item }} = {% if rtr[r].setting_standby_reduction_item != None %}{{ rtr[r].setting_standby_reduction_item() }}{% endif %} <br>
-		- Fixed reduction: {{ rtr[r].setting_fixed_reduction_item }} = {% if rtr[r].setting_fixed_reduction_item != None %}{{ rtr[r].setting_fixed_reduction_item() }}{% endif %} <br>
+	{% if false %}
 		<br>
-		Rtr: {{ rtr[r] }}<br>
-		Controller: {{ rtr[r].controller }}<br>
-		Mode object: {{ rtr[r]._mode }}<br>
-		Temp object: {{ rtr[r]._temp }}<br>
 		<br>
-	{% endfor %}
-	<br>
+		<br>
+		{% for r in rtr %}
+			rtr <strong>{{ r }}</strong>: <br>
+			Rtr: {{ rtr[r] }}<br>
+			Controller: {{ rtr[r].controller }}<br>
+			Mode object: {{ rtr[r]._mode }}<br>
+			Temp object: {{ rtr[r]._temp }}<br>
+			<br>
+		{% endfor %}
+		<br>
+	{% endif %}
 {% endblock bodytab2 %}
 
 
