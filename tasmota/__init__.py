@@ -38,7 +38,7 @@ class Tasmota(MqttPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '0.1.0'
+    PLUGIN_VERSION = '0.5.0'
 
 
     def __init__(self, sh):
@@ -73,12 +73,19 @@ class Tasmota(MqttPlugin):
         self.tasmota_items = []              # to hold item information for web interface
 
         # add subscription to get device announces
+        # ('tele' topics are sent every 5 minutes)
         self.add_tasmota_subscription('tele', '+', 'LWT', 'bool', bool_values=['Offline', 'Online'], callback=self.on_mqtt_announce)
+        self.add_tasmota_subscription('tele', '+', 'STATE', 'dict', callback=self.on_mqtt_announce)
+        self.add_tasmota_subscription('tele', '+', 'SENSOR', 'dict', callback=self.on_mqtt_announce)
         self.add_tasmota_subscription('tele', '+', 'INFO1', 'dict', callback=self.on_mqtt_announce)
         self.add_tasmota_subscription('tele', '+', 'INFO2', 'dict', callback=self.on_mqtt_announce)
+        self.add_tasmota_subscription('tele', '+', 'INFO3', 'dict', callback=self.on_mqtt_announce)
         self.add_tasmota_subscription('stat', '+', 'STATUS', 'dict', callback=self.on_mqtt_announce)
         self.add_tasmota_subscription('stat', '+', 'STATUS2', 'dict', callback=self.on_mqtt_announce)
         self.add_tasmota_subscription('stat', '+', 'STATUS5', 'dict', callback=self.on_mqtt_announce)
+        self.add_tasmota_subscription('stat', '+', 'STATUS9', 'dict', callback=self.on_mqtt_announce)
+
+        self.add_tasmota_subscription('stat', '+', 'POWER', 'dict', callback=self.on_mqtt_message)
 
         # if plugin should start even without web interface
         self.init_webinterface(WebInterface)
@@ -143,8 +150,10 @@ class Tasmota(MqttPlugin):
 
             if not self.tasmota_devices.get(tasmota_topic, None):
                 self.tasmota_devices[tasmota_topic] = {}
+                self.tasmota_devices[tasmota_topic]['item'] = item
                 self.tasmota_devices[tasmota_topic]['relay'] = tasmota_relay
                 self.tasmota_devices[tasmota_topic]['connected_to_item'] = False
+                self.tasmota_devices[tasmota_topic]['uptime'] = './.'
 
                 # ask for status info of this newly discovered tasmota device
                 self.publish_topic('cmnd/' + tasmota_topic + '/STATUS', 0)
@@ -160,7 +169,12 @@ class Tasmota(MqttPlugin):
                 if tasmota_relay > '1':
                     detail += tasmota_relay
                 bool_values = ['OFF', 'ON']
-#            elif tasmota_attr == 'energy':
+                self.tasmota_devices[tasmota_topic]['connected_to_item'] = True
+            elif tasmota_attr in ['online', None]:
+                self.tasmota_devices[tasmota_topic]['online'] = False
+                self.tasmota_devices[tasmota_topic]['connected_to_item'] = True
+
+            #            elif tasmota_attr == 'energy':
 #                topic = 'shellies/' + tasmota_topic + '/relay/' + tasmota_relay + '/energy'
 #            elif tasmota_attr == 'online':
 #                topic = 'shellies/' + tasmota_topic + '/online'
@@ -294,6 +308,20 @@ class Tasmota(MqttPlugin):
         if info_topic == 'LWT':
             self.tasmota_devices[tasmota_topic]['online'] = payload
 
+        if info_topic == 'STATE':
+            self.tasmota_devices[tasmota_topic]['uptime'] = payload.get('Uptime', '-')
+            self.logger.info(f"tasmota_topic={tasmota_topic}, info_topic={info_topic}")
+            self.logger.info(f" - Payload={payload}")
+            self.tasmota_devices[tasmota_topic]['item'](payload.get('POWER') == 'ON')
+
+        if info_topic == 'SENSOR':
+            self.logger.info(f"Topic={topic}, tasmota_topic={tasmota_topic}, info_topic={info_topic}")
+            self.logger.info(f" - Payload={payload}")
+
+        if info_topic == 'STATUS9':
+            self.logger.info(f"Topic={topic}, tasmota_topic={tasmota_topic}, info_topic={info_topic}")
+            self.logger.info(f" - Payload={payload}")
+
         if info_topic == 'STATUS':
             fn = payload['Status'].get('FriendlyName', '')
             if fn != '':
@@ -311,6 +339,33 @@ class Tasmota(MqttPlugin):
             self.tasmota_devices[tasmota_topic]['fw_ver'] = payload.get('Version', '')
         if info_topic == 'INFO2':
             self.tasmota_devices[tasmota_topic]['ip'] = payload.get('IPAddress', '')
+        if info_topic == 'INFO3':
+            restart_reason = payload.get('RestartReason', '')
+            self.logger.warning(f"Device {tasmota_topic} (IP={self.tasmota_devices[tasmota_topic]['ip']}) just startet. Reason={restart_reason}")
+
+        return
+
+
+    def on_mqtt_message(self, topic, payload, qos=None, retain=None):
+        """
+        Callback function to handle received messages
+
+        :param topic:
+        :param payload:
+        :param qos:
+        :param retain:
+        """
+        self.logger.info("tasmota.on_mqtt_message: topic = '{}', payload = '{}'".format(topic, payload))
+        wrk = topic.split('/')
+        tasmota_topic = wrk[1]
+        info_topic = wrk[2]
+
+        device = self.tasmota_devices.get(tasmota_topic, None)
+        if device is not None:
+            if info_topic == 'POWER':
+                self.logger.info(f"Topic={topic}, tasmota_topic={tasmota_topic}, info_topic={info_topic}, payload={payload}")
+                self.logger.info(f" - item.path={self.tasmota_devices[tasmota_topic]['item']._path}")
+                self.tasmota_devices[tasmota_topic]['item'](payload)
 
         return
 

@@ -148,7 +148,9 @@
 		<th>{{ _('Friendy Name') }}</th>
 		<th>{{ _('Mac Adresse') }}</th>
 		<th>{{ _('IP Adresse') }}</th>
+		<th>{{ _('Uptime') }}</th>
 		<th>{{ _('Firmware Version') }}</th>
+
 		<th>{{ _('konfiguriert') }}</th>
 	</tr>
 	</thead>
@@ -159,6 +161,7 @@
 			<td class="py-1">{{ p.tasmota_devices[device].friendly_name }}</td>
 			<td class="py-1">{{ p.tasmota_devices[device].mac }}</td>
 			<td class="py-1">{{ p.tasmota_devices[device].ip }}</td>
+			<td class="py-1">{{ p.tasmota_devices[device].uptime }}</td>
 			<td class="py-1">{{ p.tasmota_devices[device].fw_ver }}</td>
 
 			<td class="py-1">{{ p.tasmota_devices[device].connected_to_item }}</td>
