@@ -34,7 +34,7 @@ Web Interface des Plugins
 Tasmota Items
 -------------
 
-Das Webinterface zeigt die Items an, für die ein Shelly Device konfiguriert ist.
+Das Webinterface zeigt die Items an, für die ein Tasmota Device konfiguriert ist.
 
 .. image:: user_doc/assets/tasmota-webif-items.jpg
    :class: screenshot

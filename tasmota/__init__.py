@@ -25,6 +25,8 @@
 
 import json
 
+from datetime import datetime, timedelta
+
 from lib.module import Modules
 from lib.model.mqttplugin import *
 from lib.item import Items
@@ -61,8 +63,15 @@ class Tasmota(MqttPlugin):
         if self._init_complete == False:
             return
 
+        # cycle time in seconds, only needed, if hardware/interface needs to be
+        # polled for value changes by adding a scheduler entry in the run method of this plugin
+        # (maybe you want to make it a plugin parameter?)
+        self._cycle = 60
+
+
         # get the parameters for the plugin (as defined in metadata plugin.yaml):
         self.full_topic = self.get_parameter_value('full_topic').lower()
+        self.telemetry_period = self.get_parameter_value('telemetry_period')
         if self.full_topic.find('%prefix%') == -1 or self.full_topic.find('%topic%') == -1:
             self.full_topic = '%prefix%/%topic%/'
         if self.full_topic[-1] != '/':
@@ -104,10 +113,13 @@ class Tasmota(MqttPlugin):
 
         for topic in self.tasmota_devices:
             # ask for status info of this newly discovered tasmota device
+            self.logger.debug(f"run: publishing 'cmnd/' + {topic} + '/STATUS'")
             self.publish_topic('cmnd/' + topic + '/STATUS', 0)
+            self.logger.info(f"run: Setting telemetry period to {self.telemetry_period} seconds")
+            self.logger.debug(f"run: publishing 'cmnd/' + {topic} + '/teleperiod'")
+            self.publish_topic('cmnd/' + topic + '/teleperiod', self.telemetry_period)
 
-
-
+        self.scheduler_add('poll_device', self.poll_device, cycle=self._cycle)
         self.alive = True
         return
 
@@ -117,6 +129,7 @@ class Tasmota(MqttPlugin):
         Stop method for the plugin
         """
         self.logger.debug("Stop method called")
+        self.scheduler_remove('poll_device')
         self.alive = False
 
         # stop subscription to all topics
@@ -139,7 +152,7 @@ class Tasmota(MqttPlugin):
                         can be sent to the knx with a knx write function within the knx plugin.
         """
         if self.has_iattr(item.conf, 'tasmota_topic'):
-            self.logger.debug("parsing item: {0}".format(item.id()))
+            self.logger.debug(f"parsing item: {item.id()}")
 
             tasmota_topic = self.get_iattr_value(item.conf, 'tasmota_topic')
 
@@ -147,13 +160,16 @@ class Tasmota(MqttPlugin):
             tasmota_relay = self.get_iattr_value(item.conf, 'tasmota_relay')
             if not tasmota_relay:
                 tasmota_relay = '1'
+            #self.logger.debug(f" - tasmota_topic={tasmota_topic}, tasmota_attr={tasmota_attr}, tasmota_relay={tasmota_relay}")
+            #self.logger.debug(f" - tasmota_topic={tasmota_topic}, item.conf={item.conf}")
 
             if not self.tasmota_devices.get(tasmota_topic, None):
                 self.tasmota_devices[tasmota_topic] = {}
-                self.tasmota_devices[tasmota_topic]['item'] = item
                 self.tasmota_devices[tasmota_topic]['relay'] = tasmota_relay
                 self.tasmota_devices[tasmota_topic]['connected_to_item'] = False
-                self.tasmota_devices[tasmota_topic]['uptime'] = './.'
+                self.tasmota_devices[tasmota_topic]['uptime'] = '-'
+                self.tasmota_devices[tasmota_topic]['sensortype'] = '-'
+                self.tasmota_devices[tasmota_topic]['energy_sensors'] = {}
 
                 # ask for status info of this newly discovered tasmota device
                 self.publish_topic('cmnd/' + tasmota_topic + '/STATUS', 0)
@@ -166,30 +182,30 @@ class Tasmota(MqttPlugin):
             if tasmota_attr in ['relay', None]:
                 topic = tasmota_topic
                 detail = 'POWER'
-                if tasmota_relay > '1':
-                    detail += tasmota_relay
-                bool_values = ['OFF', 'ON']
+                #if tasmota_relay > '1':
+                #    detail += tasmota_relay
+                #bool_values = ['OFF', 'ON']
                 self.tasmota_devices[tasmota_topic]['connected_to_item'] = True
-            elif tasmota_attr in ['online', None]:
-                self.tasmota_devices[tasmota_topic]['online'] = False
-                self.tasmota_devices[tasmota_topic]['connected_to_item'] = True
-
-            #            elif tasmota_attr == 'energy':
-#                topic = 'shellies/' + tasmota_topic + '/relay/' + tasmota_relay + '/energy'
-#            elif tasmota_attr == 'online':
-#                topic = 'shellies/' + tasmota_topic + '/online'
-#                bool_values = ['false', 'true']
-#            elif tasmota_attr == 'temp':
-#                topic = 'shellies/' + tasmota_topic + '/temperature'
-#            elif tasmota_attr == 'temp_f':
-#                topic = 'shellies/' + tasmota_topic + '/temperature_f'
-            else:
-                self.logger.warning("parse_item: unknown attribute tasmota_attr = {}".format(tasmota_attr))
-
-            if topic:
+                self.tasmota_devices[tasmota_topic]['item_relay'] = item
                 # append to list used for web interface
                 if not item in self.tasmota_items:
                     self.tasmota_items.append(item)
+            elif tasmota_attr in ['online']:
+                self.tasmota_devices[tasmota_topic]['online'] = False
+                self.tasmota_devices[tasmota_topic]['connected_to_item'] = True
+                self.tasmota_devices[tasmota_topic]['item_online'] = item
+                # append to list used for web interface
+                if not item in self.tasmota_items:
+                    self.tasmota_items.append(item)
+            elif tasmota_attr in ['voltage', 'current', 'power', 'power_total', 'power_yesterday', 'power_today']:
+                self.logger.debug(f" - tasmota_attr={tasmota_attr}, item={'item_'+tasmota_attr}")
+                self.tasmota_devices[tasmota_topic]['item_'+tasmota_attr] = item
+                self.tasmota_devices[tasmota_topic]['connected_to_item'] = True
+                if not item in self.tasmota_items:
+                    self.tasmota_items.append(item)
+
+            else:
+                self.logger.warning("parse_item: unknown attribute tasmota_attr = {}".format(tasmota_attr))
 
                 # subscribe to topic for relay state
                 payload_type = item.property.type
@@ -225,25 +241,49 @@ class Tasmota(MqttPlugin):
         if self.alive and caller != self.get_shortname():
             # code to execute if the plugin is not stopped
             # and only, if the item has not been changed by this this plugin:
-            self.logger.info("update_item: {}, item has been changed in SmartHomeNG outside of this plugin in {}".format(item.id(), caller))
 
-            # publish topic with new relay state
+            # get tasmota attributes of item
             tasmota_topic = self.get_iattr_value(item.conf, 'tasmota_topic')
-            #tasmota_type = self.get_iattr_value(item.conf, 'tasmota_type').lower()
+            tasmota_attr = self.get_iattr_value(item.conf, 'tasmota_attr')
             tasmota_relay = self.get_iattr_value(item.conf, 'tasmota_relay')
-            if not tasmota_relay:
-                tasmota_relay = '1'
 
-            bool_values = None
-            topic = tasmota_topic
-            detail = 'POWER'
-            if tasmota_relay > '1':
-                detail += tasmota_relay
-            bool_values = ['OFF', 'ON']
+            if tasmota_attr == 'relay':
+                self.logger.info("update_item: {}, item has been changed in SmartHomeNG outside of this plugin in {}".format(item.id(), caller))
 
-            #self.publish_topic('cmnd', topic, detail, item(), item, bool_values=['off','on'])
-            self.publish_tasmota_topic('cmnd', topic, detail, item(), item, bool_values=bool_values)
+                # publish topic with new relay state
+                if not tasmota_relay:
+                    tasmota_relay = '1'
 
+                bool_values = None
+                topic = tasmota_topic
+                detail = 'POWER'
+                if tasmota_relay > '1':
+                    detail += tasmota_relay
+                bool_values = ['OFF', 'ON']
+
+                #self.publish_topic('cmnd', topic, detail, item(), item, bool_values=['off','on'])
+                self.publish_tasmota_topic('cmnd', topic, detail, item(), item, bool_values=bool_values)
+            else:
+                self.logger.warning("update_item: {}, trying to change item in SmartHomeNG that is readonly in tasmota device (by {})".format(item.id(), caller))
+
+    def poll_device(self):
+        """
+        Polls for updates of the device
+
+        This method is only needed, if the device (hardware/interface) does not propagate
+        changes on it's own, but has to be polled to get the actual status.
+        It is called by the scheduler which is set within run() method.
+        """
+        #self.logger.info("poll_device: Checking online status")
+        for tasmota_topic in self.tasmota_devices:
+            if self.tasmota_devices[tasmota_topic].get('online', None) is not None:
+                if self.tasmota_devices[tasmota_topic]['online_timeout'] < datetime.now():
+                    self.tasmota_devices[tasmota_topic]['online'] = False
+                    self.set_item_value(tasmota_topic, 'item_online', False, 'poll_device')
+                    self.logger.info(f"poll_device: {tasmota_topic} is not online any more - online_timeout={self.tasmota_devices[tasmota_topic]['online_timeout']}, now={datetime.now()}")
+
+
+    # ---------------------------------------------------------------------------------------------------
 
     def add_tasmota_subscription(self, prefix, topic, detail, payload_type, bool_values=None, item=None, callback=None):
         """
@@ -293,10 +333,11 @@ class Tasmota(MqttPlugin):
         :param qos:
         :param retain:
         """
-        self.logger.info("tasmota.on_mqtt_announce: topic = '{}', payload = '{}'".format(topic, payload))
         wrk = topic.split('/')
+        topic_type = wrk[0]
         tasmota_topic = wrk[1]
         info_topic = wrk[2]
+        self.logger.info(f"on_mqtt_announce: type={topic_type}, device={tasmota_topic}, info_topic={info_topic}, payload={payload}")
 
         if not self.tasmota_devices.get(tasmota_topic, None):
             self.tasmota_devices[tasmota_topic] = {}
@@ -307,20 +348,45 @@ class Tasmota(MqttPlugin):
 
         if info_topic == 'LWT':
             self.tasmota_devices[tasmota_topic]['online'] = payload
+            self.tasmota_devices[tasmota_topic]['online_timeout'] = datetime.now()+timedelta(seconds=self.telemetry_period+5)
+            #self.logger.info(f" - new 'online_timeout'={self.tasmota_devices[tasmota_topic]['online_timeout']}")
+            self.set_item_value(tasmota_topic, 'item_online', payload, info_topic)
 
         if info_topic == 'STATE':
             self.tasmota_devices[tasmota_topic]['uptime'] = payload.get('Uptime', '-')
-            self.logger.info(f"tasmota_topic={tasmota_topic}, info_topic={info_topic}")
-            self.logger.info(f" - Payload={payload}")
-            self.tasmota_devices[tasmota_topic]['item'](payload.get('POWER') == 'ON')
+            self.set_item_value(tasmota_topic, 'item_relay', payload.get('POWER','OFF') == 'ON', info_topic)
+
+            self.tasmota_devices[tasmota_topic]['online_timeout'] = datetime.now()+timedelta(seconds=self.telemetry_period+5)
+            self.set_item_value(tasmota_topic, 'item_online', True, info_topic)
+            #self.logger.info(f" - new 'online_timeout'={self.tasmota_devices[tasmota_topic]['online_timeout']}")
 
         if info_topic == 'SENSOR':
-            self.logger.info(f"Topic={topic}, tasmota_topic={tasmota_topic}, info_topic={info_topic}")
-            self.logger.info(f" - Payload={payload}")
+            energy = payload.get('ENERGY', None)
+            if energy is not None:
+                self.tasmota_devices[tasmota_topic]['sensortype'] = 'ENERGY'
+                self.tasmota_devices[tasmota_topic]['energy_sensors']['voltage'] = energy['Voltage']
+                self.tasmota_devices[tasmota_topic]['energy_sensors']['current'] = energy['Current']
+                # Leistung, Scheinleistung, Blindleistung
+                self.tasmota_devices[tasmota_topic]['energy_sensors']['power'] = energy['Power']
+                self.tasmota_devices[tasmota_topic]['energy_sensors']['apparent_power'] = energy['ApparentPower']
+                self.tasmota_devices[tasmota_topic]['energy_sensors']['reactive_power'] = energy['ReactivePower']
+                self.tasmota_devices[tasmota_topic]['energy_sensors']['factor'] = energy['Factor']
+                # Verbrauch
+                self.tasmota_devices[tasmota_topic]['energy_sensors']['total_starttime'] = energy['TotalStartTime']
+                self.tasmota_devices[tasmota_topic]['energy_sensors']['total'] = energy['Total']
+                self.tasmota_devices[tasmota_topic]['energy_sensors']['yesterday'] = energy['Yesterday']
+                self.tasmota_devices[tasmota_topic]['energy_sensors']['today'] = energy['Today']
+                self.tasmota_devices[tasmota_topic]['energy_sensors']['period'] = energy.get('Period', None)
 
-        if info_topic == 'STATUS9':
-            self.logger.info(f"Topic={topic}, tasmota_topic={tasmota_topic}, info_topic={info_topic}")
-            self.logger.info(f" - Payload={payload}")
+                self.set_item_value(tasmota_topic, 'item_voltage', self.tasmota_devices[tasmota_topic]['energy_sensors']['voltage'], info_topic)
+                self.set_item_value(tasmota_topic, 'item_current', self.tasmota_devices[tasmota_topic]['energy_sensors']['current'], info_topic)
+                self.set_item_value(tasmota_topic, 'item_power', self.tasmota_devices[tasmota_topic]['energy_sensors']['power'], info_topic)
+                self.set_item_value(tasmota_topic, 'item_power_total', self.tasmota_devices[tasmota_topic]['energy_sensors']['total'], info_topic)
+                self.set_item_value(tasmota_topic, 'item_power_yesterday', self.tasmota_devices[tasmota_topic]['energy_sensors']['yesterday'], info_topic)
+                self.set_item_value(tasmota_topic, 'item_power_today', self.tasmota_devices[tasmota_topic]['energy_sensors']['today'], info_topic)
+
+            self.tasmota_devices[tasmota_topic]['online_timeout'] = datetime.now()+timedelta(seconds=self.telemetry_period+5)
+            self.set_item_value(tasmota_topic, 'item_online', True, info_topic)
 
         if info_topic == 'STATUS':
             fn = payload['Status'].get('FriendlyName', '')
@@ -328,11 +394,19 @@ class Tasmota(MqttPlugin):
                 if fn[0] == '[' and fn[-1] == ']':
                     fn = fn[1:-1]
             self.tasmota_devices[tasmota_topic]['friendly_name'] = fn
+            self.set_item_value(tasmota_topic, 'item_relay', payload['Status'].get('Power', 0), info_topic)
+
         if info_topic == 'STATUS2':
             self.tasmota_devices[tasmota_topic]['fw_ver'] = payload['StatusFWR'].get('Version', '')
         if info_topic == 'STATUS5':
             self.tasmota_devices[tasmota_topic]['ip'] = payload['StatusNET'].get('IPAddress', '')
             self.tasmota_devices[tasmota_topic]['mac'] = payload['StatusNET'].get('Mac', '')
+
+        if info_topic == 'STATUS9':
+            #self.logger.info(f"Topic={topic}, tasmota_topic={tasmota_topic}, info_topic={info_topic}")
+            #self.logger.info(f" - Payload={payload}")
+            StatusPTH = payload.get('StatusPTH', {})
+            #self.logger.info(f" - StatusPTH={StatusPTH}")
 
         # Get info direct after boot of client
         if info_topic == 'INFO1':
@@ -355,17 +429,35 @@ class Tasmota(MqttPlugin):
         :param qos:
         :param retain:
         """
-        self.logger.info("tasmota.on_mqtt_message: topic = '{}', payload = '{}'".format(topic, payload))
         wrk = topic.split('/')
+        topic_type = wrk[0]
         tasmota_topic = wrk[1]
         info_topic = wrk[2]
+        self.logger.info(f"on_mqtt_message: topic_type={topic_type}, tasmota_topic={tasmota_topic}, info_topic={info_topic}, payload={payload}")
 
         device = self.tasmota_devices.get(tasmota_topic, None)
         if device is not None:
             if info_topic == 'POWER':
-                self.logger.info(f"Topic={topic}, tasmota_topic={tasmota_topic}, info_topic={info_topic}, payload={payload}")
-                self.logger.info(f" - item.path={self.tasmota_devices[tasmota_topic]['item']._path}")
-                self.tasmota_devices[tasmota_topic]['item'](payload)
-
+                self.logger.info(f"on_mqtt_message: tasmota_topic={tasmota_topic}, info_topic={info_topic}, payload={payload}")
+                self.set_item_value(tasmota_topic, 'item_relay', payload == 'ON', info_topic)
         return
 
+
+    def set_item_value(self, tasmota_topic, itemtype, value, info_topic=''):
+
+        item = self.tasmota_devices[tasmota_topic].get(itemtype, None)
+        topic = ''
+        src = ''
+        if info_topic != '':
+            topic = "  (from info_topic '" + info_topic + "'}"
+            src = self.get_instance_name()
+            if src != '':
+                src += ':'
+            src += tasmota_topic + ':' + info_topic
+
+        if item is not None:
+            item(value, self.get_shortname(), src)
+            #self.logger.info(f"{tasmota_topic}: Item '{item.id()}' set to value {value}{topic}")
+        else:
+            self.logger.info(f"{tasmota_topic}: No item for '{itemtype}' defined to set to {value}{topic}")
+        return
