@@ -90,7 +90,7 @@ class SmartVisu(SmartPlugin):
         except:
             self.mod_websocket = None
         if self.mod_websocket == None:
-            self.logger.warning("Module 'websocket' could not be initialized.")
+            self.logger.info("Module 'websocket' could not be initialized.")
         else:
             self.mod_websocket.set_smartvisu_support(protocol_enabled=True, default_acl=self.default_acl, query_definitions=False, series_updatecycle=0)
         return

@@ -7,7 +7,7 @@
 smartvisu
 =========
 
-Das Plugin stellt das Bindeglied zur smartVISU dar. Es verfügt über folgende Feature:
+Das Plugin stellt das Bindeglied zur smartVISU dar. Es verfügt über folgende Features:
 
 - es kann mit Hilfe einiger Item Attribute Seiten für die smartVISU generieren
 - es kann Widgets, die in Plugins enthalten sind in die smartVISU installieren
