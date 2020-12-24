@@ -545,7 +545,7 @@ class AlexaRc4shNG(SmartPlugin):
             if myItem._type == "num":
                 myValue = str(myItem())
                 myValue = myValue.replace(".", ",")
-            elif myitem._type == "bool":
+            elif myItem._type == "bool":
                 myValue = str(myItem())
             else:
                 myValue = str(myItem())
@@ -559,12 +559,12 @@ class AlexaRc4shNG(SmartPlugin):
         try:
             actEcho = self.Echos.get(dvName)
         except:
-            self.logger.warning('found no Echo with Name : {}'.format(dvname))
-            self._insert_protocoll_entry('found no Echo with Name : {}'.format(dvname))
+            self.logger.warning('found no Echo with Name : {}'.format(dvName))
+            self._insert_protocoll_entry('found no Echo with Name : {}'.format(dvName))
             return
         if actEcho == None:
-            self.logger.warning('found no Echo with Name : {}'.format(dvname))
-            self._insert_protocoll_entry('found no Echo with Name : {}'.format(dvname))
+            self.logger.warning('found no Echo with Name : {}'.format(dvName))
+            self._insert_protocoll_entry('found no Echo with Name : {}'.format(dvName))
             return
         
         myUrl='https://'+self.host
@@ -602,9 +602,10 @@ class AlexaRc4shNG(SmartPlugin):
         
         myResult = myStatus
         
-
-        self.logger.info('Status of send_cmd: %d' % myResult)
-        
+        if myResult == 200:
+            self.logger.info('Status of send_cmd: %d' % myResult)
+        else:
+            self.logger.warning("itemStatus of send_cmd: {}: {}".format(myResult, myContent))
         
         return myResult 
         
@@ -1363,7 +1364,7 @@ class WebInterface(SmartPluginWebIf):
                 Device_items.append(newEntry)
             
         except Exception as err:
-            self.logger.debug('No devices found',err)
+            self.logger.debug("No devices found: {}".format(err))
         
         return Device_items
 
