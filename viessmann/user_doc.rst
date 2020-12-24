@@ -35,7 +35,7 @@ Changelog
 -  Erste Version
 
 Anforderungen
-------------
+-------------
 
 Das Plugin benötigt die ``pyserial``-Bibliothek und einen seriellen IR-Adapter.
 
