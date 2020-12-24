@@ -265,13 +265,6 @@ class AlexaRc4shNG(SmartPlugin):
         # Nur bei Wertänderung, sonst nix wie raus hier
         if(oldValue == newValue):
             return         
-        
-        
-        try:
-            myEchos = self.sh.alexarc4shng.Echos.all()
-            
-        except Exception as err:
-            self.logger.debug("Error while getting Echos :",err)
         # End Test
         
 
