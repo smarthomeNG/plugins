@@ -1,0 +1,264 @@
+<!-- vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab -->
+{% extends "base_plugin.html" %}
+{% set tabcount = 2 %}
+{% set tab1title = _('Viessmann Items') %}
+{% set tab2title = _('Alle Datenpunkte') %}
+{% set language = p.get_sh().get_defaultlanguage() %}
+{% if last_read_cmd != "" %}
+{% set start_tab = 3 %}
+{% endif %}
+{% if language not in ['en','de'] %}
+{% set language = 'en' %}
+{% endif %}
+
+{% block pluginscripts %}
+/*
+ * The combined file was created by the DataTables downloader builder:
+ *   https://datatables.net/download
+ *
+ * To rebuild or modify this file with the latest versions of the included
+ * software please visit:
+ *   https://datatables.net/download/#dt/dt-1.10.21/fh-3.1.7/r-2.2.5
+ *
+ * Included libraries:
+ *   DataTables 1.10.21, FixedHeader 3.1.7, Responsive 2.2.5
+ */
+<link rel="stylesheet" type="text/css" href="static/datatables.css">
+<script type="text/javascript" charset="utf8" src="static/datatables.js"></script>
+
+<script type="text/javascript">
+
+	$(document).ready( function () {
+	    $('#itemtable').DataTable( {
+	        "paging": false,
+	        fixedHeader: true
+	        } );
+	    $('#activetable').DataTable( {
+	        "paging": false,
+	        fixedHeader: true
+	        } );
+	    $('#addrtable').DataTable( {
+	    	"paging": false,
+	    	fixedHeader: true
+	    	} );
+
+	    // When a button in the address table (tab3) is pressed...
+		// (formally any submit button inside the "button_pressed"-Form)
+	    $("#button_pressed").submit(function(e) {
+	 
+			e.preventDefault();
+
+	        // post the form values via AJAX...
+			if ($("#button").val() == '') {
+
+				// if button is empty, we want custom address read...
+				$.post('submit', {
+					addr: $("#cust_addr").val(),
+					length: $("#cust_len").val(),
+					unit: $("#cust_unit").val()
+				}, function(data) {
+
+		            // and set the title with the result
+		            var cmd = data.last.cmd;
+		            var val = data.last.val;
+
+		            if (cmd != '') {
+		            	$("#last_read_cmd").html(data.last.cmd + ": ")
+		            	$("#last_read_val").html(data.last.val)
+		            } else {
+		            	$("#last_read_cmd").html("---")
+		            	$("#last_read_val").html("")
+
+		            }
+
+		            $("#addrcust").html(data.last.val)
+
+					for (var key in data) {
+						if (key != 'last') {
+							$("#addr"+key).html(data[key].val)
+						}
+					}
+				});
+				return false ;
+
+			} else {
+			
+				// just do it
+		        $.post('submit', {button: $("#button").val()}, function(data) {
+	 
+		            // and set the title with the result
+		            var cmd = data.last.cmd;
+		            var val = data.last.val;
+
+		            if (cmd != '') {
+		            	$("#last_read_cmd").html(data.last.cmd + ": ")
+		            	$("#last_read_val").html(data.last.val)
+		            } else {
+		            	$("#last_read_cmd").html("---")
+		            	$("#last_read_val").html("")
+
+		            }
+
+					for (var key in data) {
+						if (key != 'last') {
+							$("#addr"+key).html(data[key].val)
+						}
+					}
+			    });
+	    	    return false ;
+	    	}
+	    });
+
+	         
+	    // When the button 'clear' is clicked...
+	    $("#clear").click(function(e) {
+	 
+			e.preventDefault();
+
+	        // post the form values via AJAX...
+	        $.post('submit', {clear: "true"}, function(data) {
+	 
+	            // clear all read fields
+            	$("#last_read_cmd").html("---")
+            	$("#last_read_val").html("")
+
+				for (var key in data) {
+					if (key != 'last') {
+						$("#addr"+key).html(data[key].val)
+					}
+				}
+	        });
+	        return false ;
+	    });
+	});
+</script>
+{% endblock pluginscripts %}
+
+
+{% block headtable %}
+<table class="table table-striped table-hover">
+	<tbody>
+		<tr>
+			<td class="py-1"><strong>{{ _('Serieller Port') }}</strong></td>
+			<td class="py-1">{{ p._serialport }}</td>
+			<td class="py-1" width="50px"></td>
+			<td class="py-1"><strong>{{ _('Anzahl Items') }}</strong></td>
+			<td class="py-1">{{ p._params|length }}</td>
+			<td class="py-1" width="50px"></td>
+		</tr>
+		<tr>
+			<td class="py-1"><strong>{{ _('Heizungstyp') }}</strong></td>
+			<td class="py-1">{{ p._heating_type }}</td>
+			<td></td>
+			<td class="py-1"><strong>{{ _('Verbunden') }}</strong></td>
+			<td class="py-1">{{ p._connected }}</td>
+			<td></td>
+		</tr>
+		<tr>
+			<td class="py-1"><strong>{{ _('Protokoll') }}</strong></td>
+			<td class="py-1">{{ p._protocol }}</td>
+			<td></td>
+			<td class="py-1"><strong>{{ _('Verbindung aktiv') }}</strong></td>
+			<td class="py-1">{{ p._initialized }}</td>
+			<td></td>
+		</tr>
+		<tr>
+			<td class="py-1" colspan="3"><strong>{{ _('Letzter manuell gelesener Wert') }}</strong></td>
+			<td class="py-1"><span id="last_read_cmd">{{ last_read_cmd + ": " if last_read_cmd else '---' }} </span></td>
+			<td class="py-1"><span id="last_read_val">{{ last_read_value }}</span></td>
+			<td></td>
+		</tr>
+	</tbody>
+</table>
+{% endblock headtable %}
+
+{% block buttons %}
+    	<button id="clear" class="btn btn-shng btn-sm" type="button">Gelesene Werte löschen</button>
+{% endblock %}
+
+{% block bodytab1 %}
+<div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
+	<div class="col-sm-12">
+		{% if p._params|length %}
+		    <table id="itemtable" class="table table-striped table-hover">
+		    	<thead>
+				    <tr>
+				    	<th>{{ _('Item') }}</th>
+				    	<th>{{ _('Datenpunkt') }}</th>
+				    	<th>{{ _('Befehlsname') }}</th>
+				    	<th>{{ _('Typ') }}</th>
+				    	<th>{{ _('Wert') }}</th>
+				    	<th>{{ _('Letzte Aktualisierung') }}</th>
+				    </tr>
+				</thead>
+				<tbody>
+				    {% for commandcode in p._params %}
+				        <tr>
+				            <td>{{ p._params[commandcode]['item'].path() }}</td>
+				            <td>{{ commandcode }}</td>
+				            <td>{{ p._params[commandcode]['commandname'] }}</td>
+				            <td>{{ p._params[commandcode]['item'].type() }}</td>
+				            <td>{{ p._params[commandcode]['item']() }}</td>
+				            <td>{{ p._params[commandcode]['item'].last_update() }}</td>
+				        </tr>
+				    {% endfor %}
+				</tbody>
+		    </table>
+		{% endif %}
+	</div>
+</div>
+{% endblock bodytab1 %}
+
+{% block bodytab2 %}
+<div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
+	<div class="col-sm-12">
+		{% if cmds|length %}
+			<form id="button_pressed" action="" method="post">
+				<input type="hidden" id="button" name="button" value="" />
+			    <table id="addrtable" class="table table-striped table-hover">
+				    <thead>
+					    <tr>
+					    	<th>{{ _('Befehlsname') }}</th>
+					    	<th>{{ _('Datenpunkt') }}</th>
+					    	<th>{{ _('Länge') }}</th>
+					    	<th>{{ _('Einheit') }}</th>
+					    	<th>{{ _('Lesen/Schreiben') }}</th>
+					    	<th>{{ _('Datenpunkt lesen') }}</th>
+					    	<th>{{ _('gelesener Wert') }}</th>
+					   	</tr>
+					</thead>
+					<tbody>
+					        <tr>
+					            <td>{{ _('_Custom') }}</td>
+					            <td><input id="cust_addr" name="cust_addr" type="text" minlength="4" maxlength="4" size="6" pattern="[0-9a-fA-F]{4}" title="{{ _('vierstellige Hex-Adresse') }}" /></td>
+					            <td><input id="cust_len" name="cust_len" type="number" value="2" min="1" max="8" title="{{ _('Zahl von 1 bis 8') }}" /></td>
+					            <td>
+					            	<select id="cust_unit" name="cust_unit">
+					            		{% for unit in units %}
+					            		<option {% if unit == 'IUINT' %}selected="selected" {% endif %} value="{{ unit }}">{{ unit }}</option>
+					            		{% endfor %}
+					            	</select>
+					            </td>
+					            <td>False</td>
+					            <td><button class="btn btn-shng btn-sm" type="button" onclick="$('#button').val('');$('#button_pressed').submit();">lesen</button></td>
+					            <td><span id="addrcust">&nbsp;</span></td>
+					        </tr>
+
+					    {% for cmd in cmds.keys() %}
+					        <tr>
+					            <td>{{ cmd }}</td>
+					            <td>{{ cmds[cmd]['addr'] }}</td>
+					            <td>{{ cmds[cmd]['len'] }}</td>
+					            <td>{{ cmds[cmd]['unit'] }}</td>
+					            <td>{{ cmds[cmd]['set'] }}</td>
+					            <td><button class="btn btn-shng btn-sm" type="button" onclick="$('#button').val('{{ cmds[cmd]['addr'] }}');$('#button_pressed').submit();">lesen</button></td>
+					            <td><span id="addr{{ cmds[cmd]['addr'] }}">&nbsp;</span></td>
+					        </tr>
+					    {% endfor %}
+					</tbody>
+			    </table>
+        	</form>
+		{% endif %}
+	</div>
+</div>
+{% endblock bodytab2 %}
