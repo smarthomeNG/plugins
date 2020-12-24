@@ -40,7 +40,7 @@ class Tasmota(MqttPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '0.5.0'
+    PLUGIN_VERSION = '1.0.0'
 
 
     def __init__(self, sh):
