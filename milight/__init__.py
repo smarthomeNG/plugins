@@ -46,7 +46,7 @@ class Milight(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.6.0'
+    PLUGIN_VERSION = '1.6.1'
     
     # tags this plugin handles
     ITEM_TAGS = [MILIGHT_SW,MILIGHT_DIM,MILIGHT_COL, MILIGHT_WHITE, MILIGHT_DISCO, MILIGHT_DISCO_UP, MILIGHT_DISCO_DOWN, MILIGHT_RGB]
@@ -141,6 +141,7 @@ class Milight(SmartPlugin):
         """
         Sends data given via UDP without further encoding
         """
+        self.logger.debug("use UDP {}:{} to send data {}".format(self.udp_ip, self.udp_port, data_s))
         try:
             family, type, proto, canonname, sockaddr = socket.getaddrinfo(
                 self.udp_ip, self.udp_port)[0]
@@ -152,7 +153,7 @@ class Milight(SmartPlugin):
             del(sock)
         except Exception as e:
             self.logger.warning(
-                "miLight UDP: Problem sending data to {}:{}: ".format(self.udp_ip, self.udp_port, e))
+                "miLight UDP: Problem '{}' sending data to {}:{}".format(e, self.udp_ip, self.udp_port))
             pass
         else:
             self.logger.debug("miLight UDP: Sending data to {}:{}:{} ".format(
@@ -318,33 +319,9 @@ class Milight(SmartPlugin):
                         with the item, caller, source and dest as arguments and in case of the knx plugin the value
                         can be sent to the knx with a knx write function within the knx plugin.
         """
-        # if self.has_iattr(item.conf, MILIGHT_SW):
-        #     self.logger.debug("parse item: {}".format(item))
-        #     return self.update_item
-        # if self.has_iattr(item.conf, MILIGHT_DIM):
-        #     self.logger.debug("parse item: {}".format(item))
-        #     return self.update_item
-        # if self.has_iattr(item.conf, MILIGHT_COL):
-        #     self.logger.debug("parse item: {}".format(item))
-        #     return self.update_item
-        # if self.has_iattr(item.conf, MILIGHT_WHITE):
-        #     self.logger.debug("parse item: {}".format(item))
-        #     return self.update_item
-        # if self.has_iattr(item.conf, MILIGHT_DISCO):
-        #     self.logger.debug("parse item: {}".format(item))
-        #     return self.update_item
-        # if self.has_iattr(item.conf, MILIGHT_DISCO_UP):
-        #     self.logger.debug("parse item: {}".format(item))
-        #     return self.update_item
-        # if self.has_iattr(item.conf, MILIGHT_DISCO_DOWN):
-        #     self.logger.debug("parse item: {}".format(item))
-        #     return self.update_item
-        # if self.has_iattr(item.conf, MILIGHT_RGB):
-        #     self.logger.debug("parse item: {}".format(item))
-        #     return self.update_item
-
-        if any(elem in item.property.attributes  for elem in [MILIGHT_SW, MILIGHT_DIM, MILIGHT_COL, MILIGHT_WHITE, MILIGHT_DISCO, MILIGHT_DISCO_UP, MILIGHT_DISCO_DOWN, MILIGHT_RGB]):
-            return self.update_item
+        for elem in [MILIGHT_SW, MILIGHT_DIM, MILIGHT_COL, MILIGHT_WHITE, MILIGHT_DISCO, MILIGHT_DISCO_UP, MILIGHT_DISCO_DOWN, MILIGHT_RGB]:
+            if self.has_iattr(item.conf, elem):
+                return self.update_item
 
     def update_item(self, item, caller=None, source=None, dest=None):
         """
@@ -359,7 +336,7 @@ class Milight(SmartPlugin):
         :param source: if given it represents the source
         :param dest: if given it represents the dest
         """
-        if caller != self.get_shortname():
+        if self.alive and caller != self.get_shortname():
             # code to execute, only if the item has not been changed by this this plugin:
             self.logger.info("Update item: {}, item has been changed outside this plugin".format(item.id()))
 
