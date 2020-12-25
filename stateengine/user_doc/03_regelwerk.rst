@@ -25,6 +25,20 @@ Zuerst wird also der erste Status getestet. Kann dieser nicht aktiviert werden,
 folgt der darunter angegebene, etc. Details hierzu finden sich im nächsten Teil
 der Dokumentation.
 
+Möchte man die Evaluierung eines Items deaktivieren, ist unter rules
+das Attribute ``se_plugin`` auf inactive zu setzen:
+
+.. code-block:: yaml
+
+   #items/item.yaml
+   raffstore1:
+       automatik:
+           struct: stateengine.general
+
+           rules:
+              se_plugin: inactive
+
+
 .. rubric:: Item-Definitionen
    :name: itemdefinitionen
 
@@ -40,6 +54,10 @@ als auch für das Setzen von "dynamischen" Items möglich.
 
 An dieser Stelle ist es auch möglich, über ``se_mindelta_`` zu definieren, um welchen Wert
 sich ein Item mindestens geändert haben muss, um neu gesetzt zu werden. Siehe auch :ref:`Aktionen`.
+
+Außerdem ist es möglich, über ``se_repeat_actions`` generell zu definieren,
+ob Aktionen für die Stateengine wiederholt ausgeführt werden sollen oder nicht. Diese Konfiguration
+kann für einzelne Aktionen individuell über die Angabe ``repeat`` überschrieben werden. Siehe auch :ref:`Aktionen`.
 
 .. rubric:: Beispiel se_item
    :name: beispielregelwerk
@@ -60,6 +78,7 @@ und Aktionen folgen auf den nächsten Seiten.
         automatik:
             struct: stateengine.general
             rules:
+                se_log_level: 2
                 se_item_height: beispiel.raffstore1.hoehe
                 se_item_brightness: beispiel.wetterstation.helligkeit
 

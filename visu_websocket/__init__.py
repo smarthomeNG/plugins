@@ -51,7 +51,7 @@ class WebSocket(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = "1.5.1"
+    PLUGIN_VERSION = "1.5.3"
 
 
     def __init__(self, sh, *args, **kwargs):
@@ -461,7 +461,7 @@ class websockethandler(lib.connection.Stream):
             self.json_send(data)
 
     def json_send(self, data):
-        self.logger.debug("Visu: DUMMY send to {0}: {1}".format(self.addr, data))
+        self.logger.info("Visu: DUMMY send to {0}: {1}".format(self.addr, data))
 
     def handle_close(self):
         # remove circular references
@@ -523,7 +523,8 @@ class websockethandler(lib.connection.Stream):
                 del(reply['update'])
                 del(reply['params'])
                 if reply['series'] is not None:
-#                    self.logger.warning("Visu: update send to {0}: {1}".format(self.addr, reply))
+                    # self.logger.warning("Visu: update send to {0}: {1}".format(self.addr, reply))
+                    self.logger.info(">SerUP {}: {}".format(self.addr, reply))
                     self.json_send(reply)
         for sid in remove:
             del(self._update_series[sid])
@@ -541,7 +542,7 @@ class websockethandler(lib.connection.Stream):
         :type data: json structure
 
         """
-        self.logger.debug("{0} sent {1}".format(self.addr, repr(data)))
+        self.logger.info("{0} sent {1}".format(self.addr, repr(data)))
         try:
             data = json.loads(data)
         except Exception as e:
@@ -566,7 +567,7 @@ class websockethandler(lib.connection.Stream):
             items = []
             newmonitor_items = []
             for path in list(data['items']):
-                path_parts = path.split('.property.')
+                path_parts = 0 if path is None else path.split('.property.')
                 if len(path_parts) == 1:
                     self.logger.debug("Client {0} requested to monitor item {1}".format(self.addr, path_parts[0]))
                     try:
@@ -633,6 +634,41 @@ class websockethandler(lib.connection.Stream):
                         self.logger.warning("Client {0} requested invalid series: {1}. Probably not database plugin is configured".format(self.addr, path))
                     else:
                         self.logger.warning("Client {0} requested invalid series: {1}.".format(self.addr, path))
+
+        elif command == 'series_cancel':
+            path = data['item']
+            series = data['series']
+
+            if 'start' in data:
+                start = data['start']
+            else:
+                start = '72h'
+            if 'end' in data:
+                end = data['end']
+            else:
+                end = 'now'
+            if 'count' in data:
+                count = data['count']
+            else:
+                count = 100
+
+            self.logger.info("Series cancelation: path={}, series={}, start={}, end={}, count={}".format(path, series, start, end, count))
+            try:
+                reply = self.items[path]['item'].series(series, start, end, count)
+                self.logger.info("Series cancelation: reply={}".format(reply))
+                self.logger.info("Series cancelation: self._update_series={}".format(self._update_series))
+            except Exception as e:
+                self.logger.error("Problem fetching series for {0}: {1} - Wrong sqlite plugin?".format(path, e))
+            else:
+                self._series_lock.acquire()
+                try:
+                    del (self._update_series[reply['sid']])
+                    self.logger.info("Series cancelation: Series updates for path {} canceled".format(path))
+                    self.json_send({'cmd': command, 'result': "Series updates for path {} canceled".format(path)})
+                except:
+                    self.logger.warning("Series cancelation: No series for path {} found in list".format(path))
+                    self.json_send({'cmd': command, 'error': "No series for path {} found in list".format(path)})
+                self._series_lock.release()
 
         elif command == 'log':
             self.log = True
@@ -843,6 +879,7 @@ class websockethandler(lib.connection.Stream):
         else:
             payload = data[header:]
 
+        #self.logger.info("rfc6455_parse: Received {}".format(data.decode()))
         try:
             self.json_parse(payload.decode())
         except Exception as e:
@@ -851,6 +888,7 @@ class websockethandler(lib.connection.Stream):
 
     def rfc6455_send(self, data):
         data = json.dumps(data, cls=JSONEncoder, separators=(',', ':'))
+        #self.logger.info("rfc6455_send: Sending {}".format(data))
         header = bytearray(2)
         header[0] = self.set_bit(header[0], 0)  # opcode text
         header[0] = self.set_bit(header[0], 7)  # final
@@ -870,6 +908,7 @@ class websockethandler(lib.connection.Stream):
 
     def hixie76_send(self, data):
         data = json.dumps(data, cls=JSONEncoder, separators=(',', ':'))
+        self.logger.info("hixie76_send: Sending {}".format(data))
         packet = bytearray()
         packet.append(0x00)
         packet.extend(data.encode())
@@ -877,6 +916,7 @@ class websockethandler(lib.connection.Stream):
         self.send(packet)
 
     def hixie76_parse(self, data):
+        self.logger.info("hixie76_parse: Received {}".format(data.decode().lstrip('\x00')))
         try:
             self.json_parse(data.decode().lstrip('\x00'))
         except Exception as e:

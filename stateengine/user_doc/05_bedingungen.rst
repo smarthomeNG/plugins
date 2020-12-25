@@ -21,7 +21,7 @@ die Helligkeit (über se_item_brightness definiert) über 500 Lux liegt.
                    se_item_brightness: beispiel.wetterstation.helligkeit
                    Daemmerung:
                        name: Dämmerung
-                       <Aktionen>
+                       remark: <Aktionen>
                        enter:
                           se_min_brightness: 500
 
@@ -61,6 +61,7 @@ Der zu vergleichende Wert einer Bedingung kann auf folgende Arten definiert werd
 - statischer Wert (also z.B. 500 Lux). Wird angegegeben mit ``value:500``, wobei das value: auch weggelassen werden kann.
 - Item (beispielsweise ein Item namens settings.helligkeitsschwellwert). Wird angegeben mit ``item:settings.helligkeitsschwellwert``
 - Eval-Funktion (siehe auch `eval Ausdrücke <https://www.smarthomeng.de/user/konfiguration/items_attributes_eval_ausdruecke.html>`_). Wird angegeben mit ``eval:1*2*se_eval.get_relative_itemvalue('..bla')``
+- Regular Expression (siehe auch ` RegEx Howto <https://docs.python.org/3.7/howto/regex.html#regex-howto>`_) - Vergleich mittels re.fullmatch, wobei Groß/Kleinschreibung ignoriert wird. Wird angegeben mit ``regex:StateEngine Plugin:(.*)``
 - Template: eine Vorlage, z.B. eine eval Funktion, die immer wieder innerhalb
   des StateEngine Items eingesetzt werden kann. Angegeben durch ``template:<Name des Templates>``
 
@@ -81,7 +82,7 @@ die jeweils mit einem Unterstrich "_" getrennt werden:
 
 Setzt man für mehrere Bedingungsabfragen (z.B. Helligkeit, Temperatur, etc.) immer die
 gleichen Ausdrücke ein (z.B. eine eval-Funktion), so kann Letzteres als Template
-definiert und referenziert werden. Dadurch wird die die Handhabung
+definiert und referenziert werden. Dadurch wird die  Handhabung
 komplexerer Abfragen deutlich vereinfacht. Diese Templates müssen wie se_item/se_eval
 auf höchster Ebene des StateEngine Items (also z.B. rules) deklariert werden.
 
@@ -115,6 +116,7 @@ und der Zustand aktiviert.
       se_value_laststate:
           - 'kochen'
           - 'eval:1+2'
+          - 'regex:Nachfuehren(.*)'
           - 'item:..laststate_id'
 
 Im oben gezeigten Beispiel kann der letzte Status einen von drei Werten beinhalten,
@@ -188,8 +190,48 @@ angegebenen Wert oder gleich einem der in einer Liste angegebenen Wert ist.
 
 Die gesamte Bedingung (Minimum, Maximum und Wert) wird negiert
 (umgekehrt). Für das Attribut wird der Datentyp Boolean verwendet,
-zulässige Werte sind "true", "1", "yes", "on" bzw. "false", "0",
-"no", "off"
+zulässige Werte sind "true", "yes", "on" bzw. "false", "no", "off"
+
+**Aktualisierung des Items durch**
+
+.. code-block:: yaml
+
+       se_updatedby_<Bedingungsname>: [Wert]
+
+Die Bedingung ist erfüllt, wenn das Item durch den angegebenen Wert bzw.
+einen der angegebenen Werte geändert wurde. Hier bietet es sich an,
+den Wert als Regular Expression mittels ``se_updatedby_<Bedingungsname>: regex:StateEngine Plugin`` zu definieren.
+Die Werte(liste) kann auch durch ``se_updatedbynegate_<Bedingungsname>`` negiert werden.
+
+.. code-block:: yaml
+
+       se_updatedby_<Bedingungsname>:
+          - [Wert1]
+          - [Wert2]
+          - regex:[WertN]
+
+       se_updatedbynegate_<Bedingungsname>: True|False
+
+**Änderung des Items durch**
+
+.. code-block:: yaml
+
+       se_changedby_<Bedingungsname>: [Wert]
+
+Die Bedingung ist erfüllt, wenn das Item durch den angegebenen Wert bzw.
+einen der angegebenen Werte geändert wurde. Hier bietet es sich an,
+den Wert als Regular Expression mittels ``se_changedby_<Bedingungsname>: regex:StateEngine Plugin`` zu definieren.
+Die Werte(liste) kann auch durch ``se_changedbynegate_<Bedingungsname>`` negiert werden.
+
+.. code-block:: yaml
+
+       se_changedby_<Bedingungsname>:
+          - [Wert1]
+          - [Wert2]
+          - regex:[WertN]
+
+       se_changedbynegate_<Bedingungsname>: True|False
+
 
 **Mindestalter**
 
@@ -199,7 +241,8 @@ zulässige Werte sind "true", "1", "yes", "on" bzw. "false", "0",
 
 Die Bedingung ist erfüllt, wenn das Alter des Items, das zur
 Ermittlung des Werts angegeben ist, größer als das angegebene
-Mindestalter ist.
+Mindestalter ist. Die age Bedingungen sollten immer mit einer value Bedingung verknüpft werden
+(z.B. ``se_value_<Bedingungsname>: True``)
 
 **Höchstalter**
 
@@ -209,7 +252,8 @@ Mindestalter ist.
 
 Die Bedingung ist erfüllt, wenn das Alter des Items, das zur
 Ermittlung des Werts angegeben ist, kleiner als das angegebene
-Höchstalter ist.
+Höchstalter ist. Die age Bedingungen sollten immer mit einer value Bedingung verknüpft werden
+(z.B. ``se_value_<Bedingungsname>: True``)
 
 **Altersbedingung negieren**
 
@@ -289,7 +333,7 @@ Das Alter wird über die letzte Änderung des Items, das als
 **random**
 *Zufallszahl zwischen 0 und 100*
 Wenn etwas zufällig mit einer Wahrscheinlichkeit von 60% passieren
-soll, kan beispielsweise die Bedingung ``max_random: 60``
+soll, kan beispielsweise die Bedingung ``se_max_random: 60``
 verwendet werden.
 
 **laststate**

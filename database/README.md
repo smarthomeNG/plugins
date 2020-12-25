@@ -55,8 +55,7 @@ Tested drivers (other may work too):
 
 ```yaml
 database:
-    class_name: Database
-    class_path: plugins.database
+    plugin_name: database
     driver: sqlite3
     connect:
       - "database:/path/to/log.db"
@@ -96,7 +95,6 @@ some:
     item:
         type: num
         database: 'yes' # or 'init'
-        # database_acl: rw
 ```
 
 #### database_acl

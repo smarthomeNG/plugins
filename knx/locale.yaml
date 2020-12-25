@@ -1,7 +1,8 @@
 plugin_translations:
     # Translations for the plugin specially for the web interface
     'Statistiken':           {'de': '=', 'en': 'Statistics', 'fr': 'Statistiques'}
-    'Letzte KNX Aktivität':  {'de': '=', 'en': 'Last KNX activity', 'fr': 'Dernière activité KNX'}
+    'KNX Service':           {'de': '=', 'en': 'KNX daemon', 'fr': ''}
+    'Letzte Aktivität':      {'de': '=', 'en': 'Last activity', 'fr': 'Dernière activité'}
     '# gelesen':             {'de': '=', 'en': '# read', 'fr': ''}
     '# geschrieben':         {'de': '=', 'en': '# write', 'fr': ''}
     '# geantwortet':         {'de': '=', 'en': '# response', 'fr': ''}
@@ -13,7 +14,159 @@ plugin_translations:
 #        en: 'Here goes the content of the web interface.'
 #        fr: 'Le contenu de l'interface web vient ici.'
 
-    'Service für den KNX Support':
-        de: '='
-        en: 'Service deamon for the KNX support'
+    "Using busmonitor (L) = '{}'":
+        de: "Benutze Busmonitor (L) = '{}'"
+        en: '='
         fr: ''
+
+    '!!! KNX Plugin in READONLY mode !!!':
+        de: '!!! KNX Plugin im READONLY Modus !!!'
+        en: '='
+        fr: ''
+
+    'Illegal data size: {}':
+        de: "Ungültiger Datenumfang zum Senden '{}'"
+        en: '='
+        fr: ''
+
+    "Invalid value '{}' configured for parameter 'busmonitor', using 'false'":
+        de: "Ungültiger Wert '{}' für das Attribut 'busmonitor' angegeben, es wird 'false' genutzt"
+        en: '='
+        fr: ''
+
+    "groupwrite telegram for {} with unknown flag: {}. Please choose beetween write and response.":
+        de: "groupwrite Telegramm für {} mit einem unbekanntem Flag: {}. Bitte entweder write oder response auswählen"
+        en: '='
+        fr: ''
+
+    "groupwrite telegram for: {} - Value: {} not send. Plugin in READONLY mode.":
+        de: "groupwrite Telegram für {} - Wert {} wird nicht gesendet, das Plugin ist im READONLY Modus."
+        en: '='
+        fr: ''
+
+    "problem encoding ga: {}":
+        de: "Gruppenadresse {} konnte nicht kodiert werden"
+        en: '='
+        fr: ''
+
+    "reading knxd cache for ga: {}":
+        de: "Lese den knxd cache für Gruppenadresse {}"
+        en: '='
+        fr: ''
+
+    "problem polling {}, no known ga":
+        de: "Für Item {} ist keine bekannte Gruppenadresse vorhanden"
+        en: '='
+        fr: ''
+
+    "reading knxd cache":
+        de: "Lese Knxd Cache"
+        en: '='
+        fr: ''
+
+    "finished reading knxd cache":
+        de: "Lesen des Knxd Cache abgeschlossen"
+        en: '='
+        fr: ''
+
+    "enable group monitor":
+        de: "Gruppenmonitor einschalten"
+        en: '='
+        fr: ''
+
+    "knxd init read for {} ga":
+        de: "Lesen des init Wertes vom knxd für Gruppenadresse {}"
+        en: '='
+        fr: ''
+
+    "finished knxd init read":
+        de: "Lesen des init Wertes vom knxd abgeschlossen"
+        en: '='
+        fr: ''
+
+    "problem unpacking length: {} ({})":
+        de: "Es ist ein Fehler '{}' beim Entpacken mit der Länge '{}' aufgetreten"
+        en: '='
+        fr: ''
+
+    "plugin closes connection to knxd/eibd. Restarting SmartHomeNG":
+        de: "Plugin hat die Verbindung zum knxd/eibd geschlossen. SmartHomeNG wird neu gestartet"
+        en: '='
+        fr: ''
+
+    "SmartHomeNG (KNX plugin stalled)":
+        de: "SmartHomeNG (KNX plugin ist gestolpert)"
+        en: '='
+        fr: ''
+
+    'Ja':
+        de: '='
+        en: 'Yes'
+        fr: 'Qui'
+
+    'Nein':
+        de: '='
+        en: 'No'
+        fr: 'Non'
+
+    'Keine ETS5 Projektdatei gefunden':
+        de: '='
+        en: 'No ETS5 project file found'
+        fr: 'Pas trouvée un file ETS projet'
+
+    'nicht zugewiesen':
+        de: '='
+        en: 'not assigned'
+        fr: 'pas assignee'
+
+    'Gruppenadresse':
+        de: '='
+        en: 'Group address'
+        fr: ''
+
+    'Name':
+        de: '='
+        en: 'Name'
+        fr: 'Nom'
+
+    'Kommentar':
+        de: '='
+        en: 'Comment'
+        fr: ''
+
+    'Beschreibung':
+        de: '='
+        en: 'Description'
+        fr: ''
+
+    'Datenpunkt':
+        de: '='
+        en: 'Datapoint'
+        fr: ''
+
+    'Pfad zur KNX Projektdatei':
+        de: '='
+        en: 'Path to KNX project file'
+        fr: ''
+
+    'gültig':
+        de: '='
+        en: 'valid'
+        fr: ''
+
+    'Projektdatei hochladen':
+        de: '='
+        en: 'Upload project file'
+        fr: ''
+
+    'ETS5 Projektdatei (*.knxproj) auswählen':
+        de: '='
+        en: 'Select ETS5 projekt file(*.knxproj)'
+        fr: ''
+
+    'hochladen':
+        de: '='
+        en: 'upload'
+        fr: ''
+
+

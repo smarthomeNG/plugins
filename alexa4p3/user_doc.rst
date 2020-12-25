@@ -1,8 +1,12 @@
 .. index:: Plugins; Alexa4P3 (Unterstützung von Amazon Echo/Alexa Geräten)
 .. index:: Alexa4P3
 
-Alexa4P3
-########
+========
+alexa4p3
+========
+
+Plugin zur Ansteuerung von SmartHomeNG via Amazon Echo bzw. Alexa
+
 
 Konfiguration
 =============
@@ -10,10 +14,10 @@ Konfiguration
 Die Informationen zur Konfiguration des Plugins sind unter :doc:`/plugins_doc/config/alexa4p3` beschrieben.
 
 
-.. important:: 
+.. important::
 
    Das Alexa-Plugin kann nicht mit **SmartHomeNG-Versionen vor v1.5.2** genutzt werden.
-   Es wird dann nicht geladen. 
+   Es wird dann nicht geladen.
 
 
 Webinterface

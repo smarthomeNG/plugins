@@ -23,27 +23,26 @@ import logging
 import datetime
 import os
 import errno
-#from datetime import timezone, timedelta
-from datetime import timezone
-
-
+import re
 import dateutil.tz
 import dateutil.rrule
 import dateutil.relativedelta
-from lib.model.smartplugin import SmartPlugin
+from lib.model.smartplugin import *
 from lib.shtime import Shtime
 from lib.network import Http
 from bin.smarthome import VERSION
-
+#from datetime import timezone, timedelta
+from datetime import timezone
 
 class iCal(SmartPlugin):
-    PLUGIN_VERSION = "1.5.3"
+    PLUGIN_VERSION = "1.5.4"
     ALLOW_MULTIINSTANCE = False
     DAYS = ("MO", "TU", "WE", "TH", "FR", "SA", "SU")
     FREQ = ("YEARLY", "MONTHLY", "WEEKLY", "DAILY", "HOURLY", "MINUTELY", "SECONDLY")
     PROPERTIES = ("SUMMARY", "DESCRIPTION", "LOCATION", "CATEGORIES", "CLASS")
 
     def __init__(self, smarthome):
+        super().__init__()
         if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
             self.logger = logging.getLogger(__name__)
         try:
@@ -55,10 +54,10 @@ class iCal(SmartPlugin):
             self._items = []
             self._icals = {}
             self._ical_aliases = {}
-            self.sh = smarthome
             cycle = self.get_parameter_value('cycle')
             calendars = self.get_parameter_value('calendars')
             config_dir = self.get_parameter_value('directory')
+            self.handle_login = self.get_parameter_value('handle_login')
         except Exception as err:
             self.logger.error('Problems initializing: {}'.format(err))
             self._init_complete = False
@@ -66,13 +65,13 @@ class iCal(SmartPlugin):
         try:
             self._directory = '{}/{}'.format(self.get_vardir(), config_dir)
         except Exception:
-            self._directory = '{}/var/{}'.format(self.sh.get_basedir(), config_dir)
+            self._directory = '{}/var/{}'.format(smarthome.get_basedir(), config_dir)
         try:
             os.makedirs(self._directory)
             self.logger.debug('Created {} subfolder in var'.format(config_dir))
         except OSError as e:
             if e.errno != errno.EEXIST:
-                self.logger.error('Problem creating {} folder in {}/var'.format(config_dir, self.sh.get_basedir()))
+                self.logger.error('Problem creating {} folder in {}/var'.format(config_dir, smarthome.get_basedir()))
                 self._init_complete = False
                 return
 
@@ -82,20 +81,23 @@ class iCal(SmartPlugin):
             if ':' in calendar and 'http' != calendar[:4]:
                 name, _, cal = calendar.partition(':')
                 calendar = cal.strip()
-                self.logger.info('Registering calendar {} with alias {}.'.format(calendar, name))
+                self.logger.info('Registering calendar {} with alias {}.'.format(self._clean_uri(calendar), name))
                 self._ical_aliases[name.strip()] = calendar
             else:
-                self.logger.info('Registering calendar {} without alias.'.format(calendar))
+                self.logger.info('Registering calendar {} without alias.'.format(self._clean_uri(calendar)))
             calendar = calendar.strip()
             self._icals[calendar] = self._read_events(calendar)
 
-        smarthome.scheduler.add('iCalUpdate', self._update_items, cron='* * * *', prio=5)
-        smarthome.scheduler.add('iCalRefresh', self._update_calendars, cycle=int(cycle), prio=5)
+        self.shtime = Shtime.get_instance()
+        self.scheduler_add('iCalUpdate', self._update_items, cron='* * * *', prio=5)
+        self.scheduler_add('iCalRefresh', self._update_calendars, cycle=int(cycle), prio=5)
 
     def run(self):
         self.alive = True
 
     def stop(self):
+        self.scheduler_remove('iCalUpdate')
+        self.scheduler_remove('iCalRefresh')
         self.alive = False
 
     def parse_item(self, item):
@@ -154,7 +156,7 @@ class iCal(SmartPlugin):
     def _update_calendars(self):
         for uri in self._icals:
             self._icals[uri] = self._read_events(uri)
-            self.logger.debug('Updated calendar {0}'.format(uri))
+            self.logger.debug('Updated calendar {0}'.format(self._clean_uri(uri)))
 
         if len(self._icals):
             self._update_items()
@@ -232,7 +234,7 @@ class iCal(SmartPlugin):
             # 'Z' indicates 'Zulu', thus UTC time, therefore specify time zone utc:
             dt = dt.replace(tzinfo=datetime.timezone.utc)
 
-        # the following condition occurs for complete day schedules. They do not have the 'T' lettre in start/end times. 
+        # the following condition occurs for complete day schedules. They do not have the 'T' lettre in start/end times.
         else:  # date
             y = int(val[0:4])
             m = int(val[4:6])
@@ -248,19 +250,19 @@ class iCal(SmartPlugin):
             #self.logger.debug('Datetime before conversion: {0}'.format(dt))
 
             calendar_tz = dateutil.tz.gettz(timezoneFromCalendar)
-            
+
             dt = dt.replace(tzinfo=calendar_tz)
 
             #self.logger.debug('Datetime after conversion for series entries: {}'.format(dt))
 
         # convert all time stamps to local timezone, configured in smarthome
-        dt = dt.astimezone(self.sh.tzinfo())
+        dt = dt.astimezone(self.shtime.tzinfo())
         #self.logger.debug('Datetime after final conversion in plugin ical: {}'.format(dt))
 
-        
+
         #convert time based on time zone info which has been extracted on a higher level:
         #dt = dt.astimezone(dtzinfo)
-        
+
         return dt
 
     def _parse_ical(self, ical, ics, prio):
@@ -334,7 +336,7 @@ class iCal(SmartPlugin):
                 else:
                     event[key] = val  # noqa
             try:
-                event['EXDATES'] = [y for x in event['EXDATES'] for y in x]        
+                event['EXDATES'] = [y for x in event['EXDATES'] for y in x]
             except Exception:
                 pass
         return events
@@ -385,3 +387,15 @@ class iCal(SmartPlugin):
             args[par.lower()] = rrule[par]
 
         return dateutil.rrule.rrule(freq, **args)
+
+    def _clean_uri(self, uri):
+        # check for http[s]?://user:password@domain.tld/... style uris and strip name/pass
+        pattern = re.compile('http([s]?)://([^:]+:[^@]+@)')
+        if self.handle_login == 'show' or not pattern.match(uri):
+            return uri
+
+        replacement = {
+            'strip': 'http\g<1>://',
+            'mask': 'http\g<1>://***:***@'
+        }
+        return pattern.sub(replacement[self.handle_login], uri)

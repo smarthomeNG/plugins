@@ -31,9 +31,9 @@ plugin:
     state: ready
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/28692-√-neues-plugin-logitech-squeezebox-anregungen
 
-    version: 1.3.2                 # Plugin version
+    version: 1.4.0                 # Plugin version
     sh_minversion: 1.3             # minimum shNG version to use this plugin
-#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+#    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
     classname: Squeezebox          # class containing the plugin
 
@@ -59,6 +59,29 @@ parameters:
         description:
             de: 'IP des Logitech Media Servers'
             en: 'IP of the Logitech Media Server'
+
+    autoreconnect:
+        type: bool
+        default: False
+        description:
+            de: 'Erneuter Verbindungsaufbau, falls Verbindung unterbrochen'
+            en: 'Reconnect if connection is broken'
+
+    connect_retries:
+        type: int
+        default: 2
+        valid_min: 0
+        description:
+            de: 'Anzahl Versuche, die Verbindung erneut aufzubauen'
+            en: 'Number of retries to reconnect'
+
+    connect_cycle:
+        type: int
+        default: 10
+        valid_min: 0
+        description:
+            de: 'Pause zwischen automatischen Verbindungsversuchen.'
+            en: 'Pause between automatic connection retries'
 
 item_attributes:
     # Definition of item attributes defined by this plugin
@@ -163,28 +186,28 @@ item_structs:
         abortscan:
             type: bool
             visu_acl: rw
-            enforce_updates: True
+            enforce_updates: yes
             squeezebox_send: abortscan
             squeezebox_recv: abortscan
 
         wipecache:
             type: bool
             visu_acl: rw
-            enforce_updates: True
+            enforce_updates: yes
             squeezebox_send: wipecache
             squeezebox_recv: wipecache
 
         libraries:
             type: str
             visu_acl: rw
-            enforce_updates: True
+            enforce_updates: yes
             squeezebox_send: libraries
             squeezebox_recv: libraries
 
         totalgenres:
             type: num
             visu_acl: rw
-            enforce_updates: True
+            enforce_updates: yes
             squeezebox_send: info total genres ?
             squeezebox_recv: info total genres
             squeezebox_init: info total genres ?
@@ -192,7 +215,7 @@ item_structs:
         totalduration:
             type: num
             visu_acl: rw
-            enforce_updates: True
+            enforce_updates: yes
             squeezebox_send: info total duration ?
             squeezebox_recv: info total duration
             squeezebox_init: info total duration ?
@@ -200,7 +223,7 @@ item_structs:
         totalartists:
             type: num
             visu_acl: rw
-            enforce_updates: True
+            enforce_updates: yes
             squeezebox_send: info total artists ?
             squeezebox_recv: info total artists
             squeezebox_init: info total artists ?
@@ -208,7 +231,7 @@ item_structs:
         totalalbums:
             type: num
             visu_acl: rw
-            enforce_updates: True
+            enforce_updates: yes
             squeezebox_send: info total albums ?
             squeezebox_recv: info total albums
             squeezebox_init: info total albums ?
@@ -216,7 +239,7 @@ item_structs:
         totalsongs:
             type: num
             visu_acl: rw
-            enforce_updates: True
+            enforce_updates: yes
             squeezebox_send: info total songs ?
             squeezebox_recv: info total songs
             squeezebox_init: info total songs ?
@@ -226,31 +249,39 @@ item_structs:
             visu_acl: rw
             squeezebox_send: rescan {}
             squeezebox_recv: rescan
+            on_update: .progress.scantype = value
 
             query:
                 type: bool
                 visu_acl: rw
-                enforce_updates: True
+                enforce_updates: yes
                 squeezebox_send: rescan ?
                 crontab: init = True
+                autotimer: 1s = False
 
             progress:
-                type: num
+                type: str
                 visu_acl: ro
                 squeezebox_send: rescanprogress
                 squeezebox_recv: scanner notify
+                on_update:
+                    - .time = 0 if len(value.split(":")) == 1 else value.split(":")[1].split("||")[0]
+                    - .scantype = value if len(value.split(":")) == 1 else value.split(":")[1].split("||")[1] if len(value.split(":")[1].split("||")) > 1 else ""
+                    - .directory = "" if len(value.split(":")) == 1 else value.split(":")[1].split("||")[2].split("|")[0] if (len(value.split(":")[1].split("||")) > 1 and len(value.split(":")[1].split("||")[2].split("|")) > 1) else ""
+                    - .action = "" if len(value.split(":")) == 1 else value.split(":")[1].split("||")[2].split("|")[1] if (len(value.split(":")[1].split("||")) > 1 and len(value.split(":")[1].split("||")[2].split("|")) > 1) else value.split(":")[1].split("||")[2] if len(value.split(":")[1].split("||")) > 1 else ""
 
-                result:
+                time:
+                    type: num
+                    visu_acl: ro
+                scantype:
                     type: str
-                    squeezebox_recv: rescanprogress
-                    on_update: .. = value.split(":")[1]
-
-                query:
-                    type: bool
-                    visu_acl: rw
-                    enforce_updates: True
-                    squeezebox_send: rescanprogress
-                    crontab: init = True
+                    visu_acl: ro
+                directory:
+                    type: str
+                    visu_acl: ro
+                action:
+                    type: str
+                    visu_acl: ro
 
     server:
         name: Vorlage-Struktur für Squeezebox Server
@@ -270,7 +301,7 @@ item_structs:
             query:
                 type: bool
                 visu_acl: rw
-                enforce_updates: True
+                enforce_updates: yes
                 squeezebox_send: player count ?
                 crontab: init = True
 
@@ -286,7 +317,7 @@ item_structs:
             query:
                 type: bool
                 visu_acl: rw
-                enforce_updates: True
+                enforce_updates: yes
                 squeezebox_send: favorites items
                 crontab: init = True
 
@@ -316,7 +347,7 @@ item_structs:
             query:
                 type: bool
                 visu_acl: rw
-                enforce_updates: True
+                enforce_updates: yes
                 squeezebox_send: <playerid> syncgroups ?
                 crontab: init = True
 
@@ -329,7 +360,7 @@ item_structs:
             query:
                 type: bool
                 visu_acl: rw
-                enforce_updates: True
+                enforce_updates: yes
                 squeezebox_send: <playerid> signalstrength ?
                 crontab: init = True
 
@@ -343,7 +374,7 @@ item_structs:
         connected:
             type: bool
             visu_acl: rw
-            enforce_updates: True
+            enforce_updates: yes
             squeezebox_send: <playerid> connected ?
             squeezebox_recv: <playerid> connected
             squeezebox_init: <playerid> connected ?
@@ -358,21 +389,21 @@ item_structs:
         sync:
             type: str
             visu_acl: rw
-            enforce_updates: True
+            enforce_updates: yes
             squeezebox_send: <playerid> sync {}
             squeezebox_recv: <playerid> sync
 
             query:
                 type: bool
                 visu_acl: rw
-                enforce_updates: True
+                enforce_updates: yes
                 squeezebox_send: <playerid> sync ?
                 crontab: init = True
 
         unsync:
             type: bool
             visu_acl: rw
-            enforce_updates: True
+            enforce_updates: yes
             squeezebox_send: <playerid> sync -
 
         power:
@@ -383,7 +414,7 @@ item_structs:
             squeezebox_init: <playerid> power ?
 
         button:
-            type: bool
+            type: str
             visu_acl: rw
             squeezebox_send: <playerid> button {}
             squeezebox_recv: <playerid> button
@@ -398,20 +429,20 @@ item_structs:
             query:
                 type: bool
                 visu_acl: rw
-                enforce_updates: True
+                enforce_updates: yes
                 squeezebox_send: <playerid> display ?
 
         connect:
             type: str
             visu_acl: rw
-            enforce_updates: True
+            enforce_updates: yes
             squeezebox_send: <playerid> connect {}
             squeezebox_recv: <playerid> connect
 
         disconnect:
             type: str
             visu_acl: rw
-            enforce_updates: True
+            enforce_updates: yes
             squeezebox_send: disconnect <playerid> {}
             squeezebox_recv: disconnect <playerid>
 
@@ -480,13 +511,13 @@ item_structs:
             query:
                 type: bool
                 visu_acl: rw
-                enforce_updates: True
+                enforce_updates: yes
                 squeezebox_send: <playerid> mode ?
                 crontab: init = True
 
         mute:
             type: bool
-            enforce_updates: True
+            enforce_updates: yes
             visu_acl: rw
             squeezebox_send: <playerid> mixer muting {}
             squeezebox_recv: <playerid> prefset server mute
@@ -503,36 +534,44 @@ item_structs:
                 type: num
                 squeezebox_send: <playerid> mixer volume {}
                 remark: Use this item in conjunction with the fade() item function
-                enforce_updates: True
+                enforce_updates: yes
 
             up:
                 type: num
-                enforce_updates: True
+                enforce_updates: yes
                 visu_acl: rw
+                cache: True
                 squeezebox_send: <playerid> mixer volume +{}
 
             down:
                 type: num
-                enforce_updates: True
+                enforce_updates: yes
                 visu_acl: rw
+                cache: True
                 squeezebox_send: <playerid> mixer volume -{}
 
             low:
                 type: num
-                value: 60
+                visu_acl: rw
+                enforce_updates: yes
+                initial_value: 60
+                cache: True
                 remark: Sets the volume to a given (low) value
                 squeezebox_send: <playerid> mixer volume {}
 
             high:
                 type: num
-                value: 80
+                visu_acl: rw
+                enforce_updates: yes
+                initial_value: 80
+                cache: True
                 remark: Sets the volume to a given (high) value
                 squeezebox_send: <playerid> mixer volume {}
 
         customskip:
             type: str
             visu_acl: rw
-            enforce_updates: True
+            enforce_updates: yes
             cache: True
             remark: Use a filter to potentially skip songs with specific attributes (low rating, genre, etc.)
             squeezebox_send: <playerid> customskip setfilter filter{}.cs.xml
@@ -552,20 +591,32 @@ item_structs:
             song:
                 type: bool
                 visu_acl: rw
-                enforce_updates: 'yes'
-                squeezebox_send: <playerid> playlist repeat 1
+                enforce_updates: yes
+                on_update: .self.sendcommand = True if value is True else None
+
+                sendcommand:
+                    type: bool
+                    squeezebox_send: <playerid> playlist repeat 1
 
             playlist:
                 type: bool
                 visu_acl: rw
-                enforce_updates: 'yes'
-                squeezebox_send: <playerid> playlist repeat 2
+                enforce_updates: yes
+                on_update: .self.sendcommand = True if value is True else None
+
+                sendcommand:
+                    type: bool
+                    squeezebox_send: <playerid> playlist repeat 2
 
             none:
                 type: bool
                 visu_acl: rw
-                enforce_updates: 'yes'
-                squeezebox_send: <playerid> playlist repeat 0
+                enforce_updates: yes
+                on_update: .self.sendcommand = True if value is True else None
+
+                sendcommand:
+                    type: bool
+                    squeezebox_send: <playerid> playlist repeat 0
 
             dummy:
                 type: bool
@@ -585,46 +636,58 @@ item_structs:
             song:
                 type: bool
                 visu_acl: rw
-                enforce_updates: 'yes'
-                squeezebox_send: <playerid> playlist shuffle 1
+                enforce_updates: yes
+                on_update: .self.sendcommand = True if value is True else None
+
+                sendcommand:
+                    type: bool
+                    squeezebox_send: <playerid> playlist shuffle 1
 
             album:
                 type: bool
                 visu_acl: rw
-                enforce_updates: 'yes'
-                squeezebox_send: <playerid> playlist shuffle 2
+                enforce_updates: yes
+                on_update: .self.sendcommand = True if value is True else None
+
+                sendcommand:
+                    type: bool
+                    squeezebox_send: <playerid> playlist shuffle 2
 
             none:
                 type: bool
                 visu_acl: rw
-                enforce_updates: 'yes'
-                squeezebox_send: <playerid> playlist shuffle 0
+                enforce_updates: yes
+                on_update: .self.sendcommand = True if value is True else None
+
+                sendcommand:
+                    type: bool
+                    squeezebox_send: <playerid> playlist shuffle 0
 
         play:
             type: bool
             visu_acl: rw
-            enforce_updates: True
+            enforce_updates: yes
             squeezebox_send: <playerid> play 3
             squeezebox_recv: <playerid> play
 
         stop:
             type: bool
             visu_acl: rw
-            enforce_updates: True
+            enforce_updates: yes
             squeezebox_send: <playerid> stop
             squeezebox_recv: <playerid> stop
 
         pause:
             type: bool
             visu_acl: rw
-            enforce_updates: True
+            enforce_updates: yes
             squeezebox_send: <playerid> pause {} 3
             squeezebox_recv: <playerid> pause
 
         time:
             type: num
             visu_acl: rw
-            enforce_updates: True
+            enforce_updates: yes
             squeezebox_recv: <playerid> time
             squeezebox_send: <playerid> time {}
 
@@ -634,13 +697,13 @@ item_structs:
                 squeezebox_send: <playerid> time ?
                 crontab: init = True
                 cycle: 100
-                enforce_updates: True
+                enforce_updates: yes
                 remark: Queries current song time every 10 seconds and updates time item
 
         forward:
             type: num
             visu_acl: rw
-            enforce_updates: True
+            enforce_updates: yes
             value: 10
             remark: Item value defines time in seconds to skip in current song
             squeezebox_send: <playerid> time +{}
@@ -648,20 +711,20 @@ item_structs:
         rewind:
             type: num
             visu_acl: rw
-            enforce_updates: True
+            enforce_updates: yes
             value: 10
             remark: Item value defines time in seconds to go back in current song
             squeezebox_send: <playerid> time -{}
 
         next:
             type: bool
-            enforce_updates: True
+            enforce_updates: yes
             visu_acl: rw
             squeezebox_send: <playerid> playlist index +1
 
         previous:
             type: bool
-            enforce_updates: True
+            enforce_updates: yes
             visu_acl: rw
             squeezebox_send: <playerid> playlist index -1
 
@@ -671,52 +734,52 @@ item_structs:
         index:
             type: num
             visu_acl: rw
-            enforce_updates: True
+            enforce_updates: yes
             squeezebox_send: <playerid> playlist index {}
             squeezebox_recv: <playerid> playlist index
 
             query:
                 type: bool
                 visu_acl: rw
-                enforce_updates: True
+                enforce_updates: yes
                 squeezebox_send: <playerid> playlist index ?
                 crontab: init = True
 
         playlist_name:
             type: str
             visu_acl: rw
-            enforce_updates: True
+            enforce_updates: yes
             squeezebox_send: <playerid> playlist name {}
             squeezebox_recv: <playerid> playlist name
 
             query:
                 type: bool
                 visu_acl: rw
-                enforce_updates: True
+                enforce_updates: yes
                 squeezebox_send: <playerid> playlist name ?
                 crontab: init = True
 
         save:
             type: str
             visu_acl: rw
-            enforce_updates: True
+            enforce_updates: yes
             squeezebox_send: <playerid> playlist save {}
 
         load:
             type: str
-            enforce_updates: True
+            enforce_updates: yes
             visu_acl: rw
             squeezebox_send: <playerid> playlist resume {}
 
         loadalbum:
             type: str
-            enforce_updates: True
+            enforce_updates: yes
             visu_acl: rw
             squeezebox_send: <playerid> playlist loadalbum {}
 
         loadtracks:
             type: str
-            enforce_updates: True
+            enforce_updates: yes
             visu_acl: rw
             squeezebox_send: <playerid> playlist loadtracks {}
 
@@ -758,7 +821,7 @@ item_structs:
         clear:
             type: bool
             visu_acl: rw
-            enforce_updates: True
+            enforce_updates: yes
             squeezebox_send: <playerid> playlist clear
             squeezebox_recv: <playerid> playlist clear
 

@@ -12,8 +12,8 @@ plugin:
     documentation: http://smarthomeng.de/user/plugins/avm/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/934835-avm-plugin
 
-    version: 1.5.8                 # Plugin version
-    sh_minversion: 1.5b            # minimum shNG version to use this plugin
+    version: 1.5.10                 # Plugin version
+    sh_minversion: 1.6             # minimum shNG version to use this plugin
 #    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
     restartable: True
@@ -142,8 +142,16 @@ item_attributes:
         - 'temperature'
         - 'set_temperature'
         - 'set_temperature_reduced'
-        - 'set_temperature_compfort'
+        - 'set_temperature_comfort'
         - 'hkr_device'
+        - 'firmware_version'
+        - 'manufacturer'
+        - 'product_name'
+        - 'device_name'
+        - 'connection_status'
+        - 'device_id'
+        - 'device_function'
+        - 'set_hkrwindowopen'
 
     avm_incoming_allowed:
         type: str
@@ -157,7 +165,12 @@ item_attributes:
         description:
             de: '(optional) Definition der erlaubten angerufenen Rufnummer in Items vom avm_data_type `monitor_trigger`.'
             en: '(optional) Definition of the allowed called number. Only in items of avm_data_type `monitor_trigger`.'
-    mac:
+    avm_wlan_index:
+        type: int
+        description:
+            de: '(optional) Definition des Wlans ueber index: (1: 2.4Ghz, 2: 5Ghz, 3: Gaeste).'
+            en: '(optional) Definition of WiFi via index: (1: 2.4GHz, 2: 5GHz, 3: Guest)'
+    avm_mac:
         type: mac
         mandatory: False
         description:
@@ -169,6 +182,14 @@ item_attributes:
         description:
             de: 'Definition der Aktor Identifikationsnummer (AIN)Items vom avm_data_type `aha_device`. Nur für diese Items mandatory!'
             en: 'Definition of the actor identification number (AIN) for items of avm_data_type `aha_device`. Only mandatory for these items!'
+
+    index:
+        type: num
+        mandatory: False
+        description:
+            de: 'Index für den Anrufbeantworter, normalerweise für den ersten eine "1". Es werden bis zu 5 Anrufbeantworter vom Gerät unterstützt.'
+            en: 'Index für the answering machine, normally a "1" for the first one. Supported are up to 5 answering machines.'
+
 
 item_structs: NONE
   # Definition of item-structure templates for this plugin

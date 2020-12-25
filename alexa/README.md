@@ -22,21 +22,19 @@ This plugin/s service *does not offer any ssl or authentication*! It is strongly
 
 ## Configuration
 
-### plugin.conf
+### plugin.yaml
 basic configuration
 ```
-[alexa]
-    class_name = Alexa
-    class_path = plugins.alexa
+alexa:
+    plugin_name: alexa
 ```
 
 you may change host/ip and port of the web-service
 ```
-[alexa]
-    class_name = Alexa
-    class_path = plugins.alexa
-    service_host = "0.0.0.0"
-    service_port = 9000
+alexa:
+    plugin_name: alexa
+    service_host: '0.0.0.0'
+    service_port: 9000
 ```
 
 ### items.conf

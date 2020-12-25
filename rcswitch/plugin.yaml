@@ -12,7 +12,7 @@ plugin:
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/39094-logic-und-howto-für-433mhz-steckdosen
 
-    version: 1.2.0.4              # Plugin version
+    version: 1.2.1              # Plugin version
     sh_minversion: 1.2            # minimum shNG version to use this plugin
 #    sh_maxversion:               # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False         # plugin supports multi instance
@@ -40,7 +40,6 @@ parameters:
 
     rcswitch_host:
         type: ip
-        default: ''
         description:
             de: "IP oder HOSTNAME des rcswitch hosts, falls das System nicht auf dieser SmartHomeNG-Maschine läuft. \
                 Achtung: Auf dem Remote Host muss ein SSH Server installiert sein."
@@ -49,14 +48,12 @@ parameters:
 
     rcswitch_user:
         type: str
-        default: ''
         description:
             de: "User auf dem Remote Host"
             en: "user at remote host"
 
     rcswitch_password:
         type: str
-        default: ''
         description:
             de: "Passwort auf dem Remote Host"
             en: "password for user at remote host"

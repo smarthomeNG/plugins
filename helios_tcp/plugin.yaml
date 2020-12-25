@@ -6,11 +6,12 @@ plugin:
         de: 'Erlaubt die Kommunikation über TCP mit Helios KWL Geräten mit Helios Easy Controls'
         en: 'Enables the communication over TCP with Helios KWL devices that use Helios Easy Controls'
     maintainer: freget (Thilo Schneider)
-
-    version: 1.0.0                 # Plugin version
+    tester: nobody
+    version: 1.0.2                 # Plugin version
     state: ready
     sh_minversion: 1.6             # minimum shNG version to use this plugin
 #   sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    restartable: True
     multi_instance: False          # plugin supports multi instance
     classname: HeliosTCP           # class containing the plugin
 
@@ -28,8 +29,6 @@ parameters:
       description:
         de: "Dauer zwischen der Abfrage der Werte in der Lüftungsanlage in Sekunden"
         en: "Time difference between two polls of the linked values in seconds"
-      
-
 
 item_attributes:
     helios_tcp:
@@ -180,5 +179,9 @@ item_structs:
         visu_acl: r
         helios_tcp: info_count
 
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin
 
+plugin_functions: NONE
+    # Definition of function interface of the plugin
 

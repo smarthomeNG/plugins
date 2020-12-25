@@ -1,10 +1,19 @@
 
 .. index:: Plugins; visu_smartvisu (smartVISU Unterstützung)
 .. index:: visu_smartvisu
+.. index:: smartVISU
 
 ==============
 visu_smartvisu
 ==============
+
+.. attention::
+
+    Dieses Plugin ist veraltet (deprecated) und wird nicht mehr weiter gepflegt. Es wird dringend empfohlen stattdessen
+    das Plugin **smartvisu** zu nutzen, welches einen erweiterten Funktionsumfang hat.
+
+    Dieses Plugin wird in einem der kommenden Releases aus SmartHomeNG entfernt werden.
+
 
 Mit dem Plugin **visu\_smartvisu** können aus der Definition der Items
 in SmartHomeNG automatisch Visuseiten erstellt werden. Diese Visu Seiten
@@ -38,7 +47,7 @@ Seiten ausgewählt werden.
 smartVISU prüft dann, ob eine angeforderte Seite unter ``manuell`` vorhanden ist und benutzt diese Seite. Falls
 die angeforderte Seite unter ``manuell`` nicht gefunden wird, wird sie aus den ``smarthome`` Seiten geladen.
 
-Das Vorgehen hierzu ist auch unter :doc:`/visualisierung/visu_partlyauto` beschrieben.
+Das Vorgehen hierzu ist auch unter **Visualisierung/Manuell erstellte Seiten** beschrieben.
 
 
 Empfohlenes Vorgehen für manuell erstellte Seiten

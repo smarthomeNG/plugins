@@ -119,6 +119,17 @@ definiert und jederzeit abgeändert werden.
               cache: True
               initial_value: 30 #nur für Demozwecke
 
+           himmelsrichtung:
+              type: str
+              visu_acl: rw
+              cache: True
+              eval: >-
+                "osten" if ("osten" in sh..self.property.path) else
+                "sueden" if ("sueden" in sh..self.property.path) else
+                "westen" if ("westen" in sh..self.property.path) else "unknown"
+              enforce_updates: True
+              crontab: init = "unklar"
+
        rules:
            # Item für Helligkeit außen
            se_item_brightness: beispiel.wetterstation.helligkeit
@@ -136,10 +147,11 @@ definiert und jederzeit abgeändert werden.
            se_item_lamelle: ...lamelle
            # Keine Änderung des Lamellenwinkels wenn Abweichung kleiner 5
            se_mindelta_lamelle: 5
+           # Keine Änderung des Lamellenwinkels wenn Abweichung kleiner 5
+           se_item_himmelsrichtung: ..settings.himmelsrichtung
 
            # Zustand "Nachführen der Lamellen zum Sonnenstand bei großer Helligkeit", Gebäudeseite 1
-           Nachfuehren_Seite_Eins:
-               type: foo
+           Nachfuehren_Osten:
                name: Sonnenschutz
                # Aktionen:
                # - Behang ganz herunterfahren
@@ -163,6 +175,8 @@ definiert und jederzeit abgeändert werden.
                    se_max_sun_azimut: 270
                    # - es draußen mindestens 22° hat
                    se_min_temperature: 22
+                   # - das Fenster gen Osten gerichtet ist.
+                   se_value_himmelsrichtung: "osten"
 
                # Hysterese für Helligkeit: Wenn
                enter_hysterese:
@@ -173,6 +187,7 @@ definiert und jederzeit abgeändert werden.
                    se_min_sun_altitude: 1
                    se_min_sun_azimut: 90
                    se_max_sun_azimut: 270
+                   se_value_himmelsrichtung: "osten"
                    # Anmerkung: Hier keine erneute Prüfung der Temperatur, damit Temperaturschwankungen nicht
                    # zum Auf-/Abfahren der Raffstores führen
 
@@ -186,31 +201,34 @@ definiert und jederzeit abgeändert werden.
                    se_min_sun_altitude: 1
                    se_min_sun_azimut: 90
                    se_max_sun_azimut: 270
+                   se_value_himmelsrichtung: "osten"
                    # Anmerkung: Auch hier keine erneute Prüfung der Temperatur, damit Temperaturschwankungen nicht
                    # zum Auf-/Abfahren der Raffstores führen
 
            # Zustand "Nachführen der Lamellen zum Sonnenstand bei großer Helligkeit", Gebäudeseite 2
-           Nachfuehren_Seite_Zwei:
-               type: foo
-               # Einstellungen des Vorgabezustands "Nachfuehren_Seite_Eins" übernehmen
+           Nachfuehren_Sueden:
+               # Einstellungen des Vorgabezustands "Nachfuehren_Osten" übernehmen
                # Hier sollte eine relative Addressierung vorgenommen werden.
-               se_use: ..Nachfuehren_Seite_Eins
+               se_use: ..Nachfuehren_Osten
 
                # Sonnenwinkel in den Bedingungsgruppen anpassen
                enter:
                    # ... die Sonne aus Richtung 220° bis 340° kommt
                    se_min_sun_azimut: 220
                    se_max_sun_azimut: 340
+                   se_value_himmelsrichtung: "sueden"
 
                enter_hysterese:
                    # ... die Sonne aus Richtung 220° bis 340° kommt
                    se_min_sun_azimut: 220
                    se_max_sun_azimut: 340
+                   se_value_himmelsrichtung: "sueden"
 
                enter_delay:
                    # ... die Sonne aus Richtung 220° bis 340° kommt
                    se_min_sun_azimut: 220
                    se_max_sun_azimut: 340
+                   se_value_himmelsrichtung: "sueden"
 
            # Zustand "Nacht"
            Nacht:
@@ -310,10 +328,10 @@ Regelwerk-Items "rules" sollen ebenfalls je nach Bedarf ergänzt werden.
                        - beispiel.raffstore1.step
                        - beispiel.raffstore1.hoehe
                        - beispiel.raffstore1.lamelle
+                   # Seit SmarthomeNG werden die Listen se_manual_exclude vom plugin struct und diesem struct
+                   # automatisch miteinander kombiniert. Davor wären hier noch init:* und database:* erneut anzugeben.
                    se_manual_exclude:
-                       - 'KNX:0.0.0:*' # Hier die physikalische Adresse des Schalt/Jalousieaktors angeben!
-                       - 'Init:*'
-                       - 'database:*'
+                       - 'KNX:0.0.0' # Hier die physikalische Adresse des Schalt/Jalousieaktors angeben!
 
                rules:
                    # Relevante Standard-Attribute werden durch den Import der Templates automatisch eingebunden.
@@ -411,7 +429,7 @@ Es werden wieder sämtliche Zustände evaluiert.
 Der zweite Raffstore ist ein komplexeres Beispiel. Hier werden
 nicht nur die Vorgabewerte übernommen, hier werden komplett neue
 Bedingungsgruppen definiert, sowie vorhandene Bedingungsgruppen
-abgeändert. Es wird explizit auf Template-Imports via struct verzichtet.
+abgeändert. Natürlich könnte man hier auch alternativ auf Template-Imports via struct zurück greifen.
 
 .. code-block:: yaml
 
@@ -493,7 +511,12 @@ abgeändert. Es wird explizit auf Template-Imports via struct verzichtet.
                    # Erste Zustandsermittlung nach 30 Sekunden
                    se_startup_delay: 30
                    # Über diese Items soll die Statusermittlung ausgelöst werden
-                   eval_trigger: beispiel.trigger.raffstore | beispiel.raffstore2.automatik.anwesenheit | beispiel.raffstore2.automatik.manuell | beispiel.raffstore2.automatik.lock | beispiel.raffstore2.automatik.suspend
+                   eval_trigger:
+                     - beispiel.trigger.raffstore
+                     - beispiel.raffstore2.automatik.anwesenheit
+                     - beispiel.raffstore2.automatik.manuell
+                     - beispiel.raffstore2.automatik.lock
+                     - beispiel.raffstore2.automatik.suspend
                    # In dieses Item soll die Id des aktuellen Zustands geschrieben werden
                    se_laststate_item_id: ..state_id
                    # In dieses Item soll der Name des aktuellen Zustands geschrieben werden
@@ -515,7 +538,7 @@ abgeändert. Es wird explizit auf Template-Imports via struct verzichtet.
 
                    Nachfuehren:
                        # Zustand "Nachführen": Vorgabeeinstellungen übernehmen
-                       se_use: stateengine_default_raffstore.rules.Nachfuehren_Seite_Eins
+                       se_use: stateengine_default_raffstore.rules.Nachfuehren_Osten
 
                        # ..und jetzt verändern wir das ganze, in dem wir abhängig vom "Anwesend"-Flag andere
                        # Grenzwerte für die Helligkeit setzen.
@@ -712,14 +735,7 @@ Letzten Endes wird alles in einem item.yaml auf folgende Art und Weise implement
                   - ...sa
                   - ...dimmen.taster
                 se_manual_exclude:
-                  - Database:*
                   - KNX:1.1.2:*
-
-            settings_edited:
-                type: bool
-                name: settings editiert
-                eval_trigger: ..settings.*
-                eval: not sh...settings_edited()
 
             settings:
                 heimkino: # muss mit dem entsprechenden Statusnamen übereinstimmen
@@ -739,7 +755,7 @@ Letzten Endes wird alles in einem item.yaml auf folgende Art und Weise implement
                   - licht_rules_heimkino
                   - licht_rules_lichtkurve
 
-                remark: Aktuell muss das eval_trigger noch manuell mit der kompletten Liste überschrieben werden, auch wenn die Structs bereits Einträge enthalten.
+                remark: Das eval_trigger muss vor SmarthomeNG 1.7 noch manuell mit der kompletten Liste überschrieben werden, auch wenn die Structs bereits Einträge enthalten. Ab 1.7 würde licht.modus* ausreichen!
                 eval_trigger:
                   - ..settings_edited
                   - ..lock

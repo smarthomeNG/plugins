@@ -24,6 +24,7 @@
 #
 #########################################################################
 
+import io
 import os
 import logging
 import re
@@ -47,7 +48,7 @@ except:
 
 from plugins.sonos.soco.exceptions import SoCoUPnPException
 from plugins.sonos.soco.music_services import MusicService
-from lib.item import Item
+from lib.item import Items
 from plugins.sonos.soco import *
 from lib.model.smartplugin import SmartPlugin
 from plugins.sonos.soco.data_structures import to_didl_string, DidlItem, DidlMusicTrack
@@ -161,6 +162,16 @@ class SimpleHttpServer:
         self.waitForThread()
 
 
+def renew_error_callback(exception): # events_twisted: failure
+        msg = 'Error received on autorenew: {}'.format(str(exception))
+        # Redundant, as the exception will be logged by the events module
+        self.logger.error(msg)
+
+        # ToDo possible improvement: 
+        # Do not do periodic renew but do prober disposal on renew failure here instead.
+        # sub.renew(requested_timeout=10)
+
+
 class SubscriptionHandler(object):
     def __init__(self, endpoint, service, logger, threadName):
         self._lock = threading.Lock()
@@ -173,6 +184,7 @@ class SubscriptionHandler(object):
         self._threadName = threadName
 
     def subscribe(self):
+        self.logger.info("Debug: start subscribe for endpoint {0}".format(self._endpoint))
         with self._lock:
             self._signal = threading.Event()
             try:
@@ -180,11 +192,13 @@ class SubscriptionHandler(object):
             except Exception as err:
                 self.logger.warning("Sonos: {err}".format(err=err))
             if self._event:
+                self._event.auto_renew_fail = renew_error_callback
                 self._thread = threading.Thread(target=self._endpoint, name=self._threadName, args=(self,))
                 self._thread.setDaemon(True)
                 self._thread.start()
 
     def unsubscribe(self):
+        self.logger.info("Debug: start unsubscribe for endpoint {0}".format(self._endpoint))
         with self._lock:
             if self._event:
                 # try to unsubscribe first
@@ -194,8 +208,14 @@ class SubscriptionHandler(object):
                     self.logger.warning("Sonos: {err}".format(err=err))
                 self._signal.set()
                 if self._thread:
+                    self.logger.info("Debug: Preparing to terminate thread")
                     self._thread.join(2)
-                self.logger.debug("Sonos: event {event} unsubscribed and thread terminated".format(
+                    if not self._thread.isAlive(): 
+                        self.logger.info("Debug: Thread killed") 
+                    else:
+                        self.logger.warning("Debug: Thread is still alive") 
+
+                self.logger.info("Event {event} unsubscribed and thread terminated".format(
                     event=self._endpoint))
 
     @property
@@ -359,7 +379,7 @@ class Speaker(object):
         """
         clean-up all things here
         """
-        self.logger.debug("Sonos: {uid}: disposing".format(uid=self.uid))
+        self.logger.info("Debug: {uid}: disposing".format(uid=self.uid))
 
         if not self._soco:
             return
@@ -376,6 +396,7 @@ class Speaker(object):
     def subscribe_base_events(self):
         if not self._soco:
             return
+        self.logger.info("Debug: Start subscribe base event fct")
         self.zone_subscription.unsubscribe()
         self.zone_subscription.subscribe()
 
@@ -407,6 +428,8 @@ class Speaker(object):
         self.sonos_playlists()
 
     def check_subscriptions(self) -> None:
+
+        self.logger.info("Debug: Start check_subscriptions fct")
 
         self.zone_subscription.unsubscribe()
         self.zone_subscription.subscribe()
@@ -506,7 +529,10 @@ class Speaker(object):
                 try:
                     event = sub_handler.event.events.get(timeout=0.5)
                     if 'zone_name' in event.variables:
-                        self.player_name = event.variables['zone_name']
+                        if event.variables['zone_name']:
+                            self.player_name = event.variables['zone_name']
+                        else:
+                            self.player_name = "unknown"
                     sub_handler.event.events.task_done()
                     del event
                 except Empty:
@@ -1214,8 +1240,10 @@ class Speaker(object):
         if self.is_coordinator:
             for member in self._zone_group_members:
                 if member is not self:
+                    self.logger.info("Debug: Unsubscribe in fct zone_group_members") 
                     member.av_subscription.unsubscribe()
                 else:
+                    self.logger.info("Debug: Un/Subscribe in fct zone_group_members") 
                     member.av_subscription.unsubscribe()
                     member.av_subscription.subscribe()
 
@@ -2297,20 +2325,20 @@ class Speaker(object):
 
 class Sonos(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.5.0"
+    PLUGIN_VERSION = "1.5.1"
 
-    def __init__(self, sh, tts=False, local_webservice_path=None, local_webservice_path_snippet=None,
-                 discover_cycle="120", webservice_ip=None, webservice_port=23500, speaker_ips=None, snippet_duration_offset=0.0, **kwargs):
+    def __init__(self, sh, *args, **kwargs):
         super().__init__(**kwargs)
+
         self._sh = sh
         #self.logger = logging.getLogger('sonos')  # get a unique logger for the plugin and provide it internally
         self.zero_zone = False  # sometime a discovery scan fails, so try it two times; we need to save the state
         self._sonos_dpt3_step = 2  # default value for dpt3 volume step (step(s) per time period)
         self._sonos_dpt3_time = 1  # default value for dpt3 volume time (time period per step in seconds)
-        self._tts = self.to_bool(tts, default=False)
-        self._local_webservice_path = local_webservice_path
-        self._snippet_duration_offset = float(snippet_duration_offset)
-		
+        self._tts = self.to_bool(self.get_parameter_value("tts"), default=False)
+        self._local_webservice_path = self.get_parameter_value("local_webservice_path")
+        self._snippet_duration_offset = float(self.get_parameter_value("snippet_duration_offset"))
+	
         from bin.smarthome import VERSION
         if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
             self.logger = logging.getLogger(__name__)
@@ -2325,7 +2353,8 @@ class Sonos(SmartPlugin):
             return
 
         # see documentation: if no exclusive snippet path is set, we use the global one
-        if local_webservice_path_snippet is None:
+        local_webservice_path_snippet = self.get_parameter_value("local_webservice_path_snippet")
+        if local_webservice_path_snippet == '':
             self._local_webservice_path_snippet = self._local_webservice_path
         else:
             self._local_webservice_path_snippet = local_webservice_path_snippet
@@ -2351,7 +2380,8 @@ class Sonos(SmartPlugin):
         self._speaker_ips = utils.unique_list(self._speaker_ips)
         auto_ip = utils.get_local_ip_address()
 
-        if webservice_ip is not None:
+        webservice_ip = self.get_parameter_value("webservice_ip")
+        if not webservice_ip == '':
             if self.is_ip(webservice_ip):
                 self._webservice_ip = webservice_ip
             else:
@@ -2360,7 +2390,9 @@ class Sonos(SmartPlugin):
                 self._tts = False
         else:
             self._webservice_ip = auto_ip
+            self.logger.debug("Webservice IP is not specified. Using auto IP instead.")
 
+        webservice_port = self.get_parameter_value("webservice_port")
         if utils.is_valid_port(str(webservice_port)):
             self._webservice_port = int(webservice_port)
             if not utils.is_open_port(self._webservice_port):
@@ -2372,8 +2404,7 @@ class Sonos(SmartPlugin):
                                "1024-65535. TTS disabled!".format(port=webservice_port))
             self._tts = False
 
-        discover_cycle_default = 120
-
+        self.webservice = None
         if self._tts:
             if self._local_webservice_path_snippet:
                 # we just need an existing path with read rights, this can be done by the user while shNG is running
@@ -2408,6 +2439,11 @@ class Sonos(SmartPlugin):
                                                                self._webservice_port,
                                                                self._local_webservice_path,
                                                                self._local_webservice_path_snippet)
+
+#                            self.logger.debug("Sonos Debug: ip {0}, port {1}, path {2}, snippet {3}".format(self._webservice_ip,
+#                                                               self._webservice_port,
+#                                                               self._local_webservice_path,
+#                                                               self._local_webservice_path_snippet))
                             self.webservice.start()
                         else:
                             self.logger.warning(
@@ -2423,30 +2459,33 @@ class Sonos(SmartPlugin):
                 self.logger.debug("Sonos: Local webservice path for TTS has to be set. TTS disabled!")
         else:
             self.logger.debug("Sonos: TTS disabled")
-        try:
-            self._discover_cycle = int(discover_cycle)
-        except:
-            self.logger.error("Sonos: Parameter 'discover_cycle' [{val}] invalid, must be int.".format(
-                val=discover_cycle
-            ))
-            self._discover_cycle = discover_cycle_default
-
+        
+        self._discover_cycle = int(self.get_parameter_value("discover_cycle"))
         self.logger.info("Sonos: Setting discover cycle to {val} seconds.".format(val=self._discover_cycle))
 
+        # Read SoCo Version:
+        src = io.open('plugins/sonos/soco/__init__.py', encoding='utf-8').read()
+        metadata = dict(re.findall("__([a-z]+)__ = \"([^\"]+)\"", src))
+        VERSION = metadata['version']
+        self.logger.info("Loading SoCo version {0}.".format(VERSION))
+
     def run(self):
-        self.logger.debug("Sonos: run method called")
+        self.logger.debug("Run method called")
         self._sh.scheduler.add("sonos_discover_scheduler", self._discover, prio=3, cron=None,
                                cycle=self._discover_cycle, value=None, offset=None, next=None)
         self.alive = True
 
     def stop(self):
         self.logger.debug("Sonos: stop method called")
+        if self.webservice:
+            self.webservice.stop() 
+        self.scheduler_remove('sonos_discover_scheduler')
         for uid, speaker in sonos_speaker.items():
             speaker.dispose()
         event_listener.stop()
         self.alive = False
 
-    def parse_item(self, item: Item) -> object:
+    def parse_item(self, item: Items) -> object:
         """
         Parses an item
         :param item: item to parse
@@ -2560,7 +2599,7 @@ class Sonos(SmartPlugin):
     def parse_logic(self, logic):
         pass
 
-    def update_item(self, item: Item, caller: object = str, source: object = str, dest: object = str) -> None:
+    def update_item(self, item: Items, caller: object = str, source: object = str, dest: object = str) -> None:
         """
         Write items values
         :param item: item to be updated towards the plugin
@@ -2662,7 +2701,7 @@ class Sonos(SmartPlugin):
                     sonos_speaker[uid].play_snippet(item(), self._local_webservice_path_snippet, self._webservice_url, volume, self._snippet_duration_offset,
                                                     fade_in)
 
-    def _resolve_child_command_str(self, item: Item, child_command, default_value="") -> str:
+    def _resolve_child_command_str(self, item: Items, child_command, default_value="") -> str:
         """
         Resolves a child command of type str for an item
         :type child_command: The sonos_attrib name for the child
@@ -2679,7 +2718,7 @@ class Sonos(SmartPlugin):
                     return child()
         return default_value
 
-    def _resolve_child_command_bool(self, item: Item, child_command) -> bool:
+    def _resolve_child_command_bool(self, item: Items, child_command) -> bool:
         """
         Resolves a child command of type bool for an item
         :type child_command: The sonos_attrib name for the child
@@ -2693,7 +2732,7 @@ class Sonos(SmartPlugin):
                     return child()
         return False
 
-    def _resolve_child_command_int(self, item: Item, child_command, default_value=0) -> int:
+    def _resolve_child_command_int(self, item: Items, child_command, default_value=0) -> int:
         """
         Resolves a child command of type int for an item
         :type default_value: the default value, if the child not exists or an error occurred
@@ -2712,7 +2751,7 @@ class Sonos(SmartPlugin):
             self.logger.warning("Sonos: Could not cast value [{val}] to 'int', using default value '0'")
             return default_value
 
-    def _resolve_group_command(self, item: Item) -> bool:
+    def _resolve_group_command(self, item: Items) -> bool:
         """
         Resolves a group_command child for an item
         :rtype: bool
@@ -2731,7 +2770,7 @@ class Sonos(SmartPlugin):
                     return child()
         return False
 
-    def _resolve_max_volume_command(self, item: Item) -> int:
+    def _resolve_max_volume_command(self, item: Items) -> int:
 
         if self.get_iattr_value(item.conf, 'sonos_attrib') == 'vol_dpt3':
             volume_item = self.get_iattr_value(item.conf, 'volume_parent')
@@ -2748,7 +2787,7 @@ class Sonos(SmartPlugin):
                         return -1
         return -1
 
-    def _resolve_uid(self, item: Item) -> str:
+    def _resolve_uid(self, item: Items) -> str:
         """
         Tries to find the uuid (typically the parent item) of an item
         :rtype: str
@@ -2776,6 +2815,8 @@ class Sonos(SmartPlugin):
         package is sent over the network.
         :rtype: None
         """
+        self.logger.info("Debug: Start discover fct")
+
         handled_speaker = {}
 
         zones = []
@@ -2783,16 +2824,20 @@ class Sonos(SmartPlugin):
             for ip in self._speaker_ips:
                 zones.append(SoCo(ip))
         else:
-            zones = soco.discover(timeout=5)
+            try:
+                zones = soco.discover(timeout=5)
+            except Exception as e:
+                self.logger.error("Exception during soco discover function: %s" % str(e))
+            
 
         # 1. attempt: don't touch our speaker, return and wait for next interval
         # 2. attempt: ok, no speaker found, go on
         if not zones:
             if not self.zero_zone:
-                self.logger.debug("Sonos: No speaker found (1. attempt), ignoring speaker handling.")
+                self.logger.info("Debug: No speaker found (1. attempt), ignoring speaker handling.")
                 self.zero_zone = True
                 return
-            self.logger.debug("Sonos: No speaker found.")
+            self.logger.info("Debug: No speaker found.")
         self.zero_zone = False
 
         for zone in zones:
@@ -2800,6 +2845,8 @@ class Sonos(SmartPlugin):
                 is_up = False
             else:
                 uid = zone.uid.lower()
+
+                self.logger.debug("Pinging speaker with uid {0}".format(uid))
                 # don't trust the discover function, offline speakers can be cached
                 # we try to ping the speaker
                 with open(os.devnull, 'w') as DEVNULL:
@@ -2813,17 +2860,21 @@ class Sonos(SmartPlugin):
                         is_up = False
 
             if is_up:
-                self.logger.debug("Sonos: Speaker found: {zone}, {uid}".format(zone=zone.ip_address, uid=uid))
+                self.logger.info("Debug: Speaker found: {zone}, {uid}".format(zone=zone.ip_address, uid=uid))
                 if uid in sonos_speaker:
                     if zone is not sonos_speaker[uid].soco:
+                        self.logger.info("Debug: zone is not in speaker list jet. Adding and subscribing zone {0}".format(zone))
                         sonos_speaker[uid].soco = zone
                         sonos_speaker[uid].subscribe_base_events()
                     else:
-                        self.logger.debug("Sonos: SoCo instance already initiated, skipping.")
-                        self.logger.debug("Sonos: checking subscriptions")
-                        sonos_speaker[uid].check_subscriptions()
+                        self.logger.info("Debug: SoCo instance {0} already initiated, skipping.".format(zone))
+#                        # The following check subscriptions functions triggers an unsubscribe/subscribe. However, this causes
+#                        # a massive memory leak increasing with every check_subscription call. 
+#                        self.logger.info("Debug: checking subscriptions")
+#                        sonos_speaker[uid].check_subscriptions()
 
                 else:
+                    self.logger.info("Debug: Initializing new speaker with uid={0}".format(uid))
                     _initialize_speaker(uid, self.logger)
                     sonos_speaker[uid].soco = zone
 
@@ -2832,23 +2883,26 @@ class Sonos(SmartPlugin):
 
             else:
                 if sonos_speaker[uid].soco is not None:
-                    self.logger.debug(
-                        "Sonos: Disposing offline speaker: {zone}, {uid}".format(zone=zone.ip_address, uid=uid))
+                    self.logger.info(
+                        "Debug: Disposing offline speaker: {zone}, {uid}".format(zone=zone.ip_address, uid=uid))
                     sonos_speaker[uid].dispose()
                 else:
-                    self.logger.debug(
-                        "Sonos: Ignoring offline speaker: {zone}, {uid}".format(zone=zone.ip_address, uid=uid))
+                    self.logger.info(
+                        "Debug: Ignoring offline speaker: {zone}, {uid}".format(zone=zone.ip_address, uid=uid))
 
                 sonos_speaker[uid].is_initialized = False
 
             if uid in sonos_speaker:
+                self.logger.info("Debug: setting {0}, uid {1} to handled speaker".format(zone.ip_address,uid))
                 handled_speaker[uid] = sonos_speaker[uid]
+            else:
+                self.logger.info("Debug: ip {0}, uid {1} is not in sonos_speaker".format(zone.ip_address, uid))
 
         # dispose every speaker that was not found
         for uid in set(sonos_speaker.keys()) - set(handled_speaker.keys()):
             if sonos_speaker[uid].soco is not None:
-                self.logger.debug(
-                    "Sonos: Removing undiscovered speaker: {zone}, {uid}".format(zone=zone.ip_address, uid=uid))
+                self.logger.info(
+                    "Debug: Removing undiscovered speaker: {zone}, {uid}".format(zone=zone.ip_address, uid=uid))
                 sonos_speaker[uid].dispose()
 
 

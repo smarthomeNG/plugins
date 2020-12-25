@@ -1,50 +1,61 @@
 #!/usr/bin/env python3
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
+# Copyright 2012-2013   Marcus Popp                        marcus@popp.mx
+# Copyright 2016        Thomas Ernst
 # Copyright 2017-       Martin Sinn                         m.sinn@gmx.de
-#           2016        Thomas Ernst
-#           2012-2013   Marcus Popp                        marcus@popp.mx
+# Copyright 2017-       Serge Wagener                serge@wagener.family
+# Copyright 2020        Bernd Meiners               Bernd.Meiners@mail.de
 #########################################################################
+#  This file is part of SmartHomeNG.
+#  https://www.smarthomeNG.de
+#  https://knx-user-forum.de/forum/supportforen/smarthome-py
+#
 #  Commandline Interface for SmartHomeNG
 #
-#  This plugin is free software: you can redistribute it and/or modify
+#  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation, either version 3 of the License, or
 #  (at your option) any later version.
 #
-#  This plugin is distributed in the hope that it will be useful,
+#  SmartHomeNG is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License
-#  along with this plugin. If not, see <http://www.gnu.org/licenses/>.
+#  along with SmartHomeNG. If not, see <http://www.gnu.org/licenses/>.
+#
 #########################################################################
 
 import logging
 import threading
 
-import lib.connection
 from lib.logic import Logics
 from lib.item import Items
 from lib.model.smartplugin import SmartPlugin
+from .webif import WebInterface
+
 from lib.utils import Utils
+from lib.network import Tcp_server
 
+from lib.shtime import Shtime
 
-class CLIHandler(lib.connection.Stream):
+shtime = Shtime.get_instance()
+
+class CLIHandler:
     terminator = '\n'.encode()
 
-    def __init__(self, smarthome, sock, source, updates, hashed_password, commands, plugin):
+    def __init__(self, smarthome, client, source, updates, hashed_password, commands, plugin):
         """
         Constructor
         :param smarthome: SmartHomeNG instance
-        :param sock: Socket
+        :param client: lib.network.__Client
         :param source: Source
         :param updates: Flag: Updates allowed
         :param hashed_password: Hashed password that is required to logon
         :param commands: CLICommands instance containing available commands
         """
-        lib.connection.Stream.__init__(self, sock, source)
         self.logger = logging.getLogger(__name__)
         self.source = source
         self.updates_allowed = updates
@@ -52,6 +63,9 @@ class CLIHandler(lib.connection.Stream):
         self.hashed_password = hashed_password
         self.commands = commands
         self.__prompt_type = ''
+        self.__client = client
+        self.__socket = self.__client.socket
+        self.__client.set_callbacks(data_received=self.data_received)
         self.push("SmartHomeNG v{0}\n".format(self.sh.version))
 
         if hashed_password is None:
@@ -60,23 +74,21 @@ class CLIHandler(lib.connection.Stream):
         else:
             self.__push_password_prompt()
         self.plugin = plugin
+        self.logger.debug("CLI Handler init with updates {}".format( "allowed" if updates else "not allowed"))
 
     def push(self, data):
         """
         Send data to client
         :param data: String to send
         """
-        self.send(data.encode())
+        self.__client.send(data)
 
-    def found_terminator(self, data):
+    def data_received(self, server, client, cmd):
         """
         Received data and found terminator (newline) in data
         :param data: Received data up to terminator
         """
-        if not self.plugin.alive:
-            self.close()
         # Call process methods based on prompt type
-        cmd = data.decode().strip()
         if self.__prompt_type == 'password':
             self.__process_password(cmd)
         elif self.__prompt_type == 'command':
@@ -96,7 +108,7 @@ class CLIHandler(lib.connection.Stream):
         else:
             self.logger.debug("CLI: {0} Authorization failed".format(self.source))
             self.push("Authorization failed. Bye\n")
-            self.close()
+            self.__client.close()
             return
 
     def __process_command(self, cmd):
@@ -104,9 +116,10 @@ class CLIHandler(lib.connection.Stream):
         Process entered command
         :param cmd: entered command
         """
+        self.logger.debug("CLI: process command '{}'".format(cmd))
         if cmd in ('quit', 'q', 'exit', 'x'):
             self.push('bye\n')
-            self.close()
+            self.__client.close()
             return
         else:
             if not self.commands.execute(self, cmd, self.source):
@@ -122,7 +135,7 @@ class CLIHandler(lib.connection.Stream):
         """
         Push 'echo off' and password prompt to client.
         """
-        self.__echo_off()
+        self.__client.send_echo_off()
         self.push("Password: ")
         self.__prompt_type = 'password'
 
@@ -131,48 +144,8 @@ class CLIHandler(lib.connection.Stream):
         Push 'echo on' and newline to client
         :return:
         """
-        self.__echo_on()
+        self.__client.send_echo_on()
         self.push("\n")
-
-    def __echo_off(self):
-        """
-        Send 'IAC WILL ECHO' to client, telling the client that we will echo.
-        Check that reply is 'IAC DO ECHO', meaning that the client has understood.
-        As we are not echoing entered text will be invisible
-        """
-        try:
-            self.socket.settimeout(2)
-            self.send(bytearray([0xFF, 0xFB, 0x01]))  # IAC WILL ECHO
-            data = self.socket.recv(3)
-            self.socket.setblocking(0)
-            if data != bytearray([0xFF, 0xFD, 0x01]):  # IAC DO ECHO
-                self.logger.error("Error at 'echo off': Sent b'\\xff\\xfb\\x01 , Expected reply b'\\xff\\xfd\\x01, received {0}".format(data))
-                self.push("'echo off' failed. Bye")
-                self.close()
-        except Exception as e:
-            self.push("\nException at 'echo off'. See log for details.")
-            self.logger.exception(e)
-            self.close()
-
-    def __echo_on(self):
-        """
-        Send 'IAC WONT ECHO' to client, telling the client that we wont echo.
-        Check that reply is 'IAC DONT ECHO', meaning that the client has understood.
-        Now the client should be echoing and we do not have to care about this
-        """
-        try:
-            self.socket.settimeout(2)
-            self.send(bytearray([0xFF, 0xFC, 0x01]))  # IAC WONT ECHO
-            data = self.socket.recv(3)
-            self.socket.setblocking(0)
-            if data != bytearray([0xFF, 0xFE, 0x01]):  # IAC DONT ECHO
-                self.logger.error("Error at 'echo on': Sent b'\\xff\\xfc\\x01 , Expected reply b'\\xff\\xfe\\x01, received {0}".format(data))
-                self.push("'echo off' failed. Bye")
-                self.close()
-        except Exception as e:
-            self.push("\nException at 'echo on'. See log for details.")
-            self.logger.exception(e)
-            self.close()
 
     def __push_command_prompt(self):
         """Push command prompt to client"""
@@ -180,64 +153,83 @@ class CLIHandler(lib.connection.Stream):
         self.__prompt_type = 'command'
 
 
-class CLI(lib.connection.Server, SmartPlugin):
+class CLI(SmartPlugin):
 
-    PLUGIN_VERSION = '1.4.2'     # is checked against version in plugin.yaml
+    PLUGIN_VERSION = '1.7.2'     # is checked against version in plugin.yaml
 
-    def __init__(self, smarthome, update='False', ip='127.0.0.1', port=2323, hashed_password=''):
+    def __init__(self, sh):
         """
-        Constructor
-        :param smarthome: smarthomeNG instance
-        :param update: Flag: Updates allowed
-        :param ip: IP to bind on
-        :param port: Port to bind on
-        :param hashed_password: Hashed password that is required to logon
+        Initalizes the plugin.
+
+        If the sh object is needed at all, the method self.get_sh() should be used to get it.
+        There should be almost no need for a reference to the sh object any more.
+
+        Plugins have to use the new way of getting parameter values:
+        use the SmartPlugin method get_parameter_value(parameter_name). Anywhere within the Plugin you can get
+        the configured (and checked) value for a parameter by calling self.get_parameter_value(parameter_name). It
+        returns the value in the datatype that is defined in the metadata.
         """
-        self.logger = logging.getLogger(__name__)
+
+        # Call init code of parent class (SmartPlugin)
+        super().__init__()
+
+        from bin.smarthome import VERSION
+        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
+            self.logger = logging.getLogger(__name__)
 
         self.items = Items.get_instance()
 
-        if hashed_password is None or hashed_password == '':
+        self.updates_allowed = self.get_parameter_value('update')
+        self.ip = self.get_parameter_value('ip')
+        self.port = self.get_parameter_value('port')
+        self.hashed_password = self.get_parameter_value('hashed_password')
+        if self.hashed_password is None or self.hashed_password == '':
             self.logger.warning("CLI: You should set a password for this plugin.")
-            hashed_password = None
-        elif hashed_password.lower() == 'none':
-            hashed_password = None
-        elif not Utils.is_hash(hashed_password):
+            self.hashed_password = None
+        elif self.hashed_password.lower() == 'none':
+            self.hashed_password = None
+        elif not Utils.is_hash(self.hashed_password):
             self.logger.error("CLI: Value given for 'hashed_password' is not a valid hash value. Login will not be possible")
 
-        lib.connection.Server.__init__(self, ip, port)
-        self.sh = smarthome
-        self.updates_allowed = Utils.to_bool(update)
-        self.hashed_password = hashed_password
-        self.commands = CLICommands(self.sh, self.updates_allowed, self)
+        name = 'plugins.' + self.get_fullname()
+        self.server = Tcp_server(interface=self.ip, port=self.port, name=name, mode=Tcp_server.MODE_TEXT_LINE)
+        self.server.set_callbacks(incoming_connection=self.handle_connection)
+        self.commands = CLICommands(self.get_sh(), self.updates_allowed, self)
         self.alive = False
 
+        # On initialization error use:
+        #   self._init_complete = False
+        #   return
 
-    def handle_connection(self):
+        # if plugin should start even without web interface
+        self.init_webinterface(WebInterface)
+        # if plugin should not start without web interface
+        # if not self.init_webinterface():
+        #     self._init_complete = False
+
+
+    def handle_connection(self, server, client):
         """
         Handle incoming connection
         """
-        if self.alive:
-            sock, address = self.accept()
-            if sock is None:
-                return
-            self.logger.debug("{}: incoming connection from {} to {}".format(self._name, address, self.address))
-            CLIHandler(self.sh, sock, address, self.updates_allowed, self.hashed_password, self.commands, self)
-        else:
-            self.close()
+        self.logger.debug("Incoming connection from {}".format(client.name))
+        CLIHandler(self.get_sh(), client, client.name, self.updates_allowed, self.hashed_password, self.commands, self)
 
     def run(self):
         """
-        Called by SmartHomeNG to start plugin
+        Run method for the plugin
         """
+        self.logger.debug("Run method called")
         self.alive = True
+        self.server.start()
 
     def stop(self):
         """
-        Called by SmarthomeNG to stop plugin
+        Stop method for the plugin
         """
+        self.logger.debug("Stop method called")
         self.alive = False
-        self.close()
+        self.server.close()
 
     def add_command(self, command, function, usage):
         """
@@ -276,6 +268,7 @@ class CLICommands:
         self.updates_allowed = updates_allowed
         self._commands = {}
 
+        self.logger.debug("add basic commands")
         # Add basic commands
         self.add_command('il', self._cli_il, 'item', 'il: list all items (with values) - command alias: la')
         self.add_command('la', self._cli_il, 'item', None)
@@ -305,7 +298,7 @@ class CLICommands:
         self.add_command('rr', self._cli_lrr, 'logic', None)
         self.add_command('lt', self._cli_lt, 'logic', 'lt [logic]: trigger a logic - command alias: tr')
         self.add_command('tr', self._cli_lt, 'logic', None)
-        
+
         self.add_command('sl', self._cli_sl, 'scheduler', 'sl: list all scheduler tasks by name')
         self.add_command('st', self._cli_sl, 'scheduler', 'st: list all scheduler tasks by execution time')
         self.add_command('si', self._cli_si, 'scheduler', 'si [task]: show details for given scheduler task')
@@ -314,6 +307,7 @@ class CLICommands:
         self.add_command('rt', self._cli_rt, '???', 'rt: return runtime')
         self.add_command('help', self._cli_help2, '-', 'help [group]: show help for group of commands [item, log, logic, scheduler]' )
         self.add_command('h', self._cli_help2, '-', 'h: alias for help')
+        self.logger.debug("finished adding basic commands")
 
     def add_command(self, command, function, group, usage):
         """
@@ -350,6 +344,7 @@ class CLICommands:
             self.logics = Logics.get_instance()
         for command, data in self._commands.items():
             if cmd == command or cmd.startswith(command + " "):
+                self.logger.debug("try to dispatch command '{}'".format(cmd))
                 try:
                     data['function'](handler, cmd.lstrip(command).strip(), source)
                 except Exception as e:
@@ -517,7 +512,7 @@ class CLICommands:
         if idle_threads > 0:
             threads.append(self.thread_sum("idle", idle_threads))
             threads_count += idle_threads
-        
+
         threads_sorted = sorted(threads, key=lambda k: k['sort'])
 
         handler.push("{0} Threads:\n".format(threads_count))
@@ -559,10 +554,10 @@ class CLICommands:
                 handler.push("{0}\n".format(item.id()))
         else:
             if match:
-                items = self.sh.match_items(parameter)
+                items = self.plugin.items.match_items(parameter)
                 childs = False
             else:
-                items = [self.sh.return_item(parameter)]
+                items = [self.plugin.items.return_item(parameter)]
                 childs = True
             if len(items):
                 for item in items:
@@ -586,9 +581,9 @@ class CLICommands:
         :param source: Source
         """
         if '*' in parameter or ':' in parameter:
-            items = self.sh.match_items(parameter)
+            items = self.plugin.items.match_items(parameter)
         else:
-            items = [self.sh.return_item(parameter)]
+            items = [self.plugin.items.return_item(parameter)]
         if len(items):
             for item in items:
                 # noinspection PyProtectedMember
@@ -628,6 +623,7 @@ class CLICommands:
         :param parameter: Parameters used to call the command
         :param source: Source
         """
+        self.logger.debug("execute _cli_help2 with parameter '{}'".format(parameter))
         for command, data in sorted(self._commands.items()):
             if parameter == '' or data['group'] == parameter:
                 if data['usage'] is not None:
@@ -664,7 +660,7 @@ class CLICommands:
                 log = logs[parameter]
 
         if log is not None:
-            log.clean(self.sh.now())
+            log.clean(shtime.now())
 
     # noinspection PyUnusedLocal
     def _cli_il(self, handler, parameter, source):
@@ -678,7 +674,7 @@ class CLICommands:
 #        wrk = "Items ({}):".format(self.plugin.items.item_count())
 #        wrk += '\n'+'='*len(wrk)+'\n'
 #        handler.push(wrk)
-        for item in self.sh.return_items():
+        for item in self.plugin.items.return_items():
             if item.type():
                 handler.push("{0} = {1}\n".format(item.id(), item()))
             else:
@@ -703,7 +699,7 @@ class CLICommands:
         if not value:
             handler.push("You have to specify an item value. Syntax: up item = value\n")
             return
-        items = self.sh.match_items(path)
+        items = self.plugin.items.match_items(path)
         if len(items):
             for item in items:
                 if not item.type():

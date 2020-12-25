@@ -9,7 +9,9 @@ We tested the plugin with the Raspberry Pi B and the temperature sensor DS18B20.
 ### Supported Hardware
 
 Tested with:
-Raspberry Pi Model B
+Raspberry Pi Model B, 
+Raspberry Pi 2B, 
+Raspberry Pi 3B, 
 1-Wire - Sensor DS18B20
 
 ## Configuration
@@ -67,19 +69,28 @@ rpi1wire:
 ## Items
 
 ```yaml
-rpi1wire:
-    sensor_list:
+someitem:
+    somelist:
+        rpi1wire_sys: list
         name: Sensor-List
         type: str
         visu_acl: ro
-    sensors:
-       name: Sensors
-       type: num
-       visu_acl: ro
+    somecount:
+        rpi1wire_sys: count
+        name: Sensors
+        type: num
+        visu_acl: ro
+    someupdate:
+        rpi1wire_sys: update
+        name: Update Sensors
+        type: bool
+        inital_value: 0
+        visu_acl: rw
 ```
 
-``sh.rpi1wire.sensor_list()`` - contains a list of all found sensors
-``sh.rpi1wire.sensors()`` - contains the number of sensors found
+``rpi1wire_sys: list`` - contains a list of all found sensors
+``rpi1wire_sys: count`` - contains the number of sensors found
+``rpi1wire_sys: update`` - Item for searching sensors and update list and count
 
 ### rpi1wire_id  or  rpi1wire_name
 
@@ -87,7 +98,7 @@ The id or name of the 1-wire - sensor. Both attributes serve the same purpose.
 The Item having one of these attributes will receive the temperature measurement.
 The Item thus needs to be of type num.
 
-### rpi1wire_update
+### rpi1wire_sys: update
 
 If this item is triggered, the sensors are re-searched without restarting the server
 
@@ -99,8 +110,27 @@ Please refer to the documentation generated from plugin.yaml metadata.
 update_sensors() can be called to force a reread of all sensors.
 
 ## Examples
-
+```yaml
+someitem:
+    somelist:
+        rpi1wire_sys: list
+        name: Sensor-List
+        type: str
+        visu_acl: ro
+    somecount:
+        rpi1wire_sys: count
+        name: Sensors
+        type: num
+        visu_acl: ro
+    someupdate:
+        rpi1wire_sys: update
+        name: Update Sensors
+        type: bool
+        inital_value: 0
+        visu_acl: rw
 ### Example 1
+````
+### Example 1 with Sensor-Name
 
 ```yaml
 someroom:
@@ -109,34 +139,26 @@ someroom:
         type: num
         visu_acl: ro
         rpi1wire_name: rpi_temp1
-        sqlite: yes
+        database: yes
 ```
 
-### Example 2
+### Example 2 with Sensor-ID
 
 ```yaml
 someroom:
      mytemperature:
         name: my Name
-        name: Wohnzimme Raumtemperatur
         type: num
         visu_acl: ro
         rpi1wire_id: 28-0215018970ff
-        sqlite: yes
+        database: yes
 
-rpi1wire:
-     update:
-        name: Update Sensor-List
-        type: bool
-        visu_acl: rw
-        rpi1wire_update: 1
-```
+
+...
 
 
 ## Web Interfaces
 
-A Big ToDo here: 
-- List found sensors
-- List Items affected with rpi1wire_id or rpi1wire_name
-- Show Items with rpi1wire_update
+The Webinterface is reachable on you smarthomeNG server here :
+yourserver:8383/rpi1wire/
 

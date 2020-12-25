@@ -169,7 +169,7 @@ shifts the event to the next day.
 The plugin needs certain control items to exist. They can be integrated in
 smartVISU. I created a block the looks like in the following picture:
 
-![screenshot](screenshot.png)
+![screenshot](assets/widget.png)
 
 The code is here. Replace the item names with yours from the item.yaml file.
 The png files for the lamps are in the package.
@@ -280,4 +280,4 @@ Day and Trigger are ignored for the time being and might be used later.
 The following state diagram shows the state changes depenging on the control item.
 The state is stored in the state item.
 
-![Statediagram](state_diagram.png)
+![Statediagram](assets/state_diagram.png)

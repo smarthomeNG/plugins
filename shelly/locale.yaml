@@ -5,7 +5,7 @@ plugin_translations:
     'Mac Adresse':        {'de': '=', 'en': 'Mac Address'}
     'IP Adresse':         {'de': '=', 'en': 'IP Address'}
     'Firmware Version':   {'de': '=', 'en': '='}
-    'neue Firmware':      {'de': '=', 'en': 'new Firmware'}
+    'neue Firmware':      {'de': 'neue FW verfügbar', 'en': 'new FW available'}
     'konfiguriert':       {'de': '=', 'en': 'configured'}
     'Message Durchsatz':  {'de': '=', 'en': 'Message throughput'}
     'letzte Minute':      {'de': '=', 'en': 'last minute'}

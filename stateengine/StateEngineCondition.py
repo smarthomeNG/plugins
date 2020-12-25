@@ -22,6 +22,7 @@ from . import StateEngineTools
 from . import StateEngineCurrent
 from . import StateEngineValue
 from . import StateEngineEval
+import re
 from collections import OrderedDict
 
 
@@ -46,6 +47,10 @@ class SeCondition(StateEngineTools.SeItemChild):
         self.__negate = False
         self.__agemin = StateEngineValue.SeValue(self._abitem, "agemin")
         self.__agemax = StateEngineValue.SeValue(self._abitem, "agemax")
+        self.__changedby = StateEngineValue.SeValue(self._abitem, "changedby", True)
+        self.__updatedby = StateEngineValue.SeValue(self._abitem, "updatedby", True)
+        self.__changedbynegate = None
+        self.__updatedbynegate = None
         self.__agenegate = None
         self.__error = None
 
@@ -53,7 +58,7 @@ class SeCondition(StateEngineTools.SeItemChild):
         return "'item': {}, 'eval': {}, 'value': {}".format(self.__item, self.__eval, self.__value)
 
     # set a certain function to a given value
-    # func: Function to set ('item', 'eval', 'value', 'min', 'max', 'negate', 'agemin', 'agemax' or 'agenegate')
+    # func: Function to set ('item', 'eval', 'value', 'min', 'max', 'negate', 'changedby', 'updatedby', 'changedbynegate', 'updatedbynegate', 'agemin', 'agemax' or 'agenegate')
     # value: Value for function
     def set(self, func, value):
         if func == "se_item":
@@ -76,6 +81,14 @@ class SeCondition(StateEngineTools.SeItemChild):
             self.__agemin.set(value, self.__name)
         elif func in ["se_agemax", "se_maxage"]:
             self.__agemax.set(value, self.__name)
+        elif func == "se_changedby":
+            self.__changedby.set(value, self.__name)
+        elif func == "se_updatedby":
+            self.__updatedby.set(value, self.__name)
+        elif func == "se_changedbynegate":
+            self.__changedbynegate = value
+        elif func == "se_updatedbynegate":
+            self.__updatedbynegate = value
         elif func == "se_negate":
             self.__negate = value
         elif func == "se_agenegate":
@@ -90,9 +103,13 @@ class SeCondition(StateEngineTools.SeItemChild):
         if 'SeCurrent' in eval_result:
             eval_result = eval_result.split('SeCurrent.')[1].split(' ')[0]
         value_result = str(self.__value.get_for_webif())
-        result = {'item': str(self.__item), 'eval': eval_result, 'value': value_result, 'min': str(self.__min),
+        result = {'item': str(self.__item), 'eval': eval_result, 'value': value_result,
+                  'min': str(self.__min),
                   'max': str(self.__max), 'agemin': str(self.__agemin), 'agemax': str(self.__agemax),
-                  'negate': str(self.__negate), 'agenegate': str(self.__agenegate)}
+                  'negate': str(self.__negate), 'agenegate': str(self.__agenegate),
+                  'changedby': str(self.__changedby), 'updatedby': str(self.__updatedby),
+                  'changedbynegate': str(self.__changedbynegate),
+                  'updatedbynegate': str(self.__updatedbynegate)}
         return result
 
     # Complete condition (do some checks, cast value, min and max based on item or eval data types)
@@ -101,7 +118,8 @@ class SeCondition(StateEngineTools.SeItemChild):
     def complete(self, item_state):
         # check if it is possible to complete this condition
         if self.__min.is_empty() and self.__max.is_empty() and self.__value.is_empty() \
-                and self.__agemin.is_empty() and self.__agemax.is_empty():
+                and self.__agemin.is_empty() and self.__agemax.is_empty() \
+                and self.__changedby.is_empty() and self.__updatedby.is_empty():
             return False
 
         # set 'eval' for some known conditions if item and eval are not set, yet
@@ -155,9 +173,16 @@ class SeCondition(StateEngineTools.SeItemChild):
             if result is not None:
                 self.__eval = result
 
-        # no we should have either 'item' or 'eval' set. If not, raise ValueError
+        # now we should have either 'item' or 'eval' set. If not, raise ValueError
         if self.__item is None and self.__eval is None:
             raise ValueError("Condition {}: Neither 'item' nor 'eval' given!".format(self.__name))
+
+        if (self.__item is not None or self.__eval is not None)\
+           and not self.__changedby.is_empty() and self.__changedbynegate is None:
+            self.__changedbynegate = False
+        if (self.__item is not None or self.__eval is not None)\
+           and not self.__updatedby.is_empty() and self.__updatedbynegate is None:
+            self.__updatedbynegate = False
 
         # cast stuff
         try:
@@ -197,6 +222,12 @@ class SeCondition(StateEngineTools.SeItemChild):
         if not self.__check_value():
             self._log_decrease_indent()
             return False
+        if not self.__check_updatedby():
+            self._log_decrease_indent()
+            return False
+        if not self.__check_changedby():
+            self._log_decrease_indent()
+            return False
         if not self.__check_age():
             self._log_decrease_indent()
             return False
@@ -206,7 +237,7 @@ class SeCondition(StateEngineTools.SeItemChild):
     # Write condition to logger
     def write_to_logger(self):
         if self.__error is not None:
-            self._log_debug("error: {0}", self.__error)
+            self._log_warning("error: {0}", self.__error)
         if self.__item is not None:
             if isinstance(self.__item, list):
                 for i in self.__item:
@@ -228,6 +259,12 @@ class SeCondition(StateEngineTools.SeItemChild):
         self.__agemax.write_to_logger()
         if self.__agenegate is not None:
             self._log_debug("age negate: {0}", self.__agenegate)
+        self.__changedby.write_to_logger()
+        if self.__changedbynegate is not None and not self.__changedby.is_empty():
+            self._log_debug("changedby negate: {0}", self.__changedbynegate)
+        self.__updatedby.write_to_logger()
+        if self.__updatedbynegate is not None and not self.__updatedby.is_empty():
+            self._log_debug("updatedby negate: {0}", self.__updatedbynegate)
 
     # Cast 'value', 'min' and 'max' using given cast function
     # cast_func: cast function to use
@@ -239,13 +276,24 @@ class SeCondition(StateEngineTools.SeItemChild):
             self.__negate = StateEngineTools.cast_bool(self.__negate)
         self.__agemin.set_cast(StateEngineTools.cast_num)
         self.__agemax.set_cast(StateEngineTools.cast_num)
+        self.__changedby.set_cast(StateEngineTools.cast_str)
+        if self.__changedbynegate is not None:
+            self.__changedbynegate = StateEngineTools.cast_bool(self.__changedbynegate)
+        self.__updatedby.set_cast(StateEngineTools.cast_str)
+        if self.__updatedbynegate is not None:
+            self.__updatedbynegate = StateEngineTools.cast_bool(self.__updatedbynegate)
         if self.__agenegate is not None:
             self.__agenegate = StateEngineTools.cast_bool(self.__agenegate)
 
-    # Check if value conditions match
-    def __check_value(self):
+    def __change_update_value(self, value, valuetype):
         def __convert(value, current):
             _oldvalue = value
+            try:
+                if isinstance(value, re._pattern_type):
+                    return value, current
+            except Exception:
+                if isinstance(value, re.Pattern):
+                    return value, current
             if isinstance(current, bool):
                 value = StateEngineTools.cast_bool(value)
             elif isinstance(current, int):
@@ -258,65 +306,106 @@ class SeCondition(StateEngineTools.SeItemChild):
                 value = str(value)
                 current = str(current)
             if not type(_oldvalue) == type(value):
-                self._log_info("Value {} was type {} and therefore not the same type as item value {}. It got converted to {}.",
-                               _oldvalue, type(_oldvalue), current, type(value))
+                self._log_debug("Value {} was type {} and therefore not the same"
+                                " type as item value {}. It got converted to {}.",
+                                _oldvalue, type(_oldvalue), current, type(value))
             return value, current
 
-        current = self.__get_current()
+        current = self.__get_current(type='changedby') if valuetype == "changedby" else\
+            self.__get_current(type='updatedby') if valuetype == "updatedby" else\
+            self.__get_current(type='value')
+        negate = self.__changedbynegate if valuetype == "changedby" else\
+            self.__updatedbynegate if valuetype == "updatedby" else\
+            self.__negate
+
+        if isinstance(value, list):
+            text = "Condition '{0}': {1}={2} negate={3} current={4}"
+            self._log_debug(text, self.__name, valuetype, value, negate, current)
+            self._log_increase_indent()
+            for i, element in enumerate(value):
+                regex_result = None
+                regex_check = False
+                if valuetype == "value" and type(element) != type(current) and current is not None:
+                    element, current = __convert(element, current)
+                try:
+                    if isinstance(element, re._pattern_type):
+                        regex_result = element.fullmatch(str(current))
+                        regex_check = True
+                except Exception:
+                    if isinstance(element, re.Pattern):
+                        regex_result = element.fullmatch(str(current))
+                        regex_check = True
+                if negate:
+                    if (regex_result is not None and regex_check is True)\
+                       or (current == element and regex_check is False):
+                        self._log_debug("{0} found but negated -> not matching", element)
+                        return False
+                else:
+                    if (regex_result is not None and regex_check is True)\
+                       or (current == element and regex_check is False):
+                        self._log_debug("{0} found -> matching", element)
+                        return True
+                if regex_check is True:
+                    self._log_debug("Regex '{}' result: {}, element {}", element, regex_result)
+
+            if negate:
+                self._log_debug("{0} not in list -> matching", current)
+                return True
+            else:
+                self._log_debug("{0} not in list -> not matching", current)
+                return False
+        else:
+            regex_result = None
+            regex_check = False
+            # If current and value have different types, convert both to string
+            if valuetype == "value" and type(value) != type(current) and current is not None:
+                value, current = __convert(value, current)
+            text = "Condition '{0}': {1}={2} negate={3} current={4}"
+            self._log_debug(text, self.__name, valuetype, value, negate, current)
+            self._log_increase_indent()
+            try:
+                if isinstance(value, re._pattern_type):
+                    regex_result = value.fullmatch(str(current))
+                    regex_check = True
+            except Exception:
+                if isinstance(value, re.Pattern):
+                    regex_result = value.fullmatch(str(current))
+                    regex_check = True
+            if negate:
+                if (regex_result is None and regex_check is True)\
+                   or (current != value and regex_check is False):
+                    self._log_debug("not OK but negated -> matching")
+                    return True
+            else:
+                if (regex_result is not None and regex_check is True)\
+                   or (current == value and regex_check is False):
+                    self._log_debug("OK -> matching")
+                    return True
+            self._log_debug("not OK -> not matching")
+            return False
+
+    # Check if value conditions match
+    def __check_value(self):
         try:
             cond_min_max = self.__min.is_empty() and self.__max.is_empty()
             if not self.__value.is_empty():
                 # 'value' is given. We ignore 'min' and 'max' and check only for the given value
                 value = self.__value.get()
                 value = StateEngineTools.flatten_list(value)
-
-                if isinstance(value, list):
-                    text = "Condition '{0}': value={1} negate={2} current={3}"
-                    self._log_debug(text, self.__name, value, self.__negate, current)
-                    self._log_increase_indent()
-
-                    for element in value:
-                        if type(element) != type(current) and current is not None:
-                            element, current = __convert(element, current)
-                        if self.__negate:
-                            if current == element:
-                                self._log_debug("{0} found but negated -> not matching", element)
-                                return False
-                        else:
-                            if current == element:
-                                self._log_debug("{0} found -> matching", element)
-                                return True
-
-                    if self.__negate:
-                        self._log_debug("{0} not in list -> matching", current)
-                        return True
-                    else:
-                        self._log_debug("{0} not in list -> not matching", current)
-                        return False
-
-                else:
-                    # If current and value have different types, convert both to string
-                    if type(value) != type(current) and current is not None:
-                        value, current = __convert(value, current)
-                    text = "Condition '{0}': value={1} negate={2} current={3}"
-                    self._log_debug(text, self.__name, value, self.__negate, current)
-                    self._log_increase_indent()
-
-                    if self.__negate:
-                        if current != value:
-                            self._log_debug("not OK but negated -> matching")
-                            return True
-                    else:
-                        if current == value:
-                            self._log_debug("OK -> matching")
-                            return True
-
-                    self._log_debug("not OK -> not matching")
-                    return False
+                return self.__change_update_value(value, "value")
 
             elif not cond_min_max:
                 min_get_value = self.__min.get()
                 max_get_value = self.__max.get()
+                current = self.__get_current()
+                try:
+                    if isinstance(min_get_value, re._pattern_type) or isinstance(max_get_value, re._pattern_type):
+                        self._log_warning("You can not use regular expression with min/max -> ignoring")
+                        return True
+                except Exception:
+                    if isinstance(min_get_value, re.Pattern) or isinstance(max_get_value, re.Pattern):
+                        self._log_warning("You can not use regular expression with min/max -> ignoring")
+                        return True
                 min_value = [min_get_value] if not isinstance(min_get_value, list) else min_get_value
                 max_value = [max_get_value] if not isinstance(max_get_value, list) else max_get_value
                 min_value = StateEngineTools.flatten_list(min_value)
@@ -372,8 +461,10 @@ class SeCondition(StateEngineTools.SeItemChild):
                 else:
                     self._log_debug("given limits ok -> matching")
                     return True
-            else:
-                self._log_warning("Neither value nor min/max given. This might result in unexpected evalutions. Min {}, max {}, value {}",
+
+            elif self.__value.is_empty() and cond_min_max:
+                self._log_warning("Neither value nor min/max given. This might result in unexpected"
+                                  " evalutions. Min {}, max {}, value {}",
                                   self.__min.get(), self.__max.get(), self.__value.get())
                 self._log_increase_indent()
                 return True
@@ -383,16 +474,51 @@ class SeCondition(StateEngineTools.SeItemChild):
         finally:
             self._log_decrease_indent()
 
+    # Check if changedby conditions match
+    def __check_changedby(self):
+        try:
+            if not self.__changedby.is_empty():
+                # 'changedby' is given.
+                changedby = self.__changedby.get()
+                changedby = StateEngineTools.flatten_list(changedby)
+                return self.__change_update_value(changedby, "changedby")
+
+            else:
+                self._log_increase_indent()
+                return True
+
+        except Exception as ex:
+            self._log_warning("Problem checking changedby {}", ex)
+        finally:
+            self._log_decrease_indent()
+
+    # Check if updatedby conditions match
+    def __check_updatedby(self):
+        try:
+            if not self.__updatedby.is_empty():
+                # 'updatedby' is given.
+                updatedby = self.__updatedby.get()
+                updatedby = StateEngineTools.flatten_list(updatedby)
+                return self.__change_update_value(updatedby, "updatedby")
+            else:
+                self._log_increase_indent()
+                return True
+
+        except Exception as ex:
+            self._log_warning("Problem checking updatedby {}", ex)
+        finally:
+            self._log_decrease_indent()
+
     # Check if age conditions match
     def __check_age(self):
         # No limits given -> OK
         if self.__agemin.is_empty() and self.__agemax.is_empty():
-            self._log_info("Age of '{0}': No limits given", self.__name)
+            self._log_debug("Age of '{0}': No limits given", self.__name)
             return True
 
         # Ignore if no current value can be determined
         if self.__item is None and self.__eval is None:
-            self._log_info("Age of '{0}': No item found! Considering condition as matching!", self.__name)
+            self._log_warning("Age of '{0}': No item/eval found! Considering condition as matching!", self.__name)
             return True
 
         try:
@@ -400,14 +526,14 @@ class SeCondition(StateEngineTools.SeItemChild):
         except Exception:
             cond_evalitem = False
         if self.__item is None and cond_evalitem is False:
-            self._log_info("Make sure your se_eval '{}' really contains an item and not an ID. If the age "
-                           "condition does not work though, please check your eval!", self.__eval)
+            self._log_warning("Make sure your se_eval '{}' really contains an item and not an ID. If the age "
+                              "condition does not work though, please check your eval!", self.__eval)
 
         try:
             current = self.__get_current(type='age')
         except Exception as ex:
-            self._log_info("Age of '{0}': Not possible to get age from eval {1}! "
-                           "Considering condition as matching: {2}", self.__name, self.__eval, ex)
+            self._log_warning("Age of '{0}': Not possible to get age from eval {1}! "
+                              "Considering condition as matching: {2}", self.__name, self.__eval, ex)
             return True
         agemin = None if self.__agemin.is_empty() else self.__agemin.get()
         agemax = None if self.__agemax.is_empty() else self.__agemax.get()
@@ -423,7 +549,8 @@ class SeCondition(StateEngineTools.SeItemChild):
             text = "Age of '{0}': min={1} max={2} negate={3} current={4}"
             self._log_debug(text, self.__name, agemin, agemax, self.__agenegate, current)
             if diff_len != 0:
-                self._log_debug("Min and max age are always evaluated as valuepairs. If needed you can also provide 'novalue' as a list value")
+                self._log_warning("Min and max age are always evaluated as valuepairs."
+                                  " If needed you can also provide 'novalue' as a list value")
             self._log_increase_indent()
             _notmatching = 0
             for i, _ in enumerate(agemin):
@@ -466,11 +593,15 @@ class SeCondition(StateEngineTools.SeItemChild):
     # Current value of condition (based on item or eval)
     def __get_current(self, type='value'):
         if self.__item is not None:
-            return self.__item.property.value if type == 'value' else self.__item.property.last_change_age
+            return self.__item.property.last_change_age if type == 'age' else\
+                   self.__item.property.last_change_by if type == 'changedby' else\
+                   self.__item.property.last_update_by if type == 'updatedby' else\
+                   self.__item.property.value
         if self.__eval is not None:
             # noinspection PyUnusedLocal
             self._log_debug("Trying to get {} of eval {}", type, self.__eval)
             sh = self._sh
+            shtime = self._shtime
             if isinstance(self.__eval, str):
                 # noinspection PyUnusedLocal
                 if "stateengine_eval" in self.__eval or "se_eval" in self.__eval:

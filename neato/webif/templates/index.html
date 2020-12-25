@@ -1,0 +1,287 @@
+{% extends "base_plugin.html" %}
+
+{% set logo_frame = false %}
+
+<!-- set update_interval to a value > 0 (in milliseconds) to enable periodic data updates -->
+{% set update_interval = 0 %}
+
+<!--
+	Additional script tag for plugin specific javascript code go into this block
+-->
+{% block pluginscripts %}
+<script>
+	function handleUpdatedData(response, dataSet=null) {
+		if (dataSet === 'devices_info' || dataSet === null) {
+			var objResponse = JSON.parse(response);
+			myProto = document.getElementById(dataSet);
+			for (var device in objResponse) {
+				<!--
+				shngInsertText (device+'_source', objResponse[device]['source']);
+				shngInsertText (device+'_powerState', objResponse[device]['powerState']);
+				-->
+			}
+		}
+	}
+
+	function generateHashCommand() {
+		window.location.href='?action=generateHash';
+		
+		return false;
+	}
+
+	function requestCodeCommand() {
+		if (confirm('{{ _('Wollen Sie bei Vorwerk unter obiger Emailadresse einen Freischaltcode anfragen?') }}')) {
+			email = $('#input-email');
+			hashInputField = $('#input-hash');
+			window.location.href='?action=requestCode&hashInput=' + hashInputField.val() + '&email=' + email.val();
+		}
+		return false;
+	}
+	
+	function requestTokenCommand() {
+		if (confirm('{{ _('Wollen Sie bei Vorwerk unter obiger Emailadresse und Hash einen dauerhaften Login Token anfragen?') }}')) {
+			email = $('#input-email');
+			hashInputField = $('#input-hash');
+			codeInputField = $('#input-code');
+			window.location.href='?action=requestToken&hashInput=' + hashInputField.val() + '&email=' + email.val() + '&code=' + codeInputField.val();
+		}
+		return false;
+	}
+
+	function copyClipboardFunction() {
+ 		/* Get the text field */
+  		var copyText = document.getElementById("input-token");
+
+  		/* Select the text field */
+  		copyText.select();
+  		copyText.setSelectionRange(0, 99999); /*For mobile devices*/
+
+		/* Copy the text inside the text field */
+  		document.execCommand("copy");
+
+  		/* Alert the copied text */
+  		alert("Copied the text: " + copyText.value);
+		
+		return false;
+	}
+
+	function copyToPluginFunction() {
+		if (confirm('{{ _('Wollen Sie den Vorwerk Token dauerhaft in die plugin.yaml Konfiguration uebernehmen?') }}')) {
+			tokenField = $('#input-token');
+			window.location.href='?action=writeToPluginConfig&tokenInput=' + tokenField.val();
+		}
+		return false;
+	}
+
+
+
+
+
+
+</script>
+{% endblock pluginscripts %}
+
+
+{% block headtable %}
+<table class="table table-striped table-hover">
+	<tbody>
+		<tr>
+			<td class="py-1"><strong>Neato/Vorwerk Backend</strong></td>
+			<td class="py-1">{% if p.numberRobots() %}{{ _('Online') }}{% else %}{{ _('Offline') }}{% endif %}</td>
+			<td class="py-1" width="50px"></td>
+			<td class="py-1"><strong>Number Robots</strong></td>
+			<td class="py-1">{{ p.numberRobots() }}</td>
+			<td class="py-1" width="50px"></td>
+		</tr>
+		<tr>
+			<td class="py-1"><strong> </strong></td>
+			<td class="py-1">-</td>
+			<td></td>
+			<td class="py-1"><strong> </strong></td>
+			<td class="py-1">-</td>
+			<td></td>
+		</tr>
+	</tbody>
+</table>
+{% endblock headtable %}
+
+
+<!--
+	Additional buttons for the web interface (if any are needed) - displayed below the headtable-section
+-->
+{% block buttons %}
+{% if 1==2 %}
+	<div>
+		<button id="btn1" class="btn btn-shng btn-sm" name="scan" onclick="shngPost('', {learn: 'on'})"><i class="fas fa-question"></i>&nbsp;&nbsp;&nbsp;{{ _('nach Devices suchen') }}&nbsp;</button>
+	</div>
+{% endif %}
+{% endblock %}
+
+<!--
+	Define the number of tabs for the body of the web interface (1 - 3)
+-->
+{% set tabcount = 1 %}
+
+
+<!--
+	Set the tab that will be visible on start, if another tab that 1 is wanted (1 - 3)
+-->
+
+{% set start_tab = 1 %}
+
+<!--
+	Content block for the first tab of the Webinterface
+-->
+{% set tab1title = "<strong>Vorwerk OAuth2</strong>" %}
+
+{% block bodytab1 %}
+
+{% if calculatedHash %}
+	<div class="mb-2 alert alert-success alert-dismissible fade show" role="alert">
+		<strong>{{ _('Hash calculated') }}</strong><br/>
+		{{ _('Hashwert erfolgreich berechnet.') }}
+		<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+			<span aria-hidden="true">&times;</span>
+		</button>
+	</div>
+{% endif %}
+{% if codeRequestSuccessfull %}
+	<div class="mb-2 alert alert-success alert-dismissible fade show" role="alert">
+		<strong>{{ _('Vorwerk Validierungscode') }}</strong><br/>
+		{{ _('Anfrage an Vorwerk gesendet. Bitte Emailpostfach ueberpruefen.') }}
+		<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+			<span aria-hidden="true">&times;</span>
+		</button>
+	</div>
+{% endif %}
+{% if codeRequestSuccessfull == False%}
+	<div class="mb-2 alert alert-warning alert-dismissible fade show" role="alert">
+		<strong>{{ _('Vorwerk Validierungscode') }}</strong><br/>
+		{{ _('Fehler bei Anfrage an Vorwerk. Siehe Logfile fuer Details.') }}
+		<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+			<span aria-hidden="true">&times;</span>
+		</button>
+	</div>
+{% endif %}
+{% if configWriteSuccessfull %}
+	<div class="mb-2 alert alert-success alert-dismissible fade show" role="alert">
+		<strong>{{ _('Token speichern') }}</strong><br/>
+		{{ _('Token in plugin.yaml geschrieben.') }}
+		<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+			<span aria-hidden="true">&times;</span>
+		</button>
+	</div>
+{% endif %}
+{% if configWriteSuccessfull == False %}
+	<div class="mb-2 alert alert-warning alert-dismissible fade show" role="alert">
+		<strong>{{ _('Token speichern') }}</strong><br/>
+		{{ _('Fehler beim Speichern des Tokens in plugin.yaml. Siehe Logfile fuer Details.') }}
+		<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+			<span aria-hidden="true">&times;</span>
+		</button>
+	</div>
+{% endif %}
+
+
+<div class="container-fluid m-2">
+	{{ _('Vorwerk Explanation') }}
+</div>
+
+
+<div class="row">
+
+	<div class="col-md-11 mb-3">
+		<div class="row">
+			<div class="col-md-3 mb-3">
+				{{ _('1) Vorwerk account Email ueberpruefen') }}:
+			</div>
+			<div class="col-md-3 mb-3">
+				<input type="email" class="form-control mb-1" id="input-email" value= {{ p.accountEmail() }} readonly placeholder="{{ _('Account Email') }}" maxlength="32" style="width: 300px;">
+			</div>
+		</div>
+<!--
+		<div class="row">
+		<td style="min-width:190px;" style="padding-top:15px;">
+			<div class="col-md-3 mb-3">
+				{{ _('2) ID Hash generieren') }}:
+			</div>
+			<div class="col-md-3 mb-3">
+				<input type="text" class="form-control mb-1" id="input-hash" value = {{ p.clientIDHash() }} 
+				placeholder="{{ _('ID Hash') }}" maxlength="32" style="width: 300px;">
+			</div>
+
+			<div class="col-md-4 mb-3">
+				<button type="button" class="btn btn-shng btn-sm" title="{{ _('Generiere Hash') }}" onclick="generateHashCommand();">{{ _('Generiere Hash') }}</button>
+			</div>
+		</div>
+-->
+		<div class="row">
+		<td style="min-width:190px;" style="padding-top:15px;">
+			<div class="col-md-3 mb-3">
+				{{ _('2) Diese oder andere gueltige ClientID eingeben') }}:
+			</div>
+			<div class="col-md-3 mb-3">
+				<input type="text" class="form-control mb-1" id="input-hash" value = {{ p.clientIDHash() }} 
+				placeholder="{{ _('ID Hash') }}" maxlength="32" style="width: 300px;">
+			</div>
+		</div>
+
+		<div class="row">
+		<td style="min-width:190px;" style="padding-top:15px;">
+			<div class="col-md-6 mb-3">
+				{{ _('3) Vorwerk Code anfragen') }}:
+			</div>
+			<div class="col-md-6 mb-3">
+				<button type="button" class="btn btn-shng btn-sm" title="{{ _('Code anfragen') }}" onclick="requestCodeCommand();">{{ _('Code anfragen') }}</button>
+			</div>
+		</div>
+		<div class="row">
+		<td style="min-width:190px;" style="padding-top:15px;">
+			<div class="col-md-3 mb-3">
+				{{ _('4) Per Email erhaltenen Code eintragen') }}:
+			</div>
+			<div class="col-md-3 mb-3">
+				<input type="text" class="form-control mb-1" id="input-code" placeholder="{{ _('Hier Vorwerk Code eintragen') }}" maxlength="6" style="width: 300px;">
+			</div>
+		</div>
+		<div class="row">
+		<td style="min-width:190px;" style="padding-top:15px;">
+			<div class="col-md-6 mb-3">
+				{{ _('5) Vorwerk Token anfragen') }}:
+			</div>
+			<div class="col-md-6 mb-3">
+				<button type="button" class="btn btn-shng btn-sm" title="{{ _('Token anfragen') }}" onclick="requestTokenCommand();">{{ _('Token anfragen') }}</button>
+			</div>
+		</div>
+		<div class="row">
+		<td style="min-width:190px;" style="padding-top:15px;">
+			<div class="col-md-3 mb-3">
+				{{ _('6) Token in plugin.yaml kopieren') }}:
+			</div>
+			<div class="col-md-3 mb-3">
+				<input type="text" class="form-control mb-1" id="input-token" {% if token %} value = {{ token }} {% endif %}
+				readonly placeholder="{{ _('Vorwerk Token') }}" maxlength="200" style="width: 300px;">
+			</div>
+			<div class="col-md-6 mb-3">
+				<button type="button" class="btn btn-shng btn-sm" onclick="copyClipboardFunction()">In Zwischenablage kopieren</button>
+			</div>
+		</div>
+		<div class="row">
+		<td style="min-width:190px;" style="padding-top:15px;">
+			<div class="col-md-6 mb-3">
+			</div>
+			<div class="col-md-6 mb-3">
+				<button type="button" class="btn btn-shng btn-sm" onclick="copyToPluginFunction()">In plugin Konfig kopieren</button>
+			</div>
+		</div>
+
+	</div>
+</div>
+
+
+{% endblock bodytab1 %}
+
+
+
+
+

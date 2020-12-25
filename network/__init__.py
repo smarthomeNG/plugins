@@ -24,9 +24,17 @@ import socket
 import urllib.request
 import urllib.parse
 import urllib.error
+#import lib.network to come soon, tidy up and document first
 import lib.connection
 
 from lib.model.smartplugin import SmartPlugin
+
+# attribute keywords
+NW              = 'nw'
+NW_ACL          = 'nw_acl'
+NW_UDP_LISTEN   = 'nw_udp_listen'
+NW_TCP_LISTEN   = 'nw_tcp_listen'
+NW_UDP_SEND     = 'nw_udp_send'
 
 
 class TCPHandler(lib.connection.Stream):
@@ -73,10 +81,8 @@ class HTTPHandler(lib.connection.Stream):
                 request = line.split(' ')[1].strip('/')
                 if self.parser(self.source, self.dest, urllib.parse.unquote(request)) is not False:
                     self.send(b'HTTP/1.1 200 OK\r\n\r\n', close=True)
-
                 else:
                     self.send(b'HTTP/1.1 400 Bad Request\r\n\r\n', close=True)
-
                 break
 
 
@@ -117,8 +123,11 @@ class UDPDispatcher(lib.connection.Server):
 
 
 class Network(SmartPlugin):
-    ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.4.0"
+    """
+    Main class of the Plugin. Does all plugin specific stuff and provides
+    the update functions for the items
+    """
+    PLUGIN_VERSION = "1.4.1"
 
     generic_listeners = {}
     special_listeners = {}
@@ -126,7 +135,27 @@ class Network(SmartPlugin):
     socket_warning = 10
     socket_warning = 2
 
-    def __init__(self, sh, *args, **kwargs):
+    def __init__(self, sh ):
+        """
+        Initalizes the plugin.
+
+        If you need the sh object at all, use the method self.get_sh() to get it. There should be almost no need for
+        a reference to the sh object any more.
+
+        Plugins have to use the new way of getting parameter values:
+        use the SmartPlugin method get_parameter_value(parameter_name). Anywhere within the Plugin you can get
+        the configured (and checked) value for a parameter by calling self.get_parameter_value(parameter_name). It
+        returns the value in the datatype that is defined in the metadata.
+        """
+
+        # Call init code of parent class (SmartPlugin)
+        super().__init__()
+
+        from bin.smarthome import VERSION
+        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
+            self.logger = logging.getLogger(__name__)
+
+        # get the parameters for the plugin (as defined in metadata plugin.yaml):
         self.tcp_acl = self.parse_acl(self.get_parameter_value('tcp_acl'))
         self.udp_acl = self.parse_acl(self.get_parameter_value('udp_acl'))
         self.http_acl = self.parse_acl(self.get_parameter_value('http_acl'))
@@ -141,6 +170,13 @@ class Network(SmartPlugin):
                               generic=True)
 
     def udp(self, host, port, data):
+        """
+        This function writes given data to a host with specified port
+
+        :param host: a host or an ip for destination
+        :param port: a port number
+        :param data: a string containing data
+        """
         try:
             family, type, proto, canonname, sockaddr = socket.getaddrinfo(host, port)[0]
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -163,10 +199,11 @@ class Network(SmartPlugin):
         elif proto == 'http':
             dispatcher = HTTPDispatcher(self.parse_input, ip, port)
         else:
-
             return
+
         if not dispatcher.connected:
             return False
+
         acl = self.parse_acl(acl)
         if generic:
             self.generic_listeners[dest] = {'items': {}, 'logics': {}, 'acl': acl}
@@ -175,6 +212,12 @@ class Network(SmartPlugin):
         return True
 
     def parse_acl(self, acl):
+        """
+        Parse an acl which can contain either
+            '*' which means accept data from all connection requests or
+            a list of one or more ip which are allowed to connect
+        """
+        self.logger.debug("parse_acl called with acl='{}'".format(acl))
         if acl == ['*']:
             return False
         if isinstance(acl, str):
@@ -182,6 +225,15 @@ class Network(SmartPlugin):
         return acl
 
     def parse_input(self, source, dest, data):
+        """
+        :param: source
+        :param: dest
+        :param: data either
+                        * `item|item.path|value`
+                        * `logic|logic_name|value`
+                        * `log|loglevel|message` # loglevel could be info, warning or error
+        """
+        self.logger.debug("parse_input called with source={}, dest={} and data={}".format(source, dest, data))
         if dest in self.generic_listeners:
             inp = data.split(self.input_seperator, 2)  # max 3 elements
             if len(inp) < 3:
@@ -191,6 +243,7 @@ class Network(SmartPlugin):
             proto = dest.split(':')[0].upper()
             source, __, port = source.partition(':')
             gacl = self.generic_listeners[dest]['acl']
+
             if typ == 'item':
                 if name not in self.generic_listeners[dest]['items']:
                     self.logger.error("Item '{}' not available in the generic listener.".format(name))
@@ -239,6 +292,7 @@ class Network(SmartPlugin):
             else:
                 self.logger.error("Unsupporter key element {}. Data: {}".format(typ, data))
                 return False
+
         elif dest in self.special_listeners:
             proto, t1, t2 = dest.partition(':')
             if proto == 'udp':
@@ -278,31 +332,72 @@ class Network(SmartPlugin):
         return True
 
     def run(self):
+        """
+        Run method for the plugin
+        """
+        self.logger.debug("Run method called")
         self.alive = True
 
     def stop(self):
+        """
+        Stop method for the plugin
+        """
+        self.logger.debug("Stop method called")
         self.alive = False
 
     def parse_logic(self, logic):
+        """
+        Called when the plugin is initialized to parse a logic
+        """
         self.parse_obj(logic, 'logic')
 
     def parse_item(self, item):
+        """
+        This is called when the plugin is initialized and 
+        a param item is given to decide wether to act on it or not
+        """
         self.parse_obj(item, 'item')
-        if ('nw_udp_send' in item.conf):
+
+        if self.has_iattr(item.conf, NW_UDP_SEND):
+            self.logger.debug("parse item: {}".format(item))
             return self.update_item
 
+
     def update_item(self, item, caller=None, source=None, dest=None):
-        if 'nw_udp_send' in item.conf:
-            addr, __, message = item.conf['nw_udp_send'].partition('=')
-            if not message:
-                message = str(item())
-            else:
-                message = message.replace('itemvalue', str(item()))
-            host, __, port = addr.partition(':')
-            self.udp(host, port, message)
+        """
+        Item has been updated
+
+        This method is called, if the value of an item has been updated by SmartHomeNG.
+        It should write the changed value out to the device (hardware/interface) that
+        is managed by this plugin.
+
+        :param item: item to be updated towards the plugin
+        :param caller: if given it represents the callers name
+        :param source: if given it represents the source
+        :param dest: if given it represents the dest
+        """
+        if self.alive and caller != self.get_shortname():
+            # code to execute if the plugin is not stopped
+            # and only, if the item has not been changed by this this plugin:
+            self.logger.info("Update item: {}, item has been changed outside this plugin".format(item.id()))
+
+            if self.has_iattr(item.conf, NW_UDP_SEND):
+                # nw_udp_send: "11.11.11.11:7777=command: itemvalue"    ## sends an UDP packet with 'command: ' and the current item value as payload
+                # instead of "command" any text may be chosen. If somewhere right from equal sign
+                # the word ``itemvalue``` appears, it will be replaced by the items value
+                addr, __, message = self.get_iattr_value(item.conf, NW_UDP_SEND).partition('=')
+                if not message:
+                    message = str(item())
+                else:
+                    message = message.replace('itemvalue', str(item()))
+                host, __, port = addr.partition(':')
+                self.udp(host, port, message)
 
     def parse_obj(self, obj, obj_type):
-        # nw_acl, nw_udp, nw_tcp
+        """
+        parses either an item with item.conf or a logic with logic.conf
+        """
+        # NW_ACL, NW_UDP, NW_TCP
         if obj_type == 'item':
             oid = obj.id()
         elif obj_type == 'logic':
@@ -310,18 +405,18 @@ class Network(SmartPlugin):
         else:
             return
 
-        if 'nw_acl' in obj.conf:
-            acl = obj.conf['nw_acl']
+        if NW_ACL in obj.conf:
+            acl = obj.conf[NW_ACL]
         else:
             acl = False
 
-        if 'nw' in obj.conf:  # adding object to generic listeners
-            if self.to_bool(obj.conf['nw']):
+        if NW in obj.conf:  # adding object to generic listeners
+            if self.to_bool(obj.conf[NW]):
                 for dest in self.generic_listeners:
                     self.generic_listeners[dest][obj_type + 's'][oid] = {obj_type: obj, 'acl': acl}
 
-        if 'nw_udp_listen' in obj.conf:
-            ip, sep, port = obj.conf['nw_udp_listen'].rpartition(':')
+        if NW_UDP_LISTEN in obj.conf:
+            ip, sep, port = obj.conf[NW_UDP_LISTEN].rpartition(':')
             if not ip:
                 ip = '0.0.0.0'
             dest = 'udp:' + ip + ':' + port
@@ -333,8 +428,8 @@ class Network(SmartPlugin):
             else:
                 self.special_listeners[dest][obj_type + 's'][oid] = {obj_type: obj, 'acl': acl}
 
-        if 'nw_tcp_listen' in obj.conf:
-            ip, sep, port = obj.conf['nw_tcp_listen'].rpartition(':')
+        if NW_TCP_LISTEN in obj.conf:
+            ip, sep, port = obj.conf[NW_TCP_LISTEN].rpartition(':')
             if not ip:
                 ip = '0.0.0.0'
             dest = 'tcp:' + ip + ':' + port

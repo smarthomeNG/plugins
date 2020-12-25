@@ -37,7 +37,7 @@ können wie folgt eingebunden werden:
                        - beispiel.raffstore1.hoehe
                        - beispiel.raffstore1.lamelle
                     se_manual_exclude:
-                       - KNX:y.y.y:*
+                       - KNX:y.y.y:1/2/3 # konkrete Gruppenadresse eines konkreten KNX Geräts
                        - Init:*
 
                 rules:
@@ -50,8 +50,10 @@ können wie folgt eingebunden werden:
                   additional_state1:
                       type: foo
 
-Zumindest in der SmarthomeNG Version 1.6.0 werden die eval_trigger Angaben aus den einzelnen Struct-Vorgaben nicht
+Unter SmarthomeNG Version 1.7.0 werden die eval_trigger Angaben aus den einzelnen Struct-Vorgaben nicht
 kumuliert. Es ist daher wichtig, die eval_trigger Liste nochmals manuell im endgültigen Item anzulegen.
+Bei neueren Versionen kann man sich das erneute Listen der Trigger wie lock, suspend und release sparen,
+da diese bereits im struct des Plugins gelistet sind.
 
 Die Vorlagen beinhalten folgende Strukturen:
 
@@ -93,7 +95,7 @@ se_plugin. Dieser Codeblock wird zwingend von jedem Zustandsautomaten benötigt.
        eval: True
 
        # se_startup_delay: 30
-       # se_repeat_actions: true     # Ist das nicht eine Doublette zu anderen Möglichkeiten das zu konfigurieren?
+       # se_repeat_actions: true
        # se_suspend_time: 7200
 
        se_laststate_item_id: ..state_id
@@ -141,108 +143,178 @@ Items gelistet sein, die für ein vorübergehendes Aussetzen der Automatisierung
 (z.B. Schalt- und Dimm-Items)
 
 Das Item ``settings.suspendduration`` ermöglicht es, die Dauer der Pausierung bequem
-über eine Visu oder das Backend zu ändern. Setzt man das Item ``settings.suspend_active``
-auf False, wird der Pause-Zustand deaktiviert und manuelle Betätigungen werden
+über eine Visu oder das Backend zu ändern. Das darunter angesiedelte ``duration_format``
+konvertiert die angegebene Dauer in Minuten in das "Duration Format" mit
+Tage-, Stunden- und Minutenangabe, für 5 Minuten also z.B. 0d 0h 5i. Dies ist genau wie das
+``suspend_start.unix_timestamp`` Item für das smartvisu Widget clock.countdown notwendig.
+
+Setzt man das Item ``settings.suspend_active`` auf False, wird der Pause-Zustand
+deaktiviert und manuelle Betätigungen werden
 beim nächsten Durchlauf eventuell durch andere Zustände überschrieben.
 
 .. code-block:: yaml
 
   #stateengine.state_suspend
-  suspend:
-      type: bool
-      knx_dpt: 1
-      visu_acl: rw
-      cache: True
-
-  suspend_end:
-      type: str
-      visu_acl: ro
-      cache: True
-
-  manuell:
-      type: bool
-      name: manuell
-      se_manual_invert: True
-      se_manual_exclude:
-        - database:*
-
-  retrigger:
-      remark: Item to retrigger the rule set evaluation
-      type: bool
-      visu_acl: rw
-      enforce_updates: True
-
-  settings:
-      remark: Use these settings for your condition values
-
-      suspendduration:
-          remark: duration of suspend mode
-          type: num
-          visu_acl: rw
-          cache: True
-          initial_value: 60
-
-      suspend_active:
-          remark: Use this to (de)activate suspend mode in general
-          type: bool
-          visu_acl: rw
-          cache: True
-          initial_value: True
-
-      settings_edited:
-          type: bool
-          name: settings editiert
-          eval_trigger: ...settings.*
-          eval: not sh..self()
-          on_update: ...retrigger = True
-
-  rules:
-      se_item_suspend: ..suspend
-      se_item_suspend_end: ..suspend_end
-      se_item_suspend_active: ..settings.suspend_active
-      se_suspend_time: eval:se_eval.get_relative_itemproperty('..settings.suspendduration', 'value') * 60
-      eval_trigger:
-          - ..manuell
-          - ..retrigger
+  state_suspend:
+      name: Zustandsvorlage für manuelles Aussetzen
 
       suspend:
-          name: ausgesetzt
+          type: bool
+          knx_dpt: 1
+          visu_acl: rw
+          cache: True
 
-          on_enter_or_stay:
-              se_action_suspend:
-                - 'function: special'
-                - 'value: suspend:..suspend, ..manuell'
-                - 'repeat: True'
-                - 'order: 1'
-              se_action_suspend_end:
-                - 'function: set'
-                - "to: eval:se_eval.insert_suspend_time('..suspend', suspend_text='%X')"
-                - 'repeat: True'
-                - 'order: 2'
-              se_action_retrigger:
-                - 'function: special'
-                - 'value: retrigger:..retrigger'
-                - 'delay: var:item.suspend_remaining'
-                - 'repeat: True'
-                - 'order: 3'
+      suspend_end:
+          type: str
+          visu_acl: ro
+          eval: sh..self.date_time.property.value.split(' ')[1].split('.')[0]
+          eval_trigger: .date_time
+          crontab: init
 
-          on_leave:
-              se_action_suspend:
-                - 'function: set'
-                - 'to: False'
-              se_action_suspend_end:
-                - 'function: set'
-                - 'to:  '
+          date_time:
+              type: str
+              visu_acl: ro
+              cache: True
 
-          enter_manuell:
-              se_value_trigger_source: eval:sh...manuell.property.path
-              se_value_suspend_active: True
+          unix_timestamp:
+              type: num
+              visu_acl: ro
+              eval: value if sh...date_time.property.value in ['', ' '] else sh.tools.dt2ts(shtime.datetime_transform(sh...date_time.property.value)) * 1000
+              eval_trigger: ..date_time
+              crontab: init
 
-          enter_stay:
-              se_value_laststate: var:current.state_id
-              se_agemax_suspend: var:item.suspend_time
-              se_value_suspend: True
-              se_value_suspend_active: True
+
+      suspend_start:
+          type: str
+          visu_acl: ro
+          eval: sh..self.date_time.property.value.split(' ')[1].split('.')[0]
+          eval_trigger: .date_time
+          crontab: init
+
+          date_time:
+              type: str
+              visu_acl: ro
+              cache: True
+
+          unix_timestamp:
+              remark: Can be used for the clock.countdown widget
+              type: num
+              visu_acl: ro
+              eval: value if sh...date_time.property.value in ['', ' '] else sh.tools.dt2ts(shtime.datetime_transform(sh...date_time.property.value)) * 1000
+              eval_trigger: ..date_time
+              crontab: init
+
+      manuell:
+          type: bool
+          name: manuell
+          se_manual_invert: True
+          remark: Adapt the se_manual_exclude the way you need it
+          #se_manual_include: KNX:* Force manual mode based on source
+          se_manual_exclude:
+            - database:*
+            - init:*
+
+      retrigger:
+          remark: Item to retrigger the rule set evaluation
+          type: bool
+          visu_acl: rw
+          enforce_updates: True
+
+      settings:
+          remark: Use these settings for your condition values
+
+          suspendduration:
+              remark: duration of suspend mode in minutes (gets converted automatically)
+              type: num
+              visu_acl: rw
+              cache: True
+              initial_value: 60
+
+              duration_format:
+                  remark: Can be used for the clock.countdown widget
+                  type: str
+                  visu_acl: ro
+                  eval: "'{}d {}h {}i 0s'.format(int(sh...() //1440), int((sh...()%3600)//60), round((sh...()%3600)%60))"
+                  eval_trigger: ..
+                  crontab: init
+
+          suspend_active:
+              remark: Use this to (de)activate suspend mode in general
+              type: bool
+              visu_acl: rw
+              cache: True
+              initial_value: True
+
+          settings_edited:
+              type: bool
+              name: settings editiert
+              cache: True
+              eval_trigger: ...settings.*
+              eval: not sh..self()
+              on_update: ...retrigger = True
+
+      rules:
+          se_item_suspend: ..suspend
+          se_item_suspend_end: ..suspend_end.date_time
+          se_item_suspend_start: ..suspend_start.date_time
+          se_item_suspend_active: ..settings.suspend_active
+          se_suspend_time: eval:se_eval.get_relative_itemproperty('..settings.suspendduration', 'value') * 60
+          eval_trigger:
+              - ..manuell
+              - ..retrigger
+
+          suspend:
+              name: ausgesetzt
+
+              on_enter_or_stay:
+                  se_action_suspend:
+                    - 'function: special'
+                    - 'value: suspend:..suspend, ..manuell'
+                    - 'repeat: True'
+                    - 'order: 1'
+                  se_action_suspend_end:
+                    - 'function: set'
+                    - "to: eval:se_eval.insert_suspend_time('..suspend', suspend_text='%Y-%m-%d %H:%M:%S.%f%z')"
+                    - 'repeat: True'
+                    - 'order: 2'
+                  se_action_suspend_start:
+                    - 'function: set'
+                    - "to: eval:str(shtime.now())"
+                    - 'repeat: True'
+                    - 'order: 3'
+                    - 'conditionset: (.*)enter_manuell'
+                  se_action_retrigger:
+                    - 'function: special'
+                    - 'value: retrigger:..retrigger'
+                    - 'delay: var:item.suspend_remaining'
+                    - 'repeat: True'
+                    - 'order: 4'
+
+              on_leave:
+                  se_action_suspend:
+                    - 'function: set'
+                    - 'to: False'
+                    - 'order: 1'
+                  se_action_suspend_end:
+                    - 'function: set'
+                    - 'to:  '
+                    - 'order: 2'
+                  se_action_suspend_start:
+                    - 'function: set'
+                    - 'to:  '
+                    - 'order: 3'
+                    - 'delay: 1'
+
+              enter_manuell:
+                  se_value_trigger_source: eval:se_eval.get_relative_itemproperty('..manuell', 'path')
+                  se_value_suspend_active: True
+
+              enter_stay:
+                  se_value_laststate: var:current.state_id
+                  se_agemax_suspend: var:item.suspend_time
+                  se_value_suspend: True
+                  se_value_suspend_active: True
+
 
 Die ``state_release`` Vorlage ist nicht unbedingt nötig, kann aber dazu genutzt werden,
 schnell den Sperr- oder Pause-Zustand zu verlassen und die erneute Evaluierung

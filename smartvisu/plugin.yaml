@@ -1,0 +1,196 @@
+# Metadata for the Smart-Plugin
+plugin:
+    # Global plugin attributes
+    type: system                  # plugin type (gateway, interface, protocol, system, web)
+    description:                  # Alternative: description in multiple languages
+        de: 'smartVISU Unterstützung: Autogenerierung von Seiten; Widget Handling'
+        en: 'Support for smartVISU: Automatic generation of pages; widget handling'
+    maintainer: msinn
+    tester: wvhn
+    state: ready
+#    keywords: iot xyz
+    documentation: http://smarthomeng.de/user/plugins/visu_smartvisu/user_doc.html
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1586800-support-thread-für-das-smartvisu-plugin
+
+    version: 1.8.0                 # Plugin version
+    sh_minversion: 1.7.2            # minimum shNG version to use this plugin
+#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    py_minversion: 3.6             # minimum Python version to use for this plugin
+#    py_maxversion:                 # maximum Python version to use for this plugin (leave empty if latest)
+    multi_instance: True           # plugin supports multi instance
+    restartable: True
+    classname: SmartVisu           # class containing the plugin
+
+parameters:
+    # Definition of parameters to be configured in etc/plugin.yaml
+    smartvisu_dir:
+        type: str
+        default: /var/www/html/smartvisu
+        description:
+            de: 'Basisverzeichnis der smartVISU. Nur wenn dieser Wert richtig konfiguriert ist, kann das Plugin Seiten für die smartVISU generieren, Widgets installieren, etc.'
+            en: 'You could generate pages for the smartVISU visualisation if you specify the smartvisu_dir which should be set to the root directory of your smartVISU installation.'
+
+    generate_pages:
+        type: bool
+        default: True
+        description:
+            de: 'Falls True, werden Seiten für smartVISU generiert'
+            en: 'If True, pages for smartVISU are generated'
+
+    overwrite_templates:
+        type: bool
+        default: True
+        description:
+            de: 'Sollen in der smartVISU bereits existierende Templates überschrieben werden?'
+            en: 'Should templates already that already exist in smartVISU bi overwritten?'
+
+    visu_style:
+        type: str
+        default: std
+        valid_list:
+          - std
+          - blk
+        description:
+            de: 'Benutzer Style für die generierten Visualisierungs-Seiten'
+            en: 'Style used for the generated visualization'
+
+    default_acl:
+        type: str
+        default: rw
+        valid_list:
+          - rw
+          - ro
+          - deny
+        valid_list_description:
+            de: ['Lesen/Schreiben', 'Nur Lesen', 'Kein Zugriff']
+            en: ['Read/Write', 'Read Only', 'Deny access']
+        description:
+            de: Steuert den Zugriff über smartVISU Nutzdaten-Protokoll - Voreinstellung für alle Items
+            en: Configures the standard access to the defined items and logics over the smartVISU payload protocol
+
+    handle_widgets:
+        type: bool
+        default: True
+        description:
+            de: 'Standardmäßig werden Widgets aus den Plugins in die smartVISU kopiert und eingebunden. Dieses kann verhindert werden, wenn dieser Parameter auf False gesetzt wird.'
+            en: 'By default, the visu plugin handles smartVISU widgets. If your run into problems, you can disable the widget handling by setting this attribute to False.'
+
+    list_deprecated_warnings:
+        type: bool
+        default: False
+        description:
+            de: 'Sollen Deprecated- bzw. Removed Warnungen und Fehler einzeln geloggt werden?'
+            en: 'Should individual Deprecated/Removed warnings and errors be logged?'
+
+item_attributes:
+    # Definition of item attributes defined by this plugin
+#    visu_acl:    # defined in visu_websocket
+#        type: bool
+#        description:
+#            de: ''
+#            en: 'Simply set the visu_acl attribute to something to allow read/write access to the item'
+
+    sv_page:
+        type: str
+        valid_list:
+          - room
+          - seperator
+          - overview
+          - category
+          - cat_seperator
+          - room_lite
+        description:
+            de: "Setzen Sie 'sv_page' auf einen der angegebenen Werte, um eine Seite für dieses Item zu generieren. Jedes Widget unterhalb dieses Elements wird auf der Seite angezeigt"
+            en: 'Set sv_page to to one of the listed values generate a page for this item. Every widget beneath this item will be included in the page'
+
+    sv_blocksize:
+        type: str
+        valid_list:
+            - '1'
+            - '2'
+            - '3'
+        description:
+            de: "Größe des Widget-Blocks auf der smartVISU Seite"
+            en: 'Size of the widget-block on the smartVISU page'
+
+    sv_overview:
+        type: str
+        description:
+            de: "Wenn eine Seite sv_page als 'overview' definiert hat, werden Items eines bestimmten Typs angezeigt. Der Name/Bezeichner des Typs wird definiert, indem 'sv_overview' auf einen eindeutigen Namen gesetzt wird. Damit Elemente auf dieser Seite angezeigt werden, müssen die Items 'sv_item_type' definieren und auf den Wert von 'sv_overview' setzen."
+            en: 'If a page has defined sv_page as overview, it shows items of a specific type. The name/identifier of the type is defined by setting sv_overview to an unique name. For items to be displayed on this page, the items have to define sv_item_type and set it to the value of sv_overview.'
+
+    sv_item_type:
+        type: str
+        description:
+            de: 'sv_item_type erlaubt es, items auf anderen Seiten als der Raum-Seite anzuzeigen'
+            en: 'sv_item_type allows items to be displayed on an overview page.'
+
+    sv_img:
+        type: str
+        description:
+            de: 'Bild, das in der Navigation der smartVISU angezeigt wird'
+            en: 'By setting sv_img you could assign an icon or picture for a page or widget'
+
+    sv_widget:
+        type: str
+        description:
+            de: 'Definition des Widgets, welches für das Item verwendet wird'
+            en: 'allows the specification of a widget. You could define multiple widgets. The widget(s) is/are shown by being encapsulated in a block of type 2 (Collapsable Block) - Relative item references are supported'
+
+    sv_name1:
+        type: str
+        description:
+            de: 'Name des Widgets'
+            en: 'Name of the widget'
+
+    sv_widget2:
+        type: str
+        description:
+            de: 'Definition des zweiten Widgets, welches für das Item verwendet wird'
+            en: 'Definition of the secondary widget which is used for the item'
+
+    sv_name2:
+        type: str
+        description:
+            de: 'Name des zweiten Widgets'
+            en: 'Name of the second widget'
+
+    sv_nav_aside:
+        type: str
+        description:
+            de: 'Ermöglicht die Angabe eines Widgets, das auf der rechten Seite der Navigationsleiste für einen Raum angezeigt wird. (obere Zeile) - Relative Item-Referenzen werden unterstützt'
+            en: 'allows the specification of a widget, that is being displayed at the right side of the navigation bar for a room. (upper line) - Relative item references are supported'
+
+    sv_nav_aside2:
+        type: str
+        description:
+            de: 'Ermöglicht die Angabe eines Widgets, das auf der rechten Seite der Navigationsleiste für einen Raum angezeigt wird. (untere Zeile) - Relative Item-Referenzen werden unterstützt.'
+            en: 'allows the specification of a widget, that is being displayed at the right side of the navigation bar for a room. (lower line) - Relative item references are supported.'
+
+    sv_heading_left:
+        type: str
+        description:
+            de: 'erlaubt die Angabe eines Widgets, das oben auf einer Raumseite angezeigt wird. Dieses Widget wird angezeigt, ohne in einem Block gekapselt zu sein. Das Widget ist nach links ausgerichtet'
+            en: 'allows the specification of a widget, hat is being displayed at the top of a room-page. This widget is shown without being encapsulated in a block. The widget is aligned to to the left'
+
+    sv_heading_center:
+        type: str
+        description:
+            de: 'erlaubt die Angabe eines Widgets, das oben auf einer Raumseite angezeigt wird. Dieses Widget wird angezeigt, ohne in einem Block gekapselt zu sein. Das Widget wird zentriert'
+            en: 'allows the specification of a widget, hat is being displayed at the top of a room-page. This widget is shown without being encapsulated in a block. The widget is aligned to to the center'
+
+    sv_heading_right:
+        type: str
+        description:
+            de: 'erlaubt die Angabe eines Widgets, das oben auf einer Raumseite angezeigt wird. Dieses Widget wird angezeigt, ohne in einem Block gekapselt zu sein. Das Widget ist nach rechts ausgerichtet'
+            en: 'allows the specification of a widget, hat is being displayed at the top of a room-page. This widget is shown without being encapsulated in a block. The widget is aligned to to the right'
+
+item_structs: NONE
+  # Definition of item-structure templates for this plugin
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin
+
+plugin_functions: NONE
+    # Definition of function interface of the plugin
+

@@ -1,0 +1,77 @@
+
+/**
+* Standard RTR (Room Temperatur Regulator) widget for rtr2 plugin
+*
+* @param {item} an item for the rtr
+* @param {value=0.5} step for plus/minus buttons (optional, default: 0.5)
+* @param {text=} name of the rtr
+*/
+{% macro rtr(item_rtr, step, txt) %}
+
+	{% import "device.html" as device %}
+	{% import "basic.html" as basic %}
+
+	{% if txt is empty %}
+		{% set txt = "heizt mit" %}
+	{% endif %}
+
+	{{ device.rtr(item_rtr~"_id", txt ~ " ", item_rtr~".ist_temp", item_rtr~".soll_temp", item_rtr~".komfort", item_rtr~".nacht", item_rtr~".frost", item_rtr~".heizt", item_rtr~".stellwert_text", step, '', [basic.symbol(item_rtr~"_id2", item_rtr~".gesperrt", "", "secur_locked.svg", '1', '', 'icon1')]) }}
+
+{% endmacro %}
+
+
+/**
+* Standard plot widget for rtr2 plugin
+*
+* @param {item} an item for the rtr
+* @param {add_item=} additional item for a data series
+*/
+{% macro plot(item_rtr, label, add_item, add_label, add_item2, add_label2) %}
+
+	{% import "plot.html" as plot %}
+
+	<!--
+	rot:  '#B53300' (35%)
+	rot:  '#992b00' (30%)
+	rot:  '#802400' (25%)
+	grün: '#5FDB4B'
+	violett: '#8B008B'
+	-->
+
+	{% if add_item is empty %}
+		{% set label = 'Ist Temp.' %}
+	{% endif %}
+
+	{% set temp_items = [item_rtr~".soll_temp", item_rtr~".ist_temp", item_rtr~".stellwert"] %}
+	{% set label_values = ['Sollwert', label, 'Stellwert'] %}
+	{% set mode_values = ['max','max','avg'] %}
+	{% set color_values = ['#4972BF', '#f9a028', '#802400', '#ada497', '#ab6e1b'] %}
+	{% set exposure_values = ['stair', '', 'stair', '', ''] %}
+
+	{% if not add_item is empty %}
+		{% set temp_items = [item_rtr~".soll_temp", item_rtr~".ist_temp", item_rtr~".stellwert", add_item] %}
+		{% set mode_values = ['max','max','avg', 'max'] %}
+	{% endif %}
+	{% if not add_label is empty %}
+		{% set label_values = ['Sollwert',label,'Stellwert', add_label] %}
+	{% endif %}
+
+	{% if not add_item2 is empty %}
+		{% set temp_items = [item_rtr~".soll_temp", item_rtr~".ist_temp", item_rtr~".stellwert", add_item, add_item2] %}
+		{% set mode_values = ['max','max','avg', 'max', 'max'] %}
+	{% endif %}
+	{% if not add_label2 is empty %}
+		{% set label_values = ['Sollwert',label,'Stellwert', add_label, add_label2] %}
+	{% endif %}
+
+	{{ plot.period(item_rtr~"_plotid",
+		temp_items,
+		mode_values, '96h', '', [17,-1], [32, 48], '',
+		label_values,
+		color_values, exposure_values,
+		['','', ''],
+		'5i', [1,1,2], [0,1],
+		['',''])
+	}}
+
+{% endmacro %}

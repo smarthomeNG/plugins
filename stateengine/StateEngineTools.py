@@ -60,6 +60,8 @@ def flatten_list(changelist):
                     flat_list.append(item)
             else:
                 flat_list.append(sublist)
+    elif isinstance(changelist, str) and changelist.startswith("["):
+        flat_list = ast.literal_eval(changelist)
     else:
         flat_list = changelist
     return flat_list
@@ -239,10 +241,10 @@ def get_original_caller(smarthome, caller, source, item=None):
         original_item = itemsApi.return_item(original_source)
         if original_item is None:
             break
-        original_changed_by = original_item.changed_by()
-        if ":" not in original_changed_by:
+        original_updated_by = original_item.property.last_update_by
+        if ":" not in original_updated_by:
             break
-        original_caller, __, original_source = original_changed_by.partition(":")
+        original_caller, __, original_source = original_updated_by.partition(":")
     if item is None:
         return original_caller, original_source
     else:
@@ -258,7 +260,9 @@ class SeItemChild:
     # abitem: parent SeItem instance
     def __init__(self, abitem):
         self._abitem = abitem
+        self.se_plugin = abitem.se_plugin
         self._sh = abitem.sh
+        self._shtime = abitem.shtime
 
     # wrapper method for logger.info
     def _log_info(self, text, *args):

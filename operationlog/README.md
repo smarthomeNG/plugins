@@ -1,7 +1,7 @@
 # OperationLog
 
 This plugins can be used to create logs which are cached, written to file and stored in memory to be used by items or other
-plugins. Furthermore the logs can be visualised by smartVISU using the standard widget "status.log".
+plugins. Furthermore the logs can be visualized by SmartVISU using the standard widget **status.log**.
 
 ## Requirements
 
@@ -34,12 +34,14 @@ mylogname2:
     filepattern: yearly_log-{name}-{year:04}.log
 ```
 
-This will register two logs named mylogname1 and mylogname2.
-The first one named mylogname1 is configured with the default configuration as shown,
+This will register two logs named **mylogname1** and **mylogname2**.
+The first one named **mylogname1** is configured with the default configuration as shown,
 caching the log to file ``var/cache/mylogname1`` and logging to file ``var/log/operationlog/yyyy-mm-dd-mylogname1.log``.
+
 Every day a new logfile will be created. The last 50 entries will be kept in memory.
 
-The entries of the second log will not be kept in memory, only logged to a yearly file with the pattern yearly_log-mylogname2-yyyy.
+
+The entries of the second log will not be kept in memory, only logged to a yearly file with the pattern ``var/log/yearly_log-mylogname2-yyyy.log``.
 
 The logging file can be named as desired. The keys `{name}`, `{year}`, `{month}` and `{day}` are replaced by the log name and current time respectively.
 Every time a log entry is written, the file name is checked and a new file is created upon change.
@@ -157,9 +159,9 @@ some_logic:
 
 To enable logging for a given logic when it is triggered just
 add the `olog` attribute to the logic configuration. As default a simple
-logtext is logged: Logic {logic.name} triggered.
+log text is logged: Logic {logic.name} triggered.
 
-Optionally you can overwrite the default logtext using the `olog_txt`
+Optionally you can overwrite the default log text using the `olog_txt`
 attribute. In contrast to the item setting this supports different predefined
 keys as listed below:
 
@@ -171,11 +173,11 @@ Key         | Description
 `{source}`  | identifies the source of change
 `{dest}`    | identifies the destination of change
 
-Furthermore user defined python expressions can be used in the logtext. Define as follows:
+Furthermore user defined python expressions can be used in the log text. Define as follows:
 
 `{eval=<python code>}`
 
-The code is replaced by the return value of the \<python code> for the logtext. Multiple `{eval=<python code>}` statements can be used.
+The code is replaced by the return value of the <python code> for the log text. Multiple `{eval=<python code>}` statements can be used.
 
 
 ### Functions
@@ -187,13 +189,16 @@ sh.mylogname1('<level_keyword>', msg)
 
 Logs the message in `msg` parameter with the given log level specified in the `<level_keyword>` parameter.
 
-Using the loglevel keywords `INFO`, `WARNING` and `ERROR` (upper or lower case) will cause the smartVISU plugin "status.log" to mark the entries with the colors green, yellow and red respectively. Alternative formulation causing a red color are `EXCEPTION` and `CRITICAL`. Using other loglevel keyword will result in log entry without a color mark.
+Using the log level keywords `INFO`, `WARNING` and `ERROR` (upper or lower case) will cause 
+the **SmartVISU** widget **status.log** to mark the entries with the colors green, yellow and red respectively.
+Alternative formulation causing a red color are `EXCEPTION` and `CRITICAL`. 
+Using other log level keywords will result in a log entry without a color mark.
 
 ```python
 sh.mylogname1(msg)
 ```
 
-Logs the message in the `msg` parameter with the default loglevel `INFO`.
+Logs the message in the `msg` parameter with the default log level `INFO`.
 
 ```python
 data = sh.mylogname1()
@@ -201,4 +206,4 @@ data = sh.mylogname1()
 
 will return a deque object containing the log with the last `maxlen` entries.
 
-This plugin is inspired from the plugins MemLog and AutoBlind, reusing some of their sourcecode.
+This plugin is inspired from the plugins MemLog and AutoBlind, reusing some of their source code.

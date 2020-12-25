@@ -5,6 +5,7 @@
 #########################################################################
 # Copyright 2015 KNX-User-Forum e.V.            http://knx-user-forum.de/
 # By Skender Haxhimolla 2015
+# By Oliver Hinckel 2020-
 #########################################################################
 #  This file is part of SmartHomeNG.   https://github.com/smarthomeNG/
 #
@@ -24,14 +25,15 @@
 #########################################################################
 
 import logging
-import sleekxmpp
+import asyncio
+import slixmpp
 
 from lib.plugin import Plugins
 from lib.model.smartplugin import *
 
 class XMPP(SmartPlugin):
 
-    PLUGIN_VERSION = "1.4.0"
+    PLUGIN_VERSION = "1.4.1"
     ALLOW_MULTIINSTANCE = False
 
     def __init__(self, smarthome, jid, password, logic='XMPP'):
@@ -53,7 +55,7 @@ class XMPP(SmartPlugin):
         if len(joins) and 'xep_0045' not in plugins:
             plugins.append('xep_0045')
 
-        self.xmpp = sleekxmpp.ClientXMPP(jid, password)
+        self.xmpp = slixmpp.ClientXMPP(jid, password)
         for plugin in plugins:
             self.xmpp.register_plugin(plugin)
         self.xmpp.use_ipv6 = self.get_parameter_value('use_ipv6')
@@ -62,6 +64,7 @@ class XMPP(SmartPlugin):
         self._logic = logic
         self._sh = smarthome
         self._join = joins
+        self.xmpp.loop = asyncio.get_event_loop()
 
     def run(self):
         self.alive = True
@@ -69,15 +72,18 @@ class XMPP(SmartPlugin):
             self.xmpp.connect(address=self._server)
         else:
             self.xmpp.connect()
-        self.xmpp.process(threaded=True)
+        self.xmpp.process()
 
     def stop(self):
-        self._run = False
-        self.alive = False
         for chat in self._join:
-            self.xmpp.plugin['xep_0045'].leaveMUC(chat, self.xmpp.boundjid.bare)
+            self.xmpp.plugin['xep_0045'].leave_muc(chat, self.xmpp.boundjid.bare)
         self.logger.info("Shutting Down XMPP Client")
-        self.xmpp.disconnect(wait=False)
+        self.xmpp.disconnect(wait=True, ignore_send_queue=True)
+        self.xmpp.loop.stop()
+        while self.xmpp.loop.is_running():
+          pass
+        self.xmpp.loop.close()
+        self.alive = False
 
     def parse_item(self, item):
         return None
@@ -98,10 +104,10 @@ class XMPP(SmartPlugin):
 
     def handleXMPPConnected(self, event):
         try:
-            self.xmpp.sendPresence(pstatus="Send me a message")
+            self.xmpp.send_presence(pstatus="Send me a message")
             self.xmpp.get_roster()
             for chat in self._join:
-                self.xmpp.plugin['xep_0045'].joinMUC(chat, self.xmpp.boundjid.bare, wait=True)
+                self.xmpp.plugin['xep_0045'].join_muc(chat, self.xmpp.boundjid.bare, wait=True)
         except Exception as e:
             self.logger.error("XMPP: Reconnecting, because can not set/get presence/roster: {}".format(e))
             self.xmpp.reconnect()

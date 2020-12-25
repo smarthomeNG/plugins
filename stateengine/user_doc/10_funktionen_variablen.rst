@@ -11,7 +11,7 @@ Funktionen und Variablen
 Das stateengine Plugin stellt verschiedene vordefinierte
 Funktionen zur Verfügung, die einfach für
 ``se_set_<Aktionsname>`` und ``se_run_<Aktionsname>`` Aktionen
-verwendet werden können:
+mittels ``eval:`` verwendet werden können:
 
 **Sonnenstandsabhängige Lamellenausrichtung**
 *Die Neigung der Lamellen wird automatisch von der Höhe der Sonne bestimmt.*
@@ -111,7 +111,7 @@ verwendet werden. Alternativ ist es auch möglich, die aus SmarthomeNG bekannte 
 
 Statt dieser Funktion kann se_eval.get_relative_itemproperty('..suspend', 'value')
 verwendet werden. Alternativ ist es auch möglich, die aus SmarthomeNG bekannte Syntax
-``sh...suspend.property.value`` oder ``sh...suspend()`` zu verwenden.
+``sh...suspend.property.value`` oder ``sh...suspend()`` im eval zu verwenden.
 Insofern hat diese Funktion nur wenig Relevanz.
 
 **Item-Property relativ zum Regelwerk-Item ermitteln**
@@ -148,7 +148,9 @@ Der Name der aktuellen Aktion, also der Teil hinter ``se_action_`` kann für
 das Setzen oder Eruieren von Werten herangezogen werden. Dies macht insbesondere
 dann Sinn, wenn auf Setting-Items in der Aktion Bezug genommen wird. Durch
 diese Variable ist es so je nach Setup möglich, ein Template für sämtliche
-Aktionen zu nutzen. Hier ein Beispiel. Das Template "setvalue" wird für das
+Aktionen zu nutzen. Sobald die Statusevaluierung
+abgeschlossen ist, ist diese Variable leer.
+Ein Beispiel: Das Template "setvalue" wird für das
 Setzen mehrerer Items herangezogen. Der eval Ausdruck schafft eine Referenz
 auf das passende Unteritem in licht1.automatik.settings.
 
@@ -198,8 +200,15 @@ auf das passende Unteritem in licht1.automatik.settings.
 **current.state_id:**
 *Die Id des Status, der gerade geprüft wird*
 
+Diese Variable wird leer, sobald die Statusevaluierung beendet wurde, noch bevor die Aktionen des
+zuletzt eingenommenen Zustands ausgeführt werden. Sie kann daher nur in der Evaluierung, nicht aber
+in on_enter(_or_stay) genutzt werden. Hierfür wird stattdessen ``se_eval.get_relative_itemvalue('..state_id')`` genutzt.
+
 **current.state_name:**
 *Der Name des Status, der gerade geprüft wird*
+
+Wie die state_id Variable wird diese nur während der Statusevaluierung entsprechend befüllt und sofort beim Eintritt
+in einen neuen Zustand geleert (noch vor dem Durchführen der Aktionen).
 
 Das angeführte Beispiel zeigt, wie eine Bedingung mit einem Wert abgeglichen
 werden kann, der in einem passenden Settingitem hinterlegt ist. Konkret
@@ -207,8 +216,8 @@ würde beim Evaluieren vom Zustand_Eins mit dem Namen "sueden" die maximale
 Helligkeit der Wetterstation mit dem Wert von automatik.settings.sueden.max_bright
 verglichen werden. Im Zustand_Zwei namens osten würde der Vergleich hingegen
 mit dem Item automatik.settings.osten.max_bright stattfinden. Zu beachten ist,
-dass die Eval Ausdrücke exakt gleich sind, was ein Anlegen von eigenen Templates
-deutlich vereinfacht.
+dass die Eval Ausdrücke exakt gleich sind, wodurch ein Anlegen von eigenen Templates
+die Situation deutlich vereinfachen würde.
 
 .. code-block:: yaml
 
@@ -249,23 +258,25 @@ deutlich vereinfacht.
 **current.conditionset_name:**
 *Der Name der Bedingungsgruppe, die gerade geprüft wird*
 
+Beide current.conditionset Variablen können ebenso wie die oben erwähnten current.state_id/name
+nur während der Prüfung der Bedingungen genutzt werden, nicht jedoch für Aktionen.
+
 Das Beispiel zeigt einen Windzustand. Dieser übernimmt keine Funktionen,
 sondern dient lediglich der Visualisierung (Sicherheitsrelevante Features
-sollten unbedingt z.B. über den KNX Bus erfolgen!).
+sollten unbedingt z.B. über den KNX Bus erfolgen!). Außerdem wird davon
+ausgegangen, dass es einen untergeordneten Zustand names x gibt.
 
 - enter_normal wird angenommen, sobald das Wind-Item aktiv ist, zuvor aber
-  nicht der Lock-Zustand aktiv war.
+  nicht der x-Zustand aktiv war.
 
-- enter_afterlock wird angenommen, sobald das Wind-Item aktiv ist und zuvor
-  der Sperr-Zustand aktiv war.
+- enter_after_x wird angenommen, sobald das Wind-Item aktiv ist und zuvor
+  der x-Zustand aktiv war.
 
-- enter_stayafterlock wird Dank des se_value_conditionset_name dann angenommen,
-  solange das Wind-Item noch aktiv ist und der Zustand aufgrund des enter_afterlock
-  aktiviert wurde.
+- enter_stayafter_x wird angenommen, sobald das Wind-Item aktiv ist und zuvor
+  der x-Zustand aktiv war.
 
-Da bei der on_leave Aktion der Lock-Zustand nur dann aktiviert wird, wenn der
-Zustand auf Grund eines "lock" Bedingungssets eingenommen wurde, kann nun der
-Sperrzustand wieder hergestellt werden.
+Beim Verlassen des Windzustands (on_leave) wird nun ein bestimmtes Item (y)
+auf True gesetzt - aber nur, wenn zuvor der x-Zustand aktiv war.
 
 .. code-block:: yaml
 
@@ -278,23 +289,21 @@ Sperrzustand wieder hergestellt werden.
                 wind:
                     name: wind
                     on_leave:
-                        se_action_lock:
+                        se_action_y:
                           - function:set
                           - to:True
-                          - conditionset:(.*)enter_(.*)lock
+                          - conditionset:(.*)enter_(.*)_x
 
-                    enter_normal:
+                    enter_after_x:
                         se_value_wind: True
-                        se_value_laststate: eval:stateengine_eval.get_relative_itemid('..rules.lock')
-                        se_negate_laststate: True
+                        se_value_laststate: eval:stateengine_eval.get_relative_itemid('..rules.x')
 
-                    enter_afterlock:
-                        se_value_wind: True
-                        se_value_laststate: eval:stateengine_eval.get_relative_itemid('..rules.lock')
-
-                    enter_stayafterlock:
+                    enter_stayafter_x:
                         se_value_wind: True
                         se_value_laststate: var:current.state_id
                         se_value_lastconditionset_name:
                             - 'var:current.conditionset_name'
-                            - 'enter_afterlock'
+                            - 'enter_after_x'
+
+                    enter_normal:
+                        se_value_wind: True

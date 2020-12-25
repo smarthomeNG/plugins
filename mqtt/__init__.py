@@ -40,7 +40,7 @@ class Mqtt2(MqttPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '2.0.0'
+    PLUGIN_VERSION = '2.0.1'
 
 
     def __init__(self, sh, *args, **kwargs):
@@ -221,6 +221,8 @@ class Mqtt2(MqttPlugin):
                 retain = self.get_iattr_value(item.conf, 'mqtt_retain')
                 if retain == None:
                     retain = False
+                else:
+                    retain = Utils.to_bool(retain)
 
                 bool_values = self.get_iattr_value(item.conf, 'mqtt_bool_values')
                 if bool_values is None or bool_values == []:

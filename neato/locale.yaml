@@ -1,0 +1,16 @@
+# translations for the web interface
+plugin_translations:
+    # Translations for the plugin specially for the web interface
+    'Informationen':         {'de': '=', 'en': 'Informations'}
+
+    # Alternative format for translations of longer texts:
+    'Vorwerk Explanation':
+        de: 'Schritt fuer Schritt Anleitung zur Generierung eines Oauth2 Tokens fuer Vorwerk API, kompatibel zur MyKobold APP.'
+        en: 'Step by Step manual for generating an OAuth2 token for Vorwerk API, compatible with new MyKobold APP.'
+
+    'Liste der Neato/Vorwerk Items:':
+        de: '='
+        en: 'List of Neato/Vorwerk items:'
+
+
+

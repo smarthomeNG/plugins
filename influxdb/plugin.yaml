@@ -3,15 +3,19 @@ plugin:
     # Global plugin attributes
     type: system                   # plugin type (gateway, interface, protocol, system, web)
     description:                   # Alternative: description in multiple languages
-        de: 'Ermöglicht Speicherung von Item Werten in einer InfluxData time-series Datenbank (Plugin aus 2017)'
-        en: 'Plugin to store item values in an InfluxData time-series database (plugin from 2017)'
+        de: 'Ermöglicht Speicherung von Item Werten in einer InfluxData time-series Datenbank'
+        en: 'Plugin to store item values in an InfluxData time-series database'
+    requirements:
+        de: 'influxdb database'
+        en: 'influxdb database'
     maintainer: Kai Meder
-    tester: '?'                    # Who tests this plugin?
+    tester: chrisr79, onkelandy                    # Who tests this plugin?
     state: ready
-    keywords: database
-    documentation: https://github.com/smarthomeNG/smarthome/wiki/Installation-Influx-Grafana        # url of documentation (wiki) page
+    keywords: database, influx, influxdb
+    #documentation: https://www.smarthomeng.de/user/plugins/influxdb/user_doc.html
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1498207-support-thread-f%C3%BCr-influxdb-plugin
 
-    version: 1.0.1                 # Plugin version
+    version: 1.0.2                 # Plugin version
     sh_minversion: 1.1             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
@@ -60,12 +64,25 @@ parameters:
         description:
             de: "?"
             en: "?"
+    write_http:
+        type: bool
+        default: False
+        description:
+            de: "Bei True werden die Werte mit HTTP und bei False mit UDP in die Datenbank geschrieben."
+            en: "If True values into the database are written with HTTP, if False with UDP."
+    http_port:
+        type: int
+        default: 8086
+        valid_min: 0
+        valid_max: 65535
+        description:
+            de: "Portnummer der InfluxData Datenbank für HTTP-Zugriff"
+            en: "Port of the InfluxData database for HTTP access"    
 
 item_attributes:
     # Definition of item attributes defined by this plugin
     influxdb:
         type: foo
-        default: None'
         description:
             de: "Diesem Attribut einen Wert zuweisen, um den Item Wert durch das influxdata Plugin zu speichern"
             en: "Assign a value to this attribute to store the item value through the influxdata plugin"
@@ -79,6 +96,11 @@ item_attributes:
         description:
             de: 'Angabe weitere Tags, die mit dem Wert gespeichert werden sollen (z.B.: {"room": "dining"}'
             en: 'Specify additional tags to be stored with the value (e.g.: {"room": "dining"}'
+    influxdb_fields:
+        type: dict
+        description:
+            de: 'Das Schlüssel-Wert-Paar in einer InfluxDB-Datenstruktur, die Metadaten und den tatsächlichen Datenwert aufzeichnet.'
+            en: 'The key-value pair in an InfluxDB data structure that records metadata and the actual data value.'
 
 item_structs: NONE
   # Definition of item-structure templates for this plugin
@@ -88,4 +110,3 @@ plugin_functions: NONE
 
 logic_parameters: NONE
     # Definition of logic parameters defined by this plugin
-

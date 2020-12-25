@@ -2,7 +2,7 @@
 # -*- coding: utf8 -*-
 #########################################################################
 # Copyright 2017-       Martin Sinn                         m.sinn@gmx.de
-# Copyright 2014-2016   Michael Würtenberger             
+# Copyright 2014-2016   Michael Würtenberger
 #########################################################################
 #  Philips Hue plugin for SmartHomeNG
 #
@@ -25,9 +25,9 @@
 #  Basiert auf den Ueberlegungen des verhandenen Hue Plugins.
 #  Die Parametrierung des Plugings in der plugin.conf und die authorize() Methode wurden zur
 #  Wahrung der Kompatibilitaet uebernommen
-# 
+#
 #  Umsetzung rgb mit aufgenommen, basiert auf der einwegumrechnung von
-#  https://github.com/benknight/hue-python-rgb-converter 
+#  https://github.com/benknight/hue-python-rgb-converter
 #
 #  Basiert aus der API 1.11 der Philips hue API spezifikation, die man unter
 #  http://www.developers.meethue.com/documentation/lights-api finden kann
@@ -37,7 +37,7 @@
 #  Library for RGB / CIE1931 coversion ported from Bryan Johnson's JavaScript implementation:
 #  https://github.com/bjohnso5/hue-hacking
 #  extension to use different triangle points depending of the type of the hue system
-# 
+#
 
 import logging
 import json
@@ -56,7 +56,7 @@ client = Tools()
 
 class HUE(SmartPlugin):
 
-    PLUGIN_VERSION = "1.4.4"
+    PLUGIN_VERSION = "1.4.5"
 
     def __init__(self, smarthome, hue_ip = '', hue_user = '', hue_port = '80', cycle_lamps = '10', cycle_bridges = '60', default_transitionTime = '0.4'):
 
@@ -188,7 +188,7 @@ class HUE(SmartPlugin):
     def getDistanceBetweenTwoPoints(self, one, two):
         dx = one.x - two.x
         dy = one.y - two.y
-        return math.sqrt(dx * dx + dy * dy) 
+        return math.sqrt(dx * dx + dy * dy)
     def getXYPointFromRGB(self, red, green, blue, lampType):
         r = ((red + 0.055) / (1.0 + 0.055))**2.4 if (red > 0.04045) else (red / 12.92)
         g = ((green + 0.055) / (1.0 + 0.055))**2.4 if (green > 0.04045) else (green / 12.92)
@@ -207,7 +207,7 @@ class HUE(SmartPlugin):
             xyPoint = self.getClosestPointToPoint(xyPoint, lampType)
         return [xyPoint.x, xyPoint.y]
     ### end of library files
-    
+
     def run(self):
         self.alive = True
         # if you want to create child threads, do not make them daemon = True!
@@ -215,14 +215,14 @@ class HUE(SmartPlugin):
 
     def stop(self):
         self.alive = False
-        
+
     def _find_item_attribute(self, item, attribute, attributeDefault, attributeLimit=99):
         # zwischenspeichern für die loggerausgabe
         itemSearch = item
         # schleife bis ich ganz oben angekommen bin
         while (not attribute in itemSearch.conf):
             # eine Stufe in den ebenen nach oben
-            itemSearch = itemSearch.return_parent()                    
+            itemSearch = itemSearch.return_parent()
             if (itemSearch is self._sh):
                 # wir sind am root knoten angekommen und haben nichts gefunden !
                 if attribute == 'hue_bridge_id' and self._numberHueBridges > 1:
@@ -239,7 +239,7 @@ class HUE(SmartPlugin):
             itemAttribute = attributeLimit
             self.logger.warning('_find_item_attribute: attribute [{0}] exceeds upper limit and set to default in item [{1}]'.format(attribute,item))
         return str(itemAttribute)
-    
+
     def parse_item(self, item):
         # alle konfigurationsfehler sollten in der parsing routinge abgefangen werden
         # fehlende parameter werden mit eine fehlermeldung versehen und auf default werte gesetzt
@@ -296,7 +296,7 @@ class HUE(SmartPlugin):
                     self._listenGroupItems[hueIndex] = item
                 else:
                     self.logger.warning('parse_item: in group item [{0}] command hue_listen_group = {1} is duplicated to item  [{2}]'.format(item,hueListenGroupCommand,self._listenGroupItems[hueIndex]))
-        
+
         if 'hue_send' in item.conf:
             hueSendCommand = item.conf['hue_send']
             if hueSendCommand in self._sendLampKeys:
@@ -351,7 +351,7 @@ class HUE(SmartPlugin):
         else:
             value = int(value)
         return value
-   
+
     def update_lamp_item(self, item, caller=None, source=None, dest=None):
         # methode, die bei einer änderung des items ausgerufen wird wenn die änderung von aussen kommt, dann wird diese abgearbeitet
         # im konkreten fall heisst das, dass der aktuelle status der betroffene lampe komplett zusammengestellt wird
@@ -370,30 +370,30 @@ class HUE(SmartPlugin):
 
             # index ist immer bridge_id + lamp_id + hue_send
             hueIndex = hueBridgeId + '.' + hueLampId
-            
+
             if hueIndex + '.on' in self._sendLampItems:
                 hueLampIsOn = self._sendLampItems[(hueIndex + '.on')]()
             else:
                 self.logger.warning('update_lamp_item: no item for on/off defined for bridge {0} lampe {1}'.format(hueBridgeId, hueLampId))
                 hueLampIsOn = False
-                
+
             # test aus die wertgrenzen, die die bridge verstehen kann
             if hueSend in self._rangeInteger8:
                 # werte dürfen zwischen 0 und 255 liegen
-                value = self._limit_range_int(value, 0, 255)    
+                value = self._limit_range_int(value, 0, 255)
             if hueSend in self._rangeSignedInteger8:
                 # werte dürfen zwischen -254 und 254 liegen
-                value = self._limit_range_int(value, -254, 254)    
+                value = self._limit_range_int(value, -254, 254)
             if hueSend in self._rangeInteger16:
                 # hue darf zwischen 0 und 65535 liegen
-                value = self._limit_range_int(value, 0, 65535)    
+                value = self._limit_range_int(value, 0, 65535)
             if hueSend in self._rangeSignedInteger16:
                 # hue darf zwischen -65534 und 65534 liegen
-                value = self._limit_range_int(value, -65534, 65534)    
+                value = self._limit_range_int(value, -65534, 65534)
             if hueSend == 'ct':
                 # ct darf zwischen 153 und 500 liegen
                 value = self._limit_range_int(value, 153, 500)
-                
+
             if hueLampIsOn:
                 # lampe ist an (status in sh). dann können alle befehle gesendet werden
                 if hueSend == 'on':
@@ -405,16 +405,16 @@ class HUE(SmartPlugin):
                     else:
                         # ansonst wird nur eingeschaltet
                         self._set_lamp_state(hueBridgeId, hueLampId, {'on': True , 'transitiontime': hueTransitionTime})
-                        self.logger.info('update_lamp_item: no bri item defined for restoring the brightness after swiching on again')                        
+                        self.logger.info('update_lamp_item: no bri item defined for restoring the brightness after swiching on again')
                 else:
                     # anderer befehl gegeben
                     if hueSend in self._rgbKeys:
                         # besonderheit ist der befehl für die rgb variante, da hier alle werte herausgesucht werden müssen
                         if ((hueIndex + '.col_r') in self._sendLampItems) and ((hueIndex + '.col_g') in self._sendLampItems) and ((hueIndex + '.col_b') in self._sendLampItems):
                             # wertebereiche der anderen klären bri darf zwischen 0 und 255 liegen
-                            value_r = self._limit_range_int(self._sendLampItems[(hueIndex + '.col_r')](), 0, 255)    
-                            value_g = self._limit_range_int(self._sendLampItems[(hueIndex + '.col_g')](), 0, 255)    
-                            value_b = self._limit_range_int(self._sendLampItems[(hueIndex + '.col_b')](), 0, 255)    
+                            value_r = self._limit_range_int(self._sendLampItems[(hueIndex + '.col_r')](), 0, 255)
+                            value_g = self._limit_range_int(self._sendLampItems[(hueIndex + '.col_g')](), 0, 255)
+                            value_b = self._limit_range_int(self._sendLampItems[(hueIndex + '.col_b')](), 0, 255)
 
                             xyPoint = self.getXYPointFromRGB(value_r, value_g, value_b, int(hueLampType))
                             # und jetzt der wert setzen
@@ -456,24 +456,24 @@ class HUE(SmartPlugin):
 
             # index ist immer bridge_id + lamp_id + hue_send
             hueIndex = hueBridgeId + '.' + hueGroupId
-            
+
             if hueIndex + '.on' in self._sendGroupItems:
                 hueGroupIsOn = self._sendGroupItems[(hueIndex + '.on')]()
             else:
                 self.logger.warning('update_group_item: no item for on/off defined for bridge {0} group {1}'.format(hueBridgeId, hueGroupId))
                 hueGroupIsOn = False
-                
+
             # test aus die wertgrenzen, die die bridge verstehen kann
             if hueSendGroup in self._rangeInteger8:
                 # werte dürfen zwischen 0 und 255 liegen
-                value = self._limit_range_int(value, 0, 255)    
+                value = self._limit_range_int(value, 0, 255)
             if hueSendGroup in self._rangeInteger16:
                 # hue darf zwischen 0 und 65535 liegen
-                value = self._limit_range_int(value, 0, 65535)    
+                value = self._limit_range_int(value, 0, 65535)
             if hueSendGroup == 'ct':
                 # hue darf zwischen 0 und 65535 liegen
                 value = self._limit_range_int(value, 153, 500)
-                
+
             if hueGroupIsOn:
                 # lampe ist an (status in sh). dann können alle befehle gesendet werden
                 if hueSendGroup == 'on':
@@ -485,7 +485,7 @@ class HUE(SmartPlugin):
                     else:
                         # ansonst wird nur eingeschaltet
                         self._set_group_state(hueBridgeId, hueGroupId, {'on': True , 'transitiontime': hueTransitionTime})
-                        self.logger.info('update_lamp_item: no bri item defined for restoring the brightness after swiching on again')                        
+                        self.logger.info('update_lamp_item: no bri item defined for restoring the brightness after swiching on again')
                 else:
                     # standardbefehle
                     self._set_group_state(hueBridgeId, hueGroupId, {hueSendGroup: value, 'transitiontime': hueTransitionTime})
@@ -502,8 +502,8 @@ class HUE(SmartPlugin):
                         self._set_group_state(hueBridgeId, hueGroupId, {'on': True , 'bri': value, 'transitiontime': hueTransitionTime})
                     else:
                         # ansonsten wird kein befehl abgesetzt !
-                        pass                           
-                           
+                        pass
+
     def update_bridge_item(self, item, caller=None, source=None, dest=None):
         # methode, die bei einer änderung des items ausgerufen wird
         # wenn die änderung von aussen kommt, dann wird diese abgearbeitet
@@ -517,12 +517,12 @@ class HUE(SmartPlugin):
             # test aus die wertgrenzen, die die bridge verstehen kann
             if hueSend in self._rangeInteger8:
                 # werte dürfen zwischen 0 und 255 liegen
-                value = self._limit_range_int(value, 0, 255)    
+                value = self._limit_range_int(value, 0, 255)
             if hueSend in self._rangeInteger16:
                 # hue darf zwischen 0 und 65535 liegen
-                value = self._limit_range_int(value, 0, 65535)    
+                value = self._limit_range_int(value, 0, 65535)
             self._set_group_state(hueBridgeId, '0', {hueSend: value})
-                                   
+
     def dimmenDPT3(self, item, caller=None, source=None, dest=None):
         # das ist die methode, die die DPT3 dimmnachrichten auf die dimmbaren hue items mapped
         # fallunterscheidung dimmen oder stop
@@ -547,7 +547,7 @@ class HUE(SmartPlugin):
                 # das ist aus meiner sicht noch ein fehler in item.py
                 item.return_parent()(int(item.return_parent()() + 1), 'HUE_FADE')
                 item.return_parent()(int(item.return_parent()() - 1), 'HUE_FADE')
-                
+
     def  _get_web_content(self, hueBridgeId='0', path='', method='GET', body=None):
         # in dieser routine erfolgt der umbau und die speziellen themen zur auswertung der verbindung, die speziell für das plugin ist
         # der rest sollte standard in der routine fetch_url() enthalten sein. leider fehlt dort aber die auswertung der fehllerconditions
@@ -657,7 +657,8 @@ class HUE(SmartPlugin):
                 for hueObjectItem, hueObjectItemValue in dictOptimized.items():
                     # nachdem alle objekte und werte auf die gleiche ebene gebracht wurden, beginnt die zuordnung
                     # vor hier an werden die ganzen listen items durchgesehen und die werte aus der rückmeldung zugeordnet
-                    for returnItem in self._listenLampItems:
+                    loop_listenLampItems = list(self._listenLampItems.keys())
+                    for returnItem in loop_listenLampItems:
                         # wenn ein listen item angelegt wurde und dafür ein status zurückkam
                         # verglichen wird mit dem referenzkey, der weiter oben aus lampid und state gebaut wurde
                         if returnItem == (hueBridgeId + '.' + hueLampId + '.' + hueObjectItem):
@@ -773,7 +774,7 @@ class HUE(SmartPlugin):
 
 
     def get_config(self, hueBridgeId='0'):
-        # hier eine interaktive routing für di ecli, um den user herauszubekommen, 
+        # hier eine interaktive routing für di ecli, um den user herauszubekommen,
         # mit dem die szenen gesetzt worden sind, um ihn dann als user für das plugin einzusetzen
         # und jetzt alle szenen
         returnValues = self._get_webcontent(hueBridgeId, '/scenes')
