@@ -48,6 +48,7 @@ import requests
 
 
 
+
 class protocoll(object):
     
     log = []
@@ -85,16 +86,15 @@ class Alexa4P3(SmartPlugin):
         self.service_https_keyfile = None        
         self.service_host='0.0.0.0'        
         
-        self.devices = AlexaDevices()
-        self.actions = AlexaActions(self.sh, self.logger, self.devices)
-        
         self._proto = protocoll()
+        
+        self.devices = AlexaDevices()
+        self.actions = AlexaActions(self.sh, self.logger, self.devices,self._proto)
         
         self.service = AlexaService(self._proto,self.logger, self.PLUGIN_VERSION, self.devices, self.actions,
                                     self.service_host, int(self.service_port), self.service_https_certfile, self.service_https_keyfile)
         self.action_count_v2 = 0
         self.action_count_v3 = 0
-        
         
         self.init_webinterface()
 

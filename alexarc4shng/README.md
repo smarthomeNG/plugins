@@ -165,7 +165,7 @@ login_update_cycle->seconds to wait for automatic Login in to refresh the cookie
 
 ```yaml
 AlexaRc4shNG:
-    plugin_name: AlexaRc4shNG
+    plugin_name: alexarc4shng
     cookiefile: /usr/local/smarthome/plugins/alexarc4shng/cookies.txt
     host: alexa.amazon.de
     item_2_enable_alexa_rc: Item_to_enable_Alexaremote
@@ -287,9 +287,9 @@ The plugin provides the following publich functions. You can use it for example 
 example how to use in logics:
 
 ```yaml
-sh.alexarc4shng.send_cmd("yourDevice", "Text2Speech", "yourValue")
+sh.AlexaRc4shNG.send_cmd("yourDevice", "Text2Speech", "yourValue")
 ---
-sh.alexarc4shng.send_cmd('Kueche','Text2Speech','Der Sensor der Hebenlage signalisiert ein Problem.')
+sh.AlexaRc4shNG.send_cmd('Kueche','Text2Speech','Der Sensor der Hebenlage signalisiert ein Problem.')
 ```
 Sends a command to the device. "dvName" is the name of the device,  "cmdName" is the name of the CommandLet, mValue is the value you would send.
 You can find all this informations on the Web-Interface.
@@ -302,7 +302,7 @@ You can also user the [placeholders](#placeholders)
 This function returns the Device-Name of the last Echo Device which got a voice command. You can use it in logics to trigger events based on the last used Echo device.
 
 ```yaml
-myLastDevice = sh.alexarc4shng.get_last_alexa()
+myLastDevice = sh.AlexaRc4shNG.get_last_alexa()
 
 ```
 # Web-Interface <a name="webinterface"/></a>

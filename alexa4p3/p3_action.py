@@ -175,7 +175,7 @@ def SetRangeValue(self, directive):
         oldValue=str(item())
         item_range = self.item_range(item, DEFAULT_RANGE)
         item_new = calc_percentage(new_percentage, item_range)
-        self.sh.Alexa4P3._proto.addEntry('INFO   ','Changed item :{} from {} to {}'.format(item.property.name,oldValue,newValue))
+        self._proto.addEntry('INFO   ','Changed item :{} from {} to {}'.format(item.property.name,oldValue,newValue))
         self.logger.info("Alexa P3: SetRangeValue({}, {:.1f})".format(item.id(), item_new))
         item( item_new, "alexa4p3" )
         self.response_Value = None
@@ -273,14 +273,13 @@ def SetTargetTemperature(self, directive):
 def TurnOn(self, directive):
     device_id = directive['endpoint']['endpointId']
     items = self.items(device_id)
-
     for item in items:
         on, off = self.item_range(item, DEFAULT_RANGE_LOGIC)
         self.logger.info("Alexa: turnOn({}, {})".format(item.id(), on))
         if on != None:
             item( on, "alexa4p3" )
             self.response_Value = 'ON'            
-            self.sh.Alexa4P3._proto.addEntry('INFO   ', 'Changed item :{} to {}'.format(item.property.name,self.response_Value))
+            self._proto.addEntry('INFO   ', 'Changed item :{} to {}'.format(item.property.name,self.response_Value))
     myValue = self.p3_respond(directive)
     return myValue
 

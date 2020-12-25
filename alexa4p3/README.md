@@ -6,7 +6,8 @@ Alexa4PayloadV3
 
 1. [Generell](#generell)
 2. [Change Log](#changelog)
-3. [Requrirements](#requirements)
+3. [Requrirements](#requirements)<br>
+   [Einrichtung Amazon-Skill / Lambda-Funktion](#Skill)<sup><span style="color:red"> **Neu**</sup></span>
 4. [Icon / Display Categories](#Icons)<sup><span style="color:blue"> **Update**</sup></span>
 5. [Entwicklung / Einbau von neuen Skills](#Entwicklung)
 6. [Alexa-ThermostatController](#ThermostatController) + [Thermosensor](#Thermostatsensor)
@@ -23,6 +24,7 @@ Alexa4PayloadV3
 17. [Alexa-ColorTemperaturController](#ColorTemperaturController) <sup><span style="color:red"> **Neu**</sup></span>
 18. [Alexa-PlaybackController](#PlaybackController) <sup><span style="color:red"> **Neu**</sup></span>
 19. [Web-Interface](#webinterface) <sup><span style="color:red"> **Neu**</sup></span>
+
 
 
 ## [Beispiel-Konfigurationen](#Beispiel) <sup><span style="color:red"> **Neu**</sup></span>
@@ -73,6 +75,9 @@ PayloadV3 : TurnOn
 Die Actions unterscheiden sich zwischen Payload V2 und V3 oft nur durch Gross/Klein-Schreibung
 
 ## Change Log <a name="changelog"/></a>
+
+### 20.10.2020
+- Doku von Schuma für die Einrichtung des Skills bei Amazon ergänzt - eingefügt bei Requirements
 
 ### 11.04.2020
 - Version auf 1.0.2 für shNG Release 1.7 erhöht
@@ -138,6 +143,13 @@ Die Actions unterscheiden sich zwischen Payload V2 und V3 oft nur durch Gross/Kl
 ## Requrirements
 
 Das Plugin benötigt Modul Python-Requests. Dies sollte mit dem Core immer auf dem aktuellen Stand mitkommen.
+
+<a name="Skill"/></a>
+## Amazon Skill / Lambda
+ 
+Es muss ein funktionierender Skill in der Amazon Developer Konsole / AWS Lambda erstellt werden.
+Eine ausführliche Dokumentation ist [hier](./assets/Alexa_V3_plugin.pdf) zu finden.
+Vielen Dank @schuma für die ausführliche Dokumentation
 
 Ansonsten keine Requirements.
 
