@@ -1,7 +1,6 @@
 .. index:: Plugins; Alexa4P3 (Unterstützung von Amazon Echo/Alexa Geräten)
 .. index:: Alexa4P3
 
-
 ========
 alexa4p3
 ========
