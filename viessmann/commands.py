@@ -401,7 +401,7 @@ unitset = {
         'IU100':   {'unit_de': 'INT unsigned 100',  'type': 'integer',  'signed': False, 'read_value_transform': '100'},        # vito unit:
         'IU3600':  {'unit_de': 'INT unsigned 3600', 'type': 'integer',  'signed': False, 'read_value_transform': '3600'},       # vito unit: CS
         'IUBOOL':  {'unit_de': 'INT unsigned bool', 'type': 'integer',  'signed': False, 'read_value_transform': 'bool'},       # vito unit:
-        'IUINT':   {'unit_de': 'INT unsigned int',  'type': 'integer',  'signed': False, 'read_value_transform': 'int'},        # vito unit:
+        'IUINT':   {'unit_de': 'INT unsigned int',  'type': 'integer',  'signed': False, 'read_value_transform': '1'},          # vito unit:
         'IUNON':   {'unit_de': 'INT unsigned non',  'type': 'integer',  'signed': False, 'read_value_transform': 'non'},        # vito unit: UTI, CO
         'IS2':     {'unit_de': 'INT signed 2',      'type': 'integer',  'signed': True,  'read_value_transform': '2'},          # vito unit: UT1, PR
         'IS10':    {'unit_de': 'INT signed 10',     'type': 'integer',  'signed': True,  'read_value_transform': '10'},         # vito unit: UT, UN
@@ -427,7 +427,7 @@ unitset = {
         'IU3600':  {'unit_de': 'INT unsigned 3600', 'type': 'integer',  'signed': False, 'read_value_transform': '3600'},       # vito unit: CS
         'IUPR':    {'unit_de': 'INT unsigned 2.55', 'type': 'integer',  'signed': False, 'read_value_transform': '2.55'},       # vito unit: PP
         'IUBOOL':  {'unit_de': 'INT unsigned bool', 'type': 'integer',  'signed': False, 'read_value_transform': 'bool'},       # vito unit:
-        'IUINT':   {'unit_de': 'INT unsigned int',  'type': 'integer',  'signed': False, 'read_value_transform': 'int'},        # vito unit:
+        'IUINT':   {'unit_de': 'INT unsigned int',  'type': 'integer',  'signed': False, 'read_value_transform': '1'},          # vito unit:
         'IUNON':   {'unit_de': 'INT unsigned non',  'type': 'integer',  'signed': False, 'read_value_transform': 'non'},        # vito unit: UTI, CO
         'IS2':     {'unit_de': 'INT signed 2',      'type': 'integer',  'signed': True,  'read_value_transform': '2'},          # vito unit: UT1, PR
         'IS10':    {'unit_de': 'INT signed 10',     'type': 'integer',  'signed': True,  'read_value_transform': '10'},         # vito unit: UT, UN
