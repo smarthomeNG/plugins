@@ -1,8 +1,9 @@
 .. index:: Plugins; hue2 (Philips Hue v2)
 .. index:: hue hue2
 
+====
 hue2
-####
+====
 
 Das Plugin unterstützt Philips Hue Bridges. Es ist eine komplette Neuentwicklung mit einem deutlich erweiterten
 Funktionsumfang gegenüber dem alten Hue Plugin:
@@ -12,6 +13,7 @@ Funktionsumfang gegenüber dem alten Hue Plugin:
 - Das Plugin unterstützt je Instanz im Gegensatz zum alten Plugin nur eine Bridge. Dafür ist es Multi-Instance fähig,
   so dass bei Einsatz mehrerer Bridges einfach mehrere Instanzen des Plugins konfiguriert werden können.
 - Zur Vereinfachten Einrichtung von Items liefert das Plugin Struktur Templates.
+- Funktionalitäten von Hue Gruppen werden großteils unterstützt.
 
 
 Plugin Instanz hinzufügen
@@ -139,7 +141,7 @@ Mit ``hue2_resource`` wird festgelegt, auf welche Resource der Bridge zugegriffe
 
 .. note::
 
-    Bisher ist nur der Resouce-Typ ``light`` implementiert.
+    Bisher sind nur die Resouce-Typen ``light`` und ``group`` implementiert.
 
 Mit ``hue2_id`` wird festgelegt auf welche Resource des gewählten Typs zugegriffen werden soll. Die Id kann im
 Web Interface im Tab des entsprechenden Resource-Typs nachgesehen werden.
@@ -159,6 +161,8 @@ Für den Resource-Typ ``light`` sind die folgenden Funktionen implementiert (ein
     - ``type``
     - ``modelid``
     - ``swversion``
+    - ``activate_scene``
+
 
 Die vollständige Übersicht über die unterstützen Funktionen und die Datentypen dazu kann auf der
 Seite :doc:`/plugins_doc/config/hue2` in der Beschreibung des Item Attributes ``hue2_function`` nachgelesen
