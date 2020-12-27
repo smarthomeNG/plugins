@@ -7,10 +7,10 @@ plugin:
         en: 'Gateway for connection to the Philips/Signify Hue system using one bridge (v1 or v2)'
     maintainer: msinn
 #    tester:                         # Who tests this plugin?
-    state: develop                  # change to ready when done with development
+    state: ready                    # change to ready when done with development
 #    keywords: iot xyz
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
-#    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/41379-philips-hue-plugin-neu-v1-0-released
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1586861-support-thread-für-das-hue2-plugin
 
     version: 2.0.0                  # Plugin version (must match the version specified in __init__.py)
     sh_minversion: 1.7.2c           # minimum shNG version to use this plugin
@@ -100,6 +100,7 @@ item_attributes:
             de: "Anzusteuernde Funktion für die gewählte Resource/ID"
             en: "Function of the selected resource/id that shall be read/controlled"
         valid_list:
+          - ''
           - on
           - bri
           - hue
@@ -112,35 +113,38 @@ item_attributes:
           - type
           - modelid
           - swversion
+          - activate_scene
 
 
         valid_list_description:
             de:
-              - "Ein-/Ausschalten -> bool, r/w (resource: light)"
-              - "Helligkeit, 0 … 255 -> num, r/w (resource: light)"
-              - "Farbton, 0 … 65535 -> num, r/w (resource: light)"
-              - "Sättigung, 0 … 255 -> num, r/w (resource: light)"
-              - "ct Wert -> num, r/w (resource: light)"
+              - "Ein-/Ausschalten -> bool, r/w (resource: light, group)"
+              - "Helligkeit, 0 … 255 -> num, r/w (resource: light, group)"
+              - "Farbton, 0 … 65535 -> num, r/w (resource: light), group"
+              - "Sättigung, 0 … 255 -> num, r/w (resource: light, group)"
+              - "ct Wert -> num, r/w (resource: light, group)"
               - "Name -> str, r/w (resource: light, group, scene, sensor)"
               - "Erreichbar -> bool, r/o (resource: light)"
-              - "Farb-Mode -> str (Werte: ct, hs, xy), r/o (resource: light)"
-              - "xy Werte -> list, r/w (resource: light)"
+              - "Farb-Mode -> str (Werte: ct, hs, xy), r/o (resource: light, group)"
+              - "xy Werte -> list, r/w (resource: light, group)"
               - "Typ des Leuchtmittels -> str, r/o (resource: light)"
               - "Model Id des Leuchtmittels -> str, r/o (resource: light)"
               - "Software Version des Leuchtmittels -> str, r/o (resource: light)"
+              - "Aktivieren einer Szene für Leuchten in der selektierten Gruppe (hue2_id) -> str w/o (resource: group)"
             en:
-              - "On/Off -> bool, r/w (resource: light)"
-              - "Brightness, 0 … 255 -> num, r/w (resource: light)"
-              - "Hue, 0 … 65535 -> num, r/w (resource: light)"
-              - "Saturation, 0 … 255 -> num, r/w (resource: light)"
-              - "ct value -> num, r/w (resource: light)"
+              - "On/Off -> bool, r/w (resource: light, group)"
+              - "Brightness, 0 … 255 -> num, r/w (resource: light, group)"
+              - "Hue, 0 … 65535 -> num, r/w (resource: light, group)"
+              - "Saturation, 0 … 255 -> num, r/w (resource: light, group)"
+              - "ct value -> num, r/w (resource: light, group)"
               - "Name -> str, r/w (resource: light, group, scene, sensor)"
               - "Reachable -> bool, r/o (resource: light)"
-              - "Color-mode -> str (Werte: ct, hs, xy), r/o (resource: light)"
-              - "xy values -> list, r/w (resource: light)"
+              - "Color-mode -> str (Werte: ct, hs, xy), r/o (resource: light, group)"
+              - "xy values -> list, r/w (resource: light, group)"
               - "Typ of lamp -> str, r/o (resource: light)"
               - "Model id of lamp -> str, r/o (resource: light)"
               - "Software version lamp -> str, r/o (resource: light)"
+              - "Activate a scene for lights in the selected grpup (hue2_id) -> str w/o (resource: group)"
 
 item_structs:
     # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
@@ -181,6 +185,18 @@ item_structs:
             hue2_id@instance: ..:.
             hue2_function@instance: ct
 
+        colormode:
+            type: str
+            hue2_resource@instance: ..:.
+            hue2_id@instance: ..:.
+            hue2_function@instance: colormode
+
+        xy:
+            type: list
+            hue2_resource@instance: ..:.
+            hue2_id@instance: ..:.
+            hue2_function@instance: xy
+
     light_extended:
         name: Vorlage-Struktur für eine Hue Leuchte mit erweiteten Attributen/Sub-Items
         struct: hue2.light
@@ -195,18 +211,6 @@ item_structs:
             hue2_resource@instance: ..:.
             hue2_id@instance: ..:.
             hue2_function@instance: reachable
-
-        colormode:
-            type: str
-            hue2_resource@instance: ..:.
-            hue2_id@instance: ..:.
-            hue2_function@instance: colormode
-
-        xy:
-            type: list
-            hue2_resource@instance: ..:.
-            hue2_id@instance: ..:.
-            hue2_function@instance: xy
 
         lighttype:
             type: str
@@ -225,6 +229,63 @@ item_structs:
             hue2_resource@instance: ..:.
             hue2_id@instance: ..:.
             hue2_function@instance: swversion
+
+    group_activate_scene:
+        name: Vorlage-Struktur zum aktivieren von Hue Szenen
+        type: str
+        hue2_resource@instance: group
+        hue2_function@instance: activate_scene
+        #hue2_id@instance: 1
+
+    group:
+        name: Vorlage-Struktur für eine Hue Gruppe
+
+        type: foo
+        hue2_resource@instance: group
+        #hue2_id@instance: 1
+
+        onoff:
+            type: bool
+            hue2_resource@instance: ..:.
+            hue2_id@instance: ..:.
+            hue2_function@instance: on
+
+        level:
+            type: num
+            hue2_resource@instance: ..:.
+            hue2_id@instance: ..:.
+            hue2_function@instance: bri
+
+        hue:
+            type: num
+            hue2_resource@instance: ..:.
+            hue2_id@instance: ..:.
+            hue2_function@instance: hue
+
+        sat:
+            type: num
+            hue2_resource@instance: ..:.
+            hue2_id@instance: ..:.
+            hue2_function@instance: sat
+
+        ct:
+            type: num
+            hue2_resource@instance: ..:.
+            hue2_id@instance: ..:.
+            hue2_function@instance: ct
+
+        colormode:
+            type: str
+            hue2_resource@instance: ..:.
+            hue2_id@instance: ..:.
+            hue2_function@instance: colormode
+
+        xy:
+            type: list
+            hue2_resource@instance: ..:.
+            hue2_id@instance: ..:.
+            hue2_function@instance: xy
+
 
 #item_attribute_prefixes:
     # Definition of item attributes that only have a common prefix (enter 'item_attribute_prefixes: NONE' or ommit this section, if section should be empty)

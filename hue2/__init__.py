@@ -51,8 +51,10 @@ class Hue2(SmartPlugin):
 
     PLUGIN_VERSION = '2.0.0'    # (must match the version specified in plugin.yaml)
 
-    hue_light_state_values          = ['on', 'bri', 'hue', 'sat', 'ct', 'xy', 'colormode', 'reachable']
-    hue_light_state_writable_values = ['on', 'bri', 'hue', 'sat', 'ct', 'xy']
+    hue_group_action_values          = ['on', 'bri', 'hue', 'sat', 'ct', 'xy', 'colormode']
+    hue_light_action_writable_values = ['on', 'bri', 'hue', 'sat', 'ct', 'xy']
+    hue_light_state_values           = ['on', 'bri', 'hue', 'sat', 'ct', 'xy', 'colormode', 'reachable']
+    hue_light_state_writable_values  = ['on', 'bri', 'hue', 'sat', 'ct', 'xy']
 
 
     br = None               # Bridge object for communication with the bridge
@@ -190,6 +192,10 @@ class Hue2(SmartPlugin):
                 # ensure that the scheduler for sensors will be started if items use sensor data
                 self.light_items_configured = True
 
+            if conf_data['resource'] == 'group':
+                # bridge updates are allways scheduled
+                self.logger.debug("parse_item: configured group item = {}".format(conf_data))
+
             if conf_data['function'] != 'reachable':
                 return self.update_item
             return
@@ -273,9 +279,26 @@ class Hue2(SmartPlugin):
 
     def update_group_from_item(self, plugin_item, value):
 
-        self.logger.debug("update_group_from_item: plugin_item = {}".format(plugin_item))
-        if plugin_item['function'] == 'name':
+        self.logger.debug("update_group_from_item: plugin_item = {} -> value = {}".format(plugin_item, value))
+        if plugin_item['function'] == 'on':
+            self.br.groups(plugin_item['id'], 'action', on=value)
+        elif plugin_item['function'] == 'bri':
+            if value > 0:
+                self.br.groups[plugin_item['id']]['action'](on=True, bri=value)
+            else:
+                self.br.groups[plugin_item['id']]['action'](bri=value)
+        elif plugin_item['function'] == 'hue':
+            self.br.groups[plugin_item['id']]['action'](hue=value)
+        elif plugin_item['function'] == 'sat':
+            self.br.groups[plugin_item['id']]['action'](sat=value)
+        elif plugin_item['function'] == 'ct':
+            self.br.groups[plugin_item['id']]['action'](ct=value)
+        elif plugin_item['function'] == 'name':
             self.br.groups[plugin_item['id']](name=value)
+        elif plugin_item['function'] == 'xy':
+            self.br.groups[plugin_item['id']]['action'](xy=value)
+        elif plugin_item['function'] == 'activate_scene':
+            self.br.groups(plugin_item['id'], 'action', scene=value)
 
         return
 
@@ -451,14 +474,18 @@ class Hue2(SmartPlugin):
         :return:
         """
         result = ''
-        try:
-            group = self.bridge_groups[group_id]
-        except KeyError:
-            self.logger.error(f"poll_bridge: Group '{group_id}' not defined on bridge (item '{item_path}')")
-            return None
+        if group_id != '0':
+            # group_id 0 is a special group for "all groups" and can not be polled
+            try:
+                group = self.bridge_groups[group_id]
+            except KeyError:
+                self.logger.error(f"poll_bridge: Group '{group_id}' not defined on bridge (item '{item_path}')")
+                return None
 
-        if function == 'name':
-            result = group['name']
+            if function in self.hue_group_action_values:
+                result = group['action'].get(function, '')
+            elif function == 'name':
+                result = group['name']
         return result
 
 
