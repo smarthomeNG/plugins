@@ -992,6 +992,10 @@ class Viessmann(SmartPlugin):
         if res is None:
             return
 
+        # write returns True on success
+        if res is True:
+            return True
+
         # assign results
         (value, commandcode) = res
 
@@ -1398,7 +1402,7 @@ class Viessmann(SmartPlugin):
         # Handling of write command response if not error
         elif responsedatacode == 2 and responsetypecode != 3:
             self.logger.debug(f'Write request of adress {commandcode} successfull writing {valuebytecount} bytes')
-            return None
+            return True
         else:
             self.logger.error(f'Write request of adress {commandcode} NOT successfull writing {valuebytecount} bytes')
             return None
@@ -1679,7 +1683,7 @@ class Viessmann(SmartPlugin):
         :return: Transformed value
         :rtype: int
         '''
-        return int(value * int(transform))
+        return int(float(value) * int(transform))
 
     def _error_decode(self, value):
         '''
