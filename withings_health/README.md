@@ -9,16 +9,16 @@ Support Thread: https://knx-user-forum.de/forum/supportforen/smarthome-py/114117
 
 ## Requirements
 
-This plugin requires lib nokia. You can install this lib with: 
+This plugin requires lib withings-api. You can install this lib with: 
 
 ```bash
-sudo pip3 install nokia --upgrade
+sudo pip3 install withings-api --upgrade
 ```
 
 You have to register at https://account.withings.com/partner/add_oauth2.
 The callback URL to enter when registering is shown via the plugin's web interface and can be added as soon as client_id and consumer_secret have been set in etc/plugin.yaml
 
-The OAuth2 process can then be triggered via the Web Interface of the plugin. Therefore at least the first four items of the example below need to exist (access_token, token_expiry, token_type, refresh_token).
+The OAuth2 process can then be triggered via the Web Interface of the plugin. Therefore, at least the first four items of the example below need to exist (access_token, token_expiry, token_type, refresh_token).
 
 In case your SmartHomeNG instance is offline for too long, the tokens expire. You then have to start the OAuth2 process via the Web Interface again. Errors will be logged in this case!
 
@@ -27,8 +27,7 @@ In case your SmartHomeNG instance is offline for too long, the tokens expire. Yo
 ### plugin.yaml
 ```yaml
 withings_health: 
-    class_name: WithingsHealth
-    class_path: plugins.withings_health
+    plugin_name: withings_health
     user_id: <your user id>
     client_id: <your client id>
     consumer_secret: <your consumer secret>
@@ -107,9 +106,9 @@ body:
         visu_acl: ro
         withings_type@withings_health: fat_mass_weight
 
-    heart_pulse:
+    heart_rate:
         type: num
         visu_acl: ro
-        withings_type@withings_health: heart_pulse
+        withings_type@withings_health: heart_rate
 ```
 
