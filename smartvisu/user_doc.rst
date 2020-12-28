@@ -20,6 +20,13 @@ Mit dem Plugin **smartvisu** können aus der Definition der Items in SmartHomeNG
 smartVISU erstellt werden. Diese Visu Seiten werden im Verzeichnis ``smarthome`` des ``pages`` Verzeichnisses
 der smartVISU erstellt. Das Plugin unterstützt smartVISU Versionen ab v2.8.
 
+.. note::
+
+    Damit die generierten Seiten abgelegt werden können, muss SmartHomeNG Schreibrechte auf die smartVISU Verzeichnisse
+    haben. Deshalb bitte unbedingt darauf achten, dass die Berechtigungen und Gruppen Zugehörigkeit so gesetzt sind,
+    wie es in der Komplettanleitung im Abschnitt **smartVISU installieren** beschrieben ist.
+
+
 Das smartvisu Plugin ist der Ersatz für das Plugin visu_smartvisu, welches nun deprecated ist und in einem der
 kommenden Releases aus SmartHomeNG entfernt wird.
 
