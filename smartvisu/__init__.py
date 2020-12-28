@@ -344,8 +344,11 @@ class SmartVisu(SmartPlugin):
 
         filename = os.path.join(self.smartvisu_dir, 'config.ini')
         config_parser = ConfigParser()
-        with open(filename) as stream:
-            config_parser.read_string("[dummy_section]\n" + stream.read())
+        try:
+            with open(filename) as stream:
+                config_parser.read_string("[dummy_section]\n" + stream.read())
+        except Exception as e:
+            self.logger.warning(f"Unable to read config.ini of smartVISU - {e}")
 
         value = config_parser.get('dummy_section', key)
         value = Utils.strip_quotes(value)
