@@ -25,7 +25,7 @@ solarlog:
 
 #### Attributes
 
-* `fw`: specifies if firmware of the SolarLog is <= 2.x
+* `fw2x`: specifies if firmware of the SolarLog is <= 2.x
 * `host`: specifies the hostname of the SolarLog.
 * `cycle`: specifies the cycle for the query of the SolarLog.
 

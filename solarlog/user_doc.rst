@@ -32,7 +32,7 @@ plugin.yaml
 Attribute
 ^^^^^^^^^
 
-- `` fw``: Gibt an, ob Firmware <= 2.x ist.
+- `` fw2x``: Gibt an, ob Firmware <= 2.x ist.
 - `` host``: Gibt den Hostnamen des SolarLog an.
 - `` cycle``: Bestimmt den Zyklus für die Abfrage des SolarLog.
 

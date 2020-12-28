@@ -56,7 +56,7 @@ class SolarLog(SmartPlugin):
         self._sh = sh
 
         # get the parameters for the plugin (as defined in metadata plugin.yaml):
-        self.fw = self.get_parameter_value('fw')
+        self.fw2x = self.get_parameter_value('fw2x')
         self.host = self.get_parameter_value('host')
         self.cycle = self.get_parameter_value('cycle')
 
@@ -77,12 +77,13 @@ class SolarLog(SmartPlugin):
         """
         self.logger.debug("Run method called")
         # setup scheduler for device poll loop
-        if self.fw:
+        if self.fw2x:
             # use 'old' code for firmware <= 2.x
-            self.scheduler_add(self.get_shortname(), self.poll_device, cycle=self.cycle, next=shtime.now())
+            self.poll_device = self.poll_deviceV2
         else:
             # use new code from klab for firmware >= 3.x
-            self.scheduler_add(self.get_shortname(), self.poll_deviceV3, cycle=self.cycle, next=shtime.now())
+            self.poll_device = self.poll_deviceV3
+        self.scheduler_add(self.get_shortname(), self.poll_device, cycle=self.cycle, next=shtime.now())
         self.alive = True
 
     def stop(self):
@@ -107,7 +108,7 @@ class SolarLog(SmartPlugin):
         
         return None
 
-    def poll_device(self):
+    def poll_deviceV2(self):
         """
         Polls for updates of the SolarLog device
         """
