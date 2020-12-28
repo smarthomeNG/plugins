@@ -349,6 +349,7 @@ class SmartVisu(SmartPlugin):
                 config_parser.read_string("[dummy_section]\n" + stream.read())
         except Exception as e:
             self.logger.warning(f"Unable to read config.ini of smartVISU - {e}")
+            return ''
 
         value = config_parser.get('dummy_section', key)
         value = Utils.strip_quotes(value)
@@ -372,15 +373,18 @@ class SmartVisu(SmartPlugin):
         # read config.ini to get the name of the pages directory
         dirname = self.read_from_sv_configini('pages')
 
-        # write json file with list of item pathes
-        pagedir_name = os.path.join(self.smartvisu_dir, 'pages', dirname)
-        filename = os.path.join(pagedir_name, 'masteritem.json')
-        self.logger.debug(f"write_masteritem_file: filename='{filename}'")
-        try:
-            with open(filename, 'w', encoding='utf-8') as f:
-                json.dump(item_list, f, ensure_ascii=False, indent=4)
-            self.logger.info(f"master-itemfile written to smartVISU (to directory {pagedir_name})")
-        except:
-            self.logger.warning(f"Could not write master-itemfile to smartVISU (to directory {pagedir_name})")
+        if dirname != '':
+            # write json file with list of item pathes
+            pagedir_name = os.path.join(self.smartvisu_dir, 'pages', dirname)
+            filename = os.path.join(pagedir_name, 'masteritem.json')
+            self.logger.debug(f"write_masteritem_file: filename='{filename}'")
+            try:
+                with open(filename, 'w', encoding='utf-8') as f:
+                    json.dump(item_list, f, ensure_ascii=False, indent=4)
+                self.logger.info(f"master-itemfile written to smartVISU (to directory {pagedir_name})")
+            except:
+                self.logger.warning(f"Could not write master-itemfile to smartVISU (to directory {pagedir_name})")
+        else:
+            self.logger.warning("Master-itemfile nor written, because the name of the pages directory could not be read from smartVISU")
         return
 
