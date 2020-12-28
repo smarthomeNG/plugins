@@ -400,7 +400,8 @@ class WebInterface(SmartPluginWebIf):
                 callback_uri=self.plugin.get_callback_url(),
                 scope=(AuthScope.USER_ACTIVITY,
                        AuthScope.USER_METRICS,
-                       AuthScope.USER_INFO)
+                       AuthScope.USER_INFO,
+                       AuthScope.USER_SLEEP_EVENTS,)
             )
 
         if not reload and code:
