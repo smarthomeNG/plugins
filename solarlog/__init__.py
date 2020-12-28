@@ -29,6 +29,10 @@ from lib.model.smartplugin import *
 import re
 import logging
 
+# firmware >= 3.x
+import json
+import http.client
+
 from lib.shtime import Shtime
 shtime = Shtime.get_instance()
 
@@ -38,7 +42,7 @@ class SolarLog(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.6.1'
+    PLUGIN_VERSION = '1.6.2'
 
     def __init__(self, sh, *args, **kwargs):
         """
@@ -52,6 +56,7 @@ class SolarLog(SmartPlugin):
         self._sh = sh
 
         # get the parameters for the plugin (as defined in metadata plugin.yaml):
+        self.fw = self.get_parameter_value('fw')
         self.host = self.get_parameter_value('host')
         self.cycle = self.get_parameter_value('cycle')
 
@@ -72,7 +77,12 @@ class SolarLog(SmartPlugin):
         """
         self.logger.debug("Run method called")
         # setup scheduler for device poll loop
-        self.scheduler_add(self.get_shortname(), self.poll_device, cycle=self.cycle, next=shtime.now())
+        if self.fw:
+            # use 'old' code for firmware <= 2.x
+            self.scheduler_add(self.get_shortname(), self.poll_device, cycle=self.cycle, next=shtime.now())
+        else:
+            # use new code from klab for firmware >= 3.x
+            self.scheduler_add(self.get_shortname(), self.poll_deviceV3, cycle=self.cycle, next=shtime.now())
         self.alive = True
 
     def stop(self):
@@ -92,7 +102,7 @@ class SolarLog(SmartPlugin):
         """
         if self.has_iattr(item.conf, 'solarlog'):
             self.logger.debug("parse item: {}".format(item))
-            index = get_iattr_value(item.conf, 'solarlog')
+            index = self.get_iattr_value(item.conf, 'solarlog')
             self._items[ index ] = item
         
         return None
@@ -351,6 +361,25 @@ class SolarLog(SmartPlugin):
         url = self.host + filename
         return self._sh.tools.fetch_url(url).decode(encoding='latin_1')
 
+    def poll_deviceV3(self):
+        """
+        Polls for updates of the SolarLog device with firmware >= 3.x
+        """
+        for parameter in self._items:
+             params = '{"801":{"170":null}}'
+             paramsbytes = params.encode('utf-8')
+             headers = {"Content-Type": "application/json",
+                        "Accept": "text/plain"}
+             conn = http.client.HTTPConnection(self.host)
+             conn.request("POST", "/getjp", params, headers)
+             response = conn.getresponse()
+             data=response.read()
+             jsondata = json.loads(data.decode('utf-8'))
+             value = jsondata['801']['170'][str(parameter)]
+             if parameter in self._items:
+                  item = self._items[parameter]
+                  item (value, 'solarlog')
+        return
 
 
     def init_webinterface(self):
