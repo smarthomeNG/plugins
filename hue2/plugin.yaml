@@ -118,6 +118,7 @@ item_attributes:
 
         valid_list_description:
             de:
+              - "<noch keine Funktion gewählt>"
               - "Ein-/Ausschalten -> bool, r/w (resource: light, group)"
               - "Helligkeit, 0 … 255 -> num, r/w (resource: light, group)"
               - "Farbton, 0 … 65535 -> num, r/w (resource: light), group"
@@ -132,6 +133,7 @@ item_attributes:
               - "Software Version des Leuchtmittels -> str, r/o (resource: light)"
               - "Aktivieren einer Szene für Leuchten in der selektierten Gruppe (hue2_id) -> str w/o (resource: group)"
             en:
+              - "<no function choosen yet>"
               - "On/Off -> bool, r/w (resource: light, group)"
               - "Brightness, 0 … 255 -> num, r/w (resource: light, group)"
               - "Hue, 0 … 65535 -> num, r/w (resource: light, group)"
