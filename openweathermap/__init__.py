@@ -2,7 +2,6 @@
 #
 #########################################################################
 #  Copyright 2018 René Frieß                      rene.friess(a)gmail.com
-#  Version 1.5.0.1
 #########################################################################
 #
 #  This file is part of SmartHomeNG.
@@ -34,7 +33,7 @@ from bin.smarthome import VERSION
 
 
 class OpenWeatherMap(SmartPlugin):
-    PLUGIN_VERSION = "1.5.0.4"
+    PLUGIN_VERSION = "1.5.1"
 
     _base_url = 'https://api.openweathermap.org/%s'
     _base_img_url = 'https://tile.openweathermap.org/map/%s/%s/%s/%s.png?appid=%s'
