@@ -57,17 +57,17 @@ class WithingsHealth(SmartPlugin):
         self.scheduler_remove('poll_data')
         self.alive = False
 
-    def _store_tokens(self, token):
+    def _store_tokens(self, credentials2):
         self.logger.debug(
             "Updating tokens to items: access_token - {} token_expiry - {} token_type - {} refresh_token - {}".
-                format(token['access_token'], token['expires_in'], token['token_type'],
-                       token['refresh_token']))
-        self.get_item('access_token')(token['access_token'])
+                format(credentials2.access_token, credentials2.expires_in, credentials2.token_type,
+                       credentials2.refresh_token))
+        self.get_item('access_token')(credentials2.access_token)
         self.get_item('token_expiry')(
             int((datetime.datetime.utcnow() - datetime.datetime(1970, 1, 1)).total_seconds()) + int(
-                token['expires_in']))
-        self.get_item('token_type')(token['token_type'])
-        self.get_item('refresh_token')(token['refresh_token'])
+                credentials2.expires_in))
+        self.get_item('token_type')(credentials2.token_type)
+        self.get_item('refresh_token')(credentials2.refresh_token)
 
     def _update_loop(self):
         """
