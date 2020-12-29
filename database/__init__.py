@@ -313,7 +313,9 @@ class Database(SmartPlugin):
         if id is None and create == True:
             id = [self.insertItem(item.id(), cur)]
 
-        return None if id == None else int(id[COL_ITEM_ID])
+        if (COL_ITEM_ID > len(id)) or (id == None):
+            return None
+        return int(id[COL_ITEM_ID])
 
 
     def db(self):
