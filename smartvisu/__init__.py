@@ -368,8 +368,7 @@ class SmartVisu(SmartPlugin):
         items_sorted = sorted(items.return_items(), key=lambda k: str.lower(k['_path']), reverse=False)
         item_list = []
         for item in items_sorted:
-            item_list.append(item.property.path)
-
+            item_list.append(item.property.path + '|' + item.property.type)
         # read config.ini to get the name of the pages directory
         dirname = self.read_from_sv_configini('pages')
 
