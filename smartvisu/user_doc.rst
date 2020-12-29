@@ -47,8 +47,9 @@ Weiterführende Informationen
     Das Plugin ist nur aktiv, wenn die Plugins gestartet werden. Nachdem es die Generierungs- und Kopier-Aktionen
     abgeschlossen hat, stoppt es. Es wird in der Admin GUI in der Liste der Plugins daher als pausiert angezeigt.
 
-    Wird hier der Start Button für das Plugin gedrückt, werden die Visu Seiten erneut generiert und die Widgets
-    werden erneut kopiert. Das Plugin stoppt anschließend wieder.
+    Wird hier der Start Button für das Plugin gedrückt (der sichtbar ist, wenn die Admin GUI im Entwickler Modus läuft),
+    werden die Visu Seiten erneut generiert und die Widgets werden erneut kopiert. Das Plugin stoppt anschließend
+    wieder.
 
 
 Mischung von generierten und manuell erstellten Seiten
