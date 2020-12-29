@@ -32,11 +32,10 @@ from withings_api.common import Credentials, CredentialsType, get_measure_value,
 
 
 class WithingsHealth(SmartPlugin):
-    ALLOW_MULTIINSTANCE = True
     PLUGIN_VERSION = "1.8.0"
-    ALLOWED_MEASURE_TYPES = [1, 4, 5, 6, 8, 11]
 
-    def __init__(self, sh, *args, **kwargs):
+    def __init__(self, sh):
+        super().__init__()
         self.shtime = Shtime.get_instance()
         self._user_id = self.get_parameter_value('user_id')
         self._client_id = self.get_parameter_value('client_id')
