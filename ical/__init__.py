@@ -29,7 +29,7 @@ import dateutil.rrule
 import dateutil.relativedelta
 from lib.model.smartplugin import *
 from lib.shtime import Shtime
-from lib.network import Http
+from lib.network import Http, Network
 from bin.smarthome import VERSION
 #from datetime import timezone, timedelta
 from datetime import timezone
@@ -47,17 +47,17 @@ class iCal(SmartPlugin):
             self.logger = logging.getLogger(__name__)
         try:
             self.shtime = Shtime.get_instance()
+            self.handle_login = self.get_parameter_value('handle_login')
             try:
-                self.dl = Http(timeout=self.get_parameter_value('timeout'))
+                self.dl = Http(timeout=self.get_parameter_value('timeout'), hide_login=self.handle_login)
             except:
-                self.dl = Http('')
+                self.dl = Http(hide_login=self.handle_login)
             self._items = []
             self._icals = {}
             self._ical_aliases = {}
             cycle = self.get_parameter_value('cycle')
             calendars = self.get_parameter_value('calendars')
             config_dir = self.get_parameter_value('directory')
-            self.handle_login = self.get_parameter_value('handle_login')
         except Exception as err:
             self.logger.error('Problems initializing: {}'.format(err))
             self._init_complete = False
@@ -81,10 +81,10 @@ class iCal(SmartPlugin):
             if ':' in calendar and 'http' != calendar[:4]:
                 name, _, cal = calendar.partition(':')
                 calendar = cal.strip()
-                self.logger.info('Registering calendar {} with alias {}.'.format(self._clean_uri(calendar), name))
+                self.logger.info('Registering calendar {} with alias {}.'.format(Network.clean_uri(calendar, self.handle_login), name))
                 self._ical_aliases[name.strip()] = calendar
             else:
-                self.logger.info('Registering calendar {} without alias.'.format(self._clean_uri(calendar)))
+                self.logger.info('Registering calendar {} without alias.'.format(Network.clean_uri(calendar, self.handle_login)))
             calendar = calendar.strip()
             self._icals[calendar] = self._read_events(calendar)
 
@@ -156,7 +156,7 @@ class iCal(SmartPlugin):
     def _update_calendars(self):
         for uri in self._icals:
             self._icals[uri] = self._read_events(uri)
-            self.logger.debug('Updated calendar {0}'.format(self._clean_uri(uri)))
+            self.logger.debug('Updated calendar {0}'.format(Network.clean_uri(uri, self.handle_login)))
 
         if len(self._icals):
             self._update_items()
@@ -212,7 +212,7 @@ class iCal(SmartPlugin):
             if downloaded is False:
                 self.logger.error('Could not download online ics file {0}.'.format(ics))
                 return {}
-            self.logger.debug('Online ics {} successfully downloaded to {}'.format(ics, filename))
+            self.logger.debug('Online ics {} successfully downloaded to {}'.format(Network.clean_uri(ics, self.handle_login), filename))
             ics = os.path.normpath(filename)
         try:
             ics = '{}/{}'.format(self._directory, ics) if self._directory not in ics else ics
@@ -387,15 +387,3 @@ class iCal(SmartPlugin):
             args[par.lower()] = rrule[par]
 
         return dateutil.rrule.rrule(freq, **args)
-
-    def _clean_uri(self, uri):
-        # check for http[s]?://user:password@domain.tld/... style uris and strip name/pass
-        pattern = re.compile('http([s]?)://([^:]+:[^@]+@)')
-        if self.handle_login == 'show' or not pattern.match(uri):
-            return uri
-
-        replacement = {
-            'strip': 'http\g<1>://',
-            'mask': 'http\g<1>://***:***@'
-        }
-        return pattern.sub(replacement[self.handle_login], uri)
