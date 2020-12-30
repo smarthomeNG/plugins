@@ -21,11 +21,8 @@
 
 import logging
 import socket
-import urllib.request
 import urllib.parse
-import urllib.error
 import lib.network
-import time
 
 from lib.model.smartplugin import SmartPlugin
 
@@ -37,83 +34,140 @@ NW_TCP_LISTEN   = 'nw_tcp_listen'
 NW_UDP_SEND     = 'nw_udp_send'
 
 
-class TCPHandler(lib.connection.Stream):
-
-    def __init__(self, parser, dest, sock, source):
-        super().__init__(sock, source)
-        self.terminator = b'\n'
-        self.parser = parser
-        self.dest = dest
-        self.source = source
-
-    def found_terminator(self, data):
-        self.parser(self.source, self.dest, data.decode(errors='ignore').strip())
-        self.close()
-
-
 class TCPDispatcher(lib.network.Tcp_server):
-
+    '''
+    Encapsulation class for using lib.network.Tcp_server class
+    '''
     def __init__(self, parser, ip, port):
+        '''
+        Initializes the class
+
+        :param parser: callback function for handling data, called as parser(remoteip, 'tcp:<localip>:<localport>', '<data>')
+        :type parser: function
+        :param ip: local ip address to bind to
+        :type ip: str
+        :param port: local port to bind to
+        :type port: int
+        '''
         super().__init__(port, ip, 1, b'\n')
         self.parser = parser
         self.dest = f'tcp:{ip}:{port}'
-        self.set_callbacks(data_received=self.handle_connection)
+        self.set_callbacks(data_received=self.handle_received_data, incoming_connection=self.handle_connection)
         self.start()
 
-    def handle_connection(self, client, data):
-        sock, address = self.accept()
-        if sock is None:
-            return
-        HTTPHandler(self.parser, self.dest, sock, address)
+    def handle_connection(self, server, client):
+        '''
+        Handle incoming connection. Just used for debugging
 
+        :param server: Tcp_server object serving the connection
+        :type server: lib.network.Tcp_server
+        :param client: Client object for connection
+        :type client: lib.network.Client
+        '''
+        self.logger.debug(f'Incoming TCP connection from {client.name}')
 
-class HTTPHandler(lib.connection.Stream):
+    def handle_received_data(self, server, client, data):
+        '''
+        Forward received data to parser callback
 
-    def __init__(self, parser, dest, sock, source):
-        super().__init__(sock, source)
-        self.terminator = b'\r\n\r\n'
-        self.parser = parser
-        self.dest = dest
-        self.source = source
-
-    def found_terminator(self, data):
-        for line in data.decode(errors='ignore').splitlines():
-            if line.startswith('GET'):
-                request = line.split(' ')[1].strip('/')
-                if self.parser(self.source, self.dest, urllib.parse.unquote(request)) is not False:
-                    self.send(b'HTTP/1.1 200 OK\r\n\r\n', close=True)
-                else:
-                    self.send(b'HTTP/1.1 400 Bad Request\r\n\r\n', close=True)
-                break
+        :param server: Tcp_server object serving the connection
+        :type server: lib.network.Tcp_server
+        :param client: Client object for connection
+        :type addr: lib.network.Client
+        :param data: received data
+        :type data: string
+        '''
+        self.logger.debug(f'Received packet from {client.ip}:{client.port} to {self.dest} with content "{data}"')
+        self.parser(client.ip, self.dest, data.strip())
 
 
 class HTTPDispatcher(lib.network.Tcp_server):
-
+    '''
+    Encapsulation class for using lib.network.Tcp_server class with HTTP GET support
+    '''
     def __init__(self, parser, ip, port):
+        '''
+        Initializes the class
+
+        :param parser: callback function for handling data, called as parser(remoteip, 'tcp:<localip>:<localport>', '<data>')
+        :type parser: function
+        :param ip: local ip address to bind to
+        :type ip: str
+        :param port: local port to bind to
+        :type port: int
+        '''
         super().__init__(port, ip, 1, b'\n')
         self.parser = parser
-        self.dest = f'tcp:{ip}:{port}'
+        self.dest = f'http:{ip}:{port}'
+        self.set_callbacks(data_received=self.handle_received_data, incoming_connection=self.handle_connection)
         self.start()
 
-    def handle_connection(self):
-        sock, address = self.accept()
-        if sock is None:
-            return
-        HTTPHandler(self.parser, self.dest, sock, address)
+    def handle_connection(self, server, client):
+        '''
+        Handle incoming connection. Just used for debugging
+
+        :param server: Tcp_server object serving the connection
+        :type server: lib.network.Tcp_server
+        :param client: Client object for connection
+        :type client: lib.network.Client
+        '''
+        self.logger.debug(f'Incoming HTTP connection from {client.name}')
+
+    def handle_received_data(self, server, client, data):
+        '''
+        Forward received data to parser callback
+
+        :param server: Tcp_server object serving the connection
+        :type server: lib.network.Tcp_server
+        :param client: Client object for connection
+        :type addr: lib.network.Client
+        :param data: received data
+        :type data: string
+        '''
+        self.logger.debug(f'Received packet from {client.ip}:{client.port} to {self.dest} via HTTP with content "{data}"')
+
+        # find lines starting with GET and return remaining lines "HTTP-like" and return status
+        for line in data.splitlines():
+            if line.startswith('GET'):
+                request = line.split(' ')[1].strip('/')
+                if self.parser(client.ip, self.dest, urllib.parse.unquote(request)) is not False:
+                    client.send(b'HTTP/1.1 200 OK\r\n\r\n')
+                else:
+                    client.send(b'HTTP/1.1 400 Bad Request\r\n\r\n')
+                client.close()
 
 
 class UDPDispatcher(lib.network.Udp_server):
-
+    '''
+    Encapsulation class for using lib.network.Udp_server class
+    '''
     def __init__(self, parser, ip, port):
+        '''
+        Initializes the class
+
+        :param parser: callback function for handling data, called as parser(remoteip, 'tcp:<localip>:<localport>', '<data>')
+        :type parser: function
+        :param ip: local ip address to bind to
+        :type ip: str
+        :param port: local port to bind to
+        :type port: int
+        '''
         self.logger = logging.getLogger(__name__)
-        self.logger.debug(f'Setting up UDPDispatcher on {ip}:{port}, callback is {parser}')
         self.parser = parser
         self.dest = f'udp:{ip}:{port}'
         super().__init__(port, ip)
-        self.set_callbacks(data_received=self.handle_connection)
+        self.set_callbacks(data_received=self.handle_received_data)
         self.start()
 
-    def handle_connection(self, addr, data):
+    def handle_received_data(self, addr, data):
+        '''
+        Forward received data to parser callback
+
+        :param addr: address information about the remote client: ('<ip>', <port>)
+        :type addr: tuple
+        :param data: received data
+        :type data: string
+        '''
         ip = addr[0]
         addr = f'{addr[0]}:{addr[1]}'
         self.logger.debug(f'{self.name}: incoming connection from {addr} to {self.dest}')
@@ -125,13 +179,14 @@ class Networkng(SmartPlugin):
     Main class of the Plugin. Does all plugin specific stuff and provides
     the update functions for the items
     '''
-    PLUGIN_VERSION = '1.5.0'
+    PLUGIN_VERSION = '1.6.0'
 
     generic_listeners = {}
     special_listeners = {}
     input_seperator = '|'
     socket_warning = 10
     socket_warning = 2
+    _dispatcher_list = []
 
     def __init__(self, sh):
         '''
@@ -164,7 +219,9 @@ class Networkng(SmartPlugin):
         if self.get_parameter_value('udp') == 'yes':
             self.add_listener('udp', self.get_parameter_value('ip'), self.get_parameter_value('port'), self.udp_acl,
                               generic=True)
-        if self.get_parameter_value('http') != 'no':
+        if self.get_parameter_value('http') == 'yes':
+            self.logger.error('http parameter must be "no" or <port number>, but it is set to "yes". HTTP listener not enabled.')
+        elif self.get_parameter_value('http') != 'no':
             self.add_listener('http', self.get_parameter_value('ip'), self.get_parameter_value('http'), self.http_acl,
                               generic=True)
 
@@ -202,9 +259,9 @@ class Networkng(SmartPlugin):
             return
 
         if not dispatcher.listening():
-#
-            self.logger.debug(f'dispatcher on not listening on {dest}, cancel')
             return False
+
+        self._dispatcher_list.append(dispatcher)
 
         acl = self.parse_acl(acl)
         if generic:
@@ -298,8 +355,6 @@ class Networkng(SmartPlugin):
                 return False
 
         elif dest in self.special_listeners:
-#
-            self.logger.debug(f'{dest} is in special listeners')
             proto, t1, t2 = dest.partition(':')
             if proto == 'udp':
                 gacl = self.udp_acl
@@ -349,6 +404,12 @@ class Networkng(SmartPlugin):
         Stop method for the plugin
         '''
         self.logger.debug('Stop method called')
+        for listener in self._dispatcher_list:
+            try:  # keep some ugly errors on keyboard interrupt hidden
+                listener.close()
+            except:
+                pass
+        self._dispatcher_list = []
         self.alive = False
 
     def parse_logic(self, logic):
