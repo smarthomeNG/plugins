@@ -192,7 +192,7 @@ class CLI(SmartPlugin):
             self.logger.error("CLI: Value given for 'hashed_password' is not a valid hash value. Login will not be possible")
 
         name = 'plugins.' + self.get_fullname()
-        self.server = Tcp_server(interface=self.ip, port=self.port, name=name, mode=Tcp_server.MODE_TEXT_LINE)
+        self.server = Tcp_server(host=self.ip, port=self.port, name=name, mode=Tcp_server.MODE_TEXT_LINE)
         self.server.set_callbacks(incoming_connection=self.handle_connection)
         self.commands = CLICommands(self.get_sh(), self.updates_allowed, self)
         self.alive = False
@@ -206,7 +206,6 @@ class CLI(SmartPlugin):
         # if plugin should not start without web interface
         # if not self.init_webinterface():
         #     self._init_complete = False
-
 
     def handle_connection(self, server, client):
         """
@@ -229,7 +228,10 @@ class CLI(SmartPlugin):
         """
         self.logger.debug("Stop method called")
         self.alive = False
-        self.server.close()
+        try:  # keep some ugly errors on keyboard interrupt to yourself
+            self.server.close()
+        except:
+            pass
 
     def add_command(self, command, function, usage):
         """
