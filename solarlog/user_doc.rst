@@ -3,14 +3,13 @@ Solarlog
 
 Dieses Plugin kann eine Webseite vom SolarLog-Protokolliergerät lesen und Werte zurückgeben.
 Es wurde 2013 von Niko Will erstellt und 2019 von Bernd Meiners zu einem SmartPlugin umgebaut.
+Es wurde 2017 von klab für SolarLog-Geräte mit Firmware >= 3.x neu geschrieben und 2020 von
+Christian Michels in das alte Plugin integriert.
 
 Requirements
 ------------
 
-Dieses Plugin hat keine Anforderungen oder Abhängigkeiten, arbeitet jedoch mit SolarLog und
-Firmware <= 2.x zusammen.
-Neuere SolarLog-Geräte mit Firmware> = 3.x sollten nur nach JSON-Daten abgefragt werden,
-die innerhalb einer Logik analysiert werden können.
+Dieses Plugin hat keine Anforderungen oder Abhängigkeiten.
 
 Todo
 ----
@@ -33,6 +32,7 @@ plugin.yaml
 Attribute
 ^^^^^^^^^
 
+- `` fw2x``: Gibt an, ob Firmware <= 2.x ist.
 - `` host``: Gibt den Hostnamen des SolarLog an.
 - `` cycle``: Bestimmt den Zyklus für die Abfrage des SolarLog.
 
@@ -55,7 +55,7 @@ Wenn Sie Werte aus einer Array-Struktur wie den PDC-Wert aus dem Sekundenstring 
 
 var [\ _ inverter [\ _ string]]
 
-In diesem Beispiel sollten Details zur Verwendung erläutert werden:
+In diesem Beispiel sollten Details zur Verwendung mit Firmware <= 2.x erläutert werden:
 
 .. code :: yaml
 
@@ -114,6 +114,61 @@ In diesem Beispiel sollten Details zur Verwendung erläutert werden:
                     solarlog: udc_0_1
                     database: yes
 
+
+In diesem Beispiel sollten Details zur Verwendung mit Firmware >= 3.x erläutert werden:
+
+.. code :: yaml
+pv:
+
+    w_gesamt_zaehler:
+        type: num
+        cache: 'on'
+        solarlog: 101
+
+    w_gesamt:
+        type: num
+        cache: 'on'
+        solarlog: 102
+
+    spannung_ac:
+        type: num
+        cache: 'on'
+        solarlog: 103
+
+    spannung_dc1:
+        type: num
+        cache: 'on'
+        solarlog: 104
+
+    wh_heute:
+        type: num
+        solarlog: 105
+        cache: 'on'
+
+    wh_gestern:
+        type: num
+        cache: 'on'
+        solarlog: 106
+
+    wh_monat:
+        type: num
+        cache: 'on'
+        solarlog: 107
+
+    wh_jahr:
+        type: num
+        cache: 'on'
+        solarlog: 108
+
+    wh_gesamt:
+        type: num
+        cache: 'on'
+        solarlog: 109
+
+    wp_generatorleistung:
+        type: num
+        cache: 'on'
+        solarlog: 116
 
 Das `` database: yes`` impliziert, dass auch ein Datenbank-Plugin konfiguriert ist.
 Dienst zur Anzeige von Messwerten innerhalb einer Visu.
