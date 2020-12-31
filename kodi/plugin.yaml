@@ -107,12 +107,12 @@ item_structs:
 
         audiostreams:
             kodi_item@instance: streams
-            type: foo
+            type: list
             visu_acl: ro
 
         subtitles:
             kodi_item@instance: subtitles
-            type: foo
+            type: list
             visu_acl: ro
 
         player:
