@@ -48,8 +48,6 @@ OWMSG_GET = 8           # dirall or read depending on path
 OWMSG_DIRALLSLASH = 9   # dirall but with directory entries getting a trailing '/'
 OWMSG_GETSLASH = 10     # dirallslash or read depending on path
 
-
-
 # Flags see https://owfs.org/index_php_page_owserver-flag-word.html
 OWFLAG_OWNET_REQUEST =          0x00000100  # Ownet request (included for all ownet messages)
 OWFLAG_UNCACHED =               0x00000020  # Implicit /uncached
@@ -60,6 +58,14 @@ OWFLAG_INCLUDE_SPECIAL_DIRS =   0x00000002  # include special directories
 # further flags are defined for other measurement units instead of
 # Celsius, Millibar, or standard display /10.67C6697351FF
 
+# Directory Messages
+# see at https://www.owfs.org/index_php_page_directory-messages.html
+DEV_resume =            0b0000000000000001  # supports RESUME command
+DEV_alarm =             0b0000000000000010  # can trigger an alarm
+DEV_ovdr =              0b0000000000000100  # support OVERDRIVE 
+DEV_temp =              0b1000000000000000  # responds to simultaneous temperature convert 0x44
+DEV_volt =              0b0100000000000000  # responds to simultaneous voltage convert 0x3C
+DEV_chain =             0b0010000000000000  # supports CHAIN command
 
 class OwBase(object):
 
@@ -73,6 +79,10 @@ class OwBase(object):
 
         self._lock = threading.Lock()
         self._flag = OWFLAG_OWNET_REQUEST + OWFLAG_PERSISTENCE + OWFLAG_INCLUDE_SPECIAL_DIRS
+        self.owserver_flags = 0
+        self.owserver_size = 0
+        self.owserver_offset = 0
+        self.version = 0
         self._unknown_sensor_already_warned = []
         self._unsupported_sensor_already_warned = []
 
@@ -140,8 +150,28 @@ class OwBase(object):
         """
         Sends a request for data to owserver and waits for response
         Protocol described in https://owfs.org/index_php_page_owserver-protocol.html and
-        the messages can be found in https://github.com/owfs/owfs/blob/master/module/owlib/src/include/ow_message.h
-        
+        the messages are part of `ow_message.h <https://github.com/owfs/owfs/blob/master/module/owlib/src/include/ow_message.h>`__
+        ```
+        /* message to owserver */
+        struct server_msg {
+            int32_t version;
+            int32_t payload;
+            int32_t type;
+            int32_t control_flags;
+            int32_t size;
+            int32_t offset;
+        };
+
+        /* message to client */
+        struct client_msg {
+            int32_t version;
+            int32_t payload;
+            int32_t ret;
+            int32_t control_flags;
+            int32_t size;
+            int32_t offset;
+        };
+        ```
         returns the payload of communication efforts
         """
         #if self.logger.isEnabledFor(logging.DEBUG):
@@ -162,7 +192,7 @@ class OwBase(object):
                     payload = path + '\x00'
                     data = 65536
                 header = bytearray(24)
-                #header[0:3]                                                # version
+                #header[0:3]                                                # version, currently defined as 0
                 header[4:8] = len(payload).to_bytes(4, byteorder='big')     # payload
                 header[8:12] = cmd.to_bytes(4, byteorder='big')             # type
                 header[12:16] = self._flag.to_bytes(4, byteorder='big')     # control flags
@@ -190,12 +220,12 @@ class OwBase(object):
                         self.close()
                         raise owex("error receiving header: no or not enough data {} bytes".format(len(header)))
 
-                    #version = int.from_bytes(data[0:4], byteorder='big')
+                    self.version = int.from_bytes(data[0:4], byteorder='big')
                     length = int.from_bytes(header[4:8], byteorder='big')
                     ret = int.from_bytes(header[8:12], byteorder='big')
-                    #flags = int.from_bytes(data[12:16], byteorder='big')
-                    #size = int.from_bytes(data[16:20], byteorder='big')
-                    #offset = int.from_bytes(data[20:24], byteorder='big')
+                    self.owserver_flags = int.from_bytes(data[12:16], byteorder='big')
+                    self.owserver_size = int.from_bytes(data[16:20], byteorder='big')
+                    self.owserver_offset = int.from_bytes(data[20:24], byteorder='big')
                     if not length == OW_ERROR:
                         break
                         
