@@ -992,6 +992,10 @@ class Viessmann(SmartPlugin):
         if res is None:
             return
 
+        # write returns True on success
+        if res is True:
+            return True
+
         # assign results
         (value, commandcode) = res
 
@@ -1106,8 +1110,8 @@ class Viessmann(SmartPlugin):
             return None
 
         try:
-            commandvalueresult = unitconf['type']
-            commandtransform = unitconf['read_value_transform']
+            valuetype = unitconf['type']
+            valuereadtransform = unitconf['read_value_transform']
         except KeyError:
             self.logger.error(f'Error in unit configuration {unitconf} for unit {commandunit}, aborting')
             return None
@@ -1131,17 +1135,17 @@ class Viessmann(SmartPlugin):
 
         try:
             # Create valuebytes
-            if commandvalueresult == 'datetime' or commandvalueresult == 'date':
+            if valuetype == 'datetime' or valuetype == 'date':
                 try:
                     datestring = dateutil.parser.isoparse(value).strftime('%Y%m%d%w%H%M%S')
                     # Viessmann erwartet 2 digits für Wochentag, daher wird hier noch eine 0 eingefügt
                     datestring = datestring[:8] + '0' + datestring[8:]
                     valuebytes = bytes.fromhex(datestring)
-                    self.logger.debug(f'Created value bytes for type {commandvalueresult} as bytes: {valuebytes}')
+                    self.logger.debug(f'Created value bytes for type {valuetype} as bytes: {valuebytes}')
                 except Exception as e:
                     self.logger.error(f'Incorrect data format, YYYY-MM-DD expected; Error: {e}')
                     return None
-            elif commandvalueresult == 'timer':
+            elif valuetype == 'timer':
                 try:
                     times = ''
                     for switching_time in value:
@@ -1149,22 +1153,24 @@ class Viessmann(SmartPlugin):
                         aus = self._encode_timer(switching_time['Aus'])
                         times += f'{an:02x}{aus:02x}'
                     valuebytes = bytes.fromhex(times)
-                    self.logger.debug(f'Created value bytes for type {commandvalueresult} as hexstring: {self._bytes2hexstring(valuebytes)} and as bytes: {valuebytes}')
+                    self.logger.debug(f'Created value bytes for type {valuetype} as hexstring: {self._bytes2hexstring(valuebytes)} and as bytes: {valuebytes}')
                 except Exception as e:
                     self.logger.error(f'Incorrect data format, (An: hh:mm Aus: hh:mm) expected; Error: {e}')
                     return None
-            elif commandvalueresult == 'integer' or commandvalueresult == 'list':
-                if commandtransform == 'int':
-                    value = self._value_transform_write(value, commandtransform)
-                    self.logger.debug(f'Transformed value using method {commandtransform} to {value}')
-                elif commandtransform == 'bool':
+            # valuetype 'list' is transformed to listentry via index on read, but written directly as int, so numerical transform could apply
+            elif valuetype == 'integer' or valuetype == 'list':
+                # transform value is numerical -> multiply value with it
+                if self._isfloat(valuereadtransform):
+                    value = self._value_transform_write(value, valuereadtransform)
+                    self.logger.debug(f'Transformed value using method "* {valuereadtransform}" to {value}')
+                elif valuereadtransform == 'bool':
                     value = bool(value)
                 else:
                     value = int(value)
                 valuebytes = self._int2bytes(value, commandvaluebytes)
-                self.logger.debug(f'Created value bytes for type {commandvalueresult} as hexstring: {self._bytes2hexstring(valuebytes)} and as bytes: {valuebytes}')
+                self.logger.debug(f'Created value bytes for type {valuetype} as hexstring: {self._bytes2hexstring(valuebytes)} and as bytes: {valuebytes}')
             else:
-                self.logger.error(f'Type {commandvalueresult} not definied for creating write command bytes')
+                self.logger.error(f'Type {valuetype} not definied for creating write command bytes')
                 return None
         except Exception as e:
             self.logger.debug(f'_build_valuebytes_from_value failed with unexpected error: {e}')
@@ -1398,7 +1404,7 @@ class Viessmann(SmartPlugin):
         # Handling of write command response if not error
         elif responsedatacode == 2 and responsetypecode != 3:
             self.logger.debug(f'Write request of adress {commandcode} successfull writing {valuebytecount} bytes')
-            return None
+            return True
         else:
             self.logger.error(f'Write request of adress {commandcode} NOT successfull writing {valuebytecount} bytes')
             return None
@@ -1679,7 +1685,8 @@ class Viessmann(SmartPlugin):
         :return: Transformed value
         :rtype: int
         '''
-        return int(value * int(transform))
+        # as transform and value can be float and by error possibly str, we try to float both
+        return int(float(value) * float(transform))
 
     def _error_decode(self, value):
         '''
