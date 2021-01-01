@@ -1692,6 +1692,7 @@ class Viessmann(SmartPlugin):
         '''
         Decode error value from device if defined, else return error as string
         '''
+        value = str(value).upper()
         if value in self._errorset:
             errorstring = str(self._errorset[value])
         else:
