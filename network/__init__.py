@@ -214,17 +214,18 @@ class Network(SmartPlugin):
         self.udp_acl = self.parse_acl(self.get_parameter_value('udp_acl'))
         self.http_acl = self.parse_acl(self.get_parameter_value('http_acl'))
 
-        if self.get_parameter_value('tcp') == 'yes':
+        if self.get_parameter_value('tcp'):
             self.add_listener('tcp', self.get_parameter_value('ip'), self.get_parameter_value('port'), self.tcp_acl,
                               generic=True)
-        if self.get_parameter_value('udp') == 'yes':
+        print(f'val is {self.get_parameter_value("udp")}, type is {self.get_parameter_value("udp")}')
+        if self.get_parameter_value('udp'):
             self.add_listener('udp', self.get_parameter_value('ip'), self.get_parameter_value('port'), self.udp_acl,
                               generic=True)
-        if self.get_parameter_value('http') == 'yes':
-            self.logger.error('http parameter must be "no" or <port number>, but it is set to "yes". HTTP listener not enabled.')
-        elif self.get_parameter_value('http') != 'no':
+        if self.get_parameter_value('http').isnumeric():
             self.add_listener('http', self.get_parameter_value('ip'), self.get_parameter_value('http'), self.http_acl,
                               generic=True)
+        elif self.get_parameter_value('http') == 'yes':
+            self.logger.error('http parameter must be "no" or <port number>, but it is set to "yes". HTTP listener not enabled.')
 
     def udp(self, host, port, data):
         '''
