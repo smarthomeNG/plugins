@@ -1252,7 +1252,7 @@ class Viessmann(SmartPlugin):
                 return (None, 0)
 
             # Calculate length of payload (only needed for P300)
-            payloadlength = int(self._controlset['Command_bytes_write']) + int(commandvaluebytes)
+            payloadlength = int(self._controlset.get('Command_bytes_write', 0)) + int(commandvaluebytes)
             self.logger.debug(f'Payload length is: {payloadlength} bytes')
 
         # Build packet for read commands
