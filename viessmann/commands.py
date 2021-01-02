@@ -130,10 +130,10 @@ commandset = {
         'Raumtemperatur_Soll_Party_Betrieb_A1M1':     {'addr': '2308', 'len': 1, 'unit': 'ISNON',   'set': True, 'min_value': 3,   'max_value': 37},        # Raumtemperatur Soll Party Betrieb A1M1
         'Aktuelle_Betriebsart_A1M1':                  {'addr': '2301', 'len': 1, 'unit': 'BA',      'set': False},                                          # Aktuelle Betriebsart A1M1
         'Betriebsart_A1M1':                           {'addr': '2323', 'len': 1, 'unit': 'IUINT',   'set': True, 'min_value': 0,   'max_value': 4},         # Betriebsart A1M1
-        'Sparbetrieb_A1M1':                           {'addr': '2302', 'len': 1, 'unit': 'IUBOOL',  'set': True, 'min_value': 0,   'max_value': 1},         # Sparbetrieb A1M1
-        'Zustand_Sparbetrieb_A1M1':                   {'addr': '2331', 'len': 1, 'unit': 'IUINT',   'set': False},                                          # Zustand Sparbetrieb A1M1
-        'Partybetrieb_A1M1':                          {'addr': '2303', 'len': 1, 'unit': 'IUBOOL',  'set': True, 'min_value': 0,   'max_value': 1},         # Partybetrieb A1M1
-        'Zustand_Partybetrieb_A1M1':                  {'addr': '2330', 'len': 1, 'unit': 'IUINT',   'set': False},                                          # Zustand Partybetrieb A1M1
+        'Sparbetrieb_A1M1':                           {'addr': '2302', 'len': 1, 'unit': 'IUBOOL',  'set': False},                                          # Sparbetrieb A1M1
+        'Zustand_Sparbetrieb_A1M1':                   {'addr': '2331', 'len': 1, 'unit': 'IUBOOL',  'set': True, 'min_value': 0,   'max_value': 1},         # Zustand Sparbetrieb A1M1        
+        'Partybetrieb_A1M1':                          {'addr': '2303', 'len': 1, 'unit': 'IUBOOL',  'set': False},                                          # Partybetrieb A1M1
+        'Zustand_Partybetrieb_A1M1':                  {'addr': '2330', 'len': 1, 'unit': 'IUBOOL',  'set': True, 'min_value': 0,   'max_value': 1},         # Zustand Partybetrieb A1M1        
         'Vorlauftemperatur_A1M1':                     {'addr': '2900', 'len': 2, 'unit': 'IU10',    'set': False},                                          # Vorlauftemperatur A1M1
         'Vorlauftemperatur_Soll_A1M1':                {'addr': '2544', 'len': 2, 'unit': 'IU10',    'set': False},                                          # Vorlauftemperatur Soll A1M1
         'StatusFrost_A1M1':                           {'addr': '2500', 'len': 1, 'unit': 'IUBOOL',  'set': False},                                          # Status Frostwarnung A1M1
@@ -162,10 +162,10 @@ commandset = {
         'Raumtemperatur_Soll_Party_Betrieb_M2':       {'addr': '3308', 'len': 1, 'unit': 'ISNON',   'set': True, 'min_value': 3,   'max_value': 37},        # Raumtemperatur Soll Party Betrieb
         'Aktuelle_Betriebsart_M2':                    {'addr': '3301', 'len': 1, 'unit': 'BA',      'set': False},                                          # Aktuelle Betriebsart
         'Betriebsart_M2':                             {'addr': '3323', 'len': 1, 'unit': 'IUINT',   'set': True, 'min_value': 0,   'max_value': 4},         # Betriebsart
-        'Sparbetrieb_M2':                             {'addr': '3302', 'len': 1, 'unit': 'IUBOOL',  'set': True, 'min_value': 0,   'max_value': 1},         # Sparbetrieb
-        'Zustand_Sparbetrieb_M2':                     {'addr': '3331', 'len': 1, 'unit': 'IUINT',   'set': False},                                          # Zustand Sparbetrieb
-        'Partybetrieb_M2':                            {'addr': '3303', 'len': 1, 'unit': 'IUBOOL',  'set': True, 'min_value': 0,   'max_value': 1},         # Partybetrieb
-        'Zustand_Partybetrieb_M2':                    {'addr': '3330', 'len': 1, 'unit': 'IUINT',   'set': False},                                          # Zustand Partybetrieb
+        'Sparbetrieb_M2':                             {'addr': '3302', 'len': 1, 'unit': 'IUBOOL',  'set': False},                                          # Sparbetrieb
+        'Zustand_Sparbetrieb_M2':                     {'addr': '3331', 'len': 1, 'unit': 'IUBOOL',  'set': True, 'min_value': 0,   'max_value': 1},         # Zustand Sparbetrieb 
+        'Partybetrieb_M2':                            {'addr': '3303', 'len': 1, 'unit': 'IUBOOL',  'set': False},                                          # Partybetrieb
+        'Zustand_Partybetrieb_M2':                    {'addr': '3330', 'len': 1, 'unit': 'IUBOOL',  'set': True, 'min_value': 0,   'max_value': 1},         # Zustand Partybetrieb        
         'Vorlauftemperatur_M2':                       {'addr': '3900', 'len': 2, 'unit': 'IU10',    'set': False},                                          # Vorlauftemperatur
         'Vorlauftemperatur_Soll_M2':                  {'addr': '3544', 'len': 2, 'unit': 'IU10',    'set': False},                                          # Vorlauftemperatur Soll
         'StatusFrost_M2':                             {'addr': '3500', 'len': 1, 'unit': 'IUBOOL',  'set': False},                                          # Status Frostwarnung
