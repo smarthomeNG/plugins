@@ -719,22 +719,22 @@ systemschemes = {
 }
 
 devicetypes = {
-    '2098': 'V200KW2, Protokoll: KW',
-    '2053': 'GWG_VBEM, Protokoll: GWG',
-    '20CB': 'VScotHO1, Protokoll: P300',
-    '2094': 'V200KW1, Protokoll: KW',
-    '209F': 'V200KO1B, Protokoll: P300, KW',
-    '204D': 'V200WO1C, Protokoll: P300',
-    '20B8': 'V333MW1, Protokoll: ',
-    '20A0': 'V100GC1, Protokoll: ',
-    '20C2': 'VDensHO1, Protokoll: ',
-    '20A4': 'V200GW1, Protokoll: ',
-    '20C8': 'VPlusHO1, Protokoll: ',
-    '2046': 'V200WO1,VBC700, Protokoll: ',
-    '2047': 'V200WO1,VBC700, Protokoll: ',
-    '2049': 'V200WO1,VBC700, Protokoll: ',
-    '2032': 'VBC550, Protokoll: ',
-    '2033': 'VBC550, Protokoll: '
+    '2098': 'V200KW2',   # Protokoll: KW
+    '2053': 'GWG_VBEM',  # Protokoll: GWG
+    '20CB': 'VScotHO1',  # Protokoll: P300
+    '2094': 'V200KW1',   # Protokoll: KW
+    '209F': 'V200KO1B',  # Protokoll: P300
+    '204D': 'V200WO1C',  # Protokoll: P300
+    '20B8': 'V333MW1',
+    '20A0': 'V100GC1',
+    '20C2': 'VDensHO1',
+    '20A4': 'V200GW1',
+    '20C8': 'VPlusHO1',
+    '2046': 'V200WO1',
+    '2047': 'V200WO1',
+    '2049': 'V200WO1',
+    '2032': 'VBC550',
+    '2033': 'VBC550'
 }
 
 returnstatus = {
