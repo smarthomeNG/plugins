@@ -100,6 +100,12 @@ item_attributes:
             de: 'Liest alle konfigurierten Items neu, wenn es auf True gesetzt wird'
             en: 'Triggers reading of all configured items if set to True'
 
+    viess_ba_list:
+        type: bool
+        description:
+            de: 'Gibt nach der Initialisierung eine Liste aller für die konfigurierte Heizung gültigen Betriebsarten zurück'
+            en: 'Returns a list of valid operating modes for the configured device type after initialization'
+
 item_structs:
     timer:
         name: Schaltzeiten in Einzelzeiten fuer An und Aus
