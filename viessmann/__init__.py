@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 
 #########################################################################
@@ -33,11 +33,27 @@ from datetime import datetime
 import dateutil.parser
 import cherrypy
 
-from . import commands
+if __name__ == '__main__':
+    # just needed for standalone mode
 
-from lib.item import Items
-from lib.model.smartplugin import *
-from bin.smarthome import VERSION
+    class SmartPlugin():
+        pass
+
+    class SmartPluginWebIf():
+        pass
+
+    import os
+    BASE = os.path.sep.join(os.path.realpath(__file__).split(os.path.sep)[:-3])
+    sys.path.insert(0, BASE)
+    import commands
+
+else:
+    from . import commands
+
+    from lib.item import Items
+    from lib.model.smartplugin import *
+
+    from bin.smarthome import VERSION
 
 
 class Viessmann(SmartPlugin):
@@ -55,13 +71,22 @@ class Viessmann(SmartPlugin):
 # public methods
 #
 
-    def __init__(self, sh, *args, **kwargs):
+    def __init__(self, sh, *args, standalone='', logger=None, **kwargs):
 
-        # Get plugin parameter
-        self._serialport = self.get_parameter_value('serialport')
-        self._heating_type = self.get_parameter_value('heating_type')
-        self._protocol = self.get_parameter_value('protocol')
-        self._timeout = self.get_parameter_value('timeout')
+        # standalone mode: just setup basic info
+        if standalone:
+            self._serialport = standalone
+            self._timeout = 3
+            self.logger = logger
+            self._standalone = True
+
+        else:
+            # Get plugin parameter
+            self._serialport = self.get_parameter_value('serialport')
+            self._heating_type = self.get_parameter_value('heating_type')
+            self._protocol = self.get_parameter_value('protocol')
+            self._timeout = self.get_parameter_value('timeout')
+            self._standalone = False
 
         # Set variables
         self._params = {}                                                   # Item dict
@@ -88,6 +113,10 @@ class Viessmann(SmartPlugin):
             'FR': ['fr', 'freitag', 'friday'],
             'SA': ['sa', 'samstag', 'saturday'],
             'SU': ['so', 'sonntag', 'sunday']}
+
+        # if running standalone, don't initialize command sets
+        if not sh:
+            return
 
         # initialize logger if necessary
         if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
@@ -495,8 +524,7 @@ class Viessmann(SmartPlugin):
             self._connected = True
             self.logger.info(f'Connected to {self._serialport}')
             self._connection_attempts = 0
-
-            if not self.scheduler_get('cyclic'):
+            if not self._standalone and not self.scheduler_get('cyclic'):
                 self._create_cyclic_scheduler()
             return True
         except Exception as e:
@@ -1272,7 +1300,7 @@ class Viessmann(SmartPlugin):
 
     def _parse_response(self, response, commandname='', read_response=True):
         '''
-        Process device response data, try to parse type and value and assign value to associated item
+        Process device response data, try to parse type and value
 
         :param response: Data received from device
         :type response: bytearray
@@ -1908,5 +1936,135 @@ class WebInterface(SmartPluginWebIf):
         return json.dumps(self._last_read).encode('utf-8')
 
 
+# ------------------------------------------
+# The following code is for standalone use of the plugin to identify the device
+# ------------------------------------------
+
+def get_device_type(v, protocol):
+
+    # try to connect and read device type info from 0x00f8
+    print(f'Trying protocol {protocol} on device {serialport}')
+
+    # first, initialize Viessmann object for use
+    v.alive = True
+    v._protocol = protocol
+
+    # setup protocol controlset
+    v._controlset = commands.controlset[protocol]
+    res = v._connect()
+    if not res:
+        logger.info(f'Connection to {serialport} failed. Please check connection.')
+        return None
+
+    res = v._init_communication()
+    if not res:
+        logger.info(f'Could not initialize communication using protocol {protocol}.')
+        return False
+
+    # we are connected to the IR head
+
+    # set needed unit
+    v._unitset = {
+        'DT': {'unit_de': 'DeviceType', 'type': 'list', 'signed': False, 'read_value_transform': 'non'}
+    }
+
+    # set needed command. DeviceType command is (hopefully) the same in all devices...
+    v._commandset = {
+        'DT': {'addr': '00f8', 'len': 2, 'unit': 'DT', 'set': False},
+    }
+
+    # we leave this empty so we get the DT code back
+    v._devicetypes = {}
+
+    # this is protocol dependent, so easier to let the Class work this out...
+    (packet, responselen) = v._build_command_packet('DT')
+    if packet is None:
+        raise ValueError('No command packet received for address 00f8. This shouldn\'t happen...')
+
+    # send it
+    response_packet = v._send_command_packet(packet, responselen)
+    if response_packet is None:
+        raise ValueError('Error on communicating with the device, no response received. Unknown error.')
+
+    # let it go...
+    v._disconnect()
+
+    (val, code) = v._parse_response(response_packet, 'DT')
+
+    if val is not None:
+        return val
+    else:
+        return None
+
+
 if __name__ == '__main__':
-    print('Library version %s' % __version__)
+
+    usage = '''
+    Usage:
+    ----------------------------------------------------------------------------------
+
+    This plugin is meant to be used inside SmartHomeNG.
+
+    For diagnostic purposes, you can run it as a standalone Python program from the
+    command line. It will try to communicate with a connected Viessmann heating system
+    and return the device type and the necessary protocol for setting up your plugin
+    in SmartHomeNG.
+
+    You need to call this plugin with the serial interface as the first parameter, e.g.
+
+    ./__init__.py /dev/ttyUSB0
+
+    If you call it with -v as a second parameter, you get additional debug information:
+
+    ./__init__.py /dev/ttyUSB0 -v
+
+    '''
+
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.CRITICAL)
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.DEBUG)
+
+    # create formatter and add it to the handlers
+    formatter = logging.Formatter('%(asctime)s - %(message)s  @ %(lineno)d')
+    ch.setFormatter(formatter)
+
+    # add the handlers to the logger
+    logger.addHandler(ch)
+
+    serialport = ""
+
+    if len(sys.argv) == 2:
+        serialport = sys.argv[1]
+    elif len(sys.argv) == 3 and sys.argv[2] == '-v':
+        serialport = sys.argv[1]
+        logger.setLevel(logging.DEBUG)
+    else:
+        print(usage)
+        exit()
+
+    print("This is Viessmann plugin running in standalone mode")
+    print("===================================================")
+
+    v = Viessmann(None, standalone=serialport, logger=logger)
+
+    for proto in ('P300', 'KW'):
+
+        res = get_device_type(v, proto)
+        if res is None:
+
+            # None means no connection, no further tries
+            print(f'Connection could not be established to {serialport}. Please check connection.')
+            break
+
+        if res is False:
+
+            # False means no comm init (only P300), go on
+            print(f'Communication could not be established using protocol {proto}.')
+        else:
+
+            # anything else should be the devices answer, try to decode and quit
+            print(f'Device ID is {res}, device type is {commands.devicetypes.get(res, 'unknown')} using protocol {proto}')
+            # break
+
+    print('Done.')

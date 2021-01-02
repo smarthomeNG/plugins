@@ -130,10 +130,10 @@ commandset = {
         'Raumtemperatur_Soll_Party_Betrieb_A1M1':     {'addr': '2308', 'len': 1, 'unit': 'ISNON',   'set': True, 'min_value': 3,   'max_value': 37},        # Raumtemperatur Soll Party Betrieb A1M1
         'Aktuelle_Betriebsart_A1M1':                  {'addr': '2301', 'len': 1, 'unit': 'BA',      'set': False},                                          # Aktuelle Betriebsart A1M1
         'Betriebsart_A1M1':                           {'addr': '2323', 'len': 1, 'unit': 'IUINT',   'set': True, 'min_value': 0,   'max_value': 4},         # Betriebsart A1M1
-        'Sparbetrieb_A1M1':                           {'addr': '2302', 'len': 1, 'unit': 'IUBOOL',  'set': True, 'min_value': 0,   'max_value': 1},         # Sparbetrieb A1M1
-        'Zustand_Sparbetrieb_A1M1':                   {'addr': '2331', 'len': 1, 'unit': 'IUINT',   'set': False},                                          # Zustand Sparbetrieb A1M1
-        'Partybetrieb_A1M1':                          {'addr': '2303', 'len': 1, 'unit': 'IUBOOL',  'set': True, 'min_value': 0,   'max_value': 1},         # Partybetrieb A1M1
-        'Zustand_Partybetrieb_A1M1':                  {'addr': '2330', 'len': 1, 'unit': 'IUINT',   'set': False},                                          # Zustand Partybetrieb A1M1
+        'Sparbetrieb_A1M1':                           {'addr': '2302', 'len': 1, 'unit': 'IUBOOL',  'set': False},                                          # Sparbetrieb A1M1
+        'Zustand_Sparbetrieb_A1M1':                   {'addr': '2331', 'len': 1, 'unit': 'IUBOOL',  'set': True, 'min_value': 0,   'max_value': 1},         # Zustand Sparbetrieb A1M1        
+        'Partybetrieb_A1M1':                          {'addr': '2303', 'len': 1, 'unit': 'IUBOOL',  'set': False},                                          # Partybetrieb A1M1
+        'Zustand_Partybetrieb_A1M1':                  {'addr': '2330', 'len': 1, 'unit': 'IUBOOL',  'set': True, 'min_value': 0,   'max_value': 1},         # Zustand Partybetrieb A1M1        
         'Vorlauftemperatur_A1M1':                     {'addr': '2900', 'len': 2, 'unit': 'IU10',    'set': False},                                          # Vorlauftemperatur A1M1
         'Vorlauftemperatur_Soll_A1M1':                {'addr': '2544', 'len': 2, 'unit': 'IU10',    'set': False},                                          # Vorlauftemperatur Soll A1M1
         'StatusFrost_A1M1':                           {'addr': '2500', 'len': 1, 'unit': 'IUBOOL',  'set': False},                                          # Status Frostwarnung A1M1
@@ -162,10 +162,10 @@ commandset = {
         'Raumtemperatur_Soll_Party_Betrieb_M2':       {'addr': '3308', 'len': 1, 'unit': 'ISNON',   'set': True, 'min_value': 3,   'max_value': 37},        # Raumtemperatur Soll Party Betrieb
         'Aktuelle_Betriebsart_M2':                    {'addr': '3301', 'len': 1, 'unit': 'BA',      'set': False},                                          # Aktuelle Betriebsart
         'Betriebsart_M2':                             {'addr': '3323', 'len': 1, 'unit': 'IUINT',   'set': True, 'min_value': 0,   'max_value': 4},         # Betriebsart
-        'Sparbetrieb_M2':                             {'addr': '3302', 'len': 1, 'unit': 'IUBOOL',  'set': True, 'min_value': 0,   'max_value': 1},         # Sparbetrieb
-        'Zustand_Sparbetrieb_M2':                     {'addr': '3331', 'len': 1, 'unit': 'IUINT',   'set': False},                                          # Zustand Sparbetrieb
-        'Partybetrieb_M2':                            {'addr': '3303', 'len': 1, 'unit': 'IUBOOL',  'set': True, 'min_value': 0,   'max_value': 1},         # Partybetrieb
-        'Zustand_Partybetrieb_M2':                    {'addr': '3330', 'len': 1, 'unit': 'IUINT',   'set': False},                                          # Zustand Partybetrieb
+        'Sparbetrieb_M2':                             {'addr': '3302', 'len': 1, 'unit': 'IUBOOL',  'set': False},                                          # Sparbetrieb
+        'Zustand_Sparbetrieb_M2':                     {'addr': '3331', 'len': 1, 'unit': 'IUBOOL',  'set': True, 'min_value': 0,   'max_value': 1},         # Zustand Sparbetrieb 
+        'Partybetrieb_M2':                            {'addr': '3303', 'len': 1, 'unit': 'IUBOOL',  'set': False},                                          # Partybetrieb
+        'Zustand_Partybetrieb_M2':                    {'addr': '3330', 'len': 1, 'unit': 'IUBOOL',  'set': True, 'min_value': 0,   'max_value': 1},         # Zustand Partybetrieb        
         'Vorlauftemperatur_M2':                       {'addr': '3900', 'len': 2, 'unit': 'IU10',    'set': False},                                          # Vorlauftemperatur
         'Vorlauftemperatur_Soll_M2':                  {'addr': '3544', 'len': 2, 'unit': 'IU10',    'set': False},                                          # Vorlauftemperatur Soll
         'StatusFrost_M2':                             {'addr': '3500', 'len': 1, 'unit': 'IUBOOL',  'set': False},                                          # Status Frostwarnung
@@ -718,22 +718,22 @@ systemschemes = {
 }
 
 devicetypes = {
-    '2098': 'V200KW2, Protokoll: KW',
-    '2053': 'GWG_VBEM, Protokoll: GWG',
-    '20CB': 'VScotHO1, Protokoll: P300',
-    '2094': 'V200KW1, Protokoll: KW',
-    '209F': 'V200KO1B, Protokoll: P300, KW',
-    '204D': 'V200WO1C, Protokoll: P300',
-    '20B8': 'V333MW1, Protokoll: ',
-    '20A0': 'V100GC1, Protokoll: ',
-    '20C2': 'VDensHO1, Protokoll: ',
-    '20A4': 'V200GW1, Protokoll: ',
-    '20C8': 'VPlusHO1, Protokoll: ',
-    '2046': 'V200WO1,VBC700, Protokoll: ',
-    '2047': 'V200WO1,VBC700, Protokoll: ',
-    '2049': 'V200WO1,VBC700, Protokoll: ',
-    '2032': 'VBC550, Protokoll: ',
-    '2033': 'VBC550, Protokoll: '
+    '2098': 'V200KW2',   # Protokoll: KW
+    '2053': 'GWG_VBEM',  # Protokoll: GWG
+    '20CB': 'VScotHO1',  # Protokoll: P300
+    '2094': 'V200KW1',   # Protokoll: KW
+    '209F': 'V200KO1B',  # Protokoll: P300
+    '204D': 'V200WO1C',  # Protokoll: P300
+    '20B8': 'V333MW1',
+    '20A0': 'V100GC1',
+    '20C2': 'VDensHO1',
+    '20A4': 'V200GW1',
+    '20C8': 'VPlusHO1',
+    '2046': 'V200WO1',
+    '2047': 'V200WO1',
+    '2049': 'V200WO1',
+    '2032': 'VBC550',
+    '2033': 'VBC550'
 }
 
 returnstatus = {
