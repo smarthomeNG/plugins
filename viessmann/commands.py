@@ -672,7 +672,6 @@ operatingmodes = {
         '00': 'Abschaltbetrieb',
         '01': 'Warmwasser',
         '02': 'Heizen und Warmwasser',
-        '03': 'undefiniert',
         '04': 'dauernd reduziert',
         '05': 'dauernd normal',
         '06': 'normal Abschalt',

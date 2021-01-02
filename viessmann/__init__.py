@@ -70,7 +70,8 @@ class Viessmann(SmartPlugin):
         self._application_timer = {}                                        # Dict of application timer with command codes and values
         self._timer_cmds = []                                               # List of command codes for timer
         self._viess_timer_dict = {}
-        self._last_values = {}                                              # list of last value per command code
+        self._last_values = {}              
+        self._balist_item = None                                # list of last value per command code
         self._lock = threading.Lock()
         self._initread = False
         self._timerread = False
@@ -243,6 +244,11 @@ class Viessmann(SmartPlugin):
             else:
                 self.logger.info(f'Item {item} to be written by using command {commandname}')
                 return self.update_item
+
+        # get operating modes list
+        if self.has_iattr(item.conf, 'viess_ba_list'):
+            self._balist_item = item
+            self.logger.info(f'Item {item} wants list of operating modes')
 
     def parse_logic(self, logic):
         pass
@@ -604,6 +610,11 @@ class Viessmann(SmartPlugin):
         '''
         Read all values configured to be read at startup / connection
         '''
+        if self._balist_item is not None:
+            balist = list(self._operatingmodes.values())
+            self._balist_item(balist, self.get_shortname())
+            self.logger.info(f'writing list of operating modes ({len(balist)} entries) to item {self._balist_item}')
+
         if self._init_cmds != []:
             self.logger.info('Starting initial read commands.')
             if self._protocol == 'KW':
