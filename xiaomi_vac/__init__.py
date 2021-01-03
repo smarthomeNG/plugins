@@ -78,6 +78,7 @@ class Robvac(SmartPlugin):
     # --------------------------------------------------------------------------
     def _connect(self):
         if self._connected is False:
+            self._data['state'] = 'disconnected'
             for i in range(0, self.retry_count_max-self.retry_count):
                 try:
                     self.vakuum = miio.Vacuum(self._ip, self._token, 0, 0)
