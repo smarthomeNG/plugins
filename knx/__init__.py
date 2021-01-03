@@ -39,7 +39,7 @@ import cherrypy
 from lib.network import Tcp_client
 from lib.utils import Utils
 from lib.item import Items
-from lib.model.smartplugin import *
+from lib.model.smartplugin import SmartPlugin, SmartPluginWebIf
 from lib.shtime import Shtime
 
 from . import dpts
@@ -86,7 +86,7 @@ KNXMC = 'IP Router'
 # old class KNX(lib.connection.Client,SmartPlugin):
 class KNX(SmartPlugin):
 
-    PLUGIN_VERSION = "1.7.4"
+    PLUGIN_VERSION = "1.7.5"
 
     # tags actually used by the plugin are shown here
     # can be used later for backend item editing purposes, to check valid item attributes
@@ -120,7 +120,7 @@ class KNX(SmartPlugin):
         self._cache_ga_response_pending = []
         self.time_ga = self.get_parameter_value('time_ga')
         self.date_ga = self.get_parameter_value('date_ga')
-        send_time = self.get_parameter_value('send_time')
+        self._send_time_do = self.get_parameter_value('send_time')
         self._bm_separatefile = False
         self._bm_format = "BM': {1} set {2} to {3}"
 
@@ -145,9 +145,6 @@ class KNX(SmartPlugin):
         else:
             self.logger.warning(self.translate("Invalid value '{}' configured for parameter 'busmonitor', using 'false'").format(busmonitor))
             self._busmonitor = self.logger.debug
-
-        if send_time:
-            self._sh.scheduler.add('KNX[{0}] time'.format(self.get_instance_name()), self._send_time, prio=5, cycle=int(send_time))
 
         self.readonly = self.get_parameter_value('readonly')
         if self.readonly:
@@ -474,6 +471,9 @@ class KNX(SmartPlugin):
             self.logger.debug("Plugin '{}': run method called".format(self.get_fullname()))
         self.alive = True
         self._client.connect()
+        # moved from __init__() for proper restart behaviour
+        if self._send_time_do:
+            self._sh.scheduler.add('KNX[{0}] time'.format(self.get_instance_name()), self._send_time, prio=5, cycle=int(self._send_time_do))
 
     def stop(self):
         """
@@ -482,6 +482,9 @@ class KNX(SmartPlugin):
         if self.logger.isEnabledFor(logging.DEBUG):
             self.logger.debug("Plugin '{}': stop method called".format(self.get_fullname()))
         self.alive = False
+        # added to effect better cleanup on stop
+        if self.scheduler_get(f'KNX[{self.get_instance_name()}] time'):
+            self.scheduler_remove(f'KNX[{self.get_instance_name()}] time')
         self._client.close()
 
     def parse_item(self, item):
@@ -657,14 +660,15 @@ class KNX(SmartPlugin):
         :param source: if given it represents the source
         :param dest: if given it represents the dest
         """
-        if self.has_iattr(item.conf, KNX_SEND):
-            if caller != self.get_shortname():
-                for ga in self.get_iattr_value(item.conf, KNX_SEND):
-                    self.groupwrite(ga, item(), self.get_iattr_value(item.conf, KNX_DPT))
-        if self.has_iattr(item.conf, KNX_STATUS):
-            for ga in self.get_iattr_value(item.conf, KNX_STATUS):  # send status update
-                if ga != dest:
-                    self.groupwrite(ga, item(), self.get_iattr_value(item.conf, KNX_DPT))
+        if self.alive:
+            if self.has_iattr(item.conf, KNX_SEND):
+                if caller != self.get_shortname():
+                    for ga in self.get_iattr_value(item.conf, KNX_SEND):
+                        self.groupwrite(ga, item(), self.get_iattr_value(item.conf, KNX_DPT))
+            if self.has_iattr(item.conf, KNX_STATUS):
+                for ga in self.get_iattr_value(item.conf, KNX_STATUS):  # send status update
+                    if ga != dest:
+                        self.groupwrite(ga, item(), self.get_iattr_value(item.conf, KNX_DPT))
 
     def init_webinterface(self):
         """"
