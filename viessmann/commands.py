@@ -236,6 +236,7 @@ commandset = {
     'V200HO1C': {
         # Allgemein
         'Anlagentyp':                                 {'addr': '00f8', 'len': 2, 'unit': 'DT',      'set': False},                                          # Heizungstyp
+        'Anlagenschema':                              {'addr': '7700', 'len': 2, 'unit': 'SC',      'set': False},                                          # Anlagenschema
         'Frostgefahr':                                {'addr': '2510', 'len': 1, 'unit': 'IUBOOL',  'set': False},                                          # Frostgefahr
         'Aussentemperatur_TP':                        {'addr': '5525', 'len': 2, 'unit': 'IU10',    'set': False},                                          # Aussentemperatur_tiefpass
         'Aussentemperatur_Dp':                        {'addr': '5527', 'len': 2, 'unit': 'IU10',    'set': False},                                          # Aussentemperatur in Grad C (Gedaempft)
@@ -291,10 +292,12 @@ commandset = {
     'V200KW2': {
         # Allgemein
         'Anlagentyp':                                 {'addr': '00f8', 'len': 2, 'unit': 'DT',      'set': False},                                          # Ermittle Device Typ der Anlage
+        'Anlagenschema':                              {'addr': '7700', 'len': 2, 'unit': 'SC',      'set': False},                                          # Anlagenschema
         'Aussentemperatur':                           {'addr': '0800', 'len': 2, 'unit': 'IU10',    'set': False},                                          # Aussentemperatur_tiefpass
-        'Aussentemperatur_TP':                        {'addr': '2053', 'len': 2, 'unit': 'IU10',    'set': False},                                          # Aussentemperatur_tiefpass
         'Aussentemperatur_Dp':                        {'addr': '5527', 'len': 2, 'unit': 'IU10',    'set': False},                                          # Aussentemperatur in Grad C (Gedaempft)
+        'Systemtime':                                 {'addr': '088e', 'len': 8, 'unit': 'TI',      'set': True},                                           # Systemzeit
         # Kessel
+        'TempKOffset':                                {'addr': '6760', 'len': 1, 'unit': 'IUINT',   'set': True, 'min_value': 10,   'max_value': 50},       # Kesseloffset KT ueber WWsoll in Grad C
         'Kesseltemperatur':                           {'addr': '0802', 'len': 2, 'unit': 'IU10',    'set': False},                                          # Kesseltemperatur
         'Kesselsolltemperatur':                       {'addr': '5502', 'len': 2, 'unit': 'IU10',    'set': True},                                           # Kesselsolltemperatur
         # Fehler
@@ -313,27 +316,84 @@ commandset = {
         # Pumpen
         'Speicherladepumpe':                          {'addr': '0845', 'len': 1, 'unit': 'IUBOOL',  'set': False},                                          # Speicherladepumpe für Warmwasser
         'Zirkulationspumpe':                          {'addr': '0846', 'len': 1, 'unit': 'IUBOOL',  'set': False},                                          # Zirkulationspumpe
-        'Heizkreispumpe_A1M1':                        {'addr': '2906', 'len': 1, 'unit': 'IUBOOL',  'set': False},                                          # Heizkreispumpe A1
-        'Heizkreispumpe_M2':                          {'addr': '3906', 'len': 1, 'unit': 'IUINT',   'set': False},                                          # Heizkreispumpe M2
+        'Heizkreispumpe_A1M1':                        {'addr': '2906', 'len': 1, 'unit': 'IUBOOL',  'set': False},                                          # Heizkreispumpe A1M1
+        'Heizkreispumpe_M2':                          {'addr': '3906', 'len': 1, 'unit': 'IUBOOL',  'set': False},                                          # Heizkreispumpe M2
         # Brenner
+        'Brennertyp':                                 {'addr': 'a30b', 'len': 1, 'unit': 'IUNON',   'set': False},                                          # Brennertyp 0=einstufig 1=zweistufig 2=modulierend
+        'Brennerstufe':                               {'addr': '551e', 'len': 1, 'unit': 'RT',      'set': False},                                          # Ermittle die aktuelle Brennerstufe
         'Brennerstarts':                              {'addr': '088a', 'len': 2, 'unit': 'ISNON',   'set': True, 'min_value': 0,   'max_value': 1193045},   # Brennerstarts
         'Brennerstatus_1':                            {'addr': '55d3', 'len': 1, 'unit': 'IUBOOL',  'set': False},                                          # Brennerstatus Stufe1
         'Brennerstatus_2':                            {'addr': '0849', 'len': 1, 'unit': 'IUBOOL',  'set': False},                                          # Brennerstatus Stufe2
-        'Brenner_BetriebsstundenStufe1':              {'addr': '0886', 'len': 4, 'unit': 'IU3600',  'set': True, 'min_value': 0,   'max_value': 1193045},   # Brenner-Betriebsstunden
-        'BrennerStufe':                               {'addr': '551e', 'len': 1, 'unit': 'RT',      'set': False},                                          # Ermittle den Brennerstatus aktuelle Stufe
-        'Heizleistung':                               {'addr': '55e3', 'len': 1, 'unit': 'IU2',     'set': False},
+        'Brenner_BetriebsstundenStufe1':              {'addr': '0886', 'len': 4, 'unit': 'IU3600',  'set': True, 'min_value': 0,   'max_value': 1193045},   # Brenner-Betriebsstunden Stufe 1
+        'Brenner_BetriebsstundenStufe2':              {'addr': '08A3', 'len': 4, 'unit': 'IU3600',  'set': True, 'min_value': 0,   'max_value': 1193045},   # Brenner-Betriebsstunden Stufe 2
+        # Heizkreis A1M1
+        'Betriebsart_A1M1':                           {'addr': '2301', 'len': 1, 'unit': 'BA',      'set': True},                                           # Betriebsart A1M1
+        'Aktuelle_Betriebsart_A1M1':                  {'addr': '2500', 'len': 1, 'unit': 'BA',      'set': False},                                          # Aktuelle Betriebsart A1M1
+        'Sparbetrieb_A1M1':                           {'addr': '2302', 'len': 1, 'unit': 'IUBOOL',  'set': True, 'min_value': 0,   'max_value': 1},         # Sparbetrieb A1M1
+        'Partybetrieb_A1M1':                          {'addr': '2303', 'len': 1, 'unit': 'IUBOOL',  'set': True, 'min_value': 0,   'max_value': 1},         # Partybetrieb A1M1
+        'Vorlauftemperatur_A1M1':                     {'addr': '2900', 'len': 2, 'unit': 'IU10',    'set': False},                                          # Vorlauftemperatur A1M1
+        'Vorlauftemperatur_Soll_A1M1':                {'addr': '2544', 'len': 2, 'unit': 'IU10',    'set': False},                                          # Vorlauftemperatur Soll A1M1
+        'Raumtemperatur_Soll_Normalbetrieb_A1M1':     {'addr': '2303', 'len': 1, 'unit': 'ISNON',   'set': True, 'min_value': 4,   'max_value': 37},        # Raumtemperatur Soll Normalbetrieb A1M1
+        'Raumtemperatur_Soll_Red_Betrieb_A1M1':       {'addr': '2307', 'len': 1, 'unit': 'ISNON',   'set': True, 'min_value': 4,   'max_value': 37},        # Raumtemperatur Soll Reduzierter Betrieb A1M1
+        'Raumtemperatur_Soll_Party_Betrieb_A1M1':     {'addr': '2308', 'len': 1, 'unit': 'ISNON',   'set': True, 'min_value': 4,   'max_value': 37},        # Raumtemperatur Soll Party Betrieb A1M1
+        'Neigung_Heizkennlinie_A1M1':                 {'addr': '2305', 'len': 1, 'unit': 'IU10',    'set': True, 'min_value': 0.2, 'max_value': 3.5},       # Neigung Heizkennlinie A1M1
+        'Niveau_Heizkennlinie_A1M1':                  {'addr': '2304', 'len': 1, 'unit': 'ISNON',   'set': True, 'min_value': -13, 'max_value': 40},        # Niveau Heizkennlinie A1M1
+        'MischerM1':                                  {'addr': '254c', 'len': 1, 'unit': 'IUPR',    'set': False},                                          # Ermittle Mischerposition M1
+        'Heizkreispumpenlogik_A1M1':                  {'addr': '27a5', 'len': 1, 'unit': 'ISNON',   'set': True, 'min_value': 0,   'max_value': 15},        # 0=ohne HPL-Funktion, 1=AT > RTsoll + 5 K, 2=AT > RTsoll + 4 K, 3=AT > RTsoll + 3 K, 4=AT > RTsoll + 2 K, 5=AT > RTsoll + 1 K, 6=AT > RTsoll, 7=AT > RTsoll - 1 K, 8=AT > RTsoll - 2 K, 9=AT > RTsoll - 3 K, 10=AT > RTsoll - 4 K, 11=AT > RTsoll - 5 K, 12=AT > RTsoll - 6 K, 13=AT > RTsoll - 7 K, 14=AT > RTsoll - 8 K, 15=AT > RTsoll - 9 K
+        'Sparschaltung_A1M1':                         {'addr': '27a6', 'len': 1, 'unit': 'ISNON',   'set': True, 'min_value': 5,   'max_value': 36},        # AbsolutSommersparschaltung
         # Heizkreis M2
-        'Betriebsart':                                {'addr': '2301', 'len': 1, 'unit': 'BA',      'set': True},                                           # Betriebsart A1M1
-        'BetriebsartM1':                              {'addr': '2301', 'len': 1, 'unit': 'BA',      'set': True},                                           # Betriebsart A1M1
-        'BetriebsartM2':                              {'addr': '3301', 'len': 1, 'unit': 'BA',      'set': True},                                           # Betriebsart A1M1
+        'Betriebsart_M2':                             {'addr': '3301', 'len': 1, 'unit': 'BA',      'set': True},                                           # Betriebsart M2
+        'Aktuelle_Betriebsart_M2':                    {'addr': '3500', 'len': 1, 'unit': 'BA',      'set': False},                                          # Aktuelle Betriebsart M2
+        'Sparbetrieb_M2':                             {'addr': '3302', 'len': 1, 'unit': 'IUBOOL',  'set': True, 'min_value': 0,   'max_value': 1},         # Sparbetrieb
+        'Partybetrieb_M2':                            {'addr': '3303', 'len': 1, 'unit': 'IUBOOL',  'set': True, 'min_value': 0,   'max_value': 1},         # Partybetrieb A1M1
+        'Raumtemperatur_Soll_Normalbetrieb_M2':       {'addr': '3306', 'len': 1, 'unit': 'ISNON',   'set': True, 'min_value': 4,   'max_value': 37},        # Raumtemperatur Soll Normalbetrieb
+        'Raumtemperatur_Soll_Red_Betrieb_M2':         {'addr': '3307', 'len': 1, 'unit': 'ISNON',   'set': True, 'min_value': 4,   'max_value': 37},        # Raumtemperatur Soll Reduzierter Betrieb
+        'Raumtemperatur_Soll_Party_Betrieb_M2':       {'addr': '3308', 'len': 1, 'unit': 'ISNON',   'set': True, 'min_value': 4,   'max_value': 37},        # Raumtemperatur Soll Party Betrieb
+        'Neigung_Heizkennlinie_M2':                   {'addr': '3305', 'len': 1, 'unit': 'IU10',    'set': True, 'min_value': 0.2, 'max_value': 3.5},       # Neigung Heizkennlinie M2
+        'Niveau_Heizkennlinie_M2':                    {'addr': '3304', 'len': 1, 'unit': 'ISNON',   'set': True, 'min_value': -13, 'max_value': 40},        # Niveau Heizkennlinie M2
         'MischerM2':                                  {'addr': '354c', 'len': 1, 'unit': 'IUPR',    'set': False},                                          # Ermittle Mischerposition M2
-        'Vorlauftemperatur_Soll_M2':                  {'addr': '3544', 'len': 2, 'unit': 'IU10',    'set': True, 'min_value': 10,  'max_value': 80},        # Vorlauftemperatur Soll
+        'Vorlauftemperatur_Soll_M2':                  {'addr': '37C6', 'len': 2, 'unit': 'IU10',    'set': True, 'min_value': 10,  'max_value': 80},        # Vorlauftemperatur Soll
         'Vorlauftemperatur_M2':                       {'addr': '080c', 'len': 2, 'unit': 'IU10',    'set': False},                                          # Vorlauftemperatur Ist
-        'StatusKlemme2':                              {'addr': '3904', 'len': 1, 'unit': 'IUINT',   'set': False},
-        'StatusKlemme17':                             {'addr': '3905', 'len': 1, 'unit': 'IUINT',   'set': False},
+        'Heizkreispumpenlogik_M2':                    {'addr': '37a5', 'len': 1, 'unit': 'ISNON',   'set': True, 'min_value': 0,   'max_value': 15},        # 0=ohne HPL-Funktion, 1=AT > RTsoll + 5 K, 2=AT > RTsoll + 4 K, 3=AT > RTsoll + 3 K, 4=AT > RTsoll + 2 K, 5=AT > RTsoll + 1 K, 6=AT > RTsoll, 7=AT > RTsoll - 1 K, 8=AT > RTsoll - 2 K, 9=AT > RTsoll - 3 K, 10=AT > RTsoll - 4 K, 11=AT > RTsoll - 5 K, 12=AT > RTsoll - 6 K, 13=AT > RTsoll - 7 K, 14=AT > RTsoll - 8 K, 15=AT > RTsoll - 9 K
+        'Sparschaltung_M2':                           {'addr': '37a6', 'len': 1, 'unit': 'ISNON',   'set': True, 'min_value': 5,   'max_value': 36},        # AbsolutSommersparschaltung
+        'StatusKlemme2':                              {'addr': '3904', 'len': 1, 'unit': 'IUINT',   'set': False},                                          # 0=OK, 1=Kurzschluss, 2=nicht vorhanden, 3-5=Referenzfehler, 6=nicht vorhanden
+        'StatusKlemme17':                             {'addr': '3905', 'len': 1, 'unit': 'IUINT',   'set': False},                                          # 0=OK, 1=Kurzschluss, 2=nicht vorhanden, 3-5=Referenzfehler, 6=nicht vorhanden
         # Warmwasser
         'Warmwasser_Temperatur':                      {'addr': '0804', 'len': 2, 'unit': 'IU10',    'set': False},                                          # Warmwassertemperatur in Grad C
         'Warmwasser_Solltemperatur':                  {'addr': '6300', 'len': 1, 'unit': 'ISNON',   'set': True, 'min_value': 10,  'max_value': 80},        # Warmwasser-Solltemperatur
+        'Warmwasser_SollwertMax':                     {'addr': '675A', 'len': 1, 'unit': 'IUBOOL',  'set': False},                                          # 0=inaktiv, 1=aktiv
+        # Ferienprogramm HK_A1M1
+        'Ferienprogramm_A1M1':                        {'addr': '2535', 'len': 1, 'unit': 'IUBOOL',  'set': False},                                          # Ferienprogramm A1M1 0=inaktiv 1=aktiv
+        'Ferien_Abreisetag_A1M1':                     {'addr': '2309', 'len': 8, 'unit': 'DA',      'set': True},                                           # Ferien Abreisetag A1M1
+        'Ferien_Rückreisetag_A1M1':                   {'addr': '2311', 'len': 8, 'unit': 'DA',      'set': True},                                           # Ferien Rückreisetag A1M1
+        # Ferienprogramm HK_M2
+        'Ferienprogramm_M2':                          {'addr': '3535', 'len': 1, 'unit': 'IUBOOL',  'set': False},                                          # Ferienprogramm M2 0=inaktiv 1=aktiv
+        'Ferien_Abreisetag_M2':                       {'addr': '3309', 'len': 8, 'unit': 'DA',      'set': True},                                           # Ferien Abreisetag M2
+        'Ferien_Rückreisetag_M2':                     {'addr': '3311', 'len': 8, 'unit': 'DA',      'set': True},                                           # Ferien Rückreisetag M2
+        # Schaltzeiten Warmwasser
+        'Timer_Warmwasser_Mo':                        {'addr': '2100', 'len': 8, 'unit': 'CT',      'set': True},                                           # Timer Warmwasserbereitung Montag
+        'Timer_Warmwasser_Di':                        {'addr': '2108', 'len': 8, 'unit': 'CT',      'set': True},                                           # Timer Warmwasserbereitung Dienstag
+        'Timer_Warmwasser_Mi':                        {'addr': '2110', 'len': 8, 'unit': 'CT',      'set': True},                                           # Timer Warmwasserbereitung Mittwoch
+        'Timer_Warmwasser_Do':                        {'addr': '2118', 'len': 8, 'unit': 'CT',      'set': True},                                           # Timer Warmwasserbereitung Donnerstag
+        'Timer_Warmwasser_Fr':                        {'addr': '2120', 'len': 8, 'unit': 'CT',      'set': True},                                           # Timer Warmwasserbereitung Freitag
+        'Timer_Warmwasser_Sa':                        {'addr': '2128', 'len': 8, 'unit': 'CT',      'set': True},                                           # Timer Warmwasserbereitung Samstag
+        'Timer_Warmwasser_So':                        {'addr': '2130', 'len': 8, 'unit': 'CT',      'set': True},                                           # Timer Warmwasserbereitung Sonntag
+        # Schaltzeiten HK_A1M1
+        'Timer_A1M1_Mo':                              {'addr': '2000', 'len': 8, 'unit': 'CT',      'set': True},                                           # Timer Heizkreis_A1M1 Montag
+        'Timer_A1M1_Di':                              {'addr': '2008', 'len': 8, 'unit': 'CT',      'set': True},                                           # Timer Heizkreis_A1M1 Dienstag
+        'Timer_A1M1_Mi':                              {'addr': '2010', 'len': 8, 'unit': 'CT',      'set': True},                                           # Timer Heizkreis_A1M1 Mittwoch
+        'Timer_A1M1_Do':                              {'addr': '2018', 'len': 8, 'unit': 'CT',      'set': True},                                           # Timer Heizkreis_A1M1 Donnerstag
+        'Timer_A1M1_Fr':                              {'addr': '2020', 'len': 8, 'unit': 'CT',      'set': True},                                           # Timer Heizkreis_A1M1 Freitag
+        'Timer_A1M1_Sa':                              {'addr': '2028', 'len': 8, 'unit': 'CT',      'set': True},                                           # Timer Heizkreis_A1M1 Samstag
+        'Timer_A1M1_So':                              {'addr': '2030', 'len': 8, 'unit': 'CT',      'set': True},                                           # Timer Heizkreis_A1M1 Sonntag
+        # Schaltzeiten HK_M2
+        'Timer_M2_Mo':                                {'addr': '3000', 'len': 8, 'unit': 'CT',      'set': True},                                           # Timer Heizkreis_A1M1 Montag
+        'Timer_M2_Di':                                {'addr': '3008', 'len': 8, 'unit': 'CT',      'set': True},                                           # Timer Heizkreis_A1M1 Dienstag
+        'Timer_M2_Mi':                                {'addr': '3010', 'len': 8, 'unit': 'CT',      'set': True},                                           # Timer Heizkreis_A1M1 Mittwoch
+        'Timer_M2_Do':                                {'addr': '3018', 'len': 8, 'unit': 'CT',      'set': True},                                           # Timer Heizkreis_A1M1 Donnerstag
+        'Timer_M2_Fr':                                {'addr': '3020', 'len': 8, 'unit': 'CT',      'set': True},                                           # Timer Heizkreis_A1M1 Freitag
+        'Timer_M2_Sa':                                {'addr': '3028', 'len': 8, 'unit': 'CT',      'set': True},                                           # Timer Heizkreis_A1M1 Samstag
+        'Timer_M2_So':                                {'addr': '3030', 'len': 8, 'unit': 'CT',      'set': True},                                           # Timer Heizkreis_A1M1 Sonntag
     },
     'V200WO1C': {
         # generelle Infos
@@ -689,12 +749,17 @@ operatingmodes = {
 
 systemschemes = {
     'V200KW2': {
+        '00': '-',
         '01': 'A1',
         '02': 'A1 + WW',
-        '04': 'M2',
-        '03': 'M2 + WW',
+        '03': 'M2',
+        '04': 'M2 + WW',
         '05': 'A1 + M2',
-        '06': 'A1 + M2 + WW'
+        '06': 'A1 + M2 + WW',
+        '07': 'M2 + M3',
+        '08': 'M2 + M3 + WW',
+        '09': 'M2 + M3 + WW',
+        '10': 'A1 + M2 + M3 + WW'
     },
     'V200KO1B': {
         '01': 'A1',

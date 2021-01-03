@@ -6,7 +6,7 @@ plugin:
         de: 'Lesen und Schreiben von Werten einer Viessmann Heizung'
         en: 'Read and write data of a Viessmann heating system'
     maintainer: Morg
-    tester: sisamiwe
+    tester: sisamiwe, tcr82
     keywords: viessmann heating optolink
     state: ready                    # change to ready when done with development
     version: 1.2.0                  # Plugin version
@@ -55,50 +55,56 @@ item_attributes:
     viess_send:
         type: str
         description:
-            de: 'Änderung des Items wird mit konfiguriertem Kommando an die Heizung geschickt.'
-            en: 'Changes to this item result in sending the configured command to the heating system.'
+            de: 'Änderung des Items wird mit konfiguriertem Kommando an die Heizung geschickt'
+            en: 'Changes to this item result in sending the configured command to the heating system'
 
     viess_read:
         type: str
         description:
-            de: 'Liest Wert mit konfiguriertem Kommando aus der Heizung aus.'
-            en: 'The item value should be read by using the configured command.'
+            de: 'Liest Wert mit konfiguriertem Kommando aus der Heizung aus'
+            en: 'The item value should be read by using the configured command'
 
     viess_read_afterwrite:
         type: num
         description:
-            de: 'Konfiguriert eine Verzögerung in Sekunden nachdem ein Lesekommando nach einem Schreibkommando an die Heizung geschickt wird.'
-            en: 'Configures delay in seconds to issue a read command after write command.'
+            de: 'Konfiguriert eine Verzögerung in Sekunden nachdem ein Lesekommando nach einem Schreibkommando an die Heizung geschickt wird'
+            en: 'Configures delay in seconds to issue a read command after write command'
 
     viess_read_cycle:
         type: num
         description:
-            de: 'Konfiguriert ein Intervall in Sekunden für das Lesekommando.'
-            en: 'Configures a interval in seconds for the read command.'
+            de: 'Konfiguriert ein Intervall in Sekunden für das Lesekommando'
+            en: 'Configures a interval in seconds for the read command'
 
     viess_init:
         type: bool
         description:
-            de: 'Konfiguriert, ob der Wert aus der Heizung initialisiert werden soll.'
-            en: 'Configures to initialize the item value with the value from the KWL system.'
+            de: 'Konfiguriert, ob der Wert aus der Heizung initialisiert werden soll'
+            en: 'Configures to initialize the item value with the value from the KWL system'
 
     viess_trigger:
         type: list(str)
         description:
-            de: 'Konfiguriert Lesekommandos, die nach einem Schreibvorgang auf das Item aufgerufen werden.'
-            en: 'Configures read commands after an update to the item.'
+            de: 'Konfiguriert Lesekommandos, die nach einem Schreibvorgang auf das Item aufgerufen werden'
+            en: 'Configures read commands after an update to the item'
 
     viess_trigger_afterwrite:
         type: num
         description:
-            de: 'Konfiguriert eine Verzögerung in Sekunden, bis ein Trigger ausgeführt werden soll, nachdem ein Wert gesetzt wurde.'
-            en: 'Configures delay in seconds to run trigger commands after item update.'
+            de: 'Konfiguriert eine Verzögerung in Sekunden, bis ein Trigger ausgeführt werden soll, nachdem ein Wert gesetzt wurde'
+            en: 'Configures delay in seconds to run trigger commands after item update'
 
     viess_update:
         type: bool
         description:
             de: 'Liest alle konfigurierten Items neu, wenn es auf True gesetzt wird'
             en: 'Triggers reading of all configured items if set to True'
+
+    viess_timer:
+        type: dict
+        description:
+            de: 'Liest alle Timer zu einer Anwendung (Heizkreis, Warmwasser) und stellt diese für die Nutzung mit UZSU zur Verfügung'
+            en: 'Provides an UZSU-compatible dict with all timers for one application (heating circuit, heated water)'
 
     viess_ba_list:
         type: bool
@@ -170,8 +176,8 @@ plugin_functions:
     read_addr:
         type: foo
         description:
-            de: 'Stößt das Lesen des angegebenen Datenpunkts an, der nicht an ein Item gebunden sein muss. Es erfolgt keine Zuweisung an ein Item. Rückgabewert ist der gelesene Wert, oder NONE bei Fehler.'
-            en: 'Triggers reading of the supplied data point, which doesn''t have to be bound to an item. Result will not be assigned to an item. Return value is the read value, or NONE if an error occurred.'
+            de: 'Stößt das Lesen des angegebenen Datenpunkts an, der nicht an ein Item gebunden sein muss. Es erfolgt keine Zuweisung an ein Item. Rückgabewert ist der gelesene Wert, oder NONE bei Fehler'
+            en: 'Triggers reading of the supplied data point, which doesn''t have to be bound to an item. Result will not be assigned to an item. Return value is the read value, or NONE if an error occurred'
         parameters:
             addr:
                 type: str
@@ -181,8 +187,8 @@ plugin_functions:
     read_temp_addr:
         type: foo
         description:
-            de: 'Stößt das Lesen eines beliebigen Datenpunkts an, der nicht konfiguriert oder bekannt sein muss. Es erfolgt keine Zuweisung an ein Item. Rückgabewert ist der gelesene Wert, oder NONE bei Fehler.'
-            en: 'Triggers reading of an arbitrary data point, which doesn''t have to be configured or known. Result will not be assigned to an item. Return value is the read value, or NONE if an error occurred.'
+            de: 'Stößt das Lesen eines beliebigen Datenpunkts an, der nicht konfiguriert oder bekannt sein muss. Es erfolgt keine Zuweisung an ein Item. Rückgabewert ist der gelesene Wert, oder NONE bei Fehler'
+            en: 'Triggers reading of an arbitrary data point, which doesn''t have to be configured or known. Result will not be assigned to an item. Return value is the read value, or NONE if an error occurred'
         parameters:
             addr:
                 type: str
@@ -202,5 +208,5 @@ plugin_functions:
                 type: str
                 mandatory: yes
                 description:
-                    de: 'Einheitencode für die Konvertierung der Antwort. Muss in der Protokollkonfiguration ``unitset`` in commands.py definiert sein.'
+                    de: 'Einheitencode für die Konvertierung der Antwort. Muss in der Protokollkonfiguration ``unitset`` in commands.py definiert sein'
                     en: 'Unit code for converting the response value. Needs to be defined in the protocol configuration ``unitset`` in commands.py'
