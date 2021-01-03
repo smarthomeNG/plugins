@@ -43,6 +43,7 @@ from lib.shtime import Shtime
 
 shtime = Shtime.get_instance()
 
+
 class CLIHandler:
     terminator = '\n'.encode()
 
@@ -155,7 +156,7 @@ class CLIHandler:
 
 class CLI(SmartPlugin):
 
-    PLUGIN_VERSION = '1.7.2'     # is checked against version in plugin.yaml
+    PLUGIN_VERSION = '1.8.0'     # is checked against version in plugin.yaml
 
     def __init__(self, sh):
         """
@@ -342,18 +343,19 @@ class CLICommands:
         :param source: Call source
         :return: TRUE: Command found and handled, FALSE: Unknown command, nothing done
         """
-        if self.logics is None:
-            self.logics = Logics.get_instance()
-        for command, data in self._commands.items():
-            if cmd == command or cmd.startswith(command + " "):
-                self.logger.debug("try to dispatch command '{}'".format(cmd))
-                try:
-                    data['function'](handler, cmd.lstrip(command).strip(), source)
-                except Exception as e:
-                    self.logger.exception(e)
-                    handler.push("Exception \"{0}\" occured when executing command \"{1}\".\n".format(e, command))
-                    handler.push("See smarthomeNG log for details\n")
-                return True
+        if self.alive:
+            if self.logics is None:
+                self.logics = Logics.get_instance()
+            for command, data in self._commands.items():
+                if cmd == command or cmd.startswith(command + " "):
+                    self.logger.debug("try to dispatch command '{}'".format(cmd))
+                    try:
+                        data['function'](handler, cmd.lstrip(command).strip(), source)
+                    except Exception as e:
+                        self.logger.exception(e)
+                        handler.push("Exception \"{0}\" occured when executing command \"{1}\".\n".format(e, command))
+                        handler.push("See smarthomeNG log for details\n")
+                    return True
         return False
 
     # noinspection PyUnusedLocal
@@ -521,7 +523,6 @@ class CLICommands:
         for t in threads_sorted:
             handler.push("{:<30}     {}\n".format(t['name'], t['id']))
 
-
     # noinspection PyUnusedLocal
     def _cli_rt(self, handler, parameter, source):
         """
@@ -631,7 +632,7 @@ class CLICommands:
                 if data['usage'] is not None:
                     handler.push(data['usage'] + '\n')
         if parameter != '':
-            if not parameter in ['item', 'log', 'logic', 'scheduler']:
+            if parameter not in ['item', 'log', 'logic', 'scheduler']:
                 handler.push('help: Unknown group\n\n')
                 data = self._commands['help']
                 handler.push(data['usage'] + '\n')
@@ -682,7 +683,7 @@ class CLICommands:
             else:
                 handler.push("{0}\n".format(item.id()))
         wrk = "{} Items".format(self.plugin.items.item_count())
-        wrk = '-'*len(wrk)+'\n'+wrk+'\n'
+        wrk = '-' * len(wrk) + '\n' + wrk + '\n'
         handler.push(wrk)
 
     def _cli_iupdate(self, handler, parameter, source):

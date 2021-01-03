@@ -260,9 +260,6 @@ class Network(SmartPlugin):
         else:
             return
 
-        if not dispatcher.listening():
-            return False
-
         self._dispatcher_list.append(dispatcher)
 
         acl = self.parse_acl(acl)
@@ -400,6 +397,10 @@ class Network(SmartPlugin):
         '''
         self.logger.debug('Run method called')
         self.alive = True
+        for listener in self._dispatcher_list:
+            listener.start()
+            if not listener.listening():
+                self.logger.error(f'Server {listener.name} did not start properly.')
 
     def stop(self):
         '''
