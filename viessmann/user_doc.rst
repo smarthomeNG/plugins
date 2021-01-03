@@ -11,6 +11,8 @@ Dieses Plugin nutzt eine separate Datei ``commands.py``, in der die Definitionen
 
 Das Plugin unterstützt die serielle Kommunikation mit dem Lesekopf (ggf. über einen USB-Seriell-Adapter).
 
+Zur Identifizierung des Heizungstyps kann das Plugin auch im Standalone-Modus betrieben werden (s.u.)
+
 Changelog
 ---------
 
@@ -365,3 +367,19 @@ Auf einer Seite werden die Items aufgelistet, die Plugin-Attributen konfiguriert
 Auf der zweiten Seite werden alle im aktuellen Befehlssatz enthaltenen Parameter aufgelistet. Dabei besteht für jeden Wert einzeln die Möglichkeit, einen Lesevorgang auszulösen. Die Rückgabewerte werden in die jeweilige Tabellenzeile eingetragen. Dieser entspricht der Funktion ``read_addr()``, d.h. es werden keine Item-Werte aktualisiert. 
 
 Weiterhin kann in der Zeile für den Parameter "_Custom" eine freie Adresse angegeben werden, die analog zur Funktion ``read_temp_addr()`` einen Lesevorgang auf beliebigen Adressen erlaubt. Auch hier wird der Rückgabewert in die jeweilige Tabellenzeile eingetragen. Damit wird ermöglicht, ohne großen Aufwand Datenpunkte und deren Konfiguration (Einheit und Datenlänge) zu testen.
+
+
+Standalone-Modus
+----------------
+
+Wenn der Heizungstyp nicht bekannt ist, kann das Plugin im Standalone-Modus (also ohne SmartHomeNG zu starten) genutzt werden. Es versucht dann, mit der Heizung zu kommunizieren und den Gerätetyp zu identizifieren.
+
+Dazu muss das Plugin im Plugin-Ordner direkt aufgerufen werden:
+
+``./__init__.py <serieller Port> [-v]``
+
+Der serielle Port ist dabei die Gerätedatei bzw. der entsprechende Port, an dem der Lesekopf angeschlossen ist, z.B. ``/dev/ttyUSB0``. Dieses Argument ist verpflichtend.
+
+Das optionale zweite Argument `-v` weist das Plugin an, zusätzliche Debug-Ausgaben zu erzeugen. Solange keine Probleme beim Aufruf auftreten, ist das nicht erforderlich.
+
+Sollte die Datei sich nicht starten lassen, muss ggf. der Dateimodus angepasst werden. Mit ``chmod u+x __init__.py`` kann die z.B. unter Linux erfolgen.
