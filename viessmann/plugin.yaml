@@ -9,11 +9,11 @@ plugin:
     tester: sisamiwe, tcr82
     keywords: viessmann heating optolink
     state: ready                    # change to ready when done with development
-    version: 1.2.0                  # Plugin version
+    version: 1.2.1                  # Plugin version
     sh_minversion: 1.6.0            # minimum shNG version to use this plugin
     py_minversion: 3.6
     multi_instance: false           # plugin supports multi instance
-    restartable: unknown
+    restartable: true
     classname: Viessmann            # class containing the plugin
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1455991-viessmann-plugin-neuentwicklung-python-hilfe/
 
@@ -101,10 +101,10 @@ item_attributes:
             en: 'Triggers reading of all configured items if set to True'
 
     viess_timer:
-        type: dict
+        type: str
         description:
-            de: 'Liest alle Timer zu einer Anwendung (Heizkreis, Warmwasser) und stellt diese für die Nutzung mit UZSU zur Verfügung'
-            en: 'Provides an UZSU-compatible dict with all timers for one application (heating circuit, heated water)'
+            de: 'Liest alle Timer zur übergebenen Anwendung (z.B. Heizkreis_A1M1) und stellt diese für die Nutzung mit UZSU zur Verfügung'
+            en: 'Provides an UZSU-compatible dict with all timers for the given application (e.g. Heizkreis_A1M1)'
 
     viess_ba_list:
         type: bool
