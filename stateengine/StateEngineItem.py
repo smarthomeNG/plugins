@@ -103,8 +103,7 @@ class SeItem:
     def __init__(self, smarthome, item, se_plugin):
         self.items = Items.get_instance()
         self.shtime = Shtime.get_instance()
-        self._update_lock = threading.Lock()
-        self.queue_lock = threading.Lock()
+        self.update_lock = threading.Lock()
         self.__queue = queue.Queue()
         self.__sh = smarthome
         self.__item = item
@@ -227,9 +226,8 @@ class SeItem:
             self.__se_plugin.scheduler_remove('{}'.format(entry))
 
     def run_queue(self):
-        self._update_lock.acquire(True, 10)
+        self.update_lock.acquire(True, 10)
         while not self.__queue.empty():
-            self.queue_lock.acquire(True, 5)
             job = self.__queue.get()
             if job is None:
                 break
@@ -247,17 +245,16 @@ class SeItem:
                 # Find out what initially caused the update to trigger if the caller is "Eval"
                 orig_caller, orig_source, orig_item = StateEngineTools.get_original_caller(self.__logger, caller, source, item)
                 if orig_caller != caller:
-                    text = "{0} initially triggered by {1} (item={2} source={3} value={4})"
-                    self.__logger.debug(text, caller, orig_caller, orig_item.property.path, orig_source, orig_item.property.value)
+                    text = "{0} initially triggered by {1} (item={2} source={3} value={4})."
+                    self.__logger.debug(text, caller, orig_caller, orig_item.property.path,
+                                        orig_source, orig_item.property.value)
                 cond1 = orig_caller == StateEngineDefaults.plugin_identification
                 cond2 = caller == StateEngineDefaults.plugin_identification
                 cond1_2 = orig_source == item_id
                 cond2_2 = source == item_id
                 if (cond1 and cond1_2) or (cond2 and cond2_2):
                     self.__logger.debug("Ignoring changes from {0}", StateEngineDefaults.plugin_identification)
-                    if self._update_lock.locked():
-                        self._update_lock.release()
-                    return
+                    continue
 
                 self.__update_trigger_item = item.property.path
                 self.__update_trigger_caller = caller
@@ -311,8 +308,8 @@ class SeItem:
                             text = "No matching state found, staying at {0} ('{1}') based on conditionset {2} ('{3}')"
                             self.__logger.info(text, last_state.id, last_state.name, _last_conditionset_id, _last_conditionset_name)
                         last_state.run_stay(self.__repeat_actions.get())
-                    if self._update_lock.locked():
-                        self._update_lock.release()
+                    if self.update_lock.locked():
+                        self.update_lock.release()
                     return
                 _last_conditionset_id = self.__lastconditionset_get_id()
                 _last_conditionset_name = self.__lastconditionset_get_name()
@@ -361,11 +358,9 @@ class SeItem:
                     self.update_webif(_key_enter, False)
 
                 self.__logger.info("State evaluation finished")
-                if self.queue_lock.locked():
-                    self.queue_lock.release()
         self.__logger.info("State evaluation queue empty.")
-        if self._update_lock.locked():
-            self._update_lock.release()
+        if self.update_lock.locked():
+            self.update_lock.release()
 
     def update_webif(self, key, value):
         def _nested_set(dic, keys, val):
@@ -396,9 +391,9 @@ class SeItem:
         if not self.__startup_delay_over:
             self.__logger.debug("Startup delay not over yet. Skipping state evaluation")
             return
-
         self.__queue.put(["stateevaluation", item, caller, source, dest])
-        if not self.queue_lock.locked():
+        if not self.update_lock.locked():
+            self.__logger.debug("Run queue to update state")
             self.run_queue()
 
     # check if state can be entered after setting state-specific variables
@@ -490,7 +485,7 @@ class SeItem:
         if self.__item._trigger and self.__item._eval is None:
             self.__item._eval = "1"
 
-        # Check scheduler settings and update if requred
+        # Check scheduler settings and update if required
 
         job = self.__sh.scheduler._scheduler.get("items.{}".format(self.id))
         if job is None:
