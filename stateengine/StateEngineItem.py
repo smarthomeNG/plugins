@@ -229,8 +229,9 @@ class SeItem:
             self.__se_plugin.scheduler_remove('{}'.format(entry))
 
     def run_queue(self):
-        self._update_lock.acquire()
+        self._update_lock.acquire(True, 10)
         while not self.__queue.empty():
+            self.queue_lock.acquire(True, 5)
             job = self.__queue.get()
             if job is None:
                 break
@@ -364,6 +365,8 @@ class SeItem:
                     self.update_webif(_key_enter, False)
 
                 self.__logger.info("State evaluation finished")
+                if self.queue_lock.locked():
+                    self.queue_lock.release()
         self.__logger.info("State evaluation queue empty.")
         if self._update_lock.locked():
             self._update_lock.release()
@@ -399,7 +402,8 @@ class SeItem:
             return
 
         self.__queue.put(["stateevaluation", item, caller, source, dest])
-        self.run_queue()
+        if not self.queue_lock.locked():
+            self.run_queue()
 
     # check if state can be entered after setting state-specific variables
     # state: state to check

@@ -26,7 +26,6 @@ import datetime
 from lib.shtime import Shtime
 from lib.item import Items
 import re
-import threading
 
 
 # Base class from which all action classes are derived
@@ -70,7 +69,7 @@ class SeActionBase(StateEngineTools.SeItemChild):
         self.__template = None
         self._state = None
         self.__queue = abitem.queue
-        self._action_lock = threading.Lock()
+        self.queue_lock = abitem.queue_lock
 
     def update_delay(self, value):
         self.__delay.set(value)
@@ -261,7 +260,9 @@ class SeActionBase(StateEngineTools.SeItemChild):
     def _delayed_execute(self, actionname: str, namevar: str = "", repeat_text: str = "", value=None):
         self._log_debug("Putting delayed action '{}' into queue.", namevar)
         self.__queue.put(["delayedaction", self, actionname, namevar, repeat_text, value])
-        self._abitem.run_queue()
+        if not self.queue_lock.locked():
+            self._log_debug("Running queue")
+            self._abitem.run_queue()
 
     # Really execute the action (needs to be implemented in derived classes)
     def real_execute(self, actionname: str, namevar: str = "", repeat_text: str = "", value=None, returnvalue=False):
@@ -389,6 +390,8 @@ class SeActionSetItem(SeActionBase):
         self._log_debug("{0}: Set '{1}' to '{2}'{3}", actionname, item.property.path, value, repeat_text)
         # noinspection PyCallingNonCallable
         item(value, caller=self._caller, source=self._parent)
+        if self.queue_lock.locked():
+            self.queue_lock.release()
 
     def get(self):
         try:
@@ -435,7 +438,8 @@ class SeActionSetByattr(SeActionBase):
         for item in self.items.find_items(self.__byattr):
             self._log_info("\t{0} = {1}", item.property.path, item.conf[self.__byattr])
             item(item.conf[self.__byattr], caller=self._caller, source=self._parent)
-        #self._log_decrease_indent()
+        if self.queue_lock.locked():
+            self.queue_lock.release()
 
     def get(self):
         return {'function': str(self.__function), 'byattr': str(self.__byattr), 'conditionset': str(self.conditionset.get())}
@@ -487,7 +491,8 @@ class SeActionTrigger(SeActionBase):
         self._log_info("{0}: Triggering logic '{1}' using value '{2}'.{3}", actionname, self.__logic, value, repeat_text)
         add_logics = 'logics.{}'.format(self.__logic) if not self.__logic.startswith('logics.') else self.__logic
         self._sh.trigger(add_logics, by=self._caller, source=self._name, value=value)
-        #self._log_decrease_indent()
+        if self.queue_lock.locked():
+            self.queue_lock.release()
 
     def get(self):
         return {'function': str(self.__function), 'logic': str(self.__logic),
@@ -559,6 +564,8 @@ class SeActionRun(SeActionBase):
                 self._log_decrease_indent()
                 text = "{0}: Problem calling '{0}': {1}."
                 self._log_error(text.format(actionname, StateEngineTools.get_eval_name(self.__eval), ex))
+        if self.queue_lock.locked():
+            self.queue_lock.release()
 
     def get(self):
         return {'function': str(self.__function), 'eval': str(self.__eval),
@@ -783,6 +790,8 @@ class SeActionSpecial(SeActionBase):
             self._log_decrease_indent()
             raise ValueError("{0}: Unknown special value '{1}'!".format(actionname, self.__special))
         self._log_debug("Special action {0}: done", self.__special)
+        if self.queue_lock.locked():
+            self.queue_lock.release()
 
     def suspend_get_value(self, value):
         if value is None:
