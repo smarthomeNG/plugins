@@ -357,8 +357,8 @@ item_attributes:
         valid_min: 1
         valid_max: 86400
         description:
-            de: 'Dauer der Unterbrechung der automatischen Steuerung nach manuellen Aktionen'
-            en: 'Suspend duration after manual actions'
+            de: 'Dauer der Unterbrechung der automatischen Steuerung nach manuellen Aktionen in Sekunden'
+            en: 'Suspend duration after manual actions in seconds'
         description_long:
             de: '**Unterbrechung der automatischen Steuerung nach manuellen Aktionen:**\n
                  Nach manuellen Aktionen kann die Automatik für eine bestimmte Zeit

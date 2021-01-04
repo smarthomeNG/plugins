@@ -142,9 +142,11 @@ class SeItem:
 
         # Init lastconditionset items/values
         self.__lastconditionset_item_id = self.return_item_by_attribute("se_lastconditionset_item_id")
-        self.__lastconditionset_internal_id = "" if self.__lastconditionset_item_id is None else self.__lastconditionset_item_id.property.value
+        self.__lastconditionset_internal_id = "" if self.__lastconditionset_item_id is None else \
+            self.__lastconditionset_item_id.property.value
         self.__lastconditionset_item_name = self.return_item_by_attribute("se_lastconditionset_item_name")
-        self.__lastconditionset_internal_name = "" if self.__lastconditionset_item_name is None else self.__lastconditionset_item_name.property.value
+        self.__lastconditionset_internal_name = "" if self.__lastconditionset_item_name is None else \
+            self.__lastconditionset_item_name.property.value
 
         self.__states = []
         self.__templates = {}
@@ -576,8 +578,10 @@ class SeItem:
         triggers = self.__verbose_triggers()
 
         # log general config
-        self.__logger.header("Configuration of item {0}".format(self.__name))
+        self.__logger.info("".ljust(80, "_"))
+        self.__logger.header("Configuration of item {0}".format(self.__id))
         self.__startup_delay.write_to_logger()
+        self.__suspend_time.write_to_logger()
         self.__instant_leaveaction.write_to_logger()
         for t in self.__templates:
             self.__logger.info("Template {0}: {1}", t, self.__templates.get(t))
@@ -722,7 +726,8 @@ class SeItem:
     # - item_id = "..threedots.further.down" will return item "my.threedots.further.down"
     def return_item(self, item_id: str):
         if not isinstance(item_id, str):
-            self.__logger.info("'{0}' should be defined as string. Check your item config! Everything might run smoothely, nevertheless.".format(item_id))
+            self.__logger.info("'{0}' should be defined as string. Check your item config! "
+                               "Everything might run smoothely, nevertheless.".format(item_id))
             return item_id
         if not item_id.startswith("."):
             item = self.items.return_item(item_id)

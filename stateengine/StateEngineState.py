@@ -20,10 +20,8 @@
 #########################################################################
 from . import StateEngineTools
 from . import StateEngineConditionSets
-from . import StateEngineCondition
 from . import StateEngineActions
 from . import StateEngineValue
-from collections import OrderedDict
 
 
 # Class representing an object state, consisting of name, conditions to be met and configured actions for state
