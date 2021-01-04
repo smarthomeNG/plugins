@@ -11,7 +11,7 @@ plugin:
 #    keywords: iot xyz
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
 
-    version: 1.1.1                 # Plugin version
+    version: 1.1.2                 # Plugin version
     sh_minversion: 1.1             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
@@ -50,17 +50,17 @@ parameters:
             en: 'Password for the login'
 
     rooms:
-        type: list
-        default: []
+        type: str
+        default: ''
         description:
-            de: 'Liste der Räume'
+            de: 'Liste der Räume (z.B.: ''{1: "KO", 2: "WZ", 3: "EZ", 10: "SZ"}'')'
             en: 'List of rooms'
 
     mlns:
         type: str
-        default: []
+        default: ''
         description:
-            de: 'Liste der MLNs'
+            de: 'Liste der MLNs (z.B.: ''{1: "BV9-WZ", 2: "BV10-SZ", 3: "BLActive-KO"}'')'
             en: 'List of MLNs'
 
     log_mlgwtelegrams:
