@@ -105,6 +105,7 @@ class SeItem:
         self.items = Items.get_instance()
         self.shtime = Shtime.get_instance()
         self._update_lock = threading.Lock()
+        self.queue_lock = threading.Lock()
         self.__queue = queue.Queue()
         self.__sh = smarthome
         self.__item = item
