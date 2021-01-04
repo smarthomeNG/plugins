@@ -453,7 +453,7 @@ class SeActionTrigger(SeActionBase):
     def __init__(self, abitem, name: str):
         super().__init__(abitem, name)
         self.__logic = None
-        self.__value = None
+        self.__value = StateEngineValue.SeValue(self._abitem, "value")
         self.__function = "trigger"
 
     # set the action based on a set_(action_name) attribute
@@ -461,7 +461,8 @@ class SeActionTrigger(SeActionBase):
     def update(self, value):
         logic, value = StateEngineTools.partition_strip(value, ":")
         self.__logic = logic
-        self.__value = None if value == "" else value
+        value = None if value == "" else value
+        self.__value.set(value)
 
     # Complete action
     # item_state: state item to read from
