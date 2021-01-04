@@ -20,7 +20,7 @@
 #########################################################################
 import datetime
 from ast import literal_eval
-# import logging
+import logging
 from lib.item import Items
 itemsApi = Items.get_instance()
 
@@ -61,7 +61,7 @@ def flatten_list(changelist):
             else:
                 flat_list.append(sublist)
     elif isinstance(changelist, str) and changelist.startswith("["):
-        flat_list = ast.literal_eval(changelist)
+        flat_list = literal_eval(changelist)
     else:
         flat_list = changelist
     return flat_list
@@ -230,21 +230,28 @@ def get_eval_name(eval_func):
 
 
 # determine original caller/source
-# smarthome: instance of smarthome.py
 # caller: caller
 # source: source
-def get_original_caller(smarthome, caller, source, item=None):
+# item: item being updated
+# eval_type: update or change
+def get_original_caller(elog, caller, source, item=None, eval_keyword=['Eval'], eval_type='update'):
     original_caller = caller
-    original_source = source
     original_item = item
-    while original_caller == "Eval":
+    if isinstance(source, str):
+        original_source = source
+    else:
+        original_source = "None"
+    while original_caller in eval_keyword:
         original_item = itemsApi.return_item(original_source)
         if original_item is None:
+            elog.info("get_caller({0}, {1}): original item not found", caller, source)
             break
-        original_updated_by = original_item.property.last_update_by
-        if ":" not in original_updated_by:
+        original_manipulated_by = original_item.property.last_update_by if eval_type == "update" else \
+            original_item.property.last_change_by
+        if ":" not in original_manipulated_by:
             break
-        original_caller, __, original_source = original_updated_by.partition(":")
+        original_caller, __, original_source = original_manipulated_by.partition(":")
+
     if item is None:
         return original_caller, original_source
     else:
