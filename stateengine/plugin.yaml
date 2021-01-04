@@ -90,6 +90,14 @@ parameters:
                 \n
                 '
 
+    suspend_time_format:
+        type: str
+        default: 'minutes'
+        valid_list: ['minutes', 'seconds']
+        description:
+            de: 'Format zur Berechnung der Suspenddauer'
+            en: 'Format to calculate suspend duration'
+
     suspend_time_default:
         type: int
         default: 3600
@@ -602,7 +610,7 @@ item_structs:
             se_item_suspend_end: ..suspend_end.date_time
             se_item_suspend_start: ..suspend_start.date_time
             se_item_suspend_active: ..settings.suspend_active
-            se_suspend_time: eval:se_eval.get_relative_itemproperty('..settings.suspendduration', 'value') * 60
+            se_suspend_time: ..settings.suspendduration
             eval_trigger:
                 - ..manuell
                 - ..retrigger

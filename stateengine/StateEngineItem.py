@@ -127,6 +127,8 @@ class SeItem:
         # Init suspend settings
         self.__suspend_time = StateEngineValue.SeValue(self, "Suspension time on manual changes", False, "num")
         self.__suspend_time.set_from_attr(self.__item, "se_suspend_time", StateEngineDefaults.suspend_time)
+        self.__suspend_time_format = StateEngineValue.SeValue(self, "Suspension time format", False, "str")
+        self.__suspend_time_format = StateEngineDefaults.suspend_time_format
 
         # Init laststate items/values
         self.__laststate_item_id = self.return_item_by_attribute("se_laststate_item_id")
@@ -161,7 +163,7 @@ class SeItem:
 
         # Init variables
         self.__variables = {
-            "item.suspend_time": self.__suspend_time.get(),
+            "item.suspend_time": self.__suspend_time.get() if self.__suspend_time_format == "seconds" else self.__suspend_time.get() * 60,
             "item.suspend_remaining": 0,
             "current.state_id": "",
             "current.state_name": "",
@@ -261,7 +263,7 @@ class SeItem:
 
                 # Update current values
                 StateEngineCurrent.update()
-                self.__variables["item.suspend_time"] = self.__suspend_time.get()
+                self.__variables["item.suspend_time"] = self.__suspend_time.get() if self.__suspend_time_format == "seconds" else self.__suspend_time.get() * 60
                 self.__variables["item.suspend_remaining"] = -1
 
                 # get last state
