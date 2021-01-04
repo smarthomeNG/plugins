@@ -465,6 +465,7 @@ item_structs:
             type: bool
             visu_acl: rw
             enforce_updates: True
+            on_update: ..rules = True
 
         settings:
             settings_edited:
@@ -472,7 +473,7 @@ item_structs:
                 name: settings editiert
                 eval_trigger: ...settings.*
                 eval: not sh..self()
-                on_update: ...retrigger = True
+                on_update: ...retrigger = True if sh..self.property.prev_update_age > 0.1 else None
 
         rules:
             name: Zustandsautomat
@@ -480,8 +481,6 @@ item_structs:
             type: bool
             se_plugin: active
             eval: True
-            eval_trigger:
-                - ..retrigger
             se_laststate_item_id: ..state_id
             se_laststate_item_name: ..state_name
             se_lastconditionset_item_id: ..conditionset_id
@@ -535,7 +534,6 @@ item_structs:
                 eval_trigger: ..date_time
                 crontab: init
 
-
         suspend_start:
             type: str
             visu_acl: ro
@@ -571,9 +569,13 @@ item_structs:
             type: bool
             visu_acl: rw
             enforce_updates: True
+            on_update: ..rules = True
 
         settings:
             remark: Use these settings for your condition values
+            type: bool
+            eval: sh..suspendduration(sh..suspendduration(), "Init", "Start")
+            crontab: init = True
 
             suspendduration:
                 remark: duration of suspend mode in minutes (gets converted automatically)
@@ -581,14 +583,23 @@ item_structs:
                 visu_acl: rw
                 cache: True
                 initial_value: 60
+                on_change: .seconds = value * 60 if not sh..self.property.last_change_by == "On_Change:{}".format(sh..seconds.property.path) else None
+                on_update: .seconds = value * 60 if "Init" in sh..self.property.last_update_by else None
 
                 duration_format:
                     remark: Can be used for the clock.countdown widget
                     type: str
+                    cache: True
                     visu_acl: ro
-                    eval: "'{}d {}h {}i 0s'.format(int(sh...() //1440), int((sh...()%3600)//60), round((sh...()%3600)%60))"
-                    eval_trigger: ..
-                    crontab: init
+                    eval: "'{}d {}h {}i {}s'.format(int(sh...seconds()//86400), int((sh...seconds()%86400)//3600), int((sh...seconds()%3600)//60), round((sh...seconds()%3600)%60))"
+                    eval_trigger: ..seconds
+
+                seconds:
+                    remark: duration of suspend mode in seconds (gets converted automatically)
+                    type: num
+                    visu_acl: rw
+                    cache: True
+                    on_change: .. = value / 60 if not sh..self.property.last_change_by in [ "On_Change:{}".format(sh....property.path), "On_Update:{}".format(sh....property.path)] else None
 
             suspend_active:
                 remark: Use this to (de)activate suspend mode in general
@@ -600,10 +611,9 @@ item_structs:
             settings_edited:
                 type: bool
                 name: settings editiert
-                cache: True
                 eval_trigger: ...settings.*
                 eval: not sh..self()
-                on_update: ...retrigger = True
+                on_update: ...retrigger = True if sh..self.property.prev_update_age > 0.1 else None
 
         rules:
             se_item_suspend: ..suspend
@@ -613,7 +623,6 @@ item_structs:
             se_suspend_time: item:..settings.suspendduration.seconds
             eval_trigger:
                 - ..manuell
-                - ..retrigger
 
             suspend:
                 name: ausgesetzt
