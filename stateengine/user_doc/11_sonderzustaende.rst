@@ -74,13 +74,14 @@ Ablauf dieser Zeit soll die Automatik wieder aktiv werden.
 Der Aussetzenzustand kann einfach über ``struct: stateenginge.state_suspend`` in
 das Stateengine Item (auf der selben Hierarchieebene wie das rules Item)
 übernommen werden. Es muss dann lediglich noch
-das manuell Item angepasst werden - siehe weiter unten.
+das manuell Item angepasst werden - siehe weiter unten. Außerdem ist die Dauer
+des Suspendzustands im Item ``automatik.settings.suspendduration.seconds`` einzustellen.
 
 .. rubric:: Das "Suspend"-Item
   :name: dassuspenditem
 
 Zunächst wird ein "Suspend"-Item benötigt. Dieses Item zeigt zum
-einen die zeitweise Deaktivierung an, zum, anderen kann die
+einen die zeitweise Deaktivierung an, zum anderen kann die
 Deaktivierung über dieses Item vorzeitig beendet werden:
 
 .. code-block:: yaml
@@ -260,3 +261,4 @@ abweichend sein soll, kann dort das Attribut
       se_suspend_time: <Sekunden>
 
 angegeben werden. Der Parameter kann auch durch ein Item festgelegt werden.
+Im struct wird hier das Item automatik.settings.suspendduration.seconds verknüpft.
