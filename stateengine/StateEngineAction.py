@@ -533,7 +533,7 @@ class SeActionRun(SeActionBase):
             self._log_debug("eval: {0}", StateEngineTools.get_eval_name(self.__eval))
 
     # Really execute the action
-    def real_execute(self, actionname: str, namevar: str = "", repeat_text: str = "", value = None, returnvalue = False):
+    def real_execute(self, actionname: str, namevar: str = "", repeat_text: str = "", value=None, returnvalue=False):
         self._abitem.set_variable('current.action_name', namevar)
         self._log_increase_indent()
         if isinstance(self.__eval, str):

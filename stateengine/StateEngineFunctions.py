@@ -96,6 +96,7 @@ class SeFunctions:
             result = entry.match(original)
             if result is not None:
                 elog.info("Manual item updated by Stateengine Plugin. Ignoring change and writing value {}",
+                          retval_no_trigger)
                 return retval_no_trigger
 
             if "se_manual_on" in item.conf:

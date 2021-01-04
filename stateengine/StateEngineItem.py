@@ -28,7 +28,6 @@ from . import StateEngineCurrent
 from . import StateEngineValue
 from lib.item import Items
 from lib.shtime import Shtime
-import time
 import threading
 import queue
 
@@ -241,20 +240,17 @@ class SeItem:
                 action.real_execute(actionname, namevar, repeat_text, value)
             else:
                 (_, item, caller, source, dest) = job
-
                 item_id = item.property.path if item is not None else "(no item)"
-
                 self.__logger.update_logfile()
                 self.__logger.header("Update state of item {0}".format(self.__name))
-                #time.sleep(2)
                 if caller:
                     self.__logger.debug("Update triggered by {0} (item={1} source={2} dest={3})", caller, item_id, source, dest)
 
                 # Find out what initially caused the update to trigger if the caller is "Eval"
                 orig_caller, orig_source, orig_item = StateEngineTools.get_original_caller(self.__logger, caller, source, item)
                 if orig_caller != caller:
-                    text = "Eval initially triggered by {0} (item={1} source={2} value={3})"
-                    self.__logger.debug(text, orig_caller, orig_item.property.path, orig_source, orig_item.property.value)
+                    text = "{0} initially triggered by {1} (item={2} source={3} value={4})"
+                    self.__logger.debug(text, caller, orig_caller, orig_item.property.path, orig_source, orig_item.property.value)
                 cond1 = orig_caller == StateEngineDefaults.plugin_identification
                 cond2 = caller == StateEngineDefaults.plugin_identification
                 cond1_2 = orig_source == item_id
@@ -341,7 +337,8 @@ class SeItem:
                             self.__logger.info("Maybe some actions were performed directly after leave - see log above.")
                     elif last_state is not None:
                         self.lastconditionset_set(_original_conditionset_id, _original_conditionset_name)
-                        self.__logger.info("Leaving {0} ('{1}'). Condition set was: {2}", last_state.id, last_state.name, _original_conditionset_id)
+                        self.__logger.info("Leaving {0} ('{1}'). Condition set was: {2}", last_state.id,
+                                           last_state.name, _original_conditionset_id)
                         last_state.run_leave(self.__repeat_actions.get())
                         _leaveactions_run = True
                     if new_state.conditions.count() == 0:
@@ -473,7 +470,6 @@ class SeItem:
     def __add_triggers(self):
         # add item trigger
         self.__item.add_method_trigger(self.update_state)
-
 
     # Check item settings and update if required
     # noinspection PyProtectedMember
