@@ -175,4 +175,3 @@ class SeFunctions:
                 return retval_trigger
         finally:
             lock.release()
-

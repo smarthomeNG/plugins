@@ -244,7 +244,7 @@ def get_original_caller(elog, caller, source, item=None, eval_keyword=['Eval'], 
     while original_caller in eval_keyword:
         original_item = itemsApi.return_item(original_source)
         if original_item is None:
-            elog.info("get_caller({0}, {1}): original item not found", caller, source)
+            elog.warning("get_caller({0}, {1}): original item not found", caller, source)
             break
         original_manipulated_by = original_item.property.last_update_by if eval_type == "update" else \
             original_item.property.last_change_by
