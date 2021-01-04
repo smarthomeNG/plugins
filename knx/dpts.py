@@ -98,6 +98,21 @@ def de5001(payload):
     return round(struct.unpack('>B', payload)[0] * 100.0 / 255, 1)
 
 
+def en5999(value):
+    if value < 0:
+        value = 0
+    elif value > 255:
+        value = 255
+    return [0, int(value) & 0xff]
+
+
+def de5999(payload):
+    # artificial data point for tebis TS
+    if len(payload) != 1:
+        return None
+    return struct.unpack('>B', payload)[0] & 0x0f
+
+
 def en6(value):
     if value < -128:
         value = -128
@@ -431,6 +446,7 @@ decode = {
     '5': de5,
     '5001': de5001,
     '5.001': de5001,
+    '5999': de5999,
     '6': de6,
     '7': de7,
     '8': de8,
@@ -467,6 +483,7 @@ encode = {
     '5': en5,
     '5001': en5001,
     '5.001': en5001,
+    '5999': en5999,
     '6': en6,
     '7': en7,
     '8': en8,
