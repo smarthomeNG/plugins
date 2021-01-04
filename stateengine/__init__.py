@@ -49,9 +49,9 @@ class StateEngine(SmartPlugin):
         self.__cli = None
         self.init_webinterface()
         self.__log_directory = self.get_parameter_value("log_directory")
-        StateEngineDefaults.suspend_time_format = self.get_parameter_value("suspend_time_format")
         try:
             log_level = self.get_parameter_value("log_level")
+            StateEngineDefaults.log_level = log_level
             log_directory = self.__log_directory
             self.logger.info("Init StateEngine (log_level={0}, log_directory={1})".format(log_level, log_directory))
 
