@@ -223,6 +223,14 @@ item_attributes:
             de: 'Datentyp des Objekt-Items. Muss "bool" sein.'
             en: 'Data type of the object item. Has to be "bool"'
 
+    se_instant_leaveaction:
+        type: bool
+        default: False
+        description:
+            de: 'Ist dieser Parameter auf True gesetzt, werden "on leave" Aktionen sofort ausgeführt, wenn der aktuelle Zustand nicht mehr eingenommen wird. Standardmäßig werden die Aktionen erst direkt vor dem Eintreten in einen neuen Zustand getriggert.'
+            en: 'If this parameter is set to True the "on leave" actions are run immediately after not entering the current state
+            again. By default the actions are triggered directly before entering a new state.'
+
     se_plugin:
         type: str
         mandatory: True

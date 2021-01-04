@@ -79,6 +79,10 @@ class SeItem:
         return self.__logger
 
     @property
+    def instant_leaveaction(self):
+        return self.__instant_leaveaction
+
+    @property
     def laststate(self):
         return self.__laststate_item_id.property.value
 
@@ -145,6 +149,8 @@ class SeItem:
         self.__states = []
         self.__templates = {}
         self.__webif_infos = OrderedDict()
+        self.__instant_leaveaction = StateEngineValue.SeValue(self, "Instant Leave Action", False, "bool")
+        self.__instant_leaveaction.set_from_attr(self.__item, "se_instant_leaveaction", StateEngineDefaults.instant_leaveaction)
         self.__repeat_actions = StateEngineValue.SeValue(self, "Repeat actions if state is not changed", False, "bool")
         self.__repeat_actions.set_from_attr(self.__item, "se_repeat_actions", True)
 
@@ -165,6 +171,7 @@ class SeItem:
         self.__variables = {
             "item.suspend_time": self.__suspend_time.get() if self.__suspend_time_format == "seconds" else self.__suspend_time.get() * 60,
             "item.suspend_remaining": 0,
+            "item.instant_leaveaction": self.__instant_leaveaction.get(),
             "current.state_id": "",
             "current.state_name": "",
             "current.conditionset_id": "",
@@ -265,6 +272,7 @@ class SeItem:
                 StateEngineCurrent.update()
                 self.__variables["item.suspend_time"] = self.__suspend_time.get() if self.__suspend_time_format == "seconds" else self.__suspend_time.get() * 60
                 self.__variables["item.suspend_remaining"] = -1
+                self.__variables["item.instant_leaveaction"] = self.__instant_leaveaction.get()
 
                 # get last state
                 last_state = self.__laststate_get()
@@ -284,7 +292,7 @@ class SeItem:
                 for state in self.__states:
                     result = self.__update_check_can_enter(state)
                     # New state is different from last state
-                    if result is False and last_state == state and StateEngineDefaults.instant_leaveaction is True:
+                    if result is False and last_state == state and self.__instant_leaveaction.get() is True:
                         self.__logger.info("Leaving {0} ('{1}'). Running actions immediately.", last_state.id, last_state.name)
                         last_state.run_leave(self.__repeat_actions.get())
                         _leaveactions_run = True
@@ -570,6 +578,7 @@ class SeItem:
         # log general config
         self.__logger.header("Configuration of item {0}".format(self.__name))
         self.__startup_delay.write_to_logger()
+        self.__instant_leaveaction.write_to_logger()
         for t in self.__templates:
             self.__logger.info("Template {0}: {1}", t, self.__templates.get(t))
         self.__logger.info("Cycle: {0}", cycles)
