@@ -134,7 +134,7 @@ class StateEngine(SmartPlugin):
     # source: Source to check
     # changed_by: List of callers/source (element format <caller>:<source>) to check against
     def is_changed_by(self, caller, source, changed_by):
-        original_caller, original_source = StateEngineTools.get_original_caller(self.get_sh(), caller, source)
+        original_caller, original_source = StateEngineTools.get_original_caller(self.logger, caller, source)
         for entry in changed_by:
             entry_caller, __, entry_source = entry.partition(":")
             if (entry_caller == original_caller or entry_caller == "*") and (
@@ -147,7 +147,7 @@ class StateEngine(SmartPlugin):
     # source: Source to check
     # changed_by: List of callers/source (element format <caller>:<source>) to check against
     def not_changed_by(self, caller, source, changed_by):
-        original_caller, original_source = StateEngineTools.get_original_caller(self.get_sh(), caller, source)
+        original_caller, original_source = StateEngineTools.get_original_caller(self.logger, caller, source)
         for entry in changed_by:
             entry_caller, __, entry_source = entry.partition(":")
             if (entry_caller == original_caller or entry_caller == "*") and (

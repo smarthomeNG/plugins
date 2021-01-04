@@ -22,6 +22,7 @@ import logging
 import threading
 import re
 from . import StateEngineLogger
+from . import StateEngineTools
 from lib.item import Items
 
 
@@ -87,8 +88,10 @@ class SeFunctions:
             retval_trigger = not item()
             elog.info("Current value of item {0} is {1}", item_id, retval_no_trigger)
 
-            original = self.get_original_caller(elog, caller, source)
-            elog.info("original trigger by '{0}'", original)
+            original_caller, original_source = StateEngineTools.get_original_caller(elog, caller, source)
+            elog.info("get_caller({0}, {1}): original trigger by {2}:{3}", caller, source,
+                      original_caller, original_source)
+            original = "{}:{}".format(original_caller, original_source)
             entry = re.compile("Stateengine Plugin", re.IGNORECASE)
             result = entry.match(original)
             if result is not None:
@@ -172,26 +175,3 @@ class SeFunctions:
         finally:
             lock.release()
 
-    # determine original caller/source
-    # elog: instance of logging class
-    # caller: caller
-    # source: source
-    def get_original_caller(self, elog, caller, source, type='update'):
-        if isinstance(source, str):
-            original_manipulated_by = source
-        else:
-            original_manipulated_by = "None"
-        while caller == "Eval":
-            original_item = self.items.return_item(source)
-            if original_item is None:
-                elog.info("get_caller({0}, {1}): original item not found", caller, source)
-                break
-            original_manipulated_by = original_item.property.last_update_by if type == "update" else original_item.property.last_change_by
-            original_manipulated_time = original_item.property.last_update if type == "update" else original_item.property.last_change
-            oc = caller
-            os = source
-            caller, __, source = original_manipulated_by.partition(":")
-            elog.info("get_caller({0}, {1}): updated by {2} at {3}", oc, os,
-                        original_manipulated_by, original_manipulated_time)
-
-        return original_manipulated_by
