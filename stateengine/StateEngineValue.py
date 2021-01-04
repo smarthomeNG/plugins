@@ -80,8 +80,10 @@ class SeValue(StateEngineTools.SeItemChild):
             source = []
             field_value = []
             for i, val in enumerate(value):
-                if isinstance(val, dict) or isinstance(val, tuple):
+                if isinstance(val, dict):
                     val = list("{!s}:{!s}".format(k, v) for (k, v) in val.items())[0]
+                if isinstance(val, tuple):
+                    val = ':'.join(val)
                 if isinstance(val, str):
                     s, f = StateEngineTools.partition_strip(val, ":")
                 else:
@@ -122,7 +124,7 @@ class SeValue(StateEngineTools.SeItemChild):
                         self.__listorder = [i for i in self.__listorder if i != val]
                         source[i], field_value[i], val = None, None, None
             try:
-                if isinstance(self.__template, list) and len(self.__template == 1):
+                if isinstance(self.__template, list) and len(self.__template) == 1:
                     self.__template = self.__template[0]
             except Exception:
                 pass
