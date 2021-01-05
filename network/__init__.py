@@ -221,11 +221,12 @@ class Network(SmartPlugin):
         if self.get_parameter_value('udp'):
             self.add_listener('udp', self.get_parameter_value('ip'), self.get_parameter_value('port'), self.udp_acl,
                               generic=True)
-        if str(self.get_parameter_value('http')).isnumeric():
-            self.add_listener('http', self.get_parameter_value('ip'), self.get_parameter_value('http'), self.http_acl,
+        http_param = self.get_parameter_value('http')
+        if str(http_param).isnumeric():
+            self.add_listener('http', self.get_parameter_value('ip'), http_param, self.http_acl,
                               generic=True)
-        elif str(self.get_parameter_value('http')).lower() in ('yes', 'true'):
-            self.logger.warning(f'http parameter must be "no" or <port number>, but it is set to "{self.get_parameter_value('http')}". HTTP listener not enabled.')
+        elif str(http_param).lower() in ('yes', 'true'):
+            self.logger.warning(f'http parameter must be "no" or <port number>, but it is set to "{http_param}". HTTP listener not enabled.')
 
     def udp(self, host, port, data):
         '''
