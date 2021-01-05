@@ -274,7 +274,12 @@ class WebInterface(SmartPluginWebIf):
 
         if action == "get_graph" and abitem is not None:
             if isinstance(abitem, str):
-                abitem = self.plugin.abitems[abitem]
+                try:
+                    abitem = self.plugin.abitems[abitem]
+                except Exception as e:
+                    self.logger.warning("Item {} not initialized yet. "
+                                        "Try again later.".format(abitem))
+                    return None
             self.plugin.get_graph(abitem, 'graph')
             tmpl = self.tplenv.get_template('visu.html')
             return tmpl.render(p=self.plugin, item=abitem,
