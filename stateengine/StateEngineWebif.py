@@ -81,7 +81,9 @@ class WebInterface(StateEngineTools.SeItemChild):
                 action1 = self.__states[state][label_type][action].get('function')
                 if action1 == 'set':
                     action2 = self.__states[state][label_type][action].get('item')
-                    action3 = 'to {}'.format(self.__states[state][label_type][action].get('value'))
+                    value_check = self.__states[state][label_type][action].get('value')
+                    value_check = '""'  if value_check == "" else value_check
+                    action3 = 'to {}'.format(value_check)
                 elif action1 == 'special':
                     action2 = self.__states[state][label_type][action].get('special')
                     action3 = self.__states[state][label_type][action].get('value')
@@ -92,7 +94,7 @@ class WebInterface(StateEngineTools.SeItemChild):
                     actionlabel += '<tr><td align="center"><font color={}>{}</font></td><td align="center">{}</td>' \
                                    '<td align="center">{}</td></tr>'.format(fontcolor, action1, action2, action3)
                 elif not action2 == 'None':
-                    actionlabel += '<font color="{}">{} {} {}{}</font><br />'.format(fontcolor, action1, action2, action3, additionaltext)
+                    actionlabel += '<font color="{}">&nbsp;&nbsp;{} {} {}{}&nbsp;&nbsp;</font><br />'.format(fontcolor, action1, action2, action3, additionaltext)
         actionlabel += '</table>>' if label_format == 'table' else '>'
         actionlabel = '' if actionlabel == '<<table border="0"></table>>' or actionlabel == '<>' else actionlabel
         #self._log_debug('actionlabel: {}', actionlabel)
