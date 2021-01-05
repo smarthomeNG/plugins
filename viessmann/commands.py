@@ -333,7 +333,7 @@ commandset = {
         'Partybetrieb_A1M1':                          {'addr': '2303', 'len': 1, 'unit': 'IUBOOL',  'set': True, 'min_value': 0,   'max_value': 1},         # Partybetrieb A1M1
         'Vorlauftemperatur_A1M1':                     {'addr': '2900', 'len': 2, 'unit': 'IU10',    'set': False},                                          # Vorlauftemperatur A1M1
         'Vorlauftemperatur_Soll_A1M1':                {'addr': '2544', 'len': 2, 'unit': 'IU10',    'set': False},                                          # Vorlauftemperatur Soll A1M1
-        'Raumtemperatur_Soll_Normalbetrieb_A1M1':     {'addr': '2303', 'len': 1, 'unit': 'ISNON',   'set': True, 'min_value': 4,   'max_value': 37},        # Raumtemperatur Soll Normalbetrieb A1M1
+        'Raumtemperatur_Soll_Normalbetrieb_A1M1':     {'addr': '2306', 'len': 1, 'unit': 'ISNON',   'set': True, 'min_value': 4,   'max_value': 37},        # Raumtemperatur Soll Normalbetrieb A1M1
         'Raumtemperatur_Soll_Red_Betrieb_A1M1':       {'addr': '2307', 'len': 1, 'unit': 'ISNON',   'set': True, 'min_value': 4,   'max_value': 37},        # Raumtemperatur Soll Reduzierter Betrieb A1M1
         'Raumtemperatur_Soll_Party_Betrieb_A1M1':     {'addr': '2308', 'len': 1, 'unit': 'ISNON',   'set': True, 'min_value': 4,   'max_value': 37},        # Raumtemperatur Soll Party Betrieb A1M1
         'Neigung_Heizkennlinie_A1M1':                 {'addr': '2305', 'len': 1, 'unit': 'IU10',    'set': True, 'min_value': 0.2, 'max_value': 3.5},       # Neigung Heizkennlinie A1M1
