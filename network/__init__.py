@@ -54,7 +54,6 @@ class TCPDispatcher(lib.network.Tcp_server):
         self.parser = parser
         self.dest = f'tcp:{ip}:{port}'
         self.set_callbacks(data_received=self.handle_received_data, incoming_connection=self.handle_connection)
-        self.start()
 
     def handle_connection(self, server, client):
         '''
@@ -101,7 +100,6 @@ class HTTPDispatcher(lib.network.Tcp_server):
         self.parser = parser
         self.dest = f'http:{ip}:{port}'
         self.set_callbacks(data_received=self.handle_received_data, incoming_connection=self.handle_connection)
-        self.start()
 
     def handle_connection(self, server, client):
         '''
@@ -158,7 +156,6 @@ class UDPDispatcher(lib.network.Udp_server):
         self.dest = f'udp:{ip}:{port}'
         super().__init__(port, ip)
         self.set_callbacks(data_received=self.handle_received_data)
-        self.start()
 
     def handle_received_data(self, addr, data):
         '''
