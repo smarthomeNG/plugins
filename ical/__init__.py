@@ -359,15 +359,19 @@ class iCal(SmartPlugin):
             else:
                 rrule['WKST'] = int(rrule['WKST'])
         if 'BYDAY' in rrule:
-            day = rrule['BYDAY']
-            if day.isalpha():
-                if day in self.DAYS:
-                    day = self.DAYS.index(day)
-            else:
-                n = int(day[0:-2])
-                day = self.DAYS.index(day[-2:])
-                day = dateutil.rrule.weekday(day, n)
-            rrule['BYWEEKDAY'] = day
+            days = rrule['BYDAY'].split(',')
+            new_days = []
+            for day in days:
+                day = day.strip()
+                if day.isalpha():
+                    if day in self.DAYS:
+                        day = self.DAYS.index(day)
+                else:
+                    n = int(day[0:-2])
+                    day = self.DAYS.index(day[-2:])
+                    day = dateutil.rrule.weekday(day, n)
+                new_days.append(day)
+            rrule['BYWEEKDAY'] = new_days
             del(rrule['BYDAY'])
         if 'COUNT' in rrule:
             rrule['COUNT'] = int(rrule['COUNT'])
