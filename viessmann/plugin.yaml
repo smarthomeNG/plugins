@@ -1,3 +1,7 @@
+%YAML 1.1
+# vim: set et ts=4 sts=4 sw=4 ai ff=unix nu wrap :
+---
+
 # Metadata for the Smart-Plugin
 plugin:
     # Global plugin attributes

@@ -195,6 +195,24 @@ Der in der Itemkonfiguration angegebene Wert wird nicht ausgewertet.
         viess_update: 'egal'
 
 
+viess\_ba\_list
+^^^^^^^^^^^^^^^
+Das Item mit diesem Attribut erhält einmalig beim Start des Plugins die Liste der für den konfigurierten Heizungstyp gültigen Betriebsarten.
+
+Diese kann z.B. in SmartVISU wie folgt eingebunden werden:
+
+.. code:: yaml
+
+    item:
+        viess_ba_list: 'egal'
+
+.. code::
+
+    {{ basic.select('heizen_ba_item', 'heizung.betriebsart', 'menu', '', '', '', '', '', 'heizung.ba_list') }}
+
+Dies erzeugt eine ("Menü"-) Auswahlliste, aus der die Betriebsart ausgewählt werden kann, die dann vom Plugin an die Heizung übergeben wird.
+
+
 Beispiel
 ^^^^^^^^
 
