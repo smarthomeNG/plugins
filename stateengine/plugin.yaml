@@ -643,7 +643,6 @@ item_structs:
                       - "to: eval:str(shtime.now())"
                       - 'repeat: True'
                       - 'order: 3'
-                      - 'conditionset: (.*)enter_manuell'
                     se_action_retrigger:
                       - 'function: special'
                       - 'value: retrigger:..retrigger'
