@@ -515,6 +515,12 @@ item_structs:
             visu_acl: rw
             cache: True
 
+            visu:
+                type: bool
+                knx_dpt: 1
+                visu_acl: rw
+                cache: True
+
         suspend_end:
             type: str
             visu_acl: ro
@@ -617,6 +623,7 @@ item_structs:
 
         rules:
             se_item_suspend: ..suspend
+            se_item_suspend_visu: ..suspend.visu
             se_item_suspend_end: ..suspend_end.date_time
             se_item_suspend_start: ..suspend_start.date_time
             se_item_suspend_active: ..settings.suspend_active
@@ -626,6 +633,12 @@ item_structs:
 
             suspend:
                 name: ausgesetzt
+
+                on_enter:
+                    se_action_suspend_visu:
+                      - 'function: set'
+                      - 'to: True'
+                      - 'order: 2'
 
                 on_enter_or_stay:
                     se_action_suspend:
@@ -637,32 +650,36 @@ item_structs:
                       - 'function: set'
                       - "to: eval:se_eval.insert_suspend_time('..suspend', suspend_text='%Y-%m-%d %H:%M:%S.%f%z')"
                       - 'repeat: True'
-                      - 'order: 2'
+                      - 'order: 3'
                     se_action_suspend_start:
                       - 'function: set'
                       - "to: eval:str(shtime.now())"
                       - 'repeat: True'
-                      - 'order: 3'
+                      - 'order: 4'
                     se_action_retrigger:
                       - 'function: special'
                       - 'value: retrigger:..retrigger'
                       - 'delay: var:item.suspend_remaining'
                       - 'repeat: True'
-                      - 'order: 4'
+                      - 'order: 5'
 
                 on_leave:
                     se_action_suspend:
                       - 'function: set'
                       - 'to: False'
                       - 'order: 1'
+                    se_action_suspend_visu:
+                      - 'function: set'
+                      - 'to: False'
+                      - 'order: 2'
                     se_action_suspend_end:
                       - 'function: set'
                       - 'to:  '
-                      - 'order: 2'
+                      - 'order: 3'
                     se_action_suspend_start:
                       - 'function: set'
                       - 'to:  '
-                      - 'order: 3'
+                      - 'order: 4'
                       - 'delay: 1'
 
                 enter_manuell:
@@ -684,9 +701,61 @@ item_structs:
             visu_acl: rw
             enforce_updates: True
 
+        suspend:
+            type: bool
+            knx_dpt: 1
+            visu_acl: rw
+            cache: True
+
+            visu:
+                type: bool
+                knx_dpt: 1
+                visu_acl: rw
+                cache: True
+
+        suspend_end:
+            type: str
+            visu_acl: ro
+            eval: "'' if not any(char.isdigit() for char in sh..self.date_time()) else sh..self.date_time().split(' ')[1].split('.')[0]"
+            eval_trigger: .date_time
+            crontab: init
+
+            date_time:
+                type: str
+                visu_acl: ro
+                cache: True
+
+            unix_timestamp:
+                type: num
+                visu_acl: ro
+                eval: "0 if not any(char.isdigit() for char in sh...date_time()) else  sh.tools.dt2ts(shtime.datetime_transform(sh...date_time())) * 1000"
+                eval_trigger: ..date_time
+                crontab: init
+
+        suspend_start:
+            type: str
+            visu_acl: ro
+            eval: "'' if not any(char.isdigit() for char in sh..self.date_time()) else sh..self.date_time().split(' ')[1].split('.')[0]"
+            eval_trigger: .date_time
+            crontab: init
+
+            date_time:
+                type: str
+                visu_acl: ro
+                cache: True
+
+            unix_timestamp:
+                remark: Can be used for the clock.countdown widget
+                type: num
+                visu_acl: ro
+                eval: "0 if not any(char.isdigit() for char in sh...date_time()) else  sh.tools.dt2ts(shtime.datetime_transform(sh...date_time())) * 1000"
+                eval_trigger: ..date_time
+                crontab: init
+
         rules:
             se_item_lock: ..lock
             se_item_suspend: ..suspend
+            se_item_suspend_visu: ..suspend.visu
             se_item_release: ..release
             se_item_suspend_end: ..suspend_end
             se_item_suspend_start: ..suspend_start
@@ -696,28 +765,32 @@ item_structs:
             release:
                 name: release
 
-                on_enter_or_stay:
+                on_enter:
                     se_action_suspend:
                       - 'function: set'
                       - 'to: False'
                       - 'order: 1'
-                    se_action_lock:
+                    se_action_suspend_visu:
                       - 'function: set'
                       - 'to: False'
                       - 'order: 2'
+                    se_action_lock:
+                      - 'function: set'
+                      - 'to: False'
+                      - 'order: 3'
                     se_action_suspend_start:
                       - 'function: set'
                       - 'to: '
-                      - 'order: 3'
+                      - 'order: 4'
                     se_action_release:
                       - 'function: set'
                       - 'to: False'
-                      - 'order: 4'
+                      - 'order: 5'
                     se_action_retrigger:
                       - 'function: special'
                       - 'value: retrigger:..retrigger'
                       - 'repeat: True'
-                      - 'order: 5'
+                      - 'order: 6'
 
                 enter:
                     se_value_release: True
