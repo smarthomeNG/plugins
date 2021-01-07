@@ -56,11 +56,14 @@ class Mode():
     def comfort(self, value):
 
         if isinstance(value, bool):
-            if value:
-                self._mode_hvac = 1
-            elif self._mode_hvac == 1:
-                self._mode_hvac = 2
-            return
+            if self._mode_hvac == 4:
+                self._mode_before_frost = value
+            else:
+                if value:
+                    self._mode_hvac = 1
+                elif self._mode_hvac == 1:
+                    self._mode_hvac = 2
+                return
         else:
             self._type_error('non-boolean')
             return
@@ -83,11 +86,14 @@ class Mode():
     def standby(self, value):
 
         if isinstance(value, bool):
-            if value:
-                self._mode_hvac = 2
-            elif self._mode_hvac == 2:
-                self._mode_hvac = 2
-            return
+            if self._mode_hvac == 4:
+                self._mode_before_frost = value
+            else:
+                if value:
+                    self._mode_hvac = 2
+                elif self._mode_hvac == 2:
+                    self._mode_hvac = 2
+                return
         else:
             self._type_error('non-boolean')
             return
@@ -110,11 +116,14 @@ class Mode():
     def night(self, value):
 
         if isinstance(value, bool):
-            if value:
-                self._mode_hvac = 3
-            elif self._mode_hvac == 3:
-                self._mode_hvac = 2
-            return
+            if self._mode_hvac == 4:
+                self._mode_before_frost = value
+            else:
+                if value:
+                    self._mode_hvac = 3
+                elif self._mode_hvac == 3:
+                    self._mode_hvac = 2
+                return
         else:
             self._type_error('non-boolean')
             return

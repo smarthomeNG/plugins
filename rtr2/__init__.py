@@ -322,6 +322,7 @@ class Rtr2(SmartPlugin):
         for r in self._rtr:
             info_dict[r] = {}
             info_dict[r]['hvac'] = self._rtr[r]._mode.hvac
+            info_dict[r]['mode_before_frost'] = self._rtr[r]._mode._mode_before_frost
             info_dict[r]['comfort_temp'] = round(self._rtr[r]._temp._temp_comfort, 2)
             info_dict[r]['standby_reduction'] = round(self._rtr[r]._temp.standby_reduction, 2)
             info_dict[r]['night_reduction'] = round(self._rtr[r]._temp.night_reduction, 2)
@@ -357,6 +358,7 @@ class Rtr2(SmartPlugin):
         for r in info_dict:
             self.logger.info(f"rtr {r} = {info_dict[r]}")
             if self._rtr.get(r, None) is not None:
+                self._rtr[r]._mode._mode_before_frost = info_dict[r].get('mode_before_frost', 0)
                 self._rtr[r]._mode.hvac = info_dict[r]['hvac']
                 self._rtr[r]._temp._temp_comfort = info_dict[r]['comfort_temp']
                 self._rtr[r]._temp.standby_reduction = info_dict[r]['standby_reduction']
