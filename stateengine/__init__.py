@@ -194,7 +194,7 @@ class StateEngine(SmartPlugin):
                         </iframe></object>'.format(abitem)
         except Exception as ex:
             self.logger.error("Problem getting graph for {}. Error: {}".format(abitem, ex))
-            return ''
+            return "<h2>Can not show visualization. Most likely pydotplus library is missing.</h2>"
 
     def init_webinterface(self):
         """"
