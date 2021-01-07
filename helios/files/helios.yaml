@@ -17,26 +17,26 @@ ventilation:
             type: num
             # value = 546   # umbauter Raum (546m³); gem. Helios-Rechner nur 384 m³ belüftet (???)
             value: 384
-            visu_acl: r
+            visu_acl: ro
 
         Ane:
             name: 'DIN: Fläche (A) der Nutzungseinheit (ne) in m² (=belüftete Fläche, Wohnfläche)'
             type: num
             # value = 143
             value: 143
-            visu_acl: r
+            visu_acl: ro
 
         fWS:
             name: 'DIN: Wärmeschutzfaktor (0,3 für Haus mit aktueller Wärmedämmung, sonst 0,4)'
             type: num
             # value = 0.3
             value: '0.3'
-            visu_acl: r
+            visu_acl: ro
 
             daemmung:
                 name: Haustyp gem. Wärmeschutzdämmung    # nicht ändern, wird automatisch gesetzt
                 type: str
-                visu_acl: r
+                visu_acl: ro
                 eval: '"gedämmt" if (sh.ventilation.parameters.fWS()<0.4) else "teil-/ungedämmt"'
                 eval_trigger: ventilation.parameters.fWS
 
@@ -45,35 +45,35 @@ ventilation:
             type: num
             # value = 360                                             # Default Helios EC/ET 300 Pro
             value: 360
-            visu_acl: r
+            visu_acl: ro
 
         fanspeed_levels:
             name: Anzahl der Schaltstufen der KWL (siehe Anlagendoku); wird z.Z. nicht verwendet
             type: num
             # value = 8                                               # Default Helios EC/ET 300 Pro
             value: 8
-            visu_acl: r
+            visu_acl: ro
 
         airflow_per_mode:
             name: Volumenstrom je Stufe in m³/h  (siehe Anlagendoku); F7-Filter = jeweils -10%!
             type: str
             # value = "0 105 165 195 240 270 305 335 360"             # Default Helios EC/ET 300 Pro
             value: 0 105 165 195 240 270 305 335 360
-            visu_acl: r
+            visu_acl: ro
 
         consumption_per_mode:
             name: Verbrauch _beider_ Ventilatoren je Stufe in W (siehe Anlagendoku)
             type: str
             # value = "0 20 36 50 72 92 130 160 194"                  # Default Helios EC/ET 300 Pro
             value: 0 20 36 50 72 92 130 160 194
-            visu_acl: r
+            visu_acl: ro
 
         preheating_consumption:
             name: Stromverbrauch der Vorheizung in W (siehe Anlagendoku)
             type: num
             # value = 1000                                            # Default Helios EC/ET 300 Pro
             value: 1000
-            visu_acl: r
+            visu_acl: ro
 
     # sh.py/logics/helios_logics.py - Booster ("Stoßlüftung") settings
     # ==============================================================================================
@@ -85,20 +85,20 @@ ventilation:
             type: num
             # value: 1=Helios default, 2=Logic with fixed values, 3=Logic (interactive Popup)
             value: 3
-            visu_acl: r
+            visu_acl: ro
 
         boost_fanspeed:
             name: Setting for booster - speed for logic with fixed values (only for boost_mode 2)
             type: num
             value: 8
-            visu_acl: r
+            visu_acl: ro
 
         boost_time:
             name: Setting for booster - duration for logic with fixed values (only for boost_mode 2)
             type: num
             # value = 2700   ---> 45 minutes * 60 seconds = 2700 seconds
             value: 2700
-            visu_acl: r
+            visu_acl: ro
 
     # ==============================================================================================
     # Don't modify the items below unless you know what you're doing
@@ -146,7 +146,7 @@ ventilation:
             # ToDo: Macht Wert 18...20°C hier eher Sinn?
             type: num
             helios_var: bypass_temp
-            visu_acl: r
+            visu_acl: ro
 
         _outside_temp:
             name: 'DIN/EN: Außenluft, outdoor air / ODA, grün; Luft von draussen'
@@ -157,7 +157,7 @@ ventilation:
             # abkühlende Vorheizung verfälschen dann die Werte)            
             type: num
             helios_var: outside_temp
-            visu_acl: r
+            visu_acl: ro
             # sqlite = yes
             database: 'init'
             
@@ -165,7 +165,7 @@ ventilation:
             name: 'DIN/EN: Zuluft, supply air / SUP, blau; Luft in die Räume'
             type: num
             helios_var: incoming_temp
-            visu_acl: r
+            visu_acl: ro
             # sqlite = yes
             database: 'init'
 
@@ -175,7 +175,7 @@ ventilation:
             cache: true
             # cache = true --> sonst beim Start Fehler div/0 bei Berechnungen
             helios_var: inside_temp
-            visu_acl: r
+            visu_acl: ro
             # sqlite = yes
             database: 'init'
 
@@ -183,7 +183,7 @@ ventilation:
             name: 'DIN/EN: Fortluft, exhaust air, braun; Luft nach draussen'
             type: num
             helios_var: exhaust_temp
-            visu_acl: r
+            visu_acl: ro
             # sqlite = yes
             database: 'init'
 
@@ -274,13 +274,13 @@ ventilation:
             name: Aktueller Status
             type: bool
             helios_var: boost_status
-            visu_acl: r
+            visu_acl: ro
 
         _boost_remaining:
             name: Verbleibende Minuten bei aktivierter Stoßlüftung
             type: num
             helios_var: boost_remaining
-            visu_acl: r
+            visu_acl: ro
 
         _clean_filter:
             name: Verbleibende Zeit für Filterreinigung in Monaten
@@ -292,7 +292,7 @@ ventilation:
             name: Aus der KWL ausgelesener Fehlercode
             type: num
             helios_var: device_error
-            visu_acl: r
+            visu_acl: ro
             # Konstanten für Fehleranzeige in der Visu --> ErrNo:Name:Description:Countermeasures
             e0:   0:Kein Fehler:Kein Fehlertext:Keine Fehlerbehebung
             e1:   1:?:?:?
@@ -449,7 +449,7 @@ ventilation:
 
             info1:
                 name: Zuluftmotor Infotext - Status, Luftvolumen
-                visu_acl: r
+                visu_acl: ro
                 type: str
                 eval: sh.ventilation.fans.supply.is_on.as_text() + ', ' + sh.ventilation.power.supply_fan.effective.as_text()
                 eval_trigger:
@@ -458,7 +458,7 @@ ventilation:
 
             info2:
                 name: Zuluftmotor Infotext - Drosselung, Verbrauch
-                visu_acl: r
+                visu_acl: ro
                 type: str
                 eval: sh.ventilation.airflow.supply_fan.effective.as_text() + ' (' + sh.ventilation.fans.supply.percent.effective.as_text() + ')'
                 eval_trigger:
@@ -509,7 +509,7 @@ ventilation:
 
             info1:
                 name: Fortluftmotor Infotext - Status, Luftvolumen
-                visu_acl: r
+                visu_acl: ro
                 type: str
                 eval: sh.ventilation.fans.exhaust.is_on.as_text() + ', ' + sh.ventilation.power.exhaust_fan.effective.as_text()
                 eval_trigger:
@@ -518,7 +518,7 @@ ventilation:
 
             info2:
                 name: Fortluftmotor Infotext - Drosselung, Verbrauch
-                visu_acl: r
+                visu_acl: ro
                 type: str
                 eval: sh.ventilation.airflow.exhaust_fan.effective.as_text() + ' (' + sh.ventilation.fans.exhaust.percent.effective.as_text() + ')'
                 eval_trigger:
@@ -530,7 +530,7 @@ ventilation:
             power_consumption:
                 name: Stromverbrauch beider Ventilatoren
                 type: num
-                visu_acl: r
+                visu_acl: ro
                 eval: sh.ventilation.power.supply_fan.effective() + sh.ventilation.power.exhaust_fan.effective()
                 eval_trigger:
                   - ventilation.power.supply_fan.effective
@@ -544,7 +544,7 @@ ventilation:
 
             level_info:
                 name: Kombinierte Anzeige der Lüftungsstufen (aktuell / min ... max)
-                visu_acl: r
+                visu_acl: ro
                 type: str
                 eval: str(sh.ventilation.rs485._fanspeed()) + ' (' + str(sh.ventilation.rs485._min_fanspeed()) + '..' + str(sh.ventilation.rs485._max_fanspeed()) + ')'
                 eval_trigger:
@@ -603,7 +603,7 @@ ventilation:
                 name: Verbleibende Zeit
                 type: num
                 value: 10
-                visu_acl: r
+                visu_acl: ro
 
         # ToDo
         boost_remaining_a:
@@ -701,7 +701,7 @@ ventilation:
         supply_fan:
             name: Luftdurchsatz in m³ gem. Messung oder Ventilatorkurve
             type: num
-            visu_acl: r
+            visu_acl: ro
             eval: sh.ventilation.parameters.airflow_per_mode().split()[int(sh.ventilation.rs485._fanspeed())]
             eval_trigger:
               - ventilation.rs485._fanspeed
@@ -711,7 +711,7 @@ ventilation:
             effective:
                 name: Tatsächlicher Luftdurchsatz (Drosselung berücksichtigt)
                 type: num
-                visu_acl: r
+                visu_acl: ro
                 eval: sh.ventilation.airflow.supply_fan() * sh.ventilation.fans.supply.percent.effective() / 100
                 eval_trigger:
                   - ventilation.airflow.supply_fan
@@ -726,7 +726,7 @@ ventilation:
         exhaust_fan:
             name: Luftdurchsatz in m³ gem. Ventilatorkurve
             type: num
-            visu_acl: r
+            visu_acl: ro
             eval: sh.ventilation.parameters.airflow_per_mode().split()[int(sh.ventilation.rs485._fanspeed())]
             eval_trigger:
               - ventilation.rs485._fanspeed
@@ -736,7 +736,7 @@ ventilation:
             effective:
                 name: Tatsächlicher Luftdurchsatz (Drosselung berücksichtigt)
                 type: num
-                visu_acl: r
+                visu_acl: ro
                 eval: sh.ventilation.airflow.exhaust_fan() * sh.ventilation.fans.exhaust.percent.effective() / 100
                 eval_trigger:
                   - ventilation.airflow.exhaust_fan
@@ -751,7 +751,7 @@ ventilation:
         air_exchange_rate:
             name: Luftaustauschrate
             type: num
-            visu_acl: r
+            visu_acl: ro
             eval: round(sh.ventilation.airflow.supply_fan.effective()/sh.ventilation.parameters.house_volume(), 2)
             eval_trigger: ventilation.airflow.supply_fan.effective
 
@@ -786,7 +786,7 @@ ventilation:
             moisture_protection:
                 name: Feuchteschutz    # fWS * (-0,001 * Ane² + 1,15 * Ane + 20)
                 type: num
-                visu_acl: r
+                visu_acl: ro
                 eval: round(sh.ventilation.parameters.fWS() * (-0.001 * (sh.ventilation.parameters.Ane()*sh.ventilation.parameters.Ane()) + 1.15 * sh.ventilation.parameters.Ane() + 20))
                 eval_trigger:
                   - ventilation.parameters.Ane
@@ -795,7 +795,7 @@ ventilation:
                 air_exchange_rate:
                     name: Luftaustauschrate bei Feuchteschutz
                     type: num
-                    visu_acl: r
+                    visu_acl: ro
                     eval: round(sh.ventilation.airflow.DIN.moisture_protection()/sh.ventilation.parameters.house_volume(), 2)
                     eval_trigger: ventilation.airflow.DIN.moisture_protection
 
@@ -803,14 +803,14 @@ ventilation:
             reduced_air_exchange:
                 name: Reduzierte Lüftung    # 0,7 * (-0,001 * Ane² + 1,15 * Ane + 20)
                 type: num
-                visu_acl: r
+                visu_acl: ro
                 eval: round(0.7 * (-0.001 * (sh.ventilation.parameters.Ane()*sh.ventilation.parameters.Ane()) + 1.15 * sh.ventilation.parameters.Ane() + 20))
                 eval_trigger: ventilation.parameters.Ane
 
                 air_exchange_rate:
                     name: Luftaustauschrate bei reduzierter Lüftung
                     type: num
-                    visu_acl: r
+                    visu_acl: ro
                     eval: round(sh.ventilation.airflow.DIN.reduced_air_exchange()/sh.ventilation.parameters.house_volume(), 2)
                     eval_trigger: ventilation.airflow.DIN.reduced_air_exchange
 
@@ -818,14 +818,14 @@ ventilation:
             normal_air_exchange:
                 name: Nennlüftung    # -0,001 * Ane² + 1,15 * Ane + 20
                 type: num
-                visu_acl: r
+                visu_acl: ro
                 eval: round(-0.001 * (sh.ventilation.parameters.Ane()*sh.ventilation.parameters.Ane()) + 1.15 * sh.ventilation.parameters.Ane() + 20)
                 eval_trigger: ventilation.parameters.Ane
 
                 air_exchange_rate:
                     name: Luftaustauschrate bei Nennlüftung
                     type: num
-                    visu_acl: r
+                    visu_acl: ro
                     eval: round(sh.ventilation.airflow.DIN.normal_air_exchange()/sh.ventilation.parameters.house_volume(), 2)
                     eval_trigger: ventilation.airflow.DIN.normal_air_exchange
 
@@ -833,14 +833,14 @@ ventilation:
             boost_air_exchange:
                 name: Intensivlüftung    # 1,15 * (-0,001 * Ane² + 1,15 * Ane + 20)
                 type: num
-                visu_acl: r
+                visu_acl: ro
                 eval: round(1.15 * (-0.001 * (sh.ventilation.parameters.Ane()*sh.ventilation.parameters.Ane()) + 1.15 * sh.ventilation.parameters.Ane() + 20))
                 eval_trigger: ventilation.parameters.Ane
 
                 air_exchange_rate:
                     name: Luftaustauschrate bei Intensivlüftung
                     type: num
-                    visu_acl: r
+                    visu_acl: ro
                     eval: round(sh.ventilation.airflow.DIN.boost_air_exchange()/sh.ventilation.parameters.house_volume(), 2)
                     eval_trigger: ventilation.airflow.DIN.boost_air_exchange
 
@@ -851,7 +851,7 @@ ventilation:
         total_outgoing:
             name: Energiegehalt der Abluft
             type: num
-            visu_acl: r
+            visu_acl: ro
             cache: 'true'
             # 'cache = true  # otherwise often div/0 at startup; cache not working for some reason'
             # database: 'init'
@@ -865,7 +865,7 @@ ventilation:
             as_text:
                 name: Wärmeenergie + 'W'
                 type: str
-                visu_acl: r
+                visu_acl: ro
                 eval: "'%sW' % (sh.ventilation.thermal_energy.total_outgoing())"
                 eval_trigger: ventilation.thermal_energy.total_outgoing
 
@@ -877,7 +877,7 @@ ventilation:
               - ventilation.rs485._exhaust_temp
               - ventilation.rs485._outside_temp
             type: num
-            visu_acl: r
+            visu_acl: ro
             # sqlite = yes
             # database: 'init'
             database: 'true'
@@ -885,14 +885,14 @@ ventilation:
             as_text:
                 name: Verlustwärme + 'W'
                 type: str
-                visu_acl: r
+                visu_acl: ro
                 eval: "'%sW' % (sh.ventilation.thermal_energy.loss())"
                 eval_trigger: ventilation.thermal_energy.loss
 
         recovery:
             name: Rückgewonnene Wärme
             type: num
-            visu_acl: r
+            visu_acl: ro
             eval: round(1.005 * 1.204 / 3.6 * sh.ventilation.airflow.supply_fan.effective() * (sh.ventilation.rs485._incoming_temp() - sh.ventilation.rs485._outside_temp()))
             eval_trigger:
               - ventilation.airflow.supply_fan.effective
@@ -905,7 +905,7 @@ ventilation:
             as_text:
                 name: Rückgewonnene Wärme + 'W'
                 type: str
-                visu_acl: r
+                visu_acl: ro
                 eval: "'%sW' % (sh.ventilation.thermal_energy.recovery())"
                 eval_trigger: ventilation.thermal_energy.recovery
 
@@ -913,7 +913,7 @@ ventilation:
         defrost:
             name: Verlustwärme durch Aufheizen des Wärmetauschers
             type: num
-            visu_acl: r
+            visu_acl: ro
             eval: sh.ventilation.thermal_energy.total_outgoing() - sh.ventilation.thermal_energy.loss() - sh.ventilation.thermal_energy.recovery()
             eval_trigger:
               - ventilation.thermal_energy.total_outgoing
@@ -926,14 +926,14 @@ ventilation:
             as_text:
                 name: Verlustwärme durch Aufheizen + 'W'
                 type: str
-                visu_acl: r
+                visu_acl: ro
                 eval: "'%sW' % (sh.ventilation.thermal_energy.defrost())"
                 eval_trigger: ventilation.thermal_energy.defrost
 
         efficiency:
             name: Wirkungsgrad in %
             type: num
-            visu_acl: r
+            visu_acl: ro
             # 0.000001 addieren, sonst beim Start DIV/0
             eval: round(sh.ventilation.thermal_energy.recovery() / (sh.ventilation.thermal_energy.total_outgoing()+0.000001) * 100)
             eval_trigger:
@@ -946,7 +946,7 @@ ventilation:
             as_text:
                 name: Wirkungsgrad + '%'
                 type: str
-                visu_acl: r
+                visu_acl: ro
                 eval: str(int(sh.ventilation.thermal_energy.efficiency())) + '%'
                 eval_trigger: ventilation.thermal_energy.efficiency
 
@@ -954,7 +954,7 @@ ventilation:
         alt_total_outgoing:
             name: Energieverlust Abluft total
             type: num
-            visu_acl: r
+            visu_acl: ro
             eval: round(1.005 * 101325 / ( 287.05 * (sh.ventilation.rs485._inside_temp() - sh.ventilation.rs485._outside_temp() + 273.15)) / 3.6 * sh.ventilation.airflow.exhaust_fan.effective() * (sh.ventilation.rs485._inside_temp() - sh.ventilation.rs485._outside_temp()))
             eval_trigger:
               - ventilation.airflow.exhaust_fan.effective
@@ -969,12 +969,12 @@ ventilation:
               - ventilation.rs485._exhaust_temp
               - ventilation.rs485._outside_temp
             type: num
-            visu_acl: r
+            visu_acl: ro
 
         alt_recovery:
             name: Rückgewonnene Wärme
             type: num
-            visu_acl: r
+            visu_acl: ro
             eval: round(1.005 * (101325 / (287.05 * (sh.ventilation.rs485._incoming_temp() - sh.ventilation.rs485._outside_temp() + 273.15))) / 3.6 * sh.ventilation.airflow.supply_fan.effective() * (sh.ventilation.rs485._incoming_temp() - sh.ventilation.rs485._outside_temp()))
             eval_trigger:
               - ventilation.airflow.supply_fan.effective
@@ -984,7 +984,7 @@ ventilation:
         alt_defrost:
             name: Verlustwärme durch Aufheizen des Wärmetauschers
             type: num
-            visu_acl: r
+            visu_acl: ro
             eval: sh.ventilation.thermal_energy.alt_total_outgoing() - sh.ventilation.thermal_energy.alt_loss() - sh.ventilation.thermal_energy.alt_recovery()
             eval_trigger:
               - ventilation.thermal_energy.total_outgoing
@@ -1002,7 +1002,7 @@ ventilation:
         heating:
             name: Aktueller Stromverbrauch der Vorheizung in W
             type: num
-            visu_acl: r
+            visu_acl: ro
             eval: int(sh.ventilation.heating.is_on()) * sh.ventilation.parameters.preheating_consumption()    # # int hinzugefügt
             eval_trigger: ventilation.heating.is_on
 
@@ -1015,7 +1015,7 @@ ventilation:
         supply_fan:
             name: Stromverbrauch, siehe Anlagendoku (notwendiges Hilfsitem - direkte Umsetzung von "effective" schmeisst Fehler)
             type: num
-            visu_acl: r
+            visu_acl: ro
             eval: int(sh.ventilation.parameters.consumption_per_mode().split()[int(sh.ventilation.rs485._fanspeed())]) / 2
             eval_trigger:
               - ventilation.rs485._fanspeed
@@ -1025,7 +1025,7 @@ ventilation:
             effective:
                 name: Tatsächlicher Stromverbrauch (Drosselung berücksichtigt)
                 type: num
-                visu_acl: r
+                visu_acl: ro
                 eval: sh.ventilation.power.supply_fan() * sh.ventilation.fans.supply.percent.effective() / 100
                 eval_trigger:
                   - ventilation.power.supply_fan
@@ -1040,7 +1040,7 @@ ventilation:
         exhaust_fan:
             name: Stromverbrauch, siehe Anlagendoku (notwendiges Hilfsitem - direkte Umsetzung von "effective" schmeisst Fehler)
             type: num
-            visu_acl: r
+            visu_acl: ro
             eval: int(sh.ventilation.parameters.consumption_per_mode().split()[int(sh.ventilation.rs485._fanspeed())]) / 2
             eval_trigger:
               - ventilation.rs485._fanspeed
@@ -1050,7 +1050,7 @@ ventilation:
             effective:
                 name: Tatsächlicher Stromverbrauch (Drosselung berücksichtigt)
                 type: num
-                visu_acl: r
+                visu_acl: ro
                 eval: sh.ventilation.power.exhaust_fan() * sh.ventilation.fans.exhaust.percent.effective() / 100
                 eval_trigger:
                   - ventilation.power.exhaust_fan
@@ -1065,7 +1065,7 @@ ventilation:
         total:
             name: Gesamtverbrauch in W (Steuerlektronik vernachlässigt, da keine Angaben)
             type: num
-            visu_acl: r
+            visu_acl: ro
             eval: sh.ventilation.power.heating() + sh.ventilation.power.supply_fan.effective() + sh.ventilation.power.exhaust_fan.effective()
             eval_trigger:
               - ventilation.power.heating
