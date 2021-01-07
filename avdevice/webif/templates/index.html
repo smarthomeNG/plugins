@@ -2,17 +2,60 @@
 {% block scripts %}
 {{ super() }}
 <script>
-function mainpage() {
-  var url = window.location.href;
-  var page = url.substring(url.lastIndexOf('/') + 1);
-  var final = url.replace(page, '');
-  if ( url.includes("?action=") ) {
-    window.location.href = final;
-  };
-}
-document.addEventListener("DOMContentLoaded", function() {
-  mainpage();
-});
+	function mainpage() {
+	  var url = window.location.href;
+	  var page = url.substring(url.lastIndexOf('/') + 1);
+	  var final = url.replace(page, '');
+	  if ( url.includes("?action=") ) {
+		window.location.href = final;
+	  };
+	}
+	document.addEventListener("DOMContentLoaded", function() {
+	  mainpage();
+	});
+</script>
+<script>
+    $(document).ready( function () {
+		try 
+			{	
+			$('#maintable').DataTable( {
+				"paging": false,
+				fixedHeader: true
+				} );
+			$('#querylog').DataTable( {
+				"paging": false,
+				fixedHeader: true
+				} );
+			$('#commandlog').DataTable( {
+				"paging": false,
+				fixedHeader: true
+				} );
+			$('#buffer').DataTable( {
+				"paging": false,
+				fixedHeader: true
+				} );
+			$('#zone1').DataTable( {
+				"paging": false,
+				fixedHeader: true
+				} );	
+			$('#zone2').DataTable( {
+				"paging": false,
+				fixedHeader: true
+				} );
+			$('#zone3').DataTable( {
+				"paging": false,
+				fixedHeader: true
+				} );	
+			$('#zone4').DataTable( {
+				"paging": false,
+				fixedHeader: true
+				} );	
+			}
+		catch (e) 
+			{
+			console.log("Datatable JS not loaded, showing standard table without reorder option")
+			}					
+        });
 </script>
 {% endblock scripts %}
 
@@ -28,10 +71,12 @@ document.addEventListener("DOMContentLoaded", function() {
 {% set item_count_zone1 = p.init.get_items('zone1')|length %}
 {% set item_count_zone2 = p.init.get_items('zone2')|length %}
 {% set item_count_zone3 = p.init.get_items('zone3')|length %}
+{% set item_count_zone4 = p.init.get_items('zone4')|length %}
 {% set tab1title = "<strong>Zone 0 Items</strong> (" ~ item_count_zone0 ~ ")" %}
 {% set tab2title = "<strong>Zone 1 Items</strong> (" ~ item_count_zone1 ~ ")" %}
 {% set tab3title = "<strong>Zone 2 Items</strong> (" ~ item_count_zone2 ~ ")" %}
 {% set tab4title = "<strong>Zone 3 Items</strong> (" ~ item_count_zone3 ~ ")" %}
+{% set tab4title = "<strong>Zone 4 Items</strong> (" ~ item_count_zone4 ~ ")" %}
 
 {% set tabcount = 1 %}
 {% if item_count_zone1>0 %}
@@ -42,6 +87,9 @@ document.addEventListener("DOMContentLoaded", function() {
 {% endif %}
 {% if item_count_zone3>0 %}
   {% set tabcount = 4 %}
+{% endif %}
+{% if item_count_zone4>0 %}
+  {% set tabcount = 5 %}
 {% endif %}
 
 {% if item_count_zone0==0 %}
@@ -56,7 +104,7 @@ document.addEventListener("DOMContentLoaded", function() {
   {% set conn_color = 'green' %}
 {% endif %}
 
-<table class="table table-striped table-hover">
+<table id="summary" class="table table-striped table-hover">
   <tbody>
     <tr>
       <td class="py-1 left-head"><strong>{{ _('Modell') }}</strong></td>
@@ -74,8 +122,9 @@ document.addEventListener("DOMContentLoaded", function() {
     </tr>
     <tr>
       <td class="py-1 header"><div class="oneliner"><strong>{{ _('Abhängig von') }}</strong></div></td>
-      <td class="py-1 content"><div>{{ p._dependson.property.path|default('nichts') }}
-        {% if p._dependson_value %} = {{ p._dependson_value }}{% endif %}</div></td>
+	  
+      <td class="py-1 content"><div>{% if p._dependson %}{{ p._dependson.property.path }}{% else %}nichts{% endif %}
+        {% if p._dependson and p._dependson_value %} = {{ p._dependson_value }}{% endif %}</div></td>
       <td class="py-1 header"><div class="oneliner"><strong>{{ _('0 wenn') }}</strong></div></td>
       <td class="py-1 content"><div>
         {% if p._depend0_power0 %}Power{% endif %}{% if p._depend0_power0 and p._depend0_volume0%}, {% endif %}
@@ -121,7 +170,7 @@ document.addEventListener("DOMContentLoaded", function() {
   <div class="mb-2">
     {{ _('Die folgenden Items sind dieser Instanz des AVDevice Plugins zugewiesen') }}:
   </div>
-  <table class="table table-striped table-hover pluginList">
+  <table id="maintable" class="table table-striped table-hover pluginList">
     <thead>
     <tr>
       <th>{{ _('Item') }}</th>
@@ -129,6 +178,7 @@ document.addEventListener("DOMContentLoaded", function() {
       <th>{{ _('Abhängig von') }}</th>
     </tr>
     </thead>
+	<tbody>
     {% for item in p.init.get_items('zone0') %}
 
       {% if p.has_iattr(item.conf, 'avdevice_zone0') or p.has_iattr(item.conf, 'avdevice') %}
@@ -139,6 +189,7 @@ document.addEventListener("DOMContentLoaded", function() {
         </tr>
       {% endif %}
     {% endfor %}
+	</tbody>
   </table>
 {% else %}
     <div class="mb-2">
@@ -149,7 +200,7 @@ document.addEventListener("DOMContentLoaded", function() {
   <div class="mb-2">
     {{ _('DEBUGGING') }}:
   </div>
-<table class="table table-striped table-hover">
+<table id="querylog" class="table table-striped table-hover">
   <thead>
     <tr>
       <th width="250">
@@ -191,7 +242,8 @@ document.addEventListener("DOMContentLoaded", function() {
       {% endif %}
   </tbody>
 </table>
-<table class="table table-striped table-hover">
+
+<table id="commandlog" class="table table-striped table-hover">
   <thead>
     <tr>
       <th width="250">
@@ -232,7 +284,8 @@ document.addEventListener("DOMContentLoaded", function() {
 
   </tbody>
 </table>
-<table class="table table-striped table-hover">
+
+<table id="buffer" class="table table-striped table-hover">
   <thead>
     <tr>
       <th width="250">
@@ -275,7 +328,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
   </tbody>
 </table>
-<table class="table table-striped table-hover">
+<table id="current" class="table table-striped table-hover">
   <tbody>
     <tr>
       <td class="py-1" width="200"><strong>Sending Command</strong></td>
@@ -313,7 +366,7 @@ document.addEventListener("DOMContentLoaded", function() {
   <div class="mb-2">
     {{ _('Die folgenden Items sind dieser Instanz des AVDevice Plugins zugewiesen') }}:
   </div>
-  <table class="table table-striped table-hover pluginList">
+  <table id="zone1" class="table table-striped table-hover pluginList">
     <thead>
     <tr>
       <th>{{ _('Item') }}</th>
@@ -321,6 +374,7 @@ document.addEventListener("DOMContentLoaded", function() {
       <th>{{ _('Abhängig von') }}</th>
     </tr>
     </thead>
+	<tbody>
     {% for item in p.init.get_items('zone1') %}
 
       {% if p.has_iattr(item.conf, 'avdevice_zone1') %}
@@ -331,6 +385,7 @@ document.addEventListener("DOMContentLoaded", function() {
         </tr>
       {% endif %}
     {% endfor %}
+	</tbody>
   </table>
 {% else %}
     <div class="mb-2">
@@ -346,7 +401,7 @@ document.addEventListener("DOMContentLoaded", function() {
   <div class="mb-2">
     {{ _('Die folgenden Items sind dieser Instanz des AVDevice Plugins zugewiesen') }}:
   </div>
-  <table class="table table-striped table-hover pluginList">
+  <table id="zone2" class="table table-striped table-hover pluginList">
     <thead>
     <tr>
       <th>{{ _('Item') }}</th>
@@ -354,6 +409,7 @@ document.addEventListener("DOMContentLoaded", function() {
       <th>{{ _('Abhängig von') }}</th>
     </tr>
     </thead>
+	<tbody>
     {% for item in p.init.get_items('zone2') %}
 
       {% if p.has_iattr(item.conf, 'avdevice_zone2') %}
@@ -364,6 +420,7 @@ document.addEventListener("DOMContentLoaded", function() {
         </tr>
       {% endif %}
     {% endfor %}
+	</tbody>
   </table>
 {% else %}
     <div class="mb-2">
@@ -380,7 +437,7 @@ document.addEventListener("DOMContentLoaded", function() {
   <div class="mb-2">
     {{ _('Die folgenden Items sind dieser Instanz des Database Plugins zugewiesen') }}:
   </div>
-  <table class="table table-striped table-hover pluginList">
+  <table id="zone3" class="table table-striped table-hover pluginList">
     <thead>
     <tr>
       <th>{{ _('Item') }}</th>
@@ -388,6 +445,7 @@ document.addEventListener("DOMContentLoaded", function() {
       <th>{{ _('Abhängig von') }}</th>
     </tr>
     </thead>
+	<tbody>
     {% for item in p.init.get_items('zone3') %}
 
       {% if p.has_iattr(item.conf, 'avdevice_zone3') %}
@@ -398,6 +456,7 @@ document.addEventListener("DOMContentLoaded", function() {
         </tr>
       {% endif %}
     {% endfor %}
+	</tbody>
   </table>
 {% else %}
     <div class="mb-2">
@@ -406,3 +465,38 @@ document.addEventListener("DOMContentLoaded", function() {
 {% endif %}
 </div>
 {% endblock bodytab4 %}
+
+{% block bodytab5 %}
+<div class="container-fluid m-2">
+{% if item_count_zone4>0 %}
+  <div class="mb-2">
+    {{ _('Die folgenden Items sind dieser Instanz des Database Plugins zugewiesen') }}:
+  </div>
+  <table id="zone4" class="table table-striped table-hover pluginList">
+    <thead>
+    <tr>
+      <th>{{ _('Item') }}</th>
+      <th>{{ _('Wert') }}</th>
+      <th>{{ _('Abhängig von') }}</th>
+    </tr>
+    </thead>
+	<tbody>
+    {% for item in p.init.get_items('zone4') %}
+
+      {% if p.has_iattr(item.conf, 'avdevice_zone4') %}
+        <tr>
+          <td class="py-1">{{ item._path }}</td>
+          <td class="py-1">{{ item() }}</td>
+          <td class="py-1">{{ p._logics_dependencies('zone4', item) }}</td>
+        </tr>
+      {% endif %}
+    {% endfor %}
+	</tbody>
+  </table>
+{% else %}
+    <div class="mb-2">
+      {{ _('Es sind keine Item in dieser Zone definiert.') }}
+    </div>
+{% endif %}
+</div>
+{% endblock bodytab5 %}
