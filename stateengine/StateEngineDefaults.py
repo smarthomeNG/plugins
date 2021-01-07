@@ -25,6 +25,8 @@ startup_delay = 10
 
 suspend_time = 3600
 
+log_level = 0
+
 instant_leaveaction = False
 
 plugin_identification = "StateEngine Plugin"

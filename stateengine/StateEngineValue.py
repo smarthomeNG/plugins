@@ -23,6 +23,7 @@ from . import StateEngineEval
 import re
 from copy import deepcopy
 
+
 # Class representing a value for a condition (either value or via item/eval)
 class SeValue(StateEngineTools.SeItemChild):
     # Constructor
@@ -60,7 +61,8 @@ class SeValue(StateEngineTools.SeItemChild):
 
     # Indicate of object is empty (neither value nor item nor eval set)
     def is_empty(self):
-        return self.__value is None and self.__item is None and self.__eval is None and self.__varname is None and self.__regex is None
+        return self.__value is None and self.__item is None and self.__eval is None and \
+               self.__varname is None and self.__regex is None
 
     # Set value directly from attribute
     # item: item containing the attribute
@@ -72,14 +74,16 @@ class SeValue(StateEngineTools.SeItemChild):
 
     # Set value
     # value: string indicating value or source of value
-    # name: name of object ("time" is being handeled different)
+    # name: name of object ("time" is being handled differently)
     def set(self, value, name=""):
         if isinstance(value, list):
             source = []
             field_value = []
             for i, val in enumerate(value):
-                if isinstance(val, dict) or isinstance(val, tuple):
+                if isinstance(val, dict):
                     val = list("{!s}:{!s}".format(k, v) for (k, v) in val.items())[0]
+                if isinstance(val, tuple):
+                    val = ':'.join(val)
                 if isinstance(val, str):
                     s, f = StateEngineTools.partition_strip(val, ":")
                 else:
@@ -120,7 +124,7 @@ class SeValue(StateEngineTools.SeItemChild):
                         self.__listorder = [i for i in self.__listorder if i != val]
                         source[i], field_value[i], val = None, None, None
             try:
-                if isinstance(self.__template, list) and len(self.__template == 1):
+                if isinstance(self.__template, list) and len(self.__template) == 1:
                     self.__template = self.__template[0]
             except Exception:
                 pass
@@ -170,17 +174,21 @@ class SeValue(StateEngineTools.SeItemChild):
         if isinstance(source, list):
             for i, s in enumerate(source):
                 if isinstance(field_value[i], list) and not self.__allow_value_list:
-                    raise ValueError("{0}: value_in is not allowed. Field_value: {1} ({2})".format(self.__name, field_value[i], self.__allow_value_list))
+                    raise ValueError("{0}: value_in is not allowed. Field_value: {1} ({2})".format(
+                        self.__name, field_value[i], self.__allow_value_list))
                 else:
                     if s == "template":
                         if isinstance(self.__template, list):
                             for t in self.__template:
                                 _template = self._abitem.templates.get(t)
                                 if _template is not None:
-                                    self._log_debug("Template {} exchanged with {}", self.__template, self._abitem.templates[field_value[i]])
-                                    s, field_value[i] = StateEngineTools.partition_strip(self._abitem.templates[field_value[i]], ":")
+                                    self._log_debug("Template {} exchanged with {}", self.__template,
+                                                    self._abitem.templates[field_value[i]])
+                                    s, field_value[i] = StateEngineTools.partition_strip(
+                                        self._abitem.templates[field_value[i]], ":")
                                 else:
-                                    self._log_warning("Template with name {} does not exist for this SE Item!", self.__template)
+                                    self._log_warning("Template with name {} does not exist for this SE Item!",
+                                                      self.__template)
                                     s = None
                     try:
                         cond1 = s.isdigit()
@@ -365,7 +373,8 @@ class SeValue(StateEngineTools.SeItemChild):
                     except Exception:
                         pass
                     value = [value]
-                    self._log_debug("Original casting of {} to {} failed. New cast is now: {}.", value, self.__cast_func, type(value))
+                    self._log_debug("Original casting of {} to {} failed. New cast is now: {}.",
+                                    value, self.__cast_func, type(value))
                     return value
                 return None
         return value
@@ -377,7 +386,7 @@ class SeValue(StateEngineTools.SeItemChild):
         rest = evalstr
         endtags = [endtags] if isinstance(endtags, str) else endtags
 
-        while (rest.find(begintag+'.') != -1):
+        while rest.find(begintag+'.') != -1:
             pref += rest[:rest.find(begintag+'.')]
             rest = rest[rest.find(begintag+'.')+len(begintag):]
             endtag = ''
@@ -494,7 +503,7 @@ class SeValue(StateEngineTools.SeItemChild):
                         values.append(self.__do_cast(value))
                     self._log_decrease_indent()
             else:
-                self._log_debug("Checking eval (no str, no list): {0}.", val)
+                self._log_debug("Checking eval (no str, no list): {0}.", self.__eval)
                 try:
                     self._log_increase_indent()
                     _newvalue = self.__do_cast(self.__eval())

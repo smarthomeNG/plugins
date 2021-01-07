@@ -21,6 +21,7 @@
 import logging
 import datetime
 import os
+from . import StateEngineDefaults
 
 
 class SeLogger:
@@ -110,9 +111,9 @@ class SeLogger:
 
     # override log level for specific items by using se_log_level attribute
     def override_loglevel(self, loglevel, item=None):
-        logger = logging.getLogger('plugins.stateengine')
-        self.__loglevel = int(loglevel)
-        logger.info("Loglevel for item {0} got individually set to {1}.".format(item, loglevel))
+        self.__loglevel = loglevel.get()
+        if self.__loglevel != StateEngineDefaults.log_level:
+            self.logger.info("Loglevel for item {0} got individually set to {1}.".format(item.property.path, self.__loglevel))
 
     # get current log level of abitem
     def get_loglevel(self):

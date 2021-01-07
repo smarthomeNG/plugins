@@ -152,7 +152,7 @@ class SeEval(StateEngineTools.SeItemChild):
 
     # Return the property of an item related to the StateEngine Object Item
     # item_id: Relative id of item whose property should be returned
-    # prop: name of property, e.g. last_change. See https://www.smarthomeng.de/user/konfiguration/items_properties.html?highlight=property
+    # prop: name of property, e.g. last_change. See https://www.smarthomeng.de/user/konfiguration/items_properties.html
     #
     # See description of StateEngineItem.SeItem.return_item for details
     def get_relative_itemproperty(self, subitem_id, prop):
@@ -168,13 +168,14 @@ class SeEval(StateEngineTools.SeItemChild):
             if self._abitem._initstate and subitem_id == '..state_name':
                 returnvalue = getattr(self._abitem.return_item(self._abitem._initstate).property, prop)
                 self._log_debug("Return item property '{0}' from {1}: {2} during init", prop,
-                               self._abitem.return_item(self._abitem._initstate).property.path, returnvalue)
+                                self._abitem.return_item(self._abitem._initstate).property.path, returnvalue)
             else:
                 returnvalue = getattr(item.property, prop)
                 self._log_debug("Return item property {0} from {1}: {2}", prop, item.property.path, returnvalue)
         except Exception as ex:
             returnvalue = None
-            self._log_warning("Problem evaluating property {0} of {1} - property might not exist. Error: {2}", prop, subitem_id, ex)
+            self._log_warning("Problem evaluating property {0} of {1} - property might not exist. Error: {2}",
+                              prop, subitem_id, ex)
         finally:
             self._eval_lock.release()
         return returnvalue
@@ -188,23 +189,23 @@ class SeEval(StateEngineTools.SeItemChild):
         self._eval_lock.acquire()
         self._log_debug("Executing method 'get_attributevalue({0}, {1})'", item, attrib)
         if ":" in item:
-            type, item = StateEngineTools.partition_strip(item, ":")
-            item = self._abitem.return_item(self._abitem.get_variable(item)) if type == "var" else item
+            var_type, item = StateEngineTools.partition_strip(item, ":")
+            item = self._abitem.return_item(self._abitem.get_variable(item)) if var_type == "var" else item
         else:
             item = self._abitem.return_item(item)
         try:
             if self._abitem._initstate and item == '..state_name':
                 returnvalue = self._abitem.return_item(self._abitem._initstate).conf[attrib]
                 self._log_debug("Return item attribute '{0}' from {1}: {2} during init",
-                               attrib, self._abitem.return_item(self._abitem._initstate).property.path, returnvalue)
+                                attrib, self._abitem.return_item(self._abitem._initstate).property.path, returnvalue)
             else:
                 returnvalue = item.conf[attrib]
-                #returnvalue = getattr(item.property.attributes, attrib)
                 self._log_debug("Return item attribute {0} from {1}: {2}", attrib, item.property.path, returnvalue)
         except Exception as ex:
             returnvalue = None
             self._log_warning("Problem evaluating attribute {0} of {1} - attribute might not exist. "
-                              "Existing item attributes are: {3}. Error: {2}.", attrib, item, ex, getattr(item.property, 'attributes'))
+                              "Existing item attributes are: {3}. Error: {2}.",
+                              attrib, item, ex, getattr(item.property, 'attributes'))
         finally:
             self._eval_lock.release()
         return returnvalue

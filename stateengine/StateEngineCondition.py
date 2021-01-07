@@ -58,7 +58,8 @@ class SeCondition(StateEngineTools.SeItemChild):
         return "'item': {}, 'eval': {}, 'value': {}".format(self.__item, self.__eval, self.__value)
 
     # set a certain function to a given value
-    # func: Function to set ('item', 'eval', 'value', 'min', 'max', 'negate', 'changedby', 'updatedby', 'changedbynegate', 'updatedbynegate', 'agemin', 'agemax' or 'agenegate')
+    # func: Function to set ('item', 'eval', 'value', 'min', 'max', 'negate', 'changedby', 'updatedby',
+    # 'changedbynegate', 'updatedbynegate', 'agemin', 'agemax' or 'agenegate')
     # value: Value for function
     def set(self, func, value):
         if func == "se_item":
@@ -241,15 +242,15 @@ class SeCondition(StateEngineTools.SeItemChild):
         if self.__item is not None:
             if isinstance(self.__item, list):
                 for i in self.__item:
-                    self._log_debug("item: {0} ({1})", self.__name, i.property.path)
+                    self._log_info("item: {0} ({1})", self.__name, i.property.path)
             else:
-                self._log_debug("item: {0} ({1})", self.__name, self.__item.property.path)
+                self._log_info("item: {0} ({1})", self.__name, self.__item.property.path)
         if self.__eval is not None:
             if isinstance(self.__item, list):
                 for e in self.__item:
-                    self._log_debug("eval: {0}", StateEngineTools.get_eval_name(e))
+                    self._log_info("eval: {0}", StateEngineTools.get_eval_name(e))
             else:
-                self._log_debug("eval: {0}", StateEngineTools.get_eval_name(self.__eval))
+                self._log_info("eval: {0}", StateEngineTools.get_eval_name(self.__eval))
         self.__value.write_to_logger()
         self.__min.write_to_logger()
         self.__max.write_to_logger()
@@ -286,41 +287,41 @@ class SeCondition(StateEngineTools.SeItemChild):
             self.__agenegate = StateEngineTools.cast_bool(self.__agenegate)
 
     def __change_update_value(self, value, valuetype):
-        def __convert(value, current):
-            _oldvalue = value
+        def __convert(convert_value, convert_current):
+            _oldvalue = convert_value
             try:
-                if isinstance(value, re._pattern_type):
-                    return value, current
+                if isinstance(convert_value, re._pattern_type):
+                    return convert_value, convert_current
             except Exception:
-                if isinstance(value, re.Pattern):
-                    return value, current
-            if isinstance(current, bool):
-                value = StateEngineTools.cast_bool(value)
-            elif isinstance(current, int):
-                value = int(StateEngineTools.cast_num(value))
-            elif isinstance(current, float):
-                value = StateEngineTools.cast_num(value) * 1.0
-            elif isinstance(current, list):
-                value = StateEngineTools.cast_list(value)
+                if isinstance(convert_value, re.Pattern):
+                    return convert_value, convert_current
+            if isinstance(convert_current, bool):
+                convert_value = StateEngineTools.cast_bool(convert_value)
+            elif isinstance(convert_current, int):
+                convert_value = int(StateEngineTools.cast_num(convert_value))
+            elif isinstance(convert_current, float):
+                convert_value = StateEngineTools.cast_num(convert_value) * 1.0
+            elif isinstance(convert_current, list):
+                convert_value = StateEngineTools.cast_list(convert_value)
             else:
-                value = str(value)
-                current = str(current)
-            if not type(_oldvalue) == type(value):
+                convert_value = str(convert_value)
+                convert_current = str(convert_current)
+            if not type(_oldvalue) == type(convert_value):
                 self._log_debug("Value {} was type {} and therefore not the same"
                                 " type as item value {}. It got converted to {}.",
-                                _oldvalue, type(_oldvalue), current, type(value))
-            return value, current
+                                _oldvalue, type(_oldvalue), convert_current, type(convert_value))
+            return convert_value, convert_current
 
-        current = self.__get_current(type='changedby') if valuetype == "changedby" else\
-            self.__get_current(type='updatedby') if valuetype == "updatedby" else\
-            self.__get_current(type='value')
+        current = self.__get_current(eval_type='changedby') if valuetype == "changedby" else\
+            self.__get_current(eval_type='updatedby') if valuetype == "updatedby" else\
+            self.__get_current(eval_type='value')
         negate = self.__changedbynegate if valuetype == "changedby" else\
             self.__updatedbynegate if valuetype == "updatedby" else\
             self.__negate
 
         if isinstance(value, list):
             text = "Condition '{0}': {1}={2} negate={3} current={4}"
-            self._log_debug(text, self.__name, valuetype, value, negate, current)
+            self._log_info(text, self.__name, valuetype, value, negate, current)
             self._log_increase_indent()
             for i, element in enumerate(value):
                 regex_result = None
@@ -361,7 +362,7 @@ class SeCondition(StateEngineTools.SeItemChild):
             if valuetype == "value" and type(value) != type(current) and current is not None:
                 value, current = __convert(value, current)
             text = "Condition '{0}': {1}={2} negate={3} current={4}"
-            self._log_debug(text, self.__name, valuetype, value, negate, current)
+            self._log_info(text, self.__name, valuetype, value, negate, current)
             self._log_increase_indent()
             try:
                 if isinstance(value, re._pattern_type):
@@ -414,9 +415,10 @@ class SeCondition(StateEngineTools.SeItemChild):
                 min_value = min_value + [None] * abs(diff_len) if diff_len < 0 else min_value
                 max_value = max_value + [None] * diff_len if diff_len > 0 else max_value
                 text = "Condition '{0}': min={1} max={2} negate={3} current={4}"
-                self._log_debug(text, self.__name, min_value, max_value, self.__negate, current)
+                self._log_info(text, self.__name, min_value, max_value, self.__negate, current)
                 if diff_len != 0:
-                    self._log_debug("Min and max are always evaluated as valuepairs. If needed you can also provide 'novalue' as a list value")
+                    self._log_debug("Min and max are always evaluated as valuepairs. "
+                                    "If needed you can also provide 'novalue' as a list value")
                 self._log_increase_indent()
                 _notmatching = 0
                 for i, _ in enumerate(min_value):
@@ -530,7 +532,7 @@ class SeCondition(StateEngineTools.SeItemChild):
                               "condition does not work though, please check your eval!", self.__eval)
 
         try:
-            current = self.__get_current(type='age')
+            current = self.__get_current(eval_type='age')
         except Exception as ex:
             self._log_warning("Age of '{0}': Not possible to get age from eval {1}! "
                               "Considering condition as matching: {2}", self.__name, self.__eval, ex)
@@ -591,15 +593,15 @@ class SeCondition(StateEngineTools.SeItemChild):
             self._log_decrease_indent()
 
     # Current value of condition (based on item or eval)
-    def __get_current(self, type='value'):
+    def __get_current(self, eval_type='value'):
         if self.__item is not None:
-            return self.__item.property.last_change_age if type == 'age' else\
-                   self.__item.property.last_change_by if type == 'changedby' else\
-                   self.__item.property.last_update_by if type == 'updatedby' else\
+            return self.__item.property.last_change_age if eval_type == 'age' else\
+                   self.__item.property.last_change_by if eval_type == 'changedby' else\
+                   self.__item.property.last_update_by if eval_type == 'updatedby' else\
                    self.__item.property.value
         if self.__eval is not None:
             # noinspection PyUnusedLocal
-            self._log_debug("Trying to get {} of eval {}", type, self.__eval)
+            self._log_debug("Trying to get {} of eval {}", eval_type, self.__eval)
             sh = self._sh
             shtime = self._shtime
             if isinstance(self.__eval, str):
@@ -608,7 +610,7 @@ class SeCondition(StateEngineTools.SeItemChild):
                     # noinspection PyUnusedLocal
                     stateengine_eval = se_eval = StateEngineEval.SeEval(self._abitem)
                 try:
-                    value = eval(self.__eval).property.value if type == 'value' else eval(self.__eval).property.last_change_age
+                    value = eval(self.__eval).property.value if eval_type == 'value' else eval(self.__eval).property.last_change_age
                 except Exception as ex:
                     text = "Condition {}: problem evaluating {}: {}"
                     raise ValueError(text.format(self.__name, self.__eval, ex))

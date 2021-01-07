@@ -20,10 +20,8 @@
 #########################################################################
 from . import StateEngineTools
 from . import StateEngineConditionSets
-from . import StateEngineCondition
 from . import StateEngineActions
 from . import StateEngineValue
-from collections import OrderedDict
 
 
 # Class representing an object state, consisting of name, conditions to be met and configured actions for state
@@ -139,7 +137,7 @@ class SeState(StateEngineTools.SeItemChild):
             self._abitem.update_webif([self.id, 'actions_enter_or_stay'], self.__actions_enter_or_stay.dict_actions)
 
         if self.__actions_leave.count() > 0:
-            self._log_info("Actions to perform on leave:")
+            self._log_info("Actions to perform on leave (instant leave: {})", self._abitem.instant_leaveaction)
             self._log_increase_indent()
             self.__actions_leave.write_to_logger()
             self._log_decrease_indent()

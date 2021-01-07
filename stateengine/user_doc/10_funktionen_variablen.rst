@@ -134,12 +134,21 @@ Im Plugin stehen folgende Variablen zur Verfügung:
 
 **item.suspend_time:**
 *Die Suspend-Time des Items*
+Sie wird durch ``se_suspend_time`` im Regelitem mittels value,
+item oder eval initialisiert.
 
 **item.suspend_remaining:**
 *Die übrige Dauer des Suspend Zustands*
 
 Beide obigen Variablen werden vom Suspendzustand genutzt, können bei
 Bedarf aber auch für andere Zwecke, welche auch immer, genutzt werden.
+
+**item.instant_leaveaction:**
+*Information, wie das leave_action Attribut für das Regelwerkitem gesetzt ist*
+Die Option instant_leaveaction kann sowohl in der globalen Pluginkonfiguration
+mittels ``instant_leaveaction``, als auch pro Item mittels ``se_instant_leaveaction``
+festgelegt werden. Sie bestimmt, ob on_leave Aktionen sofort nach dem Verlassen
+eines Zustands ausgeführt werden oder erst am Ende der Statusevaluierung.
 
 **current.action_name:**
 *Der Name der Aktion, in der auf die Variable zugegriffen wird*
