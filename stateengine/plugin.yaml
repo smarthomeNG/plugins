@@ -598,7 +598,9 @@ item_structs:
                     cache: True
                     visu_acl: ro
                     eval: "'{}d {}h {}i {}s'.format(int(sh...seconds()//86400), int((sh...seconds()%86400)//3600), int((sh...seconds()%3600)//60), round((sh...seconds()%3600)%60))"
-                    eval_trigger: ..seconds
+                    eval_trigger:
+                      - ..seconds
+                      - ..
 
                 seconds:
                     remark: duration of suspend mode in seconds (gets converted automatically)
