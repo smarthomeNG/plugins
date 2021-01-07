@@ -49,6 +49,7 @@ class SeActions(StateEngineTools.SeItemChild):
         self.__unassigned_modes = {}
         self.__queue = queue.Queue()
         self._action_lock = threading.Lock()
+        self.__ab_alive = self._abitem.ab_alive
 
     # Return number of actions in list
     def count(self):
@@ -355,13 +356,17 @@ class SeActions(StateEngineTools.SeItemChild):
                 actions.append((additional_actions.__actions[name].get_order(), additional_actions.__actions[name]))
         for order, action in sorted(actions, key=lambda x: x[0]):
             self.__queue.put([action, is_repeat, allow_item_repeat, state])
-
+        self.__ab_alive = self._abitem.ab_alive
+        if not self.__ab_alive:
+            self._log_debug("StateEngine Plugin not running (anymore). Action queue not activated.")
+            return
         self._action_lock.acquire()
-        while not self.__queue.empty():
+        while not self.__queue.empty() and self.__ab_alive:
             job = self.__queue.get()
-            if job is None:
+            self.__ab_alive = self._abitem.ab_alive
+            if job is None or self.__ab_alive is False:
+                self._log_debug("No jobs in action queue left or plugin not active anymore.")
                 break
-
             (action, is_repeat, allow_item_repeat, state) = job
             action.execute(is_repeat, allow_item_repeat, state)
 
@@ -384,9 +389,9 @@ class SeActions(StateEngineTools.SeItemChild):
             actions.append((self.__actions[name].get_order(), self.__actions[name]))
         for order, action in sorted(actions, key=lambda x: x[0]):
             # noinspection PyProtectedMember
-            self._log_info("Action '{0}':", action._name)
+            self._log_info("Action '{0}':", action.name)
             self._log_increase_indent()
-            self._abitem._initactionname = action._name
+            self._abitem._initactionname = action.name
             action.write_to_logger()
             self._abitem._initactionname = None
             self._log_decrease_indent()

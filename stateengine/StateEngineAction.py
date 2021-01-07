@@ -30,6 +30,10 @@ import re
 
 # Base class from which all action classes are derived
 class SeActionBase(StateEngineTools.SeItemChild):
+    @property
+    def name(self):
+        return self._name
+
     # Cast function for delay
     # value: value to cast
     @staticmethod

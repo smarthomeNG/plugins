@@ -97,6 +97,14 @@ class SeItem:
     def lastconditionset_name(self):
         return self.__lastconditionset_item_name.property.value
 
+    @property
+    def ab_alive(self):
+        return self.__ab_alive
+
+    @ab_alive.setter
+    def ab_alive(self, value):
+        self.__ab_alive = value
+
     # Constructor
     # smarthome: instance of smarthome.py
     # item: item to use
@@ -104,6 +112,7 @@ class SeItem:
         self.items = Items.get_instance()
         self.shtime = Shtime.get_instance()
         self.update_lock = threading.Lock()
+        self.__ab_alive = False
         self.__queue = queue.Queue()
         self.__sh = smarthome
         self.__item = item
@@ -225,10 +234,14 @@ class SeItem:
             self.__se_plugin.scheduler_remove('{}'.format(entry))
 
     def run_queue(self):
+        if not self.__ab_alive:
+            self.__logger.debug("StateEngine Plugin not running (anymore). Queue not activated.")
+            return
         self.update_lock.acquire(True, 10)
-        while not self.__queue.empty():
+        while not self.__queue.empty() and self.__ab_alive:
             job = self.__queue.get()
-            if job is None:
+            if job is None or self.__ab_alive is False:
+                self.__logger.debug("No jobs in queue left or plugin not active anymore")
                 break
             elif job[0] == "delayedaction":
                 (_, action, actionname, namevar, repeat_text, value) = job
@@ -286,6 +299,9 @@ class SeItem:
                 new_state = None
                 _leaveactions_run = False
                 for state in self.__states:
+                    if not self.__ab_alive:
+                        self.__logger.debug("StateEngine Plugin not running (anymore). Stop state evaluation.")
+                        return
                     result = self.__update_check_can_enter(state)
                     # New state is different from last state
                     if result is False and last_state == state and self.__instant_leaveaction.get() is True:
@@ -349,7 +365,7 @@ class SeItem:
                                            new_state.id, new_state.name, _last_conditionset_id, _last_conditionset_name)
                     self.__laststate_set(new_state)
                     new_state.run_enter(self.__repeat_actions.get())
-                if _leaveactions_run is True:
+                if _leaveactions_run is True and self.__ab_alive:
                     _key_leave = ['{}'.format(last_state.id), 'leave']
                     _key_stay = ['{}'.format(last_state.id), 'stay']
                     _key_enter = ['{}'.format(last_state.id), 'enter']

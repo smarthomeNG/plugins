@@ -104,6 +104,7 @@ class StateEngine(SmartPlugin):
             if item.conf["se_plugin"] == "active":
                 try:
                     abitem = StateEngineItem.SeItem(self.get_sh(), item, self)
+                    abitem.ab_alive = True
                     self.__items[abitem.id] = abitem
                 except ValueError as ex:
                     self.logger.error("Problem with Item: {0}: {1}".format(item.property.path, ex))
@@ -122,11 +123,13 @@ class StateEngine(SmartPlugin):
         self.logger.debug("stop method called")
         self.scheduler_remove('StateEngine: Remove old logfiles')
         for item in self.__items:
+            self.__items[item].ab_alive = False
             self.scheduler_remove('{}'.format(item))
             self.scheduler_remove('{}-Startup Delay'.format(item))
             self.__items[item].remove_all_schedulers()
 
         self.alive = False
+        self.get_sh().stateengine_plugin_functions.ab_alive = False
         self.logger.debug("stop method finished")
 
     # Determine if caller/source are contained in changed_by list
