@@ -44,7 +44,12 @@ class WebInterface(StateEngineTools.SeItemChild):
         self.__active_conditionset = abitem.lastconditionset_name
         self.__active_state = abitem.laststate
 
-        self.__graph = pydotplus.Dot('StateEngine', graph_type='digraph', splines='false', overlap='scale', compound='false')
+        self.__graph = pydotplus.Dot('StateEngine', graph_type='digraph', splines='false',
+                                     overlap='scale', compound='false')
+        self.__graph.set_node_defaults(color='lightgray', style='filled', shape='box',
+                                       fontname='Helvetica', fontsize='10')
+        self.__graph.set_edge_defaults(color='darkgray', style='filled', shape='box',
+                                       fontname='Helvetica', fontsize='10')
         self.__nodes = {}
         self.__scalefactor = 0.1
         self.__textlimit = 45
@@ -82,7 +87,7 @@ class WebInterface(StateEngineTools.SeItemChild):
                 if action1 == 'set':
                     action2 = self.__states[state][label_type][action].get('item')
                     value_check = self.__states[state][label_type][action].get('value')
-                    value_check = '""'  if value_check == "" else value_check
+                    value_check = '""' if value_check == "" else value_check
                     action3 = 'to {}'.format(value_check)
                 elif action1 == 'special':
                     action2 = self.__states[state][label_type][action].get('special')
@@ -94,7 +99,8 @@ class WebInterface(StateEngineTools.SeItemChild):
                     actionlabel += '<tr><td align="center"><font color={}>{}</font></td><td align="center">{}</td>' \
                                    '<td align="center">{}</td></tr>'.format(fontcolor, action1, action2, action3)
                 elif not action2 == 'None':
-                    actionlabel += '<font color="{}">&nbsp;&nbsp;{} {} {}{}&nbsp;&nbsp;</font><br />'.format(fontcolor, action1, action2, action3, additionaltext)
+                    actionlabel += '<font color="{}">&nbsp;&nbsp;{} {} {}{}&nbsp;&nbsp;</font><br />'.format(
+                        fontcolor, action1, action2, action3, additionaltext)
         actionlabel += '</table>>' if label_format == 'table' else '>'
         actionlabel = '' if actionlabel == '<<table border="0"></table>>' or actionlabel == '<>' else actionlabel
         #self._log_debug('actionlabel: {}', actionlabel)
@@ -181,7 +187,7 @@ class WebInterface(StateEngineTools.SeItemChild):
 
         label = 'first enter' if action_type == 'actions_enter' else 'staying at state'
 
-        position = '{},{}!'.format(0.65, new_y)
+        position = '{},{}!'.format(0.63, new_y)
         color = color_enter if label == 'first enter' else color_stay
         self.__nodes['{}_{}_state_{}'.format(state, conditionset, action_type)] = \
             pydotplus.Node('{}_{}_state_{}'.format(state, conditionset, action_type), style="filled", fillcolor=color,
@@ -190,15 +196,15 @@ class WebInterface(StateEngineTools.SeItemChild):
         if self.__nodes.get('{}_{}_state_actions_enter_edge'.format(state, conditionset)) is None:
             self.__nodes['{}_{}_state_{}_edge'.format(state, conditionset, action_type)] = \
                 pydotplus.Edge(self.__nodes['{}_{}'.format(state, conditionset)], self.__nodes['{}_{}_state_{}'.format(
-                    state, conditionset, action_type)], style='bold', color='blue', taillabel="    True")
+                    state, conditionset, action_type)], style='bold', taillabel="    True", tooltip='first enter')
             self.__graph.add_edge(self.__nodes['{}_{}_state_{}_edge'.format(state, conditionset, action_type)])
         else:
             self.__graph.add_edge(pydotplus.Edge(self.__nodes['{}_{}_state_actions_enter'.format(state, conditionset)],
                                                  self.__nodes['{}_{}_state_actions_stay'.format(state, conditionset)],
-                                                 style='bold', color='blue', label="False    "))
+                                                 style='bold', label="False    "))
         self.__graph.add_edge(pydotplus.Edge(self.__nodes['{}_{}_state_{}'.format(state, conditionset, action_type)],
                                              self.__nodes['{}_{}_{}'.format(state, conditionset, action_type)],
-                                             style='bold', color='blue', taillabel="    True"))
+                                             style='bold', taillabel="    True"))
         try:
             if action_type == 'actions_enter':
                 self.__nodes['{}_{}_actions_enter'.format(state, conditionset)].obj_dict['attributes']['fillcolor'] = color
@@ -239,18 +245,18 @@ class WebInterface(StateEngineTools.SeItemChild):
                     self.__graph.add_node(self.__nodes['{}_above_right'.format(state)])
                     self.__graph.add_edge(pydotplus.Edge(self.__nodes['{}_above'.format(state)],
                                                          self.__nodes['{}_above_right'.format(state)], style='bold',
-                                                         color='blue', label="", dir="none"))
+                                                         color='black', label="", dir="none"))
                     self.__graph.add_edge(pydotplus.Edge(self.__nodes['{}_above_right'.format(state)], lastnode,
-                                                         style='bold', color='blue', label="False   ", dir="none"))
+                                                         style='bold', color='black', label="False   ", dir="none"))
                     self.__graph.add_edge(pydotplus.Edge(state, self.__nodes['{}_above'.format(state)], style='bold',
-                                                         color='blue', label="", dir="back"))
+                                                         color='black', label="", dir="back"))
                 new_y -= 1 * self.__scalefactor
                 position = '{},{}!'.format(0, new_y)
                 #self._log_debug('state: {} {}',state, position)
                 self.__nodes[state] = pydotplus.Node(state, pos=position, pin=True, notranslate=True, style="filled",
                                                      fillcolor=color, shape="ellipse",
-                                                     label='<<table border="0"><tr><td>{}</td></tr><hr/><tr><td>{}</td></tr></table>>'.format(
-                                                         state, self.__states[state]['name']))
+                                                     label='<<table border="0"><tr><td>{}</td></tr><hr/><tr>'
+                                                           '<td>{}</td></tr></table>>'.format(state, self.__states[state]['name']))
                 position = '{},{}!'.format(0.5, new_y)
                 self.__nodes['{}_right'.format(state)] = pydotplus.Node('{}_right'.format(state), pos=position,
                                                                         shape="square", width="0", label="")
@@ -293,8 +299,8 @@ class WebInterface(StateEngineTools.SeItemChild):
                         #self._log_debug('Condition 2 problem {}'.format(ex))
                         cond2 = True
 
-                    color = "gray" if cond1 and cond2 else "chartreuse3" if (conditionset == self.__active_conditionset or cond3) and\
-                            state == self.__active_state else "indianred2"
+                    color = "gray" if cond1 and cond2 else "chartreuse3" \
+                        if (conditionset == self.__active_conditionset or cond3) and state == self.__active_state else "indianred2"
                     label = 'no condition' if conditionset == '' else conditionset
                     self.__nodes['{}_{}'.format(state, conditionset)] = pydotplus.Node(
                         '{}_{}'.format(state, conditionset), style="filled", fillcolor=color, shape="diamond",
@@ -340,20 +346,20 @@ class WebInterface(StateEngineTools.SeItemChild):
                         self.__graph.add_node(self.__nodes['{}_{}_right'.format(state, conditionset)])
                         self.__graph.add_edge(pydotplus.Edge(self.__nodes['{}_{}'.format(state, conditionset)],
                                                              self.__nodes['{}_{}_right'.format(state, conditionset)],
-                                                             style='bold', color='blue', taillabel="    True"))
+                                                             style='bold', taillabel="    True", tooltip='action on enter'))
 
                     if j == 0:
                         self.__graph.add_edge(pydotplus.Edge(self.__nodes[state], self.__nodes['{}_right'.format(state)],
-                                                             style='bold', color='blue', dir='none',
+                                                             style='bold', color='black', dir='none',
                                                              edgetooltip='check first conditionset'))
                         self.__graph.add_edge(pydotplus.Edge(self.__nodes['{}_right'.format(state)],
                                                              self.__nodes['{}_{}'.format(state, conditionset)],
-                                                             style='bold', color='blue', tooltip='check first conditionset'))
+                                                             style='bold', color='black', tooltip='check first conditionset'))
                         #self._log_debug('Drew line from state')
                     else:
                         self.__graph.add_edge(pydotplus.Edge(previous_conditionset,
                                                              self.__nodes['{}_{}'.format(state, conditionset)],
-                                                             style='bold', color='blue', tooltip='check next conditionset'))
+                                                             style='bold', color='black', tooltip='check next conditionset'))
                     previous_conditionset = self.__nodes['{}_{}'.format(state, conditionset)]
 
                 if len(self.__states[state].get('actions_leave')) > 0:
@@ -375,7 +381,7 @@ class WebInterface(StateEngineTools.SeItemChild):
                                                                             label='leave', pos=position)
                     self.__graph.add_node(self.__nodes['{}_leave'.format(state)])
                     self.__graph.add_edge(pydotplus.Edge(previous_conditionset, self.__nodes['{}_leave'.format(state)],
-                                                         style='bold', color='blue'))
+                                                         style='bold', color='black', tooltip='check leave'))
 
                     position = '{},{}!'.format(new_x, new_y)
                     #self._log_debug('action leave: {}', position)
@@ -386,7 +392,7 @@ class WebInterface(StateEngineTools.SeItemChild):
                     self.__graph.add_node(self.__nodes['{}_actions_leave'.format(state)])
                     self.__graph.add_edge(pydotplus.Edge(self.__nodes['{}_leave'.format(state)],
                                                          self.__nodes['{}_actions_leave'.format(state)], style='bold',
-                                                         color='blue', taillabel="    True"))
+                                                         taillabel="    True", tooltip='run leave actions'))
 
                 previous_state = state
 

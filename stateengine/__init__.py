@@ -194,7 +194,11 @@ class StateEngine(SmartPlugin):
                         </iframe></object>'.format(abitem)
         except Exception as ex:
             self.logger.error("Problem getting graph for {}. Error: {}".format(abitem, ex))
-            return "<h2>Can not show visualization. Most likely pydotplus library is missing.</h2>"
+            return '<h4>Can not show visualization. Most likely GraphViz is missing.</h4> ' \
+                   'Please download and install <a href="https://graphviz.org/download/" target="_new">' \
+                   'https://graphviz.org/download/</a><br/>' \
+                   'on Windows add install path to your environment path AND run dot -c.' \
+                   'Additionally copy dot.exe to fdp.exe!'
 
     def init_webinterface(self):
         """"
