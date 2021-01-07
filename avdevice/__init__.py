@@ -541,7 +541,7 @@ class AVDevice(SmartPlugin):
                     buffer = socket.recv(4096).decode('utf-8')
                 buffer = tidy(buffer)
                 buffering = False
-                cond1 = self._response_buffer is not False or self._response_buffer is not 0
+                cond1 = self._response_buffer is not False or self._response_buffer != 0
                 if not buffer == '' and cond1:
                     buffering = True
                 elif buffer == '' and not self._sendingcommand == 'done' and not self._sendingcommand == 'gaveup':
@@ -1218,6 +1218,7 @@ class AVDevice(SmartPlugin):
                                         expectedvalue = eval(expectedvalue.lstrip('0'))
                                     except Exception:
                                         pass
+                                    dict_entry = None
                                     for x in self._functions[zone]:
                                         if self._functions[zone][x][1] == additional['Function']:
                                             try:
@@ -1798,7 +1799,7 @@ class AVDevice(SmartPlugin):
                                 responseposition = entry[2]
                                 item = entry[3]
                                 expectedtype = entry[7]
-                                index = data.find(dictkey)
+                                index = data.find(str(dictkey))
                                 if index == 0:
                                     av_function = entry[4]
                                     zone = entry[5]
