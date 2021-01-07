@@ -40,10 +40,10 @@ class StateEngine(SmartPlugin):
     # noinspection PyUnusedLocal,PyMissingConstructor
     def __init__(self, sh):
         super().__init__()
-        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
-            self.logger = logging.getLogger(__name__)
+        self.logger = logging.getLogger('{}.general'.format(__name__))
         self.items = Items.get_instance()
         self.__items = self.abitems = {}
+        self.mod_http = None
         self.__sh = sh
         self.alive = False
         self.__cli = None
@@ -114,7 +114,6 @@ class StateEngine(SmartPlugin):
             self.logger.info("StateEngine deactivated because no items have been found.")
 
         self.__cli = StateEngineCliCommands.SeCliCommands(self.get_sh(), self.__items, self.logger)
-        #self.logger.info("Items: {}".format(self.__items))
         self.alive = True
         self.get_sh().stateengine_plugin_functions.ab_alive = True
 
@@ -128,6 +127,7 @@ class StateEngine(SmartPlugin):
             self.__items[item].remove_all_schedulers()
 
         self.alive = False
+        self.logger.debug("stop method finished")
 
     # Determine if caller/source are contained in changed_by list
     # caller: Caller to check
@@ -168,18 +168,18 @@ class StateEngine(SmartPlugin):
             finallist.append(self.__items[i])
         return finallist
 
-    def get_graph(self, abitem, type='link'):
+    def get_graph(self, abitem, graphtype='link'):
         if isinstance(abitem, str):
             abitem = self.__items[abitem]
         webif = StateEngineWebif.WebInterface(self.__sh, abitem)
         try:
             os.makedirs(self.path_join(self.get_plugin_dir(), 'webif/static/img/visualisations/'))
-        except OSError as e:
+        except OSError:
             pass
         vis_file = self.path_join(self.get_plugin_dir(), 'webif/static/img/visualisations/{}.svg'.format(abitem))
         #self.logger.debug("Getting graph: {}, {}".format(abitem, webif))
         try:
-            if type == 'link':
+            if graphtype == 'link':
                 return '<a href="static/img/visualisations/{}.svg"><img src="static/img/vis.png" width="30"></a>'.format(abitem)
             else:
                 webif.drawgraph(vis_file)
@@ -200,16 +200,18 @@ class StateEngine(SmartPlugin):
         This method is only needed if the plugin is implementing a web interface
         """
         try:
-            self.mod_http = Modules.get_instance().get_module('http')   # try/except to handle running in a core version that does not support modules
-        except:
-             self.mod_http = None
-        if self.mod_http == None:
+            self.mod_http = Modules.get_instance().get_module('http')
+            # try/except to handle running in a core version that does not support modules
+        except Exception:
+            self.mod_http = None
+        if self.mod_http is None:
             self.logger.error("Plugin '{}': Not initializing the web interface".format(self.get_shortname()))
             return False
 
         import sys
-        if not "SmartPluginWebIf" in list(sys.modules['lib.model.smartplugin'].__dict__):
-            self.logger.warning("Plugin '{}': Web interface needs SmartHomeNG v1.5 and up. Not initializing the web interface".format(self.get_shortname()))
+        if "SmartPluginWebIf" not in list(sys.modules['lib.model.smartplugin'].__dict__):
+            self.logger.warning("Plugin '{}': Web interface needs SmartHomeNG v1.5 and up. "
+                                "Not initializing the web interface".format(self.get_shortname()))
             return False
 
         # set application configuration for cherrypy
@@ -241,8 +243,8 @@ class StateEngine(SmartPlugin):
 import cherrypy
 from jinja2 import Environment, FileSystemLoader
 
-class WebInterface(SmartPluginWebIf):
 
+class WebInterface(SmartPluginWebIf):
 
     def __init__(self, webif_dir, plugin):
         """
@@ -257,7 +259,6 @@ class WebInterface(SmartPluginWebIf):
         self.webif_dir = webif_dir
         self.plugin = plugin
         self.tplenv = self.init_template_environment()
-
 
     @cherrypy.expose
     def index(self, action=None, item_id=None, item_path=None, reload=None, abitem=None, page='index'):
@@ -278,12 +279,12 @@ class WebInterface(SmartPluginWebIf):
                     abitem = self.plugin.abitems[abitem]
                 except Exception as e:
                     self.logger.warning("Item {} not initialized yet. "
-                                        "Try again later.".format(abitem))
+                                        "Try again later. Error: {}".format(abitem, e))
                     return None
             self.plugin.get_graph(abitem, 'graph')
             tmpl = self.tplenv.get_template('visu.html')
             return tmpl.render(p=self.plugin, item=abitem,
-                               language=self.plugin._sh.get_defaultlanguage(), now=self.plugin.shtime.now())
+                               language=self.plugin.get_sh().get_defaultlanguage(), now=self.plugin.shtime.now())
         # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
         return tmpl.render(p=self.plugin,
-                           language=self.plugin._sh.get_defaultlanguage(), now=self.plugin.shtime.now())
+                           language=self.plugin.get_sh().get_defaultlanguage(), now=self.plugin.shtime.now())

@@ -242,15 +242,15 @@ class SeCondition(StateEngineTools.SeItemChild):
         if self.__item is not None:
             if isinstance(self.__item, list):
                 for i in self.__item:
-                    self._log_debug("item: {0} ({1})", self.__name, i.property.path)
+                    self._log_info("item: {0} ({1})", self.__name, i.property.path)
             else:
-                self._log_debug("item: {0} ({1})", self.__name, self.__item.property.path)
+                self._log_info("item: {0} ({1})", self.__name, self.__item.property.path)
         if self.__eval is not None:
             if isinstance(self.__item, list):
                 for e in self.__item:
-                    self._log_debug("eval: {0}", StateEngineTools.get_eval_name(e))
+                    self._log_info("eval: {0}", StateEngineTools.get_eval_name(e))
             else:
-                self._log_debug("eval: {0}", StateEngineTools.get_eval_name(self.__eval))
+                self._log_info("eval: {0}", StateEngineTools.get_eval_name(self.__eval))
         self.__value.write_to_logger()
         self.__min.write_to_logger()
         self.__max.write_to_logger()
@@ -321,7 +321,7 @@ class SeCondition(StateEngineTools.SeItemChild):
 
         if isinstance(value, list):
             text = "Condition '{0}': {1}={2} negate={3} current={4}"
-            self._log_debug(text, self.__name, valuetype, value, negate, current)
+            self._log_info(text, self.__name, valuetype, value, negate, current)
             self._log_increase_indent()
             for i, element in enumerate(value):
                 regex_result = None
@@ -362,7 +362,7 @@ class SeCondition(StateEngineTools.SeItemChild):
             if valuetype == "value" and type(value) != type(current) and current is not None:
                 value, current = __convert(value, current)
             text = "Condition '{0}': {1}={2} negate={3} current={4}"
-            self._log_debug(text, self.__name, valuetype, value, negate, current)
+            self._log_info(text, self.__name, valuetype, value, negate, current)
             self._log_increase_indent()
             try:
                 if isinstance(value, re._pattern_type):
@@ -415,9 +415,10 @@ class SeCondition(StateEngineTools.SeItemChild):
                 min_value = min_value + [None] * abs(diff_len) if diff_len < 0 else min_value
                 max_value = max_value + [None] * diff_len if diff_len > 0 else max_value
                 text = "Condition '{0}': min={1} max={2} negate={3} current={4}"
-                self._log_debug(text, self.__name, min_value, max_value, self.__negate, current)
+                self._log_info(text, self.__name, min_value, max_value, self.__negate, current)
                 if diff_len != 0:
-                    self._log_debug("Min and max are always evaluated as valuepairs. If needed you can also provide 'novalue' as a list value")
+                    self._log_debug("Min and max are always evaluated as valuepairs. "
+                                    "If needed you can also provide 'novalue' as a list value")
                 self._log_increase_indent()
                 _notmatching = 0
                 for i, _ in enumerate(min_value):

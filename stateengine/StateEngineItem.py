@@ -118,11 +118,10 @@ class SeItem:
         self.__logger = SeLogger.create(self.__item)
         self.__log_level = StateEngineValue.SeValue(self, "Log Level", False, "num")
         self.__log_level.set_from_attr(self.__item, "se_log_level", StateEngineDefaults.log_level)
-        self.__logger.override_loglevel(self.__log_level, self.__item)
         self.__logger.header("")
         self.__logger.header("Initialize Item {0} (Log Level set"
                              " to {1})".format(self.id, self.__log_level))
-
+        self.__logger.override_loglevel(self.__log_level, self.__item)
         # get startup delay
         self.__startup_delay = StateEngineValue.SeValue(self, "Startup Delay", False, "num")
         self.__startup_delay.set_from_attr(self.__item, "se_startup_delay", StateEngineDefaults.startup_delay)
@@ -233,6 +232,7 @@ class SeItem:
                 break
             elif job[0] == "delayedaction":
                 (_, action, actionname, namevar, repeat_text, value) = job
+                self.__logger.info("Running delayed action: {0}", actionname)
                 action.real_execute(actionname, namevar, repeat_text, value)
             else:
                 (_, item, caller, source, dest) = job
@@ -357,7 +357,7 @@ class SeItem:
                     self.update_webif(_key_stay, False)
                     self.update_webif(_key_enter, False)
 
-                self.__logger.info("State evaluation finished")
+                self.__logger.debug("State evaluation finished")
         self.__logger.info("State evaluation queue empty.")
         if self.update_lock.locked():
             self.update_lock.release()
@@ -722,7 +722,7 @@ class SeItem:
     def return_item(self, item_id: str):
         if not isinstance(item_id, str):
             self.__logger.info("'{0}' should be defined as string. Check your item config! "
-                               "Everything might run smoothely, nevertheless.".format(item_id))
+                               "Everything might run smoothly, nevertheless.".format(item_id))
             return item_id
         if not item_id.startswith("."):
             item = self.items.return_item(item_id)
