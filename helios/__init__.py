@@ -409,8 +409,8 @@ class HeliosBase(SmartPlugin):
                         .format(varname, '0x%0*X' % (2, CONST_MAP_VARIABLES_TO_ID[varname]["varid"]),
                         '0x%0*X' % (2,raw_value), "{0:08b}".format(raw_value), raw_value, value)
                     ) 
-                else:   # logging as info only, so we stop spamming log file as some noise on the bus seems to be normal
-                    self.logger.info("Helios: No valid value for '{0}' from ventilation system received."
+                else:   # logging in debug only, so we stop spamming log file (noise on the bus seems to be normal)
+                    self.logger.debug("Helios: No valid value for '{0}' from ventilation system received."
                         .format(varname)
                     ) 
             else:

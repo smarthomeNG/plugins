@@ -1,0 +1,484 @@
+/**
+ * -----------------------------------------------------------------------------
+ * @package     smartVISU
+ * @author      Martin Gleiß
+ * @copyright   2012
+ * @license     GPL [http://www.gnu.de]
+ * ----------------------------------------------------------------------------- 
+ */
+
+
+/**
+ * Styles for the smartVISU's Helios widget
+ */
+
+@CHARSET "UTF-8";
+
+.vol_per_hr_chart {
+    width: 350px;
+    margin: 0 auto;
+    position: absolute;
+    top: 25px;
+    left: -22px;
+}
+
+.highcharts-plot-band {
+	fill-opacity: 1;
+}
+
+.plotband-c1 {
+	fill: #B90000;
+}
+
+.plotband-c2 {
+	fill: #C8550A;
+}
+
+.plotband-c3 {
+	fill: #E1DC0F;
+}
+
+.plotband-c4 {
+	fill: #5A9100;
+}
+
+.plotband-c5 {
+	fill: #C8550A;
+}
+
+
+.helios_outside_temp {
+	position: absolute;
+	margin-top: -290px;
+	margin-left: 200px;
+}
+
+.helios_inside_temp {
+	position: absolute;
+	margin-top: -205px; 
+	margin-left: 195px;
+}
+
+.helios_exhaust_temp {
+	position: absolute;
+	margin-top: -290px;
+	margin-left: 295px;
+}
+
+.helios_incoming_temp {
+	position: absolute;
+	margin-top: -205px;
+	margin-left: 295px;
+}
+
+.helios_faninfo_left {
+	position: absolute;
+	margin-top: -340px;
+	margin-left: 62px;
+	text-align: center;
+	background-color: black;
+	font-size: small;
+}
+
+.helios_faninfo_right {
+	position: absolute;
+	margin-top: -340px;
+	margin-left: 380px;
+	text-align: center;
+	background-color: black;
+	font-size: small;
+}
+
+.helios_debug_info{
+	position: absolute;
+	margin-top: 0px;
+	margin-left: 0px;
+	text-align: left;
+	font-size: larger;
+	color: red;
+}
+
+.helios_thermalinfo_total {
+	position: absolute;
+	margin-top: -175px;
+	margin-left: 108px;
+	text-align: center;
+}
+
+.helios_thermalinfo_recovered {
+	position: absolute;
+	margin-top: -175px;
+	margin-left: 390px;
+	text-align: left;
+}
+
+.helios_thermalinfo_lost {
+	position: absolute;
+	margin-top: -330px;
+	margin-left: 332px;
+	text-align: left;
+}
+
+.helios_thermalinfo_defrost {
+	position: absolute;
+	color: rgb(205, 104, 35);
+	line-height: 12px;
+	text-align: right;
+	margin-top: -245px;
+	margin-left: 112px;
+}
+
+.helios_thermalinfo_efficiency {
+	position: absolute;
+	margin-top: -355px;
+	margin-left: 240px;
+	text-align: left;
+	font-size: small;
+	background-color: black;
+}
+
+.helios_thermalinfo_exchange_rate {
+	position: absolute;
+	margin-top: -340px;
+	margin-left: 240px;
+	text-align: left;
+	font-size: small;
+	background-color: black;
+}
+
+.helios_mini-info_or {
+	font-size: xx-small;
+	text-align: center;
+	margin-top: -5px;
+	color: rgb(205, 104, 35);
+}
+
+.helios_mini-info_rt {
+	font-size: xx-small;
+	text-align: center;
+	margin-top: -5px;
+	margin-bottom: -8px;
+	color: red;
+}
+
+.helios_heating_indicator {
+	position: absolute;
+	margin-top: -267px;
+	margin-left: 175px;
+	text-align: left;
+}
+
+.helios_heating {
+	position: absolute;
+	margin-top: -275px;
+	margin-left: 63px;
+	text-align: center;
+	font-size: small;
+	background-color: black;
+}
+
+.helios_boost_1 {
+	position: absolute;
+	margin-top: -300px;
+	margin-left: 478px;
+	text-align: center;
+	background-color: black;
+	font-size: small;
+}
+
+.helios_boost_2 {
+	position: absolute;
+	margin-top: -267px;
+	margin-left: 445px;
+	text-align: center;
+	background-color: black;
+	font-size: small;
+}
+
+.helios_frost_indicator {
+	position: absolute;
+	margin-top: -345px;
+	margin-left: 160px;
+	text-align: right;
+}
+
+.helios_bypass {
+	position: absolute;
+	margin-top: -222px;
+	margin-left: 350px;
+	text-align: center;
+	font-size: small;
+	background-color: black;
+}
+
+.helios_error_icon {
+	position: absolute;
+	margin-top: -190px;
+	margin-left: 235px;
+}
+
+.helios_level_icon {
+	position: absolute;
+	margin-top: -258px;
+	margin-left: 236px;
+}
+
+.helios_filterchange_icon {
+	position: absolute;
+	margin-top:-330px;
+	margin-left:235px;
+}
+
+.helios_power_switch {
+	position: absolute;
+	margin-top: -295px;
+	margin-left: 235px;
+}
+
+.helios_bypass_indicator {
+	position: absolute;
+	margin-top: -267px;
+	margin-left: 310px;
+}
+
+.helios_UZSU_button {
+	position: absolute;
+	margin-top: -425px;
+	margin-left: 395px;
+}
+
+.helios_booster_switch_helios {
+	position: absolute;
+	margin-top: -120px;
+	margin-left: 235px;
+}
+
+.helios_booster_switch_easy {
+	position: absolute;
+	margin-top: -120px;
+	margin-left: 300px;
+}
+
+.helios_booster_switch_interactive {
+	position: absolute;
+	margin-top: -300px;
+	margin-left: 440px;
+}
+
+.helios_popup_booster_interactive {
+	position: absolute;
+	width: 300px;
+	height: 320px;
+	text-align: center;
+	margin-left: -300px;
+	margin-top: -270px;
+}
+
+.helios_booster_button {
+	position: absolute;
+	margin-left: 342px;
+	margin-top: -190px;
+}
+
+.helios_settings_button {
+	position: absolute;
+	margin-left: 475px;
+	margin-top: -425px;
+}
+
+.helios_info_button {
+	position: absolute;
+	margin-top: -423px;
+	margin-left: 313px;
+}
+
+.helios_popup_header {
+	float:center;
+}
+
+.helios_popup_level {
+	width:250px;
+	height:180px;
+	text-align:center;
+}
+
+.helios_popup_info {
+	text-align: center;
+	position: absolute;
+	top: 25px;
+	left: -225px;
+}
+
+.helios_popup_error {
+	text-align: center;
+	position: absolute;
+	width: 250px;
+	height: 250px;
+	left: -145px;
+	top: -155px;
+}
+
+.helios_popup_filter {
+	text-align: center;
+	position: absolute;
+	width: 250px;
+	height: 250px;
+	left: -125px;
+	top: -15px;
+}
+
+.helios_popup_bypass {
+	text-align: center;
+	position: absolute;
+	width: 250px;
+	height: 250px;
+	left: -210px;
+	top: -80px;
+}
+
+.helios_popup_frost {
+	text-align: center;
+	position: absolute;
+	width: 250px;
+	height: 200px;
+	margin-left: -55px;
+}
+
+.helios_popup_heating {
+	text-align: center;
+	position: absolute;
+	width: 250px;
+	height: 200px;
+	margin-left: -75px;
+	margin-top: -80px;
+}
+
+.helios-resetbutton {
+	text-align: center;
+}
+
+.helios_info_description {
+	font-size: 100%;
+	text-align: center;
+	margin-top: 3px;
+	margin-bottom: 3px;
+}
+
+.helios_info_value {
+	text-align: center;
+	font-size: 300%;
+}
+
+.helios_info_left {
+	float: left;
+	// width:39%;
+	text-align: left;
+}
+
+.helios_info_right {
+	float: right;
+	// width:60%;
+	text-align: right;
+}
+
+.helios_info_subheader {
+	background-color: lightgrey;
+	color: black;
+	margin-top: 3px;
+	margin-bottom: 3px;
+}
+
+.helios_info_smalltext {
+	text-align: justify;
+	font-size: smaller;
+	margin-top: 3px;
+	margin-bottom: 3px;
+}
+
+.helios_uzsutest_button {
+	position: absolute;
+	margin-top: 5px;
+	margin-left: 240px;
+	font-size: small;
+	background-color: black;
+}
+
+.helios_alarmtest_button {
+	position: absolute;
+	margin-top: 5px;
+	margin-left: 320px;
+	font-size: small;
+	background-color: black;
+}
+
+.helios_filtertest_button {
+	position: absolute;
+	margin-top: 5px;
+	margin-left: 395px;
+	font-size: small;
+	background-color: black;
+}
+
+.helios_popup_uzsutest {
+	text-align: center;
+	position: absolute;
+	width: 250px;
+	top: 100px;
+	height: 250px;
+	left: -150px;
+}
+
+/******** new **********/
+
+.kwlcontainer{
+	width: 300px;
+	height: 330px;
+	margin: 0 auto;
+	text-align: center;
+    background: #000000;
+}
+
+ul.kwltabs{
+	margin: 0px;
+	padding: 0px;
+	list-style: none;
+}
+
+ul.kwltabs li{
+	background: none;
+	color: white;
+	display: inline-block;
+	padding: 10px 15px;
+    /** padding: 8px 12px; **/
+	cursor: pointer;
+}
+
+ul.kwltabs li.current{
+	background: #FFA121;
+	color: white;
+}
+
+.kwltab-content{
+	display: none;
+	background: #ededed;
+	padding: 15px;
+	height: 250px;
+}
+
+.kwltab-content.current{
+	display: inherit;
+	color: white;
+	background: none;
+}
+
+#kwlgauge {
+	margin-left: -15px;	
+}
+
+.gaugetext{
+    position: relative;
+    /** margin-top: -40px; **/
+    font-family: sans-serif;
+    font-size: 24px;
+    text-shadow: 2px 2px 4px #000000;
+}
