@@ -16,6 +16,11 @@ Zur Identifizierung des Heizungstyps kann das Plugin auch im Standalone-Modus be
 Changelog
 ---------
 
+1.2.2
+~~~~~
+
+-  Funktion zum manuellen Schreiben von Werten hinzugefügt
+
 1.2.0
 ~~~~~
 
@@ -195,6 +200,17 @@ Der in der Itemkonfiguration angegebene Wert wird nicht ausgewertet.
         viess_update: 'egal'
 
 
+viess\_timer
+^^^^^^^^^^^^
+Das Item mit diesem Attribut übergibt als Attributwert den Namen einer Anwendung, z.B. Heizkreis_A1M1, und das Plugin gibt ein UZSU-formatiertes dict mit allen zugehörigen Timern der Heizung zurück
+Beim Schreiben wird das UZSU-dict in die einzelnen Tagestimer aufgeteilt und an die Heizung gesendet.
+
+.. code:: yaml
+
+    item:
+        viess_timer: 'Heizkreis_A1M1'
+
+
 viess\_ba\_list
 ^^^^^^^^^^^^^^^
 Das Item mit diesem Attribut erhält einmalig beim Start des Plugins die Liste der für den konfigurierten Heizungstyp gültigen Betriebsarten.
@@ -366,6 +382,15 @@ read\_temp\_addr(addr, length, unit)
 
 Diese Funktion versucht, den Parameter an der Adresse ``addr`` zu lesen und einen Wert von ``length`` Bytes in die Einheit ``unit`` zu konvertieren. Die Adresse muss als vierstellige Hex-Zahl im String-Format übergeben werden, im Gegensatz zu ``read_addr()`` aber nicht im Befehlssatz definiert sein. ``length`` ist auf Werte zwischen 1 und 8 (Bytes) beschränkt. ``unit`` muss im aktuellen Befehlssatz definiert sein.
 Der Rückgabewert ist das Ergebnis des Lesevorgangs oder None, wenn ein Fehler aufgetreten ist.
+
+
+write\_addr(addr, value)
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Diese Funktion versucht, den Wert ``value`` an die angegebene Adresse zu schreiben. Die Adresse muss als vierstellige Hex-Zahl im String-Format übergeben werden. Es können nur Adressen beschrieben werden, die im Befehlssatz für den aktiven Heizungstyp enthalten sind. Durch ``write_addr`` werden Itemwerte nicht direkt geändert; wenn die geschriebenen Werte von der Heizung wieder ausgelesen werden (z.B. durch zyklisches Lesen), werden die geänderten Werte in die entsprechenden Items übernommen.
+
+
+:Warning: Das Schreiben von beliebigen Werten oder Werten, deren Bedeutung nicht klar ist, kann im Heizungsgerät möglicherweise unerwartete Folgen haben. Auch eine Beschädigung der Heizung ist nicht auszuschließen.
 
 
 :Note: Wenn eine der Plugin-Funktionen in einer Logik verwendet werden sollen, kann dies in der folgenden Form erfolgen:

@@ -325,7 +325,7 @@ commandset = {
         'Brennerstatus_1':                            {'addr': '55d3', 'len': 1, 'unit': 'IUBOOL',  'set': False},                                          # Brennerstatus Stufe1
         'Brennerstatus_2':                            {'addr': '0849', 'len': 1, 'unit': 'IUBOOL',  'set': False},                                          # Brennerstatus Stufe2
         'Brenner_BetriebsstundenStufe1':              {'addr': '0886', 'len': 4, 'unit': 'IU3600',  'set': True, 'min_value': 0,   'max_value': 1193045},   # Brenner-Betriebsstunden Stufe 1
-        'Brenner_BetriebsstundenStufe2':              {'addr': '08A3', 'len': 4, 'unit': 'IU3600',  'set': True, 'min_value': 0,   'max_value': 1193045},   # Brenner-Betriebsstunden Stufe 2
+        'Brenner_BetriebsstundenStufe2':              {'addr': '08a3', 'len': 4, 'unit': 'IU3600',  'set': True, 'min_value': 0,   'max_value': 1193045},   # Brenner-Betriebsstunden Stufe 2
         # Heizkreis A1M1
         'Betriebsart_A1M1':                           {'addr': '2301', 'len': 1, 'unit': 'BA',      'set': True},                                           # Betriebsart A1M1
         'Aktuelle_Betriebsart_A1M1':                  {'addr': '2500', 'len': 1, 'unit': 'BA',      'set': False},                                          # Aktuelle Betriebsart A1M1
@@ -352,7 +352,7 @@ commandset = {
         'Neigung_Heizkennlinie_M2':                   {'addr': '3305', 'len': 1, 'unit': 'IU10',    'set': True, 'min_value': 0.2, 'max_value': 3.5},       # Neigung Heizkennlinie M2
         'Niveau_Heizkennlinie_M2':                    {'addr': '3304', 'len': 1, 'unit': 'ISNON',   'set': True, 'min_value': -13, 'max_value': 40},        # Niveau Heizkennlinie M2
         'MischerM2':                                  {'addr': '354c', 'len': 1, 'unit': 'IUPR',    'set': False},                                          # Ermittle Mischerposition M2
-        'Vorlauftemperatur_Soll_M2':                  {'addr': '37C6', 'len': 2, 'unit': 'IU10',    'set': True, 'min_value': 10,  'max_value': 80},        # Vorlauftemperatur Soll
+        'Vorlauftemperatur_Soll_M2':                  {'addr': '37c6', 'len': 2, 'unit': 'IU10',    'set': True, 'min_value': 10,  'max_value': 80},        # Vorlauftemperatur Soll
         'Vorlauftemperatur_M2':                       {'addr': '080c', 'len': 2, 'unit': 'IU10',    'set': False},                                          # Vorlauftemperatur Ist
         'Heizkreispumpenlogik_M2':                    {'addr': '37a5', 'len': 1, 'unit': 'ISNON',   'set': True, 'min_value': 0,   'max_value': 15},        # 0=ohne HPL-Funktion, 1=AT > RTsoll + 5 K, 2=AT > RTsoll + 4 K, 3=AT > RTsoll + 3 K, 4=AT > RTsoll + 2 K, 5=AT > RTsoll + 1 K, 6=AT > RTsoll, 7=AT > RTsoll - 1 K, 8=AT > RTsoll - 2 K, 9=AT > RTsoll - 3 K, 10=AT > RTsoll - 4 K, 11=AT > RTsoll - 5 K, 12=AT > RTsoll - 6 K, 13=AT > RTsoll - 7 K, 14=AT > RTsoll - 8 K, 15=AT > RTsoll - 9 K
         'Sparschaltung_M2':                           {'addr': '37a6', 'len': 1, 'unit': 'ISNON',   'set': True, 'min_value': 5,   'max_value': 36},        # AbsolutSommersparschaltung
@@ -361,7 +361,7 @@ commandset = {
         # Warmwasser
         'Warmwasser_Temperatur':                      {'addr': '0804', 'len': 2, 'unit': 'IU10',    'set': False},                                          # Warmwassertemperatur in Grad C
         'Warmwasser_Solltemperatur':                  {'addr': '6300', 'len': 1, 'unit': 'ISNON',   'set': True, 'min_value': 10,  'max_value': 80},        # Warmwasser-Solltemperatur
-        'Warmwasser_SollwertMax':                     {'addr': '675A', 'len': 1, 'unit': 'IUBOOL',  'set': False},                                          # 0=inaktiv, 1=aktiv
+        'Warmwasser_SollwertMax':                     {'addr': '675a', 'len': 1, 'unit': 'IUBOOL',  'set': False},                                          # 0=inaktiv, 1=aktiv
         # Ferienprogramm HK_A1M1
         'Ferienprogramm_A1M1':                        {'addr': '2535', 'len': 1, 'unit': 'IUBOOL',  'set': False},                                          # Ferienprogramm A1M1 0=inaktiv 1=aktiv
         'Ferien_Abreisetag_A1M1':                     {'addr': '2309', 'len': 8, 'unit': 'DA',      'set': True},                                           # Ferien Abreisetag A1M1
@@ -474,6 +474,7 @@ unitset = {
         'SR':      {'unit_de': 'SetReturnStatus',   'type': 'list',     'signed': False, 'read_value_transform': 'non'},        # vito unit:
         'TI':      {'unit_de': 'SystemTime',        'type': 'datetime', 'signed': False, 'read_value_transform': 'non'},        # vito unit: TI
         'DA':      {'unit_de': 'Date',              'type': 'date',     'signed': False, 'read_value_transform': 'non'},        # vito unit:
+        'HEX':     {'unit_de': 'HexString',         'type': 'string',   'signed': False, 'read_value_transform': 'hex'},        # vito unit:
     },
     'KW': {
         'BA':      {'unit_de': 'Betriebsart',       'type': 'list',     'signed': False, 'read_value_transform': 'non'},        # vito unit: BA
@@ -501,6 +502,7 @@ unitset = {
         'SR':      {'unit_de': 'SetReturnStatus',   'type': 'list',     'signed': False, 'read_value_transform': 'non'},        # vito unit:
         'TI':      {'unit_de': 'SystemTime',        'type': 'datetime', 'signed': False, 'read_value_transform': 'non'},        # vito unit: TI
         'DA':      {'unit_de': 'Date',              'type': 'date',     'signed': False, 'read_value_transform': 'non'},        # vito unit:
+        'HEX':     {'unit_de': 'HexString',         'type': 'string',   'signed': False, 'read_value_transform': 'hex'},        # vito unit:
     }
 }
 

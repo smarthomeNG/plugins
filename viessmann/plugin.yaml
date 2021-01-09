@@ -13,7 +13,7 @@ plugin:
     tester: sisamiwe, tcr82
     keywords: viessmann heating optolink
     state: ready                    # change to ready when done with development
-    version: 1.2.1                  # Plugin version
+    version: 1.2.2                  # Plugin version
     sh_minversion: 1.6.0            # minimum shNG version to use this plugin
     py_minversion: 3.6
     multi_instance: false           # plugin supports multi instance
@@ -214,3 +214,18 @@ plugin_functions:
                 description:
                     de: 'Einheitencode für die Konvertierung der Antwort. Muss in der Protokollkonfiguration ``unitset`` in commands.py definiert sein'
                     en: 'Unit code for converting the response value. Needs to be defined in the protocol configuration ``unitset`` in commands.py'
+    write_addr:
+        type: foo
+        description:
+            de: 'Stößt das Schreiben des angegebenen Datenpunkts an, der nicht an ein Item gebunden sein muss. Der übergebene Wert muss zum konfigurierten Datentyp passen'
+            en: 'Triggers writing of the supplied data point, which doesn''t have to be bound to an item. The submitted value must match the configured data type'
+        parameters:
+            addr:
+                type: str
+                description:
+                    de: 'Vierstellige Hex-Adresse des Datenpunktes'
+                    en: 'Four-digit hex address of the data point'
+            value:
+                description:
+                    de: 'Zu schreibender Wert'
+                    en: 'Value to be written'
