@@ -62,7 +62,7 @@ class Prowl(SmartPlugin):
 
     def notify(self, event='', description='', priority=None, url=None, apikey=None, application='SmartHomeNG'):
         """Provides an exposed function to send a notification"""
-        self.__call__(self, event, description, priority, url, apikey, application)
+        self.__call__(event, description, priority, url, apikey, application)
 
     def __call__(self, event='', description='', priority=None, url=None, apikey=None, application='SmartHomeNG'):
         """does the work to send a notification to prowl api"""
