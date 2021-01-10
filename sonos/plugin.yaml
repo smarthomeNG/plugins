@@ -112,7 +112,7 @@ item_attributes:
     - bass
     - treble
     - loudness
-    - playmode
+    - play_mode
     - radio_show
     - radio_station
     - serial_number
@@ -144,7 +144,6 @@ item_attributes:
     - sonos_playlists
     - stream_content
     - current_track_duration
-    - trackalbumart
 
   sonos_send:
     type: str

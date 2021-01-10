@@ -2184,6 +2184,9 @@ class Speaker(object):
     def _play_snippet(self, file_path: str, webservice_url: str, volume: int = -1, duration_offset: float = 0, fade_in=False) -> None:
         if not self._check_property():
             return
+        if not os.path.isfile(file_path):
+             self.logger.error("Cannot find snipped file {0}".format(file_path)) 
+             return
         if not self.is_coordinator:
             sonos_speaker[self.coordinator]._play_snippet(file_path, webservice_url, volume, duration_offset, fade_in)
         else:
@@ -2195,46 +2198,50 @@ class Speaker(object):
                     volumes[member] = sonos_speaker[member].volume
 
                 tag = TinyTag.get(file_path)
-                duration = round(tag.duration) + duration_offset
-                self.logger.debug("Sonos: TTS track duration offset is: {offset}s".format(offset=duration_offset))
-                self.logger.debug("Sonos: TTS track duration: {duration}s".format(duration=duration))
-                file_name = quote(os.path.split(file_path)[1])
-                snippet_url = "{url}/{file}".format(url=webservice_url, file=file_name)
-
-                # was GoogleTTS the last track? do not snapshot
-                last_station = self.radio_station.lower()
-                if last_station != "snippet":
-                    snap = Snapshot(self.soco)
-                    snap.snapshot()
-
-                time.sleep(0.5)
-                self.set_stop()
-                if volume == -1:
-                    volume = self.volume
-
-                self.set_volume(volume, True)
-                self.soco.play_uri(snippet_url, title="snippet")
-                time.sleep(duration)
-                self.set_stop()
-
-                # Restore the Sonos device back to it's previous state
-                if last_station != "snippet":
-                    if snap is not None:
-                        snap.restore()
+                self.logger.debug("Debug: tagduration {0}, duration_offset {1}".format(tag.duration,duration_offset))
+                if not tag.duration:
+                    self.logger.error("TinyTag duration is none.")
                 else:
-                    self.radio_station = ""
-                for member in self.zone_group_members:
-                    if member in volumes:
-                        if fade_in:
-                            vol_to_ramp = volumes[member]
-                            sonos_speaker[member].soco.volume = 0
-                            sonos_speaker[member].soco.renderingControl.RampToVolume(
-                                [('InstanceID', 0), ('Channel', 'Master'),
-                                 ('RampType', 'SLEEP_TIMER_RAMP_TYPE'),
-                                 ('DesiredVolume', vol_to_ramp),
-                                 ('ResetVolumeAfter', False), ('ProgramURI', '')])
-                        else:
-                            sonos_speaker[member].set_volume(volumes[member], group_command=False)
+                    duration = round(tag.duration) + duration_offset
+                    self.logger.debug("Sonos: TTS track duration offset is: {offset}s".format(offset=duration_offset))
+                    self.logger.debug("Sonos: TTS track duration: {duration}s".format(duration=duration))
+                    file_name = quote(os.path.split(file_path)[1])
+                    snippet_url = "{url}/{file}".format(url=webservice_url, file=file_name)
+
+                    # was GoogleTTS the last track? do not snapshot
+                    last_station = self.radio_station.lower()
+                    if last_station != "snippet":
+                        snap = Snapshot(self.soco)
+                        snap.snapshot()
+
+                    time.sleep(0.5)
+                    self.set_stop()
+                    if volume == -1:
+                        volume = self.volume
+
+                    self.set_volume(volume, True)
+                    self.soco.play_uri(snippet_url, title="snippet")
+                    time.sleep(duration)
+                    self.set_stop()
+
+                    # Restore the Sonos device back to it's previous state
+                    if last_station != "snippet":
+                        if snap is not None:
+                            snap.restore()
+                    else:
+                        self.radio_station = ""
+                    for member in self.zone_group_members:
+                        if member in volumes:
+                            if fade_in:
+                                vol_to_ramp = volumes[member]
+                                sonos_speaker[member].soco.volume = 0
+                                sonos_speaker[member].soco.renderingControl.RampToVolume(
+                                    [('InstanceID', 0), ('Channel', 'Master'),
+                                    ('RampType', 'SLEEP_TIMER_RAMP_TYPE'),
+                                    ('DesiredVolume', vol_to_ramp),
+                                    ('ResetVolumeAfter', False), ('ProgramURI', '')])
+                            else:
+                                sonos_speaker[member].set_volume(volumes[member], group_command=False)
 
     def play_snippet(self, audio_file, local_webservice_path_snippet: str, webservice_url: str, volume: int = -1, duration_offset: float = 0,
                      fade_in=False) -> None:
@@ -2358,6 +2365,7 @@ class Sonos(SmartPlugin):
             self._local_webservice_path_snippet = self._local_webservice_path
         else:
             self._local_webservice_path_snippet = local_webservice_path_snippet
+        self.logger.debug("Set local webservice snippet path to {0}".format(self._local_webservice_path_snippet))
 
         get_param_func = getattr(self, "get_parameter_value", None)
         if callable(get_param_func):
@@ -2381,16 +2389,16 @@ class Sonos(SmartPlugin):
         auto_ip = utils.get_local_ip_address()
 
         webservice_ip = self.get_parameter_value("webservice_ip")
-        if not webservice_ip == '':
+        if not webservice_ip == '' and not webservice_ip =='0.0.0.0':
             if self.is_ip(webservice_ip):
                 self._webservice_ip = webservice_ip
             else:
-                self.logger.error("Sonos: Your webservice_ip parameter is invalid. '{ip}' is not a vaild ip address. "
+                self.logger.error("Your webservice_ip parameter is invalid. '{ip}' is not a vaild ip address. "
                                    "Disabling TTS.".format(ip=webservice_ip))
                 self._tts = False
         else:
             self._webservice_ip = auto_ip
-            self.logger.debug("Webservice IP is not specified. Using auto IP instead.")
+            self.logger.debug("Webservice IP is not specified. Using auto IP instead ({0}).".format(self._webservice_ip))
 
         webservice_port = self.get_parameter_value("webservice_port")
         if utils.is_valid_port(str(webservice_port)):

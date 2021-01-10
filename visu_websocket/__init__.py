@@ -40,6 +40,7 @@ import collections
 import lib.connection
 from lib.item import Items
 from lib.logic import Logics
+from lib.module import Modules
 from lib.model.smartplugin import *
 
 
@@ -85,6 +86,23 @@ class WebSocket(SmartPlugin):
 
         if self.acl in ('true', 'yes'):
             self.acl = 'rw'
+
+        # get instance of websocket module (to check for port use collision)
+        try:
+            self.mod_websocket = Modules.get_instance().get_module('websocket')
+        except:
+            self.mod_websocket = None
+        if self.mod_websocket is None:
+            self.logger.warning("The new websocket module is not configured/loaded.")
+            self.logger.warning("You should configure the websocket module and disable this plugin (visu_websocket)")
+        else:
+            module_port = self.mod_websocket.get_port()
+            module_tls_port = self.mod_websocket.get_tls_port()
+            if (self.port == module_port) or (self.port == module_tls_port):
+                self.logger.warning(f"Websocket module is configured to use the same port ({self.port})")
+                self.logger.warning("Disable this plugin (visu_smartvisu), you don't need it any more")
+                self._init_complete = False
+                return
 
         self.websocket = _websocket(self.get_sh(), self, self.ip, self.port, self.tls, self.wsproto, self.querydef)
 
@@ -694,7 +712,7 @@ class websockethandler(lib.connection.Stream):
             elif proto < self.proto:
                 self.logger.warning("WebSocket: protocol mismatch. Update your client: {0}".format(self.addr))
 #            self.json_send({'cmd': 'proto', 'ver': self.proto, 'time': self._sh.now()})
-            self.json_send({'cmd': 'proto', 'ver': self.proto, 'time': self.shtime.now()})
+            self.json_send({'cmd': 'proto', 'ver': self.proto, 'server': 'plugins.visu_websocket', 'time': self.shtime.now()})
 #            self.logger.warning("VISU json_parse: send to {0}: {1}".format(self.addr, "{'cmd': 'proto', 'ver': " + str(self.proto) + ", 'time': " + str(self._sh.now()) + "}"))
 
         elif command == 'identity':  # identify client

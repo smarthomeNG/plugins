@@ -1,420 +1,494 @@
-WP:
-    type: foo
+DrexelWeiss:
+    Uhrzeit:
+        visu_acl: ro
+        type: num
+        cache: True
+        DuW_LU_register: 5212
 
-    Status:
-        type: foo
+    Tag:
+        visu_acl: ro
+        type: num
+        cache: True
+        DuW_LU_register: 1174
 
-        Kuehlung:
-            visu_acl: r
-            type: bool
-            cache: 'true'
-            DuW_WP_register: 1142
+    Adresse:
+        visu_acl: ro
+        type: num
+        cache: True
+        DuW_WP_register: 5436
 
-        Heizung:
-            visu_acl: r
-            type: bool
-            cache: 'true'
-            DuW_WP_register: 1328
+    Firmware:
+        visu_acl: ro
+        type: num
+        cache: True
+        DuW_LU_register: 1156
 
-        Warmwasser:
-            visu_acl: r
-            type: bool
-            cache: 'true'
-            DuW_WP_register: 1036
-
-        Aktiv:
-            visu_acl: r
-            type: bool
-            cache: 'true'
-            DuW_WP_register: 1044
-
-        Modus:
-            visu_acl: r
-            type: num
-            cache: 'true'
-            DuW_WP_register: 1314
-
-        Temperatur:
-            type: foo
-
-            Aussen:
-                name: Temperatur aussen
-                visu_acl: r
+    WP:
+        Status:
+            Information:
+                visu_acl: ro
                 type: num
-                DuW_WP_register: 202
+                cache: True
+                DuW_WP_register: 7000
 
-            Raum:
-                name: Temperatur innen
-                visu_acl: r
+            Kuehlung:
+                visu_acl: ro
+                type: bool
+                cache: 'true'
+                DuW_WP_register: 1142
+
+            Heizung:
+                visu_acl: ro
+                type: bool
+                cache: 'true'
+                DuW_WP_register: 1328
+
+            Warmwasser:
+                visu_acl: ro
+                type: bool
+                cache: 'true'
+                DuW_WP_register: 1036
+            
+            Heizstab:
+                visu_acl: ro
+                type: bool
+                cache: True
+                DuW_WP_register: 1038
+
+            Aktiv:
+                visu_acl: ro
+                type: bool
+                cache: 'true'
+                DuW_WP_register: 1044
+
+            Modus:
+                visu_acl: ro
                 type: num
-                DuW_WP_register: 200
+                cache: 'true'
+                DuW_WP_register: 1314
+            
+            Restzeit:
+                visu_acl: ro
+                type: num
+                cache: True
+                eval: __import__('math').ceil(sh..Sekunden()/60)
+
+                Sekunden:
+                    visu_acl: ro
+                    type: num
+                    cache: True
+                    DuW_WP_register: 1316
+
+            Temperatur:
+                Sole:
+                    name: Temperatur Sole
+                    visu_acl: ro
+                    type: num
+                    DuW_WP_register: 216
+
+                Vorlauf:
+                    name: Temperatur Vorlauf
+                    visu_acl: ro
+                    type: num
+                    DuW_WP_register: 240
+
+                Aussen:
+                    name: Temperatur aussen
+                    visu_acl: ro
+                    type: num
+                    DuW_WP_register: 202
+
+                Raum:
+                    name: Temperatur innen
+                    visu_acl: ro
+                    type: num
+                    DuW_WP_register: 200
+
+                Boiler:
+                    name: Temperatur Boiler
+                    visu_acl: ro
+                    type: num
+                    DuW_WP_register: 214
+
+                Boileroben:
+                    visu_acl: ro
+                    type: num
+                    name: Temperatur Boiler oben
+                    DuW_WP_register: 212
+
+        Einstellung:
+            Raumsoll:
+                name: Temperatur Soll
+                visu_acl: rw
+                type: num
+                cache: 'true'
+                DuW_WP_register: 5016
+
+            Kuehlung_Schwellwert:
+                visu_acl: rw
+                type: num
+                cache: 'true'
+                DuW_WP_register: 5186
+
+            Heizungplus:
+                visu_acl: rw
+                type: bool
+                cache: 'true'
+                DuW_WP_register: 5492
+
+        Energieverbrauch:
+            Heizung:
+                visu_acl: ro
+                type: num
+                cache: 'true'
+                DuW_WP_register: 4502
+
+            Warmwasser:
+                visu_acl: ro
+                type: num
+                cache: 'true'
+                DuW_WP_register: 4504
+
+            Kompressor:
+                visu_acl: ro
+                type: num
+                cache: 'true'
+                DuW_WP_register: 4500
+
+            Lufterwaermung:
+                visu_acl: ro
+                type: num
+                cache: 'true'
+                DuW_WP_register: 4506
+
+        Leistung:
+            Heizung:
+                visu_acl: ro
+                type: num
+                cache: 'true'
+                DuW_WP_register: 4002
+
+            Warmwasser:
+                visu_acl: ro
+                type: num
+                cache: 'true'
+                DuW_WP_register: 4004
+
+            Kompressor:
+                visu_acl: ro
+                type: num
+                cache: 'true'
+                DuW_WP_register: 4000
+
+            Lufterwaermung:
+                visu_acl: ro
+                type: num
+                cache: 'true'
+                DuW_WP_register: 4006
+
+        Betriebsstunden:
+            Gesamt:
+                visu_acl: ro
+                type: num
+                cache: 'true'
+                DuW_WP_register: 924
 
             Boiler:
-                name: Temperatur Boiler
-                visu_acl: r
+                visu_acl: ro
                 type: num
-                DuW_WP_register: 214
+                cache: 'true'
+                DuW_WP_register: 948
 
-            Boileroben:
-                visu_acl: r
+            Heizung:
+                visu_acl: ro
                 type: num
-                name: Temperatur Boiler oben
-                DuW_WP_register: 212
+                cache: 'true'
+                DuW_WP_register: 950
 
-    Einstellung:
-        type: foo
+            Heizstufe1:
+                visu_acl: ro
+                type: num
+                cache: 'true'
+                DuW_WP_register: 912
 
-        Raumsoll:
-            name: Temperatur Soll
+            Heizstufe2:
+                visu_acl: ro
+                type: num
+                cache: 'true'
+                DuW_WP_register: 914
+
+            Kuehlung:
+                visu_acl: ro
+                type: num
+                cache: 'true'
+                DuW_WP_register: 952
+
+            Kompressor:
+                visu_acl: ro
+                type: num
+                cache: 'true'
+                DuW_WP_register: 910
+
+        Stoerung:
+            Boilerfuehler:
+                visu_acl: ro
+                type: bool
+                cache: 'true'
+                DuW_WP_register: 830
+
+            Boilertemperatur:
+                visu_acl: ro
+                type: bool
+                cache: 'true'
+                DuW_WP_register: 810
+
+            Heizkreis_Durchfluss:
+                visu_acl: ro
+                type: bool
+                cache: 'true'
+                DuW_WP_register: 848
+
+            Heizkreis_Temperatur:
+                visu_acl: ro
+                type: bool
+                cache: 'true'
+                DuW_WP_register: 850
+
+            Solekreis_Durchfluss:
+                visu_acl: ro
+                type: bool
+                cache: 'true'
+                DuW_WP_register: 846
+
+            Solekreis_Temperatur:
+                visu_acl: ro
+                type: bool
+                cache: 'true'
+                DuW_WP_register: 812
+
+            WP_Hochdruck:
+                visu_acl: ro
+                type: bool
+                cache: 'true'
+                DuW_WP_register: 818
+
+            WP_Niederdruck:
+                visu_acl: ro
+                type: bool
+                cache: 'true'
+                DuW_WP_register: 820
+            
+            Summenstoerung:
+                visu_acl: ro
+                type: num
+                cache: True
+                DuW_WP_register: 800
+
+            Summenstoerung2:
+                visu_acl: ro
+                type: num
+                cache: True
+                DuW_WP_register: 7500
+
+    LU:
+        Betriebsart:
+            name: Betriebsart
             visu_acl: rw
             type: num
             cache: 'true'
-            DuW_WP_register: 5016
+            DuW_LU_register: 5002
 
-        Kuehlung_Schwellwert:
-            visu_acl: rw
-            type: num
-            cache: 'true'
-            DuW_WP_register: 5186
+        Einstellung:
+            CO2_Stufe0:
+                name: CO2 0
+                visu_acl: rw
+                type: num
+                DuW_LU_register: 5274
 
-        Heizungplus:
-            visu_acl: rw
-            type: bool
-            cache: 'true'
-            DuW_WP_register: 5492
+            CO2_Stufe1:
+                name: CO2 1
+                visu_acl: rw
+                type: num
+                DuW_LU_register: 5276
 
-    Energieverbrauch:
-        type: foo
+            CO2_Stufe2:
+                name: CO2 2
+                visu_acl: rw
+                type: num
+                DuW_LU_register: 5278
 
-        Heizung:
-            visu_acl: r
-            type: num
-            cache: 'true'
-            DuW_WP_register: 4502
+            CO2_Stufe3:
+                name: CO2 3
+                visu_acl: rw
+                type: num
+                DuW_LU_register: 5280
 
-        Warmwasser:
-            visu_acl: r
-            type: num
-            cache: 'true'
-            DuW_WP_register: 4504
+        Status:
+            Drehzahl_Zuluft:
+                visu_acl: ro
+                type: num
+                cache: True
+                DuW_LU_register: 1184
 
-        Kompressor:
-            visu_acl: r
-            type: num
-            cache: 'true'
-            DuW_WP_register: 4500
+            Drehzahl_Abluft:
+                visu_acl: ro
+                type: num
+                cache: True
+                DuW_LU_register: 1186
 
-        Lufterwaermung:
-            visu_acl: r
-            type: num
-            cache: 'true'
-            DuW_WP_register: 4506
+            Information:
+                visu_acl: ro
+                type: num
+                cache: True
+                DuW_LU_register: 7000
 
-    Leistung:
-        type: foo
+            Feinstaubfilter:
+                visu_acl: ro
+                type: num
+                cache: 'true'
+                DuW_LU_register: 7004
 
-        Heizung:
-            visu_acl: r
-            type: num
-            cache: 'true'
-            DuW_WP_register: 4002
+            Grobstaubfilter:
+                visu_acl: ro
+                type: num
+                cache: 'true'
+                DuW_LU_register: 7002
 
-        Warmwasser:
-            visu_acl: r
-            type: num
-            cache: 'true'
-            DuW_WP_register: 4004
+            CO2_Wert:
+                visu_acl: ro
+                type: num
+                DuW_LU_register: 230
 
-        Kompressor:
-            visu_acl: r
-            type: num
-            cache: 'true'
-            DuW_WP_register: 4000
+            Luefterstufe:
+                name: Stufe
+                visu_acl: ro
+                type: num
+                DuW_LU_register: 1066
 
-        Lufterwaermung:
-            visu_acl: r
-            type: num
-            cache: 'true'
-            DuW_WP_register: 4006
+        Betriebsstunden:
+            Abluftventilator:
+                visu_acl: ro
+                type: num
+                cache: 'true'
+                DuW_LU_register: 902
 
-    Betriebsstunden:
-        type: foo
+            Feinstaubfilter:
+                visu_acl: ro
+                type: num
+                cache: 'true'
+                DuW_LU_register: 928
 
-        Gesamt:
-            visu_acl: r
-            type: num
-            cache: 'true'
-            DuW_WP_register: 924
+            Grobstaubfilter:
+                visu_acl: ro
+                type: num
+                cache: 'true'
+                DuW_LU_register: 926
 
-        Boiler:
-            visu_acl: r
-            type: num
-            cache: 'true'
-            DuW_WP_register: 948
+            Luefterstufe0:
+                visu_acl: ro
+                type: num
+                cache: 'true'
+                DuW_LU_register: 962
 
-        Heizung:
-            visu_acl: r
-            type: num
-            cache: 'true'
-            DuW_WP_register: 950
+            Luefterstufe1:
+                visu_acl: ro
+                type: num
+                cache: 'true'
+                DuW_LU_register: 904
 
-        Heizstufe1:
-            visu_acl: r
-            type: num
-            cache: 'true'
-            DuW_WP_register: 912
+            Luefterstufe2:
+                visu_acl: ro
+                type: num
+                cache: 'true'
+                DuW_LU_register: 906
 
-        Heizstufe2:
-            visu_acl: r
-            type: num
-            cache: 'true'
-            DuW_WP_register: 914
+            Luefterstufe3:
+                visu_acl: ro
+                type: num
+                cache: 'true'
+                DuW_LU_register: 908
 
-        Kuehlung:
-            visu_acl: r
-            type: num
-            cache: 'true'
-            DuW_WP_register: 952
+            Zuluftventilator:
+                visu_acl: ro
+                type: num
+                cache: 'true'
+                DuW_LU_register: 900
 
-        Kompressor:
-            visu_acl: r
-            type: num
-            cache: 'true'
-            DuW_WP_register: 910
+        Stoerung:
+            Abluftventilator:
+                visu_acl: ro
+                type: bool
+                cache: 'true'
+                DuW_LU_register: 826
 
-    Stoerung:
-        type: foo
+            CO2:
+                visu_acl: ro
+                type: bool
+                cache: 'true'
+                DuW_LU_register: 832
 
-        Boilerfuehler:
-            visu_acl: r
-            type: bool
-            cache: 'true'
-            DuW_WP_register: 830
+            Heizkreisdurchfluss:
+                visu_acl: ro
+                type: bool
+                cache: 'true'
+                DuW_LU_register: 848
 
-        Boilertemperatur:
-            visu_acl: r
-            type: bool
-            cache: 'true'
-            DuW_WP_register: 810
+            Druckverlust_Abluft:
+                visu_acl: ro
+                type: bool
+                cache: 'true'
+                DuW_LU_register: 854
 
-        Heizkreis_Durchfluss:
-            visu_acl: r
-            type: bool
-            cache: 'true'
-            DuW_WP_register: 848
+            Druckverlust_Zuluft:
+                visu_acl: ro
+                type: bool
+                cache: 'true'
+                DuW_LU_register: 852
 
-        Heizkreis_Temperatur:
-            visu_acl: r
-            type: bool
-            cache: 'true'
-            DuW_WP_register: 850
+            Temp_aussen:
+                visu_acl: ro
+                type: bool
+                cache: 'true'
+                DuW_LU_register: 806
 
-        Solekreis_Durchfluss:
-            visu_acl: r
-            type: bool
-            cache: 'true'
-            DuW_WP_register: 846
+            Temp_Vorlauf:
+                visu_acl: ro
+                type: bool
+                cache: 'true'
+                DuW_LU_register: 850
 
-        Solekreis_Temperatur:
-            visu_acl: r
-            type: bool
-            cache: 'true'
-            DuW_WP_register: 812
+            Temp_Raum:
+                visu_acl: ro
+                type: bool
+                cache: 'true'
+                DuW_LU_register: 804
 
-        WP_Hochdruck:
-            visu_acl: r
-            type: bool
-            cache: 'true'
-            DuW_WP_register: 818
+            Temp_Sole:
+                visu_acl: ro
+                type: bool
+                cache: 'true'
+                DuW_LU_register: 812
 
-        WP_Niederdruck:
-            visu_acl: r
-            type: bool
-            cache: 'true'
-            DuW_WP_register: 820
+            Temp_Sole_aussen:
+                visu_acl: ro
+                type: bool
+                cache: 'true'
+                DuW_LU_register: 7504
 
-LU:
-    type: foo
+            Zuluftventilator:
+                visu_acl: ro
+                type: bool
+                cache: 'true'
+                DuW_LU_register: 824
 
-    Betriebsart:
-        name: Betriebsart
-        visu_acl: rw
-        type: num
-        cache: 'true'
-        database@nas: 'yes'
-        DuW_LU_register: 5002
+            Summenstoerung:
+                visu_acl: ro
+                type: num
+                cache: True
+                DuW_LU_register: 800
 
-    Einstellung:
-        type: foo
-
-        CO2_Stufe0:
-            name: CO2 0
-            visu_acl: rw
-            type: num
-            DuW_LU_register: 5274
-
-        CO2_Stufe1:
-            name: CO2 1
-            visu_acl: rw
-            type: num
-            DuW_LU_register: 5276
-
-        CO2_Stufe2:
-            name: CO2 2
-            visu_acl: rw
-            type: num
-            DuW_LU_register: 5278
-
-        CO2_Stufe3:
-            name: CO2 3
-            visu_acl: rw
-            type: num
-            DuW_LU_register: 5280
-
-    Status:
-        type: foo
-
-        Feinstaubfilter:
-            visu_acl: r
-            type: num
-            cache: 'true'
-            DuW_LU_register: 7004
-            database@nas: 'yes'
-
-        Grobstaubfilter:
-            visu_acl: r
-            type: num
-            cache: 'true'
-            DuW_LU_register: 7002
-            database@nas: 'yes'
-
-        CO2_Wert:
-            visu_acl: r
-            type: num
-            DuW_LU_register: 230
-
-        Luefterstufe:
-            name: Stufe
-            visu_acl: r
-            type: num
-            DuW_LU_register: 1066
-
-    Betriebsstunden:
-        type: foo
-
-        Abluftventilator:
-            visu_acl: r
-            type: num
-            cache: 'true'
-            DuW_LU_register: 902
-
-        Feinstaubfilter:
-            visu_acl: r
-            type: num
-            cache: 'true'
-            DuW_LU_register: 928
-
-        Grobstaubfilter:
-            visu_acl: r
-            type: num
-            cache: 'true'
-            DuW_LU_register: 926
-
-        Luefterstufe0:
-            visu_acl: r
-            type: num
-            cache: 'true'
-            DuW_LU_register: 962
-
-        Luefterstufe1:
-            visu_acl: r
-            type: num
-            cache: 'true'
-            DuW_LU_register: 904
-
-        Luefterstufe2:
-            visu_acl: r
-            type: num
-            cache: 'true'
-            DuW_LU_register: 906
-
-        Luefterstufe3:
-            visu_acl: r
-            type: num
-            cache: 'true'
-            DuW_LU_register: 908
-
-        Zuluftventilator:
-            visu_acl: r
-            type: num
-            cache: 'true'
-            DuW_LU_register: 900
-
-    Stoerung:
-        type: foo
-
-        Abluftventilator:
-            visu_acl: r
-            type: bool
-            cache: 'true'
-            DuW_LU_register: 826
-
-        CO2:
-            visu_acl: r
-            type: bool
-            cache: 'true'
-            DuW_LU_register: 832
-
-        Heizkreisdurchfluss:
-            visu_acl: r
-            type: bool
-            cache: 'true'
-            DuW_LU_register: 848
-
-        Druckverlust_Abluft:
-            visu_acl: r
-            type: bool
-            cache: 'true'
-            DuW_LU_register: 854
-
-        Druckverlust_Zuluft:
-            visu_acl: r
-            type: bool
-            cache: 'true'
-            DuW_LU_register: 852
-
-        Temp_aussen:
-            visu_acl: r
-            type: bool
-            cache: 'true'
-            DuW_LU_register: 806
-
-        Temp_Vorlauf:
-            visu_acl: r
-            type: bool
-            cache: 'true'
-            DuW_LU_register: 850
-
-        Temp_Raum:
-            visu_acl: r
-            type: bool
-            cache: 'true'
-            DuW_LU_register: 804
-
-        Temp_Sole:
-            visu_acl: r
-            type: bool
-            cache: 'true'
-            DuW_LU_register: 812
-
-        Temp_Sole_aussen:
-            visu_acl: r
-            type: bool
-            cache: 'true'
-            DuW_LU_register: 7504
-
-        Zuluftventilator:
-            visu_acl: r
-            type: bool
-            cache: 'true'
-            DuW_LU_register: 824
+            Summenstoerung2:
+                visu_acl: ro
+                type: num
+                cache: True
+                DuW_LU_register: 7500

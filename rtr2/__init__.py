@@ -81,6 +81,8 @@ class Rtr2(SmartPlugin):
         self.default_min_output = self.get_parameter_value('min_output')
         self.default_max_output = self.get_parameter_value('max_output')
 
+        self.cache_read_tried = False # Only write cache on shutdown, if a cache read has been tried on start
+
         # cycle time in seconds, only needed, if hardware/interface needs to be
         # polled for value changes by adding a scheduler entry in the run method of this plugin
         # (maybe you want to make it a plugin parameter?)
@@ -218,7 +220,7 @@ class Rtr2(SmartPlugin):
                 else:
                     return
 
-                self._rtr[rtr_id].update_rtr_items()
+                self._rtr[rtr_id].update_rtr_items('Init')
                 return self.update_item
 
 
@@ -310,10 +312,17 @@ class Rtr2(SmartPlugin):
         #  - temp info (analog to setup parameters)
         #  - rtr mode
         #
+        if not self.cache_read_tried:
+            # Do not write cache, if no cache read has been tried on startup
+            # (-> an error has happend in the initialization of SmartHomeNG)
+            # This is done to prevent writing the default values to cache if initialization of shng aborts
+            return
+
         info_dict = {}
         for r in self._rtr:
             info_dict[r] = {}
             info_dict[r]['hvac'] = self._rtr[r]._mode.hvac
+            info_dict[r]['mode_before_frost'] = self._rtr[r]._mode._mode_before_frost
             info_dict[r]['comfort_temp'] = round(self._rtr[r]._temp._temp_comfort, 2)
             info_dict[r]['standby_reduction'] = round(self._rtr[r]._temp.standby_reduction, 2)
             info_dict[r]['night_reduction'] = round(self._rtr[r]._temp.night_reduction, 2)
@@ -335,6 +344,8 @@ class Rtr2(SmartPlugin):
         return
 
     def read_cacheinfo(self):
+        self.cache_read_tried = True
+
         self.logger.info("read_cacheinfo() called")
         filename = os.path.join(self.cache_path,'rtr2.json')
         try:
@@ -347,6 +358,7 @@ class Rtr2(SmartPlugin):
         for r in info_dict:
             self.logger.info(f"rtr {r} = {info_dict[r]}")
             if self._rtr.get(r, None) is not None:
+                self._rtr[r]._mode._mode_before_frost = info_dict[r].get('mode_before_frost', 0)
                 self._rtr[r]._mode.hvac = info_dict[r]['hvac']
                 self._rtr[r]._temp._temp_comfort = info_dict[r]['comfort_temp']
                 self._rtr[r]._temp.standby_reduction = info_dict[r]['standby_reduction']
@@ -367,7 +379,7 @@ class Rtr2(SmartPlugin):
                     if value is not None:
                         self._rtr[r].setting_min_output_item(value)
 
-                self._rtr[r].update_rtr_items()
+                self._rtr[r].update_rtr_items('Cache')
             else:
                 self.logger.warning(f"Cannot restore cached values for rtr '{r}' (rtr not defined in items)")
         return
@@ -534,44 +546,44 @@ class Rtr_object():
         return
 
 
-    def update_rtr_items(self, ignore_function='-'):
+    def update_rtr_items(self, ignore_function=None):
 
         if ignore_function != 'comfort_mode':
-            self._update_item(self.comfort_item, self._mode.comfort)
+            self._update_item(self.comfort_item, self._mode.comfort, src=ignore_function)
         if ignore_function != 'standby_mode':
-            self._update_item(self.standby_item, self._mode.standby)
+            self._update_item(self.standby_item, self._mode.standby, src=ignore_function)
         if ignore_function != 'night_mode':
-            self._update_item(self.night_item, self._mode.night)
+            self._update_item(self.night_item, self._mode.night, src=ignore_function)
         if ignore_function != 'frost_mode':
-            self._update_item(self.frost_item, self._mode.frost)
+            self._update_item(self.frost_item, self._mode.frost, src=ignore_function)
         if ignore_function != 'hvac_mode':
-            self._update_item(self.hvac_item, self._mode.hvac)
+            self._update_item(self.hvac_item, self._mode.hvac, src=ignore_function)
         if ignore_function != 'temp_set':
-            self._update_item(self.temp_set_item, round(self._temp.set_temp, 2))
+            self._update_item(self.temp_set_item, round(float(self._temp.set_temp), 2), src=ignore_function)
 
         # self.temp_actual_item = None
 
         if ignore_function != 'setting_temp_comfort':
-            self._update_item(self.setting_temp_comfort_item, round(self._temp.comfort, 2))
+            self._update_item(self.setting_temp_comfort_item, round(self._temp.comfort, 2), src=ignore_function)
         if ignore_function != 'setting_temp_standby':
-            self._update_item(self.setting_temp_standby_item, round(self._temp.standby, 2))
+            self._update_item(self.setting_temp_standby_item, round(self._temp.standby, 2), src=ignore_function)
         if ignore_function != 'setting_temp_night':
-            self._update_item(self.setting_temp_night_item, round(self._temp.night, 2))
+            self._update_item(self.setting_temp_night_item, round(self._temp.night, 2), src=ignore_function)
         if ignore_function != 'setting_night_reduction':
-            self._update_item(self.setting_night_reduction_item, self._temp.night_reduction)
+            self._update_item(self.setting_night_reduction_item, self._temp.night_reduction, src=ignore_function)
         if ignore_function != 'setting_standby_reduction':
-            self._update_item(self.setting_standby_reduction_item, self._temp.standby_reduction)
+            self._update_item(self.setting_standby_reduction_item, self._temp.standby_reduction, src=ignore_function)
         if ignore_function != 'setting_fixed_reduction':
-            self._update_item(self.setting_fixed_reduction_item, self._temp.fixed_reduction)
+            self._update_item(self.setting_fixed_reduction_item, self._temp.fixed_reduction, src=ignore_function)
         if ignore_function != 'setting_temp_frost':
-            self._update_item(self.setting_temp_frost_item, round(self._temp.frost, 2))
+            self._update_item(self.setting_temp_frost_item, round(self._temp.frost, 2), src=ignore_function)
 
-        self._update_item(self.heating_status_item, self.heating)
+        self._update_item(self.heating_status_item, self.heating, src=ignore_function)
 
 
-    def _update_item(self, item, value):
+    def _update_item(self, item, value, src=None):
         if item is not None:
-            item(value, self.plugin.get_shortname())
+            item(value, self.plugin.get_shortname(), src)
 
 
     @property
