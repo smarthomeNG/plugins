@@ -114,18 +114,38 @@ Darüber hinaus gibt es eine große Zahl weiterer Einstallungen, die am RTR vorg
 Einstellen des Modus
 --------------------
 
-Der Raumtemperatur Regler (RTR) verfügt über vier Modi (komfort, standby, nacht, frostschutz). Für jeden dieser
+Der Raumtemperatur Regler (RTR) verfügt über vier Modi (komfort, standby/normal, nacht, frostschutz). Für jeden dieser
 Modi gibt es ein Sub-Item, mit dem der entsprechende Modus gewählt werden kann. Dazu muss der Wert **True** in
 das entsprechende Item geschrieben werden.
 
 Wenn der Wert **False** in das **komfort** oder **nacht** Modus-Item geschrieben wird, so wird der Modus **standby**
 aktiviert.
 
-Wenn der Frostschutz Modus aktiv ist und in das **frost** Sub-Item der Wert **False** geschrieben wird, wird der
-Modus wiederhergestellt, der vor Aktivierung des Frostschutzes aktiv war.
+hvac
+~~~~
 
-Weiterhin gibt es ein Sub-Item ``hvac`` in welches der Modus als Zahl (1 bis 4) geschrieben werden kann (1=konfort,
-2=standby, 3=nacht, 4=frost).
+Weiterhin gibt es ein Sub-Item ``hvac`` in welches der Modus als Zahl geschrieben werden kann. Statt den Modus
+über die boolschen Items ``komfort``, ``normal``, ``nacht`` und ``frost`` kann der Modus über einen numerischen
+Wert zwischen 1 und 4 im Item ``hvac`` gesetzt werden.
+
+
+Frostschutz
+~~~~~~~~~~~
+
+Der Modus Frostschutz verhält sich anders als die anderen 3 Modi. Wenn der Frostschutz Modus aktiv ist und in
+das **frost** Sub-Item der Wert **False** geschrieben wird, wird der Modus wiederhergestellt, der vor Aktivierung
+des Frostschutzes aktiv war.
+
+Falls während der Frostschutz aktiv ist, der Komfort Modus, der Standby/Normal Modus oder der Nacht Modus aktiviert
+wird, fürhrt das nicht zumm Ende des Frostschutz Modus. Vielmehr wird der aktivierte Modus zwischengespeichert und
+erst durch Abschaltung des Frostschutzes aktivert.
+
+Der Frostschutz wird nur dadurch deaktivert, dass das **frost** Item auf False gesetzt wird oder das **hvac** Item
+auf einen Wert zwischen 1 und 3 gesetzt wird.
+
+Bei setzen des hvac Modus während der Frostschutz Modus aktiv ist, wird der gewählte Modus gesetzt und nicht der
+zwischengespeicherte Modus, der vor aktivieren des Frostschutzes aktiv war.
+
 
 Automatische Nachtabsenkung
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -148,8 +168,8 @@ Verwendung des ``crontab`` Attributes für die Modus-Items ``komfort`` und ``nac
 Hierdurch wird täglich um 4:30 Uhr der Komfort-Modus aktiviert und täglich um 21:00 Uhr die Nachtabsenkung.
 
 
-Frostschutz
------------
+automatischer Frostschutz
+-------------------------
 
 Eine automatische Aktivierung des Frostschutzes kann für viele Zwescke nützlich sein. Im folgenden Beispiel wird
 der Frostschutz aktiviert, wenn das Fenster geöffnet wird, um Heizenergie zu sparen. Dazu wird das ``frost`` Attribut
