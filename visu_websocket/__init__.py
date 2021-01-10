@@ -92,7 +92,10 @@ class WebSocket(SmartPlugin):
             self.mod_websocket = Modules.get_instance().get_module('websocket')
         except:
             self.mod_websocket = None
-        if not (self.mod_websocket is None):
+        if self.mod_websocket is None:
+            self.logger.warning("The new websocket module is not configured/loaded.")
+            self.logger.warning("You should configure the websocket module and disable this plugin (visu_websocket)")
+        else:
             module_port = self.mod_websocket.get_port()
             module_tls_port = self.mod_websocket.get_tls_port()
             if (self.port == module_port) or (self.port == module_tls_port):
