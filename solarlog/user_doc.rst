@@ -118,57 +118,59 @@ In diesem Beispiel sollten Details zur Verwendung mit Firmware <= 2.x erläutert
 In diesem Beispiel sollten Details zur Verwendung mit Firmware >= 3.x erläutert werden:
 
 .. code :: yaml
-pv:
 
-    w_gesamt_zaehler:
-        type: num
-        cache: 'on'
-        solarlog: 101
+   pv:
 
-    w_gesamt:
-        type: num
-        cache: 'on'
-        solarlog: 102
+       w_gesamt_zaehler:
+           type: num
+           cache: 'on'
+           solarlog: 101
 
-    spannung_ac:
-        type: num
-        cache: 'on'
-        solarlog: 103
+       w_gesamt:
+           type: num
+           cache: 'on'
+           solarlog: 102
 
-    spannung_dc1:
-        type: num
-        cache: 'on'
-        solarlog: 104
+       spannung_ac:
+           type: num
+           cache: 'on'
+           solarlog: 103
 
-    wh_heute:
-        type: num
-        solarlog: 105
-        cache: 'on'
+       spannung_dc1:
+           type: num
+           cache: 'on'
+           solarlog: 104
 
-    wh_gestern:
-        type: num
-        cache: 'on'
-        solarlog: 106
+       wh_heute:
+           type: num
+           solarlog: 105
+           cache: 'on'
 
-    wh_monat:
-        type: num
-        cache: 'on'
-        solarlog: 107
+       wh_gestern:
+           type: num
+           cache: 'on'
+           solarlog: 106
 
-    wh_jahr:
-        type: num
-        cache: 'on'
-        solarlog: 108
+       wh_monat:
+           type: num
+           cache: 'on'
+           solarlog: 107
 
-    wh_gesamt:
-        type: num
-        cache: 'on'
-        solarlog: 109
+       wh_jahr:
+           type: num
+           cache: 'on'
+           solarlog: 108
 
-    wp_generatorleistung:
-        type: num
-        cache: 'on'
-        solarlog: 116
+       wh_gesamt:
+           type: num
+           cache: 'on'
+           solarlog: 109
+
+       wp_generatorleistung:
+           type: num
+           cache: 'on'
+           solarlog: 116
+
 
 Das `` database: yes`` impliziert, dass auch ein Datenbank-Plugin konfiguriert ist.
 Dienst zur Anzeige von Messwerten innerhalb einer Visu.
