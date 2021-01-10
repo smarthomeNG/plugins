@@ -4,12 +4,12 @@ onewire
 Der 1-Wire bzw. One-Wire oder Eindraht-Bus ist ein Bussystem das mit 2 oder 3 Einzeladern betrieben werden wird.
 Es gibt einen parasitären Modus in dem nur 2 Kabel genutzt werden und einen Modus in dem eine Zusatzspannung von 5V genutzt wird.
 
-Es gibt für dieses System recht günstige Sensoren so das die Nutzung zur 
+Es gibt für dieses System recht günstige Sensoren so das die Nutzung zur
 Temperaturmessung, Feuchtigkeitsmesung, Akkuüberwachung etc. nicht sehr kosteninstensiv ist.
 
 Anforderungen
 -------------
-Eine vorhandene 1-Wire Schnittstelle mit mindestens einem Sensor wird benötigt sowie ein installiertes 
+Eine vorhandene 1-Wire Schnittstelle mit mindestens einem Sensor wird benötigt sowie ein installiertes
 owserver wird benötigt um das Plugin nutzen zu können.
 
 Notwendige Software
@@ -18,7 +18,7 @@ Notwendige Software
 Das Plugin benötigt einen installierten und lauffähigen `owserver <https://owfs.org>`_.
 Die Installation und Konfiguration ist je nach Schnittstelle und Linux Variante und Version leicht unterschiedlich.
 
-Zumeist wird eine USB Schnittstelle DS2490 verwendet. Für die Konfiguration wird typischerweise bei Linux 
+Zumeist wird eine USB Schnittstelle DS2490 verwendet. Für die Konfiguration wird typischerweise bei Linux
 eine udev-Rule angelegt damit owserver ohne root Rechte betrieben werden kann.
 
 .. code:: bash
@@ -50,10 +50,13 @@ Sicher unterstützt werden zur Zeit:
 Konfiguration
 -------------
 
+Die Plugin Parameter und die Informationen zur Item-spezifischen Konfiguration des Plugins sind
+unter :doc:`/plugins_doc/config/onewire` beschrieben.
+
 plugin.yaml
 ~~~~~~~~~~~
 
-Bitte die Dokumentation lesen, die aus den Metadaten der plugin.yaml erzeugt wurde.
+Bitte die Dokumentation lesen, die aus den Metadaten der plugin.yaml erzeugt wurde (siehe oben).
 
 
 items.yaml
@@ -70,7 +73,7 @@ Es ist wichtig die Onewire Adressen als String in yaml einzugeben z.B. ``ow_addr
 sonst kann es unter Umständen dazu kommen das aus der yaml-Datei die Onewire Adresse als Fließkommazahl
 interpretiert wird und damit keine Funktion gegeben ist.
 
-Es ist möglich für Busteilnehmer einer Onewire Adresse einen alias zuzuweisen. Das geschieht durch die Angabe eines 
+Es ist möglich für Busteilnehmer einer Onewire Adresse einen alias zuzuweisen. Das geschieht durch die Angabe eines
 Links in der Datei ``/etc/owfs.conf`` auf eine Datei die Paare von Sensor ID und alias definiert:
 
 .. code:: bash
@@ -87,7 +90,7 @@ Eine Datei ``ow_aliases`` enthält dann die Sensor ID und zugewiesene alias
 Wenn auf diese Weise alias definiert werden, kann das Plugin für das Attribut ``ow_addr`` auch den alias nutzen
 
 Da es einige Busteilnehmer gibtm die mehrere unterschiedliche Daten liefern,
-reicht es nicht aus nur die Sensor ID in ``ow_addr`` anzugeben. 
+reicht es nicht aus nur die Sensor ID in ``ow_addr`` anzugeben.
 zusätzlich muß für ein Item auch die gewünschte Datenumwandlung definiert werden.
 Das Attribut ``ow_sensor`` definiert diese Datenumwandlung.
 
@@ -105,7 +108,7 @@ iButtons:
 * 'BM' - iButton master
 * 'B' - iButton
 
-Wenn ein iButton master verwendet wird, fragt das Plugin häufiger ab. 
+Wenn ein iButton master verwendet wird, fragt das Plugin häufiger ab.
 Die Abfrage mit ``B`` liefert ``True`` wenn der iButton erkannt wird, ansonsten ``False``
 Wenn I/O Sensoren (2406) verwendet werden, fragt das Plugin diese häufiger ab.
 

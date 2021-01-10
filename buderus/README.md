@@ -17,7 +17,7 @@ __Limitations__
 ### Needed software
 
 * SmartHomeNG V1.6 or later
-* Python modules: see [requirements.txt](requirements.txt)
+* Python modules: see **requirements.txt** in the plugin directory
 
 ### Supported Hardware
 
