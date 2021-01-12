@@ -161,7 +161,7 @@ class DarkSky(SmartPlugin):
             self.logger.error(
                 "get_forecast: Exception when sending GET request for get_forecast: {}".format(e))
             return
-        if len(response) < 1:
+        if len(response.text) < 1:
             self.logger.error("get_forecast: Server returned zero bytes")
             return
 
