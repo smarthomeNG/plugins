@@ -839,7 +839,7 @@ class Viessmann(SmartPlugin):
                     if len(chunk) != 0:
                         replies[addr].extend(chunk)
                     else:
-                        self.logger.error('Received 0 bytes chunk from {addr} - this probably is a communication error, possibly a wrong datapoint address?')
+                        self.logger.error(f'Received 0 bytes chunk from {addr} - this probably is a communication error, possibly a wrong datapoint address?')
                         return
                 except IOError as io:
                     raise IOError(f'IO Error: {io}')
