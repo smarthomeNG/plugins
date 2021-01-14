@@ -12,7 +12,7 @@ plugin:
     documentation: https://github.com/smarthomeng/plugins/blob/develop/neato/README.md
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1417295-support-thread-plugin-neato
 
-    version: 1.6.3                  # Plugin version
+    version: 1.6.4                  # Plugin version
     sh_minversion: 1.6              # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False           # plugin supports multi instance
@@ -52,107 +52,45 @@ parameters:
 
 item_attributes:
     # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)
-    neato_name:
+    neato_attribute:
         type: str
         description:
-            de: 'Name des Roboters'
-            en: 'Name of the robot'
-    neato_command:
-        type: num
-        description:
-            en: 'Available Commands:
-                61   start
-                62   stop
-                63   pause
-                64   resume
-                65   find me
-                66   goToBase
-                67   enableSchedule
-                68   disableSchedule'
-            de: 'Verfuegbare Kommandos:
-                61   start
-                62   stop
-                63   pause
-                64   fortsetzen
-                65   finde mich
-                66   fahre zur Basis
-                67   Reinigungsplan aktivieren
-                68   Reinigungsplan deaktivieren'
-    neato_state:
-        type: str
-        description:
-            en: 'Specifies the state of the Robot.
-                0   Invalid
-                1   Idle
-                2   Busy
-                3   Paused
-                4   Error'
-            de: 'Gibt den Zustand des Roboters an.
-                0   Invalide
-                1   Idle
-                2   Beschaeftigt
-                3   Pausiert
-                4   Fehler'
-    neato_alert:
-        type: str
-        description:
-            en: 'Alert string if active'
-            de: 'Alarmtext'
-
-    neato_state_action:
-        type: str
-        description:
-            en: 'If the state is busy, this element specifies what the robot is or has been busy doing.
-            In the state is pause or error, it specifies the activity that the Robot was doing.
-            If state is other, this element is null
-                ========
-                0	Invalid
-                1	House Cleaning
-                2	Spot Cleaning
-                3	Manual Cleaning
-                4	Docking
-                5	User Menu Active
-                6	Suspended Cleaning
-                7	Updating
-                8	Copying Logs
-                9	Recovering Location
-                10	IEC Test
-                11	Map cleaning
-                12	Exploring map (creating a persistent map)
-                13	Acquiring Persistent Map IDs
-                14	Creating & Uploading Map
-                15	Suspended Exploration'
-            de: 'Roboter Reinigungszustand'
-    neato_isdocked:
-        type: bool
-        description:
-            de: 'Roboter Docking Status'
-            en: 'Robot docking status'
-    neato_isscheduleenabled:
-        type: bool
-        description:
-            de: 'Roboter Status Reinigunsplan'
-            en: 'Robot cleaning schedule status'
-    neato_ischarging:
-        type: bool
-        description:
-            de: 'Roboter Ladestatus'
-            en: 'Robot charging status'
-    neato_chargepercentage:
-        type: str
-        description:
-            de: 'Roboter Batteriestatus'
-            en: 'Robot battery status'
-    neato_message:
-        type: str
-        description:
-            de: 'Roboter Nachricht'
-            en: 'Robot message'
-    neato_commandGoToBaseAvailable:
-        type: bool
-        description:
-            de: 'Roboter Befehl zur Basis verfuegbar'
-            en: 'Robot command return to base available'
+            de: 'Neato Attributes:
+                 Name
+                 Befehl
+                 Zustand
+                 Alarm Text
+                 Zustand Aktion
+                 ist angedockt
+                 Reinigungsplan aktiv
+                 laed gerade
+                 Ladestand
+                 Nachricht
+                 fahr zur Basis'
+            en: 'Neato attributes:
+                 name
+                 command
+                 state
+                 alarm text
+                 action state
+                 is docked to Base
+                 cleaning schedule enabled
+                 is charging
+                 charge percentage
+                 message
+                 go to base'
+        valid_list:
+          - name
+          - command
+          - state
+          - alert
+          - state_action
+          - is_docked
+          - is_schedule_enabled
+          - is_charging
+          - charge_percentage
+          - message
+          - command_goToBaseAvailable
 
 item_structs: NONE
     # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)

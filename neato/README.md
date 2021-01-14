@@ -1,12 +1,15 @@
 # Neato/Vorwerk Vacuum Robot
 
-#### Version 1.6.3
+#### Version 1.6.4
 
 This plugin connects your Neato (https://www.neatorobotics.com/) or Vorwerk Robot with SmarthomeNG.
 - Command start, stop, pause, resume cleaning and trigger sendToBase and FindMe mode.
 - Read status of your robot
 
 ## Change history
+
+V 1.6.4    fixed readout for docking state and go to base availability
+           combined all neato attribues into one
 
 V 1.6.3    changed attribute charge_percentage from string to integer
            added alert text output, e.g. dustbin full
@@ -93,39 +96,51 @@ Create an item based on the template below:
 
 ```yaml
 Neato:
-  Robot:
-    Name:
-      type: str
-      neato_name: ''
-      visu_acl: ro
-    State:
-      type: str
-      neato_state: ''
-      visu_acl: ro
-    StateAction:
-      type: str
-      neato_state_action: ''
-      visu_acl: ro
-    Command:
-      type: num
-      neato_command: 0
-      visu_acl: rw
-    IsDocked:
-      type: bool
-      neato_isdocked: ''
-      visu_acl: ro
-    IsScheduleEnabled:
-      type: bool
-      neato_isscheduleenabled: ''
-      visu_acl: rw
-    ChargePercentage:
-      type: num
-      neato_chargepercentage: ''
-      visu_acl: ro
-    Alert:
-      type: str
-      neato_alert: ''
-      visu_acl: ro
+  Name:
+    type: str
+    neato_attribute: 'name'
+    visu_acl: ro
+  State:
+    type: str
+    value: 'offline'
+    neato_attribute: 'state'
+    visu_acl: ro
+  StateAction:
+    type: str
+    neato_attribute: 'state_action'
+    visu_acl: ro
+  Command:
+    type: num
+    neato_attribute: 'command'
+    visu_acl: rw
+  IsDocked:
+    value: False
+    type: bool
+    neato_attribute: 'is_docked'
+    visu_acl: ro
+  IsScheduleEnabled:
+    value: False
+    type: bool
+    neato_attribute: 'is_schedule_enabled'
+    visu_acl: rw
+  IsCharging:
+    value: False
+    type: bool
+    neato_attribute: 'is_charging'
+    visu_acl: ro
+  ChargePercentage:
+    type: num
+    neato_attribute: 'charge_percentage'
+    visu_acl: ro
+  GoToBaseAvailable:
+    type: bool
+    value: False
+    neato_attribute: 'command_goToBaseAvailable'
+    visu_acl: ro
+  Alert:
+    type: str
+    neato_attribute: 'alert'
+    visu_acl: ro
 
 ```
 
@@ -151,16 +166,38 @@ Thats it! Now you can start using the plugin within SmartVisu, for example:
 /** Get the robots battery charge status (num) */
 ```
 
-Following cleaning states are currently available:
+The following cleaning states are currently available:
 
 | Neato.Robot.State |
 | ----------------- |
+| invalid           |
 | idle              |
 | busy              |
 | paused            |
 | error             |
 
 If Neato.Robot.State == 'busy' than you can find the current cleaning activity in Neato.Robot.StateAction.
+
+The following action states are currently available:
+
+| Neato.Robot.StateAction                         |
+| ------------------------------------------------|
+| 0	Invalid                                   |
+| 1	House Cleaning                            |
+| 2	Spot Cleaning                             |
+| 3	Manual Cleaning                           |
+| 4	Docking                                   |
+| 5	User Menu Active                          |
+| 6	Suspended Cleaning                        |
+| 7	Updating                                  |
+| 8	Copying Logs                              |
+| 9	Recovering Location                       |
+| 10	IEC Test                                  | 
+| 11	Map cleaning                              |
+| 12	Exploring map (creating a persistent map) |
+| 13	Acquiring Persistent Map IDs              |
+| 14	Creating & Uploading Map                  |
+| 15	Suspended Exploration                     |
 
 
 #### Send commands to the robot:

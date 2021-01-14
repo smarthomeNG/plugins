@@ -323,7 +323,7 @@ class Robot:
         return date
 
     def __cleaning_start_string(self):
-        self.logger.debug("Robot: houseCleaning {0}, spotCleaning {1}".format(self.houseCleaning, self.spotCleaning ))
+        self.logger.info("Robot: houseCleaning {0}, spotCleaning {1}".format(self.houseCleaning, self.spotCleaning ))
 
         if self.houseCleaning == 'basic-1':
             return '{"reqId": "77","cmd": "startCleaning","params": {"category": ' + str(
