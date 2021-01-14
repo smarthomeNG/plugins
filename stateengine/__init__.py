@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
-#  Copyright 2014-     Thomas Ernst                       offline@gmx.net
+#  Copyright 2014-2018 Thomas Ernst                       offline@gmx.net
+#  Copyright 2019- Onkel Andy                       onkelandy@hotmail.com
 #########################################################################
 #  Finite state machine plugin for SmartHomeNG
 #
@@ -26,11 +27,12 @@ from . import StateEngineTools
 from . import StateEngineCliCommands
 from . import StateEngineFunctions
 from . import StateEngineWebif
+from . import StateEngineStruct
 import logging
 import os
 from lib.model.smartplugin import *
-from bin.smarthome import VERSION
 from lib.item import Items
+from copy import deepcopy
 
 
 class StateEngine(SmartPlugin):
