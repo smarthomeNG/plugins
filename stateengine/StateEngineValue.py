@@ -107,10 +107,24 @@ class SeValue(StateEngineTools.SeItemChild):
             _, _struct_name = StateEngineTools.partition_strip(_use, ":")
             StateEngineStruct.SeStructMain(self._abitem, _struct_name)
 
+    def __resetvalue(self):
+        self.__value = None
+        self.__item = None
+        self.__eval = None
+        self.__regex = None
+        self.__struct = None
+        self.__varname = None
+        self.__template = None
+        self._additional_sources = []
+        self.__listorder = []
+        self.__type_listorder = []
+
     # Set value
     # value: string indicating value or source of value
     # name: name of object ("time" is being handled differently)
-    def set(self, value, name=""):
+    def set(self, value, name="", reset=True):
+        if reset:
+            self.__resetvalue()
         if isinstance(value, list):
             source = []
             field_value = []

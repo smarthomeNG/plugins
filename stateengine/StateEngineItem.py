@@ -430,6 +430,7 @@ class SeItem:
         try:
             self.__variables["current.state_id"] = state.id
             self.__variables["current.state_name"] = state.name
+            state.refill()
             return state.can_enter()
         except Exception as ex:
             self.__logger.warning("Problem with currentstate {0}. Error: {1}", state, ex)

@@ -210,6 +210,13 @@ class SeState(StateEngineTools.SeItemChild):
         self._log_decrease_indent()
         self._log_decrease_indent()
 
+    def refill(self):
+        if not self.__use.is_empty() and "eval" in self.__use.get_type():
+            self._log_debug("State {}: se_use attribute including eval - updating state conditions and actions", self.__name)
+            self._log_increase_indent()
+            self.__fill(self.__item, 0, "refill")
+            self._log_decrease_indent()
+
     def update_name(self, item_state, recursion_depth=0):
         # if an item name is given, or if we do not have a name after returning from all recursions,
         # use item name as state name
