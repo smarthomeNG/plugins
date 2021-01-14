@@ -161,35 +161,12 @@ class XMPPLogHandler(logging.Handler):
         self._xmpp_receiver = xmpp_receiver
         self._xmpp_receiver_type = xmpp_receiver_type
 
-    def _add_error(self, record):
-        if self._xmpp_plugin not in self._errors:
-            self._errors[self._xmpp_plugin] = { 'count': 0, 'first': None, 'last': None }
-        errors = self._errors[self._xmpp_plugin]
-        errors['count'] = errors['count'] + 1
-        if errors['count'] == 1:
-            errors['first'] = record
-        else:
-            errors['last'] = record
-        if errors['count'] >= 100:
-            ecount = errors['count']
-            efirst = errors['first']
-            elast = errors['last']
-            del(self._errors[self._xmpp_plugin])
-            logger = logging.getLogger(__name__)
-            logger.error('XMPP plugin "{}" not connected to server, discarding {} messages'.format(self._xmpp_plugin, ecount))
-            logger.error('First message: {}'.format(efirst))
-            logger.error('Last message: {}'.format(elast))
-        else:
-            self._errors[self._xmpp_plugin] = errors
-
     def emit(self, record):
         if self._plugin is None and Plugins.get_instance() is not None:
             self._plugin = Plugins.get_instance().return_plugin(self._xmpp_plugin)
 
         if self._plugin is not None and self._plugin.is_connected():
             self._plugin.send(self._xmpp_receiver, self.format(record), self._xmpp_receiver_type)
-        else:
-            self._add_error(record)
 
 
 def main():
