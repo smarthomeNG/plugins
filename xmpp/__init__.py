@@ -78,16 +78,12 @@ class XMPP(SmartPlugin):
           self.xmpp.process(timeout=1)
 
     def stop(self):
+        self.alive = False
         self._connected = False
         for chat in self._join:
             self.xmpp.plugin['xep_0045'].leave_muc(chat, self.xmpp.boundjid.bare)
         self.logger.info("Shutting Down XMPP Client")
-        self.xmpp.disconnect(wait=True, ignore_send_queue=True)
-        self.xmpp.loop.stop()
-        while self.xmpp.loop.is_running():
-          pass
-        self.xmpp.loop.close()
-        self.alive = False
+        self.xmpp.disconnect(wait=True)
 
     def parse_item(self, item):
         return None
