@@ -26,8 +26,10 @@ from . import StateEngineState
 from . import StateEngineDefaults
 from . import StateEngineCurrent
 from . import StateEngineValue
+from . import StateEngineStruct
 from lib.item import Items
 from lib.shtime import Shtime
+from lib.item.item import Item
 import threading
 import queue
 
@@ -108,14 +110,16 @@ class SeItem:
     # Constructor
     # smarthome: instance of smarthome.py
     # item: item to use
+    # se_plugin: smartplugin instance
     def __init__(self, smarthome, item, se_plugin):
+        self.__item = item
+        self.__logger = SeLogger.create(self.__item)
         self.items = Items.get_instance()
         self.shtime = Shtime.get_instance()
         self.update_lock = threading.Lock()
         self.__ab_alive = False
         self.__queue = queue.Queue()
         self.__sh = smarthome
-        self.__item = item
         self.__se_plugin = se_plugin
         self.__active_schedulers = []
         try:
@@ -123,8 +127,9 @@ class SeItem:
         except Exception:
             self.__id = item
         self.__name = str(self.__item)
+        self.__itemClass = Item
         # initialize logging
-        self.__logger = SeLogger.create(self.__item)
+
         self.__log_level = StateEngineValue.SeValue(self, "Log Level", False, "num")
         self.__log_level.set_from_attr(self.__item, "se_log_level", StateEngineDefaults.log_level)
         self.__logger.header("")
@@ -201,7 +206,8 @@ class SeItem:
         self.__write_to_log()
 
         # start timer with startup-delay
-        startup_delay = 0 if self.__startup_delay.is_empty() else self.__startup_delay.get()
+        _startup_delay_param = self.__startup_delay.get()
+        startup_delay = 1 if self.__startup_delay.is_empty() or _startup_delay_param == 0 else _startup_delay_param
         if startup_delay > 0:
             first_run = self.shtime.now() + datetime.timedelta(seconds=startup_delay)
             scheduler_name = self.__id + "-Startup Delay"
@@ -233,6 +239,8 @@ class SeItem:
         for entry in self.__active_schedulers:
             self.__se_plugin.scheduler_remove('{}'.format(entry))
 
+    # region Updatestate ***********************************************************************************************
+    # run queue
     def run_queue(self):
         if not self.__ab_alive:
             self.__logger.debug("StateEngine Plugin not running (anymore). Queue not activated.")
@@ -244,9 +252,9 @@ class SeItem:
                 self.__logger.debug("No jobs in queue left or plugin not active anymore")
                 break
             elif job[0] == "delayedaction":
-                (_, action, actionname, namevar, repeat_text, value) = job
+                (_, action, actionname, namevar, repeat_text, value, current_condition) = job
                 self.__logger.info("Running delayed action: {0}", actionname)
-                action.real_execute(actionname, namevar, repeat_text, value)
+                action.real_execute(actionname, namevar, repeat_text, value, current_condition)
             else:
                 (_, item, caller, source, dest) = job
                 item_id = item.property.path if item is not None else "(no item)"
@@ -409,7 +417,7 @@ class SeItem:
             return
         self.__queue.put(["stateevaluation", item, caller, source, dest])
         if not self.update_lock.locked():
-            self.__logger.debug("Run queue to update state")
+            self.__logger.debug("Run queue to update state. Item: {}, caller: {}, source: {}".format(item, caller, source))
             self.run_queue()
 
     # check if state can be entered after setting state-specific variables
@@ -426,6 +434,8 @@ class SeItem:
             self.__variables["current.state_name"] = ""
             self.__variables["current.conditionset_id"] = ""
             self.__variables["current.conditionset_name"] = ""
+
+    # endregion
 
     # region Laststate *************************************************************************************************
     # Set laststate
@@ -715,12 +725,20 @@ class SeItem:
     # callback function that is called after the startup delay
     # noinspection PyUnusedLocal
     def __startup_delay_callback(self, item, caller=None, source=None, dest=None):
-        self.__startup_delay_over = True
         scheduler_name = self.__id + "-Startup Delay"
-        self.__se_plugin.scheduler_remove(scheduler_name)
-        self.__logger.debug('Startup Delay over. Removed scheduler {}', scheduler_name)
-        self.update_state(item, "Startup Delay", source, dest)
-        self.__add_triggers()
+        if not self.__ab_alive and self.__se_plugin.scheduler_get(scheduler_name):
+            next_run = self.shtime.now() + datetime.timedelta(seconds=3)
+            self.__logger.debug(
+                "Startup Delay over but StateEngine Plugin not running yet. Will try again at {}".format(next_run))
+            self.__se_plugin.scheduler_change(scheduler_name, next=next_run)
+            self.__se_plugin.scheduler_trigger(scheduler_name)
+        else:
+            self.__startup_delay_over = True
+            if self.__se_plugin.scheduler_get(scheduler_name):
+                self.__se_plugin.scheduler_remove(scheduler_name)
+                self.__logger.debug('Startup Delay over. Removed scheduler {}', scheduler_name)
+            self.update_state(item, "Startup Delay", source, dest)
+            self.__add_triggers()
 
     # Return an item related to the StateEngine Object Item
     # item_id: Id of item to return
@@ -735,11 +753,25 @@ class SeItem:
     # - item_id = "..twodots" will return item "my.stateengine.twodots"
     # - item_id = "..threedots" will return item "my.threedots"
     # - item_id = "..threedots.further.down" will return item "my.threedots.further.down"
-    def return_item(self, item_id: str):
+    def return_item(self, item_id):
+        if isinstance(item_id, (StateEngineStruct.SeStruct, self.__itemClass)):
+            return item_id
         if not isinstance(item_id, str):
             self.__logger.info("'{0}' should be defined as string. Check your item config! "
                                "Everything might run smoothly, nevertheless.".format(item_id))
             return item_id
+        item_id = item_id.strip()
+        if item_id.startswith("struct:"):
+            item = None
+            _, item_id = StateEngineTools.partition_strip(item_id, ":")
+            try:
+                self.__logger.debug("Creating struct for id {}".format(item_id))
+                item = StateEngineStruct.SeStructMain(self, item_id)
+            except Exception as e:
+                self.__logger.warning("struct creation ERROR {}".format(e))
+            if item is None:
+                self.__logger.warning("Item '{0}' not found!".format(item_id))
+            return item
         if not item_id.startswith("."):
             item = self.items.return_item(item_id)
             if item is None:
