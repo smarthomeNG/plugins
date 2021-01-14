@@ -64,12 +64,14 @@ class SeCondition(StateEngineTools.SeItemChild):
     def set(self, func, value):
         if func == "se_item":
             if ":" in value:
-                self._log_warning("Your item configuration '{0}' is wrong! Define a plain (relative) item!", value)
+                self._log_warning("Your item configuration '{0}' is wrong! Define a plain (relative) "
+                                  "item without item: at the beginning!", value)
                 _, _, value = value.partition(":")
             self.__item = self._abitem.return_item(value)
         elif func == "se_eval":
             if ":" in value:
-                self._log_warning("Your eval configuration '{0}' is wrong! Define a plain eval term!", value)
+                self._log_warning("Your eval configuration '{0}' is wrong! Define a plain eval "
+                                  "term without eval: at the beginning!", value)
                 _, _, value = value.partition(":")
             self.__eval = value
         if func == "se_value":
@@ -209,7 +211,6 @@ class SeCondition(StateEngineTools.SeItemChild):
             cond_evalitem = False
         if self.__item is None and not cond_min_max and not cond_evalitem:
             raise ValueError("Condition {}: 'agemin'/'agemax' can not be used for eval!".format(self.__name))
-
         return True
 
     # Check if condition is matching
