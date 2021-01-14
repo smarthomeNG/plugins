@@ -106,6 +106,10 @@ class Resol(SmartPlugin):
         global new_data
         self.send("DATA\n")
         dat = self.recv()
+
+        if not dat:
+            self.logger.warning("Could not receive data via socket")
+            return
     
         #Check if device is ready to send Data
         if not dat.startswith("+OK"):
@@ -119,6 +123,8 @@ class Resol(SmartPlugin):
 
     # Receive 1024 bytes from stream
     def recv(self):
+        if not self.sock:
+            return None
         dat = self.sock.recv(1024).decode('Cp1252')
         return dat
     
@@ -129,6 +135,8 @@ class Resol(SmartPlugin):
     # Read Data until minimum 1 message is received
     def readstream(self):
         data = self.recv()
+        if not data:
+            return None
         while data.count(chr(0xAA)) < 4:
           data += self.recv()
         return data
@@ -226,7 +234,7 @@ class Resol(SmartPlugin):
                 count = count + 1
             if logger_debug:
                 self.logger.debug("payload: of item " + str(item) + ": " + str(wert))
-            self._sh.return_item(str(item))(wert,self.get_shortname(),'mysource','mydest')
+            self._sh.return_item(str(item))(wert, self.get_shortname(), str(source), str(destination))
 
     def integrate_septett(self, frame):
         data = ''
