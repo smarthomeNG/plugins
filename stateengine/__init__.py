@@ -27,7 +27,6 @@ from . import StateEngineTools
 from . import StateEngineCliCommands
 from . import StateEngineFunctions
 from . import StateEngineWebif
-from . import StateEngineStruct
 import logging
 import os
 from lib.model.smartplugin import *

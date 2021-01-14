@@ -26,7 +26,6 @@ from . import StateEngineActions
 from . import StateEngineValue
 from . import StateEngineStruct
 from lib.item import Items
-import copy
 
 
 # Class representing an object state, consisting of name, conditions to be met and configured actions for state
@@ -35,6 +34,10 @@ class SeState(StateEngineTools.SeItemChild):
     @property
     def id(self):
         return self.__id
+
+    @property
+    def state_item(self):
+        return self.__item
 
     # Return name of state
     @property
@@ -69,9 +72,10 @@ class SeState(StateEngineTools.SeItemChild):
             self._log_info("Init state {}", self.__id)
         except Exception as err:
             self._log_info("Problem init state ID of Item {}. {}", self.__item, err)
-        self.__name = ""
         self.__text = StateEngineValue.SeValue(self._abitem, "State Name", False, "str")
         self.__use = StateEngineValue.SeValue(self._abitem, "State configuration extension", True, "item")
+        self.__name = ''
+        self.__name = self.update_name(self.__item)
         self.__use_done = []
         self.__conditions = StateEngineConditionSets.SeConditionSets(self._abitem)
         self.__actions_enter_or_stay = StateEngineActions.SeActions(self._abitem)
@@ -105,6 +109,8 @@ class SeState(StateEngineTools.SeItemChild):
         self._abitem._initstate = self.id
         self._log_info("State {0}:", self.id)
         self._log_increase_indent()
+        self.update_name(self.__item)
+        self.__text.write_to_logger()
         self._log_info("Updating Web Interface...")
         self._log_increase_indent()
         self._abitem.update_webif(self.id, {'name': self.name,
@@ -116,8 +122,6 @@ class SeState(StateEngineTools.SeItemChild):
                                             'leave': False, 'enter': False, 'stay': False})
         self._log_decrease_indent()
         self._log_info("Finished Web Interface Update")
-        self._log_info("Name: {0}", self.name)
-        self.__text.write_to_logger()
         self.__use.write_to_logger()
         if self.__conditions.count() > 0:
             self._log_info("Condition sets to enter state:")
@@ -206,6 +210,18 @@ class SeState(StateEngineTools.SeItemChild):
         self._log_decrease_indent()
         self._log_decrease_indent()
 
+    def update_name(self, item_state, recursion_depth=0):
+        # if an item name is given, or if we do not have a name after returning from all recursions,
+        # use item name as state name
+        if "se_name" in item_state.conf:
+            self.__text.set_from_attr(item_state, "se_name", self.__text.get(None))
+        elif str(item_state) != item_state.property.path or (self.__name == "" and recursion_depth == 0):
+            self.__name = str(item_state).split('.')[-1]
+            self.__text.set(self.__name)
+        elif self.__text.is_empty() and recursion_depth == 0:
+            self.__text.set("value:" + self.__name)
+        return self.text
+
     # Read configuration from item and populate data in class
     # item_state: item to read from
     # recursion_depth: current recursion_depth (recursion is canceled after five levels)
@@ -292,15 +308,7 @@ class SeState(StateEngineTools.SeItemChild):
 
         _total_actioncount = _enter_actioncount + _stay_actioncount + _enter_stay_actioncount + _leave_actioncount
 
-        # if an item name is given, or if we do not have a name after returning from all recursions,
-        # use item name as state name
-        if "se_name" in item_state.conf:
-            self.__text.set_from_attr(item_state, "se_name", self.__text.get(None))
-        elif str(item_state) != item_state.property.path or (self.__name == "" and recursion_depth == 0):
-            self.__name = str(item_state).split('.')[-1]
-            self.__text.set(self.__name)
-        elif self.__text.is_empty() and recursion_depth == 0:
-            self.__text.set("value:" + self.__name)
+        self.update_name(item_state, recursion_depth)
 
         # Complete condition sets and actions at the end
         if recursion_depth == 0:

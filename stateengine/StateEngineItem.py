@@ -326,6 +326,7 @@ class SeItem:
                     if last_state is None:
                         self.__logger.info("No matching state found, no previous state available. Doing nothing.")
                     else:
+                        last_state.update_name(last_state.state_item)
                         if _last_conditionset_id in ['', None]:
                             text = "No matching state found, staying at {0} ('{1}')"
                             self.__logger.info(text, last_state.id, last_state.name)
@@ -340,6 +341,7 @@ class SeItem:
                 _last_conditionset_name = self.__lastconditionset_get_name()
                 # get data for new state
                 if last_state is not None and new_state.id == last_state.id:
+                    new_state.update_name(new_state.state_item)
                     if _last_conditionset_id in ['', None]:
                         self.__logger.info("Staying at {0} ('{1}')", new_state.id, new_state.name)
                     else:
@@ -367,6 +369,7 @@ class SeItem:
                         _last_conditionset_name = ''
                     else:
                         self.lastconditionset_set(_last_conditionset_id, _last_conditionset_name)
+                    new_state.update_name(new_state.state_item)
                     if _last_conditionset_id in ['', None]:
                         self.__logger.info("Entering {0} ('{1}')", new_state.id, new_state.name)
                     else:
