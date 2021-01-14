@@ -74,7 +74,8 @@ class XMPP(SmartPlugin):
             self.xmpp.connect(address=self._server)
         else:
             self.xmpp.connect()
-        self.xmpp.process()
+        while self.alive:
+          self.xmpp.process(timeout=1)
 
     def stop(self):
         self._connected = False
