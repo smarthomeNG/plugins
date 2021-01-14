@@ -61,6 +61,7 @@ class SeActions(StateEngineTools.SeItemChild):
     def update(self, attribute, value):
         # Split attribute in function and action name
         func, name = StateEngineTools.partition_strip(attribute, "_")
+        _count = 0
         try:
             if func == "se_delay":
                 # set delay
@@ -112,6 +113,7 @@ class SeActions(StateEngineTools.SeItemChild):
                 return
             elif func == "se_action":  # and name not in self.__actions:
                 self.__handle_combined_action_attribute(name, value)
+                _count += 1
             elif self.__ensure_action_exists(func, name):
                 # update action
                 self.__actions[name].update(value)
@@ -119,6 +121,7 @@ class SeActions(StateEngineTools.SeItemChild):
             if name in self.__actions:
                 del self.__actions[name]
             self._log_warning("Ignoring action {0} because: {1}", attribute, ex)
+        return _count
 
     # ensure that action exists and create if missing
     # func: action function
