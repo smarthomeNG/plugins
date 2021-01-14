@@ -67,6 +67,7 @@ zum anderen stellt das Plugin folgende Vorlagen fix fertig bereit:
 Gemeinsam mit der Vorlage stateengine.general, die allgemein relevante Items automatisch erstellt, könnte
 ein Item wie unten zu sehen bestückt werden. Das Einbinden der Zustandsvorlagen findet dabei auf gleicher
 Hierarchieebene wie das Regelwerk-Item statt. Genauere Angaben hierzu sind unter :ref:`Zustand-Templates` zu finden.
+Informationen zu ``se_use`` findet man unter :ref:`Sonstiges`.
 
 Zusätzlich können eigene Zustände (beispielsweise day) definiert werden.
 
