@@ -75,7 +75,7 @@ class CLIHandler:
         else:
             self.__push_password_prompt()
         self.plugin = plugin
-        self.logger.debug("CLI Handler init with updates {}".format( "allowed" if updates else "not allowed"))
+        self.logger.debug("CLI Handler init with updates {}".format("allowed" if updates else "not allowed"))
 
     def push(self, data):
         """
@@ -343,7 +343,7 @@ class CLICommands:
         :param source: Call source
         :return: TRUE: Command found and handled, FALSE: Unknown command, nothing done
         """
-        if self.alive:
+        if self.plugin and getattr(self.plugin, 'alive', False):
             if self.logics is None:
                 self.logics = Logics.get_instance()
             for command, data in self._commands.items():
