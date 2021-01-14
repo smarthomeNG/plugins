@@ -59,7 +59,7 @@ class StateEngine(SmartPlugin):
             StateEngineDefaults.suspend_time = self.get_parameter_value("suspend_time_default")
             StateEngineDefaults.instant_leaveaction = self.get_parameter_value("instant_leaveaction")
             StateEngineDefaults.write_to_log(self.logger)
-
+            self.get_sh().stateengine_plugin_functions = StateEngineFunctions.SeFunctions(self.get_sh(), self.logger)
             StateEngineCurrent.init(self.get_sh())
 
             if log_level > 0:
@@ -75,7 +75,7 @@ class StateEngine(SmartPlugin):
                 self.scheduler_add('StateEngine: Remove old logfiles', SeLogger.remove_old_logfiles, cron=cron, offset=0)
             SeLogger.set_loglevel(log_level)
             SeLogger.set_logdirectory(log_directory)
-            self.get_sh().stateengine_plugin_functions = StateEngineFunctions.SeFunctions(self.get_sh(), self.logger)
+
         except Exception:
             self._init_complete = False
             return

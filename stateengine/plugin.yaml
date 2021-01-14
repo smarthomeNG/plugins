@@ -579,10 +579,117 @@ item_structs:
 
         settings:
             remark: Use these settings for your condition values
-            type: bool
-            eval: sh..suspendduration(sh..suspendduration(), "Init", "Start")
+            type: foo
+            eval: (sh..suspendduration(sh..suspendduration(), "Init", "Start"), sh..suspendvariant.suspendduration1(sh..suspendduration0(), "Init", "Start"), sh..suspendvariant.suspendduration1(sh..suspendduration1(), "Init", "Start"), sh..suspendvariant.suspendduration2(sh..suspendduration2(), "Init", "Start"))
             crontab: init = True
+            
+            suspendvariant:
+                remark: number between 0 and 2 to define which suspendduration should be used
+                type: num
+                visu_acl: rw
+                cache: True
+                initial_value: 0
+                
+                suspendduration0:
+                    remark: gets automatically updated from settings.suspendduration as this is the default item for the suspendduration
+                    type: num
+                    visu_acl: rw
+                    cache: True
+                    on_change: .seconds = value * 60 if not sh..self.property.last_change_by == "On_Change:{}".format(sh..seconds.property.path) else None
+                    on_update: .seconds = value * 60 if "Init" in sh..self.property.last_update_by else None
+                    eval: sh....suspendduration()
+                    eval_trigger: ...suspendduration
 
+                    duration_format:
+                        remark: Can be used for the clock.countdown widget
+                        type: str
+                        cache: True
+                        visu_acl: ro
+                        eval: "'{}d {}h {}i {}s'.format(int(sh...seconds()//86400), int((sh...seconds()%86400)//3600), int((sh...seconds()%3600)//60), round((sh...seconds()%3600)%60))"
+                        eval_trigger:
+                          - ..seconds
+                          - ..
+
+                    seconds:
+                        remark: duration of suspend mode in seconds (gets converted automatically)
+                        type: num
+                        visu_acl: rw
+                        cache: True
+                        on_change: .. = value / 60 if not sh..self.property.last_change_by in [ "On_Change:{}".format(sh....property.path), "On_Update:{}".format(sh....property.path)] else None
+                
+                suspendduration1:
+                    remark: duration of suspend mode in minutes (gets converted automatically)
+                    type: num
+                    visu_acl: rw
+                    cache: True
+                    initial_value: 60
+                    on_change: .seconds = value * 60 if not sh..self.property.last_change_by == "On_Change:{}".format(sh..seconds.property.path) else None
+                    on_update: .seconds = value * 60 if "Init" in sh..self.property.last_update_by else None
+
+                    duration_format:
+                        remark: Can be used for the clock.countdown widget
+                        type: str
+                        cache: True
+                        visu_acl: ro
+                        eval: "'{}d {}h {}i {}s'.format(int(sh...seconds()//86400), int((sh...seconds()%86400)//3600), int((sh...seconds()%3600)//60), round((sh...seconds()%3600)%60))"
+                        eval_trigger:
+                          - ..seconds
+                          - ..
+
+                    seconds:
+                        remark: duration of suspend mode in seconds (gets converted automatically)
+                        type: num
+                        visu_acl: rw
+                        cache: True
+                        on_change: .. = value / 60 if not sh..self.property.last_change_by in [ "On_Change:{}".format(sh....property.path), "On_Update:{}".format(sh....property.path)] else None
+
+                suspendduration2:
+                    remark: duration of suspend mode in minutes (gets converted automatically)
+                    type: num
+                    visu_acl: rw
+                    cache: True
+                    initial_value: 60
+                    on_change: .seconds = value * 60 if not sh..self.property.last_change_by == "On_Change:{}".format(sh..seconds.property.path) else None
+                    on_update: .seconds = value * 60 if "Init" in sh..self.property.last_update_by else None
+
+                    duration_format:
+                        remark: Can be used for the clock.countdown widget
+                        type: str
+                        cache: True
+                        visu_acl: ro
+                        eval: "'{}d {}h {}i {}s'.format(int(sh...seconds()//86400), int((sh...seconds()%86400)//3600), int((sh...seconds()%3600)//60), round((sh...seconds()%3600)%60))"
+                        eval_trigger:
+                          - ..seconds
+                          - ..
+
+                    seconds:
+                        remark: duration of suspend mode in seconds (gets converted automatically)
+                        type: num
+                        visu_acl: rw
+                        cache: True
+                        on_change: .. = value / 60 if not sh..self.property.last_change_by in [ "On_Change:{}".format(sh....property.path), "On_Update:{}".format(sh....property.path)] else None                
+     
+                additionaluse0:
+                    remark: set this value to a struct or (relative) state that should be added to the condition sets if suspendvariant is 0
+                    type: str
+                    visu_acl: rw
+                    cache: True
+                    initial_value: 'struct:stateengine.state_standard.rules.standard'
+                    
+                additionaluse1:
+                    remark: set this value to a struct or (relative) state that should be added to the condition sets if suspendvariant is 1
+                    type: str
+                    visu_acl: rw
+                    cache: True
+                    initial_value: ''
+
+                additionaluse2:
+                    remark: set this value to a struct or (relative) state that should be added to the condition sets if suspendvariant is 2
+                    type: str
+                    visu_acl: rw
+                    cache: True
+                    initial_value: ''
+                        
             suspendduration:
                 remark: duration of suspend mode in minutes (gets converted automatically)
                 type: num
@@ -608,7 +715,7 @@ item_structs:
                     visu_acl: rw
                     cache: True
                     on_change: .. = value / 60 if not sh..self.property.last_change_by in [ "On_Change:{}".format(sh....property.path), "On_Update:{}".format(sh....property.path)] else None
-
+                    
             suspend_active:
                 remark: Use this to (de)activate suspend mode in general
                 type: bool
@@ -629,12 +736,15 @@ item_structs:
             se_item_suspend_end: ..suspend_end.date_time
             se_item_suspend_start: ..suspend_start.date_time
             se_item_suspend_active: ..settings.suspend_active
-            se_suspend_time: item:..settings.suspendduration.seconds
+            se_item_suspendvariant: ..settings.suspendvariant
+            se_suspend_time: eval:se_eval.get_relative_itemvalue('..settings.suspendvariant.suspendduration{}.seconds'.format(max(0, min(se_eval.get_relative_itemvalue('..settings.suspendvariant'), 2))))
+            
             eval_trigger:
                 - ..manuell
 
             suspend:
                 name: ausgesetzt
+                se_use: eval:se_eval.get_relative_itemvalue('..settings.suspendvariant.additionaluse{}'.format(max(0, min(se_eval.get_relative_itemvalue('..settings.suspendvariant'), 2))))
 
                 on_enter:
                     se_action_suspend_visu:
@@ -666,33 +776,46 @@ item_structs:
                       - 'order: 5'
 
                 on_leave:
+                    se_action_suspendvariant:
+                      - 'function: set'
+                      - 'to: eval:se_eval.get_relative_itemproperty("..settings.suspendvariant", "last_value")'
+                      - 'order: 1'
                     se_action_suspend:
                       - 'function: set'
                       - 'to: False'
-                      - 'order: 1'
+                      - 'order: 2'
                     se_action_suspend_visu:
                       - 'function: set'
                       - 'to: False'
-                      - 'order: 2'
+                      - 'order: 3'
                     se_action_suspend_end:
                       - 'function: set'
                       - 'to:  '
-                      - 'order: 3'
+                      - 'order: 4'
                     se_action_suspend_start:
                       - 'function: set'
                       - 'to:  '
-                      - 'order: 4'
+                      - 'order: 5'
                       - 'delay: 1'
 
                 enter_manuell:
                     se_value_trigger_source: eval:se_eval.get_relative_itemproperty('..manuell', 'path')
                     se_value_suspend_active: True
-
+                    
                 enter_stay:
                     se_value_laststate: var:current.state_id
                     se_agemax_suspend: var:item.suspend_time
                     se_value_suspend: True
                     se_value_suspend_active: True
+
+    state_standard:
+        name: leerer Zustand (z.B. Standard)
+        rules:
+            standard:
+                name: standard
+                
+                enter_manuell:
+                    type: foo
 
     state_release:
         name: Zustandsvorlage für Deaktivieren von Suspend und Lock und erneutes Evaluieren der Regeln
