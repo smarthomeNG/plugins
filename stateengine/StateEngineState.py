@@ -75,7 +75,6 @@ class SeState(StateEngineTools.SeItemChild):
         self.__text = StateEngineValue.SeValue(self._abitem, "State Name", False, "str")
         self.__use = StateEngineValue.SeValue(self._abitem, "State configuration extension", True, "item")
         self.__name = ''
-        self.__name = self.update_name(self.__item)
         self.__use_done = []
         self.__conditions = StateEngineConditionSets.SeConditionSets(self._abitem)
         self.__actions_enter_or_stay = StateEngineActions.SeActions(self._abitem)
@@ -221,13 +220,14 @@ class SeState(StateEngineTools.SeItemChild):
         # if an item name is given, or if we do not have a name after returning from all recursions,
         # use item name as state name
         if "se_name" in item_state.conf:
-            self.__text.set_from_attr(item_state, "se_name", self.__text.get(None))
+            self.__text.set_from_attr(item_state, "se_name")
         elif str(item_state) != item_state.property.path or (self.__name == "" and recursion_depth == 0):
-            self.__name = str(item_state).split('.')[-1]
-            self.__text.set(self.__name)
+            _name = str(item_state).split('.')[-1]
+            self.__text.set(_name)
         elif self.__text.is_empty() and recursion_depth == 0:
             self.__text.set("value:" + self.__name)
-        return self.text
+        self.__name = self.text
+        return self.__name
 
     # Read configuration from item and populate data in class
     # item_state: item to read from
