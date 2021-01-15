@@ -88,6 +88,7 @@ class Viessmann(SmartPlugin):
             self._standalone = False
 
         # Set variables
+        self._error_count = 0
         self._params = {}                                                   # Item dict
         self._init_cmds = []                                                # List of command codes for read at init
         self._cyclic_cmds = {}                                              # Dict of command codes with cylce-times for cyclic readings
@@ -838,7 +839,7 @@ class Viessmann(SmartPlugin):
                     if len(chunk) != 0:
                         replies[addr].extend(chunk)
                     else:
-                        self.logger.error('Received 0 bytes chunk from {addr} - this probably is a communication error, possibly a wrong datapoint address?')
+                        self.logger.error(f'Received 0 bytes chunk from {addr} - this probably is a communication error, possibly a wrong datapoint address?')
                         return
                 except IOError as io:
                     raise IOError(f'IO Error: {io}')
@@ -961,8 +962,13 @@ class Viessmann(SmartPlugin):
                             self._initialized = False
                         elif chunk[:1] != self._int2bytes(self._controlset['Acknowledge'], 1):
                             self.logger.error(f'Received invalid chunk, not starting with ACK! response was: {chunk}')
+                            self._error_count += 1
+                            if self._error_count > 5:
+                                self.log.warning('Encountered 5 invalid chunks in sequence. Maybe communication was lost, re-initializing')
+                                self._initialized = False
                         else:
                             response_packet.extend(chunk)
+                            self._error_count = 0
                             return response_packet
                     else:
                         self.logger.error(f'Received 0 bytes chunk - ignoring response_packet! chunk was: {chunk}')
