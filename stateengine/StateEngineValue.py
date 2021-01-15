@@ -22,6 +22,7 @@
 from . import StateEngineTools
 from . import StateEngineEval
 from . import StateEngineStruct
+from . import StateEngineStructs
 from lib.item import Items
 from lib.item.item import Item
 import re
@@ -105,7 +106,7 @@ class SeValue(StateEngineTools.SeItemChild):
         for _use in _additional_sources:
             self._additional_sources.remove(_use)
             _, _struct_name = StateEngineTools.partition_strip(_use, ":")
-            StateEngineStruct.SeStructMain(self._abitem, _struct_name)
+            StateEngineStructs.create(self._abitem, _struct_name)
 
     def __resetvalue(self):
         self.__value = None
@@ -264,7 +265,7 @@ class SeValue(StateEngineTools.SeItemChild):
                 self.__regex = [] if self.__regex is None else [self.__regex] if not isinstance(self.__regex, list) else self.__regex
                 self.__regex.append(None if s != "regex" else field_value[i])
                 self.__struct = [] if self.__struct is None else [self.__struct] if not isinstance(self.__struct, list) else self.__struct
-                self.__struct.append(None if s != "struct" else StateEngineStruct.SeStructMain(self._abitem, field_value[i]))
+                self.__struct.append(None if s != "struct" else StateEngineStructs.create(self._abitem, field_value[i]))
                 self.__varname = [] if self.__varname is None else [self.__varname] if not isinstance(self.__varname, list) else self.__varname
                 self.__varname.append(None if s != "var" else field_value[i])
             self.__item = [i for i in self.__item if i is not None]
@@ -284,7 +285,7 @@ class SeValue(StateEngineTools.SeItemChild):
             self.__item = None if source != "item" else self._abitem.return_item(field_value)
             self.__eval = None if source != "eval" else field_value
             self.__regex = None if source != "regex" else field_value
-            self.__struct = None if source != "struct" else StateEngineStruct.SeStructMain(self._abitem, field_value)
+            self.__struct = None if source != "struct" else StateEngineStructs.create(self._abitem, field_value)
             self.__varname = None if source != "var" else field_value
             if source == "value":
                 if isinstance(field_value, list) and not self.__allow_value_list:

@@ -52,14 +52,14 @@ class SeStruct(StateEngineTools.SeItemChild):
     # Constructor
     # abitem: parent SeItem instance
     # struct_path: string defining struct
-    def __init__(self, abitem, struct_path):
+    def __init__(self, abitem, struct_path, global_struct):
         super().__init__(abitem)
         self.itemsApi = Items.get_instance()
         self.struct_path = struct_path
         self._conf = {}
         self._full_conf = {}
         self._struct = None
-        self._global_struct = copy.deepcopy(self.itemsApi.return_struct_definitions())
+        self._global_struct = global_struct # copy.deepcopy(self.itemsApi.return_struct_definitions())
         self._struct_rest = None
         self._children_structs = []
         self._parent_struct = None
@@ -104,8 +104,8 @@ class SeStructMain(SeStruct):
     # Initialize the action
     # abitem: parent SeItem instance
     # name: Name of action
-    def __init__(self, abitem, struct_path):
-        super().__init__(abitem, struct_path)
+    def __init__(self, abitem, struct_path, global_struct):
+        super().__init__(abitem, struct_path, global_struct)
         #self._log_debug("Struct path {} for {}", self.struct_path, __class__.__name__)
 
     def __repr__(self):
@@ -113,7 +113,7 @@ class SeStructMain(SeStruct):
 
     def create_parent(self):
         try:
-            parent = SeStructParent(self._abitem, self.struct_path)
+            parent = SeStructParent(self._abitem, self.struct_path, self._global_struct)
             self._parent_struct = parent
         except Exception as ex:
             raise Exception("Struct {0} create parent error: {1}".format(self.struct_path, ex))
@@ -129,7 +129,7 @@ class SeStructMain(SeStruct):
             for c in _temp_dict:
                 if c.startswith("enter"):
                     _se_ok = True
-                c = SeStructChild(self._abitem, '{}.{}'.format(self.struct_path, c))
+                c = SeStructChild(self._abitem, '{}.{}'.format(self.struct_path, c), self._global_struct)
                 self._children_structs.append(c)
         except Exception as ex:
             raise Exception("Struct {0} create children error: {1}".format(self.struct_path, ex))
@@ -162,8 +162,8 @@ class SeStructChild(SeStruct):
     # Initialize the action
     # abitem: parent SeItem instance
     # name: Name of action
-    def __init__(self, abitem, struct_path):
-        super().__init__(abitem, struct_path)
+    def __init__(self, abitem, struct_path, global_struct):
+        super().__init__(abitem, struct_path, global_struct)
         #self._log_debug("Struct path {} for {}", self.struct_path, __class__.__name__)
 
     def __repr__(self):
@@ -181,8 +181,8 @@ class SeStructParent(SeStruct):
     # Initialize the action
     # abitem: parent SeItem instance
     # name: Name of action
-    def __init__(self, abitem, struct_path):
-        super().__init__(abitem, struct_path)
+    def __init__(self, abitem, struct_path, global_struct):
+        super().__init__(abitem, struct_path, global_struct)
         #self._log_debug("Struct path {} for {}", self.struct_path, __class__.__name__)
 
     def __repr__(self):
