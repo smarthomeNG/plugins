@@ -28,6 +28,7 @@ from . import StateEngineDefaults
 from . import StateEngineCurrent
 from . import StateEngineValue
 from . import StateEngineStruct
+from . import StateEngineStructs
 from lib.item import Items
 from lib.shtime import Shtime
 from lib.item.item import Item
@@ -772,9 +773,9 @@ class SeItem:
             _, item_id = StateEngineTools.partition_strip(item_id, ":")
             try:
                 self.__logger.debug("Creating struct for id {}".format(item_id))
-                item = StateEngineStruct.SeStructMain(self, item_id)
+                item = StateEngineStructs.create(self, item_id)
             except Exception as e:
-                self.__logger.warning("struct creation ERROR {}".format(e))
+                self.__logger.warning("struct {} creation ERROR {}".format(item_id, e))
             if item is None:
                 self.__logger.warning("Item '{0}' not found!".format(item_id))
             return item
