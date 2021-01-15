@@ -60,7 +60,7 @@ class SeActionBase(StateEngineTools.SeItemChild):
         self._parent = self._abitem.id
         self._caller = StateEngineDefaults.plugin_identification
         self.shtime = Shtime.get_instance()
-        self.items = Items.get_instance()
+        self.itemsApi = Items.get_instance()
         self._name = name
         self.__delay = StateEngineValue.SeValue(self._abitem, "delay")
         self.__repeat = None
@@ -115,10 +115,10 @@ class SeActionBase(StateEngineTools.SeItemChild):
         self.__order.write_to_logger()
 
     # Execute action (considering delay, etc)
-    # is_repeat: Inidicate if this is a repeated action without changing the state
+    # is_repeat: Indicate if this is a repeated action without changing the state
     # item_allow_repeat: Is repeating actions generally allowed for the item?
     # state: state item that triggered the action
-    def execute(self, is_repeat: bool, allow_item_repeat: bool, state: str):
+    def execute(self, is_repeat: bool, allow_item_repeat: bool, state):
         self._state = state
         if not self._can_execute():
             return
@@ -215,6 +215,9 @@ class SeActionBase(StateEngineTools.SeItemChild):
             except Exception:
                 pass
             try:
+                state.update_name(state.state_item)
+                _key_name = ['{}'.format(state.id), 'name']
+                self.update_webif(_key_name, state.name)
                 _key = ['{}'.format(state.id), 'actions_leave', '{}'.format(self._name), 'delay']
                 self._abitem.update_webif(_key, _delay_info)
             except Exception:
@@ -439,7 +442,7 @@ class SeActionSetByattr(SeActionBase):
             return value
         self._log_info("{0}: Setting values by attribute '{1}'.{2}", actionname, self.__byattr, repeat_text)
         source = self._parent if current_condition is None else current_condition
-        for item in self.items.find_items(self.__byattr):
+        for item in self.itemsApi.find_items(self.__byattr):
             self._log_info("\t{0} = {1}", item.property.path, item.conf[self.__byattr])
             item(item.conf[self.__byattr], caller=self._caller, source=source)
 

@@ -312,6 +312,8 @@ class SeItem:
                         self.__logger.debug("StateEngine Plugin not running (anymore). Stop state evaluation.")
                         return
                     state.update_name(state.state_item)
+                    _key_name = ['{}'.format(state.id), 'name']
+                    self.update_webif(_key_name, state.name)
                     result = self.__update_check_can_enter(state)
                     # New state is different from last state
                     if result is False and last_state == state and self.__instant_leaveaction.get() is True:
@@ -379,6 +381,7 @@ class SeItem:
                     _key_leave = ['{}'.format(last_state.id), 'leave']
                     _key_stay = ['{}'.format(last_state.id), 'stay']
                     _key_enter = ['{}'.format(last_state.id), 'enter']
+
                     self.update_webif(_key_leave, True)
                     self.update_webif(_key_stay, False)
                     self.update_webif(_key_enter, False)
