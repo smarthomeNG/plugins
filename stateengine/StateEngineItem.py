@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
-#  Copyright 2014-     Thomas Ernst                       offline@gmx.net
+#  Copyright 2014-2018 Thomas Ernst                       offline@gmx.net
+#  Copyright 2019- Onkel Andy                       onkelandy@hotmail.com
 #########################################################################
 #  Finite state machine plugin for SmartHomeNG
 #
@@ -26,9 +27,11 @@ from . import StateEngineState
 from . import StateEngineDefaults
 from . import StateEngineCurrent
 from . import StateEngineValue
+from . import StateEngineStruct
+from . import StateEngineStructs
 from lib.item import Items
 from lib.shtime import Shtime
-import time
+from lib.item.item import Item
 import threading
 import queue
 
@@ -79,6 +82,10 @@ class SeItem:
         return self.__logger
 
     @property
+    def instant_leaveaction(self):
+        return self.__instant_leaveaction
+
+    @property
     def laststate(self):
         return self.__laststate_item_id.property.value
 
@@ -94,16 +101,27 @@ class SeItem:
     def lastconditionset_name(self):
         return self.__lastconditionset_item_name.property.value
 
+    @property
+    def ab_alive(self):
+        return self.__ab_alive
+
+    @ab_alive.setter
+    def ab_alive(self, value):
+        self.__ab_alive = value
+
     # Constructor
     # smarthome: instance of smarthome.py
     # item: item to use
+    # se_plugin: smartplugin instance
     def __init__(self, smarthome, item, se_plugin):
-        self.items = Items.get_instance()
+        self.__item = item
+        self.__logger = SeLogger.create(self.__item)
+        self.itemsApi = Items.get_instance()
         self.shtime = Shtime.get_instance()
-        self._update_lock = threading.Lock()
+        self.update_lock = threading.Lock()
+        self.__ab_alive = False
         self.__queue = queue.Queue()
         self.__sh = smarthome
-        self.__item = item
         self.__se_plugin = se_plugin
         self.__active_schedulers = []
         try:
@@ -111,14 +129,15 @@ class SeItem:
         except Exception:
             self.__id = item
         self.__name = str(self.__item)
+        self.__itemClass = Item
         # initialize logging
-        self.__logger = SeLogger.create(self.__item)
-        if self.se_plugin.has_iattr(item.conf, "se_log_level"):
-            ll = self.se_plugin.get_iattr_value(item.conf, "se_log_level")
-            self.__logger.override_loglevel(ll, self.__item)
-        self.__logger.header("Initialize Item {0} (Log Level set"
-                             " to {1})".format(self.id, self.__logger.get_loglevel()))
 
+        self.__log_level = StateEngineValue.SeValue(self, "Log Level", False, "num")
+        self.__log_level.set_from_attr(self.__item, "se_log_level", StateEngineDefaults.log_level)
+        self.__logger.header("")
+        self.__logger.header("Initialize Item {0} (Log Level set"
+                             " to {1})".format(self.id, self.__log_level))
+        self.__logger.override_loglevel(self.__log_level, self.__item)
         # get startup delay
         self.__startup_delay = StateEngineValue.SeValue(self, "Startup Delay", False, "num")
         self.__startup_delay.set_from_attr(self.__item, "se_startup_delay", StateEngineDefaults.startup_delay)
@@ -136,13 +155,17 @@ class SeItem:
 
         # Init lastconditionset items/values
         self.__lastconditionset_item_id = self.return_item_by_attribute("se_lastconditionset_item_id")
-        self.__lastconditionset_internal_id = "" if self.__lastconditionset_item_id is None else self.__lastconditionset_item_id.property.value
+        self.__lastconditionset_internal_id = "" if self.__lastconditionset_item_id is None else \
+            self.__lastconditionset_item_id.property.value
         self.__lastconditionset_item_name = self.return_item_by_attribute("se_lastconditionset_item_name")
-        self.__lastconditionset_internal_name = "" if self.__lastconditionset_item_name is None else self.__lastconditionset_item_name.property.value
+        self.__lastconditionset_internal_name = "" if self.__lastconditionset_item_name is None else \
+            self.__lastconditionset_item_name.property.value
 
         self.__states = []
         self.__templates = {}
         self.__webif_infos = OrderedDict()
+        self.__instant_leaveaction = StateEngineValue.SeValue(self, "Instant Leave Action", False, "bool")
+        self.__instant_leaveaction.set_from_attr(self.__item, "se_instant_leaveaction", StateEngineDefaults.instant_leaveaction)
         self.__repeat_actions = StateEngineValue.SeValue(self, "Repeat actions if state is not changed", False, "bool")
         self.__repeat_actions.set_from_attr(self.__item, "se_repeat_actions", True)
 
@@ -163,6 +186,7 @@ class SeItem:
         self.__variables = {
             "item.suspend_time": self.__suspend_time.get(),
             "item.suspend_remaining": 0,
+            "item.instant_leaveaction": self.__instant_leaveaction.get(),
             "current.state_id": "",
             "current.state_name": "",
             "current.conditionset_id": "",
@@ -184,7 +208,8 @@ class SeItem:
         self.__write_to_log()
 
         # start timer with startup-delay
-        startup_delay = 0 if self.__startup_delay.is_empty() else self.__startup_delay.get()
+        _startup_delay_param = self.__startup_delay.get()
+        startup_delay = 1 if self.__startup_delay.is_empty() or _startup_delay_param == 0 else _startup_delay_param
         if startup_delay > 0:
             first_run = self.shtime.now() + datetime.timedelta(seconds=startup_delay)
             scheduler_name = self.__id + "-Startup Delay"
@@ -216,40 +241,43 @@ class SeItem:
         for entry in self.__active_schedulers:
             self.__se_plugin.scheduler_remove('{}'.format(entry))
 
+    # region Updatestate ***********************************************************************************************
+    # run queue
     def run_queue(self):
-        self._update_lock.acquire()
-        while not self.__queue.empty():
+        if not self.__ab_alive:
+            self.__logger.debug("StateEngine Plugin not running (anymore). Queue not activated.")
+            return
+        self.update_lock.acquire(True, 10)
+        while not self.__queue.empty() and self.__ab_alive:
             job = self.__queue.get()
-            if job is None:
+            if job is None or self.__ab_alive is False:
+                self.__logger.debug("No jobs in queue left or plugin not active anymore")
                 break
             elif job[0] == "delayedaction":
-                (_, action, actionname, namevar, repeat_text, value) = job
-                action.real_execute(actionname, namevar, repeat_text, value)
+                (_, action, actionname, namevar, repeat_text, value, current_condition) = job
+                self.__logger.info("Running delayed action: {0} based on {1}", actionname, current_condition)
+                action.real_execute(actionname, namevar, repeat_text, value, False, current_condition)
             else:
                 (_, item, caller, source, dest) = job
-
                 item_id = item.property.path if item is not None else "(no item)"
-
                 self.__logger.update_logfile()
                 self.__logger.header("Update state of item {0}".format(self.__name))
-                #time.sleep(2)
                 if caller:
                     self.__logger.debug("Update triggered by {0} (item={1} source={2} dest={3})", caller, item_id, source, dest)
 
                 # Find out what initially caused the update to trigger if the caller is "Eval"
-                orig_caller, orig_source, orig_item = StateEngineTools.get_original_caller(self.sh, caller, source, item)
+                orig_caller, orig_source, orig_item = StateEngineTools.get_original_caller(self.__logger, caller, source, item)
                 if orig_caller != caller:
-                    text = "Eval initially triggered by {0} (item={1} source={2} value={3})"
-                    self.__logger.debug(text, orig_caller, orig_item.property.path, orig_source, orig_item.property.value)
+                    text = "{0} initially triggered by {1} (item={2} source={3} value={4})."
+                    self.__logger.debug(text, caller, orig_caller, orig_item.property.path,
+                                        orig_source, orig_item.property.value)
                 cond1 = orig_caller == StateEngineDefaults.plugin_identification
                 cond2 = caller == StateEngineDefaults.plugin_identification
                 cond1_2 = orig_source == item_id
                 cond2_2 = source == item_id
                 if (cond1 and cond1_2) or (cond2 and cond2_2):
                     self.__logger.debug("Ignoring changes from {0}", StateEngineDefaults.plugin_identification)
-                    if self._update_lock.locked():
-                        self._update_lock.release()
-                    return
+                    continue
 
                 self.__update_trigger_item = item.property.path
                 self.__update_trigger_caller = caller
@@ -263,6 +291,7 @@ class SeItem:
                 StateEngineCurrent.update()
                 self.__variables["item.suspend_time"] = self.__suspend_time.get()
                 self.__variables["item.suspend_remaining"] = -1
+                self.__variables["item.instant_leaveaction"] = self.__instant_leaveaction.get()
 
                 # get last state
                 last_state = self.__laststate_get()
@@ -280,9 +309,15 @@ class SeItem:
                 new_state = None
                 _leaveactions_run = False
                 for state in self.__states:
+                    if not self.__ab_alive:
+                        self.__logger.debug("StateEngine Plugin not running (anymore). Stop state evaluation.")
+                        return
+                    state.update_name(state.state_item)
+                    _key_name = ['{}'.format(state.id), 'name']
+                    self.update_webif(_key_name, state.name)
                     result = self.__update_check_can_enter(state)
                     # New state is different from last state
-                    if result is False and last_state == state and StateEngineDefaults.instant_leaveaction is True:
+                    if result is False and last_state == state and self.__instant_leaveaction.get() is True:
                         self.__logger.info("Leaving {0} ('{1}'). Running actions immediately.", last_state.id, last_state.name)
                         last_state.run_leave(self.__repeat_actions.get())
                         _leaveactions_run = True
@@ -302,8 +337,8 @@ class SeItem:
                             text = "No matching state found, staying at {0} ('{1}') based on conditionset {2} ('{3}')"
                             self.__logger.info(text, last_state.id, last_state.name, _last_conditionset_id, _last_conditionset_name)
                         last_state.run_stay(self.__repeat_actions.get())
-                    if self._update_lock.locked():
-                        self._update_lock.release()
+                    if self.update_lock.locked():
+                        self.update_lock.release()
                     return
                 _last_conditionset_id = self.__lastconditionset_get_id()
                 _last_conditionset_name = self.__lastconditionset_get_name()
@@ -326,7 +361,8 @@ class SeItem:
                             self.__logger.info("Maybe some actions were performed directly after leave - see log above.")
                     elif last_state is not None:
                         self.lastconditionset_set(_original_conditionset_id, _original_conditionset_name)
-                        self.__logger.info("Leaving {0} ('{1}'). Condition set was: {2}", last_state.id, last_state.name, _original_conditionset_id)
+                        self.__logger.info("Leaving {0} ('{1}'). Condition set was: {2}", last_state.id,
+                                           last_state.name, _original_conditionset_id)
                         last_state.run_leave(self.__repeat_actions.get())
                         _leaveactions_run = True
                     if new_state.conditions.count() == 0:
@@ -342,18 +378,19 @@ class SeItem:
                                            new_state.id, new_state.name, _last_conditionset_id, _last_conditionset_name)
                     self.__laststate_set(new_state)
                     new_state.run_enter(self.__repeat_actions.get())
-                if _leaveactions_run is True:
+                if _leaveactions_run is True and self.__ab_alive:
                     _key_leave = ['{}'.format(last_state.id), 'leave']
                     _key_stay = ['{}'.format(last_state.id), 'stay']
                     _key_enter = ['{}'.format(last_state.id), 'enter']
+
                     self.update_webif(_key_leave, True)
                     self.update_webif(_key_stay, False)
                     self.update_webif(_key_enter, False)
 
-                self.__logger.info("State evaluation finished")
+                self.__logger.debug("State evaluation finished")
         self.__logger.info("State evaluation queue empty.")
-        if self._update_lock.locked():
-            self._update_lock.release()
+        if self.update_lock.locked():
+            self.update_lock.release()
 
     def update_webif(self, key, value):
         def _nested_set(dic, keys, val):
@@ -384,9 +421,10 @@ class SeItem:
         if not self.__startup_delay_over:
             self.__logger.debug("Startup delay not over yet. Skipping state evaluation")
             return
-
         self.__queue.put(["stateevaluation", item, caller, source, dest])
-        self.run_queue()
+        if not self.update_lock.locked():
+            self.__logger.debug("Run queue to update state. Item: {}, caller: {}, source: {}".format(item, caller, source))
+            self.run_queue()
 
     # check if state can be entered after setting state-specific variables
     # state: state to check
@@ -394,6 +432,7 @@ class SeItem:
         try:
             self.__variables["current.state_id"] = state.id
             self.__variables["current.state_name"] = state.name
+            state.refill()
             return state.can_enter()
         except Exception as ex:
             self.__logger.warning("Problem with currentstate {0}. Error: {1}", state, ex)
@@ -402,6 +441,8 @@ class SeItem:
             self.__variables["current.state_name"] = ""
             self.__variables["current.conditionset_id"] = ""
             self.__variables["current.conditionset_name"] = ""
+
+    # endregion
 
     # region Laststate *************************************************************************************************
     # Set laststate
@@ -456,7 +497,6 @@ class SeItem:
         # add item trigger
         self.__item.add_method_trigger(self.update_state)
 
-
     # Check item settings and update if required
     # noinspection PyProtectedMember
     def __check_item_config(self):
@@ -478,7 +518,7 @@ class SeItem:
         if self.__item._trigger and self.__item._eval is None:
             self.__item._eval = "1"
 
-        # Check scheduler settings and update if requred
+        # Check scheduler settings and update if required
 
         job = self.__sh.scheduler._scheduler.get("items.{}".format(self.id))
         if job is None:
@@ -566,8 +606,11 @@ class SeItem:
         triggers = self.__verbose_triggers()
 
         # log general config
-        self.__logger.header("Configuration of item {0}".format(self.__name))
+        self.__logger.info("".ljust(80, "_"))
+        self.__logger.header("Configuration of item {0}".format(self.__id))
         self.__startup_delay.write_to_logger()
+        self.__suspend_time.write_to_logger()
+        self.__instant_leaveaction.write_to_logger()
         for t in self.__templates:
             self.__logger.info("Template {0}: {1}", t, self.__templates.get(t))
         self.__logger.info("Cycle: {0}", cycles)
@@ -689,12 +732,20 @@ class SeItem:
     # callback function that is called after the startup delay
     # noinspection PyUnusedLocal
     def __startup_delay_callback(self, item, caller=None, source=None, dest=None):
-        self.__startup_delay_over = True
         scheduler_name = self.__id + "-Startup Delay"
-        self.__se_plugin.scheduler_remove(scheduler_name)
-        self.__logger.debug('Startup Delay over. Removed scheduler {}', scheduler_name)
-        self.update_state(item, "Startup Delay", source, dest)
-        self.__add_triggers()
+        if not self.__ab_alive and self.__se_plugin.scheduler_get(scheduler_name):
+            next_run = self.shtime.now() + datetime.timedelta(seconds=3)
+            self.__logger.debug(
+                "Startup Delay over but StateEngine Plugin not running yet. Will try again at {}".format(next_run))
+            self.__se_plugin.scheduler_change(scheduler_name, next=next_run)
+            self.__se_plugin.scheduler_trigger(scheduler_name)
+        else:
+            self.__startup_delay_over = True
+            if self.__se_plugin.scheduler_get(scheduler_name):
+                self.__se_plugin.scheduler_remove(scheduler_name)
+                self.__logger.debug('Startup Delay over. Removed scheduler {}', scheduler_name)
+            self.update_state(item, "Startup Delay", source, dest)
+            self.__add_triggers()
 
     # Return an item related to the StateEngine Object Item
     # item_id: Id of item to return
@@ -709,12 +760,29 @@ class SeItem:
     # - item_id = "..twodots" will return item "my.stateengine.twodots"
     # - item_id = "..threedots" will return item "my.threedots"
     # - item_id = "..threedots.further.down" will return item "my.threedots.further.down"
-    def return_item(self, item_id: str):
-        if not isinstance(item_id, str):
-            self.__logger.info("'{0}' should be defined as string. Check your item config! Everything might run smoothely, nevertheless.".format(item_id))
+    def return_item(self, item_id):
+        if isinstance(item_id, (StateEngineStruct.SeStruct, self.__itemClass)):
             return item_id
+        if isinstance(item_id, StateEngineState.SeState):
+            return self.itemsApi.return_item(item_id.id)
+        if not isinstance(item_id, str):
+            self.__logger.info("'{0}' should be defined as string. Check your item config! "
+                               "Everything might run smoothly, nevertheless.".format(item_id))
+            return item_id
+        item_id = item_id.strip()
+        if item_id.startswith("struct:"):
+            item = None
+            _, item_id = StateEngineTools.partition_strip(item_id, ":")
+            try:
+                self.__logger.debug("Creating struct for id {}".format(item_id))
+                item = StateEngineStructs.create(self, item_id)
+            except Exception as e:
+                self.__logger.error("struct {} creation failed. Error: {}".format(item_id, e))
+            if item is None:
+                self.__logger.warning("Item '{0}' not found!".format(item_id))
+            return item
         if not item_id.startswith("."):
-            item = self.items.return_item(item_id)
+            item = self.itemsApi.return_item(item_id)
             if item is None:
                 self.__logger.warning("Item '{0}' not found!".format(item_id))
             return item
@@ -736,7 +804,7 @@ class SeItem:
         rel_item_id = item_id[parent_level:]
         if rel_item_id != "":
             result += "." + rel_item_id
-        item = self.items.return_item(result)
+        item = self.itemsApi.return_item(result)
         if item is None:
             self.__logger.warning("Determined item '{0}' does not exist.".format(result))
         return item

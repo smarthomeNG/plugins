@@ -101,7 +101,7 @@ Folgende Werte sind möglich:
 
    se_action_<Aktionsname>:
        - 'function: set'
-       - 'to: <val>'
+       - 'to: <val>/<eval>/<var>/<item>'
        - 'force: [True/False]'
 
 Das Item, das verändert werden soll, muss auf Ebene des
@@ -134,7 +134,7 @@ etc).
 
    se_action_<Aktionsname>:
        - 'function: add'
-       - 'value: <val>/<eval>/<var>'
+       - 'value: <val>/<eval>/<var>/<item>'
        - 'force: [True/False]'
 
 Das Item, das verändert werden soll, muss auf Ebene des
@@ -152,7 +152,7 @@ stehen muss, während eine Zahl das nicht sollte.
 
    se_action_<Aktionsname>:
        - 'function: remove'
-       - 'value: <val>/<eval>/<var>'
+       - 'value: <val>/<eval>/<var>/<item>'
        - 'mode: [first/last/all]'
 
 Das Item, das verändert werden soll, muss auf Ebene des
@@ -188,7 +188,7 @@ benötigt. Außerdem wird der Rückgabewert der Funktion ignoriert.
    se_action_<Aktionsname>:
        - 'function: trigger'
        - 'logic: <Logikname>'
-       - 'value: <Wert>'
+       - 'value: <val>/<eval>/<var>/<item>'
 
 Löst die Ausführung der Logik ``<Logikname>`` aus. Um beim
 Auslösen einen Wert an die Logik zu übergeben, kann dieser Wert
@@ -215,7 +215,7 @@ Items jeweils zugewiesen ist.
                type: num
                <Attributname>: 42
 
-dumm1 wird auf ``42`` gesetzt.
+dummy1 wird auf ``42`` gesetzt.
 Ein anderes Item, dummy2,
 
 .. code-block:: yaml
@@ -250,12 +250,13 @@ In den Beispielen wurden also die relativen Items suspend, manuell und retrigger
 Über den optionalen Parameter ``<delay>`` wird die Verzögerung angegeben, nach der die
 Aktion ausgeführt werden soll.
 
-Die Angabe erfolgt in Sekunden oder mit dem Suffix "m" in Minuten.
+Die Angabe erfolgt in Sekunden oder mit dem Suffix "m" in Minuten. Die Verzögerungszeit
+kann auch durch ein eval oder Item zur Laufzeit berechnet werden.
 
 .. code-block:: yaml
-
-       'delay: 30'         --> 30 Sekunden
-       'delay: 30m'        --> 30 Minuten
+       'delay: <eval>/<item>' --> Ergebnis eines Eval-Ausdrucks oder eines Items
+       'delay: 30'            --> 30 Sekunden
+       'delay: 30m'           --> 30 Minuten
 
 Der Timer zur Ausführung der Aktion nach der angegebenen
 Verzögerung wird entfernt, wenn eine gleichartige Aktion
@@ -307,8 +308,8 @@ ausgeführt werden können. In Einzelfällen kann es jedoch
 erforderlich sein, mehrere Aktionen in einer bestimmten
 Reihenfolge auszuführen. Dies kann über den Parameter
 ``order: <order>`` erfolgen. Mit diesem Attribut wird der Aktion
-eine Zahl zugewiesen. Aktionen werden in aufsteigender Reihenfolge
-der zugewiesenen Zahlen ausgeführt.
+eine Zahl zugewiesen, die als value, item oder eval vorliegen kann.
+Aktionen werden in aufsteigender Reihenfolge der zugewiesenen Zahlen ausgeführt.
 
 .. code-block:: yaml
 

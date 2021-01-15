@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
-#  Copyright 2014-     Thomas Ernst                       offline@gmx.net
+#  Copyright 2014-2018 Thomas Ernst                       offline@gmx.net
+#  Copyright 2019- Onkel Andy                       onkelandy@hotmail.com
 #########################################################################
 #  Finite state machine plugin for SmartHomeNG
 #
@@ -24,6 +25,8 @@ import logging
 startup_delay = 10
 
 suspend_time = 3600
+
+log_level = 0
 
 instant_leaveaction = False
 
