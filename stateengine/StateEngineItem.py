@@ -255,8 +255,8 @@ class SeItem:
                 break
             elif job[0] == "delayedaction":
                 (_, action, actionname, namevar, repeat_text, value, current_condition) = job
-                self.__logger.info("Running delayed action: {0}", actionname)
-                action.real_execute(actionname, namevar, repeat_text, value, current_condition)
+                self.__logger.info("Running delayed action: {0} based on {1}", actionname, current_condition)
+                action.real_execute(actionname, namevar, repeat_text, value, False, current_condition)
             else:
                 (_, item, caller, source, dest) = job
                 item_id = item.property.path if item is not None else "(no item)"
