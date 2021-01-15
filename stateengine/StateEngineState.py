@@ -105,7 +105,7 @@ class SeState(StateEngineTools.SeItemChild):
 
     # log state data
     def write_to_log(self):
-        self._abitem._initstate = self.id
+        self._abitem._initstate = self
         self._log_info("State {0}:", self.id)
         self._log_increase_indent()
         self.update_name(self.__item)

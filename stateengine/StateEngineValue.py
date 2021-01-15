@@ -445,7 +445,6 @@ class SeValue(StateEngineTools.SeItemChild):
                 if isinstance(value, list):
                     valuelist = []
                     for element in value:
-                        element = ":".join([i.strip() for i in element.split(":")])
                         try:
                             _newvalue = element if element == 'novalue' else self.__cast_func(element)
                         except Exception as ex:

@@ -775,7 +775,7 @@ class SeItem:
                 self.__logger.debug("Creating struct for id {}".format(item_id))
                 item = StateEngineStructs.create(self, item_id)
             except Exception as e:
-                self.__logger.warning("struct {} creation ERROR {}".format(item_id, e))
+                self.__logger.error("struct {} creation failed. Error: {}".format(item_id, e))
             if item is None:
                 self.__logger.warning("Item '{0}' not found!".format(item_id))
             return item
