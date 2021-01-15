@@ -28,16 +28,15 @@ __allstructs = []
 
 
 def create(_abitem, struct):
-    if struct not in __allstructs:
+    _find_result = next((item for item in __allstructs if item["name"] == struct), False)
+    if not _find_result:
         created_struct = StateEngineStruct.SeStructMain(_abitem, struct, global_struct)
-        __allstructs.append(struct)
+        __allstructs.append({'name': struct, 'struct': created_struct})
         _abitem.logger.debug("Struct {} created. ", struct)
         return created_struct
     else:
-        pass
         #_abitem.logger.debug("Struct {} already exists - skip creation. All structs: {}", struct, __allstructs)
-        return StateEngineStruct.SeStructMain(_abitem, struct, global_struct)
-
+        return _find_result.get("struct")
 
 
 def exists(_abitem, struct):
