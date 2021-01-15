@@ -43,7 +43,7 @@ from bin.smarthome import VERSION
 
 class Robvac(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.1.0"
+    PLUGIN_VERSION = "1.1.1"
 
     def __init__(self, smarthome):
         self._ip = self.get_parameter_value("ip")
@@ -60,6 +60,7 @@ class Robvac(SmartPlugin):
         self.retry_count = 1
         self._connected = False
         self._data = {}
+        self._data['state'] = 'disconnected'
         if not self.init_webinterface():
             self._init_complete = False
 
@@ -89,6 +90,7 @@ class Robvac(SmartPlugin):
                                       "Cycle {1} ".format(e, self.retry_count))
                     self.retry_count += 1
                     self._connected = False
+                    self._data['state'] = 'disconnected'
                     return False
 
     # --------------------------------------------------------------------------
@@ -303,6 +305,7 @@ class Robvac(SmartPlugin):
             else:
                 self.logger.error("Xiaomi_Robvac: Error {}".format(e))
             self._connected = False
+            self._data['state'] = 'disconnected'
 
         for x in self._data:
             if x in self.messages:
