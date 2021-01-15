@@ -84,11 +84,19 @@ parameters:
 
 item_attributes:
     # Definition of item attributes defined by this plugin
-#    visu_acl:    # defined in visu_websocket
-#        type: bool
-#        description:
-#            de: ''
-#            en: 'Simply set the visu_acl attribute to something to allow read/write access to the item'
+    visu_acl:
+        type: str
+        description:
+            de: 'Das Attribut visu_acl steuert die Zugriffsrechte der smartVISU auf das einzelene Item ()'
+            en: 'Simply set the visu_acl attribute to something to allow read/write access to the item'
+        valid_list:
+          - rw
+          - ro
+          - deny
+          - ''
+        valid_list_description:
+            de: ['Lesen/Schreiben', 'Nur Lesen', 'Kein Zugriff', 'Standardeinstellung nutzen']
+            en: ['Read/Write', 'Read Only', 'Deny access', 'Use standard setting']
 
     sv_page:
         type: str
