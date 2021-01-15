@@ -580,7 +580,7 @@ item_structs:
         settings:
             remark: Use these settings for your condition values
             type: foo
-            eval: (sh..suspendduration(sh..suspendduration(), "Init", "Start"), sh..suspendvariant.suspendduration1(sh..suspendduration0(), "Init", "Start"), sh..suspendvariant.suspendduration1(sh..suspendduration1(), "Init", "Start"), sh..suspendvariant.suspendduration2(sh..suspendduration2(), "Init", "Start"))
+            eval: (sh..suspendduration(sh..suspendduration(), "Init", "Start"), sh..suspendvariant.suspendduration0(sh..suspendduration(), "Init", "Start"), sh..suspendvariant.suspendduration1(sh..suspendvariant.suspendduration1(), "Init", "Start"), sh..suspendvariant.suspendduration2(sh..suspendvariant.suspendduration2(), "Init", "Start"))
             crontab: init = True
             
             suspendvariant:
