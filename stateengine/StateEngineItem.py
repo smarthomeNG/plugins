@@ -116,7 +116,7 @@ class SeItem:
     def __init__(self, smarthome, item, se_plugin):
         self.__item = item
         self.__logger = SeLogger.create(self.__item)
-        self.items = Items.get_instance()
+        self.itemsApi = Items.get_instance()
         self.shtime = Shtime.get_instance()
         self.update_lock = threading.Lock()
         self.__ab_alive = False
@@ -763,6 +763,8 @@ class SeItem:
     def return_item(self, item_id):
         if isinstance(item_id, (StateEngineStruct.SeStruct, self.__itemClass)):
             return item_id
+        if isinstance(item_id, StateEngineState.SeState):
+            return self.itemsApi.return_item(item_id.id)
         if not isinstance(item_id, str):
             self.__logger.info("'{0}' should be defined as string. Check your item config! "
                                "Everything might run smoothly, nevertheless.".format(item_id))
@@ -780,7 +782,7 @@ class SeItem:
                 self.__logger.warning("Item '{0}' not found!".format(item_id))
             return item
         if not item_id.startswith("."):
-            item = self.items.return_item(item_id)
+            item = self.itemsApi.return_item(item_id)
             if item is None:
                 self.__logger.warning("Item '{0}' not found!".format(item_id))
             return item
@@ -802,7 +804,7 @@ class SeItem:
         rel_item_id = item_id[parent_level:]
         if rel_item_id != "":
             result += "." + rel_item_id
-        item = self.items.return_item(result)
+        item = self.itemsApi.return_item(result)
         if item is None:
             self.__logger.warning("Determined item '{0}' does not exist.".format(result))
         return item

@@ -96,7 +96,7 @@ class SeEval(StateEngineTools.SeItemChild):
         self._log_debug("Executing method 'get_relative_itemid({0})'", subitem_id)
         try:
             if self._abitem._initstate and subitem_id == '..state_name':
-                returnvalue = self._abitem.return_item(self._abitem._initstate).property.path
+                returnvalue = self._abitem.return_item(self._abitem._initstate.id).property.path
                 self._log_debug("Return item path '{0}' during init", returnvalue)
             else:
                 returnvalue = self._abitem.return_item(subitem_id).property.path
@@ -117,7 +117,7 @@ class SeEval(StateEngineTools.SeItemChild):
         self._log_debug("Executing method 'get_relative_item({0})'", subitem_id)
         try:
             if self._abitem._initstate and subitem_id == '..state_name':
-                returnvalue = self._abitem.return_item(self._abitem._initstate)
+                returnvalue = self._abitem.return_item(self._abitem._initstate.id)
                 self._log_debug("Return item '{0}' during init", returnvalue)
             else:
                 returnvalue = self._abitem.return_item(subitem_id)
@@ -138,8 +138,7 @@ class SeEval(StateEngineTools.SeItemChild):
         self._log_debug("Executing method 'get_relative_itemvalue({0})'", subitem_id)
         try:
             if self._abitem._initstate and subitem_id == '..state_name':
-                _item = self._abitem.return_item(self._abitem._initstate)
-                returnvalue = _item.text
+                returnvalue = self._abitem._initstate.text
                 self._log_debug("Return item value '{0}' during init", returnvalue)
             else:
                 item = self._abitem.return_item(subitem_id)
@@ -168,9 +167,9 @@ class SeEval(StateEngineTools.SeItemChild):
             return
         try:
             if self._abitem._initstate and subitem_id == '..state_name':
-                returnvalue = getattr(self._abitem.return_item(self._abitem._initstate).property, prop)
+                returnvalue = getattr(self._abitem.return_item(self._abitem._initstate.id).property, prop)
                 self._log_debug("Return item property '{0}' from {1}: {2} during init", prop,
-                                self._abitem.return_item(self._abitem._initstate).property.path, returnvalue)
+                                self._abitem.return_item(self._abitem._initstate.id).property.path, returnvalue)
             else:
                 returnvalue = getattr(item.property, prop)
                 self._log_debug("Return item property {0} from {1}: {2}", prop, item.property.path, returnvalue)
@@ -197,9 +196,9 @@ class SeEval(StateEngineTools.SeItemChild):
             item = self._abitem.return_item(item)
         try:
             if self._abitem._initstate and item == '..state_name':
-                returnvalue = self._abitem.return_item(self._abitem._initstate).conf[attrib]
+                returnvalue = self._abitem.return_item(self._abitem._initstate.id).conf[attrib]
                 self._log_debug("Return item attribute '{0}' from {1}: {2} during init",
-                                attrib, self._abitem.return_item(self._abitem._initstate).property.path, returnvalue)
+                                attrib, self._abitem.return_item(self._abitem._initstate.id).property.path, returnvalue)
             else:
                 returnvalue = item.conf[attrib]
                 self._log_debug("Return item attribute {0} from {1}: {2}", attrib, item.property.path, returnvalue)
