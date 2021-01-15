@@ -63,9 +63,9 @@ controlset = {
 commandset = {
     'V200KO1B': {
         # Kessel
-        'Aussentemperatur':                           {'addr': '0800', 'len': 2, 'unit': 'IU10',    'set': False},                                          # Aussentemperatur
-        'Aussentemperatur_TP':                        {'addr': '5525', 'len': 2, 'unit': 'IU10',    'set': False},                                          # Aussentemperatur_tiefpass
-        'Aussentemperatur_Dp':                        {'addr': '5527', 'len': 2, 'unit': 'IU10',    'set': False},                                          # Aussentemperatur in Grad C (Gedaempft)
+        'Aussentemperatur':                           {'addr': '0800', 'len': 2, 'unit': 'IS10',    'set': False},                                          # Aussentemperatur
+        'Aussentemperatur_TP':                        {'addr': '5525', 'len': 2, 'unit': 'IS10',    'set': False},                                          # Aussentemperatur_tiefpass
+        'Aussentemperatur_Dp':                        {'addr': '5527', 'len': 2, 'unit': 'IS10',    'set': False},                                          # Aussentemperatur in Grad C (Gedaempft)
         'Kesseltemperatur':                           {'addr': '0802', 'len': 2, 'unit': 'IU10',    'set': False},                                          # Kesseltemperatur
         'Kesseltemperatur_TP':                        {'addr': '0810', 'len': 2, 'unit': 'IU10',    'set': False},                                          # Kesseltemperatur_tiefpass
         'Kesselsolltemperatur':                       {'addr': '555a', 'len': 2, 'unit': 'IU10',    'set': False},                                          # Kesselsolltemperatur
@@ -238,8 +238,8 @@ commandset = {
         'Anlagentyp':                                 {'addr': '00f8', 'len': 2, 'unit': 'DT',      'set': False},                                          # Heizungstyp
         'Anlagenschema':                              {'addr': '7700', 'len': 2, 'unit': 'SC',      'set': False},                                          # Anlagenschema
         'Frostgefahr':                                {'addr': '2510', 'len': 1, 'unit': 'IUBOOL',  'set': False},                                          # Frostgefahr
-        'Aussentemperatur_TP':                        {'addr': '5525', 'len': 2, 'unit': 'IU10',    'set': False},                                          # Aussentemperatur_tiefpass
-        'Aussentemperatur_Dp':                        {'addr': '5527', 'len': 2, 'unit': 'IU10',    'set': False},                                          # Aussentemperatur in Grad C (Gedaempft)
+        'Aussentemperatur_TP':                        {'addr': '5525', 'len': 2, 'unit': 'IS10',    'set': False},                                          # Aussentemperatur_tiefpass
+        'Aussentemperatur_Dp':                        {'addr': '5527', 'len': 2, 'unit': 'IS10',    'set': False},                                          # Aussentemperatur in Grad C (Gedaempft)
         'Anlagenleistung':                            {'addr': 'a38f', 'len': 2, 'unit': 'IS10',    'set': False},                                          # Anlagenleistung
         # Kessel
         'Kesseltemperatur_TP':                        {'addr': '0810', 'len': 2, 'unit': 'IU10',    'set': False},                                          # Kesseltemperatur_tiefpass
@@ -293,8 +293,9 @@ commandset = {
         # Allgemein
         'Anlagentyp':                                 {'addr': '00f8', 'len': 2, 'unit': 'DT',      'set': False},                                          # Ermittle Device Typ der Anlage
         'Anlagenschema':                              {'addr': '7700', 'len': 2, 'unit': 'SC',      'set': False},                                          # Anlagenschema
-        'Aussentemperatur':                           {'addr': '0800', 'len': 2, 'unit': 'IU10',    'set': False},                                          # Aussentemperatur_tiefpass
-        'Aussentemperatur_Dp':                        {'addr': '5527', 'len': 2, 'unit': 'IU10',    'set': False},                                          # Aussentemperatur in Grad C (Gedaempft)
+        'AnlagenSoftwareIndex':                       {'addr': '7330', 'len': 1, 'unit': 'IUNON',   'set': False},                                          # Bedienteil SoftwareIndex
+        'Aussentemperatur':                           {'addr': '0800', 'len': 2, 'unit': 'IS10',    'set': False},                                          # Aussentemperatur_tiefpass
+        'Aussentemperatur_Dp':                        {'addr': '5527', 'len': 2, 'unit': 'IS10',    'set': False},                                          # Aussentemperatur in Grad C (Gedaempft)
         'Systemtime':                                 {'addr': '088e', 'len': 8, 'unit': 'TI',      'set': True},                                           # Systemzeit
         # Kessel
         'TempKOffset':                                {'addr': '6760', 'len': 1, 'unit': 'IUINT',   'set': True, 'min_value': 10,   'max_value': 50},       # Kesseloffset KT ueber WWsoll in Grad C
@@ -330,6 +331,7 @@ commandset = {
         'Betriebsart_A1M1':                           {'addr': '2301', 'len': 1, 'unit': 'BA',      'set': True},                                           # Betriebsart A1M1
         'Aktuelle_Betriebsart_A1M1':                  {'addr': '2500', 'len': 1, 'unit': 'BA',      'set': False},                                          # Aktuelle Betriebsart A1M1
         'Sparbetrieb_A1M1':                           {'addr': '2302', 'len': 1, 'unit': 'IUBOOL',  'set': True, 'min_value': 0,   'max_value': 1},         # Sparbetrieb A1M1
+        'Partybetrieb_A1M1_Zeit':                     {'addr': '27f2', 'len': 1, 'unit': 'IUINT',   'set': True, 'min_value': 0,   'max_value': 12},        # Partyzeit M2
         'Partybetrieb_A1M1':                          {'addr': '2303', 'len': 1, 'unit': 'IUBOOL',  'set': True, 'min_value': 0,   'max_value': 1},         # Partybetrieb A1M1
         'Vorlauftemperatur_A1M1':                     {'addr': '2900', 'len': 2, 'unit': 'IU10',    'set': False},                                          # Vorlauftemperatur A1M1
         'Vorlauftemperatur_Soll_A1M1':                {'addr': '2544', 'len': 2, 'unit': 'IU10',    'set': False},                                          # Vorlauftemperatur Soll A1M1
@@ -346,21 +348,30 @@ commandset = {
         'Aktuelle_Betriebsart_M2':                    {'addr': '3500', 'len': 1, 'unit': 'BA',      'set': False},                                          # Aktuelle Betriebsart M2
         'Sparbetrieb_M2':                             {'addr': '3302', 'len': 1, 'unit': 'IUBOOL',  'set': True, 'min_value': 0,   'max_value': 1},         # Sparbetrieb
         'Partybetrieb_M2':                            {'addr': '3303', 'len': 1, 'unit': 'IUBOOL',  'set': True, 'min_value': 0,   'max_value': 1},         # Partybetrieb A1M1
+        'Partybetrieb_M2_Zeit':                       {'addr': '37f2', 'len': 1, 'unit': 'IUINT',   'set': True, 'min_value': 0,   'max_value': 12},        # Partyzeit M2
         'Raumtemperatur_Soll_Normalbetrieb_M2':       {'addr': '3306', 'len': 1, 'unit': 'ISNON',   'set': True, 'min_value': 4,   'max_value': 37},        # Raumtemperatur Soll Normalbetrieb
         'Raumtemperatur_Soll_Red_Betrieb_M2':         {'addr': '3307', 'len': 1, 'unit': 'ISNON',   'set': True, 'min_value': 4,   'max_value': 37},        # Raumtemperatur Soll Reduzierter Betrieb
         'Raumtemperatur_Soll_Party_Betrieb_M2':       {'addr': '3308', 'len': 1, 'unit': 'ISNON',   'set': True, 'min_value': 4,   'max_value': 37},        # Raumtemperatur Soll Party Betrieb
         'Neigung_Heizkennlinie_M2':                   {'addr': '3305', 'len': 1, 'unit': 'IU10',    'set': True, 'min_value': 0.2, 'max_value': 3.5},       # Neigung Heizkennlinie M2
         'Niveau_Heizkennlinie_M2':                    {'addr': '3304', 'len': 1, 'unit': 'ISNON',   'set': True, 'min_value': -13, 'max_value': 40},        # Niveau Heizkennlinie M2
         'MischerM2':                                  {'addr': '354c', 'len': 1, 'unit': 'IUPR',    'set': False},                                          # Ermittle Mischerposition M2
+        'MischerM2Auf':                               {'addr': '084d', 'len': 1, 'unit': 'IUBOOL',  'set': True, 'min_value': 0,   'max_value': 1},         # MischerM2 Auf 0=AUS;1=EIN
+        'MischerM2Zu':                                {'addr': '084c', 'len': 1, 'unit': 'IUBOOL',  'set': True, 'min_value': 0,   'max_value': 1},         # MischerM2 Zu 0=AUS;1=EIN
         'Vorlauftemperatur_Soll_M2':                  {'addr': '37c6', 'len': 2, 'unit': 'IU10',    'set': True, 'min_value': 10,  'max_value': 80},        # Vorlauftemperatur Soll
         'Vorlauftemperatur_M2':                       {'addr': '080c', 'len': 2, 'unit': 'IU10',    'set': False},                                          # Vorlauftemperatur Ist
+        'Vorlauftemperatur_min_M2':                   {'addr': '37c5', 'len': 1, 'unit': 'ISNON',   'set': True, 'min_value': 1,   'max_value': 127},       # Minimalbegrenzung der Vorlauftemperatur
+        'Vorlauftemperatur_max_M2':                   {'addr': '37c6', 'len': 1, 'unit': 'ISNON',   'set': True, 'min_value': 1,   'max_value': 127},       # Maximalbegrenzung der Vorlauftemperatur
         'Heizkreispumpenlogik_M2':                    {'addr': '37a5', 'len': 1, 'unit': 'ISNON',   'set': True, 'min_value': 0,   'max_value': 15},        # 0=ohne HPL-Funktion, 1=AT > RTsoll + 5 K, 2=AT > RTsoll + 4 K, 3=AT > RTsoll + 3 K, 4=AT > RTsoll + 2 K, 5=AT > RTsoll + 1 K, 6=AT > RTsoll, 7=AT > RTsoll - 1 K, 8=AT > RTsoll - 2 K, 9=AT > RTsoll - 3 K, 10=AT > RTsoll - 4 K, 11=AT > RTsoll - 5 K, 12=AT > RTsoll - 6 K, 13=AT > RTsoll - 7 K, 14=AT > RTsoll - 8 K, 15=AT > RTsoll - 9 K
         'Sparschaltung_M2':                           {'addr': '37a6', 'len': 1, 'unit': 'ISNON',   'set': True, 'min_value': 5,   'max_value': 36},        # AbsolutSommersparschaltung
         'StatusKlemme2':                              {'addr': '3904', 'len': 1, 'unit': 'IUINT',   'set': False},                                          # 0=OK, 1=Kurzschluss, 2=nicht vorhanden, 3-5=Referenzfehler, 6=nicht vorhanden
         'StatusKlemme17':                             {'addr': '3905', 'len': 1, 'unit': 'IUINT',   'set': False},                                          # 0=OK, 1=Kurzschluss, 2=nicht vorhanden, 3-5=Referenzfehler, 6=nicht vorhanden
         # Warmwasser
+        'Warmwasser_Status':                          {'addr': '650A', 'len': 1, 'unit': 'IUNON',   'set': False},                                          # 0=Ladung inaktiv, 1=in Ladung, 2=im Nachlauf
+        'Warmwasser_KesselOffset':                    {'addr': '6760', 'len': 1, 'unit': 'IUINT',   'set': True, 'min_value': 10,  'max_value': 50},        # Warmwasser Kessel Offset in K
+        'Warmwasser_BeiPartyDNormal':                 {'addr': '6764', 'len': 1, 'unit': 'IUNON',   'set': True, 'min_value': 0,  'max_value': 2},          # WW Heizen bei Party 0=AUS, 1=nach Schaltuhr, 2=EIN
         'Warmwasser_Temperatur':                      {'addr': '0804', 'len': 2, 'unit': 'IU10',    'set': False},                                          # Warmwassertemperatur in Grad C
         'Warmwasser_Solltemperatur':                  {'addr': '6300', 'len': 1, 'unit': 'ISNON',   'set': True, 'min_value': 10,  'max_value': 80},        # Warmwasser-Solltemperatur
+        'Warmwasser_SolltemperaturAktuell':           {'addr': '6500', 'len': 1, 'unit': 'IU10'  ,  'set': False},                                          # Warmwasser-Solltemperatur aktuell
         'Warmwasser_SollwertMax':                     {'addr': '675a', 'len': 1, 'unit': 'IUBOOL',  'set': False},                                          # 0=inaktiv, 1=aktiv
         # Ferienprogramm HK_A1M1
         'Ferienprogramm_A1M1':                        {'addr': '2535', 'len': 1, 'unit': 'IUBOOL',  'set': False},                                          # Ferienprogramm A1M1 0=inaktiv 1=aktiv
