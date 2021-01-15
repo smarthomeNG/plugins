@@ -7,7 +7,7 @@ plugin:
         en: 'Store data in an InfluxData TSDB'
     maintainer: rthill
     tester: brandst
-    state: ready
+    state: deprecated
     keywords: database
     documentation: https://github.com/smarthomeNG/smarthome/wiki/Installation-Influx-Grafana        # url of documentation (wiki) page
 

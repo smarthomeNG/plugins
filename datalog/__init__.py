@@ -24,12 +24,13 @@ import time
 import threading
 
 from lib.model.smartplugin import SmartPlugin
-
+from lib.shtime import Shtime
+shtime = Shtime.get_instance()
 
 class DataLog(SmartPlugin):
 
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = '1.5.0'
+    PLUGIN_VERSION = '1.5.1'
 
     filepatterns = {}
     logpatterns = {}
@@ -39,7 +40,6 @@ class DataLog(SmartPlugin):
     _buffer_lock = None
 
     def __init__(self, smarthome, *args, **kwargs):
-        self._sh = smarthome
         self.path = self.get_parameter_value('path')
         self.logger = logging.getLogger(__name__)
 
@@ -90,7 +90,7 @@ class DataLog(SmartPlugin):
 
     def run(self):
         self.alive = True
-        self._sh.scheduler.add('DataLog', self._dump, cycle=self.cycle)
+        self.scheduler_add('DataLog', self._dump, cycle=self.cycle)
 
     def stop(self):
         self.alive = False
@@ -134,11 +134,11 @@ class DataLog(SmartPlugin):
 
         if item.id() in self._items:
             for log in self._items[item.id()]:
-                self._buffer[log].append({ 'time' : self._sh.now(), 'item' : item.id(), 'value' : item() })
+                self._buffer[log].append({ 'time' : shtime.now(), 'item' : item.id(), 'value' : item() })
 
     def _dump(self):
         data = {}
-        now = self._sh.now()
+        now = shtime.now()
         handles = {}
 
         for log in self._buffer:

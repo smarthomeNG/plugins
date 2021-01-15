@@ -101,7 +101,7 @@ Folgende Werte sind möglich:
 
    se_action_<Aktionsname>:
        - 'function: set'
-       - 'to: <val>'
+       - 'to: <val>/<eval>/<var>/<item>'
        - 'force: [True/False]'
 
 Das Item, das verändert werden soll, muss auf Ebene des
@@ -134,7 +134,7 @@ etc).
 
    se_action_<Aktionsname>:
        - 'function: add'
-       - 'value: <val>/<eval>/<var>'
+       - 'value: <val>/<eval>/<var>/<item>'
        - 'force: [True/False]'
 
 Das Item, das verändert werden soll, muss auf Ebene des
@@ -152,7 +152,7 @@ stehen muss, während eine Zahl das nicht sollte.
 
    se_action_<Aktionsname>:
        - 'function: remove'
-       - 'value: <val>/<eval>/<var>'
+       - 'value: <val>/<eval>/<var>/<item>'
        - 'mode: [first/last/all]'
 
 Das Item, das verändert werden soll, muss auf Ebene des
@@ -188,7 +188,7 @@ benötigt. Außerdem wird der Rückgabewert der Funktion ignoriert.
    se_action_<Aktionsname>:
        - 'function: trigger'
        - 'logic: <Logikname>'
-       - 'value: <Wert>'
+       - 'value: <val>/<eval>/<var>/<item>'
 
 Löst die Ausführung der Logik ``<Logikname>`` aus. Um beim
 Auslösen einen Wert an die Logik zu übergeben, kann dieser Wert
@@ -215,7 +215,7 @@ Items jeweils zugewiesen ist.
                type: num
                <Attributname>: 42
 
-dumm1 wird auf ``42`` gesetzt.
+dummy1 wird auf ``42`` gesetzt.
 Ein anderes Item, dummy2,
 
 .. code-block:: yaml
@@ -245,23 +245,47 @@ In den Beispielen wurden also die relativen Items suspend, manuell und retrigger
 .. rubric:: Zusätzliche Parameter
    :name: parameter
 
-**delay: <delay>**
+**delay: <int>**
 
 Über den optionalen Parameter ``<delay>`` wird die Verzögerung angegeben, nach der die
 Aktion ausgeführt werden soll.
 
-Die Angabe erfolgt in Sekunden oder mit dem Suffix "m" in Minuten.
+Die Angabe erfolgt in Sekunden oder mit dem Suffix "m" in Minuten. Die Verzögerungszeit
+kann auch durch ein eval oder Item zur Laufzeit berechnet werden.
 
 .. code-block:: yaml
-
-       'delay: 30'         --> 30 Sekunden
-       'delay: 30m'        --> 30 Minuten
+       'delay: <eval>/<item>' --> Ergebnis eines Eval-Ausdrucks oder eines Items
+       'delay: 30'            --> 30 Sekunden
+       'delay: 30m'           --> 30 Minuten
 
 Der Timer zur Ausführung der Aktion nach der angegebenen
 Verzögerung wird entfernt, wenn eine gleichartige Aktion
 ausgeführt werden soll (egal ob verzögert oder nicht).
 
-**repeat: <repeat>**
+**instanteval: <bool>**
+
+Über den optionalen Parameter ``<instanteval>`` wird für verzögerte Aktionen angegeben,
+ob etwaige eval Ausdrücke sofort evaluiert und gespeichert werden sollen oder
+die Evaluierung erst zum Ausführungszeitpunkt stattfinden soll.
+
+.. code-block:: yaml
+
+       'instanteval: [True|False]'
+
+Beispiel: Ein Item soll auf einen Wert aus einem Item gesetzt werden. Das Item wird
+anhand des gerade aktuellen Zustands durch ein eval eruiert:
+
+.. code-block:: yaml
+
+        eval:sh.return_item(se_eval.get_relative_itemid('..settings.{}'.format(se_eval.get_relative_itemvalue('..state_name'))))()
+
+Angenommen, der aktuelle Zustand heißt ``regen``, so wird durch den obigen Code das Item
+auf den Wert aus ``settings.regen`` gesetzt. Ändert sich aber während der Verzögerungszeit (delay)
+der Zustand auf ``sonne``, würde zum Ausführungszeitpunkt der Aktion der Wert aus dem Item ``settings.sonne``
+herangezogen werden. Wenn dies nicht erwünscht ist und das Item also auf den Vorgabewert des
+ursprünglichen Zustands (regen) gesetzt werden soll, kann der Parameter ``instanteval: True`` gesetzt werden.
+
+**repeat: <bool>**
 
 .. code-block:: yaml
 
@@ -269,9 +293,12 @@ ausgeführt werden soll (egal ob verzögert oder nicht).
 
 Über das Attribut wird unabhängig vom globalen Setting für das
 stateengine Item festgelegt, ob eine Aktion auch beim erneuten
-Eintritt in den Status ausgeführt wird oder nicht.
+Eintritt in den Status ausgeführt wird oder nicht. Das globale Setting
+kann im Regelwerk Item unter rules durch ``se_repeat_actions: false`` dezidiert
+auf False gesetzt werden. Standardmäßig, wenn das Attribut also nicht angegeben wird,
+werden Aktionen wiederholt ausgeführt.
 
-**order: <order>**
+**order: <int>**
 
 Die Reihenfolge, in der die Aktionen ausgeführt werden, ist nicht
 zwingend die Reihenfolge in der die Attribute definiert sind. In
@@ -281,8 +308,8 @@ ausgeführt werden können. In Einzelfällen kann es jedoch
 erforderlich sein, mehrere Aktionen in einer bestimmten
 Reihenfolge auszuführen. Dies kann über den Parameter
 ``order: <order>`` erfolgen. Mit diesem Attribut wird der Aktion
-eine Zahl zugewiesen. Aktionen werden in aufsteigender Reihenfolge
-der zugewiesenen Zahlen ausgeführt.
+eine Zahl zugewiesen, die als value, item oder eval vorliegen kann.
+Aktionen werden in aufsteigender Reihenfolge der zugewiesenen Zahlen ausgeführt.
 
 .. code-block:: yaml
 
@@ -292,13 +319,13 @@ der zugewiesenen Zahlen ausgeführt.
 
 .. code-block:: yaml
 
-      'conditionset: ["enter_(.*)_test", "eval:sh.itemX.property.name"]'
+      'conditionset: ["regex:enter_(.*)_test", "eval:sh.itemX.property.name"]'
 
 Über das Attribut wird festgelegt, dass die Aktion nur dann ausgeführt werden
 soll, wenn der Zustand durch die angegebene Bedingungsgruppe eingenommen wurde.
 Zum Vergleich wird immer der volle Pfad der Bedingungsgruppe herangezogen.
-Conditionset erlaubt sowohl eine Liste als auch reguläre Ausdrücke, wodurch
-nicht zwingend der komplette Pfad der Bedingungsgruppe bekannt sein muss.
+Conditionset erlaubt sowohl einzelne Werte mittels value, regex oder eval, als auch eine Liste.
+Wichtig ist, reguläre Ausdrücke unter Anführungszeichen zu setzen (und dann Hochkomma um den gesamten Eintrag).
 Der gesamte Pfad könnte wie folgt evaluiert werden:
 
 .. code-block:: yaml
@@ -321,12 +348,12 @@ regnet hingegen auf den Wert, der in den Settings hinterlegt ist.
               - 'function: set'
               - 'to: item:..settings.abend.hoehe'
               - 'order: 1'
-              - 'conditionset: (.*)enter(?!_regen)(.*)'
+              - 'conditionset: regex:(.*)enter(?!_regen)(.*)'
             se_action_hoehe_regen:
               - 'function: set'
               - 'to: 100'
               - 'order: 1'
-              - 'conditionset: (.*)enter_regen'
+              - 'conditionset: regex:(.*)enter_regen'
 
         enter_normal:
             diverse Bedingungen

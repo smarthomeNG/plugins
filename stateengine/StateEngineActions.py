@@ -21,7 +21,8 @@
 from . import StateEngineAction
 from . import StateEngineTools
 import ast
-import time
+import threading
+import queue
 
 
 # Class representing a list of actions
@@ -42,9 +43,13 @@ class SeActions(StateEngineTools.SeItemChild):
         self.__actions = {}
         self.__unassigned_delays = {}
         self.__unassigned_repeats = {}
+        self.__unassigned_instantevals = {}
         self.__unassigned_orders = {}
         self.__unassigned_conditionsets = {}
         self.__unassigned_modes = {}
+        self.__queue = queue.Queue()
+        self._action_lock = threading.Lock()
+        self.__ab_alive = self._abitem.ab_alive
 
     # Return number of actions in list
     def count(self):
@@ -56,6 +61,7 @@ class SeActions(StateEngineTools.SeItemChild):
     def update(self, attribute, value):
         # Split attribute in function and action name
         func, name = StateEngineTools.partition_strip(attribute, "_")
+        _count = 0
         try:
             if func == "se_delay":
                 # set delay
@@ -64,6 +70,14 @@ class SeActions(StateEngineTools.SeItemChild):
                     self.__unassigned_delays[name] = value
                 else:
                     self.__actions[name].update_delay(value)
+                return
+            elif func == "se_instanteval":
+                # set instant calculation
+                if name not in self.__actions:
+                    # If we do not have the action yet (repeat-attribute before action-attribute), ...
+                    self.__unassigned_instantevals[name] = value
+                else:
+                    self.__actions[name].update_instanteval(value)
                 return
             elif func == "se_repeat":
                 # set repeat
@@ -99,6 +113,7 @@ class SeActions(StateEngineTools.SeItemChild):
                 return
             elif func == "se_action":  # and name not in self.__actions:
                 self.__handle_combined_action_attribute(name, value)
+                _count += 1
             elif self.__ensure_action_exists(func, name):
                 # update action
                 self.__actions[name].update(value)
@@ -106,6 +121,7 @@ class SeActions(StateEngineTools.SeItemChild):
             if name in self.__actions:
                 del self.__actions[name]
             self._log_warning("Ignoring action {0} because: {1}", attribute, ex)
+        return _count
 
     # ensure that action exists and create if missing
     # func: action function
@@ -143,6 +159,10 @@ class SeActions(StateEngineTools.SeItemChild):
             action.update_delay(self.__unassigned_delays[name])
             del self.__unassigned_delays[name]
 
+        if name in self.__unassigned_instantevals:
+            action.update_instanteval(self.__unassigned_instantevals[name])
+            del self.__unassigned_instantevals[name]
+
         if name in self.__unassigned_repeats:
             action.update_repeat(self.__unassigned_repeats[name])
             del self.__unassigned_repeats[name]
@@ -170,7 +190,8 @@ class SeActions(StateEngineTools.SeItemChild):
             raise ValueError("Attribute 'se_action_{0}': Value must be a string or a list!".format(name))
 
         # parse parameters
-        parameter = {'function': None, 'force': None, 'repeat': None, 'delay': 0, 'order': None, 'conditionset': None, 'mode': None}
+        parameter = {'function': None, 'force': None, 'repeat': None, 'delay': 0, 'order': None, 'conditionset': None,
+                     'mode': None, 'instanteval': None}
         for entry in value_list:
             if isinstance(entry, dict):
                 entry = list("{!s}:{!s}".format(k, v) for (k, v) in entry.items())[0]
@@ -191,13 +212,15 @@ class SeActions(StateEngineTools.SeItemChild):
             raise ValueError("Attribute 'se_action_{0}: Parameter 'function' must be set!".format(name))
         if parameter['function'] not in ('set', 'force', 'run', 'byattr', 'trigger', 'special',
                                          'add', 'remove', 'removeall', 'removefirst', 'removelast'):
-            raise ValueError("Attribute 'se_action_{0}: Invalid value '{1}' for parameter 'function'!".format(name, parameter['function']))
+            raise ValueError("Attribute 'se_action_{0}: Invalid value '{1}' for parameter "
+                             "'function'!".format(name, parameter['function']))
 
         # handle force
         if parameter['force'] is not None:
             # Parameter force is supported only for type "set" and type "force"
             if parameter['function'] != "set" and parameter['function'] != "force":
-                self._log_warning("Attribute 'se_action_{0}': Parameter 'force' not supported for function '{1}'", name, parameter['function'])
+                self._log_warning("Attribute 'se_action_{0}': Parameter 'force' not supported "
+                                  "for function '{1}'", name, parameter['function'])
             elif parameter['force'] and parameter['function'] == "set":
                 # Convert type "set" with force=True to type "force"
                 self._log_info("Attribute 'se_action_{0}': Parameter 'function' changed from 'set' to 'force', "
@@ -213,7 +236,8 @@ class SeActions(StateEngineTools.SeItemChild):
         if parameter['mode'] is not None:
             # Parameter mode is supported only for type "remove"
             if parameter['function'] != "remove":
-                self._log_warning("Attribute 'se_action_{0}': Parameter 'mode' not supported for function '{1}'", name, parameter['function'])
+                self._log_warning("Attribute 'se_action_{0}': Parameter 'mode' not supported for function '{1}'",
+                                  name, parameter['function'])
             elif parameter['mode'] and parameter['function'] == "remove":
                 # Convert type "remove" with mode to specific remove type
                 if parameter['mode'] in possible_mode_list:
@@ -293,6 +317,8 @@ class SeActions(StateEngineTools.SeItemChild):
 
         # add additional parameters
         if exists:
+            if parameter['instanteval'] is not None:
+                self.__actions[name].update_instanteval(parameter['instanteval'])
             if parameter['repeat'] is not None:
                 self.__actions[name].update_repeat(parameter['repeat'])
             if parameter['delay'] != 0:
@@ -307,7 +333,8 @@ class SeActions(StateEngineTools.SeItemChild):
     # noinspection PyMethodMayBeStatic
     def __raise_missing_parameter_error(self, parameter, param_name):
         if param_name not in parameter or parameter[param_name] is None:
-            raise ValueError("Attribute 'se_action_{0}: Parameter '{1}' must be set for function '{2}'!".format(parameter['action'], param_name, parameter['function']))
+            raise ValueError("Attribute 'se_action_{0}: Parameter '{1}' must be set for "
+                             "function '{2}'!".format(parameter['action'], param_name, parameter['function']))
 
     # Check the actions optimize and complete them
     # item_state: item to read from
@@ -319,7 +346,7 @@ class SeActions(StateEngineTools.SeItemChild):
                 raise ValueError("State '{0}', Action '{1}': {2}".format(item_state.property.path, name, ex))
 
     # Execute all actions
-    # is_repeat: Inidicate if this is a repeated action without changing the state
+    # is_repeat: Indicate if this is a repeated action without changing the state
     # item_allow_repeat: Is repeating actions generally allowed for the item?
     # state: state item triggering the action
     # additional_actions: SeActions-Instance containing actions which should be executed, too
@@ -331,15 +358,23 @@ class SeActions(StateEngineTools.SeItemChild):
             for name in additional_actions.__actions:
                 actions.append((additional_actions.__actions[name].get_order(), additional_actions.__actions[name]))
         for order, action in sorted(actions, key=lambda x: x[0]):
-            i = 0
-            while len(self._abitem.action_in_progress) > 0:
-                self._log_info("{} is already running. Postponing current action {} with order {} for one second", self._abitem.action_in_progress, action._name, order)
-                i += 1
-                time.sleep(1)
-                if i >= 10:
-                    self._log_warning("10 seconds wait time for action {} is over. Running it now.", action)
-                    break
+            self.__queue.put([action, is_repeat, allow_item_repeat, state])
+        self.__ab_alive = self._abitem.ab_alive
+        if not self.__ab_alive:
+            self._log_debug("StateEngine Plugin not running (anymore). Action queue not activated.")
+            return
+        self._action_lock.acquire()
+        while not self.__queue.empty() and self.__ab_alive:
+            job = self.__queue.get()
+            self.__ab_alive = self._abitem.ab_alive
+            if job is None or self.__ab_alive is False:
+                self._log_debug("No jobs in action queue left or plugin not active anymore.")
+                break
+            (action, is_repeat, allow_item_repeat, state) = job
             action.execute(is_repeat, allow_item_repeat, state)
+
+        if self._action_lock.locked():
+            self._action_lock.release()
 
     def get(self):
         actions = []
@@ -357,9 +392,9 @@ class SeActions(StateEngineTools.SeItemChild):
             actions.append((self.__actions[name].get_order(), self.__actions[name]))
         for order, action in sorted(actions, key=lambda x: x[0]):
             # noinspection PyProtectedMember
-            self._log_info("Action '{0}':", action._name)
+            self._log_info("Action '{0}':", action.name)
             self._log_increase_indent()
-            self._abitem._initactionname = action._name
+            self._abitem._initactionname = action.name
             action.write_to_logger()
             self._abitem._initactionname = None
             self._log_decrease_indent()

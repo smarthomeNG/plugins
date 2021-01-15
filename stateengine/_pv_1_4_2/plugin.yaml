@@ -333,13 +333,13 @@ item_structs:
         state_id:
             remark: The id/path of the actual state is assigned to this item by the stateengine
             type: str
-            visu_acl: r
+            visu_acl: ro
             cache: True
 
         state_name:
             remark: The name of the actual state is assigned to this item by the stateengine
             type: str
-            visu_acl: r
+            visu_acl: ro
             cache: True
 
         rules:

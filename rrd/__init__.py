@@ -46,7 +46,7 @@ class RRD(SmartPlugin):
     """
     Main class of the Plugin. Does all plugin specific stuff and provides
     the update functions for the items
-    The Module **rrdtool** from Pypi.org is used to access rrd. 
+    The Module **rrdtool** from Pypi.org is used to access rrd.
     Documentation can be found at `<https://pythonhosted.org/rrdtool/>`_
     """
 
@@ -67,8 +67,16 @@ class RRD(SmartPlugin):
         # get the parameters for the plugin (as defined in metadata plugin.yaml):
         rrd_dir = self.get_parameter_value('rrd_dir')
         if not rrd_dir:
-            rrd_dir = self.get_sh().base_dir + '/var/rrd/'
+            rrd_dir = os.path.join(self.get_sh().base_dir, 'var', 'rrd')
+        if not rrd_dir.endswith(os.sep):
+            rrd_dir += os.sep
         self._rrd_dir = rrd_dir
+        if not os.path.exists(self._rrd_dir):
+            try:
+                os.makedirs(self._rrd_dir)
+            except:
+                self.logger.error("Unable to create directory '{}'".format(self._rrd_dir))
+
         self._rrds = {}
         self.step = self.get_parameter_value('step')
 
@@ -136,7 +144,7 @@ class RRD(SmartPlugin):
         if self.has_iattr(item.conf,'rrd_step'):
             rrd_step = self.get_iattr_value(item.conf,'rrd_step')
 
-        
+
         no_series = False
         if self.has_iattr(item.conf,'rrd_no_series'):
             no_series = self.get_iattr_value(item.conf,'rrd_no_series')
@@ -146,7 +154,7 @@ class RRD(SmartPlugin):
         else:
             item.series = functools.partial(self._series, item=item.id())
             item.db = functools.partial(self._single, item=item.id())
-        
+
         self._rrds[item.id()] = {'item': item, 'id': item.id(), 'rrdb': rrdb, 'max': rrd_max, 'min': rrd_min, 'step': rrd_step, 'type': rrd_type}
 
         if self.get_iattr_value(item.conf, 'rrd') == 'init':
@@ -226,7 +234,7 @@ class RRD(SmartPlugin):
         except Exception as e:
             self.logger.warning("error reading {0} data: {1}".format(item, e))
             return None
-        
+
         # postprocess values
         if sid is None:
             sid = "{}|{}|{}|{}|{}".format(item,func,start,end,count)
@@ -249,9 +257,9 @@ class RRD(SmartPlugin):
     def _single(self, func, start='1d', end='now', item=None):
         """
         Reads a single value from rrd.
-        
+
         :param func: String with consolidating function 'avg', 'min', 'max', 'last' to use
-        :param start: String containing a start time 
+        :param start: String containing a start time
         :param end: String containing a start time
         """
         if item in self._rrds:
@@ -259,7 +267,7 @@ class RRD(SmartPlugin):
         else:
             self.logger.warning("RRDtool: not enabled for {}".format(item))
             return
-        
+
         # prepare consolidation function
         query = ["{}".format(rrd['rrdb'])]
         if func == 'avg':
@@ -282,7 +290,7 @@ class RRD(SmartPlugin):
         else:
             self.logger.warning("RRDtool: unsupported consolidation function {} for {}".format(func, item))
             return
-        
+
         # set time frame for query
         if start.isdigit():
             query.extend(['--start', "{}".format(start)])
@@ -293,7 +301,7 @@ class RRD(SmartPlugin):
                 query.extend(['--end', "{}".format(end)])
             else:
                 query.extend(['--end', "now-{}".format(end)])
-        
+
         # execute query
         try:
             meta, name, data = rrdtool.fetch(*query)
@@ -303,7 +311,7 @@ class RRD(SmartPlugin):
 
         # unpack returned values
         values = [v[0] for v in data if v[0] is not None]
-        
+
         # postprocess for consolidation
         if func == 'avg':
             if len(values) > 0:
@@ -336,7 +344,7 @@ class RRD(SmartPlugin):
         if rrd['max']:
             args.append('RRA:MAX:0.5:{}:1825'.format(int(86400 / rrd['step'])))  # 24h/5y
         args.extend(['--step', str(rrd['step'])])
-        
+
         if rrd['type'] == 'GAUGE':
             args.append('RRA:AVERAGE:0.5:1:{}'.format(int(86400 / rrd['step']) * 7 + 8))  # 7 days
             args.append('RRA:AVERAGE:0.5:{}:1536'.format(int(1800 / rrd['step'])))  # 0.5h/32 days

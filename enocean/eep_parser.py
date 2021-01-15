@@ -262,6 +262,29 @@ class EEP_Parser():
         results['AD_2'] = payload[0] * 1.8 / pow(2, 8)
         return results
 
+    def _parse_eep_A5_0G_03(self, payload, status):
+        '''
+        4 Byte communication(4BS) Telegramm
+        Status command from bidirectional shutter actors:
+            Eltako FSB61NP-230V, FSB71, FJ62/12-36V DC, FJ62NP-230V
+        If actor is stopped during run it sends the feedback of runtime and the direction
+        This enables to calculate the actual shutter position
+        Key Description:
+            MOVE: runtime of movement in s (with direction: "-" = up; "+" = down)
+        '''
+        self.logger.debug("enocean: eep-parser processing A5_0G_03 4BS telegram: shutter movement feedback")
+        self.logger.debug("enocean: eep-parser input payload = [{}]".format(', '.join(['0x%02X' % b for b in payload])))
+        self.logger.debug("enocean: eep-parser input status = {}".format(status))
+        results = {}
+        runtime_s = ((payload[0] << 8) + payload[1]) / 10
+        if (payload[2] == 1):
+            self.logger.debug("enocean: shutter moved {} s 'upwards'".format(runtime_s))
+            results['MOVE'] = runtime_s * -1
+        elif (payload[2] == 2):
+            self.logger.debug("enocean: shutter moved {} s 'downwards'".format(runtime_s))
+            results['MOVE'] = runtime_s
+        return results
+
 #####################################################
 ### --- Definitions for RORG = D2  / ORG = D2 --- ###
 #####################################################
@@ -361,32 +384,7 @@ class EEP_Parser():
             results['A'] = True
         elif (payload[0] == 0x10):
             results['A'] = False
-        return results
-    
-    def _parse_eep_F6_02_03_01(self, payload, status):
-        '''
-        Repeated switch communication(RPS) Telegramm
-        Status command from bidirectional shutter actors
-        Repeated switch Command for Eltako FSB61NP-230V, FSB71
-        Key Description:
-        STATUS: status what the shutter does
-        B: status of the shutter actor (command) 
-        '''
-        self.logger.debug("enocean: processing F6_02_03_01: shutter actor")
-        results = {}
-        if (payload[0] == 0x70):
-            results['STATUS'] = 'upper end position'
-            results['B'] = 0
-        elif (payload[0] == 0x50):
-            results['STATUS'] = 'lower end position'
-            results['B'] = 0
-        elif (payload[0] == 0x01):
-            results['STATUS'] = 'Start movin up'
-            results['B'] = 1
-        elif (payload[0] == 0x02):
-            results['STATUS'] = 'Start movin down'
-            results['B'] = 2
-        return results
+        return results 
 
     def _parse_eep_F6_10_00(self, payload, status):
         self.logger.debug("enocean: processing F6_10_00: Mechanical Handle")
@@ -400,4 +398,30 @@ class EEP_Parser():
             results['STATUS'] = 2
         else:
             self.logger.error("enocean: error in F6_10_00 handle status, payload: {0} unknown".format(payload[0]))
+        return results
+
+    def _parse_eep_F6_0G_03(self, payload, status):
+        '''
+        Repeated switch communication(RPS) Telegramm
+        Status command from bidirectional shutter actors
+        Repeated switch Command for Eltako FSB61NP-230V, FSB71
+        Key Description:
+            POSITION: 0 -> upper endposition; 255 -> lower endposition
+            STATUS: Info what the shutter does
+            B: status of the shutter actor (command) 
+        '''
+        self.logger.debug("enocean: processing F6_0G_03: shutter actor")
+        results = {}
+        if (payload[0] == 0x70):
+            results['POSITION'] = 0
+            results['B'] = 0
+        elif (payload[0] == 0x50):
+            results['POSITION'] = 255
+            results['B'] = 0
+        elif (payload[0] == 0x01):
+            results['STATUS'] = 'Start movin up'
+            results['B'] = 1
+        elif (payload[0] == 0x02):
+            results['STATUS'] = 'Start movin down'
+            results['B'] = 2
         return results

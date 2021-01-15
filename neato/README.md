@@ -1,6 +1,6 @@
 # Neato/Vorwerk Vacuum Robot
 
-#### Version 1.0.0
+#### Version 1.6.4
 
 This plugin connects your Neato (https://www.neatorobotics.com/) or Vorwerk Robot with SmarthomeNG.
 - Command start, stop, pause, resume cleaning and trigger sendToBase and FindMe mode.
@@ -8,10 +8,18 @@ This plugin connects your Neato (https://www.neatorobotics.com/) or Vorwerk Robo
 
 ## Change history
 
-### Changes Since version 1.x.x
+V 1.6.4    fixed readout for docking state and go to base availability
+           combined all neato attribues into one
 
-- No Changes so far
+V 1.6.3    changed attribute charge_percentage from string to integer
+           added alert text output, e.g. dustbin full
+           Write obtained OAuth2 token obtained via web interface directly to config plugin.yaml
 
+V 1.6.2    Added webinterface
+
+V 1.6.1    Added new Vorwerk Oauth2 based authentication feature (compatible with myKobold APP)
+
+V 1.6.0    Initial working version
 
 ## Requirements
 
@@ -39,7 +47,14 @@ This plugin connects your Neato (https://www.neatorobotics.com/) or Vorwerk Robo
 
 ### 1) /smarthome/etc/plugin.yaml
 
-Enable the plugin in plugin.yaml, type in your Neato or Vorwerk credentials and define whether you are using a Neato or Vorwerk robot.
+Enable the plugin in plugin.yaml , type in your Neato or Vorwerk credentials and define whether you are using a Neato or Vorwerk robot.
+
+
+### 2) Authentication
+
+Two different authentication techniques are supported by the plugin: 
+
+a) Authentication via "account email" and account password (applicable for Neato and old Vorwerk API)
 
 ```yaml
 Neato:
@@ -49,41 +64,84 @@ Neato:
     robot_vendor: 'neato or vorwerk'
 ```
 
+b) Oauth2 authentication via "account email" and token (applicable for Vorwerk only, supports the new MyKobold APP interface) 
+```yaml
+Neato:
+    plugin_name: neato
+    account_email: 'your_neato_account_email'
+    token: 'HEX_ASCII_TOKEN'
+    robot_vendor: 'vorwerk'
+```
+
+In order to obtain a token, use the plugin's webinterface on the Vorwerk OAuth2 tab.
+
+If you cannot operate the webinterface, do the following steps manually:
+ 
+a) Enable Neato plugin and configure Vorwerk account email address
+
+b) Enable logging at INFO level for neato plugin in logger.yaml
+
+c) Execute plugin function request_oauth2_code. This will request a code from neato to be sent by email to the above address.
+
+d) After reception of the code, execute the plugin function request_oauth2_token(code) with the received code as argument
+
+e) Read the generated ASCII hex token from the logging file
+
+f) Insert the token to the neato plugin section of the plugin.yaml configuration file
+
+
 ### 2) /smarthome/items/robot.yaml
 
 Create an item based on the template below:
 
 ```yaml
 Neato:
-  Robot:
-    Name:
-      type: str
-      neato_name: ''
-      visu_acl: ro
-    State:
-      type: str
-      neato_state: ''
-      visu_acl: ro
-    StateAction:
-      type: str
-      neato_state_action: ''
-      visu_acl: ro
-    Command:
-      type: num
-      neato_command: 0
-      visu_acl: rw
-    IsDocked:
-      type: bool
-      neato_isdocked: ''
-      visu_acl: ro
-    IsScheduleEnabled:
-      type: bool
-      neato_isscheduleenabled: ''
-      visu_acl: rw
-    ChargePercentage:
-      type: str
-      neato_chargepercentage: ''
-      visu_acl: ro
+  Name:
+    type: str
+    neato_attribute: 'name'
+    visu_acl: ro
+  State:
+    type: str
+    value: 'offline'
+    neato_attribute: 'state'
+    visu_acl: ro
+  StateAction:
+    type: str
+    neato_attribute: 'state_action'
+    visu_acl: ro
+  Command:
+    type: num
+    neato_attribute: 'command'
+    visu_acl: rw
+  IsDocked:
+    value: False
+    type: bool
+    neato_attribute: 'is_docked'
+    visu_acl: ro
+  IsScheduleEnabled:
+    value: False
+    type: bool
+    neato_attribute: 'is_schedule_enabled'
+    visu_acl: rw
+  IsCharging:
+    value: False
+    type: bool
+    neato_attribute: 'is_charging'
+    visu_acl: ro
+  ChargePercentage:
+    type: num
+    neato_attribute: 'charge_percentage'
+    visu_acl: ro
+  GoToBaseAvailable:
+    type: bool
+    value: False
+    neato_attribute: 'command_goToBaseAvailable'
+    visu_acl: ro
+  Alert:
+    type: str
+    neato_attribute: 'alert'
+    visu_acl: ro
+
 ```
 
 ## Examples
@@ -108,16 +166,38 @@ Thats it! Now you can start using the plugin within SmartVisu, for example:
 /** Get the robots battery charge status (num) */
 ```
 
-Following cleaning states are currently available:
+The following cleaning states are currently available:
 
 | Neato.Robot.State |
 | ----------------- |
+| invalid           |
 | idle              |
 | busy              |
 | paused            |
 | error             |
 
 If Neato.Robot.State == 'busy' than you can find the current cleaning activity in Neato.Robot.StateAction.
+
+The following action states are currently available:
+
+| Neato.Robot.StateAction                         |
+| ------------------------------------------------|
+| 0	Invalid                                   |
+| 1	House Cleaning                            |
+| 2	Spot Cleaning                             |
+| 3	Manual Cleaning                           |
+| 4	Docking                                   |
+| 5	User Menu Active                          |
+| 6	Suspended Cleaning                        |
+| 7	Updating                                  |
+| 8	Copying Logs                              |
+| 9	Recovering Location                       |
+| 10	IEC Test                                  | 
+| 11	Map cleaning                              |
+| 12	Exploring map (creating a persistent map) |
+| 13	Acquiring Persistent Map IDs              |
+| 14	Creating & Uploading Map                  |
+| 15	Suspended Exploration                     |
 
 
 #### Send commands to the robot:

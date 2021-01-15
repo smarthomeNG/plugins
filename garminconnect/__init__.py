@@ -159,21 +159,31 @@ class GarminConnect(SmartPlugin):
 
         try:
             response = self._session.get(getURL, headers=self.headers)
+            if response.status_code == 429:
+                raise GarminConnectTooManyRequestsError("Too many requests")
+
+            self.logger.debug("Statistics response code %s", response.status_code)
             response.raise_for_status()
         except requests.exceptions.HTTPError as e:
             self.logger.error("Exception occured during stats retrieval: %s" % e)
-            return
+            raise GarminConnectConnectionError("Error connecting") from err
+
         if response.json()['privacyProtected'] is True:
             self.logger.info(
                 "Session expired - trying relogin.")
             self._login(self._email, self._password)
             try:
                 response = self._session.get(getURL, headers=self.headers)
+                if response.status_code == 429:
+                    raise GarminConnectTooManyRequestsError("Too many requests")
+
+                self.logger.debug("Statistics response code %s", response.status_code)
                 response.raise_for_status()
 
             except requests.exceptions.HTTPError as e:
                 self.logger.error("Exception occured during stats retrieval: %s" % e)
-                return
+                raise GarminConnectConnectionError("Error connecting") from err
+
         return response.json()
 
     def _fetch_heart_rates(self, cdate):  # cDate = 'YYYY-mm-dd'

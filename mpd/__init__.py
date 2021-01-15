@@ -3,6 +3,7 @@
 #########################################################################
 # Copyright 2013 Marcus Popp                               marcus@popp.mx
 #           2017 Nino Coric                        mail2n.coric@gmail.com
+#           2020 Bernd Meiners                      Bernd.Meiners@mail.de
 #########################################################################
 #  This file is part of SmartHomeNG.    https://github.com/smarthomeNG//
 #
@@ -28,20 +29,44 @@ import datetime
 import lib.connection
 from lib.model.smartplugin import SmartPlugin
 
-ITEM_TAG = ['mpd_status','mpd_songinfo','mpd_statistic','mpd_command', 'mpd_url', 
-            'mpd_localplaylist', 'mpd_rawcommand', 'mpd_database']
-class MPD(lib.connection.Client,SmartPlugin):
+class MPD(SmartPlugin, lib.connection.Client):
 
-    ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = "1.4.1"
+    PLUGIN_VERSION = "1.4.2"
+    STATUS        = 'mpd_status'
+    SONGINFO      = 'mpd_songinfo'
+    STATISTIC     = 'mpd_statistic'
+    COMMAND       = 'mpd_command'
+    URL           = 'mpd_url'
+    LOCALPLAYLIST = 'mpd_localplaylist'
+    RAWCOMMAND    = 'mpd_rawcommand'
+    DATABASE      = 'mpd_database'
+    # use e.g. as MPD.STATUS to keep in namespace
 
-    def __init__(self, sh, host, port=6600, cycle=2):
-        self._sh = sh
-        self.logger = logging.getLogger(__name__)
+    def __init__(self, sh):
+        """
+        Initalizes the plugin.
+
+        If the sh object is needed at all, the method self.get_sh() should be used to get it.
+        There should be almost no need for a reference to the sh object any more.
+
+        Plugins have to use the new way of getting parameter values:
+        use the SmartPlugin method get_parameter_value(parameter_name). Anywhere within the Plugin you can get
+        the configured (and checked) value for a parameter by calling self.get_parameter_value(parameter_name). It
+        returns the value in the datatype that is defined in the metadata.
+        """
+
+        # Call init code of parent class (SmartPlugin)
+        super().__init__()
+
+        from bin.smarthome import VERSION
+        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
+            self.logger = logging.getLogger(__name__)
+
         self.instance = self.get_instance_name()
-        self.host = host
-        self.port = port
-        self._cycle = int(cycle)
+        
+        self.host = self.get_parameter_value('host')
+        self.port = self.get_parameter_value('port')
+        self._cycle = self.get_parameter_value('cycle')
 
         lib.connection.Client.__init__(self, self.host, self.port, monitor=True)
         self.terminator = b'\n'
@@ -85,7 +110,7 @@ class MPD(lib.connection.Client,SmartPlugin):
 
     def run(self):
         self.alive = True
-        self._sh.scheduler.add('MPD', self.update_status, cycle=self._cycle)
+        self.scheduler_add('MPD', self.update_status, cycle=self._cycle)
 
     def stop(self):
         self.alive = False
@@ -109,23 +134,23 @@ class MPD(lib.connection.Client,SmartPlugin):
 
     def parse_item(self, item):
         #all status-related items here
-        if self.get_iattr_value(item.conf, ITEM_TAG[0]) in self._mpd_statusRequests:
-            key = (self.get_iattr_value(item.conf, ITEM_TAG[0]))
+        if self.get_iattr_value(item.conf, MPD.STATUS) in self._mpd_statusRequests:
+            key = (self.get_iattr_value(item.conf, MPD.STATUS))
             self._status_items[key] = item
-        if self.get_iattr_value(item.conf, ITEM_TAG[1]) in self._mpd_currentsongRequests:
-            key = (self.get_iattr_value(item.conf, ITEM_TAG[1]))
+        if self.get_iattr_value(item.conf, MPD.SONGINFO) in self._mpd_currentsongRequests:
+            key = (self.get_iattr_value(item.conf, MPD.SONGINFO))
             self._currentsong_items[key] = item
-        if self.get_iattr_value(item.conf, ITEM_TAG[2]) in self._mpd_statisticRequests:
-            key = (self.get_iattr_value(item.conf, ITEM_TAG[2]))
+        if self.get_iattr_value(item.conf, MPD.STATISTIC) in self._mpd_statisticRequests:
+            key = (self.get_iattr_value(item.conf, MPD.STATISTIC))
             self._statistic_items[key] = item
         #do not return after status-related items => they can be combined with command-related items
         #all command-related items here
-        if self.get_iattr_value(item.conf, ITEM_TAG[3]) in self._mpd_playbackCommands \
-          or self.get_iattr_value(item.conf, ITEM_TAG[3]) in self._mpd_playbackOptions \
-          or self.get_iattr_value(item.conf, ITEM_TAG[4]) is not None \
-          or self.get_iattr_value(item.conf, ITEM_TAG[5]) is not None \
-          or self.get_iattr_value(item.conf, ITEM_TAG[6]) in self._mpd_rawCommand \
-          or self.get_iattr_value(item.conf, ITEM_TAG[7]) in self._mpd_databaseCommands:
+        if self.get_iattr_value(item.conf, MPD.COMMAND) in self._mpd_playbackCommands \
+          or self.get_iattr_value(item.conf, MPD.COMMAND) in self._mpd_playbackOptions \
+          or self.get_iattr_value(item.conf, MPD.URL) is not None \
+          or self.get_iattr_value(item.conf, MPD.LOCALPLAYLIST) is not None \
+          or self.get_iattr_value(item.conf, MPD.RAWCOMMAND) in self._mpd_rawCommand \
+          or self.get_iattr_value(item.conf, MPD.DATABASE) in self._mpd_databaseCommands:
             self.loggercmd("callback assigned for item {}".format(item),'d')
             return self.update_item
 
@@ -278,32 +303,32 @@ class MPD(lib.connection.Client,SmartPlugin):
         if caller != 'MPD':
             self.loggercmd("update_item called for item {}".format(item),'d')
             #playbackCommands
-            if self.get_iattr_value(item.conf, ITEM_TAG[3]) == 'next':
+            if self.get_iattr_value(item.conf, MPD.COMMAND) == 'next':
                 self._send('next')
                 return
-            if self.get_iattr_value(item.conf, ITEM_TAG[3]) == 'play':
+            if self.get_iattr_value(item.conf, MPD.COMMAND) == 'play':
                 self._send("play {}".format(item()))
                 return
-            if self.get_iattr_value(item.conf, ITEM_TAG[3]) == 'pause':
+            if self.get_iattr_value(item.conf, MPD.COMMAND) == 'pause':
                 self._send("pause {}".format(item()))
                 return
-            if self.get_iattr_value(item.conf, ITEM_TAG[3]) == 'stop':
+            if self.get_iattr_value(item.conf, MPD.COMMAND) == 'stop':
                 self._send('stop')
                 return
-            if self.get_iattr_value(item.conf, ITEM_TAG[3]) == 'playpause':
+            if self.get_iattr_value(item.conf, MPD.COMMAND) == 'playpause':
                 if self._internal_tems['isPlaying']:
                     self._send("pause 1")
                 elif self._internal_tems['isPaused']:
                     self._send("pause 0")
                 elif self._internal_tems['isStopped']:
                     self._send("play")
-            if self.get_iattr_value(item.conf, ITEM_TAG[3]) == 'playid':
+            if self.get_iattr_value(item.conf, MPD.COMMAND) == 'playid':
                 self._send("playid {}".format(item()))
                 return
-            if self.get_iattr_value(item.conf, ITEM_TAG[3]) == 'previous':
+            if self.get_iattr_value(item.conf, MPD.COMMAND) == 'previous':
                 self._send("previous")
                 return
-            if self.get_iattr_value(item.conf, ITEM_TAG[3]) == 'seek':
+            if self.get_iattr_value(item.conf, MPD.COMMAND) == 'seek':
                 val = item()
                 if val:
                     pattern = re.compile("^\d+[ ]\d+$")
@@ -312,7 +337,7 @@ class MPD(lib.connection.Client,SmartPlugin):
                         return
                 self.loggercmd("ignoring invalid seek value",'w')
                 return
-            if self.get_iattr_value(item.conf, ITEM_TAG[3]) == 'seekid':
+            if self.get_iattr_value(item.conf, MPD.COMMAND) == 'seekid':
                 val = item()
                 if val:
                     pattern = re.compile("^\d+[ ]\d+$")
@@ -321,7 +346,7 @@ class MPD(lib.connection.Client,SmartPlugin):
                         return
                 self.loggercmd("ignoring invalid seekid value",'w')
                 return
-            if self.get_iattr_value(item.conf, ITEM_TAG[3]) == 'seekcur':
+            if self.get_iattr_value(item.conf, MPD.COMMAND) == 'seekcur':
                 val = item()
                 if val:
                     pattern = re.compile("^[+-]?\d+$")
@@ -330,31 +355,31 @@ class MPD(lib.connection.Client,SmartPlugin):
                         return
                 self.loggercmd("ignoring invalid seekcur value",'w')
                 return
-            if self.get_iattr_value(item.conf, ITEM_TAG[3]) == 'mute': #own-defined item
+            if self.get_iattr_value(item.conf, MPD.COMMAND) == 'mute': #own-defined item
                 if self._internal_tems['lastVolume'] < 0: #can be -1 if MPD can't detect the current volume
                     self._internal_tems['lastVolume'] = 20
                 self._send("setvol {}".format(int(self._internal_tems['lastVolume']) if self._internal_tems['isMuted'] else 0))
                 return
             #playbackoptions
-            if self.get_iattr_value(item.conf, ITEM_TAG[3]) == 'consume':
+            if self.get_iattr_value(item.conf, MPD.COMMAND) == 'consume':
                 self._send("consume {}".format(1 if item() else 0))
                 return
-            if self.get_iattr_value(item.conf, ITEM_TAG[3]) == 'crossfade':
+            if self.get_iattr_value(item.conf, MPD.COMMAND) == 'crossfade':
                 self._send("crossfade {}".format(item()))
                 return
-            if self.get_iattr_value(item.conf, ITEM_TAG[3]) == 'mixrampdb':
+            if self.get_iattr_value(item.conf, MPD.COMMAND) == 'mixrampdb':
                 self._send("mixrampdb {}".format(item()))
                 return
-            if self.get_iattr_value(item.conf, ITEM_TAG[3]) == 'mixrampdelay':
+            if self.get_iattr_value(item.conf, MPD.COMMAND) == 'mixrampdelay':
                 self._send("mixrampdelay {}".format(item()))
                 return
-            if self.get_iattr_value(item.conf, ITEM_TAG[3]) == 'random':
+            if self.get_iattr_value(item.conf, MPD.COMMAND) == 'random':
                 self._send("random {}".format(1 if item() else 0))
                 return
-            if self.get_iattr_value(item.conf, ITEM_TAG[3]) == 'repeat':
+            if self.get_iattr_value(item.conf, MPD.COMMAND) == 'repeat':
                 self._send("repeat {}".format(1 if item() else 0))
                 return
-            if self.get_iattr_value(item.conf, ITEM_TAG[3]) == 'setvol':
+            if self.get_iattr_value(item.conf, MPD.COMMAND) == 'setvol':
                 val = item()
                 if val > 100:
                     self.loggercmd("invalid volume => value > 100 => set 100",'w')
@@ -364,10 +389,10 @@ class MPD(lib.connection.Client,SmartPlugin):
                     val = 0
                 self._send("setvol {}".format(val))
                 return
-            if self.get_iattr_value(item.conf, ITEM_TAG[3]) == 'single':
+            if self.get_iattr_value(item.conf, MPD.COMMAND) == 'single':
                 self._send("single {}".format(1 if item() else 0))
                 return
-            if self.get_iattr_value(item.conf, ITEM_TAG[3]) == 'replay_gain_mode':
+            if self.get_iattr_value(item.conf, MPD.COMMAND) == 'replay_gain_mode':
                 val = item()
                 if val in ['off','track','album','auto']:
                     self._send("replay_gain_mode {}".format(1 if item() else 0))
@@ -376,25 +401,25 @@ class MPD(lib.connection.Client,SmartPlugin):
                     pass
                 return
             #url
-            if self.has_iattr(item.conf, ITEM_TAG[4]):
+            if self.has_iattr(item.conf, MPD.URL):
                 self.play_url(item)
                 return
             #localplaylist
-            if self.has_iattr(item.conf, ITEM_TAG[5]):
+            if self.has_iattr(item.conf, MPD.LOCALPLAYLIST):
                 self.play_localplaylist(item)
                 return
             #rawcommand
-            if self.get_iattr_value(item.conf, ITEM_TAG[6]) == 'rawcommand':
+            if self.get_iattr_value(item.conf, MPD.RAWCOMMAND) == 'rawcommand':
                 self._send(item())
                 return
             #database
-            if self.get_iattr_value(item.conf, ITEM_TAG[7]) == 'update':
+            if self.get_iattr_value(item.conf, MPD.DATABASE) == 'update':
                 command = 'update'
                 if item():
                     command = "{} {}".format(command,item())
                 self._send(command)
                 return
-            if self.get_iattr_value(item.conf, ITEM_TAG[7]) == 'rescan':
+            if self.get_iattr_value(item.conf, MPD.DATABASE) == 'rescan':
                 command = 'rescan'
                 if item():
                     command = "{} {}".format(command,item())
@@ -414,7 +439,7 @@ class MPD(lib.connection.Client,SmartPlugin):
         ext = ext.lower()
         play = []
         if ext in ('m3u', 'pls'):
-            content = self._sh.tools.fetch_url(url, timeout=4)
+            content = self.get_sh().tools.fetch_url(url, timeout=4)
             if content is False:
                 return play
             content = content.decode()
@@ -432,7 +457,7 @@ class MPD(lib.connection.Client,SmartPlugin):
         return play
 
     def play_url(self, item):
-        url = self.get_iattr_value(item.conf, ITEM_TAG[4])
+        url = self.get_iattr_value(item.conf, MPD.URL)
         play = self._parse_url(url)
         if play == []:
             self.loggercmd("no url to add",'w')
@@ -443,7 +468,7 @@ class MPD(lib.connection.Client,SmartPlugin):
         self._send('play', False)
 
     def play_localplaylist(self, item):
-        file = self.get_iattr_value(item.conf, ITEM_TAG[5])
+        file = self.get_iattr_value(item.conf, MPD.LOCALPLAYLIST)
         if file:
             self._send('clear', False)
             self._send('load {}'.format(file), False)

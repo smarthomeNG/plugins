@@ -42,6 +42,19 @@ Example configuration of an item-tree for the openweathermap plugin in yaml-form
  ...:
 
 owm:
+    rain_layer:
+        type: str
+        owm_matchstring@home: precipitation_new
+        x@home: 13
+        y@home: 48
+        z@home: 7
+
+    cloud_layer:
+        type: str
+        owm_matchstring@home: clouds_new
+        x@home: 1
+        y@home: 1
+        z@home: 2
 
     home:
 

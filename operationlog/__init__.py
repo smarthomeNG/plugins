@@ -1,9 +1,15 @@
 #!/usr/bin/env python3
+# vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
 # Copyright 2016- Jan Troelsen                            jan@troelsen.de
 # Copyright 2017- Oliver Hinckel                       github@ollisnet.de
+# Copyright 2020- Bernd Meiners                     Bernd.Meiners@mail.de
 #########################################################################
-#  operationlogger
+#  This file is part of SmartHomeNG.
+#  https://www.smarthomeNG.de
+#  https://knx-user-forum.de/forum/supportforen/smarthome-py
+#
+#  OperationLog
 #
 #  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -26,72 +32,95 @@ import lib.log
 import os
 import pickle
 
+from lib.module import Modules
+from lib.model.smartplugin import *
+from lib.item import Items
 from lib.shtime import Shtime
-from lib.model.smartplugin import SmartPlugin
 
 from .AutoBlindLoggerOLog import AbLogger
 
-
-
-class OperationLog(AbLogger, SmartPlugin):
+class OperationLog(SmartPlugin, AbLogger):
     _log = None
     _items = {}
-    PLUGIN_VERSION = "1.3.0"
-    ALLOW_MULTIINSTANCE = False
 
-    def __init__(self, smarthome, name, cache=True, logtofile=True, filepattern="{year:04}-{month:02}-{day:02}-{name}.log",
-                 mapping=['time', 'thread', 'level', 'message'], items=[], maxlen=50, logger=None):
-        log_directory = "var/log/operationlog/"
-        self._sh = smarthome
+    PLUGIN_VERSION = "1.3.3"
+
+    def __init__(self, sh):
+        # Call init code of parent class (SmartPlugin)
+        super().__init__()
+
+        from bin.smarthome import VERSION
+        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
+            self.logger = logging.getLogger(__name__)
+
         self.shtime = Shtime.get_instance()
-        self.name = name
-        self.logger = logging.getLogger(__name__)
-        if log_directory[0] != "/":
-            base = self._sh.base_dir
-            if base[-1] != "/":
-                base += "/"
-            self.log_directory = base + log_directory
-        else:
-            self.log_directory = log_directory
-        if not os.path.exists(self.log_directory):
-            os.makedirs(log_directory)
+        self.name = self.get_parameter_value('name')
+        self._filepattern = self.get_parameter_value('filepattern')
+        self._maxlen = self.get_parameter_value('maxlen')
+        self.mapping = self.get_parameter_value('mapping')
+        self._items = self.get_parameter_value('items')
+        self._cache = self.get_parameter_value('cache')
+        self.additional_logger_name = self.get_parameter_value('logger')
+        self._logtofile = self.get_parameter_value('logtofile')
+        log_directory = self.get_parameter_value('logdirectory')
+
+        # Todo: make windows compatible path settings
+        try:
+            if log_directory[0] != "/":
+                base = self.get_sh().base_dir
+                if base[-1] != "/":
+                    base += "/"
+                self.log_directory = base + log_directory
+            else:
+                self.log_directory = log_directory
+
+            if not os.path.exists(self.log_directory):
+                os.makedirs(self.log_directory)
+        except Exception as e:
+            self.logger.error("Error '{}' while establishing a log_directory '{}'".format(e,log_directory))
+            return
+
+        # Autoblindlogger
         AbLogger.set_logdirectory(self.log_directory)
         AbLogger.set_loglevel(2)
         AbLogger.set_logmaxage(0)
-        AbLogger.__init__(self, name)
-        self._filepattern = filepattern
-        self._log = lib.log.Log(smarthome, name, mapping, int(maxlen))
-        self._logger = None if not logger else logging.getLogger(logger)
-        self._path = name
+        AbLogger.__init__(self, self.name)
+
+        self._log = lib.log.Log(self.get_sh(), self.name, self.mapping, self._maxlen)
+        self._path = self.name
         self._cachefile = None
-        self._cache = True
         self.__myLogger = None
         self._logcache = None
-        self._maxlen = int(maxlen)
-        self._items = items
+        
         self._item_conf = {}
         self._logic_conf = {}
         self.__date = None
         self.__fname = None
-        info_txt_cache = ", caching active"
-        if isinstance(cache, str) and cache in ['False', 'false', 'No', 'no']:
-            self._cache = False
-            info_txt_cache = ""
-        info_logger_log = ", logging to {}".format(logger)
-        if not logger:
-            info_logger_log = ""
-        self._logtofile = True
+
+        # 
+        info_txt_cache = ", caching active" if self._cache else ""
+
+        # additional logger given from plugin.yaml section "logger"
+        if self.additional_logger_name:
+            self.additional_logger = logging.getLogger(self.additional_logger_name)
+        else:
+            self.additional_logger = None
+        
+        if self.additional_logger:
+            info_additional_logger_log = ", logging to {}".format(self.additional_logger_name)
+        else:
+            info_additional_logger_log = ""
+
         info_txt_log = "OperationLog {}: logging to file {}{}, keeping {} entries in memory".format(self.name, self.log_directory,
                                                                                                     self._filepattern, int(self._maxlen))
-        if isinstance(logtofile, str) and logtofile in ['False', 'false', 'No', 'no']:
-            self._logtofile = False
-        self.logger.info(info_txt_log + info_txt_cache + info_logger_log)
+
+        self.logger.info(info_txt_log + info_txt_cache + info_additional_logger_log)
 
         #############################################################
         # Cache
         #############################################################
         if self._cache is True:
-            self._cachefile = self._sh._cache_dir + self._path
+            self._cachefile = self.get_sh()._cache_dir + self._path
             try:
                 self.__last_change, self._logcache = _cache_read(self._cachefile, self.shtime.tzinfo())
                 self.load(self._logcache)
@@ -104,6 +133,14 @@ class OperationLog(AbLogger, SmartPlugin):
                 except Exception as e:
                     self.logger.warning("OperationLog {}: problem reading cache: {}".format(self._path, e))
 
+        # give some info to the user via webinterface
+        self.init_webinterface()
+
+        if self.logger.isEnabledFor(logging.DEBUG):
+            self.logger.debug("init {} done".format(__name__))
+        self._init_complete = True
+
+
     def update_logfilename(self):
         if self.__date == datetime.datetime.today() and self.__fname is not None:
             return
@@ -112,9 +149,13 @@ class OperationLog(AbLogger, SmartPlugin):
         self.__myLogger.update_logfile(self.__fname)
 
     def run(self):
+        """
+        Run method for the plugin
+        """
+        self.logger.debug("Run method called")
         if self._logtofile is True:
             self.__myLogger = self.create(self.name)
-        sh = self._sh
+        sh = self.get_sh()
         for item_id in self._item_conf:
             if 'olog_eval' in self._item_conf[item_id]:
                 for (ind, eval_str) in enumerate(self._item_conf[item_id]['olog_eval']):
@@ -135,9 +176,25 @@ class OperationLog(AbLogger, SmartPlugin):
         self.alive = True
 
     def stop(self):
+        """
+        Stop method for the plugin
+        """
+        self.logger.debug("Stop method called")
         self.alive = False
 
     def parse_item(self, item):
+        """
+        Default plugin parse_item method. Is called when the plugin is initialized.
+        The plugin can, corresponding to its attribute keywords, decide what to do with
+        the item in future, like adding it to an internal array for future reference
+        :param item:    The item to process.
+        :return:        If the plugin needs to be informed of an items change you should return a call back function
+                        like the function update_item down below. An example when this is needed is the knx plugin
+                        where parse_item returns the update_item function when the attribute knx_send is found.
+                        This means that when the items value is about to be updated, the call back function is called
+                        with the item, caller, source and dest as arguments and in case of the knx plugin the value
+                        can be sent to the knx with a knx write function within the knx plugin.
+        """
         if 'olog' in item.conf and item.conf['olog'] == self.name:
             self._item_conf[item.id()] = {}
             if 'olog_txt' in item.conf or 'olog_rules' in item.conf:
@@ -181,6 +238,9 @@ class OperationLog(AbLogger, SmartPlugin):
             return None
 
     def parse_logic(self, logic):
+        """
+        Default plugin parse_logic method
+        """
         if 'olog' in logic.conf and logic.conf['olog'] == self.name:
             self._logic_conf[logic.name] = {}
             if 'olog_txt' in logic.conf:
@@ -223,6 +283,9 @@ class OperationLog(AbLogger, SmartPlugin):
             return self._log
 
     def load(self, logentries):
+        """
+        Loads logentries (which were just read from cache) into the log object (see lib.log.Log())
+        """
         if len(logentries) != 0:
             for logentry in reversed(logentries):
                 log = []
@@ -238,7 +301,19 @@ class OperationLog(AbLogger, SmartPlugin):
                 self._log.add(log)
 
     def update_item(self, item, caller=None, source=None, dest=None):
-        if caller != 'OperationLog':
+        """
+        Item has been updated
+
+        This method is called, if the value of an item has been updated by SmartHomeNG.
+        It should write the changed value out to a log
+
+        :param item: item that was updated before
+        :param caller: if given it represents the callers name
+        :param source: if given it represents the source
+        :param dest: if given it represents the dest
+        """
+        if self.alive and caller != self.get_shortname():
+            # this plugin does not change any item thus the check for caller is not really necessary
             if item.conf['olog'] == self.name:
                 if len(self._items) == 0:
                     if item.id() in self._item_conf and 'olog_txt' in self._item_conf[item.id()]:
@@ -264,7 +339,6 @@ class OperationLog(AbLogger, SmartPlugin):
                                 mvalue = item()
                                 if self._item_conf[item.id()]['olog_rules']["*"] is None:
                                     return
-                        sh = self._sh
                         self._item_conf[item.id()]['olog_eval_res'] = []
                         for expr in self._item_conf[item.id()]['olog_eval']:
                             self._item_conf[item.id()]['olog_eval_res'].append(eval(expr))
@@ -284,12 +358,11 @@ class OperationLog(AbLogger, SmartPlugin):
                 else:
                     logvalues = []
                     for it in self._items:
-                        logvalues.append('{} = {} '.format(str(it), self._sh.return_item(it)()))
+                        logvalues.append('{} = {} '.format(str(it), self.get_sh().return_item(it)()))
                 self.log(logvalues, 'INFO' if 'olog_level' not in item.conf else item.conf['olog_level'])
 
     def trigger_logic(self, logic, by=None, source=None, dest=None):
         if self.name == logic.conf['olog'] and logic.name in self._logic_conf:
-            sh = self._sh
             olog_txt = self._logic_conf[logic.name]['olog_txt']
             olog_eval = self._logic_conf[logic.name]['olog_eval']
             eval_res = [eval(expr) for expr in olog_eval]
@@ -297,6 +370,9 @@ class OperationLog(AbLogger, SmartPlugin):
             self.log(logvalues, 'INFO' if 'olog_level' not in logic.conf else logic.conf['olog_level'])
 
     def log(self, logvalues, level='INFO'):
+        """
+        Creates a log entry with logvalues of given level
+        """
         if len(logvalues):
             log = []
             for name in self._log.mapping:
@@ -310,7 +386,8 @@ class OperationLog(AbLogger, SmartPlugin):
                     values_txt = map(str, logvalues)
                     log.append(' '.join(values_txt))
             self._log.add(log)
-            if self._logtofile is True:
+            # consider to write the log entry to 
+            if self._logtofile:
                 self.update_logfilename()
                 self.__myLogger.info('{}: {}', log[2], ''.join(log[3:]))
 
@@ -320,14 +397,63 @@ class OperationLog(AbLogger, SmartPlugin):
                 except Exception as e:
                     self.logger.warning("OperationLog {}: could not update cache {}".format(self._path, e))
 
-            if self._logger:
-                self._logger.log(logging.getLevelName(level), ' '.join(map(str, logvalues)))
+            if self.additional_logger:
+                self.additional_logger.log(logging.getLevelName(level), ' '.join(map(str, logvalues)))
+
+    def init_webinterface(self):
+        """"
+        Initialize the web interface for this plugin
+
+        This method is only needed if the plugin is implementing a web interface
+        """
+        try:
+            self.mod_http = Modules.get_instance().get_module(
+                'http')  # try/except to handle running in a core version that does not support modules
+        except:
+            self.mod_http = None
+        if self.mod_http == None:
+            self.logger.error("Not initializing the web interface")
+            return False
+
+        import sys
+        if not "SmartPluginWebIf" in list(sys.modules['lib.model.smartplugin'].__dict__):
+            self.logger.warning("Web interface needs SmartHomeNG v1.5 and up. Not initializing the web interface")
+            return False
+
+        # set application configuration for cherrypy
+        webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
+        config = {
+            '/': {
+                'tools.staticdir.root': webif_dir,
+            },
+            '/static': {
+                'tools.staticdir.on': True,
+                'tools.staticdir.dir': 'static'
+            }
+        }
+
+        # Register the web interface as a cherrypy app
+        self.mod_http.register_webif(WebInterface(webif_dir, self),
+                                     self.get_shortname(),
+                                     config,
+                                     self.get_classname(), self.get_instance_name(),
+                                     description='')
+
+        return True
 
 
 #####################################################################
 # Cache Methods
 #####################################################################
 def _cache_read(filename, tz):
+    """
+    This loads the cache from a file
+
+    :param filename: file to load from
+    :param tz: timezone
+    :return: [description]
+    :rtype: a tuple with datetime and values from file
+    """
     ts = os.path.getmtime(filename)
     dt = datetime.datetime.fromtimestamp(ts, tz)
     value = None
@@ -342,3 +468,69 @@ def _cache_write(logger, filename, value):
             pickle.dump(value, f)
     except IOError:
         logger.warning("Could not write to {}".format(filename))
+
+# ------------------------------------------
+#    Webinterface of the plugin
+# ------------------------------------------
+
+import cherrypy
+from jinja2 import Environment, FileSystemLoader
+
+
+class WebInterface(SmartPluginWebIf):
+
+    def __init__(self, webif_dir, plugin):
+        """
+        Initialization of instance of class WebInterface
+
+        :param webif_dir: directory where the webinterface of the plugin resides
+        :param plugin: instance of the plugin
+        :type webif_dir: str
+        :type plugin: object
+        """
+        self.logger = logging.getLogger(__name__)
+        self.webif_dir = webif_dir
+        self.plugin = plugin
+        self.tplenv = self.init_template_environment()
+
+        self.items = Items.get_instance()
+
+    @cherrypy.expose
+    def index(self, reload=None):
+        """
+        Build index.html for cherrypy
+
+        Render the template and return the html file to be delivered to the browser
+
+        :return: contents of the template after beeing rendered
+        """
+        tmpl = self.tplenv.get_template('index.html')
+        # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
+        return tmpl.render(p=self.plugin, items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path'])))
+
+
+    @cherrypy.expose
+    def get_data_html(self, dataSet=None):
+        """
+        Return data to update the webpage
+
+        For the standard update mechanism of the web interface, the dataSet to return the data for is None
+
+        :param dataSet: Dataset for which the data should be returned (standard: None)
+        :return: dict with the data needed to update the web page.
+        """
+        if dataSet is None:
+            # get the new data
+            data = {}
+
+            # data['item'] = {}
+            # for i in self.plugin.items:
+            #     data['item'][i]['value'] = self.plugin.getitemvalue(i)
+            #
+            # return it as json the the web page
+            # try:
+            #     return json.dumps(data)
+            # except Exception as e:
+            #     self.logger.error("get_data_html exception: {}".format(e))
+        return {}
+

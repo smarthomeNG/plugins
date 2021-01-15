@@ -1,4 +1,4 @@
-# Mail
+# mailsend
 
 ## Requirements
 

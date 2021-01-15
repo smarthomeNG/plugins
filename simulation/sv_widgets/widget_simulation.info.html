@@ -1,0 +1,38 @@
+/**
+* -----------------------------------------------------------------------------
+* @package     smartVISU
+* @author      Onkel Andy
+* @copyright   2018 - 2020
+* @license     GPL [http://www.gnu.de]
+* -----------------------------------------------------------------------------
+*/
+{% extends "custom/widget_custom.html" %}
+
+
+{% block example %}
+<div>
+  <p>You just have to implement the widget with the relevant attributes for the
+    simulation items.
+  </p>
+
+
+  <div class="twig">Example:<br>
+		<code class="prettyprint">{% filter trim|escape|nl2br %}{% verbatim %}
+      {{ simulation.info('', 'Simulation', 'sim.status', 'sim.tank', 'sim.control', 'sim.message')) }}
+		{% endverbatim %}{% endfilter %}</code>
+	</div>
+	<div class="html">
+    {{ simulation.info('', 'Simulation', 'sim.status', 'sim.tank', 'sim.control', 'sim.message')) }}
+	</div>
+
+</div>
+<script type="text/javascript">
+  $( document ).ready(function() {
+       io.write('sim.header', 'Simulation' );
+       io.write('sim.status', '02' );
+       io.write('sim.message', 'Last Record' );
+       io.write('sim.tank', '13' );
+    });
+
+</script>
+{% endblock %}

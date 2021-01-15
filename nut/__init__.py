@@ -23,7 +23,7 @@ import telnetlib
 from lib.model.smartplugin import SmartPlugin
 
 class NUT(SmartPlugin):
-  PLUGIN_VERSION = '1.3.0.1'
+  PLUGIN_VERSION = '1.3.1'
   ALLOW_MULTIINSTANCE = True
 
   def __init__(self, sh, ups, cycle = 60, host = 'localhost', port = 3493, timeout = 5):
@@ -38,7 +38,7 @@ class NUT(SmartPlugin):
     self.logger = logging.getLogger(__name__)
     self._sh.scheduler.add(__name__, self._read_ups, prio = 5, cycle = self._cycle)
     self.logger.info('Init NUT Plugin')
-    
+
   def run(self):
     self.alive = True
 

@@ -128,27 +128,27 @@ item_structs:
     Temperatur:
       Frischluft:
         type: num
-        visu_acl: r
+        visu_acl: ro
         helios_tcp: outside_temp
 
       Zuluft:
         type: num
-        visu_acl: r
+        visu_acl: ro
         helios_tcp: incoming_temp
 
       Abluft:
         type: num
-        visu_acl: r
+        visu_acl: ro
         helios_tcp: inside_temp
 
       Fortluft:
         type: num
-        visu_acl: r
+        visu_acl: ro
         helios_tcp: exhaust_temp
 
     Luftfeuchtigkeit:
       type: num
-      visu_acl: r
+      visu_acl: ro
       database: yes
       helios_tcp: internal_humidity
 
@@ -166,17 +166,17 @@ item_structs:
     Status:
       AnzahlFehler:
         type: num
-        visu_acl: r
+        visu_acl: ro
         helios_tcp: error_count
 
     AnzahlWarnungen:
         type: num
-        visu_acl: r
+        visu_acl: ro
         helios_tcp: warning_count
 
     AnzahlInfos:
         type: num
-        visu_acl: r
+        visu_acl: ro
         helios_tcp: info_count
 
 logic_parameters: NONE

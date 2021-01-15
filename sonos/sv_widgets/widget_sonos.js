@@ -20,7 +20,8 @@ $.widget("sv.sonos_playlists", $.sv.widget, {
 				var playlist = $(event.target).html();
 				var data_item = this.element.attr('data-send');
 				io.write(data_item, playlist);
-				$("#popup_sonos_playlists").popup('close');
+				var popup_ref = this.element.attr('data-ref');
+				$(popup_ref).popup('close');
 		}
 	}
 });

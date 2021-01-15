@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
-#  Copyright 2014-     Thomas Ernst                       offline@gmx.net
+#  Copyright 2014-2018 Thomas Ernst                       offline@gmx.net
+#  Copyright 2019- Onkel Andy                       onkelandy@hotmail.com
 #########################################################################
 #  Finite state machine plugin for SmartHomeNG
 #
@@ -21,26 +22,39 @@
 import logging
 import datetime
 import os
+from . import StateEngineDefaults
 
 
 class SeLogger:
 
-    # Set log level
+    # Set global log level
     # loglevel: current loglevel
     @staticmethod
     def set_loglevel(loglevel):
         try:
             SeLogger.__loglevel = int(loglevel)
         except ValueError:
-            SeLogger.__loglevel = 2
+            SeLogger.__loglevel = 0
             logger = logging.getLogger('plugins.stateengine')
-            logger.error("Das Log-Level muss numerisch angegeben werden.")
+            logger.error("Loglevel has to be an int number!")
 
     # Set log directory
     # logdirectory: Target directory for StateEngine log files
     @staticmethod
     def set_logdirectory(logdirectory):
         SeLogger.__logdirectory = logdirectory
+
+    # Create log directory
+    # logdirectory: Target directory for StateEngine log files
+    @staticmethod
+    def create_logdirectory(base, log_directory):
+        if log_directory[0] != "/":
+            if base[-1] != "/":
+                base += "/"
+            log_directory = base + log_directory
+        if not os.path.exists(log_directory):
+            os.makedirs(log_directory)
+        return log_directory
 
     # Set max age for log files
     # logmaxage: Maximum age for log files (days)
@@ -51,8 +65,9 @@ class SeLogger:
         except ValueError:
             SeLogger.__logmaxage = 0
             logger = logging.getLogger('plugins.stateengine')
-            logger.error("Das maximale Alter der Logdateien muss numerisch angegeben werden.")
+            logger.error("The maximum age of the log files has to be an int number.")
 
+    # Remove old log files (by scheduler)
     @staticmethod
     def remove_old_logfiles():
         if SeLogger.__logmaxage == 0:
@@ -90,9 +105,20 @@ class SeLogger:
         self.logger = logging.getLogger('{}.{}'.format(__name__.replace(".StateEngineLogger", ""), item.property.path))
         self.__section = item.property.path.replace(".", "_").replace("/", "")
         self.__indentlevel = 0
+        self.__loglevel = SeLogger.__loglevel
         self.__date = None
         self.__filename = ""
         self.update_logfile()
+
+    # override log level for specific items by using se_log_level attribute
+    def override_loglevel(self, loglevel, item=None):
+        self.__loglevel = loglevel.get()
+        if self.__loglevel != StateEngineDefaults.log_level:
+            self.logger.info("Loglevel for item {0} got individually set to {1}.".format(item.property.path, self.__loglevel))
+
+    # get current log level of abitem
+    def get_loglevel(self):
+        return self.__loglevel
 
     # Update name logfile if required
     def update_logfile(self):
@@ -119,7 +145,7 @@ class SeLogger:
     # text: text to log
     def log(self, level, text, *args):
         # Section givn: Check level
-        if level <= SeLogger.__loglevel:
+        if level <= self.__loglevel:
             indent = "\t" * self.__indentlevel
             text = text.format(*args)
             logtext = "{0}{1} {2}\r\n".format(datetime.datetime.now(), indent, text)

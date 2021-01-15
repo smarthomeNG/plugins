@@ -1,29 +1,31 @@
 #!/usr/bin/env python3
-# vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
-#########################################################################
-# Copyright 2013 KNX-User-Forum e.V.            http://knx-user-forum.de/
-#########################################################################
-#  This file is part of SmartHome.py.    http://mknx.github.io/smarthome/
 #
-#  SmartHome.py is free software: you can redistribute it and/or modify
+#########################################################################
+#  Copyright 2017                                          pfischi@gmx.de
+#  Erweiterungen: Copyright 2020                    rene.friess@gmail.com
+#########################################################################
+#
+#  This file is part of SmartHomeNG.
+#
+#  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation, either version 3 of the License, or
 #  (at your option) any later version.
 #
-#  SmartHome.py is distributed in the hope that it will be useful,
+#  SmartHomeNG is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License
-#  along with SmartHome.py. If not, see <http://www.gnu.org/licenses/>.
+#  along with SmartHomeNG. If not, see <http://www.gnu.org/licenses/>.
+#
 #########################################################################
 
 import logging
 import urllib.request
 import json
 import requests
-import lib.connection
 import re
 import cherrypy
 import time
@@ -34,60 +36,21 @@ from bin.smarthome import VERSION
 
 nuki_action_items = {}
 nuki_event_items = {}
+nuki_door_items = {}
 nuki_battery_items = {}
 paired_nukis = []
 lock = False
 
 
-class NukiTCPDispatcher(lib.connection.Server):
-    def __init__(self, plugin):
-        self.plugin = plugin
-        lib.connection.Server.__init__(self, self.plugin.get_callback_ip(), self.plugin.get_callback_port(),
-                                       proto='TCP')
-        self.dest = 'tcp:' + self.plugin.get_callback_ip() + ':{port}'.format(port=self.plugin.get_callback_port())
-        self.plugin.logger.debug("Plugin '{pluginname}' - NukiTCPDispatcher: starting tcp listener with {url}".format(
-            pluginname=self.plugin.get_shortname(), url=self.dest))
-        self.connect()
-
-    def handle_connection(self):
-        try:
-            conn, address = self.socket.accept()
-            data = conn.recv(1024)
-            address = "{}:{}".format(address[0], address[1])
-            self.plugin.logger.info(
-                "Plugin '{}' - NukiTCPDispatcher: {}: incoming connection from {}".format(self.plugin.get_shortname(),
-                                                                                          'test', address))
-        except Exception as err:
-            self.logger.error("Plugin '{pluginname}':: {}: {}".format(self.plugin.get_shortname(), self._name, err))
-            return
-
-        try:
-            result = re.search('\{.*\}', data.decode('utf-8'))
-            self.plugin.logger.debug(
-                "Plugin '{}' - NukiTCPDispatcher: Getting JSON String".format(self.plugin.get_shortname()))
-            nuki_bridge_response = json.loads(result.group(0))
-            nuki_id = nuki_bridge_response['nukiId']
-            state_name = nuki_bridge_response['stateName']
-            self.plugin.logger.debug(
-                "Plugin '{pluginname}' - NukiTCPDispatcher: Status Smartlock: ID: {nuki_id} Status: {state_name}".
-                    format(pluginname=self.plugin.get_shortname(), nuki_id=nuki_id, state_name=state_name))
-            conn.send(b"HTTP/1.1 200 OK\nContent-Type: text/html\n\n")
-
-            Nuki.update_lock_state(nuki_id, nuki_bridge_response)
-        except Exception as err:
-            self.plugin.logger.error("Plugin '{}' - NukiTCPDispatcher: Error parsing nuki response!\nError: {}".format(
-                self.plugin.get_shortname(), err))
-
-
 class Nuki(SmartPlugin):
-    PLUGIN_VERSION = "1.5.0.6"
-    ALLOW_MULTIINSTANCE = False
+    PLUGIN_VERSION = "1.6.1"
 
     def __init__(self, sh, *args, **kwargs):
 
         global paired_nukis
         global nuki_event_items
         global nuki_action_items
+        global nuki_door_items
         global nuki_battery_items
         global lock
         global request_queue
@@ -98,11 +61,16 @@ class Nuki(SmartPlugin):
         self._base_url = self.get_parameter_value('protocol') + '://' + self.get_parameter_value(
             'bridge_ip') + ":" + str(self.get_parameter_value('bridge_port')) + '/'
         self._token = self.get_parameter_value('bridge_api_token')
-        self._callback_ip = self.get_parameter_value('bridge_callback_ip')
-        self._callback_port = self.get_parameter_value('bridge_callback_port')
+
         self._action = ''
         self._noWait = self.get_parameter_value('no_wait')
         self.items = Items.get_instance()
+
+        if not self.init_webinterfaces():
+            self._init_complete = False
+
+        self._callback_ip = self.mod_http.get_local_ip_address()  # get_parameter_value('bridge_callback_ip')
+        self._callback_port = self.mod_http.get_local_servicesport()  # get_parameter_value('bridge_callback_port')
 
         if self._callback_ip is None or self._callback_ip in ['0.0.0.0', '']:
             self._callback_ip = self.get_local_ipv4_address()
@@ -119,10 +87,8 @@ class Nuki(SmartPlugin):
             self.logger.info(
                 "Plugin '{pluginname}': using given ip address {ip}".format(pluginname=self.get_shortname(),
                                                                             ip=self._callback_ip))
-
-        self._callback_url = "http://{ip}:{port}/".format(ip=self._callback_ip, port=self._callback_port)
-
-        NukiTCPDispatcher(self)
+        self._callback_url = "http://{ip}:{port}/nuki_callback/".format(ip=self._callback_ip,
+                                                                        port=self._callback_port)
 
         self._lockActions = [1,  # unlock
                              2,  # lock
@@ -156,20 +122,24 @@ class Nuki(SmartPlugin):
 
             if self.has_iattr(item.conf, 'nuki_trigger'):
                 nuki_trigger = self.get_iattr_value(item.conf, "nuki_trigger")
-                if nuki_trigger.lower() not in ['state', 'action', 'battery']:
+                if nuki_trigger.lower() not in ['state', 'doorstate', 'action', 'battery']:
                     self.logger.warning("Plugin '{pluginname}': Item {item} defines an invalid Nuki trigger {trigger}! "
-                                        "It has to be 'state' or 'action'.".format(pluginname=self.get_shortname(),
-                                                                                   item=item, trigger=nuki_trigger))
+                                        "It has to be 'state', 'doorstate' or 'action'.".format(
+                        pluginname=self.get_shortname(),
+                        item=item, trigger=nuki_trigger))
                     return
                 if nuki_trigger.lower() == 'state':
                     nuki_event_items[item] = int(nuki_id)
+                elif nuki_trigger.lower() == 'doorstate':
+                    nuki_door_items[item] = int(nuki_id)
                 elif nuki_trigger.lower() == 'action':
                     nuki_action_items[item] = int(nuki_id)
                 else:
                     nuki_battery_items[item] = int(nuki_id)
             else:
                 self.logger.warning("Plugin '{pluginname}': Item {item} defines a Nuki ID but no nuki trigger! "
-                                    "This item has no effect.".format(pluginname=self.get_shortname(), item=item.property.path))
+                                    "This item has no effect.".format(pluginname=self.get_shortname(),
+                                                                      item=item.property.path))
                 return
             return self.update_item
 
@@ -201,15 +171,21 @@ class Nuki(SmartPlugin):
 
         nuki_battery = None
         nuki_state = None
+        nuki_doorstate = None
 
         if 'state' in lock_state:
             nuki_state = lock_state['state']
+        if 'doorsensorState' in lock_state:
+            nuki_doorstate = lock_state['doorsensorState']
         if 'batteryCritical' in lock_state:
             nuki_battery = 0 if not lock_state['batteryCritical'] else 1
 
         for item, key in nuki_event_items.items():
             if key == nuki_id:
                 item(nuki_state, 'NUKI')
+        for item, key in nuki_door_items.items():
+            if key == nuki_id:
+                item(nuki_doorstate, 'NUKI')
         for item, key in nuki_battery_items.items():
             if key == nuki_id:
                 item(nuki_battery, 'NUKI')
@@ -318,6 +294,9 @@ class Nuki(SmartPlugin):
     def get_event_items(self):
         return nuki_event_items
 
+    def get_door_items(self):
+        return nuki_door_items
+
     def get_battery_items(self):
         return nuki_battery_items
 
@@ -333,7 +312,7 @@ class Nuki(SmartPlugin):
     def get_callback_url(self):
         return self._callback_url
 
-    def init_webinterface(self):
+    def init_webinterfaces(self):
         """"
         Initialize the web interface for this plugin
 
@@ -344,11 +323,11 @@ class Nuki(SmartPlugin):
                 'http')  # try/except to handle running in a core version that does not support modules
         except:
             self.mod_http = None
-        if self.mod_http is None:
-            self.logger.error("Plugin '{}': Not initializing the web interface".format(self.get_shortname()))
+        if self.mod_http == None:
+            self.logger.error("Plugin '{}': Not initializing the web interface. If not already done so, please configure "
+                              "http module in etc/module.yaml.".format(self.get_fullname()))
             return False
 
-        # set application configuration for cherrypy
         webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
         config = {
             '/': {
@@ -360,12 +339,25 @@ class Nuki(SmartPlugin):
             }
         }
 
+        config_callback_ws = {
+            '/': {}
+        }
+
         # Register the web interface as a cherrypy app
         self.mod_http.register_webif(WebInterface(webif_dir, self),
                                      self.get_shortname(),
                                      config,
                                      self.get_classname(), self.get_instance_name(),
-                                     description='')
+                                     description='Nuki Web Interface')
+
+        # Register the callback interface as a cherrypy app
+        self.mod_http.register_service(NukiWebServiceInterface(webif_dir, self),
+                                       self.get_shortname(),
+                                       config_callback_ws,
+                                       self.get_classname(), self.get_instance_name(),
+                                       description='',
+                                       servicename='nuki_callback',
+                                       use_global_basic_auth=False)
 
         return True
 
@@ -373,6 +365,36 @@ class Nuki(SmartPlugin):
 # ------------------------------------------
 #    Webinterface of the plugin
 # ------------------------------------------
+
+class NukiWebServiceInterface:
+    exposed = True
+
+    def __init__(self, webif_dir, plugin):
+        self.webif_dir = webif_dir
+        self.logger = logging.getLogger(__name__)
+        self.plugin = plugin
+
+    @cherrypy.expose
+    @cherrypy.tools.json_in()
+    @cherrypy.tools.json_out()
+    def index(self):
+        try:
+            input_json = cherrypy.request.json
+            self.plugin.logger.debug(
+                "Plugin '{}' - NukiWebServiceInterface: Getting JSON String".format(self.plugin.get_shortname()))
+            nuki_id = input_json['nukiId']
+            state_name = input_json['stateName']
+            self.plugin.logger.debug(
+                "Plugin '{pluginname}' - NukiWebServiceInterface: Status Smartlock: ID: {nuki_id} Status: {state_name}".
+                    format(pluginname=self.plugin.get_shortname(), nuki_id=nuki_id, state_name=state_name))
+
+            Nuki.update_lock_state(nuki_id, input_json)
+        except Exception as err:
+            self.plugin.logger.error(
+                "Plugin '{}' - NukiWebServiceInterface: Error parsing nuki response!\nError: {}".format(
+                    self.plugin.get_shortname(), err))
+        pass
+
 
 class WebInterface(SmartPluginWebIf):
 
@@ -403,9 +425,9 @@ class WebInterface(SmartPluginWebIf):
         tmpl = self.tplenv.get_template('index.html')
         return tmpl.render(plugin_shortname=self.plugin.get_shortname(), plugin_version=self.plugin.get_version(),
                            interface=None,
-                           item_count=len(self.plugin.get_event_items()) + len(self.plugin.get_action_items()) + len(
-                               self.plugin.get_battery_items()),
-                           plugin_info=self.plugin.get_info(), tabcount=1,
+                           item_count=len(self.plugin.get_event_items()) + len(self.plugin.get_door_items()) +
+                                      len(self.plugin.get_action_items()) + len(self.plugin.get_battery_items()),
+                           plugin_info=self.plugin.get_info(), paired_nukis=paired_nukis, tabcount=1,
                            p=self.plugin)
 
     @cherrypy.expose
@@ -433,9 +455,13 @@ class WebInterface(SmartPluginWebIf):
         :return: dict with the data needed to update the web page.
         """
         if dataSet is None:
-        # get the new data
+            # get the new data
             data = {}
             for item, value in self.plugin.get_event_items().items():
+                data[item.id() + "_value"] = item()
+                data[item.id() + "_last_update"] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
+                data[item.id() + "_last_change"] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
+            for item, value in self.plugin.get_door_items().items():
                 data[item.id() + "_value"] = item()
                 data[item.id() + "_last_update"] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
                 data[item.id() + "_last_change"] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')

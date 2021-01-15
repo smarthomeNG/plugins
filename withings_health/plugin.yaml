@@ -12,12 +12,12 @@ plugin:
     documentation: 'http://smarthomeng.de/user/plugins_doc/config/withings_health.html'
     support: 'https://knx-user-forum.de/forum/supportforen/smarthome-py/1141179-nokia-health-plugin'
 
-    version: 1.6.4                 # Plugin version
-    sh_minversion: 1.6             # minimum shNG version to use this plugin
+    version: 1.8.0                 # Plugin version
+    sh_minversion: 1.7             # minimum shNG version to use this plugin
 #    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
-    restartable: unknown
-    classname: NokiaHealth         # class containing the plugin
+    restartable: True
+    classname: WithingsHealth         # class containing the plugin
 
 parameters:
     # Definition of parameters to be configured in etc/plugin.yaml
@@ -54,7 +54,7 @@ parameters:
 item_attributes:
     # Definition of item attributes defined by this plugin
 
-    nh_type:
+    withings_type:
         type: str
         description:
             de: 'nh_type kann folgende Werte annehmen: Zwingend für OAuth2: access_token, token_expiry, token_type, refresh_token | Optional: weight, height (wird von Nokia Health nur beim allerersten Messwert geliefert), bmi, bmi_text, fat_ratio, fat_free_mass, fat_mass_weight, diastolic_blood_pressure, systolic_blood_pressure, temperature, body_temperature, skin_temperature, spo2, heart_pulse, hydration, bone_mass, pulse_wave_velocity.'
@@ -73,7 +73,7 @@ item_attributes:
         - 'body_temperature'
         - 'skin_temperature'
         - 'spo2'
-        - 'heart_pulse'
+        - 'heart_rate'
         - 'hydration'
         - 'bone_mass'
         - 'pulse_wave_velocity'
@@ -82,12 +82,90 @@ item_attributes:
         - 'token_type'
         - 'refresh_token'
 
-item_structs: NONE
+item_structs:
   # Definition of item-structure templates for this plugin
+    body:
+        name: Body data from withings health scale
+
+        weight:
+            name: Body weight
+            type: num
+            withings_type@instance: weight
+            database: init
+
+        height:
+            name: Body height
+            type: num
+            withings_type@instance: height
+            database: init
+
+        bmi:
+            name: Bondy measurement index (BMI) calculated by the plugin from weight and height (might only work after height is retrieved first time)
+            type: num
+            withings_type@instance: bmi
+            database: init
+
+        bmi_text:
+            name: Bondy measurement index (BMI) in a textual representation (German/English)
+            type: str
+            withings_type@instance: bmi_text
+            database: init
+
+        fat_ratio:
+            name: Fat ratio of the measured body
+            type: num
+            withings_type@instance: fat_ratio
+            database: init
+
+        fat_free_mass:
+            name: Fat free mass of the measured body
+            type: num
+            withings_type@instance: fat_free_mass
+            database: init
+
+        fat_mass_weight:
+            name: Fat weight of the measured body
+            type: num
+            withings_type@instance: fat_mass_weight
+            database: init
+
+        heart_rate:
+            name: Heart rate during measurement
+            type: num
+            withings_type@instance: heart_rate
+            database: init
+
+        access_token:
+            name: Stores the access token after oauth authentification
+            type: str
+            cache: yes
+            withings_type@instance: access_token
+
+        token_expiry:
+            name: Stores the token expiration time after oauth authentification
+            type: num
+            cache: yes
+            withings_type@instance: token_expiry
+
+        token_type:
+            name: Stores the token type after oauth authentification
+            type: str
+            cache: yes
+            withings_type@instance: token_type
+
+        refresh_token:
+            name: Stores the refresh token for the next refresh
+            type: str
+            cache: yes
+            withings_type@instance: refresh_token
 
 logic_parameters: NONE
     # Definition of logic parameters defined by this plugin
 
-plugin_functions: NONE
+plugin_functions:
     # Definition of function interface of the plugin
-
+    get_callback_url:
+        type: str
+        description:
+            de: 'Gibt die Callback URL des Withings Health Plugins zurück.'
+            en: 'Returns the callback url of the withings health plugin.'

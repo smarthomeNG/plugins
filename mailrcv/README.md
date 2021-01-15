@@ -1,4 +1,4 @@
-# Mail
+# mailrcv
 
 ## Requirements
 
@@ -10,8 +10,7 @@ This plugin has no requirements or dependencies.
 
 ```yaml
 imap:
-    class_name: IMAP
-    class_path: plugins.mail
+    plugin.mailrcv
     host: mail.example.com
     username: smarthome
     password: secret

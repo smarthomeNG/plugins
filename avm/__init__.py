@@ -25,6 +25,7 @@ import datetime
 import logging
 import socket
 import time
+from time import mktime
 import threading
 from xml.dom import minidom
 import requests
@@ -59,6 +60,8 @@ class MonitoringService:
         self._items_incoming = []  # items for incoming calls
         self._items_outgoing = []  # items for outgoing calls
         self._duration_item = dict()  # 2 items, on for counting the incoming, one for counting the outgoing call duration
+        self._duration_item['call_duration_outgoing'] = None
+        self._duration_item['call_duration_incoming'] = None
         self._call_active = dict()
         self._listen_active = False
         self._call_active['incoming'] = False
@@ -79,9 +82,8 @@ class MonitoringService:
         self.conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             self.conn.connect((self._host, self._port))
-            self._listen_thread = threading.Thread(target=self._listen,
-                                                   name="AVM Monitoring Service {}".format(
-                                                       self._plugin_instance.get_fullname())).start()
+            _name = 'plugins.' + self._plugin_instance.get_fullname() + '.Monitoring_Service'
+            self._listen_thread = threading.Thread(target=self._listen, name=_name).start()
             self._plugin_instance.logger.debug("MonitoringService: connection established")
         except Exception as e:
             self.conn = None
@@ -257,7 +259,7 @@ class MonitoringService:
                 self._trigger('', '', '', line[2], line[1], '')
         except Exception as e:
             self._plugin_instance.logger.error(
-                "MonitoringService: " + type(e) + " while handling Callmonitor response: " + str(e))
+                "MonitoringService: " + type(e).__name__ + " while handling Callmonitor response: " + str(e))
             return
 
     def _trigger(self, call_from, call_to, time, callid, event, branch):
@@ -298,7 +300,8 @@ class MonitoringService:
                 self._call_incoming_cid = callid
 
                 # reset duration for incoming calls
-                self._duration_item['call_duration_incoming'](0, self._plugin_instance.get_shortname())
+                if not self._duration_item['call_duration_incoming'] is None:
+                    self._duration_item['call_duration_incoming'](0, self._plugin_instance.get_shortname())
 
                 # process items specific to incoming calls
                 for item in self._items_incoming:  # update items for incoming calls
@@ -511,7 +514,7 @@ class AVM(SmartPlugin):
     Main class of the Plugin. Does all plugin specific stuff and provides the update functions for the different TR-064 services on the FritzDevice
     """
 
-    PLUGIN_VERSION = "1.5.9"
+    PLUGIN_VERSION = "1.5.10"
 
     _header = {'SOAPACTION': '', 'CONTENT-TYPE': 'text/xml; charset="utf-8"'}
     _envelope = """
@@ -839,7 +842,7 @@ class AVM(SmartPlugin):
         elif self.has_iattr(item.conf, 'avm_data_type'):
             # normal items
             self._fritz_device._items.append(item)
-        if self.get_iattr_value(item.conf, 'avm_data_type') in ['wlanconfig', 'tam', 'aha_device', 'set_temperature']:
+        if self.get_iattr_value(item.conf, 'avm_data_type') in ['wlanconfig', 'tam', 'aha_device', 'set_temperature', 'set_hkrwindowopen']:
             # special items which can be changed outside the plugin context and need to be submitted to the FritzDevice
             return self.update_item
 
@@ -857,7 +860,7 @@ class AVM(SmartPlugin):
         # Doublecheck: Shall we send this request via self._session.get instead?
         response = requests.get("http://fritz.box/login_sid.lua")
         myXML = response.text
-        self.logger.info("Debug response text: {0}".format(myXML))
+        self.logger.debug("Session request response text: {0}".format(myXML))
         xml = minidom.parseString(myXML)
         challenge_xml = xml.getElementsByTagName('Challenge')
         sid_xml = xml.getElementsByTagName('SID')
@@ -889,7 +892,7 @@ class AVM(SmartPlugin):
         # r = self._session.get(url, timeout=self._timeout, verify=self._verify)
         # self.logger.info("Debug return: {0}".format(r))
 
-    def _assemble_aha_interface(self, ain='', aha_action='', aha_param='', sid=''):
+    def _assemble_aha_interface(self, ain='', aha_action='', aha_param='', sid='', endtimestamp=''):
         """
         Builds the AVM home automation (AHA) http interface command string
         https://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/AHA-HTTP-Interface.pdf
@@ -904,8 +907,11 @@ class AVM(SmartPlugin):
         # https://fritz.box/webservices/homeautoswitch.lua?ain=099950196524&switchcmd=sethkrtsoll&param=254&sid=9c977765016899f8
         #
         # Command string with session id parameter:
-        aha_string = "/webservices/homeautoswitch.lua?ain={0}&switchcmd={1}&param={2}&sid={3}".format(
-            ain.replace(" ", ""), aha_action, aha_param, sid)
+        if endtimestamp == '':
+            aha_string = "/webservices/homeautoswitch.lua?ain={0}&switchcmd={1}&param={2}&sid={3}".format(ain.replace(" ", ""), aha_action, aha_param, sid)
+        else:
+            aha_string = "/webservices/homeautoswitch.lua?ain={0}&switchcmd={1}&endtimestamp={2}&sid={3}".format(ain.replace(" ", ""), aha_action, endtimestamp, sid)
+
         return aha_string
 
     def update_item(self, item, caller=None, source=None, dest=None):
@@ -927,20 +933,22 @@ class AVM(SmartPlugin):
                 action = 'SetSwitch'
             elif self.get_iattr_value(item.conf, 'avm_data_type') == 'set_temperature':
                 action = 'sethkrtsoll'
+            elif self.get_iattr_value(item.conf, 'avm_data_type') == 'set_hkrwindowopen':
+                action = 'sethkrwindowopen'
             else:
                 self.logger.error("%s is not defined to be updated." % self.get_iattr_value(item.conf, 'avm_data_type'))
                 return
 
             headers = self._header.copy()
             if self.get_iattr_value(item.conf, 'avm_data_type') == 'wlanconfig':
-                if int(item.conf['avm_wlan_index']) > 0:
+                if int(self.get_iattr_value(item.conf, 'avm_wlan_index')) > 0:
                     headers['SOAPACTION'] = "%s#%s" % (
-                        self._urn_map['WLANConfiguration'] % str(item.conf['avm_wlan_index']), action)
+                        self._urn_map['WLANConfiguration'] % str(self.get_iattr_value(item.conf, 'avm_wlan_index')), action)
                     soap_data = self._assemble_soap_data(action, self._urn_map['WLANConfiguration'] % str(
-                        item.conf['avm_wlan_index']), {'NewEnable': int(item())})
+                        self.get_iattr_value(item.conf, 'avm_wlan_index')), {'NewEnable': int(item())})
                 else:
                     self.logger.error(
-                        'No wlan_index attribute provided: %s' % self.get_iattr_value(item.conf, 'avm_data_type'))
+                        'No avm_wlan_index attribute provided: %s' % self.get_iattr_value(item.conf, 'avm_data_type'))
             elif self.get_iattr_value(item.conf, 'avm_data_type') == 'tam':
                 headers['SOAPACTION'] = "%s#%s" % (self._urn_map['TAM'], action)
                 soap_data = self._assemble_soap_data(action, self._urn_map['TAM'],
@@ -959,18 +967,47 @@ class AVM(SmartPlugin):
 
             if self.get_iattr_value(item.conf, 'avm_data_type') == 'wlanconfig':
                 param = "%s%s%s" % (
-                    "/upnp/control/", self.get_iattr_value(item.conf, 'avm_data_type'), item.conf['avm_wlan_index'])
+                    "/upnp/control/", self.get_iattr_value(item.conf, 'avm_data_type'), self.get_iattr_value(item.conf, 'avm_wlan_index'))
                 url = self._build_url(param)
 
             elif self.get_iattr_value(item.conf, 'avm_data_type') == 'tam':
                 url = self._build_url("/upnp/control/x_tam")
             elif self.get_iattr_value(item.conf, 'avm_data_type') == 'aha_device':
                 url = self._build_url("/upnp/control/x_homeauto")
+            elif self.get_iattr_value(item.conf, 'avm_data_type') == 'set_hkrwindowopen':
+                self.logger.debug("hkrwindowopen caller is: {0}".format(caller))
+                cmd_enable = bool(item())
+                self.logger.debug("Debug enable is: {0}".format(cmd_enable))
+                parentItem = item.return_parent()
+                ainDevice = '0'
+                parent_ain = self.get_iattr_value(parentItem.conf, 'ain')
+                if isinstance(parent_ain, str):
+                    ainDevice = parent_ain
+                else:
+                    self.logger.error('hkrt ain is not a string value')
+                self.logger.info("Debug ain is {0}".format(ainDevice))
+
+                # request new session ID:
+                mySID = self._request_session_id()
+
+                #Assemble endtimestamp:
+                if cmd_enable == False:
+                    endtime = 0
+                else:
+                    now = self.shtime.now()
+                    unix_secs = mktime(now.timetuple())
+                    #set endtime to now + 12h:
+                    endtime = int(unix_secs + 12*3600)
+                self.logger.debug("HKR endtimestamp is: {0}".format(endtime ))
+
+                aha_string = self._assemble_aha_interface(ain=ainDevice, aha_action=action, endtimestamp=endtime, sid=mySID)
+                self.logger.debug("Debug ahastring: {0}".format(aha_string))
+
             elif self.get_iattr_value(item.conf, 'avm_data_type') == 'set_temperature':
                 self.logger.info("Debug caller is: {0}".format(caller))
                 # Check commanded temperature range:
                 cmd_temperature = float(item())
-                self.logger.info("Debug cmd_temp is: {0}".format(cmd_temperature))
+                self.logger.debug("Debug cmd_temp is: {0}".format(cmd_temperature))
                 parentItem = item.return_parent()
                 ainDevice = '0'
                 parent_ain = self.get_iattr_value(parentItem.conf, 'ain')
@@ -999,6 +1036,11 @@ class AVM(SmartPlugin):
 
                 aha_string = self._assemble_aha_interface(ain=ainDevice, aha_action=action, aha_param=temp_scaled,
                                                           sid=mySID)
+
+            #Function used for AHA http interface only:
+            current_avm_data_type = self.get_iattr_value(item.conf, 'avm_data_type')
+            use_aha_interface = current_avm_data_type in ['set_temperature', 'set_hkrwindowopen']
+            if use_aha_interface:
                 # build_url method cannot be used because it uses another IP port.
                 # url = self._build_url(aha_string)
 
@@ -1011,16 +1053,26 @@ class AVM(SmartPlugin):
 
                 url = "%s://%s:%s%s" % (url_prefix, self._fritz_device.get_host(), 443, aha_string)
                 self.logger.debug("Debug param: {0}".format(aha_string))
-                self.logger.info("Debug url: {0}".format(url))
+                self.logger.debug("Debug url: {0}".format(url))
 
             try:
-                if self.get_iattr_value(item.conf, 'avm_data_type') == 'set_temperature':
+
+                if use_aha_interface:
                     r = self._session.get(url, timeout=self._timeout, verify=self._verify)
-                    self.logger.info("Debug return: {0}".format(r))
+                    self.logger.debug("Return value aha interface: {0}".format(r))
+
+                    statusCode = r.status_code
+                    if statusCode == 200:
+                        self.logger.debug("Sending AHA command successful")
+                    else:
+                        self.logger.error("AHA command error code: {0}".format(statusCode))
+
                 else:
                     self._session.post(url, data=soap_data, timeout=self._timeout, headers=headers,
                                        auth=HTTPDigestAuth(self._fritz_device.get_user(),
                                                            self._fritz_device.get_password()), verify=self._verify)
+
+
             except Exception as e:
                 if self._fritz_device.is_available():
                     self.logger.error(
@@ -1034,10 +1086,10 @@ class AVM(SmartPlugin):
                                     'avm_data_type') == 'wlanconfig':  # check if item was guest wifi item and remaining time is set as item..
                 for citem in self._fritz_device.get_items():  # search for guest time remaining item.
                     if self.get_iattr_value(citem.conf,
-                                            'avm_data_type') == 'wlan_guest_time_remaining' and citem.conf[
-                        'avm_wlan_index'] == item.conf['avm_wlan_index']:
+                                            'avm_data_type') == 'wlan_guest_time_remaining' and self.get_iattr_value(citem.conf,
+                        'avm_wlan_index') == self.get_iattr_value(item.conf, 'avm_wlan_index'):
                         self._response_cache.pop("wlanconfig_%s_%s" % (
-                            citem.conf['avm_wlan_index'], "X_AVM-DE_GetWLANExtInfo"),
+                            self.get_iattr_value(citem.conf, 'avm_wlan_index'), "X_AVM-DE_GetWLANExtInfo"),
                                                  None)  # reset response cache
                         self._update_wlan_config(citem)  # immediately update remaining guest time
 
@@ -1641,13 +1693,14 @@ class AVM(SmartPlugin):
         headers = self._header.copy()
 
         if self.get_iattr_value(item.conf, 'avm_data_type') == 'network_device':
-            if 'mac' not in item.conf:
-                self.logger.error("No mac attribute provided in network_device item %s" % item.property.path)
+            if not self.has_iattr(item.conf, 'avm_mac'):
+                self.logger.error("No avm_mac attribute provided in network_device item %s" % item.property.path)
                 return
             action = 'GetSpecificHostEntry'
             headers['SOAPACTION'] = "%s#%s" % (self._urn_map['Hosts'], action)
             soap_data = self._assemble_soap_data(action, self._urn_map['Hosts'],
-                                                 {'NewMACAddress': item.conf['mac']})
+                                                 {'NewMACAddress': self.get_iattr_value(item.conf,
+                                                                                             'avm_mac')})
         else:
             self.logger.error(
                 "Attribute %s not supported by plugin (update hosts)" % self.get_iattr_value(item.conf,
@@ -1707,7 +1760,7 @@ class AVM(SmartPlugin):
             item(0)
             self.logger.debug(
                 "MAC Address %s for item %s not available on the FritzDevice - ID: %s" % (
-                item.conf['mac'], item.property.path, self._fritz_device.get_identifier()))
+                self.get_iattr_value(item.conf, 'avm_mac'), item.property.path, self._fritz_device.get_identifier()))
 
     def _update_home_automation(self, item):
         """
@@ -1904,8 +1957,9 @@ class AVM(SmartPlugin):
 
             else:
                 self.logger.error(
-                    'Argument {} of Attribute {} not available on the FritzDevice with AIN {}.'
-                    .format(self.get_iattr_value(child.conf,'avm_data_type'), self.get_iattr_value(item.conf,'avm_data_type'), item.conf['ain'].strip()))
+                    'Attribute {} not available on the FritzDevice with AIN {}.'
+                    .format(self.get_iattr_value(item.conf,'avm_data_type'), item.conf['ain'].strip()))
+                    
 
     def _update_fritz_device_info(self, item):
         """
@@ -2003,7 +2057,12 @@ class AVM(SmartPlugin):
             return
 
         headers['SOAPACTION'] = "%s#%s" % (self._urn_map['TAM'], action)
-        soap_data = self._assemble_soap_data(action, self._urn_map['TAM'], {'NewIndex': 0})
+
+        index = 0
+        if self.has_iattr(item.conf, 'index'):
+            index = int(self.get_iattr_value(item.conf, 'index'))-1
+
+        soap_data = self._assemble_soap_data(action, self._urn_map['TAM'], {'NewIndex': index})
 
         if "tam_" + action not in self._response_cache:
             try:
@@ -2090,13 +2149,13 @@ class AVM(SmartPlugin):
 
         :param item: item to be updated (Supported item avm_data_types: wlanconfig, wlan_guest_time_remaining
         """
-        if item.conf['avm_wlan_index']:
-            if int(item.conf['avm_wlan_index']) > 0:
-                url = self._build_url("/upnp/control/wlanconfig%s" % item.conf['avm_wlan_index'])
+        if self.has_iattr(item.conf, 'avm_wlan_index'):
+            if int(self.get_iattr_value(item.conf, 'avm_wlan_index')) > 0:
+                url = self._build_url("/upnp/control/wlanconfig%s" % self.get_iattr_value(item.conf, 'avm_wlan_index'))
             else:
-                self.logger.error('No wlan_index attribute provided')
+                self.logger.error('No avm_wlan_index attribute provided')
         else:
-            self.logger.error('No wlan_index attribute provided')
+            self.logger.error('No avm_wlan_index attribute provided for {}'.format(item))
 
         headers = self._header.copy()
 
@@ -2109,11 +2168,11 @@ class AVM(SmartPlugin):
             return
 
         headers['SOAPACTION'] = "%s#%s" % (
-            self._urn_map['WLANConfiguration'] % str(item.conf['avm_wlan_index']), action)
+            self._urn_map['WLANConfiguration'] % str(self.get_iattr_value(item.conf, 'avm_wlan_index')), action)
         soap_data = self._assemble_soap_data(action,
-                                             self._urn_map['WLANConfiguration'] % str(item.conf['avm_wlan_index']))
+                                             self._urn_map['WLANConfiguration'] % str(self.get_iattr_value(item.conf, 'avm_wlan_index')))
 
-        if not "wlanconfig_%s_%s" % (item.conf['avm_wlan_index'], action) in self._response_cache:
+        if not "wlanconfig_%s_%s" % (self.get_iattr_value(item.conf, 'avm_wlan_index'), action) in self._response_cache:
             try:
                 response = self._session.post(url, data=soap_data, timeout=self._timeout, headers=headers,
                                               auth=HTTPDigestAuth(self._fritz_device.get_user(),
@@ -2127,16 +2186,15 @@ class AVM(SmartPlugin):
                 return
             if not self._fritz_device.is_available():
                 self.set_device_availability(True)
-            self._response_cache["wlanconfig_%s_%s" % (item.conf['avm_wlan_index'], action)] = response.content
+            self._response_cache["wlanconfig_%s_%s" % (self.get_iattr_value(item.conf, 'avm_wlan_index'), action)] = response.content
         else:
             self.logger.debug("Accessing wlanconfig response cache for action %s and item %s!" % (action, item.property.path))
 
         try:
-            xml = minidom.parseString(self._response_cache["wlanconfig_%s_%s" % (item.conf['avm_wlan_index'], action)])
+            xml = minidom.parseString(self._response_cache["wlanconfig_%s_%s" % (self.get_iattr_value(item.conf, 'avm_wlan_index'), action)])
         except Exception as e:
             self.logger.error("Exception when parsing response: %s" % str(e))
             return
-
         if self.get_iattr_value(item.conf, 'avm_data_type') == 'wlanconfig':
             newEnable = self._get_value_from_xml_node(xml, 'NewEnable')
             if newEnable is not None:
@@ -2482,7 +2540,7 @@ class WebInterface(SmartPluginWebIf):
     def __init__(self, webif_dir, plugin):
         """
         Initialization of instance of class WebInterface
-        
+
         :param webif_dir: directory where the webinterface of the plugin resides
         :param plugin: instance of the plugin
         :type webif_dir: str

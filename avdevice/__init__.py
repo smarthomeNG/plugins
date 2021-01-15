@@ -52,7 +52,7 @@ logging.addLevelName(logging.DEBUG - 2, 'VERBOSE2')
 
 class AVDevice(SmartPlugin):
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = "1.6.1"
+    PLUGIN_VERSION = "1.6.2"
 
     def __init__(self, smarthome):
         self.itemsApi = Items.get_instance()
@@ -99,6 +99,8 @@ class AVDevice(SmartPlugin):
             self._auto_reconnect = self.get_parameter_value('autoreconnect')
             self._resend_retries = int(self.get_parameter_value('sendretries'))
             self._reconnect_retries = int(self.get_parameter_value('reconnectretries'))
+            self._lineending_send = self.get_parameter_value('lineending_send')
+            self._lineending_response = self.get_parameter_value('lineending_response')
             ignoreresponse = self.get_parameter_value('ignoreresponse')
             errorresponse = self.get_parameter_value('errorresponse')
             forcebuffer = self.get_parameter_value('forcebuffer')
@@ -522,15 +524,15 @@ class AVDevice(SmartPlugin):
                             "Processing Response {}: expected response: {}, bufferlist {}. Sortedbuffer: {}".format(
                                 self._name, expectedsplit, bufferlist, sortedbuffer))
             bufferlist = [x for x in bufferlist if x not in sortedbuffer]
-            buffer = "\r\n".join(sortedbuffer + bufferlist)
-            buffer = "{}\r\n".format(buffer)
+            buffer = self._lineending_response.join(sortedbuffer + bufferlist)
+            buffer = "{}{}".format(buffer, self._lineending_response)
             return buffer, expectedsplit
 
         try:
             buffer = ''
             tidy = lambda c: re.sub(
-                r'(^\s*[\r\n]+|^\s*\Z)|(\s*\Z|\s*[\r\n]+)',
-                lambda m: '\r\n' if m.lastindex == 2 else '',
+                r'(^\s*[{0}]+|^\s*\Z)|(\s*\Z|\s*[{0}]+)'.format(self._lineending_response),
+                lambda m: self._lineending_response if m.lastindex == 2 else '',
                 c)
             try:
                 if self._rs232 and (socket == self._serialwrapper or socket == self._serial):
@@ -539,7 +541,7 @@ class AVDevice(SmartPlugin):
                     buffer = socket.recv(4096).decode('utf-8')
                 buffer = tidy(buffer)
                 buffering = False
-                cond1 = self._response_buffer is not False or self._response_buffer is not 0
+                cond1 = self._response_buffer is not False or self._response_buffer != 0
                 if not buffer == '' and cond1:
                     buffering = True
                 elif buffer == '' and not self._sendingcommand == 'done' and not self._sendingcommand == 'gaveup':
@@ -615,17 +617,17 @@ class AVDevice(SmartPlugin):
                     yield 'ERROR'
 
             while buffering:
-                if '\r\n' in buffer:
+                if self._lineending_response in buffer:
                     self.logger.log(VERBOSE2,
                                     "Processing Response {}: Buffer before removing duplicates: {}".format(
-                                        self._name, re.sub('[\r\n]', ' --- ', buffer)))
+                                        self._name, re.sub('[{}]'.format(self._lineending_response), ' --- ', buffer)))
                     if self._clearbuffer is True:
-                        buffer = '\r\n'
+                        buffer = self._lineending_response
                         self.logger.log(VERBOSE1,
                                         "Processing Response {}: Clearing buffer because clearbuffer set to true. It is now: {}".format(
-                                            self._name, re.sub('[\r\n]', ' --- ', buffer)))
+                                            self._name, re.sub('[{}]'.format(self._lineending_response), ' --- ', buffer)))
                         self._clearbuffer = False
-                    bufferlist = buffer.split("\r\n")
+                    bufferlist = buffer.split(self._lineending_response)
                     bufferlist = bufferlist[:-1] if len(bufferlist) > 1 else bufferlist
                     # Removing duplicates
                     buffer_cleaned = []
@@ -633,18 +635,18 @@ class AVDevice(SmartPlugin):
                         if buff not in buffer_cleaned or buff in self._force_buffer:
                             buffer_cleaned.append(buff)
                     bufferlist = buffer_cleaned
-                    buffer = "\r\n".join(bufferlist) + "\r\n"
+                    buffer = self._lineending_response.join(bufferlist) + self._lineending_response
 
                     if self._send_commands:
                         _, expectedsplit = _sortbuffer(buffer, bufferlist)
                         # first entry should be buffer as soon as resorting works perfectly smooth. Problem now: On very short interval settings the sorting results in wrong reponses.
                         self.logger.log(VERBOSE2, "Processing Response {}: Buffer after sorting: {}.".format(
-                            self._name, re.sub('[\r\n]', ' --- ', buffer)))
+                            self._name, re.sub('[{}]'.format(self._lineending_response), ' --- ', buffer)))
 
-                    (line, buffer) = buffer.split("\r\n", 1)
+                    (line, buffer) = buffer.split(self._lineending_response, 1)
                     self.logger.log(VERBOSE2,
                                     "Processing Response {}: Buffer: {} Line: {}. Response buffer: {}, force buffer: {}.".format(
-                                        self._name, re.sub('\r\n', ' --- ', buffer), re.sub('\r\n', '. ', line),
+                                        self._name, re.sub('{}'.format(self._lineending_response), ' --- ', buffer), re.sub('{}'.format(self._lineending_response), '. ', line),
                                         self._response_buffer, self._force_buffer))
                     cond1 = ('' in self._force_buffer and len(self._force_buffer) == 1)
                     cond2 = (self._response_buffer is False or self._response_buffer == 0)
@@ -659,8 +661,8 @@ class AVDevice(SmartPlugin):
                                     self.logger.log(VERBOSE2,
                                                     "Processing Response {}: Testing forcebuffer {}. Bufferlist: {}. Start: {}".format(
                                                         self._name, buf, bufferlist, start))
-                                    if not buffer.find('\r\n', start) == -1:
-                                        end = buffer.index('\r\n', start)
+                                    if not buffer.find(self._lineending_response, start) == -1:
+                                        end = buffer.index(self._lineending_response, start)
                                         if not buffer[start:end] in bufferlist and not buffer[start:end] in line:
                                             bufferlist.append(buffer[start:end])
                                     else:
@@ -668,16 +670,16 @@ class AVDevice(SmartPlugin):
                                             bufferlist.append(buffer[start:])
                                     self.logger.debug(
                                         "Processing Response {}: Forcebuffer {} FOUND in buffer. Bufferlist: {}. Buffer: {}".format(
-                                            self._name, buf, bufferlist, re.sub('[\r\n]', ' --- ', buffer)))
+                                            self._name, buf, bufferlist, re.sub('[{}]'.format(self._lineending_response), ' --- ', buffer)))
                             except Exception as err:
                                 self.logger.warning(
                                     "Processing Response {}: Problems while buffering. Error: {}".format(self._name,
                                                                                                          err))
-                        buffer = tidy('\r\n'.join(bufferlist)) if bufferlist else tidy(buffer)
+                        buffer = tidy(self._lineending_response.join(bufferlist)) if bufferlist else tidy(buffer)
                         self.logger.log(VERBOSE2, "Processing Response {}: Tidied entry without buffer: {}".format(
                             self._name, buffer))
 
-                    if '{}\r\n'.format(line) == buffer:
+                    if '{}{}'.format(line, self._lineending_response) == buffer:
                         buffer = ''
                         self.logger.log(VERBOSE1,
                                         "Processing Response {}: Clearing buffer because it's the same as Line: {}".format(
@@ -726,9 +728,9 @@ class AVDevice(SmartPlugin):
                         yield "{}".format(line)
                     elif cond3 and cond4 and cond5:
                         buffering = False
-                        buffer = tidy(buffer + '\r\n{}\r\n'.format(line))
+                        buffer = tidy(buffer + '{}{}{}'.format(self._lineending_response, line, self._lineending_response))
                         self.logger.log(VERBOSE1, "Processing Response {}: Append Display info {} to buffer: {}".format(
-                            self._name, line, re.sub('[\r\n]', ' --- ', buffer)))
+                            self._name, line, re.sub('[{}]'.format(self._lineending_response), ' --- ', buffer)))
                     elif line.startswith(tuple(self._ignore_response)) and '' not in self._ignore_response:
                         try:
                             keyfound = False
@@ -767,31 +769,31 @@ class AVDevice(SmartPlugin):
                                 tuple(self._force_buffer)) and '' not in self._force_buffer:
                             buffering = False
                             self.logger.log(VERBOSE1, "Processing Response {}: Clearing buffer: {}".format(
-                                self._name, re.sub('[\r\n]', ' --- ', buffer)))
-                            buffer = '\r\n'
+                                self._name, re.sub('[{}]'.format(self._lineending_response), ' --- ', buffer)))
+                            buffer = self._lineending_response
                         self.logger.log(VERBOSE1,
                                         "Processing Response {}: Sending back line: {}.".format(self._name, line))
                         yield "{}".format(line)
                 else:
                     try:
-                        more = '\r\n'
+                        more = self._lineending_response
                         if self._rs232 and (socket == self._serialwrapper or socket == self._serial):
                             more = socket.readline().decode('utf-8') if socket == self._serial else socket.read()
                         if self._tcp and socket == self._tcp:
                             more = socket.recv(4096).decode('utf-8')
-                        morelist = more.split("\r\n")
-                        buffer += '\r\n' if buffer.find('\r\n') == -1 and len(buffer) > 0 else ''
-                        buffer += '\r\n'.join([x[0] for x in itertools.groupby(morelist)])
+                        morelist = more.split(self._lineending_response)
+                        buffer += self._lineending_response if buffer.find(self._lineending_response) == -1 and len(buffer) > 0 else ''
+                        buffer += self._lineending_response.join([x[0] for x in itertools.groupby(morelist)])
                     except Exception:
                         pass
                     finally:
                         buffering = False
                         self.logger.log(VERBOSE1, "Processing Response {}: Buffering false. Buffer: {}".format(
-                            self._name, re.sub('[\r\n]', ' --- ', buffer)))
+                            self._name, re.sub('[{}]'.format(self._lineending_response), ' --- ', buffer)))
 
-            if not buffer == '\r\n' and (self._response_buffer is True or type(self._response_buffer) is int):
+            if not buffer == self._lineending_response and (self._response_buffer is True or type(self._response_buffer) is int):
                 buffer = tidy(buffer)
-                bufferlist = buffer.split('\r\n')
+                bufferlist = buffer.split(self._lineending_response)
                 # Removing everything except last x lines
                 maximum = abs(self._response_buffer) if type(self._response_buffer) is int else 11
                 # Removing empty entries
@@ -802,7 +804,7 @@ class AVDevice(SmartPlugin):
                 bufferlist = newbuffer[-1 * max(min(len(newbuffer), maximum), 0):]
                 buffering = False
                 if bufferlist:
-                    self._expected_response = CreateExpectedResponse('\r\n'.join(bufferlist), self._name,
+                    self._expected_response = CreateExpectedResponse(self._lineending_response.join(bufferlist), self._name,
                                                                      self._send_commands, self.logger).create_expected()
                 for buf in bufferlist:
                     cond1 = not re.sub('[ ]', '', buf) == ''
@@ -816,9 +818,9 @@ class AVDevice(SmartPlugin):
                         self._wait(0.2)
                         yield buf
 
-            elif not buffer == '\r\n':
+            elif not buffer == self._lineending_response:
                 buffer = tidy(buffer)
-                bufferlist = buffer.split('\r\n')
+                bufferlist = buffer.split(self._lineending_response)
                 # Removing everything except last x lines
                 maximum = abs(self._response_buffer) if type(self._response_buffer) is int else 11
                 multiplier = 1 if self._response_buffer >= 0 else -1
@@ -829,7 +831,7 @@ class AVDevice(SmartPlugin):
                             tuple(self._ignore_response)) and '' not in self._ignore_response:
                         self.logger.debug(
                             "Processing Response {}: Sending back {} from filtered buffer: {}.".format(
-                                self._name, buf, re.sub('[\r\n]', ' --- ', buffer)))
+                                self._name, buf, re.sub('[{}]'.format(self._lineending_response), ' --- ', buffer)))
                         self._wait(0.2)
                         yield buf
         except Exception as err:
@@ -1036,20 +1038,19 @@ class AVDevice(SmartPlugin):
                 while ser.in_waiting == 0:
                     i += 1
                     self._wait(0.5)
-                    ser.write(bytes('{}\r'.format(command), 'utf-8'))
+                    ser.write(bytes('{}{}'.format(command, self._lineending_send), 'utf-8'))
                     # buffer = bytes()
                     buffer = ser.read().decode('utf-8')
                     self.logger.log(VERBOSE1,
                                     "Connecting Serial {}:  Buffer: {}. Reconnecting Retry: {}.".format(
-                                        self._name, re.sub('[\r\n]', ' --- ', buffer), i))
+                                        self._name, re.sub('[{}]'.format(self._lineending_response), ' --- ', buffer), i))
                     if i >= 4:
                         ser.close()
                         self.logger.log(VERBOSE1,
                                         "Connecting Serial {}:  Ran through several retries.".format(self._name))
                         break
                 if ser.isOpen():
-                    self._serialwrapper = io.TextIOWrapper(io.BufferedRWPair(ser, ser), newline='\r\n',
-                                                           encoding='utf-8', line_buffering=True)
+                    self._serialwrapper = io.TextIOWrapper(io.BufferedRWPair(ser, ser), newline=self._lineending_response, encoding='utf-8', line_buffering=True)
                     self._serialwrapper.timeout = 0.1
                     self._serial = ser
                     self._trigger_reconnect = False
@@ -1217,6 +1218,7 @@ class AVDevice(SmartPlugin):
                                         expectedvalue = eval(expectedvalue.lstrip('0'))
                                     except Exception:
                                         pass
+                                    dict_entry = None
                                     for x in self._functions[zone]:
                                         if self._functions[zone][x][1] == additional['Function']:
                                             try:
@@ -1333,7 +1335,7 @@ class AVDevice(SmartPlugin):
                 dependsvalue = self._dependson()
                 self.logger.debug(
                     "Checking Dependency {}: Connection depends on {}. It's value is {}, has to be {}. Connections are {}".format(
-                        self._name, self._dependson, dependsvalue, self._dependson_value, self._is_connected))
+                        self._name, self._dependson.property.path, dependsvalue, self._dependson_value, self._is_connected))
                 if dependsvalue == self._dependson_value:
                     depending = False
                     if dep_type == 'dependitem':
@@ -1797,7 +1799,7 @@ class AVDevice(SmartPlugin):
                                 responseposition = entry[2]
                                 item = entry[3]
                                 expectedtype = entry[7]
-                                index = data.find(dictkey)
+                                index = data.find(str(dictkey))
                                 if index == 0:
                                     av_function = entry[4]
                                     zone = entry[5]
@@ -2952,7 +2954,7 @@ class AVDevice(SmartPlugin):
                         self._wait(waitingtime)
                     else:
                         if self._rs232 is not None:
-                            result = self._serialwrapper.write(u'{}\r'.format(multicommand))
+                            result = self._serialwrapper.write(u'{}{}'.format(multicommand, self._lineending_send))
                             self._serialwrapper.flush()
                             self.logger.debug(
                                 "Sending Serial {}: {} was sent {} from Multicommand-List {}. Returns {}. Sending command: {}".format(
@@ -2960,7 +2962,7 @@ class AVDevice(SmartPlugin):
                             self._wait(0.2)
 
                         elif self._tcp is not None:
-                            result = self._tcpsocket.send(bytes('{}\r'.format(multicommand), 'utf-8'))
+                            result = self._tcpsocket.send(bytes('{}{}'.format(multicommand, self._lineending_send), 'utf-8'))
                             self.logger.debug(
                                 "Sending TCP {}: {} was sent {} from Multicommand-List {}. Returns {}".format(
                                     self._name, command, multicommand, commandlist, result))

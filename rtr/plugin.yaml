@@ -3,14 +3,14 @@ plugin:
     type: system                  # plugin type (gateway, interface, protocol, system, web)
     description:                  # Alternative: description in multiple languages
         de: 'Raum Temperatur Regler'
-        en: 'Room Temperatur controller'
+        en: 'Room Temperature controller'
     maintainer: Thomas Creutz / bmxp
     tester: bmxp
     state: ready
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/31450-rtr-heizungs-plugin
     documentation: https://www.smarthomeng.de/dev/user/plugins/rtr/README.html
-    version: 1.2.4                 # Plugin version
-    sh_minversion: 1.2             # minimum shNG version to use this plugin
+    version: 1.6.0                 # Plugin version
+    sh_minversion: 1.6             # minimum shNG version to use this plugin
     restartable: True
     multi_instance: False          # plugin supports multi instance
     classname: RTR                 # class containing the plugin

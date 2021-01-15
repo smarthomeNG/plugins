@@ -1,8 +1,9 @@
 # translations for the web interface
 plugin_translations:
     # Translations for the plugin specially for the web interface
-    'Wert 2':         {'de': '=', 'en': 'Value 2'}
-    'Wert 4':         {'de': '=', 'en': 'Value 4'}
+    'Wert':         {'de': '=', 'en': 'Value'}
+    'Aktualisiert': {'de': '=', 'en': 'Updated'}
+    'Pfad': {'de': '=', 'en': 'Directory'}
 
     # Alternative format for translations of longer texts:
     'Hier kommt der Inhalt des Webinterfaces hin.':

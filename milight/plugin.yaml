@@ -13,11 +13,11 @@ plugin:
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1002464-support-thread-für-dlms-plugin
 
     # Following entries are for Smart-Plugins:
-    version: 1.6.0                  # Plugin version
+    version: 1.6.1                  # Plugin version
     sh_minversion: 1.5              # minimum shNG version to use this plugin
     # sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True            # plugin supports multi instance
-    restartable: unknown
+    restartable: True
     classname: Milight              # class containing the plugin
 
 parameters:

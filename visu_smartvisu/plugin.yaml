@@ -7,7 +7,8 @@ plugin:
         en: 'Support for smartVISU: Automatic generation of pages; widget handling'
     maintainer: msinn
     tester: psilo909
-    state: qa-passed
+    #state: qa-passed
+    state: deprecated
 #    keywords: iot xyz
     documentation: http://smarthomeng.de/user/plugins/visu_smartvisu/user_doc.html
 
@@ -79,6 +80,16 @@ item_attributes:
             de: "Setzen Sie 'sv_page' auf einen der angegebenen Werte, um eine Seite für dieses Item zu generieren. Jedes Widget unterhalb dieses Elements wird auf der Seite angezeigt"
             en: 'Set sv_page to to one of the listed values generate a page for this item. Every widget beneath this item will be included in the page'
 
+    sv_blocksize:
+        type: str
+        valid_list:
+            - '1'
+            - '2'
+            - '3'
+        description:
+            de: "Größe des Widget-Blocks auf der smartVISU Seite"
+            en: 'Size of the widget-block on the smartVISU page'
+
     sv_overview:
         type: str
         description:
@@ -103,11 +114,23 @@ item_attributes:
             de: 'Definition des Widgets, welches für das Item verwendet wird'
             en: 'allows the specification of a widget. You could define multiple widgets. The widget(s) is/are shown by being encapsulated in a block of type 2 (Collapsable Block) - Relative item references are supported'
 
+    sv_name1:
+        type: str
+        description:
+            de: 'Name des Widgets'
+            en: 'Name of the widget'
+
     sv_widget2:
         type: str
         description:
             de: 'Definition des zweiten Widgets, welches für das Item verwendet wird'
             en: 'Definition of the secondary widget which is used for the item'
+
+    sv_name2:
+        type: str
+        description:
+            de: 'Name des zweiten Widgets'
+            en: 'Name of the second widget'
 
     sv_nav_aside:
         type: str

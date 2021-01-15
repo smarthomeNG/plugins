@@ -56,7 +56,7 @@ class UniFiConst(object):
     TYPE_DV_IP = 'device_ip'
     TYPE_DV_NAME = 'device_name'
 
-    ATTR_MAC = 'mac'
+    ATTR_MAC = 'unifi_client_mac'
     ATTR_SW_MAC = 'unifi_switch_mac'
     ATTR_DV_MAC = 'unifi_device_mac'
     ATTR_AP_MAC = 'unifi_ap_mac'
@@ -147,7 +147,7 @@ class UniFiControllerClientModel():
 
         if n['type'] == "wired_client":
             node_body[UniFiConst.ATTR_TYPE] = UniFiConst.TYPE_CL_PRESENT
-            node_body['mac'] = n['mac']
+            node_body[UniFiConst.ATTR_MAC] = n['mac']
             node_body['type'] = 'bool'
             node_body['hostname'] = {}
             node_body['hostname'][UniFiConst.ATTR_TYPE] = UniFiConst.TYPE_CL_HOSTNAME
@@ -289,7 +289,7 @@ class UniFiControllerClient(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.6.1'
+    PLUGIN_VERSION = '1.6.2'
 
     def __init__(self, sh, *args, **kwargs):
         """
@@ -299,6 +299,7 @@ class UniFiControllerClient(SmartPlugin):
         from bin.smarthome import VERSION
         if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
             self.logger = logging.getLogger(__name__)
+        self._pollfailed = 0
 
         # get the parameters for the plugin (as defined in metadata plugin.yaml):
         self._unifi_controller_url = self.get_parameter_value(UniFiConst.PARAMETER_URL)
@@ -652,8 +653,10 @@ class UniFiControllerClient(SmartPlugin):
             self._poll_with_unifi_type(UniFiConst.TYPE_AP_ENABLED, lambda i: self._check_ap_enabled(i))
             self._poll_with_unifi_type(UniFiConst.TYPE_DV_IP, lambda i: self._get_device_info(i, 'ip'))
             self._poll_with_unifi_type(UniFiConst.TYPE_DV_NAME, lambda i: self._get_device_info(i, 'name'))
+            self._pollfailed = 0
         except ConnectionError as ex:
-            self.logger.error("Poll failed: " + repr(ex))
+            self._pollfailed += 1
+            self.logger.error("Poll failed: {} for {} time(s) in a row.".format(repr(ex), self._pollfailed))
 
     def init_webinterface(self):
         """"

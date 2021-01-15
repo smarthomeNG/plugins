@@ -7,11 +7,12 @@ plugin:
         en: 'Support for a websocket protocol (for smartVISU, etc.)'
     maintainer: msinn
     tester: psilo909
-    state: qa-passed
+    #state: qa-passed
+    state: deprecated
 #    keywords: iot xyz
     documentation: http://smarthomeng.de/user/plugins/visu_websocket/user_doc.html
 
-    version: 1.5.2                # Plugin version
+    version: 1.5.3                # Plugin version
     sh_minversion: 1.5            # minimum shNG version to use this plugin
 #    sh_maxversion:               # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False         # plugin supports multi instance

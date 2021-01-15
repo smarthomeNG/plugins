@@ -12,10 +12,17 @@ plugin:
   documentation: https://github.com/smarthomeNG/plugins/tree/master/sonos # url of documentation (wiki) page
   support: https://knx-user-forum.de/forum/supportforen/smarthome-py/25151-sonos-anbindung
 
-  version: 1.5.0                 # Plugin version
+  version: 1.5.1                 # Plugin version
   sh_minversion: 1.5.1           # minimum shNG version to use this plugin
   multi_instance: False          # plugin supports multi instance
+  restartable: unknown
   classname: Sonos               # class containing the plugin
+
+plugin_functions: NONE
+
+logic_parameters: NONE
+
+item_structs: NONE
 
 parameters:
   tts:
@@ -38,7 +45,7 @@ parameters:
       en: "(optional) The sniipet audio files can be stored separatly from the TTS audio files by activating this option. If 'tts' is enabled and this option is not set, the value 'local_webservice_path' is used for the audio snippet path."
 
   webservice_ip:
-    type: str
+    type: ip
     description:
       de: "(optional) Für TTS und die Audio-Snippet-Funktionalität wird ein simpler Webservice gestartet. Die IP-Adresse wird per default automatisch ermittelt, kann hier aber manuell gesetzt werden."
       en: "(optional) For the TTS and audio snippet functionality, a simple webservice is started. By default the IP is detected automatically and can be manually overridden here."
@@ -57,18 +64,147 @@ parameters:
       en: "(optional) You can set static IP addresses for your Sonos speaker. This will disable auto-discovery. This is useful if you're using a containerized environment with restricted network access."
 
   discover_cycle:
-      type: int
-      description:
-        de: "Zeitintervall, nach dem (erneut) nach (neuen) Lautsprechern im Netzwerk gesucht wird."
-        en: "Time interval to search again for (new) speakers in the network."
+    type: int
+    default: 180
+    valid_min: 120
+    description:
+      de: "Zeitintervall, nach dem (erneut) nach (neuen) Lautsprechern im Netzwerk gesucht wird."
+      en: "Time interval to search again for (new) speakers in the network."
 
   snippet_duration_offset:
     type: num
-    default: 0.0
+    default: 0
+    valid_min: 0
     description:
       de: "(optional) Verlängert die Dauer von Snippet Audio Dateien um einen festen Offset in Sekunden."
       en: "(optional) Extend snippet duration by a fixed offset specified in seconds"
 
 item_attributes:
-    # Definition of item attributes defined by this plugin
+  # Definition of item attributes defined by this plugin
+  sonos_uid:
+    type: str
+    description:
+      de: 'Sonos unique device ID'
+      en: 'Sonos unique device ID'
+    mandatory: 'False'
 
+
+  sonos_recv:
+    type: str
+    description:
+      de: 'Empfangsattribut'
+      en: 'Receive attribute'
+    mandatory: 'False'
+    valid_list:
+    - 'is_initialized'
+    - 'volume'
+    - 'play'
+    - is_coordiantor
+    - mute
+    - stop
+    - seek
+    - pause
+    - track_title
+    - track_artist
+    - track_uri
+    - track_album
+    - track_album_art
+    - bass
+    - treble
+    - loudness
+    - play_mode
+    - radio_show
+    - radio_station
+    - serial_number
+    - software_version
+    - hardware_version
+    - model
+    - uid
+    - ip
+    - mac_address
+    - status
+    - additional_zone_members
+    - alarms
+    - is_coordinator
+    - tts_local_mode
+    - night_mode
+    - dialog_mode
+    - cross_fade
+    - coordinator
+    - snooze
+    - status_light
+    - zone_group_members
+    - player_name
+    - household_id
+    - streamtype
+    - current_track
+    - number_of_tracks
+    - current_transport_actions
+    - current_valid_play_modes
+    - sonos_playlists
+    - stream_content
+    - current_track_duration
+
+  sonos_send:
+    type: str
+    description:
+      de: 'Sendeattribut'
+      en: 'Sending attribute'
+    mandatory: 'False'
+    valid_list:
+    - 'volume'
+    - 'play'
+    - 'pause'
+    - 'stop'
+    - 'mute'
+    - 'cross_fade'
+    - 'snooze'
+    - 'play_mode'
+    - 'next'
+    - 'previous'
+    - 'play_tunein'
+    - 'play_url'
+    - 'load_sonos_playlist'
+    - 'play_snippet'
+    - 'play_tts'
+    - join
+    - unjoin
+    - volume_up
+    - volume_down
+    - partymode
+    - bass
+    - treble
+    - loudness
+    - playmode
+    - seek
+    - status
+    - alarms
+    - get_playlist
+    - set_playlist
+    - night_mode
+    - dialog_mode
+    - cross_fade
+    - snooze
+    - status_light
+    - switch_linein
+    - switch_tv
+
+  sonos_attrib:
+    type: str
+    description:
+      de: 'Empfangsattribut'
+      en: 'Receive attribute'
+    mandatory: 'False'
+    valid_list:
+    - 'group'
+    - 'dpt3_helper'
+    - 'vol_dpt3'
+    - 'max_volume'
+    - 'tts_language'
+    - 'tts_volume'
+    - 'tts_fade_in'
+    - 'start_after'
+    - snippet_fade_in
+    - snippet_volume
+    - clear_queue
+    - start_track

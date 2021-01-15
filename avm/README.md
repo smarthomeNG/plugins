@@ -233,7 +233,7 @@ avm:
                 cache: 'yes'
 
     tam:
-        index: 1
+        index@fritzbox_7490: 1
         type: bool
         visu_acl: rw
         avm_data_type@fritzbox_7490: tam
@@ -350,68 +350,68 @@ avm:
             type: bool
             visu_acl: rw
             avm_data_type@fritzbox_7490: wlanconfig    # 2,4ghz
-            avm_wlan_index: 1
+            avm_wlan_index@fritzbox_7490: 1
 
         gf_wlan_1_ssid:
             type: str
             visu_acl: ro
             avm_data_type@fritzbox_7490: wlanconfig_ssid    # 2,4ghz
-            avm_wlan_index: 1
+            avm_wlan_index@fritzbox_7490: 1
 
         gf_wlan_2:
             type: bool
             visu_acl: rw
             avm_data_type@fritzbox_7490: wlanconfig    # 5 GHz
-            avm_wlan_index: 2
+            avm_wlan_index@fritzbox_7490: 2
 
         gf_wlan_3:
             type: bool
             visu_acl: rw
             avm_data_type@fritzbox_7490: wlanconfig    # Guest
-            avm_wlan_index: 3
+            avm_wlan_index@fritzbox_7490: 3
 
         gf_wlan_3_ssid:
             type: str
             visu_acl: ro
             avm_data_type@fritzbox_7490: wlanconfig_ssid    # 2,4ghz
-            avm_wlan_index: 3
+            avm_wlan_index@fritzbox_7490: 3
 
         gf_wlan_3_tr:
             type: num
             visu_acl: rw
             avm_data_type@fritzbox_7490: wlan_guest_time_remaining    # Guest
-            avm_wlan_index: 3
+            avm_wlan_index@fritzbox_7490: 3
 
         uf_wlan_1:
             type: bool
             visu_acl: rw
             avm_data_type@wlan_repeater_1750: wlanconfig    # 2,4ghz
-            avm_wlan_index: 1
+            avm_wlan_index@wlan_repeater_1750: 1
 
         uf_wlan_1_ssid:
             type: str
             visu_acl: ro
             avm_data_type@wlan_repeater_1750: wlanconfig_ssid    # 2,4ghz
-            avm_wlan_index: 1
+            avm_wlan_index@wlan_repeater_1750: 1
 
         uf_wlan_2:
             type: bool
             visu_acl: rw
             avm_data_type@wlan_repeater_1750: wlanconfig    # 5 GHz
-            avm_wlan_index: 2
+            avm_wlan_index@wlan_repeater_1750: 2
 
         uf_wlan_3:
             type: bool
             visu_acl: rw
             avm_data_type@wlan_repeater_1750: wlanconfig    # Guest
-            avm_wlan_index: 3
+            avm_wlan_index@wlan_repeater_1750: 3
 
     devices:
 
         wlan_repeater_1750:
 
             GalaxyS5:
-                mac: xx:xx:xx:xx:xx:xx
+                avm_mac@wlan_repeater_1750: xx:xx:xx:xx:xx:xx
                 avm_data_type@wlan_repeater_1750: network_device
                 type: bool
                 cache: 'yes'
@@ -436,7 +436,7 @@ avm:
                     visu_acl: ro
 
             iPhone:
-                mac: xx:xx:xx:xx:xx:xx
+                avm_mac@wlan_repeater_1750: xx:xx:xx:xx:xx:xx
                 avm_data_type@wlan_repeater_1750: network_device
                 type: bool
                 cache: 'yes'
@@ -463,7 +463,7 @@ avm:
         fritzbox_7490:
 
             iPad:
-                mac: xx:xx:xx:xx:xx:xx
+                avm_mac@fritzbox_7490: xx:xx:xx:xx:xx:xx
                 avm_data_type@fritzbox_7490: network_device
                 type: bool
                 visu_acl: ro
@@ -673,6 +673,13 @@ avm:
                 avm_data_type@fritzbox_7490: set_temperature
                 type: num
                 visu_acl: rw
+
+            set_hkrwindowopen:
+                value: False
+                avm_data_type@fritzbox_7490: set_hkrwindowopen
+                type: bool
+                visu_acl: rw
+                enforce_updates: true
 
 ```
 

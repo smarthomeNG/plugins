@@ -1,0 +1,105 @@
+# Metadata for the Smart-Plugin
+plugin:
+    # Global plugin attributes
+    type: system                  # plugin type (gateway, interface, protocol, system, web)
+    subtype: core                 # plugin subtype (if applicable)
+    description:                  # Alternative: description in multiple languages
+        de: 'Command Line Interface für SmartHomeNG - Funktioniert mit SmartHomeNG v1.4 und höher'
+        en: 'Commandline interface for SmartHomeNG - Works with SmartHomeNG v1.4 and up'
+    maintainer: msinn
+    tester: onkelandy, Sandman60, ohinckel
+    state: qa-passed
+#    keywords: iot xyz
+    documentation: http://smarthomeng.de/user/plugins/cli/user_doc.html
+
+    version: 1.4.2                 # Plugin version
+    sh_minversion: 1.4             # minimum shNG version to use this plugin
+#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    multi_instance: False          # plugin supports multi instance
+    restartable: unknown
+    classname: CLI                 # class containing the plugin
+
+parameters:
+    # Definition of parameters to be configured in etc/plugin.yaml
+    update:
+        type: bool
+        default: False
+        description:
+            de: 'Wenn dieser Parameter False ist, ist der CLI Zugriff rein lesend. Um Updates duchführen zu können, muss dieser Parameter auf True gesetzt werden.'
+            en: 'Restrict the access of the items to read only (false) or allows read/write access (true).'
+
+    ip:
+        type: ip
+        default: 127.0.0.1
+        description:
+            de: 'Legt fest auf welchen Netzwerk Interfaces CLI nach Verbindungen lauscht (127.0.0.1 für localhost, 0.0.0.0 für alle Netzwerk Interfaces)'
+            en: 'used network interface, e.g. 127.0.0.1 (localhost) or listen on all network interfaces: 0.0.0.0'
+
+    port:
+        type: int
+        valid_min: 0
+        valid_max: 65535
+        default: 2323
+        description:
+            de: 'Netzwerk Port der für die Verbindung genutzt wird'
+
+            en: 'used network port'
+
+    hashed_password:
+        type: str
+        description:
+            de: "Hash (SHA-512) des Passwortes zum Login. Hashes können durch das backend Plugin erzeugt werden. Wenn kein Passwort verwendet werden soll wird eine Warnung geloggt. Soll dieses Log unterbleiben, muss für diesen Parameter 'none' eingegeben werden."
+            en: "password that needs to be entered on login. SHA-512 hashed. Hashes can be created via the backend plugin. If you don't use a password, a warning will be logged. If you don't want that log entry, this parameter must be set to 'none'."
+
+
+item_attributes: NONE
+    # Definition of item attributes defined by this plugin
+
+item_structs: NONE
+  # Definition of item-structure templates for this plugin
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin
+
+plugin_functions:
+    # Definition of function interface of the plugin
+
+    add_command:
+        type: void
+        description:
+            de: "sh.cli.commands.add_command(command, function, group, usage)"
+            en: "sh.cli.commands.add_command(command, function, group, usage)"
+        parameters:
+            command:
+                type: str
+                description:
+                    de: "Name des Kommandos"
+                    en: "Name of the command"
+            function:
+                type: function
+                description:
+                    de: "Funktion die aufgerufen werden soll, wenn das Kommando eingegeben wird"
+                    en: "function to be called when the command is entered"
+            group:
+                type: str
+                valid_list: ['item', 'log', 'logic', 'scheduler']
+                description:
+                    de: "Kommando Gruppe (item, log, logic, scheduler)"
+                    en: "Command group (item, log, logic, scheduler)"
+            usage:
+                type: str
+                description:
+                    de: "Beschreibung der Kommando-Nutzung"
+                    en: "description how to use that command"
+
+    remove_command:
+        type: bool
+        description:
+            de: "sh.cli.commands.remove_command(command)"
+            en: "sh.cli.commands.remove_command(command)"
+        parameters:
+            command:
+                type: str
+                description:
+                    de: "Name des Kommandos"
+                    en: "Name of the command"

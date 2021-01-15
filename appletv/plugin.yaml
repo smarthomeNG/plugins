@@ -7,15 +7,13 @@ plugin:
         en: 'Controls an Apple TV'
         fr: 'Contrôle un Apple TV'
     maintainer: Foxi352
-#    tester:                        # Who tests this plugin?
     state: ready
-#    keywords: iot xyz
+    keywords: appletv media
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1223483-plugin-apple-tv
 
-    version: 1.5.1                  # Plugin version
-    sh_minversion: 1.4              # minimum shNG version to use this plugin
-#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    version: 1.6.1                  # Plugin version
+    sh_minversion: 1.6              # minimum shNG version to use this plugin
     multi_instance: True            # plugin supports multi instance
     classname: AppleTV              # class containing the plugin
 
@@ -24,23 +22,319 @@ parameters:
         type: ip
         default: 0.0.0.0
         description:
-            de: 'IP Adresse des Gerätes.'
-            en: 'Device IP address.'
-            fr: "Adresse IP de l'appareil"
-    login_id:
-        type: str
-        default: ''
+            de: 'IP Adresse des Gerätes. Bei 0.0.0.0 wir das erste erkannte Gerät genutzt.'
+            en: 'Device IP address. 0.0.0.0 uses the first detected device.'
+            fr: "Adresse IP de l'appareil. 0.0.0.0 pour utiliser le premier appareil détecté."
+    scan_timeout:
+        type: num
+        default: 5
         description:
-            de: 'Login ID des Gerätes, kann im Webinterface gefunden werden.'
-            en: 'Login ID of the device. Can be found in the web interface.'
-            fr: "ID de connexion de l'appareil. Peut être trouvé sur l'interface web"
+            de: 'Timeout in Sekunden beim scannen des Netzwerkes nach AppleTV Geräten'
+            en: 'Timeout in seconds to scan the local network for AppleTV devices'
+            fr: "Délai d'attente en secondes du scan réseau pour trouver les appareils AppleTV"
 
 item_attributes:
     # Definition of item attributes defined by this plugin
+
+item_structs:
+    device:
+        name:
+            name: Name of device
+            type: str
+            visu_acl: ro
+            cache: Yes
+            appletv@instance: name
+        ip:
+            name: IP address of device
+            type: str
+            visu_acl: ro
+            cache: Yes
+            appletv@instance: ip
+        mac:
+            name: MAC address of device
+            type: str
+            visu_acl: ro
+            cache: Yes
+            appletv@instance: mac
+        model:
+            name: MAC address of device
+            type: str
+            visu_acl: ro
+            cache: Yes
+            appletv@instance: model
+        os:
+            name: MAC address of device
+            type: str
+            visu_acl: ro
+            cache: Yes
+            appletv@instance: os
+        power:
+            name: Power state of the device
+            type: bool
+            visu_acl: rw
+            appletv@instance: power
+    playing:
+        app:
+            identifier:
+                type: str
+                visu_acl: ro
+                cache: Yes
+                appletv@instance: playing_app_identifier
+            name:
+                type: str
+                visu_acl: ro
+                cache: Yes
+                appletv@instance: playing_app_name
+        state:
+            type: num
+            visu_acl: ro
+            cache: Yes
+            appletv@instance: playing_state
+        state_text:
+            type: str
+            visu_acl: ro
+            cache: Yes
+            appletv@instance: playing_state_text
+        fingerprint:
+            type: str
+            visu_acl: ro
+            cache: Yes
+            appletv@instance: playing_fingerprint             
+        genre:
+            type: str
+            visu_acl: ro
+            cache: Yes
+            appletv@instance: playing_genre
+        artist:
+            type: str
+            visu_acl: ro
+            cache: Yes
+            appletv@instance: playing_artist
+        album:
+            type: str
+            visu_acl: ro
+            cache: Yes
+            appletv@instance: playing_album
+        title:
+            type: str
+            visu_acl: ro
+            cache: Yes
+            appletv@instance: playing_title
+        type:
+            type: num
+            visu_acl: ro
+            cache: Yes
+            appletv@instance: playing_type
+        type_text:
+            type: str
+            visu_acl: ro
+            cache: Yes
+            appletv@instance: playing_type_text
+        position:
+            type: num
+            visu_acl: ro
+            cache: Yes
+            appletv@instance: playing_position
+        totaltime:
+            type: num
+            visu_acl: ro
+            cache: Yes
+            appletv@instance: playing_total_time
+        position_percent:
+            type: num
+            visu_acl: rw
+            cache: Yes
+            appletv@instance: playing_position_percent
+        repeat:
+            type: num
+            visu_acl: rw
+            cache: Yes
+            enfore_updates: Yes
+            appletv@instance: playing_repeat
+        repeat_text:
+            type: str
+            visu_acl: ro
+            cache: Yes
+            appletv@instance: playing_repeat_text      
+        shuffle:
+            type: num
+            visu_acl: rw
+            cache: Yes
+            enfore_updates: Yes
+            appletv@instance: playing_shuffle
+        shuffle_text:
+            type: str
+            visu_acl: ro
+            cache: Yes
+            appletv@instance: playing_shuffle_text
+        artwork:
+            width:
+                name: Width of the currently playing artwork
+                type: num
+                visu_acl: ro
+                appletv@instance: artwork_width
+            height:
+                name: Height of the currently playing artwork
+                type: num
+                visu_acl: ro
+                appletv@instance: artwork_height
+            mimetype:
+                name: Mimetype of the currently playing artwork
+                type: str
+                visu_acl: ro
+                appletv@instance: artwork_mimetype
+            base64:
+                name: The actual playing artwork in base64
+                type: foo
+                visu_acl: ro
+                appletv@instance: artwork_base64
+    commands:
+        top_menu:
+            name: RC top menu key
+            type: bool
+            visu_acl: rw
+            appletv@instance: rc_top_menu
+        home:
+            name: RC kome key
+            type: bool
+            visu_acl: rw
+            appletv@instance: rc_home
+        home_hold:
+            name: RC hold home key
+            type: bool
+            visu_acl: rw
+            appletv@instance: rc_home_hold
+        menu:
+            name: RC menu key
+            type: bool
+            visu_acl: rw
+            appletv@instance: rc_menu
+        select:
+            name: RC select key
+            type: bool
+            visu_acl: rw
+            appletv@instance: rc_select
+        next:
+            name: RC next key
+            type: bool
+            visu_acl: rw
+            appletv@instance: rc_next
+        previous:
+            name: RC previous key
+            type: bool
+            visu_acl: rw
+            appletv@instance: rc_previous
+        pause:
+            name: RC pause key
+            type: bool
+            visu_acl: rw
+            appletv@instance: rc_pause
+        play:
+            name: RC play key
+            type: bool
+            visu_acl: rw
+            appletv@instance: rc_play
+        play_pause:
+            name: RC toggle between play and pause
+            type: bool
+            visu_acl: rw
+            appletv@instance: rc_play_pause
+        stop:
+            name: RC stop key
+            type: bool
+            visu_acl: rw
+            appletv@instance: rc_stop
+        down:
+            name: RC down key
+            type: bool
+            visu_acl: rw
+            appletv@instance: rc_down
+        up:
+            name: RC up key
+            type: bool
+            visu_acl: rw
+            appletv@instance: rc_up
+        right:
+            name: RC right key
+            type: bool
+            visu_acl: rw
+            appletv@instance: rc_right
+        left:
+            name: RC left key
+            type: bool
+            visu_acl: rw
+            appletv@instance: rc_left
+        set_position:
+            name: RC set position
+            type: num
+            visu_acl: rw
+            appletv@instance: rc_set_position
+        set_repeat:
+            name: RC set repeat mode
+            type: num
+            visu_acl: rw
+            appletv@instance: rc_set_repeat
+        set_shuffle:
+            name: RC set shuffle mode
+            type: num
+            visu_acl: rw
+            appletv@instance: rc_set_shuffle
+        skip_backward:
+            name: RC skip backward key
+            type: bool
+            visu_acl: rw
+            appletv@instance: rc_skip_backward
+        skip_forward:
+            name: RC skip forward key
+            type: bool
+            visu_acl: rw
+            appletv@instance: rc_skip_forward
+        volume_down:
+            name: RC volume down key
+            type: bool
+            visu_acl: rw
+            appletv@instance: rc_volume_down
+        volume_up:
+            name: RC volume up key
+            type: bool
+            visu_acl: rw
+            appletv@instance: rc_volume_up
+        suspend:
+            name: RC suspend key
+            type: bool
+            visu_acl: rw
+            appletv@instance: rc_suspend
+        wakeup:
+            name: RC wakeup key
+            type: bool
+            visu_acl: rw
+            appletv@instance: rc_wakeup
 
 logic_parameters: NONE
 # Definition of logic parameters defined by this plugin
 
 plugin_functions:
-# Definition of plugin functions defined by this plugin
-
+    is_on:
+        type: bool
+        description:
+            de: "Ist das Gerät eingeschaltet"
+            en: "Is device turned on"
+            fr: "Est-ce que l'appareil est allumé"
+    is_playing:
+        type: bool
+        description:
+            de: "Ist das Gerät am abspielen"
+            en: "Is device playing"
+            fr: "Est-ce que l'appareil est en train de jouer"
+    play:
+        type: bool
+        description:
+            de: "Abspielen"
+            en: "Play"
+            fr: "Jouer"
+    pause:
+        type: bool
+        description:
+            de: "Pause"
+            en: "Pause"
+            fr: "Pause"

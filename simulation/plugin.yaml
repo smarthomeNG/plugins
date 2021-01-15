@@ -5,13 +5,29 @@ plugin:
     description:                  # Alternative: description in multiple languages
         de: 'Aufnahme und Abspielen von Aktionsreihenfolgen.'
         en: 'Recording And Replay of Actions on Items.'
+    description_long:
+        de: 'Dieses Plugin erlaubt es, Anwesenheit zu simulieren, wenn niemand zuhause ist.\n
+             Um dies zu bewerkstelligen, nimmt es durchgehen die Daten aller konfigurierten
+             Items auf und schreibt diese Events in eine Datei. Hierbei handelt es sich
+             um ein Textfile, in dem jedes Event in eine eigene Zeile geschrieben wird.
+             Diese Datei kann in einem Texteditor verändert werden, allerdings ist dabei
+             darauf zu achten, dass die Syntax beibehalten bleibt.\n
+             Auf Abruf kann das Plugin die Aufzeichnungen wieder abspielen.
+             '
+        en: 'The simulation plugin allows simulating presence in case none is at home.\n
+             To achieve this, the plugin constantly records all configured items and
+             writes changes to those (events) into a file. It is a text file
+             where each event has one line. The file can be modified using a
+             text editor, but be careful.\n
+             Upon request the plugin can playback the contents of this file.
+             '
     maintainer:  MichaelBu (?)
     tester: psilo909, Sandman60, cmalo
     state: ready
 #    keywords: iot xyz
-    documentation: https://www.smarthomeng.de/developer/plugins/simulation/README.html        # url of documentation (wiki) page
-    support: 'https://knx-user-forum.de/forum/supportforen/smarthome-py/841097-anwesenheitssimulation-0-1'
-    version: 1.5.0.8               # Plugin version
+    documentation: https://www.smarthomeng.de/user/plugins/simulation/user_doc.html       # url of documentation (wiki) page
+    support: 'https://knx-user-forum.de/forum/supportforen/smarthome-py/841097'
+    version: 1.5.1               # Plugin version
     sh_minversion: 1.5             # minimum shNG version to use this plugin
 #    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
@@ -40,21 +56,48 @@ item_attributes:
     sim:
         type: str
         mandatory: True
+        valid_list:
+          - track
+          - state
+          - control
+          - message
+          - tank
         description:
             de: 'Entweder der Wert "track", "state", "control", "message" oder "tank". Außer "track" dürfen die Werte
             nur exakt einem Item zugeordnet werden. Sie dienen der internen Datenhaltung des Plugins. "track"
             dient dazu, den Wert eines Items mit dem Plugin aufzuzeichnen. Es darf daher auch in mehreren Items gesetzt
-            werden.'
+            werden. Es werden nur Items mit dem Typ bool und num unterstüzt.'
             en: 'May be either the value "track", "state", "control", "message" or "tank". Besides "track" the values
             may only be assigned one time over all items. They are used for plugin internal information storage.
-            "track" may be assigned to multiple items and is used to record the value changes of that item.'
+            "track" may be assigned to multiple items and is used to record the value changes of that item. Only items with boolean or num type are supported.'
 
-item_structs: NONE
+item_structs:
   # Definition of item-structure templates for this plugin
+    general:
+        name: Vorlage-Struktur für Simulationplugin
+
+        status:
+            type: num
+            sim: state
+            visu_acl: ro
+
+        control:
+            type: num
+            sim: control
+            visu_acl: rw
+
+        message:
+            type: str
+            sim: message
+            visu_acl: ro
+
+        tank:
+            type: num
+            sim: tank
+            visu_acl: ro
 
 logic_parameters: NONE
     # Definition of logic parameters defined by this plugin
 
 plugin_functions: NONE
     # Definition of function interface of the plugin
-

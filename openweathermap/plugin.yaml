@@ -12,8 +12,8 @@ plugin:
     documentation: 'http://smarthomeng.de/user/plugins/openweathermap/user_doc.html'
     support: 'https://knx-user-forum.de/forum/supportforen/smarthome-py/1246998-support-thread-zum-openweathermap-plugin'
     keywords: weather
-    version: 1.5.0.4              # Plugin version
-    sh_minversion: 1.5b           # minimum shNG version to use this plugin
+    version: 1.5.1                # Plugin version
+    sh_minversion: 1.6            # minimum shNG version to use this plugin
 #    sh_maxversion:               # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True          # plugin supports multi instance
     restartable: unknown
@@ -71,6 +71,24 @@ item_attributes:
         description:
             de: 'Matchstring für die OpenWeatherMap Daten, siehe Beispiele in der README.'
             en: 'Matchstring for the OpenWeatherMap data, see examples in README.'
+    x:
+        type: num
+        mandatory: False
+        description:
+            de: 'X-Koordinate für die entsprechenden Layer-Bilder-Links von OpenWeatherMap. Nur nutzbar mit owm_matchstring: precipitation_new und clouds_new.'
+            en: 'X coordinate for layer image URLs of OpenWeatherMap. Only usable with owm_matchstring: precipitation_new and clouds_new.'
+    y:
+        type: num
+        mandatory: False
+        description:
+            de: 'Y-Koordinate für die entsprechenden Layer-Bilder-Links von OpenWeatherMap. Nur nutzbar mit owm_matchstring: precipitation_new und clouds_new.'
+            en: 'Y coordinate for layer image URLs of OpenWeatherMap. Only usable with owm_matchstring: precipitation_new and clouds_new.'
+    z:
+        type: num
+        mandatory: False
+        description:
+            de: 'Z-Koordinate für die entsprechenden Layer-Bilder-Links von OpenWeatherMap. Nur nutzbar mit owm_matchstring: precipitation_new und clouds_new.'
+            en: 'Z coordinate for layer image URLs of OpenWeatherMap. Only usable with owm_matchstring: precipitation_new and clouds_new.'
 
 item_structs: NONE
   # Definition of item-structure templates for this plugin

@@ -66,6 +66,7 @@ class iCal(SmartPlugin):
             self._directory = '{}/{}'.format(self.get_vardir(), config_dir)
         except Exception:
             self._directory = '{}/var/{}'.format(smarthome.get_basedir(), config_dir)
+        self._directory = os.path.normpath(self._directory)
         try:
             os.makedirs(self._directory)
             self.logger.debug('Created {} subfolder in var'.format(config_dir))
@@ -215,12 +216,13 @@ class iCal(SmartPlugin):
             self.logger.debug('Online ics {} successfully downloaded to {}'.format(ics, filename))
             ics = os.path.normpath(filename)
         try:
+            ics = ics.replace('\\', os.sep).replace('/', os.sep)
             ics = '{}/{}'.format(self._directory, ics) if self._directory not in ics else ics
             with open(ics, 'r') as f:
                 ical = f.read()
                 self.logger.debug('Read offline ical file {}'.format(ics))
         except IOError as e:
-            self.logger.error('Could not open local ics file {0}: {1}'.format(ics, e))
+            self.logger.error('Could not open local ics file {0} (directory {1}): {2}'.format(ics, self._directory, e))
             return {}
 
         return self._parse_ical(ical, ics, prio)
@@ -359,15 +361,19 @@ class iCal(SmartPlugin):
             else:
                 rrule['WKST'] = int(rrule['WKST'])
         if 'BYDAY' in rrule:
-            day = rrule['BYDAY']
-            if day.isalpha():
-                if day in self.DAYS:
-                    day = self.DAYS.index(day)
-            else:
-                n = int(day[0:-2])
-                day = self.DAYS.index(day[-2:])
-                day = dateutil.rrule.weekday(day, n)
-            rrule['BYWEEKDAY'] = day
+            days = rrule['BYDAY'].split(',')
+            new_days = []
+            for day in days:
+                day = day.strip()
+                if day.isalpha():
+                    if day in self.DAYS:
+                        day = self.DAYS.index(day)
+                else:
+                    n = int(day[0:-2])
+                    day = self.DAYS.index(day[-2:])
+                    day = dateutil.rrule.weekday(day, n)
+                new_days.append(day)
+            rrule['BYWEEKDAY'] = new_days
             del(rrule['BYDAY'])
         if 'COUNT' in rrule:
             rrule['COUNT'] = int(rrule['COUNT'])

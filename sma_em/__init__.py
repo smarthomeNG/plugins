@@ -48,39 +48,39 @@ sma_channels = {
     # totals
     1: ('pconsume', 'W', 'kWh'),
     2: ('psupply', 'W', 'kWh'),
-    3: ('sconsume', 'VA', 'kVAh'),
-    4: ('ssupply', 'VA', 'kVAh'),
-    9: ('qconsume', 'VAr', 'kVArh'),
-    10: ('qsupply', 'VAr', 'kVArh'),
+    3: ('qconsume', 'VAr', 'kVArh'),
+    4: ('qsupply', 'VAr', 'kVArh'),
+    9: ('sconsume', 'VA', 'kVAh'),
+    10: ('ssupply', 'VA', 'kVAh'),
     13: ('cosphi', '°'),
     14: ('frequency', 'Hz'),
     # phase 1
     21: ('p1consume', 'W', 'kWh'),
     22: ('p1supply', 'W', 'kWh'),
-    23: ('s1consume', 'VA', 'kVAh'),
-    24: ('s1supply', 'VA', 'kVAh'),
-    29: ('q1consume', 'VAr', 'kVArh'),
-    30: ('q1supply', 'VAr', 'kVArh'),
+    23: ('q1consume', 'VAr', 'kVArh'),
+    24: ('q1supply', 'VAr', 'kVArh'),
+    29: ('s1consume', 'VA', 'kVAh'),
+    30: ('s1supply', 'VA', 'kVAh'),
     31: ('i1', 'A'),
     32: ('u1', 'V'),
     33: ('cosphi1', '°'),
     # phase 2
     41: ('p2consume', 'W', 'kWh'),
     42: ('p2supply', 'W', 'kWh'),
-    43: ('s2consume', 'VA', 'kVAh'),
-    44: ('s2supply', 'VA', 'kVAh'),
-    49: ('q2consume', 'VAr', 'kVArh'),
-    50: ('q2supply', 'VAr', 'kVArh'),
+    43: ('q2consume', 'VAr', 'kVArh'),
+    44: ('q2supply', 'VAr', 'kVArh'),
+    49: ('s2consume', 'VA', 'kVAh'),
+    50: ('s2supply', 'VA', 'kVAh'),
     51: ('i2', 'A'),
     52: ('u2', 'V'),
     53: ('cosphi2', '°'),
     # phase 3
     61: ('p3consume', 'W', 'kWh'),
     62: ('p3supply', 'W', 'kWh'),
-    63: ('s3consume', 'VA', 'kVAh'),
-    64: ('s3supply', 'VA', 'kVAh'),
-    69: ('q3consume', 'VAr', 'kVArh'),
-    70: ('q3supply', 'VAr', 'kVArh'),
+    63: ('q3consume', 'VAr', 'kVArh'),
+    64: ('q3supply', 'VAr', 'kVArh'),
+    69: ('s3consume', 'VA', 'kVAh'),
+    70: ('s3supply', 'VA', 'kVAh'),
     71: ('i3', 'A'),
     72: ('u3', 'V'),
     73: ('cosphi3', '°'),
@@ -91,7 +91,7 @@ sma_channels = {
 
 class SMA_EM(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.6.0"
+    PLUGIN_VERSION = "1.6.1"
 
     # listen to the Multicast; SMA-Energymeter sends its measurements to 239.12.255.254:9522
     MCAST_GRP = '239.12.255.254'
@@ -437,8 +437,9 @@ class SMA_EM(SmartPlugin):
             datatype = 'version'
         else:
             datatype = 'unknown'
-            print('unknown datatype: measurement {} datatype {} raw_type {}'.format(measurement, datatype, raw_type))
-        return (measurement, datatype)
+            self.logger.error(
+                'unknown datatype: measurement {} datatype {} raw_type {}'.format(measurement, datatype, raw_type))
+        return measurement, datatype
 
     def decode_speedwire(self, datagram):
         emparts = {}
@@ -482,8 +483,8 @@ class SMA_EM(SmartPlugin):
                     value = datagram[position + 4:position + 8]
                     if measurement in sma_channels.keys():
                         bversion = (binascii.b2a_hex(value).decode("utf-8"))
-                        version = str(int(bversion[0:2])) + "." + str(int(bversion[2:4])) + "." + str(
-                            int(bversion[4:6]))
+                        version = str(int(bversion[0:2], 16)) + "." + str(int(bversion[2:4], 16)) + "." + str(
+                            int(bversion[4:6], 16))
                         revision = str(chr(int(bversion[6:8])))
                         # revision definitions
                         if revision == "1":
@@ -504,7 +505,7 @@ class SMA_EM(SmartPlugin):
                         elif revision == "6":
                             # N – Keine Revision
                             version = version + ".N"
-                        # adding versionnumber to compare verions
+                        # adding versionnumber to compare versions
                         version = version + "|" + str(bversion[0:2]) + str(bversion[2:4]) + str(bversion[4:6])
                         emparts[sma_channels[measurement][0]] = version
                     position += 8

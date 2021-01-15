@@ -14,12 +14,13 @@ function BtnSave(result)
  	  alert ("No Name given for CommandLet, please enter one");
 	  return;
 	}
+/*
     if (document.getElementById("txtApiUrl").value == "")
 	{
  	  alert ("No API-URL given for CommandLet, please enter one");
 	  return;
 	}
-
+*/
     document.getElementById("txtButton").value ="BtnSave";
 
     myPayload = myCodeMirrorConf.getValue();

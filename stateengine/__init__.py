@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
-#  Copyright 2014-     Thomas Ernst                       offline@gmx.net
+#  Copyright 2014-2018 Thomas Ernst                       offline@gmx.net
+#  Copyright 2019- Onkel Andy                       onkelandy@hotmail.com
 #########################################################################
 #  Finite state machine plugin for SmartHomeNG
 #
@@ -29,56 +30,53 @@ from . import StateEngineWebif
 import logging
 import os
 from lib.model.smartplugin import *
-from bin.smarthome import VERSION
 from lib.item import Items
+from copy import deepcopy
 
 
 class StateEngine(SmartPlugin):
-    PLUGIN_VERSION = '1.6.2'
+    PLUGIN_VERSION = '1.8.0'
 
     # Constructor
     # noinspection PyUnusedLocal,PyMissingConstructor
     def __init__(self, sh):
-
-        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
-            self.logger = logging.getLogger(__name__)
+        super().__init__()
+        self.logger = logging.getLogger('{}.general'.format(__name__))
         self.items = Items.get_instance()
         self.__items = self.abitems = {}
+        self.mod_http = None
         self.__sh = sh
         self.alive = False
         self.__cli = None
         self.init_webinterface()
+        self.__log_directory = self.get_parameter_value("log_directory")
         try:
             log_level = self.get_parameter_value("log_level")
-            log_directory = self.get_parameter_value("log_directory")
+            StateEngineDefaults.log_level = log_level
+            log_directory = self.__log_directory
             self.logger.info("Init StateEngine (log_level={0}, log_directory={1})".format(log_level, log_directory))
 
             StateEngineDefaults.startup_delay = self.get_parameter_value("startup_delay_default")
             StateEngineDefaults.suspend_time = self.get_parameter_value("suspend_time_default")
             StateEngineDefaults.instant_leaveaction = self.get_parameter_value("instant_leaveaction")
             StateEngineDefaults.write_to_log(self.logger)
-
+            self.get_sh().stateengine_plugin_functions = StateEngineFunctions.SeFunctions(self.get_sh(), self.logger)
             StateEngineCurrent.init(self.get_sh())
 
             if log_level > 0:
-                if log_directory[0] != "/":
-                    base = self.get_sh().get_basedir()
-                    if base[-1] != "/":
-                        base += "/"
-                    log_directory = base + log_directory
-                if not os.path.exists(log_directory):
-                    os.makedirs(log_directory)
-                text = "StateEngine extended logging is active. Logging to '{0}' with loglevel {1}."
+                base = self.get_sh().get_basedir()
+                log_directory = SeLogger.create_logdirectory(base, log_directory)
+                text = "StateEngine extended logging is active. Logging to '{0}' with log level {1}."
                 self.logger.info(text.format(log_directory, log_level))
             log_maxage = self.get_parameter_value("log_maxage")
-            if log_level > 0 and log_maxage > 0:
+            if log_maxage > 0:
                 self.logger.info("StateEngine extended log files will be deleted after {0} days.".format(log_maxage))
                 SeLogger.set_logmaxage(log_maxage)
                 cron = ['init', '30 0 * *']
                 self.scheduler_add('StateEngine: Remove old logfiles', SeLogger.remove_old_logfiles, cron=cron, offset=0)
             SeLogger.set_loglevel(log_level)
             SeLogger.set_logdirectory(log_directory)
-            self.get_sh().stateengine_plugin_functions = StateEngineFunctions.SeFunctions(self.get_sh(), self.logger)
+
         except Exception:
             self._init_complete = False
             return
@@ -94,7 +92,9 @@ class StateEngine(SmartPlugin):
             item._eval = "sh.stateengine_plugin_functions.manual_item_update_eval('" + item.id() + "', caller, source)"
         elif self.has_iattr(item.conf, "se_manual_invert"):
             item._eval = "not sh." + item.id() + "()"
-
+        if self.has_iattr(item.conf, "se_log_level"):
+            base = self.get_sh().get_basedir()
+            SeLogger.create_logdirectory(base, self.__log_directory)
         return None
 
     # Initialization of plugin
@@ -104,8 +104,9 @@ class StateEngine(SmartPlugin):
         for item in self.items.find_items("se_plugin"):
             if item.conf["se_plugin"] == "active":
                 try:
-                    ab_item = StateEngineItem.SeItem(self.get_sh(), item, self)
-                    self.__items[ab_item.id] = ab_item
+                    abitem = StateEngineItem.SeItem(self.get_sh(), item, self)
+                    abitem.ab_alive = True
+                    self.__items[abitem.id] = abitem
                 except ValueError as ex:
                     self.logger.error("Problem with Item: {0}: {1}".format(item.property.path, ex))
 
@@ -115,20 +116,29 @@ class StateEngine(SmartPlugin):
             self.logger.info("StateEngine deactivated because no items have been found.")
 
         self.__cli = StateEngineCliCommands.SeCliCommands(self.get_sh(), self.__items, self.logger)
-        #self.logger.info("Items: {}".format(self.__items))
         self.alive = True
         self.get_sh().stateengine_plugin_functions.ab_alive = True
 
     # Stopping of plugin
     def stop(self):
+        self.logger.debug("stop method called")
+        self.scheduler_remove('StateEngine: Remove old logfiles')
+        for item in self.__items:
+            self.__items[item].ab_alive = False
+            self.scheduler_remove('{}'.format(item))
+            self.scheduler_remove('{}-Startup Delay'.format(item))
+            self.__items[item].remove_all_schedulers()
+
         self.alive = False
+        self.get_sh().stateengine_plugin_functions.ab_alive = False
+        self.logger.debug("stop method finished")
 
     # Determine if caller/source are contained in changed_by list
     # caller: Caller to check
     # source: Source to check
     # changed_by: List of callers/source (element format <caller>:<source>) to check against
     def is_changed_by(self, caller, source, changed_by):
-        original_caller, original_source = StateEngineTools.get_original_caller(self.get_sh(), caller, source)
+        original_caller, original_source = StateEngineTools.get_original_caller(self.logger, caller, source)
         for entry in changed_by:
             entry_caller, __, entry_source = entry.partition(":")
             if (entry_caller == original_caller or entry_caller == "*") and (
@@ -141,7 +151,7 @@ class StateEngine(SmartPlugin):
     # source: Source to check
     # changed_by: List of callers/source (element format <caller>:<source>) to check against
     def not_changed_by(self, caller, source, changed_by):
-        original_caller, original_source = StateEngineTools.get_original_caller(self.get_sh(), caller, source)
+        original_caller, original_source = StateEngineTools.get_original_caller(self.logger, caller, source)
         for entry in changed_by:
             entry_caller, __, entry_source = entry.partition(":")
             if (entry_caller == original_caller or entry_caller == "*") and (
@@ -162,18 +172,18 @@ class StateEngine(SmartPlugin):
             finallist.append(self.__items[i])
         return finallist
 
-    def get_graph(self, abitem, type='link'):
+    def get_graph(self, abitem, graphtype='link'):
         if isinstance(abitem, str):
             abitem = self.__items[abitem]
         webif = StateEngineWebif.WebInterface(self.__sh, abitem)
         try:
             os.makedirs(self.path_join(self.get_plugin_dir(), 'webif/static/img/visualisations/'))
-        except OSError as e:
+        except OSError:
             pass
         vis_file = self.path_join(self.get_plugin_dir(), 'webif/static/img/visualisations/{}.svg'.format(abitem))
         #self.logger.debug("Getting graph: {}, {}".format(abitem, webif))
         try:
-            if type == 'link':
+            if graphtype == 'link':
                 return '<a href="static/img/visualisations/{}.svg"><img src="static/img/vis.png" width="30"></a>'.format(abitem)
             else:
                 webif.drawgraph(vis_file)
@@ -185,7 +195,11 @@ class StateEngine(SmartPlugin):
                         </iframe></object>'.format(abitem)
         except Exception as ex:
             self.logger.error("Problem getting graph for {}. Error: {}".format(abitem, ex))
-            return ''
+            return '<h4>Can not show visualization. Most likely GraphViz is missing.</h4> ' \
+                   'Please download and install <a href="https://graphviz.org/download/" target="_new">' \
+                   'https://graphviz.org/download/</a><br/>' \
+                   'on Windows add install path to your environment path AND run dot -c.' \
+                   'Additionally copy dot.exe to fdp.exe!'
 
     def init_webinterface(self):
         """"
@@ -194,16 +208,18 @@ class StateEngine(SmartPlugin):
         This method is only needed if the plugin is implementing a web interface
         """
         try:
-            self.mod_http = Modules.get_instance().get_module('http')   # try/except to handle running in a core version that does not support modules
-        except:
-             self.mod_http = None
-        if self.mod_http == None:
+            self.mod_http = Modules.get_instance().get_module('http')
+            # try/except to handle running in a core version that does not support modules
+        except Exception:
+            self.mod_http = None
+        if self.mod_http is None:
             self.logger.error("Plugin '{}': Not initializing the web interface".format(self.get_shortname()))
             return False
 
         import sys
-        if not "SmartPluginWebIf" in list(sys.modules['lib.model.smartplugin'].__dict__):
-            self.logger.warning("Plugin '{}': Web interface needs SmartHomeNG v1.5 and up. Not initializing the web interface".format(self.get_shortname()))
+        if "SmartPluginWebIf" not in list(sys.modules['lib.model.smartplugin'].__dict__):
+            self.logger.warning("Plugin '{}': Web interface needs SmartHomeNG v1.5 and up. "
+                                "Not initializing the web interface".format(self.get_shortname()))
             return False
 
         # set application configuration for cherrypy
@@ -235,8 +251,8 @@ class StateEngine(SmartPlugin):
 import cherrypy
 from jinja2 import Environment, FileSystemLoader
 
-class WebInterface(SmartPluginWebIf):
 
+class WebInterface(SmartPluginWebIf):
 
     def __init__(self, webif_dir, plugin):
         """
@@ -251,7 +267,6 @@ class WebInterface(SmartPluginWebIf):
         self.webif_dir = webif_dir
         self.plugin = plugin
         self.tplenv = self.init_template_environment()
-
 
     @cherrypy.expose
     def index(self, action=None, item_id=None, item_path=None, reload=None, abitem=None, page='index'):
@@ -268,11 +283,16 @@ class WebInterface(SmartPluginWebIf):
 
         if action == "get_graph" and abitem is not None:
             if isinstance(abitem, str):
-                abitem = self.plugin.abitems[abitem]
+                try:
+                    abitem = self.plugin.abitems[abitem]
+                except Exception as e:
+                    self.logger.warning("Item {} not initialized yet. "
+                                        "Try again later. Error: {}".format(abitem, e))
+                    return None
             self.plugin.get_graph(abitem, 'graph')
             tmpl = self.tplenv.get_template('visu.html')
             return tmpl.render(p=self.plugin, item=abitem,
-                               language=self.plugin._sh.get_defaultlanguage(), now=self.plugin.shtime.now())
+                               language=self.plugin.get_sh().get_defaultlanguage(), now=self.plugin.shtime.now())
         # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
         return tmpl.render(p=self.plugin,
-                           language=self.plugin._sh.get_defaultlanguage(), now=self.plugin.shtime.now())
+                           language=self.plugin.get_sh().get_defaultlanguage(), now=self.plugin.shtime.now())

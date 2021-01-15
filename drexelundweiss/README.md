@@ -4,6 +4,12 @@ This plugin uses the D&W USB service interface for connection, so you don't need
 
 ## Changelog
 
+1.5.3:
+* Improve line ending handling
+* Add possibility to use PANEL PCB (for room temperature, etc.)
+* Minor improvements for logging, etc.
+* Web documentation instead of README
+
 1.5.2:
 * Added aerosilent exos
 * Updated README

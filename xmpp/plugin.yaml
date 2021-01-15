@@ -1,18 +1,18 @@
-# Metadata for the classic-plugin
+# Metadata for the smart-plugin
 plugin:
     # Global plugin attributes
     type: protocol                 # plugin type (gateway, interface, protocol, system, web)
     description:
-        de: 'Unterstützung des Extensible Messaging and Presence Protocol (XMPP). Unterstützt z.Zt. nur das Senden von Nachrichten'
-        en: 'Support for the Extensible Messaging and Presence Protocol (XMPP). Currently only message sending supported'
+        de: 'Unterstützung des Extensible Messaging and Presence Protocol (XMPP). Unterstützt z.Zt. nur das Senden von Nachrichten.'
+        en: 'Support for the Extensible Messaging and Presence Protocol (XMPP). Currently only message sending supported.'
     maintainer: '? (Skender Haxhimolla)'
     tester: ohinckel                   # Who tests this plugin?
     state: ready
-#    keywords: kwd1 kwd2            # keywords, where applicable
+    keywords: xmpp messaging event  # keywords, where applicable
 #    documentation: https://github.com/smarthomeNG/plugins/blob/develop/mqtt/README.md        # url of documentation (wiki) page
 
 # Following entries are for Smart-Plugins:
-    version: 1.3.3                 # Plugin version
+    version: 1.4.1                 # Plugin version
     sh_minversion: 1.3             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False
@@ -68,10 +68,11 @@ logic_parameters: NONE
 plugin_functions:
     # Definition of function interface of the plugin
     send:
+        type: void
         description:
             de: 'Eine Messgae via xmpp senden'
             en: 'Send a message via xmpp'
-        parameter:
+        parameters:
             to:
                 type: str
                 description:

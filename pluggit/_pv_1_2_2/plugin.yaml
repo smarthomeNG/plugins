@@ -1,0 +1,105 @@
+# Metadata for the Smart-Plugin
+plugin:
+    # Global plugin attributes
+    type: interface                 # plugin type (gateway, interface, protocol, system, web)
+    description:
+        de: 'Anbindung einer KWL Pluggit AP310 über das Modbus Protokoll'
+        en: 'Connection of a Pluggit AP310 unit using Modbus protocol'
+    maintainer: '? (Henning Behrend / ratzi82)'
+    tester: '?'                    # Who tests this plugin?
+    state: ready
+    keywords: modbus
+#    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
+#    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
+
+    version: 1.2.2                 # Plugin version
+    sh_minversion: 1.2             # minimum shNG version to use this plugin
+#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    multi_instance: False          # plugin supports multi instance
+    restartable: unknown
+    classname: Pluggit             # class containing the plugin
+
+parameters:
+    # Definition of parameters to be configured in etc/plugin.yaml
+    host:
+        type: str
+        description:
+            de: "Hostname oder IP Adresse des Pluggit Dienstes"
+            en: "Hostname or IP address of the Pluggit service"
+
+    port:
+        type: int
+        default: 502
+        valid_min: 0
+        valid_max: 65535
+        description:
+            de: "Port Nummer des Pluggit Dienstes"
+            en: "Port number of Pluggit service"
+
+    cycle:
+        type: int
+        default: 50
+        description:
+            de: "Zykluszeit"
+            en: "Cycle time"
+
+
+item_attributes:
+    # Definition of item attributes defined by this plugin
+
+    pluggit_listen:
+        type: str
+        valid_list:
+          - prmRamIdxUnitMode
+          - prmNumOfWeekProgram
+          - prmRomIdxSpeedLevel
+          - prmFilterRemainingTime
+          - prmRamIdxT1
+          - prmRamIdxT2
+          - prmRamIdxT3
+          - prmRamIdxT4
+        valid_list_description:
+            de:
+              - Aktiver Modus der Einheit> 0x0004 Manueller Modus; 0x0008 Wochenprogramm
+              - Nummer des Wochenprogrammes (für Week Programmier-Modus)
+              - Geschwindigkeit des Lüfters im manuellen Modus; zeigt den aktuellen Gschwindigkeits-Level [4-0]
+              - Verbleibende Zeit der Lebensdauer des Filters (in Tagen)
+              - Frischluft Temperatur in °C
+              - Zuluft Temperatur in °C
+              - Abluft Temperatur in °C
+              - Fortluft Temperatur in °C
+            en:
+              - Active Unit mode> 0x0004 Manual Mode; 0x0008 WeekProgram
+              - Number of the Active Week Program (for Week Program mode)
+              - Speed level of Fans in Manual mode; shows a current speed level [4-0]; used for changing of the fan speed level
+              - Remaining time of the Filter Lifetime (Days)
+              - Frischluft temperature in degree
+              - Zuluft temperature in degree
+              - Abluft temperature in degree
+              - Fortluft temperature in degree
+        description:
+            de: "In das Item zu lesende Daten"
+            en: "Data to be read into the item"
+
+    pluggit_send:
+        type: str
+        valid_list:
+          - activatePowerBoost
+        valid_list_description:
+            de:
+              - Bool Variable welche den Unit Mode auf manuellen Modus ändert und den Lüfter Gschwindikeits-Level auf den höchsten Wert (4) setzt.
+            en:
+              - bool variable that changes the Unit Mode to manual mode and sets the fan speed level to the highest level (4)
+        description:
+            de: "In die Pluggit Einheit zu schreibender Wert"
+            en: "Value to be written to Plugitt unit"
+
+item_structs: NONE
+  # Definition of item-structure templates for this plugin
+
+plugin_functions: NONE
+    # Definition of plugin functions defined by this plugin
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin
+

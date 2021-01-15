@@ -177,8 +177,9 @@ class Database(SmartPlugin):
 
             self.logger.debug(item.conf)
             self._buffer_insert(item, [])
-            item.series = functools.partial(self._series, item=item.id())   # Zur Nutzung im Websocket Plugin
+            item.series = functools.partial(self._series, item=item.id())  # Zur Nutzung im Websocket Plugin
             item.db = functools.partial(self._single, item=item.id())      # Nie genutzt??? -> Doch
+            item.dbplugin = self                                           # genutzt zum Zugriff auf die Plugin Instanz z.B. durch Logiken
 
             if self._db_initialized and self.get_iattr_value(item.conf, 'database').lower() == 'init':
                 if not self._db.lock(5):
@@ -193,13 +194,18 @@ class Database(SmartPlugin):
                         prev_change = self._fetchone('SELECT MAX(time) from {log} WHERE item_id = :id',
                                                      {'id': cache[COL_ITEM_ID]}, cur=cur)
                         if (value is not None) and (prev_change is not None) and (prev_change[0] is not None):
-                            item.set(value, 'Database', prev_change=self._datetime(prev_change[0]), last_change=last_change)
+                            item.set(value, 'Database', source='Init', prev_change=self._datetime(prev_change[0]), last_change=last_change)
                         if value is not None and self.get_iattr_value(item.conf, 'database_acl') is not None and self.get_iattr_value(item.conf, 'database_acl').lower() == 'ro':
                             self._buffer_insert(item, [(self._timestamp(self.shtime.now()), None, value)])
                     except Exception as e:
                         self.logger.error("Reading cache value from database for {} failed: {}".format(item.id(), e))
+                else:
+                    self.logger.info("Cache not available in database for item {}".format(item.id() ))
                 cur.close()
                 self._db.release()
+            elif self.get_iattr_value(item.conf, 'database').lower() == 'init':
+                self.logger.warning("Db not initialized. Cannot read database value for item {}".format(item.id()))
+
             return self.update_item
         else:
             return None
@@ -238,6 +244,8 @@ class Database(SmartPlugin):
         if acl == 'rw':
             start = self._timestamp(item.prev_change())
             end = self._timestamp(item.last_change())
+            if end - start < 0:
+                self.logger.warning("Negative duration: start: {0}, end {1}, prevChange: {2}, lastChange: {3}, item: {4}".format(start , end, item.prev_change(), item.last_change(), item ))
             last = None if len(self._buffer[item]) == 0 or self._buffer[item][-1][1] is not None else \
                 self._buffer[item][-1]
             if last:  # update current value with duration
@@ -247,6 +255,7 @@ class Database(SmartPlugin):
             else:  # append new value with none duration
                 if item.property.path.startswith('test.'):
                     self.logger.debug("(last is None) Setting value {} to item '{}' value because database_acl = {}".format(end-start, item, acl))
+
                 self._buffer[item].append((start, end - start, item.prev_value()))
 
             # add current value with None duration
@@ -304,7 +313,9 @@ class Database(SmartPlugin):
         if id is None and create == True:
             id = [self.insertItem(item.id(), cur)]
 
-        return None if id == None else int(id[COL_ITEM_ID])
+        if (COL_ITEM_ID >= len(id)) or (id == None):
+            return None
+        return int(id[COL_ITEM_ID])
 
 
     def db(self):
@@ -688,6 +699,7 @@ class Database(SmartPlugin):
 
         :return: data structure in the form needed by the websocket plugin return it to the visu
         """
+        #self.logger.warning("_series: item={}, func={}, start={}, end={}, count={}".format(item, func, start, end, count))
         init = not update
         if sid is None:
             sid = item + '|' + func + '|' + str(start) + '|' + str(end) + '|' + str(count)
@@ -734,12 +746,14 @@ class Database(SmartPlugin):
         if expression['finalizer']:
             tuples = self._finalize(expression['finalizer'], tuples)
 
-        return {
+        result = {
             'cmd': 'series', 'series': tuples, 'sid': sid,
             'params': {'update': True, 'item': item, 'func': func, 'start': logs['iend'], 'end': end,
                        'step': logs['step'], 'sid': sid},
             'update': self.shtime.now() + datetime.timedelta(seconds=int(logs['step'] / 1000))
         }
+        #self.logger.warning("_series: result={}".format(result))
+        return result
 
 
     def _single(self, func, start, end='now', item=None):
@@ -782,7 +796,7 @@ class Database(SmartPlugin):
         if ':' in func:
             expression['finalizer'] = func[:func.index(":")]
             func = func[func.index(":") + 1:]
-        if func is 'count' or func.startswith('count'):
+        if func == 'count' or func.startswith('count'):
             parts = re.match('(count)((<>|!=|<|=|>)(\d+))?', func)
             func = 'count'
             if parts and parts.group(3) is not None:
@@ -1184,8 +1198,16 @@ class Database(SmartPlugin):
                     {i: [self._prepare(query[0]), self._prepare(query[1])] for i, query in self._setup.items()})
                 self._db_initialized = True
         except Exception as e:
-            self.logger.error("Database: Initialization failed: {}".format(e))
-            return False
+            #self.logger.error("Database: Initialization failed: {}".format(e))
+            #return False
+
+            self.logger.critical("Database: Initialization failed: {}".format(e))
+            if self.driver.lower() == "sqlite3":
+                self._sh.restart('SmartHomeNG (Database plugin stalled)')
+                exit(0)
+            else:
+                return False
+
         return True
 
 
@@ -1293,7 +1315,9 @@ class Database(SmartPlugin):
         :param dt:
         :return:
         """
-        return int(time.mktime(dt.timetuple())) * 1000 + int(dt.microsecond / 1000)
+        val = int(time.mktime(dt.timetuple())) * 1000 + int(dt.microsecond / 1000)
+        #self.logger.debug("Debug timestamp {0}, val {1}, epoche timestamp {2}, micrsec {3}".format(dt, val, time.mktime(dt.timetuple()), dt.microsecond) )
+        return val
 
 
     def _seconds(self, ms):

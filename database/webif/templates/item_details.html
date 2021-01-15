@@ -64,7 +64,12 @@ function confirmDelete(url, text) {
 				{% if item.property.type == 'str' %}<td class="py-1">{{ dataset[3] }}</td>{% endif %}
 				{% if item.property.type == 'foo' %}<td class="py-1">{{ dataset[3] }}</td>{% endif %}
 				<td class="py-1">{{ dataset[6].strftime('%d.%m.%Y %H:%M:%S') }} </td>
-				<td class="py-1"><button type="button" class="btn btn-danger btn-sm" title="{{ _('Wert löschen') }}" onclick="confirmDelete('?action=delete_log&item_id={{ dataset[1] }}&item_path={{ item_path }}&time_orig={{ dataset['0_orig'] }}&changed_orig={{ dataset['6_orig'] }}{% if day and month and year %}&day={{ day }}&month={{ month }}&year={{ year }}{% endif %}','{{ _('Wollen Sie den Datensatz (Tabelle log) dieses Items wirklich löschen?') }}')"><i class="fas fa-trash-alt"></i></button></td>
+				<td class="py-1"><button {% if loop.index < 3 and (day is none or (day+" "+month+" "+year == now.strftime('%-d %m %Y'))) %}disabled{% endif %} type="button"
+				class="btn btn-{% if loop.index < 3 and (day is none or (day+" "+month+" "+year == now.strftime('%-d %m %Y'))) %}secondary{% else %}danger{% endif %} btn-sm"
+				title="{% if loop.index < 3 and (day is none or (day+" "+month+" "+year == now.strftime('%-d %m %Y'))) %}{{ _('Wert löschen fuer aktuellen Wert nicht verfuegbar.') }}{% else %}{{ _('Wert löschen') }}{% endif %}"
+				onclick="confirmDelete('?action=delete_log&item_id={{ dataset[1] }}&item_path={{ item_path }}&time_orig={{ dataset['0_orig'] }}&changed_orig={{ dataset['6_orig'] }}{% if day and month and year %}&day={{ day }}&month={{ month }}&year={{ year }}{% endif %}','{{ _('Wollen Sie den Datensatz (Tabelle log) dieses Items wirklich löschen?') }}')"><i class="fas fa-trash-alt"></i></button></td>
+
+
 			</tr>
 		{% endfor %}
 	{% else %}

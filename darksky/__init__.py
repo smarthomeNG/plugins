@@ -161,7 +161,12 @@ class DarkSky(SmartPlugin):
             self.logger.error(
                 "get_forecast: Exception when sending GET request for get_forecast: {}".format(e))
             return
-        json_obj = response.json()
+        try:
+            json_obj = response.json()
+        except Exception as e:
+            self.logger.error(
+                "get_forecast: Response {} is no valid json format: {}".format(response, e))
+            return
         daily_data = OrderedDict()
 
         # add icon_visu, date and day to daily and currently
