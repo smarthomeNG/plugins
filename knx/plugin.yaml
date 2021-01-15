@@ -131,6 +131,8 @@ item_attributes:
          - '5'
          - '5001'
          - '5.001'
+         - '5999'
+         - '5.999'
          - '6'
          - '7'
          - '8'
@@ -164,6 +166,8 @@ item_attributes:
              - 'Relativwert, 0 … 255 (8 Bit) -> num'
              - 'Relativwert, 0 … 100 % (8 Bit) -> num'
              - 'Relativwert, 0 … 100 % (8 Bit) -> num'
+             - 'Spezial DPT für Tebis TS Systeme, (8 Bit) -> num'
+             - 'Spezial DPT für Tebis TS Systeme, (8 Bit) -> num'
              - 'Ganzzahl -128 - 127 (8 Bit) -> num'
              - 'Ganzzahl 0 - 65535 (16 Bit) -> num'
              - 'Ganzzahl -32768 - 32767 (16 Bit) -> num'
@@ -196,6 +200,8 @@ item_attributes:
              - 'Relative value, 0 … 255 (8 Bit) -> num'
              - 'Relative value, 0 … 100 % (8 Bit) -> num'
              - 'Relative value, 0 … 100 % (8 Bit) -> num'
+             - 'Special DPT for Tebis TS systems, (8 Bit) -> num'
+             - 'Special DPT for Tebis TS systems, (8 Bit) -> num'
              - 'Integer -128 - 127 (8 Bit) -> num'
              - 'Integer 0 - 65535 (16 Bit) -> num'
              - 'Integer -32768 - 32767 (16 Bit) -> num'
@@ -331,6 +337,8 @@ plugin_functions:
                  - '5'
                  - '5001'
                  - '5.001'
+                 - '5999'
+                 - '5.999'
                  - '6'
                  - '7'
                  - '8'
@@ -364,6 +372,8 @@ plugin_functions:
                      - 'Relativwert, 0 … 255 (8 Bit) -> num'
                      - 'Relativwert, 0 … 100 % (8 Bit) -> num'
                      - 'Relativwert, 0 … 100 % (8 Bit) -> num'
+                     - 'Spezial DPT für Tebis TS Systeme, (8 Bit) -> num'
+                     - 'Spezial DPT für Tebis TS Systeme, (8 Bit) -> num'
                      - 'Ganzzahl -128 - 127 (8 Bit) -> num'
                      - 'Ganzzahl 0 - 65535 (16 Bit) -> num'
                      - 'Ganzzahl -32768 - 32767 (16 Bit) -> num'
@@ -396,6 +406,8 @@ plugin_functions:
                      - 'Relative value, 0 … 255 (8 Bit) -> num'
                      - 'Relative value, 0 … 100 % (8 Bit) -> num'
                      - 'Relative value, 0 … 100 % (8 Bit) -> num'
+                     - 'Special DPT for Tebis TS systems, (8 Bit) -> num'
+                     - 'Special DPT for Tebis TS systems, (8 Bit) -> num'
                      - 'Integer -128 - 127 (8 Bit) -> num'
                      - 'Integer 0 - 65535 (16 Bit) -> num'
                      - 'Integer -32768 - 32767 (16 Bit) -> num'
@@ -457,9 +469,4 @@ plugin_functions:
                 description:
                     de: "Gruppenadresse an die das Datum gesendet wird"
                     en: "Group address to send the date to"
-
-
-
-
-
 

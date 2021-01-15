@@ -119,6 +119,23 @@ def de5001(payload):
         return None
     return round(struct.unpack('>B', payload)[0] * 100.0 / 255, 1)
 
+
+def en5999(value):
+    # artificial data point for tebis TS systems
+    if value < 0:
+        value = 0
+    elif value > 255:
+        value = 255
+    return [0, int(value) & 0xff]
+
+
+def de5999(payload):
+    # artificial data point for tebis TS systems
+    if len(payload) != 1:
+        return None
+    return struct.unpack('>B', payload)[0] & 0x0f
+
+
 """
 Datapoint type one Byte with signed relative value
 """
@@ -481,6 +498,8 @@ decode = {
     '5': de5,
     '5001': de5001,
     '5.001': de5001,
+    '5999': de5999,
+    '5.999': de5999,
     '6': de6,
     '7': de7,
     '8': de8,
@@ -526,6 +545,8 @@ encode = {
     # 5.003 -> DPT_Angle [0..360] °
     # 5.004 -> DPT_Percent_U8 [0..255] %
     # 5.005 -> DPT_DecimalFactor
+    '5999': de5999,     #artificial data point for tebis TS systems
+    '5.999': de5999,    #artificial data point for tebis TS systems
     '6': en6,           #One Byte: signed relative value or status with mode
     '7': en7,           #Two Bytes: unsigned value
     '8': en8,           #Two Bytes: signed value
@@ -543,7 +564,7 @@ encode = {
     '17': en17,         #One Byte: Scene Number
     '17001': en17001,
     '17.001': en17001,
-    '18001': en18001,   #OneByte: 
+    '18001': en18001,   #OneByte:
     '18.001': en18001,  #  DPT_SceneControl
     # '19' : en19,      #DPT_DateTime
     # '19001' : en19,   #DPT_DateTime
@@ -559,8 +580,8 @@ encode = {
     '28001': en28,      #DPT_UTF-8
     '28.001': en28,     #DPT_UTF-8
     '229': en229,
-    '232': en232,
-    '275.100' : en275100,
+    '232': en232,       #RGB
+    '275.100' : en275100,   # Setpoint temperature, contains 4 values: Komfort, Standby, Night and Frost
     'ga': enga
 }
 # DPT: 19, 28
