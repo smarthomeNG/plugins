@@ -138,7 +138,8 @@ class SeEval(StateEngineTools.SeItemChild):
         self._log_debug("Executing method 'get_relative_itemvalue({0})'", subitem_id)
         try:
             if self._abitem._initstate and subitem_id == '..state_name':
-                returnvalue = self._abitem.return_item(self._abitem._initstate).property.name
+                _item = self._abitem.return_item(self._abitem._initstate)
+                returnvalue = _item.text
                 self._log_debug("Return item value '{0}' during init", returnvalue)
             else:
                 item = self._abitem.return_item(subitem_id)
