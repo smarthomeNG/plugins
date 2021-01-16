@@ -86,7 +86,6 @@ def get_child_item(item, child_id):
 # item: Item for which the last part of the id should be returned
 # returns: last part of item id
 def get_last_part_of_item_id(item):
-    #logger.warning("ITEM: {}".format(item))
     if isinstance(item, str):
         return_value = item if "." not in item else item.rsplit(".", 1)[1]
     else:

@@ -45,6 +45,9 @@ class SeFunctions:
         self.__ab_alive = False
         self.items = Items.get_instance()
 
+    def __repr__(self):
+        return "SeFunctions"
+
     # get a lock object
     # lock_id: Id of the lock object to return
     def __get_lock(self, lock_id):

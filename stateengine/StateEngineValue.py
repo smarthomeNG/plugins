@@ -82,7 +82,7 @@ class SeValue(StateEngineTools.SeItemChild):
     # item: item containing the attribute
     # attribute_name: name of attribute to use
     # default_value: default value to be used if item contains no such attribute
-    def set_from_attr(self, item, attribute_name, default_value=None):
+    def set_from_attr(self, item, attribute_name, default_value=None, reset=True):
         value = item.conf.get(attribute_name) or default_value
         # Convert weird string representation of OrderedDict correctly
         if isinstance(value, str) and value.startswith("["):
@@ -100,7 +100,7 @@ class SeValue(StateEngineTools.SeItemChild):
             value = ast.literal_eval(value)
         except Exception:
             pass
-        self.set(value, attribute_name)
+        self.set(value, attribute_name, reset)
 
     def _set_additional(self, _additional_sources):
         for _use in _additional_sources:
@@ -379,16 +379,26 @@ class SeValue(StateEngineTools.SeItemChild):
         if self.__template is not None:
             self._log_debug("{0}: Using template(s) {1}", self.__name, self.__template)
         if self.__value is not None:
-            self._log_debug("{0}: {1}", self.__name, self.__value)
+            if isinstance(self.__value, list):
+                for i in self.__value:
+                    if i is not None:
+                        self._log_debug("{0}: {1}", self.__name, i)
+            else:
+                self._log_debug("{0}: {1}", self.__name, self.__value)
         if self.__regex is not None:
-            self._log_debug("{0} from regex: {1}", self.__name, self.__regex)
+            if isinstance(self.__regex, list):
+                for i in self.__regex:
+                    if i is not None:
+                        self._log_debug("{0} from regex: {1}", self.__name, i)
+            else:
+                self._log_debug("{0} from regex: {1}", self.__name, self.__regex)
         if self.__struct is not None:
             if isinstance(self.__struct, list):
                 for i in self.__struct:
                     if i is not None:
                         self._log_debug("{0} from struct: {1}", self.__name, i.property.path)
             else:
-                self._log_debug("{0} from struct: {1}", self.__name, self.__struct)
+                self._log_debug("{0} from struct: {1}", self.__name, self.__struct.property.path)
         if self.__item is not None:
             if isinstance(self.__item, list):
                 for i in self.__item:
@@ -402,7 +412,12 @@ class SeValue(StateEngineTools.SeItemChild):
             self._log_debug("Currently eval results in {}", self.__get_eval())
             self.__listorder = _original_listorder
         if self.__varname is not None:
-            self._log_debug("{0} from variable: {1}", self.__name, self.__varname)
+            if isinstance(self.__varname, list):
+                for i in self.__varname:
+                    if i is not None:
+                        self._log_debug("{0} from variable: {1}", self.__name, i)
+            else:
+                self._log_debug("{0} from item: {1}", self.__name, self.__varname)
 
     # Get Text (similar to logger text)
     # prefix: Prefix for text
