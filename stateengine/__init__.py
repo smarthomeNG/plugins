@@ -35,7 +35,7 @@ from copy import deepcopy
 
 
 class StateEngine(SmartPlugin):
-    PLUGIN_VERSION = '1.8.0'
+    PLUGIN_VERSION = '1.8.1'
 
     # Constructor
     # noinspection PyUnusedLocal,PyMissingConstructor

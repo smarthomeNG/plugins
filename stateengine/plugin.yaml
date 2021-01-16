@@ -40,7 +40,7 @@ plugin:
     documentation: https://www.smarthomeng.de/user/plugins/stateengine/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1303071-stateengine-plugin-support
 
-    version: 1.8.0
+    version: 1.8.1
     sh_minversion: 1.6
     multi_instance: False
     classname: StateEngine
@@ -582,14 +582,14 @@ item_structs:
             type: foo
             eval: (sh..suspendduration(sh..suspendduration(), "Init", "Start"), sh..suspendvariant.suspendduration0(sh..suspendduration(), "Init", "Start"), sh..suspendvariant.suspendduration1(sh..suspendvariant.suspendduration1(), "Init", "Start"), sh..suspendvariant.suspendduration2(sh..suspendvariant.suspendduration2(), "Init", "Start"))
             crontab: init = True
-            
+
             suspendvariant:
                 remark: number between 0 and 2 to define which suspendduration should be used
                 type: num
                 visu_acl: rw
                 cache: True
                 initial_value: 0
-                
+
                 suspendduration0:
                     remark: gets automatically updated from settings.suspendduration as this is the default item for the suspendduration
                     type: num
@@ -616,7 +616,7 @@ item_structs:
                         visu_acl: rw
                         cache: True
                         on_change: .. = value / 60 if not sh..self.property.last_change_by in [ "On_Change:{}".format(sh....property.path), "On_Update:{}".format(sh....property.path)] else None
-                
+
                 suspendduration1:
                     remark: duration of suspend mode in minutes (gets converted automatically)
                     type: num
@@ -667,15 +667,15 @@ item_structs:
                         type: num
                         visu_acl: rw
                         cache: True
-                        on_change: .. = value / 60 if not sh..self.property.last_change_by in [ "On_Change:{}".format(sh....property.path), "On_Update:{}".format(sh....property.path)] else None                
-     
+                        on_change: .. = value / 60 if not sh..self.property.last_change_by in [ "On_Change:{}".format(sh....property.path), "On_Update:{}".format(sh....property.path)] else None
+
                 additionaluse0:
                     remark: set this value to a struct or (relative) state that should be added to the condition sets if suspendvariant is 0
                     type: str
                     visu_acl: rw
                     cache: True
                     initial_value: 'struct:stateengine.state_standard.rules.standard'
-                    
+
                 additionaluse1:
                     remark: set this value to a struct or (relative) state that should be added to the condition sets if suspendvariant is 1
                     type: str
@@ -689,7 +689,7 @@ item_structs:
                     visu_acl: rw
                     cache: True
                     initial_value: ''
-                        
+
             suspendduration:
                 remark: duration of suspend mode in minutes (gets converted automatically)
                 type: num
@@ -715,7 +715,7 @@ item_structs:
                     visu_acl: rw
                     cache: True
                     on_change: .. = value / 60 if not sh..self.property.last_change_by in [ "On_Change:{}".format(sh....property.path), "On_Update:{}".format(sh....property.path)] else None
-                    
+
             suspend_active:
                 remark: Use this to (de)activate suspend mode in general
                 type: bool
@@ -738,7 +738,7 @@ item_structs:
             se_item_suspend_active: ..settings.suspend_active
             se_item_suspendvariant: ..settings.suspendvariant
             se_suspend_time: eval:se_eval.get_relative_itemvalue('..settings.suspendvariant.suspendduration{}.seconds'.format(max(0, min(se_eval.get_relative_itemvalue('..settings.suspendvariant'), 2))))
-            
+
             eval_trigger:
                 - ..manuell
 
@@ -802,7 +802,7 @@ item_structs:
                 enter_manuell:
                     se_value_trigger_source: eval:se_eval.get_relative_itemproperty('..manuell', 'path')
                     se_value_suspend_active: True
-                    
+
                 enter_stay:
                     se_value_laststate: var:current.state_id
                     se_agemax_suspend: var:item.suspend_time
@@ -814,7 +814,7 @@ item_structs:
         rules:
             standard:
                 name: standard
-                
+
                 enter_manuell:
                     type: foo
 
