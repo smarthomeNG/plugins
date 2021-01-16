@@ -29,7 +29,7 @@ Beinhaltet ein verknüpfter State ebenfalls ein se_use Attribut, werden auch die
 Deklaration steckt, desto geringer ist ihre Priorität. Heißt, etwaige Zustandseinstellungen im eigentlichen Item erweitern und
 überschreiben Einstellungen, die mit se_use eingebunden wurden.
 
-Weitere Details sind unter :ref:`_Zustand-Templates` zu finden.
+Weitere Details sind unter :ref:`Zustand-Templates` zu finden.
 
 Zustandsnamen
 -------------
