@@ -71,6 +71,7 @@ class SeState(StateEngineTools.SeItemChild):
             self.__id = self.__item.property.path
             self._log_info("Init state {}", self.__id)
         except Exception as err:
+            self.__id = None
             self._log_info("Problem init state ID of Item {}. {}", self.__item, err)
         self.__text = StateEngineValue.SeValue(self._abitem, "State Name", False, "str")
         self.__use = StateEngineValue.SeValue(self._abitem, "State configuration extension", True, "item")
@@ -321,10 +322,11 @@ class SeState(StateEngineTools.SeItemChild):
         # Complete condition sets and actions at the end
         if recursion_depth == 0:
             self.__conditions.complete(item_state)
-            self.__actions_enter.complete(item_state)
-            self.__actions_stay.complete(item_state)
-            self.__actions_enter_or_stay.complete(item_state)
-            self.__actions_leave.complete(item_state)
+
+            self.__actions_enter.complete(item_state, self.__conditions.evals_items)
+            self.__actions_stay.complete(item_state, self.__conditions.evals_items)
+            self.__actions_enter_or_stay.complete(item_state, self.__conditions.evals_items)
+            self.__actions_leave.complete(item_state, self.__conditions.evals_items)
 
         _summary = "{} on_enter, {} on_stay , {} on_enter_or_stay, {} on_leave"
         if se_use is not None:
