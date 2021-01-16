@@ -2,6 +2,7 @@
 .. index:: Stateengine; Aktionen - einzeln
 .. _Aktionen - einzeln:
 
+==================
 Aktionen - einzeln
 ==================
 
@@ -17,12 +18,14 @@ Name ist auch hier beliebig und wird lediglich in der Benennung
 der Attribute verwendet. Die Namen aller Attribute, die zu einer
 Bedingung gehören, folgen dem Muster ``se_<Funktion>_<Aktionsname>``.
 
-.. rubric:: Aktion: Item auf einen Wert setzen
-   :name: aktionitemaufeinenwertsetzen
+Definition der Aktion
+---------------------
+
+**Aktion set: Item auf einen Wert setzen**
 
 .. code-block:: yaml
 
-       se_set_<Aktionsname>
+       se_set_<Aktionsname>: <val>/<eval>/<var>/<item>
 
 Das Item, das verändert werden soll, muss auf Ebene des
 Regelwerk-Items über das Attribut ``se_item_<Aktionsname>``
@@ -32,8 +35,26 @@ Der Wert, auf den das Item gesezt wird, kann als statischer Wert, als Wert eines
 Items oder als Ergebnis der Ausführung einer Funktion festgelegt
 werden.
 
-.. rubric:: Aktion: Ausführen einer Funktion
-   :name: aktionausfuehreneinerfunktion
+**Aktion force: Item zwangsweise auf einen Wert setzen**
+
+.. code-block:: yaml
+
+       se_force_<Aktionsname>: <val>/<eval>/<var>/<item>
+
+Diese Aktion funktioniert analog zu ``se_set_<Aktionsname>``.
+Einziger Unterschied ist, dass die Wertänderung erzwungen wird:
+Wenn das Item bereits den zu setzenden Wert hat, dann ändert
+smarthomeNG das Item nicht. Selbst wenn beim Item das Attribut
+``enforce_updates: yes`` gesetzt ist, wird zwar der Wert neu
+gesetzt, der von smarthomeNG die Änderungszeit nicht neu gesetzt. Mit
+dem Attribut ``se_force_<Aktionsname>`` wird das Plugin den Wert
+des Items bei Bedarf zuerst auf einen anderen Wert ändern und dann
+auf dem Zielwert setzen. Damit erfolgt auf jeden Fall eine
+Wertänderung (ggf. sogar zwei) mit allen damit in Zusammenhang
+stehenden Änderungen (eval's, Aktualisierung der Änderungszeiten,
+etc).
+
+**Aktion run: Ausführen einer Funktion**
 
 .. code-block:: yaml
 
@@ -43,20 +64,17 @@ Die Angabe ist vergleichbar mit dem Ausführen einer Funktion zur
 Ermittlung des Werts für ein Item, hier wird jedoch kein Item
 benötigt. Außerdem wird der Rückgabewert der Funktion ignoriert.
 
-.. rubric:: Aktion: Auslösen einer Logikausführung
-   :name: aktionausloeseneinerlogikausfuehrung
+**Aktion trigger: Auslösen einer Logikausführung**
 
 .. code-block:: yaml
 
        se_trigger_<Aktionsname>: meineLogik:Zu übergebender Wert
 
 Um beim Auslösen einen Wert an die Logik zu übergeben, kann dieser
-Wert im Attribut über die Angabe von ``: <Wert>`` hinter dem
+Wert im Attribut über die Angabe von ``:<Wert>`` hinter dem
 Logiknamen angegeben werden.
 
-.. rubric:: Aktion: Alle Items, die ein bestimmtes Attribut haben,
-   auf den Wert dieses Attributs setzen
-   :name: aktionalleitemsdieeinbestimmtesattributhabenaufdenwertdiesesattributssetzen
+**Funktion byattr: Alle Items mit bestimmtem auf den Wert setzen**
 
 .. code-block:: yaml
 
@@ -85,8 +103,34 @@ Ein anderes Item
 
 wird gleichzeitig auf ``Rums`` gesetzt.
 
-.. rubric:: Aktion: Sondervorgänge
-   :name: aktionsondervorgnge
+**Aktion add: Wert zu einem Listenitem hinzufügen**
+
+.. code-block:: yaml
+
+   se_add_<Aktionsname>: <val>/<eval>/<var>/<item>
+
+Der Wert des Attributs legt fest, welcher Wert zum Item
+mit dem Typ ``list`` hinzugefügt werden soll. Wird hier direkt ein
+Wert angegeben, ist darauf zu achten, dass ein String unter Anführungszeichen
+stehen muss, während eine Zahl das nicht sollte.
+
+**Aktion remove: Wert von einem Listenitem entfernen**
+
+.. code-block:: yaml
+
+   se_remove_<Aktionsname>: <val>/<eval>/<var>/<item>
+
+Der Wert des Attributs legt fest, welcher Wert vom Item
+mit dem Typ ``list`` entfernt werden soll. Dabei ist zu beachten,
+dass zwischen String (Anführungszeichen) und Zahlen unterschieden wird.
+Ist der angegegeben Wert nicht in der Liste, wird der originale
+Itemwert erneut geschrieben, ohne etwas zu entfernen. Über
+``se_mode`` lässt sich einstellen, ob jeweils alle mit dem Wert übereinstimmenden
+Einträge in der Liste (mode: all) oder nur der erste (first) bzw. der letzte (last)
+Eintrag gelöscht werden sollen. Wird der Parameter nicht angegeben, werden immer
+alle passenden Einträge gelöscht.
+
+**Aktion special: Sondervorgänge**
 
 .. code-block:: yaml
 
@@ -96,8 +140,20 @@ Für bestimmte Sondervorgänge sind besondere Aktionen im Plugin
 definiert (z. B. für das Suspend). Diese werden jedoch nicht hier
 erläutert, sondern an den Stellen, an denen Sie verwendet werden.
 
-.. rubric:: Verzögertes Ausführen einer Aktion
-   :name: verzgertesausfhreneineraktion
+Weitere Einstellungen
+---------------------
+
+**mindelta: <int>**
+
+Es ist möglich, eine Minimumabweichung für
+Änderungen zu definieren. Wenn die Differenz zwischen dem
+aktuellen Wert des Items und dem ermittelten neuen Wert kleiner
+ist als die festgelegte Minimumabweichung wird keine Änderung
+vorgenommen. Die Minimumabweichung wird über das Attribut
+``se_mindelta_<Aktionsname>`` auf der Ebene des Regelwerk-Items
+festgelegt.
+
+**delay: <int>**
 
 .. code-block:: yaml
 
@@ -114,23 +170,21 @@ die Verzögerung größer als der ``cycle`` ist, wird die Aktion
 nie durchgeführt werden, es sei denn die Aktion soll nur
 einmalig ausgeführt werden.
 
-.. rubric:: Wiederholen einer Aktion
-   :name: wiederholeneineraktion
+**repeat: <bool>**
 
 .. code-block:: yaml
 
-       se_repeat_<Aktionsname>: True|False
+       se_repeat_<Aktionsname>: [True|False]
 
 Über das Attribut wird unabhängig vom globalen Setting für das
 stateengine Item festgelegt, ob eine Aktion auch beim erneuten
 Eintritt in den Status ausgeführt wird oder nicht.
 
-.. rubric:: Festlegen der Ausführungsreihenfolge von Aktionen
-   :name: festlegenderausfhrungsreihenfolgevonaktionen
+**order: <int>**
 
 .. code-block:: yaml
 
-       se_order_<Aktionsname>
+       se_order_<Aktionsname>: <int>
        se_order_aktion1: 3
        se_order_aktion2: 2
        se_order_aktion3: 1
@@ -149,39 +203,32 @@ Reihenfolge der beiden Aktionen untereinander ist dann wieder
 zufällig. Innerhalb der gesamten Aktionen werden die beiden
 Aktionen jedoch an der angegebenen Position ausgeführt.
 
-.. rubric:: Aktion: Minimumabweichung
-   :name: minimumabweichung
+**instanteval: <bool>**
 
-Es ist möglich, eine Minimumabweichung für
-Änderungen zu definieren. Wenn die Differenz zwischen dem
-aktuellen Wert des Items und dem ermittelten neuen Wert kleiner
-ist als die festgelegte Minimumabweichung wird keine Änderung
-vorgenommen. Die Minimumabweichung wird über das Attribut
-``se_mindelta_<Aktionsname>`` auf der Ebene des Regelwerk-Items
-festgelegt.
-
-.. rubric:: Aktion: Item zwangsweise auf einen Wert setzen
-   :name: aktionitemzwangsweiseaufeinenwertsetzen
+Über den optionalen Parameter ``<instanteval>`` wird für verzögerte Aktionen angegeben,
+ob etwaige eval Ausdrücke sofort evaluiert und gespeichert werden sollen oder
+die Evaluierung erst zum Ausführungszeitpunkt stattfinden soll.
 
 .. code-block:: yaml
 
-       se_force_<Aktionsname>
+       se_instanteval_<Aktionsname>: [True|False]
 
-Diese Aktion funktioniert analog zu ``se_set_<Aktionsname>``.
-Einziger Unterschied ist, dass die Wertänderung erzwungen wird:
-Wenn das Item bereits den zu setzenden Wert hat, dann ändert
-smarthomeNG das Item nicht. Selbst wenn beim Item das Attribut
-``enforce_updates: yes`` gesetzt ist, wird zwar der Wert neu
-gesetzt, der von smarthomeNG die Änderungszeit nicht neu gesetzt. Mit
-dem Attribut ``se_force_<Aktionsname>`` wird das Plugin den Wert
-des Items bei Bedarf zuerst auf einen anderen Wert ändern und dann
-auf dem Zielwert setzen. Damit erfolgt auf jeden Fall eine
-Wertänderung (ggf. sogar zwei) mit allen damit in Zusammenhang
-stehenden Änderungen (eval's, Aktualisierung der Änderungszeiten,
-etc).
+Beispiel: Ein Item soll auf einen Wert aus einem Item gesetzt werden. Das Item wird
+anhand des gerade aktuellen Zustands durch ein eval eruiert:
 
-.. rubric:: Beispiel zu Aktionen
-   :name: beispielzuaktioneneinzeln
+.. code-block:: yaml
+
+        eval:sh.return_item(se_eval.get_relative_itemid('..settings.{}'.format(se_eval.get_relative_itemvalue('..state_name'))))()
+
+Angenommen, der aktuelle Zustand heißt ``regen``, so wird durch den obigen Code das Item
+auf den Wert aus ``settings.regen`` gesetzt. Ändert sich aber während der Verzögerungszeit (delay)
+der Zustand auf ``sonne``, würde zum Ausführungszeitpunkt der Aktion der Wert aus dem Item ``settings.sonne``
+herangezogen werden. Wenn dies nicht erwünscht ist und das Item also auf den Vorgabewert des
+ursprünglichen Zustands (regen) gesetzt werden soll, kann das Attribut
+``se_instanteval_<Aktionsname: True`` gesetzt werden.
+
+Beispiel zu Aktionen
+--------------------
 
 .. code-block:: yaml
 

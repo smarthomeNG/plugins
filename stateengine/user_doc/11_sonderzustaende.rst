@@ -2,6 +2,7 @@
 .. index:: Stateengine; Besondere Zustände
 .. _Besondere Zustände:
 
+==================
 Besondere Zustände
 ==================
 
@@ -18,8 +19,8 @@ Sperr-Item ein, das beispielsweise über einen Taster oder die Visu änderbar
 ist. Sperr-Item und Zustand können durch ``struct: stateengine.state_lock``
 auf Höhe des Regelwerk-Items automatisch implementiert werden.
 
-.. rubric:: Das "Sperr"-Item
-  :name: dassperritem
+"Sperr"-Item
+============
 
 Die Sperre soll aktiv sein, wenn das Sperr-Item den Wert ``True`` hat.
 Das Sperritem definiert man wie folgt:
@@ -35,8 +36,8 @@ Das Sperritem definiert man wie folgt:
              visu_acl: rw
              cache: on
 
-.. rubric:: Der Sperr-Zustand
- :name: dersperrzustand
+Der Sperr-Zustand
+=================
 
 Der zugehörige Zustand könnte so aussehen und sollte als erster Zustand definiert
 werden, da er anderen Zuständen gegenüber priorisiert werden soll.
@@ -77,8 +78,8 @@ das Stateengine Item (auf der selben Hierarchieebene wie das rules Item)
 das manuell Item angepasst werden - siehe weiter unten. Außerdem ist die Dauer
 des Suspendzustands im Item ``automatik.settings.suspendduration.seconds`` einzustellen.
 
-.. rubric:: Das "Suspend"-Item
-  :name: dassuspenditem
+Das "Suspend"-Item
+==================
 
 Zunächst wird ein "Suspend"-Item benötigt. Dieses Item zeigt zum
 einen die zeitweise Deaktivierung an, zum anderen kann die
@@ -97,8 +98,8 @@ Deaktivierung über dieses Item vorzeitig beendet werden:
                    visu_acl: rw
                    cache: 'True'
 
-.. rubric:: Das "Manuell"-Item
-  :name: dasmanuellitem
+Das "Manuell"-Item
+==================
 
 Ein weiteres Item wird benötigt, um alle Aktionen, die den
 Suspend-Zustand auslösen sollen, zu kapseln. Dieses Item ist das
@@ -183,8 +184,8 @@ Ein weiteres Beispiel mit Wildcards. Groß- und Kleinschreibung spielen generell
       - knx:1.0.0:3/5/*
 
 
-.. rubric:: Der Suspend-Zustand
-  :name: dersuspendzustand
+Der Suspend-Zustand
+===================
 
 Mit diesen beiden Items kann nun ein einfacher Suspend-Zustand
 definiert werden. Als Aktion im Suspend-Zustand wird dabei die
@@ -245,7 +246,7 @@ Der Suspend-Zustand sieht damit wie folgt aus:
 Da der Suspend-Zustand anderen Zuständen
 vorgehen sollte, steht er üblicherweise sehr weit vorrne in der
 Reihenfolge. In der Regel wird der Suspend-Zustand in der
-Definition der zweite Zustand nach dem Lock-Zustand sein. Allerdings wird es 
+Definition der zweite Zustand nach dem Lock-Zustand sein. Allerdings wird es
 auch Setups geben, wo ein anderer - theoretisch untergeordneter - Zustand
 den Manuellbetrieb aufheben soll. Typischerweise, wenn abends die Jalousien zugehen
 sollen, selbst wenn man diese zuvor manuell betätigt hatte. In diesem Fall ist es nötig,
@@ -253,8 +254,8 @@ den Suspendzustand zwei Mal einzubinden und den "auflösenden" Zustand, also z.B
 als Burgerpatty dazwischen zu stecken. Um dieses Setup dennoch möglichst einfach zu halten,
 bietet es sich an, das ``se_use`` Attribut zu nutzen.
 
-.. rubric:: Dauer der zeitweisen Deaktivierung
-  :name: dauerderzeitweisendeaktivierung
+Dauer der zeitweisen Deaktivierung
+----------------------------------
 
 Die Dauer der zeitweisen Deaktivierung wird in der
 Plugin-Konfiguration über die Einstellung ``suspend_time_default``

@@ -2,19 +2,20 @@
 .. index:: Stateengine; Sonstiges
 .. _Sonstiges:
 
+=========
 Sonstiges
 =========
 
-.. rubric:: Einbinden anderer Zustände
-   :name: einbindenandererzustaende
+Einbinden anderer Zustände
+--------------------------
 
 **se_use (optional):**
-*Item(pfad) zu einer weiteren Zustandskonfiguration*
+*Einbinden einer weiteren Zustandskonfiguration*
 
 .. code-block:: yaml
 
     se_use: <Zustandsitem> # z.B. stateengine_defaults.state_suspend.rules.suspend
-	
+
 Seit Version 1.8 wird se_use gleich behandelt wie andere Plugin spezifische Attribute mit Wertzuweisung.
 Dadurch ist es nicht nur möglich, eine Liste von einzubindenden Zuständen zu deklarieren,
 sondern auch auf die verschiedenen Schlüsselwörter zurückzugreifen:
@@ -28,8 +29,10 @@ Beinhaltet ein verknüpfter State ebenfalls ein se_use Attribut, werden auch die
 Deklaration steckt, desto geringer ist ihre Priorität. Heißt, etwaige Zustandseinstellungen im eigentlichen Item erweitern und
 überschreiben Einstellungen, die mit se_use eingebunden wurden.
 
-.. rubric:: Zustandsnamen
-   :name: sonstigeszustandsnamen
+Weitere Details sind unter :ref:`_Zustand-Templates` zu finden.
+
+Zustandsnamen
+-------------
 
 **name (optional):**
 *Name des Zustands*
@@ -49,8 +52,8 @@ zu ändern. Ist also z.B. der Zustand auf Grund der Temperatur eingenommen worde
 könnte der Name auf "Zustand (Temp)" geändert werden. Ist der Zustand aufgrund
 der Helligkeitsbedingung aktiv, könnte der Name auf "Zustand (Hell)" geändert werden.
 
-.. rubric:: CLI
-   :name: sonstigescli
+CLI
+---
 
 Im CLI Plugin können folgende zwei Befehle zu Debuggingzwecken eingesetzt werden:
 
