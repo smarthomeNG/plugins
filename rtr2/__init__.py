@@ -334,6 +334,14 @@ class Rtr2(SmartPlugin):
                 info_dict[r]['max_output'] = self._rtr[r].setting_max_output_item()
             if (self._rtr[r].setting_min_output_item is not None):
                 info_dict[r]['min_output'] = self._rtr[r].setting_min_output_item()
+            if self.default_Kp != self._rtr[r].controller._Kp:
+                info_dict[r]['Kp'] = self._rtr[r].controller._Kp
+            if self.default_Ki != self._rtr[r].controller._Ki:
+                info_dict[r]['Ki'] = self._rtr[r].controller._Ki
+            try:
+                if self.default_Kd != self._rtr[r].controller._Kd:
+                    info_dict[r]['Kd'] = self._rtr[r].controller._Kd
+            except: pass
         self.logger.info(f"write_cacheinfo: info_dict = {info_dict}")
 
         filename = os.path.join(self.cache_path,'rtr2.json')
@@ -358,6 +366,13 @@ class Rtr2(SmartPlugin):
         for r in info_dict:
             self.logger.info(f"rtr {r} = {info_dict[r]}")
             if self._rtr.get(r, None) is not None:
+                try:
+                    # set Kp, Ki, Kd only, if saved to cache before
+                    self._rtr[r].controller._Kp = float(info_dict[r]['Kp'])
+                    self._rtr[r].controller._Ki = float(info_dict[r]['Ki'])
+                    self._rtr[r].controller._Kd = float(info_dict[r]['Kd'])
+                except: pass
+
                 self._rtr[r]._mode._mode_before_frost = info_dict[r].get('mode_before_frost', 0)
                 self._rtr[r]._mode.hvac = info_dict[r]['hvac']
                 self._rtr[r]._temp._temp_comfort = info_dict[r]['comfort_temp']
@@ -393,7 +408,7 @@ from .pi_controller import *
 
 class Rtr_object():
 
-    def __init__(self, plugin, temp_settings=None):
+    def __init__(self, plugin, temp_settings=None, controller_settings=None):
         self.plugin = plugin
         self.logger = self.plugin.logger
         self.valve_protect = False
@@ -415,13 +430,25 @@ class Rtr_object():
 
         self.logger.info(f"New Rtr_object: Initial temp_settings = {temp_settings}")
 
+        Kp = self.plugin.default_Kp
+        Ki = self.plugin.default_Ki
+        Kd = self.plugin.default_Kd
+        if controller_settings is not None and isinstance(controller_settings, list):
+            # use inividual controller settings for Kp, Ki (and Kd)
+            if len(controller_settings) > 0:
+                Kp = controller_settings[0]
+            if len(controller_settings) > 1:
+                Ki = controller_settings[1]
+            if len(controller_settings) > 2:
+                Kd = controller_settings[2]
+
         self._mode = Mode()
 
         #                        mode,       comfort_temp,   night_reduction=None, standby_reduction=None,
         #                         fixed_reduction=True, hvac_mode=True, frost_temp=None):
         self._temp = Temperature(self._mode, temp_settings[0], temp_settings[1], temp_settings[2],
                                  temp_settings[3], temp_settings[4], temp_settings[5])
-        self.controller = Pi_controller(self._temp, self.plugin.default_Kp, self.plugin.default_Ki)
+        self.controller = Pi_controller(self._temp, Kp, Ki)
         # self.controller = Pi_controller(self._temp, 3, 120)
 
         self.id = 'unknown_rtr'
