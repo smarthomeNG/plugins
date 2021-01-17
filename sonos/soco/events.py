@@ -11,10 +11,10 @@
 """Classes to handle Sonos UPnP Events and Subscriptions.
 
 The `Subscription` class from this module will be used in
-:py:mod:`soco.services` unless config.EVENTS_MODULE is set
-to point to :py:mod:`soco.events_twisted`, in which case
-:py:mod:`soco.events_twisted.Subscription` will be used.
-See the Example in :py:mod:`soco.events_twisted`.
+:py:mod:`soco.services` unless `config.EVENTS_MODULE` is set to
+point to :py:mod:`soco.events_twisted`, in which case
+:py:mod:`soco.events_twisted.Subscription` will be used.  See the
+Example in :py:mod:`soco.events_twisted`.
 
 Example:
 
@@ -55,6 +55,7 @@ Example:
                 sub2.unsubscribe()
                 event_listener.stop()
                 break
+
 """
 
 from __future__ import unicode_literals
@@ -100,7 +101,7 @@ class EventNotifyHandler(BaseHTTPRequestHandler, EventNotifyHandlerBase):
         self.subscriptions_map = subscriptions_map
         # super appears at the end of __init__, because
         # BaseHTTPRequestHandler.__init__ does not return.
-        super(EventNotifyHandler, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def do_NOTIFY(self):  # pylint: disable=invalid-name
         """Serve a ``NOTIFY`` request by calling `handle_notification`
@@ -137,7 +138,7 @@ class EventServerThread(threading.Thread):
             address (tuple): The (ip, port) address on which the server
                 should listen.
         """
-        super(EventServerThread, self).__init__()
+        super().__init__()
         #: `threading.Event`: Used to signal that the server should stop.
         self.stop_flag = threading.Event()
         #: `tuple`: The (ip, port) address on which the server is
@@ -145,7 +146,8 @@ class EventServerThread(threading.Thread):
         self.server = server
 
     def run(self):
-        """Start the server on `address`.
+        """Start the server
+
         Handling of requests is delegated to an instance of the
         `EventNotifyHandler` class.
         """
@@ -155,8 +157,7 @@ class EventServerThread(threading.Thread):
             self.server.handle_request()
 
     def stop(self):
-        """Stop the server.
-        """
+        """Stop the server."""
         self.stop_flag.set()
 
 
@@ -169,7 +170,7 @@ class EventListener(EventListenerBase):
     """
 
     def __init__(self):
-        super(EventListener, self).__init__()
+        super().__init__()
         #: `EventServerThread`: thread on which to run.
         self._listener_thread = None
 
@@ -188,7 +189,7 @@ class EventListener(EventListenerBase):
                 should start listening.
         Returns:
             int: `requested_port_number`. Included for
-                compatibility with `soco.events_twisted.EventListener.listen`
+            compatibility with `soco.events_twisted.EventListener.listen`
 
         Note:
             The port on which the event listener listens is configurable.
@@ -233,7 +234,7 @@ class EventListener(EventListenerBase):
         # to ensure the main thread does not hang
         self._listener_thread.join(1)
         # check if join timed out and issue a warning if it did
-        if self._listener_thread.isAlive():
+        if self._listener_thread.is_alive():
             log.warning("Event Listener did not shutdown gracefully.")
 
 
@@ -251,7 +252,7 @@ class Subscription(SubscriptionBase):
                 events will be put. If not specified, a queue will be
                 created and used.
         """
-        super(Subscription, self).__init__(service, event_queue)
+        super().__init__(service, event_queue)
         # Used to keep track of the auto_renew thread
         self._auto_renew_thread = None
         self._auto_renew_thread_flag = threading.Event()
@@ -294,7 +295,7 @@ class Subscription(SubscriptionBase):
             `Subscription`: The Subscription instance.
 
         """
-        subscribe = super(Subscription, self).subscribe
+        subscribe = super().subscribe
         return self._wrap(subscribe, strict, requested_timeout, auto_renew)
 
     def renew(self, requested_timeout=None, is_autorenew=False, strict=True):
@@ -320,7 +321,7 @@ class Subscription(SubscriptionBase):
             `Subscription`: The Subscription instance.
 
         """
-        renew = super(Subscription, self).renew
+        renew = super().renew
         return self._wrap(renew, strict, requested_timeout, is_autorenew)
 
     def unsubscribe(self, strict=True):
@@ -340,7 +341,7 @@ class Subscription(SubscriptionBase):
             `Subscription`: The Subscription instance.
 
         """
-        unsubscribe = super(Subscription, self).unsubscribe
+        unsubscribe = super().unsubscribe
         return self._wrap(unsubscribe, strict)
 
     def _auto_renew_start(self, interval):
@@ -352,7 +353,7 @@ class Subscription(SubscriptionBase):
             """
 
             def __init__(self, interval, stop_flag, sub, *args, **kwargs):
-                super(AutoRenewThread, self).__init__(*args, **kwargs)
+                super().__init__(*args, **kwargs)
                 self.interval = interval
                 self.subscription = sub
                 self.stop_flag = stop_flag

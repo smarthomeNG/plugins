@@ -2332,7 +2332,7 @@ class Speaker(object):
 
 class Sonos(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.5.1"
+    PLUGIN_VERSION = "1.5.2"
 
     def __init__(self, sh, *args, **kwargs):
         super().__init__(**kwargs)

@@ -47,10 +47,10 @@ class MusicLibrary(object):
     # pylint: disable=invalid-name, protected-access
     def __init__(self, soco=None):
         """
-         Args:
-             soco (`SoCo`, optional): A `SoCo` instance to query for music
-                 library information. If `None`, or not supplied, a random
-                 `SoCo` instance will be used.
+        Args:
+            soco (`SoCo`, optional): A `SoCo` instance to query for music
+                library information. If `None`, or not supplied, a random
+                `SoCo` instance will be used.
         """
         self.soco = soco if soco is not None else discovery.any_soco()
         self.contentDirectory = self.soco.contentDirectory
@@ -80,7 +80,7 @@ class MusicLibrary(object):
             item.album_art_uri = self.build_album_art_full_uri(item.album_art_uri)
 
     def get_artists(self, *args, **kwargs):
-        """Convenience method for `get_music_library_formation`
+        """Convenience method for `get_music_library_information`
         with ``search_type='artists'``. For details of other arguments,
         see `that method
         <#soco.music_library.MusicLibrary.get_music_library_information>`_.
@@ -502,8 +502,7 @@ class MusicLibrary(object):
 
     @property
     def library_updating(self):
-        """bool: whether the music library is in the process of being updated.
-        """
+        """bool: whether the music library is in the process of being updated."""
         result = self.contentDirectory.GetShareIndexInProgress()
         return result["IsIndexing"] != "0"
 
@@ -515,7 +514,9 @@ class MusicLibrary(object):
                 compilation setting (see `album_artist_display_option`).
         """
         return self.contentDirectory.RefreshShareIndex(
-            [("AlbumArtistDisplayOption", album_artist_display_option),]
+            [
+                ("AlbumArtistDisplayOption", album_artist_display_option),
+            ]
         )
 
     def search_track(self, artist, album=None, track=None, full_album_art_uri=False):
@@ -623,7 +624,7 @@ class MusicLibrary(object):
 
         Returns:
             list: The music library shares, which are strings of the form
-                ``'//hostname_or_IP/share_path'``.
+            ``'//hostname_or_IP/share_path'``.
         """
         response = self.contentDirectory.Browse(
             [
