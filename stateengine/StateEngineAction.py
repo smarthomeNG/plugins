@@ -332,7 +332,7 @@ class SeActionSetItem(SeActionBase):
                 _selfitem = self.__item if self.__item is not None and self.__item != "None" else None
                 _item = _item if _item is not None and _item != "None" else None
                 _eval = _eval if _eval is not None and _eval != "None" else None
-                self.__item = _selfitem or _item or _eval
+                self.__item = _selfitem or self._abitem.return_item(_item) or _eval
         except Exception as ex:
             self._log_error("No valid item info for action {}, trying to get differently. Problem: {}", self.name, ex)
         # missing item in action: Try to find it.
