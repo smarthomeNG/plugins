@@ -230,7 +230,7 @@ class SeActionBase(StateEngineTools.SeItemChild):
 
     # Complete action
     # item_state: state item to read from
-    def complete(self, item_state):
+    def complete(self, item_state, evals_items=None):
         raise NotImplementedError("Class {} doesn't implement complete()".format(self.__class__.__name__))
 
     # Check if execution is possible
@@ -443,7 +443,7 @@ class SeActionSetByattr(SeActionBase):
 
     # Complete action
     # item_state: state item to read from
-    def complete(self, item_state):
+    def complete(self, item_state, evals_items=None):
         self._scheduler_name = "{}-SeByAttrDelayTimer".format(self.__byattr)
 
     # Write action to logger
@@ -492,7 +492,7 @@ class SeActionTrigger(SeActionBase):
 
     # Complete action
     # item_state: state item to read from
-    def complete(self, item_state):
+    def complete(self, item_state, evals_items=None):
         self._scheduler_name = "{}-SeLogicDelayTimer".format(self.__logic)
 
     # Write action to logger
@@ -550,7 +550,7 @@ class SeActionRun(SeActionBase):
 
     # Complete action
     # item_state: state item to read from
-    def complete(self, item_state):
+    def complete(self, item_state, evals_items=None):
         self._scheduler_name = "{}-SeRunDelayTimer".format(StateEngineTools.get_eval_name(self.__eval))
 
     # Write action to logger
@@ -622,7 +622,7 @@ class SeActionForceItem(SeActionBase):
 
     # Complete action
     # item_state: state item to read from
-    def complete(self, item_state):
+    def complete(self, item_state, evals_items=None):
         # missing item in action: Try to find it.
         if self.__item is None:
             item = StateEngineTools.find_attribute(self._sh, item_state, "se_item_" + self._name)
@@ -783,7 +783,7 @@ class SeActionSpecial(SeActionBase):
 
     # Complete action
     # item_state: state item to read from
-    def complete(self, item_state):
+    def complete(self, item_state, evals_items=None):
         if isinstance(self.__value, list):
             item = self.__value[0].property.path
         else:
