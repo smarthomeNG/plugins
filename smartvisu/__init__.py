@@ -43,7 +43,7 @@ from .svinstallwidgets import SmartVisuInstallWidgets
 #########################################################################
 
 class SmartVisu(SmartPlugin):
-    PLUGIN_VERSION="1.8.0"
+    PLUGIN_VERSION="1.8.1"
     ALLOW_MULTIINSTANCE = True
 
     visu_definition = None
@@ -134,7 +134,7 @@ class SmartVisu(SmartPlugin):
 
                 self.write_masteritem_file()
                 self.logger.info("Finished smartVISU v{} handling".format(self.smartvisu_version))
-        self.stop()
+        # self.stop()
 
 
     def stop(self):
@@ -356,6 +356,7 @@ class SmartVisu(SmartPlugin):
         self.logger.debug(f"read_from_sv_configini: key={key} -> value={value}")
         return value
 
+
     def write_masteritem_file(self):
         """
         create_master_item.py in smartVISU
@@ -386,4 +387,17 @@ class SmartVisu(SmartPlugin):
         else:
             self.logger.warning("Master-itemfile nor written, because the name of the pages directory could not be read from smartVISU")
         return
+
+
+    def url(self, url, clientip=''):
+        """
+        Tell the websocket client (visu) to load a specific url
+        """
+        if self.mod_websocket is None:
+            self.logger.error("Cannot send url to visu because websocket module is not loaded")
+            return False
+
+        result = self.mod_websocket.set_visu_url(url, clientip)
+
+        return result
 
