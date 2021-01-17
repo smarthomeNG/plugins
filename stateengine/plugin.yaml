@@ -767,7 +767,7 @@ item_structs:
                       - 'function: set'
                       - "to: eval:str(shtime.now())"
                       - 'repeat: True'
-                      - 'conditionset: enter_manuell'
+                      - 'conditionset: (.*)enter_manuell'
                       - 'order: 4'
                     se_action_retrigger:
                       - 'function: special'
