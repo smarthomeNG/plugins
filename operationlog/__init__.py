@@ -31,6 +31,7 @@ import datetime
 import lib.log
 import os
 import pickle
+import ast
 
 from lib.module import Modules
 from lib.model.smartplugin import *
@@ -43,7 +44,7 @@ class OperationLog(SmartPlugin, AbLogger):
     _log = None
     _items = {}
 
-    PLUGIN_VERSION = "1.3.3"
+    PLUGIN_VERSION = "1.3.4"
 
     def __init__(self, sh):
         # Call init code of parent class (SmartPlugin)
@@ -213,7 +214,14 @@ class OperationLog(SmartPlugin, AbLogger):
             if 'olog_rules' in item.conf:
                 olog_rules = item.conf['olog_rules']
                 if isinstance(olog_rules, str):
-                    olog_rules = [olog_rules, ]
+                    try:
+                        temp = ast.literal_eval(olog_rules)
+                    except:
+                        temp = None
+                    if isinstance(temp, list):
+                        olog_rules = temp
+                    else:
+                        olog_rules = [olog_rules, ]
                 for txt in olog_rules:
                     key_txt, value = txt.split(':')
                     if key_txt == 'True':

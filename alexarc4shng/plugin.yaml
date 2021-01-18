@@ -15,7 +15,7 @@ plugin:
     keywords: Alexa Amazon Remote Control
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1336416-alexa-text-to-speach
     state: develop                   # State of the Plugin
-    restartable: True                # Plugin is restartable 
+    restartable: True                # Plugin is restartable
 
 plugin_functions:
     # Definition of function interface of the plugin
@@ -50,14 +50,17 @@ plugin_functions:
 
 logic_parameters: NONE               # No logic parameters for this plugin
 item_structs: NONE                   # no item structure needed
-item_attributes:
-    # Definition of item attributes defined by this plugin
-    alexa_cmd_XX:
+item_attributes: NONE                # no item attributes needed
+
+item_attribute_prefixes:
+    # Definition of item attributes that only have a common prefix (enter 'item_attribute_prefixes: NONE' or ommit this section, if section should be empty)
+    # NOTE: This section should only be used, if really nessesary (e.g. for the stateengine plugin)
+    alexa_cmd_:
         type: str
         mandatory: True
         description:
-            de: 'String um die Befehle zu definieren'
-            en: 'string to define orders'  
+            de: 'String um die Befehle zu definieren (alexa_cmd_01, alexa_cmd_02, ...)'
+            en: 'string to define commands (alexa_cmd_01, alexa_cmd_02, ...)'
 
 parameters:
     # Definition of parameters to be configured in etc/plugin.yaml

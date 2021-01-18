@@ -257,10 +257,10 @@ class DidlResource(object):
             if result is not None:
                 try:
                     return int(result)
-                except ValueError:
+                except ValueError as error:
                     raise DIDLMetadataError(
                         "Could not convert {0} to an integer".format(name)
-                    )
+                    ) from error
             else:
                 return None
 
@@ -511,7 +511,7 @@ class DidlObject(with_metaclass(DidlMetaClass, object)):
         # does not use some of them.
 
         # pylint: disable=super-on-old-class
-        super(DidlObject, self).__init__()
+        super().__init__()
         self.title = title
         self.parent_id = parent_id
         self.item_id = item_id
@@ -713,12 +713,12 @@ class DidlObject(with_metaclass(DidlMetaClass, object)):
     def to_dict(self, remove_nones=False):
         """Return the dict representation of the instance.
 
-       Args:
-            remove_nones (bool, optional): Optionally remove dictionary
-                elements when their value is `None`.
+        Args:
+             remove_nones (bool, optional): Optionally remove dictionary
+                 elements when their value is `None`.
 
-        Returns:
-            dict: a dict representation of the `DidlObject`.
+         Returns:
+             dict: a dict representation of the `DidlObject`.
         """
         content = {}
         # Get the value of each attribute listed in _translation, and add it
@@ -821,7 +821,7 @@ class DidlObject(with_metaclass(DidlMetaClass, object)):
                 used for playing the item.
             protocol_info (str): Protocol info for the resource. If none is
                 given and the resource does not exist yet, a default protocol
-                info is constructed as '[uri prefix]:*:*:*'.
+                info is constructed as ``'[uri prefix]:*:*:*'``.
         """
         try:
             self.resources[resource_nr].uri = uri
@@ -959,7 +959,7 @@ class DidlFavorite(DidlItem):
     """Class that represents a Sonos favorite.
 
     Note that the favorite itself isn't playable in all cases, please use the
-    object returned by `favorite.reference` instead."""
+    object returned by :attr:`favorite.reference` instead."""
 
     # the DIDL Lite class for this object.
     item_class = "object.itemobject.item.sonos-favorite"
@@ -1103,7 +1103,9 @@ class DidlPerson(DidlContainer):
     #: dfdf
     _translation = DidlContainer._translation.copy()
     _translation.update(
-        {"language": ("dc", "language"),}
+        {
+            "language": ("dc", "language"),
+        }
     )
 
 
@@ -1147,7 +1149,7 @@ class DidlPlaylistContainer(DidlContainer):
 
     """Class that represents a music library play list."""
 
-    #:
+    # (str) The DIDL Lite class for this object
     item_class = "object.container.playlistContainer"
     # Yes, really. Sonos uses the item tag, not the container tag. But
     # sometimes it uses the container tag, eg:
@@ -1256,7 +1258,7 @@ class ListOfMusicInfoItems(list):
     """
 
     def __init__(self, items, number_returned, total_matches, update_id):
-        super(ListOfMusicInfoItems, self).__init__(items)
+        super().__init__(items)
         self._metadata = {
             "item_list": list(items),
             "number_returned": number_returned,
@@ -1293,7 +1295,7 @@ class ListOfMusicInfoItems(list):
             warnings.warn(message, stacklevel=2)
             return self._metadata[key]
         else:
-            return super(ListOfMusicInfoItems, self).__getitem__(key)
+            return super().__getitem__(key)
 
     @property
     def number_returned(self):
@@ -1319,15 +1321,13 @@ class SearchResult(ListOfMusicInfoItems):
     """
 
     def __init__(self, items, search_type, number_returned, total_matches, update_id):
-        super(SearchResult, self).__init__(
-            items, number_returned, total_matches, update_id
-        )
+        super().__init__(items, number_returned, total_matches, update_id)
         self._metadata["search_type"] = search_type
 
     def __repr__(self):
         return "{0}(items={1}, search_type='{2}')".format(
             self.__class__.__name__,
-            super(SearchResult, self).__repr__(),
+            super().__repr__(),
             self.search_type,
         )
 
@@ -1343,5 +1343,6 @@ class Queue(ListOfMusicInfoItems):
 
     def __repr__(self):
         return "{0}(items={1})".format(
-            self.__class__.__name__, super(Queue, self).__repr__(),
+            self.__class__.__name__,
+            super().__repr__(),
         )
