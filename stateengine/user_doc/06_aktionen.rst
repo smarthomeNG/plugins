@@ -253,7 +253,8 @@ Aktion ausgeführt werden soll.
 Die Angabe erfolgt in Sekunden oder mit dem Suffix "m" in Minuten. Die Verzögerungszeit
 kann auch durch ein eval oder Item zur Laufzeit berechnet werden.
 
-.. code-block:: yaml
+.. code-block::
+
        'delay: <eval>/<item>' --> Ergebnis eines Eval-Ausdrucks oder eines Items
        'delay: 30'            --> 30 Sekunden
        'delay: 30m'           --> 30 Minuten
