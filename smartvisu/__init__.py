@@ -33,6 +33,8 @@ from lib.utils import Utils
 from lib.module import Modules
 from lib.model.smartplugin import SmartPlugin
 
+from .webif import WebInterface
+
 from .svgenerator import SmartVisuGenerator
 from .svinstallwidgets import SmartVisuInstallWidgets
 
@@ -93,6 +95,16 @@ class SmartVisu(SmartPlugin):
             self.logger.info("Module 'websocket' could not be initialized.")
         else:
             self.mod_websocket.set_smartvisu_support(protocol_enabled=True, default_acl=self.default_acl, query_definitions=False, series_updatecycle=0)
+
+        self.port = ''
+        self.tls_port = ''
+        if self.mod_websocket is not None:
+            self.port = str(self.mod_websocket.get_port())
+            if self.mod_websocket.get_use_tls():
+                self.tls_port = self.mod_websocket.get_tls_port()
+
+        self.init_webinterface(WebInterface)
+
         return
 
 
@@ -405,3 +417,16 @@ class SmartVisu(SmartPlugin):
 
         return result
 
+
+    def return_clients(self):
+        """
+        Returns connected clients
+
+        :return: list of dicts with client information
+        """
+        if self.mod_websocket is None:
+            return {}
+
+        client_info = self.mod_websocket.get_visu_client_info()
+        self.logger.warning(f"client_info = {client_info}")
+        return client_info
