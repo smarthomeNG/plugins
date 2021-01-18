@@ -358,6 +358,8 @@ class Subscription(SubscriptionBase):
                 self.subscription = sub
                 self.stop_flag = stop_flag
                 self.daemon = True
+                debugName = 'SonosAutoRenewDebug' 
+                self.setName(debugName)
 
             def run(self):
                 subscription = self.subscription
