@@ -210,6 +210,9 @@ class EventListener(EventListenerBase):
 
         self._listener_thread = EventServerThread(server)
         self._listener_thread.daemon = True
+        debugName = 'SonosEventServerThread' 
+        self._listener_thread.setName(debugName)
+
         self._listener_thread.start()
         if port_number != self.requested_port_number:
             log.debug(
