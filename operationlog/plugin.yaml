@@ -11,7 +11,7 @@ plugin:
     state: ready
     documentation: https://www.smarthomeng.de/user/plugins/operationlog/README.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1496323-support-thread-für-operationlog-plugin
-    version: 1.3.3                 # Plugin version
+    version: 1.3.4                 # Plugin version
     sh_minversion: 1.5             # minimum shNG version to use this plugin
     # sh_maxversion:               # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
@@ -79,26 +79,26 @@ parameters:
         # [time, thread, level, message]
         description:
             de: >
-                Definiert eine Liste mit kommagetrennten Werten die für jede Nachricht geloggt werden. 
+                Definiert eine Liste mit kommagetrennten Werten die für jede Nachricht geloggt werden.
                 Die folgenden internen Zuordnungen können benutzt werden:
-                
+
                 time - Zeitstempel des Eintrags
                 thread - Thread der die Daten erzeugt
                 level - Der log level (Standard ist INFO)
                 message - Die Nachricht
-                
-                Die Vorgabe sollte beibehalten werden, wenn das Log in SmartVISU angezeigt werden soll, 
+
+                Die Vorgabe sollte beibehalten werden, wenn das Log in SmartVISU angezeigt werden soll,
                 sonst werden die Werte von der SmartVISU für die Darstellung nicht korrekt interpretiert.
             en: >
-                This configures the list of values with comma separated values which are logged for each log message. 
+                This configures the list of values with comma separated values which are logged for each log message.
                 The following internal mappings can be used and will be automatically set
                 if not given explicitely when logging data:
-                
+
                 time - the timestamp of log
                 thread - the thread logging data
                 level - the log level (defaults to INFO)
                 message - the message
-                
+
                 The default value should not be changed. Otherwise the SmartVISU might misinterpret the values for display.
 
     items:
@@ -107,7 +107,7 @@ parameters:
             de: >
                 Jedes mal wenn ein Item aktualisiert wird, wird ein Logeintrag geschrieben unter der
                 Berücksichtigung der konfigurierten Items und deren Werte als Log Werte
-                
+
                 Wird dies nicht angegeben, dann werden die vorgegebenen Zuordnungswerte verwendet:
                   - item_a --> now
                   - item_b --> thread info
@@ -117,7 +117,7 @@ parameters:
             en: >
                 Each time an item is updated using the memlog configuration setting, a log entry will be written
                 using the list of items configured in this attribute as log values.
-                
+
                 When this is not configured, the default mapping values will be used the associated item's value will
                 be logged. e.g.:
                   - item_a --> now

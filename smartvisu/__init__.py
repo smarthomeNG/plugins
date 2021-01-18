@@ -351,7 +351,11 @@ class SmartVisu(SmartPlugin):
             self.logger.warning(f"Unable to read config.ini of smartVISU - {e}")
             return ''
 
-        value = config_parser.get('dummy_section', key)
+        try:
+            value = config_parser.get('dummy_section', key)
+        except:
+            self.logger.warning("smartVISU is not configured")
+            return ''
         value = Utils.strip_quotes(value)
         self.logger.debug(f"read_from_sv_configini: key={key} -> value={value}")
         return value
@@ -385,7 +389,7 @@ class SmartVisu(SmartPlugin):
             except:
                 self.logger.warning(f"Could not write master-itemfile to smartVISU (to directory {pagedir_name})")
         else:
-            self.logger.warning("Master-itemfile nor written, because the name of the pages directory could not be read from smartVISU")
+            self.logger.warning("Master-itemfile not written, because the name of the pages directory could not be read from smartVISU")
         return
 
 
