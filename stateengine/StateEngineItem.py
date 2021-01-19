@@ -435,7 +435,7 @@ class SeItem:
             state.refill()
             return state.can_enter()
         except Exception as ex:
-            self.__logger.warning("Problem with currentstate {0}. Error: {1}", state, ex)
+            self.__logger.warning("Problem with currentstate {0}. Error: {1}", state.id, ex)
         finally:
             self.__variables["current.state_id"] = ""
             self.__variables["current.state_name"] = ""
@@ -774,7 +774,7 @@ class SeItem:
             item = None
             _, item_id = StateEngineTools.partition_strip(item_id, ":")
             try:
-                self.__logger.debug("Creating struct for id {}".format(item_id))
+                #self.__logger.debug("Creating struct for id {}".format(item_id))
                 item = StateEngineStructs.create(self, item_id)
             except Exception as e:
                 self.__logger.error("struct {} creation failed. Error: {}".format(item_id, e))

@@ -1,11 +1,12 @@
 
 .. index:: Stateengine; Ausführungszeitpunkt
 
+====================
 Ausführungszeitpunkt
 ====================
 
-.. rubric:: Beispiel
-  :name: ausfuehrungsbeispiel
+Beispiel
+--------
 
 Im Beispiel ist ein Item im Zustand 1 namens ``on_enter_or_stay`` angelegt.
 In diesem Item befinden sich diverse Aktionen, die jedes Mal ausgeführt werden,
@@ -25,8 +26,8 @@ wenn der Zustand aktiv wird oder bleibt.
                             name: Ausführen immer wenn ein Zustand aktiv ist
                             <... Aktionen ...>
 
-.. rubric:: Aktionsausführung
-  :name: aktionsausfuehrung
+Aktionsausführung
+-----------------
 
 Um festzulegen, wann die Aktionen eines Zustands ausgeführt
 werden, gibt es vier Ereignisse, denen die Aktionen zugeordnet

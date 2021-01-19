@@ -71,6 +71,7 @@ class SeState(StateEngineTools.SeItemChild):
             self.__id = self.__item.property.path
             self._log_info("Init state {}", self.__id)
         except Exception as err:
+            self.__id = None
             self._log_info("Problem init state ID of Item {}. {}", self.__item, err)
         self.__text = StateEngineValue.SeValue(self._abitem, "State Name", False, "str")
         self.__use = StateEngineValue.SeValue(self._abitem, "State configuration extension", True, "item")
@@ -121,7 +122,9 @@ class SeState(StateEngineTools.SeItemChild):
                                             'leave': False, 'enter': False, 'stay': False})
         self._log_decrease_indent()
         self._log_info("Finished Web Interface Update")
-        self.__use.write_to_logger()
+        if self.__use_done:
+            _log_se_use = self.__use_done[0] if len(self.__use_done) == 1 else self.__use_done
+            self._log_info("State configuration extended by se_use: {}", _log_se_use)
         if self.__conditions.count() > 0:
             self._log_info("Condition sets to enter state:")
             self._log_increase_indent()
@@ -308,7 +311,6 @@ class SeState(StateEngineTools.SeItemChild):
                     self.__conditions.update(child_name, child_item, parent_item)
             except ValueError as ex:
                 raise ValueError("Condition {0} error: {1}".format(child_name, ex))
-
         # Actions defined directly in the item go to "enter_or_stay"
         for attribute in item_state.conf:
             _enter_stay_actioncount += self.__actions_enter_or_stay.update(attribute, item_state.conf[attribute]) or 0
@@ -320,10 +322,11 @@ class SeState(StateEngineTools.SeItemChild):
         # Complete condition sets and actions at the end
         if recursion_depth == 0:
             self.__conditions.complete(item_state)
-            self.__actions_enter.complete(item_state)
-            self.__actions_stay.complete(item_state)
-            self.__actions_enter_or_stay.complete(item_state)
-            self.__actions_leave.complete(item_state)
+
+            self.__actions_enter.complete(item_state, self.__conditions.evals_items)
+            self.__actions_stay.complete(item_state, self.__conditions.evals_items)
+            self.__actions_enter_or_stay.complete(item_state, self.__conditions.evals_items)
+            self.__actions_leave.complete(item_state, self.__conditions.evals_items)
 
         _summary = "{} on_enter, {} on_stay , {} on_enter_or_stay, {} on_leave"
         if se_use is not None:

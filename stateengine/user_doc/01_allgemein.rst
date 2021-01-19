@@ -1,6 +1,7 @@
 
 .. index:: Stateengine; Allgemein
 
+=========
 Allgemein
 =========
 
@@ -16,14 +17,14 @@ Allgemein
       Sperrfunktionalität verwendet werden, über die alle aktuellen
       Jalousieaktoren verfügen!
 
-.. rubric:: Einführung
-   :name: einfuehrungstateengine
+Einführung
+----------
 
 Als Einstieg in das Plugin empfiehlt es sich, die `Blogeinträge <https://www.smarthomeng.de/tag/stateengine>`_
 auf der SmarthomeNG Seite zu lesen! Die Informationen zur Konfiguration des Plugins sind unter `Plugin stateengine <https://www.smarthomeng.de/user/plugins_doc/config/stateengine.html>`_ beschrieben.
 
-.. rubric:: Funktionalität
-   :name: funktionalitaet
+Funktionalität
+--------------
 
 Über zusätzliche Items in den items/\*.yaml Dateien können für beliebige Items
 Zustandsautomaten implementiert werden. Jeder Zustand kann Sets von Einstiegsbedingungen haben
@@ -52,8 +53,8 @@ Die folgenden Bedingungen können Teil der Bedingungsgruppen sein:
 Zusätzlich können beliebige Items (z.B. Temperatur) als Bedingungen geprüft werden
 (Minimum, Maximum oder Wert)
 
-.. rubric:: Umstieg von Autblind
-   :name: umstieg
+Umstieg von Autblind
+--------------------
 
 Das `Autoblind Plugin <https://github.com/i-am-offline/smarthome.plugin.autoblind>`__
 von i-am-offline wurde für SmarthomeNG 1.6 ins offizielle Repo übernommen und
@@ -62,8 +63,8 @@ dabei erweitert und optimiert. Für einen Umstieg ist es wichtig, die Attribute
 Script, das diesen Prozess deutlich vereinfacht und nicht nur die Attribute in
 den items/\*.yaml Dateien ersetzt, sondern auch die Cachefiles umbenennt.
 
-.. rubric:: Webinterface
-   :name: webif
+Webinterface
+------------
 
 Über das Webinterface lässt sich auf einen Blick erkennen, welche State Engine sich
 in welchem Zustand befindet. Zusätzlich ist es möglich, durch Klick auf einen Eintrag
@@ -77,3 +78,6 @@ Bei den Aktionen sind die einzelnen Zeilen unter Umständen ebenfalls farbkodier
 - weiß: Aktion nicht ausgeführt, da Bedingungen nicht erfüllt
 - grau: Aktion wird erst mit Verzögerung ausgeführt
 - rot: Fehler in der Konfiguration
+
+.. image:: assets/webinterface.png
+   :class: screenshot

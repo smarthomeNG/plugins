@@ -2,11 +2,12 @@
 .. index:: Stateengine; Bedingungen
 .. _Bedingungen:
 
+===========
 Bedingungen
 ===========
 
-.. rubric:: Beispiel
-    :name: beispielbedingungen
+Beispiel
+--------
 
 Im folgenden Beispiel wird der Zustand "Daemmerung" eingenommen, sobald
 die Helligkeit (über se_item_brightness definiert) über 500 Lux liegt.
@@ -25,8 +26,8 @@ die Helligkeit (über se_item_brightness definiert) über 500 Lux liegt.
                        enter:
                           se_min_brightness: 500
 
-.. rubric:: Bedingungsgruppen
-  :name: bedingungsgruppen
+Bedingungsgruppen
+-----------------
 
 Unabhängig davon, ob ein Zustand von nur einer Bedingung oder mehreren Bedingungen
 abhängt, werden Bedingungen immer als Attribute unter ein Item gestellt, das
@@ -53,21 +54,21 @@ Die folgenden Regeln kommen zur Anwendung:
    aktueller Zustand werden. Solch ein Zustand kann als
    Default-Zustand am Ende der Zustände definiert werden.
 
-.. rubric:: Zu vergleichender Wert der Bedingung
-   :name: bereitstellungdesaktuellenwerts
+Wertevergleich
+--------------
 
 Der zu vergleichende Wert einer Bedingung kann auf folgende Arten definiert werden:
 
 - statischer Wert (also z.B. 500 Lux). Wird angegegeben mit ``value:500``, wobei das value: auch weggelassen werden kann.
 - Item (beispielsweise ein Item namens settings.helligkeitsschwellwert). Wird angegeben mit ``item:settings.helligkeitsschwellwert``
-- Eval-Funktion (siehe auch `eval Ausdrücke <https://www.smarthomeng.de/user/konfiguration/items_attributes_eval_ausdruecke.html>`_). Wird angegeben mit ``eval:1*2*se_eval.get_relative_itemvalue('..bla')``
+- Eval-Funktion (siehe auch `eval Ausdrücke <https://www.smarthomeng.de/user/referenz/items/standard_attribute/eval.html>`_). Wird angegeben mit ``eval:1*2*se_eval.get_relative_itemvalue('..bla')``
 - Regular Expression (siehe auch ` RegEx Howto <https://docs.python.org/3.7/howto/regex.html#regex-howto>`_) - Vergleich mittels re.fullmatch, wobei Groß/Kleinschreibung ignoriert wird. Wird angegeben mit ``regex:StateEngine Plugin:(.*)``
 - Template: eine Vorlage, z.B. eine eval Funktion, die immer wieder innerhalb
   des StateEngine Items eingesetzt werden kann. Angegeben durch ``template:<Name des Templates>``
 
 
-.. rubric:: Name der Bedingung
-   :name: namederbedingung
+Name der Bedingung
+------------------
 
 Der Name einer Bedingung setzt sich aus folgenden drei Teilen zusammen,
 die jeweils mit einem Unterstrich "_" getrennt werden:
@@ -77,8 +78,8 @@ die jeweils mit einem Unterstrich "_" getrennt werden:
 - ``<Vergleichsitem/Bedingungsname>``: Hier wird entweder das im Regelwerk-Item mittels ``se_item_<Name>`` deklarierte Item oder eine besondere Bedingung (siehe unten) referenziert.
 
 
-.. rubric:: Templates für Bedingungsabfragen
-   :name: bedingungstemplates
+Templates für Bedingungsabfragen
+--------------------------------
 
 Setzt man für mehrere Bedingungsabfragen (z.B. Helligkeit, Temperatur, etc.) immer die
 gleichen Ausdrücke ein (z.B. eine eval-Funktion), so kann Letzteres als Template
@@ -102,8 +103,8 @@ Bei sämtlichen Bedingungen ist es möglich, Werte als Liste anzugeben. Es ist a
 nicht möglich, Templates als Listen zu definieren.
 
 
-.. rubric:: Bedingungslisten
-   :name: bedingungslisten
+Bedingungslisten
+----------------
 
 Sämtliche nun gelisteten Bedingungen können entweder eine einzelne Angabe haben
 oder aus einer Liste mit mehreren Bedingungen bestehen.
@@ -145,8 +146,8 @@ Obige Bedingung wird beispielsweise wahr bei:
 - einem Wert maximal so hoch wie der in EinzweitesIem hinterlegte
 
 
-.. rubric:: Vergleichsfunktion
-   :name: vergleichsfunktion
+Vergleichsfunktion
+------------------
 
 **Minimum**
 
@@ -267,8 +268,8 @@ zulässige Werte sind "true", "1", "yes", "on" bzw. "false", "0",
 "no", "off"
 
 
-.. rubric:: "Besondere" Bedingungen
-   :name: besonderebedingungen
+"Besondere" Bedingungen
+-----------------------
 
 Das Plugin stellt die Werte für einige "besondere" Bedingungen
 automatisch bereit. Für diese Bedingungen muss daher kein Item und
@@ -303,7 +304,7 @@ Freitag, 5 = Samstag, 6 = Sonntag
 Der Azimut (Horizontalwinkel) ist die Kompassrichtung, in der die
 Sonne steht. Der Azimut wird von smarthomeNg auf Basis der
 aktuellen Zeit sowie der konfigurierten geographischen Position
-berechnet. Siehe auch `Dokumentation <https://www.smarthomeng.de/user/logiken/objekteundmethoden_zeit_sonne_mond.html>`_
+berechnet. Siehe auch `Dokumentation <https://www.smarthomeng.de/user/logiken/objekteundmethoden_sonne_mond.html>`_
 für Voraussetzungen zur Berechnung der Sonnenposition.
 Beispielwerte: 0 → Sonne exakt im Norden, 90 → Sonne exakt im
 Osten, 180 → Sonne exakt im Süden, 270 → Sonne exakt im Westen
@@ -314,7 +315,7 @@ Die Altitude (Vertikalwikel) ist der Winkel, in dem die Sonne über
 dem Horizont steht. Die Altitude wird von smarthomeNG auf Basis
 der aktuellen Zeit sowie der konfigurierten geographischen
 Position berechnet. Siehe auch `SmarthomeNG
-Dokumentation <https://www.smarthomeng.de/user/logiken/objekteundmethoden_zeit_sonne_mond.html>`_
+Dokumentation <https://www.smarthomeng.de/user/logiken/objekteundmethoden_sonne_mond.html>`_
 für Voraussetzungen zur Berechnung der Sonnenposition. Werte:
 negativ → Sonne unterhalb des Horizonts, 0 →
 Sonnenaufgang/Sonnenuntergang, 90 → Sonne exakt im Zenith

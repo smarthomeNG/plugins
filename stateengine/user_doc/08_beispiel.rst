@@ -1,6 +1,7 @@
 
 .. index:: Stateengine; Beispiel
 
+========
 Beispiel
 ========
 
@@ -18,8 +19,8 @@ beschrieben werden. Folgende Zustände sollen abgedeckt werden:
 -  Nacht
 -  Tag
 
-.. rubric:: Items zum Prüfen
-   :name: itemszumpruefen
+Items zum Prüfen
+----------------
 
 Zuerst benötigen wir ein paar Items, die nachher als Bedingungen
 abgeprüft werden sollen. Die boolschen Items sind insofern relevant,
@@ -73,8 +74,8 @@ wieder öffnen, wenn die Sonne länger als Y Minuten verdeckt ist.
                    type: num
                    initial_value: 24 #nur für Demozwecke
 
-.. rubric:: Trigger
-   :name: trigger
+Trigger
+-------
 
 Da wir mehrere Raffstores automatisieren wollen und alle
 Raffstores gleichzeitig fahren sollen, brauchen wir einen externen
@@ -94,8 +95,8 @@ Trigger, auf den dann alle Automatiken hören:
 
 In diesem Fall wird die Zustandsermittlung jede Minute ausgelöst.
 
-.. rubric:: Default-Konfiguration
-   :name: defaultkonfiguration
+Default-Konfiguration
+---------------------
 
 Nun kommt die Default-Konfiguration. Sie ist unabhängig von
 konkreten zu automatisierenden Objekten. Sie beinhaltet jedoch
@@ -270,8 +271,8 @@ definiert und jederzeit abgeändert werden.
                    se_max_time: '23:30'
 
 
-.. rubric:: Automatisierung Raffstore 1
-   :name: automatisierungraffstore1
+Automatisierung Raffstore 1
+---------------------------
 
 Jetzt wollen wir den ersten Raffstore automatisieren. Einige Items
 dazu haben wir sowieso schon, da der Raffstore über diese Items
@@ -362,8 +363,8 @@ Regelwerk-Items "rules" sollen ebenfalls je nach Bedarf ergänzt werden.
                           # Dieser Eintrag bleibt leer, damit der Zustand ohne Bedingung aktiviert werden kann.
 
 
-.. rubric:: Testen der State Engine
-  :name: testenderstateengine
+Testen der State Engine
+-----------------------
 
 Nachdem die oben angegebenen Itemstrukturen angelegt worden sind, bietet sich ein
 Test des Systems an, weshalb smarthomeNG mit aktiviertem Plugin gestartet werden sollte.
@@ -409,7 +410,7 @@ e) Es erfolgt eine weitere Evaluierung des Automaten durch das cycle Attribut:
 
 Der Zustand wird verlassen. Gibt es einen nachfolgenden Zustand, der eingenommen werden kann, ist dies der neue aktive Zustand. Gibt es keine Zustände, die aktiviert werden könnten, verbleibt die State Engine beim letzten aktiven Zustand, also beim Sonnenschutz. Im Beispiel gibt es noch einen Standard "Tag" Eintrag, wodurch der Raffstore hoch fährt.
 
-f) up beispiel.raffstore1.aufab =1
+f) up beispiel.raffstore1.aufab = 1
 
 - Durch Triggern des "Manuell" Items wird die Zustandsevaluierung pausiert.
 
@@ -423,8 +424,8 @@ g) up beispiel.raffstore1.automatik.settings.suspendduration = 1
 Es werden wieder sämtliche Zustände evaluiert.
 
 
-.. rubric:: Automatisierung Raffstore 2
-   :name: automatisierungraffstore2
+Automatisierung Raffstore 2
+---------------------------
 
 Der zweite Raffstore ist ein komplexeres Beispiel. Hier werden
 nicht nur die Vorgabewerte übernommen, hier werden komplett neue
@@ -632,8 +633,9 @@ abgeändert. Natürlich könnte man hier auch alternativ auf Template-Imports vi
                        # Zustand "Tag": Vorgabeeinstellungen übernehmen
                        se_use: stateengine_default_raffstore.rules.Tag
 
-.. rubric:: Settings für Itemwerte
-  :name: settingsfueritemwerte
+
+Settings für Itemwerte
+----------------------
 
 Das Setup ist besonders flexibel, wenn zu setzende Werte nicht fix in den Zustandsvorgaben
 definiert werden, sondern in eigenen Items, die dann jederzeit zur Laufzeit abänderbar

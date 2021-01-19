@@ -26,6 +26,13 @@ from collections import OrderedDict
 # Class representing a list of condition sets
 class SeConditionSets(StateEngineTools.SeItemChild):
 
+    @property
+    def evals_items(self):
+        _result = {}
+        for entry in self.__condition_sets:
+            _result.update(self.__condition_sets[entry].evals_items)
+        return _result
+
     # Initialize the list of condition sets
     # abitem: parent SeItem instance
     def __init__(self, abitem):

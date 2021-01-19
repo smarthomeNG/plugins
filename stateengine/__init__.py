@@ -31,18 +31,17 @@ import logging
 import os
 from lib.model.smartplugin import *
 from lib.item import Items
-from copy import deepcopy
 
 
 class StateEngine(SmartPlugin):
-    PLUGIN_VERSION = '1.8.0'
+    PLUGIN_VERSION = '1.8.1'
 
     # Constructor
     # noinspection PyUnusedLocal,PyMissingConstructor
     def __init__(self, sh):
         super().__init__()
         self.logger = logging.getLogger('{}.general'.format(__name__))
-        self.items = Items.get_instance()
+        self.itemsApi = Items.get_instance()
         self.__items = self.abitems = {}
         self.mod_http = None
         self.__sh = sh
@@ -84,6 +83,7 @@ class StateEngine(SmartPlugin):
     # Parse an item
     # noinspection PyMethodMayBeStatic
     def parse_item(self, item):
+        item.expand_relativepathes('se_manual_logitem', '', '')
         try:
             item.expand_relativepathes('se_item_*', '', '')
         except Exception:
@@ -101,7 +101,7 @@ class StateEngine(SmartPlugin):
     def run(self):
         # Initialize
         self.logger.info("Init StateEngine items")
-        for item in self.items.find_items("se_plugin"):
+        for item in self.itemsApi.find_items("se_plugin"):
             if item.conf["se_plugin"] == "active":
                 try:
                     abitem = StateEngineItem.SeItem(self.get_sh(), item, self)

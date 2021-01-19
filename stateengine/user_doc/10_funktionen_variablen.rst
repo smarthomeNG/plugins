@@ -1,12 +1,12 @@
 
 .. index:: Stateengine; Funktionen und Variablen
 
+========================
 Funktionen und Variablen
 ========================
 
-.. rubric:: Vordefinierte Funktionen
-  :name: vordefiniertefunktionen
-
+Vordefinierte Funktionen
+------------------------
 
 Das stateengine Plugin stellt verschiedene vordefinierte
 Funktionen zur Verfügung, die einfach für
@@ -123,12 +123,12 @@ Insofern hat diese Funktion nur wenig Relevanz.
   se_eval.get_relative_itemproperty('..suspend', 'last_change_age')
 
 Welche Werte für ``property`` genutzt werden können, ist hier nachzulesen:
-`Item Properties <https://www.smarthomeng.de/user/konfiguration/items_properties.html?highlight=property>`_).
+`Item Properties <https://www.smarthomeng.de/user/referenz/items/properties.html>`_).
 Prinzipiell ist auch diese Funktion nicht zwingend zu verwenden, da sie ebenfalls
 durch bekannt Syntax ersetzt werden kann: ``sh...suspend.property.last_change_age``
 
-.. rubric:: Variablen
-  :name: speziellevariablen
+Variablen
+---------
 
 Im Plugin stehen folgende Variablen zur Verfügung:
 
