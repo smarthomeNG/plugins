@@ -50,7 +50,7 @@ class Database(SmartPlugin):
     """
 
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = '1.5.14'
+    PLUGIN_VERSION = '1.5.15'
 
     # SQL queries: {item} = item table name, {log} = log table name
     # time, item_id, val_str, val_num, val_bool, changed
@@ -313,7 +313,7 @@ class Database(SmartPlugin):
         if id is None and create == True:
             id = [self.insertItem(item.id(), cur)]
 
-        if (COL_ITEM_ID >= len(id)) or (id == None):
+        if (id is None) or (COL_ITEM_ID >= len(id)) :
             return None
         return int(id[COL_ITEM_ID])
 

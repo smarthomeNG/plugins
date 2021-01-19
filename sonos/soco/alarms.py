@@ -106,10 +106,10 @@ class Alarm(object):
         """
         Args:
             zone (`SoCo`): The soco instance which will play the alarm.
-            start_time (`datetime.time`, optional): The alarm's start time.
+            start_time (datetime.time, optional): The alarm's start time.
                 Specify hours, minutes and seconds only. Defaults to the
                 current time.
-            duration (`datetime.time`, optional): The alarm's duration. Specify
+            duration (datetime.time, optional): The alarm's duration. Specify
                 hours, minutes and seconds only. May be `None` for unlimited
                 duration. Defaults to `None`.
             recurrence (str, optional): A string representing how
@@ -134,7 +134,7 @@ class Alarm(object):
                 otherwise. Defaults to `False`.
         """
 
-        super(Alarm, self).__init__()
+        super().__init__()
         self.zone = zone
         if start_time is None:
             start_time = datetime.now().time()
@@ -266,7 +266,7 @@ def get_alarms(zone=None):
     """Get a set of all alarms known to the Sonos system.
 
     Args:
-        zone (`SoCo`, optional): a SoCo instance to query. If None, a random
+        zone (soco.SoCo, optional): a SoCo instance to query. If None, a random
             instance is used. Defaults to `None`.
 
     Returns:

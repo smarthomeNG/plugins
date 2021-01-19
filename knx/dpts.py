@@ -545,8 +545,8 @@ encode = {
     # 5.003 -> DPT_Angle [0..360] °
     # 5.004 -> DPT_Percent_U8 [0..255] %
     # 5.005 -> DPT_DecimalFactor
-    '5999': de5999,     #artificial data point for tebis TS systems
-    '5.999': de5999,    #artificial data point for tebis TS systems
+    '5999': en5999,     #artificial data point for tebis TS systems
+    '5.999': en5999,    #artificial data point for tebis TS systems
     '6': en6,           #One Byte: signed relative value or status with mode
     '7': en7,           #Two Bytes: unsigned value
     '8': en8,           #Two Bytes: signed value

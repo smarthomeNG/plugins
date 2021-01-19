@@ -29,7 +29,7 @@ def really_unicode(in_string):
 
     Raises:
         ValueError
-        """
+    """
     if isinstance(in_string, StringType):
         for args in (("utf-8",), ("latin-1",), ("ascii", "replace")):
             try:
@@ -46,18 +46,18 @@ def really_unicode(in_string):
 def really_utf8(in_string):
     """Encode a string with utf-8. Really.
 
-    First decode ``in_string`` via `really_unicode` to ensure it can
-    successfully be encoded as utf-8. This is required since just calling
-    encode on a string will often cause Python 2 to perform a coerced strict
-    auto-decode as ascii first and will result in a `UnicodeDecodeError` being
-    raised. After `really_unicode` returns a safe unicode string, encode as
-    utf-8 and return the utf-8 encoded string.
+     First decode ``in_string`` via `really_unicode` to ensure it can
+     successfully be encoded as utf-8. This is required since just calling
+     encode on a string will often cause Python 2 to perform a coerced strict
+     auto-decode as ascii first and will result in a `UnicodeDecodeError` being
+     raised. After `really_unicode` returns a safe unicode string, encode as
+     utf-8 and return the utf-8 encoded string.
 
-   Args:
-        in_string (str): The string to convert.
+    Args:
+         in_string (str): The string to convert.
 
-    Returns:
-        str: utf-encoded data.
+     Returns:
+         str: utf-encoded data.
     """
     return really_unicode(in_string).encode("utf-8")
 
@@ -127,6 +127,8 @@ class deprecated(object):
         alternative (str, optional): The name of an alternative object to use
         will_be_removed_in (str, optional): The version in which the object is
             likely to be removed.
+        alternative_not_referable (bool): (optional) Indicate that
+            ``alternative`` cannot be used as a sphinx reference
 
     Example:
         ..  code-block:: python
@@ -140,10 +142,17 @@ class deprecated(object):
     # pylint: disable=invalid-name, too-few-public-methods
     # pylint: disable=missing-docstring
 
-    def __init__(self, since, alternative=None, will_be_removed_in=None):
+    def __init__(
+        self,
+        since,
+        alternative=None,
+        will_be_removed_in=None,
+        alternative_not_referable=False,
+    ):
         self.since_version = since
         self.alternative = alternative
         self.will_be_removed_in = will_be_removed_in
+        self.alternative_not_referable = alternative_not_referable
 
     def __call__(self, deprecated_fn):
         @functools.wraps(deprecated_fn)
@@ -166,7 +175,10 @@ class deprecated(object):
                 self.will_be_removed_in
             )
         if self.alternative is not None:
-            docs += "\n     Use `{}` instead.".format(self.alternative)
+            if self.alternative_not_referable:
+                docs += "\n     Use ``{}`` instead.".format(self.alternative)
+            else:
+                docs += "\n     Use `{}` instead.".format(self.alternative)
         if decorated.__doc__ is None:
             decorated.__doc__ = ""
         decorated.__doc__ += docs
