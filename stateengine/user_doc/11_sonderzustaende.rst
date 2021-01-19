@@ -110,7 +110,10 @@ Um etwaige Probleme mit dem Suspendzustand einfacher erkennen zu können,
 kann ein spezielles Logging aktiviert werden:
 
 **se_manual_logitem**
-*Der absolute Pfad des manuell Items*
+*Der absolute oder relative Pfad des manuell Items*
+
+Im unteren Beispiel kann der Pfad sowohl **beispiel.raffstore1.automatik.manuell**
+als auch schlicht und einfach **.self** lauten.
 
 .. code-block:: yaml
 
@@ -122,7 +125,7 @@ kann ein spezielles Logging aktiviert werden:
                manuell:
                    type: bool
                    se_manual_invert: 'True'
-                   se_manual_logitem: beispiel.raffstore1.automatik.manuell
+                   se_manual_logitem: .self
                    se_manual_exclude:
                      - database:*
                      - KNX:1.1.4:*

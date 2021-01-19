@@ -43,7 +43,7 @@ class SeFunctions:
         self.__locks = {}
         self.__global_struct = {}
         self.__ab_alive = False
-        self.items = Items.get_instance()
+        self.itemsApi = Items.get_instance()
 
     def __repr__(self):
         return "SeFunctions"
@@ -64,7 +64,7 @@ class SeFunctions:
     # If the original caller/source should be considered, the method returns the inverted value of the item.
     # Otherwise, the method returns the current value of the item, so that no change will be made
     def manual_item_update_eval(self, item_id, caller=None, source=None):
-        item = self.items.return_item(item_id)
+        item = self.itemsApi.return_item(item_id)
         if item is None:
             self.logger.error("manual_item_update_eval: item {0} not found!", item_id)
 
@@ -78,7 +78,7 @@ class SeFunctions:
 
             if "se_manual_logitem" in item.conf:
                 elog_item_id = item.conf["se_manual_logitem"]
-                elog_item = self.items.return_item(elog_item_id)
+                elog_item = self.itemsApi.return_item(elog_item_id)
                 if elog_item is None:
                     self.logger.error("manual_item_update_item: se_manual_logitem {0} not found!", elog_item_id)
                     elog = StateEngineLogger.SeLoggerDummy()
