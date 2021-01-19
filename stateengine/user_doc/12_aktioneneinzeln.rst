@@ -205,7 +205,7 @@ Aktionen jedoch an der angegebenen Position ausgeführt.
 
 **instanteval: <bool>**
 
-Über den optionalen Parameter ``<instanteval>`` wird für verzögerte Aktionen angegeben,
+Über das optionale Attribut ``se_instanteval`` wird für verzögerte Aktionen angegeben,
 ob etwaige eval Ausdrücke sofort evaluiert und gespeichert werden sollen oder
 die Evaluierung erst zum Ausführungszeitpunkt stattfinden soll.
 
@@ -213,7 +213,7 @@ die Evaluierung erst zum Ausführungszeitpunkt stattfinden soll.
 
        se_instanteval_<Aktionsname>: [True|False]
 
-Beispiel: Ein Item soll auf einen Wert aus einem Item gesetzt werden. Das Item wird
+Beispiel: Ein Item soll auf einen Wert aus einem anderen Item gesetzt werden. Das andere Item wird
 anhand des gerade aktuellen Zustands durch ein eval eruiert:
 
 .. code-block:: yaml
@@ -225,7 +225,7 @@ auf den Wert aus ``settings.regen`` gesetzt. Ändert sich aber während der Verz
 der Zustand auf ``sonne``, würde zum Ausführungszeitpunkt der Aktion der Wert aus dem Item ``settings.sonne``
 herangezogen werden. Wenn dies nicht erwünscht ist und das Item also auf den Vorgabewert des
 ursprünglichen Zustands (regen) gesetzt werden soll, kann das Attribut
-``se_instanteval_<Aktionsname: True`` gesetzt werden.
+``se_instanteval_<Aktionsname>: True`` gesetzt werden.
 
 Beispiel zu Aktionen
 --------------------
