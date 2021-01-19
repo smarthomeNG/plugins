@@ -1,8 +1,9 @@
 
 .. index:: Stateengine; Regelwerk-Item
 
+==============
 Regelwerk-Item
-##############
+==============
 
 Unter jedem Item, für das eine State Machine angelegt werden soll, muss ein "Regelwerk-Item" erstellt werden.
 Es wird empfohlen, dieses mit dem Namen ``rules`` als Child-Item unter das Item, das automatisiert werden soll, zu legen.
@@ -39,8 +40,8 @@ das Attribute ``se_plugin`` auf inactive zu setzen:
               se_plugin: inactive
 
 
-.. rubric:: Item-Definitionen
-   :name: itemdefinitionen
+Item-Definitionen
+-----------------
 
 Bedingungen und Aktionen beziehen sich überlicherweise auf Items wie beispielsweise
 die Höhe einer Jalousie oder die Außenhelligkeit.
@@ -59,8 +60,8 @@ Außerdem ist es möglich, über ``se_repeat_actions`` generell zu definieren,
 ob Aktionen für die Stateengine wiederholt ausgeführt werden sollen oder nicht. Diese Konfiguration
 kann für einzelne Aktionen individuell über die Angabe ``repeat`` überschrieben werden. Siehe auch :ref:`Aktionen`.
 
-.. rubric:: Beispiel se_item
-   :name: beispielregelwerk
+Beispiel se_item
+================
 
 Im Beispiel wird durch ``se_item_height`` das Item ``beispiel.raffstore1.hoehe``
 dem Plugin unter dem Namen "height" bekannt gemacht. Das Item ``beispiel.wetterstation.helligkeit``
@@ -91,8 +92,8 @@ und Aktionen folgen auf den nächsten Seiten.
                     enter_toodark:
                         se_max_brightness: 25
 
-.. rubric:: Beispiel se_eval
-   :name: beispielregelwerkeval
+Beispiel se_eval
+================
 
 se_eval ist für Sonderfälle und etwas komplexere Konfiurationen sinnvoll, kann aber
 im ersten Durchlauf ignoriert werden. Es wird daher empfohlen, als Beginner

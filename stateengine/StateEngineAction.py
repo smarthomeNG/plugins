@@ -230,7 +230,7 @@ class SeActionBase(StateEngineTools.SeItemChild):
 
     # Complete action
     # item_state: state item to read from
-    def complete(self, item_state):
+    def complete(self, item_state, evals_items=None):
         raise NotImplementedError("Class {} doesn't implement complete()".format(self.__class__.__name__))
 
     # Check if execution is possible
@@ -291,6 +291,9 @@ class SeActionSetItem(SeActionBase):
         self.__mindelta = StateEngineValue.SeValue(self._abitem, "mindelta")
         self.__function = "set"
 
+    def __repr__(self):
+        return "SeAction Set {}".format(self._name)
+
     def _getitem_fromeval(self):
         if isinstance(self.__item, str):
             item = None
@@ -320,10 +323,22 @@ class SeActionSetItem(SeActionBase):
 
     # Complete action
     # item_state: state item to read from
-    def complete(self, item_state):
+    def complete(self, item_state, evals_items=None):
+        try:
+            _name = evals_items.get(self.name)
+            if _name is not None:
+                _item = _name.get('item')
+                _eval = str(_name.get('eval'))
+                _selfitem = self.__item if self.__item is not None and self.__item != "None" else None
+                _item = _item if _item is not None and _item != "None" else None
+                _eval = _eval if _eval is not None and _eval != "None" else None
+                self.__item = _selfitem or self._abitem.return_item(_item) or _eval
+        except Exception as ex:
+            self._log_error("No valid item info for action {}, trying to get differently. Problem: {}", self.name, ex)
         # missing item in action: Try to find it.
         if self.__item is None:
             item = StateEngineTools.find_attribute(self._sh, item_state, "se_item_" + self._name)
+
             if item is not None:
                 self.__item = self._abitem.return_item(item)
             else:
@@ -418,6 +433,9 @@ class SeActionSetByattr(SeActionBase):
         self.__byattr = None
         self.__function = "set by attribute"
 
+    def __repr__(self):
+        return "SeAction SetByAttr {}".format(self._name)
+
     # set the action based on a set_(action_name) attribute
     # value: Value of the set_(action_name) attribute
     def update(self, value):
@@ -425,7 +443,7 @@ class SeActionSetByattr(SeActionBase):
 
     # Complete action
     # item_state: state item to read from
-    def complete(self, item_state):
+    def complete(self, item_state, evals_items=None):
         self._scheduler_name = "{}-SeByAttrDelayTimer".format(self.__byattr)
 
     # Write action to logger
@@ -461,6 +479,9 @@ class SeActionTrigger(SeActionBase):
         self.__value = StateEngineValue.SeValue(self._abitem, "value")
         self.__function = "trigger"
 
+    def __repr__(self):
+        return "SeAction Trigger {}".format(self._name)
+
     # set the action based on a set_(action_name) attribute
     # value: Value of the set_(action_name) attribute
     def update(self, value):
@@ -471,7 +492,7 @@ class SeActionTrigger(SeActionBase):
 
     # Complete action
     # item_state: state item to read from
-    def complete(self, item_state):
+    def complete(self, item_state, evals_items=None):
         self._scheduler_name = "{}-SeLogicDelayTimer".format(self.__logic)
 
     # Write action to logger
@@ -513,6 +534,9 @@ class SeActionRun(SeActionBase):
         self.__eval = None
         self.__function = "run"
 
+    def __repr__(self):
+        return "SeAction Run {}".format(self._name)
+
     # set the action based on a set_(action_name) attribute
     # value: Value of the set_(action_name) attribute
     def update(self, value):
@@ -526,7 +550,7 @@ class SeActionRun(SeActionBase):
 
     # Complete action
     # item_state: state item to read from
-    def complete(self, item_state):
+    def complete(self, item_state, evals_items=None):
         self._scheduler_name = "{}-SeRunDelayTimer".format(StateEngineTools.get_eval_name(self.__eval))
 
     # Write action to logger
@@ -588,6 +612,9 @@ class SeActionForceItem(SeActionBase):
         self.__mindelta = StateEngineValue.SeValue(self._abitem, "mindelta")
         self.__function = "force set"
 
+    def __repr__(self):
+        return "SeAction Force {}".format(self._name)
+
     # set the action based on a set_(action_name) attribute
     # value: Value of the set_(action_name) attribute
     def update(self, value):
@@ -595,7 +622,7 @@ class SeActionForceItem(SeActionBase):
 
     # Complete action
     # item_state: state item to read from
-    def complete(self, item_state):
+    def complete(self, item_state, evals_items=None):
         # missing item in action: Try to find it.
         if self.__item is None:
             item = StateEngineTools.find_attribute(self._sh, item_state, "se_item_" + self._name)
@@ -739,6 +766,9 @@ class SeActionSpecial(SeActionBase):
         self.__value = None
         self.__function = "special"
 
+    def __repr__(self):
+        return "SeAction Special {}".format(self._name)
+
     # set the action based on a set_(action_name) attribute
     # value: Value of the set_(action_name) attribute
     def update(self, value):
@@ -753,7 +783,7 @@ class SeActionSpecial(SeActionBase):
 
     # Complete action
     # item_state: state item to read from
-    def complete(self, item_state):
+    def complete(self, item_state, evals_items=None):
         if isinstance(self.__value, list):
             item = self.__value[0].property.path
         else:
@@ -868,6 +898,9 @@ class SeActionAddItem(SeActionSetItem):
         super().__init__(abitem, name)
         self.__function = "add to list"
 
+    def __repr__(self):
+        return "SeAction Add {}".format(self._name)
+
     def write_to_logger(self):
         self._log_debug("function: {}", self.__function)
         SeActionSetItem.write_to_logger(self)
@@ -898,6 +931,9 @@ class SeActionRemoveFirstItem(SeActionSetItem):
     def __init__(self, abitem, name: str):
         super().__init__(abitem, name)
         self.__function = "remove first from list"
+
+    def __repr__(self):
+        return "SeAction RemoveFirst {}".format(self._name)
 
     def write_to_logger(self):
         self._log_debug("function: {}", self.__function)
@@ -935,6 +971,9 @@ class SeActionRemoveLastItem(SeActionSetItem):
     def __init__(self, abitem, name: str):
         super().__init__(abitem, name)
         self.__function = "remove last from list"
+
+    def __repr__(self):
+        return "SeAction RemoveLast {}".format(self._name)
 
     def write_to_logger(self):
         self._log_debug("function: {}", self.__function)
@@ -974,6 +1013,9 @@ class SeActionRemoveAllItem(SeActionSetItem):
     def __init__(self, abitem, name: str):
         super().__init__(abitem, name)
         self.__function = "remove all from list"
+
+    def __repr__(self):
+        return "SeAction RemoveAll {}".format(self._name)
 
     def write_to_logger(self):
         self._log_debug("function: {}", self.__function)

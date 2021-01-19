@@ -45,6 +45,10 @@ class SeStruct(StateEngineTools.SeItemChild):
     def conf(self):
         return self._conf
 
+    @property
+    def id(self):
+        return self.struct_path
+
     def return_children(self):
         for child in self._conf.keys():
             yield child

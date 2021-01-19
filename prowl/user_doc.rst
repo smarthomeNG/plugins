@@ -37,6 +37,7 @@ Unter ``prowl_values`` kann eine Liste von `Wert: "Text"`-Paaren angegeben werde
 		type: bool
 		prowl_event: 'Änderung von typ3'
 		prowl_values:
+
 			- true: 'typ3 ist an'
 			- false: 'typ3 ist aus'
 

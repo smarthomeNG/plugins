@@ -41,6 +41,10 @@ class SeConditionSet(StateEngineTools.SeItemChild):
         return self.__conditions
 
     @property
+    def evals_items(self):
+        return self.__evals_items
+
+    @property
     def dict_conditions(self):
         result = OrderedDict()
         for name in self.__conditions:
@@ -56,9 +60,10 @@ class SeConditionSet(StateEngineTools.SeItemChild):
         self.__name = name
         self.__id = conditionid
         self.__conditions = OrderedDict()
+        self.__evals_items = {}
 
     def __repr__(self):
-        return "{}".format(self.__conditions)
+        return "SeConditionSet {}".format(self.__conditions)
 
     # Update condition set
     # item: item containing settings for condition set
@@ -89,8 +94,8 @@ class SeConditionSet(StateEngineTools.SeItemChild):
             func, name = StateEngineTools.partition_strip(attribute, "_")
             if name == "":
                 continue
-
             # update item/eval in this condition
+
             if func == "se_item" or func == "se_eval":
                 if name not in self.__conditions:
                     self.__conditions[name] = StateEngineCondition.SeCondition(self._abitem, name)
@@ -99,6 +104,7 @@ class SeConditionSet(StateEngineTools.SeItemChild):
                 except ValueError as ex:
                     text = "Item '{0}', Attribute '{1}' Error: {2}"
                     raise ValueError(text.format(grandparent_item.property.path, attribute, ex))
+                self.__evals_items.update({name: self.__conditions[name].get()})
 
     # Check the condition set, optimize and complete it
     # item_state: item to read from

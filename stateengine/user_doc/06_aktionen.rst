@@ -2,6 +2,7 @@
 .. index:: Stateengine; Aktionen
 .. _Aktionen:
 
+========
 Aktionen
 ========
 
@@ -24,8 +25,8 @@ würden sich die Lamellen ständig um wenige Grad(bruchteile) ändern. Wird jedo
 beispielsweise auf den Wert 10 gesetzt, findet eine Änderung erst statt, wenn sich der
 errechnete Wert um mindestens 10 Grad vom aktuellen Lamellenwert unterscheidet.
 
-.. rubric:: Beispiel zu Aktionen
-  :name: beispielzuaktionenkombiniert
+Beispiel zu Aktionen
+--------------------
 
 Das folgende Beispiel führt je nach Zustand folgende Aktionen aus:
 
@@ -70,8 +71,8 @@ Das folgende Beispiel führt je nach Zustand folgende Aktionen aus:
                         - 'delay: 10'
                     <...>
 
-.. rubric:: Aufbau von Aktionen
-  :name: aufbauvonaktionen
+Aufbau von Aktionen
+-------------------
 
 Bei yaml Files werden die Parameter mittels Aufzählungszeichen "-"
 untereinander definiert, die Listeneinträge müssen in Anführungszeichen oder
@@ -87,8 +88,8 @@ Hochkommas gesetzt werden:
        - 'repeat: <repeat>'
        - 'conditionset: <conditionset regex>'
 
-.. rubric:: Auszuführende Aktionsart
-   :name: function
+Auszuführende Aktionsart
+------------------------
 
 Mit dem Parameter ``<func>`` wird die auszuführende Funktion
 festgelegt. In Abhängigkeit zur gewählten Funktion werden
@@ -167,7 +168,7 @@ Itemwert erneut geschrieben, ohne etwas zu entfernen. Über den Parameter
 ``mode`` lässt sich einstellen, ob jeweils alle mit dem Wert übereinstimmenden
 Einträge in der Liste (mode: all) oder nur der erste (first) bzw. der letzte (last)
 Eintrag gelöscht werden sollen. Wird der Parameter nicht angegeben, werden immer
-alle Einträge gelöscht.
+alle passenden Einträge gelöscht.
 
 **Funktion run: Ausführen einer Funktion**
 
@@ -195,7 +196,7 @@ Auslösen einen Wert an die Logik zu übergeben, kann dieser Wert
 über die Angabe von ``value: <Wert>`` hinter dem Logiknamen
 angegeben werden. Die Angabe kann aber auch entfallen.
 
-**Funktion byattr: Alle Items, die ein bestimmtes Attribut haben, auf den Wert dieses Attributs setzen**
+**Funktion byattr: Alle Items mit bestimmtem Attribut auf einen Wert setzen**
 
 .. code-block:: yaml
 
@@ -242,8 +243,8 @@ definiert. Aktuell gibt es zwei besondere Vorgänge:
 
 In den Beispielen wurden also die relativen Items suspend, manuell und retrigger referenziert.
 
-.. rubric:: Zusätzliche Parameter
-   :name: parameter
+Zusätzliche Parameter
+---------------------
 
 **delay: <int>**
 
@@ -253,7 +254,7 @@ Aktion ausgeführt werden soll.
 Die Angabe erfolgt in Sekunden oder mit dem Suffix "m" in Minuten. Die Verzögerungszeit
 kann auch durch ein eval oder Item zur Laufzeit berechnet werden.
 
-.. code-block::
+.. code-block:: yaml
 
        'delay: <eval>/<item>' --> Ergebnis eines Eval-Ausdrucks oder eines Items
        'delay: 30'            --> 30 Sekunden
@@ -362,12 +363,12 @@ regnet hingegen auf den Wert, der in den Settings hinterlegt ist.
         enter_regen:
             diverse andere Bedingungen
 
-.. rubric:: Templates für Aktionen
-   :name: aktionstemplates
+Templates für Aktionen
+----------------------
 
 Setzt man für mehrere Aktionen (z.B. Setzen auf einen Wert abhängig vom aktuellen
 Zustand) immer die gleichen Ausdrücke ein, so kann Letzteres als Template
-definiert und referenziert werden. Dadurch wird die die Handhabung
+definiert und referenziert werden. Dadurch wird die Handhabung
 komplexerer Wertdeklarationen deutlich vereinfacht. Diese Templates müssen wie se_item/se_eval
 auf höchster Ebene des StateEngine Items (also z.B. rules) deklariert werden.
 

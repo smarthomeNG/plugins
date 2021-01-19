@@ -55,7 +55,7 @@ class SeCondition(StateEngineTools.SeItemChild):
         self.__error = None
 
     def __repr__(self):
-        return "'item': {}, 'eval': {}, 'value': {}".format(self.__item, self.__eval, self.__value)
+        return "SeCondition 'item': {}, 'eval': {}, 'value': {}".format(self.__item, self.__eval, self.__value)
 
     # set a certain function to a given value
     # func: Function to set ('item', 'eval', 'value', 'min', 'max', 'negate', 'changedby', 'updatedby',

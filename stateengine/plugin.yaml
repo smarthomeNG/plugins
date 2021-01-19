@@ -40,7 +40,7 @@ plugin:
     documentation: https://www.smarthomeng.de/user/plugins/stateengine/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1303071-stateengine-plugin-support
 
-    version: 1.8.0
+    version: 1.8.1
     sh_minversion: 1.6
     multi_instance: False
     classname: StateEngine
@@ -580,16 +580,206 @@ item_structs:
         settings:
             remark: Use these settings for your condition values
             type: foo
+            eval: sh..suspendduration(sh..suspendduration(), "Init", "Start")
+            crontab: init = True
+
+            suspendduration:
+                remark: duration of suspend mode in minutes (gets converted automatically)
+                type: num
+                visu_acl: rw
+                cache: True
+                initial_value: 60
+                on_change: .seconds = value * 60 if not sh..self.property.last_change_by == "On_Change:{}".format(sh..seconds.property.path) else None
+                on_update: .seconds = value * 60 if "Init" in sh..self.property.last_update_by else None
+
+                duration_format:
+                    remark: Can be used for the clock.countdown widget
+                    type: str
+                    cache: True
+                    visu_acl: ro
+                    eval: "'{}d {}h {}i {}s'.format(int(sh...seconds()//86400), int((sh...seconds()%86400)//3600), int((sh...seconds()%3600)//60), round((sh...seconds()%3600)%60))"
+                    eval_trigger:
+                      - ..seconds
+                      - ..
+
+                seconds:
+                    remark: duration of suspend mode in seconds (gets converted automatically)
+                    type: num
+                    visu_acl: rw
+                    cache: True
+                    on_change: .. = value / 60 if not sh..self.property.last_change_by in [ "On_Change:{}".format(sh....property.path), "On_Update:{}".format(sh....property.path)] else None
+
+            suspend_active:
+                remark: Use this to (de)activate suspend mode in general
+                type: bool
+                visu_acl: rw
+                cache: True
+                initial_value: True
+
+            settings_edited:
+                type: bool
+                name: settings editiert
+                eval_trigger: ...settings.*
+                eval: not sh..self()
+                on_update: ...retrigger = True if sh..self.property.prev_update_age > 0.1 else None
+
+        rules:
+            se_item_suspend: ..suspend
+            se_item_suspend_visu: ..suspend.visu
+            se_item_suspend_end: ..suspend_end.date_time
+            se_item_suspend_start: ..suspend_start.date_time
+            se_item_suspend_active: ..settings.suspend_active
+            se_suspend_time: ..settings.suspendduration
+
+            eval_trigger:
+                - ..manuell
+
+            suspend:
+                name: ausgesetzt
+
+                on_enter:
+                    se_action_suspend_visu:
+                      - 'function: set'
+                      - 'to: True'
+                      - 'order: 2'
+
+                on_enter_or_stay:
+                    se_action_suspend:
+                      - 'function: special'
+                      - 'value: suspend:..suspend, ..manuell'
+                      - 'repeat: True'
+                      - 'order: 1'
+                    se_action_suspend_end:
+                      - 'function: set'
+                      - "to: eval:se_eval.insert_suspend_time('..suspend', suspend_text='%Y-%m-%d %H:%M:%S.%f%z')"
+                      - 'repeat: True'
+                      - 'order: 3'
+                    se_action_suspend_start:
+                      - 'function: set'
+                      - "to: eval:str(shtime.now())"
+                      - 'repeat: True'
+                      - 'conditionset: (.*)enter_manuell'
+                      - 'order: 4'
+                    se_action_retrigger:
+                      - 'function: special'
+                      - 'value: retrigger:..retrigger'
+                      - 'delay: var:item.suspend_remaining'
+                      - 'repeat: True'
+                      - 'order: 5'
+
+                on_leave:
+                    se_action_suspend:
+                      - 'function: set'
+                      - 'to: False'
+                      - 'order: 2'
+                    se_action_suspend_visu:
+                      - 'function: set'
+                      - 'to: False'
+                      - 'order: 3'
+                    se_action_suspend_end:
+                      - 'function: set'
+                      - 'to:  '
+                      - 'order: 4'
+                    se_action_suspend_start:
+                      - 'function: set'
+                      - 'to:  '
+                      - 'order: 5'
+                      - 'delay: 1'
+
+                enter_manuell:
+                    se_value_trigger_source: eval:se_eval.get_relative_itemproperty('..manuell', 'path')
+                    se_value_suspend_active: True
+
+                enter_stay:
+                    se_value_laststate: var:current.state_id
+                    se_agemax_suspend: var:item.suspend_time
+                    se_value_suspend: True
+                    se_value_suspend_active: True
+
+    state_suspend_dynamic:
+        name: Zustandsvorlage für manuelles Aussetzen mit dynamischen Parametern
+
+        suspend:
+            type: bool
+            knx_dpt: 1
+            visu_acl: rw
+            cache: True
+
+            visu:
+                type: bool
+                knx_dpt: 1
+                visu_acl: rw
+                cache: True
+
+        suspend_end:
+            type: str
+            visu_acl: ro
+            eval: "'' if not any(char.isdigit() for char in sh..self.date_time()) else sh..self.date_time().split(' ')[1].split('.')[0]"
+            eval_trigger: .date_time
+            crontab: init
+
+            date_time:
+                type: str
+                visu_acl: ro
+                cache: True
+
+            unix_timestamp:
+                type: num
+                visu_acl: ro
+                eval: "0 if not any(char.isdigit() for char in sh...date_time()) else  sh.tools.dt2ts(shtime.datetime_transform(sh...date_time())) * 1000"
+                eval_trigger: ..date_time
+                crontab: init
+
+        suspend_start:
+            type: str
+            visu_acl: ro
+            eval: "'' if not any(char.isdigit() for char in sh..self.date_time()) else sh..self.date_time().split(' ')[1].split('.')[0]"
+            eval_trigger: .date_time
+            crontab: init
+
+            date_time:
+                type: str
+                visu_acl: ro
+                cache: True
+
+            unix_timestamp:
+                remark: Can be used for the clock.countdown widget
+                type: num
+                visu_acl: ro
+                eval: "0 if not any(char.isdigit() for char in sh...date_time()) else  sh.tools.dt2ts(shtime.datetime_transform(sh...date_time())) * 1000"
+                eval_trigger: ..date_time
+                crontab: init
+
+        manuell:
+            type: bool
+            name: manuell
+            se_manual_invert: True
+            remark: Adapt the se_manual_exclude the way you need it
+            #se_manual_include: KNX:* Force manual mode based on source
+            se_manual_exclude:
+              - database:*
+              - init:*
+
+        retrigger:
+            remark: Item to retrigger the rule set evaluation
+            type: bool
+            visu_acl: rw
+            enforce_updates: True
+            on_update: ..rules = True
+
+        settings:
+            remark: Use these settings for your condition values
+            type: foo
             eval: (sh..suspendduration(sh..suspendduration(), "Init", "Start"), sh..suspendvariant.suspendduration0(sh..suspendduration(), "Init", "Start"), sh..suspendvariant.suspendduration1(sh..suspendvariant.suspendduration1(), "Init", "Start"), sh..suspendvariant.suspendduration2(sh..suspendvariant.suspendduration2(), "Init", "Start"))
             crontab: init = True
-            
+
             suspendvariant:
                 remark: number between 0 and 2 to define which suspendduration should be used
                 type: num
                 visu_acl: rw
                 cache: True
                 initial_value: 0
-                
+
                 suspendduration0:
                     remark: gets automatically updated from settings.suspendduration as this is the default item for the suspendduration
                     type: num
@@ -616,7 +806,7 @@ item_structs:
                         visu_acl: rw
                         cache: True
                         on_change: .. = value / 60 if not sh..self.property.last_change_by in [ "On_Change:{}".format(sh....property.path), "On_Update:{}".format(sh....property.path)] else None
-                
+
                 suspendduration1:
                     remark: duration of suspend mode in minutes (gets converted automatically)
                     type: num
@@ -667,15 +857,15 @@ item_structs:
                         type: num
                         visu_acl: rw
                         cache: True
-                        on_change: .. = value / 60 if not sh..self.property.last_change_by in [ "On_Change:{}".format(sh....property.path), "On_Update:{}".format(sh....property.path)] else None                
-     
+                        on_change: .. = value / 60 if not sh..self.property.last_change_by in [ "On_Change:{}".format(sh....property.path), "On_Update:{}".format(sh....property.path)] else None
+
                 additionaluse0:
                     remark: set this value to a struct or (relative) state that should be added to the condition sets if suspendvariant is 0
                     type: str
                     visu_acl: rw
                     cache: True
                     initial_value: 'struct:stateengine.state_standard.rules.standard'
-                    
+
                 additionaluse1:
                     remark: set this value to a struct or (relative) state that should be added to the condition sets if suspendvariant is 1
                     type: str
@@ -689,7 +879,7 @@ item_structs:
                     visu_acl: rw
                     cache: True
                     initial_value: ''
-                        
+
             suspendduration:
                 remark: duration of suspend mode in minutes (gets converted automatically)
                 type: num
@@ -715,7 +905,7 @@ item_structs:
                     visu_acl: rw
                     cache: True
                     on_change: .. = value / 60 if not sh..self.property.last_change_by in [ "On_Change:{}".format(sh....property.path), "On_Update:{}".format(sh....property.path)] else None
-                    
+
             suspend_active:
                 remark: Use this to (de)activate suspend mode in general
                 type: bool
@@ -738,7 +928,7 @@ item_structs:
             se_item_suspend_active: ..settings.suspend_active
             se_item_suspendvariant: ..settings.suspendvariant
             se_suspend_time: eval:se_eval.get_relative_itemvalue('..settings.suspendvariant.suspendduration{}.seconds'.format(max(0, min(se_eval.get_relative_itemvalue('..settings.suspendvariant'), 2))))
-            
+
             eval_trigger:
                 - ..manuell
 
@@ -767,7 +957,7 @@ item_structs:
                       - 'function: set'
                       - "to: eval:str(shtime.now())"
                       - 'repeat: True'
-                      - 'conditionset: enter_manuell'
+                      - 'conditionset: (.*)enter_manuell'
                       - 'order: 4'
                     se_action_retrigger:
                       - 'function: special'
@@ -802,7 +992,7 @@ item_structs:
                 enter_manuell:
                     se_value_trigger_source: eval:se_eval.get_relative_itemproperty('..manuell', 'path')
                     se_value_suspend_active: True
-                    
+
                 enter_stay:
                     se_value_laststate: var:current.state_id
                     se_agemax_suspend: var:item.suspend_time
@@ -814,7 +1004,7 @@ item_structs:
         rules:
             standard:
                 name: standard
-                
+
                 enter_manuell:
                     type: foo
 

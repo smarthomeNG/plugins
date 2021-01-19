@@ -51,6 +51,9 @@ class SeActions(StateEngineTools.SeItemChild):
         self._action_lock = threading.Lock()
         self.__ab_alive = self._abitem.ab_alive
 
+    def __repr__(self):
+        return "SeActions, count {}".format(self.count())
+
     # Return number of actions in list
     def count(self):
         return len(self.__actions)
@@ -117,6 +120,7 @@ class SeActions(StateEngineTools.SeItemChild):
             elif self.__ensure_action_exists(func, name):
                 # update action
                 self.__actions[name].update(value)
+                _count += 1
         except ValueError as ex:
             if name in self.__actions:
                 del self.__actions[name]
@@ -154,7 +158,6 @@ class SeActions(StateEngineTools.SeItemChild):
             action = StateEngineAction.SeActionRemoveLastItem(self._abitem, name)
         else:
             return False
-
         if name in self.__unassigned_delays:
             action.update_delay(self.__unassigned_delays[name])
             del self.__unassigned_delays[name]
@@ -338,12 +341,19 @@ class SeActions(StateEngineTools.SeItemChild):
 
     # Check the actions optimize and complete them
     # item_state: item to read from
-    def complete(self, item_state):
+    def complete(self, item_state, evals_items=None):
         for name in self.__actions:
             try:
-                self.__actions[name].complete(item_state)
+                self.__actions[name].complete(item_state, evals_items)
             except ValueError as ex:
                 raise ValueError("State '{0}', Action '{1}': {2}".format(item_state.property.path, name, ex))
+
+    def set(self, value):
+        for name in self.__actions:
+            try:
+                self.__actions[name].update(value)
+            except ValueError as ex:
+                raise ValueError("State '{0}', Action '{1}': {2}".format(value.property.path, name, ex))
 
     # Execute all actions
     # is_repeat: Indicate if this is a repeated action without changing the state
