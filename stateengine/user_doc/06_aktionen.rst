@@ -196,7 +196,7 @@ Auslösen einen Wert an die Logik zu übergeben, kann dieser Wert
 über die Angabe von ``value: <Wert>`` hinter dem Logiknamen
 angegeben werden. Die Angabe kann aber auch entfallen.
 
-**Funktion byattr: Alle Items mit bestimmtem auf den Wert setzen**
+**Funktion byattr: Alle Items mit bestimmtem Attribut auf einen Wert setzen**
 
 .. code-block:: yaml
 
@@ -368,7 +368,7 @@ Templates für Aktionen
 
 Setzt man für mehrere Aktionen (z.B. Setzen auf einen Wert abhängig vom aktuellen
 Zustand) immer die gleichen Ausdrücke ein, so kann Letzteres als Template
-definiert und referenziert werden. Dadurch wird die die Handhabung
+definiert und referenziert werden. Dadurch wird die Handhabung
 komplexerer Wertdeklarationen deutlich vereinfacht. Diese Templates müssen wie se_item/se_eval
 auf höchster Ebene des StateEngine Items (also z.B. rules) deklariert werden.
 
