@@ -41,7 +41,7 @@ class Casambi(SmartPlugin):
     """
 
     # Use VERSION = '1.0.0' for your initial plugin Release
-    PLUGIN_VERSION = '1.7.1'    # (must match the version specified in plugin.yaml)
+    PLUGIN_VERSION = '1.7.2'    # (must match the version specified in plugin.yaml)
 
     def __init__(self, sh):
         """
@@ -89,8 +89,6 @@ class Casambi(SmartPlugin):
             self._init_complete = False
             return
 
-        self.sessionID, self.networkID, self.numberNetworks = self.getSessionCredentials()
-
         self.init_webinterface()
         
         return
@@ -111,7 +109,7 @@ class Casambi(SmartPlugin):
             headers={'X-Casambi-Key': self.api_key, 
                      'content-type': 'application/json'}, timeout=10, verify=False)
         
-        #self.logger.debug("Session request response: {0}".format(sessionrequest_response.text))
+        self.logger.debug("Session request response: {0}".format(sessionrequest_response.text))
         statusCode = sessionrequest_response.status_code
         if statusCode == 200:
             self.logger.debug("Sending session request command successful")
@@ -148,6 +146,7 @@ class Casambi(SmartPlugin):
 
     def openWebsocket(self, networkID):
 
+        self.logger.debug("start openWebsocket")
         reference = 'REFERENCE-ID'; # Reference handle created by client to link messages to relevant callbacks
         socketType = 1;             # Client type, use value 1 (FRONTEND)
 
@@ -318,6 +317,8 @@ class Casambi(SmartPlugin):
         # if you need to create child threads, do not make them daemon = True!
         # They will not shutdown properly. (It's a python bug)
 
+        self.sessionID, self.networkID, self.numberNetworks = self.getSessionCredentials()
+
         self.thread = threading.Thread(target=self.eventHandler, name='CasambiEventHandler')
         self.thread.daemon = False
         self.thread.start()
@@ -326,20 +327,43 @@ class Casambi(SmartPlugin):
     def eventHandler(self):
         self.logger.debug("EventHandler thread started")
         if self.networkID:
+            self.logger.debug("Trying to open websocket once")
             self.openWebsocket(self.networkID)
+        else:
+            self.logger.warning("Cannot open websocket once. Invalid networkID")
 
         errorCount = 0
         doReconnect = False
         while self.alive:
-            try:
-                receivedData =  self.websocket.recv()
-                self.logger.debug("Received data: {0}".format(receivedData))
-                errorCount = 0
-            except Exception as e:
-                self.logger.info("Error during data reception: {0}".format(e))
-                errorCount = errorCount  + 1
-                doReconnect = True
+            #self.logger.debug("Starting loop")
 
+            if not self.websocket or self.websocket.connected == False:
+                self.logger.debug("Websocket no longer connected.")
+                doReconnect = True
+                errorCount = errorCount  + 1
+            else:
+                self.logger.debug("Starting data receive")
+                try:
+                    self.logger.debug("Trying to receive data")
+                    receivedData =  self.websocket.recv()
+                    self.logger.debug("Received data: {0}".format(receivedData))
+                    errorCount = 0
+                except timeout:
+                    self.logger.debug("Reception timeout")
+                except socket.timeout:
+                    self.logger.debug("Socket reception timeout")
+                except Exception as e:
+                    self.logger.info("Error during data reception: {0}".format(e))
+                    errorCount = errorCount  + 1
+                    doReconnect = True
+
+                if not receivedData: 
+                    self.logger.debug("Received empty data")
+                else: 
+                    self.logger.debug("Received data: {0}".format(receivedData))
+                    self.decodeEventData(receivedData)
+
+            # Error handling:
             if errorCount > 2:
                 errorCount = 1
                 self.logger.debug("Waiting for 60 seconds")
@@ -348,11 +372,14 @@ class Casambi(SmartPlugin):
             if not self.alive:
                 break
 
-            if doReconnect and self.networkID:
-                self.openWebsocket(self.networkID)
-                doReconnect = False
-           
-            self.decodeEventData(receivedData)
+            if doReconnect:
+                if self.networkID:
+                    self.logger.debug("Trying to reopen websocket")
+                    self.openWebsocket(self.networkID)
+                    doReconnect = False
+                else:
+                    self.logger.warning("Cannot reconnect due to invalid network ID")
+            
             
         if self.websocket:
             self.websocket.close()
