@@ -130,6 +130,8 @@ class Resol(SmartPlugin):
     
     # Sends given bytes over the stream. Adds debug
     def send(self, dat):
+        if not self.sock:
+            return
         self.sock.send(dat.encode('utf-8'))
     
     # Read Data until minimum 1 message is received
