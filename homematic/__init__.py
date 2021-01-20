@@ -41,7 +41,7 @@ class Homematic(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.5.0'
+    PLUGIN_VERSION = '1.5.1'
 #    ALLOW_MULTIINSTANCE = False
 
     connected = False
@@ -122,10 +122,10 @@ class Homematic(SmartPlugin):
         except:
             self.logger.error("Unable to start HomeMatic object - SmartHomeNG will be unable to terminate the thread vor this plugin (instance)")
             self.connected = False
-#            self._init_complete = False
-            # stop the thread that got created by initializing pyhomematic
-#            self.hm.stop()
-#            return
+        #            self._init_complete = False
+        # stop the thread that got created by initializing pyhomematic
+        #            self.hm.stop()
+        #            return
 
         # start communication with HomeMatic ccu
         try:
@@ -136,13 +136,13 @@ class Homematic(SmartPlugin):
         if self.connected:
             # TO DO: sleep besser lösen!
             sleep(20)
-#            self.logger.warning("Plugin '{}': self.hm.devices".format(self.hm.devices))
-            if self.hm.devices.get(self.hm_id,{}) == {}:
+            #            self.logger.warning("Plugin '{}': self.hm.devices".format(self.hm.devices))
+            if self.hm.devices.get(self.hm_id, {}) == {}:
                 self.logger.error("Connection to ccu failed")
-#                self._init_complete = False
-                # stop the thread that got created by initializing pyhomematic
-#                self.hm.stop()
-#                return
+        #                self._init_complete = False
+        # stop the thread that got created by initializing pyhomematic
+        #                self.hm.stop()
+        #                return
 
         self.hm_items = []
 
@@ -158,6 +158,7 @@ class Homematic(SmartPlugin):
         Run method for the plugin
         """
         self.logger.debug("Run method called")
+
         self.alive = True
         # if you want to create child threads, do not make them daemon = True!
         # They will not shutdown properly. (It's a python bug)
@@ -169,6 +170,7 @@ class Homematic(SmartPlugin):
         """
         self.logger.debug("Stop method called")
         self.alive = False
+
         self.hm.stop()
         self.hmip.stop()
 
@@ -190,7 +192,6 @@ class Homematic(SmartPlugin):
             init_error = False
 #            self.logger.debug("parse_item: {}".format(item))
             dev_id = self.get_iattr_value(item.conf, 'hm_address')
-
 
             dev_type = self.get_iattr_value(item.conf, 'hm_type')
 
@@ -254,7 +255,13 @@ class Homematic(SmartPlugin):
                 elif hm_node == 'EV':
                     value = dev.event(hm_function)
                 elif hm_node == 'SE':
-                    value = dev.getSensorData(hm_function)
+                    try:
+                        #Do not read sensors during initialization (could result in a warning 'HMGeneric.getValue: ...'
+                        #to logger 'pyhomematic.devicetypes.generic'
+                        # value = dev.getSensorData(hm_function)
+                        pass
+                    except Exception as e:
+                        self.logger.warning(f"parse_item: Item {item._path} Exception {e}")
                 elif hm_node == 'WR':
                     value = dev.getWriteData(hm_function)
                 else:
@@ -269,7 +276,8 @@ class Homematic(SmartPlugin):
                     self.logger.info("Initializing {} with '{}' from address={}:{}, function={}".format(item, value, hm_address, hm_channel, hm_function))
                     item(value, 'HomeMatic', 'Init')
                 else:
-                    if not init_error:
+                    if (not init_error) and (hm_node != 'SE'):
+                        # Dont log an error for sensors, since sensor data is not read during initialization
                         self.logger.error("Not initializing {} from address={}:{}, function='{}'".format(item, hm_node, hm_address, hm_channel, hm_function))
 
             return self.update_item
