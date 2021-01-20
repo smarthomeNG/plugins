@@ -550,7 +550,7 @@ class SeCondition(StateEngineTools.SeItemChild):
             agemin = agemin + [None] * abs(diff_len) if diff_len < 0 else agemin
             agemax = agemax + [None] * diff_len if diff_len > 0 else agemax
             text = "Age of '{0}': min={1} max={2} negate={3} current={4}"
-            self._log_debug(text, self.__name, agemin, agemax, self.__agenegate, current)
+            self._log_info(text, self.__name, agemin, agemax, self.__agenegate, current)
             if diff_len != 0:
                 self._log_warning("Min and max age are always evaluated as valuepairs."
                                   " If needed you can also provide 'novalue' as a list value")

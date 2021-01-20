@@ -629,7 +629,7 @@ item_structs:
             se_item_suspend_end: ..suspend_end.date_time
             se_item_suspend_start: ..suspend_start.date_time
             se_item_suspend_active: ..settings.suspend_active
-            se_suspend_time: ..settings.suspendduration
+            se_suspend_time: item:..settings.suspendduration.seconds
 
             eval_trigger:
                 - ..manuell
