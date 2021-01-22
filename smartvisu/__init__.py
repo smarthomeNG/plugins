@@ -75,6 +75,8 @@ class SmartVisu(SmartPlugin):
         self.smartvisu_version = self.get_smartvisu_version()
         if self.smartvisu_version == '':
             self.logger.error("Could not determine smartVISU version!")
+        self.smartvisu_is_configured = self.sv_is_configured()
+        self.logger.info(f"sv version={self.smartvisu_version}, sv_is_configured={self.smartvisu_is_configured}")
 
         self.deprecated_widgets = []
         self.removed_widgets = []
@@ -114,38 +116,48 @@ class SmartVisu(SmartPlugin):
             if not os.path.isdir(os.path.join(self.smartvisu_dir, 'pages')):
                 self.logger.error("Could not find valid smartVISU directory: {}".format(self.smartvisu_dir))
             else:
-                self.logger.info("Starting smartVISU v{} handling for visu in {}".format(self.smartvisu_version, self.smartvisu_dir))
+                self.logger.info(f"Starting smartVISU v{self.smartvisu_version} handling for visu in {self.smartvisu_dir}")
                 if self._handle_widgets:
-                    try:
-                        sv_iwdg = SmartVisuInstallWidgets(self)
-                    except Exception as e:
-                        self.logger.exception("SmartVisuInstallWidgets v{}: Exception: {}".format(self.get_smartvisu_version(), e))
-                    if self.removed_plugin_widgets != []:
-                        self.logger.error("Plugin widgets that need an update now: {}".format(self.removed_plugin_widgets))
-                    if self.deprecated_plugin_widgets != []:
-                        self.logger.warning("Plugin widgets that should get an update: {}".format(self.deprecated_plugin_widgets))
+                    if self.smartvisu_is_configured:
+                        try:
+                            sv_iwdg = SmartVisuInstallWidgets(self)
+                        except Exception as e:
+                            self.logger.exception("SmartVisuInstallWidgets v{}: Exception: {}".format(self.get_smartvisu_version(), e))
+                        if self.removed_plugin_widgets != []:
+                            self.logger.error("Plugin widgets that need an update now: {}".format(self.removed_plugin_widgets))
+                        if self.deprecated_plugin_widgets != []:
+                            self.logger.warning("Plugin widgets that should get an update: {}".format(self.deprecated_plugin_widgets))
+                    else:
+                        self.logger.warning(f"Not installing widgets because smartVISU v{self.smartvisu_version} in directory {self.smartvisu_dir} is not yet configured")
 
+                # generate pages for smartvisu, if configured to do so and smartvisu is already configured
                 if self._generate_pages:
-                    try:
-                        svgen = SmartVisuGenerator(self, self.visu_definition)
-                    except Exception as e:
-                        self.logger.exception("SmartVisuGenerator: Exception: {}".format(e))
+                    if self.smartvisu_is_configured:
+                        try:
+                            svgen = SmartVisuGenerator(self, self.visu_definition)
+                        except Exception as e:
+                            self.logger.exception("SmartVisuGenerator: Exception: {}".format(e))
 
-                    wid_list = list(self.r_usage.keys())
-                    for wid in wid_list:
-                        if self.r_usage[wid] == 0:
-                            del (self.r_usage[wid])
-                    wid_list = list(self.d_usage.keys())
-                    for wid in wid_list:
-                        if self.d_usage[wid] == 0:
-                            del (self.d_usage[wid])
-                    if self.r_usage != {}:
-                        self.logger.error("Removed widget usage (used in # sv_widgets): {}".format(self.r_usage))
-                    if self.d_usage != {}:
-                        self.logger.warning("Deprecated widget usage (used in # sv_widgets): {}".format(self.d_usage))
+                        wid_list = list(self.r_usage.keys())
+                        for wid in wid_list:
+                            if self.r_usage[wid] == 0:
+                                del (self.r_usage[wid])
+                        wid_list = list(self.d_usage.keys())
+                        for wid in wid_list:
+                            if self.d_usage[wid] == 0:
+                                del (self.d_usage[wid])
+                        if self.r_usage != {}:
+                            self.logger.error("Removed widget usage (used in # sv_widgets): {}".format(self.r_usage))
+                        if self.d_usage != {}:
+                            self.logger.warning("Deprecated widget usage (used in # sv_widgets): {}".format(self.d_usage))
+                    else:
+                        self.logger.warning(f"Not generating pages because smartVISU v{self.smartvisu_version} in directory {self.smartvisu_dir} is not yet configured")
 
-                self.write_masteritem_file()
-                self.logger.info("Finished smartVISU v{} handling".format(self.smartvisu_version))
+                if self.smartvisu_is_configured:
+                    self.write_masteritem_file()
+                    self.logger.info("Finished smartVISU v{} handling".format(self.smartvisu_version))
+                else:
+                    self.logger.warning(f"Not generating item-masterfile because smartVISU v{self.smartvisu_version} in directory {self.smartvisu_dir} is not yet configured")
         # self.stop()
 
 
@@ -360,17 +372,40 @@ class SmartVisu(SmartPlugin):
             with open(filename) as stream:
                 config_parser.read_string("[dummy_section]\n" + stream.read())
         except Exception as e:
-            self.logger.warning(f"Unable to read config.ini of smartVISU - {e}")
+
+            self.logger.info("smartVISU is not configured (no 'config.ini' file found)")
             return ''
 
         try:
             value = config_parser.get('dummy_section', key)
         except:
-            self.logger.warning("smartVISU is not configured")
+            self.logger.info("smartVISU is not configured (no entry 'pages' in 'config.ini' file found)")
             return ''
         value = Utils.strip_quotes(value)
         self.logger.debug(f"read_from_sv_configini: key={key} -> value={value}")
         return value
+
+
+    def sv_is_configured(self):
+        """
+        Test if the smartvisu is configured
+
+        The test is only performed for smartvisu v2.9 abd above
+
+        :return: True, if the smartvisu is configured or the sv-version is v2.8 or below
+        """
+
+        if self.smartvisu_version.startswith('2.7') or self.smartvisu_version.startswith('2.8'):
+            # Do not perform test on old sv versions
+            result = True
+            self.logger.warning("Old version, configuration not realy tested")
+        else:
+            # Test for sv v2.9 and up
+            # read config.ini to get the name of the pages directory
+            dirname = self.read_from_sv_configini('pages')
+            result = (dirname != '')
+
+        return result
 
 
     def write_masteritem_file(self):
