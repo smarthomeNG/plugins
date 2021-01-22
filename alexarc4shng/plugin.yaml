@@ -17,51 +17,6 @@ plugin:
     state: develop                   # State of the Plugin
     restartable: True                # Plugin is restartable
 
-plugin_functions:
-    # Definition of function interface of the plugin
-
-    send_cmd:
-        type: str
-        description:
-            de: "Sendet einen Befehl an Alexa."
-            en: "Sends a command to Alexa."
-        parameters:
-            dvName:
-                type: str
-                description:
-                    de: "Name des Alexa Devices."
-                    en: "Name of Alexa device."
-            cmdName:
-                type: str
-                description:
-                    de: "Name des Befehls, z.b. Text2Speech."
-                    en: "Name of command, e.g. Text2Speech."
-            mValue:
-                type: str
-                description:
-                    de: "Wert, der gesendet werden soll, numerische Werte ohne Hochkomma als Zahl"
-                    en: "Value to send, numeric Values without Quotes as Num"
-
-    get_last_alexa:
-        type: str
-        description:
-            de: "Liefert die Geräte-ID des zuletzt verwendeten Alexa-Gerätes zurück"
-            en: "delivers the Device-ID of the last used Alexa-Device"
-
-logic_parameters: NONE               # No logic parameters for this plugin
-item_structs: NONE                   # no item structure needed
-item_attributes: NONE                # no item attributes needed
-
-item_attribute_prefixes:
-    # Definition of item attributes that only have a common prefix (enter 'item_attribute_prefixes: NONE' or ommit this section, if section should be empty)
-    # NOTE: This section should only be used, if really nessesary (e.g. for the stateengine plugin)
-    alexa_cmd_:
-        type: str
-        mandatory: True
-        description:
-            de: 'String um die Befehle zu definieren (alexa_cmd_01, alexa_cmd_02, ...)'
-            en: 'string to define commands (alexa_cmd_01, alexa_cmd_02, ...)'
-
 parameters:
     # Definition of parameters to be configured in etc/plugin.yaml
     cookiefile:
@@ -97,4 +52,49 @@ parameters:
         description:
             de: 'Sekunden bis zum automatischen refreshen des Cookie-files'
             en: 'seconds till the next automatic login to get a new cookie'
+
+logic_parameters: NONE               # No logic parameters for this plugin
+item_structs: NONE                   # no item structure needed
+item_attributes: NONE                # no item attributes needed
+
+item_attribute_prefixes:
+    # Definition of item attributes that only have a common prefix (enter 'item_attribute_prefixes: NONE' or ommit this section, if section should be empty)
+    # NOTE: This section should only be used, if really nessesary (e.g. for the stateengine plugin)
+    alexa_cmd_:
+        type: str
+        mandatory: True
+        description:
+            de: 'String um die Befehle zu definieren (alexa_cmd_01, alexa_cmd_02, ...)'
+            en: 'string to define commands (alexa_cmd_01, alexa_cmd_02, ...)'
+
+plugin_functions:
+    # Definition of function interface of the plugin
+
+    send_cmd:
+        type: str
+        description:
+            de: "Sendet einen Befehl an Alexa."
+            en: "Sends a command to Alexa."
+        parameters:
+            dvName:
+                type: str
+                description:
+                    de: "Name des Alexa Devices."
+                    en: "Name of Alexa device."
+            cmdName:
+                type: str
+                description:
+                    de: "Name des Befehls, z.b. Text2Speech."
+                    en: "Name of command, e.g. Text2Speech."
+            mValue:
+                type: str
+                description:
+                    de: "Wert, der gesendet werden soll, numerische Werte ohne Hochkomma als Zahl"
+                    en: "Value to send, numeric Values without Quotes as Num"
+
+    get_last_alexa:
+        type: str
+        description:
+            de: "Liefert die Geräte-ID des zuletzt verwendeten Alexa-Gerätes zurück"
+            en: "delivers the Device-ID of the last used Alexa-Device"
 
