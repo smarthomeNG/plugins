@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
-#  Copyright 2020 Bernd Meiners                     Bernd.Meiners@mail.de
+#  Copyright 2020-2021 Bernd Meiners                Bernd.Meiners@mail.de
 #########################################################################
 #  This file is part of SmartHomeNG.py.  
 #  Visit:  https://github.com/smarthomeNG/
@@ -26,84 +26,16 @@ import copy
 import logging
 
 from pathlib import Path
-from lxml import etree
+from collections import OrderedDict
+import xmltodict
 
 logger = logging.getLogger("knxproject")
-
-#import dpts
-"""
-MAPPING = { \
-    # xml          item type    knx datatype mapping in SmartHomeNG
-    "DPST-1-1" : ( "bool", "1" )
-    "DPST-13-10": "13.xxx",
-    "DPST-14-56": "14.xxx",
-    "DPST-225-1": None, # Type unknown in linknx
-}
-
-def Datatype(name):
-    if name in DATATYPE.keys():
-        return DATATYPE[name]
-    n = name.split("-")
-    if n[0] == "DPT":
-        return "%s.xxx"%n[1]
-    else:
-        return "%i.%03i"%(int(n[1]),int(n[2]))
-"""
-
-"""
-    '1': de1,
-    '2': de2,
-    '3': de3,
-    '4002': de4002,
-    '4.002': de4002,
-    '5': de5,
-    '5001': de5001,
-    '5.001': de5001,
-    '6': de6,
-    '7': de7,
-    '8': de8,
-    '9': de9,
-    '10': de10,
-    '11': de11,
-    '12': de12,
-    '13': de13,
-    '14': de14,
-    '16000': de16000,
-    '16': de16000,
-    '16001': de16001,
-    '16.001': de16001,
-    '17': de17,
-    '17001': de17001,
-    '17.001': de17001,
-    '18001': de18001,
-    '18.001': de18001,
-    '20': de20,
-    '24': de24,
-    '229': de229,
-    '232': de232,
-    '275.100' : de275100,
-"""
 
 def int_to_lvl3_groupaddress(ga):
     """ converts an given integer into a string representing a three level group address """
     if ga <= 0 or ga > 32767:
         raise ValueError("Given Integer not in range for a valid group address")
     return "{0}/{1}/{2}".format((ga >> 11) & 0x1f, (ga >> 8) & 0x07, (ga) & 0xff)
-
-def strip_namespace_prefix(tree):
-    """
-    removes namespace prefixes from any element matching the xpath query that returns a prefixed element
-
-    :param tree: a
-    :return: tree without namespace prefixes
-    """
-    #xpath query for selecting all element nodes in namespace
-    query = "descendant-or-self::*[namespace-uri()!='']"
-    #for each element returned by the above xpath query...
-    for element in tree.xpath(query):
-        #replace element name with its local name
-        element.tag = etree.QName(element).localname
-    return tree
 
 def is_knxproject(filename):
     """
@@ -202,7 +134,6 @@ def _parse_esfproject(filename):
     return GAs
 
 
-
 def _parse_knxproject(filename):
     """
     Details can be found in ``KNX-XML Project-Schema-v17 - Description.pdf`` [1]
@@ -210,12 +141,46 @@ def _parse_knxproject(filename):
     Then there are a couple of subdirectories named M-<1234> where <1234> is a placeholder for a manufacturer ID and
     also a subdirectory named P-<ABCD> which contains the relevant information, e.g.:
     P-03B3
-        BinaryData    <subdirectory with binary data for ETS>
-        ExtraData     <subdirectory with extra data for ETS>
-        UserFiles     <subdirectory with user supplied files>
-        project.xml   <description of the contained (up to 16) projects as well as
+        BinaryData    subdirectory with binary data for ETS
+        ExtraData     subdirectory with extra data for ETS
+        UserFiles     subdirectory with user supplied files
+        project.xml   description of the contained (up to 16) projects as well as
                       further ProjectInformation like ``GroupAddressStyle`` which must be ``ThreeLevel`` here to work
-        0.xml         <a project description file that we need to examine
+        0.xml         a project description file that we need to examine
+
+    A sample xml file for group addresses could contain e.g.
+    ```xml
+    <?xml version="1.0" encoding="utf-8"?>
+    <KNX xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" CreatedBy="ETS5" ToolVersion="5.7.1093.38570" xmlns="http://knx.org/xml/project/20">
+    <Project Id="P-0185">
+        <Installations>
+        <Installation Name="" BCUKey="4294967295" DefaultLine="P-0185-0_L-3" IPRoutingLatencyTolerance="2000">
+            <Topology>...</Topology>
+            <Locations>...</Locations>
+            <GroupAddresses>
+            <GroupRanges>
+                <GroupRange Id="P-0185-0_GR-1" RangeStart="1" RangeEnd="2047" Name="Neue Hauptgruppe" Puid="26">
+                    <GroupRange Id="P-0185-0_GR-2" RangeStart="1" RangeEnd="255" Name="Neue Mittelgruppe" Puid="27">
+                        <GroupAddress Id="P-0185-0_GA-1" Address="1" Name="Schalten" Description="Schlafzimmer Eltern Lichtschalter" DatapointType="DPST-1-1" Puid="28" />
+                        <GroupAddress Id="P-0185-0_GA-2" Address="2" Name="Status" Description="Schlafzimmer Eltern Lichtschalter" DatapointType="DPST-1-1" Puid="30" />
+                    </GroupRange>
+                    <GroupRange Id="P-0185-0_GR-3" RangeStart="256" RangeEnd="511" Name="Neue Mittelgruppe" Puid="36">
+                        <GroupAddress Id="P-0185-0_GA-3" Address="256" Name="Bewegen" Description="Wohnzimmer Markise" DatapointType="DPST-1-8" Puid="37" />
+                        <GroupAddress Id="P-0185-0_GA-4" Address="257" Name="Schritt/Stop" Description="Wohnzimmer Markise" DatapointType="DPST-1-7" Puid="39" />
+                        <GroupAddress Id="P-0185-0_GA-5" Address="258" Name="Windalarm" Description="Wohnzimmer Markise" DatapointType="DPST-1-5" Puid="41" />
+                        <GroupAddress Id="P-0185-0_GA-6" Address="259" Name="Regenalarm" Description="Wohnzimmer Markise" DatapointType="DPST-1-5" Puid="43" />
+                        <GroupAddress Id="P-0185-0_GA-7" Address="260" Name="Position" Description="Wohnzimmer Markise" DatapointType="DPST-5-1" Puid="45" />
+                        <GroupAddress Id="P-0185-0_GA-8" Address="261" Name="Lamellenstellung" Description="Wohnzimmer Markise" DatapointType="DPST-5-1" Puid="47" />
+                    </GroupRange>
+                </GroupRange>
+            </GroupRanges>
+            </GroupAddresses>
+            <Trades> ... </Trades>
+        </Installation>
+        </Installations>
+    </Project>
+    </KNX>
+    ```
     """
     knxproj = zipfile.ZipFile(filename, 'r')
 
@@ -229,7 +194,7 @@ def _parse_knxproject(filename):
         if file.filename.split("/")[-1] != '0.xml':
             continue
         subprojects.append(file)
-        print(file)
+        logger.debug("Subfile '{}' found".format(file))
 
     if len(subprojects) == 0:
         logger.error("No project file found to examine")
@@ -240,28 +205,60 @@ def _parse_knxproject(filename):
         return None
 
     xmlfile = knxproj.open(subprojects[0].filename)
-    xmldoc = etree.fromstring(xmlfile.read())
-    xmlroot = strip_namespace_prefix( xmldoc )
+    xmldict = xmltodict.parse(xmlfile.read())
     
-    GroupRanges = xmlroot.find("{*}Project/{*}Installations/{*}Installation/{*}GroupAddresses/{*}GroupRanges")
-
     GAs = {}
 
-    # SmartHomeNG only supports Groupaddresses with 3 levels
-    # ToDo: Abort on encountering other level constellation or support them
-    main_ga_elem = GroupRanges.findall('GroupRange')
-    for level1 in main_ga_elem:
-        for level2 in level1:
-            for level3 in level2:
-                ga = level3.attrib.get("Address")
-                if ga:
-                    ga = int_to_lvl3_groupaddress(int(ga))
-                    GAs[ga] = { "Id":level3.attrib.get("Id"), "HG" : level1.attrib.get("Name"), "MG" : level2.attrib.get("Name"), "Name": level3.attrib.get("Name"), "Description":level3.attrib.get("Description"), "Comment":level3.attrib.get("Comment"), "DatapointType":level3.attrib.get("DatapointType"), "Puid":level3.attrib.get("Puid") }
+    try:
+        ga_dict = xmldict["KNX"]["Project"]["Installations"]["Installation"]["GroupAddresses"]["GroupRanges"]
+        if ga_dict is None:
+            logger.warning("No Group Ranges found. Please forward this info along with knxproj file to the author for problem search")
+            return GAs
 
+        top = ga_dict.get('GroupRange',None)
+        if top is None: return GAs
+
+        if isinstance(top, OrderedDict):
+            # if there is only one child defined in xml, an ordered dict is
+            # returned here instead of a list
+            # so we need to convert it to a list
+            main_ga = [top]
+        else:
+            main_ga = top
+
+        for middle in main_ga:
+            middle_dict = middle.get('GroupRange',None)
+            if middle_dict is None: continue
+
+            if isinstance( middle_dict, OrderedDict):
+                # same as above
+                middle_ga = [middle_dict]
+            else:
+                middle_ga = middle_dict
+
+            for last in middle_ga:
+                last_dict = last.get('GroupAddress', None)
+
+                if last_dict is None: continue
+
+                if isinstance( last_dict, OrderedDict):
+                    # same as above
+                    last_ga = [last_dict]
+                else:
+                    last_ga = last_dict
+
+                for ga_dict in last_ga:
+                        ga = ga_dict.get("@Address")
+                        if ga:
+                            ga = int_to_lvl3_groupaddress(int(ga))
+                            GAs[ga] = {"Id": ga_dict.get("@Id"), 
+                                "HG": middle.get("@Name"), 
+                                "MG": last.get("@Name"), 
+                                "Name": ga_dict.get("@Name"), 
+                                "Description": ga_dict.get("@Description"), 
+                                "Comment": ga_dict.get("@Comment"), 
+                                "DatapointType": ga_dict.get("@DatapointType"), 
+                                "Puid": ga_dict.get("@Puid")}
+    except Exception as e: 
+        print("Error {} occurred".format(e))
     return GAs
-
-if __name__ == "__main__":
-
-    parse_projectfile(Path("Demo.knxproj")
-
-)
