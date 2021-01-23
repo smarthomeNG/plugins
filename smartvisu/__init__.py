@@ -118,17 +118,14 @@ class SmartVisu(SmartPlugin):
             else:
                 self.logger.info(f"Starting smartVISU v{self.smartvisu_version} handling for visu in {self.smartvisu_dir}")
                 if self._handle_widgets:
-                    if self.smartvisu_is_configured:
-                        try:
-                            sv_iwdg = SmartVisuInstallWidgets(self)
-                        except Exception as e:
-                            self.logger.exception("SmartVisuInstallWidgets v{}: Exception: {}".format(self.get_smartvisu_version(), e))
-                        if self.removed_plugin_widgets != []:
-                            self.logger.error("Plugin widgets that need an update now: {}".format(self.removed_plugin_widgets))
-                        if self.deprecated_plugin_widgets != []:
-                            self.logger.warning("Plugin widgets that should get an update: {}".format(self.deprecated_plugin_widgets))
-                    else:
-                        self.logger.warning(f"Not installing widgets because smartVISU v{self.smartvisu_version} in directory {self.smartvisu_dir} is not yet configured")
+                    try:
+                        sv_iwdg = SmartVisuInstallWidgets(self)
+                    except Exception as e:
+                        self.logger.exception("SmartVisuInstallWidgets v{}: Exception: {}".format(self.get_smartvisu_version(), e))
+                    if self.removed_plugin_widgets != []:
+                        self.logger.error("Plugin widgets that need an update now: {}".format(self.removed_plugin_widgets))
+                    if self.deprecated_plugin_widgets != []:
+                        self.logger.warning("Plugin widgets that should get an update: {}".format(self.deprecated_plugin_widgets))
 
                 # generate pages for smartvisu, if configured to do so and smartvisu is already configured
                 if self._generate_pages:
