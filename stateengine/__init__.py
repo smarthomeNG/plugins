@@ -76,8 +76,9 @@ class StateEngine(SmartPlugin):
             SeLogger.set_loglevel(log_level)
             SeLogger.set_logdirectory(log_directory)
 
-        except Exception:
+        except Exception as ex:
             self._init_complete = False
+            self.logger.warning("Problem loading Stateengine plugin: {}".format(ex))
             return
 
     # Parse an item
@@ -277,7 +278,7 @@ class WebInterface(SmartPluginWebIf):
 
         :return: contents of the template after beeing rendered
         """
-        item = self.plugin.items.return_item(item_path)
+        item = self.plugin.itemsApi.return_item(item_path)
 
         tmpl = self.tplenv.get_template('{}.html'.format(page))
 
