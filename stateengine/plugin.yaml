@@ -416,7 +416,6 @@ item_attributes:
                 '
 
     se_use:
-        type: str
         type: list(str)
         description:
             de: 'Nutzen eines Vorgabezustands'
@@ -432,19 +431,6 @@ item_attributes:
                 In the specific state item the template or any struct can get referenced by using the attribute
                 se_use. The templates that should be used can even be dynamically changed during runtime
                 by using the **eval:** declaration in front of a valid eval expression
-                '
-        description:
-            de: 'Nutzen eines Vorgabezustands (veraltet - Nutze stattdessen das struct Feature)'
-            en: 'Using a default template (deprecated - Use the struct feature instead)'
-        description_long:
-            de: 'Vorgabezustände werden als Item an beliebiger Stelle innerhalb der
-                Item-Struktur definiert. Im konkreten Zustands-Item kann das Vorgabezustand-Item
-                über das Attribut se_use referenziert werden. Es wird empfohlen,
-                stattdessen das **struct** Feature zu nutzen.
-                '
-            en: 'Template states are defined as an item at any given position in the item tree.
-                In the specific state item the template can get referenced by using the attribute
-                se_use. It is recommended, however, to use the **struct** feature instead.
                 '
 
 item_structs:
