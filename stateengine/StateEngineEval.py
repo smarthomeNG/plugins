@@ -36,6 +36,9 @@ class SeEval(StateEngineTools.SeItemChild):
         self._eval_lock = threading.Lock()
         self.shtime = Shtime.get_instance()
 
+    def __repr__(self):
+        return "SeEval"
+
     # Get lamella angle based on sun_altitute for sun tracking
     def sun_tracking(self):
         self._eval_lock.acquire()

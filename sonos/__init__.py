@@ -188,7 +188,8 @@ class SubscriptionHandler(object):
         with self._lock:
             self._signal = threading.Event()
             try:
-                self._event = self._service.subscribe(auto_renew=True)
+#                self._event = self._service.subscribe(auto_renew=True)
+                self._event = self._service.subscribe(auto_renew=False)
             except Exception as err:
                 self.logger.warning("Sonos: {err}".format(err=err))
             if self._event:
@@ -340,7 +341,12 @@ class Speaker(object):
     def soco(self, value):
         if self._soco != value:
             self._soco = value
-            self.logger.debug("Sonos: {uid}: soco set to {value}".format(uid=self.uid, value=value))
+            self._is_coordinator = self._soco.is_coordinator
+            self.coordinator = self.soco.group.coordinator.uid.lower()
+            self.uid = self.soco.uid.lower()
+            self.household_id = self.soco.household_id
+
+            #self.logger.info("Debug: uid: {uid}: soco set to {value}".format(uid=self.uid, value=value))
             if self._soco:
                 self.render_subscription = \
                     SubscriptionHandler(endpoint=self._rendering_control_event, service=self._soco.renderingControl,
@@ -370,10 +376,6 @@ class Speaker(object):
                     self.alarm_subscription,
                     self.device_subscription
                 ]
-                self._is_coordinator = self._soco.is_coordinator
-                self.coordinator = self.soco.group.coordinator.uid.lower()
-                self.uid = self.soco.uid.lower()
-                self.household_id = self.soco.household_id
 
     def dispose(self):
         """
@@ -411,6 +413,7 @@ class Speaker(object):
 
         self.render_subscription.unsubscribe()
         self.render_subscription.subscribe()
+
 
     def refresh_static_properties(self) -> None:
         """
@@ -1240,10 +1243,10 @@ class Speaker(object):
         if self.is_coordinator:
             for member in self._zone_group_members:
                 if member is not self:
-                    self.logger.info("Debug: Unsubscribe in fct zone_group_members") 
+                    self.logger.info("Debug: Unsubscribe av event for uid {0} in fct zone_group_members".format(self.uid)) 
                     member.av_subscription.unsubscribe()
                 else:
-                    self.logger.info("Debug: Un/Subscribe in fct zone_group_members") 
+                    self.logger.info("Debug: Un/Subscribe av event for uid {0} in fct zone_group_members".format(self.uid)) 
                     member.av_subscription.unsubscribe()
                     member.av_subscription.subscribe()
 
@@ -1508,6 +1511,8 @@ class Speaker(object):
         :param value: True for mute, False for un-mute
         :return: True, if successful, otherwise False.
         """
+        #self.logger.info("Debug: set_mute: check_property: {0}".format(self._check_property()))
+        self.logger.info("Debug: set_mute: self.coordinator: {0}".format(self.coordinator))
         try:
             if not self._check_property():
                 return False
@@ -2332,7 +2337,7 @@ class Speaker(object):
 
 class Sonos(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.5.1"
+    PLUGIN_VERSION = "1.5.3"
 
     def __init__(self, sh, *args, **kwargs):
         super().__init__(**kwargs)
@@ -2476,6 +2481,13 @@ class Sonos(SmartPlugin):
         metadata = dict(re.findall("__([a-z]+)__ = \"([^\"]+)\"", src))
         VERSION = metadata['version']
         self.logger.info("Loading SoCo version {0}.".format(VERSION))
+
+        # Configure log level of different SoCo modules:
+        #logging.getLogger('plugins.sonos.soco.events_base').setLevel(logging.WARNING)
+        #logging.getLogger('plugins.sonos.soco.events').setLevel(logging.WARNING)
+        logging.getLogger('plugins.sonos.soco.discovery').setLevel(logging.WARNING)
+        logging.getLogger('plugins.sonos.soco.services').setLevel(logging.WARNING)
+        self.logger.info("Set all SoCo loglevel to WARNING")
 
     def run(self):
         self.logger.debug("Run method called")
@@ -2920,6 +2932,9 @@ def _initialize_speaker(uid: str, logger: logging) -> None:
     :param uid: uid of the speaker
     :param logger: logger instance
     """
+    # The method _initialize_speaker is called for every unknown sonos speaker identified by the discovery function
+    # Moreover, it is called for every sonos attribute having the sonos_recv attribute to initialize those speakers even
+    # if they have not been discovered yet by the sonos discovery function.
     with _create_speaker_lock:
         if uid not in sonos_speaker:
             sonos_speaker[uid] = Speaker(uid=uid, logger=logger)

@@ -12,8 +12,8 @@ plugin:
     documentation: http://smarthomeng.de/user/plugins/visu_smartvisu/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1586800-support-thread-für-das-smartvisu-plugin
 
-    version: 1.8.0                 # Plugin version
-    sh_minversion: 1.7.2            # minimum shNG version to use this plugin
+    version: 1.8.1                 # Plugin version
+    sh_minversion: 1.8.1            # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     py_minversion: 3.6             # minimum Python version to use for this plugin
 #    py_maxversion:                 # maximum Python version to use for this plugin (leave empty if latest)
@@ -199,6 +199,24 @@ item_structs: NONE
 logic_parameters: NONE
     # Definition of logic parameters defined by this plugin
 
-plugin_functions: NONE
+plugin_functions:
     # Definition of function interface of the plugin
+
+    url:
+        type: void
+        description:
+            de: "Diese Funktion weist smartVISU Clients an, auf die angegebene Url (Visu Seite) zu wechseln. Die Funktion funktioniert mit smartVISU v2.9 und später. Für smartVISU v2.8 muss ein modifizierter Treiber io_smarthome.js verwendet werden - Beispiel: sh.visu.url('index.php?page=apartement.living', '10.0.0.23')"
+            en: "This function instructs the smartVISU clients to change to the specified url (visu page). This function works with smartVISU v2.9 and up, for smartVISU v2.8 a modified driver io_smarthome.js is needed - Example: sh.visu.url('index.php?page=apartement.living', '10.0.0.23')"
+        parameters:
+            url:
+                type: str
+                description:
+                    de: "Die URL zu der smartVISU wechseln soll"
+                    en: "url to which smartVISU should change"
+            clientip:
+                type: str
+                default: ''
+                description:
+                    de: "Falls angegeben, werden nur Clients (Browser) die auf dem Host mit der angegebenen IP Adresse laufen angewiesen die Seite zu wechseln. "
+                    en: "If specified, only clients (browsers) running on the host with the specified ip address are instructed to change the page."
 

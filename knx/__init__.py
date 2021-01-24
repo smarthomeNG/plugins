@@ -4,7 +4,7 @@
 #  Copyright 2012-2013 Marcus Popp                         marcus@popp.mx
 #  Copyright 2016- Christian Strassburg               c.strassburg@gmx.de
 #  Copyright 2017- Serge Wagener                     serge@wagener.family
-#  Copyright 2017-2020 Bernd Meiners                Bernd.Meiners@mail.de
+#  Copyright 2017-2021 Bernd Meiners                Bernd.Meiners@mail.de
 #########################################################################
 #  This file is part of SmartHomeNG.py.
 #  Visit:  https://github.com/smarthomeNG/
@@ -82,7 +82,7 @@ KNXMC = 'IP Router'
 # old class KNX(lib.connection.Client,SmartPlugin):
 class KNX(SmartPlugin):
 
-    PLUGIN_VERSION = "1.7.4"
+    PLUGIN_VERSION = "1.7.5"
 
     # tags actually used by the plugin are shown here
     # can be used later for backend item editing purposes, to check valid item attributes

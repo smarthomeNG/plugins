@@ -38,7 +38,7 @@ Logger. Die einzelnen Abschnitte müssen in die ``logging.yaml`` integriert werd
          level: INFO
          handlers: [busmonitor_file]
 
-Mit dieser Kofiguration werde alle busmonitor Mitteilungen in 
+Mit dieser Konfiguration werde alle busmonitor Mitteilungen in 
 ``./var/log/knx_busmonitor.log`` geschrieben.
 
 items.yaml
@@ -46,7 +46,7 @@ items.yaml
 
 Bitte die Dokumentation lesen, die aus den Metadaten der ``plugin.yaml`` erzeugt wurde.
 
-Nachfolgend eine Datei mit Beispielen für Itemdefinitionen unter Berücksichtigung des KNX Plugins
+Nachfolgend eine Datei mit Beispielen für Item Definitionen unter Berücksichtigung des KNX Plugins
 
 .. code-block:: yaml
 

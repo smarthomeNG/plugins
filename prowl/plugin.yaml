@@ -1,3 +1,7 @@
+%YAML 1.1
+# vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
+---
+
 # Metadata for the Smart-Plugin
 plugin:
     # Global plugin attributes
@@ -7,16 +11,16 @@ plugin:
         en: 'Support for prowl'
     maintainer: Foxi352
     state: ready
-    tester: '?'                    # Who tests this plugin?
+    tester: Morg                    # Who tests this plugin?
     keywords: iOS Prowl Growl SMS Push
     documentation: https://www.smarthomeng.de/user/plugins/prowl/README.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1492644-support-thread-zum-prowl-plugin
 
-    version: 1.3.1                 # Plugin version
+    version: 1.3.2                 # Plugin version
     sh_minversion: 1.3             # minimum shNG version to use this plugin
-    #sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
-    multi_instance: True           # plugin supports multi instance
-    restartable: unknown
+    # sh_maxversion:               # maximum shNG version to use this plugin (leave empty if latest)
+    multi_instance: true           # plugin supports multi instance
+    restartable: true
     classname: Prowl               # class containing the plugin
 
 parameters:
@@ -25,15 +29,38 @@ parameters:
     apikey:
         type: str
         description:
-            de: "Der Parameter ist optional. Hier kann ein globaler apikey für den Prowl Service definiert werden"
-            en: "This attribute is optional. You could define a global apikey for the prowl service"
+            de: 'Der Parameter ist optional. Hier kann ein globaler apikey für den Prowl Service definiert werden'
+            en: 'This attribute is optional. You could define a global apikey for the prowl service'
 
 
-item_attributes: NONE
+item_attributes:
     # Definition of item attributes defined by this plugin
+    prowl_event:
+        type: str
+        description:
+            de: 'Der Text für das Event-Feld. "VAL" wird durch den Item-Wert ersetzt.'
+            en: 'Text for the event field. "VAL" is replaced by the item value.'
+
+    prowl_text:
+        type: str
+        description:
+            de: 'Der Text für das Description-Feld. "VAL" wird durch den Item-Wert ersetzt.'
+            en: 'Text for the description field. "VAL" is replaced by the item value.'
+
+    prowl_values:
+        type: list(dict)
+        description:
+            de: 'Eine Liste von Wert: "Text"-Paaren. Wenn der Item-Wert einem angegebenen Wert entspricht, wird der entsprechende Text als description gesendet.'
+            en: 'A list of value: "text" pairs. If the item value matches a value, the respective text ist sent as description.'
+
+    prowl_swap:
+        type: bool
+        description:
+            de: 'Wenn dieses Attribut auf true gesetzt wird, werden die Felder event und description vor dem Senden vertauscht.'
+            en: 'If this attribute is set to true, the event and description fields are swapped before sending.'
 
 item_structs: NONE
-  # Definition of item-structure templates for this plugin
+    # Definition of item-structure templates for this plugin
 
 plugin_functions:
     # Definition of plugin functions defined by this plugin
@@ -41,48 +68,47 @@ plugin_functions:
     notify:
         type: foo
         description:
-            de: "Diese Funktion versendet eine eMail - Beispiel: sh.mail('admin@smart.home', 'Testmail', 'Mailtext und Betreff können UTF-8 kodierten Text enthalten')"
-            en: "This function sends an email - Example: sh.mail('admin@smart.home', 'Testmail', 'Subject and mail body can contain UTF-8 encoded text')"
+            de: 'Diese Funktion versendet eine Nachricht an Prowl.'
+            en: 'This function sends a Prowl notification.'
         parameters:
             event:
                 type: str
                 default: ''
                 description:
-                    de: "Typ des Ereignisses"
-                    en: "Type of event"
+                    de: 'Typ des Ereignisses'
+                    en: 'Type of event'
             description:
                 type: str
                 default: ''
                 description:
-                    de: "Beschreibung des Ereignisses"
-                    en: "Description of the event"
+                    de: 'Beschreibung des Ereignisses'
+                    en: 'Description of the event'
             priority:
                 type: int
                 default: None*
                 valid_min: 0
                 valid_max: 2
                 description:
-                    de: "Es kann eine Priorität (0-2) angegeben werden, um zwischen Ereignissen auf dem Mobile Device zu differenzieren"
-                    en: "A priority (0-2) can be specified to differentiate beetween events on your mobile device"
+                    de: 'Es kann eine Priorität (0-2) angegeben werden, um zwischen Ereignissen auf dem Mobile Device zu differenzieren'
+                    en: 'A priority (0-2) can be specified to differentiate beetween events on your mobile device'
             url:
                 type: str
                 default: None*
                 description:
-                    de: "Diese URL wird mit der Notification verbunden"
-                    en: "This url would be linked to the notification"
+                    de: 'Diese URL wird mit der Notification verbunden'
+                    en: 'This url would be linked to the notification'
             apikey:
                 type: str
                 default: None*
                 description:
-                    de: "Hier kann ein individueller apikey angegeben werden"
-                    en: "An individual apikey can be specified here"
+                    de: 'Hier kann ein individueller apikey angegeben werden'
+                    en: 'An individual apikey can be specified here'
             application:
                 type: str
                 default: 'SmartHomeNG'
                 description:
-                    de: "Name der sendenden Applikation"
-                    en: "Name of the sending application"
+                    de: 'Name der sendenden Applikation'
+                    en: 'Name of the sending application'
 
 logic_parameters: NONE
     # Definition of logic parameters defined by this plugin
-

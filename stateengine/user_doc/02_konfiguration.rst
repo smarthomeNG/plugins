@@ -1,6 +1,7 @@
 
 .. index:: Stateengine; Konfiguration
 
+=============
 Konfiguration
 =============
 
@@ -8,8 +9,8 @@ Konfiguration
 
       Detaillierte Informationen zur Konfiguration des Plugins sind unter :doc:`/plugins_doc/config/stateengine` zu finden.
 
-.. rubric:: Pluginkonfiguration
-   :name: pluginkonfiguration
+Pluginkonfiguration
+-------------------
 
 .. code-block:: yaml
 
@@ -23,8 +24,8 @@ Konfiguration
        #log_directory: var/log/StateEngine/
        #log_maxage: 0
 
-.. rubric:: Aktivieren
- :name: aktivieren
+Aktivieren
+----------
 
 Um für ein Item das Stateengine Plugin zu aktivieren, ist das Attribut ``se_plugin``
 auf ``active`` zu setzen. Dies ist in der generellen struct Vorlage bereits
@@ -40,8 +41,8 @@ nicht eingesetzt wird.
              se_plugin: active
              se_log_level: 2
 
-.. rubric:: Logging
-  :name: logging
+Logging
+-------
 
 Es gibt zwei Möglichkeiten, den Output des Plugins zu loggen:
 **intern**

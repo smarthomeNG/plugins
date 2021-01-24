@@ -33,7 +33,6 @@ class SeCliCommands:
         self.logger = logger
         self.plugins = Plugins.get_instance()
 
-
         # Add additional cli commands if cli is active (and functionality to add own cli commands is available)
         try:
             cli = self._get_cli_plugin()
