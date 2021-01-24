@@ -89,9 +89,9 @@ $("a").click(function() {
     {% for item in p.get_items() %}
     <tr onclick="location.href='?action=get_graph&abitem={{ item }}';">
         <td class="py-1">{{ item }}</td>
-        <td class="py-1">{% for cond in item.webif_infos.keys() %}{% if not p.items.return_item(cond) == None %}
+        <td class="py-1">{% for cond in item.webif_infos.keys() %}{% if not p.itemsApi.return_item(cond) == None %}
                           {% if loop.index > 1%},{% endif %}
-                         {{ p.items.return_item(cond)._name.split('.')[-1] }}{% endif %}{% endfor %}</td>
+                         {{ p.itemsApi.return_item(cond)._name.split('.')[-1] }}{% endif %}{% endfor %}</td>
         <td class="py-1">{{ item.laststate_name }}</td>
         <td class="py-1">{{ item.lastconditionset_name }}</td>
 
