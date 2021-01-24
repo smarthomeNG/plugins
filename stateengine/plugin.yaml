@@ -416,7 +416,6 @@ item_attributes:
                 '
 
     se_use:
-        type: str
         type: list(str)
         description:
             de: 'Nutzen eines Vorgabezustands'
