@@ -32,6 +32,8 @@ import os
 from lib.model.smartplugin import *
 from lib.item import Items
 
+logging.addLevelName(StateEngineDefaults.VERBOSE, 'DEVELOP')
+
 
 class StateEngine(SmartPlugin):
     PLUGIN_VERSION = '1.8.1'

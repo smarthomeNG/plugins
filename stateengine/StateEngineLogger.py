@@ -35,7 +35,7 @@ class SeLogger:
             SeLogger.__loglevel = int(loglevel)
         except ValueError:
             SeLogger.__loglevel = 0
-            logger = logging.getLogger('plugins.stateengine')
+            logger = logging.getLogger('plugins.stateengine.general')
             logger.error("Loglevel has to be an int number!")
 
     # Set log directory
@@ -144,7 +144,7 @@ class SeLogger:
     # level: required loglevel
     # text: text to log
     def log(self, level, text, *args):
-        # Section givn: Check level
+        # Section given: Check level
         if level <= self.__loglevel:
             indent = "\t" * self.__indentlevel
             text = text.format(*args)
@@ -169,7 +169,7 @@ class SeLogger:
         text = '{}{}'.format(indent, text)
         self.logger.info(text.format(*args))
 
-    # log with lebel=debug
+    # log with level=debug
     # text: text to log
     # *args: parameters for text
     def debug(self, text, *args):
@@ -177,6 +177,15 @@ class SeLogger:
         indent = "\t" * self.__indentlevel
         text = '{}{}'.format(indent, text)
         self.logger.debug(text.format(*args))
+
+    # log with level=develop
+    # text: text to log
+    # *args: parameters for text
+    def develop(self, text, *args):
+        self.log(3, "DEV: " + text, *args)
+        indent = "\t" * self.__indentlevel
+        text = '{}{}'.format(indent, text)
+        self.logger.log(StateEngineDefaults.VERBOSE, text.format(*args))
 
     # log warning (always to main smarthome.py log)
     # text: text to log
@@ -232,41 +241,47 @@ class SeLoggerDummy:
     # log text something
     # level: required loglevel
     # text: text to log
+    def develop(self, text, *args):
+        pass
+
+    # log text something
+    # level: required loglevel
+    # text: text to log
     def log(self, level, text, *args):
         pass
 
-    # log header line (as info)
+    # log header line (always to main smarthomeNG log as info)
     # text: header text
     def header(self, text):
-        pass
+        self.logger.info(text)
 
-    # log with level=info
+    # log with level=info (always to main smarthomeNG log)
     # @param text text to log
     # @param *args parameters for text
     def info(self, text, *args):
-        pass
+        self.logger.info(text.format(*args))
 
-    # log with lebel=debug
+    # log with level=debug (always to main smarthomeNG log)
     # text: text to log
     # *args: parameters for text
     def debug(self, text, *args):
-        pass
+        self.logger.debug(text.format(*args))
 
-    # log warning (always to main smarthome.py log)
+    # log warning (always to main smarthomeNG log)
     # text: text to log
     # *args: parameters for text
     # noinspection PyMethodMayBeStatic
     def warning(self, text, *args):
         self.logger.warning(text.format(*args))
 
-    # log error (always to main smarthome.py log)
+    # log error (always to main smarthomeNG log)
     # text: text to log
     # *args: parameters for text
     # noinspection PyMethodMayBeStatic
     def error(self, text, *args):
         self.logger.error(text.format(*args))
 
-    # log exception (always to main smarthome.py log'
+    # log exception (always to main smarthomeNG log)
     # msg: message to log
     # *args: arguments for message
     # **kwargs: known arguments for message

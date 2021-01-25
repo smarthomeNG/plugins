@@ -32,6 +32,8 @@ instant_leaveaction = False
 
 plugin_identification = "StateEngine Plugin"
 
+VERBOSE = logging.DEBUG - 1
+
 
 def write_to_log(logger):
     logger.info("StateEngine default startup delay = {0}".format(startup_delay))
