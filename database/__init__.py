@@ -308,7 +308,10 @@ class Database(SmartPlugin):
         :rtype: int | None
         """
 
-        id = self.readItem(str(item.id()), cur=cur)
+        try:
+            id = self.readItem(str(item.id()), cur=cur)
+        except Exception as e:
+            self.logger.warning(f"id(): No id found for item {item.id()} - Exception {e}")
 
         if id is None and create == True:
             id = [self.insertItem(item.id(), cur)]
@@ -1143,7 +1146,10 @@ class Database(SmartPlugin):
         try:
             item_id = self.id(item, create=False)
         except:
-            self.logger.critical("remove_older_than_maxage: no id for item {}".format(item))
+            if item_id is None:
+                self.logger.info("remove_older_than_maxage: no id for item {}".format(item))
+            else:
+                self.logger.critical("remove_older_than_maxage: no id for item {}".format(item))
             return
         time_end = self.get_maxage_ts(item)
         timestamp_end = self._timestamp(time_end)
