@@ -63,7 +63,7 @@ item_attributes:
     # Definition of item attributes defined by this plugin
     rc_device:
         type: str
-        valid_list: [1,2,3,4,5,a,b,c,d,e,A,B,C,D,E]
+        valid_list: ['1','2','3','4','5','a','b','c','d','e','A','B','C','D','E']
         description:
             de: "Nummer (oder Buchstabe) des Device"
             en: "Number or letter or the device"
