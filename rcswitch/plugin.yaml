@@ -3,8 +3,8 @@ plugin:
     # Global plugin attributes
     type: gateway                 # plugin type (gateway, interface, protocol, system, web)
     description:                  # Alternative: description in multiple languages
-        de: 'Schalten von 433 MHz Funksteckdosen'
-        en: 'Support for 433 MHz wireless sockets'
+        de: 'Schalten von 433 MHz Funksteckdosen z.B. für Brennenstuhl RCS 1000 N'
+        en: 'Support for 433 MHz wireless sockets e.g. for Brennenstuhl RCS 1000 N'
     maintainer: dafra
     tester: hasenradball          # Who tests this plugin?
     state: ready
