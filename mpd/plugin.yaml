@@ -3,17 +3,17 @@ plugin:
     # Global plugin attributes
     type: gateway                    # plugin type (gateway, interface, protocol, system, web)
     description:
-        de: 'Music Player Deamon (MPD) Unterstützung'
-        en: 'Music Player Deamon (MPD) support'
+        de: 'Music Player Daemon (MPD) Unterstützung'
+        en: 'Music Player Daemon (MPD) support'
     maintainer: 'E3EAT'
-#    tester:                        # Who tests this plugin?
+    tester:  beavon, knxms          # Who tests this plugin?
     keywords: MPD Music Player      # keywords, where applicable
     state: ready
     documentation: https://www.smarthomeng.de/user/plugins/mpd/README.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1540433-support-thread-für-das-mpd-plugin
 
 # Following entries are for Smart-Plugins:
-    version: 1.4.2                 # Plugin version
+    version: 1.4.3                 # Plugin version
     sh_minversion: 1.4             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True
@@ -24,7 +24,7 @@ parameters:
     # Definition of parameters to be configured in etc/plugin.yaml
 
     host:
-        type: str
+        type: ip
         mandatory: True
         description:
             de: 'IP oder Hostname des MPD'
@@ -32,7 +32,6 @@ parameters:
 
     port:
         type: int
-        mandatory: False
         default: 6600
         description:
             de: 'Der Port auf dem MPD lauscht.'
@@ -40,7 +39,6 @@ parameters:
 
     cycle:
         type: int
-        mandatory: False
         default: 2
         description:
             de: 'Gibt an nach wie vielen Sekunden die Statusitems aktualisiert werden'
@@ -133,7 +131,7 @@ item_attributes:
     mpd_songinfo:
         type: str
         description:
-            de: ''
+            de: 'Implementiert Kommandos und Informationen über das aktuell gespielte Musikstück zu erhalten'
             en: 'Implements commands that are used to query information about the current playing song.'
         valid_list:
             - 'file'
@@ -199,6 +197,7 @@ item_attributes:
                 - 'num,  time length of music played'
 
     mpd_command:
+        type: str
         description:
             de: 'Implementiert Anweisungen die genutzt werden um das Abspielen von Musikstücken zu kontrollieren'
             en: 'Implements commands that are used to control the playback.'
@@ -270,13 +269,13 @@ item_attributes:
                 - 'num,  Sets volume to VOL, the range of volume is 0-100'
                 - 'str,  ets the replay gain mode. One of off, track, album, auto'
     mpd_url:
-        type: bool
+        type: str
         description:
-            de: ''
+            de: 'Untersucht die gegebene URL und versucht den Stream abzuspielen'
             en: 'Parses the defined url and tries to play the stream.'
             
     mpd_localplaylist:
-        type: bool
+        type: str
         description:
             de: 'Sucht eine lokale Playlist mit einem gegebenen Namen und spielt sie ab wenn sie gefunden wurde'
             en: 'Searches for a local playlist with the defined filename and plays it if found.'
