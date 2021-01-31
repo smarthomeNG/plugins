@@ -137,7 +137,7 @@ class KNX(SmartPlugin):
             self._bm_separatefile = True
             self._bm_format = "{0};{1};{2};{3}"
             self._busmonitor = logging.getLogger("knx_busmonitor").info
-            self.logger.warning(self.translate("Using busmonitor (L) = '{}'").format(busmonitor))
+            self.logger.info(self.translate("Using busmonitor (L) = '{}'").format(busmonitor))
         else:
             self.logger.warning(self.translate("Invalid value '{}' configured for parameter 'busmonitor', using 'false'").format(busmonitor))
             self._busmonitor = self.logger.debug
@@ -470,6 +470,7 @@ class KNX(SmartPlugin):
                     item = self.gar[dst][ITEM]
                     if self.logger.isEnabledFor(logging.DEBUG):
                         self.logger.debug("groupwrite value '{}' to ga '{}' as DPT '{}' as response".format(dst, item(), self.get_iattr_value(item.conf,KNX_DPT)))
+                    self._busmonitor(self._bm_format.format(self.get_instance_name(), src, dst, val))
                     self.groupwrite(dst, item(), self.get_iattr_value(item.conf,KNX_DPT), 'response')
                 if self.gar[dst][LOGIC] is not None:
                     src_wrk = self.get_instance_name()
@@ -679,11 +680,15 @@ class KNX(SmartPlugin):
         if self.has_iattr(item.conf, KNX_SEND):
             if caller != self.get_shortname():
                 for ga in self.get_iattr_value(item.conf, KNX_SEND):
-                    self.groupwrite(ga, item(), self.get_iattr_value(item.conf, KNX_DPT))
+                    _value = item()
+                    self._busmonitor(self._bm_format.format(self.get_instance_name(), 'SEND', ga, _value))
+                    self.groupwrite(ga, _value, self.get_iattr_value(item.conf, KNX_DPT))
         if self.has_iattr(item.conf, KNX_STATUS):
             for ga in self.get_iattr_value(item.conf, KNX_STATUS):  # send status update
                 if ga != dest:
-                    self.groupwrite(ga, item(), self.get_iattr_value(item.conf, KNX_DPT))
+                    _value = item()
+                    self._busmonitor(self._bm_format.format(self.get_instance_name(), 'STATUS', ga, _value))
+                    self.groupwrite(ga, _value, self.get_iattr_value(item.conf, KNX_DPT))
 
 
     def init_webinterface(self):
