@@ -82,7 +82,7 @@ KNXMC = 'IP Router'
 # old class KNX(lib.connection.Client,SmartPlugin):
 class KNX(SmartPlugin):
 
-    PLUGIN_VERSION = "1.7.5"
+    PLUGIN_VERSION = "1.7.6"
 
     # tags actually used by the plugin are shown here
     # can be used later for backend item editing purposes, to check valid item attributes
