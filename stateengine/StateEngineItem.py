@@ -72,7 +72,7 @@ class SeItem:
 
     @property
     def lastconditionset(self):
-        return self.__lastconditionset_item_id.property.value
+        return None if self.__lastconditionset_item_id is None else self.__lastconditionset_item_id.property.value
 
     @property
     def laststate_name(self):
@@ -80,7 +80,7 @@ class SeItem:
 
     @property
     def lastconditionset_name(self):
-        return self.__lastconditionset_item_name.property.value
+        return None if self.__lastconditionset_item_name is None else self.__lastconditionset_item_name.property.value
 
     @property
     def action_in_progress(self):
