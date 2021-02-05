@@ -128,6 +128,7 @@ class KNX(SmartPlugin):
         self.stats_last_write = None    # last write from KNX
         self.stats_last_response = None # last response from KNX
         self.stats_last_action = None   # the newes
+        self._log_own_packets = self.get_parameter_value('log_own_packets')
 
         if busmonitor.lower() in ['on','true']:
             self._busmonitor = self.logger.info
@@ -470,7 +471,8 @@ class KNX(SmartPlugin):
                     item = self.gar[dst][ITEM]
                     if self.logger.isEnabledFor(logging.DEBUG):
                         self.logger.debug("groupwrite value '{}' to ga '{}' as DPT '{}' as response".format(dst, item(), self.get_iattr_value(item.conf,KNX_DPT)))
-                    self._busmonitor(self._bm_format.format(self.get_instance_name(), src, dst, val))
+                    if self._log_own_packets is True:
+                        self._busmonitor(self._bm_format.format(self.get_instance_name(), src, dst, val))
                     self.groupwrite(dst, item(), self.get_iattr_value(item.conf,KNX_DPT), 'response')
                 if self.gar[dst][LOGIC] is not None:
                     src_wrk = self.get_instance_name()
@@ -681,13 +683,15 @@ class KNX(SmartPlugin):
             if caller != self.get_shortname():
                 for ga in self.get_iattr_value(item.conf, KNX_SEND):
                     _value = item()
-                    self._busmonitor(self._bm_format.format(self.get_instance_name(), 'SEND', ga, _value))
+                    if self._log_own_packets is True:
+                        self._busmonitor(self._bm_format.format(self.get_instance_name(), 'SEND', ga, _value))
                     self.groupwrite(ga, _value, self.get_iattr_value(item.conf, KNX_DPT))
         if self.has_iattr(item.conf, KNX_STATUS):
             for ga in self.get_iattr_value(item.conf, KNX_STATUS):  # send status update
                 if ga != dest:
                     _value = item()
-                    self._busmonitor(self._bm_format.format(self.get_instance_name(), 'STATUS', ga, _value))
+                    if self._log_own_packets is True:
+                        self._busmonitor(self._bm_format.format(self.get_instance_name(), 'STATUS', ga, _value))
                     self.groupwrite(ga, _value, self.get_iattr_value(item.conf, KNX_DPT))
 
 
