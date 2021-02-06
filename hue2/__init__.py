@@ -576,7 +576,9 @@ class Hue2(SmartPlugin):
         for br in discovered_bridges:
             br_info = {}
             br_info['mac'] = br
-            br_info['ip'] = discovered_bridges[br].split('/')[2].split(':')[0]
+            br_info['ip'], port = discovered_bridges[br].split('/')[2].split(':')
+            if int(port) != 80:
+                br_info['ip'] = br_info['ip'] + ':' + port
             r = requests.get('http://' + br_info['ip'] + '/description.xml')
             if r.status_code == 200:
                 xmldict = xmltodict.parse(r.text)
