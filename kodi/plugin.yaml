@@ -224,7 +224,7 @@ item_structs:
 
         favourites:
             kodi_item@instance: get_favourites
-            type: str
+            type: dict
             visu_acl: rw
             enforce_updates: true
 
