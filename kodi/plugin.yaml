@@ -8,8 +8,8 @@ plugin:
     requirements:
         de: 'Es ist eine Kodi Installation v12 oder höher notwendig, bei der in den Einstellungen "Allow programs on other systems to control Kodi" aktiviert ist.'
         en: 'You need one or more Kodi (12 a.k.a. Frodo or above) with system-settings-service "Allow programs on other systems to control Kodi" enabled.'
-    maintainer: onkelandy
-    tester: psilo, Morg
+    maintainer: Morg, onkelandy
+    tester: psilo
     state: ready
     keywords: mediacenter kodi xmbc
     documentation: http://smarthomeng.de/user/plugins/kodi/user_doc.html
