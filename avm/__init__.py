@@ -82,10 +82,12 @@ class MonitoringService:
             return
 
         self.conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.conn.settimeout(None)
         try:
             self.conn.connect((self._host, self._port))
             _name = 'plugins.' + self._plugin_instance.get_fullname() + '.Monitoring_Service'
-            self._listen_thread = threading.Thread(target=self._listen, name=_name).start()
+            self._listen_thread = threading.Thread(target=self._listen, name=_name)
+            self._listen_thread.start()
             self._plugin_instance.logger.debug("MonitoringService: connection established")
         except Exception as e:
             self.conn = None
@@ -102,11 +104,16 @@ class MonitoringService:
         self._listen_active = False
         self._stop_counter('incoming')
         self._stop_counter('outgoing')
+        # Close the socket to stop the listen thread
+        try:
+            self.conn.shutdown(2)
+            self.conn.close()
+        except:
+            pass
         try:
             self._listen_thread.join(1)
         except:
             pass
-        self.conn.shutdown(2)
 
     def reconnect(self):
         """
@@ -172,19 +179,27 @@ class MonitoringService:
         """
         self._listen_active = True
         buffer = ""
-        data = True
         while self._listen_active:
-            data = self.conn.recv(recv_buffer)
-            if data == "":
+            try:
+                data = self.conn.recv(recv_buffer)
+            except Exception as e:
+                self._plugin_instance.logger.error("CallMonitor connection receive error: " + str(e))
+                break
+            if not data:
                 self._plugin_instance.logger.error("CallMonitor connection not open anymore.")
-            else:
-                self._plugin_instance.logger.debug("Data Received from CallMonitor: %s" % data.decode("utf-8"))
-            buffer += data.decode("utf-8")
+                break
+            data = data.decode("utf-8")
+            self._plugin_instance.logger.debug("Data Received from CallMonitor: %s" % data)
+            buffer += data
             while buffer.find("\n") != -1:
                 line, buffer = buffer.split("\n", 1)
                 self._parse_line(line)
-
-            # time.sleep(1)
+        self._listen_active = False
+        try:
+            self.conn.shutdown(2)
+            self.conn.close()
+        except:
+            pass
         return
 
     def _start_counter(self, timestamp, direction):
