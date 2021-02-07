@@ -12,7 +12,7 @@ plugin:
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1586861-support-thread-für-das-hue2-plugin
 
-    version: 2.0.0                  # Plugin version (must match the version specified in __init__.py)
+    version: 2.0.1                  # Plugin version (must match the version specified in __init__.py)
     sh_minversion: 1.8.0            # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
 #    py_minversion: 3.6             # minimum Python version to use for this plugin
@@ -72,6 +72,16 @@ parameters:
             de: 'IP Adresse der Philips/Signify Hue Bridge
                  Dieser Parameter wird durch das Plugins in den Konfigurationsdaten abgelegt. Er ist in der Admin GUI nicht änderbar'
             en: 'ip address of the Philips/Signify hue bridge
+                 The plugin ist saving this dats to the configuration. This parameter cannot be changed in the admin GUI'
+
+    bridge_port:
+        type: int
+        gui_type: readonly
+        valid_min: 0
+        description:
+            de: 'Port der Philips/Signify Hue Bridge
+                 Dieser Parameter wird durch das Plugins in den Konfigurationsdaten abgelegt. Er ist in der Admin GUI nicht änderbar'
+            en: 'Port of the Philips/Signify hue bridge
                  The plugin ist saving this dats to the configuration. This parameter cannot be changed in the admin GUI'
 
 item_attributes:

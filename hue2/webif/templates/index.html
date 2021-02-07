@@ -429,6 +429,7 @@
 						<th class="py-1">{{ _('Modell Nr.') }}</th>
 						<th class="py-1">{{ _('Version') }}</th>
 						<th class="py-1">{{ _('IP') }}</th>
+						<th class="py-1">{{ _('Port') }}</th>
 <!--					<th class="py-1">{{ _('UDN') }}</th>  -->
 						<th class="py-1" width="200px"></th>
 					</tr>
@@ -442,6 +443,7 @@
 							<td class="py-1">{{ db.modelNumber }}</td>
 							<td class="py-1">{{ db.version }}</td>
 							<td class="py-1">{{ db.ip }}</td>
+							<td class="py-1">{{ db.port }}</td>
 <!--						<td class="py-1">{{ db.UDN }}</td>  -->
 							<td class="py-1">
 								{% if bridge_count == 0 %}
@@ -482,6 +484,7 @@
 	<!--					<th class="py-1">{{ _('Modell Nr.') }}</th>  -->
 							<th class="py-1">{{ _('Version') }}</th>
 							<th class="py-1">{{ _('IP') }}</th>
+							<th class="py-1">{{ _('Port') }}</th>
 							<th class="py-1">{{ _('Anwendungsschlüssel') }}</th>
 							<th class="py-1" width="200px"></th>
 						</tr>
@@ -498,6 +501,7 @@
 	<!--						<td class="py-1">{{ cb.modelNumber }}</td>  -->
 								<td class="py-1">{{ cb.version }}</td>
 								<td class="py-1">{{ cb.ip }}</td>
+								<td class="py-1">{{ cb.port }}</td>
 								<td class="py-1">{{ cb.username }}</td>
 								<td class="py-1">
 									<button id="btn1" class="btn btn-shng btn-sm" name="disconnect" type="submit" value="{{ cb.serialNumber }}"><i class="fas fa-wifi"></i>&nbsp;&nbsp;&nbsp;{{ _('Trennen') }}&nbsp;</button>
