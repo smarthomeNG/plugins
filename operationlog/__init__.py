@@ -44,7 +44,7 @@ class OperationLog(SmartPlugin, AbLogger):
     _log = None
     _items = {}
 
-    PLUGIN_VERSION = "1.3.4"
+    PLUGIN_VERSION = "1.3.5"
 
     def __init__(self, sh):
         # Call init code of parent class (SmartPlugin)
@@ -198,11 +198,13 @@ class OperationLog(SmartPlugin, AbLogger):
         """
         if 'olog' in item.conf and item.conf['olog'] == self.name:
             self._item_conf[item.id()] = {}
-            if 'olog_txt' in item.conf or 'olog_rules' in item.conf:
-                self._item_conf[item.id()]['olog_rules'] = {}
-                self._item_conf[item.id()]['olog_rules']['lowlim'] = None
-                self._item_conf[item.id()]['olog_rules']['highlim'] = None
-                self._item_conf[item.id()]['olog_rules']['*'] = None
+
+            # set these as default in any case. default is to log
+            self._item_conf[item.id()]['olog_rules'] = {}
+            self._item_conf[item.id()]['olog_rules']['lowlim'] = None
+            self._item_conf[item.id()]['olog_rules']['highlim'] = None
+            self._item_conf[item.id()]['olog_rules']['*'] = 'value'
+
             if 'olog_txt' in item.conf:
                 olog_txt = item.conf['olog_txt']
                 self._item_conf[item.id()]['olog_eval'] = []
@@ -211,7 +213,10 @@ class OperationLog(SmartPlugin, AbLogger):
                 self._item_conf[item.id()]['olog_eval'] = eval_parse['olog_eval']
                 if len(self._item_conf[item.id()]['olog_eval']) != 0:
                     self.logger.info('Item: {}, olog evaluating: {}'.format(item.id(), self._item_conf[item.id()]['olog_eval']))
+
             if 'olog_rules' in item.conf:
+                # we have explicit rules, remove default 'all'
+                self._item_conf[item.id()]['olog_rules']['*'] = None
                 olog_rules = item.conf['olog_rules']
                 if isinstance(olog_rules, str):
                     try:
@@ -239,8 +244,8 @@ class OperationLog(SmartPlugin, AbLogger):
                             if key_txt in ['lowlim', 'highlim']:
                                 self._item_conf[item.id()]['olog_rules']["*"] = 'value'
                     self._item_conf[item.id()]['olog_rules'][key] = value
-                if len(self._item_conf[item.id()]['olog_rules']) != 0:
-                    self.logger.info('Item: {}, olog rules: {}'.format(item.id(), self._item_conf[item.id()]['olog_rules']))
+
+            self.logger.info('Item: {}, olog rules: {}'.format(item.id(), self._item_conf[item.id()]['olog_rules']))
             return self.update_item
         else:
             return None
@@ -350,14 +355,20 @@ class OperationLog(SmartPlugin, AbLogger):
                         self._item_conf[item.id()]['olog_eval_res'] = []
                         for expr in self._item_conf[item.id()]['olog_eval']:
                             self._item_conf[item.id()]['olog_eval_res'].append(eval(expr))
+                        try:
+                            pname = str(item.return_parent())
+                            pid = item.return_parent().id()
+                        except Exception:
+                            pname = ''
+                            pid = ''
                         logtxt = self._item_conf[item.id()]['olog_txt'].format(*self._item_conf[item.id()]['olog_eval_res'],
                                                                                **{'value': item(),
                                                                                   'mvalue': mvalue,
                                                                                   'name': str(item),
                                                                                   'age': round(item.prev_age(), 2),
-                                                                                  'pname': str(item.return_parent()),
+                                                                                  'pname': pname,
                                                                                   'id': item.id(),
-                                                                                  'pid': item.return_parent().id(),
+                                                                                  'pid': pid,
                                                                                   'lowlim': self._item_conf[item.id()]['olog_rules']['lowlim'],
                                                                                   'highlim': self._item_conf[item.id()]['olog_rules']['highlim']})
                         logvalues = [logtxt]
