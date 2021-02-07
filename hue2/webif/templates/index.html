@@ -218,8 +218,13 @@
 								<td class="py-1">{{ bridge_lights[l].type }}</td>
 								<td class="py-1">{{ bridge_lights[l].productname }}</td>
 								<td class="py-1">{{ bridge_lights[l].swversion }}</td>
-								<td class="py-1">{{ bridge_lights[l].config.startup.mode }}</td>
-								<td class="py-1">{{ bridge_lights[l].config.startup.customsettings }}</td>
+								{% if 'startup' in bridge_lights[l]['config'] %}
+									<td class="py-1">{{ bridge_lights[l].config.startup.mode }}</td>
+									<td class="py-1">{{ bridge_lights[l].config.startup.customsettings }}</td>
+								{% else %}
+									<td class="py-1">-</td>
+									<td class="py-1">-</td>
+								{% endif %}
 								<td class="py-1">{{ bridge_lights[l].capabilities.control.maxlumen }}</td>
 							</tr>
 						{% endfor %}
