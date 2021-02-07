@@ -624,7 +624,7 @@ class Hue2(SmartPlugin):
 
     # --------------------------------------------------------------------------------------------
 
-    def create_new_username(self, ip, devicetype=None, timeout=5):
+    def create_new_username(self, ip, port, devicetype=None, timeout=5):
         """
         Helper function to generate a new anonymous username on a hue bridge
 
@@ -641,7 +641,7 @@ class Hue2(SmartPlugin):
             QhueException if something went wrong with username generation (for
                 example, if the bridge button wasn't pressed).
         """
-        api_url = "http://{}/api".format(ip)
+        api_url = "http://{}/api".format(ip+':'+port)
         res = qhue.qhue.Resource(api_url, timeout)
 
         if devicetype is None:
@@ -658,7 +658,7 @@ class Hue2(SmartPlugin):
             return response[0]["success"]["username"]
 
 
-    def remove_username(self, ip, username, timeout=5):
+    def remove_username(self, ip, port, username, timeout=5):
         """
         Remove the username/application key from the bridge
 
@@ -673,7 +673,7 @@ class Hue2(SmartPlugin):
         Raises:
             QhueException if something went wrong with username deletion
         """
-        api_url = "http://{}/api/{}".format(ip, username)
+        api_url = "http://{}/api/{}".format(ip+':'+port, username)
         url = api_url + "/config/whitelist/{}".format(username)
         self.logger.info("remove_username: url = {}".format(url))
         res = qhue.qhue.Resource(url, timeout)
