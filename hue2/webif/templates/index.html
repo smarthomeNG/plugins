@@ -218,14 +218,18 @@
 								<td class="py-1">{{ bridge_lights[l].type }}</td>
 								<td class="py-1">{{ bridge_lights[l].productname }}</td>
 								<td class="py-1">{{ bridge_lights[l].swversion }}</td>
-								{% if 'startup' in bridge_lights[l]['config'] %}
+								{% if bridge_config.apiversion >= '1.24.0' %}
 									<td class="py-1">{{ bridge_lights[l].config.startup.mode }}</td>
 									<td class="py-1">{{ bridge_lights[l].config.startup.customsettings }}</td>
 								{% else %}
 									<td class="py-1">-</td>
 									<td class="py-1">-</td>
 								{% endif %}
-								<td class="py-1">{{ bridge_lights[l].capabilities.control.maxlumen }}</td>
+								{% if bridge_config.apiversion >= '1.22.0' %}
+									<td class="py-1">{{ bridge_lights[l].capabilities.control.maxlumen }}</td>
+								{% else %}
+									<td class="py-1">-</td>
+								{% endif %}
 							</tr>
 						{% endfor %}
 					</tbody>
@@ -433,6 +437,8 @@
 						<th class="py-1">{{ _('Modell Name') }}</th>
 						<th class="py-1">{{ _('Modell Nr.') }}</th>
 						<th class="py-1">{{ _('Version') }}</th>
+						<th class="py-1">{{ _('API-Version') }}</th>
+						<th class="py-1">{{ _('swversion') }}</th>
 						<th class="py-1">{{ _('IP') }}</th>
 						<th class="py-1">{{ _('Port') }}</th>
 <!--					<th class="py-1">{{ _('UDN') }}</th>  -->
@@ -447,6 +453,8 @@
 							<td class="py-1">{{ db.modelName }}</td>
 							<td class="py-1">{{ db.modelNumber }}</td>
 							<td class="py-1">{{ db.version }}</td>
+							<td class="py-1">{{ db.apiversion }}</td>
+							<td class="py-1">{{ db.swversion }}</td>
 							<td class="py-1">{{ db.ip }}</td>
 							<td class="py-1">{{ db.port }}</td>
 <!--						<td class="py-1">{{ db.UDN }}</td>  -->
@@ -488,6 +496,7 @@
 							<th class="py-1">{{ _('Modell Name') }}</th>
 	<!--					<th class="py-1">{{ _('Modell Nr.') }}</th>  -->
 							<th class="py-1">{{ _('Version') }}</th>
+							<th class="py-1">{{ _('API-Version') }}</th>
 							<th class="py-1">{{ _('IP') }}</th>
 							<th class="py-1">{{ _('Port') }}</th>
 							<th class="py-1">{{ _('Anwendungsschlüssel') }}</th>
@@ -505,6 +514,7 @@
 								<td class="py-1">{{ cb.modelName }}</td>
 	<!--						<td class="py-1">{{ cb.modelNumber }}</td>  -->
 								<td class="py-1">{{ cb.version }}</td>
+								<td class="py-1">{{ cb.apiversion }}</td>
 								<td class="py-1">{{ cb.ip }}</td>
 								<td class="py-1">{{ cb.port }}</td>
 								<td class="py-1">{{ cb.username }}</td>

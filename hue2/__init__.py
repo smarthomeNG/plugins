@@ -49,7 +49,7 @@ class Hue2(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '2.0.1'    # (must match the version specified in plugin.yaml)
+    PLUGIN_VERSION = '2.0.2'    # (must match the version specified in plugin.yaml)
 
     hue_group_action_values          = ['on', 'bri', 'hue', 'sat', 'ct', 'xy', 'colormode']
     hue_light_action_writable_values = ['on', 'bri', 'hue', 'sat', 'ct', 'xy']
@@ -317,6 +317,19 @@ class Hue2(SmartPlugin):
         return
 
 
+    def get_api_config_of_bridge(self, urlbase):
+
+        url = urlbase + 'api/config'
+        api_config = {}
+        try:
+            r = requests.get(url)
+            if r.status_code == 200:
+                api_config = r.json()
+        except Exception as e:
+            self.logger.error(f"get_api_config_of_bridge: url='{url}' - Exception {e}")
+        return api_config
+
+
     def get_data_from_discovered_bridges(self, serialno):
         """
         Get data from discovered bridges for a given serial number
@@ -336,6 +349,12 @@ class Hue2(SmartPlugin):
                 if db['serialNumber'] == serialno:
                     result = db
                     break
+
+        if result != {}:
+            api_config = self.get_api_config_of_bridge(result.get('URLBase',''))
+            result['datastoreversion'] = api_config.get('datastoreversion', '')
+            result['apiversion'] = api_config.get('apiversion', '')
+            result['swversion'] = api_config.get('swversion', '')
 
         return result
 
@@ -567,7 +586,7 @@ class Hue2(SmartPlugin):
             self.bridge_sensors = {}
             return
         self.logger.info("get_bridgeinfo: self.bridge = {}".format(self.bridge))
-        self.br = qhue.Bridge(self.bridge['ip']+':'+self.bridge['port'], self.bridge['username'])
+        self.br = qhue.Bridge(self.bridge['ip']+':'+str(self.bridge['port']), self.bridge['username'])
         try:
             self.bridge_lights = self.br.lights()
             self.bridge_groups = self.br.groups()
@@ -615,6 +634,14 @@ class Hue2(SmartPlugin):
                     br_info['version'] = 'v2'
                 else:
                     br_info['version'] = 'unknown'
+
+                # get API information
+                api_config = self.get_api_config_of_bridge(br_info['URLBase'])
+                br_info['datastoreversion'] = api_config.get('datastoreversion', '')
+                br_info['apiversion'] = api_config.get('apiversion', '')
+                br_info['swversion'] = api_config.get('swversion', '')
+
+
             bridges.append(br_info)
 
         for bridge in bridges:

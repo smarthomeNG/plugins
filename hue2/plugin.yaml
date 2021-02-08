@@ -12,8 +12,8 @@ plugin:
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1586861-support-thread-für-das-hue2-plugin
 
-    version: 2.0.1                  # Plugin version (must match the version specified in __init__.py)
-    sh_minversion: 1.8.0            # minimum shNG version to use this plugin
+    version: 2.0.2                  # Plugin version (must match the version specified in __init__.py)
+    sh_minversion: 1.8.1a            # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
 #    py_minversion: 3.6             # minimum Python version to use for this plugin
 #    py_maxversion:                 # maximum Python version to use for this plugin (leave empty if latest)
@@ -160,24 +160,11 @@ item_attributes:
 
 item_structs:
     # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
+
+    # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
     light:
         name: Vorlage-Struktur für eine Hue Leuchte
-
-        type: foo
-        hue2_resource@instance: light
-        #hue2_id@instance: 1
-
-        onoff:
-            type: bool
-            hue2_resource@instance: ..:.
-            hue2_id@instance: ..:.
-            hue2_function@instance: on
-
-        level:
-            type: num
-            hue2_resource@instance: ..:.
-            hue2_id@instance: ..:.
-            hue2_function@instance: bri
+        struct: hue2._light_basic
 
         hue:
             type: num
@@ -191,17 +178,21 @@ item_structs:
             hue2_id@instance: ..:.
             hue2_function@instance: sat
 
-        ct:
-            type: num
+        xy:
+            type: list
             hue2_resource@instance: ..:.
             hue2_id@instance: ..:.
-            hue2_function@instance: ct
+            hue2_function@instance: xy
 
-        colormode:
-            type: str
-            hue2_resource@instance: ..:.
-            hue2_id@instance: ..:.
-            hue2_function@instance: colormode
+
+    light_ww:
+        name: Vorlage-Struktur für eine Hue Leuchte (warm white)
+        struct: hue2._light_basic
+
+
+    light_xy:
+        name: Vorlage-Struktur für eine Hue Leuchte (Farbe nur über xy)
+        struct: hue2._light_basic
 
         xy:
             type: list
@@ -209,38 +200,27 @@ item_structs:
             hue2_id@instance: ..:.
             hue2_function@instance: xy
 
+
     light_extended:
         name: Vorlage-Struktur für eine Hue Leuchte mit erweiteten Attributen/Sub-Items
-        struct: hue2.light
-        lightname:
-            type: str
-            hue2_resource@instance: ..:.
-            hue2_id@instance: ..:.
-            hue2_function@instance: name
+        struct:
+          - hue2.light
+          - hue2._light_extended
 
-        reachable:
-            type: bool
-            hue2_resource@instance: ..:.
-            hue2_id@instance: ..:.
-            hue2_function@instance: reachable
 
-        lighttype:
-            type: str
-            hue2_resource@instance: ..:.
-            hue2_id@instance: ..:.
-            hue2_function@instance: type
+    light_ww_extended:
+        name: Vorlage-Struktur für eine Hue Leuchte mit erweiteten Attributen/Sub-Items
+        struct:
+          - hue2.light_ww
+          - hue2._light_extended
 
-        modelid:
-            type: str
-            hue2_resource@instance: ..:.
-            hue2_id@instance: ..:.
-            hue2_function@instance: modelid
 
-        swversion:
-            type: str
-            hue2_resource@instance: ..:.
-            hue2_id@instance: ..:.
-            hue2_function@instance: swversion
+    light_xy_extended:
+        name: Vorlage-Struktur für eine Hue Leuchte mit erweiteten Attributen/Sub-Items
+        struct:
+          - hue2.light_xy
+          - hue2._light_extended
+
 
     group_activate_scene:
         name: Vorlage-Struktur zum aktivieren von Hue Szenen
@@ -297,6 +277,73 @@ item_structs:
             hue2_resource@instance: ..:.
             hue2_id@instance: ..:.
             hue2_function@instance: xy
+
+
+
+    _light_basic:
+        name: interne Vorlage-Struktur für eine Hue Leuchte (basic)
+
+        type: foo
+        hue2_resource@instance: light
+        #hue2_id@instance: 1
+
+        onoff:
+            type: bool
+            hue2_resource@instance: ..:.
+            hue2_id@instance: ..:.
+            hue2_function@instance: on
+
+        level:
+            type: num
+            hue2_resource@instance: ..:.
+            hue2_id@instance: ..:.
+            hue2_function@instance: bri
+
+        ct:
+            type: num
+            hue2_resource@instance: ..:.
+            hue2_id@instance: ..:.
+            hue2_function@instance: ct
+
+        colormode:
+            type: str
+            hue2_resource@instance: ..:.
+            hue2_id@instance: ..:.
+            hue2_function@instance: colormode
+
+
+    _light_extended:
+        name: interne Vorlage-Struktur für eine Hue Leuchte (extended attributes)
+        lightname:
+            type: str
+            hue2_resource@instance: ..:.
+            hue2_id@instance: ..:.
+            hue2_function@instance: name
+
+        reachable:
+            type: bool
+            hue2_resource@instance: ..:.
+            hue2_id@instance: ..:.
+            hue2_function@instance: reachable
+
+        lighttype:
+            type: str
+            hue2_resource@instance: ..:.
+            hue2_id@instance: ..:.
+            hue2_function@instance: type
+
+        modelid:
+            type: str
+            hue2_resource@instance: ..:.
+            hue2_id@instance: ..:.
+            hue2_function@instance: modelid
+
+        swversion:
+            type: str
+            hue2_resource@instance: ..:.
+            hue2_id@instance: ..:.
+            hue2_function@instance: swversion
+
 
 
 #item_attribute_prefixes:
