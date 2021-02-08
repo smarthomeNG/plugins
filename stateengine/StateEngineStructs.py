@@ -19,11 +19,9 @@
 #  along with this plugin. If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
 from . import StateEngineStruct
-import copy
 from lib.item import Items
 
-itemsApi = Items.get_instance()
-global_struct = copy.deepcopy(itemsApi.return_struct_definitions())
+global_struct = {}
 __allstructs = []
 
 
