@@ -126,7 +126,7 @@ class Prowl(SmartPlugin):
                         text = params['text'].replace('VAL', str(item()))
 
                     url = None
-                    if 'url' in params:
+                    if 'url' in params and params['url'] is not None:
                         url = params['url'].replace('VAL', str(item()))
 
                     # got any result?
