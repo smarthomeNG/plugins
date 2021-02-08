@@ -157,6 +157,7 @@ class OperationLog(SmartPlugin, AbLogger):
         if self._logtofile is True:
             self.__myLogger = self.create(self.name)
         sh = self.get_sh()
+        shtime = Shtime.get_instance()
         for item_id in self._item_conf:
             if 'olog_eval' in self._item_conf[item_id]:
                 for (ind, eval_str) in enumerate(self._item_conf[item_id]['olog_eval']):
@@ -325,6 +326,8 @@ class OperationLog(SmartPlugin, AbLogger):
         :param source: if given it represents the source
         :param dest: if given it represents the dest
         """
+        sh = self.get_sh()
+        shtime = Shtime.get_instance()
         if self.alive and caller != self.get_shortname():
             # this plugin does not change any item thus the check for caller is not really necessary
             if item.conf['olog'] == self.name:
