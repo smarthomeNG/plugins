@@ -27,8 +27,10 @@ from . import StateEngineTools
 from . import StateEngineCliCommands
 from . import StateEngineFunctions
 from . import StateEngineWebif
+from . import StateEngineStructs
 import logging
 import os
+import copy
 from lib.model.smartplugin import *
 from lib.item import Items
 
@@ -101,6 +103,7 @@ class StateEngine(SmartPlugin):
     # Initialization of plugin
     def run(self):
         # Initialize
+        StateEngineStructs.global_struct = copy.deepcopy(self.itemsApi.return_struct_definitions())
         self.logger.info("Init StateEngine items")
         for item in self.itemsApi.find_items("se_plugin"):
             if item.conf["se_plugin"] == "active":
