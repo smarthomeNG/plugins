@@ -56,6 +56,11 @@ class SeItem:
     def webif_infos(self):
         return self.__webif_infos
 
+    # return instance of shtime class
+    @property
+    def shtime(self):
+        return self.__shtime
+
     # return instance of smarthome.py class
     @property
     def sh(self):
@@ -117,11 +122,11 @@ class SeItem:
         self.__item = item
         self.__logger = SeLogger.create(self.__item)
         self.itemsApi = Items.get_instance()
-        self.shtime = Shtime.get_instance()
         self.update_lock = threading.Lock()
         self.__ab_alive = False
         self.__queue = queue.Queue()
         self.__sh = smarthome
+        self.__shtime = Shtime.get_instance()
         self.__se_plugin = se_plugin
         self.__active_schedulers = []
         self.__all_releasedby = {}
@@ -223,7 +228,7 @@ class SeItem:
         _startup_delay_param = self.__startup_delay.get()
         startup_delay = 1 if self.__startup_delay.is_empty() or _startup_delay_param == 0 else _startup_delay_param
         if startup_delay > 0:
-            first_run = self.shtime.now() + datetime.timedelta(seconds=startup_delay)
+            first_run = self.__shtime.now() + datetime.timedelta(seconds=startup_delay)
             scheduler_name = self.__id + "-Startup Delay"
             value = {"item": self.__item, "caller": "Init"}
             self.__se_plugin.scheduler_add(scheduler_name, self.__startup_delay_callback, value=value, next=first_run)
@@ -950,7 +955,7 @@ class SeItem:
     def __startup_delay_callback(self, item, caller=None, source=None, dest=None):
         scheduler_name = self.__id + "-Startup Delay"
         if not self.__ab_alive and self.__se_plugin.scheduler_get(scheduler_name):
-            next_run = self.shtime.now() + datetime.timedelta(seconds=3)
+            next_run = self.__shtime.now() + datetime.timedelta(seconds=3)
             self.__logger.debug(
                 "Startup Delay over but StateEngine Plugin not running yet. Will try again at {}".format(next_run))
             self.__se_plugin.scheduler_change(scheduler_name, next=next_run)
