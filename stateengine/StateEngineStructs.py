@@ -19,7 +19,6 @@
 #  along with this plugin. If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
 from . import StateEngineStruct
-import copy
 from lib.item import Items
 
 global_struct = {}
