@@ -99,6 +99,7 @@ class SeState(StateEngineTools.SeItemChild):
     # Check conditions if state can be entered
     # returns: True = At least one enter condition set is fulfilled, False = No enter condition set is fulfilled
     def can_enter(self):
+        self._log_decrease_indent(10)
         self._log_info("Check if state '{0}' ('{1}') can be entered:", self.id, self.name)
         self._log_increase_indent()
         result = self.__conditions.one_conditionset_matching()
@@ -285,9 +286,8 @@ class SeState(StateEngineTools.SeItemChild):
                         self.__use_done.append(element)
                         self.__fill(element, recursion_depth + 1, _name)
         if "se_released_by" in item_state.conf:
-
             self.__release.set_from_attr(item_state, "se_released_by")
-            self._log_debug("State has released attribute {}, self.release = {}", item_state, self.__release)
+            self._log_debug("State {} has released attribute, self.release = {}", item_state.property.path, self.__release)
 
         # Get action sets and condition sets
         parent_item = item_state.return_parent()

@@ -522,7 +522,7 @@ item_structs:
             type: dict
             visu_acl: ro
             cache: True
-            initial_value: "{}"
+            initial_value: "{'initial': 'start'}"
 
         retrigger:
             remark: Item to retrigger the rule set evaluation
