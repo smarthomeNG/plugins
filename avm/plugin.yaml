@@ -253,6 +253,12 @@ plugin_functions:
                     de: "ID des Telefonbuchs, in dem nachgeschlagen werden soll."
                     en: "ID of the phone book, in which numbers should be looked up."
 
+    get_device_log:
+        type: list(str)
+        description:
+            de: "Ermittelt die Logeinträge auf dem Gerät."
+            en: "Gets the log entries on the device."
+
     get_host_details:
         type: dict(str)
         description:

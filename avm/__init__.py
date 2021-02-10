@@ -1610,6 +1610,40 @@ class AVM(SmartPlugin):
         if not self._fritz_device.is_available():
             self.set_device_availability(True)
 
+    def get_device_log(self):
+        """
+        Gets the Device Log
+        :return: Array of Device Log Entries
+        """
+        url = self._build_url("/upnp/control/deviceinfo")
+        headers = self._header.copy()
+        action = 'GetDeviceLog'
+
+        headers['SOAPACTION'] = "%s#%s" % (self._urn_map['DeviceInfo'], action)
+        soap_data = self._assemble_soap_data(action, self._urn_map['DeviceInfo'])
+        try:
+            response = self._session.post(url, data=soap_data, timeout=self._timeout, headers=headers,
+                                          auth=HTTPDigestAuth(self._fritz_device.get_user(),
+                                                              self._fritz_device.get_password()),
+                                          verify=self._verify)
+        except Exception as e:
+            if self._fritz_device.is_available():
+                self.logger.error("Exception when sending POST request, method get_device_log: %s" % str(e))
+                self.set_device_availability(False)
+            return
+        if not self._fritz_device.is_available():
+            self.set_device_availability(True)
+        self._response_cache["dev_info_" + action] = response.content
+
+        try:
+            xml = minidom.parseString(self._response_cache["dev_info_" + action])
+        except Exception as e:
+            self.logger.error("Exception when parsing response: %s" % str(e))
+            return
+
+        element_xml = xml.getElementsByTagName('NewDeviceLog')
+        return element_xml[0].firstChild.nodeValue.split("\n")
+
     def is_host_active(self, mac_address):
         """
         Checks if a MAC address is active on the FritzDevice, e.g. the status can be used for simple presence detection
@@ -1959,7 +1993,6 @@ class AVM(SmartPlugin):
                 self.logger.error(
                     'Attribute {} not available on the FritzDevice with AIN {}.'
                     .format(self.get_iattr_value(item.conf,'avm_data_type'), item.conf['ain'].strip()))
-                    
 
     def _update_fritz_device_info(self, item):
         """
