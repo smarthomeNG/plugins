@@ -556,6 +556,7 @@ class AVM(SmartPlugin):
         self.logger.info('Init AVM Plugin')
 
         self._session = requests.Session()
+        self._lua_session = requests.Session()
         self._timeout = 10
 
         self._verify = self.get_parameter_value('verify')
@@ -853,39 +854,33 @@ class AVM(SmartPlugin):
             # special items which can be changed outside the plugin context and need to be submitted to the FritzDevice
             return self.update_item
 
-    def getHashResponse(self, challenge, pwd):
-        myMd5HashString = (challenge + '-' + pwd).encode('utf-16LE')
+    def _get_hash_response(self, challenge, pwd):
+        my_md5_hash_string = (challenge + '-' + pwd).encode('utf-16LE')
         m = hashlib.md5()
-        m.update(myMd5HashString)
-        #        self.logger.info("Debug hexdigest: {0}".format(m.hexdigest()))
-        #        print ('MD5-Hash starting with challenge :' + challenge + "-" + m.hexdigest())
+        m.update(my_md5_hash_string)
         return challenge + "-" + m.hexdigest()
 
     def _request_session_id(self):
         user = self._fritz_device.get_user()
         pwd = self._fritz_device.get_password()
 
-        # Doublecheck: Shall we send this request via self._session.get instead?
-        response = requests.get(self._build_url('/login_sid.lua', lua=True), verify=self._verify)
-
-        # "%s://%s/login_sid.lua" % (url_prefix, self.get_fritz_device().get_host()),
-
-        myXML = response.text
-        self.logger.debug("Session request response text: {0}".format(myXML))
-        xml = minidom.parseString(myXML)
+        response = self._lua_session.get(self._build_url('/login_sid.lua', lua=True), verify=self._verify)
+        my_xml = response.text
+        self.logger.debug("Session request response text: {0}".format(my_xml))
+        xml = minidom.parseString(my_xml)
         challenge_xml = xml.getElementsByTagName('Challenge')
         sid_xml = xml.getElementsByTagName('SID')
         if len(challenge_xml) > 0:
-            mySID = sid_xml[0].firstChild.data
+            my_sid = sid_xml[0].firstChild.data
         if len(challenge_xml) > 0:
-            myChallenge = challenge_xml[0].firstChild.data
+            my_challenge = challenge_xml[0].firstChild.data
 
-        self.logger.info("Debug apriori SID: {0}, Challenge: {1}".format(mySID, myChallenge))
-        hashResponse = self.getHashResponse(myChallenge, pwd)
+        self.logger.info("Debug apriori SID: {0}, Challenge: {1}".format(my_sid, my_challenge))
+        hash_response = self._get_hash_response(my_challenge, pwd)
 
         # Doublecheck: Shall we send this request via self._session.get instead?
-        response = requests.get(self._build_url('/login_sid.lua?username=%s&response=%s' % (user,
-                                                                                            hashResponse), lua=True),
+        response = self._lua_session.get(self._build_url('/login_sid.lua?username=%s&response=%s' % (user,
+                                                                                            hash_response), lua=True),
                                 verify=self._verify)
         myXML = response.text
         xml = minidom.parseString(myXML)
@@ -898,12 +893,6 @@ class AVM(SmartPlugin):
 
         self.logger.info("Debug posterior SID: {0}, Challenge: {1}".format(mySID, myChallenge))
         return mySID
-
-        # self.logger.debug("Debug param: {0}".format(aha_string))
-        # self.logger.info("Debug url: {0}".format(url))
-
-        # r = self._session.get(url, timeout=self._timeout, verify=self._verify)
-        # self.logger.info("Debug return: {0}".format(r))
 
     def _assemble_aha_interface(self, ain='', aha_action='', aha_param='', sid='', endtimestamp=''):
         """
@@ -1050,10 +1039,10 @@ class AVM(SmartPlugin):
                         "Commanded hkrt temperature {0} is out of range. Aborting.".format(cmd_temperature))
 
                 # request new session ID:
-                mySID = self._request_session_id()
+                my_sid = self._request_session_id()
 
                 aha_string = self._assemble_aha_interface(ain=ainDevice, aha_action=action, aha_param=temp_scaled,
-                                                          sid=mySID)
+                                                          sid=my_sid)
 
             # Function used for AHA http interface only:
             current_avm_data_type = self.get_iattr_value(item.conf, 'avm_data_type')
@@ -1077,14 +1066,14 @@ class AVM(SmartPlugin):
                     r = self._session.get(url, timeout=self._timeout, verify=self._verify)
                     self.logger.debug("Return value aha interface: {0}".format(r))
 
-                    statusCode = r.status_code
-                    if statusCode == 200:
+                    status_code = r.status_code
+                    if status_code == 200:
                         self.logger.debug("Sending AHA command successful")
                     else:
-                        self.logger.error("AHA command error code: {0}".format(statusCode))
+                        self.logger.error("AHA command error code: {0}".format(status_code))
 
                 else:
-                    self._session.post(url, data=soap_data, timeout=self._timeout, headers=headers,
+                    self._lua_session.post(url, data=soap_data, timeout=self._timeout, headers=headers,
                                        auth=HTTPDigestAuth(self._fritz_device.get_user(),
                                                            self._fritz_device.get_password()), verify=self._verify)
 
@@ -1632,14 +1621,14 @@ class AVM(SmartPlugin):
         Gets the Device Log from the LUA HTTP Interface via LUA Scripts (more complete than the get_device_log TR-064 version.
         :return: Array of Device Log Entries (text, type, category, timestamp, date, time)
         """
-        mySID = self._request_session_id()
-        query_string = "/query.lua?mq_log=logger:status/log&sid={0}".format(mySID)
-        r = self._session.get(self._build_url(query_string, lua=True), timeout=self._timeout, verify=self._verify)
-        statusCode = r.status_code
-        if statusCode == 200:
+        my_sid = self._request_session_id()
+        query_string = "/query.lua?mq_log=logger:status/log&sid={0}".format(my_sid)
+        r = self._lua_session.get(self._build_url(query_string, lua=True), timeout=self._timeout, verify=self._verify)
+        status_code = r.status_code
+        if status_code == 200:
             self.logger.debug("get_device_log_from_lua: Sending query.lua command successful")
         else:
-            self.logger.error("get_device_log_from_lua: query.lua command error code: {0}".format(statusCode))
+            self.logger.error("get_device_log_from_lua: query.lua command error code: {0}".format(status_code))
             return
 
         try:
