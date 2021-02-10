@@ -258,6 +258,8 @@ plugin_functions:
         description:
             de: "Ermittelt die Logeinträge auf dem Gerät."
             en: "Gets the log entries on the device."
+        parameters:
+        # This function has no parameters
 
     get_host_details:
         type: dict(str)

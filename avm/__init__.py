@@ -2593,11 +2593,11 @@ class WebInterface(SmartPluginWebIf):
 
         :return: contents of the template after beeing rendered
         """
-        tabcount = 2
+        tabcount = 3
         call_monitor_items = 0
         if self.plugin._call_monitor:
             call_monitor_items = self.plugin._monitoring_service.get_item_count_total()
-            tabcount = 3
+            tabcount = 4
 
         tmpl = self.tplenv.get_template('index.html')
         return tmpl.render(plugin_shortname=self.plugin.get_shortname(), plugin_version=self.plugin.get_version(),

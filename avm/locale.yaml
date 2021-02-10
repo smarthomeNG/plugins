@@ -19,6 +19,7 @@ plugin_translations:
     'Call Monitor verbunden': {'de': '=', 'en': 'Device Connected', 'fr': ''}
     'nicht verbunden': {'de': '=', 'en': 'not connected', 'fr': ''}
     'Reboot': {'de': '=', 'en': '=', 'fr': ''}
+    'Log-Einträge': {'de': '=', 'en': 'Log Entries', 'fr': ''}
     'Wollen Sie das Gerät wirklich neu starten?':
         'de': '='
         'en': 'Do you really want to reboot the device?'
