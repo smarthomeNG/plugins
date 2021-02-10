@@ -190,13 +190,13 @@ class MonitoringService:
     def _start_counter(self, timestamp, direction):
         if direction == 'incoming':
             self._call_connect_timestamp = time.mktime(
-                datetime.datetime.strptime(timestamp, "%d.%m.%y %H:%M:%S").timetuple())
+                datetime.strptime(timestamp, "%d.%m.%y %H:%M:%S").timetuple())
             self._duration_counter_thread_incoming = threading.Thread(target=self._count_duration_incoming,
                                                                       name="MonitoringService_Duration_Incoming_%s" % self._plugin_instance.get_instance_name()).start()
             self._plugin_instance.logger.debug('Counter incoming - STARTED')
         elif direction == 'outgoing':
             self._call_connect_timestamp = time.mktime(
-                datetime.datetime.strptime(timestamp, "%d.%m.%y %H:%M:%S").timetuple())
+                datetime.strptime(timestamp, "%d.%m.%y %H:%M:%S").timetuple())
             self._duration_counter_thread_outgoing = threading.Thread(target=self._count_duration_outgoing,
                                                                       name="MonitoringService_Duration_Outgoing_%s" % self._plugin_instance.get_instance_name()).start()
             self._plugin_instance.logger.debug('Counter outgoing - STARTED')
@@ -1321,7 +1321,7 @@ class AVM(SmartPlugin):
                                     if attribute != 'Date':
                                         result_entry[attribute] = attribute_value[0].firstChild.data
                                     else:
-                                        result_entry[attribute] = datetime.datetime.strptime(
+                                        result_entry[attribute] = datetime.strptime(
                                             attribute_value[0].firstChild.data, '%d.%m.%y %H:%M')
 
                         result_entries.append(result_entry)
@@ -1633,13 +1633,7 @@ class AVM(SmartPlugin):
         :return: Array of Device Log Entries (text, type, category, timestamp, date, time)
         """
         mySID = self._request_session_id()
-        if self._fritz_device.is_ssl():
-            url_prefix = "https"
-        else:
-            url_prefix = "http"
         query_string = "/query.lua?mq_log=logger:status/log&sid={0}".format(mySID)
-        url = "%s://%s%s" % (url_prefix, self._fritz_device.get_host(), query_string)
-
         r = self._session.get(self._build_url(query_string, lua=True), timeout=self._timeout, verify=self._verify)
         statusCode = r.status_code
         if statusCode == 200:
@@ -1669,7 +1663,7 @@ class AVM(SmartPlugin):
     def get_device_log_from_tr064(self):
         """
         Gets the Device Log via TR-064
-        :return: Array of Device Log Entries
+        :return: Array of Device Log Entries (Strings)
         """
         url = self._build_url("/upnp/control/deviceinfo")
         headers = self._header.copy()
@@ -1684,7 +1678,7 @@ class AVM(SmartPlugin):
                                           verify=self._verify)
         except Exception as e:
             if self._fritz_device.is_available():
-                self.logger.error("Exception when sending POST request, method get_device_log: %s" % str(e))
+                self.logger.error("get_device_log_from_tr064: Exception when sending POST request, method get_device_log: %s" % str(e))
                 self.set_device_availability(False)
             return
         if not self._fritz_device.is_available():
@@ -1694,7 +1688,7 @@ class AVM(SmartPlugin):
         try:
             xml = minidom.parseString(self._response_cache["dev_info_" + action])
         except Exception as e:
-            self.logger.error("Exception when parsing response: %s" % str(e))
+            self.logger.error("get_device_log_from_tr064: Exception when parsing response: %s" % str(e))
             return
 
         element_xml = xml.getElementsByTagName('NewDeviceLog')
