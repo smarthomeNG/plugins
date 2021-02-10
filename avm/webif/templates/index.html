@@ -130,8 +130,17 @@
 {% block bodytab3 %}
 <table class="table table-striped table-hover">
 	<tbody>
-    {% for logentry in p.get_device_log() %}
-        <tr><td class="py-1">{{ logentry }}</td></tr>
+    <tr>
+        <th>{{ _('Meldung')}}</th>
+        <th>{{ _('Nachrichtennummer')}}</th>
+        <th>{{ _('Kategorie')}}</th>
+    </tr>
+    {% for logentry in p.get_device_log_from_lua() %}
+        <tr>
+            <td class="py-1">{{ logentry[0] }}</td>
+            <td class="py-1">{{ logentry[1] }}</td>
+            <td class="py-1">{{ _('cat_'+logentry[2]) }}</td>
+        </tr>
     {% endfor %}
     </tbody>
 </table>

@@ -1051,7 +1051,7 @@ class AVM(SmartPlugin):
                     url_prefix = "http"
                     port = 80
 
-                url = "%s://%s:%s%s" % (url_prefix, self._fritz_device.get_host(), 443, aha_string)
+                url = "%s://%s:%s%s" % (url_prefix, self._fritz_device.get_host(), port, aha_string)
                 self.logger.debug("Debug param: {0}".format(aha_string))
                 self.logger.debug("Debug url: {0}".format(url))
 
@@ -1610,9 +1610,37 @@ class AVM(SmartPlugin):
         if not self._fritz_device.is_available():
             self.set_device_availability(True)
 
-    def get_device_log(self):
+    def get_device_log_from_lua(self):
         """
-        Gets the Device Log
+        Gets the Device Log from the LUA HTTP Interface via LUA Scripts (more complete than the get_device_log TR-064 version.
+        :return: Array of Device Log Entries
+        """
+        mySID = self._request_session_id()
+        if self._fritz_device.is_ssl():
+            url_prefix = "https"
+            port = 443
+        else:
+            url_prefix = "http"
+            port = 80
+        query_string = "/query.lua?mq_log=logger:status/log&sid={0}".format(mySID)
+        url = "%s://%s:%s%s" % (url_prefix, self._fritz_device.get_host(), port, query_string)
+        r = self._session.get(url, timeout=self._timeout, verify=self._verify)
+        statusCode = r.status_code
+        if statusCode == 200:
+            self.logger.debug("get_device_log_from_web: Sending query.lua command successful")
+        else:
+            self.logger.error("get_device_log_from_web: query.lua command error code: {0}".format(statusCode))
+
+        try:
+            data = r.json()['mq_log']
+            return data
+        except JSONDecodeError:
+            self.logger.error('get_device_log_from_web: SID seems invalid.Please try again.')
+        return
+
+    def get_device_log_from_tr064(self):
+        """
+        Gets the Device Log via TR-064
         :return: Array of Device Log Entries
         """
         url = self._build_url("/upnp/control/deviceinfo")
