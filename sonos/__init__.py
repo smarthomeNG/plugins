@@ -58,7 +58,7 @@ from plugins.sonos.soco.snapshot import Snapshot
 from plugins.sonos.soco.xml import XML
 import time
 
-from plugins.sonos.tts import gTTS
+from gtts import gTTS
 from plugins.sonos.utils import file_size, get_tts_local_file_path, get_free_diskspace, get_folder_size
 
 _create_speaker_lock = threading.Lock()  # make speaker object creation thread-safe
@@ -2283,7 +2283,7 @@ class Speaker(object):
 
             # only do a tts call if file not exists
             if not os.path.exists(file_path):
-                tts = gTTS(tts, self.logger, tts_language)
+                tts = gTTS(tts, lang=tts_language)
                 try:
                     tts.save(file_path)
                 except Exception as err:
@@ -2337,7 +2337,7 @@ class Speaker(object):
 
 class Sonos(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.5.4"
+    PLUGIN_VERSION = "1.5.5"
 
     def __init__(self, sh, *args, **kwargs):
         super().__init__(**kwargs)
