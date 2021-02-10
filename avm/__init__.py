@@ -625,7 +625,7 @@ class AVM(SmartPlugin):
         soap_data = self._envelope.strip() % body
         return soap_data
 
-    def _build_url(self, suffix):
+    def _build_url(self, suffix, lua=False):
         """
         Builds a request url
 
@@ -636,7 +636,11 @@ class AVM(SmartPlugin):
             url_prefix = "https"
         else:
             url_prefix = "http"
-        url = "%s://%s:%s%s" % (url_prefix, self._fritz_device.get_host(), self._fritz_device.get_port(), suffix)
+        if not lua:
+            url = "%s://%s:%s%s" % (url_prefix, self._fritz_device.get_host(), self._fritz_device.get_port(), suffix)
+        else:
+            url = "%s://%s%s" % (url_prefix, self._fritz_device.get_host(), suffix)
+
         return url
 
     def _update_loop(self):
@@ -858,14 +862,12 @@ class AVM(SmartPlugin):
     def _request_session_id(self):
         user = self._fritz_device.get_user()
         pwd = self._fritz_device.get_password()
-        if self._fritz_device.is_ssl():
-            url_prefix = "https"
-        else:
-            url_prefix = "http"
+
         # Doublecheck: Shall we send this request via self._session.get instead?
-        response = requests.get("%s://%s/login_sid.lua" % (url_prefix,
-                                                            self.get_fritz_device().get_host()),
-                                verify=self._verify)
+        response = requests.get(self._build_url('/login_sid.lua', lua=True), verify=self._verify)
+
+        #"%s://%s/login_sid.lua" % (url_prefix, self.get_fritz_device().get_host()),
+
         myXML = response.text
         self.logger.debug("Session request response text: {0}".format(myXML))
         xml = minidom.parseString(myXML)
@@ -880,10 +882,8 @@ class AVM(SmartPlugin):
         hashResponse = self.getHashResponse(myChallenge, pwd)
 
         # Doublecheck: Shall we send this request via self._session.get instead?
-        response = requests.get("%s://%s/login_sid.lua?username=%s&response=%s" % (url_prefix,
-                                                           self.get_fritz_device().get_host(),
-                                                           user,
-                                                           hashResponse),
+        response = requests.get(self._build_url('/login_sid.lua?username=%s&response=%s' % (user,
+                                                           hashResponse), lua=True),
                                 verify=self._verify)
         myXML = response.text
         xml = minidom.parseString(myXML)
@@ -1631,7 +1631,8 @@ class AVM(SmartPlugin):
             url_prefix = "http"
         query_string = "/query.lua?mq_log=logger:status/log&sid={0}".format(mySID)
         url = "%s://%s%s" % (url_prefix, self._fritz_device.get_host(), query_string)
-        r = self._session.get(url, timeout=self._timeout, verify=self._verify)
+
+        r = self._session.get(self._build_url(query_string, lua=True), timeout=self._timeout, verify=self._verify)
         statusCode = r.status_code
         if statusCode == 200:
             self.logger.debug("get_device_log_from_web: Sending query.lua command successful")
