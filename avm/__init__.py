@@ -33,6 +33,7 @@ from requests.packages import urllib3
 from requests.auth import HTTPDigestAuth
 from lib.model.smartplugin import *
 from lib.module import Modules
+from json.decoder import JSONDecodeError
 import cherrypy
 
 # for session id generation:
@@ -857,8 +858,14 @@ class AVM(SmartPlugin):
     def _request_session_id(self):
         user = self._fritz_device.get_user()
         pwd = self._fritz_device.get_password()
+        if self._fritz_device.is_ssl():
+            url_prefix = "https"
+        else:
+            url_prefix = "http"
         # Doublecheck: Shall we send this request via self._session.get instead?
-        response = requests.get("http://fritz.box/login_sid.lua")
+        response = requests.get("%s://%s/login_sid.lua" % (url_prefix,
+                                                            self.get_fritz_device().get_host()),
+                                verify=self._verify)
         myXML = response.text
         self.logger.debug("Session request response text: {0}".format(myXML))
         xml = minidom.parseString(myXML)
@@ -873,7 +880,11 @@ class AVM(SmartPlugin):
         hashResponse = self.getHashResponse(myChallenge, pwd)
 
         # Doublecheck: Shall we send this request via self._session.get instead?
-        response = requests.get("http://fritz.box/login_sid.lua?username=" + user + "&response=" + hashResponse)
+        response = requests.get("%s://%s/login_sid.lua?username=%s&response=%s" % (url_prefix,
+                                                           self.get_fritz_device().get_host(),
+                                                           user,
+                                                           hashResponse),
+                                verify=self._verify)
         myXML = response.text
         xml = minidom.parseString(myXML)
         challenge_xml = xml.getElementsByTagName('Challenge')
@@ -1046,12 +1057,10 @@ class AVM(SmartPlugin):
 
                 if self._fritz_device.is_ssl():
                     url_prefix = "https"
-                    port = 443
                 else:
                     url_prefix = "http"
-                    port = 80
 
-                url = "%s://%s:%s%s" % (url_prefix, self._fritz_device.get_host(), port, aha_string)
+                url = "%s://%s%s" % (url_prefix, self._fritz_device.get_host(), aha_string)
                 self.logger.debug("Debug param: {0}".format(aha_string))
                 self.logger.debug("Debug url: {0}".format(url))
 
@@ -1618,18 +1627,17 @@ class AVM(SmartPlugin):
         mySID = self._request_session_id()
         if self._fritz_device.is_ssl():
             url_prefix = "https"
-            port = 443
         else:
             url_prefix = "http"
-            port = 80
         query_string = "/query.lua?mq_log=logger:status/log&sid={0}".format(mySID)
-        url = "%s://%s:%s%s" % (url_prefix, self._fritz_device.get_host(), port, query_string)
+        url = "%s://%s%s" % (url_prefix, self._fritz_device.get_host(), query_string)
         r = self._session.get(url, timeout=self._timeout, verify=self._verify)
         statusCode = r.status_code
         if statusCode == 200:
             self.logger.debug("get_device_log_from_web: Sending query.lua command successful")
         else:
             self.logger.error("get_device_log_from_web: query.lua command error code: {0}".format(statusCode))
+            return
 
         try:
             data = r.json()['mq_log']
