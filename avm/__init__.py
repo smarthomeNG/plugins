@@ -1642,7 +1642,10 @@ class AVM(SmartPlugin):
             return
 
         element_xml = xml.getElementsByTagName('NewDeviceLog')
-        return element_xml[0].firstChild.nodeValue.split("\n")
+        if element_xml[0].firstChild is not None:
+            return element_xml[0].firstChild.nodeValue.split("\n")
+        else:
+            return ""
 
     def is_host_active(self, mac_address):
         """
