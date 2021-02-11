@@ -2195,6 +2195,17 @@ class Speaker(object):
         if not self.is_coordinator:
             sonos_speaker[self.coordinator]._play_snippet(file_path, webservice_url, volume, duration_offset, fade_in)
         else:
+
+            # Check if stop() is part of currently supported transport actions.
+            # For example, stop() is not available when the speakter is in TV mode.
+            currentActions = self.current_transport_actions
+            self.logger.error("Debug: Sonos play_snippet: checking transport actions: {0}".format(currentActions))
+            if not 'Stop' in currentActions:
+                self.logger.error("Debug: Speaker cannot execute stop command. Therefore, skipping play_snippet function")
+                return
+            else:
+                self.logger.error("Debug: Speaker supports stop() function")
+
             with self._snippet_queue_lock:
                 snap = None
                 volumes = {}
