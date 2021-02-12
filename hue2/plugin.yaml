@@ -124,6 +124,8 @@ item_attributes:
           - modelid
           - swversion
           - activate_scene
+          - alert
+          - effect
 
 
         valid_list_description:
@@ -142,6 +144,8 @@ item_attributes:
               - "Model Id des Leuchtmittels -> str, r/o (resource: light)"
               - "Software Version des Leuchtmittels -> str, r/o (resource: light)"
               - "Aktivieren einer Szene für Leuchten in der selektierten Gruppe (hue2_id) -> str w/o (resource: group)"
+              - "Benachrichtigung -> str (Werte: none, select, lselect) (resource: light, group)"
+              - "Lichteffekt -> str (Werte: none, colorloop) (resource: light, group)"
             en:
               - "<no function choosen yet>"
               - "On/Off -> bool, r/w (resource: light, group)"
@@ -157,6 +161,8 @@ item_attributes:
               - "Model id of lamp -> str, r/o (resource: light)"
               - "Software version lamp -> str, r/o (resource: light)"
               - "Activate a scene for lights in the selected grpup (hue2_id) -> str w/o (resource: group)"
+              - "Alert -> str (values: none, select, lselect) (resource: light, group)"
+              - "Effect -> str (values: none, colorloop) (resource: light, group)"
 
 item_structs:
     # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
@@ -310,6 +316,18 @@ item_structs:
             hue2_resource@instance: ..:.
             hue2_id@instance: ..:.
             hue2_function@instance: colormode
+
+        alert:
+            type: str
+            hue2_resource@instance: ..:.
+            hue2_id@instance: ..:.
+            hue2_function@instance: alert
+
+        effect:
+            type: str
+            hue2_resource@instance: ..:.
+            hue2_id@instance: ..:.
+            hue2_function@instance: effect
 
 
     _light_extended:
