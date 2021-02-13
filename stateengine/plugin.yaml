@@ -40,7 +40,7 @@ plugin:
     documentation: https://www.smarthomeng.de/user/plugins/stateengine/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1303071-stateengine-plugin-support
 
-    version: 1.8.1
+    version: 1.8.2
     sh_minversion: 1.6
     multi_instance: False
     classname: StateEngine
@@ -149,19 +149,25 @@ parameters:
         description_long:
             de: '**Verzeichnis für die Protokolldateien:**\n
                  Die Logdateien der erweiterten Protokollierung werden in das
-                 hier angegebene Verzeichnis geschrieben.
+                 hier angegebene Verzeichnis geschrieben.\n
                  Wenn der angegebene Verzeichnisname mit "/" beginnt wird er als
                  absoluter Verzeichnisname behandelt. Alle anderen
                  Verzeichnisnamen werden als Unterverzeichnisse des smarthomeNG
                  Basisverzeichnisses behandelt. Das angegebene Verzeichnis wird
-                 angelegt, wenn es nicht existiert.
+                 angelegt, wenn es nicht existiert.\n
                  Wenn hier kein abweichendes Verzeichnis angegeben ist, wird das
-                 Verzeichnis ``<smarthome_base_directory>/var/log/AutoState/``
+                 Verzeichnis ``<smarthome_base_directory>/var/log/StateEngine/``
                  verwendet.
                  '
             en: '**Directory for log files**:\n
+                The extended log files are saved in the directory defined with
+                this parameter.\n
+                If the folder name starts with a "/" it is
+                interpreted as an absolut path, otherwise relative to the smarthomeNG
+                base folder. The folder is created on the first plugin start if
+                it does not exist.\n
                 If the parameter is absent the log files will be saved to
-                ``<smarthome_base_directory>/var/log/AutoState/``
+                ``<smarthome_base_directory>/var/log/StateEngine/``
                 '
     log_maxage:
         type: int
