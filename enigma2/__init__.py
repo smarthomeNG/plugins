@@ -45,6 +45,7 @@ class Enigma2Device:
         self._password = password
         self._items = []
         self._items_fast = []
+        self._items_remote_command = []
 
     def get_identifier(self):
         """
@@ -80,11 +81,19 @@ class Enigma2Device:
 
     def get_fast_items(self):
         """
-        Returns added items
+        Returns added fast items
 
         :return: array of items hold by the device
         """
         return self._items_fast
+
+    def get_items_remote_command(self):
+        """
+        Returns added remote command items
+
+        :return: array of items hold by the device
+        """
+        return self._items_remote_command
 
     def get_item_count(self):
         """
@@ -236,17 +245,18 @@ class Enigma2(SmartPlugin):
         if self.has_iattr(item.conf, "enigma2_page"):
             if self.get_iattr_value(item.conf, 'enigma2_page') in ['about', 'powerstate', 'subservices', 'deviceinfo']:
                 if self.get_iattr_value(item.conf, 'enigma2_data_type') in self._keys_fast_refresh:
-                    self._enigma2_device._items_fast.append(item)
+                    self.get_enigma2_device().get_fast_items().append(item)
                 else:
-                    self._enigma2_device._items.append(item)
+                    self.get_enigma2_device().get_items().append(item)
         elif self.has_iattr(item.conf, "enigma2_data_type"):
             if self.get_iattr_value(item.conf, 'enigma2_data_type') in self._keys_fast_refresh:
-                self._enigma2_device._items_fast.append(item)
+                self.get_enigma2_device().get_fast_items().append(item)
             else:
-                self._enigma2_device._items.append(item)
+                self.get_enigma2_device().get_items().append(item)
             if self.get_iattr_value(item.conf, 'enigma2_data_type') in ['current_volume', 'e2servicereference']:
                 return self.execute_item
         elif self.has_iattr(item.conf, "enigma2_remote_command_id") or self.has_iattr(item.conf, "sref"):
+            self.get_enigma2_device().get_items_remote_command().append(item)
             return self.execute_item
 
     def execute_item(self, item, caller=None, source=None, dest=None):
@@ -303,7 +313,7 @@ class Enigma2(SmartPlugin):
         xml = self.box_request(self._url_suffix_map['remotecontrol'], 'command=%s' % command_id)
         e2result_xml = xml.getElementsByTagName('e2result')
         e2resulttext_xml = xml.getElementsByTagName('e2resulttext')
-        if (len(e2resulttext_xml) > 0 and len(e2result_xml) > 0):
+        if len(e2resulttext_xml) > 0 and len(e2result_xml) > 0:
             if not e2resulttext_xml[0].firstChild is None and not e2result_xml[0].firstChild is None:
                 if e2result_xml[0].firstChild.data == 'True':
                     self.logger.debug(e2resulttext_xml[0].firstChild.data)
@@ -710,8 +720,8 @@ class WebInterface(SmartPluginWebIf):
         return tmpl.render(plugin_shortname=self.plugin.get_shortname(), plugin_version=self.plugin.get_version(),
                            interface=None, item_count=len(self.plugin.get_enigma2_device().get_items()),
                            item_count_fast=len(self.plugin.get_enigma2_device().get_fast_items()),
+                           item_count_remote_command=len(self.plugin.get_enigma2_device().get_items_remote_command()),
                            plugin_info=self.plugin.get_info(), tabcount=1,
-                           tab1title="Enigma2 Items (%s)" % str(len(self.plugin.get_enigma2_device().get_items())+len(self.plugin.get_enigma2_device().get_fast_items())),
                            p=self.plugin)
 
     @cherrypy.expose
@@ -733,6 +743,10 @@ class WebInterface(SmartPluginWebIf):
                 data[item.id() + "_last_change"] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
 
             for item in self.plugin.get_enigma2_device().get_fast_items():
+                data[item.id() + "_value"] = item()
+                data[item.id() + "_last_update"] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
+                data[item.id() + "_last_change"] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
+            for item in self.plugin.get_enigma2_device().get_items_remote_command():
                 data[item.id() + "_value"] = item()
                 data[item.id() + "_last_update"] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
                 data[item.id() + "_last_change"] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')

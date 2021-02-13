@@ -2,6 +2,9 @@
 {% set update_interval = 3000 %}
 {% set logo_frame = false %}
 {% set use_bodytabs = true %}
+{% set tab2title = "Remote Command Items (" + p.get_enigma2_device().get_items_remote_command()|length|string+ ")"  %}
+{% set tab1title = "Enigma2 Items (" + (p.get_enigma2_device().get_items()|length+p.get_enigma2_device().get_fast_items()|length)|string+ ")" %}
+{% set tabcount = 2 %}
 
 {% block headtable %}
 <table class="table table-striped table-hover">
@@ -49,6 +52,11 @@
             shngInsertText ('{{ item.id() }}_last_update', objResponse['{{ item.id() }}_last_update'])
             shngInsertText ('{{ item.id() }}_last_change', objResponse['{{ item.id() }}_last_change'])
             {% endfor %}
+            {% for item in p.get_enigma2_device().get_items_remote_command() %}
+            shngInsertText ('{{ item.id() }}_value', objResponse['{{ item.id() }}_value'])
+            shngInsertText ('{{ item.id() }}_last_update', objResponse['{{ item.id() }}_last_update'])
+            shngInsertText ('{{ item.id() }}_last_change', objResponse['{{ item.id() }}_last_change'])
+            {% endfor %}
         }
     }
 </script>
@@ -56,9 +64,9 @@
 
 {% block bodytab1 %}
 
-<div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
+<div class="table-responsive" style="margin-left: 2px; margin-right: 2px; margin-top: 10px;" class="row">
 	<div class="col-sm-12">
-		<h5>{{ _('Enigma2 Fast Items') }} ({{ p.get_enigma2_device().get_fast_items()|length }})</h5>
+		<h6>{{ _('Enigma2 Fast Items') }} ({{ p.get_enigma2_device().get_fast_items()|length }})</h6>
 
 		<table class="table table-striped table-hover pluginList">
 			<thead>
@@ -85,7 +93,7 @@
 			</tbody>
 		</table>
 
-        <h5>{{ _('Enigma2 Items') }} ({{ p.get_enigma2_device().get_items()|length }})</h5>
+        <h6>{{ _('Enigma2 Items') }} ({{ p.get_enigma2_device().get_items()|length }})</h6>
 
 		<table class="table table-striped table-hover pluginList">
 			<thead>
@@ -114,4 +122,34 @@
 	</div>
 </div>
 
+{% endblock %}
+{% block bodytab2 %}
+<div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
+	<div class="col-sm-12">
+		<table class="table table-striped table-hover pluginList">
+			<thead>
+				<tr class="shng_heading">
+                    <th>{{ _('Pfad') }}</th>
+					<th>{{ _('Typ') }}</th>
+                    <th>{{ _('Enigma2 Datentyp') }}</th>
+					<th>{{ _('Wert') }}</th>
+					<th>{{ _('Letztes Update') }}</th>
+					<th>{{ _('Letzter Change') }}</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for item in p.get_enigma2_device().get_items_remote_command() %}
+					<tr id="{{ loop.index }}_click">
+						<td class="py-1">{{ item.property.path }}</td>
+						<td class="py-1">{{ item.property.type }}</td>
+						<td class="py-1">{{ p.get_iattr_value(item.conf, 'enigma2_data_type') }}</td>
+						<td id="{{ item.id() }}_value" class="py-1">{{ item() }}</td>
+						<td id="{{ item.id() }}_last_update" class="py-1">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+						<td id="{{ item.id() }}_last_change" class="py-1">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+					</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+	</div>
+</div>
 {% endblock %}
