@@ -131,7 +131,6 @@
 				<tr class="shng_heading">
                     <th>{{ _('Pfad') }}</th>
 					<th>{{ _('Typ') }}</th>
-                    <th>{{ _('Enigma2 Datentyp') }}</th>
 					<th>{{ _('Wert') }}</th>
 					<th>{{ _('Letztes Update') }}</th>
 					<th>{{ _('Letzter Change') }}</th>
@@ -142,7 +141,6 @@
 					<tr id="{{ loop.index }}_click">
 						<td class="py-1">{{ item.property.path }}</td>
 						<td class="py-1">{{ item.property.type }}</td>
-						<td class="py-1">{{ p.get_iattr_value(item.conf, 'enigma2_data_type') }}</td>
 						<td id="{{ item.id() }}_value" class="py-1">{{ item() }}</td>
 						<td id="{{ item.id() }}_last_update" class="py-1">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
 						<td id="{{ item.id() }}_last_change" class="py-1">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
