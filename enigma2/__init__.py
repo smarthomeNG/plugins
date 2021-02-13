@@ -124,7 +124,7 @@ class Enigma2(SmartPlugin):
     Main class of the Plugin. Does all plugin specific stuff and provides the update functions for the Enigma2Device
     """
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = "1.4.12"
+    PLUGIN_VERSION = "1.4.13"
 
     _url_suffix_map = dict([('about', '/web/about'),
                             ('deviceinfo', '/web/deviceinfo'),
