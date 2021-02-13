@@ -118,14 +118,14 @@ plugin_functions:
     send_message:
         type: void
         description:
-            de: "Sendet eine Message an das Enigma2 Device - Beispiel: sh.vusolo2.send_message('Testnachricht', 1, 10)"
+            de: "Sendet eine Nachricht an das Enigma2 Device - Beispiel: sh.vusolo2.send_message('Testnachricht', 1, 10)"
             en: "Sends a message to the device - Example: sh.vusolo2.send_message('Testmessage', 1, 10)"
 
         parameters:
             messagetext:
                 type: str
                 description:
-                    de: "Anzuzeignder Text"
+                    de: "Anzuzeigender Text"
                     en: "Text to be displayed"
             messagetype:
                 type: int
@@ -135,13 +135,13 @@ plugin_functions:
                     de: ['Ja/Nein', 'Info', 'Mitteilung', 'Achtung']
                     en: ['Yes/No', 'Info', 'Message', 'Attention']
                 description:
-                    de: "messagetype bestimmt die Art wie die Mitteilung angezeigt werden soll"
+                    de: "messagetype bestimmt die Art, wie die Nachricht angezeigt werden soll"
                     en: "messagetype determines the way the message shall be shown"
             timeout:
                 type: int
                 default: 10
                 description:
-                    de: "Anzeigedauer der Message in Sekunden"
+                    de: "Anzeigedauer der Nachricht in Sekunden"
                     en: "Number of seconds the message should stay on the device"
 
     set_power_state:

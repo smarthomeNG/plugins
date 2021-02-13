@@ -13,3 +13,4 @@ plugin_translations:
     'Host/Port':  {'de': '=', 'en': '=', 'fr': ''}
     'Benutzer':  {'de': '=', 'en': 'Username', 'fr': ''}
     'Passwort':  {'de': '=', 'en': 'Password', 'fr': ''}
+    'Plugin-API':  {'de': '=', 'en': '=', 'fr': ''}

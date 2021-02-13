@@ -1,10 +1,12 @@
 {% extends "base_plugin.html" %}
 {% set update_interval = 3000 %}
+{% set language = p.get_sh().get_defaultlanguage() %}
 {% set logo_frame = false %}
 {% set use_bodytabs = true %}
-{% set tab2title = "Remote Command Items (" + p.get_enigma2_device().get_items_remote_command()|length|string+ ")"  %}
 {% set tab1title = "Enigma2 Items (" + (p.get_enigma2_device().get_items()|length+p.get_enigma2_device().get_fast_items()|length)|string+ ")" %}
-{% set tabcount = 2 %}
+{% set tab2title = "Remote Command Items (" + p.get_enigma2_device().get_items_remote_command()|length|string+ ")"  %}
+{% set tab3title = _('Plugin-API') %}
+{% set tabcount = 3 %}
 
 {% block headtable %}
 <table class="table table-striped table-hover">
@@ -149,5 +151,36 @@
 			</tbody>
 		</table>
 	</div>
+</div>
+{% endblock %}
+{% block bodytab3 %}
+<div class="container ml-1 pl-1 mr-1 pr-1">
+{%  for function, dict in p.metadata.plugin_functions.items() %}
+    <div class="card mb-2">
+      <div class="card-header p-2">
+          <strong>{{ dict['type'] }} {{ function }}({% if dict['parameters'] is not none %}{%  for name, paramdict in dict['parameters'].items() %}{% if loop.index > 1 %}, {% endif %}{{  name }}: {{ paramdict['type'] }}{% endfor %}{% endif %})</strong>
+      </div>
+      <div class="card-body p-2">
+          {{ dict['description'][language] }}<br/>
+          {% if dict['parameters'] is not none %}
+              <div class="card mt-2">
+                  <div class="card-header p-2">
+                    <strong>{{ _('Parameter') }}:</strong>
+                  </div>
+                  <div class="card-body p-2">
+                      <ul class="list-group">
+                      {%  for name, paramdict in dict['parameters'].items() %}
+                        <li class="list-group-item p-2">
+                            <strong>{{  name }}: {{ paramdict['type'] }}</strong><br/>
+                        {{ paramdict['description'][language] }}
+                        </li>
+                      {% endfor %}
+                      </ul>
+                  </div>
+              </div>
+          {% endif %}
+      </div>
+    </div>
+{% endfor %}
 </div>
 {% endblock %}
