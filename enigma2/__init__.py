@@ -282,12 +282,10 @@ class Enigma2(SmartPlugin):
         else:
             url = "http"
         url += "://%s:%s%s?%s" % (self._enigma2_device.get_host(), self._enigma2_device.get_port(), suffix, parameter)
-
         try:
             response = self._session.get(url, timeout=self._timeout,
                                          auth=HTTPBasicAuth(self._enigma2_device.get_user(),
                                                             self._enigma2_device.get_password()), verify=self._verify)
-
         except Exception as e:
             self.logger.error("Exception when sending GET request: {0}".format(str(e)))
             return minidom.parseString('<noanswer/>')
@@ -301,7 +299,6 @@ class Enigma2(SmartPlugin):
 
     def remote_control_command(self, command_id):
         xml = self.box_request(self._url_suffix_map['remotecontrol'], 'command=%s' % command_id)
-
         e2result_xml = xml.getElementsByTagName('e2result')
         e2resulttext_xml = xml.getElementsByTagName('e2resulttext')
         if (len(e2resulttext_xml) > 0 and len(e2result_xml) > 0):
@@ -464,7 +461,8 @@ class Enigma2(SmartPlugin):
         if len(test_xml) == 0:
             element_xml = xml.getElementsByTagName('e2servicereference')
             if len(element_xml) > 0:
-                e2servicereference = element_xml[0].firstChild.data
+                if element_xml[0].firstChild is not None:
+                    e2servicereference = element_xml[0].firstChild.data
             else:
                 e2servicereference = ''
                 self.logger.error("Attribute %s not available on the Enigma2Device" % self.get_iattr_value(item.conf,
