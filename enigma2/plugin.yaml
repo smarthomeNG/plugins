@@ -30,6 +30,7 @@ parameters:
     password:
         type: str
         default: ''
+        hide: True
         description:
             de: '(optional) Passwort für den Login. Wird aus Sicherheitsgründen empfohlen.'
             en: '(optional) Password for login. Is recommended due to security reasons'

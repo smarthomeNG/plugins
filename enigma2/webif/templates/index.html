@@ -11,22 +11,24 @@
 			<td class="py-1">
                 {{ p.get_fast_cycle() }}
             </td>
-			<td><strong>{{ _('Host/Port') }}:</strong></td>
-			<td>
+			<td class="py-1"><strong>{{ _('Host/Port') }}:</strong></td>
+			<td class="py-1">
                 <a class="text-shng" target="_blank" href="http{% if p.get_enigma2_device().is_ssl() %}s{% endif %}://{{ p.get_enigma2_device().get_host() }}:{{ p.get_enigma2_device().get_port() }}">
                     http{% if p.get_enigma2_device().is_ssl() %}s{% endif %}://{{ p.get_enigma2_device().get_host() }}:{{ p.get_enigma2_device().get_port() }}
                 </a>
             </td>
-			<td></td>
+			<td class="py-1"><strong>{{ _('Benutzer') }}</strong></td>
+			<td class="py-1">{% if p.get_parameter_value_for_display('username') %}{{ p.get_parameter_value_for_display('username') }}{% else %}-{% endif %}</td>
 		</tr>
 		<tr>
 			<td class="py-1"><strong>{{ _('Cycle') }}</strong></td>
 			<td class="py-1">
 				{{ p.get_cycle() }}
 			</td>
-			<td></td>
-			<td></td>
-			<td></td>
+			<td class="py-1"></td>
+			<td class="py-1"></td>
+			<td class="py-1"><strong>{{ _('Passwort') }}</strong></td>
+			<td class="py-1">{% if p.get_parameter_value_for_display('password') %}{{ p.get_parameter_value_for_display('password') }}{% else %}-{% endif %}</td>
 		</tr>
 	</tbody>
 </table>
@@ -38,6 +40,11 @@
         if (dataSet === 'devices_info' || dataSet === null) {
             var objResponse = JSON.parse(response);
             {% for item in p.get_enigma2_device().get_items() %}
+            shngInsertText ('{{ item.id() }}_value', objResponse['{{ item.id() }}_value'])
+            shngInsertText ('{{ item.id() }}_last_update', objResponse['{{ item.id() }}_last_update'])
+            shngInsertText ('{{ item.id() }}_last_change', objResponse['{{ item.id() }}_last_change'])
+            {% endfor %}
+            {% for item in p.get_enigma2_device().get_fast_items() %}
             shngInsertText ('{{ item.id() }}_value', objResponse['{{ item.id() }}_value'])
             shngInsertText ('{{ item.id() }}_last_update', objResponse['{{ item.id() }}_last_update'])
             shngInsertText ('{{ item.id() }}_last_change', objResponse['{{ item.id() }}_last_change'])

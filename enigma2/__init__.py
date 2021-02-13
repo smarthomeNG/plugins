@@ -727,12 +727,12 @@ class WebInterface(SmartPluginWebIf):
         if dataSet is None:
             # get the new data
             data = {}
-            for key, item in self.plugin.get_enigma2_device().get_items().items():
+            for item in self.plugin.get_enigma2_device().get_items():
                 data[item.id() + "_value"] = item()
                 data[item.id() + "_last_update"] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
                 data[item.id() + "_last_change"] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
 
-            for key, item in self.plugin.get_enigma2_device().get_fast_items().items():
+            for item in self.plugin.get_enigma2_device().get_fast_items():
                 data[item.id() + "_value"] = item()
                 data[item.id() + "_last_update"] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
                 data[item.id() + "_last_change"] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
