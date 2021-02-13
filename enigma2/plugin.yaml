@@ -164,7 +164,7 @@ plugin_functions:
     get_answer:
         type: foo
         description:
-            de: "Diese Funktion prüft, ob eine Antwort zu einer gesendeten Message eingegangen ist. Dabei ist ddas timeout zu beachten, bis eine Message beantwortet wird. - Beispiel: sh.vusolo2.get_answer()"
+            de: "Diese Funktion prüft, ob eine Antwort zu einer gesendeten Nachricht eingegangen ist. Dabei ist der Timeout zu beachten, bis eine Message beantwortet werden muss. - Beispiel: sh.vusolo2.get_answer()"
             en: "This function checks for an answer to a sent message. If you call this method, take into account the timeout until the message can be answered and e.g. set a 'while (count < 0)' - Example: sh.vusolo2.get_answer()"
 
         parameters:

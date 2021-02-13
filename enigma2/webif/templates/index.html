@@ -172,7 +172,17 @@
                       {%  for name, paramdict in dict['parameters'].items() %}
                         <li class="list-group-item p-2">
                             <strong>{{  name }}: {{ paramdict['type'] }}</strong><br/>
-                        {{ paramdict['description'][language] }}
+                            {{ paramdict['description'][language] }}
+                            {%  if paramdict['valid_list'] %}
+                            <br/>
+                            <table>
+                                {% for valid_list_entry in paramdict['valid_list'] %}
+                                <tr>
+                                    <td>{{ valid_list_entry }} - {{ paramdict['valid_list_description'][language][loop.index - 1] }}</td>
+                                </tr>
+                                {% endfor %}
+                            </table>
+                            {% endif %}
                         </li>
                       {% endfor %}
                       </ul>
