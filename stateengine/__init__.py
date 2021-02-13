@@ -64,9 +64,10 @@ class StateEngine(SmartPlugin):
             self.get_sh().stateengine_plugin_functions = StateEngineFunctions.SeFunctions(self.get_sh(), self.logger)
             StateEngineCurrent.init(self.get_sh())
 
-            if log_level > 0:
-                base = self.get_sh().get_basedir()
-                log_directory = SeLogger.create_logdirectory(base, log_directory)
+            base = self.get_sh().get_basedir()
+            log_directory = SeLogger.create_logdirectory(base, log_directory)
+
+            if log_level > 0:                
                 text = "StateEngine extended logging is active. Logging to '{0}' with log level {1}."
                 self.logger.info(text.format(log_directory, log_level))
             log_maxage = self.get_parameter_value("log_maxage")
