@@ -28,7 +28,7 @@ from xml.dom import minidom
 import requests
 from requests.packages import urllib3
 from requests.auth import HTTPBasicAuth
-from lib.model.smartplugin import SmartPlugin
+from lib.model.smartplugin import *
 
 
 class Enigma2Device:
@@ -180,6 +180,8 @@ class Enigma2(SmartPlugin):
         self._response_cache = dict()
         self._response_cache_fast = dict()
 
+        self.init_webinterface()
+
     def run(self):
         """
         Run method for the plugin
@@ -305,6 +307,12 @@ class Enigma2(SmartPlugin):
             if not e2resulttext_xml[0].firstChild is None and not e2result_xml[0].firstChild is None:
                 if e2result_xml[0].firstChild.data == 'True':
                     self.logger.debug(e2resulttext_xml[0].firstChild.data)
+
+    def get_cycle(self):
+        return self._cycle
+
+    def get_fast_cycle(self):
+        return self._fast_cycle
 
     def get_audio_tracks(self):
         """
@@ -622,3 +630,114 @@ class Enigma2(SmartPlugin):
             if not xml[0].firstChild is None:
                 data = xml[0].firstChild.data
         return data
+
+    def get_enigma2_device(self):
+        return self._enigma2_device
+
+    def init_webinterface(self):
+        """"
+        Initialize the web interface for this plugin
+
+        This method is only needed if the plugin is implementing a web interface
+        """
+        try:
+            self.mod_http = Modules.get_instance().get_module(
+                'http')  # try/except to handle running in a core version that does not support modules
+        except:
+            self.mod_http = None
+        if self.mod_http == None:
+            self.logger.error("Plugin '{}': Not initializing the web interface".format(self.get_shortname()))
+            return False
+
+        # set application configuration for cherrypy
+        webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
+        config = {
+            '/': {
+                'tools.staticdir.root': webif_dir,
+            },
+            '/static': {
+                'tools.staticdir.on': True,
+                'tools.staticdir.dir': 'static'
+            }
+        }
+
+        # Register the web interface as a cherrypy app
+        self.mod_http.register_webif(WebInterface(webif_dir, self),
+                                     self.get_shortname(),
+                                     config,
+                                     self.get_classname(), self.get_instance_name(),
+                                     description='')
+
+        return True
+
+
+# ------------------------------------------
+#    Webinterface of the plugin
+# ------------------------------------------
+
+import cherrypy
+import json
+from jinja2 import Environment, FileSystemLoader
+
+
+class WebInterface(SmartPluginWebIf):
+
+    def __init__(self, webif_dir, plugin):
+        """
+        Initialization of instance of class WebInterface
+
+        :param webif_dir: directory where the webinterface of the plugin resides
+        :param plugin: instance of the plugin
+        :type webif_dir: str
+        :type plugin: object
+        """
+        self.logger = logging.getLogger(__name__)
+        self.webif_dir = webif_dir
+        self.plugin = plugin
+
+        self.tplenv = self.init_template_environment()
+
+    @cherrypy.expose
+    def index(self, reload=None):
+        """
+        Build index.html for cherrypy
+
+        Render the template and return the html file to be delivered to the browser
+
+        :return: contents of the template after beeing rendered
+        """
+        tmpl = self.tplenv.get_template('index.html')
+        return tmpl.render(plugin_shortname=self.plugin.get_shortname(), plugin_version=self.plugin.get_version(),
+                           interface=None, item_count=len(self.plugin.get_enigma2_device().get_items()),
+                           item_count_fast=len(self.plugin.get_enigma2_device().get_fast_items()),
+                           plugin_info=self.plugin.get_info(), tabcount=1,
+                           tab1title="Enigma2 Items (%s)" % str(len(self.plugin.get_enigma2_device().get_items())+len(self.plugin.get_enigma2_device().get_fast_items())),
+                           p=self.plugin)
+
+    @cherrypy.expose
+    def get_data_html(self, dataSet=None):
+        """
+        Return data to update the webpage
+
+        For the standard update mechanism of the web interface, the dataSet to return the data for is None
+
+        :param dataSet: Dataset for which the data should be returned (standard: None)
+        :return: dict with the data needed to update the web page.
+        """
+        if dataSet is None:
+            # get the new data
+            data = {}
+            for key, item in self.plugin.get_enigma2_device().get_items().items():
+                data[item.id() + "_value"] = item()
+                data[item.id() + "_last_update"] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
+                data[item.id() + "_last_change"] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
+
+            for key, item in self.plugin.get_enigma2_device().get_fast_items().items():
+                data[item.id() + "_value"] = item()
+                data[item.id() + "_last_update"] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
+                data[item.id() + "_last_change"] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
+
+            # return it as json the the web page
+            return json.dumps(data)
+        else:
+            return
