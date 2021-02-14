@@ -97,13 +97,10 @@ class SmartVisuGenerator:
             item_path = entry.get('path', '')
             separator = entry.get('separator', False)
             img = entry.get('img', None)
-            self.logger.warning(f"initialize_visu_menu: item_path='{item_path}', name='{name}'")
             if name != '':
                 menu_entry = self.create_menuentry(menu, name, item_path, separator, img, entry.get('nav_aside', None), entry.get('nav_aside2', None), True)
                 self.add_menuentry_to_list(menu, menu_entry)
             self.logger.debug("initialize_visu_menu: '{}' menu_entry={}".format(menu, menu_entry))
-
-        self.logger.warning(f"initialize_visu_menu: menu={menu}, self.navigation={self.navigation}")
 
 
     def handle_heading_attributes(self, room):
