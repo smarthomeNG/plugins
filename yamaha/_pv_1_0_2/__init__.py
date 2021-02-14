@@ -2,7 +2,7 @@
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
 #  Copyright 2016 Raoul Thill                       raoul.thill@gmail.com
-#  Copyright 2020-2021 Bernd Meiners                Bernd.Meiners@mail.de
+#  Copyright 2020 Bernd Meiners                     Bernd.Meiners@mail.de
 #########################################################################
 #  This file is part of SmartHomeNG.
 #
@@ -55,7 +55,7 @@ class Mcast(socket.socket):
 
 
 class Yamaha(SmartPlugin):
-    PLUGIN_VERSION = "1.0.3"
+    PLUGIN_VERSION = "1.0.2"
 
     def __init__(self, smarthome):
         # Call init code of parent class (SmartPlugin)
@@ -154,36 +154,26 @@ class Yamaha(SmartPlugin):
 
     def _initialize(self):
         try:
-            self.logger.debug("initializing current state")
+            self.logger.info("Yamaha now initializing current state")
             for yamaha_host, yamaha_cmd in self._yamaha_rxv.items():
-                self.logger.debug("Initializing items for host: {}".format(yamaha_host))
+                self.logger.info("Initializing items for host: {}".format(yamaha_host))
                 state = self._update_state(yamaha_host)
                 self.logger.debug(state)
                 for yamaha_cmd, item in yamaha_cmd.items():
                     if yamaha_cmd != 'state':
-                        self.logger.debug("Initializing cmd {} for item {}".format(yamaha_cmd, item))
+                        self.logger.info("Initializing cmd {} for item {}".format(yamaha_cmd, item))
                         value = self._return_value(state, yamaha_cmd)
                         item(value, self.get_shortname())
         except Exception as e:
             self.logger.error("Exception '{}' occurred".format(e))
             return
-        self.logger.debug("Yamaha finished initializing current state")
+        self.logger.info("Yamaha finished initializing current state")
         return True
 
     def _return_document(self, doc):
         return etree.tostring(doc, xml_declaration=True, encoding='UTF-8', pretty_print=False)
 
     def _event_notify(self, value, cmd='PUT'):
-        """
-        Sets the Yamaha device Notification status
-
-        :param value: Set the notification status on if True is given, else to off
-        :type value: boolean
-        :param cmd: command for notification, defaults to 'PUT'
-        :type cmd: str, optional
-        :return: XML with command to set the notification status
-        :rtype: str
-        """
         root = etree.Element('YAMAHA_AV')
         root.set('cmd', cmd)
         system = etree.SubElement(root, 'System')
@@ -344,16 +334,6 @@ class Yamaha(SmartPlugin):
             return events
 
     def _submit_payload(self, host, payload):
-        """
-        Creates a data package with payload given as string containing some XML coded command 
-
-        :param host: IP or hostname of Yamaha device
-        :type host: str
-        :param payload: XML coded command
-        :type payload: str
-        :return: Returns the response if receiveed by device, otherwise None
-        :rtype: str
-        """
         if payload:
             self.logger.debug("Sending payload {}".format(payload))
             res = requests.post("http://%s/YamahaRemoteControl/ctrl" % host,
@@ -375,35 +355,14 @@ class Yamaha(SmartPlugin):
             return None
 
     def _lookup_host(self, item):
-        """
-        A ``yamaha_cmd`` Item needs the parent to have the attribute ``yamaha_host``
-        This method gets the parents ``yamaha_host`` attributes value.
-
-        :param item: Item with a ``yamaha_cmd``
-        :type item: item
-        :return: Either the ip or hostname of the device or an empty string otherwise
-        :rtype: str
-        """
         parent = item.return_parent()
         yamaha_host = self.get_iattr_value(parent.conf,'yamaha_host')
         return yamaha_host
 
     def parse_item(self, item):
-        """
-        This method is called for every item in SmartHomeNG when the plugin is already initialized.
-
-        :param item:    The item to process.
-        :return:        If the plugin needs to be informed of an items change you should return a call back function
-                        like the function update_item down below. An example when this is needed is the knx plugin
-                        where parse_item returns the update_item function when the attribute knx_send is found.
-                        This means that when the items value is about to be updated, the call back function is called
-                        with the item, caller, source and dest as arguments and in case of the knx plugin the value
-                        can be sent to the knx with a knx write function within the knx plugin.
-        """
         if self.has_iattr(item.conf, 'yamaha_cmd'):
             self.logger.debug("parse item: {}".format(item))
             yamaha_host = self._lookup_host(item)
-            # todo: abort if yamaha_host is empty
             yamaha_cmd = self.get_iattr_value(item.conf, 'yamaha_cmd').lower()
             if not yamaha_cmd in self._yamaha_cmds:
                 self.logger.warning("{} not in valid commands: {}".format(yamaha_cmd, self._yamaha_cmds))
