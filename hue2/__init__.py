@@ -49,7 +49,7 @@ class Hue2(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '2.0.0'    # (must match the version specified in plugin.yaml)
+    PLUGIN_VERSION = '2.0.2'    # (must match the version specified in plugin.yaml)
 
     hue_group_action_values          = ['on', 'bri', 'hue', 'sat', 'ct', 'xy', 'colormode']
     hue_light_action_writable_values = ['on', 'bri', 'hue', 'sat', 'ct', 'xy']
@@ -87,6 +87,7 @@ class Hue2(SmartPlugin):
         # get the parameters for the plugin (as defined in metadata plugin.yaml):
         self.bridge_serial = self.get_parameter_value('bridge_serial')
         self.bridge_ip = self.get_parameter_value('bridge_ip')
+        self.bridge_port = self.get_parameter_value('bridge_port')
         self.bridge_user = self.get_parameter_value('bridge_user')
 
         # polled for value changes by adding a scheduler entry in the run method of this plugin
@@ -116,15 +117,19 @@ class Hue2(SmartPlugin):
                 if self.bridge.get('serialNumber', '') == '':
                     # if not discovered, use stored ip address
                     self.bridge['ip'] = self.bridge_ip
+                    self.bridge['port'] = self.bridge_port
                     self.bridge['serialNumber'] = self.bridge_serial
-                    self.logger.warning("Configured bridge {} is still not in the list of discovered bridges, trying with stored ip address {}".format(self.bridge_serial, self.bridge_ip))
+                    self.logger.warning("Configured bridge {} is still not in the list of discovered bridges, trying with stored ip address {}:{}".format(self.bridge_serial, self.bridge_ip, self.bridge_port))
 
             self.bridge['username'] = self.bridge_user
             if self.bridge['ip'] != self.bridge_ip:
                 # if ip address of bridge has changed, store new ip address in configuration data
                 self.update_plugin_config()
-        self.get_bridgeinfo()
-        self.logger.info("Bridgeinfo for configured bridge '{}' = {}".format(self.bridge_serial, self.bridge))
+        if not self.get_bridgeinfo():
+            self.bridge = {}
+            self.logger.warning("Bridge '{}' is treated as unconfigured".format(self.bridge_serial))
+        else:
+            self.logger.info("Bridgeinfo for configured bridge '{}' = {}".format(self.bridge_serial, self.bridge))
 
 
         # dict to store information about items handled by this plugin
@@ -312,6 +317,19 @@ class Hue2(SmartPlugin):
         return
 
 
+    def get_api_config_of_bridge(self, urlbase):
+
+        url = urlbase + 'api/config'
+        api_config = {}
+        try:
+            r = requests.get(url)
+            if r.status_code == 200:
+                api_config = r.json()
+        except Exception as e:
+            self.logger.error(f"get_api_config_of_bridge: url='{url}' - Exception {e}")
+        return api_config
+
+
     def get_data_from_discovered_bridges(self, serialno):
         """
         Get data from discovered bridges for a given serial number
@@ -331,6 +349,12 @@ class Hue2(SmartPlugin):
                 if db['serialNumber'] == serialno:
                     result = db
                     break
+
+        if result != {}:
+            api_config = self.get_api_config_of_bridge(result.get('URLBase',''))
+            result['datastoreversion'] = api_config.get('datastoreversion', '')
+            result['apiversion'] = api_config.get('apiversion', '')
+            result['swversion'] = api_config.get('swversion', '')
 
         return result
 
@@ -454,7 +478,11 @@ class Hue2(SmartPlugin):
             return None
 
         if function in self.hue_light_state_values:
-            result = light['state'][function]
+            try:
+                result = light['state'][function]
+            except KeyError:
+                self.logger.warning(f"poll_bridge_lights: Function {function} not supported by light '{light_id}' (item '{item_path}')")
+                result = ''
         elif function == 'name':
             result = light['name']
         elif function == 'type':
@@ -542,6 +570,7 @@ class Hue2(SmartPlugin):
         conf_dict['bridge_serial'] = self.bridge.get('serialNumber','')
         conf_dict['bridge_user'] = self.bridge.get('username','')
         conf_dict['bridge_ip'] = self.bridge.get('ip','')
+        conf_dict['bridge_port'] = self.bridge.get('port','')
         self.update_config_section(conf_dict)
         return
 
@@ -557,13 +586,24 @@ class Hue2(SmartPlugin):
             self.bridge_sensors = {}
             return
         self.logger.info("get_bridgeinfo: self.bridge = {}".format(self.bridge))
-        self.br = qhue.Bridge(self.bridge['ip'], self.bridge['username'])
-        self.bridge_lights = self.br.lights()
-        self.bridge_groups = self.br.groups()
-        self.bridge_config = self.br.config()
-        self.bridge_scenes = self.br.scenes()
-        self.bridge_sensors = self.br.sensors()
-        return
+        self.br = qhue.Bridge(self.bridge['ip']+':'+str(self.bridge['port']), self.bridge['username'])
+        try:
+            self.bridge_lights = self.br.lights()
+            self.bridge_groups = self.br.groups()
+            self.bridge_config = self.br.config()
+            self.bridge_scenes = self.br.scenes()
+            self.bridge_sensors = self.br.sensors()
+        except Exception as e:
+            self.logger.error(f"Bridge '{self.bridge.get('serialNumber','')}' returned exception {e}")
+            self.br = None
+            self.bridge_lights = {}
+            self.bridge_groups = {}
+            self.bridge_config = {}
+            self.bridge_scenes = {}
+            self.bridge_sensors = {}
+            return False
+
+        return True
 
     def discover_bridges(self):
         bridges = []
@@ -577,7 +617,8 @@ class Hue2(SmartPlugin):
             br_info = {}
             br_info['mac'] = br
             br_info['ip'] = discovered_bridges[br].split('/')[2].split(':')[0]
-            r = requests.get('http://' + br_info['ip'] + '/description.xml')
+            br_info['port'] = discovered_bridges[br].split('/')[2].split(':')[1]
+            r = requests.get('http://' + br_info['ip'] + ':' + br_info['port'] + '/description.xml')
             if r.status_code == 200:
                 xmldict = xmltodict.parse(r.text)
                 br_info['friendlyName'] = str(xmldict['root']['device']['friendlyName'])
@@ -593,6 +634,14 @@ class Hue2(SmartPlugin):
                     br_info['version'] = 'v2'
                 else:
                     br_info['version'] = 'unknown'
+
+                # get API information
+                api_config = self.get_api_config_of_bridge(br_info['URLBase'])
+                br_info['datastoreversion'] = api_config.get('datastoreversion', '')
+                br_info['apiversion'] = api_config.get('apiversion', '')
+                br_info['swversion'] = api_config.get('swversion', '')
+
+
             bridges.append(br_info)
 
         for bridge in bridges:
@@ -602,7 +651,7 @@ class Hue2(SmartPlugin):
 
     # --------------------------------------------------------------------------------------------
 
-    def create_new_username(self, ip, devicetype=None, timeout=5):
+    def create_new_username(self, ip, port, devicetype=None, timeout=5):
         """
         Helper function to generate a new anonymous username on a hue bridge
 
@@ -619,7 +668,7 @@ class Hue2(SmartPlugin):
             QhueException if something went wrong with username generation (for
                 example, if the bridge button wasn't pressed).
         """
-        api_url = "http://{}/api".format(ip)
+        api_url = "http://{}/api".format(ip+':'+port)
         res = qhue.qhue.Resource(api_url, timeout)
 
         if devicetype is None:
@@ -636,7 +685,7 @@ class Hue2(SmartPlugin):
             return response[0]["success"]["username"]
 
 
-    def remove_username(self, ip, username, timeout=5):
+    def remove_username(self, ip, port, username, timeout=5):
         """
         Remove the username/application key from the bridge
 
@@ -651,7 +700,7 @@ class Hue2(SmartPlugin):
         Raises:
             QhueException if something went wrong with username deletion
         """
-        api_url = "http://{}/api/{}".format(ip, username)
+        api_url = "http://{}/api/{}".format(ip+':'+port, username)
         url = api_url + "/config/whitelist/{}".format(username)
         self.logger.info("remove_username: url = {}".format(url))
         res = qhue.qhue.Resource(url, timeout)

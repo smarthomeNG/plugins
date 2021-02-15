@@ -12,7 +12,7 @@ plugin:
     documentation: http://smarthomeng.de/user/plugins/avm/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/934835-avm-plugin
 
-    version: 1.5.10                 # Plugin version
+    version: 1.5.11                 # Plugin version
     sh_minversion: 1.6             # minimum shNG version to use this plugin
 #    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
@@ -252,6 +252,22 @@ plugin_functions:
                 description:
                     de: "ID des Telefonbuchs, in dem nachgeschlagen werden soll."
                     en: "ID of the phone book, in which numbers should be looked up."
+
+    get_device_log_from_lua:
+        type: list(list(str))
+        description:
+            de: "Ermittelt die Logeinträge auf dem Gerät über die LUA Schnittstelle /query.lua?mq_log=logger:status/log."
+            en: "Gets the log entries on the device via the LUA interface /query.lua?mq_log=logger:status/log."
+        parameters:
+        # This function has no parameters
+
+    get_device_log_from_tr064:
+        type: list(str)
+        description:
+            de: "Ermittelt die Logeinträge auf dem Gerät über die TR-064 Schnittstelle."
+            en: "Gets the log entries on the device via the TR-064 interface."
+        parameters:
+        # This function has no parameters
 
     get_host_details:
         type: dict(str)

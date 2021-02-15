@@ -12,7 +12,7 @@ plugin:
     documentation: http://smarthomeng.de/user/plugins/dlms/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1002464-support-thread-für-dlms-plugin
 
-    version: 1.5.3                 # Plugin version
+    version: 1.5.4                 # Plugin version
     sh_minversion: 1.4             # minimum shNG version to use this plugin
     #sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
@@ -87,10 +87,38 @@ parameters:
 item_attributes:
     # Definition of item attributes defined by this plugin
     dlms_obis_code:
-        type: str
+        type: list(len, str, int, str, str)
         description:
-            de: 'Anweisung welcher Teil einer OBIS Zeile geparst und dem Item zugewiesen werden soll `1-1:1.6.2*01|Index|Value/Unit|Value Type`'
-            en: 'instruction which part of obis line should be parsed and assigned to an item `1-1:1.6.2*01|Index|Value/Unit|Value Type`'
+            de: >
+                Anweisung welcher Teil einer OBIS Zeile geparst und dem Item zugewiesen werden soll 
+                * obis Code ``1-1:1.6.2*01`` 
+                * Index
+                * Entweder Wert also 'Value' oder Einheit also 'Unit'
+                * Wert Konvertierungsart 
+                    * Z6 (Zeit codiert mit hhmmss),
+                    * Z4 (Zeit codiert mit hhmm),
+                    * D6 (Datum codiert mit YYMMDD),
+                    * ZST10 (Datum und Zeit codiert mit YYMMDDhhmm),
+                    * ZST12 (Datum und Zeit codiert mit YYMMDDhhmmss),
+                    * str eine Zeichenkette
+                    * float eine Fliesskommazahl
+                    * int ein ganze Zahl
+                    * num Numerisch, entweder Ganzzahl oder Fliesskommazahl
+            en: >
+                instruction which part of obis line should be parsed and assigned to an item `1-1:1.6.2*01|Index|Value/Unit|Value Type`'
+                * obis Code ``1-1:1.6.2*01`` 
+                * Index
+                * Either 'Value' or 'Unit'
+                * Value conversion
+                    * Z6 (time coded with hhmmss),
+                    * Z4 (time coded with hhmm),
+                    * D6 (date coded with YYMMDD),
+                    * ZST10 (date and time coded with YYMMDDhhmm),
+                    * ZST12 (date and time coded with YYMMDDhhmmss),
+                    * str, a string
+                    * float, a floating point number
+                    * int an integer
+                    * num a number either float or int
     dlms_obis_readout:
         type: str
         description:

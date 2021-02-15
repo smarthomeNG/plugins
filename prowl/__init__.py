@@ -40,7 +40,7 @@ class Prowl(SmartPlugin):
     Note: Not all parameters of `notify()` can be set by item attributes. If you need
     more control, maybe use a logic to call `notify()` with all relevant parameters.
     '''
-    PLUGIN_VERSION = '1.3.2'
+    PLUGIN_VERSION = '1.3.3'
 
     _host = 'api.prowlapp.com'
     _api = '/publicapi/add'
@@ -94,6 +94,7 @@ class Prowl(SmartPlugin):
                             vals[arg] = entry[arg]
             params['vals'] = vals
             params['swap'] = self.get_iattr_value(item.conf, 'prowl_swap')
+            params['url'] = self.get_iattr_value(item.conf, 'prowl_url')
 
             # store item params
             self._prowl_items[item] = params
@@ -124,12 +125,16 @@ class Prowl(SmartPlugin):
                     elif params['text']:
                         text = params['text'].replace('VAL', str(item()))
 
+                    url = None
+                    if 'url' in params and params['url'] is not None:
+                        url = params['url'].replace('VAL', str(item()))
+
                     # got any result?
                     if text:
                         if params['swap']:
                             (text, event) = (event, text)
                         self.logger.info(f'Notifying prowl for item {item}: "{event}" -> "{text}"')
-                        self.notify(event, text)
+                        self.notify(event, text, url=url)
                     else:
                         self.logger.info(f'Not notifying prowl for item {item}: value {item()} not in prowl_values and no prowl_text set')
                         return

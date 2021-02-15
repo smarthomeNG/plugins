@@ -1,0 +1,16 @@
+plugin_translations:
+    # Translations for the plugin specially for the web interface
+    'Pfad':             {'de': '=', 'en': 'Path', 'fr': ''}
+    'Typ':              {'de': '=', 'en': 'Type', 'fr': ''}
+    'Wert':             {'de': '=', 'en': 'Value', 'fr': ''}
+    'Letztes Update':   {'de': '=', 'en': 'Last Update', 'fr': ''}
+    'Letzter Change':   {'de': '=', 'en': 'Last Change', 'fr': ''}
+    'Enigma2 Datentyp':  {'de': '=', 'en': 'Enigma2 Data Type', 'fr': ''}
+    'Enigma2 Items':  {'de': '=', 'en': '=', 'fr': ''}
+    'Enigma2 Fast Items':  {'de': '=', 'en': '=', 'fr': ''}
+    'Cycle':  {'de': '=', 'en': '=', 'fr': ''}
+    'Fast Cycle':  {'de': '=', 'en': '=', 'fr': ''}
+    'Host/Port':  {'de': '=', 'en': '=', 'fr': ''}
+    'Benutzer':  {'de': '=', 'en': 'Username', 'fr': ''}
+    'Passwort':  {'de': '=', 'en': 'Password', 'fr': ''}
+    'Plugin-API':  {'de': '=', 'en': '=', 'fr': ''}

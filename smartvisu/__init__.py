@@ -45,7 +45,7 @@ from .svinstallwidgets import SmartVisuInstallWidgets
 #########################################################################
 
 class SmartVisu(SmartPlugin):
-    PLUGIN_VERSION="1.8.1"
+    PLUGIN_VERSION="1.8.2"
     ALLOW_MULTIINSTANCE = True
 
     visu_definition = None
@@ -460,5 +460,5 @@ class SmartVisu(SmartPlugin):
             return {}
 
         client_info = self.mod_websocket.get_visu_client_info()
-        self.logger.warning(f"client_info = {client_info}")
+        self.logger.info(f"client_info = {client_info}")
         return client_info

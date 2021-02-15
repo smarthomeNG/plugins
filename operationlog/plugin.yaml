@@ -1,3 +1,7 @@
+%YAML 1.1
+# vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
+---
+
 # Metadata for the Smart-Plugin
 plugin:
     # Global plugin attributes
@@ -6,16 +10,16 @@ plugin:
         de: 'Implementierung separater Logs'
         en: 'Implementation of additional logs'
     maintainer: 'bmxp'
-    tester: Sandman60, onkelandy
+    tester: Sandman60, onkelandy, Morg
     keywords: Operation logging SmartVISU DEBUG CRITICAL INFO WARNING
     state: ready
-    documentation: https://www.smarthomeng.de/user/plugins/operationlog/README.html
+    documentation: https://www.smarthomeng.de/user/plugins/operationlog/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1496323-support-thread-für-operationlog-plugin
-    version: 1.3.4                 # Plugin version
-    sh_minversion: 1.5             # minimum shNG version to use this plugin
+    version: 1.3.5                 # Plugin version
+    sh_minversion: 1.4             # minimum shNG version to use this plugin
     # sh_maxversion:               # maximum shNG version to use this plugin (leave empty if latest)
-    multi_instance: False          # plugin supports multi instance
-    restartable: True
+    multi_instance: false          # plugin supports multi instance
+    restartable: true
     classname: OperationLog        # class containing the plugin
 
 parameters:
@@ -32,16 +36,17 @@ parameters:
         description:
             de: 'Gibt an, wieviele Einträge im Speicher vorgehalten werden'
             en: 'Specifies how many log entries will be kept in memory'
+
     cache:
         type: bool
-        default: True
+        default: true
         description:
             de: 'Aktiviert die Caching-Funktion für das Log (Log bleibt bei Neustart erhalten)'
             en: 'Activates the caching for the log (log will be restored on restarts)'
 
     logtofile:
         type: bool
-        default: True
+        default: true
         description:
             de: 'Aktiviert das Schreiben von Logeinträgen in eine Datei'
             en: 'Activates logging entries into to file'
@@ -70,13 +75,6 @@ parameters:
     mapping:
         type: list(str)
         default: ["time","thread","level","message"]
-        #valid_list is not implemented in full for a list of strings.
-        #valid_list:
-        #  - time
-        #  - thread
-        #  - level
-        #  - message
-        # [time, thread, level, message]
         description:
             de: >
                 Definiert eine Liste mit kommagetrennten Werten die für jede Nachricht geloggt werden.
@@ -140,10 +138,10 @@ item_attributes:
     olog_level:
         type: str
         valid_list:
-          - DEBUG
-          - INFO
-          - WARNING
-          - ERROR
+            - DEBUG
+            - INFO
+            - WARNING
+            - ERROR
         description:
             de: 'Gibt den Log-Level an (DEBUG, INFO, WARNING, ERROR)'
             en: 'Specifies the log level (DEBUG, INFO, WARNING, ERROR)'
@@ -154,7 +152,7 @@ item_attributes:
             en: 'Declares specific rules/mappings for the logging'
 
 item_structs: NONE
-  # Definition of item-structure templates for this plugin
+    # Definition of item-structure templates for this plugin
 
 logic_parameters:
     # Definition of logic parameters defined by this plugin
@@ -181,4 +179,3 @@ logic_parameters:
 
 plugin_functions: NONE
     # Definition of function interface of the plugin
-

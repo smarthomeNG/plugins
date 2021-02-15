@@ -13,7 +13,7 @@ plugin:
     documentation: http://smarthomeng.de/user/plugins/knx/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1552531-support-thread-zum-knx-plugin
 
-    version: 1.7.5                 # Plugin version
+    version: 1.7.7                 # Plugin version
     sh_minversion: 1.7             # minimum shNG version to use this plugin
 #    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
@@ -58,6 +58,13 @@ parameters:
         description:
             de: "Wenn auf 'on'/'true' gesetzt, wird jedes KNX-Paket im Standard-Logger protokolliert. Wenn 'logger' eingestellt ist, werden alle KNX-Meldungen in einem separaten Logger 'knx_busmonitor' protokolliert."
             en: "If set to 'on'/'true' every KNX packet will be logged to the default plugin logger. If set to 'logger', all knx messages will be logged to a separate logger 'knx_busmonitor'"
+
+    log_own_packets:
+        type: bool
+        default: False
+        description:
+            de: 'Wenn der Wert auf "True" gesetzt ist, loggt der Busmonitor auch Pakete, die vom Plugin selbst geschrieben werden.'
+            en: 'If set to True, the busmonitor also logs packets coming from the plugin.'
 
     provider:
         type: str
@@ -469,4 +476,3 @@ plugin_functions:
                 description:
                     de: "Gruppenadresse an die das Datum gesendet wird"
                     en: "Group address to send the date to"
-

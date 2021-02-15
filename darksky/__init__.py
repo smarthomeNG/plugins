@@ -158,25 +158,38 @@ class DarkSky(SmartPlugin):
         try:
             response = self._session.get(self._build_url())
         except Exception as e:
-            self.logger.error(
-                "get_forecast: Exception when sending GET request for get_forecast: {}".format(e))
+            self.logger.warning("get_forecast: Exception when sending GET"
+                                " request for get_forecast: {}".format(e))
             return
         try:
             json_obj = response.json()
         except Exception as e:
-            self.logger.error(
-                "get_forecast: Response {} is no valid json format: {}".format(response, e))
+            self.logger.warning("get_forecast: Response {} is no valid"
+                                " json format: {}".format(response, e))
             return
         daily_data = OrderedDict()
+        if not json_obj.get('daily'):
+            self.logger.warning("get_forecast: Response {} has no info for daily values."
+                                " Ignoring response.".format(response))
+            return
+        if not json_obj.get('hourly'):
+            self.logger.warning("get_forecast: Response {} has no info for hourly values."
+                                " Ignoring response.".format(response))
+            return
 
         # add icon_visu, date and day to daily and currently
         json_obj['daily'].update({'icon_visu': self.map_icon(json_obj['daily']['icon'])})
-        date_entry = datetime.datetime.fromtimestamp(json_obj['currently']['time']).strftime('%d.%m.%Y')
-        day_entry = datetime.datetime.fromtimestamp(json_obj['currently']['time']).strftime('%A')
-        hour_entry = datetime.datetime.fromtimestamp(json_obj['currently']['time']).hour
-        json_obj['currently'].update({'date': date_entry, 'weekday': day_entry, 'hour': hour_entry,
-                                      'icon_visu': self.map_icon(json_obj['currently']['icon'])})
         json_obj['hourly'].update({'icon_visu': self.map_icon(json_obj['hourly']['icon'])})
+        if not json_obj.get('currently'):
+            self.logger.warning("get_forecast: Response {} has no info for current values."
+                                " Skipping update for currently values.".format(response))
+        else:
+            date_entry = datetime.datetime.fromtimestamp(json_obj['currently']['time']).strftime('%d.%m.%Y')
+            day_entry = datetime.datetime.fromtimestamp(json_obj['currently']['time']).strftime('%A')
+            hour_entry = datetime.datetime.fromtimestamp(json_obj['currently']['time']).hour
+            json_obj['currently'].update({'date': date_entry, 'weekday': day_entry,
+                                          'hour': hour_entry, 'icon_visu':
+                                          self.map_icon(json_obj['currently']['icon'])})
 
         # add icon_visu, date and day to each day
         for day in json_obj['daily'].get('data'):

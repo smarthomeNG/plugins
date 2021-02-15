@@ -42,7 +42,7 @@ class Kodi(SmartPlugin):
     '''
     PLUGIN_VERSION = '1.6.0'
     ALLOW_MULTIINSTANCE = True
-    _initcommands = ['get_actplayer', 'get_status_au']
+    _initcommands = ['get_actplayer', 'get_status_au', 'get_favourites']
 
     def __init__(self, sh, *args, **kwargs):
         '''

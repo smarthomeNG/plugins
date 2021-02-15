@@ -107,6 +107,7 @@ class SeLogger:
         self.__indentlevel = 0
         self.__loglevel = SeLogger.__loglevel
         self.__date = None
+        self.__logerror = False
         self.__filename = ""
         self.update_logfile()
 
@@ -149,8 +150,14 @@ class SeLogger:
             indent = "\t" * self.__indentlevel
             text = text.format(*args)
             logtext = "{0}{1} {2}\r\n".format(datetime.datetime.now(), indent, text)
-            with open(self.__filename, mode="a", encoding="utf-8") as f:
-                f.write(logtext)
+            try:
+                with open(self.__filename, mode="a", encoding="utf-8") as f:
+                    f.write(logtext)
+            except Exception as e:
+                if self.__logerror is False:
+                    self.__logerror = True
+                    self.logger.error("There is a problem with "
+                                      "the logfile {}: {}".format(self.__filename, e))
 
     # log header line (as info)
     # text: header text

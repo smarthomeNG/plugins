@@ -28,7 +28,7 @@ Konfiguration
 Standardwerte mit denen ein neuer Raumtemperatur Regler (RTR) eingerichtet wird, können in den Parametern des Plugins
 konfiguriert werden. Falls ein neuer RTR mit abweichenden Einstellungen eingerichtet werden soll, können die Werte
 im RTR-Item in einem Attribut angegeben werden. Diese Angaben (wie auch die Parameter mit den Standardwerten) sind
-jedoch nur für den ersten Start eines RTR von Interesse, da die Einstellungen jedes RTR gecacht werden und beim
+jedoch nur für den ersten Start eines RTR von Interesse, da die Einstellungen jedes RTR gecached werden und beim
 Neustart von SmartHomeNG wieder hergestellt werden.
 
 Diese Plugin Parameter und die Informationen zur Item-spezifischen Konfiguration des Plugins sind
@@ -61,7 +61,7 @@ Für einige der Items ist das sogar notwendig, damit der RTR seine Aufgabe erfü
     Beispiel ``database: init`` dafür, dass die jeweils gemessene Temperatur in der Datenbank gespeichert wird.
 
   - Das Sub-Item ``test_rtr.stellwert`` muss mit einem Heizungs-Aktor verbunden werden, damit die Steuerungs-
-    Funktiomn des RTR auch auswirkungen hat. Im folgenden Beispiel erfolgt das dadurch, dass der Stellwert auf
+    Funktion des RTR auch Auswirkungen hat. Im folgenden Beispiel erfolgt das dadurch, dass der Stellwert auf
     eine KNX Gruppenadresse geschrieben wird, die mit einem Heizungs-Aktor verbunden ist. Außerdem sorgt in dem
     Beispiel ``database: init`` dafür, dass der jeweilige Stellwert in der Datenbank gespeichert wird.
 
@@ -85,7 +85,7 @@ Für einige der Items ist das sogar notwendig, damit der RTR seine Aufgabe erfü
 Mit diesem minimalen Set an Angaben ist der RTR grundsätzlich betriebsbereit und kann seine Aufgabe erfüllen.
 
 Die gewünschte Soll-Temperatur kann durch setzen des Wertes des Items ``test_rtr.soll_temp`` eingestellt werden.
-Falls die Soll-Temperatur auch in der Datenbank gespeichert werden soll, so muu das Item mit dem Attribut
+Falls die Soll-Temperatur auch in der Datenbank gespeichert werden soll, so muss das Item mit dem Attribut
 ``database: init`` angegeben werden, wie im Beispiel unten zu sehen ist.
 
 .. code-block:: yaml
@@ -108,7 +108,7 @@ Falls die Soll-Temperatur auch in der Datenbank gespeichert werden soll, so muu 
             database: init
 
 
-Darüber hinaus gibt es eine große Zahl weiterer Einstallungen, die am RTR vorgenommen werden können.
+Darüber hinaus gibt es eine große Zahl weiterer Einstellungen, die am RTR vorgenommen werden können.
 
 
 Einstellen des Modus
@@ -137,10 +137,10 @@ das **frost** Sub-Item der Wert **False** geschrieben wird, wird der Modus wiede
 des Frostschutzes aktiv war.
 
 Falls während der Frostschutz aktiv ist, der Komfort Modus, der Standby/Normal Modus oder der Nacht Modus aktiviert
-wird, fürhrt das nicht zumm Ende des Frostschutz Modus. Vielmehr wird der aktivierte Modus zwischengespeichert und
-erst durch Abschaltung des Frostschutzes aktivert.
+wird, führt das nicht zum Ende des Frostschutz Modus. Vielmehr wird der aktivierte Modus zwischengespeichert und
+erst durch Abschaltung des Frostschutzes aktiviert.
 
-Der Frostschutz wird nur dadurch deaktivert, dass das **frost** Item auf False gesetzt wird oder das **hvac** Item
+Der Frostschutz wird nur dadurch deaktiviert, dass das **frost** Item auf False gesetzt wird oder das **hvac** Item
 auf einen Wert zwischen 1 und 3 gesetzt wird.
 
 Bei setzen des hvac Modus während der Frostschutz Modus aktiv ist, wird der gewählte Modus gesetzt und nicht der
@@ -171,7 +171,7 @@ Hierdurch wird täglich um 4:30 Uhr der Komfort-Modus aktiviert und täglich um 
 automatischer Frostschutz
 -------------------------
 
-Eine automatische Aktivierung des Frostschutzes kann für viele Zwescke nützlich sein. Im folgenden Beispiel wird
+Eine automatische Aktivierung des Frostschutzes kann für viele Zwecke nützlich sein. Im folgenden Beispiel wird
 der Frostschutz aktiviert, wenn das Fenster geöffnet wird, um Heizenergie zu sparen. Dazu wird das ``frost`` Attribut
 mit dem Item verbunden, welches den Status des Fensterkontaktes enthält.
 
@@ -185,7 +185,7 @@ mit dem Item verbunden, welches den Status des Fensterkontaktes enthält.
             eval: True if sh.wohnung.dusche.fenster.griff() > 0 else False
             eval_trigger: wohnung.dusche.fenster.griff
 
-Es wird hierbei auf einen Wert größer 0 verglichen, da der Fenstergriff separate Stati für gekippt ond geöffnet
+Es wird hierbei auf einen Wert größer 0 verglichen, da der Fenstergriff separate Stati für gekippt und geöffnet
 liefert.
 
 
@@ -210,7 +210,7 @@ Das Plugin verwendet die zwei Item Attribute: ``rtr2_id`` und ``rtr2_function``.
 
 Mit ``rtr2_id`` wird festgelegt auf welchen Raumtemperatur Regler (RTR) zugegriffen werden soll.
 
-Mit ``hue2_function`` wird festgelegt, welche Funktion des RTR abgefragt oder gesteuert werden soll.
+Mit ``rtr2_function`` wird festgelegt, welche Funktion des RTR abgefragt oder gesteuert werden soll.
 Es sind die folgenden Funktionen implementiert (einige erlauben nur die Abfrage):
 
     - ``comfort_mode``
@@ -268,7 +268,7 @@ Das Widget hat nur drei Parameter, von denen nur einer benötigt wird:
   - Schrittgröße für die Temperatur Verstellung (falls der Wert leer gelassen wird, wird der Standardwert 0.5 genutzt)
   - Text der vor dem Stellwert angezeigt wird (falls der Wert leer gelassen wird, wird 'heizt mit' angezeigt)
 
-Das widget wird folgendermaßen genutzt:
+Das Widget wird folgendermaßen genutzt:
 
 .. code-block:: yaml
 
@@ -308,7 +308,7 @@ Das Widget hat sechs Parameter, von denen nur einer benötigt wird:
   - Item mit den Daten der 2. zusätzlichen Temperatur (falls der Wert leer gelassen wird, wird keine 2. zusätzliche Temperatur angezeigt)
   - Beschriftung für die 2. zusätzliche Temperatur
 
-Das widget wird folgendermaßen genutzt (incl. Anzeige einer zusätzlichen Temperatur):
+Das Widget wird folgendermaßen genutzt (incl. Anzeige einer zusätzlichen Temperatur):
 
 .. code-block:: yaml
 
@@ -357,7 +357,7 @@ Im ersten Tab werden die Raumtemperatur Regler mit den wichtigsten Informationen
 |
 |
 
-Wenn man auf die Zeile eines Raumtemeratur Reglers klickt, werden alle mit dem Regler verbundenen Items angezeigt:
+Wenn man auf die Zeile eines Raumtemperatur Reglers klickt, werden alle mit dem Regler verbundenen Items angezeigt:
 
 .. image:: assets/webif_tab1_2.jpg
    :class: screenshot
@@ -366,7 +366,7 @@ Wenn man auf die Zeile eines Raumtemeratur Reglers klickt, werden alle mit dem R
 |
 |
 
-Im zweiten Tab werden erweiterte Informationen zu den Raumtemeratur Reglern angezeigt:
+Im zweiten Tab werden erweiterte Informationen zu den Raumtemperatur Reglern angezeigt:
 
 .. image:: assets/webif_tab2.jpg
    :class: screenshot
