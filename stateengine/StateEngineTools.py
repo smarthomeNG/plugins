@@ -46,6 +46,10 @@ class SeItemChild:
         self._abitem.logger.info(text, *args)
 
     # wrapper method for logger.debug
+    def _log_develop(self, text, *args):
+        self._abitem.logger.develop(text, *args)
+
+    # wrapper method for logger.debug
     def _log_debug(self, text, *args):
         self._abitem.logger.debug(text, *args)
 

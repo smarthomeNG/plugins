@@ -34,9 +34,11 @@ import copy
 from lib.model.smartplugin import *
 from lib.item import Items
 
+logging.addLevelName(StateEngineDefaults.VERBOSE, 'DEVELOP')
+
 
 class StateEngine(SmartPlugin):
-    PLUGIN_VERSION = '1.8.2'
+    PLUGIN_VERSION = '1.9.0'
 
     # Constructor
     # noinspection PyUnusedLocal,PyMissingConstructor

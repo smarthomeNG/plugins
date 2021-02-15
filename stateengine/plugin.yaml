@@ -34,13 +34,13 @@ plugin:
              - graphviz: ``sudo apt install graphviz``\n
              - Python Modul pydotplus: ``pip3 install pydotplus``\n
              '
-    maintainer: i-am-offline, onkelandy
+    maintainer: onkelandy
     tester: '?'
     state: ready
     documentation: https://www.smarthomeng.de/user/plugins/stateengine/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1303071-stateengine-plugin-support
 
-    version: 1.8.2
+    version: 1.9.0
     sh_minversion: 1.6
     multi_instance: False
     classname: StateEngine
@@ -121,12 +121,13 @@ parameters:
           - 0
           - 1
           - 2
+          - 3
         valid_list_description:
-            de: ['deaktiviert', 'Info', 'Debug']
-            en: ['deactivated', 'Info', 'Debug']
+            de: ['deaktiviert', 'Info', 'Debug', 'Develop']
+            en: ['deactivated', 'Info', 'Debug', 'Develop']
         description:
-            de: 'Erweiterte Protokollierung: Loglevel (0: aus, 1: Info, 2: Debug)'
-            en: 'Extended Logging: Loglevel (0: off, 1: Info, 2: Debug)'
+            de: 'Erweiterte Protokollierung: Loglevel (0: aus, 1: Info, 2: Debug, 3: Develop/Verbose)'
+            en: 'Extended Logging: Loglevel (0: off, 1: Info, 2: Debug, 3: Develop/Verbose)'
         description_long:
             de: '**Erweiterte Protokollierung:**\n
                  Bei einem Wert von 1 oder 2 wird pro Item eine eigene Logdatei im unter log_directory
@@ -328,6 +329,41 @@ item_attributes:
                  It can be used for visualization, actions and conditions.
                  '
 
+    se_shouldnotrelease_item:
+        type: str
+        description:
+            de: 'ID des Items, in dem interne Informationen für das released_by Feature gespeichert werden'
+            en: 'ID of the item that saves internal information for the released_by feature'
+        description_long:
+            de: '**ID des Items, in dem interne Informationen für das released_by Feature gespeichert werden:**\n
+               Ein Dictionary mit den Stati als Keys, die ein se_released_by Attribut haben und den Stati/Items
+               als Values, die zuvor schon aktiv waren und erst bei einem erneuten Wechsel von "can not be entered"
+               auf "can be entered" den entsprechenden Status released, also (vorübergehend) auflöst.
+               '
+            en: '**ID of the item that saves internal information for the released_by feature:**\n
+                A dictionary with the states as keys that have an se_released_by attribute and the states/items
+                as values that have been active before already and only release/overrule the relevant state
+                if they change from "can not be entered" to "can be entered".
+                '
+
+    se_hasreleased_item:
+        type: str
+        description:
+            de: 'ID des Items, in dem interne Informationen für das released_by Feature gespeichert werden'
+            en: 'ID of the item that saves internal information for the released_by feature'
+        description_long:
+            de: '**ID des Items, in dem interne Informationen für das released_by Feature gespeichert werden:**\n
+               Ein Dictionary mit den Stati als Keys, die ein se_released_by Attribut haben und den Stati/Items
+               als Values, die jene Items bereits aufgelöst haben und somit erst bei erneutem Wechsel
+               von "can not be entered" auf "can be entered" den enstprechenden Status released, also (vorübergehend)
+               auflösen.
+               '
+            en: '**ID of the item that saves internal information for the released_by feature:**\n
+                A dictionary with the states as keys that have an se_released_by attribute and the states/items
+                as values that have released them already and only release/overrule the relevant state
+                if they change from "can not be entered" to "can be entered" again.
+                '
+
     se_repeat_actions:
         type: bool
         description:
@@ -407,9 +443,10 @@ item_attributes:
           - 0
           - 1
           - 2
+          - 3
         valid_list_description:
-            de: ['deaktiviert', 'Info', 'Debug']
-            en: ['deactivated', 'Info', 'Debug']
+            de: ['deaktiviert', 'Info', 'Debug', 'Develop']
+            en: ['deactivated', 'Info', 'Debug', 'Develop']
         description:
             de: 'Loglevel für ein konkretes Stateengine Item'
             en: 'Log level for a distinct stateengine item'
@@ -437,6 +474,17 @@ item_attributes:
                 In the specific state item the template or any struct can get referenced by using the attribute
                 se_use. The templates that should be used can even be dynamically changed during runtime
                 by using the **eval:** declaration in front of a valid eval expression
+                '
+
+    se_released_by:
+        type: list(str)
+        description:
+            de: 'Definieren von untergeordneten Zuständen, die den aktuellen Zustand auflösen können'
+            en: 'Definition of subordinate states that can release the current state'
+        description_long:
+            de: '
+                '
+            en: '
                 '
 
 item_structs:
@@ -468,6 +516,20 @@ item_structs:
             visu_acl: ro
             cache: True
 
+        shouldnotrelease:
+            remark: Helper item for releasedby function
+            type: dict
+            visu_acl: ro
+            cache: True
+            initial_value: "{}"
+
+        hasreleased:
+            remark: Helper item for releasedby function
+            type: dict
+            visu_acl: ro
+            cache: True
+            initial_value: "{'initial': 'start'}"
+
         retrigger:
             remark: Item to retrigger the rule set evaluation
             type: bool
@@ -493,6 +555,8 @@ item_structs:
             se_laststate_item_name: ..state_name
             se_lastconditionset_item_id: ..conditionset_id
             se_lastconditionset_item_name: ..conditionset_name
+            se_shouldnotrelease_item: ..shouldnotrelease
+            se_hasreleased_item: ..hasreleased
 
     state_lock:
         name: Zustandsvorlage zum Sperren der Evaluierung
