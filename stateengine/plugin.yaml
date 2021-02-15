@@ -34,13 +34,13 @@ plugin:
              - graphviz: ``sudo apt install graphviz``\n
              - Python Modul pydotplus: ``pip3 install pydotplus``\n
              '
-    maintainer: i-am-offline, onkelandy
+    maintainer: onkelandy
     tester: '?'
     state: ready
     documentation: https://www.smarthomeng.de/user/plugins/stateengine/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1303071-stateengine-plugin-support
 
-    version: 1.8.2
+    version: 1.9.0
     sh_minversion: 1.6
     multi_instance: False
     classname: StateEngine
