@@ -87,14 +87,14 @@ parameters:
 item_attributes:
     # Definition of item attributes defined by this plugin
     dlms_obis_code:
-        type: list(len, str, int, str, str)
+        type: list(4, str, int, str, str)
         description:
             de: >
-                Anweisung welcher Teil einer OBIS Zeile geparst und dem Item zugewiesen werden soll 
-                * obis Code ``1-1:1.6.2*01`` 
+                Anweisung welcher Teil einer OBIS Zeile geparst und dem Item zugewiesen werden soll
+                * obis Code ``1-1:1.6.2*01``
                 * Index
                 * Entweder Wert also 'Value' oder Einheit also 'Unit'
-                * Wert Konvertierungsart 
+                * Wert Konvertierungsart
                     * Z6 (Zeit codiert mit hhmmss),
                     * Z4 (Zeit codiert mit hhmm),
                     * D6 (Datum codiert mit YYMMDD),
@@ -106,7 +106,7 @@ item_attributes:
                     * num Numerisch, entweder Ganzzahl oder Fliesskommazahl
             en: >
                 instruction which part of obis line should be parsed and assigned to an item `1-1:1.6.2*01|Index|Value/Unit|Value Type`'
-                * obis Code ``1-1:1.6.2*01`` 
+                * obis Code ``1-1:1.6.2*01``
                 * Index
                 * Either 'Value' or 'Unit'
                 * Value conversion
