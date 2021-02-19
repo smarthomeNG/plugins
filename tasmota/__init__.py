@@ -94,7 +94,7 @@ class Tasmota(MqttPlugin):
         self.add_tasmota_subscription('stat', '+', 'STATUS5', 'dict', callback=self.on_mqtt_announce)
         self.add_tasmota_subscription('stat', '+', 'STATUS9', 'dict', callback=self.on_mqtt_announce)
 
-        self.add_tasmota_subscription('stat', '+', 'POWER', 'dict', callback=self.on_mqtt_message)
+        self.add_tasmota_subscription('stat', '+', 'POWER', 'num', callback=self.on_mqtt_message)
 
         # if plugin should start even without web interface
         self.init_webinterface(WebInterface)
@@ -209,6 +209,7 @@ class Tasmota(MqttPlugin):
 
                 # subscribe to topic for relay state
                 payload_type = item.property.type
+                self.logger.warning(f"parse_item: 'stat', topic='{topic}', detail='{detail}', payload_type='{payload_type}', bool_values='{bool_values}', item='{item.id()}'")
                 self.add_tasmota_subscription('stat', topic, detail, payload_type, bool_values=bool_values, item=item)
 
             return self.update_item
