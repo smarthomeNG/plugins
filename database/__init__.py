@@ -593,6 +593,8 @@ class Database(SmartPlugin):
         """
         params = {'id': id}
         result = self._fetchall("SELECT count(*) FROM {log} WHERE item_id = :id;", params, cur=cur)
+        if result == []:
+            return 0
         try:
             return result[0][0]
         except Exception as e:
