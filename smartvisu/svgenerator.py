@@ -287,9 +287,9 @@ class SmartVisuGenerator:
                     menu_entry['img'] = img_name
                 if menu_entry['item_path'] == '':
                     menu_entry['item_path'] = item_path
-                if menu_entry.get('nav_aside', '') == ''and menu_entry['nav_aside_set'] == False:
+                if menu_entry.get('nav_aside', '') == ''and menu_entry.get('nav_aside_set', False) == False:
                     menu_entry['nav_aside'] = nav_aside
-                if menu_entry.get('nav_aside2', '') == '' and menu_entry['nav_aside2_set'] == False:
+                if menu_entry.get('nav_aside2', '') == '' and menu_entry.get('nav_aside2_set', False) == False:
                     menu_entry['nav_aside2'] = nav_aside2
                 return menu_entry
 
