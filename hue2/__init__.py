@@ -49,7 +49,7 @@ class Hue2(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '2.0.2'    # (must match the version specified in plugin.yaml)
+    PLUGIN_VERSION = '2.0.3'    # (must match the version specified in plugin.yaml)
 
     hue_group_action_values          = ['on', 'bri', 'hue', 'sat', 'ct', 'xy', 'colormode']
     hue_light_action_writable_values = ['on', 'bri', 'hue', 'sat', 'ct', 'xy']
@@ -120,6 +120,12 @@ class Hue2(SmartPlugin):
                     self.bridge['port'] = self.bridge_port
                     self.bridge['serialNumber'] = self.bridge_serial
                     self.logger.warning("Configured bridge {} is still not in the list of discovered bridges, trying with stored ip address {}:{}".format(self.bridge_serial, self.bridge_ip, self.bridge_port))
+
+                    api_config = self.get_api_config_of_bridge('http://'+self.bridge['ip']+':'+str(self.bridge['port'])+'/')
+                    self.bridge['datastoreversion'] = api_config.get('datastoreversion', '')
+                    self.bridge['apiversion'] = api_config.get('apiversion', '')
+                    self.bridge['swversion'] = api_config.get('swversion', '')
+
 
             self.bridge['username'] = self.bridge_user
             if self.bridge['ip'] != self.bridge_ip:
@@ -378,13 +384,16 @@ class Hue2(SmartPlugin):
             return
         else:
             if self.br is not None:
-                self.bridge_groups = self.br.groups()
-                self.bridge_config = self.br.config()
-                self.bridge_scenes = self.br.scenes()
-                if not self.light_items_configured:
-                    self.bridge_lights = self.br.lights()
-                if not self.sensor_items_configured:
-                    self.bridge_sensors = self.br.sensors()
+                try:
+                    self.bridge_groups = self.br.groups()
+                    self.bridge_config = self.br.config()
+                    self.bridge_scenes = self.br.scenes()
+                    if not self.light_items_configured:
+                        self.bridge_lights = self.br.lights()
+                    if not self.sensor_items_configured:
+                        self.bridge_sensors = self.br.sensors()
+                except Exception as e:
+                    self.logger.error(f"poll_bridge: Exception {e}")
 
         # update items with polled data
         src = self.get_instance_name()
@@ -416,7 +425,10 @@ class Hue2(SmartPlugin):
             return
         else:
             if self.br is not None:
-                self.bridge_lights = self.br.lights()
+                try:
+                    self.bridge_lights = self.br.lights()
+                except Exception as e:
+                    self.logger.error(f"poll_bridge_lights: Exception {e}")
 
         # update items with polled data
         src = self.get_instance_name()
@@ -445,7 +457,10 @@ class Hue2(SmartPlugin):
             return
         else:
             if self.br is not None:
-                self.bridge_sensors = self.br.sensors()
+                try:
+                    self.bridge_sensors = self.br.sensors()
+                except Exception as e:
+                    self.logger.error(f"poll_bridge_sensors: Exception {e}")
 
         # update items with polled data
         src = self.get_instance_name()

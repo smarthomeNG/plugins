@@ -12,7 +12,7 @@ plugin:
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1586861-support-thread-für-das-hue2-plugin
 
-    version: 2.0.2                  # Plugin version (must match the version specified in __init__.py)
+    version: 2.0.3                  # Plugin version (must match the version specified in __init__.py)
     sh_minversion: 1.8.1a            # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
 #    py_minversion: 3.6             # minimum Python version to use for this plugin
@@ -77,6 +77,7 @@ parameters:
     bridge_port:
         type: int
         gui_type: readonly
+        default: 80
         valid_min: 0
         description:
             de: 'Port der Philips/Signify Hue Bridge
@@ -209,14 +210,14 @@ item_structs:
 
 
     light_ww_extended:
-        name: Vorlage-Struktur für eine Hue Leuchte mit erweiteten Attributen/Sub-Items
+        name: Vorlage-Struktur für eine Hue Leuchte mit erweiteten Attributen/Sub-Items (warm white)
         struct:
           - hue2.light_ww
           - hue2._light_extended
 
 
     light_xy_extended:
-        name: Vorlage-Struktur für eine Hue Leuchte mit erweiteten Attributen/Sub-Items
+        name: Vorlage-Struktur für eine Hue Leuchte mit erweiteten Attributen/Sub-Items (Farbe nur über xy)
         struct:
           - hue2.light_xy
           - hue2._light_extended
