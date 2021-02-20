@@ -51,10 +51,10 @@ class Hue2(SmartPlugin):
 
     PLUGIN_VERSION = '2.0.4'    # (must match the version specified in plugin.yaml)
 
-    hue_group_action_values          = ['on', 'bri', 'hue', 'sat', 'ct', 'xy', 'colormode']
+    hue_group_action_values          = ['on', 'bri', 'hue', 'sat', 'ct', 'xy', 'colormode','alert', 'effect']
     hue_light_action_writable_values = ['on', 'bri', 'hue', 'sat', 'ct', 'xy']
-    hue_light_state_values           = ['on', 'bri', 'hue', 'sat', 'ct', 'xy', 'colormode', 'reachable']
-    hue_light_state_writable_values  = ['on', 'bri', 'hue', 'sat', 'ct', 'xy']
+    hue_light_state_values           = ['on', 'bri', 'hue', 'sat', 'ct', 'xy', 'colormode', 'reachable','alert','effect']
+    hue_light_state_writable_values  = ['on', 'bri', 'hue', 'sat', 'ct', 'xy','alert','effect']
 
 
     br = None               # Bridge object for communication with the bridge
@@ -274,6 +274,10 @@ class Hue2(SmartPlugin):
                 self.br.lights[plugin_item['id']](name=value)
             elif plugin_item['function'] == 'xy':
                 self.br.lights[plugin_item['id']]['state'](xy=value)
+            elif plugin_item['function'] == 'alert':
+                self.br.lights[plugin_item['id']]['state'](alert=value)
+            elif plugin_item['function'] == 'effect':
+                self.br.lights[plugin_item['id']]['state'](effect=value)
         except qhue.qhue.QhueException as e:
             self.logger.error(f"update_light_from_item: item {plugin_item['item'].id()} - qhue exception '{e}'")
         return
