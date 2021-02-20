@@ -182,11 +182,11 @@ class DarkSky(SmartPlugin):
                                 " json format: {}".format(response, e))
             return
         daily_data = OrderedDict()
-        if not json_obj.get('daily'):
+        if not json_obj.get('daily', False):
             self.logger.warning("get_forecast: Response {} has no info for daily values."
                                 " Ignoring response.".format(response))
             return
-        if not json_obj.get('hourly'):
+        if not json_obj.get('hourly', False):
             self.logger.warning("get_forecast: Response {} has no info for hourly values."
                                 " Ignoring response.".format(response))
             return
