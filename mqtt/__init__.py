@@ -23,11 +23,7 @@
 #
 #########################################################################
 
-import logging
-import json
 
-from lib.module import Modules
-#from lib.model.smartplugin import *
 from lib.model.mqttplugin import *
 from lib.item import Items
 
