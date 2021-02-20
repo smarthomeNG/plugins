@@ -49,7 +49,7 @@ class Hue2(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '2.0.3'    # (must match the version specified in plugin.yaml)
+    PLUGIN_VERSION = '2.0.4'    # (must match the version specified in plugin.yaml)
 
     hue_group_action_values          = ['on', 'bri', 'hue', 'sat', 'ct', 'xy', 'colormode']
     hue_light_action_writable_values = ['on', 'bri', 'hue', 'sat', 'ct', 'xy']
@@ -386,14 +386,22 @@ class Hue2(SmartPlugin):
             if self.br is not None:
                 try:
                     self.bridge_groups = self.br.groups()
-                    self.bridge_config = self.br.config()
-                    self.bridge_scenes = self.br.scenes()
                     if not self.light_items_configured:
                         self.bridge_lights = self.br.lights()
                     if not self.sensor_items_configured:
                         self.bridge_sensors = self.br.sensors()
                 except Exception as e:
                     self.logger.error(f"poll_bridge: Exception {e}")
+
+                try:
+                    self.bridge_config = self.br.config()
+                except Exception as e:
+                    self.logger.info(f"poll_bridge: Bridge-config not supported - Exception {e}")
+
+                try:
+                    self.bridge_scenes = self.br.scenes()
+                except Exception as e:
+                    self.logger.info(f"poll_bridge: Scenes not supported - Exception {e}")
 
         # update items with polled data
         src = self.get_instance_name()
@@ -638,10 +646,15 @@ class Hue2(SmartPlugin):
                 xmldict = xmltodict.parse(r.text)
                 br_info['friendlyName'] = str(xmldict['root']['device']['friendlyName'])
                 br_info['manufacturer'] = str(xmldict['root']['device']['manufacturer'])
+                br_info['manufacturerURL'] = str(xmldict['root']['device']['manufacturerURL'])
+                br_info['modelDescription'] = str(xmldict['root']['device']['modelDescription'])
                 br_info['modelName'] = str(xmldict['root']['device']['modelName'])
+                br_info['modelURL'] = str(xmldict['root']['device']['modelURL'])
                 br_info['modelNumber'] = str(xmldict['root']['device']['modelNumber'])
                 br_info['serialNumber'] = str(xmldict['root']['device']['serialNumber'])
                 br_info['UDN'] = str(xmldict['root']['device']['UDN'])
+                br_info['gatewayName'] = str(xmldict['root']['device'].get('gatewayName', ''))
+
                 br_info['URLBase'] = str(xmldict['root']['URLBase'])
                 if br_info['modelName'] == 'Philips hue bridge 2012':
                     br_info['version'] = 'v1'
