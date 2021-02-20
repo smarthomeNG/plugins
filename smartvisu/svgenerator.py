@@ -403,7 +403,11 @@ class SmartVisuGenerator:
             self.logger.error("Could not read template file '{0}': {1}".format(template, e))
             return ''
         for s, r in replace:
-            tpl = tpl.replace(s, r)
+            if r is None:
+                rs = ''
+            else:
+                rs = r
+                tpl = tpl.replace(s, rs)
         return tpl
 
 
@@ -494,4 +498,3 @@ class SmartVisuGenerator:
                     except Exception as e:
                         self.logger.error("Could not copy {0} from {1} to {2}".format(fn, self.shng_tpldir, self.gen_tpldir))
         return
-
