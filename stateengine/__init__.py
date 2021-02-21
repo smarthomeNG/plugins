@@ -33,12 +33,13 @@ import os
 import copy
 from lib.model.smartplugin import *
 from lib.item import Items
+from .webif import WebInterface
 
 logging.addLevelName(StateEngineDefaults.VERBOSE, 'DEVELOP')
 
 
 class StateEngine(SmartPlugin):
-    PLUGIN_VERSION = '1.9.0'
+    PLUGIN_VERSION = '1.9.1'
 
     # Constructor
     # noinspection PyUnusedLocal,PyMissingConstructor
@@ -51,7 +52,7 @@ class StateEngine(SmartPlugin):
         self.__sh = sh
         self.alive = False
         self.__cli = None
-        self.init_webinterface()
+        self.init_webinterface(WebInterface)
         self.__log_directory = self.get_parameter_value("log_directory")
         try:
             log_level = self.get_parameter_value("log_level")
@@ -207,99 +208,3 @@ class StateEngine(SmartPlugin):
                    'https://graphviz.org/download/</a><br/>' \
                    'on Windows add install path to your environment path AND run dot -c.' \
                    'Additionally copy dot.exe to fdp.exe!'
-
-    def init_webinterface(self):
-        """"
-        Initialize the web interface for this plugin
-
-        This method is only needed if the plugin is implementing a web interface
-        """
-        try:
-            self.mod_http = Modules.get_instance().get_module('http')
-            # try/except to handle running in a core version that does not support modules
-        except Exception:
-            self.mod_http = None
-        if self.mod_http is None:
-            self.logger.error("Plugin '{}': Not initializing the web interface".format(self.get_shortname()))
-            return False
-
-        import sys
-        if "SmartPluginWebIf" not in list(sys.modules['lib.model.smartplugin'].__dict__):
-            self.logger.warning("Plugin '{}': Web interface needs SmartHomeNG v1.5 and up. "
-                                "Not initializing the web interface".format(self.get_shortname()))
-            return False
-
-        # set application configuration for cherrypy
-        webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
-        config = {
-            '/': {
-                'tools.staticdir.root': webif_dir,
-            },
-            '/static': {
-                'tools.staticdir.on': True,
-                'tools.staticdir.dir': 'static'
-            }
-        }
-
-        # Register the web interface as a cherrypy app
-        self.mod_http.register_webif(WebInterface(webif_dir, self),
-                                     self.get_shortname(),
-                                     config,
-                                     self.get_classname(), self.get_instance_name(),
-                                     description='')
-
-        return True
-
-
-# ------------------------------------------
-#    Webinterface of the plugin
-# ------------------------------------------
-
-import cherrypy
-from jinja2 import Environment, FileSystemLoader
-
-
-class WebInterface(SmartPluginWebIf):
-
-    def __init__(self, webif_dir, plugin):
-        """
-        Initialization of instance of class WebInterface
-
-        :param webif_dir: directory where the webinterface of the plugin resides
-        :param plugin: instance of the plugin
-        :type webif_dir: str
-        :type plugin: object
-        """
-        self.logger = logging.getLogger(__name__)
-        self.webif_dir = webif_dir
-        self.plugin = plugin
-        self.tplenv = self.init_template_environment()
-
-    @cherrypy.expose
-    def index(self, action=None, item_id=None, item_path=None, reload=None, abitem=None, page='index'):
-        """
-        Build index.html for cherrypy
-
-        Render the template and return the html file to be delivered to the browser
-
-        :return: contents of the template after beeing rendered
-        """
-        item = self.plugin.itemsApi.return_item(item_path)
-
-        tmpl = self.tplenv.get_template('{}.html'.format(page))
-
-        if action == "get_graph" and abitem is not None:
-            if isinstance(abitem, str):
-                try:
-                    abitem = self.plugin.abitems[abitem]
-                except Exception as e:
-                    self.logger.warning("Item {} not initialized yet. "
-                                        "Try again later. Error: {}".format(abitem, e))
-                    return None
-            self.plugin.get_graph(abitem, 'graph')
-            tmpl = self.tplenv.get_template('visu.html')
-            return tmpl.render(p=self.plugin, item=abitem,
-                               language=self.plugin.get_sh().get_defaultlanguage(), now=self.plugin.shtime.now())
-        # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
-        return tmpl.render(p=self.plugin,
-                           language=self.plugin.get_sh().get_defaultlanguage(), now=self.plugin.shtime.now())
