@@ -49,8 +49,13 @@ except:
 from plugins.sonos.soco.exceptions import SoCoUPnPException
 from plugins.sonos.soco.music_services import MusicService
 from lib.item import Items
+from lib.module import Modules
 from plugins.sonos.soco import *
 from lib.model.smartplugin import SmartPlugin
+from lib.model.smartplugin import SmartPluginWebIf
+#from lib.model.smartplugin import *
+
+
 from plugins.sonos.soco.data_structures import to_didl_string, DidlItem, DidlMusicTrack
 from plugins.sonos.soco.events import event_listener
 from plugins.sonos.soco.music_services.data_structures import get_class
@@ -2346,7 +2351,7 @@ class Speaker(object):
 
 class Sonos(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.5.5"
+    PLUGIN_VERSION = "1.5.6"
 
     def __init__(self, sh, *args, **kwargs):
         super().__init__(**kwargs)
@@ -2488,8 +2493,8 @@ class Sonos(SmartPlugin):
         # Read SoCo Version:
         src = io.open('plugins/sonos/soco/__init__.py', encoding='utf-8').read()
         metadata = dict(re.findall("__([a-z]+)__ = \"([^\"]+)\"", src))
-        VERSION = metadata['version']
-        self.logger.info("Loading SoCo version {0}.".format(VERSION))
+        self.SoCo_version = metadata['version']
+        self.logger.info("Loading SoCo version {0}.".format(self.SoCo_version))
 
         # Configure log level of different SoCo modules:
         #logging.getLogger('plugins.sonos.soco.events_base').setLevel(logging.WARNING)
@@ -2497,6 +2502,8 @@ class Sonos(SmartPlugin):
         logging.getLogger('plugins.sonos.soco.discovery').setLevel(logging.WARNING)
         logging.getLogger('plugins.sonos.soco.services').setLevel(logging.WARNING)
         self.logger.info("Set all SoCo loglevel to WARNING")
+
+        self.init_webinterface()
 
     def run(self):
         self.logger.debug("Run method called")
@@ -2935,6 +2942,50 @@ class Sonos(SmartPlugin):
                 sonos_speaker[uid].dispose()
 
 
+    def init_webinterface(self):
+        """"
+        Initialize the web interface for this plugin
+
+        This method is only needed if the plugin is implementing a web interface
+        """
+        try:
+            self.mod_http = Modules.get_instance().get_module(
+                'http')  # try/except to handle running in a core version that does not support modules
+        except:
+            self.mod_http = None
+        if self.mod_http == None:
+            self.logger.error("Not initializing the web interface")
+            return False
+
+        import sys
+        if not "SmartPluginWebIf" in list(sys.modules['lib.model.smartplugin'].__dict__):
+            self.logger.warning("Web interface needs SmartHomeNG v1.5 and up. Not initializing the web interface")
+            return False
+
+        # set application configuration for cherrypy
+        webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
+        config = {
+            '/': {
+                'tools.staticdir.root': webif_dir,
+            },
+            '/static': {
+                'tools.staticdir.on': True,
+                'tools.staticdir.dir': 'static'
+            }
+        }
+
+        # Register the web interface as a cherrypy app
+        self.mod_http.register_webif(WebInterface(webif_dir, self),
+                                     self.get_shortname(),
+                                     config,
+                                     self.get_classname(), self.get_instance_name(),
+                                     description='')
+
+        return True
+
+
+
+
 def _initialize_speaker(uid: str, logger: logging) -> None:
     """
     Create a Speaker object by a given uuid
@@ -2947,3 +2998,72 @@ def _initialize_speaker(uid: str, logger: logging) -> None:
     with _create_speaker_lock:
         if uid not in sonos_speaker:
             sonos_speaker[uid] = Speaker(uid=uid, logger=logger)
+
+
+
+# ------------------------------------------
+#    Webinterface of the plugin
+# ------------------------------------------
+
+import cherrypy
+from jinja2 import Environment, FileSystemLoader
+
+
+class WebInterface(SmartPluginWebIf):
+
+    def __init__(self, webif_dir, plugin):
+        """
+        Initialization of instance of class WebInterface
+
+        :param webif_dir: directory where the webinterface of the plugin resides
+        :param plugin: instance of the plugin
+        :type webif_dir: str
+        :type plugin: object
+        """
+        self.logger = logging.getLogger(__name__)
+        self.webif_dir = webif_dir
+        self.plugin = plugin
+        self.tplenv = self.init_template_environment()
+
+        self.items = Items.get_instance()
+
+    @cherrypy.expose
+    def index(self, reload=None):
+        """
+        Build index.html for cherrypy
+
+        Render the template and return the html file to be delivered to the browser
+
+        :return: contents of the template after beeing rendered
+        """
+        tmpl = self.tplenv.get_template('index.html')
+        # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
+        return tmpl.render(p=self.plugin, items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path'])))
+
+
+    @cherrypy.expose
+    def get_data_html(self, dataSet=None):
+        """
+        Return data to update the webpage
+
+        For the standard update mechanism of the web interface, the dataSet to return the data for is None
+
+        :param dataSet: Dataset for which the data should be returned (standard: None)
+        :return: dict with the data needed to update the web page.
+        """
+        if dataSet is None:
+            # get the new data
+            data = {}
+
+            # data['item'] = {}
+            # for i in self.plugin.items:
+            #     data['item'][i]['value'] = self.plugin.getitemvalue(i)
+            #
+            # return it as json the the web page
+            # try:
+            #     return json.dumps(data)
+            # except Exception as e:
+            #     self.logger.error("get_data_html exception: {}".format(e))
+        return {}
+
+
