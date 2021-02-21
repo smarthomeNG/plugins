@@ -13,10 +13,17 @@
 <script type="text/javascript">
 	$( document ).ready(function() {
 			io.write('Sonos.Kitchen.volume', 20 );
-			io.write('Sonos.Kitchen.track_artist', 'MC Max Mustermann' );
-			io.write('Sonos.Kitchen.track_title', 'Nice Music Title' );
-			io.write('Sonos.Kitchen.radio_station', 'Nice Radio Station' );
-			io.write('Sonos.Kitchen.streamtype', 'radio' );
+			io.write('Sonos.Kitchen.track_album', 'Abbey Road' );
+			io.write('Sonos.Kitchen.radio_station', '' );
+			io.write('Sonos.Kitchen.streamtype', 'music' );
+			io.write('Sonos.Kitchen.track_album_art', 'https://upload.wikimedia.org/wikipedia/en/4/42/Beatles_-_Abbey_Road.jpg' );
+			io.write('Sonos.Kitchen.sonos_playlists', ['Classic', 'Chansons', 'Rock', 'Chill', 'Pary'] );
+			io.write('Sonos.Kitchen.current_transport_actions', 'Set, Stop, Pause, Play, X_DLNA_SeekTime, X_DLNA_SeekTrackNr' );
+			io.write('Sonos.Kitchen.current_track_duration', '0:04:27' );
+			io.write('Sonos.Kitchen.current_track', 1 );
+			io.write('Sonos.Kitchen.play_mode', 'NORMAL' );
+			io.write('Sonos.Kitchen.track_artist', 'MC Mustermann' );
+			io.write('Sonos.Kitchen.track_title', 'Nice Title' );
 
 		});
 
@@ -29,9 +36,17 @@
 			{{ widget_sonos.player('name1', 'Sonos.Kitchen') }}  
 		{% endraw %}{% endfilter %}</code>
 	</div>
-	<div class="html">
-		{{ widget_sonos.player('name1', 'Sonos.Kitchen') }}  
+	<div class="block">
+		<div class="html">
+			{{ widget_sonos.player('name1', 'Sonos.Kitchen') }}  
+		</div>
 	</div>
+
+
+        
+
+
+
 
 {% endblock %}
 

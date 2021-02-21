@@ -27,14 +27,18 @@ from . import StateEngineTools
 from . import StateEngineCliCommands
 from . import StateEngineFunctions
 from . import StateEngineWebif
+from . import StateEngineStructs
 import logging
 import os
+import copy
 from lib.model.smartplugin import *
 from lib.item import Items
 
+logging.addLevelName(StateEngineDefaults.VERBOSE, 'DEVELOP')
+
 
 class StateEngine(SmartPlugin):
-    PLUGIN_VERSION = '1.8.1'
+    PLUGIN_VERSION = '1.9.0'
 
     # Constructor
     # noinspection PyUnusedLocal,PyMissingConstructor
@@ -62,9 +66,10 @@ class StateEngine(SmartPlugin):
             self.get_sh().stateengine_plugin_functions = StateEngineFunctions.SeFunctions(self.get_sh(), self.logger)
             StateEngineCurrent.init(self.get_sh())
 
+            base = self.get_sh().get_basedir()
+            log_directory = SeLogger.create_logdirectory(base, log_directory)
+
             if log_level > 0:
-                base = self.get_sh().get_basedir()
-                log_directory = SeLogger.create_logdirectory(base, log_directory)
                 text = "StateEngine extended logging is active. Logging to '{0}' with log level {1}."
                 self.logger.info(text.format(log_directory, log_level))
             log_maxage = self.get_parameter_value("log_maxage")
@@ -101,6 +106,7 @@ class StateEngine(SmartPlugin):
     # Initialization of plugin
     def run(self):
         # Initialize
+        StateEngineStructs.global_struct = copy.deepcopy(self.itemsApi.return_struct_definitions())
         self.logger.info("Init StateEngine items")
         for item in self.itemsApi.find_items("se_plugin"):
             if item.conf["se_plugin"] == "active":

@@ -71,7 +71,20 @@ Verwendung von structs
 ----------------------
 
 Mit der Hilfe von Struktur Templates wird die Einrichtung von Items stark vereinfacht. Hierzu werden für
-Leuchten die Templates **hue2.light** und **hue2.light_extended** vom Plugin mitgeliefert.
+Leuchten Templates vom Plugin mitgeliefert.
+
+Grundsätzliche Item Definitionen für Leuchten:
+
+- **hue2.light** - Standard Definition für Philips Hue Leuchten
+- **hue2.light_ww** - Standard Definition für Philips Warmwhite Leuchten
+- **hue2.light_xy** - Standard Definition für Leuchten von Dritt-Anbietern, die kein **sat** und **hue** unterstützen, sondern nur **xy**
+
+Erweiterte Item Definitionen für oben genannten Leuchten-Typen:
+
+- **hue2.light_extended**
+- **hue2.light_ww_extended**
+- **hue2.light_xy_extended**
+
 
 Ein Item für eine Hue Leuchte kann einfach folgendermaßen konfiguriert werden, indem nur die Id der zu
 steuernden Leuchts als ``hue2_id`` angegeben wird:

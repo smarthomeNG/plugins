@@ -31,7 +31,7 @@ from lib.model.smartplugin import SmartPlugin
 
 class MPD(SmartPlugin, lib.connection.Client):
 
-    PLUGIN_VERSION = "1.4.2"
+    PLUGIN_VERSION = "1.4.3"
     STATUS        = 'mpd_status'
     SONGINFO      = 'mpd_songinfo'
     STATISTIC     = 'mpd_statistic'

@@ -32,6 +32,8 @@ from pyhomematic import HMConnection
 from lib.module import Modules
 from lib.model.smartplugin import *
 
+from .webif import WebInterface
+
 from time import sleep
 
 
@@ -41,7 +43,7 @@ class Homematic(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.5.1'
+    PLUGIN_VERSION = '1.5.2'
 #    ALLOW_MULTIINSTANCE = False
 
     connected = False
@@ -49,24 +51,19 @@ class Homematic(SmartPlugin):
 
     def __init__(self, sh, *args, **kwargs):
         """
-        Initalizes the plugin. The parameters descriptions for this method are pulled from the entry in plugin.yaml.
-
-        :param sh:  **Deprecated**: The instance of the smarthome object. For SmartHomeNG versions **beyond** 1.3: **Don't use it**!
-        :param *args: **Deprecated**: Old way of passing parameter values. For SmartHomeNG versions **beyond** 1.3: **Don't use it**!
-        :param **kwargs:**Deprecated**: Old way of passing parameter values. For SmartHomeNG versions **beyond** 1.3: **Don't use it**!
+        Initalizes the plugin.
 
         If you need the sh object at all, use the method self.get_sh() to get it. There should be almost no need for
         a reference to the sh object any more.
 
-        The parameters *args and **kwargs are the old way of passing parameters. They are deprecated. They are imlemented
-        to support older plugins. Plugins for SmartHomeNG v1.4 and beyond should use the new way of getting parameter values:
-        use the SmartPlugin method get_parameter_value(parameter_name) instead. Anywhere within the Plugin you can get
+        Plugins have to use the new way of getting parameter values:
+        use the SmartPlugin method get_parameter_value(parameter_name). Anywhere within the Plugin you can get
         the configured (and checked) value for a parameter by calling self.get_parameter_value(parameter_name). It
         returns the value in the datatype that is defined in the metadata.
         """
-        from bin.smarthome import VERSION
-        if '.'.join(VERSION.split('.',2)[:2]) <= '1.5':
-            self.logger = logging.getLogger(__name__)
+
+        # Call init code of parent class (SmartPlugin)
+        super().__init__()
 
         # get the parameters for the plugin (as defined in metadata plugin.yaml):
         #   self.param1 = self.get_parameter_value('param1')
@@ -146,9 +143,7 @@ class Homematic(SmartPlugin):
 
         self.hm_items = []
 
-        if not self.init_webinterface():
-#            self._init_complete = False
-            pass
+        self.init_webinterface(WebInterface)
 
         return
 
@@ -361,47 +356,6 @@ class Homematic(SmartPlugin):
                 # ON_TIME (float 0.0-85825945.6 s), SUBMIT (string)
 
                 # STATE, LEVEL, STOP (action)
-
-
-    def init_webinterface(self):
-        """"
-        Initialize the web interface for this plugin
-
-        This method is only needed if the plugin is implementing a web interface
-        """
-        try:
-            self.mod_http = Modules.get_instance().get_module('http')   # try/except to handle running in a core version that does not support modules
-        except:
-             self.mod_http = None
-        if self.mod_http == None:
-            self.logger.error("Not initializing the web interface")
-            return False
-
-        import sys
-        if not "SmartPluginWebIf" in list(sys.modules['lib.model.smartplugin'].__dict__):
-            self.logger.warning("Web interface needs SmartHomeNG v1.5 and up. Not initializing the web interface")
-            return False
-
-        # set application configuration for cherrypy
-        webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
-        config = {
-            '/': {
-                'tools.staticdir.root': webif_dir,
-            },
-            '/static': {
-                'tools.staticdir.on': True,
-                'tools.staticdir.dir': 'static'
-            }
-        }
-
-        # Register the web interface as a cherrypy app
-        self.mod_http.register_webif(WebInterface(webif_dir, self),
-                                     self.get_shortname(),
-                                     config,
-                                     self.get_classname(), self.get_instance_name(),
-                                     description='')
-        return True
-
 
 
 # ---------------------------------------------------------

@@ -59,6 +59,10 @@ class SeState(StateEngineTools.SeItemChild):
     def conditions(self):
         return self.__conditions
 
+    @property
+    def releasedby(self):
+        return self.__release.get()
+
     # Constructor
     # abitem: parent SeItem instance
     # item_state: item containing configuration of state
@@ -75,6 +79,7 @@ class SeState(StateEngineTools.SeItemChild):
             self._log_info("Problem init state ID of Item {}. {}", self.__item, err)
         self.__text = StateEngineValue.SeValue(self._abitem, "State Name", False, "str")
         self.__use = StateEngineValue.SeValue(self._abitem, "State configuration extension", True, "item")
+        self.__release = StateEngineValue.SeValue(self._abitem, "State released by", True, "item")
         self.__name = ''
         self.__use_done = []
         self.__conditions = StateEngineConditionSets.SeConditionSets(self._abitem)
@@ -92,8 +97,9 @@ class SeState(StateEngineTools.SeItemChild):
         return "SeState item: {}, id {}.".format(self.__item, self.__id)
 
     # Check conditions if state can be entered
-    # returns: True = At least one enter condition set is fulfulled, False = No enter condition set is fulfilled
+    # returns: True = At least one enter condition set is fulfilled, False = No enter condition set is fulfilled
     def can_enter(self):
+        self._log_decrease_indent(10)
         self._log_info("Check if state '{0}' ('{1}') can be entered:", self.id, self.name)
         self._log_increase_indent()
         result = self.__conditions.one_conditionset_matching()
@@ -125,6 +131,7 @@ class SeState(StateEngineTools.SeItemChild):
         if self.__use_done:
             _log_se_use = self.__use_done[0] if len(self.__use_done) == 1 else self.__use_done
             self._log_info("State configuration extended by se_use: {}", _log_se_use)
+        self.__release.write_to_logger()
         if self.__conditions.count() > 0:
             self._log_info("Condition sets to enter state:")
             self._log_increase_indent()
@@ -278,6 +285,9 @@ class SeState(StateEngineTools.SeItemChild):
                         #self._log_debug("Adding {} again to state fill function.", _name)
                         self.__use_done.append(element)
                         self.__fill(element, recursion_depth + 1, _name)
+        if "se_released_by" in item_state.conf:
+            self.__release.set_from_attr(item_state, "se_released_by")
+            self._log_debug("State {} has released attribute, self.release = {}", item_state.property.path, self.__release)
 
         # Get action sets and condition sets
         parent_item = item_state.return_parent()

@@ -58,7 +58,7 @@ from plugins.sonos.soco.snapshot import Snapshot
 from plugins.sonos.soco.xml import XML
 import time
 
-from plugins.sonos.tts import gTTS
+from gtts import gTTS
 from plugins.sonos.utils import file_size, get_tts_local_file_path, get_free_diskspace, get_folder_size
 
 _create_speaker_lock = threading.Lock()  # make speaker object creation thread-safe
@@ -2195,6 +2195,15 @@ class Speaker(object):
         if not self.is_coordinator:
             sonos_speaker[self.coordinator]._play_snippet(file_path, webservice_url, volume, duration_offset, fade_in)
         else:
+
+            # Check if stop() is part of currently supported transport actions.
+            # For example, stop() is not available when the speakter is in TV mode.
+            currentActions = self.current_transport_actions
+            self.logger.debug("play_snippet: checking transport actions: {0}".format(currentActions))
+            if not 'Stop' in currentActions:
+                self.logger.warning("Speaker cannot execute stop command in current mode. Therefore, skipping play_snippet function")
+                return
+
             with self._snippet_queue_lock:
                 snap = None
                 volumes = {}
@@ -2283,7 +2292,7 @@ class Speaker(object):
 
             # only do a tts call if file not exists
             if not os.path.exists(file_path):
-                tts = gTTS(tts, self.logger, tts_language)
+                tts = gTTS(tts, lang=tts_language)
                 try:
                     tts.save(file_path)
                 except Exception as err:
@@ -2337,7 +2346,7 @@ class Speaker(object):
 
 class Sonos(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.5.3"
+    PLUGIN_VERSION = "1.5.5"
 
     def __init__(self, sh, *args, **kwargs):
         super().__init__(**kwargs)

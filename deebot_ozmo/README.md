@@ -1,6 +1,6 @@
 # Plugin for Deebot Ozmo 920 / 950 / 960
 
-#### Version 1.7.1
+#### Version 1.7.2
 This plugin can control and monitor an Ecovacs Deebot Ozmo series vaccum cleaner robot.
 
 ## Change history

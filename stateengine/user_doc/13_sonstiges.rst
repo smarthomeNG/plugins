@@ -31,6 +31,71 @@ Deklaration steckt, desto geringer ist ihre Priorität. Heißt, etwaige Zustands
 
 Weitere Details sind unter :ref:`Zustand-Templates` zu finden.
 
+Auflösen von Zuständen
+----------------------
+
+**se_releasedby (optional):**
+*Definieren von Zuständen, die den aktuellen Zustand auflösen können, auch wenn sie untergeordnet sind*
+
+Das Attribut ermöglicht es, andere untergeordnete Zustände
+zu definieren, die den Zustand auflösen, sobald jene
+eingenommen werden könnten. Im Normalfall bleibt dennoch
+der übergeordnete Zustand aktiv, bis die Bedingungen nicht
+mehr wahr sind. Gewünscht wird dies normalerweise beim
+Suspendzustand, allerdings kann das Attribut bei jedem
+beliebigem Zustand genutzt werden.
+
+Ein Zustand mit diesem Attribut wird aufgelöst, also
+(vorerst) nicht mehr eingenommen, sobald ein mit dem
+Attribut angegebener Zustand eingenommen werden könnte.
+Befindet sich in der Hierarchie noch ein weiterer Zustand,
+dessen Bedingungen erfüllt werden, wird eben dieser Zustand
+eingenommen - auch wenn er den ursprünglichen Zustand
+nicht aufgelöst hat.
+
+Bei einer relativen Angabe eines Zustands/Items ist
+darauf zu achten, dass hier nicht relativ vom rules
+Item aus gesucht wird (wie sonst üblich), sondern relativ
+zum Zustandsitem. Es reicht also ein Punkt vor dem Namen des Zustandes.
+
+Ein Beispiel:
+Der in der Hierarchie ganz oben (unter lock und release)
+angesiedelte Suspendmodus hat das Attribut definiert:
+
+.. code-block:: yaml
+
+    struct: stateengine.state_suspend
+
+    rules:
+      suspend:
+        se_releasedby: .Nacht
+
+      Nacht:
+        enter:
+          <Bedingungen>
+
+Angenommen, aktuell ist der Zustand "Nacht" aktiv. Es wird nun ein
+Schalter betätigt, der den übergeordneten Suspendzustand aktiviert.
+Die Stateengine wechselt nun in den Suspendmodus.
+
+Und bleibt auch dort, selbst wenn es noch Nacht ist.
+Werden beim nächsten Check die Bedingungen für den
+Nachzustand nicht mehr erfüllt, passiert nach wie vor
+nichts, da ja der Suspendzustand ohnehin übergeordnet
+ist.
+
+Sind bei einem späteren Check der Zustände allerdings
+die Bedingungen aus einem Bedingungsset für "Nacht" alle wahr,
+wird der Suspendmodus deaktiviert und der nächste mögliche
+Zustand in der Hierarchie wird eingenommen. Im obigen
+Beispiel wäre das der Nacht-Zustand.
+
+Um die Abfolge der Zustände bzw. interne Informationen
+zur Funktionsweise des Release-Features auch nach einem
+Neustart zur Verfügung zu haben, sind zwei zusätzliche
+Items notwendig. Diese sind bereits in der struct Vorlage
+``stateengine.general`` vorhanden.
+
 Zustandsnamen
 -------------
 
