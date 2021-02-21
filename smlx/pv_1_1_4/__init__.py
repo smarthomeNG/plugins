@@ -2,7 +2,7 @@
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
 #  Copyright 2012-2014 Oliver Hinckel                  github@ollisnet.de
-#  Copyright 2018-2021                              Bernd.Meiners@mail.de
+#  Copyright 2018                                   Bernd.Meiners@mail.de
 #########################################################################
 #
 #  This file is part of SmartHomeNG.    https://github.com/smarthomeNG//
@@ -31,7 +31,6 @@ import socket
 import errno
 
 from lib.module import Modules
-from lib.item import Items
 
 from lib.model.smartplugin import *
 
@@ -51,7 +50,6 @@ else:
     logger.debug("Init plugin component {}".format(__name__))
 
 from . import algorithms
-from .webif import WebInterface
 
 def to_Hex(data):
     """
@@ -87,7 +85,7 @@ class Smlx(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.1.5'
+    PLUGIN_VERSION = '1.1.4'
 
     _units = {  # Blue book @ http://www.dlms.com/documentation/overviewexcerptsofthedlmsuacolouredbooks/index.html
        1 : 'a',    2 : 'mo',    3 : 'wk',  4 : 'd',    5 : 'h',     6 : 'min.',  7 : 's',     8 : '°',     9 : '°C',    10 : 'currency',
@@ -102,14 +100,10 @@ class Smlx(SmartPlugin):
       'smart-meter-gateway-com-1' : 'hex'
     }
 
-    def __init__(self, sh):
+    def __init__(self, sh, *args, **kwargs):
         """
         Initalizes the plugin. The parameters described for this method are pulled from the entry in plugin.conf.
         """
-
-        # Call init code of parent class (SmartPlugin)
-        super().__init__()
-
         self.cycle = self.get_parameter_value('cycle')
 
         self.host = self.get_parameter_value('host')  # None
@@ -150,7 +144,6 @@ class Smlx(SmartPlugin):
         self.logger.debug("Using CRC params poly={}, reflect_in={}, xor_in={}, reflect_out={}, xor_out={}, swap_crc_bytes={}".format(self.poly, self.reflect_in, self.xor_in, self.reflect_out, self.xor_out, self.swap_crc_bytes))
         # Todo: change to lib.network if network is implemented again
         # smarthome.connections.monitor(self)
-        self.init_webinterface(WebInterface)
 
     def run(self):
         """
