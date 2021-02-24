@@ -442,6 +442,21 @@ def de232(payload):
     return list(struct.unpack('>BBB', payload))
 
 """
+Datapoint Types U8U8U8U8
+    251.600 DPT_Colour_RGBW
+    Only 4Bytes are used, first 2Bytes are unused
+"""
+
+def en251(value):
+    return [0, 0xff, 0x0f, int(value[0]) & 0xff, int(value[1]) & 0xff, int(value[2]) & 0xff, int(value[3]) & 0xff]
+
+
+def de251(payload):
+    if len(payload) != 6:
+        return None
+    return list(struct.unpack('>lBB', payload))
+
+"""
 Datapoint type with eight bytes F16F16F16F16
     275.100 DPT_TempRoomSetpSetF16[4]
     Item Value then is a list of four F16 values
@@ -528,6 +543,7 @@ decode = {
     '28.001': de28,     #DPT_UTF-8
     '229': de229,
     '232': de232,
+    '251': de251,       #RGBW
     '275.100' : de275100,
     'pa': depa,
     'ga': dega
@@ -581,6 +597,7 @@ encode = {
     '28.001': en28,     #DPT_UTF-8
     '229': en229,
     '232': en232,       #RGB
+    '251': en251,       #RGBW
     '275.100' : en275100,   # Setpoint temperature, contains 4 values: Komfort, Standby, Night and Frost
     'ga': enga
 }
