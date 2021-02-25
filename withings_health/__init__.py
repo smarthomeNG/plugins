@@ -40,6 +40,7 @@ class WithingsHealth(SmartPlugin):
         self._user_id = self.get_parameter_value('user_id')
         self._client_id = self.get_parameter_value('client_id')
         self._consumer_secret = self.get_parameter_value('consumer_secret')
+        self._callback_base_url = self.get_parameter_value('callback_base_url')
         self._cycle = self.get_parameter_value('cycle')
         self._creds = None
         self._client = None
@@ -350,10 +351,13 @@ class WithingsHealth(SmartPlugin):
     def get_callback_url(self):
         ip = self.mod_http.get_local_ip_address()
         port = self.mod_http.get_local_port()
+        base_url = self._callback_base_url
+        if not base_url:
+            base_url = "http://{}:{}".format(ip, port)
         web_ifs = self.mod_http.get_webifs_for_plugin(self.get_shortname())
         for web_if in web_ifs:
             if web_if['Instance'] == self.get_instance_name():
-                callback_url = "http://{}:{}{}".format(ip, port, web_if['Mount'])
+                callback_url = "{}{}".format(base_url, web_if['Mount'])
                 self.logger.debug("WebIf found, callback is {}".format(self.get_fullname(),
                                                                        callback_url))
             return callback_url
