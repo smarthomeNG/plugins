@@ -106,7 +106,7 @@ class SeCondition(StateEngineTools.SeItemChild):
         if 'SeCurrent' in eval_result:
             eval_result = eval_result.split('SeCurrent.')[1].split(' ')[0]
         value_result = str(self.__value.get_for_webif())
-        result = {'item': str(self.__item), 'eval': eval_result, 'value': value_result,
+        result = {'item': self.__item.path(), 'eval': eval_result, 'value': value_result,
                   'min': str(self.__min),
                   'max': str(self.__max), 'agemin': str(self.__agemin), 'agemax': str(self.__agemax),
                   'negate': str(self.__negate), 'agenegate': str(self.__agenegate),
