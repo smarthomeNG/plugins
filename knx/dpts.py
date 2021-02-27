@@ -448,13 +448,13 @@ Datapoint Types U8U8U8U8
 """
 
 def en251(value):
-    return [0, 0xff, 0x0f, int(value[0]) & 0xff, int(value[1]) & 0xff, int(value[2]) & 0xff, int(value[3]) & 0xff]
+    return [0, 0x00, 0x0f, int(value[0]) & 0xff, int(value[1]) & 0xff, int(value[2]) & 0xff, int(value[3]) & 0xff]
 
 
 def de251(payload):
     if len(payload) != 6:
         return None
-    return list(struct.unpack('>lBB', payload))
+    return list(struct.unpack('>BBBBBB', payload))[2:6]
 
 """
 Datapoint type with eight bytes F16F16F16F16
