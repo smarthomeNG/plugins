@@ -1,6 +1,6 @@
 # Robonect Plugin
 
-#### Version 1.0.0
+#### Version 1.0.3
 
 Plugin for reading data from Husqvarna, Gardena, Flymo or McCulloch robotic lawnmowers, equipped with the Robonect Hx module.
 In later stages of development, it will also be possible to control the robot via the plugin as far as the Robonect API supports this.
