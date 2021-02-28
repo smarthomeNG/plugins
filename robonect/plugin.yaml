@@ -365,7 +365,7 @@ item_structs:
 
                 unix:
                     robonect_data_type: error_unix
-                    type: int
+                    type: num
         wlan:
             signal:
                 name: 'Wifi Signal Strength'
