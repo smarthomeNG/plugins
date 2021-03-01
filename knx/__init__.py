@@ -35,8 +35,9 @@ import pathlib
 from lib.network import Tcp_client
 from lib.utils import Utils
 from lib.item import Items
-from lib.model.smartplugin import SmartPlugin, SmartPluginWebIf
+from lib.model.smartplugin import SmartPlugin
 from lib.shtime import Shtime
+from .webif import WebInterface
 
 from . import dpts
 from . import knxproj
@@ -677,46 +678,6 @@ class KNX(SmartPlugin):
                         self._busmonitor(self._bm_format.format(self.get_instance_name(), 'STATUS', ga, _value))
                     self.groupwrite(ga, _value, self.get_iattr_value(item.conf, KNX_DPT))
 
-    def init_webinterface(self):
-        """"
-        Initialize the web interface for this plugin
-
-        This method is only needed if the plugin is implementing a web interface
-        """
-        try:
-            self.mod_http = Modules.get_instance().get_module('http')   # try/except to handle running in a core version that does not support modules
-        except:
-            self.mod_http = None
-        if self.mod_http is None:
-            self.logger.error("Not initializing the web interface")
-            return False
-
-        import sys
-        if "SmartPluginWebIf" not in list(sys.modules['lib.model.smartplugin'].__dict__):
-            self.logger.warning("Web interface needs SmartHomeNG v1.5 and up. Not initializing the web interface")
-            return False
-
-        # set application configuration for cherrypy
-        webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
-        config = {
-            '/': {
-                'tools.staticdir.root': webif_dir,
-            },
-            '/static': {
-                'tools.staticdir.on': True,
-                'tools.staticdir.dir': 'static'
-            }
-        }
-
-        # Register the web interface as a cherrypy app
-        self.mod_http.register_webif(WebInterface(webif_dir, self),
-                                     self.get_shortname(),
-                                     config,
-                                     self.get_classname(), self.get_instance_name(),
-                                     description='')
-
-        return True
-
 
 # ------------------------------------------
 #    Statistics functions for KNX
@@ -849,151 +810,3 @@ class KNX(SmartPlugin):
         :return: list of group addresses that did not receive a cache read response
         """
         return self._cache_ga_response_pending
-
-
-# ------------------------------------------
-#    Webinterface of the plugin
-# ------------------------------------------
-
-
-class WebInterface(SmartPluginWebIf):
-
-    def __init__(self, webif_dir, plugin):
-        """
-        Initialization of instance of class WebInterface
-
-        :param webif_dir: directory where the webinterface of the plugin resides
-        :param plugin: instance of the plugin
-        :type webif_dir: str
-        :type plugin: object
-        """
-        self.logger = logging.getLogger(__name__)
-        self.webif_dir = webif_dir
-        self.plugin = plugin
-        self.tplenv = self.init_template_environment()
-
-        self.items = Items.get_instance()
-        self.last_upload = ""
-
-        self.knxdaemon = ''
-        if os.name != 'nt':
-            if self.get_process_info("ps cax|grep eibd") != '':
-                self.knxdaemon = 'eibd'
-            if self.get_process_info("ps cax|grep knxd") != '':
-                if self.knxdaemon != '':
-                    self.knxdaemon += ' and '
-                self.knxdaemon += 'knxd'
-        else:
-            self.knxdaemon = 'can not be determined when running on Windows'
-
-    def get_process_info(self, command):
-        """
-        returns output from executing a given command via the shell.
-        """
-        # call date command
-        p = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
-
-        # Talk with date command i.e. read data from stdout and stderr. Store this info in tuple ##
-        # Interact with process: Send data to stdin. Read data from stdout and stderr, until end-of-file is reached.
-        # Wait for process to terminate. The optional input argument should be a string to be sent to the child process, or None, if no data should be sent to the child.
-        (result, err) = p.communicate()
-
-        # Wait for date to terminate. #
-        p.wait()
-        return str(result, encoding='utf-8', errors='strict')
-
-    @cherrypy.expose
-    def index(self, reload=None, knxprojfile=None):
-        """
-        Build index.html for cherrypy
-
-        Render the template and return the html file to be delivered to the browser
-
-        :return: contents of the template after beeing rendered
-        """
-        if self.plugin.use_project_file and knxprojfile is not None:
-            size = 0
-            with open(self.plugin.projectpath, 'wb') as out:
-                while True:
-                    data = knxprojfile.file.read(8192)
-                    if not data:
-                        break
-                    out.write(data)
-                    size += len(data)
-            self.last_upload = "File received.\nFilename: {}\nLength: {}\nMime-type: {}\n".format(knxprojfile.filename, size, knxprojfile.content_type)
-            self.plugin._parse_projectfile()
-
-        plgitems = []
-        for item in self.items.return_items():
-            if any(elem in item.property.attributes for elem in [KNX_DPT, KNX_STATUS, KNX_SEND, KNX_REPLY, KNX_CACHE, KNX_INIT, KNX_LISTEN, KNX_POLL]):
-                plgitems.append(item)
-
-        # build a dict with groupaddress as key to items and their attributes
-        # ga_usage_by_Item = { '0/1/2' : { ItemA : { attribute1 : True, attribute2 : True },
-        #                                  ItemB : { attribute1 : True, attribute2 : True }}, ...}
-        # ga_usage_by_Attrib={ '0/1/2' : { attribut1 : { ItemA : True, ItemB : True },
-        #                                  attribut2 : { ItemC : True, ItemD : True }}, ...}
-        ga_usage_by_Item = {}
-        ga_usage_by_Attrib = {}
-        for item in plgitems:
-            for elem in [KNX_DPT, KNX_STATUS, KNX_SEND, KNX_REPLY, KNX_CACHE, KNX_INIT, KNX_LISTEN, KNX_POLL]:
-                if elem in item.property.attributes:
-                    value = self.plugin.get_iattr_value(item.conf, elem)
-                    # value might be a list or a string here
-                    if isinstance(value, str):
-                        values = [value]
-                    else:
-                        values = value
-                    for ga in values:
-                        # create ga_usage_by_Item entries
-                        if ga not in ga_usage_by_Item:
-                            ga_usage_by_Item[ga] = {}
-                        if item not in ga_usage_by_Item[ga]:
-                            ga_usage_by_Item[ga][item] = {}
-                        ga_usage_by_Item[ga][item][elem] = True
-
-                        # create ga_usage_by_Attrib entries
-                        if ga not in ga_usage_by_Attrib:
-                            ga_usage_by_Attrib[ga] = {}
-                        if item not in ga_usage_by_Attrib[ga]:
-                            ga_usage_by_Attrib[ga][elem] = {}
-                        ga_usage_by_Attrib[ga][elem][item] = True
-
-        tmpl = self.tplenv.get_template('index.html')
-        # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
-        return tmpl.render(p=self.plugin,
-                           items=sorted(plgitems, key=lambda k: str.lower(k['_path'])),
-                           knxdaemon=self.knxdaemon,
-                           stats_ga=self.plugin.get_stats_ga(), stats_ga_list=sorted(self.plugin.get_stats_ga(), key=lambda k: str(int(k.split('/')[0]) + 100) + str(int(k.split('/')[1]) + 100) + str(int(k.split('/')[2]) + 1000)),
-                           stats_pa=self.plugin.get_stats_pa(), stats_pa_list=sorted(self.plugin.get_stats_pa(), key=lambda k: str(int(k.split('.')[0]) + 100) + str(int(k.split('.')[1]) + 100) + str(int(k.split('.')[2]) + 1000)),
-                           last_upload=self.last_upload,
-                           ga_usage_by_Item=ga_usage_by_Item,
-                           ga_usage_by_Attrib=ga_usage_by_Attrib,
-                           knx_attribs=[KNX_DPT, KNX_STATUS, KNX_SEND, KNX_REPLY, KNX_CACHE, KNX_INIT, KNX_LISTEN, KNX_POLL]
-                           )
-
-    @cherrypy.expose
-    def get_data_html(self, dataSet=None):
-        """
-        Return data to update the webpage
-
-        For the standard update mechanism of the web interface, the dataSet to return the data for is None
-
-        :param dataSet: Dataset for which the data should be returned (standard: None)
-        :return: dict with the data needed to update the web page.
-        """
-        if dataSet is None:
-            pass
-            # get the new data
-            # data = {}
-
-            # data['item'] = {}
-            # for i in self.plugin.items:
-            #     data['item'][i]['value'] = self.plugin.getitemvalue(i)
-            #
-            # return it as json the the web page
-            # try:
-            #     return json.dumps(data)
-            # except Exception as e:
-            #     self.logger.error("get_data_html exception: {}".format(e))
-        return {}
