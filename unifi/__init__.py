@@ -29,7 +29,7 @@ from jinja2 import Environment, FileSystemLoader
 import cherrypy
 from lib.module import Modules
 from lib.model.smartplugin import *
-from lib.network import Network
+from lib.utils import Utils
 from plugins.unifi.ubiquiti.unifi import API as UniFiAPI
 from plugins.unifi.ubiquiti.unifi import DataException as UniFiDataException
 import ruamel.yaml as yaml
@@ -377,7 +377,7 @@ class UniFiControllerClient(SmartPlugin):
             self.logger.error(msg + " in item " + item.path())
 
     def _mac_check(self, item, item_type: str, leaf_item=None):
-        if not Network.is_mac(self.get_iattr_value(item.conf, item_type)):
+        if not Utils.is_mac(self.get_iattr_value(item.conf, item_type)):
             self._log_item_error(item, "invalid {} attribute provided from {}".format(item_type, item.path()))
             return False
         return True

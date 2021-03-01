@@ -24,25 +24,20 @@
 #########################################################################
 
 from lib.module import Modules
-from lib.model.smartplugin import SmartPlugin, SmartPluginWebIf
+from lib.model.smartplugin import *
 from lib.item import Items
-from lib.network import Tcp_client
-
-import logging
-import sys
-import cherrypy
+import lib.connection
 
 REQ_DELIMITER = b'\r'
 RESP_DELIMITER = b'\r\n'
 
-
-class Russound(SmartPlugin):
+class Russound(SmartPlugin,lib.connection.Client):
     """
     Main class of the Plugin. Does all plugin specific stuff and provides
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.7.0'
+    PLUGIN_VERSION = '1.6.0'
 
     def __init__(self, sh, *args, **kwargs):
         """
@@ -64,13 +59,8 @@ class Russound(SmartPlugin):
             return
 
         # Initialization code goes here
+        lib.connection.Client.__init__(self, self.host, self.port, monitor=True)
         self.terminator = RESP_DELIMITER
-#
-        # lib.connection.Client.__init__(self, self.host, self.port, monitor=True)
-        self._client = Tcp_client(self.host, self.port, terminator=self.terminator)
-# TODO
-        self._client.set_callbacks(data_received=self.found_terminator)
-#
         self.params = {}
         self.sources = {}
 
@@ -82,13 +72,8 @@ class Russound(SmartPlugin):
         Run method for the plugin
         """
         self.logger.debug("Run method called")
-        if not self._client.connect():
-            self.logger.debug(f'Connection to {self.host}:{self.port} not possible. Plugin deactivated.')
-            return
-
         self.alive = True
-#
-        # self.close()
+        self.close()
 
     def stop(self):
         """
@@ -96,7 +81,6 @@ class Russound(SmartPlugin):
         """
         self.logger.debug("Stop method called")
         self.alive = False
-        self._client.close()
 
     def parse_item(self, item):
         """
@@ -111,19 +95,19 @@ class Russound(SmartPlugin):
                         with the item, caller, source and dest as arguments and in case of the knx plugin the value
                         can be sent to the knx with a knx write function within the knx plugin.
         """
-        # if self.has_iattr(item.conf, 'rus_src'):
-        #     s = int(self.get_iattr_value(item.conf, 'rus_src'))
+        # if self.has_iattr(item.conf,'rus_src'):
+        #     s = int(self.get_iattr_value(item.conf,'rus_src'))
         #     self.sources[s] = {'s': s, 'item':item}
         #     self.logger.debug("Source {0} added".format(s))
         #     return None
 
         if self.has_iattr(item.conf, 'rus_path'):
             self.logger.debug("parse item: {}".format(item))
-
-            path = self.get_iattr_value(item.conf, 'rus_path')
+            
+            path = self.get_iattr_value(item.conf,'rus_path')
             parts = path.split('.', 2)
 
-            if len(parts) != 3:
+            if len(parts) is not 3:
                 self.logger.warning(
                     "Invalid Russound path with value {0}, format should be 'c.z.p' c = controller, z = zone, p = parameter name.".format(path))
                 return None
@@ -134,13 +118,13 @@ class Russound(SmartPlugin):
 
         else:
             if self.has_iattr(item.conf, 'rus_controller'):
-                c = self.get_iattr_value(item.conf, 'rus_controller')
+                c = self.get_iattr_value(item.conf,'rus_controller')
                 path = c + '.'
             else:
                 return None
 
             if self.has_iattr(item.conf, 'rus_zone'):
-                z = self.get_iattr_value(item.conf, 'rus_zone')
+                z = self.get_iattr_value(item.conf,'rus_zone')
                 path += z + '.'
             else:
                 self.logger.warning(
@@ -148,7 +132,7 @@ class Russound(SmartPlugin):
                 return None
 
             if self.has_iattr(item.conf, 'rus_parameter'):
-                param = self.get_iattr_value(item.conf, 'rus_parameter')
+                param = self.get_iattr_value(item.conf,'rus_parameter')
                 path += param
             else:
                 self.logger.warning(
@@ -156,10 +140,10 @@ class Russound(SmartPlugin):
                 return None
 
             if param == 'relativevolume':
-                # item._enforce_updates = True
+                #item._enforce_updates = True
                 item.property.enforce_updates = True
 
-            self.set_attr_value(item.conf, 'rus_path', path)
+            self.set_attr_value(item.conf,'rus_path',path)
 
         param = param.lower()
         self.params[path] = {'c':
@@ -194,7 +178,7 @@ class Russound(SmartPlugin):
         if self.alive and caller != self.get_shortname():
             # code to execute if the plugin is not stopped
             # and only, if the item has not been changed by this this plugin:
-            self.logger.info("Update item: {}, item has been changed outside this plugin (caller={}, source={}, dest={})".format(item.id(), caller, source, dest))
+            self.logger.info("Update item: {}, item has been changed outside this plugin (caller={}, source={}, dest={})".format(item.id(),caller, source, dest))
 
             if self.has_iattr(item.conf, 'rus_path'):
                 path = self.get_iattr_value(item.conf, 'rus_path')
@@ -262,22 +246,14 @@ class Russound(SmartPlugin):
         self._send_cmd('WATCH System ON\r')
 
     def _send_cmd(self, cmd):
-        if not self.alive:
-            self.logger.error('Trying to send data but plugin is not running')
-            return
         self.logger.debug("Sending request: {0}".format(cmd))
 
         # if connection is closed we don't wait for sh.con to reopen it
         # instead we reconnect immediatly
-#
-        # if not self.connected:
-        #     self.connect()
-        if not self._client.connected:
-            self._client.connect()
+        if not self.connected:
+            self.connect()
 
-        # self.send(cmd.encode())
-        self._client.send(cmd.encode())
-#
+        self.send(cmd.encode())
 
     def found_terminator(self, resp):
         try:
@@ -326,11 +302,11 @@ class Russound(SmartPlugin):
 
     def _decode(self, cmd, value):
         cmd = cmd.lower()
-        if cmd in ['bass', 'treble', 'balance', 'turnonvolume', 'volume']:
+        if cmd in ['bass','treble','balance','turnonvolume','volume']:
             return int(value)
-        elif cmd in ['loudness', 'status', 'mute']:
+        elif cmd in ['loudness','status','mute']:
             return value == 'ON'
-        elif cmd in ['partymode', 'donotdisturb']:
+        elif cmd in ['partymode','donotdisturb']:
             return value.lower()
         elif cmd == 'currentsource':
             return value
@@ -346,12 +322,13 @@ class Russound(SmartPlugin):
         for path in self.params:
             p = self.params[path]
             key = '{0}.{1}'.format(p['c'], p['z'])
-            if key not in zones:
+            if not key in zones:
                 zones.append(key)
                 self._watch_zone(p['c'], p['z'])
 
         for s in self.sources:
             self._watch_source(s)
+
 
     def poll_device(self):
         """
@@ -388,11 +365,12 @@ class Russound(SmartPlugin):
                 'http')  # try/except to handle running in a core version that does not support modules
         except:
             self.mod_http = None
-        if self.mod_http is None:
+        if self.mod_http == None:
             self.logger.error("Not initializing the web interface")
             return False
 
-        if "SmartPluginWebIf" not in list(sys.modules['lib.model.smartplugin'].__dict__):
+        import sys
+        if not "SmartPluginWebIf" in list(sys.modules['lib.model.smartplugin'].__dict__):
             self.logger.warning("Web interface needs SmartHomeNG v1.5 and up. Not initializing the web interface")
             return False
 
@@ -421,6 +399,9 @@ class Russound(SmartPlugin):
 # ------------------------------------------
 #    Webinterface of the plugin
 # ------------------------------------------
+
+import cherrypy
+from jinja2 import Environment, FileSystemLoader
 
 
 class WebInterface(SmartPluginWebIf):
@@ -454,6 +435,7 @@ class WebInterface(SmartPluginWebIf):
         # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
         return tmpl.render(p=self.plugin, items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path'])))
 
+
     @cherrypy.expose
     def get_data_html(self, dataSet=None):
         """
@@ -465,9 +447,8 @@ class WebInterface(SmartPluginWebIf):
         :return: dict with the data needed to update the web page.
         """
         if dataSet is None:
-            pass
             # get the new data
-            # data = {}
+            data = {}
 
             # data['item'] = {}
             # for i in self.plugin.items:
