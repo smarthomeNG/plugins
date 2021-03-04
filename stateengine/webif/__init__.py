@@ -53,7 +53,7 @@ class WebInterface(SmartPluginWebIf):
         :type webif_dir: str
         :type plugin: object
         """
-        self.logger = logging.getLogger(__name__)
+        self.logger = plugin.logger
         self.webif_dir = webif_dir
         self.plugin = plugin
         self.tplenv = self.init_template_environment()

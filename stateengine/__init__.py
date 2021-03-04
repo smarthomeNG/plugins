@@ -45,7 +45,7 @@ class StateEngine(SmartPlugin):
     # noinspection PyUnusedLocal,PyMissingConstructor
     def __init__(self, sh):
         super().__init__()
-        self.logger = logging.getLogger(__name__)
+        self.logger = StateEngineDefaults.mainlogger
         self.itemsApi = Items.get_instance()
         self.__items = self.abitems = {}
         self.mod_http = None
