@@ -53,7 +53,7 @@ class iCal(SmartPlugin):
             self._items = []
             self._icals = {}
             self._ical_aliases = {}
-            cycle = self.get_parameter_value('cycle')
+            self._cycle = self.get_parameter_value('cycle')
             calendars = self.get_parameter_value('calendars')
             config_dir = self.get_parameter_value('directory')
         except Exception as err:
@@ -91,7 +91,7 @@ class iCal(SmartPlugin):
 
     def run(self):
         self.scheduler_add('iCalUpdate', self._update_items, cron='* * * *', prio=5)
-        self.scheduler_add('iCalRefresh', self._update_calendars, cycle=int(cycle), prio=5)
+        self.scheduler_add('iCalRefresh', self._update_calendars, cycle=int(self._cycle), prio=5)
         self.alive = True
 
     def stop(self):
