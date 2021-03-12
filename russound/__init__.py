@@ -65,12 +65,8 @@ class Russound(SmartPlugin):
 
         # Initialization code goes here
         self.terminator = RESP_DELIMITER
-#
-        # lib.connection.Client.__init__(self, self.host, self.port, monitor=True)
         self._client = Tcp_client(self.host, self.port, terminator=self.terminator)
-# TODO
         self._client.set_callbacks(data_received=self.found_terminator)
-#
         self.params = {}
         self.sources = {}
 
