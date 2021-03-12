@@ -70,11 +70,8 @@ class MPD(SmartPlugin):
         self._cycle = self.get_parameter_value('cycle')
 
         self.terminator = b'\n'
-#
-        # lib.connection.Client.__init__(self, self.host, self.port, monitor=True)
         self._client = Tcp_client(self.host, self.port, terminator=self.terminator)
         self._client.set_callbacks(connected=self.handle_connect, data_received=self.parse_reply)
-#
         self._cmd_lock = threading.Lock()
         self._reply_lock = threading.Condition()
         self._reply = {}
@@ -178,10 +175,7 @@ class MPD(SmartPlugin):
             self.orphanItems = []
 
     def update_statusitems(self, warn):
-#
-        # if not self.connected:
         if not self._client.connected:
-#
             if warn:
                 self.loggercmd("update_status while not connected", 'e')
             return
@@ -500,10 +494,7 @@ class MPD(SmartPlugin):
         self._reply = {}
         self._reply_lock.acquire()
         self.loggercmd("send {} to MPD".format(command), 'd')
-#
-        # self.send((command + '\n').encode())
         self._client.send((command + '\n').encode())
-#
         if wait:
             self._reply_lock.wait(1)
         self._reply_lock.release()

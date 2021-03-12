@@ -110,54 +110,6 @@ class HTTPDispatcher(Tcp_server):
                 self.send(b'HTTP/1.1 400 Bad Request\r\n\r\n', close=True)
             break
 
-#
-# class HTTPHandler(lib.connection.Stream):
-#
-#     def __init__(self, smarthome, parser, dest, sock, source):
-#         lib.connection.Stream.__init__(self, sock, source)
-#         self._sh = smarthome
-#         self.terminator = b"\r\n\r\n"
-#         self.parser = parser
-#         self.dest = dest
-#         self.source = source
-#
-#     def found_terminator(self, data):
-#         for line in data.decode(errors="ignore").splitlines():
-#             if line.startswith('GET'):
-#                 request = line.split(' ')[1].strip('/')
-#                 request = urllib.parse.unquote_plus(request)
-#                 if self.parser(self.source, self.dest, request) is not False:
-#                     parsedText=ParseText(self._sh, request)
-#                     parse_result = parsedText.parse_message()
-#                     if parse_result[1]:
-#                         answer = parse_result[1][2]
-#                     else:
-#                         answer = parse_result[0]
-#                 else:
-#                     answer = dictError['error']
-#                 answer_length = len(answer.encode('utf-8'))
-#                 logger.debug("SP: Sende Antwort: %s (%s Bytes)" % (answer, answer_length))
-#                 self.send(bytes("HTTP/1.1 200 OK\r\nContent-type: text/plain; charset=UTF-8\r\nContent-Length: %s\r\n\r\n%s" % (answer_length, answer), encoding="utf-8"), close=True)
-#             else:
-#                 logger.debug("SP: Sende Antwort: 400 Bad Request")
-#                 self.send(b'HTTP/1.1 400 Bad Request\r\n\r\n', close=True)
-#             break
-#
-#
-# class HTTPDispatcher(lib.connection.Server):
-#     def __init__(self, smarthome, parser, ip, port):
-#         lib.connection.Server.__init__(self, ip, port)
-#         self._sh = smarthome
-#         self.parser = parser
-#         self.dest = "http:{}:{}".format(ip,port)
-#         self.connect()
-#
-#     def handle_connection(self):
-#         sock, address = self.accept()
-#         if sock is None:
-#             return
-#         HTTPHandler(self._sh, self.parser, self.dest, sock, address)
-
 
 class Speech_Parser(SmartPlugin):
     """

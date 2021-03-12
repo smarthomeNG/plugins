@@ -85,7 +85,6 @@ KNXIP = 'IP Interface'
 KNXMC = 'IP Router'
 
 
-# old class KNX(lib.connection.Client,SmartPlugin):
 class KNX(SmartPlugin):
 
     PLUGIN_VERSION = "1.7.8"
@@ -104,7 +103,6 @@ class KNX(SmartPlugin):
         if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
             self.logger = logging.getLogger(__name__)
 
-        # old lib.connection.Client.__init__(self, self.host, self.port, monitor=True)
         name = 'plugins.' + self.get_fullname()
         self._client = Tcp_client(name=name, host=self.host, port=self.port, binary=True, autoreconnect=True, connect_cycle=5, retry_cycle=30)
         self._client.set_callbacks(connected=self.handle_connect, data_received=self.parse_telegram)  # , disconnected=disconnected_callback, data_received=receive_callback

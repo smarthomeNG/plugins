@@ -66,11 +66,8 @@ class Asterisk(SmartPlugin):
         self.password = self.get_parameter_value('password')
 
         self.terminator = b'\r\n\r\n'
-#
-        # lib.connection.Client.__init__(self, self.host, self.port, monitor=True)
         self._client = Tcp_client(self.host, self.port, terminator=self.terminator)
         self._client.set_callbacks(connected=self.handle_connect, data_received=self.found_terminator)
-#
         self._init_cmd = {'Action': 'Login', 'Username': self.username, 'Secret': self.password, 'Events': 'call,user,cdr'}
         self._reply_lock = threading.Condition()
         self._cmd_lock = threading.Lock()
@@ -84,11 +81,8 @@ class Asterisk(SmartPlugin):
         """
         This function sends a command to the Asterisk Server
         """
-#
-        # if not self.connected:
         if not self._client.connected():
             return
-#
         self._cmd_lock.acquire()
         if self._aid > 100:
             self._aid = 0
@@ -315,7 +309,6 @@ class Asterisk(SmartPlugin):
         else:
             self.logger.error(f'Connection to {self.host}:{self.port} not possible, plugin not starting')
 
-# lib.connection -> reused as 'connected' callback
     def handle_connect(self):
         self._command(self._init_cmd, reply=False)
         for mb in self._mailboxes:
