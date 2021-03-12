@@ -48,7 +48,6 @@ class ComfoAir(SmartPlugin):
         self._connection_attempts = 0
         self._connection_errorlog = 60
         self._initread = False
-        smarthome.connections.monitor(self)
 
         # Load controlset and commandset
         if kwltype in commands.controlset and kwltype in commands.commandset:

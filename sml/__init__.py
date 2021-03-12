@@ -77,8 +77,6 @@ class Sml(SmartPlugin):
             self.logger.warning("Device type \"{}\" not supported - defaulting to \"raw\"".format(device))
             self._prepare = self._prepareRaw
 
-        smarthome.connections.monitor(self)
-
     def run(self):
         self.alive = True
         self._sh.scheduler.add('Sml', self._refresh, cycle=self.cycle)

@@ -20,128 +20,29 @@
 #########################################################################
 # coding: utf-8
 """
-A pythonic library to discover and control Teufel Raumfeld speakers
+A pythonic library to discover and control Teufel Raumfeld speakers.
 """
 
-import socket
-try:
-    from urllib.parse import urlparse  # python3
-except ImportError:
-    from urlparse import urlparse      # python2
+from urllib.parse import urlparse
 from pysimplesoap.client import SoapClient
 from pysimplesoap.simplexml import SimpleXMLElement
 from pysimplesoap.helpers import fetch
 from pysimplesoap.transport import get_Http
 
-
-
-
-import http
-import logging
-import lib.connection
-import lib.tools
-import os
-import re
 import socket
-import threading
-
-
+import logging
 
 logger = logging.getLogger('')
 
 
-__version__ = '0.2'
+__version__ = '0.3'
 __all__ = ['discover', 'RaumfeldDevice']
 
 
-class Raumfeld():
-
-    def __init__(self, smarthome):
-        self._sh = smarthome
-        logger.debug("Raumfeld plugin init")
-        
-        self.discover()
-        
-        if len(self._devices) > 0:
-                logger.info('found %s raumfeld devices' %len(self._devices))
-        else:
-                logger.info("no raumfeld device found")
-                
-        #Discover items from time to time / every minute
-        self._sh.scheduler.add('Raumfeld Discover', self.discover, prio=5, cycle=60)
-
-    def run(self):
-        self.alive = True
-        # if you want to create child threads, do not make them daemon = True!
-        # They will not shutdown properly. (It's a python bug)
-        
-    def stop(self):
-        self.alive = False
-        self.close()
-        
-    def discover(self):
-        # discovery returns a list of RaumfeldDevices
-        self._devices = discover(timeout=1, retries=1)
-        logger.debug('Devices: %s' % self._devices)
-        
-
-    def parse_item(self, item):
-        
-        if 'device_name' in item.conf:
-            return self.update_item
-            
-        if 'stream_url' in item.conf:
-            return self.update_item
-        
-        return None
-
-    def parse_logic(self, logic):
-        if 'xxx' in logic.conf:
-            # self.function(logic['name'])
-            pass
-
-    def update_item(self, item, caller=None, source=None, dest=None):
-        if caller != 'Raumfeld':  
-            raumfeldDevice = None
-            
-            if self._devices is None:
-                return None;
-            
-            for d in self._devices:
-                logger.debug('its device: %s' %d)
-                
-                if d.friendly_name == item.conf['device_name']:
-                    raumfeldDevice = d
-                    logger.debug('found device: %s' %d)
-                    break
-
-            if raumfeldDevice is None:
-                logger.debug('no raumfeld device specified. no device found by name %s' %deviceName)
-                return None
-                
-            logger.debug('raumfeld device found')
-            
-            if True == item():
-                logger.info('play stream %s' %item.conf['stream_url'])
-                raumfeldDevice.av_transport.SetAVTransportURI(InstanceID=1,CurrentURI=item.conf['stream_url'],CurrentURIMetaData='')
-                raumfeldDevice.play()
-            else:
-                logger.info('stop stream %s' %item.conf['stream_url'])
-                raumfeldDevice.pause()
-                return None
-
-
-if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG)
-    myplugin = Raumfeld('smarthome-dummy')
-    myplugin.run()
-
-    
-#Raumfeld Code von https://github.com/tfeldmann/python-raumfeld
-
-
+# Raumfeld Code von https://github.com/tfeldmann/python-raumfeld
 def discover(timeout=1, retries=1):
-    """Discover Raumfeld devices in the network
+    """
+    Discover Raumfeld devices in the network.
 
     :param timeout: The timeout in seconds
     :param retries: How often the search should be retried
@@ -175,7 +76,7 @@ def discover(timeout=1, retries=1):
                 for line in response.split('\r\n'):
                     if line.startswith('Location: '):
                         location = line.split(' ')[1].strip()
-                        if not location in locations:
+                        if location not in locations:
                             locations.append(location)
             except socket.timeout:
                 break
@@ -184,6 +85,83 @@ def discover(timeout=1, retries=1):
     # only return 'Virtual Media Player'
     return [device for device in devices
             if device.model_description == 'Virtual Media Player']
+
+
+class Raumfeld():
+
+    def __init__(self, smarthome):
+        self._sh = smarthome
+        logger.debug("Raumfeld plugin init")
+
+        self.discover()
+
+        if len(self._devices) > 0:
+            logger.info('found %s raumfeld devices' % len(self._devices))
+        else:
+            logger.info("no raumfeld device found")
+
+        # Discover items from time to time / every minute
+        if self._sh:
+            self._sh.scheduler.add('Raumfeld Discover', self.discover, prio=5, cycle=60)
+
+    def run(self):
+        self.alive = True
+        # if you want to create child threads, do not make them daemon = True!
+        # They will not shutdown properly. (It's a python bug)
+
+    def stop(self):
+        self.alive = False
+        self.close()
+
+    def discover(self):
+        # discovery returns a list of RaumfeldDevices
+        self._devices = discover(timeout=1, retries=1)
+        logger.debug('Devices: %s' % self._devices)
+
+    def parse_item(self, item):
+
+        if 'device_name' in item.conf:
+            return self.update_item
+
+        if 'stream_url' in item.conf:
+            return self.update_item
+
+        return None
+
+    def parse_logic(self, logic):
+        if 'xxx' in logic.conf:
+            # self.function(logic['name'])
+            pass
+
+    def update_item(self, item, caller=None, source=None, dest=None):
+        if caller != 'Raumfeld':
+            raumfeldDevice = None
+
+            if self._devices is None:
+                return None
+
+            for d in self._devices:
+                logger.debug('its device: %s' % d)
+
+                if d.friendly_name == item.conf['device_name']:
+                    raumfeldDevice = d
+                    logger.debug('found device: %s' % d)
+                    break
+
+            if raumfeldDevice is None:
+                logger.debug('no raumfeld device specified. no device found by name %s' %deviceName)
+                return None
+
+            logger.debug('raumfeld device found')
+
+            if item():
+                logger.info('play stream %s' % item.conf['stream_url'])
+                raumfeldDevice.av_transport.SetAVTransportURI(InstanceID=1, CurrentURI=item.conf['stream_url'],CurrentURIMetaData='')
+                raumfeldDevice.play()
+            else:
+                logger.info('stop stream %s' % item.conf['stream_url'])
+                raumfeldDevice.pause()
+                return None
 
 
 class RaumfeldDevice(object):
@@ -217,16 +195,16 @@ class RaumfeldDevice(object):
             soap_ns='soap', ns='s', exceptions=True)
 
     def play(self):
-        """Start playing"""
+        """Start playing."""
         self.av_transport.Play(InstanceID=1, Speed=2)
 
     def pause(self):
-        """Pause"""
+        """Pause."""
         self.av_transport.Pause(InstanceID=1)
 
     @property
     def volume(self):
-        """get/set the current volume"""
+        """get/set the current volume."""
         return self.rendering_control.GetVolume(InstanceID=1).CurrentVolume
 
     @volume.setter
@@ -235,7 +213,7 @@ class RaumfeldDevice(object):
 
     @property
     def mute(self):
-        """get/set the current mute state"""
+        """get/set the current mute state."""
         response = self.rendering_control.GetMute(InstanceID=1, Channel=1)
         return response.CurrentMute == 1
 
