@@ -35,7 +35,7 @@ class SeLogger:
             SeLogger.__loglevel = int(loglevel)
         except ValueError:
             SeLogger.__loglevel = 0
-            logger = StateEngineDefaults.mainlogger
+            logger = StateEngineDefaults.logger
             logger.error("Loglevel has to be an int number!")
 
     # Set log directory
@@ -64,7 +64,7 @@ class SeLogger:
             SeLogger.__logmaxage = int(logmaxage)
         except ValueError:
             SeLogger.__logmaxage = 0
-            logger = StateEngineDefaults.mainlogger
+            logger = StateEngineDefaults.logger
             logger.error("The maximum age of the log files has to be an int number.")
 
     # Remove old log files (by scheduler)
@@ -72,7 +72,7 @@ class SeLogger:
     def remove_old_logfiles():
         if SeLogger.__logmaxage == 0:
             return
-        logger = StateEngineDefaults.mainlogger
+        logger = StateEngineDefaults.logger
         logger.info("Removing logfiles older than {0} days".format(SeLogger.__logmaxage))
         count_success = 0
         count_error = 0
@@ -102,7 +102,7 @@ class SeLogger:
     # Constructor
     # item: item for which the detailed log is (used as part of file name)
     def __init__(self, item):
-        self.logger = StateEngineDefaults.logger
+        self.logger = StateEngineDefaults.se_logger
         self.__section = item.property.path.replace(".", "_").replace("/", "")
         self.__indentlevel = 0
         self.__loglevel = StateEngineDefaults.log_level

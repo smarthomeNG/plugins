@@ -34,9 +34,9 @@ plugin_identification = "StateEngine Plugin"
 
 VERBOSE = logging.DEBUG - 1
 
-mainlogger = logging.getLogger('plugins.stateengine')
+logger = None
 
-logger = logging.getLogger('stateengine')
+se_logger = logging.getLogger('stateengine')
 
 log_maxage = 0
 
