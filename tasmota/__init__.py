@@ -40,7 +40,7 @@ class Tasmota(MqttPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.1.0'
+    PLUGIN_VERSION = '1.1.1'
 
 
     def __init__(self, sh):
@@ -169,7 +169,7 @@ class Tasmota(MqttPlugin):
                 self.tasmota_devices[tasmota_topic]['relay'] = '-'   # tasmota_relay
                 self.tasmota_devices[tasmota_topic]['connected_to_item'] = False
                 self.tasmota_devices[tasmota_topic]['uptime'] = '-'
-                self.tasmota_devices[tasmota_topic]['hsb'] = {}
+                self.tasmota_devices[tasmota_topic]['hsb'] = []
                 self.tasmota_devices[tasmota_topic]['rf_received'] = {}
                 self.tasmota_devices[tasmota_topic]['sensortype'] = '-'
                 self.tasmota_devices[tasmota_topic]['energy_sensors'] = {}
@@ -274,21 +274,23 @@ class Tasmota(MqttPlugin):
                     # publish topic with new relay state
                     if not tasmota_relay:
                         tasmota_relay = '1'
-
                     bool_values = None
                     topic = tasmota_topic
                     detail = 'POWER'
                     if tasmota_relay > '1':
                         detail += tasmota_relay
                     bool_values = ['OFF', 'ON']
+                    value = item()
+                    
                 if tasmota_attr == 'hsb':
-                    # publish topic with new rhsb value
+                    # publish topic with new hsb value
                     bool_values = None
                     topic = tasmota_topic
                     detail = 'HsbColor'
+                    value = ','.join(str(v) for v in item())
 
                 # self.publish_topic('cmnd', topic, detail, item(), item, bool_values=['off','on'])
-                self.publish_tasmota_topic('cmnd', topic, detail, item(), item, bool_values=bool_values)
+                self.publish_tasmota_topic('cmnd', topic, detail, value, item, bool_values=bool_values)
 
             else:
                 self.logger.warning("update_item: {}, trying to change item in SmartHomeNG that is readonly in tasmota device (by {})".format(item.id(), caller))
@@ -382,8 +384,9 @@ class Tasmota(MqttPlugin):
         if info_topic == 'STATE':
             self.tasmota_devices[tasmota_topic]['uptime'] = payload.get('Uptime', '-')
             self.set_item_value(tasmota_topic, 'item_relay', payload.get('POWER','OFF') == 'ON', info_topic)
-            self.tasmota_devices[tasmota_topic]['hsb'] = payload.get('HSBColor', '-')
-            self.set_item_value(tasmota_topic, 'item_hsb', payload.get('HSBColor', '-'), info_topic)
+            
+            self.tasmota_devices[tasmota_topic]['hsb'] = payload.get('HSBColor', None).split(",")
+            self.set_item_value(tasmota_topic, 'item_hsb', payload.get('HSBColor', None).split(","), info_topic)
 
             self.tasmota_devices[tasmota_topic]['online_timeout'] = datetime.now()+timedelta(seconds=self.telemetry_period+5)
             self.set_item_value(tasmota_topic, 'item_online', True, info_topic)
@@ -442,8 +445,8 @@ class Tasmota(MqttPlugin):
 
         if info_topic == 'RESULT':
             if payload.get('HSBColor', '') != '':
-                self.tasmota_devices[tasmota_topic]['HSBColor'] = payload.get('HSBColor')
-                self.set_item_value(tasmota_topic, 'item_hsb', self.tasmota_devices[tasmota_topic]['HSBColor'], info_topic)
+                self.tasmota_devices[tasmota_topic]['hsb'] = payload.get('HSBColor').split(",")
+                self.set_item_value(tasmota_topic, 'item_hsb', payload.get('HSBColor').split(","), info_topic)
 
             elif payload.get('RfReceived', None) is not None:
                 rf = payload.get('RfReceived', None)

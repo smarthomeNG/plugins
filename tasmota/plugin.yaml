@@ -12,7 +12,7 @@ plugin:
     documentation: http://smarthomeng.de/user/plugins/tasmota/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1520293-support-thread-für-das-tasmota-plugin
 
-    version: 1.1.0                 # Plugin version
+    version: 1.1.1                 # Plugin version
     sh_minversion: 1.7.2           # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     py_minversion: 3.6             # minimum Python version to use for this plugin
@@ -81,7 +81,7 @@ item_attributes:
               - "Temperatur in °C bei Tasmota Devices mit TEMP Sensor (DS18B20, AM2301) -> num, r/o"
               - "Luftfeuchtigkeit in %rH bei Tasmota Devices mit HUM Sensor (AM2301) -> num, r/o"
               - "Taupunkt in °C bei Tasmota Devices mit HUM und TEMP Sensor (AM2301) -> num, r/o"
-              - "Hue, Saturartion, Brightness (HSB) bei RGBW Tasmota Devices (H801) -> str, r/w"
+              - "Hue, Saturartion, Brightness (HSB) bei RGBW Tasmota Devices (H801) -> list, r/w"
               - "Received RF data bei Tasmota Device mit RF Empfang (SONOFF Bridge) -> str, r/o"
 
     tasmota_relay:
