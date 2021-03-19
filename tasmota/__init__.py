@@ -60,7 +60,7 @@ class Tasmota(MqttPlugin):
 
         # Call init code of parent class (MqttPlugin)
         super().__init__()
-        if self._init_complete is False:
+        if not self._init_complete:
             return
 
         # cycle time in seconds, only needed, if hardware/interface needs to be
@@ -181,11 +181,12 @@ class Tasmota(MqttPlugin):
             # handle the different topics from Tasmota device
             topic = None
             bool_values = None
+            detail = None
             if tasmota_attr:
                 tasmota_attr = tasmota_attr.lower()
             if tasmota_attr in ['relay', None]:
-                topic = tasmota_topic
-                detail = 'POWER'
+                # topic = tasmota_topic
+                # detail = 'POWER'
                 # if tasmota_relay > '1':
                 #    detail += tasmota_relay
                 # bool_values = ['OFF', 'ON']
@@ -278,7 +279,7 @@ class Tasmota(MqttPlugin):
                     topic = tasmota_topic
                     detail = 'POWER'
                     if tasmota_relay > '1':
-                        detail += tasmota_relay
+                        detail += str(tasmota_relay)
                     bool_values = ['OFF', 'ON']
                     value = item()
                     
@@ -383,7 +384,7 @@ class Tasmota(MqttPlugin):
 
         if info_topic == 'STATE':
             self.tasmota_devices[tasmota_topic]['uptime'] = payload.get('Uptime', '-')
-            self.set_item_value(tasmota_topic, 'item_relay', payload.get('POWER','OFF') == 'ON', info_topic)
+            self.set_item_value(tasmota_topic, 'item_relay', payload.get('POWER', 'OFF') == 'ON', info_topic)
             
             self.tasmota_devices[tasmota_topic]['hsb'] = payload.get('HSBColor', None).split(",")
             self.set_item_value(tasmota_topic, 'item_hsb', payload.get('HSBColor', None).split(","), info_topic)
@@ -394,7 +395,7 @@ class Tasmota(MqttPlugin):
 
         if info_topic == 'SENSOR':
             if payload.get('ENERGY', None) is not None:
-                energy = payload.get('ENERGY', None)
+                energy = payload('ENERGY')
 
                 self.tasmota_devices[tasmota_topic]['sensortype'] = 'ENERGY'
                 self.tasmota_devices[tasmota_topic]['energy_sensors']['voltage'] = energy['Voltage']
@@ -419,40 +420,56 @@ class Tasmota(MqttPlugin):
                 self.set_item_value(tasmota_topic, 'item_power_today', self.tasmota_devices[tasmota_topic]['energy_sensors']['today'], info_topic)
 
             if payload.get('DS18B20', None) is not None:
-                ds18b20 = payload.get('DS18B20', None)
-
+                ds18b20 = payload('DS18B20')
                 self.tasmota_devices[tasmota_topic]['sensortype'] = 'DS18B20'
-                self.tasmota_devices[tasmota_topic]['temp_sensors']['id'] = ds18b20['Id']
-                self.tasmota_devices[tasmota_topic]['temp_sensors']['temp'] = ds18b20['Temperature']
-
-                self.set_item_value(tasmota_topic, 'item_id', self.tasmota_devices[tasmota_topic]['temp_sensors']['id'], info_topic)
-                self.set_item_value(tasmota_topic, 'item_temp', self.tasmota_devices[tasmota_topic]['temp_sensors']['temp'], info_topic)
+                if type(ds18b20) is dict:
+                    if 'id' in ds18b20:
+                        self.tasmota_devices[tasmota_topic]['temp_sensors']['id'] = ds18b20['Id']
+                        self.set_item_value(tasmota_topic, 'item_id', self.tasmota_devices[tasmota_topic]['temp_sensors']['id'], info_topic)
+                    if 'Temperature' in ds18b20:
+                        self.tasmota_devices[tasmota_topic]['temp_sensors']['temp'] = ds18b20['Temperature']
+                        self.set_item_value(tasmota_topic, 'item_temp', self.tasmota_devices[tasmota_topic]['temp_sensors']['temp'], info_topic)
 
             if payload.get('AM2301', None) is not None:
-                am2301 = payload.get('AM2301', None)
-
+                am2301 = payload('AM2301')
                 self.tasmota_devices[tasmota_topic]['sensortype'] = 'AM2301'
-                self.tasmota_devices[tasmota_topic]['temp_sensors']['hum'] = am2301['Humidity']
-                self.tasmota_devices[tasmota_topic]['temp_sensors']['temp'] = am2301['Temperature']
-                self.tasmota_devices[tasmota_topic]['temp_sensors']['dewpoint'] = am2301['DewPoint']
-
-                self.set_item_value(tasmota_topic, 'item_hum', self.tasmota_devices[tasmota_topic]['temp_sensors']['hum'], info_topic)
-                self.set_item_value(tasmota_topic, 'item_temp', self.tasmota_devices[tasmota_topic]['temp_sensors']['temp'], info_topic)
-                self.set_item_value(tasmota_topic, 'item_dewpoint', self.tasmota_devices[tasmota_topic]['temp_sensors']['dewpoint'], info_topic)
+                if type(am2301) is dict:
+                    if 'Humidity' in am2301:
+                        self.tasmota_devices[tasmota_topic]['temp_sensors']['hum'] = am2301['Humidity']
+                        self.set_item_value(tasmota_topic, 'item_hum', self.tasmota_devices[tasmota_topic]['temp_sensors']['hum'], info_topic)
+                    if 'Temperature' in am2301:
+                        self.tasmota_devices[tasmota_topic]['temp_sensors']['temp'] = am2301['Temperature']
+                        self.set_item_value(tasmota_topic, 'item_temp', self.tasmota_devices[tasmota_topic]['temp_sensors']['temp'], info_topic)
+                    if 'DewPoint' in am2301:
+                        self.tasmota_devices[tasmota_topic]['temp_sensors']['dewpoint'] = am2301['DewPoint']
+                        self.set_item_value(tasmota_topic, 'item_dewpoint', self.tasmota_devices[tasmota_topic]['temp_sensors']['dewpoint'], info_topic)
 
             self.tasmota_devices[tasmota_topic]['online_timeout'] = datetime.now()+timedelta(seconds=self.telemetry_period+5)
             self.set_item_value(tasmota_topic, 'item_online', True, info_topic)
 
         if info_topic == 'RESULT':
             if payload.get('HSBColor', '') != '':
-                self.tasmota_devices[tasmota_topic]['hsb'] = payload.get('HSBColor').split(",")
-                self.set_item_value(tasmota_topic, 'item_hsb', payload.get('HSBColor').split(","), info_topic)
+                hsb = payload('HSBColor')
+                hsb_list = []
+                if hsb.count(',') == 2:
+                    hsb_list = hsb.split(",")
+                    try:
+                        hsb_list = [int(element) for element in hsb_list]
+                    except Exception as e:
+                        self.logger.info(f'Received Data for HSBColor do not contain in values for HSB. Payload was {hsb}. Error was {e}.')
+                else:
+                    self.logger.info(f'Received Data for HSBColor do not contain in values for HSB. Payload was {hsb}.')
+ 
+                self.tasmota_devices[tasmota_topic]['hsb'] = hsb_list
+                self.set_item_value(tasmota_topic, 'item_hsb', hsb_list, info_topic)
 
             elif payload.get('RfReceived', None) is not None:
-                rf = payload.get('RfReceived', None)
-                #'RfReceived': {'Sync': 10200, 'Low': 330, 'High': 980, 'Data': '3602B8', 'RfKey': 'None'}
-                self.tasmota_devices[tasmota_topic]['rf_received'] = rf
-                self.set_item_value(tasmota_topic, 'item_rf', rf['Data'], info_topic)
+                rf = payload('RfReceived')
+                # 'RfReceived': {'Sync': 10200, 'Low': 330, 'High': 980, 'Data': '3602B8', 'RfKey': 'None'}
+                if type(rf) is dict:
+                    self.tasmota_devices[tasmota_topic]['rf_received'] = rf
+                    if 'Data' in rf:
+                        self.set_item_value(tasmota_topic, 'item_rf', rf['Data'], info_topic)
 
             self.tasmota_devices[tasmota_topic]['online_timeout'] = datetime.now()+timedelta(seconds=self.telemetry_period+5)
             self.set_item_value(tasmota_topic, 'item_online', True, info_topic)

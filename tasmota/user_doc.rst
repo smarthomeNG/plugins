@@ -80,35 +80,11 @@ Informationen bereitstellt.
 Ein Klick auf das Tasmota Topic öffnet Konfigurationsseite des Devices.
 
 
-Tasmota Umwelt Information
----------------------------
-
-Das Webinterface zeigt Informationen zu Temperatur/Luftfeuchtigkeit an, falls das jeweilige Tasmota Device diese
-Informationen bereitstellt.
-
-.. image:: user_doc/assets/webif_tab4.jpg
-   :class: screenshot
-
-Ein Klick auf das Tasmota Topic öffnet Konfigurationsseite des Devices.
-
-
-Tasmota RF Information
----------------------------
-
-Das Webinterface zeigt Informationen zu RF an, falls das jeweilige Tasmota Device diese
-Informationen bereitstellt.
-
-.. image:: user_doc/assets/webif_tab5.jpg
-   :class: screenshot
-
-Ein Klick auf das Tasmota Topic öffnet Konfigurationsseite des Devices.
-
-
 Broker Information
 ------------------
 
 Das Webinterface zeigt Informationen zum genutzten MQTT Broker an.
 
-.. image:: user_doc/assets/webif_tab6.jpg
+.. image:: user_doc/assets/webif_tab4.jpg
    :class: screenshot
 
