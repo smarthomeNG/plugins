@@ -24,10 +24,7 @@ from lib.model.smartplugin import SmartPlugin, SmartPluginWebIf, Modules
 
 from bin.smarthome import VERSION
 
-import threading
 import logging
-import time
-import struct
 from puresnmp import get
 
 class Snmp(SmartPlugin):
@@ -40,15 +37,6 @@ class Snmp(SmartPlugin):
     PLUGIN_VERSION = '1.6.1'
 
     _flip = {0: '1', False: '1', 1: '0', True: '0', '0': True, '1': False}
-
-    _supported = {
-        'value': 'Value',                    # Wert wird erwartet
-        'string': 'String',                  # String wird erwartet; Rückmeldewert in String oder Bytearray wie bspw b'TS-251'
-        'hex-string': 'hex-string',          # Text-String, der in Hex-übergeben wird
-        'mac-adress': 'mac-adress',          # MAC-Adresse
-        'ip-adress': 'ip-adress',            # IP-Adresse
-        'error-state': 'error-state'         # Error-State bestehend aus 2 Byte; Darstellung als 16bit Array, wobei das Bit auf 1 den Fehler angibt
-        }
 
     def __init__(self, sh, *args, **kwargs):
         """
@@ -65,7 +53,7 @@ class Snmp(SmartPlugin):
         self.instance = self.get_parameter_value('instance')         # the instance of the plugin for questioning multiple smartmeter
         self.cycle = self.get_parameter_value('cycle')               # the frequency in seconds how often the query shoud be done
         self.host = self.get_parameter_value('snmp_host')            # IP Adress of the network device to be queried
-        self.port = int(self.get_parameter_value('snmp_port'))       # Port for SNMP queries
+        self.port = self.get_parameter_value('snmp_port')            # Port for SNMP queries
         self.community = self.get_parameter_value('snmp_community')  # SNMP Community
 
         # Initialization code goes here
@@ -74,7 +62,6 @@ class Snmp(SmartPlugin):
         self._items will contain something like
         {'1.3.6.1.4.1.24681.1.2.5.0': {'temp': {'item': Item: netzwerk.qnap_ts251.cpu_temp}}, '1.3.6.1.4.1.24681.1.2.1.0': {'precent': {'item': Item: netzwerk.qnap_ts251.cpu_usage}}, '1.3.6.1.4.1.24681.1.2.6.0': {'temp': {'item': Item: netzwerk.qnap_ts251.system_temp}}}
         """
-
         # log
         self.logger.debug("Instance {} of SNMP configured to use host '{}' with update cycle of {} seconds and Community {}".format(self.instance if self.instance else 0, self.host, self.cycle, self.community))
 
@@ -112,19 +99,16 @@ class Snmp(SmartPlugin):
         oid = self.get_iattr_value(item.conf, 'snmp_oid')
 
         if not self.has_iattr(item.conf, 'snmp_prop'):
-            self.logger.warning("SNMP: No snmp_prop for {0} defined, set to standard".format(item.id()))
+            self.logger.warning(f'SNMP: No snmp_prop for {item.id()} defined, set to standard')
             prop = 'std'
         else:
             prop = self.get_iattr_value(item.conf, 'snmp_prop').lower()
 
-        if prop not in self._supported:
-            self.logger.info("Unknown properties specified for {0}".format(item.id()))
-
         if oid in self._items:
-            self.logger.debug("Set dict[{}][{}] as item:{}".format(oid, prop, item))
+            self.logger.debug(f'Set dict[{oid}][{prop}] as item:{item}')
             self._items[oid][prop] = {'item': item}
         else:
-            self.logger.debug("Set dict[{}] as prop:{} <item:{}>".format(oid, prop, item))
+            self.logger.debug(f'Set dict[{oid}] as prop:{prop} <item:{item}>')
             self._items[oid] = {prop: {'item': item}}
 
         self.logger.debug(self._items)
@@ -138,7 +122,7 @@ class Snmp(SmartPlugin):
 
         for oid in self._items:
             if not self.alive:
-                self.logger.debug("Self not alive".format(oid))
+                self.logger.debug(f'Self not alive for {oid}')
                 break
             for prop in self._items[oid]:
                 item = self._items[oid][prop]['item']
@@ -147,26 +131,26 @@ class Snmp(SmartPlugin):
                 community = self.community
                 oid = oid
                 prop = prop
-                self.logger.debug('Poll for item: {} with property: {} using oid: {}, host: {}, community: {} '.format(item, prop, oid, host, community))
+                self.logger.debug(f'Poll for item: {item} with property: {prop} using oid: {oid}, host: {host}, community: {community} ')
 
                 # Request data
                 try:
                     response = get(host, community, oid)
-                    self.logger.debug('Successfully received response: {}'.format(response))
+                    self.logger.debug(f'Successfully received response: {response}')
                 except Exception as e:
-                    self.logger.error('Exception occured when getting data of OID {}: {}'.format(oid, e))
+                    self.logger.error(f'Exception occured when getting data of OID {oid}: {e}')
                     return
 
                 # Transform response
                 result = 0
-                unit = 0
+                unit = '-'
 
                 if prop == 'value':
                     try:
                         response = response.decode('ascii')
                     except Exception as e:
                         response = response
-                        self.logger.debug('Response for OID {} not decoded, since it was no ASCII string. Result is: {}. Error was: {}'.format(oid, result, e))  
+                        self.logger.debug(f'Response for OID {oid} not decoded....Result is: {result}, error was: {e}.')
                     
                     # Prüfung, ob Leerzeichen vorhanden sind, um den Wert von Einheit zu trennen
                     try:
@@ -176,7 +160,7 @@ class Snmp(SmartPlugin):
                             result = int(response)
                         else:
                             result = float(response)
-                        self.logger.debug('Response did not contain units; therefore using standard conversion to float or int is used')
+                        self.logger.debug('Response did not contain units; therefore using standard conversion to float or int is used.')
                     else:
                         unit_short = (response[(code_pos+1):(code_pos +2)]).lower()
                         value = float(response[:(code_pos)])
@@ -195,77 +179,72 @@ class Snmp(SmartPlugin):
                             unit = response[(code_pos+1):len(response)]
                         else:
                             result = round(value, 2)
-                            self.logger.debug('Response value type not defined; using standard conversion to float')
+                            self.logger.debug('Response value type not defined; using standard conversion to float.')
                 
                 elif prop == 'string':
                     try:
                         result = str(response.decode('ascii'))
-                        unit = 'no'
                     except Exception as e:
                         result = str(response)
-                        self.logger.debug('Response for OID {} not decoded, since it was no ASCII string. Result is: {}. Error was: {}'.format(oid, result, e))
+                        self.logger.debug(f'Response for OID {oid} not decoded, since it was no ASCII string. Result is: {result}. Error was: {e}.')
                     else:
                         self.logger.debug('String response decoded to: {}'.format(result))
 
                 elif prop == 'hex-string':
                     try:
                         result = bytes.fromhex(response).decode("utf-8")
-                        unit = 'no'
                     except Exception as e:
                         result = response
-                        self.logger.debug('Response for OID {} not decoded from hex-string to string. Result is: {}. Error was: {}'.format(oid, result, e))
+                        self.logger.debug(f'Response for OID {oid} not decoded from hex-string to string. Result is: {result}. Error was: {e}.')
                     else:
-                        self.logger.debug('hex-string decoded to: {}'.format(result))
+                        self.logger.debug(f'hex-string decoded to: {result}.')
                         
                 elif prop == 'mac-adress':
                     try:
                         # result = response.hex(":")   # Pyhton 3.8 required
                         result = ':'.join(f'{x:02x}' for x in response)
-                        unit = 'no'
                     except Exception as e:
                         result = response
-                        self.logger.debug('Response for OID {} not decoded to mac-adress. Result is: {}. Error was: {}'.format(oid, result, e))
+                        self.logger.debug(f'Response for OID {oid} not decoded to mac-adress. Result is: {result}. Error was: {e}.')
+                    
+                    if self.is_mac(result) is True:
+                        self.logger.debug(f'mac-adress decoded and validated to be: {result}.')
                     else:
-                        self.logger.debug('mac-adress decoded as: {}'.format(result))
+                        self.logger.debug(f'result is not an mac-adress; decoded as: {result}.')
                 
                 elif prop == 'ip-adress':
                     try:
                         result = '.'.join(str(cc) for cc in response)
-                        unit = 'no'
                     except Exception as e:
                         result = response
-                        self.logger.debug('Response for OID {} not decoded to mac-adress. Result is: {}. Error was: {}'.format(oid, result, e))   
-                    else: 
-                        self.logger.debug('ip-adress decoded as: {}'.format(result))
-                        
-                    #if validate_ip(response) is True:
-                    #    result = str(response)
-                    #    self.logger.debug('ip-adress checked to: {}'.format(result))
-                    #else:
-                    #    self.logger.debug('Response for OID {} does not contain ip-adress'.format(oid))
+                        self.logger.debug(f'Response for OID {oid} not decoded to mac-adress. Result is: {result}. Error was: {e}.')   
+                    
+                    if self.is_ip(result) is True:
+                        self.logger.debug(f'ip-adress decoded and validated to be: {result}.')
+                    else:
+                        self.logger.debug(f'result is not an ip-adress; decoded as: {result}.')
                 
                 elif prop == 'error-state':
                     try:
                         binary = ''
                         for byte in response:
                             binary += "{0:08b}".format(byte)
-                        self.logger.debug('error-state decoded to binary: {}'.format(binary)) 
+                        self.logger.debug(f'error-state decoded to binary: {binary}.') 
                         if binary.find("1") is True:
                             result = binary.find("1")
                         else:
                           result = '-'
-                        unit = 'no'                        
                     except Exception as e:
                         result = response
-                        self.logger.debug('Response for OID {} not decoded to error-state.  Result is: {}. Error was: {}'.format(oid, result, e))
+                        self.logger.debug(f'Response for OID {oid} not decoded to error-state.  Result is: {result}. Error was: {e}.')
                     else:
-                        self.logger.debug('error-state decoded to error-code: {}'.format(result))
+                        self.logger.debug(f'error-state decoded to error-code: {result}')
 
                 else:
                     self.logger.debug('Item property not defined in item.conf')
 
                 # Set item value
-                self.logger.debug('Response successfully transformed to: {} with unit: {} '.format(result, unit))
+                self.logger.debug(f'Response successfully transformed to: {result} with unit: {unit}.')
                 item(result, 'SNMP')
 
     def update_item(self, item, caller=None, source=None, dest=None):
@@ -274,23 +253,11 @@ class Snmp(SmartPlugin):
                 # code to execute, only if the item has not been changed by this plugin:
                 self.logger.debug("Update item: {}, item has been changed outside this plugin".format(item.id()))
             except Exception as e:
-                self.logger.warning("Problem setting output {0}: {1}".format(item._ow_path['path'], e))
+                self.logger.warning(f'Problem setting output {item._ow_path['path']}: {e}.')
 
     def get_items(self):
         return self._items
         
-    def validate_ip(s):
-        a = s.split('.')
-        if len(a) != 4:
-            return False
-        for x in a:
-            if not x.isdigit():
-                return False
-            i = int(x)
-            if i < 0 or i > 255:
-                return False
-        return True
- 
 #
 # webinterface
 #

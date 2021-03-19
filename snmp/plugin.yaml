@@ -9,8 +9,8 @@ plugin:
     state: develop                 # change to ready when done with development
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1455436-support-thread-f%C3%BCr-snmp-plugin
     
-    version: 1.6.1                 # Plugin version
-    sh_minversion: 1.6.0           # minimum shNG version to use this plugin
+    version: 1.1.0                 # Plugin version
+    sh_minversion: 1.8.0           # minimum shNG version to use this plugin
 #    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
     restartable: unknown
@@ -21,6 +21,8 @@ parameters:
     cycle:
         type: int
         default: 300
+        valid_min: 10
+        valid_max: 3600
         description:
             de: 'Zeitlicher Abstand in Sekunden zwischen zwei Abfragen'
             en: 'Time in seconds between two queries'
@@ -33,7 +35,7 @@ parameters:
             en: 'ip adress pf device to be queried'
 
     snmp_port:
-        type: num
+        type: int
         default: 161
         description:
             de: 'Port für SNMP Abfrage'
@@ -66,6 +68,15 @@ item_attributes:
         - 'mac-adress'
         - 'ip-adress'
         - 'error-state'        
+        
+        valid_list_description:
+            de:
+              - "Als Abfrageergebnis wird ein Zahlenwert erwartet -> num, r/o"
+              - "Als Abfrageergebnis wird ein Textstring erwartet, Rohdaten sind auch vom Typ String -> str, r/o"
+              - "Als Abfrageergebnis wird ein Textstring erwartet, Rohdaten sind auch vom Typ Hex-String -> str, r/o"
+              - "Als Abfrageergebnis wird eine MAC-Adresse erwartet -> str, r/o"
+              - "Als Abfrageergebnis wird eine IP-Adresse erwartet -> str, r/o"
+              - "Als Abfrageergebnis wird der Fehlerstatus des Druckers erwartet -> num, r/o"
 
 item_structs: NONE
   # Definition of item-structure templates for this plugin

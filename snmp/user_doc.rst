@@ -1,5 +1,5 @@
 snmp
-=========
+====
 
 Das SNMP-Plugin ermöglicht das Überwachen von Netzwerkgeräten mittels des SNMP Protokolls. Die Implementierung basiert auf den Python Package puresnmp.
 
@@ -10,7 +10,7 @@ Changelog
 1.1.0
 ~~~~~
 
--  Erweiterung der Datentypen
+-  Erweiterung der Datentypen insbesondere für Abfrage von Druckern
 -  Erweiterung des WebIF
 
 1.0.0
@@ -54,7 +54,7 @@ plugin.yaml
 Die Konfiguration des Plugins bietet folgende Möglichkeiten:
 
 snmp\_host
-^^^^^^^^^^^^^^
+^^^^^^^^^^
 
 IP-Adresse des Host, der per SNMP überwacht werden soll.
 
@@ -86,7 +86,7 @@ Die Verknüpfung von SmartHomeNG-Items und SNMP OIDs ist vollständig flexibel u
 Die folgenden Attribute werden unterstützt:
 
 snmp\_oid
-^^^^^^^^^^^^^^
+^^^^^^^^^
 
 Der Wert der angegebenen OID wird gelesen und dem Item zugewiesen.
 
@@ -97,7 +97,7 @@ Der Wert der angegebenen OID wird gelesen und dem Item zugewiesen.
 
 
 snmp\_prop
-^^^^^^^^^^^^^^
+^^^^^^^^^^
 
 Der gelesene Rohwert wird gemäß dem angegebenen Parameterwert interpretiert.
 
@@ -141,9 +141,6 @@ Konfigurationsbeispiel:
 Web-Interface
 -------------
 
-Im Web-Interface gibt es neben den allgemeinen Statusinformationen zum Plugin zwei Seiten.
-
-Auf einer Seite werden die Items aufgelistet, die Plugin-Attributen konfiguriert haben. Damit kann eine schnelle Übersicht über die Konfiguration und die aktuellen Werte geboten werden.
-
-Auf der zweiten Seite werden alle im aktuellen Befehlssatz enthaltenen Parameter aufgelistet.
+Im Web-Interface gibt es neben den allgemeinen Statusinformationen zum Plugin eine weitere Seite,
+auf der alle Items der Plugin-Instanz aufgelistet werden. Anzeigt werden ebenfalls die Plugin-Attribute.
 
