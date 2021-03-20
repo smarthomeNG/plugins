@@ -45,6 +45,7 @@ class Resol(SmartPlugin):
         # They will not shutdown properly. (It's a python bug)
 
     def stop(self):
+        self.scheduler_remove('PollData')
         self.alive = False
 
     def parse_item(self, item):
