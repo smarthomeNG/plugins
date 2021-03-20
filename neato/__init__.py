@@ -31,7 +31,7 @@ from .robot import Robot
 
 
 class Neato(SmartPlugin):
-    PLUGIN_VERSION = '1.6.4'
+    PLUGIN_VERSION = '1.6.5'
     robot = 'None'
 
     def __init__(self, sh, *args, **kwargs):
@@ -120,6 +120,15 @@ class Neato(SmartPlugin):
 
     def start_robot(self):
         self.robot.robot_command("start")
+
+    def start_robot(self, boundary_id=None, map_id=None):
+        self.robot.robot_command("start", boundary_id, map_id)
+
+    def get_map_boundaries(self, map_id=None):
+        self.robot.robot_command("getMapBoundaries", map_id)
+
+    def dismiss_current_alert(self):
+        self.robot.robot_command("dismiss_current_alert")
 
     def enable_schedule(self):
         self.robot.robot_command("enableSchedule")
