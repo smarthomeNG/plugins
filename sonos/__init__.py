@@ -2205,10 +2205,7 @@ class Speaker(object):
             # For example, stop() is not available when the speakter is in TV mode.
             currentActions = self.current_transport_actions
             self.logger.debug("play_snippet: checking transport actions: {0}".format(currentActions))
-            if not 'Stop' in currentActions:
-                self.logger.warning("Speaker cannot execute stop command in current mode. Therefore, skipping play_snippet function")
-                return
-
+            
             with self._snippet_queue_lock:
                 snap = None
                 volumes = {}
@@ -2234,14 +2231,16 @@ class Speaker(object):
                         snap.snapshot()
 
                     time.sleep(0.5)
-                    self.set_stop()
+                    if 'Stop' in currentActions:
+                        self.set_stop()
                     if volume == -1:
                         volume = self.volume
 
                     self.set_volume(volume, True)
                     self.soco.play_uri(snippet_url, title="snippet")
                     time.sleep(duration)
-                    self.set_stop()
+                    if 'Stop' in currentActions:
+                        self.set_stop()
 
                     # Restore the Sonos device back to it's previous state
                     if last_station != "snippet":
@@ -2351,7 +2350,7 @@ class Speaker(object):
 
 class Sonos(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.5.6"
+    PLUGIN_VERSION = "1.5.8"
 
     def __init__(self, sh, *args, **kwargs):
         super().__init__(**kwargs)
@@ -2406,6 +2405,9 @@ class Sonos(SmartPlugin):
         # unique items in list
         self._speaker_ips = utils.unique_list(self._speaker_ips)
         auto_ip = utils.get_local_ip_address()
+        if auto_ip == '0.0.0.0':
+            self.logger.error("Automatic detection of local IP not sucessfull")
+            return
 
         webservice_ip = self.get_parameter_value("webservice_ip")
         if not webservice_ip == '' and not webservice_ip =='0.0.0.0':
