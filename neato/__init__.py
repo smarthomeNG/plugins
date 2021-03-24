@@ -85,6 +85,9 @@ class Neato(SmartPlugin):
             return self.update_item
         elif self.get_iattr_value(item.conf, 'neato_attribute') == 'is_schedule_enabled':
             return self.update_item
+        elif self.get_iattr_value(item.conf, 'neato_attribute') == 'clean_room':
+            return self.update_item
+
 
 
     def parse_logic(self, logic):
@@ -116,6 +119,9 @@ class Neato(SmartPlugin):
                 else:
                     self.robot.robot_command("disableSchedule")
                     self.logger.debug("disabling neato scheduler")
+            elif self.get_iattr_value(item.conf, 'neato_attribute') == 'clean_room':
+                self.robot.robot_command("start", item._value, None)
+
             pass
 
     def start_robot(self):
