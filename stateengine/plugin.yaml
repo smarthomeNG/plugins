@@ -143,7 +143,7 @@ parameters:
 
     log_directory:
         type: str
-        default: 'var/log/StateEngine/'
+        default: 'var/log/stateengine/'
         description:
             de: 'Erweiterte Protokollierung: Verzeichnis für die Protokolldateien'
             en: 'Extended Logging: Directory for log files'
@@ -157,7 +157,7 @@ parameters:
                  Basisverzeichnisses behandelt. Das angegebene Verzeichnis wird
                  angelegt, wenn es nicht existiert.\n
                  Wenn hier kein abweichendes Verzeichnis angegeben ist, wird das
-                 Verzeichnis ``<smarthome_base_directory>/var/log/StateEngine/``
+                 Verzeichnis ``<smarthome_base_directory>/var/log/stateengine/``
                  verwendet.
                  '
             en: '**Directory for log files**:\n
@@ -168,7 +168,7 @@ parameters:
                 base folder. The folder is created on the first plugin start if
                 it does not exist.\n
                 If the parameter is absent the log files will be saved to
-                ``<smarthome_base_directory>/var/log/StateEngine/``
+                ``<smarthome_base_directory>/var/log/stateengine/``
                 '
     log_maxage:
         type: int
