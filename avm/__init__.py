@@ -186,7 +186,8 @@ class MonitoringService:
                 self._plugin_instance.logger.error("CallMonitor connection receive error: " + str(e))
                 break
             if not data:
-                self._plugin_instance.logger.error("CallMonitor connection not open anymore.")
+                if self._listen_active:
+                    self._plugin_instance.logger.error("CallMonitor connection not open anymore.")
                 break
             data = data.decode("utf-8")
             self._plugin_instance.logger.debug("Data Received from CallMonitor: %s" % data)
