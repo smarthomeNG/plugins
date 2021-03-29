@@ -310,7 +310,7 @@ class EnOcean(SmartPlugin):
                         if rx_key in results:
                             if 'enocean_rocker_sequence' in item.conf:
                                 try:   
-                                    if hasattr(item, '_enocean_rs_thread') and item._enocean_rs_thread.isAlive():
+                                    if hasattr(item, '_enocean_rs_thread') and item._enocean_rs_thread.is_alive():
                                         if results[rx_key]:
                                             if logger_debug:
                                                 self.logger.debug("sending pressed event")
