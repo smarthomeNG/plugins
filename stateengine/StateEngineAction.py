@@ -126,6 +126,7 @@ class SeActionBase(StateEngineTools.SeItemChild):
         condition_met = True if condition_to_meet is None else False
         condition_to_meet = condition_to_meet if isinstance(condition_to_meet, list) else [condition_to_meet]
         current_condition = self._abitem.get_lastconditionset_id()
+        current_condition = self._abitem.get_laststate_id() if current_condition == '' else current_condition
         for cond in condition_to_meet:
             try:
                 cond = re.compile(cond)
@@ -241,6 +242,8 @@ class SeActionBase(StateEngineTools.SeItemChild):
         return True
 
     def _waitforexecute(self, actionname: str, namevar: str = "", repeat_text: str = "", delay: int = 0, current_condition: str = ""):
+        self._log_decrease_indent(50)
+        self._log_increase_indent()
         if delay == 0:
             self._log_info("Running action '{}'.", namevar)
             self.real_execute(actionname, namevar, repeat_text, None, False, current_condition)
