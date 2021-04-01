@@ -56,7 +56,7 @@ from . import conversion
 
 
 class DLMS(SmartPlugin, conversion.Conversion):
-    PLUGIN_VERSION = "1.5.4"
+    PLUGIN_VERSION = "1.5.5"
 
     """
     This class provides a Plugin for SmarthomeNG which reads out a smartmeter.
@@ -126,6 +126,7 @@ class DLMS(SmartPlugin, conversion.Conversion):
         self._config['timeout'] = self.get_parameter_value('timeout')
 
         self._config['use_checksum'] = self.get_parameter_value('use_checksum')
+        self._config['onlylisten'] = self.get_parameter_value('only_listen')
         self._config['reset_baudrate'] = self.get_parameter_value('reset_baudrate')
         self._config['no_waiting'] = self.get_parameter_value('no_waiting')
 

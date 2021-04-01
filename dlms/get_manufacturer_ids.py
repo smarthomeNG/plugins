@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
-#  Copyright 2016 - 2018 Bernd Meiners              Bernd.Meiners@mail.de
+#  Copyright 2016 - 2021 Bernd Meiners              Bernd.Meiners@mail.de
 #########################################################################
 #
-#  DLMS plugin for SmartHomeNG.py.
+#  DLMS plugin for SmartHomeNG
 #
 #  This file is part of SmartHomeNG.py.
 #  Visit:  https://github.com/smarthomeNG/
@@ -39,10 +39,11 @@ to serve as information database for the identification of smartmeters
 
 import logging
 import requests
+import sys
 
 from ruamel.yaml import YAML
 from io import BytesIO
-import openpyxl
+install_openpyxl = "python3 -m pip install --user openpyxl"
 
 if __name__ == '__main__':
     logger = logging.getLogger(__name__)
@@ -50,6 +51,11 @@ if __name__ == '__main__':
 else:
     logger = logging.getLogger()
     logger.debug("init plugin component {}".format(__name__))
+
+try:
+    import openpyxl
+except:
+    sys.exit("Package 'openpyxl' was not found. You might install with {}".format(install_openpyxl))
 
 
 def get_manufacturer( from_url, to_yaml, verbose = False ):
@@ -61,6 +67,8 @@ def get_manufacturer( from_url, to_yaml, verbose = False ):
     y = YAML()
 
     logger.debug("Read manufacturer IDs from URL: '{}'".format(url))
+    logger.debug("Using openpyxl version '{}'".format(openpyxl.__version__))
+    
     headers = {'User-agent': 'Mozilla/5.0'}
 
     try:
@@ -73,7 +81,7 @@ def get_manufacturer( from_url, to_yaml, verbose = False ):
         wb = openpyxl.load_workbook(filename=BytesIO(reque.content), data_only=True)
         #wb = openpyxl.load_workbook(xlfilename, data_only=True)
 
-        logger.debug('sheetnames {}'.format(wb.get_sheet_names()))
+        logger.debug('sheetnames {}'.format(wb.sheetnames))
         
         sheet = wb.active
         logger.debug('sheet {}'.format(sheet))

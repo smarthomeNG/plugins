@@ -12,7 +12,7 @@ plugin:
     documentation: http://smarthomeng.de/user/plugins/dlms/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1002464-support-thread-für-dlms-plugin
 
-    version: 1.5.4                 # Plugin version
+    version: 1.5.5                 # Plugin version
     sh_minversion: 1.4             # minimum shNG version to use this plugin
     #sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
@@ -71,6 +71,12 @@ parameters:
         description:
             de: 'Wenn wahr, wird eine Prüfsumme über die ausgelesenen Daten gebildet'
             en: 'if true then a checksum will be calculated of the readout result'
+    only_listen:
+        type: bool
+        default: False
+        description:
+            de: 'Manche Smartmeter können nicht abgefragt werden sondern senden von sich aus Informationen. Für diese Smartmeter auf True setzen und die Baudrate anpassen'
+            en: 'Some smartmeter can not be queried, they send information without request. For those devices set to True and adjust baudrate'
     reset_baudrate:
         type: bool
         default: True
