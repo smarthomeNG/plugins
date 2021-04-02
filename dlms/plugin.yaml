@@ -93,7 +93,7 @@ parameters:
 item_attributes:
     # Definition of item attributes defined by this plugin
     dlms_obis_code:
-        type: list(4, str, int, str, str)
+        type: list(4,str,int,str,str)
         description:
             de: >
                 Anweisung welcher Teil einer OBIS Zeile geparst und dem Item zugewiesen werden soll
