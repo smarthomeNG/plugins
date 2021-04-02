@@ -128,7 +128,7 @@ class WithingsHealth(SmartPlugin):
                     "Items for OAuth2 Data are not set with required values. Please run process via WebGUI of the plugin.")
                 return
         try:
-            measures = self._client.measure_get_meas()
+            measures = self._client.measure_get_meas(startdate=None, enddate=None, lastupdate=None)
         except Exception as e:
             self.logger.error(
                 "An exception occured when running measure_get_meas(): {}. Aborting update.".format(
@@ -407,7 +407,7 @@ class WebInterface(SmartPluginWebIf):
             self.logger.debug("Got code as callback: {}".format(self.plugin.get_fullname(), code))
             credentials = None
             try:
-                credentials = self._auth.get_credentials(code)
+                credentials = self._auth.getauth.get_credentials(code)
             except Exception as e:
                 self.logger.error(
                     "An error occurred, perhaps code parameter is invalid or too old? Message: {}".format(
