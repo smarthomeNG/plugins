@@ -86,11 +86,11 @@ class WebInterface(SmartPluginWebIf):
             self.logger.debug("Got code as callback: {}".format(self.plugin.get_fullname(), code))
             credentials = None
             try:
-                credentials = self._auth.getauth.get_credentials(code)
+                credentials = self._auth.get_credentials(code)
             except Exception as e:
                 self.logger.error(
                     "An error occurred, perhaps code parameter is invalid or too old? Message: {}".format(
-                        self.plugin.get_fullname(), str(e)))
+                        str(e)))
             if credentials is not None:
                 self._creds = credentials
                 self.logger.debug(
