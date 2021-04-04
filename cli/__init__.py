@@ -67,7 +67,7 @@ class CLIHandler:
         self.__client = client
         self.__socket = self.__client.socket
         self.__client.set_callbacks(data_received=self.data_received)
-        self.push("SmartHomeNG v{0}\n".format(self.sh.version))
+        self.push("SmartHomeNG v{}  -  cli plugin v{}\n".format(self.sh.version, CLI.PLUGIN_VERSION))
 
         if hashed_password is None:
             self.__push_helpmessage()
@@ -156,7 +156,7 @@ class CLIHandler:
 
 class CLI(SmartPlugin):
 
-    PLUGIN_VERSION = '1.8.0'     # is checked against version in plugin.yaml
+    PLUGIN_VERSION = '1.8.1'     # is checked against version in plugin.yaml
 
     def __init__(self, sh):
         """
@@ -286,6 +286,7 @@ class CLICommands:
 
         self.add_command('logc', self._cli_logc, 'log', 'logc [log]: clean (memory) log')
         self.add_command('logd', self._cli_logd, 'log', 'logd [log]: log dump of (memory) log')
+        self.add_command('logl', self._cli_logl, 'log', 'logl: list existing (memory) logs')
 
         self.add_command('ll', self._cli_ll, 'logic', 'll: list all logics and next execution time - command alias: lo')
         self.add_command('lo', self._cli_ll, 'logic', None)   # old command
@@ -775,3 +776,12 @@ class CLICommands:
                 values = [str(value) for value in entry]
                 handler.push(str(values))
                 handler.push("\n")
+
+    # noinspection PyUnusedLocal
+    def _cli_logl(self, handler, parameter, source):
+        logs = self.sh.return_logs()
+        if logs is not None:
+            handler.push("Existing (memory) logs:\n")
+            for log in sorted(list(logs)):
+                handler.push("- {0}\n".format(log))
+
