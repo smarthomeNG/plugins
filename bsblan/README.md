@@ -10,8 +10,8 @@ Brötje and similar Systems.
 - write all accessible boiler parameters
 
 ## Change history
-1.0.2 revised README. Compatibility check for BSB-LAN Version 2.x
-1.0.1 added support for writing parameters
+- 1.0.2 revised README. Compatibility check for BSB-LAN Version 2.x
+- 1.0.1 added support for writing parameters
 
 ### Requirements needed software
 
