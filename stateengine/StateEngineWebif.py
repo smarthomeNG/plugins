@@ -52,7 +52,7 @@ class WebInterface(StateEngineTools.SeItemChild):
                                        fontname='Helvetica', fontsize='10')
         self.__nodes = {}
         self.__scalefactor = 0.1
-        self.__textlimit = 45
+        self.__textlimit = 145
         self.__conditionset_count = 0
 
     def __repr__(self):
@@ -111,7 +111,7 @@ class WebInterface(StateEngineTools.SeItemChild):
         _empty_set = self.__states[state]['conditionsets'].get(conditionset) == ''
         if _empty_set:
             return '', ''
-        conditionlist = '<<table border="0" width="520" cellpadding="5">'
+        conditionlist = '<<table border="0" cellpadding="5">'
 
         for k, condition in enumerate(self.__states[state]['conditionsets'].get(conditionset)):
             condition_dict = self.__states[state]['conditionsets'][conditionset].get(condition)
@@ -134,7 +134,7 @@ class WebInterface(StateEngineTools.SeItemChild):
                 cond6 = not compare == 'changedbynegate'
                 cond7 = not compare == 'updatedbynegate'
                 if cond1 and cond2 and cond3 and cond4 and cond5 and cond6 and cond7:
-                    conditionlist += '<tr><td align="center" width="260"><b>'
+                    conditionlist += '<tr><td align="center"><b>'
                     textlength = len(str(condition_dict.get('item')))
                     condition_tooltip += '{}&#13;&#10;&#13;&#10;'.format(condition_dict.get('item')) \
                         if textlength > self.__textlimit else ''
