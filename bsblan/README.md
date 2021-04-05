@@ -1,6 +1,6 @@
 # Plugin for BSB-Lan-Adapter
 
-#### Version 1.0.1
+#### Version 1.0.2
 
 This plugin connects your BSB-LPB-LAN-Adapter (https://github.com/1coderookie/BSB-LPB-LAN/) with SmarthomeNG.
 BSB-LPB-LAN is a LAN Interface for Boiler-System-Bus (BSB) that enables you to control heating systems from Elco or 
@@ -9,7 +9,7 @@ Brötje and similar Systems.
 - write all accessible boiler parameters
 
 ## Change history
-1.0.1 added support for writing parameters
+1.0.2 added support for writing parameters
 
 ### Requirements needed software
 
