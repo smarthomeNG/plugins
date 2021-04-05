@@ -644,7 +644,7 @@ item_structs:
             unix_timestamp:
                 type: num
                 visu_acl: ro
-                eval: "0 if not any(char.isdigit() for char in sh...date_time()) else  sh.tools.dt2ts(shtime.datetime_transform(sh...date_time())) * 1000"
+                eval: "0 if not any(char.isdigit() for char in sh...date_time()) else  shtime.datetime_transform(sh...date_time()).timestamp() * 1000"
                 eval_trigger: ..date_time
                 crontab: init
 
@@ -664,7 +664,7 @@ item_structs:
                 remark: Can be used for the clock.countdown widget
                 type: num
                 visu_acl: ro
-                eval: "0 if not any(char.isdigit() for char in sh...date_time()) else  sh.tools.dt2ts(shtime.datetime_transform(sh...date_time())) * 1000"
+                eval: "0 if not any(char.isdigit() for char in sh...date_time()) else  shtime.datetime_transform(sh...date_time()).timestamp() * 1000"
                 eval_trigger: ..date_time
                 crontab: init
 
@@ -834,7 +834,7 @@ item_structs:
             unix_timestamp:
                 type: num
                 visu_acl: ro
-                eval: "0 if not any(char.isdigit() for char in sh...date_time()) else  sh.tools.dt2ts(shtime.datetime_transform(sh...date_time())) * 1000"
+                eval: "0 if not any(char.isdigit() for char in sh...date_time()) else  shtime.datetime_transform(sh...date_time()).timestamp() * 1000"
                 eval_trigger: ..date_time
                 crontab: init
 
@@ -854,7 +854,7 @@ item_structs:
                 remark: Can be used for the clock.countdown widget
                 type: num
                 visu_acl: ro
-                eval: "0 if not any(char.isdigit() for char in sh...date_time()) else  sh.tools.dt2ts(shtime.datetime_transform(sh...date_time())) * 1000"
+                eval: "0 if not any(char.isdigit() for char in sh...date_time()) else  shtime.datetime_transform(sh...date_time()).timestamp() * 1000"
                 eval_trigger: ..date_time
                 crontab: init
 
@@ -1152,7 +1152,7 @@ item_structs:
             unix_timestamp:
                 type: num
                 visu_acl: ro
-                eval: "0 if not any(char.isdigit() for char in sh...date_time()) else  sh.tools.dt2ts(shtime.datetime_transform(sh...date_time())) * 1000"
+                eval: "0 if not any(char.isdigit() for char in sh...date_time()) else  shtime.datetime_transform(sh...date_time()).timestamp() * 1000"
                 eval_trigger: ..date_time
                 crontab: init
 
@@ -1172,7 +1172,7 @@ item_structs:
                 remark: Can be used for the clock.countdown widget
                 type: num
                 visu_acl: ro
-                eval: "0 if not any(char.isdigit() for char in sh...date_time()) else  sh.tools.dt2ts(shtime.datetime_transform(sh...date_time())) * 1000"
+                eval: "0 if not any(char.isdigit() for char in sh...date_time()) else  shtime.datetime_transform(sh...date_time()).timestamp() * 1000"
                 eval_trigger: ..date_time
                 crontab: init
 
