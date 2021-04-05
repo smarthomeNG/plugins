@@ -758,6 +758,8 @@ class CLICommands:
                 handler.push("  {} = {}\n".format(key, task[key]))
             handler.push("}\n")
 
+    from dateutil.tz import tzlocal
+    from datetime import datetime
     # noinspection PyUnusedLocal
     def _cli_logd(self, handler, parameter, source):
         if parameter is None or parameter == "":
@@ -773,8 +775,10 @@ class CLICommands:
         if log is not None:
             handler.push("Log dump of '{0}':\n".format(log._name))
             for entry in log.last(10):
+                ts = entry[0].strftime("%d.%m.%Y %H:%M:%S %Z")
                 values = [str(value) for value in entry]
-                handler.push(str(values))
+                del values[0]
+                handler.push(ts + ' ' + str(values))
                 handler.push("\n")
 
     # noinspection PyUnusedLocal
