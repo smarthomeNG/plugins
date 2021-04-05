@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
-#  Copyright 2014-     Thomas Ernst                       offline@gmx.net
+#  Copyright 2014-2018 Thomas Ernst                       offline@gmx.net
+#  Copyright 2019- Onkel Andy                       onkelandy@hotmail.com
 #########################################################################
 #  Finite state machine plugin for SmartHomeNG
 #
@@ -35,8 +36,11 @@ class SeEval(StateEngineTools.SeItemChild):
         self._eval_lock = threading.Lock()
         self.shtime = Shtime.get_instance()
 
-    # Get lamella angle based on sun_altitute for sun tracking
-    def sun_tracking(self):
+    def __repr__(self):
+        return "SeEval"
+
+    # Get lamella angle based on sun_altitude for sun tracking
+    def sun_tracking(self, offset=0):
         self._eval_lock.acquire()
         self._log_debug("Executing method 'SunTracking()'")
         self._log_increase_indent()
@@ -44,7 +48,7 @@ class SeEval(StateEngineTools.SeItemChild):
         altitude = StateEngineCurrent.values.get_sun_altitude()
         self._log_debug("Current sun altitude is {0}°", altitude)
 
-        value = 90 - altitude
+        value = 90 - altitude + offset
         self._log_debug("Blinds at right angle to the sun at {0}°", value)
 
         self._log_decrease_indent()
@@ -95,7 +99,7 @@ class SeEval(StateEngineTools.SeItemChild):
         self._log_debug("Executing method 'get_relative_itemid({0})'", subitem_id)
         try:
             if self._abitem._initstate and subitem_id == '..state_name':
-                returnvalue = self._abitem.return_item(self._abitem._initstate).property.path
+                returnvalue = self._abitem.return_item(self._abitem._initstate.id).property.path
                 self._log_debug("Return item path '{0}' during init", returnvalue)
             else:
                 returnvalue = self._abitem.return_item(subitem_id).property.path
@@ -116,7 +120,7 @@ class SeEval(StateEngineTools.SeItemChild):
         self._log_debug("Executing method 'get_relative_item({0})'", subitem_id)
         try:
             if self._abitem._initstate and subitem_id == '..state_name':
-                returnvalue = self._abitem.return_item(self._abitem._initstate)
+                returnvalue = self._abitem.return_item(self._abitem._initstate.id)
                 self._log_debug("Return item '{0}' during init", returnvalue)
             else:
                 returnvalue = self._abitem.return_item(subitem_id)
@@ -137,7 +141,7 @@ class SeEval(StateEngineTools.SeItemChild):
         self._log_debug("Executing method 'get_relative_itemvalue({0})'", subitem_id)
         try:
             if self._abitem._initstate and subitem_id == '..state_name':
-                returnvalue = self._abitem.return_item(self._abitem._initstate).property.name
+                returnvalue = self._abitem._initstate.text
                 self._log_debug("Return item value '{0}' during init", returnvalue)
             else:
                 item = self._abitem.return_item(subitem_id)
@@ -152,7 +156,7 @@ class SeEval(StateEngineTools.SeItemChild):
 
     # Return the property of an item related to the StateEngine Object Item
     # item_id: Relative id of item whose property should be returned
-    # prop: name of property, e.g. last_change. See https://www.smarthomeng.de/user/konfiguration/items_properties.html?highlight=property
+    # prop: name of property, e.g. last_change. See https://www.smarthomeng.de/user/konfiguration/items_properties.html
     #
     # See description of StateEngineItem.SeItem.return_item for details
     def get_relative_itemproperty(self, subitem_id, prop):
@@ -166,15 +170,16 @@ class SeEval(StateEngineTools.SeItemChild):
             return
         try:
             if self._abitem._initstate and subitem_id == '..state_name':
-                returnvalue = getattr(self._abitem.return_item(self._abitem._initstate).property, prop)
+                returnvalue = getattr(self._abitem.return_item(self._abitem._initstate.id).property, prop)
                 self._log_debug("Return item property '{0}' from {1}: {2} during init", prop,
-                               self._abitem.return_item(self._abitem._initstate).property.path, returnvalue)
+                                self._abitem.return_item(self._abitem._initstate.id).property.path, returnvalue)
             else:
                 returnvalue = getattr(item.property, prop)
                 self._log_debug("Return item property {0} from {1}: {2}", prop, item.property.path, returnvalue)
         except Exception as ex:
             returnvalue = None
-            self._log_warning("Problem evaluating property {0} of {1} - property might not exist. Error: {2}", prop, subitem_id, ex)
+            self._log_warning("Problem evaluating property {0} of {1} - property might not exist. Error: {2}",
+                              prop, subitem_id, ex)
         finally:
             self._eval_lock.release()
         return returnvalue
@@ -188,23 +193,23 @@ class SeEval(StateEngineTools.SeItemChild):
         self._eval_lock.acquire()
         self._log_debug("Executing method 'get_attributevalue({0}, {1})'", item, attrib)
         if ":" in item:
-            type, item = StateEngineTools.partition_strip(item, ":")
-            item = self._abitem.return_item(self._abitem.get_variable(item)) if type == "var" else item
+            var_type, item = StateEngineTools.partition_strip(item, ":")
+            item = self._abitem.return_item(self._abitem.get_variable(item)) if var_type == "var" else item
         else:
             item = self._abitem.return_item(item)
         try:
             if self._abitem._initstate and item == '..state_name':
-                returnvalue = self._abitem.return_item(self._abitem._initstate).conf[attrib]
+                returnvalue = self._abitem.return_item(self._abitem._initstate.id).conf[attrib]
                 self._log_debug("Return item attribute '{0}' from {1}: {2} during init",
-                               attrib, self._abitem.return_item(self._abitem._initstate).property.path, returnvalue)
+                                attrib, self._abitem.return_item(self._abitem._initstate.id).property.path, returnvalue)
             else:
                 returnvalue = item.conf[attrib]
-                #returnvalue = getattr(item.property.attributes, attrib)
                 self._log_debug("Return item attribute {0} from {1}: {2}", attrib, item.property.path, returnvalue)
         except Exception as ex:
             returnvalue = None
             self._log_warning("Problem evaluating attribute {0} of {1} - attribute might not exist. "
-                              "Existing item attributes are: {3}. Error: {2}.", attrib, item, ex, getattr(item.property, 'attributes'))
+                              "Existing item attributes are: {3}. Error: {2}.",
+                              attrib, item, ex, getattr(item.property, 'attributes'))
         finally:
             self._eval_lock.release()
         return returnvalue

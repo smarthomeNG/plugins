@@ -25,14 +25,17 @@ import datetime
 import logging
 import socket
 import time
-from time import mktime
 import threading
-from xml.dom import minidom
 import requests
+from time import mktime
+from xml.dom import minidom
 from requests.packages import urllib3
 from requests.auth import HTTPDigestAuth
 from lib.model.smartplugin import *
 from lib.module import Modules
+from json.decoder import JSONDecodeError
+from datetime import datetime
+from .webif import WebInterface
 import cherrypy
 
 # for session id generation:
@@ -80,10 +83,12 @@ class MonitoringService:
             return
 
         self.conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.conn.settimeout(None)
         try:
             self.conn.connect((self._host, self._port))
             _name = 'plugins.' + self._plugin_instance.get_fullname() + '.Monitoring_Service'
-            self._listen_thread = threading.Thread(target=self._listen, name=_name).start()
+            self._listen_thread = threading.Thread(target=self._listen, name=_name)
+            self._listen_thread.start()
             self._plugin_instance.logger.debug("MonitoringService: connection established")
         except Exception as e:
             self.conn = None
@@ -100,11 +105,16 @@ class MonitoringService:
         self._listen_active = False
         self._stop_counter('incoming')
         self._stop_counter('outgoing')
+        # Close the socket to stop the listen thread
+        try:
+            self.conn.shutdown(2)
+            self.conn.close()
+        except:
+            pass
         try:
             self._listen_thread.join(1)
         except:
             pass
-        self.conn.shutdown(2)
 
     def reconnect(self):
         """
@@ -170,31 +180,40 @@ class MonitoringService:
         """
         self._listen_active = True
         buffer = ""
-        data = True
         while self._listen_active:
-            data = self.conn.recv(recv_buffer)
-            if data == "":
-                self._plugin_instance.logger.error("CallMonitor connection not open anymore.")
-            else:
-                self._plugin_instance.logger.debug("Data Received from CallMonitor: %s" % data.decode("utf-8"))
-            buffer += data.decode("utf-8")
+            try:
+                data = self.conn.recv(recv_buffer)
+            except Exception as e:
+                self._plugin_instance.logger.error("CallMonitor connection receive error: " + str(e))
+                break
+            if not data:
+                if self._listen_active:
+                    self._plugin_instance.logger.error("CallMonitor connection not open anymore.")
+                break
+            data = data.decode("utf-8")
+            self._plugin_instance.logger.debug("Data Received from CallMonitor: %s" % data)
+            buffer += data
             while buffer.find("\n") != -1:
                 line, buffer = buffer.split("\n", 1)
                 self._parse_line(line)
-
-            # time.sleep(1)
+        self._listen_active = False
+        try:
+            self.conn.shutdown(2)
+            self.conn.close()
+        except:
+            pass
         return
 
     def _start_counter(self, timestamp, direction):
         if direction == 'incoming':
             self._call_connect_timestamp = time.mktime(
-                datetime.datetime.strptime(timestamp, "%d.%m.%y %H:%M:%S").timetuple())
+                datetime.strptime(timestamp, "%d.%m.%y %H:%M:%S").timetuple())
             self._duration_counter_thread_incoming = threading.Thread(target=self._count_duration_incoming,
                                                                       name="MonitoringService_Duration_Incoming_%s" % self._plugin_instance.get_instance_name()).start()
             self._plugin_instance.logger.debug('Counter incoming - STARTED')
         elif direction == 'outgoing':
             self._call_connect_timestamp = time.mktime(
-                datetime.datetime.strptime(timestamp, "%d.%m.%y %H:%M:%S").timetuple())
+                datetime.strptime(timestamp, "%d.%m.%y %H:%M:%S").timetuple())
             self._duration_counter_thread_outgoing = threading.Thread(target=self._count_duration_outgoing,
                                                                       name="MonitoringService_Duration_Outgoing_%s" % self._plugin_instance.get_instance_name()).start()
             self._plugin_instance.logger.debug('Counter outgoing - STARTED')
@@ -514,7 +533,7 @@ class AVM(SmartPlugin):
     Main class of the Plugin. Does all plugin specific stuff and provides the update functions for the different TR-064 services on the FritzDevice
     """
 
-    PLUGIN_VERSION = "1.5.10"
+    PLUGIN_VERSION = "1.5.12"
 
     _header = {'SOAPACTION': '', 'CONTENT-TYPE': 'text/xml; charset="utf-8"'}
     _envelope = """
@@ -554,6 +573,7 @@ class AVM(SmartPlugin):
         self.logger.info('Init AVM Plugin')
 
         self._session = requests.Session()
+        self._lua_session = requests.Session()
         self._timeout = 10
 
         self._verify = self.get_parameter_value('verify')
@@ -585,7 +605,7 @@ class AVM(SmartPlugin):
         self.logger.debug("Plugin initialized with host: %s, port: %s, ssl: %s, verify: %s, user: %s, call_monitor: %s"
                           % (self._fritz_device.get_host(), self._fritz_device.get_port(), self._fritz_device.is_ssl(),
                              self._verify, self._fritz_device.get_user(), self._call_monitor))
-        if not self.init_webinterface():
+        if not self.init_webinterface(WebInterface):
             self._init_complete = False
 
     def run(self):
@@ -624,7 +644,7 @@ class AVM(SmartPlugin):
         soap_data = self._envelope.strip() % body
         return soap_data
 
-    def _build_url(self, suffix):
+    def _build_url(self, suffix, lua=False):
         """
         Builds a request url
 
@@ -635,7 +655,11 @@ class AVM(SmartPlugin):
             url_prefix = "https"
         else:
             url_prefix = "http"
-        url = "%s://%s:%s%s" % (url_prefix, self._fritz_device.get_host(), self._fritz_device.get_port(), suffix)
+        if not lua:
+            url = "%s://%s:%s%s" % (url_prefix, self._fritz_device.get_host(), self._fritz_device.get_port(), suffix)
+        else:
+            url = "%s://%s%s" % (url_prefix, self._fritz_device.get_host(), suffix)
+
         return url
 
     def _update_loop(self):
@@ -842,38 +866,39 @@ class AVM(SmartPlugin):
         elif self.has_iattr(item.conf, 'avm_data_type'):
             # normal items
             self._fritz_device._items.append(item)
-        if self.get_iattr_value(item.conf, 'avm_data_type') in ['wlanconfig', 'tam', 'aha_device', 'set_temperature', 'set_hkrwindowopen']:
+        if self.get_iattr_value(item.conf, 'avm_data_type') in ['wlanconfig', 'tam', 'aha_device', 'set_temperature',
+                                                                'set_hkrwindowopen']:
             # special items which can be changed outside the plugin context and need to be submitted to the FritzDevice
             return self.update_item
 
-    def getHashResponse(self, challenge, pwd):
-        myMd5HashString = (challenge + '-' + pwd).encode('utf-16LE')
+    def _get_hash_response(self, challenge, pwd):
+        my_md5_hash_string = (challenge + '-' + pwd).encode('utf-16LE')
         m = hashlib.md5()
-        m.update(myMd5HashString)
-        #        self.logger.info("Debug hexdigest: {0}".format(m.hexdigest()))
-        #        print ('MD5-Hash starting with challenge :' + challenge + "-" + m.hexdigest())
+        m.update(my_md5_hash_string)
         return challenge + "-" + m.hexdigest()
 
     def _request_session_id(self):
         user = self._fritz_device.get_user()
         pwd = self._fritz_device.get_password()
-        # Doublecheck: Shall we send this request via self._session.get instead?
-        response = requests.get("http://fritz.box/login_sid.lua")
-        myXML = response.text
-        self.logger.debug("Session request response text: {0}".format(myXML))
-        xml = minidom.parseString(myXML)
+
+        response = self._lua_session.get(self._build_url('/login_sid.lua', lua=True), verify=self._verify)
+        my_xml = response.text
+        self.logger.debug("Session request response text: {0}".format(my_xml))
+        xml = minidom.parseString(my_xml)
         challenge_xml = xml.getElementsByTagName('Challenge')
         sid_xml = xml.getElementsByTagName('SID')
         if len(challenge_xml) > 0:
-            mySID = sid_xml[0].firstChild.data
+            my_sid = sid_xml[0].firstChild.data
         if len(challenge_xml) > 0:
-            myChallenge = challenge_xml[0].firstChild.data
+            my_challenge = challenge_xml[0].firstChild.data
 
-        self.logger.info("Debug apriori SID: {0}, Challenge: {1}".format(mySID, myChallenge))
-        hashResponse = self.getHashResponse(myChallenge, pwd)
+        self.logger.info("Debug apriori SID: {0}, Challenge: {1}".format(my_sid, my_challenge))
+        hash_response = self._get_hash_response(my_challenge, pwd)
 
         # Doublecheck: Shall we send this request via self._session.get instead?
-        response = requests.get("http://fritz.box/login_sid.lua?username=" + user + "&response=" + hashResponse)
+        response = self._lua_session.get(self._build_url('/login_sid.lua?username=%s&response=%s' % (user,
+                                                                                            hash_response), lua=True),
+                                verify=self._verify)
         myXML = response.text
         xml = minidom.parseString(myXML)
         challenge_xml = xml.getElementsByTagName('Challenge')
@@ -885,12 +910,6 @@ class AVM(SmartPlugin):
 
         self.logger.info("Debug posterior SID: {0}, Challenge: {1}".format(mySID, myChallenge))
         return mySID
-
-        # self.logger.debug("Debug param: {0}".format(aha_string))
-        # self.logger.info("Debug url: {0}".format(url))
-
-        # r = self._session.get(url, timeout=self._timeout, verify=self._verify)
-        # self.logger.info("Debug return: {0}".format(r))
 
     def _assemble_aha_interface(self, ain='', aha_action='', aha_param='', sid='', endtimestamp=''):
         """
@@ -908,9 +927,11 @@ class AVM(SmartPlugin):
         #
         # Command string with session id parameter:
         if endtimestamp == '':
-            aha_string = "/webservices/homeautoswitch.lua?ain={0}&switchcmd={1}&param={2}&sid={3}".format(ain.replace(" ", ""), aha_action, aha_param, sid)
+            aha_string = "/webservices/homeautoswitch.lua?ain={0}&switchcmd={1}&param={2}&sid={3}".format(
+                ain.replace(" ", ""), aha_action, aha_param, sid)
         else:
-            aha_string = "/webservices/homeautoswitch.lua?ain={0}&switchcmd={1}&endtimestamp={2}&sid={3}".format(ain.replace(" ", ""), aha_action, endtimestamp, sid)
+            aha_string = "/webservices/homeautoswitch.lua?ain={0}&switchcmd={1}&endtimestamp={2}&sid={3}".format(
+                ain.replace(" ", ""), aha_action, endtimestamp, sid)
 
         return aha_string
 
@@ -943,7 +964,8 @@ class AVM(SmartPlugin):
             if self.get_iattr_value(item.conf, 'avm_data_type') == 'wlanconfig':
                 if int(self.get_iattr_value(item.conf, 'avm_wlan_index')) > 0:
                     headers['SOAPACTION'] = "%s#%s" % (
-                        self._urn_map['WLANConfiguration'] % str(self.get_iattr_value(item.conf, 'avm_wlan_index')), action)
+                        self._urn_map['WLANConfiguration'] % str(self.get_iattr_value(item.conf, 'avm_wlan_index')),
+                        action)
                     soap_data = self._assemble_soap_data(action, self._urn_map['WLANConfiguration'] % str(
                         self.get_iattr_value(item.conf, 'avm_wlan_index')), {'NewEnable': int(item())})
                 else:
@@ -967,7 +989,8 @@ class AVM(SmartPlugin):
 
             if self.get_iattr_value(item.conf, 'avm_data_type') == 'wlanconfig':
                 param = "%s%s%s" % (
-                    "/upnp/control/", self.get_iattr_value(item.conf, 'avm_data_type'), self.get_iattr_value(item.conf, 'avm_wlan_index'))
+                    "/upnp/control/", self.get_iattr_value(item.conf, 'avm_data_type'),
+                    self.get_iattr_value(item.conf, 'avm_wlan_index'))
                 url = self._build_url(param)
 
             elif self.get_iattr_value(item.conf, 'avm_data_type') == 'tam':
@@ -990,17 +1013,18 @@ class AVM(SmartPlugin):
                 # request new session ID:
                 mySID = self._request_session_id()
 
-                #Assemble endtimestamp:
+                # Assemble endtimestamp:
                 if cmd_enable == False:
                     endtime = 0
                 else:
                     now = self.shtime.now()
                     unix_secs = mktime(now.timetuple())
-                    #set endtime to now + 12h:
-                    endtime = int(unix_secs + 12*3600)
-                self.logger.debug("HKR endtimestamp is: {0}".format(endtime ))
+                    # set endtime to now + 12h:
+                    endtime = int(unix_secs + 12 * 3600)
+                self.logger.debug("HKR endtimestamp is: {0}".format(endtime))
 
-                aha_string = self._assemble_aha_interface(ain=ainDevice, aha_action=action, endtimestamp=endtime, sid=mySID)
+                aha_string = self._assemble_aha_interface(ain=ainDevice, aha_action=action, endtimestamp=endtime,
+                                                          sid=mySID)
                 self.logger.debug("Debug ahastring: {0}".format(aha_string))
 
             elif self.get_iattr_value(item.conf, 'avm_data_type') == 'set_temperature':
@@ -1032,12 +1056,12 @@ class AVM(SmartPlugin):
                         "Commanded hkrt temperature {0} is out of range. Aborting.".format(cmd_temperature))
 
                 # request new session ID:
-                mySID = self._request_session_id()
+                my_sid = self._request_session_id()
 
                 aha_string = self._assemble_aha_interface(ain=ainDevice, aha_action=action, aha_param=temp_scaled,
-                                                          sid=mySID)
+                                                          sid=my_sid)
 
-            #Function used for AHA http interface only:
+            # Function used for AHA http interface only:
             current_avm_data_type = self.get_iattr_value(item.conf, 'avm_data_type')
             use_aha_interface = current_avm_data_type in ['set_temperature', 'set_hkrwindowopen']
             if use_aha_interface:
@@ -1046,12 +1070,10 @@ class AVM(SmartPlugin):
 
                 if self._fritz_device.is_ssl():
                     url_prefix = "https"
-                    port = 443
                 else:
                     url_prefix = "http"
-                    port = 80
 
-                url = "%s://%s:%s%s" % (url_prefix, self._fritz_device.get_host(), 443, aha_string)
+                url = "%s://%s%s" % (url_prefix, self._fritz_device.get_host(), aha_string)
                 self.logger.debug("Debug param: {0}".format(aha_string))
                 self.logger.debug("Debug url: {0}".format(url))
 
@@ -1061,14 +1083,14 @@ class AVM(SmartPlugin):
                     r = self._session.get(url, timeout=self._timeout, verify=self._verify)
                     self.logger.debug("Return value aha interface: {0}".format(r))
 
-                    statusCode = r.status_code
-                    if statusCode == 200:
+                    status_code = r.status_code
+                    if status_code == 200:
                         self.logger.debug("Sending AHA command successful")
                     else:
-                        self.logger.error("AHA command error code: {0}".format(statusCode))
+                        self.logger.error("AHA command error code: {0}".format(status_code))
 
                 else:
-                    self._session.post(url, data=soap_data, timeout=self._timeout, headers=headers,
+                    self._lua_session.post(url, data=soap_data, timeout=self._timeout, headers=headers,
                                        auth=HTTPDigestAuth(self._fritz_device.get_user(),
                                                            self._fritz_device.get_password()), verify=self._verify)
 
@@ -1086,7 +1108,8 @@ class AVM(SmartPlugin):
                                     'avm_data_type') == 'wlanconfig':  # check if item was guest wifi item and remaining time is set as item..
                 for citem in self._fritz_device.get_items():  # search for guest time remaining item.
                     if self.get_iattr_value(citem.conf,
-                                            'avm_data_type') == 'wlan_guest_time_remaining' and self.get_iattr_value(citem.conf,
+                                            'avm_data_type') == 'wlan_guest_time_remaining' and self.get_iattr_value(
+                        citem.conf,
                         'avm_wlan_index') == self.get_iattr_value(item.conf, 'avm_wlan_index'):
                         self._response_cache.pop("wlanconfig_%s_%s" % (
                             self.get_iattr_value(citem.conf, 'avm_wlan_index'), "X_AVM-DE_GetWLANExtInfo"),
@@ -1304,7 +1327,7 @@ class AVM(SmartPlugin):
                                     if attribute != 'Date':
                                         result_entry[attribute] = attribute_value[0].firstChild.data
                                     else:
-                                        result_entry[attribute] = datetime.datetime.strptime(
+                                        result_entry[attribute] = datetime.strptime(
                                             attribute_value[0].firstChild.data, '%d.%m.%y %H:%M')
 
                         result_entries.append(result_entry)
@@ -1610,6 +1633,76 @@ class AVM(SmartPlugin):
         if not self._fritz_device.is_available():
             self.set_device_availability(True)
 
+    def get_device_log_from_lua(self):
+        """
+        Gets the Device Log from the LUA HTTP Interface via LUA Scripts (more complete than the get_device_log TR-064 version.
+        :return: Array of Device Log Entries (text, type, category, timestamp, date, time)
+        """
+        my_sid = self._request_session_id()
+        query_string = "/query.lua?mq_log=logger:status/log&sid={0}".format(my_sid)
+        r = self._lua_session.get(self._build_url(query_string, lua=True), timeout=self._timeout, verify=self._verify)
+        status_code = r.status_code
+        if status_code == 200:
+            self.logger.debug("get_device_log_from_lua: Sending query.lua command successful")
+        else:
+            self.logger.error("get_device_log_from_lua: query.lua command error code: {0}".format(status_code))
+            return
+
+        try:
+            data = r.json()['mq_log']
+            newlog = []
+
+            for text, typ, cat in data:
+                l_date = text[:8]
+                l_time = text[9:17]
+                l_text = text[18:]
+                l_cat = int(cat)
+                l_type = int(typ)
+                l_ts = int(datetime.timestamp(datetime.strptime(text[:17], '%d.%m.%y %H:%M:%S')))
+                newlog.append([l_text, l_type, l_cat, l_ts, l_date, l_time])
+
+            return newlog
+        except JSONDecodeError:
+            self.logger.error('get_device_log_from_web: SID seems invalid.Please try again.')
+        return
+
+    def get_device_log_from_tr064(self):
+        """
+        Gets the Device Log via TR-064
+        :return: Array of Device Log Entries (Strings)
+        """
+        url = self._build_url("/upnp/control/deviceinfo")
+        headers = self._header.copy()
+        action = 'GetDeviceLog'
+
+        headers['SOAPACTION'] = "%s#%s" % (self._urn_map['DeviceInfo'], action)
+        soap_data = self._assemble_soap_data(action, self._urn_map['DeviceInfo'])
+        try:
+            response = self._session.post(url, data=soap_data, timeout=self._timeout, headers=headers,
+                                          auth=HTTPDigestAuth(self._fritz_device.get_user(),
+                                                              self._fritz_device.get_password()),
+                                          verify=self._verify)
+        except Exception as e:
+            if self._fritz_device.is_available():
+                self.logger.error("get_device_log_from_tr064: Exception when sending POST request, method get_device_log: %s" % str(e))
+                self.set_device_availability(False)
+            return
+        if not self._fritz_device.is_available():
+            self.set_device_availability(True)
+        self._response_cache["dev_info_" + action] = response.content
+
+        try:
+            xml = minidom.parseString(self._response_cache["dev_info_" + action])
+        except Exception as e:
+            self.logger.error("get_device_log_from_tr064: Exception when parsing response: %s" % str(e))
+            return
+
+        element_xml = xml.getElementsByTagName('NewDeviceLog')
+        if element_xml[0].firstChild is not None:
+            return element_xml[0].firstChild.nodeValue.split("\n")
+        else:
+            return ""
+
     def is_host_active(self, mac_address):
         """
         Checks if a MAC address is active on the FritzDevice, e.g. the status can be used for simple presence detection
@@ -1700,7 +1793,7 @@ class AVM(SmartPlugin):
             headers['SOAPACTION'] = "%s#%s" % (self._urn_map['Hosts'], action)
             soap_data = self._assemble_soap_data(action, self._urn_map['Hosts'],
                                                  {'NewMACAddress': self.get_iattr_value(item.conf,
-                                                                                             'avm_mac')})
+                                                                                        'avm_mac')})
         else:
             self.logger.error(
                 "Attribute %s not supported by plugin (update hosts)" % self.get_iattr_value(item.conf,
@@ -1760,7 +1853,8 @@ class AVM(SmartPlugin):
             item(0)
             self.logger.debug(
                 "MAC Address %s for item %s not available on the FritzDevice - ID: %s" % (
-                self.get_iattr_value(item.conf, 'avm_mac'), item.property.path, self._fritz_device.get_identifier()))
+                    self.get_iattr_value(item.conf, 'avm_mac'), item.property.path,
+                    self._fritz_device.get_identifier()))
 
     def _update_home_automation(self, item):
         """
@@ -1873,7 +1967,9 @@ class AVM(SmartPlugin):
                             else:
                                 self.logger.error(
                                     'Argument {} of Attribute {} not available on the FritzDevice with AIN {}.'
-                                    .format(self.get_iattr_value(child.conf,'avm_data_type'), self.get_iattr_value(item.conf,'avm_data_type'), item.conf['ain'].strip()))
+                                        .format(self.get_iattr_value(child.conf, 'avm_data_type'),
+                                                self.get_iattr_value(item.conf, 'avm_data_type'),
+                                                item.conf['ain'].strip()))
                         elif self.get_iattr_value(child.conf, 'avm_data_type') == 'set_temperature':
                             set_temperature = xml.getElementsByTagName('NewHkrSetTemperature')
                             if len(set_temperature) > 0:
@@ -1881,7 +1977,9 @@ class AVM(SmartPlugin):
                             else:
                                 self.logger.error(
                                     'Argument {} of Attribute {} not available on the FritzDevice with AIN {}.'
-                                    .format(self.get_iattr_value(child.conf,'avm_data_type'), self.get_iattr_value(item.conf,'avm_data_type'), item.conf['ain'].strip()))
+                                        .format(self.get_iattr_value(child.conf, 'avm_data_type'),
+                                                self.get_iattr_value(item.conf, 'avm_data_type'),
+                                                item.conf['ain'].strip()))
                         elif self.get_iattr_value(child.conf, 'avm_data_type') == 'set_temperature_reduced':
                             set_temperature_reduced = xml.getElementsByTagName('NewHkrReduceTemperature')
                             if len(set_temperature_reduced) > 0:
@@ -1889,7 +1987,9 @@ class AVM(SmartPlugin):
                             else:
                                 self.logger.error(
                                     'Argument {} of Attribute {} not available on the FritzDevice with AIN {}.'
-                                    .format(self.get_iattr_value(child.conf,'avm_data_type'), self.get_iattr_value(item.conf,'avm_data_type'), item.conf['ain'].strip()))
+                                        .format(self.get_iattr_value(child.conf, 'avm_data_type'),
+                                                self.get_iattr_value(item.conf, 'avm_data_type'),
+                                                item.conf['ain'].strip()))
                         elif self.get_iattr_value(child.conf, 'avm_data_type') == 'set_temperature_comfort':
                             set_temperature_comfort = xml.getElementsByTagName('NewHkrComfortTemperature')
                             if len(set_temperature_comfort) > 0:
@@ -1897,7 +1997,9 @@ class AVM(SmartPlugin):
                             else:
                                 self.logger.error(
                                     'Argument {} of Attribute {} not available on the FritzDevice with AIN {}.'
-                                    .format(self.get_iattr_value(child.conf,'avm_data_type'), self.get_iattr_value(item.conf,'avm_data_type'), item.conf['ain'].strip()))
+                                        .format(self.get_iattr_value(child.conf, 'avm_data_type'),
+                                                self.get_iattr_value(item.conf, 'avm_data_type'),
+                                                item.conf['ain'].strip()))
                         elif self.get_iattr_value(child.conf, 'avm_data_type') == 'firmware_version':
                             firmware_version = xml.getElementsByTagName('NewFirmwareVersion')
                             if len(firmware_version) > 0:
@@ -1905,7 +2007,9 @@ class AVM(SmartPlugin):
                             else:
                                 self.logger.error(
                                     'Argument {} of Attribute {} not available on the FritzDevice with AIN {}.'
-                                    .format(self.get_iattr_value(child.conf,'avm_data_type'), self.get_iattr_value(item.conf,'avm_data_type'), item.conf['ain'].strip()))
+                                        .format(self.get_iattr_value(child.conf, 'avm_data_type'),
+                                                self.get_iattr_value(item.conf, 'avm_data_type'),
+                                                item.conf['ain'].strip()))
                         elif self.get_iattr_value(child.conf, 'avm_data_type') == 'manufacturer':
                             manufacturer = xml.getElementsByTagName('NewManufacturer')
                             if len(manufacturer) > 0:
@@ -1913,7 +2017,9 @@ class AVM(SmartPlugin):
                             else:
                                 self.logger.error(
                                     'Argument {} of Attribute {} not available on the FritzDevice with AIN {}.'
-                                    .format(self.get_iattr_value(child.conf,'avm_data_type'), self.get_iattr_value(item.conf,'avm_data_type'), item.conf['ain'].strip()))
+                                        .format(self.get_iattr_value(child.conf, 'avm_data_type'),
+                                                self.get_iattr_value(item.conf, 'avm_data_type'),
+                                                item.conf['ain'].strip()))
                         elif self.get_iattr_value(child.conf, 'avm_data_type') == 'product_name':
                             product_name = xml.getElementsByTagName('NewProductName')
                             if len(product_name) > 0:
@@ -1921,7 +2027,9 @@ class AVM(SmartPlugin):
                             else:
                                 self.logger.error(
                                     'Argument {} of Attribute {} not available on the FritzDevice with AIN {}.'
-                                    .format(self.get_iattr_value(child.conf,'avm_data_type'), self.get_iattr_value(item.conf,'avm_data_type'), item.conf['ain'].strip()))
+                                        .format(self.get_iattr_value(child.conf, 'avm_data_type'),
+                                                self.get_iattr_value(item.conf, 'avm_data_type'),
+                                                item.conf['ain'].strip()))
                         elif self.get_iattr_value(child.conf, 'avm_data_type') == 'device_name':
                             device_name = xml.getElementsByTagName('NewDeviceName')
                             if len(device_name) > 0:
@@ -1929,7 +2037,9 @@ class AVM(SmartPlugin):
                             else:
                                 self.logger.error(
                                     'Argument {} of Attribute {} not available on the FritzDevice with AIN {}.'
-                                    .format(self.get_iattr_value(child.conf,'avm_data_type'), self.get_iattr_value(item.conf,'avm_data_type'), item.conf['ain'].strip()))
+                                        .format(self.get_iattr_value(child.conf, 'avm_data_type'),
+                                                self.get_iattr_value(item.conf, 'avm_data_type'),
+                                                item.conf['ain'].strip()))
                         elif self.get_iattr_value(child.conf, 'avm_data_type') == 'connection_status':
                             connection_status = xml.getElementsByTagName('NewPresent')
                             if len(connection_status) > 0:
@@ -1937,7 +2047,9 @@ class AVM(SmartPlugin):
                             else:
                                 self.logger.error(
                                     'Argument {} of Attribute {} not available on the FritzDevice with AIN {}.'
-                                    .format(self.get_iattr_value(child.conf,'avm_data_type'), self.get_iattr_value(item.conf,'avm_data_type'), item.conf['ain'].strip()))
+                                        .format(self.get_iattr_value(child.conf, 'avm_data_type'),
+                                                self.get_iattr_value(item.conf, 'avm_data_type'),
+                                                item.conf['ain'].strip()))
                         elif self.get_iattr_value(child.conf, 'avm_data_type') == 'device_id':
                             device_id = xml.getElementsByTagName('NewDeviceId')
                             if len(device_id) > 0:
@@ -1945,7 +2057,9 @@ class AVM(SmartPlugin):
                             else:
                                 self.logger.error(
                                     'Argument {} of Attribute {} not available on the FritzDevice with AIN {}.'
-                                    .format(self.get_iattr_value(child.conf,'avm_data_type'), self.get_iattr_value(item.conf,'avm_data_type'), item.conf['ain'].strip()))
+                                        .format(self.get_iattr_value(child.conf, 'avm_data_type'),
+                                                self.get_iattr_value(item.conf, 'avm_data_type'),
+                                                item.conf['ain'].strip()))
                         elif self.get_iattr_value(child.conf, 'avm_data_type') == 'device_function':
                             device_function = xml.getElementsByTagName('NewFunctionBitMask')
                             if len(device_function) > 0:
@@ -1953,12 +2067,14 @@ class AVM(SmartPlugin):
                             else:
                                 self.logger.error(
                                     'Argument {} of Attribute {} not available on the FritzDevice with AIN {}.'
-                                    .format(self.get_iattr_value(child.conf,'avm_data_type'), self.get_iattr_value(item.conf,'avm_data_type'), item.conf['ain'].strip()))
+                                        .format(self.get_iattr_value(child.conf, 'avm_data_type'),
+                                                self.get_iattr_value(item.conf, 'avm_data_type'),
+                                                item.conf['ain'].strip()))
 
             else:
                 self.logger.error(
-                    'Argument {} of Attribute {} not available on the FritzDevice with AIN {}.'
-                    .format(self.get_iattr_value(child.conf,'avm_data_type'), self.get_iattr_value(item.conf,'avm_data_type'), item.conf['ain'].strip()))
+                    'Attribute {} not available on the FritzDevice with AIN {}.'
+                        .format(self.get_iattr_value(item.conf, 'avm_data_type'), item.conf['ain'].strip()))
 
     def _update_fritz_device_info(self, item):
         """
@@ -1991,7 +2107,8 @@ class AVM(SmartPlugin):
                                               verify=self._verify)
             except Exception as e:
                 if self._fritz_device.is_available():
-                    self.logger.error("Exception when sending POST request, method _update_fritz_device_info: %s" % str(e))
+                    self.logger.error(
+                        "Exception when sending POST request, method _update_fritz_device_info: %s" % str(e))
                     self.set_device_availability(False)
                 return
             if not self._fritz_device.is_available():
@@ -2059,7 +2176,7 @@ class AVM(SmartPlugin):
 
         index = 0
         if self.has_iattr(item.conf, 'index'):
-            index = int(self.get_iattr_value(item.conf, 'index'))-1
+            index = int(self.get_iattr_value(item.conf, 'index')) - 1
 
         soap_data = self._assemble_soap_data(action, self._urn_map['TAM'], {'NewIndex': index})
 
@@ -2117,7 +2234,8 @@ class AVM(SmartPlugin):
                         self.set_device_availability(True)
                     self._response_cache["tam_messages"] = message_result.content
                 else:
-                    self.logger.debug("Accessing tam_messages response cache for action %s and item %s!" % (action, item.property.path))
+                    self.logger.debug("Accessing tam_messages response cache for action %s and item %s!" % (
+                    action, item.property.path))
 
                 try:
                     message_xml = minidom.parseString(self._response_cache["tam_messages"])
@@ -2169,7 +2287,8 @@ class AVM(SmartPlugin):
         headers['SOAPACTION'] = "%s#%s" % (
             self._urn_map['WLANConfiguration'] % str(self.get_iattr_value(item.conf, 'avm_wlan_index')), action)
         soap_data = self._assemble_soap_data(action,
-                                             self._urn_map['WLANConfiguration'] % str(self.get_iattr_value(item.conf, 'avm_wlan_index')))
+                                             self._urn_map['WLANConfiguration'] % str(
+                                                 self.get_iattr_value(item.conf, 'avm_wlan_index')))
 
         if not "wlanconfig_%s_%s" % (self.get_iattr_value(item.conf, 'avm_wlan_index'), action) in self._response_cache:
             try:
@@ -2185,12 +2304,15 @@ class AVM(SmartPlugin):
                 return
             if not self._fritz_device.is_available():
                 self.set_device_availability(True)
-            self._response_cache["wlanconfig_%s_%s" % (self.get_iattr_value(item.conf, 'avm_wlan_index'), action)] = response.content
+            self._response_cache[
+                "wlanconfig_%s_%s" % (self.get_iattr_value(item.conf, 'avm_wlan_index'), action)] = response.content
         else:
-            self.logger.debug("Accessing wlanconfig response cache for action %s and item %s!" % (action, item.property.path))
+            self.logger.debug(
+                "Accessing wlanconfig response cache for action %s and item %s!" % (action, item.property.path))
 
         try:
-            xml = minidom.parseString(self._response_cache["wlanconfig_%s_%s" % (self.get_iattr_value(item.conf, 'avm_wlan_index'), action)])
+            xml = minidom.parseString(
+                self._response_cache["wlanconfig_%s_%s" % (self.get_iattr_value(item.conf, 'avm_wlan_index'), action)])
         except Exception as e:
             self.logger.error("Exception when parsing response: %s" % str(e))
             return
@@ -2245,14 +2367,16 @@ class AVM(SmartPlugin):
                                               verify=self._verify)
             except Exception as e:
                 if self._fritz_device.is_available():
-                    self.logger.error("Exception when sending POST request, method _update_wan_dsl_interface_config: %s" % str(e))
+                    self.logger.error(
+                        "Exception when sending POST request, method _update_wan_dsl_interface_config: %s" % str(e))
                     self.set_device_availability(False)
                 return
             if not self._fritz_device.is_available():
                 self.set_device_availability(True)
             self._response_cache["wan_dsl_interface_config_" + action] = response.content
         else:
-            self.logger.debug("Accessing wan_dsl_interface_config response cache for action %s and item %s!" % (action, item.property.path))
+            self.logger.debug("Accessing wan_dsl_interface_config response cache for action %s and item %s!" % (
+            action, item.property.path))
 
         try:
             xml = minidom.parseString(self._response_cache["wan_dsl_interface_config_" + action])
@@ -2321,14 +2445,18 @@ class AVM(SmartPlugin):
                                               verify=self._verify)
             except Exception as e:
                 if self._fritz_device.is_available():
-                    self.logger.error("Exception when sending POST request, method _update_wan_common_interface_configuration: %s" % str(e))
+                    self.logger.error(
+                        "Exception when sending POST request, method _update_wan_common_interface_configuration: %s" % str(
+                            e))
                     self.set_device_availability(False)
                 return
             if not self._fritz_device.is_available():
                 self.set_device_availability(True)
             self._response_cache["wan_common_interface_configuration_" + action] = response.content
         else:
-            self.logger.debug("Accessing wan_common_interface_configuration response cache for action %s and item %s!" % (action, item.property.path))
+            self.logger.debug(
+                "Accessing wan_common_interface_configuration response cache for action %s and item %s!" % (
+                action, item.property.path))
 
         try:
             xml = minidom.parseString(self._response_cache["wan_common_interface_configuration_" + action])
@@ -2435,14 +2563,16 @@ class AVM(SmartPlugin):
                                               verify=self._verify)
             except Exception as e:
                 if self._fritz_device.is_available():
-                    self.logger.error("Exception when sending POST request, method _update_wan_ip_connection: %s" % str(e))
+                    self.logger.error(
+                        "Exception when sending POST request, method _update_wan_ip_connection: %s" % str(e))
                     self.set_device_availability(False)
                 return
             if not self._fritz_device.is_available():
                 self.set_device_availability(True)
             self._response_cache["wan_ip_connection_" + action] = response.content
         else:
-            self.logger.debug("Accessing wan_ip_connection response cache for action %s and item %s!" % (action, item.property.path))
+            self.logger.debug(
+                "Accessing wan_ip_connection response cache for action %s and item %s!" % (action, item.property.path))
 
         try:
             xml = minidom.parseString(self._response_cache["wan_ip_connection_" + action])
@@ -2492,90 +2622,3 @@ class AVM(SmartPlugin):
             if not xml[0].firstChild is None:
                 data = xml[0].firstChild.data
         return data
-
-    def init_webinterface(self):
-        """"
-        Initialize the web interface for this plugin
-
-        This method is only needed if the plugin is implementing a web interface
-        """
-        try:
-            self.mod_http = Modules.get_instance().get_module(
-                'http')  # try/except to handle running in a core version that does not support modules
-        except:
-            self.mod_http = None
-        if self.mod_http == None:
-            self.logger.error("Plugin '{}': Not initializing the web interface".format(self.get_shortname()))
-            return False
-
-        # set application configuration for cherrypy
-        webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
-        config = {
-            '/': {
-                'tools.staticdir.root': webif_dir,
-            },
-            '/static': {
-                'tools.staticdir.on': True,
-                'tools.staticdir.dir': 'static'
-            }
-        }
-
-        # Register the web interface as a cherrypy app
-        self.mod_http.register_webif(WebInterface(webif_dir, self),
-                                     self.get_shortname(),
-                                     config,
-                                     self.get_classname(), self.get_instance_name(),
-                                     description='')
-
-        return True
-
-
-# ------------------------------------------
-#    Webinterface of the plugin
-# ------------------------------------------
-
-class WebInterface(SmartPluginWebIf):
-
-    def __init__(self, webif_dir, plugin):
-        """
-        Initialization of instance of class WebInterface
-
-        :param webif_dir: directory where the webinterface of the plugin resides
-        :param plugin: instance of the plugin
-        :type webif_dir: str
-        :type plugin: object
-        """
-        self.webif_dir = webif_dir
-        self.plugin = plugin
-        self.logger = plugin.logger
-        self.tplenv = self.init_template_environment()
-
-    @cherrypy.expose
-    def index(self, reload=None, action=None):
-        """
-        Build index.html for cherrypy
-
-        Render the template and return the html file to be delivered to the browser
-
-        :return: contents of the template after beeing rendered
-        """
-        tabcount = 2
-        call_monitor_items = 0
-        if self.plugin._call_monitor:
-            call_monitor_items = self.plugin._monitoring_service.get_item_count_total()
-            tabcount = 3
-
-        tmpl = self.tplenv.get_template('index.html')
-        return tmpl.render(plugin_shortname=self.plugin.get_shortname(), plugin_version=self.plugin.get_version(),
-                           plugin_info=self.plugin.get_info(), tabcount=tabcount,
-                           avm_items=self.plugin.get_fritz_device().get_item_count(),
-                           call_monitor_items=call_monitor_items,
-                           p=self.plugin)
-
-    @cherrypy.expose
-    def reboot(self):
-        self.plugin.reboot()
-
-    @cherrypy.expose
-    def reconnect(self):
-        self.plugin.reconnect()

@@ -2,7 +2,6 @@
 #
 #########################################################################
 #  Copyright 2017 René Frieß                      rene.friess(a)gmail.com
-#  Version 1.3.0.1
 #########################################################################
 #
 #  This file is part of SmartHomeNG.
@@ -28,7 +27,7 @@ from lib.model.smartplugin import SmartPlugin
 
 class Traffic(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.5.0.2"
+    PLUGIN_VERSION = "1.5.1"
     _base_url = 'https://maps.googleapis.com/maps/api/directions/json'
 
     def __init__(self, sh, *args, **kwargs):

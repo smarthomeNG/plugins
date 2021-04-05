@@ -9,15 +9,15 @@ plugin:
     maintainer: msinn, bmxp
     tester: psilo909, onkelandy, Sandman60, brandst
     state: qa-passed
-    keywords: KNX knxd listen cache bus 
+    keywords: KNX knxd listen cache bus
     documentation: http://smarthomeng.de/user/plugins/knx/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1552531-support-thread-zum-knx-plugin
 
-    version: 1.7.4                 # Plugin version
-    sh_minversion: 1.7             # minimum shNG version to use this plugin
+    sh_minversion: 1.8.2a          # minimum shNG version to use this plugin
+    version: 1.7.8                 # Plugin version
 #    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
-    multi_instance: True           # plugin supports multi instance
-    restartable: unknown
+    multi_instance: true           # plugin supports multi instance
+    restartable: true
     classname: KNX                 # class containing the plugin
     attribute_prefix: knx          # prefix of the item-attributes, so attributes have to start with 'knx_'
 
@@ -49,15 +49,22 @@ parameters:
         valid_list:
           - 'on'
           - 'off'
+          - 'logger'
           - 'true'
           - 'false'
-          - 'logger'
         valid_list_description:
-            de: ['Ein', 'Aus', 'Ein', 'Aus', 'in eigenen Logger']
-            en: ['On', 'Off', 'On', 'Off', 'to own logger']
+            de: ['Ein', 'Aus', 'in eigenen Logger', 'Ein', 'Aus']
+            en: ['On', 'Off', 'to own logger', 'On', 'Off']
         description:
             de: "Wenn auf 'on'/'true' gesetzt, wird jedes KNX-Paket im Standard-Logger protokolliert. Wenn 'logger' eingestellt ist, werden alle KNX-Meldungen in einem separaten Logger 'knx_busmonitor' protokolliert."
             en: "If set to 'on'/'true' every KNX packet will be logged to the default plugin logger. If set to 'logger', all knx messages will be logged to a separate logger 'knx_busmonitor'"
+
+    log_own_packets:
+        type: bool
+        default: False
+        description:
+            de: 'Wenn der Wert auf "True" gesetzt ist, loggt der Busmonitor auch Pakete, die vom Plugin selbst geschrieben werden.'
+            en: 'If set to True, the busmonitor also logs packets coming from the plugin.'
 
     provider:
         type: str
@@ -117,7 +124,7 @@ parameters:
             de: 'Wenn diese Option auf "True" gesetzt ist, kann eine ETS Projektdatei hochgeladen und die enthaltenen Gruppenadressen angezeigt werden'
             en: 'if set to True, an ETS project file might be uploaded and contained group addresses shown'
 
-        
+
 item_attributes:
     # Definition of item attributes defined by this plugin
     knx_dpt:
@@ -131,6 +138,8 @@ item_attributes:
          - '5'
          - '5001'
          - '5.001'
+         - '5999'
+         - '5.999'
          - '6'
          - '7'
          - '8'
@@ -153,6 +162,7 @@ item_attributes:
          - '24'
          - '229'
          - '232'
+         - '251'
          - '275.100'
         valid_list_description:
             de:
@@ -164,6 +174,8 @@ item_attributes:
              - 'Relativwert, 0 … 255 (8 Bit) -> num'
              - 'Relativwert, 0 … 100 % (8 Bit) -> num'
              - 'Relativwert, 0 … 100 % (8 Bit) -> num'
+             - 'Spezial DPT für Tebis TS Systeme, (8 Bit) -> num'
+             - 'Spezial DPT für Tebis TS Systeme, (8 Bit) -> num'
              - 'Ganzzahl -128 - 127 (8 Bit) -> num'
              - 'Ganzzahl 0 - 65535 (16 Bit) -> num'
              - 'Ganzzahl -32768 - 32767 (16 Bit) -> num'
@@ -186,6 +198,7 @@ item_attributes:
              - 'Unlimitierte Zeichenkette [8859_1] (var) -> str'
              - 'Smartmeter Werte Tripel: [Ganzzahl -2147483648 - 2147483647(32 Bit), 0-255 (8 Bit), 0-255 (8 Bit)] (6 Byte) -> list'
              - 'RGB: [0, 0, 0] - [255, 255, 255] (3 Byte) -> list'
+             - 'RGBW: [0, 0, 0, 0] - [255, 255, 255, 255] (4 Byte)-> list'
              - 'Quadrupel mit Solltemperaturen für Komfort, Standby, Nachtabsenkung, Frostschutz (4 Fließkommazahlen mit 16 Bit) -> list'
             en:
              - 'Switch (1 Bit) -> bool'
@@ -196,6 +209,8 @@ item_attributes:
              - 'Relative value, 0 … 255 (8 Bit) -> num'
              - 'Relative value, 0 … 100 % (8 Bit) -> num'
              - 'Relative value, 0 … 100 % (8 Bit) -> num'
+             - 'Special DPT for Tebis TS systems, (8 Bit) -> num'
+             - 'Special DPT for Tebis TS systems, (8 Bit) -> num'
              - 'Integer -128 - 127 (8 Bit) -> num'
              - 'Integer 0 - 65535 (16 Bit) -> num'
              - 'Integer -32768 - 32767 (16 Bit) -> num'
@@ -218,6 +233,7 @@ item_attributes:
              - 'unlimited string [8859_1] (var) -> str'
              - 'Smartmeter value triple: [Integer -2147483648 - 2147483647(32 Bit), 0-255 (8 Bit), 0-255 (8 Bit)] (6 Byte) -> list'
              - 'RGB: [0, 0, 0] - [255, 255, 255] (3 Byte) -> list'
+             - 'RGBW: [0, 0, 0, 0] - [255, 255, 255, 255] (4 Byte)-> list'
              - 'Quadrupel with set temperatures comfort, standby, night reduction, frost protection (4 float with 16 Bit) -> list'
         description:
             de: 'Dieses Attribut setzt den Typ des KNX-Datenpunktes, der für die Konvertierung der KNX-Nachrichten in das interne SmartHomeNG-Format verwendet wird. Die Angabe ist zwingend erforderlich ist. Wenn Sie keinen Wert angeben, wird das Element vom Plugin ignoriert. Der DPT muss dem Typ des Artikels entsprechen!'
@@ -331,6 +347,8 @@ plugin_functions:
                  - '5'
                  - '5001'
                  - '5.001'
+                 - '5999'
+                 - '5.999'
                  - '6'
                  - '7'
                  - '8'
@@ -353,6 +371,7 @@ plugin_functions:
                  - '24'
                  - '229'
                  - '232'
+                 - '251'
                  - '275.100'
                 valid_list_description:
                     de:
@@ -364,6 +383,8 @@ plugin_functions:
                      - 'Relativwert, 0 … 255 (8 Bit) -> num'
                      - 'Relativwert, 0 … 100 % (8 Bit) -> num'
                      - 'Relativwert, 0 … 100 % (8 Bit) -> num'
+                     - 'Spezial DPT für Tebis TS Systeme, (8 Bit) -> num'
+                     - 'Spezial DPT für Tebis TS Systeme, (8 Bit) -> num'
                      - 'Ganzzahl -128 - 127 (8 Bit) -> num'
                      - 'Ganzzahl 0 - 65535 (16 Bit) -> num'
                      - 'Ganzzahl -32768 - 32767 (16 Bit) -> num'
@@ -386,6 +407,7 @@ plugin_functions:
                      - 'Unlimitierte Zeichenkette [8859_1] (var) -> str'
                      - 'Smartmeter Werte Tripel: [Ganzzahl -2147483648 - 2147483647(32 Bit), 0-255 (8 Bit), 0-255 (8 Bit)] (6 Byte) -> list'
                      - 'RGB: [0, 0, 0] - [255, 255, 255] (3 Byte) -> list'
+                     - 'RGBW: [0, 0, 0, 0] - [255, 255, 255, 255] (4 Byte)-> list'
                      - 'Quadrupel mit Solltemperaturen für Komfort, Standby, Nachtabsenkung, Frostschutz (4 Fließkommazahlen mit 16 Bit) -> list'
                     en:
                      - 'Switch (1 Bit) -> bool'
@@ -396,6 +418,8 @@ plugin_functions:
                      - 'Relative value, 0 … 255 (8 Bit) -> num'
                      - 'Relative value, 0 … 100 % (8 Bit) -> num'
                      - 'Relative value, 0 … 100 % (8 Bit) -> num'
+                     - 'Special DPT for Tebis TS systems, (8 Bit) -> num'
+                     - 'Special DPT for Tebis TS systems, (8 Bit) -> num'
                      - 'Integer -128 - 127 (8 Bit) -> num'
                      - 'Integer 0 - 65535 (16 Bit) -> num'
                      - 'Integer -32768 - 32767 (16 Bit) -> num'
@@ -418,6 +442,7 @@ plugin_functions:
                      - 'unlimited string [8859_1] (var) -> str'
                      - 'Smartmeter value triple: [Integer -2147483648 - 2147483647(32 Bit), 0-255 (8 Bit), 0-255 (8 Bit)] (6 Byte) -> list'
                      - 'RGB: [0, 0, 0] - [255, 255, 255] (3 Byte) -> list'
+                     - 'RGBW: [0, 0, 0, 0] - [255, 255, 255, 255] (4 Byte)-> list'
                      - 'Quadrupel with set temperatures comfort, standby, night reduction, frost protection (4 float with 16 Bit) -> list'
                 description:
                     de: "KNX Datenpunkttyp"
@@ -457,9 +482,3 @@ plugin_functions:
                 description:
                     de: "Gruppenadresse an die das Datum gesendet wird"
                     en: "Group address to send the date to"
-
-
-
-
-
-

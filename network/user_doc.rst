@@ -5,9 +5,6 @@ Requirements
 ------------
 
 Dieses Plugin besitzt keine Abhängigkeiten von anderen Bibliotheken. 
-Es ist zu beachten das Portangaben unter Linux größer als 1024 sein müssen damit
-sie ohne root Zugriff genutzt werden können. Ports unter 1025 sind 
-*wohdefinierte Ports* und damit dem System vorbehalten.
 
 Konfiguration
 -------------
@@ -24,12 +21,13 @@ plugin.yaml
        class_path: plugins.network
        # ip: 0.0.0.0
        # port: 2727
-       tcp: 'yes'
+       tcp: yes
        tcp_acl:
          - 127.0.0.1
          - 192.168.0.34
-       # udp: 'no'
+       # udp: no
        # udp_acl: '*'
+       http: 12345
 
 Attribute
 ~~~~~~~~~
@@ -38,6 +36,8 @@ Attribute
 
 -  ``port``: gibt den hörenden Port für generisch eintreffende TCP und
    UDP Verbindungen an. Der Standard ist Port 2727.
+
+:Note: Es ist zu beachten, dass Portangaben unter Linux größer als 1024 sein müssen, damit sie ohne root-Zugriff genutzt werden können. Ports unter 1025 sind *reservierte Ports* und damit dem System vorbehalten.
 
 -  ``tcp``: Das Plugin akzeptiert grundsätzlich keine TCP Verbindungen. 
    Erst wenn dieses Attribut auf 'yes' gesetzt wird, werden TCP Verbindungen akzeptiert.

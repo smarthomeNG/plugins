@@ -20,6 +20,9 @@
 #########################################################################
 from . import StateEngineCondition
 from . import StateEngineTools
+import collections.abc
+from collections import OrderedDict
+
 
 # Class representing a set of conditions
 class SeConditionSet(StateEngineTools.SeItemChild):
@@ -38,8 +41,12 @@ class SeConditionSet(StateEngineTools.SeItemChild):
         return self.__conditions
 
     @property
+    def evals_items(self):
+        return self.__evals_items
+
+    @property
     def dict_conditions(self):
-        result = {}
+        result = OrderedDict()
         for name in self.__conditions:
             result.update({name: self.__conditions[name].get()})
         return result
@@ -47,20 +54,26 @@ class SeConditionSet(StateEngineTools.SeItemChild):
     # Initialize the condition set
     # abitem: parent SeItem instance
     # name: Name of condition set
-    def __init__(self, abitem, name, id):
+    # conditionid: Condition set item or dict
+    def __init__(self, abitem, name, conditionid):
         super().__init__(abitem)
         self.__name = name
-        self.__id = id
-        self.__conditions = {}
+        self.__id = conditionid
+        self.__conditions = OrderedDict()
+        self.__evals_items = {}
 
     def __repr__(self):
-        return "{}".format(self.__conditions)
+        return "SeConditionSet {}".format(self.__conditions)
 
     # Update condition set
     # item: item containing settings for condition set
     # grandparent_item: grandparent item of item (containing the definition if items and evals)
     def update(self, item, grandparent_item):
         # Update conditions in condition set
+        if isinstance(item, collections.abc.Mapping) or isinstance(grandparent_item, collections.abc.Mapping):
+            self._log_error("Condition '{0}' item or parent is a dictionary. Something went wrong!", item)
+            return
+
         if item is not None:
             for attribute in item.conf:
                 func, name = StateEngineTools.partition_strip(attribute, "_")
@@ -71,6 +84,7 @@ class SeConditionSet(StateEngineTools.SeItemChild):
                     if name not in self.__conditions:
                         self.__conditions[name] = StateEngineCondition.SeCondition(self._abitem, name)
                     self.__conditions[name].set(func, item.conf[attribute])
+                    self.__conditions.move_to_end(name, last=True)
 
                 except ValueError as ex:
                     raise ValueError("Condition {0} error: {1}".format(name, ex))
@@ -80,8 +94,8 @@ class SeConditionSet(StateEngineTools.SeItemChild):
             func, name = StateEngineTools.partition_strip(attribute, "_")
             if name == "":
                 continue
-
             # update item/eval in this condition
+
             if func == "se_item" or func == "se_eval":
                 if name not in self.__conditions:
                     self.__conditions[name] = StateEngineCondition.SeCondition(self._abitem, name)
@@ -90,6 +104,7 @@ class SeConditionSet(StateEngineTools.SeItemChild):
                 except ValueError as ex:
                     text = "Item '{0}', Attribute '{1}' Error: {2}"
                     raise ValueError(text.format(grandparent_item.property.path, attribute, ex))
+                self.__evals_items.update({name: self.__conditions[name].get()})
 
     # Check the condition set, optimize and complete it
     # item_state: item to read from
@@ -117,8 +132,8 @@ class SeConditionSet(StateEngineTools.SeItemChild):
             self.__conditions[name].write_to_logger()
             self._log_decrease_indent()
 
-    def __currentconditionset_set(self, id, name):
-        self._abitem.set_variable('current.conditionset_id', id)
+    def __currentconditionset_set(self, conditionsetid, name):
+        self._abitem.set_variable('current.conditionset_id', conditionsetid)
         self._abitem.set_variable('current.conditionset_name', name)
 
     # Check all conditions in the condition set. Return

@@ -183,13 +183,13 @@ class EEP_Parser():
     def _parse_eep_A5_12_01(self, payload, status):
         # Status command from switch actor with powermeter, for example Eltako FSVA-230
         results = {}
-        status = payload[3]
-        is_data = (status & 0x08) == 0x08
+        status_byte = payload[3]
+        is_data = (status_byte & 0x08) == 0x08
         if(is_data == False):
             self.logger.debug("enocean: processing A5_12_01: powermeter: is learn telegram. Aborting.")
             return results
-        is_power = (status & 0x04) == 0x04
-        div_enum = (status & 0x03)
+        is_power = (status_byte & 0x04) == 0x04
+        div_enum = (status_byte & 0x03)
         divisor = 1.0
         if(div_enum == 0):
             divisor = 1.0
@@ -213,6 +213,13 @@ class EEP_Parser():
         value = (payload[0] << 16) + (payload[1] << 8) + payload[2]
         value = value / divisor
         self.logger.debug("enocean: processing A5_12_01: powermeter: {0} W".format(value))
+
+        #debug output for wrong power values:
+        if value > 1500:
+            self.logger.warning("enocean: A5_12_01 exception: value {0}, divisor {1}, divenum {2}, statusPayload {3}, header status {4}".format(value, divisor, div_enum, status_byte, status))
+            self.logger.warning("enocean: A5_12_01 exception: payloads 0-3: {0},{1},{2},{3}".format(payload[0], payload[1],payload[2],payload[3]))
+            results['DEBUG'] = 1
+
         results['VALUE'] = value
         return results
 

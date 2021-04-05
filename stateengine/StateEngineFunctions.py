@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
-#  Copyright 2014-     Thomas Ernst                       offline@gmx.net
+#  Copyright 2014-2018 Thomas Ernst                       offline@gmx.net
+#  Copyright 2019- Onkel Andy                       onkelandy@hotmail.com
 #########################################################################
 #  Finite state machine plugin for SmartHomeNG
 #
@@ -22,6 +23,7 @@ import logging
 import threading
 import re
 from . import StateEngineLogger
+from . import StateEngineTools
 from lib.item import Items
 
 
@@ -39,8 +41,12 @@ class SeFunctions:
         self.logger = logger
         self.__sh = smarthome
         self.__locks = {}
+        self.__global_struct = {}
         self.__ab_alive = False
-        self.items = Items.get_instance()
+        self.itemsApi = Items.get_instance()
+
+    def __repr__(self):
+        return "SeFunctions"
 
     # get a lock object
     # lock_id: Id of the lock object to return
@@ -58,7 +64,7 @@ class SeFunctions:
     # If the original caller/source should be considered, the method returns the inverted value of the item.
     # Otherwise, the method returns the current value of the item, so that no change will be made
     def manual_item_update_eval(self, item_id, caller=None, source=None):
-        item = self.items.return_item(item_id)
+        item = self.itemsApi.return_item(item_id)
         if item is None:
             self.logger.error("manual_item_update_eval: item {0} not found!", item_id)
 
@@ -72,7 +78,7 @@ class SeFunctions:
 
             if "se_manual_logitem" in item.conf:
                 elog_item_id = item.conf["se_manual_logitem"]
-                elog_item = self.items.return_item(elog_item_id)
+                elog_item = self.itemsApi.return_item(elog_item_id)
                 if elog_item is None:
                     self.logger.error("manual_item_update_item: se_manual_logitem {0} not found!", elog_item_id)
                     elog = StateEngineLogger.SeLoggerDummy()
@@ -87,12 +93,15 @@ class SeFunctions:
             retval_trigger = not item()
             elog.info("Current value of item {0} is {1}", item_id, retval_no_trigger)
 
-            original = self.get_original_caller(elog, caller, source)
-            elog.info("original trigger by '{0}'", original)
+            original_caller, original_source = StateEngineTools.get_original_caller(elog, caller, source)
+            elog.info("get_caller({0}, {1}): original trigger by {2}:{3}", caller, source,
+                      original_caller, original_source)
+            original = "{}:{}".format(original_caller, original_source)
             entry = re.compile("Stateengine Plugin", re.IGNORECASE)
             result = entry.match(original)
             if result is not None:
-                elog.info("Manual item updated by Stateengine Plugin. Ignoring change and writing value {}", retval_no_trigger)
+                elog.info("Manual item updated by Stateengine Plugin. Ignoring change and writing value {}",
+                          retval_no_trigger)
                 return retval_no_trigger
 
             if "se_manual_on" in item.conf:
@@ -171,27 +180,3 @@ class SeFunctions:
                 return retval_trigger
         finally:
             lock.release()
-
-    # determine original caller/source
-    # elog: instance of logging class
-    # caller: caller
-    # source: source
-    def get_original_caller(self, elog, caller, source, type='update'):
-        if isinstance(source, str):
-            original_manipulated_by = source
-        else:
-            original_manipulated_by = "None"
-        while caller == "Eval":
-            original_item = self.items.return_item(source)
-            if original_item is None:
-                elog.info("get_caller({0}, {1}): original item not found", caller, source)
-                break
-            original_manipulated_by = original_item.property.last_update_by if type == "update" else original_item.property.last_change_by
-            original_manipulated_time = original_item.property.last_update if type == "update" else original_item.property.last_change
-            oc = caller
-            os = source
-            caller, __, source = original_manipulated_by.partition(":")
-            elog.info("get_caller({0}, {1}): updated by {2} at {3}", oc, os,
-                        original_manipulated_by, original_manipulated_time)
-
-        return original_manipulated_by

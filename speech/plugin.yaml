@@ -11,10 +11,10 @@ plugin:
     keywords: speech recognition parser
     documentation: http://smarthomeng.de/user/plugins/speech/user_doc.html
     support: http://knx-user-forum.de/forum/supportforen/smarthome-py/39857-plugin-speech-parser
-    version: 1.6.0                  # Plugin version
-    sh_minversion: 1.5              # minimum shNG version to use this plugin
+    version: 1.7.0                  # Plugin version
+    sh_minversion: 1.8.2a           # minimum shNG version to use this plugin
     # sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
-    multi_instance: False           # plugin supports multi instance
+    multi_instance: false           # plugin supports multi instance
     restartable: true
     classname: Speech_Parser        # class containing the plugin
 
@@ -65,4 +65,3 @@ plugin_functions: NONE
 
 logic_parameters: NONE
     # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)
-

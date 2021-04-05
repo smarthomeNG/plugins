@@ -29,7 +29,7 @@ from jinja2 import Environment, FileSystemLoader
 import cherrypy
 from lib.module import Modules
 from lib.model.smartplugin import *
-from lib.network import Network
+from lib.utils import Utils
 from plugins.unifi.ubiquiti.unifi import API as UniFiAPI
 from plugins.unifi.ubiquiti.unifi import DataException as UniFiDataException
 import ruamel.yaml as yaml
@@ -147,7 +147,7 @@ class UniFiControllerClientModel():
 
         if n['type'] == "wired_client":
             node_body[UniFiConst.ATTR_TYPE] = UniFiConst.TYPE_CL_PRESENT
-            node_body['mac'] = n['mac']
+            node_body[UniFiConst.ATTR_MAC] = n['mac']
             node_body['type'] = 'bool'
             node_body['hostname'] = {}
             node_body['hostname'][UniFiConst.ATTR_TYPE] = UniFiConst.TYPE_CL_HOSTNAME
@@ -299,6 +299,7 @@ class UniFiControllerClient(SmartPlugin):
         from bin.smarthome import VERSION
         if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
             self.logger = logging.getLogger(__name__)
+        self._pollfailed = 0
 
         # get the parameters for the plugin (as defined in metadata plugin.yaml):
         self._unifi_controller_url = self.get_parameter_value(UniFiConst.PARAMETER_URL)
@@ -376,7 +377,7 @@ class UniFiControllerClient(SmartPlugin):
             self.logger.error(msg + " in item " + item.path())
 
     def _mac_check(self, item, item_type: str, leaf_item=None):
-        if not Network.is_mac(self.get_iattr_value(item.conf, item_type)):
+        if not Utils.is_mac(self.get_iattr_value(item.conf, item_type)):
             self._log_item_error(item, "invalid {} attribute provided from {}".format(item_type, item.path()))
             return False
         return True
@@ -652,8 +653,10 @@ class UniFiControllerClient(SmartPlugin):
             self._poll_with_unifi_type(UniFiConst.TYPE_AP_ENABLED, lambda i: self._check_ap_enabled(i))
             self._poll_with_unifi_type(UniFiConst.TYPE_DV_IP, lambda i: self._get_device_info(i, 'ip'))
             self._poll_with_unifi_type(UniFiConst.TYPE_DV_NAME, lambda i: self._get_device_info(i, 'name'))
+            self._pollfailed = 0
         except ConnectionError as ex:
-            self.logger.error("Poll failed: " + repr(ex))
+            self._pollfailed += 1
+            self.logger.error("Poll failed: {} for {} time(s) in a row.".format(repr(ex), self._pollfailed))
 
     def init_webinterface(self):
         """"

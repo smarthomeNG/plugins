@@ -1,17 +1,19 @@
 .. index:: Plugins; hue2 (Philips Hue v2)
 .. index:: hue hue2
 
+====
 hue2
-####
+====
 
-Das Plugin unterstützt Philips Hue Bridges. Es ist eine kompleete Neuentwicklung mit einem deutlich erweitertem
-Funktionsumfang gegenüber dem alten Hue Plugins:
+Das Plugin unterstützt Philips Hue Bridges. Es ist eine komplette Neuentwicklung mit einem deutlich erweiterten
+Funktionsumfang gegenüber dem alten Hue Plugin:
 
 - Die Authorisierung an der Hue Bride ist in das Plugin integriert und erfolgt über das Webinferface des Plugins.
 - Das Plugin hat eine Funktion um aktive Hue Bridges im lokalen Netzwerk zu finden.
 - Das Plugin unterstützt je Instanz im Gegensatz zum alten Plugin nur eine Bridge. Dafür ist es Multi-Instance fähig,
   so dass bei Einsatz mehrerer Bridges einfach mehrere Instanzen des Plugins konfiguriert werden können.
 - Zur Vereinfachten Einrichtung von Items liefert das Plugin Struktur Templates.
+- Funktionalitäten von Hue Gruppen werden großteils unterstützt.
 
 
 Plugin Instanz hinzufügen
@@ -25,7 +27,7 @@ im Web Interface.
 Konfiguration
 =============
 
-Die grundlegende Konfiguration des Plugins selbst, erfolgt durch das Web Interface des Plugins. Mit dem Wab Interface
+Die grundlegende Konfiguration des Plugins selbst, erfolgt durch das Web Interface des Plugins. Mit dem Web Interface
 kann die Verbindung zu einer Bridge hergestellt werden kann. Optionale weitere Einstellungen (z.B. Abfrage Zyklus)
 können über die Admin GUI vorgenommen werden. Diese Parameter und die Informationen zur Item-spezifischen
 Konfiguration des Plugins sind unter :doc:`/plugins_doc/config/hue2` beschrieben.
@@ -69,7 +71,20 @@ Verwendung von structs
 ----------------------
 
 Mit der Hilfe von Struktur Templates wird die Einrichtung von Items stark vereinfacht. Hierzu werden für
-Leuchten die Templates **hue2.light** und **hue2.light_extended** vom Plugin mitgeliefert.
+Leuchten Templates vom Plugin mitgeliefert.
+
+Grundsätzliche Item Definitionen für Leuchten:
+
+- **hue2.light** - Standard Definition für Philips Hue Leuchten
+- **hue2.light_ww** - Standard Definition für Philips Warmwhite Leuchten
+- **hue2.light_xy** - Standard Definition für Leuchten von Dritt-Anbietern, die kein **sat** und **hue** unterstützen, sondern nur **xy**
+
+Erweiterte Item Definitionen für oben genannten Leuchten-Typen:
+
+- **hue2.light_extended**
+- **hue2.light_ww_extended**
+- **hue2.light_xy_extended**
+
 
 Ein Item für eine Hue Leuchte kann einfach folgendermaßen konfiguriert werden, indem nur die Id der zu
 steuernden Leuchts als ``hue2_id`` angegeben wird:
@@ -139,7 +154,7 @@ Mit ``hue2_resource`` wird festgelegt, auf welche Resource der Bridge zugegriffe
 
 .. note::
 
-    Bisher ist nur der Resouce-Typ ``light`` implementiert.
+    Bisher sind nur die Resouce-Typen ``light`` und ``group`` implementiert.
 
 Mit ``hue2_id`` wird festgelegt auf welche Resource des gewählten Typs zugegriffen werden soll. Die Id kann im
 Web Interface im Tab des entsprechenden Resource-Typs nachgesehen werden.
@@ -159,6 +174,8 @@ Für den Resource-Typ ``light`` sind die folgenden Funktionen implementiert (ein
     - ``type``
     - ``modelid``
     - ``swversion``
+    - ``activate_scene``
+
 
 Die vollständige Übersicht über die unterstützen Funktionen und die Datentypen dazu kann auf der
 Seite :doc:`/plugins_doc/config/hue2` in der Beschreibung des Item Attributes ``hue2_function`` nachgelesen

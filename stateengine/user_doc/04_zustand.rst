@@ -1,11 +1,12 @@
 
 .. index:: Stateengine; Zustand-Item
 
+============
 Zustand-Item
 ============
 
-.. rubric:: Zustände
-   :name: daszustandsitem
+Zustände
+--------
 
 Alle Items unterhalb des Regelwerk-Items (``rules``)
 beschreiben Zustände des Objekts ("Zustands-Item").
@@ -21,8 +22,8 @@ Die Ids der Zustands-Items sind beliebig, im Beispiel ``day``.
                 day:
                     name: Tag # optional, wie bei allen Items
 
-.. rubric:: Bedingungen
-   :name: zustanditem_bedingungen
+Bedingungen
+-----------
 
 Jeder Zustand kann eine beliebige Anzahl von Bedingungsgruppen
 haben. Jede Bedingungsgruppe definiert ein Set an Bedingungen das
@@ -33,8 +34,8 @@ Jede Bedingungsgruppe wird durch ein Item
 abgebildet. Details zu den Bedingungen
 werden im Abschnitt :ref:`Bedingungen` erläutert.
 
-.. rubric:: Aktionen
-   :name: aktionenintro
+Aktionen
+--------
 
 Jeder Zustand kann eine beliebige Anzahl an Aktionen definieren.
 Sobald ein Zustand aktueller Zustand wird, werden die Aktionen des
@@ -44,8 +45,8 @@ festlegen, wann eine Aktion ausgeführt wird.
 Details zu den Aktionen werden im Abschnitt
 :ref:`Aktionen` erläutert.
 
-.. rubric:: Templates für Zustände
-   :name: zustandtemplates
+Templates für Zustände
+----------------------
 
 Da viele Items immer wieder die gleichen Zustände inklusive Aktionen und Bedingungen
 nutzen, gibt es die Möglichkeit, Zustände als Vorlagen zu deklarieren und diese
@@ -67,6 +68,7 @@ zum anderen stellt das Plugin folgende Vorlagen fix fertig bereit:
 Gemeinsam mit der Vorlage stateengine.general, die allgemein relevante Items automatisch erstellt, könnte
 ein Item wie unten zu sehen bestückt werden. Das Einbinden der Zustandsvorlagen findet dabei auf gleicher
 Hierarchieebene wie das Regelwerk-Item statt. Genauere Angaben hierzu sind unter :ref:`Zustand-Templates` zu finden.
+Informationen zu ``se_use`` findet man unter :ref:`Sonstiges`.
 
 Zusätzlich können eigene Zustände (beispielsweise day) definiert werden.
 

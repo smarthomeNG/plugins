@@ -1,0 +1,326 @@
+# Metadata for the plugin
+plugin:
+    # Global plugin attributes
+    type: system                   # plugin type (gateway, interface, protocol, system, web)
+    description:
+        de: 'Raum Temperatur Regler v2'
+        en: 'Room Temperature controller v2'
+    maintainer: msinn
+#    tester:                         # Who tests this plugin?
+    state: ready                    # change to ready when done with development
+#    keywords: iot xyz
+#    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1586747-support-thread-für-das-rtr2-plugin
+
+    version: 2.0.0                  # Plugin version (must match the version specified in __init__.py)
+    sh_minversion: 1.8.0            # minimum shNG version to use this plugin
+#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    py_minversion: 3.6             # minimum Python version to use for this plugin
+#    py_maxversion:                 # maximum Python version to use for this plugin (leave empty if latest)
+    multi_instance: False           # plugin supports multi instance
+    restartable: False
+    configuration_needed: False     # False: The plugin will be enabled by the Admin GUI without configuration
+    classname: Rtr2                 # class containing the plugin
+
+parameters:
+    # Definition of parameters to be configured in etc/plugin.yaml (enter 'parameters: NONE', if section should be empty)
+    default_Kp:
+        type: num
+        default: 4
+        description:
+            de: 'Gebäuchliche Werte: Wasserheizung=4 K, Fußbodenheitzung=4 K, Split Unit=4 K'
+            en: '...'
+
+    default_Ki:
+        type: num
+        default: 120
+        description:
+            de: 'Gebäuchliche Werte: Wasserheizung=120 Min, Fußbodenheitzung=150 Min, Split Unit=60 Min'
+            en: '...'
+
+    #default_Kd:
+    #    type: num
+    #    description:
+    #        de: '(Zukünftige Erweiterung für PID-Regler)'
+    #        en: '...'
+
+    comfort_temp:
+        type: num
+        default: 22.0
+        description:
+            de: 'Standard Vorgabe für die Temperatur im Komfort Modus'
+            en: '...'
+
+    standby_reduction:
+        type: num
+        default: 1.0
+        description:
+            de: 'Standard Vorgabe für die Temperatur im Standby Modus'
+            en: '...'
+
+    night_reduction:
+        type: num
+        default: 3.0
+        description:
+            de: 'Standard Vorgabe für die Temperatur im Nacht Modus (bei Nachtabsenkung)'
+            en: '...'
+
+    fixed_reduction:
+        type: bool
+        default: True
+        description:
+            de: 'Soll die Temperatur Differenz zwischen Komfort Modus und den anderen Modi konstant sein?'
+            en: '...'
+
+    frost_temp:
+        type: num
+        default: 7.0
+        description:
+            de: 'Standard Vorgabe für die Temperatur im Frostschutz Modus'
+            en: '...'
+
+    hvac_mode:
+        type: int
+        default: 2
+        valid_min: 1
+        valid_max: 4
+        description:
+            de: 'Modus Standard Vorgabe: 1=Komfort, 2=Standby, 3=Nacht, 4=Frostschutz'
+            en: '...'
+
+    valve_protect:
+        type: bool
+        default: True
+        description:
+            de: "Standard Vorgabe für die Aktivierung der Ventilschutz Einstellung der Regler."
+            en: "..."
+
+    max_output:
+        type: num
+        valid_min: 20
+        valid_max: 100
+        default: 100
+        description:
+            de: "Standard Vorgabe für den maximalen Stellwert der Regler."
+            en: "..."
+
+    min_output:
+        type: num
+        valid_min: 0
+        valid_max: 25
+        default: 0
+        description:
+            de: "Standard Vorgabe für den minimalen Stellwert der Regler."
+            en: "..."
+
+item_attributes:
+    # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)
+
+    rtr2_id:
+        type: str
+        description:
+            de: "ID des anzusteuernden rtr. Die Funktion des Items wird mit 'rtr2_function' festgelegt."
+            en: "..."
+
+    rtr2_function:
+        type: str
+        description:
+            de: "Anzusteuernde Funktion für den gewählten rtr"
+            en: "..."
+        valid_list:
+          - ''
+          - comfort_mode
+          - standby_mode
+          - night_mode
+          - frost_mode
+          - hvac_mode
+          - heating_status
+          - lock_status
+          - temp_set
+          - temp_actual
+          - control_output
+          - setting_temp_comfort
+          - setting_temp_standby
+          - setting_temp_night
+          - setting_night_reduction
+          - setting_standby_reduction
+          - setting_fixed_reduction
+          - setting_temp_frost
+          - setting_min_output
+          - setting_max_output
+
+        valid_list_description:
+            de:
+              - "<noch keine Funktion gewählt>"
+              - "Mode 'comfort' setzen -> bool, r/w"
+              - "Mode 'standby' setzen -> bool, r/w"
+              - "Mode 'night' setzen -> bool, r/w"
+              - "Mode 'frost' setzen -> bool, r/w"
+              - "Mode 'hvac' setzen -> num, r/w"
+              - "Heiz Status -> bool, r/o"
+              - "Sperr Status -> bool, r/w (r/o)"
+              - "Soll Temp setzen -> num, r/o"
+              - "Ist Temp setzen -> num, w/o"
+              - "Stellwert -> num, r/o"
+              - "Setting: Komfort Temp setzen -> num, r/w"
+              - "Setting: Standby Temp setzen -> num, r/w"
+              - "Setting: Nacht Temp setzen -> num, r/w"
+              - "Setting: Nachtabsenkung setzen -> num, r/w"
+              - "Setting: Standby-Absenkung setzen -> num, r/w"
+              - "Setting: Feste Absenkung -> bool, r/w"
+              - "Setting: Frostschutz Temp setzen -> num, r/w"
+              - "Setting: Minimaler Stellwert -> num(0-25), r/w"
+              - "Setting: Maximaler Stellwert -> num(25-100), r/w"
+            en:
+              - "..."
+              - "..."
+              - "..."
+              - "..."
+              - "..."
+              - "..."
+              - "..."
+              - "..."
+              - "..."
+              - "..."
+              - "..."
+              - "..."
+              - "..."
+              - "..."
+              - "..."
+              - "..."
+              - "..."
+              - "..."
+              - "..."
+
+    rtr2_settings:
+        type: list
+        description:
+            de: "Initale Einstellungen für den Rtr"
+            en: "Inital settings for the Rtr"
+
+    rtr2_controller_settings:
+        type: list
+        description:
+            de: "Initale Einstellungen für den Controller, falls abweichend von den Plugin Standardwerten"
+            en: "Inital settings for the controller, if different from the plugin defaults"
+
+item_structs:
+    # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
+    rtr:
+        name: Vorlage-Struktur für einen Raumtemperatur Regler
+
+        type: foo
+        #rtr2_id@instance: living
+
+        komfort:
+            type: bool
+            rtr2_id@instance: ..:.
+            rtr2_function@instance: comfort_mode
+
+        normal:
+            type: bool
+            rtr2_id@instance: ..:.
+            rtr2_function@instance: standby_mode
+
+        nacht:
+            type: bool
+            rtr2_id@instance: ..:.
+            rtr2_function@instance: night_mode
+
+        frost:
+            type: bool
+            rtr2_id@instance: ..:.
+            rtr2_function@instance: frost_mode
+
+        hvac:
+            type: num
+            rtr2_id@instance: ..:.
+            rtr2_function@instance: hvac_mode
+
+        heizt:
+            type: bool
+            rtr2_id@instance: ..:.
+            rtr2_function@instance: heating_status
+
+        gesperrt:
+            type: bool
+            rtr2_id@instance: ..:.
+            rtr2_function@instance: lock_status
+
+        soll_temp:
+            type: num
+            rtr2_id@instance: ..:.
+            rtr2_function@instance: temp_set
+
+        ist_temp:
+            type: num
+            rtr2_id@instance: ..:.
+            rtr2_function@instance: temp_actual
+
+        stellwert:
+            type: num
+            rtr2_id@instance: ..:.
+            rtr2_function@instance: control_output
+
+        stellwert_text:
+            type: str
+            eval: "'{:.1f}%'.format(sh...stellwert(),2)"
+            eval_trigger: ..stellwert
+
+        settings:
+            komfort_temp:
+                type: num
+                rtr2_id@instance: ...:.
+                rtr2_function@instance: setting_temp_comfort
+
+            standby_temp:
+                type: num
+                rtr2_id@instance: ...:.
+                rtr2_function@instance: setting_temp_standby
+
+            nacht_temp:
+                type: num
+                rtr2_id@instance: ...:.
+                rtr2_function@instance: setting_temp_night
+
+            feste_absenkung:
+                type: bool
+                rtr2_id@instance: ...:.
+                rtr2_function@instance: setting_fixed_reduction
+
+            nacht_absenkung:
+                type: num
+                rtr2_id@instance: ...:.
+                rtr2_function@instance: setting_night_reduction
+
+            standby_absenkung:
+                type: num
+                rtr2_id@instance: ...:.
+                rtr2_function@instance: setting_standby_reduction
+
+            frost_temp:
+                type: num
+                rtr2_id@instance: ...:.
+                rtr2_function@instance: setting_temp_frost
+
+            min_stellwert:
+                type: num
+                rtr2_id@instance: ...:.
+                rtr2_function@instance: setting_min_output
+
+            max_stellwert:
+                type: num
+                rtr2_id@instance: ...:.
+                rtr2_function@instance: setting_max_output
+
+
+#item_attribute_prefixes:
+    # Definition of item attributes that only have a common prefix (enter 'item_attribute_prefixes: NONE' or ommit this section, if section should be empty)
+    # NOTE: This section should only be used, if really nessesary (e.g. for the stateengine plugin)
+
+plugin_functions: NONE
+    # Definition of plugin functions defined by this plugin (enter 'plugin_functions: NONE', if section should be empty)
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)
+

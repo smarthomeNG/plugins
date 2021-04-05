@@ -6,14 +6,17 @@ plugin:
         de: 'smartVISU Unterstützung: Autogenerierung von Seiten; Widget Handling'
         en: 'Support for smartVISU: Automatic generation of pages; widget handling'
     maintainer: msinn
-    tester: psilo909
-    state: qa-develop
+    tester: wvhn
+    state: ready
 #    keywords: iot xyz
     documentation: http://smarthomeng.de/user/plugins/visu_smartvisu/user_doc.html
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1586800-support-thread-für-das-smartvisu-plugin
 
-    version: 1.8.0                 # Plugin version
-    sh_minversion: 1.4             # minimum shNG version to use this plugin
+    version: 1.8.2                 # Plugin version
+    sh_minversion: 1.8.1            # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    py_minversion: 3.6             # minimum Python version to use for this plugin
+#    py_maxversion:                 # maximum Python version to use for this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
     restartable: True
     classname: SmartVisu           # class containing the plugin
@@ -22,8 +25,9 @@ parameters:
     # Definition of parameters to be configured in etc/plugin.yaml
     smartvisu_dir:
         type: str
+        default: /var/www/html/smartvisu
         description:
-            de: 'Basisverzeichnis der smartVISU. Nur wenn dieser Wert konfiguriert ist, kann das Plugin Seiten für die smartVISU generieren.'
+            de: 'Basisverzeichnis der smartVISU. Nur wenn dieser Wert richtig konfiguriert ist, kann das Plugin Seiten für die smartVISU generieren, Widgets installieren, etc.'
             en: 'You could generate pages for the smartVISU visualisation if you specify the smartvisu_dir which should be set to the root directory of your smartVISU installation.'
 
     generate_pages:
@@ -50,6 +54,20 @@ parameters:
             de: 'Benutzer Style für die generierten Visualisierungs-Seiten'
             en: 'Style used for the generated visualization'
 
+    default_acl:
+        type: str
+        default: rw
+        valid_list:
+          - rw
+          - ro
+          - deny
+        valid_list_description:
+            de: ['Lesen/Schreiben', 'Nur Lesen', 'Kein Zugriff']
+            en: ['Read/Write', 'Read Only', 'Deny access']
+        description:
+            de: Steuert den Zugriff über smartVISU Nutzdaten-Protokoll - Voreinstellung für alle Items
+            en: Configures the standard access to the defined items and logics over the smartVISU payload protocol
+
     handle_widgets:
         type: bool
         default: True
@@ -66,11 +84,19 @@ parameters:
 
 item_attributes:
     # Definition of item attributes defined by this plugin
-#    visu_acl:    # defined in visu_websocket
-#        type: bool
-#        description:
-#            de: ''
-#            en: 'Simply set the visu_acl attribute to something to allow read/write access to the item'
+    visu_acl:
+        type: str
+        description:
+            de: 'Das Attribut visu_acl steuert die Zugriffsrechte der smartVISU auf das einzelene Item ()'
+            en: 'Simply set the visu_acl attribute to something to allow read/write access to the item'
+        valid_list:
+          - rw
+          - ro
+          - deny
+          - ''
+        valid_list_description:
+            de: ['Lesen/Schreiben', 'Nur Lesen', 'Kein Zugriff', 'Standardeinstellung nutzen']
+            en: ['Read/Write', 'Read Only', 'Deny access', 'Use standard setting']
 
     sv_page:
         type: str
@@ -173,6 +199,24 @@ item_structs: NONE
 logic_parameters: NONE
     # Definition of logic parameters defined by this plugin
 
-plugin_functions: NONE
+plugin_functions:
     # Definition of function interface of the plugin
+
+    url:
+        type: void
+        description:
+            de: "Diese Funktion weist smartVISU Clients an, auf die angegebene Url (Visu Seite) zu wechseln. Die Funktion funktioniert mit smartVISU v2.9 und später. Für smartVISU v2.8 muss ein modifizierter Treiber io_smarthome.js verwendet werden - Beispiel: sh.visu.url('index.php?page=apartement.living', '10.0.0.23')"
+            en: "This function instructs the smartVISU clients to change to the specified url (visu page). This function works with smartVISU v2.9 and up, for smartVISU v2.8 a modified driver io_smarthome.js is needed - Example: sh.visu.url('index.php?page=apartement.living', '10.0.0.23')"
+        parameters:
+            url:
+                type: str
+                description:
+                    de: "Die URL zu der smartVISU wechseln soll"
+                    en: "url to which smartVISU should change"
+            clientip:
+                type: str
+                default: ''
+                description:
+                    de: "Falls angegeben, werden nur Clients (Browser) die auf dem Host mit der angegebenen IP Adresse laufen angewiesen die Seite zu wechseln. "
+                    en: "If specified, only clients (browsers) running on the host with the specified ip address are instructed to change the page."
 

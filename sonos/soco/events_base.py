@@ -40,15 +40,15 @@ def parse_event_xml(xml_event):
 
     Returns:
         dict: A dict with keys representing the evented variables. The
-            relevant value will usually be a string representation of the
-            variable's value, but may on occasion be:
+        relevant value will usually be a string representation of the
+        variable's value, but may on occasion be:
 
-            * a dict (eg when the volume changes, the value will itself be a
-              dict containing the volume for each channel:
-              :code:`{'Volume': {'LF': '100', 'RF': '100', 'Master': '36'}}`)
-            * an instance of a `DidlObject` subclass (eg if it represents
-              track metadata).
-            * a `SoCoFault` (if a variable contains illegal metadata)
+        * a dict (eg when the volume changes, the value will itself be a
+          dict containing the volume for each channel:
+          :code:`{'Volume': {'LF': '100', 'RF': '100', 'Master': '36'}}`)
+        * an instance of a `DidlObject` subclass (eg if it represents
+          track metadata).
+        * a `SoCoFault` (if a variable contains illegal metadata)
     """
 
     result = {}
@@ -226,7 +226,7 @@ class EventNotifyHandlerBase(object):
 
             This method calls the log_event method, which must be overridden
             in the class that inherits from this class.
-         """
+        """
 
         timestamp = time.time()
         seq = headers["seq"]  # Event sequence number
@@ -312,8 +312,7 @@ class EventListenerBase(object):
                         log.info("Event Listener started")
 
     def stop(self):
-        """Stop the Event Listener.
-        """
+        """Stop the Event Listener."""
         if not self.is_running:
             return
         self.is_running = False
@@ -610,7 +609,11 @@ class SubscriptionBase(object):
         if callback and hasattr(callback, "__call__"):
             callback(event)
         else:
-            self.events.put(event)
+            try:
+                self.events.put(event)
+            # pylint: disable=broad-except
+            except Exception as ex:
+                log.debug("Error putting event %s, ex=%s", event, ex)
 
     # pylint: disable=missing-docstring
     def _auto_renew_start(self, interval):
@@ -705,7 +708,7 @@ class SubscriptionsMap(object):
     """
 
     def __init__(self):
-        super(SubscriptionsMap, self).__init__()
+        super().__init__()
         #: `weakref.WeakValueDictionary`: Thread safe mapping.
         #: Used to store a mapping of sid to subscription
         self.subscriptions = weakref.WeakValueDictionary()
@@ -762,7 +765,7 @@ class SubscriptionsMap(object):
 
             Returns:
                 `soco.events.Subscription`: The subscription relating
-                    to that sid.
+                to that sid.
 
         When using :py:mod:`soco.events_twisted`, an instance of
         `soco.events_twisted.Subscription` will be returned.

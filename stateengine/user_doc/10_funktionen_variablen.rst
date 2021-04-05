@@ -1,12 +1,12 @@
 
 .. index:: Stateengine; Funktionen und Variablen
 
+========================
 Funktionen und Variablen
 ========================
 
-.. rubric:: Vordefinierte Funktionen
-  :name: vordefiniertefunktionen
-
+Vordefinierte Funktionen
+------------------------
 
 Das stateengine Plugin stellt verschiedene vordefinierte
 Funktionen zur Verfügung, die einfach für
@@ -15,10 +15,11 @@ mittels ``eval:`` verwendet werden können:
 
 **Sonnenstandsabhängige Lamellenausrichtung**
 *Die Neigung der Lamellen wird automatisch von der Höhe der Sonne bestimmt.*
+Optional kann noch ein Offset in Klammer mitgegeben werden, um etwaige kleine Abweichungen auszugleichen.
 
 .. code-block:: yaml
 
-   se_eval.sun_tracking()
+   se_eval.sun_tracking(-10)
 
 **Zufallszahl**
 *Über min und max kann die kleinste/größte Nummer, die zurückgegeben werden soll, festgelegt werden.*
@@ -123,23 +124,32 @@ Insofern hat diese Funktion nur wenig Relevanz.
   se_eval.get_relative_itemproperty('..suspend', 'last_change_age')
 
 Welche Werte für ``property`` genutzt werden können, ist hier nachzulesen:
-`Item Properties <https://www.smarthomeng.de/user/konfiguration/items_properties.html?highlight=property>`_).
+`Item Properties <https://www.smarthomeng.de/user/referenz/items/properties.html>`_).
 Prinzipiell ist auch diese Funktion nicht zwingend zu verwenden, da sie ebenfalls
 durch bekannt Syntax ersetzt werden kann: ``sh...suspend.property.last_change_age``
 
-.. rubric:: Variablen
-  :name: speziellevariablen
+Variablen
+---------
 
 Im Plugin stehen folgende Variablen zur Verfügung:
 
 **item.suspend_time:**
 *Die Suspend-Time des Items*
+Sie wird durch ``se_suspend_time`` im Regelitem mittels value,
+item oder eval initialisiert.
 
 **item.suspend_remaining:**
 *Die übrige Dauer des Suspend Zustands*
 
 Beide obigen Variablen werden vom Suspendzustand genutzt, können bei
 Bedarf aber auch für andere Zwecke, welche auch immer, genutzt werden.
+
+**item.instant_leaveaction:**
+*Information, wie das leave_action Attribut für das Regelwerkitem gesetzt ist*
+Die Option instant_leaveaction kann sowohl in der globalen Pluginkonfiguration
+mittels ``instant_leaveaction``, als auch pro Item mittels ``se_instant_leaveaction``
+festgelegt werden. Sie bestimmt, ob on_leave Aktionen sofort nach dem Verlassen
+eines Zustands ausgeführt werden oder erst am Ende der Statusevaluierung.
 
 **current.action_name:**
 *Der Name der Aktion, in der auf die Variable zugegriffen wird*
@@ -148,7 +158,9 @@ Der Name der aktuellen Aktion, also der Teil hinter ``se_action_`` kann für
 das Setzen oder Eruieren von Werten herangezogen werden. Dies macht insbesondere
 dann Sinn, wenn auf Setting-Items in der Aktion Bezug genommen wird. Durch
 diese Variable ist es so je nach Setup möglich, ein Template für sämtliche
-Aktionen zu nutzen. Hier ein Beispiel. Das Template "setvalue" wird für das
+Aktionen zu nutzen. Sobald die Statusevaluierung
+abgeschlossen ist, ist diese Variable leer.
+Ein Beispiel: Das Template "setvalue" wird für das
 Setzen mehrerer Items herangezogen. Der eval Ausdruck schafft eine Referenz
 auf das passende Unteritem in licht1.automatik.settings.
 
@@ -198,8 +210,15 @@ auf das passende Unteritem in licht1.automatik.settings.
 **current.state_id:**
 *Die Id des Status, der gerade geprüft wird*
 
+Diese Variable wird leer, sobald die Statusevaluierung beendet wurde, noch bevor die Aktionen des
+zuletzt eingenommenen Zustands ausgeführt werden. Sie kann daher nur in der Evaluierung, nicht aber
+in on_enter(_or_stay) genutzt werden. Hierfür wird stattdessen ``se_eval.get_relative_itemvalue('..state_id')`` genutzt.
+
 **current.state_name:**
 *Der Name des Status, der gerade geprüft wird*
+
+Wie die state_id Variable wird diese nur während der Statusevaluierung entsprechend befüllt und sofort beim Eintritt
+in einen neuen Zustand geleert (noch vor dem Durchführen der Aktionen).
 
 Das angeführte Beispiel zeigt, wie eine Bedingung mit einem Wert abgeglichen
 werden kann, der in einem passenden Settingitem hinterlegt ist. Konkret
@@ -207,8 +226,8 @@ würde beim Evaluieren vom Zustand_Eins mit dem Namen "sueden" die maximale
 Helligkeit der Wetterstation mit dem Wert von automatik.settings.sueden.max_bright
 verglichen werden. Im Zustand_Zwei namens osten würde der Vergleich hingegen
 mit dem Item automatik.settings.osten.max_bright stattfinden. Zu beachten ist,
-dass die Eval Ausdrücke exakt gleich sind, was ein Anlegen von eigenen Templates
-deutlich vereinfacht.
+dass die Eval Ausdrücke exakt gleich sind, wodurch ein Anlegen von eigenen Templates
+die Situation deutlich vereinfachen würde.
 
 .. code-block:: yaml
 
@@ -248,6 +267,9 @@ deutlich vereinfacht.
 
 **current.conditionset_name:**
 *Der Name der Bedingungsgruppe, die gerade geprüft wird*
+
+Beide current.conditionset Variablen können ebenso wie die oben erwähnten current.state_id/name
+nur während der Prüfung der Bedingungen genutzt werden, nicht jedoch für Aktionen.
 
 Das Beispiel zeigt einen Windzustand. Dieser übernimmt keine Funktionen,
 sondern dient lediglich der Visualisierung (Sicherheitsrelevante Features

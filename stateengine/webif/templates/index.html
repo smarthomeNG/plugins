@@ -17,6 +17,21 @@ $("a").click(function() {
     Console.debug(value);
 });
 </script>
+<script>
+    $(document).ready( function () {
+		try
+			{
+			$('#maintable').DataTable( {
+				"paging": false,
+				fixedHeader: true
+				} );
+			}
+		catch (e)
+			{
+			console.log("Datatable JS not loaded, showing standard table without reorder option")
+			}
+        });
+</script>
 {% endblock scripts %}
 {% set logo_frame = false %}
 
@@ -62,7 +77,7 @@ $("a").click(function() {
     {{ _('Die folgenden Items verfügen über ein StateEngine Item') }}.
     <strong>{{ _('Klick auf die entsprechende Zeile öffnet die Visualisierung!') }}</strong>
   </div>
-  <table class="table table-striped table-hover pluginList">
+  <table id="maintable" class="table table-striped table-hover pluginList">
     <thead>
     <tr>
       <th>{{ _('SE Item') }}</th>
@@ -74,9 +89,9 @@ $("a").click(function() {
     {% for item in p.get_items() %}
     <tr onclick="location.href='?action=get_graph&abitem={{ item }}';">
         <td class="py-1">{{ item }}</td>
-        <td class="py-1">{% for cond in item.webif_infos.keys() %}{% if not p.items.return_item(cond) == None %}
+        <td class="py-1">{% for cond in item.webif_infos.keys() %}{% if not p.itemsApi.return_item(cond) == None %}
                           {% if loop.index > 1%},{% endif %}
-                         {{ p.items.return_item(cond)._name.split('.')[-1] }}{% endif %}{% endfor %}</td>
+                         {{ p.itemsApi.return_item(cond)._name.split('.')[-1] }}{% endif %}{% endfor %}</td>
         <td class="py-1">{{ item.laststate_name }}</td>
         <td class="py-1">{{ item.lastconditionset_name }}</td>
 

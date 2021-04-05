@@ -26,11 +26,14 @@ import datetime
 from lib.shtime import Shtime
 from lib.item import Items
 import re
-import threading
 
 
 # Base class from which all action classes are derived
 class SeActionBase(StateEngineTools.SeItemChild):
+    @property
+    def name(self):
+        return self._name
+
     # Cast function for delay
     # value: value to cast
     @staticmethod
@@ -54,10 +57,10 @@ class SeActionBase(StateEngineTools.SeItemChild):
     def __init__(self, abitem, name: str):
         super().__init__(abitem)
         self._se_plugin = abitem.se_plugin
-        self._parent = abitem
+        self._parent = self._abitem.id
         self._caller = StateEngineDefaults.plugin_identification
         self.shtime = Shtime.get_instance()
-        self.items = Items.get_instance()
+        self.itemsApi = Items.get_instance()
         self._name = name
         self.__delay = StateEngineValue.SeValue(self._abitem, "delay")
         self.__repeat = None
@@ -70,7 +73,6 @@ class SeActionBase(StateEngineTools.SeItemChild):
         self.__template = None
         self._state = None
         self.__queue = abitem.queue
-        self._action_lock = threading.Lock()
 
     def update_delay(self, value):
         self.__delay.set(value)
@@ -113,10 +115,10 @@ class SeActionBase(StateEngineTools.SeItemChild):
         self.__order.write_to_logger()
 
     # Execute action (considering delay, etc)
-    # is_repeat: Inidicate if this is a repeated action without changing the state
+    # is_repeat: Indicate if this is a repeated action without changing the state
     # item_allow_repeat: Is repeating actions generally allowed for the item?
     # state: state item that triggered the action
-    def execute(self, is_repeat: bool, allow_item_repeat: bool, state: str):
+    def execute(self, is_repeat: bool, allow_item_repeat: bool, state):
         self._state = state
         if not self._can_execute():
             return
@@ -124,6 +126,7 @@ class SeActionBase(StateEngineTools.SeItemChild):
         condition_met = True if condition_to_meet is None else False
         condition_to_meet = condition_to_meet if isinstance(condition_to_meet, list) else [condition_to_meet]
         current_condition = self._abitem.get_lastconditionset_id()
+        current_condition = self._abitem.get_laststate_id() if current_condition == '' else current_condition
         for cond in condition_to_meet:
             try:
                 cond = re.compile(cond)
@@ -135,7 +138,8 @@ class SeActionBase(StateEngineTools.SeItemChild):
                 if cond is not None:
                     self._log_warning("Given conditionset {} is not a valid regex: {}", cond, ex)
         if condition_met is False:
-            self._log_info("Action '{0}': Conditionset {1} not matching {2}. Skipping.", self._name, condition_to_meet, current_condition)
+            self._log_info("Action '{0}': Conditionset {1} not matching {2}. Skipping.",
+                           self._name, condition_to_meet, current_condition)
             return
 
         if is_repeat:
@@ -194,7 +198,7 @@ class SeActionBase(StateEngineTools.SeItemChild):
                 self._log_warning("Action'{0}: Ignored because of delay is negative!", self._name)
                 _delay_info = -1
             else:
-                self._waitforexecute(actionname, self._name, repeat_text, delay)
+                self._waitforexecute(actionname, self._name, repeat_text, delay, current_condition)
 
             try:
                 _key = ['{}'.format(state.id), 'actions_stay', '{}'.format(self._name), 'delay']
@@ -212,6 +216,9 @@ class SeActionBase(StateEngineTools.SeItemChild):
             except Exception:
                 pass
             try:
+                state.update_name(state.state_item)
+                _key_name = ['{}'.format(state.id), 'name']
+                self.update_webif(_key_name, state.name)
                 _key = ['{}'.format(state.id), 'actions_leave', '{}'.format(self._name), 'delay']
                 self._abitem.update_webif(_key, _delay_info)
             except Exception:
@@ -224,7 +231,7 @@ class SeActionBase(StateEngineTools.SeItemChild):
 
     # Complete action
     # item_state: state item to read from
-    def complete(self, item_state):
+    def complete(self, item_state, evals_items=None):
         raise NotImplementedError("Class {} doesn't implement complete()".format(self.__class__.__name__))
 
     # Check if execution is possible
@@ -234,20 +241,22 @@ class SeActionBase(StateEngineTools.SeItemChild):
     def get(self):
         return True
 
-    def _waitforexecute(self, actionname: str, namevar: str = "", repeat_text: str = "", delay: int = 0):
+    def _waitforexecute(self, actionname: str, namevar: str = "", repeat_text: str = "", delay: int = 0, current_condition: str = ""):
+        self._log_decrease_indent(50)
+        self._log_increase_indent()
         if delay == 0:
             self._log_info("Running action '{}'.", namevar)
-            self.real_execute(actionname, namevar, repeat_text)
+            self.real_execute(actionname, namevar, repeat_text, None, False, current_condition)
         else:
             instanteval = None if self.__instanteval is None else self.__instanteval.get()
             self._log_info("Action '{0}': Add {1} second timer '{2}' "
-                           "for delayed execution. {3}. Instant Eval: {4}", self._name, delay,
+                           "for delayed execution.{3} Instant Eval: {4}", self._name, delay,
                            self._scheduler_name, repeat_text, instanteval)
             next_run = self.shtime.now() + datetime.timedelta(seconds=delay)
             if instanteval is True:
                 self._log_increase_indent()
                 self._log_debug("Evaluating value for delayed action '{}'.", namevar)
-                value = self.real_execute(actionname, namevar, repeat_text, None, True)
+                value = self.real_execute(actionname, namevar, repeat_text, None, True, current_condition)
                 self._log_debug("Value for delayed action is going to be '{}'.", value)
                 self._log_decrease_indent()
             else:
@@ -255,16 +264,19 @@ class SeActionBase(StateEngineTools.SeItemChild):
             self._abitem.add_scheduler_entry(self._scheduler_name)
             self._se_plugin.scheduler_add(self._scheduler_name, self._delayed_execute,
                                           value={'actionname': actionname, 'namevar': self._name,
-                                                 'repeat_text': repeat_text, 'value': value}, next=next_run)
+                                                 'repeat_text': repeat_text, 'value': value,
+                                                 'current_condition': current_condition}, next=next_run)
 
-    def _delayed_execute(self, actionname: str, namevar: str = "", repeat_text: str = "", value = None):
+    def _delayed_execute(self, actionname: str, namevar: str = "", repeat_text: str = "", value=None, current_condition=None):
         self._log_debug("Putting delayed action '{}' into queue.", namevar)
-        self.__queue.put(["delayedaction", self, actionname, namevar, repeat_text, value])
-        self._abitem.run_queue()
+        self.__queue.put(["delayedaction", self, actionname, namevar, repeat_text, value, current_condition])
+        if not self._abitem.update_lock.locked():
+            self._log_debug("Running queue")
+            self._abitem.run_queue()
 
     # Really execute the action (needs to be implemented in derived classes)
-    def real_execute(self, actionname: str, namevar: str = "", repeat_text: str = "", value = None, returnvalue = False):
-        raise NotImplementedError("Class {} doesn't implement _execute()".format(self.__class__.__name__))
+    def real_execute(self, actionname: str, namevar: str = "", repeat_text: str = "", value=None, returnvalue=False, current_condition=None):
+        raise NotImplementedError("Class {} doesn't implement real_execute()".format(self.__class__.__name__))
 
     def _getitem_fromeval(self):
         return
@@ -281,6 +293,9 @@ class SeActionSetItem(SeActionBase):
         self.__value = StateEngineValue.SeValue(self._abitem, "value")
         self.__mindelta = StateEngineValue.SeValue(self._abitem, "mindelta")
         self.__function = "set"
+
+    def __repr__(self):
+        return "SeAction Set {}".format(self._name)
 
     def _getitem_fromeval(self):
         if isinstance(self.__item, str):
@@ -311,10 +326,22 @@ class SeActionSetItem(SeActionBase):
 
     # Complete action
     # item_state: state item to read from
-    def complete(self, item_state):
+    def complete(self, item_state, evals_items=None):
+        try:
+            _name = evals_items.get(self.name)
+            if _name is not None:
+                _item = _name.get('item')
+                _eval = str(_name.get('eval'))
+                _selfitem = self.__item if self.__item is not None and self.__item != "None" else None
+                _item = _item if _item is not None and _item != "None" else None
+                _eval = _eval if _eval is not None and _eval != "None" else None
+                self.__item = _selfitem or self._abitem.return_item(_item) or _eval
+        except Exception as ex:
+            self._log_error("No valid item info for action {}, trying to get differently. Problem: {}", self.name, ex)
         # missing item in action: Try to find it.
         if self.__item is None:
             item = StateEngineTools.find_attribute(self._sh, item_state, "se_item_" + self._name)
+
             if item is not None:
                 self.__item = self._abitem.return_item(item)
             else:
@@ -358,7 +385,7 @@ class SeActionSetItem(SeActionBase):
         return True
 
     # Really execute the action (needs to be implemented in derived classes)
-    def real_execute(self, actionname: str, namevar: str = "", repeat_text: str = "", value = None, returnvalue = False):
+    def real_execute(self, actionname: str, namevar: str = "", repeat_text: str = "", value=None, returnvalue=False, current_condition=None):
         self._abitem.set_variable('current.action_name', namevar)
         self._log_increase_indent()
         if value is None:
@@ -381,13 +408,14 @@ class SeActionSetItem(SeActionBase):
                 self._log_debug(text, actionname, self.__item.property.path, value, delta, mindelta)
                 return
 
-        self._execute_set_add_remove(actionname, namevar, repeat_text, self.__item, value)
+        self._execute_set_add_remove(actionname, namevar, repeat_text, self.__item, value, current_condition)
 
-    def _execute_set_add_remove(self, actionname, namevar, repeat_text, item, value):
+    def _execute_set_add_remove(self, actionname, namevar, repeat_text, item, value, current_condition):
         self._log_decrease_indent()
-        self._log_debug("{0}: Set '{1}' to '{2}'. {3}", actionname, item.property.path, value, repeat_text)
+        self._log_debug("{0}: Set '{1}' to '{2}'{3}", actionname, item.property.path, value, repeat_text)
+        source = self._parent if current_condition is None else current_condition
         # noinspection PyCallingNonCallable
-        item(value, caller=self._caller, source=self._parent)
+        item(value, caller=self._caller, source=source)
 
     def get(self):
         try:
@@ -408,6 +436,9 @@ class SeActionSetByattr(SeActionBase):
         self.__byattr = None
         self.__function = "set by attribute"
 
+    def __repr__(self):
+        return "SeAction SetByAttr {}".format(self._name)
+
     # set the action based on a set_(action_name) attribute
     # value: Value of the set_(action_name) attribute
     def update(self, value):
@@ -415,7 +446,7 @@ class SeActionSetByattr(SeActionBase):
 
     # Complete action
     # item_state: state item to read from
-    def complete(self, item_state):
+    def complete(self, item_state, evals_items=None):
         self._scheduler_name = "{}-SeByAttrDelayTimer".format(self.__byattr)
 
     # Write action to logger
@@ -423,18 +454,18 @@ class SeActionSetByattr(SeActionBase):
         self._log_debug("function: {}", self.__function)
         SeActionBase.write_to_logger(self)
         if self.__byattr is not None:
-            self._log_debug("set by attriute: {0}", self.__byattr)
+            self._log_debug("set by attribute: {0}", self.__byattr)
 
     # Really execute the action
-    def real_execute(self, actionname: str, namevar: str = "", repeat_text: str = "", value = None, returnvalue = False):
+    def real_execute(self, actionname: str, namevar: str = "", repeat_text: str = "", value=None, returnvalue=False, current_condition=None):
         self._abitem.set_variable('current.action_name', namevar)
         if returnvalue:
             return value
         self._log_info("{0}: Setting values by attribute '{1}'.{2}", actionname, self.__byattr, repeat_text)
-        for item in self.items.find_items(self.__byattr):
+        source = self._parent if current_condition is None else current_condition
+        for item in self.itemsApi.find_items(self.__byattr):
             self._log_info("\t{0} = {1}", item.property.path, item.conf[self.__byattr])
-            item(item.conf[self.__byattr], caller=self._caller, source=self._parent)
-        #self._log_decrease_indent()
+            item(item.conf[self.__byattr], caller=self._caller, source=source)
 
     def get(self):
         return {'function': str(self.__function), 'byattr': str(self.__byattr), 'conditionset': str(self.conditionset.get())}
@@ -448,19 +479,23 @@ class SeActionTrigger(SeActionBase):
     def __init__(self, abitem, name: str):
         super().__init__(abitem, name)
         self.__logic = None
-        self.__value = None
+        self.__value = StateEngineValue.SeValue(self._abitem, "value")
         self.__function = "trigger"
+
+    def __repr__(self):
+        return "SeAction Trigger {}".format(self._name)
 
     # set the action based on a set_(action_name) attribute
     # value: Value of the set_(action_name) attribute
     def update(self, value):
         logic, value = StateEngineTools.partition_strip(value, ":")
         self.__logic = logic
-        self.__value = None if value == "" else value
+        value = None if value == "" else value
+        self.__value.set(value)
 
     # Complete action
     # item_state: state item to read from
-    def complete(self, item_state):
+    def complete(self, item_state, evals_items=None):
         self._scheduler_name = "{}-SeLogicDelayTimer".format(self.__logic)
 
     # Write action to logger
@@ -473,7 +508,7 @@ class SeActionTrigger(SeActionBase):
             self._log_debug("value: {0}", self.__value)
 
     # Really execute the action
-    def real_execute(self, actionname: str, namevar: str = "", repeat_text: str = "", value = None, returnvalue = False):
+    def real_execute(self, actionname: str, namevar: str = "", repeat_text: str = "", value=None, returnvalue=False, current_condition=None):
         self._abitem.set_variable('current.action_name', namevar)
         if value is None:
             try:
@@ -486,7 +521,6 @@ class SeActionTrigger(SeActionBase):
         self._log_info("{0}: Triggering logic '{1}' using value '{2}'.{3}", actionname, self.__logic, value, repeat_text)
         add_logics = 'logics.{}'.format(self.__logic) if not self.__logic.startswith('logics.') else self.__logic
         self._sh.trigger(add_logics, by=self._caller, source=self._name, value=value)
-        #self._log_decrease_indent()
 
     def get(self):
         return {'function': str(self.__function), 'logic': str(self.__logic),
@@ -503,6 +537,9 @@ class SeActionRun(SeActionBase):
         self.__eval = None
         self.__function = "run"
 
+    def __repr__(self):
+        return "SeAction Run {}".format(self._name)
+
     # set the action based on a set_(action_name) attribute
     # value: Value of the set_(action_name) attribute
     def update(self, value):
@@ -516,7 +553,7 @@ class SeActionRun(SeActionBase):
 
     # Complete action
     # item_state: state item to read from
-    def complete(self, item_state):
+    def complete(self, item_state, evals_items=None):
         self._scheduler_name = "{}-SeRunDelayTimer".format(StateEngineTools.get_eval_name(self.__eval))
 
     # Write action to logger
@@ -527,7 +564,7 @@ class SeActionRun(SeActionBase):
             self._log_debug("eval: {0}", StateEngineTools.get_eval_name(self.__eval))
 
     # Really execute the action
-    def real_execute(self, actionname: str, namevar: str = "", repeat_text: str = "", value = None, returnvalue = False):
+    def real_execute(self, actionname: str, namevar: str = "", repeat_text: str = "", value=None, returnvalue=False, current_condition=None):
         self._abitem.set_variable('current.action_name', namevar)
         self._log_increase_indent()
         if isinstance(self.__eval, str):
@@ -541,6 +578,7 @@ class SeActionRun(SeActionBase):
                 if returnvalue:
                     self._log_decrease_indent()
                     return eval(self.__eval)
+                self._log_debug("Running eval {0} based on conditionset {1}", self.__eval, current_condition)
                 eval(self.__eval)
                 self._log_decrease_indent()
             except Exception as ex:
@@ -552,6 +590,7 @@ class SeActionRun(SeActionBase):
                 if returnvalue:
                     self._log_decrease_indent()
                     return self.__eval()
+                self._log_debug("Running eval {0} based on conditionset {1}", self.__eval, current_condition)
                 self.__eval()
                 self._log_decrease_indent()
             except Exception as ex:
@@ -576,6 +615,9 @@ class SeActionForceItem(SeActionBase):
         self.__mindelta = StateEngineValue.SeValue(self._abitem, "mindelta")
         self.__function = "force set"
 
+    def __repr__(self):
+        return "SeAction Force {}".format(self._name)
+
     # set the action based on a set_(action_name) attribute
     # value: Value of the set_(action_name) attribute
     def update(self, value):
@@ -583,7 +625,7 @@ class SeActionForceItem(SeActionBase):
 
     # Complete action
     # item_state: state item to read from
-    def complete(self, item_state):
+    def complete(self, item_state, evals_items=None):
         # missing item in action: Try to find it.
         if self.__item is None:
             item = StateEngineTools.find_attribute(self._sh, item_state, "se_item_" + self._name)
@@ -655,7 +697,7 @@ class SeActionForceItem(SeActionBase):
 
     # Really execute the action (needs to be implemented in derived classes)
     # noinspection PyProtectedMember
-    def real_execute(self, actionname: str, namevar: str = "", repeat_text: str = "", value = None, returnvalue = False):
+    def real_execute(self, actionname: str, namevar: str = "", repeat_text: str = "", value=None, returnvalue=False, current_condition=None):
         self._abitem.set_variable('current.action_name', namevar)
         self._log_increase_indent()
         if value is None:
@@ -679,24 +721,25 @@ class SeActionForceItem(SeActionBase):
                 return
 
         # Set to different value first ("force")
+        source = self._parent if current_condition is None else current_condition
         if self.__item() == value:
             if self.__item._type == 'bool':
                 self._log_debug("{0}: Set '{1}' to '{2}' (Force)", actionname, self.__item.property.path, not value)
-                self.__item(not value, caller=self._caller, source=self._parent)
+                self.__item(not value, caller=self._caller, source=source)
             elif self.__item._type == 'str':
                 if value != '':
                     self._log_debug("{0}: Set '{1}' to '{2}' (Force)", actionname, self.__item.property.path, '')
-                    self.__item('', caller=self._caller, source=self._parent)
+                    self.__item('', caller=self._caller, source=source)
                 else:
                     self._log_debug("{0}: Set '{1}' to '{2}' (Force)", actionname, self.__item.property.path, '-')
-                    self.__item('-', caller=self._caller, source=self._parent)
+                    self.__item('-', caller=self._caller, source=source)
             elif self.__item._type == 'num':
                 if value != 0:
                     self._log_debug("{0}: Set '{1}' to '{2}' (Force)", actionname, self.__item.property.path, 0)
-                    self.__item(0, caller=self._caller, source=self._parent)
+                    self.__item(0, caller=self._caller, source=source)
                 else:
                     self._log_debug("{0}: Set '{1}' to '{2}' (Force)", actionname, self.__item.property.path, 1)
-                    self.__item(1, caller=self._caller, source=self._parent)
+                    self.__item(1, caller=self._caller, source=source)
             else:
                 self._log_warning("{0}: Force not implemented for item type '{1}'", actionname, self.__item._type)
         else:
@@ -704,14 +747,15 @@ class SeActionForceItem(SeActionBase):
         self._log_decrease_indent()
         self._log_debug("{0}: Set '{1}' to '{2}'.{3}", actionname, self.__item.property.path, value, repeat_text)
         # noinspection PyCallingNonCallable
-        self.__item(value, caller=self._caller, source=self._parent)
+        self.__item(value, caller=self._caller, source=source)
 
     def get(self):
         try:
             item = str(self.__item.property.path)
         except Exception:
             item = str(self.__item)
-        return {'function': str(self.__function), 'item': item, 'value': str(self.__value.get()), 'conditionset': str(self.conditionset.get())}
+        return {'function': str(self.__function), 'item': item, 'value': str(self.__value.get()),
+                'conditionset': str(self.conditionset.get())}
 
 
 # Class representing a single "se_special" action
@@ -724,6 +768,9 @@ class SeActionSpecial(SeActionBase):
         self.__special = None
         self.__value = None
         self.__function = "special"
+
+    def __repr__(self):
+        return "SeAction Special {}".format(self._name)
 
     # set the action based on a set_(action_name) attribute
     # value: Value of the set_(action_name) attribute
@@ -739,7 +786,7 @@ class SeActionSpecial(SeActionBase):
 
     # Complete action
     # item_state: state item to read from
-    def complete(self, item_state):
+    def complete(self, item_state, evals_items=None):
         if isinstance(self.__value, list):
             item = self.__value[0].property.path
         else:
@@ -757,7 +804,7 @@ class SeActionSpecial(SeActionBase):
             self._log_debug("Retrigger item: {0}", self.__value.property.path)
 
     # Really execute the action
-    def real_execute(self, actionname: str, namevar: str = "", repeat_text: str = "", value = None, returnvalue = False):
+    def real_execute(self, actionname: str, namevar: str = "", repeat_text: str = "", value=None, returnvalue=False, current_condition=None):
         self._abitem.set_variable('current.action_name', namevar)
         if returnvalue:
             return None
@@ -765,17 +812,21 @@ class SeActionSpecial(SeActionBase):
             _log_value = self.__value.property.path
         except Exception:
             _log_value = self.__value
-        self._log_info("{0}: Executing special action '{1}' using item '{2}'.{3}",
-                       actionname, self.__special, _log_value, repeat_text)
+        self._log_info("{0}: Executing special action '{1}' using item '{2}' based on '{3}'.{4}",
+                       actionname, self.__special, _log_value, current_condition, repeat_text)
         self._log_increase_indent()
         if self.__special == "suspend":
-            self.suspend_execute()
+            self.suspend_execute(current_condition)
+            self._log_decrease_indent()
         elif self.__special == "retrigger":
             # noinspection PyCallingNonCallable
-            self.__value(True, caller=self._caller)
+            self._abitem.update_state(self.__value, self._caller)
+            #self.__value(True, caller=self._caller)
+            self._log_decrease_indent()
         else:
             self._log_decrease_indent()
             raise ValueError("{0}: Unknown special value '{1}'!".format(actionname, self.__special))
+        self._log_debug("Special action {0}: done", self.__special)
 
     def suspend_get_value(self, value):
         if value is None:
@@ -804,18 +855,18 @@ class SeActionSpecial(SeActionBase):
         se_item = self._abitem.return_item(se_item)
         if se_item is None:
             raise ValueError("Action {0}: Retrigger item '{1}' not found!", self._name, se_item)
-
         return se_item
 
-    def suspend_execute(self):
+    def suspend_execute(self, current_condition=None):
         suspend_item = self._abitem.return_item(self.__value[0])
+        source = "SuspendAction, {}".format(self._parent if current_condition is None else current_condition)
         if self._abitem.get_update_trigger_source() == self.__value[1]:
             # triggered by manual-item: Update suspend item
             if suspend_item.property.value:
                 self._log_debug("Set '{0}' to '{1}' (Force)", suspend_item.property.path, False)
-                suspend_item(False)
+                suspend_item(False, caller=self._caller, source=source)
             self._log_debug("Set '{0}' to '{1}'.", suspend_item.property.path, True)
-            suspend_item(True)
+            suspend_item(True, caller=self._caller, source=source)
         else:
             self._log_debug("Leaving '{0}' untouched.", suspend_item.property.path)
 
@@ -850,17 +901,21 @@ class SeActionAddItem(SeActionSetItem):
         super().__init__(abitem, name)
         self.__function = "add to list"
 
+    def __repr__(self):
+        return "SeAction Add {}".format(self._name)
+
     def write_to_logger(self):
         self._log_debug("function: {}", self.__function)
         SeActionSetItem.write_to_logger(self)
         SeActionBase.write_to_logger(self)
 
-    def _execute_set_add_remove(self, actionname, namevar, repeat_text, item, value):
+    def _execute_set_add_remove(self, actionname, namevar, repeat_text, item, value, current_condition=None):
         value = value if isinstance(value, list) else [value]
-        self._log_debug("{0}: Add '{1}' to '{2}'. {3}", actionname, value, item.property.path, repeat_text)
+        self._log_debug("{0}: Add '{1}' to '{2}'.{3}", actionname, value, item.property.path, repeat_text)
         value = item.property.value + value
+        source = self._parent if current_condition is None else current_condition
         # noinspection PyCallingNonCallable
-        item(value, caller=self._caller, source=self._parent)
+        item(value, caller=self._caller, source=source)
 
     def get(self):
         try:
@@ -880,21 +935,27 @@ class SeActionRemoveFirstItem(SeActionSetItem):
         super().__init__(abitem, name)
         self.__function = "remove first from list"
 
+    def __repr__(self):
+        return "SeAction RemoveFirst {}".format(self._name)
+
     def write_to_logger(self):
         self._log_debug("function: {}", self.__function)
         SeActionSetItem.write_to_logger(self)
         SeActionBase.write_to_logger(self)
 
-    def _execute_set_add_remove(self, actionname, namevar, repeat_text, item, value):
+    def _execute_set_add_remove(self, actionname, namevar, repeat_text, item, value, current_condition=None):
         currentvalue = item.property.value
         value = value if isinstance(value, list) else [value]
         for v in value:
             try:
                 currentvalue.remove(v)
-                self._log_debug("{0}: Remove first entry '{1}' from '{2}'. {3}", actionname, v, item.property.path, repeat_text)
+                self._log_debug("{0}: Remove first entry '{1}' from '{2}'.{3}",
+                                actionname, v, item.property.path, repeat_text)
             except Exception as ex:
-                self._log_warning("{0}: Remove first entry '{1}' from '{2}' failed: {3}", actionname, value, item.property.path, ex)
-        item(currentvalue, caller=self._caller, source=self._parent)
+                self._log_warning("{0}: Remove first entry '{1}' from '{2}' failed: {3}",
+                                  actionname, value, item.property.path, ex)
+        source = self._parent if current_condition is None else current_condition
+        item(currentvalue, caller=self._caller, source=source)
 
     def get(self):
         try:
@@ -914,12 +975,15 @@ class SeActionRemoveLastItem(SeActionSetItem):
         super().__init__(abitem, name)
         self.__function = "remove last from list"
 
+    def __repr__(self):
+        return "SeAction RemoveLast {}".format(self._name)
+
     def write_to_logger(self):
         self._log_debug("function: {}", self.__function)
         SeActionSetItem.write_to_logger(self)
         SeActionBase.write_to_logger(self)
 
-    def _execute_set_add_remove(self, actionname, namevar, repeat_text, item, value):
+    def _execute_set_add_remove(self, actionname, namevar, repeat_text, item, value, current_condition=None):
         currentvalue = item.property.value
         value = value if isinstance(value, list) else [value]
         for v in value:
@@ -927,10 +991,13 @@ class SeActionRemoveLastItem(SeActionSetItem):
                 currentvalue.reverse()
                 currentvalue.remove(v)
                 currentvalue.reverse()
-                self._log_debug("{0}: Remove last entry '{1}' from '{2}'. {3}", actionname, v, item.property.path, repeat_text)
+                self._log_debug("{0}: Remove last entry '{1}' from '{2}'.{3}",
+                                actionname, v, item.property.path, repeat_text)
             except Exception as ex:
-                self._log_warning("{0}: Remove last entry '{1}' from '{2}' failed: {3}", actionname, value, item.property.path, ex)
-        item(currentvalue, caller=self._caller, source=self._parent)
+                self._log_warning("{0}: Remove last entry '{1}' from '{2}' failed: {3}",
+                                  actionname, value, item.property.path, ex)
+        source = self._parent if current_condition is None else current_condition
+        item(currentvalue, caller=self._caller, source=source)
 
     def get(self):
         try:
@@ -950,22 +1017,27 @@ class SeActionRemoveAllItem(SeActionSetItem):
         super().__init__(abitem, name)
         self.__function = "remove all from list"
 
+    def __repr__(self):
+        return "SeAction RemoveAll {}".format(self._name)
+
     def write_to_logger(self):
         self._log_debug("function: {}", self.__function)
         SeActionSetItem.write_to_logger(self)
         SeActionBase.write_to_logger(self)
 
-    def _execute_set_add_remove(self, actionname, namevar, repeat_text, item, value):
+    def _execute_set_add_remove(self, actionname, namevar, repeat_text, item, value, current_condition=None):
         currentvalue = item.property.value
         value = value if isinstance(value, list) else [value]
         for v in value:
             try:
                 currentvalue = [i for i in currentvalue if i != v]
-                self._log_debug("{0}: Remove all '{1}' from '{2}'. {3}", actionname, v, item.property.path, repeat_text)
+                self._log_debug("{0}: Remove all '{1}' from '{2}'.{3}",
+                                actionname, v, item.property.path, repeat_text)
             except Exception as ex:
-                self._log_warning("{0}: Remove all '{1}' from '{2}' failed: {3}", actionname, value, item.property.path, ex)
-
-        item(currentvalue, caller=self._caller, source=self._parent)
+                self._log_warning("{0}: Remove all '{1}' from '{2}' failed: {3}",
+                                  actionname, value, item.property.path, ex)
+        source = self._parent if current_condition is None else current_condition
+        item(currentvalue, caller=self._caller, source=source)
 
     def get(self):
         try:

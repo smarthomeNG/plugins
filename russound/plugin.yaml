@@ -12,11 +12,11 @@ plugin:
     documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py
 
-    version: 1.6.0                  # Plugin version
-    sh_minversion: 1.5              # minimum shNG version to use this plugin
+    version: 1.7.0                  # Plugin version
+    sh_minversion: 1.8.2a           # minimum shNG version to use this plugin
     # sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
-    multi_instance: False           # plugin supports multi instance
-    restartable: unknown
+    multi_instance: false           # plugin supports multi instance
+    restartable: true
     classname: Russound         # class containing the plugin
 
 parameters:

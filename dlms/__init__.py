@@ -56,7 +56,7 @@ from . import conversion
 
 
 class DLMS(SmartPlugin, conversion.Conversion):
-    PLUGIN_VERSION = "1.5.3"
+    PLUGIN_VERSION = "1.5.5"
 
     """
     This class provides a Plugin for SmarthomeNG which reads out a smartmeter.
@@ -126,6 +126,7 @@ class DLMS(SmartPlugin, conversion.Conversion):
         self._config['timeout'] = self.get_parameter_value('timeout')
 
         self._config['use_checksum'] = self.get_parameter_value('use_checksum')
+        self._config['onlylisten'] = self.get_parameter_value('only_listen')
         self._config['reset_baudrate'] = self.get_parameter_value('reset_baudrate')
         self._config['no_waiting'] = self.get_parameter_value('no_waiting')
 
@@ -306,58 +307,64 @@ class DLMS(SmartPlugin, conversion.Conversion):
 
         # update all items marked for a full readout
         self._update_dlms_obis_readout_items(readout)
+        self.logger.debug("readout size is {}".format(len(readout)))
 
-        for line in re.split('\r\n', readout):
-            # '!' as single OBIS code line means 'end of data'
-            if line.startswith("!"):
-                self.logger.debug("No more data available to read")
-                break
+        try:
+            for line in re.split('\r\n', readout):
+                # '!' as single OBIS code line means 'end of data'
+                if line.startswith("!"):
+                    self.logger.debug("No more data available to read")
+                    break
 
-            # if there is an empty line it is very likely that an error occurred.
-            # It might be that checksum is disabled an thus no error could be catched
-            if len(line) == 0:
-                self.logger.error("An empty line was encountered!")
-                break
+                # if there is an empty line it is very likely that an error occurred.
+                # It might be that checksum is disabled an thus no error could be catched
+                if len(line) == 0:
+                    self.logger.error("An empty line was encountered!")
+                    break
 
-            # Now check if we can split between values and OBIS code
-            arguments = line.split('(')
-            if len(arguments)==1:
-                # no values found at all; that seems to be a wrong OBIS code line then
-                arguments = arguments[0]
-                values = ""
-                self.logger.warning("Any line with OBIS Code should have at least one data item")
-            else:
-                # ok, found some values to the right, lets isolate them
-                values = arguments[1:]
-                obis_code = arguments[0]
+                # Now check if we can split between values and OBIS code
+                arguments = line.split('(')
+                if len(arguments)==1:
+                    # no values found at all; that seems to be a wrong OBIS code line then
+                    arguments = arguments[0]
+                    values = ""
+                    self.logger.warning("Any line with OBIS Code should have at least one data item")
+                else:
+                    # ok, found some values to the right, lets isolate them
+                    values = arguments[1:]
+                    obis_code = arguments[0]
 
-                if self._is_obis_code_wanted(obis_code):
-                    TempValues = values
-                    values = []
-                    for s in TempValues:
-                        s = s.replace(')','')
-                        if len(s) > 0:
-                            # we now should have a list with values that may contain a number
-                            # separated from a unit by a '*' or a date
-                            # so see, if there is an '*' within
-                            vu = s.split('*')
-                            if len(vu) > 2:
-                                self.logger.error("Too many entries found in '{}' of '{}'".format(s, line))
-                            elif len(vu) == 2:
-                                # just a value and a unit
-                                v = vu[0]
-                                u = vu[1]
-                                values.append( { 'Value': v, 'Unit': u} )
-                            else:
-                                # just a value, no unit
-                                v = vu[0]
-                                values.append( { 'Value': v } )
-                    # uncomment the following line to check the generation of the values dictionary
-                    # self.logger.debug("{:40} ---> {}".format(line, Values))
-                    try:
-                        self._update_items(obis_code, values)
-                    except:
-                        self.logger.error("tried to update items for Obis Code {} to Values {} failed with {}".format(obis_code, values, sys.exc_info()[0]))
+                    if self._is_obis_code_wanted(obis_code):
+                        TempValues = values
+                        values = []
+                        for s in TempValues:
+                            s = s.replace(')','')
+                            if len(s) > 0:
+                                # we now should have a list with values that may contain a number
+                                # separated from a unit by a '*' or a date
+                                # so see, if there is an '*' within
+                                vu = s.split('*')
+                                if len(vu) > 2:
+                                    self.logger.error("Too many entries found in '{}' of '{}'".format(s, line))
+                                elif len(vu) == 2:
+                                    # just a value and a unit
+                                    v = vu[0]
+                                    u = vu[1]
+                                    values.append( { 'Value': v, 'Unit': u} )
+                                else:
+                                    # just a value, no unit
+                                    v = vu[0]
+                                    values.append( { 'Value': v } )
+                        # uncomment the following line to check the generation of the values dictionary
+                        self.logger.debug("{:40} ---> {}".format(line, values))
+                        try:
+                            self._update_items(obis_code, values)
+                        except:
+                            self.logger.error("tried to update items for Obis Code {} to Values {} failed with {}".format(obis_code, values, sys.exc_info()[0]))
+            self.logger.debug("All lines inspected, no more data")
+        except Exception as e:
+            self.logger.debug("Exception '{0}' occurred, please inform plugin author!".format(e))
+
 
 # ------------------------------------------
 #    Webinterface of the plugin
@@ -394,5 +401,5 @@ class WebInterface(SmartPluginWebIf):
         """
         tmpl = self.tplenv.get_template('index.html')
         # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
-        return tmpl.render(p=self.plugin, i=self.plugin._instance, c=self.plugin._config, r=self.plugin._last_readout, cycle=self.plugin._update_cycle, items=self.plugin.dlms_obis_readout_items )
+        return tmpl.render(p=self.plugin, i=self.plugin._instance, c=self.plugin._config, r=self.plugin._last_readout, cycle=self.plugin._update_cycle, readout_items=self.plugin.dlms_obis_readout_items, code_items=self.plugin.dlms_obis_code_items )
 

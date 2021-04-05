@@ -16,11 +16,11 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with SmartHomeNG. If not, see <http://www.gnu.org/licenses/>.
-# 
+#
 #  ToDo
 #  Fehlermeldung wenn Datei nicht geschrieben werden kann
 #  Language Settings
-#  Day is out of range for Month...  
+#  Day is out of range for Month...
 #  Replay simulation from beginning when end of file is reached
 #
 #  Releases:
@@ -48,7 +48,7 @@ from lib.scheduler import Scheduler
 
 class Simulation(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.5.0.8"
+    PLUGIN_VERSION = "1.5.1"
 
     def __init__(self, sh, *args, **kwargs):
         self.logger = logging.getLogger(__name__)

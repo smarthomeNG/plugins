@@ -24,7 +24,23 @@ Es werden alle Relays eines Tasmota Devices (bis zu 4) unterstützt.
 Konfiguration
 =============
 
-Informationen zur Konfiguration und die vollständige Beschreibung der Item-Attribute sind
+Für die Nutzung eines Tasmota Devices müssen in dem entsprechenden Item die zwei Attribute ``tasmota_topic`` und
+``tasmota_attr`` konfiguriert werden, wie im folgenden Beispiel gezeigt:
+
+.. code-block:: yaml
+
+    schalter:
+        type: bool
+        tasmota_topic: delock_switch2
+        tasmota_attr: relay
+
+        leistung:
+            type: num
+            tasmota_topic: ..:.
+            tasmota_attr: power
+
+
+Vollständige Informationen zur Konfiguration und die vollständige Beschreibung der Item-Attribute sind
 unter :doc:`/plugins_doc/config/tasmota` zu finden.
 
 
@@ -34,9 +50,9 @@ Web Interface des Plugins
 Tasmota Items
 -------------
 
-Das Webinterface zeigt die Items an, für die ein Shelly Device konfiguriert ist.
+Das Webinterface zeigt die Items an, für die ein Tasmota Device konfiguriert ist.
 
-.. image:: user_doc/assets/tasmota-webif-items.jpg
+.. image:: user_doc/assets/webif_tab1.jpg
    :class: screenshot
 
 
@@ -46,7 +62,19 @@ Tasmota Devices
 Das Webinterface zeigt Informationen zu den konfigurierten Tasmota Devices an, sowie etwa hinzugekommen Devices die
 in SmartHomeNG noch nicht konfiguriert (mit einem Item vebunden) sind.
 
-.. image:: user_doc/assets/tasmota-webif-devices.jpg
+.. image:: user_doc/assets/webif_tab2.jpg
+   :class: screenshot
+
+Ein Klick auf das Tasmota Topic öffnet Konfigurationsseite des Devices.
+
+
+Tasmota Energie Information
+---------------------------
+
+Das Webinterface zeigt Informationen zu Energie/Verbrauch an, falls das jeweilige Tasmota Device diese
+Informationen bereitstellt.
+
+.. image:: user_doc/assets/webif_tab3.jpg
    :class: screenshot
 
 Ein Klick auf das Tasmota Topic öffnet Konfigurationsseite des Devices.
@@ -57,6 +85,6 @@ Broker Information
 
 Das Webinterface zeigt Informationen zum genutzten MQTT Broker an.
 
-.. image:: user_doc/assets/tasmota-webif-brokerinfo.jpg
+.. image:: user_doc/assets/webif_tab4.jpg
    :class: screenshot
 

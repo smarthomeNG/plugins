@@ -50,7 +50,7 @@ class Database(SmartPlugin):
     """
 
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = '1.5.14'
+    PLUGIN_VERSION = '1.5.15'
 
     # SQL queries: {item} = item table name, {log} = log table name
     # time, item_id, val_str, val_num, val_bool, changed
@@ -308,12 +308,17 @@ class Database(SmartPlugin):
         :rtype: int | None
         """
 
-        id = self.readItem(str(item.id()), cur=cur)
+        try:
+            id = self.readItem(str(item.id()), cur=cur)
+        except Exception as e:
+            self.logger.warning(f"id(): No id found for item {item.id()} - Exception {e}")
 
         if id is None and create == True:
             id = [self.insertItem(item.id(), cur)]
 
-        return None if id == None else int(id[COL_ITEM_ID])
+        if (id is None) or (COL_ITEM_ID >= len(id)) :
+            return None
+        return int(id[COL_ITEM_ID])
 
 
     def db(self):
@@ -588,6 +593,8 @@ class Database(SmartPlugin):
         """
         params = {'id': id}
         result = self._fetchall("SELECT count(*) FROM {log} WHERE item_id = :id;", params, cur=cur)
+        if result == []:
+            return 0
         try:
             return result[0][0]
         except Exception as e:
@@ -1141,7 +1148,10 @@ class Database(SmartPlugin):
         try:
             item_id = self.id(item, create=False)
         except:
-            self.logger.critical("remove_older_than_maxage: no id for item {}".format(item))
+            if item_id is None:
+                self.logger.info("remove_older_than_maxage: no id for item {}".format(item))
+            else:
+                self.logger.critical("remove_older_than_maxage: no id for item {}".format(item))
             return
         time_end = self.get_maxage_ts(item)
         timestamp_end = self._timestamp(time_end)

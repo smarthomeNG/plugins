@@ -28,7 +28,7 @@ from xml.dom import minidom
 import requests
 from requests.packages import urllib3
 from requests.auth import HTTPBasicAuth
-from lib.model.smartplugin import SmartPlugin
+from lib.model.smartplugin import *
 
 
 class Enigma2Device:
@@ -45,6 +45,7 @@ class Enigma2Device:
         self._password = password
         self._items = []
         self._items_fast = []
+        self._items_remote_command = []
 
     def get_identifier(self):
         """
@@ -80,11 +81,19 @@ class Enigma2Device:
 
     def get_fast_items(self):
         """
-        Returns added items
+        Returns added fast items
 
         :return: array of items hold by the device
         """
         return self._items_fast
+
+    def get_items_remote_command(self):
+        """
+        Returns added remote command items
+
+        :return: array of items hold by the device
+        """
+        return self._items_remote_command
 
     def get_item_count(self):
         """
@@ -124,7 +133,7 @@ class Enigma2(SmartPlugin):
     Main class of the Plugin. Does all plugin specific stuff and provides the update functions for the Enigma2Device
     """
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = "1.4.12"
+    PLUGIN_VERSION = "1.4.13"
 
     _url_suffix_map = dict([('about', '/web/about'),
                             ('deviceinfo', '/web/deviceinfo'),
@@ -180,6 +189,8 @@ class Enigma2(SmartPlugin):
         self._response_cache = dict()
         self._response_cache_fast = dict()
 
+        self.init_webinterface()
+
     def run(self):
         """
         Run method for the plugin
@@ -234,17 +245,18 @@ class Enigma2(SmartPlugin):
         if self.has_iattr(item.conf, "enigma2_page"):
             if self.get_iattr_value(item.conf, 'enigma2_page') in ['about', 'powerstate', 'subservices', 'deviceinfo']:
                 if self.get_iattr_value(item.conf, 'enigma2_data_type') in self._keys_fast_refresh:
-                    self._enigma2_device._items_fast.append(item)
+                    self.get_enigma2_device().get_fast_items().append(item)
                 else:
-                    self._enigma2_device._items.append(item)
+                    self.get_enigma2_device().get_items().append(item)
         elif self.has_iattr(item.conf, "enigma2_data_type"):
             if self.get_iattr_value(item.conf, 'enigma2_data_type') in self._keys_fast_refresh:
-                self._enigma2_device._items_fast.append(item)
+                self.get_enigma2_device().get_fast_items().append(item)
             else:
-                self._enigma2_device._items.append(item)
+                self.get_enigma2_device().get_items().append(item)
             if self.get_iattr_value(item.conf, 'enigma2_data_type') in ['current_volume', 'e2servicereference']:
                 return self.execute_item
         elif self.has_iattr(item.conf, "enigma2_remote_command_id") or self.has_iattr(item.conf, "sref"):
+            self.get_enigma2_device().get_items_remote_command().append(item)
             return self.execute_item
 
     def execute_item(self, item, caller=None, source=None, dest=None):
@@ -282,12 +294,10 @@ class Enigma2(SmartPlugin):
         else:
             url = "http"
         url += "://%s:%s%s?%s" % (self._enigma2_device.get_host(), self._enigma2_device.get_port(), suffix, parameter)
-
         try:
             response = self._session.get(url, timeout=self._timeout,
                                          auth=HTTPBasicAuth(self._enigma2_device.get_user(),
                                                             self._enigma2_device.get_password()), verify=self._verify)
-
         except Exception as e:
             self.logger.error("Exception when sending GET request: {0}".format(str(e)))
             return minidom.parseString('<noanswer/>')
@@ -301,13 +311,18 @@ class Enigma2(SmartPlugin):
 
     def remote_control_command(self, command_id):
         xml = self.box_request(self._url_suffix_map['remotecontrol'], 'command=%s' % command_id)
-
         e2result_xml = xml.getElementsByTagName('e2result')
         e2resulttext_xml = xml.getElementsByTagName('e2resulttext')
-        if (len(e2resulttext_xml) > 0 and len(e2result_xml) > 0):
+        if len(e2resulttext_xml) > 0 and len(e2result_xml) > 0:
             if not e2resulttext_xml[0].firstChild is None and not e2result_xml[0].firstChild is None:
                 if e2result_xml[0].firstChild.data == 'True':
                     self.logger.debug(e2resulttext_xml[0].firstChild.data)
+
+    def get_cycle(self):
+        return self._cycle
+
+    def get_fast_cycle(self):
+        return self._fast_cycle
 
     def get_audio_tracks(self):
         """
@@ -464,7 +479,8 @@ class Enigma2(SmartPlugin):
         if len(test_xml) == 0:
             element_xml = xml.getElementsByTagName('e2servicereference')
             if len(element_xml) > 0:
-                e2servicereference = element_xml[0].firstChild.data
+                if element_xml[0].firstChild is not None:
+                    e2servicereference = element_xml[0].firstChild.data
             else:
                 e2servicereference = ''
                 self.logger.error("Attribute %s not available on the Enigma2Device" % self.get_iattr_value(item.conf,
@@ -624,3 +640,118 @@ class Enigma2(SmartPlugin):
             if not xml[0].firstChild is None:
                 data = xml[0].firstChild.data
         return data
+
+    def get_enigma2_device(self):
+        return self._enigma2_device
+
+    def init_webinterface(self):
+        """"
+        Initialize the web interface for this plugin
+
+        This method is only needed if the plugin is implementing a web interface
+        """
+        try:
+            self.mod_http = Modules.get_instance().get_module(
+                'http')  # try/except to handle running in a core version that does not support modules
+        except:
+            self.mod_http = None
+        if self.mod_http == None:
+            self.logger.error("Plugin '{}': Not initializing the web interface".format(self.get_shortname()))
+            return False
+
+        # set application configuration for cherrypy
+        webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
+        config = {
+            '/': {
+                'tools.staticdir.root': webif_dir,
+            },
+            '/static': {
+                'tools.staticdir.on': True,
+                'tools.staticdir.dir': 'static'
+            }
+        }
+
+        # Register the web interface as a cherrypy app
+        self.mod_http.register_webif(WebInterface(webif_dir, self),
+                                     self.get_shortname(),
+                                     config,
+                                     self.get_classname(), self.get_instance_name(),
+                                     description='')
+
+        return True
+
+
+# ------------------------------------------
+#    Webinterface of the plugin
+# ------------------------------------------
+
+import cherrypy
+import json
+from jinja2 import Environment, FileSystemLoader
+
+
+class WebInterface(SmartPluginWebIf):
+
+    def __init__(self, webif_dir, plugin):
+        """
+        Initialization of instance of class WebInterface
+
+        :param webif_dir: directory where the webinterface of the plugin resides
+        :param plugin: instance of the plugin
+        :type webif_dir: str
+        :type plugin: object
+        """
+        self.logger = logging.getLogger(__name__)
+        self.webif_dir = webif_dir
+        self.plugin = plugin
+
+        self.tplenv = self.init_template_environment()
+
+    @cherrypy.expose
+    def index(self, reload=None):
+        """
+        Build index.html for cherrypy
+
+        Render the template and return the html file to be delivered to the browser
+
+        :return: contents of the template after beeing rendered
+        """
+        tmpl = self.tplenv.get_template('index.html')
+        return tmpl.render(plugin_shortname=self.plugin.get_shortname(), plugin_version=self.plugin.get_version(),
+                           interface=None, item_count=len(self.plugin.get_enigma2_device().get_items()),
+                           item_count_fast=len(self.plugin.get_enigma2_device().get_fast_items()),
+                           item_count_remote_command=len(self.plugin.get_enigma2_device().get_items_remote_command()),
+                           plugin_info=self.plugin.get_info(), tabcount=1,
+                           p=self.plugin)
+
+    @cherrypy.expose
+    def get_data_html(self, dataSet=None):
+        """
+        Return data to update the webpage
+
+        For the standard update mechanism of the web interface, the dataSet to return the data for is None
+
+        :param dataSet: Dataset for which the data should be returned (standard: None)
+        :return: dict with the data needed to update the web page.
+        """
+        if dataSet is None:
+            # get the new data
+            data = {}
+            for item in self.plugin.get_enigma2_device().get_items():
+                data[item.id() + "_value"] = item()
+                data[item.id() + "_last_update"] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
+                data[item.id() + "_last_change"] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
+
+            for item in self.plugin.get_enigma2_device().get_fast_items():
+                data[item.id() + "_value"] = item()
+                data[item.id() + "_last_update"] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
+                data[item.id() + "_last_change"] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
+            for item in self.plugin.get_enigma2_device().get_items_remote_command():
+                data[item.id() + "_value"] = item()
+                data[item.id() + "_last_update"] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
+                data[item.id() + "_last_change"] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
+
+            # return it as json the the web page
+            return json.dumps(data)
+        else:
+            return

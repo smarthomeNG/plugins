@@ -29,7 +29,11 @@ import os
 import shutil
 
 import lib.shyaml as shyaml
+from lib.utils import Utils
+from lib.module import Modules
 from lib.model.smartplugin import SmartPlugin
+
+from .webif import WebInterface
 
 from .svgenerator import SmartVisuGenerator
 from .svinstallwidgets import SmartVisuInstallWidgets
@@ -41,7 +45,7 @@ from .svinstallwidgets import SmartVisuInstallWidgets
 #########################################################################
 
 class SmartVisu(SmartPlugin):
-    PLUGIN_VERSION="1.8.0"
+    PLUGIN_VERSION="1.8.2"
     ALLOW_MULTIINSTANCE = True
 
     visu_definition = None
@@ -54,9 +58,10 @@ class SmartVisu(SmartPlugin):
 
 
     def __init__(self, sh):
-        self.logger = logging.getLogger(__name__)
+        #self.logger = logging.getLogger(__name__)
         self._sh = sh
 
+        self.default_acl = self.get_parameter_value('default_acl')
         self.smartvisu_dir = self.get_parameter_value('smartvisu_dir')
         self._generate_pages = self.get_parameter_value('generate_pages')
         self.overwrite_templates = self.get_parameter_value('overwrite_templates')
@@ -70,6 +75,8 @@ class SmartVisu(SmartPlugin):
         self.smartvisu_version = self.get_smartvisu_version()
         if self.smartvisu_version == '':
             self.logger.error("Could not determine smartVISU version!")
+        self.smartvisu_is_configured = self.sv_is_configured()
+        self.logger.info(f"sv version={self.smartvisu_version}, sv_is_configured={self.smartvisu_is_configured}")
 
         self.deprecated_widgets = []
         self.removed_widgets = []
@@ -81,6 +88,27 @@ class SmartVisu(SmartPlugin):
         self.read_visu_definition()
         self.load_deprecated_info()
 
+        # get instance of websocket module (to enable sv-protocol support)
+        try:
+            self.mod_websocket = Modules.get_instance().get_module('websocket')
+        except:
+            self.mod_websocket = None
+        if self.mod_websocket == None:
+            self.logger.info("Module 'websocket' could not be initialized.")
+        else:
+            self.mod_websocket.set_smartvisu_support(protocol_enabled=True, default_acl=self.default_acl, query_definitions=False, series_updatecycle=0)
+
+        self.port = ''
+        self.tls_port = ''
+        if self.mod_websocket is not None:
+            self.port = str(self.mod_websocket.get_port())
+            if self.mod_websocket.get_use_tls():
+                self.tls_port = self.mod_websocket.get_tls_port()
+
+        self.init_webinterface(WebInterface)
+
+        return
+
 
     def run(self):
         self.alive = True
@@ -88,7 +116,7 @@ class SmartVisu(SmartPlugin):
             if not os.path.isdir(os.path.join(self.smartvisu_dir, 'pages')):
                 self.logger.error("Could not find valid smartVISU directory: {}".format(self.smartvisu_dir))
             else:
-                self.logger.warning("Starting smartVISU v{} handling for visu in {}".format(self.smartvisu_version, self.smartvisu_dir))
+                self.logger.info(f"Starting smartVISU v{self.smartvisu_version} handling for visu in {self.smartvisu_dir}")
                 if self._handle_widgets:
                     try:
                         sv_iwdg = SmartVisuInstallWidgets(self)
@@ -99,26 +127,35 @@ class SmartVisu(SmartPlugin):
                     if self.deprecated_plugin_widgets != []:
                         self.logger.warning("Plugin widgets that should get an update: {}".format(self.deprecated_plugin_widgets))
 
+                # generate pages for smartvisu, if configured to do so and smartvisu is already configured
                 if self._generate_pages:
-                    try:
-                        svgen = SmartVisuGenerator(self, self.visu_definition)
-                    except Exception as e:
-                        self.logger.exception("SmartVisuGenerator: Exception: {}".format(e))
+                    if self.smartvisu_is_configured:
+                        try:
+                            svgen = SmartVisuGenerator(self, self.visu_definition)
+                        except Exception as e:
+                            self.logger.exception("SmartVisuGenerator: Exception: {}".format(e))
 
-                    wid_list = list(self.r_usage.keys())
-                    for wid in wid_list:
-                        if self.r_usage[wid] == 0:
-                            del (self.r_usage[wid])
-                    wid_list = list(self.d_usage.keys())
-                    for wid in wid_list:
-                        if self.d_usage[wid] == 0:
-                            del (self.d_usage[wid])
-                    if self.r_usage != {}:
-                        self.logger.error("Removed widget usage={}".format(self.r_usage))
-                    if self.d_usage != {}:
-                        self.logger.warning("Deprecated widget usage={}".format(self.d_usage))
+                        wid_list = list(self.r_usage.keys())
+                        for wid in wid_list:
+                            if self.r_usage[wid] == 0:
+                                del (self.r_usage[wid])
+                        wid_list = list(self.d_usage.keys())
+                        for wid in wid_list:
+                            if self.d_usage[wid] == 0:
+                                del (self.d_usage[wid])
+                        if self.r_usage != {}:
+                            self.logger.error("Removed widget usage (used in # sv_widgets): {}".format(self.r_usage))
+                        if self.d_usage != {}:
+                            self.logger.warning("Deprecated widget usage (used in # sv_widgets): {}".format(self.d_usage))
+                    else:
+                        self.logger.warning(f"Not generating pages because smartVISU v{self.smartvisu_version} in directory {self.smartvisu_dir} is not yet configured")
 
-                self.logger.info("Finished smartVISU v{} handling".format(self.smartvisu_version))
+                if self.smartvisu_is_configured:
+                    self.write_masteritem_file()
+                    self.logger.info("Finished smartVISU v{} handling".format(self.smartvisu_version))
+                else:
+                    self.logger.warning(f"Not generating item-masterfile because smartVISU v{self.smartvisu_version} in directory {self.smartvisu_dir} is not yet configured")
+        # self.stop()
 
 
     def stop(self):
@@ -203,7 +240,13 @@ class SmartVisu(SmartPlugin):
         self.deprecated_plugin_widgets = []
         filename = os.path.join(self.smartvisu_dir, 'widgets', 'deprecated.yaml')
         dep_warnings = shyaml.yaml_load(filename, ordered=False, ignore_notfound=True)
+        if dep_warnings is None:
+            #load deprecated warnings for older versions of smartvisu
+            if self.smartvisu_version.startswith('2.9'):
+                filename = os.path.join(self.get_plugin_dir(), 'deprecated_29.yaml')
+                dep_warnings = shyaml.yaml_load(filename, ordered=False, ignore_notfound=True)
         if dep_warnings is not None:
+            self.logger.info("Using deprecated info from file '{}' for smartVISU v{}".format(filename, self.smartvisu_version))
             self.deprecated_widgets = dep_warnings.get('deprecated', [])
             self.removed_widgets = dep_warnings.get('removed', [])
 
@@ -307,3 +350,115 @@ class SmartVisu(SmartPlugin):
         filename = os.path.join(self.etc_dir, 'visu.yaml')
         self.visu_definition = shyaml.yaml_load(filename, ordered=False, ignore_notfound=True)
         return
+
+
+    def read_from_sv_configini(self, key):
+        """
+        Read a value from the configuration file of smartVISU
+
+        :param key: key to read from config.ini
+        :return: value of the key read
+        """
+        from configparser import ConfigParser
+        #config = ConfigParser()
+        #config.read('test.ini')
+
+        filename = os.path.join(self.smartvisu_dir, 'config.ini')
+        config_parser = ConfigParser()
+        try:
+            with open(filename) as stream:
+                config_parser.read_string("[dummy_section]\n" + stream.read())
+        except Exception as e:
+
+            self.logger.info("smartVISU is not configured (no 'config.ini' file found)")
+            return ''
+
+        try:
+            value = config_parser.get('dummy_section', key)
+        except:
+            self.logger.info("smartVISU is not configured (no entry 'pages' in 'config.ini' file found)")
+            return ''
+        value = Utils.strip_quotes(value)
+        self.logger.debug(f"read_from_sv_configini: key={key} -> value={value}")
+        return value
+
+
+    def sv_is_configured(self):
+        """
+        Test if the smartvisu is configured
+
+        The test is only performed for smartvisu v2.9 abd above
+
+        :return: True, if the smartvisu is configured or the sv-version is v2.8 or below
+        """
+
+        if self.smartvisu_version.startswith('2.7') or self.smartvisu_version.startswith('2.8'):
+            # Do not perform test on old sv versions
+            result = True
+            self.logger.warning("Old version, configuration not realy tested")
+        else:
+            # Test for sv v2.9 and up
+            # read config.ini to get the name of the pages directory
+            dirname = self.read_from_sv_configini('pages')
+            result = (dirname != '')
+
+        return result
+
+
+    def write_masteritem_file(self):
+        """
+        create_master_item.py in smartVISU
+        """
+        import json
+        from lib.item import Items
+
+        # get a list with only the pathes of the items
+        items = Items.get_instance()
+        items_sorted = sorted(items.return_items(), key=lambda k: str.lower(k['_path']), reverse=False)
+        item_list = []
+        for item in items_sorted:
+            item_list.append(item.property.path + '|' + item.property.type)
+        # read config.ini to get the name of the pages directory
+        dirname = self.read_from_sv_configini('pages')
+
+        if dirname != '':
+            # write json file with list of item pathes
+            pagedir_name = os.path.join(self.smartvisu_dir, 'pages', dirname)
+            filename = os.path.join(pagedir_name, 'masteritem.json')
+            self.logger.debug(f"write_masteritem_file: filename='{filename}'")
+            try:
+                with open(filename, 'w', encoding='utf-8') as f:
+                    json.dump(item_list, f, ensure_ascii=False, indent=4)
+                self.logger.info(f"master-itemfile written to smartVISU (to directory {pagedir_name})")
+            except:
+                self.logger.warning(f"Could not write master-itemfile to smartVISU (to directory {pagedir_name})")
+        else:
+            self.logger.warning("Master-itemfile not written, because the name of the pages directory could not be read from smartVISU")
+        return
+
+
+    def url(self, url, clientip=''):
+        """
+        Tell the websocket client (visu) to load a specific url
+        """
+        if self.mod_websocket is None:
+            self.logger.error("Cannot send url to visu because websocket module is not loaded")
+            return False
+
+        result = self.mod_websocket.set_visu_url(url, clientip)
+
+        return result
+
+
+    def return_clients(self):
+        """
+        Returns connected clients
+
+        :return: list of dicts with client information
+        """
+        if self.mod_websocket is None:
+            return {}
+
+        client_info = self.mod_websocket.get_visu_client_info()
+        self.logger.info(f"client_info = {client_info}")
+        return client_info

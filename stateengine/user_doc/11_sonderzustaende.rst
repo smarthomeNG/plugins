@@ -2,6 +2,7 @@
 .. index:: Stateengine; Besondere Zustände
 .. _Besondere Zustände:
 
+==================
 Besondere Zustände
 ==================
 
@@ -18,8 +19,8 @@ Sperr-Item ein, das beispielsweise über einen Taster oder die Visu änderbar
 ist. Sperr-Item und Zustand können durch ``struct: stateengine.state_lock``
 auf Höhe des Regelwerk-Items automatisch implementiert werden.
 
-.. rubric:: Das "Sperr"-Item
-  :name: dassperritem
+"Sperr"-Item
+============
 
 Die Sperre soll aktiv sein, wenn das Sperr-Item den Wert ``True`` hat.
 Das Sperritem definiert man wie folgt:
@@ -35,8 +36,8 @@ Das Sperritem definiert man wie folgt:
              visu_acl: rw
              cache: on
 
-.. rubric:: Der Sperr-Zustand
- :name: dersperrzustand
+Der Sperr-Zustand
+=================
 
 Der zugehörige Zustand könnte so aussehen und sollte als erster Zustand definiert
 werden, da er anderen Zuständen gegenüber priorisiert werden soll.
@@ -74,13 +75,14 @@ Ablauf dieser Zeit soll die Automatik wieder aktiv werden.
 Der Aussetzenzustand kann einfach über ``struct: stateenginge.state_suspend`` in
 das Stateengine Item (auf der selben Hierarchieebene wie das rules Item)
 übernommen werden. Es muss dann lediglich noch
-das manuell Item angepasst werden - siehe weiter unten.
+das manuell Item angepasst werden - siehe weiter unten. Außerdem ist die Dauer
+des Suspendzustands im Item ``automatik.settings.suspendduration.seconds`` einzustellen.
 
-.. rubric:: Das "Suspend"-Item
-  :name: dassuspenditem
+Das "Suspend"-Item
+==================
 
 Zunächst wird ein "Suspend"-Item benötigt. Dieses Item zeigt zum
-einen die zeitweise Deaktivierung an, zum, anderen kann die
+einen die zeitweise Deaktivierung an, zum anderen kann die
 Deaktivierung über dieses Item vorzeitig beendet werden:
 
 .. code-block:: yaml
@@ -96,8 +98,8 @@ Deaktivierung über dieses Item vorzeitig beendet werden:
                    visu_acl: rw
                    cache: 'True'
 
-.. rubric:: Das "Manuell"-Item
-  :name: dasmanuellitem
+Das "Manuell"-Item
+==================
 
 Ein weiteres Item wird benötigt, um alle Aktionen, die den
 Suspend-Zustand auslösen sollen, zu kapseln. Dieses Item ist das
@@ -108,7 +110,10 @@ Um etwaige Probleme mit dem Suspendzustand einfacher erkennen zu können,
 kann ein spezielles Logging aktiviert werden:
 
 **se_manual_logitem**
-*Der absolute Pfad des manuell Items*
+*Der absolute oder relative Pfad des manuell Items*
+
+Im unteren Beispiel kann der Pfad sowohl **beispiel.raffstore1.automatik.manuell**
+als auch schlicht und einfach **.self** lauten.
 
 .. code-block:: yaml
 
@@ -120,7 +125,7 @@ kann ein spezielles Logging aktiviert werden:
                manuell:
                    type: bool
                    se_manual_invert: 'True'
-                   se_manual_logitem: beispiel.raffstore1.automatik.manuell
+                   se_manual_logitem: .self
                    se_manual_exclude:
                      - database:*
                      - KNX:1.1.4:*
@@ -182,8 +187,8 @@ Ein weiteres Beispiel mit Wildcards. Groß- und Kleinschreibung spielen generell
       - knx:1.0.0:3/5/*
 
 
-.. rubric:: Der Suspend-Zustand
-  :name: dersuspendzustand
+Der Suspend-Zustand
+===================
 
 Mit diesen beiden Items kann nun ein einfacher Suspend-Zustand
 definiert werden. Als Aktion im Suspend-Zustand wird dabei die
@@ -244,10 +249,28 @@ Der Suspend-Zustand sieht damit wie folgt aus:
 Da der Suspend-Zustand anderen Zuständen
 vorgehen sollte, steht er üblicherweise sehr weit vorrne in der
 Reihenfolge. In der Regel wird der Suspend-Zustand in der
-Definition der zweite Zustand nach dem Lock-Zustand sein.
+Definition der zweite Zustand nach dem Lock-Zustand sein. Allerdings wird es
+auch Setups geben, wo ein anderer - theoretisch untergeordneter - Zustand
+den Manuellbetrieb aufheben soll. Typischerweise, wenn abends die Jalousien zugehen
+sollen, selbst wenn man diese zuvor manuell betätigt hatte. In diesem Fall gibt es zwei Möglichkeiten:
 
-.. rubric:: Dauer der zeitweisen Deaktivierung
-  :name: dauerderzeitweisendeaktivierung
+- den Suspendzustand zwei Mal einbinden und den "auflösenden" Zustand, also z.B. Nacht
+  als Burgerpatty dazwischen zu stecken. Um dieses Setup dennoch möglichst einfach zu halten,
+  bietet es sich an, das ``se_use`` Attribut zu nutzen.
+- das ``se_releasedby`` Attribut zu nutzen. Hier können Zustände
+  deklariert werden, die den Suspendzustand auflösen können. Dabei
+  versucht das Plugin, bei jedem Durchlauf zu eruieren, ob der
+  auflösende Zustand (z.B. Nacht) eingenommen werden könnte, obwohl
+  aktuell der Suspendzustand aktiv ist. Kann/könnte der auflösende
+  Zustand eingenommen werden, wird der Suspendzustand deaktiviert und
+  der in der Hierarchie als nächstes folgende Zustand eingenommen,
+  dessen Bedingungen erfüllt werden. Dies muss nicht zwingend der
+  auflösende Zustand sein.
+
+Weiter Details hierzu sind unter :ref:`Sonstiges` zu finden.
+
+Dauer der zeitweisen Deaktivierung
+----------------------------------
 
 Die Dauer der zeitweisen Deaktivierung wird in der
 Plugin-Konfiguration über die Einstellung ``suspend_time_default``
@@ -259,4 +282,10 @@ abweichend sein soll, kann dort das Attribut
 
       se_suspend_time: <Sekunden>
 
-angegeben werden. Der Parameter kann auch durch ein Item festgelegt werden.
+angegeben werden. Der Parameter kann auch durch ein Item oder eval festgelegt werden.
+Letzteres ermöglicht es, je nach Situation die Suspenddauer von verschiedenen Items
+abhängig zu machen. Im struct ``state_suspend_dynamic`` wird hier das Item automatik.settings.suspendduration.seconds verknüpft bzw.
+für die verschiedenen "suspendvariants" automatik.settings.suspendvariant.suspendduration[0-2].seconds.
+Hierzu ist im struct ein Item settings.suspendvariant integriert, das einen numerischen Wert zwischen 0
+und 2 erwartet. 0 ist dabei die "normale" Funktionsweise, eine 1 würde auf die duration1 und eine 2 auf die
+duration2 verweisen.

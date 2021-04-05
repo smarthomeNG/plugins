@@ -81,7 +81,7 @@ item_attributes:
 
     kodi_item:
         type: str
-        valid_list: ['quit', 'mute', 'volume', 'action', 'seek', 'audio', 'speed', 'subtitle', 'playpause', 'stop', 'goto', 'power']
+        valid_list: ['quit', 'mute', 'volume', 'action', 'seek', 'audio', 'speed', 'subtitle', 'playpause', 'stop', 'goto', 'power', 'subtitles', 'streams', 'media', 'title', 'player', 'state', 'update', 'macro', 'get_favourites']
         description:
             de: 'Der Attributwert hängt von der gewünschten Funktion ab. Siehe Dokumentation für Details.'
             en: 'The attribute value is dependant on the wanted function. Look at the documentation for details.'
@@ -107,12 +107,12 @@ item_structs:
 
         audiostreams:
             kodi_item@instance: streams
-            type: foo
+            type: list
             visu_acl: ro
 
         subtitles:
             kodi_item@instance: subtitles
-            type: foo
+            type: list
             visu_acl: ro
 
         player:

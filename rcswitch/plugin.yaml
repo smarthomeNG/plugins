@@ -3,8 +3,8 @@ plugin:
     # Global plugin attributes
     type: gateway                 # plugin type (gateway, interface, protocol, system, web)
     description:                  # Alternative: description in multiple languages
-        de: 'Schalten von 433 MHz Funksteckdosen'
-        en: 'Support for 433 MHz wireless sockets'
+        de: 'Schalten von 433 MHz Funksteckdosen z.B. für Brennenstuhl RCS 1000 N'
+        en: 'Support for 433 MHz wireless sockets e.g. for Brennenstuhl RCS 1000 N'
     maintainer: dafra
     tester: hasenradball          # Who tests this plugin?
     state: ready
@@ -12,7 +12,7 @@ plugin:
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/39094-logic-und-howto-für-433mhz-steckdosen
 
-    version: 1.2.1              # Plugin version
+    version: 1.2.2              # Plugin version
     sh_minversion: 1.2            # minimum shNG version to use this plugin
 #    sh_maxversion:               # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False         # plugin supports multi instance
@@ -63,7 +63,7 @@ item_attributes:
     # Definition of item attributes defined by this plugin
     rc_device:
         type: str
-        valid_list: [1,2,3,4,5,a,b,c,d,e,A,B,C,D,E]
+        valid_list: ['1','2','3','4','5','a','b','c','d','e','A','B','C','D','E']
         description:
             de: "Nummer (oder Buchstabe) des Device"
             en: "Number or letter or the device"

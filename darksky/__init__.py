@@ -30,19 +30,33 @@ from collections import OrderedDict
 from lib.module import Modules
 from lib.model.smartplugin import *
 
+from .webif import WebInterface
+
 
 class DarkSky(SmartPlugin):
 
 
-    PLUGIN_VERSION = "1.7.0"
+    PLUGIN_VERSION = "1.7.1"
 
     _base_forecast_url = 'https://api.darksky.net/forecast/%s/%s,%s'
 
     def __init__(self, sh, *args, **kwargs):
         """
-        Initializes the plugin
+        Initalizes the plugin.
+
+        If you need the sh object at all, use the method self.get_sh() to get it. There should be almost no need for
+        a reference to the sh object any more.
+
+        Plugins have to use the new way of getting parameter values:
+        use the SmartPlugin method get_parameter_value(parameter_name). Anywhere within the Plugin you can get
+        the configured (and checked) value for a parameter by calling self.get_parameter_value(parameter_name). It
+        returns the value in the datatype that is defined in the metadata.
         """
-        self.logger = logging.getLogger(__name__)
+
+        # Call init code of parent class (SmartPlugin)
+        super().__init__()
+
+        # get the parameters for the plugin (as defined in metadata plugin.yaml):
         self._key = self.get_parameter_value('key')
         if self.get_parameter_value('latitude') != '' and self.get_parameter_value('longitude') != '':
             self._lat = self.get_parameter_value('latitude')
@@ -58,8 +72,8 @@ class DarkSky(SmartPlugin):
         self._cycle = int(self.get_parameter_value('cycle'))
         self._items = {}
 
-        if not self.init_webinterface():
-            self._init_complete = False
+        self.init_webinterface(WebInterface)
+
 
     def run(self):
         self.scheduler_add(__name__, self._update_loop, prio=5, cycle=self._cycle, offset=2)
@@ -158,20 +172,38 @@ class DarkSky(SmartPlugin):
         try:
             response = self._session.get(self._build_url())
         except Exception as e:
-            self.logger.error(
-                "get_forecast: Exception when sending GET request for get_forecast: {}".format(e))
+            self.logger.warning("get_forecast: Exception when sending GET"
+                                " request for get_forecast: {}".format(e))
             return
-        json_obj = response.json()
+        try:
+            json_obj = response.json()
+        except Exception as e:
+            self.logger.warning("get_forecast: Response {} is no valid"
+                                " json format: {}".format(response, e))
+            return
         daily_data = OrderedDict()
+        if not json_obj.get('daily', False):
+            self.logger.warning("get_forecast: Response {} has no info for daily values."
+                                " Ignoring response.".format(response))
+            return
+        if not json_obj.get('hourly', False):
+            self.logger.warning("get_forecast: Response {} has no info for hourly values."
+                                " Ignoring response.".format(response))
+            return
 
         # add icon_visu, date and day to daily and currently
         json_obj['daily'].update({'icon_visu': self.map_icon(json_obj['daily']['icon'])})
-        date_entry = datetime.datetime.fromtimestamp(json_obj['currently']['time']).strftime('%d.%m.%Y')
-        day_entry = datetime.datetime.fromtimestamp(json_obj['currently']['time']).strftime('%A')
-        hour_entry = datetime.datetime.fromtimestamp(json_obj['currently']['time']).hour
-        json_obj['currently'].update({'date': date_entry, 'weekday': day_entry, 'hour': hour_entry,
-                                      'icon_visu': self.map_icon(json_obj['currently']['icon'])})
         json_obj['hourly'].update({'icon_visu': self.map_icon(json_obj['hourly']['icon'])})
+        if not json_obj.get('currently'):
+            self.logger.warning("get_forecast: Response {} has no info for current values."
+                                " Skipping update for currently values.".format(response))
+        else:
+            date_entry = datetime.datetime.fromtimestamp(json_obj['currently']['time']).strftime('%d.%m.%Y')
+            day_entry = datetime.datetime.fromtimestamp(json_obj['currently']['time']).strftime('%A')
+            hour_entry = datetime.datetime.fromtimestamp(json_obj['currently']['time']).hour
+            json_obj['currently'].update({'date': date_entry, 'weekday': day_entry,
+                                          'hour': hour_entry, 'icon_visu':
+                                          self.map_icon(json_obj['currently']['icon'])})
 
         # add icon_visu, date and day to each day
         for day in json_obj['daily'].get('data'):
@@ -290,103 +322,3 @@ class DarkSky(SmartPlugin):
             self.logger.error('_build_url: Wrong url type specified: %s' %url_type)
         return url
 
-    def init_webinterface(self):
-        """"
-        Initialize the web interface for this plugin
-
-        This method is only needed if the plugin is implementing a web interface
-        """
-        try:
-            self.mod_http = Modules.get_instance().get_module('http')   # try/except to handle running in a core version that does not support modules
-        except Exception:
-            self.mod_http = None
-        if self.mod_http is None:
-            self.logger.error("Plugin '{}': Not initializing the web interface".format(self.get_shortname()))
-            return False
-
-        # set application configuration for cherrypy
-        webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
-        config = {
-            '/': {
-                'tools.staticdir.root': webif_dir,
-            },
-            '/static': {
-                'tools.staticdir.on': True,
-                'tools.staticdir.dir': 'static'
-            }
-        }
-
-        # Register the web interface as a cherrypy app
-        self.mod_http.register_webif(WebInterface(webif_dir, self),
-                                     self.get_shortname(),
-                                     config,
-                                     self.get_classname(), self.get_instance_name(),
-                                     description='')
-
-        return True
-
-
-import cherrypy
-from jinja2 import Environment, FileSystemLoader
-
-
-class WebInterface(SmartPluginWebIf):
-
-    def __init__(self, webif_dir, plugin):
-        """
-        Initialization of instance of class WebInterface
-
-        :param webif_dir: directory where the webinterface of the plugin resides
-        :param plugin: instance of the plugin
-        :type webif_dir: str
-        :type plugin: object
-        """
-        self.logger = logging.getLogger(__name__)
-        self.webif_dir = webif_dir
-        self.plugin = plugin
-        self.tplenv = self.init_template_environment()
-
-    @cherrypy.expose
-    def index(self, reload=None):
-        """
-        Build index.html for cherrypy
-
-        Render the template and return the html file to be delivered to the browser
-
-        :return: contents of the template after beeing rendered
-        """
-
-        def printdict(OD, mode='dict', s="", indent=' '*4, level=0):
-            def is_number(s):
-                try:
-                    float(s)
-                    return True
-                except Exception:
-                    return False
-
-            def fstr(s):
-                return s if is_number(s) else '"{}"'.format(s)
-            if mode != 'dict':
-                kv_tpl = '("{}")'.format(s)
-                ST = 'OrderedDict([\n'
-                END = '])'
-            else:
-                kv_tpl = '"%s": %s'
-                ST = '{\n'
-                END = '}'
-            for i, k in enumerate(OD.keys()):
-                if type(OD[k]) in [dict, OrderedDict]:
-                    level += 1
-                    s += (level-1)*indent+kv_tpl%(k,ST+printdict(OD[k], mode=mode, indent=indent, level=level)+(level-1)*indent+END)
-                    level -= 1
-                else:
-                    s += level*indent+kv_tpl%(k,fstr(OD[k]))
-                if i != len(OD) - 1:
-                    s += ","
-                s += "\n"
-            return s
-
-        tmpl = self.tplenv.get_template('index.html')
-        pf = printdict(self.plugin.get_json_data())
-        return tmpl.render(plugin_shortname=self.plugin.get_shortname(), plugin_version=self.plugin.get_version(),
-                           plugin_info=self.plugin.get_info(), p=self.plugin, json_data=pf.replace('\n', '<br>').replace(' ', '&nbsp;'),)

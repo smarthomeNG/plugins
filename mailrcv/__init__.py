@@ -41,7 +41,7 @@ class IMAP(SmartPlugin):
         self._trashfolder = self.get_parameter_value('trashfolder')
         self._mail_sub = {}
         self._mail_to = {}
-        self._mail = False
+        self._mail = None
 
         if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
             self.logger = logging.getLogger(__name__)
@@ -66,7 +66,11 @@ class IMAP(SmartPlugin):
         except Exception as e:
             self.logger.warning("Could not connect to {0}: {1}".format(self._host, e))
             return
-        rsp, data = imap.select()
+        try:
+            rsp, data = imap.select()
+        except Exception as e:
+            self.logger.warning("Problem getting mail on host {0}: {1}".format(self._host, e))
+            return
         if rsp != 'OK':
             self.logger.warning("IMAP: Could not select mailbox")
             imap.close()
@@ -82,6 +86,7 @@ class IMAP(SmartPlugin):
         for uid in uids:
             if not self.alive:
                 break
+            mail = {}
             try:
                 rsp, data = imap.uid('fetch', uid, '(RFC822)')
                 if rsp != 'OK':
@@ -89,27 +94,28 @@ class IMAP(SmartPlugin):
                     continue
                 try:
                     mail = email.message_from_bytes(data[0][1])
-                except:
+                except Exception as e:
                     if len(data) < 2:
-                        self.logger.warning("IMAP: problem getting message {} from data: data-list has length {} and data[0] = '{}'".format(uid, len(data), data[0]))
+                        self.logger.warning("IMAP: problem getting message {} from data: "
+                                            "data-list has length {} and data[0] = '{}' "
+                                            "Error: {}".format(uid, len(data), data[0], e))
                     if len(data) > 1:
-                        self.logger.warning("data[1] = '{}'".format(data[1]))
+                        self.logger.warning("data[1] = '{}'. Error: {}".format(data[1], e))
+                    break
                 # If a (non standard-conforming) mail without content-transfer-encoding is received, decoding the mail content fails.
                 # In this case we set the encoding to the official standard, which should be a good guess.
-                if not 'content-transfer-encoding' in mail:
+                if 'content-transfer-encoding' not in mail:
                     mail['content-transfer-encoding'] = '7BIT'
                 to = email.utils.parseaddr(mail['To'])[1]
                 fo = email.utils.parseaddr(mail['From'])[1]
                 if mail['Subject'] is None:
                     subject = 'no subject'
-                    encoding = None
                 else:
                     subject, encoding = email.header.decode_header(mail['Subject'])[0]
                     if encoding is not None:
                         subject = subject.decode(encoding)
             except Exception as e:
-                self.logger.warning("mail['Subject'] = '{}'".format(mail['Subject']))
-                self.logger.exception("IMAP: problem parsing message {}: {}".format(uid, e))
+                self.logger.error("IMAP: problem parsing message {} with subject {}: {}".format(uid, mail.get('Subject'), e))
                 # self.logger.warning("data = '{}', mail = '{}'".format(data, mail))
                 continue
             if subject in self._mail_sub:
@@ -119,15 +125,15 @@ class IMAP(SmartPlugin):
             elif self._mail:
                 logic = self._mail
             else:
-                logic = False
-            if logic:
+                logic = None
+            if logic is not None:
                 logic.trigger('IMAP', fo, mail, dest=to)
                 if self._host.lower() == 'imap.gmail.com':
                     typ, data = imap.uid('store', uid, '+X-GM-LABELS', '\\Trash')
                     if typ == 'OK':
-                        logger.debug("Moving mail to trash. {0} => {1}: {2}".format(fo, to, subject))
+                        self.logger.debug("Moving mail to trash. {0} => {1}: {2}".format(fo, to, subject))
                     else:
-                        logger.warning("Could not move mail to trash. {0} => {1}: {2}".format(fo, to, subject))
+                        self.logger.warning("Could not move mail to trash. {0} => {1}: {2}".format(fo, to, subject))
                 else:
                     rsp, data = imap.uid('copy', uid, self._trashfolder)
                     if rsp == 'OK':
@@ -135,9 +141,15 @@ class IMAP(SmartPlugin):
                         self.logger.debug("Moving mail to trash. {0} => {1}: {2}".format(fo, to, subject))
                     else:
                         self.logger.warning("Could not move mail to trash. {0} => {1}: {2}".format(fo, to, subject))
-                        self.logger.info("Consider setting the trashfolder option to the name of your trash mailbox. Available mailboxes are:")
+                        self.logger.info("Consider setting the trashfolder option to the name of your trash mailbox.")
+                        mailboxes = []
                         for mb in imap.list()[1]:
-                            self.logger.info(mb.decode("utf-8"))
+                            if mb is not None:
+                                mailboxes.append(mb.decode("utf-8"))
+                        if mailboxes:
+                            self.logger.info("Available mailboxes are: {}".format(mailboxes))
+                        else:
+                            self.logger.info("No trash mailboxes available")
             else:
                 self.logger.info("Ignoring mail. {0} => {1}: {2}".format(fo, to, subject))
         imap.close()
@@ -163,4 +175,3 @@ class IMAP(SmartPlugin):
 
     def update_item(self, item, caller=None, source=None, dest=None):
         pass
-

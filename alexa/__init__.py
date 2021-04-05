@@ -32,7 +32,7 @@ from . import actions_percentage
 from . import actions_lock
 
 class Alexa(SmartPlugin):
-    PLUGIN_VERSION = "1.3.0.9.0"
+    PLUGIN_VERSION = "1.3.1"
     ALLOW_MULTIINSTANCE = False
 
     def __init__(self, sh, service_host='0.0.0.0', service_port=9000, service_https_certfile=None, service_https_keyfile=None):

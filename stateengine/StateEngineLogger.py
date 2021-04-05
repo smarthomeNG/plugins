@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
-#  Copyright 2014-     Thomas Ernst                       offline@gmx.net
+#  Copyright 2014-2018 Thomas Ernst                       offline@gmx.net
+#  Copyright 2019- Onkel Andy                       onkelandy@hotmail.com
 #########################################################################
 #  Finite state machine plugin for SmartHomeNG
 #
@@ -21,6 +22,7 @@
 import logging
 import datetime
 import os
+from . import StateEngineDefaults
 
 
 class SeLogger:
@@ -33,7 +35,7 @@ class SeLogger:
             SeLogger.__loglevel = int(loglevel)
         except ValueError:
             SeLogger.__loglevel = 0
-            logger = logging.getLogger('plugins.stateengine')
+            logger = StateEngineDefaults.logger
             logger.error("Loglevel has to be an int number!")
 
     # Set log directory
@@ -62,7 +64,7 @@ class SeLogger:
             SeLogger.__logmaxage = int(logmaxage)
         except ValueError:
             SeLogger.__logmaxage = 0
-            logger = logging.getLogger('plugins.stateengine')
+            logger = StateEngineDefaults.logger
             logger.error("The maximum age of the log files has to be an int number.")
 
     # Remove old log files (by scheduler)
@@ -70,7 +72,7 @@ class SeLogger:
     def remove_old_logfiles():
         if SeLogger.__logmaxage == 0:
             return
-        logger = logging.getLogger('plugins.stateengine')
+        logger = StateEngineDefaults.logger
         logger.info("Removing logfiles older than {0} days".format(SeLogger.__logmaxage))
         count_success = 0
         count_error = 0
@@ -100,19 +102,21 @@ class SeLogger:
     # Constructor
     # item: item for which the detailed log is (used as part of file name)
     def __init__(self, item):
-        self.logger = logging.getLogger('{}.{}'.format(__name__.replace(".StateEngineLogger", ""), item.property.path))
+        self.logger = StateEngineDefaults.se_logger
         self.__section = item.property.path.replace(".", "_").replace("/", "")
         self.__indentlevel = 0
-        self.__loglevel = SeLogger.__loglevel
+        self.__loglevel = StateEngineDefaults.log_level
+        self.__logmaxage = StateEngineDefaults.log_maxage
         self.__date = None
+        self.__logerror = False
         self.__filename = ""
         self.update_logfile()
 
     # override log level for specific items by using se_log_level attribute
     def override_loglevel(self, loglevel, item=None):
-        logger = logging.getLogger('plugins.stateengine')
-        self.__loglevel = int(loglevel)
-        logger.info("Loglevel for item {0} got individually set to {1}.".format(item, loglevel))
+        self.__loglevel = loglevel.get()
+        if self.__loglevel != StateEngineDefaults.log_level:
+            self.logger.info("Loglevel for item {0} got individually set to {1}.".format(item.property.path, self.__loglevel))
 
     # get current log level of abitem
     def get_loglevel(self):
@@ -142,13 +146,19 @@ class SeLogger:
     # level: required loglevel
     # text: text to log
     def log(self, level, text, *args):
-        # Section givn: Check level
+        # Section given: Check level
         if level <= self.__loglevel:
             indent = "\t" * self.__indentlevel
             text = text.format(*args)
             logtext = "{0}{1} {2}\r\n".format(datetime.datetime.now(), indent, text)
-            with open(self.__filename, mode="a", encoding="utf-8") as f:
-                f.write(logtext)
+            try:
+                with open(self.__filename, mode="a", encoding="utf-8") as f:
+                    f.write(logtext)
+            except Exception as e:
+                if self.__logerror is False:
+                    self.__logerror = True
+                    self.logger.error("There is a problem with "
+                                      "the logfile {}: {}".format(self.__filename, e))
 
     # log header line (as info)
     # text: header text
@@ -167,7 +177,7 @@ class SeLogger:
         text = '{}{}'.format(indent, text)
         self.logger.info(text.format(*args))
 
-    # log with lebel=debug
+    # log with level=debug
     # text: text to log
     # *args: parameters for text
     def debug(self, text, *args):
@@ -175,6 +185,15 @@ class SeLogger:
         indent = "\t" * self.__indentlevel
         text = '{}{}'.format(indent, text)
         self.logger.debug(text.format(*args))
+
+    # log with level=develop
+    # text: text to log
+    # *args: parameters for text
+    def develop(self, text, *args):
+        self.log(3, "DEV: " + text, *args)
+        indent = "\t" * self.__indentlevel
+        text = '{}{}'.format(indent, text)
+        self.logger.log(StateEngineDefaults.VERBOSE, text.format(*args))
 
     # log warning (always to main smarthome.py log)
     # text: text to log
@@ -211,7 +230,7 @@ class SeLoggerDummy:
     # item: item for which the detailed log is (used as part of file name)
     # noinspection PyUnusedLocal
     def __init__(self, item=None):
-        self.logger = logging.getLogger(__name__)
+        self.logger = StateEngineDefaults.logger
 
     # Update name logfile if required
     def update_logfile(self):
@@ -230,41 +249,47 @@ class SeLoggerDummy:
     # log text something
     # level: required loglevel
     # text: text to log
+    def develop(self, text, *args):
+        pass
+
+    # log text something
+    # level: required loglevel
+    # text: text to log
     def log(self, level, text, *args):
         pass
 
-    # log header line (as info)
+    # log header line (always to main smarthomeNG log as info)
     # text: header text
     def header(self, text):
-        pass
+        self.logger.info(text)
 
-    # log with level=info
+    # log with level=info (always to main smarthomeNG log)
     # @param text text to log
     # @param *args parameters for text
     def info(self, text, *args):
-        pass
+        self.logger.info(text.format(*args))
 
-    # log with lebel=debug
+    # log with level=debug (always to main smarthomeNG log)
     # text: text to log
     # *args: parameters for text
     def debug(self, text, *args):
-        pass
+        self.logger.debug(text.format(*args))
 
-    # log warning (always to main smarthome.py log)
+    # log warning (always to main smarthomeNG log)
     # text: text to log
     # *args: parameters for text
     # noinspection PyMethodMayBeStatic
     def warning(self, text, *args):
         self.logger.warning(text.format(*args))
 
-    # log error (always to main smarthome.py log)
+    # log error (always to main smarthomeNG log)
     # text: text to log
     # *args: parameters for text
     # noinspection PyMethodMayBeStatic
     def error(self, text, *args):
         self.logger.error(text.format(*args))
 
-    # log exception (always to main smarthome.py log'
+    # log exception (always to main smarthomeNG log)
     # msg: message to log
     # *args: arguments for message
     # **kwargs: known arguments for message

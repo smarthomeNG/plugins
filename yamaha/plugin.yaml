@@ -3,16 +3,16 @@ plugin:
     # Global plugin attributes
     type: interface                 # plugin type (gateway, interface, protocol, system, web)
     description:
-        de: 'Plugin um Yamaha RX-V und RX-S Receiver zu kontrollieren, **seit SmartHomeNG v1.3**'
-        en: 'Plugin to control Yamaha RX-V and RX-S receiver, **since SmartHomeNG v1.3**'
-    maintainer: rthill
-    tester: Sandman60
+        de: 'Plugin um Yamaha RX-V und RX-S Receiver via XML API zu kontrollieren'
+        en: 'Plugin to control Yamaha RX-V and RX-S receiver via XML API'
+    maintainer: bmxp
+    tester: None
     state: ready
     keywords: Yamaha receiver music 
     documentation: http://smarthomeng.de/user/plugins/yamaha/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/896468-plugin-yamaha
 
-    version: 1.0.2                 # Plugin version
+    version: 1.0.3                 # Plugin version
     sh_minversion: 1.1             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance

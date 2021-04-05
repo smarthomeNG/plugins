@@ -65,6 +65,14 @@
 		return false;
 	}
 
+	function copyToPluginFunction() {
+		if (confirm('{{ _('Wollen Sie den Vorwerk Token dauerhaft in die plugin.yaml Konfiguration uebernehmen?') }}')) {
+			tokenField = $('#input-token');
+			window.location.href='?action=writeToPluginConfig&tokenInput=' + tokenField.val();
+		}
+		return false;
+	}
+
 
 
 
@@ -155,9 +163,24 @@
 		</button>
 	</div>
 {% endif %}
-
-
-
+{% if configWriteSuccessfull %}
+	<div class="mb-2 alert alert-success alert-dismissible fade show" role="alert">
+		<strong>{{ _('Token speichern') }}</strong><br/>
+		{{ _('Token in plugin.yaml geschrieben.') }}
+		<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+			<span aria-hidden="true">&times;</span>
+		</button>
+	</div>
+{% endif %}
+{% if configWriteSuccessfull == False %}
+	<div class="mb-2 alert alert-warning alert-dismissible fade show" role="alert">
+		<strong>{{ _('Token speichern') }}</strong><br/>
+		{{ _('Fehler beim Speichern des Tokens in plugin.yaml. Siehe Logfile fuer Details.') }}
+		<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+			<span aria-hidden="true">&times;</span>
+		</button>
+	</div>
+{% endif %}
 
 
 <div class="container-fluid m-2">
@@ -230,8 +253,6 @@
 				<button type="button" class="btn btn-shng btn-sm" title="{{ _('Token anfragen') }}" onclick="requestTokenCommand();">{{ _('Token anfragen') }}</button>
 			</div>
 		</div>
-
-
 		<div class="row">
 		<td style="min-width:190px;" style="padding-top:15px;">
 			<div class="col-md-3 mb-3">
@@ -245,6 +266,15 @@
 				<button type="button" class="btn btn-shng btn-sm" onclick="copyClipboardFunction()">In Zwischenablage kopieren</button>
 			</div>
 		</div>
+		<div class="row">
+		<td style="min-width:190px;" style="padding-top:15px;">
+			<div class="col-md-6 mb-3">
+			</div>
+			<div class="col-md-6 mb-3">
+				<button type="button" class="btn btn-shng btn-sm" onclick="copyToPluginFunction()">In plugin Konfig kopieren</button>
+			</div>
+		</div>
+
 	</div>
 </div>
 

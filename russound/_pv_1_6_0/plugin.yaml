@@ -1,0 +1,84 @@
+# Metadata for the plugin
+plugin:
+    # Global plugin attributes
+    type: interface                 # plugin type (gateway, interface, protocol, system, web)
+    description:
+        de: 'Anbindung von Russound Audio Geräten'
+        en: 'Russound audio device '
+    maintainer: bmxp
+    tester: alex,fritz              # Who tests this plugin?
+    state: develop                  # change to ready when done with development
+    keywords: russound audio device multiroom net
+    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
+
+    version: 1.6.0                  # Plugin version
+    sh_minversion: 1.5              # minimum shNG version to use this plugin
+    # sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
+    multi_instance: False           # plugin supports multi instance
+    restartable: unknown
+    classname: Russound         # class containing the plugin
+
+parameters:
+    host:
+        type: ip
+        default: 127.0.0.1
+        description:
+            de: 'Russound Hostname oder IP Adresse'
+            en: 'Russound hostname or ip address'
+            fr: "Nom de l'hôte ou adresse IP de Russound"
+
+    port:
+        type: int
+        default: 9621
+        description:
+            de: 'Russound Port'
+            en: 'Russound port'
+            fr: "Port de Russound"
+
+item_attributes: 
+    rus_path:
+        type: str
+        description:
+            de: >
+                Pfad mit Controller, Zone und System Parameter, getrennt durch "."
+                Parameter ist
+                * status = Zone An oder Aus: Item muss vom Typ "bool" sein
+                * volume = Lautstärke der Zone: Item muss vom Typ "num" sein. Gültige Werte im Bereich [0..50]
+                * bass = Bass der Zone: Item muss vom Typ "num" sein. Gültige Werte im Bereich [-10..10]
+                * treble = Höhen der Zone: Item muss vom Typ "num" sein. Gültige Werte im Bereich [-10..10]
+                * balance = Balance der Zone: Item muss vom Typ "num" sein. Gültige Werte im Bereich [-10..10]
+                * turnonvolume = Lautstärke der Zone einschalten: Item muss vom Typ "num" sein. Gültige Werte im Bereich [0..50]
+                * currentsource = Nummer der Soundquelle: Item muss vom Typ "num" sein.
+                * mute = Ausgabeunterdrückung der zone (Mute): Item muss vom Typ "bool" sein
+                * loudness = Loudness der zone: Item muss vom Typ "bool" sein
+                * partymode = Party Modus Einstellung der Zone: Item muss vom Typ string sein. Gültige Werte [ON/OFF/MASTER]
+                * donotdisturb = "Nicht Stören" Einstellung der Zone: Item muss vom Typ string sein
+                * name = Name der Zone (nur lesbar)
+                
+            en: >
+                Path with controller, zone and system parameter, separated by .
+                * status = zone On/Off: item type must be bool
+                * volume = volume of the zone: item type must be num [0..50]
+                * bass = bass of the zone: item type must be num [-10..10]
+                * treble = treble of the zone: item type must be num [-10..10]
+                * balance = balance of the zone: item type must be num [-10..10]
+                * turnonvolume = volume on zone on: item type must be num [0..50]
+                * currentsource = number of the source: item type must be num
+                * mute = mute the zone volume: item type must be bool
+                * loudness = loudness of the zone: item type must be bool
+                * partymode = party mode setting of the zone: item type must be string [ON/OFF/MASTER]
+                * donotdisturb = do not disturb setting of the zone: item type must be string
+                * name = name of the zone (readonly)
+                
+
+
+item_structs: NONE
+    # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
+
+plugin_functions: NONE
+    # Definition of plugin functions defined by this plugin (enter 'plugin_functions: NONE', if section should be empty)
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)
+

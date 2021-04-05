@@ -1,2 +1,2 @@
-deebotozmo==1.6.6
+deebotozmo==1.7.8
 dnspython

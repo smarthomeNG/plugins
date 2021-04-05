@@ -1,0 +1,98 @@
+# Metadata for the classic-plugin
+plugin:
+    # Global plugin attributes
+    type: interface                 # plugin type (gateway, interface, protocol, system, web)
+    description:
+        de: 'Interface fuer Resol VBUS'
+        en: 'Interface for Resol VBUS'
+    maintainer: 'KHome'
+    tester: 'aschwith'              # Who tests this plugin?
+    state: develop     
+    keywords: resol, cosmo2, DL2, solar    # keywords, where applicable
+    documentation: https://github.com/smarthomeNG/plugins/resol/README.md        # url of documentation (wiki) page
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/919242-neues-plugin-resol-vbus-cosmo-multi-solarthermie-logging/page4
+
+# Following entries are for Smart-Plugins:
+    version: 1.0.3                 # Plugin version
+    sh_minversion: 1.7.2           # minimum shNG version to use this plugin
+#    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
+    multi_instance: False
+    restartable: unknown
+    classname: Resol               # class containing the plugin
+
+parameters:
+    # Definition of parameters to be configured in etc/plugin.yaml
+    ip:
+        type: ipv4
+        mandatory: True
+        description:
+            de: 'IP Adresse des VBUS LAN'
+            en: 'IPp address of VBUS LAN'
+    port:
+        type: int
+        valid_min: 0
+        default: 7053
+        description:
+            de: 'IP port des VBUS LAN'
+            en: 'IP port of VBUS LAN'
+    password:
+        type: str
+        mandatory: True
+        hide: True
+        description:
+            de: 'Passwort des DL2'
+            en: 'Password of DL2'
+    cycle:
+        type: int
+        default: 60
+        description:
+            de: 'Poll Cycle in Sekunden'
+            en: 'Poll cycle in seconds'
+
+item_attributes:
+    # Definition of item attributes defined by this plugin
+    resol_source:
+        type: str
+        description:
+            de: 'Source hex value'
+            en: 'Source hex value'
+    resol_destination:
+        type: str
+        description:
+            de: 'Destination hex value'
+            en: 'Destination hex value'
+    resol_command:
+        type: str
+        description:
+            de: 'Command hex value'
+            en: 'Command hex value'
+    resol_offset:
+        type: num
+        valid_min: 0
+        description:
+            de: 'Byte Offset'
+            en: 'Byte Offset'
+    resol_bituse:
+        type: num
+        valid_min: 0
+        description:
+            de: 'Byte Bituse Mask'
+            en: 'Byte Bituse Mask'
+    resol_factor:
+        type: list
+        valid_min: 0
+        description:
+            de: 'Ein Skalierungsfaktor pro Byte'
+            en: 'One byte scale factor per byte'
+
+item_structs: NONE
+
+plugin_functions: NONE
+    # Definition of plugin functions defined by this plugin (enter 'plugin_functions: NONE', if section should be empty)
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)
+
+
+
+

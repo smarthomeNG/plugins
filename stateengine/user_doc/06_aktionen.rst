@@ -2,6 +2,7 @@
 .. index:: Stateengine; Aktionen
 .. _Aktionen:
 
+========
 Aktionen
 ========
 
@@ -24,8 +25,8 @@ würden sich die Lamellen ständig um wenige Grad(bruchteile) ändern. Wird jedo
 beispielsweise auf den Wert 10 gesetzt, findet eine Änderung erst statt, wenn sich der
 errechnete Wert um mindestens 10 Grad vom aktuellen Lamellenwert unterscheidet.
 
-.. rubric:: Beispiel zu Aktionen
-  :name: beispielzuaktionenkombiniert
+Beispiel zu Aktionen
+--------------------
 
 Das folgende Beispiel führt je nach Zustand folgende Aktionen aus:
 
@@ -70,8 +71,8 @@ Das folgende Beispiel führt je nach Zustand folgende Aktionen aus:
                         - 'delay: 10'
                     <...>
 
-.. rubric:: Aufbau von Aktionen
-  :name: aufbauvonaktionen
+Aufbau von Aktionen
+-------------------
 
 Bei yaml Files werden die Parameter mittels Aufzählungszeichen "-"
 untereinander definiert, die Listeneinträge müssen in Anführungszeichen oder
@@ -87,8 +88,8 @@ Hochkommas gesetzt werden:
        - 'repeat: <repeat>'
        - 'conditionset: <conditionset regex>'
 
-.. rubric:: Auszuführende Aktionsart
-   :name: function
+Auszuführende Aktionsart
+------------------------
 
 Mit dem Parameter ``<func>`` wird die auszuführende Funktion
 festgelegt. In Abhängigkeit zur gewählten Funktion werden
@@ -101,7 +102,7 @@ Folgende Werte sind möglich:
 
    se_action_<Aktionsname>:
        - 'function: set'
-       - 'to: <val>'
+       - 'to: <val>/<eval>/<var>/<item>'
        - 'force: [True/False]'
 
 Das Item, das verändert werden soll, muss auf Ebene des
@@ -134,7 +135,7 @@ etc).
 
    se_action_<Aktionsname>:
        - 'function: add'
-       - 'value: <val>/<eval>/<var>'
+       - 'value: <val>/<eval>/<var>/<item>'
        - 'force: [True/False]'
 
 Das Item, das verändert werden soll, muss auf Ebene des
@@ -152,7 +153,7 @@ stehen muss, während eine Zahl das nicht sollte.
 
    se_action_<Aktionsname>:
        - 'function: remove'
-       - 'value: <val>/<eval>/<var>'
+       - 'value: <val>/<eval>/<var>/<item>'
        - 'mode: [first/last/all]'
 
 Das Item, das verändert werden soll, muss auf Ebene des
@@ -167,7 +168,7 @@ Itemwert erneut geschrieben, ohne etwas zu entfernen. Über den Parameter
 ``mode`` lässt sich einstellen, ob jeweils alle mit dem Wert übereinstimmenden
 Einträge in der Liste (mode: all) oder nur der erste (first) bzw. der letzte (last)
 Eintrag gelöscht werden sollen. Wird der Parameter nicht angegeben, werden immer
-alle Einträge gelöscht.
+alle passenden Einträge gelöscht.
 
 **Funktion run: Ausführen einer Funktion**
 
@@ -188,14 +189,14 @@ benötigt. Außerdem wird der Rückgabewert der Funktion ignoriert.
    se_action_<Aktionsname>:
        - 'function: trigger'
        - 'logic: <Logikname>'
-       - 'value: <Wert>'
+       - 'value: <val>/<eval>/<var>/<item>'
 
 Löst die Ausführung der Logik ``<Logikname>`` aus. Um beim
 Auslösen einen Wert an die Logik zu übergeben, kann dieser Wert
 über die Angabe von ``value: <Wert>`` hinter dem Logiknamen
 angegeben werden. Die Angabe kann aber auch entfallen.
 
-**Funktion byattr: Alle Items, die ein bestimmtes Attribut haben, auf den Wert dieses Attributs setzen**
+**Funktion byattr: Alle Items mit bestimmtem Attribut auf einen Wert setzen**
 
 .. code-block:: yaml
 
@@ -215,7 +216,7 @@ Items jeweils zugewiesen ist.
                type: num
                <Attributname>: 42
 
-dumm1 wird auf ``42`` gesetzt.
+dummy1 wird auf ``42`` gesetzt.
 Ein anderes Item, dummy2,
 
 .. code-block:: yaml
@@ -242,20 +243,22 @@ definiert. Aktuell gibt es zwei besondere Vorgänge:
 
 In den Beispielen wurden also die relativen Items suspend, manuell und retrigger referenziert.
 
-.. rubric:: Zusätzliche Parameter
-   :name: parameter
+Zusätzliche Parameter
+---------------------
 
 **delay: <int>**
 
 Über den optionalen Parameter ``<delay>`` wird die Verzögerung angegeben, nach der die
 Aktion ausgeführt werden soll.
 
-Die Angabe erfolgt in Sekunden oder mit dem Suffix "m" in Minuten.
+Die Angabe erfolgt in Sekunden oder mit dem Suffix "m" in Minuten. Die Verzögerungszeit
+kann auch durch ein eval oder Item zur Laufzeit berechnet werden.
 
 .. code-block:: yaml
 
-       'delay: 30'         --> 30 Sekunden
-       'delay: 30m'        --> 30 Minuten
+       'delay: <eval>/<item>' --> Ergebnis eines Eval-Ausdrucks oder eines Items
+       'delay: 30'            --> 30 Sekunden
+       'delay: 30m'           --> 30 Minuten
 
 Der Timer zur Ausführung der Aktion nach der angegebenen
 Verzögerung wird entfernt, wenn eine gleichartige Aktion
@@ -307,8 +310,8 @@ ausgeführt werden können. In Einzelfällen kann es jedoch
 erforderlich sein, mehrere Aktionen in einer bestimmten
 Reihenfolge auszuführen. Dies kann über den Parameter
 ``order: <order>`` erfolgen. Mit diesem Attribut wird der Aktion
-eine Zahl zugewiesen. Aktionen werden in aufsteigender Reihenfolge
-der zugewiesenen Zahlen ausgeführt.
+eine Zahl zugewiesen, die als value, item oder eval vorliegen kann.
+Aktionen werden in aufsteigender Reihenfolge der zugewiesenen Zahlen ausgeführt.
 
 .. code-block:: yaml
 
@@ -360,12 +363,12 @@ regnet hingegen auf den Wert, der in den Settings hinterlegt ist.
         enter_regen:
             diverse andere Bedingungen
 
-.. rubric:: Templates für Aktionen
-   :name: aktionstemplates
+Templates für Aktionen
+----------------------
 
 Setzt man für mehrere Aktionen (z.B. Setzen auf einen Wert abhängig vom aktuellen
 Zustand) immer die gleichen Ausdrücke ein, so kann Letzteres als Template
-definiert und referenziert werden. Dadurch wird die die Handhabung
+definiert und referenziert werden. Dadurch wird die Handhabung
 komplexerer Wertdeklarationen deutlich vereinfacht. Diese Templates müssen wie se_item/se_eval
 auf höchster Ebene des StateEngine Items (also z.B. rules) deklariert werden.
 

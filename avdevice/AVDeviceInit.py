@@ -549,6 +549,7 @@ class Init(object):
                         try:
                             # remove *{str}
                             self._functions['zone{}'.format(zone)][command][4] = self._functions['zone{}'.format(zone)][command][4].replace('*{str}', '*')
+                            self._functions['zone{}'.format(zone)][command][4] = self._functions['zone{}'.format(zone)][command][4].replace('*{num}', '*')
                             response_to_split = self._functions['zone{}'.format(zone)][command][4].split("|")
                             for response in response_to_split:
                                 if not response:
@@ -561,15 +562,18 @@ class Init(object):
                                 except Exception:
                                     specialparse = ''
                                 valuelength = response.count('*')
-                                commandlength = 100 if (response.find('?{str}') >= 0 or response.find('*{str}') >= 0) else len(response)
+                                commandlength = 100 if (response.find('?{str}') >= 0 or response.find('*{str}') >= 0 or response.find('?{num}') >= 0 or response.find('*{num}') >= 0) else len(response)
                                 response = re.sub('\?\{str\}', '?', response) if response.find('?{str}') >= 0 else response
+                                response = re.sub('\?\{num\}', '?', response) if response.find('?{num}') >= 0 else response
                                 response = re.sub('\*\{str\}', '*', response) if response.find('*{str}') >= 0 else response
+                                response = re.sub('\*\{num\}', '*', response) if response.find('*{num}') >= 0 else response
                                 cond1 = response.count('?') == 1 and response.count('*') == 0
                                 cond2 = response.count('*') == 1
                                 cond3 = 'str' in self._functions['zone{}'.format(zone)][command][9].split(',')
                                 if (cond1 or cond2) and cond3:
                                     valuelength = 100
                                     response = re.sub('\*\{str\}', '*', response)
+                                    response = re.sub('\*\{num\}', '*', response)
                                     cond1 = response.count('?') == 1 and response.count('*') == 0
                                     response = re.sub('[?]', '*', response) if cond1 else response
                                 position = response.index('*') if response.find('*') >= 0 else 0
@@ -769,6 +773,8 @@ class Init(object):
                         row[9] = row[9].replace('|', ',')
                         row[2] = row[2].replace('{str}', '')
                         row[3] = row[3].replace('{str}', '')
+                        row[2] = row[2].replace('{num}', '')
+                        row[3] = row[3].replace('{num}', '')
                         row[9] = 'empty' if (row[4].count('*') == 0 and row[4].count('?') == 0 and row[9] == '') \
                             else 'bool,int,str' if row[9] == '' else row[9]
                         row[2] = row[3] if not row[2] else row[2]
@@ -879,7 +885,7 @@ class ProcessVariables(Init):
                 else False if re.sub('[ ]', '', str(self._value[1])).lower() in ['0', 'no', 'false', 'off'] \
                 else None
             self.logger.debug(
-                "Initializing {}: Dependson Item: {}. Value: {}".format(self._name, depend, dependson_value))
+                "Initializing {}: Dependson Item: {}. Value: {}".format(self._name, depend.property.path, dependson_value))
         except Exception:
             dependson_value = True if depend is not None else None
         depend0_power0 = True if re.sub('[ ]', '', str(self._value[2])).lower() in ['1', 'yes', 'true', 'on'] and depend else False

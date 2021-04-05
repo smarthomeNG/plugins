@@ -31,19 +31,17 @@ from .robot import Robot
 
 
 class Neato(SmartPlugin):
-    PLUGIN_VERSION = '1.6.3'
+    PLUGIN_VERSION = '1.6.5'
     robot = 'None'
-    _items = []
 
     def __init__(self, sh, *args, **kwargs):
-        from bin.smarthome import VERSION
 
         self.robot = Robot(self.get_parameter_value("account_email"), self.get_parameter_value("account_pass"), self.get_parameter_value("robot_vendor"), token=self.get_parameter_value("token"))
-#        self.robot.update_robot()
         self._sh = sh
         self._cycle = 60
         self.logger.debug("Init completed.")
         self.init_webinterface()
+        self._items = {}
         return
 
     def numberRobots(self):
@@ -71,41 +69,25 @@ class Neato(SmartPlugin):
 
     def parse_item(self, item):
         
-        # Status items:
-        if self.has_iattr(item.conf, 'neato_name'):
-            item.property.value = self.robot.name
-            self._items.append(item)
+        """
+        Default plugin parse_item method. Is called when the plugin is initialized. Selects each item corresponding to
+        the neato_attribute and adds it to an internal array
 
-        if self.has_iattr(item.conf, 'neato_chargepercentage'):
-            item.property.value = int(self.robot.chargePercentage)
-            self._items.append(item)
-
-        if self.has_iattr(item.conf, 'neato_isdocked'):
-            item.property.value = self.robot.isDocked
-            self._items.append(item)
-
-        if self.has_iattr(item.conf, 'neato_isscheduleenabled'):
-            item.property.value = self.robot.isScheduleEnabled
-            self._items.append(item)
-
-        if self.has_iattr(item.conf, 'neato_ischarging'):
-            item.property.value = self.robot.isCharging
-            self._items.append(item)
-
-        if self.has_iattr(item.conf, 'neato_state'):
-            item.property.value = self.__get_state_string(self.robot.state)
-            self._items.append(item)
-
-        if self.has_iattr(item.conf, 'neato_state_action'):
-            item.property.value = self.__get_state_action_string(self.robot.state_action)
-            self._items.append(item)
+        :param item: The item to process.
+        """
+        if self.get_iattr_value(item.conf, 'neato_attribute'):
+            if not self.get_iattr_value(item.conf, 'neato_attribute') in self._items:
+                self._items[self.get_iattr_value(item.conf, 'neato_attribute')] = []
+            self._items[self.get_iattr_value(item.conf, 'neato_attribute')].append(item)
 
         # Command items that can be changed outside the plugin context:
-        if self.has_iattr(item.conf, 'neato_command'):
+        if self.get_iattr_value(item.conf, 'neato_attribute') == 'command':
+            return self.update_item
+        elif self.get_iattr_value(item.conf, 'neato_attribute') == 'is_schedule_enabled':
+            return self.update_item
+        elif self.get_iattr_value(item.conf, 'neato_attribute') == 'clean_room':
             return self.update_item
 
-        elif self.has_iattr(item.conf, 'neato_isscheduleenabled'):
-            return self.update_item
 
 
     def parse_logic(self, logic):
@@ -124,23 +106,35 @@ class Neato(SmartPlugin):
                 67: 'enableSchedule',
                 68: 'disableSchedule'}
 
-            if self.has_iattr(item.conf, 'neato_command'):
+            if self.get_iattr_value(item.conf, 'neato_attribute') == 'command':
                 if item._value in val_to_command:
                     self.robot.robot_command(val_to_command[item._value])
                 else:
                     self.logger.warning("Update item: {}, item has no command equivalent for value '{}'".format(item.id(),item() ))
 
-            elif self.has_iattr(item.conf, 'neato_isscheduleenabled'):
+            elif self.get_iattr_value(item.conf, 'neato_attribute') == 'is_schedule_enabled':
                 if item._value == True:
                     self.robot.robot_command("enableSchedule")
                     self.logger.debug("enabling neato scheduler")
                 else:
                     self.robot.robot_command("disableSchedule")
                     self.logger.debug("disabling neato scheduler")
+            elif self.get_iattr_value(item.conf, 'neato_attribute') == 'clean_room':
+                self.robot.robot_command("start", item._value, None)
+
             pass
 
     def start_robot(self):
         self.robot.robot_command("start")
+
+    def start_robot(self, boundary_id=None, map_id=None):
+        self.robot.robot_command("start", boundary_id, map_id)
+
+    def get_map_boundaries(self, map_id=None):
+        self.robot.robot_command("getMapBoundaries", map_id)
+
+    def dismiss_current_alert(self):
+        self.robot.robot_command("dismiss_current_alert")
 
     def enable_schedule(self):
         self.robot.robot_command("enableSchedule")
@@ -154,34 +148,40 @@ class Neato(SmartPlugin):
         if returnValue == 'error':
             return
 
-        for item in self._items:
+        for attribute, matchStringItems in self._items.items():
 
             if not self.alive:
                 return
 
-            if self.has_iattr(item.conf, 'neato_name'):
+            #self.logger.warning('DEBUG: attribute: {0}, matchStringItems: {1}".format(attribute, matchStringItems))
+
+            value = None
+
+            if attribute == 'name':
                 value = self.robot.name
-                item(value, self.get_shortname())
-
-            if self.has_iattr(item.conf, 'neato_chargepercentage'):
+            elif attribute == 'charge_percentage':
                 value = str(self.robot.chargePercentage)
-                item(value, self.get_shortname())
-
-            if self.has_iattr(item.conf, 'neato_isdocked'):
-                value = self.robot.isDocked
-                item(value, self.get_shortname())
-
-            if self.has_iattr(item.conf, 'neato_state'):
+            elif attribute == 'is_docked':
+                value = str(self.robot.isDocked)
+            elif attribute == 'is_charging':
+                value = self.robot.isCharging
+            elif attribute == 'state':
                 value = str(self.__get_state_string(self.robot.state))
-                item(value, self.get_shortname())
-
-            if self.has_iattr(item.conf, 'neato_state_action'):
+            elif attribute == 'state_action':
                 value = str(self.__get_state_action_string(self.robot.state_action))
-                item(value, self.get_shortname())
-
-            if self.has_iattr(item.conf, 'neato_isscheduleenabled'):
+            elif attribute == 'alert':
+                value = str(self.robot.alert)
+            elif attribute == 'is_schedule_enabled':
                 value = self.robot.isScheduleEnabled 
-                item(value, self.get_shortname())
+            elif attribute == 'command_goToBaseAvailable':
+                value = self.robot.dockHasBeenSeen
+
+            # if a value was found, store it to item
+            if value is not None:
+                for sameMatchStringItem in matchStringItems:
+                    sameMatchStringItem(value, self.get_shortname() )
+                    self.logger.debug('_update: Value "{0}" written to item {1}'.format(value, sameMatchStringItem))
+
         pass
 
     def __get_state_string(self,state):
@@ -320,7 +320,7 @@ class WebInterface(SmartPluginWebIf):
         self.items = Items.get_instance()
 
     @cherrypy.expose
-    def index(self, reload=None, action=None, email=None, hashInput=None, code=None):
+    def index(self, reload=None, action=None, email=None, hashInput=None, code=None, tokenInput=None):
         """
         Build index.html for cherrypy
 
@@ -331,6 +331,8 @@ class WebInterface(SmartPluginWebIf):
         calculatedHash = ''
         codeRequestSuccessfull = None
         token = ''
+        configWriteSuccessfull = None
+
 
         if action is not None:
             if action == "generateHash":
@@ -353,12 +355,25 @@ class WebInterface(SmartPluginWebIf):
                     self.logger.error("Request Vorwerk token: Email validation code missing.")
                 else:
                     self.logger.error("Request Vorwerk token: Missing argument.")
+            elif action =="writeToPluginConfig":
+                if (tokenInput is not None) and (not tokenInput == ''):
+                    self.logger.warning("Writing token to plugin.yaml")
+                    param_dict = {"token": str(tokenInput)}
+                    self.plugin.update_config_section(param_dict)
+                    configWriteSuccessfull = True
+                else:
+                    self.logger.error("writeToPluginConfig: Missing argument.")
+                    configWriteSuccessfull = False
             else:
                 self.logger.error("Unknown command received via webinterface")
 
         tmpl = self.tplenv.get_template('index.html')
         # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
-        return tmpl.render(p=self.plugin, calculatedHash=calculatedHash, token=token, codeRequestSuccessfull=codeRequestSuccessfull, items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path'])))
+        return tmpl.render(p=self.plugin, calculatedHash=calculatedHash,
+                           token=token,
+                           codeRequestSuccessfull=codeRequestSuccessfull,
+                           configWriteSuccessfull=configWriteSuccessfull,
+                           items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path'])))
 
 
     @cherrypy.expose

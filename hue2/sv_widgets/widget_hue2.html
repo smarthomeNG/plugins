@@ -24,10 +24,10 @@
 		</td>
 		{% if g_alert_effect != '' %}
 			<td width="25%" align="center">
-				Alert:{{ basic.stateswitch(id~'alert',g_lamp~'.alert', 'mini', ['0','1'], [icon1~'audio_pause.png', icon1~'audio_play.png'], ['lselect','']) }}
+				Alert:{{ basic.stateswitch(id~'alert',g_lamp~'.alert', 'mini', ['lselect','none'], [icon1~'audio_pause.png', icon1~'audio_play.png']) }}
 			</td>
 			<td width="25%" align="center">
-				Effect:{{ basic.stateswitch(id~'effect', g_lamp~'.effect', 'mini', ['0','1'], [icon1~'audio_pause.png', icon1~'audio_play.png'], ['colorloop','']) }}
+				Effect:{{ basic.stateswitch(id~'effect', g_lamp~'.effect', 'mini', ['colorloop','none'], [icon1~'audio_pause.png', icon1~'audio_play.png']) }}
 			</td>
 		{% endif %}
 	</tr>
@@ -76,9 +76,8 @@
 	Model: {{ basic.print(id~'.modelid', g_lamp~'.modelid') }} <br>
 	SW Vers.: {{ basic.print(id~'.swversion', g_lamp~'.swversion') }} <br>
 	colormode: {{ basic.print(id~'.colormode', g_lamp~'.colormode') }} <br>
-	reachable: {{ basic.text(id~'.reachable', g_lamp~'.reachable', 'Ja', 'Nein') }} <br>
+	reachable: {{ basic.symbol(id~'.reachable', g_lamp~'.reachable', ['Ja', 'Nein']) }} <br>
 	<br>
 	ct {{ basic.slider(id~'.ct', g_lamp~'.ct', 153, 500) }}
 
 {% endmacro %}
-

@@ -40,7 +40,9 @@ from lib.utils import Utils
 from lib.network import Tcp_server
 
 from lib.shtime import Shtime
+
 shtime = Shtime.get_instance()
+
 
 class CLIHandler:
     terminator = '\n'.encode()
@@ -65,7 +67,7 @@ class CLIHandler:
         self.__client = client
         self.__socket = self.__client.socket
         self.__client.set_callbacks(data_received=self.data_received)
-        self.push("SmartHomeNG v{0}\n".format(self.sh.version))
+        self.push("SmartHomeNG v{}  -  cli plugin v{}\n".format(self.sh.version, CLI.PLUGIN_VERSION))
 
         if hashed_password is None:
             self.__push_helpmessage()
@@ -73,7 +75,7 @@ class CLIHandler:
         else:
             self.__push_password_prompt()
         self.plugin = plugin
-        self.logger.debug("CLI Handler init with updates {}".format( "allowed" if updates else "not allowed"))
+        self.logger.debug("CLI Handler init with updates {}".format("allowed" if updates else "not allowed"))
 
     def push(self, data):
         """
@@ -154,7 +156,7 @@ class CLIHandler:
 
 class CLI(SmartPlugin):
 
-    PLUGIN_VERSION = '1.7.1'     # is checked against version in plugin.yaml
+    PLUGIN_VERSION = '1.8.1'     # is checked against version in plugin.yaml
 
     def __init__(self, sh):
         """
@@ -190,7 +192,8 @@ class CLI(SmartPlugin):
         elif not Utils.is_hash(self.hashed_password):
             self.logger.error("CLI: Value given for 'hashed_password' is not a valid hash value. Login will not be possible")
 
-        self.server = Tcp_server(interface=self.ip, port=self.port, name='CLI', mode=Tcp_server.MODE_TEXT_LINE)
+        name = 'plugins.' + self.get_fullname()
+        self.server = Tcp_server(host=self.ip, port=self.port, name=name, mode=Tcp_server.MODE_TEXT_LINE)
         self.server.set_callbacks(incoming_connection=self.handle_connection)
         self.commands = CLICommands(self.get_sh(), self.updates_allowed, self)
         self.alive = False
@@ -204,7 +207,6 @@ class CLI(SmartPlugin):
         # if plugin should not start without web interface
         # if not self.init_webinterface():
         #     self._init_complete = False
-
 
     def handle_connection(self, server, client):
         """
@@ -227,7 +229,10 @@ class CLI(SmartPlugin):
         """
         self.logger.debug("Stop method called")
         self.alive = False
-        self.server.close()
+        try:  # keep some ugly errors on keyboard interrupt to yourself
+            self.server.close()
+        except:
+            pass
 
     def add_command(self, command, function, usage):
         """
@@ -281,6 +286,7 @@ class CLICommands:
 
         self.add_command('logc', self._cli_logc, 'log', 'logc [log]: clean (memory) log')
         self.add_command('logd', self._cli_logd, 'log', 'logd [log]: log dump of (memory) log')
+        self.add_command('logl', self._cli_logl, 'log', 'logl: list existing (memory) logs')
 
         self.add_command('ll', self._cli_ll, 'logic', 'll: list all logics and next execution time - command alias: lo')
         self.add_command('lo', self._cli_ll, 'logic', None)   # old command
@@ -296,7 +302,7 @@ class CLICommands:
         self.add_command('rr', self._cli_lrr, 'logic', None)
         self.add_command('lt', self._cli_lt, 'logic', 'lt [logic]: trigger a logic - command alias: tr')
         self.add_command('tr', self._cli_lt, 'logic', None)
-        
+
         self.add_command('sl', self._cli_sl, 'scheduler', 'sl: list all scheduler tasks by name')
         self.add_command('st', self._cli_sl, 'scheduler', 'st: list all scheduler tasks by execution time')
         self.add_command('si', self._cli_si, 'scheduler', 'si [task]: show details for given scheduler task')
@@ -338,18 +344,19 @@ class CLICommands:
         :param source: Call source
         :return: TRUE: Command found and handled, FALSE: Unknown command, nothing done
         """
-        if self.logics is None:
-            self.logics = Logics.get_instance()
-        for command, data in self._commands.items():
-            if cmd == command or cmd.startswith(command + " "):
-                self.logger.debug("try to dispatch command '{}'".format(cmd))
-                try:
-                    data['function'](handler, cmd.lstrip(command).strip(), source)
-                except Exception as e:
-                    self.logger.exception(e)
-                    handler.push("Exception \"{0}\" occured when executing command \"{1}\".\n".format(e, command))
-                    handler.push("See smarthomeNG log for details\n")
-                return True
+        if self.plugin and getattr(self.plugin, 'alive', False):
+            if self.logics is None:
+                self.logics = Logics.get_instance()
+            for command, data in self._commands.items():
+                if cmd == command or cmd.startswith(command + " "):
+                    self.logger.debug("try to dispatch command '{}'".format(cmd))
+                    try:
+                        data['function'](handler, cmd.lstrip(command).strip(), source)
+                    except Exception as e:
+                        self.logger.exception(e)
+                        handler.push("Exception \"{0}\" occured when executing command \"{1}\".\n".format(e, command))
+                        handler.push("See smarthomeNG log for details\n")
+                    return True
         return False
 
     # noinspection PyUnusedLocal
@@ -510,13 +517,12 @@ class CLICommands:
         if idle_threads > 0:
             threads.append(self.thread_sum("idle", idle_threads))
             threads_count += idle_threads
-        
+
         threads_sorted = sorted(threads, key=lambda k: k['sort'])
 
         handler.push("{0} Threads:\n".format(threads_count))
         for t in threads_sorted:
             handler.push("{:<30}     {}\n".format(t['name'], t['id']))
-
 
     # noinspection PyUnusedLocal
     def _cli_rt(self, handler, parameter, source):
@@ -552,10 +558,10 @@ class CLICommands:
                 handler.push("{0}\n".format(item.id()))
         else:
             if match:
-                items = self.sh.match_items(parameter)
+                items = self.plugin.items.match_items(parameter)
                 childs = False
             else:
-                items = [self.sh.return_item(parameter)]
+                items = [self.plugin.items.return_item(parameter)]
                 childs = True
             if len(items):
                 for item in items:
@@ -579,9 +585,9 @@ class CLICommands:
         :param source: Source
         """
         if '*' in parameter or ':' in parameter:
-            items = self.sh.match_items(parameter)
+            items = self.plugin.items.match_items(parameter)
         else:
-            items = [self.sh.return_item(parameter)]
+            items = [self.plugin.items.return_item(parameter)]
         if len(items):
             for item in items:
                 # noinspection PyProtectedMember
@@ -627,7 +633,7 @@ class CLICommands:
                 if data['usage'] is not None:
                     handler.push(data['usage'] + '\n')
         if parameter != '':
-            if not parameter in ['item', 'log', 'logic', 'scheduler']:
+            if parameter not in ['item', 'log', 'logic', 'scheduler']:
                 handler.push('help: Unknown group\n\n')
                 data = self._commands['help']
                 handler.push(data['usage'] + '\n')
@@ -672,13 +678,13 @@ class CLICommands:
 #        wrk = "Items ({}):".format(self.plugin.items.item_count())
 #        wrk += '\n'+'='*len(wrk)+'\n'
 #        handler.push(wrk)
-        for item in self.sh.return_items():
+        for item in self.plugin.items.return_items():
             if item.type():
                 handler.push("{0} = {1}\n".format(item.id(), item()))
             else:
                 handler.push("{0}\n".format(item.id()))
         wrk = "{} Items".format(self.plugin.items.item_count())
-        wrk = '-'*len(wrk)+'\n'+wrk+'\n'
+        wrk = '-' * len(wrk) + '\n' + wrk + '\n'
         handler.push(wrk)
 
     def _cli_iupdate(self, handler, parameter, source):
@@ -697,7 +703,7 @@ class CLICommands:
         if not value:
             handler.push("You have to specify an item value. Syntax: up item = value\n")
             return
-        items = self.sh.match_items(path)
+        items = self.plugin.items.match_items(path)
         if len(items):
             for item in items:
                 if not item.type():
@@ -770,3 +776,12 @@ class CLICommands:
                 values = [str(value) for value in entry]
                 handler.push(str(values))
                 handler.push("\n")
+
+    # noinspection PyUnusedLocal
+    def _cli_logl(self, handler, parameter, source):
+        logs = self.sh.return_logs()
+        if logs is not None:
+            handler.push("Existing (memory) logs:\n")
+            for log in sorted(list(logs)):
+                handler.push("- {0}\n".format(log))
+

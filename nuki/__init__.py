@@ -1,35 +1,38 @@
 #!/usr/bin/env python3
-# vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
-#########################################################################
-# Copyright 2013 KNX-User-Forum e.V.            http://knx-user-forum.de/
-#########################################################################
-#  This file is part of SmartHome.py.    http://mknx.github.io/smarthome/
 #
-#  SmartHome.py is free software: you can redistribute it and/or modify
+#########################################################################
+#  Copyright 2017                                          pfischi@gmx.de
+#  Erweiterungen: Copyright 2020                    rene.friess@gmail.com
+#########################################################################
+#
+#  This file is part of SmartHomeNG.
+#
+#  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation, either version 3 of the License, or
 #  (at your option) any later version.
 #
-#  SmartHome.py is distributed in the hope that it will be useful,
+#  SmartHomeNG is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
 #
 #  You should have received a copy of the GNU General Public License
-#  along with SmartHome.py. If not, see <http://www.gnu.org/licenses/>.
+#  along with SmartHomeNG. If not, see <http://www.gnu.org/licenses/>.
+#
 #########################################################################
 
 import logging
 import urllib.request
 import json
 import requests
-import re
 import cherrypy
 import time
-from jinja2 import Environment, FileSystemLoader
-from lib.model.smartplugin import *
+from lib.model.smartplugin import SmartPlugin, SmartPluginWebIf
 from lib.item import Items
 from bin.smarthome import VERSION
+from lib.utils import Utils
+from lib.module import Modules
 
 nuki_action_items = {}
 nuki_event_items = {}
@@ -40,8 +43,7 @@ lock = False
 
 
 class Nuki(SmartPlugin):
-    PLUGIN_VERSION = "1.6.0"
-    ALLOW_MULTIINSTANCE = False
+    PLUGIN_VERSION = "1.6.1"
 
     def __init__(self, sh, *args, **kwargs):
 
@@ -70,8 +72,8 @@ class Nuki(SmartPlugin):
         self._callback_ip = self.mod_http.get_local_ip_address()  # get_parameter_value('bridge_callback_ip')
         self._callback_port = self.mod_http.get_local_servicesport()  # get_parameter_value('bridge_callback_port')
 
-        if self._callback_ip is None or self._callback_ip in ['0.0.0.0', '']:
-            self._callback_ip = self.get_local_ipv4_address()
+        if self._callback_ip is None:  # 0.0.0.0 or empty means "all network interfaces" or self._callback_ip in ['0.0.0.0', '']:
+            self._callback_ip = Utils.get_local_ipv4_address()
 
             if not self._callback_ip:
                 self.logger.critical(
@@ -123,8 +125,8 @@ class Nuki(SmartPlugin):
                 if nuki_trigger.lower() not in ['state', 'doorstate', 'action', 'battery']:
                     self.logger.warning("Plugin '{pluginname}': Item {item} defines an invalid Nuki trigger {trigger}! "
                                         "It has to be 'state', 'doorstate' or 'action'.".format(
-                        pluginname=self.get_shortname(),
-                        item=item, trigger=nuki_trigger))
+                                            pluginname=self.get_shortname(),
+                                            item=item, trigger=nuki_trigger))
                     return
                 if nuki_trigger.lower() == 'state':
                     nuki_event_items[item] = int(nuki_id)
@@ -321,7 +323,7 @@ class Nuki(SmartPlugin):
                 'http')  # try/except to handle running in a core version that does not support modules
         except:
             self.mod_http = None
-        if self.mod_http == None:
+        if self.mod_http is None:
             self.logger.error("Plugin '{}': Not initializing the web interface. If not already done so, please configure "
                               "http module in etc/module.yaml.".format(self.get_fullname()))
             return False
@@ -384,7 +386,7 @@ class NukiWebServiceInterface:
             state_name = input_json['stateName']
             self.plugin.logger.debug(
                 "Plugin '{pluginname}' - NukiWebServiceInterface: Status Smartlock: ID: {nuki_id} Status: {state_name}".
-                    format(pluginname=self.plugin.get_shortname(), nuki_id=nuki_id, state_name=state_name))
+                format(pluginname=self.plugin.get_shortname(), nuki_id=nuki_id, state_name=state_name))
 
             Nuki.update_lock_state(nuki_id, input_json)
         except Exception as err:

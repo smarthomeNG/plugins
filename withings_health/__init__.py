@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
 #
 #########################################################################
-#  Copyright 2017-2018 Marc René Frieß            rene.friess(a)gmail.com
+#  Copyright 2017-2021 Marc René Frieß            rene.friess(a)gmail.com
 #########################################################################
-#
 #  This file is part of SmartHomeNG.
+#  https://www.smarthomeNG.de
+#  https://knx-user-forum.de/forum/supportforen/smarthome-py
+#
+#  Sample plugin for new plugins to run with SmartHomeNG version 1.5 and
+#  upwards.
 #
 #  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -25,15 +29,17 @@ import cherrypy
 import datetime
 from lib.model.smartplugin import *
 from lib.shtime import Shtime
-from nokia import NokiaAuth, NokiaApi, NokiaCredentials
-
+from oauthlib.oauth2.rfc6749.errors import MissingTokenError
+from typing_extensions import Final
+from withings_api import AuthScope, WithingsApi, WithingsAuth
+from withings_api.common import Credentials, CredentialsType, get_measure_value, MeasureType
+from .webif import WebInterface
 
 class WithingsHealth(SmartPlugin):
-    ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = "1.7.0"
-    ALLOWED_MEASURE_TYPES = [1, 4, 5, 6, 8, 11]
+    PLUGIN_VERSION = "1.8.1"
 
-    def __init__(self, sh, *args, **kwargs):
+    def __init__(self, sh):
+        super().__init__()
         self.shtime = Shtime.get_instance()
         self._user_id = self.get_parameter_value('user_id')
         self._client_id = self.get_parameter_value('client_id')
@@ -43,7 +49,7 @@ class WithingsHealth(SmartPlugin):
         self._client = None
         self._items = {}
 
-        if not self.init_webinterface():
+        if not self.init_webinterface(WebInterface):
             self._init_complete = False
 
     def run(self):
@@ -51,19 +57,20 @@ class WithingsHealth(SmartPlugin):
         self.scheduler_add('poll_data', self._update_loop, cycle=self._cycle)
 
     def stop(self):
+        self.scheduler_remove('poll_data')
         self.alive = False
 
-    def _store_tokens(self, token):
+    def _store_tokens(self, credentials2):
         self.logger.debug(
             "Updating tokens to items: access_token - {} token_expiry - {} token_type - {} refresh_token - {}".
-                format(token['access_token'], token['expires_in'], token['token_type'],
-                       token['refresh_token']))
-        self.get_item('access_token')(token['access_token'])
+                format(credentials2.access_token, credentials2.expires_in, credentials2.token_type,
+                       credentials2.refresh_token))
+        self.get_item('access_token')(credentials2.access_token)
         self.get_item('token_expiry')(
             int((datetime.datetime.utcnow() - datetime.datetime(1970, 1, 1)).total_seconds()) + int(
-                token['expires_in']))
-        self.get_item('token_type')(token['token_type'])
-        self.get_item('refresh_token')(token['refresh_token'])
+                credentials2.expires_in))
+        self.get_item('token_type')(credentials2.token_type)
+        self.get_item('refresh_token')(credentials2.refresh_token)
 
     def _update_loop(self):
         """
@@ -78,23 +85,6 @@ class WithingsHealth(SmartPlugin):
     def _update(self):
         """
         Updates information on diverse items
-        Mappings:
-        ('weight', 1),
-        ('height', 4),
-        ('fat_free_mass', 5),
-        ('fat_ratio', 6),
-        ('fat_mass_weight', 8),
-        ('diastolic_blood_pressure', 9),
-        ('systolic_blood_pressure', 10),
-        ('heart_pulse', 11),
-        ('temperature', 12),
-        ('spo2', 54),
-        ('body_temperature', 71),
-        ('skin_temperature', 72),
-        ('muscle_mass', 76),
-        ('hydration', 77),
-        ('bone_mass', 88),
-        ('pulse_wave_velocity', 91)
         """
 
         if 'access_token' not in self.get_items() or 'token_expiry' not in self.get_items() or 'token_type' not in self.get_items() or 'refresh_token' not in self.get_items():
@@ -122,13 +112,15 @@ class WithingsHealth(SmartPlugin):
                                    self._user_id,
                                    self._client_id,
                                    self._consumer_secret))
-                    self._creds = NokiaCredentials(self.get_item('access_token')(),
-                                                   self.get_item('token_expiry')(),
-                                                   self.get_item('token_type')(),
-                                                   self.get_item('refresh_token')(),
-                                                   self._user_id, self._client_id,
-                                                   self._consumer_secret)
-                    self._client = NokiaApi(self._creds, refresh_cb=self._store_tokens)
+                    self._creds = Credentials(
+                        access_token=self.get_item('access_token')(),
+                        token_expiry=self.get_item('token_expiry')(),
+                        token_type=self.get_item('token_type')(),
+                        refresh_token=self.get_item('refresh_token')(),
+                        userid=self._user_id,
+                        client_id=self._client_id,
+                        consumer_secret=self._consumer_secret)
+                    self._client = WithingsApi(self._creds, refresh_cb=self._store_tokens)
                 else:
                     self.logger.error(
                         "Token is expired, run OAuth2 again from Web Interface (Expiry Date: {}).".format(
@@ -140,99 +132,132 @@ class WithingsHealth(SmartPlugin):
                     "Items for OAuth2 Data are not set with required values. Please run process via WebGUI of the plugin.")
                 return
         try:
-            measures = self._client.get_measures()
+            measures = self._client.measure_get_meas(startdate=None, enddate=None, lastupdate=None)
         except Exception as e:
             self.logger.error(
-                "An exception occured when running get_measures(): {}. Aborting update.".format(
+                "An exception occured when running measure_get_meas(): {}. Aborting update.".format(
                     str(e)))
             return
 
-        last_measure = measures[0]
-
-        if last_measure.get_measure(11) is not None and 'heart_pulse' in self._items:
-            self._items['heart_pulse'](last_measure.get_measure(11), self.get_shortname())
-            self.logger.debug("heart_pulse - {}".format(last_measure.get_measure(11)))
-
-        # Bugfix for strange behavior of returning heart_pulse as seperate dataset..
-        if last_measure.get_measure(1) is None:
-            last_measure = measures[1]
-
-        if last_measure.get_measure(1) is not None and 'weight' in self._items:
-            self._items['weight'](last_measure.get_measure(1), self.get_shortname())
-            self.logger.debug("weight - {}".format(last_measure.get_measure(1)))
-
-        if last_measure.get_measure(4) is not None and 'height' in self._items:
-            self._items['height'](last_measure.get_measure(4), self.get_shortname())
-            self.logger.debug("height - {}".format(last_measure.get_measure(4)))
-
-        if last_measure.get_measure(5) is not None and 'fat_free_mass' in self._items:
-            self._items['fat_free_mass'](last_measure.get_measure(5), self.get_shortname())
+        if get_measure_value(measures,
+                             with_measure_type=MeasureType.HEART_RATE) is not None and 'heart_rate' in self._items:
+            self._items['heart_rate'](get_measure_value(measures, with_measure_type=MeasureType.HEART_RATE),
+                                      self.get_shortname())
             self.logger.debug(
-                "fat_free_mass - {}".format(last_measure.get_measure(5)))
+                "heart_rate - {}".format(get_measure_value(measures, with_measure_type=MeasureType.HEART_RATE)))
 
-        if last_measure.get_measure(6) is not None and 'fat_ratio' in self._items:
-            self._items['fat_ratio'](last_measure.get_measure(6), self.get_shortname())
-            self.logger.debug("fat_ratio - {}".format(last_measure.get_measure(6)))
+        if get_measure_value(measures, with_measure_type=MeasureType.WEIGHT) is not None and 'weight' in self._items:
+            self._items['weight'](get_measure_value(measures, with_measure_type=MeasureType.WEIGHT),
+                                  self.get_shortname())
+            self.logger.debug("weight - {}".format(get_measure_value(measures, with_measure_type=MeasureType.WEIGHT)))
 
-        if last_measure.get_measure(8) is not None and 'fat_mass_weight' in self._items:
-            self._items['fat_mass_weight'](last_measure.get_measure(8), self.get_shortname())
+        if get_measure_value(measures, with_measure_type=MeasureType.HEIGHT) is not None and 'height' in self._items:
+            self._items['height'](get_measure_value(measures, with_measure_type=MeasureType.HEIGHT),
+                                  self.get_shortname())
+            self.logger.debug("height - {}".format(get_measure_value(measures, with_measure_type=MeasureType.HEIGHT)))
+
+        if get_measure_value(measures,
+                             with_measure_type=MeasureType.FAT_FREE_MASS) is not None and 'fat_free_mass' in self._items:
+            self._items['fat_free_mass'](get_measure_value(measures, with_measure_type=MeasureType.FAT_FREE_MASS),
+                                         self.get_shortname())
             self.logger.debug(
-                "fat_mass_weight - {}".format(last_measure.get_measure(8)))
+                "fat_free_mass - {}".format(get_measure_value(measures, with_measure_type=MeasureType.FAT_FREE_MASS)))
 
-        if last_measure.get_measure(9) is not None and 'diastolic_blood_pressure' in self._items:
-            self._items['diastolic_blood_pressure'](last_measure.get_measure(9), self.get_shortname())
+        if get_measure_value(measures,
+                             with_measure_type=MeasureType.FAT_RATIO) is not None and 'fat_ratio' in self._items:
+            self._items['fat_ratio'](get_measure_value(measures, with_measure_type=MeasureType.FAT_RATIO),
+                                     self.get_shortname())
             self.logger.debug(
-                "diastolic_blood_pressure - {}".format(last_measure.get_measure(9)))
+                "fat_ratio - {}".format(get_measure_value(measures, with_measure_type=MeasureType.FAT_RATIO)))
 
-        if last_measure.get_measure(10) is not None and 'systolic_blood_pressure' in self._items:
-            self._items['systolic_blood_pressure'](last_measure.get_measure(10), self.get_shortname())
+        if get_measure_value(measures,
+                             with_measure_type=MeasureType.FAT_MASS_WEIGHT) is not None and 'fat_mass_weight' in self._items:
+            self._items['fat_mass_weight'](get_measure_value(measures, with_measure_type=MeasureType.FAT_MASS_WEIGHT),
+                                           self.get_shortname())
             self.logger.debug(
-                "systolic_blood_pressure - {}".format(last_measure.get_measure(10)))
+                "fat_mass_weight - {}".format(
+                    get_measure_value(measures, with_measure_type=MeasureType.FAT_MASS_WEIGHT)))
 
-        if last_measure.get_measure(11) is not None and 'heart_pulse' in self._items:
-            self._items['heart_pulse'](last_measure.get_measure(11), self.get_shortname())
-            self.logger.debug("heart_pulse - {}".format(last_measure.get_measure(11)))
-
-        if last_measure.get_measure(12) is not None and 'temperature' in self._items:
-            self._items['temperature'](last_measure.get_measure(12), self.get_shortname())
-            self.logger.debug("temperature - {}".format(last_measure.get_measure(12)))
-
-        if last_measure.get_measure(54) is not None and 'spo2' in self._items:
-            self._items['spo2'](last_measure.get_measure(54), self.get_shortname())
-            self.logger.debug("spo2 - {}".format(last_measure.get_measure(54)))
-
-        if last_measure.get_measure(71) is not None and 'body_temperature' in self._items:
-            self._items['body_temperature'](last_measure.get_measure(71), self.get_shortname())
+        if get_measure_value(measures,
+                             with_measure_type=MeasureType.DIASTOLIC_BLOOD_PRESSURE) is not None and 'diastolic_blood_pressure' in self._items:
+            self._items['diastolic_blood_pressure'](
+                get_measure_value(measures, with_measure_type=MeasureType.DIASTOLIC_BLOOD_PRESSURE),
+                self.get_shortname())
             self.logger.debug(
-                "body_temperature - {}".format(last_measure.get_measure(71)))
+                "diastolic_blood_pressure - {}".format(
+                    get_measure_value(measures, with_measure_type=MeasureType.DIASTOLIC_BLOOD_PRESSURE)))
 
-        if last_measure.get_measure(72) is not None and 'skin_temperature' in self._items:
-            self._items['skin_temperature'](last_measure.get_measure(72), self.get_shortname())
+        if get_measure_value(measures,
+                             with_measure_type=MeasureType.SYSTOLIC_BLOOD_PRESSURE) is not None and 'systolic_blood_pressure' in self._items:
+            self._items['systolic_blood_pressure'](
+                get_measure_value(measures, with_measure_type=MeasureType.SYSTOLIC_BLOOD_PRESSURE),
+                self.get_shortname())
             self.logger.debug(
-                "skin_temperature - {}".format(last_measure.get_measure(72)))
+                "systolic_blood_pressure - {}".format(
+                    get_measure_value(measures, with_measure_type=MeasureType.SYSTOLIC_BLOOD_PRESSURE)))
 
-        if last_measure.get_measure(76) is not None and 'muscle_mass' in self._items:
-            self._items['muscle_mass'](last_measure.get_measure(76), self.get_shortname())
-            self.logger.debug("muscle_mass - {}".format(last_measure.get_measure(76)))
-
-        if last_measure.get_measure(77) is not None and 'hydration' in self._items:
-            self._items['hydration'](last_measure.get_measure(77), self.get_shortname())
-            self.logger.debug("hydration - {}".format(last_measure.get_measure(77)))
-
-        if last_measure.get_measure(88) is not None and 'bone_mass' in self._items:
-            self._items['bone_mass'](last_measure.get_measure(88), self.get_shortname())
-            self.logger.debug("bone_mass - {}".format(last_measure.get_measure(88)))
-
-        if last_measure.get_measure(91) is not None and 'pulse_wave_velocity' in self._items:
-            self._items['pulse_wave_velocity'](last_measure.get_measure(91), self.get_shortname())
+        if get_measure_value(measures,
+                             with_measure_type=MeasureType.TEMPERATURE) is not None and 'temperature' in self._items:
+            self._items['temperature'](get_measure_value(measures, with_measure_type=MeasureType.TEMPERATURE),
+                                       self.get_shortname())
             self.logger.debug(
-                "pulse_wave_velocity - {}".format(last_measure.get_measure(91)))
+                "temperature - {}".format(get_measure_value(measures, with_measure_type=MeasureType.TEMPERATURE)))
 
-        if 'height' in self._items and ('bmi' in self._items or 'bmi_text' in self._items) and last_measure.get_measure(
-                1) is not None:
+        if get_measure_value(measures, with_measure_type=MeasureType.SP02) is not None and 'spo2' in self._items:
+            self._items['spo2'](get_measure_value(measures, with_measure_type=MeasureType.SP02), self.get_shortname())
+            self.logger.debug("spo2 - {}".format(get_measure_value(measures, with_measure_type=MeasureType.SP02)))
+
+        if get_measure_value(measures,
+                             with_measure_type=MeasureType.BODY_TEMPERATURE) is not None and 'body_temperature' in self._items:
+            self._items['body_temperature'](get_measure_value(measures, with_measure_type=MeasureType.BODY_TEMPERATURE),
+                                            self.get_shortname())
+            self.logger.debug(
+                "body_temperature - {}".format(
+                    get_measure_value(measures, with_measure_type=MeasureType.BODY_TEMPERATURE)))
+
+        if get_measure_value(measures,
+                             with_measure_type=MeasureType.SKIN_TEMPERATURE) is not None and 'skin_temperature' in self._items:
+            self._items['skin_temperature'](get_measure_value(measures, with_measure_type=MeasureType.SKIN_TEMPERATURE),
+                                            self.get_shortname())
+            self.logger.debug(
+                "skin_temperature - {}".format(
+                    get_measure_value(measures, with_measure_type=MeasureType.SKIN_TEMPERATURE)))
+
+        if get_measure_value(measures,
+                             with_measure_type=MeasureType.MUSCLE_MASS) is not None and 'muscle_mass' in self._items:
+            self._items['muscle_mass'](get_measure_value(measures, with_measure_type=MeasureType.MUSCLE_MASS),
+                                       self.get_shortname())
+            self.logger.debug(
+                "muscle_mass - {}".format(get_measure_value(measures, with_measure_type=MeasureType.MUSCLE_MASS)))
+
+        if get_measure_value(measures,
+                             with_measure_type=MeasureType.HYDRATION) is not None and 'hydration' in self._items:
+            self._items['hydration'](get_measure_value(measures, with_measure_type=MeasureType.HYDRATION),
+                                     self.get_shortname())
+            self.logger.debug(
+                "hydration - {}".format(get_measure_value(measures, with_measure_type=MeasureType.HYDRATION)))
+
+        if get_measure_value(measures,
+                             with_measure_type=MeasureType.BONE_MASS) is not None and 'bone_mass' in self._items:
+            self._items['bone_mass'](get_measure_value(measures, with_measure_type=MeasureType.BONE_MASS),
+                                     self.get_shortname())
+            self.logger.debug(
+                "bone_mass - {}".format(get_measure_value(measures, with_measure_type=MeasureType.BONE_MASS)))
+
+        if get_measure_value(measures,
+                             with_measure_type=MeasureType.PULSE_WAVE_VELOCITY) is not None and 'pulse_wave_velocity' in self._items:
+            self._items['pulse_wave_velocity'](
+                get_measure_value(measures, with_measure_type=MeasureType.PULSE_WAVE_VELOCITY), self.get_shortname())
+            self.logger.debug(
+                "pulse_wave_velocity - {}".format(
+                    get_measure_value(measures, with_measure_type=MeasureType.PULSE_WAVE_VELOCITY)))
+
+        if 'height' in self._items and ('bmi' in self._items or 'bmi_text' in self._items) and get_measure_value(
+                measures, with_measure_type=MeasureType.WEIGHT) is not None:
             if self._items['height']() > 0:
                 bmi = round(
-                    last_measure.get_measure(1) / ((self._items['height']()) * (self._items['height']())), 2)
+                    get_measure_value(measures, with_measure_type=MeasureType.WEIGHT) / (
+                            (self._items['height']()) * (self._items['height']())), 2)
                 if 'bmi' in self._items:
                     self._items['bmi'](bmi, self.get_shortname())
                 if 'bmi_text' in self._items:
@@ -269,7 +294,7 @@ class WithingsHealth(SmartPlugin):
         if self.get_iattr_value(item.conf, 'withings_type') in ['weight', 'height', 'fat_free_mass', 'fat_mass_weight',
                                                                 'fat_ratio', 'fat_mass_weight',
                                                                 'diastolic_blood_pressure',
-                                                                'systolic_blood_pressure', 'heart_pulse', 'temperature',
+                                                                'systolic_blood_pressure', 'heart_rate', 'temperature',
                                                                 'spo2', 'body_temperature', 'skin_temperature',
                                                                 'muscle_mass',
                                                                 'hydration', 'bone_mass', 'pulse_wave_velocity', 'bmi',
@@ -284,123 +309,22 @@ class WithingsHealth(SmartPlugin):
     def get_item(self, key):
         return self._items[key]
 
-    def init_webinterface(self):
-        """"
-        Initialize the web interface for this plugin
+    def get_client_id(self):
+        return self._client_id
 
-        This method is only needed if the plugin is implementing a web interface
-        """
-        try:
-            self.mod_http = Modules.get_instance().get_module(
-                'http')  # try/except to handle running in a core version that does not support modules
-        except:
-            self.mod_http = None
-        if self.mod_http == None:
-            self.logger.error("Not initializing the web interface")
-            return False
+    def get_consumer_secret(self):
+        return self._consumer_secret
 
-        # set application configuration for cherrypy
-        webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
-        config = {
-            '/': {
-                'tools.staticdir.root': webif_dir,
-            },
-            '/static': {
-                'tools.staticdir.on': True,
-                'tools.staticdir.dir': 'static'
-            }
-        }
-
-        # Register the web interface as a cherrypy app
-        self.mod_http.register_webif(WebInterface(webif_dir, self),
-                                     self.get_shortname(),
-                                     config,
-                                     self.get_classname(), self.get_instance_name(),
-                                     description='')
-
-        return True
-
-
-# ------------------------------------------
-#    Webinterface of the plugin
-# ------------------------------------------
-
-class WebInterface(SmartPluginWebIf):
-
-    def __init__(self, webif_dir, plugin):
-        """
-        Initialization of instance of class WebInterface
-
-        :param webif_dir: directory where the webinterface of the plugin resides
-        :param plugin: instance of the plugin
-        :type webif_dir: str
-        :type plugin: object
-        """
-        self.logger = logging.getLogger(__name__)
-        self.webif_dir = webif_dir
-        self.plugin = plugin
-        self._creds = None
-        self._auth = None
-
-        self.tplenv = self.init_template_environment()
-
-    def _get_callback_url(self):
-        ip = self.plugin.mod_http.get_local_ip_address()
-        port = self.plugin.mod_http.get_local_port()
-        web_ifs = self.plugin.mod_http.get_webifs_for_plugin(self.plugin.get_shortname())
+    def get_callback_url(self):
+        ip = self.mod_http.get_local_ip_address()
+        port = self.mod_http.get_local_port()
+        web_ifs = self.mod_http.get_webifs_for_plugin(self.get_shortname())
         for web_if in web_ifs:
-            if web_if['Instance'] == self.plugin.get_instance_name():
+            if web_if['Instance'] == self.get_instance_name():
                 callback_url = "http://{}:{}{}".format(ip, port, web_if['Mount'])
-                self.logger.debug("WebIf found, callback is {}".format(self.plugin.get_fullname(),
+                self.logger.debug("WebIf found, callback is {}".format(self.get_fullname(),
                                                                        callback_url))
             return callback_url
-        self.logger.error("Callback URL cannot be established.".format(self.plugin.get_fullname()))
+        self.logger.error("Callback URL cannot be established.".format(self.get_fullname()))
 
-    @cherrypy.expose
-    def index(self, reload=None, state=None, code=None, error=None):
-        """
-        Build index.html for cherrypy
 
-        Render the template and return the html file to be delivered to the browser
-
-        :return: contents of the template after beeing rendered
-        """
-        if self._auth is None:
-            self._auth = NokiaAuth(
-                self.plugin._client_id,
-                self.plugin._consumer_secret,
-                callback_uri=self._get_callback_url(),
-                scope='user.info,user.metrics,user.activity'
-            )
-
-        if not reload and code:
-            self.logger.debug("Got code as callback: {}".format(self.plugin.get_fullname(), code))
-            credentials = None
-            try:
-                credentials = self._auth.get_credentials(code)
-            except Exception as e:
-                self.logger.error(
-                    "An error occurred, perhaps code parameter is invalid or too old? Message: {}".format(
-                        self.plugin.get_fullname(), str(e)))
-            if credentials is not None:
-                self._creds = credentials
-                self.logger.debug(
-                    "New credentials are: access_token {}, token_expiry {}, token_type {}, refresh_token {}".
-                        format(self.plugin.get_fullname(), self._creds.access_token, self._creds.token_expiry,
-                               self._creds.token_type, self._creds.refresh_token))
-                self.plugin.get_item('access_token')(self._creds.access_token)
-                self.plugin.get_item('token_expiry')(self._creds.token_expiry)
-                self.plugin.get_item('token_type')(self._creds.token_type)
-                self.plugin.get_item('refresh_token')(self._creds.refresh_token)
-
-                self.plugin._client = None
-
-        tmpl = self.tplenv.get_template('index.html')
-        return tmpl.render(plugin_shortname=self.plugin.get_shortname(), plugin_version=self.plugin.get_version(),
-                           interface=None, item_count=len(self.plugin.get_items()),
-                           plugin_info=self.plugin.get_info(), tabcount=2, callback_url=self._get_callback_url(),
-                           tab1title="Withings Health Items (%s)" % len(self.plugin.get_items()),
-                           tab2title="OAuth2 Data", authorize_url=self._auth.get_authorize_url(),
-                           p=self.plugin, token_expiry=datetime.datetime.fromtimestamp(self.plugin.get_item(
-                'token_expiry')(), tz=self.plugin.shtime.tzinfo()), now=self.plugin.shtime.now(), code=code,
-                           state=state, reload=reload, language=self.plugin.get_sh().get_defaultlanguage())

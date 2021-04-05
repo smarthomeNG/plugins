@@ -12,7 +12,7 @@ plugin:
 #    documentation: http://smarthomeng.de/user/plugins/mqtt2/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1451853-support-thread-für-das-shelly-plugin
 
-    version: 1.1.3                 # Plugin version
+    version: 1.1.5                 # Plugin version
     sh_minversion: 1.7.2           # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
@@ -39,6 +39,7 @@ item_attributes:
             - shellyswitch
             - shellyswitch25
             - shelly4pro
+            - shellyht
         description:
             de: "Typ des Shelly Devices (z.B. Shellyplug, Shellyplug-s, Shelly1/pm, Shelly2, Shelly2.5, Shelly4Pro)"
             en: "Type of Shelly device (e.g. Shellyplug, Shellyplug-s. Shelly1/pm, Shelly2, Shelly2.5, Shelly4Pro)"
@@ -53,6 +54,8 @@ item_attributes:
             - online
             - temp
             - temp_f
+            - humidity
+            - battery
         description:
             de: "Zu lesendes/schreibendes Attribut des Shelly Devices. Achtung: Nicht jedes Attribut ist auf allen Device-Typen vorhanden."
             en: "Attribute of Shelly devcie that shall be read/written. Note: Not every attribute is available on all device types"
@@ -109,6 +112,25 @@ item_structs:
             shelly_id: ..:.
             shelly_type: ..:.
             shelly_attr: temp_f
+
+    shellyht:
+        name: WLAN Temperatur & Feuchtesensor (Zwischenstecker)
+        type: bool
+        # shelly_id: xxxxxx
+        shelly_type: shellyht
+#        shelly_attr: relay
+#        shelly_relay: '0'
+
+        online:
+            type: bool
+            shelly_id: ..:.
+            shelly_type: ..:.
+            shelly_attr: online
+        battery:
+            type: num
+            shelly_id: ..:.
+            shelly_type: ..:.
+            shelly_attr: battery
 
 plugin_functions: NONE
     # Definition of plugin functions defined by this plugin (enter 'plugin_functions: NONE', if section should be empty)

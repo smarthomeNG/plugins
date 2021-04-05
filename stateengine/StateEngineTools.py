@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
-#  Copyright 2014-     Thomas Ernst                       offline@gmx.net
+#  Copyright 2014-2018 Thomas Ernst                       offline@gmx.net
+#  Copyright 2019- Onkel Andy                       onkelandy@hotmail.com
 #########################################################################
 #  Finite state machine plugin for SmartHomeNG
 #
@@ -20,14 +21,57 @@
 #########################################################################
 import datetime
 from ast import literal_eval
-# import logging
 from lib.item import Items
-itemsApi = Items.get_instance()
+from lib.item.item import Item
+import re
 
-#
-# Some general tool functions
-#
-# logger = logging.getLogger(__name__)
+itemsApi = Items.get_instance()
+__itemClass = Item
+
+# General class for everything that is below the SeItem Class
+# This class provides some general stuff:
+# - Protected wrapper-methods for logging
+# - abitem and smarthome Instances
+class SeItemChild:
+    # Constructor
+    # abitem: parent SeItem instance
+    def __init__(self, abitem):
+        self._abitem = abitem
+        self.se_plugin = abitem.se_plugin
+        self._sh = abitem.sh
+        self._shtime = abitem.shtime
+
+    # wrapper method for logger.info
+    def _log_info(self, text, *args):
+        self._abitem.logger.info(text, *args)
+
+    # wrapper method for logger.debug
+    def _log_develop(self, text, *args):
+        self._abitem.logger.develop(text, *args)
+
+    # wrapper method for logger.debug
+    def _log_debug(self, text, *args):
+        self._abitem.logger.debug(text, *args)
+
+    # wrapper method for logger.warning
+    def _log_warning(self, text, *args):
+        self._abitem.logger.warning(text, *args)
+
+    # wrapper method for logger.error
+    def _log_error(self, text, *args):
+        self._abitem.logger.error(text, *args)
+
+    # wrapper method for logger.exception
+    def _log_exception(self, msg, *args, **kwargs):
+        self._abitem.logger.exception(msg, *args, **kwargs)
+
+    # wrapper method for logger.increase_indent
+    def _log_increase_indent(self, by=1):
+        self._abitem.logger.increase_indent(by)
+
+    # wrapper method for logger.decrease_indent
+    def _log_decrease_indent(self, by=1):
+        self._abitem.logger.decrease_indent(by)
 
 
 # Find a certain item below a given item.
@@ -42,11 +86,44 @@ def get_child_item(item, child_id):
     return None
 
 
-# Returns the last part of the id of an item (everythig behind last .)
+# Returns the last part of the id of an item (everything behind last .)
 # item: Item for which the last part of the id should be returned
 # returns: last part of item id
 def get_last_part_of_item_id(item):
-    return item.property.path.rsplit(".", 1)[1]
+    if isinstance(item, str):
+        return_value = item if "." not in item else item.rsplit(".", 1)[1]
+    else:
+        return_value = item.property.path.rsplit(".", 1)[1]
+    return return_value
+
+
+def parse_relative(evalstr, begintag, endtags):
+    if evalstr.find(begintag+'.') == -1:
+        return evalstr
+    pref = ''
+    rest = evalstr
+    endtags = [endtags] if isinstance(endtags, str) else endtags
+
+    while rest.find(begintag+'.') != -1:
+        pref += rest[:rest.find(begintag+'.')]
+        rest = rest[rest.find(begintag+'.')+len(begintag):]
+        endtag = ''
+        previousposition = 1000
+        for end in endtags:
+            position = rest.find(end)
+            if position < previousposition and not position == -1:
+                endtag = end
+                previousposition = position
+        rel = rest[:rest.find(endtag)]
+        rest = rest[rest.find(endtag)+len(endtag):]
+        if 'property' in endtag:
+            rest1 = re.split('( |\+|\-|\*|\/)', rest, 1)
+            rest = ''.join(rest1[1:])
+            pref += "se_eval.get_relative_itemproperty('{}', '{}')".format(rel, rest1[0])
+        elif '()' in endtag:
+            pref += "se_eval.get_relative_itemvalue('{}')".format(rel)
+    pref += rest
+    return pref
 
 
 # Flatten list of values
@@ -61,7 +138,7 @@ def flatten_list(changelist):
             else:
                 flat_list.append(sublist)
     elif isinstance(changelist, str) and changelist.startswith("["):
-        flat_list = ast.literal_eval(changelist)
+        flat_list = literal_eval(changelist)
     else:
         flat_list = changelist
     return flat_list
@@ -102,7 +179,7 @@ def cast_bool(value):
             return True
         else:
             raise ValueError("Can't cast {0} to bool!".format(value))
-    elif type(value) in [str, str]:
+    elif isinstance(value, str):
         if value.lower() in ['0', 'false', 'no', 'off']:
             return False
         elif value.lower() in ['1', 'true', 'yes', 'on']:
@@ -135,6 +212,7 @@ def cast_list(value):
         except Exception:
             pass
     if isinstance(value, list):
+        value = flatten_list(value)
         return value
     else:
         value = [value]
@@ -175,14 +253,18 @@ def cast_time(value):
 def find_attribute(smarthome, base_item, attribute, recursion_depth=0):
     # 1: parent of given item could have attribute
     parent_item = base_item.return_parent()
-    if parent_item is not None and attribute in parent_item.conf:
-        return parent_item.conf[attribute]
+    try:
+        _parent_conf = parent_item.conf
+        if parent_item is not None and attribute in _parent_conf:
+            return parent_item.conf[attribute]
+    except Exception:
+        return None
 
     # 2: if item has attribute "se_use", get the item to use and search this item for required attribute
     if "se_use" in base_item.conf:
         if recursion_depth > 5:
             return None
-        use_item = itemsApi.return_item(base_item.conf["se_use"])
+        use_item = itemsApi.return_item(base_item.conf.get("se_use"))
         if use_item is not None:
             result = find_attribute(smarthome, use_item, attribute, recursion_depth + 1)
             if result is not None:
@@ -230,64 +312,30 @@ def get_eval_name(eval_func):
 
 
 # determine original caller/source
-# smarthome: instance of smarthome.py
 # caller: caller
 # source: source
-def get_original_caller(smarthome, caller, source, item=None):
+# item: item being updated
+# eval_type: update or change
+def get_original_caller(elog, caller, source, item=None, eval_keyword=['Eval'], eval_type='update'):
     original_caller = caller
-    original_source = source
     original_item = item
-    while original_caller == "Eval":
+    if isinstance(source, str):
+        original_source = source
+    else:
+        original_source = "None"
+    while original_caller in eval_keyword:
         original_item = itemsApi.return_item(original_source)
         if original_item is None:
+            elog.warning("get_caller({0}, {1}): original item not found", caller, source)
             break
-        original_updated_by = original_item.property.last_update_by
-        if ":" not in original_updated_by:
+        original_manipulated_by = original_item.property.last_update_by if eval_type == "update" else \
+            original_item.property.last_change_by
+        if ":" not in original_manipulated_by:
             break
-        original_caller, __, original_source = original_updated_by.partition(":")
+        original_caller, __, original_source = original_manipulated_by.partition(":")
+
     if item is None:
         return original_caller, original_source
     else:
         return original_caller, original_source, original_item
 
-
-# General class for everything that is below the SeItem Class
-# This class provides some general stuff:
-# - Protected wrapper-methods for logging
-# - abitem and smarthome Instances
-class SeItemChild:
-    # Constructor
-    # abitem: parent SeItem instance
-    def __init__(self, abitem):
-        self._abitem = abitem
-        self.se_plugin = abitem.se_plugin
-        self._sh = abitem.sh
-        self._shtime = abitem.shtime
-
-    # wrapper method for logger.info
-    def _log_info(self, text, *args):
-        self._abitem.logger.info(text, *args)
-
-    # wrapper method for logger.debug
-    def _log_debug(self, text, *args):
-        self._abitem.logger.debug(text, *args)
-
-    # wrapper method for logger.warning
-    def _log_warning(self, text, *args):
-        self._abitem.logger.warning(text, *args)
-
-    # wrapper method for logger.error
-    def _log_error(self, text, *args):
-        self._abitem.logger.error(text, *args)
-
-    # wrapper method for logger.exception
-    def _log_exception(self, msg, *args, **kwargs):
-        self._abitem.logger.exception(msg, *args, **kwargs)
-
-    # wrapper method for logger.increase_indent
-    def _log_increase_indent(self, by=1):
-        self._abitem.logger.increase_indent(by)
-
-    # wrapper method for logger.decrease_indent
-    def _log_decrease_indent(self, by=1):
-        self._abitem.logger.decrease_indent(by)

@@ -52,6 +52,9 @@ class SeCurrent:
         self.__month = None
         self.update()
 
+    def __repr__(self):
+        return "SeCurrent"
+
     # Return current weekday
     def get_weekday(self):
         return self.__weekday

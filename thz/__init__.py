@@ -2,9 +2,12 @@
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
 #  Ported and Copyright 2014 toggle
+#  Copyright 2019 - 2020 Bernd Meiners              Bernd.Meiners@mail.de
 #########################################################################
 #  This software is based on the FHEM implementation
 #  https://github.com/mhop/fhem-mirror/blob/master/fhem/FHEM/00_THZ.pm
+#  which is itself based upon hard work of Robert Penz
+#  http://robert.penz.name/heat-pump-lwz/
 #
 #  THZ plugin for SmartHomeNG
 #
@@ -54,17 +57,10 @@ class THZ(SmartPlugin):
     """
     Class THZ implements main control instance
     """
-    PLUGIN_VERSION = "0.2.2"
+    PLUGIN_VERSION = "1.0.0"
 
     def __init__(self, sh, *args, **kwargs):
         """
-        old: smarthome, 
-        serial_port='/dev/ttyUSB0', 
-        baudrate=115200, 
-        poll_period=300, 
-        min_update_period=86400, 
-        max_update_period=300
-        server_host = '0.0.0.0'
         server_port = 57483
         """
         from bin.smarthome import VERSION

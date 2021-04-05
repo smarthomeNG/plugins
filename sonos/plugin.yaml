@@ -12,10 +12,18 @@ plugin:
   documentation: https://github.com/smarthomeNG/plugins/tree/master/sonos # url of documentation (wiki) page
   support: https://knx-user-forum.de/forum/supportforen/smarthome-py/25151-sonos-anbindung
 
-  version: 1.5.1                 # Plugin version
+  version: 1.5.8                 # Plugin version
   sh_minversion: 1.5.1           # minimum shNG version to use this plugin
+  py_minversion: 3.5             # minimum Python version to use for this plugin
   multi_instance: False          # plugin supports multi instance
+  restartable: unknown
   classname: Sonos               # class containing the plugin
+
+plugin_functions: NONE
+
+logic_parameters: NONE
+
+item_structs: NONE
 
 parameters:
   tts:
@@ -38,7 +46,7 @@ parameters:
       en: "(optional) The sniipet audio files can be stored separatly from the TTS audio files by activating this option. If 'tts' is enabled and this option is not set, the value 'local_webservice_path' is used for the audio snippet path."
 
   webservice_ip:
-    type: str
+    type: ip
     description:
       de: "(optional) Für TTS und die Audio-Snippet-Funktionalität wird ein simpler Webservice gestartet. Die IP-Adresse wird per default automatisch ermittelt, kann hier aber manuell gesetzt werden."
       en: "(optional) For the TTS and audio snippet functionality, a simple webservice is started. By default the IP is detected automatically and can be manually overridden here."
@@ -58,13 +66,16 @@ parameters:
 
   discover_cycle:
     type: int
+    default: 180
+    valid_min: 120
     description:
       de: "Zeitintervall, nach dem (erneut) nach (neuen) Lautsprechern im Netzwerk gesucht wird."
       en: "Time interval to search again for (new) speakers in the network."
 
   snippet_duration_offset:
     type: num
-    default: 0.0
+    default: 0
+    valid_min: 0
     description:
       de: "(optional) Verlängert die Dauer von Snippet Audio Dateien um einen festen Offset in Sekunden."
       en: "(optional) Extend snippet duration by a fixed offset specified in seconds"
@@ -97,11 +108,12 @@ item_attributes:
     - track_title
     - track_artist
     - track_uri
-    - trackalbumart
+    - track_album
+    - track_album_art
     - bass
     - treble
     - loudness
-    - playmode
+    - play_mode
     - radio_show
     - radio_station
     - serial_number
@@ -116,6 +128,23 @@ item_attributes:
     - alarms
     - is_coordinator
     - tts_local_mode
+    - night_mode
+    - dialog_mode
+    - cross_fade
+    - coordinator
+    - snooze
+    - status_light
+    - zone_group_members
+    - player_name
+    - household_id
+    - streamtype
+    - current_track
+    - number_of_tracks
+    - current_transport_actions
+    - current_valid_play_modes
+    - sonos_playlists
+    - stream_content
+    - current_track_duration
 
   sonos_send:
     type: str
@@ -153,6 +182,13 @@ item_attributes:
     - alarms
     - get_playlist
     - set_playlist
+    - night_mode
+    - dialog_mode
+    - cross_fade
+    - snooze
+    - status_light
+    - switch_linein
+    - switch_tv
 
   sonos_attrib:
     type: str
@@ -168,3 +204,23 @@ item_attributes:
     - 'tts_language'
     - 'tts_volume'
     - 'tts_fade_in'
+    - 'start_after'
+    - snippet_fade_in
+    - snippet_volume
+    - clear_queue
+    - start_track
+
+  sonos_dpt3_step:
+    type: int
+    description:
+      de: 'Relatives dpt3 Inkrement'
+      en: 'Relative dpt3 increment'
+    mandatory: 'False'
+
+
+  sonos_dpt3_time:
+    type: int
+    description:
+      de: 'Dpt3 Zeitinkrement'
+      en: 'Dpt3 time increment'
+    mandatory: 'False'

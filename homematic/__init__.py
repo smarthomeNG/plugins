@@ -32,6 +32,8 @@ from pyhomematic import HMConnection
 from lib.module import Modules
 from lib.model.smartplugin import *
 
+from .webif import WebInterface
+
 from time import sleep
 
 
@@ -41,7 +43,7 @@ class Homematic(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.5.0'
+    PLUGIN_VERSION = '1.5.2'
 #    ALLOW_MULTIINSTANCE = False
 
     connected = False
@@ -49,24 +51,19 @@ class Homematic(SmartPlugin):
 
     def __init__(self, sh, *args, **kwargs):
         """
-        Initalizes the plugin. The parameters descriptions for this method are pulled from the entry in plugin.yaml.
-
-        :param sh:  **Deprecated**: The instance of the smarthome object. For SmartHomeNG versions **beyond** 1.3: **Don't use it**!
-        :param *args: **Deprecated**: Old way of passing parameter values. For SmartHomeNG versions **beyond** 1.3: **Don't use it**!
-        :param **kwargs:**Deprecated**: Old way of passing parameter values. For SmartHomeNG versions **beyond** 1.3: **Don't use it**!
+        Initalizes the plugin.
 
         If you need the sh object at all, use the method self.get_sh() to get it. There should be almost no need for
         a reference to the sh object any more.
 
-        The parameters *args and **kwargs are the old way of passing parameters. They are deprecated. They are imlemented
-        to support older plugins. Plugins for SmartHomeNG v1.4 and beyond should use the new way of getting parameter values:
-        use the SmartPlugin method get_parameter_value(parameter_name) instead. Anywhere within the Plugin you can get
+        Plugins have to use the new way of getting parameter values:
+        use the SmartPlugin method get_parameter_value(parameter_name). Anywhere within the Plugin you can get
         the configured (and checked) value for a parameter by calling self.get_parameter_value(parameter_name). It
         returns the value in the datatype that is defined in the metadata.
         """
-        from bin.smarthome import VERSION
-        if '.'.join(VERSION.split('.',2)[:2]) <= '1.5':
-            self.logger = logging.getLogger(__name__)
+
+        # Call init code of parent class (SmartPlugin)
+        super().__init__()
 
         # get the parameters for the plugin (as defined in metadata plugin.yaml):
         #   self.param1 = self.get_parameter_value('param1')
@@ -122,10 +119,10 @@ class Homematic(SmartPlugin):
         except:
             self.logger.error("Unable to start HomeMatic object - SmartHomeNG will be unable to terminate the thread vor this plugin (instance)")
             self.connected = False
-#            self._init_complete = False
-            # stop the thread that got created by initializing pyhomematic
-#            self.hm.stop()
-#            return
+        #            self._init_complete = False
+        # stop the thread that got created by initializing pyhomematic
+        #            self.hm.stop()
+        #            return
 
         # start communication with HomeMatic ccu
         try:
@@ -136,19 +133,17 @@ class Homematic(SmartPlugin):
         if self.connected:
             # TO DO: sleep besser lösen!
             sleep(20)
-#            self.logger.warning("Plugin '{}': self.hm.devices".format(self.hm.devices))
-            if self.hm.devices.get(self.hm_id,{}) == {}:
+            #            self.logger.warning("Plugin '{}': self.hm.devices".format(self.hm.devices))
+            if self.hm.devices.get(self.hm_id, {}) == {}:
                 self.logger.error("Connection to ccu failed")
-#                self._init_complete = False
-                # stop the thread that got created by initializing pyhomematic
-#                self.hm.stop()
-#                return
+        #                self._init_complete = False
+        # stop the thread that got created by initializing pyhomematic
+        #                self.hm.stop()
+        #                return
 
         self.hm_items = []
 
-        if not self.init_webinterface():
-#            self._init_complete = False
-            pass
+        self.init_webinterface(WebInterface)
 
         return
 
@@ -158,6 +153,7 @@ class Homematic(SmartPlugin):
         Run method for the plugin
         """
         self.logger.debug("Run method called")
+
         self.alive = True
         # if you want to create child threads, do not make them daemon = True!
         # They will not shutdown properly. (It's a python bug)
@@ -169,6 +165,7 @@ class Homematic(SmartPlugin):
         """
         self.logger.debug("Stop method called")
         self.alive = False
+
         self.hm.stop()
         self.hmip.stop()
 
@@ -190,7 +187,6 @@ class Homematic(SmartPlugin):
             init_error = False
 #            self.logger.debug("parse_item: {}".format(item))
             dev_id = self.get_iattr_value(item.conf, 'hm_address')
-
 
             dev_type = self.get_iattr_value(item.conf, 'hm_type')
 
@@ -254,18 +250,29 @@ class Homematic(SmartPlugin):
                 elif hm_node == 'EV':
                     value = dev.event(hm_function)
                 elif hm_node == 'SE':
-                    value = dev.getSensorData(hm_function)
+                    try:
+                        #Do not read sensors during initialization (could result in a warning 'HMGeneric.getValue: ...'
+                        #to logger 'pyhomematic.devicetypes.generic'
+                        # value = dev.getSensorData(hm_function)
+                        pass
+                    except Exception as e:
+                        self.logger.warning(f"parse_item: Item {item._path} Exception {e}")
                 elif hm_node == 'WR':
                     value = dev.getWriteData(hm_function)
                 else:
                     init_error = True
-                    self.logger.error("Not initializing {}: Unknown hm_node='{}' for address={}:{}, function={}".format(item, hm_node, hm_address, hm_channel, hm_function))
+                    log_text = "Not initializing {}: Unknown hm_node='{}' for address={}:{}, function={}".format(item, hm_node, hm_address, hm_channel, hm_function)
+                    if hm_node is None and hm_function == 'STATE':
+                        self.logger.info(log_text)
+                    else:
+                        self.logger.error(log_text)
 
                 if value is not None:
                     self.logger.info("Initializing {} with '{}' from address={}:{}, function={}".format(item, value, hm_address, hm_channel, hm_function))
                     item(value, 'HomeMatic', 'Init')
                 else:
-                    if not init_error:
+                    if (not init_error) and (hm_node != 'SE'):
+                        # Dont log an error for sensors, since sensor data is not read during initialization
                         self.logger.error("Not initializing {} from address={}:{}, function='{}'".format(item, hm_node, hm_address, hm_channel, hm_function))
 
             return self.update_item
@@ -349,47 +356,6 @@ class Homematic(SmartPlugin):
                 # ON_TIME (float 0.0-85825945.6 s), SUBMIT (string)
 
                 # STATE, LEVEL, STOP (action)
-
-
-    def init_webinterface(self):
-        """"
-        Initialize the web interface for this plugin
-
-        This method is only needed if the plugin is implementing a web interface
-        """
-        try:
-            self.mod_http = Modules.get_instance().get_module('http')   # try/except to handle running in a core version that does not support modules
-        except:
-             self.mod_http = None
-        if self.mod_http == None:
-            self.logger.error("Not initializing the web interface")
-            return False
-
-        import sys
-        if not "SmartPluginWebIf" in list(sys.modules['lib.model.smartplugin'].__dict__):
-            self.logger.warning("Web interface needs SmartHomeNG v1.5 and up. Not initializing the web interface")
-            return False
-
-        # set application configuration for cherrypy
-        webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
-        config = {
-            '/': {
-                'tools.staticdir.root': webif_dir,
-            },
-            '/static': {
-                'tools.staticdir.on': True,
-                'tools.staticdir.dir': 'static'
-            }
-        }
-
-        # Register the web interface as a cherrypy app
-        self.mod_http.register_webif(WebInterface(webif_dir, self),
-                                     self.get_shortname(),
-                                     config,
-                                     self.get_classname(), self.get_instance_name(),
-                                     description='')
-        return True
-
 
 
 # ---------------------------------------------------------

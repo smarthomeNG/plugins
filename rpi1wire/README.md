@@ -81,7 +81,7 @@ someitem:
         type: num
         visu_acl: ro
     someupdate:
-        rpi1wire_sys: update
+        rpi1wire: update
         name: Update Sensors
         type: bool
         inital_value: 0
@@ -105,32 +105,10 @@ If this item is triggered, the sensors are re-searched without restarting the se
 ### logic.yaml
 Please refer to the documentation generated from plugin.yaml metadata.
 
-## Methods
-
-update_sensors() can be called to force a reread of all sensors.
 
 ## Examples
-```yaml
-someitem:
-    somelist:
-        rpi1wire_sys: list
-        name: Sensor-List
-        type: str
-        visu_acl: ro
-    somecount:
-        rpi1wire_sys: count
-        name: Sensors
-        type: num
-        visu_acl: ro
-    someupdate:
-        rpi1wire_sys: update
-        name: Update Sensors
-        type: bool
-        inital_value: 0
-        visu_acl: rw
+
 ### Example 1
-````
-### Example 1 with Sensor-Name
 
 ```yaml
 someroom:
@@ -142,23 +120,42 @@ someroom:
         database: yes
 ```
 
-### Example 2 with Sensor-ID
+### Example 2
 
 ```yaml
 someroom:
      mytemperature:
         name: my Name
+        name: Wohnzimmer Raumtemperatur
         type: num
         visu_acl: ro
         rpi1wire_id: 28-0215018970ff
         database: yes
 
-
-...
+rpi1wire:
+     update:
+        name: Update Sensor-List
+        type: bool
+        rpi1wire_sys: update
+        visu_acl: rw
+        initial_value: 0
+    sensor_list:
+        rpi1wire_sys: list
+        name: Sensor List
+        type: str
+        visu_acl: ro
+    sensor_count:
+        rpi1wire_sys: count
+        name: Sensor Count
+        type: num
+        visu_acl: ro
+```
 
 
 ## Web Interfaces
 
-The Webinterface is reachable on you smarthomeNG server here :
-yourserver:8383/rpi1wire/
+A Big ToDo here: 
+- List found sensors
+- List Items affected with rpi1wire_id or rpi1wire_name
+- Show Items with rpi1wire_update
 

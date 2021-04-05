@@ -27,12 +27,12 @@ def alexa(action_name, directive_type, response_type, namespace, properties,payl
 
 
 class AlexaActions(object):
-    def __init__(self, sh, logger, devices):
+    def __init__(self, sh, logger, devices, proto):
         self.actions = {}
         self.actions_by_directive = {}
         for func in action_func_registry:
             logger.debug("Alexa: initializing action {}".format(func.alexa_action_name))
-            action = AlexaAction(sh, logger, devices, func, func.alexa_action_name, func.alexa_directive_type, func.alexa_response_type,func.alexa_namespace, func.alexa_properties,func.alexa_payload_version)
+            action = AlexaAction(sh, logger, devices, func, func.alexa_action_name, func.alexa_directive_type, func.alexa_response_type,func.alexa_namespace, func.alexa_properties,func.alexa_payload_version,proto)
             self.actions[action.name] = action
             self.actions_by_directive[action.directive_type] = action
 
@@ -45,7 +45,7 @@ class AlexaActions(object):
     
 
 class AlexaAction(object):
-    def __init__(self, sh, logger, devices, func, action_name, directive_type, response_type, namespace,properties,payload_version):
+    def __init__(self, sh, logger, devices, func, action_name, directive_type, response_type, namespace,properties,payload_version,proto):
         self.sh = sh
         self.logger = logger
         self.devices = devices
@@ -58,6 +58,8 @@ class AlexaAction(object):
         self.response_Value = None
         self.properties = properties
         self.payload_version = payload_version
+        
+        self._proto = proto
 
     def __call__(self, payload):
         return self.func(self, payload)
