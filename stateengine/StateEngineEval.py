@@ -51,6 +51,12 @@ class SeEval(StateEngineTools.SeItemChild):
 
         if offset is None:
             offset = StateEngineDefaults.suntracking_offset
+        else:
+            try:
+                offset = float(offset)
+            except Exception as e:
+                offset = 0
+                self._log_warning("Problem handling offset {0}: {1}", offset, e)
         self._eval_lock.acquire()
         self._log_debug("Executing method 'SunTracking({0})'", offset)
         self._log_increase_indent()
