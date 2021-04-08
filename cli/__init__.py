@@ -31,6 +31,7 @@
 import logging
 import threading
 
+import lib.log
 from lib.logic import Logics
 from lib.item import Items
 from lib.model.smartplugin import SmartPlugin
@@ -118,15 +119,18 @@ class CLIHandler:
         :param cmd: entered command
         """
         self.logger.debug("CLI: process command '{}'".format(cmd))
-        if cmd in ('quit', 'q', 'exit', 'x'):
-            self.push('bye\n')
-            self.__client.close()
-            return
-        else:
-            if not self.commands.execute(self, cmd, self.source):
-                self.push("Unknown command.\n")
-                self.__push_helpmessage()
+        if cmd == '':
             self.__push_command_prompt()
+        else:
+            if cmd in ('quit', 'q', 'exit', 'x'):
+                self.push('bye\n')
+                self.__client.close()
+                return
+            else:
+                if not self.commands.execute(self, cmd, self.source):
+                    self.push("Unknown command.\n")
+                    self.__push_helpmessage()
+                self.__push_command_prompt()
 
     def __push_helpmessage(self):
         """Push help message to client"""
@@ -656,7 +660,7 @@ class CLICommands:
         if parameter is None or parameter == "":
             log = self.sh.log
         else:
-            logs = self.sh.return_logs()
+            logs = self.sh.logs.return_logs()
             if parameter not in logs:
                 handler.push("Log '{0}' does not exist\n".format(parameter))
                 log = None
@@ -763,9 +767,9 @@ class CLICommands:
     # noinspection PyUnusedLocal
     def _cli_logd(self, handler, parameter, source):
         if parameter is None or parameter == "":
-            log = self.sh.log
+            log = self.sh.logs.return_logs()['env.core.log']
         else:
-            logs = self.sh.return_logs()
+            logs = self.sh.logs.return_logs()
             if parameter not in logs:
                 handler.push("Log '{0}' does not exist\n".format(parameter))
                 log = None
@@ -778,14 +782,14 @@ class CLICommands:
                 ts = entry[0].strftime("%d.%m.%Y %H:%M:%S %Z")
                 values = [str(value) for value in entry]
                 del values[0]
-                handler.push(ts + ' ' + str(values))
+                handler.push(ts + ': ' + str(values))
                 handler.push("\n")
 
     # noinspection PyUnusedLocal
     def _cli_logl(self, handler, parameter, source):
-        logs = self.sh.return_logs()
+        logs = self.sh.logs.return_logs()
         if logs is not None:
             handler.push("Existing (memory) logs:\n")
             for log in sorted(list(logs)):
-                handler.push("- {0}\n".format(log))
+                handler.push("- {}   (maxlen={})\n".format(log, self.sh.logs.return_logs()[log].maxlen))
 
