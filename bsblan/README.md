@@ -1,4 +1,6 @@
-![Alt text](/bsblan/assets/BSB-LAN-Logo_SmartHomeNG.png?raw=true)
+
+![BSB-LAN Logo](assets/BSB-LAN-Logo_SmartHomeNG.png)
+
 # Plugin for BSB-Lan-Adapter
 
 #### Version 1.0.2
