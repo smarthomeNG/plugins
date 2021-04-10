@@ -12,7 +12,7 @@ plugin:
     keywords: telnet cli command line interface remote control
     documentation: http://smarthomeng.de/user/plugins/cli/user_doc.html
 
-    version: 1.8.1                 # Plugin version
+    version: 1.8.2                 # Plugin version
     sh_minversion: 1.8.2c          # minimum shNG version to use this plugin
     # sh_maxversion:               # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: true           # plugin supports multi instance

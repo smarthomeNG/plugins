@@ -160,7 +160,7 @@ class CLIHandler:
 
 class CLI(SmartPlugin):
 
-    PLUGIN_VERSION = '1.8.1'     # is checked against version in plugin.yaml
+    PLUGIN_VERSION = '1.8.2'     # is checked against version in plugin.yaml
 
     def __init__(self, sh):
         """
@@ -177,10 +177,6 @@ class CLI(SmartPlugin):
 
         # Call init code of parent class (SmartPlugin)
         super().__init__()
-
-        from bin.smarthome import VERSION
-        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
-            self.logger = logging.getLogger(__name__)
 
         self.items = Items.get_instance()
 
@@ -791,5 +787,13 @@ class CLICommands:
         if logs is not None:
             handler.push("Existing (memory) logs:\n")
             for log in sorted(list(logs)):
-                handler.push("- {}   (maxlen={})\n".format(log, self.sh.logs.return_logs()[log].maxlen))
+                memlog_instance = self.sh.logs.return_logs()[log]
+                if memlog_instance.handler is None:
+                    loghandler_name = 'None'
+                    loghandler_level = '?'
+                    handler.push("- {:<20}(maxlen={})\n".format(log, memlog_instance.maxlen))
+                else:
+                    loghandler_name = memlog_instance.handler.get_name()
+                    loghandler_level = logging.getLevelName(memlog_instance.handler.level)
+                    handler.push("- {:<20}(maxlen={}, level={}, LogHandler={})\n".format(log, memlog_instance.maxlen, loghandler_level, loghandler_name))
 
