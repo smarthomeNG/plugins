@@ -315,7 +315,7 @@ class Network(SmartPlugin):
                         self.logger.error(f'Generic network acl doesn\'t permit updates from {source_ip}.')
                         return False
                 item = self.generic_listeners[dest]['items'][name]['item']
-                self.logger.debug(f'Setting {item} to {value} (from {proto}:{source_ip})')
+                self.logger.info(f'generic_listeners: Setting {item} to {value} (from {proto}:{source_ip})')
                 item(value, proto, source_ip)
 
             elif typ == 'logic':
@@ -382,7 +382,7 @@ class Network(SmartPlugin):
                     if source_ip not in gacl:
                         self.logger.error(f'Generic network acl doesn\'t permit triggering from {source_ip}.')
                         return False
-                self.logger.debug(f'Setting {item} to {data} (from {proto}:{source_ip})')
+                self.logger.debug(f'special_listeners: Setting {item} to {data} (from {proto}:{source_ip})')
                 item(data, 'network', source_ip)
         else:
             self.logger.error(f'Destination {dest}, not in listeners!')
