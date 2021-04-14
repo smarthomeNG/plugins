@@ -7,12 +7,12 @@ plugin:
         en: 'Plugin to control switches which are equipped with Tasmote firmware. Communication is handled through the MQTT module of SmartHomeNG.'
     maintainer: msinn
     tester: msinn                  # Who tests this plugin?
-    state: ready                   # change to ready when done with development
+    state: develop                   # change to ready when done with development
     keywords: iot
     documentation: http://smarthomeng.de/user/plugins/tasmota/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1520293-support-thread-für-das-tasmota-plugin
 
-    version: 1.0.0                 # Plugin version
+    version: 1.1.0                 # Plugin version
     sh_minversion: 1.7.2           # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     py_minversion: 3.6             # minimum Python version to use for this plugin
@@ -50,8 +50,8 @@ item_attributes:
         default: relay
         description:
             de: "Zu lesendes/schreibendes Attribut des Tasmota Devices. Achtung: Nicht jedes Attribut ist auf allen Device-Typen vorhanden."
-            en: "Attribute of Tasmota devcie that shall be read/written. Note: Not every attribute is available on all device types"
-        valid_list:
+            en: "Attribute of Tasmota device that shall be read/written. Note: Not every attribute is available on all device types"
+        valid_list_ci:
             - ''
             - relay
             - online
@@ -61,6 +61,13 @@ item_attributes:
             - power_total
             - power_yesterday
             - power_today
+            - temp
+            - hum
+            - dewpoint
+            - hsb
+            - rf_recv
+            - rf_send
+            - rf_key_send
 
         valid_list_description:
             de:
@@ -73,7 +80,13 @@ item_attributes:
               - "Verbrauch (gesamt) in kWh bei Tasmota Devices mit ENERGY Sensor -> num, r/o"
               - "Verbrauch (gestern) in kWh bei Tasmota Devices mit ENERGY Sensor -> num, r/o"
               - "Verbrauch (heute) in kWh bei Tasmota Devices mit ENERGY Sensor -> num, r/o"
-
+              - "Temperatur in °C bei Tasmota Devices mit TEMP Sensor (DS18B20, AM2301) -> num, r/o"
+              - "Luftfeuchtigkeit in %rH bei Tasmota Devices mit HUM Sensor (AM2301) -> num, r/o"
+              - "Taupunkt in °C bei Tasmota Devices mit HUM und TEMP Sensor (AM2301) -> num, r/o"
+              - "Hue, Saturartion, Brightness (HSB) bei RGBW Tasmota Devices (H801) -> list, r/w"
+              - "Empfange RF data bei Tasmota Device mit RF Empfang (SONOFF Bridge) -> str, r/o"
+              - "Zu sendende RF Daten bei Tasmota Device mit RF Sendemöglichkeit (SONOFF Bridge) -> dict, r/w"
+              - "Zu sendende RF-Key Tasmota Device mit RF Sendemöglichkeit (SONOFF Bridge) -> num [1-16], r/w"
 
     tasmota_relay:
         type: str
