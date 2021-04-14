@@ -1,0 +1,333 @@
+<!-- vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab -->
+{% extends "base_plugin.html" %}
+{% set tabcount = 5 %}
+
+{% set language = p.get_sh().get_defaultlanguage() %}
+
+{% if p.avm_smarthome_items|length==0 %}
+	{% set start_tab = 2 %}
+{% endif %}
+
+{% if language not in ['en','de'] %}
+    {% set language = 'en' %}
+{% endif %}
+
+<!-- set update_interval to a value > 0 (in milliseconds) to enable periodic data updates -->
+{% set update_interval = 0 %}
+
+
+{% block pluginscripts %}
+/*
+ * The combined file was created by the DataTables downloader builder:
+ *   https://datatables.net/download
+ *
+ * To rebuild or modify this file with the latest versions of the included
+ * software please visit:
+ *   https://datatables.net/download/#dt/dt-1.10.21/fh-3.1.7/r-2.2.5
+ *
+ * Included libraries:
+ *   DataTables 1.10.21, FixedHeader 3.1.7, Responsive 2.2.5
+ */
+ 
+<link rel="stylesheet" type="text/css" href="static/datatables.css">
+<script type="text/javascript" charset="utf8" src="static/datatables.js"></script>
+
+<script type="text/javascript">
+
+	$(document).ready( function () {
+	    $('#itemtable').DataTable( {
+	        "paging": false,
+	        fixedHeader: true
+	        } );
+	    $('#devicetable').DataTable( {
+	    	"paging": false,
+	    	fixedHeader: true
+	    	} );
+        $('#thermostattable').DataTable( {
+	    	"paging": false,
+	    	fixedHeader: true
+	    	} );
+        $('#relaistable').DataTable( {
+	    	"paging": false,
+	    	fixedHeader: true
+	    	} );
+        $('#alarmtable').DataTable( {
+	    	"paging": false,
+	    	fixedHeader: true
+	    	} );
+	});
+
+</script>
+{% endblock pluginscripts %}
+
+
+{% block headtable %}
+<table class="table table-striped table-hover">
+	<tbody>
+		<tr>
+			<td class="py-1"><strong>Host</strong></td>
+			<td class="py-1">{{ p.host }}</td>
+			<td class="py-1" width="50px"></td>
+			<td class="py-1"><strong>-</strong></td>
+			<td class="py-1">-</td>
+			<td class="py-1" width="50px"></td>
+		</tr>
+		<tr>
+			<td class="py-1"><strong>Username</strong></td>
+			<td class="py-1">{{ p.user }}</td>
+			<td></td>
+			<td class="py-1"><strong>-</strong></td>
+			<td class="py-1">-</td>
+			<td></td>
+		</tr>
+		<tr>
+			<td class="py-1"><strong>Cycle</strong></td>
+			<td class="py-1">{{ p._cycle }}</td>
+			<td></td>
+			<td class="py-1"><strong>-</strong></td>
+			<td class="py-1">-</td>
+			<td></td>
+		</tr>
+	</tbody>
+</table>
+{% endblock headtable %}
+
+
+<!--
+	Additional buttons for the web interface (if any are needed) - displayed below the headtable-section
+-->
+{% block buttons %}
+{% if 1==2 %}
+	<div>
+		<button id="btn1" class="btn btn-shng btn-sm" name="scan" onclick="shngPost('', {learn: 'on'})"><i class="fas fa-question"></i>&nbsp;&nbsp;&nbsp;{{ _('nach Devices suchen') }}&nbsp;</button>
+	</div>
+{% endif %}
+{% endblock %}
+
+
+<!--
+	Content block for the first tab of the Webinterface
+-->
+{% set tab1title = "<strong>Items</strong>" %}
+
+{% block bodytab1 %}
+<div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
+	<div class="col-sm-12">
+		{% if p.avm_smarthome_items|length %}
+		    <table id="itemtable" class="table table-striped table-hover">
+		    	<thead>
+				    <tr>
+                        <th>{{ _('Pfad') }}</th>
+                        <th>{{ _('Device') }}</th>
+                        <th>{{ _('Typ') }}</th>
+                        <th>{{ _('AVM Datentyp') }}</th>
+                        <th>{{ _('Wert') }}</th>
+                        <th>{{ _('Letztes Update') }}</th>
+                        <th>{{ _('Letzter Change') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in p.avm_smarthome_items %}
+                        {% if p.get_instance_name() %}
+                            {% set instance_key = "avm_smarthome_data@"+p.get_instance_name() %}
+                        {% else %}
+                            {% set instance_key = "avm_smarthome_data" %}
+                        {% endif %}
+                        <tr>
+                            <td>{{ item.property.path }}</td>
+                            <td>{{ item.return_parent().name() }}</td>
+                            <td>{{ item.property.type }}</td>
+                            <td>{{ item.conf[instance_key] }}</td>
+                            <td>{{ item() }}</td>
+                            <td>{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                            <td>{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+    </div>
+</div>
+{% endblock bodytab1 %}
+
+
+<!--
+	Content block for the second tab of the Webinterface
+-->
+{% set tab2title = "<strong>Devices</strong>" %}
+
+{% block bodytab2 %}
+<div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
+	<div class="col-sm-12">
+		{% if p.avm_smarthome_devices|length %}
+            <table id="devicetable" class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>{{ _('Name') }}</th>
+                        <th>{{ _('AIN') }}</th>
+                        <th>{{ _('Hersteller') }}</th>
+                        <th>{{ _('Produkt Name') }}</th>
+                        <th>{{ _('Firmware') }}</th>
+                        <th>{{ _('Online') }}</th>
+                        <th>{{ _('Battery') }}</th>
+                        <th>{{ _('Switch') }}</th>
+                        <th>{{ _('TempSensor') }}</th>
+                        <th>{{ _('Thermostat') }}</th>
+                        <th>{{ _('Alarm') }}</th>
+                        <th>{{ _('Lock') }}</th>
+                        <th>{{ _('Device Lock') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ain in p.avm_smarthome_devices %}
+                        <tr>
+                            <td>{{ p.avm_smarthome_devices[ain].name }}</td>
+                            <td>{{ ain }}</td>
+                            <td>{{ p.avm_smarthome_devices[ain].manufacturer }}</td>
+                            <td>{{ p.avm_smarthome_devices[ain].productname }}</td>
+                            <td>{{ p.avm_smarthome_devices[ain].fw_version }}</td>
+                            <td>{% if p.avm_smarthome_devices[ain].online == True %} Ja {% else %} Nein {% endif %}</td>
+                            <td>
+                                {% if p.avm_smarthome_devices[ain]['thermostat'] != {} %}
+                                    {{ p.avm_smarthome_devices[ain]['thermostat'].battery_level }} %
+                                {% else %}
+                                        -
+                                {% endif %}
+                            </td>
+                            <td>{% if p.avm_smarthome_devices[ain].has_switch == True %} Ja {% else %} Nein {% endif %}</td>
+                            <td>{% if p.avm_smarthome_devices[ain].has_temperature_sensor == True %} Ja {% else %} Nein {% endif %}</td>
+                            <td>{% if p.avm_smarthome_devices[ain].has_thermostat == True %} Ja {% else %} Nein {% endif %}</td>
+                            <td>{% if p.avm_smarthome_devices[ain].has_alarm == True %} Ja {% else %} Nein {% endif %}</td>
+                            <td>{% if p.avm_smarthome_devices[ain].lock == True %} Ja {% else %} Nein {% endif %}</td>
+                            <td>{% if p.avm_smarthome_devices[ain].device_lock == True %} Ja {% else %} Nein {% endif %}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+    </div>
+</div>
+{% endblock bodytab2 %}
+
+<!--
+	Content block for the third tab of the Webinterface
+-->
+{% set tab3title = "<strong>Thermostate</strong>" %}
+
+{% block bodytab3 %}
+<div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
+	<div class="col-sm-12">
+		{% if p.avm_smarthome_meta['thermostat'] == True %}
+            <table id="thermostattable" class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>{{ _('Name') }}</th>
+                        <th>{{ _('Ist-Temp') }}</th>
+                        <th>{{ _('Soll-Temp') }}</th>
+                        <th>{{ _('Com-Temp') }}</th>
+                        <th>{{ _('Eco-Temp') }}</th>
+                        <th>{{ _('Batt-Level') }}</th>
+                        <th>{{ _('Offset') }}</th>
+                        <th>{{ _('Fenster') }}</th>
+                        <th>{{ _('Sommerprog') }}</th>
+                        <th>{{ _('Ferienprog') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ain in p.avm_smarthome_devices %}
+                        <tr>
+                            <td>{{ p.avm_smarthome_devices[ain].name }}</td>
+                            <td>{{ p.avm_smarthome_devices[ain]['thermostat'].actual_temperature }}°C</td>
+                            <td>{{ p.avm_smarthome_devices[ain]['thermostat'].target_temperature }}°C</td>
+                            <td>{{ p.avm_smarthome_devices[ain]['thermostat'].comfort_temperature }}°C</td>
+                            <td>{{ p.avm_smarthome_devices[ain]['thermostat'].eco_temperature }}°C</td>
+                            <td>{{ p.avm_smarthome_devices[ain]['thermostat'].battery_level }}%</td>
+                            <td>{{ p.avm_smarthome_devices[ain]['temperature_sensor'].offset }}K</td>
+                            <td>{% if p.avm_smarthome_devices[ain]['thermostat'].window_open == True %} offen {% else %} zu {% endif %}</td>
+                            <td>{% if p.avm_smarthome_devices[ain]['thermostat'].summer_active == True %} aktiv {% else %} nein {% endif %}</td>
+                            <td>{% if p.avm_smarthome_devices[ain]['thermostat'].holiday_active == True %} aktiv {% else %} nein {% endif %}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <strong> No AVM Devices with Thermostate Function discovered.</strong>
+            &nbsp;
+        {% endif %}
+    </div>
+</div>
+{% endblock bodytab3 %}
+
+
+<!--
+	Content block for the third tab of the Webinterface
+-->
+{% set tab4title = "<strong>Relais</strong>" %}
+
+{% block bodytab4 %}
+<div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
+	<div class="col-sm-12">
+		 <table id="relaistable" class="table table-striped table-hover">
+            {% if p.avm_smarthome_meta['switch'] == True %}
+                <thead>
+                    <tr>
+                        <th>{{ _('Name') }}</th>
+                        <th>{{ _('Status') }}</th>
+                        <th>{{ _('Power') }}</th>
+                        <th>{{ _('Energy') }}</th>
+                        <th>{{ _('Spannung') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ain in p.avm_smarthome_devices %}
+                        <tr>
+                            <td>{{ p.avm_smarthome_devices[ain].name }}</td>
+                            <td>{% if p.avm_smarthome_devices[ain]['switch'].switch_state == True %} An {% else %} Aus {% endif %}</td>
+                            <td>{{ p.avm_smarthome_devices[ain]['switch'].power }}</td>
+                            <td>{{ p.avm_smarthome_devices[ain]['switch'].energy }}</td>
+                            <td>{{ p.avm_smarthome_devices[ain]['switch'].voltage }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            {% else %}
+            <strong> No AVM Devices with Relais Function discovered.</strong>
+            &nbsp;
+            {% endif %}
+        </table>
+    </div>
+</div>
+{% endblock bodytab4 %}
+
+
+<!--
+	Content block for the third tab of the Webinterface
+-->
+{% set tab5title = "<strong>Alarm</strong>" %}
+
+{% block bodytab5 %}
+<div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
+	<div class="col-sm-12">
+		{% if p.avm_smarthome_meta['alarm'] == True %}
+            <table id="alarmtable" class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>{{ _('Name') }}</th>
+                        <th>{{ _('Status') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ain in p.avm_smarthome_devices %}
+                        <tr>
+                            <td>{{ p.avm_smarthome_devices[ain].name }}</td>
+                            <td>{% if p.avm_smarthome_devices[ain]['alarm'].alert_state == True %} An {% else %} Aus {% endif %}</td>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <strong> No AVM Devices with Alarm Function discovered.</strong>
+            &nbsp;
+        {% endif %}
+    </div>
+</div>
+{% endblock bodytab5 %}
+

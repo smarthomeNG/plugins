@@ -1,0 +1,17 @@
+# translations for the web interface
+plugin_translations:
+    # Translations for the plugin specially for the web interface
+    'AVM Smarthome Datentyp':       {'de': '=', 'en': 'AVM Smart Home Data Type', 'fr': ''}
+    'AVM Items':                    {'de': '=', 'en': '=', 'fr': ''}
+    'Pfad':                         {'de': '=', 'en': 'Path', 'fr': ''}
+    'Typ':                          {'de': '=', 'en': 'Type', 'fr': ''}
+    'Wert':                         {'de': '=', 'en': 'Value', 'fr': ''}
+    'Letztes Update':               {'de': '=', 'en': 'Last Update', 'fr': ''}
+    'Letzter Change':               {'de': '=', 'en': 'Last Change', 'fr': ''}
+    'Plugin-API':                   {'de': '=', 'en': 'Plugin API', 'fr': ''}
+    'Parameter':                    {'de': '=', 'en': 'Parameters', 'fr': ''}
+    'Ja':                           {'de': '=', 'en': 'Yes', 'fr': ''}
+    'Nein':                         {'de': '=', 'en': 'No', 'fr': ''}
+    'Gerät verfügbar':              {'de': '=', 'en': 'Device Available', 'fr': ''}
+    'Gerät nicht verfügbar':        {'de': '=', 'en': 'Device Not Available', 'fr': ''}
+    'nicht verbunden':              {'de': '=', 'en': 'not connected', 'fr': ''}
