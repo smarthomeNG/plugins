@@ -1,27 +1,136 @@
+<!-- vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab -->
 {% extends "base_plugin.html" %}
+{% set tabcount = 1 %}
+{% set tab1title = _('SNMP Items') %}
 
-{% set logo_frame = false %}
+{% set language = p.get_sh().get_defaultlanguage() %}
+{% if last_read_cmd != "" %}
+{% set start_tab = 1 %}
+{% endif %}
+{% if language not in ['en','de'] %}
+{% set language = 'en' %}
+{% endif %}
 
-<!-- set update_interval to a value > 0 (in milliseconds) to enable periodic data updates -->
-{% set update_interval = 0 %}
-
-<!--
-	Additional script tag for plugin specific javascript code go into this block
--->
 {% block pluginscripts %}
-<script>
-	function handleUpdatedData(response, dataSet=null) {
-		if (dataSet === 'devices_info' || dataSet === null) {
-			var objResponse = JSON.parse(response);
-			myProto = document.getElementById(dataSet);
-			for (var device in objResponse) {
-				<!--
-				shngInsertText (device+'_source', objResponse[device]['source']);
-				shngInsertText (device+'_powerState', objResponse[device]['powerState']);
-				-->
-			}
-		}
-	}
+/*
+ * The combined file was created by the DataTables downloader builder:
+ *   https://datatables.net/download
+ *
+ * To rebuild or modify this file with the latest versions of the included
+ * software please visit:
+ *   https://datatables.net/download/#dt/dt-1.10.21/fh-3.1.7/r-2.2.5
+ *
+ * Included libraries:
+ *   DataTables 1.10.21, FixedHeader 3.1.7, Responsive 2.2.5
+ */
+<link rel="stylesheet" type="text/css" href="static/datatables_min.css">
+<script type="text/javascript" charset="utf8" src="static/datatables_min.js"></script>
+
+<script type="text/javascript">
+
+	$(document).ready( function () {
+	    $('#itemtable').DataTable( {
+	        "paging": false,
+	        fixedHeader: true
+	        } );
+	    $('#activetable').DataTable( {
+	        "paging": false,
+	        fixedHeader: true
+	        } );
+	    $('#addrtable').DataTable( {
+	    	"paging": false,
+	    	fixedHeader: true
+	    	} );
+
+	    // When a button in the address table (tab3) is pressed...
+		// (formally any submit button inside the "button_pressed"-Form)
+	    $("#button_pressed").submit(function(e) {
+	 
+			e.preventDefault();
+
+	        // post the form values via AJAX...
+			if ($("#button").val() == '') {
+
+				// if button is empty, we want custom address read...
+				$.post('submit', {
+					addr: $("#cust_addr").val(),
+					length: $("#cust_len").val(),
+					unit: $("#cust_unit").val()
+				}, function(data) {
+
+		            // and set the title with the result
+		            var cmd = data.last.cmd;
+		            var val = data.last.val;
+
+		            if (cmd != '') {
+		            	$("#last_read_cmd").html(data.last.cmd + ": ")
+		            	$("#last_read_val").html(data.last.val)
+		            } else {
+		            	$("#last_read_cmd").html("---")
+		            	$("#last_read_val").html("")
+
+		            }
+
+		            $("#addrcust").html(data.last.val)
+
+					for (var key in data) {
+						if (key != 'last') {
+							$("#addr"+key).html(data[key].val)
+						}
+					}
+				});
+				return false ;
+
+			} else {
+			
+				// just do it
+		        $.post('submit', {button: $("#button").val()}, function(data) {
+	 
+		            // and set the title with the result
+		            var cmd = data.last.cmd;
+		            var val = data.last.val;
+
+		            if (cmd != '') {
+		            	$("#last_read_cmd").html(data.last.cmd + ": ")
+		            	$("#last_read_val").html(data.last.val)
+		            } else {
+		            	$("#last_read_cmd").html("---")
+		            	$("#last_read_val").html("")
+
+		            }
+
+					for (var key in data) {
+						if (key != 'last') {
+							$("#addr"+key).html(data[key].val)
+						}
+					}
+			    });
+	    	    return false ;
+	    	}
+	    });
+
+	         
+	    // When the button 'clear' is clicked...
+	    $("#clear").click(function(e) {
+	 
+			e.preventDefault();
+
+	        // post the form values via AJAX...
+	        $.post('submit', {clear: "true"}, function(data) {
+	 
+	            // clear all read fields
+            	$("#last_read_cmd").html("---")
+            	$("#last_read_val").html("")
+
+				for (var key in data) {
+					if (key != 'last') {
+						$("#addr"+key).html(data[key].val)
+					}
+				}
+	        });
+	        return false ;
+	    });
+	});
 </script>
 {% endblock pluginscripts %}
 
@@ -55,105 +164,99 @@
 		</tr>
 	</tbody>
 </table>
-
 {% endblock headtable %}
-
-
-<!--
-	Additional buttons for the web interface (if any are needed) - displayed below the headtable-section
--->
-{% block buttons %}
-{% if 1==2 %}
-	<div>
-		<button id="btn1" class="btn btn-shng btn-sm" name="scan" onclick="shngPost('', {learn: 'on'})"><i class="fas fa-question"></i>&nbsp;&nbsp;&nbsp;{{ _('nach Devices suchen') }}&nbsp;</button>
-	</div>
-{% endif %}
-{% endblock %}
-
-<!--
-	Define the number of tabs for the body of the web interface (1 - 3)
--->
-{% set tabcount = 2 %}
-
-
-<!--
-	Set the tab that will be visible on start, if another tab that 1 is wanted (1 - 3)
--->
-{% if item_count==0 %}
-	{% set start_tab = 1 %}
-{% endif %}
 
 
 <!--
 	Content block for the first tab of the Webinterface
 -->
-{% set tab1title = "<strong>" ~ p.get_shortname() ~ " Items</strong> " %}
 {% block bodytab1 %}
-{% if p._items|length %}
-<div><strong>{{ p._items|length }} {{ _('Items in SmartHomeNG Items für diese Instanz definiert') }}</strong></div>
-<div class="container-fluid m-2">
-    <table class="table table-striped table-hover">
-    <tr><th>{{ _('Item') }}</th><th>{{ _('OID') }}</th><th>{{ _('Typ') }}</th><th>{{ _('Wert') }}</th><th>{{ _('Letzte Änderung') }}</th></tr>
-    {% for oid in p._items %}
-        {% for entry in p._items[oid] %}
-        <tr>
-        <td>{{ p._items[oid][entry]['item'].path() }}</td>
-        <td>{{ oid }}</td>
-        <td>{{ p._items[oid][entry]['item'].type() }}</td>
-        <td>{{ p._items[oid][entry]['item']() }}</td>
-        <td>{{ p._items[oid][entry]['item'].last_update() }}</td>
-        </tr>
-        {% endfor %}
-    {% endfor %}
-    </table>
+<div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
+	<div class="col-sm-12">
+		{% if p._items|length %}
+		    <table id="itemtable" class="table table-striped table-hover">
+		    	<thead>
+				    <tr>
+				    	<th>{{ _('Item') }}</th>
+				    	<th>{{ _('OID') }}</th>
+				    	<th>{{ _('Typ') }}</th>
+				    	<th>{{ _('Wert') }}</th>
+				    	<th width="250">{{ _('Letzte Aktualisierung') }}</th>
+				    </tr>
+				</thead>
+				<tbody>
+				    {% for oid in p._items %}
+                        {% for entry in p._items[oid] %}
+                            <tr>
+                                <td>{{ p._items[oid][entry]['item'].path() }}</td>
+                                <td>{{ oid }}</td>
+                                <td>{{ p._items[oid][entry]['item'].type() }}</td>
+                                <td>{{ p._items[oid][entry]['item']() }}</td>
+                                <td>{{ p._items[oid][entry]['item'].last_update() }}</td>
+                            </tr>
+                        {% endfor %}
+                    {% endfor %}
+				</tbody>
+		    </table>
+		{% endif %}
+	</div>
 </div>
-{% endif %}
 {% endblock bodytab1 %}
 
-
 <!--
-	Content block for the second tab of the Webinterface
--->
-{% set tab2title = "<strong>" ~ p.get_shortname() ~ " OIDs</strong> " %}
+{% set tab2title = _('Alle Datenpunkte') %}
+
 {% block bodytab2 %}
-{% if p._items|length %}
-<div><strong>{{ p._items|length }} {{ _('OIDs in SmartHomeNG Items für diese Instanz definiert') }}</strong></div>
-<div class="container-fluid m-2">
-    <table class="table table-striped table-hover">
-    <tr><th>{{ _('OID') }}</th><th>{{ _('Item') }}</th><th>{{ _('Typ') }}</th><th>{{ _('Wert') }}</th><th>{{ _('Letzte Änderung') }}</th></tr>
-    {% for oid in p._items %}
-        {% for entry in p._items[oid] %}
-        <tr>
-        <td>{{ oid }}</td>
-        <td>{{ p._items[oid][entry]['item'].path() }}</td>
-        <td>{{ p._items[oid][entry]['item'].type() }}</td>
-        <td>{{ p._items[oid][entry]['item']() }}</td>
-        <td>{{ p._items[oid][entry]['item'].last_update() }}</td>
-        </tr>
-        {% endfor %}
-    {% endfor %}
-    </table>
+<div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
+	<div class="col-sm-12">
+		{% if cmds|length %}
+			<form id="button_pressed" action="" method="post">
+				<input type="hidden" id="button" name="button" value="" />
+			    <table id="addrtable" class="table table-striped table-hover">
+				    <thead>
+					    <tr>
+					    	<th>{{ _('Befehlsname') }}</th>
+					    	<th>{{ _('Datenpunkt') }}</th>
+					    	<th>{{ _('Länge') }}</th>
+					    	<th>{{ _('Einheit') }}</th>
+					    	<th>{{ _('Lesen/Schreiben') }}</th>
+					    	<th>{{ _('Datenpunkt lesen') }}</th>
+					    	<th>{{ _('gelesener Wert') }}</th>
+					   	</tr>
+					</thead>
+					<tbody>
+					        <tr>
+					            <td>{{ _('_Custom') }}</td>
+					            <td><input id="cust_addr" name="cust_addr" type="text" minlength="4" maxlength="4" size="6" pattern="[0-9a-fA-F]{4}" title="{{ _('vierstellige Hex-Adresse') }}" /></td>
+					            <td><input id="cust_len" name="cust_len" type="number" value="2" min="1" max="8" title="{{ _('Zahl von 1 bis 8') }}" /></td>
+					            <td>
+					            	<select id="cust_unit" name="cust_unit">
+					            		{% for unit in units %}
+					            		<option {% if unit == 'IUINT' %}selected="selected" {% endif %} value="{{ unit }}">{{ unit }}</option>
+					            		{% endfor %}
+					            	</select>
+					            </td>
+					            <td>False</td>
+					            <td><button class="btn btn-shng btn-sm" type="button" onclick="$('#button').val('');$('#button_pressed').submit();">lesen</button></td>
+					            <td><span id="addrcust">&nbsp;</span></td>
+					        </tr>
+
+					    {% for cmd in cmds.keys() %}
+					        <tr>
+					            <td>{{ cmd }}</td>
+					            <td>{{ cmds[cmd]['addr'] }}</td>
+					            <td>{{ cmds[cmd]['len'] }}</td>
+					            <td>{{ cmds[cmd]['unit'] }}</td>
+					            <td>{{ cmds[cmd]['set'] }}</td>
+					            <td><button class="btn btn-shng btn-sm" type="button" onclick="$('#button').val('{{ cmds[cmd]['addr'] }}');$('#button_pressed').submit();">lesen</button></td>
+					            <td><span id="addr{{ cmds[cmd]['addr'] }}">&nbsp;</span></td>
+					        </tr>
+					    {% endfor %}
+					</tbody>
+			    </table>
+        	</form>
+		{% endif %}
+	</div>
 </div>
-{% endif %}
 {% endblock bodytab2 %}
-
-
-<!--
-	Content block for the third tab of the Webinterface
-	If wanted, a title for the tab can be defined as:
-		{% set tab3title = "<strong>" ~ p.get_shortname() ~ " Geräte</strong>" %}
-	It has to be defined before (and outside) the block bodytab3
 -->
-{% set tab1title = "<strong>" ~ test ~ " Items</strong>" %}
-{% block bodytab3 %}
-{% endblock bodytab3 %}
-
-
-<!--
-	Content block for the fourth tab of the Webinterface
-	If wanted, a title for the tab can be defined as:
-		{% set tab4title = "<strong>" ~ p.get_shortname() ~ " Geräte</strong>" %}
-	It has to be defined before (and outside) the block bodytab4
--->
-{% block bodytab4 %}
-{% endblock bodytab4 %}
