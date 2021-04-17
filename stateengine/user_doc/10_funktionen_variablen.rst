@@ -15,10 +15,11 @@ mittels ``eval:`` verwendet werden können:
 
 **Sonnenstandsabhängige Lamellenausrichtung**
 *Die Neigung der Lamellen wird automatisch von der Höhe der Sonne bestimmt.*
+Optional kann noch ein Offset in Klammer mitgegeben werden, um etwaige kleine Abweichungen auszugleichen.
 
 .. code-block:: yaml
 
-   se_eval.sun_tracking()
+   se_eval.sun_tracking(-10)
 
 **Zufallszahl**
 *Über min und max kann die kleinste/größte Nummer, die zurückgegeben werden soll, festgelegt werden.*

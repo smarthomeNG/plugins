@@ -31,6 +31,7 @@
 import logging
 import threading
 
+import lib.log
 from lib.logic import Logics
 from lib.item import Items
 from lib.model.smartplugin import SmartPlugin
@@ -67,7 +68,7 @@ class CLIHandler:
         self.__client = client
         self.__socket = self.__client.socket
         self.__client.set_callbacks(data_received=self.data_received)
-        self.push("SmartHomeNG v{0}\n".format(self.sh.version))
+        self.push("SmartHomeNG v{}  -  cli plugin v{}\n".format(self.sh.version, CLI.PLUGIN_VERSION))
 
         if hashed_password is None:
             self.__push_helpmessage()
@@ -118,15 +119,18 @@ class CLIHandler:
         :param cmd: entered command
         """
         self.logger.debug("CLI: process command '{}'".format(cmd))
-        if cmd in ('quit', 'q', 'exit', 'x'):
-            self.push('bye\n')
-            self.__client.close()
-            return
-        else:
-            if not self.commands.execute(self, cmd, self.source):
-                self.push("Unknown command.\n")
-                self.__push_helpmessage()
+        if cmd == '':
             self.__push_command_prompt()
+        else:
+            if cmd in ('quit', 'q', 'exit', 'x'):
+                self.push('bye\n')
+                self.__client.close()
+                return
+            else:
+                if not self.commands.execute(self, cmd, self.source):
+                    self.push("Unknown command.\n")
+                    self.__push_helpmessage()
+                self.__push_command_prompt()
 
     def __push_helpmessage(self):
         """Push help message to client"""
@@ -156,7 +160,7 @@ class CLIHandler:
 
 class CLI(SmartPlugin):
 
-    PLUGIN_VERSION = '1.8.0'     # is checked against version in plugin.yaml
+    PLUGIN_VERSION = '1.8.2'     # is checked against version in plugin.yaml
 
     def __init__(self, sh):
         """
@@ -173,10 +177,6 @@ class CLI(SmartPlugin):
 
         # Call init code of parent class (SmartPlugin)
         super().__init__()
-
-        from bin.smarthome import VERSION
-        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
-            self.logger = logging.getLogger(__name__)
 
         self.items = Items.get_instance()
 
@@ -286,6 +286,7 @@ class CLICommands:
 
         self.add_command('logc', self._cli_logc, 'log', 'logc [log]: clean (memory) log')
         self.add_command('logd', self._cli_logd, 'log', 'logd [log]: log dump of (memory) log')
+        self.add_command('logl', self._cli_logl, 'log', 'logl: list existing (memory) logs')
 
         self.add_command('ll', self._cli_ll, 'logic', 'll: list all logics and next execution time - command alias: lo')
         self.add_command('lo', self._cli_ll, 'logic', None)   # old command
@@ -655,7 +656,7 @@ class CLICommands:
         if parameter is None or parameter == "":
             log = self.sh.log
         else:
-            logs = self.sh.return_logs()
+            logs = self.sh.logs.return_logs()
             if parameter not in logs:
                 handler.push("Log '{0}' does not exist\n".format(parameter))
                 log = None
@@ -757,12 +758,14 @@ class CLICommands:
                 handler.push("  {} = {}\n".format(key, task[key]))
             handler.push("}\n")
 
+    from dateutil.tz import tzlocal
+    from datetime import datetime
     # noinspection PyUnusedLocal
     def _cli_logd(self, handler, parameter, source):
         if parameter is None or parameter == "":
-            log = self.sh.log
+            log = self.sh.logs.return_logs()['env.core.log']
         else:
-            logs = self.sh.return_logs()
+            logs = self.sh.logs.return_logs()
             if parameter not in logs:
                 handler.push("Log '{0}' does not exist\n".format(parameter))
                 log = None
@@ -772,6 +775,25 @@ class CLICommands:
         if log is not None:
             handler.push("Log dump of '{0}':\n".format(log._name))
             for entry in log.last(10):
+                ts = entry[0].strftime("%d.%m.%Y %H:%M:%S %Z")
                 values = [str(value) for value in entry]
-                handler.push(str(values))
+                del values[0]
+                handler.push(ts + ': ' + str(values))
                 handler.push("\n")
+
+    # noinspection PyUnusedLocal
+    def _cli_logl(self, handler, parameter, source):
+        logs = self.sh.logs.return_logs()
+        if logs is not None:
+            handler.push("Existing (memory) logs:\n")
+            for log in sorted(list(logs)):
+                memlog_instance = self.sh.logs.return_logs()[log]
+                if memlog_instance.handler is None:
+                    loghandler_name = 'None'
+                    loghandler_level = '?'
+                    handler.push("- {:<20}(maxlen={})\n".format(log, memlog_instance.maxlen))
+                else:
+                    loghandler_name = memlog_instance.handler.get_name()
+                    loghandler_level = logging.getLevelName(memlog_instance.handler.level)
+                    handler.push("- {:<20}(maxlen={}, level={}, LogHandler={})\n".format(log, memlog_instance.maxlen, loghandler_level, loghandler_name))
+

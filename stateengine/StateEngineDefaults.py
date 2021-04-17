@@ -34,6 +34,12 @@ plugin_identification = "StateEngine Plugin"
 
 VERBOSE = logging.DEBUG - 1
 
+logger = None
+
+se_logger = logging.getLogger('stateengine')
+
+log_maxage = 0
+
 
 def write_to_log(logger):
     logger.info("StateEngine default startup delay = {0}".format(startup_delay))

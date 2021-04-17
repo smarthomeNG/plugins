@@ -1,0 +1,67 @@
+# Metadata for the plugin
+plugin:
+    # Global plugin attributes
+    type: interface                   # plugin type (gateway, interface, protocol, system, web)
+    description:
+        de: 'Dieses Plugin liest die aktuellen Werte eines SMA-Wechselrichters per SMA Speedwire Feldbus/Modbus aus'
+        en: 'This plug-in reads the current values of an SMA inverter via SMA Speedwire fieldbus/Modbus'
+    maintainer: kla.b, msinn
+    tester: kla.b, Hochpass         # Who tests this plugin?
+    state: ready                    # change to ready when done with development
+#    keywords: iot xyz
+#    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
+#    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
+
+    version: 1.4.0                  # Plugin version (must match the version specified in __init__.py)
+    sh_minversion: 1.7              # minimum shNG version to use this plugin
+#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+#    py_minversion: 3.6             # minimum Python version to use for this plugin
+#    py_maxversion:                 # maximum Python version to use for this plugin (leave empty if latest)
+    multi_instance: True            # plugin supports multi instance
+    restartable: unknown
+    classname: SMAModbus            # class containing the plugin
+
+parameters:
+    # Definition of parameters to be configured in etc/plugin.yaml (enter 'parameters: NONE', if section should be empty)
+    host:
+        type: ipv4
+        mandatory: True
+        description:
+            de: 'IP Adresse des SMA Wechselrichters'
+            en: 'IP address of the SMA inverter'
+
+    port:
+        type: int
+        default: 502
+        description:
+            de: 'Modbus Port'
+            en: 'Modbus port'
+
+    cycle:
+        type: int
+        default: 300
+        description:
+            de: 'Update Zyklus in Sekunden'
+            en: 'Update cycle in seconds'
+
+
+item_attributes:
+    # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)
+    smamb_register:
+        type: int
+        description:
+            de: 'Das Modbus-Register des SMA Modbus-Profils'
+            en: 'The Modbus register of the SMA Modbus profile'
+
+item_structs: NONE
+    # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
+
+#item_attribute_prefixes:
+    # Definition of item attributes that only have a common prefix (enter 'item_attribute_prefixes: NONE' or ommit this section, if section should be empty)
+    # NOTE: This section should only be used, if really nessesary (e.g. for the stateengine plugin)
+
+plugin_functions: NONE
+    # Definition of plugin functions defined by this plugin (enter 'plugin_functions: NONE', if section should be empty)
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)

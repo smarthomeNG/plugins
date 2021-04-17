@@ -210,25 +210,26 @@ definiert und jederzeit abgeändert werden.
            Nachfuehren_Sueden:
                # Einstellungen des Vorgabezustands "Nachfuehren_Osten" übernehmen
                # Hier sollte eine relative Addressierung vorgenommen werden.
-               se_use: ..Nachfuehren_Osten
+               # Achtung: das Item wird relativ zum SE Item = rules gesucht!
+               se_use: .Nachfuehren_Osten
 
                # Sonnenwinkel in den Bedingungsgruppen anpassen
                enter:
                    # ... die Sonne aus Richtung 220° bis 340° kommt
-                   se_min_sun_azimut: 220
-                   se_max_sun_azimut: 340
+                   se_min_sun_azimut: 150
+                   se_max_sun_azimut: 250
                    se_value_himmelsrichtung: "sueden"
 
                enter_hysterese:
                    # ... die Sonne aus Richtung 220° bis 340° kommt
-                   se_min_sun_azimut: 220
-                   se_max_sun_azimut: 340
+                   se_min_sun_azimut: 150
+                   se_max_sun_azimut: 250
                    se_value_himmelsrichtung: "sueden"
 
                enter_delay:
                    # ... die Sonne aus Richtung 220° bis 340° kommt
-                   se_min_sun_azimut: 220
-                   se_max_sun_azimut: 340
+                   se_min_sun_azimut: 150
+                   se_max_sun_azimut: 250
                    se_value_himmelsrichtung: "sueden"
 
            # Zustand "Nacht"

@@ -39,8 +39,8 @@ class SeEval(StateEngineTools.SeItemChild):
     def __repr__(self):
         return "SeEval"
 
-    # Get lamella angle based on sun_altitute for sun tracking
-    def sun_tracking(self):
+    # Get lamella angle based on sun_altitude for sun tracking
+    def sun_tracking(self, offset=0):
         self._eval_lock.acquire()
         self._log_debug("Executing method 'SunTracking()'")
         self._log_increase_indent()
@@ -48,7 +48,7 @@ class SeEval(StateEngineTools.SeItemChild):
         altitude = StateEngineCurrent.values.get_sun_altitude()
         self._log_debug("Current sun altitude is {0}°", altitude)
 
-        value = 90 - altitude
+        value = 90 - altitude + offset
         self._log_debug("Blinds at right angle to the sun at {0}°", value)
 
         self._log_decrease_indent()
