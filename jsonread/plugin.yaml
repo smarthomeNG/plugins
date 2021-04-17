@@ -8,7 +8,7 @@ plugin:
     maintainer: Torsten Dreyer
     tester: none (yet)
     state: develop
-    keywords: json jq 
+    keywords: json jq
     documentation: http://smarthomeng.de/user/plugins_doc/config/not-yet.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/not-yet
 
@@ -56,10 +56,8 @@ item_structs: NONE
     # NOTE: This section should only be used, if really nessesary (e.g. for the stateengine plugin)
 
 logic_parameters: NONE
-    # Definition of logic parameters defined by this plugin
+    # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)
 
 plugin_functions: NONE
     # Definition of function interface of the plugin
 
-logic_parameters: NONE
-    # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)
