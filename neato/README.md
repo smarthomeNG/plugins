@@ -1,47 +1,9 @@
 # Neato/Vorwerk Vacuum Robot
 
-#### Version 1.6.4
 
 This plugin connects your Neato (https://www.neatorobotics.com/) or Vorwerk Robot with SmarthomeNG.
 - Command start, stop, pause, resume cleaning and trigger sendToBase and FindMe mode.
 - Read status of your robot
-
-## Change history
-
-V 1.6.4    fixed readout for docking state and go to base availability
-           combined all neato attribues into one
-
-V 1.6.3    changed attribute charge_percentage from string to integer
-           added alert text output, e.g. dustbin full
-           Write obtained OAuth2 token obtained via web interface directly to config plugin.yaml
-
-V 1.6.2    Added webinterface
-
-V 1.6.1    Added new Vorwerk Oauth2 based authentication feature (compatible with myKobold APP)
-
-V 1.6.0    Initial working version
-
-## Requirements
-
-- locale en_US.utf8 must be installed (sudo dpkg-reconfigure locales)
-
-### Needed software
-
-* Python > 3.5
-* pip install requests
-* SmarthomeNG >= 1.6.0
-
-
-### Supported Hardware
-
-| Robot             | Supported    | Tested |
-| ----------------- |:------------:| ------:|
-| Neato Botvac D3   | yes          | no     |
-| Neato Botvac D4   | yes          | no     |
-| Neato Botvac D5   | yes          | yes    |
-| Neato Botvac D6   | yes          | no     |
-| Neato Botvac D7   | yes          | no     |
-| Vorwerk VR300     | yes          | yes    |
 
 ## Configuration
 

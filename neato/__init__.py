@@ -31,7 +31,7 @@ from .robot import Robot
 
 
 class Neato(SmartPlugin):
-    PLUGIN_VERSION = '1.6.5'
+    PLUGIN_VERSION = '1.6.6'
     robot = 'None'
 
     def __init__(self, sh, *args, **kwargs):
@@ -332,6 +332,8 @@ class WebInterface(SmartPluginWebIf):
         codeRequestSuccessfull = None
         token = ''
         configWriteSuccessfull = None
+        resetAlarmsSuccessfull = None
+
 
 
         if action is not None:
@@ -364,6 +366,10 @@ class WebInterface(SmartPluginWebIf):
                 else:
                     self.logger.error("writeToPluginConfig: Missing argument.")
                     configWriteSuccessfull = False
+            elif action =="clearAlarms":
+                    self.logger.warning("Resetting alarms via webinterface")
+                    self.plugin.dismiss_current_alert()
+                    resetAlarmsSuccessfull = True
             else:
                 self.logger.error("Unknown command received via webinterface")
 
@@ -373,6 +379,7 @@ class WebInterface(SmartPluginWebIf):
                            token=token,
                            codeRequestSuccessfull=codeRequestSuccessfull,
                            configWriteSuccessfull=configWriteSuccessfull,
+                           resetAlarmsSuccessfull=resetAlarmsSuccessfull,
                            items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path'])))
 
 
