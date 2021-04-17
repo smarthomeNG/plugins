@@ -83,7 +83,7 @@ function mainpage() {
         {% else %}
           {% set color = 'gray' %}
         {% endif %}
-        <div id="detail_{{item._path}}" style="position:fixed;bottom:10px;right: 5%;max-width:50%;display:none" class="mb-2 alert alert-success alert-dismissible fade show" role="alert">{{ p._items[item] }}</div>
+        <div id="detail_{{item._path}}" style="position:fixed;bottom:10px;right: 5%;max-width:50%;display:none" class="mb-2 alert alert-success alert-dismissible fade show" role="alert">{{ p.get_itemdict(item) }}</div>
           <tr style="color:{{ color }};" onClick="togglevis('detail_{{item._path}}')" onMouseOut="hide('detail_{{item._path}}')">
             <td class="py-1">{{ item._path }}</td>
             <td class="py-1">{{ p.get_iattr_value(item.conf, 'uzsu_item') }}
