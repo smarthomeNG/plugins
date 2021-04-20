@@ -63,6 +63,8 @@ class StateEngine(SmartPlugin):
             StateEngineDefaults.startup_delay = self.get_parameter_value("startup_delay_default")
             StateEngineDefaults.suspend_time = self.get_parameter_value("suspend_time_default")
             StateEngineDefaults.instant_leaveaction = self.get_parameter_value("instant_leaveaction")
+            StateEngineDefaults.suntracking_offset = self.get_parameter_value("lamella_offset")
+            StateEngineDefaults.lamella_open_value = self.get_parameter_value("lamella_open_value")
             StateEngineDefaults.write_to_log(self.logger)
             self.get_sh().stateengine_plugin_functions = StateEngineFunctions.SeFunctions(self.get_sh(), self.logger)
             StateEngineCurrent.init(self.get_sh())
