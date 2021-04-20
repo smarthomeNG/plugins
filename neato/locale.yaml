@@ -2,15 +2,60 @@
 plugin_translations:
     # Translations for the plugin specially for the web interface
     'Informationen':         {'de': '=', 'en': 'Informations'}
+    'Einstellungen':         {'de': '=', 'en': 'Settings'}
 
     # Alternative format for translations of longer texts:
     'Vorwerk Explanation':
         de: 'Schritt fuer Schritt Anleitung zur Generierung eines Oauth2 Tokens fuer Vorwerk API, kompatibel zur MyKobold APP.'
         en: 'Step by Step manual for generating an OAuth2 token for Vorwerk API, compatible with new MyKobold APP.'
-
-    'Liste der Neato/Vorwerk Items:':
+    'Anzahl Roboter':
         de: '='
-        en: 'List of Neato/Vorwerk items:'
+        en: 'Number Robots'
+    'Alarme loeschen':
+        de: '='
+        en: 'Reset alarms'
+    'Alarme geloescht':
+        de: '='
+        en: 'Alarms cleared'
+    'Loescht Fehlermeldungen, wie z.B. Staubbehaelter leeren.':
+        de: '='
+        en: 'Resets error messages like for example dustbin full'
+    '1) Vorwerk account Email ueberpruefen':
+        de: '='
+        en: 'Doublecheck Vorwerk account email'
+    '6) Token in plugin.yaml kopieren':
+        de: '='
+        en: 'Copy token to plugin.yaml'
+    '5) Vorwerk Token anfragen':
+        de: '='
+        en: 'Request Vorwerk Token'
+    '4) Per Email erhaltenen Code eintragen':
+        de: '='
+        en: 'Insert code obtained via email'
+    '3) Vorwerk Code anfragen':
+        de: '='
+        en: 'Request Vowerk code'
+    '2) Diese oder andere gueltige ClientID eingeben':
+        de: '='
+        en: 'Use this or insert other valid ClientID'
+    'Code anfragen':
+        de: '='
+        en: 'Request code'
+    'Hier Vorwerk Code eintragen':
+        de: '='
+        en: 'Insert Vorwerk code here'
+    'Token anfragen':
+        de: '='
+        en: 'Request token'
+    'In Plugin Konfig kopieren':
+        de: '='
+        en: 'Copy to plugin configuration'
+    'In Zwischenablage kopieren':
+        de: '='
+        en: 'Copy to clipboard'
+    'Vorwerk Token':
+        de: '='
+        en: '='
 
 
 

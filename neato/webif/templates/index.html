@@ -93,7 +93,7 @@
 			<td class="py-1"><strong>Neato/Vorwerk Backend</strong></td>
 			<td class="py-1">{% if p.numberRobots() %}{{ _('Online') }}{% else %}{{ _('Offline') }}{% endif %}</td>
 			<td class="py-1" width="50px"></td>
-			<td class="py-1"><strong>Number Robots</strong></td>
+			<td class="py-1"><strong>{{ _('Anzahl Roboter') }}</strong></td>
 			<td class="py-1">{{ p.numberRobots() }}</td>
 			<td class="py-1" width="50px"></td>
 		</tr>
@@ -275,7 +275,7 @@
 				readonly placeholder="{{ _('Vorwerk Token') }}" maxlength="200" style="width: 300px;">
 			</div>
 			<div class="col-md-6 mb-3">
-				<button type="button" class="btn btn-shng btn-sm" onclick="copyClipboardFunction()">In Zwischenablage kopieren</button>
+				<button type="button" class="btn btn-shng btn-sm" onclick="copyClipboardFunction()">{{ ('In Zwischenablage kopieren') }}</button>
 			</div>
 		</div>
 		<div class="row">
@@ -283,7 +283,7 @@
 			<div class="col-md-6 mb-3">
 			</div>
 			<div class="col-md-6 mb-3">
-				<button type="button" class="btn btn-shng btn-sm" onclick="copyToPluginFunction()">In plugin Konfig kopieren</button>
+				<button type="button" class="btn btn-shng btn-sm" onclick="copyToPluginFunction()">{{ ('In Plugin Konfig kopieren') }}</button>
 			</div>
 		</div>
 
@@ -293,7 +293,8 @@
 
 {% endblock bodytab1 %}
 
-{% set tab2title = "<strong>Settings</strong>" %}
+{% set tab2title = "<strong>" ~ _('Einstellungen') ~ "</strong>" %}
+
 
 {% block bodytab2 %}
 <div class="row">
@@ -301,7 +302,7 @@
 			<div class="col-md-6 mb-3">
 			</div>
 			<div class="col-md-6 mb-3">
-				<button type="button" class="btn btn-shng btn-sm" onclick="clearAlarmsCommand()">Alarme loeschen</button>
+				<button type="button" class="btn btn-shng btn-sm" onclick="clearAlarmsCommand()" title= "{{ _('Loescht Fehlermeldungen, wie z.B. Staubbehaelter leeren.') }}">{{ _('Alarme loeschen') }}</button>
 			</div>
 		</div>
 
