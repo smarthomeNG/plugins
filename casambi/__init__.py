@@ -93,6 +93,12 @@ class Casambi(SmartPlugin):
         
         return
 
+    def sessionIDValid(self):
+        return self.sessionID != ''
+
+    def networkIDValid(self):
+        return self.networkID != ''
+
     def getSessionCredentials(self):
         sessionID = ''
         networkID = ''
@@ -330,7 +336,12 @@ class Casambi(SmartPlugin):
         # if you need to create child threads, do not make them daemon = True!
         # They will not shutdown properly. (It's a python bug)
 
-        self.sessionID, self.networkID, self.numberNetworks = self.getSessionCredentials()
+        try:                    
+            self.sessionID, self.networkID, self.numberNetworks = self.getSessionCredentials()
+        except Exception as e:
+            self.logger.error("Exception during getSessionCredectials: {0}".format(e))
+
+        
 
         self.thread = threading.Thread(target=self.eventHandler, name='CasambiEventHandler')
         self.thread.daemon = False
@@ -346,6 +357,7 @@ class Casambi(SmartPlugin):
             self.logger.warning("Cannot open websocket once. Invalid networkID")
 
         errorCount = 0
+        noNetworkIDErrorCount = 0
         doReconnect = False
         while self.alive:
             #self.logger.debug("Starting loop")
@@ -400,6 +412,16 @@ class Casambi(SmartPlugin):
                     doReconnect = False
                 else:
                     self.logger.warning("Cannot reconnect due to invalid network ID")
+                    noNetworkIDErrorCount = noNetworkIDErrorCount + 1
+            if noNetworkIDErrorCount > 10:
+                self.logger.warning("Requesting new network and session ID")
+                try:                    
+                    self.sessionID, self.networkID, self.numberNetworks = self.getSessionCredentials()
+                except Exception as e:
+                    self.logger.error("Exception during getSessionCredectials: {0}".format(e))
+
+                noNetworkIDErrorCount = 0
+
         
         self.logger.debug("Debug Casambi: self.alive: {0}".format(self.alive))
         if self.websocket:
