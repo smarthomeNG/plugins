@@ -17,17 +17,18 @@ Requirements
 - locale en_US.utf8 must be installed (sudo dpkg-reconfigure locales)
 
 Supported Hardware
-=============
+==================
 
-| Robot             | Supported    | Tested |
-| ----------------- |:------------:| ------:|
-| Neato Botvac D3   | yes          | no     |
-| Neato Botvac D4   | yes          | no     |
-| Neato Botvac D5   | yes          | yes    |
-| Neato Botvac D6   | yes          | no     |
-| Neato Botvac D7   | yes          | no     |
-| Vorwerk VR300     | yes          | yes    |
-
+=============== ========= ======
+Robot           Supported Tested
+=============== ========= ======
+Neato Botvac D3 yes       no
+Neato Botvac D4 yes       no
+Neato Botvac D5 yes       yes
+Neato Botvac D6 yes       no
+Neato Botvac D7 yes       no
+Vorwerk VR300   yes       yes
+=============== ========= ======
 
 
 Web Interface

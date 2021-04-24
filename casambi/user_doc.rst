@@ -5,15 +5,12 @@
 casambi
 ========
 
-Casambi plugin, mit Unterstützung für Casambi Produkte und Occhio Air.
+Dieses Plugin unterstützt Casambi und Occhio Lichter durch die Verwendung des Casambi Backend API.
+Die Kommunikation erfolgt über Bluetooth Low Energy (BLE) und die Casambi Produkte sind in vielen 
+Geräten verbaut, beispielsweise von Occhio.
 
-Gateway plugin for controlling and reading Casambi devices via the Casambi backend API.
-Casambi devices are based on Bluetooth Low Energy (BLE) radio and integrated into many products such as
-Occhio lights.
-
-Official Casambi API documentation: 
-https://developer.casambi.com/
-
+Für weitere Informationen empfiehlt sich die Lektüre der offiziellen   
+`Casambi API Dokumentation <https://developer.casambi.com/>`_ 
 
 Konfiguration
 =============
@@ -21,7 +18,7 @@ Konfiguration
 Die Informationen zur Konfiguration des Plugins sind unter :doc:`/plugins_doc/config/casambi` beschrieben.
 
 Gateway Hardware
-=============
+================
 
 According to the Casambi concept, a mobile device (cell phone or tablet) is used as hardware gateway between local 
 BLE network and Casambi backend. 
@@ -34,10 +31,11 @@ support@casambi.com
 
 
 Beispiele
-=============
+===========
 
-Example for dimmer (Occhio Sento) with dimming and additional up/down fading feature.
-Item tree:
+Beispiel für einen Dimmer (Occhio Sento) mit zusätzlichen Möglichkeiten für heller und dunkler dimmen.
+
+.. code:: yaml
 
     readinglight:
         casambi_id: 2
@@ -72,7 +70,7 @@ Item tree:
 Web Interface
 =============
 
-Das casambi Plugin verfügt über ein Webinterface, auf dem die Casambi items dargestellt werden.
+Das casambi Plugin verfügt über ein Webinterface, auf dem die Casambi Items dargestellt werden.
 
 .. important::
 
@@ -101,4 +99,3 @@ Im ersten Tab werden die Items angezeigt, die das Casambi Plugin nutzen:
 
 .. image:: assets/webif1.jpg
    :class: screenshot
-
