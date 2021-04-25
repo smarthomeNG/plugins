@@ -5,35 +5,33 @@ telegram
 ########
 
 Das Plugin dient zum Senden und Empfangen von Nachrichten über den
-`Telegram Nachrichten Dienst <https://telegram.org/>`_
+Nachrichten Dienst `Telegram  <https://telegram.org/>`_
 
 Abhängigkeiten
 --------------
 
 Es wird die Bibliothek ``python-telegram-bot`` benötigt.
-Diese ist in der ``requirements.txt`` enthalten.
-Bevor das Plugin genutzt werden kann, muß die Bibliothek installiert werden:
+Diese ist in der ``requirements.txt`` enthalten. Ab SmartHomeNG 1.8 sollte die Bibliothek 
+direkt beim Start von SmartHomeNG installiert werden. 
 
-* Entweder mit ``sudo pip install -r requirements.txt``
+Es ist möglich die Installation auch manuell vorzunehmen mit 
 
-oder
-
-* unter Benutzung von ``pip install -r requirements.txt`` innerhalb
-  des Verzeichnisses ``/usr/local/smarthome/plugins/telegram``.
+``python -m pip install -r requirements.txt --user --upgrade`` innerhalb des
+ Verzeichnisses ``/usr/local/smarthome/plugins/telegram``.
 
 Konfiguration
 -------------
 
-Zuerst muß ein eigener Bot bei Telegram erstellt werden:
+Zuerst muss ein eigener Bot bei Telegram erstellt werden:
 
 * An ``Botfather`` das Kommando ``/newbot`` senden.
-* Dann muß ein **Bot Name** vergeben werden der noch nicht existiert.
+* Dann muss ein **Bot Name** vergeben werden der noch nicht existiert.
 * Weitere Bot Details können eingestellt werden, wenn das Kommando
   ``/mybots`` an den BotFather gesendet wird.
 
 Der BotFather erstellt für den neuen Bot ein sogenanntes **token** also
 einen einzigartigen Schlüssel.
-Dieser muß in der ``plugin.yaml`` von SmartHomeNG eingetragen werden:
+Dieser muss in der ``plugin.yaml`` von SmartHomeNG eingetragen werden:
 
 .. code::yaml
 
@@ -46,7 +44,7 @@ Dieser muß in der ``plugin.yaml`` von SmartHomeNG eingetragen werden:
 * token: Der oben beschriebene einzigartige Schlüssel mit dem der Bot bei
   Telegram identifiziert wird.
 
-Jeder Chat, der auf den Bot zugreifen soll, muß SmartHomeNG bekannt gemacht werden.
+Jeder Chat, der auf den Bot zugreifen soll, muss SmartHomeNG bekannt gemacht werden.
 Das geschieht über ein Item das das Schlüsselwort ``telegram_chat_ids`` hat und
 als Wert ein Dictionary hat. Im Dictionary sind Paare von Chat Id und Berechtigung
 gespeichert.
@@ -65,14 +63,14 @@ gespeichert.
     # Nachfolgend ein Chat dem Lese- und Schreibrechte gewährt werden
     value: '{ 3234123342: 1 }'
 
-Um die Chat Id zu bekommen, muß der Bot zunächst laufen.
+Um die Chat Id zu bekommen, muss der Bot zunächst laufen.
 Dazu wird SmartHomeNG (neu) gestartet.
 
 Im Telegram Client wird der Bot als Chatpartner aufgerufen und das
 Kommando ``/start`` an den Bot gesendet.
 
 Der Bot reagiert mit einer Meldung, das die Chat ID noch nicht bekannt ist und
-diese zunächst eingetragen werden muß. Mit der nun bekannten Chat ID wird
+diese zunächst eingetragen werden muss. Mit der nun bekannten Chat ID wird
 entweder über das Backend oder das Admin Interface bei den Items das Dictionary
 aus dem vorherigen Beispiel erweitert.
 
@@ -86,14 +84,14 @@ items.yaml
 telegram_chat_ids
 ^^^^^^^^^^^^^^^^^
 
-Es muß ein Item angelegt werden mit dem Typ Dictionary. In ihm werden Chat Ids
+Es muss ein Item angelegt werden mit dem Typ Dictionary. In ihm werden Chat Ids
 und Zugriff auf den Bot gespeichert. Siehe obiges Beispiel.
 
 
 telegram_message
 ^^^^^^^^^^^^^^^^
 
-Senden einer Nachricht, wenn sich ein Item ändert. Es ist möglich Platzhalter
+Senden einer Nachricht, wenn sich der Wert eines Items ändert. Es ist möglich Platzhalter
 in der Nachricht zu verwenden.
 
 Verfügbare Platzhalter:
@@ -121,29 +119,67 @@ Beispiel mit Platzhaltern
        type: str
        visu_acl: r
        cache: 'on'
-       telegram_message: 'New AutoBlind state: [VALUE]'
+       telegram_message: 'Neuer Stateengine Status: [VALUE]'
+
+telegram_condition
+^^^^^^^^^^^^^^^^^^
+
+Da es Situationen gibt die für Items ein ``enforce_updates: True`` benötigen, 
+würde bei ``telegram_message`` bei jeder Aktualisierung des Items eine Nachricht verschickt werden.
+Um das zu verhindern, kann einem Item das Attribut ``telegram_condition: on_change``
+zugewiesen werden.
+
+Einfaches Beispiel
+''''''''''''''''''
+
+.. code:: yaml
+
+   Tuerklingel:
+       type: bool
+       knx_dpt: 1
+       enforce_updates: True
+       telegram_message: 'Es klingelt an der Tür'
+       telegram_value_match_regex: (true|True|1)
+
+Dadurch wird auf eine mehrfache Zuweisung des Items mit dem Wert ``True``
+nur einmal mit einer Nachricht reagiert. Um eine weitere Nachricht zu generieren
+muss das Item zunächst wieder den Wert ``False`` annehmen.
+Das Attribut ``telegram_value_match_regex`` filtert den Wert so das es 
+bei der Änderung des Itemwertes auf ``False`` zu keiner Meldung *Es klingelt an der Tür* kommt.
+
 
 telegram_value_match_regex
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-In manchen Fälles ist es sinnvoll einen Itemwert zunächst zu prüfen bevor eine
+In manchen Fällen ist es sinnvoll einen Itemwert zunächst zu prüfen bevor eine
 Meldung gesendet wird:
 
-Beispiel
-''''''''
+Beispiele
+'''''''''
 
 .. code:: yaml
 
-   TestNum:
+    TestNum:
        type: num
        cache: True
        telegram_message: 'TestNum: [VALUE]'
-       telegram_value_match_regex: '[0-1][0-9]' # nur Nachrichten senden wenn Zahlen von 0 - 19
-   TestBool:
-       type: bool
-       cache: True
-       telegram_message: "TestBool: [VALUE]"
-       telegram_value_match_regex: 1            # nur Nachricht senden wenn 1 (True)
+       telegram_value_match_regex: '[0-1][0-9]'
+
+Es wird bei Änderung des Items ``TestNum`` nur dann ein Mitteilung verschickt, wenn 
+das Ergebnis der Umwandlung des Itemwertes in einen String dieser mit 
+Zahlen von 0 - 19 beginnt.
+
+.. code:: yaml
+
+    Eingangstuer:
+        verschlossen:
+            type: bool
+            cache: True
+            telegram_message: "Eingangstür ist verschlossen"
+            telegram_value_match_regex: (true|True|1)
+
+Bei Änderung des Items ``Eingangstuer.verschlossen`` wird nur dann eine Nachricht 
+gesendet, wenn das Item den Wert True annimmt.
 
 telegram_info
 ^^^^^^^^^^^^^
@@ -153,7 +189,7 @@ Der Listeneintrag entspricht dabei dem Attributwert.
 Wird das Kommando ``/info`` an den Bot gesendet, so erstellt der Bot ein
 Tastaturmenü das jedes Attribut mindestens einmal als Kommando enthält.
 Bei Auswahl eines dieser Kommandos im Telegram Client wird dann für jedes Item
-das das Schlüsselwort telegram_info und als Attribut den Kommandonamen enthält
+das das Schlüsselwort ``telegram_info`` und als Attribut den Kommandonamen enthält
 der Wert des Items ausgegeben.
 
 Beispiel
@@ -168,7 +204,7 @@ Beispiel
        telegram_info: wetter
 
    Wind_kmh:
-       name: Windgeschwindigkeit in kmh
+       name: Windgeschwindigkeit in km pro Stunde
        type: num
        knx_dpt: 9
        telegram_info: wetter
@@ -179,7 +215,7 @@ Beispiel
        knx_dpt: 9
        telegram_info: rtr_ist
 
-Das Kommando ``/info`` veranlasst den Bot zu antworten mit
+Das Kommando ``/info`` im Telegram Client veranlasst den Bot zu antworten mit zwei Tasten
 
 .. code::
 
@@ -289,3 +325,11 @@ Die folgende Beispiellogik zeigt einige Nutzungsmöglichkeiten für die Funktion
 
    local_file = "/usr/local/smarthome/var/ ... bitte eine lokal gespeicherte Datei angeben ..."
    sh.telegram.photo_broadcast(local_file, local_file)
+
+
+ToDo - weitere Aufgaben
+-----------------------
+
+* Schnittstelle ins Logging schaffen um log Einträge direkt weiterzuleiten als Mitteilungen an Telegram
+* Schreib- und Lesezugriff auf Itemwerte implementieren, ähnlich wie im cli Plugin
+* Ein Menü dynamisch bereitstellen das die Item Baumstruktur abbildet mit zugehörigen Werten
