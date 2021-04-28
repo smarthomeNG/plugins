@@ -6,13 +6,13 @@ plugin:
         de: 'Dieses Plugin liest die aktuellen Werte eines SMA-Wechselrichters per SMA Speedwire Feldbus/Modbus aus'
         en: 'This plug-in reads the current values of an SMA inverter via SMA Speedwire fieldbus/Modbus'
     maintainer: kla.b, msinn
-    tester: kla.b, Hochpass         # Who tests this plugin?
+    tester: kla.b, Hochpass, sipple   # Who tests this plugin?
     state: ready                    # change to ready when done with development
 #    keywords: iot xyz
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
 #    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
 
-    version: 1.4.0                  # Plugin version (must match the version specified in __init__.py)
+    version: 1.5.0                  # Plugin version (must match the version specified in __init__.py)
     sh_minversion: 1.7              # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
 #    py_minversion: 3.6             # minimum Python version to use for this plugin
@@ -52,6 +52,15 @@ item_attributes:
         description:
             de: 'Das Modbus-Register des SMA Modbus-Profils'
             en: 'The Modbus register of the SMA Modbus profile'
+
+    smamb_datatype:
+        type: str
+        default: 'U32'
+        valid_list: ['S16', 'U16', 'S32', 'U32', 'S64', 'U64', 'STR08', 'STR12', 'STR16', 'STR32']
+
+        description:
+            de: 'SMA Datentyp'
+            en: 'SMA datatype'
 
 item_structs: NONE
     # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)

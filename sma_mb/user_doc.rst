@@ -66,35 +66,47 @@ items.yaml
         serialnumber:
             type: num
             visu_acl: ro
-            smamb_register@sb3000tl: 30057
+            smamb_register: 30057
+            smamb_datatype: U32
 
         status:
             type: num
             visu_acl: ro
-            smamb_register@sb3000tl: 30201
+            smamb_register: 30201
+            smamb_datatype: U32
 
         iso:
             type: num
             visu_acl: ro
-            smamb_register@sb3000tl: 30225
+            smamb_register: 30225
+            smamb_datatype: U32
 
         relais:
             type: num
             visu_acl: ro
-            smamb_register@sb3000tl: 30217
+            smamb_register: 30217
+            smamb_datatype: U32
 
         ac_energy_total:
             type: num
             visu_acl: ro
-            smamb_register@sb3000tl: 30529
+            smamb_register: 30529
+            smamb_datatype: U32
 
         ac_energy_day:
             type: num
             visu_acl: ro
-            smamb_register@sb3000tl: 30535
+            smamb_register: 30535
+            smamb_datatype: U32
 
         time_work:
             type: num
             visu_acl: ro
-            smamb_register@sb3000tl: 30541
+            smamb_register: 30541
+            smamb_datatype: U32
 
+        power:
+            type: num
+            visu_acl: ro
+            smamb_register: 30775
+            smamb_datatype: S32
