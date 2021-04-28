@@ -36,7 +36,7 @@ class OneWire(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.6.9'
+    PLUGIN_VERSION = '1.6.10'
 
     _flip = {0: '1', False: '1', 1: '0', True: '0', '0': True, '1': False}
 
@@ -263,30 +263,36 @@ class OneWire(SmartPlugin):
         # speed up logging for time critical sections only
         debugLog = self.logger.isEnabledFor(logging.DEBUG)
         warningLog = self.logger.isEnabledFor(logging.WARNING)
-        for addr in self._ios:
-            for key in self._ios[addr]:
-                if key.startswith('O'):  # ignore output
-                    continue
-                item = self._ios[addr][key]['item']
-                path = self._ios[addr][key]['path']
-                if path is None:
-                    if debugLog:
-                        self.logger.debug("1-Wire: path not found for {0}".format(item.id()))
-                    continue
-                try:
-                    # the following can take a while so if in the meantime the plugin should stop we can abort this process here
-                    if not self.alive:  
-                        return
-                    if key == 'B':
-                        entries = [entry.split("/")[-2] for entry in self.owbase.dir('/uncached')]
-                        value = (addr in entries)
-                    else:
-                        value = self._flip[self.owbase.read('/uncached' + path).decode()]
-                except Exception as e:
-                    if warningLog:
-                        self.logger.warning("1-Wire: problem reading {}, error {}".format(addr,e))
-                    continue
-                item(value, self.get_shortname(), path)
+        try:
+            for addr in self._ios:
+                for key in self._ios[addr]:
+                    if key.startswith('O'):  # ignore output
+                        continue
+                    item = self._ios[addr][key]['item']
+                    path = self._ios[addr][key]['path']
+                    if path is None:
+                        if debugLog:
+                            self.logger.debug("1-Wire: path not found for {0}".format(item.id()))
+                        continue
+                    try:
+                        # the following can take a while so if in the meantime the plugin should stop we can abort this process here
+                        if not self.alive:  
+                            return
+                        if key == 'B':
+                            entries = [entry.split("/")[-2] for entry in self.owbase.dir('/uncached')]
+                            value = (addr in entries)
+                        else:
+                            value = self._flip[self.owbase.read('/uncached' + path).decode()]
+                    except ConnectionError as e:
+                        raise
+                    except Exception as e:
+                        if warningLog:
+                            self.logger.warning("1-Wire: problem reading {}, error {}".format(addr,e))
+                        continue
+                    item(value, self.get_shortname(), path)
+        except ConnectionError as e:
+            if warningLog:
+                self.logger.warning("1-Wire: problem reading {}, error {}".format(addr,e))
 
     """
     The iButton loop is for iButton devices which are often used as extension to a key ring. 

@@ -35,6 +35,7 @@ from lib.model.smartplugin import *
 from lib.module import Modules
 from json.decoder import JSONDecodeError
 from datetime import datetime
+from .webif import WebInterface
 import cherrypy
 
 # for session id generation:
@@ -82,10 +83,12 @@ class MonitoringService:
             return
 
         self.conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.conn.settimeout(None)
         try:
             self.conn.connect((self._host, self._port))
             _name = 'plugins.' + self._plugin_instance.get_fullname() + '.Monitoring_Service'
-            self._listen_thread = threading.Thread(target=self._listen, name=_name).start()
+            self._listen_thread = threading.Thread(target=self._listen, name=_name)
+            self._listen_thread.start()
             self._plugin_instance.logger.debug("MonitoringService: connection established")
         except Exception as e:
             self.conn = None
@@ -102,11 +105,16 @@ class MonitoringService:
         self._listen_active = False
         self._stop_counter('incoming')
         self._stop_counter('outgoing')
+        # Close the socket to stop the listen thread
+        try:
+            self.conn.shutdown(2)
+            self.conn.close()
+        except:
+            pass
         try:
             self._listen_thread.join(1)
         except:
             pass
-        self.conn.shutdown(2)
 
     def reconnect(self):
         """
@@ -172,19 +180,28 @@ class MonitoringService:
         """
         self._listen_active = True
         buffer = ""
-        data = True
         while self._listen_active:
-            data = self.conn.recv(recv_buffer)
-            if data == "":
-                self._plugin_instance.logger.error("CallMonitor connection not open anymore.")
-            else:
-                self._plugin_instance.logger.debug("Data Received from CallMonitor: %s" % data.decode("utf-8"))
-            buffer += data.decode("utf-8")
+            try:
+                data = self.conn.recv(recv_buffer)
+            except Exception as e:
+                self._plugin_instance.logger.error("CallMonitor connection receive error: " + str(e))
+                break
+            if not data:
+                if self._listen_active:
+                    self._plugin_instance.logger.error("CallMonitor connection not open anymore.")
+                break
+            data = data.decode("utf-8")
+            self._plugin_instance.logger.debug("Data Received from CallMonitor: %s" % data)
+            buffer += data
             while buffer.find("\n") != -1:
                 line, buffer = buffer.split("\n", 1)
                 self._parse_line(line)
-
-            # time.sleep(1)
+        self._listen_active = False
+        try:
+            self.conn.shutdown(2)
+            self.conn.close()
+        except:
+            pass
         return
 
     def _start_counter(self, timestamp, direction):
@@ -516,7 +533,7 @@ class AVM(SmartPlugin):
     Main class of the Plugin. Does all plugin specific stuff and provides the update functions for the different TR-064 services on the FritzDevice
     """
 
-    PLUGIN_VERSION = "1.5.11"
+    PLUGIN_VERSION = "1.5.12"
 
     _header = {'SOAPACTION': '', 'CONTENT-TYPE': 'text/xml; charset="utf-8"'}
     _envelope = """
@@ -588,7 +605,7 @@ class AVM(SmartPlugin):
         self.logger.debug("Plugin initialized with host: %s, port: %s, ssl: %s, verify: %s, user: %s, call_monitor: %s"
                           % (self._fritz_device.get_host(), self._fritz_device.get_port(), self._fritz_device.is_ssl(),
                              self._verify, self._fritz_device.get_user(), self._call_monitor))
-        if not self.init_webinterface():
+        if not self.init_webinterface(WebInterface):
             self._init_complete = False
 
     def run(self):
@@ -2605,90 +2622,3 @@ class AVM(SmartPlugin):
             if not xml[0].firstChild is None:
                 data = xml[0].firstChild.data
         return data
-
-    def init_webinterface(self):
-        """"
-        Initialize the web interface for this plugin
-
-        This method is only needed if the plugin is implementing a web interface
-        """
-        try:
-            self.mod_http = Modules.get_instance().get_module(
-                'http')  # try/except to handle running in a core version that does not support modules
-        except:
-            self.mod_http = None
-        if self.mod_http == None:
-            self.logger.error("Plugin '{}': Not initializing the web interface".format(self.get_shortname()))
-            return False
-
-        # set application configuration for cherrypy
-        webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
-        config = {
-            '/': {
-                'tools.staticdir.root': webif_dir,
-            },
-            '/static': {
-                'tools.staticdir.on': True,
-                'tools.staticdir.dir': 'static'
-            }
-        }
-
-        # Register the web interface as a cherrypy app
-        self.mod_http.register_webif(WebInterface(webif_dir, self),
-                                     self.get_shortname(),
-                                     config,
-                                     self.get_classname(), self.get_instance_name(),
-                                     description='')
-
-        return True
-
-
-# ------------------------------------------
-#    Webinterface of the plugin
-# ------------------------------------------
-
-class WebInterface(SmartPluginWebIf):
-
-    def __init__(self, webif_dir, plugin):
-        """
-        Initialization of instance of class WebInterface
-
-        :param webif_dir: directory where the webinterface of the plugin resides
-        :param plugin: instance of the plugin
-        :type webif_dir: str
-        :type plugin: object
-        """
-        self.webif_dir = webif_dir
-        self.plugin = plugin
-        self.logger = plugin.logger
-        self.tplenv = self.init_template_environment()
-
-    @cherrypy.expose
-    def index(self, reload=None, action=None):
-        """
-        Build index.html for cherrypy
-
-        Render the template and return the html file to be delivered to the browser
-
-        :return: contents of the template after beeing rendered
-        """
-        tabcount = 3
-        call_monitor_items = 0
-        if self.plugin._call_monitor:
-            call_monitor_items = self.plugin._monitoring_service.get_item_count_total()
-            tabcount = 4
-
-        tmpl = self.tplenv.get_template('index.html')
-        return tmpl.render(plugin_shortname=self.plugin.get_shortname(), plugin_version=self.plugin.get_version(),
-                           plugin_info=self.plugin.get_info(), tabcount=tabcount,
-                           avm_items=self.plugin.get_fritz_device().get_item_count(),
-                           call_monitor_items=call_monitor_items,
-                           p=self.plugin)
-
-    @cherrypy.expose
-    def reboot(self):
-        self.plugin.reboot()
-
-    @cherrypy.expose
-    def reconnect(self):
-        self.plugin.reconnect()

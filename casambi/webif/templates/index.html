@@ -33,16 +33,16 @@
 			<td class="py-1"><strong>Casambi Backend</strong></td>
 			<td class="py-1">{% if p.casambiBackendStatus %}{{ _('Online') }}{% else %}{{ _('Offline') }}{% endif %}</td>
 			<td class="py-1" width="50px"></td>
-			<td class="py-1"><strong>Number Networks</strong></td>
+			<td class="py-1"><strong>{{ _('Anzahl Netzwerke') }}</strong></td>
 			<td class="py-1">{{ p.numberNetworks }}</td>
 			<td class="py-1" width="50px"></td>
 		</tr>
 		<tr>
-			<td class="py-1"><strong> </strong></td>
-			<td class="py-1">-</td>
+			<td class="py-1"><strong>NetworkID </strong></td>
+			<td class="py-1">{% if p.networkIDValid() %}{{ _('Valide') }}{% else %}{{ _('Invalide') }}{% endif %}</td>
 			<td></td>
-			<td class="py-1"><strong> </strong></td>
-			<td class="py-1">-</td>
+			<td class="py-1"><strong>SessionID</strong></td>
+			<td class="py-1">{% if p.sessionIDValid() %}{{ _('Valide') }}{% else %}{{ _('Invalide') }}{% endif %}</td>
 			<td></td>
 		</tr>
 	</tbody>

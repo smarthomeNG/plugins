@@ -21,6 +21,7 @@
 #########################################################################
 from . import StateEngineTools
 from . import StateEngineCurrent
+from . import StateEngineDefaults
 from random import randint
 import subprocess
 import datetime
@@ -39,17 +40,33 @@ class SeEval(StateEngineTools.SeItemChild):
     def __repr__(self):
         return "SeEval"
 
-    # Get lamella angle based on sun_altitute for sun tracking
-    def sun_tracking(self):
+    # Get lamella angle based on sun_altitude for sun tracking
+    def sun_tracking(self, offset=None):
+        def reMap(_value, _minoutput):
+            _value = 100 if _value > 100 else _value
+            _value = 0 if _value < 0 else _value
+            outputSpan = 100 - _minoutput
+            scaledThrust = float(_value) / float(100)
+            return _minoutput + (scaledThrust * outputSpan)
+
+        if offset is None:
+            offset = StateEngineDefaults.suntracking_offset
+        else:
+            try:
+                offset = float(offset)
+            except Exception as e:
+                offset = 0
+                self._log_warning("Problem handling offset {0}: {1}", offset, e)
         self._eval_lock.acquire()
-        self._log_debug("Executing method 'SunTracking()'")
+        self._log_debug("Executing method 'SunTracking({0})'", offset)
         self._log_increase_indent()
 
         altitude = StateEngineCurrent.values.get_sun_altitude()
-        self._log_debug("Current sun altitude is {0}°", altitude)
-
-        value = 90 - altitude
-        self._log_debug("Blinds at right angle to the sun at {0}°", value)
+        self._log_debug("Current sun altitude is {0:.2f}°", altitude)
+        _lamella_open_value = StateEngineDefaults.lamella_open_value
+        _lamella_text = " (based on lamella open value of {0})".format(_lamella_open_value)
+        value = reMap(90 - altitude, _lamella_open_value) + offset
+        self._log_debug("Blinds at right angle to the sun at {0}° with an offset of {1}°{2}", value, offset, _lamella_text)
 
         self._log_decrease_indent()
         self._eval_lock.release()

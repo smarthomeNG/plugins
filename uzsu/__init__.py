@@ -68,6 +68,9 @@ from unittest import mock
 from collections import OrderedDict
 from bin.smarthome import VERSION
 import copy
+import html
+import json
+from .webif import WebInterface
 
 try:
     from scipy import interpolate
@@ -112,7 +115,7 @@ class UZSU(SmartPlugin):
         self._planned = {}
         self._update_count = {'todo': 0, 'done': 0}
         self._itpl = {}
-        self.init_webinterface()
+        self.init_webinterface(WebInterface)
         self.logger.info("Init with timezone {}".format(self._timezone))
         if not REQUIRED_PACKAGE_IMPORTED:
             self.logger.warning("Unable to import Python package 'scipy' which is necessary for interpolation.")
@@ -924,6 +927,15 @@ class UZSU(SmartPlugin):
                 self.get_iattr_value(item.conf, ITEM_TAG[0]), err))
         return _itemvalue
 
+    def get_itemdict(self, item):
+        """
+        Getting a sorted item list with uzsu config
+        :item:          uzsu item
+        :return:        sanitzed dict from uzsu item
+        """
+
+        return html.escape(json.dumps(self._items[item]))
+
     def get_items(self):
         """
         Getting a sorted item list with uzsu config
@@ -935,83 +947,3 @@ class UZSU(SmartPlugin):
         for i in sortedlist:
             finallist.append(self.itemsApi.return_item(i))
         return finallist
-
-    def init_webinterface(self):
-        """"
-        Initialize the web interface for this plugin
-
-        This method is only needed if the plugin is implementing a web interface
-        """
-        try:
-            self.mod_http = Modules.get_instance().get_module('http')
-        except Exception:
-            self.mod_http = None
-        if self.mod_http is None:
-            self.logger.error("Plugin '{}': Not initializing the web interface".format(self.get_shortname()))
-            return False
-
-        import sys
-        if "SmartPluginWebIf" not in list(sys.modules['lib.model.smartplugin'].__dict__):
-            self.logger.warning("Plugin '{}': Web interface needs SmartHomeNG v1.5 and up. Not initializing the web interface".format(self.get_shortname()))
-            return False
-
-        # set application configuration for cherrypy
-        webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
-        config = {
-            '/': {
-                'tools.staticdir.root': webif_dir,
-            },
-            '/static': {
-                'tools.staticdir.on': True,
-                'tools.staticdir.dir': 'static'
-            }
-        }
-
-        # Register the web interface as a cherrypy app
-        self.mod_http.register_webif(WebInterface(webif_dir, self),
-                                     self.get_shortname(),
-                                     config,
-                                     self.get_classname(), self.get_instance_name(),
-                                     description='')
-
-        return True
-
-
-# ------------------------------------------
-#    Webinterface of the plugin
-# ------------------------------------------
-
-import cherrypy
-from jinja2 import Environment, FileSystemLoader
-
-
-class WebInterface(SmartPluginWebIf):
-
-    def __init__(self, webif_dir, plugin):
-        """
-        Initialization of instance of class WebInterface
-
-        :param webif_dir: directory where the webinterface of the plugin resides
-        :param plugin: instance of the plugin
-        :type webif_dir: str
-        :type plugin: object
-        """
-        self.logger = logging.getLogger(__name__)
-        self.webif_dir = webif_dir
-        self.plugin = plugin
-        self.tplenv = self.init_template_environment()
-
-    @cherrypy.expose
-    def index(self, action=None, item_id=None, item_path=None, reload=None):
-        """
-        Build index.html for cherrypy
-
-        Render the template and return the html file to be delivered to the browser
-
-        :return: contents of the template after beeing rendered
-        """
-        item = self.plugin.get_sh().return_item(item_path)
-        tmpl = self.tplenv.get_template('index.html')
-        # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
-        return tmpl.render(p=self.plugin,
-                           language=self.plugin._sh.get_defaultlanguage(), now=self.plugin.shtime.now())

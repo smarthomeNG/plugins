@@ -3,7 +3,7 @@
 #########################################################################
 # Copyright 2017 Markus Garscha                 http://knx-user-forum.de/
 #           2018 Ivan De Filippis
-#           2018-2020 Bernd Meiners                 Bernd.Meiners@mail.de
+#           2018-2021 Bernd Meiners                 Bernd.Meiners@mail.de
 #########################################################################
 #
 #  This file is part of SmartHomeNG.
@@ -47,6 +47,8 @@ except:
     REQUIRED_PACKAGE_IMPORTED = False
 
 ITEM_ATTR_MESSAGE         = 'telegram_message'            # Send message on item change 
+ITEM_ATTR_CONDITION       = 'telegram_condition'          # when to send the message, if not given send any time, 
+                                                          #   if on_change_only then just if the item's current value differs from the previous value
 ITEM_ATTR_INFO            = 'telegram_info'               # read items with specific item-values 
 ITEM_ATTR_TEXT            = 'telegram_text'               # write message-text into the item
 ITEM_ATTR_MATCHREGEX      = 'telegram_value_match_regex'  # check a value against a condition before sending a message
@@ -62,7 +64,7 @@ MESSAGE_TAG_DEST          = '[DEST]'
 
 class Telegram(SmartPlugin):
 
-    PLUGIN_VERSION = "1.6.4"
+    PLUGIN_VERSION = "1.6.6"
 
     _items = []              # all items using attribute ``telegram_message```
     _items_info = {}         # dict used whith the info-command: key = attribute_value, val= item_list telegram_info
@@ -312,11 +314,22 @@ class Telegram(SmartPlugin):
             msg_txt = msg_txt.replace(MESSAGE_TAG_SOURCE, source)
             msg_txt = msg_txt.replace(MESSAGE_TAG_DEST, dest)
 
-            # DEBUG
-            # msg_txt = msg_txt_tmpl
+            # restricing send by a condition set
+            if self.has_iattr(item.conf, ITEM_ATTR_CONDITION):
+                cond = self.get_iattr_value(item.conf, ITEM_ATTR_CONDITION).lower()
+                if cond == "on_change":
+                    if item.property.value != item.property.last_value and item.property.last_update <= item.property.last_change:
+                        self.logger.debug("condition {} met: {}!={}, last_update_age {}, last_change_age {}".format(cond,item.property.value,item.property.last_value, item.property.last_update, item.property.last_change))
+                    else:
+                        self.logger.debug("condition {} not met: {}=={}, last_update_age {}, last_change_age {}".format(cond,item.property.value,item.property.last_value, item.property.last_update, item.property.last_change))
+                        return
+                elif cond == "on_update":
+                    # this is standard behaviour
+                    pass
+                else:
+                    self.logger.debug("ignoring unknown condition {}".format(cond))
 
             self.logger.info("send Message: {}".format(msg_txt))
-
             self.msg_broadcast(msg_txt)
 
     def _msg_broadcast(self, msg, chat_id=None):

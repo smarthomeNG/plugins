@@ -38,7 +38,7 @@ class Shelly(MqttPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.1.4'
+    PLUGIN_VERSION = '1.1.5'
 
 
     def __init__(self, sh):
@@ -145,7 +145,20 @@ class Shelly(MqttPlugin):
             bool_values = None
             if shelly_attr:
                 shelly_attr = shelly_attr.lower()
-            if shelly_attr in ['relay', None]:
+
+            # shellyht needs another topic path than the relay devices:
+            if shelly_type == 'shellyht':
+                if shelly_attr == 'humidity':
+                    topic = 'shellies/' + shelly_id + '/sensor/humidity'
+                elif shelly_attr == 'battery':
+                    topic = 'shellies/' + shelly_id + '/sensor/battery'
+                elif shelly_attr == 'temp':
+                    topic = 'shellies/' + shelly_id + '/sensor/temperature'
+                elif shelly_attr == 'error':
+                    topic = 'shellies/' + shelly_id + '/sensor/error'
+                else:
+                    self.logger.warning("parse_item: unknown attribute shelly_attr = {} for type {}".format(shelly_attr, shelly_type))
+            elif shelly_attr in ['relay', None]:
                 topic = 'shellies/' + shelly_id + '/relay/' + shelly_relay
                 bool_values = ['off', 'on']
             elif shelly_attr == 'power':
@@ -160,7 +173,7 @@ class Shelly(MqttPlugin):
             elif shelly_attr == 'temp_f':
                 topic = 'shellies/' + shelly_id + '/temperature_f'
             else:
-                self.logger.warning("parse_item: unknown attribute shelly_attr = {}".format(shelly_attr))
+                self.logger.warning("parse_item: unknown attribute shelly_attr = {} for type {}".format(shelly_attr, shelly_type))
 
             if topic:
                 # append to list used for web interface

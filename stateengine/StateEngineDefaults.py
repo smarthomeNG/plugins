@@ -28,14 +28,26 @@ suspend_time = 3600
 
 log_level = 0
 
+suntracking_offset = 0
+
+lamella_open_value = 0
+
 instant_leaveaction = False
 
 plugin_identification = "StateEngine Plugin"
 
 VERBOSE = logging.DEBUG - 1
 
+logger = None
+
+se_logger = logging.getLogger('stateengine')
+
+log_maxage = 0
+
 
 def write_to_log(logger):
+    logger.info("StateEngine default suntracking offset = {0}".format(suntracking_offset))
+    logger.info("StateEngine default suntracking lamella open value = {0}".format(lamella_open_value))
     logger.info("StateEngine default startup delay = {0}".format(startup_delay))
     logger.info("StateEngine default suspension time = {0}".format(suspend_time))
     logger.info("StateEngine default instant_leaveaction = {0}".format(instant_leaveaction))

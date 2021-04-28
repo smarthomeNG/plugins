@@ -36,7 +36,7 @@ from .webif import WebInterface
 class DarkSky(SmartPlugin):
 
 
-    PLUGIN_VERSION = "1.7.1"
+    PLUGIN_VERSION = "1.7.2"
 
     _base_forecast_url = 'https://api.darksky.net/forecast/%s/%s,%s'
 

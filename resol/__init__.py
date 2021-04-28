@@ -25,7 +25,7 @@ from lib.model.smartplugin import *
 
 class Resol(SmartPlugin):
 
-    PLUGIN_VERSION = '1.0.2'    # (must match the version specified in plugin.yaml)
+    PLUGIN_VERSION = '1.0.3'    # (must match the version specified in plugin.yaml)
 
 
     def __init__(self, sh, *args, **kwargs):
@@ -45,6 +45,7 @@ class Resol(SmartPlugin):
         # They will not shutdown properly. (It's a python bug)
 
     def stop(self):
+        self.scheduler_remove('PollData')
         self.alive = False
 
     def parse_item(self, item):
@@ -178,7 +179,11 @@ class Resol(SmartPlugin):
     def get_payload(self, msg):
         payload = ''
         for i in range(self.get_frame_count(msg)):
-          payload += self.integrate_septett(msg[9+(i*6):15+(i*6)])
+            if (15+(i*6)) <= len(msg): 
+                payload += self.integrate_septett(msg[9+(i*6):15+(i*6)])
+            else:
+                self.logger.error("get_payload: index {0} out of range {1} for i={2}".format((15+(i*6)), len(msg), i))
+                return ''
         return payload
     
     # parse payload and set item value
@@ -193,6 +198,8 @@ class Resol(SmartPlugin):
             self.logger.debug("source: " + str(source))
             self.logger.debug("destination: " + str(destination))
         payload = self.get_payload(msg)
+        if payload == '':
+            return
         for item in self._items:
             if 'resol_source' in item.return_parent().conf:
                 if item.return_parent().conf['resol_source'] != self.get_source(msg):

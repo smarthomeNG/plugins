@@ -2,10 +2,10 @@
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
 #  Copyright 2013 - 2015 KNX-User-Forum e.V.    http://knx-user-forum.de/
-#  Copyright 2016 - 2018 Bernd Meiners              Bernd.Meiners@mail.de
+#  Copyright 2016 - 2021 Bernd Meiners              Bernd.Meiners@mail.de
 #########################################################################
 #
-#  DLMS plugin for SmartHomeNG.py.
+#  DLMS plugin for SmartHomeNG
 #
 #  This file is part of SmartHomeNG.py.
 #  Visit:  https://github.com/smarthomeNG/
@@ -110,6 +110,7 @@ def read_data_block_from_serial(the_serial, end_byte=0x0a):
     :param end_byte: the indicator for end of data by source endpoint
     :returns the read data or None
     """
+    logger.debug("start to read data from serial device")
     response = bytes()
     try:
         while True:
@@ -125,6 +126,7 @@ def read_data_block_from_serial(the_serial, end_byte=0x0a):
     except Exception as e:
         logger.debug("Warning {0}".format(e))
         return None
+    logger.debug("finished reading data from serial device after {} bytes".format(len(response)))
     return response
 
 def query( config ):
@@ -138,7 +140,7 @@ def query( config ):
     6. closes the serial communication
     
     config contains a dict with entries for        
-    'serialport', 'device', 'timeout','use_checksum', 'reset_baudrate', 'no_waiting'
+    'serialport', 'device', 'timeout', 'use_checksum', 'reset_baudrate', 'no_waiting', 'onlylisten'
     
     return: a textblock with the data response from smartmeter
     """
@@ -146,6 +148,7 @@ def query( config ):
     starttime = time.time()
     runtime = starttime
     result = None
+    
 
     SerialPort = config.get('serialport')
     Device = config.get('device','')
@@ -153,7 +156,8 @@ def query( config ):
     QueryCode = config.get('querycode', '?')
     use_checksum = config.get('use_checksum', True)
     timeout = config.get('timeout', 3)
-
+    OnlyListen = config.get('onlylisten', False)    # just for the case that smartmeter transmits data without a query first
+    logger.debug("Config='{}'".format(config))
     StartChar = b'/'[0]
 
     Request_Message = b"/"+QueryCode.encode('ascii')+Device.encode('ascii')+b"!\r\n"
@@ -206,43 +210,47 @@ def query( config ):
     logger.debug("Time to open serial port {}: {}".format(SerialPort, format_time(time.time()- runtime)))
     runtime = time.time()
 
-    try:
-        #logger.debug("Reset input buffer from serial port '{}'".format(SerialPort))
-        #dlms_serial.reset_input_buffer()    # replaced dlms_serial.flushInput()
-        logger.debug("Writing request message {} to serial port '{}'".format(Request_Message, SerialPort))
-        dlms_serial.write(Request_Message)
-        #logger.debug("Flushing buffer from serial port '{}'".format(SerialPort))
-        #dlms_serial.flush()                 # replaced dlms_serial.drainOutput()
-    except Exception as e:
-        logger.warning("Error {}".format(e))
-        return
-
-    logger.debug("Time to send first request to smartmeter: {}".format( format_time(time.time()- runtime)))
-
-    # now get first response
-    response = read_data_block_from_serial(dlms_serial)
-    if response is None:
-        logger.debug("No response received upon first request")
-        return
-
-    logger.debug("Time to receive an answer: {}".format(format_time(time.time()- runtime)))
-    runtime = time.time()
-
-    # We need to examine the read response here for an echo of the _Request_Message
-    # some meters answer with an echo of the request Message
-    if response == Request_Message:
-        logger.debug("Request Message was echoed, need to read the identification message".format(response))
-        # read Identification message if Request was echoed
-        # now read the capabilities and type/brand line from Smartmeter
-        # e.g. b'/LGZ5\\2ZMD3104407.B32\r\n'
+    if OnlyListen:
         response = read_data_block_from_serial(dlms_serial)
     else:
-        logger.debug("Request Message was not equal to response, treating as identification message".format(response))
+        try:
+            #logger.debug("Reset input buffer from serial port '{}'".format(SerialPort))
+            #dlms_serial.reset_input_buffer()    # replaced dlms_serial.flushInput()
+            logger.debug("Writing request message {} to serial port '{}'".format(Request_Message, SerialPort))
+            dlms_serial.write(Request_Message)
+            #logger.debug("Flushing buffer from serial port '{}'".format(SerialPort))
+            #dlms_serial.flush()                 # replaced dlms_serial.drainOutput()
+        except Exception as e:
+            logger.warning("Error {}".format(e))
+            return
 
-    logger.debug("Time to get first identification message from smartmeter: "
-                      "{}".format(format_time(time.time() - runtime)))
-    runtime = time.time()
+        logger.debug("Time to send first request to smartmeter: {}".format( format_time(time.time()- runtime)))
 
+        # now get first response
+        response = read_data_block_from_serial(dlms_serial)
+        if response is None:
+            logger.debug("No response received upon first request")
+            return
+
+        logger.debug("Time to receive an answer: {}".format(format_time(time.time()- runtime)))
+        runtime = time.time()
+
+        # We need to examine the read response here for an echo of the _Request_Message
+        # some meters answer with an echo of the request Message
+        if response == Request_Message:
+            logger.debug("Request Message was echoed, need to read the identification message".format(response))
+            # read Identification message if Request was echoed
+            # now read the capabilities and type/brand line from Smartmeter
+            # e.g. b'/LGZ5\\2ZMD3104407.B32\r\n'
+            response = read_data_block_from_serial(dlms_serial)
+        else:
+            logger.debug("Request Message was not equal to response, treating as identification message".format(response))
+
+        logger.debug("Time to get first identification message from smartmeter: "
+                          "{}".format(format_time(time.time() - runtime)))
+        runtime = time.time()
+
+    
     Identification_Message = response
     logger.debug("Identification Message is {}".format(Identification_Message))
 
@@ -310,44 +318,54 @@ def query( config ):
     # maybe todo
     # we could implement here a baudrate that is fixed to somewhat lower speed if we need to
     # read out a smartmeter with broken communication
-    Action = b'0' # Data readout, possible are also b'1' for programming mode or some manufacturer specific
-    
-    Acknowledge = b'\x060'+ Baudrate_identification.encode() + Action + b'\r\n'
-
-    if Protocol_Mode == 'C':
-        # the speed change in communication is initiated from the reading device
-        time.sleep(wait_before_acknowledge)
-        logger.debug("Using protocol mode C, send acknowledge {} "
-                          "and tell smartmeter to switch to {} Baud".format(Acknowledge, NewBaudrate))
-        try:
-            dlms_serial.write( Acknowledge )
-        except Exception as e:
-            logger.warning("Warning {0}".format(e))
-            return
-        time.sleep(wait_after_acknowledge)
-        #dlms_serial.flush()
-        #dlms_serial.reset_input_buffer()
-        if (NewBaudrate != InitialBaudrate):
-            # change request to set higher baudrate
-            dlms_serial.baudrate = NewBaudrate
-
-    elif Protocol_Mode == 'B':
-        # the speed change in communication is initiated from the smartmeter device
-        time.sleep(wait_before_acknowledge)
-        logger.debug("Using protocol mode B, smartmeter and reader will switch to {} Baud".format(NewBaudrate))
-        time.sleep(wait_after_acknowledge)
-        #dlms_serial.flush()
-        #dlms_serial.reset_input_buffer()
-        if (NewBaudrate != InitialBaudrate):
-            # change request to set higher baudrate
-            dlms_serial.baudrate = NewBaudrate
+    if OnlyListen:  # we can not tell smartmeter to change baudrate in listening only mode
+        Acknowledge = b''
     else:
-        logger.debug("No change of readout baudrate, "
-                          "smartmeter and reader will stay at {} Baud".format(NewBaudrate))
+        Action = b'0' # Data readout, possible are also b'1' for programming mode or some manufacturer specific
+        Acknowledge = b'\x060'+ Baudrate_identification.encode() + Action + b'\r\n'
+
+    if OnlyListen:  # we can not tell smartmeter to change baudrate in listening only mode
+        logger.debug("Can not change Baudrate in listening only mode")
+    
+    else:
+        if Protocol_Mode == 'C':
+            # the speed change in communication is initiated from the reading device
+            time.sleep(wait_before_acknowledge)
+            logger.debug("Using protocol mode C, send acknowledge {} "
+                              "and tell smartmeter to switch to {} Baud".format(Acknowledge, NewBaudrate))
+            try:
+                dlms_serial.write( Acknowledge )
+            except Exception as e:
+                logger.warning("Warning {0}".format(e))
+                return
+            time.sleep(wait_after_acknowledge)
+            #dlms_serial.flush()
+            #dlms_serial.reset_input_buffer()
+            if (NewBaudrate != InitialBaudrate):
+                # change request to set higher baudrate
+                dlms_serial.baudrate = NewBaudrate
+
+        elif Protocol_Mode == 'B':
+            # the speed change in communication is initiated from the smartmeter device
+            time.sleep(wait_before_acknowledge)
+            logger.debug("Using protocol mode B, smartmeter and reader will switch to {} Baud".format(NewBaudrate))
+            time.sleep(wait_after_acknowledge)
+            #dlms_serial.flush()
+            #dlms_serial.reset_input_buffer()
+            if (NewBaudrate != InitialBaudrate):
+                # change request to set higher baudrate
+                dlms_serial.baudrate = NewBaudrate
+        else:
+            logger.debug("No change of readout baudrate, "
+                              "smartmeter and reader will stay at {} Baud".format(NewBaudrate))
 
     # now read the huge data block with all the OBIS codes
     logger.debug("Reading OBIS data from smartmeter")
-    response = read_data_block_from_serial( dlms_serial, None)
+    if OnlyListen:
+        packet_terminator = b'!'
+    else:
+        packet_terminator = None
+    response = read_data_block_from_serial( dlms_serial, packet_terminator)
 
     dlms_serial.close()
     logger.debug("Time for reading OBIS data: {}".format(format_time(time.time()- runtime)))
@@ -394,7 +412,7 @@ def query( config ):
         else:
             logger.warning("STX - ETX not found")
     else:
-        logger.debug("checksum calculation")
+        logger.debug("checksum calculation skipped")
 
     if len(response) > 5:
         result = str(response[1:-4], 'ascii')
@@ -420,6 +438,9 @@ if __name__ == '__main__':
     parser.add_argument('-s', '--speed', help='initial baudrate to start the communication with the smartmeter', type=int, default=300 )
     parser.add_argument('-d', '--device', help='give a device address to include in the query', default='' )
     parser.add_argument('-q', '--querycode', help='give query code, e.g. 2 instead of ?', default='?' )
+    parser.add_argument('-l', '--onlylisten', help='Only listen to serial, no active query', action='store_true' )
+    parser.add_argument('-c', '--nochecksum', help='use a checksum', action='store_false' )
+    
     args = parser.parse_args()
         
     config = {}
@@ -429,6 +450,8 @@ if __name__ == '__main__':
     config['querycode'] = args.querycode
     config['speed'] = args.speed
     config['timeout'] = args.timeout
+    config['onlylisten'] = args.onlylisten
+    config['use_checksum'] = args.nochecksum
     
     if args.verbose:
         logging.getLogger().setLevel( logging.DEBUG )

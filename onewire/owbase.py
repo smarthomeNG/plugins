@@ -181,7 +181,7 @@ class OwBase(object):
             #    self.logger.debug("no connection while request() was called. Retrying ...")
             self.connect()
         if not self.connected:
-            raise owex("No connection to owserver.")
+            raise ConnectionError("No connection to owserver.")
         islocked = self._lock.acquire()
         if islocked:
             try:
