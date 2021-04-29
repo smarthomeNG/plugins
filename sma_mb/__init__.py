@@ -54,7 +54,7 @@ class SMAModbus(SmartPlugin):
     are already available!
     """
 
-    PLUGIN_VERSION = '1.5.0'    # (must match the version specified in plugin.yaml), use '1.0.0' for your initial plugin Release
+    PLUGIN_VERSION = '1.5.1'    # (must match the version specified in plugin.yaml), use '1.0.0' for your initial plugin Release
 
     def __init__(self, sh):
         """
@@ -179,8 +179,22 @@ class SMAModbus(SmartPlugin):
 
         for read_parameter in self._items:
 
+            if self._datatypes[read_parameter] in ['S32', 'U32']:
+                register_count = 2
+            elif self._datatypes[read_parameter] in ['S16', 'U16']:
+                register_count = 1
+            elif self._datatypes[read_parameter] in ['S64', 'U64']:
+                register_count = 4
+            elif self._datatypes[read_parameter] == 'STR08':
+                register_count = 8
+            elif self._datatypes[read_parameter] == 'STR12':
+                register_count = 12
+            elif self._datatypes[read_parameter] == 'STR16':
+                register_count = 16
+            else:
+                register_count = 2
             try:
-                result = client.read_holding_registers((int(read_parameter)), 2, unit=3)
+                result = client.read_holding_registers((int(read_parameter)), register_count, unit=3)
             except Exception as e:
                 self.logger.error(f"poll_device: Item {self._items[read_parameter].property.path} - Error trying to get result, got Exception {e}")
             else:
@@ -190,7 +204,10 @@ class SMAModbus(SmartPlugin):
                 elif self._datatypes[read_parameter] == 'U16':
                     decoded = {'value': decoder.decode_16bit_uint()}
                 elif self._datatypes[read_parameter] == 'S32':
-                    decoded = {'value': decoder.decode_32bit_int()}
+                    sint = decoder.decode_32bit_int()
+                    if sint == -2147483648:
+                        sint = 0
+                    decoded = {'value': sint}
                 elif self._datatypes[read_parameter] == 'U32':
                     decoded = {'value': decoder.decode_32bit_uint()}
                 elif self._datatypes[read_parameter] == 'S64':
@@ -203,8 +220,6 @@ class SMAModbus(SmartPlugin):
                     decoded = {'value': decoder.decode_string(size=12)}
                 elif self._datatypes[read_parameter] == 'STR16':
                     decoded = {'value': decoder.decode_string(size=16)}
-                elif self._datatypes[read_parameter] == 'STR32':
-                    decoded = {'value': decoder.decode_string(size=32)}
                 else:
                     decoded = {'value': decoder.decode_32bit_uint()}
 
