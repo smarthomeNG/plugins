@@ -54,7 +54,7 @@ class SMAModbus(SmartPlugin):
     are already available!
     """
 
-    PLUGIN_VERSION = '1.5.1'    # (must match the version specified in plugin.yaml), use '1.0.0' for your initial plugin Release
+    PLUGIN_VERSION = '1.5.2'    # (must match the version specified in plugin.yaml), use '1.0.0' for your initial plugin Release
 
     def __init__(self, sh):
         """
@@ -215,11 +215,11 @@ class SMAModbus(SmartPlugin):
                 elif self._datatypes[read_parameter] == 'U64':
                     decoded = {'value': decoder.decode_64bit_uint()}
                 elif self._datatypes[read_parameter] == 'STR08':
-                    decoded = {'value': decoder.decode_string(size=8)}
+                    decoded = {'value': decoder.decode_string(size=16).rstrip(b'\0').decode('utf-8')}
                 elif self._datatypes[read_parameter] == 'STR12':
-                    decoded = {'value': decoder.decode_string(size=12)}
+                    decoded = {'value': decoder.decode_string(size=24).rstrip(b'\0').decode('utf-8')}
                 elif self._datatypes[read_parameter] == 'STR16':
-                    decoded = {'value': decoder.decode_string(size=16)}
+                    decoded = {'value': decoder.decode_string(size=32).rstrip(b'\0').decode('utf-8')}
                 else:
                     decoded = {'value': decoder.decode_32bit_uint()}
 

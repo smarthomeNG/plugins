@@ -12,7 +12,7 @@ plugin:
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
 #    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
 
-    version: 1.5.1                  # Plugin version (must match the version specified in __init__.py)
+    version: 1.5.2                  # Plugin version (must match the version specified in __init__.py)
     sh_minversion: 1.7              # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
 #    py_minversion: 3.6             # minimum Python version to use for this plugin
@@ -55,12 +55,32 @@ item_attributes:
 
     smamb_datatype:
         type: str
-        default: 'U32'
-        valid_list: ['S16', 'U16', 'S32', 'U32', 'S64', 'U64', 'STR08', 'STR12', 'STR16']
-
         description:
             de: 'SMA Datentyp'
             en: 'SMA datatype'
+        default: 'U32'
+        valid_list: ['S16', 'U16', 'S32', 'U32', 'S64', 'U64', 'STR08', 'STR12', 'STR16']
+        valid_list_description:
+            de:
+             - '16-Bit Integer, mit Vorzeichen'
+             - '16-Bit Integer, ohne Vorzeichen'
+             - '32-Bit Integer, mit Vorzeichen'
+             - '32-Bit Integer, ohne Vorzeichen'
+             - '64-Bit Integer, mit Vorzeichen'
+             - '64-Bit Integer, ohne Vorzeichen'
+             - 'String aus 8 Registern (ergibt einen String mit bis zu 16 Zeichen)'
+             - 'String aus 12 Registern (ergibt einen String mit bis zu 24 Zeichen)'
+             - 'String aus 16 Registern (ergibt einen String mit bis zu 32 Zeichen)'
+            en:
+             - 'Signed 16-bit integer'
+             - 'Unsigned 16-bit integer'
+             - 'Signed 32-bit integer'
+             - 'Unsigned 32-bit integer'
+             - 'Signed 64-bit integer'
+             - 'Unsigned 64-bit integer'
+             - 'String from 8 registers (resulting in a string with up to 16 characters)'
+             - 'String from 12 registers (resulting in a string with up to 24 characters)'
+             - 'String from 16 registers (resulting in a string with up to 32 characters)'
 
 item_structs: NONE
     # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
