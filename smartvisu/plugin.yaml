@@ -12,7 +12,7 @@ plugin:
     documentation: http://smarthomeng.de/user/plugins/visu_smartvisu/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1586800-support-thread-für-das-smartvisu-plugin
 
-    version: 1.8.2                 # Plugin version
+    version: 1.8.3                 # Plugin version
     sh_minversion: 1.8.1            # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     py_minversion: 3.6             # minimum Python version to use for this plugin
@@ -74,6 +74,13 @@ parameters:
         description:
             de: 'Standardmäßig werden Widgets aus den Plugins in die smartVISU kopiert und eingebunden. Dieses kann verhindert werden, wenn dieser Parameter auf False gesetzt wird.'
             en: 'By default, the visu plugin handles smartVISU widgets. If your run into problems, you can disable the widget handling by setting this attribute to False.'
+
+    create_masteritem_file:
+        type: bool
+        default: True
+        description:
+            de: 'False: Das Plugin unterdrückt die Erzeugung der masteritem.json Datei, die für den Widget Assistenten der smartVISU benötigt wird.'
+            en: 'False: The plugin suppresses the creation of the masteritem.json file, which is required for the widget wizard of the smartVISU.'
 
     list_deprecated_warnings:
         type: bool
