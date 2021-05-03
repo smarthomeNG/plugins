@@ -54,7 +54,7 @@ class SMAModbus(SmartPlugin):
     are already available!
     """
 
-    PLUGIN_VERSION = '1.4.0'    # (must match the version specified in plugin.yaml), use '1.0.0' for your initial plugin Release
+    PLUGIN_VERSION = '1.5.2'    # (must match the version specified in plugin.yaml), use '1.0.0' for your initial plugin Release
 
     def __init__(self, sh):
         """
@@ -83,6 +83,7 @@ class SMAModbus(SmartPlugin):
         # Initialization code goes here
 
         self._items = {}
+        self._datatypes = {}
 
         self.init_webinterface(WebInterface)
         return
@@ -123,8 +124,12 @@ class SMAModbus(SmartPlugin):
         if self.has_iattr(item.conf, 'smamb_register'):
             self.logger.debug(f"parse item: {item.property.path}")
             modbus_register = self.get_iattr_value(item.conf, 'smamb_register')
+            modbus_datatype = self.get_iattr_value(item.conf, 'smamb_datatype')
+            if modbus_datatype is None:
+                modbus_datatype = 'U32'
             self._items[modbus_register]=item
-            self.logger.debug(f"item: {item.property.path} added with modbus_register: {modbus_register}")
+            self._datatypes[modbus_register]=modbus_datatype
+            self.logger.debug(f"item: {item.property.path} added with modbus_register '{modbus_register}', datatype '{modbus_datatype}'")
             return self.update_item
 
 
@@ -174,15 +179,50 @@ class SMAModbus(SmartPlugin):
 
         for read_parameter in self._items:
 
+            if self._datatypes[read_parameter] in ['S32', 'U32']:
+                register_count = 2
+            elif self._datatypes[read_parameter] in ['S16', 'U16']:
+                register_count = 1
+            elif self._datatypes[read_parameter] in ['S64', 'U64']:
+                register_count = 4
+            elif self._datatypes[read_parameter] == 'STR08':
+                register_count = 8
+            elif self._datatypes[read_parameter] == 'STR12':
+                register_count = 12
+            elif self._datatypes[read_parameter] == 'STR16':
+                register_count = 16
+            else:
+                register_count = 2
             try:
-                result = client.read_holding_registers((int(read_parameter)), 2, unit=3)
+                result = client.read_holding_registers((int(read_parameter)), register_count, unit=3)
             except Exception as e:
                 self.logger.error(f"poll_device: Item {self._items[read_parameter].property.path} - Error trying to get result, got Exception {e}")
             else:
                 decoder = BinaryPayloadDecoder.fromRegisters(result.registers, byteorder=Endian.Big)
-                decoded = {
-                    'value': decoder.decode_32bit_uint(),
-                }
+                if self._datatypes[read_parameter] == 'S16':
+                    decoded = {'value': decoder.decode_16bit_int()}
+                elif self._datatypes[read_parameter] == 'U16':
+                    decoded = {'value': decoder.decode_16bit_uint()}
+                elif self._datatypes[read_parameter] == 'S32':
+                    sint = decoder.decode_32bit_int()
+                    if sint == -2147483648:
+                        sint = 0
+                    decoded = {'value': sint}
+                elif self._datatypes[read_parameter] == 'U32':
+                    decoded = {'value': decoder.decode_32bit_uint()}
+                elif self._datatypes[read_parameter] == 'S64':
+                    decoded = {'value': decoder.decode_64bit_int()}
+                elif self._datatypes[read_parameter] == 'U64':
+                    decoded = {'value': decoder.decode_64bit_uint()}
+                elif self._datatypes[read_parameter] == 'STR08':
+                    decoded = {'value': decoder.decode_string(size=16).rstrip(b'\0').decode('utf-8')}
+                elif self._datatypes[read_parameter] == 'STR12':
+                    decoded = {'value': decoder.decode_string(size=24).rstrip(b'\0').decode('utf-8')}
+                elif self._datatypes[read_parameter] == 'STR16':
+                    decoded = {'value': decoder.decode_string(size=32).rstrip(b'\0').decode('utf-8')}
+                else:
+                    decoded = {'value': decoder.decode_32bit_uint()}
+
                 valueend = decoded.get("value")
                 self.logger.debug(f"value is {valueend} key is {read_parameter} self._item is {self._items[read_parameter].property.path}")
                 if read_parameter in self._items:
