@@ -2350,19 +2350,19 @@ class Speaker(object):
 
 class Sonos(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.5.8"
+    PLUGIN_VERSION = "1.5.9"
 
     def __init__(self, sh, *args, **kwargs):
         super().__init__(**kwargs)
 
         self._sh = sh
-        #self.logger = logging.getLogger('sonos')  # get a unique logger for the plugin and provide it internally
         self.zero_zone = False  # sometime a discovery scan fails, so try it two times; we need to save the state
         self._sonos_dpt3_step = 2  # default value for dpt3 volume step (step(s) per time period)
         self._sonos_dpt3_time = 1  # default value for dpt3 volume time (time period per step in seconds)
         self._tts = self.to_bool(self.get_parameter_value("tts"), default=False)
         self._local_webservice_path = self.get_parameter_value("local_webservice_path")
         self._snippet_duration_offset = float(self.get_parameter_value("snippet_duration_offset"))
+        self.SoCo_nr_speakers = 0
 	
         from bin.smarthome import VERSION
         if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
@@ -2855,6 +2855,7 @@ class Sonos(SmartPlugin):
         """
         self.logger.info("Debug: Start discover fct")
 
+        online_speaker_count = 0
         handled_speaker = {}
 
         zones = []
@@ -2899,6 +2900,7 @@ class Sonos(SmartPlugin):
 
             if is_up:
                 self.logger.info("Debug: Speaker found: {zone}, {uid}".format(zone=zone.ip_address, uid=uid))
+                online_speaker_count = online_speaker_count + 1 
                 if uid in sonos_speaker:
                     if zone is not sonos_speaker[uid].soco:
                         self.logger.info("Debug: zone is not in speaker list jet. Adding and subscribing zone {0}".format(zone))
@@ -2942,6 +2944,9 @@ class Sonos(SmartPlugin):
                 self.logger.info(
                     "Debug: Removing undiscovered speaker: {zone}, {uid}".format(zone=zone.ip_address, uid=uid))
                 sonos_speaker[uid].dispose()
+
+        # Extract number of online speakers:
+        self.SoCo_nr_speakers = online_speaker_count 
 
 
     def init_webinterface(self):
