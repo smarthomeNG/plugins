@@ -191,7 +191,7 @@ item_structs:
             squeezebox_recv: abortscan
 
         wipecache:
-            type: bool
+            type: str
             visu_acl: rw
             enforce_updates: yes
             squeezebox_send: wipecache
