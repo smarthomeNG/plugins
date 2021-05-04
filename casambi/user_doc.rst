@@ -33,7 +33,7 @@ support@casambi.com
 Beispiele
 =========
 
-Beispiel für einen Dimmer (Occhio Sento) mit zusätzlichen Möglichkeiten für heller und dunkler dimmen.
+Beispiel für einen Dimmer (Occhio Sento) mit zusätzlichen Möglichkeiten für heller-dunkler und vertikales dimmen.
 
 .. code:: yaml
 
