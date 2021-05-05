@@ -41,7 +41,7 @@ class Casambi(SmartPlugin):
     """
 
     # Use VERSION = '1.0.0' for your initial plugin Release
-    PLUGIN_VERSION = '1.7.2'    # (must match the version specified in plugin.yaml)
+    PLUGIN_VERSION = '1.7.3'    # (must match the version specified in plugin.yaml)
 
     def __init__(self, sh):
         """
@@ -209,10 +209,14 @@ class Casambi(SmartPlugin):
         Control message format for switching/dimming of casambi devices
         """
         dimValue = 0
+        cctValue = 0
+
         if key == 'ON':
             dimValue = int(item() == True)
         elif key == 'DIMMER' or key == 'VERTICAL':
             dimValue = item() / 100.0
+        elif key == 'CCT':
+            cctValue = item()
         else:
             self.logger.error("Invalid key: {0}".format(key))
 
@@ -221,6 +225,9 @@ class Casambi(SmartPlugin):
             targetControls = {"Dimmer": {"value": dimValue}} # Dimmer value can be anything from 0 to 1
         elif key == 'VERTICAL':
             targetControls = {"Vertical": {"value": dimValue}} # Vertical fader value can be anything from 0 to 1
+        elif key == 'CCT':
+            targetControls = {"CCT": {"value": cctValue}} # Tunable white fader value can be anything from 0 to 1
+
 
         controlMsg = {
                 "wire": self.wire,
@@ -278,6 +285,8 @@ class Casambi(SmartPlugin):
             status = None
             dimValue = None
             verticalValue = None
+            cctValue = None
+
             self.logger.debug("Debug Json unitChanged: {0}".format(dataJson))
             if 'id' in dataJson:
                 unitID = int(dataJson['id'])
@@ -301,8 +310,11 @@ class Casambi(SmartPlugin):
                         dimValue = value
                     elif type == 'Vertical':
                         verticalValue = value
+                    elif type == 'CCT':
+                        cctValue = value
 
-            self.logger.debug("Received {0} status from unit {1}, on: {2}, value: {3}, vertical: {4}.".format(method, unitID, on, dimValue, verticalValue))
+
+            self.logger.debug("Received {0} status from unit {1}, on: {2}, value: {3}, vertical: {4}, cct: {5}.".format(method, unitID, on, dimValue, verticalValue, cctValue))
 
             #Copy data into casambi item:
             if unitID and (unitID in self._rx_items):
@@ -315,6 +327,9 @@ class Casambi(SmartPlugin):
                         item(dimValue * 100, self.get_shortname())
                     elif item.conf['casambi_rx_key'].upper() == 'VERTICAL':
                         item(verticalValue * 100, self.get_shortname())
+                    elif item.conf['casambi_rx_key'].upper() == 'CCT':
+                        item(cctValue, self.get_shortname())
+
             elif unitID and not (unitID in self._rx_items):
                 self.logger.warning("Received status information for ID {0} which has no equivalent item.".format(unitID))
         else:

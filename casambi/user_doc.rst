@@ -65,6 +65,36 @@ Beispiel für einen Dimmer (Occhio Sento) mit zusätzlichen Möglichkeiten für 
                 enforce_updates: True
 
 
+Beispiel für einen Tunable White Dimmer :
+
+.. code:: yaml
+
+    spotlight:
+        casambi_id: 3
+        enforce_updates: True
+
+        light:
+            type: bool
+            casambi_rx_key: ON
+            casambi_tx_key: ON
+            visu_acl: rw
+            enforce_updates: True
+
+            level:
+                type: num
+                value: 0
+                casambi_rx_key: DIMMER
+                casambi_tx_key: DIMMER
+                visu_acl: rw
+                enforce_updates: True
+
+            tunablewhite:
+                type: num
+                value: 0
+                casambi_rx_key: CCT
+                casambi_tx_key: CCT
+                visu_acl: rw
+                enforce_updates: True
 
 
 Web Interface
