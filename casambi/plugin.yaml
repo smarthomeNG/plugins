@@ -61,6 +61,7 @@ item_attributes:
         - 'ON'
         - 'DIMMER'
         - 'VERTICAL'
+        - 'CCT'
 
     casambi_rx_key:
         type: str
@@ -71,6 +72,8 @@ item_attributes:
         - 'ON'
         - 'DIMMER'
         - 'VERTICAL'
+        - 'CCT'
+
 
 item_structs:
     # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
