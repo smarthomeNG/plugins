@@ -208,25 +208,24 @@ class Casambi(SmartPlugin):
         """
         Control message format for switching/dimming of casambi devices
         """
-        dimValue = 0
-        cctValue = 0
-
+        sendValue = 0
+        
         if key == 'ON':
-            dimValue = int(item() == True)
+            sendValue = int(item() == True)
         elif key == 'DIMMER' or key == 'VERTICAL':
-            dimValue = item() / 100.0
+            sendValue = item() / 100.0
         elif key == 'CCT':
-            cctValue = item()
+            sendValue = item()
         else:
             self.logger.error("Invalid key: {0}".format(key))
 
         targetControls = ''
         if key == 'ON' or key == 'DIMMER':
-            targetControls = {"Dimmer": {"value": dimValue}} # Dimmer value can be anything from 0 to 1
+            targetControls = {"Dimmer": {"value": sendValue}} # Dimmer value can be anything from 0 to 1
         elif key == 'VERTICAL':
-            targetControls = {"Vertical": {"value": dimValue}} # Vertical fader value can be anything from 0 to 1
+            targetControls = {"Vertical": {"value": sendValue}} # Vertical fader value can be anything from 0 to 1
         elif key == 'CCT':
-            targetControls = {"CCT": {"value": cctValue}} # Tunable white fader value can be anything from 0 to 1
+            targetControls = {"CCT": {"value": sendValue}} # Tunable white fader value can be anything from 0 to 1
 
 
         controlMsg = {
@@ -237,6 +236,7 @@ class Casambi(SmartPlugin):
 	}
         # convert to JSON string:
         controlMsgJson = json.dumps(controlMsg)
+        self.logger.debug("Send command: {0}".format(controlMsgJson))
 
         if self.websocket and self.websocket.connected:
             try:
@@ -247,7 +247,7 @@ class Casambi(SmartPlugin):
             if self.casambiBackendStatus == False:
                 self.logger.warning("Command sent but backend is not online.")
             else:
-                self.logger.debug("Command with value {0} sent out via open websocket".format(dimValue))
+                self.logger.debug("Command {0} with value {1} sent out via open websocket".format(key, sendValue))
         else:
             self.logger.error("Unable to send command. Websocket is not open")
             self.logger.debug("Debug: self.websocket: {0}, self.websocket.connected: {1}.".format(self.websocket, self.websocket.connected))
