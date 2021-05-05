@@ -225,8 +225,7 @@ class Casambi(SmartPlugin):
         elif key == 'VERTICAL':
             targetControls = {"Vertical": {"value": sendValue}} # Vertical fader value can be anything from 0 to 1
         elif key == 'CCT':
-            # targetControls = {"CCT": {"value": sendValue}} # Tunable white fader value can be anything from min to max, typically 2500 - 6000 Kelvin
-            targetControls = {"ColorTemperature": {"value" : sendValue}, "Colorsource": {"source": "TW"}} # // ColorTemperature value in Kelvins, anything between 
+            targetControls = {"ColorTemperature": {"value" : sendValue}, "Colorsource": {"source": "TW"}} # ColorTemperature value in Kelvins 
 
         controlMsg = {
                 "wire": self.wire,

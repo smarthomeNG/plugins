@@ -6,7 +6,7 @@ plugin:
         de: 'Gateway plugin fuer Casambi'
         en: 'Gateway plugin for Casambi devices'
     maintainer: aschwith
-#   tester:                         # Who tests this plugin?
+    tester: macflei                 
     state: ready                    # change to ready when done with development
     keywords: casambi, occhio air, 
 #   documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
