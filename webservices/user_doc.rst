@@ -50,134 +50,132 @@ Bitte die Dokumentation lesen, die aus den Metadaten der plugin.yaml erzeugt wur
 Beispiele und Nutzungshinweise
 ------------------------------
 
-Einfaches Interface
-~~~~~~~~~~~~~~~~~~~
+Das Webservices Plugin unterstützt drei leicht unterschiedliche Arten von
+Zugriffen wie im Folgenden beschrieben werden.
 
-Itemwert abfragen
-^^^^^^^^^^^^^^^^^
+.. tabs::
 
-Mit einer URL ``http://{SmartHomeNG IP}:{http_modul_services_port}/ws/items/{item_path}``
-wird ein Datensatz inklusive Metadaten abgefragt.
+   .. tab:: Einfaches Interface
 
-Beispielsweise liefern Abfragen wie ``http://192.168.1.1:8384/ws/items/knx.gf.office.light`` 
-folgende JSON formatierte Daten:
+      .. tabs:: 
 
-.. code:: JSON
+         .. tab:: Itemwert abfragen
 
-   {"changed_by": "Cache", "enforce_updates": "False", "age": 1896.412548, "triggers": ["bound method KNX.update_item of plugins.knx.KNX", "bound method WebSocket.update_item of plugins.visu_websocket.WebSocket", "bound method Simulation.update_item of plugins.simulation.Simulation"], "last_change": "2017-12-02 06:53:56.310862+01:00", "autotimer": "False", "eval": "None", "value": true, "previous_age": "", "previous_value": true, "type": "bool", "config": {"alexa_actions": "turnOn turnOff", "alexa_name": "Lampe B\u00fcro", "knx_dpt": "1", "knx_init": "2/3/50", "knx_listen": "2/3/50", "knx_send": ["2/3/10"], "nw": "yes", "sim": "track", "visu_acl": "rw"}, "name": "knx.gf.office.light", "path": "knx.gf.office.light", "threshold": "False", "cache": "/python/smarthome/var/cache/knx.gf.office.light", "cycle": "", "last_update": "2017-12-02 06:53:56.310862+01:00", "previous_change": "2017-12-02 07:18:22.911165+01:00", "eval_trigger": "False", "crontab": "", "logics": ["LightCheckLogic"]}
+            Mit einer URL ``http://{SmartHomeNG IP}:{http_modul_services_port}/ws/items/{item_path}``
+            wird ein Datensatz inklusive Metadaten abgefragt.
 
-Sollte das Attribut ``webservices_data`` des Items auf ``val`` gesetzt sein, liefert die Abfrage nur den Wert.
+            Beispielsweise liefern Abfragen wie ``http://192.168.1.1:8384/ws/items/knx.gf.office.light`` 
+            folgende JSON formatierte Daten:
 
-Itemwert setzen
-^^^^^^^^^^^^^^^
+            .. code:: JSON
 
-Mit einer URL ``http://{SmartHomeNG IP}:{http_modul_services_port}/ws/items/{item_path}/{value}`` 
-wird der Wert eines Items auf ``value`` gesetzt.
+               {"changed_by": "Cache", "enforce_updates": "False", "age": 1896.412548, "triggers": ["bound method KNX.update_item of plugins.knx.KNX", "bound method WebSocket.update_item of plugins.visu_websocket.WebSocket", "bound method Simulation.update_item of plugins.simulation.Simulation"], "last_change": "2017-12-02 06:53:56.310862+01:00", "autotimer": "False", "eval": "None", "value": true, "previous_age": "", "previous_value": true, "type": "bool", "config": {"alexa_actions": "turnOn turnOff", "alexa_name": "Lampe B\u00fcro", "knx_dpt": "1", "knx_init": "2/3/50", "knx_listen": "2/3/50", "knx_send": ["2/3/10"], "nw": "yes", "sim": "track", "visu_acl": "rw"}, "name": "knx.gf.office.light", "path": "knx.gf.office.light", "threshold": "False", "cache": "/python/smarthome/var/cache/knx.gf.office.light", "cycle": "", "last_update": "2017-12-02 06:53:56.310862+01:00", "previous_change": "2017-12-02 07:18:22.911165+01:00", "eval_trigger": "False", "crontab": "", "logics": ["LightCheckLogic"]}
 
-Beispielsweise sorgt eine Abfrage ``http://192.168.1.1:8384/ws/items/knx.gf.office.light/1`` dafür das im Falle eines Items
-mit dem Pfad ``knx.gf.office.light`` der Wert auf ``True`` gesetzt wird und damit z.B. das Licht angeht.
+            Sollte das Attribut ``webservices_data`` des Items auf ``val`` gesetzt sein, liefert die Abfrage nur den Wert.
 
-Wenn ein Fehler auftritt (z.B. Item nicht gefunden) liefert das Plugin eine JSON formatierte Fehlermeldung aus:
+         .. tab:: Itemwert setzen
 
-.. code:: JSON
+            Mit einer URL ``http://{SmartHomeNG IP}:{http_modul_services_port}/ws/items/{item_path}/{value}`` 
+            wird der Wert eines Items auf den Wert ``value`` gesetzt.
 
-   {"Error": "No item with item path <itemname> found."}
+            Beispielsweise sorgt eine Abfrage ``http://192.168.1.1:8384/ws/items/knx.gf.office.light/1`` dafür das im Falle eines Items
+            mit dem Pfad ``knx.gf.office.light`` der Wert auf ``True`` gesetzt wird und damit z.B. das Licht angeht.
 
-Eine erfolgreiche Abfrage eines Item dagegen liefert eine JSON formatierte Rückgabe der Art:
+      Wenn ein Fehler auftritt (z.B. Item nicht gefunden) liefert das Plugin eine JSON formatierte Fehlermeldung aus:
 
-.. code:: JSON
+      .. code:: JSON
 
-   {"Success": "Item with item path <itemname> set to <value>."}
+         {"Error": "No item with item path <itemname> found."}
 
-REST Interface
-~~~~~~~~~~~~~~
+      Eine erfolgreiche Abfrage eines Item dagegen liefert eine JSON formatierte Rückgabe der Art:
 
-Die POST und PUT Requests können mit dem Chrome Plugin **Postman** getestet werden.
+      .. code:: JSON
 
-Itemliste abfragen
-^^^^^^^^^^^^^^^^^^
+         {"Success": "Item with item path <itemname> set to <value>."}
 
-Mit einer URL ``http://{SmartHomeNG IP}:{http_modul_services_port}/rest/items/``
-wird eine Liste aller Items abgefragt, deren Werte abgefragt oder gesetzt werden können. 
-Dabei werden nur Items der Typen String, Numerisch und Boolean berücksichtigt 
-sowie die Systemitems
-``env.location.moonrise``, ``env.location.moonset``, ``env.location.sunrise`` und ``env.location.sunset``.
-Deren Typ ist mit ``foo`` definiert und effektiv sind es datetime Objekte.
+   .. tab:: REST Interface
 
-Im folgenden eine Liste mit nur einem Item um den Rückgabewert zu illustrieren
+      Die POST und PUT Requests können mit dem Chrome Plugin **Postman** getestet werden.
 
-.. code:: JSON
+      .. tabs::
 
-   { "A_Crontab.OneBool": { "path": "A_Crontab.OneBool", "name": "A_Crontab.OneBool", "type": "bool", "value": true, "age": 113731.985496, "last_update": "2020-04-25 00:00:00.361957+02:00", "last_change": "2020-04-24 09:06:15.333481+02:00", "changed_by": "Init:Initial_Value", "previous_value": true, "previous_age": 0, "previous_change": "2020-04-24 09:06:15.333481+02:00", "enforce_updates": "False", "cache": "False", "eval": "None", "eval_trigger": "False", "cycle": "", "crontab": "", "autotimer": "False", "threshold": "False", "config": {}, "logics": [], "triggers": [], "url": "http://192.168.x.y:8383/rest/items/A_Crontab.OneBool" }}
+         .. tab:: Itemliste abfragen
 
-Itemwert abfragen
-^^^^^^^^^^^^^^^^^
+            Mit einer URL ``http://\<SmartHomeNG IP}:\<http_modul_services_port}/rest/items/``
+            wird eine Liste aller Items abgefragt, deren Werte abgefragt oder gesetzt werden können. 
+            Dabei werden nur Items der Typen String, Numerisch und Boolean berücksichtigt 
+            sowie die Systemitems
+            ``env.location.moonrise``, ``env.location.moonset``, ``env.location.sunrise`` und ``env.location.sunset``.
+            Deren Typ ist mit ``foo`` definiert und effektiv sind es datetime Objekte.
 
-Mit einer URL ``http://{SmartHomeNG IP}:{http_modul_services_port}/rest/items/{item_path}``
-wird ein Datensatz inklusive Metadaten abgefragt.
+            Im folgenden eine Liste mit nur einem Item um den Rückgabewert zu illustrieren
 
-Beispielsweise liefern Abfragen wie ``http://192.168.1.1:8384/rest/items/knx.gf.office.light`` 
-folgende JSON formatierte Daten:
+            .. code:: JSON
 
-.. code:: JSON
+               { "A_Crontab.OneBool": { "path": "A_Crontab.OneBool", "name": "A_Crontab.OneBool", "type": "bool", "value": true, "age": 113731.985496, "last_update": "2020-04-25 00:00:00.361957+02:00", "last_change": "2020-04-24 09:06:15.333481+02:00", "changed_by": "Init:Initial_Value", "previous_value": true, "previous_age": 0, "previous_change": "2020-04-24 09:06:15.333481+02:00", "enforce_updates": "False", "cache": "False", "eval": "None", "eval_trigger": "False", "cycle": "", "crontab": "", "autotimer": "False", "threshold": "False", "config": {}, "logics": [], "triggers": [], "url": "http://192.168.x.y:8383/rest/items/A_Crontab.OneBool" }}
 
-   {"changed_by": "Cache", "enforce_updates": "False", "age": 1896.412548, "triggers": ["bound method KNX.update_item of plugins.knx.KNX", "bound method WebSocket.update_item of plugins.visu_websocket.WebSocket", "bound method Simulation.update_item of plugins.simulation.Simulation"], "last_change": "2017-12-02 06:53:56.310862+01:00", "autotimer": "False", "eval": "None", "value": true, "previous_age": "", "previous_value": true, "type": "bool", "config": {"alexa_actions": "turnOn turnOff", "alexa_name": "Lampe B\u00fcro", "knx_dpt": "1", "knx_init": "2/3/50", "knx_listen": "2/3/50", "knx_send": ["2/3/10"], "nw": "yes", "sim": "track", "visu_acl": "rw"}, "name": "knx.gf.office.light", "path": "knx.gf.office.light", "threshold": "False", "cache": "/python/smarthome/var/cache/knx.gf.office.light", "cycle": "", "last_update": "2017-12-02 06:53:56.310862+01:00", "previous_change": "2017-12-02 07:18:22.911165+01:00", "eval_trigger": "False", "crontab": "", "logics": ["LightCheckLogic"]}
+         .. tab:: Itemwert abfragen
 
-Sollte das Attribut ``webservices_data`` des Items auf ``val`` gesetzt sein, liefert die Abfrage nur den Wert.
+            Mit einer URL ``http://{SmartHomeNG IP}:{http_modul_services_port}/rest/items/{item_path}``
+            wird ein Datensatz inklusive Metadaten abgefragt.
 
+            Beispielsweise liefern Abfragen wie ``http://192.168.1.1:8384/rest/items/knx.gf.office.light`` 
+            folgende JSON formatierte Daten:
 
-Itemwert setzen
-^^^^^^^^^^^^^^^
+            .. code:: JSON
 
-Mit einer URL ``http://{SmartHomeNG IP}:{http_modul_services_port}/rest/items/{item_path}/{value}`` 
-wird der Wert eines Items auf ``value`` gesetzt.
+               {"changed_by": "Cache", "enforce_updates": "False", "age": 1896.412548, "triggers": ["bound method KNX.update_item of plugins.knx.KNX", "bound method WebSocket.update_item of plugins.visu_websocket.WebSocket", "bound method Simulation.update_item of plugins.simulation.Simulation"], "last_change": "2017-12-02 06:53:56.310862+01:00", "autotimer": "False", "eval": "None", "value": true, "previous_age": "", "previous_value": true, "type": "bool", "config": {"alexa_actions": "turnOn turnOff", "alexa_name": "Lampe B\u00fcro", "knx_dpt": "1", "knx_init": "2/3/50", "knx_listen": "2/3/50", "knx_send": ["2/3/10"], "nw": "yes", "sim": "track", "visu_acl": "rw"}, "name": "knx.gf.office.light", "path": "knx.gf.office.light", "threshold": "False", "cache": "/python/smarthome/var/cache/knx.gf.office.light", "cycle": "", "last_update": "2017-12-02 06:53:56.310862+01:00", "previous_change": "2017-12-02 07:18:22.911165+01:00", "eval_trigger": "False", "crontab": "", "logics": ["LightCheckLogic"]}
 
-Beispielsweise sorgt eine Abfrage ``http://192.168.1.1:8384/rest/items/knx.gf.office.light/1`` dafür das im Falle eines Items
-mit dem Pfad ``knx.gf.office.light`` der Wert auf ``True`` gesetzt wird und damit z.B. das Licht angeht.
+            Sollte das Attribut ``webservices_data`` des Items auf ``val`` gesetzt sein, liefert die Abfrage nur den Wert.
 
-Itemgruppe abfragen
-^^^^^^^^^^^^^^^^^^^
+         .. tab:: Itemwert setzen
 
-Ähnlich wie bei der Abfrage eines einzelnen Items gibt es die Möglichkeit eine bestimmte Gruppe von Items
-gleichzeitig abzufragen. Dazu muss beim Item ein Attribut ``webservices_set`` mit dem Namen der Gruppe definiert werden.
+            Mit einer URL ``http://{SmartHomeNG IP}:{http_modul_services_port}/rest/items/{item_path}/{value}`` 
+            wird der Wert eines Items auf ``value`` gesetzt.
 
-Beispielsweise sorgt eine Abfrage ``http://192.168.1.1:8384/rest/itemset/lights`` dafür das 
-die Daten der Items mit dem Attribut ``webservices_set: lights`` als JSON formatierte Daten zurückgeliefert werden.
+            Beispielsweise sorgt eine Abfrage ``http://192.168.1.1:8384/rest/items/knx.gf.office.light/1`` dafür das im Falle eines Items
+            mit dem Pfad ``knx.gf.office.light`` der Wert auf ``True`` gesetzt wird und damit z.B. das Licht angeht.
 
+         .. tab:: Itemgruppe abfragen
 
-HTTP PUT und GET
-~~~~~~~~~~~~~~~~
+            Ähnlich wie bei der Abfrage eines einzelnen Items gibt es die Möglichkeit eine bestimmte Gruppe von Items
+            gleichzeitig abzufragen. Dazu muss beim Item ein Attribut ``webservices_set`` mit dem Namen der Gruppe definiert werden.
 
-PUT
-^^^
+            Beispielsweise sorgt eine Abfrage ``http://192.168.1.1:8384/rest/itemset/lights`` dafür das 
+            die Daten der Items mit dem Attribut ``webservices_set: lights`` als JSON formatierte Daten zurückgeliefert werden.
 
-A HTTP PUT request to the URL sets a value of an item. Only num, bool and str item types are supported.
-For bool items you can use int values 0 and 1, but also "yes", "no", "y", "n", "true", "false", "t", "f", "on", "off".
-In case you send a string (or a string bool representation), take care it is provided in "...".
+   .. tab:: HTTP PUT und GET
 
-Es muss sichergestellt sein, das im **HTTP HEADER** der ``Content-Type: application/json`` gesetzt ist.
+      .. tabs::
 
-``http://<martHomeNG IP>:<http_modul_services_port>/rest/items/<item_pfad`>`
+         .. tab:: PUT
 
-Beispielsweise könnte ein HTTP PUT request mit 0 als Argument ``http://192.168.1.1:8384/rest/items/office.light`` das Licht ausschalten.
+            A HTTP PUT request to the URL sets a value of an item. Only num, bool and str item types are supported.
+            For bool items you can use int values 0 and 1, but also "yes", "no", "y", "n", "true", "false", "t", "f", "on", "off".
+            In case you send a string (or a string bool representation), take care it is provided in "...".
 
-POST
-^^^^
+            Es muss sichergestellt sein, das im **HTTP HEADER** der ``Content-Type: application/json`` gesetzt ist.
 
-Ein HTTP POST request an die URL setzt den Wert eines Items. Dabei werden nur Items der Typen String, Numerisch und Boolean berücksichtigt
-sowie die Systemitems
-``env.location.moonrise``, ``env.location.moonset``, ``env.location.sunrise`` und ``env.location.sunset``.
-Deren Typ ist mit ``foo`` definiert und effektiv sind es datetime Objekte.
+            ``http://\<SmartHomeNG IP\>:\<http_modul_services_port\>/rest/items/\<item_pfad\>``
 
-Für Boolsche Werte können Ganzzahlwerte  0 und 1 benutzt werden oder aber auch "yes", "no", "y", "n", "true" für **Wahr** oder
-"false", "t", "f", "on", "off" für **Falsch**
-Zeichenketten oder Boolesche Werte als Zeichenkettendarstellung müssen in doppelte Hochkommata eingeschlossen werden "...".
+            Beispielsweise könnte ein HTTP PUT request mit 0 als Argument ``http://192.168.1.1:8384/rest/items/office.light`` das Licht ausschalten.
 
-Es muss sichergestellt sein, das im **HTTP HEADER** der ``Content-Type: application/json`` gesetzt ist.
+         .. tab:: POST
 
-``http://<SmartHomeNG IP>:<http_modul_services_port>/rest/items/<item_pfad`>`
+            Ein HTTP POST request an die URL setzt den Wert eines Items. Dabei werden nur Items der Typen String, Numerisch und Boolean berücksichtigt
+            sowie die Systemitems
+            ``env.location.moonrise``, ``env.location.moonset``, ``env.location.sunrise`` und ``env.location.sunset``.
+            Deren Typ ist mit ``foo`` definiert und effektiv sind es datetime Objekte.
 
-Beispielsweise könnte ein HTTP POST request mit 0 als Argument ``http://192.168.1.1:8384/rest/items/office.light`` das Licht ausschalten.
+            Für Boolsche Werte können Ganzzahlwerte  0 und 1 benutzt werden oder aber auch "yes", "no", "y", "n", "true" für **Wahr** oder
+            "false", "t", "f", "on", "off" für **Falsch**
+            Zeichenketten oder Boolesche Werte als Zeichenkettendarstellung müssen in doppelte Hochkommata eingeschlossen werden "...".
+
+            Es muss sichergestellt sein, das im **HTTP HEADER** der ``Content-Type: application/json`` gesetzt ist.
+
+            ``http://\<SmartHomeNG IP\>:\<http_modul_services_port\>/rest/items/\<item_pfad\>``
+
+            Beispielsweise könnte ein HTTP POST request mit ``0`` als Argument ``http://192.168.1.1:8384/rest/items/office.light`` das Licht ausschalten.
 
 
 Web Interface
@@ -199,7 +197,7 @@ Aufruf des Webinterfaces
 Das Plugin kann aus dem Admin Interface aufgerufen werden. Dazu auf der Seite Plugins in der entsprechenden
 Zeile das Icon in der Spalte **Web Interface** anklicken.
 
-Außerdem kann das Webinterface direkt über ``http://<SmartHomeNG_IP>:<http_modul_port>/plugin/<webservices>`` 
+Außerdem kann das Webinterface direkt über ``http://\<SmartHomeNG_IP\>:\<http_modul_port\>/plugin/\<webservices\>`` 
 aufgerufen werden.
 
 ``http_modul_port`` steht in diesem Fall für den im http Modul definierten Port
