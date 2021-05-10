@@ -278,9 +278,9 @@ dbplugin.updateItem(id, 12345, 0, 100)       # update item value in database for
 ```
 
 
---------------------------------------------
+%--------------------------------------------
 # Vollständig übernommen in plugin.yaml
---------------------------------------------
+%--------------------------------------------
 
 #### dbplugin.readItem(id, cur=None)
 
