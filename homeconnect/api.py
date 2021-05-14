@@ -15,7 +15,7 @@ URL_SIM = "https://simulator.home-connect.com"
 ENDPOINT_AUTHORIZE = "/security/oauth/authorize"
 ENDPOINT_TOKEN = "/security/oauth/token"
 ENDPOINT_APPLIANCES = "/api/homeappliances"
-
+TIMEOUT_S = 120
 
 class HomeConnectError(Exception):
     pass
@@ -206,29 +206,25 @@ class HomeConnectAppliance:
 
     def listen_events(self, callback=None):
         """Spawn a thread with an event listener that updates the status."""
-        uri = self.hc.get_uri(
-            "{}/{}{}".format("/api/homeappliances", self.haId, "/events")
-        )
-        from requests.exceptions import HTTPError
-
-        sse = None
-        while True:
-            try:
-                sse = SSEClient(uri, session=self.hc.oauth, retry=100)
-            except HTTPError:
-                print("HTTPError while trying to listen")
-                time.sleep(0.1)
-                continue
-            break
+        uri = f"{self.hc.host}/api/homeappliances/{self.haId}/events"
+        sse = SSEClient(uri, session=self.hc._oauth, retry=1000, timeout=TIMEOUT_S)
         Thread(target=self._listen, args=(sse, callback)).start()
 
     def _listen(self, sse, callback=None):
         """Worker function for listener."""
-        for event in sse:
-            try:
-                self.handle_event(event, callback)
-            except ValueError:
-                pass
+        LOGGER.info("Listening to event stream for device %s", self.name)
+        try:
+            for event in sse:
+                try:
+                    self.handle_event(event, callback)
+                except ValueError:
+                    pass
+        except TokenExpiredError as e:
+            LOGGER.info("Token expired in event stream.")
+            self.hc._oauth.token = self.hc.refresh_tokens()
+            uri = f"{self.hc.host}/api/homeappliances/{self.haId}/events"
+            sse = SSEClient(uri, session=self.hc._oauth, retry=1000, timeout=TIMEOUT_S)
+            self._listen(sse, callback=callback)
 
     @staticmethod
     def json2dict(lst):
@@ -241,7 +237,8 @@ class HomeConnectAppliance:
         Updates the status with the event data and executes any callback
         function."""
         event = json.loads(event.data)
-        self.status.update(self.json2dict(event["items"]))
+        d = self.json2dict(event["items"])
+        self.status.update(d)
         if callback is not None:
             callback(self)
 
@@ -276,17 +273,32 @@ class HomeConnectAppliance:
             return []
         return [p["key"] for p in programs["programs"]]
 
-    def start_program(self, program):
+    def get_program_options(self, program_key):
+        """Get program options."""
+        options = self.get(f"/programs/available/{program_key}")
+        if not options or "options" not in options:
+            return []
+        return [{p["key"]: p} for p in options["options"]]
+
+    def start_program(self, program_key, options=None):
         """Start a program."""
-        return self.put("/programs/active", {"data": {"key": program}})
+        if options is not None:
+            return self.put(
+                "/programs/active", {"data": {"key": program_key, "options": options}}
+            )
+        return self.put("/programs/active", {"data": {"key": program_key}})
 
     def stop_program(self):
         """Stop a program."""
         return self.delete("/programs/active")
 
-    def select_program(self, data):
+    def select_program(self, program, options=None):
         """Select a program."""
-        return self.put("/programs/selected", data)
+        if options is None:
+            _options = {}
+        else:
+            _options = {"options": options}
+        return self.put("/programs/selected", {"data": {"key": program, **_options}})
 
     def get_status(self):
         """Get the status (as dictionary) and update `self.status`."""
@@ -309,4 +321,32 @@ class HomeConnectAppliance:
         return self.put(
             "/settings/{}".format(settingkey),
             {"data": {"key": settingkey, "value": value}},
+        )
+
+    def set_options_active_program(self, option_key, value, unit=None):
+        """Change the option `option_key` of the currently active program."""
+        if unit is None:
+            _unit = {}
+        else:
+            _unit = {"unit": unit}
+        return self.put(
+            f"/programs/active/options/{option_key}",
+            {"data": {"key": option_key, "value": value, **_unit}},
+        )
+
+    def set_options_selected_program(self, option_key, value, unit=None):
+        """Change the option `option_key` of the currently selected program."""
+        if unit is None:
+            _unit = {}
+        else:
+            _unit = {"unit": unit}
+        return self.put(
+            f"/programs/selected/options/{option_key}",
+            {"data": {"key": option_key, "value": value, **_unit}},
+        )
+
+    def execute_command(self, command):
+        """Execute a command."""
+        return self.put(
+            f"/commands/{command}", {"data": {"key": command, "value": True}},
         )
