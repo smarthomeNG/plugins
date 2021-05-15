@@ -45,6 +45,20 @@ parameters:
 
 item_attributes:
     # Definition of item attributes defined by this plugin
+    homeconnect_data_type:
+        type: str
+        mandatory: True
+        description:
+            de: 'HomeConnect Datentyp des jeweiligen Items.'
+            en: 'HomeConnect Data Type of the respective item.'
+        valid_list:
+            - 'status'
+    ha_id:
+        type: str
+        mandatory: True
+        description:
+            de: 'haId des jeweiligen Items (siehe Appliance Liste im WebInterface des Plugins).'
+            en: 'haId of the respective item (see in appliance list in web interface of the plugin).'
 
 item_structs:
   # Definition of item-structure templates for this plugin

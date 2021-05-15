@@ -36,8 +36,8 @@ class HomeConnect:
         self.client_secret = client_secret
         self.redirect_uri = redirect_uri
         self.simulate = simulate
-        self.oauth = None
-        self.token_cache = token_cache or "homeconnect_oauth_token.json"
+        self._oauth = None
+        self._token_cache = token_cache or "homeconnect_oauth_token.json"
         self.connect()
 
     def get_uri(self, endpoint):
@@ -49,15 +49,15 @@ class HomeConnect:
 
     def token_dump(self, token):
         """Dump the token to a JSON file."""
-        with open(self.token_cache, "w") as f:
+        with open(self._token_cache, "w") as f:
             json.dump(token, f)
 
     def token_load(self):
         """Load the token from the cache if exists it and is not expired,
         otherwise return None."""
-        if not os.path.exists(self.token_cache):
+        if not os.path.exists(self._token_cache):
             return None
-        with open(self.token_cache, "r") as f:
+        with open(self._token_cache, "r") as f:
             token = json.load(f)
         now = int(time.time())
         token["expires_in"] = token.get("expires_at", now - 1) - now
@@ -78,7 +78,7 @@ class HomeConnect:
         refresh_url = self.get_uri(ENDPOINT_TOKEN)
         token = self.token_load()
         if token:
-            self.oauth = OAuth2Session(
+            self._oauth = OAuth2Session(
                 self.client_id,
                 token=token,
                 auto_refresh_url=refresh_url,
@@ -86,7 +86,7 @@ class HomeConnect:
                 token_updater=self.token_dump,
             )
         else:
-            self.oauth = OAuth2Session(
+            self._oauth = OAuth2Session(
                 self.client_id,
                 redirect_uri=self.redirect_uri,
                 auto_refresh_url=refresh_url,
@@ -97,14 +97,14 @@ class HomeConnect:
     def get_authurl(self):
         """Get the URL needed for the authorization code grant flow."""
         uri = self.get_uri(ENDPOINT_AUTHORIZE)
-        authorization_url, state = self.oauth.authorization_url(uri)
+        authorization_url, state = self._oauth.authorization_url(uri)
         return authorization_url
 
     def get_token(self, authorization_response):
         """Get the token given the redirect URL obtained from the
         authorization."""
         uri = self.get_uri(ENDPOINT_TOKEN)
-        token = self.oauth.fetch_token(
+        token = self._oauth.fetch_token(
             uri,
             authorization_response=authorization_response,
             client_secret=self.client_secret,
@@ -114,7 +114,7 @@ class HomeConnect:
     def get(self, endpoint):
         """Get data as dictionary from an endpoint."""
         uri = self.get_uri(endpoint)
-        res = self.oauth.get(uri)
+        res = self._oauth.get(uri)
         if not res.content:
             return {}
         try:
@@ -130,7 +130,7 @@ class HomeConnect:
     def put(self, endpoint, data):
         """Send (PUT) data to an endpoint."""
         uri = self.get_uri(endpoint)
-        res = self.oauth.put(
+        res = self._oauth.put(
             uri,
             json.dumps(data),
             headers={
@@ -151,7 +151,7 @@ class HomeConnect:
     def delete(self, endpoint):
         """Delete an endpoint."""
         uri = self.get_uri(endpoint)
-        res = self.oauth.delete(uri)
+        res = self._oauth.delete(uri)
         if not res.content:
             return {}
         try:
@@ -207,7 +207,7 @@ class HomeConnectAppliance:
     def listen_events(self, callback=None):
         """Spawn a thread with an event listener that updates the status."""
         uri = f"{self.hc.host}/api/homeappliances/{self.haId}/events"
-        sse = SSEClient(uri, session=self.hc._oauth, retry=1000, timeout=TIMEOUT_S)
+        sse = SSEClient(uri, session=self.hc.oauth, retry=1000, timeout=TIMEOUT_S)
         Thread(target=self._listen, args=(sse, callback)).start()
 
     def _listen(self, sse, callback=None):
@@ -221,7 +221,7 @@ class HomeConnectAppliance:
                     pass
         except TokenExpiredError as e:
             LOGGER.info("Token expired in event stream.")
-            self.hc._oauth.token = self.hc.refresh_tokens()
+            self.hc.oauth.token = self.hc.refresh_tokens()
             uri = f"{self.hc.host}/api/homeappliances/{self.haId}/events"
             sse = SSEClient(uri, session=self.hc._oauth, retry=1000, timeout=TIMEOUT_S)
             self._listen(sse, callback=callback)

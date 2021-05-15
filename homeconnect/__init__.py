@@ -65,6 +65,12 @@ class SHNGHomeConnect(SmartPlugin):
         Starts the update loop for all known items.
         """
         self.logger.debug("Starting update loop")
+        token = self.get_hc().token_load()
+        if token and not self.get_hc().token_expired(token):
+            for appliance in self.get_hc().get_appliances():
+                if self._items[appliance.haId]:
+                    self._items[appliance.haId](appliance.connected)
+
         if not self.alive:
             return
 
@@ -84,7 +90,7 @@ class SHNGHomeConnect(SmartPlugin):
         :param item: The item to process.
         """
         if self.get_iattr_value(item.conf, 'homeconnect_data_type'):
-            self._items[self.get_iattr_value(item.conf, 'homeconnect_data_type')] = item
+            self._items[self.get_iattr_value(item.conf, 'ha_id')] = item
         pass
 
     def get_items(self):

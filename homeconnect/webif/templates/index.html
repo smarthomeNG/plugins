@@ -41,7 +41,30 @@
 
 	<div class="col-sm-12 mt-3">
 		<h5>{{ _('HomeConnect Items') }} ({{ p.get_items()|length }})</h5>
-
+        <table class="table table-striped table-hover pluginList">
+			<thead>
+				<tr class="shng_heading">
+					<th>{{ _('Pfad') }}</th>
+					<th>{{ _('Typ') }}</th>
+					<th>{{ _('HomeConnect Data Type') }}</th>
+					<th>{{ _('Wert') }}</th>
+					<th>{{ _('Letztes Update') }}</th>
+					<th>{{ _('Letzter Change') }}</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for key, item in p.get_items().items() %}
+					<tr id="{{ loop.index }}_click">
+						<td class="py-1" {% if key in ['token_expiry', 'token_type', 'refresh_token', 'access_token'] %}style="font-weight:bold;"{% endif %}>{{ item._path }}</td>
+						<td class="py-1">{{ item._type }}</td>
+						<td class="py-1">{{ key }}</td>
+						<td class="py-1" {% if key == 'token_expiry' and p.get_item('token_expiry')() > 0 and token_expiry < now %}style="color: red; font-weight: bold;"{% endif %}>{{ item() }} {% if key == 'token_expiry' %}{% if p.get_item('token_expiry')() > 0 %}({% if language == 'en' %}{{ token_expiry.strftime('%m/%d/%Y %H:%M:%S') }}{% else %}{{ token_expiry.strftime('%d.%m.%Y %H:%M:%S') }}{% endif %}){% endif %}{% endif %}</td>
+						<td class="py-1">{% if language == 'en' %}{{ item.last_update().strftime('%m/%d/%Y %H:%M:%S') }}{% else %}{{ item.last_update().strftime('%d.%m.%Y %H:%M:%S') }}{% endif %}</td>
+						<td class="py-1">{% if language == 'en' %}{{ item.last_change().strftime('%m/%d/%Y %H:%M:%S') }}{% else %}{{ item.last_change().strftime('%d.%m.%Y %H:%M:%S') }}{% endif %}</td>
+					</tr>
+				{% endfor %}
+			</tbody>
+		</table>
     </div>
 </div>
 {% endblock %}
