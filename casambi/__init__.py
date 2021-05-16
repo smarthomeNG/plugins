@@ -41,7 +41,7 @@ class Casambi(SmartPlugin):
     """
 
     # Use VERSION = '1.0.0' for your initial plugin Release
-    PLUGIN_VERSION = '1.7.3'    # (must match the version specified in plugin.yaml)
+    PLUGIN_VERSION = '1.7.4'    # (must match the version specified in plugin.yaml)
 
     def __init__(self, sh):
         """
@@ -186,6 +186,7 @@ class Casambi(SmartPlugin):
             result =  self.websocket.recv()
         except Exception as e:
             self.logger.info("Exception during receiving in openWebsocket(): {0}".format(e))
+            return
         
         self.logger.debug("Received: {0}".format(result)) 
         resultJson = json.loads(result.decode('utf-8'))
@@ -198,8 +199,9 @@ class Casambi(SmartPlugin):
         if wireStatus == 'openWireSucceed':
             self.logger.debug("Wire opened successfully")
         else:    
-            self.logger.error("wireStatus: {0}".format(wireStatus))    
-
+            self.logger.error("wireStatus: {0}".format(wireStatus))   
+            self.logger.error("Debug: wireStatus response: {0}".format(result))    
+ 
         pass
 
 
@@ -333,6 +335,7 @@ class Casambi(SmartPlugin):
                 self.logger.warning("Received status information for ID {0} which has no equivalent item.".format(unitID))
         else:
             self.logger.warning("Received unknown method {0} which is not supported.".format(method))
+            self.logger.warning("Debug: decodeData(), receivedData: {0}".format(receivedData))
 
         pass
 
