@@ -189,19 +189,12 @@ class Casambi(SmartPlugin):
             return
         
         self.logger.debug("Received: {0}".format(result)) 
-        resultJson = json.loads(result.decode('utf-8'))
-        wireStatus = ''
-        if resultJson:
-            if 'wireStatus' in resultJson:
-                wireStatus = str(resultJson['wireStatus'])
-                self.logger.debug("wireStatus: {0}".format(wireStatus))
+        
+        try:
+            self.decodeEventData(receivedData)
+        except Exception as e:
+            self.logger.error("Exception during decodeEventData: {0}".format(e))
 
-        if wireStatus == 'openWireSucceed':
-            self.logger.debug("Wire opened successfully")
-        else:    
-            self.logger.error("wireStatus: {0}".format(wireStatus))   
-            self.logger.error("Debug: wireStatus response: {0}".format(result))    
- 
         pass
 
 
@@ -260,21 +253,31 @@ class Casambi(SmartPlugin):
         if len(receivedData) < 1:
             return
 
-        dataJson = json.loads(receivedData.decode('utf-8'))
-
-        if 'wireStatus' in dataJson:
-            wireStatus = str(dataJson['wireStatus']) 
-            if not (wireStatus == 'openWireSucceed'):
-                self.logger.warning("Event: Wirestatus {0} received".format(wireStatus))
-
         method = ''
+
+        dataJson = json.loads(receivedData.decode('utf-8'))
+        
         if dataJson:
+            if 'wireStatus' in dataJson:
+                wireStatus = str(dataJson['wireStatus']) 
+
+                if wireStatus == 'openWireSucceed':
+                    self.logger.debug("Wire opened successfully")
+                elif wireStatus == '':
+                    self.logger.debug("No wireStatus received")
+                else:    
+                    self.logger.error("wireStatus: {0}".format(wireStatus))   
+                    self.logger.error("Debug: wireStatus response: {0}".format(result))    
+
             if 'method' in dataJson :
                 method = str(dataJson ['method'])
         else:
             self.logger.debug("decodeEventData: Invalid Json")
 
-        if method == 'peerChanged':
+        if method == '':
+            # This happens for example if a wireStatus response to an open message is received which does not contain a method attribute.
+            self.logger.debug("Event: No method info received.")
+        elif method == 'peerChanged':
             online = None
             if 'online' in dataJson:
                 self.casambiBackendStatus = bool(dataJson ['online'])
