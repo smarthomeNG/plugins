@@ -107,8 +107,8 @@ The philosophy is now to have a getter and a setter if possible.
 For this plugin it means that SmartVISU now can access the attributes values, too as shown in the following example (valid for SmartVISU >= 2.9):
 
 ```html
-{{ basic.print( '', 'sh.second.sleeping.light.property.prev_value') }} 
-{{ basic.print( '', 'sh.second.sleeping.light.property.last_change') }} 
+{{ basic.print( '', 'second.sleeping.light.property.prev_value') }} 
+{{ basic.print( '', 'second.sleeping.light.property.last_change') }} 
 ```
 
 The properties aka attributes will only be updated when the items value is updated, thus changes can only propagated to SmartVISU in case the 
