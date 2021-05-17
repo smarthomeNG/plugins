@@ -191,9 +191,9 @@ class Casambi(SmartPlugin):
         self.logger.debug("Received: {0}".format(result)) 
         
         try:
-            self.decodeEventData(receivedData)
+            self.decodeEventData(result)
         except Exception as e:
-            self.logger.error("Exception during decodeEventData: {0}".format(e))
+            self.logger.error("Exception in decodeEventData from openWebsocket: {0}".format(e))
 
         pass
 
