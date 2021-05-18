@@ -80,11 +80,14 @@ class WebInterface(SmartPluginWebIf):
             self.plugin.get_hc().get_token(cherrypy.url()+"?code="+code+"&state="+state+"&grant_type="+grant_type)
             token = self.plugin.get_hc().token_load()
 
+        token_expiry_date = None
+        if token is not None:
+            token_expiry_date = datetime.fromtimestamp(token['expires_at'])
 
         tmpl = self.tplenv.get_template('index.html')
         return tmpl.render(plugin_shortname=self.plugin.get_shortname(), plugin_version=self.plugin.get_version(),
                            interface=None, item_count=len(self.plugin.get_items()),
                            plugin_info=self.plugin.get_info(), tabcount=2,
                            tab1title="HomeConnect Items (%s)" % len(self.plugin.get_items()),
-                           tab2title="OAuth2 Data", tab3title="Appliances", token=token, token_expiry_date=datetime.fromtimestamp(token['expires_at']),
+                           tab2title="OAuth2 Data", tab3title="Appliances", token=token, token_expiry_date=token_expiry_date,
                            p=self.plugin)
