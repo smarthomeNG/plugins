@@ -41,8 +41,6 @@ from lib.model.smartplugin import SmartPluginWebIf
 import cherrypy
 import csv
 from jinja2 import Environment, FileSystemLoader
-from withings_api import AuthScope, WithingsApi, WithingsAuth
-from withings_api.common import Credentials, CredentialsType, get_measure_value, MeasureType
 
 class WebInterface(SmartPluginWebIf):
 
