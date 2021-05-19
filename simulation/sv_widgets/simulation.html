@@ -18,24 +18,24 @@
 */
 {% macro info(id, header, status, tank, control, message) %}
     {% import "basic.html" as basic %}
-    {% if header is empty %} {% set text = "Anwesenheitssimulation" %} {% endif %}
+    {% if header is empty %} {% set header = "Anwesenheitssimulation" %} {% endif %}
     <div class="block" id="{{ uid(page, id) }}">
     	<div class="set-2" data-role="collapsible-set" data-theme="c" data-content-theme="a" data-mini="true">
     		<div data-role="collapsible" data-collapsed="false">
     		<h3>{{header}}</h3>
     		<table width=100%>
     			<tr>
-    				<td>{{ basic.symbol('','{{status}}','','lamp_sim.svg',['4','0','1','2','3'],'',['#0b0','#A4A4A4','#A4A4A4','#A4A4A4','#A4A4A4']) }}</td>
-    				<td>Aufgenommene Tage<br>{{ basic.print('', '{{tank}}') }}</td>
-    				<td>{{ basic.symbol('','{{status}}','','lamp_sim.svg',['0','4','1','2','3'],'',['#A4A4A4','#A4A4A4','#fa3','#f00','#BF00FF']) }}</td>
-    				<td rowspan=3 width="20%">{{ basic.tank('P_tank1', '{{tank}}',0,15,1,'cylinder','#0C0') }}</td>
+    				<td>{{ basic.symbol('', status,'','lamp_sim.svg',['4','0','1','2','3'],'',['#0b0','#A4A4A4','#A4A4A4','#A4A4A4','#A4A4A4']) }}</td>
+    				<td>Aufgenommene Tage<br>{{ basic.print('', tank) }}</td>
+    				<td>{{ basic.symbol('', status,'','lamp_sim.svg',['0','4','1','2','3'],'',['#A4A4A4','#A4A4A4','#fa3','#f00','#BF00FF']) }}</td>
+    				<td rowspan=3 width="20%">{{ basic.tank('P_tank1', tank, 0, 15, 1, 'cylinder','#0C0') }}</td>
     			</tr><tr>
-    				<td>{{ basic.stateswitch('', '{{control}}', 'mini', '2', 'audio_play.svg', '', '') }}</td>
-    				<td>{{ basic.stateswitch('', '{{control}}', 'mini', '1', 'audio_stop.svg', '', '') }}</td>
-    				<td>{{ basic.stateswitch('', '{{control}}', 'mini', '3', 'audio_rec.svg', '', '') }}</td>
+    				<td>{{ basic.stateswitch('', control, 'mini', '2', 'audio_play.svg', '', '') }}</td>
+    				<td>{{ basic.stateswitch('', control, 'mini', '1', 'audio_stop.svg', '', '') }}</td>
+    				<td>{{ basic.stateswitch('', control, 'mini', '3', 'audio_rec.svg', '', '') }}</td>
     				<td></td>
     			</tr><tr>
-    				<td colspan=3 width="80%">{{basic.print('','{{message}}', 'html') }}</td>
+    				<td colspan=3 width="80%">{{basic.print('', message, 'html') }}</td>
     				<td></td>
     			</tr>
     		</table>
