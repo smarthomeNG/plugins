@@ -190,10 +190,10 @@ class Casambi(SmartPlugin):
         
         self.logger.debug("Received: {0}".format(result)) 
         
-        try:
-            self.decodeEventData(result)
-        except Exception as e:
-            self.logger.error("Exception in decodeEventData from openWebsocket: {0}".format(e))
+        #try:
+        self.decodeEventData(result)
+        #except Exception as e:
+        #    self.logger.error("Exception in decodeEventData from openWebsocket: {0}".format(e))
 
         pass
 
@@ -281,6 +281,11 @@ class Casambi(SmartPlugin):
             online = None
             if 'online' in dataJson:
                 self.casambiBackendStatus = bool(dataJson ['online'])
+                for id in self._rx_items:
+                    for item in self._rx_items[id]:
+                        if (item.conf['casambi_rx_key'].upper() == 'BACKEND_ONLINE_STAT'):
+                            item( self.casambiBackendStatus, self.get_shortname())
+
             self.logger.debug("Received {0} status with backend online status: {1}.".format(method, self.casambiBackendStatus))
 
         elif method == 'unitChanged':
@@ -406,10 +411,10 @@ class Casambi(SmartPlugin):
                     self.logger.debug("Received empty data")
                 else: 
                     self.logger.debug("Received data: {0}".format(receivedData))
-                    try:
-                        self.decodeEventData(receivedData)
-                    except Exception as e:
-                        self.logger.error("Exception during decodeEventData: {0}".format(e))
+                    #try:
+                    self.decodeEventData(receivedData)
+                    #except Exception as e:
+                    #    self.logger.error("Exception during decodeEventData: {0}".format(e))
 
 
             # Error handling:

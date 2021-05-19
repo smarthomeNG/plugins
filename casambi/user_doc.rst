@@ -41,6 +41,11 @@ Beispiel für einen Dimmer (Occhio Sento) mit zusätzlichen Möglichkeiten für 
         casambi_id: 2
         enforce_updates: True
 
+        backendstatus:
+            type: bool
+            casambi_rx_key: BACKEND_ONLINE_STAT
+            visu_acl: ro
+
         light:
             type: bool
             casambi_rx_key: ON
