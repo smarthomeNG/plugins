@@ -51,6 +51,10 @@ class SHNGHomeConnect(SmartPlugin):
             self._init_complete = False
         else:
             self._hc = HomeConnect(self._client_id, self._client_secret, self.get_redirect_uri(), token_cache=self.get_sh().get_basedir()+"/plugins/homeconnect/homeconnect_oauth_token.json")
+            token = self.get_hc().token_load()
+            if token:
+                if not self.get_hc().token_expired(token):
+                    self._init_appliance_listeners()
 
     def run(self):
         self.alive = True
@@ -65,11 +69,6 @@ class SHNGHomeConnect(SmartPlugin):
         Starts the update loop for all known items.
         """
         self.logger.debug("Starting update loop")
-        token = self.get_hc().token_load()
-        if token and not self.get_hc().token_expired(token):
-            for appliance in self.get_hc().get_appliances():
-                if self._items[appliance.haId]:
-                    self._items[appliance.haId](appliance.connected)
 
         if not self.alive:
             return
@@ -80,7 +79,22 @@ class SHNGHomeConnect(SmartPlugin):
         """
         Updates information on diverse items
         """
+        token = self.get_hc().token_load()
+        if token:
+            if not self.get_hc().token_expired(token):
+                for appliance in self.get_hc().get_appliances():
+                    if appliance.haId + "_status" in self._items:
+                        self._items[appliance.haId + "_status"](appliance.connected)
         pass
+
+    def _update_listener(self):
+        pass
+
+    def _init_appliance_listeners(self):
+        token = self.get_hc().token_load()
+        if token and not self.get_hc().token_expired(token):
+            for appliance in self.get_hc().get_appliances():
+                appliance.listen_events(self._update_listener)
 
     def parse_item(self, item):
         """
@@ -90,7 +104,7 @@ class SHNGHomeConnect(SmartPlugin):
         :param item: The item to process.
         """
         if self.get_iattr_value(item.conf, 'homeconnect_data_type'):
-            self._items[self.get_iattr_value(item.conf, 'ha_id')] = item
+            self._items[self.get_iattr_value(item.conf, 'ha_id')+"_"+self.get_iattr_value(item.conf, 'homeconnect_data_type')] = item
         pass
 
     def get_items(self):

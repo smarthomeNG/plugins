@@ -89,8 +89,10 @@
                 {{ p.get_redirect_uri() }}
             </td>
         </tr>
+        {% if token %}
         {% if p.get_hc().token_expired(token) %}
             <tr><td colspan="2" style="color: red; font-weight:bold;">Token expired!</td></tr>
+        {% endif %}
         {% endif %}
         {% if token and not p.get_hc().token_expired(token) %}
         <tr>
