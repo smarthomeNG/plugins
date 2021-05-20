@@ -111,6 +111,14 @@ class HomeConnect:
         )
         self.token_dump(token)
 
+    def refresh_tokens(self) -> Dict[str, Union[str, int]]:
+        """Refresh and return new tokens."""
+        LOGGER.info("Refreshing tokens ...")
+        token = self._oauth.refresh_token(self.get_uri(ENDPOINT_TOKEN))
+        self.token_dump(token)
+
+        return token
+
     def get(self, endpoint):
         """Get data as dictionary from an endpoint."""
         uri = self.get_uri(endpoint)
