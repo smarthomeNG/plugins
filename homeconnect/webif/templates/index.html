@@ -200,6 +200,10 @@
                      {{ appliance.connected }}
                  </td>
             </tr>
+            <tr>
+                <td>Programs</td>
+                <td>{{ appliance.get_programs_available()|join(', ') }}</td>
+            </tr>
             {% endfor %}
             </table>
          </div>
