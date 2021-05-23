@@ -89,3 +89,14 @@ plugin_functions:
                 description:
                     de: "haId der Appliance (im Web-Interface des Plugins zu sehen)"
                     en: "haId of the appliance (can be found in the web interface of the plugin"
+    get_programs_active:
+        type: list(str)
+        description:
+            de: "Gibt die aktiven Programme einer Appliance zurück."
+            en: "Returns the active programs of an appliance."
+        parameters:
+            haId:
+                type: str
+                description:
+                    de: "haId der Appliance (im Web-Interface des Plugins zu sehen)"
+                    en: "haId of the appliance (can be found in the web interface of the plugin"

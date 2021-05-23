@@ -82,6 +82,7 @@ class HomeConnect:
         }
         refresh_url = self.get_uri(ENDPOINT_TOKEN)
         token = self.token_load()
+        #refresh see https://requests-oauthlib.readthedocs.io/en/latest/oauth2_workflow.html#refreshing-tokens
         if token:
             self._oauth = OAuth2Session(
                 self.client_id,
