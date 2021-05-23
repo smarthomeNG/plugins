@@ -73,3 +73,19 @@ plugin_functions:
         description:
             de: 'Gibt die Redirect URL des HomeConnect Plugins zurück.'
             en: 'Returns the redirect url of the HomeConnect plugin.'
+    get_hc:
+        type: foo
+        description:
+            de: 'Gibt das HomeConnect Objekt des HomeConnect Plugins zurück.'
+            en: 'Returns the HomeConnect object of the HomeConnect plugin.'
+    get_programs_available:
+        type: list(str)
+        description:
+            de: "Gibt die verfügbaren Programme einer Appliance zurück."
+            en: "Returns the available programs of an appliance."
+        parameters:
+            haId:
+                type: str
+                description:
+                    de: "haId der Appliance (im Web-Interface des Plugins zu sehen)"
+                    en: "haId of the appliance (can be found in the web interface of the plugin"

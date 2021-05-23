@@ -125,6 +125,11 @@ class SHNGHomeConnect(SmartPlugin):
     def get_token(self):
         return self._token
 
+    def get_programs_available(self, haId):
+        for appliance in self.get_hc().get_appliances():
+            if appliance.haId == haId:
+                return appliance.get_programs_available()
+
     def set_token(self, new_token):
         self.logger.debug("Updating token: %s"%new_token)
         self._token = new_token
