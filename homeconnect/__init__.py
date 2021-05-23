@@ -50,10 +50,11 @@ class SHNGHomeConnect(SmartPlugin):
         if not self.init_webinterface(WebInterface):
             self._init_complete = False
         else:
-            self._hc = HomeConnect(self._client_id, self._client_secret, self.get_redirect_uri(), token_cache=self.get_sh().get_basedir()+"/plugins/homeconnect/homeconnect_oauth_token.json")
-            token = self.get_hc().token_load()
-            if token:
-                if not self.get_hc().token_expired(token):
+            self._hc = HomeConnect(self._client_id, self._client_secret, self.get_redirect_uri(), token_cache=self.get_sh().get_basedir()+"/plugins/homeconnect/homeconnect_oauth_token.json", token_listener=self.set_token)
+            self._token = self.get_hc().token_load()
+            self.logger.debug("Token loaded: %s"%self._token)
+            if self._token:
+                if not self.get_hc().token_expired(self._token):
                     self._init_appliance_listeners()
 
     def run(self):
@@ -79,22 +80,27 @@ class SHNGHomeConnect(SmartPlugin):
         """
         Updates information on diverse items
         """
-        token = self.get_hc().token_load()
-        if token:
-            if not self.get_hc().token_expired(token):
-                for appliance in self.get_hc().get_appliances():
-                    if appliance.haId + "_status" in self._items:
-                        self._items[appliance.haId + "_status"](appliance.connected)
+        self.logger.debug("Token in _update is %s"%self._token)
+        if self._token:
+            if not self.get_hc().token_expired(self._token):
+                try:
+                    for appliance in self.get_hc().get_appliances():
+                        if appliance.haId + "_status" in self._items:
+                            self._items[appliance.haId + "_status"](appliance.connected)
+                except Exception as e:
+                    self.logger.error("An exception occured in _update %s"%e)
         pass
 
     def _update_listener(self):
         pass
 
     def _init_appliance_listeners(self):
-        token = self.get_hc().token_load()
-        if token and not self.get_hc().token_expired(token):
-            for appliance in self.get_hc().get_appliances():
-                appliance.listen_events(self._update_listener)
+        if self._token and not self.get_hc().token_expired(self._token):
+            try:
+                for appliance in self.get_hc().get_appliances():
+                    appliance.listen_events(self._update_listener)
+            except Exception as e:
+                self.logger.error("An exception occured in _update %s" % e)
 
     def parse_item(self, item):
         """
@@ -115,6 +121,13 @@ class SHNGHomeConnect(SmartPlugin):
 
     def get_client_id(self):
         return self._client_id
+
+    def get_token(self):
+        return self._token
+
+    def set_token(self, new_token):
+        self.logger.debug("Updating token: %s"%new_token)
+        self._token = new_token
 
     def get_client_secret(self):
         return self._client_secret
