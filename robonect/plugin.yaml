@@ -33,8 +33,8 @@ parameters:
         type: str
         default: 'api'
         description:
-            de: 'Art der Anbindung: nur via API (nur Pollen von Daten) oder API + MQTT (für live updates - benötigt das konfigurierte MQTT Modul von SmartHomeNG!).'
-            en: 'Type of connection: only via API (only polling of data) or API + MQTT (for live updates - requires the configured MQTT module of SmartHomeNG!).'
+            de: 'Art der Anbindung: nur via API (nur Pollen von Daten) oder API + MQTT (für live updates - benötigt das konfigurierte MQTT Modul von SmartHomeNG! Bitte im Robonect unter "Kommunikation" -> "MQTT-Client" das Flag "Einheiten an Werte anfügen" ausschalten).'
+            en: 'Type of connection: only via API (only polling of data) or API + MQTT (for live updates - requires the configured MQTT module of SmartHomeNG! Remove the flag under "Kommunikation" -> "MQTT-Client" das Flag "Einheiten an Werte anfügen").'
         valid_list:
             - 'api'
             - 'mqtt'
