@@ -88,7 +88,7 @@ class SHNGHomeConnect(SmartPlugin):
                         if appliance.haId + "_status" in self._items:
                             self._items[appliance.haId + "_status"](appliance.connected)
                 except Exception as e:
-                    self.logger.error("An exception occured in _update %s"%e)
+                    self.logger.error("An exception occurred in _update %s"%e)
         pass
 
     def _update_listener(self):
@@ -100,7 +100,7 @@ class SHNGHomeConnect(SmartPlugin):
                 for appliance in self.get_hc().get_appliances():
                     appliance.listen_events(self._update_listener)
             except Exception as e:
-                self.logger.error("An exception occured in _update %s" % e)
+                self.logger.error("An exception occurred in _update %s" % e)
 
     def parse_item(self, item):
         """
@@ -142,7 +142,7 @@ class SHNGHomeConnect(SmartPlugin):
         for web_if in web_ifs:
             if web_if['Instance'] == self.get_instance_name():
                 redirect_uri = "http://{}:{}{}".format(ip, port, web_if['Mount'])
-                self.logger.debug("WebIf found, callback is {}".format(self.get_fullname(),
+                self.logger.debug("WebIf of plugin {} found, callback is {}".format(self.get_fullname(),
                                                                        redirect_uri))
             return redirect_uri
         self.logger.error("Redirect URL cannot be established.".format(self.get_fullname()))
