@@ -133,7 +133,12 @@ class SHNGHomeConnect(SmartPlugin):
     def get_programs_active(self, haId):
         for appliance in self.get_hc().get_appliances():
             if appliance.haId == haId:
-                return appliance.get_programs_active()
+                try:
+                    return appliance.get_programs_active()
+                except Exception as e:
+                    self.logger.debug("An exception occurred: %s"%str(e))
+                    return ""
+
 
     def set_token(self, new_token):
         self.logger.debug("Updating token: %s"%new_token)
