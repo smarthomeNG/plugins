@@ -272,10 +272,14 @@ item_structs:
             name: 'Control of the Mower'
             robonect_data_type: control
             type: str
+            webservices_set: automower
+            webservices_data: 'val'
             mode:
                 name: 'Control Mode of the Mower'
                 robonect_data_type: control/mode
                 type: str
+                webservices_set: automower
+                webservices_data: 'val'
         status:
             name: 'Status Code'
             robonect_data_type: mower/status
