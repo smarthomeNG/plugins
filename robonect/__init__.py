@@ -196,7 +196,7 @@ class Robonect(MqttPlugin):
                 self.publish_topic(topic, item())
 
             if mqtt_id == 'control/mode':
-                if item() not in self.MODE_TYPES and not item() == 'job':
+                if item() not in self.MODE_TYPES or item() == 'job':
                     self.logger.error( "mqtt publish invalid mode supplied: '{}' must be one of 'home','eod','man','auto'.".format(item()))
                     return
             else:
