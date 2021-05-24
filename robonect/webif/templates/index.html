@@ -223,12 +223,15 @@
 {% set tab2title = "<strong>"+_('Fehlercodes')+"</strong>" %}
 {% block bodytab2 %}
     <div class="ml-4 mt-4 mb-4">
+    {% set error_list = p.get_full_error_list() %}
+    {% if error_list %}
     {% for entry in p.get_full_error_list() %}
         <div>
         {{  entry['error_code'] }}:&nbsp;
         {{  entry['error_message'] }}
         </div>
     {% endfor %}
+    {% endif %}
     </div>
 {% endblock bodytab2 %}
 
