@@ -155,8 +155,9 @@ class Robonect(MqttPlugin):
                 self._motor_items[self.get_iattr_value(item.conf, 'robonect_data_type')] = item
             else:
                 self._items[self.get_iattr_value(item.conf, 'robonect_data_type')] = item
-            if mqtt_id in ['control', 'control/mode']:
-                return self.update_item
+            if self._plugin_mode == 'mqtt':
+                if mqtt_id in ['control', 'control/mode']:
+                    return self.update_item
         return
 
     def parse_logic(self, logic):
