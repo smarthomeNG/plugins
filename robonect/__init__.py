@@ -40,7 +40,7 @@ class Robonect(MqttPlugin):
     Main class of the Plugin. Does all plugin specific stuff and provides
     the update functions for the items
     """
-    PLUGIN_VERSION = '1.0.3'  # (must match the version specified in plugin.yaml)
+    PLUGIN_VERSION = '1.0.4'  # (must match the version specified in plugin.yaml)
     STATUS_TYPES = ['mower/status', 'mower/status/text', 'status_text_translated', 'mower/distance', 'mower/status/duration',
                     'mower/statistic/hours',
                     'mower/stopped', 'mower/mode', 'mower/mode/text', 'mode_text_translated', 'mower/battery/charge', 'blades_quality',
@@ -154,6 +154,8 @@ class Robonect(MqttPlugin):
                 self._motor_items[self.get_iattr_value(item.conf, 'robonect_data_type')] = item
             else:
                 self._items[self.get_iattr_value(item.conf, 'robonect_data_type')] = item
+            if mqtt_id in ['control', 'control/mode']:
+                return self.update_item
         return
 
     def parse_logic(self, logic):
@@ -182,13 +184,25 @@ class Robonect(MqttPlugin):
             # and only, if the item has not been changed by this this plugin:
             self.logger.info("Update item: {}, item has been changed outside this plugin".format(item.id()))
 
-            if self.has_iattr(item.conf, 'foo_itemtag'):
-                self.logger.debug(
-                    "update_item was called with item '{}' from caller '{}', source '{}' and dest '{}'".format(item,
-                                                                                                               caller,
-                                                                                                               source,
-                                                                                                               dest))
-            pass
+            mqtt_id = self.get_iattr_value(item.conf, 'robonect_data_type')
+            topic = '%s/%s' % (self._topic_prefix, mqtt_id)
+
+            if mqtt_id == 'control':
+                if item() not in ['start', 'stop']:
+                    self.logger.error("mqtt publish invalid command supplied: '{}' must be one of 'start','stop'.".format(item()))
+                    return
+            else:
+                self.logger.debug("Publish {} {}".format(topic, item()))
+                self.publish_topic(topic, item())
+
+            if mqtt_id == 'control/mode':
+                if item() not in self.MODE_TYPES and not item() == 'job':
+                    self.logger.error( "mqtt publish invalid mode supplied: '{}' must be one of 'home','eod','man','auto'.".format(item()))
+                    return
+            else:
+                self.logger.debug("Publish {} {}".format(topic, item()))
+                self.publish_topic(topic, item())
+        return
 
     def poll_device(self, ignore_status=False):
         """
