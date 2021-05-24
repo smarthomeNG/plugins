@@ -841,31 +841,31 @@ class Robonect(MqttPlugin):
             return
 
         self.set_mower_online()
-
-        for item in self._remote_items['remotestart_name']:
-            key = 'remotestart_%s' % self.get_iattr_value(item.conf, 'robonect_remote_index')
-            if key in json_obj:
-                item(json_obj[key]['name'], self.get_shortname())
-
-        for item in self._remote_items['remotestart_visible']:
-            key = 'remotestart_%s' % self.get_iattr_value(item.conf, 'robonect_remote_index')
-            if key in json_obj:
-                item(json_obj[key]['visible'], self.get_shortname())
-
-        for item in self._remote_items['remotestart_path']:
-            key = 'remotestart_%s' % self.get_iattr_value(item.conf, 'robonect_remote_index')
-            if key in json_obj:
-                item(json_obj[key]['path'], self.get_shortname())
-
-        for item in self._remote_items['remotestart_proportion']:
-            key = 'remotestart_%s' % self.get_iattr_value(item.conf, 'robonect_remote_index')
-            if key in json_obj:
-                item(json_obj[key]['proportion'], self.get_shortname())
-
-        for item in self._remote_items['remotestart_distance']:
-            key = 'remotestart_%s' % self.get_iattr_value(item.conf, 'robonect_remote_index')
-            if key in json_obj:
-                item(json_obj[key]['distance'], self.get_shortname())
+        if 'remotestart_name' in self._remote_items:
+            for item in self._remote_items['remotestart_name']:
+                key = 'remotestart_%s' % self.get_iattr_value(item.conf, 'robonect_remote_index')
+                if key in json_obj:
+                    item(json_obj[key]['name'], self.get_shortname())
+        if 'remotestart_visible' in self._remote_items:
+            for item in self._remote_items['remotestart_visible']:
+                key = 'remotestart_%s' % self.get_iattr_value(item.conf, 'robonect_remote_index')
+                if key in json_obj:
+                    item(json_obj[key]['visible'], self.get_shortname())
+        if 'remotestart_path' in self._remote_items:
+            for item in self._remote_items['remotestart_path']:
+                key = 'remotestart_%s' % self.get_iattr_value(item.conf, 'robonect_remote_index')
+                if key in json_obj:
+                    item(json_obj[key]['path'], self.get_shortname())
+        if 'remotestart_proportion' in self._remote_items:
+            for item in self._remote_items['remotestart_proportion']:
+                key = 'remotestart_%s' % self.get_iattr_value(item.conf, 'robonect_remote_index')
+                if key in json_obj:
+                    item(json_obj[key]['proportion'], self.get_shortname())
+        if 'remotestart_distance' in self._remote_items:
+            for item in self._remote_items['remotestart_distance']:
+                key = 'remotestart_%s' % self.get_iattr_value(item.conf, 'robonect_remote_index')
+                if key in json_obj:
+                    item(json_obj[key]['distance'], self.get_shortname())
 
         return json_obj
 
