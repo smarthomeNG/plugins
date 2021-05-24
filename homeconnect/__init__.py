@@ -154,6 +154,24 @@ class SHNGHomeConnect(SmartPlugin):
                     self.logger.debug("An exception occurred: %s"%str(e))
                     return ""
 
+    def start_program(self, ha_id, program_key, options=None):
+        for appliance in self.get_hc().get_appliances():
+            if appliance.haId == ha_id:
+                try:
+                    return appliance.start_program(program_key, options)
+                except Exception as e:
+                    self.logger.debug("An exception occurred: %s" % str(e))
+                    return ""
+
+    def stop_program(self, ha_id, program_key, options=None):
+        for appliance in self.get_hc().get_appliances():
+            if appliance.haId == ha_id:
+                try:
+                    return appliance.stop_program(program_key, options)
+                except Exception as e:
+                    self.logger.debug("An exception occurred: %s" % str(e))
+                    return ""
+
     def set_token(self, new_token):
         self.logger.debug("Updating token: %s"%new_token)
         self._token = new_token

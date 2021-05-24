@@ -239,7 +239,15 @@
             </tr>
             <tr>
                 <td>Programs</td>
-                <td>{{ appliance.get_programs_available()|join(', ') }}</td>
+                <td>
+                    <ul>
+                    {% for program in appliance.get_programs_available() %}
+                    <li>
+                        {{ program }}
+                    </li>
+                    {% endfor %}
+                    </ul>
+                </td>
             </tr>
             {% endfor %}
             </table>

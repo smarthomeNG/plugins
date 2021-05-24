@@ -135,3 +135,45 @@ plugin_functions:
                 description:
                     de: "program_key des Programms, dessen Optionen zurückgegeben werden sollen (im Web-Interface des Plugins zu sehen)"
                     en: "program_key of the program, whose options shall be retreiver (can be found in the web interface of the plugin)"
+    start_program:
+        type: str
+        description:
+            de: "Startet das Programm einer Appliance."
+            en: "Starts the program of an appliance."
+        parameters:
+            ha_id:
+                type: str
+                description:
+                    de: "ha_id der Appliance (im Web-Interface des Plugins zu sehen)"
+                    en: "ha_id of the appliance (can be found in the web interface of the plugin)"
+            program_key:
+                type: str
+                description:
+                    de: "program_key des Programms, das ausgeführt werden soll (im Web-Interface des Plugins zu sehen)"
+                    en: "program_key of the program, which shall be started (can be found in the web interface of the plugin)"
+            options:
+                type: str
+                description:
+                    de: "Optionen des Programms, das ausgeführt werden soll (im Web-Interface des Plugins zu sehen)"
+                    en: "Options of the program, which shall be started (can be found in the web interface of the plugin)"
+    stop_program:
+        type: str
+        description:
+            de: "Stoppt das Programm einer Appliance."
+            en: "Stops the program of an appliance."
+        parameters:
+            ha_id:
+                type: str
+                description:
+                    de: "ha_id der Appliance (im Web-Interface des Plugins zu sehen)"
+                    en: "ha_id of the appliance (can be found in the web interface of the plugin)"
+            program_key:
+                type: str
+                description:
+                    de: "program_key des Programms, das gestoppt werden soll (im Web-Interface des Plugins zu sehen)"
+                    en: "program_key of the program, which shall be stopped (can be found in the web interface of the plugin)"
+            options:
+                type: str
+                description:
+                    de: "Optionen des Programms, das gestoppt werden soll (im Web-Interface des Plugins zu sehen)"
+                    en: "Options of the program, which shall be stopped (can be found in the web interface of the plugin)"
