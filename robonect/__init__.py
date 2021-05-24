@@ -79,6 +79,7 @@ class Robonect(MqttPlugin):
         self._motor_items = {}
         self._status = 0
         self._mode = 0
+        self._full_error_list
         self._session = requests.Session()
         self.init_webinterface(WebInterface)
         return
@@ -495,7 +496,14 @@ class Robonect(MqttPlugin):
         self.set_mower_online()
 
         if 'errors' in json_obj:
+            self.set_full_error_list(json_obj['errors'])
             return json_obj['errors']
+        else:
+            return self._full_error_list
+
+    def set_full_error_list(self, full_error_list):
+        self._full_error_list = full_error_list
+        return
 
     def set_name_via_api(self, name):
         """
