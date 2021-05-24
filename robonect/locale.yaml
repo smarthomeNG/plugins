@@ -13,6 +13,7 @@ plugin_translations:
     'Status':  {'de': '=', 'en': 'Status', 'fr': ''}
     'AUTO':  {'de': 'Auto', 'en': 'Auto', 'fr': ''}
     'MANUAL':  {'de': 'Manuell', 'en': 'Manual', 'fr': ''}
+    'EOD':  {'de': 'Feierabend', 'en': 'End of Day', 'fr': ''}
     'HOME':  {'de': 'Home', 'en': 'Home', 'fr': ''}
     'DEMO':  {'de': 'Demo', 'en': 'Demo', 'fr': ''}
     'DETECTING_STATUS':  {'de': 'Status wird ermittelt', 'en': 'Detecting Status', 'fr': ''}
