@@ -2,7 +2,11 @@
 
 {% set logo_frame = false %}
 {% set use_bodytabs = true %}
-{% if token %}{% set tabcount = 3 %}{% endif %}
+{% set tab2title = "OAuth2 Data" %}
+{% set tab3title = "Plugin-API" %}
+{% set tab4title = "Appliances" %}
+{% set language = p.get_sh().get_defaultlanguage() %}
+{% if token %}{% set tabcount = 4 %}{% endif %}
 
 {% block headtable %}
 <table class="table table-striped table-hover">
@@ -137,8 +141,41 @@
     </table>
 </div>
 {% endblock %}
-
 {% block bodytab3 %}
+    <div class="container ml-1 pl-1 mr-1 pr-1">
+    {%  for function, dict in p.metadata.plugin_functions.items() %}
+        <div class="card mb-2">
+            <div class="card-header p-2">
+                <strong>{{ dict['type'] }} {{ function }}({% if 'parameters' in dict %}{% if dict['parameters'] is not none %}{%  for name, paramdict in dict['parameters'].items() %}{% if loop.index > 1 %}, {% endif %}{{  name }}: {{ paramdict['type'] }}{% endfor %}{% endif %}{% endif %})</strong>
+            </div>
+            <div class="card-body p-2">
+            {{ dict['description'][language] }}<br/>
+            {% if 'parameters' in dict %}
+                {% if dict['parameters'] is not none %}
+                <div class="card mt-2">
+                     <div class="card-header p-2">
+                         <strong>{{ _('Parameter') }}:</strong>
+                     </div>
+                     <div class="card-body p-2">
+                         <ul class="list-group">
+                         {%  for name, paramdict in dict['parameters'].items() %}
+                              <li class="list-group-item p-2">
+                                  <strong>{{  name }}: {{ paramdict['type'] }}</strong><br/>
+                                  {{ paramdict['description'][language] }}
+                              </li>
+                          {% endfor %}
+                          </ul>
+                     </div>
+                </div>
+                {% endif %}
+            {% endif %}
+            </div>
+        </div>
+    {% endfor %}
+    </div>
+{% endblock bodytab3 %}
+
+{% block bodytab4 %}
     {% if token and not p.get_hc().token_expired(token) %}
     {% set tabcount = 3 %}
         <div>

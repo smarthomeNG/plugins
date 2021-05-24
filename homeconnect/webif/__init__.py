@@ -33,7 +33,6 @@ import cherrypy
 from lib.item import Items
 from lib.model.smartplugin import SmartPluginWebIf
 
-
 # ------------------------------------------
 #    Webinterface of the plugin
 # ------------------------------------------
@@ -41,6 +40,7 @@ from lib.model.smartplugin import SmartPluginWebIf
 import cherrypy
 import csv
 from jinja2 import Environment, FileSystemLoader
+
 
 class WebInterface(SmartPluginWebIf):
 
@@ -75,7 +75,8 @@ class WebInterface(SmartPluginWebIf):
         if grant_type == "authorization_code" and code is not None and state is not None:
             os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
             self.logger.error("Token expired, refreshing!")
-            self.plugin.get_hc().get_token(cherrypy.url()+"?code="+code+"&state="+state+"&grant_type="+grant_type)
+            self.plugin.get_hc().get_token(
+                cherrypy.url() + "?code=" + code + "&state=" + state + "&grant_type=" + grant_type)
             token = self.plugin.get_hc().token_load()
 
         token_expiry_date = None
@@ -85,7 +86,7 @@ class WebInterface(SmartPluginWebIf):
         tmpl = self.tplenv.get_template('index.html')
         return tmpl.render(plugin_shortname=self.plugin.get_shortname(), plugin_version=self.plugin.get_version(),
                            interface=None, item_count=len(self.plugin.get_items()),
-                           plugin_info=self.plugin.get_info(), tabcount=2,
-                           tab1title="HomeConnect Items (%s)" % len(self.plugin.get_items()),
-                           tab2title="OAuth2 Data", tab3title="Appliances", token=token, token_expiry_date=token_expiry_date,
+                           plugin_info=self.plugin.get_info(), tabcount=3,
+                           tab1title="HomeConnect Items (%s)" % len(self.plugin.get_items()), token=token,
+                           token_expiry_date=token_expiry_date,
                            p=self.plugin)

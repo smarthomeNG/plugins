@@ -44,13 +44,14 @@ class SHNGHomeConnect(SmartPlugin):
         self._client_id = self.get_parameter_value('client_id')
         self._client_secret = self.get_parameter_value('client_secret')
         self._cycle = self.get_parameter_value('cycle')
+        self._simulate = self.get_parameter_value('simulate')
         self._token = None
         self._items = {}
 
         if not self.init_webinterface(WebInterface):
             self._init_complete = False
         else:
-            self._hc = HomeConnect(self._client_id, self._client_secret, self.get_redirect_uri(), token_cache=self.get_sh().get_basedir()+"/plugins/homeconnect/homeconnect_oauth_token.json", token_listener=self.set_token)
+            self._hc = HomeConnect(self._client_id, self._client_secret, self.get_redirect_uri(), simulate=self._simulate, token_cache=self.get_sh().get_basedir()+"/plugins/homeconnect/homeconnect_oauth_token.json", token_listener=self.set_token)
             self._token = self.get_hc().token_load()
             self.logger.debug("Token loaded: %s"%self._token)
             if self._token:
@@ -125,20 +126,33 @@ class SHNGHomeConnect(SmartPlugin):
     def get_token(self):
         return self._token
 
-    def get_programs_available(self, haId):
+    def get_programs_available(self, ha_id):
         for appliance in self.get_hc().get_appliances():
-            if appliance.haId == haId:
+            if appliance.haId == ha_id:
                 return appliance.get_programs_available()
 
-    def get_programs_active(self, haId):
+    def get_programs_active(self, ha_id):
         for appliance in self.get_hc().get_appliances():
-            if appliance.haId == haId:
+            if appliance.haId == ha_id:
                 try:
                     return appliance.get_programs_active()
                 except Exception as e:
                     self.logger.debug("An exception occurred: %s"%str(e))
                     return ""
 
+    def get_programs_selected(self, ha_id):
+        for appliance in self.get_hc().get_appliances():
+            if appliance.haId == ha_id:
+                return appliance.get_programs_selected()
+
+    def get_program_options(self, ha_id, program_key):
+        for appliance in self.get_hc().get_appliances():
+            if appliance.haId == ha_id:
+                try:
+                    return appliance.get_program_options(program_key)
+                except Exception as e:
+                    self.logger.debug("An exception occurred: %s"%str(e))
+                    return ""
 
     def set_token(self, new_token):
         self.logger.debug("Updating token: %s"%new_token)

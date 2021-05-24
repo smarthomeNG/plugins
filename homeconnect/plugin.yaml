@@ -36,6 +36,14 @@ parameters:
             de: 'Client Secret von https://developer.home-connect.com/'
             en: 'Client Secret from https://developer.home-connect.com/'
 
+    simulate:
+        type: bool
+        default: False
+        mandatory: False
+        description:
+            de: 'Aktiviert den Simulationsmodus, um gegen virtuelle Geräte (Appliances) zu testen.'
+            en: 'Enables the simulation mode to test against virtual devices (appliances).'
+
     cycle:
         type: int
         default: 300
@@ -84,19 +92,46 @@ plugin_functions:
             de: "Gibt die verfügbaren Programme einer Appliance zurück."
             en: "Returns the available programs of an appliance."
         parameters:
-            haId:
+            ha_id:
                 type: str
                 description:
-                    de: "haId der Appliance (im Web-Interface des Plugins zu sehen)"
-                    en: "haId of the appliance (can be found in the web interface of the plugin)"
+                    de: "ha_id der Appliance (im Web-Interface des Plugins zu sehen)"
+                    en: "ha_id of the appliance (can be found in the web interface of the plugin)"
     get_programs_active:
         type: str
         description:
             de: "Gibt die aktiven Programme einer Appliance zurück."
             en: "Returns the active programs of an appliance."
         parameters:
-            haId:
+            ha_id:
                 type: str
                 description:
-                    de: "haId der Appliance (im Web-Interface des Plugins zu sehen)"
-                    en: "haId of the appliance (can be found in the web interface of the plugin)"
+                    de: "ha_id der Appliance (im Web-Interface des Plugins zu sehen)"
+                    en: "ha_id of the appliance (can be found in the web interface of the plugin)"
+    get_programs_selected:
+        type: str
+        description:
+            de: "Gibt die selektierten Programme einer Appliance zurück."
+            en: "Returns the selected programs of an appliance."
+        parameters:
+            ha_id:
+                type: str
+                description:
+                    de: "ha_id der Appliance (im Web-Interface des Plugins zu sehen)"
+                    en: "ha_id of the appliance (can be found in the web interface of the plugin)"
+    get_program_options:
+        type: list(str)
+        description:
+            de: "Gibt die selektierten Programme einer Appliance zurück."
+            en: "Returns the selected programs of an appliance."
+        parameters:
+            ha_id:
+                type: str
+                description:
+                    de: "ha_id der Appliance (im Web-Interface des Plugins zu sehen)"
+                    en: "ha_id of the appliance (can be found in the web interface of the plugin)"
+            program_key:
+                type: str
+                description:
+                    de: "program_key des Programms, dessen Optionen zurückgegeben werden sollen (im Web-Interface des Plugins zu sehen)"
+                    en: "program_key of the program, whose options shall be retreiver (can be found in the web interface of the plugin)"
