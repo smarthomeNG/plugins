@@ -79,7 +79,7 @@ class Robonect(MqttPlugin):
         self._motor_items = {}
         self._status = 0
         self._mode = 0
-        self._full_error_list
+        self._full_error_list = None
         self._session = requests.Session()
         self.init_webinterface(WebInterface)
         return
