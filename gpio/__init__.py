@@ -123,7 +123,7 @@ class GPIO(SmartPlugin, Utils):
                     else:
                         break
                 else:
-                    self.logger.error('Not adding event detection for input pin {}, given up: {}'.format(pin, err))
+                    self.logger.error('Not adding event detection for input pin {}, given up'.format(pin))
         self.alive = True
 
     def stop(self):
