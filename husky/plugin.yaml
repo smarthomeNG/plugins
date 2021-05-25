@@ -1,0 +1,217 @@
+# Metadata for the plugin
+plugin:
+    # Global plugin attributes
+    type: interface                   # plugin type (gateway, interface, protocol, system, web)
+    description:
+        de: 'Husqvarna Automower Plugin'
+        en: 'Husqvarna automower plugin'
+    maintainer: gama 
+    tester: Scaramangas, manhartm, manu241   # Who tests this plugin?
+    state: develop                  # change to ready when done with development
+    keywords: mower, husqvarna, automover, lawn
+    documentation: https://www.smarthomeng.de/user/plugins/husky/user_doc.html
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1658386-support-thread-zum-husky-plugin
+    version: 1.1.0                  # Plugin version
+    sh_minversion: 1.6              # minimum shNG version to use this plugin
+    #sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    multi_instance: False           # plugin supports multi instance
+    restartable: True 
+    classname: Husky         # class containing the plugin
+
+parameters:
+    userid:
+        type: str
+        default: ''
+        description:
+            de: 'Benutzer ID für den Husqvarna Service'
+            en: 'User ID for Husqvarna service'
+    password:
+        type: str
+        default: ''
+        hide: True
+        description:
+            de: 'Passwort für den Login'
+            en: 'Password for login'
+    device:
+        type: str
+        default: ''
+        description:
+            de: '(optional) ID oder Name des Mähroboters'
+            en: '(optional) id or name of the automower'
+
+    mapkey:
+        type: str
+        default: ''
+        description:
+            de: '(optional) google maps api key'
+            en: '(optional) google maps api key'
+
+
+item_attributes: 
+    # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)
+    husky_info:
+        type: str
+        description:
+            de: 'Das Item, welches mit allgemeinen Informationen (z.B. Modell) durch das Plugin beschrieben werden soll'
+            en: 'Item that shoul receive general information (e.g. model) by the plugin'
+
+    husky_state:
+        type: str
+        description:
+            de: 'Das Item, welches mit Status Informationen (z.B. Aktivität) durch das Plugin beschrieben werden soll'
+            en: 'Item that should receive status information (e.g. activity) by the plugin'
+
+    husky_control:
+        type: str
+        description:
+            de: 'Das Item, mit dem der Mähroboter gesteuert werden soll (z.B. Start Kommando)' 
+            en: 'Item to control the mower (e.g. start command)' 
+
+    husky_operating:
+        type: str 
+        description:
+            de: 'Das Item, welches Mähroboter Arbeitsdaten beinhaltet (z.B. Zeit in Bewegung)' 
+            en: 'Item to receive mower working data (e.g. time in movement)' 
+
+item_structs:
+    # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
+    basic:
+        name: Default Mower Template 
+
+        info:
+            name: Mower information
+
+            device:
+                husky_info: NAME 
+                type: str
+                visu_acl: ro
+
+            model:
+                husky_info: MODEL
+                type: str
+                visu_acl: ro
+
+            id:
+                husky_info: ID 
+                type: str
+                visu_acl: ro
+
+        state:
+            name: State information 
+
+            connection:
+                name: mower connection state 
+                husky_state: connection 
+                type: bool 
+                visu_acl: ro
+
+            inoperation: 
+                name: mower in operation mode 
+                type: bool
+                visu_acl: ro
+                eval: "sh...activity() in ['CUTTING','MOVING','CHARGING']"
+                eval_trigger: ..activity
+
+            activity: 
+                name: activity name (CUTTING, MOVING, ...)
+                husky_state: activity 
+                type: str 
+                visu_acl: ro
+
+            errormessage: 
+                husky_state: errormessage 
+                type: str 
+                visu_acl: ro
+                value: 'no error'
+                telegram_message: 'MOWER ERROR: [VALUE]'
+
+            message: 
+                husky_state: message 
+                type: str 
+                visu_acl: ro
+                telegram_info: mower 
+
+            color: 
+                husky_state: color 
+                type: str 
+                visu_acl: ro
+
+            batterypercent: 
+                husky_state: batterypercent 
+                type: num 
+                visu_acl: ro
+
+            battery255: 
+                type: num 
+                visu_acl: ro
+                eval: int(value * 255 / 100)
+                eval_trigger: ..batterypercent
+
+        control:
+            name: Steuerbefehle
+
+            start:
+                name: Start
+                type: num 
+                husky_control: START_3H
+                visu_acl: rw
+                value: 180 
+                enforce_updates: True
+
+            stop:
+                name: Stop 
+                type: bool 
+                husky_control: STOP
+                visu_acl: rw
+                enforce_updates: True
+
+            park:
+                name: Park 
+                type: bool 
+                husky_control: PARK 
+                visu_acl: rw
+                enforce_updates: True
+
+        operating:
+            name: Betriebsdaten (Zwischenspeicher für das Plugin bei Neustart) 
+
+            cutting:
+                name: Mähzeit in Millisekunden 
+                type: num
+                husky_operating: CUTTING 
+                visu_acl: ro
+                cache: 'True'
+
+            parked:
+                name: Parkzeit in Millisekunden 
+                type: num
+                husky_operating: PARKED 
+                visu_acl: ro
+                cache: 'True'
+
+            charging:
+                name: Ladezeit in Millisekunden 
+                type: num
+                husky_operating: CHARGING 
+                visu_acl: ro
+                cache: 'True'
+
+            moving:
+                name: Bewegungszeit in Millisekunden
+                type: num
+                husky_operating: MOVING
+                visu_acl: ro
+                cache: 'True'
+
+            error:
+                name: Fehlerzeit in Millisekunden 
+                type: num
+                husky_operating: ERROR 
+                visu_acl: ro
+                cache: 'True'
+
+plugin_functions: NONE
+    # Definition of plugin functions defined by this plugin (enter 'plugin_functions: NONE', if section should be empty)
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)
