@@ -73,6 +73,7 @@ item_attributes:
         - 'DIMMER'
         - 'VERTICAL'
         - 'CCT'
+        - 'BACKEND_ONLINE_STAT'
 
 
 item_structs:

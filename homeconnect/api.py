@@ -1,6 +1,7 @@
 import json
 import os
 import time
+import logging
 from threading import Thread
 from typing import Callable, Dict, Optional, Union
 
@@ -30,6 +31,7 @@ class HomeConnect:
         redirect_uri="",
         simulate=False,
         token_cache=None,
+        token_listener=None
     ):
         """Initialize the connection."""
         self.client_id = client_id
@@ -38,6 +40,8 @@ class HomeConnect:
         self.simulate = simulate
         self._oauth = None
         self._token_cache = token_cache or "homeconnect_oauth_token.json"
+        self.logger = logging.getLogger(__name__)
+        self.token_listener = token_listener
         self.connect()
 
     def get_uri(self, endpoint):
@@ -51,6 +55,7 @@ class HomeConnect:
         """Dump the token to a JSON file."""
         with open(self._token_cache, "w") as f:
             json.dump(token, f)
+            self.token_listener(token)
 
     def token_load(self):
         """Load the token from the cache if exists it and is not expired,
@@ -77,6 +82,7 @@ class HomeConnect:
         }
         refresh_url = self.get_uri(ENDPOINT_TOKEN)
         token = self.token_load()
+        #refresh see https://requests-oauthlib.readthedocs.io/en/latest/oauth2_workflow.html#refreshing-tokens
         if token:
             self._oauth = OAuth2Session(
                 self.client_id,
@@ -104,11 +110,16 @@ class HomeConnect:
         """Get the token given the redirect URL obtained from the
         authorization."""
         uri = self.get_uri(ENDPOINT_TOKEN)
-        token = self._oauth.fetch_token(
-            uri,
-            authorization_response=authorization_response,
-            client_secret=self.client_secret,
-        )
+        try:
+            token = self._oauth.fetch_token(
+                uri,
+                authorization_response=authorization_response,
+                client_secret=self.client_secret,
+            )
+        except Exception as e:
+            self.logger.error("An error occured in get_token: %s"%e)
+            return
+
         self.token_dump(token)
 
     def get(self, endpoint):
@@ -206,25 +217,29 @@ class HomeConnectAppliance:
 
     def listen_events(self, callback=None):
         """Spawn a thread with an event listener that updates the status."""
-        uri = f"{URL_API}/api/homeappliances/{self.haId}/events"
-        sse = SSEClient(uri, session=self.hc._oauth, retry=1000, timeout=TIMEOUT_S)
+        uri = self.hc.get_uri(
+            "{}/{}{}".format("/api/homeappliances", self.haId, "/events")
+        )
+        from requests.exceptions import HTTPError
+
+        sse = None
+        while True:
+            try:
+                sse = SSEClient(uri, session=self.hc._oauth, retry=100)
+            except HTTPError:
+                print("HTTPError while trying to listen")
+                time.sleep(0.1)
+                continue
+            break
         Thread(target=self._listen, args=(sse, callback)).start()
 
     def _listen(self, sse, callback=None):
         """Worker function for listener."""
-        LOGGER.info("Listening to event stream for device %s", self.name)
-        try:
-            for event in sse:
-                try:
-                    self.handle_event(event, callback)
-                except ValueError:
-                    pass
-        except TokenExpiredError as e:
-            LOGGER.info("Token expired in event stream.")
-            self.hc._oauth.token = self.hc.refresh_tokens()
-            uri = f"{URL_API}/api/homeappliances/{self.haId}/events"
-            sse = SSEClient(uri, session=self.hc._oauth, retry=1000, timeout=TIMEOUT_S)
-            self._listen(sse, callback=callback)
+        for event in sse:
+            try:
+                self.handle_event(event, callback)
+            except ValueError:
+                pass
 
     @staticmethod
     def json2dict(lst):
