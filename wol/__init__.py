@@ -20,62 +20,92 @@
 #  You should have received a copy of the GNU General Public License
 #  along with SmartHomeNG. If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
-#  Usage:
-#
-#  1. activate the plugin in etc/plugins.conf
-#    [wakeonlan]
-#        class_name = WakeOnLan
-#        class_path = plugins.wol
-#
-#  2. add to you items atribute  "wol_mac" with the mac for wake up.
-#     there is also an option wol_ip when waking up hosts in different
-#     subnets.
-#  [wakeonlan_item]
-#     type = bool
-#     wol_mac = 01:02:03:04:05:06
-#     wol_ip = 1.2.3.4 #optional
-#
-#  type of separators are unimportant. you can use:
-#    wol_mac = 01:02:03:04:05:06
-#  or:
-#    wol_mac = 01-02-03-04-05-06
-#  or don't use any separators:
-#    wol_mac = 010203040506
-#
 
 import logging
 import socket
+
 from lib.model.smartplugin import SmartPlugin
+from lib.item import Items
+
+from .webif import WebInterface
 
 ITEM_TAG = ['wol_mac', 'wol_ip']
 
 
 class WakeOnLan(SmartPlugin):
-    PLUGIN_VERSION = "1.1.2"
-    ALLOW_MULTIINSTANCE = True
+    """
+    Main class of the Plugin. Does all plugin specific stuff and provides
+    the update functions for the items
+
+    HINT: Please have a look at the SmartPlugin class to see which
+    class properties and methods (class variables and class functions)
+    are already available!
+    """
+
+    PLUGIN_VERSION = "1.2.0"
 
     def __init__(self, sh, *args, **kwargs):
-        self._sh = sh
-        self.logger = logging.getLogger(__name__)
+        # Call init code of parent class (SmartPlugin)
+        super().__init__()
+
+        # if plugin should start even without web interface
+        self.init_webinterface(WebInterface)
+
 
     def __call__(self, mac_adr):
         self.wake_on_lan(mac_adr)
 
     def run(self):
+        """
+        Run method for the plugin
+        """
+        self.logger.debug("Run method called")
         self.alive = True
 
     def stop(self):
+        """
+        Stop method for the plugin
+        """
+        self.logger.debug("Stop method called")
         self.alive = False
 
+
     def parse_item(self, item):
+        """
+        Default plugin parse_item method. Is called when the plugin is initialized.
+        The plugin can, corresponding to its attribute keywords, decide what to do with
+        the item in future, like adding it to an internal array for future reference
+        :param item:    The item to process.
+        :return:        If the plugin needs to be informed of an items change you should return a call back function
+                        like the function update_item down below. An example when this is needed is the knx plugin
+                        where parse_item returns the update_item function when the attribute knx_send is found.
+                        This means that when the items value is about to be updated, the call back function is called
+                        with the item, caller, source and dest as arguments and in case of the knx plugin the value
+                        can be sent to the knx with a knx write function within the knx plugin.
+        """
         if self.has_iattr(item.conf, ITEM_TAG[0]):
             return self.update_item
 
     def parse_logic(self, logic):
+        """
+        Default plugin parse_logic method
+        """
         pass
 
     def update_item(self, item, caller=None, source=None, dest=None):
-        if item():
+        """
+        Item has been updated
+
+        This method is called, if the value of an item has been updated by SmartHomeNG.
+        It should write the changed value out to the device (hardware/interface) that
+        is managed by this plugin.
+
+        :param item: item to be updated towards the plugin
+        :param caller: if given it represents the callers name
+        :param source: if given it represents the source
+        :param dest: if given it represents the dest
+        """
+        if self.alive and item():
             if self.has_iattr(item.conf, ITEM_TAG[0]):
                 if self.has_iattr(item.conf, ITEM_TAG[1]):
                     self.wake_on_lan(self.get_iattr_value(item.conf, ITEM_TAG[0]),
@@ -83,25 +113,37 @@ class WakeOnLan(SmartPlugin):
                 else:
                     self.wake_on_lan(self.get_iattr_value(item.conf, ITEM_TAG[0]))
 
-    def wake_on_lan(self, mac_adr, ip_adr='<broadcast>'):
-        self.logger.debug("WakeOnLan: send magic paket to {}".format(mac_adr))
+    def wake_on_lan(self, mac_adr, ip_adr=None):
+        """
+        Prepare a magic packet and send to given mac address, optionally via given ip address
+
+        :param mac_adr: mac addres of device to wake up
+        :type mac_adr: mac
+        :param ip_adr: ip address, if not given defaults to '<broadcast>'
+        :type ip_adr: ip4
+        """
+        self.logger.debug(f"WakeOnLan: send magic paket to {mac_adr}")
         # check length and format 
         if self.is_mac(mac_adr) != True:
-            self.logger.warning("WakeOnLan: invalid mac address {}!".format(mac_adr))
+            self.logger.warning(f"WakeOnLan: invalid mac address {mac_adr}!")
             return
         if len(mac_adr) == 12 + 5:
             sep = mac_adr[2]
             mac_adr = mac_adr.replace(sep, '')
         # create magic packet 
         data = ''.join(['FF' * 6, mac_adr * 20])
+
         # Broadcast
-        self.logger.debug("WakeOnLan: send magic paket " + data + "to ip/mac " + ip_adr + "/" + mac_adr)
+        if isinstance(ip_adr, str):
+            if ip_adr.strip() == "":
+                ip_adr = None
+        
+        if ip_adr is None: ip_adr = '<broadcast>'
+
+        if ip_adr:
+            self.logger.debug(f"WakeOnLan: send magic paket {data} to ip/mac {ip_adr}/{mac_adr}")
+        else:
+            self.logger.debug(f"WakeOnLan: send magic paket {data} to mac {mac_adr}")
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
         sock.sendto(bytearray.fromhex(data), (ip_adr, 7))
-
-
-if __name__ == '__main__':
-    myplugin = WakeOnLan('smarthome-dummy')
-    logging.basicConfig(level=logging.DEBUG, format='%(relativeCreated)6d %(threadName)s %(message)s')
-    myplugin.wake_on_lan('01:02:03:04:05:06')

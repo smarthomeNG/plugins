@@ -1,0 +1,10 @@
+# translations for the web interface
+plugin_translations:
+    # Translations for the plugin specially for the web interface
+    'Mac Adresse':         {'de': '=', 'en': 'mac address'}
+    'IP Adresse':         {'de': '=', 'en': 'IP address'}
+
+    # Alternative format for translations of longer texts:
+    'Hier kommt der Inhalt des Webinterfaces hin.':
+        de: '='
+        en: 'Here goes the content of the web interface.'
