@@ -12,7 +12,7 @@ plugin:
     documentation: 'http://smarthomeng.de/user/plugins/openweathermap/user_doc.html'
     support: 'https://knx-user-forum.de/forum/supportforen/smarthome-py/1246998-support-thread-zum-openweathermap-plugin'
     keywords: weather
-    version: 1.5.1                # Plugin version
+    version: 1.8.2                # Plugin version
     sh_minversion: 1.6            # minimum shNG version to use this plugin
 #    sh_maxversion:               # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True          # plugin supports multi instance
@@ -32,15 +32,22 @@ parameters:
         mandatory: False
         default: ''
         description:
-            de: 'Latitude des Ortes, für den die Wetterdaten abgerufen werden sollen. Default: SmartHomeNG Settings'
-            en: 'Latitude for the location, of which weather data is requested. Default: SmartHomeNG Settings'
+            de: 'Latitude des Ortes, für den die Wetterdaten abgerufen werden sollen (max. 4 Dezimalstellen). Default: SmartHomeNG Settings'
+            en: 'Latitude for the location, of which weather data is requested (max. 4 decimal places). Default: SmartHomeNG Settings'
     longitude:
         type: str
         mandatory: False
         default: ''
         description:
-            de: 'Longitude des Ortes, für den die Wetterdaten abgerufen werden sollen. Default: SmartHomeNG Settings.'
-            en: 'Longitude for the location, of which weather data is requested. Default: SmartHomeNG Settings.'
+            de: 'Longitude des Ortes, für den die Wetterdaten abgerufen werden sollen (max. 4 Dezimalstellen). Default: SmartHomeNG Settings.'
+            en: 'Longitude for the location, of which weather data is requested (max 4 decimal places). Default: SmartHomeNG Settings.'
+    altitude:
+        type: str
+        mandatory: False
+        default: ''
+        description:
+            de: 'Altitude des Ortes, für den die Wetterdaten abgerufen werden sollen. Default: SmartHomeNG Settings.'
+            en: 'Altitude for the location, of which weather data is requested. Default: SmartHomeNG Settings Elevation.'
     lang:
         type: str
         mandatory: False
@@ -71,31 +78,145 @@ item_attributes:
         description:
             de: 'Matchstring für die OpenWeatherMap Daten, siehe Beispiele in der README.'
             en: 'Matchstring for the OpenWeatherMap data, see examples in README.'
-    x:
+    owm_coord_x:
         type: num
         mandatory: False
         description:
             de: 'X-Koordinate für die entsprechenden Layer-Bilder-Links von OpenWeatherMap. Nur nutzbar mit owm_matchstring: precipitation_new und clouds_new.'
             en: 'X coordinate for layer image URLs of OpenWeatherMap. Only usable with owm_matchstring: precipitation_new and clouds_new.'
-    y:
+    owm_coord_y:
         type: num
         mandatory: False
         description:
             de: 'Y-Koordinate für die entsprechenden Layer-Bilder-Links von OpenWeatherMap. Nur nutzbar mit owm_matchstring: precipitation_new und clouds_new.'
             en: 'Y coordinate for layer image URLs of OpenWeatherMap. Only usable with owm_matchstring: precipitation_new and clouds_new.'
-    z:
+    owm_coord_z:
         type: num
         mandatory: False
         description:
             de: 'Z-Koordinate für die entsprechenden Layer-Bilder-Links von OpenWeatherMap. Nur nutzbar mit owm_matchstring: precipitation_new und clouds_new.'
             en: 'Z coordinate for layer image URLs of OpenWeatherMap. Only usable with owm_matchstring: precipitation_new and clouds_new.'
 
-item_structs: NONE
-  # Definition of item-structure templates for this plugin
+item_structs:
+    # Definition of item-structure templates for this plugin
+    irrigation:
+        type: bool
+        autotimer: sh..schedule_seconds() = false
+        visu_acl: rw
+        enforce_updates: 'true'
+
+        schedule_seconds:
+            type: num
+            initial_value: 0
+            visu_acl: ro
+            eval: round((sh...todays_water_demand_in_l() / sh...factors.flowrate_l_per_min()) * 60)
+            eval_trigger:
+                - ..factors.flowrate_l_per_min
+                - ..todays_water_demand_in_l
+
+            remaining_time:
+                type: num
+                visu_acl: ro
+                enforce_updates: 'true'
+                eval: sh...() - sh....age() if sh....() else 0
+                eval_trigger: ...
+                cycle: 1
+
+        todays_water_demand_in_l:
+            type: num
+            eval: max(0, (sh...evaporation() * sh...evaporation.exposure_factor()) - (sh...rain() * sh...rain.exposure_factor())) * sh...factors()
+            eval_trigger:
+                - ..evaporation
+                - ..evaporation.exposure_factor
+                - ..rain
+                - ..rain.exposure_factor
+                - ..factors
+
+        evaporation:
+            type: num
+            initial_value: 0
+            owm_matchstring: day/0/eto
+
+            exposure_factor:
+                remark: 'How exposed is your area to evaporation? Lower the factor for less exposure (e.g. shading, or wind-shields) or higher the factor if there is more sun (reflection) or wind (droughty areas).'
+                type: num
+                cache: yes
+                initial_value: 1
+
+        rain:
+            type: num
+            eval: sum
+            eval_trigger:
+                - .past_12h
+                - .next_12h
+            
+            past_12h:
+                type: num
+                owm_matchstring: virtual/past12h/sum/rain/1h            
+            next_12h:
+                type: num
+                owm_matchstring: virtual/next12h/sum/rain/1h
+
+            exposure_factor:
+                remark: 'How exposed is your area to rain? Lower the factor for less exposure (e.g. roofs or bushes) or higher the factor if additional water is put there (e.g. from roof-drains).'
+                initial_value: 1
+                type: num
+                cache: yes
+
+        factors:
+            type: num
+            eval: sh..area_in_sqm() * sh..crop_coefficient() * sh..plant_density() * sh..gut_feeling()
+            eval_trigger:
+                - .area_in_sqm
+                - .crop_coefficient
+                - .plant_density
+                - .gut_feeling
+
+            flowrate_l_per_min:
+                remark: 'How much water is transported by your irrigation-system? liters per minute'
+                initial_value: 4
+                type: num
+                cache: yes
+
+            area_in_sqm:
+                remark: 'This is the irrigated area. This is important for the effectivity of rain vs. evaporation.'
+                initial_value: 1
+                type: num
+                cache: yes
+            
+            crop_coefficient:
+                remark: 'This is the coefficient that can be set based on the plants. Typically 0.3 to 0.9'
+                initial_value: 0.9
+                type: num
+                cache: yes
+            
+            plant_density:
+                remark: 'How dense are the plants planted? Typically 0.3 to 1.5'
+                initial_value: 1
+                type: num
+                cache: yes
+            
+            gut_feeling:
+                remark: 'This is a factor that should be used to tweak irrigation based on gut-feelings, typically this should be assigned centrally for the whole yard (use eval).'
+                initial_value: 1
+                type: num
+                cache: yes
+
 
 logic_parameters: NONE
     # Definition of logic parameters defined by this plugin
 
-plugin_functions: NONE
+plugin_functions:
     # Definition of function interface of the plugin
+    get_value:
+        type: void
+        description:
+            de: "Lädt einen Wert"
+            en: "Reads a value"
+        parameters:
+            owm_matchstring:
+                type: str
+                description:
+                    de: "Zum Beispiel /day/0/rain"
+                    en: "E.g. /day/0/rain"
 

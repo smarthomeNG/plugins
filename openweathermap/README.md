@@ -45,16 +45,16 @@ owm:
     rain_layer:
         type: str
         owm_matchstring@home: precipitation_new
-        x@home: 13
-        y@home: 48
-        z@home: 7
+        owm_coord_x@home: 13
+        owm_coord_y@home: 48
+        owm_coord_z@home: 7
 
     cloud_layer:
         type: str
         owm_matchstring@home: clouds_new
-        x@home: 1
-        y@home: 1
-        z@home: 2
+        owm_coord_x@home: 1
+        owm_coord_y@home: 1
+        owm_coord_z@home: 2
 
     home:
 
