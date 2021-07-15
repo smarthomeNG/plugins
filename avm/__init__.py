@@ -2071,10 +2071,15 @@ class AVM(SmartPlugin):
                                                 self.get_iattr_value(item.conf, 'avm_data_type'),
                                                 item.conf['ain'].strip()))
 
+                        else:
+                            pass
+                            
             else:
-                self.logger.error(
-                    'Attribute {} not available on the FritzDevice with AIN {}.'
-                        .format(self.get_iattr_value(item.conf, 'avm_data_type'), item.conf['ain'].strip()))
+                self.logger.warning("Response NewHkrSetVentilStatus is empty")
+        else:
+            self.logger.warning('Unsupported avm_data_type {0} in _update_home_automation()'.format(self.get_iattr_value(item.conf, 'avm_data_type')))
+
+                
 
     def _update_fritz_device_info(self, item):
         """

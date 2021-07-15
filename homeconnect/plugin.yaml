@@ -1,0 +1,179 @@
+# Metadata for the Smart-Plugin
+plugin:
+    # Global plugin attributes
+    type: web                      # plugin type (gateway, interface, protocol, system, web)
+    description:
+        de: 'Anbindung der BSH/Siemens HomeConnect Schnittstelle mit Oauth2'
+        en: 'Usage of the BSH/Siemens HomeConnect interface with oauth2'
+    maintainer: 'psilo909'
+    tester: 'psilo909'
+    state: development
+    keywords: smart devices
+    documentation: 'http://smarthomeng.de/user/plugins_doc/config/withings_health.html'
+    support: 'https://knx-user-forum.de/forum/supportforen/smarthome-py/1141179-nokia-health-plugin'
+    version: 1.0.0                 # Plugin version
+    sh_minversion: 1.7             # minimum shNG version to use this plugin
+#    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
+    multi_instance: False          # plugin supports multi instance
+    restartable: False
+    classname: SHNGHomeConnect         # class containing the plugin
+
+parameters:
+    # Definition of parameters to be configured in etc/plugin.yaml
+
+    client_id:
+        type: str
+        mandatory: True
+        description:
+            de: 'Client ID von https://developer.home-connect.com/'
+            en: 'Client ID from https://developer.home-connect.com/'
+
+    client_secret:
+        type: str
+        default: 300
+        mandatory: True
+        description:
+            de: 'Client Secret von https://developer.home-connect.com/'
+            en: 'Client Secret from https://developer.home-connect.com/'
+
+    simulate:
+        type: bool
+        default: False
+        mandatory: False
+        description:
+            de: 'Aktiviert den Simulationsmodus, um gegen virtuelle Geräte (Appliances) zu testen.'
+            en: 'Enables the simulation mode to test against virtual devices (appliances).'
+
+    cycle:
+        type: int
+        default: 300
+        description:
+            de: 'Dieser Parameter muss normalerweise nicht angegeben werden. Er erlaubt es die Update-Frquenz anzupassen (Standard: alle 600 Sekunden). Mit dem Standardwert werden die Daten von Nokia Health alle 5 Minuten aktualisiert.'
+            en: "This parameter usually doesn't have to be specified. It allows to change the update frequency (cycle every 300 seconds). As a standard, the plugin updates the Nokia Health data every 5 minutes."
+
+item_attributes:
+    # Definition of item attributes defined by this plugin
+    homeconnect_data_type:
+        type: str
+        mandatory: True
+        description:
+            de: 'HomeConnect Datentyp des jeweiligen Items.'
+            en: 'HomeConnect Data Type of the respective item.'
+        valid_list:
+            - 'status'
+    ha_id:
+        type: str
+        mandatory: True
+        description:
+            de: 'haId des jeweiligen Items (siehe Appliance Liste im WebInterface des Plugins).'
+            en: 'haId of the respective item (see in appliance list in web interface of the plugin).'
+
+item_structs:
+  # Definition of item-structure templates for this plugin
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin
+
+plugin_functions:
+    # Definition of function interface of the plugin
+    get_redirect_url:
+        type: str
+        description:
+            de: 'Gibt die Redirect URL des HomeConnect Plugins zurück.'
+            en: 'Returns the redirect url of the HomeConnect plugin.'
+    get_hc:
+        type: foo
+        description:
+            de: 'Gibt das HomeConnect Objekt des HomeConnect Plugins zurück.'
+            en: 'Returns the HomeConnect object of the HomeConnect plugin.'
+    get_programs_available:
+        type: list(str)
+        description:
+            de: "Gibt die verfügbaren Programme einer Appliance zurück."
+            en: "Returns the available programs of an appliance."
+        parameters:
+            ha_id:
+                type: str
+                description:
+                    de: "ha_id der Appliance (im Web-Interface des Plugins zu sehen)"
+                    en: "ha_id of the appliance (can be found in the web interface of the plugin)"
+    get_programs_active:
+        type: str
+        description:
+            de: "Gibt die aktiven Programme einer Appliance zurück."
+            en: "Returns the active programs of an appliance."
+        parameters:
+            ha_id:
+                type: str
+                description:
+                    de: "ha_id der Appliance (im Web-Interface des Plugins zu sehen)"
+                    en: "ha_id of the appliance (can be found in the web interface of the plugin)"
+    get_programs_selected:
+        type: str
+        description:
+            de: "Gibt die selektierten Programme einer Appliance zurück."
+            en: "Returns the selected programs of an appliance."
+        parameters:
+            ha_id:
+                type: str
+                description:
+                    de: "ha_id der Appliance (im Web-Interface des Plugins zu sehen)"
+                    en: "ha_id of the appliance (can be found in the web interface of the plugin)"
+    get_program_options:
+        type: list(str)
+        description:
+            de: "Gibt die selektierten Programme einer Appliance zurück."
+            en: "Returns the selected programs of an appliance."
+        parameters:
+            ha_id:
+                type: str
+                description:
+                    de: "ha_id der Appliance (im Web-Interface des Plugins zu sehen)"
+                    en: "ha_id of the appliance (can be found in the web interface of the plugin)"
+            program_key:
+                type: str
+                description:
+                    de: "program_key des Programms, dessen Optionen zurückgegeben werden sollen (im Web-Interface des Plugins zu sehen)"
+                    en: "program_key of the program, whose options shall be retreiver (can be found in the web interface of the plugin)"
+    start_program:
+        type: str
+        description:
+            de: "Startet das Programm einer Appliance."
+            en: "Starts the program of an appliance."
+        parameters:
+            ha_id:
+                type: str
+                description:
+                    de: "ha_id der Appliance (im Web-Interface des Plugins zu sehen)"
+                    en: "ha_id of the appliance (can be found in the web interface of the plugin)"
+            program_key:
+                type: str
+                description:
+                    de: "program_key des Programms, das ausgeführt werden soll (im Web-Interface des Plugins zu sehen)"
+                    en: "program_key of the program, which shall be started (can be found in the web interface of the plugin)"
+            options:
+                type: str
+                description:
+                    de: "Optionen des Programms, das ausgeführt werden soll (im Web-Interface des Plugins zu sehen)"
+                    en: "Options of the program, which shall be started (can be found in the web interface of the plugin)"
+    stop_program:
+        type: str
+        description:
+            de: "Stoppt das Programm einer Appliance."
+            en: "Stops the program of an appliance."
+        parameters:
+            ha_id:
+                type: str
+                description:
+                    de: "ha_id der Appliance (im Web-Interface des Plugins zu sehen)"
+                    en: "ha_id of the appliance (can be found in the web interface of the plugin)"
+            program_key:
+                type: str
+                description:
+                    de: "program_key des Programms, das gestoppt werden soll (im Web-Interface des Plugins zu sehen)"
+                    en: "program_key of the program, which shall be stopped (can be found in the web interface of the plugin)"
+            options:
+                type: str
+                description:
+                    de: "Optionen des Programms, das gestoppt werden soll (im Web-Interface des Plugins zu sehen)"
+                    en: "Options of the program, which shall be stopped (can be found in the web interface of the plugin)"

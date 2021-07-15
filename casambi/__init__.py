@@ -41,7 +41,7 @@ class Casambi(SmartPlugin):
     """
 
     # Use VERSION = '1.0.0' for your initial plugin Release
-    PLUGIN_VERSION = '1.7.3'    # (must match the version specified in plugin.yaml)
+    PLUGIN_VERSION = '1.7.4'    # (must match the version specified in plugin.yaml)
 
     def __init__(self, sh):
         """
@@ -186,19 +186,14 @@ class Casambi(SmartPlugin):
             result =  self.websocket.recv()
         except Exception as e:
             self.logger.info("Exception during receiving in openWebsocket(): {0}".format(e))
+            return
         
         self.logger.debug("Received: {0}".format(result)) 
-        resultJson = json.loads(result.decode('utf-8'))
-        wireStatus = ''
-        if resultJson:
-            if 'wireStatus' in resultJson:
-                wireStatus = str(resultJson['wireStatus'])
-                self.logger.debug("wireStatus: {0}".format(wireStatus))
-
-        if wireStatus == 'openWireSucceed':
-            self.logger.debug("Wire opened successfully")
-        else:    
-            self.logger.error("wireStatus: {0}".format(wireStatus))    
+        
+        #try:
+        self.decodeEventData(result)
+        #except Exception as e:
+        #    self.logger.error("Exception in decodeEventData from openWebsocket: {0}".format(e))
 
         pass
 
@@ -258,24 +253,39 @@ class Casambi(SmartPlugin):
         if len(receivedData) < 1:
             return
 
-        dataJson = json.loads(receivedData.decode('utf-8'))
-
-        if 'wireStatus' in dataJson:
-            wireStatus = str(dataJson['wireStatus']) 
-            if not (wireStatus == 'openWireSucceed'):
-                self.logger.warning("Event: Wirestatus {0} received".format(wireStatus))
-
         method = ''
+
+        dataJson = json.loads(receivedData.decode('utf-8'))
+        
         if dataJson:
+            if 'wireStatus' in dataJson:
+                wireStatus = str(dataJson['wireStatus']) 
+
+                if wireStatus == 'openWireSucceed':
+                    self.logger.debug("Wire opened successfully")
+                elif wireStatus == '':
+                    self.logger.debug("No wireStatus received")
+                else:    
+                    self.logger.error("wireStatus: {0}".format(wireStatus))   
+                    self.logger.error("Debug: wireStatus response: {0}".format(result))    
+
             if 'method' in dataJson :
                 method = str(dataJson ['method'])
         else:
             self.logger.debug("decodeEventData: Invalid Json")
 
-        if method == 'peerChanged':
+        if method == '':
+            # This happens for example if a wireStatus response to an open message is received which does not contain a method attribute.
+            self.logger.debug("Event: No method info received.")
+        elif method == 'peerChanged':
             online = None
             if 'online' in dataJson:
                 self.casambiBackendStatus = bool(dataJson ['online'])
+                for id in self._rx_items:
+                    for item in self._rx_items[id]:
+                        if (item.conf['casambi_rx_key'].upper() == 'BACKEND_ONLINE_STAT'):
+                            item( self.casambiBackendStatus, self.get_shortname())
+
             self.logger.debug("Received {0} status with backend online status: {1}.".format(method, self.casambiBackendStatus))
 
         elif method == 'unitChanged':
@@ -333,6 +343,7 @@ class Casambi(SmartPlugin):
                 self.logger.warning("Received status information for ID {0} which has no equivalent item.".format(unitID))
         else:
             self.logger.warning("Received unknown method {0} which is not supported.".format(method))
+            self.logger.warning("Debug: decodeData(), receivedData: {0}".format(receivedData))
 
         pass
 
@@ -400,10 +411,10 @@ class Casambi(SmartPlugin):
                     self.logger.debug("Received empty data")
                 else: 
                     self.logger.debug("Received data: {0}".format(receivedData))
-                    try:
-                        self.decodeEventData(receivedData)
-                    except Exception as e:
-                        self.logger.error("Exception during decodeEventData: {0}".format(e))
+                    #try:
+                    self.decodeEventData(receivedData)
+                    #except Exception as e:
+                    #    self.logger.error("Exception during decodeEventData: {0}".format(e))
 
 
             # Error handling:

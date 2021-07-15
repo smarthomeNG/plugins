@@ -1,0 +1,334 @@
+{% extends "base_plugin.html" %}
+
+{% set logo_frame = false %}
+{% set items_count = items_control|length + items_state|length + items_opdata|length %}
+
+{% block headtable %}	
+<table class="table table-striped table-hover">
+	<tbody>
+		<tr>
+			<td class="py-1"><strong>Auth Token</strong></td>
+			<td class="py-1">{{ p._get_api_token() }}</td>
+			<td class="py-1" width="50px"></td>
+			<td class="py-1"><strong>expires:</strong></td>
+			<td class="py-1">{{ p._get_api_token_expire_date() }}</td>
+			<td class="py-1" width="50px"></td>
+		</tr>
+		<tr>
+			<td class="py-1"><strong>User ID</strong></td>
+			<td class="py-1">{{ p.get_parameter_value_for_display('userid') }}</td>
+			<td></td>
+			<td class="py-1"><strong>Password</strong></td>
+			<td class="py-1">{{ p.get_parameter_value_for_display('password') }}</td>
+			<td></td>
+		</tr>
+	</tbody>
+</table>
+{% endblock headtable %}
+
+
+<!--
+	Additional buttons for the web interface (if any are needed) - displayed below the headtable-section
+-->
+{% block buttons %}
+{% if 1==2 %}
+	<form action="" method="post">
+	</form>
+{% endif %}
+{% endblock %}
+
+<!--
+	Define the number of tabs for the body of the web interface (1 - 3)
+-->
+{% set tabcount = 2 %}
+
+
+<!--
+	Set the tab that will be visible on start, if another tab that 1 is wanted (1 - 3)
+-->
+{% if item_count==0 %}
+	{% set start_tab = 1 %}
+{% endif %}
+
+
+<!--
+	Content block for the first tab of the Webinterface
+-->
+{% set tab1title = "<strong>" ~ p.get_shortname() ~ " Geräte</strong> (" ~ device_count ~ ")" %}
+{% block bodytab1 %}
+<div class="container-fluid m-2">
+
+
+<table class="table">
+  <tbody>
+    <tr>
+      <td class="py-1">
+	<strong>{{ p.mymower.get_mower_name() }}</strong></br>
+        <small>{{ p.mymower.get_mower_model_name() }}</small></br>
+        <small>{{ p.mymower.get_mower_id() }}</small></br>
+
+	{% if p.mymower.get_mower_product_code()=="AM105" %}
+	  <img src="static/img/H310-0496 105.png" alt="{{ _('Gerät verfügbar') }}" style="width: 200px;"/></br>
+	{% elif p.mymower.get_mower_product_code()=="AM310" %}
+	  <img src="static/img/H310-1049 310.png" alt="{{ _('Gerät verfügbar') }}" style="width: 200px;"/></br>
+	{% elif p.mymower.get_mower_product_code()=="AM315X" %}
+	  <img src="static/img/H310-1610 315x.png" alt="{{ _('Gerät verfügbar') }}" style="width: 200px;"/></br>
+	{% elif p.mymower.get_mower_product_code()=="AM520" %}
+	  <img src="static/img/H310-1659 520.png" alt="{{ _('Gerät verfügbar') }}" style="width: 200px;"/></br>
+	{% elif p.mymower.get_mower_product_code()=="AM420" %}
+	  <img src="static/img/H310-0867 420.png" alt="{{ _('Gerät verfügbar') }}" style="width: 200px;"/></br>
+	{% elif p.mymower.get_mower_product_code()=="AM315" %}
+	  <img src="static/img/H310-1050 315.png" alt="{{ _('Gerät verfügbar') }}" style="width: 200px;"/></br>
+	{% elif p.mymower.get_mower_product_code()=="AM430X" %}
+	  <img src="static/img/H310-1611 430x.png" alt="{{ _('Gerät verfügbar') }}" style="width: 200px;"/></br>
+	{% elif p.mymower.get_mower_product_code()=="AM435XAWD" %}
+	  <img src="static/img/H310-1892 435x AWD.png" alt="{{ _('Gerät verfügbar') }}" style="width: 200px;"/></br>
+	{% elif p.mymower.get_mower_product_code()=="AM440" %}
+	  <img src="static/img/H310-0867 440.png" alt="{{ _('Gerät verfügbar') }}" style="width: 200px;"/></br>
+	{% elif p.mymower.get_mower_product_code()=="AM450X" %}
+	  <img src="static/img/H310-1176 450x.png" alt="{{ _('Gerät verfügbar') }}" style="width: 200px;"/></br>
+	{% elif p.mymower.get_mower_product_code()=="AM550" %}
+	  <img src="static/img/H310-1612 550.png" alt="{{ _('Gerät verfügbar') }}" style="width: 200px;"/></br>
+	{% elif p.mymower.get_mower_product_code()=="AM535AWD" %}
+	  <img src="static/img/H310-1900 535 AWD.png" alt="{{ _('Gerät verfügbar') }}" style="width: 200px;"/></br>
+	{% endif %}
+
+        <span style="color: #{{ p.mymower.last_status().get_activity_color() }};">
+		{{ p.mymower.last_status().get_activity() }}
+
+		{% if p.mymower.last_status().get_activity()=="CUTTING" %}
+			<i class="fas fa-cog fa-spin"></i>
+		{% elif p.mymower.last_status().get_activity()=="MOVING" %}
+			<i class="fas fa-forward"></i>
+		{% elif p.mymower.last_status().get_activity()=="PARKED" %}
+			<i class="fas fa-warehouse"></i>
+		{% elif p.mymower.last_status().get_activity()=="CHARGING" %}
+			<i class="fas fa-warehouse"></i>
+		{% elif p.mymower.last_status().get_activity()=="DISABLED" %}
+			<i class="fas fa-cogs"></i>
+		{% elif p.mymower.last_status().get_activity()=="ERROR" %}
+			<i class="fas fa-exclamation-triangle"></i>
+		{% endif %}
+        </span>
+
+        <small style="float: right;">
+
+        {% if p.mymower.last_status().is_connected()==True %}
+          <i class="fas fa-wifi"></i> 
+          <i class="fas fa-link"></i> 
+        {% else %}
+          <i style="color: #aaaaaa;" class="fas fa-wifi"></i> 
+          <i class="fas fa-unlink"></i> 
+	{% endif %}
+
+        {% if p.mymower.last_status().get_battery_percent() >= 90 %}
+          <i class="fas fa-battery-full"></i> 
+        {% elif p.mymower.last_status().get_battery_percent() >= 75 %}
+          <i class="fas fa-battery-three-quarters"></i> 
+        {% elif p.mymower.last_status().get_battery_percent() >= 50 %}
+          <i class="fas fa-attery-half"></i> 
+        {% elif p.mymower.last_status().get_battery_percent() >= 25 %}
+          <i class="fas fa-battery-quarter"></i> 
+        {% else %}
+          <i class="fas fa-battery-empty"></i> 
+        {% endif %}
+        {{ p.mymower.last_status().get_battery_percent() }}%</small></br>
+
+        {% if p.mymower.last_status().get_activity()=="ERROR" %}
+	    {{ p.mymower.last_status().get_last_error_message() }}</br>
+	    {{ p.mymower.last_status().get_last_error_time() }}
+        {% else %}
+	    {{ p.mymower.last_status().get_status_message() }}
+	{% endif %}
+        </br>
+
+
+
+	<form action="" method="post">
+        <button type="button" class="btn btn-shng btn-sm" onclick="jQuery.get('mower_stop');"><i class="fas fa-stop"></i> {{ _('Stop') }}</button>
+        <button type="button" class="btn btn-shng btn-sm" onclick="jQuery.get('mower_start');"><i class="fas fa-play"></i> {{ _('Start') }}</button>
+        <button type="button" class="btn btn-shng btn-sm" onclick="jQuery.get('mower_start_3h');"><i class="fas fa-play"></i> {{ _('Start 3h') }}</button>
+        <button type="button" class="btn btn-shng btn-sm" onclick="jQuery.get('mower_park');"><i class="fas fa-home"></i> {{ _('Park') }}</button>
+        <button type="button" class="btn btn-shng btn-sm" onclick="jQuery.get('mower_park_timer');"><i class="fas fa-home"></i> {{ _('Park Timer') }}</button>
+	</form>
+      </td><td>
+        <div id="map-1" style="height: 300px; width: 500px;"></div>
+
+
+        <link rel="stylesheet" href="https://cdn.rawgit.com/openlayers/openlayers.github.io/master/en/v5.3.0/css/ol.css" type="text/css">
+	<script src="https://cdn.rawgit.com/openlayers/openlayers.github.io/master/en/v5.3.0/build/ol.js"></script>
+	<script type="text/javascript">
+		var mower_lon = {{ p.mymower.last_status().get_longitude() }}
+                var mower_lat = {{ p.mymower.last_status().get_latitude() }}
+
+		var map1 = new ol.Map({
+			target: 'map-1',
+			layers: [
+			  new ol.layer.Tile({
+			    source: new ol.source.OSM()
+			  })
+			],
+			view: new ol.View({
+			  center: ol.proj.fromLonLat([mower_lon, mower_lat]),
+			  zoom: 19 
+			})
+		      });
+
+		var mowerStyle = new ol.style.Circle({
+				radius: 30,
+				fill: new ol.style.Fill({
+			    		color: '#ff9900',
+					opacity: 0.9
+					}),
+				stroke: new ol.style.Stroke({
+					color: '#ff0000',
+					opacity: 0.4
+					})
+				});
+
+                var mower1 = new ol.Feature({
+			geometry: new ol.geom.Point(ol.proj.transform([mower_lon, mower_lat], 'EPSG:4326', 'EPSG:3857')),
+                        style: mowerStyle
+			});
+
+                var mowers = [];
+                mowers.push(mower1); 
+		var mowerSource = new ol.source.Vector({
+			features: mowers
+			});
+		var mowerLayer = new ol.layer.Vector({
+			source: mowerSource
+			});
+
+                map1.addLayer(mowerLayer);
+
+
+		/** var mower_coordinates = [[lon, lat], [lon, lat], ... ]*/
+                var mower_coordinates = {{ p.mymower.last_status().get_last_coordinates() }};
+
+		var mowerLines = new ol.layer.Vector({
+			source: new ol.source.Vector({
+				features: [new ol.Feature({
+						geometry: new ol.geom.LineString(mower_coordinates).transform('EPSG:4326','EPSG:3857'),
+						name: 'Track'
+						})]
+				}),
+			});
+		map1.addLayer(mowerLines);
+
+		setTimeout(function() {
+		    map1.updateSize();
+		}, 100);
+
+        </script>
+
+      </td>
+    </tr>
+    <tr>
+      <td colspan="2">
+        <h2>History</h2>
+	<table class="table table-striped table-hover">
+        <thead><tr>
+            <th>Timestamp</th>
+            <th>Activity</th>
+            <th>Battery</th>
+            <th>Coords</th>
+            <th>Timedelta</th>
+        </tr></thead>
+        <tbody>
+	{% for activity in p.mymower.get_mower_activities() %}
+            <tr>
+                <td class="py-1">{{ activity.get_updated_at_time() }}</td>
+                <td class="py-1">{{ activity.get_activity() }}</td>
+                <td class="py-1">{{ activity.get_battery_percent() }} %</td>
+                <td class="py-1">{{ activity.get_longitude() }}, {{ activity.get_latitude() }}</td>
+                <td class="py-1">{{ p.disp_age(activity.get_timeDelta()//1000) }}</td>
+            </tr>
+	{% endfor %}
+        </tbody>
+        </table>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+</div>
+
+{% endblock bodytab1 %}
+
+
+<!--
+	Content block for the second tab of the Webinterface
+-->
+{% set tab2title = "<strong>" ~ p.get_shortname() ~ " Items</strong> (" ~ items_count ~ ")" %}
+{% block bodytab2 %}
+<div class="container-fluid m-2">
+
+    <h2>Control Items</h2>
+    <table class="table table-striped table-hover pluginList">
+        <thead><tr>
+            <th>Path</th>
+            <th>Function</th>
+        </tr></thead>
+        <tbody>
+
+            {% for item in items_control %}
+                <tr>
+                    <td class="py-1">{{ item._path }}</td>
+                    <td class="py-1">{{ item }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+
+    <h2>State Items</h2>
+    <table class="table table-striped table-hover pluginList">
+        <thead><tr>
+            <th>Path</th>
+            <th>Value</th>
+            <th>Last Update</th>
+            <th>Last Change</th>
+        </tr></thead>
+        <tbody>
+
+            {% for item in items_state %}
+                <tr>
+                    <td class="py-1">{{ item._path }}</td>
+                    <td class="py-1">{{ item() }}</td>
+                    <td class="py-1">{{ item.last_update().strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                    <td class="py-1">{{ item.last_change().strftime('%d.%m.%Y %H:%M:%S') }}</td>
+
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+
+    <h2>Operation Data Items</h2>
+    <table class="table table-striped table-hover pluginList">
+        <thead><tr>
+            <th>Path</th>
+            <th>Value</th>
+            <th>Last Update</th>
+            <th>Last Change</th>
+        </tr></thead>
+        <tbody>
+
+            {% for item in items_opdata %}
+                <tr>
+                    <td class="py-1">{{ item._path }}</td>
+                    <td class="py-1">{{ p.disp_age(item()//1000) }}</td>
+                    <td class="py-1">{{ item.last_update().strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                    <td class="py-1">{{ item.last_change().strftime('%d.%m.%Y %H:%M:%S') }}</td>
+
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+
+
+</div>
+{% endblock bodytab2 %}
+
