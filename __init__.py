@@ -651,7 +651,8 @@ class OpenWeatherMap(SmartPlugin):
 
     def get_json_data_for_webif(self, data_source_key):
         src = self._data_sources[data_source_key]['data']
-        return pformat(src).replace('\n', '<br>').replace(' ', '&nbsp;')
+        return json.dumps(src, indent=4)
+        # return pformat(src)  # .replace('\n', '<br>').replace(' ', '&nbsp;')
 
     def init_webinterface(self):
         """"
