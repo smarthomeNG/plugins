@@ -21,8 +21,7 @@ Use the plugin configuration to configure the openweathermap plugin.
 ```yaml
 # for etc/plugin.yaml configuration file:
 weather_openweathermap:
-    class_name: OpenWeatherMap
-    class_path: plugins.openweathermap
+    plugin_name: openweathermap
     key: xxxxyyyyxxxxyyyy
     instance: 'home'
     # latitude: '48.04712'
