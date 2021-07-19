@@ -100,10 +100,10 @@ Matchstrings are re-written by the plugin to allow a clear distinction of the da
     - `wind_speed`: Wind speed in metre/sec
     - `wind_deg`: Wind direction, degrees (meteorological)
     - `wind_gust`: Wind gust (peaks in speed) in metre/sec
-    - `weather/id`: to get the weather condition id
-    - `weather/main`: to get the group-name of weather parameters (Rain, Snow, Extreme etc.)
-    - `weather/description`: to get the weather condition description within the group.
-    - `weather/icon`: to get the weather icon id
+    - `weather/0/id`: to get the weather condition id
+    - `weather/0/main`: to get the group-name of weather parameters (Rain, Snow, Extreme etc.)
+    - `weather/0/description`: to get the weather condition description within the group.
+    - `weather/0/icon`: to get the weather icon id
     - `pop`: Propability of precipitation
 - **begins with "day/N/"** where N is a number between 0 and 6. Be aware that -0 (see below) and 0 are returning different valid values! Original data-source is the [onecall-API](https://openweathermap.org/api/one-call-api).
   As you are using a positive value for N (including 0) outlook data is retrieved.
@@ -137,10 +137,10 @@ Matchstrings are re-written by the plugin to allow a clear distinction of the da
     - `wind_speed`: Wind speed in metre/sec
     - `wind_deg`: Wind direction, degrees (meteorological)
     - `wind_gust`: Wind gust (peaks in speed) in metre/sec
-    - `weather/id`: to get the weather condition id
-    - `weather/main`: to get the group-name of weather parameters (Rain, Snow, Extreme etc.)
-    - `weather/description`: to get the weather condition description within the group.
-    - `weather/icon`: to get the weather icon id
+    - `weather/0/id`: to get the weather condition id
+    - `weather/0/main`: to get the group-name of weather parameters (Rain, Snow, Extreme etc.)
+    - `weather/0/description`: to get the weather condition description within the group.
+    - `weather/0/icon`: to get the weather icon id
 - **begins with "day/-N/"** where N is a number between 0 and 4. Be aware that -0 and 0 (see above) are returning different valid values! Original data-source is the [onecall-API with the time-machine feature](https://openweathermap.org/api/one-call-api#history).
   As you are using a negative value for N (including -0) historic data is retrieved. Appending an "hour/I/" to the matchstring results in selecting an hour "I" of that particular day. Warning: Accessing "day/-0/hour/18/..." at an earlier time than 6pm (UTC!!) will result in an ERROR as the API is not combining historic data with outlook data.
   Without appending hour, the daily summary will be retrieved (from the tree below "current/" within the JSON response).
@@ -163,10 +163,10 @@ Matchstrings are re-written by the plugin to allow a clear distinction of the da
     - `main/temp` / `main/feels_like` / `main/temp_max` / `main/temp_min` to get current / today's temperature data.
     - `rain/1h` / `rain/3h` / `snow/1h` / `snow/3h` to get current precipitation data in mm
     - `main/humidity` / `main/pressure` to get current relative humidity (in %) and pressure values
-    - `weather/id` to get the weather condition id
-    - `weather/main` to get the group-name of weather parameters (Rain, Snow, Extreme etc.)
-    - `weather/description` to get the weather condition description within the group.
-    - `weather/icon` to get the weather icon id
+    - `weather/0/id` to get the weather condition id
+    - `weather/0/main` to get the group-name of weather parameters (Rain, Snow, Extreme etc.)
+    - `weather/0/description` to get the weather condition description within the group.
+    - `weather/0/icon` to get the weather icon id
     - `wind/deg` / `wind/speed` / `wind/gust` to get some facts about the wind (direction/speed/peak-speeds)
 
 
@@ -396,10 +396,18 @@ The complete struct provides a hint how this is implemented:
 
 * All times are in UTC. So if you query "yesterdays" values for Germany you will have a 1hr or 2hr time-frame from the next day and a missing time-frame of the same day.
 * The formula used for ETO calculation makes use of a solar radiation feature. Unfortunately this value is not available for free via API. Luckily the UV-index matches the scale and should be somewhat equivalent to the actual value, so this is used in the calculation instead. Still: The usage of the UV-index instead of a real solar radiation feature is scientifically WRONG.
+* For an unknown reason ([Thanks for discovering Sisamiwe](https://knx-user-forum.de/forum/supportforen/smarthome-py/1246998-support-thread-zum-openweathermap-plugin?p=1672747#post1672747)) "weather" is a list, so you have to use "weather/0/id" to get the id value.
 
 #### Tips and Tricks
 
-To convert the time in the dt values to a local value you may want to use an eval string and generate a printable value. **TODO**
+To convert the time in the dt values to a local value you may want to use an eval string and generate a printable value.
+
+  ```yaml
+  conditions_as_of:
+        type: str
+        owm_matchstring: day/1/dt 
+        eval: datetime.datetime.fromtimestamp(value, datetime.timezone.utc).astimezone().strftime('%Y-%m-%d %H:%M:%S %Z%z')
+  ```
 
 #### Example: items.yaml
 Example configuration of an item-tree for the openweathermap plugin in yaml-format:
@@ -663,7 +671,6 @@ owm:
 
 ```
 
-#### Special features
 
 ### logic.yaml
 
