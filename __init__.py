@@ -203,13 +203,21 @@ class OpenWeatherMap(SmartPlugin):
             wrk_typ = f"onecall-{minus_days}"
         elif s.startswith('day/'):
             wrk = self._data_sources[self._data_source_key_onecall]['data']
-            new_day = int(s[4])
-            s = s.replace(s[0:5], 'daily/' + str(new_day))
+            try:
+                new_day = int(s[4])
+                s = s.replace(s[0:5], 'daily/' + str(new_day))
+            except:
+                s = s.replace('day/', 'daily/0/')
+                self.logger.warning(f"Missing integer after 'day/' assuming 'day/0/' in matchstring {owm_matchstring}")
             wrk_typ = self._data_source_key_onecall
         elif s.startswith('hour/'):
             wrk = self._data_sources[self._data_source_key_onecall]['data']
-            new_day = int(s[5])
-            s = s.replace(s[0:6], 'hourly/' + str(new_day))
+            try:
+                new_day = int(s[5])              
+                s = s.replace(s[0:6], 'hourly/' + str(new_day))
+            except:
+                s = s.replace('hour/', 'hourly/0/')
+                self.logger.warning(f"Missing integer after 'hour/' assuming 'hour/0/' in matchstring {owm_matchstring}")  
             wrk_typ = self._data_source_key_onecall
         else:
             wrk_typ = self._data_source_key_weather
@@ -400,7 +408,7 @@ class OpenWeatherMap(SmartPlugin):
                             f"Integer index ({int(sp[0])}) out of range after '{'/'.join(successful_path)}'")
                 else:
                     raise Exception(
-                        f"Integer expected in matchstring after '{'/'.join(successful_path)}'")
+                        f"Integer expected in matchstring after '{'/'.join(successful_path)}/{last_popped}'")
             else:
                 if type(wrk) is not dict:
                     self.logger.error("s=%s wrk=%s type(wrk)=%s" %
@@ -652,7 +660,6 @@ class OpenWeatherMap(SmartPlugin):
     def get_json_data_for_webif(self, data_source_key):
         src = self._data_sources[data_source_key]['data']
         return json.dumps(src, indent=4)
-        # return pformat(src)  # .replace('\n', '<br>').replace(' ', '&nbsp;')
 
     def init_webinterface(self):
         """"
