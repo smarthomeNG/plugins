@@ -85,7 +85,9 @@ class OpenWeatherMap(SmartPlugin):
         self._soft_fails = ['rain/1h',
                             'rain/3h',
                             'snow/1h',
-                            'snow/3h']
+                            'snow/3h',
+                            'rain/',
+                            'snow/']
 
         self._session = requests.Session()
         self._cycle = int(self.get_parameter_value('cycle'))
@@ -224,13 +226,13 @@ class OpenWeatherMap(SmartPlugin):
             wrk = self._data_sources[self._data_source_key_weather]['data']
 
         try:
-            if (s.startswith("current/") or s.startswith("daily/")) and s.endswith('/eto'):
+            if (s.startswith("current/") or s.startswith("daily/") or s.startswith("day/")) and s.endswith('/eto'):
                 s = s.replace("current/", "day/0/")
                 s = s.replace("daily/", "day/")
                 ret_val = self._calculate_eto(s)
                 wrk_typ = "onecall [eto-calculation]"
             else:
-                ret_val = self._get_val_from_dict(s, wrk)
+                ret_val, s = self._get_val_from_dict(s, wrk)
         except Exception as e:
             ret_val = e
 
@@ -390,13 +392,14 @@ class OpenWeatherMap(SmartPlugin):
         while True:
             if (len(sp) == 0) or (wrk is None):
                 if wrk is None:
+                    missing_child_path = last_popped if len(sp) == 0 else f"{last_popped}/{'/'.join(sp)}"
                     if f"{last_popped}/{'/'.join(sp)}" in self._soft_fails:
                         wrk = 0
                         self.logger.debug(
-                            f"No defined value for '{s}', missing '{last_popped}/{'/'.join(sp)}', defaulting to 0")
+                            f"No defined value for '{s}', missing '{missing_child_path}', defaulting to 0")
                     else:
                         raise Exception(
-                            f"Missing child '{last_popped}/{'/'.join(sp)}' after '{'/'.join(successful_path)}'")
+                            f"Missing child '{missing_child_path}' after '{'/'.join(successful_path)}'")
                 break
 
             if type(wrk) is list:
@@ -407,8 +410,13 @@ class OpenWeatherMap(SmartPlugin):
                         raise Exception(
                             f"Integer index ({int(sp[0])}) out of range after '{'/'.join(successful_path)}'")
                 else:
-                    raise Exception(
-                        f"Integer expected in matchstring after '{'/'.join(successful_path)}/{last_popped}'")
+                    wrk = wrk[0]
+                    self.logger.warning(f"Integer expected in matchstring after '{'/'.join(successful_path)}/{last_popped}', inserting '/0' to match FIRST entry.")
+                    if last_popped is not None:
+                        successful_path.append(last_popped)
+                    last_popped = '0'
+                    continue
+                    # raise Exception(f"Integer expected in matchstring after '{'/'.join(successful_path)}/{last_popped}'")
             else:
                 if type(wrk) is not dict:
                     self.logger.error("s=%s wrk=%s type(wrk)=%s" %
@@ -418,7 +426,7 @@ class OpenWeatherMap(SmartPlugin):
             if last_popped is not None:
                 successful_path.append(last_popped)
             last_popped = sp.pop(0)
-        return wrk
+        return (wrk, f"{'/'.join(successful_path)}/{last_popped}")
 
     def get_daily_forecast(self, s):
         """
@@ -457,7 +465,7 @@ class OpenWeatherMap(SmartPlugin):
                     if dt >= int(too_far.timestamp()):
                         break
                     if dt >= int(date_requested.timestamp()):
-                        val = self._get_val_from_dict("/".join(sp), entry)
+                        val, _ = self._get_val_from_dict("/".join(sp), entry)
                         if isinstance(val, float) or isinstance(val, int):
                             wrk.append(val)
                         elif val is None:
@@ -516,8 +524,14 @@ class OpenWeatherMap(SmartPlugin):
 
         :param item: The item to process.
         """
+        owm_pfx = self.get_iattr_value(item.conf, 'owm_match_prefix')
         owm_ms = self.get_iattr_value(item.conf, 'owm_matchstring')
         if owm_ms:
+            if owm_pfx:
+                owm_ms = f"{owm_pfx}/{owm_ms}"
+                owm_ms = owm_ms.replace('///', '/')
+                owm_ms = owm_ms.replace('//', '/')
+
             self._items[item.id()] = (owm_ms, item)
 
             if owm_ms in self._origins_weather:
