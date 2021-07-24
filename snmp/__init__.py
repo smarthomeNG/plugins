@@ -65,7 +65,7 @@ class Snmp(SmartPlugin):
         self.instance = self.get_parameter_value('instance')         # the instance of the plugin for questioning multiple smartmeter
         self.cycle = self.get_parameter_value('cycle')               # the frequency in seconds how often the query shoud be done
         self.host = self.get_parameter_value('snmp_host')            # IP Adress of the network device to be queried
-        self.port = int(self.get_parameter_value('snmp_port'))       # Port for SNMP queries
+        self.port = self.get_parameter_value('snmp_port')            # Port for SNMP queries
         self.community = self.get_parameter_value('snmp_community')  # SNMP Community
 
         # Initialization code goes here
