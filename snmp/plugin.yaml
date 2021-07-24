@@ -33,7 +33,7 @@ parameters:
             en: 'ip adress pf device to be queried'
 
     snmp_port:
-        type: num
+        type: int
         default: 161
         description:
             de: 'Port für SNMP Abfrage'
