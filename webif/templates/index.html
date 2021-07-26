@@ -15,7 +15,7 @@
 {% set tab10title = 'JSON Data (onecall-4)' %}
 
 
-{% set start_tab = 2 %}
+{% set start_tab = 5 %}
 
 {% block headtable %}
 <script src="/gstatic/codemirror/mode/javascript/javascript.js"></script>
@@ -57,8 +57,10 @@
 {% block bodytab2 %}
 <br style="clear:both;"/>
 <div class="container-fluid">
+	Origin: {{ data_weather.url }}<br />
+	Fetched: {{ data_weather.fetched }}
 	<div style="border: 1px solid #ddd; margin-bottom: 10px;">
-		<textarea autocomplete="off" id="bodytab2_json" name="bodytab2_json">{{ json_data_weather }}</textarea>
+		<textarea autocomplete="off" id="bodytab2_json" name="bodytab2_json">{{ data_weather.data }}</textarea>
 	</div>
 </div>
 <script type="text/javascript" language="javascript">
@@ -78,8 +80,10 @@
 {% block bodytab3 %}
 <br style="clear:both;"/>
 <div class="container-fluid">
+	Origin: {{ data_forecast.url }}<br />
+	Fetched: {{ data_forecast.fetched }}
 	<div style="border: 1px solid #ddd; margin-bottom: 10px;">
-		<textarea autocomplete="off" id="bodytab3_json" name="bodytab3_json">{{ json_data_forecast }}</textarea>
+		<textarea autocomplete="off" id="bodytab3_json" name="bodytab3_json">{{ data_forecast.data }}</textarea>
 	</div>
 </div>
 <script type="text/javascript" language="javascript">
@@ -99,8 +103,10 @@
 {% block bodytab4 %}
 <br style="clear:both;"/>
 <div class="container-fluid">
+	Origin: {{ data_uvi.url }}<br />
+	Fetched: {{ data_uvi.fetched }}
 	<div style="border: 1px solid #ddd; margin-bottom: 10px;">
-		<textarea autocomplete="off" id="bodytab4_json" name="bodytab4_json">{{ json_data_uvi }}</textarea>
+		<textarea autocomplete="off" id="bodytab4_json" name="bodytab4_json">{{ data_uvi.data }}</textarea>
 	</div>
 </div>
 <script type="text/javascript" language="javascript">
@@ -120,8 +126,10 @@
 {% block bodytab5 %}
 <br style="clear:both;"/>
 <div class="container-fluid">
+	Origin: {{ data_onecall.url }}<br />
+	Fetched: {{ data_onecall.fetched }}
 	<div style="border: 1px solid #ddd; margin-bottom: 10px;">
-		<textarea autocomplete="off" id="bodytab5_json" name="bodytab5_json">{{ json_data_onecall }}</textarea>
+		<textarea autocomplete="off" id="bodytab5_json" name="bodytab5_json">{{ data_onecall.data }}</textarea>
 	</div>
 </div>
 <script type="text/javascript" language="javascript">
@@ -141,8 +149,10 @@
 {% block bodytab6 %}
 <br style="clear:both;"/>
 <div class="container-fluid">
+	Origin: {{ data_back0day.url }}<br />
+	Fetched: {{ data_back0day.fetched }}
 	<div style="border: 1px solid #ddd; margin-bottom: 10px;">
-		<textarea autocomplete="off" id="bodytab6_json" name="bodytab6_json">{{ json_data_back0day }}</textarea>
+		<textarea autocomplete="off" id="bodytab6_json" name="bodytab6_json">{{ data_back0day.data }}</textarea>
 	</div>
 </div>
 <script type="text/javascript" language="javascript">
@@ -162,8 +172,10 @@
 {% block bodytab7 %}
 <br style="clear:both;"/>
 <div class="container-fluid">
+	Origin: {{ data_back1day.url }}<br />
+	Fetched: {{ data_back1day.fetched }}
 	<div style="border: 1px solid #ddd; margin-bottom: 10px;">
-		<textarea autocomplete="off" id="bodytab7_json" name="bodytab7_json">{{ json_data_back1day }}</textarea>
+		<textarea autocomplete="off" id="bodytab7_json" name="bodytab7_json">{{ data_back1day.data }}</textarea>
 	</div>
 </div>
 <script type="text/javascript" language="javascript">
@@ -183,8 +195,10 @@
 {% block bodytab8 %}
 <br style="clear:both;"/>
 <div class="container-fluid">
+	Origin: {{ data_back2day.url }}<br />
+	Fetched: {{ data_back2day.fetched }}
 	<div style="border: 1px solid #ddd; margin-bottom: 10px;">
-		<textarea autocomplete="off" id="bodytab8_json" name="bodytab8_json">{{ json_data_back2day }}</textarea>
+		<textarea autocomplete="off" id="bodytab8_json" name="bodytab8_json">{{ data_back2day.data }}</textarea>
 	</div>
 </div>
 <script type="text/javascript" language="javascript">
@@ -204,8 +218,10 @@
 {% block bodytab9 %}
 <br style="clear:both;"/>
 <div class="container-fluid">
+	Origin: {{ data_back3day.url }}<br />
+	Fetched: {{ data_back3day.fetched }}
 	<div style="border: 1px solid #ddd; margin-bottom: 10px;">
-		<textarea autocomplete="off" id="bodytab9_json" name="bodytab9_json">{{ json_data_back3day }}</textarea>
+		<textarea autocomplete="off" id="bodytab9_json" name="bodytab9_json">{{ data_back3day.data }}</textarea>
 	</div>
 </div>
 <script type="text/javascript" language="javascript">
@@ -225,8 +241,10 @@
 {% block bodytab10 %}
 <br style="clear:both;"/>
 <div class="container-fluid">
+	Origin: {{ data_back4day.url }}<br />
+	Fetched: {{ data_back4day.fetched }}
 	<div style="border: 1px solid #ddd; margin-bottom: 10px;">
-		<textarea autocomplete="off" id="bodytab10_json" name="bodytab10_json">{{ json_data_back4day }}</textarea>
+		<textarea autocomplete="off" id="bodytab10_json" name="bodytab10_json">{{ data_back4day.data }}</textarea>
 	</div>
 </div>
 <script type="text/javascript" language="javascript">
