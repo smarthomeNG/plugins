@@ -42,6 +42,35 @@ class OpenWeatherMap(SmartPlugin):
     _base_url = 'https://api.openweathermap.org/%s'
     _base_img_url = 'https://tile.openweathermap.org/map/%s/%s/%s/%s.png?appid=%s'
 
+    # source for german descriptions https://www.smarthomeng.de/vom-winde-verweht
+    _beaufort_descriptions_de = ["Windstille",
+                                 "leiser Zug",
+                                 "leichte Brise",
+                                 "schwacher Wind",
+                                 "mäßiger Wind",
+                                 "frischer Wind",
+                                 "starker Wind",
+                                 "steifer Wind",
+                                 "stürmischer Wind",
+                                 "Sturm",
+                                 "schwerer Sturm",
+                                 "orkanartiger Sturm",
+                                 "Orkan"]
+    # source for english descriptions https://simple.wikipedia.org/wiki/Beaufort_scale
+    _beaufort_descriptions_en = ["Calm",
+                                 "Light air",
+                                 "Light breeze",
+                                 "Gentle breeze",
+                                 "Moderate breeze",
+                                 "Fresh breeze",
+                                 "Strong breeze",
+                                 "High wind",
+                                 "Fresh Gale",
+                                 "Strong Gale",
+                                 "Storm",
+                                 "Violent storm",
+                                 "Hurricane-force"]
+
     def __init__(self, sh, *args, **kwargs):
         """
         Initializes the plugin
@@ -111,7 +140,8 @@ class OpenWeatherMap(SmartPlugin):
         self._request_daily = False
         self._request_alerts = False
 
-        self._origins_onecall = ['lat', 'lon', 'timezone', 'timezone_offset', 'alerts']
+        self._origins_onecall = ['lat', 'lon',
+                                 'timezone', 'timezone_offset', 'alerts']
 
         self._origins_weather = ['base', 'clouds', 'cod', 'coord', 'dt', 'id', 'name',
                                  'main/feels_like', 'main/humidity', 'main/pressure', 'main/temp', 'main/temp_max', 'main/temp_min',
@@ -172,7 +202,7 @@ class OpenWeatherMap(SmartPlugin):
         self.__query_api_if(self._data_source_key_back4day,
                             only_if=self._request_back4day, delta_t=-4)
 
-    def get_value_with_meta(self, owm_matchstring, correlation_hint = ""):
+    def get_value_with_meta(self, owm_matchstring, correlation_hint=""):
         s = owm_matchstring
         wrk_typ = "WRONG"
         ret_val = None
@@ -220,17 +250,19 @@ class OpenWeatherMap(SmartPlugin):
             except:
                 s = s.replace('day/', 'daily/0/')
                 was_ok = False
-                self.logger.warning(f"{correlation_hint}Missing integer after 'day/' assuming 'day/0/' in matchstring {owm_matchstring}")
+                self.logger.warning(
+                    f"{correlation_hint}Missing integer after 'day/' assuming 'day/0/' in matchstring {owm_matchstring}")
             wrk_typ = self._data_source_key_onecall
         elif s.startswith('hour/'):
             wrk = self._data_sources[self._data_source_key_onecall]['data']
             try:
-                new_day = int(s[5])              
+                new_day = int(s[5])
                 s = s.replace(s[0:6], 'hourly/' + str(new_day))
             except:
                 s = s.replace('hour/', 'hourly/0/')
                 was_ok = False
-                self.logger.warning(f"{correlation_hint}Missing integer after 'hour/' assuming 'hour/0/' in matchstring {owm_matchstring}")  
+                self.logger.warning(
+                    f"{correlation_hint}Missing integer after 'hour/' assuming 'hour/0/' in matchstring {owm_matchstring}")
             wrk_typ = self._data_source_key_onecall
         else:
             wrk_typ = self._data_source_key_weather
@@ -250,8 +282,9 @@ class OpenWeatherMap(SmartPlugin):
 
         return (ret_val, wrk_typ, s, was_ok)
 
-    def get_value(self, owm_matchstring, correlation_hint = ""):
-        ret_val, _, _, _ = self.get_value_with_meta(owm_matchstring, correlation_hint)
+    def get_value(self, owm_matchstring, correlation_hint=""):
+        ret_val, _, _, _ = self.get_value_with_meta(
+            owm_matchstring, correlation_hint)
         return ret_val
 
     def _update(self):
@@ -301,15 +334,21 @@ class OpenWeatherMap(SmartPlugin):
 
         TODO: solar_rad values are kWh/m2 - the uvi values seem to coincidentally fit the scale.
         """
-        self.logger.debug("%s _calculate_eto: for %s" % ((correlation_hint, s)))
+        self.logger.debug("%s _calculate_eto: for %s" %
+                          ((correlation_hint, s)))
 
         climate_sunrise = datetime.utcfromtimestamp(
             int(self.get_value(s.replace('/eto', "/sunrise"), correlation_hint)))
-        climate_humidity = self.get_value(s.replace('/eto', "/humidity"), correlation_hint)
-        climate_pressure = self.get_value(s.replace('/eto', "/pressure"), correlation_hint)
-        climate_min = self.get_value(s.replace('/eto', "/temp/min"), correlation_hint)
-        climate_max = self.get_value(s.replace('/eto', "/temp/max"), correlation_hint)
-        climate_speed = self.get_value(s.replace('/eto', "/wind_speed"), correlation_hint)
+        climate_humidity = self.get_value(
+            s.replace('/eto', "/humidity"), correlation_hint)
+        climate_pressure = self.get_value(
+            s.replace('/eto', "/pressure"), correlation_hint)
+        climate_min = self.get_value(
+            s.replace('/eto', "/temp/min"), correlation_hint)
+        climate_max = self.get_value(
+            s.replace('/eto', "/temp/max"), correlation_hint)
+        climate_speed = self.get_value(
+            s.replace('/eto', "/wind_speed"), correlation_hint)
         solarRad = self.get_value(s.replace('/eto', "/uvi"), correlation_hint)
         alt = float(self._elev)
         lat = float(self._lat)
@@ -348,7 +387,8 @@ class OpenWeatherMap(SmartPlugin):
         etWind = PT * TT * (eS - eA)
         eTo = etRad + etWind
 
-        self.logger.debug("%s _calculate_eto: %s, eTo: %s" % (correlation_hint, s, eTo))
+        self.logger.debug("%s _calculate_eto: %s, eTo: %s" %
+                          (correlation_hint, s, eTo))
         return eTo
 
     def __get_virtual_value(self, virtual_ms, correlation_hint):
@@ -357,16 +397,20 @@ class OpenWeatherMap(SmartPlugin):
         operation = virtual_ms[8:11]
         if virtual_ms.startswith("next24h/"):
             for hr in range(0, 24):
-                pool.append(self.get_value(f'hour/{hr}/{data_field}', correlation_hint))
+                pool.append(self.get_value(
+                    f'hour/{hr}/{data_field}', correlation_hint))
         elif virtual_ms.startswith("next12h/"):
             for hr in range(0, 12):
-                pool.append(self.get_value(f'hour/{hr}/{data_field}', correlation_hint))
+                pool.append(self.get_value(
+                    f'hour/{hr}/{data_field}', correlation_hint))
         elif virtual_ms.startswith("past24h/"):
             for hr in range(0, 24):
-                pool.append(self.get_value(f'day/-1/hour/{hr}/{data_field}', correlation_hint))
+                pool.append(self.get_value(
+                    f'day/-1/hour/{hr}/{data_field}', correlation_hint))
             for hr in range(0, 24):
                 try:
-                    val = self.get_value(f'day/-0/hour/{hr}/{data_field}', correlation_hint)
+                    val = self.get_value(
+                        f'day/-0/hour/{hr}/{data_field}', correlation_hint)
                     if not isinstance(val, Exception):
                         pool.append(val)
                 except:
@@ -374,17 +418,20 @@ class OpenWeatherMap(SmartPlugin):
             pool = pool[-24:]
         elif virtual_ms.startswith("past12h/"):
             for hr in range(12, 24):
-                pool.append(self.get_value(f'day/-1/hour/{hr}/{data_field}', correlation_hint))
+                pool.append(self.get_value(
+                    f'day/-1/hour/{hr}/{data_field}', correlation_hint))
             for hr in range(0, 24):
                 try:
-                    val = self.get_value(f'day/-0/hour/{hr}/{data_field}', correlation_hint)
+                    val = self.get_value(
+                        f'day/-0/hour/{hr}/{data_field}', correlation_hint)
                     if not isinstance(val, Exception):
                         pool.append(val)
                 except:
                     pass
             pool = pool[-12:]
 
-        self.logger.debug(f"{correlation_hint} {virtual_ms}  Pool: {pformat(pool, width=4000)}")
+        self.logger.debug(
+            f"{correlation_hint} {virtual_ms}  Pool: {pformat(pool, width=4000)}")
 
         if operation == "max":
             return max(pool)
@@ -399,7 +446,7 @@ class OpenWeatherMap(SmartPlugin):
         else:
             return f"Unknown operation '{operation}' in match_string '{virtual_ms}'"
 
-    def _get_val_from_dict(self, s, wrk, correlation_hint = ""):
+    def _get_val_from_dict(self, s, wrk, correlation_hint=""):
         """
         Uses string s as a path to navigate to the requested value in dict wrk.
         """
@@ -409,7 +456,8 @@ class OpenWeatherMap(SmartPlugin):
         while True:
             if (len(sp) == 0) or (wrk is None):
                 if wrk is None:
-                    missing_child_path = last_popped if len(sp) == 0 else f"{last_popped}/{'/'.join(sp)}"
+                    missing_child_path = last_popped if len(
+                        sp) == 0 else f"{last_popped}/{'/'.join(sp)}"
                     if f"{last_popped}/{'/'.join(sp)}" in self._soft_fails:
                         wrk = 0
                         self.logger.debug(
@@ -428,14 +476,16 @@ class OpenWeatherMap(SmartPlugin):
                             f"Integer index ({int(sp[0])}) out of range after '{'/'.join(successful_path)}'")
                 else:
                     wrk = wrk[0]
-                    self.logger.warning(f"{correlation_hint}Integer expected in matchstring after '{'/'.join(successful_path)}/{last_popped}', inserting '/0' to match FIRST entry.")
+                    self.logger.warning(
+                        f"{correlation_hint}Integer expected in matchstring after '{'/'.join(successful_path)}/{last_popped}', inserting '/0' to match FIRST entry.")
                     if last_popped is not None:
                         successful_path.append(last_popped)
                     last_popped = '0'
                     continue
             else:
                 if type(wrk) is not dict:
-                    self.logger.error(f"{correlation_hint}s={s} wrk={wrk} type(wrk)={type(wrk)}")
+                    self.logger.error(
+                        f"{correlation_hint}s={s} wrk={wrk} type(wrk)={type(wrk)}")
                 wrk = wrk.get(sp[0])
 
             if last_popped is not None:
@@ -682,6 +732,45 @@ class OpenWeatherMap(SmartPlugin):
             self.logger.error(
                 '%s _build_url: Wrong url type specified: %s' % (item.property.path, url_type))
         return url
+
+    def get_beaufort_number(self, speed_in_mps):
+        try:
+            # Origin of table: https://www.smarthomeng.de/vom-winde-verweht
+            table = [
+                (0.3, 0),
+                (1.6, 1),
+                (3.4, 2),
+                (5.5, 3),
+                (8.0, 4),
+                (10.8, 5),
+                (13.9, 6),
+                (17.2, 7),
+                (20.8, 8),
+                (24.5, 9),
+                (28.5, 10),
+                (32.7, 11),
+                (999,  12)]
+            return min(filter(lambda x: x[0] >= speed_in_mps, table))[1]
+        except ValueError:
+            self.logger.error(f"Cannot translate wind-speed to beaufort-number, received: '{speed_in_mps}'")
+            return None
+
+    def get_beaufort_description(self, speed_in_bft):
+        if speed_in_bft is None:
+            self.logger.warning(f"speed_in_bft is given as None")
+            return None
+        if type(speed_in_bft) is not int:
+            self.logger.error(f"speed_in_bft is not given as int: '{speed_in_bft}'")
+            return None
+        if (speed_in_bft < 0) or (speed_in_bft > 12):
+            self.logger.error(f"speed_in_bft is out of scale: '{speed_in_bft}'")
+            return None
+
+        self.logger.debug(f"Wind: {self._beaufort_descriptions_de[speed_in_bft]}")
+
+        if self._lang == 'de':
+            return self._beaufort_descriptions_de[speed_in_bft]
+        return self._beaufort_descriptions_en[speed_in_bft]
 
     def get_items(self):
         return self._items

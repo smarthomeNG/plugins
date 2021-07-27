@@ -5,10 +5,10 @@ plugin:
     description:
         de: 'Wetterdaten über OpenWeatherMap.'
         en: 'Weather data via OpenWeatherMap.'
-    maintainer: psilo909
-    tester: psilo909
+    maintainer: psilo909, jentz1986
+    tester: Sisamiwe, jentz1986
     state: qa-passed
-#    keywords: iot xyz
+    keywords: weather precipation irrigation
     documentation: 'http://smarthomeng.de/user/plugins/openweathermap/user_doc.html'
     support: 'https://knx-user-forum.de/forum/supportforen/smarthome-py/1246998-support-thread-zum-openweathermap-plugin'
     keywords: weather
@@ -219,4 +219,28 @@ plugin_functions:
                 description:
                     de: "Zum Beispiel /day/0/rain"
                     en: "E.g. /day/0/rain"
+    
+    get_beaufort_description:
+        type: str
+        description:
+            de: ""
+            en: ""
+        parameters:
+            speed_in_bft:
+                type: num
+                description:
+                    de: "Windstärke in bft, integer zwischen 0 und 12"
+                    de: "Wind-speed in bft, integer between 0 und 12"
+    
+    get_beaufort_number:
+        type: num
+        description:
+            de: "Berechnet den Beaufort-Wert (0 - 12) aus der Windgeschwindigkeit in m/s"
+            en: "Translates a wind-speed from m/s to beaufort-scale (0 - 12)"
+        parameters:
+            speed_in_mps:
+                type: num
+                description:
+                    de: "Windstärke in m/s"
+                    de: "Wind-speed in m/s"
 
