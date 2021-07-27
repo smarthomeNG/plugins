@@ -71,6 +71,10 @@ class OpenWeatherMap(SmartPlugin):
                                  "Violent storm",
                                  "Hurricane-force"]
 
+    _placebo_alarm = {'sender_name': 'Placebo', 'event': 'None',
+                      'start': 1609455600, 'end': 1924988400,
+                      'description': 'No Alarm', 'tags': []}
+
     def __init__(self, sh, *args, **kwargs):
         """
         Initializes the plugin
@@ -228,8 +232,10 @@ class OpenWeatherMap(SmartPlugin):
         elif s.startswith('current/'):
             wrk = self._data_sources[self._data_source_key_onecall]['data']
             wrk_typ = self._data_source_key_onecall
-        elif s.startswith('alerts/'):
+        elif s.startswith('alerts'):
             wrk = self._data_sources[self._data_source_key_onecall]['data']
+            if "alerts" not in wrk:
+                wrk.update({'alerts': [self._placebo_alarm]})
             wrk_typ = self._data_source_key_onecall
         elif s in self._origins_onecall:
             wrk = self._data_sources[self._data_source_key_onecall]['data']
@@ -450,6 +456,10 @@ class OpenWeatherMap(SmartPlugin):
         """
         Uses string s as a path to navigate to the requested value in dict wrk.
         """
+
+        if s == "alerts":
+            self.logger.debug(pformat(wrk))
+
         successful_path = []
         last_popped = None
         sp = s.split('/')
@@ -752,7 +762,8 @@ class OpenWeatherMap(SmartPlugin):
                 (999,  12)]
             return min(filter(lambda x: x[0] >= speed_in_mps, table))[1]
         except ValueError:
-            self.logger.error(f"Cannot translate wind-speed to beaufort-number, received: '{speed_in_mps}'")
+            self.logger.error(
+                f"Cannot translate wind-speed to beaufort-number, received: '{speed_in_mps}'")
             return None
 
     def get_beaufort_description(self, speed_in_bft):
@@ -760,10 +771,12 @@ class OpenWeatherMap(SmartPlugin):
             self.logger.warning(f"speed_in_bft is given as None")
             return None
         if type(speed_in_bft) is not int:
-            self.logger.error(f"speed_in_bft is not given as int: '{speed_in_bft}'")
+            self.logger.error(
+                f"speed_in_bft is not given as int: '{speed_in_bft}'")
             return None
         if (speed_in_bft < 0) or (speed_in_bft > 12):
-            self.logger.error(f"speed_in_bft is out of scale: '{speed_in_bft}'")
+            self.logger.error(
+                f"speed_in_bft is out of scale: '{speed_in_bft}'")
             return None
         if self._lang == 'de':
             return self._beaufort_descriptions_de[speed_in_bft]
