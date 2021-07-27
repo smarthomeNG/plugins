@@ -765,9 +765,6 @@ class OpenWeatherMap(SmartPlugin):
         if (speed_in_bft < 0) or (speed_in_bft > 12):
             self.logger.error(f"speed_in_bft is out of scale: '{speed_in_bft}'")
             return None
-
-        self.logger.debug(f"Wind: {self._beaufort_descriptions_de[speed_in_bft]}")
-
         if self._lang == 'de':
             return self._beaufort_descriptions_de[speed_in_bft]
         return self._beaufort_descriptions_en[speed_in_bft]
