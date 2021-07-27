@@ -280,6 +280,21 @@ class OpenWeatherMap(SmartPlugin):
                 s = s.replace("daily/", "day/")
                 ret_val = self.__calculate_eto(s, correlation_hint)
                 wrk_typ = "onecall [eto-calculation]"
+            elif (s.startswith("current/") or s.startswith("daily/") or s.startswith("day/") or s.startswith("hour/")) and (s.endswith('/wind_speed/beaufort') or s.endswith('/wind_speed/description')):
+                wrk_typ = "onecall [bft-calculation]"
+                mps_string = s.replace('/wind_speed/beaufort', '/wind_speed')
+                mps_string = mps_string.replace(
+                    '/wind_speed/description', '/wind_speed')
+                wind_mps, updated_s = self._get_val_from_dict(
+                    mps_string, wrk, correlation_hint)
+                bft_val = self.get_beaufort_number(wind_mps)
+                if s.endswith('/beaufort'):
+                    ret_val = bft_val
+                elif s.endswith('/description'):
+                    ret_val = self.get_beaufort_description(bft_val)
+                else:
+                    raise Exception(f"Cannot make sense of {s}")
+                s = updated_s
             else:
                 ret_val, s = self._get_val_from_dict(s, wrk, correlation_hint)
         except Exception as e:
