@@ -35,6 +35,7 @@ item_attributes:
         valid_list:
             - shellyplug
             - shellyplug-s
+            - shelly1
             - shelly1pm
             - shellyswitch
             - shellyswitch25
