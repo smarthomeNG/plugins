@@ -40,6 +40,7 @@ item_attributes:
             - shellyswitch25
             - shelly4pro
             - shellyht
+            - shellyflood
         description:
             de: "Typ des Shelly Devices (z.B. Shellyplug, Shellyplug-s, Shelly1/pm, Shelly2, Shelly2.5, Shelly4Pro)"
             en: "Type of Shelly device (e.g. Shellyplug, Shellyplug-s. Shelly1/pm, Shelly2, Shelly2.5, Shelly4Pro)"
@@ -56,6 +57,8 @@ item_attributes:
             - temp_f
             - humidity
             - battery
+            - flood
+            - error
         description:
             de: "Zu lesendes/schreibendes Attribut des Shelly Devices. Achtung: Nicht jedes Attribut ist auf allen Device-Typen vorhanden."
             en: "Attribute of Shelly devcie that shall be read/written. Note: Not every attribute is available on all device types"
@@ -126,6 +129,33 @@ item_structs:
             shelly_id: ..:.
             shelly_type: ..:.
             shelly_attr: online
+        battery:
+            type: num
+            shelly_id: ..:.
+            shelly_type: ..:.
+            shelly_attr: battery
+
+    shellyflood:
+        name: WLAN Flutsensor, mit Temperaturmessung
+        type: bool
+        shelly_type: shellyflood
+        shelly_attr: flood
+
+        online:
+            type: bool
+            shelly_id: ..:.
+            shelly_type: ..:.
+            shelly_attr: online
+        temp:
+            type: num
+            shelly_id: ..:.
+            shelly_type: ..:.
+            shelly_attr: temp
+        error:
+            type: num
+            shelly_id: ..:.
+            shelly_type: ..:.
+            shelly_attr: error
         battery:
             type: num
             shelly_id: ..:.
