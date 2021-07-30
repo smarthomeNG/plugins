@@ -464,6 +464,8 @@ class OpenWeatherMap(SmartPlugin):
         elif operation == "sum":
             return round(functools.reduce(
                 lambda x, y: x + y, pool), 2)
+        elif operation == "all":
+            return pool
         else:
             return f"Unknown operation '{operation}' in match_string '{virtual_ms}'"
 
@@ -471,10 +473,6 @@ class OpenWeatherMap(SmartPlugin):
         """
         Uses string s as a path to navigate to the requested value in dict wrk.
         """
-
-        if s == "alerts":
-            self.logger.debug(pformat(wrk))
-
         successful_path = []
         last_popped = None
         sp = s.split('/')
@@ -499,6 +497,12 @@ class OpenWeatherMap(SmartPlugin):
                     else:
                         raise Exception(
                             f"Integer index ({int(sp[0])}) out of range after '{'/'.join(successful_path)}'")
+                elif sp[0] == '@count':
+                    if last_popped == 'alerts' and wrk[0] == self._placebo_alarm:
+                        wrk = 0
+                    else:
+                        wrk = len(wrk)
+                    break
                 else:
                     wrk = wrk[0]
                     self.logger.warning(

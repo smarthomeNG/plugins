@@ -78,6 +78,13 @@ item_attributes:
         description:
             de: 'Matchstring für die OpenWeatherMap Daten, siehe Beispiele in der README.'
             en: 'Matchstring for the OpenWeatherMap data, see examples in README.'
+    owm_match_prefix:
+        type: str
+        mandatory: False
+        default: None
+        description:
+            de: 'Präfix der dem Matchstring vorangestellt wird. Kann in einem struct vererbt werden über ..:.'
+            en: 'Prefix that is prepended to the matchstring. Can be inherited in a struct by using ..:.'
     owm_coord_x:
         type: num
         mandatory: False
