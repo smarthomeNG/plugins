@@ -146,10 +146,20 @@ class Shelly(MqttPlugin):
             if shelly_attr:
                 shelly_attr = shelly_attr.lower()
 
-            # shellyht and shellyflood needs another topic path than the relay devices:
-            if shelly_type == 'shellyht' or shelly_type == 'shellyflood':
+            # shellyht, shellydw2 and shellyflood needs another topic path than the relay devices:
+            if shelly_type == 'shellyht' or shelly_type == 'shellydw2' or shelly_type == 'shellyflood':
                 if shelly_attr == 'humidity':
                     topic = 'shellies/' + shelly_id + '/sensor/humidity'
+                elif shelly_attr == 'state':
+                    topic = 'shellies/' + shelly_id + '/sensor/state'
+                elif shelly_attr == 'tilt':
+                    topic = 'shellies/' + shelly_id + '/sensor/tilt'
+                elif shelly_attr == 'vibration':
+                    topic = 'shellies/' + shelly_id + '/sensor/vibration'
+                elif shelly_attr == 'lux':
+                    topic = 'shellies/' + shelly_id + '/sensor/lux'
+                elif shelly_attr == 'illumination':
+                    topic = 'shellies/' + shelly_id + '/sensor/illumination'
                 elif shelly_attr == 'flood':
                     topic = 'shellies/' + shelly_id + '/sensor/flood'
                 elif shelly_attr == 'battery':
