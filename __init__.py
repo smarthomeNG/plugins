@@ -29,6 +29,7 @@ import datetime
 import json
 import math
 import functools
+from .webif import WebInterface
 from datetime import datetime, timedelta, timezone
 from lib.module import Modules
 from lib.model.smartplugin import *
@@ -105,6 +106,13 @@ class OpenWeatherMap(SmartPlugin):
         self._data_source_key_back4day = 'onecall-4'
         self._data_source_key_onecall = 'onecall'
 
+        self._data_source_key_airpollution_current = 'airpollution_current'
+        self._data_source_key_airpollution_forecast = 'airpollution_forecast'
+        self._data_source_key_airpollution_back1day = 'airpollution-1'
+        self._data_source_key_airpollution_back2day = 'airpollution-2'
+        self._data_source_key_airpollution_back3day = 'airpollution-3'
+        self._data_source_key_airpollution_back4day = 'airpollution-4'
+
         self._data_sources = {self._data_source_key_weather:  {'url': '', 'fetched': '', 'data': None},
                               self._data_source_key_forecast: {'url': '', 'fetched': '', 'data': None},
                               self._data_source_key_uvi:      {'url': '', 'fetched': '', 'data': None},
@@ -113,7 +121,13 @@ class OpenWeatherMap(SmartPlugin):
                               self._data_source_key_back2day: {'url': '', 'fetched': '', 'data': None},
                               self._data_source_key_back3day: {'url': '', 'fetched': '', 'data': None},
                               self._data_source_key_back4day: {'url': '', 'fetched': '', 'data': None},
-                              self._data_source_key_onecall:  {'url': '', 'fetched': '', 'data': None}}
+                              self._data_source_key_onecall:  {'url': '', 'fetched': '', 'data': None},
+                              self._data_source_key_airpollution_current:  {'url': '', 'fetched': '', 'data': None},
+                              self._data_source_key_airpollution_forecast:  {'url': '', 'fetched': '', 'data': None},
+                              self._data_source_key_airpollution_back1day:  {'url': '', 'fetched': '', 'data': None},
+                              self._data_source_key_airpollution_back2day:  {'url': '', 'fetched': '', 'data': None},
+                              self._data_source_key_airpollution_back3day:  {'url': '', 'fetched': '', 'data': None},
+                              self._data_source_key_airpollution_back4day:  {'url': '', 'fetched': '', 'data': None}}
 
         self._soft_fails = ['rain/1h',
                             'rain/3h',
@@ -129,6 +143,13 @@ class OpenWeatherMap(SmartPlugin):
         self._request_weather = False
         self._request_forecast = False
         self._request_uvi = False
+
+        self._request_airpollution_current = False
+        self._request_airpollution_forecast = False
+        self._request_airpollution_back1day = False
+        self._request_airpollution_back2day = False
+        self._request_airpollution_back3day = False
+        self._request_airpollution_back4day = False
 
         # Via one-call timemachine
         self._request_back0day = False
@@ -155,8 +176,12 @@ class OpenWeatherMap(SmartPlugin):
 
         self._origins_layer = [
             'clouds_new', 'precipitation_new', 'pressure_new', 'wind_new', 'temp_new']
-
-        self.init_webinterface()
+                
+        if not self.init_webinterface(WebInterface):
+            self.logger.error("Unable to start Webinterface")
+            self._init_complete = False
+        else:
+            self.logger.debug("Init complete")
 
     def run(self):
         self.scheduler_add(__name__, self._update_loop,
@@ -187,6 +212,19 @@ class OpenWeatherMap(SmartPlugin):
                             only_if=self._request_forecast)
         self.__query_api_if(self._data_source_key_uvi,
                             only_if=self._request_uvi)
+        self.__query_api_if(self._data_source_key_airpollution_current,
+                            only_if=self._request_airpollution_current)
+        self.__query_api_if(self._data_source_key_airpollution_forecast,
+                            only_if=self._request_airpollution_forecast)
+
+        self.__query_api_if(self._data_source_key_airpollution_back1day,
+                            only_if=self._request_airpollution_back1day, delta_t=-1)
+        self.__query_api_if(self._data_source_key_airpollution_back2day,
+                            only_if=self._request_airpollution_back2day, delta_t=-2)
+        self.__query_api_if(self._data_source_key_airpollution_back3day,
+                            only_if=self._request_airpollution_back3day, delta_t=-3)
+        self.__query_api_if(self._data_source_key_airpollution_back4day,
+                            only_if=self._request_airpollution_back4day, delta_t=-4)
 
         get_onecall = self._request_current or \
             self._request_minutely or \
@@ -232,6 +270,26 @@ class OpenWeatherMap(SmartPlugin):
         elif s.startswith('current/'):
             wrk = self._data_sources[self._data_source_key_onecall]['data']
             wrk_typ = self._data_source_key_onecall
+        elif s.startswith('airpollution/forecast/'):
+            wrk = self._data_sources[self._data_source_key_airpollution_forecast]['data']
+            prefix = f"airpollution/forecast/"
+            s = s.replace(prefix, "list/")
+            wrk_typ = self._data_source_key_airpollution_forecast
+        elif s.startswith('airpollution/day/-'):
+            minus_days = s[18]
+            wrk = self._data_sources[f"airpollution-{minus_days}"]['data']
+            prefix = f"airpollution/day/-{minus_days}"
+            s = s.replace(f"{prefix}/hour/", "list/")
+            wrk_typ = f"airpollution-{minus_days}"
+        elif s.startswith('airpollution/hour/'):
+            wrk = self._data_sources[self._data_source_key_airpollution_forecast]['data']
+            prefix = f"airpollution/hour/"
+            s = s.replace(prefix, "list/")
+            wrk_typ = self._data_source_key_airpollution_forecast
+        elif s.startswith('airpollution/'):
+            wrk = self._data_sources[self._data_source_key_airpollution_current]['data']
+            s = s.replace("airpollution/", "list/0/")
+            wrk_typ = self._data_source_key_airpollution_current
         elif s.startswith('alerts'):
             wrk = self._data_sources[self._data_source_key_onecall]['data']
             if "alerts" not in wrk:
@@ -317,7 +375,7 @@ class OpenWeatherMap(SmartPlugin):
         for item_path, owm_item_data in self._items.items():
             owm_matchstring, item = owm_item_data
             if owm_matchstring in self._origins_layer:
-                ret_val = self._build_url('owm_layer', item)
+                ret_val = self.__build_url('owm_layer', item)
                 wrk_typ = 'owm_layer'
                 item(ret_val, self.get_shortname(),
                      f"{wrk_typ} // {owm_matchstring}")
@@ -599,7 +657,7 @@ class OpenWeatherMap(SmartPlugin):
         Requests the weather information at openweathermap.com
         """
         try:
-            url = self._build_url(data_source_key, delta_t=delta_t)
+            url = self.__build_url(data_source_key, delta_t=delta_t)
             response = self._session.get(url)
         except Exception as e:
             self.logger.error(
@@ -650,6 +708,18 @@ class OpenWeatherMap(SmartPlugin):
                 self._request_back3day = True
             elif owm_ms.startswith('day/-4'):
                 self._request_back4day = True
+            elif owm_ms.startswith('airpollution/hour'):
+                self._request_airpollution_forecast = True
+            elif owm_ms.startswith('airpollution/day/-1'):
+                self._request_airpollution_back1day = True
+            elif owm_ms.startswith('airpollution/day/-2'):
+                self._request_airpollution_back2day = True
+            elif owm_ms.startswith('airpollution/day/-3'):
+                self._request_airpollution_back3day = True
+            elif owm_ms.startswith('airpollution/day/-4'):
+                self._request_airpollution_back4day = True
+            elif owm_ms.startswith('airpollution/'):
+                self._request_airpollution_current = True
             elif owm_ms.startswith('day'):
                 self._request_daily = True
             elif owm_ms.startswith('alerts'):
@@ -674,7 +744,7 @@ class OpenWeatherMap(SmartPlugin):
         ytile = int((1.0 - math.asinh(math.tan(lat_rad)) / math.pi) / 2.0 * n)
         return (xtile, ytile)
 
-    def _build_url(self, url_type=None, item=None, delta_t=0):
+    def __build_url(self, url_type=None, item=None, delta_t=0):
         """
         Builds a request url
         @param url_type: url type (currently on 'forecast', as historic data are not supported.
@@ -696,6 +766,21 @@ class OpenWeatherMap(SmartPlugin):
             parameters = "?lat=%s&lon=%s&appid=%s&lang=%s&units=%s" % (self._lat, self._lon, self._key, self._lang,
                                                                        self._units)
             url = '%s%s' % (url, parameters)
+        elif url_type == self._data_source_key_airpollution_current:
+            url = self._base_url % 'data/2.5/air_pollution'
+            parameters = "?lat=%s&lon=%s&appid=%s" % (
+                self._lat, self._lon, self._key)
+            url = '%s%s' % (url, parameters)
+        elif url_type == self._data_source_key_airpollution_forecast:
+            url = self._base_url % 'data/2.5/air_pollution/history'
+            parameters = "?lat=%s&lon=%s&start=%i&end=%i&appid=%s" % (
+                self._lat, self._lon, datetime.utcnow().timestamp(), self.__get_timestamp_for_delta_days(5), self._key)
+            url = '%s%s' % (url, parameters)
+        elif url_type.startswith('airpollution-'):
+            url = self._base_url % 'data/2.5/air_pollution/history'
+            parameters = "?lat=%s&lon=%s&start=%i&end=%i&appid=%s" % (self._lat, self._lon,  self.__get_timestamp_for_delta_days(
+                delta_t), self.__get_timestamp_for_delta_days(delta_t + 1), self._key)
+            url = '%s%s' % (url, parameters)
         elif url_type == self._data_source_key_onecall:
             url = self._base_url % 'data/2.5/onecall'
             excluded = []
@@ -713,13 +798,11 @@ class OpenWeatherMap(SmartPlugin):
             parameters = "?lat=%s&lon=%s&exclude=%s&appid=%s&lang=%s&units=%s" % (self._lat, self._lon, exclude,
                                                                                   self._key, self._lang, self._units)
             url = '%s%s' % (url, parameters)
-            self.logger.debug("_build_url: onecall URL: %s" % url)
         elif url_type.startswith('onecall-'):
             url = self._base_url % 'data/2.5/onecall/timemachine'
             parameters = "?lat=%s&lon=%s&dt=%i&appid=%s&lang=%s&units=%s" % (self._lat, self._lon, self.__get_timestamp_for_delta_days(delta_t),
                                                                              self._key, self._lang, self._units)
             url = '%s%s' % (url, parameters)
-            self.logger.debug("_build_url: yesterday URL: %s" % url)
         elif url_type == 'owm_layer':
             if self.has_iattr(item.conf, 'owm_matchstring'):
                 layer = self.get_iattr_value(item.conf, 'owm_matchstring')
@@ -759,8 +842,21 @@ class OpenWeatherMap(SmartPlugin):
             url = self._base_img_url % (layer, z, x, y, self._key)
         else:
             self.logger.error(
-                '%s _build_url: Wrong url type specified: %s' % (item.property.path, url_type))
+                '%s __build_url: Wrong url type specified: %s' % (item.property.path, url_type))
         return url
+
+    def _get_all_data_for_webif(self):
+        rslt = []
+        for data_source_key in self._data_sources:
+            src = self._data_sources[data_source_key]['data']
+            rslt.append({
+                "key": data_source_key.replace('-', '_minus_'),
+                "data": json.dumps(src, indent=4),
+                "url": self._data_sources[data_source_key]['url'],
+                "fetched": self._data_sources[data_source_key]['fetched']
+            })
+
+        return rslt
 
     def get_beaufort_number(self, speed_in_mps):
         try:
@@ -800,111 +896,3 @@ class OpenWeatherMap(SmartPlugin):
         if self._lang == 'de':
             return self._beaufort_descriptions_de[speed_in_bft]
         return self._beaufort_descriptions_en[speed_in_bft]
-
-    def get_items(self):
-        return self._items
-
-    def get_data_for_webif(self, data_source_key):
-        src = self._data_sources[data_source_key]['data']
-        return {
-            "data": json.dumps(src, indent=4),
-            "url": self._data_sources[data_source_key]['url'],
-            "fetched": self._data_sources[data_source_key]['fetched']
-        }
-
-    def init_webinterface(self):
-        """"
-        Initialize the web interface for this plugin
-
-        This method is only needed if the plugin is implementing a web interface
-        """
-        try:
-            self.mod_http = Modules.get_instance().get_module(
-                'http')  # try/except to handle running in a core version that does not support modules
-        except:
-            self.mod_http = None
-        if self.mod_http == None:
-            self.logger.error(
-                "Plugin '{}': Not initializing the web interface".format(self.get_shortname()))
-            return False
-
-        # set application configuration for cherrypy
-        webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
-        config = {
-            '/': {
-                'tools.staticdir.root': webif_dir,
-            },
-            '/static': {
-                'tools.staticdir.on': True,
-                'tools.staticdir.dir': 'static'
-            }
-        }
-
-        # Register the web interface as a cherrypy app
-        self.mod_http.register_webif(WebInterface(webif_dir, self),
-                                     self.get_shortname(),
-                                     config,
-                                     self.get_classname(), self.get_instance_name(),
-                                     description='')
-
-        return True
-
-
-class WebInterface(SmartPluginWebIf):
-
-    def __init__(self, webif_dir, plugin):
-        """
-        Initialization of instance of class WebInterface
-
-        :param webif_dir: directory where the webinterface of the plugin resides
-        :param plugin: instance of the plugin
-        :type webif_dir: str
-        :type plugin: object
-        """
-        self.webif_dir = webif_dir
-        self.plugin = plugin
-        self.logger = self.plugin.logger
-        self.tplenv = self.init_template_environment()
-
-    @cherrypy.expose
-    def index(self, reload=None):
-        """
-        Build index.html for cherrypy
-
-        Render the template and return the html file to be delivered to the browser
-
-        :return: contents of the template after beeing rendered
-        """
-
-        tmpl = self.tplenv.get_template('index.html')
-
-        data_weather = self.plugin.get_data_for_webif(
-            self.plugin._data_source_key_weather)
-        data_forecast = self.plugin.get_data_for_webif(
-            self.plugin._data_source_key_forecast)
-        data_uvi = self.plugin.get_data_for_webif(
-            self.plugin._data_source_key_uvi)
-        data_onecall = self.plugin.get_data_for_webif(
-            self.plugin._data_source_key_onecall)
-        data_back0day = self.plugin.get_data_for_webif(
-            self.plugin._data_source_key_back0day)
-        data_back1day = self.plugin.get_data_for_webif(
-            self.plugin._data_source_key_back1day)
-        data_back2day = self.plugin.get_data_for_webif(
-            self.plugin._data_source_key_back2day)
-        data_back3day = self.plugin.get_data_for_webif(
-            self.plugin._data_source_key_back3day)
-        data_back4day = self.plugin.get_data_for_webif(
-            self.plugin._data_source_key_back4day)
-
-        return tmpl.render(plugin_shortname=self.plugin.get_shortname(), plugin_version=self.plugin.get_version(),
-                           plugin_info=self.plugin.get_info(), p=self.plugin,
-                           data_weather=data_weather,
-                           data_forecast=data_forecast,
-                           data_uvi=data_uvi,
-                           data_onecall=data_onecall,
-                           data_back0day=data_back0day,
-                           data_back1day=data_back1day,
-                           data_back2day=data_back2day,
-                           data_back3day=data_back3day,
-                           data_back4day=data_back4day)

@@ -2,29 +2,77 @@
 
 {% set logo_frame = false %}
 {% set use_bodytabs = true %}
-{% set tabcount = 10 %}
+{% set tabcount = 2 %}
 {% set tab1title = 'Items' %}
-{% set tab2title = 'JSON Data (weather)' %}
-{% set tab3title = 'JSON Data (forecast)' %}
-{% set tab4title = 'JSON Data (uvi)' %}
-{% set tab5title = 'JSON Data (onecall)' %}
-{% set tab6title = 'JSON Data (onecall-0)' %}
-{% set tab7title = 'JSON Data (onecall-1)' %}
-{% set tab8title = 'JSON Data (onecall-2)' %}
-{% set tab9title = 'JSON Data (onecall-3)' %}
-{% set tab10title = 'JSON Data (onecall-4)' %}
+{% set tab2title = 'JSON Data' %}
 
+{% set start_tab = 2 %}
 
-{% set start_tab = 5 %}
+{% set json_data = p._get_all_data_for_webif() %}
+{% set item_data = p._items %}
 
 {% block headtable %}
 <script src="/gstatic/codemirror/mode/javascript/javascript.js"></script>
+<style>
+	.owm_codeblock {
+		display: none;
+	}
+
+	.owm_active {
+		display: block;
+	}
+
+	.owm_nav_active {
+		font-weight: bold;
+	}
+
+	.owm_codeblock textarea {
+		display: none;
+	}
+
+	.owm_nav_box {
+		border-width: 1px;
+		border-style: solid;
+		border-color: #ddd;
+		width: 210px;
+		background: #ddd;
+		padding: 3px;
+		margin-bottom: 3px;
+		cursor: pointer;
+	}
+
+	.owm_nav_box:hover {
+		border-color: red;
+	}
+</style>
+<script language="javascript">
+	function enable_block(block) {
+		$(".owm_active").toggleClass("owm_active");
+		$(".owm_nav_active").toggleClass("owm_nav_active");
+		block.toggleClass("owm_nav_active");
+		
+		selected_block = "#" + block.attr("id").replace('_nav', '');
+		$(selected_block).toggleClass("owm_active");
+		src_origin = selected_block + " textarea";
+		window.bodytab2_json_editor.setValue($(src_origin).val());
+	}
+
+	$(function() {
+		$(".owm_codeblock").each(function( index ) {
+			$("#"+$(this).attr("id")+'_nav').click(function() {
+				enable_block($(this));
+			});
+		});
+
+		enable_block($(".owm_nav_box").first());
+	});
+</script>
 {% endblock %}
 
 {% block bodytab1 %}
 <div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
 	<div class="col-sm-12">
-		<h5>OpenWeatherMap Plugin Items ({{ p.get_items()|length }})</h5>
+		<h5>OpenWeatherMap Plugin Items ({{ item_data|length }})</h5>
 
 		<table class="table table-striped table-hover pluginList">
 			<thead>
@@ -38,7 +86,7 @@
 				</tr>
 			</thead>
 			<tbody>
-				{% for key, item in p.get_items().items() %}
+				{% for key, item in item_data.items() %}
 					<tr id="{{ loop.index }}_click">
 						<td class="py-1">{{ item[1].property.path }}</td>
 						<td class="py-1">{{ item[1].property.type }}</td>
@@ -56,15 +104,34 @@
 
 {% block bodytab2 %}
 <br style="clear:both;"/>
-<div class="container-fluid">
-	Origin: {{ data_weather.url }}<br />
-	Fetched: {{ data_weather.fetched }}
-	<div style="border: 1px solid #ddd; margin-bottom: 10px;">
-		<textarea autocomplete="off" id="bodytab2_json" name="bodytab2_json">{{ data_weather.data }}</textarea>
+<div style="float: left; width: 220px; display: block;">
+	{% for data_source in json_data %}
+		<div class="owm_nav_box" id="owm_block_{{ data_source.key }}_nav">{{ data_source.key | replace('_minus_', '-') }}</div>
+	{% endfor %}
+</div>
+
+{% for data_source in json_data %}
+	<div class="owm_codeblock" id="owm_block_{{ data_source.key }}">
+		<h5>{{ data_source.key | replace('_minus_', '-') }}</h5>
+		<table>
+			<tr>
+				<td>Origin:</td>
+				<td><a href="{{ data_source.url }}">{{ data_source.url | replace(p._key, "(key)") }}</a></td>
+			</tr>
+			<tr>
+				<td>Fetched: &nbsp; </td>
+				<td>{{ data_source.fetched }}</td>
+			</tr>
+		</table>
+		<textarea autocomplete="off">{{ data_source.data }}</textarea>
 	</div>
+{% endfor %}
+
+<div style="margin-bottom: 10px; margin-top: 10px;">
+	<textarea autocomplete="off" id="bodytab2_editor"></textarea>
 </div>
 <script type="text/javascript" language="javascript">
-	window.bodytab2_json_editor = CodeMirror.fromTextArea(document.getElementById("bodytab2_json"), {
+	window.bodytab2_json_editor = CodeMirror.fromTextArea(document.getElementById("bodytab2_editor"), {
 		mode: {name: "javascript", json: true},
 		lineNumbers: true,
 		readOnly: true,
@@ -73,191 +140,6 @@
 		foldGutter: true,
 		gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
 	});
-	window.bodytab2_json_editor.refresh()
+	window.bodytab2_json_editor.refresh();
 </script>
-{% endblock %}
-
-{% block bodytab3 %}
-<br style="clear:both;"/>
-<div class="container-fluid">
-	Origin: {{ data_forecast.url }}<br />
-	Fetched: {{ data_forecast.fetched }}
-	<div style="border: 1px solid #ddd; margin-bottom: 10px;">
-		<textarea autocomplete="off" id="bodytab3_json" name="bodytab3_json">{{ data_forecast.data }}</textarea>
-	</div>
-</div>
-<script type="text/javascript" language="javascript">
-	window.bodytab3_json_editor = CodeMirror.fromTextArea(document.getElementById("bodytab3_json"), {
-		mode: {name: "javascript", json: true},
-		lineNumbers: true,
-		readOnly: true,
-		lineWrapping: true,
-		extraKeys: {"Ctrl-Q": function(cm){ cm.foldCode(cm.getCursor()); }},
-		foldGutter: true,
-		gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
-	});
-	window.bodytab3_json_editor.refresh()
-</script>
-{% endblock %}
-
-{% block bodytab4 %}
-<br style="clear:both;"/>
-<div class="container-fluid">
-	Origin: {{ data_uvi.url }}<br />
-	Fetched: {{ data_uvi.fetched }}
-	<div style="border: 1px solid #ddd; margin-bottom: 10px;">
-		<textarea autocomplete="off" id="bodytab4_json" name="bodytab4_json">{{ data_uvi.data }}</textarea>
-	</div>
-</div>
-<script type="text/javascript" language="javascript">
-	window.bodytab4_json_editor = CodeMirror.fromTextArea(document.getElementById("bodytab4_json"), {
-		mode: {name: "javascript", json: true},
-		lineNumbers: true,
-		readOnly: true,
-		lineWrapping: true,
-		extraKeys: {"Ctrl-Q": function(cm){ cm.foldCode(cm.getCursor()); }},
-		foldGutter: true,
-		gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
-	});
-	window.bodytab4_json_editor.refresh()
-</script>
-{% endblock %}
-
-{% block bodytab5 %}
-<br style="clear:both;"/>
-<div class="container-fluid">
-	Origin: {{ data_onecall.url }}<br />
-	Fetched: {{ data_onecall.fetched }}
-	<div style="border: 1px solid #ddd; margin-bottom: 10px;">
-		<textarea autocomplete="off" id="bodytab5_json" name="bodytab5_json">{{ data_onecall.data }}</textarea>
-	</div>
-</div>
-<script type="text/javascript" language="javascript">
-	window.bodytab5_json_editor = CodeMirror.fromTextArea(document.getElementById("bodytab5_json"), {
-		mode: {name: "javascript", json: true},
-		lineNumbers: true,
-		readOnly: true,
-		lineWrapping: true,
-		extraKeys: {"Ctrl-Q": function(cm){ cm.foldCode(cm.getCursor()); }},
-		foldGutter: true,
-		gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
-	});
-	window.bodytab5_json_editor.refresh()
-</script>
-{% endblock %}
-
-{% block bodytab6 %}
-<br style="clear:both;"/>
-<div class="container-fluid">
-	Origin: {{ data_back0day.url }}<br />
-	Fetched: {{ data_back0day.fetched }}
-	<div style="border: 1px solid #ddd; margin-bottom: 10px;">
-		<textarea autocomplete="off" id="bodytab6_json" name="bodytab6_json">{{ data_back0day.data }}</textarea>
-	</div>
-</div>
-<script type="text/javascript" language="javascript">
-	window.bodytab6_json_editor = CodeMirror.fromTextArea(document.getElementById("bodytab6_json"), {
-		mode: {name: "javascript", json: true},
-		lineNumbers: true,
-		readOnly: true,
-		lineWrapping: true,
-		extraKeys: {"Ctrl-Q": function(cm){ cm.foldCode(cm.getCursor()); }},
-		foldGutter: true,
-		gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
-	});
-	window.bodytab6_json_editor.refresh()
-</script>
-{% endblock %}
-
-{% block bodytab7 %}
-<br style="clear:both;"/>
-<div class="container-fluid">
-	Origin: {{ data_back1day.url }}<br />
-	Fetched: {{ data_back1day.fetched }}
-	<div style="border: 1px solid #ddd; margin-bottom: 10px;">
-		<textarea autocomplete="off" id="bodytab7_json" name="bodytab7_json">{{ data_back1day.data }}</textarea>
-	</div>
-</div>
-<script type="text/javascript" language="javascript">
-	window.bodytab7_json_editor = CodeMirror.fromTextArea(document.getElementById("bodytab7_json"), {
-		mode: {name: "javascript", json: true},
-		lineNumbers: true,
-		readOnly: true,
-		lineWrapping: true,
-		extraKeys: {"Ctrl-Q": function(cm){ cm.foldCode(cm.getCursor()); }},
-		foldGutter: true,
-		gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
-	});
-	window.bodytab7_json_editor.refresh()
-</script>
-{% endblock %}
-
-{% block bodytab8 %}
-<br style="clear:both;"/>
-<div class="container-fluid">
-	Origin: {{ data_back2day.url }}<br />
-	Fetched: {{ data_back2day.fetched }}
-	<div style="border: 1px solid #ddd; margin-bottom: 10px;">
-		<textarea autocomplete="off" id="bodytab8_json" name="bodytab8_json">{{ data_back2day.data }}</textarea>
-	</div>
-</div>
-<script type="text/javascript" language="javascript">
-	window.bodytab8_json_editor = CodeMirror.fromTextArea(document.getElementById("bodytab8_json"), {
-		mode: {name: "javascript", json: true},
-		lineNumbers: true,
-		readOnly: true,
-		lineWrapping: true,
-		extraKeys: {"Ctrl-Q": function(cm){ cm.foldCode(cm.getCursor()); }},
-		foldGutter: true,
-		gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
-	});
-	window.bodytab8_json_editor.refresh()
-</script>
-{% endblock %}
-
-{% block bodytab9 %}
-<br style="clear:both;"/>
-<div class="container-fluid">
-	Origin: {{ data_back3day.url }}<br />
-	Fetched: {{ data_back3day.fetched }}
-	<div style="border: 1px solid #ddd; margin-bottom: 10px;">
-		<textarea autocomplete="off" id="bodytab9_json" name="bodytab9_json">{{ data_back3day.data }}</textarea>
-	</div>
-</div>
-<script type="text/javascript" language="javascript">
-	window.bodytab9_json_editor = CodeMirror.fromTextArea(document.getElementById("bodytab9_json"), {
-		mode: {name: "javascript", json: true},
-		lineNumbers: true,
-		readOnly: true,
-		lineWrapping: true,
-		extraKeys: {"Ctrl-Q": function(cm){ cm.foldCode(cm.getCursor()); }},
-		foldGutter: true,
-		gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
-	});
-	window.bodytab9_json_editor.refresh()
-</script>
-{% endblock %}
-
-{% block bodytab10 %}
-<br style="clear:both;"/>
-<div class="container-fluid">
-	Origin: {{ data_back4day.url }}<br />
-	Fetched: {{ data_back4day.fetched }}
-	<div style="border: 1px solid #ddd; margin-bottom: 10px;">
-		<textarea autocomplete="off" id="bodytab10_json" name="bodytab10_json">{{ data_back4day.data }}</textarea>
-	</div>
-</div>
-<script type="text/javascript" language="javascript">
-	window.bodytab10_json_editor = CodeMirror.fromTextArea(document.getElementById("bodytab10_json"), {
-		mode: {name: "javascript", json: true},
-		lineNumbers: true,
-		readOnly: true,
-		lineWrapping: true,
-		extraKeys: {"Ctrl-Q": function(cm){ cm.foldCode(cm.getCursor()); }},
-		foldGutter: true,
-		gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
-	});
-	window.bodytab10_json_editor.refresh()
-</script>
-
 {% endblock %}
