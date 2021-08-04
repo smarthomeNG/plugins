@@ -51,10 +51,33 @@ The data provided by OpenWeatherMap is mapped to items by matchstrings. A matchs
 - [onecall](https://openweathermap.org/api/one-call-api)
 - onecall-0...onecall-4 uses the time-machine feature provided by the [one-call-api](https://openweathermap.org/api/one-call-api#history), to collect the "historic" data, which includes past values of today (onecall-0).
 - [layer](https://openweathermap.org/api/weathermaps), providing map tile-data.
+- [airpollution](https://openweathermap.org/api/air-pollution)
 
 The list before is providing the names of the "data-source-keys" that are used within this plugin. You can see the results of the last calls within the web-interface of this plugin. The plugin identifies the need for downloading data from each endpoint by the definition of the respective matchstring. If no matchstring would require data from e.g. the data-source "weather", then this endpoint would not be called by the plugin. The prefferable way of reading weather-data is via the one-call API.
 
 Data is retrieved in metric units (m, mm, hPa, °C).
+
+In order to access the data that can be retrieved via the API an attribute of "owm_matchstring" is needed. Optionally you can add a "owm_match_prefix". That string is prepended to the "owm_matchstring" given.
+
+``` yaml
+
+forecast_daily1_no_prefix:
+    type: str
+    remark: This is a valid way of adressing the description of tomorrows weather
+    owm_matchstring@home: day/1/weather/0/description
+
+forecast_daily1_with_prefix:
+    type: str
+    remark: here the match-string is compiled as day/1/weather/0/description
+    owm_match_prefix@home: day/1
+    owm_matchstring@home: /weather/0/description
+    
+    temp_night:
+        type: num
+        remark: here the match-string is compiled as day/1/temp/night, inheriting the prefix from the parent-element.
+        owm_match_prefix@home: ../.
+        owm_matchstring@home: /temp/night
+```
 
 #### Soft-failing matching
 
@@ -97,7 +120,7 @@ Matchstrings are re-written by the plugin to allow a clear distinction of the da
     - `rain/1h`: Rain volume in mm
     - `snow/1h`: Snow volume in mm
     - `visibility`: Average visibility, metres
-    - `wind_speed`: Wind speed in metre/sec
+    - `wind_speed`: Wind speed in metre/sec (this can be extended as wind_speed/beaufort and wind_speed/description to get the Beaufort-value and the Description of the Speed-level in German or English)
     - `wind_deg`: Wind direction, degrees (meteorological)
     - `wind_gust`: Wind gust (peaks in speed) in metre/sec
     - `weather/0/id`: to get the weather condition id
@@ -134,7 +157,7 @@ Matchstrings are re-written by the plugin to allow a clear distinction of the da
     - `snow`: Snow volume in mm
     - `pop`: Propability of precipitation
     - `visibility`: Average visibility, metres
-    - `wind_speed`: Wind speed in metre/sec
+    - `wind_speed`: Wind speed in metre/sec (this can be extended as wind_speed/beaufort and wind_speed/description to get the Beaufort-value and the Description of the Speed-level in German or English)
     - `wind_deg`: Wind direction, degrees (meteorological)
     - `wind_gust`: Wind gust (peaks in speed) in metre/sec
     - `weather/0/id`: to get the weather condition id
@@ -147,6 +170,23 @@ Matchstrings are re-written by the plugin to allow a clear distinction of the da
   examples: 
     - `day/-1/hour/13/temp` to get yesterdays temperature at 1pm UTC.
     - `day/-2/pressure` to get the average(?) air-pressure from the day before yesterday.
+- **begins with "airpollution"** Retrieves Air-Quality-Index and air-pollution component values. Original data-source is the [airpollution API](https://openweathermap.org/api/air-pollution).
+    In general you can retrieve the following values:
+    - `airpollution/main/aqi` to get the Air-Quality-Index
+    - `airpollution/components/co`
+    - `airpollution/components/no`
+    - `airpollution/components/no2`
+    - `airpollution/components/o3`
+    - `airpollution/components/so2`
+    - `airpollution/components/pm2_5`
+    - `airpollution/components/pm10`
+    - `airpollution/components/nh3`
+    You may insert "/day/-1/hour/11/" between airpollution and main or component, where days can range from -1 to -4 and hour from 0 to 23. With that you can retrieve values of a certain hour from that day in the past.
+    In order to retrieve forecast values you may insert "/hour/11" (not prepended with a day). This will provide access to the next 72 hours of forecast.
+    Examples:
+        - `airpollution/day/-1/hour/11/main/aqi` yesterday at 12:00 UTC
+        - `airpollution/day/-4/hour/9/main/aqi` four days into the past at 9:00 UTC
+        - `airpollution/hour/24/main/aqi` tommorrow, same time
 - **ends with _new (see list below)** prepares a map-layer URL either from the given parameters owm_coord_x, owm_coord_y, owm_coord_z or from a translation of the current geo-coordinates to the tile-information
   Complete list of map-layers:
   - `clouds_new`
@@ -167,8 +207,13 @@ Matchstrings are re-written by the plugin to allow a clear distinction of the da
     - `weather/0/main` to get the group-name of weather parameters (Rain, Snow, Extreme etc.)
     - `weather/0/description` to get the weather condition description within the group.
     - `weather/0/icon` to get the weather icon id
-    - `wind/deg` / `wind/speed` / `wind/gust` to get some facts about the wind (direction/speed/peak-speeds)
+    - `wind/deg` / `wind/speed` / `wind/gust` to get some facts about the wind (direction/speed/peak-speeds), (No Beaufort-suffixes possible here)
 
+#### Matching lists
+
+The weather-condition is stored as a list and can be correctly accessed via "current/weather/0/description". As the data-type list in "current/weather" is not obvious, the plugin will automatically insert a /0/ to match the first item of such list. Therefore "current/weather/description" will result in a value - and a WARNING in the log on every update. This feature is intended to find the issues easy and then permanently fix them by updating the matchstrings in your configuration.
+
+In case you are working with dynamic lists such as "alerts" that might contain no to an undefined amount of data you can make use of the "@count"-directive in order to retrieve the number of records in that list. An example is "current/weather/@count" (always 1) or "alerts/@count", making a lot more sense.
 
 #### Virtual matchstrings
 
@@ -205,8 +250,29 @@ The virtual matchstrings consist of the following elements:
     - max
     - min
     - avg
+    - all (to generate a list with all items)
 - a matchstring that would match an element in the [hourly one-call API](https://openweathermap.org/api/one-call-api#example)
 
+An example usage of those virtual matchstrings is the rain_overview-widget for SmartVisu provided with this plugin:
+
+```yaml
+weather:
+    as_of:
+        type: num
+        remark: This has to be a time-stamp to work properly, so no eval here
+        owm_matchstring: current/dt
+    rain_past_12h:
+        type: list            
+        owm_matchstring@home: virtual/past12h/all/rain/1h
+    rain_next_12hrs:
+        type: list
+        owm_matchstring@home: virtual/next12h/all/rain/1h
+```
+
+```html
+{% import "widgets_openweathermap.html" as owm %}
+{{ owm.rain_overview('visual_id', 'weather.rain_past_12hrs', 'weather.rain_next_12hrs', 'wetter.as_of') }}
+```
 
 #### Daily forecast (calculated)
 
@@ -392,6 +458,26 @@ The complete struct provides a hint how this is implemented:
 
 ```
 
+This can be used from SmartVisu with a widget that is provided along with this plugin. Example, matching the YAML above:
+
+```html
+
+{% import "widgets_openweathermap.html" as owm %}
+{{ owm.irrigation('valve_1', 'The greenhouse', 'garden.irrigation_valve1') }}
+
+```
+
+#### Weather alerts
+
+Weather alerts are forwarded from the respective authority, e.g. the "Deutscher Wetterdienst". If there is an alert, typically two items are added to the list, one in the national language and another one in English. The plugin is ensuring there is always at least one alarm. If there is no alarm condition the plugin is adding a "Placebo"-Alert that is described as "No Alert". This is done to ensure that the matchstring "alerts/0/event" will always return a value, otherwise not even the "alerts"-node is defined in the API-response, resulting in ERROR-messages in the log. By using "alerts/@count" one can identify whether there is an alert or not. If only the placebo-alert is defined, "alerts/@count" will return the numerical value "0", although there is an item in the list.
+
+One way to display the alerts in the SmartVisu is the usage of the status.activelist-widget:
+
+```html
+{{ status.activelist('', 'weather.alerts', 'event', 'start', 'description', '') }} 
+```
+
+
 #### Caveats
 
 * All times are in UTC. So if you query "yesterdays" values for Germany you will have a 1hr or 2hr time-frame from the next day and a missing time-frame of the same day.
@@ -412,265 +498,10 @@ To convert the time in the dt values to a local value you may want to use an eva
 #### Example: items.yaml
 Example configuration of an item-tree for the openweathermap plugin in yaml-format:
 
-```yaml
+https://gist.github.com/sisamiwe/cad440d4ba643324577fc8cbf8b0930b
 
- ...:
-
-owm:
-    rain_layer:
-        type: str
-        owm_matchstring@home: precipitation_new
-        owm_coord_x@home: 13
-        owm_coord_y@home: 48
-        owm_coord_z@home: 7
-
-    cloud_layer:
-        type: str
-        owm_matchstring@home: clouds_new
-        owm_coord_x@home: 1
-        owm_coord_y@home: 1
-        owm_coord_z@home: 2
-
-    home:
-
-        latitude:
-            type: num
-            owm_matchstring@home: coord/lat
-
-        longitude:
-            type: num
-            owm_matchstring@home: coord/lon
-
-        conditions:
-            type: list
-            owm_matchstring@home: weather
-            
-        temp:
-            type: num
-            owm_matchstring@home: main/temp
-
-        pressure:
-            type: num
-            owm_matchstring@home: main/pressure
-
-            grnd_level:
-                type: num
-                owm_matchstring@home: main/grnd_level
-
-            sea_level:
-                type: num
-                owm_matchstring@home: main/sea_level
-
-        humidity:
-            type: num
-            owm_matchstring@home: main/humidity
-
-        temp_min:
-            type: num
-            owm_matchstring@home: main/temp_min
-
-        temp_max:
-            type: num
-            owm_matchstring@home: main/temp_max
-
-        wind:
-
-            wind_speed:
-                type: num
-                owm_matchstring@home: wind/speed
-
-            wind_deg:
-                type: num
-                owm_matchstring@home: wind/deg
-
-        clouds:
-            type: num
-            owm_matchstring@home: clouds/all
-
-        rain_3h:
-            type: num
-            owm_matchstring@home: rain/3h
-
-        snow_3h:
-            type: num
-            owm_matchstring@home: snow/3h
-
-        time:
-            type: num
-            owm_matchstring@home: dt
-
-        sunrise_utc:
-            type: num
-            owm_matchstring@home: sys/sunrise
-
-        sunset_utc:
-            type: num
-            owm_matchstring@home: sys/sunset
-
-        country:
-            type: str
-            owm_matchstring@home: sys/country
-
-        city_name:
-            type: str
-            owm_matchstring@home: name
-
-        city_id:
-            type: num
-            owm_matchstring@home: id
-
-        uvi:
-            type: num
-            owm_matchstring@home: uvi_value
-
-        uvi_date:
-            type: num
-            owm_matchstring@home: uvi_date
-
-        forecast_3hours: # next 3 hours, use 0-39 for further forecasts
-            time:
-                type: num
-                owm_matchstring@home: forecast/1/dt
-
-            conditions:
-                type: list
-                owm_matchstring@home: weather
-
-            temp:
-                type: num
-                owm_matchstring@home: forecast/1/main/temp
-
-            temp_min:
-                type: num
-                owm_matchstring@home: forecast/1/main/temp_min
-
-            temp_max:
-                type: num
-                owm_matchstring@home: forecast/1/main/temp_max
-
-            pressure:
-                type: num
-                owm_matchstring@home: forecast/1/main/pressure
-
-            grnd_level:
-                type: num
-                owm_matchstring@home: forecast/1/main/grnd_level
-
-            sea_level:
-                type: num
-                owm_matchstring@home: forecast/1/main/sea_level
-
-            humidity:
-                type: num
-                owm_matchstring@home: forecast/1/main/humidity
-
-            wind:
-                wind_speed:
-                    type: num
-                    owm_matchstring@home: forecast/1/wind/speed
-
-                wind_deg:
-                    type: num
-                    owm_matchstring@home: forecast/1/wind/deg
-
-            clouds:
-                type: num
-                owm_matchstring@home: forecast/1/clouds/all
-
-        forecast_daily0: # tomorrow's forecast
-            time:
-                type: num
-                owm_matchstring@home: forecast/daily/0/dt
-
-            temp:
-                type: num
-                owm_matchstring@home: forecast/daily/0/main/temp
-
-            temp_min:
-                type: num
-                owm_matchstring@home: forecast/daily/0/main/temp_min
-
-            temp_max:
-                type: num
-                owm_matchstring@home: forecast/daily/0/main/temp_max
-
-            pressure:
-                type: num
-                owm_matchstring@home: forecast/daily/0/main/pressure
-
-                grnd_level:
-                    type: num
-                    owm_matchstring@home: forecast/daily/0/main/grnd_level
-
-                sea_level:
-                    type: num
-                    owm_matchstring@home: forecast/daily/0/main/sea_level
-
-            humidity:
-                type: num
-                owm_matchstring@home: forecast/daily/0/main/humidity
-
-            wind:
-                wind_speed:
-                    type: num
-                    owm_matchstring@home: forecast/daily/0/wind/speed
-
-                wind_deg:
-                    type: num
-                    owm_matchstring@home: forecast/daily/0/wind/deg
-
-            clouds:
-                type: num
-                owm_matchstring@home: forecast/daily/0/clouds/all
-
-        forecast_daily1: # day after tomorrow (max index 4 = 5 days ahead)
-            time:
-                type: num
-                owm_matchstring@home: forecast/daily/1/dt
-
-            temp:
-                type: num
-                owm_matchstring@home: forecast/daily/1/main/temp
-
-            temp_min:
-                type: num
-                owm_matchstring@home: forecast/daily/1/main/temp_min
-
-            temp_max:
-                type: num
-                owm_matchstring@home: forecast/daily/1/main/temp_max
-
-            pressure:
-                type: num
-                owm_matchstring@home: forecast/daily/1/main/pressure
-
-            grnd_level:
-                type: num
-                owm_matchstring@home: forecast/daily/1/main/grnd_level
-
-            sea_level:
-                type: num
-                owm_matchstring@home: forecast/daily/1/main/sea_level
-
-            humidity:
-                type: num
-                owm_matchstring@home: forecast/daily/1/main/humidity
-
-            wind:
-                wind_speed:
-                    type: num
-                    owm_matchstring@home: forecast/daily/1/wind/speed
-
-                wind_deg:
-                    type: num
-                    owm_matchstring@home: forecast/daily/1/wind/deg
-
-            clouds:
-                type: num
-                owm_matchstring@home: forecast/daily/1/clouds/all
-
-```
-
+Please keep in mind to replace the _priv_openweathermap with openweathermap, or how ever the plugin-path is named.
+The plugin.yaml that is part of that gist doesn't need to be copied, it is already part of this plugin-version.
 
 ### logic.yaml
 
@@ -678,4 +509,6 @@ No logic configuration implemented.
 
 ## Methods / Functions
 
-No methods or functions are implemented.
+### get_beaufort_number(value_in_meter_per_second)
+
+### get_beaufort_description(bft_number)
