@@ -389,7 +389,7 @@ irrigation:
     evaporation:
         type: num
         initial_value: 0
-        owm_matchstring: day/0/eto
+        owm_matchstring@instance: day/0/eto
 
         exposure_factor:
             remark: 'How exposed is your area to evaporation? Lower the factor for less exposure (e.g. shading, or wind-shields) or higher the factor if there is more sun (reflection) or wind (droughty areas).'
