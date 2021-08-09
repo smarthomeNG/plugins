@@ -264,14 +264,14 @@ weather:
     rain_past_12h:
         type: list            
         owm_matchstring@home: virtual/past12h/all/rain/1h
-    rain_next_12hrs:
+    rain_next_12h:
         type: list
         owm_matchstring@home: virtual/next12h/all/rain/1h
 ```
 
 ```html
 {% import "widgets_openweathermap.html" as owm %}
-{{ owm.rain_overview('visual_id', 'weather.rain_past_12hrs', 'weather.rain_next_12hrs', 'wetter.as_of') }}
+{{ owm.rain_overview('visual_id', 'weather.rain_past_12h', 'weather.rain_next_12h', 'weather.as_of') }}
 ```
 
 #### Daily forecast (calculated)
@@ -353,108 +353,108 @@ The complete struct provides a hint how this is implemented:
 
 ```yaml
 
-    irrigation:
-        type: bool
-        autotimer: sh..schedule_seconds() = False
-        visu_acl: rw
-        enforce_updates: 'true'
+irrigation:
+    type: bool
+    autotimer: sh..schedule_seconds() = False
+    visu_acl: rw
+    enforce_updates: 'true'
 
-        schedule_seconds:
+    schedule_seconds:
+        type: num
+        initial_value: 0
+        visu_acl: ro
+        eval: round((sh...todays_water_demand_in_l() / sh...factors.flowrate_l_per_min()) * 60)
+        eval_trigger:
+            - ..factors.flowrate_l_per_min
+            - ..todays_water_demand_in_l
+
+        remaining_time:
             type: num
-            initial_value: 0
             visu_acl: ro
-            eval: round((sh...todays_water_demand_in_l() / sh...factors.flowrate_l_per_min()) * 60)
-            eval_trigger:
-                - ..factors.flowrate_l_per_min
-                - ..todays_water_demand_in_l
+            enforce_updates: 'true'
+            eval: sh...() - sh....age() if sh....() else 0
+            eval_trigger: ...
+            cycle: 1
 
-            remaining_time:
-                type: num
-                visu_acl: ro
-                enforce_updates: 'true'
-                eval: sh...() - sh....age() if sh....() else 0
-                eval_trigger: ...
-                cycle: 1
+    todays_water_demand_in_l:
+        type: num
+        eval: max(0, (sh...evaporation() * sh...evaporation.exposure_factor()) - (sh...rain() * sh...rain.exposure_factor())) * sh...factors()
+        eval_trigger:
+            - ..evaporation
+            - ..evaporation.exposure_factor
+            - ..rain
+            - ..rain.exposure_factor
+            - ..factors
 
-        todays_water_demand_in_l:
+    evaporation:
+        type: num
+        initial_value: 0
+        owm_matchstring: day/0/eto
+
+        exposure_factor:
+            remark: 'How exposed is your area to evaporation? Lower the factor for less exposure (e.g. shading, or wind-shields) or higher the factor if there is more sun (reflection) or wind (droughty areas).'
             type: num
-            eval: max(0, (sh...evaporation() * sh...evaporation.exposure_factor()) - (sh...rain() * sh...rain.exposure_factor())) * sh...factors()
-            eval_trigger:
-                - ..evaporation
-                - ..evaporation.exposure_factor
-                - ..rain
-                - ..rain.exposure_factor
-                - ..factors
+            cache: yes
+            initial_value: 1
 
-        evaporation:
+    rain:
+        type: num
+        eval: sum
+        eval_trigger:
+            - .past_12h
+            - .next_12h
+        
+        past_12h:
             type: num
-            initial_value: 0
-            owm_matchstring: day/0/eto
-
-            exposure_factor:
-                remark: 'How exposed is your area to evaporation? Lower the factor for less exposure (e.g. shading, or wind-shields) or higher the factor if there is more sun (reflection) or wind (droughty areas).'
-                type: num
-                cache: yes
-                initial_value: 1
-
-        rain:
+            owm_matchstring@instance: virtual/past12h/sum/rain/1h            
+        next_12h:
             type: num
-            eval: sum
-            eval_trigger:
-                - .past_12h
-                - .next_12h
-            
-            past_12h:
-                type: num
-                owm_matchstring: virtual/past12h/sum/rain/1h            
-            next_12h:
-                type: num
-                owm_matchstring: virtual/next12h/sum/rain/1h
+            owm_matchstring@instance: virtual/next12h/sum/rain/1h
 
-            exposure_factor:
-                remark: 'How exposed is your area to rain? Lower the factor for less exposure (e.g. roofs or bushes) or higher the factor if additional water is put there (e.g. from roof-drains).'
-                initial_value: 1
-                type: num
-                cache: yes
-
-        factors:
+        exposure_factor:
+            remark: 'How exposed is your area to rain? Lower the factor for less exposure (e.g. roofs or bushes) or higher the factor if additional water is put there (e.g. from roof-drains).'
+            initial_value: 1
             type: num
-            eval: sh..area_in_sqm() * sh..crop_coefficient() * sh..plant_density() * sh..gut_feeling()
-            eval_trigger:
-                - .area_in_sqm
-                - .crop_coefficient
-                - .plant_density
-                - .gut_feeling
+            cache: yes
 
-            flowrate_l_per_min:
-                remark: 'How much water is transported by your irrigation-system? liters per minute'
-                initial_value: 4
-                type: num
-                cache: yes
+    factors:
+        type: num
+        eval: sh..area_in_sqm() * sh..crop_coefficient() * sh..plant_density() * sh..gut_feeling()
+        eval_trigger:
+            - .area_in_sqm
+            - .crop_coefficient
+            - .plant_density
+            - .gut_feeling
 
-            area_in_sqm:
-                remark: 'This is the irrigated area. This is important for the effectivity of rain vs. evaporation.'
-                initial_value: 1
-                type: num
-                cache: yes
-            
-            crop_coefficient:
-                remark: 'This is the coefficient that can be set based on the plants. Typically 0.3 to 0.9'
-                initial_value: 0.9
-                type: num
-                cache: yes
-            
-            plant_density:
-                remark: 'How dense are the plants planted? Typically 0.3 to 1.5'
-                initial_value: 1
-                type: num
-                cache: yes
-            
-            gut_feeling:
-                remark: 'This is a factor that should be used to tweak irrigation based on gut-feelings, typically this should be assigned centrally for the whole yard (use eval).'
-                initial_value: 1
-                type: num
-                cache: yes
+        flowrate_l_per_min:
+            remark: 'How much water is transported by your irrigation-system? liters per minute'
+            initial_value: 4
+            type: num
+            cache: yes
+
+        area_in_sqm:
+            remark: 'This is the irrigated area. This is important for the effectivity of rain vs. evaporation.'
+            initial_value: 1
+            type: num
+            cache: yes
+        
+        crop_coefficient:
+            remark: 'This is the coefficient that can be set based on the plants. Typically 0.3 to 0.9'
+            initial_value: 0.9
+            type: num
+            cache: yes
+        
+        plant_density:
+            remark: 'How dense are the plants planted? Typically 0.3 to 1.5'
+            initial_value: 1
+            type: num
+            cache: yes
+        
+        gut_feeling:
+            remark: 'This is a factor that should be used to tweak irrigation based on gut-feelings, typically this should be assigned centrally for the whole yard (use eval).'
+            initial_value: 1
+            type: num
+            cache: yes
 
 ```
 
