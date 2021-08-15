@@ -35,12 +35,11 @@ plugin.yaml
 
 Das Plugin muss nur einmal instantiiert werden. Es ist nicht nötig/möglich mehrere Instanzen zu verwalten.
 
-.. code-block:: yaml
-   :linenos:
+``` yaml
 
     text_display:
         plugin_name: text_display
-
+```
 
 items.yaml
 ~~~~~~~~~~
@@ -66,9 +65,7 @@ Nachrichtensenke
 
 In diesem Beispiel werden die Nachrichten auf die KNX-GA a/b/c geschickt. Liegt keine Nachricht vor, wird ein Leerzeichen als Text geschickt, damit z.B. auf den MDT Glastastern keine alten Nachrichten stehen bleiben. Lässt man die Default-Konfiguration einfach weg, wird kein Wert gesendet. Auf den MDT-RTR ist das der einfachste Weg, die Nachricht verschwinden zu lassen.
 
-.. code-block:: yaml
-   :linenos:
-
+``` yaml
    meldung:
         knx_dpt: "16.001"
         knx_send: a/b/c
@@ -80,15 +77,14 @@ In diesem Beispiel werden die Nachrichten auf die KNX-GA a/b/c geschickt. Liegt 
             - "fenster"
         text_display_sink_rings_with_prio:
             - "anruf"
-
+```
 
 "Fenster auf" Nachrichtenquelle
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Dies ist die Struktur für einen Raum, das muss dann für jeden Raum wiederholt werden.
 
-.. code-block:: yaml
-   :linenos:
+``` yaml
     schlafzimmer:
         temperatur_im_schlafzimmer:
             type: num
@@ -123,14 +119,12 @@ Dies ist die Struktur für einen Raum, das muss dann für jeden Raum wiederholt 
                 type: bool
                 knx_dpt: 1
                 knx_cache: x/y/z
-
+```
 
 Außentemperatur abhängig von Fensterstatus:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. code-block:: yaml
-   :linenos:
-
+``` yaml
     wetter:
         luft_temperatur:
             type: num
@@ -153,6 +147,7 @@ Außentemperatur abhängig von Fensterstatus:
                         - wohnzimmer.fenster
                     text_display_target_ring: 'fenster'
                     text_display_content_source_item: ..
+```
 
 
 AB Prüfen Nachrichtenquelle:
@@ -160,9 +155,7 @@ AB Prüfen Nachrichtenquelle:
 
 Die Anzahl der neuen Nachrichten auf dem Anrufbeantworter muss über 0 sein, damit immer der gleiche "AB prüfen" Text angezeigt wird.
 
-.. code-block:: yaml
-   :linenos:
-
+``` yaml
     fritzbox:
         tam:
             index: 1
@@ -186,14 +179,12 @@ Die Anzahl der neuen Nachrichten auf dem Anrufbeantworter muss über 0 sein, dam
                 type: num
                 visu_acl: ro
                 avm_data_type@fritzbox: tam_new_message_number
-
+```
 
 Anrufer-Meldungen
 ~~~~~~~~~~~~~~~~~
 
-.. code-block:: yaml
-   :linenos:
-
+``` yaml
     fritzbox:
         monitor:
             message:
@@ -218,6 +209,7 @@ Anrufer-Meldungen
                 event:
                     type: str
                     avm_data_type@fritzbox: call_event_incoming
+```
 
 
 Web Interface
