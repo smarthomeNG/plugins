@@ -37,8 +37,9 @@ Das Plugin muss nur einmal instantiiert werden. Es ist nicht nötig/möglich meh
 
 ``` yaml
 
-    text_display:
-        plugin_name: text_display
+text_display:
+    plugin_name: text_display
+
 ```
 
 items.yaml
@@ -66,17 +67,19 @@ Nachrichtensenke
 In diesem Beispiel werden die Nachrichten auf die KNX-GA a/b/c geschickt. Liegt keine Nachricht vor, wird ein Leerzeichen als Text geschickt, damit z.B. auf den MDT Glastastern keine alten Nachrichten stehen bleiben. Lässt man die Default-Konfiguration einfach weg, wird kein Wert gesendet. Auf den MDT-RTR ist das der einfachste Weg, die Nachricht verschwinden zu lassen.
 
 ``` yaml
-   meldung:
-        knx_dpt: "16.001"
-        knx_send: a/b/c
-        knx_reply: a/b/c
-        enforce_updates: "yes"
-        text_display_default_message: ' '
-        text_display_sink_for_rings:
-            - "wichtiger_als_fenster"
-            - "fenster"
-        text_display_sink_rings_with_prio:
-            - "anruf"
+
+meldung:
+    knx_dpt: "16.001"
+    knx_send: a/b/c
+    knx_reply: a/b/c
+    enforce_updates: "yes"
+    text_display_default_message: ' '
+    text_display_sink_for_rings:
+        - "wichtiger_als_fenster"
+        - "fenster"
+    text_display_sink_rings_with_prio:
+        - "anruf"
+
 ```
 
 "Fenster auf" Nachrichtenquelle
@@ -85,68 +88,72 @@ In diesem Beispiel werden die Nachrichten auf die KNX-GA a/b/c geschickt. Liegt 
 Dies ist die Struktur für einen Raum, das muss dann für jeden Raum wiederholt werden.
 
 ``` yaml
-    schlafzimmer:
-        temperatur_im_schlafzimmer:
-            type: num
-            knx_cache: x/y/z
-            
-            anzeige_string:
-                type: str
-                eval: >
-                    f"SchlaZi: {sh...():.1f}°C"
-                eval_trigger: ..
 
-            display_is_relevant:
-                type: bool
-                eval: or
-                eval_trigger: 
-                    - ...irgendein_fenster_im_schlafzimmer_offen
-                text_display_target_ring: 'fenster'
-                text_display_content_source_item: ..
+schlafzimmer:
+    temperatur_im_schlafzimmer:
+        type: num
+        knx_cache: x/y/z
+        
+        anzeige_string:
+            type: str
+            eval: >
+                f"SchlaZi: {sh...():.1f}°C"
+            eval_trigger: ..
 
-        irgendein_fenster_im_schlafzimmer_offen:
+        display_is_relevant:
             type: bool
             eval: or
-            eval_trigger:
-                - .fenster_zur_strasse
-                - .fenster_zum_garten
-            
-            fenster_zur_strasse:
-                type: bool
-                knx_dpt: 1
-                knx_cache: x/y/z
-            fenster_zur_strasse:
-                type: bool
-                knx_dpt: 1
-                knx_cache: x/y/z
+            eval_trigger: 
+                - ...irgendein_fenster_im_schlafzimmer_offen
+            text_display_target_ring: 'fenster'
+            text_display_content_source_item: ..
+
+    irgendein_fenster_im_schlafzimmer_offen:
+        type: bool
+        eval: or
+        eval_trigger:
+            - .fenster_zur_strasse
+            - .fenster_zum_garten
+        
+        fenster_zur_strasse:
+            type: bool
+            knx_dpt: 1
+            knx_cache: x/y/z
+        fenster_zur_strasse:
+            type: bool
+            knx_dpt: 1
+            knx_cache: x/y/z
+
 ```
 
 Außentemperatur abhängig von Fensterstatus:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ``` yaml
-    wetter:
-        luft_temperatur:
-            type: num
-            remark: wo auch immer der Wert herkommt (OpenWeatherMap ;-) / Wetterstation)
-            
-            message_string:
-                type: str
-                eval: >
-                    f"Außen: {sh...():.1f}°C"
-                eval_trigger: ..
-                display_is_relevant:
-                    type: bool
-                    eval: or
-                    eval_trigger:
-                        - schlafzimmer.fenster
-                        - kinderzimmer.fenster
-                        - buero.fenster
-                        - og_bad.fenster
-                        - eg_bad.fenster
-                        - wohnzimmer.fenster
-                    text_display_target_ring: 'fenster'
-                    text_display_content_source_item: ..
+
+wetter:
+    luft_temperatur:
+        type: num
+        remark: wo auch immer der Wert herkommt (OpenWeatherMap ;-) / Wetterstation)
+        
+        message_string:
+            type: str
+            eval: >
+                f"Außen: {sh...():.1f}°C"
+            eval_trigger: ..
+            display_is_relevant:
+                type: bool
+                eval: or
+                eval_trigger:
+                    - schlafzimmer.fenster
+                    - kinderzimmer.fenster
+                    - buero.fenster
+                    - og_bad.fenster
+                    - eg_bad.fenster
+                    - wohnzimmer.fenster
+                text_display_target_ring: 'fenster'
+                text_display_content_source_item: ..
+
 ```
 
 
@@ -156,59 +163,63 @@ AB Prüfen Nachrichtenquelle:
 Die Anzahl der neuen Nachrichten auf dem Anrufbeantworter muss über 0 sein, damit immer der gleiche "AB prüfen" Text angezeigt wird.
 
 ``` yaml
-    fritzbox:
-        tam:
-            index: 1
+
+fritzbox:
+    tam:
+        index: 1
+        type: bool
+        avm_data_type@fritzbox: tam
+        new_message_present:
             type: bool
-            avm_data_type@fritzbox: tam
-            new_message_present:
-                type: bool
-                visu_acl: ro
-                eval: sh.fritzbox.tam.message_number_new() > 0
-                eval_trigger:
-                    - fritzbox.tam.message_number_new
-                text_display_target_ring: 'wichtiger_als_fenster'
-                text_display_content_source_item: .ab_pruefen_text
+            visu_acl: ro
+            eval: sh.fritzbox.tam.message_number_new() > 0
+            eval_trigger:
+                - fritzbox.tam.message_number_new
+            text_display_target_ring: 'wichtiger_als_fenster'
+            text_display_content_source_item: .ab_pruefen_text
 
-                ab_pruefen_text:
-                    type: str
-                    remark: Klar kann man hier auch die Nachricht dynamisch bauen, z.B. "'AB: {} Nachr.'.format(sh.fritzbox.tam.message_number_new())"
-                    initial_value: "AB prüfen"
+            ab_pruefen_text:
+                type: str
+                remark: Klar kann man hier auch die Nachricht dynamisch bauen, z.B. "'AB: {} Nachr.'.format(sh.fritzbox.tam.message_number_new())"
+                initial_value: "AB prüfen"
 
-            message_number_new:
-                type: num
-                visu_acl: ro
-                avm_data_type@fritzbox: tam_new_message_number
+        message_number_new:
+            type: num
+            visu_acl: ro
+            avm_data_type@fritzbox: tam_new_message_number
+
 ```
 
 Anrufer-Meldungen
 ~~~~~~~~~~~~~~~~~
 
 ``` yaml
-    fritzbox:
-        monitor:
-            message:
+
+fritzbox:
+    monitor:
+        message:
+            type: bool
+            eval: sh.fritzbox.monitor.incoming.event() == 'ring' and sh.fritzbox.monitor.incoming.is_call_incoming() == True
+            eval_trigger:
+                - ..incoming.is_call_incoming
+                - ..incoming.event
+            text_display_target_ring: 'anruf'
+            text_display_content_source_item: .message_text
+            message_text:
+                type: str
+                eval: "'T:{}'.format(sh.fritzbox.monitor.incoming.last_caller())"
+                eval_trigger: fritzbox.monitor.incoming.last_caller
+        incoming:
+            is_call_incoming:
                 type: bool
-                eval: sh.fritzbox.monitor.incoming.event() == 'ring' and sh.fritzbox.monitor.incoming.is_call_incoming() == True
-                eval_trigger:
-                    - ..incoming.is_call_incoming
-                    - ..incoming.event
-                text_display_target_ring: 'anruf'
-                text_display_content_source_item: .message_text
-                message_text:
-                    type: str
-                    eval: "'T:{}'.format(sh.fritzbox.monitor.incoming.last_caller())"
-                    eval_trigger: fritzbox.monitor.incoming.last_caller
-            incoming:
-                is_call_incoming:
-                    type: bool
-                    avm_data_type@fritzbox: is_call_incoming
-                last_caller:
-                    type: str
-                    avm_data_type@fritzbox: last_caller_incoming
-                event:
-                    type: str
-                    avm_data_type@fritzbox: call_event_incoming
+                avm_data_type@fritzbox: is_call_incoming
+            last_caller:
+                type: str
+                avm_data_type@fritzbox: last_caller_incoming
+            event:
+                type: str
+                avm_data_type@fritzbox: call_event_incoming
+
 ```
 
 
