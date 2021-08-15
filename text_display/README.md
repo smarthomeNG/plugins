@@ -1,5 +1,4 @@
-text_display
-============
+# text_display
 
 Das Plugin dient dazu Nachrichten auf Displays (z.B. KNX-Taster) anzuzeigen. 
 
@@ -10,28 +9,24 @@ Das Plugin dient dazu Nachrichten auf Displays (z.B. KNX-Taster) anzuzeigen.
 * Für eine Senke kann ein oder mehrere Ringe definiert werden, die die Standardringe erzwungenermaßen verdecken, z.B. für die Anzeige von Anrufen oder Alarmen.
 * Eine Senke kann einen default-Wert haben, auf den zurückgesetzt wird, wenn keine Nachricht gültig ist.
 
-Anforderungen
--------------
+## Anforderungen
+
 Das Plugin funktioniert ab Python 3.6, ansonsten existieren keine Anforderungen
 
-Notwendige Software
-~~~~~~~~~~~~~~~~~~~
+### Notwendige Software
 
 Keine Abhängigkeiten
 
-Unterstützte Geräte
-~~~~~~~~~~~~~~~~~~~
+### Unterstützte Geräte
 
 Im Prinzip funktioniert das Plugin Hardwareunabhängig. Die Anzeige des einen Texts kann zum Beispiel auch in der Visu erfolgen. Zu beachten wäre, dass KNX-Taster nur 13 Zeichen anzeigen können. Es werden nur die ersten 13 Zeichen verschickt, wenn man den knx_dpt: "16.001" verwendet, der Rest wird "verschluckt".
 
 
-Konfiguration
--------------
+## Konfiguration
 
 Die Konfiguration erfolgt (abgesehen von der Instantiierung) ausschließlich über Items. Es gibt keine durch Logik auslösbaren Funktionen oder Verknüpfungen mit Logiken.
 
-plugin.yaml
-~~~~~~~~~~~
+### plugin.yaml
 
 Das Plugin muss nur einmal instantiiert werden. Es ist nicht nötig/möglich mehrere Instanzen zu verwalten.
 
@@ -42,14 +37,11 @@ text_display:
 
 ```
 
-items.yaml
-~~~~~~~~~~
+### items.yaml
 
 Bitte die Dokumentation lesen, die aus den Metadaten der plugin.yaml erzeugt wurde. Bzw. das Beispiel unten verstehen...
 
-
-Beispiele
----------
+## Beispiele
 
 Die Folgenden Anforderungen werden im nachfolgenden Beispiel umgesetzt:
 
@@ -61,8 +53,7 @@ Die Folgenden Anforderungen werden im nachfolgenden Beispiel umgesetzt:
 
 Relevant sind letztlich nur die text_display_... Attribute. Letzten Endes werden mit den ganzen Konstruktionen außen herum nur einfache Booleanwerte erzeugt, die aussagen, ob die Nachricht angezeigt werden sollte oder nicht. Damit die Nachrichten noch etwas mehr Informationsgehalt haben, sind einige Nachrichtentexte mit Informationen von anderen Items angereichert worden.
 
-Nachrichtensenke
-~~~~~~~~~~~~~~~~
+#### Nachrichtensenke
 
 In diesem Beispiel werden die Nachrichten auf die KNX-GA a/b/c geschickt. Liegt keine Nachricht vor, wird ein Leerzeichen als Text geschickt, damit z.B. auf den MDT Glastastern keine alten Nachrichten stehen bleiben. Lässt man die Default-Konfiguration einfach weg, wird kein Wert gesendet. Auf den MDT-RTR ist das der einfachste Weg, die Nachricht verschwinden zu lassen.
 
@@ -82,8 +73,7 @@ meldung:
 
 ```
 
-"Fenster auf" Nachrichtenquelle
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#### "Fenster auf" Nachrichtenquelle
 
 Dies ist die Struktur für einen Raum, das muss dann für jeden Raum wiederholt werden.
 
@@ -126,8 +116,7 @@ schlafzimmer:
 
 ```
 
-Außentemperatur abhängig von Fensterstatus:
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#### Außentemperatur abhängig von Fensterstatus:
 
 ``` yaml
 
@@ -156,9 +145,7 @@ wetter:
 
 ```
 
-
-AB Prüfen Nachrichtenquelle:
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#### AB Prüfen Nachrichtenquelle:
 
 Die Anzahl der neuen Nachrichten auf dem Anrufbeantworter muss über 0 sein, damit immer der gleiche "AB prüfen" Text angezeigt wird.
 
@@ -190,8 +177,7 @@ fritzbox:
 
 ```
 
-Anrufer-Meldungen
-~~~~~~~~~~~~~~~~~
+#### Anrufer-Meldungen
 
 ``` yaml
 
@@ -223,8 +209,7 @@ fritzbox:
 ```
 
 
-Web Interface
--------------
+## Web Interface
 
 Das Plugin liefert ein WebInterface in dem sich die Nachrichtenringe, mit den gesetzten Slots nachvollziehen lassen. Darüberhinaus werden dort auch die Senken angezeigt. Die Darstellung ist sicher noch Verbesserungsfähig, funktioniert aber fürs Debuggen.
  
