@@ -108,7 +108,7 @@ item_structs:
     # Definition of item-structure templates for this plugin
     irrigation:
         type: bool
-        autotimer: sh..schedule_seconds() = false
+        autotimer: sh..schedule_seconds() = False
         visu_acl: rw
         enforce_updates: 'true'
 
@@ -208,6 +208,126 @@ item_structs:
                 initial_value: 1
                 type: num
                 cache: yes
+
+    irrigation_weekly:
+        type: bool
+        autotimer: sh..schedule_seconds() = False
+        visu_acl: rw
+        enforce_updates: 'true'
+
+        schedule_seconds:
+            type: num
+            initial_value: 0
+            visu_acl: ro
+            eval: round((sh...weeks_water_demand_in_l() / sh...factors.flowrate_l_per_min()) * 60)
+            eval_trigger:
+                - ..factors.flowrate_l_per_min
+                - ..weeks_water_demand_in_l
+
+            remaining_time:
+                type: num
+                visu_acl: ro
+                enforce_updates: 'true'
+                eval: sh...() - sh....age() if sh....() else 0
+                eval_trigger: ...
+                cycle: 5
+
+        weeks_water_demand_in_l:
+            type: num
+            eval: max(0, (sh...evaporation() * sh...evaporation.exposure_factor()) - (sh...rain() * sh...rain.exposure_factor())) * sh...factors()
+            eval_trigger:
+                - ..evaporation
+                - ..evaporation.exposure_factor
+                - ..rain
+                - ..rain.exposure_factor
+                - ..factors
+
+        evaporation:
+            type: num
+            initial_value: 0
+            eval: sum
+            eval_trigger:
+                - .day_past3
+                - .day_past2
+                - .day_past1
+                - .day_past0
+                - .day_next1
+                - .day_next2
+            day_past3:
+                type: num
+                owm_matchstring@instance: day/-3/eto
+            day_past2:
+                type: num
+                owm_matchstring@instance: day/-2/eto
+            day_past1:
+                type: num
+                owm_matchstring@instance: day/-1/eto
+            day_past0:
+                type: num
+                owm_matchstring@instance: day/-0/eto
+            day_next0:
+                type: num
+                owm_matchstring@instance: day/0/eto
+            day_next1:
+                type: num
+                owm_matchstring@instance: day/1/eto
+            day_next2:
+                type: num
+                owm_matchstring@instance: day/2/eto
+
+            exposure_factor:
+                remark: 'How exposed is your area to evaporation? Lower the factor for less exposure (e.g. shading, or wind-shields) or higher the factor if there is more sun (reflection) or wind (droughty areas).'
+                type: num
+                cache: yes
+                initial_value: 1
+
+        rain:
+            type: num
+            eval: sum
+            eval_trigger:
+                - .past_4d
+                - .next_3d
+            
+            past_4d:
+                type: num
+                owm_matchstring@instance: virtual/past4d/sum/rain/1h            
+            next_3d:
+                type: num
+                owm_matchstring@instance: virtual/next3d/sum/rain
+
+            exposure_factor:
+                remark: 'How exposed is your area to rain? Lower the factor for less exposure (e.g. roofs or bushes) or higher the factor if additional water is put there (e.g. from roof-drains).'
+                initial_value: 1
+                type: num
+                cache: yes
+
+        factors:
+            type: num
+            eval: sh..area_in_sqm() * sh..gut_feeling()
+            eval_trigger:
+                - .area_in_sqm
+                - .gut_feeling
+
+            flowrate_l_per_min:
+                remark: 'How much water is transported by your irrigation-system? liters per minute'
+                initial_value: 4
+                type: num
+                cache: yes
+
+            area_in_sqm:
+                remark: 'This is the irrigated area. This is important for the effectivity of rain vs. evaporation.'
+                initial_value: 1
+                type: num
+                cache: yes
+            
+            gut_feeling:
+                remark: 'This is a factor that should be used to tweak irrigation based on gut-feelings, typically this should be assigned centrally for the whole yard (use eval).'
+                initial_value: 1
+                type: num
+                cache: yes
+
+
+
 
     locals:
         name: OpenWeatherMap local data

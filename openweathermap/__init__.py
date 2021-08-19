@@ -304,7 +304,8 @@ class OpenWeatherMap(SmartPlugin):
             prefix = f"day/-{minus_days}"
             s = s.replace(f"{prefix}/hour/", "hourly/")
             # wierd to have a "current" in historic data :-)
-            s = s.replace(f"{prefix}/", "current/")
+            if not s.endswith('/eto'):
+                s = s.replace(f"{prefix}/", "current/")
             wrk_typ = f"onecall-{minus_days}"
         elif s.startswith('day/'):
             wrk = self._data_sources[self._data_source_key_onecall]['data']
@@ -423,9 +424,9 @@ class OpenWeatherMap(SmartPlugin):
         climate_pressure = self.get_value(
             s.replace('/eto', "/pressure"), correlation_hint)
         climate_min = self.get_value(
-            s.replace('/eto', "/temp/min"), correlation_hint)
+            s.replace('/eto', "/temp" if s.startswith('day/-') else "/temp/min"), correlation_hint)
         climate_max = self.get_value(
-            s.replace('/eto', "/temp/max"), correlation_hint)
+            s.replace('/eto', "/temp" if s.startswith('day/-') else "/temp/max"), correlation_hint)
         climate_speed = self.get_value(
             s.replace('/eto', "/wind_speed"), correlation_hint)
         solarRad = self.get_value(s.replace('/eto', "/uvi"), correlation_hint)
@@ -470,44 +471,57 @@ class OpenWeatherMap(SmartPlugin):
                           (correlation_hint, s, eTo))
         return eTo
 
+    def __tokenize_matchstring(self, virtual_ms):
+        tokens = virtual_ms.split('/')
+        if tokens[0].startswith("next"):
+            mode = 'next'
+        elif tokens[0].startswith("past"):
+            mode = 'past'
+        numbers = ''.join(filter(str.isdigit, tokens[0]))
+        operation = tokens[1]
+        unit = tokens[0].replace(f'{mode}{numbers}', '')
+        data_field = '/'.join(tokens[2:])
+
+        self.logger.debug(f"transformed {virtual_ms} into: M:{mode}, n:{numbers}, u:{unit}, O:{operation}, DF: {data_field}")
+
+        return (mode, int(numbers),unit, operation, data_field)
+
     def __get_virtual_value(self, virtual_ms, correlation_hint):
         pool = []
-        data_field = virtual_ms[12:]
-        operation = virtual_ms[8:11]
-        if virtual_ms.startswith("next24h/"):
-            for hr in range(0, 24):
-                pool.append(self.get_value(
-                    f'hour/{hr}/{data_field}', correlation_hint))
-        elif virtual_ms.startswith("next12h/"):
-            for hr in range(0, 12):
-                pool.append(self.get_value(
-                    f'hour/{hr}/{data_field}', correlation_hint))
-        elif virtual_ms.startswith("past24h/"):
-            for hr in range(0, 24):
-                pool.append(self.get_value(
-                    f'day/-1/hour/{hr}/{data_field}', correlation_hint))
-            for hr in range(0, 24):
-                try:
-                    val = self.get_value(
-                        f'day/-0/hour/{hr}/{data_field}', correlation_hint)
-                    if not isinstance(val, Exception):
-                        pool.append(val)
-                except:
-                    pass
-            pool = pool[-24:]
-        elif virtual_ms.startswith("past12h/"):
-            for hr in range(12, 24):
-                pool.append(self.get_value(
-                    f'day/-1/hour/{hr}/{data_field}', correlation_hint))
-            for hr in range(0, 24):
-                try:
-                    val = self.get_value(
-                        f'day/-0/hour/{hr}/{data_field}', correlation_hint)
-                    if not isinstance(val, Exception):
-                        pool.append(val)
-                except:
-                    pass
-            pool = pool[-12:]
+        mode, number, unit, operation, data_field = self.__tokenize_matchstring(virtual_ms)
+
+        if mode == 'next':
+            if unit == 'h':
+                if number > 48:
+                    raise Exception("Cannot get value further than 48h in future, switch unit to 'd' to see further into the future")
+                for hr in range(0, number):
+                    pool.append(self.get_value(
+                        f'hour/{hr}/{data_field}', correlation_hint))
+            elif unit == 'd':
+                if number > 6:
+                    raise Exception("Cannot get value further than 6d in future")
+                for day in range(0, number):
+                    pool.append(self.get_value(
+                        f'day/{day}/{data_field}', correlation_hint))
+        elif mode == 'past':
+            if unit == 'd':
+                hours = number * 24
+            else:
+                hours = number
+
+            days_back = int(hours / 24) + 1
+            self.logger.debug(f"PAST: {virtual_ms} into: hrs:{hours}, days_back:{days_back}")
+            for day_back in range(days_back, -1, -1):
+                for hr in range(0, 24):
+                    try:
+                        val = self.get_value(
+                            f'day/-{day_back}/hour/{hr}/{data_field}', correlation_hint)
+                        # self.logger.debug(f"got value 'day/-{day_back}/hour/{hr}/{data_field}' as '{val}'")
+                        if not isinstance(val, Exception):
+                            pool.append(val)
+                    except:
+                        pass
+            pool = pool[-hours:]
 
         self.logger.debug(
             f"{correlation_hint} {virtual_ms}  Pool: {pformat(pool, width=4000)}")
@@ -541,8 +555,8 @@ class OpenWeatherMap(SmartPlugin):
                         sp) == 0 else f"{last_popped}/{'/'.join(sp)}"
                     if f"{last_popped}/{'/'.join(sp)}" in self._soft_fails:
                         wrk = 0
-                        self.logger.debug(
-                            f"{correlation_hint}No defined value from API for '{s}', missing '{missing_child_path}', defaulting to 0")
+                        #self.logger.debug(
+                        #    f"{correlation_hint}No defined value from API for '{s}', missing '{missing_child_path}', defaulting to 0")
                     else:
                         raise Exception(
                             f"Missing child '{last_popped}' after '{'/'.join(successful_path)}' (complete path missing: {missing_child_path})")
@@ -689,6 +703,7 @@ class OpenWeatherMap(SmartPlugin):
             if owm_ms in self._origins_weather:
                 self._request_weather = True
             elif owm_ms.startswith('uvi_'):
+                self.logger.warning(f"{item.path()} The UVI API is deprecated - if you intend to query the current UV-index, use 'current/uvi' instead")
                 self._request_uvi = True
             elif owm_ms.startswith('forecast'):
                 self._request_forecast = True
