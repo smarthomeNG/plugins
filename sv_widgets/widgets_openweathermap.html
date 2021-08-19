@@ -2,7 +2,7 @@
 {% import "basic.html" as basic %}
 {% import "device.html" as device %}
 <div class="cells" style="height: 60px;">
-    <div class="cell3" style="text-align: left;">{{ basic.stateswitch(id~'sw', gad_irrigation_valve_root, 'icon', '', ['sani_water_tap.svg', 'sani_irrigation.svg']) }} &nbsp;
+    <div class="cell3" style="text-align: left;">{{ basic.stateswitch(id~'sw', gad_irrigation_valve_root, 'icon', '', [ icon_off | default('sani_water_tap.svg'), icon_on | default('sani_irrigation.svg')]) }} &nbsp;
         &nbsp;{{ info_title }}</div>
     <div class="cell1" style="text-align: right;">
         {{ basic.print('', gad_irrigation_valve_root, 'script', '$("#'~id~'remaining").css("display", (VAR1 == 0) ? "none" : "block")') }}
@@ -26,6 +26,9 @@
 <div id="{{id}}_pop" data-role="popup">
     <div style="margin-left: 5px; margin-right: 5px; max-width: 300px; min-width: 300px">
         <h2>{{ info_title }}</h2>
+        <div style="margin-bottom: 5px;">
+            Aktueller Wasserbedarf: {{ basic.print(id~'demand', gad_irrigation_valve_root~'.todays_water_demand_in_l', '%01,2f l') }}
+        </div>
         <div>
             Regenwirkung (%)
             {{ basic.slider(id~'rainfactor', gad_irrigation_valve_root~'.rain.exposure_factor', 0, 2, 0.1, '', '', 0, 200) }}
@@ -48,7 +51,58 @@
         </div>
         <div>
             Flußrate Bewässerung (l/min)
-            {{ basic.slider(id~'flowrate', gad_irrigation_valve_root~'.factors.flowrate_l_per_min', 0.1, 10, 0.1) }}
+            {{ basic.slider(id~'flowrate', gad_irrigation_valve_root~'.factors.flowrate_l_per_min', 3, 100, 0.1) }}
+        </div>
+    </div>
+</div>
+{% endmacro %}
+
+{% macro irrigation_weekly(id, info_title, gad_irrigation_valve_root, icon_on, icon_off) %}
+{% import "basic.html" as basic %}
+{% import "device.html" as device %}
+<div class="cells" style="height: 60px;">
+    <div class="cell3" style="text-align: left;">{{ basic.stateswitch(id~'sw', gad_irrigation_valve_root, 'icon', '', [ icon_off | default('sani_irrigation_pop_up_off.svg'), icon_on | default('sani_irrigation_pop_up_on.svg')]) }} &nbsp;
+        &nbsp;{{ info_title }}</div>
+    <div class="cell1" style="text-align: right;">
+        {{ basic.print('', gad_irrigation_valve_root, 'script', '$("#'~id~'remaining").css("display", (VAR1 == 0) ? "none" : "block")') }}
+        {{ basic.print('', gad_irrigation_valve_root, 'script', '$("#'~id~'scheduled").css("display", (VAR1 == 1) ? "none" : "block")') }}
+        <div id="{{id~'remaining'}}">
+            {{ basic.print('', gad_irrigation_valve_root~'.schedule_seconds.remaining_time', '%01f s noch') }}
+        </div>
+        <div id="{{id~'scheduled'}}">
+            {{ basic.print('', gad_irrigation_valve_root~'.schedule_seconds', 's geplant') }}
+        </div>
+    </div>
+    <div class="cell1" style="text-align: right;">
+        {{ device.uzsuicon(id~'uz', gad_irrigation_valve_root~'.uzsu', 'Zeitsteuerung '~info_title ) }}</div>
+    <div class="cell1" style="text-align: right;">
+        <a href="#{{id}}_pop" data-rel="popup">
+            {{ basic.symbol(id~'details', gad_irrigation_valve_root, '', ['edit_settings', 'edit_settings'], [1, 0]) }}
+        </a>
+    </div>
+</div>
+
+<div id="{{id}}_pop" data-role="popup">
+    <div style="margin-left: 5px; margin-right: 5px; max-width: 300px; min-width: 300px">
+        <h2>{{ info_title }}</h2>
+        <div style="margin-bottom: 5px;">
+            Aktueller Wasserbedarf: {{ basic.print(id~'demand', gad_irrigation_valve_root~'.weeks_water_demand_in_l', '%01,1f l') }}
+        </div>
+        <div>
+            Regenwirkung (%)
+            {{ basic.slider(id~'rainfactor', gad_irrigation_valve_root~'.rain.exposure_factor', 0, 2, 0.1, '', '', 0, 200) }}
+        </div>
+        <div>
+            Verdunstungswirkung (%)
+            {{ basic.slider(id~'evapofactor', gad_irrigation_valve_root~'.evaporation.exposure_factor', 0, 2, 0.1, '', '', 0, 200) }}
+        </div>
+        <div>
+            Fläche (qm)
+            {{ basic.slider(id~'area_in_sqm', gad_irrigation_valve_root~'.factors.area_in_sqm', 1, 1000, 1) }}
+        </div>
+        <div>
+            Flußrate Bewässerung (l/min)
+            {{ basic.slider(id~'flowrate', gad_irrigation_valve_root~'.factors.flowrate_l_per_min', 1, 30, 0.1) }}
         </div>
     </div>
 </div>
