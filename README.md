@@ -242,16 +242,20 @@ The virtual matchstrings consist of the following elements:
 - prefix "virtual"
 - a time-frame that could be:
     - past12h
-    - next12h
-    - past24h
-    - next24h
+    - next3d
+    - ...
+    The time-frame is compiled from a statement about the direction (past or next) a numeric literal and the unit, which could be "h" or "d" for hours or days. The maximum numbers are:
+    - next6d
+    - next48h
+    - past4d
+    - past96h
 - an aggregation-function:
     - sum
     - max
     - min
     - avg
     - all (to generate a list with all items)
-- a matchstring that would match an element in the [hourly one-call API](https://openweathermap.org/api/one-call-api#example)
+- a matchstring that would match an element in the [hourly one-call API](https://openweathermap.org/api/one-call-api#example). CAVE: For values as next#d the daily fields from the same API are matched!
 
 An example usage of those virtual matchstrings is the rain_overview-widget for SmartVisu provided with this plugin:
 
@@ -311,7 +315,7 @@ The implementation of the calculation is based on: (https://edis.ifas.ufl.edu/pd
 
 Caveat: The formula used for ETO calculation makes use of a solar radiation feature. Unfortunately this value is not available for free via API. Luckily the UV-index matches the scale and should be somewhat equivalent to the actual value, so this is used in the calculation instead. Still: The usage of the UV-index instead of a real solar radiation feature is scientifically WRONG.
 
-#### Struct to support irrigation control
+#### Struct to support irrigation control for daily irrigation (plants)
 
 You can use the irrigation struct to switch an irrigation valve (solenoid) off automatically, based on the daily watering demand. If you combine that with an uzsu you will be able to even start the irrigation automatically. Using this method you will be able to water your plant based on the demand and not perform irrigation if there was enough rain.
 
@@ -466,6 +470,176 @@ This can be used from SmartVisu with a widget that is provided along with this p
 {{ owm.irrigation('valve_1', 'The greenhouse', 'garden.irrigation_valve1') }}
 
 ```
+
+#### Struct to support irrigation control for weekly irrigation (lawn)
+
+You can use the irrigation_weekly struct to switch an irrigation valve (solenoid) off automatically, based on the weekly watering demand. If you combine that with an uzsu you will be able to even start the irrigation automatically. Using this method you will be able to water your lawn based on the demand and not perform irrigation if there was enough rain.
+
+In this case the past 4 days are considered and the outlook of the next 3 days.
+
+```yaml
+garden:
+    gut_feeling_for_irrigation:
+        type: num
+        cache: yes
+        remark: Value ranging from 0 to 2 where 1 would be normal, and 2 would double the amount
+    irrigation_valve2:
+        knx_dpt: 1
+        knx_send: ...
+        knx_cache: ...
+        struct: 
+            - owm.irrigation_weekly
+            - uzsu.child  # in case you want to start automatically
+        evaporation:
+            exposure_factor:
+                initial_value: 0.9  # Lightly shady area (greenhouses could be 0.7)
+        rain:
+            exposure_factor:
+                initial_value: 0.5  # half covered by a roof (greenhouses would be 0)
+        factors:
+            flowrate_l_per_min:
+                initial_value: 20   # liters per minute by irrigation system
+            area_in_sqm:
+                initial_value: 350  # area covered by irrigation system
+            gut_feeling:
+                eval: sum
+                eval_trigger: 
+                    - garden.gut_feeling_for_irrigation
+```
+
+The complete struct provides a hint how this is implemented:
+
+```yaml
+
+    irrigation_weekly:
+        type: bool
+        autotimer: sh..schedule_seconds() = False
+        visu_acl: rw
+        enforce_updates: 'true'
+
+        schedule_seconds:
+            type: num
+            initial_value: 0
+            visu_acl: ro
+            eval: round((sh...weeks_water_demand_in_l() / sh...factors.flowrate_l_per_min()) * 60)
+            eval_trigger:
+                - ..factors.flowrate_l_per_min
+                - ..weeks_water_demand_in_l
+
+            remaining_time:
+                type: num
+                visu_acl: ro
+                enforce_updates: 'true'
+                eval: sh...() - sh....age() if sh....() else 0
+                eval_trigger: ...
+                cycle: 5
+
+        weeks_water_demand_in_l:
+            type: num
+            eval: max(0, (sh...evaporation() * sh...evaporation.exposure_factor()) - (sh...rain() * sh...rain.exposure_factor())) * sh...factors()
+            eval_trigger:
+                - ..evaporation
+                - ..evaporation.exposure_factor
+                - ..rain
+                - ..rain.exposure_factor
+                - ..factors
+
+        evaporation:
+            type: num
+            initial_value: 0
+            eval: sum
+            eval_trigger:
+                - .day_past3
+                - .day_past2
+                - .day_past1
+                - .day_past0
+                - .day_next1
+                - .day_next2
+            day_past3:
+                type: num
+                owm_matchstring@instance: day/-3/eto
+            day_past2:
+                type: num
+                owm_matchstring@instance: day/-2/eto
+            day_past1:
+                type: num
+                owm_matchstring@instance: day/-1/eto
+            day_past0:
+                type: num
+                owm_matchstring@instance: day/-0/eto
+            day_next0:
+                type: num
+                owm_matchstring@instance: day/0/eto
+            day_next1:
+                type: num
+                owm_matchstring@instance: day/1/eto
+            day_next2:
+                type: num
+                owm_matchstring@instance: day/2/eto
+
+            exposure_factor:
+                remark: 'How exposed is your area to evaporation? Lower the factor for less exposure (e.g. shading, or wind-shields) or higher the factor if there is more sun (reflection) or wind (droughty areas).'
+                type: num
+                cache: yes
+                initial_value: 1
+
+        rain:
+            type: num
+            eval: sum
+            eval_trigger:
+                - .past_4d
+                - .next_3d
+            
+            past_4d:
+                type: num
+                owm_matchstring@instance: virtual/past4d/sum/rain/1h            
+            next_3d:
+                type: num
+                owm_matchstring@instance: virtual/next3d/sum/rain
+
+            exposure_factor:
+                remark: 'How exposed is your area to rain? Lower the factor for less exposure (e.g. roofs or bushes) or higher the factor if additional water is put there (e.g. from roof-drains).'
+                initial_value: 1
+                type: num
+                cache: yes
+
+        factors:
+            type: num
+            eval: sh..area_in_sqm() * sh..gut_feeling()
+            eval_trigger:
+                - .area_in_sqm
+                - .gut_feeling
+
+            flowrate_l_per_min:
+                remark: 'How much water is transported by your irrigation-system? liters per minute'
+                initial_value: 4
+                type: num
+                cache: yes
+
+            area_in_sqm:
+                remark: 'This is the irrigated area. This is important for the effectivity of rain vs. evaporation.'
+                initial_value: 1
+                type: num
+                cache: yes
+            
+            gut_feeling:
+                remark: 'This is a factor that should be used to tweak irrigation based on gut-feelings, typically this should be assigned centrally for the whole yard (use eval).'
+                initial_value: 1
+                type: num
+                cache: yes
+
+```
+
+This can be used from SmartVisu with a widget that is provided along with this plugin. Example, matching the YAML above:
+
+```html
+
+{% import "widgets_openweathermap.html" as owm %}
+{{ owm.irrigation_weekly('valve_2', 'Lawn in the backyard', 'garden.irrigation_valve2') }}
+
+```
+
+
 
 #### Weather alerts
 

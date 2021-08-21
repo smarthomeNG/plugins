@@ -740,6 +740,18 @@ class OpenWeatherMap(SmartPlugin):
             elif owm_ms.startswith('alerts'):
                 self._request_alerts = True
             elif owm_ms.startswith('virtual/past'):
+                _, number, unit, _, _ = self.__tokenize_matchstring(owm_ms)
+                if unit == 'd':
+                    hours = number * 24
+                else:
+                    hours = number
+                days_back = int(hours / 24) + 1
+                if days_back > 3:
+                    self._request_back4day = True
+                if days_back > 2:
+                    self._request_back3day = True
+                if days_back > 1:
+                    self._request_back2day = True
                 self._request_back0day = True
                 self._request_back1day = True
             elif owm_ms.startswith('virtual/next'):
