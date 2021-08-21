@@ -740,7 +740,7 @@ class OpenWeatherMap(SmartPlugin):
             elif owm_ms.startswith('alerts'):
                 self._request_alerts = True
             elif owm_ms.startswith('virtual/past'):
-                _, number, unit, _, _ = self.__tokenize_matchstring(owm_ms)
+                _, number, unit, _, _ = self.__tokenize_matchstring(owm_ms[8:])
                 if unit == 'd':
                     hours = number * 24
                 else:
