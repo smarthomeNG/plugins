@@ -31,10 +31,19 @@ import math
 import functools
 from .webif import WebInterface
 from datetime import datetime, timedelta, timezone
-from lib.module import Modules
 from lib.model.smartplugin import *
 from bin.smarthome import VERSION
 from pprint import pformat
+
+
+class OpenWeatherMapNoValueHardException(Exception):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
+
+
+class OpenWeatherMapNoValueSoftException(Exception):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
 
 
 class OpenWeatherMap(SmartPlugin):
@@ -129,12 +138,15 @@ class OpenWeatherMap(SmartPlugin):
                               self._data_source_key_airpollution_back3day:  {'url': '', 'fetched': '', 'data': None},
                               self._data_source_key_airpollution_back4day:  {'url': '', 'fetched': '', 'data': None}}
 
-        self._soft_fails = ['rain/1h',
-                            'rain/3h',
-                            'snow/1h',
-                            'snow/3h',
-                            'rain/',
-                            'snow/']
+        self._soft_fails_to_zero = ['rain/1h',
+                                    'rain/3h',
+                                    'snow/1h',
+                                    'snow/3h',
+                                    'rain/',
+                                    'snow/']
+
+        self._soft_fails_to_info = ['wind_gust/',
+                                    'wind_gustav/']
 
         self._session = requests.Session()
         self._cycle = int(self.get_parameter_value('cycle'))
@@ -176,7 +188,7 @@ class OpenWeatherMap(SmartPlugin):
 
         self._origins_layer = [
             'clouds_new', 'precipitation_new', 'pressure_new', 'wind_new', 'temp_new']
-                
+
         if not self.init_webinterface(WebInterface):
             self.logger.error("Unable to start Webinterface")
             self._init_complete = False
@@ -367,6 +379,13 @@ class OpenWeatherMap(SmartPlugin):
             owm_matchstring, correlation_hint)
         return ret_val
 
+    def get_value_or_raise(self, owm_matchstring, correlation_hint=""):
+        ret_val, _, _, _ = self.get_value_with_meta(
+            owm_matchstring, correlation_hint)
+        if isinstance(ret_val, Exception):
+            raise ret_val
+        return ret_val
+
     def _update(self):
         """
         Updates information on diverse items
@@ -387,7 +406,10 @@ class OpenWeatherMap(SmartPlugin):
                     ret_val, wrk_typ, changed_match_string, was_ok = self.get_value_with_meta(
                         owm_matchstring, f"{item_path} ")
 
-                    if isinstance(ret_val, Exception):
+                    if isinstance(ret_val, OpenWeatherMapNoValueSoftException):
+                        self.logger.info(
+                            "%s INFO: owm-string: %s --> %s from wrk=%s, Error: %s" % (item, owm_matchstring, changed_match_string, wrk_typ, ret_val))
+                    elif isinstance(ret_val, Exception):
                         self.logger.error(
                             "%s ERROR: owm-string: %s --> %s from wrk=%s, Error: %s" % (item, owm_matchstring, changed_match_string, wrk_typ, ret_val))
                     else:
@@ -411,25 +433,25 @@ class OpenWeatherMap(SmartPlugin):
         Based on: https://edis.ifas.ufl.edu/pdffiles/ae/ae45900.pdf
                   http://www.fao.org/3/X0490E/x0490e00.htm#Contents
 
-
         TODO: solar_rad values are kWh/m2 - the uvi values seem to coincidentally fit the scale.
         """
         self.logger.debug("%s _calculate_eto: for %s" %
                           ((correlation_hint, s)))
-
-        climate_sunrise = datetime.utcfromtimestamp(
-            int(self.get_value(s.replace('/eto', "/sunrise"), correlation_hint)))
-        climate_humidity = self.get_value(
+        sunrise_value = self.get_value_or_raise(
+            s.replace('/eto', "/sunrise"), correlation_hint)
+        climate_sunrise = datetime.utcfromtimestamp(int(sunrise_value))
+        climate_humidity = self.get_value_or_raise(
             s.replace('/eto', "/humidity"), correlation_hint)
-        climate_pressure = self.get_value(
+        climate_pressure = self.get_value_or_raise(
             s.replace('/eto', "/pressure"), correlation_hint)
-        climate_min = self.get_value(
+        climate_min = self.get_value_or_raise(
             s.replace('/eto', "/temp" if s.startswith('day/-') else "/temp/min"), correlation_hint)
-        climate_max = self.get_value(
+        climate_max = self.get_value_or_raise(
             s.replace('/eto', "/temp" if s.startswith('day/-') else "/temp/max"), correlation_hint)
-        climate_speed = self.get_value(
+        climate_speed = self.get_value_or_raise(
             s.replace('/eto', "/wind_speed"), correlation_hint)
-        solarRad = self.get_value(s.replace('/eto', "/uvi"), correlation_hint)
+        solarRad = self.get_value_or_raise(
+            s.replace('/eto', "/uvi"), correlation_hint)
         alt = float(self._elev)
         lat = float(self._lat)
 
@@ -482,27 +504,33 @@ class OpenWeatherMap(SmartPlugin):
         unit = tokens[0].replace(f'{mode}{numbers}', '')
         data_field = '/'.join(tokens[2:])
 
-        self.logger.debug(f"transformed {virtual_ms} into: M:{mode}, n:{numbers}, u:{unit}, O:{operation}, DF: {data_field}")
+        self.logger.debug(
+            f"transformed {virtual_ms} into: M:{mode}, n:{numbers}, u:{unit}, O:{operation}, DF: {data_field}")
 
-        return (mode, int(numbers),unit, operation, data_field)
+        return (mode, int(numbers), unit, operation, data_field)
 
     def __get_virtual_value(self, virtual_ms, correlation_hint):
         pool = []
-        mode, number, unit, operation, data_field = self.__tokenize_matchstring(virtual_ms)
+        mode, number, unit, operation, data_field = self.__tokenize_matchstring(
+            virtual_ms)
 
         if mode == 'next':
             if unit == 'h':
                 if number > 48:
-                    raise Exception("Cannot get value further than 48h in future, switch unit to 'd' to see further into the future")
+                    raise Exception(
+                        "Cannot get value further than 48h in future, switch unit to 'd' to see further into the future")
                 for hr in range(0, number):
-                    pool.append(self.get_value(
-                        f'hour/{hr}/{data_field}', correlation_hint))
+                    val = self.get_value(f'hour/{hr}/{data_field}', correlation_hint)
+                    if not isinstance(val, Exception):
+                        pool.append(val)
             elif unit == 'd':
                 if number > 6:
-                    raise Exception("Cannot get value further than 6d in future")
+                    raise Exception(
+                        "Cannot get value further than 6d in future")
                 for day in range(0, number):
-                    pool.append(self.get_value(
-                        f'day/{day}/{data_field}', correlation_hint))
+                    val = self.get_value(f'day/{day}/{data_field}', correlation_hint)
+                    if not isinstance(val, Exception):
+                        pool.append(val)
         elif mode == 'past':
             if unit == 'd':
                 hours = number * 24
@@ -510,13 +538,13 @@ class OpenWeatherMap(SmartPlugin):
                 hours = number
 
             days_back = int(hours / 24) + 1
-            self.logger.debug(f"PAST: {virtual_ms} into: hrs:{hours}, days_back:{days_back}")
+            self.logger.debug(
+                f"PAST: {virtual_ms} into: hrs:{hours}, days_back:{days_back}")
             for day_back in range(days_back, -1, -1):
                 for hr in range(0, 24):
                     try:
                         val = self.get_value(
                             f'day/-{day_back}/hour/{hr}/{data_field}', correlation_hint)
-                        # self.logger.debug(f"got value 'day/-{day_back}/hour/{hr}/{data_field}' as '{val}'")
                         if not isinstance(val, Exception):
                             pool.append(val)
                     except:
@@ -531,9 +559,13 @@ class OpenWeatherMap(SmartPlugin):
         elif operation == "min":
             return min(pool)
         elif operation == "avg":
+            if len(pool) == 0:
+                return 0
             return round(functools.reduce(
                 lambda x, y: x + y, pool) / len(pool), 2)
         elif operation == "sum":
+            if len(pool) == 0:
+                return 0
             return round(functools.reduce(
                 lambda x, y: x + y, pool), 2)
         elif operation == "all":
@@ -553,12 +585,15 @@ class OpenWeatherMap(SmartPlugin):
                 if wrk is None:
                     missing_child_path = last_popped if len(
                         sp) == 0 else f"{last_popped}/{'/'.join(sp)}"
-                    if f"{last_popped}/{'/'.join(sp)}" in self._soft_fails:
+                    if f"{last_popped}/{'/'.join(sp)}" in self._soft_fails_to_zero:
                         wrk = 0
-                        #self.logger.debug(
+                        # self.logger.debug(
                         #    f"{correlation_hint}No defined value from API for '{s}', missing '{missing_child_path}', defaulting to 0")
+                    elif f"{last_popped}/{'/'.join(sp)}" in self._soft_fails_to_info:
+                        raise OpenWeatherMapNoValueSoftException(
+                            f"Missing child '{last_popped}' after '{'/'.join(successful_path)}' (complete path missing: {missing_child_path})")
                     else:
-                        raise Exception(
+                        raise OpenWeatherMapNoValueHardException(
                             f"Missing child '{last_popped}' after '{'/'.join(successful_path)}' (complete path missing: {missing_child_path})")
                 break
 
@@ -567,7 +602,7 @@ class OpenWeatherMap(SmartPlugin):
                     if int(sp[0]) < len(wrk):
                         wrk = wrk[int(sp[0])]
                     else:
-                        raise Exception(
+                        raise OpenWeatherMapNoValueHardException(
                             f"Integer index ({int(sp[0])}) out of range after '{'/'.join(successful_path)}'")
                 elif sp[0] == '@count':
                     if last_popped == 'alerts' and wrk[0] == self._placebo_alarm:
@@ -703,7 +738,8 @@ class OpenWeatherMap(SmartPlugin):
             if owm_ms in self._origins_weather:
                 self._request_weather = True
             elif owm_ms.startswith('uvi_'):
-                self.logger.warning(f"{item.path()} The UVI API is deprecated - if you intend to query the current UV-index, use 'current/uvi' instead")
+                self.logger.warning(
+                    f"{item.path()} The UVI API is deprecated - if you intend to query the current UV-index, use 'current/uvi' instead")
                 self._request_uvi = True
             elif owm_ms.startswith('forecast'):
                 self._request_forecast = True
