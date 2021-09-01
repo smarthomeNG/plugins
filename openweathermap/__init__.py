@@ -21,8 +21,6 @@
 #
 #########################################################################
 
-from jinja2 import Environment, FileSystemLoader
-import cherrypy
 import logging
 import requests
 import datetime
@@ -712,6 +710,12 @@ class OpenWeatherMap(SmartPlugin):
             self.logger.error(
                 "__query_api: Exception when sending GET request for data_source_key '%s': %s" % (data_source_key, str(e)))
             return
+        num_bytes = len(response.content)
+        self.logger.debug(f"Received {num_bytes} bytes for {data_source_key} from {url}")
+        if num_bytes < 50:
+            self.logger.error(f"Response for {data_source_key} from {url} was too short to be meaningful: '{response.content}'")
+            return
+
         json_obj = response.json()
 
         self._data_sources[data_source_key]['url'] = url
