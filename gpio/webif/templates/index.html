@@ -15,11 +15,11 @@ function mainpage() {
     $(document).ready( function () {
 		try
 			{
-			$('#maintable').DataTable( {
+			$('#in_table').DataTable( {
 				"paging": false,
 				fixedHeader: true
 				} );
-      $('#detailtable').DataTable( {
+      $('#out_table').DataTable( {
         "paging": false,
         fixedHeader: true
         } );
@@ -61,7 +61,7 @@ function mainpage() {
   <div class="mb-2">
     {{ _('Die folgenden Items sind dem GPIO Plugin als IN Pin zugewiesen') }}:
   </div>
-  <table id="maintable" class="table table-striped table-hover pluginList">
+  <table id="in_table" class="table table-striped table-hover pluginList">
     <thead>
     <tr>
       <th>{{ _('Item') }}</th>
@@ -96,7 +96,7 @@ function mainpage() {
   <div class="mb-2">
     {{ _('Die folgenden Items sind dem GPIO Plugin als OUT Pin zugewiesen') }}:
   </div>
-    <table id="detailtable" class="table table-striped table-hover pluginList">
+    <table id="out_table" class="table table-striped table-hover pluginList">
       <thead>
       <tr>
         <th>{{ _('Item') }}</th>
