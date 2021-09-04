@@ -2,6 +2,7 @@
 #
 #########################################################################
 #  Copyright 2018 René Frieß                      rene.friess(a)gmail.com
+#  Updated in 2021 by Jens Höppner to make use of one-call API
 #########################################################################
 #
 #  This file is part of SmartHomeNG.
