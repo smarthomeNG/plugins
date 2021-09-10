@@ -90,13 +90,13 @@ schlafzimmer:
                 f"SchlaZi: {sh...():.1f}°C"
             eval_trigger: ..
 
-        display_is_relevant:
-            type: bool
-            eval: or
-            eval_trigger: 
-                - ...irgendein_fenster_im_schlafzimmer_offen
-            text_display_target_ring: 'fenster'
-            text_display_content_source_item: ..
+            display_is_relevant:
+                type: bool
+                eval: or
+                eval_trigger: 
+                    - ....irgendein_fenster_im_schlafzimmer_offen
+                text_display_target_ring: 'fenster'
+                text_display_content_source_item: ..
 
     irgendein_fenster_im_schlafzimmer_offen:
         type: bool
