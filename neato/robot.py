@@ -31,6 +31,7 @@ class Robot:
 
         self._session = requests.Session()
         self._timeout = 10
+        self._verifySSL = False
         self._token = token
         self._clientIDHash = 'KY4YbVAvtgB7lp8vIbWQ7zLk3hssZlhR'
         self._numberRobots = 0
@@ -128,7 +129,7 @@ class Robot:
                 self.__urlNucleo + "/vendors/"+self.__vendor+"/robots/" + self.serial + "/messages", data=n,
                 headers={'X-Date': self.__get_current_date(), 'X-Agent': 'ios-7|iPhone 4|0.11.3-142',
                      'Date': self.__get_current_date(), 'Accept': 'application/vnd.neato.nucleo.v1',
-                     'Authorization': 'NEATOAPP ' + h.hexdigest()}, timeout=self._timeout )
+                     'Authorization': 'NEATOAPP ' + h.hexdigest()}, timeout=self._timeout, verify=self._verifySSL )
         except Exception as e:
             self.logger.error("Robot: Exception during command request: %s" % str(e))
             return None
@@ -182,7 +183,7 @@ class Robot:
                                                                      'X-Agent': 'ios-7|iPhone 4|0.11.3-142',
                                                                      'Date': self.__get_current_date(),
                                                                      'Accept': 'application/vnd.neato.nucleo.v1',
-                                                                     'Authorization': 'NEATOAPP ' + h.hexdigest()}, timeout=self._timeout )
+                                                                     'Authorization': 'NEATOAPP ' + h.hexdigest()}, timeout=self._timeout, verify=self._verifySSL )
  
         except Exception as e:
             self.logger.error("Robot: Exception during cloud state request: %s" % str(e))
