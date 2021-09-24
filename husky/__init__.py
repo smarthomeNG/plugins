@@ -28,6 +28,7 @@ from lib.model.smartplugin import *
 
 import json
 import requests 
+import logging
 
 from datetime import datetime, timedelta
 from dateutil.parser import parse
@@ -826,6 +827,7 @@ class Mower:
     }
 
     def __init__(self):
+        self.logger = logging.getLogger(__name__)
         self._mower_id           = None
         self._mower_name         = None
         self._mower_model        = 'UNKNOWN' 
