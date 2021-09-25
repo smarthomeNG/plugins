@@ -5,9 +5,9 @@
 OpenWeatherMap
 ==============
 
-Das Plugin dient zum Empfang der Wetterinformationen von OpenWeatherMap (https://openweathermap.org/).
+This Plugin is used to receive weather information via OpenWeatherMap (https://openweathermap.org/).
 
-Unterstützt werden aktuell die APIs:
+The following APIs of OpenWeatherMap are supported:
 
 - weather
 - forecast
@@ -30,12 +30,12 @@ Keep this in mind:
 
 
 
-Funktionsweise
-==============
+Functionality
+=============
 
 
-Allgemein
----------
+General Information
+-------------------
 
 The data provided by OpenWeatherMap is mapped to items by matchstrings. A matchstring is defining the path to a data-source within an API-response field.
 The available resources make use of the following APIs:
@@ -91,6 +91,7 @@ Matchstrings are re-written by the plugin to allow a clear distinction of the da
 - begins with "uvi" original data-source is the uvi-API: the prefix "uvi" is removed when matching items in the JSON-source. example: uvi_value to get the current UV-index value as this API is deprecated, the replacement is current/uvi, it may be automatically replaced in future versions of this plugin.
 - begins with "current/" original data-source is the onecall-API, values are read directly. example: current/weather/description for a text describing the current weather in the defined language.
 - begins with "hour/I/" where I is a number between 0 and 47 representing the relative hour from now onwards. Original data-source is the onecall-API the prefix "hour/" is replaced with "hourly/" when matching items in the JSON-source. example: hour/2/feels_like to get the perceived temperature two hours from now. complete set of data-points that can be retrieved for each hour:
+
     - dt: Point in time represented by this data-point
     - temp: Temperature in Celsius
     - feels_like: Perceived Temperature
@@ -111,6 +112,7 @@ Matchstrings are re-written by the plugin to allow a clear distinction of the da
     - weather/0/icon: to get the weather icon id
     - pop: Propability of precipitation
 - begins with "day/N/" where N is a number between 0 and 6. Be aware that -0 (see below) and 0 are returning different valid values! Original data-source is the onecall-API. As you are using a positive value for N (including 0) outlook data is retrieved. the prefix "day/" is replaced with "daily/" when matching items in the JSON-source. example: day/1/feels_like/night to get tomorrows perceived temperature at night. complete set of data-points that can be retrieved for each day:
+
     - dt: Point in time represented by this data-point
     - sunrise: Sunrise of this day, UTC
     - sunset: Sunset of this day, UTC
@@ -143,9 +145,12 @@ Matchstrings are re-written by the plugin to allow a clear distinction of the da
     - weather/0/description: to get the weather condition description within the group.
     - weather/0/icon: to get the weather icon id
 - begins with "day/-N/" where N is a number between 0 and 4. Be aware that -0 and 0 (see above) are returning different valid values! Original data-source is the onecall-API with the time-machine feature. As you are using a negative value for N (including -0) historic data is retrieved. Appending an "hour/I/" to the matchstring results in selecting an hour "I" of that particular day. Warning: Accessing "day/-0/hour/18/..." at an earlier time than 6pm (UTC!!) will result in an ERROR as the API is not combining historic data with outlook data. Without appending hour, the daily summary will be retrieved (from the tree below "current/" within the JSON response). examples:
+
     - day/-1/hour/13/temp to get yesterdays temperature at 1pm UTC.
     - day/-2/pressure to get the average(?) air-pressure from the day before yesterday.
+
 - begins with "airpollution" Retrieves Air-Quality-Index and air-pollution component values. Original data-source is the airpollution API. In general you can retrieve the following values:
+
     - airpollution/main/aqi to get the Air-Quality-Index
     - airpollution/components/co
     - airpollution/components/no
@@ -155,16 +160,21 @@ Matchstrings are re-written by the plugin to allow a clear distinction of the da
     - airpollution/components/pm2_5
     - airpollution/components/pm10
     - airpollution/components/nh3 You may insert "/day/-1/hour/11/" between airpollution and main or component, where days can range from -1 to -4 and hour from 0 to 23. With that you can retrieve values of a certain hour from that day in the past. In order to retrieve forecast values you may insert "/hour/11" (not prepended with a day). This will provide access to the next 72 hours of forecast. Examples:
+
         - airpollution/day/-1/hour/11/main/aqi yesterday at 12:00 UTC
         - airpollution/day/-4/hour/9/main/aqi four days into the past at 9:00 UTC
         - airpollution/hour/24/main/aqi tommorrow, same time
+
 - ends with _new (see list below) prepares a map-layer URL either from the given parameters owm_coord_x, owm_coord_y, owm_coord_z or from a translation of the current geo-coordinates to the tile-information Complete list of map-layers:
+
     - clouds_new
     - precipitation_new
     - pressure_new
     - wind_new
     - temp_new
+
 - everything else is tried to be matched against the weather-API. Complete list:
+
     - base / cod / sys/id / sys/type to get some internal parameters (if you can make sense of it).
     - coord/lon / coord/lat / id / name / sys/country / timezone for OWM's interpretation of your location data.
     - clouds/all / visibility to get the current cloud coverage and visibility range in meters.
@@ -209,6 +219,7 @@ The virtual matchstrings consist of the following elements:
 
 - prefix "virtual"
 - a time-frame that could be:
+
     - past12h
     - next3d
     - ... The time-frame is compiled from a statement about the direction (past or next) a numeric literal and the unit, which could be "h" or "d" for hours or days. The maximum numbers are:
@@ -216,12 +227,15 @@ The virtual matchstrings consist of the following elements:
     - next48h
     - past4d
     - past96h
+
 - an aggregation-function:
+
     - sum
     - max
     - min
     - avg
     - all (to generate a list with all items)
+
 - a matchstring that would match an element in the hourly one-call API.
 
 CAVE: For values as next#d the daily fields from the same API are matched!
@@ -310,19 +324,22 @@ Translate beaufort scale number into beaufort scale description (Windstärke)
 
 
 
-Konfiguration
+Configuration
 =============
 
 
 Plugin
 ------
-Das Plugin kann über das Admin Interface aktiviert und konfiguriert werden.
+The plugin can be activated and configured via the Admin Interface.
 
-Für die Konfiguration ist nur der API-Key notwendig.
-Zusätzlich können folgende Parameter gesetzt werden:
-- Lokale Postiion für den Abfrageort (Wenn dieser Parameter nicht gesetzt ist, werden die Informationen dazu von shNG aus etc/smarthome.yaml verwendet)
-- Sprache
-- Updatezykluszeit
+The API-Key is needed for Plugin Configuration.
+In addition the following parameters can be set:
+- local position of the point of interest (Default: data from shNG out of etc/smarthome.yaml will be used)
+- language
+- cycle time
+- instance
+
+Note: The following configuration examples for items and structs require a definition of an instance ("home"). 
 
 
 Items
@@ -349,7 +366,7 @@ Please note to take care of the instance (here @home) for proper working.
             owm_match_prefix@home: ../.
             owm_matchstring@home: /temp/night
 
-Here follows a complete item.yaml for that plugin. Please keep in mind to adapt plugin instance (here "home") and plugin name (here "_priv_openweathermap").
+Here follows a complete item.yaml for that plugin. Please keep in mind to adapt the plugin instance (here "home") and plugin name (here "_priv_openweathermap") to your configuration.
 
 .. code:: yaml
 
@@ -681,7 +698,7 @@ Here follows a complete item.yaml for that plugin. Please keep in mind to adapt 
 
 Item structs
 ------------
-Zur Vereinfachung der Einrichtung von Items sind für folgende Item-structs vordefiniert:
+To ease the handling of the plugin, the following item structs are defined and ready to use:
 
 - irrigation  -  Irrigation control for daily irrigation (plants)
 - irrigation_weekly  -  Irrigation control for weekly irrigation (lawn)
@@ -699,8 +716,8 @@ Zur Vereinfachung der Einrichtung von Items sind für folgende Item-structs vord
 
 
 
-Anwendungen
-===========
+Applications
+============
 
 Irrigation control for daily irrigation (plants)
 ------------------------------------------------
