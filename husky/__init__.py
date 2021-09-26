@@ -930,7 +930,7 @@ class Mower:
         if 'model' in json:
             self._mower_model   = json['model']
         else:
-            self.logger.error("Model attribute not found in json: {0}".format(json))
+            self.logger.debug("Model attribute not found in json: {0}".format(json))
 
     def set_mower_activity_time(self, activity, time):
         self._activity_timer[activity.upper()] = int(time)
