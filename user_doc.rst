@@ -111,6 +111,7 @@ Matchstrings are re-written by the plugin to allow a clear distinction of the da
     - weather/0/description: to get the weather condition description within the group.
     - weather/0/icon: to get the weather icon id
     - pop: Propability of precipitation
+
 - begins with "day/N/" where N is a number between 0 and 6. Be aware that -0 (see below) and 0 are returning different valid values! Original data-source is the onecall-API. As you are using a positive value for N (including 0) outlook data is retrieved. the prefix "day/" is replaced with "daily/" when matching items in the JSON-source. example: day/1/feels_like/night to get tomorrows perceived temperature at night. complete set of data-points that can be retrieved for each day:
 
     - dt: Point in time represented by this data-point
