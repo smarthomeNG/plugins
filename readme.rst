@@ -1,243 +1,210 @@
 ==============
-OpenWeatherMap
+openweathermap
 ==============
 
-This Plugin is used to receive weather information via OpenWeatherMap (https://openweathermap.org/).
-
-The following APIs of OpenWeatherMap are supported:
+Dieses Plugin stellt die Wetterinformationen via OpenWeatherMap (https://openweathermap.org/) zur Verfügung.
+Die folgenden APIs von OpenWeatherMap werden unterstützt:
 
 - weather
 - forecast
-- uvi deprecated
+- uvi (deprecated)
 - onecall
-- onecall-0...onecall-4 uses the time-machine feature provided by the one-call-api, to collect the "historic" data, which includes past values of today (onecall-0).
-- layer, providing map tile-data.
+- onecall-0...onecall-4 (verwendet die "time-machine" Funktion der one-call API, um historische Daten einschließlich heute (onecall-0) zu beziehen.
+- layer
 - airpollution
-
 
 
 Requirements
 =============
-An api key from OpenWeatherMap is needed. It can be obtained free of charge from https://openweathermap.org.
 
-The api key which is available free of charge allows up to 60 calls a minute.
-Keep this in mind:
-- if you want to change the update frequency using the cycle parameter.
-- this plugin uses multiple calls per update-cycle. It may sum up to 10 calls per cycle. If you use the same API-key in SmartVisu, this will as well consume your call-quota.
+Zur Verwendung des Plugins wird ein API Key von OpenWeatherMap benötigt, der kostenfrei bei https://openweathermap.org zu erstellen ist.
+
+.. note:: Die kostenfreie Version ermöglicht 60 Datenabrufe pro Minute bzw. 1000 pro Tag. Das Plugin nutzt mehrfache (bis zu 10) Abrufe pro Updatezyklus. Achtung also beim Einstellen des Update-Cycle bzw. bei Verwendung des gleichen API Keys inder smartVISU.
 
 
-
-Functionality
+Funktionaliät
 =============
 
+Allgemeine Information
+----------------------
 
-General Information
--------------------
+Die von OpenWeatherMap bereitgestellten Daten werden mit Hilfe eines "Matchstrings" zu den Items verknüpft. Der "Matchstring" definiert den Pfad zur Datenquelle innerhalb des Datenfeldes.
+Die Liste der unterstützten APIs stellt die Namen der "data-source-keys" dar, die im Plugin verwendet werden. Das Ergebnis des letzten Datenabrufes wird im WebIF des Pluigns dargestellt.
+Das Plugin lädt, abhängig von dem in der Itemkonfiguration definierten "Matchstrings", die notwendigen Daten. Ist kein entsprechender "Matching" definiert, wird die jeweilige API nicht abgerufen.
+Der bevorzugte Weg ist die Verwendung der "one-call" API.
 
-The data provided by OpenWeatherMap is mapped to items by matchstrings. A matchstring is defining the path to a data-source within an API-response field.
-The available resources make use of the following APIs:
-
-- weather
-- forecast
-- uvi deprecated
-- onecall
-- onecall-0...onecall-4 uses the time-machine feature provided by the one-call-api, to collect the "historic" data, which includes past values of today (onecall-0).
-- layer, providing map tile-data.
-- airpollution
-
-The list before is providing the names of the "data-source-keys" that are used within this plugin. You can see the results of the last calls within the web-interface of this plugin. The plugin identifies the need for downloading data from each endpoint by the definition of the respective matchstring. If no matchstring would require data from e.g. the data-source "weather", then this endpoint would not be called by the plugin. The prefferable way of reading weather-data is via the one-call API.
-
-Data is retrieved in metric units (m, mm, hPa, °C).
-
-In order to access the data that can be retrieved via the API an attribute of "owm_matchstring" is needed. Optionally you can add a "owm_match_prefix". That string is prepended to the "owm_matchstring" given.
-
-.. code:: yaml
-
-    forecast_daily1_no_prefix:
-        type: str
-        remark: This is a valid way of adressing the description of tomorrows weather
-        owm_matchstring@home: day/1/weather/0/description
-
-    forecast_daily1_with_prefix:
-        type: str
-        remark: here the match-string is compiled as day/1/weather/0/description
-        owm_match_prefix@home: day/1
-        owm_matchstring@home: /weather/0/description
-
-        temp_night:
-            type: num
-            remark: here the match-string is compiled as day/1/temp/night, inheriting the prefix from the parent-element.
-            owm_match_prefix@home: ../.
-            owm_matchstring@home: /temp/night
+Alle Wetterdaten werden in metrischen Einheiten (m, mm, hPa, °C) dargestellt.
 
 
-Soft-failing matching
----------------------
-The typical matching would access the root of the JSON-response of an API call and then follow the provided path to select the items from the response "tree". If the next node along the path cannot be matched an ERROR will be logged. Typically this is caused by typos or missing / wrong integer-indices on counted items.
-Unfortunately not all responses from OWM will always contain a value. For example rain or snow data is only included if rain or snow has actually fallen or will be falling. For matchstrings ending in 'snow/3h', 'snow/1h', 'rain/3h' or 'rain/1h' an unmatched item will receive the value 0 instead of None. This will be logged as a DEBUG-level message (if enabled).
+Verfügbare Matchstrings
+-----------------------
+
+Der Beginn des "Matchstring" definiert die zu verwendende Daten-Quelle (API):
+
+- beginnt mit ``virtual/`` siehe `Virtual Matchstrings`; Beispiel: virtual/past24h/sum/rain/1h um die Gesamtmenge an Regen der letzten 24h zu bekommen
+- beginnt mit ``forecast/daily/``, siehe `Daily forecast (calculated)`; Beispiel: forecast/daily/0/main/temp_min um die niedrigste Tagestemperatur für morgen zu bekommen
+- endet mit ``/eto`` beginnt mit ``current/`` oder ``daily/``, siehe `Evapotranspiration`; Beisüiel: daily/1/eto für den morgigen ETO-Wert.
+- beginnt mit ``forecast/`` (Datenquelle ist die forecast-API); Beispiel: forecast/1/main/humidity um die vorhergesagte Luftfeuchtigkeit on 3h von jetzt zu bekommen (Bemerkung: ``forecast/`` wird durch ``list/`` ersetzt, wenn entsprechende Items in der Datenquelle vorhanden sind)
+- beginnt mit ``uvi`` (Datenquelle ist die uvi-API); Beispiel: uvi_value um den UV-Index Wert zu bekommen; Diese API is veraltet und durch current/uvi ersetzt
+- beginnt mit ``current/``  Beispiel: current/weather/description um die textuelle Beschreibung des aktuellen Wetters in der definierten Sprache zu bekommen
+- beginnt mit ``hour/I/`` wobei I [0..47] die Anzahl der Stunden von jetzt in die Zukunft angibt. Beispiel: hour/2/feels_like um die gefühlte Temperatur in 2 Stunden von jetzt zu bekommen; (Bemerkung: Der prefix "hour/" wird durch "hourly/" ersetzt, wenn entsprechende Items in der Datenquelle vorhanden sind) Die folgende Liste enthält alle verfügbaren Datenpunkte:
+
+  - ``dt`` Zeitpunkt der folgenden Daten
+  - ``temp`` Temperatur, °C
+  - ``feels_like`` gefühlte Temperatur, °C
+  - ``pressure`` Luftdruck auf Meereshöhe, hPa
+  - ``humidity`` Relative Luftfeuchtigkeit, %RH
+  - ``dew_point`` Taupunkt, °C
+  - ``uvi`` UV-Index
+  - ``clouds`` Bewölkung, %
+  - ``rain/1h`` Regenmenge, mm
+  - ``snow/1h`` Schneemenge, mm
+  - ``pop`` Niederschlagswahrscheinlichkeit (Propability of precipitation), %
+  - ``visibility`` Durchschnittliche Sichtweite, m
+  - ``wind_speed`` Windgeschwindigkeit, m/s (dies kann erweitert werden um ``wind_speed/beaufort`` und ``wind_speed/description``, um die Windstärke nach Beaufort als Wert bzw. Beschreibung zu bekommen)
+  - ``wind_deg`` Windrichtung, °
+  - ``wind_gust`` Windböen, m/s
+  - ``weather/0/id`` Wetterbedingungs-ID
+  - ``weather/0/main`` Gruppenname der Wetter-Parameter (Rain, Snow, Extreme etc.)
+  - ``weather/0/description`` Wetterbeschreibung innerhalb der Gruppe
+  - ``weather/0/icon`` Wetter-Icon-ID
+    
+
+- beginnt mit ``day/N/`` wobei N [0..6] die Anzahl der Tage von heute in die Zukunft ist bzw. [-4..-0] die Anzahl der Tage von heute in die Vergangenheit ist. Achtung: -0 and 0 ergeben verschiedene Werte! Datenquelle ist onecall-API; Beispiel: day/1/feels_like/night um die morgige gefühlte Nachttemperatur zu bekommen; (Bemerkung: Der prefix "day/" wird durch "daily/" ersetzt, wenn entsprechende Items in der Datenquelle vorhanden sind) Die folgende Liste enthält alle verfügbaren Datenpunkte:
+
+  - ``dt`` Zeitpunkt der folgenden Daten
+  - ``sunrise`` Sonnenaufgang dieses Tages, UTC
+  - ``sunset`` Sonnenuntergang dieses Tages, UTC
+  - ``moonrise`` Mondaufgang dieses Tages, UTC
+  - ``moonset`` Monduntergang dieses Tages, UTC
+  - ``temp/morn`` Morgentemperatur, °C
+  - ``temp/day`` Tagestemperatur, °C
+  - ``temp/eve`` Abendtemperatur, °C
+  - ``temp/night`` Nachttemperatur, °C
+  - ``temp/min`` minimale Tagestemperatur, °C
+  - ``temp/max`` maximale Tagestemperatur, °C
+  - ``feels_like/morn`` Gefühlte Morgentemperatur, °C
+  - ``feels_like/day`` Gefühlte Tagestemperatur, °C
+  - ``feels_like/eve`` Gefühlte Abendtemperatur, °C
+  - ``feels_like/night`` Gefühlte Nachttemperatur, °C
+  - ``pressure`` Luftdruck auf Meereshöhe, hPa
+  - ``humidity`` realtive Luftfeuchtigkeit, %RH
+  - ``dew_point`` Taupunkt, °C
+  - ``uvi`` Maximum UV-Index des Tages
+  - ``clouds`` Bewölkung, %
+  - ``rain`` Regenmenge, mm
+  - ``snow`` Schneemenge, mm
+  - ``pop`` Niederschlagswahrscheinlichkeit (Propability of precipitation), %
+  - ``visibility`` Durchschnittliche Sichtweite, m
+  - ``wind_speed`` Windgeschwindigkeit, m/s (dies kann erweitert werden um wind_speed/beaufort und wind_speed/description, um die Windstärke nach Beaufort als Wert bzw. Beschreibung zu bekommen)
+  - ``wind_deg`` Windrichtung, °
+  - ``wind_gust`` Windböen, m/s
+  - ``weather/0/id`` Wetterbedingungs-ID
+  - ``weather/0/main`` Gruppenname der Wetter-Parameter (Rain, Snow, Extreme etc.)
+  - ``weather/0/description`` Wetterbeschreibung innerhalb der Gruppe
+  - ``weather/0/icon`` Wetter-Icon-ID
 
 
-Matchstring-Rewriting / Data-Source identification
---------------------------------------------------
-Matchstrings are re-written by the plugin to allow a clear distinction of the data-sources while maintaining readability. The start of a matchstring provides a hint on the utilized data-source:
+  Hängt man ``hour/I/`` an den Matchstring an, wird die gewählte Stunde "I" des entsprechenden Tages ausgewählt. Warnung: Zugriff auf "day/-0/hour/18/..." früher als 18.00 Uhr (UTC!!) führt zu einem ERROR, da die API historische Daten und Vorhersagedaten nicht kombinieren kann.
 
-- begins with "virtual/", see Virtual matchstrings example: virtual/past24h/sum/rain/1h for the total amount of rain in the past 24h.
-- begins with "forecast/daily/", see Daily forecast (calculated) example: forecast/daily/0/main/temp_min for tomorrows minimal temperature. consider using the one-call equivalents, e.g. day/1/temp/min to retrieve the same value as in the example
-- ends with "/eto" and begins with "current/" or "daily/", see Evapotranspiration example: daily/1/eto for tomorrows ETO-value.
-- begins with "forecast/" original data-source is the forecast-API: the prefix "forecast/" is replaced with "list/" when matching items in the JSON-source. example: forecast/1/main/humidity to retrieve the forecasted humidity three hours in the future.
-- begins with "uvi" original data-source is the uvi-API: the prefix "uvi" is removed when matching items in the JSON-source. example: uvi_value to get the current UV-index value as this API is deprecated, the replacement is current/uvi, it may be automatically replaced in future versions of this plugin.
-- begins with "current/" original data-source is the onecall-API, values are read directly. example: current/weather/description for a text describing the current weather in the defined language.
-- begins with "hour/I/" where I is a number between 0 and 47 representing the relative hour from now onwards. Original data-source is the onecall-API the prefix "hour/" is replaced with "hourly/" when matching items in the JSON-source. example: hour/2/feels_like to get the perceived temperature two hours from now. complete set of data-points that can be retrieved for each hour:
+  Beispiele:
 
-    - dt: Point in time represented by this data-point
-    - temp: Temperature in Celsius
-    - feels_like: Perceived Temperature
-    - pressure: Atmospheric pressure on the sea level, hPa
-    - humidity: Relative Humidity in %
-    - dew_point: Atmospheric temperature (varying according to pressure and humidity) below which water droplets begin to condense and dew can form. Celsius
-    - uvi: UV index
-    - clouds: Cloudiness %
-    - rain/1h: Rain volume in mm
-    - snow/1h: Snow volume in mm
-    - visibility: Average visibility, metres
-    - wind_speed: Wind speed in metre/sec (this can be extended as wind_speed/beaufort and wind_speed/description to get the Beaufort-value and the Description of the Speed-level in German or English)
-    - wind_deg: Wind direction, degrees (meteorological)
-    - wind_gust: Wind gust (peaks in speed) in metre/sec
-    - weather/0/id: to get the weather condition id
-    - weather/0/main: to get the group-name of weather parameters (Rain, Snow, Extreme etc.)
-    - weather/0/description: to get the weather condition description within the group.
-    - weather/0/icon: to get the weather icon id
-    - pop: Propability of precipitation
-- begins with "day/N/" where N is a number between 0 and 6. Be aware that -0 (see below) and 0 are returning different valid values! Original data-source is the onecall-API. As you are using a positive value for N (including 0) outlook data is retrieved. the prefix "day/" is replaced with "daily/" when matching items in the JSON-source. example: day/1/feels_like/night to get tomorrows perceived temperature at night. complete set of data-points that can be retrieved for each day:
+  - ``day/-1/hour/13/temp`` um die gestrige Temperatur um 13.00 Uhr UTC zu bekommen
+  - ``day/-2/pressure`` um den durchnittliche (?) Luftdruck von Vorgestern (heute -2 Tage) zu bekommen
 
-    - dt: Point in time represented by this data-point
-    - sunrise: Sunrise of this day, UTC
-    - sunset: Sunset of this day, UTC
-    - moonrise: Moonrise of this day, UTC
-    - moonset: Moonset of this day, UTC
-    - temp/morn: Morning temperature in Celsius.
-    - temp/day: Day temperature in Celsius.
-    - temp/eve: Evening temperature in Celsius.
-    - temp/night: Night temperature in Celsius.
-    - temp/min: Min daily temperature in Celsius.
-    - temp/max: Max daily temperature in Celsius.
-    - feels_like/morn: Perceived Morning Temperature
-    - feels_like/day: Perceived Day Temperature
-    - feels_like/eve: Perceived Evening Temperature
-    - feels_like/night: Perceived Night Temperature
-    - pressure: Atmospheric pressure on the sea level, hPa
-    - humidity: Relative Humidity in %
-    - dew_point: Atmospheric temperature (varying according to pressure and humidity) below which water droplets begin to condense and dew can form. Celsius
-    - uvi: Maximum UV index for the day
-    - clouds: Cloudiness %
-    - rain: Rain volume in mm
-    - snow: Snow volume in mm
-    - pop: Propability of precipitation
-    - visibility: Average visibility, metres
-    - wind_speed: Wind speed in metre/sec (this can be extended as wind_speed/beaufort and wind_speed/description to get the Beaufort-value and the Description of the Speed-level in German or English)
-    - wind_deg: Wind direction, degrees (meteorological)
-    - wind_gust: Wind gust (peaks in speed) in metre/sec
-    - weather/0/id: to get the weather condition id
-    - weather/0/main: to get the group-name of weather parameters (Rain, Snow, Extreme etc.)
-    - weather/0/description: to get the weather condition description within the group.
-    - weather/0/icon: to get the weather icon id
-- begins with "day/-N/" where N is a number between 0 and 4. Be aware that -0 and 0 (see above) are returning different valid values! Original data-source is the onecall-API with the time-machine feature. As you are using a negative value for N (including -0) historic data is retrieved. Appending an "hour/I/" to the matchstring results in selecting an hour "I" of that particular day. Warning: Accessing "day/-0/hour/18/..." at an earlier time than 6pm (UTC!!) will result in an ERROR as the API is not combining historic data with outlook data. Without appending hour, the daily summary will be retrieved (from the tree below "current/" within the JSON response). examples:
+- beginnt mit ``airpollution`` Retrieves Air-Quality-Index and air-pollution component values. Original data-source is the airpollution API. In general you can retrieve the following values:
 
-    - day/-1/hour/13/temp to get yesterdays temperature at 1pm UTC.
-    - day/-2/pressure to get the average(?) air-pressure from the day before yesterday.
+  - ``airpollution/main/aqi`` AirQualityIndex
+  - ``airpollution/components/co`` CO Wert
+  - ``airpollution/components/no`` NO Wert
+  - ``airpollution/components/no2`` NO2 Wert
+  - ``airpollution/components/o3`` Ozonwert
+  - ``airpollution/components/so2`` SO2 Wert
+  - ``airpollution/components/pm2_5`` Partikel 2-5µm
+  - ``airpollution/components/pm10`` Partikel 10µm
+  - ``airpollution/components/nh3`` NH3 Wert
+		
+  Ergänzt man ``/day/-1/hour/11/`` zwischen airpollution und main oder component, mit day [-1 .. -4] und hour [0 .. 23] erhält man die Daten für eine definierte Stunde am definierten Tag in der Vergangenheit.
 
-- begins with "airpollution" Retrieves Air-Quality-Index and air-pollution component values. Original data-source is the airpollution API. In general you can retrieve the following values:
+  Ergänzt man ``/hour/11`` (ohne Tag) mit hour [0 .. 72] erhält man die Vorhersage-Daten für die definierte Stunde von jetzt ab.
 
-    - airpollution/main/aqi to get the Air-Quality-Index
-    - airpollution/components/co
-    - airpollution/components/no
-    - airpollution/components/no2
-    - airpollution/components/o3
-    - airpollution/components/so2
-    - airpollution/components/pm2_5
-    - airpollution/components/pm10
-    - airpollution/components/nh3 You may insert "/day/-1/hour/11/" between airpollution and main or component, where days can range from -1 to -4 and hour from 0 to 23. With that you can retrieve values of a certain hour from that day in the past. In order to retrieve forecast values you may insert "/hour/11" (not prepended with a day). This will provide access to the next 72 hours of forecast. Examples:
+  Beispiele:
 
-        - airpollution/day/-1/hour/11/main/aqi yesterday at 12:00 UTC
-        - airpollution/day/-4/hour/9/main/aqi four days into the past at 9:00 UTC
-        - airpollution/hour/24/main/aqi tommorrow, same time
+  - ``airpollution/day/-1/hour/11/main/aqi`` um den AirQualityIndex von gestern 12:00 UTC zu bekommen
+  - ``airpollution/day/-4/hour/9/main/aqi`` um den AirQualityIndex vor 4 Tagen um 9:00 UTC zu bekommen
+  - ``airpollution/hour/24/main/aqi`` um den AirQualityIndex von morgen zur gleichen Zeit zu bekommen
 
-- ends with _new (see list below) prepares a map-layer URL either from the given parameters owm_coord_x, owm_coord_y, owm_coord_z or from a translation of the current geo-coordinates to the tile-information Complete list of map-layers:
+- endet mit ``_new`` bereitet eine map-layer URL entweder mit den gegebenen Parametern owm_coord_x, owm_coord_y, owm_coord_z oder von einer Verwendung der aktuellen Geo-Koordinaten. Liste der map-layers:
 
-    - clouds_new
-    - precipitation_new
-    - pressure_new
-    - wind_new
-    - temp_new
+  - ``clouds_new``
+  - ``precipitation_new``
+  - ``pressure_new``
+  - ``wind_new``
+  - ``temp_new``
 
-- everything else is tried to be matched against the weather-API. Complete list:
+- bei allen anderen Werten wird versucht, diese gegen die weather-API zu prüfen. 
 
-    - base / cod / sys/id / sys/type to get some internal parameters (if you can make sense of it).
-    - coord/lon / coord/lat / id / name / sys/country / timezone for OWM's interpretation of your location data.
-    - clouds/all / visibility to get the current cloud coverage and visibility range in meters.
-    - dt / sys/sunrise / sys/sunset to get the request's time, sunrise and sunset time in UTC.
-    - main/temp / main/feels_like / main/temp_max / main/temp_min to get current / today's temperature data.
-    - rain/1h / rain/3h / snow/1h / snow/3h to get current precipitation data in mm
-    - main/humidity / main/pressure to get current relative humidity (in %) and pressure values
-    - weather/0/id to get the weather condition id
-    - weather/0/main to get the group-name of weather parameters (Rain, Snow, Extreme etc.)
-    - weather/0/description to get the weather condition description within the group.
-    - weather/0/icon to get the weather icon id
-    - wind/deg / wind/speed / wind/gust to get some facts about the wind (direction/speed/peak-speeds), (No Beaufort-suffixes possible here)
+  - ``base`` / ``cod`` / ``sys/id`` / ``sys/type`` um einige interne Parameter zu bekommen.
+  - ``coord/lon`` / ``coord/lat`` / ``id`` / ``name`` / ``sys/country`` / ``timezone`` für OWMs Interpretation deiner Ortsdaten.
+  - ``clouds/all`` / ``visibility`` um die aktuelle Bewölkung und Sichtweite zu bekommen.
+  - ``dt`` / ``sys/sunrise`` / ``sys/sunset`` um den Abfragezeitpunkt, Sonnenaufgang und Sonnenuntergang in UTC zu bekommen.
+  - ``main/temp`` / ``main/feels_like`` / ``main/temp_max`` / ``main/temp_min`` um die aktuellen / heutigen Temperaturwerte zu bekommen.
+  - ``rain/1h`` / ``rain/3h`` / ``snow/1h`` / ``snow/3h`` um die aktuelle Vorhersagedaten in mm zu bekommen.1
+  - ``main/humidity`` / ``main/pressure`` um die aktuelle relative Luftfeuchtigkeit in % und den Luftdruck in mbar zu bekommen.
+  - ``weather/0/id`` um die Wetterbedingungs-ID zu bekommen.
+  - ``weather/0/main`` um den Gruppenname der Wetter-Parameter (Rain, Snow, Extreme etc.) zu bekommen
+  - ``weather/0/description`` um die Wetterbeschreibung innerhalb der Gruppe zu bekommen
+  - ``weather/0/icon`` um die Wetter-Icon-ID zu bekommen.
+  - ``wind/deg`` / ``wind/speed`` / ``wind/gust`` um die Werte für Windrichtung, Windgeschwindigkeit und Windböen zu bekommen. Beaufort-suffixes funktionieren hier nicht)
+
+.. note:: Matchstrings werden durch das Plugin verändert, um eine klare Unterscheidung der Datenquellen für Wartung und Code-Lesbarkeit des Plugin zu gewährleisten.
 
 
-Matching lists
---------------
-The weather-condition is stored as a list and can be correctly accessed via "current/weather/0/description". As the data-type list in "current/weather" is not obvious, the plugin will automatically insert a /0/ to match the first item of such list. Therefore "current/weather/description" will result in a value - and a WARNING in the log on every update. This feature is intended to find the issues easy and then permanently fix them by updating the matchstrings in your configuration.
-In case you are working with dynamic lists such as "alerts" that might contain no to an undefined amount of data you can make use of the "@count"-directive in order to retrieve the number of records in that list. An example is "current/weather/@count" (always 1) or "alerts/@count", making a lot more sense.
+Zugriff auf Listen
+------------------
+Die Wetterkonditionen sind als Liste gespeichert und können mit ``current/weather/0/description`` adressiert werden. Da der Datentyp "list" nicht offensichtlich ist, setzt das Plugin automatisch "/0/" ein, um auf das erste Element der Liste zuzugreifen.
+Deshalb führt ``current/weather/description`` zum entsprechenden Wert und einer WARNING im Log bei jedem Update. Diese Umsetzung soll dazu dienen, Probleme leicht zu identifizieren und durch ein Update des Matchstrings in der Konfiguration zu beheben.
+Dynamischen Listen wie bspw. bei ``alerts`` beinhalten eine unbekannte Anzahl von Elementen in der Liste. Mit ``@count`` kann die Anzahl der Listenelemente ermittelt werden. 
+Beispiele: ``current/weather/@count`` (immer 1) oder ``alerts/@count`` 
 
 
-Virtual matchstrings
---------------------
-Not all data can be directly retrieved via any API, some data needs to be aggregated via multiple data-sources. If you want to know the amount of rain of the past 24 hours at 10am you would need to query todays and yesterdays data and then summarize the data. This feature is built into the plugin. Virtual matchstrings are prefixed with the keyword "virtual".
+Virtuelle Matchstrings
+----------------------
 
-.. code:: yaml
+Nicht alle Daten können direkt von den APIs abgerufen werden. Eine Daten müssen aus mehreren Datenquellen aggregiert werden. Bspw. müssen, um die Regenmenge der letzten 24 Stunden zu bekommen, die entsprechenden Daten von heute und gestern abgerufen und dann addiert werden.
+Diese Funktion ist im Plugin integriert und wird mit dem Prefix ``virtual`` aktiviert.
 
-    owm:
-        rain_past_24h:
-            type: num
-            owm_matchstring@home: virtual/past24h/sum/rain/1h
-        rain_next_24h:
-            type: num
-            owm_matchstring@home: virtual/next24h/sum/rain/1h
-        avg_wind_next_24h:
-            type: num
-            owm_matchstring@home: virtual/next24h/avg/wind_speed
-        max_wind_next_12h:
-            type: num
-            owm_matchstring@home: virtual/next12h/max/wind_gust
+Ein virtueller Matchstring besteht aus den folgenden Elementen:
 
-The virtual matchstrings consist of the following elements:
+- prefix ``virtual``
+- Zeitraum zusammengesetzt aus der Richtung (past or next) und einer Zahl mit Einheit für Stunden "h" bzw. Tage "d"; Beispiele inkl. der maximal möglichen Zeitspanne
 
-- prefix "virtual"
-- a time-frame that could be:
+  - ``next6d`` Vorschau auf die nächten 6 Tage
+  - ``next48h`` Vorschau auf die nächten 48 Stunden
+  - ``past4d`` Rückschau auf die nächten 4 Tage
+  - ``past96h`` Rückschau auf die nächten 96 Stunden
 
-    - past12h
-    - next3d
-    - ... The time-frame is compiled from a statement about the direction (past or next) a numeric literal and the unit, which could be "h" or "d" for hours or days. The maximum numbers are:
-    - next6d
-    - next48h
-    - past4d
-    - past96h
+- Funktion
 
-- an aggregation-function:
+  - ``sum`` Summe
+  - ``max`` Maximalwert
+  - ``min`` Minimalrwe
+  - ``avg`` Mittelwert
+  - ``all`` erzeugt eine Liste mit allen Einträgen
 
-    - sum
-    - max
-    - min
-    - avg
-    - all (to generate a list with all items)
+- Matchstring, der ein Element der stündlichen one-call API abfragt
 
-- a matchstring that would match an element in the hourly one-call API.
+Beispiele:
 
-CAVE: For values as next#d the daily fields from the same API are matched!
+- ``virtual/past24h/sum/rain/1h`` um die Regenmenge der letzten 24h zu bekommen
+- ``virtual/next24h/sum/rain/1h`` um die voraussichtliche Regenmenge der nächsten 24h zu bekommen
+- ``virtual/next24h/avg/wind_speed`` um die voraussichtliche mittlere Windgeschwindigkeit der nächsten 24h zu bekommen
+- ``virtual/next12h/max/wind_gust`` um die voraussichtliche max. Windböen der nächsten 12h zu bekommen
 
-An example usage of those virtual matchstrings is the rain_overview-widget for SmartVisu provided with this plugin:
+.. note:: Für den Werte bei ``next#d`` werden die Tageseinträge der gleich API verwendet!
+
+
+Hier ein Beispiel für die Verwendung der virtuellen Matchstrings mit dem smartVISU ``rain_overview-widget`` dieses Plugins:
 
 .. code:: yaml
 
@@ -257,92 +224,90 @@ An example usage of those virtual matchstrings is the rain_overview-widget for S
 
     {% import "widgets_openweathermap.html" as owm %}
     {{ owm.rain_overview('visual_id', 'weather.rain_past_12h', 'weather.rain_next_12h', 'weather.as_of') }}
+	
 
-
-Daily forecast (calculated)
+Tagesvorhersage (berechnet)
 ---------------------------
-Another type of virtual matchstrings are the values selected by a "forecast/daily/N/..."-matchstring. N represents a value between 0 and 4, where 0 represents tomorrow, 1 the day after tomorrow, etc. Here the forecast-data source is used. You may suffix "/min" or "/max" to the match-string in order to retrieve the respective aggregation. By default the average value is returned.
 
-.. code:: yaml
+Ein anderer Typ von virtuellen Matchstrings wird verwendet, um einen Tagesvorhersage zu berechnen.
 
-    owm:
-        home:
-            forecast_daily0:
-                temp:
-                    type: num
-                    owm_matchstring@home: forecast/daily/0/main/temp
-
-                temp_min:
-                    type: num
-                    owm_matchstring@home: forecast/daily/0/main/temp_min/min
-
-                temp_max:
-                    type: num
-                    owm_matchstring@home: forecast/daily/0/main/temp_max/max
+- prefix ``forecast``
+- attribut ``daily``
+- Tagesangabe N im Bereich [0 .. 4] mit 0 für morgen und 1 für übermorgen usw.
+- Nummer des Listenelement ``0``
+- Matchstring, der ein Element der forecast API abfragt
+- optional: Suffix ``/min`` oder ``/max`` an den Matchstring, um eine Aggregierungsfunktion zu wählen. ``avg`` wird als Standard verwendet.
 
 
-Evapotranspiration
-------------------
-The Evapotranspiration considers effects like wind, solar radiation (even indirect on cloudy days), pressure and relative humidity to calculate the loss of water from the ground by evaporation. The original data-source for the components considered is the one-call API. The resulting value is a demand for irrigation in mm. This can be set in relation with the fallen rain to identify the real need.
-Examples for matchstrings:
-
-    - current/eto / daily/0/eto get today's ETO
-    - daily/1/eto
-
-More information can be retrieved at the original implementation found here: (https://github.com/MTry/homebridge-smart-irrigation)
-The implementation of the calculation is based on: (https://edis.ifas.ufl.edu/pdffiles/ae/ae45900.pdf) and explained here: (http://www.fao.org/3/X0490E/x0490e00.htm#Contents)
-Caveat: The formula used for ETO calculation makes use of a solar radiation feature. Unfortunately this value is not available for free via API. Luckily the UV-index matches the scale and should be somewhat equivalent to the actual value, so this is used in the calculation instead. Still: The usage of the UV-index instead of a real solar radiation feature is scientifically WRONG.
+Beispiele:
+- ``forecast/daily/0/main/temp`` um die morgige Tagestemperatur zu bekommen
+- ``forecast/daily/0/main/temp_min/min`` um die morgige minimale Tagestemperatur zu bekommen
+- ``forecast/daily/0/main/temp_max/max``  um die maximale Tagestemperatur zu bekommen
 
 
-Weather alerts
---------------
+Verdunstung / Evapotranspiration
+--------------------------------
 
-Weather alerts are forwarded from the respective authority, e.g. the "Deutscher Wetterdienst". If there is an alert, typically two items are added to the list, one in the national language and another one in English. The plugin is ensuring there is always at least one alarm. If there is no alarm condition the plugin is adding a "Placebo"-Alert that is described as "No Alert". This is done to ensure that the matchstring "alerts/0/event" will always return a value, otherwise not even the "alerts"-node is defined in the API-response, resulting in ERROR-messages in the log. By using "alerts/@count" one can identify whether there is an alert or not. If only the placebo-alert is defined, "alerts/@count" will return the numerical value "0", although there is an item in the list.
-One way to display the alerts in the SmartVisu is the usage of the status.activelist-widget:
+Die Verdunstung trägt Effekten wie Wind, Sonneneinstrahlung, Luftdruck und relative Luftfeuchtigkeit Rechnung und berechnet den Verlust von Wasser im Boden durch Verdunstung.
+Die Datenquelle für die zur Berechnung notwendigen Daten ist die one-call API. Das Ergebnis der Berechnung ist der Bedarf an Bewässerung in mm. Dies kann in Relation mit der Regenmenge genutzt werden, um die wirklichen Bewässerungsbedarf zu ermitteln.
+
+Beispiele:
+
+- ``current/eto`` um die aktuelle Verdunstung zu bekommen
+- ``daily/0/eto`` um die heutige Verdunstung zu bekommen
+- ``daily/1/eto`` um die morgige Verdunstung zu bekommen
+
+
+Weitere Informationen gibt es bei der originalen Implementierung: (https://github.com/MTry/homebridge-smart-irrigation)
+
+Die Implementierung der Berechnung basiert auf: (https://edis.ifas.ufl.edu/pdffiles/ae/ae45900.pdf) und ist beschrieben (http://www.fao.org/3/X0490E/x0490e00.htm#Contents)
+
+.. note:: Die Formel zur Berechnung der Verdunstung benötigt die Sonnenstrahlung, welches nicht bei der freien OWM API zur Verfügung steht. Anstelle dessen wird er UV-Index verwendet, der als equivalent anzusehen ist.
+	Nichtsdestotrotz ist die Verwendung des UV-Index anstelle der realen Sonnenstrahlung aus wissenschaftlicher Sicht falsch.
+
+
+Wetteralarme
+------------
+
+Wetteralarme werden von der entsprechenden Behörde wie bspw. der Deutscher Wetterdienst bereitgestellt und entsprechend weitergeleitet. Im Falle eines Alarmes, werden 2 Einträge (einer in Landessprache und einer in Englisch) in der Liste zugefügt.
+Liegt kein realer Alarm vor, ist der Alarm-Knoten der API-Antwort nicht vorhanden und führt zu einem Fehler bzw ERROR im Log. Um dies zu verhindern, stellt das Plugin sicher, dass immer mindestens ein Alarm, der "Placebo-Alarm" mit der Beschreibung "No Alert" ein. vorliegt. 
+So wird sichergestellt, dass der Matchstring ``alerts/0/event`` immer einen Wert zugewiesen bekommt.
+Durch die Verwendung von ``alerts/@count`` kann die Anzahl der vorliegenden Alarme ermittelt werden. Liegt nur der "Placebo-Alarm" vor, ist die Antwort der numerische Wert "0".
+
+Eine Möglichkeit die Alarme in der smartVISU darzustellen, ist die Verwendung des Widgets ``status.activelist``:
 
 .. code:: html
 
     {{ status.activelist('', 'weather.alerts', 'event', 'start', 'description', '') }}
 
 
-
-Methods / Functions
-===================
-
-
-get_beaufort_number(value_in_meter_per_second)
-----------------------------------------------
-Translate wind speed or wind gust from m/s into beaufort scale number (Windstärke)
-
-
-get_beaufort_description(bft_number)
-------------------------------------
-Translate beaufort scale number into beaufort scale description (Windstärke)
+Matchstring Fehlerbehandlung
+----------------------------
+Das typische Prüfen der Matchstrings wird bei die Wurzel der JSON-Antwort des API-Abrufes beginnen und dann dem im Matchstring definierten "Pfades" folgend die entsprechenden Daten aus dem JSON dem Item zuweisen.
+Wenn der nächste Knoten entlang dieses "Pfades" nicht erreicht werden kan, wird ein ERROR geloggt. Typischerweise entsteht das durch Schreibfehler oder fehlender/falsche Indizees bei Listen.
+Nicht alle Antworten der OWM APIs enthalten alle Daten/Werte. Bspw. sind Daten für ``rain``und ``snow`` nur beinhaltet, wenn es regnet oder schneit oder regen oder schneien wird.
+Für Matchstrings die auf ``snow/3h``, ``snow/1h``, ``rain/3h`` oder ``rain/1h`` enden, wird das "nicht passende" Item den Wert 0 statt None erhalten. Dies wird (wenn aktiviert) als DEBUG Nachricht im Log eingetragen.
 
 
 
-Configuration
+Konfiguration
 =============
 
+Die Informationen zur Konfiguration des Plugins sind unter :doc:`/plugins_doc/config/avm` beschrieben bzw. in der **plugin.yaml** nachzulesen.
 
-Plugin
-------
-The plugin can be activated and configured via the Admin Interface.
 
-The API-Key is needed for Plugin Configuration.
-In addition the following parameters can be set:
-- local position of the point of interest (Default: data from shNG out of etc/smarthome.yaml will be used)
-- language
-- cycle time
-- instance
-
-Note: The following configuration examples for items and structs require a definition of an instance ("home"). 
+Nachfolgend noch einige Zusatzinformationen.
 
 
 Items
 -----
-In order to access the data that can be retrieved via the API an attribute of "owm_matchstring" is needed. Optionally you can add a "owm_match_prefix". That string is prepended to the "owm_matchstring" given. This allows better structing.
-Please note to take care of the instance (here @home) for proper working.
+
+Für die Nutzung des Plugins muss in den entsprechenden Items das Attribute ``owm_matchstring`` konfiguriert werden. Optional kann dass Attribut ``owm_match_prefix`` verwendet werden.
+Dieser String wird dem ``owm_matchstring`` vorangestellt und erlaubt eine bessere Struktur bzw. eine einfachere Definition von structs.
+
+.. note:: Die korrekte Definition und Verwendung der Instanz des Plugins ist für die einwandfreie Funktion des Plugins notwendig. In den Beispielen lautet der Name der Instanz **home**
+
+Beispiel:
 
 .. code:: yaml
 
@@ -363,7 +328,7 @@ Please note to take care of the instance (here @home) for proper working.
             owm_match_prefix@home: ../.
             owm_matchstring@home: /temp/night
 
-Here follows a complete item.yaml for that plugin. Please keep in mind to adapt the plugin instance (here "home") and plugin name (here "_priv_openweathermap") to your configuration.
+Hier nachfolgend eine komplette item.yaml für die Anwendung des Plugins. Die Instanz (hier **home**) als auch der Plugin-Name (hier **_priv_openweathermap**) ist gemäß Eurer Definition anzupassen.
 
 .. code:: yaml
 
@@ -693,33 +658,17 @@ Here follows a complete item.yaml for that plugin. Please keep in mind to adapt 
                 struct: _priv_openweathermap.airpollution
 
 
-Item structs
-------------
-To ease the handling of the plugin, the following item structs are defined and ready to use:
 
-- irrigation  -  Irrigation control for daily irrigation (plants)
-- irrigation_weekly  -  Irrigation control for weekly irrigation (lawn)
-- locals  -  OpenWeatherMap local data
-- current  -  OpenWeatherMap current weather data
-- forecast_daily  -  OpenWeatherMap daily weather forecast data
-- forecast_hourly  -  OpenWeatherMap hourly weather forecast data
-- historical_daily  -  OpenWeatherMap historical weather data for dedicated day
-- historical_hourly  -  OpenWeatherMap historical weather data for dedicated hour
-- alerts  -  OpenWeatherMap national weather alerts data from major national weather warning systems
-- darksky2owm_locals  -  Locals report openweathermap matching item defined in darksky-plugin struct
-- darksky2owm_current_weather  -  Current weather of Weather report from openweathermap matching item defined in darksky-plugin struct
-- darksky2owm_forecast_hourly  -  Hourly forcast of Weather report from openweathermap matching item defined in darksky-plugin struct
-- darksky2owm_forecast_daily  -  Daily forcast of Weather report from openweathermap matching item defined in darksky-plugin struct
+Anwendungen
+===========
 
+Steuerung einer täglichen Bewässerung bspw. für Pflanzen
+--------------------------------------------------------
+Mit der Verwendung dieser Methode können die Pflanzen bedarfsgerecht bewässert werden. Dazu wird das Irrigation struct
+verwendet, um -basierend auf dem Wasserbedarf-  ein Bewässungsventil automtisch zu schalten.
+Im Kombination mit der UZSU kann man die Bewässerung auch automatisch starten.
 
-
-Applications
-============
-
-Irrigation control for daily irrigation (plants)
-------------------------------------------------
-
-You can use the irrigation struct to switch an irrigation valve (solenoid) off automatically, based on the daily watering demand. If you combine that with an uzsu you will be able to even start the irrigation automatically. Using this method you will be able to water your plant based on the demand and not perform irrigation if there was enough rain.
+item.yaml
 
 .. code:: yaml
 
@@ -755,7 +704,7 @@ You can use the irrigation struct to switch an irrigation valve (solenoid) off a
                     eval_trigger:
                         - garden.gut_feeling_for_irrigation
 
-The complete struct provides a hint how this is implemented:
+Das komplette struct zeigt die Funktionsweise:
 
 .. code:: yaml
 
@@ -862,7 +811,8 @@ The complete struct provides a hint how this is implemented:
                 type: num
                 cache: yes
 
-This can be used from SmartVisu with a widget that is provided along with this plugin. Example, matching the YAML above:
+In der smartVISU kann das beinhaltete Widget verwendet werden.
+Das Beispiel, passend zur YAML von oben:
 
 .. code:: html
 
@@ -870,10 +820,15 @@ This can be used from SmartVisu with a widget that is provided along with this p
     {{ owm.irrigation('valve_1', 'The greenhouse', 'garden.irrigation_valve1') }}
 
 
-Irrigation control for weekly irrigation (lawn)
------------------------------------------------
-You can use the irrigation_weekly struct to switch an irrigation valve (solenoid) off automatically, based on the weekly watering demand. If you combine that with an uzsu you will be able to even start the irrigation automatically. Using this method you will be able to water your lawn based on the demand and not perform irrigation if there was enough rain.
-In this case the past 4 days are considered and the outlook of the next 3 days.
+Steuerung einer wöchtenlichen Bewässerung bspw. für Rasen
+---------------------------------------------------------
+
+Mit der Verwendung dieser Methode kann Rasen bedarfsgerecht bewässert werden. Dazu wird das irrigation_weekly struct
+verwendet, um -basierend auf dem wöchentlichen Wasserbedarf-  ein Bewässungsventil automtisch zu schalten.
+Im Kombination mit der UZSU kann man die Bewässerung auch automatisch starten.
+In diesem Falle werden die vergangenen 4 und die Vorhersage der kommenden 3 Tage für die Berechnung herangezogen.
+
+item.yaml
 
 .. code:: yaml
 
@@ -905,7 +860,7 @@ In this case the past 4 days are considered and the outlook of the next 3 days.
                     eval_trigger:
                         - garden.gut_feeling_for_irrigation
 
-The complete struct provides a hint how this is implemented:
+Das komplette struct zeigt die Funktionsweise:
 
 .. code:: yaml
 
@@ -1026,12 +981,28 @@ The complete struct provides a hint how this is implemented:
                 type: num
                 cache: yes
 
-This can be used from SmartVisu with a widget that is provided along with this plugin. Example, matching the YAML above:
+In der smartVISU kann das beinhaltete Widget verwendet werden.
+Das Beispiel, passend zur YAML von oben:
 
 .. code:: html
 
     {% import "widgets_openweathermap.html" as owm %}
     {{ owm.irrigation_weekly('valve_2', 'Lawn in the backyard', 'garden.irrigation_valve2') }}
+	
+	
+Funktionen des Plugins
+======================
+
+
+get_beaufort_number(value_in_meter_per_second)
+----------------------------------------------
+Berechnet aus der Windgeschwindigkeit die Windstärke nach Beaufort
+
+
+
+get_beaufort_description(bft_number)
+------------------------------------
+Berechnet aus der Windgeschwindigkeit die Beschreibung der Windstärke nach Beaufort
 
 
 
@@ -1040,28 +1011,28 @@ Web Interface des Plugins
 
 
 OWM Items
-------------
+---------
 
-The Webinterface tab "items" shows all items, for witch a OWM Input has been configured.
+The WebIF Reiter "items" zeigt alle Items, für die ein OWM Attribut konfiguriert ist.
 
-Listed and periodicly updated is:
-    - item path
-    - item type
-    - owm_matchstring
-    - item value
-    - date and trigger of last update
-    - date of last change
+Gelistet und periodisch aktualisiert sind:
+  - item path
+  - item type
+  - owm_matchstring
+  - item value
+  - date and trigger of last update
+  - date of last change
 
 
 JSON
 ----
 
-The tab "JSON" contains a menu for selecting the different openweathermap apis and the raw data in JSON format.
+The Reiter "JSON" beinhaltet a Menu mit den verschieden OWM APIs und den jeweiligen Roh-Daten in JSON format.
 
 
 Tipps and Tricks
 ================
-To convert the time in the dt values to a local value you may want to use an eval string and generate a printable value.
+Um die Werte der datetime (dt) lesbar dazustellen, kann ``eval`` verwendet werden.
 
 .. code:: yaml
 
@@ -1072,8 +1043,9 @@ To convert the time in the dt values to a local value you may want to use an eva
 
 
 
-Caveats
-=======
-- All times are in UTC. So if you query "yesterdays" values for Germany you will have a 1hr or 2hr time-frame from the next day and a missing time-frame of the same day.
-- The formula used for ETO calculation makes use of a solar radiation feature. Unfortunately this value is not available for free via API. Luckily the UV-index matches the scale and should be somewhat equivalent to the actual value, so this is used in the calculation instead. Still: The usage of the UV-index instead of a real solar radiation feature is scientifically WRONG.
-- For an unknown reason "weather" is a list, so you have to use "weather/0/id" to get the id value.
+Hinweise
+========
+
+- Alle angegebenen Zeiten sind un UTC. Bedingt dadurch ergibt sich ein Zeitversatz von 1h (MEZ) oder 2h (MESZ) für Abfragewerte für Deutschland.
+- Die Formel zur Berechnung der Verdunstung benötigt die Sonnenstrahlung, welches nicht bei der freien OWM API zur Verfügung steht. Anstelle dessen wird er UV-Index verwendet, der als equivalent anzusehen ist. Nichtsdestotrotz ist die Verwendung des UV-Index anstelle der realen Sonnenstrahlung aus wissenschaftlicher Sicht falsch.
+- Die Abfrage ``weather`` liefert eine Liste zurück. Es muss als Matchstring also ``weather/0/id`` verwendet werden, um den Wert für die ID zu bekommen.
