@@ -136,3 +136,7 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
+
+# Ignoring directories
+# Both the directory itself and its contents will be ignored.
+_archive/
