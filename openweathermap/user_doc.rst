@@ -29,8 +29,8 @@ Allgemeine Information
 ----------------------
 
 Die von OpenWeatherMap bereitgestellten Daten werden mit Hilfe eines "Matchstrings" zu den Items verknüpft. Der "Matchstring" definiert den Pfad zur Datenquelle innerhalb des Datenfeldes.
-Die Liste der unterstützten APIs stellt die Namen der "data-source-keys" dar, die im Plugin verwendet werden. Das Ergebnis des letzten Datenabrufes wird im WebIF des Pluigns dargestellt.
-Das Plugin lädt, abhängig von dem in der Itemkonfiguration definierten "Matchstrings", die notwendigen Daten. Ist kein entsprechender "Matching" definiert, wird die jeweilige API nicht abgerufen.
+Die Liste der unterstützten APIs stellt die Namen der "data-source-keys" dar, die im Plugin verwendet werden. Das Ergebnis des letzten Datenabrufes wird im WebIF des Plugins dargestellt.
+Das Plugin lädt, abhängig von dem in der Itemkonfiguration definierten "Matchstrings", die notwendigen Daten. Ist kein entsprechender "Matchstring" definiert, wird die jeweilige API nicht abgerufen.
 Der bevorzugte Weg ist die Verwendung der "one-call" API.
 
 Alle Wetterdaten werden in metrischen Einheiten (m, mm, hPa, °C) dargestellt.
@@ -284,7 +284,7 @@ Eine Möglichkeit die Alarme in der smartVISU darzustellen, ist die Verwendung d
 Matchstring Fehlerbehandlung
 ----------------------------
 Das typische Prüfen der Matchstrings wird bei die Wurzel der JSON-Antwort des API-Abrufes beginnen und dann dem im Matchstring definierten "Pfades" folgend die entsprechenden Daten aus dem JSON dem Item zuweisen.
-Wenn der nächste Knoten entlang dieses "Pfades" nicht erreicht werden kan, wird ein ERROR geloggt. Typischerweise entsteht das durch Schreibfehler oder fehlender/falsche Indizees bei Listen.
+Wenn der nächste Knoten entlang dieses "Pfades" nicht erreicht werden kan, wird ein ERROR geloggt. Typischerweise entsteht das durch Schreibfehler oder fehlender/falsche Indizes bei Listen.
 Nicht alle Antworten der OWM APIs enthalten alle Daten/Werte. Bspw. sind Daten für ``rain``und ``snow`` nur beinhaltet, wenn es regnet oder schneit oder regen oder schneien wird.
 Für Matchstrings die auf ``snow/3h``, ``snow/1h``, ``rain/3h`` oder ``rain/1h`` enden, wird das "nicht passende" Item den Wert 0 statt None erhalten. Dies wird (wenn aktiviert) als DEBUG Nachricht im Log eingetragen.
 
@@ -305,7 +305,7 @@ Items
 Für die Nutzung des Plugins muss in den entsprechenden Items das Attribute ``owm_matchstring`` konfiguriert werden. Optional kann dass Attribut ``owm_match_prefix`` verwendet werden.
 Dieser String wird dem ``owm_matchstring`` vorangestellt und erlaubt eine bessere Struktur bzw. eine einfachere Definition von structs.
 
-.. note:: Die korrekte Definition und Verwendung der Instanz des Plugins ist für die einwandfreie Funktion des Plugins notwendig. In den Beispielen lautet der Name der Instanz **home**
+.. note:: Die korrekte Definition und Verwendung der Instanz des Plugins ist für die einwandfreie Funktion des Plugins notwendig. In den Beispielen lautet der Name der Instanz **home**, ein Betrieb komplett ohne Instanznamen, also nur mit der Default-Instanz ist aber möglich.
 
 Beispiel:
 
@@ -328,7 +328,7 @@ Beispiel:
             owm_match_prefix@home: ../.
             owm_matchstring@home: /temp/night
 
-Hier nachfolgend eine komplette item.yaml für die Anwendung des Plugins. Die Instanz (hier **home**) als auch der Plugin-Name (hier **_priv_openweathermap**) ist gemäß Eurer Definition anzupassen.
+Hier nachfolgend eine komplette item.yaml für die Anwendung des Plugins. Die Instanz (hier **home**) als auch der Plugin-Name (hier **openweathermap**) ist gemäß Eurer Definition anzupassen.
 
 .. code:: yaml
 
@@ -336,246 +336,246 @@ Hier nachfolgend eine komplette item.yaml für die Anwendung des Plugins. Die In
         owm:
             locals:
                 instance: home
-                struct: _priv_openweathermap.locals
+                struct: openweathermap.locals
 
             current:
                 instance: home
-                struct: _priv_openweathermap.current
+                struct: openweathermap.current
 
             forecast:
                 hourly:
                     currently_plus_1h:
                         instance: home
                         owm_match_prefix@home: hour/1
-                        struct: _priv_openweathermap.forecast_hourly
+                        struct: openweathermap.forecast_hourly
 
                     currently_plus_2h:
                         instance: home
                         owm_match_prefix@home: hour/2
-                        struct: _priv_openweathermap.forecast_hourly
+                        struct: openweathermap.forecast_hourly
 
                     currently_plus_3h:
                         instance: home
                         owm_match_prefix@home: hour/3
-                        struct: _priv_openweathermap.forecast_hourly
+                        struct: openweathermap.forecast_hourly
 
                     currently_plus_4h:
                         instance: home
                         owm_match_prefix@home: hour/4
-                        struct: _priv_openweathermap.forecast_hourly
+                        struct: openweathermap.forecast_hourly
 
                     currently_plus_5h:
                         instance: home
                         owm_match_prefix@home: hour/5
-                        struct: _priv_openweathermap.forecast_hourly
+                        struct: openweathermap.forecast_hourly
 
                     currently_plus_6h:
                         instance: home
                         owm_match_prefix@home: hour/6
-                        struct: _priv_openweathermap.forecast_hourly
+                        struct: openweathermap.forecast_hourly
 
                     currently_plus_7h:
                         instance: home
                         owm_match_prefix@home: hour/7
-                        struct: _priv_openweathermap.forecast_hourly
+                        struct: openweathermap.forecast_hourly
 
                     currently_plus_8h:
                         instance: home
                         owm_match_prefix@home: hour/8
-                        struct: _priv_openweathermap.forecast_hourly
+                        struct: openweathermap.forecast_hourly
 
                     currently_plus_9h:
                         instance: home
                         owm_match_prefix@home: hour/9
-                        struct: _priv_openweathermap.forecast_hourly
+                        struct: openweathermap.forecast_hourly
 
                     currently_plus_10h:
                         instance: home
                         owm_match_prefix@home: hour/10
-                        struct: _priv_openweathermap.forecast_hourly
+                        struct: openweathermap.forecast_hourly
 
                     currently_plus_11h:
                         instance: home
                         owm_match_prefix@home: hour/11
-                        struct: _priv_openweathermap.forecast_hourly
+                        struct: openweathermap.forecast_hourly
 
                     currently_plus_12h:
                         instance: home
                         owm_match_prefix@home: hour/12
-                        struct: _priv_openweathermap.forecast_hourly
+                        struct: openweathermap.forecast_hourly
 
                     currently_plus_13h:
                         instance: home
                         owm_match_prefix@home: hour/13
-                        struct: _priv_openweathermap.forecast_hourly
+                        struct: openweathermap.forecast_hourly
 
                     currently_plus_14h:
                         instance: home
                         owm_match_prefix@home: hour/14
-                        struct: _priv_openweathermap.forecast_hourly
+                        struct: openweathermap.forecast_hourly
 
                     currently_plus_15h:
                         instance: home
                         owm_match_prefix@home: hour/15
-                        struct: _priv_openweathermap.forecast_hourly
+                        struct: openweathermap.forecast_hourly
 
                     currently_plus_16h:
                         instance: home
                         owm_match_prefix@home: hour/16
-                        struct: _priv_openweathermap.forecast_hourly
+                        struct: openweathermap.forecast_hourly
 
                     currently_plus_17h:
                         instance: home
                         owm_match_prefix@home: hour/17
-                        struct: _priv_openweathermap.forecast_hourly
+                        struct: openweathermap.forecast_hourly
 
                     currently_plus_18h:
                         instance: home
                         owm_match_prefix@home: hour/18
-                        struct: _priv_openweathermap.forecast_hourly
+                        struct: openweathermap.forecast_hourly
 
                     currently_plus_19h:
                         instance: home
                         owm_match_prefix@home: hour/19
-                        struct: _priv_openweathermap.forecast_hourly
+                        struct: openweathermap.forecast_hourly
 
                     currently_plus_20h:
                         instance: home
                         owm_match_prefix@home: hour/20
-                        struct: _priv_openweathermap.forecast_hourly
+                        struct: openweathermap.forecast_hourly
 
                     currently_plus_21h:
                         instance: home
                         owm_match_prefix@home: hour/21
-                        struct: _priv_openweathermap.forecast_hourly
+                        struct: openweathermap.forecast_hourly
 
                     currently_plus_22h:
                         instance: home
                         owm_match_prefix@home: hour/22
-                        struct: _priv_openweathermap.forecast_hourly
+                        struct: openweathermap.forecast_hourly
 
                     currently_plus_23h:
                         instance: home
                         owm_match_prefix@home: hour/23
-                        struct: _priv_openweathermap.forecast_hourly
+                        struct: openweathermap.forecast_hourly
 
                     currently_plus_24h:
                         instance: home
                         owm_match_prefix@home: hour/24
-                        struct: _priv_openweathermap.forecast_hourly
+                        struct: openweathermap.forecast_hourly
 
                     currently_plus_25h:
                         instance: home
                         owm_match_prefix@home: hour/25
-                        struct: _priv_openweathermap.forecast_hourly
+                        struct: openweathermap.forecast_hourly
 
                     currently_plus_26h:
                         instance: home
                         owm_match_prefix@home: hour/26
-                        struct: _priv_openweathermap.forecast_hourly
+                        struct: openweathermap.forecast_hourly
 
                     currently_plus_27h:
                         instance: home
                         owm_match_prefix@home: hour/27
-                        struct: _priv_openweathermap.forecast_hourly
+                        struct: openweathermap.forecast_hourly
 
                     currently_plus_28h:
                         instance: home
                         owm_match_prefix@home: hour/28
-                        struct: _priv_openweathermap.forecast_hourly
+                        struct: _openweathermap.forecast_hourly
 
                     currently_plus_29h:
                         instance: home
                         owm_match_prefix@home: hour/29
-                        struct: _priv_openweathermap.forecast_hourly
+                        struct: openweathermap.forecast_hourly
 
                     currently_plus_30h:
                         instance: home
                         owm_match_prefix@home: hour/30
-                        struct: _priv_openweathermap.forecast_hourly
+                        struct: openweathermap.forecast_hourly
 
                     currently_plus_31h:
                         instance: home
                         owm_match_prefix@home: hour/31
-                        struct: _priv_openweathermap.forecast_hourly
+                        struct: openweathermap.forecast_hourly
 
                     currently_plus_32h:
                         instance: home
                         owm_match_prefix@home: hour/32
-                        struct: _priv_openweathermap.forecast_hourly
+                        struct: openweathermap.forecast_hourly
 
                 daily:
                     today:
                         instance: home
                         owm_match_prefix@home: day/0
-                        struct: _priv_openweathermap.forecast_daily
+                        struct: openweathermap.forecast_daily
 
                     today_plus_1d:
                         instance: home
                         owm_match_prefix@home: day/1
-                        struct: _priv_openweathermap.forecast_daily
+                        struct: openweathermap.forecast_daily
 
                     today_plus_2d:
                         instance: home
                         owm_match_prefix@home: day/2
-                        struct: _priv_openweathermap.forecast_daily
+                        struct: openweathermap.forecast_daily
 
                     today_plus_3d:
                         instance: home
                         owm_match_prefix@home: day/3
-                        struct: _priv_openweathermap.forecast_daily
+                        struct: openweathermap.forecast_daily
 
                     today_plus_4d:
                         instance: home
                         owm_match_prefix@home: day/4
-                        struct: _priv_openweathermap.forecast_daily
+                        struct: openweathermap.forecast_daily
 
                     today_plus_5d:
                         instance: home
                         owm_match_prefix@home: day/5
-                        struct: _priv_openweathermap.forecast_daily
+                        struct: openweathermap.forecast_daily
 
                     today_plus_6d:
                         instance: home
                         owm_match_prefix@home: day/6
-                        struct: _priv_openweathermap.forecast_daily
+                        struct: openweathermap.forecast_daily
 
                     today_plus_7d:
                         instance: home
                         owm_match_prefix@home: day/7
-                        struct: _priv_openweathermap.forecast_daily
+                        struct: openweathermap.forecast_daily
 
             # historics:
                 # daily:
                     # today:
                         # instance: home
                         # owm_match_prefix@home: day/-0
-                        # struct: _priv_openweathermap.historical_daily
+                        # struct: openweathermap.historical_daily
 
                     # today_minus_1d:
                         # instance: home
                         # owm_match_prefix@home: day/-1
-                        # struct: _priv_openweathermap.historical_daily
+                        # struct: openweathermap.historical_daily
 
                     # today_minus_2d:
                         # instance: home
                         # owm_match_prefix@home: day/-2
-                        # struct: _priv_openweathermap.historical_daily
+                        # struct: openweathermap.historical_daily
 
                     # today_minus_3d:
                         # instance: home
                         # owm_match_prefix@home: day/-3
-                        # struct: _priv_openweathermap.historical_daily
+                        # struct: openweathermap.historical_daily
 
                     # today_minus_4d:
                         # instance: home
                         # owm_match_prefix@home: day/-4
-                        # struct: _priv_openweathermap.historical_daily
+                        # struct: openweathermap.historical_daily
 
                     # today_minus_5d:
                         # instance: home
                         # owm_match_prefix@home: day/-5
-                        # struct: _priv_openweathermap.historical_daily
+                        # struct: openweathermap.historical_daily
 
                 # hourly:
                     # currently_minus_1h:
@@ -651,11 +651,11 @@ Hier nachfolgend eine komplette item.yaml für die Anwendung des Plugins. Die In
 
             alerts:
                 instance: home
-                struct: _priv_openweathermap.alerts
+                struct: openweathermap.alerts
 
             airpollution:
                 instance: home
-                struct: _priv_openweathermap.airpollution
+                struct: openweathermap.airpollution
 
 
 
@@ -665,8 +665,8 @@ Anwendungen
 Steuerung einer täglichen Bewässerung bspw. für Pflanzen
 --------------------------------------------------------
 Mit der Verwendung dieser Methode können die Pflanzen bedarfsgerecht bewässert werden. Dazu wird das Irrigation struct
-verwendet, um -basierend auf dem Wasserbedarf-  ein Bewässungsventil automtisch zu schalten.
-Im Kombination mit der UZSU kann man die Bewässerung auch automatisch starten.
+verwendet, um -basierend auf dem Wasserbedarf-  ein Bewässerungsventil automatisch nach Abgabe der Tageswassermenge abzuschalten.
+Im Kombination mit der UZSU kann man die Bewässerung auch automatisch starten. Hier sollte dann logischerweise nur eine Zeit am Tag definiert werden.
 
 item.yaml
 
