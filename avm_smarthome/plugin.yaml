@@ -1,0 +1,214 @@
+# Metadata for the plugin
+plugin:
+    # Global plugin attributes
+    type: interface                   # plugin type (gateway, interface, protocol, system, web)
+    description:
+        de: 'AVM Smarthome Plugin für DECT Steckdosen, Heizkörperthermostate DECT301 und Comet DECT und DECT Smart-Home-Sensor basierend auf HTTP GET Request'
+        en: 'AVM Smarthome Plugin for DECT sockes, smart radiator control DECT301 and Comet DECT and DECT smart home sensors based on HTTP GET Request'
+    maintainer: Michael Wenzel
+#    tester:                         # Who tests this plugin?
+    state: develop                  # change to ready when done with development
+    keywords: avm, fritzbox, dect
+#    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
+#    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
+
+    version: 1.0.A                  # Plugin version (must match the version specified in __init__.py)
+    sh_minversion: 1.8              # minimum shNG version to use this plugin
+#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    multi_instance: True            # plugin supports multi instance
+    restartable: unknown
+    classname: AVM_smarthome         # class containing the plugin
+
+parameters:
+    # Definition of parameters to be configured in etc/plugin.yaml (enter 'parameters: NONE', if section should be empty)
+    cycle:
+        type: int
+        default: 300
+        description:
+            de: '(optional) Zeit zwischen zwei Updateläufen. Default ist 300 Sekunden.'
+            en: '(optional) Time period between two update cycles. Default is 300 seconds.'
+   
+    username:
+        type: str
+        default: ''
+        mandatory: True
+        description:
+            de: 'Nutzername für den Login an der Fritz!Box auf `Anmeldung mit FRITZ!Box-Benutzernamen und Kennwort` notwendig'
+            en: 'Login information (user) on Fritz!Box should be configured for login with username and password'
+
+    password:
+        type: str
+        default: ''
+        hide: True
+        mandatory: True
+        description:
+            de: '(optional) Passwort für den Login. Wird in der Regel immer benötigt und aus Sicherheitsgründen empfohlen.'
+            en: '(optional) Password for login. Is normally always needed and recommended due to security reasons'
+
+    host:
+        type: str
+        default: 'fritz.box'
+        description:
+            de: '(optional) Hostname oder IP-Adresse des FritzDevice.'
+            en: '(optional) Hostname or ip address of the FritzDevice.'
+
+item_attributes:
+    avm_ain:
+        type: str
+        mandatory: False
+        description:
+            de: 'Definition der Aktor Identifikationsnummer (AIN) für die folgenden Items'
+            en: 'Definition of the actor identification number (AIN) for the following items'
+
+    avm_smarthome_data:
+        type: str
+        mandatory: True
+        description:
+            de: 'AVM smarthome Datentyp des jeweiligen Items.'
+            en: 'AVM smarthome Data Type of the respective item.'
+        valid_list:
+        - 'name'                        # general
+        - 'avm_ain'                     # general
+        - 'identifier'                  # general
+        - 'productname'                 # general
+        - 'manufacturer'                # general
+        - 'firmware_version'            # general
+        - 'present'                     # general
+        - 'lock'                        # general
+        - 'device_lock'                 # general
+        - 'has_switch'                  # general
+        - 'has_temperature_sensor'      # general
+        - 'has_thermostat'              # general
+        - 'has_alarm'                   # general
+        - 'target_temperature'          # device has thermostat
+        - 'set_temperature'             # device has thermostat
+        - 'comfort_temperature'         # device has thermostat
+        - 'eco_temperature'             # device has thermostat
+        - 'battery_low'                 # device has thermostat
+        - 'battery_level'               # device has thermostat
+        - 'window_open'                 # device has thermostat
+        - 'summer_active'               # device has thermostat
+        - 'holiday_active'              # device has thermostat
+        - 'switch_state'                # device has switch
+        - 'power'                       # device has switch
+        - 'energy'                      # device has switch
+        - 'voltage'                     # device has switch
+        - 'set_switch_state_on'         # device has switch
+        - 'set_switch_state_off'        # device has switch
+        - 'set_switch_state_toggle'     # device has switch
+        - 'temperature'                 # device has temperature sensor
+        - 'offset'                      # device has temperature sensor
+        - 'alert_state'                 # device has alert
+
+item_structs:
+    general:
+        name:
+            avm_smarthome_data: name
+            type: str
+        # ain:
+            # avm_smarthome_data: avm_ain
+            # type: str
+        identifier:
+            avm_smarthome_data: identifier
+            type: str
+        productname:
+            avm_smarthome_data: productname
+            type: str
+        manufacturer:
+            avm_smarthome_data: manufacturer
+            type: str
+        firmware_version:
+            avm_smarthome_data: firmware_version
+            type: str
+        present:
+            avm_smarthome_data: present
+            type: bool
+        lock:
+            avm_smarthome_data: lock
+            type: bool
+        device_lock:
+            avm_smarthome_data: device_lock
+            type: bool
+        has_switch:
+            avm_smarthome_data: has_switch
+            type: bool
+        has_temperature_sensor:
+            avm_smarthome_data: has_temperature_sensor
+            type: bool
+        has_thermostat:
+            avm_smarthome_data: has_thermostat
+            type: bool
+        has_alarm:
+            avm_smarthome_data: has_alarm
+            type: bool
+    hkr:
+        actual_temperature:
+            avm_smarthome_data: temperature
+            type: num
+        target_temperature:
+            avm_smarthome_data: target_temperature
+            type: num
+        set_target_temperature:
+            avm_smarthome_data: set_temperature
+            type: num
+        comfort_temperature:
+            avm_smarthome_data: comfort_temperature
+            type: num
+        eco_temperature:
+            avm_smarthome_data: eco_temperature
+            type: num
+        battery_low:
+            avm_smarthome_data: battery_low
+            type: bool
+        battery_level:
+            avm_smarthome_data: battery_level
+            type: num
+        window_open:
+            avm_smarthome_data: window_open
+            type: bool
+        summer_active:
+            avm_smarthome_data: summer_active
+            type: bool
+        holiday_active:
+            avm_smarthome_data: holiday_active
+            type: bool
+    temperatur_sensor:
+        temperatur:
+            avm_smarthome_data: temperature
+            type: num
+        offset:
+            avm_smarthome_data: offset
+            type: num
+    alert:
+        state:
+            avm_smarthome_data: alert
+            type: bool
+    switch:
+        switch_state:
+            avm_smarthome_data: alert
+            type: bool
+        power:
+            avm_smarthome_data: power
+            type: num
+        energy:
+            avm_smarthome_data: energy
+            type: num
+        voltage:
+            avm_smarthome_data: voltage
+            type: num
+        set_toggle:
+            avm_smarthome_data: set_switch_state_toggle
+            type: bool
+            enforce_updates: yes
+        set_switch_state:
+            avm_smarthome_data: set_switch_state
+            type: bool        
+
+plugin_functions: NONE
+    # Definition of plugin functions defined by this plugin (enter 'plugin_functions: NONE', if section should be empty)
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)
+    
+
+

@@ -69,7 +69,7 @@ class Resol(SmartPlugin):
 
 
         try:
-           self.sock.connect((self._ip, self._port))
+            self.sock.connect((self._ip, self._port))
         except Exception as e:
             self.logger.error("Exception during socket connect: %s" % str(e))
             return
@@ -77,30 +77,36 @@ class Resol(SmartPlugin):
         self.login()
         self.load_data()
         try:
-          self.sock.shutdown(0)
+            self.sock.shutdown(0)
+            self.sock.close()
         except:
-          pass
-        self.sock.close()
+            pass
+        
         self.sock = None
 
 # Logs in onto the DeltaSol BS Plus over LAN. Also starts (and maintains) the
 # actual stream of data.
     def login(self):
         dat = self.recv()
-        #logger.debug("DATA: " + str(dat))
+        self.logger.debug("Login response: " + str(dat))
 
         #Check if device answered
         if dat != "+HELLO\n":
-          self.logger.warning("WRONG REPLY FROM VBUS LAN: " + str(dat))
-          return False
+            self.logger.warning("WRONG REPLY FROM VBUS LAN: " + str(dat))
+            return False
 
         #Send Password
         self.send("PASS %s\n" % self._password)
 
         dat = self.recv()
-        #logger.debug("DATA 2: " + str(dat))
+        self.logger.debug("Response to pwd: " + str(dat))
 
-        return dat.startswith("+OK")
+        #Check if device accepted password
+        if not dat.startswith("+OK"):
+            self.logger.warning("Password not accepted:" + str(dat))
+            return False
+
+        return True
 
     def load_data(self):
         #Request Data
@@ -111,16 +117,34 @@ class Resol(SmartPlugin):
         if not dat:
             self.logger.warning("Could not receive data via socket")
             return
+
+        self.logger.debug("Response to data: " + str(dat))
+
     
         #Check if device is ready to send Data
         if not dat.startswith("+OK"):
           self.logger.warning("Vbus Lan is not ready, reply: " + str(dat))
           return
         buf = self.readstream()
+        
+        #self.logger.warning("Readstream {0} bytes as asci: {1}".format(len(buf),str(buf)))
+        #self.logger.warning(40*"-")
+
+        #self.logger.warning("Readstream hex {0} bytes:".format(len(buf)))
+        #index = 0
+        #for single_byte in buf:
+        #    self.logger.warning("index {0}, content {1}".format(index, buf[index].encode('utf-8').hex() ))
+        #    index = index + 1
+        #self.logger.warning(40*"#")
+
+        #s = buf.encode('utf-8')
+        #self.logger.warning("Readstream hex {0} bytes: {1}".format(len(buf), s.hex()))
+
         msgs = self.splitmsg(buf)
         for msg in msgs:
-          if "PV1" == self.get_protocolversion(msg):
-            self.parse_payload(msg)
+            #self.logger.warning("Msg protocol version {0}".format(self.get_protocolversion(msg)))
+            if "PV1" == self.get_protocolversion(msg):
+                self.parse_payload(msg)
 
     # Receive 1024 bytes from stream
     def recv(self):
@@ -141,7 +165,10 @@ class Resol(SmartPlugin):
         if not data:
             return None
         while data.count(chr(0xAA)) < 4:
-          data += self.recv()
+            data_rcv = self.recv()
+            if not data_rcv:
+                return None
+            data += data_rcv
         return data
     
     #Split Messages on Sync Byte
@@ -197,7 +224,14 @@ class Resol(SmartPlugin):
             self.logger.debug("command: " + str(command))
             self.logger.debug("source: " + str(source))
             self.logger.debug("destination: " + str(destination))
+        #self.logger.warning("Frame count: {0}".format(self.get_frame_count(msg)))
+        #self.logger.warning("Length msg: {0}".format(len(msg)))
+
         payload = self.get_payload(msg)
+        #self.logger.warning("Length payload: {0}".format(len(payload)))
+
+
+
         if payload == '':
             return
         for item in self._items:

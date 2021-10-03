@@ -58,7 +58,18 @@ $(document).ready( function () {
     } );
 {% endif %}
 
-
+$(document).ready(
+    function(){
+        $('#fupload').change(
+            function(){
+                if ($(this).val()) {
+                    $('#btnupload').attr('disabled',false);
+                } else {
+                    $('#btnupload').attr('disabled',true);
+                }
+            }
+            );
+    });
 </script>
 {% endblock pluginscripts %}
 
@@ -94,12 +105,11 @@ $(document).ready( function () {
 				</tr>
 				{% endif %}
 				<tr>
-					<td class="py-1"><strong>{{ _('Projektdatei hochladen') }}</strong></td>
+					<td class="py-1"><strong>{{ _('Projektdatei') }}</strong></td>
 					<td class="py-1" colspan="4">
 						<form method="post" action="index" enctype="multipart/form-data">
-							<label for="fupload">{{ _('Projektdatei auswählen') }}</label>
 							<input id="fupload" type="file" name="knxprojfile" accept="*.knxproj|*.esf"/>
-							<button>hochladen</button>
+							<button id="btnupload" disabled="True">{{ _('hochladen') }}</button>
 						</form>
 					</td>
 				</tr>

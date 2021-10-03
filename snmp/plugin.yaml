@@ -9,7 +9,7 @@ plugin:
     state: develop                 # change to ready when done with development
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1455436-support-thread-f%C3%BCr-snmp-plugin
     
-    version: 1.6.0                 # Plugin version
+    version: 1.6.1                 # Plugin version
     sh_minversion: 1.6.0           # minimum shNG version to use this plugin
 #    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
@@ -33,7 +33,7 @@ parameters:
             en: 'ip adress pf device to be queried'
 
     snmp_port:
-        type: num
+        type: int
         default: 161
         description:
             de: 'Port für SNMP Abfrage'
@@ -53,11 +53,19 @@ item_attributes:
         description:
             de: 'Definiert den OID Code, mit dem das Geräte angefragt werden soll'
             en: 'This assigns the OID code to the item, which will be used to query the device.'
+            
     snmp_prop:
         type: str
         description:
-            de: 'Definiert, wie das Plugin die Geräteantwort verarbeiten soll (value oder string'
-            en: 'This tells the plugin, how the response from the device should be handled. (value or string)'
+            de: 'Definiert, wie das Plugin die Geräteantwort verarbeiten soll'
+            en: 'This tells the plugin, how the response from the device should be handled.'
+        valid_list:
+        - 'value'
+        - 'string'
+        - 'hex-string'
+        - 'mac-adress'
+        - 'ip-adress'
+        - 'error-state'        
 
 item_structs: NONE
   # Definition of item-structure templates for this plugin

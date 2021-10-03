@@ -29,7 +29,7 @@ plugin:
         en: 'RPi.GPIO python module'
     keywords: iot gpio raspberrypi
 
-    version: 1.5.0                 # Plugin version
+    version: 1.5.1                 # Plugin version
     sh_minversion: 1.4             # minimum shNG version to use this plugin
     multi_instance: false          # plugin supports multi instance
     restartable: unknown
@@ -57,6 +57,12 @@ parameters:
                 Define the GPIO PIN Mode that you use to declare the pin numbers.
                 `More info on GPIO headers <https://www.raspberrypi-spy.co.uk/2012/06/simple-guide-to-the-rpi-gpio-header-and-pins/>`_
                 '
+    initretries:
+        type: int
+        default: 10
+        description:
+            de: 'Anzahl an Versuchen zum Pluginstart, Listen-Events für die Pins zu erstellen.'
+            en: 'Amount of retries to create the listen events at plugin start.'
 
     bouncetime:
         type: int
@@ -158,7 +164,7 @@ item_attributes:
             en: 'Swap high/low on input/output'
         description_long:
             de: '**Ein-/Ausgabewerte an/aus invertieren**\n
-                Vertauscht die Zuordnung von Itemwert zu GPIO-Ein-/Ausgabe zu True->low/0, False->high/1. 
+                Vertauscht die Zuordnung von Itemwert zu GPIO-Ein-/Ausgabe zu True->low/0, False->high/1.
                 Beachte: ein konfigurierter Initialwert wird auch invertiert.
                 '
             en: '**Swap high/low on input/output**\n

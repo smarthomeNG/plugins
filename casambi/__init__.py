@@ -41,7 +41,7 @@ class Casambi(SmartPlugin):
     """
 
     # Use VERSION = '1.0.0' for your initial plugin Release
-    PLUGIN_VERSION = '1.7.2'    # (must match the version specified in plugin.yaml)
+    PLUGIN_VERSION = '1.7.4'    # (must match the version specified in plugin.yaml)
 
     def __init__(self, sh):
         """
@@ -183,22 +183,17 @@ class Casambi(SmartPlugin):
         time.sleep(1)
 
         try:
-            result =  self.websocket.recv()
+            result = self.websocket.recv()
         except Exception as e:
             self.logger.info("Exception during receiving in openWebsocket(): {0}".format(e))
+            return
         
         self.logger.debug("Received: {0}".format(result)) 
-        resultJson = json.loads(result.decode('utf-8'))
-        wireStatus = ''
-        if resultJson:
-            if 'wireStatus' in resultJson:
-                wireStatus = str(resultJson['wireStatus'])
-                self.logger.debug("wireStatus: {0}".format(wireStatus))
-
-        if wireStatus == 'openWireSucceed':
-            self.logger.debug("Wire opened successfully")
-        else:    
-            self.logger.error("wireStatus: {0}".format(wireStatus))    
+        
+        #try:
+        self.decodeEventData(result)
+        #except Exception as e:
+        #    self.logger.error("Exception in decodeEventData from openWebsocket: {0}".format(e))
 
         pass
 
@@ -208,19 +203,24 @@ class Casambi(SmartPlugin):
         """
         Control message format for switching/dimming of casambi devices
         """
-        dimValue = 0
+        sendValue = 0
+        
         if key == 'ON':
-            dimValue = int(item() == True)
+            sendValue = int(item() == True)
         elif key == 'DIMMER' or key == 'VERTICAL':
-            dimValue = item() / 100.0
+            sendValue = item() / 100.0
+        elif key == 'CCT':
+            sendValue = item()
         else:
             self.logger.error("Invalid key: {0}".format(key))
 
         targetControls = ''
         if key == 'ON' or key == 'DIMMER':
-            targetControls = {"Dimmer": {"value": dimValue}} # Dimmer value can be anything from 0 to 1
+            targetControls = {"Dimmer": {"value": sendValue}} # Dimmer value can be anything from 0 to 1
         elif key == 'VERTICAL':
-            targetControls = {"Vertical": {"value": dimValue}} # Vertical fader value can be anything from 0 to 1
+            targetControls = {"Vertical": {"value": sendValue}} # Vertical fader value can be anything from 0 to 1
+        elif key == 'CCT':
+            targetControls = {"ColorTemperature": {"value" : sendValue}, "Colorsource": {"source": "TW"}} # ColorTemperature value in Kelvins 
 
         controlMsg = {
                 "wire": self.wire,
@@ -230,6 +230,7 @@ class Casambi(SmartPlugin):
 	}
         # convert to JSON string:
         controlMsgJson = json.dumps(controlMsg)
+        self.logger.debug("Send command: {0}".format(controlMsgJson))
 
         if self.websocket and self.websocket.connected:
             try:
@@ -240,7 +241,7 @@ class Casambi(SmartPlugin):
             if self.casambiBackendStatus == False:
                 self.logger.warning("Command sent but backend is not online.")
             else:
-                self.logger.debug("Command with value {0} sent out via open websocket".format(dimValue))
+                self.logger.debug("Command {0} with value {1} sent out via open websocket".format(key, sendValue))
         else:
             self.logger.error("Unable to send command. Websocket is not open")
             self.logger.debug("Debug: self.websocket: {0}, self.websocket.connected: {1}.".format(self.websocket, self.websocket.connected))
@@ -252,24 +253,39 @@ class Casambi(SmartPlugin):
         if len(receivedData) < 1:
             return
 
-        dataJson = json.loads(receivedData.decode('utf-8'))
-
-        if 'wireStatus' in dataJson:
-            wireStatus = str(dataJson['wireStatus']) 
-            if not (wireStatus == 'openWireSucceed'):
-                self.logger.warning("Event: Wirestatus {0} received".format(wireStatus))
-
         method = ''
+
+        dataJson = json.loads(receivedData.decode('utf-8'))
+        
         if dataJson:
+            if 'wireStatus' in dataJson:
+                wireStatus = str(dataJson['wireStatus']) 
+
+                if wireStatus == 'openWireSucceed':
+                    self.logger.debug("Wire opened successfully")
+                elif wireStatus == '':
+                    self.logger.debug("No wireStatus received")
+                else:    
+                    self.logger.error("wireStatus: {0}".format(wireStatus))   
+                    self.logger.error("Debug: wireStatus response: {0}".format(receivedData))    
+
             if 'method' in dataJson :
                 method = str(dataJson ['method'])
         else:
             self.logger.debug("decodeEventData: Invalid Json")
 
-        if method == 'peerChanged':
+        if method == '':
+            # This happens for example if a wireStatus response to an open message is received which does not contain a method attribute.
+            self.logger.debug("Event: No method info received.")
+        elif method == 'peerChanged':
             online = None
             if 'online' in dataJson:
                 self.casambiBackendStatus = bool(dataJson ['online'])
+                for id in self._rx_items:
+                    for item in self._rx_items[id]:
+                        if (item.conf['casambi_rx_key'].upper() == 'BACKEND_ONLINE_STAT'):
+                            item( self.casambiBackendStatus, self.get_shortname())
+
             self.logger.debug("Received {0} status with backend online status: {1}.".format(method, self.casambiBackendStatus))
 
         elif method == 'unitChanged':
@@ -278,6 +294,8 @@ class Casambi(SmartPlugin):
             status = None
             dimValue = None
             verticalValue = None
+            cctValue = None
+
             self.logger.debug("Debug Json unitChanged: {0}".format(dataJson))
             if 'id' in dataJson:
                 unitID = int(dataJson['id'])
@@ -301,8 +319,11 @@ class Casambi(SmartPlugin):
                         dimValue = value
                     elif type == 'Vertical':
                         verticalValue = value
+                    elif type == 'CCT':
+                        cctValue = value
 
-            self.logger.debug("Received {0} status from unit {1}, on: {2}, value: {3}, vertical: {4}.".format(method, unitID, on, dimValue, verticalValue))
+
+            self.logger.debug("Received {0} status from unit {1}, on: {2}, value: {3}, vertical: {4}, cct: {5}.".format(method, unitID, on, dimValue, verticalValue, cctValue))
 
             #Copy data into casambi item:
             if unitID and (unitID in self._rx_items):
@@ -315,10 +336,14 @@ class Casambi(SmartPlugin):
                         item(dimValue * 100, self.get_shortname())
                     elif item.conf['casambi_rx_key'].upper() == 'VERTICAL':
                         item(verticalValue * 100, self.get_shortname())
+                    elif item.conf['casambi_rx_key'].upper() == 'CCT':
+                        item(cctValue, self.get_shortname())
+
             elif unitID and not (unitID in self._rx_items):
                 self.logger.warning("Received status information for ID {0} which has no equivalent item.".format(unitID))
         else:
             self.logger.warning("Received unknown method {0} which is not supported.".format(method))
+            self.logger.warning("Debug: decodeData(), receivedData: {0}".format(receivedData))
 
         pass
 
@@ -386,10 +411,10 @@ class Casambi(SmartPlugin):
                     self.logger.debug("Received empty data")
                 else: 
                     self.logger.debug("Received data: {0}".format(receivedData))
-                    try:
-                        self.decodeEventData(receivedData)
-                    except Exception as e:
-                        self.logger.error("Exception during decodeEventData: {0}".format(e))
+                    #try:
+                    self.decodeEventData(receivedData)
+                    #except Exception as e:
+                    #    self.logger.error("Exception during decodeEventData: {0}".format(e))
 
 
             # Error handling:

@@ -6,13 +6,13 @@ plugin:
         de: 'Gateway plugin fuer Casambi'
         en: 'Gateway plugin for Casambi devices'
     maintainer: aschwith
-#   tester:                         # Who tests this plugin?
+    tester: macflei                 
     state: ready                    # change to ready when done with development
     keywords: casambi, occhio air, 
 #   documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1496182-supportthread-f%C3%BCr-casambi-plugin
 
-    version: 1.7.2                  # Plugin version (must match the version specified in __init__.py)
+    version: 1.7.4                  # Plugin version (must match the version specified in __init__.py)
     sh_minversion: 1.7              # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False           # plugin supports multi instance
@@ -61,6 +61,7 @@ item_attributes:
         - 'ON'
         - 'DIMMER'
         - 'VERTICAL'
+        - 'CCT'
 
     casambi_rx_key:
         type: str
@@ -71,6 +72,9 @@ item_attributes:
         - 'ON'
         - 'DIMMER'
         - 'VERTICAL'
+        - 'CCT'
+        - 'BACKEND_ONLINE_STAT'
+
 
 item_structs:
     # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)

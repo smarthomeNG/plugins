@@ -34,7 +34,7 @@ class GPIO(SmartPlugin, Utils):
     Main class of the plugin.
     '''
 
-    PLUGIN_VERSION = '1.5.0'
+    PLUGIN_VERSION = '1.5.1'
     ALLOW_MULTIINSTANCE = False
 
     def __init__(self, sh):
@@ -57,6 +57,7 @@ class GPIO(SmartPlugin, Utils):
             # read parameters
             self._mode = self.get_parameter_value('mode').upper()
             self._bouncetime = self.get_parameter_value('bouncetime')
+            self._initretries = self.get_parameter_value('initretries')
             pud_param = self.get_parameter_value('pullupdown')
             if pud_param.upper() == 'UP':
                 self._pullupdown = PiGPIO.PUD_UP
@@ -110,20 +111,22 @@ class GPIO(SmartPlugin, Utils):
 ## as this may delay plugin startup considerably, anyone able to pinpoint possible
 ## reasons for first-time-failures please report this, thanks in advance! SH
                 err = None
-                for attempt in range(10):
+                for attempt in range(self._initretries):
+                    time.sleep(1)
                     try:
                         PiGPIO.add_event_detect(pin, PiGPIO.BOTH, callback=self.process_gpio_event, bouncetime=self._bouncetime)
                         self.logger.info('Adding event detection for input pin {}, initial value is {}'.format(pin, item()))
                     except RuntimeError as err:
-                        self.logger.debug('Problem adding event detection for input pin {}: {}. Retry {}/10'.format(pin, err, attempt + 1))
-                        time.sleep(3)
+                        self.logger.warning('Problem adding event detection for input pin {}: {}. Retry {}/{}'.format(pin, err, attempt + 1, self._initretries))
+                        time.sleep(2)
                     except ValueError as err:
-                        self.logger.error('Problem adding event detection for input pin {}: {}'.format(pin, err))
+                        self.logger.warning('Problem adding event detection for input pin {}: {}. Retry {}/{}'.format(pin, err, attempt + 1, self._initretries))
                         break
                     else:
+                        self.logger.warning('Unspecific problem adding event detection for input pin {}. Retry {}/{}'.format(pin, attempt + 1, self._initretries))
                         break
                 else:
-                    self.logger.error('Not adding event detection for input pin {}, given up: {}'.format(pin, err))
+                    self.logger.error('Not adding event detection for input pin {}, given up'.format(pin))
         self.alive = True
 
     def stop(self):

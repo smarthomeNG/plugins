@@ -1,0 +1,1 @@
+pyfritzhome >= 0.5.1

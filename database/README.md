@@ -277,6 +277,11 @@ item (in the `item` database table).
 dbplugin.updateItem(id, 12345, 0, 100)       # update item value in database for timestamp 12345, duration 0, value 100
 ```
 
+
+%--------------------------------------------
+# Vollständig übernommen in plugin.yaml
+%--------------------------------------------
+
 #### dbplugin.readItem(id, cur=None)
 
 This method will read the item data including all fields. When the id
@@ -295,6 +300,7 @@ This method will read all items data including all fields.
 ```python
 items = dbplugin.readItems()                 # read all fields of all item which contains the last item status
 ```
+
 #### dbplugin.deleteItem(id, cur=None)
 
 This method will delete the item and its log data.

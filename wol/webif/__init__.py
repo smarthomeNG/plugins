@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
-#  Copyright 2020-     <AUTHOR>                                   <EMAIL>
+#  Copyright 2021-     Bernd Meiners                Bernd.Meiners@mail.de
 #########################################################################
 #  This file is part of SmartHomeNG.
 #  https://www.smarthomeNG.de
@@ -32,6 +32,7 @@ import os
 from lib.item import Items
 from lib.model.smartplugin import SmartPluginWebIf
 
+
 # ------------------------------------------
 #    Webinterface of the plugin
 # ------------------------------------------
@@ -58,71 +59,41 @@ class WebInterface(SmartPluginWebIf):
         self.items = Items.get_instance()
 
         self.tplenv = self.init_template_environment()
-        self.knxdeamon = ''
-        if os.name != 'nt':
-            if self.get_process_info("ps cax|grep eibd") != '':
-                self.knxdeamon = 'eibd'
-            if self.get_process_info("ps cax|grep knxd") != '':
-                if self.knxdeamon != '':
-                    self.knxdeamon += ' and '
-                self.knxdeamon += 'knxd'
-        else:
-            self.knxdeamon = 'can not be determined when running on Windows'
-
-    def get_process_info(self, command):
-        """
-        returns output from executing a given command via the shell.
-        """
-        ## get subprocess module
-        import subprocess
-
-        ## call date command ##
-        p = subprocess.Popen(command, stdout=subprocess.PIPE, shell=True)
-
-        # Talk with date command i.e. read data from stdout and stderr. Store this info in tuple ##
-        # Interact with process: Send data to stdin. Read data from stdout and stderr, until end-of-file is reached.
-        # Wait for process to terminate. The optional input argument should be a string to be sent to the child process, or None, if no data should be sent to the child.
-        (result, err) = p.communicate()
-
-        ## Wait for date to terminate. Get return returncode ##
-        p_status = p.wait()
-        return str(result, encoding='utf-8', errors='strict')
 
 
     @cherrypy.expose
-    def index(self, reload=None, knxprojfile=None):
+    def index(self, reload=None):
         """
         Build index.html for cherrypy
 
         Render the template and return the html file to be delivered to the browser
 
-        :return: contents of the template after being rendered
+        :return: contents of the template after beeing rendered
         """
-        if knxprojfile is not None:
-            sh = self.plugin.get_sh()
-            upload_path = sh.get_basedir()
-            upload_filename = 'ETS5.knxproj'
-
-            upload_file = os.path.normpath(
-                os.path.join(upload_path, upload_filename))
-            size = 0
-            with open(upload_file, 'wb') as out:
-                while True:
-                    data = knxprojfile.file.read(8192)
-                    if not data:
-                        break
-                    out.write(data)
-                    size += len(data)
-            out = "File received.\nFilename: {}\nLength: {}\nMime-type: {}\n".format(knxprojfile.filename, size, knxprojfile.content_type, data)
-
-        plgitems = []
-        for item in self.items.return_items():
-            if any(elem in item.property.attributes  for elem in [KNX_DPT,KNX_STATUS,KNX_SEND,KNX_REPLY,KNX_CACHE,KNX_INIT,KNX_LISTEN,KNX_POLL]):
-                plgitems.append(item)
-
         tmpl = self.tplenv.get_template('index.html')
         # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
-        return tmpl.render(p=self.plugin, items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path'])))
+        plugin_items = sorted([])
+        for item in self.items.return_items():
+            if self.plugin.has_iattr(item.conf, 'wol_mac'):
+                plugin_items.append(item)
+        return tmpl.render(p=self.plugin,
+                           items=plugin_items,
+                           item_count=len(plugin_items))
+
+    @cherrypy.expose
+    def do_wake_up(self, mac_addr, ip_addr):
+        """
+        Return data to update the webpage
+
+        For the standard update mechanism of the web interface, the dataSet to return the data for is None
+
+        :param dataSet: Dataset for which the data should be returned (standard: None)
+        :return: dict with the data needed to update the web page.
+        """
+        if ip_addr == "":
+            ip_addr = None
+        self.plugin.wake_on_lan(mac_addr, ip_addr)
+        self.logger.warning(f"do wake up for {mac_addr} with {ip_addr}")
 
 
     @cherrypy.expose
@@ -149,3 +120,4 @@ class WebInterface(SmartPluginWebIf):
             # except Exception as e:
             #     self.logger.error("get_data_html exception: {}".format(e))
         return {}
+

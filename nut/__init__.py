@@ -65,6 +65,7 @@ class NUT(SmartPlugin):
         self._conn.close()
     except Exception as e:
         self.logger.info("Exception during sending in openWebsocket(): {0}".format(e))
+        return
 
     
     for line in result.decode().splitlines():

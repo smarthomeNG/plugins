@@ -10,15 +10,15 @@
 
 {%- block scripts %}
 {{ super() }}
-<script src="/gstatic/bootstrap-datepicker/dist/js/bootstrap-datepicker.min.js"></script>
-<script src="/gstatic/bootstrap-datepicker/dist/locales/bootstrap-datepicker.de.min.js"></script>
-<script src="/gstatic/bootstrap-datepicker/dist/locales/bootstrap-datepicker.fr.min.js"></script>
+<script src="/gstatic/bootstrap-datepicker/js/bootstrap-datepicker.min.js"></script>
+<script src="/gstatic/bootstrap-datepicker/locales/bootstrap-datepicker.de.min.js"></script>
+<script src="/gstatic/bootstrap-datepicker/locales/bootstrap-datepicker.fr.min.js"></script>
 <script src="/gstatic/chartjs/Chart.min.js"></script>
 {%- endblock scripts %}
 
 {%- block styles %}
 {{ super() }}
-<link rel="stylesheet" href="/gstatic/bootstrap-datepicker/dist/css/bootstrap-datepicker.min.css" type="text/css"/>
+<link rel="stylesheet" href="/gstatic/bootstrap-datepicker/css/bootstrap-datepicker.min.css" type="text/css"/>
     <script src="/gstatic/chartjs/Chart.min.css"></script>
 {%- endblock styles %}
 
@@ -72,16 +72,16 @@
                             <td class="py-1" style="font-weight: bold;">{{ _('Gesamtdistanz') }}</td><td class="py-1">{% if stats['totalDistanceMeters'] is not none %}{{ stats['totalDistanceMeters'] }} {{ _('m') }}{% else %}-{% endif %}</td>
                         </tr>
                         <tr>
-                            <td class="py-1" style="font-weight: bold;">{{ _('Hochaktive Zeit') }}</td><td class="py-1">{% if stats['highlyActiveSeconds'] is not none %}{{ p.shtime.seconds_to_displaysting(stats['highlyActiveSeconds']) }}{% else %}-{% endif %}</td>
+                            <td class="py-1" style="font-weight: bold;">{{ _('Hochaktive Zeit') }}</td><td class="py-1">{% if stats['highlyActiveSeconds'] is not none %}{{ p.shtime.seconds_to_displaystring(stats['highlyActiveSeconds']) }}{% else %}-{% endif %}</td>
                         </tr>
                         <tr>
-                            <td class="py-1" style="font-weight: bold;">{{ _('Aktivzeit') }}</td><td class="py-1">{% if stats['activeSeconds'] is not none %}{{ p.shtime.seconds_to_displaysting(stats['activeSeconds']) }}{% else %}-{% endif %}</td>
+                            <td class="py-1" style="font-weight: bold;">{{ _('Aktivzeit') }}</td><td class="py-1">{% if stats['activeSeconds'] is not none %}{{ p.shtime.seconds_to_displaystring(stats['activeSeconds']) }}{% else %}-{% endif %}</td>
                         </tr>
                         <tr>
-                            <td class="py-1" style="font-weight: bold;">{{ _('Sitzzeit') }}</td><td class="py-1">{% if stats['sedentarySeconds'] is not none %}{{ p.shtime.seconds_to_displaysting(stats['sedentarySeconds']) }}{% else %}-{% endif %}</td>
+                            <td class="py-1" style="font-weight: bold;">{{ _('Sitzzeit') }}</td><td class="py-1">{% if stats['sedentarySeconds'] is not none %}{{ p.shtime.seconds_to_displaystring(stats['sedentarySeconds']) }}{% else %}-{% endif %}</td>
                         </tr>
                         <tr>
-                            <td class="py-1" style="font-weight: bold;">{{ _('Schlafdauer') }}</td><td class="py-1">{% if stats['sleepingSeconds'] is not none %}{{ p.shtime.seconds_to_displaysting(stats['sleepingSeconds']) }}{% else %}-{% endif %}</td>
+                            <td class="py-1" style="font-weight: bold;">{{ _('Schlafdauer') }}</td><td class="py-1">{% if stats['sleepingSeconds'] is not none %}{{ p.shtime.seconds_to_displaystring(stats['sleepingSeconds']) }}{% else %}-{% endif %}</td>
                         </tr>
                         <tr>
                             <td class="py-1" style="font-weight: bold;">{{ _('Stresslevel') }}</td><td class="py-1">{% if stats['averageStressLevel'] is not none %}{{ stats['averageStressLevel'] }}{% else %}-{% endif %}</td>
