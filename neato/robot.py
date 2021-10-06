@@ -119,8 +119,10 @@ class Robot:
         elif command == 'dismiss_current_alert':
             n = '{"reqId": "2", "cmd": "dismissCurrentAlert"}'
         else:
-            self.logger.warning("Robot: Command unknown '{}'".format(command))
+            self.logger.warning("Robot: Command unknown {0}".format(command))
             return None
+
+        self.logger.debug("Robot: Json Command {0}".format(n))
         message = self.serial.lower() + '\n' + self.__get_current_date() + '\n' + n
         h = hmac.new(self.__secretKey.encode('utf-8'), message.encode('utf8'), hashlib.sha256)
 
@@ -143,6 +145,10 @@ class Robot:
         if 'result' in responseJson:
             if str(responseJson['result']) == 'ok':
                 self.logger.debug("Sending command successful")
+            else:
+                self.logger.error("Sending command failed. Result: {0}".format(str(responseJson['result']) ))
+                self.logger.error("Debug: send command response: {0}".format(start_cleaning_response.text))
+
         else:
             if 'message' in responseJson:
                 self.logger.error("Sending command failed. Message: {0}".format(str(responseJson['message'])))
@@ -340,21 +346,32 @@ class Robot:
 
         self.logger.debug("Robot: houseCleaning {0}, spotCleaning {1}".format(self.houseCleaning, self.spotCleaning ))
 
+        local_category = self.category
+
+        if ( (local_category is None) or (local_category == '') or (local_category != 4 and local_category != 2)):
+            # Default to using the persistent map if we support basic-3 or basic-4.
+            if self.houseCleaning in ["basic-3", "basic-4"]:
+                local_category = 4
+            else:
+                local_category = 2
+
+            self.logger.warning("Robot: category changed for send command from {0} (received) to {1}".format(self.category, local_category ))
+
         if self.houseCleaning == 'basic-1':
             return '{"reqId": "77","cmd": "startCleaning","params": {"category": ' + str(
-                self.category) + ',"mode": ' + str(self.mode) + ', "modifier": ' + str(self.modifier) + '}}'
+                local_category) + ',"mode": ' + str(self.mode) + ', "modifier": ' + str(self.modifier) + '}}'
         if self.houseCleaning == 'minimal-2':
             return '{"reqId": "77","cmd": "startCleaning","params": {"category": ' + str(
-                self.category) + ',"navigationMode": ' + str(self.navigationMode) + '}}'
+                local_category) + ',"navigationMode": ' + str(self.navigationMode) + '}}'
         if self.houseCleaning == 'minimal-3':
             return '{"reqId": "77","cmd": "startCleaning","params": {"category": ' + str(
-                self.category) + ',"navigationMode": ' + str(self.navigationMode) + '}}'
-        if self.houseCleaning == 'basic-3' or 'basic-4':
+                local_category) + ',"navigationMode": ' + str(self.navigationMode) + '}}'
+        if self.houseCleaning in ["basic-3", "basic-4"]:
             jsonCommand = {
                 "reqId": "77",
                 "cmd": "startCleaning",
                 "params": {
-                    "category": str(self.category),
+                    "category": str(local_category),
                     "mode": str(self.mode),
                     "navigationMode": str(self.navigationMode)}}
             if boundary_id:

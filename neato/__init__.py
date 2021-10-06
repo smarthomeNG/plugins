@@ -26,12 +26,13 @@
 from lib.model.smartplugin import *
 from lib.item import Items
 import binascii
+import json
 
 from .robot import Robot
 
 
 class Neato(SmartPlugin):
-    PLUGIN_VERSION = '1.6.6'
+    PLUGIN_VERSION = '1.6.7'
     robot = 'None'
 
     def __init__(self, sh, *args, **kwargs):
@@ -121,26 +122,50 @@ class Neato(SmartPlugin):
                     self.logger.debug("disabling neato scheduler")
             elif self.get_iattr_value(item.conf, 'neato_attribute') == 'clean_room':
                 self.robot.robot_command("start", item._value, None)
-
+                #self.robot.robot_command("start", item._value, '2020-03-09T07:52:21Z')
             pass
 
     def start_robot(self):
-        self.robot.robot_command("start")
+        response = self.robot.robot_command("start")
+        return self.check_command_response(response)
 
     def start_robot(self, boundary_id=None, map_id=None):
-        self.robot.robot_command("start", boundary_id, map_id)
+        response = self.robot.robot_command("start", boundary_id, map_id)
+        return self.check_command_response(response)
 
+
+    # returns boundaryIds (clean zones) for given mapID
+    # returns True on success and False otherwise
     def get_map_boundaries(self, map_id=None):
-        self.robot.robot_command("getMapBoundaries", map_id)
+        response = self.robot.robot_command("getMapBoundaries", map_id)
+        return self.check_command_response(response)
 
     def dismiss_current_alert(self):
-        self.robot.robot_command("dismiss_current_alert")
+        response = self.robot.robot_command("dismiss_current_alert")
+        return self.check_command_response(response)
 
+
+    # enable cleaning schedule
+    # returns True on success and False otherwise
     def enable_schedule(self):
-        self.robot.robot_command("enableSchedule")
+        response = self.robot.robot_command("enableSchedule")
+        return self.check_command_response(response)
 
     def disable_schedule(self):
-        self.robot.robot_command("disableSchedule")
+        response = self.robot.robot_command("disableSchedule")
+        return self.check_command_response(response)
+
+    def check_command_response(self, response):
+        if not response:
+            return False
+        responseJson = response.json()
+        if 'result' in responseJson:
+            if str(responseJson['result']) == 'ok':
+                return True
+            else:
+                return False
+        else:
+            return False
 
     def poll_device(self):
         returnValue = self.robot.update_robot()
@@ -180,7 +205,7 @@ class Neato(SmartPlugin):
             if value is not None:
                 for sameMatchStringItem in matchStringItems:
                     sameMatchStringItem(value, self.get_shortname() )
-                    self.logger.debug('_update: Value "{0}" written to item {1}'.format(value, sameMatchStringItem))
+                    #self.logger.debug('_update: Value "{0}" written to item {1}'.format(value, sameMatchStringItem))
 
         pass
 
@@ -320,7 +345,7 @@ class WebInterface(SmartPluginWebIf):
         self.items = Items.get_instance()
 
     @cherrypy.expose
-    def index(self, reload=None, action=None, email=None, hashInput=None, code=None, tokenInput=None):
+    def index(self, reload=None, action=None, email=None, hashInput=None, code=None, tokenInput=None, mapIDInput=None):
         """
         Build index.html for cherrypy
 
@@ -329,10 +354,11 @@ class WebInterface(SmartPluginWebIf):
         :return: contents of the template after beeing rendered
         """
         calculatedHash = ''
-        codeRequestSuccessfull = None
+        codeRequestSuccessfull  = None
         token = ''
-        configWriteSuccessfull = None
-        resetAlarmsSuccessfull = None
+        configWriteSuccessfull  = None
+        resetAlarmsSuccessfull  = None
+        boundaryListSuccessfull = None
 
 
 
@@ -370,6 +396,9 @@ class WebInterface(SmartPluginWebIf):
                     self.logger.warning("Resetting alarms via webinterface")
                     self.plugin.dismiss_current_alert()
                     resetAlarmsSuccessfull = True
+            elif action =="listAvailableMaps":
+                    self.logger.warning("List all available maps via webinterface")
+                    boundaryListSuccessfull = self.plugin.get_map_boundaries(map_id=mapIDInput)
             else:
                 self.logger.error("Unknown command received via webinterface")
 
@@ -380,6 +409,7 @@ class WebInterface(SmartPluginWebIf):
                            codeRequestSuccessfull=codeRequestSuccessfull,
                            configWriteSuccessfull=configWriteSuccessfull,
                            resetAlarmsSuccessfull=resetAlarmsSuccessfull,
+                           boundaryListSuccessfull=boundaryListSuccessfull,
                            items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path'])))
 
 
