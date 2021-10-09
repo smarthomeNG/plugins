@@ -34,12 +34,28 @@
 #               A deactivated entry is stored to the database but doesn't trigger the setting of the value.
 #               It can be enabled later with the update method.
 #
-#     time:     time as string to use sunrise/sunset arithmetics like in the crontab
-#               examples:
-#               17:00<sunset
-#               sunrise>8:00
-#               17:00<sunset.
-#               You also can set the time with 17:00
+#     time:     time as string
+#               A) regular time expression like 17:00
+#               B) to use sunrise/sunset arithmetics like in the crontab
+#                  examples:
+#                     17:00<sunset
+#                     sunrise>8:00
+#                     17:00<sunset.
+#               C) 'serie' to indicate the use of a time series; definition of a time series is mandatory using dict key 'series'
+#
+#     series:   definition of the time series as dict using keys 'active', 'timeSeriesMin', 'timeSeriesMax', 'timeSeriesIntervall'
+#                   example:
+#                       "series":{"active":true,
+#                                 "timeSeriesMin":"06:15",
+#                                 "timeSeriesMax":"15:30",
+#                                 "timeSeriesIntervall":"01:00"}
+#               alternativly to 'timeSeriesMax', which indicated the end time of the time series, the key 'timeSeriesCount'
+#               can be used to define the number of cycles to be run
+#                   example:
+#                       "series":{"active":true,
+#                                 "timeSeriesMin":"06:15",
+#                                 "timeSeriesCount":"4",
+#                                 "timeSeriesIntervall":"01:00"}
 #
 #     rrule:    You can use the recurrence rules documented in the iCalendar RFC for recurrence use of a switching entry.
 #
@@ -68,9 +84,6 @@ from unittest import mock
 from collections import OrderedDict
 from bin.smarthome import VERSION
 import copy
-import html
-import json
-from .webif import WebInterface
 
 try:
     from scipy import interpolate
@@ -115,7 +128,7 @@ class UZSU(SmartPlugin):
         self._planned = {}
         self._update_count = {'todo': 0, 'done': 0}
         self._itpl = {}
-        self.init_webinterface(WebInterface)
+        self.init_webinterface()
         self.logger.info("Init with timezone {}".format(self._timezone))
         if not REQUIRED_PACKAGE_IMPORTED:
             self.logger.warning("Unable to import Python package 'scipy' which is necessary for interpolation.")
@@ -462,9 +475,10 @@ class UZSU(SmartPlugin):
             self._items[item] = item()
         else:
             self._items[item] = copy.deepcopy(item())
+            
         cond = (not caller == 'UZSU Plugin') or source == 'logic'
-        self.logger.debug('Update Item {}, Caller {}, Source {}, Dest {}. Will update: {}'.format(
-            item, caller, source, dest, cond))
+        self.logger.debug(f'Update Item {item}, Caller {caller}, Source {source}, Dest {dest}. Will update: {cond}')
+
         if not source == 'create_rrule':
             self._check_rruleandplanned(item)
         # Removing Duplicates
@@ -476,6 +490,72 @@ class UZSU(SmartPlugin):
             item(self._items[item], 'UZSU Plugin', 'item_deactivated')
         if cond:
             self._schedule(item, caller='update')
+
+    def _decode_time_series(self, item):
+        """
+                Returns an list of all UZSU entries including the resolved time series entries
+                :param item:        item for which the time UZSU entries will be generated
+        """
+        new_uzsu_list = []
+        for entry in self._items[item]['list']:
+            if entry['time'] == 'serie':
+                offset = 0
+                if entry['series'].get('active') is True:
+                    self.logger.debug(f"Time series entry found with {entry['time']}")
+                    seriesstart = entry['series'].get('timeSeriesMin', None)
+                    intervall = entry['series'].get('timeSeriesIntervall', None)
+                    endtime = entry['series'].get('timeSeriesMax', None)
+                    count = entry['series'].get('timeSeriesCount', None)
+                    
+                    if seriesstart is not None and intervall is not None:
+                        if not 'sun' in seriesstart:
+                            starttime = datetime.strptime(seriesstart, "%H:%M" )
+                            sun = None
+                        else:
+                            starttime = None
+                            start_list = seriesstart.split('+')
+                            sun = start_list[0]
+                            if len(start_list) == 2:
+                                offset = int(start_list[1][:-1])
+                        
+                        step = intervall.split(':')
+                        step_min = int(step[0])*60+int(step[1])
+                                                    
+                        if endtime is not None and starttime is not None:
+                            endtime = datetime.strptime(endtime, "%H:%M" )
+                            while starttime <= endtime:
+                                start = starttime.strftime("%H:%M")
+                                new_entry = entry.copy()
+                                del new_entry['series']
+                                new_entry['time'] = start
+                                new_uzsu_list.append(new_entry)
+                                starttime += timedelta(minutes=step_min)
+                                self.logger.debug(f"Time series entry with endtime decoced to {new_entry}")
+                        elif count is not None:
+                            count = int(count)
+                            for i in range(count-1):
+                                new_entry = entry.copy()
+                                del new_entry['series']
+                                
+                                if starttime is not None:
+                                    start = starttime.strftime("%H:%M")
+                                    new_entry['time'] = start
+                                    starttime += timedelta(minutes=step_min)
+                                elif sun is not None:
+                                    offset += step_min
+                                    start = sun + '+' + str(offset) + 'm'
+                                    new_entry['time'] = start
+                                new_uzsu_list.append(new_entry)
+                                self.logger.debug(f'Time series entry with count decoced to {new_entry}')
+                        else:
+                            self.logger.error('no endtime or series count for time series defined')
+                    else:
+                        self.logger.error('time series not (fully) defined')
+                else:
+                    self.logger.info('time series not active')
+            else:
+                new_uzsu_list.append(entry)
+        return new_uzsu_list
 
     def _schedule(self, item, caller=None):
         """
@@ -494,7 +574,7 @@ class UZSU(SmartPlugin):
         self._update_sun(item, caller='schedule')
         if self._items[item].get('interpolation') is None:
             self.logger.error("Something is wrong with your UZSU item. You most likely use a wrong smartVISU widget version!"
-                              " Use the latest device.uzsu from SV 2.9. "
+                              "Use the latest device.uzsu from SV 2.9."
                               "If you write your uzsu dict directly please use the format given in the documentation: "
                               "https://www.smarthomeng.de/user/plugins/uzsu/user_doc.html and include the interpolation array correctly!")
         elif not self._items[item]['interpolation'].get('itemtype'):
@@ -505,7 +585,8 @@ class UZSU(SmartPlugin):
             self._planned.update({item: None})
         elif self._items[item].get('active') is True:
             self._itpl[item] = OrderedDict()
-            for i, entry in enumerate(self._items[item]['list']):
+            time_entries = self._decode_time_series(item)
+            for i, entry in enumerate(time_entries):
                 next, value = self._get_time(entry, 'next', item, i)
                 previous, previousvalue = self._get_time(entry, 'previous', item, i)
                 item(self._items[item], 'UZSU Plugin', 'schedule')
@@ -927,15 +1008,6 @@ class UZSU(SmartPlugin):
                 self.get_iattr_value(item.conf, ITEM_TAG[0]), err))
         return _itemvalue
 
-    def get_itemdict(self, item):
-        """
-        Getting a sorted item list with uzsu config
-        :item:          uzsu item
-        :return:        sanitzed dict from uzsu item
-        """
-
-        return html.escape(json.dumps(self._items[item]))
-
     def get_items(self):
         """
         Getting a sorted item list with uzsu config
@@ -947,3 +1019,83 @@ class UZSU(SmartPlugin):
         for i in sortedlist:
             finallist.append(self.itemsApi.return_item(i))
         return finallist
+
+    def init_webinterface(self):
+        """"
+        Initialize the web interface for this plugin
+
+        This method is only needed if the plugin is implementing a web interface
+        """
+        try:
+            self.mod_http = Modules.get_instance().get_module('http')
+        except Exception:
+            self.mod_http = None
+        if self.mod_http is None:
+            self.logger.error("Plugin '{}': Not initializing the web interface".format(self.get_shortname()))
+            return False
+
+        import sys
+        if "SmartPluginWebIf" not in list(sys.modules['lib.model.smartplugin'].__dict__):
+            self.logger.warning("Plugin '{}': Web interface needs SmartHomeNG v1.5 and up. Not initializing the web interface".format(self.get_shortname()))
+            return False
+
+        # set application configuration for cherrypy
+        webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
+        config = {
+            '/': {
+                'tools.staticdir.root': webif_dir,
+            },
+            '/static': {
+                'tools.staticdir.on': True,
+                'tools.staticdir.dir': 'static'
+            }
+        }
+
+        # Register the web interface as a cherrypy app
+        self.mod_http.register_webif(WebInterface(webif_dir, self),
+                                     self.get_shortname(),
+                                     config,
+                                     self.get_classname(), self.get_instance_name(),
+                                     description='')
+
+        return True
+
+
+# ------------------------------------------
+#    Webinterface of the plugin
+# ------------------------------------------
+
+import cherrypy
+from jinja2 import Environment, FileSystemLoader
+
+
+class WebInterface(SmartPluginWebIf):
+
+    def __init__(self, webif_dir, plugin):
+        """
+        Initialization of instance of class WebInterface
+
+        :param webif_dir: directory where the webinterface of the plugin resides
+        :param plugin: instance of the plugin
+        :type webif_dir: str
+        :type plugin: object
+        """
+        self.logger = logging.getLogger(__name__)
+        self.webif_dir = webif_dir
+        self.plugin = plugin
+        self.tplenv = self.init_template_environment()
+
+    @cherrypy.expose
+    def index(self, action=None, item_id=None, item_path=None, reload=None):
+        """
+        Build index.html for cherrypy
+
+        Render the template and return the html file to be delivered to the browser
+
+        :return: contents of the template after beeing rendered
+        """
+        item = self.plugin.get_sh().return_item(item_path)
+        tmpl = self.tplenv.get_template('index.html')
+        # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
+        return tmpl.render(p=self.plugin,
+                           language=self.plugin._sh.get_defaultlanguage(), now=self.plugin.shtime.now())

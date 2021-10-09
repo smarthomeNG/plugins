@@ -10,6 +10,9 @@ For info on how to configure the plugin see the [Configuration Documentation](ht
 
 ## Changelog
 
+### v1.5.4
+* Added use of time series
+
 ### v1.5.3
 * Remove useless dictionary parts from uzsu items (to make double entry check work better)
 * Added SciPy as a requirements

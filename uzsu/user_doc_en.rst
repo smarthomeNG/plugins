@@ -54,7 +54,23 @@ Each UZSU item is of type list. Each list entry has to be a dict with specific k
 
 - **active**: `True` if the entry is activated, `False` if not. A deactivated entry is stored to the database but doesn't trigger the setting of the value. It can be enabled with the `activate` function.
 
-- **time**: time as string to use sunrise/sunset arithmetics like in the crontab eg. `17:00<sunset`, `sunrise>8:00`, `17:00<sunset`. You also can set the time with `17:00`.
+- **time**: time as string to use sunrise/sunset arithmetics like in the crontab eg. `17:00<sunset`, `sunrise>8:00`, `17:00<sunset`. You also can set the time with `17:00` or to 'serie' to use a time series.
+
+- **series**: Dict, to define the time series. This dict is mandatory if value 'serie' is used at key 'time'.
+               The following key need to be used:
+                'active', 'timeSeriesMin', 'timeSeriesMax', 'timeSeriesIntervall'
+                   example:
+                       "series":{"active":true,
+                                 "timeSeriesMin":"06:15",
+                                 "timeSeriesMax":"15:30",
+                                 "timeSeriesIntervall":"01:00"}
+               or
+                'active', 'timeSeriesMin', 'timeSeriesCount', 'timeSeriesIntervall'
+                   example:
+                       "series":{"active":true,
+                                 "timeSeriesMin":"06:15",
+                                 "timeSeriesCount":"4",
+                                 "timeSeriesIntervall":"01:00"}
 
 - **rrule**: You can use the recurrence rules documented for [rrule](https://dateutil.readthedocs.io/en/stable/rrule.html) for recurrence use of a switching entry.
 

@@ -83,7 +83,23 @@ Jedes USZU Item wird als dict-Typ gespeichert. Jeder Listen-Eintrag ist wiederum
 
 -  **active**: ``True`` wenn die UZSU aktiviert ist, ``False`` wenn keine Aktualisierungen vorgenommen werden sollen. Dieser Wert kann über die Pluginfunktion activate gesteuert werden.
 
--  **time**: Zeit als String. Entweder eine direkte Zeitangabe wie ``17:00`` oder eine Kombination mit Sonnenauf- und Untergang wie bei einem crontab, z.B. ``17:00<sunset``, ``sunrise>8:00``, ``17:00<sunset``.
+-  **time**: Zeit als String. Entweder eine direkte Zeitangabe wie ``17:00``, eine Kombination mit Sonnenauf- und Untergang wie bei einem crontab, z.B. ``17:00<sunset``, ``sunrise>8:00``, ``17:00<sunset`` oder die 'serie', um eine Zeitserie zu definieren.
+
+-  **series**: Dict, um die Zeitserie zu definieren. Notwendige Angabe, wenn beim Key 'time' der Wert 'serie' angegeben wurde.
+               Notwendige Keys im Dict sind:
+                'active', 'timeSeriesMin', 'timeSeriesMax', 'timeSeriesIntervall'
+                   Beispiel:
+                       "series":{"active":true,
+                                 "timeSeriesMin":"06:15",
+                                 "timeSeriesMax":"15:30",
+                                 "timeSeriesIntervall":"01:00"}
+               oder
+                'active', 'timeSeriesMin', 'timeSeriesCount', 'timeSeriesIntervall'
+                   Beispiel:
+                       "series":{"active":true,
+                                 "timeSeriesMin":"06:15",
+                                 "timeSeriesCount":"4",
+                                 "timeSeriesIntervall":"01:00"}
 
 -  **rrule**: Hier können Wiederholungsregeln wie in `rrule <https://dateutil.readthedocs.io/en/stable/rrule.html>`_ beschrieben festgelegt werden.
 
