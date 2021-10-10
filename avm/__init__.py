@@ -1011,21 +1011,24 @@ class AVM(SmartPlugin):
                 self.logger.info("Debug ain is {0}".format(ainDevice))
 
                 # request new session ID:
-                mySID = self._request_session_id()
+                try:
+                    mySID = self._request_session_id()
 
-                # Assemble endtimestamp:
-                if cmd_enable == False:
-                    endtime = 0
-                else:
-                    now = self.shtime.now()
-                    unix_secs = mktime(now.timetuple())
-                    # set endtime to now + 12h:
-                    endtime = int(unix_secs + 12 * 3600)
-                self.logger.debug("HKR endtimestamp is: {0}".format(endtime))
+                    # Assemble endtimestamp:
+                    if cmd_enable == False:
+                        endtime = 0
+                    else:
+                        now = self.shtime.now()
+                        unix_secs = mktime(now.timetuple())
+                        # set endtime to now + 12h:
+                        endtime = int(unix_secs + 12 * 3600)
+                    self.logger.debug("HKR endtimestamp is: {0}".format(endtime))
 
-                aha_string = self._assemble_aha_interface(ain=ainDevice, aha_action=action, endtimestamp=endtime,
+                    aha_string = self._assemble_aha_interface(ain=ainDevice, aha_action=action, endtimestamp=endtime,
                                                           sid=mySID)
-                self.logger.debug("Debug ahastring: {0}".format(aha_string))
+                    self.logger.debug("Debug ahastring: {0}".format(aha_string))
+                except Exception as e:
+                    self.logger.error("Exception HKR window open: %s" % str(e))
 
             elif self.get_iattr_value(item.conf, 'avm_data_type') == 'set_temperature':
                 self.logger.info("Debug caller is: {0}".format(caller))
@@ -1056,10 +1059,14 @@ class AVM(SmartPlugin):
                         "Commanded hkrt temperature {0} is out of range. Aborting.".format(cmd_temperature))
 
                 # request new session ID:
-                my_sid = self._request_session_id()
+                try:
+                    my_sid = self._request_session_id()
 
-                aha_string = self._assemble_aha_interface(ain=ainDevice, aha_action=action, aha_param=temp_scaled,
+                    aha_string = self._assemble_aha_interface(ain=ainDevice, aha_action=action, aha_param=temp_scaled,
                                                           sid=my_sid)
+
+                except Exception as e:
+                    self.logger.error("Exception settemperature: %s" % str(e))
 
             # Function used for AHA http interface only:
             current_avm_data_type = self.get_iattr_value(item.conf, 'avm_data_type')

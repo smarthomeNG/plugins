@@ -28,6 +28,7 @@ from lib.model.smartplugin import *
 
 import json
 import requests 
+import logging
 
 from datetime import datetime, timedelta
 from dateutil.parser import parse
@@ -826,6 +827,7 @@ class Mower:
     }
 
     def __init__(self):
+        self.logger = logging.getLogger(__name__)
         self._mower_id           = None
         self._mower_name         = None
         self._mower_model        = 'UNKNOWN' 
@@ -917,9 +919,18 @@ class Mower:
 
     def parse_mower_from_json(self, json):
         # self.logger.debug(json.dumps(json, indent=4, sort_keys=True))
-        self._mower_id      = json['id'] 
-        self._mower_name    = json['name'] 
-        self._mower_model   = json['model'] 
+        if 'id' in json:
+            self._mower_id      = json['id'] 
+        else:
+            self.logger.error("Id attribute not found in json: {0}".format(json))
+        if 'name' in json:
+            self._mower_name    = json['name']
+        else:
+            self.logger.error("Name attribute not found in json: {0}".format(json))
+        if 'model' in json:
+            self._mower_model   = json['model']
+        else:
+            self.logger.debug("Model attribute not found in json: {0}".format(json))
 
     def set_mower_activity_time(self, activity, time):
         self._activity_timer[activity.upper()] = int(time)

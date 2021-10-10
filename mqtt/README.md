@@ -74,11 +74,11 @@ For building a web interface for a plugin, we deliver the following 3rd party co
    * Bootstrap Tree View: 
       * CSS: &lt;link rel="stylesheet" href="/gstatic/bootstrap-treeview/bootstrap-treeview.css" type="text/css"/&gt; 
       * JS: &lt;script src="/gstatic/bootstrap-treeview/bootstrap-treeview.min.js"&gt;&lt;/script&gt;
-   * Bootstrap Datepicker v1.8.0:
-      * CSS: &lt;link rel="stylesheet" href="/gstatic/bootstrap-datepicker/dist/css/bootstrap-datepicker.min.css" type="text/css"/&gt;
+   * Bootstrap Datepicker v1.9.0:
+      * CSS: &lt;link rel="stylesheet" href="/gstatic/bootstrap-datepicker/css/bootstrap-datepicker.min.css" type="text/css"/&gt;
       * JS:
-         * &lt;script src="/gstatic/bootstrap-datepicker/dist/js/bootstrap-datepicker.min.js"&gt;&lt;/script&gt;
-         * &lt;script src="/gstatic/bootstrap-datepicker/dist/locales/bootstrap-datepicker.de.min.js"&gt;&lt;/script&gt;
+         * &lt;script src="/gstatic/bootstrap-datepicker/js/bootstrap-datepicker.min.js"&gt;&lt;/script&gt;
+         * &lt;script src="/gstatic/bootstrap-datepicker/locales/bootstrap-datepicker.de.min.js"&gt;&lt;/script&gt;
    * popper.js: 
       * JS: &lt;script src="/gstatic/popper.js/popper.min.js"&gt;&lt;/script&gt;
    * CodeMirror 5.46.0: 

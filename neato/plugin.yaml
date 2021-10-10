@@ -12,7 +12,7 @@ plugin:
     documentation: https://github.com/smarthomeng/plugins/blob/develop/neato/README.md
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1417295-support-thread-plugin-neato
 
-    version: 1.6.6                  # Plugin version
+    version: 1.6.7                  # Plugin version
     sh_minversion: 1.8.0            # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False           # plugin supports multi instance
@@ -101,21 +101,21 @@ item_structs: NONE
 
 plugin_functions:
     enable_schedule:
-        type: void
+        type: bool
         description:
             de: "Aktiviert den Reinigunsplan."
             en: "Activates cleaning schedule."
         parameters:
         # This function has no parameters
     disable_schedule:
-        type: void
+        type: bool
         description:
             de: "Deaktiviert den Reinigunsplan."
             en: "Disables cleaning schedule."
         parameters:
         # This function has no parameters
     start_robot:
-        type: void
+        type: bool
         description:
             de: "Aktiviert Reinigung"
             en: "Activates cleaning"
@@ -131,12 +131,12 @@ plugin_functions:
                     de: "Karten ID"
                     en: "Map ID"
     dismiss_current_alert:
-        type: void
+        type: bool
         description:
             de: "Loescht aktuelle Alarme"
             en: "Resets current alerts"
     get_map_boundaries:
-        type: void
+        type: bool
         description:
             de: "Gibt im logfile die verfuebaren Raeume aus"
             en: "Outputs available boundaries (rooms) in logfile"

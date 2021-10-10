@@ -19,16 +19,16 @@
 #  along with SmartHomeNG. If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
 
-from lib.module import Modules
-from lib.model.smartplugin import *
 from lib.item import Items
+from lib.model.smartplugin import SmartPlugin, SmartPluginWebIf, Modules
+
+from bin.smarthome import VERSION
 
 import threading
 import logging
 import time
 import struct
 from puresnmp import get
-
 
 class Snmp(SmartPlugin):
     """
@@ -37,13 +37,18 @@ class Snmp(SmartPlugin):
     """
 
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = '1.6.0'
+    PLUGIN_VERSION = '1.6.1'
 
     _flip = {0: '1', False: '1', 1: '0', True: '0', '0': True, '1': False}
 
     _supported = {
-        'value': 'Value',           # Wert wird erwartet
-        'string': 'String'}         # String wird erwartet; Rückmeldewert in String oder Bytearray wie bspw b'TS-251'
+        'value': 'Value',                    # Wert wird erwartet
+        'string': 'String',                  # String wird erwartet; Rückmeldewert in String oder Bytearray wie bspw b'TS-251'
+        'hex-string': 'hex-string',          # Text-String, der in Hex-übergeben wird
+        'mac-adress': 'mac-adress',          # MAC-Adresse
+        'ip-adress': 'ip-adress',            # IP-Adresse
+        'error-state': 'error-state'         # Error-State bestehend aus 2 Byte; Darstellung als 16bit Array, wobei das Bit auf 1 den Fehler angibt
+        }
 
     def __init__(self, sh, *args, **kwargs):
         """
@@ -73,7 +78,7 @@ class Snmp(SmartPlugin):
         # log
         self.logger.debug("Instance {} of SNMP configured to use host '{}' with update cycle of {} seconds and Community {}".format(self.instance if self.instance else 0, self.host, self.cycle, self.community))
 
-        # give some info to the user via webinterface
+        # Init web interface
         self.init_webinterface()
 
         # init_complete to True
@@ -156,20 +161,22 @@ class Snmp(SmartPlugin):
                 result = 0
                 unit = 0
 
-                try:
-                    response = response.decode('ascii')
-                except Exception as e:
-                    response = response
-                    self.logger.debug('Response for OID {} not decoded, since it was no ASCII string. Error was: {}'.format(oid, e))
-                else:
-                    self.logger.debug('Response decoded')
-
                 if prop == 'value':
+                    try:
+                        response = response.decode('ascii')
+                    except Exception as e:
+                        response = response
+                        self.logger.debug('Response for OID {} not decoded, since it was no ASCII string. Result is: {}. Error was: {}'.format(oid, result, e))  
+                    
                     # Prüfung, ob Leerzeichen vorhanden sind, um den Wert von Einheit zu trennen
                     try:
                         code_pos = response.index(" ")
                     except:
-                        result = float(response)
+                        if isinstance(response, int) is True:
+                            result = int(response)
+                        else:
+                            result = float(response)
+                        self.logger.debug('Response did not contain units; therefore using standard conversion to float or int is used')
                     else:
                         unit_short = (response[(code_pos+1):(code_pos +2)]).lower()
                         value = float(response[:(code_pos)])
@@ -187,11 +194,73 @@ class Snmp(SmartPlugin):
                             result = int(value)
                             unit = response[(code_pos+1):len(response)]
                         else:
-                            result = round(value, 3)
-                            self.logger.debug('Response value typ not defined; using standard conversion to float')
+                            result = round(value, 2)
+                            self.logger.debug('Response value type not defined; using standard conversion to float')
+                
                 elif prop == 'string':
-                    result = str(response)
-                    unit = 'no'
+                    try:
+                        result = str(response.decode('ascii'))
+                        unit = 'no'
+                    except Exception as e:
+                        result = str(response)
+                        self.logger.debug('Response for OID {} not decoded, since it was no ASCII string. Result is: {}. Error was: {}'.format(oid, result, e))
+                    else:
+                        self.logger.debug('String response decoded to: {}'.format(result))
+
+                elif prop == 'hex-string':
+                    try:
+                        result = bytes.fromhex(response).decode("utf-8")
+                        unit = 'no'
+                    except Exception as e:
+                        result = response
+                        self.logger.debug('Response for OID {} not decoded from hex-string to string. Result is: {}. Error was: {}'.format(oid, result, e))
+                    else:
+                        self.logger.debug('hex-string decoded to: {}'.format(result))
+                        
+                elif prop == 'mac-adress':
+                    try:
+                        # result = response.hex(":")   # Pyhton 3.8 required
+                        result = ':'.join(f'{x:02x}' for x in response)
+                        unit = 'no'
+                    except Exception as e:
+                        result = response
+                        self.logger.debug('Response for OID {} not decoded to mac-adress. Result is: {}. Error was: {}'.format(oid, result, e))
+                    else:
+                        self.logger.debug('mac-adress decoded as: {}'.format(result))
+                
+                elif prop == 'ip-adress':
+                    try:
+                        result = '.'.join(str(cc) for cc in response)
+                        unit = 'no'
+                    except Exception as e:
+                        result = response
+                        self.logger.debug('Response for OID {} not decoded to mac-adress. Result is: {}. Error was: {}'.format(oid, result, e))   
+                    else: 
+                        self.logger.debug('ip-adress decoded as: {}'.format(result))
+                        
+                    #if validate_ip(response) is True:
+                    #    result = str(response)
+                    #    self.logger.debug('ip-adress checked to: {}'.format(result))
+                    #else:
+                    #    self.logger.debug('Response for OID {} does not contain ip-adress'.format(oid))
+                
+                elif prop == 'error-state':
+                    try:
+                        binary = ''
+                        for byte in response:
+                            binary += "{0:08b}".format(byte)
+                        self.logger.debug('error-state decoded to binary: {}'.format(binary)) 
+                        if binary.find("1") is True:
+                            result = binary.find("1")
+                        else:
+                          result = '-'
+                        unit = 'no'                        
+                    except Exception as e:
+                        result = response
+                        self.logger.debug('Response for OID {} not decoded to error-state.  Result is: {}. Error was: {}'.format(oid, result, e))
+                    else:
+                        self.logger.debug('error-state decoded to error-code: {}'.format(result))
+
                 else:
                     self.logger.debug('Item property not defined in item.conf')
 
@@ -209,6 +278,22 @@ class Snmp(SmartPlugin):
 
     def get_items(self):
         return self._items
+        
+    def validate_ip(s):
+        a = s.split('.')
+        if len(a) != 4:
+            return False
+        for x in a:
+            if not x.isdigit():
+                return False
+            i = int(x)
+            if i < 0 or i > 255:
+                return False
+        return True
+ 
+#
+# webinterface
+#
 
     def init_webinterface(self):
         """"
@@ -258,7 +343,6 @@ class Snmp(SmartPlugin):
 
 import cherrypy
 from jinja2 import Environment, FileSystemLoader
-
 
 class WebInterface(SmartPluginWebIf):
 

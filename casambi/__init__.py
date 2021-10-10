@@ -183,7 +183,7 @@ class Casambi(SmartPlugin):
         time.sleep(1)
 
         try:
-            result =  self.websocket.recv()
+            result = self.websocket.recv()
         except Exception as e:
             self.logger.info("Exception during receiving in openWebsocket(): {0}".format(e))
             return
@@ -267,7 +267,7 @@ class Casambi(SmartPlugin):
                     self.logger.debug("No wireStatus received")
                 else:    
                     self.logger.error("wireStatus: {0}".format(wireStatus))   
-                    self.logger.error("Debug: wireStatus response: {0}".format(result))    
+                    self.logger.error("Debug: wireStatus response: {0}".format(receivedData))    
 
             if 'method' in dataJson :
                 method = str(dataJson ['method'])

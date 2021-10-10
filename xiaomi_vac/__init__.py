@@ -43,7 +43,7 @@ from bin.smarthome import VERSION
 
 class Robvac(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.1.1"
+    PLUGIN_VERSION = "1.1.2"
 
     def __init__(self, smarthome):
         self._ip = self.get_parameter_value("ip")
@@ -122,8 +122,12 @@ class Robvac(SmartPlugin):
             # funktioniert nur mit übergebener id
             if self._data.get('clean_ids') is not None:
                 # self._data['clean_ids'] = self._data['clean_ids'].sort(reverse=True)
-                self._data['clean_details_last0'] = (
-                    self.vakuum.clean_details(self._data['clean_ids'][0], return_list=False))
+                try:
+                    self._data['clean_details_last0'] = (
+                        self.vakuum.clean_details(self._data['clean_ids'][0], return_list=False))
+                except Exception:
+                    self._data['clean_details_last0'] = (
+                        self.vakuum.clean_details(self._data['clean_ids'][0]))
                 self._data['last0_area'] = (
                     round(self._data['clean_details_last0'].area, 2))
                 self._data['last0_complete'] = self._data['clean_details_last0'].complete
@@ -139,8 +143,12 @@ class Robvac(SmartPlugin):
                     (self._data['clean_details_last0'].start
                      + self._data['clean_details_last0'].duration).strftime("%H:%M"))
 
-                self._data['clean_details_last1'] = (
-                    self.vakuum.clean_details(self._data['clean_ids'][1], return_list=False))
+                try:
+                    self._data['clean_details_last1'] = (
+                        self.vakuum.clean_details(self._data['clean_ids'][1], return_list=False))
+                except Exception:
+                    self._data['clean_details_last1'] = (
+                        self.vakuum.clean_details(self._data['clean_ids'][1]))
                 self._data['last1_area'] = (
                     round(self._data['clean_details_last1'].area, 2))
                 self._data['last1_complete'] = self._data['clean_details_last1'].complete
@@ -156,8 +164,12 @@ class Robvac(SmartPlugin):
                     (self._data['clean_details_last1'].start
                      + self._data['clean_details_last1'].duration).strftime("%H:%M"))
 
-                self._data['clean_details_last2'] = (
-                    self.vakuum.clean_details(self._data['clean_ids'][2], return_list=False))
+                try:
+                    self._data['clean_details_last2'] = (
+                        self.vakuum.clean_details(self._data['clean_ids'][2], return_list=False))
+                except Exception:
+                    self._data['clean_details_last2'] = (
+                        self.vakuum.clean_details(self._data['clean_ids'][2]))
                 self._data['last2_area'] = (
                     round(self._data['clean_details_last2'].area, 2))
                 self._data['last2_complete'] = self._data['clean_details_last2'].complete
@@ -173,8 +185,12 @@ class Robvac(SmartPlugin):
                      (self._data['clean_details_last2'].start
                       + self._data['clean_details_last2'].duration).strftime("%H:%M"))
 
-                self._data['clean_details_last3'] = (
-                    self.vakuum.clean_details(self._data['clean_ids'][3], return_list=False))
+                try:
+                    self._data['clean_details_last3'] = (
+                        self.vakuum.clean_details(self._data['clean_ids'][3], return_list=False))
+                except Exception:
+                    self._data['clean_details_last3'] = (
+                        self.vakuum.clean_details(self._data['clean_ids'][3]))
                 self._data['last3_area'] = (
                     round(self._data['clean_details_last3'].area, 2))
                 self._data['last3_complete'] = self._data['clean_details_last3'].complete
