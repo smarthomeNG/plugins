@@ -499,30 +499,64 @@ class UZSU(SmartPlugin):
         new_uzsu_list = []
         for entry in self._items[item]['list']:
             if entry['time'] == 'serie':
-                offset = 0
                 if entry['series'].get('active') is True:
                     self.logger.debug(f"Time series entry found with {entry['time']}")
                     seriesstart = entry['series'].get('timeSeriesMin', None)
                     intervall = entry['series'].get('timeSeriesIntervall', None)
                     endtime = entry['series'].get('timeSeriesMax', None)
                     count = entry['series'].get('timeSeriesCount', None)
-                    
+
                     if seriesstart is not None and intervall is not None:
                         if not 'sun' in seriesstart:
-                            starttime = datetime.strptime(seriesstart, "%H:%M" )
-                            sun = None
+                            starttime = datetime.strptime(seriesstart, "%H:%M")
+                            tabs = None
                         else:
                             starttime = None
-                            start_list = seriesstart.split('+')
-                            sun = start_list[0]
-                            if len(start_list) == 2:
-                                offset = int(start_list[1][:-1])
-                        
+                            # parse time string
+                            tabs = seriesstart.split('<')
+                            if len(tabs) == 1:
+                                smin = None
+                                cron = tabs[0].strip()
+                                smax = None
+                            elif len(tabs) == 2:
+                                if tabs[0].startswith('sun'):
+                                    smin = None
+                                    cron = tabs[0].strip()
+                                    smax = tabs[1].strip()
+                                else:
+                                    smin = tabs[0].strip()
+                                    cron = tabs[1].strip()
+                                    smax = None
+                            elif len(tabs) == 3:
+                                smin = tabs[0].strip()
+                                cron = tabs[1].strip()
+                                smax = tabs[2].strip()
+
+                            doff = 0  # degree offset
+                            moff = 0  # minute offset
+                            tmp, op, offs = cron.rpartition('+')
+                            if op:
+                                if offs.endswith('m'):
+                                    moff = int(offs.strip('m'))
+                                else:
+                                    doff = float(offs)
+                            else:
+                                tmp, op, offs = cron.rpartition('-')
+                                if op:
+                                    if offs.endswith('m'):
+                                        moff = -int(offs.strip('m'))
+                                    else:
+                                        doff = -float(offs)
+
+                            if doff != 0:
+                                self.logger.debug(
+                                    f'Use of sun offset in degrees not supported within time series; Given value will be ignored.')
+
                         step = intervall.split(':')
-                        step_min = int(step[0])*60+int(step[1])
-                                                    
+                        step_min = int(step[0]) * 60 + int(step[1])
+
                         if endtime is not None and starttime is not None:
-                            endtime = datetime.strptime(endtime, "%H:%M" )
+                            endtime = datetime.strptime(endtime, "%H:%M")
                             while starttime <= endtime:
                                 start = starttime.strftime("%H:%M")
                                 new_entry = entry.copy()
@@ -533,26 +567,35 @@ class UZSU(SmartPlugin):
                                 self.logger.debug(f"Time series entry with endtime decoced to {new_entry}")
                         elif count is not None:
                             count = int(count)
-                            for i in range(count-1):
+                            for i in range(count - 1):
                                 new_entry = entry.copy()
                                 del new_entry['series']
-                                
                                 if starttime is not None:
                                     start = starttime.strftime("%H:%M")
                                     new_entry['time'] = start
                                     starttime += timedelta(minutes=step_min)
-                                elif sun is not None:
-                                    offset += step_min
-                                    start = sun + '+' + str(offset) + 'm'
+                                elif tabs is not None:
+                                    start = ''
+                                    if smin is not None:
+                                        start += smin + '<'
+                                    start += tmp
+                                    if moff < 0:
+                                        start += str(moff) + 'm'
+                                    elif moff > 0:
+                                        start += '+' + str(moff) + 'm'
+                                    if smax is not None:
+                                        start += '<' + smax
                                     new_entry['time'] = start
+                                    moff += step_min
+
                                 new_uzsu_list.append(new_entry)
                                 self.logger.debug(f'Time series entry with count decoced to {new_entry}')
                         else:
-                            self.logger.error('no endtime or series count for time series defined')
+                            self.logger.debug('no endtime or series count for time series defined')
                     else:
-                        self.logger.error('time series not (fully) defined')
+                        self.logger.debug('time series not fully defined; start and or intervall missing')
                 else:
-                    self.logger.info('time series not active')
+                    self.logger.debug('time series not active')
             else:
                 new_uzsu_list.append(entry)
         return new_uzsu_list
