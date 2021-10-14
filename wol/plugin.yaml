@@ -8,7 +8,7 @@ plugin:
     maintainer: bmxp
     tester: ohinckel
     state: qa-passed
-    keywords: Wake, on, LAN, magic, paket, packet, 
+    keywords: Wake, on, LAN, magic, paket, packet,
     documentation: https://www.smarthomeng.de/user/plugins_doc/config/wol.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1661427
     version: 1.2.0                 # Plugin version
@@ -38,11 +38,11 @@ item_attributes:
                 The separators can be chosen arbitrary or left out optionally.
 
     wol_ip:
-        type: ip4
+        type: ipv4
         mandatory: False
         description:
             de: >
-                Optionales Attribut. Hier kann die IP Adresse des Hosts angegeben werden 
+                Optionales Attribut. Hier kann die IP Adresse des Hosts angegeben werden
                 wenn ein Gerät eines anderen Subnetzes aufgeweckt werden soll
             en: >
                 This attribute is optional. You have to provide the IP address of the
@@ -67,7 +67,7 @@ plugin_functions:
                 type: mac
                 mandatory: True
                 description:
-                    de: 
+                    de:
                         MAC Adresse des per WOL aufzuweckenden Gerätes.
                         Die Trennzeichen für die einzelnen MAC Bestandteile sind beliebig wählbar
                         oder können auch weggelassen werden
@@ -79,7 +79,7 @@ plugin_functions:
                 mandatory: False
                 description:
                     de: >
-                        Optionales Attribut. Hier kann die IP Adresse des Hosts angegeben werden 
+                        Optionales Attribut. Hier kann die IP Adresse des Hosts angegeben werden
                         wenn ein Gerät eines anderen Subnetzes aufgeweckt werden soll
                     en: >
                         This attribute is optional. You have to provide the IP address of the
