@@ -1,0 +1,137 @@
+{% extends "base_plugin.html" %}
+
+{% set logo_frame = false %}
+
+<!-- set update_interval to a value > 0 (in milliseconds) to enable periodic data updates -->
+{% set update_interval = 5000 %}
+
+<!--
+	Additional script tag for plugin specific javascript code go into this block
+-->
+{% block pluginscripts %}
+<script>
+	function handleUpdatedData(response, dataSet = null) {
+		if (dataSet === 'devices_info' || dataSet === null) {
+			var ring_data = JSON.parse(response);
+			ring_data.forEach(element => {
+				ring = element.ring;
+				element.slots.forEach(slot_data => {
+					shngInsertText(ring + slot_data.is_relevant_origin + '_rele', slot_data.is_relevant)
+					shngInsertText(ring + slot_data.is_relevant_origin + '_cntt', slot_data.content)
+				});
+			});
+		}
+	}
+</script>
+{% endblock pluginscripts %}
+
+
+{% block headtable %}
+<table class="table table-striped table-hover">
+	<tbody>
+		<tr>
+			<td class="py-1"><strong>Prompt 1</strong></td>
+			<td class="py-1">{% if 1 == 2 %}{{ _('Ja') }}{% else %}{{ _('Nein') }}{% endif %}</td>
+			<td class="py-1" width="50px"></td>
+			<td class="py-1"><strong>Prompt 4</strong></td>
+			<td class="py-1">{{ _('Wert 4') }}</td>
+			<td class="py-1" width="50px"></td>
+		</tr>
+		<tr>
+			<td class="py-1"><strong>Prompt 2</strong></td>
+			<td class="py-1">{{ _('Wert 2') }}</td>
+			<td></td>
+			<td class="py-1"><strong>Prompt 5</strong></td>
+			<td class="py-1">-</td>
+			<td></td>
+		</tr>
+	</tbody>
+</table>
+{% endblock headtable %}
+
+
+<!--
+	Additional buttons for the web interface (if any are needed) - displayed below the headtable-section
+-->
+{% block buttons %}
+{% if 1 == 2 %}
+<div>
+	<button id="btn1" class="btn btn-shng btn-sm" name="scan" onclick="shngPost('', {learn: 'on'})"><i
+			class="fas fa-question"></i>&nbsp;&nbsp;&nbsp;{{ _('nach Devices suchen') }}&nbsp;</button>
+</div>
+{% endif %}
+{% endblock %}
+
+<!--
+	Define the number of tabs for the body of the web interface (1 - 3)
+-->
+{% set tabcount = 2 %}
+
+
+<!--
+	Set the tab that will be visible on start, if another tab that 1 is wanted (1 - 3)
+-->
+{% if item_count==0 %}
+{% set start_tab = 1 %}
+{% endif %}
+
+
+<!--
+	Content block for the first tab of the Webinterface
+-->
+{% set tab1title = "<strong>" ~ _('Nachrichtenringe') ~ "</strong> (" ~ len(p._model.get_rings()) ~ ")" %}
+{% block bodytab1 %}
+<div class="container-fluid m-2">
+	<div id="hierhin">
+		{% for ring in p._model.get_rings() %}
+		<h2>{{ ring }}</h2>
+		<table class="table table-striped table-hover">
+			<thead>
+				<tr>
+					<td>Item</td>
+					<td>Relevant</td>
+					<td>Inhalt</td>
+				</tr>
+			</thead>
+			<tbody>
+				{% for slot in p._model.get_ring_model(ring).get_slots() %}
+				{% set slot_data = slot.get_data() %}
+				<tr>
+					<td id="{{ ring }}{{ slot_data.is_relevant_origin }}_orig">{{ slot_data.is_relevant_origin }}</td>
+					<td id="{{ ring }}{{ slot_data.is_relevant_origin }}_rele">{{ slot_data.is_relevant }}</td>
+					<td id="{{ ring }}{{ slot_data.is_relevant_origin }}_cntt">{{ slot_data.content }}</td>
+				</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+		{% endfor %}
+	</div>
+</div>
+{% endblock bodytab1 %}
+
+
+{% set tab2title = "<strong>" ~ _('Nachrichtensenken') ~ "</strong> (" ~ len(p._model.get_sinks()) ~ ")" %}
+{% block bodytab2 %}
+<div class="container-fluid m-2">
+	{% for sink in p._model.get_sinks() %}
+	<h2>{{ sink }}</h2>
+	{% set sink_data = p._model.dump_sink(sink) %}
+	{% set sink_data2 = p._model.introspect_sink(sink) %}
+	{{ sink_data2 }}
+	<table class="table table-striped table-hover">
+		<thead>
+			<tr>
+				<td>Ring</td>
+			</tr>
+		</thead>
+		<tbody>
+			{% for sink_slot in sink_data %}
+			<tr>
+				<td id="{{ sink }}_id">{{ sink_slot }}</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+	{% endfor %}
+</div>
+{% endblock bodytab2 %}
