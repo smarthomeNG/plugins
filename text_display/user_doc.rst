@@ -1,7 +1,7 @@
 text_display
 ============
 
-Das Plugin dient dazu Nachrichten auf Displays (z.B. KNX-Taster) anzuzeigen. 
+Das Plugin dient dazu Nachrichten auf Displays (z.B. KNX-Taster) anzuzeigen.
 
 * Es gibt Nachrichten**senken**, das sind die jeweiligen Anzeigegeräte, die die Nachrichten anzeigen sollen.
 * Nachrichten werden in den Nachrichten**ringen** verwaltet. Auf jedem Ring gibt es eine feste Anzahl an Slots, für die geprüft wird, ob die Nachricht relevant ist. Die Anzahl wird natürlich aus der Menge der möglichen Nachrichtenquellen automatisch definiert.
@@ -66,8 +66,7 @@ Nachrichtensenke
 
 In diesem Beispiel werden die Nachrichten auf die KNX-GA a/b/c geschickt. Liegt keine Nachricht vor, wird ein Leerzeichen als Text geschickt, damit z.B. auf den MDT Glastastern keine alten Nachrichten stehen bleiben. Lässt man die Default-Konfiguration einfach weg, wird kein Wert gesendet. Auf den MDT-RTR ist das der einfachste Weg, die Nachricht verschwinden zu lassen.
 
-.. code-block:: yaml
-   :linenos:
+.. code:: yaml
 
    meldung:
         knx_dpt: "16.001"
@@ -87,13 +86,13 @@ In diesem Beispiel werden die Nachrichten auf die KNX-GA a/b/c geschickt. Liegt 
 
 Dies ist die Struktur für einen Raum, das muss dann für jeden Raum wiederholt werden.
 
-.. code-block:: yaml
-   :linenos:
+.. code:: yaml
+
     schlafzimmer:
         temperatur_im_schlafzimmer:
             type: num
             knx_cache: x/y/z
-            
+
             anzeige_string:
                 type: str
                 eval: >
@@ -103,7 +102,7 @@ Dies ist die Struktur für einen Raum, das muss dann für jeden Raum wiederholt 
                 display_is_relevant:
                     type: bool
                     eval: or
-                    eval_trigger: 
+                    eval_trigger:
                         - .,..irgendein_fenster_im_schlafzimmer_offen
                     text_display_target_ring: 'fenster'
                     text_display_content_source_item: ..
@@ -114,7 +113,7 @@ Dies ist die Struktur für einen Raum, das muss dann für jeden Raum wiederholt 
             eval_trigger:
                 - .fenster_zur_strasse
                 - .fenster_zum_garten
-            
+
             fenster_zur_strasse:
                 type: bool
                 knx_dpt: 1
@@ -128,14 +127,13 @@ Dies ist die Struktur für einen Raum, das muss dann für jeden Raum wiederholt 
 Außentemperatur abhängig von Fensterstatus:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. code-block:: yaml
-   :linenos:
+.. code:: yaml
 
     wetter:
         luft_temperatur:
             type: num
             remark: wo auch immer der Wert herkommt (OpenWeatherMap ;-) / Wetterstation)
-            
+
             message_string:
                 type: str
                 eval: >
@@ -160,8 +158,7 @@ AB Prüfen Nachrichtenquelle:
 
 Die Anzahl der neuen Nachrichten auf dem Anrufbeantworter muss über 0 sein, damit immer der gleiche "AB prüfen" Text angezeigt wird.
 
-.. code-block:: yaml
-   :linenos:
+.. code:: yaml
 
     fritzbox:
         tam:
@@ -191,8 +188,7 @@ Die Anzahl der neuen Nachrichten auf dem Anrufbeantworter muss über 0 sein, dam
 Anrufer-Meldungen
 ~~~~~~~~~~~~~~~~~
 
-.. code-block:: yaml
-   :linenos:
+.. code:: yaml
 
     fritzbox:
         monitor:
@@ -224,4 +220,3 @@ Web Interface
 -------------
 
 Das Plugin liefert ein WebInterface in dem sich die Nachrichtenringe, mit den gesetzten Slots nachvollziehen lassen. Darüberhinaus werden dort auch die Senken angezeigt. Die Darstellung ist sicher noch Verbesserungsfähig, funktioniert aber fürs Debuggen.
- 
