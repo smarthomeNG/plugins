@@ -701,7 +701,13 @@ class Hue2(SmartPlugin):
                 example, if the bridge button wasn't pressed).
         """
         api_url = "http://{}/api".format(ip+':'+port)
-        res = qhue.qhue.Resource(api_url, timeout)
+        try:
+            # for qhue versions v2.0.0 and up
+            session = requests.Session()
+            res = qhue.qhue.Resource(api_url, session, timeout)
+        except:
+            # for qhue versions prior to v2.0.0
+            res = qhue.qhue.Resource(api_url, timeout)
 
         if devicetype is None:
             devicetype = "SmartHomeNG#{}".format(getfqdn())
