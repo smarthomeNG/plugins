@@ -1,0 +1,78 @@
+# Metadata for the plugin
+plugin:
+    # Global plugin attributes
+    type: system                   # plugin type (gateway, interface, protocol, system, web)
+    description:
+        de: 'Plugin um Text Nachrichten auf Displays (z.B. KNX RTR oder Taster) nacheinander anzuzeigen'
+        en: 'Plugin to cycle text-messages on displays (e.g. KNX-devices)'
+    maintainer: jentz1986
+    tester: jentz1986               # Who tests this plugin?
+    state: develop                  # change to ready when done with development
+    keywords: message text display knx
+#    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1678358-meldungsplugin-f%C3%BCr-textmeldungen-auf-knx-tastern
+
+    version: 1.8.1                  # Plugin version (must match the version specified in __init__.py)
+    sh_minversion: 1.8.0            # minimum shNG version to use this plugin
+#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    py_minversion: 3.6             # minimum Python version to use for this plugin
+#    py_maxversion:                 # maximum Python version to use for this plugin (leave empty if latest)
+    multi_instance: False           # plugin supports multi instance
+    restartable: False
+    classname: TextDisplay          # class containing the plugin
+
+parameters:
+    # Definition of parameters to be configured in etc/plugin.yaml (enter 'parameters: NONE', if section should be empty)
+    NONE
+
+item_attributes:
+    text_display_content_source_item:
+        type: str
+        mandatory: True
+        description:
+            de: 'Pfad zum Item mit dem Nachrichten-Inhalt'
+            en: 'Path to item providing message-content'
+    text_display_target_ring:
+        type: str
+        default: 'fallback'
+        description:
+            de: 'Nachrichtenring: Nachrichten auf dem gleichen Ring, werden gleich priorisiert'
+            en: 'Message ring: Messages on the same ring are prioritized equally'
+
+    text_display_sink_for_rings:
+        type: list(str)
+        description:
+            de: 'Nachrichtenringe: Nachrichten dieser Ringe sollen auf der aktuellen Senke ausgegeben werden'
+            en: 'Message rings: Messages from the listed rings shall be forwarded to this sink'
+    text_display_default_message:
+        type: str
+        description:
+            de: 'Wenn es keine Nachrichten gibt, wird dieser Wert einmal gesetzt'
+            en: 'When there is no message to be sent, this value is sent once'
+    text_display_sink_rings_with_prio:
+        type: list(str)
+        description:
+            de: 'Nachrichtenringe: Nachrichten dieser Ringe sollen andere Nachrichten verdecken'
+            en: 'Message rings: Messages from the listed rings shall be covering messages from default rings'
+    text_display_cycle_time:
+        type: int
+        default: 3
+        valid_min: 1
+        description:
+            de: 'Wie lange soll eine Nachricht bleiben, bevor sie durch die nächste ersetzt wird?'
+            en: 'How long should a message stay until it is replaced by the next one?'
+
+
+item_structs: 
+    NONE
+
+#item_attribute_prefixes:
+    # Definition of item attributes that only have a common prefix (enter 'item_attribute_prefixes: NONE' or ommit this section, if section should be empty)
+    # NOTE: This section should only be used, if really nessesary (e.g. for the stateengine plugin)
+
+plugin_functions:
+    NONE
+
+logic_parameters:
+    NONE
+    # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)
