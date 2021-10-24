@@ -212,7 +212,7 @@ class Rpi1Wire(SmartPlugin):
         """
         Updates the values in plugin dict from 1wire directory
         """
-         for sensor in self.sensors:
+        for sensor in self.sensors:
             id = self.sensors[sensor]
             value = self.getvalue(id)
             #if value != 99999:
