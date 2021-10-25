@@ -1,6 +1,3 @@
-.. index:: Plugins; telegram
-.. index:: telegram
-
 ========
 telegram
 ========
@@ -13,14 +10,9 @@ Abhängigkeiten
 
 Es wird die Bibliothek ``python-telegram-bot`` benötigt.
 Diese ist in der ``requirements.txt`` enthalten.
-Bevor das Plugin genutzt werden kann, muß die Bibliothek installiert werden:
+Bevor das Plugin genutzt werden kann, muß die Bibliothek installiert werden. Dies geschieht automatisch beim Neustart
+von shNG nach der Pluginkonfiguration
 
-* Entweder mit ``sudo pip install -r requirements.txt``
-
-oder
-
-* unter Benutzung von ``pip install -r requirements.txt`` innerhalb
-  des Verzeichnisses ``/usr/local/smarthome/plugins/telegram``.
 
 Konfiguration von Telegram
 ==========================
@@ -37,7 +29,7 @@ Der BotFather erstellt für den neuen Bot ein sogenanntes **token** also einen e
 Konfiguration des Plugins
 =========================
 
-Die Konfiguration des Plugins ist auch unter :doc:`/plugins_doc/config/telegram` beschrieben bzw. in der **plugin.yaml** nachzulesen.
+Die Konfiguration des Plugins ist in der **plugin.yaml** nachzulesen.
 
 
 Der erstelle **token** muß in der ``plugin.yaml`` von SmartHomeNG eingetragen werden. Das kann im Admin-IF geschehen oder durch direkten Eintrag in die ``plugin.yaml``.
