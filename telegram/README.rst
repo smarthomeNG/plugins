@@ -1,6 +1,3 @@
-.. index:: Plugins; telegram
-.. index:: telegram
-
 ========
 telegram
 ========
@@ -122,8 +119,8 @@ Beispiel mit Platzhaltern
        visu_acl: r
        cache: 'on'
        telegram_message: 'New AutoBlind state: [VALUE]'
-
-
+       
+       
 telegram_condition
 ------------------
 

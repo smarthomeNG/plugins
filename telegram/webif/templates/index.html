@@ -52,24 +52,111 @@
 <!--
 	Content block for the first tab of the Webinterface
 -->
-{% set tab1title = "<strong>TAB1</strong>" %}
+{% set tab1title = "<strong>Items</strong>"%}
 {% block bodytab1 %}
-<div class="container-fluid m-2">
-    {% autoescape false %}
-    {{ r | replace("\r\n", "<br/>") }}
-    {% endautoescape %}
+<strong>Telegram Output Items</strong>
+<div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
+	<div class="col-sm-12">
+		<table class="table table-striped table-hover pluginList">
+			<thead>
+				<tr class="shng_heading">
+					<th>{{ _('Pfad') }}</th>
+					<th>{{ _('Typ') }}</th>
+					<th>{{ _('Wert') }}</th>
+					<th>{{ _('Letztes Update') }}</th>
+					<th>{{ _('Letzter Change') }}</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for item in p._items %}
+					<tr id="{{ loop.index }}_click">
+						<td class="py-1">{{ item.property.path }}</td>
+						<td class="py-1">{{ item.property.type }}</td>
+						<td class="py-1">{{ item() }}</td>
+						<td class="py-1">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+						<td class="py-1">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+					</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+	</div>
 </div>
-{% endblock bodytab1 %}
+<strong>Telegram Input Items</strong>
+<div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
+	<div class="col-sm-12">
+		<table class="table table-striped table-hover pluginList">
+			<thead>
+				<tr class="shng_heading">
+					<th>{{ _('Pfad') }}</th>
+					<th>{{ _('Typ') }}</th>
+					<th>{{ _('Wert') }}</th>
+					<th>{{ _('Letztes Update') }}</th>
+					<th>{{ _('Letzter Change') }}</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for item in p._items_text_message %}
+					<tr id="{{ loop.index }}_click">
+						<td class="py-1">{{ item.property.path }}</td>
+						<td class="py-1">{{ item.property.type }}</td>
+						<td class="py-1">{{ item() }}</td>
+						<td class="py-1">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+						<td class="py-1">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+					</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+	</div>
+</div>
+{% endblock %}
 
 
 <!--
 	Content block for the second tab of the Webinterface
 -->
-{% set tab2title = "<strong>TAB2</strong>" %}
+{% set tab2title = "<strong>Telegram Infos</strong>" %}
 {% block bodytab2 %}
-<div class="container-fluid m-2">
-    {% for item in items %}
-        <div>{{ item }}</div>
-    {% endfor %}
+<strong>Chat-IDs</strong>
+<div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
+	<div class="col-sm-12">
+		<table class="table table-striped table-hover pluginList">
+			<thead>
+				<tr class="shng_heading">
+					<th>{{ _('Registrierte Chat-ID') }}</th>
+					<th>{{ _('Zugriff') }}</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for key in p._chat_ids_item() %}
+					<tr id="{{ loop.index }}_click">
+						<td class="py-1">{{ key }}</td>
+						<td class="py-1">{{ p._chat_ids_item()[key] }}</td>
+					</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+	</div>
+</div>
+
+<strong>Telegram Infos</strong>
+<div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
+	<div class="col-sm-12">
+		<table class="table table-striped table-hover pluginList">
+			<thead>
+				<tr class="shng_heading">
+					<th>{{ _('Info') }}</th>
+					<th>{{ _('Info-Items') }}</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for key in p._items_info %}
+					<tr id="{{ loop.index }}_click">
+						<td class="py-1">{{ key }}</td>
+						<td class="py-1">{{ p._items_info[key] }}</td>
+					</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+	</div>
 </div>
 {% endblock bodytab2 %}
