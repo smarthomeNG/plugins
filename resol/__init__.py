@@ -46,6 +46,14 @@ class Resol(SmartPlugin):
 
     def stop(self):
         self.scheduler_remove('PollData')
+
+        try:
+            self.sock.shutdown(0)
+            self.sock.close()
+        except:
+            pass
+        
+        self.sock = None
         self.alive = False
 
     def parse_item(self, item):
@@ -79,7 +87,8 @@ class Resol(SmartPlugin):
         try:
             self.sock.shutdown(0)
             self.sock.close()
-        except:
+        except Exception as e:
+            self.logger.warning("Exception during shutdown socket command: {0}".format(e))
             pass
         
         self.sock = None
@@ -139,6 +148,9 @@ class Resol(SmartPlugin):
 
         #s = buf.encode('utf-8')
         #self.logger.warning("Readstream hex {0} bytes: {1}".format(len(buf), s.hex()))
+
+        if not buf: 
+            return
 
         msgs = self.splitmsg(buf)
         for msg in msgs:

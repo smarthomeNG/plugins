@@ -78,3 +78,20 @@ resol:
 
 
 ```
+
+Resol protocol:
+
+Synch byte beween messages: 0xAA
+
+Message:
+    Byte    Content
+    0-1     Destination
+    2-3     Source
+    4       Protocol Version,        0x10 -> "PV1", 0x20 -> "PV2", 0x30 -> "PV3"
+    5-6     Command
+    7-8     Frame count,             Example 0x1047-> 104 bytes
+
+    
+
+
+```
