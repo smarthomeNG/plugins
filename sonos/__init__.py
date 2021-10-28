@@ -196,7 +196,7 @@ class SubscriptionHandler(object):
 #                self._event = self._service.subscribe(auto_renew=True)
                 self._event = self._service.subscribe(auto_renew=False)
             except Exception as err:
-                self.logger.warning("Sonos: {err}".format(err=err))
+                self.logger.warning("Exception in subscribe(): {err}".format(err=err))
             if self._event:
                 self._event.auto_renew_fail = renew_error_callback
                 self._thread = threading.Thread(target=self._endpoint, name=self._threadName, args=(self,))
@@ -211,7 +211,7 @@ class SubscriptionHandler(object):
                 try:
                     self._event.unsubscribe()
                 except Exception as err:
-                    self.logger.warning("Sonos: {err}".format(err=err))
+                    self.logger.warning("Exception in unsubscribe(): {err}".format(err=err))
                 self._signal.set()
                 if self._thread:
                     self.logger.info("Debug: Preparing to terminate thread")
@@ -395,7 +395,7 @@ class Speaker(object):
             try:
                 subscription.unsubscribe()
             except Exception as error:
-                self.logger.warning("Sonos: {error}".format(error=error))
+                self.logger.warning("Exception in dispose(): {error}".format(error=error))
                 continue
 
         self._soco = None
@@ -2184,7 +2184,12 @@ class Speaker(object):
         """
         Gets all Sonos playlist items.
         """
-        playlists = self.soco.get_sonos_playlists()
+        try:
+            playlists = self.soco.get_sonos_playlists()
+        except Exception as e:
+            self.logger.info("Error during soco.get_sonos_playlists(): {0}".format(e))
+            return
+
         p_l = []
         for value in playlists:
             p_l.append(value.title)
@@ -2339,7 +2344,7 @@ class Speaker(object):
                     try:
                         self.soco.play_from_queue(track, start)
                     except SoCoUPnPException as ex:
-                        self.logger.warning("Sonos: {ex}".format(ex=ex))
+                        self.logger.warning("Exception in play_from_queue(): {ex}".format(ex=ex))
                         return
                     # bug here? no event, we have to trigger it manually
                     if start:
@@ -2350,7 +2355,7 @@ class Speaker(object):
 
 class Sonos(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.5.9"
+    PLUGIN_VERSION = "1.6.0"
 
     def __init__(self, sh, *args, **kwargs):
         super().__init__(**kwargs)
@@ -2867,7 +2872,11 @@ class Sonos(SmartPlugin):
                 zones = soco.discover(timeout=5)
             except Exception as e:
                 self.logger.error("Exception during soco discover function: %s" % str(e))
-            
+                return
+
+        if zones is None: 
+            self.logger.debug("Discovery could not be executed.")
+            return 
 
         # 1. attempt: don't touch our speaker, return and wait for next interval
         # 2. attempt: ok, no speaker found, go on
