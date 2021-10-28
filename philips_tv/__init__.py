@@ -53,6 +53,7 @@ class Philips_TV(SmartPlugin):
         self.deviceKey = 'invalid'
         self._rx_items = []
         self.verbose = False
+        self._errors = ''
 
         
         temp = self.get_parameter_value('deviceID')
@@ -131,7 +132,7 @@ class Philips_TV(SmartPlugin):
         pass
 
     def poll_device(self):
-        self.logger.debug('Polling philips device')
+        #self.logger.debug('Polling philips device')
 
         error_msg    = None
         volume       = None
@@ -146,13 +147,16 @@ class Philips_TV(SmartPlugin):
         if value_json is not None:
             if 'error' in value_json:
                 error_msg = value_json["error"]
+                self._errors = error_msg
                 powerstate = 'OFF'
                 if error_msg == 'Can not reach the API': 
-                    self.logger.debug("Error: {0}".format(error_msg))
+                    #self.logger.debug("Error: {0}".format(error_msg))
+                    pass
                 else:
                     self.logger.error("Error: {0}".format(error_msg))
             else:
-                powerstate = ''
+                error_msg = ''
+                self._errors = error_msg
 
             if 'muted' in value_json:
                 muted = value_json["muted"]
@@ -162,7 +166,7 @@ class Philips_TV(SmartPlugin):
                 #self.logger.debug("Volume state is: {0}".format(volume))
          
         value = self.get("activities/current", verbose=self.verbose, err_count=0, print_response=False)
-        self.logger.debug("Response: {0}".format(value))
+        #self.logger.debug("Response: {0}".format(value))
         value_json = json.loads(value)
         if value_json is not None:
             if 'component' in value_json:
@@ -171,7 +175,46 @@ class Philips_TV(SmartPlugin):
                     packageName = component["packageName"]
                 if 'className' in component:
                     className= component["className"]
-                self.logger.debug("APP state is: {0}, {1}".format(packageName, className))
+                if className != 'NA' or packageName != 'NA':
+                    self.logger.info("APP state is: {0}, {1}".format(packageName, className))
+
+        #does not work:
+        #value = self.get("activities", verbose=self.verbose, err_count=0, print_response=False)
+        #self.logger.debug("Response Activities: {0}".format(value))
+
+
+        # does not work:
+        #value = self.get("channeldb/tv/favoritelLists/all", verbose=self.verbose, err_count=0, print_response=False)
+        #self.logger.debug("Response Favorite: {0}".format(value))
+
+        # does not work:
+        #value = self.get("channeldb/tv/favoritelLists/all", verbose=self.verbose, err_count=0, print_response=False)
+        #self.logger.debug("Response Favorite list: {0}".format(value))
+
+
+        # works: lists all tv channels:
+        #value = self.get("channeldb/tv/channelLists/all", verbose=self.verbose, err_count=0, print_response=False)
+        #self.logger.debug("Response: {0}".format(value))
+
+        # does not work:
+        #value = self.get("applications/current", verbose=self.verbose, err_count=0, print_response=False)
+        #self.logger.debug("Response apps current: {0}".format(value))
+
+        #does not work
+        #value = self.get("sources/current", verbose=self.verbose, err_count=0, print_response=False)
+
+        # works: lists all apps
+        #value = self.get("applications", verbose=self.verbose, err_count=0, print_response=False)
+        #self.logger.debug("Response applications: {0}".format(value))
+        #value_json = json.loads(value)
+        #if value_json is not None:
+        #    if 'applications' in value_json:
+        #        applicationList = value_json["applications"]
+        #        self.logger.debug("Applications:")
+        #        for app in applicationList:
+        #            if 'label' in app:
+        #                self.logger.debug("\t{0}".format(app['label']))
+
 
         value = self.get("powerstate", verbose=self.verbose, err_count=0, print_response=False)
         #self.logger.debug("Response: {0}".format(value))
@@ -182,7 +225,7 @@ class Philips_TV(SmartPlugin):
                 #self.logger.debug("Powerstate is: {0}".format(powerstate))
 
         value = self.get("activities/tv", verbose=self.verbose, err_count=0, print_response=False)
-        self.logger.debug("Response: {0}".format(value))
+        #self.logger.debug("Response: {0}".format(value))
         value_json = json.loads(value)
         if value_json is not None:
             if 'channel' in value_json:
