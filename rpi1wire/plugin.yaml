@@ -3,10 +3,10 @@ plugin:
     # Global plugin attributes
     type: gateway                   # plugin type (gateway, interface, protocol, system, web)
     description:
-        de: 'Plugin für den Rapberry Pi. Erlaubt den einfachen Zugriff auf 1-Wire Sensoren. Getestet mit Raspberry Pi B und dem Temperatursensor DS18B20'
+        de: 'Plugin für den Raspberry Pi. Erlaubt den einfachen Zugriff auf 1-Wire Sensoren. Getestet mit Raspberry Pi B und dem Temperatursensor DS18B20'
         en: 'Plugin developed for the Raspberry Pi. It allows easy access to 1-Wire sensors. Tested with the Raspberry Pi B and the temperature sensor DS18B20'
         fr: 'Support de 1-Wire à travers Raspberry Pi sur SmartHomeNG v1.5 et plus'
-    maintainer: bmxp
+    maintainer: bmxp, sisamiwe
     tester: sisamiwe, ElektroRudi   # Who tests this plugin?
     state: develop                  # change to ready when done with development
     keywords: 1wire onewire raspberry pi dallas temperature sensor
@@ -33,7 +33,7 @@ parameters:
         type: str
         default: '/sys/bus/w1/devices'
         description:
-            de: 'Verzeichnis des Onewire, in dem der RPi die Werte der 1-wire Sensoren hält'
+            de: 'Verzeichnis des onewire, in dem der RPi die Werte der 1-wire Sensoren hält'
             en: 'Directory of onewire provided'
 
 item_attributes:
