@@ -1,1 +1,2 @@
 python-telegram-bot>=12.8.0
+requests
