@@ -372,7 +372,7 @@ class EnOcean(SmartPlugin):
             elif (data[0] == 0) and (len(data) == 0):
                 self.logger.error("enocean: Reading Base ID: No answer")
             else:
-                self.logger.error("enocean: Reading Base ID returned code = {}".format(RETURN_CODES[data[0]]))
+                self.logger.error("enocean: Reading Base ID returned code = {0} and {1} bytes".format(RETURN_CODES[data[0]], len(data)))
         elif (self._last_packet_type == PACKET_TYPE_COMMON_COMMAND) and (self._last_cmd_code == CO_WR_BIST):
             if (data[0] == 0) and (len(data) == 2):
                 if (data[1] == 0):

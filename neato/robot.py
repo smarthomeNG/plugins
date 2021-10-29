@@ -200,6 +200,8 @@ class Robot:
             self.logger.debug("Sending cloud state request successful")
         elif statusCode == 403:
             self.logger.debug("Sending cloud state request returned: Forbidden. Aquire new session key.")
+        elif statusCode == 404:
+            self.logger.error("Robot is not reachable for backend. Is robot online?")
         else:
             self.logger.error("Sending cloud state request error: {0}, msg: {1}".format(statusCode,robot_cloud_state_response.text ))
             return 'error'
@@ -355,7 +357,7 @@ class Robot:
             else:
                 local_category = 2
 
-            self.logger.warning("Robot: category changed for send command from {0} (received) to {1}".format(self.category, local_category ))
+            self.logger.info("Robot: category changed for send command from {0} (received) to {1}".format(self.category, local_category ))
 
         if self.houseCleaning == 'basic-1':
             return '{"reqId": "77","cmd": "startCleaning","params": {"category": ' + str(
