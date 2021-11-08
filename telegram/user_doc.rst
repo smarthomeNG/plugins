@@ -258,7 +258,7 @@ Beispiel
 
 Nach der Eingabe von ``Hello world!`` am Telegram wird das Item ``telegram_message``
 auf ``<Benutzername des chat Partners>: Chat-ID: Hello world!`` gesetzt.
-Ein John Doe ergäbe also ``John Doe: Hello world!``
+Ein John Doe ergäbe also ``John Doe: xxxxxxx: Hello world!``
 
 Mit einer Logik kann basierend darauf ein Menu und entsprechende Abfragen an shNG gestellt werden.
 Siehe dazu ein Beispiel weiter unten.
