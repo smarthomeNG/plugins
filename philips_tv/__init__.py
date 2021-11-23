@@ -59,22 +59,22 @@ class Philips_TV(SmartPlugin):
         temp = self.get_parameter_value('deviceID')
         if not temp == '':
             self.deviceID = temp
-            self.logger.debug("Loaded deviceID: {0}".format(self.deviceID))
+            self.logger.debug(f"Loaded deviceID: {self.deviceID}")
 
         temp = self.get_parameter_value('deviceKey')
         if not temp == '':
             self.deviceKey = temp
-            self.logger.debug("Loaded deviceKey: {0}".format(self.deviceKey))
+            self.logger.debug(f"Loaded deviceKey: {self.deviceKey}")
 
 
 
         # Check plugin parameters:
         if (len(self.ip) < 1):
-            self.logger.error('No valid ip specified. Aborting.')
+            self.logger.error("No valid ip specified. Aborting.")
             self._init_complete = False
             return
         else:
-            self.logger.info('Philips TV configured on IP: {0}'.format(self.ip))
+            self.logger.info(f"Philips TV configured on IP: {self.ip}")
         self.logger.debug("Init completed.")
         self.init_webinterface()
         self._items = {}
@@ -104,7 +104,7 @@ class Philips_TV(SmartPlugin):
         """
         if self.get_iattr_value(item.conf, 'philips_tv_rx_key'):
             self._rx_items.append(item)
-            #self.logger.debug("rx-items dict: {0}".format(self._rx_items))
+            #self.logger.debug(f"rx-items dict: {self._rx_items}")
 
         if self.has_iattr(item.conf, 'philips_tv_tx_key'):
             # register item for event handling via smarthomeNG core. Needed for sending control actions:
@@ -114,7 +114,7 @@ class Philips_TV(SmartPlugin):
         pass
 
     def update_item(self, item, caller=None, source=None, dest=None):
-        self.logger.debug("Update philips item: Caller: {0}, pluginname: {1}".format(caller,self.get_shortname() ))
+        self.logger.debug(f"Update philips item: Caller: {caller}, pluginname: {self.get_shortname()}")
         if caller != self.get_shortname():
             if self.has_iattr(item.conf, 'philips_tv_tx_key'):
                 tx_key = item.conf['philips_tv_tx_key'].upper()
@@ -128,11 +128,11 @@ class Philips_TV(SmartPlugin):
                         #self.logger.debug("Sending poweroff command")
                         self.post("input/key", body=body, verbose=self.verbose, err_count=0)
                 else:
-                    self.logger.error("Unknown tx key: {0}".format(tx_key))
+                    self.logger.error(f"Unknown tx key: {tx_key}")
         pass
 
     def poll_device(self):
-        #self.logger.debug('Polling philips device')
+        #self.logger.debug("Polling philips device")
 
         error_msg    = None
         volume       = None
@@ -141,7 +141,7 @@ class Philips_TV(SmartPlugin):
         channel_name = None
 
         value = self.get("audio/volume", verbose=self.verbose, err_count=0, print_response=False)
-        #self.logger.debug("Response: {0}".format(value))
+        #self.logger.debug(f"Response: {value}")
         
         value_json = json.loads(value)
         if value_json is not None:
@@ -150,23 +150,23 @@ class Philips_TV(SmartPlugin):
                 self._errors = error_msg
                 powerstate = 'OFF'
                 if error_msg == 'Can not reach the API': 
-                    #self.logger.debug("Error: {0}".format(error_msg))
+                    #self.logger.debug(f"Error: {error_msg}")
                     pass
                 else:
-                    self.logger.error("Error: {0}".format(error_msg))
+                    self.logger.error(f"Error: {error_msg}")
             else:
                 error_msg = ''
                 self._errors = error_msg
 
             if 'muted' in value_json:
                 muted = value_json["muted"]
-                #self.logger.debug("Mute state is: {0}".format(muted))
+                #self.logger.debug(f"Mute state is: {muted}")
             if 'current' in value_json:
                 volume = value_json["current"]
-                #self.logger.debug("Volume state is: {0}".format(volume))
+                #self.logger.debug(f"Volume state is: {volume}")
          
         value = self.get("activities/current", verbose=self.verbose, err_count=0, print_response=False)
-        #self.logger.debug("Response: {0}".format(value))
+        #self.logger.debug(f"Response: {value}")
         value_json = json.loads(value)
         if value_json is not None:
             if 'component' in value_json:
@@ -176,36 +176,44 @@ class Philips_TV(SmartPlugin):
                 if 'className' in component:
                     className= component["className"]
                 if className != 'NA' or packageName != 'NA':
-                    self.logger.info("APP state is: {0}, {1}".format(packageName, className))
+                    self.logger.info(f"APP state is: {packageName}, {className}")
+
+        #value = self.get("recordings/list", verbose=self.verbose, err_count=0, print_response=False)
+        #self.logger.debug(f"Response recordings: {value}")
+        #value_json = json.loads(value)
+        #if value_json is not None:
+        #    if 'recordings' in value_json:
+        #        recordingList = value_json["recordings"]
+        #        self.logger.debug(f"{len(recordingList)} recordings available")
 
         #does not work:
         #value = self.get("activities", verbose=self.verbose, err_count=0, print_response=False)
-        #self.logger.debug("Response Activities: {0}".format(value))
+        #self.logger.debug(f"Response Activities: {value}")
 
 
         # does not work:
         #value = self.get("channeldb/tv/favoritelLists/all", verbose=self.verbose, err_count=0, print_response=False)
-        #self.logger.debug("Response Favorite: {0}".format(value))
+        #self.logger.debug(f"Response Favorite: {value}")
 
         # does not work:
         #value = self.get("channeldb/tv/favoritelLists/all", verbose=self.verbose, err_count=0, print_response=False)
-        #self.logger.debug("Response Favorite list: {0}".format(value))
+        #self.logger.debug(f"Response Favorite list: {value}")
 
 
         # works: lists all tv channels:
         #value = self.get("channeldb/tv/channelLists/all", verbose=self.verbose, err_count=0, print_response=False)
-        #self.logger.debug("Response: {0}".format(value))
+        #self.logger.debug(f"Response: {value}")
 
         # does not work:
         #value = self.get("applications/current", verbose=self.verbose, err_count=0, print_response=False)
-        #self.logger.debug("Response apps current: {0}".format(value))
+        #self.logger.debug(f"Response apps current: {value}".format())
 
         #does not work
         #value = self.get("sources/current", verbose=self.verbose, err_count=0, print_response=False)
 
         # works: lists all apps
         #value = self.get("applications", verbose=self.verbose, err_count=0, print_response=False)
-        #self.logger.debug("Response applications: {0}".format(value))
+        #self.logger.debug(f"Response applications: {value}")
         #value_json = json.loads(value)
         #if value_json is not None:
         #    if 'applications' in value_json:
@@ -213,26 +221,26 @@ class Philips_TV(SmartPlugin):
         #        self.logger.debug("Applications:")
         #        for app in applicationList:
         #            if 'label' in app:
-        #                self.logger.debug("\t{0}".format(app['label']))
+        #                self.logger.debug(f"\t{app['label']}")
 
 
         value = self.get("powerstate", verbose=self.verbose, err_count=0, print_response=False)
-        #self.logger.debug("Response: {0}".format(value))
+        #self.logger.debug(f"Response: {value}")
         value_json = json.loads(value)
         if value_json is not None:
             if 'powerstate' in value_json:
                 powerstate = value_json["powerstate"]
-                #self.logger.debug("Powerstate is: {0}".format(powerstate))
+                #self.logger.debug(f"Powerstate is: {powerstate}")
 
         value = self.get("activities/tv", verbose=self.verbose, err_count=0, print_response=False)
-        #self.logger.debug("Response: {0}".format(value))
+        #self.logger.debug(f"Response: {value}")
         value_json = json.loads(value)
         if value_json is not None:
             if 'channel' in value_json:
                 channel_json = value_json["channel"]
                 if 'name' in channel_json:
                     channel_name = channel_json["name"]
-                    #self.logger.debug("Channel name is: {0}".format(channel_name))
+                    #self.logger.debug(f"Channel name is: {channel_name}")
 
 
         # copy information into smarthomeNG items:
@@ -271,16 +279,16 @@ class Philips_TV(SmartPlugin):
         try:
             r = self.session.post('https://' + str(self.ip) + ':1926/6/pair/request', json=data, verify=False, timeout=4)
         except Exception as e:
-            self.logger.error("Exception during sending in pair_request(): {0}".format(e))
+            self.logger.error(f"Exception during sending in pair_request(): {e}")
             return None
         
         if r.json() is not None:
             if r.json()["error_id"] == "SUCCESS":
                 response=r.json()
-                self.logger.info("Request successfull: {0}".format(response))
+                self.logger.info(f"Request successfull: {response}")
                 return response
             else:
-                self.logger.error("Error {0}".format(r.json()))
+                self.logger.error(f"Error {r.json()}")
                 return None
         else:
             self.logger.error("Can not reach the API")
@@ -293,8 +301,8 @@ class Philips_TV(SmartPlugin):
                 self.logger.info("Resending pair confirm request")
             try:
                 r = self.session.post("https://" + str(self.ip) + ":1926/6/pair/grant", json=data, verify=False, auth=HTTPDigestAuth(self.deviceID, self.deviceKey), timeout=2)
-                self.logger.debug("Username for subsequent calls is: {0}".format(self.deviceID))
-                self.logger.debug("Password for subsequent calls is: {0}".format(self.deviceKey))
+                self.logger.debug(f"Username for subsequent calls is: {self.deviceID}")
+                self.logger.debug(f"Password for subsequent calls is: {self.deviceKey}")
                 return True
             except Exception:
                 # try again
@@ -310,7 +318,7 @@ class Philips_TV(SmartPlugin):
         payload["application_id"] = "app.id"
         self.deviceID = self.createDeviceId()
         payload["device_id"] = self.deviceID
-        self.logger.debug("New Device ID is {0}".format(self.deviceID))
+        self.logger.debug(f"New Device ID is {self.deviceID}")
 
         data = { "scope" :  [ "read", "write", "control"] }
         data["device"]  = self.getDeviceSpecJson(payload)
@@ -321,7 +329,7 @@ class Philips_TV(SmartPlugin):
         if result:
             self.auth_Timestamp = result["timestamp"]
             self.deviceKey = result["auth_key"]
-            self.logger.info("timestamp {0}, auth_key {1}".format(self.auth_Timestamp, self.deviceKey))
+            self.logger.info(f"timestamp {self.auth_Timestamp}, auth_key {self.deviceKey}")
 
             self.logger.info("Writing token to plugin.yaml")
             param_dict = {"deviceID": str(self.deviceID), "deviceKey": str(self.deviceKey)}
@@ -332,7 +340,7 @@ class Philips_TV(SmartPlugin):
         return False
 
     def completePairing(self, code):
-        self.logger.debug("Completing pairing process with code {0}".format(code))
+        self.logger.debug(f"Completing pairing process with code {code}")
 
         data = { "scope" :  [ "read", "write", "control"] }
         data["device_id"] = self.deviceID
@@ -362,7 +370,7 @@ class Philips_TV(SmartPlugin):
     def get(self, path, verbose=True, err_count=0, print_response=True):
         while err_count < int(self._num_retries):
             if verbose:
-                self.logger.info("Sending GET request to https://" + str(self.ip) + ":1926/6/" + str(path))
+                self.logger.info(f"Sending GET request to https://{str(self.ip)}':1926/6/'{str(path)}")
             try:
                 r = self.session.get("https://" + str(self.ip) + ":1926/6/" + str(path), verify=False, auth=HTTPDigestAuth(str(self.deviceID), str(self.deviceKey)), timeout=2)
             except Exception:
@@ -383,11 +391,11 @@ class Philips_TV(SmartPlugin):
             if type(body) is str:
                 body = json.loads(body)
             if verbose:
-                self.logger.info("Sending POST request to https://" + str(self.ip) + ":1926/6/" + str(path) ) 
+                self.logger.info(f"Sending POST request to https://{str(self.ip)} ':1926/6/'{str(path)}")
             try:
                 r = self.session.post("https://" + str(self.ip) + ":1926/6/" + str(path), json=body, verify=False, auth=HTTPDigestAuth(str(self.deviceID), str(self.deviceKey)), timeout=2)
             except Exception as e:
-                #self.logger.debug("Exception during post command: {0}".format(e))
+                #self.logger.debug(f"Exception during post command: {e}")
                 err_count += 1
                 continue
             if verbose:
@@ -529,7 +537,7 @@ class WebInterface(SmartPluginWebIf):
             # try:
             #     return json.dumps(data)
             # except Exception as e:
-            #     self.logger.error("get_data_html exception: {}".format(e))
+            #     self.logger.error(f"get_data_html exception: {e}")
         return {}
 
 
