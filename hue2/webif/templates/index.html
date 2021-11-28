@@ -218,7 +218,7 @@
 								<td class="py-1">{{ bridge_lights[l].type }}</td>
 								<td class="py-1">{{ bridge_lights[l].productname }}</td>
 								<td class="py-1">{{ bridge_lights[l].swversion }}</td>
-								{% if bridge_config.apiversion >= '1.24.0' %}
+								{% if (bridge_config.apiversion >= '1.24.0') and (bridge_lights[l].config.startup) %}
 									<td class="py-1">{{ bridge_lights[l].config.startup.mode }}</td>
 									<td class="py-1">{{ bridge_lights[l].config.startup.customsettings }}</td>
 								{% else %}
@@ -421,13 +421,16 @@
 -->
 {% set tab6title = "<strong>Hue Bridge</strong>" %}
 {% block bodytab6 %}
+	{% if discovered_bridges != [] %}
 	<div style="margin-left: 20px;">
 		<br>
 		<strong>{{ _('Gefundene Bridges') }}:</strong><br>
 	</div>
+	{%  endif %}
 	<div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
 		<div class="col-sm-12">
 
+			{% if discovered_bridges != [] %}
 			<form action="" method="post">
 			<table class="table table-striped table-hover pluginList">
 				<thead>
@@ -471,6 +474,7 @@
 				</tbody>
 			</table>
 			</form>
+			{% endif %}
 		</div>
 	</div>
 
