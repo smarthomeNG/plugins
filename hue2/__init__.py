@@ -25,7 +25,6 @@
 #
 #########################################################################
 
-import discoverhue
 import qhue
 import requests
 import xmltodict
@@ -38,6 +37,7 @@ from lib.item import Items
 
 from .webif import WebInterface
 
+from .discover_bridges import discover_bridges
 
 # If a needed package is imported, which might be not installed in the Python environment,
 # add it to a requirements.txt file within the plugin's directory
@@ -49,7 +49,7 @@ class Hue2(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '2.0.4'    # (must match the version specified in plugin.yaml)
+    PLUGIN_VERSION = '2.1.0'    # (must match the version specified in plugin.yaml)
 
     hue_group_action_values          = ['on', 'bri', 'hue', 'sat', 'ct', 'xy', 'colormode','alert', 'effect']
     hue_light_action_writable_values = ['on', 'bri', 'hue', 'sat', 'ct', 'xy']
@@ -97,40 +97,44 @@ class Hue2(SmartPlugin):
         self._cycle_lights = self.get_parameter_value('polltime_lights')
         self._cycle_bridge = self.get_parameter_value('polltime_bridge')
 
-        # discover hue bridges on the network
-        self.discovered_bridges = self.discover_bridges()
+        self.discovered_bridges = []
+        self.bridge = self.get_bridge_desciption(self.bridge_ip, self.bridge_port)
+        if self.bridge == {}:
+            # discover hue bridges on the network
+            self.discovered_bridges = self.discover_bridges()
 
-        # self.bridge = self.get_parameter_value('bridge')
-        # self.get_bridgeinfo()
-        # self.logger.warning("Configured Bridge={}, type={}".format(self.bridge, type(self.bridge)))
+            # self.bridge = self.get_parameter_value('bridge')
+            # self.get_bridgeinfo()
+            # self.logger.warning("Configured Bridge={}, type={}".format(self.bridge, type(self.bridge)))
 
-        if self.bridge_serial == '':
-            self.bridge = {}
-        else:
-            # if a bridge is configured
-            # find bridge using its serial number
-            self.bridge = self.get_data_from_discovered_bridges(self.bridge_serial)
-            if self.bridge.get('serialNumber', '') == '':
-                self.logger.warning("Configured bridge {} is not in the list of discovered bridges, starting second discovery")
-                self.discovered_bridges = self.discover_bridges()
-
+            if self.bridge_serial == '':
+                self.bridge = {}
+            else:
+                # if a bridge is configured
+                # find bridge using its serial number
+                self.bridge = self.get_data_from_discovered_bridges(self.bridge_serial)
                 if self.bridge.get('serialNumber', '') == '':
-                    # if not discovered, use stored ip address
-                    self.bridge['ip'] = self.bridge_ip
-                    self.bridge['port'] = self.bridge_port
-                    self.bridge['serialNumber'] = self.bridge_serial
-                    self.logger.warning("Configured bridge {} is still not in the list of discovered bridges, trying with stored ip address {}:{}".format(self.bridge_serial, self.bridge_ip, self.bridge_port))
+                    self.logger.warning("Configured bridge {} is not in the list of discovered bridges, starting second discovery")
+                    self.discovered_bridges = self.discover_bridges()
 
-                    api_config = self.get_api_config_of_bridge('http://'+self.bridge['ip']+':'+str(self.bridge['port'])+'/')
-                    self.bridge['datastoreversion'] = api_config.get('datastoreversion', '')
-                    self.bridge['apiversion'] = api_config.get('apiversion', '')
-                    self.bridge['swversion'] = api_config.get('swversion', '')
+                    if self.bridge.get('serialNumber', '') == '':
+                        # if not discovered, use stored ip address
+                        self.bridge['ip'] = self.bridge_ip
+                        self.bridge['port'] = self.bridge_port
+                        self.bridge['serialNumber'] = self.bridge_serial
+                        self.logger.warning("Configured bridge {} is still not in the list of discovered bridges, trying with stored ip address {}:{}".format(self.bridge_serial, self.bridge_ip, self.bridge_port))
+
+                        api_config = self.get_api_config_of_bridge('http://'+self.bridge['ip']+':'+str(self.bridge['port'])+'/')
+                        self.bridge['datastoreversion'] = api_config.get('datastoreversion', '')
+                        self.bridge['apiversion'] = api_config.get('apiversion', '')
+                        self.bridge['swversion'] = api_config.get('swversion', '')
 
 
-            self.bridge['username'] = self.bridge_user
-            if self.bridge['ip'] != self.bridge_ip:
-                # if ip address of bridge has changed, store new ip address in configuration data
-                self.update_plugin_config()
+        self.bridge['username'] = self.bridge_user
+        if self.bridge['ip'] != self.bridge_ip:
+            # if ip address of bridge has changed, store new ip address in configuration data
+            self.update_plugin_config()
+
         if not self.get_bridgeinfo():
             self.bridge = {}
             self.logger.warning("Bridge '{}' is treated as unconfigured".format(self.bridge_serial))
@@ -632,47 +636,67 @@ class Hue2(SmartPlugin):
 
         return True
 
+
+    def get_bridge_desciption(self, ip, port):
+        """
+        Get description of bridge
+
+        :param ip:
+        :param port:
+        :return:
+        """
+        br_info = {}
+
+        protocol = 'http'
+        if str(port) == '443':
+            protocol = 'https'
+
+        requests.packages.urllib3.disable_warnings(requests.packages.urllib3.exceptions.InsecureRequestWarning)
+        r = requests.get(protocol + '://' + ip + ':' + str(port) + '/description.xml', verify=False)
+        if r.status_code == 200:
+            xmldict = xmltodict.parse(r.text)
+            br_info['ip'] = ip
+            br_info['port'] = str(port)
+            br_info['friendlyName'] = str(xmldict['root']['device']['friendlyName'])
+            br_info['manufacturer'] = str(xmldict['root']['device']['manufacturer'])
+            br_info['manufacturerURL'] = str(xmldict['root']['device']['manufacturerURL'])
+            br_info['modelDescription'] = str(xmldict['root']['device']['modelDescription'])
+            br_info['modelName'] = str(xmldict['root']['device']['modelName'])
+            br_info['modelURL'] = str(xmldict['root']['device']['modelURL'])
+            br_info['modelNumber'] = str(xmldict['root']['device']['modelNumber'])
+            br_info['serialNumber'] = str(xmldict['root']['device']['serialNumber'])
+            br_info['UDN'] = str(xmldict['root']['device']['UDN'])
+            br_info['gatewayName'] = str(xmldict['root']['device'].get('gatewayName', ''))
+
+            br_info['URLBase'] = str(xmldict['root']['URLBase'])
+            if br_info['modelName'] == 'Philips hue bridge 2012':
+                br_info['version'] = 'v1'
+            elif br_info['modelName'] == 'Philips hue bridge 2015':
+                br_info['version'] = 'v2'
+            else:
+                br_info['version'] = 'unknown'
+
+            # get API information
+            api_config = self.get_api_config_of_bridge(br_info['URLBase'])
+            br_info['datastoreversion'] = api_config.get('datastoreversion', '')
+            br_info['apiversion'] = api_config.get('apiversion', '')
+            br_info['swversion'] = api_config.get('swversion', '')
+
+        return br_info
+
+
     def discover_bridges(self):
         bridges = []
         try:
-            discovered_bridges = discoverhue.find_bridges()
+            discovered_bridges = discover_bridges(mdns=True, upnp=True, httponly=True)
         except Exception as e:
-            self.logger.error("discover_bridges: Exception in find_bridges(): {}".format(e))
+            self.logger.error("discover_bridges: Exception in discover_bridges(): {}".format(e))
             discovered_bridges = {}
 
         for br in discovered_bridges:
-            br_info = {}
-            br_info['mac'] = br
-            br_info['ip'] = discovered_bridges[br].split('/')[2].split(':')[0]
-            br_info['port'] = discovered_bridges[br].split('/')[2].split(':')[1]
-            r = requests.get('http://' + br_info['ip'] + ':' + br_info['port'] + '/description.xml')
-            if r.status_code == 200:
-                xmldict = xmltodict.parse(r.text)
-                br_info['friendlyName'] = str(xmldict['root']['device']['friendlyName'])
-                br_info['manufacturer'] = str(xmldict['root']['device']['manufacturer'])
-                br_info['manufacturerURL'] = str(xmldict['root']['device']['manufacturerURL'])
-                br_info['modelDescription'] = str(xmldict['root']['device']['modelDescription'])
-                br_info['modelName'] = str(xmldict['root']['device']['modelName'])
-                br_info['modelURL'] = str(xmldict['root']['device']['modelURL'])
-                br_info['modelNumber'] = str(xmldict['root']['device']['modelNumber'])
-                br_info['serialNumber'] = str(xmldict['root']['device']['serialNumber'])
-                br_info['UDN'] = str(xmldict['root']['device']['UDN'])
-                br_info['gatewayName'] = str(xmldict['root']['device'].get('gatewayName', ''))
-
-                br_info['URLBase'] = str(xmldict['root']['URLBase'])
-                if br_info['modelName'] == 'Philips hue bridge 2012':
-                    br_info['version'] = 'v1'
-                elif br_info['modelName'] == 'Philips hue bridge 2015':
-                    br_info['version'] = 'v2'
-                else:
-                    br_info['version'] = 'unknown'
-
-                # get API information
-                api_config = self.get_api_config_of_bridge(br_info['URLBase'])
-                br_info['datastoreversion'] = api_config.get('datastoreversion', '')
-                br_info['apiversion'] = api_config.get('apiversion', '')
-                br_info['swversion'] = api_config.get('swversion', '')
-
+            ip = discovered_bridges[br].split('/')[2].split(':')[0]
+            port = discovered_bridges[br].split('/')[2].split(':')[1]
+            br_info = self.get_bridge_desciption(ip, port)
 
             bridges.append(br_info)
 
@@ -707,6 +731,7 @@ class Hue2(SmartPlugin):
             res = qhue.qhue.Resource(api_url, session, timeout)
         except:
             # for qhue versions prior to v2.0.0
+            res = qhue.qhue.Resource(api_url, timeout)
             res = qhue.qhue.Resource(api_url, timeout)
 
         if devicetype is None:
