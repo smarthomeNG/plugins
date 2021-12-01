@@ -95,7 +95,7 @@ item_attributes:
             de: 'Tastersequenz'
             en: 'Rocker action sequence'
 
-    enocean_device
+    enocean_device:
         type: str
         description:
             de: 'Enocean Geraetetyp'
