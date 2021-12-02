@@ -45,7 +45,7 @@ from .svinstallwidgets import SmartVisuInstallWidgets
 #########################################################################
 
 class SmartVisu(SmartPlugin):
-    PLUGIN_VERSION="1.8.3"
+    PLUGIN_VERSION="1.8.3a"
     ALLOW_MULTIINSTANCE = True
 
     visu_definition = None
