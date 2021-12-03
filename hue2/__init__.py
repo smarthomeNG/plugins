@@ -688,7 +688,9 @@ class Hue2(SmartPlugin):
     def discover_bridges(self):
         bridges = []
         try:
-            discovered_bridges = discover_bridges(mdns=True, upnp=True, httponly=True)
+            #discovered_bridges = discover_bridges(mdns=True, upnp=True, httponly=True)
+            discovered_bridges = discover_bridges(upnp=True, httponly=True)
+
         except Exception as e:
             self.logger.error("discover_bridges: Exception in discover_bridges(): {}".format(e))
             discovered_bridges = {}
