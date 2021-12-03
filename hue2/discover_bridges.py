@@ -195,16 +195,19 @@ def discover_bridges(upnp=False, httponly=False):
 
     upnp_discovered_bridges = {}
     if upnp:
+        # discover via upnp
         discover_bridges_by_method(mdns=False, upnp=True, broker=False, httponly=httponly)
         upnp_discovered_bridges = discovered_bridges.copy()
 
-    discover_bridges_by_method(mdns=False, upnp=False, broker=False, httponly=httponly)
+    # discover via mDNS
+    discover_bridges_by_method(mdns=True, upnp=False, broker=False, httponly=httponly)
     if discovered_bridges != {}:
         if upnp_discovered_bridges != {}:
             for key, value in upnp_discovered_bridges.items():
                 discovered_bridges[key] = value
         return discovered_bridges
 
+    # discover via broker server
     discover_bridges_by_method(mdns=False, upnp=False, broker=True, httponly=httponly)
     if discovered_bridges != {}:
         if upnp_discovered_bridges != {}:
