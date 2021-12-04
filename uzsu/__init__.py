@@ -89,7 +89,7 @@ class UZSU(SmartPlugin):
 
     ALLOW_MULTIINSTANCE = False
 
-    PLUGIN_VERSION = "1.5.4"
+    PLUGIN_VERSION = "1.5.5"
 
     _items = {}         # item buffer for all uzsu enabled items
 
@@ -112,6 +112,7 @@ class UZSU(SmartPlugin):
         self._sh = smarthome
         self._uzsu_sun = None
         self._items = {}
+        self._lastvalues = {}
         self._planned = {}
         self._update_count = {'todo': 0, 'done': 0}
         self._itpl = {}
@@ -133,7 +134,7 @@ class UZSU(SmartPlugin):
 
         for item in self._items:
             self._items[item]['interpolation']['itemtype'] = self._add_type(item)
-            self._items[item]['lastvalue'] = None
+            self._lastvalues[item] = None
             item(self._items[item], 'UZSU Plugin', 'run')
             cond1 = self._items[item].get('active') and self._items[item]['active'] is True
             cond2 = self._items[item].get('list')
@@ -144,6 +145,11 @@ class UZSU(SmartPlugin):
         for item in self._items:
             cond1 = self._items[item].get('active') is True
             cond2 = self._items[item].get('list')
+            # remove lastvalue dict entry, it is not used anymore
+            try:
+                self._items[item].pop('lastvalue')
+            except Exception:
+                pass
             self._check_rruleandplanned(item)
             if cond1 and cond2:
                 self._schedule(item, caller='run')
@@ -255,7 +261,7 @@ class UZSU(SmartPlugin):
 
     def _logics_lastvalue(self, item=None):
         if self._items.get(item):
-            lastvalue = self._items[item].get('lastvalue')
+            lastvalue = self._lastvalues.get(item)
         else:
             lastvalue = None
         self.logger.debug("Last value of item {} is: {}.".format(item, lastvalue))
@@ -471,7 +477,7 @@ class UZSU(SmartPlugin):
         if self._remove_duplicates is True and self._items[item].get('list') and cond:
             self._remove_dupes(item)
         if cond and self._items[item].get('active') is False and not source == 'update_sun':
-            self._items[item]['lastvalue'] = None
+            self._lastvalues[item] = None
             self.logger.debug('lastvalue for item {} set to None because UZSU is deactivated'.format(item))
             item(self._items[item], 'UZSU Plugin', 'item_deactivated')
         if cond:
@@ -550,8 +556,7 @@ class UZSU(SmartPlugin):
             _initvalue = itpl_list[entry_index - min(1, entry_index)][1]
             itpl_list = itpl_list[entry_index - min(2, entry_index):entry_index + min(3, len(itpl_list))]
             itpl_list.remove((entry_now, 'NOW'))
-            self._items[item]['lastvalue'] = _initvalue
-            item(self._items[item], 'UZSU Plugin', 'lastvalue')
+            self._lastvalues[item] = _initvalue
             _timediff = datetime.now(self._timezone) - timedelta(minutes=_initage)
             try:
                 _value = float(_value)
@@ -704,7 +709,7 @@ class UZSU(SmartPlugin):
                         sleep(0.01)
                         next = self._sun(datetime.combine(dt.date(), datetime.min.time()).replace(tzinfo=self._timezone), time, timescan)
                         self.logger.debug("Result parsing time (rrule) {}: {}".format(time, next))
-                        if entryindex is not None:
+                        if entryindex is not None and timescan == 'next':
                             self._update_suncalc(item, entry, entryindex, next.strftime("%H:%M"))
                     else:
                         next = datetime.combine(dt.date(), parser.parse(time.strip()).time()).replace(tzinfo=self._timezone)
