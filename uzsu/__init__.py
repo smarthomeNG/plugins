@@ -145,6 +145,11 @@ class UZSU(SmartPlugin):
         for item in self._items:
             cond1 = self._items[item].get('active') is True
             cond2 = self._items[item].get('list')
+            # remove lastvalue dict entry, it is not used anymore
+            try:
+                self._items[item].pop('lastvalue')
+            except Exception:
+                pass
             self._check_rruleandplanned(item)
             if cond1 and cond2:
                 self._schedule(item, caller='run')
