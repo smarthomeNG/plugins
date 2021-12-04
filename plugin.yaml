@@ -1391,7 +1391,7 @@ plugin_functions:
                 type: num
                 description:
                     de: "Windstärke in bft, integer zwischen 0 und 12"
-                    de: "Wind-speed in bft, integer between 0 und 12"
+                    en: "Wind-speed in bft, integer between 0 und 12"
     
     get_beaufort_number:
         type: num
@@ -1403,5 +1403,5 @@ plugin_functions:
                 type: num
                 description:
                     de: "Windstärke in m/s"
-                    de: "Wind-speed in m/s"
+                    en: "Wind-speed in m/s"
 
