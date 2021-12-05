@@ -3,8 +3,9 @@
 {% set logo_frame = false %}
 {% set use_bodytabs = true %}
 {% set tabcount = 2 %}
-{% set tab1title = 'Items' %}
-{% set tab2title = 'JSON Data' %}
+{% set tab1title = _('Items') %}
+{% set tab2title = _('JSON Data') %}
+{% set tab3title = _('Matchstring Tester') %}
 
 {% set start_tab = 2 %}
 
@@ -88,22 +89,48 @@
 {% endblock pluginscripts %}
 
 {% block headtable %}
-{% endblock %}
+<table class="table table-striped table-hover">
+	<tbody>
+		<tr>
+			<td class="py-1" width="150px"><strong>{{ _('Breitengrad') }}</strong></td>
+			<td class="py-1">{{ p._lat }}</td>
+			<td class="py-1" width="150px"><strong>{{ _('Sprache') }}</strong></td>
+			<td class="py-1">{{ p._lang }}</td>
+		</tr>
+		<tr>
+			<td class="py-1" width="150px"><strong>{{ _('Längengrad') }}</strong></td>
+			<td class="py-1">{{ p._lon }}</td>
+			<td class="py-1" width="150px"><strong>{{ _('Einheiten') }}</strong></td>
+			<td class="py-1">{{ p._units }}</td>
+		</tr>
+		<tr>
+			<td class="py-1" width="150px"><strong>{{ _('Höhe in m') }}</strong></td>
+			<td class="py-1">{{ p._elev }}</td>
+			<td class="py-1" width="150px"><strong>{{ _('Ladezyklus (s)') }}</strong></td>
+			<td class="py-1">{{ p._cycle }}</td>
+		</tr>
+		<tr>
+			<td class="py-1" width="150px"><strong>{{ _('API-Schlüssel') }}</strong></td>
+			<td class="py-1" colspan="3"><div title="{{ p._key }}">{% for letter in p._key %}*{% endfor %}</div></td>
+		</tr>
+	</tbody>
+</table>
+{% endblock headtable %}
 
 {% block bodytab1 %}
 <div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
 	<div class="col-sm-12">
-		<h5>OpenWeatherMap Plugin Items ({{ item_data|length }})</h5>
+		<h5>{{ _('Items with relation to this OWM-plugin instance') }} ({{ item_data|length }})</h5>
 
 		<table class="table table-striped table-hover pluginList" id="items_table">
 			<thead>
 				<tr class="shng_heading">
-					<th>Pfad</th>
-					<th>Typ</th>
+					<th>{{ _('Pfad') }}</th>
+					<th>{{ _('Typ') }}</th>
 					<th>owm_matchstring</th>
-					<th>Wert</th>
-					<th>Letztes Update</th>
-					<th>Letzter Change</th>
+					<th>{{ _('Wert') }}</th>
+					<th>{{ _('Letztes Update') }}</th>
+					<th>{{ _('Letzter Change') }}</th>
 				</tr>
 			</thead>
 			<tbody>
@@ -136,11 +163,11 @@
 		<h5>{{ data_source.key | replace('_minus_', '-') }}</h5>
 		<table>
 			<tr>
-				<td>Origin:</td>
+				<td>{{ _('Origin') }}:</td>
 				<td><a href="{{ data_source.url }}">{{ data_source.url | replace(p._key, "(key)") }}</a></td>
 			</tr>
 			<tr>
-				<td>Fetched: &nbsp; </td>
+				<td>{{ _('Fetched') }}: &nbsp; </td>
 				<td>{{ data_source.fetched }}</td>
 			</tr>
 		</table>
@@ -163,4 +190,8 @@
 	});
 	window.bodytab2_json_editor.refresh();
 </script>
+{% endblock %}
+
+{% block buttons %}
+<button type="button" class="btn btn-shng btn-sm" onclick="if (confirm('{{ _('Sollen nun einmalig alle Dateien abgefragt werden?') }}')) { jQuery.get('force_download_all',  function( data ) { location.reload(); }); }">{{ _('Alle Dateien herunterladen') }}</button>
 {% endblock %}

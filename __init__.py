@@ -121,21 +121,21 @@ class OpenWeatherMap(SmartPlugin):
         self._data_source_key_airpollution_back3day = 'airpollution-3'
         self._data_source_key_airpollution_back4day = 'airpollution-4'
 
-        self._data_sources = {self._data_source_key_weather:  {'url': '', 'fetched': '', 'data': None},
-                              self._data_source_key_forecast: {'url': '', 'fetched': '', 'data': None},
-                              self._data_source_key_uvi:      {'url': '', 'fetched': '', 'data': None},
-                              self._data_source_key_back0day: {'url': '', 'fetched': '', 'data': None},
-                              self._data_source_key_back1day: {'url': '', 'fetched': '', 'data': None},
-                              self._data_source_key_back2day: {'url': '', 'fetched': '', 'data': None},
-                              self._data_source_key_back3day: {'url': '', 'fetched': '', 'data': None},
-                              self._data_source_key_back4day: {'url': '', 'fetched': '', 'data': None},
-                              self._data_source_key_onecall:  {'url': '', 'fetched': '', 'data': None},
-                              self._data_source_key_airpollution_current:  {'url': '', 'fetched': '', 'data': None},
-                              self._data_source_key_airpollution_forecast:  {'url': '', 'fetched': '', 'data': None},
-                              self._data_source_key_airpollution_back1day:  {'url': '', 'fetched': '', 'data': None},
-                              self._data_source_key_airpollution_back2day:  {'url': '', 'fetched': '', 'data': None},
-                              self._data_source_key_airpollution_back3day:  {'url': '', 'fetched': '', 'data': None},
-                              self._data_source_key_airpollution_back4day:  {'url': '', 'fetched': '', 'data': None}}
+        self._data_sources = {self._data_source_key_weather:  {'url': '', 'fetched': '', 'data': 'Not downloaded!'},
+                              self._data_source_key_forecast: {'url': '', 'fetched': '', 'data': 'Not downloaded!'},
+                              self._data_source_key_uvi:      {'url': '', 'fetched': '', 'data': 'Not downloaded!'},
+                              self._data_source_key_back0day: {'url': '', 'fetched': '', 'data': 'Not downloaded!'},
+                              self._data_source_key_back1day: {'url': '', 'fetched': '', 'data': 'Not downloaded!'},
+                              self._data_source_key_back2day: {'url': '', 'fetched': '', 'data': 'Not downloaded!'},
+                              self._data_source_key_back3day: {'url': '', 'fetched': '', 'data': 'Not downloaded!'},
+                              self._data_source_key_back4day: {'url': '', 'fetched': '', 'data': 'Not downloaded!'},
+                              self._data_source_key_onecall:  {'url': '', 'fetched': '', 'data': 'Not downloaded!'},
+                              self._data_source_key_airpollution_current:  {'url': '', 'fetched': '', 'data': 'Not downloaded!'},
+                              self._data_source_key_airpollution_forecast:  {'url': '', 'fetched': '', 'data': 'Not downloaded!'},
+                              self._data_source_key_airpollution_back1day:  {'url': '', 'fetched': '', 'data': 'Not downloaded!'},
+                              self._data_source_key_airpollution_back2day:  {'url': '', 'fetched': '', 'data': 'Not downloaded!'},
+                              self._data_source_key_airpollution_back3day:  {'url': '', 'fetched': '', 'data': 'Not downloaded!'},
+                              self._data_source_key_airpollution_back4day:  {'url': '', 'fetched': '', 'data': 'Not downloaded!'}}
 
         self._soft_fails_to_zero = ['rain/1h',
                                     'rain/3h',
@@ -212,6 +212,29 @@ class OpenWeatherMap(SmartPlugin):
             return
 
         self._update()
+
+    def force_download_all_data(self):
+        """
+        Downloads data according to items' demands
+        """
+        self.__query_api_if(self._data_source_key_weather, force=True)
+        self.__query_api_if(self._data_source_key_forecast, force=True)
+        self.__query_api_if(self._data_source_key_uvi, force=True)
+        self.__query_api_if(self._data_source_key_airpollution_current, force=True)
+        self.__query_api_if(self._data_source_key_airpollution_forecast, force=True)
+
+        self.__query_api_if(self._data_source_key_airpollution_back1day, force=True, delta_t=-1)
+        self.__query_api_if(self._data_source_key_airpollution_back2day, force=True, delta_t=-2)
+        self.__query_api_if(self._data_source_key_airpollution_back3day, force=True, delta_t=-3)
+        self.__query_api_if(self._data_source_key_airpollution_back4day, force=True, delta_t=-4)
+
+        self.__query_api_if(self._data_source_key_onecall, force=True)
+
+        self.__query_api_if(self._data_source_key_back0day,force=True, delta_t=0)
+        self.__query_api_if(self._data_source_key_back1day, force=True, delta_t=-1)
+        self.__query_api_if(self._data_source_key_back2day, force=True, delta_t=-2)
+        self.__query_api_if(self._data_source_key_back3day, force=True, delta_t=-3)
+        self.__query_api_if(self._data_source_key_back4day, force=True, delta_t=-4)
 
     def _download_data(self):
         """
@@ -694,18 +717,20 @@ class OpenWeatherMap(SmartPlugin):
                 lambda x, y: x + y, wrk) / len(wrk), 2)
         return result
 
-    def __query_api_if(self, data_source_key, only_if, delta_t=0):
-        if only_if:
-            self.__query_api(data_source_key, delta_t)
+    def __query_api_if(self, data_source_key, only_if=False, delta_t=0, force=False):
+        if only_if or force:
+            self.__query_api(data_source_key, delta_t, force)
         else:
-            self._data_sources[data_source_key]['data'] = "Not requested by any item!"
+            if self._data_sources[data_source_key]['data'] == 'Not downloaded!':
+                self._data_sources[data_source_key]['data'] = "Not requested by any item, you may download this via the web-interface!"
+            # otherwise keep previous data
 
-    def __query_api(self, data_source_key, delta_t=0):
+    def __query_api(self, data_source_key, delta_t=0, force=False):
         """
         Requests the weather information at openweathermap.com
         """
         try:
-            url = self.__build_url(data_source_key, delta_t=delta_t)
+            url = self.__build_url(data_source_key, delta_t=delta_t, force=force)
             response = self._session.get(url)
         except Exception as e:
             self.logger.error(
@@ -812,7 +837,7 @@ class OpenWeatherMap(SmartPlugin):
         ytile = int((1.0 - math.asinh(math.tan(lat_rad)) / math.pi) / 2.0 * n)
         return (xtile, ytile)
 
-    def __build_url(self, url_type=None, item=None, delta_t=0):
+    def __build_url(self, url_type=None, item=None, delta_t=0, force=False):
         """
         Builds a request url
         @param url_type: url type (currently on 'forecast', as historic data are not supported.
@@ -851,18 +876,21 @@ class OpenWeatherMap(SmartPlugin):
             url = '%s%s' % (url, parameters)
         elif url_type == self._data_source_key_onecall:
             url = self._base_url % 'data/2.5/onecall'
-            excluded = []
-            if not self._request_current:
-                excluded.append("current")
-            if not self._request_minutely:
-                excluded.append("minutely")
-            if not self._request_hourly:
-                excluded.append("hourly")
-            if not self._request_daily:
-                excluded.append("daily")
-            if not self._request_alerts:
-                excluded.append("alerts")
-            exclude = ",".join(excluded)
+            if force:
+                exclude = ""
+            else:
+                excluded = []
+                if not self._request_current:
+                    excluded.append("current")
+                if not self._request_minutely:
+                    excluded.append("minutely")
+                if not self._request_hourly:
+                    excluded.append("hourly")
+                if not self._request_daily:
+                    excluded.append("daily")
+                if not self._request_alerts:
+                    excluded.append("alerts")
+                exclude = ",".join(excluded)
             parameters = "?lat=%s&lon=%s&exclude=%s&appid=%s&lang=%s&units=%s" % (self._lat, self._lon, exclude,
                                                                                   self._key, self._lang, self._units)
             url = '%s%s' % (url, parameters)
