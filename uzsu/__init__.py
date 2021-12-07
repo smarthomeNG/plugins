@@ -148,6 +148,8 @@ class UZSU(SmartPlugin):
             # remove lastvalue dict entry, it is not used anymore
             try:
                 self._items[item].pop('lastvalue')
+                item(self._items[item], 'UZSU Plugin', 'lastvalue removed')
+                self.logger.DEBUG("Item '{}': removed lastvalue dict entry as it is deprecated.".format(item))
             except Exception:
                 pass
             self._check_rruleandplanned(item)
@@ -259,12 +261,13 @@ class UZSU(SmartPlugin):
                 self.logger.warning("Item to be set by uzsu '{}' does not have a type attribute. Error: {}".format(_itemforuzsu, err))
         return _itemtype
 
-    def _logics_lastvalue(self, item=None):
+    def _logics_lastvalue(self, by=None, item=None):
         if self._items.get(item):
             lastvalue = self._lastvalues.get(item)
         else:
             lastvalue = None
-        self.logger.debug("Last value of item {} is: {}.".format(item, lastvalue))
+        by_test = " Queried by {}".format(by) if by is not None else ""
+        self.logger.debug("Last value of item {} is: {}.{}".format(item, lastvalue, by_test))
         return lastvalue
 
     def _logics_resume(self, activevalue=True, item=None):
