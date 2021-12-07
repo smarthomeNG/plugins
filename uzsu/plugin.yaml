@@ -137,8 +137,8 @@ item_structs:
                 remark: The last set value if UZSU is active
                 type: foo
                 visu_acl: ro
-                eval: "'None' if sh...lastvalue() is None else sh...lastvalue()"
-                crontab: init = 'None'
+                eval: sh...lastvalue('uzsu_dict_updated')
+                crontab: init = None
                 eval_trigger: ..
 
             active:
@@ -186,6 +186,13 @@ plugin_functions:
         description:
             de: 'Abfrage des zuletzt gesetzten Werts. Kann z.B. beim Aktivieren der UZSU genutzt werden, um sofort auf den gewünschten Wert zu schalten.'
             en: 'Query the last value. Can be used to immediately set the correct value after activating an UZSU.'
+        parameters:
+            by:
+                type: str
+                default: None
+                description:
+                    de: 'Für eine entsprechende Info im Logfile kann hier z.B. der Itemname, der den Wert abruft eingetragen werden'
+                    en: 'For respective info in the log file you can choose to put the item name that queries the value.'
 
     clear:
         type: bool
