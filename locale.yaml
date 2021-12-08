@@ -75,7 +75,22 @@ plugin_translations:
         de: 'OWM Rohdaten (JSON)'
         en: '='
 
-    'Matchstring Tester':
-        de: '='
-        en: '='
+    'Tester':
+        de: 'Match-Strings'
+        en: 'Match-Strings'
 
+    'Erfolg':
+        de: '='
+        en: 'Success'
+    
+    'Fehler':
+        de: '='
+        en: 'Error'
+
+    'Abgefragte Datenquelle':
+        de: '='
+        en: 'queried data source'
+
+    'Pfad in der Datenquelle':
+        de: '='
+        en: 'path within data source'

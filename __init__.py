@@ -176,6 +176,8 @@ class OpenWeatherMap(SmartPlugin):
         self._request_daily = False
         self._request_alerts = False
 
+        self._forced_download_happened = False
+
         self._origins_onecall = ['lat', 'lon',
                                  'timezone', 'timezone_offset', 'alerts']
 

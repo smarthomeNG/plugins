@@ -25,7 +25,7 @@
 #
 #########################################################################
 
-import datetime
+from datetime import datetime, timezone
 import time
 import os
 
@@ -78,3 +78,31 @@ class WebInterface(SmartPluginWebIf):
     @cherrypy.expose
     def force_download_all(self):
         self.plugin.force_download_all_data()
+
+    @cherrypy.expose
+    def test_match_string(self, match_string):
+        success = True
+        req_correlation_key = f"webif_req {str(datetime.now().replace(tzinfo=timezone.utc).timestamp())}:"
+        self.logger.debug(f'Queried to test match_string "{match_string}" as request "{req_correlation_key}"')
+
+        if not self.plugin._forced_download_happened:
+            self.plugin.force_download_all_data()
+
+        try:
+            ret_val, wrk_typ, s, was_ok = self.plugin.get_value_with_meta(match_string, req_correlation_key)
+            str_value = str(ret_val)
+            path_in_source = s
+            queried_source = wrk_typ
+            success = was_ok
+        except Exception as e:
+            success = False
+            str_value = repr(e)
+            queried_source = ""
+            path_in_source = ""
+
+        return json.dumps({
+            "success": success,
+            "value": str_value,
+            "queried_source": queried_source,
+            "path_in_source": path_in_source
+        })
