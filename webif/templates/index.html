@@ -33,26 +33,35 @@
 			}
 
 		$('#test_match_string').click(function() {
+			wait_indicator(true);
 			$.get('test_match_string', $.param({match_string:  $('#owm_string_source').val()}), function(match_string_eval_result) {
-				console.log(match_string_eval_result);
+				wait_indicator(false);
 				parsed_result = JSON.parse(match_string_eval_result);
 				$('#result_output').empty();
 				$('#result_output').append("<div>" + (parsed_result.success ? '<img src="static/img/lamp_green.png" alt="{{ _('Erfolg') }}" style="width: 17px;padding-bottom: 3px;"/>' : '<img src="static/img/lamp_red.png" alt="{{ _('Fehler') }}" style="width: 17px;padding-bottom: 3px;"/>') + parsed_result.value + "</div>");
 				$('#result_output').append("<div id='goto_source' class='clickable'>{{ _('Gehe zu Datenquelle') }}: " + parsed_result.queried_source + " / {{ _('Pfad in der Datenquelle') }}: " + parsed_result.path_in_source + "</div>");
 				$('#goto_source').click(function() {
+					wait_indicator(true);
 					$('.nav-tabs a[href="#bodytab_2"]').tab('show');
 					enable_block($("#owm_block_" + parsed_result.queried_source.replace('-', '_minus_') + "_nav"));
 					pos_hint = parsed_result.position_in_file.split(",");
 					line_hint = pos_hint[0];
 					char_hint_start = pos_hint[1];
 					char_hint_end = pos_hint[2] - 1;
-					window.bodytab2_json_editor.markText({line: line_hint, ch: 0}, {line: line_hint, ch: char_hint_end}, {className: "styled-background"});
-					window.bodytab2_json_editor.scrollIntoView({line: line_hint, ch: 0}, {line: line_hint, ch: char_hint_end});
+					window.bodytab2_json_editor.markText({line: line_hint, ch: 0}, {line: line_hint, ch: char_hint_end}, {css: "background: yellow;"}); //{className: "styled-background"});
+					window.bodytab2_json_editor.scrollIntoView({line: line_hint, ch: 0}, 200);
+					wait_indicator(false);
 				});
 			});
 		});
+
+		enable_block($("#code_nav .owm_nav_box").first());
+		// enable_example($("#example_nav .owm_nav_box").first());
 	});
 
+	function wait_indicator(yes_no) {
+		document.getElementById('progress_indicator').style.display = yes_no ? "block" : "none";
+	}
 
 	function show_hide_map() {
 		var map_div = document.getElementById('detail_map');
@@ -72,10 +81,53 @@
 			map_div.style.display = "none";
 		}
 	}
+
+	function enable_block(block) {
+		$(".owm_c_active").toggleClass("owm_c_active");
+		$(".owm_c_nav_active").toggleClass("owm_c_nav_active");
+		block.toggleClass("owm_c_nav_active");
+		
+		selected_block = "#" + block.attr("id").replace('_nav', '');
+		$(selected_block).toggleClass("owm_c_active");
+
+		src_origin = selected_block + " textarea";
+		window.bodytab2_json_editor.setValue($(src_origin).val());
+		window.bodytab2_json_editor.setSize($('#outer_box').width() - 200, ($('#measure_bar').height() - $(selected_block).height()) - 5);
+	}
+
+	function enable_example(block) {
+		$(".owm_e_active").toggleClass("owm_e_active");
+		$(".owm_e_nav_active").toggleClass("owm_e_nav_active");
+		block.toggleClass("owm_e_nav_active");
+		
+		selected_block = "#" + block.attr("id").replace('_nav', '');
+		$(selected_block).toggleClass("owm_e_active");
+	}
+
+	$(function() {
+		$(".owm_codeblock").each(function( index ) {
+			$("#"+$(this).attr("id")+'_nav').click(function() {
+				enable_block($(this));
+			});
+		});
+	});
+
+	$(function() {
+		$(".owm_exampleblock").each(function( index ) {
+			$("#"+$(this).attr("id")+'_nav').click(function() {
+				enable_example($(this));
+			});
+		});
+	});
 </script>
 <style>
+	h5 {
+		margin-top: 10px;
+	}
+
 	.owm_codeblock {
 		display: none;
+		flex: 0 1 auto;
 	}
 	.owm_exampleblock {
 		display: none;
@@ -105,7 +157,7 @@
 		border-width: 1px;
 		border-style: solid;
 		border-color: #ddd;
-		width: 210px;
+		width: 190px;
 		background: #ddd;
 		padding: 3px;
 		margin-bottom: 3px;
@@ -124,48 +176,6 @@
 		background: yellow;
 	}
 </style>
-<script language="javascript">
-	function enable_block(block) {
-		$(".owm_c_active").toggleClass("owm_c_active");
-		$(".owm_c_nav_active").toggleClass("owm_c_nav_active");
-		block.toggleClass("owm_c_nav_active");
-		
-		selected_block = "#" + block.attr("id").replace('_nav', '');
-		$(selected_block).toggleClass("owm_c_active");
-
-		src_origin = selected_block + " textarea";
-		window.bodytab2_json_editor.setValue($(src_origin).val());
-	}
-
-	function enable_example(block) {
-		$(".owm_e_active").toggleClass("owm_e_active");
-		$(".owm_e_nav_active").toggleClass("owm_e_nav_active");
-		block.toggleClass("owm_e_nav_active");
-		
-		selected_block = "#" + block.attr("id").replace('_nav', '');
-		$(selected_block).toggleClass("owm_e_active");
-	}
-
-	$(function() {
-		$(".owm_codeblock").each(function( index ) {
-			$("#"+$(this).attr("id")+'_nav').click(function() {
-				enable_block($(this));
-			});
-		});
-
-		enable_block($("#code_nav .owm_nav_box").first());
-	});
-
-	$(function() {
-		$(".owm_exampleblock").each(function( index ) {
-			$("#"+$(this).attr("id")+'_nav').click(function() {
-				enable_example($(this));
-			});
-		});
-
-		enable_example($("#example_nav .owm_nav_box").first());
-	});
-</script>
 
 {% endblock pluginscripts %}
 
@@ -196,6 +206,9 @@
 		</tr>
 	</tbody>
 </table>
+<div id="progress_indicator" style="position:fixed;bottom:0px;right: 0px;width:100%; height: 100%; display:none; opacity: 0.5; background: white;" class="mb-2 alert alert-success alert-dismissible fade show" role="alert">
+	&nbsp;
+</div>
 <div id="detail_map" style="position:fixed;bottom:10px;right: 5%;width:50%; height: 50%; display:none" class="mb-2 alert alert-success alert-dismissible fade show" role="alert"></div>
 {% endblock headtable %}
 
@@ -233,44 +246,46 @@
 {% endblock %}
 
 {% block bodytab2 %}
-<br style="clear:both;"/>
-<div style="float: left; width: 220px; display: block;" id="code_nav">
-	{% for data_source in json_data %}
-		<div class="owm_nav_box code" id="owm_block_{{ data_source.key }}_nav">{{ data_source.key | replace('_minus_', '-') }}</div>
-	{% endfor %}
-</div>
-
-{% for data_source in json_data %}
-	<div class="owm_codeblock code" id="owm_block_{{ data_source.key }}">
-		<h5>{{ data_source.key | replace('_minus_', '-') }}</h5>
-		<table>
-			<tr>
-				<td>{{ _('Origin') }}:</td>
-				<td><a href="{{ data_source.url }}">{{ data_source.url | replace(p._key, "(key)") }}</a></td>
-			</tr>
-			<tr>
-				<td>{{ _('Fetched') }}: &nbsp; </td>
-				<td>{{ data_source.fetched }}</td>
-			</tr>
-		</table>
-		<textarea autocomplete="off">{{ data_source.data }}</textarea>
+<div id="outer_box">
+	<div style="float: left; width: 190px; display: block;" id="code_nav">
+		{% for data_source in json_data %}
+			<div class="owm_nav_box code" id="owm_block_{{ data_source.key }}_nav">{{ data_source.key | replace('_minus_', '-') }}</div>
+		{% endfor %}
 	</div>
-{% endfor %}
-
-<div style="margin-bottom: 10px; margin-top: 10px;">
-	<textarea autocomplete="off" id="bodytab2_editor"></textarea>
+	<div style="float: left; height: calc(100vh - 245px); width: 10px;" id="measure_bar">&nbsp;</div> 
+	<div style="display: flex; flex-flow: column; height: calc(100vh - 245px);">
+		{% for data_source in json_data %}
+			<div class="owm_codeblock" id="owm_block_{{ data_source.key }}">
+				<h5>{{ data_source.key | replace('_minus_', '-') }}</h5>
+				<table>
+					<tr>
+						<td>{{ _('Origin') }}:</td>
+						<td><a href="{{ data_source.url }}">{{ data_source.url | replace(p._key, "(key)") }}</a></td>
+					</tr>
+					<tr>
+						<td>{{ _('Fetched') }}: &nbsp; </td>
+						<td>{{ data_source.fetched }}</td>
+					</tr>
+				</table>
+				<textarea autocomplete="off">{{ data_source.data }}</textarea>
+			</div>
+		{% endfor %}
+		<div style="flex: 1 1 auto;">
+			<textarea autocomplete="off" id="bodytab2_editor"></textarea>
+			<script type="text/javascript" language="javascript">
+				window.bodytab2_json_editor = CodeMirror.fromTextArea(document.getElementById("bodytab2_editor"), {
+					mode: {name: "javascript", json: true},
+					lineNumbers: true,
+					readOnly: true,
+					lineWrapping: true,
+					extraKeys: {"Ctrl-Q": function(cm){ cm.foldCode(cm.getCursor()); }},
+					foldGutter: true,
+					gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
+				});
+			</script>
+		</div>
+	</div>
 </div>
-<script type="text/javascript" language="javascript">
-	window.bodytab2_json_editor = CodeMirror.fromTextArea(document.getElementById("bodytab2_editor"), {
-		mode: {name: "javascript", json: true},
-		lineNumbers: true,
-		readOnly: true,
-		lineWrapping: true,
-		extraKeys: {"Ctrl-Q": function(cm){ cm.foldCode(cm.getCursor()); }},
-		foldGutter: true,
-		gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
-	});
-</script>
 {% endblock %}
 
 {% block bodytab3 %}
@@ -300,5 +315,5 @@
 
 
 {% block buttons %}
-<button type="button" class="btn btn-shng btn-sm" onclick="if (confirm('{{ _('Sollen nun einmalig alle Dateien abgefragt werden?') }}')) { jQuery.get('force_download_all',  function( data ) { location.reload(); }); }">{{ _('Alle Dateien herunterladen') }}</button>
+<button type="button" class="btn btn-shng btn-sm" onclick="if (confirm('{{ _('Sollen nun einmalig alle Dateien abgefragt werden?') }}')) { wait_indicator(true); jQuery.get('force_download_all',  function( data ) { location.reload(); }); }">{{ _('Alle Dateien herunterladen') }}</button>
 {% endblock %}
