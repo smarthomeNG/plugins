@@ -1405,3 +1405,14 @@ plugin_functions:
                     de: "Windstärke in m/s"
                     en: "Wind-speed in m/s"
 
+    get_raw_data_file:
+        type: str
+        description:
+            de: "Stellt die JSON-Datei der Datenquelle bereit"
+            en: "Allows access to the JSON-String of the raw-file"
+        parameters:
+            data_source_key:
+                type: str
+                description:
+                    de: "Datenquelle"
+                    de: "Data source key"

@@ -15,7 +15,6 @@
 {% block pluginscripts %}
 <link rel="stylesheet" href="static/leaflet/leaflet.css" />
 <script src="static/leaflet/leaflet.js"></script>
-
 <link rel="stylesheet" type="text/css" href="static/datatables.css">
 <script type="text/javascript" charset="utf8" src="static/datatables.js"></script>
 <script src="/gstatic/codemirror/mode/javascript/javascript.js"></script>
@@ -47,8 +46,16 @@
 				parsed_result = JSON.parse(match_string_eval_result);
 				$('#result_output').empty();
 				$('#result_output').append("<div>" + (parsed_result.success ? '<img src="static/img/lamp_green.png" alt="{{ _('Erfolg') }}" style="width: 17px;padding-bottom: 3px;"/>' : '<img src="static/img/lamp_red.png" alt="{{ _('Fehler') }}" style="width: 17px;padding-bottom: 3px;"/>') + parsed_result.value + "</div>");
-				$('#result_output').append("<div>{{ _('Gehe zu Datenquelle') }}: " + parsed_result.queried_source + " / {{ _('Pfad in der Datenquelle') }}: " + parsed_result.path_in_source + "</div>");
-				// alert("owm_block_" + parsed_result.queried_source.replace('-', '_minus_') + "_nav");
+				$('#result_output').append("<div id='goto_source' class='clickable'>{{ _('Gehe zu Datenquelle') }}: " + parsed_result.queried_source + " / {{ _('Pfad in der Datenquelle') }}: " + parsed_result.path_in_source + "</div>");
+				$('#goto_source').click(function() {
+					$('.nav-tabs a[href="#bodytab_2"]').tab('show');
+					enable_block($("#owm_block_" + parsed_result.queried_source.replace('-', '_minus_') + "_nav"));
+					pos_hint = parsed_result.position_in_file.split(",")
+					line_hint = pos_hint[0]
+					char_hint_start = pos_hint[1]
+					char_hint_end = pos_hint[2]
+					window.bodytab2_json_editor.markText({line: line_hint, ch: 1}, {line: line_hint, ch: char_hint_end}, {className: "styled-background"});
+				});
 			});
 		});
 	});
@@ -103,6 +110,10 @@
 
 	.clickable {
 		cursor: pointer;
+	}
+
+	.styled-background {
+		background: yellow;
 	}
 </style>
 <script language="javascript">
@@ -261,19 +272,22 @@
 	<button type="button" class="btn btn-shng btn-sm" id="test_match_string">Testen</button>
 	<div id="result_output"></div>
 </div>
-<br style="clear:both;"/>
-<div style="float: left; width: 220px; display: block;" id="example_nav">
-	<div class="owm_nav_box" id="owm_block_exampl_rain_nav">Regen</div>
-	<div class="owm_nav_box" id="owm_block_exampl_temp_nav">Temperaturen</div>
-</div>
-<div id="owm_block_exampl_rain" class="owm_exampleblock">
-	<h5>Regen</h5>
-	Und seine Freunde	
-</div>
-<div id="owm_block_exampl_temp" class="owm_exampleblock">
-	<h5>Temperaturen</h5>
-	Und deren Freunde	
-</div>
+{# 
+	TODO: Später mal sollte hier eine Anleitung entstehen.
+	<br style="clear:both;"/>
+	<div style="float: left; width: 220px; display: block;" id="example_nav">
+		<div class="owm_nav_box" id="owm_block_exampl_rain_nav">Regen</div>
+		<div class="owm_nav_box" id="owm_block_exampl_temp_nav">Temperaturen</div>
+	</div>
+	<div id="owm_block_exampl_rain" class="owm_exampleblock">
+		<h5>Regen</h5>
+		Und seine Freunde	
+	</div>
+	<div id="owm_block_exampl_temp" class="owm_exampleblock">
+		<h5>Temperaturen</h5>
+		Und deren Freunde	
+	</div>
+#}
 {% endblock %}
 
 

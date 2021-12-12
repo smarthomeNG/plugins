@@ -89,20 +89,23 @@ class WebInterface(SmartPluginWebIf):
             self.plugin.force_download_all_data()
 
         try:
-            ret_val, wrk_typ, s, was_ok = self.plugin.get_value_with_meta(match_string, req_correlation_key)
+            ret_val, queried_source, s, was_ok = self.plugin.get_value_with_meta(match_string, req_correlation_key)
             str_value = str(ret_val)
+            line, char, line_len = self.plugin._get_position_hint_within_json(queried_source, s)
             path_in_source = s
-            queried_source = wrk_typ
+            position_in_file = f"{line},{char},{line_len}"
             success = was_ok
         except Exception as e:
             success = False
             str_value = repr(e)
             queried_source = ""
             path_in_source = ""
+            position_in_file = ""
 
         return json.dumps({
             "success": success,
             "value": str_value,
             "queried_source": queried_source,
-            "path_in_source": path_in_source
+            "path_in_source": path_in_source,
+            "position_in_file": position_in_file
         })

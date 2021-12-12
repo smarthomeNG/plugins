@@ -956,6 +956,34 @@ class OpenWeatherMap(SmartPlugin):
 
         return rslt
 
+    def get_raw_data_file(self, data_source_key):
+        src = self._data_sources[data_source_key]['data']
+        return json.dumps(src, indent=4)
+
+    def _get_position_hint_within_json(self, data_source_key, match_string_within_file):
+        splitted = match_string_within_file.split("/")
+        src = self._data_sources[data_source_key]['data']
+        daten = json.dumps(src, indent=4).splitlines()
+        
+        last_line = 0
+        for pos_in_match_string in range(len(splitted)):
+            if splitted[pos_in_match_string].isnumeric():
+                number = int(splitted[pos_in_match_string]) + 1
+                for line_in_file in range(last_line, len(daten)):
+                    now_search_for = ((" " * 4) * (pos_in_match_string + 1)) + "{"
+                    if daten[line_in_file] == now_search_for:
+                        number = number - 1
+                        if number == 0:
+                            last_line = line_in_file
+                            break
+            else:
+                now_search_for = ((" " * 4) * (pos_in_match_string + 1)) + f'"{splitted[pos_in_match_string]}":'
+                for line_in_file in range(last_line, len(daten)):
+                    if daten[line_in_file].startswith(now_search_for):
+                        last_line = line_in_file
+                        break
+        return (last_line, 4 * (pos_in_match_string + 1), len(daten[line_in_file]))
+
     def get_beaufort_number(self, speed_in_mps):
         try:
             # Origin of table: https://www.smarthomeng.de/vom-winde-verweht
