@@ -1,0 +1,96 @@
+plugin_translations:
+    'Sollen nun einmalig alle Datensätze abgefragt werden?':
+        de: '='
+        en: 'Shall all files be downloaded now?'
+
+    'Alle Dateien herunterladen':
+        de: '='
+        en: 'Download all files'
+
+    'Origin':
+        de: 'Quelle'
+        en: '='
+
+    'Fetched':
+        de: 'Geladen'
+        en: '='
+
+    'Breitengrad':
+        de: '='
+        en: 'Latitude'
+
+    'Sprache':
+        de: '='
+        en: 'Language'
+        
+    'Längengrad':
+        de: '='
+        en: 'Longitude'
+        
+    'Einheiten':
+        de: '='
+        en: 'Units'
+        
+    'Höhe in m':
+        de: '='
+        en: 'Altitude in m'
+        
+    'API-Schlüssel':
+        de: '='
+        en: 'API Key'
+
+    'Ladezyklus (s)':
+        de: '='
+        en: 'Reload Cycle (s)'
+        
+    'Items with relation to this OWM-plugin instance':
+        de: 'Items mit Bezug zu dieser OWM-plugin Instanz'
+        en: '='
+
+    'Pfad':
+        de: '='
+        en: 'path'
+
+    'Typ':
+        de: '='
+        en: 'type'
+
+    'Wert':
+        de: '='
+        en: 'value'
+
+    'Letztes Update':
+        de: '='
+        en: 'last updated'
+
+    'Letzter Change':
+        de: '='
+        en: 'last changed'
+
+    'Items':
+        de: '='
+        en: 'items'
+
+    'JSON Data':
+        de: 'OWM Rohdaten (JSON)'
+        en: '='
+
+    'Tester':
+        de: 'Match-Strings'
+        en: 'Match-Strings'
+
+    'Erfolg':
+        de: '='
+        en: 'Success'
+    
+    'Fehler':
+        de: '='
+        en: 'Error'
+
+    'Abgefragte Datenquelle':
+        de: '='
+        en: 'queried data source'
+
+    'Pfad in der Datenquelle':
+        de: '='
+        en: 'path within data source'

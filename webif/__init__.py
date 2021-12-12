@@ -25,7 +25,7 @@
 #
 #########################################################################
 
-import datetime
+from datetime import datetime, timezone
 import time
 import os
 
@@ -74,3 +74,38 @@ class WebInterface(SmartPluginWebIf):
         tmpl = self.tplenv.get_template('index.html')
         # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
         return tmpl.render(p=self.plugin)
+
+    @cherrypy.expose
+    def force_download_all(self):
+        self.plugin.force_download_all_data()
+
+    @cherrypy.expose
+    def test_match_string(self, match_string):
+        success = True
+        req_correlation_key = f"webif_req {str(datetime.now().replace(tzinfo=timezone.utc).timestamp())}:"
+        self.logger.debug(f'Queried to test match_string "{match_string}" as request "{req_correlation_key}"')
+
+        if not self.plugin._forced_download_happened:
+            self.plugin.force_download_all_data()
+
+        try:
+            ret_val, queried_source, s, was_ok = self.plugin.get_value_with_meta(match_string, req_correlation_key)
+            str_value = str(ret_val)
+            line, char, line_len = self.plugin._get_position_hint_within_json(queried_source, s)
+            path_in_source = s
+            position_in_file = f"{line},{char},{line_len}"
+            success = was_ok
+        except Exception as e:
+            success = False
+            str_value = repr(e)
+            queried_source = ""
+            path_in_source = ""
+            position_in_file = ""
+
+        return json.dumps({
+            "success": success,
+            "value": str_value,
+            "queried_source": queried_source,
+            "path_in_source": path_in_source,
+            "position_in_file": position_in_file
+        })
