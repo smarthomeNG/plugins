@@ -40,14 +40,14 @@ plugin:
              (but make sure they still meet the requirements for smarthomeng)!
              If that does not work you can use: ``sudo apt update && sudo apt install -y python3-scipy``\n
              '
-    maintainer: cmalo, bmxp, onkelandy
+    maintainer: cmalo, bmxp, onkelandy, andrek
     tester: Sandman60, cmalo, schuma
     state: ready
 #    keywords: iot xyz
     documentation: https://www.smarthomeng.de/user/plugins/uzsu/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1364692-supportthread-für-uzsu-plugin
 
-    version: 1.5.5                 # Plugin version
+    version: 1.6.0                 # Plugin version
     sh_minversion: 1.5             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
