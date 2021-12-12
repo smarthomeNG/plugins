@@ -32,14 +32,6 @@
 			console.log("Datatable JS not loaded, showing standard table without reorder option")
 			}
 
-		var map = L.map('detail_map').setView([{{ p._lat }}, {{ p._lon }}], 8);
-
-		L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-			attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-		}).addTo(map);
-
-		L.marker([{{ p._lat }}, {{ p._lon }}]).addTo(map);
-
 		$('#test_match_string').click(function() {
 			$.get('test_match_string', $.param({match_string:  $('#owm_string_source').val()}), function(match_string_eval_result) {
 				console.log(match_string_eval_result);
@@ -50,19 +42,35 @@
 				$('#goto_source').click(function() {
 					$('.nav-tabs a[href="#bodytab_2"]').tab('show');
 					enable_block($("#owm_block_" + parsed_result.queried_source.replace('-', '_minus_') + "_nav"));
-					pos_hint = parsed_result.position_in_file.split(",")
-					line_hint = pos_hint[0]
-					char_hint_start = pos_hint[1]
-					char_hint_end = pos_hint[2]
-					window.bodytab2_json_editor.markText({line: line_hint, ch: 1}, {line: line_hint, ch: char_hint_end}, {className: "styled-background"});
+					pos_hint = parsed_result.position_in_file.split(",");
+					line_hint = pos_hint[0];
+					char_hint_start = pos_hint[1];
+					char_hint_end = pos_hint[2] - 1;
+					window.bodytab2_json_editor.markText({line: line_hint, ch: 0}, {line: line_hint, ch: char_hint_end}, {className: "styled-background"});
+					window.bodytab2_json_editor.scrollIntoView({line: line_hint, ch: 0}, {line: line_hint, ch: char_hint_end});
 				});
 			});
 		});
 	});
 
-	function togglevis(id) {
-		var div = document.getElementById(id);
-		div.style.display = div.style.display == "none" ? "block" : "none";
+
+	function show_hide_map() {
+		var map_div = document.getElementById('detail_map');
+		if (map_div.style.display == "none") {
+			map_div.style.display = "block";
+			if (mapInstance) {
+				return;
+			}
+			var mapInstance = L.map('detail_map').setView([{{ p._lat }}, {{ p._lon }}], 8);
+
+			L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+				attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+			}).addTo(mapInstance);
+	
+			L.marker([{{ p._lat }}, {{ p._lon }}]).addTo(mapInstance);
+		} else {
+			map_div.style.display = "none";
+		}
 	}
 </script>
 <style>
@@ -165,20 +173,20 @@
 <table class="table table-striped table-hover">
 	<tbody>
 		<tr>
-			<td class="py-1 clickable" onClick="togglevis('detail_map')" width="150px"><strong>{{ _('Breitengrad') }}</strong></td>
-			<td class="py-1 clickable" onClick="togglevis('detail_map')">{{ p._lat }}</td>
+			<td class="py-1 clickable" onClick="show_hide_map()" width="150px"><strong>{{ _('Breitengrad') }}</strong></td>
+			<td class="py-1 clickable" onClick="show_hide_map()">{{ p._lat }}</td>
 			<td class="py-1" width="150px"><strong>{{ _('Sprache') }}</strong></td>
 			<td class="py-1">{{ p._lang }}</td>
 		</tr>
 		<tr>
-			<td class="py-1 clickable" onClick="togglevis('detail_map')" width="150px"><strong>{{ _('Längengrad') }}</strong></td>
-			<td class="py-1 clickable" onClick="togglevis('detail_map')">{{ p._lon }}</td>
+			<td class="py-1 clickable" onClick="show_hide_map()" width="150px"><strong>{{ _('Längengrad') }}</strong></td>
+			<td class="py-1 clickable" onClick="show_hide_map()">{{ p._lon }}</td>
 			<td class="py-1" width="150px"><strong>{{ _('Einheiten') }}</strong></td>
 			<td class="py-1">{{ p._units }}</td>
 		</tr>
 		<tr>
-			<td class="py-1 clickable" onClick="togglevis('detail_map')" width="150px"><strong>{{ _('Höhe in m') }}</strong></td>
-			<td class="py-1 clickable" onClick="togglevis('detail_map')" class="">{{ p._elev }}</td>
+			<td class="py-1 clickable" onClick="show_hide_map()" width="150px"><strong>{{ _('Höhe in m') }}</strong></td>
+			<td class="py-1 clickable" onClick="show_hide_map()" class="">{{ p._elev }}</td>
 			<td class="py-1" width="150px"><strong>{{ _('Ladezyklus (s)') }}</strong></td>
 			<td class="py-1">{{ p._cycle }}</td>
 		</tr>
@@ -262,7 +270,6 @@
 		foldGutter: true,
 		gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
 	});
-	window.bodytab2_json_editor.refresh();
 </script>
 {% endblock %}
 
