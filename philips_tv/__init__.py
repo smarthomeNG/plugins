@@ -245,17 +245,17 @@ class Philips_TV(SmartPlugin):
 
         # copy information into smarthomeNG items:
         for item in self._rx_items:
-            if error_msg and (item.conf['philips_tv_rx_key'].upper() == 'ERROR'):
+            if (error_msg is not None) and (item.conf['philips_tv_rx_key'].upper() == 'ERROR'):
                 item(str(error_msg), self.get_shortname())
-            elif muted and item.conf['philips_tv_rx_key'].upper() == 'MUTE':
+            elif (muted is not None) and item.conf['philips_tv_rx_key'].upper() == 'MUTE':
                 item(bool(muted), self.get_shortname())
-            elif volume and item.conf['philips_tv_rx_key'].upper() == 'VOLUME':
+            elif (volume is not None) and item.conf['philips_tv_rx_key'].upper() == 'VOLUME':
                 item(volume, self.get_shortname())
-            elif powerstate and item.conf['philips_tv_rx_key'].upper() == 'POWERSTATE':
+            elif (powerstate is not None) and item.conf['philips_tv_rx_key'].upper() == 'POWERSTATE':
                 item(bool(powerstate == 'On'), self.get_shortname())
-            elif powerstate and item.conf['philips_tv_rx_key'].upper() == 'POWERSTATEINFO':
+            elif (powerstate is not None) and item.conf['philips_tv_rx_key'].upper() == 'POWERSTATEINFO':
                 item(str(powerstate), self.get_shortname())
-            elif channel_name and item.conf['philips_tv_rx_key'].upper() == 'CHANNEL':
+            elif (channel_name is not None) and item.conf['philips_tv_rx_key'].upper() == 'CHANNEL':
                 item(str(channel_name), self.get_shortname())
 
         pass
