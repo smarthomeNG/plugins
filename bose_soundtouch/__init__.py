@@ -38,7 +38,7 @@ class BoseSoundtouch(SmartPlugin):
     the update functions for the items
     """
     # Plugin parameters
-    PLUGIN_VERSION = '1.0.0'
+    PLUGIN_VERSION = '1.0.1'
     PLUGIN_PARAMETER_IP = None
     PLUGIN_PARAMETER_PORT = None
 
@@ -97,8 +97,14 @@ class BoseSoundtouch(SmartPlugin):
         # BOSE SOUNDTOUCH INITIALIZATION
         #######################################################################
         # Connect to device
-        self.device = soundtouch_device(self.PLUGIN_PARAMETER_IP, self.PLUGIN_PARAMETER_PORT)
-        self.logger.info("Initialized connection to Bose Soundtouch device '" + self.getSoundtouchDevice().config.name + "' at " + self.getSoundtouchDevice().config.device_ip)
+        try:
+            self.device = soundtouch_device(self.PLUGIN_PARAMETER_IP, self.PLUGIN_PARAMETER_PORT)
+            self.logger.info("Initialized connection to Bose Soundtouch device '" + self.getSoundtouchDevice().config.name + "' at " + self.getSoundtouchDevice().config.device_ip)
+        except Exception as e:
+            self.logger.error("Fatal error during plugin initialization.")
+            self.logger.error(e)
+            self._init_complete = False
+
         #######################################################################
 
         # On initialization error use:
@@ -271,41 +277,41 @@ class BoseSoundtouch(SmartPlugin):
         for item in self.get_sh().find_items(self.ITEM_ACTION_ATTR):
             if presets is None:
                 presets = self.getSoundtouchDevice().presets()
-            if self.get_iattr_value(item.conf, self.ITEM_ACTION_ATTR) == 'presets.0.name':
+            if self.get_iattr_value(item.conf, self.ITEM_ACTION_ATTR) == 'presets.0.name' and len(presets) > 0:
                 item(presets[0].name, self.get_shortname())
-            elif self.get_iattr_value(item.conf, self.ITEM_ACTION_ATTR) == 'presets.0.preset_id':
+            elif self.get_iattr_value(item.conf, self.ITEM_ACTION_ATTR) == 'presets.0.preset_id' and len(presets) > 0:
                 item(presets[0].preset_id, self.get_shortname())
-            elif self.get_iattr_value(item.conf, self.ITEM_ACTION_ATTR) == 'presets.0.source':
+            elif self.get_iattr_value(item.conf, self.ITEM_ACTION_ATTR) == 'presets.0.source' and len(presets) > 0:
                 item(presets[0].source, self.get_shortname())
-            elif self.get_iattr_value(item.conf, self.ITEM_ACTION_ATTR) == 'presets.1.name':
+            elif self.get_iattr_value(item.conf, self.ITEM_ACTION_ATTR) == 'presets.1.name' and len(presets) > 1:
                 item(presets[1].name, self.get_shortname())
-            elif self.get_iattr_value(item.conf, self.ITEM_ACTION_ATTR) == 'presets.1.preset_id':
+            elif self.get_iattr_value(item.conf, self.ITEM_ACTION_ATTR) == 'presets.1.preset_id' and len(presets) > 1:
                 item(presets[1].preset_id, self.get_shortname())
-            elif self.get_iattr_value(item.conf, self.ITEM_ACTION_ATTR) == 'presets.1.source':
+            elif self.get_iattr_value(item.conf, self.ITEM_ACTION_ATTR) == 'presets.1.source' and len(presets) > 1:
                 item(presets[1].source, self.get_shortname())
-            elif self.get_iattr_value(item.conf, self.ITEM_ACTION_ATTR) == 'presets.2.name':
+            elif self.get_iattr_value(item.conf, self.ITEM_ACTION_ATTR) == 'presets.2.name' and len(presets) > 2:
                 item(presets[2].name, self.get_shortname())
-            elif self.get_iattr_value(item.conf, self.ITEM_ACTION_ATTR) == 'presets.2.preset_id':
+            elif self.get_iattr_value(item.conf, self.ITEM_ACTION_ATTR) == 'presets.2.preset_id' and len(presets) > 2:
                 item(presets[2].preset_id, self.get_shortname())
-            elif self.get_iattr_value(item.conf, self.ITEM_ACTION_ATTR) == 'presets.2.source':
+            elif self.get_iattr_value(item.conf, self.ITEM_ACTION_ATTR) == 'presets.2.source' and len(presets) > 2:
                 item(presets[2].source, self.get_shortname())
-            elif self.get_iattr_value(item.conf, self.ITEM_ACTION_ATTR) == 'presets.3.name':
+            elif self.get_iattr_value(item.conf, self.ITEM_ACTION_ATTR) == 'presets.3.name' and len(presets) > 3:
                 item(presets[3].name, self.get_shortname())
-            elif self.get_iattr_value(item.conf, self.ITEM_ACTION_ATTR) == 'presets.3.preset_id':
+            elif self.get_iattr_value(item.conf, self.ITEM_ACTION_ATTR) == 'presets.3.preset_id' and len(presets) > 3:
                 item(presets[3].preset_id, self.get_shortname())
-            elif self.get_iattr_value(item.conf, self.ITEM_ACTION_ATTR) == 'presets.3.source':
+            elif self.get_iattr_value(item.conf, self.ITEM_ACTION_ATTR) == 'presets.3.source' and len(presets) > 3:
                 item(presets[3].source, self.get_shortname())
-            elif self.get_iattr_value(item.conf, self.ITEM_ACTION_ATTR) == 'presets.4.name':
+            elif self.get_iattr_value(item.conf, self.ITEM_ACTION_ATTR) == 'presets.4.name' and len(presets) > 4:
                 item(presets[4].name, self.get_shortname())
-            elif self.get_iattr_value(item.conf, self.ITEM_ACTION_ATTR) == 'presets.4.preset_id':
+            elif self.get_iattr_value(item.conf, self.ITEM_ACTION_ATTR) == 'presets.4.preset_id' and len(presets) > 4:
                 item(presets[4].preset_id, self.get_shortname())
-            elif self.get_iattr_value(item.conf, self.ITEM_ACTION_ATTR) == 'presets.4.source':
+            elif self.get_iattr_value(item.conf, self.ITEM_ACTION_ATTR) == 'presets.4.source' and len(presets) > 4:
                 item(presets[4].source, self.get_shortname())
-            elif self.get_iattr_value(item.conf, self.ITEM_ACTION_ATTR) == 'presets.5.name':
+            elif self.get_iattr_value(item.conf, self.ITEM_ACTION_ATTR) == 'presets.5.name' and len(presets) > 5:
                 item(presets[5].name, self.get_shortname())
-            elif self.get_iattr_value(item.conf, self.ITEM_ACTION_ATTR) == 'presets.5.preset_id':
+            elif self.get_iattr_value(item.conf, self.ITEM_ACTION_ATTR) == 'presets.5.preset_id' and len(presets) > 5:
                 item(presets[5].preset_id, self.get_shortname())
-            elif self.get_iattr_value(item.conf, self.ITEM_ACTION_ATTR) == 'presets.5.source':
+            elif self.get_iattr_value(item.conf, self.ITEM_ACTION_ATTR) == 'presets.5.source' and len(presets) > 5:
                 item(presets[5].source, self.get_shortname())
 
     def powerOnSoundtouch(self):

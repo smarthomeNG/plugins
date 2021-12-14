@@ -1,5 +1,9 @@
 # Bose Soundtouch Plugin
 
+#### Version 1.0.1
+
+- Improved error handling.
+
 #### Version 1.0.0
 
 This plugin integrates [Bose Soundtouch](https://www.bose.de/de_de/products/speakers/smart_home/soundtouch_family.html) devices into the [SmartHomeNG](https://www.smarthomeng.de/) infrastructure. Currently the following use cases are implemented:
