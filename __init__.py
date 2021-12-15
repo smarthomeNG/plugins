@@ -137,6 +137,17 @@ class OpenWeatherMap(SmartPlugin):
                               self._data_source_key_airpollution_back3day:  {'url': '', 'fetched': '', 'data': 'Not downloaded!'},
                               self._data_source_key_airpollution_back4day:  {'url': '', 'fetched': '', 'data': 'Not downloaded!'}}
 
+        self._soft_fails = {
+            "rain/1h": "static=0",
+            "rain/3h": "static=0",
+            "snow/1h": "static=0",
+            "snow/3h": "static=0",
+            "rain/": "static=0",
+            "snow/": "static=0",
+            "wind_gust/": "log_info",
+            "wind_gustav/": "static=-1"
+        }
+
         self._soft_fails_to_zero = ['rain/1h',
                                     'rain/3h',
                                     'snow/1h',
