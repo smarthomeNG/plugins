@@ -36,6 +36,18 @@ Der bevorzugte Weg ist die Verwendung der "one-call" API.
 Alle Wetterdaten werden in metrischen Einheiten (m, mm, hPa, °C) dargestellt.
 
 
+Rohe JSON Daten in ein Item speichern
+-------------------------------------
+
+Nutze die "data-source-keys" um die entsprechende Datenquelle zu identifizieren.
+
+.. code:: yaml
+
+    kompletter_onecall_json:
+        type: str
+        owm_raw_file: onecall
+
+
 Verfügbare Matchstrings
 -----------------------
 
