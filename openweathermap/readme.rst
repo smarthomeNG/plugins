@@ -36,6 +36,19 @@ Der bevorzugte Weg ist die Verwendung der "one-call" API.
 Alle Wetterdaten werden in metrischen Einheiten (m, mm, hPa, °C) dargestellt.
 
 
+Rohe JSON Daten in ein Item speichern
+-------------------------------------
+
+Nutze die "data-source-keys" um die entsprechende Datenquelle zu identifizieren.
+
+.. code:: yaml
+
+    kompletter_onecall_json:
+        type: str
+        owm_raw_file: onecall
+
+
+
 Verfügbare Matchstrings
 -----------------------
 
@@ -43,7 +56,7 @@ Der Beginn des "Matchstring" definiert die zu verwendende Daten-Quelle (API):
 
 - beginnt mit ``virtual/`` siehe `Virtual Matchstrings`; Beispiel: virtual/past24h/sum/rain/1h um die Gesamtmenge an Regen der letzten 24h zu bekommen
 - beginnt mit ``forecast/daily/``, siehe `Daily forecast (calculated)`; Beispiel: forecast/daily/0/main/temp_min um die niedrigste Tagestemperatur für morgen zu bekommen
-- endet mit ``/eto`` beginnt mit ``current/`` oder ``daily/``, siehe `Evapotranspiration`; Beisüiel: daily/1/eto für den morgigen ETO-Wert.
+- endet mit ``/eto`` beginnt mit ``current/`` oder ``daily/``, siehe `Evapotranspiration`; Beispiel: daily/1/eto für den morgigen ETO-Wert.
 - beginnt mit ``forecast/`` (Datenquelle ist die forecast-API); Beispiel: forecast/1/main/humidity um die vorhergesagte Luftfeuchtigkeit on 3h von jetzt zu bekommen (Bemerkung: ``forecast/`` wird durch ``list/`` ersetzt, wenn entsprechende Items in der Datenquelle vorhanden sind)
 - beginnt mit ``uvi`` (Datenquelle ist die uvi-API); Beispiel: uvi_value um den UV-Index Wert zu bekommen; Diese API is veraltet und durch current/uvi ersetzt
 - beginnt mit ``current/``  Beispiel: current/weather/description um die textuelle Beschreibung des aktuellen Wetters in der definierten Sprache zu bekommen
@@ -286,14 +299,14 @@ Matchstring Fehlerbehandlung
 Das typische Prüfen der Matchstrings wird bei die Wurzel der JSON-Antwort des API-Abrufes beginnen und dann dem im Matchstring definierten "Pfades" folgend die entsprechenden Daten aus dem JSON dem Item zuweisen.
 Wenn der nächste Knoten entlang dieses "Pfades" nicht erreicht werden kan, wird ein ERROR geloggt. Typischerweise entsteht das durch Schreibfehler oder fehlender/falsche Indizees bei Listen.
 Nicht alle Antworten der OWM APIs enthalten alle Daten/Werte. Bspw. sind Daten für ``rain``und ``snow`` nur beinhaltet, wenn es regnet oder schneit oder regen oder schneien wird.
-Für Matchstrings die auf ``snow/3h``, ``snow/1h``, ``rain/3h`` oder ``rain/1h`` enden, wird das "nicht passende" Item den Wert 0 statt None erhalten. Dies wird (wenn aktiviert) als DEBUG Nachricht im Log eingetragen.
+Für Matchstrings die auf ``snow/3h``, ``snow/1h``, ``rain/3h`` oder ``rain/1h`` enden, wird das "nicht passende" Item den Wert 0 statt None erhalten. Dies wird (wenn aktiviert) als DEBUG Nachricht im Log eingetragen. Dieses Verhalten ist konfigurierbar über den Plugin-Parameter ``softfail_precipitation``.
 
 
 
 Konfiguration
 =============
 
-Die Informationen zur Konfiguration des Plugins sind unter :doc:`/plugins_doc/config/avm` beschrieben bzw. in der **plugin.yaml** nachzulesen.
+Die Informationen zur Konfiguration des Plugins sind unter :doc:`/plugins_doc/config/openweathermap` beschrieben bzw. in der **plugin.yaml** nachzulesen.
 
 
 Nachfolgend noch einige Zusatzinformationen.

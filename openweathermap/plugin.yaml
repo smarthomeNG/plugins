@@ -69,6 +69,33 @@ parameters:
             de: '(optional) Zeit zwischen zwei Updateläufen. Default ist 300 Sekunden.'
             en: '(optional) Time period between two update cycles. Default is 300 seconds.'
 
+    softfail_precipitation:
+        type: str
+        mandatory: False
+        default: 'number=0'
+        valid_list:
+          - 'number=0'
+          - 'number=-1'
+          - 'no_update'
+          - 'log_info'
+        description:
+            de: 'Wenn keine optionalen Niederschlagswerte (Regen/Schnee) geliefert werden, aber eine Aktualisierung passiert ist - was soll geschrieben werden?'
+            en: 'What should written to items if the last JSON did not contain any value for rain or snow?'
+
+    softfail_wind_gust:
+        type: str
+        mandatory: False
+        default: 'relative=../wind_speed'
+        valid_list:
+          - 'number=0'
+          - 'number=-1'
+          - 'no_update'
+          - 'relative=../wind_speed'
+          - 'log_info'
+        description:
+            de: 'Wenn keine Werte für Windböen geliefert werden, aber eine Aktualisierung passiert ist - was soll geschrieben werden?'
+            en: 'What should written to items if the last JSON did not contain any value for wind gusts?'
+
 item_attributes:
     # Definition of item attributes defined by this plugin
     owm_matchstring:
@@ -102,6 +129,13 @@ item_attributes:
         description:
             de: 'Z-Koordinate für die entsprechenden Layer-Bilder-Links von OpenWeatherMap. Nur nutzbar mit owm_matchstring: precipitation_new und clouds_new.'
             en: 'Z coordinate for layer image URLs of OpenWeatherMap. Only usable with owm_matchstring: precipitation_new and clouds_new.'
+    owm_raw_file:
+        type: str
+        mandatory: False
+        description:
+            de: 'Name einer Datenquelle, der JSON hier komplett eingebunden wird'
+            en: 'Name of data-source which JSON is embedded as value of this item'
+
 
 item_structs:
     # Definition of item-structure templates for this plugin
@@ -1391,7 +1425,7 @@ plugin_functions:
                 type: num
                 description:
                     de: "Windstärke in bft, integer zwischen 0 und 12"
-                    de: "Wind-speed in bft, integer between 0 und 12"
+                    en: "Wind-speed in bft, integer between 0 und 12"
     
     get_beaufort_number:
         type: num
@@ -1403,5 +1437,16 @@ plugin_functions:
                 type: num
                 description:
                     de: "Windstärke in m/s"
-                    de: "Wind-speed in m/s"
+                    en: "Wind-speed in m/s"
 
+    get_raw_data_file:
+        type: str
+        description:
+            de: "Stellt die JSON-Datei der Datenquelle bereit"
+            en: "Allows access to the JSON-String of the raw-file"
+        parameters:
+            data_source_key:
+                type: str
+                description:
+                    de: "Datenquelle"
+                    de: "Data source key"
