@@ -298,14 +298,14 @@ Matchstring Fehlerbehandlung
 Das typische Prüfen der Matchstrings wird bei die Wurzel der JSON-Antwort des API-Abrufes beginnen und dann dem im Matchstring definierten "Pfades" folgend die entsprechenden Daten aus dem JSON dem Item zuweisen.
 Wenn der nächste Knoten entlang dieses "Pfades" nicht erreicht werden kan, wird ein ERROR geloggt. Typischerweise entsteht das durch Schreibfehler oder fehlender/falsche Indizes bei Listen.
 Nicht alle Antworten der OWM APIs enthalten alle Daten/Werte. Bspw. sind Daten für ``rain``und ``snow`` nur beinhaltet, wenn es regnet oder schneit oder regen oder schneien wird.
-Für Matchstrings die auf ``snow/3h``, ``snow/1h``, ``rain/3h`` oder ``rain/1h`` enden, wird das "nicht passende" Item den Wert 0 statt None erhalten. Dies wird (wenn aktiviert) als DEBUG Nachricht im Log eingetragen.
+Für Matchstrings die auf ``snow/3h``, ``snow/1h``, ``rain/3h`` oder ``rain/1h`` enden, wird das "nicht passende" Item den Wert 0 statt None erhalten. Dies wird (wenn aktiviert) als DEBUG Nachricht im Log eingetragen. Dieses Verhalten ist konfigurierbar über den Plugin-Parameter ``softfail_precipitation``.
 
 
 
 Konfiguration
 =============
 
-Die Informationen zur Konfiguration des Plugins sind unter :doc:`/plugins_doc/config/avm` beschrieben bzw. in der **plugin.yaml** nachzulesen.
+Die Informationen zur Konfiguration des Plugins sind unter :doc:`/plugins_doc/config/openweathermap` beschrieben bzw. in der **plugin.yaml** nachzulesen.
 
 
 Nachfolgend noch einige Zusatzinformationen.
