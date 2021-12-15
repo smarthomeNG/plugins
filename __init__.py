@@ -104,6 +104,19 @@ class OpenWeatherMap(SmartPlugin):
         self._lang = self.get_parameter_value('lang')
         self._units = self.get_parameter_value('units')
 
+        softfail_mode_precipitation = self.get_parameter_value('softfail_precipitation')
+        softfail_mode_wind_gust = self.get_parameter_value('softfail_wind_gust')
+
+        self._soft_fails = {
+            "rain/1h": softfail_mode_precipitation,
+            "rain/3h": softfail_mode_precipitation,
+            "snow/1h": softfail_mode_precipitation,
+            "snow/3h": softfail_mode_precipitation,
+            "rain/": softfail_mode_precipitation,
+            "snow/": softfail_mode_precipitation,
+            "wind_gust/": softfail_mode_wind_gust
+        }
+
         self._data_source_key_weather = 'weather'
         self._data_source_key_forecast = 'forecast'
         self._data_source_key_uvi = 'uvi'
@@ -136,16 +149,6 @@ class OpenWeatherMap(SmartPlugin):
                               self._data_source_key_airpollution_back2day:  {'url': '', 'fetched': '', 'data': 'Not downloaded!'},
                               self._data_source_key_airpollution_back3day:  {'url': '', 'fetched': '', 'data': 'Not downloaded!'},
                               self._data_source_key_airpollution_back4day:  {'url': '', 'fetched': '', 'data': 'Not downloaded!'}}
-
-        self._soft_fails_to_zero = ['rain/1h',
-                                    'rain/3h',
-                                    'snow/1h',
-                                    'snow/3h',
-                                    'rain/',
-                                    'snow/']
-
-        self._soft_fails_to_info = ['wind_gust/',
-                                    'wind_gustav/']
 
         self._session = requests.Session()
         self._cycle = int(self.get_parameter_value('cycle'))
@@ -381,8 +384,8 @@ class OpenWeatherMap(SmartPlugin):
                 mps_string = s.replace('/wind_speed/beaufort', '/wind_speed')
                 mps_string = mps_string.replace(
                     '/wind_speed/description', '/wind_speed')
-                wind_mps, updated_s = self._get_val_from_dict(
-                    mps_string, wrk, correlation_hint)
+                wind_mps, updated_s = self.__get_val_from_dict(
+                    mps_string, wrk, correlation_hint, owm_matchstring)
                 bft_val = self.get_beaufort_number(wind_mps)
                 if s.endswith('/beaufort'):
                     ret_val = bft_val
@@ -392,7 +395,7 @@ class OpenWeatherMap(SmartPlugin):
                     raise Exception(f"Cannot make sense of {s}")
                 s = updated_s
             else:
-                ret_val, s = self._get_val_from_dict(s, wrk, correlation_hint)
+                ret_val, s = self.__get_val_from_dict(s, wrk, correlation_hint, owm_matchstring)
         except Exception as e:
             was_ok = False
             ret_val = e
@@ -437,9 +440,11 @@ class OpenWeatherMap(SmartPlugin):
                     ret_val, wrk_typ, changed_match_string, was_ok = self.get_value_with_meta(
                         owm_matchstring, f"{item_path} ")
 
-                    if isinstance(ret_val, OpenWeatherMapNoValueSoftException):
+                    if ret_val is None:
+                        return
+                    elif isinstance(ret_val, OpenWeatherMapNoValueSoftException):
                         self.logger.info(
-                            "%s INFO: owm-string: %s --> %s from wrk=%s, Error: %s" % (item, owm_matchstring, changed_match_string, wrk_typ, ret_val))
+                            "%s INFO: owm-string: %s --> %s from wrk=%s, Info: %s" % (item, owm_matchstring, changed_match_string, wrk_typ, ret_val))
                     elif isinstance(ret_val, Exception):
                         self.logger.error(
                             "%s ERROR: owm-string: %s --> %s from wrk=%s, Error: %s" % (item, owm_matchstring, changed_match_string, wrk_typ, ret_val))
@@ -604,7 +609,42 @@ class OpenWeatherMap(SmartPlugin):
         else:
             return f"Unknown operation '{operation}' in match_string '{virtual_ms}'"
 
-    def _get_val_from_dict(self, s, wrk, correlation_hint=""):
+    def __handle_fail(self, last_popped, current_leaf, successful_path, original_match_string, correlation_hint):
+        missing_child_path = last_popped if len(current_leaf) == 0 else f"{last_popped}/{'/'.join(current_leaf)}"
+        fail_match_string = f"{last_popped}/{'/'.join(current_leaf)}"
+                
+        if fail_match_string in self._soft_fails:
+            soft_fail_mode = self._soft_fails[fail_match_string]
+            if soft_fail_mode == "log_info":
+                raise OpenWeatherMapNoValueSoftException(
+                    f"Missing child '{last_popped}' after '{'/'.join(successful_path)}' (complete path missing: {missing_child_path})")
+            elif soft_fail_mode == "no_update":
+                changed_match_string = '/'.join(successful_path) + missing_child_path
+                self.logger.debug(
+                            "%s DEBUG: owm-string: %s --> %s, Missing Child, Soft-Fail to no_update" % (correlation_hint, original_match_string, changed_match_string))
+                return None
+            elif soft_fail_mode.startswith("number="):
+                return int(soft_fail_mode.replace("number=", ""))
+            elif soft_fail_mode.startswith("string="):
+                return soft_fail_mode.replace("string=", "")
+            elif soft_fail_mode.startswith("relative="):
+                relative_match_string = soft_fail_mode.replace("relative=", "")
+                match_path = original_match_string.split('/')
+                for fragment in relative_match_string.split('/'):
+                    if fragment == "..":
+                        match_path.pop()
+                    else:
+                        match_path.append(fragment)
+                new_match_string = "/".join(match_path)
+                self.logger.debug(f"{correlation_hint} '{original_match_string}' is matching soft_fail '{fail_match_string}' and will query '{new_match_string}'")
+                return self.get_value_or_raise(new_match_string, correlation_hint)
+
+        raise OpenWeatherMapNoValueHardException(
+            f"Missing child '{last_popped}' after '{'/'.join(successful_path)}' (complete path missing: {missing_child_path})")
+           
+
+
+    def __get_val_from_dict(self, s, wrk, correlation_hint, original_match_string):
         """
         Uses string s as a path to navigate to the requested value in dict wrk.
         """
@@ -614,18 +654,7 @@ class OpenWeatherMap(SmartPlugin):
         while True:
             if (len(sp) == 0) or (wrk is None):
                 if wrk is None:
-                    missing_child_path = last_popped if len(
-                        sp) == 0 else f"{last_popped}/{'/'.join(sp)}"
-                    if f"{last_popped}/{'/'.join(sp)}" in self._soft_fails_to_zero:
-                        wrk = 0
-                        # self.logger.debug(
-                        #    f"{correlation_hint}No defined value from API for '{s}', missing '{missing_child_path}', defaulting to 0")
-                    elif f"{last_popped}/{'/'.join(sp)}" in self._soft_fails_to_info:
-                        raise OpenWeatherMapNoValueSoftException(
-                            f"Missing child '{last_popped}' after '{'/'.join(successful_path)}' (complete path missing: {missing_child_path})")
-                    else:
-                        raise OpenWeatherMapNoValueHardException(
-                            f"Missing child '{last_popped}' after '{'/'.join(successful_path)}' (complete path missing: {missing_child_path})")
+                    wrk = self.__handle_fail(last_popped, sp, successful_path, original_match_string, correlation_hint)
                 break
 
             if type(wrk) is list:
@@ -667,6 +696,7 @@ class OpenWeatherMap(SmartPlugin):
         requested period (1, 2, ..., 5 days in the future).
         Uses local time to determine which entries to include/exclude.
         """
+        original_match_string = s
         s = s.replace("forecast/daily/", "")
         forecast = self._data_sources[self._data_source_key_forecast]['data']
         if forecast is None:
@@ -697,7 +727,7 @@ class OpenWeatherMap(SmartPlugin):
                     if dt >= int(too_far.timestamp()):
                         break
                     if dt >= int(date_requested.timestamp()):
-                        val, _ = self._get_val_from_dict("/".join(sp), entry)
+                        val, _ = self.__get_val_from_dict("/".join(sp), entry, "", original_match_string)
                         if isinstance(val, float) or isinstance(val, int):
                             wrk.append(val)
                         elif val is None:
