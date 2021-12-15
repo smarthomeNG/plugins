@@ -69,6 +69,33 @@ parameters:
             de: '(optional) Zeit zwischen zwei Updateläufen. Default ist 300 Sekunden.'
             en: '(optional) Time period between two update cycles. Default is 300 seconds.'
 
+    softfail_precipitation:
+        type: str
+        mandatory: True
+        default: 'number=0'
+        valid_list:
+          - 'number=0'
+          - 'number=-1'
+          - 'no_update'
+          - 'log_info'
+        description:
+            de: 'Wenn keine optionalen Niederschlagswerte (Regen/Schnee) geliefert werden, aber eine Aktualisierung passiert ist - was soll geschrieben werden?'
+            en: 'What should written to items if the last JSON did not contain any value for rain or snow?'
+
+    softfail_wind_gust:
+        type: str
+        mandatory: True
+        default: 'relative=../wind_speed'
+        valid_list:
+          - 'number=0'
+          - 'number=-1'
+          - 'no_update'
+          - 'relative=../wind_speed'
+          - 'log_info'
+        description:
+            de: 'Wenn keine Werte für Windböen geliefert werden, aber eine Aktualisierung passiert ist - was soll geschrieben werden?'
+            en: 'What should written to items if the last JSON did not contain any value for wind gusts?'
+
 item_attributes:
     # Definition of item attributes defined by this plugin
     owm_matchstring:

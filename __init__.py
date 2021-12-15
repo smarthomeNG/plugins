@@ -104,6 +104,19 @@ class OpenWeatherMap(SmartPlugin):
         self._lang = self.get_parameter_value('lang')
         self._units = self.get_parameter_value('units')
 
+        softfail_mode_precipitation = self.get_parameter_value('softfail_precipitation')
+        softfail_mode_wind_gust = self.get_parameter_value('softfail_wind_gust')
+
+        self._soft_fails = {
+            "rain/1h": softfail_mode_precipitation,
+            "rain/3h": softfail_mode_precipitation,
+            "snow/1h": softfail_mode_precipitation,
+            "snow/3h": softfail_mode_precipitation,
+            "rain/": softfail_mode_precipitation,
+            "snow/": softfail_mode_precipitation,
+            "wind_gust/": softfail_mode_wind_gust
+        }
+
         self._data_source_key_weather = 'weather'
         self._data_source_key_forecast = 'forecast'
         self._data_source_key_uvi = 'uvi'
@@ -136,20 +149,6 @@ class OpenWeatherMap(SmartPlugin):
                               self._data_source_key_airpollution_back2day:  {'url': '', 'fetched': '', 'data': 'Not downloaded!'},
                               self._data_source_key_airpollution_back3day:  {'url': '', 'fetched': '', 'data': 'Not downloaded!'},
                               self._data_source_key_airpollution_back4day:  {'url': '', 'fetched': '', 'data': 'Not downloaded!'}}
-
-        self._soft_fails = {
-            "rain/1h": "number=0",
-            "rain/3h": "number=0",
-            "snow/1h": "number=0",
-            "snow/3h": "number=0",
-            "rain/": "number=0",
-            "snow/": "number=0",
-            "wind_gust/": "relative=../wind_speed",
-            "wind_gustav/": "number=-1",
-            "wind_gustavs/": "string=-1",
-            "wind_gustavn/": "no_update",
-            "wind_gustavi/": "log_info"
-        }
 
         self._session = requests.Session()
         self._cycle = int(self.get_parameter_value('cycle'))
