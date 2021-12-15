@@ -150,6 +150,7 @@ class OpenWeatherMap(SmartPlugin):
         self._session = requests.Session()
         self._cycle = int(self.get_parameter_value('cycle'))
         self._items = {}
+        self._raw_items = {}
 
         self._request_weather = False
         self._request_forecast = False
@@ -415,6 +416,12 @@ class OpenWeatherMap(SmartPlugin):
         Updates information on diverse items
         """
         self._download_data()
+
+        for item_path, owm_item_data in self._raw_items.items():
+            data_source_key, item = owm_item_data
+            raw = json.dumps(self._data_sources[data_source_key]['data'], indent=4)
+            item(raw, self.get_shortname(), f"raw // {data_source_key}")
+            pass
 
         for item_path, owm_item_data in self._items.items():
             owm_matchstring, item = owm_item_data
@@ -757,6 +764,15 @@ class OpenWeatherMap(SmartPlugin):
 
         :param item: The item to process.
         """
+        owm_raw = self.get_iattr_value(item.conf, 'owm_raw_file')
+        if owm_raw:
+            for ds_key in self._data_sources:
+                if owm_raw == ds_key:
+                    self._raw_items[item.id()] = (ds_key, item)
+                    return
+            self.logger.warn(f"Unmatched owm_raw_file name '{owm_raw}'")
+            return
+
         owm_pfx = self.get_iattr_value(item.conf, 'owm_match_prefix')
         owm_ms = self.get_iattr_value(item.conf, 'owm_matchstring')
         if owm_ms:

@@ -30,6 +30,19 @@ Keep this in mind:
 Functionality
 =============
 
+Save raw JSON-string to item
+----------------------------
+
+Use the "data-source-keys" to identify the respective data-source.
+
+.. code:: yaml
+
+    complete_onecall_json:
+        type: str
+        owm_raw_file: onecall
+
+
+
 
 General Information
 -------------------
