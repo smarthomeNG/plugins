@@ -70,7 +70,7 @@
 			if (mapInstance) {
 				return;
 			}
-			var mapInstance = L.map('detail_map').setView([{{ p._lat }}, {{ p._lon }}], 8);
+			var mapInstance = L.map('detail_map').setView([{{ p._lat }}, {{ p._lon }}], 10);
 
 			L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 				attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
