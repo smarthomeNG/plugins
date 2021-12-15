@@ -55,7 +55,7 @@ Der Beginn des "Matchstring" definiert die zu verwendende Daten-Quelle (API):
 
 - beginnt mit ``virtual/`` siehe `Virtual Matchstrings`; Beispiel: virtual/past24h/sum/rain/1h um die Gesamtmenge an Regen der letzten 24h zu bekommen
 - beginnt mit ``forecast/daily/``, siehe `Daily forecast (calculated)`; Beispiel: forecast/daily/0/main/temp_min um die niedrigste Tagestemperatur für morgen zu bekommen
-- endet mit ``/eto`` beginnt mit ``current/`` oder ``daily/``, siehe `Evapotranspiration`; Beisüiel: daily/1/eto für den morgigen ETO-Wert.
+- endet mit ``/eto`` beginnt mit ``current/`` oder ``daily/``, siehe `Evapotranspiration`; Beispiel: daily/1/eto für den morgigen ETO-Wert.
 - beginnt mit ``forecast/`` (Datenquelle ist die forecast-API); Beispiel: forecast/1/main/humidity um die vorhergesagte Luftfeuchtigkeit on 3h von jetzt zu bekommen (Bemerkung: ``forecast/`` wird durch ``list/`` ersetzt, wenn entsprechende Items in der Datenquelle vorhanden sind)
 - beginnt mit ``uvi`` (Datenquelle ist die uvi-API); Beispiel: uvi_value um den UV-Index Wert zu bekommen; Diese API is veraltet und durch current/uvi ersetzt
 - beginnt mit ``current/``  Beispiel: current/weather/description um die textuelle Beschreibung des aktuellen Wetters in der definierten Sprache zu bekommen
