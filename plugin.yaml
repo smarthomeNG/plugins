@@ -102,6 +102,13 @@ item_attributes:
         description:
             de: 'Z-Koordinate für die entsprechenden Layer-Bilder-Links von OpenWeatherMap. Nur nutzbar mit owm_matchstring: precipitation_new und clouds_new.'
             en: 'Z coordinate for layer image URLs of OpenWeatherMap. Only usable with owm_matchstring: precipitation_new and clouds_new.'
+    owm_raw_file:
+        type: str
+        mandatory: False
+        description:
+            de: 'Name einer Datenquelle, der JSON hier komplett eingebunden wird'
+            en: 'Name of data-source which JSON is embedded as value of this item'
+
 
 item_structs:
     # Definition of item-structure templates for this plugin
