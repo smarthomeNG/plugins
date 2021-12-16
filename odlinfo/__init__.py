@@ -97,11 +97,8 @@ class ODLInfo(SmartPlugin):
         @param odlinfo_ids: array if internal odlinfo_ids
         """
         result_stations = []
-
-        for odlinfo_id in odlinfo_ids:
-            self.logger.debug(odlinfo_id)
-            station = self.get_radiation_data_for_id(odlinfo_id)
-            if station is not None:
+        for result_station in self.get_stations():
+            if (result_station['kenn'] in odlinfo_ids) or (result_station['id'] in odlinfo_ids):
                 result_stations.append(result_station)
         return result_stations
 
