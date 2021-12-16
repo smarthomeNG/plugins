@@ -47,8 +47,6 @@ class ODLInfo(SmartPlugin):
     def __init__(self, sh, *args, **kwargs):
         """
         Initializes the plugin
-        @param user: For accessing the ODLINFO API you need a personal username
-        @param password: For accessing the ODLINFO API you need a personal password
         """
         # Call init code of parent class (SmartPlugin or MqttPlugin)
         super().__init__()
@@ -95,7 +93,7 @@ class ODLInfo(SmartPlugin):
 
     def get_stations_for_ids(self, odlinfo_ids):
         """
-        Returns an array of dicts of information for a radiation measurement stations
+        Returns an array of dicts of information for multiple radiation measurement stations
         @param odlinfo_ids: array if internal odlinfo_ids
         """
         result_stations = []
