@@ -37,10 +37,12 @@ import logging
 import requests
 from lib.model.smartplugin import SmartPlugin
 from requests.auth import HTTPBasicAuth
+from .webif import WebInterface
+import cherrypy
 
 class ODLInfo(SmartPlugin):
-    PLUGIN_VERSION = "1.4.3"
-    _base_url = 'https://odlinfo.bfs.de/daten/json/stamm.json'
+    PLUGIN_VERSION = "1.5.0"
+    _base_url = 'https://www.imis.bfs.de/ogc/opendata/ows'
 
     def __init__(self, sh, *args, **kwargs):
         """
@@ -51,10 +53,9 @@ class ODLInfo(SmartPlugin):
         # Call init code of parent class (SmartPlugin or MqttPlugin)
         super().__init__()
 
-        self._user = self.get_parameter_value('user')
-        self._password = self.get_parameter_value('password')
-        self._keys = ['ort', 'kenn', 'plz', 'status', 'kid', 'hoehe', 'lon', 'lat', 'mw']
         self._session = requests.Session()
+        if not self.init_webinterface(WebInterface):
+            self._init_complete = False
 
     def run(self):
         self.alive = True
@@ -62,57 +63,57 @@ class ODLInfo(SmartPlugin):
     def stop(self):
         self.alive = False
 
-    def get_radiation_data_for_id(self, odlinfo_id):
+    def get_stations(self):
         """
-        Returns a dict of information for a radiation measurement station
-        @param odlinfo_id: internal odlinfo_id
+        Returns an array of dicts with information on all radiation measurement stations.
         """
         try:
-            response = self._session.get(self._build_url(), auth=HTTPBasicAuth(self._user, self._password))
+            parameters = "service=WFS&version=1.1.0&request=GetFeature&typeName=opendata:odlinfo_odl_1h_latest&outputFormat=application/json&sortBy=plz"
+            response = self._session.get(self._build_url(parameters))
 
         except Exception as e:
             self.logger.error(
                 "Exception when sending GET request for get_radiation_data_for_id: %s" % str(e))
             return
         json_obj = response.json()
+        stations = []
+        for element in json_obj["features"]:
+            stations.append(element['properties'])
 
-        if json_obj[odlinfo_id]:
-            self.logger.debug(json_obj[odlinfo_id])
-            result_station = {}
-            for key in self._keys:
-                if key in result_station:
-                    result_station[key] = json_obj[odlinfo_id][key]
-                else:
-                    self.logger.debug("Key %s not found in resulting data. Please check manually."%key)
-        return result_station
+        return stations
 
-    def get_radiation_data_for_ids(self, odlinfo_ids):
+
+    def get_station_for_id(self, odlinfo_id):
+        """
+        Returns a dict of information for a radiation measurement station
+        @param odlinfo_id: internal odlinfo_id
+        """
+        for element in self.get_stations():
+            if odlinfo_id == element['kenn'] or odlinfo_id == element['id']:
+                return element
+        return None
+
+    def get_stations_for_ids(self, odlinfo_ids):
         """
         Returns an array of dicts of information for a radiation measurement stations
         @param odlinfo_ids: array if internal odlinfo_ids
         """
         result_stations = []
-        try:
-            response = self._session.get(self._build_url(), auth=HTTPBasicAuth(self._user, self._password))
-        except Exception as e:
-            self.logger.error(
-                "Exception when sending GET request for get_radiation_data_for_ids: %s" % str(e))
-            return
-        json_obj = response.json()
+
         for odlinfo_id in odlinfo_ids:
             self.logger.debug(odlinfo_id)
-            if json_obj[odlinfo_id]:
-                self.logger.debug(json_obj[odlinfo_id])
-                result_station = {}
-                for key in self._keys:
-                    result_station[key] = json_obj[odlinfo_id][key]
-            result_stations.append(result_station)
+            station = self.get_radiation_data_for_id(odlinfo_id)
+            if station is not None:
+                result_stations.append(result_station)
         return result_stations
 
-    def _build_url(self):
+    def _build_url(self, parameters=''):
         """
         Builds a request url, method included for a later use vs other data files of ODLINFO
         @return: string of the url
         """
         url = self._base_url
-        return url
+        if parameters != '':
+            return "%s?%s" % (url, parameters)
+        else:
+            return url
