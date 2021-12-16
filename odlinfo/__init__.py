@@ -52,8 +52,7 @@ class ODLInfo(SmartPlugin):
         super().__init__()
 
         self._session = requests.Session()
-        if not self.init_webinterface(WebInterface):
-            self._init_complete = False
+        self.init_webinterface(WebInterface)
 
     def run(self):
         self.alive = True
