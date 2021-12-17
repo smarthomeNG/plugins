@@ -46,7 +46,6 @@ mydevice:
         type: str
         value: ''
         modBusAddress: 40030
-        modBusUnit: '71'                 #(optional) default: 1  
         modBusDataType: 'string16'        #(optional) default: uint16  
         #modBusFactor: '1000'               #(optional) default: 1
         modBusByteOrder: 'Endian.Little'   #(optional) default: 'Endian.Big'
@@ -55,7 +54,6 @@ mydevice:
         type: num
         value: '0'
         modBusAddress: 40048
-        modBusUnit: '71'                 #(optional) default: 1  
         #modBusDataType: 'uint16'        #(optional) default: uint16  
         modBusFactor: '0.001'           #(optional) default: 1
         modBusByteOrder: 'Endian.Little'   #(optional) default: 'Endian.Big'
@@ -64,7 +62,6 @@ mydevice:
         type: num
         value: ''
         modBusAddress: 40050
-        modBusUnit: '71'                 #(optional) default: 1  
         modBusDataType: 'int16'         #(optional) default: uint16  
         modBusFactor: '0.001'           #(optional) default: 1
         modBusByteOrder: 'Endian.Little'   #(optional) default: 'Endian.Big'
@@ -73,11 +70,15 @@ mydevice:
         type: num
         value: ''
         modBusAddress: 40052
-        modBusUnit: '71'                 #(optional) default: 1  
         modBusDataType: 'float32        #(optional) default: uint16  
         #modBusFactor: '1'               #(optional) default: 1
         modBusByteOrder: 'Endian.Little'   #(optional) default: 'Endian.Big'
         modBusWordOrder: 'Endian.Little'   #(optional) default: 'Endian.Big'
+
+Changelog
+---------
+V1.0.1     slaveUnit zu plugin-Paramter hinzugefügt
+V1.0.0     Initial plugin version
 
 
 Web Interface

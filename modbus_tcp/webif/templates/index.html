@@ -17,15 +17,15 @@
                 {% endif %}
                 <strong>{{ _('Verbunden') }}</strong>
             </td>
-			<td class="py-1"><strong>{{ _('Host') }}</strong></td>
-			<td class="py-1">{{ p._host }}</td>
-			
+			<td class="py-1"><strong>{{ _('Host : Port') }}</strong></td>
+			<td class="py-1">{{ p._host }} : {{ p._port }} </td>
 		</tr>
         <tr>
             <td class="py-1"><strong>{{ _('') }}</strong></td>
-			<td class="py-1"><strong>{{ _('port') }}</strong></td>
-			<td class="py-1">{{ p._port }}</td>
+			<td class="py-1"><strong>{{ _('slave Unit') }}</strong></td>
+			<td class="py-1">{{ p._slaveUnit }}</td>
 		</tr>
+
         <tr>
             <td class="py-1"><strong>{{ _('') }}</strong></td>
 			<td class="py-1"><strong>{{ _('pol_device / cycle-time [seconds]') }}</strong></td>
@@ -33,10 +33,8 @@
 		</tr>
         <tr>
             <td class="py-1"><strong>{{ _('') }}</strong></td>
-			<td class="py-1"><strong>{{ _('last_read') }}</strong></td>
-			<td class="py-1">{{ p._pollStatus.last_dt }}</td>
-			<td class="py-1"><strong>{{ _('readed_registers') }}</strong></td>
-			<td class="py-1">{{ p._pollStatus.regCount }}</td>
+			<td class="py-1"><strong>{{ _('last_read (readed registers)') }}</strong></td>
+			<td class="py-1">{{ p._pollStatus.last_dt.strftime('%d.%m.%Y %H:%M:%S %Z') }} ({{ p._pollStatus.regCount }})</td>
 		</tr>
 		
 	</tbody>

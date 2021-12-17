@@ -35,13 +35,12 @@ from pymodbus.client.sync import ModbusTcpClient
 
 AttrAddress = 'modBusAddress'
 AttrType = 'modBusDataType'
-AttrUnit = 'modBusUnit'
 AttrFactor = 'modBusFactor'
 AttrByteOrder = 'modBusByteOrder'
 AttrWordOrder = 'modBusWordOrder'
 
 class modbus_tcp(SmartPlugin):
-    PLUGIN_VERSION = '1.0.0'
+    PLUGIN_VERSION = '1.0.1'
 
     def __init__(self, sh, *args, **kwargs):
         """
@@ -52,6 +51,7 @@ class modbus_tcp(SmartPlugin):
         self._host = self.get_parameter_value('host')
         self._port = int(self.get_parameter_value('port'))
         self._cycle = int(self.get_parameter_value('cycle'))
+        self._slaveUnit = int(self.get_parameter_value('slaveUnit'))
         
         self._sh = sh
         self.logger = logging.getLogger(__name__)
@@ -127,7 +127,6 @@ class modbus_tcp(SmartPlugin):
             value = item()
             dataType = 'uint16'
             factor = 1
-            unit = 1
             byteOrder = 'Endian.Big'
             wordOrder = 'Endian.Big'
             self.logger.debug("parse read item: {0}".format(item))
@@ -135,8 +134,6 @@ class modbus_tcp(SmartPlugin):
                 dataType = self.get_iattr_value(item.conf, AttrType)
             if self.has_iattr(item.conf, AttrFactor):
                 factor = float(self.get_iattr_value(item.conf, AttrFactor))
-            if self.has_iattr(item.conf, AttrUnit):
-                unit = int(self.get_iattr_value(item.conf, AttrUnit))
             if self.has_iattr(item.conf, AttrByteOrder):
                 byteOrder = self.get_iattr_value(item.conf, AttrByteOrder)
             if self.has_iattr(item.conf, AttrWordOrder):
@@ -156,7 +153,7 @@ class modbus_tcp(SmartPlugin):
                 wordOrder = Endian.Big
                 self.logger.error("Invalid byte order -> default(Endian.Big) is used : {0}".format(regParameters['wordOrder']))    
                 
-            regPara = {'dataType': dataType, 'factor': factor, 'unit':unit, 'byteOrder': byteOrder, 'wordOrder': wordOrder, 'item': item, 'value': value }
+            regPara = {'dataType': dataType, 'factor': factor, 'byteOrder': byteOrder, 'wordOrder': wordOrder, 'item': item, 'value': value }
             self._regToRead.update({regAddr: regPara})
             
     def poll_device(self):
@@ -216,8 +213,8 @@ class modbus_tcp(SmartPlugin):
             words = int(bits/2)  # bei string: bits = bytes !! string16 -> 16Byte - 8 words
         else:
             words = int(bits/16)
-        #self.logger.debug("read register:{0} words:{1} unit:{2}".format(address, words, regParameters['unit']))
-        result = self._Mclient.read_holding_registers(address, words, unit=regParameters['unit'])
+        #self.logger.debug("read register:{0} words:{1} slaveUnit:{2}".format(address, words, self._slaveUnit))
+        result = self._Mclient.read_holding_registers(address, words, unit=self._slaveUnit)
         #self.logger.debug("read result: {0} ".format(result))
         value = BinaryPayloadDecoder.fromRegisters(result.registers, byteorder=bo,wordorder=wo)
         

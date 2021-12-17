@@ -37,6 +37,13 @@ parameters:
         description:
             de: 'Update Zyklus in Sekunden'
             en: 'Update cycle in seconds'
+            
+    slaveUnit:
+        type: num
+        default: 1
+        description:
+            de: 'Slave-Addresse der zu lesenden Modbus-Einheit'
+            en: 'slave-address of the Modbus-Unit to read'
 
 item_attributes:
     modBusAddress:
@@ -51,13 +58,6 @@ item_attributes:
         description:
             de: 'Datentyp vom zu lesenden Register (int16 uint16 int32 unit32 float32 string16)'
             en: 'datatype from register to read (int16 uint16 int32 unit32 float32 string16)'
-            
-    modBusUnit:
-        type: num
-        default: 1
-        description:
-            de: 'Addresse der zu lesenden Modbus-Einheit'
-            en: 'address of the Modbus-Unit to read'
             
     modBusByteOrder:
         type: str
