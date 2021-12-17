@@ -18,4 +18,6 @@ plugin_translations:
     'Time':   {'de': 'Zeitpunkt', 'en': '=', 'fr': ''}
     'in Betrieb':   {'de': '=', 'en': 'in operation', 'fr': ''}
     'defekt':   {'de': '=', 'en': 'malfunction', 'fr': ''}
-
+    'Letztes Update': {'de': '=', 'en': 'Last Update', 'fr': ''}
+    'Wollen Sie die Daten wirklich aktualisieren?':   {'de': '=', 'en': 'Do you really want to update the data?', 'fr': ''}
+    'Update Manually':   {'de': 'Manuell aktualisieren', 'en': '=', 'fr': ''}

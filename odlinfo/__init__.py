@@ -56,6 +56,7 @@ class ODLInfo(SmartPlugin):
             self._init_complete = False
         self._cycle = self.get_parameter_value('cycle')
         self._stations = []
+        self._update_timestamp = None
         return
 
     def run(self):
@@ -70,11 +71,12 @@ class ODLInfo(SmartPlugin):
 
     def _get_stations(self):
         """
-        Returns an array of dicts with information on all radiation measurement stations.
+        Returns an array of dicts with information on all radiation measurement stations from live request. Also caches the data.
         """
         try:
             parameters = "service=WFS&version=1.1.0&request=GetFeature&typeName=opendata:odlinfo_odl_1h_latest&outputFormat=application/json&sortBy=plz"
             response = self._session.get(self._build_url(parameters))
+            self._update_timestamp = self.shtime.now()
 
         except Exception as e:
             self.logger.error(
@@ -85,9 +87,15 @@ class ODLInfo(SmartPlugin):
         for element in json_obj["features"]:
             self._stations.append(element['properties'])
 
-        return stations
+        return self._stations
+
+    def get_update_timestamp(self):
+        return self._update_timestamp
 
     def get_stations(self):
+        """
+        Returns an array of dicts with information on all radiation measurement stations from cached array.
+        """
         if len(self._stations) == 0:
             self._get_stations()
         return self._stations

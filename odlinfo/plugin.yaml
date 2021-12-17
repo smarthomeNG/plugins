@@ -23,7 +23,7 @@ parameters:
     # Definition of parameters to be configured in etc/plugin.yaml
     cycle:
         type: int
-        default: 3600
+        default: 1800
         description:
             de: '(optional) Zeit zwischen zwei Updateläufen. Default ist 3600 Sekunden.'
             en: '(optional) Time period between two update cycles. Default is 3600 seconds.'
@@ -39,45 +39,51 @@ logic_parameters: NONE
 
 plugin_functions:
 
+    get_update_timestamp:
+        type: foo
+        description:
+            de: "Gibt das datetime Objekt zurück, wann die intern im Plugin gecachten Daten zuletzt aktualisiert wurden."
+            en: "Returns the datetime, when the internally cached data were last updated."
+
     get_stations:
         type: list(dict)
         description:
             de: "Gibt ein Array of DICTs mit allen verfügbaren Messstationen zurück. Keys eines DICTs:<br/><br/>
-            id: Die internationale ID der Messstelle.<br/>
-            kenn: Die Messstellenkennung, wie sie auch auf ODL-Info verwendet wird.<br/>
-            plz: Die Postleitzahl der Messstelle.<br/>
-            name: Der Name bzw. Ortsname der Messstelle.<br/>
-            site_status: Der Status der Messstelle als Zahl. (1 = in Betrieb, 2 = Defekt, 3 = Testbetrieb)<br/>
-            site_status_text: Der Status der Messstelle als Text.<br/>
-            kid: ID des Messnetzknotens, dem die Messstelle zugeordnet ist. (1 = Freiburg, 2 = Berlin, 3 = München, 4 = Bonn, 5 = Salzgitter, 6 = Rendsburg)<br/>
-            height_above_sea: Höhe der Messstelle über NN.<br/>
-            start_measure: Startzeitpunkt der Messperiode für den gegebenen Messwert.<br/>
-            end_measure: Endzeitpunkt der Messperiode für den gegebenen Messwert.<br/>
-            value: Der Messwert.<br/>
-            value_cosmic: Kosmischer Anteil des Messwertes.<br/>
-            value_terrestrial: Terrestrischer Anteil des Messwertes.<br/>
-            unit: Einheit zu dem Messwert.<br/>
-            validated: Prüfstatus des Messwertes. (1 = geprüft, 2 = ungeprüft)<br/>
-            nuclide: Bezeichnung der Messgröße.<br/>
-            duration: Dauer der Messperiode."
+            <strong>id:</strong> Die internationale ID der Messstelle.<br/>
+            <strong>kenn:</strong> Die Messstellenkennung, wie sie auch auf ODL-Info verwendet wird.<br/>
+            <strong>plz:</strong> Die Postleitzahl der Messstelle.<br/>
+            <strong>name:</strong> Der Name bzw. Ortsname der Messstelle.<br/>
+            <strong>site_status:</strong> Der Status der Messstelle als Zahl. (1 = in Betrieb, 2 = Defekt, 3 = Testbetrieb)<br/>
+            <strong>site_status_text:</strong> Der Status der Messstelle als Text.<br/>
+            <strong>kid:</strong> ID des Messnetzknotens, dem die Messstelle zugeordnet ist. (1 = Freiburg, 2 = Berlin, 3 = München, 4 = Bonn, 5 = Salzgitter, 6 = Rendsburg)<br/>
+            <strong>height_above_sea:</strong> Höhe der Messstelle über NN.<br/>
+            <strong>start_measure:</strong> Startzeitpunkt der Messperiode für den gegebenen Messwert.<br/>
+            <strong>end_measure:</strong> Endzeitpunkt der Messperiode für den gegebenen Messwert.<br/>
+            <strong>value:</strong> Der Messwert.<br/>
+            <strong>value_cosmic:</strong> Kosmischer Anteil des Messwertes.<br/>
+            <strong>value_terrestrial:</strong> Terrestrischer Anteil des Messwertes.<br/>
+            <strong>unit:</strong> Einheit zu dem Messwert.<br/>
+            <strong>validated:</strong> Prüfstatus des Messwertes. (1 = geprüft, 2 = ungeprüft)<br/>
+            <strong>nuclide:</strong> Bezeichnung der Messgröße.<br/>
+            <strong>duration:</strong> Dauer der Messperiode."
             en: "Returns an Array of DICTs with all available measuring stations. Key of a DICT:<br/><br/>
-            id: International ID of a measuring point.<br/>
-            kenn: The masuring point identifier, as used in ODL-Info.<br/>
-            plz: The postal code of the measuring point.<br/>
-            name: The name / city name of the measuring point.<br/>
-            site_status: The status of the measuring point as number. (1 = operating normally, 2 = malfunction, 3 = in test)<br/>
-            site_status_text: The status of the measuring point as text.<br/>
-            kid: ID of the measuring network node, the which the measuring point is associated. (1 = Freiburg, 2 = Berlin, 3 = München, 4 = Bonn, 5 = Salzgitter, 6 = Rendsburg)<br/>
-            height_above_sea: Height above sea of the measuring point.<br/>
-            start_measure: Start time of the measuring period of the given measuring value.<br/>
-            end_measure: End time of the measuring period of the given measuring value.<br/>
-            value: The measuring value.<br/>
-            value_cosmic: Cosmic part of the measuring value.<br/>
-            value_terrestrial: Terrestrial part of the measuring value.<br/>
-            unit: Unit of the measuring value.<br/>
-            validated: Check status of the measuring value. (1 = validated, 2 = unvalidated)<br/>
-            nuclide: Name of the measurand.<br/>
-            duration: Duration of the measurement period."
+            <strong>id:</strong> International ID of a measuring point.<br/>
+            <strong>kenn:</strong> The masuring point identifier, as used in ODL-Info.<br/>
+            <strong>plz:</strong> The postal code of the measuring point.<br/>
+            <strong>name:</strong> The name / city name of the measuring point.<br/>
+            <strong>site_status:</strong> The status of the measuring point as number. (1 = operating normally, 2 = malfunction, 3 = in test)<br/>
+            <strong>site_status_text:</strong> The status of the measuring point as text.<br/>
+            <strong>kid:</strong> ID of the measuring network node, the which the measuring point is associated. (1 = Freiburg, 2 = Berlin, 3 = München, 4 = Bonn, 5 = Salzgitter, 6 = Rendsburg)<br/>
+            <strong>height_above_sea:</strong> Height above sea of the measuring point.<br/>
+            <strong>start_measure:</strong> Start time of the measuring period of the given measuring value.<br/>
+            <strong>end_measure:</strong> End time of the measuring period of the given measuring value.<br/>
+            <strong>value:</strong> The measuring value.<br/>
+            <strong>value_cosmic:</strong> Cosmic part of the measuring value.<br/>
+            <strong>value_terrestrial:</strong> Terrestrial part of the measuring value.<br/>
+            <strong>unit:</strong> Unit of the measuring value.<br/>
+            <strong>validated:</strong> Check status of the measuring value. (1 = validated, 2 = unvalidated)<br/>
+            <strong>nuclide:</strong> Name of the measurand.<br/>
+            <strong>duration:</strong> Duration of the measurement period."
 
     get_station_for_id:
         type: dict
