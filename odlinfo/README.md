@@ -2,7 +2,7 @@
 
 This plugin retrieves the Gamma-Ortsdosisleistung (ODL) in µSv/h (and some more information) from measuring stations in Germany.
 For more information see https://odlinfo.bfs.de.
-From version 1.5.0 it uses the novel interface, described in detail at https://odlinfo.bfs.de/ODL/DE/service/datenschnittstelle/datenschnittstelle_node.html.
+From version 1.5.1 it uses the novel interface, described in detail at https://odlinfo.bfs.de/ODL/DE/service/datenschnittstelle/datenschnittstelle_node.html.
 Also take care to read the terms of use at https://www.imis.bfs.de/geoportal/resources/sitepolicy.html.
 
 ## Requirements

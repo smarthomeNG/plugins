@@ -41,7 +41,7 @@ from .webif import WebInterface
 import cherrypy
 
 class ODLInfo(SmartPlugin):
-    PLUGIN_VERSION = "1.5.0"
+    PLUGIN_VERSION = "1.5.1"
     _base_url = 'https://www.imis.bfs.de/ogc/opendata/ows'
 
     def __init__(self, sh, *args, **kwargs):
