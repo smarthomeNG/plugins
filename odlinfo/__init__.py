@@ -52,15 +52,23 @@ class ODLInfo(SmartPlugin):
         super().__init__()
 
         self._session = requests.Session()
-        self.init_webinterface(WebInterface)
+        if not self.init_webinterface(WebInterface):
+            self._init_complete = False
+        self._cycle = self.get_parameter_value('cycle')
+        self._stations = []
+        return
 
     def run(self):
+        self.logger.debug("Run method called")
+        self.scheduler_add('get_stations_from_odlinfo', self._get_stations, cycle=self._cycle)
         self.alive = True
 
     def stop(self):
+        self.logger.debug("Stop method called")
+        self.scheduler_remove('get_stations_from_odlinfo')
         self.alive = False
 
-    def get_stations(self):
+    def _get_stations(self):
         """
         Returns an array of dicts with information on all radiation measurement stations.
         """
@@ -70,15 +78,19 @@ class ODLInfo(SmartPlugin):
 
         except Exception as e:
             self.logger.error(
-                "Exception when sending GET request for get_radiation_data_for_id: %s" % str(e))
+                "Exception when sending GET request for _get_stations: %s" % str(e))
             return
         json_obj = response.json()
-        stations = []
+        self._stations = []
         for element in json_obj["features"]:
-            stations.append(element['properties'])
+            self._stations.append(element['properties'])
 
         return stations
 
+    def get_stations(self):
+        if len(self._stations) == 0:
+            self._get_stations()
+        return self._stations
 
     def get_station_for_id(self, odlinfo_id):
         """

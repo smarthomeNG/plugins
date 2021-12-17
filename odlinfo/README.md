@@ -80,6 +80,7 @@ Dies führt dazu, dass einzelne Zeitreihen abrupt enden.
 odlinfo:
     class_name: ODLInfo
     class_path: plugins.odlinfo
+    cycle: 3600
 ```
 
 ### items.yaml
