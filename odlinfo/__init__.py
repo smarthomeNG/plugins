@@ -79,6 +79,9 @@ class ODLInfo(SmartPlugin):
                 self.logger.error("odl_data_type set twice, problem for item with odl_station %s" % self.get_iattr_value(item.conf, 'odl_station'))
             self._items[self.get_iattr_value(item.conf, 'odl_station')][self.get_iattr_value(item.conf, 'odl_data_type')] = item
 
+    def get_items(self):
+        return self._items
+
     def _get_stations(self):
         """
         Returns an array of dicts with information on all radiation measurement stations from live request. Also caches the data.
