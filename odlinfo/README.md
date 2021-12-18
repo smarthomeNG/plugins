@@ -2,7 +2,7 @@
 
 This plugin retrieves the Gamma-Ortsdosisleistung (ODL) in µSv/h (and some more information) from measuring stations in Germany.
 For more information see https://odlinfo.bfs.de.
-From version 1.5.1 it uses the novel interface, described in detail at https://odlinfo.bfs.de/ODL/DE/service/datenschnittstelle/datenschnittstelle_node.html.
+From version 1.5.2 it uses the novel interface, described in detail at https://odlinfo.bfs.de/ODL/DE/service/datenschnittstelle/datenschnittstelle_node.html.
 Also take care to read the terms of use at https://www.imis.bfs.de/geoportal/resources/sitepolicy.html.
 
 ## Requirements
@@ -90,8 +90,25 @@ odlinfo:
 ```yaml
 outside:
 
-    radiation:
+    radiation: #this item will be updated via logic
         type: num
+        cache: 'yes'
+
+        wessling: #these items will be auto updated by the plugin, using the international and odlinfo id
+            radiation: 
+                type: num
+                odl_station: '091881441'
+                odl_data_type: 'value'
+
+            radiation_terrestrial:
+                type: num
+                odl_station: '091881441'
+                odl_data_type: 'value_terrestrial'
+
+            radiation_cosmic:
+                type: num
+                odl_station: 'DEZ1453'
+                odl_data_type: 'value_cosmic'
 ```
 
 ## Functions

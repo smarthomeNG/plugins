@@ -41,7 +41,7 @@ from .webif import WebInterface
 import cherrypy
 
 class ODLInfo(SmartPlugin):
-    PLUGIN_VERSION = "1.5.1"
+    PLUGIN_VERSION = "1.5.2"
     _base_url = 'https://www.imis.bfs.de/ogc/opendata/ows'
 
     def __init__(self, sh, *args, **kwargs):
@@ -56,6 +56,7 @@ class ODLInfo(SmartPlugin):
             self._init_complete = False
         self._cycle = self.get_parameter_value('cycle')
         self._stations = []
+        self._items = {}
         self._update_timestamp = None
         return
 
@@ -68,6 +69,15 @@ class ODLInfo(SmartPlugin):
         self.logger.debug("Stop method called")
         self.scheduler_remove('get_stations_from_odlinfo')
         self.alive = False
+
+    def parse_item(self, item):
+        if self.has_iattr(item.conf, 'odl_data_type') and self.has_iattr(item.conf, 'odl_station'):
+            self.logger.debug(f"parse item: {item}")
+            if self.get_iattr_value(item.conf, 'odl_station') not in self._items:
+                self._items[self.get_iattr_value(item.conf, 'odl_station')] = {}
+            if self.get_iattr_value(item.conf, 'odl_data_type') in self._items[self.get_iattr_value(item.conf, 'odl_station')]:
+                self.logger.error("odl_data_type set twice, problem for item with odl_station %s" % self.get_iattr_value(item.conf, 'odl_station'))
+            self._items[self.get_iattr_value(item.conf, 'odl_station')][self.get_iattr_value(item.conf, 'odl_data_type')] = item
 
     def _get_stations(self):
         """
@@ -86,6 +96,16 @@ class ODLInfo(SmartPlugin):
         self._stations = []
         for element in json_obj["features"]:
             self._stations.append(element['properties'])
+            for key in self._items:
+                if key == element['properties']['id'] or key == element['properties']['kenn']:
+                    for data_type in self._items[key]:
+                        self.logger.debug("%s %s %s"%(key,element['properties']['id'],element['properties']['kenn']))
+                        if data_type == 'value':
+                            self._items[key][data_type](element['properties']['value'])
+                        elif data_type == 'value_terrestrial':
+                            self._items[key][data_type](element['properties']['value_terrestrial'])
+                        elif data_type == 'value_cosmic':
+                            self._items[key][data_type](element['properties']['value_cosmic'])
 
         return self._stations
 
