@@ -22,6 +22,30 @@ Zur Verwendung des Plugins wird ein API Key von OpenWeatherMap benötigt, der ko
 .. note:: Die kostenfreie Version ermöglicht 60 Datenabrufe pro Minute bzw. 1000 pro Tag. Das Plugin nutzt mehrfache (bis zu 10) Abrufe pro Updatezyklus. Achtung also beim Einstellen des Update-Cycle bzw. bei Verwendung des gleichen API Keys inder smartVISU.
 
 
+Migration von vorheriger Version 1.5.1
+======================================
+
+Plugin-parameter
+----------------
+
+* Ein neuer Parameter 'altitude' wurde hinzugefügt um die Höhenangabe über Meeresniveau zu haben. Dies wird für die ETO-Berechnung benötigt. Wird diese Konfiguration weggelassen, so wird das Plugin ALLE Geo-Koordinaten aus der SHNG-Konfiguration nutzen.
+* Man kann die Interpretation der aktuellen Koordinaten im Webinterface prüfen, in dem man auf die Geo-Koordinaten in der Tabelle oben rechts klickt. Eine zoom-bare Karte mit einem präzisen Zeiger wird dargestellt.
+* 'softfail_precipitation' und 'softfail_wind_gust' können verwendet werden um fehlende Werte für Niederschlag ('rain' / 'snow') und Windböen ('wind_gust') zu ersetzen. Das Standardverhalten ist 0 für den Niederschlag und 'wind_speed' für den Wert von 'wind_gust'.
+
+
+Item-attribute
+--------------
+
+* 'x', 'y', 'z'-Attribute für die Kartenelemente wurden umbenannt in 'owm_coord_x', 'owm_coord_y' and 'owm_coord_z' - diese Parameter können gänzlich weggelassen werden. In diesem Fall werden die Werte aus den Plugin-Koordinaten abgeleitet.
+
+
+Hints
+-----
+
+* In früheren Versionen der OpenWeatherMap-API konnten die match_strings 'main/grnd_level' und 'main/sea_level' verwendet werden um verschiedene Luftdruck-Werte zu erhalten. Jetzt gibt es nur noch einen Wert 'current/pressure'.
+* Die uvi-API ist seitens OpenWeatherMap abgekündigt. Anstelle von 'uvi_value' sollte nun 'current/uvi' verwendet werden.
+
+
 Funktionaliät
 =============
 
