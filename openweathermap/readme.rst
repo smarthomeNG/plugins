@@ -14,6 +14,30 @@ Die folgenden APIs von OpenWeatherMap werden unterstützt:
 - airpollution
 
 
+Migrating from previous version 1.5.1
+=====================================
+
+Plugin-parameters
+-----------------
+
+* A new parameter altitude has been added, to reflect the height above sea-level (needed for ETO-calculation). If this parameter is omitted, the plugin will default to the complete longitude, latitude and altitude configuration of SHNG.
+* You can check the interpretation of the current coordinates in the Web-Interface by clicking the top-right table's coordinates values. A zoomable-map with a precise pointer will be displayed.
+* 'softfail_precipitation' and 'softfail_wind_gust' can be used to define the behaviour for missing values for missing 'rain', 'snow' and 'wind_gust' values. The default behaviour is to assume 0 precipitation if the value is not provided, for wind_gust, the wind_speed value will be used.
+
+
+Item-attributes
+---------------
+
+* 'x', 'y', 'z' attributes for the map-layers have been renamed to owm_coord_x, owm_coord_y and owm_coord_z - but they can be omitted completely, as they are calculated from the plugin-coordinates, which themselves default to the geo-coordinates of SHNG.
+
+
+Hints
+-----
+
+* In older versions of the OpenWeatherMap-API the match_strings 'main/grnd_level' and 'main/sea_level' could be used to obtain different air-pressure values. Nowadays this should be obtained using 'current/pressure'
+* The uvi-API is deprecated by OWM. So instead of using 'uvi_value' please use 'current/uvi', that will deliver the same value. For the next release this will be automatically replaced and respective warnings will appear in the log.
+
+
 Requirements
 =============
 
