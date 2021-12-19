@@ -456,7 +456,7 @@ class UZSU(SmartPlugin):
                             self.logger.warning("Set old entry for item '{}' at {} with value {} to inactive"
                                                 " because newer active entry with value {} found.".format(
                                                     item, time, oldvalue, newvalue))
-        self._update_item(item, 'UZSU Plugin', 'update')
+
 
     def _check_rruleandplanned(self, item):
         if self._items[item].get('list'):
