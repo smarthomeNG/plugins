@@ -63,6 +63,16 @@ parameters:
             de: 'Falls True, werden Einträge mit exakt den selben Einstellungen, aber unterschiedlichem Wert durch einen neu getätigten Eintrag ersetzt'
             en: 'If True, existing entries with exactly the same settings except the value get replaced by the new entry'
 
+    suncalculation_cron:
+        type: str
+        default: '0 0 * *'
+        description:
+            de: 'Cron-Angabe, wann für die UZSU Einträge mit Sonnenstandbezug die errechnete Uhrzeit ins dict Item geschrieben werden soll.'
+            en: 'Cron definition when the UZSU item should be updated with the calculated times for sun-related UZSU entries.'
+        description_long:
+            de: 'Cron-Angabe, wann für die UZSU Einträge mit Sonnenstandbezug die errechnete Uhrzeit ins dict Item geschrieben werden soll. Diese "calculated" Einträge sind relevant für diverse UZSU Widgets der SmartVisu.'
+            en: 'Cron definition when the UZSU item should be updated with the calculated times for sun-related UZSU entries.There "calculated" entries are relevant for some SmartVisu UZSU widgets.'
+
     interpolation_interval:
         type: int
         default: 5
