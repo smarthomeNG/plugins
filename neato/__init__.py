@@ -81,7 +81,8 @@ class Neato(SmartPlugin):
                 self._items[self.get_iattr_value(item.conf, 'neato_attribute')] = []
             self._items[self.get_iattr_value(item.conf, 'neato_attribute')].append(item)
 
-        # Command items that can be changed outside the plugin context:
+        # Register items for event handling via smarthomeNG core. Needed for sending control actions:
+        # Command items can be changed outside the plugin context:
         if self.get_iattr_value(item.conf, 'neato_attribute') == 'command':
             return self.update_item
         elif self.get_iattr_value(item.conf, 'neato_attribute') == 'is_schedule_enabled':
@@ -105,7 +106,8 @@ class Neato(SmartPlugin):
                 65: 'findme',
                 66: 'sendToBase',
                 67: 'enableSchedule',
-                68: 'disableSchedule'}
+                68: 'disableSchedule',
+                69: 'dismiss_current_alert'}
 
             if self.get_iattr_value(item.conf, 'neato_attribute') == 'command':
                 if item._value in val_to_command:
