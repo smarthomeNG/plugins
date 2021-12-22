@@ -48,8 +48,9 @@ class Resol(SmartPlugin):
         self.scheduler_remove('PollData')
 
         try:
-            self.sock.shutdown(0)
-            self.sock.close()
+            if self.sock: 
+                self.sock.shutdown(0)
+                self.sock.close()
         except:
             pass
         
@@ -61,7 +62,8 @@ class Resol(SmartPlugin):
           self.logger.debug("ELTERN Source: " + str(item.return_parent().conf['resol_source']))
           if 'resol_bituse' in item.conf:
             self._items.append(item)
-            return self.update_item
+            # As plugin is read-only, no need to register item for event handling via smarthomeNG core:
+                        
           else:
             self.logger.error("resol_offset found in: " + str(item) + " but no bitsize given, specify bitsize in item with resol_bitsize = ")
 

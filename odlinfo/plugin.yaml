@@ -12,7 +12,7 @@ plugin:
     documentation: https://smarthomeng.de/user/plugins_doc/config/odlinfo.html
     support: https://knx-user-forum.de/node/986480
 
-    version: 1.5.1                 # Plugin version
+    version: 1.5.2                 # Plugin version
     sh_minversion: 1.6             # minimum shNG version to use this plugin
 #    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
@@ -28,8 +28,24 @@ parameters:
             de: '(optional) Zeit zwischen zwei Updateläufen. Default ist 3600 Sekunden.'
             en: '(optional) Time period between two update cycles. Default is 3600 seconds.'
 
-item_attributes: NONE
+item_attributes:
     # Definition of item attributes defined by this plugin
+    odl_station:
+        type: str
+        mandatory: True
+        description:
+            de: 'Internationale ID oder ODL Messstellenkennung der Station.'
+            en: 'International ID or ODL masuring point identifier of the station.'
+    odl_data_type:
+        type: str
+        mandatory: True
+        description:
+            de: 'Daten, die dem Item zugeordnet werden sollen.'
+            en: 'Data to add to the item.'
+        valid_list:
+            - 'value'
+            - 'value_terrestrial'
+            - 'value_cosmic'
 
 item_structs: NONE
   # Definition of item-structure templates for this plugin
