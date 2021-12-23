@@ -10,18 +10,29 @@ shelly
 Das Plugin dienst zur Steuerung von Shelly Devices über MQTT. Zur Aktivierung von MQTT für die Shelly Devices bitte
 die Dokumentation des jeweiligen Devices zu Rate ziehen.
 
-Zurzeit wird Schalter (Relay) Funktion folgender Shelly Devices unterstützt:
+Zurzeit werden folgende Shelly Devices unterstützt:
 
-- Shellyplug
-- Shellyplug-s
 - Shelly1/pm
 - Shelly2
 - Shelly2.5
 - Shelly4Pro
+- Shelly Plug
+- Shelly PlugS
+- Shelly H&T
+- Shelly Flood
+- Shelly Door/Window 2
 
 Es werden alle Relays eines Shelly Devices (bis zu 4) unterstützt. Weiterhin werden die folgenden
 Attribute/Parameter der Devices unterstützt, soweit die Devices selbst diese unterstützen:
 
+- humidity
+- state
+- tilt
+- vibration
+- lux
+- illumination
+- flood
+- battery
 - power
 - energy
 - temperature
@@ -32,7 +43,7 @@ sowie der online-Status.
 
 .. attention::
 
-    Das Plugin kommuniziert über MQTT und benötigt das mqtt neues Modul, welches die Kommunikation mit dem MQTT Broker
+    Das Plugin kommuniziert über MQTT und benötigt das neue mqtt Modul, welches die Kommunikation mit dem MQTT Broker
     durchführt. Dieses Modul muß geladen und konfiguriert sein, damit das Plugin funktioniert.
 
 
@@ -92,7 +103,9 @@ Zur Vereinfachung der Einrichtung von Items sind für folgende Shelly Devices It
 
 - shellyplug
 - shellyplug_s
-
+- shellyht
+- shellyflood
+ 
 Unter Verwendung der entsprechenden Vorlage kann die Einrichtung einfach durch Angabe der shally_id des
 entsprechenden Devices erfolgen:
 

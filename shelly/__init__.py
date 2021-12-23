@@ -146,16 +146,30 @@ class Shelly(MqttPlugin):
             if shelly_attr:
                 shelly_attr = shelly_attr.lower()
 
-            # shellyht needs another topic path than the relay devices:
-            if shelly_type == 'shellyht':
+            # shellyht, shellydw2 and shellyflood needs another topic path than the relay devices:
+            if shelly_type == 'shellyht' or shelly_type == 'shellydw2' or shelly_type == 'shellyflood':
                 if shelly_attr == 'humidity':
                     topic = 'shellies/' + shelly_id + '/sensor/humidity'
+                elif shelly_attr == 'state':
+                    topic = 'shellies/' + shelly_id + '/sensor/state'
+                elif shelly_attr == 'tilt':
+                    topic = 'shellies/' + shelly_id + '/sensor/tilt'
+                elif shelly_attr == 'vibration':
+                    topic = 'shellies/' + shelly_id + '/sensor/vibration'
+                elif shelly_attr == 'lux':
+                    topic = 'shellies/' + shelly_id + '/sensor/lux'
+                elif shelly_attr == 'illumination':
+                    topic = 'shellies/' + shelly_id + '/sensor/illumination'
+                elif shelly_attr == 'flood':
+                    topic = 'shellies/' + shelly_id + '/sensor/flood'
                 elif shelly_attr == 'battery':
                     topic = 'shellies/' + shelly_id + '/sensor/battery'
                 elif shelly_attr == 'temp':
                     topic = 'shellies/' + shelly_id + '/sensor/temperature'
                 elif shelly_attr == 'error':
                     topic = 'shellies/' + shelly_id + '/sensor/error'
+                elif shelly_attr == 'online':
+                    topic = 'shellies/' + shelly_id + '/online'
                 else:
                     self.logger.warning("parse_item: unknown attribute shelly_attr = {} for type {}".format(shelly_attr, shelly_type))
             elif shelly_attr in ['relay', None]:
