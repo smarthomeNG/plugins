@@ -1,0 +1,93 @@
+# Metadata for the Smart-Plugin
+plugin:
+    # Global plugin attributes
+    type: gateway
+    description:
+        de: 'Plugin zur Geräte-Anbindung über ModBus an SmartHomeNG'
+        en: 'Plugin to connect via modbus with SmartHomeNG'
+    maintainer: ivande
+    tester: 'n/a'
+    state: develop
+    keywords: modbus_tcp
+    documentation: https://github.com/smarthomeNG/plugins/blob/develop/modbus_tcp/user_doc.rst
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1154368-einbindung-von-modbus-tcp
+    version: 1.0.0                 # Plugin version
+    sh_minversion: 1.8             # minimum shNG version to use this plugin
+    py_minversion: 3.6  
+    #multi_instance: True           # plugin supports multi instance
+    restartable: unknown
+    classname: modbus_tcp          # class containing the plugin
+
+parameters:
+    host:
+        type: ipv4
+        description:
+            de: 'IP Adresse des Modbus-Geraetes'
+            en: 'IP address from the modbus-device'
+            
+    port:
+        type: num
+        description:
+            de: 'modbus Port'
+            en: 'modbus port'
+
+    cycle:
+        type: num
+        default: 300
+        description:
+            de: 'Update Zyklus in Sekunden'
+            en: 'Update cycle in seconds'
+            
+    slaveUnit:
+        type: num
+        default: 1
+        description:
+            de: 'Slave-Addresse der zu lesenden Modbus-Einheit'
+            en: 'slave-address of the Modbus-Unit to read'
+
+item_attributes:
+    modBusAddress:
+        type: num
+        description:
+            de: 'Register Adresse welche gelesen werden soll'
+            en: 'register address to read'
+
+    modBusDataType:
+        type: str
+        default: 'uint16'
+        description:
+            de: 'Datentyp vom zu lesenden Register (int16 uint16 int32 unit32 float32 string16)'
+            en: 'datatype from register to read (int16 uint16 int32 unit32 float32 string16)'
+            
+    modBusByteOrder:
+        type: str
+        default: 'Endian.Big'
+        description:
+            de: 'Endian.Big oder Endial.Little'
+            en: 'Endian.Big or Endial.Little'
+        valid_list:
+        - 'Endian.Big'
+        - 'Endial.Little'
+            
+    modBusWordOrder:
+        type: str
+        default: 'Endian.Big'
+        description:
+            de: 'Endian.Big oder Endial.Little'
+            en: 'Endian.Big or Endial.Little'
+        valid_list:
+        - 'Endian.Big'
+        - 'Endial.Little'
+
+    modBusFactor:
+        type: num
+        default: 1
+        description:
+            de: 'Faktor mit welchem der gelesene Register-Wert multipliziert wird'
+            en: 'Factor by which the read register value is multiplied'
+
+item_structs: NONE
+
+plugin_functions: NONE
+
+logic_parameters: NONE
