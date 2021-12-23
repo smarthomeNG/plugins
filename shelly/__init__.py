@@ -38,7 +38,7 @@ class Shelly(MqttPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.1.5'
+    PLUGIN_VERSION = '1.2.0'
 
 
     def __init__(self, sh):
