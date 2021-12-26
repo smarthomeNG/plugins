@@ -66,8 +66,8 @@ $(document).ready( function () {
 			<td class="py-1"><strong>{{ _('Schnittstelle') }}</strong></td>
 			<td class="py-1">{{ c['serialport'] }}</td>
 			<td class="py-1" width="50px"></td>
-			<td class="py-1"><strong>{{ _('Crontab') }}</strong></td>
-			<td class="py-1">'{{ cron }}'</td>
+			<td class="py-1"><strong>{{ _('Gerätesubadresse') }}</strong></td>
+			<td class="py-1">'{{ c['device'] }}'</td>
 			<td class="py-1" width="50px"></td>
 		</tr>
 		<tr>
@@ -86,14 +86,6 @@ $(document).ready( function () {
 			<td class="py-1">{{ c['onlylisten'] }}</td>
 			<td class="py-1" width="50px"></td>
 			<td></td>
-		</tr>
-		<tr>
-			<td class="py-1"><strong>{{ _('Gerätesubadresse') }}</strong></td>
-			<td class="py-1">'{{ c['device'] }}'</td>
-			<td class="py-1" width="50px"></td>
-			<td class="py-1"></td>
-			<td class="py-1"></td>
-			<td class="py-1" width="50px"></td>
 		</tr>
 	</tbody>
 </table>

@@ -47,15 +47,15 @@ install_openpyxl = "python3 -m pip install --user openpyxl"
 
 if __name__ == '__main__':
     logger = logging.getLogger(__name__)
-    logger.debug(f"init standalone {__name__}")
+    logger.debug("init standalone {}".format(__name__))
 else:
     logger = logging.getLogger()
-    logger.debug(f"init plugin component {__name__}")
+    logger.debug("init plugin component {}".format(__name__))
 
 try:
     import openpyxl
 except:
-    sys.exit(f"Package 'openpyxl' was not found. You might install with {install_openpyxl}")
+    sys.exit("Package 'openpyxl' was not found. You might install with {}".format(install_openpyxl))
 
 
 def get_manufacturer( from_url, to_yaml, verbose = False ):
@@ -66,15 +66,15 @@ def get_manufacturer( from_url, to_yaml, verbose = False ):
     r = {}
     y = YAML()
 
-    logger.debug(f"Read manufacturer IDs from URL: '{url}'")
-    logger.debug(f"Using openpyxl version '{openpyxl.__version__}'")
+    logger.debug("Read manufacturer IDs from URL: '{}'".format(url))
+    logger.debug("Using openpyxl version '{}'".format(openpyxl.__version__))
     
     headers = {'User-agent': 'Mozilla/5.0'}
 
     try:
         reque = requests.get(url, headers=headers)
     except ConnectionError as e:
-        logger.debug(f"An error {e} occurred fetching {url}\n")
+        logger.debug('An error occurred fetching {} \n {}'.format(url, e.reason))
         raise
 
     try:
@@ -84,35 +84,30 @@ def get_manufacturer( from_url, to_yaml, verbose = False ):
         logger.debug('sheetnames {}'.format(wb.sheetnames))
         
         sheet = wb.active
-        logger.debug(f"sheet {sheet}")
-        logger.debug(f"rows [{sheet.min_row} .. {sheet.max_row}]")
-        logger.debug(f"columns [{sheet.min_column} .. {sheet.max_column}]")
+        logger.debug('sheet {}'.format(sheet))
+        logger.debug('rows [{} ..{}]'.format(sheet.min_row, sheet.max_row))
+        logger.debug('columns [{} ..{}]'.format(sheet.min_column, sheet.max_column))
         
         if sheet.min_row+1 <= sheet.max_row and sheet.min_column == 1 and sheet.max_column == 4:
             # Get data from rows """
             for row in range(sheet.min_row+1,sheet.max_row):
-                id = str(sheet.cell(row, 1).value).strip()
-                if len(id) == 3:
-                    # there are entries like > 'ITRON ...'  < that need special cleaning:
-                    man = str(sheet.cell(row, 2).value).strip()
-                    man = man.strip('\'').strip()
-                    r[id] = man
-                    if verbose:
-                        logger.debug(f"{id}->{man}")
-                else:
-                    logger.debug(f">id< is '{id}' has more than 3 characters and will not be considered")
+                id = sheet.cell(row, 1).value
+                man = sheet.cell(row, 2).value
+                r[id] = man
+                if verbose:
+                    logger.debug("{}->{}".format(id,man))
             with open(exportfile, 'w') as f:
                 y.dump( r, f )
 
-        logger.debug(f"{len(r)} distinct manufacturers were found and written to {exportfile}")
+        logger.debug("{} distinct manufacturers were found and written to {}".format(len(r),exportfile))
         
     except Exception as e:
-        logger.debug(f"Error {e} occurred")
+        logger.debug("Error {} occurred".format(e))
 
     return r
 
 if __name__ == '__main__':
-    verbose = True
+    verbose = False
 
     logging.getLogger().setLevel( logging.DEBUG )
     ch = logging.StreamHandler()
