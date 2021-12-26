@@ -22,6 +22,7 @@
 
 import struct
 import datetime
+import math
 
 """
 Datapoint Types are described in detail e.g. in **03_07_02 Datapoint Types v01.08.02 AS**
@@ -302,7 +303,11 @@ def en14(value):
 def de14(payload):
     if len(payload) != 4:
         return None
-    return struct.unpack('>f', payload)[0]
+    ret = struct.unpack('>f', payload)[0]
+    if math.isnan(ret):
+        return None
+    else:
+        return ret
 
 
 """
@@ -482,11 +487,23 @@ def de275100(payload):
 Decode Physical Address
 """
 
-def depa(string):
-    if len(string) != 2:
+def depa(ba):
+    """expects a bytearray with length 2 in big endian"""
+    if len(ba) != 2:
         return None
-    pa = struct.unpack(">H", string)[0]
+    pa = struct.unpack(">H", ba)[0]
     return "{0}.{1}.{2}".format((pa >> 12) & 0x0f, (pa >> 8) & 0x0f, (pa) & 0xff)
+
+def enpa(pa):
+    """expects a string containing the physical address of a device separated with a dot and no whitespace anywhere"""
+    pa = pa.split('.')
+    if len(pa)==3:
+        area = int(pa[0]) & 0x0f
+        line = int(pa[1]) & 0x0f
+        device = int(pa[2]) & 0xff
+        return [area << 4 | line, device]
+    else:
+        return None
 
 """
 Group Address from and to string
@@ -599,6 +616,6 @@ encode = {
     '232': en232,       #RGB
     '251': en251,       #RGBW
     '275.100' : en275100,   # Setpoint temperature, contains 4 values: Komfort, Standby, Night and Frost
+    'pa': enpa,
     'ga': enga
 }
-# DPT: 19, 28

@@ -14,7 +14,7 @@ plugin:
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1552531-support-thread-zum-knx-plugin
 
     sh_minversion: 1.8.2a          # minimum shNG version to use this plugin
-    version: 1.7.8                 # Plugin version
+    version: 1.7.9                 # Plugin version
 #    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: true           # plugin supports multi instance
     restartable: true
@@ -124,6 +124,12 @@ parameters:
             de: 'Wenn diese Option auf "True" gesetzt ist, kann eine ETS Projektdatei hochgeladen und die enthaltenen Gruppenadressen angezeigt werden'
             en: 'if set to True, an ETS project file might be uploaded and contained group addresses shown'
 
+    project_file_password:
+        type: str
+        default: ''
+        description:
+            de: 'Legt optional ein Passwort für den Zugriff auf eine knxproj Datei fest'
+            en: 'Set a pasword to be able to unzip a knxproj file'
 
 item_attributes:
     # Definition of item attributes defined by this plugin

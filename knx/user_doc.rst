@@ -122,6 +122,18 @@ Beispiele zur Nutzung der Zeitfunktionen:
 
 Alternativ zu diesen Funktionen kann auch das Plugin Attribut ``send_time`` genutzt werden.
 
+Umwandlungen der Datentypen in Itemwerte
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Die Umwandlungen der Werte vom KNX in einen Itemwert und von Itemwerte zum KNX entsprechen den Festlegungen 
+des Dokumentes **03_07_02_Datapoint Types v02.01.02 AS** der **KNX System specifications**.
+
+Es gibt Situationen wo der KNX Werte liefern kann die nicht als Itemwert zugelassen sind. 
+Ein Beispiel dafür ist der Datenpunkt Typ 14 der eine 4 Byte umfassende Fliesskommazahl codiert.
+Werte die ungültig sind und vom KNX geliefert werden entsprechen in Python einem Wert ``NaN``.
+Da dieser Wert (Not a Number) in Items von SmartHomeNG nicht zugelassen ist wird die Zuweisung auf ein Item unterdrückt 
+und eine Warnung in das entsprechende Logfile geschrieben (wenn konfiguriert)
+
 Beispiele
 ---------
 
@@ -162,8 +174,14 @@ Der dritte Tab zeigt Statistiken zu den physikalischen Adressen:
 .. image:: assets/tab3_pa_statistics.png
    :class: screenshot
 
-Mit der neuesten Release ist noch die Möglichkeit dazugekommen über das Webinterface eine Projektdatei aus der ETS hochzuladen.
+Über das Webinterface kann eine Projektdatei aus der ETS hochgeladen werden um zu prüfen ob es Items ohne Zuweisung zu Gruppenadressen gibt
+oder auch Gruppenadressen die keine Items definiert haben.
 Kompatibel sind Exportdateien aus der ETS5 (\*.knxproj) oder ETS4 (\*.esf = OPC).
+Es ist möglich für geschützte Projektdateien ein Passwort mit anzugeben. Dieses Passwort wird dann intern für die Laufzeit in SmartHomeNG
+gespeichert und steht dort solange zur Verfügung bis ein Neustart erfolgt oder bis ein anderes Passwort zugewiesen wird.
+Ebenfalls ist es möglich im Abschnitt in der Plugin.yaml ein Passwort zu definieren. Ist ein solches definiert und erfolgt ein Upload unter
+Angabe eines neuen Passwortes, so wird das vorbelegte intern überschrieben. Erst nach einem Neustart ist das in der Plugin.yaml definierte
+Passwort dann wieder vorhanden.
 
 Nur wenn eine gültige Datei hochgeladen wurde wird ein vierter Tab angezeigt.
 Hier wird dann der Vergleich zwischen den definierten Gruppenadressen aus der ETS mit den in SmartHomeNG konfigurierten 

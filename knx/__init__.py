@@ -40,19 +40,12 @@ from lib.shtime import Shtime
 
 from . import dpts
 from . import knxproj
+from .knxd import KNXD
 
 # WebIf
 from lib.model.smartplugin import SmartPluginWebIf
 import cherrypy
 import os
-
-
-# types from knxd\src\include\eibtypes.h
-KNXD_OPEN_GROUPCON  = 38     # 0x26
-KNXD_GROUP_PACKET   = 39     # 0x27 ‭
-KNXD_CACHE_ENABLE   = 112    # 0x70
-KNXD_CACHE_DISABLE  = 113    # 0x71
-KNXD_CACHE_READ     = 116    # 0x74
 
 KNXD_CACHEREAD_DELAY  = 0.35
 KNXD_CACHEREAD_DELAY  = 0.0
@@ -79,20 +72,19 @@ LOGIC = 'logic'
 LOGICS = 'logics'
 DPT = 'dpt'
 
-# provider for KNX service
-KNXD =  'knxd'
-KNXIP = 'IP Interface'
-KNXMC = 'IP Router'
-
-
 class KNX(SmartPlugin):
 
-    PLUGIN_VERSION = "1.7.8"
+    PLUGIN_VERSION = "1.7.9"
 
     # tags actually used by the plugin are shown here
     # can be used later for backend item editing purposes, to check valid item attributes
     ITEM_TAG = [KNX_DPT, KNX_STATUS, KNX_SEND, KNX_REPLY, KNX_LISTEN, KNX_INIT, KNX_CACHE, KNX_POLL]
     ITEM_TAG_PLUS = [KNX_DTP]
+
+    # provider for KNX service
+    PROVIDER_KNXD =  'knxd'
+    PROVIDER_KNXIP = 'IP Interface'
+    PROVIDER_KNXMC = 'IP Router'
 
     def __init__(self, smarthome):
         self.provider = self.get_parameter_value('provider')
@@ -105,7 +97,7 @@ class KNX(SmartPlugin):
 
         name = 'plugins.' + self.get_fullname()
         self._client = Tcp_client(name=name, host=self.host, port=self.port, binary=True, autoreconnect=True, connect_cycle=5, retry_cycle=30)
-        self._client.set_callbacks(connected=self.handle_connect, data_received=self.parse_telegram)  # , disconnected=disconnected_callback, data_received=receive_callback
+        self._client.set_callbacks(connected=self.handle_connect, data_received=self.parse_knxd_message)  # , disconnected=disconnected_callback, data_received=receive_callback
 
         if self.logger.isEnabledFor(logging.DEBUG):
             self.logger.debug("init knx")
@@ -129,7 +121,7 @@ class KNX(SmartPlugin):
         self.stats_last_read = None     # last read request from KNX
         self.stats_last_write = None    # last write from KNX
         self.stats_last_response = None # last response from KNX
-        self.stats_last_action = None   # the newes
+        self.stats_last_action = None   # the most recent action
         self._log_own_packets = self.get_parameter_value('log_own_packets')
         # following is for a special logger called busmonitor
         busmonitor = self.get_parameter_value('busmonitor')
@@ -152,6 +144,7 @@ class KNX(SmartPlugin):
             self.logger.warning(self.translate("!!! KNX Plugin in READONLY mode !!!"))
 
         # extension to use knx project files from ETS5
+        self.project_file_password = self.get_parameter_value( 'project_file_password')
         self.knxproj_ga = {}
         self.use_project_file = self.get_parameter_value('use_project_file')
 
@@ -174,7 +167,7 @@ class KNX(SmartPlugin):
     def _parse_projectfile(self):
         self._check_projectfile_destination()
         if self.projectpath.is_file():
-            self.knxproj_ga = knxproj.parse_projectfile(self.projectpath)
+            self.knxproj_ga = knxproj.parse_projectfile(self.projectpath, self.project_file_password)
 
     def _check_projectfile_destination(self):
         if not self.projectpath.exists():
@@ -198,7 +191,7 @@ class KNX(SmartPlugin):
         self._client.send(send)
 
     def groupwrite(self, ga, payload, dpt, flag='write'):
-        pkt = bytearray([0, KNXD_GROUP_PACKET])
+        pkt = bytearray([0, KNXD.GROUP_PACKET])
         try:
             pkt.extend(self.encode(ga, 'ga'))
         except:
@@ -228,7 +221,7 @@ class KNX(SmartPlugin):
             self._send(pkt)
 
     def _cacheread(self, ga):
-        pkt = bytearray([0, KNXD_CACHE_READ])
+        pkt = bytearray([0, KNXD.CACHE_READ])
         try:
             pkt.extend(self.encode(ga, 'ga'))
         except:
@@ -240,7 +233,7 @@ class KNX(SmartPlugin):
         self._send(pkt)
 
     def groupread(self, ga):
-        pkt = bytearray([0, KNXD_GROUP_PACKET])
+        pkt = bytearray([0, KNXD.GROUP_PACKET])
         try:
             pkt.extend(self.encode(ga, 'ga'))
         except:
@@ -261,12 +254,15 @@ class KNX(SmartPlugin):
             self.logger.warning(self.translate('problem polling {}, no known ga').format(item))
 
         if 'interval' in kwargs and 'ga' in kwargs:
-            ga = kwargs['ga']
-            interval = int(kwargs['interval'])
-            next = self.shtime.now() + timedelta(seconds=interval)
-            self._sh.scheduler.add('KNX poll {}'.format(item), self._poll,
-                                   value={'instance': self.get_instance_name(), ITEM: item, 'ga': ga, 'interval': interval},
-                                   next=next)
+            try:
+                ga = kwargs['ga']
+                interval = int(kwargs['interval'])
+                next = self.shtime.now() + timedelta(seconds=interval)
+                self._sh.scheduler.add(f'KNX poll {item}', self._poll,
+                                    value={'instance': self.get_instance_name(), ITEM: item, 'ga': ga, 'interval': interval},
+                                    next=next)
+            except Exception as ex:
+                self.logger.error(f"_poll function got an error {ex}")
 
     def _send_time(self):
         self.send_time(self.time_ga, self.date_ga)
@@ -279,10 +275,22 @@ class KNX(SmartPlugin):
             self.groupwrite(date_ga, now.date(), '11')
 
     def handle_connect(self, client):
-        enable_cache = bytearray([0, KNXD_CACHE_ENABLE])
+        """
+        Callback function to set up internals after a connection to knxd was established
+
+        :param client: the calling client for adaption purposes
+        :type client: TCP_client
+        """
+        
+        # let the knxd use its group address cache
+        enable_cache = bytearray([0, KNXD.CACHE_ENABLE])
         self._send(enable_cache)
-        self.found_terminator = self.parse_length
+        
+        # set next kind of data to expect from connection 
         self._isLength = True
+        
+        # if this is the first connect after init of plugin then read the
+        # group addresses from knxd which have the knx_cache attribute
         if self._cache_ga != []:
             if self.logger.isEnabledFor(logging.DEBUG):
                 self.logger.debug(self.translate('reading knxd cache'))
@@ -296,11 +304,13 @@ class KNX(SmartPlugin):
             if self.logger.isEnabledFor(logging.DEBUG):
                 self.logger.debug(self.translate('finished reading knxd cache'))
 
+        # let knxd create a new group monitor and send the read requests
+        # for all group addresses which have the knx_read  attribute 
         if self.logger.isEnabledFor(logging.DEBUG):
             self.logger.debug(self.translate('enable group monitor'))
-        init = bytearray([0, KNXD_OPEN_GROUPCON, 0, 0, 0])
+
+        init = bytearray([0, KNXD.OPEN_GROUPCON, 0, 0, 0])
         self._send(init)
-        # old self.terminator = 2
         client.terminator = 2
         if self._init_ga != []:
             if client.connected:
@@ -312,37 +322,36 @@ class KNX(SmartPlugin):
                 if self.logger.isEnabledFor(logging.DEBUG):
                     self.logger.debug(self.translate('finished knxd init read'))
 
-    def parse_length(self, length):
-        try:
-            self.terminator = struct.unpack(">H", length)[0]
-            if self.logger.isEnabledFor(logging.DEBUG):
-                self.logger.debug("******** TERMINATOR: {}".format(self.terminator))
-        except Exception as e:
-            self.logger.error(self.translate("problem unpacking length: {} ({})").format(length, e))
-            self.logger.critical(self.translate("plugin closes connection to knxd/eibd. Restarting SmartHomeNG"))
-            self.close()
-            self._sh.restart(self.translate('SmartHomeNG (KNX plugin stalled)'))
-            exit(0)
-
     def encode(self, data, dpt):
         return dpts.encode[str(dpt)](data)
 
     def decode(self, data, dpt):
         return dpts.decode[str(dpt)](data)
 
-    # old def parse_telegram(self, data):
-    def parse_telegram(self, client, data):
+    def parse_knxd_message(self, client, data):
         """
-        inspects a received eibd/knxd compatible telegram
+        inspects a message from knxd (eibd)
 
         :param client: Tcp_client
-        :param data: expected is a bytearray with
-            2 byte type   --> see eibtypes.h
+        :param data: message from knxd as bytearray
+        
+        a message from knxd will have 4 extra bytes plus eventually the knx telegram payload
+        2 byte length
+        2 byte knxd message type   --> see eibtypes.h
+        
+        knx telegram then consists of
+            1 byte control byte
             2 byte source as physical address
             2 byte destination as group address
             2 byte command/data
             n byte data
+        thus at least 7 bytes
 
+        The process consists of two steps:
+        * At first the variable ``self._isLength`` is True and the length for the 
+          following knxd message plus eventual knx telegram is set to ``client.terminator``
+        * then the next call to parse_knxd_message is awaited to contain 
+          the knxd message type in the first two bytes and then following eventually a knx telegram
         """
         if self._isLength:
             self._isLength = False
@@ -355,11 +364,11 @@ class KNX(SmartPlugin):
             self._isLength = True
             client.terminator = 2
 
-        typ = struct.unpack(">H", data[0:2])[0]
-        if (typ != KNXD_GROUP_PACKET and typ != KNXD_CACHE_READ) or len(data) < 8:
-            # if self.logger.isEnabledFor(logging.DEBUG):
-            #    self.logger.debug("Ignore telegram.")
+        knxd_msg_type = struct.unpack(">H", data[0:2])[0]
+        if (knxd_msg_type != KNXD.GROUP_PACKET and knxd_msg_type != KNXD.CACHE_READ) or len(data) < 8:
+            self.handle_other_knxd_messages(knxd_msg_type, data[2:])
             return
+
         if (data[6] & 0x03 or (data[7] & 0xC0) == 0xC0):
             if self.logger.isEnabledFor(logging.DEBUG):
                 self.logger.debug("Unknown APDU")
@@ -422,10 +431,10 @@ class KNX(SmartPlugin):
                 # print "out:{0}".format(out)
 
                 # remove all ga that came from a cache read request
-                if typ == KNXD_CACHE_READ:
+                if knxd_msg_type == KNXD.CACHE_READ:
                     if dst in self._cache_ga_response_pending:
                         self._cache_ga_response_pending.remove(dst)
-                way = "" if typ != KNXD_CACHE_READ else " (from knxd Cache)"
+                way = "" if knxd_msg_type != KNXD.CACHE_READ else " (from knxd Cache)"
                 if self.logger.isEnabledFor(logging.DEBUG):
                     self.logger.debug("{} request from {} to {} with '{}' and DPT {}{}".format(flg, src, dst, binascii.hexlify(payload).decode(), dpt, way))
                 src_wrk = self.get_instance_name()
@@ -455,11 +464,12 @@ class KNX(SmartPlugin):
             if dst in self.gar:  # read item
                 if self.gar[dst][ITEM] is not None:
                     item = self.gar[dst][ITEM]
+                    val = item()
                     if self.logger.isEnabledFor(logging.DEBUG):
-                        self.logger.debug("groupwrite value '{}' to ga '{}' as DPT '{}' as response".format(dst, item(), self.get_iattr_value(item.conf,KNX_DPT)))
+                        self.logger.debug("groupwrite value '{}' to ga '{}' as DPT '{}' as response".format(dst, val, self.get_iattr_value(item.conf,KNX_DPT)))
                     if self._log_own_packets is True:
                         self._busmonitor(self._bm_format.format(self.get_instance_name(), src, dst, val))
-                    self.groupwrite(dst, item(), self.get_iattr_value(item.conf,KNX_DPT), 'response')
+                    self.groupwrite(dst, val, self.get_iattr_value(item.conf,KNX_DPT), 'response')
                 if self.gar[dst][LOGIC] is not None:
                     src_wrk = self.get_instance_name()
                     if src_wrk != '':
@@ -468,6 +478,20 @@ class KNX(SmartPlugin):
                     if self.logger.isEnabledFor(logging.DEBUG):
                         self.logger.debug("Trigger Logic '{}' from caller='{}', source='{}', dest='{}'".format(self.gar[dst][LOGIC], self.get_shortname(), src_wrk, dst))
                     self.gar[dst][LOGIC].trigger(self.get_shortname(), src_wrk, None, dst)
+
+    def handle_other_knxd_messages(self, knxd_msg_type, data):
+        """to approach a two way communication we need to know more about the other messages"""
+        if len(data) > 0:
+            payloadstr = f" with data {binascii.hexlify(data).decode()}"
+        else:
+            payloadstr = " no further data"
+        if knxd_msg_type in KNXD.MessageDescriptions:
+            msg = f"KNXD message {KNXD.MessageDescriptions[knxd_msg_type]} received {payloadstr}"
+        else:
+            msg = f"KNXD message UNKNOWN received with data {payloadstr}"
+
+        if self.logger.isEnabledFor(logging.DEBUG):
+            self.logger.debug(msg)
 
     def run(self):
         """
@@ -591,13 +615,13 @@ class KNX(SmartPlugin):
                 knx_poll = [knx_poll, ]
             if len(knx_poll) == 2:
                 poll_ga = knx_poll[0]
-                poll_interval = knx_poll[1]
+                poll_interval = float(knx_poll[1]) 
 
                 self.logger.info(
                     "Item {} is polled on GA {} every {} seconds".format(item, poll_ga, poll_interval))
                 randomwait = random.randrange(15)
                 next = self.shtime.now() + timedelta(seconds=poll_interval + randomwait)
-                self._sh.scheduler.add('KNX poll {}'.format(item), self._poll,
+                self._sh.scheduler.add(f'KNX poll {item}', self._poll,
                                        value={ITEM: item, 'ga': poll_ga, 'interval': poll_interval}, next=next)
             else:
                 self.logger.warning(
@@ -870,12 +894,19 @@ class WebInterface(SmartPluginWebIf):
 
 
     @cherrypy.expose
-    def index(self, reload=None, knxprojfile=None):
+    def index(self, reload=None, knxprojfile=None, password=None):
         """
         Build index.html for cherrypy
         Render the template and return the html file to be delivered to the browser
         :return: contents of the template after beeing rendered
         """
+        if password is not None:
+            if password != '':
+                self.plugin.project_file_password = password
+                self.logger.debug("Set password for knxproj file")
+            else:
+                self.logger.debug("Provided password is empty, will not replace the saved password")
+
         # if given knxprojfile then this is an upload
         if self.plugin.use_project_file and knxprojfile is not None:
             size = 0
