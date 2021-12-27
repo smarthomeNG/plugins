@@ -49,10 +49,10 @@ function confirmDelete(url, text) {
 	</strong>
 	<br/>( {{_('Datenbank-ID') }}: {{ item_id }}, {{ _('Typ') }}: {{ item.type() }}, {{ log_array | length }} {{_('Datensätze')}}, {{_('Aktueller Wert')}}: {{ item() }}  -  {{_('Gesamt')}}: <strong>{{ p.readLogCount(item_id) }} {{_('Datensätze')}}</strong>, {{_('ältester Wert')}}: <strong>{% if p.readLogCount(item_id) >0 %}{{ p._datetime(p.readOldestLog(item_id)).strftime('%d.%m.%Y %H:%M:%S') }}{% else %}-{% endif %}</strong> )
 </div>
-<div style="float:right; width:220px;" id="datepicker">
+<div style="float:right; width:20%;" id="datepicker">
 </div>
-<div style="margin-right: 220px;">
-<table class="table table-striped table-hover pluginList" style="">
+<div style="float:left; width:80%;">
+<table class="table table-striped table-hover pluginList" id="item_details_table">
 	<thead>
 	<tr>
 		<th style="width: 90px;">{{ _('Item ID') }}</th>
@@ -63,7 +63,7 @@ function confirmDelete(url, text) {
 		{% if item.property.type == 'str' %}<th>VAL_STR</th>{% endif %}
 		{% if item.property.type == 'foo' %}<th>VAL_STR</th>{% endif %}
 		<th style="width: 190px;">{{ _('Geändert') }}</th>
-		<th>{{ _('Aktionen') }}</th>
+		<th class="no-sort">{{ _('Aktionen') }}</th>
 	</tr>
 	</thead>
 	{% if log_array | length > 0 %}
