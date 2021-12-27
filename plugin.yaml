@@ -982,7 +982,7 @@ item_structs:
             owm_matchstring@instance: alerts/0/description
             
 
-    darksky2owm_lcoals:
+    darksky2owm_locals:
         name: Locals report openweathermap matching item defined in darksky-plugin struct
 
         latitude:
