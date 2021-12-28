@@ -380,6 +380,10 @@ item_structs:
             name: Shift in seconds from UTC
             type: num
             owm_matchstring@instance: timezone_offset
+        location:
+            name: Name of the requested location
+            type: str
+            owm_matchstring@instance: name
 
     current:
         name: OpenWeatherMap current weather data

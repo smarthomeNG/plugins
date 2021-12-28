@@ -23,7 +23,7 @@ Das Python Modul Pyserial wird benötigt. Die Installation ab SmartHomeNG 1.8 er
 Es muß sichergestellt sein, das der Benutzer der SmartHomeNG ausführt auch die Brechtigung hat
 den seriellen Port zu verwenden. Möglicherweise muß eine udev-Regel erstellt werden.
 
-Ein Beispiel für eine aktuelle Version des Volkszaehler IR-Lesekopfes bei der jeweils 
+Ein Beispiel für eine aktuelle Version des Volkszaehler IR-Lesekopfes bei der jeweils
 Vendor- und Product-ID für den eigenen Lesekopf angepaßt werden müssen:
 
 .. code:: bash
@@ -77,8 +77,8 @@ Beispiele für die plugin.yaml
        update_cycle: 900
 
 Im ersten Beispiel wird das Plugin alle 900 Sekunden also alle 15 Minuten den Smartmeter abfragen.
-Da cycle nicht zu einem bestimmten Zeitpunkt aufgerufen wird sondern der Abstand zwischen den Abfragen 
-nur entsprechend lang ist, ist auch der Zeitpunkt der Daten recht variabel. 
+Da cycle nicht zu einem bestimmten Zeitpunkt aufgerufen wird sondern der Abstand zwischen den Abfragen
+nur entsprechend lang ist, ist auch der Zeitpunkt der Daten recht variabel.
 
 Alternativ dazu lässt sich ein crontab für die Abfrage definieren um zu genauen Zeitpunkten eine Zählerauswertung zu haben.
 Im nachfolgenden Beispiel wird alle 60 Sekunden eine Zählerabfrage gestartet. Dabei muß die Abfragedauer und Systemauslastung
@@ -105,7 +105,7 @@ oder von sich aus Daten sendet ohne einen Anstoss zu benötigen.
 
 Sendet ein Smartmeter von sich aus, so gibt dessen Bedienungsanleitung Auskunft mit welcher
 Geschwindigkeit die Schnittstelle betrieben werden kann. Im folgenden wird die Kommunikation
-mit einem Easymeter der Q3D Serie abgefragt der keine Checksumme der Daten unterstützt, 
+mit einem Easymeter der Q3D Serie abgefragt der keine Checksumme der Daten unterstützt,
 und ohne Aufforderung mit 9600 Baud sendet:
 
 ``python3 dlms.py <serieller Port> -c -l -s 9600``
@@ -114,7 +114,7 @@ Das Ergebnis der Auslesung wird auf der Konsole ausgegeben, siehe Codebeispiele 
 Aus den aufgelisten Obis Codes lassen sich die Einstellungen
 für die Itemdefinition ableiten.
 
-Die gewählten Parameter für den Standalone Modus finden sich in den Einstellungen für die ``plugin.yaml`` 
+Die gewählten Parameter für den Standalone Modus finden sich in den Einstellungen für die ``plugin.yaml``
 von SmartHomeNG wieder. Alternativ kann die Einstellung auch über das Admin Interface vorgenommen werden.
 
 
@@ -129,7 +129,7 @@ Eine einzelne **Zeile** kann so aussehen:
 
    A-B:C.D.E*F(Wert*Einheit)(anderer Wert)
 
-Die Wertegruppen **A** und **B** sind optional, ebenso **E** und **F**. 
+Die Wertegruppen **A** und **B** sind optional, ebenso **E** und **F**.
 Der zweite Wert kann weggelassen werden, ebenso die Einheit des ersten Wertes.
 Jede Smartmeter-Anzeige sieht anders aus.
 Eine direkte Vorschrift wie die Werte zu interpretieren sind gibt es nicht.
@@ -148,37 +148,37 @@ Grundlegende Eigenschaft des Datenelements (abstrakte Daten, Strom-, Gas-, Wärm
 B
 --
 **Kanalnummer**, d.h. die Nummer des Eingangs einer Messung Geräte mit mehreren Eingängen
-zur Messung der Energie von gleiche oder unterschiedliche Typen (z.B. in Datenkonzentratoren, Registrierungseinheiten). 
+zur Messung der Energie von gleiche oder unterschiedliche Typen (z.B. in Datenkonzentratoren, Registrierungseinheiten).
 Daten von verschiedene Quellen können somit identifiziert werden. Die Definitionen für
 diese Wertegruppe ist unabhängig aus der Wertegruppe A.
 
 C
 --
-abstrakte oder physische Datenelemente bezogen auf die Informationsquelle 
-betroffen, z.B. Strom, Spannung, Leistung, Lautstärke, Temperatur. 
-Die Definitionen hängen vom Wert der Wertegruppe A ab. 
+abstrakte oder physische Datenelemente bezogen auf die Informationsquelle
+betroffen, z.B. Strom, Spannung, Leistung, Lautstärke, Temperatur.
+Die Definitionen hängen vom Wert der Wertegruppe A ab.
 Vermessung, Tarifabwicklung und Datenspeicherungsmethoden dieser Mengen werden durch den Wert definiert
 Gruppen D, E und F Für abstrakte Daten, die hierarchische Struktur der 6 Codefelder ist nicht zutreffend.
 
 D
 --
 
-Typen oder das Ergebnis der Verarbeitung physikalischer Größen 
-identifiziert mit den Wertegruppen A und C, nach verschiedenen speziellen Algorithmen. 
+Typen oder das Ergebnis der Verarbeitung physikalischer Größen
+identifiziert mit den Wertegruppen A und C, nach verschiedenen speziellen Algorithmen.
 Die Algorithmen können Energie liefern und Bedarfsmengen sowie andere physikalische Größen.
 
 E
 --
 
 Weiterverarbeitung der Messung Ergebnisse identifiziert mit Wert Gruppen A bis D zum Tarif
-registriert, nach dem Tarif(e) im Einsatz. Für abstrakte Daten oder für Messergebnisse 
+registriert, nach dem Tarif(e) im Einsatz. Für abstrakte Daten oder für Messergebnisse
 für die Tarife nicht relevant, diese Wertegruppe kann zur weiteren Klassifizierung verwendet.
 
 F
 --
 
-die Speicherung von Daten, identifiziert nach Wertegruppen A bis E,  
-zu unterschiedlichen Abrechnungszeiträumen. 
+die Speicherung von Daten, identifiziert nach Wertegruppen A bis E,
+zu unterschiedlichen Abrechnungszeiträumen.
 Wo dies nicht relevant ist, kann diese Wertegruppe für weitere Klassifizierung verwendet werden.
 
 Im folgenden zwei Beispiele um eine Vorstellung von den Unterschieden zu bekommen:
@@ -187,7 +187,7 @@ OBIS-Codebeispiel A
 ~~~~~~~~~~~~~~~~~~~
 
 Einige erste Zeilen einer beispielhaften OBIS-Code-Auslesung für einen **Landis & Gyr ZMD
-310** Smartmeter für industrielle Zwecke 
+310** Smartmeter für industrielle Zwecke
 
 .. code:: text
 
@@ -234,17 +234,17 @@ Web Interface
 =============
 
 Das dlms Plugin verfügt über ein Webinterface, mit dessen Hilfe die Items die das Plugin nutzen
-übersichtlich dargestellt werden. 
+übersichtlich dargestellt werden.
 
-.. important:: 
+.. important::
 
    Das Webinterface des Plugins kann mit SmartHomeNG v1.4.2 und davor **nicht** genutzt werden.
-   Es wird dann nicht geladen. Diese Einschränkung gilt nur für das Webinterface. Ansonsten gilt 
+   Es wird dann nicht geladen. Diese Einschränkung gilt nur für das Webinterface. Ansonsten gilt
    für das Plugin die in den Metadaten angegebene minimale SmartHomeNG Version.
 
 
 Werte aus den Codezeilen ermitteln
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+----------------------------------
 
 Im Vergleich der Beispiele wird offensichtlich das der grundsätzlich gleiche OBIS Code leicht
 unterschiedlich erscheint:
@@ -265,7 +265,7 @@ Attribute:
 
    zaehler:
       type: num
-      dlms_obis_code: 
+      dlms_obis_code:
          - '1-1:1.8.0'
          - 0
          - 'Value'
@@ -279,7 +279,7 @@ Attribute:
 
    zaehler:
       type: num
-      dlms_obis_code: 
+      dlms_obis_code:
          - '1.8.0*00'
          - 0
          - 'Value'
@@ -291,7 +291,7 @@ Um die Einheit von ``1-1:1.8.0(00051206*kWh)`` in ein Item zu bekommen, bekommt 
 
    zaehler_unit:
       type: str
-      dlms_obis_code: 
+      dlms_obis_code:
          - '1-1:1.8.0'
          - 0
          - 'Unit'
@@ -307,31 +307,31 @@ Eine Beispielhafte **item.yaml** für die OBIS Codes aus **Beispiel A** könnte 
            dlms_obis_readout: yes
        Seriennummer:
            type: str
-           dlms_obis_code: 
+           dlms_obis_code:
                - '1-1:0.0.0
                - 0
-               - 'Value' 
+               - 'Value'
                - 'str'
 
        Ablesung:
            # Datum und Uhrzeit der letzten Ablesung
            Uhrzeit:
                type: foo
-               dlms_obis_code: 
+               dlms_obis_code:
                  - '1-1:0.9.1'
                  - 0
                  - 'Value'
                  - 'Z6'
            Datum:
                type: foo
-               dlms_obis_code: 
+               dlms_obis_code:
                  - '1-1:0.9.2'
                  - 0
                  - 'Value'
                  - 'D6'
            Datum_Aktueller_Abrechnungsmonat:
                type: foo
-               dlms_obis_code: 
+               dlms_obis_code:
                  - '1-1:0.1.3'
                  - 0
                  - 'Value'
@@ -339,26 +339,26 @@ Eine Beispielhafte **item.yaml** für die OBIS Codes aus **Beispiel A** könnte 
            Monatszaehler:
                # Billing period counter
                type: num
-               dlms_obis_code: 
+               dlms_obis_code:
                  - '1-1:0.1.0'
                  - 0
                  - 'Value'
                  - 'num'
-               
+
        Bezug:
            Energie:
                type: num
                sqlite: yes
-               dlms_obis_code: 
+               dlms_obis_code:
                  - '1-1:1.8.1'
                  - 0
                  - 'Value'
                  - 'num'
-                 
+
            Energie_Einheit:
                type: str
                sqlite: yes
-               dlms_obis_code: 
+               dlms_obis_code:
                  - '1-1:1.8.1'
                  - 0
                  - 'Unit'
@@ -368,7 +368,7 @@ Eine Beispielhafte **item.yaml** für die OBIS Codes aus **Beispiel A** könnte 
            Energie:
                type: num
                sqlite: yes
-               dlms_obis_code: 
+               dlms_obis_code:
                  - '1-1:2.8.1'
                  - 0
                  - 'Value'
@@ -377,7 +377,7 @@ Eine Beispielhafte **item.yaml** für die OBIS Codes aus **Beispiel A** könnte 
            Energie_Einheit:
                type: str
                sqlite: yes
-               dlms_obis_code: 
+               dlms_obis_code:
                  - '1-1:2.8.1'
                  - 0
                  - 'Unit'
@@ -389,7 +389,7 @@ Die Syntax für das Item Attribut **dlms_obis_code** ist wie folgt:
 .. code:: yaml
 
    my_item:
-      dlms_obis_code: 
+      dlms_obis_code:
          - 1-1:1.6.2*01
          - Index
          - 'Value' or 'Unit'
@@ -421,7 +421,7 @@ Aufruf des Webinterfaces
 Das Plugin kann aus dem backend aufgerufen werden. Dazu auf der Seite Plugins in der entsprechenden
 Zeile das Icon in der Spalte **Web Interface** anklicken.
 
-Außerdem kann das Webinterface direkt über ``http://smarthome.local:8383/dlms`` bzw. 
+Außerdem kann das Webinterface direkt über ``http://smarthome.local:8383/dlms`` bzw.
 ``http://smarthome.local:8383/dlms_<Instanz>`` aufgerufen werden.
 
 
@@ -430,7 +430,7 @@ Beispiele
 
 Folgende Informationen können im Webinterface angezeigt werden:
 
-Oben rechts werden allgemeine Parameter zum Plugin angezeigt. 
+Oben rechts werden allgemeine Parameter zum Plugin angezeigt.
 
 Im ersten Tab wird das Ergebnis der letzten Auslesung angezeigt:
 
