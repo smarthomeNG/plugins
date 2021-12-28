@@ -20,14 +20,14 @@
 <script src="/gstatic/codemirror/mode/javascript/javascript.js"></script>
 <script>
     $(document).ready( function () {
-		try 
-			{	
+		try
+			{
 			$('#items_table').DataTable( {
 				"paging": false,
 				fixedHeader: true
-				} );				
+				} );
 			}
-		catch (e) 
+		catch (e)
 			{
 			console.log("Datatable JS not loaded, showing standard table without reorder option")
 			}
@@ -75,7 +75,7 @@
 			L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 				attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 			}).addTo(mapInstance);
-	
+
 			L.marker([{{ p._lat }}, {{ p._lon }}]).addTo(mapInstance);
 		} else {
 			map_div.style.display = "none";
@@ -86,7 +86,7 @@
 		$(".owm_c_active").toggleClass("owm_c_active");
 		$(".owm_c_nav_active").toggleClass("owm_c_nav_active");
 		block.toggleClass("owm_c_nav_active");
-		
+
 		selected_block = "#" + block.attr("id").replace('_nav', '');
 		$(selected_block).toggleClass("owm_c_active");
 
@@ -99,7 +99,7 @@
 		$(".owm_e_active").toggleClass("owm_e_active");
 		$(".owm_e_nav_active").toggleClass("owm_e_nav_active");
 		block.toggleClass("owm_e_nav_active");
-		
+
 		selected_block = "#" + block.attr("id").replace('_nav', '');
 		$(selected_block).toggleClass("owm_e_active");
 	}
@@ -200,10 +200,12 @@
 			<td class="py-1" width="150px"><strong>{{ _('Ladezyklus (s)') }}</strong></td>
 			<td class="py-1">{{ p._cycle }}</td>
 		</tr>
+<!--
 		<tr>
 			<td class="py-1" width="150px"><strong>{{ _('API-Schlüssel') }}</strong></td>
 			<td class="py-1" colspan="3"><div title="{{ p._key }}">{% for letter in p._key %}*{% endfor %}</div></td>
 		</tr>
+-->
 	</tbody>
 </table>
 <div id="progress_indicator" style="position:fixed;bottom:0px;right: 0px;width:100%; height: 100%; display:none; opacity: 0.5; background: white;" class="mb-2 alert alert-success alert-dismissible fade show" role="alert">
@@ -252,7 +254,7 @@
 			<div class="owm_nav_box code" id="owm_block_{{ data_source.key }}_nav">{{ data_source.key | replace('_minus_', '-') }}</div>
 		{% endfor %}
 	</div>
-	<div style="float: left; height: calc(100vh - 245px); width: 10px;" id="measure_bar">&nbsp;</div> 
+	<div style="float: left; height: calc(100vh - 245px); width: 10px;" id="measure_bar">&nbsp;</div>
 	<div style="display: flex; flex-flow: column; height: calc(100vh - 245px);">
 		{% for data_source in json_data %}
 			<div class="owm_codeblock" id="owm_block_{{ data_source.key }}">
@@ -294,7 +296,7 @@
 	<button type="button" class="btn btn-shng btn-sm" id="test_match_string">Testen</button>
 	<div id="result_output"></div>
 </div>
-{# 
+{#
 	TODO: Später mal sollte hier eine Anleitung entstehen.
 	<br style="clear:both;"/>
 	<div style="float: left; width: 220px; display: block;" id="example_nav">
@@ -303,11 +305,11 @@
 	</div>
 	<div id="owm_block_exampl_rain" class="owm_exampleblock">
 		<h5>Regen</h5>
-		Und seine Freunde	
+		Und seine Freunde
 	</div>
 	<div id="owm_block_exampl_temp" class="owm_exampleblock">
 		<h5>Temperaturen</h5>
-		Und deren Freunde	
+		Und deren Freunde
 	</div>
 #}
 {% endblock %}

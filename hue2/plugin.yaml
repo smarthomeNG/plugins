@@ -187,6 +187,7 @@ item_structs:
 
         xy:
             type: list
+            enforce_updates: True
             hue2_resource@instance: ..:.
             hue2_id@instance: ..:.
             hue2_function@instance: xy
@@ -203,6 +204,7 @@ item_structs:
 
         xy:
             type: list
+            enforce_updates: True
             hue2_resource@instance: ..:.
             hue2_id@instance: ..:.
             hue2_function@instance: xy
@@ -245,30 +247,35 @@ item_structs:
 
         onoff:
             type: bool
+            enforce_updates: True
             hue2_resource@instance: ..:.
             hue2_id@instance: ..:.
             hue2_function@instance: on
 
         level:
             type: num
+            enforce_updates: True
             hue2_resource@instance: ..:.
             hue2_id@instance: ..:.
             hue2_function@instance: bri
 
         hue:
             type: num
+            enforce_updates: True
             hue2_resource@instance: ..:.
             hue2_id@instance: ..:.
             hue2_function@instance: hue
 
         sat:
             type: num
+            enforce_updates: True
             hue2_resource@instance: ..:.
             hue2_id@instance: ..:.
             hue2_function@instance: sat
 
         ct:
             type: num
+            enforce_updates: True
             hue2_resource@instance: ..:.
             hue2_id@instance: ..:.
             hue2_function@instance: ct
@@ -281,6 +288,7 @@ item_structs:
 
         xy:
             type: list
+            enforce_updates: True
             hue2_resource@instance: ..:.
             hue2_id@instance: ..:.
             hue2_function@instance: xy
@@ -296,18 +304,21 @@ item_structs:
 
         onoff:
             type: bool
+            enforce_updates: True
             hue2_resource@instance: ..:.
             hue2_id@instance: ..:.
             hue2_function@instance: on
 
         level:
             type: num
+            enforce_updates: True
             hue2_resource@instance: ..:.
             hue2_id@instance: ..:.
             hue2_function@instance: bri
 
         ct:
             type: num
+            enforce_updates: True
             hue2_resource@instance: ..:.
             hue2_id@instance: ..:.
             hue2_function@instance: ct

@@ -46,7 +46,7 @@ class OpenWeatherMapNoValueSoftException(Exception):
 
 
 class OpenWeatherMap(SmartPlugin):
-    PLUGIN_VERSION = "1.8.2"
+    PLUGIN_VERSION = "1.8.3"
 
     _base_url = 'https://api.openweathermap.org/%s'
     _base_img_url = 'https://tile.openweathermap.org/map/%s/%s/%s/%s.png?appid=%s'
@@ -612,7 +612,7 @@ class OpenWeatherMap(SmartPlugin):
     def __handle_fail(self, last_popped, current_leaf, successful_path, original_match_string, correlation_hint):
         missing_child_path = last_popped if len(current_leaf) == 0 else f"{last_popped}/{'/'.join(current_leaf)}"
         fail_match_string = f"{last_popped}/{'/'.join(current_leaf)}"
-                
+
         if fail_match_string in self._soft_fails:
             soft_fail_mode = self._soft_fails[fail_match_string]
             if soft_fail_mode == "log_info":
@@ -641,7 +641,7 @@ class OpenWeatherMap(SmartPlugin):
 
         raise OpenWeatherMapNoValueHardException(
             f"Missing child '{last_popped}' after '{'/'.join(successful_path)}' (complete path missing: {missing_child_path})")
-           
+
 
 
     def __get_val_from_dict(self, s, wrk, correlation_hint, original_match_string):
@@ -1010,7 +1010,7 @@ class OpenWeatherMap(SmartPlugin):
         splitted = match_string_within_file.split("/")
         src = self._data_sources[data_source_key]['data']
         daten = json.dumps(src, indent=4).splitlines()
-        
+
         last_line = 0
         for pos_in_match_string in range(len(splitted)):
             if splitted[pos_in_match_string].isnumeric():

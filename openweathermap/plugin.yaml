@@ -11,8 +11,8 @@ plugin:
     keywords: weather precipation irrigation
     documentation: 'http://smarthomeng.de/user/plugins/openweathermap/user_doc.html'
     support: 'https://knx-user-forum.de/forum/supportforen/smarthome-py/1246998-support-thread-zum-openweathermap-plugin'
-    version: 1.8.2                # Plugin version
-    sh_minversion: 1.6            # minimum shNG version to use this plugin
+    version: 1.8.3                # Plugin version
+    sh_minversion: 1.8.2d         # minimum shNG version to use this plugin
 #    sh_maxversion:               # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True          # plugin supports multi instance
     restartable: unknown
@@ -189,10 +189,10 @@ item_structs:
             eval_trigger:
                 - .past_12h
                 - .next_12h
-            
+
             past_12h:
                 type: num
-                owm_matchstring@instance: virtual/past12h/sum/rain/1h            
+                owm_matchstring@instance: virtual/past12h/sum/rain/1h
             next_12h:
                 type: num
                 owm_matchstring@instance: virtual/next12h/sum/rain/1h
@@ -223,19 +223,19 @@ item_structs:
                 initial_value: 1
                 type: num
                 cache: yes
-            
+
             crop_coefficient:
                 remark: 'This is the coefficient that can be set based on the plants. Typically 0.3 to 0.9'
                 initial_value: 0.9
                 type: num
                 cache: yes
-            
+
             plant_density:
                 remark: 'How dense are the plants planted? Typically 0.3 to 1.5'
                 initial_value: 1
                 type: num
                 cache: yes
-            
+
             gut_feeling:
                 remark: 'This is a factor that should be used to tweak irrigation based on gut-feelings, typically this should be assigned centrally for the whole yard (use eval).'
                 initial_value: 1
@@ -320,10 +320,10 @@ item_structs:
             eval_trigger:
                 - .past_4d
                 - .next_3d
-            
+
             past_4d:
                 type: num
-                owm_matchstring@instance: virtual/past4d/sum/rain/1h            
+                owm_matchstring@instance: virtual/past4d/sum/rain/1h
             next_3d:
                 type: num
                 owm_matchstring@instance: virtual/next3d/sum/rain
@@ -352,7 +352,7 @@ item_structs:
                 initial_value: 1
                 type: num
                 cache: yes
-            
+
             gut_feeling:
                 remark: 'This is a factor that should be used to tweak irrigation based on gut-feelings, typically this should be assigned centrally for the whole yard (use eval).'
                 initial_value: 1
@@ -380,7 +380,7 @@ item_structs:
             name: Shift in seconds from UTC
             type: num
             owm_matchstring@instance: timezone_offset
-                
+
     current:
         name: OpenWeatherMap current weather data
         dt:
@@ -434,17 +434,17 @@ item_structs:
             name: Wind speed. Wind speed. Units default metre/sec, metric metre/sec, imperial miles/hour.
             type: num
             owm_matchstring@instance: current/wind_speed
-            
+
             beaufort_nr:
                 name: wind speed as beaufort number
                 type: num
                 owm_matchstring: current/wind_speed/beaufort
-                
+
             beaufort_string:
                 name: wind speed as beaufort string
                 type: str
                 owm_matchstring: current/wind_speed/description
-                    
+
         wind_gust:
             name: (where available) Wind gust. Units default metre/sec, metric metre/sec, imperial miles/hour.
             type: num
@@ -453,7 +453,7 @@ item_structs:
             name: Wind direction, degrees (meteorological)
             type: num
             owm_matchstring@instance: current/wind_deg
-            
+
             wind_direction_string:
                 type: str
                 eval: "['N','NO','O','SO','S','SW','W','NW','N'][int((sh...() + 22.5) / 45)] if sh...() is not None else 'Update ausstehend'"
@@ -555,7 +555,7 @@ item_structs:
                 owm_matchstring@instance: /temp/max
         feels_like:
             name: This accounts for the human perception of weather. Units default kelvin, metric Celsius, imperial Fahrenheit.
-            
+
             feels_like_morn:
                 name: Morning temperature.
                 type: num
@@ -606,12 +606,12 @@ item_structs:
             type: num
             owm_match_prefix@instance: ..:.
             owm_matchstring@instance: /wind_deg
-            
+
             wind_direction_string:
                 type: str
                 eval: "['N','NO','O','SO','S','SW','W','NW','N'][int((sh...() + 22.5) / 45)] if sh...() is not None else 'Update ausstehend'"
                 eval_trigger: ..
-                
+
         clouds:
             name: Cloudiness, %
             type: num
@@ -638,8 +638,8 @@ item_structs:
             owm_match_prefix@instance: ..:.
             owm_matchstring@instance: /snow
         # weather:
-            # name: 
-            # type: 
+            # name:
+            # type:
             # owm_matchstring@instance: /weather
         weather_id:
             name: Weather condition id
@@ -661,7 +661,7 @@ item_structs:
             type: str
             owm_match_prefix@instance: ..:.
             owm_matchstring@instance: /weather/0/icon
-            
+
     forecast_hourly:
         name: OpenWeatherMap hourly weather forecast data
         dt:
@@ -759,8 +759,8 @@ item_structs:
             name: Weather icon id. How to get icons
             type: str
             owm_match_prefix@instance: ..:.
-            owm_matchstring@instance: /weather/0/icon            
-            
+            owm_matchstring@instance: /weather/0/icon
+
     historical_daily:
         name: OpenWeatherMap historical weather data for dedicated day
         dt:
@@ -842,8 +842,8 @@ item_structs:
             owm_match_prefix@instance: ..:.
             owm_matchstring@instance: /snow/1h
         # weather:
-            # name: 
-            # type: 
+            # name:
+            # type:
             # owm_matchstring@instance: day/-0/weather
         weather_id:
             name: Weather condition id
@@ -865,7 +865,7 @@ item_structs:
             type: str
             owm_match_prefix@instance: ..:.
             owm_matchstring@instance: /weather/0/icon
-            
+
     historical_hourly:
         name: OpenWeatherMap historical weather data for dedicated hour
         dt:
@@ -954,7 +954,7 @@ item_structs:
             type: str
             owm_match_prefix@instance: ..:.
             owm_matchstring@instance: /weather/0/icon
-    
+
     alerts:
         name: OpenWeatherMap national weather alerts data from major national weather warning systems
 
@@ -980,7 +980,7 @@ item_structs:
             name: Description of the alert
             type: str
             owm_matchstring@instance: alerts/0/description
-            
+
 
     darksky2owm_locals:
         name: Locals report openweathermap matching item defined in darksky-plugin struct
@@ -996,10 +996,10 @@ item_structs:
         timezone:
             type: str
             owm_matchstring@instance: timezone
-               
+
     darksky2owm_current_weather:
         name: Current weather of Weather report from openweathermap matching item defined in darksky-plugin struct
-        
+
         time_epoch:
             type: num
             owm_matchstring@instance: current/dt
@@ -1100,7 +1100,7 @@ item_structs:
             type: num
             eval: datetime.datetime.fromtimestamp(sh...time_epoch(), datetime.timezone.utc).astimezone().strftime('%w')
             eval_trigger: ..time_epoch
-            
+
     darksky2owm_forecast_hourly:
         name: Hourly forcast of Weather report from openweathermap matching item defined in darksky-plugin struct
 
@@ -1220,10 +1220,10 @@ item_structs:
             type: str
             eval: datetime.datetime.fromtimestamp(sh...time_epoch(), datetime.timezone.utc).astimezone().strftime('%w')
             eval_trigger: ..time_epoch
-            
+
     darksky2owm_forecast_daily:
         name: Daily forcast of Weather report from openweathermap matching item defined in darksky-plugin struct
-        
+
         time_epoch:
             type: num
             owm_match_prefix@instance: ..:.
@@ -1390,7 +1390,7 @@ item_structs:
             type: num
             eval: datetime.datetime.fromtimestamp(sh...time_epoch(), datetime.timezone.utc).astimezone().strftime('%w')
             eval_trigger: ..time_epoch
-            
+
 
         precipProbability_mean:
             type: num
@@ -1414,7 +1414,7 @@ plugin_functions:
                 description:
                     de: "Zum Beispiel /day/0/rain"
                     en: "E.g. /day/0/rain"
-    
+
     get_beaufort_description:
         type: str
         description:
@@ -1426,7 +1426,7 @@ plugin_functions:
                 description:
                     de: "Windstärke in bft, integer zwischen 0 und 12"
                     en: "Wind-speed in bft, integer between 0 und 12"
-    
+
     get_beaufort_number:
         type: num
         description:
@@ -1449,4 +1449,4 @@ plugin_functions:
                 type: str
                 description:
                     de: "Datenquelle"
-                    de: "Data source key"
+                    en: "Data source key"

@@ -7,7 +7,7 @@
 #  https://www.smarthomeNG.de
 #  https://knx-user-forum.de/forum/supportforen/smarthome-py
 #
-#  Sample plugin for new plugins to run with SmartHomeNG version 1.5 and
+#  hue plugin for new plugins to run with SmartHomeNG version 1.8 and
 #  upwards.
 #
 #  SmartHomeNG is free software: you can redistribute it and/or modify
