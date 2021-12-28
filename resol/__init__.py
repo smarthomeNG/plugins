@@ -25,7 +25,7 @@ from lib.model.smartplugin import *
 
 class Resol(SmartPlugin):
 
-    PLUGIN_VERSION = '1.0.2'    # (must match the version specified in plugin.yaml)
+    PLUGIN_VERSION = '1.0.3'    # (must match the version specified in plugin.yaml)
 
 
     def __init__(self, sh, *args, **kwargs):
@@ -45,6 +45,16 @@ class Resol(SmartPlugin):
         # They will not shutdown properly. (It's a python bug)
 
     def stop(self):
+        self.scheduler_remove('PollData')
+
+        try:
+            if self.sock: 
+                self.sock.shutdown(0)
+                self.sock.close()
+        except:
+            pass
+        
+        self.sock = None
         self.alive = False
 
     def parse_item(self, item):
@@ -52,7 +62,8 @@ class Resol(SmartPlugin):
           self.logger.debug("ELTERN Source: " + str(item.return_parent().conf['resol_source']))
           if 'resol_bituse' in item.conf:
             self._items.append(item)
-            return self.update_item
+            # As plugin is read-only, no need to register item for event handling via smarthomeNG core:
+                        
           else:
             self.logger.error("resol_offset found in: " + str(item) + " but no bitsize given, specify bitsize in item with resol_bitsize = ")
 
@@ -68,7 +79,7 @@ class Resol(SmartPlugin):
 
 
         try:
-           self.sock.connect((self._ip, self._port))
+            self.sock.connect((self._ip, self._port))
         except Exception as e:
             self.logger.error("Exception during socket connect: %s" % str(e))
             return
@@ -76,30 +87,37 @@ class Resol(SmartPlugin):
         self.login()
         self.load_data()
         try:
-          self.sock.shutdown(0)
-        except:
-          pass
-        self.sock.close()
+            self.sock.shutdown(0)
+            self.sock.close()
+        except Exception as e:
+            self.logger.warning("Exception during shutdown socket command: {0}".format(e))
+            pass
+        
         self.sock = None
 
 # Logs in onto the DeltaSol BS Plus over LAN. Also starts (and maintains) the
 # actual stream of data.
     def login(self):
         dat = self.recv()
-        #logger.debug("DATA: " + str(dat))
+        self.logger.debug("Login response: " + str(dat))
 
         #Check if device answered
         if dat != "+HELLO\n":
-          self.logger.warning("WRONG REPLY FROM VBUS LAN: " + str(dat))
-          return False
+            self.logger.warning("WRONG REPLY FROM VBUS LAN: " + str(dat))
+            return False
 
         #Send Password
         self.send("PASS %s\n" % self._password)
 
         dat = self.recv()
-        #logger.debug("DATA 2: " + str(dat))
+        self.logger.debug("Response to pwd: " + str(dat))
 
-        return dat.startswith("+OK")
+        #Check if device accepted password
+        if not dat.startswith("+OK"):
+            self.logger.warning("Password not accepted:" + str(dat))
+            return False
+
+        return True
 
     def load_data(self):
         #Request Data
@@ -110,16 +128,37 @@ class Resol(SmartPlugin):
         if not dat:
             self.logger.warning("Could not receive data via socket")
             return
+
+        self.logger.debug("Response to data: " + str(dat))
+
     
         #Check if device is ready to send Data
         if not dat.startswith("+OK"):
           self.logger.warning("Vbus Lan is not ready, reply: " + str(dat))
           return
         buf = self.readstream()
+        
+        #self.logger.warning("Readstream {0} bytes as asci: {1}".format(len(buf),str(buf)))
+        #self.logger.warning(40*"-")
+
+        #self.logger.warning("Readstream hex {0} bytes:".format(len(buf)))
+        #index = 0
+        #for single_byte in buf:
+        #    self.logger.warning("index {0}, content {1}".format(index, buf[index].encode('utf-8').hex() ))
+        #    index = index + 1
+        #self.logger.warning(40*"#")
+
+        #s = buf.encode('utf-8')
+        #self.logger.warning("Readstream hex {0} bytes: {1}".format(len(buf), s.hex()))
+
+        if not buf: 
+            return
+
         msgs = self.splitmsg(buf)
         for msg in msgs:
-          if "PV1" == self.get_protocolversion(msg):
-            self.parse_payload(msg)
+            #self.logger.warning("Msg protocol version {0}".format(self.get_protocolversion(msg)))
+            if "PV1" == self.get_protocolversion(msg):
+                self.parse_payload(msg)
 
     # Receive 1024 bytes from stream
     def recv(self):
@@ -140,7 +179,10 @@ class Resol(SmartPlugin):
         if not data:
             return None
         while data.count(chr(0xAA)) < 4:
-          data += self.recv()
+            data_rcv = self.recv()
+            if not data_rcv:
+                return None
+            data += data_rcv
         return data
     
     #Split Messages on Sync Byte
@@ -178,7 +220,11 @@ class Resol(SmartPlugin):
     def get_payload(self, msg):
         payload = ''
         for i in range(self.get_frame_count(msg)):
-          payload += self.integrate_septett(msg[9+(i*6):15+(i*6)])
+            if (15+(i*6)) <= len(msg): 
+                payload += self.integrate_septett(msg[9+(i*6):15+(i*6)])
+            else:
+                self.logger.error("get_payload: index {0} out of range {1} for i={2}".format((15+(i*6)), len(msg), i))
+                return ''
         return payload
     
     # parse payload and set item value
@@ -192,7 +238,16 @@ class Resol(SmartPlugin):
             self.logger.debug("command: " + str(command))
             self.logger.debug("source: " + str(source))
             self.logger.debug("destination: " + str(destination))
+        #self.logger.warning("Frame count: {0}".format(self.get_frame_count(msg)))
+        #self.logger.warning("Length msg: {0}".format(len(msg)))
+
         payload = self.get_payload(msg)
+        #self.logger.warning("Length payload: {0}".format(len(payload)))
+
+
+
+        if payload == '':
+            return
         for item in self._items:
             if 'resol_source' in item.return_parent().conf:
                 if item.return_parent().conf['resol_source'] != self.get_source(msg):

@@ -2,21 +2,22 @@
 plugin:
     # Global plugin attributes
     type: protocol                 # plugin type (gateway, interface, protocol, system, web)
-    description:                  # Alternative: description in multiple languages
+    description:                   # Alternative: description in multiple languages
         de: 'Wake on LAN'
         en: 'Wake on LAN'
-    maintainer: cmalo
+    maintainer: bmxp
     tester: ohinckel
     state: qa-passed
-#    tester:                        # Who tests this plugin?
-#    keywords: iot xyz
-#    documentation: https://github.com/smarthomeNG/plugins/blob/develop/mqtt/README.md        # url of documentation (wiki) page
-
-    version: 1.1.2                 # Plugin version
-    sh_minversion: 1.1             # minimum shNG version to use this plugin
-#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    keywords: Wake, on, LAN, magic, paket, packet,
+    documentation: https://www.smarthomeng.de/user/plugins_doc/config/wol.html
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1661427
+    version: 1.2.0                 # Plugin version
+    sh_minversion: 1.8             # minimum shNG version to use this plugin
+    #sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
+    py_minversion: 3.6             # minimum Python version to use for this plugin
+    #py_maxversion:                # maximum Python version to use for this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
-    restartable: unknown
+    restartable: True
     classname: WakeOnLan           # class containing the plugin
 
 parameters: NONE
@@ -28,15 +29,26 @@ item_attributes:
         type: mac
         mandatory: True
         description:
-            de: 'MAC Adresse des per WOL aufzuweckenden Geräts.'
-            en: 'MAC address of device that shall be started by WOL.'
+            de: >
+                MAC Adresse des per WOL aufzuweckenden Gerätes.
+                Die Trennzeichen für die einzelnen MAC Bestandteile sind beliebig wählbar
+                oder können auch weggelassen werden
+            en: >
+                MAC address of device that shall be started by WOL.
+                The separators can be chosen arbitrary or left out optionally.
 
     wol_ip:
-        type: str
+        type: ipv4
         mandatory: False
         description:
-            de: '(optional) IP Adresse des per WOL aufzuweckenden Geräts.'
-            en: '(optional) IP address of device that shall be started by WOL.'
+            de: >
+                Optionales Attribut. Hier kann die IP Adresse des Hosts angegeben werden
+                wenn ein Gerät eines anderen Subnetzes aufgeweckt werden soll
+            en: >
+                This attribute is optional. You have to provide the IP address of the
+                host to wake up when waking up hosts in different subnets (not the same
+                broadcast domain).
+
 
 item_structs: NONE
   # Definition of item-structure templates for this plugin
@@ -44,5 +56,32 @@ item_structs: NONE
 logic_parameters: NONE
     # Definition of logic parameters defined by this plugin
 
-plugin_functions: NONE
-    # Definition of function interface of the plugin
+plugin_functions:
+    wake_on_lan:
+        type: str
+        description:
+            de: 'Sendet ein Datenpaket zum Aufwecken'
+            en: 'Sends a magic packet to awake a device'
+        parameters:
+            mac_adr:
+                type: mac
+                mandatory: True
+                description:
+                    de:
+                        MAC Adresse des per WOL aufzuweckenden Gerätes.
+                        Die Trennzeichen für die einzelnen MAC Bestandteile sind beliebig wählbar
+                        oder können auch weggelassen werden
+                    en: >
+                        MAC address of device that shall be started by WOL.
+                        The separators can be chosen arbitrarily or optionally be left out.
+            ip_adr:
+                type: ip4
+                mandatory: False
+                description:
+                    de: >
+                        Optionales Attribut. Hier kann die IP Adresse des Hosts angegeben werden
+                        wenn ein Gerät eines anderen Subnetzes aufgeweckt werden soll
+                    en: >
+                        This attribute is optional. You have to provide the IP address of the
+                        host to wake up when waking up hosts in different subnets (not the same
+                        broadcast domain).

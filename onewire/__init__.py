@@ -2,7 +2,7 @@
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
 #  Copyright 2012-2014 Marcus Popp                         marcus@popp.mx
-#  Copyright 2019-2020 Bernd Meiners                Bernd.Meiners@mail.de
+#  Copyright 2019-2021 Bernd Meiners                Bernd.Meiners@mail.de
 #########################################################################
 #  This file is part of SmartHomeNG.    https://github.com/smarthomeNG//
 #
@@ -36,7 +36,7 @@ class OneWire(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.6.9'
+    PLUGIN_VERSION = '1.8.1'
 
     _flip = {0: '1', False: '1', 1: '0', True: '0', '0': True, '1': False}
 
@@ -229,7 +229,7 @@ class OneWire(SmartPlugin):
         This runs endless until the plugin stops
         """
         threading.currentThread().name = 'onewire-io'
-        self.logger.debug("1-Wire: Starting I/O detection")
+        self.logger.debug("Starting I/O detection")
         while self.alive:
             if self.log_counter_io_loop_time == -1 or self.log_counter_io_loop_time > 0:
                 start = time.time()
@@ -247,7 +247,7 @@ class OneWire(SmartPlugin):
                         self.logger.debug("Logging counter for cycle I/O detection time reached zero and stops now")
             if self.alive:  # only sleep when not stop is in process
                 self.stopevent.wait(self._io_wait)
-        self.logger.debug("1-Wire: Leaving I/O detection, self.alive is {}".format(self.alive))
+        self.logger.debug("Leaving I/O detection, self.alive is {}".format(self.alive))
 
     def _io_cycle(self):
         """
@@ -263,30 +263,36 @@ class OneWire(SmartPlugin):
         # speed up logging for time critical sections only
         debugLog = self.logger.isEnabledFor(logging.DEBUG)
         warningLog = self.logger.isEnabledFor(logging.WARNING)
-        for addr in self._ios:
-            for key in self._ios[addr]:
-                if key.startswith('O'):  # ignore output
-                    continue
-                item = self._ios[addr][key]['item']
-                path = self._ios[addr][key]['path']
-                if path is None:
-                    if debugLog:
-                        self.logger.debug("1-Wire: path not found for {0}".format(item.id()))
-                    continue
-                try:
-                    # the following can take a while so if in the meantime the plugin should stop we can abort this process here
-                    if not self.alive:  
-                        return
-                    if key == 'B':
-                        entries = [entry.split("/")[-2] for entry in self.owbase.dir('/uncached')]
-                        value = (addr in entries)
-                    else:
-                        value = self._flip[self.owbase.read('/uncached' + path).decode()]
-                except Exception as e:
-                    if warningLog:
-                        self.logger.warning("1-Wire: problem reading {}, error {}".format(addr,e))
-                    continue
-                item(value, self.get_shortname(), path)
+        try:
+            for addr in self._ios:
+                for key in self._ios[addr]:
+                    if key.startswith('O'):  # ignore output
+                        continue
+                    item = self._ios[addr][key]['item']
+                    path = self._ios[addr][key]['path']
+                    if path is None:
+                        if debugLog:
+                            self.logger.debug("path not found for {0}".format(item.id()))
+                        continue
+                    try:
+                        # the following can take a while so if in the meantime the plugin should stop we can abort this process here
+                        if not self.alive:  
+                            return
+                        if key == 'B':
+                            entries = [entry.split("/")[-2] for entry in self.owbase.dir('/uncached')]
+                            value = (addr in entries)
+                        else:
+                            value = self._flip[self.owbase.read('/uncached' + path).decode()]
+                    except ConnectionError as e:
+                        raise
+                    except Exception as e:
+                        if warningLog:
+                            self.logger.warning("problem reading {}, error {}".format(addr,e))
+                        continue
+                    item(value, self.get_shortname(), path)
+        except ConnectionError as e:
+            if warningLog:
+                self.logger.warning("problem reading {}, error {}".format(addr,e))
 
     """
     The iButton loop is for iButton devices which are often used as extension to a key ring. 
@@ -298,7 +304,7 @@ class OneWire(SmartPlugin):
         This is once called after detection of a iButton busmaster and runs endless until plugin stops
         """
         threading.currentThread().name = 'onewire-ibutton'
-        self.logger.debug("1-Wire: Starting iButton detection")
+        self.logger.debug("Starting iButton detection")
         while self.alive:
             self._ibutton_cycle()
             self.stopevent.wait(self._button_wait)
@@ -311,7 +317,7 @@ class OneWire(SmartPlugin):
         error = False
         for bus in self._ibutton_buses:
             if not self.alive:
-                self.logger.error("1-Wire: Self not alive".format(bus))
+                self.logger.error("Self not alive".format(bus))
                 break
             path = '/uncached/' + bus + '/'
             name = self._ibutton_buses[bus]
@@ -351,7 +357,7 @@ class OneWire(SmartPlugin):
         debugLog = self.logger.isEnabledFor(logging.DEBUG)
         warningLog = self.logger.isEnabledFor(logging.WARNING)
         if debugLog:
-            self.logger.debug("1-Wire: sensor_cycle called")
+            self.logger.debug("sensor_cycle called")
 
         if not self._discovered:
             if debugLog:
@@ -362,25 +368,25 @@ class OneWire(SmartPlugin):
         for addr in self._sensors:
             if not self.alive:
                 if debugLog:
-                    self.logger.debug("1-Wire: Self not alive".format(addr))
+                    self.logger.debug("Self not alive".format(addr))
                 break
             for key in self._sensors[addr]:
                 item = self._sensors[addr][key]['item']
                 path = self._sensors[addr][key]['path']
                 if path is None:
                     if debugLog:
-                        self.logger.debug("1-Wire: path not found for {0}".format(item.id()))
+                        self.logger.debug("path not found for {0}".format(item.id()))
                     continue
                 try:
                     value = self.owbase.read('/uncached' + path).decode()
                     value = float(value)
                     if key.startswith('T') and value == 85:
                         if self.logger.isEnabledFor(logging.ERROR):
-                            self.logger.error("1-Wire: reading {0} gives error value 85.".format(addr))
+                            self.logger.error("reading {0} gives error value 85.".format(addr))
                         continue
                 except Exception as e:
                     if warningLog:
-                        self.logger.warning("1-Wire: problem reading {} {}: {}. Trying to continue with next sensor".format(addr, path, e))
+                        self.logger.warning("problem reading {} {}: {}. Trying to continue with next sensor".format(addr, path, e))
                 else:  #only if no exception
                     if key == 'L':  # light lux conversion
                         if value > 0:
@@ -394,7 +400,7 @@ class OneWire(SmartPlugin):
         cycletime = time.time() - start
         if self.log_counter_cycle_time > 0 or self.log_counter_cycle_time == -1:
             if debugLog:
-                self.logger.debug("1-Wire: sensor cycle takes {0:.2f} seconds for {1} sensors, average is {2:.2f} per sensor".format(cycletime, len(self._sensors),cycletime/len(self._sensors)))
+                self.logger.debug("sensor cycle takes {0:.2f} seconds for {1} sensors, average is {2:.2f} per sensor".format(cycletime, len(self._sensors),cycletime/len(self._sensors)))
             if self.log_counter_cycle_time > 0:
                 self.log_counter_cycle_time -= 1
             if self.log_counter_cycle_time == 0 and debugLog:
@@ -411,29 +417,29 @@ class OneWire(SmartPlugin):
         # speed up logging for time critical sections only
         debugLog = self.logger.isEnabledFor(logging.DEBUG)
 
-        self.logger.debug("1-Wire: discovery called")
+        self.logger.debug("discovery called")
         self._intruders = []  # reset intrusion detection
         try:
             listing = self.owbase.dir('/')
         except Exception as e:
-            self.logger.error("1-Wire: listing '/' failed with error '{}'".format(e))
+            self.logger.error("listing '/' failed with error '{}'".format(e))
             return
         #if debugLog:
-        #    self.logger.debug("1-Wire: got listing for '/' = '{}'  self.alive: {}".format(listing,self.alive))
+        #    self.logger.debug("got listing for '/' = '{}'  self.alive: {}".format(listing,self.alive))
         if type(listing) != list:
-            self.logger.warning("1-Wire: listing '{0}' is not a list.".format(listing))
+            self.logger.warning("listing '{0}' is not a list.".format(listing))
             return
             
-        if self._last_discovery == listing:
-            self.logger.debug("1-Wire: listing did not change, no need to proceed, exit discovery")
+        if self._last_discovery == sorted(listing):
+            self.logger.debug("listing did not change, no need to proceed, exit discovery")
             return
 
-        self.logger.debug("1-Wire: listing changed: '{}'. Save for next discovery cycle".format(listing))
-        self._last_discovery = listing
+        self.logger.debug("listing changed: '{}'. Save for next discovery cycle".format(listing))
+        self._last_discovery = sorted(listing)
 
         for path in listing:
             if not self.alive:
-                self.logger.warning("1-Wire: self.alive is False")
+                self.logger.warning("self.alive is False")
                 break
             # just examine one bus after the next
             if path.startswith('/bus.'):
@@ -445,28 +451,28 @@ class OneWire(SmartPlugin):
                     sensors = self.owbase.dir(path)
                 except Exception as e:
                     if debugLog:
-                        self.logger.debug("1-Wire: problem reading bus: {0}: {1}".format(bus, e))
+                        self.logger.debug(f"problem reading {bus}: {e}")
                     continue
                 for sensor in sensors:
                     # skip subdirectories alarm, interface and simultaneous
                     if any(['alarm' in sensor, 'interface' in sensor, 'simultaneous' in sensor]):
                         if debugLog:
-                            self.logger.debug("1-Wire: Skipping reserved words for bus: {0}".format(bus))
+                            self.logger.debug(f"Skipping reserved word in {sensor} for {bus}")
                         continue
 
                     if debugLog:
-                        self.logger.debug("1-Wire: Examine Sensor {}".format(sensor))
+                        self.logger.debug(f"Examine Sensor {sensor}")
                     addr = sensor.split("/")[-2]
                     if addr not in self._buses[bus]:
                         keys = self.owbase.identify_sensor(sensor)
                         
                         if keys is None:
                             if debugLog:
-                                self.logger.debug("1-Wire: Skipping sensor {0} for bus: {1}".format(sensor, bus))
+                                self.logger.debug(f"Skipping sensor {sensor} for {bus}")
                             continue
                         self._buses[bus].append(addr)
                         if self.logger.isEnabledFor(logging.INFO):
-                            self.logger.info("1-Wire: {0} with sensors: {1}".format(addr, ', '.join(list(keys.keys()))))
+                            self.logger.info("{0} with sensors: {1}".format(addr, ', '.join(list(keys.keys()))))
                         
                         # depending on the key, decide which dictionary to put in the device data
                         if 'IA' in keys or 'IB' in keys or 'I0' in keys or 'I1' in keys or 'I2' in keys or 'I3' in keys or 'I4' in keys or 'I5' in keys or 'I6' in keys or 'I7' in keys:
@@ -480,14 +486,14 @@ class OneWire(SmartPlugin):
                             
                         if addr in table:
                             if debugLog:
-                                self.logger.debug("1-Wire: addr {} was found in lookup {}".format(addr,table[addr]))
+                                self.logger.debug("addr {} was found in lookup {}".format(addr,table[addr]))
                             for ch in ['A', 'B']:
                                 if 'I' + ch in table[addr] and 'O' + ch in keys:  # set to 0 and delete output PIO
                                     try:
                                         self.owbase.write(sensor + keys['O' + ch], 0)
                                     except Exception as e:
                                         if self.logger.isEnabledFor(logging.INFO):
-                                            self.logger.info("1-Wire: problem setting {0}{1} as input: {2}".format(sensor, keys['O' + ch], e))
+                                            self.logger.info("problem setting {0}{1} as input: {2}".format(sensor, keys['O' + ch], e))
                                     del(keys['O' + ch])
                             for key in keys:
                                 if key in table[addr]:
@@ -498,17 +504,17 @@ class OneWire(SmartPlugin):
                                         self.owbase.write(table[addr][key]['path'], self._flip[table[addr][key]['item']()])
                                     except Exception as e:
                                         if self.logger.isEnabledFor(logging.INFO):
-                                            self.logger.info("1-Wire: problem setting output {0}{1}: {2}".format(sensor, keys['O' + ch], e))
+                                            self.logger.info("problem setting output {0}{1}: {2}".format(sensor, keys['O' + ch], e))
                         else:
                             if debugLog:
-                                self.logger.debug("1-Wire: addr {} was not found in lookup {}".format(addr,table))
+                                self.logger.debug("addr {} was not found in lookup {}".format(addr,table))
                     else:
                         if debugLog:
-                            self.logger.debug("1-Wire: Sensor {} was already found in bus ".format(sensor,bus))
+                            self.logger.debug(f"Sensor {sensor} was already found in bus {bus}")
 
         else: # for did not end prematurely with break or something else
             self._discovered = True
-            self.logger.debug("1-Wire: discovery finished")
+            self.logger.debug("discovery finished")
 
         # get a list of all directory entries from owserver
         # self.devices = self.tree()
@@ -519,7 +525,7 @@ class OneWire(SmartPlugin):
             self._iButton_Strategy_set = True
             if self._ibuttons != {} and self._ibutton_masters == {}:
                 if self.logger.isEnabledFor(logging.INFO):
-                    self.logger.info("1-Wire: iButtons specified but no dedicated iButton master. Using I/O cycle for the iButtons.")
+                    self.logger.info("iButtons specified but no dedicated iButton master. Using I/O cycle for the iButtons.")
                 for addr in self._ibuttons:
                     for key in self._ibuttons[addr]:
                         if key == 'B':
@@ -553,20 +559,20 @@ class OneWire(SmartPlugin):
             return
         if not self.has_iattr(item.conf, 'ow_sensor'):
             if warningLog:
-                self.logger.warning("1-Wire: No ow_sensor for {0} defined".format(item.id()))
+                self.logger.warning("No ow_sensor for {0} defined".format(item.id()))
             return
             
         addr = self.get_iattr_value(item.conf,'ow_addr')
         key = self.get_iattr_value(item.conf,'ow_sensor')
         if debugLog:
-            self.logger.debug("1-Wire: ow_sensor '{1}' with ow_addr '{2}' for item '{0}' defined".format(item.id(), key, addr))
+            self.logger.debug("ow_sensor '{1}' with ow_addr '{2}' for item '{0}' defined".format(item.id(), key, addr))
 
         # check the compliance with regular sensor address definitions
         while True:
             # when we found the addr to be an alias it is fine, that should work then.
             if self.is_alias(addr):
                 if debugLog:
-                    self.logger.debug("1-Wire: ow_addr {} is an alias".format(addr))
+                    self.logger.debug(f"ow_addr {addr} is an alias")
                 break
 
             # if a check for the addr turns out that it has an alias, we should then use this
@@ -574,14 +580,14 @@ class OneWire(SmartPlugin):
                 old_addr = addr
                 addr = self.get_alias(old_addr)
                 if debugLog:
-                    self.logger.debug("1-Wire: ow_addr {} has an alias {}".format(old_addr, addr))
+                    self.logger.debug(f"ow_addr {old_addr} has an alias {addr}")
                 break
 
             if len(addr) == 15 and addr[2] == '.':  # matches 3A.1F8107000000
                 break
 
             if warningLog:
-                self.logger.warning("While parsing ow_addr found wrong address definition '{}' for item {}".format(addr, item))
+                self.logger.warning(f"found wrong address definition '{addr}' for item {item} while parsing ow_addr")
             break
 
         if key in ['IA', 'IB', 'OA', 'OB', 'I0', 'I1', 'I2', 'I3', 'I4', 'I5', 'I6', 'I7', 'O0', 'O1', 'O2', 'O3', 'O4', 'O5', 'O6', 'O7']:
@@ -597,7 +603,7 @@ class OneWire(SmartPlugin):
         if key not in self._supported:  # unknown key
             path = '/' + addr + '/' + key
             if self.logger.isEnabledFor(logging.INFO):
-                self.logger.info("1-Wire: unknown sensor specified for {0} using path: {1}".format(item.id(), path))
+                self.logger.info(f"unknown sensor specified for {item.id()} using path: {path}")
         else:
             path = None
             if key == 'VOC':
@@ -605,11 +611,11 @@ class OneWire(SmartPlugin):
 
         if addr in table:
             if debugLog:
-                self.logger.debug("set dict[{}][{}] as item:{} and path:{}".format(addr,key, item, path))
+                self.logger.debug(f"set dict[{addr}][{key}] as item:{item} and path:{path}")
             table[addr][key] = {'item': item, 'path': path}
         else:
             if debugLog:
-                self.logger.debug("set dict[{}] as key:{} <item:{} and path:{}>".format(addr,key, item, path))
+                self.logger.debug(f"set dict[{addr}] as key:{key} <item:{item} and path:{path}>")
             table[addr] = {key: {'item': item, 'path': path}}
         if key.startswith('O'):
             item._ow_path = table[addr][key]
@@ -619,10 +625,10 @@ class OneWire(SmartPlugin):
         if caller != self.get_shortname():
             try:
                 # code to execute, only if the item has not been changed by this plugin:
-                self.logger.debug("Update item: {}, item has been changed outside this plugin".format(item.id()))
+                self.logger.debug("update item: {}, item has been changed outside this plugin".format(item.id()))
                 self.owbase.write(item._ow_path['path'], self._flip[item()])
             except Exception as e:
-                self.logger.warning("1-Wire: problem setting output {0}: {1}".format(item._ow_path['path'], e))
+                self.logger.warning(f"problem setting output {item._ow_path['path']}: {e}")
 
     def init_webinterface(self):
         """"
@@ -636,7 +642,7 @@ class OneWire(SmartPlugin):
         except:
             self.mod_http = None
         if self.mod_http == None:
-            self.logger.error("Not initializing the web interface")
+            self.logger.error("not initializing the web interface")
             return False
 
         import sys

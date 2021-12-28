@@ -5,16 +5,18 @@ plugin:
     description:
         de: 'Unterstützung für Smartmeter, die DLMS (Device Language Message Specification, IEC 62056-21) nutzen und OBIS Codes liefern'
         en: 'Support for smartmeter using DLMS (Device Language Message Specification, IEC 62056-21) and delivering OBIS codes'
-    maintainer: bmxp (JuMi2006)
+    maintainer: bmxp
     tester: NONE                   # Who tests this plugin?
     state: ready
     keywords: dlms obis smartmeter
     documentation: http://smarthomeng.de/user/plugins/dlms/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1002464-support-thread-für-dlms-plugin
 
-    version: 1.5.4                 # Plugin version
-    sh_minversion: 1.4             # minimum shNG version to use this plugin
+    version: 1.9.1                 # Plugin version
+    sh_minversion: 1.8             # minimum shNG version to use this plugin
     #sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
+    py_minversion: 3.6             # minimum Python version to use for this plugin, due to f-strings
+    # py_maxversion:               # maximum Python version to use for this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
     restartable: unknown
     classname: DLMS                # class containing the plugin
@@ -33,6 +35,12 @@ parameters:
         description:
             de: 'Baudrate bei der die Kommunikation erfolgen soll'
             en: 'Baudrate at which the communikation should take place'
+    baudrate_fix:
+        type: bool
+        default: False
+        description:
+            de: 'Baudrate beibehalten trotz Änderungsanforderung'
+            en: 'Keep up baudrate in communication despite of change request'
     update_cycle:
         type: int
         valid_min: 1
@@ -47,6 +55,11 @@ parameters:
         description:
             de: 'Zeit die beim Start des Plugins zusätzlich gewartet wird, damit sich verschiedene Instanzen die gleiche Schnittstellen abfragen nicht in die Quere kommen'
             en: 'Time which gets added to the start of first query. This prevents interference between two instances using the same interface'
+    update_crontab:
+        type: str
+        description:
+            de: 'Abfragen des Smartmeters mit Festlegung via Crontab'
+            en: 'Queries of smartmeter by means of a crontab'
     device_address:
         type: str
         default: ''
@@ -71,6 +84,12 @@ parameters:
         description:
             de: 'Wenn wahr, wird eine Prüfsumme über die ausgelesenen Daten gebildet'
             en: 'if true then a checksum will be calculated of the readout result'
+    only_listen:
+        type: bool
+        default: False
+        description:
+            de: 'Manche Smartmeter können nicht abgefragt werden sondern senden von sich aus Informationen. Für diese Smartmeter auf True setzen und die Baudrate anpassen'
+            en: 'Some smartmeter can not be queried, they send information without request. For those devices set to True and adjust baudrate'
     reset_baudrate:
         type: bool
         default: True
@@ -87,7 +106,7 @@ parameters:
 item_attributes:
     # Definition of item attributes defined by this plugin
     dlms_obis_code:
-        type: list(4, str, int, str, str)
+        type: list(4,str,int,str,str)
         description:
             de: >
                 Anweisung welcher Teil einer OBIS Zeile geparst und dem Item zugewiesen werden soll

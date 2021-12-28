@@ -7,14 +7,13 @@ plugin:
         en: 'Weather data via darksky.net.'
     maintainer: psilo909
     tester: onkelandy, henfri, cannon
-    state: 'qa-passed'
-#    keywords: iot xyz
+    state: 'deprecated'
+    keywords: weather sun wind rain precipitation
     documentation: 'https://www.smarthomeng.de/user/plugins/darksky/user_doc.html'
-    support: 'https://knx-user-forum.de/forum/supportforen/smarthome-py/1244744-neues-plugin-wetterdaten-via-darksky-net-forecast-io'
-    keywords: weather
-    version: 1.7.1                # Plugin version
+    support: 'https://knx-user-forum.de/forum/supportforen/smarthome-py/1244744'
+    version: 1.7.2                # Plugin version
     sh_minversion: 1.7            # minimum shNG version to use this plugin
-#    sh_maxversion:               # maximum shNG version to use this plugin (leave empty if latest)
+    #sh_maxversion:               # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True          # plugin supports multi instance
     restartable: True
     classname: DarkSky            # class containing the plugin
@@ -51,10 +50,10 @@ parameters:
     units:
         type: str
         mandatory: False
-        default: 'auto'
+        default: 'ca'
         description:
-            de: 'Einheit der zurückgelieferten Daten. Mögliche Werte siehe https://darksky.net/dev/docs.'
-            en: 'Unit of the returned data. Possible values see https://darksky.net/dev/docs.'
+            de: 'Einheit der zurückgelieferten Daten. Mögliche Werte siehe https://darksky.net/dev/docs. Default: "ca".'
+            en: 'Unit of the returned data. Possible values see https://darksky.net/dev/docs. Default: "ca".'
     cycle:
         type: int
         mandatory: False

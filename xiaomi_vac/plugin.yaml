@@ -20,7 +20,7 @@ plugin:
              The module needs the token of the robot for communication. Please follow the `instructions on github <https://python-miio.readthedocs.io/en/latest/discovery.html#installation>`_.
              '
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1453597-support-thread-f%C3%BCr-xiaomi-saugroboter-plugin
-    version: 1.1.1            # Plugin version
+    version: 1.2.0            # Plugin version
     sh_minversion: 1.4           # minimum shNG version to use this plugin
     multi_instance: False          # plugin supports multi instance
     classname: Robvac                # class containing the plugin

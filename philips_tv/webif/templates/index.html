@@ -1,0 +1,184 @@
+{% extends "base_plugin.html" %}
+
+{% set logo_frame = false %}
+
+<!-- set update_interval to a value > 0 (in milliseconds) to enable periodic data updates -->
+{% set update_interval = 0 %}
+
+<!--
+	Additional script tag for plugin specific javascript code go into this block
+-->
+{% block pluginscripts %}
+<script>
+
+	function requestPairCommand() {
+		if (confirm('{{ _('Wollen Sie beim TV einen Freischaltcode anfragen?') }}')) {
+			window.location.href='?action=requestCode';
+		}
+		return false;
+	}
+	
+	function confirmPairCommand() {
+		if (confirm('{{ _('Wollen Sie die Bindung mit dem TV bestaetigen?') }}')) {
+			codeInputField = $('#input-code');
+			window.location.href='?action=confirmCode&code=' + codeInputField.val();
+		}
+		return false;
+	}
+
+
+
+
+
+
+
+</script>
+{% endblock pluginscripts %}
+
+
+{% block headtable %}
+<table class="table table-striped table-hover">
+	<tbody>
+		<tr>
+			<td class="py-1"><strong>API Errors:</strong></td>
+			<td class="py-1">{{ p._errors}}-</td>
+			<td class="py-1" width="50px"></td>
+			<td class="py-1">-</strong></td>
+			<td class="py-1">-</td>
+			<td class="py-1" width="50px"></td>
+		</tr>
+		<tr>
+			<td class="py-1"><strong> </strong></td>
+			<td class="py-1">-</td>
+			<td></td>
+			<td class="py-1"><strong> </strong></td>
+			<td class="py-1">-</td>
+			<td></td>
+		</tr>
+	</tbody>
+</table>
+{% endblock headtable %}
+
+
+<!--
+	Additional buttons for the web interface (if any are needed) - displayed below the headtable-section
+-->
+{% block buttons %}
+{% endblock %}
+
+<!--
+	Define the number of tabs for the body of the web interface (1 - 3)
+-->
+{% set tabcount = 1 %}
+
+
+<!--
+	Set the tab that will be visible on start, if another tab that 1 is wanted (1 - 3)
+-->
+
+{% set start_tab = 1 %}
+
+<!--
+	Content block for the first tab of the Webinterface
+-->
+{% set tab1title = "<strong>Pairing with TV</strong>" %}
+
+
+{% block bodytab1 %}
+
+{% if codeRequestSuccessfull %}
+	<div class="mb-2 alert alert-success alert-dismissible fade show" role="alert">
+		<strong>{{ _('Bindungsanfrage') }}</strong><br/>
+		{{ _('Anfrage an TV Geraet gesendet. Bitte Code notieren.') }}
+		<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+			<span aria-hidden="true">&times;</span>
+		</button>
+	</div>
+{% endif %}
+{% if codeRequestSuccessfull == False%}
+	<div class="mb-2 alert alert-warning alert-dismissible fade show" role="alert">
+		<strong>{{ _('Bindungsanfrage') }}</strong><br/>
+		{{ _('Fehler beim Initiierung der Bindung. Siehe Logfile fuer Details.') }}
+		<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+			<span aria-hidden="true">&times;</span>
+		</button>
+	</div>
+{% endif %}
+{% if pairingCompleted%}
+	<div class="mb-2 alert alert-success alert-dismissible fade show" role="alert">
+		<strong>{{ _('Bindung') }}</strong><br/>
+		{{ _('Bindung erfolgreich.') }}
+		<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+			<span aria-hidden="true">&times;</span>
+		</button>
+	</div>
+{% endif %}
+{% if pairingCompleted == False %}
+	<div class="mb-2 alert alert-warning alert-dismissible fade show" role="alert">
+		<strong>{{ _('Bindung') }}</strong><br/>
+		{{ _('Bindung nicht erfolgreich. Siehe Logfile fuer Details.') }}
+		<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+			<span aria-hidden="true">&times;</span>
+		</button>
+	</div>
+{% endif %}
+
+<div class="container-fluid m-2">
+	{{ _('Philips Explanation') }}
+</div>
+
+<div class="row">
+
+	<div class="col-md-11 mb-3">
+		<div class="row">
+			<div class="col-md-3 mb-3">
+				{{ _('1) Philips TV IP ueberpruefen') }}:
+			</div>
+			<div class="col-md-3 mb-3">
+				<input type="text" class="form-control mb-1" id="input-ip" value= {{ p.ip }} readonly placeholder="{{ _('TV IP') }}" maxlength="32" style="width: 300px;">
+			</div>
+			<div class="col-md-4 mb-3">
+				<button type="button" class="btn btn-shng btn-sm" title="{{ _('Request pairing') }}" onclick="requestPairCommand();">{{ _('Request pairing') }}</button>
+			</div>
+		</div>
+
+		<div class="row">
+		<td style="min-width:190px;" style="padding-top:15px;">
+			<div class="col-md-3 mb-3">
+				{{ _('2) Device ID') }}:
+			</div>
+			<div class="col-md-3 mb-3">
+				<input type="text" class="form-control mb-1" id="input-deviceID" readonly value = {{ p.deviceID }} 
+				placeholder="{{ _('Device ID') }}" maxlength="32" style="width: 300px;">
+			</div>
+		</div>
+
+		<div class="row">
+		<td style="min-width:190px;" style="padding-top:15px;">
+			<div class="col-md-3 mb-3">
+				{{ _('4) Code des TVs eingeben:') }}:
+			</div>
+			<div class="col-md-3 mb-3">
+				<input type="text" class="form-control mb-1" id="input-code" placeholder="{{ _('Hier TV Code eintragen') }}" maxlength="6" style="width: 300px;">
+			</div>
+		</div>
+		<div class="row">
+		<td style="min-width:190px;" style="padding-top:15px;">
+			<div class="col-md-6 mb-3">
+				{{ _('5) Freischaltung bestaetigen') }}:
+			</div>
+			<div class="col-md-6 mb-3">
+				<button type="button" class="btn btn-shng btn-sm" title="{{ _('Bestaetigen') }}" onclick="confirmPairCommand();">{{ _('Bestaetigen') }}</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+
+{% endblock bodytab1 %}
+
+
+
+
+
+

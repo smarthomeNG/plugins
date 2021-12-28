@@ -12,7 +12,7 @@ plugin:
 #    documentation: http://smarthomeng.de/user/plugins/mqtt2/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1451853-support-thread-für-das-shelly-plugin
 
-    version: 1.1.4                 # Plugin version
+    version: 1.2.0                 # Plugin version
     sh_minversion: 1.7.2           # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
@@ -35,10 +35,14 @@ item_attributes:
         valid_list:
             - shellyplug
             - shellyplug-s
+            - shelly1
             - shelly1pm
             - shellyswitch
             - shellyswitch25
             - shelly4pro
+            - shellyht
+            - shellydw2
+            - shellyflood
         description:
             de: "Typ des Shelly Devices (z.B. Shellyplug, Shellyplug-s, Shelly1/pm, Shelly2, Shelly2.5, Shelly4Pro)"
             en: "Type of Shelly device (e.g. Shellyplug, Shellyplug-s. Shelly1/pm, Shelly2, Shelly2.5, Shelly4Pro)"
@@ -53,6 +57,15 @@ item_attributes:
             - online
             - temp
             - temp_f
+            - humidity
+            - battery
+            - state
+            - tilt
+            - vibration
+            - lux
+            - illumination
+            - flood
+            - error
         description:
             de: "Zu lesendes/schreibendes Attribut des Shelly Devices. Achtung: Nicht jedes Attribut ist auf allen Device-Typen vorhanden."
             en: "Attribute of Shelly devcie that shall be read/written. Note: Not every attribute is available on all device types"
@@ -109,6 +122,103 @@ item_structs:
             shelly_id: ..:.
             shelly_type: ..:.
             shelly_attr: temp_f
+
+    shellyht:
+        name: WLAN Temperatur & Feuchtesensor (Zwischenstecker)
+        type: bool
+        # shelly_id: xxxxxx
+        shelly_type: shellyht
+#        shelly_attr: relay
+#        shelly_relay: '0'
+
+        online:
+            type: bool
+            shelly_id: ..:.
+            shelly_type: ..:.
+            shelly_attr: online
+        battery:
+            type: num
+            shelly_id: ..:.
+            shelly_type: ..:.
+            shelly_attr: battery
+
+    shellydw2:
+        name: WLAN Tür und Fenster Sensor, mit Temperaturmessung
+        type: str
+        shelly_type: shellydw2
+        shelly_attr: state
+
+        open:
+            type: bool
+            eval: 1 if sh...() == 'open' else 0
+            eval_trigger: ..
+        tilt:
+            type: num
+            shelly_id: ..:.
+            shelly_type: ..:.
+            shelly_attr: tilt
+        vibration:
+            type: num
+            shelly_id: ..:.
+            shelly_type: ..:.
+            shelly_attr: vibration
+        lux:
+            type: num
+            shelly_id: ..:.
+            shelly_type: ..:.
+            shelly_attr: lux
+        illumination:
+            type: str
+            shelly_id: ..:.
+            shelly_type: ..:.
+            shelly_attr: illumination
+        temp:
+            type: num
+            shelly_id: ..:.
+            shelly_type: ..:.
+            shelly_attr: temp
+        online:
+            type: bool
+            shelly_id: ..:.
+            shelly_type: ..:.
+            shelly_attr: online
+        battery:
+            type: num
+            shelly_id: ..:.
+            shelly_type: ..:.
+            shelly_attr: battery
+        error:
+            type: num
+            shelly_id: ..:.
+            shelly_type: ..:.
+            shelly_attr: error
+
+    shellyflood:
+        name: WLAN Flutsensor, mit Temperaturmessung
+        type: bool
+        shelly_type: shellyflood
+        shelly_attr: flood
+
+        online:
+            type: bool
+            shelly_id: ..:.
+            shelly_type: ..:.
+            shelly_attr: online
+        temp:
+            type: num
+            shelly_id: ..:.
+            shelly_type: ..:.
+            shelly_attr: temp
+        error:
+            type: num
+            shelly_id: ..:.
+            shelly_type: ..:.
+            shelly_attr: error
+        battery:
+            type: num
+            shelly_id: ..:.
+            shelly_type: ..:.
+            shelly_attr: battery
 
 plugin_functions: NONE
     # Definition of plugin functions defined by this plugin (enter 'plugin_functions: NONE', if section should be empty)

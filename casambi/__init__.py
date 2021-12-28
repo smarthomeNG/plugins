@@ -33,6 +33,7 @@ import threading
 import requests
 import json
 import time
+import errno
 from websocket import create_connection
 
 class Casambi(SmartPlugin):
@@ -41,7 +42,7 @@ class Casambi(SmartPlugin):
     """
 
     # Use VERSION = '1.0.0' for your initial plugin Release
-    PLUGIN_VERSION = '1.7.2'    # (must match the version specified in plugin.yaml)
+    PLUGIN_VERSION = '1.7.4'    # (must match the version specified in plugin.yaml)
 
     def __init__(self, sh):
         """
@@ -93,6 +94,12 @@ class Casambi(SmartPlugin):
         
         return
 
+    def sessionIDValid(self):
+        return self.sessionID != ''
+
+    def networkIDValid(self):
+        return self.networkID != ''
+
     def getSessionCredentials(self):
         sessionID = ''
         networkID = ''
@@ -109,7 +116,7 @@ class Casambi(SmartPlugin):
             headers={'X-Casambi-Key': self.api_key, 
                      'content-type': 'application/json'}, timeout=10, verify=False)
         
-        self.logger.debug("Session request response: {0}".format(sessionrequest_response.text))
+        self.logger.debug(f"Session request response: {sessionrequest_response.text}")
         statusCode = sessionrequest_response.status_code
         if statusCode == 200:
             self.logger.debug("Sending session request command successful")
@@ -117,7 +124,7 @@ class Casambi(SmartPlugin):
             self.logger.error("Sending session request results in: Unauthorized. Invalid API key or credentials given.") 
             return '','',''
         else:
-            self.logger.error("Server error: {0}".format(statusCode))
+            self.logger.error(f"Server error: {statusCode}")
             return '', '', ''
 
         responseJson = sessionrequest_response.json()
@@ -125,9 +132,9 @@ class Casambi(SmartPlugin):
         NetworkInfoJson = ''
         for network in responseJson.keys():
             nrNetworks = nrNetworks + 1
-            #self.logger.debug("Network {0}: Name: {1}".format(nrNetworks, network))
+            #self.logger.debug(f"Network {nrNetworks}: Name: {network}")
             NetworkInfoJson = responseJson[network]
-        self.logger.info("In total {0} networks found".format(nrNetworks))
+        self.logger.info(f"In total {nrNetworks} networks found")
         
         if nrNetworks > 1:
             self.logger.warning("Casambi plugin does currently not support more than one network")
@@ -135,11 +142,11 @@ class Casambi(SmartPlugin):
         if NetworkInfoJson:
             if 'sessionId' in NetworkInfoJson:
                 sessionID = str(NetworkInfoJson['sessionId'])
-                self.logger.debug("Session ID received: {0}".format(sessionID))
+                self.logger.debug(f"Session ID received: {sessionID}")
     
         if 'id' in NetworkInfoJson:
             networkID = str(NetworkInfoJson['id'])
-            self.logger.debug("Network ID is: {0}".format(networkID))
+            self.logger.debug(f"Network ID is: {networkID}")
 
         return sessionID, networkID, nrNetworks
 
@@ -160,7 +167,7 @@ class Casambi(SmartPlugin):
 	    }
         # convert to JSON string:
         openMsgJson = json.dumps(openMsg)
-        #self.logger.debug("Open msg as json: {0}".format(openMsgJson))
+        #self.logger.debug(f"Open msg as json: {openMsgJson}")
 
         self.websocket = create_connection("wss://door.casambi.com/v1/bridge/", subprotocols=[self.api_key])
 
@@ -168,23 +175,26 @@ class Casambi(SmartPlugin):
             self.logger.error("Could not open websocket")   
             return
 
-        self.websocket.send(openMsgJson)
+        try:
+            self.websocket.send(openMsgJson)
+        except Exception as e:
+            self.logger.info(f"Exception during sending in openWebsocket(): {e}")
+       
         self.logger.debug("Sent open message via websocket")
         time.sleep(1)
 
-        result =  self.websocket.recv()
-        self.logger.debug("Received: {0}".format(result)) 
-        resultJson = json.loads(result.decode('utf-8'))
-        wireStatus = ''
-        if resultJson:
-            if 'wireStatus' in resultJson:
-                wireStatus = str(resultJson['wireStatus'])
-                self.logger.debug("wireStatus: {0}".format(wireStatus))
-
-        if wireStatus == 'openWireSucceed':
-            self.logger.debug("Wire opened successfully")
-        else:    
-            self.logger.error("wireStatus: {0}".format(wireStatus))    
+        try:
+            result = self.websocket.recv()
+        except Exception as e:
+            self.logger.info(f"Exception during receiving in openWebsocket(): {e}")
+            return
+        
+        self.logger.debug(f"Received: {result}") 
+        
+        #try:
+        self.decodeEventData(result)
+        #except Exception as e:
+        #    self.logger.error(f"Exception in decodeEventData from openWebsocket: {e}")
 
         pass
 
@@ -194,19 +204,24 @@ class Casambi(SmartPlugin):
         """
         Control message format for switching/dimming of casambi devices
         """
-        dimValue = 0
+        sendValue = 0
+        
         if key == 'ON':
-            dimValue = int(item() == True)
+            sendValue = int(item() == True)
         elif key == 'DIMMER' or key == 'VERTICAL':
-            dimValue = item() / 100.0
+            sendValue = item() / 100.0
+        elif key == 'CCT':
+            sendValue = item()
         else:
-            self.logger.error("Invalid key: {0}".format(key))
+            self.logger.error(f"Invalid key: {key}")
 
         targetControls = ''
         if key == 'ON' or key == 'DIMMER':
-            targetControls = {"Dimmer": {"value": dimValue}} # Dimmer value can be anything from 0 to 1
+            targetControls = {"Dimmer": {"value": sendValue}} # Dimmer value can be anything from 0 to 1
         elif key == 'VERTICAL':
-            targetControls = {"Vertical": {"value": dimValue}} # Vertical fader value can be anything from 0 to 1
+            targetControls = {"Vertical": {"value": sendValue}} # Vertical fader value can be anything from 0 to 1
+        elif key == 'CCT':
+            targetControls = {"ColorTemperature": {"value" : sendValue}, "Colorsource": {"source": "TW"}} # ColorTemperature value in Kelvins 
 
         controlMsg = {
                 "wire": self.wire,
@@ -216,16 +231,26 @@ class Casambi(SmartPlugin):
 	}
         # convert to JSON string:
         controlMsgJson = json.dumps(controlMsg)
+        self.logger.debug(f"Send command: {controlMsgJson}")
 
         if self.websocket and self.websocket.connected:
-            self.websocket.send(controlMsgJson)
+            try:
+                self.websocket.send(controlMsgJson)
+            except Exception as e:
+                self.logger.error(f"Exception during sending in controlDevice(): {e}")
+                if e.errno == errno.EPIPE:
+                    if self.websocket:
+                        self.websocket.close()
+                    self.logger.warning("Closed websocket for reinitialization")
+           
             if self.casambiBackendStatus == False:
                 self.logger.warning("Command sent but backend is not online.")
             else:
-                self.logger.debug("Command with value {0} sent out via open websocket".format(dimValue))
+                self.logger.debug(f"Command {key} with value {sendValue} sent out via open websocket")
         else:
             self.logger.error("Unable to send command. Websocket is not open")
-
+            self.logger.debug(f"Debug: self.websocket: {self.websocket}, self.websocket.connected: {self.websocket.connected}.")
+            self.logger.debug(f"Debug: self.thread.is_alive(): {self.thread.is_alive()}")
 
 
     def decodeEventData(self, receivedData):
@@ -233,25 +258,40 @@ class Casambi(SmartPlugin):
         if len(receivedData) < 1:
             return
 
-        dataJson = json.loads(receivedData.decode('utf-8'))
-
-        if 'wireStatus' in dataJson:
-            wireStatus = str(dataJson['wireStatus']) 
-            if not (wireStatus == 'openWireSucceed'):
-                self.logger.warning("Event: Wirestatus {0} received".format(wireStatus))
-
         method = ''
+
+        dataJson = json.loads(receivedData.decode('utf-8'))
+        
         if dataJson:
+            if 'wireStatus' in dataJson:
+                wireStatus = str(dataJson['wireStatus']) 
+
+                if wireStatus == 'openWireSucceed':
+                    self.logger.debug("Wire opened successfully")
+                elif wireStatus == '':
+                    self.logger.debug("No wireStatus received")
+                else:    
+                    self.logger.error(f"wireStatus: {wireStatus}")   
+                    self.logger.error(f"Debug: wireStatus response: {receivedData}")    
+
             if 'method' in dataJson :
                 method = str(dataJson ['method'])
         else:
             self.logger.debug("decodeEventData: Invalid Json")
 
-        if method == 'peerChanged':
+        if method == '':
+            # This happens for example if a wireStatus response to an open message is received which does not contain a method attribute.
+            self.logger.debug("Event: No method info received.")
+        elif method == 'peerChanged':
             online = None
             if 'online' in dataJson:
                 self.casambiBackendStatus = bool(dataJson ['online'])
-            self.logger.debug("Received {0} status with backend online status: {1}.".format(method, self.casambiBackendStatus))
+                for id in self._rx_items:
+                    for item in self._rx_items[id]:
+                        if (item.conf['casambi_rx_key'].upper() == 'BACKEND_ONLINE_STAT'):
+                            item( self.casambiBackendStatus, self.get_shortname())
+
+            self.logger.debug(f"Received {method} status with backend online status: {self.casambiBackendStatus}.")
 
         elif method == 'unitChanged':
             unitID = None
@@ -259,6 +299,8 @@ class Casambi(SmartPlugin):
             status = None
             dimValue = None
             verticalValue = None
+            cctValue = None
+
             self.logger.debug("Debug Json unitChanged: {0}".format(dataJson))
             if 'id' in dataJson:
                 unitID = int(dataJson['id'])
@@ -268,22 +310,25 @@ class Casambi(SmartPlugin):
                 status = str(dataJson['status'])
             if 'controls' in dataJson:
                 controls = dataJson['controls']
-                self.logger.debug("Debug controls Json: {0}".format(controls))
+                self.logger.debug(f"Debug controls Json: {controls}")
                 for x in controls:
-                    #self.logger.debug("Debug x: {0}".format(x))
+                    #self.logger.debug(f"Debug x: {x}")
                     type = None
                     value = None
                     if 'type' in x:
                         type = str(x['type'])
                     if 'value' in x:
                         value = float(x['value'])
-                    #self.logger.debug("Type: {0}, value: {1}".format(type, value))
+                    #self.logger.debug(f"Type: {type}, value: {value}")
                     if type == 'Dimmer':
                         dimValue = value
                     elif type == 'Vertical':
                         verticalValue = value
+                    elif type == 'CCT':
+                        cctValue = value
 
-            self.logger.debug("Received {0} status from unit {1}, on: {2}, value: {3}, vertical: {4}.".format(method, unitID, on, dimValue, verticalValue))
+
+            self.logger.debug(f"Received {method} status from unit {unitID}, on: {on}, value: {dimValue}, vertical: {verticalValue}, cct: {cctValue}.")
 
             #Copy data into casambi item:
             if unitID and (unitID in self._rx_items):
@@ -296,10 +341,14 @@ class Casambi(SmartPlugin):
                         item(dimValue * 100, self.get_shortname())
                     elif item.conf['casambi_rx_key'].upper() == 'VERTICAL':
                         item(verticalValue * 100, self.get_shortname())
+                    elif item.conf['casambi_rx_key'].upper() == 'CCT':
+                        item(cctValue, self.get_shortname())
+
             elif unitID and not (unitID in self._rx_items):
-                self.logger.warning("Received status information for ID {0} which has no equivalent item.".format(unitID))
+                self.logger.warning(f"Received status information for ID {unitID} which has no equivalent item.")
         else:
-            self.logger.warning("Received unknown method {0} which is not supported.".format(method))
+            self.logger.warning(f"Received unknown method {method} which is not supported.")
+            self.logger.warning(f"Debug: decodeData(), receivedData: {receivedData}")
 
         pass
 
@@ -317,7 +366,12 @@ class Casambi(SmartPlugin):
         # if you need to create child threads, do not make them daemon = True!
         # They will not shutdown properly. (It's a python bug)
 
-        self.sessionID, self.networkID, self.numberNetworks = self.getSessionCredentials()
+        try:                    
+            self.sessionID, self.networkID, self.numberNetworks = self.getSessionCredentials()
+        except Exception as e:
+            self.logger.error(f"Exception during getSessionCredectials: {e}")
+
+        
 
         self.thread = threading.Thread(target=self.eventHandler, name='CasambiEventHandler')
         self.thread.daemon = False
@@ -333,6 +387,7 @@ class Casambi(SmartPlugin):
             self.logger.warning("Cannot open websocket once. Invalid networkID")
 
         errorCount = 0
+        noNetworkIDErrorCount = 0
         doReconnect = False
         while self.alive:
             #self.logger.debug("Starting loop")
@@ -346,22 +401,26 @@ class Casambi(SmartPlugin):
                 try:
                     self.logger.debug("Trying to receive data")
                     receivedData =  self.websocket.recv()
-                    self.logger.debug("Received data: {0}".format(receivedData))
+                    self.logger.debug(f"Received data: {receivedData}")
                     errorCount = 0
                 except timeout:
                     self.logger.debug("Reception timeout")
                 except socket.timeout:
                     self.logger.debug("Socket reception timeout")
                 except Exception as e:
-                    self.logger.info("Error during data reception: {0}".format(e))
+                    self.logger.info(f"Error during data reception: {e}")
                     errorCount = errorCount  + 1
                     doReconnect = True
 
                 if not receivedData: 
                     self.logger.debug("Received empty data")
                 else: 
-                    self.logger.debug("Received data: {0}".format(receivedData))
+                    self.logger.debug(f"Received data: {receivedData}")
+                    #try:
                     self.decodeEventData(receivedData)
+                    #except Exception as e:
+                    #    self.logger.error(f"Exception during decodeEventData: {e}")
+
 
             # Error handling:
             if errorCount > 2:
@@ -370,21 +429,35 @@ class Casambi(SmartPlugin):
                 self.exit_event.wait(timeout=60)
        
             if not self.alive:
+                self.logger.debug("Alive check negative. Breaking")
                 break
 
             if doReconnect:
                 if self.networkID:
                     self.logger.debug("Trying to reopen websocket")
-                    self.openWebsocket(self.networkID)
+                    try:                    
+                        self.openWebsocket(self.networkID)
+                    except Exception as e:
+                        self.logger.error(f"Exception during openWebsocket in while loop: {e}")
                     doReconnect = False
                 else:
                     self.logger.warning("Cannot reconnect due to invalid network ID")
-            
-            
+                    noNetworkIDErrorCount = noNetworkIDErrorCount + 1
+            if noNetworkIDErrorCount > 10:
+                self.logger.warning("Requesting new network and session ID")
+                try:                    
+                    self.sessionID, self.networkID, self.numberNetworks = self.getSessionCredentials()
+                except Exception as e:
+                    self.logger.error(f"Exception during getSessionCredectials: {e}")
+
+                noNetworkIDErrorCount = 0
+
+        
+        self.logger.debug(f"Debug Casambi: self.alive: {self.alive}")
         if self.websocket:
             self.websocket.close()
 
-        self.logger.debug("EventHandler thread stopped")
+        self.logger.debug("Casambi EventHandler thread stopped")
 
 
     def stop(self):
@@ -393,6 +466,9 @@ class Casambi(SmartPlugin):
         """
         self.logger.debug("Stop method called")
         self.exit_event.set()
+        if self.websocket:
+            self.websocket.close()
+
 #        if self.thread:
 #            self.thread.join(2)
         self.alive = False
@@ -416,7 +492,7 @@ class Casambi(SmartPlugin):
             while not self.has_iattr( id_item.conf, 'casambi_id'):
                 id_item = id_item.return_parent()
                 if (id_item is self._sh):
-                    self.logger.error("Could not find casambi_id for item {}".format(item))
+                    self.logger.error(f"Could not find casambi_id for item {item}")
                     return None
             rx_key = item.conf['casambi_rx_key'].upper()
             id = int(id_item.conf['casambi_id'])
@@ -424,7 +500,7 @@ class Casambi(SmartPlugin):
             if (not id in self._rx_items):
                 self._rx_items[id] = []
             self._rx_items[id].append(item)
-            #self.logger.debug("rx-items dict: {0}".format(self._rx_items))
+            #self.logger.debug(f"rx-items dict: {self._rx_items}")
 
         if self.has_iattr(item.conf, 'casambi_tx_key'):
             # look from the most specifie info (tx/rx key) up to id info - one id might use multiple tx/rx child elements
@@ -432,12 +508,12 @@ class Casambi(SmartPlugin):
             while not self.has_iattr( id_item.conf, 'casambi_id'):
                 id_item = id_item.return_parent()
                 if (id_item is self._sh):
-                    self.logger.error("Could not find casambi_id for item {}".format(item))
+                    self.logger.error(f"Could not find casambi_id for item {item}")
                     return None
 
             tx_key = item.conf['casambi_tx_key'].upper()
             id = int(id_item.conf['casambi_id'])
-            #self.logger.debug("New TX-item: {0} with casambi ID: {1} and tx key: {2}".format(item, id, tx_key))
+            #self.logger.debug(f"New TX-item: {item} with casambi ID: {id} and tx key: {tx_key}")
           
             # register item for event handling via smarthomeNG core. Needed for sending control actions:
             return self.update_item
@@ -450,7 +526,7 @@ class Casambi(SmartPlugin):
 
     def update_item(self, item, caller=None, source=None, dest=None):
         """
-        self.logger.debug("Call function << update_item >>")
+        #self.logger.debug("Call function << update_item >>")
 
         This method is called, if the value of an item has been updated by SmartHomeNG.
         It should write the changed value out to the device (hardware/interface) that
@@ -464,7 +540,7 @@ class Casambi(SmartPlugin):
         if self.alive and caller != self.get_shortname():
             # code to execute if the plugin is not stopped
             # and only, if the item has not been changed by this this plugin:
-            self.logger.info("Update item: {}, item has been changed outside this plugin".format(item.id()))
+            self.logger.debug(f"Update item: {item.id()}, item has been changed outside this plugin")
 
             if self.has_iattr(item.conf, 'casambi_tx_key'):
                 # look from the most specifie info (tx/rx key) up to id info - one id might use multiple tx/rx child elements
@@ -472,18 +548,14 @@ class Casambi(SmartPlugin):
                 while not self.has_iattr( id_item.conf, 'casambi_id'):
                     id_item = id_item.return_parent()
                     if (id_item is self._sh):
-                        self.logger.error("Could not find casambi_id for item {}".format(item))
+                        self.logger.error(f"Could not find casambi_id for item {item}")
                         return None
 
                 tx_key = item.conf['casambi_tx_key'].upper()
                 id = int(id_item.conf['casambi_id'])
 
-                self.logger.debug(
-                    "update_item was called with item '{}' from caller '{}', source '{}' and dest '{}'".format(item,
-                                                                                                               caller,
-                                                                                                               source,
-                                                                                                               dest))
-                self.logger.debug("Update TX-item: {0} with casambi ID: {1} and tx key: {2}".format(item, id, tx_key))
+                self.logger.debug(f"update_item was called with item '{item}' from caller '{caller}', source '{source}' and dest '{dest}'")
+                self.logger.debug(f"Update TX-item: {item} with casambi ID: {id} and tx key: {tx_key}")
                 self.controlDevice(item, id, tx_key)
 
         pass
@@ -592,6 +664,6 @@ class WebInterface(SmartPluginWebIf):
             # try:
             #     return json.dumps(data)
             # except Exception as e:
-            #     self.logger.error("get_data_html exception: {}".format(e))
+            #     self.logger.error(f"get_data_html exception: {e}")
         return {}
 

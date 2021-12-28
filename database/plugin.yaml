@@ -12,7 +12,7 @@ plugin:
     documentation: http://smarthomeng.de/user/plugins/database/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1021844-neues-database-plugin
 
-    version: 1.5.15                # Plugin version
+    version: 1.5.17                # Plugin version
     sh_minversion: 1.8.0           # minimum shNG version to use this plugin
 #    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
@@ -222,11 +222,21 @@ plugin_functions:
     readItem:
         type: foo
         description:
-            de: 'Item-Datenbankeintrag für angegebene Datenbank-ID auslesen'
-            en: 'Read database item record for given database ID'
+            de: "Item-Datenbankeintrag für angegebene Datenbank-ID auslesen
+
+                 Diese Methode liest die Item-Daten einschließlich aller Felder. Wenn der ID Parameter ein String
+                 ist, wird angenommen, dass das Element über den Item Namen ausgewählt werden soll
+                 und nicht die Item-ID.
+                "
+            en: "Read database item record for given database ID
+
+                 This method will read the item data including all fields. If the id
+                 parameter is a string it is assumed that the item should be selected by
+                 the items name and not by the items ID.
+                "
         parameters:
             id:
-                type: int
+                type: int/str
                 description:
                     de: "Datenbank-ID des Items für das der Eintrag ausgelesen werden soll"
                     en: "Database ID of item to read the record for"
@@ -239,14 +249,9 @@ plugin_functions:
     readItems:
         type: foo
         description:
-            de: 'Item-Datenbankeinträge auslesen'
-            en: 'Read database item records'
+            de: 'Alle Item-Datenbankeinträge incl. aller Felder auslesen'
+            en: 'This method will read all items data including all fields.'
         parameters:
-            id:
-                type: int
-                description:
-                    de: "Datenbank-ID des Items für das der Eintrag ausgelesen werden soll"
-                    en: "Database ID of item to read the record for"
             cur:
                 type: foo
                 description:
@@ -256,8 +261,8 @@ plugin_functions:
     deleteItem:
         type: void
         description:
-            de: 'Item-Datenbankeintrag für angegebene Datenbank-ID löschen'
-            en: 'Delete database item record for given database ID'
+            de: 'Löschen eines Item-Datenbankeintrags und von dessen Log Daten'
+            en: 'This method will delete the item and its log data'
         parameters:
             id:
                 type: int
@@ -463,6 +468,16 @@ plugin_functions:
     cleanup:
         type: void
         description:
-            de: 'Datenbank aufräumen (löscht ungenutzte Item/Log Einträge aus der Datenbank)'
-            en: 'Cleanup database (deletes unused item/log records in the database)'
+            de: "Datenbank aufräumen (löscht ungenutzte Item/Log Einträge aus der Datenbank)
 
+                 Diese Methode entfernt alle Elemente und Logs aus der Datenbank der Elemente, welche derzeit nicht
+                 für die Protokollierung in der Datenbank konfiguriert sind. Vorsicht vor dieser Verwendung
+                 in einem Setup mit mehreren Plugin Instanzen, da eine Instanz die Items der anderen Instanz nicht kennt!
+                "
+            en: "Cleanup database (deletes unused item/log records in the database)
+
+                 This method will remove all items and logs from database of items which
+                 are currenlty not configured to be logged to database. Beware of this using
+                 in a multi-instance setup, since one instance does not know the item of
+                 the other instance!
+            "

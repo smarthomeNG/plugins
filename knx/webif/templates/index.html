@@ -58,7 +58,18 @@ $(document).ready( function () {
     } );
 {% endif %}
 
-
+$(document).ready(
+    function(){
+        $('#fupload').change(
+            function(){
+                if ($(this).val()) {
+                    $('#btnupload').attr('disabled',false);
+                } else {
+                    $('#btnupload').attr('disabled',true);
+                }
+            }
+            );
+    });
 </script>
 {% endblock pluginscripts %}
 
@@ -84,6 +95,7 @@ $(document).ready( function () {
 				<td class="py-1"></td>
 			</tr>
 			{% if p.use_project_file %}
+                <form method="post" action="index" enctype="multipart/form-data">
 				{% if p.projectpath %}
 				<tr>
 					<td class="py-1"><strong>{{ _('Pfad zur KNX Projektdatei') }}</strong></td>
@@ -94,15 +106,16 @@ $(document).ready( function () {
 				</tr>
 				{% endif %}
 				<tr>
-					<td class="py-1"><strong>{{ _('Projektdatei hochladen') }}</strong></td>
-					<td class="py-1" colspan="4">
-						<form method="post" action="index" enctype="multipart/form-data">
-							<label for="fupload">{{ _('Projektdatei auswählen') }}</label>
+					<td class="py-1"><strong>{{ _('Projektdatei') }}</strong></td>
+					<td class="py-1">
 							<input id="fupload" type="file" name="knxprojfile" accept="*.knxproj|*.esf"/>
-							<button>hochladen</button>
-						</form>
+							<button id="btnupload" disabled="True">{{ _('hochladen') }}</button>
 					</td>
+					<td></td>
+					<td class="py-1"><strong>{{ _('optionales Passwort') }}</strong></td>
+					<td class="py-1"><input id="pwd" type="password" name="password"/></td>
 				</tr>
+                </form>
 			{% endif %}
 		</tbody>
 	</table>

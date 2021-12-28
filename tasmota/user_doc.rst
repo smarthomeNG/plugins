@@ -10,9 +10,12 @@ tasmota
 Das Plugin dienst zur Steuerung von Tasmota Devices über MQTT. Zur Aktivierung von MQTT für die Tasmota Devices
 bitte die Dokumentation des jeweiligen Devices zu Rate ziehen.
 
-Zurzeit wird nur die Schalter (Relay) Funktion unterstützt:
-
-Es werden alle Relays eines Tasmota Devices (bis zu 4) unterstützt.
+Unterstützte Funktionen sind:
+* Relays eines Tasmota Devices (bis zu 4)
+* DS18B20 Temperatursensoren
+* AM2301 Sensoren für Tempteratur und Luftfeuchte
+* RGBW Dimmer (H801) mit Senden und Empfangen von HSB
+* RF-Daten Senden und Empfangen mit Sonoff Bridge RF
 
 
 .. attention::
@@ -68,13 +71,37 @@ in SmartHomeNG noch nicht konfiguriert (mit einem Item vebunden) sind.
 Ein Klick auf das Tasmota Topic öffnet Konfigurationsseite des Devices.
 
 
-Tasmota Energie Information
----------------------------
+Tasmota Sensoren
+----------------
 
-Das Webinterface zeigt Informationen zu Energie/Verbrauch an, falls das jeweilige Tasmota Device diese
+Das Webinterface zeigt Informationen mit Werten der Sensoren, falls das jeweilige Tasmota Device diese
 Informationen bereitstellt.
 
 .. image:: user_doc/assets/webif_tab3.jpg
+   :class: screenshot
+
+Ein Klick auf das Tasmota Topic öffnet Konfigurationsseite des Devices.
+
+
+Tasmota Lights
+--------------
+
+Das Webinterface zeigt Informationen der Devices mit RGB-Steuerung an, falls das jeweilige Tasmota Device diese
+Informationen bereitstellt.
+
+.. image:: user_doc/assets/webif_tab4.jpg
+   :class: screenshot
+
+Ein Klick auf das Tasmota Topic öffnet Konfigurationsseite des Devices.
+
+
+Tasmota RF
+----------
+
+Das Webinterface zeigt Informationen der Devices RF-Fähigkeit an, falls das jeweilige Tasmota Device diese
+Informationen bereitstellt.
+
+.. image:: user_doc/assets/webif_tab5.jpg
    :class: screenshot
 
 Ein Klick auf das Tasmota Topic öffnet Konfigurationsseite des Devices.
@@ -85,6 +112,6 @@ Broker Information
 
 Das Webinterface zeigt Informationen zum genutzten MQTT Broker an.
 
-.. image:: user_doc/assets/webif_tab4.jpg
+.. image:: user_doc/assets/webif_tab6.jpg
    :class: screenshot
 

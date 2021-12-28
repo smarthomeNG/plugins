@@ -40,7 +40,10 @@ def is_open_port(port):
 
 def get_local_ip_address():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    s.connect(("10.10.10.10", 80))
+    try:
+        s.connect(("10.10.10.10", 80))
+    except socket.error:
+        return "0.0.0.0"
     return s.getsockname()[0]
 
 

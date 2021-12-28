@@ -12,7 +12,7 @@ plugin:
     documentation: https://github.com/smarthomeng/plugins/blob/develop/neato/README.md
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1417295-support-thread-plugin-neato
 
-    version: 1.6.4                  # Plugin version
+    version: 1.6.7                  # Plugin version
     sh_minversion: 1.8.0            # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False           # plugin supports multi instance
@@ -66,7 +66,8 @@ item_attributes:
                  laed gerade
                  Ladestand
                  Nachricht
-                 fahr zur Basis'
+                 fahr zur Basis
+                 reinige Einzelraum'
             en: 'Neato attributes:
                  name
                  command
@@ -78,7 +79,8 @@ item_attributes:
                  is charging
                  charge percentage
                  message
-                 go to base'
+                 go to base
+                 clean room'
         valid_list:
           - name
           - command
@@ -91,6 +93,7 @@ item_attributes:
           - charge_percentage
           - message
           - command_goToBaseAvailable
+          - clean_room
 
 item_structs: NONE
     # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
@@ -98,19 +101,51 @@ item_structs: NONE
 
 plugin_functions:
     enable_schedule:
-        type: void
+        type: bool
         description:
             de: "Aktiviert den Reinigunsplan."
             en: "Activates cleaning schedule."
         parameters:
         # This function has no parameters
     disable_schedule:
-        type: void
+        type: bool
         description:
             de: "Deaktiviert den Reinigunsplan."
             en: "Disables cleaning schedule."
         parameters:
         # This function has no parameters
+    start_robot:
+        type: bool
+        description:
+            de: "Aktiviert Reinigung"
+            en: "Activates cleaning"
+        parameters:
+            boundary_id:
+                type: str
+                description:
+                    de: "Zimmer ID (ASCII hex Darstellung)"
+                    en: "Room ID (ASCII hex code)"
+            map_id:
+                type: str
+                description:
+                    de: "Karten ID"
+                    en: "Map ID"
+    dismiss_current_alert:
+        type: bool
+        description:
+            de: "Loescht aktuelle Alarme"
+            en: "Resets current alerts"
+    get_map_boundaries:
+        type: bool
+        description:
+            de: "Gibt im logfile die verfuebaren Raeume aus"
+            en: "Outputs available boundaries (rooms) in logfile"
+        parameters:
+            map_id:
+                type: str
+                description:
+                    de: "Karten ID"
+                    en: "Map ID"
 
 logic_parameters: NONE
     # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)

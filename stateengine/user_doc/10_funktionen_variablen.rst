@@ -15,10 +15,14 @@ mittels ``eval:`` verwendet werden können:
 
 **Sonnenstandsabhängige Lamellenausrichtung**
 *Die Neigung der Lamellen wird automatisch von der Höhe der Sonne bestimmt.*
+Optional kann noch ein Offset in Klammer mitgegeben werden, um etwaige kleine Abweichungen auszugleichen. Diese Abweichung
+kann auch global bei der Pluginkonfiguration mittels ``lamella_offset`` eingestellt werden, was sich dann auf
+sämtliche Aufrufe der Funktion auswirkt. Der Offset wird in Grad angegeben, wobei ein negativer Offset dafür sorgt, dass sich die Lamellen weniger weit drehen. Bei einem positiven Offset hingegen werden die Lamellen mehr geschlossen. Die Angabe beim direkten Aufruf der Funktion hat dabei immer Vorrang. Da verschiedene Lamellenarten unterschiedliche Prozentwerte im offenen Zustand
+haben können, kann die Berechnung auch mittels ``lamella_open_value`` manipuliert werden.
 
 .. code-block:: yaml
 
-   se_eval.sun_tracking()
+   se_eval.sun_tracking(-10)
 
 **Zufallszahl**
 *Über min und max kann die kleinste/größte Nummer, die zurückgegeben werden soll, festgelegt werden.*

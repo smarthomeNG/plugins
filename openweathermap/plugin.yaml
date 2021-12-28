@@ -5,15 +5,14 @@ plugin:
     description:
         de: 'Wetterdaten über OpenWeatherMap.'
         en: 'Weather data via OpenWeatherMap.'
-    maintainer: psilo909
-    tester: psilo909
+    maintainer: psilo909, jentz1986
+    tester: Sisamiwe, jentz1986
     state: qa-passed
-#    keywords: iot xyz
+    keywords: weather precipation irrigation
     documentation: 'http://smarthomeng.de/user/plugins/openweathermap/user_doc.html'
     support: 'https://knx-user-forum.de/forum/supportforen/smarthome-py/1246998-support-thread-zum-openweathermap-plugin'
-    keywords: weather
-    version: 1.5.1                # Plugin version
-    sh_minversion: 1.6            # minimum shNG version to use this plugin
+    version: 1.8.3                # Plugin version
+    sh_minversion: 1.8.2d         # minimum shNG version to use this plugin
 #    sh_maxversion:               # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True          # plugin supports multi instance
     restartable: unknown
@@ -32,15 +31,22 @@ parameters:
         mandatory: False
         default: ''
         description:
-            de: 'Latitude des Ortes, für den die Wetterdaten abgerufen werden sollen. Default: SmartHomeNG Settings'
-            en: 'Latitude for the location, of which weather data is requested. Default: SmartHomeNG Settings'
+            de: 'Latitude des Ortes, für den die Wetterdaten abgerufen werden sollen (max. 4 Dezimalstellen). Default: SmartHomeNG Settings'
+            en: 'Latitude for the location, of which weather data is requested (max. 4 decimal places). Default: SmartHomeNG Settings'
     longitude:
         type: str
         mandatory: False
         default: ''
         description:
-            de: 'Longitude des Ortes, für den die Wetterdaten abgerufen werden sollen. Default: SmartHomeNG Settings.'
-            en: 'Longitude for the location, of which weather data is requested. Default: SmartHomeNG Settings.'
+            de: 'Longitude des Ortes, für den die Wetterdaten abgerufen werden sollen (max. 4 Dezimalstellen). Default: SmartHomeNG Settings.'
+            en: 'Longitude for the location, of which weather data is requested (max 4 decimal places). Default: SmartHomeNG Settings.'
+    altitude:
+        type: str
+        mandatory: False
+        default: ''
+        description:
+            de: 'Altitude des Ortes, für den die Wetterdaten abgerufen werden sollen. Default: SmartHomeNG Settings.'
+            en: 'Altitude for the location, of which weather data is requested. Default: SmartHomeNG Settings Elevation.'
     lang:
         type: str
         mandatory: False
@@ -63,6 +69,33 @@ parameters:
             de: '(optional) Zeit zwischen zwei Updateläufen. Default ist 300 Sekunden.'
             en: '(optional) Time period between two update cycles. Default is 300 seconds.'
 
+    softfail_precipitation:
+        type: str
+        mandatory: False
+        default: 'number=0'
+        valid_list:
+          - 'number=0'
+          - 'number=-1'
+          - 'no_update'
+          - 'log_info'
+        description:
+            de: 'Wenn keine optionalen Niederschlagswerte (Regen/Schnee) geliefert werden, aber eine Aktualisierung passiert ist - was soll geschrieben werden?'
+            en: 'What should written to items if the last JSON did not contain any value for rain or snow?'
+
+    softfail_wind_gust:
+        type: str
+        mandatory: False
+        default: 'relative=../wind_speed'
+        valid_list:
+          - 'number=0'
+          - 'number=-1'
+          - 'no_update'
+          - 'relative=../wind_speed'
+          - 'log_info'
+        description:
+            de: 'Wenn keine Werte für Windböen geliefert werden, aber eine Aktualisierung passiert ist - was soll geschrieben werden?'
+            en: 'What should written to items if the last JSON did not contain any value for wind gusts?'
+
 item_attributes:
     # Definition of item attributes defined by this plugin
     owm_matchstring:
@@ -71,31 +104,1353 @@ item_attributes:
         description:
             de: 'Matchstring für die OpenWeatherMap Daten, siehe Beispiele in der README.'
             en: 'Matchstring for the OpenWeatherMap data, see examples in README.'
-    x:
+    owm_match_prefix:
+        type: str
+        mandatory: False
+        default: None
+        description:
+            de: 'Präfix der dem Matchstring vorangestellt wird. Kann in einem struct vererbt werden über ..:.'
+            en: 'Prefix that is prepended to the matchstring. Can be inherited in a struct by using ..:.'
+    owm_coord_x:
         type: num
         mandatory: False
         description:
             de: 'X-Koordinate für die entsprechenden Layer-Bilder-Links von OpenWeatherMap. Nur nutzbar mit owm_matchstring: precipitation_new und clouds_new.'
             en: 'X coordinate for layer image URLs of OpenWeatherMap. Only usable with owm_matchstring: precipitation_new and clouds_new.'
-    y:
+    owm_coord_y:
         type: num
         mandatory: False
         description:
             de: 'Y-Koordinate für die entsprechenden Layer-Bilder-Links von OpenWeatherMap. Nur nutzbar mit owm_matchstring: precipitation_new und clouds_new.'
             en: 'Y coordinate for layer image URLs of OpenWeatherMap. Only usable with owm_matchstring: precipitation_new and clouds_new.'
-    z:
+    owm_coord_z:
         type: num
         mandatory: False
         description:
             de: 'Z-Koordinate für die entsprechenden Layer-Bilder-Links von OpenWeatherMap. Nur nutzbar mit owm_matchstring: precipitation_new und clouds_new.'
             en: 'Z coordinate for layer image URLs of OpenWeatherMap. Only usable with owm_matchstring: precipitation_new and clouds_new.'
+    owm_raw_file:
+        type: str
+        mandatory: False
+        description:
+            de: 'Name einer Datenquelle, der JSON hier komplett eingebunden wird'
+            en: 'Name of data-source which JSON is embedded as value of this item'
 
-item_structs: NONE
-  # Definition of item-structure templates for this plugin
+
+item_structs:
+    # Definition of item-structure templates for this plugin
+    irrigation:
+        type: bool
+        autotimer: sh..schedule_seconds() = False
+        visu_acl: rw
+        enforce_updates: 'true'
+
+        schedule_seconds:
+            type: num
+            initial_value: 0
+            visu_acl: ro
+            eval: round((sh...todays_water_demand_in_l() / sh...factors.flowrate_l_per_min()) * 60)
+            eval_trigger:
+                - ..factors.flowrate_l_per_min
+                - ..todays_water_demand_in_l
+
+            remaining_time:
+                type: num
+                visu_acl: ro
+                enforce_updates: 'true'
+                eval: sh...() - sh....age() if sh....() else 0
+                eval_trigger: ...
+                cycle: 5
+
+        todays_water_demand_in_l:
+            type: num
+            eval: max(0, (sh...evaporation() * sh...evaporation.exposure_factor()) - (sh...rain() * sh...rain.exposure_factor())) * sh...factors()
+            eval_trigger:
+                - ..evaporation
+                - ..evaporation.exposure_factor
+                - ..rain
+                - ..rain.exposure_factor
+                - ..factors
+
+        evaporation:
+            type: num
+            initial_value: 0
+            owm_matchstring@instance: day/0/eto
+
+            exposure_factor:
+                remark: 'How exposed is your area to evaporation? Lower the factor for less exposure (e.g. shading, or wind-shields) or higher the factor if there is more sun (reflection) or wind (droughty areas).'
+                type: num
+                cache: yes
+                initial_value: 1
+
+        rain:
+            type: num
+            eval: sum
+            eval_trigger:
+                - .past_12h
+                - .next_12h
+
+            past_12h:
+                type: num
+                owm_matchstring@instance: virtual/past12h/sum/rain/1h
+            next_12h:
+                type: num
+                owm_matchstring@instance: virtual/next12h/sum/rain/1h
+
+            exposure_factor:
+                remark: 'How exposed is your area to rain? Lower the factor for less exposure (e.g. roofs or bushes) or higher the factor if additional water is put there (e.g. from roof-drains).'
+                initial_value: 1
+                type: num
+                cache: yes
+
+        factors:
+            type: num
+            eval: sh..area_in_sqm() * sh..crop_coefficient() * sh..plant_density() * sh..gut_feeling()
+            eval_trigger:
+                - .area_in_sqm
+                - .crop_coefficient
+                - .plant_density
+                - .gut_feeling
+
+            flowrate_l_per_min:
+                remark: 'How much water is transported by your irrigation-system? liters per minute'
+                initial_value: 4
+                type: num
+                cache: yes
+
+            area_in_sqm:
+                remark: 'This is the irrigated area. This is important for the effectivity of rain vs. evaporation.'
+                initial_value: 1
+                type: num
+                cache: yes
+
+            crop_coefficient:
+                remark: 'This is the coefficient that can be set based on the plants. Typically 0.3 to 0.9'
+                initial_value: 0.9
+                type: num
+                cache: yes
+
+            plant_density:
+                remark: 'How dense are the plants planted? Typically 0.3 to 1.5'
+                initial_value: 1
+                type: num
+                cache: yes
+
+            gut_feeling:
+                remark: 'This is a factor that should be used to tweak irrigation based on gut-feelings, typically this should be assigned centrally for the whole yard (use eval).'
+                initial_value: 1
+                type: num
+                cache: yes
+
+    irrigation_weekly:
+        type: bool
+        autotimer: sh..schedule_seconds() = False
+        visu_acl: rw
+        enforce_updates: 'true'
+
+        schedule_seconds:
+            type: num
+            initial_value: 0
+            visu_acl: ro
+            eval: round((sh...weeks_water_demand_in_l() / sh...factors.flowrate_l_per_min()) * 60)
+            eval_trigger:
+                - ..factors.flowrate_l_per_min
+                - ..weeks_water_demand_in_l
+
+            remaining_time:
+                type: num
+                visu_acl: ro
+                enforce_updates: 'true'
+                eval: sh...() - sh....age() if sh....() else 0
+                eval_trigger: ...
+                cycle: 5
+
+        weeks_water_demand_in_l:
+            type: num
+            eval: max(0, (sh...evaporation() * sh...evaporation.exposure_factor()) - (sh...rain() * sh...rain.exposure_factor())) * sh...factors()
+            eval_trigger:
+                - ..evaporation
+                - ..evaporation.exposure_factor
+                - ..rain
+                - ..rain.exposure_factor
+                - ..factors
+
+        evaporation:
+            type: num
+            initial_value: 0
+            eval: sum
+            eval_trigger:
+                - .day_past3
+                - .day_past2
+                - .day_past1
+                - .day_past0
+                - .day_next1
+                - .day_next2
+            day_past3:
+                type: num
+                owm_matchstring@instance: day/-3/eto
+            day_past2:
+                type: num
+                owm_matchstring@instance: day/-2/eto
+            day_past1:
+                type: num
+                owm_matchstring@instance: day/-1/eto
+            day_past0:
+                type: num
+                owm_matchstring@instance: day/-0/eto
+            day_next0:
+                type: num
+                owm_matchstring@instance: day/0/eto
+            day_next1:
+                type: num
+                owm_matchstring@instance: day/1/eto
+            day_next2:
+                type: num
+                owm_matchstring@instance: day/2/eto
+
+            exposure_factor:
+                remark: 'How exposed is your area to evaporation? Lower the factor for less exposure (e.g. shading, or wind-shields) or higher the factor if there is more sun (reflection) or wind (droughty areas).'
+                type: num
+                cache: yes
+                initial_value: 1
+
+        rain:
+            type: num
+            eval: sum
+            eval_trigger:
+                - .past_4d
+                - .next_3d
+
+            past_4d:
+                type: num
+                owm_matchstring@instance: virtual/past4d/sum/rain/1h
+            next_3d:
+                type: num
+                owm_matchstring@instance: virtual/next3d/sum/rain
+
+            exposure_factor:
+                remark: 'How exposed is your area to rain? Lower the factor for less exposure (e.g. roofs or bushes) or higher the factor if additional water is put there (e.g. from roof-drains).'
+                initial_value: 1
+                type: num
+                cache: yes
+
+        factors:
+            type: num
+            eval: sh..area_in_sqm() * sh..gut_feeling()
+            eval_trigger:
+                - .area_in_sqm
+                - .gut_feeling
+
+            flowrate_l_per_min:
+                remark: 'How much water is transported by your irrigation-system? liters per minute'
+                initial_value: 4
+                type: num
+                cache: yes
+
+            area_in_sqm:
+                remark: 'This is the irrigated area. This is important for the effectivity of rain vs. evaporation.'
+                initial_value: 1
+                type: num
+                cache: yes
+
+            gut_feeling:
+                remark: 'This is a factor that should be used to tweak irrigation based on gut-feelings, typically this should be assigned centrally for the whole yard (use eval).'
+                initial_value: 1
+                type: num
+                cache: yes
+
+
+
+
+    locals:
+        name: OpenWeatherMap local data
+        lat:
+            name: Geographical coordinates of the location (latitude)
+            type: num
+            owm_matchstring@instance: lat
+        lon:
+            name: Geographical coordinates of the location (longitude)
+            type: num
+            owm_matchstring@instance: lon
+        timezone:
+            name: Timezone name for the requested location
+            type: str
+            owm_matchstring@instance: timezone
+        timezone_offset:
+            name: Shift in seconds from UTC
+            type: num
+            owm_matchstring@instance: timezone_offset
+        location:
+            name: Name of the requested location
+            type: str
+            owm_matchstring@instance: name
+
+    current:
+        name: OpenWeatherMap current weather data
+        dt:
+            name: Current time, Unix, UTC
+            type: str
+            eval: datetime.datetime.fromtimestamp(value, datetime.timezone.utc).astimezone().strftime('%Y-%m-%d %H:%M:%S %Z%z')
+            owm_matchstring@instance: current/dt
+        sunrise:
+            name: Sunrise time, Unix, UTC
+            type: str
+            eval: datetime.datetime.fromtimestamp(value, datetime.timezone.utc).astimezone().strftime('%Y-%m-%d %H:%M:%S %Z%z')
+            owm_matchstring@instance: current/sunrise
+        sunset:
+            name: Sunset time, Unix, UTC
+            type: str
+            eval: datetime.datetime.fromtimestamp(value, datetime.timezone.utc).astimezone().strftime('%Y-%m-%d %H:%M:%S %Z%z')
+            owm_matchstring@instance: current/sunset
+        temp:
+            name: Temperature. Units - default kelvin, metric Celsius, imperial Fahrenheit.
+            type: num
+            owm_matchstring@instance: current/temp
+        feels_like:
+            name: Temperature. This temperature parameter accounts for the human perception of weather. Units default kelvin, metric Celsius, imperial Fahrenheit.
+            type: num
+            owm_matchstring@instance: current/feels_like
+        pressure:
+            name: Atmospheric pressure on the sea level, hPa
+            type: num
+            owm_matchstring@instance: current/pressure
+        humidity:
+            name: Humidity, %
+            type: num
+            owm_matchstring@instance: current/humidity
+        dew_point:
+            name: Atmospheric temperature (varying according to pressure and humidity) below which water droplets begin to condense and dew can form. Units default kelvin, metric Celsius, imperial Fahrenheit.
+            type: num
+            owm_matchstring@instance: current/dew_point
+        clouds:
+            name: Cloudiness,%
+            type: num
+            owm_matchstring@instance: current/clouds
+        uvi:
+            name: Current UV index
+            type: num
+            owm_matchstring@instance: current/uvi
+        visibility:
+            name: Average visibility, metres
+            type: num
+            owm_matchstring@instance: current/visibility
+        wind_speed:
+            name: Wind speed. Wind speed. Units default metre/sec, metric metre/sec, imperial miles/hour.
+            type: num
+            owm_matchstring@instance: current/wind_speed
+
+            beaufort_nr:
+                name: wind speed as beaufort number
+                type: num
+                owm_matchstring: current/wind_speed/beaufort
+
+            beaufort_string:
+                name: wind speed as beaufort string
+                type: str
+                owm_matchstring: current/wind_speed/description
+
+        wind_gust:
+            name: (where available) Wind gust. Units default metre/sec, metric metre/sec, imperial miles/hour.
+            type: num
+            owm_matchstring@instance: current/wind_gust
+        wind_deg:
+            name: Wind direction, degrees (meteorological)
+            type: num
+            owm_matchstring@instance: current/wind_deg
+
+            wind_direction_string:
+                type: str
+                eval: "['N','NO','O','SO','S','SW','W','NW','N'][int((sh...() + 22.5) / 45)] if sh...() is not None else 'Update ausstehend'"
+                eval_trigger: ..
+        rain:
+            name: (where available) Rain volume for last hour, mm
+            type: num
+            owm_matchstring@instance: current/rain/1h
+        snow:
+            name: (where available) Snow volume for last hour, mm
+            type: num
+            owm_matchstring@instance: current/snow/1h
+        weather_id:
+            name: Weather condition id
+            type: num
+            owm_matchstring@instance: current/weather/0/id
+        weather_main:
+            name: Group of weather parameters (Rain, Snow, Extreme etc.)
+            type: str
+            owm_matchstring@instance: current/weather/0/main
+        weather_description:
+            name: Weather condition within the group (full list of weather conditions). Get the output in your language
+            type: str
+            owm_matchstring@instance: current/weather/0/description
+        weather_icon:
+            name: Weather icon id. How to get icons
+            type: str
+            owm_matchstring@instance: current/weather/0/icon
+
+    forecast_daily:
+        name: OpenWeatherMap daily weather forecast data
+        dt:
+            name: Time of the forecasted data, Unix, UTC
+            type: str
+            eval: datetime.datetime.fromtimestamp(value, datetime.timezone.utc).astimezone().strftime('%Y-%m-%d %H:%M:%S %Z%z')
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /dt
+        sunrise:
+            name: Sunrise time, Unix, UTC
+            type: str
+            eval: datetime.datetime.fromtimestamp(value, datetime.timezone.utc).astimezone().strftime('%Y-%m-%d %H:%M:%S %Z%z')
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /sunrise
+        sunset:
+            name: Sunset time, Unix, UTC
+            type: str
+            eval: datetime.datetime.fromtimestamp(value, datetime.timezone.utc).astimezone().strftime('%Y-%m-%d %H:%M:%S %Z%z')
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /sunset
+        moonrise:
+            name: The time of when the moon rises for this day, Unix, UTC
+            type: str
+            eval: datetime.datetime.fromtimestamp(value, datetime.timezone.utc).astimezone().strftime('%Y-%m-%d %H:%M:%S %Z%z')
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /moonrise
+        moonset:
+            name: The time of when the moon sets for this day, Unix, UTC
+            type: str
+            eval: datetime.datetime.fromtimestamp(value, datetime.timezone.utc).astimezone().strftime('%Y-%m-%d %H:%M:%S %Z%z')
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /moonset
+        moon_phase:
+            name: Moon phase. 0 and 1 are 'new moon', 0.25 is 'first quarter moon', 0.5 is 'full moon' and 0.75 is 'last quarter moon'. The periods in between are called 'waxing crescent', 'waxing gibous', 'waning gibous', and 'waning crescent', respectively.
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /moon_phase
+        temp:
+            name: Temperature. Units default kelvin, metric Celsius, imperial Fahrenheit.
+
+            temp_morn:
+                name: Morning temperature.
+                type: num
+                owm_match_prefix@instance: ...:.
+                owm_matchstring@instance: /temp/morn
+            temp_day:
+                name: Day temperature.
+                type: num
+                owm_match_prefix@instance: ...:.
+                owm_matchstring@instance: /temp/day
+            temp_eve:
+                name: Evening temperature.
+                type: num
+                owm_match_prefix@instance: ...:.
+                owm_matchstring@instance: /temp/eve
+            temp_night:
+                name: Night temperature.
+                type: num
+                owm_match_prefix@instance: ...:.
+                owm_matchstring@instance: /temp/night
+            temp_min:
+                name: Min daily temperature.
+                type: num
+                owm_match_prefix@instance: ...:.
+                owm_matchstring@instance: /temp/min
+            temp_max:
+                name: Max daily temperature.
+                type: num
+                owm_match_prefix@instance: ...:.
+                owm_matchstring@instance: /temp/max
+        feels_like:
+            name: This accounts for the human perception of weather. Units default kelvin, metric Celsius, imperial Fahrenheit.
+
+            feels_like_morn:
+                name: Morning temperature.
+                type: num
+                owm_match_prefix@instance: ...:.
+                owm_matchstring@instance: /feels_like/morn
+            feels_like_day:
+                name: Day temperature.
+                type: num
+                owm_match_prefix@instance: ...:.
+                owm_matchstring@instance: /feels_like/day
+            feels_like_eve:
+                name: Evening temperature.
+                type: num
+                owm_match_prefix@instance: ...:.
+                owm_matchstring@instance: /feels_like/eve
+            feels_like_night:
+                name: Night temperature.
+                type: num
+                owm_match_prefix@instance: ...:.
+                owm_matchstring@instance: /feels_like/night
+        pressure:
+            name: Atmospheric pressure on the sea level, hPa
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /pressure
+        humidity:
+            name: Humidity, %
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /humidity
+        dew_point:
+            name: Atmospheric temperature (varying according to pressure and humidity) below which water droplets begin to condense and dew can form. Units default kelvin, metric Celsius, imperial Fahrenheit.
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /dew_point
+        wind_speed:
+            name: Wind speed. Units default metre/sec, metric metre/sec, imperial miles/hour.
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /wind_speed
+        wind_gust:
+            name: (where available) Wind gust. Units default metre/sec, metric metre/sec, imperial miles/hour.
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /wind_gust
+        wind_deg:
+            name: Wind direction, degrees (meteorological)
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /wind_deg
+
+            wind_direction_string:
+                type: str
+                eval: "['N','NO','O','SO','S','SW','W','NW','N'][int((sh...() + 22.5) / 45)] if sh...() is not None else 'Update ausstehend'"
+                eval_trigger: ..
+
+        clouds:
+            name: Cloudiness, %
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /clouds
+        uvi:
+            name: The maximum value of UV index for the day
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /uvi
+        pop:
+            name: Probability of precipitation
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /pop
+        rain:
+            name: (where available) Precipitation volume, mm
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /rain
+        snow:
+            name: (where available) Snow volume, mm
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /snow
+        # weather:
+            # name:
+            # type:
+            # owm_matchstring@instance: /weather
+        weather_id:
+            name: Weather condition id
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /weather/0/id
+        weather_main:
+            name: Group of weather parameters (Rain, Snow, Extreme etc.)
+            type: str
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /weather/0/main
+        weather_description:
+            name: Weather condition within the group (full list of weather conditions). Get the output in your language
+            type: str
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /weather/0/description
+        weather_icon:
+            name: Weather icon id. How to get icons
+            type: str
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /weather/0/icon
+
+    forecast_hourly:
+        name: OpenWeatherMap hourly weather forecast data
+        dt:
+            name: Time of the forecasted data, Unix, UTC
+            type: str
+            eval: datetime.datetime.fromtimestamp(value, datetime.timezone.utc).astimezone().strftime('%Y-%m-%d %H:%M:%S %Z%z')
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /dt
+        temp:
+            name: Temperature. Units default kelvin, metric Celsius, imperial Fahrenheit. How to change units used
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /temp
+        feels_like:
+            name: Temperature. This accounts for the human perception of weather. Units default kelvin, metric Celsius, imperial Fahrenheit.
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /feels_like
+        pressure:
+            name: Atmospheric pressure on the sea level, hPa
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /pressure
+        humidity:
+            name: Humidity, %
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /humidity
+        dew_point:
+            name: Atmospheric temperature (varying according to pressure and humidity) below which water droplets begin to condense and dew can form. Units default kelvin, metric Celsius, imperial Fahrenheit.
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /dew_point
+        uvi:
+            name: UV index
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /uvi
+        clouds:
+            name: Cloudiness, %
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /clouds
+        visibility:
+            name: Average visibility, metres
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /visibility
+        wind_speed:
+            name: Wind speed. Units default metre/sec, metric metre/sec, imperial miles/hour. How to change units used
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /wind_speed
+        wind_gust:
+            name: (where available) Wind gust. Units default metre/sec, metric metre/sec, imperial miles/hour. How to change units used
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /wind_gust
+        wind_deg:
+            name: Wind direction, degrees (meteorological)
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /wind_deg
+        pop:
+            name: Probability of precipitation
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /pop
+        rain:
+            name: (where available) Rain volume for last hour, mm
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /rain/1h
+        snow:
+            name: (where available) Snow volume for last hour, mm
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /snow/1h
+        weather_id:
+            name: Weather condition id
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /weather/0/id
+        weather_main:
+            name: Group of weather parameters (Rain, Snow, Extreme etc.)
+            type: str
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /weather/0/main
+        weather_description:
+            name: Weather condition within the group (full list of weather conditions). Get the output in your language
+            type: str
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /weather/0/description
+        weather_icon:
+            name: Weather icon id. How to get icons
+            type: str
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /weather/0/icon
+
+    historical_daily:
+        name: OpenWeatherMap historical weather data for dedicated day
+        dt:
+            name: Time of the forecasted data, Unix, UTC
+            type: str
+            eval: datetime.datetime.fromtimestamp(value, datetime.timezone.utc).astimezone().strftime('%Y-%m-%d %H:%M:%S %Z%z')
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /dt
+        sunrise:
+            name: Sunrise time, Unix, UTC
+            type: str
+            eval: datetime.datetime.fromtimestamp(value, datetime.timezone.utc).astimezone().strftime('%Y-%m-%d %H:%M:%S %Z%z')
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /sunrise
+        sunset:
+            name: Sunset time, Unix, UTC
+            type: str
+            eval: datetime.datetime.fromtimestamp(value, datetime.timezone.utc).astimezone().strftime('%Y-%m-%d %H:%M:%S %Z%z')
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /sunset
+        temp:
+            name: Temperature. Units default kelvin, metric Celsius, imperial Fahrenheit.
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /temp
+        feels_like:
+            name: This accounts for the human perception of weather. Units default kelvin, metric Celsius, imperial Fahrenheit.
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /feels_like
+        pressure:
+            name: Atmospheric pressure on the sea level, hPa
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /pressure
+        humidity:
+            name: Humidity, %
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /humidity
+        dew_point:
+            name: Atmospheric temperature (varying according to pressure and humidity) below which water droplets begin to condense and dew can form. Units default kelvin, metric Celsius, imperial Fahrenheit.
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /dew_point
+        wind_speed:
+            name: Wind speed. Units default metre/sec, metric metre/sec, imperial miles/hour.
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /wind_speed
+        wind_gust:
+            name: (where available) Wind gust. Units default metre/sec, metric metre/sec, imperial miles/hour.
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /wind_gust
+        wind_deg:
+            name: Wind direction, degrees (meteorological)
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /wind_deg
+        clouds:
+            name: Cloudiness, %
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /clouds
+        uvi:
+            name: The maximum value of UV index for the day
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /uvi
+        rain:
+            name: (where available) Precipitation volume, mm
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /rain/1h
+        snow:
+            name: (where available) Snow volume, mm
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /snow/1h
+        # weather:
+            # name:
+            # type:
+            # owm_matchstring@instance: day/-0/weather
+        weather_id:
+            name: Weather condition id
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /weather/0/id
+        weather_main:
+            name: Group of weather parameters (Rain, Snow, Extreme etc.)
+            type: str
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /weather/0/main
+        weather_description:
+            name: Weather condition within the group (full list of weather conditions). Get the output in your language
+            type: str
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /weather/0/description
+        weather_icon:
+            name: Weather icon id. How to get icons
+            type: str
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /weather/0/icon
+
+    historical_hourly:
+        name: OpenWeatherMap historical weather data for dedicated hour
+        dt:
+            name: Time of the forecasted data, Unix, UTC
+            type: str
+            eval: datetime.datetime.fromtimestamp(value, datetime.timezone.utc).astimezone().strftime('%Y-%m-%d %H:%M:%S %Z%z')
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /dt
+        temp:
+            name: Temperature. Units default kelvin, metric Celsius, imperial Fahrenheit. How to change units used
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /temp
+        feels_like:
+            name: Temperature. This accounts for the human perception of weather. Units default kelvin, metric Celsius, imperial Fahrenheit.
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /feels_like
+        pressure:
+            name: Atmospheric pressure on the sea level, hPa
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /pressure
+        humidity:
+            name: Humidity, %
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /humidity
+        dew_point:
+            name: Atmospheric temperature (varying according to pressure and humidity) below which water droplets begin to condense and dew can form. Units default kelvin, metric Celsius, imperial Fahrenheit.
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /dew_point
+        clouds:
+            name: Cloudiness, %
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /clouds
+        visibility:
+            name: Average visibility, metres
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /visibility
+        wind_speed:
+            name: Wind speed. Units default metre/sec, metric metre/sec, imperial miles/hour.How to change units used
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /wind_speed
+        wind_gust:
+            name: (where available) Wind gust. Units default metre/sec, metric metre/sec, imperial miles/hour. How to change units used
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /wind_gust
+        wind_deg:
+            name: Wind direction, degrees (meteorological)
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /wind_deg
+        rain:
+            name: (where available) Rain volume for last hour, mm
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /rain/1h
+        snow:
+            name: (where available) Snow volume for last hour, mm
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /snow/1h
+        weather_id:
+            name: Weather condition id
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /weather/0/id
+        weather_main:
+            name: Group of weather parameters (Rain, Snow, Extreme etc.)
+            type: str
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /weather/0/main
+        weather_description:
+            name: Weather condition within the group (full list of weather conditions). Get the output in your language
+            type: str
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /weather/0/description
+        weather_icon:
+            name: Weather icon id. How to get icons
+            type: str
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /weather/0/icon
+
+    alerts:
+        name: OpenWeatherMap national weather alerts data from major national weather warning systems
+
+        sender_name:
+            name: Name of the alert source.
+            type: str
+            owm_matchstring@instance: alerts/0/sender_name
+        event:
+            name: Alert event name
+            type: str
+            owm_matchstring@instance: alerts/0/event
+        start:
+            name: Date and time of the start of the alert, Unix, UTC
+            type: str
+            eval: datetime.datetime.fromtimestamp(value, datetime.timezone.utc).astimezone().strftime('%Y-%m-%d %H:%M:%S %Z%z')
+            owm_matchstring@instance: alerts/0/start
+        end:
+            name: Date and time of the end of the alert, Unix, UTC
+            type: str
+            eval: datetime.datetime.fromtimestamp(value, datetime.timezone.utc).astimezone().strftime('%Y-%m-%d %H:%M:%S %Z%z')
+            owm_matchstring@instance: alerts/0/end
+        description:
+            name: Description of the alert
+            type: str
+            owm_matchstring@instance: alerts/0/description
+
+
+    darksky2owm_locals:
+        name: Locals report openweathermap matching item defined in darksky-plugin struct
+
+        latitude:
+            type: num
+            owm_matchstring@instance: lat
+
+        longitude:
+            type: num
+            owm_matchstring@instance: lon
+
+        timezone:
+            type: str
+            owm_matchstring@instance: timezone
+
+    darksky2owm_current_weather:
+        name: Current weather of Weather report from openweathermap matching item defined in darksky-plugin struct
+
+        time_epoch:
+            type: num
+            owm_matchstring@instance: current/dt
+
+        time:
+            type: str
+            eval_trigger: ..time_epoch
+            eval: datetime.datetime.fromtimestamp(sh...time_epoch()).strftime('%HH:%MM')
+
+        summary:
+            type: str
+            owm_matchstring@instance: current/weather/0/description
+
+        icon:
+            type: str
+            owm_matchstring@instance: current/weather/0/icon
+
+        icon_visu:
+            type: str
+            owm_matchstring@instance: current/weather/0/icon
+
+        # nearestStormDistance:
+            # type: num
+            # ds_matchstring@instance: currently/nearestStormDistance
+
+        # precipIntensity:
+            # type: num
+            # ds_matchstring@instance: currently/precipIntensity
+            # database: init
+
+        # precipIntensityError:
+            # type: num
+            # ds_matchstring@instance: currently/precipIntensityError
+
+        # precipProbability:
+            # type: num
+            # ds_matchstring@instance: currently/precipProbability
+            # database: init
+
+        # precipType:
+            # type: str
+            # ds_matchstring@instance: currently/precipType
+
+        temperature:
+            type: num
+            owm_matchstring@instance: current/temp
+
+        apparenttemperature:
+            type: num
+            owm_matchstring@instance: current/feels_like
+
+        dewpoint:
+            type: num
+            owm_matchstring@instance: current/dew_point
+
+        humidity:
+            type: num
+            owm_matchstring@instance: current/humidity
+
+        pressure:
+            type: num
+            owm_matchstring@instance: current/pressure
+
+        windSpeed:
+            type: num
+            owm_matchstring@instance: current/wind_speed
+
+        windGust:
+            type: num
+            owm_matchstring@instance: current/wind_gust
+
+        windBearing:
+            type: num
+            owm_matchstring@instance: current/wind_deg
+
+        cloudCover:
+            type: num
+            owm_matchstring@instance: current/clouds
+
+        uvIndex:
+            type: num
+            owm_matchstring@instance: current/uvi
+
+        visibility:
+            type: num
+            owm_matchstring@instance: current/visibility
+
+        ozone:
+            type: num
+            owm_matchstring@instance: airpollution/components/o3
+
+        date:
+            type: str
+            eval: datetime.datetime.fromtimestamp(sh...time_epoch(), datetime.timezone.utc).astimezone().strftime('%d.%m.%Y')
+            eval_trigger: ..time_epoch
+
+        day:
+            type: num
+            eval: datetime.datetime.fromtimestamp(sh...time_epoch(), datetime.timezone.utc).astimezone().strftime('%w')
+            eval_trigger: ..time_epoch
+
+    darksky2owm_forecast_hourly:
+        name: Hourly forcast of Weather report from openweathermap matching item defined in darksky-plugin struct
+
+        time_epoch:
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /dt
+
+        time:
+            type: str
+            eval_trigger: ..time_epoch
+            eval: datetime.datetime.fromtimestamp(sh...time_epoch()).strftime('%HH:%MM')
+
+        summary:
+            type: str
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /weather/0/description
+
+        icon:
+            type: str
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /weather/0/icon
+
+        icon_visu:
+            type: str
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /weather/0/icon
+
+        # nearestStormDistance:
+            # type: num
+            # ds_matchstring@instance: hourly/hour0/nearestStormDistance
+
+        # precipIntensity:
+            # type: num
+            # ds_matchstring@instance: hourly/hour0/precipIntensity
+            # database: init
+
+        # precipIntensityError:
+            # type: num
+            # ds_matchstring@instance: hourly/hour0/precipIntensityError
+
+        # precipProbability:
+            # type: num
+            # ds_matchstring@instance: hourly/hour0/precipProbability
+            # database: init
+
+        # precipType:
+            # type: str
+            # ds_matchstring@instance: hourly/hour0/precipType
+
+        temperature:
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /temp
+
+        apparenttemperature:
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /feels_like
+
+        dewpoint:
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /dew_point
+
+        humidity:
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /humidity
+
+        pressure:
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /pressure
+
+        windSpeed:
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /wind_speed
+
+        windGust:
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /wind_gust
+
+        windBearing:
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /wind_deg
+
+        cloudCover:
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /clouds
+
+        uvIndex:
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /uvi
+
+        visibility:
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /visibility
+
+        # ozone:
+            # type: num
+            # ds_matchstring@instance: hourly/hour0/ozone
+            # database: init
+
+        date:
+            type: str
+            eval: datetime.datetime.fromtimestamp(sh...time_epoch(), datetime.timezone.utc).astimezone().strftime('%d.%m.%Y')
+            eval_trigger: ..time_epoch
+
+        weekday:
+            type: str
+            eval: datetime.datetime.fromtimestamp(sh...time_epoch(), datetime.timezone.utc).astimezone().strftime('%w')
+            eval_trigger: ..time_epoch
+
+    darksky2owm_forecast_daily:
+        name: Daily forcast of Weather report from openweathermap matching item defined in darksky-plugin struct
+
+        time_epoch:
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /dt
+
+        time:
+            type: str
+            eval_trigger: ..time_epoch
+            eval: datetime.datetime.fromtimestamp(sh...time_epoch()).strftime('%HH:%MM')
+
+        summary:
+            type: str
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /weather/0/description
+
+        icon:
+            type: str
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /weather/0/icon
+
+        icon_visu:
+            type: str
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /weather/0/icon
+
+        # nearestStormDistance:
+            # type: num
+            # ds_matchstring@instance: daily/day0/nearestStormDistance
+
+        # precipIntensity:
+            # type: num
+            # ds_matchstring@instance: daily/day0/precipIntensity
+            # database: init
+            # database_maxage: 92
+
+        # precipIntensityError:
+            # type: num
+            # ds_matchstring@instance: daily/day0/precipIntensityError
+
+        # precipProbability:
+            # type: num
+            # ds_matchstring@instance: daily/day0/precipProbability
+            # database: init
+            # database_maxage: 92
+
+        # precipType:
+            # type: str
+            # ds_matchstring@instance: daily/day0/precipType
+
+        temperature:
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /temp/max
+
+        apparenttemperature:
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /feels_like/day
+
+        dewpoint:
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /dew_point
+
+        humidity:
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /humidity
+
+        pressure:
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /pressure
+
+        windSpeed:
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /wind_speed
+
+        windGust:
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /wind_gust
+
+        windBearing:
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /wind_deg
+
+        cloudCover:
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /clouds
+
+        uvIndex:
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /uvi
+
+        # visibility:
+            # type: num
+            # ds_matchstring@instance: daily/day0/visibility
+            # database: init
+            # database_maxage: 92
+
+        # ozone:
+            # type: num
+            # ds_matchstring@instance: daily/day0/ozone
+            # database: init
+            # database_maxage: 92
+
+        temperatureMin:
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /temp/min
+
+        # temperatureMinTime:
+            # type: num
+            # ds_matchstring@instance: daily/day0/temperatureMinTime
+            # database: init
+            # database_maxage: 92
+
+        temperatureMax:
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /temp/max
+
+        # temperatureMaxTime:
+            # type: num
+            # ds_matchstring@instance: daily/day0/temperatureMaxTime
+            # database: init
+            # database_maxage: 92
+
+        # apparentTemperatureMin:
+            # type: num
+            # ds_matchstring@instance: daily/day0/apparentTemperatureMin
+            # database: init
+            # database_maxage: 92
+
+        # apparentTemperatureMinTime:
+            # type: num
+            # ds_matchstring@instance: daily/day0/apparentTemperatureMinTime
+            # database: init
+            # database_maxage: 92
+
+        # apparentTemperatureMax:
+            # type: num
+            # ds_matchstring@instance: daily/day0/apparentTemperatureMax
+            # database: init
+            # database_maxage: 92
+
+        # apparentTemperatureMaxTime:
+            # type: num
+            # ds_matchstring@instance: daily/day0/apparentTemperatureMaxTime
+            # database: init
+            # database_maxage: 92
+
+        date:
+            type: str
+            eval: datetime.datetime.fromtimestamp(sh...time_epoch(), datetime.timezone.utc).astimezone().strftime('%d.%m.%Y')
+            eval_trigger: ..time_epoch
+
+        weekday:
+            type: num
+            eval: datetime.datetime.fromtimestamp(sh...time_epoch(), datetime.timezone.utc).astimezone().strftime('%w')
+            eval_trigger: ..time_epoch
+
+
+        precipProbability_mean:
+            type: num
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /pop
+
 
 logic_parameters: NONE
     # Definition of logic parameters defined by this plugin
 
-plugin_functions: NONE
+plugin_functions:
     # Definition of function interface of the plugin
+    get_value:
+        type: void
+        description:
+            de: "Lädt einen Wert"
+            en: "Reads a value"
+        parameters:
+            owm_matchstring:
+                type: str
+                description:
+                    de: "Zum Beispiel /day/0/rain"
+                    en: "E.g. /day/0/rain"
 
+    get_beaufort_description:
+        type: str
+        description:
+            de: ""
+            en: ""
+        parameters:
+            speed_in_bft:
+                type: num
+                description:
+                    de: "Windstärke in bft, integer zwischen 0 und 12"
+                    en: "Wind-speed in bft, integer between 0 und 12"
+
+    get_beaufort_number:
+        type: num
+        description:
+            de: "Berechnet den Beaufort-Wert (0 - 12) aus der Windgeschwindigkeit in m/s"
+            en: "Translates a wind-speed from m/s to beaufort-scale (0 - 12)"
+        parameters:
+            speed_in_mps:
+                type: num
+                description:
+                    de: "Windstärke in m/s"
+                    en: "Wind-speed in m/s"
+
+    get_raw_data_file:
+        type: str
+        description:
+            de: "Stellt die JSON-Datei der Datenquelle bereit"
+            en: "Allows access to the JSON-String of the raw-file"
+        parameters:
+            data_source_key:
+                type: str
+                description:
+                    de: "Datenquelle"
+                    en: "Data source key"

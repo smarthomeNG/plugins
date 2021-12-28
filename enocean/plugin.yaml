@@ -89,12 +89,22 @@ item_attributes:
         - 'TOGGLE'
         - 'SET'
 
-
     enocean_rocker_sequence:
         type: str
         description:
             de: 'Tastersequenz'
             en: 'Rocker action sequence'
+
+    enocean_device:
+        type: str
+        description:
+            de: 'Enocean Geraetetyp'
+            en: 'Enocean device type'
+        mandatory: 'False'
+        valid_list:
+        - 'FSUD-230V'
+        - 'FUD61NPN-230V'
+        - 'FSUD-230V'
 
     block_switch:
         type: str

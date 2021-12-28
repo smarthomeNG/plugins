@@ -5,14 +5,40 @@
 
 {%- block scripts %}
 {{ super() }}
-<script src="/gstatic/bootstrap-datepicker/dist/js/bootstrap-datepicker.min.js"></script>
-<script src="/gstatic/bootstrap-datepicker/dist/locales/bootstrap-datepicker.de.min.js"></script>
-<script src="/gstatic/bootstrap-datepicker/dist/locales/bootstrap-datepicker.fr.min.js"></script>
+<script src="/gstatic/bootstrap-datepicker/js/bootstrap-datepicker.min.js"></script>
+<script src="/gstatic/bootstrap-datepicker/locales/bootstrap-datepicker.de.min.js"></script>
+<script src="/gstatic/bootstrap-datepicker/locales/bootstrap-datepicker.fr.min.js"></script>
+<script type="text/javascript" charset="utf8" src="static/datatables.js"></script>
 {%- endblock scripts %}
+
+{%- block pluginscripts %}
+<script>
+$(document).ready( function () {
+    $('#itemtable').DataTable( {
+        "paging": false,
+        fixedHeader: true,
+        columnDefs: [{
+          orderable: false,
+          targets: "no-sort"
+        }]
+        } );
+    $('#item_details_table').DataTable( {
+        "paging": false,
+        fixedHeader: true,
+        columnDefs: [{
+          orderable: false,
+          targets: "no-sort"
+        }]
+        } );
+} );
+
+</script>
+{%- endblock pluginscripts %}
 
 {%- block styles %}
 {{ super() }}
-<link rel="stylesheet" href="/gstatic/bootstrap-datepicker/dist/css/bootstrap-datepicker.min.css" type="text/css"/>
+<link rel="stylesheet" href="/gstatic/bootstrap-datepicker/css/bootstrap-datepicker.min.css" type="text/css"/>
+<link rel="stylesheet" type="text/css" href="static/datatables.css">
 {%- endblock styles %}
 
 {% block headtable %}

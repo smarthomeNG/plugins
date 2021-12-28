@@ -2,10 +2,11 @@ onewire
 =======
 
 Der 1-Wire bzw. One-Wire oder Eindraht-Bus ist ein Bussystem das mit 2 oder 3 Einzeladern betrieben werden wird.
-Es gibt einen parasitären Modus in dem nur 2 Kabel genutzt werden und einen Modus in dem eine Zusatzspannung von 5V genutzt wird.
+Es gibt einen parasitären Modus in dem nur 2 Adern genutzt werden und einen Modus in dem eine Zusatzspannung von 5V genutzt wird.
 
 Es gibt für dieses System recht günstige Sensoren so das die Nutzung zur
-Temperaturmessung, Feuchtigkeitsmesung, Akkuüberwachung etc. nicht sehr kosteninstensiv ist.
+Temperaturmessung, Feuchtigkeitsmesung, Akkuüberwachung etc. 
+im Vergleich zu anderen Systemen wie z.B. KNX recht kostengünstig ist.
 
 Anforderungen
 -------------

@@ -1,23 +1,25 @@
-# Metadata for the Smart-Plugin
+# Metadata for the JSONread-Plugin
 plugin:
     # Global plugin attributes
     type: interface               # plugin type (gateway, interface, protocol, system, web)
     description:
-        de: 'json parser plugin basierend auf jq'
+        de: 'json Parser Plugin basierend auf jq'
         en: 'json parser plugin based on jq'
     maintainer: Torsten Dreyer
     tester: none (yet)
     state: develop
-    keywords: json
+    keywords: json jq
     documentation: http://smarthomeng.de/user/plugins_doc/config/not-yet.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/not-yet
 
-    version: 1.0.1                 # Plugin version
+    version: 1.0.2                 # Plugin version
     sh_minversion: 1.4             # minimum shNG version to use this plugin
-#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    #sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    #py_minversion: 3.6             # minimum Python version to use for this plugin
+    #py_maxversion:                 # maximum Python version to use for this plugin (leave empty if latest)
     restartable: True
-    multi_instance: True          # plugin supports multi instance
-    classname: JSONREAD             # class containing the plugin
+    multi_instance: True           # plugin supports multi instance
+    classname: JSONREAD            # class containing the plugin
 
 parameters:
     # Definition of parameters to be configured in etc/plugin.yaml
@@ -25,15 +27,17 @@ parameters:
         type: str
         mandatory: True
         description:
-            de: 'URL der json Eingabe-Daten (z.B. http://foo.bar/input.json oder file:///pfad/zu/data.json)'
-            en: 'URL of the json input (e.g. http://foo.bar/input.json or file:///path/to/data.json)'
+            de: >
+                URL der JSON Datenquelle. Aktuell unterstützt werden Webprotokolle https:// und http:// sowie ein Dateiadapter file:/// (benötigt wirklich 3 Schrägstriche)
+            en: >
+                URL of the JSON source. Currently supported are web protocols https:// and http:// as well as file adapter file:/// (which needs indeed 3 slashes)
     cycle:
         type: int
         default: 30
         valid_min: 0
         description:
-            de: 'Das Abfrage-Intervall für die gegebene URL in Sekunden'
-            en: 'The polling interval for the given url in seconds'
+            de: 'Das Abfrage-Intervall für die gegebene Datenquelle in Sekunden'
+            en: 'The polling interval for the given data source in seconds'
 
 
 item_attributes:
@@ -41,14 +45,18 @@ item_attributes:
     jsonread_filter:
         type: str
         description:
-            de: 'Pfad zum Element innerhalb eines Abfrageergebnisses dessen Wert dem Item zugewiesen werden soll'
-            en: 'Path to an element with the JSON result that should be assigned as item value'
+            de: 'JQ Pfad um innerhalb eines JSON Datensatzes einen Wert auszuwählen. Dieser Wert wird dem Item dann zugewiesen'
+            en: 'JQ path to select a value from JSON dataset. The Item will then receive this value'
 
 item_structs: NONE
     # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
 
+#item_attribute_prefixes:
+    # Definition of item attributes that only have a common prefix (enter 'item_attribute_prefixes: NONE' or ommit this section, if section should be empty)
+    # NOTE: This section should only be used, if really nessesary (e.g. for the stateengine plugin)
+
 logic_parameters: NONE
-    # Definition of logic parameters defined by this plugin
+    # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)
 
 plugin_functions: NONE
     # Definition of function interface of the plugin

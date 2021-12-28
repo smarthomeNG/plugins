@@ -73,14 +73,20 @@ class IMAP(SmartPlugin):
             return
         if rsp != 'OK':
             self.logger.warning("IMAP: Could not select mailbox")
-            imap.close()
-            imap.logout()
+            try:
+                imap.close()
+                imap.logout()
+            except Exception:
+                pass
             return
         rsp, data = imap.uid('search', None, "ALL")
         if rsp != 'OK':
             self.logger.warning("IMAP: Could not search mailbox")
-            imap.close()
-            imap.logout()
+            try:
+                imap.close()
+                imap.logout()
+            except Exception:
+                pass
             return
         uids = data[0].split()
         for uid in uids:
@@ -152,8 +158,11 @@ class IMAP(SmartPlugin):
                             self.logger.info("No trash mailboxes available")
             else:
                 self.logger.info("Ignoring mail. {0} => {1}: {2}".format(fo, to, subject))
-        imap.close()
-        imap.logout()
+        try:
+            imap.close()
+            imap.logout()
+        except Exception:
+            pass
 
     def run(self):
         self.alive = True

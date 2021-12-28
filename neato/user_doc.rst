@@ -12,6 +12,24 @@ Konfiguration
 
 Die Informationen zur Konfiguration des Plugins sind unter :doc:`/plugins_doc/config/neato` beschrieben.
 
+Requirements
+=============
+- locale en_US.utf8 must be installed (sudo dpkg-reconfigure locales)
+
+Supported Hardware
+==================
+
+=============== ========= ======
+Robot           Supported Tested
+=============== ========= ======
+Neato Botvac D3 yes       no
+Neato Botvac D4 yes       no
+Neato Botvac D5 yes       yes
+Neato Botvac D6 yes       no
+Neato Botvac D7 yes       no
+Vorwerk VR300   yes       yes
+=============== ========= ======
+
 
 Web Interface
 =============
@@ -45,3 +63,23 @@ Im ersten Tab Vorwerk OAuth2 findet sich direkt die Schritt fuer Schritt Anleitu
 .. image:: assets/webif1.jpg
    :class: screenshot
 
+Changelog
+---------
+V1.6.6     added option to clear errors/alarms in neato/vorwerk backend via plugin's webif
+
+V1.6.5     added new function start_robot(boundary_id=None, map_id=None) to enable single room cleaning
+           added new function get_map_boundaries_robot(map_id=None) to request available map boundaries (rooms) for a given map
+           added new function dismiss_current_alert() to reset current alerts
+
+V 1.6.4    fixed readout for docking state and go to base availability
+           combined all neato attribues into one
+
+V 1.6.3    changed attribute charge_percentage from string to integer
+           added alert text output, e.g. dustbin full
+           Write obtained OAuth2 token obtained via web interface directly to config plugin.yaml
+
+V 1.6.2    Added webinterface
+
+V 1.6.1    Added new Vorwerk Oauth2 based authentication feature (compatible with myKobold APP)
+
+V 1.6.0    Initial working version

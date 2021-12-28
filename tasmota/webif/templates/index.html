@@ -9,7 +9,49 @@
 	Additional script tag for plugin specific javascript code go into this block
 -->
 {% block pluginscripts %}
-<script>
+/*
+ * The combined file was created by the DataTables downloader builder:
+ *   https://datatables.net/download
+ *
+ * To rebuild or modify this file with the latest versions of the included
+ * software please visit:
+ *   https://datatables.net/download/#dt/dt-1.10.21/fh-3.1.7/r-2.2.5
+ *
+ * Included libraries:
+ *   DataTables 1.10.4, FixedHeader 3.1.8, Responsive 2.2.7
+ */
+<link rel="stylesheet" type="text/css" href="static/datatables.min.css">
+<script type="text/javascript" charset="utf8" src="static/datatables.min.js"></script>
+
+<script type="text/javascript">
+
+	$(document).ready( function () {
+	    $('#itemtable').DataTable( {
+	        "paging": false,
+	        fixedHeader: true
+	        } );
+	    $('#devicetable').DataTable( {
+	    	"paging": false,
+	    	fixedHeader: true
+	    	} );
+        $('#energytable').DataTable( {
+	    	"paging": false,
+	    	fixedHeader: true
+	    	} );
+        $('#environtable').DataTable( {
+	    	"paging": false,
+	    	fixedHeader: true
+	    	} );
+        $('#lightstable').DataTable( {
+	    	"paging": false,
+	    	fixedHeader: true
+	    	} );
+        $('#rftable').DataTable( {
+	    	"paging": false,
+	    	fixedHeader: true
+	    	} );
+	});
+
 	function handleUpdatedData(response, dataSet=null) {
 		if (dataSet === 'devices_info' || dataSet === null) {
 			var objResponse = JSON.parse(response);
@@ -44,19 +86,19 @@
 	<table class="table table-striped table-hover">
 		<tbody>
 			<tr>
-				<td class="py-1"><strong>{{_('Broker Host')}}</strong></td>
-				<td class="py-1">{{ p.broker_config.host }}</td>
-				<td class="py-1" width="50px"></td>
-				<td class="py-1"><strong>{{_('Broker Port')}}</strong></td>
-				<td class="py-1">{{ p.broker_config.port }}</td>
-				<td class="py-1" width="50px"></td>
+				<td><strong>{{_('Broker Host')}}</strong></td>
+				<td>{{ p.broker_config.host }}</td>
+				<td width="50px"></td>
+				<td><strong>{{_('Broker Port')}}</strong></td>
+				<td>{{ p.broker_config.port }}</td>
+				<td width="50px"></td>
 			</tr>
 			<tr>
-				<td class="py-1"><strong>{{_('Benutzer')}}</strong></td>
-				<td class="py-1">{{ p.broker_config.user }}</td>
+				<td><strong>{{_('Benutzer')}}</strong></td>
+				<td>{{ p.broker_config.user }}</td>
 				<td></td>
-				<td class="py-1"><strong>{{_('Passwort')}}</strong></td>
-				<td class="py-1">
+				<td><strong>{{_('Passwort')}}</strong></td>
+				<td>
 				{% if p.broker_config.password %}
 					{% for letter in p.broker_config.password %}*{% endfor %}
 				{% endif %}
@@ -64,11 +106,11 @@
 				<td></td>
 			</tr>
 			<tr>
-				<td class="py-1"><strong>{{_('QoS')}}</strong></td>
-				<td class="py-1">{{ p.broker_config.qos }}</td>
+				<td><strong>{{_('QoS')}}</strong></td>
+				<td>{{ p.broker_config.qos }}</td>
 				<td></td>
-				<td class="py-1"><strong>{{_('full_topic')}}</strong></td>
-				<td class="py-1">{{ p.full_topic }}</td>
+				<td><strong>{{_('full_topic')}}</strong></td>
+				<td>{{ p.full_topic }}</td>
 				<td></td>
 			</tr>
 		</tbody>
@@ -85,7 +127,7 @@
 <!--
 	Define the number of tabs for the body of the web interface (1 - 3)
 -->
-{% set tabcount = 4 %}
+{% set tabcount = 6 %}
 
 
 <!--
@@ -99,184 +141,379 @@
 <!--
 	Content block for the first tab of the Webinterface
 -->
-{% set tab1title = "<strong>" ~ p.get_shortname() ~ " Items</strong>" %}
-{% block bodytab1 %}
-<table class="table table-striped table-hover pluginList">
-	<thead>
-	<tr>
-		<th>{{ _('Item') }}</th>
-		<th>{{ _('Typ') }}</th>
-		<th>{{ _('Wert') }}</th>
-<!--
-		<th>{{ _('Tasmota Device') }}</th>
--->
-		<th>{{ _('Tasmota Topic') }}</th>
-		<th>{{ _('Relais') }}</th>
-		<th>{{ _('Letztes Update') }}</th>
-		<th>{{ _('Letzter Change') }}</th>
-	</tr>
-	</thead>
-	{% for item in p.tasmota_items %}
-		<tr>
-			<td class="py-1">{{ item._path }}</td>
-			<td class="py-1">{{ item._type }}</td>
-			<td id="{{ item.id() }}_value" class="py-1">{{ item() }}</td>
-<!--
-			<td class="py-1">{{ p.get_iattr_value(item.conf, 'tasmota_type') }}</td>
--->
-			<td class="py-1">{{ p.get_iattr_value(item.conf, 'tasmota_topic') }}</td>
+{% set tab1title = "<strong>" ~ " Items</strong>" %}
 
-			<td class="py-1">{{ p.tasmota_devices[p.get_iattr_value(item.conf, 'tasmota_topic')]['relay'] }}</td>
-			<td id="{{ item.id() }}_last_update" class="py-1">{{ item.last_update().strftime('%d.%m.%Y %H:%M:%S') }}</td>
-			<td id="{{ item.id() }}_last_change" class="py-1">{{ item.last_change().strftime('%d.%m.%Y %H:%M:%S') }}</td>
-		</tr>
-	{% endfor %}
-</table>
+{% block bodytab1 %}
+<div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
+	<div class="col-sm-12">
+        {% if p.tasmota_items|length %}
+            <table id="itemtable" class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>{{ _('Item') }}</th>
+                        <th>{{ _('Typ') }}</th>
+                        <th>{{ _('Wert') }}</th>
+                <!--
+                        <th>{{ _('Tasmota Device') }}</th>
+                -->
+                        <th>{{ _('Tasmota Topic') }}</th>
+                        <th>{{ _('Relais') }}</th>
+                        <th>{{ _('Letztes Update') }}</th>
+                        <th>{{ _('Letzter Change') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in p.tasmota_items %}
+                        <tr>
+                            <td>{{ item._path }}</td>
+                            <td>{{ item._type }}</td>
+                            <td id="{{ item.id() }}_value" class="py-1">{{ item() }}</td>
+                <!--
+                            <td>{{ p.get_iattr_value(item.conf, 'tasmota_type') }}</td>
+                -->
+                            <td>{{ p.get_iattr_value(item.conf, 'tasmota_topic') }}</td>
+                            
+                            {%  if p.get_iattr_value(item.conf, 'tasmota_relay') is in ['1', '2', '3', '4', '5', '6', '7', '8'] %}
+                                <td>{{ p.get_iattr_value(item.conf, 'tasmota_relay') }}</td>
+                            {%  elif p.get_iattr_value(item.conf, 'tasmota_attr') == 'relay' %}   
+                                <td>1</td>
+                            {% else %}
+                                <td>-</td>
+                            {% endif %}
+
+                            <td id="{{ item.id() }}_last_update" class="py-1">{{ item.last_update().strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                            <td id="{{ item.id() }}_last_change" class="py-1">{{ item.last_change().strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+	</div>
+</div>
 {% endblock %}
 
 
 <!--
 	Content block for the second tab of the Webinterface
 -->
-{% set tab2title = "<strong>" ~ p.get_shortname() ~ " Devices</strong>" %}
+{% set tab2title = "<strong>" ~ " Devices</strong>" %}
+
 {% block bodytab2 %}
-<table class="table table-striped table-hover pluginList">
-	<thead>
-	<tr>
-		<th>{{ _('Tasmota Topic') }}</th>
-		<th>{{ _('Online') }}</th>
-		<th>{{ _('Friendy Name') }}</th>
-		<th>{{ _('Mac Adresse') }}</th>
-		<th>{{ _('IP Adresse') }}</th>
-		<th>{{ _('Uptime') }}</th>
-		<th>{{ _('Sensor Type') }}</th>
-		<th>{{ _('Firmware Version') }}</th>
-	</tr>
-	</thead>
-	{% for device in p.tasmota_devices %}
-		<tr>
-			<td class="py-1"><a class="text-shng" href="http://{{ p.tasmota_devices[device].ip }}" target="_blank">{{ device }}</a></td>
-			<td class="py-1">{{ p.tasmota_devices[device].online }}</td>
-			<td class="py-1">{{ p.tasmota_devices[device].friendly_name }}</td>
-			<td class="py-1">{{ p.tasmota_devices[device].mac }}</td>
-			<td class="py-1">{{ p.tasmota_devices[device].ip }}</td>
-			<td class="py-1">{{ p.tasmota_devices[device].uptime }}</td>
-			<td class="py-1">{{ p.tasmota_devices[device].sensortype }}</td>
-			<td class="py-1">{{ p.tasmota_devices[device].fw_ver }}</td>
-		</tr>
-	{% endfor %}
-</table>
+<div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
+	<div class="col-sm-12">
+		{% if p.tasmota_devices|length %}
+            <table id="devicetable" class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>{{ _('Tasmota Topic') }}</th>
+                        <th>{{ _('Online') }}</th>
+                        <th>{{ _('Friendy Name') }}</th>
+                        <th>{{ _('Mac Adresse') }}</th>
+                        <th>{{ _('IP Adresse') }}</th>
+                        <th>{{ _('Uptime') }}</th>
+                        <th>{{ _('Sensor Type') }}</th>
+                        <th>{{ _('Firmware Version') }}</th>
+                        <th>{{ _('Module') }}</th>
+                        <th>{{ _('Wifi') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for device in p.tasmota_devices %}
+                        {% if 'fw_ver' in p.tasmota_devices[device] %}  <!-- Nur die Devices darstellen, die wirklich TASMOTA Devices sind; Zur Prüfung wird die Firmware hergenommen -->
+                            <tr>
+                                <td><a class="text-shng" href="http://{{ p.tasmota_devices[device].ip }}" target="_blank">{{ device }}</a></td>
+                                <td>{{ p.tasmota_devices[device].online }}</td>
+                                <td>{{ p.tasmota_devices[device].friendly_name }}</td>
+                                <td>{{ p.tasmota_devices[device].mac }}</td>
+                                <td>{{ p.tasmota_devices[device].ip }}</td>
+                                <td>{{ p.tasmota_devices[device].uptime }}</td>
+                                <td>
+                                    {% if p.tasmota_devices[device]['sensors'] != {} %}
+                                        {% for key in p.tasmota_devices[device]['sensors'] %}
+                                            {{ key }}
+                                            {%if not loop.last%}, {%endif%}
+                                        {% endfor %}
+                                    {% else %}
+                                            -
+                                    {% endif %}
+                                </td>
+                                <td>{{ p.tasmota_devices[device].fw_ver }}</td>
+                                <td>{{ p.tasmota_devices[device].module }}</td>
+                                {%  if p.tasmota_devices[device]['wifi_signal'] %}
+                                    <td>{{ p.tasmota_devices[device].wifi_signal }} dBm </td>
+                                {% else %}
+                                    <td></td>
+                                {% endif %}
+                            </tr>
+                        {% endif %}
+                    {% endfor %}
+                </tbody>
+            </table>
+		{% endif %}
+	</div>
+</div>
 {% endblock %}
-
-
-<!--
-	Content block for the fourth tab of the Webinterface
-	If wanted, a title for the tab can be defined as:
-		{  % set tab3title = "<strong>" ~ p.get_shortname() ~ " Geräte</strong>" % }
-
-	It has to be defined before (and outside) the block bodytab3
--->
-{% set tab3title = "<strong>" ~ p.get_shortname() ~ " " ~ _('Energie') ~ "</strong>" %}
-{% block bodytab3 %}
-<table class="table table-striped table-hover pluginList">
-	<thead>
-	<tr>
-		<th>{{ _('Tasmota Topic') }}</th>
-		<th>{{ _('Spannung') }}</th>
-		<th>{{ _('Strom') }}</th>
-		<th>{{ _('Leistung') }}</th>
-		<!--
-		<th>{{ _('Schein Leistung') }}</th>
-		<th>{{ _('Blind Leistung') }}</th>
-		-->
-		<th>{{ _('Heute') }}</th>
-		<th>{{ _('Gestern') }}</th>
-		<th>{{ _('Gesamt') }}</th>
-		<th width="200">{{ _('Gesamt - Startzeit') }}</th>
-	</tr>
-	</thead>
-	{% for device in p.tasmota_devices %}
-		<tr>
-			<td class="py-1"><a class="text-shng" href="http://{{ p.tasmota_devices[device].ip }}" target="_blank">{{ device }}</a></td>
-			{%  if p.tasmota_devices[device]['energy_sensors'] == {} %}
-				<td class="py-1">-</td>
-				<td class="py-1">-</td>
-				<td class="py-1">-</td>
-		<!--
-				<td class="py-1">-</td>
-				<td class="py-1">-</td>
-		-->
-				<td class="py-1">-</td>
-				<td class="py-1">-</td>
-				<td class="py-1">-</td>
-				<td class="py-1">-</td>
-			{% else %}
-				<td class="py-1">{{ p.tasmota_devices[device].energy_sensors.voltage }}V</td>
-				<td class="py-1">{{ p.tasmota_devices[device].energy_sensors.current }}A</td>
-				<td class="py-1">{{ p.tasmota_devices[device].energy_sensors.power }}W</td>
-		<!--
-				<td class="py-1">{{ p.tasmota_devices[device].energy_sensors.apparent_power }}W</td>
-				<td class="py-1">{{ p.tasmota_devices[device].energy_sensors.reactive_power }}W</td>
-		-->
-				<td class="py-1">{{ p.tasmota_devices[device].energy_sensors.today }}kWh</td>
-				<td class="py-1">{{ p.tasmota_devices[device].energy_sensors.yesterday }}kWh</td>
-				<td class="py-1">{{ p.tasmota_devices[device].energy_sensors.total }}kWh</td>
-				<td class="py-1">{{ p.tasmota_devices[device].energy_sensors.total_starttime }}</td>
-			{% endif %}
-		</tr>
-	{% endfor %}
-</table>
-{% endblock %}
-
 
 
 
 <!--
 	Content block for the third tab of the Webinterface
 -->
-{% set tab4title = "<strong>" ~ " Broker Information</strong>" %}
+{% set tab3title = "<strong>" ~ " Sensoren</strong>" %}
+
+{% block bodytab3 %}
+<div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
+	<div class="col-sm-12">
+        <table id="energytable" class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>{{ _('Tasmota Topic') }}</th>
+                    <th>{{ _('Spannung') }}</th>
+                    <th>{{ _('Strom') }}</th>
+                    <th>{{ _('Leistung') }}</th>
+                    <!--
+                    <th>{{ _('Schein Leistung') }}</th>
+                    <th>{{ _('Blind Leistung') }}</th>
+                    -->
+                    <th>{{ _('Heute') }}</th>
+                    <th>{{ _('Gestern') }}</th>
+                    <th>{{ _('Gesamt') }}</th>
+                    <th width="200">{{ _('Gesamt - Startzeit') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if p.tasmota_meta['energy'] == True  %}
+                    {% for device in p.tasmota_devices %}
+                        {% if p.tasmota_devices[device]['sensors'] %}
+                            {% if p.tasmota_devices[device]['sensors']['ENERGY'] %}
+                            <tr>
+                                <td><a class="text-shng" href="http://{{ p.tasmota_devices[device].ip }}" target="_blank">{{ device }}</a></td>
+                                <td>{{ p.tasmota_devices[device]['sensors']['ENERGY'].voltage }}V</td>
+                                <td>{{ p.tasmota_devices[device]['sensors']['ENERGY'].current }}A</td>
+                                <td>{{ p.tasmota_devices[device]['sensors']['ENERGY'].power }}W</td>
+                        <!--
+                                <td>{{ p.tasmota_devices[device]['sensors']['ENERGY'].apparent_power }}W</td>
+                                <td>{{ p.tasmota_devices[device]['sensors']['ENERGY'].reactive_power }}W</td>
+                        -->
+                                <td>{{ p.tasmota_devices[device]['sensors']['ENERGY'].today }}kWh</td>
+                                <td>{{ p.tasmota_devices[device]['sensors']['ENERGY'].yesterday }}kWh</td>
+                                <td>{{ p.tasmota_devices[device]['sensors']['ENERGY'].total }}kWh</td>
+                                <td>{{ p.tasmota_devices[device]['sensors']['ENERGY'].total_starttime }}</td>
+                            </tr>
+                            {% endif %}
+                        {% endif %}
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="8">No Tasmota Devices with Energy Sensor discovered. </td>
+                    </tr>
+                    <tr>
+                        <td colspan="8"><strong>&nbsp;</strong></td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+	</div>
+</div>
+
+<div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
+	<div class="col-sm-12">
+        <table id="environtable" class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>{{ _('Tasmota Topic') }}</th>
+                    <th>{{ _('Temperatur') }}</th>
+                    <th>{{ _('Luftfeuchtigkeit') }}</th>
+                    <th>{{ _('Taupunkt') }}</th>
+                    <th>{{ _('1w-ID') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if p.tasmota_meta['ds18b20'] == True %}
+                    {% for device in p.tasmota_devices %}
+                        {% if p.tasmota_devices[device]['sensors'] %}
+                            {% if p.tasmota_devices[device]['sensors']['DS18B20'] %}
+                                <tr>
+                                    <td><a class="text-shng" href="http://{{ p.tasmota_devices[device].ip }}" target="_blank">{{ device }}</a></td>
+                                    <td>{{ p.tasmota_devices[device]['sensors']['DS18B20'].temp }}°C</td>
+                                    <td>-</td>
+                                    <td>-</td>
+                                    <td>{{ p.tasmota_devices[device]['sensors']['DS18B20'].id }}</td>
+                                </tr>
+                            {% endif %}
+                        {% endif %}
+                    {% endfor %}
+                    
+                {% elif p.tasmota_meta['am2301'] == True %}
+                    {% for device in p.tasmota_devices %}
+                        {% if p.tasmota_devices[device]['sensors'] %}
+                            {% if p.tasmota_devices[device]['sensors']['AM2301'] %}
+                                <tr>
+                                    <td><a class="text-shng" href="http://{{ p.tasmota_devices[device].ip }}" target="_blank">{{ device }}</a></td>
+                                    <td>{{ p.tasmota_devices[device]['sensors']['AM2301'].temp }}°C</td>
+                                    <td>{{ p.tasmota_devices[device]['sensors']['AM2301'].hum }}% rH</td>
+                                    <td>{{ p.tasmota_devices[device]['sensors']['AM2301'].dewpoint }}°C</td>
+                                    <td>-</td>
+                                </tr>
+                            {% endif %}
+                        {% endif %}
+                    {% endfor %}
+                    <tr>
+                        <td colspan="5"><strong>&nbsp;</strong></td>
+                    </tr>
+                
+                {% else %}
+                    <tr>
+                        <td colspan="5">No Tasmota Devices with Environmental Sensor discovered. </td>
+                    </tr>
+                    <tr>
+                        <td colspan="5"><strong>&nbsp;</strong></td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+	</div>
+</div>
+{% endblock %}
+
+<!--
+	Content block for the fourth tab of the Webinterface
+-->
+{% set tab4title = "<strong>" ~ " Lights</strong>" %}
+
 {% block bodytab4 %}
+<div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
+	<div class="col-sm-12">
+        <table id="lightstable" class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>{{ _('Tasmota Topic') }}</th>
+                    <th>{{ _('HSB') }}</th>
+                    <th>{{ _('Dimmer') }}</th>
+                    <th>{{ _('Color') }}</th>
+                    <th>{{ _('CT') }}</th>
+                    <th>{{ _('Scheme') }}</th>
+                    <th>{{ _('Fade') }}</th>
+                    <th>{{ _('Speed') }}</th>
+                    <th>{{ _('LED-Table') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if p.tasmota_meta['lights'] == True %}
+                    {% for device in p.tasmota_devices %}
+                        {% if p.tasmota_devices[device]['lights'] %}
+                            <tr>
+                                <td><a class="text-shng" href="http://{{ p.tasmota_devices[device].ip }}" target="_blank">{{ device }}</a></td>
+                                <td>{{ p.tasmota_devices[device]['lights'].hsb }}</td>
+                                <td>{{ p.tasmota_devices[device]['lights'].dimmer }}</td>
+                                <td>{{ p.tasmota_devices[device]['lights'].color }}</td>
+                                <td>{{ p.tasmota_devices[device]['lights'].ct }}</td>
+                                <td>{{ p.tasmota_devices[device]['lights'].scheme }}</td>
+                                <td>{{ p.tasmota_devices[device]['lights'].fade }}</td>
+                                <td>{{ p.tasmota_devices[device]['lights'].speed }}</td>
+                                <td>{{ p.tasmota_devices[device]['lights'].ledtable }}</td>
+                            </tr>
+                        {% endif %}
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="9">No Tasmota Devices with Light Control Capability discovered. </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+	</div>
+</div>
+{% endblock %}
+
+
+<!--
+	Content block for the fifth tab of the Webinterface
+-->
+{% set tab5title = "<strong>" ~ " RF</strong>" %}
+
+{% block bodytab5 %}
+<div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
+	<div class="col-sm-12">
+        <table id="rftable" class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>{{ _('Tasmota Topic') }}</th>
+                    <th>{{ _('RF-Received') }}</th>
+                    <th>{{ _('RF-Send Result') }}</th>
+                    <th>{{ _('RF-Key Result') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if p.tasmota_meta['rf'] == True %}
+                    {% for device in p.tasmota_devices %}
+                        {% if p.tasmota_devices[device]['rf'] %}
+                            <tr>
+                                <td><a class="text-shng" href="http://{{ p.tasmota_devices[device].ip }}" target="_blank">{{ device }}</a></td>
+                                <td>{{ p.tasmota_devices[device]['rf'].rf_received }}</td>
+                                <td>{{ p.tasmota_devices[device]['rf'].rf_send_result }}</td>
+                                <td>{{ p.tasmota_devices[device]['rf'].rfkey_result }}</td>
+                            </tr>
+                        {% endif %}
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="4">No Tasmota Devices with RF Capability discovered. </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+	</div>
+</div>
+{% endblock %}
+
+
+<!--
+	Content block for the sixt tab of the Webinterface
+-->
+{% set tab6title = "<strong>" ~ " Broker Information</strong>" %}
+{% block bodytab6 %}
 <table class="table table-striped table-hover pluginList">
 	<tr>
-		<td class="py-1"><strong>{{ 'Broker Version' }}</strong></td>
+		<td><strong>{{ 'Broker Version' }}</strong></td>
 		<td id="version" class="py-1">{{ p._broker.version }}</td>
-		<td class="py-1">{{ connection_result }}</td>
+		<td>{{ connection_result }}</td>
 <!--
         <td width="500"></td>
 -->
 	</tr>
 	<tr>
-		<td class="py-1"><strong>{{ 'Active Clients' }}</strong></td>
+		<td><strong>{{ 'Active Clients' }}</strong></td>
 		<td id="active_clients" class="py-1">{{ p._broker.active_clients }}</td>
         <td></td>
 	</tr>
 	<tr>
-		<td class="py-1"><strong>{{ 'Subscriptions' }}</strong></td>
+		<td><strong>{{ 'Subscriptions' }}</strong></td>
 		<td id="subscriptions" class="py-1">{{ p._broker.subscriptions }}</td>
         <td></td>
 	</tr>
 	<tr>
-		<td class="py-1"><strong>{{ 'Messages stored' }}</strong></td>
+		<td><strong>{{ 'Messages stored' }}</strong></td>
 		<td id="stored_messages" class="py-1">{{ p._broker.stored_messages }}</td>
         <td></td>
 	</tr>
 	<tr>
-		<td class="py-1"><strong>{{ 'Retained Messages' }}</strong></td>
+		<td><strong>{{ 'Retained Messages' }}</strong></td>
 		<td id="retained_messages" class="py-1">{{ p._broker.retained_messages }}</td>
         <td></td>
 	</tr>
 	{% if p.broker_monitoring %}
-	<tr>
-		<td class="py-1" colspan="3"><strong>&nbsp;</strong></td>
-	</tr>
-	<tr>
-		<td class="py-1"><strong>{{ _('Laufzeit') }}</strong></td>
-		<td id="broker_uptime" class="py-1">{{ p.broker_uptime() }}</td>
-        <td width="500"></td>
-	</tr>
-	<tr>
-		<td class="py-1" colspan="3"><strong>&nbsp;</strong></td>
-	</tr>
+        <tr>
+            <td class="py-1" colspan="3"><strong>&nbsp;</strong></td>
+        </tr>
+        <tr>
+            <td><strong>{{ _('Laufzeit') }}</strong></td>
+            <td id="broker_uptime" class="py-1">{{ p.broker_uptime() }}</td>
+            <td width="500"></td>
+        </tr>
+        <tr>
+            <td class="py-1" colspan="3"><strong>&nbsp;</strong></td>
+        </tr>
 	{% endif %}
 </table>
 
@@ -290,14 +527,14 @@
 		<th width="500"></th>
 	</thead>
 	<tr>
-		<td class="py-1">{{ _('Durchschnittlich Messages je Minute empfangen') }}</td>
+		<td>{{ _('Durchschnittlich Messages je Minute empfangen') }}</td>
 		<td id="msg_rcv_1min" class="py-1">{{ p._broker.msg_rcv_1min }}</td>
 		<td id="msg_rcv_5min" class="py-1"> &nbsp; &nbsp; {{ p._broker.msg_rcv_5min }}</td>
 		<td id="msg_rcv_15min" class="py-1"> &nbsp; &nbsp; {{ p._broker.msg_rcv_15min }}</td>
 		<td></td>
 	</tr>
 	<tr>
-		<td class="py-1">{{ _('Durchschnittlich Messages je Minute gesendet') }}</td>
+		<td>{{ _('Durchschnittlich Messages je Minute gesendet') }}</td>
 		<td id="msg_snt_1min" class="py-1">{{ p._broker.msg_snt_1min }}</td>
 		<td id="msg_snt_5min" class="py-1"> &nbsp; &nbsp; {{ p._broker.msg_snt_5min }}</td>
 		<td id="msg_snt_15min" class="py-1"> &nbsp; &nbsp; {{ p._broker.msg_snt_15min }}</td>
@@ -306,4 +543,27 @@
 </table>
 {% endif %}
 
+
+<table class="table table-striped table-hover pluginList">
+	<thead>
+	<tr>
+		<th>{{ _('Tasmota Topic') }}</th>
+		<th>{{ _('Tasmota Device Details') }}</th>
+	</tr>
+	</thead>
+	{% for device in p.tasmota_devices %}
+		<tr>
+			<td><a class="text-shng" href="http://{{ p.tasmota_devices[device].ip }}" target="_blank">{{ device }}</a></td>
+            <td>{{ p.tasmota_devices[device] }}</td>
+		</tr>
+	{% endfor %}
+    <tr>
+        <td>META-Daten</td>
+        <td>{{ p.tasmota_meta }}</td>
+    </tr>
+</table>
+
+
 {% endblock %}
+
+

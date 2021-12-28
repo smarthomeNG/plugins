@@ -1,0 +1,14 @@
+# translations for the web interface
+plugin_translations:
+    # Translations for the plugin specially for the web interface
+    'Informationen':         {'de': '=', 'en': 'Informations'}
+    'Einstellungen':         {'de': '=', 'en': 'Settings'}
+
+    # Alternative format for translations of longer texts:
+    'Philips Explanation':
+        de: 'Schritt fuer Schritt Anleitung zur Bindung/Authorisierung mit dem Philips TV.'
+        en: 'Step by Step manual for generating an OAuth2 token for Vorwerk API, compatible with new MyKobold APP.'
+    
+
+
+

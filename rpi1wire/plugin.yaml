@@ -3,18 +3,17 @@ plugin:
     # Global plugin attributes
     type: gateway                   # plugin type (gateway, interface, protocol, system, web)
     description:
-        de: 'Plugin für den Rapberry Pi. Erlaubt den einfachen Zugriff auf 1-Wire Sensoren. Getestet mit Raspberry Pi B und dem Temperatursensor DS18B20'
+        de: 'Plugin für den Raspberry Pi. Erlaubt den einfachen Zugriff auf 1-Wire Sensoren. Getestet mit Raspberry Pi B und dem Temperatursensor DS18B20'
         en: 'Plugin developed for the Raspberry Pi. It allows easy access to 1-Wire sensors. Tested with the Raspberry Pi B and the temperature sensor DS18B20'
         fr: 'Support de 1-Wire à travers Raspberry Pi sur SmartHomeNG v1.5 et plus'
-
-    maintainer: bmxp
+    maintainer: bmxp, sisamiwe
     tester: sisamiwe, ElektroRudi   # Who tests this plugin?
     state: develop                  # change to ready when done with development
     keywords: 1wire onewire raspberry pi dallas temperature sensor
     documentation: https://github.com/smarthomeNG/plugins/rpi1wire/Readme.md        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1451916-support-thread-für-rpi1wire-plugin
 
-    version: 1.7.1                  # Plugin version
+    version: 1.8.0                  # Plugin version
     sh_minversion: 1.5              # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False           # plugin supports multi instance
@@ -34,7 +33,7 @@ parameters:
         type: str
         default: '/sys/bus/w1/devices'
         description:
-            de: 'Verzeichnis des Onewire'
+            de: 'Verzeichnis des onewire, in dem der RPi die Werte der 1-wire Sensoren hält'
             en: 'Directory of onewire provided'
 
 item_attributes:
@@ -51,19 +50,18 @@ item_attributes:
             de: 'Attribut für Globale Plugin Items zum Triggern eines Update, Anzeigen der Anzahl gefundener Sensoren oder Auflistung der gefundenen Sensoren'
             en: 'Attribute for global plugin items to trigger value read update, count of sensors and list of sensors'
         valid_list:
-          - update  # de: 'Started bei Triggerung ein Update der Sensorliste'; en: 'Rereads the sensor list after being triggered'
+          - update  # de: 'Startet bei Triggerung ein Update der Sensorliste'; en: 'Rereads the sensor list after being triggered'
           - list    # de: 'Liste mit allen am Zielort gefundenen Sensoren'; en: 'List showing all found sensors'
           - count   # de: 'Anzahl der am Zielort gefundenen Sensoren'; en: 'Count of all found sensors'
         valid_list_description:
             de:
-                - 'Started bei Triggerung ein Update der Sensorliste'
+                - 'Startet bei Triggerung ein Update der Sensorliste'
                 - 'Liste mit allen am Zielort gefundenen Sensoren'
                 - 'Anzahl der am Zielort gefundenen Sensoren'
             en:
                 - 'Rereads the sensor list after being triggered'
                 - 'List showing all found sensors'
                 - 'Count of all found sensors'
-
 
 item_structs: NONE
     # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)

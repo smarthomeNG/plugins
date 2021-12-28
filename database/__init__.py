@@ -50,7 +50,7 @@ class Database(SmartPlugin):
     """
 
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = '1.5.15'
+    PLUGIN_VERSION = '1.5.17'
 
     # SQL queries: {item} = item table name, {log} = log table name
     # time, item_id, val_str, val_num, val_bool, changed
@@ -113,6 +113,8 @@ class Database(SmartPlugin):
         self._item_logcount = {}        # dict to store the number of log records for an item
 
         self.cleanup_active = False
+
+        self.last_connect_time  = 0     # mechanism for limiting db connection requests
 
         # Setup db and test if connection is possible
         self._db = lib.db.Database(("" if self._prefix == ""  else self._prefix.capitalize()) + "Database", self.driver, self._connect)
@@ -621,9 +623,14 @@ class Database(SmartPlugin):
         """
         condition, params = self._slice_condition(id, time=time, time_start=time_start, time_end=time_end,
                                                   changed=changed, changed_start=changed_start, changed_end=changed_end)
-        self._execute(self._prepare("DELETE FROM {log} WHERE " + condition), params, cur=cur)
-        if with_commit:
-            self._db.commit()
+        try:
+            self._execute(self._prepare("DELETE FROM {log} WHERE " + condition), params, cur=cur)
+            if with_commit:
+                self._db.commit()
+        except Exception as e:
+            self.logger.error("Exception in function deleteLog: {}".format(e))
+            self._db.rollback()
+
         self._item_logcount[id] = self.readLogCount(id)
         return
 
@@ -1137,6 +1144,10 @@ class Database(SmartPlugin):
 
         Calls by scheduler
         """
+        if not self._db.connected():
+            self.logger.warning("remove_older_than_maxage skipped as db is not connected")
+            return
+
         if self._maxage_worklist == []:
             # Fill work list, if it is empty
             self._maxage_worklist = [i for i in self._items_with_maxage]
@@ -1144,7 +1155,6 @@ class Database(SmartPlugin):
 
         item = self._maxage_worklist.pop(0)
 
-        #item_id = self.id(item, create=False)
         try:
             item_id = self.id(item, create=False)
         except:
@@ -1200,7 +1210,17 @@ class Database(SmartPlugin):
     def _initialize_db(self):
         try:
             if not self._db.connected():
-                self._db.connect()
+                # limit connection requests to 20 seconds.
+                current_time = time.time()
+                time_delta_last_connect = current_time - self.last_connect_time
+                self.logger.debug("DEBUG: delta {0}".format(time_delta_last_connect))
+                if (time_delta_last_connect >  20):
+                    self.last_connect_time = time.time()
+                    self._db.connect()
+                else:
+                    self.logger.error("Database reconnect supressed: Delta time: {0}".format(time_delta_last_connect))
+                    return False
+
             if not self._db_initialized:
                 self._db.setup(
                     {i: [self._prepare(query[0]), self._prepare(query[1])] for i, query in self._setup.items()})

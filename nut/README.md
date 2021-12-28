@@ -71,3 +71,23 @@ ups:
 ```
 
 Other ups variables, like `battery.charge`, can be directly parsed to num by sh.
+
+## Synology Example
+This plugin can be used with a Synology diskstation as NUT Server. In this configuration, the UPS is connected to the Synology diskstation via USB. The Synology then can distribute
+the UPS status as a NUT server. For this configuration
+
+1) Enable the NUT option in the Synology under "Hardware and engery"->UPS->"active network UPS server"
+2) Klick on "Authenticated Diskstation devices" and set the IP of the smarthomeNG computer
+3) Use the following Synology default settings for configuration of the plugin:
+
+### plugin.yaml
+
+```yaml
+nut:
+    class_name: NUT
+    class_path: plugins.nut
+    ups: ups
+    host: <IP of smarthomeNG system>
+    port: 3493
+```
+

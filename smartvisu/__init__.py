@@ -45,7 +45,7 @@ from .svinstallwidgets import SmartVisuInstallWidgets
 #########################################################################
 
 class SmartVisu(SmartPlugin):
-    PLUGIN_VERSION="1.8.2"
+    PLUGIN_VERSION="1.8.3a"
     ALLOW_MULTIINSTANCE = True
 
     visu_definition = None
@@ -70,6 +70,7 @@ class SmartVisu(SmartPlugin):
             self.visu_style = 'std'
             self.logger.error("smartVISU: Invalid value '" + self.get_parameter_value('visu_style') + "' configured for attribute visu_style in plugin.conf, using '" + str(self.visu_style) + "' instead")
         self._handle_widgets = self.get_parameter_value('handle_widgets')
+        self._create_masteritem_file = self.get_parameter_value('create_masteritem_file')
         self.list_deprecated_warnings = self.get_parameter_value('list_deprecated_warnings')
 
         self.smartvisu_version = self.get_smartvisu_version()
@@ -150,11 +151,12 @@ class SmartVisu(SmartPlugin):
                     else:
                         self.logger.warning(f"Not generating pages because smartVISU v{self.smartvisu_version} in directory {self.smartvisu_dir} is not yet configured")
 
-                if self.smartvisu_is_configured:
-                    self.write_masteritem_file()
-                    self.logger.info("Finished smartVISU v{} handling".format(self.smartvisu_version))
-                else:
-                    self.logger.warning(f"Not generating item-masterfile because smartVISU v{self.smartvisu_version} in directory {self.smartvisu_dir} is not yet configured")
+                if self._create_masteritem_file:
+                    if self.smartvisu_is_configured:
+                        self.write_masteritem_file()
+                        self.logger.info("Finished smartVISU v{} handling".format(self.smartvisu_version))
+                    else:
+                        self.logger.warning(f"Not generating item-masterfile because smartVISU v{self.smartvisu_version} in directory {self.smartvisu_dir} is not yet configured")
         # self.stop()
 
 
@@ -395,12 +397,15 @@ class SmartVisu(SmartPlugin):
         if self.smartvisu_version.startswith('2.7') or self.smartvisu_version.startswith('2.8'):
             # Do not perform test on old sv versions
             result = True
-            self.logger.warning("Old version, configuration not realy tested")
-        else:
+            self.logger.warning("Old version, configuration not really tested")
+        elif self.smartvisu_version.startswith('2.9') or self.smartvisu_version.startswith('3.'):
             # Test for sv v2.9 and up
             # read config.ini to get the name of the pages directory
             dirname = self.read_from_sv_configini('pages')
             result = (dirname != '')
+        else:
+            self.logger.warning("Could not determine version of smartVISU in configured directory {self.smartvisu_dir}")
+            result = False
 
         return result
 

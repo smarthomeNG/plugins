@@ -6,31 +6,31 @@
 			<table class="table table-striped table-hover">
 				<tbody>
 					<tr>
-						<td class="py-1"><strong>{{ _('Port (ws)') }}</strong></td>
-						<td class="py-1">{{ p.port }}</td>
+						<td class="py-1"><strong>{{ _('Port (ws / wss)') }}</strong></td>
+						<td class="py-1">{{ p.port }} / {{ p.tls_port }}</td>
 						<td class="py-1" width="50px"></td>
 						<td class="py-1"><strong>{{ _('Standard Zugriff (acl)') }}</strong></td>
 						<td class="py-1">{{ p.default_acl }}</td>
 						<td></td>
 					</tr>
 					<tr>
-						<td class="py-1"><strong>{{ _('Port (wss)') }}</strong></td>
-						<td class="py-1">{{ p.tls_port }}</td>
+						<td class="py-1"><strong>{{ _('Anzahl aktiver Clients') }}</strong></td>
+						<td class="py-1">{{ client_count }}</td>
 						<td></td>
 <!--
 						<td class="py-1"><strong>{{ _('Definitions-Abfrage') }}</strong></td>
 						<td class="py-1">{% if p.get_parameter_value('querydef') %}{{ _('Erlaubt') }}{% else %}{{ _('Verboten') }}{% endif %}</td>
 -->
-						<td class="py-1"></td>
-						<td class="py-1"></td>
+						<td class="py-1"><strong>{{ _('Installiere Widgets') }}</strong></td>
+						<td class="py-1">{% if p._handle_widgets %}{{ _('Ja') }}{% else %}{{ _('Nein') }}{% endif %}</td>
 						<td></td>
 					</tr>
 					<tr>
-						<td class="py-1"><strong>{{ _('Anzahl smartVISU Clients') }}</strong></td>
-						<td class="py-1">{{ client_count }}</td>
+						<td class="py-1"><strong>{{ _('Generiere Seiten') }}</strong></td>
+						<td class="py-1">{% if p._generate_pages %}{{ _('Ja') }}{% else %}{{ _('Nein') }}{% endif %}</td>
 						<td></td>
-						<td class="py-1"></td>
-						<td class="py-1"></td>
+						<td class="py-1"><strong>{{ _("Erzeuge 'masteritem' Datei") }}</strong></td>
+						<td class="py-1">{% if p._create_masteritem_file %}{{ _('Ja') }}{% else %}{{ _('Nein') }}{% endif %}</td>
 						<td></td>
 					</tr>
 				</tbody>

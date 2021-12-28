@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
-#  Copyright 2016 - 2018 Bernd Meiners              Bernd.Meiners@mail.de
+#  Copyright 2016 - 2021 Bernd Meiners              Bernd.Meiners@mail.de
 #########################################################################
 #
-#  DLMS plugin for SmartHomeNG.py.
+#  DLMS plugin for SmartHomeNG
 #
 #  This file is part of SmartHomeNG.py.
 #  Visit:  https://github.com/smarthomeNG/
@@ -39,17 +39,23 @@ to serve as information database for the identification of smartmeters
 
 import logging
 import requests
+import sys
 
 from ruamel.yaml import YAML
 from io import BytesIO
-import openpyxl
+install_openpyxl = "python3 -m pip install --user openpyxl"
 
 if __name__ == '__main__':
     logger = logging.getLogger(__name__)
-    logger.debug("init standalone {}".format(__name__))
+    logger.debug(f"init standalone {__name__}")
 else:
     logger = logging.getLogger()
-    logger.debug("init plugin component {}".format(__name__))
+    logger.debug(f"init plugin component {__name__}")
+
+try:
+    import openpyxl
+except:
+    sys.exit(f"Package 'openpyxl' was not found. You might install with {install_openpyxl}")
 
 
 def get_manufacturer( from_url, to_yaml, verbose = False ):
@@ -60,46 +66,53 @@ def get_manufacturer( from_url, to_yaml, verbose = False ):
     r = {}
     y = YAML()
 
-    logger.debug("Read manufacturer IDs from URL: '{}'".format(url))
+    logger.debug(f"Read manufacturer IDs from URL: '{url}'")
+    logger.debug(f"Using openpyxl version '{openpyxl.__version__}'")
+    
     headers = {'User-agent': 'Mozilla/5.0'}
 
     try:
         reque = requests.get(url, headers=headers)
     except ConnectionError as e:
-        logger.debug('An error occurred fetching {} \n {}'.format(url, e.reason))
+        logger.debug(f"An error {e} occurred fetching {url}\n")
         raise
 
     try:
         wb = openpyxl.load_workbook(filename=BytesIO(reque.content), data_only=True)
         #wb = openpyxl.load_workbook(xlfilename, data_only=True)
 
-        logger.debug('sheetnames {}'.format(wb.get_sheet_names()))
+        logger.debug('sheetnames {}'.format(wb.sheetnames))
         
         sheet = wb.active
-        logger.debug('sheet {}'.format(sheet))
-        logger.debug('rows [{} ..{}]'.format(sheet.min_row, sheet.max_row))
-        logger.debug('columns [{} ..{}]'.format(sheet.min_column, sheet.max_column))
+        logger.debug(f"sheet {sheet}")
+        logger.debug(f"rows [{sheet.min_row} .. {sheet.max_row}]")
+        logger.debug(f"columns [{sheet.min_column} .. {sheet.max_column}]")
         
         if sheet.min_row+1 <= sheet.max_row and sheet.min_column == 1 and sheet.max_column == 4:
             # Get data from rows """
             for row in range(sheet.min_row+1,sheet.max_row):
-                id = sheet.cell(row, 1).value
-                man = sheet.cell(row, 2).value
-                r[id] = man
-                if verbose:
-                    logger.debug("{}->{}".format(id,man))
+                id = str(sheet.cell(row, 1).value).strip()
+                if len(id) == 3:
+                    # there are entries like > 'ITRON ...'  < that need special cleaning:
+                    man = str(sheet.cell(row, 2).value).strip()
+                    man = man.strip('\'').strip()
+                    r[id] = man
+                    if verbose:
+                        logger.debug(f"{id}->{man}")
+                else:
+                    logger.debug(f">id< is '{id}' has more than 3 characters and will not be considered")
             with open(exportfile, 'w') as f:
                 y.dump( r, f )
 
-        logger.debug("{} distinct manufacturers were found and written to {}".format(len(r),exportfile))
+        logger.debug(f"{len(r)} distinct manufacturers were found and written to {exportfile}")
         
     except Exception as e:
-        logger.debug("Error {} occurred".format(e))
+        logger.debug(f"Error {e} occurred")
 
     return r
 
 if __name__ == '__main__':
-    verbose = False
+    verbose = True
 
     logging.getLogger().setLevel( logging.DEBUG )
     ch = logging.StreamHandler()

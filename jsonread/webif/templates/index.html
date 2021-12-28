@@ -1,0 +1,147 @@
+{% extends "base_plugin.html" %}
+
+{% set logo_frame = false %}
+
+<!-- set update_interval to a value > 0 (in milliseconds) to enable periodic data updates -->
+{% set update_interval = 0 %}
+
+<!--
+	Additional script tag for plugin specific javascript code go into this block
+-->
+{% block pluginscripts %}
+<script>
+	function handleUpdatedData(response, dataSet=null) {
+		if (dataSet === 'devices_info' || dataSet === null) {
+			var objResponse = JSON.parse(response);
+			myProto = document.getElementById(dataSet);
+			for (var device in objResponse) {
+				/*
+				shngInsertText (device+'_source', objResponse[device]['source']);
+				shngInsertText (device+'_powerState', objResponse[device]['powerState']);
+				*/
+			}
+		}
+	}
+</script>
+
+/*
+ * The combined file was created by the DataTables downloader builder:
+ *   https://datatables.net/download
+ *
+ * To rebuild or modify this file with the latest versions of the included
+ * software please visit:
+ *   https://datatables.net/download/#dt/dt-1.10.21/fh-3.1.7/r-2.2.5
+ *
+ * Included libraries:
+ *   DataTables 1.10.21, FixedHeader 3.1.7, Responsive 2.2.5
+ */
+<link rel="stylesheet" type="text/css" href="static/datatables.css">
+<script type="text/javascript" charset="utf8" src="static/datatables.js"></script>
+
+<script>
+$(document).ready( function () {
+    $('#itemtable').DataTable( {
+        "paging": false,
+        fixedHeader: true
+        } );
+} );
+</script>
+{% endblock pluginscripts %}
+
+
+{% block headtable %}
+<table class="table table-striped table-hover">
+	<tbody>
+		<tr>
+			<td class="py-1"><strong>URL</strong></td>
+			<td class="py-1">{{ p._url }}</td>
+			<td class="py-1" width="50px"></td>
+		</tr>
+		<tr>
+			<td class="py-1"><strong>Cycle</strong></td>
+			<td class="py-1">{{ p._cycle }}</td>
+			<td></td>
+		</tr>
+	</tbody>
+</table>
+{% endblock headtable %}
+
+
+<!--
+	Additional buttons for the web interface (if any are needed) - displayed below the headtable-section
+-->
+{% block buttons %}
+{% if 1==2 %}
+	<div>
+		<button id="btn1" class="btn btn-shng btn-sm" name="scan" onclick="shngPost('', {learn: 'on'})"><i class="fas fa-question"></i>&nbsp;&nbsp;&nbsp;{{ _('nach Devices suchen') }}&nbsp;</button>
+	</div>
+{% endif %}
+{% endblock %}
+
+<!--
+	Define the number of tabs for the body of the web interface (1 - 3)
+-->
+{% set tabcount = 3 %}
+
+
+<!--
+	Set the tab that will be visible on start, if another tab that 1 is wanted (1 - 3)
+-->
+{% set item_count = p._items|length %}
+{% if item_count==0 %}
+	{% set start_tab = 1 %}
+{% else %}
+	{% set start_tab = 2 %}
+{% endif %}
+
+
+<!--
+	Content block for the first tab of the Webinterface
+-->
+{% set tab1title = "<strong>" ~ _("Letzte Auslesung") ~ "</strong>" %}
+{% block bodytab1 %}
+<div class="container-fluid m-2">
+	<pre>{{ p._lastresultstr }}</pre>
+</div>
+{% endblock bodytab1 %}
+
+
+<!--
+	Content block for the second tab of the Webinterface
+-->
+{% set tab2title = "<strong>" ~ item_count ~ " " ~ _("Items definiert") ~ "</strong>" %}
+{% block bodytab2 %}
+<div class="table-responsive" style="margin-left: 3px; margin-right: 3px;" class="row">
+	<div class="col-sm-12">
+		<table id="itemtable" class="table table-striped table-hover">
+			<thead>
+				<tr>
+					<th style="border-bottom: 1px solid var(--shng-border);">{{ _('Item') }}</th>
+					<th style="border-bottom: 1px solid var(--shng-border);">{{ _('jsonread_filter') }}</th>
+					<th style="border-bottom: 1px solid var(--shng-border); width: 100;">{{ _('Wert') }}</th>
+					</tr>
+			</thead>
+			<tbody>
+			{% for item in p._items %}
+				<tr>
+					<td class="py-1">{{ item._path }}</td>
+					<td class="py-1">{{ p.get_iattr_value(item.conf, 'jsonread_filter') }}</td>
+					<td class="py-1">{{ item() }}</td>
+				</tr>
+			{% endfor %}
+			</tbody>
+		</table>
+	</div>
+</div>
+{% endblock bodytab2 %}
+
+<!--
+	Content block for the first tab of the Webinterface
+-->
+{% set tab3title = "<strong>" ~ _("Letzte Auslesung einfache jq Abfragesyntax") ~ "</strong>" %}
+{% block bodytab3 %}
+<div class="container-fluid m-2">
+	<pre>{{ p._lastresultjq }}</pre>
+</div>
+{% endblock bodytab3 %}
+

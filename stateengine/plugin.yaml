@@ -40,7 +40,7 @@ plugin:
     documentation: https://www.smarthomeng.de/user/plugins/stateengine/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1303071-stateengine-plugin-support
 
-    version: 1.9.0
+    version: 1.9.2
     sh_minversion: 1.6
     multi_instance: False
     classname: StateEngine
@@ -143,7 +143,7 @@ parameters:
 
     log_directory:
         type: str
-        default: 'var/log/StateEngine/'
+        default: 'var/log/stateengine/'
         description:
             de: 'Erweiterte Protokollierung: Verzeichnis für die Protokolldateien'
             en: 'Extended Logging: Directory for log files'
@@ -157,7 +157,7 @@ parameters:
                  Basisverzeichnisses behandelt. Das angegebene Verzeichnis wird
                  angelegt, wenn es nicht existiert.\n
                  Wenn hier kein abweichendes Verzeichnis angegeben ist, wird das
-                 Verzeichnis ``<smarthome_base_directory>/var/log/StateEngine/``
+                 Verzeichnis ``<smarthome_base_directory>/var/log/stateengine/``
                  verwendet.
                  '
             en: '**Directory for log files**:\n
@@ -168,7 +168,7 @@ parameters:
                 base folder. The folder is created on the first plugin start if
                 it does not exist.\n
                 If the parameter is absent the log files will be saved to
-                ``<smarthome_base_directory>/var/log/StateEngine/``
+                ``<smarthome_base_directory>/var/log/stateengine/``
                 '
     log_maxage:
         type: int
@@ -201,13 +201,49 @@ parameters:
                 Everything gets deleted from the given directory, not just log files!
                 '
 
+    lamella_open_value:
+        type: num
+        default: 0
+        valid_min: 0
+        valid_max: 100
+        description:
+            de: 'Je nach Lamellenart muss für die sun_tracking() Funktion die sonnenstandsbezogene Berechnung
+                der Lamellenausrichtung angepasst werden.
+                Hier ist der Prozentwert der Lamellen im komplett waagrechten Zustand anzugeben.'
+            en: 'Depending on the lamella variant it might be necessary to adapt the calculation of the lamella
+                orientation for a correct sun_tracking() function.
+                This value defines the complete open, horizontal lamella state in percent.'
+        description_long:
+            de: 'Je nach Lamellenart muss die sonnenstandsbezogene Berechnung der Lamellenausrichtung angepasst werden.
+                Für z-Lamellen kann hier der standardmäßige Wert 0 gewählt werden, hat man jedoch normale Lamellen,
+                die sich nach oben und unten drehen, werden die Lamellen in der Regel bei 50% komplett offen, also
+                waagrecht stehen. Somit sollte hier der Wert 50 angegeben werden, um eine korrekte Ausrichtung beim
+                Nutzen der sun_tracking Funktion zu gewährleisten.'
+            en: 'Depending on the lamella variant it might be necessary to adapt the calculation of the lamella orientation.
+                If you have z-lamella you can use the standard value 0. But if you have normal lamella that can turn up
+                or down, the lamella are most likely fully open at 50%. In this case you have to set this parameter
+                to 50 to have a correct orientation using the sun_tracking() function.'
+
+    lamella_offset:
+        type: num
+        default: 0
+        valid_min: -90
+        valid_max: 90
+        description:
+            de: 'Gibt es ein Problem mit dem automatischen Ausrichten der Lamellen mittels sun_tracking Funktion,
+                kann ein globaler Offset eingestellt werden, der für alle Aufrufe besagter Funktion berücksichtigt wird.'
+            en: 'If there is a problem with the automatic orientation of lamellas using the sun_tracking function,
+                a global offset can be defined that is used for all instances of the aforementioned function.'
+
     instant_leaveaction:
         type: bool
         default: False
         description:
-            de: 'Ist dieser Parameter auf True gesetzt, werden "on leave" Aktionen sofort ausgeführt, wenn der aktuelle Zustand nicht mehr eingenommen wird. Standardmäßig werden die Aktionen erst direkt vor dem Eintreten in einen neuen Zustand getriggert.'
-            en: 'If this parameter is set to True the "on leave" actions are run immediately after not entering the current state
-            again. By default the actions are triggered directly before entering a new state.'
+            de: 'Ist dieser Parameter auf True gesetzt, werden "on leave" Aktionen sofort ausgeführt,
+                wenn der aktuelle Zustand nicht mehr eingenommen wird. Standardmäßig werden die Aktionen erst direkt
+                vor dem Eintreten in einen neuen Zustand getriggert.'
+            en: 'If this parameter is set to True the "on leave" actions are run immediately after not entering the
+                current state again. By default the actions are triggered directly before entering a new state.'
 
 item_attributes:
     # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)
@@ -608,7 +644,7 @@ item_structs:
             unix_timestamp:
                 type: num
                 visu_acl: ro
-                eval: "0 if not any(char.isdigit() for char in sh...date_time()) else  sh.tools.dt2ts(shtime.datetime_transform(sh...date_time())) * 1000"
+                eval: "0 if not any(char.isdigit() for char in sh...date_time()) else  shtime.datetime_transform(sh...date_time()).timestamp() * 1000"
                 eval_trigger: ..date_time
                 crontab: init
 
@@ -628,7 +664,7 @@ item_structs:
                 remark: Can be used for the clock.countdown widget
                 type: num
                 visu_acl: ro
-                eval: "0 if not any(char.isdigit() for char in sh...date_time()) else  sh.tools.dt2ts(shtime.datetime_transform(sh...date_time())) * 1000"
+                eval: "0 if not any(char.isdigit() for char in sh...date_time()) else  shtime.datetime_transform(sh...date_time()).timestamp() * 1000"
                 eval_trigger: ..date_time
                 crontab: init
 
@@ -798,7 +834,7 @@ item_structs:
             unix_timestamp:
                 type: num
                 visu_acl: ro
-                eval: "0 if not any(char.isdigit() for char in sh...date_time()) else  sh.tools.dt2ts(shtime.datetime_transform(sh...date_time())) * 1000"
+                eval: "0 if not any(char.isdigit() for char in sh...date_time()) else  shtime.datetime_transform(sh...date_time()).timestamp() * 1000"
                 eval_trigger: ..date_time
                 crontab: init
 
@@ -818,7 +854,7 @@ item_structs:
                 remark: Can be used for the clock.countdown widget
                 type: num
                 visu_acl: ro
-                eval: "0 if not any(char.isdigit() for char in sh...date_time()) else  sh.tools.dt2ts(shtime.datetime_transform(sh...date_time())) * 1000"
+                eval: "0 if not any(char.isdigit() for char in sh...date_time()) else  shtime.datetime_transform(sh...date_time()).timestamp() * 1000"
                 eval_trigger: ..date_time
                 crontab: init
 
@@ -1116,7 +1152,7 @@ item_structs:
             unix_timestamp:
                 type: num
                 visu_acl: ro
-                eval: "0 if not any(char.isdigit() for char in sh...date_time()) else  sh.tools.dt2ts(shtime.datetime_transform(sh...date_time())) * 1000"
+                eval: "0 if not any(char.isdigit() for char in sh...date_time()) else  shtime.datetime_transform(sh...date_time()).timestamp() * 1000"
                 eval_trigger: ..date_time
                 crontab: init
 
@@ -1136,7 +1172,7 @@ item_structs:
                 remark: Can be used for the clock.countdown widget
                 type: num
                 visu_acl: ro
-                eval: "0 if not any(char.isdigit() for char in sh...date_time()) else  sh.tools.dt2ts(shtime.datetime_transform(sh...date_time())) * 1000"
+                eval: "0 if not any(char.isdigit() for char in sh...date_time()) else  shtime.datetime_transform(sh...date_time()).timestamp() * 1000"
                 eval_trigger: ..date_time
                 crontab: init
 

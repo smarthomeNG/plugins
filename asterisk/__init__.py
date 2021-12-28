@@ -24,18 +24,18 @@ import threading
 import logging
 import datetime
 
-import lib.connection
 import lib.log
 from lib.model.smartplugin import SmartPlugin
+from lib.network import Tcp_client
 
 
-class Asterisk(SmartPlugin, lib.connection.Client):
+class Asterisk(SmartPlugin):
 
-    PLUGIN_VERSION = "1.3.1"
+    PLUGIN_VERSION = "1.4.0"
 
     DB = 'ast_db'
     DEV = 'ast_dev'
-    BOX ='ast_box'
+    BOX = 'ast_box'
     USEREVENT = 'ast_userevent'
     # use e.g. as Asterisk.BOX to keep in namespace
 
@@ -65,8 +65,9 @@ class Asterisk(SmartPlugin, lib.connection.Client):
         self.username = self.get_parameter_value('username')
         self.password = self.get_parameter_value('password')
 
-        lib.connection.Client.__init__(self, self.host, self.port, monitor=True)
         self.terminator = b'\r\n\r\n'
+        self._client = Tcp_client(self.host, self.port, terminator=self.terminator)
+        self._client.set_callbacks(connected=self.handle_connect, data_received=self.found_terminator)
         self._init_cmd = {'Action': 'Login', 'Username': self.username, 'Secret': self.password, 'Events': 'call,user,cdr'}
         self._reply_lock = threading.Condition()
         self._cmd_lock = threading.Lock()
@@ -80,7 +81,7 @@ class Asterisk(SmartPlugin, lib.connection.Client):
         """
         This function sends a command to the Asterisk Server
         """
-        if not self.connected:
+        if not self._client.connected():
             return
         self._cmd_lock.acquire()
         if self._aid > 100:
@@ -90,14 +91,17 @@ class Asterisk(SmartPlugin, lib.connection.Client):
         self._error = False
         if reply:
             d['ActionID'] = self._aid
-        #self.logger.debug("Request {0} - sending: {1}".format(self._aid, d))
+        # self.logger.debug("Request {0} - sending: {1}".format(self._aid, d))
         self._reply_lock.acquire()
-        self.send(('\r\n'.join(['{0}: {1}'.format(key, value) for (key, value) in list(d.items())]) + '\r\n\r\n').encode())
+#
+        # self.send(('\r\n'.join(['{0}: {1}'.format(key, value) for (key, value) in list(d.items())]) + '\r\n\r\n').encode())
+        self._client.send(('\r\n'.join(['{0}: {1}'.format(key, value) for (key, value) in list(d.items())]) + '\r\n\r\n').encode())
+#
         if reply:
             self._reply_lock.wait(2)
         self._reply_lock.release()
         reply = self._reply
-        #self.logger.debug("Request {0} - reply: {1}".format(self._aid, reply))
+        # self.logger.debug("Request {0} - reply: {1}".format(self._aid, reply))
         error = self._error
         self._cmd_lock.release()
         if error:
@@ -171,7 +175,7 @@ class Asterisk(SmartPlugin, lib.connection.Client):
                     self._reply_lock.acquire()
                     self._reply_lock.notify()
                     self._reply_lock.release()
-        if not 'Event' in event:  # ignore
+        if 'Event' not in event:  # ignore
             return
         if event['Event'] == 'Newchannel':  # or data.startswith('Event: Newstate') ) and 'ChannelStateDesc: Ring' in data:
             device = self._get_device(event['Channel'])
@@ -300,7 +304,10 @@ class Asterisk(SmartPlugin, lib.connection.Client):
         Run method for the plugin
         """
         self.logger.debug("Run method called")
-        self.alive = True
+        if self._client.connect():
+            self.alive = True
+        else:
+            self.logger.error(f'Connection to {self.host}:{self.port} not possible, plugin not starting')
 
     def handle_connect(self):
         self._command(self._init_cmd, reply=False)
@@ -314,8 +321,9 @@ class Asterisk(SmartPlugin, lib.connection.Client):
         Stop method for the plugin
         """
         self.logger.debug("Stop method called")
+        self._client.close()
         self.alive = False
         self._reply_lock.acquire()
         self._reply_lock.notify()
         self._reply_lock.release()
-        self.close()
+        # self.close()

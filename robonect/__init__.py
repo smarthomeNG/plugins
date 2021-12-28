@@ -40,7 +40,7 @@ class Robonect(MqttPlugin):
     Main class of the Plugin. Does all plugin specific stuff and provides
     the update functions for the items
     """
-    PLUGIN_VERSION = '1.0.2'  # (must match the version specified in plugin.yaml)
+    PLUGIN_VERSION = '1.0.4'  # (must match the version specified in plugin.yaml)
     STATUS_TYPES = ['mower/status', 'mower/status/text', 'status_text_translated', 'mower/distance', 'mower/status/duration',
                     'mower/statistic/hours',
                     'mower/stopped', 'mower/mode', 'mower/mode/text', 'mode_text_translated', 'mower/battery/charge', 'blades_quality',
@@ -79,6 +79,7 @@ class Robonect(MqttPlugin):
         self._motor_items = {}
         self._status = 0
         self._mode = 0
+        self._full_error_list = None
         self._session = requests.Session()
         self.init_webinterface(WebInterface)
         return
@@ -154,6 +155,9 @@ class Robonect(MqttPlugin):
                 self._motor_items[self.get_iattr_value(item.conf, 'robonect_data_type')] = item
             else:
                 self._items[self.get_iattr_value(item.conf, 'robonect_data_type')] = item
+            if self._plugin_mode == 'mqtt':
+                if mqtt_id in ['control', 'control/mode']:
+                    return self.update_item
         return
 
     def parse_logic(self, logic):
@@ -182,13 +186,25 @@ class Robonect(MqttPlugin):
             # and only, if the item has not been changed by this this plugin:
             self.logger.info("Update item: {}, item has been changed outside this plugin".format(item.id()))
 
-            if self.has_iattr(item.conf, 'foo_itemtag'):
-                self.logger.debug(
-                    "update_item was called with item '{}' from caller '{}', source '{}' and dest '{}'".format(item,
-                                                                                                               caller,
-                                                                                                               source,
-                                                                                                               dest))
-            pass
+            mqtt_id = self.get_iattr_value(item.conf, 'robonect_data_type')
+            topic = '%s/%s' % (self._topic_prefix, mqtt_id)
+
+            if mqtt_id == 'control':
+                if item() not in ['start', 'stop']:
+                    self.logger.error("mqtt publish invalid command supplied: '{}' must be one of 'start','stop'.".format(item()))
+                    return
+            else:
+                self.logger.debug("Publish {} {}".format(topic, item()))
+                self.publish_topic(topic, item())
+
+            if mqtt_id == 'control/mode':
+                if item() not in self.MODE_TYPES or item() == 'job':
+                    self.logger.error( "mqtt publish invalid mode supplied: '{}' must be one of 'home','eod','man','auto'.".format(item()))
+                    return
+            else:
+                self.logger.debug("Publish {} {}".format(topic, item()))
+                self.publish_topic(topic, item())
+        return
 
     def poll_device(self, ignore_status=False):
         """
@@ -481,7 +497,14 @@ class Robonect(MqttPlugin):
         self.set_mower_online()
 
         if 'errors' in json_obj:
+            self.set_full_error_list(json_obj['errors'])
             return json_obj['errors']
+        else:
+            return self._full_error_list
+
+    def set_full_error_list(self, full_error_list):
+        self._full_error_list = full_error_list
+        return
 
     def set_name_via_api(self, name):
         """
@@ -827,31 +850,31 @@ class Robonect(MqttPlugin):
             return
 
         self.set_mower_online()
-
-        for item in self._remote_items['remotestart_name']:
-            key = 'remotestart_%s' % self.get_iattr_value(item.conf, 'robonect_remote_index')
-            if key in json_obj:
-                item(json_obj[key]['name'], self.get_shortname())
-
-        for item in self._remote_items['remotestart_visible']:
-            key = 'remotestart_%s' % self.get_iattr_value(item.conf, 'robonect_remote_index')
-            if key in json_obj:
-                item(json_obj[key]['visible'], self.get_shortname())
-
-        for item in self._remote_items['remotestart_path']:
-            key = 'remotestart_%s' % self.get_iattr_value(item.conf, 'robonect_remote_index')
-            if key in json_obj:
-                item(json_obj[key]['path'], self.get_shortname())
-
-        for item in self._remote_items['remotestart_proportion']:
-            key = 'remotestart_%s' % self.get_iattr_value(item.conf, 'robonect_remote_index')
-            if key in json_obj:
-                item(json_obj[key]['proportion'], self.get_shortname())
-
-        for item in self._remote_items['remotestart_distance']:
-            key = 'remotestart_%s' % self.get_iattr_value(item.conf, 'robonect_remote_index')
-            if key in json_obj:
-                item(json_obj[key]['distance'], self.get_shortname())
+        if 'remotestart_name' in self._remote_items:
+            for item in self._remote_items['remotestart_name']:
+                key = 'remotestart_%s' % self.get_iattr_value(item.conf, 'robonect_remote_index')
+                if key in json_obj:
+                    item(json_obj[key]['name'], self.get_shortname())
+        if 'remotestart_visible' in self._remote_items:
+            for item in self._remote_items['remotestart_visible']:
+                key = 'remotestart_%s' % self.get_iattr_value(item.conf, 'robonect_remote_index')
+                if key in json_obj:
+                    item(json_obj[key]['visible'], self.get_shortname())
+        if 'remotestart_path' in self._remote_items:
+            for item in self._remote_items['remotestart_path']:
+                key = 'remotestart_%s' % self.get_iattr_value(item.conf, 'robonect_remote_index')
+                if key in json_obj:
+                    item(json_obj[key]['path'], self.get_shortname())
+        if 'remotestart_proportion' in self._remote_items:
+            for item in self._remote_items['remotestart_proportion']:
+                key = 'remotestart_%s' % self.get_iattr_value(item.conf, 'robonect_remote_index')
+                if key in json_obj:
+                    item(json_obj[key]['proportion'], self.get_shortname())
+        if 'remotestart_distance' in self._remote_items:
+            for item in self._remote_items['remotestart_distance']:
+                key = 'remotestart_%s' % self.get_iattr_value(item.conf, 'robonect_remote_index')
+                if key in json_obj:
+                    item(json_obj[key]['distance'], self.get_shortname())
 
         return json_obj
 

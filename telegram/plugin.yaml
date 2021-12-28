@@ -12,9 +12,11 @@ plugin:
     documentation: http://smarthomeng.de/user/plugins/telegram/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1548691-support-thread-für-das-telegram-plugin
 
-    version: 1.6.4                  # Plugin version
+    version: 1.6.8                  # Plugin version
     sh_minversion: 1.3              # minimum shNG version to use this plugin
-#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    # sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
+    py_minversion: 3.6              # minimum Python version to use for this plugin
+    # py_maxversion:                # maximum Python version to use for this plugin (leave empty if latest)
     multi_instance: True            # plugin supports multi instance
     restartable: True
     classname: Telegram             # class containing the plugin
@@ -84,6 +86,19 @@ item_attributes:
         description:
             de: 'Mitteilung senden wenn sich der Itemwert ändert'
             en: 'Send message on item change'
+            
+    telegram_condition:
+        type: str
+        default: 'on_update'
+        valid_list:
+          - 'on_update'
+          - 'on_change'
+        valid_list_description:
+            de: ['Senden nach Wertaktualisierung', 'Nur senden, wenn sich der Wert des Items gegenüber dem vorherigen Wert geändert hat']
+            en: ['Send after item value update', 'Send message only if item changed its value compared to the last value']
+        description:
+            de: 'Bedingung unter der die Mitteilung gesendet wird'
+            en: 'Condition to send the message'
 
     telegram_info:
         type: str
@@ -94,8 +109,8 @@ item_attributes:
     telegram_text:
         type: str
         description:
-            de: 'Mitteilungstext als Itemwert setzen'
-            en: 'write message-text into the item'
+            de: 'Mitteilungstext als Itemwert setzen; Das Format ist "user: Chat-ID: msg"'
+            en: 'write message-text into the item; Format is "user: Chat-ID: msg"'
 
     telegram_value_match_regex:
         type: str
@@ -108,6 +123,12 @@ item_attributes:
         description:
             de: 'Ein Item dessen Datentyp dict ist und Paare von ``Chat_id`` und Schreib/Lese- oder Lesezugriff'
             en: 'An item of type dict with trusted ``chat_id`` and read/write or readonly access'
+
+    telegram_message_chat_id:
+            type: num
+            description:
+                de: 'Chat_ID, zu der diese Message gesendet werden soll'
+                en: 'Chat_ID the message should be sent to'
 
 logic_parameters: NONE
     # Definition of logic parameters defined by this plugin

@@ -11,7 +11,7 @@ plugin:
     keywords: 1wire onewire dallas ibutton sensor temperature humidity
     documentation: https://www.smarthomeng.de/user/plugins_doc/config/onewire.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1493319-support-thread-zum-onewire-plugin
-    version: 1.6.9                 # Plugin version
+    version: 1.8.1                 # Plugin version
     sh_minversion: 1.4             # minimum shNG version to use this plugin
     multi_instance: True
     restartable: True

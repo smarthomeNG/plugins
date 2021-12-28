@@ -22,7 +22,10 @@ sondern auch auf die verschiedenen Schlüsselwörter zurückzugreifen:
 
 - item:<Itempfad> liest den Wert aus gegebenem Item aus und nutzt diesen als Zustandserweiterung
 - eval:<Ausdruck> ermöglicht das dynamische Erweitern des Zustands, z.B. abhängig von einem vorigen Zustand, etc.
-- value:<Itempfad> sucht das eingegebene Item und bindet dieses ein. Der Wert kann auch als relativer Pfad angegeben werden
+- value:<Itempfad> sucht das angegebene Item und bindet dieses ein. Der Wert kann auch als
+  relativer Pfad angegeben werden. Hierbei ist zu beachten, dass die relative Adressierung
+  vom StateEngine Item selbst aus, also vom rules-Item gesucht wird! Daher reicht in der Regel
+  ein einzelner Punkt vor dem Namen des Zustands.
 - struct:<structname> ermögicht den Zugriff auf Structs, die entweder selbst oder durch irgendein Plugin bereit gestellt werden
 
 Beinhaltet ein verknüpfter State ebenfalls ein se_use Attribut, werden auch die weiteren Zustände mit eingebunden. Je "tiefer" eine

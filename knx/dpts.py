@@ -22,6 +22,7 @@
 
 import struct
 import datetime
+import math
 
 """
 Datapoint Types are described in detail e.g. in **03_07_02 Datapoint Types v01.08.02 AS**
@@ -302,7 +303,11 @@ def en14(value):
 def de14(payload):
     if len(payload) != 4:
         return None
-    return struct.unpack('>f', payload)[0]
+    ret = struct.unpack('>f', payload)[0]
+    if math.isnan(ret):
+        return None
+    else:
+        return ret
 
 
 """
@@ -442,6 +447,21 @@ def de232(payload):
     return list(struct.unpack('>BBB', payload))
 
 """
+Datapoint Types U8U8U8U8
+    251.600 DPT_Colour_RGBW
+    Only 4Bytes are used, first 2Bytes are unused
+"""
+
+def en251(value):
+    return [0, 0x00, 0x0f, int(value[0]) & 0xff, int(value[1]) & 0xff, int(value[2]) & 0xff, int(value[3]) & 0xff]
+
+
+def de251(payload):
+    if len(payload) != 6:
+        return None
+    return list(struct.unpack('>BBBBBB', payload))[2:6]
+
+"""
 Datapoint type with eight bytes F16F16F16F16
     275.100 DPT_TempRoomSetpSetF16[4]
     Item Value then is a list of four F16 values
@@ -467,11 +487,23 @@ def de275100(payload):
 Decode Physical Address
 """
 
-def depa(string):
-    if len(string) != 2:
+def depa(ba):
+    """expects a bytearray with length 2 in big endian"""
+    if len(ba) != 2:
         return None
-    pa = struct.unpack(">H", string)[0]
+    pa = struct.unpack(">H", ba)[0]
     return "{0}.{1}.{2}".format((pa >> 12) & 0x0f, (pa >> 8) & 0x0f, (pa) & 0xff)
+
+def enpa(pa):
+    """expects a string containing the physical address of a device separated with a dot and no whitespace anywhere"""
+    pa = pa.split('.')
+    if len(pa)==3:
+        area = int(pa[0]) & 0x0f
+        line = int(pa[1]) & 0x0f
+        device = int(pa[2]) & 0xff
+        return [area << 4 | line, device]
+    else:
+        return None
 
 """
 Group Address from and to string
@@ -528,6 +560,7 @@ decode = {
     '28.001': de28,     #DPT_UTF-8
     '229': de229,
     '232': de232,
+    '251': de251,       #RGBW
     '275.100' : de275100,
     'pa': depa,
     'ga': dega
@@ -581,7 +614,8 @@ encode = {
     '28.001': en28,     #DPT_UTF-8
     '229': en229,
     '232': en232,       #RGB
+    '251': en251,       #RGBW
     '275.100' : en275100,   # Setpoint temperature, contains 4 values: Komfort, Standby, Night and Frost
+    'pa': enpa,
     'ga': enga
 }
-# DPT: 19, 28

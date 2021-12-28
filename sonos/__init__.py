@@ -49,8 +49,13 @@ except:
 from plugins.sonos.soco.exceptions import SoCoUPnPException
 from plugins.sonos.soco.music_services import MusicService
 from lib.item import Items
+from lib.module import Modules
 from plugins.sonos.soco import *
 from lib.model.smartplugin import SmartPlugin
+from lib.model.smartplugin import SmartPluginWebIf
+#from lib.model.smartplugin import *
+
+
 from plugins.sonos.soco.data_structures import to_didl_string, DidlItem, DidlMusicTrack
 from plugins.sonos.soco.events import event_listener
 from plugins.sonos.soco.music_services.data_structures import get_class
@@ -191,7 +196,7 @@ class SubscriptionHandler(object):
 #                self._event = self._service.subscribe(auto_renew=True)
                 self._event = self._service.subscribe(auto_renew=False)
             except Exception as err:
-                self.logger.warning("Sonos: {err}".format(err=err))
+                self.logger.warning("Exception in subscribe(): {err}".format(err=err))
             if self._event:
                 self._event.auto_renew_fail = renew_error_callback
                 self._thread = threading.Thread(target=self._endpoint, name=self._threadName, args=(self,))
@@ -206,7 +211,7 @@ class SubscriptionHandler(object):
                 try:
                     self._event.unsubscribe()
                 except Exception as err:
-                    self.logger.warning("Sonos: {err}".format(err=err))
+                    self.logger.warning("Exception in unsubscribe(): {err}".format(err=err))
                 self._signal.set()
                 if self._thread:
                     self.logger.info("Debug: Preparing to terminate thread")
@@ -390,7 +395,7 @@ class Speaker(object):
             try:
                 subscription.unsubscribe()
             except Exception as error:
-                self.logger.warning("Sonos: {error}".format(error=error))
+                self.logger.warning("Exception in dispose(): {error}".format(error=error))
                 continue
 
         self._soco = None
@@ -2179,7 +2184,12 @@ class Speaker(object):
         """
         Gets all Sonos playlist items.
         """
-        playlists = self.soco.get_sonos_playlists()
+        try:
+            playlists = self.soco.get_sonos_playlists()
+        except Exception as e:
+            self.logger.info("Error during soco.get_sonos_playlists(): {0}".format(e))
+            return
+
         p_l = []
         for value in playlists:
             p_l.append(value.title)
@@ -2200,10 +2210,7 @@ class Speaker(object):
             # For example, stop() is not available when the speakter is in TV mode.
             currentActions = self.current_transport_actions
             self.logger.debug("play_snippet: checking transport actions: {0}".format(currentActions))
-            if not 'Stop' in currentActions:
-                self.logger.warning("Speaker cannot execute stop command in current mode. Therefore, skipping play_snippet function")
-                return
-
+            
             with self._snippet_queue_lock:
                 snap = None
                 volumes = {}
@@ -2229,14 +2236,16 @@ class Speaker(object):
                         snap.snapshot()
 
                     time.sleep(0.5)
-                    self.set_stop()
+                    if 'Stop' in currentActions:
+                        self.set_stop()
                     if volume == -1:
                         volume = self.volume
 
                     self.set_volume(volume, True)
                     self.soco.play_uri(snippet_url, title="snippet")
                     time.sleep(duration)
-                    self.set_stop()
+                    if 'Stop' in currentActions:
+                        self.set_stop()
 
                     # Restore the Sonos device back to it's previous state
                     if last_station != "snippet":
@@ -2335,7 +2344,7 @@ class Speaker(object):
                     try:
                         self.soco.play_from_queue(track, start)
                     except SoCoUPnPException as ex:
-                        self.logger.warning("Sonos: {ex}".format(ex=ex))
+                        self.logger.warning("Exception in play_from_queue(): {ex}".format(ex=ex))
                         return
                     # bug here? no event, we have to trigger it manually
                     if start:
@@ -2346,19 +2355,19 @@ class Speaker(object):
 
 class Sonos(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.5.5"
+    PLUGIN_VERSION = "1.6.0"
 
     def __init__(self, sh, *args, **kwargs):
         super().__init__(**kwargs)
 
         self._sh = sh
-        #self.logger = logging.getLogger('sonos')  # get a unique logger for the plugin and provide it internally
         self.zero_zone = False  # sometime a discovery scan fails, so try it two times; we need to save the state
         self._sonos_dpt3_step = 2  # default value for dpt3 volume step (step(s) per time period)
         self._sonos_dpt3_time = 1  # default value for dpt3 volume time (time period per step in seconds)
         self._tts = self.to_bool(self.get_parameter_value("tts"), default=False)
         self._local_webservice_path = self.get_parameter_value("local_webservice_path")
         self._snippet_duration_offset = float(self.get_parameter_value("snippet_duration_offset"))
+        self.SoCo_nr_speakers = 0
 	
         from bin.smarthome import VERSION
         if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
@@ -2401,6 +2410,9 @@ class Sonos(SmartPlugin):
         # unique items in list
         self._speaker_ips = utils.unique_list(self._speaker_ips)
         auto_ip = utils.get_local_ip_address()
+        if auto_ip == '0.0.0.0':
+            self.logger.error("Automatic detection of local IP not sucessfull")
+            return
 
         webservice_ip = self.get_parameter_value("webservice_ip")
         if not webservice_ip == '' and not webservice_ip =='0.0.0.0':
@@ -2488,8 +2500,8 @@ class Sonos(SmartPlugin):
         # Read SoCo Version:
         src = io.open('plugins/sonos/soco/__init__.py', encoding='utf-8').read()
         metadata = dict(re.findall("__([a-z]+)__ = \"([^\"]+)\"", src))
-        VERSION = metadata['version']
-        self.logger.info("Loading SoCo version {0}.".format(VERSION))
+        self.SoCo_version = metadata['version']
+        self.logger.info("Loading SoCo version {0}.".format(self.SoCo_version))
 
         # Configure log level of different SoCo modules:
         #logging.getLogger('plugins.sonos.soco.events_base').setLevel(logging.WARNING)
@@ -2497,6 +2509,8 @@ class Sonos(SmartPlugin):
         logging.getLogger('plugins.sonos.soco.discovery').setLevel(logging.WARNING)
         logging.getLogger('plugins.sonos.soco.services').setLevel(logging.WARNING)
         self.logger.info("Set all SoCo loglevel to WARNING")
+
+        self.init_webinterface()
 
     def run(self):
         self.logger.debug("Run method called")
@@ -2846,6 +2860,7 @@ class Sonos(SmartPlugin):
         """
         self.logger.info("Debug: Start discover fct")
 
+        online_speaker_count = 0
         handled_speaker = {}
 
         zones = []
@@ -2857,7 +2872,11 @@ class Sonos(SmartPlugin):
                 zones = soco.discover(timeout=5)
             except Exception as e:
                 self.logger.error("Exception during soco discover function: %s" % str(e))
-            
+                return
+
+        if zones is None: 
+            self.logger.debug("Discovery could not be executed.")
+            return 
 
         # 1. attempt: don't touch our speaker, return and wait for next interval
         # 2. attempt: ok, no speaker found, go on
@@ -2890,6 +2909,7 @@ class Sonos(SmartPlugin):
 
             if is_up:
                 self.logger.info("Debug: Speaker found: {zone}, {uid}".format(zone=zone.ip_address, uid=uid))
+                online_speaker_count = online_speaker_count + 1 
                 if uid in sonos_speaker:
                     if zone is not sonos_speaker[uid].soco:
                         self.logger.info("Debug: zone is not in speaker list jet. Adding and subscribing zone {0}".format(zone))
@@ -2934,6 +2954,53 @@ class Sonos(SmartPlugin):
                     "Debug: Removing undiscovered speaker: {zone}, {uid}".format(zone=zone.ip_address, uid=uid))
                 sonos_speaker[uid].dispose()
 
+        # Extract number of online speakers:
+        self.SoCo_nr_speakers = online_speaker_count 
+
+
+    def init_webinterface(self):
+        """"
+        Initialize the web interface for this plugin
+
+        This method is only needed if the plugin is implementing a web interface
+        """
+        try:
+            self.mod_http = Modules.get_instance().get_module(
+                'http')  # try/except to handle running in a core version that does not support modules
+        except:
+            self.mod_http = None
+        if self.mod_http == None:
+            self.logger.error("Not initializing the web interface")
+            return False
+
+        import sys
+        if not "SmartPluginWebIf" in list(sys.modules['lib.model.smartplugin'].__dict__):
+            self.logger.warning("Web interface needs SmartHomeNG v1.5 and up. Not initializing the web interface")
+            return False
+
+        # set application configuration for cherrypy
+        webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
+        config = {
+            '/': {
+                'tools.staticdir.root': webif_dir,
+            },
+            '/static': {
+                'tools.staticdir.on': True,
+                'tools.staticdir.dir': 'static'
+            }
+        }
+
+        # Register the web interface as a cherrypy app
+        self.mod_http.register_webif(WebInterface(webif_dir, self),
+                                     self.get_shortname(),
+                                     config,
+                                     self.get_classname(), self.get_instance_name(),
+                                     description='')
+
+        return True
+
+
+
 
 def _initialize_speaker(uid: str, logger: logging) -> None:
     """
@@ -2947,3 +3014,72 @@ def _initialize_speaker(uid: str, logger: logging) -> None:
     with _create_speaker_lock:
         if uid not in sonos_speaker:
             sonos_speaker[uid] = Speaker(uid=uid, logger=logger)
+
+
+
+# ------------------------------------------
+#    Webinterface of the plugin
+# ------------------------------------------
+
+import cherrypy
+from jinja2 import Environment, FileSystemLoader
+
+
+class WebInterface(SmartPluginWebIf):
+
+    def __init__(self, webif_dir, plugin):
+        """
+        Initialization of instance of class WebInterface
+
+        :param webif_dir: directory where the webinterface of the plugin resides
+        :param plugin: instance of the plugin
+        :type webif_dir: str
+        :type plugin: object
+        """
+        self.logger = logging.getLogger(__name__)
+        self.webif_dir = webif_dir
+        self.plugin = plugin
+        self.tplenv = self.init_template_environment()
+
+        self.items = Items.get_instance()
+
+    @cherrypy.expose
+    def index(self, reload=None):
+        """
+        Build index.html for cherrypy
+
+        Render the template and return the html file to be delivered to the browser
+
+        :return: contents of the template after beeing rendered
+        """
+        tmpl = self.tplenv.get_template('index.html')
+        # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
+        return tmpl.render(p=self.plugin, items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path'])))
+
+
+    @cherrypy.expose
+    def get_data_html(self, dataSet=None):
+        """
+        Return data to update the webpage
+
+        For the standard update mechanism of the web interface, the dataSet to return the data for is None
+
+        :param dataSet: Dataset for which the data should be returned (standard: None)
+        :return: dict with the data needed to update the web page.
+        """
+        if dataSet is None:
+            # get the new data
+            data = {}
+
+            # data['item'] = {}
+            # for i in self.plugin.items:
+            #     data['item'][i]['value'] = self.plugin.getitemvalue(i)
+            #
+            # return it as json the the web page
+            # try:
+            #     return json.dumps(data)
+            # except Exception as e:
+            #     self.logger.error("get_data_html exception: {}".format(e))
+        return {}
+
+

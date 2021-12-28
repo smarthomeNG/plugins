@@ -23,19 +23,17 @@ import logging
 import datetime
 import os
 import errno
-import re
 import dateutil.tz
 import dateutil.rrule
 import dateutil.relativedelta
-from lib.model.smartplugin import *
+from lib.model.smartplugin import SmartPlugin
 from lib.shtime import Shtime
-from lib.network import Http
+from lib.network import Http, Network
 from bin.smarthome import VERSION
-#from datetime import timezone, timedelta
-from datetime import timezone
+
 
 class iCal(SmartPlugin):
-    PLUGIN_VERSION = "1.5.4"
+    PLUGIN_VERSION = "1.6.0"
     ALLOW_MULTIINSTANCE = False
     DAYS = ("MO", "TU", "WE", "TH", "FR", "SA", "SU")
     FREQ = ("YEARLY", "MONTHLY", "WEEKLY", "DAILY", "HOURLY", "MINUTELY", "SECONDLY")
@@ -47,17 +45,17 @@ class iCal(SmartPlugin):
             self.logger = logging.getLogger(__name__)
         try:
             self.shtime = Shtime.get_instance()
+            self.handle_login = self.get_parameter_value('handle_login')
             try:
-                self.dl = Http(timeout=self.get_parameter_value('timeout'))
+                self.dl = Http(timeout=self.get_parameter_value('timeout'), hide_login=self.handle_login)
             except:
-                self.dl = Http('')
+                self.dl = Http(hide_login=self.handle_login)
             self._items = []
             self._icals = {}
             self._ical_aliases = {}
-            cycle = self.get_parameter_value('cycle')
+            self._cycle = self.get_parameter_value('cycle')
             calendars = self.get_parameter_value('calendars')
             config_dir = self.get_parameter_value('directory')
-            self.handle_login = self.get_parameter_value('handle_login')
         except Exception as err:
             self.logger.error('Problems initializing: {}'.format(err))
             self._init_complete = False
@@ -82,24 +80,26 @@ class iCal(SmartPlugin):
             if ':' in calendar and 'http' != calendar[:4]:
                 name, _, cal = calendar.partition(':')
                 calendar = cal.strip()
-                self.logger.info('Registering calendar {} with alias {}.'.format(self._clean_uri(calendar), name))
+                self.logger.info('Registering calendar {} with alias {}.'.format(Network.clean_uri(calendar, self.handle_login), name))
                 self._ical_aliases[name.strip()] = calendar
             else:
-                self.logger.info('Registering calendar {} without alias.'.format(self._clean_uri(calendar)))
+                self.logger.info('Registering calendar {} without alias.'.format(Network.clean_uri(calendar, self.handle_login)))
             calendar = calendar.strip()
             self._icals[calendar] = self._read_events(calendar)
 
         self.shtime = Shtime.get_instance()
-        self.scheduler_add('iCalUpdate', self._update_items, cron='* * * *', prio=5)
-        self.scheduler_add('iCalRefresh', self._update_calendars, cycle=int(cycle), prio=5)
 
     def run(self):
+        self.scheduler_add('iCalUpdate', self._update_items, cron='* * * *', prio=5)
+        self.scheduler_add('iCalRefresh', self._update_calendars, cycle=int(self._cycle), prio=5)
         self.alive = True
 
     def stop(self):
-        self.scheduler_remove('iCalUpdate')
-        self.scheduler_remove('iCalRefresh')
         self.alive = False
+        if self.scheduler_get('iCalUpdate'):
+            self.scheduler_remove('iCalUpdate')
+        if self.scheduler_get('iCalRefresh'):
+            self.scheduler_remove('iCalRefresh')
 
     def parse_item(self, item):
         if self.has_iattr(item.conf, 'ical_calendar'):
@@ -132,32 +132,33 @@ class iCal(SmartPlugin):
         return self._filter_events(self._read_events(ics, username=username, password=password, prio=prio, verify=verify), delta, offset)
 
     def _update_items(self):
-        if len(self._items):
-            now = self.shtime.now()
+        if self.alive:
+            if len(self._items):
+                now = self.shtime.now()
 
-            events = {}
-            for calendar in self._icals:
-                events[calendar] = self._filter_events(self._icals[calendar], 0, 0)
+                events = {}
+                for calendar in self._icals:
+                    events[calendar] = self._filter_events(self._icals[calendar], 0, 0)
 
-            for item in self._items:
-                calendar = item.conf['ical_calendar']
+                for item in self._items:
+                    calendar = item.conf['ical_calendar']
 
-                if calendar in self._ical_aliases:
-                    calendar = self._ical_aliases[calendar]
+                    if calendar in self._ical_aliases:
+                        calendar = self._ical_aliases[calendar]
 
-                val = False
-                for date in events[calendar]:
-                    for event in events[calendar][date]:
-                        if event['Start'] <= now <= event['End'] or (event['Start'] == event['End'] and event['Start'] <= now <= event['End'].replace(second=59, microsecond=999)):
-                            val = True
-                            break
+                    val = False
+                    for date in events[calendar]:
+                        for event in events[calendar][date]:
+                            if event['Start'] <= now <= event['End'] or (event['Start'] == event['End'] and event['Start'] <= now <= event['End'].replace(second=59, microsecond=999)):
+                                val = True
+                                break
 
-                item(val)
+                    item(val)
 
     def _update_calendars(self):
         for uri in self._icals:
             self._icals[uri] = self._read_events(uri)
-            self.logger.debug('Updated calendar {0}'.format(self._clean_uri(uri)))
+            self.logger.debug('Updated calendar {0}'.format(Network.clean_uri(uri, self.handle_login)))
 
         if len(self._icals):
             self._update_items()
@@ -209,11 +210,11 @@ class iCal(SmartPlugin):
                 name = '{}.ics'.format(entry) if ics == self._ical_aliases[entry] else name
             filename = '{}/{}'.format(self._directory, name)
             auth = 'HTTPBasicAuth' if username else None
-            downloaded = self.dl.download(url=ics, local=filename, params={username:username, password:password}, verify=verify, auth=auth)
+            downloaded = self.dl.download(url=ics, local=filename, params={username: username, password: password}, verify=verify, auth=auth)
             if downloaded is False:
                 self.logger.error('Could not download online ics file {0}.'.format(ics))
                 return {}
-            self.logger.debug('Online ics {} successfully downloaded to {}'.format(ics, filename))
+            self.logger.debug('Online ics {} successfully downloaded to {}'.format(Network.clean_uri(ics, self.handle_login), filename))
             ics = os.path.normpath(filename)
         try:
             ics = ics.replace('\\', os.sep).replace('/', os.sep)
@@ -227,7 +228,7 @@ class iCal(SmartPlugin):
 
         return self._parse_ical(ical, ics, prio)
 
-    #parse different date formats used in google calendar. Timezone is either coded in time field cointaining ('T') or in separate TZID field.
+    # parse different date formats used in google calendar. Timezone is either coded in time field cointaining ('T') or in separate TZID field.
     def _parse_date(self, val, dtzinfo, par=''):
 
         if 'T' in val:  # ISO datetime
@@ -248,22 +249,22 @@ class iCal(SmartPlugin):
         # handling of series calendar entries:
         if par.startswith('TZID='):
             tmp, par, timezoneFromCalendar = par.partition('=')
-            #self.logger.debug('Decoding series entry with time zone: {0}'.format(timezoneFromCalendar))
-            #self.logger.debug('Datetime before conversion: {0}'.format(dt))
+            # self.logger.debug('Decoding series entry with time zone: {0}'.format(timezoneFromCalendar))
+            # self.logger.debug('Datetime before conversion: {0}'.format(dt))
 
             calendar_tz = dateutil.tz.gettz(timezoneFromCalendar)
 
             dt = dt.replace(tzinfo=calendar_tz)
 
-            #self.logger.debug('Datetime after conversion for series entries: {}'.format(dt))
+            # self.logger.debug('Datetime after conversion for series entries: {}'.format(dt))
 
         # convert all time stamps to local timezone, configured in smarthome
         dt = dt.astimezone(self.shtime.tzinfo())
-        #self.logger.debug('Datetime after final conversion in plugin ical: {}'.format(dt))
+        # self.logger.debug('Datetime after final conversion in plugin ical: {}'.format(dt))
 
 
-        #convert time based on time zone info which has been extracted on a higher level:
-        #dt = dt.astimezone(dtzinfo)
+        # convert time based on time zone info which has been extracted on a higher level:
+        # dt = dt.astimezone(dtzinfo)
 
         return dt
 
@@ -273,7 +274,7 @@ class iCal(SmartPlugin):
         ical = ical.replace("\r\n\\n", ", ")
         ical = ical.replace("\n\\n", ", ").replace("\\n", ", ")
         ical = ical.replace("\\n", ", ")
-        ical = ical.replace("\r ", "").replace("\n ", "") # in case long lines continue in the next line
+        ical = ical.replace("\r ", "").replace("\n ", "")  # in case long lines continue in the next line
         for line in ical.splitlines():
             if line == 'BEGIN:VEVENT':
                 prio_count = {'UID': 1, 'SUMMARY': 1, 'SEQUENCE': 1, 'RRULE': 1, 'CLASS': 1, 'DESCRIPTION': 1}
@@ -393,15 +394,3 @@ class iCal(SmartPlugin):
             args[par.lower()] = rrule[par]
 
         return dateutil.rrule.rrule(freq, **args)
-
-    def _clean_uri(self, uri):
-        # check for http[s]?://user:password@domain.tld/... style uris and strip name/pass
-        pattern = re.compile('http([s]?)://([^:]+:[^@]+@)')
-        if self.handle_login == 'show' or not pattern.match(uri):
-            return uri
-
-        replacement = {
-            'strip': 'http\g<1>://',
-            'mask': 'http\g<1>://***:***@'
-        }
-        return pattern.sub(replacement[self.handle_login], uri)

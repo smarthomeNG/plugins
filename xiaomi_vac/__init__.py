@@ -30,9 +30,16 @@ import re
 import time
 from datetime import datetime, timedelta
 
-import miio
-from miio.vacuum import Vacuum, VacuumException
-from miio.vacuumcontainers import (VacuumStatus, ConsumableStatus, DNDStatus, CleaningDetails, CleaningSummary, Timer)
+try:
+    from miio.vacuum import Vacuum, VacuumException, Consumable
+except Exception:
+    from miio.integrations.vacuum.roborock import RoborockVacuum, VacuumException
+    from miio.integrations.vacuum.roborock.vacuum import Consumable
+try:
+    from miio.vacuumcontainers import (VacuumStatus, ConsumableStatus, DNDStatus, CleaningDetails, CleaningSummary, Timer)
+except Exception:
+    from miio.integrations.vacuum.roborock.vacuumcontainers import (VacuumStatus, ConsumableStatus, DNDStatus, CleaningDetails, CleaningSummary, Timer)
+
 from miio.discovery import Discovery
 
 from lib.model.smartplugin import *
@@ -43,7 +50,7 @@ from bin.smarthome import VERSION
 
 class Robvac(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.1.1"
+    PLUGIN_VERSION = "1.2.0"
 
     def __init__(self, smarthome):
         self._ip = self.get_parameter_value("ip")
@@ -81,7 +88,10 @@ class Robvac(SmartPlugin):
         if self._connected is False:
             for i in range(0, self.retry_count_max-self.retry_count):
                 try:
-                    self.vakuum = miio.Vacuum(self._ip, self._token, 0, 0)
+                    try:
+                        self.vakuum = Vacuum(self._ip, self._token, 0, 0)
+                    except Exception:
+                        self.vakuum = RoborockVacuum(self._ip, self._token, 0, 0)
                     self.retry_count = 1
                     self._connected = True
                     return True
@@ -122,8 +132,12 @@ class Robvac(SmartPlugin):
             # funktioniert nur mit übergebener id
             if self._data.get('clean_ids') is not None:
                 # self._data['clean_ids'] = self._data['clean_ids'].sort(reverse=True)
-                self._data['clean_details_last0'] = (
-                    self.vakuum.clean_details(self._data['clean_ids'][0], return_list=False))
+                try:
+                    self._data['clean_details_last0'] = (
+                        self.vakuum.clean_details(self._data['clean_ids'][0], return_list=False))
+                except Exception:
+                    self._data['clean_details_last0'] = (
+                        self.vakuum.clean_details(self._data['clean_ids'][0]))
                 self._data['last0_area'] = (
                     round(self._data['clean_details_last0'].area, 2))
                 self._data['last0_complete'] = self._data['clean_details_last0'].complete
@@ -139,8 +153,12 @@ class Robvac(SmartPlugin):
                     (self._data['clean_details_last0'].start
                      + self._data['clean_details_last0'].duration).strftime("%H:%M"))
 
-                self._data['clean_details_last1'] = (
-                    self.vakuum.clean_details(self._data['clean_ids'][1], return_list=False))
+                try:
+                    self._data['clean_details_last1'] = (
+                        self.vakuum.clean_details(self._data['clean_ids'][1], return_list=False))
+                except Exception:
+                    self._data['clean_details_last1'] = (
+                        self.vakuum.clean_details(self._data['clean_ids'][1]))
                 self._data['last1_area'] = (
                     round(self._data['clean_details_last1'].area, 2))
                 self._data['last1_complete'] = self._data['clean_details_last1'].complete
@@ -156,8 +174,12 @@ class Robvac(SmartPlugin):
                     (self._data['clean_details_last1'].start
                      + self._data['clean_details_last1'].duration).strftime("%H:%M"))
 
-                self._data['clean_details_last2'] = (
-                    self.vakuum.clean_details(self._data['clean_ids'][2], return_list=False))
+                try:
+                    self._data['clean_details_last2'] = (
+                        self.vakuum.clean_details(self._data['clean_ids'][2], return_list=False))
+                except Exception:
+                    self._data['clean_details_last2'] = (
+                        self.vakuum.clean_details(self._data['clean_ids'][2]))
                 self._data['last2_area'] = (
                     round(self._data['clean_details_last2'].area, 2))
                 self._data['last2_complete'] = self._data['clean_details_last2'].complete
@@ -173,8 +195,12 @@ class Robvac(SmartPlugin):
                      (self._data['clean_details_last2'].start
                       + self._data['clean_details_last2'].duration).strftime("%H:%M"))
 
-                self._data['clean_details_last3'] = (
-                    self.vakuum.clean_details(self._data['clean_ids'][3], return_list=False))
+                try:
+                    self._data['clean_details_last3'] = (
+                        self.vakuum.clean_details(self._data['clean_ids'][3], return_list=False))
+                except Exception:
+                    self._data['clean_details_last3'] = (
+                        self.vakuum.clean_details(self._data['clean_ids'][3]))
                 self._data['last3_area'] = (
                     round(self._data['clean_details_last3'].area, 2))
                 self._data['last3_complete'] = self._data['clean_details_last3'].complete
@@ -387,16 +413,16 @@ class Robvac(SmartPlugin):
                     self.vakuum.create_nogo_zone(item()[0], item()[1])
                 elif message == "reset":
                     if item().lower() in ["sensor_dirty", "sensor_reinigen"]:
-                        self.vakuum.consumable_reset(miio.vacuum.Consumable.SensorDirty)
+                        self.vakuum.consumable_reset(Consumable.SensorDirty)
                         self.logger.debug("Xiaomi_Robvac: sensor_dirty reset")
                     elif item().lower() in ["main_brush", "buerste_haupt"]:
-                        self.vakuum.consumable_reset(miio.vacuum.Consumable.MainBrush)
+                        self.vakuum.consumable_reset(Consumable.MainBrush)
                         self.logger.debug("Xiaomi_Robvac: main_brush reset")
                     elif item().lower() in ["side_brush", "buerste_seite"]:
-                        self.vakuum.consumable_reset(miio.vacuum.Consumable.SideBrush)
+                        self.vakuum.consumable_reset(Consumable.SideBrush)
                         self.logger.debug("Xiaomi_Robvac: side_brush reset")
                     elif item().lower() == "filter":
-                        self.vakuum.consumable_reset(miio.vacuum.Consumable.Filter)
+                        self.vakuum.consumable_reset(Consumable.Filter)
                         self.logger.debug("Xiaomi_Robvac: filter reset")
                     else:
                         self.logger.warning("Consumable {} does not exit. Please use only sensor_dirty/sensor_reinigen, main_brush/buerste_haupt, side_brush/buerste_seite, filter.".format(item.property.value))

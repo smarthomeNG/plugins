@@ -26,33 +26,75 @@
 
 from lib.module import Modules
 from lib.model.smartplugin import *
+from lib.network import Tcp_server
 
-import logging, sys, re, os
-import socket
+from speech import varParse, dictError
+
+import logging
+import sys
+import os
+import re
 import urllib.request
 import urllib.parse
 import urllib.error
-import lib.connection
+import cherrypy
 
 logger = logging.getLogger(__name__)
 
-class HTTPHandler(lib.connection.Stream):
 
-    def __init__(self, smarthome, parser, dest, sock, source):
-        lib.connection.Stream.__init__(self, sock, source)
-        self._sh = smarthome
-        self.terminator = b"\r\n\r\n"
+class HTTPDispatcher(Tcp_server):
+    '''
+    Encapsulation class for using lib.network.Tcp_server class with HTTP GET support
+    '''
+    def __init__(self, parser, ip, port):
+        '''
+        Initializes the class
+
+        :param parser: callback function for handling data, called as parser(remoteip, 'tcp:<localip>:<localport>', '<data>')
+        :type parser: function
+        :param ip: local ip address to bind to
+        :type ip: str
+        :param port: local port to bind to
+        :type port: int
+        '''
+        super().__init__(port, ip, 1, b'\n')
         self.parser = parser
-        self.dest = dest
-        self.source = source
+        self.dest = f'http:{ip}:{port}'
+        self.terminator = b"\r\n\r\n"
+        self.set_callbacks(data_received=self.handle_received_data, incoming_connection=self.handle_connection)
+        self.start()
 
-    def found_terminator(self, data):
-        for line in data.decode(errors="ignore").splitlines():
+    def handle_connection(self, server, client):
+        '''
+        Handle incoming connection. Just used for debugging
+
+        :param server: Tcp_server object serving the connection
+        :type server: lib.network.Tcp_server
+        :param client: Client object for connection
+        :type client: lib.network.Client
+        '''
+        self.logger.debug(f'Incoming HTTP connection from {client.name}')
+
+    def handle_received_data(self, server, client, data):
+        '''
+        Forward received data to parser callback
+
+        :param server: Tcp_server object serving the connection
+        :type server: lib.network.Tcp_server
+        :param client: Client object for connection
+        :type addr: lib.network.Client
+        :param data: received data
+        :type data: string
+        '''
+        self.logger.debug(f'Received packet from {client.ip}:{client.port} to {self.dest} via HTTP with content "{data}"')
+
+        # find lines starting with GET and return remaining lines "HTTP-like" and return status
+        for line in data.splitlines():
             if line.startswith('GET'):
                 request = line.split(' ')[1].strip('/')
                 request = urllib.parse.unquote_plus(request)
                 if self.parser(self.source, self.dest, request) is not False:
-                    parsedText=ParseText(self._sh, request)
+                    parsedText = ParseText(self._sh, request)
                     parse_result = parsedText.parse_message()
                     if parse_result[1]:
                         answer = parse_result[1][2]
@@ -69,33 +111,17 @@ class HTTPHandler(lib.connection.Stream):
             break
 
 
-class HTTPDispatcher(lib.connection.Server):
-    def __init__(self, smarthome, parser, ip, port):
-        lib.connection.Server.__init__(self, ip, port)
-        self._sh = smarthome
-        self.parser = parser
-        self.dest = "http:{}:{}".format(ip,port)
-        self.connect()
-
-    def handle_connection(self):
-        sock, address = self.accept()
-        if sock is None:
-            return
-        HTTPHandler(self._sh, self.parser, self.dest, sock, address)
-
-
 class Speech_Parser(SmartPlugin):
     """
     Main class of the Plugin. Does all plugin specific stuff and provides
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.6.0'
+    PLUGIN_VERSION = '1.7.0'
     listeners = {}
     socket_warning = 10
     socket_warning = 2
     errorMessage = False
-
 
     def __init__(self, sh, *args, **kwargs):
         """
@@ -116,13 +142,15 @@ class Speech_Parser(SmartPlugin):
             pass
 
         # Initialization code goes here
-        self.add_listener(self.ip, self.port, self.acl)
-        self.logger.info("SP: Server Starts - %s:%s" % (self.ip, self.port))
+        dest = "http:{}:{}".format(self.ip, self.port)
+        logger.info("SP: Adding listener on: {}".format(dest))
+        self.dispatcher = HTTPDispatcher(self.parse_input, self.ip, self.port)
+        self.listeners[dest] = {'items': {}, 'logics': {}, 'acl': self.parse(self.acl)}
 
         speech_plugin_path = os.path.dirname(os.path.realpath(__file__))
 
         if not os.path.exists(self.config):
-            try_other_path = os.path.join( speech_plugin_path, self.config)
+            try_other_path = os.path.join(speech_plugin_path, self.config)
             if os.path.exists(try_other_path):
                 self.config = try_other_path
             else:
@@ -131,12 +159,11 @@ class Speech_Parser(SmartPlugin):
                 return
 
         config_base = os.path.basename(self.config)
-        
+
         if config_base == "speech.py":
             sys.path.append(os.path.dirname(self.config))
             global varParse, dictError
-            from speech import varParse, dictError
-            self.logger.warning("Configuration file '{}' successfully imported".format(self.config))
+            self.logger.info("Configuration file '{}' successfully imported".format(self.config))
         else:
             self.logger.error("Configuration file '{}' error, the filename should be speech.py".format(config_base))
             self._init_complete = False
@@ -144,17 +171,6 @@ class Speech_Parser(SmartPlugin):
 
         # if plugin should start even without web interface
         self.init_webinterface()
-
-
-    def add_listener(self, ip, port, acl='*'):
-        dest = "http:{}:{}".format(ip,port)
-        logger.info("SP: Adding listener on: {}".format(dest))
-        dispatcher = HTTPDispatcher(self._sh, self.parse_input, ip, port)
-        if not dispatcher.connected:
-            return False
-        acl = self.parse_acl(acl)
-        self.listeners[dest] = {'items': {}, 'logics': {}, 'acl': acl}
-        return True
 
     def parse_acl(self, acl):
         if acl == '*':
@@ -168,6 +184,11 @@ class Speech_Parser(SmartPlugin):
         Run method for the plugin
         """
         self.logger.debug("Run method called")
+        self.logger.info("SP: Server Starts - %s:%s" % (self.ip, self.port))
+        self.dispatcher.start()
+        if not self.dispatcher.connected:
+            self.logger.error(f'Could not start server on {self.ip}:{self.port}. Plugin deactivated')
+            return
         self.alive = True
 
     def stop(self):
@@ -176,10 +197,11 @@ class Speech_Parser(SmartPlugin):
         """
         self.logger.debug("Stop method called")
         self.alive = False
+        self.dispatcher.close()
 
     def parse_item(self, item):
         self.parse_obj(item, 'item')
-        
+
     def parse_logic(self, logic):
         self.parse_obj(logic, 'logic')
 
@@ -200,10 +222,10 @@ class Speech_Parser(SmartPlugin):
             if obj.conf['sp'] in ['ro', 'rw', 'yes']:
                 for dest in self.listeners:
                     self.listeners[dest][obj_type + 's'][oid] = {obj_type: obj, 'acl': acl}
-            else:
-                errorMessage = dictError['rights_error']
 
     def parse_input(self, source, dest, data):
+        if not self.alive:
+            return False
         if dest in self.listeners:
             parse_text = ParseText(self._sh, data)
             result = parse_text.parse_message()
@@ -213,12 +235,12 @@ class Speech_Parser(SmartPlugin):
                 errorMessage = result[0]
                 return [False, errorMessage]
             name, value, answer, typ, varText = result
-            self.logger.info('Speech Parse data: '+str(data)+' Result: '+str(result))
-            #logger.debug("SP: Result: "+str(result))
-            #logger.debug("SP: Item: "+name)
-            #logger.debug("SP: Value: "+value)
-            #logger.debug("SP: Answer: "+answer)
-            #logger.debug("SP: Typ: "+typ)
+            self.logger.info('Speech Parse data: ' + str(data) + ' Result: ' + str(result))
+            # logger.debug("SP: Result: "+str(result))
+            # logger.debug("SP: Item: "+name)
+            # logger.debug("SP: Value: "+value)
+            # logger.debug("SP: Answer: "+answer)
+            # logger.debug("SP: Typ: "+typ)
             source, __, port = source.partition(':')
             gacl = self.listeners[dest]['acl']
             if typ == 'item':
@@ -263,7 +285,6 @@ class Speech_Parser(SmartPlugin):
             return False
         return True
 
-
     def init_webinterface(self):
         """"
         Initialize the web interface for this plugin
@@ -271,16 +292,14 @@ class Speech_Parser(SmartPlugin):
         This method is only needed if the plugin is implementing a web interface
         """
         try:
-            self.mod_http = Modules.get_instance().get_module(
-                'http')  # try/except to handle running in a core version that does not support modules
+            self.mod_http = Modules.get_instance().get_module('http')  # try/except to handle running in a core version that does not support modules
         except:
             self.mod_http = None
-        if self.mod_http == None:
+        if self.mod_http is None:
             self.logger.error("Not initializing the web interface")
             return False
 
-        import sys
-        if not "SmartPluginWebIf" in list(sys.modules['lib.model.smartplugin'].__dict__):
+        if "SmartPluginWebIf" not in list(sys.modules['lib.model.smartplugin'].__dict__):
             self.logger.warning("Web interface needs SmartHomeNG v1.5 and up. Not initializing the web interface")
             return False
 
@@ -323,18 +342,18 @@ class ParseText():
                 name = varResult[0]
                 value = varResult[1]
                 typ = varResult[4]
-                logger.debug("SP: parseText: "+self.parseText)
-                logger.debug("SP: Item: "+name)
-                logger.debug("SP: Value: "+value)
-                logger.debug("SP: List: "+str(varResult[2]))
-                logger.debug("SP: Answer: "+answer)
-                logger.debug("SP: Typ: "+typ)
+                logger.debug("SP: parseText: " + self.parseText)
+                logger.debug("SP: Item: " + name)
+                logger.debug("SP: Value: " + value)
+                logger.debug("SP: List: " + str(varResult[2]))
+                logger.debug("SP: Answer: " + answer)
+                logger.debug("SP: Typ: " + typ)
 
-                #get status if needed
+                # get status if needed
                 if value == '%status%':
                     value_received = str(self.get_item_value(name))
-                    value_received = value_received.replace('.', ',') # Dezimal Zahlen werden mit Punkt getrennt, ersetzen durch Komma
-                    answer = answer.replace('%status%', value_received) # Platzhalter %status% ersetzen
+                    value_received = value_received.replace('.', ',')       # Dezimal Zahlen werden mit Punkt getrennt, ersetzen durch Komma
+                    answer = answer.replace('%status%', value_received)     # Platzhalter %status% ersetzen
 
                 return(False, [name, value, answer, typ, self.parseText])
             else:
@@ -356,7 +375,7 @@ class ParseText():
             varTyp = 'item'
 
         # Build regular expression
-        for x in range(0,len(varVars)):
+        for x in range(0, len(varVars)):
             reg_ex += '('
             if type(varVars[x]) == list:
                 for var2 in varVars[x]:
@@ -366,24 +385,24 @@ class ParseText():
             else:
                 reg_ex += str(varVars[x]) + ')'
             reg_ex += '.*'
-            if len(varVars)-1 != x:
+            if len(varVars) - 1 != x:
                 reg_ex += ' '
-        logger.debug("Regular Expression:\n>"+reg_ex+"<")
+        logger.debug("Regular Expression:\n>" + reg_ex + "<")
         # test regular Expression on transmitted Text
         mo = re.match(reg_ex, self.parseText, re.IGNORECASE)
 
         if mo:
-            for x in range(0,len(varVars)):
+            for x in range(0, len(varVars)):
                 if type(varVars[x]) == list:
-                    for y in range(0,len(varVars[x])):
-                        if mo.group(x+1).lower() in varVars[x][y][1]:
+                    for y in range(0, len(varVars[x])):
+                        if mo.group(x + 1).lower() in varVars[x][y][1]:
                             varList.append(str(varVars[x][y][0]))
                             varList2.append(str(varVars[x][y][1][0]))
                 else:
-                    varList.append(str(mo.group(x+1)))
-                    varList2.append(str(mo.group(x+1)))
-            for x in range(0,len(varList)):
-                var = '%'+str(x)+'%'
+                    varList.append(str(mo.group(x + 1)))
+                    varList2.append(str(mo.group(x + 1)))
+            for x in range(0, len(varList)):
+                var = '%' + str(x) + '%'
                 varItem = varItem.replace(var, str(varList[x]))
                 varValue = varValue.replace(var, str(varList[x]))
                 if varList[x].lower() == '%status%':
@@ -401,13 +420,9 @@ class ParseText():
         return item()
 
 
-
 # ------------------------------------------
 #    Webinterface of the plugin
 # ------------------------------------------
-
-import cherrypy
-from jinja2 import Environment, FileSystemLoader
 
 
 class WebInterface(SmartPluginWebIf):
@@ -439,7 +454,6 @@ class WebInterface(SmartPluginWebIf):
         # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
         return tmpl.render(p=self.plugin)
 
-
     @cherrypy.expose
     def get_data_html(self, dataSet=None):
         """
@@ -452,9 +466,9 @@ class WebInterface(SmartPluginWebIf):
         """
         if dataSet is None:
             # get the new data
-            #self.plugin.beodevices.update_devices_info()
+            # self.plugin.beodevices.update_devices_info()
 
             # return it as json the the web page
-            #return json.dumps(self.plugin.beodevices.beodeviceinfo)
+            # return json.dumps(self.plugin.beodevices.beodeviceinfo)
             pass
         return

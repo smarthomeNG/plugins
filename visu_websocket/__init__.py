@@ -451,7 +451,7 @@ class websockethandler(lib.connection.Stream):
         self.items = items
         self.rrd = False
         self.log = False
-        self.logs = self._sh.return_logs()
+        self.logs = self._sh.logs.return_logs()
         self._series_lock = threading.Lock()
         self.visu_logics = visu_logics
         self.proto = proto

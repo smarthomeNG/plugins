@@ -6,13 +6,12 @@ plugin:
         de: 'Plugin zum Auslesen von Daten bzw. zum Ansteuern eines Mähroboters mit Robonect HX Modul (https://robonect.de/).'
         en: 'Plugin to read data / to control a robotic lawnmower with Robonect HX module (https://robonect.de/).'
     maintainer: psilo
-#    tester:                         # Who tests this plugin?
+    tester: stoepf
     state: develop                  # change to ready when done with development
-    keywords: robonect, lawnmower
+    keywords: robonect, lawnmower, gardena, husqvarna, automower
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1515205-support-thread
-
-    version: 1.0.2                  # Plugin version (must match the version specified in __init__.py)
+    version: 1.0.4                  # Plugin version (must match the version specified in __init__.py)
     sh_minversion: 1.6              # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
 #    py_minversion: 3.6             # minimum Python version to use this plugin
@@ -33,8 +32,8 @@ parameters:
         type: str
         default: 'api'
         description:
-            de: 'Art der Anbindung: nur via API (nur Pollen von Daten) oder API + MQTT (für live updates - benötigt das konfigurierte MQTT Modul von SmartHomeNG!).'
-            en: 'Type of connection: only via API (only polling of data) or API + MQTT (for live updates - requires the configured MQTT module of SmartHomeNG!).'
+            de: 'Art der Anbindung: nur via API (nur Pollen von Daten) oder API + MQTT (für live updates - benötigt das konfigurierte MQTT Modul von SmartHomeNG! Bitte im Robonect unter "Kommunikation" -> "MQTT-Client" das Flag "Einheiten an Werte anfügen" ausschalten).'
+            en: 'Type of connection: only via API (only polling of data) or API + MQTT (for live updates - requires the configured MQTT module of SmartHomeNG! Remove the flag under "Kommunikation" -> "MQTT-Client" das Flag "Einheiten an Werte anfügen").'
         valid_list:
             - 'api'
             - 'mqtt'
@@ -74,6 +73,8 @@ item_attributes:
             de: 'Robonect Datentyp. Für mögliche Werte in die "struct" schauen.'
             en: 'Robonect data type. See struct for possible values.'
         valid_list:
+            - 'control'
+            - 'control/mode'
             - 'device/name'
             - 'robonect_id'
             - 'robonect_version'
@@ -168,37 +169,30 @@ item_attributes:
 item_structs:
     main:
         name: 'Main Data From Robonect HX Module'
-
         robonect_name:
             name: 'Lawnmower Nickname'
             robonect_data_type: device/name
             type: str
-
         robonect_id:
             name: 'Robonect ID'
             robonect_data_type: robonect_id
             type: str
-
         robonect_version:
             name: 'Firmware Version of the Robonect Module'
             robonect_data_type: robonect_version
             type: str
-
         robonect_version_comment:
             name: 'Firmware Version Comment (e.g. Sub Version) of the Robonect Module'
             robonect_data_type: robonect_version_comment
             type: str
-
         robonect_version_compiled:
             name: 'Firmware Compilation Date of the Robonect Module'
             robonect_data_type: robonect_version_compiled
             type: str
-
         robonect_serial:
             name: 'Serial Number of the Robonect Module'
             robonect_data_type: device/serial
             type: str
-
         mower:
             name: 'Information About the Hardware and Software of the Mower'
 
@@ -207,7 +201,6 @@ item_structs:
                     name: 'Serial of the Robotic Lawnmower'
                     robonect_data_type: hardware_serial
                     type: str
-
                 production_date:
                     name: 'Production Date of the Robotic Lawnmower'
                     robonect_data_type: production_date
@@ -225,7 +218,6 @@ item_structs:
                     name: 'Firmware Compilation Date of the Automower'
                     robonect_data_type: msw_compiled
                     type: str
-
             wlan:
                 at-version:
                     robonect_data_type: wlan_at-version
@@ -255,7 +247,6 @@ item_structs:
                     type: num
                     robonect_data_type: remotestart_distance
                     robonect_remote_index: 1
-
             remotestart_2:
                 name:
                     type: str
@@ -277,50 +268,52 @@ item_structs:
                     type: num
                     robonect_data_type: remotestart_distance
                     robonect_remote_index: 2
-
+        control:
+            name: 'Control of the Mower'
+            robonect_data_type: control
+            type: str
+            webservices_set: automower
+            webservices_data: 'val'
+            mode:
+                name: 'Control Mode of the Mower'
+                robonect_data_type: control/mode
+                type: str
+                webservices_set: automower
+                webservices_data: 'val'
         status:
             name: 'Status Code'
             robonect_data_type: mower/status
             type: num
-
             text:
                 name: 'Status of the Mower as Text'
                 type: str
                 robonect_data_type: mower/status/text
-
                 translated:
                     name: 'Status of the Mower as Translated Text'
                     type: str
                     robonect_data_type: status_text_translated
-
             distance:
                 robonect_data_type: mower/distance
                 type: num
-
             stopped:
                 robonect_data_type: mower/stopped
                 type: bool
-
             duration:
                 name: 'Duration of Mode in Minutes'
                 robonect_data_type: mower/status/duration
                 type: num
-
             mode:
                 name: 'Mode of the Mower'
                 robonect_data_type: mower/mode
                 type: num
-
                 text:
                     name: 'Mode of the Mower as Text'
                     type: str
                     robonect_data_type: mower/mode/text
-
                     translated:
                         name: 'Status of the Mower as Translated Text'
                         type: str
                         robonect_data_type: mode_text_translated
-
             battery:
                 name: 'Battery Level in %'
                 robonect_data_type: mower/battery/charge
@@ -329,13 +322,11 @@ item_structs:
             hours:
                 robonect_data_type: mower/statistic/hours
                 type: num
-
             blades:
                 quality:
                     name: 'Quality of Blades in %'
                     robonect_data_type: blades_quality
                     type: num
-
                 hours:
                     name: 'Runtime of Blades in hours'
                     robonect_data_type: blades_hours
@@ -345,7 +336,6 @@ item_structs:
                     name: 'Age of Blades in days'
                     robonect_data_type: blades_days
                     type: num
-
             error:
                 error_code:
                     robonect_data_type: mower/error/code
@@ -354,18 +344,15 @@ item_structs:
                 error_message:
                     robonect_data_type: mower/error/message
                     type: str
-
                 date:
                     robonect_data_type: error_date
                     type: str
-
                 time:
                     robonect_data_type: error_time
                     type: str
-
                 unix:
                     robonect_data_type: error_unix
-                    type: str
+                    type: num
         wlan:
             signal:
                 name: 'Wifi Signal Strength'
@@ -376,7 +363,6 @@ item_structs:
                 name: 'Internal Temperature'
                 robonect_data_type: health/climate/temperature
                 type: num
-
             humidity:
                 name: 'Internal Humidity'
                 robonect_data_type: health/climate/humidity

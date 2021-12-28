@@ -40,14 +40,14 @@ plugin:
              (but make sure they still meet the requirements for smarthomeng)!
              If that does not work you can use: ``sudo apt update && sudo apt install -y python3-scipy``\n
              '
-    maintainer: cmalo, bmxp, onkelandy
+    maintainer: cmalo, bmxp, onkelandy, andrek
     tester: Sandman60, cmalo, schuma
     state: ready
 #    keywords: iot xyz
     documentation: https://www.smarthomeng.de/user/plugins/uzsu/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1364692-supportthread-für-uzsu-plugin
 
-    version: 1.5.3                 # Plugin version
+    version: 1.6.0                 # Plugin version
     sh_minversion: 1.5             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
@@ -62,6 +62,16 @@ parameters:
         description:
             de: 'Falls True, werden Einträge mit exakt den selben Einstellungen, aber unterschiedlichem Wert durch einen neu getätigten Eintrag ersetzt'
             en: 'If True, existing entries with exactly the same settings except the value get replaced by the new entry'
+
+    suncalculation_cron:
+        type: str
+        default: '0 0 * *'
+        description:
+            de: 'Cron-Angabe, wann für die UZSU Einträge mit Sonnenstandbezug die errechnete Uhrzeit ins dict Item geschrieben werden soll.'
+            en: 'Cron definition when the UZSU item should be updated with the calculated times for sun-related UZSU entries.'
+        description_long:
+            de: 'Cron-Angabe, wann für die UZSU Einträge mit Sonnenstandbezug die errechnete Uhrzeit ins dict Item geschrieben werden soll. Diese "calculated" Einträge sind relevant für diverse UZSU Widgets der SmartVisu.'
+            en: 'Cron definition when the UZSU item should be updated with the calculated times for sun-related UZSU entries.There "calculated" entries are relevant for some SmartVisu UZSU widgets.'
 
     interpolation_interval:
         type: int
@@ -137,8 +147,8 @@ item_structs:
                 remark: The last set value if UZSU is active
                 type: foo
                 visu_acl: ro
-                eval: "'None' if sh...lastvalue() is None else sh...lastvalue()"
-                crontab: init = 'None'
+                eval: sh...lastvalue('uzsu_dict_updated')
+                crontab: init = None
                 eval_trigger: ..
 
             active:
@@ -186,6 +196,13 @@ plugin_functions:
         description:
             de: 'Abfrage des zuletzt gesetzten Werts. Kann z.B. beim Aktivieren der UZSU genutzt werden, um sofort auf den gewünschten Wert zu schalten.'
             en: 'Query the last value. Can be used to immediately set the correct value after activating an UZSU.'
+        parameters:
+            by:
+                type: str
+                default: None
+                description:
+                    de: 'Für eine entsprechende Info im Logfile kann hier z.B. der Itemname, der den Wert abruft eingetragen werden'
+                    en: 'For respective info in the log file you can choose to put the item name that queries the value.'
 
     clear:
         type: bool

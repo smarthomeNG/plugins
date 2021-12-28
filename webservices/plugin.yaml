@@ -10,12 +10,12 @@ plugin:
     state: qa-passed
     keywords: REST, API, Webservice
     documentation: https://www.smarthomeng.de/?category_name=plugins&s=webservices
-#    documentation: http://smarthomeng.de/user/plugins/webservices/user_doc.html
+    #documentation: http://smarthomeng.de/user/plugins/webservices/user_doc.html
     support: https://knx-user-forum.de/node/1163886
 
-    version: 1.6.2                 # Plugin version
+    version: 1.6.3                 # Plugin version
     sh_minversion: 1.6             # minimum shNG version to use this plugin
-#    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
+    #sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
     restartable: unknown
     classname: WebServices         # class containing the plugin
@@ -26,7 +26,7 @@ parameters:
         type: str
         default: 'all'
         description:
-            de: '(optional) Mode des Plugins: "all", wenn die Webservice-Schnittstelle alle Items der SmartHomeNG Instanz verfügbar machen soll (default). Ansonsten werden nur Items ausgeliefert, die einem Set via webservices_set zugeordnet sind.'
+            de: '(optional) Modus des Plugins: "all", wenn die Webservice-Schnittstelle alle Items der SmartHomeNG Instanz verfügbar machen soll (default). Ansonsten werden nur Items ausgeliefert, die einem Set via webservices_set zugeordnet sind.'
             en: '(optional) Mode of the plugin: "all", if standard interface with all items shall be enabled (default if left empty). Otherwise only items are delivered via the interface that are added to a set via webservices_set attribute.'
 
     use_service_auth:

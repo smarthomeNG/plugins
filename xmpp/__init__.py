@@ -65,21 +65,24 @@ class XMPP(SmartPlugin):
         self._logic = logic
         self._sh = smarthome
         self._join = joins
-        self._connected = False
-        self.xmpp.loop = asyncio.get_event_loop()
+        self._connected = 0
+        self._loop = asyncio.get_event_loop()
 
     def run(self):
         self.alive = True
-        if self._server is not None:
-            self.xmpp.connect(address=self._server)
-        else:
-            self.xmpp.connect()
         while self.alive:
-          self.xmpp.process(timeout=1)
+            if self._connected == 0:
+                self.xmpp.loop = self._loop
+                self._connected = 1
+                if self._server is not None:
+                    self.xmpp.connect(address=self._server)
+                else:
+                    self.xmpp.connect()
+            self.xmpp.process(timeout=1)
 
     def stop(self):
         self.alive = False
-        self._connected = False
+        self._connected = 0
         for chat in self._join:
             self.xmpp.plugin['xep_0045'].leave_muc(chat, self.xmpp.boundjid.bare)
         self.logger.info("Shutting Down XMPP Client")
@@ -103,10 +106,10 @@ class XMPP(SmartPlugin):
                 pass
 
     def is_connected(self):
-        return self._connected
+        return self._connected > 1
 
     def handleXMPPConnected(self, event):
-        self._connected = True
+        self._connected = 2
         try:
             self.xmpp.send_presence(pstatus="Send me a message")
             self.xmpp.get_roster()
@@ -117,7 +120,7 @@ class XMPP(SmartPlugin):
             self.xmpp.reconnect()
 
     def handleXMPPDisconnected(self, event):
-        self._connected = False
+        self._connected = 0
 
     def handleIncomingMessage(self, msg):
         """

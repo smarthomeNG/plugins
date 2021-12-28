@@ -24,14 +24,15 @@
 import logging
 import threading
 import re
-import time
 import datetime
-import lib.connection
+
 from lib.model.smartplugin import SmartPlugin
+from lib.network import Tcp_client
 
-class MPD(SmartPlugin, lib.connection.Client):
 
-    PLUGIN_VERSION = "1.4.3"
+class MPD(SmartPlugin):
+
+    PLUGIN_VERSION = "1.5.0"
     STATUS        = 'mpd_status'
     SONGINFO      = 'mpd_songinfo'
     STATISTIC     = 'mpd_statistic'
@@ -63,13 +64,14 @@ class MPD(SmartPlugin, lib.connection.Client):
             self.logger = logging.getLogger(__name__)
 
         self.instance = self.get_instance_name()
-        
+
         self.host = self.get_parameter_value('host')
         self.port = self.get_parameter_value('port')
         self._cycle = self.get_parameter_value('cycle')
 
-        lib.connection.Client.__init__(self, self.host, self.port, monitor=True)
         self.terminator = b'\n'
+        self._client = Tcp_client(self.host, self.port, terminator=self.terminator)
+        self._client.set_callbacks(connected=self.handle_connect, data_received=self.parse_reply)
         self._cmd_lock = threading.Lock()
         self._reply_lock = threading.Condition()
         self._reply = {}
@@ -79,18 +81,18 @@ class MPD(SmartPlugin, lib.connection.Client):
         self._statistic_items = {}
         self.orphanItems = []
         self.lastWarnTime = None
-        self.warnInterval = 3600 #warn once per hour for orphaned items if some exist
-        self._internal_tems = { 'isPlaying' : False, 'isPaused' : False, 'isStopped' : False, 'isMuted' : False, 'lastVolume' : 20, 'currentName' : ''}
-        self._mpd_statusRequests = ['volume','repeat','random','single','consume','playlist','playlistlength'
-                                    ,'mixrampdb','state','song','songid','time','elapsed','bitrate','audio','nextsong'
-                                    ,'nextsongid','duration','xfade','mixrampdelay','updating_db','error','playpause','mute']
-        self._mpd_currentsongRequests = ['file','Last-Modified','Artist','Album','Title','Name','Track','Time','Pos','Id']
-        self._mpd_statisticRequests = ['artists','albums','songs','uptime','db_playtime','db_update','playtime']
-        #_mpd_playbackCommands and _mpd_playbackOptions are both handled as 'mpd_command'!
-        self._mpd_playbackCommands = ['next','pause','play','playid','previous','seek','seekid','seekcur','stop','playpause','mute']
-        self._mpd_playbackOptions = ['consume','crossfade','mixrampdb','mixrampdelay','random','repeat','setvol','single','replay_gain_mode']
+        self.warnInterval = 3600  # warn once per hour for orphaned items if some exist
+        self._internal_tems = {'isPlaying': False, 'isPaused': False, 'isStopped': False, 'isMuted': False, 'lastVolume': 20, 'currentName': ''}
+        self._mpd_statusRequests = ['volume', 'repeat', 'random', 'single', 'consume', 'playlist', 'playlistlength',
+                                    'mixrampdb', 'state', 'song', 'songid', 'time', 'elapsed', 'bitrate', 'audio', 'nextsong',
+                                    'nextsongid', 'duration', 'xfade', 'mixrampdelay', 'updating_db', 'error', 'playpause', 'mute']
+        self._mpd_currentsongRequests = ['file', 'Last-Modified', 'Artist', 'Album', 'Title', 'Name', 'Track', 'Time', 'Pos', 'Id']
+        self._mpd_statisticRequests = ['artists', 'albums', 'songs', 'uptime', 'db_playtime', 'db_update', 'playtime']
+        # _mpd_playbackCommands and _mpd_playbackOptions are both handled as 'mpd_command'!
+        self._mpd_playbackCommands = ['next', 'pause', 'play', 'playid', 'previous', 'seek', 'seekid', 'seekcur', 'stop', 'playpause', 'mute']
+        self._mpd_playbackOptions = ['consume', 'crossfade', 'mixrampdb', 'mixrampdelay', 'random', 'repeat', 'setvol', 'single', 'replay_gain_mode']
         self._mpd_rawCommand = ['rawcommand']
-        self._mpd_databaseCommands = ['update','rescan']
+        self._mpd_databaseCommands = ['update', 'rescan']
 
     def loggercmd(self, logstr, level):
         if not logstr:
@@ -109,31 +111,36 @@ class MPD(SmartPlugin, lib.connection.Client):
             self.logger.critical(logstr)
 
     def run(self):
+        if not self._client.connect():
+            self.logger.error(f'Connection to {self.host}:{self.port} not possible. Plugin deactivated.')
+            return
+
         self.alive = True
         self.scheduler_add('MPD', self.update_status, cycle=self._cycle)
 
     def stop(self):
         self.alive = False
+        self._client.close()
 
     def handle_connect(self):
-        self.loggercmd("handle_connect",'d')
-        self.found_terminator = self.parse_reply
+        self.loggercmd("handle_connect", 'd')
+        # self.found_terminator = self.parse_reply
 
     def parse_reply(self, data):
         data = data.decode()
-        self.loggercmd("parse_reply => {}".format(data),'d')
+        self.loggercmd("parse_reply => {}".format(data), 'd')
         if data.startswith('OK'):
             self._reply_lock.acquire()
             self._reply_lock.notify()
             self._reply_lock.release()
         elif data.startswith('ACK'):
-            self.loggercmd(data,'e')
+            self.loggercmd(data, 'e')
         else:
             key, sep, value = data.partition(': ')
             self._reply[key] = value
 
     def parse_item(self, item):
-        #all status-related items here
+        # all status-related items here
         if self.get_iattr_value(item.conf, MPD.STATUS) in self._mpd_statusRequests:
             key = (self.get_iattr_value(item.conf, MPD.STATUS))
             self._status_items[key] = item
@@ -143,19 +150,20 @@ class MPD(SmartPlugin, lib.connection.Client):
         if self.get_iattr_value(item.conf, MPD.STATISTIC) in self._mpd_statisticRequests:
             key = (self.get_iattr_value(item.conf, MPD.STATISTIC))
             self._statistic_items[key] = item
-        #do not return after status-related items => they can be combined with command-related items
-        #all command-related items here
+        # do not return after status-related items => they can be combined with command-related items
+        # all command-related items here
         if self.get_iattr_value(item.conf, MPD.COMMAND) in self._mpd_playbackCommands \
-          or self.get_iattr_value(item.conf, MPD.COMMAND) in self._mpd_playbackOptions \
-          or self.get_iattr_value(item.conf, MPD.URL) is not None \
-          or self.get_iattr_value(item.conf, MPD.LOCALPLAYLIST) is not None \
-          or self.get_iattr_value(item.conf, MPD.RAWCOMMAND) in self._mpd_rawCommand \
-          or self.get_iattr_value(item.conf, MPD.DATABASE) in self._mpd_databaseCommands:
-            self.loggercmd("callback assigned for item {}".format(item),'d')
+                or self.get_iattr_value(item.conf, MPD.COMMAND) in self._mpd_playbackOptions \
+                or self.get_iattr_value(item.conf, MPD.URL) is not None \
+                or self.get_iattr_value(item.conf, MPD.LOCALPLAYLIST) is not None \
+                or self.get_iattr_value(item.conf, MPD.RAWCOMMAND) in self._mpd_rawCommand \
+                or self.get_iattr_value(item.conf, MPD.DATABASE) in self._mpd_databaseCommands:
+
+            self.loggercmd("callback assigned for item {}".format(item), 'd')
             return self.update_item
 
     def update_status(self):
-        #refresh all subscribed items
+        # refresh all subscribed items
         warn = self.canWarnNow()
         self.update_statusitems(warn)
         self.update_currentsong(warn)
@@ -163,50 +171,52 @@ class MPD(SmartPlugin, lib.connection.Client):
         if warn:
             self.lastWarnTime = datetime.datetime.now()
             for warn in self.orphanItems:
-                self.loggercmd(warn,'w')
+                self.loggercmd(warn, 'w')
             self.orphanItems = []
 
-    def update_statusitems(self,warn):
-        if not self.connected:
+    def update_statusitems(self, warn):
+        if not self._client.connected:
             if warn:
-                self.loggercmd("update_status while not connected",'e')
+                self.loggercmd("update_status while not connected", 'e')
             return
         if (len(self._status_items) <= 0):
             if warn:
-                self.loggercmd("status: no items to refresh",'w')
+                self.loggercmd("status: no items to refresh", 'w')
             return
-        self.loggercmd("requesting status",'d')
+        self.loggercmd("requesting status", 'd')
         status = self._send('status')
-        self.refreshItems(self._status_items,status,warn)
+        self.refreshItems(self._status_items, status, warn)
 
-    def update_currentsong(self,warn):
+    def update_currentsong(self, warn):
         if not self.connected:
             if warn:
-                self.loggercmd("update_currentsong while not connected",'e')
+                self.loggercmd("update_currentsong while not connected", 'e')
             return
         if (len(self._currentsong_items) <= 0):
             if warn:
-                self.loggercmd("currentsong: no items to refresh",'w')
+                self.loggercmd("currentsong: no items to refresh", 'w')
             return
-        self.loggercmd("requesting currentsong",'d')
+        self.loggercmd("requesting currentsong", 'd')
         currentsong = self._send('currentsong')
-        self.refreshItems(self._currentsong_items,currentsong,warn)
+        self.refreshItems(self._currentsong_items, currentsong, warn)
 
-    def update_statistic(self,warn):
+    def update_statistic(self, warn):
         if not self.connected:
             if warn:
-                self.loggercmd("update_statistic while not connected",'e')
+                self.loggercmd("update_statistic while not connected", 'e')
             return
         if (len(self._statistic_items) <= 0):
             if warn:
-                self.loggercmd("statistic: no items to refresh",'w')
+                self.loggercmd("statistic: no items to refresh", 'w')
             return
-        self.loggercmd("requesting statistic",'d')
+        self.loggercmd("requesting statistic", 'd')
         stats = self._send('stats')
-        self.refreshItems(self._statistic_items,stats,warn)
+        self.refreshItems(self._statistic_items, stats, warn)
 
-    def refreshItems(self,subscribedItems,response,warn):
-        #1. check response for the internal items and refresh them
+    def refreshItems(self, subscribedItems, response, warn):
+        if not self.alive:
+            return
+        # 1. check response for the internal items and refresh them
         if 'state' in response:
             val = response['state']
             if val == 'play':
@@ -222,7 +232,7 @@ class MPD(SmartPlugin, lib.connection.Client):
                 self._internal_tems['isPaused'] = False
                 self._internal_tems['isStopped'] = True
             else:
-                self.loggercmd("unknown state: {}".format(val),'e')
+                self.loggercmd("unknown state: {}".format(val), 'e')
         if 'volume' in response:
             val = float(response['volume'])
             if val <= 0:
@@ -234,9 +244,9 @@ class MPD(SmartPlugin, lib.connection.Client):
             val = response['Name']
             if val:
                 self._internal_tems['currentName'] = val
-        #2. check response for subscribed items and refresh them
+        # 2. check response for subscribed items and refresh them
         for key in subscribedItems:
-            #update subscribed items (if value has changed) which exist directly in the response from MPD
+            # update subscribed items (if value has changed) which exist directly in the response from MPD
             if key in response:
                 val = response[key]
                 item = subscribedItems[key]
@@ -244,7 +254,7 @@ class MPD(SmartPlugin, lib.connection.Client):
                     try:
                         val = float(val)
                     except:
-                        self.loggercmd("can't parse {} to float".format(val),'e')
+                        self.loggercmd("can't parse {} to float".format(val), 'e')
                         continue
                 elif item.type() == 'bool':
                     if val == '0':
@@ -252,42 +262,40 @@ class MPD(SmartPlugin, lib.connection.Client):
                     elif val == '1':
                         val = True
                     else:
-                        self.loggercmd("can't parse {} to bool".format(val),'e')
+                        self.loggercmd("can't parse {} to bool".format(val), 'e')
                         continue
                 if item() != val:
-                    self.loggercmd("update item {}, old value:{} type:{}, new value:{} type:{}".format(item,item(),item.type(),val,type(val)),'d')
-                    self.setItemValue(item,val)
-            #update subscribed items which do not exist in the response from MPD
+                    self.loggercmd("update item {}, old value:{} type:{}, new value:{} type:{}".format(item, item(), item.type(), val, type(val)), 'd')
+                    self.setItemValue(item, val)
+            # update subscribed items which do not exist in the response from MPD
             elif key == 'playpause':
                 item = subscribedItems[key]
                 val = self._internal_tems['isPlaying']
                 if item() != val:
-                    self.setItemValue(item,val)
+                    self.setItemValue(item, val)
             elif key == 'mute':
                 item = subscribedItems[key]
                 val = self._internal_tems['isMuted']
                 if item() != val:
-                    self.setItemValue(item,val)
+                    self.setItemValue(item, val)
             elif key == 'Artist':
                 item = subscribedItems[key]
                 val = self._internal_tems['currentName']
                 if item() != val:
-                    self.setItemValue(item,val)
-            #do not reset these items when the tags are missing in the response from MPD
-            #that happens while MPD switches the current track!
-            elif key == 'volume' or \
-              key == 'repeat' or \
-              key == 'random':
+                    self.setItemValue(item, val)
+            # do not reset these items when the tags are missing in the response from MPD
+            # that happens while MPD switches the current track!
+            elif key in ('volume', 'repeat', 'random'):
                 return
             else:
                 if warn:
                     self.orphanItems.append("subscribed item \"{}\" not in response from MPD => consider unsubscribing this item".format(key))
-                #reset orphaned items because MPD does not send some items when they are disabled e.g. mixrampdb, error,...
-                #to keep these items consisitend in SHNG set them to "" or 0. Whenever MPD resends values the items will be refreshed in SHNG
+                # reset orphaned items because MPD does not send some items when they are disabled e.g. mixrampdb, error,...
+                # to keep these items consisitend in SHNG set them to "" or 0. Whenever MPD resends values the items will be refreshed in SHNG
                 item = subscribedItems[key]
-                self.setItemValue(item,None)
+                self.setItemValue(item, None)
 
-    def setItemValue(self,item,value):
+    def setItemValue(self, item, value):
         if item.type() == 'str':
             if value is None or not value:
                 value = ''
@@ -300,9 +308,11 @@ class MPD(SmartPlugin, lib.connection.Client):
             item(value, 'MPD')
 
     def update_item(self, item, caller=None, source=None, dest=None):
+        if not self.alive:
+            return False
         if caller != 'MPD':
-            self.loggercmd("update_item called for item {}".format(item),'d')
-            #playbackCommands
+            self.loggercmd("update_item called for item {}".format(item), 'd')
+            # playbackCommands
             if self.get_iattr_value(item.conf, MPD.COMMAND) == 'next':
                 self._send('next')
                 return
@@ -331,36 +341,36 @@ class MPD(SmartPlugin, lib.connection.Client):
             if self.get_iattr_value(item.conf, MPD.COMMAND) == 'seek':
                 val = item()
                 if val:
-                    pattern = re.compile("^\d+[ ]\d+$")
+                    pattern = re.compile('^\d+[ ]\d+$')
                     if pattern.match(val):
                         self._send("seek {}".format(val))
                         return
-                self.loggercmd("ignoring invalid seek value",'w')
+                self.loggercmd("ignoring invalid seek value", 'w')
                 return
             if self.get_iattr_value(item.conf, MPD.COMMAND) == 'seekid':
                 val = item()
                 if val:
-                    pattern = re.compile("^\d+[ ]\d+$")
+                    pattern = re.compile('^\d+[ ]\d+$')
                     if pattern.match(val):
                         self._send("seekid {}".format(val))
                         return
-                self.loggercmd("ignoring invalid seekid value",'w')
+                self.loggercmd("ignoring invalid seekid value", 'w')
                 return
             if self.get_iattr_value(item.conf, MPD.COMMAND) == 'seekcur':
                 val = item()
                 if val:
-                    pattern = re.compile("^[+-]?\d+$")
+                    pattern = re.compile('^[+-]?\d+$')
                     if pattern.match(val):
                         self._send("seekcur {}".format(val))
                         return
-                self.loggercmd("ignoring invalid seekcur value",'w')
+                self.loggercmd("ignoring invalid seekcur value", 'w')
                 return
-            if self.get_iattr_value(item.conf, MPD.COMMAND) == 'mute': #own-defined item
-                if self._internal_tems['lastVolume'] < 0: #can be -1 if MPD can't detect the current volume
+            if self.get_iattr_value(item.conf, MPD.COMMAND) == 'mute':  # own-defined item
+                if self._internal_tems['lastVolume'] < 0:   # can be -1 if MPD can't detect the current volume
                     self._internal_tems['lastVolume'] = 20
                 self._send("setvol {}".format(int(self._internal_tems['lastVolume']) if self._internal_tems['isMuted'] else 0))
                 return
-            #playbackoptions
+            # playbackoptions
             if self.get_iattr_value(item.conf, MPD.COMMAND) == 'consume':
                 self._send("consume {}".format(1 if item() else 0))
                 return
@@ -382,10 +392,10 @@ class MPD(SmartPlugin, lib.connection.Client):
             if self.get_iattr_value(item.conf, MPD.COMMAND) == 'setvol':
                 val = item()
                 if val > 100:
-                    self.loggercmd("invalid volume => value > 100 => set 100",'w')
+                    self.loggercmd("invalid volume => value > 100 => set 100", 'w')
                     val = 100
                 elif val < 0:
-                    self.loggercmd("invalid volume => value < 0 => set 0",'w')
+                    self.loggercmd("invalid volume => value < 0 => set 0", 'w')
                     val = 0
                 self._send("setvol {}".format(val))
                 return
@@ -394,35 +404,35 @@ class MPD(SmartPlugin, lib.connection.Client):
                 return
             if self.get_iattr_value(item.conf, MPD.COMMAND) == 'replay_gain_mode':
                 val = item()
-                if val in ['off','track','album','auto']:
+                if val in ['off', 'track', 'album', 'auto']:
                     self._send("replay_gain_mode {}".format(1 if item() else 0))
                 else:
-                    self.loggercmd("ignoring invalid value ({}) for replay_gain_mode".format(val),'w')
+                    self.loggercmd("ignoring invalid value ({}) for replay_gain_mode".format(val), 'w')
                     pass
                 return
-            #url
+            # url
             if self.has_iattr(item.conf, MPD.URL):
                 self.play_url(item)
                 return
-            #localplaylist
+            # localplaylist
             if self.has_iattr(item.conf, MPD.LOCALPLAYLIST):
                 self.play_localplaylist(item)
                 return
-            #rawcommand
+            # rawcommand
             if self.get_iattr_value(item.conf, MPD.RAWCOMMAND) == 'rawcommand':
                 self._send(item())
                 return
-            #database
+            # database
             if self.get_iattr_value(item.conf, MPD.DATABASE) == 'update':
                 command = 'update'
                 if item():
-                    command = "{} {}".format(command,item())
+                    command = "{} {}".format(command, item())
                 self._send(command)
                 return
             if self.get_iattr_value(item.conf, MPD.DATABASE) == 'rescan':
                 command = 'rescan'
                 if item():
-                    command = "{} {}".format(command,item())
+                    command = "{} {}".format(command, item())
                 self._send(command)
                 return
 
@@ -430,7 +440,7 @@ class MPD(SmartPlugin, lib.connection.Client):
         if self.lastWarnTime is None:
             return True
         if self.lastWarnTime + datetime.timedelta(seconds=self.warnInterval) \
-          <= datetime.datetime.now():
+                <= datetime.datetime.now():
             return True
         return False
 
@@ -460,7 +470,7 @@ class MPD(SmartPlugin, lib.connection.Client):
         url = self.get_iattr_value(item.conf, MPD.URL)
         play = self._parse_url(url)
         if play == []:
-            self.loggercmd("no url to add",'w')
+            self.loggercmd("no url to add", 'w')
             return
         self._send('clear', False)
         for url in play:
@@ -474,14 +484,17 @@ class MPD(SmartPlugin, lib.connection.Client):
             self._send('load {}'.format(file), False)
             self._send('play', False)
         else:
-            self.loggercmd("no playlistname to send",'w')
+            self.loggercmd("no playlistname to send", 'w')
 
     def _send(self, command, wait=True):
+        if not self.alive:
+            self.logger.error('Trying to send data but plugin is not running')
+            return None
         self._cmd_lock.acquire()
         self._reply = {}
         self._reply_lock.acquire()
-        self.loggercmd("send {} to MPD".format(command),'d')
-        self.send((command + '\n').encode())
+        self.loggercmd("send {} to MPD".format(command), 'd')
+        self._client.send((command + '\n').encode())
         if wait:
             self._reply_lock.wait(1)
         self._reply_lock.release()

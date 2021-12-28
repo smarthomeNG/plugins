@@ -67,8 +67,6 @@ class eBus(SmartPlugin):
         self.connected = False
         self._connection_attempts = 0
         self._connection_errorlog = 60
-        # smarthome.connections.monitor(self)
-        self.get_sh().connections.monitor(self)
         self._lock = threading.Lock()
         # self.refresh_cycle = self._cycle      # not used
 

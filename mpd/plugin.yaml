@@ -13,11 +13,11 @@ plugin:
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1540433-support-thread-für-das-mpd-plugin
 
 # Following entries are for Smart-Plugins:
-    version: 1.4.3                 # Plugin version
-    sh_minversion: 1.4             # minimum shNG version to use this plugin
+    version: 1.5.0                 # Plugin version
+    sh_minversion: 1.8.2a          # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
-    multi_instance: True
-    restartable: True
+    multi_instance: true
+    restartable: true
     classname: MPD                 # class containing the plugin
 
 parameters:
@@ -25,7 +25,7 @@ parameters:
 
     host:
         type: ip
-        mandatory: True
+        mandatory: true
         description:
             de: 'IP oder Hostname des MPD'
             en: 'IP or hostname of the MPD'

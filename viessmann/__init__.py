@@ -359,7 +359,7 @@ class Viessmann(SmartPlugin):
                 commandname = self._commandname_by_commandcode(addr)
                 self.logger.debug(f'Triggering cyclic read command: {commandname}')
                 self._send_command(commandname, )
-                entry['nexttime'] = currenttime + entry['cycle']
+                self._cyclic_cmds[addr]['nexttime'] = currenttime + self._cyclic_cmds[addr]['cycle']
                 read_items += 1
 
         self._cyclic_update_active = False

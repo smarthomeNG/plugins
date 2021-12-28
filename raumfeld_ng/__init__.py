@@ -100,7 +100,7 @@ class Raumfeld_ng(SmartPlugin):
         self.logger.debug("Plugin '{}': run method called".format(self.get_fullname()))
         # setup scheduler for device poll loop
         self.scheduler_add(__name__, self.poll_device, cycle=self._cycle)
-        # self.sh.scheduler.add(__name__, self.poll_device, cycle=self._cycle)   # for shNG before v1.4
+        # self.get_sh().scheduler.add(__name__, self.poll_device, cycle=self._cycle)   # for shNG before v1.4
 
         self.alive = True
         # if you need to create child threads, do not make them daemon = True!
@@ -163,7 +163,7 @@ class Raumfeld_ng(SmartPlugin):
             # code to execute, only if the item has not been changed by this this plugin:
             self.logger.info("Update item: {}, item has been changed outside this plugin".format(item.id()))
             urlaction = []
-            # all items which interact with this plugin have to have the "rf_attr" 
+            # all items which interact with this plugin have to have the "rf_attr"
             if self.has_iattr(item.conf, 'rf_attr'):
                 self.logger.debug(
                     "Plugin '{}': update_item was called with item '{}' from caller '{}', source '{}' and dest '{}'".format(
@@ -181,7 +181,7 @@ class Raumfeld_ng(SmartPlugin):
                         action = "enterManualStandby"
                     urlaction = [self._baseURL + "/controller/" + action + "?id=" + renderer + "&scope=" + scope]
 
-                # all case-insensitive parameter-less actions can be done here: 
+                # all case-insensitive parameter-less actions can be done here:
                 if self.get_iattr_value(item.conf, 'rf_attr') == 'play_state':
                     if value.lower() in ("stop", "play", "pause", "next", "prev"):
                         action = value.lower()
@@ -201,7 +201,7 @@ class Raumfeld_ng(SmartPlugin):
                             action = "toggleMute"
                         else:
                             self.logger.debug("mute action nicht erkannt")
-                            
+
                         scope = self.get_iattr_value(item.conf, 'rf_scope')
                         urlaction = [self._baseURL + "/controller/" + action + "?id=" + renderer + "&scope=" + scope]
                     else:
@@ -256,7 +256,7 @@ class Raumfeld_ng(SmartPlugin):
                         if response["error"]:
                             self.logger.error(response["data"]["errorMessage"])
                         # if multiple calls need some delay inbetween to give raumserver some time to perform action.
-                        # would make sense to make delay configurable. only happens if more than 1 task is defined. 
+                        # would make sense to make delay configurable. only happens if more than 1 task is defined.
                         if taskindex + 1 < len(urlaction):
                             time.sleep(5)
 
@@ -267,7 +267,7 @@ class Raumfeld_ng(SmartPlugin):
     def poll_device(self):
         """
         Polls for updates of the device
-        
+
         This method is only needed, if the device (hardware/interface) does not propagate
         changes on it's own, but has to be polled to get the actual status.
         It is called by the scheduler.
@@ -276,12 +276,12 @@ class Raumfeld_ng(SmartPlugin):
         self.ZoneConfig = self.getZoneConfig()
 
         # now we update a couple of rf items
-        items = self.sh.find_items('rf_attr')  # all raumfeld related items
+        items = self.get_sh().find_items('rf_attr')  # all raumfeld related items
         try:
             for i in items:     # check each item...
                 renderer = i.conf["rf_renderer_name"]  # which somehow has a renderer-relation
                 for Zone in self.ZoneConfig["Zones"]:
-                    if renderer in Zone["Name"]:        
+                    if renderer in Zone["Name"]:
                         if i.conf["rf_attr"] == "power_state":
                             scope = i.conf["rf_scope"]
                             # for room scope
@@ -291,7 +291,7 @@ class Raumfeld_ng(SmartPlugin):
                                         ps = room["PowerState"] == "ACTIVE"
                                         i(ps, self.get_shortname())
                             # for zone scope - if speaker of a zone are "off" or "on" it is filled,
-                            # if some speakers are "on" and some "off" -> set to "None" 
+                            # if some speakers are "on" and some "off" -> set to "None"
                             if scope == "zone":
                                 ps = Zone["PowerState"]
                                 if ps == "Off":
@@ -336,7 +336,7 @@ class Raumfeld_ng(SmartPlugin):
                             else:
                                 i(None, self.get_shortname())
                                 self.logger.info("No Track Info found in Zone {}".format(Zone["Name"]))
-                        
+
         except Exception as err:
             self.logger.error("Beim Powerraumupdate geht was schief")
             self.logger.error(err.args)
@@ -357,7 +357,7 @@ class Raumfeld_ng(SmartPlugin):
         return urltext
 
     def getZoneConfig(self):
-        # build central Config Object 
+        # build central Config Object
         urlobj = httplib2.Http(".cache")
         (resp_headers, content) = urlobj.request(self._baseURL + "/data/getZoneConfig", "GET")
         response = json.loads(content.decode('utf-8'))

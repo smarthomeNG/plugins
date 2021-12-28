@@ -3,14 +3,13 @@ objects from both music library and music service data structures
 
 """
 
-from __future__ import absolute_import
 
 import logging
+from urllib.parse import urlparse
 
 from .xml import XML, ns_tag
 from .data_structures import didl_class_to_soco_class
 from .exceptions import DIDLMetadataError
-from .compat import urlparse
 from .music_services.data_structures import get_class
 from .music_services.music_service import desc_from_uri
 
@@ -54,9 +53,15 @@ def from_didl_string(string):
     return items
 
 
-# Obviously imcomplete, but missing entries will not result in error, but just
+# Obviously incomplete, but missing entries will not result in error, but just
 # a logged warning and no upgrade of the data structure
 DIDL_NAME_TO_QUALIFIED_MS_NAME = {"DidlMusicTrack": "MediaMetadataTrack"}
+DIDL_UPGRADE_NAMES_TO_IGNORE = [
+    "DidlChapter",
+    "DidlFavorite",
+    "DidlItem",
+    "DidlPodcast",
+]
 
 
 def attempt_datastructure_upgrade(didl_item):
@@ -79,7 +84,7 @@ def attempt_datastructure_upgrade(didl_item):
         path = path.rsplit(".", 1)[0]
         # The ID has an 8 (hex) digit prefix. But it doesn't seem to
         # matter what it is!
-        item_id = "11111111{0}".format(path)
+        item_id = "11111111{}".format(path)
 
         # Pass over all the available metadata in the metadata dict, in the
         # future ask ms data structure to upgrade metadata from the service
@@ -97,13 +102,16 @@ def attempt_datastructure_upgrade(didl_item):
             # The data structure should be upgraded, but there is an entry
             # missing from DIDL_NAME_TO_QUALIFIED_MS_NAME. Log this as a
             # warning.
-            _LOG.warning(
+            class_name = didl_item.__class__.__name__
+            message = (
                 "DATA STRUCTURE UPGRADE FAIL. Unable to upgrade music library "
                 "data structure to music service data structure because an "
-                "entry is missing for %s in DIDL_NAME_TO_QUALIFIED_MS_NAME. "
-                "This should be reported as a bug.",
-                didl_item.__class__.__name__,
+                "entry is missing for %s in DIDL_NAME_TO_QUALIFIED_MS_NAME."
             )
+            if class_name in DIDL_UPGRADE_NAMES_TO_IGNORE:
+                _LOG.debug(message, class_name)
+            else:
+                _LOG.warning(message, class_name)
             return didl_item
 
         upgraded_item = cls(

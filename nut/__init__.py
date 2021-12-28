@@ -23,7 +23,7 @@ import telnetlib
 from lib.model.smartplugin import SmartPlugin
 
 class NUT(SmartPlugin):
-  PLUGIN_VERSION = '1.3.1'
+  PLUGIN_VERSION = '1.3.2'
   ALLOW_MULTIINSTANCE = True
 
   def __init__(self, sh, ups, cycle = 60, host = 'localhost', port = 3493, timeout = 5):
@@ -57,11 +57,17 @@ class NUT(SmartPlugin):
     return
 
   def _read_ups(self):
-    self._conn = telnetlib.Telnet(self._host, self._port)
-    self._conn.write('LIST VAR {}\n'.format(self._ups).encode('ascii'))
-    self._conn.read_until('BEGIN LIST VAR {}\n'.format(self._ups).encode('ascii'), self._timeout)
-    result = self._conn.read_until("END LIST VAR {}\n".format(self._ups).encode('ascii'))
-    self._conn.close()
+    try:
+        self._conn = telnetlib.Telnet(self._host, self._port)
+        self._conn.write('LIST VAR {}\n'.format(self._ups).encode('ascii'))
+        self._conn.read_until('BEGIN LIST VAR {}\n'.format(self._ups).encode('ascii'), self._timeout)
+        result = self._conn.read_until("END LIST VAR {}\n".format(self._ups).encode('ascii'))
+        self._conn.close()
+    except Exception as e:
+        self.logger.info("Exception during sending in openWebsocket(): {0}".format(e))
+        return
+
+    
     for line in result.decode().splitlines():
       cmd, ups, var, val = line.split(maxsplit = 3)
       if var in self._items:

@@ -1,0 +1,86 @@
+# Metadata for the plugin
+plugin:
+    # Global plugin attributes
+    type: system                   # plugin type (gateway, interface, protocol, system, web)
+    description:
+        de: 'Plugin für Ein-/Ausschaltverzögerung und Blinken'
+        en: 'Plugin to allow switch-off and -on delays and blinking'
+    maintainer: jentz1986
+    tester: jentz1986               # Who tests this plugin?
+    state: develop                  # change to ready when done with development
+    keywords: timing blinking delay
+#    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
+#    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
+
+    version: 1.8.1                  # Plugin version (must match the version specified in __init__.py)
+    sh_minversion: 1.8.0            # minimum shNG version to use this plugin
+#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    py_minversion: 3.6              # minimum Python version to use for this plugin
+#    py_maxversion:                 # maximum Python version to use for this plugin (leave empty if latest)
+    multi_instance: False           # plugin supports multi instance
+    restartable: False
+    classname: Timmy      # class containing the plugin
+
+parameters:
+    # Definition of parameters to be configured in etc/plugin.yaml (enter 'parameters: NONE', if section should be empty)
+    NONE
+
+item_attributes:
+    timmy_delay_target_item:
+        type: str
+        mandatory: True
+        description:
+            de: 'Pfad zum gesteuerten Item'
+            en: 'Path to the target-item'
+    timmy_delay_on_delay_seconds:
+        type: num
+        default: 0
+        description:
+            de: 'Sekunden über die Einschaltverzögerung'
+            en: 'Seconds for switch-on delay'
+    timmy_delay_off_delay_seconds:
+        type: num
+        default: 0
+        description:
+            de: 'Sekunden über die Ausschaltverzögerung'
+            en: 'Seconds for switch-on delay'
+
+    timmy_blink_target:
+        type: str
+        mandatory: yes
+        description:
+            de: 'Pfad zum gesteuerten Item'
+            en: 'Path to the target-item'
+    timmy_blink_pattern:
+        type: list
+        default: [False,True]
+        description:
+            de: 'Muster nach dem geblinkt wird, hier werden die Zielwerte definiert, Standard: [False,True]'
+            en: 'Pattern of blinking-sequence, here are the sent values defined, default: [False,True]'
+    timmy_blink_cycles:
+        type: list(num)
+        default: [1,1]
+        description:
+            de: 'Muster nach dem geblinkt wird, hier werden die Zeitabstände für die jeweiligen Schritte in Sekunden definiert, Standard: [1,1]'
+            en: 'Pattern of blinking-sequence, here are the periods defined in which the pattern is sent, default: [1,1]'
+    timmy_blink_loops:
+        type: num
+        default: 0
+        description:
+            de: 'Anzahl der Durchläufe bei angefordertem Blinken, 0 = Endlosschleife'
+            en: 'Number of loops when blinking is requested, 0 = infinite loop'
+
+item_structs: 
+    NONE
+    # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
+
+#item_attribute_prefixes:
+    # Definition of item attributes that only have a common prefix (enter 'item_attribute_prefixes: NONE' or ommit this section, if section should be empty)
+    # NOTE: This section should only be used, if really nessesary (e.g. for the stateengine plugin)
+
+plugin_functions:
+    NONE
+
+logic_parameters:
+    NONE
+    # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)

@@ -12,7 +12,7 @@ plugin:
     documentation: http://smarthomeng.de/user/plugins/visu_smartvisu/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1586800-support-thread-für-das-smartvisu-plugin
 
-    version: 1.8.2                 # Plugin version
+    version: 1.8.3a                 # Plugin version
     sh_minversion: 1.8.1            # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     py_minversion: 3.6             # minimum Python version to use for this plugin
@@ -74,6 +74,13 @@ parameters:
         description:
             de: 'Standardmäßig werden Widgets aus den Plugins in die smartVISU kopiert und eingebunden. Dieses kann verhindert werden, wenn dieser Parameter auf False gesetzt wird.'
             en: 'By default, the visu plugin handles smartVISU widgets. If your run into problems, you can disable the widget handling by setting this attribute to False.'
+
+    create_masteritem_file:
+        type: bool
+        default: True
+        description:
+            de: 'False: Das Plugin unterdrückt die Erzeugung der masteritem.json Datei, die für den Widget Assistenten der smartVISU benötigt wird.'
+            en: 'False: The plugin suppresses the creation of the masteritem.json file, which is required for the widget wizard of the smartVISU.'
 
     list_deprecated_warnings:
         type: bool
@@ -142,26 +149,26 @@ item_attributes:
     sv_widget:
         type: str
         description:
-            de: 'Definition des Widgets, welches für das Item verwendet wird'
-            en: 'allows the specification of a widget. You could define multiple widgets. The widget(s) is/are shown by being encapsulated in a block of type 2 (Collapsable Block) - Relative item references are supported'
+            de: 'Definition des Widgets, welches für das Item verwendet wird. Es können meherere Widgets angegeben werden. Anzeige erfolgt in einem ausklappbaren Block vom Typ 2. Relative Adressierung der items wird unterstützt.  '
+            en: 'allows the specification of a widget. You could define multiple widgets. The widget(s) is/are shown by being encapsulated in a block of type 2 (collapsible block) - Relative item references are supported'
 
     sv_name1:
         type: str
         description:
-            de: 'Name des Widgets'
-            en: 'Name of the widget'
+            de: 'Name des Widgets. Dieser wird als Überschrift im umschließenden Block verwendet.'
+            en: 'Name of the widget. This will be displayed as heading in the fencapsulating block.'
 
     sv_widget2:
         type: str
         description:
-            de: 'Definition des zweiten Widgets, welches für das Item verwendet wird'
-            en: 'Definition of the secondary widget which is used for the item'
+            de: 'Definition des Widgets, welches für das Item im zweiten Abschnitt des ausklappbaren Blocks angezeigt wird.'
+            en: 'Definition of the widget which is useddisplayed in the second section of the collapsible block.'
 
     sv_name2:
         type: str
         description:
-            de: 'Name des zweiten Widgets'
-            en: 'Name of the second widget'
+            de: 'Name des zweiten Widgets. Dieser wird als Überschrift im zweiten Abschnitt des umschließenden Block verwendet.'
+            en: 'Name of the second widget. This will be displayed as heading in the second section of the collapsible block.'
 
     sv_nav_aside:
         type: str

@@ -26,13 +26,13 @@ import logging
 import urllib.request
 import json
 import requests
-import re
 import cherrypy
 import time
-from jinja2 import Environment, FileSystemLoader
-from lib.model.smartplugin import *
+from lib.model.smartplugin import SmartPlugin, SmartPluginWebIf
 from lib.item import Items
 from bin.smarthome import VERSION
+from lib.utils import Utils
+from lib.module import Modules
 
 nuki_action_items = {}
 nuki_event_items = {}
@@ -72,8 +72,8 @@ class Nuki(SmartPlugin):
         self._callback_ip = self.mod_http.get_local_ip_address()  # get_parameter_value('bridge_callback_ip')
         self._callback_port = self.mod_http.get_local_servicesport()  # get_parameter_value('bridge_callback_port')
 
-        if self._callback_ip is None or self._callback_ip in ['0.0.0.0', '']:
-            self._callback_ip = self.get_local_ipv4_address()
+        if self._callback_ip is None:  # 0.0.0.0 or empty means "all network interfaces" or self._callback_ip in ['0.0.0.0', '']:
+            self._callback_ip = Utils.get_local_ipv4_address()
 
             if not self._callback_ip:
                 self.logger.critical(
@@ -125,8 +125,8 @@ class Nuki(SmartPlugin):
                 if nuki_trigger.lower() not in ['state', 'doorstate', 'action', 'battery']:
                     self.logger.warning("Plugin '{pluginname}': Item {item} defines an invalid Nuki trigger {trigger}! "
                                         "It has to be 'state', 'doorstate' or 'action'.".format(
-                        pluginname=self.get_shortname(),
-                        item=item, trigger=nuki_trigger))
+                                            pluginname=self.get_shortname(),
+                                            item=item, trigger=nuki_trigger))
                     return
                 if nuki_trigger.lower() == 'state':
                     nuki_event_items[item] = int(nuki_id)
@@ -323,7 +323,7 @@ class Nuki(SmartPlugin):
                 'http')  # try/except to handle running in a core version that does not support modules
         except:
             self.mod_http = None
-        if self.mod_http == None:
+        if self.mod_http is None:
             self.logger.error("Plugin '{}': Not initializing the web interface. If not already done so, please configure "
                               "http module in etc/module.yaml.".format(self.get_fullname()))
             return False
@@ -386,7 +386,7 @@ class NukiWebServiceInterface:
             state_name = input_json['stateName']
             self.plugin.logger.debug(
                 "Plugin '{pluginname}' - NukiWebServiceInterface: Status Smartlock: ID: {nuki_id} Status: {state_name}".
-                    format(pluginname=self.plugin.get_shortname(), nuki_id=nuki_id, state_name=state_name))
+                format(pluginname=self.plugin.get_shortname(), nuki_id=nuki_id, state_name=state_name))
 
             Nuki.update_lock_state(nuki_id, input_json)
         except Exception as err:
