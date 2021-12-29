@@ -963,8 +963,8 @@ class Viessmann(SmartPlugin):
                         elif chunk[:1] != self._int2bytes(self._controlset['Acknowledge'], 1):
                             self.logger.error(f'Received invalid chunk, not starting with ACK! response was: {chunk}')
                             self._error_count += 1
-                            if self._error_count > 5:
-                                self.log.warning('Encountered 5 invalid chunks in sequence. Maybe communication was lost, re-initializing')
+                            if self._error_count >= 5:
+                                self.logger.warning('Encountered 5 invalid chunks in sequence. Maybe communication was lost, re-initializing')
                                 self._initialized = False
                         else:
                             response_packet.extend(chunk)
