@@ -101,8 +101,10 @@ class snap7_logo(SmartPlugin):
         self.stat_writes = {}   # Zeit und Wert der gelesenen Items (Webinterface)
         
         self.threadLastRead = 0  # verstrichene Zeit zwischen zwei LeseBefehlen
+
+        self.plc = snap7.logo.Logo()    # Creates a new instance of logo
+
         self._sh.connections.monitor(self)  # damit connect ausgeführt wird
-        
         
         self.init_webinterface()
 
@@ -114,7 +116,6 @@ class snap7_logo(SmartPlugin):
         self._lock.acquire()
         try:
             self.logger.debug('try to connected to {0}'.format(self.host))
-            self.plc = snap7.logo.Logo()    # Creates a new instance of logo
             self.plc.connect(self.host, int(self.tsap_client), int(self.tsap_server))
 
         except Exception as e:
