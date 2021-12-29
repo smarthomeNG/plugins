@@ -1,0 +1,34 @@
+Heizraum: 
+    Warmwasser: 
+        Ist_temperatur: 
+            type: num
+            eval: value/10
+            visu_acl: rw
+            database: yes
+            database_maxage: 30
+            logo_read@logoheizraum: AM1
+        Soll_temperatur: 
+            type: num
+            visu_acl: rw
+            cache: True
+            logo_write@logoheizraum: VMW0
+        Durchflusswaechter: 
+            type: bool
+            logo_read@logoheizraum: I1
+        Zirkulation_pumpe: 
+            type: bool
+            logo_read@logoheizraum: Q3
+TestLOGO:
+    I1:
+        type: bool
+        logo_read@logotest: "I1"
+    Q1:
+        type: bool
+        logo_read@logotest: "Q1"
+    M1:
+        type: bool
+        logo_write@logotest: "M1"
+    M2:
+        type: bool
+        logo_read@logotest: "M2"
+        logo_write@logotest: "M2"
