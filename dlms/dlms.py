@@ -433,12 +433,12 @@ def query( config ):
             logger.debug(f"parsing OBIS codes took {format_time(time.time()- runtime)}")
         else:
             logger.debug("Sorry response did not contain enough data for OBIS decode")
+    else:
+        result = str(response, 'ascii')
 
     suggested_cycle = (time.time() - starttime) + 10.0
     config['suggested_cycle'] = suggested_cycle
     logger.debug(f"the whole query took {format_time(time.time()- starttime)}, suggested cycle thus is at least {format_time(suggested_cycle)}")
-
-
     return result
 
 if __name__ == '__main__':
