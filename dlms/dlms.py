@@ -388,9 +388,10 @@ def query( config ):
     logger.debug(f"Whole communication with smartmeter took {format_time(time.time() - starttime)}")
 
     if response.startswith(Acknowledge):
-        logger.debug("Acknowledge echoed from smartmeter")
-        response = response[len(Acknowledge):]
-        
+        if not OnlyListen:
+            logger.debug("Acknowledge echoed from smartmeter")
+            response = response[len(Acknowledge):]
+
     if use_checksum:
         # data block in response may be capsuled within STX and ETX to provide error checking
         # thus the response will contain a sequence of
@@ -426,11 +427,12 @@ def query( config ):
     else:
         logger.debug("checksum calculation skipped")
 
-    if len(response) > 5:
-        result = str(response[1:-4], 'ascii')
-        logger.debug(f"parsing OBIS codes took {format_time(time.time()- runtime)}")
-    else:
-        logger.debug("Sorry response did not contain enough data for OBIS decode")
+    if not OnlyListen:
+        if len(response) > 5:
+            result = str(response[1:-4], 'ascii')
+            logger.debug(f"parsing OBIS codes took {format_time(time.time()- runtime)}")
+        else:
+            logger.debug("Sorry response did not contain enough data for OBIS decode")
 
     suggested_cycle = (time.time() - starttime) + 10.0
     config['suggested_cycle'] = suggested_cycle
