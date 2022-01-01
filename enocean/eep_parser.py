@@ -248,6 +248,37 @@ class EEP_Parser():
         results['STATUS'] = status_byte
         return results
 
+    def _parse_eep_A5_30_01(self, payload, status):
+        results = {}
+        self.logger.debug("Processing A5_30_01")
+        lernTelegram = not ((payload[3] & 1 << 3) == 1 << 3)
+        if lernTelegram:
+            self.logger.warning("A5_30_03 is learn telegram")
+            return results
+        # Data_byte1 = 0x00 / 0xFF
+        results['ALARM'] = (payload[2]  == 0x00)
+        # Battery linear: 0-120 (bat low), 121-255(bat high)
+        results['BAT'] = payload[1]
+        return results
+
+    def _parse_eep_A5_30_03(self, payload, status):
+        results = {}
+        self.logger.warning("Debug: Processing A5_30_03")
+        lernTelegram = not ((payload[3] & 1 << 3) == 1 << 3)
+        if lernTelegram:
+            self.logger.warning("A5_30_03 is learn telegram")
+            return results
+        # Data_byte0 = 0x0F
+        if not (payload[3] == 0x0F):
+            self.logger.error("EEP A5_30_03 not according to spec.")
+            return results
+        # Data_byte2 = Temperatur 0..40°C (255..0)
+        results['TEMP']  = 40 - (payload[1]/255*40) 
+        # Data_byte1 = 0x0F = Alarm, 0x1F = kein Alarm
+        results['ALARM'] = (payload[2]  == 0x0F)
+        return results
+
+
     def _parse_eep_A5_38_08(self, payload, status):
         results = {}
         if (payload[1] == 2):  # Dimming

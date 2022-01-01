@@ -7,7 +7,7 @@ This plugin adds EnOcean support to SmarthomeNG.
 If you have special hardware not supported yet, please feel free to improve and contribute!
 
 ## Version / Change History
-Version: 1.3.5
+Version: 1.3.6
 
 Change History: currently not maintained.
 
@@ -403,7 +403,21 @@ EnOcean_Item:
             enocean_rx_key: DI_3
             ref_level: 80
             dim_speed: 100
-            color: white   
+            color: white 
+    water_sensor:
+        enocean_rx_id: 00000000
+        enocean_rx_eep: A5_30_03
+
+        alarm:
+            type: bool
+            enocean_rx_key: ALARM
+            visu_acl: ro
+
+        temperature:
+            type: num
+            enocean_rx_key: TEMP
+            visu_acl: ro
+  
 ```
 
 ### Add new listening EnOcean devices
@@ -425,6 +439,8 @@ The following status EEPs are supported:
 * A5_11_04		Dimmer status feedback
 * A5_12_01		Power Measurement, e.g. Eltako FSVA-230V
 * A5_0G_03		shutter feedback in s if actor is stopped before reaching his position (for calculation of new position)
+* A5_30_01		Alarm sensor, e.g. Eltako FSM60B water leak sensor
+* A5_30_03		Alarm sensor, e.g. Eltako FSM60B water leak sensor
 * D2_01_07		Simple electronic switch
 * D2_01_12		Simple electronic switch with 2 channels, like NodOn In-Wall module
 * D5_00_01		Door/Window Contact, e.g. Eltako FTK, FTKB
@@ -470,7 +486,7 @@ The learn message is issued by the following command:
 ```python
 sh.enocean.send_learn_protocol(id_offset, device)
 ```
-Then teach-in commands vary for different EnOcean sensor/actors. The following classes are currently supported:
+The teach-in commands vary for different EnOcean sensor/actors. The following classes are currently supported:
 
 With device are different actuators defined:
 
