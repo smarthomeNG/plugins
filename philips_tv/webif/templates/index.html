@@ -42,18 +42,10 @@
 		<tr>
 			<td class="py-1"><strong>API Errors:</strong></td>
 			<td class="py-1">{{ p._errors}}-</td>
-			<td class="py-1" width="50px"></td>
-			<td class="py-1">-</strong></td>
-			<td class="py-1">-</td>
-			<td class="py-1" width="50px"></td>
 		</tr>
 		<tr>
 			<td class="py-1"><strong> </strong></td>
 			<td class="py-1">-</td>
-			<td></td>
-			<td class="py-1"><strong> </strong></td>
-			<td class="py-1">-</td>
-			<td></td>
 		</tr>
 	</tbody>
 </table>
@@ -135,7 +127,7 @@
 				{{ _('1) Philips TV IP ueberpruefen') }}:
 			</div>
 			<div class="col-md-3 mb-3">
-				<input type="text" class="form-control mb-1" id="input-ip" value= {{ p.ip }} readonly placeholder="{{ _('TV IP') }}" maxlength="32" style="width: 300px;">
+				<input type="text" class="form-control mb-1" id="input-ip" title="{{ _('Einstellung ueber plugin.yaml') }}" value= {{ p.ip }} readonly placeholder="{{ _('TV IP') }}" maxlength="32" style="width: 300px;">
 			</div>
 			<div class="col-md-4 mb-3">
 				<button type="button" class="btn btn-shng btn-sm" title="{{ _('Request pairing') }}" onclick="requestPairCommand();">{{ _('Request pairing') }}</button>
@@ -149,7 +141,7 @@
 			</div>
 			<div class="col-md-3 mb-3">
 				<input type="text" class="form-control mb-1" id="input-deviceID" readonly value = {{ p.deviceID }} 
-				placeholder="{{ _('Device ID') }}" maxlength="32" style="width: 300px;">
+				placeholder="{{ _('Device ID') }}" maxlength="32" style="width: 300px;" title="{{ _('Automatisch generiert oder Einstellung ueber plugin.yaml') }}">
 			</div>
 		</div>
 
@@ -159,7 +151,8 @@
 				{{ _('4) Code des TVs eingeben:') }}:
 			</div>
 			<div class="col-md-3 mb-3">
-				<input type="text" class="form-control mb-1" id="input-code" placeholder="{{ _('Hier TV Code eintragen') }}" maxlength="6" style="width: 300px;">
+				<input type="text" class="form-control mb-1" id="input-code" placeholder="{{ _('Hier TV Code eintragen') }}" maxlength="6" style="width: 300px;"
+				title="{{ _('Paring Code wird vom TV angezeigt.') }}">
 			</div>
 		</div>
 		<div class="row">
