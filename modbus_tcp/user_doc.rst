@@ -94,6 +94,8 @@ siehe example.yaml
 
 Changelog
 ---------
+V1.0.3     slaveUnit - Fehler behoben (_regToRead-key (adress.unit))
+
 V1.0.2     slaveUnit zu Items hinzugefügt
 
 V1.0.1     slaveUnit zu plugin-Paramter hinzugefügt

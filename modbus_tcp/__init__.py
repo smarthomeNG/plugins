@@ -41,7 +41,7 @@ AttrWordOrder = 'modBusWordOrder'
 AttrSlaveUnit = 'modBusUnit'
 
 class modbus_tcp(SmartPlugin):
-    PLUGIN_VERSION = '1.0.2'
+    PLUGIN_VERSION = '1.0.3'
 
     def __init__(self, sh, *args, **kwargs):
         """
@@ -128,6 +128,7 @@ class modbus_tcp(SmartPlugin):
         """
         if self.has_iattr(item.conf, AttrAddress):
             regAddr = int(self.get_iattr_value(item.conf, AttrAddress))
+            reg = str(regAddr)
             value = item()
             dataType = 'uint16'
             factor = 1
@@ -141,6 +142,8 @@ class modbus_tcp(SmartPlugin):
                 slaveUnit = int(self.get_iattr_value(item.conf, AttrSlaveUnit))
                 if (slaveUnit) != self._slaveUnit:
                     self._slaveUnitRegisterDependend = True
+            reg += '.'
+            reg += str(slaveUnit)
             if self.has_iattr(item.conf, AttrFactor):
                 factor = float(self.get_iattr_value(item.conf, AttrFactor))
             if self.has_iattr(item.conf, AttrByteOrder):
@@ -162,8 +165,8 @@ class modbus_tcp(SmartPlugin):
                 wordOrder = Endian.Big
                 self.logger.error("Invalid byte order -> default(Endian.Big) is used : {0}".format(regParameters['wordOrder']))    
                 
-            regPara = {'slaveUnit': slaveUnit, 'dataType': dataType, 'factor': factor, 'byteOrder': byteOrder, 'wordOrder': wordOrder, 'item': item, 'value': value }
-            self._regToRead.update({regAddr: regPara})
+            regPara = {'regAddr': regAddr, 'slaveUnit': slaveUnit, 'dataType': dataType, 'factor': factor, 'byteOrder': byteOrder, 'wordOrder': wordOrder, 'item': item, 'value': value }
+            self._regToRead.update({reg: regPara})
             
     def poll_device(self):
         """
@@ -177,7 +180,8 @@ class modbus_tcp(SmartPlugin):
         regCount = 0
         try:
             self.connect()
-            for regAddr, regPara in self._regToRead.items():
+            for reg, regPara in self._regToRead.items():
+                regAddr = regPara['regAddr']
                 value = self.__read_Registers(regAddr, regPara)
                 #self.logger.debug("value readed: {0} type: {1}".format(value, type(value)))
                 if value is not None:
@@ -351,7 +355,7 @@ class WebInterface(SmartPluginWebIf):
         return tmpl.render(plugin_shortname=self.plugin.get_shortname(), plugin_version=self.plugin.get_version(), plugin_info=self.plugin.get_info(),
                            interface=None,
                            p=self.plugin,
-                           _regToRead=sorted(self.plugin._regToRead, key=lambda k: int(k)),
+                           _regToRead=sorted(self.plugin._regToRead, key=lambda k: (k)),
                            )
 
     @cherrypy.expose
