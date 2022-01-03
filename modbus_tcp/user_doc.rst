@@ -5,8 +5,19 @@ SmarthomeNG plugin, zum Lesen von Register über ModBusTCP
 Anforderungen
 -------------
 * Python > 3.6
-* pip install pymodbus
+* pymodbus >= 1.4.0
 * SmarthomeNG >= 1.8.0
+
+pymodbus
+~~~~~~~~
+das Paket sollte automatisch von SH installiert werden:
+
+pymodbus - manuelle Installation:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code:: shell-session
+
+    pip install pymodbus
 
 Konfiguration
 -------------
@@ -41,43 +52,52 @@ Beispiel für SH-Item's
 
 siehe example.yaml
 
-mydevice:
-    geraetename:
-        type: str
-        value: ''
-        modBusAddress: 40030
-        modBusDataType: 'string16'        #(optional) default: uint16  
-        #modBusFactor: '1000'               #(optional) default: 1
-        modBusByteOrder: 'Endian.Little'   #(optional) default: 'Endian.Big'
-        modBusWordOrder: 'Endian.Little'   #(optional) default: 'Endian.Big'
-    leistung_AC:
-        type: num
-        value: '0'
-        modBusAddress: 40048
-        #modBusDataType: 'uint16'        #(optional) default: uint16  
-        modBusFactor: '0.001'           #(optional) default: 1
-        modBusByteOrder: 'Endian.Little'   #(optional) default: 'Endian.Big'
-        modBusWordOrder: 'Endian.Little'   #(optional) default: 'Endian.Big'
-    leistung_DC:
-        type: num
-        value: ''
-        modBusAddress: 40050
-        modBusDataType: 'int16'         #(optional) default: uint16  
-        modBusFactor: '0.001'           #(optional) default: 1
-        modBusByteOrder: 'Endian.Little'   #(optional) default: 'Endian.Big'
-        modBusWordOrder: 'Endian.Little'   #(optional) default: 'Endian.Big'
-    temperatur:
-        type: num
-        value: ''
-        modBusAddress: 40052
-        modBusDataType: 'float32        #(optional) default: uint16  
-        #modBusFactor: '1'               #(optional) default: 1
-        modBusByteOrder: 'Endian.Little'   #(optional) default: 'Endian.Big'
-        modBusWordOrder: 'Endian.Little'   #(optional) default: 'Endian.Big'
+.. code-block:: yaml
+
+    mydevice:
+        geraetename:
+            type: str
+            value: ''
+            modBusAddress: 40030
+            modBusDataType: 'string16'        #(optional) default: uint16  
+            #modBusFactor: '1000'               #(optional) default: 1
+            modBusByteOrder: 'Endian.Little'   #(optional) default: 'Endian.Big'
+            modBusWordOrder: 'Endian.Little'   #(optional) default: 'Endian.Big'
+            modBusUnit: '71'                    #(optional) default: slaveUnit aus der Plugin-Konfig
+        leistung_AC:
+            type: num
+            value: '0'
+            modBusAddress: 40048
+            #modBusDataType: 'uint16'        #(optional) default: uint16  
+            modBusFactor: '0.001'           #(optional) default: 1
+            modBusByteOrder: 'Endian.Little'   #(optional) default: 'Endian.Big'
+            modBusWordOrder: 'Endian.Little'   #(optional) default: 'Endian.Big'
+            modBusUnit: '71'                    #(optional) default: slaveUnit aus der Plugin-Konfig
+        leistung_DC:
+            type: num
+            value: ''
+            modBusAddress: 40050
+            modBusDataType: 'int16'         #(optional) default: uint16  
+            modBusFactor: '0.001'           #(optional) default: 1
+            modBusByteOrder: 'Endian.Little'   #(optional) default: 'Endian.Big'
+            modBusWordOrder: 'Endian.Little'   #(optional) default: 'Endian.Big'
+            modBusUnit: '71'                    #(optional) default: slaveUnit aus der Plugin-Konfig
+        temperatur:
+            type: num
+            value: ''
+            modBusAddress: 40052
+            modBusDataType: 'float32        #(optional) default: uint16  
+            #modBusFactor: '1'               #(optional) default: 1
+            modBusByteOrder: 'Endian.Little'   #(optional) default: 'Endian.Big'
+            modBusWordOrder: 'Endian.Little'   #(optional) default: 'Endian.Big'
+            modBusUnit: '71'                    #(optional) default: slaveUnit aus der Plugin-Konfig
 
 Changelog
 ---------
+V1.0.2     slaveUnit zu Items hinzugefügt
+
 V1.0.1     slaveUnit zu plugin-Paramter hinzugefügt
+
 V1.0.0     Initial plugin version
 
 

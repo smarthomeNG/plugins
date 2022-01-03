@@ -38,9 +38,10 @@ AttrType = 'modBusDataType'
 AttrFactor = 'modBusFactor'
 AttrByteOrder = 'modBusByteOrder'
 AttrWordOrder = 'modBusWordOrder'
+AttrSlaveUnit = 'modBusUnit'
 
 class modbus_tcp(SmartPlugin):
-    PLUGIN_VERSION = '1.0.1'
+    PLUGIN_VERSION = '1.0.2'
 
     def __init__(self, sh, *args, **kwargs):
         """
@@ -52,6 +53,7 @@ class modbus_tcp(SmartPlugin):
         self._port = int(self.get_parameter_value('port'))
         self._cycle = int(self.get_parameter_value('cycle'))
         self._slaveUnit = int(self.get_parameter_value('slaveUnit'))
+        self._slaveUnitRegisterDependend = False
         
         self._sh = sh
         self.logger = logging.getLogger(__name__)
@@ -59,6 +61,8 @@ class modbus_tcp(SmartPlugin):
         self.connected = False
         self._regToRead = {}
         self._pollStatus = {}
+        
+        self._Mclient = ModbusTcpClient(self._host, port=self._port)
         
         self._sh.connections.monitor(self)  # damit connect ausgeführt wird
         self.init_webinterface()
@@ -73,13 +77,13 @@ class modbus_tcp(SmartPlugin):
             return True
         self._lock.acquire()
         try:
-            self._Mclient = ModbusTcpClient(self._host, port=self._port)
+            
             if self._Mclient.connect():
                 self.connected = True
                 self.logger.info("connected to {0}".format(str(self._Mclient)))
             else:
                 self.connected = False
-                self.logger.debug("could not connect to {0}:{1}".format(self._host, self._port))
+                self.logger.error("could not connect to {0}:{1}".format(self._host, self._port))
         except Exception as e:
             self.connected = False
             self.logger.error("connection expection: {0} {1}".format(str(self._Mclient), e))
@@ -96,8 +100,8 @@ class modbus_tcp(SmartPlugin):
                 self._Mclient.close()
                 self.logger.debug("connection closed {0}".format(str(self._Mclient)))
                 self.connected = False
-            except:
-                pass
+            except Exception as e:
+                self.logger.error('Failed to disconnect {0}'.format(e))
     
     def run(self):
         """
@@ -129,9 +133,14 @@ class modbus_tcp(SmartPlugin):
             factor = 1
             byteOrder = 'Endian.Big'
             wordOrder = 'Endian.Big'
+            slaveUnit = self._slaveUnit
             self.logger.debug("parse read item: {0}".format(item))
             if self.has_iattr(item.conf, AttrType):
                 dataType = self.get_iattr_value(item.conf, AttrType)
+            if self.has_iattr(item.conf, AttrSlaveUnit):
+                slaveUnit = int(self.get_iattr_value(item.conf, AttrSlaveUnit))
+                if (slaveUnit) != self._slaveUnit:
+                    self._slaveUnitRegisterDependend = True
             if self.has_iattr(item.conf, AttrFactor):
                 factor = float(self.get_iattr_value(item.conf, AttrFactor))
             if self.has_iattr(item.conf, AttrByteOrder):
@@ -153,7 +162,7 @@ class modbus_tcp(SmartPlugin):
                 wordOrder = Endian.Big
                 self.logger.error("Invalid byte order -> default(Endian.Big) is used : {0}".format(regParameters['wordOrder']))    
                 
-            regPara = {'dataType': dataType, 'factor': factor, 'byteOrder': byteOrder, 'wordOrder': wordOrder, 'item': item, 'value': value }
+            regPara = {'slaveUnit': slaveUnit, 'dataType': dataType, 'factor': factor, 'byteOrder': byteOrder, 'wordOrder': wordOrder, 'item': item, 'value': value }
             self._regToRead.update({regAddr: regPara})
             
     def poll_device(self):
@@ -195,6 +204,7 @@ class modbus_tcp(SmartPlugin):
             self.logger.debug("poll_device: {0} register readed requed-time: {1}".format(regCount, duration))
         except Exception as e:
             self.logger.error("something went wrong in the poll_device function: {0}".format(e))
+            self.disconnect()
         # finally:
             # self.disconnect()
         
@@ -204,6 +214,7 @@ class modbus_tcp(SmartPlugin):
         bo = regParameters['byteOrder']         
         wo = regParameters['wordOrder']
         dataType = ''.join(filter(str.isalpha, dataTypeStr))
+        slaveUnit = regParameters['slaveUnit']
         try:
             bits = int(''.join(filter(str.isdigit, dataTypeStr)))   
         except:
@@ -213,9 +224,21 @@ class modbus_tcp(SmartPlugin):
             words = int(bits/2)  # bei string: bits = bytes !! string16 -> 16Byte - 8 words
         else:
             words = int(bits/16)
-        #self.logger.debug("read register:{0} words:{1} slaveUnit:{2}".format(address, words, self._slaveUnit))
-        result = self._Mclient.read_holding_registers(address, words, unit=self._slaveUnit)
-        #self.logger.debug("read result: {0} ".format(result))
+        #self.logger.debug("read register:{0} words:{1} slaveUnit:{2}".format(address, words, slaveUnit))
+        
+        #try:
+        result = self._Mclient.read_holding_registers(address, words, unit=slaveUnit)
+        #except Exception as e:
+        #   self.logger.error("read expection: {0} register:{1} words:{2} slaveUnit:{3}".format(e, address, words, slaveUnit))
+        #    return None
+        
+        
+        if (str(result).find('Modbus Error') != -1):
+            #raise Exception("read error: {0} register:{1} words:{2} slaveUnit:{3}".format(result, address, words, slaveUnit))
+            self.logger.error("read error: {0} register:{1} words:{2} slaveUnit:{3}".format(result, address, words, slaveUnit))
+            return None
+         
+        #self.logger.debug("read result: {0}".format(result))
         value = BinaryPayloadDecoder.fromRegisters(result.registers, byteorder=bo,wordorder=wo)
         
         if dataType.lower() == 'uint':
