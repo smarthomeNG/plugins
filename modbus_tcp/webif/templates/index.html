@@ -63,7 +63,7 @@
         
         {% for item in _regToRead %}
             <tr>
-                <td class="py-1">{{ item }}</td>
+                <td class="py-1">{{ p._regToRead[item].regAddr }}</td>
                 {% if p._slaveUnitRegisterDependend %}
                 <td class="py-1">{{ p._regToRead[item].slaveUnit }}</td>
                 {% endif %}
