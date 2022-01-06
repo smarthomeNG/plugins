@@ -62,14 +62,6 @@ class GarminConnect(SmartPlugin):
         """
         Stop method for the plugin
         """
-        try:
-            self._api.logout()
-        except (
-            GarminConnectConnectionError,
-            GarminConnectAuthenticationError,
-            GarminConnectTooManyRequestsError,
-        ) as err:
-            self.logger.error("Error occurred during Garmin Connect communication: %s", err)
         self.alive = False
 
     def parse_item(self, item):
