@@ -56,26 +56,7 @@ class GarminConnect(SmartPlugin):
 
     def run(self):
         self.alive = True
-        try:
-            self._api = Garmin(self._username, self._password, is_cn=self._is_cn)
 
-            ## Login to Garmin Connect portal
-            self._api.login()
-            # USER INFO
-
-            # Get full name from profile
-            self.logger.info(self._api.get_full_name())
-
-            ## Get unit system from profile
-            self.logger.info(self._api.get_unit_system())
-        except (
-                GarminConnectConnectionError,
-                GarminConnectAuthenticationError,
-                GarminConnectTooManyRequestsError,
-        ) as err:
-            self._api = Garmin(self._username, self._password, is_cn=self._is_cn)
-            self._api.login()
-            self.logger.error("Error occurred during Garmin Connect communication: %s", err)
 
     def stop(self):
         """
@@ -100,14 +81,30 @@ class GarminConnect(SmartPlugin):
     def update_item(self, item, caller=None, source=None, dest=None):
         pass
 
+    def login(self):
+        try:
+            self._api = Garmin(self._username, self._password, is_cn=self._is_cn)
+            self._api.login()
+            self.logger.info(self._api.get_full_name())
+            self.logger.info(self._api.get_unit_system())
+        except (
+                GarminConnectConnectionError,
+                GarminConnectAuthenticationError,
+                GarminConnectTooManyRequestsError,
+        ) as err:
+            self._api = Garmin(self._username, self._password, is_cn=self._is_cn)
+            self._api.login()
+            self.logger.error("Error occurred during Garmin Connect communication: %s", err)
 
     def get_stats(self, date_str=None):
         date = self._get_date(date_str)
+        self.login()
         stats = self._api.get_stats(date.strftime('%Y-%m-%d'))
         return stats
 
     def get_heart_rates(self, date_str=None):
         date = self._get_date(date_str)
+        self.login()
         heart_rates = self._api.get_heart_rates(date.strftime('%Y-%m-%d'))
         return heart_rates
 
