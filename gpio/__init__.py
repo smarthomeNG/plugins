@@ -121,9 +121,9 @@ class GPIO(SmartPlugin, Utils):
                         time.sleep(2)
                     except ValueError as err:
                         self.logger.warning('Problem adding event detection for input pin {}: {}. Retry {}/{}'.format(pin, err, attempt + 1, self._initretries))
-                        break
+                    except Exception as err:
+                        self.logger.warning('Unspecific problem adding event detection for input pin {}: {}. Retry {}/{}'.format(pin, err, attempt + 1, self._initretries))
                     else:
-                        self.logger.warning('Unspecific problem adding event detection for input pin {}. Retry {}/{}'.format(pin, attempt + 1, self._initretries))
                         break
                 else:
                     self.logger.error('Not adding event detection for input pin {}, given up'.format(pin))

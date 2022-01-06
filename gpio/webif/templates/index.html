@@ -13,22 +13,17 @@ function mainpage() {
 </script>
 <script>
     $(document).ready( function () {
-		try
-			{
-			$('#in_table').DataTable( {
-				"paging": false,
-				fixedHeader: true
-				} );
-      $('#out_table').DataTable( {
-        "paging": false,
-        fixedHeader: true
-        } );
-			}
-		catch (e)
-			{
-			console.log("Datatable JS not loaded, showing standard table without reorder option")
-			}
-        });
+			$(window).trigger('datatables_defaults');
+			try
+				{
+					$('#table_out').DataTable( {} );
+					$('#table_in').DataTable( {} );
+				}
+			catch (e)
+				{
+					console.log("Datatable JS not loaded, showing standard table without reorder option " + e)
+				}
+    });
 </script>
 {% endblock pluginscripts %}
 {% set logo_frame = false %}
@@ -61,7 +56,7 @@ function mainpage() {
   <div class="mb-2">
     {{ _('Die folgenden Items sind dem GPIO Plugin als IN Pin zugewiesen') }}:
   </div>
-  <table id="in_table" class="table table-striped table-hover pluginList">
+  <table id="table_in" class="table table-striped table-hover pluginList display">
     <thead>
     <tr>
       <th>{{ _('Item') }}</th>
@@ -96,7 +91,7 @@ function mainpage() {
   <div class="mb-2">
     {{ _('Die folgenden Items sind dem GPIO Plugin als OUT Pin zugewiesen') }}:
   </div>
-    <table id="out_table" class="table table-striped table-hover pluginList">
+    <table id="table_out" class="table table-striped table-hover pluginList display">
       <thead>
       <tr>
         <th>{{ _('Item') }}</th>
