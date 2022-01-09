@@ -1,8 +1,3 @@
-.. index:: tasmota plugin
-.. index:: Plugins; tasmota
-.. index:: Plugins; mqtt
-.. index:: mqtt; tasmota plugin
-
 =======
 tasmota
 =======
@@ -114,4 +109,3 @@ Das Webinterface zeigt Informationen zum genutzten MQTT Broker an.
 
 .. image:: user_doc/assets/webif_tab5.jpg
    :class: screenshot
-
