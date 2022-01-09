@@ -1,4 +1,3 @@
-
 AVM
 ###
 
@@ -32,9 +31,17 @@ https://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/AHA-HTTP-Inte
 
 Unterstützung erhält man im Forum unter: https://knx-user-forum.de/forum/supportforen/smarthome-py/934835-avm-plugin
 
+Konfiguration
+=============
+
+Die Informationen zur Konfiguration des Plugins sind unter :doc:`/plugins_doc/config/avm` beschrieben bzw. in der **plugin.yaml** nachzulesen.
+
+
+Nachfolgend noch einige Zusatzinformationen.
+
 
 Konfiguration der Fritz!Box
-===========================
+---------------------------
 
 Für die Nutzung der Informationen über Telefonereignisse muss der CallMonitor aktiviert werden. Dazu muss auf
 einem direkt an die Fritz!Box angeschlossenen Telefon (Analog, ISDN S0 oder DECT) \*96#5# eingegeben werden.
@@ -43,10 +50,9 @@ Bei neueren Firmware Versionen (ab Fritz!OS v7) Muss die Anmeldung an der Box vo
 und Kennwort umgestellt werden" und es sollte ein eigener User für das AVM Plugin auf der Fritz!Box eingerichtet werden.
 
 Konfiguration des Plugins
-=========================
+-------------------------
 
-Die Konfigruation des Plugins erfolgt über das Admin-Inteface.
-Dafür stehen die folgenden Einstellungen zur Verfügung:
+Die Konfigruation des Plugins erfolgt über das Admin-Interface. Dafür stehen die folgenden Einstellungen zur Verfügung:
 
 - `username`: Required login information
 - `password`: Required login information
@@ -92,42 +98,34 @@ Alternativ kann das Plugin auch manuell konfiguriert werden.
 .. note:: Kürzere Updatezyklen können abhängig vm Fritzdevice aufgrund von CPU Auslastung und damit zu Problemen (u.a. zu Nichterreichbarkeit des Webservice) führen. Wird ein kürzerer Updatezyklus benötigt, sollte das shNG Log beobachtet werden. Dort werden entsprechende Fehlermeldungen hinterlegt.
 
 Konfiguration des Items
-=======================
+-----------------------
 
 Zur Konfiguration der Items stehen folgende Parameter zur Verfügung:
 
-avm_data_type
--------------
+**avm_data_type**:
 This attribute defines supported functions that can be set for an item. Full set see plugin.yaml.
 For most items, the avm_data_type can be bound to an instance via @... . Only in some points the items
 are parsed as child items.
 
-avm_incoming_allowed
---------------------
+**avm_incoming_allowed**:
 Definition der erlaubten eingehenden Rufnummer in Items vom avm_data_type `monitor_trigger`.'
 
-avm_target_number
------------------
+**avm_target_number**:
 Definition der erlaubten angerufenen Rufnummer in Items vom avm_data_type `monitor_trigger`.'
 
-avm_wlan_index
---------------
+**avm_wlan_index**:
 Definition des Wlans ueber index: (1: 2.4Ghz, 2: 5Ghz, 3: Gaeste).'
 
-avm_mac
--------
+**avm_mac**:
 Definition der MAC Adresse für Items vom avm_data_type `network_device`. Nur für diese Items mandatory!'
 
-ain
----
+**ain**:
 Definition der Aktor Identifikationsnummer (AIN)Items für smarthome Items. Nur für diese Items mandatory!'
 
-avm_tam_index
--------------
+**avm_tam_index**:
 Index für den Anrufbeantworter, normalerweise für den ersten eine "1". Es werden bis zu 5 Anrufbeantworter vom Gerät unterstützt.'
 
-avm_deflection_index
---------------------
+**avm_deflection_index**:
 Index für die Rufumleitung, normalerweise für die erste eine "1".'
 
 
