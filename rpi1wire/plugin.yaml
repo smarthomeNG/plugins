@@ -13,9 +13,11 @@ plugin:
     documentation: https://github.com/smarthomeNG/plugins/rpi1wire/Readme.md        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1451916-support-thread-für-rpi1wire-plugin
 
-    version: 1.8.0                  # Plugin version
+    version: 1.8.1                  # Plugin version
     sh_minversion: 1.5              # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+#    py_minversion: 3.6             # minimum Python version to use for this plugin
+#    py_maxversion:                 # maximum Python version to use for this plugin (leave empty if latest)
     multi_instance: False           # plugin supports multi instance
     restartable: True
     classname: Rpi1Wire             # class containing the plugin
@@ -33,7 +35,7 @@ parameters:
         type: str
         default: '/sys/bus/w1/devices'
         description:
-            de: 'Verzeichnis des onewire, in dem der RPi die Werte der 1-wire Sensoren hält'
+            de: 'Verzeichnis des Onewire, in dem der RPi die Werte der 1-wire Sensoren hält'
             en: 'Directory of onewire provided'
 
 item_attributes:

@@ -3,7 +3,7 @@
 #########################################################################
 #  Copyright 2015 R.Rauer                              software@rrauer.de
 #  Copyright 2020 Bernd Meiners                     Bernd.Meiners@mail.de
-#  Copyright 2021 Michael Wenzel                    wenzel_michael@web.de
+#  Copyright 2021- Michael Wenzel                   wenzel_michael@web.de
 #########################################################################
 #  This file is part of SmartHomeNG.
 #
@@ -26,6 +26,7 @@
 #########################################################################
 
 import os
+import io
 
 from lib.model.smartplugin import SmartPlugin
 from lib.item import Items
@@ -39,7 +40,7 @@ class Rpi1Wire(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.8.0'
+    PLUGIN_VERSION = '1.8.1'
 
     def __init__(self, sh):
         """"
@@ -53,12 +54,18 @@ class Rpi1Wire(SmartPlugin):
         the configured (and checked) value for a parameter by calling self.get_parameter_value(parameter_name). It
         returns the value in the datatype that is defined in the metadata.
         """
-        
-        self.logger.info('Init rpi1wire plugin')
+
+        self.logger.info(f'Init of Plugin {self.get_shortname()} started')
 
         # Call init code of parent class (SmartPlugin or MqttPlugin)
         super().__init__()
         if not self._init_complete:
+            return
+            
+        # check if shNG is running on Raspberry Pi
+        if not self._is_raspberrypi():
+            self.logger.error(f"Plugin '{self.get_shortname()}': Plugin just works with Raspberry Pi or equivalent.")
+            self._init_complete = False
             return
 
         # get the parameters for the plugin (as defined in metadata plugin.yaml):
@@ -69,20 +76,16 @@ class Rpi1Wire(SmartPlugin):
             else:
                 self.cycle = 120
         except KeyError as e:
-            self.logger.critical(
-                "Plugin '{}': Inconsistent plugin (invalid metadata definition: {} not defined)".format(self.get_shortname(), e))
+            self.logger.critical(f"Plugin '{self.get_shortname()}': Inconsistent plugin (invalid metadata definition: {e} not defined)")
             self._init_complete = False
             return
 
         # Initialization code goes here
-        self.sensors = {}
-        self._sensordaten = {}
-        self.values = {}
-        self.sysitems = {}
+        self._sensordata = {}                  # dict to hold all 1w information read from given directory
+        self.sysitems = {}                     # dict to hold Plugin system items
+        self.sensoritems = {}                  # dict to hold Plugin sensor items
+
         self.update = False
-        self.get_sensors()
-        self.anz_sensors = len(self.sensors)
-        self.logger.info(f"rpi1wire found {self.anz_sensors} sensors.")
 
         # On initialization error use:
         #   self._init_complete = False
@@ -92,7 +95,7 @@ class Rpi1Wire(SmartPlugin):
             self.logger.error("Unable to start Webinterface")
             self._init_complete = False
         else:
-            self.logger.debug("Init complete")
+            self.logger.debug(f"Init of Plugin {self.get_shortname()} complete")
         return
 
     def run(self):
@@ -100,27 +103,27 @@ class Rpi1Wire(SmartPlugin):
         Run method for the plugin
         """
         self.logger.debug("Run method called")
-        # setup scheduler for device poll loop   (disable the following line, if you don't need to poll the device. Rember to comment the self_cycle statement in __init__ as well)
-        self.scheduler_add('rpi1wire', self.update_values, prio=3, cycle=self.cycle)
-
+        self.scheduler_add('rpi1wire', self.update_sensors, prio=3, cycle=self.cycle)
         self.alive = True
-        self.update_values()
-        self.update_basics()
+        # Update sensors and items
+        self.get_sensors()
+        self.update_system()
 
-    def update_basics(self):
+    def update_system(self):
         """
         Method to update basic information of plugin like count of sensors and sensor list
         """
 
-        if self.sysitems.get('count'):
-            anz = self.get_sh().return_item(self.sysitems['count'])
-            anz(int(self.anz_sensors), 'rpi1wire')
-            self.logger.debug("rpi1wire-item sensors: {0}".format(self.anz_sensors))
+        count_item = self.sysitems.get('count')
+        if count_item is not None:
+            count_item(int(len(self._sensordata)), self.get_shortname())
+            self.logger.debug(f"Item <{count_item.id()}> set to <{int(len(self._sensordata))}>.")
 
-        if self.sysitems.get('list'):
-            ids = self.get_sh().return_item(self.sysitems['list'])
-            ids(str(self.sensors).replace("\'", ""), 'rpi1wire')
-            self.logger.debug("rpi1wire-item sensor_list: {0}".format(self.sensors))
+        list_item = self.sysitems.get('list')
+        if list_item is not None:
+            sensor_list = ", ".join(list(self._sensordata.keys()))
+            list_item(sensor_list, self.get_shortname())
+            self.logger.debug(f"Item <{list_item.id()}> set to <{sensor_list}>.")
 
     def stop(self):
         """
@@ -144,43 +147,16 @@ class Rpi1Wire(SmartPlugin):
         """
 
         if self.has_iattr(item.conf, 'rpi1wire_sys'):
-            type1 = self.get_iattr_value(item.conf, 'rpi1wire_sys')
-            if type1 == 'update':
-                self.logger.info("parse item: {}".format(item))
+            self.logger.info(f"parse item: {item.id()}")
+            rpi1wire_sys = self.get_iattr_value(item.conf, 'rpi1wire_sys')
+            self.sysitems[rpi1wire_sys] = item
+            if rpi1wire_sys == 'update':
                 return self.update_item
-            else:
-                try:
-                    sitem = item._path
-                    self.sysitems[type1] = str(sitem)
-                    self.logger.info("Item {0} assignment on Item {1} successful".format(item, sitem))
-                except:
-                    self.logger.warning("Item {0} assignment on Item {1} not successful".format(item, sitem))
 
-        if not self.has_iattr(item.conf, 'rpi1wire_id'):
-            if not self.has_iattr(item.conf, 'rpi1wire_name'):
-                return None
-
-        not_found = False
-        if self.has_iattr(item.conf, 'rpi1wire_id'):
+        elif self.has_iattr(item.conf, 'rpi1wire_id'):
+            self.logger.info(f"parse item: {item.id()}")
             addr = self.get_iattr_value(item.conf, 'rpi1wire_id')
-            try:
-                for sn, sid in self.sensors.items():
-                    if sid == self.get_iattr_value(item.conf, 'rpi1wire_id'):
-                        name = sn
-                        break
-            except:
-                self.logger.warning("Sensor {0} as Item defined but hardware not found".format(self.get_iattr_value(item.conf, 'rpi1wire_id')))
-                not_found = True
-        else:
-            if self.has_iattr(item.conf, 'rpi1wire_name'):
-                name = self.get_iattr_value(item.conf, 'rpi1wire_name')
-                try:
-                    addr = self.sensors[self.get_iattr_value(item.conf, 'rpi1wire_name')]
-                except:
-                    self.logger.warning("Sensor {0} Hardware not found".format(self.get_iattr_value(item.conf, 'rpi1wire_name')))
-                    not_found = True
-        if not_found is False:
-            self._sensordaten[addr]['item'] = item
+            self.sensoritems[addr] = item
 
     def parse_logic(self, logic):
         pass
@@ -204,38 +180,33 @@ class Rpi1Wire(SmartPlugin):
         if self.alive and caller != self.get_shortname():
             # code to execute if the plugin is not stopped
             # and only, if the item has not been changed by this this plugin:
-            self.logger.info("Update item: {}, item has been changed outside this plugin".format(item.id()))
+            self.logger.info(f"Update item: <{item.id()}>, item has been changed outside this plugin")
+            self.logger.info("Re-read of 1wire data from dictonary has been initiated.")
+            self.update_sensors()
+            return None
 
-            if self.has_iattr(item.conf, 'rpi1wire_update'):
-                self.logger.info("rpi1wire_update has been called")
-                self.update_sensors()
-                return None
-
-    def update_values(self):
+    def update_item_values(self):
         """
-        Updates the values in plugin dict from 1wire directory
+        Updates the value of connected items
         """
-        for sensor in self.sensors:
-            owid = self.sensors[sensor]
-            value = self.get_value(owid)
-            # if value != 99999:
-            text = sensor + "=" + sensor[0] + ": " + str(round(value/float(1000), 1)) + " (" + str(value)+")"
-            self.logger.debug(text)
-            self.values[sensor] = round(value/float(1000), 1)
-            try:
-                rpix = self._sensordaten[owid]
-                temp = rpix['item']
-                temp(round(value/float(1000), 1), "rpi1wire")
-                self._sensordaten[owid]['value'] = round(value/float(1000), 1)
-            except:
-                self.logger.info("sensor {0} has no item".format(owid))
+        for sensor in self.sensoritems:
+            item = self.sensoritems[sensor]
+            value_dict = self._sensordata.get(sensor)
+            if value_dict is not None:
+                value = value_dict.get('value')
+                sensortype = value_dict.get('sensortype')
+                self.logger.debug(f"For Item <{item.id()}> the value <{value}> for sensortype <{sensortype}> will be set.")
+                if item is not None:
+                    item(value, self.get_shortname())
+            else:
+                self.logger.warning(f"For Item <{item.id()}> no sensordata are available. Sensor probably not connected.")
 
     def get_sensors(self):
         """
-        Search for connected sensors and insert into self.sensors, self.values and self._sensordaten
+        Search for connected sensors and insert into self.sensors, self.values and self._sensordata
         """
+        self.logger.debug(f"get_sensors called to read directory for new onewire data.")
         objects = self.folder_objects(self.dirname)
-        i = 1
         if objects:
             # walking through the path objects
             for sensor in objects:
@@ -246,16 +217,16 @@ class Rpi1Wire(SmartPlugin):
                 if typ[0] in ['10', '22', '28']:
                     value = self.get_value(sensor)
                     if value == 99999:
-                        self.logger.warning("rpi1wire {0} - has no value".format(sensor))
+                        self.logger.warning(f"1wire sensor {sensor} - has no value")
                     else:
-                        text = "rpi_temp"+str(i)+"=" + sensor + ": " + str(round(value/float(1000), 1)) + " (" + str(value)+")"
-                        self.logger.info(text)
-                        self.sensors["rpi_temp"+str(i)] = sensor
-                        self.values["rpi_temp"+str(i)] = round(value/float(1000), 1)
-                        self._sensordaten[sensor] = {'name': "rpi_temp" + str(i), 'value': round(value / float(1000), 1)}
-                        i += 1
+                        self._sensordata[sensor] = {'sensortype': "temp", 'value': round(value / float(1000), 1)}
+            self.logger.debug(f"{self.get_shortname()} plugin found <{len(self._sensordata)}> sensors.")
+
+            # set item values
+            self.update_item_values()
+
         else:
-            self.logger.warning("rpi1wire plugin did not find directory at {0}".format(self.dirname))
+            self.logger.warning(f"{self.get_shortname()} plugin did not find directory at <{self.dirname}>")
 
     def folder_objects(self, dirname, otype="all"):
         """
@@ -278,7 +249,7 @@ class Rpi1Wire(SmartPlugin):
                     result.append(objectname)
             result.sort()
             return result
-            
+
     def get_value(self, owid):
         """
         reads a single sensor for a given id
@@ -294,12 +265,12 @@ class Rpi1Wire(SmartPlugin):
                 line = f.readline()  # read 2nd line
                 mytemp = line.rsplit('t=', 1)
             else:
-                self.logger.warning("rpi1wire {0} - return no value".format(owid))
+                self.logger.warning(f"{owid} - return no value")
                 mytemp = '99999'
             f.close()
             return int(mytemp[1])
         except:
-            self.logger.warning("can not read sensor {}".format(owid))
+            self.logger.warning(f"can not read sensor {owid}")
             return 99999
 
     def update_sensors(self):
@@ -307,60 +278,18 @@ class Rpi1Wire(SmartPlugin):
         Update of all sensor values
         """
         self.update = True
-        self.sensors = {}
-        self.anz_sensors = 0
         self.get_sensors()
-        self.anz_sensors = len(self.sensors)
-        self.search_item()
-        self.update_basics()
-        self.update_values()
-        upd = self.get_sh().return_item(self.sysitems['update'])  # Item zum Updaten der Sensoren
-        if upd is not None:
-            upd(False, 'rpi1wire')
-            self.logger.warning("{0} update value done, {1} sensors found".format(self.sysitems['update'], self.anz_sensors))
+        self.update_system()
+
+        update_item = self.sysitems.get('update')
+        if update_item is not None:
+            update_item(False, self.get_shortname())
+            self.logger.debug(f"Update of data and items done; Item <{update_item.id()}> set to <False>")
         self.update = False
-
-    def search_item(self):
-        """
-        Search within all items for plugin specific attributes and add relevant items to plugin dict
-        """
-        items = self.get_sh().return_items()
-        for item in items:
-            if self.has_iattr(item.conf, 'rpi1wire_id'):
-                addr = self.get_iattr_value(item.conf, 'rpi1wire_id')
-                try:
-                    for sn, sid in self.sensors.items():
-                        if sid == addr:
-                            name = sn
-                            self._sensordaten[addr]['item'] = item
-                            break
-                except:
-                    self.logger.warning("Sensor {0} Hardware not found".format(addr))
-                    not_found = True
-            if self.has_iattr(item.conf, 'rpi1wire_name'):
-                name = self.get_iattr_value(item.conf, 'rpi1wire_name')
-                try:
-                    addr = self.sensors[name]
-                    self._sensordaten[addr]['item'] = item
-                except:
-                    self.logger.warning("Sensor {0} Hardware not found".format(name))
-            if self.has_iattr(item.conf, 'rpi1wire_sys'):
-                type = self.get_iattr_value(item.conf, 'rpi1wire_sys')
-                try:
-                    sitem = item._path
-                    self.sysitems[type] = str(sitem)
-                    self.logger.info("Item {0} assignment on Item {1} successful".format(item, sitem))
-                except:
-                    self.logger.warning("Item {0} assignment on Item {1} NOT successful".format(item, sitem))
-        self.logger.info("{0} rpi1wire-items registriert".format(len(self._sensordaten)))
-
-    def save_sysitems(self, item):
-        """
-        Search within all items for plugin specific attribute 'rpi1wire_sys' and add relevant items to plugin dict
-        """
-        type1 = self.get_iattr_value(item.conf, 'rpi1wire_sys')
+        
+    def _is_raspberrypi(self):
         try:
-            path = item._path
-            self.sysitems[type1]['item'] = path
-        except:
-            self.logger.warning("Item {0} assignment NOT successful".format(item))
+            with io.open('/sys/firmware/devicetree/base/model', 'r') as m:
+                if 'raspberry pi' in m.read().lower(): return True
+        except Exception: pass
+        return False
