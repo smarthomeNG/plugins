@@ -1,0 +1,114 @@
+# Metadata for the plugin
+plugin:
+    # Global plugin attributes
+    type: gateway                  # plugin type (gateway, interface, protocol, system, web)
+    description:
+        de: 'Plugin zur Steuerung von Geräten, die mit einem Zigbee Gateway mit der Zigbee2MQTT Firmware versehen sind. Die Kommunikation erfolgt über das MQTT Module von SmartHomeNG.'
+        en: 'Plugin to control devices which are linked to Zigbee Gateway equipped with Zigbee2MQTT firmware. Communication is handled through the MQTT module of SmartHomeNG.'
+    maintainer: Michael Wenzel
+    tester: Michael Wenzel         # Who tests this plugin?
+    state: develop                 # change to ready when done with development
+    keywords: iot
+    documentation: 
+    support:
+
+    version: 1.0.0                 # Plugin version
+    sh_minversion: 1.8.2           # minimum shNG version to use this plugin
+#    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
+    py_minversion: 3.8             # minimum Python version to use for this plugin
+    multi_instance: True           # plugin supports multi instance
+    restartable: unknown
+    classname: Zigbee2Mqtt         # class containing the plugin
+
+parameters:
+    # Definition of parameters to be configured in etc/plugin.yaml (enter 'parameters: NONE', if section should be empty)
+    base_topic:
+        type: str
+        default: 'zigbee2mqtt'
+        description:
+            de: TopicLevel_1 um mit dem ZigBee2MQTT Gateway zu kommunizieren (%topic%)
+            en: TopicLevel_1 to be used to communicate with the ZigBee2MQTT Gateway (%topic%)
+            
+    poll_period:
+        type: int
+        default: 300
+        valid_min: 10
+        valid_max: 3600
+        description:
+            de: Zeitabstand in Sekunden in dem das Gateway Infos liefer soll
+            en: Timeperiod in seconds in which the Gateway shall send information
+
+item_attributes:
+    # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)
+    zigbee2mqtt_topic:
+        type: str
+        mandatory: true
+        description:
+            de: TopicLevel_2 um mit dem ZigBee2MQTT Gateway zu kommunizieren; entspricht dem Friendly_Name oder Short_Name des Zigbee-Gerätes
+            en: TopicLevel_2 to be used to communicate with the ZigBee2MQTT Gateway
+
+    zigbee2mqtt_attr:
+        type: str
+        mandatory: true
+        description:
+            de: "Zu lesendes/schreibendes Attribut des ZigBee2MQTT Devices. Achtung: Nicht jedes Attribut ist auf allen Device-Typen vorhanden."
+            en: "Attribute of ZigBee2MQTT device that shall be read/written. Note: Not every attribute is available on all device types"
+        valid_list_ci:
+            - ''
+            - online
+            - bridge_permit_join
+            - bridge_health_check
+            - bridge_restart
+            - bridge_networkmap_raw
+            - device_remove
+            # - device_ota_update_check
+            # - device_ota_update_update
+            - device_configure
+            - device_options
+            - device_rename
+            # - device_bind
+            # - device_unbind
+            - device_configure_reporting
+            - temperature
+            - humidity
+            - battery
+            - battery_low
+            - linkquality
+            - action
+            - vibration
+            - action_group
+            - voltage
+            - angle
+            - angle_x
+            - angle_x_absolute
+            - angle_y
+            - angle_y_absolute
+            - angle_z
+            - strength
+            - last_seen
+            - tamper
+            - sensitivity
+            - contact
+            - brightness                            # Helligkeit in % [0-100]
+            - color_temp                            # Farbtemperatur in Kelvin
+            - state
+            - hue
+            - saturation
+            - color_x
+            - color_y
+            - color_mode
+            
+        valid_list_description:
+            de:
+              - "<noch kein Attribut gewählt>"
+              - "Online Status des Zigbee Devices -> bool, r/o"
+
+item_structs: NONE
+    # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
+
+plugin_functions: NONE
+    # Definition of plugin functions defined by this plugin (enter 'plugin_functions: NONE', if section should be empty)
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)
+
