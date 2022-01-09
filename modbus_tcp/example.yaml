@@ -14,7 +14,7 @@ solaredge_SE6000:
         type: num
         name: I_AC_Power
         enforce_updates: True
-        eval: value*10**sh.Photovoltaik.AC_Leistung_sf() if sh.Photovoltaik.AC_Leistung_sf() != 0 else None
+        eval: value*10**sh.Photovoltaik.AC_Leistung_sf()
         modBusAddress: 40083
         modBusFactor: 0.001
     DC_Leistung_sf: 
@@ -26,7 +26,7 @@ solaredge_SE6000:
     DC_Leistung: 
         type: num
         name: I_DC_Power
-        eval: value*10**sh.Photovoltaik.DC_Leistung_sf() if sh.Photovoltaik.DC_Leistung_sf() != 0 else None
+        eval: value*10**sh.Photovoltaik.DC_Leistung_sf()
         enforce_updates: True
         modBusAddress: 40100
         modBusFactor: 0.001
@@ -41,7 +41,7 @@ solaredge_SE6000:
         name: I_Temp_Sink
         database: yes
         database_maxage: 365
-        eval: value*10**sh.Photovoltaik.Inverter_Temperatur_sf() if sh.Photovoltaik.Inverter_Temperatur_sf() != 0 else None
+        eval: value*10**sh.Photovoltaik.Inverter_Temperatur_sf()
         modBusAddress: 40103
         modBusDataType: int16
     Zaehler_Strom_sf: 
@@ -56,7 +56,7 @@ solaredge_SE6000:
         enforce_updates: True
         database: yes
         database_maxage: 365
-        eval: value*10**sh.Photovoltaik.Zaehler_Strom_sf() if sh.Photovoltaik.Zaehler_Strom_sf() != 0 else None
+        eval: value*10**sh.Photovoltaik.Zaehler_Strom_sf()
         modBusAddress: 40190
     Zaehler_Spannung_sf: 
         type: num
@@ -70,7 +70,7 @@ solaredge_SE6000:
         enforce_updates: True
         database: yes
         database_maxage: 365
-        eval: value*10**sh.Photovoltaik.Zaehler_Spannung_sf() if sh.Photovoltaik.Zaehler_Spannung_sf() != 0 else None
+        eval: value*10**sh.Photovoltaik.Zaehler_Spannung_sf()
         modBusAddress: 40195
     Zaehler_Frequenz_sf: 
         type: num
@@ -84,7 +84,7 @@ solaredge_SE6000:
         enforce_updates: True
         database: yes
         database_maxage: 365
-        eval: value*10**sh.Photovoltaik.Zaehler_Frequenz_sf() if sh.Photovoltaik.Zaehler_Frequenz_sf() != 0 else None
+        eval: value*10**sh.Photovoltaik.Zaehler_Frequenz_sf()
         modBusAddress: 40204
     Zaehler_Leistung_sf: 
         type: num
@@ -100,9 +100,8 @@ solaredge_SE6000:
         modBusAddress: 40206
         modBusDataType: int16
         modBusFactor: 0.001
-        Status: 
-            type: num
-            name: "0 Autark, 1 Export, 2 Import, "
+        Status: # 0 Autark, 1 Export, 2 Import,
+            type: num 
             eval_trigger: Photovoltaik.Zaehler_Leistung
             eval: 1 if sh.Photovoltaik.Zaehler_Leistung() > 0.025 else 2 if sh.Photovoltaik.Zaehler_Leistung() < -0.025 else 0
         StatusText: 
