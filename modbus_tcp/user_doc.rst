@@ -10,7 +10,7 @@ Anforderungen
 
 pymodbus
 ~~~~~~~~
-das Paket sollte automatisch von SH installiert werden:
+das Paket sollte automatisch von SH installiert werden.
 
 pymodbus - manuelle Installation:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -39,6 +39,7 @@ logic.yaml
 
 Bitte die Dokumentation lesen, die aus den Metadaten der plugin.yaml erzeugt wurde.
 
+Beispiel: In der Datei example.yaml sind ein paar Items für einen Solaredge-Wechselrichter SE6000 angelegt.
 
 Funktionen
 ~~~~~~~~~~
@@ -50,7 +51,7 @@ Beispiele
 ---------
 Beispiel für SH-Item's
 
-siehe example.yaml
+siehe auch example.yaml
 
 .. code-block:: yaml
 
@@ -59,48 +60,50 @@ siehe example.yaml
             type: str
             value: ''
             modBusAddress: 40030
-            modBusDataType: 'string16'        #(optional) default: uint16  
+            modBusDataType: 'string16'          #(optional) default: uint16  
             #modBusFactor: '1000'               #(optional) default: 1
-            modBusByteOrder: 'Endian.Little'   #(optional) default: 'Endian.Big'
-            modBusWordOrder: 'Endian.Little'   #(optional) default: 'Endian.Big'
+            modBusByteOrder: 'Endian.Little'    #(optional) default: 'Endian.Big'
+            modBusWordOrder: 'Endian.Little'    #(optional) default: 'Endian.Big'
             modBusUnit: '71'                    #(optional) default: slaveUnit aus der Plugin-Konfig
         leistung_AC:
             type: num
             value: '0'
             modBusAddress: 40048
-            #modBusDataType: 'uint16'        #(optional) default: uint16  
-            modBusFactor: '0.001'           #(optional) default: 1
-            modBusByteOrder: 'Endian.Little'   #(optional) default: 'Endian.Big'
-            modBusWordOrder: 'Endian.Little'   #(optional) default: 'Endian.Big'
+            #modBusDataType: 'uint16'           #(optional) default: uint16  
+            modBusFactor: '0.001'               #(optional) default: 1
+            modBusByteOrder: 'Endian.Little'    #(optional) default: 'Endian.Big'
+            modBusWordOrder: 'Endian.Little'    #(optional) default: 'Endian.Big'
             modBusUnit: '71'                    #(optional) default: slaveUnit aus der Plugin-Konfig
         leistung_DC:
             type: num
             value: ''
             modBusAddress: 40050
-            modBusDataType: 'int16'         #(optional) default: uint16  
-            modBusFactor: '0.001'           #(optional) default: 1
-            modBusByteOrder: 'Endian.Little'   #(optional) default: 'Endian.Big'
-            modBusWordOrder: 'Endian.Little'   #(optional) default: 'Endian.Big'
+            modBusDataType: 'int16'             #(optional) default: uint16  
+            modBusFactor: '0.001'               #(optional) default: 1
+            modBusByteOrder: 'Endian.Little'    #(optional) default: 'Endian.Big'
+            modBusWordOrder: 'Endian.Little'    #(optional) default: 'Endian.Big'
             modBusUnit: '71'                    #(optional) default: slaveUnit aus der Plugin-Konfig
         temperatur:
             type: num
             value: ''
             modBusAddress: 40052
-            modBusDataType: 'float32        #(optional) default: uint16  
-            #modBusFactor: '1'               #(optional) default: 1
-            modBusByteOrder: 'Endian.Little'   #(optional) default: 'Endian.Big'
-            modBusWordOrder: 'Endian.Little'   #(optional) default: 'Endian.Big'
+            modBusDataType: 'float32            #(optional) default: uint16  
+            #modBusFactor: '1'                  #(optional) default: 1
+            modBusByteOrder: 'Endian.Little'    #(optional) default: 'Endian.Big'
+            modBusWordOrder: 'Endian.Little'    #(optional) default: 'Endian.Big'
             modBusUnit: '71'                    #(optional) default: slaveUnit aus der Plugin-Konfig
 
 Changelog
 ---------
-V1.0.3     slaveUnit - Fehler behoben (_regToRead-key (adress.unit))
+V1.0.3  slaveUnit - Fehler behoben (_regToRead-key (adress.unit))
+        Bug Web Interface (Anzeige der Adresse)
+        example.yaml verbessert
 
-V1.0.2     slaveUnit zu Items hinzugefügt
+V1.0.2  slaveUnit zu Items hinzugefügt
 
-V1.0.1     slaveUnit zu plugin-Paramter hinzugefügt
+V1.0.1  slaveUnit zu plugin-Paramter hinzugefügt
 
-V1.0.0     Initial plugin version
+V1.0.0  Initial plugin version
 
 
 Web Interface

@@ -7,7 +7,7 @@ plugin:
         en: 'Plugin to connect via modbus with SmartHomeNG'
     maintainer: ivande
     tester: 'n/a'
-    state: develop
+    state: ready
     keywords: modbus_tcp
     documentation: https://github.com/smarthomeNG/plugins/blob/develop/modbus_tcp/user_doc.rst
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1154368-einbindung-von-modbus-tcp
