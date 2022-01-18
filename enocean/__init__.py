@@ -179,6 +179,7 @@ class EnOcean(SmartPlugin):
         else:
             self.tx_id = int(tx_id, 16)
             self.logger.info(f"Stick TX ID configured via plugin.conf to: {tx_id}")
+        self._log_unknown_msg = self.get_parameter_value("log_unknown_messages")
         self._tcm = serial.Serial(self.port, 57600, timeout=1.5)
         self._cmd_lock = threading.Lock()
         self._response_lock = threading.Condition()
@@ -336,8 +337,9 @@ class EnOcean(SmartPlugin):
                 self.logger.debug("Received repeated enocean stick message")
         else:
             self.unknown_sender_id = "{:08X}".format(sender_id)
-            self.logger.info("Unknown ID = {:08X}".format(sender_id))
-            self.logger.warning("Unknown device sent radio message: choice = {:02x} / payload = [{}] / sender_id = {:08X} / status = {} / repeat = {}".format(choice, ', '.join(['0x%02x' % b for b in payload]), sender_id, status, repeater_cnt))
+            if self._log_unknown_msg:
+                self.logger.info("Unknown ID = {:08X}".format(sender_id))
+                self.logger.warning("Unknown device sent radio message: choice = {:02x} / payload = [{}] / sender_id = {:08X} / status = {} / repeat = {}".format(choice, ', '.join(['0x%02x' % b for b in payload]), sender_id, status, repeater_cnt))
 
 
     def _process_packet_type_smart_ack_command(self, data, optional):
@@ -496,6 +498,11 @@ class EnOcean(SmartPlugin):
         hexstring = "{:08X}".format(self.tx_id)
         return hexstring
 
+    def get_log_unknown_msg(self):
+        return self._log_unknown_msg
+
+    def toggle_log_unknown_msg(self):
+        self._log_unknown_msg = not self._log_unknown_msg
     
     def _send_UTE_response(self, data, optional):
         self.logger.debug("enocean: call function << _send_UTE_response >>")
@@ -900,6 +907,9 @@ class WebInterface(SmartPluginWebIf):
             elif action == "toggle_UTE":
                 self.plugin.toggle_UTE_mode(device_offset)
                 self.logger.warning(f"UTE mode triggered via webinterface (Offset: {device_offset})")
+            elif action == "toggle_log_unknown":
+                self.plugin.toggle_log_unknown_msg()
+                self.logger.info(f"Toogle state of log unknown messages triggered via webinterface")
             elif action == "send_learn" and (device_id is not None) and not (device_id=="") and (device_offset is not None) and not(device_offset==""):
                 self.logger.warning(f"Learn telegram triggered via webinterface (ID:{device_id} Offset:{device_offset})")
                 ret = self.plugin.send_learn_protocol(int(device_offset), int(device_id))

@@ -39,6 +39,14 @@ parameters:
             en: 'Unique-ID or Base-ID of the EnOcean Module (8-digit hex value, e.g. FFFF4680)'
         mandatory: 'True'
 
+    log_unknown_messages:
+        type: bool
+        description:
+            de: 'Nachrichten von unbekannten Geraeten ins logfile schreiben'
+            en: 'Log messages from unknown devices to logfile'
+        default: 'False'
+
+
 item_attributes:
     # Definition of item attributes defined by this plugin
     enocean_rx_id:

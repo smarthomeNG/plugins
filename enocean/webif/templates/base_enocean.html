@@ -5,27 +5,29 @@
 <table class="table table-striped table-hover">
 	<tbody>
 		<tr>
-			<td class="py-1" width="150px"><strong>{{ _('BaseID') }}</strong></td>
+			<td title= "{{ _('BaseID des Enocean Sticks') }}" class="py-1" width="150px"><strong>{{ _('BaseID') }}</strong></td>
 			<td class="py-1">{{ p.get_tx_id_as_hex() }}</td>
 		</tr>
 
 		<tr>
-			<td class="py-1" width="150px"><strong>{{ _('Senden') }}</strong></td>
+			<td title= "{{ _('Nachrichten Senden') }}" class="py-1" width="150px"><strong>{{ _('Senden') }}</strong></td>
 			<td class="py-1">{% if p._block_ext_out_msg %}{{ _('Blockiert') }}{% else %}{{ _('Ein') }}{% endif %}</td>
-			<td class="py-1"></td>
-			<td class="py-1"></td>
-			<td class="py-1"></td>
-			<td class="py-1"></td>
 		</tr>
 		<tr>
 			<td class="py-1" width="150px"><strong>{{ _('UTE Listen') }}</strong></td>
 			<td class="py-1">{% if p.UTE_listen %}{{ _('Aktiv') }}{% else %}{{ _('Aus') }}{% endif %}</td>
 		</tr>
+		<tr>
+			<td title= "{{ _('Nachrichten von unbekannten Enocean Geraeten ins Logfile schreiben') }}" class="py-1" width="150px"><strong>{{ _('Log Unknown') }}</strong></td>
+			<td title= "{{ _('Nachrichten von unbekannten Enocean Geraeten ins Logfile schreiben') }}" class="py-1">{% if p.get_log_unknown_msg() %}{{ _('Aktiv') }}{% else %}{{ _('Aus') }}{% endif %}</td>
+		</tr>
+
 	</tbody>
 </table>
 {% endblock headtable %}
 
 {% block buttons %}
 <button type="button" class="btn btn-shng btn-sm" title="{{ _('Senden An/Aus') }}" onclick="confirmDelete('?action=toggle_tx_blocking','{{ _('Wollen Sie das Senden wirklich umschalten?') }}')">{{ _('Senden An/Aus') }}</button>
+<button type="button" class="btn btn-shng btn-sm" title="{{ _('Logging von unbekannten Enocean Nachrichten ins Logfile An/Aus') }}" onclick="toggleLogUnknown()">{{ _('Unknown An/Aus') }}</button>
 
 {% endblock buttons %}
