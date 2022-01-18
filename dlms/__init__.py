@@ -56,7 +56,7 @@ from . import conversion
 
 
 class DLMS(SmartPlugin, conversion.Conversion):
-    PLUGIN_VERSION = "1.9.1"
+    PLUGIN_VERSION = "1.9.2"
 
     """
     This class provides a Plugin for SmarthomeNG to reads out a smartmeter.
@@ -106,6 +106,7 @@ class DLMS(SmartPlugin, conversion.Conversion):
         self._last_readout = ""
         
         # dict especially for the interface
+        # 'serialport', 'device', 'querycode', 'speed', 'baudrate_fix', 'timeout', 'onlylisten', 'use_checksum'
         self._config = {}
         self._config['serialport'] = self.get_parameter_value('serialport')
         if not self._config['serialport']:
@@ -117,12 +118,12 @@ class DLMS(SmartPlugin, conversion.Conversion):
         self._config['device'] = self.get_parameter_value('device_address')
         self._config['querycode'] = self.get_parameter_value('querycode')
         self._config['timeout'] = self.get_parameter_value('timeout')
-
+        self._config['baudrate'] = self.get_parameter_value('baudrate')
+        self._config['baudrate_fix'] = self.get_parameter_value('baudrate_fix')
         self._config['use_checksum'] = self.get_parameter_value('use_checksum')
         self._config['onlylisten'] = self.get_parameter_value('only_listen')
         self._config['reset_baudrate'] = self.get_parameter_value('reset_baudrate')
         self._config['no_waiting'] = self.get_parameter_value('no_waiting')
-        self._config['baudrate_fix'] = self.get_parameter_value('baudrate_fix')
 
         self.logger.debug(f"Instance {self._instance if self._instance else 0} of DLMS configured to use serialport '{self._config.get('serialport')}' with update cycle of {self._update_cycle} seconds")
         self.init_webinterface()

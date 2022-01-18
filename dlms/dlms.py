@@ -154,9 +154,9 @@ def query( config ):
     4. adjusts the speed of the communication accordingly
     5. reads out the block of OBIS information
     6. closes the serial communication
-    
-    config contains a dict with entries for        
-    'serialport', 'device', 'timeout', 'use_checksum', 'reset_baudrate', 'no_waiting', 'onlylisten', 'baudrate_fix'
+
+    config contains a dict with entries for
+    'serialport', 'device', 'querycode', 'speed', 'baudrate_fix', 'timeout', 'onlylisten', 'use_checksum'
     
     return: a textblock with the data response from smartmeter
     """
