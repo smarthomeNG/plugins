@@ -68,14 +68,14 @@ import time
 import asyncio
 
 try:
-    from aiohttp import ClientSession, web
+    from aiohttp import ClientSession, ClientTimeout, web
 except ImportError as error:
     print(
         """ImportError: {}:
     Use of the SoCo events_asyncio module requires the 'aiohttp'
     package and its dependencies to be installed. aiohttp is not
     installed with SoCo by default due to potential issues installing
-    the dependencies 'mutlidict' and 'yarl' on some platforms.
+    the dependencies 'multidict' and 'yarl' on some platforms.
     See: https://github.com/SoCo/SoCo/issues/819""".format(
             error
         )
@@ -206,7 +206,8 @@ class EventListener(EventListenerBase):  # pylint: disable=too-many-instance-att
             if not port:
                 return
             self.address = (ip_address, port)
-            self.session = ClientSession(raise_for_status=True)
+            client_timeout = ClientTimeout(total=10)
+            self.session = ClientSession(raise_for_status=True, timeout=client_timeout)
             self.is_running = True
             log.debug("Event Listener started")
 
