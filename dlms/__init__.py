@@ -56,7 +56,7 @@ from . import conversion
 
 
 class DLMS(SmartPlugin, conversion.Conversion):
-    PLUGIN_VERSION = "1.9.2"
+    PLUGIN_VERSION = "1.9.3"
 
     """
     This class provides a Plugin for SmarthomeNG to reads out a smartmeter.
@@ -126,6 +126,7 @@ class DLMS(SmartPlugin, conversion.Conversion):
         self._config['no_waiting'] = self.get_parameter_value('no_waiting')
 
         self.logger.debug(f"Instance {self._instance if self._instance else 0} of DLMS configured to use serialport '{self._config.get('serialport')}' with update cycle of {self._update_cycle} seconds")
+        self.logger.debug(f"Config: {self._config}")
         self.init_webinterface()
 
         self.logger.debug("init done")
