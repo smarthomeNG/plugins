@@ -1,0 +1,74 @@
+# Metadata for the plugin
+plugin:
+    # Global plugin attributes
+    type: gateway                   # plugin type (gateway, interface, protocol, system, web)
+    description:
+        de: 'Plugin für den Raspberry Pi. Erlaubt den einfachen Zugriff auf 1-Wire Sensoren. Getestet mit Raspberry Pi B und dem Temperatursensor DS18B20'
+        en: 'Plugin developed for the Raspberry Pi. It allows easy access to 1-Wire sensors. Tested with the Raspberry Pi B and the temperature sensor DS18B20'
+        fr: 'Support de 1-Wire à travers Raspberry Pi sur SmartHomeNG v1.5 et plus'
+    maintainer: bmxp, sisamiwe
+    tester: sisamiwe, ElektroRudi   # Who tests this plugin?
+    state: develop                  # change to ready when done with development
+    keywords: 1wire onewire raspberry pi dallas temperature sensor
+    documentation: https://github.com/smarthomeNG/plugins/rpi1wire/Readme.md        # url of documentation (wiki) page
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1451916-support-thread-für-rpi1wire-plugin
+
+    version: 1.8.0                  # Plugin version
+    sh_minversion: 1.5              # minimum shNG version to use this plugin
+#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    multi_instance: False           # plugin supports multi instance
+    restartable: True
+    classname: Rpi1Wire             # class containing the plugin
+
+parameters:
+    # Definition of parameters to be configured in etc/plugin.yaml (enter 'parameters: NONE', if section should be empty)
+    cycle:
+        type: int
+        valid_min: 1
+        default: 120
+        description:
+            de: 'Zeitlicher Abstand zwischen zwei Abfragen des OneWire'
+            en: 'Time between two queries of onewire'
+    dirname:
+        type: str
+        default: '/sys/bus/w1/devices'
+        description:
+            de: 'Verzeichnis des onewire, in dem der RPi die Werte der 1-wire Sensoren hält'
+            en: 'Directory of onewire provided'
+
+item_attributes:
+    rpi1wire_id: # '20-09838903008'
+        type: str
+        description:
+            de: 'Sensoradresse im Format xx-yyyyyyyyyyyy (Bitte darauf achten, dass bei rein numerischen Sensoradressen diese in '' eingeschlossen werden müssen) oder ein Alias'
+            en: 'Sensor address in xx-yyyyyyyyyyyy format (Please note: If the sensor address is numerical, it has to be enclosed in quotes) or an alias'
+            fr: 'Adresse du capteur au format xx-yyyyyyyyyyyy'
+
+    rpi1wire_sys:
+        type: str
+        description:
+            de: 'Attribut für Globale Plugin Items zum Triggern eines Update, Anzeigen der Anzahl gefundener Sensoren oder Auflistung der gefundenen Sensoren'
+            en: 'Attribute for global plugin items to trigger value read update, count of sensors and list of sensors'
+        valid_list:
+          - update  # de: 'Startet bei Triggerung ein Update der Sensorliste'; en: 'Rereads the sensor list after being triggered'
+          - list    # de: 'Liste mit allen am Zielort gefundenen Sensoren'; en: 'List showing all found sensors'
+          - count   # de: 'Anzahl der am Zielort gefundenen Sensoren'; en: 'Count of all found sensors'
+        valid_list_description:
+            de:
+                - 'Startet bei Triggerung ein Update der Sensorliste'
+                - 'Liste mit allen am Zielort gefundenen Sensoren'
+                - 'Anzahl der am Zielort gefundenen Sensoren'
+            en:
+                - 'Rereads the sensor list after being triggered'
+                - 'List showing all found sensors'
+                - 'Count of all found sensors'
+
+item_structs: NONE
+    # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
+
+plugin_functions: NONE
+    # Definition of plugin functions defined by this plugin (enter 'plugin_functions: NONE', if section should be empty)
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)
+
