@@ -22,19 +22,20 @@
 		</tr>
         <tr>
             <td class="py-1"><strong>{{ _('') }}</strong></td>
-			<td class="py-1"><strong>{{ _('slave Unit') }}</strong></td>
+			<td class="py-1"><strong>{{ _('global slave unit') }}</strong></td>
 			<td class="py-1">{{ p._slaveUnit }}</td>
 		</tr>
-
         <tr>
             <td class="py-1"><strong>{{ _('') }}</strong></td>
 			<td class="py-1"><strong>{{ _('pol_device / cycle-time [seconds]') }}</strong></td>
 			<td class="py-1">{{ p._cycle }}</td>
 		</tr>
         <tr>
+            {% if 'last_dt' in p._pollStatus %}	
             <td class="py-1"><strong>{{ _('') }}</strong></td>
 			<td class="py-1"><strong>{{ _('last_read (readed registers)') }}</strong></td>
 			<td class="py-1">{{ p._pollStatus.last_dt.strftime('%d.%m.%Y %H:%M:%S %Z') }} ({{ p._pollStatus.regCount }})</td>
+            {% endif %}
 		</tr>
 		
 	</tbody>
@@ -46,7 +47,10 @@
     <table class="table table-striped table-hover pluginList">
         <thead>
             <tr>
-                <th>{{ _('Address') }}</th>
+                <th> {{ _('Address') }}</th>
+                {% if p._slaveUnitRegisterDependend %}
+                <th> {{ _('Unit') }}</th>
+                {% endif %}
                 <th> {{ _('Value') }}</th>
                 <th> {{ _('Item') }}</th>
                 <th> {{ _('DataType') }}</th>
@@ -59,16 +63,20 @@
         
         {% for item in _regToRead %}
             <tr>
-                <td class="py-1">{{ item }}</td>
+                <td class="py-1">{{ p._regToRead[item].regAddr }}</td>
+                {% if p._slaveUnitRegisterDependend %}
+                <td class="py-1">{{ p._regToRead[item].slaveUnit }}</td>
+                {% endif %}
                 <td class="py-1">{{ p._regToRead[item].value }}</td>
                 <td class="py-1">{{ p._regToRead[item].item }}</td>
                 <td class="py-1">{{ p._regToRead[item].dataType }}</td>
-				{% if p._regToRead[item].read_dt %}
+                
+				{% if 'read_dt' in p._regToRead[item] %}	
 				<td class="py-1">{{ p._regToRead[item].read_dt.strftime('%d.%m.%Y %H:%M:%S %Z') }}</td>
 				{% else %}
 				<td class="py-1"></td>
 				{% endif %}
-				{% if p._regToRead[item].last_read_dt %}
+                {% if 'last_read_dt' in p._regToRead[item] %}	
 				<td class="py-1">{{ p._regToRead[item].last_read_dt.strftime('%d.%m.%Y %H:%M:%S %Z') }}</td>
 				{% else %}
 				<td class="py-1"></td>
