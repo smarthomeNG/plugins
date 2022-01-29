@@ -64,10 +64,10 @@ parameters:
     cycle:
         type: int
         mandatory: False
-        default: 300
+        default: 900
         description:
-            de: '(optional) Zeit zwischen zwei Updateläufen. Default ist 300 Sekunden.'
-            en: '(optional) Time period between two update cycles. Default is 300 seconds.'
+            de: '(optional) Zeit zwischen zwei Updateläufen.'
+            en: '(optional) Time period between two update cycles.'
 
     softfail_precipitation:
         type: str
