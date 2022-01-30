@@ -131,7 +131,6 @@ class UZSU(SmartPlugin):
         self._backintime = self.get_parameter_value('backintime')
         self._suncalculation_cron = self.get_parameter_value('suncalculation_cron')
         self._sh = smarthome
-        self._uzsu_sun = None
         self._items = {}
         self._lastvalues = {}
         self._planned = {}
@@ -1056,31 +1055,6 @@ class UZSU(SmartPlugin):
         return returnValue
 
 
-    def _create_sun(self):
-        """
-        Creates a sun object for sun calculations
-        """
-        # checking preconditions from configuration:
-        uzsu_sun = None
-        if not self._sh.sun:  # no sun object created
-            self.logger.error("No latitude/longitude specified. Not possible to create sun object.")
-
-        # create an own sun object:
-        if not self._uzsu_sun:
-            try:
-                longitude = self._sh.sun._obs.long
-                latitude = self._sh.sun._obs.lat
-                elevation = self._sh.sun._obs.elev
-                uzsu_sun = lib.orb.Orb('sun', longitude, latitude, elevation)
-                self.logger.debug("Created a new sun object with latitude={}, longitude={}, elevation={}".format(
-                    latitude, longitude, elevation))
-            except Exception as e:
-                self.logger.error("Error '{}' creating a new sun object. You could not "
-                                  "use sunrise/sunset as UZSU entry.".format(e))
-        else:
-            uzsu_sun = self._uzsu_sun
-        return uzsu_sun
-
     def _sun(self, dt, tstr, timescan):
         """
         parses a given string with a time range to determine it's timely boundaries and
@@ -1091,9 +1065,6 @@ class UZSU(SmartPlugin):
         :param timescan:    defines whether to find values in the future or past, for logging purposes
         :return:            the calculated date and time in timezone aware format
         """
-        uzsu_sun = self._create_sun()
-        if not uzsu_sun:
-            return
 
         self.logger.debug("Given param dt={}, tz={} for {}".format(dt, dt.tzinfo, timescan))
 
@@ -1143,7 +1114,7 @@ class UZSU(SmartPlugin):
         dmin = None
         dmax = None
         if cron.startswith('sunrise'):
-            next_time = uzsu_sun.rise(doff, moff, dt=dt)
+            next_time = self._sh.sun.rise(doff, moff, dt=dt)
             self.logger.debug('{} time for sunrise: {}'.format(timescan, next_time))
             # time in next_time will be in utctime. So we need to adjust it
             if next_time.tzinfo == tzutc():
@@ -1153,7 +1124,7 @@ class UZSU(SmartPlugin):
             self.logger.debug("next_time.tzinfo gives {}".format(next_time.tzinfo))
             self.logger.debug("Sunrise is included and calculated as {}".format(next_time))
         elif cron.startswith('sunset'):
-            next_time = uzsu_sun.set(doff, moff, dt=dt)
+            next_time = self._sh.sun.set(doff, moff, dt=dt)
             self.logger.debug('{} time for sunset: {}'.format(timescan, next_time))
             # time in next_time will be in utctime. So we need to adjust it
             if next_time.tzinfo == tzutc():
