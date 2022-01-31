@@ -13,8 +13,8 @@ plugin:
     documentation: http://smarthomeng.de/user/plugins/knx/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1552531-support-thread-zum-knx-plugin
 
-    sh_minversion: 1.8.2a          # minimum shNG version to use this plugin
-    version: 1.7.9                 # Plugin version
+    sh_minversion: 1.9.0          # minimum shNG version to use this plugin
+    version: 1.8.0                 # Plugin version
 #    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: true           # plugin supports multi instance
     restartable: true

@@ -74,7 +74,7 @@ DPT = 'dpt'
 
 class KNX(SmartPlugin):
 
-    PLUGIN_VERSION = "1.7.9"
+    PLUGIN_VERSION = "1.8.0"
 
     # tags actually used by the plugin are shown here
     # can be used later for backend item editing purposes, to check valid item attributes
@@ -281,14 +281,14 @@ class KNX(SmartPlugin):
         :param client: the calling client for adaption purposes
         :type client: TCP_client
         """
-        
+
         # let the knxd use its group address cache
         enable_cache = bytearray([0, KNXD.CACHE_ENABLE])
         self._send(enable_cache)
-        
-        # set next kind of data to expect from connection 
+
+        # set next kind of data to expect from connection
         self._isLength = True
-        
+
         # if this is the first connect after init of plugin then read the
         # group addresses from knxd which have the knx_cache attribute
         if self._cache_ga != []:
@@ -305,7 +305,7 @@ class KNX(SmartPlugin):
                 self.logger.debug(self.translate('finished reading knxd cache'))
 
         # let knxd create a new group monitor and send the read requests
-        # for all group addresses which have the knx_read  attribute 
+        # for all group addresses which have the knx_read  attribute
         if self.logger.isEnabledFor(logging.DEBUG):
             self.logger.debug(self.translate('enable group monitor'))
 
@@ -334,11 +334,11 @@ class KNX(SmartPlugin):
 
         :param client: Tcp_client
         :param data: message from knxd as bytearray
-        
+
         a message from knxd will have 4 extra bytes plus eventually the knx telegram payload
         2 byte length
         2 byte knxd message type   --> see eibtypes.h
-        
+
         knx telegram then consists of
             1 byte control byte
             2 byte source as physical address
@@ -348,9 +348,9 @@ class KNX(SmartPlugin):
         thus at least 7 bytes
 
         The process consists of two steps:
-        * At first the variable ``self._isLength`` is True and the length for the 
+        * At first the variable ``self._isLength`` is True and the length for the
           following knxd message plus eventual knx telegram is set to ``client.terminator``
-        * then the next call to parse_knxd_message is awaited to contain 
+        * then the next call to parse_knxd_message is awaited to contain
           the knxd message type in the first two bytes and then following eventually a knx telegram
         """
         if self._isLength:
@@ -539,8 +539,7 @@ class KNX(SmartPlugin):
                 self.logger.warning("Ignoring {} unknown dpt: {}".format(item, dpt))
                 return None
         elif self.has_iattr(item.conf, KNX_STATUS) or self.has_iattr(item.conf, KNX_SEND) or self.has_iattr(item.conf, KNX_REPLY) or self.has_iattr(item.conf, KNX_LISTEN) or self.has_iattr(item.conf, KNX_INIT) or self.has_iattr(item.conf, KNX_CACHE):
-            self.logger.warning(
-                "Ignoring {}: please add knx_dpt.".format(item))
+            self.logger.warning("Ignoring {}: please add knx_dpt.".format(item))
             return None
         else:
             return None
@@ -598,8 +597,7 @@ class KNX(SmartPlugin):
                 if ga not in self.gar:
                     self.gar[ga] = {DPT: dpt, ITEM: item, LOGIC: None}
                 else:
-                    self.logger.warning(
-                        "{} knx_reply ({}) already defined for {}".format(item.id(), ga, self.gar[ga][ITEM]))
+                    self.logger.warning("{} knx_reply ({}) already defined for {}".format(item.id(), ga, self.gar[ga][ITEM]))
 
         if self.has_iattr(item.conf, KNX_SEND):
             if isinstance(self.get_iattr_value(item.conf, KNX_SEND), str):
@@ -615,7 +613,7 @@ class KNX(SmartPlugin):
                 knx_poll = [knx_poll, ]
             if len(knx_poll) == 2:
                 poll_ga = knx_poll[0]
-                poll_interval = float(knx_poll[1]) 
+                poll_interval = float(knx_poll[1])
 
                 self.logger.info(
                     "Item {} is polled on GA {} every {} seconds".format(item, poll_ga, poll_interval))
@@ -624,9 +622,7 @@ class KNX(SmartPlugin):
                 self._sh.scheduler.add(f'KNX poll {item}', self._poll,
                                        value={ITEM: item, 'ga': poll_ga, 'interval': poll_interval}, next=next)
             else:
-                self.logger.warning(
-                    "Ignoring knx_poll for item {}: We need two parameters, one for the GA and one for the polling interval.".format(
-                        item))
+                self.logger.warning("Ignoring knx_poll for item {}: We need two parameters, one for the GA and one for the polling interval.".format(item))
                 pass
 
         if self.has_iattr(item.conf, KNX_STATUS) or self.has_iattr(item.conf, KNX_SEND):
