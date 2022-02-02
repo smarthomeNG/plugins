@@ -120,7 +120,7 @@ class WebInterface(SmartPluginWebIf):
             data['item_values'] = self.plugin._item_values
             data['query'] = self.plugin._send_history['query']
             data['command'] = self.plugin._send_history['command']
-            self.logger.error(data)
+
             try:
                 return json.dumps(data)
             except Exception as e:
