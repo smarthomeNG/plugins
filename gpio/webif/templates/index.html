@@ -1,4 +1,5 @@
 {% extends "base_plugin.html" %}
+{% set update_interval = 2000 %}
 {% block pluginscripts %}
 {{ super() }}
 <script>
@@ -25,6 +26,21 @@ function mainpage() {
 				}
     });
 </script>
+<script>
+	function handleUpdatedData(response, dataSet=null) {
+		if (dataSet === 'devices_info' || dataSet === null) {
+			var objResponse = JSON.parse(response);
+			myProto = document.getElementById(dataSet);
+			for (var item in objResponse['in']) {
+				shngInsertText (item+'_invalue', objResponse['in'][item]['value']);
+			}
+      for (var item in objResponse['out']) {
+        shngInsertText (item+'_outvalue', objResponse['out'][item]['value']);
+      }
+		}
+	}
+</script>
+
 {% endblock pluginscripts %}
 {% set logo_frame = false %}
 
@@ -76,7 +92,7 @@ function mainpage() {
         <tr>
           <td class="py-1">{{ item._path }}</td>
           <td class="py-1">{{ p.get_iattr_value(item.conf, 'gpio_in') }}</td>
-          <td class="py-1">{{ item() }}</td>
+          <td class="py-1" id="{{ item }}_invalue">{{ item() }}</td>
           <td class="py-1"><span style="color:{{ color }};">
             {{ p._initdict[p.get_iattr_value(item.conf, 'gpio_in') | int] }}</span></td>
         </tr>
@@ -105,7 +121,7 @@ function mainpage() {
           <tr>
             <td class="py-1">{{ item._path }}</td>
             <td class="py-1">{{ p.get_iattr_value(item.conf, 'gpio_out') }}</td>
-            <td class="py-1">{{ item() }}</td>
+            <td class="py-1" id="{{ item }}_outvalue">{{ item() }}</td>
           </tr>
         {% endif %}
       {% endfor %}
