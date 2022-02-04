@@ -25,6 +25,25 @@ Konfiguration
 plugin.yaml
 ~~~~~~~~~~~
 
+.. code-block:: yaml
+    solaredge:
+        plugin_name: modbus_tcp
+        instance: solaredge
+        host: 192.168.0.50
+        port: 502
+        cycle: 60
+        plugin_enabled: true
+        
+    logoMB:
+        plugin_name: modbus_tcp
+        instance: logomb
+        host: 192.168.0.80
+        port: 502
+        cycle: 20
+        plugin_enabled: true
+
+* 'instance' = Name der Instanz, sollen mehrer Geräte angesprochen werden (Multiinstanz)
+
 Bitte die Dokumentation lesen, die aus den Metadaten der plugin.yaml erzeugt wurde.
 
 
@@ -59,6 +78,7 @@ siehe auch example.yaml
         geraetename:
             type: str
             value: ''
+            #modBusObjectType: HoldingRegister  #(optional) default: HoldingRegister  
             modBusAddress: 40030
             modBusDataType: 'string16'          #(optional) default: uint16  
             #modBusFactor: '1000'               #(optional) default: 1
@@ -68,6 +88,7 @@ siehe auch example.yaml
         leistung_AC:
             type: num
             value: '0'
+            #modBusObjectType: InputRegister    #(optional) default: HoldingRegister 
             modBusAddress: 40048
             #modBusDataType: 'uint16'           #(optional) default: uint16  
             modBusFactor: '0.001'               #(optional) default: 1
@@ -77,6 +98,7 @@ siehe auch example.yaml
         leistung_DC:
             type: num
             value: ''
+            #modBusObjectType: Coil             #(optional) default: HoldingRegister 
             modBusAddress: 40050
             modBusDataType: 'int16'             #(optional) default: uint16  
             modBusFactor: '0.001'               #(optional) default: 1
@@ -95,6 +117,11 @@ siehe auch example.yaml
 
 Changelog
 ---------
+V1.0.5  kleine Fehler behoben
+V1.0.4  ObjectType hinzugefügt (HoldingRegister, InputRegister, DiscreteInput, Coil)
+        Multiinstanz hinzugefügt
+        Verbindung schliessen nach Abruf aller Register
+
 V1.0.3  slaveUnit - Fehler behoben (_regToRead-key (adress.unit))
         Bug Web Interface (Anzeige der Adresse)
         example.yaml verbessert

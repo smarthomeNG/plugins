@@ -1,3 +1,35 @@
+paradigma:
+    TestInputRegister:
+        type: num
+        name: TestIR
+        enforce_updates: True
+        modBusObjectType: InputRegister
+        modBusAddress: 9997
+        modBusFactor: 0.1
+        modBusDataType: int16
+    TestHoldingRegister:
+        type: num
+        name: TestHR
+        enforce_updates: True
+        # modBusObjectType: HoldingRegister (default)
+        modBusAddress: 9998
+        modBusFactor: 0.1
+        modBusDataType: int16
+    TestCoil0:
+        type: bool
+        name: TestC0
+        enforce_updates: True
+        modBusObjectType: Coil
+        modBusAddress: 9996 #+1
+        modBusDataType: bit
+    TestCoil1:
+        type: bool
+        name: TestC1
+        enforce_updates: True
+        modBusObjectType: Coil
+        modBusAddress: 9997 #+1
+        modBusDataType: bit
+
 solaredge_SE6000: 
     C_Version: 
         type: str

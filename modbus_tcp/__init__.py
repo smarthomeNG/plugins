@@ -23,11 +23,11 @@
 #
 #########################################################################
 
-import threading
-
 from lib.model.smartplugin import *
 from lib.item import Items
 from datetime import datetime
+
+from .webif import WebInterface
 
 from pymodbus.constants import Endian
 from pymodbus.payload import BinaryPayloadDecoder
@@ -39,15 +39,22 @@ AttrFactor = 'modBusFactor'
 AttrByteOrder = 'modBusByteOrder'
 AttrWordOrder = 'modBusWordOrder'
 AttrSlaveUnit = 'modBusUnit'
+AttrObjectType = 'modBusObjectType'
 
 class modbus_tcp(SmartPlugin):
-    PLUGIN_VERSION = '1.0.3'
+    ALLOW_MULTIINSTANCE = True
+    PLUGIN_VERSION = '1.0.5'
 
     def __init__(self, sh, *args, **kwargs):
         """
         Initializes the plugin. The parameters describe for this method are pulled from the entry in plugin.conf.
         :param sh:  The instance of the smarthome object, save it for later references
         """
+        
+        self.logger.info('Init modbus_tcp plugin')
+        
+        # Call init code of parent class (SmartPlugin)
+        super().__init__()
         
         self._host = self.get_parameter_value('host')
         self._port = int(self.get_parameter_value('port'))
@@ -56,53 +63,16 @@ class modbus_tcp(SmartPlugin):
         self._slaveUnitRegisterDependend = False
         
         self._sh = sh
-        self.logger = logging.getLogger(__name__)
-        self._lock = threading.Lock()
-        self.connected = False
         self._regToRead = {}
         self._pollStatus = {}
+        self.connected = False
         
         self._Mclient = ModbusTcpClient(self._host, port=self._port)
         
-        self._sh.connections.monitor(self)  # damit connect ausgeführt wird
-        self.init_webinterface()
+        self.init_webinterface(WebInterface)
         
         return
 
-    def connect(self):
-        """
-        method to connecto to the ModbusTcpClient
-        """
-        if self.connected:
-            return True
-        self._lock.acquire()
-        try:
-            
-            if self._Mclient.connect():
-                self.connected = True
-                self.logger.info("connected to {0}".format(str(self._Mclient)))
-            else:
-                self.connected = False
-                self.logger.error("could not connect to {0}:{1}".format(self._host, self._port))
-        except Exception as e:
-            self.connected = False
-            self.logger.error("connection expection: {0} {1}".format(str(self._Mclient), e))
-            return
-        finally:
-            self._lock.release()
-
-    def disconnect(self):
-        """
-        method to disconnect the ModbusTcpClient
-        """
-        if self.connected:
-            try:
-                self._Mclient.close()
-                self.logger.debug("connection closed {0}".format(str(self._Mclient)))
-                self.connected = False
-            except Exception as e:
-                self.logger.error('Failed to disconnect {0}'.format(e))
-    
     def run(self):
         """
         Run method for the plugin
@@ -115,8 +85,10 @@ class modbus_tcp(SmartPlugin):
         Stop method for the plugin
         """
         self.alive = False
+        self.logger.debug("stop modbus_tcp plugin")
         self.scheduler_remove('modbusTCP_poll_device')
-        self.disconnect()
+        self._Mclient.close()
+        self.connected = False
         
     def parse_item(self, item):
         """
@@ -126,22 +98,31 @@ class modbus_tcp(SmartPlugin):
 
         :param item:    The item to process.
         """
+        #self.logger.debug("parse_item method called")
         if self.has_iattr(item.conf, AttrAddress):
+            self.logger.debug("parse read item: {0}".format(item))
+            objectType = 'HoldingRegister'
             regAddr = int(self.get_iattr_value(item.conf, AttrAddress))
-            reg = str(regAddr)
+            
             value = item()
             dataType = 'uint16'
             factor = 1
             byteOrder = 'Endian.Big'
             wordOrder = 'Endian.Big'
             slaveUnit = self._slaveUnit
-            self.logger.debug("parse read item: {0}".format(item))
+            
             if self.has_iattr(item.conf, AttrType):
                 dataType = self.get_iattr_value(item.conf, AttrType)
             if self.has_iattr(item.conf, AttrSlaveUnit):
                 slaveUnit = int(self.get_iattr_value(item.conf, AttrSlaveUnit))
                 if (slaveUnit) != self._slaveUnit:
                     self._slaveUnitRegisterDependend = True
+            if self.has_iattr(item.conf, AttrObjectType):
+                objectType = self.get_iattr_value(item.conf, AttrObjectType)
+                
+            reg = str(objectType)
+            reg += '.'
+            reg += str(regAddr)
             reg += '.'
             reg += str(slaveUnit)
             if self.has_iattr(item.conf, AttrFactor):
@@ -165,7 +146,11 @@ class modbus_tcp(SmartPlugin):
                 wordOrder = Endian.Big
                 self.logger.error("Invalid byte order -> default(Endian.Big) is used : {0}".format(regParameters['wordOrder']))    
                 
-            regPara = {'regAddr': regAddr, 'slaveUnit': slaveUnit, 'dataType': dataType, 'factor': factor, 'byteOrder': byteOrder, 'wordOrder': wordOrder, 'item': item, 'value': value }
+            
+            
+            regPara = {'regAddr': regAddr, 'slaveUnit': slaveUnit, 'dataType': dataType, 'factor': factor, 'byteOrder': byteOrder, 
+                       'wordOrder': wordOrder, 'item': item, 'value': value, 'objectType': objectType }
+                        
             self._regToRead.update({reg: regPara})
             
     def poll_device(self):
@@ -176,10 +161,23 @@ class modbus_tcp(SmartPlugin):
         changes on it's own, but has to be polled to get the actual status.
         It is called by the scheduler which is set within run() method.
         """
+        try:
+            if self._Mclient.connect():
+                self.logger.info("connected to {0}".format(str(self._Mclient)))
+                self.connected = True
+            else:
+                self.logger.error("could not connect to {0}:{1}".format(self._host, self._port))
+                self.connected = False
+                return
+                
+        except Exception as e:
+            self.logger.error("connection expection: {0} {1}".format(str(self._Mclient), e))
+            self.connected = False
+            return
+            
         startTime = datetime.now()
         regCount = 0
         try:
-            self.connect()
             for reg, regPara in self._regToRead.items():
                 regAddr = regPara['regAddr']
                 value = self.__read_Registers(regAddr, regPara)
@@ -208,42 +206,59 @@ class modbus_tcp(SmartPlugin):
             self.logger.debug("poll_device: {0} register readed requed-time: {1}".format(regCount, duration))
         except Exception as e:
             self.logger.error("something went wrong in the poll_device function: {0}".format(e))
-            self.disconnect()
-        # finally:
-            # self.disconnect()
+        finally:
+            self._Mclient.close()
+            #self.connected = False
         
     def __read_Registers(self, address, regParameters):
+        objectType = regParameters['objectType']
         dataTypeStr = regParameters['dataType']
-        
         bo = regParameters['byteOrder']         
         wo = regParameters['wordOrder']
         dataType = ''.join(filter(str.isalpha, dataTypeStr))
         slaveUnit = regParameters['slaveUnit']
+        registerCount = 0
         try:
             bits = int(''.join(filter(str.isdigit, dataTypeStr)))   
         except:
             bits = 16
             
         if dataType.lower() == 'string':    
-            words = int(bits/2)  # bei string: bits = bytes !! string16 -> 16Byte - 8 words
+            registerCount = int(bits/2)  # bei string: bits = bytes !! string16 -> 16Byte - 8 registerCount
         else:
-            words = int(bits/16)
-        #self.logger.debug("read register:{0} words:{1} slaveUnit:{2}".format(address, words, slaveUnit))
+            registerCount = int(bits/16)
         
-        #try:
-        result = self._Mclient.read_holding_registers(address, words, unit=slaveUnit)
-        #except Exception as e:
-        #   self.logger.error("read expection: {0} register:{1} words:{2} slaveUnit:{3}".format(e, address, words, slaveUnit))
-        #    return None
-        
-        
-        if (str(result).find('Modbus Error') != -1):
-            #raise Exception("read error: {0} register:{1} words:{2} slaveUnit:{3}".format(result, address, words, slaveUnit))
-            self.logger.error("read error: {0} register:{1} words:{2} slaveUnit:{3}".format(result, address, words, slaveUnit))
+        if self.connected == False:
+            self.logger.error(" not connect {0}:{1}".format(self._host, self._port))
             return None
-         
-        #self.logger.debug("read result: {0}".format(result))
-        value = BinaryPayloadDecoder.fromRegisters(result.registers, byteorder=bo,wordorder=wo)
+            
+        self.logger.debug("read {0}:{1} registerCount:{2} slaveUnit:{3}".format(objectType, address, registerCount, slaveUnit))
+        if objectType == 'Coil':
+            result = self._Mclient.read_coils(address, registerCount, unit=slaveUnit)
+        elif objectType == 'DiscreteInput':
+            result = self._Mclient.read_discrete_inputs(address, registerCount, unit=slaveUnit)
+        elif objectType == 'InputRegister':
+            result = self._Mclient.read_input_registers(address, registerCount, unit=slaveUnit)
+        elif objectType == 'HoldingRegister':
+            result = self._Mclient.read_holding_registers(address, registerCount, unit=slaveUnit)
+        else:
+            self.logger.error("{0} not supported: {1}".format(AttrObjectType, objectType))
+            return None
+        
+        if result.isError():
+            self.logger.error("read error: {0} register:{1} registerCount:{2} slaveUnit:{3}".format(result, address, registerCount, slaveUnit))
+            return None
+            
+        if objectType == 'Coil':
+            value = result.bits[0]
+        elif objectType == 'DiscreteInput':
+            value = result.bits[0]
+        elif objectType == 'InputRegister':
+            value = BinaryPayloadDecoder.fromRegisters(result.registers, byteorder=bo,wordorder=wo)
+        else:
+            value = BinaryPayloadDecoder.fromRegisters(result.registers, byteorder=bo,wordorder=wo)
+            
+        self.logger.debug("read result: {0}".format(result))
         
         if dataType.lower() == 'uint':
             if bits == 16:
@@ -274,103 +289,9 @@ class modbus_tcp(SmartPlugin):
             # bei string: bits = bytes !! string16 -> 16Byte
             ret = value.decode_string(bits)
             return str( ret, 'ASCII')
+        elif dataType.lower() == 'bit':
+            self.logger.debug("readed bit value: {0}".format(value))
+            return value
         else:
             self.logger.error("Number of bits or datatype not supportet : {0}".format(typeStr))
         return None
-        
-    def init_webinterface(self):
-        """
-        Initialize the web interface for this plugin
-
-        This method is only needed if the plugin is implementing a web interface
-        """
-        try:
-            self.mod_http = Modules.get_instance().get_module('http')   # try/except to handle running in a core version that does not support modules
-        except:
-             self.mod_http = None
-        if self.mod_http == None:
-            self.logger.error("Plugin '{}': Not initializing the web interface".format(self.get_shortname()))
-            return False
-        
-        import sys
-        if not "SmartPluginWebIf" in list(sys.modules['lib.model.smartplugin'].__dict__):
-            self.logger.warning("Plugin '{}': Web interface needs SmartHomeNG v1.5 and up. Not initializing the web interface".format(self.get_shortname()))
-            return False
-
-        # set application configuration for cherrypy
-        webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
-        config = {
-            '/': {
-                'tools.staticdir.root': webif_dir,
-            },
-            '/static': {
-                'tools.staticdir.on': True,
-                'tools.staticdir.dir': 'static'
-            }
-        }
-        
-        # Register the web interface as a cherrypy app
-        self.mod_http.register_webif(WebInterface(webif_dir, self), 
-                                     self.get_shortname(), 
-                                     config, 
-                                     self.get_classname(), self.get_instance_name(),
-                                     description='')
-                                   
-        return True
-        
-# ------------------------------------------
-#    Webinterface of the plugin
-# ------------------------------------------
-import cherrypy
-from jinja2 import Environment, FileSystemLoader
-
-class WebInterface(SmartPluginWebIf):
-
-    def __init__(self, webif_dir, plugin):
-        """
-        Initialization of instance of class WebInterface
-        
-        :param webif_dir: directory where the webinterface of the plugin resides
-        :param plugin: instance of the plugin
-        :type webif_dir: str
-        :type plugin: object
-        """
-        self.logger = logging.getLogger(__name__)
-        self.webif_dir = webif_dir
-        self.plugin = plugin
-        self.tplenv = self.init_template_environment()
-        
-        self.items = Items.get_instance()
-
-    @cherrypy.expose
-    def index(self, reload=None):
-        """
-        Build index.html for cherrypy
-
-        Render the template and return the html file to be delivered to the browser
-
-        :return: contents of the template after beeing rendered
-        """
-        tmpl = self.tplenv.get_template('index.html')
-        return tmpl.render(plugin_shortname=self.plugin.get_shortname(), plugin_version=self.plugin.get_version(), plugin_info=self.plugin.get_info(),
-                           interface=None,
-                           p=self.plugin,
-                           _regToRead=sorted(self.plugin._regToRead, key=lambda k: (k)),
-                           )
-
-    @cherrypy.expose
-    def triggerAction(self, path, value):
-        if path is None:
-            self.plugin.logger.error(
-                "Plugin '{}': Path parameter is missing when setting action item value!".format(self.get_shortname()))
-            return
-        if value is None:
-            self.plugin.logger.error(
-                "Plugin '{}': Value parameter is missing when setting action item value!".format(self.get_shortname()))
-            return
-        item = self.plugin.items.return_item(path)
-        item(int(value), caller=self.plugin.get_shortname(), source='triggerAction()')
-        return
-
-
-        
