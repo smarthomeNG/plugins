@@ -549,7 +549,7 @@ class UZSU(SmartPlugin):
         self._update_sun(item, caller='schedule')
         if self._items[item].get('interpolation') is None:
             self.logger.error("Something is wrong with your UZSU item. You most likely use a wrong smartVISU widget version!"
-                              " Use the latest device.uzsu from SV 2.9. "
+                              " Use the latest device.uzsu SV 2.9. or higher "
                               "If you write your uzsu dict directly please use the format given in the documentation: "
                               "https://www.smarthomeng.de/user/plugins/uzsu/user_doc.html and include the interpolation array correctly!")
             return

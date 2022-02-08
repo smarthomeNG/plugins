@@ -72,6 +72,33 @@ Das UZSU Plugin wird durch die smartVISU ab Version 2.9 sowohl in Form eines Pop
 Bei Problemen bitte das entsprechende Supportforum konsultieren. Es wird empfohlen, die Visualisierung für das Einstellen der UZSU zu verwenden.
 
 
+Standard Einstellungen
+-----------------------
+
+Für die universelle Zeitschaltuhr können folgende Einstellungen vorgenommen werden:
+
+* Allgemein Aktivieren: Komplette UZSU (de)aktivieren
+* Wochentag: Es können beliebig viele Wochentage aktiviert werden. Wird kein Wochentag in der Visu gewählt, werden automatisch alle Wochentage aktiviert.
+* Wert: Der zu schaltende Wert
+* Zeit: Die Uhrzeit, zu der der gewünschte Wert geschaltet werden soll. Im Experten- und Serienmodus kann dieser Parameter auch detaillierter konfiguriert werden.
+* Aktivieren: Eintrag aktivieren oder deaktivieren.
+
+
+Experteneinstellungen
+---------------------
+
+Alternativ zu fest definierten Schaltzeiten lassen sich die Zeitpunkte auch in Abhängigkeit des Sonnenstandes
+definieren. Hier ist außerdem ein Offset zum Sonnenauf- und Sonnenuntergang in Minuten oder Grad einstellbar.
+Pro Eintrag kann auch ein frühester oder spätester Zeitpunkt gewählt werden, der dann herangezogen wird,
+wenn die sonnenbasierte Schaltung über diese Grenzwerte hinaus berechnet werden würde.
+
+
+Zeitserie
+---------
+
+Für wiederkehrende Schaltungen können auch Serien angelegt werden. Dabei ist ein Startzeitpunkt und ein Intervall zu definieren. Das Ende kann entweder über einen Zeitpunkt oder die Anzahl Wiederholungen definiert werden. Start- und Endzeitpunkte können wie beir normalen UZSU auch sonnenstandsabhängig deklariert werden.
+
+
 Interpolation
 =============
 
@@ -92,8 +119,8 @@ Interpolation ist ein eigenes Dict innerhalb des UZSU Dictionary mit folgenden E
 -  **initizialized**: bool, wird beim Pluginstart automatisch gesetzt, sobald ein gültiger Eintrag innerhalb der initage Zeit gefunden wurde und diese Initialisierung tatsächlich ausgeführt wurde.
 
 
-Funktionen
-==========
+Pluginfunktionen
+================
 
 Detaillierte Informationen zu den Funktionen des Plugins sind unter :doc:`/plugins_doc/config/uzsu` zu finden.
 
@@ -102,6 +129,8 @@ Webinterface
 ============
 
 Das Webinterface bietet folgende Informationen:
+
+-  **Allgemeines**: Oben rechts werden die berechneten Sonnenauf- und Sonnenuntergänge der nächsten 7 Tage und die Anzahl der UZSU Items angezeigt.
 
 -  **UZSUs**: Liste aller UZSU Items mit farbkodierter Information über den Status (inaktiv = grau, aktiv = grün, Problem = rot)
 
@@ -119,13 +148,11 @@ Das Webinterface bietet folgende Informationen:
 
 -  **Init**: Back in Time bzw. init age Wert
 
--  **Sonne**: Durch Klicken auf das Plus am Beginn jeder Zeile werden die berechneten Sonnenauf- und Sonnenuntergänge der nächsten 7 Tage angezeigt.
-
 -  **dict**: Durch Klicken auf das Plus am Beginn jeder Zeile wird das gesamte Dictionary einer UZSU angezeigt.
 
 .. image:: uzsu_webif.png
-   :height: 1518px
-   :width: 3228px
+   :height: 1616px
+   :width: 3324px
    :scale: 25%
    :alt: Web Interface
    :align: center
@@ -141,8 +168,10 @@ Folgender Python Aufruf bzw. Dictionary Eintrag schaltet das Licht jeden zweiten
    sh.eg.wohnen.leuchte.uzsu({'active':True, 'list':[
    {'value':100, 'active':True, 'rrule':'FREQ=DAILY;INTERVAL=2', 'time': '16:30'},
    {'value':0, 'active':True, 'rrule':'FREQ=DAILY;INTERVAL=2', 'time': '17:30'}],
-   'interpolation': {'interval': 5, 'type': 'cubic', 'initialized': False, 'itemtype': 'num', 'initage': 0}
-   })
+   'interpolation': {'interval': 5, 'type': 'cubic', 'initialized': False, 'itemtype': 'num', 'initage': 0}, 'sunrise': '07:45', 'sunset': '17:23', 'SunCalculated': {'sunrise':
+   {'TU': '07:36', 'WE': '07:38', 'TH': '07:34', 'FR': '07:32', 'SA': '07:30', 'SU': '07:28', 'MO': '07:26'},
+   'sunset': {'TU': '17:16', 'WE': '17:18', 'TH': '17:20', 'FR': '17:22', 'SA': '17:23', 'SU': '17:25', 'MO': '17:27'}},
+   'plugin_version': '1.6.1'})
 
 
 Datenformat
