@@ -75,39 +75,59 @@ siehe auch example.yaml
 .. code-block:: yaml
 
     mydevice:
+        AI1:
+            type: num
+            name: AI1
+            modBusObjectType: InputRegister     #(optional) default: HoldingRegister  
+            modBusAddress: 0
+            modBusDataType: int16               #(optional) default: uint16  
+            #modBusByteOrder: 'Endian.Little'    #(optional) default: 'Endian.Big'
+            #modBusWordOrder: 'Endian.Little'    #(optional) default: 'Endian.Big'
+            modBusDirection: 'read_write'       #(optional) default: 'read'
+            modBusUnit: '71'                    #(optional) default: slaveUnit aus der Plugin-Konfig
+            #modBusFactor: 0.1                  #(optional) default: 1
+            #modBusDirection: read_write        #(optional) default: 'read'
+        AM1:
+            type: num
+            name: AM1
+            modBusObjectType: HoldingRegister
+            modBusAddress: 528
+            modBusDirection: read_write         
+            #modBusFactor: 1                    
+            #modBusDataType: int16              
+        M1:
+            type: bool
+            name: M1
+            modBusObjectType: Coil              
+            modBusAddress: 8256
+            modBusDataType: bit                 
+            modBusDirection: read_write
+        I1:
+            type: bool
+            name: I1
+            modBusObjectType: DiscreteInput
+            modBusAddress: 0
+            modBusDataType: bit
+        VM0:
+            type: num
+            name: VM0
+            modBusObjectType: HoldingRegister
+            modBusAddress: 0
+            modBusDirection: read_write
+            modBusFactor: 0.01
+        
         geraetename:
             type: str
-            value: ''
             #modBusObjectType: HoldingRegister  #(optional) default: HoldingRegister  
             modBusAddress: 40030
             modBusDataType: 'string16'          #(optional) default: uint16  
             #modBusFactor: '1000'               #(optional) default: 1
             modBusByteOrder: 'Endian.Little'    #(optional) default: 'Endian.Big'
             modBusWordOrder: 'Endian.Little'    #(optional) default: 'Endian.Big'
-            modBusUnit: '71'                    #(optional) default: slaveUnit aus der Plugin-Konfig
-        leistung_AC:
-            type: num
-            value: '0'
-            #modBusObjectType: InputRegister    #(optional) default: HoldingRegister 
-            modBusAddress: 40048
-            #modBusDataType: 'uint16'           #(optional) default: uint16  
-            modBusFactor: '0.001'               #(optional) default: 1
-            modBusByteOrder: 'Endian.Little'    #(optional) default: 'Endian.Big'
-            modBusWordOrder: 'Endian.Little'    #(optional) default: 'Endian.Big'
-            modBusUnit: '71'                    #(optional) default: slaveUnit aus der Plugin-Konfig
-        leistung_DC:
-            type: num
-            value: ''
-            #modBusObjectType: Coil             #(optional) default: HoldingRegister 
-            modBusAddress: 40050
-            modBusDataType: 'int16'             #(optional) default: uint16  
-            modBusFactor: '0.001'               #(optional) default: 1
-            modBusByteOrder: 'Endian.Little'    #(optional) default: 'Endian.Big'
-            modBusWordOrder: 'Endian.Little'    #(optional) default: 'Endian.Big'
+            modBusDirection: 'read_write'       #(optional) default: 'read'
             modBusUnit: '71'                    #(optional) default: slaveUnit aus der Plugin-Konfig
         temperatur:
             type: num
-            value: ''
             modBusAddress: 40052
             modBusDataType: 'float32            #(optional) default: uint16  
             #modBusFactor: '1'                  #(optional) default: 1
@@ -117,7 +137,10 @@ siehe auch example.yaml
 
 Changelog
 ---------
+V1.0.6  schreiben von Register (HoldingRegister, Coil)
+
 V1.0.5  kleine Fehler behoben
+
 V1.0.4  ObjectType hinzugefügt (HoldingRegister, InputRegister, DiscreteInput, Coil)
         Multiinstanz hinzugefügt
         Verbindung schliessen nach Abruf aller Register

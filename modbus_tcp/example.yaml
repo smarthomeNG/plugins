@@ -30,7 +30,8 @@ paradigma:
         modBusAddress: 9997 #+1
         modBusDataType: bit
 
-solaredge_SE6000: 
+#solaredge_SE6000:
+Photovoltaik:
     C_Version: 
         type: str
         name: C_Version
@@ -170,3 +171,41 @@ solaredge_SE6000:
             lookup: 
                 type: dict
                 initial_value: "{0: 'Aus', 1: 'Standby', 2: 'Init', 3: 'Laden', 4: 'Entladen', 5: 'Fehler', 6: 'Leerlauf'}"
+                
+Siemens_LOGO:
+    AI1:
+        type: num
+        name: AI1
+        modBusObjectType: InputRegister
+        modBusAddress: 0
+        #modBusFactor: 0.1
+        #modBusDataType: int16
+    AM1:
+        type: num
+        name: AM1
+        modBusObjectType: HoldingRegister
+        modBusAddress: 528
+        modBusDirection: read_write
+        #modBusFactor: 1
+        #modBusDataType: int16
+    M1:
+        type: bool
+        name: M1
+        modBusObjectType: Coil
+        modBusAddress: 8256
+        modBusDataType: bit
+        modBusDirection: read_write
+    I1:
+        type: bool
+        name: I1
+        modBusObjectType: DiscreteInput
+        modBusAddress: 0
+        modBusDataType: bit
+    VM0:
+        type: num
+        name: VM0
+        modBusObjectType: HoldingRegister
+        modBusAddress: 0
+        modBusDirection: read_write
+        modBusFactor: 0.01
+        #modBusDataType: int16
