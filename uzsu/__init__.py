@@ -109,8 +109,7 @@ class UZSU(SmartPlugin):
 
     ALLOW_MULTIINSTANCE = False
 
-    PLUGIN_VERSION = "1.6.0"
-
+    PLUGIN_VERSION = "1.6.1"      # item buffer for all uzsu enabled items
 
     def __init__(self, smarthome):
         """
@@ -132,6 +131,7 @@ class UZSU(SmartPlugin):
         self._items = {}
         self._lastvalues = {}
         self._planned = {}
+        self._webdata = {}
         self._update_count = {'todo': 0, 'done': 0}
         self._itpl = {}
         self.init_webinterface(WebInterface)
@@ -153,6 +153,7 @@ class UZSU(SmartPlugin):
         for item in self._items:
             self._items[item]['interpolation']['itemtype'] = self._add_type(item)
             self._lastvalues[item] = None
+            self._webdata[item.id()].update({'lastvalue': '-'})
             self._items[item]['plugin_version'] = self.PLUGIN_VERSION
             self._update_item(item, 'UZSU Plugin', 'run')
             cond1 = self._items[item].get('active') and self._items[item]['active'] is True
@@ -177,6 +178,7 @@ class UZSU(SmartPlugin):
             elif cond1 and not cond2:
                 self.logger.warning("Item '{}' is active but has no entries.".format(item))
                 self._planned.update({item: None})
+                self._webdata[item.id()].update({'planned': {'value': '-', 'time': '-'}})
             else:
                 self.logger.debug("Not scheduling item {}, cond1 {}, cond2 {}".format(item, cond1, cond2))
 
@@ -372,6 +374,7 @@ class UZSU(SmartPlugin):
         elif not self._planned.get(item) and self._items[item].get('active') is True:
             self.logger.warning("Item '{}' is active but has no (active) entries.".format(item))
             self._planned.update({item: None})
+            self._webdata[item.id()].update({'planned': {'value': '-', 'time': '-'}})
             return None
         else:
             self.logger.info("Nothing planned for item '{}'.".format(item))
@@ -425,8 +428,10 @@ class UZSU(SmartPlugin):
                 self._items[item]['list'] = []
             if not self._items[item].get('active'):
                 self._items[item]['active'] = False
+            self._webdata.update({item.id(): {}})
             self._update_item(item, 'UZSU Plugin', 'init')
             self._planned.update({item: 'notinit'})
+            self._webdata[item.id()].update({'planned': {'value': '-', 'time': '-'}})
             self.logger.debug('Dict for item {} is: {}'.format(item, self._items[item]))
             return self.update_item
 
@@ -457,7 +462,6 @@ class UZSU(SmartPlugin):
                                                 " because newer active entry with value {} found.".format(
                                                     item, time, oldvalue, newvalue))
 
-
     def _check_rruleandplanned(self, item):
         if self._items[item].get('list'):
             _inactive = 0
@@ -477,6 +481,7 @@ class UZSU(SmartPlugin):
                 self._update_item(item, 'UZSU Plugin', 'create_rrule')
             if _inactive >= len(self._items[item]['list']):
                 self._planned.update({item: None})
+                self._webdata[item.id()].update({'planned': {'value': '-', 'time': '-'}})
 
     def update_item(self, item, caller=None, source=None, dest=None):
         """
@@ -492,6 +497,7 @@ class UZSU(SmartPlugin):
             self._items[item] = item()
         else:
             self._items[item] = copy.deepcopy(item())
+
         cond = (not caller == 'UZSU Plugin') or source == 'logic'
         self.logger.debug('Update Item {}, Caller {}, Source {}, Dest {}. Will update: {}'.format(
             item, caller, source, dest, cond))
@@ -502,6 +508,8 @@ class UZSU(SmartPlugin):
             self._remove_dupes(item)
         if cond and self._items[item].get('active') is False and not source == 'update_sun':
             self._lastvalues[item] = None
+            self._webdata[item.id()].update({'lastvalue': '-'})
+            self._webdata[item.id()].update({'planned': {'value': '-', 'time': '-'}})
             self.logger.debug('lastvalue for item {} set to None because UZSU is deactivated'.format(item))
         if cond:
             self._schedule(item, caller='update')
@@ -515,6 +523,14 @@ class UZSU(SmartPlugin):
         self._series_calculate(item, caller, comment)
         self.logger.debug('Updating seriesCalculated for item {} caller : {} comment : {}'.format(item, caller, comment))
         item(self._items[item], caller, comment)
+        self._webdata[item.id()].update({'interpolation': self._items[item].get('interpolation')})
+        self._webdata[item.id()].update({'active': str(self._items[item].get('active'))})
+        self._webdata[item.id()].update({'sun': self._items[item].get('SunCalculated')})
+        self._webdata[item.id()].update({'dict': self.get_itemdict(item)})
+        if not comment == "init":
+            _uzsuitem, _itemvalue = self._get_dependant(item)
+            id = None if _uzsuitem is None else _uzsuitem.id()
+            self._webdata[item.id()].update({'depend': {'item': id, 'value': str(_itemvalue)}})
 
     def _schedule(self, item, caller=None):
         """
@@ -543,6 +559,7 @@ class UZSU(SmartPlugin):
         elif not self._items[item].get('list') and self._items[item].get('active') is True:
             self.logger.warning("item '{}' is active but has no entries.".format(item))
             self._planned.update({item: None})
+            self._webdata[item.id()].update({'planned': {'value': '-', 'time': '-'}})
         elif self._items[item].get('active') is True:
             self._itpl[item] = OrderedDict()
             for i, entry in enumerate(self._items[item]['list']):
@@ -590,6 +607,7 @@ class UZSU(SmartPlugin):
             itpl_list = itpl_list[entry_index - min(2, entry_index):entry_index + min(3, len(itpl_list))]
             itpl_list.remove((entry_now, 'NOW'))
             self._lastvalues[item] = _initvalue
+            self._webdata[item.id()].update({'lastvalue': _initvalue})
             _timediff = datetime.now(self._timezone) - timedelta(minutes=_initage)
             if not self._items[item]['interpolation'].get('itemtype') == 'bool':
                 try:
@@ -660,6 +678,7 @@ class UZSU(SmartPlugin):
             self.logger.debug("will add scheduler named uzsu_{} with datetime {} and tzinfo {}"
                               " and value {}".format(item.property.path, _next, _next.tzinfo, _value))
             self._planned.update({item: {'value': _value, 'next': _next.strftime('%Y-%m-%d %H:%M')}})
+            self._webdata[item.id()].update({'planned': {'value': _value, 'time': _next.strftime('%d.%m.%Y %H:%M')}})
             self._update_count['done'] = self._update_count.get('done') + 1
             self.scheduler_add('{}'.format(item.property.path), self._set, value={'item': item, 'value': _value}, next=_next)
             if self._update_count.get('done') == self._update_count.get('todo'):
@@ -668,6 +687,7 @@ class UZSU(SmartPlugin):
         elif self._items[item].get('active') is True and self._items[item].get('list'):
             self.logger.warning("item '{}' is active but has no active entries.".format(item))
             self._planned.update({item: None})
+            self._webdata[item.id()].update({'planned': {'value': '-', 'time': '-'}})
 
     def _set(self, item=None, value=None, caller=None):
         """
@@ -677,8 +697,9 @@ class UZSU(SmartPlugin):
         :param value:   value the item should be set to
         :param caller:  if given it represents the callers name
         """
-        _uzsuitem = self.itemsApi.return_item(self.get_iattr_value(item.conf, ITEM_TAG[0]))
+        _uzsuitem, _itemvalue = self._get_dependant(item)
         _uzsuitem(value, 'UZSU Plugin', 'set')
+        self._webdata[item.id()].update({'depend': {'item': _uzsuitem.id(), 'value': str(_itemvalue)}})
         if not caller:
             self._schedule(item, caller='set')
 
@@ -1179,16 +1200,17 @@ class UZSU(SmartPlugin):
         try:
             _uzsuitem = self.itemsApi.return_item(self.get_iattr_value(item.conf, ITEM_TAG[0]))
         except Exception as err:
-            _uzsuitem = None
             self.logger.warning("Item to be queried '{}' does not exist. Error: {}".format(
                 self.get_iattr_value(item.conf, ITEM_TAG[0]), err))
+            return None
+
         try:
             _itemvalue = _uzsuitem()
         except Exception as err:
             _itemvalue = None
             self.logger.warning("Item to be queried '{}' does not have a type attribute. Error: {}".format(
                 self.get_iattr_value(item.conf, ITEM_TAG[0]), err))
-        return _itemvalue
+        return _uzsuitem, _itemvalue
 
     def get_itemdict(self, item):
         """

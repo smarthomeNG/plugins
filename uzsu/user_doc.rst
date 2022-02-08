@@ -68,24 +68,8 @@ Ab *smarthomeNG 1.6* ist das Anlegen der nötigen Items via ``struct`` besonders
 SmartVISU
 =========
 
-Das UZSU Plugin wird durch die smartVISU 2.9 sowohl in Form eines Popups als auch einer grafischen Darstellung mittels *device.uzsu Widget* unterstützt.
+Das UZSU Plugin wird durch die smartVISU ab Version 2.9 sowohl in Form eines Popups als auch einer grafischen Darstellung mittels *device.uzsu Widget* unterstützt.
 Bei Problemen bitte das entsprechende Supportforum konsultieren. Es wird empfohlen, die Visualisierung für das Einstellen der UZSU zu verwenden.
-Die folgenden Informationen zum Datenformat können übersprungen werden.
-
-Datenformat
-===========
-
-Jedes USZU Item wird als dict-Typ gespeichert. Jeder Listen-Eintrag ist wiederum ein dict, das aus Key und Value-Paaren besteht. Im Folgenden werden die möglichen Dictionary-Keys gelistet. Nutzt man das USZU Widget der SmartVISU, muss man sich um diese Einträge nicht kümmern.
-
--  **dtstart**: Ein datetime Objekt, das den exakten Startwert für den rrule Algorithmus besimmt. Dieser Parameter ist besonder bei FREQ=MINUTELY rrules relevant.
-
--  **value**: Der Wert, auf den das uzsu_item gesetzt werden soll.
-
--  **active**: ``True`` wenn die UZSU aktiviert ist, ``False`` wenn keine Aktualisierungen vorgenommen werden sollen. Dieser Wert kann über die Pluginfunktion activate gesteuert werden.
-
--  **time**: Zeit als String. Entweder eine direkte Zeitangabe wie ``17:00`` oder eine Kombination mit Sonnenauf- und Untergang wie bei einem crontab, z.B. ``17:00<sunset``, ``sunrise>8:00``, ``17:00<sunset``.
-
--  **rrule**: Hier können Wiederholungsregeln wie in `rrule <https://dateutil.readthedocs.io/en/stable/rrule.html>`_ beschrieben festgelegt werden.
 
 
 Interpolation
@@ -111,9 +95,7 @@ Interpolation ist ein eigenes Dict innerhalb des UZSU Dictionary mit folgenden E
 Funktionen
 ==========
 
-.. important::
-
-      Detaillierte Informationen zu den Funktionen des Plugins sind unter :doc:`/plugins_doc/config/uzsu` zu finden.
+Detaillierte Informationen zu den Funktionen des Plugins sind unter :doc:`/plugins_doc/config/uzsu` zu finden.
 
 
 Webinterface
@@ -121,21 +103,29 @@ Webinterface
 
 Das Webinterface bietet folgende Informationen:
 
--  **UZSUs**: Liste aller UZSU Items mit farbkodierter Information über den Status (inaktiv, aktiv, Problem)
+-  **UZSUs**: Liste aller UZSU Items mit farbkodierter Information über den Status (inaktiv = grau, aktiv = grün, Problem = rot)
 
 -  **UZSU Items**: Info zu den Items, die über die UZSU geschaltet werden (inkl. Typ)
 
--  **UZSU Item Werte**: Aktueller Wert des UZSU Items, geplanter nächster Wert und Zeitpunkt der Schaltung
+-  **UZSU Item Wert**: Aktueller Wert des Items, das durch die UZSU geschaltet wird.
 
--  **UZSU Interpolation**: Interpolationstyp und Intervall
+-  **Nächster Wert**: geplanter nächster Wert und Zeitpunkt der Schaltung
 
--  **UZSU Init**: Back in Time bzw. init age Wert
+-  **Nächstes Update**: geplanter nächster Zeitpunkt der Schaltung
 
--  **UZSU dict**: Durch Klicken auf eine Zeile wird das gesamte Dictionary einer UZSU angezeigt.
+-  **Letzter Wert**: zuletzt berechneter Wert (relevant bei Interpolation). Dies ist NICHT ident mit property.last_value!
+
+-  **Interpolation**: Interpolationstyp und Intervall
+
+-  **Init**: Back in Time bzw. init age Wert
+
+-  **Sonne**: Durch Klicken auf das Plus am Beginn jeder Zeile werden die berechneten Sonnenauf- und Sonnenuntergänge der nächsten 7 Tage angezeigt.
+
+-  **dict**: Durch Klicken auf das Plus am Beginn jeder Zeile wird das gesamte Dictionary einer UZSU angezeigt.
 
 .. image:: uzsu_webif.png
-   :height: 1632px
-   :width: 3286px
+   :height: 1518px
+   :width: 3228px
    :scale: 25%
    :alt: Web Interface
    :align: center
@@ -153,3 +143,19 @@ Folgender Python Aufruf bzw. Dictionary Eintrag schaltet das Licht jeden zweiten
    {'value':0, 'active':True, 'rrule':'FREQ=DAILY;INTERVAL=2', 'time': '17:30'}],
    'interpolation': {'interval': 5, 'type': 'cubic', 'initialized': False, 'itemtype': 'num', 'initage': 0}
    })
+
+
+Datenformat
+===========
+
+Jedes USZU Item wird als dict-Typ gespeichert. Jeder Listen-Eintrag ist wiederum ein dict, das aus Key und Value-Paaren besteht. Im Folgenden werden die möglichen Dictionary-Keys gelistet. Nutzt man das USZU Widget der SmartVISU, muss man sich um diese Einträge nicht kümmern.
+
+-  **dtstart**: Ein datetime Objekt, das den exakten Startwert für den rrule Algorithmus besimmt. Dieser Parameter ist besonder bei FREQ=MINUTELY rrules relevant.
+
+-  **value**: Der Wert, auf den das uzsu_item gesetzt werden soll.
+
+-  **active**: ``True`` wenn die UZSU aktiviert ist, ``False`` wenn keine Aktualisierungen vorgenommen werden sollen. Dieser Wert kann über die Pluginfunktion activate gesteuert werden.
+
+-  **time**: Zeit als String. Entweder eine direkte Zeitangabe wie ``17:00`` oder eine Kombination mit Sonnenauf- und Untergang wie bei einem crontab, z.B. ``17:00<sunset``, ``sunrise>8:00``, ``17:00<sunset``.
+
+-  **rrule**: Hier können Wiederholungsregeln wie in `rrule <https://dateutil.readthedocs.io/en/stable/rrule.html>`_ beschrieben festgelegt werden.
