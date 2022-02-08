@@ -189,7 +189,7 @@ class UZSU(SmartPlugin):
         self.logger.debug("stop method called")
         for item in self._items:
             try:
-                self.scheduler_remove('uzsu_{}'.format(item.property.path))
+                self.scheduler_remove('{}'.format(item.property.path))
                 self.logger.debug('Removing scheduler for item {}'.format(item.property.path))
             except Exception as err:
                 self.logger.debug('Scheduler for item {} not removed. Problem: {}'.format(item.property.path, err))
@@ -525,7 +525,7 @@ class UZSU(SmartPlugin):
         :param item:    item to be updated towards the plugin
         :param caller:  if given it represents the callers name
         """
-        self.scheduler_remove('uzsu_{}'.format(item.property.path))
+        self.scheduler_remove('{}'.format(item.property.path))
         self.logger.debug('Schedule Item {}, Trigger: {}, Changed by: {}'.format(
             item, caller, item.changed_by()))
         _next = None
@@ -659,7 +659,7 @@ class UZSU(SmartPlugin):
                               " and value {}".format(item.property.path, _next, _next.tzinfo, _value))
             self._planned.update({item: {'value': _value, 'next': _next.strftime('%Y-%m-%d %H:%M')}})
             self._update_count['done'] = self._update_count.get('done') + 1
-            self.scheduler_add('uzsu_{}'.format(item.property.path), self._set, value={'item': item, 'value': _value}, next=_next)
+            self.scheduler_add('{}'.format(item.property.path), self._set, value={'item': item, 'value': _value}, next=_next)
             if self._update_count.get('done') == self._update_count.get('todo'):
                 self.scheduler_trigger('uzsu_sunupdate', by='UZSU Plugin')
                 self._update_count = {'done': 0, 'todo': 0}
