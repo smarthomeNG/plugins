@@ -2,9 +2,9 @@
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 ######################################################################################
 # Copyright 2011-2013 Niko Will
-# Copyright 2017 Bernd Meiners                          Bernd.Meiners@mail.de
-# Copyright 2018 Andreas Künz                           onkelandy66@gmail.com
-# Copyright 2021 extension for series Andre Kohler      andre.kohler01@googlemail.com
+# Copyright 2017,2022 Bernd Meiners                              Bernd.Meiners@mail.de
+# Copyright 2018 Andreas Künz                                    onkelandy66@gmail.com
+# Copyright 2021 extension for series Andre Kohler       andre.kohler01@googlemail.com
 ######################################################################################
 #  This file is part of SmartHomeNG.    https://github.com/smarthomeNG//
 #
@@ -218,13 +218,12 @@ class UZSU(SmartPlugin):
         :type item:     item
         """
         try:
-            self._uzsu_sun = self._create_sun()
             if '.'.join(VERSION.split('.', 3)[:3]) > '1.5.1':
                 self._items[item] = item()
             else:
                 self._items[item] = copy.deepcopy(item())
-            _sunrise = self._uzsu_sun.rise()
-            _sunset = self._uzsu_sun.set()
+            _sunrise = self._sh.rise()
+            _sunset = self._sh.set()
             if _sunrise.tzinfo == tzutc():
                 _sunrise = _sunrise.astimezone(self._timezone)
             if _sunset.tzinfo == tzutc():
