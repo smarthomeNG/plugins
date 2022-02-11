@@ -308,7 +308,7 @@ MsgTemplate = {
       'temp65':                [65, 2, decodeShort, 0.1, '°C'],
       'temp67':                [67, 2, decodeShort, 0.1, '°C'],
       'temp69':                [69, 2, decodeShort, 0.1, '°C'],
-      'temp75':                [75, 2, decodeShort, 0.1, '°C']
+      'temp75':                [75, 2, decodeShort, 0.01, '°C']
     },
   },
   'sTimeDate': {
