@@ -563,6 +563,7 @@ class AVM(SmartPlugin):
     PLUGIN_VERSION = "1.6.0"
 
     _header = {'SOAPACTION': '', 'CONTENT-TYPE': 'text/xml; charset="utf-8"'}
+
     _envelope = """
         <?xml version="1.0" encoding="utf-8"?>
         <s:Envelope s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"
@@ -1043,7 +1044,7 @@ class AVM(SmartPlugin):
 
     def _get_lua_post_request(self, url, data, headers):
         try:
-            self._lua_session.post(url, data=data, timeout=self._timeout, headers=headers,
+            self._lua_session.post(url, data=soap_data, timeout=self._timeout, headers=headers,
                                    auth=HTTPDigestAuth(self._fritz_device.get_user(),
                                                        self._fritz_device.get_password()), verify=self._verify)
         except Exception as e:
@@ -1311,10 +1312,11 @@ class AVM(SmartPlugin):
         self._get_lua_post_request(url, soap_data, headers)
 
     def set_aha_device(self, ain='', set_switch=False):
-        url = self._build_url("/upnp/control/x_tam")
+        url = self._build_url("/upnp/control/x_homeauto")
         headers = self._header.copy()
         action = 'SetSwitch'
         headers['SOAPACTION'] = f"{self._urn_map['Homeauto']}#{action}"
+        # SwitchState: OFF, ON, TOGGLE, UNDEFINED
         switch_state = "ON" if set_switch is True else "OFF"
         soap_data = self._assemble_soap_data(action, self._urn_map['Homeauto'],
                                              {'NewAIN': ain.strip(), 'NewSwitchState': switch_state})
