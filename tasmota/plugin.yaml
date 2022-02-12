@@ -7,12 +7,12 @@ plugin:
         en: 'Plugin to control switches which are equipped with Tasmote firmware. Communication is handled through the MQTT module of SmartHomeNG.'
     maintainer: msinn
     tester: msinn                  # Who tests this plugin?
-    state: develop                   # change to ready when done with development
+    state: ready                   # change to ready when done with development
     keywords: iot
     documentation: http://smarthomeng.de/user/plugins/tasmota/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1520293-support-thread-für-das-tasmota-plugin
 
-    version: 1.1.0                 # Plugin version
+    version: 1.2.0                 # Plugin version
     sh_minversion: 1.7.2           # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     py_minversion: 3.6             # minimum Python version to use for this plugin
@@ -65,9 +65,13 @@ item_attributes:
             - hum
             - dewpoint
             - hsb
+            - white
+            - ct
+            - dimmer
             - rf_recv
             - rf_send
             - rf_key_send
+            - zb_permit_join
 
         valid_list_description:
             de:
@@ -84,9 +88,13 @@ item_attributes:
               - "Luftfeuchtigkeit in %rH bei Tasmota Devices mit HUM Sensor (AM2301) -> num, r/o"
               - "Taupunkt in °C bei Tasmota Devices mit HUM und TEMP Sensor (AM2301) -> num, r/o"
               - "Hue, Saturartion, Brightness (HSB) bei RGBW Tasmota Devices (H801) -> list, r/w"
-              - "Empfange RF data bei Tasmota Device mit RF Empfang (SONOFF Bridge) -> str, r/o"
+              - "Color Temperature in Kelvin bei RGBW Tasmota Devices (H801) -> num, r/w"
+              - "Color Temperature in Kelvin bei RGBW Tasmota Devices (H801) -> num, r/w"
+              - "Dimmwert in % Tasmota Devices -> num, r/w"
+              - "Emfangene RF Daten bei Tasmota Device mit RF Sendemöglichkeit (SONOFF Bridge) -> dict, r/o"
               - "Zu sendende RF Daten bei Tasmota Device mit RF Sendemöglichkeit (SONOFF Bridge) -> dict, r/w"
               - "Zu sendende RF-Key Tasmota Device mit RF Sendemöglichkeit (SONOFF Bridge) -> num [1-16], r/w"
+              - "Schaltet das Pairing an der ZigBee Bridge ein/aus -> bool, r/w"
 
     tasmota_relay:
         type: str
@@ -99,6 +107,18 @@ item_attributes:
         description:
             de: "Nummer des zu schaltenden Relais im Tasmota Device"
             en: "Number of the relay in Tasmota device to use for switching command"
+            
+    tasmota_zb_device:
+        type: str
+        description:
+            de: "Friendly Name oder Kurzname des Zigbee Devices. ACHTUNG: Wird der Kurzname verwendet und beginnt dieser mit 0x, muss die Schreibweise '0x9CB9' verwendet werden"
+            en: "Friendly Name oder Short Name of Zigbee Devices"
+    
+    tasmota_zb_attr: 
+        type: str
+        description:
+            de: "Schlüssel der Json-Dict, der vom Zigbee-Device bereitgestellt wird; Key aus dem sub-dict 'data' des tasmota_zb_device"
+            en: "Dict Key of provided data; can be seen in Plugin WebIF"
 
 item_structs: NONE
     # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
