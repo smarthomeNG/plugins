@@ -560,7 +560,7 @@ class AVM(SmartPlugin):
     Main class of the Plugin. Does all plugin specific stuff and provides the update functions for the different TR-064 services on the FritzDevice
     """
 
-    PLUGIN_VERSION = "1.6.0"
+    PLUGIN_VERSION = "1.6.1"
 
     _header = {'SOAPACTION': '', 'CONTENT-TYPE': 'text/xml; charset="utf-8"'}
 
@@ -627,6 +627,7 @@ class AVM(SmartPlugin):
 
         self._cycle = int(self.get_parameter_value('cycle'))
         self._sh = sh
+
         # Response Cache: Dictionary for storing the result of requests which is used for several different items, refreshed each update cycle. Please use distinct keys!
         self._response_cache = dict()
         self._calllist_cache = []
@@ -774,11 +775,12 @@ class AVM(SmartPlugin):
             elif self.get_iattr_value(item.conf, 'avm_data_type') == 'deflection':
                 self._update_deflection_status(item)
 
-        # empty TR-064 response cache
+        # clean TR-064 response cache
         self._response_cache = dict()
 
         # Update Items using AHA-Interface
-        self._update_aha_devices()
+        if self.get_iattr_value(item.conf, 'avm_data_type') in ['aha_device']:
+            self._update_aha_devices()
 
         if self._call_monitor:
             if not self.alive:
@@ -963,7 +965,7 @@ class AVM(SmartPlugin):
                 if debug_logger is True:
                     self.logger.debug(
                         f"Item {item.id()} with avm smarthome attribut and defined AIN found; append to list")
-                self._fritz_device._smarthome_items.append(item)
+                self._fritz_device.get_smarthome_items().append(item)
             else:
                 self.logger.warning(
                     f"Item {item.id()} with avm smarthome attribut found, but AIN is not defined; Item will be ignored")
@@ -972,7 +974,7 @@ class AVM(SmartPlugin):
                 if debug_logger is True:
                     self.logger.debug(
                         f"Item {item.id()} with avm attribut 'network_device' and defined 'avm_mac' found; append to list")
-                self._fritz_device._items.append(item)
+                self._fritz_device.get_items().append(item)
             else:
                 self.logger.warning(
                     f"Item {item.id()} with avm attribut found, but 'avm_mac' is not defined; Item will be ignored")
@@ -983,7 +985,7 @@ class AVM(SmartPlugin):
                 if debug_logger is True:
                     self.logger.debug(
                         f"Item {item.id()} with avm device attribut and defined 'avm_mac' found; append to list")
-                self._fritz_device._items.append(item)
+                self._fritz_device.get_items().append(item)
             else:
                 self.logger.warning(
                     f"Item {item.id()} with avm attribut found, but 'avm_mac' is not defined in parent item; Item will be ignored")
@@ -991,7 +993,7 @@ class AVM(SmartPlugin):
         elif self.has_iattr(item.conf, 'avm_data_type'):
             if debug_logger is True:
                 self.logger.debug(f"Item {item.id()} with avm attribut found; append to list")
-            self._fritz_device._items.append(item)
+            self._fritz_device.get_items().append(item)
         if self.get_iattr_value(item.conf, 'avm_data_type') in ['wlanconfig', 'tam', 'aha_device', 'switch_state',
                                                                 'switch_toggle', 'deflection_enable'] or str(
                 self.get_iattr_value(item.conf, 'avm_data_type')).startswith('set_'):
@@ -1044,7 +1046,7 @@ class AVM(SmartPlugin):
 
     def _get_lua_post_request(self, url, data, headers):
         try:
-            self._lua_session.post(url, data=soap_data, timeout=self._timeout, headers=headers,
+            self._lua_session.post(url, data=data, timeout=self._timeout, headers=headers,
                                    auth=HTTPDigestAuth(self._fritz_device.get_user(),
                                                        self._fritz_device.get_password()), verify=self._verify)
         except Exception as e:
@@ -1139,6 +1141,9 @@ class AVM(SmartPlugin):
         | - http://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/x_homeauto.pdf
 
         :param item: item to be updated towards the FritzDevice (Supported item avm_data_types: wlanconfig, tam, aha_device)
+        :param caller: caller
+        :param source: source
+        :param dest: destination
         """
         if caller.lower() != 'avm':
             if self.logger.isEnabledFor(logging.DEBUG):
@@ -1331,7 +1336,7 @@ class AVM(SmartPlugin):
         | Implementation of this method used information from https://www.symcon.de/forum/threads/25745-FritzBox-mit-SOAP-auslesen-und-steuern
 
         :param phone_number: full phone number of contact
-        :param: ID of the phone book (default: 0)
+        :param phonebook_id: ID of the phone book (default: 0)
         :return: string of the contact's real name
         """
         url = self._build_url("/upnp/control/x_contact")
@@ -1384,7 +1389,7 @@ class AVM(SmartPlugin):
         | Implementation of this method used information from https://www.symcon.de/forum/threads/25745-FritzBox-mit-SOAP-auslesen-und-steuern
 
         :param name: partial or full name of contact as defined in the phonebook.
-        :param: ID of the phone book (default: 0)
+        :param phonebook_id: ID of the phone book (default: 0)
         :return: dict of found contact names (keys) with each containing an array of dicts (keys: type, number)
         """
         url = self._build_url("/upnp/control/x_contact")
@@ -1427,7 +1432,7 @@ class AVM(SmartPlugin):
                                     j = 0
                                     while j < phone_numbers.length:
                                         if phone_numbers[j].firstChild.data:
-                                            result_number_dict = {}
+                                            result_number_dict = dict()
                                             result_number_dict['number'] = phone_numbers[j].firstChild.data
                                             result_number_dict['type'] = phone_numbers[j].attributes["type"].value
                                             result_numbers[real_names[i].firstChild.data].append(result_number_dict)
@@ -1962,7 +1967,7 @@ class AVM(SmartPlugin):
                         elif self.get_iattr_value(child.conf, 'avm_data_type') == 'power':
                             power = xml.getElementsByTagName('NewMultimeterPower')
                             if len(power) > 0:
-                                child(int(power[0].firstChild.data), self.get_shortname())
+                                child(int(power[0].firstChild.data)/100, self.get_shortname())
                             else:
                                 self.logger.error(
                                     f"Attribute {self.get_iattr_value(item.conf, 'avm_data_type')} not supported")
@@ -1984,7 +1989,6 @@ class AVM(SmartPlugin):
             if len(element_xml) > 0:
                 # Decoding hrk valve state: open, closed or temp (temperature controlled)
                 tempstring = element_xml[0].firstChild.data
-                tempstate = 3
                 if tempstring == 'OPEN':
                     tempstate = 1
                 elif tempstring == 'CLOSED':
@@ -2179,16 +2183,16 @@ class AVM(SmartPlugin):
         if devices is not None:
             for element in devices:
                 ain = element.getAttribute('identifier')
-                if ain not in self._fritz_device._smarthome_devices.keys():
+                if ain not in self._fritz_device.get_smarthome_devices().keys():
                     if debug_logger is True:
                         self.logger.debug(f"Adding new Device with AIN {ain}")
-                    self._fritz_device._smarthome_devices[ain] = {}
+                    self._fritz_device.get_smarthome_devices()[ain] = {}
 
                 # general information of AVM smarthome device
-                self._fritz_device._smarthome_devices[ain]['device_id'] = element.getAttribute('id')
-                self._fritz_device._smarthome_devices[ain]['fw_version'] = element.getAttribute('fwversion')
-                self._fritz_device._smarthome_devices[ain]['product_name'] = element.getAttribute('productname')
-                self._fritz_device._smarthome_devices[ain]['manufacturer'] = element.getAttribute('manufacturer')
+                self._fritz_device.get_smarthome_devices()[ain]['device_id'] = element.getAttribute('id')
+                self._fritz_device.get_smarthome_devices()[ain]['fw_version'] = element.getAttribute('fwversion')
+                self._fritz_device.get_smarthome_devices()[ain]['product_name'] = element.getAttribute('productname')
+                self._fritz_device.get_smarthome_devices()[ain]['manufacturer'] = element.getAttribute('manufacturer')
 
                 # get functions of AVM smarthome device
                 functions = []
@@ -2211,36 +2215,36 @@ class AVM(SmartPlugin):
                     self.logger.debug(f'Identified function of device with AIN {ain} are {functions}')
 
                 # self._fritz_device._smarthome_devices[ain]['functionbitmask'] = functionbitmask
-                self._fritz_device._smarthome_devices[ain]['functions'] = functions
+                self._fritz_device.get_smarthome_devices()[ain]['functions'] = functions
 
                 # optional general information of AVM smarthome device
                 try:
-                    self._fritz_device._smarthome_devices[ain]['batterylow'] = bool(
+                    self._fritz_device.get_smarthome_devices()[ain]['batterylow'] = bool(
                         int(element.getElementsByTagName('batterylow')[0].firstChild.data))
                 except Exception:
                     if debug_logger is True:
                         self.logger.debug(
                             f'DECT Smarthome Device with AIN {ain} does not support Attribute {"batterylow"}.')
                 try:
-                    self._fritz_device._smarthome_devices[ain]['battery_level'] = int(
+                    self._fritz_device.get_smarthome_devices()[ain]['battery_level'] = int(
                         element.getElementsByTagName('battery')[0].firstChild.data)
                 except Exception:
                     if debug_logger is True:
                         self.logger.debug(f'DECT Smarthome Device with AIN {ain} does not support Attribute "battery".')
                 try:
-                    self._fritz_device._smarthome_devices[ain]['connected'] = bool(
+                    self._fritz_device.get_smarthome_devices()[ain]['connected'] = bool(
                         int(element.getElementsByTagName('present')[0].firstChild.data))
                 except Exception:
                     if debug_logger is True:
                         self.logger.debug(f'DECT Smarthome Device with AIN {ain} does not support Attribute "present".')
                 try:
-                    self._fritz_device._smarthome_devices[ain]['tx_busy'] = bool(
+                    self._fritz_device.get_smarthome_devices()[ain]['tx_busy'] = bool(
                         int(element.getElementsByTagName('txbusy')[0].firstChild.data))
                 except Exception:
                     if debug_logger is True:
                         self.logger.debug(f'DECT Smarthome Device with AIN {ain} does not support Attribute "txbusy".')
                 try:
-                    self._fritz_device._smarthome_devices[ain]['device_name'] = str(
+                    self._fritz_device.get_smarthome_devices()[ain]['device_name'] = str(
                         element.getElementsByTagName('name')[0].firstChild.data)
                 except Exception:
                     if debug_logger is True:
@@ -2252,77 +2256,77 @@ class AVM(SmartPlugin):
                     if len(hkr) > 0:
                         for child in hkr:
                             try:
-                                self._fritz_device._smarthome_devices[ain]['current_temperature'] = (int(
+                                self._fritz_device.get_smarthome_devices()[ain]['current_temperature'] = (int(
                                     child.getElementsByTagName('tist')[0].firstChild.data) - 16) / 2 + 8
                             except AttributeError:
                                 pass
                             try:
-                                self._fritz_device._smarthome_devices[ain]['target_temperature'] = (int(
+                                self._fritz_device.get_smarthome_devices()[ain]['target_temperature'] = (int(
                                     child.getElementsByTagName('tsoll')[0].firstChild.data) - 16) / 2 + 8
                             except AttributeError:
                                 pass
                             try:
-                                self._fritz_device._smarthome_devices[ain]['temperature_comfort'] = (int(
+                                self._fritz_device.get_smarthome_devices()[ain]['temperature_comfort'] = (int(
                                     child.getElementsByTagName('komfort')[0].firstChild.data) - 16) / 2 + 8
                             except AttributeError:
                                 pass
                             try:
-                                self._fritz_device._smarthome_devices[ain]['temperature_reduced'] = (int(
+                                self._fritz_device.get_smarthome_devices()[ain]['temperature_reduced'] = (int(
                                     child.getElementsByTagName('absenk')[0].firstChild.data) - 16) / 2 + 8
                             except AttributeError:
                                 pass
                             try:
-                                self._fritz_device._smarthome_devices[ain]['battery_level'] = int(
+                                self._fritz_device.get_smarthome_devices()[ain]['battery_level'] = int(
                                     child.getElementsByTagName('battery')[0].firstChild.data)
                             except AttributeError:
                                 pass
                             try:
-                                self._fritz_device._smarthome_devices[ain]['battery_low'] = bool(
+                                self._fritz_device.get_smarthome_devices()[ain]['battery_low'] = bool(
                                     int(child.getElementsByTagName('batterylow')[0].firstChild.data))
                             except AttributeError:
                                 pass
                             try:
-                                self._fritz_device._smarthome_devices[ain]['window_open'] = bool(
+                                self._fritz_device.get_smarthome_devices()[ain]['window_open'] = bool(
                                     int(child.getElementsByTagName('windowopenactiv')[0].firstChild.data))
                             except AttributeError:
                                 pass
                             try:
-                                self._fritz_device._smarthome_devices[ain]['summer_active'] = bool(
+                                self._fritz_device.get_smarthome_devices()[ain]['summer_active'] = bool(
                                     int(child.getElementsByTagName('summeractive')[0].firstChild.data))
                             except AttributeError:
                                 pass
                             try:
-                                self._fritz_device._smarthome_devices[ain]['holiday_active'] = bool(
+                                self._fritz_device.get_smarthome_devices()[ain]['holiday_active'] = bool(
                                     int(child.getElementsByTagName('holidayactive')[0].firstChild.data))
                             except AttributeError:
                                 pass
                             try:
-                                self._fritz_device._smarthome_devices[ain]['boost_active'] = bool(
+                                self._fritz_device.get_smarthome_devices()[ain]['boost_active'] = bool(
                                     int(child.getElementsByTagName('boostactive')[0].firstChild.data))
                             except AttributeError:
                                 pass
                             try:
-                                self._fritz_device._smarthome_devices[ain]['lock'] = bool(
+                                self._fritz_device.get_smarthome_devices()[ain]['lock'] = bool(
                                     int(child.getElementsByTagName('lock')[0].firstChild.data))
                             except AttributeError:
                                 pass
                             try:
-                                self._fritz_device._smarthome_devices[ain]['device_lock'] = bool(
+                                self._fritz_device.get_smarthome_devices()[ain]['device_lock'] = bool(
                                     int(child.getElementsByTagName('devicelock')[0].firstChild.data))
                             except AttributeError:
                                 pass
                             try:
-                                self._fritz_device._smarthome_devices[ain]['errorcode'] = int(
+                                self._fritz_device.get_smarthome_devices()[ain]['errorcode'] = int(
                                     child.getElementsByTagName('errorcode')[0].firstChild.data)
                             except AttributeError:
                                 pass
                             try:
-                                self._fritz_device._smarthome_devices[ain]['windowopenactiveendtime'] = int(
+                                self._fritz_device.get_smarthome_devices()[ain]['windowopenactiveendtime'] = int(
                                     child.getElementsByTagName('windowopenactiveendtime')[0].firstChild.data)
                             except AttributeError:
                                 pass
                             try:
-                                self._fritz_device._smarthome_devices[ain]['boostactiveendtime'] = int(
+                                self._fritz_device.get_smarthome_devices()[ain]['boostactiveendtime'] = int(
                                     child.getElementsByTagName('boostactiveendtime')[0].firstChild.data)
                             except AttributeError:
                                 pass
@@ -2333,12 +2337,12 @@ class AVM(SmartPlugin):
                     if len(temperature_element) > 0:
                         for child in temperature_element:
                             try:
-                                self._fritz_device._smarthome_devices[ain]['current_temperature'] = int(
+                                self._fritz_device.get_smarthome_devices()[ain]['current_temperature'] = int(
                                     child.getElementsByTagName('celsius')[0].firstChild.data) / 10
                             except AttributeError:
                                 pass
                             try:
-                                self._fritz_device._smarthome_devices[ain]['temperature_offset'] = int(
+                                self._fritz_device.get_smarthome_devices()[ain]['temperature_offset'] = int(
                                     child.getElementsByTagName('offset')[0].firstChild.data) / 10
                             except AttributeError:
                                 pass
@@ -2347,7 +2351,7 @@ class AVM(SmartPlugin):
                     if len(humidity_element) > 0:
                         for child in humidity_element:
                             try:
-                                self._fritz_device._smarthome_devices[ain]['humidity'] = int(
+                                self._fritz_device.get_smarthome_devices()[ain]['humidity'] = int(
                                     child.getElementsByTagName('rel_humidity')[0].firstChild.data)
                             except AttributeError:
                                 pass
@@ -2358,12 +2362,12 @@ class AVM(SmartPlugin):
                     if len(switch) > 0:
                         for child in switch:
                             try:
-                                self._fritz_device._smarthome_devices[ain]['switch_state'] = bool(
+                                self._fritz_device.get_smarthome_devices()[ain]['switch_state'] = bool(
                                     int(child.getElementsByTagName('state')[0].firstChild.data))
                             except AttributeError:
                                 pass
                             try:
-                                self._fritz_device._smarthome_devices[ain]['switch_mode'] = str(
+                                self._fritz_device.get_smarthome_devices()[ain]['switch_mode'] = str(
                                     child.getElementsByTagName('mode')[0].firstChild.data)
                             except AttributeError:
                                 pass
@@ -2374,17 +2378,17 @@ class AVM(SmartPlugin):
                     if len(powermeter) > 0:
                         for child in powermeter:
                             try:
-                                self._fritz_device._smarthome_devices[ain]['power'] = int(
+                                self._fritz_device.get_smarthome_devices()[ain]['power'] = int(
                                     child.getElementsByTagName('power')[0].firstChild.data) / 1000
                             except AttributeError:
                                 pass
                             try:
-                                self._fritz_device._smarthome_devices[ain]['energy'] = int(
+                                self._fritz_device.get_smarthome_devices()[ain]['energy'] = int(
                                     child.getElementsByTagName('energy')[0].firstChild.data) / 1000
                             except AttributeError:
                                 pass
                             try:
-                                self._fritz_device._smarthome_devices[ain]['voltage'] = int(
+                                self._fritz_device.get_smarthome_devices()[ain]['voltage'] = int(
                                     child.getElementsByTagName('voltage')[0].firstChild.data) / 1000
                             except AttributeError:
                                 pass
@@ -2395,7 +2399,7 @@ class AVM(SmartPlugin):
                     if len(button_element) > 0:
                         for child in button_element:
                             try:
-                                self._fritz_device._smarthome_devices[ain]['lastpressedtimestamp'] = int(
+                                self._fritz_device.get_smarthome_devices()[ain]['lastpressedtimestamp'] = int(
                                     child.getElementsByTagName('lastpressedtimestamp')[0].firstChild.data)
                             except AttributeError:
                                 pass
@@ -2406,12 +2410,12 @@ class AVM(SmartPlugin):
                     if len(alarm_element) > 0:
                         for child in alarm_element:
                             try:
-                                self._fritz_device._smarthome_devices[ain]['alarm'] = int(
+                                self._fritz_device.get_smarthome_devices()[ain]['alarm'] = int(
                                     child.getElementsByTagName('state')[0].firstChild.data)
                             except AttributeError:
                                 pass
                             try:
-                                self._fritz_device._smarthome_devices[ain]['lastalertchgtimestamp'] = int(
+                                self._fritz_device.get_smarthome_devices()[ain]['lastalertchgtimestamp'] = int(
                                     child.getElementsByTagName('lastalertchgtimestamp')[0].firstChild.data)
                             except AttributeError:
                                 pass
@@ -2421,12 +2425,12 @@ class AVM(SmartPlugin):
 
     def _update_smarthome_items(self):
         """Update smarthome items using dict '_smarthome_devices'"""
-        for item in self._fritz_device._smarthome_items:
+        for item in self._fritz_device.get_smarthome_devices():
             # get AIN
             ainDevice = self._get_item_ain(item)
 
             # get device sub-dict from dict
-            device = self._fritz_device._smarthome_devices.get(ainDevice, None)
+            device = self._fritz_device.get_smarthome_devices().get(ainDevice, None)
 
             if device is not None:
                 # get avm_data_type of item
@@ -2444,9 +2448,9 @@ class AVM(SmartPlugin):
 
     def _get_aha_devices_as_dict(self):
         """Get the dict of all known devices."""
-        if self._fritz_device._smarthome_devices == {}:
+        if self._fritz_device.get_smarthome_devices() == {}:
             self._update_aha_devices()
-        return self._fritz_device._smarthome_devices
+        return self._fritz_device.get_smarthome_devices()
 
     def _get_aha_device_by_ain(self, ain):
         """Return a device specified by the AIN."""
