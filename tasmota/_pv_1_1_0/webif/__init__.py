@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
-#  Copyright 2020-     <AUTHOR>                                   <EMAIL>
+#  Copyright 2020-      Martin Sinn                         m.sinn@gmx.de
 #########################################################################
 #  This file is part of SmartHomeNG.
 #  https://www.smarthomeNG.de
@@ -28,6 +28,7 @@
 import datetime
 import time
 import os
+import json
 
 from lib.item import Items
 from lib.model.smartplugin import SmartPluginWebIf
@@ -70,11 +71,15 @@ class WebInterface(SmartPluginWebIf):
 
         :return: contents of the template after beeing rendered
         """
+        self.plugin.get_broker_info()
+
+        # sort tasmota_items for display in web interface
+        self.plugin.tasmota_items = sorted(self.plugin.tasmota_items, key=lambda k: str.lower(k['_path']))
+
         tmpl = self.tplenv.get_template('index.html')
         # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
-        return tmpl.render(p=self.plugin,
-                           items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path'])),
-                           item_count=0)
+        return tmpl.render(p=self.plugin, items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path'])))
+
 
     @cherrypy.expose
     def get_data_html(self, dataSet=None):
@@ -88,16 +93,19 @@ class WebInterface(SmartPluginWebIf):
         """
         if dataSet is None:
             # get the new data
+            self.plugin.get_broker_info()
             data = {}
+            data['broker_info'] = self.plugin._broker
+            data['broker_uptime'] = self.plugin.broker_uptime()
+            data['item_values'] = self.plugin._item_values
 
-            # data['item'] = {}
-            # for i in self.plugin.items:
-            #     data['item'][i]['value'] = self.plugin.getitemvalue(i)
-            #
             # return it as json the the web page
-            # try:
-            #     return json.dumps(data)
-            # except Exception as e:
-            #     self.logger.error("get_data_html exception: {}".format(e))
-        return {}
+            try:
+                return json.dumps(data)
+            except Exception as e:
+                self.logger.error("get_data_html exception: {}".format(e))
+                return {}
+
+        return
+
 
