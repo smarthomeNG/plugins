@@ -321,9 +321,9 @@ class Asterisk(SmartPlugin):
         Stop method for the plugin
         """
         self.logger.debug("Stop method called")
-        self._client.close()
+        if self._client.connected():
+            self._client.close()
         self.alive = False
         self._reply_lock.acquire()
         self._reply_lock.notify()
         self._reply_lock.release()
-        # self.close()
