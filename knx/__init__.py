@@ -313,7 +313,7 @@ class KNX(SmartPlugin):
         self._send(init)
         client.terminator = 2
         if self._init_ga != []:
-            if client.connected:
+            if client.connected():
                 if self.logger.isEnabledFor(logging.DEBUG):
                     self.logger.debug(self.translate('knxd init read for {} ga').format(len(self._init_ga)))
                 for ga in self._init_ga:
