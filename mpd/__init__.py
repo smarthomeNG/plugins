@@ -178,7 +178,7 @@ class MPD(SmartPlugin):
             self.orphanItems = []
 
     def update_statusitems(self, warn):
-        if not self._client.connected:
+        if not self._client.connected():
             if warn:
                 self.loggercmd("update_status while not connected", 'e')
             return
@@ -191,7 +191,7 @@ class MPD(SmartPlugin):
         self.refreshItems(self._status_items, status, warn)
 
     def update_currentsong(self, warn):
-        if not self._client.connected:
+        if not self._client.connected():
             if warn:
                 self.loggercmd("update_currentsong while not connected", 'e')
             return
@@ -204,7 +204,7 @@ class MPD(SmartPlugin):
         self.refreshItems(self._currentsong_items, currentsong, warn)
 
     def update_statistic(self, warn):
-        if not self._client.connected:
+        if not self._client.connected():
             if warn:
                 self.loggercmd("update_statistic while not connected", 'e')
             return
