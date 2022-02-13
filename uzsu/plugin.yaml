@@ -109,6 +109,18 @@ parameters:
             de: 'Anzahl an Dezimalstellen bei der Berechnung der Interpolation'
             en: 'Amount of decimal places when calculating interpolation values'
 
+    webif_pagelength:
+        type: int
+        default: 100
+        valid_list:
+          - -1
+          - 25
+          - 50
+          - 100
+        description:
+            de: 'Anzahl an Items, die standardmäßig in einer Web Interface Tabelle pro Seite angezeigt werden'
+            en: 'Amount of items being listed in a web interface table per page by default'
+
 item_attributes:
     # Definition of item attributes defined by this plugin
     uzsu_item:
