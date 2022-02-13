@@ -191,7 +191,8 @@ class MonitoringService:
             buffer += data.decode("utf-8")
             while buffer.find("\n") != -1:
                 line, buffer = buffer.split("\n", 1)
-                self._parse_line(line)
+                if line:
+                    self._parse_line(line)
 
             # time.sleep(1)
         return
@@ -1960,14 +1961,14 @@ class AVM(SmartPlugin):
                         if self.get_iattr_value(child.conf, 'avm_data_type') == 'temperature':
                             temp = xml.getElementsByTagName('NewTemperatureCelsius')
                             if len(temp) > 0:
-                                child(int(temp[0].firstChild.data), self.get_shortname())
+                                child(int(temp[0].firstChild.data) / 10, self.get_shortname())
                             else:
                                 self.logger.error(
                                     f"Attribute {self.get_iattr_value(item.conf, 'avm_data_type')} not supported")
                         elif self.get_iattr_value(child.conf, 'avm_data_type') == 'power':
                             power = xml.getElementsByTagName('NewMultimeterPower')
                             if len(power) > 0:
-                                child(int(power[0].firstChild.data)/100, self.get_shortname())
+                                child(int(power[0].firstChild.data) / 100, self.get_shortname())
                             else:
                                 self.logger.error(
                                     f"Attribute {self.get_iattr_value(item.conf, 'avm_data_type')} not supported")
