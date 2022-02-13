@@ -561,7 +561,7 @@ class AVM(SmartPlugin):
     Main class of the Plugin. Does all plugin specific stuff and provides the update functions for the different TR-064 services on the FritzDevice
     """
 
-    PLUGIN_VERSION = "1.6.1"
+    PLUGIN_VERSION = "1.6.2"
 
     _header = {'SOAPACTION': '', 'CONTENT-TYPE': 'text/xml; charset="utf-8"'}
 
@@ -780,8 +780,8 @@ class AVM(SmartPlugin):
         self._response_cache = dict()
 
         # Update Items using AHA-Interface
-        if self.get_iattr_value(item.conf, 'avm_data_type') in ['aha_device']:
-            self._update_aha_devices()
+        #if self.get_iattr_value(item.conf, 'avm_data_type') in ['aha_device']:
+        self._update_aha_devices()
 
         if self._call_monitor:
             if not self.alive:
@@ -828,6 +828,11 @@ class AVM(SmartPlugin):
             debug_logger = True
         else:
             debug_logger = False
+
+        # Deprecated warning for old avm_data_types:
+        deprecated_list =  ['temperature', 'set_temperature_reduced', 'set_temperature_comfort', 'firmware_version']
+        if self.get_iattr_value(item.conf, 'avm_data_type') in deprecated_list:
+            self.logger.warning(f"Item {item.id()} uses deprecated avm_data_type attribute. Please consider to switch to avm_data_type for new Fritz AHA interface")
 
         # items specific to call monitor
         if self.get_iattr_value(item.conf, 'avm_data_type') in ['is_call_incoming', 'last_caller_incoming',
@@ -954,14 +959,17 @@ class AVM(SmartPlugin):
                                                                   'target_temperature',
                                                                   'current_temperature', 'temperature_reduced',
                                                                   'temperature_comfort',
-                                                                  'temperature_offset', 'set_hkrwindowopen',
+                                                                  'temperature_offset', 'set_window_open',
                                                                   'windowopenactiveendtime',
                                                                   'set_hkrboost', 'boost_active', 'boostactiveendtime',
                                                                   'battery_low', 'battery_level',
                                                                   'lock', 'device_lock', 'window_open', 'summer_active',
                                                                   'holiday_active', 'errorcode',
                                                                   'switch_state', 'switch_mode', 'switch_toggle',
-                                                                  'power', 'energy', 'voltage', 'humidity']:
+                                                                  'power', 'energy', 'voltage', 'humidity',
+                                                                  'set_hue', 'set_saturation', 'set_simpleonoff',
+                                                                  'set_level', 'set_colortemperature']:
+
             if self._get_item_ain(item) is not None:
                 if debug_logger is True:
                     self.logger.debug(
@@ -1124,11 +1132,6 @@ class AVM(SmartPlugin):
         if sid != '':
             aha_string += f"&sid={sid}"
 
-        # if endtimestamp == '':
-        # aha_string = "/webservices/homeautoswitch.lua?ain={0}&switchcmd={1}&param={2}&sid={3}".format(ain.replace(" ", ""), aha_action, aha_param, sid)
-        # else:
-        # aha_string = "/webservices/homeautoswitch.lua?ain={0}&switchcmd={1}&endtimestamp={2}&sid={3}".format(ain.replace(" ", ""), aha_action, endtimestamp, sid)
-
         return aha_string
 
     def update_item(self, item, caller=None, source=None, dest=None):
@@ -1257,6 +1260,28 @@ class AVM(SmartPlugin):
                 # write new value
                 self.set_hkr_boost(ainDevice, endtime)
 
+            elif self.get_iattr_value(item.conf, 'avm_data_type') == 'set_simpleonoff':
+                cmd_switch_state = bool(item())
+                if debug_logger is True:
+                    self.logger.debug(f"simpleonoff_state caller is: {caller}; switch to be set to: {cmd_switch_state}")
+                # get AIN
+                ainDevice = self._get_item_ain(item)
+                if debug_logger is True:
+                    self.logger.debug(f"Device AIN is {ainDevice}")
+                # write value
+                self.set_switch_onoff(ainDevice, cmd_switch_state)
+
+            elif self.get_iattr_value(item.conf, 'avm_data_type') == 'set_level':
+                cmd_level = int(item())
+                if debug_logger is True:
+                    self.logger.debug(f"set_level caller is: {caller}; switch to be set to level: {cmd_level}")
+                # get AIN
+                ainDevice = self._get_item_ain(item)
+                if debug_logger is True:
+                    self.logger.debug(f"Device AIN is {ainDevice}")
+                # write value
+                self.set_level(ainDevice, cmd_level)
+
             elif self.get_iattr_value(item.conf, 'avm_data_type') == 'switch_state':
                 cmd_switch_state = bool(item())
                 if debug_logger is True:
@@ -1282,6 +1307,59 @@ class AVM(SmartPlugin):
                         self.logger.debug(f"Device AIN is {ainDevice}")
                     # write value
                     self.set_switch_toggle(ainDevice)
+
+            elif self.get_iattr_value(item.conf, 'avm_data_type') == 'set_hue':
+                cmd_hue = int(item())
+                if debug_logger is True:
+                    self.logger.debug(f"hue caller is: {caller}; hue to be set to: {cmd_hue}")
+                # get AIN
+                ainDevice = self._get_item_ain(item)
+                if debug_logger is True:
+                    self.logger.debug(f"Device AIN is {ainDevice}")
+                #search saturation:
+                saturation = -1
+                parentItem = item.return_parent()
+                for child in parentItem.return_children():
+                    if self.has_iattr(child.conf, 'avm_data_type'):
+                        if self.get_iattr_value(child.conf, 'avm_data_type') == 'set_saturation':
+                            saturation = int(child())
+                            #self.logger.debug(f"Debug hue {cmd_hue}, saturation {saturation}")
+                            # write value
+                            self.set_color(ainDevice, cmd_hue, saturation, duration=0)
+                if saturation == -1:
+                    self.logger.warning(f"Cannot execute hue command because saturation value cannot be found in item tree")
+
+            elif self.get_iattr_value(item.conf, 'avm_data_type') == 'set_saturation':
+                cmd_saturation = int(item())
+                if debug_logger is True:
+                    self.logger.debug(f"Saturation caller is: {caller}; Saturation to be set to: {cmd_saturation}")
+                # get AIN
+                ainDevice = self._get_item_ain(item)
+                if debug_logger is True:
+                    self.logger.debug(f"Device AIN is {ainDevice}")
+                #search hue:
+                hue = -1
+                parentItem = item.return_parent()
+                for child in parentItem.return_children():
+                    if self.has_iattr(child.conf, 'avm_data_type'):
+                        if self.get_iattr_value(child.conf, 'avm_data_type') == 'set_hue':
+                            hue = int(child())
+                            #self.logger.debug(f"Debug saturation {cmd_saturation}, hue {hue}")
+                            # write value
+                            self.set_color(ainDevice, hue, cmd_saturation, duration=0)
+                if hue == -1:
+                    self.logger.warning(f"Cannot execute saturation command because hue value cannot be found in item tree")
+
+            elif self.get_iattr_value(item.conf, 'avm_data_type') == 'set_colortemperature':
+                cmd_colortemperature = int(item())
+                if debug_logger is True:
+                    self.logger.debug(f"set_colortemperature caller is: {caller}; colortemp to be set to: {cmd_colortemperature}")
+                # get AIN
+                ainDevice = self._get_item_ain(item)
+                if debug_logger is True:
+                    self.logger.debug(f"Device AIN is {ainDevice}")
+                # write value
+                self.set_colortemperature(ainDevice, cmd_colortemperature)
 
             else:
                 self.logger.error(f"{self.get_iattr_value(item.conf, 'avm_data_type')} is not defined to be updated.")
@@ -1945,6 +2023,9 @@ class AVM(SmartPlugin):
 
         xml = self._get_post_request_as_xml(url, soap_data, headers)
 
+        if not xml: 
+            return
+
         if self.get_iattr_value(item.conf, 'avm_data_type') == 'aha_device':
             element_xml = xml.getElementsByTagName('NewSwitchState')
             if len(element_xml) > 0:
@@ -2116,6 +2197,9 @@ class AVM(SmartPlugin):
                     self.logger.debug("Sending AHA command successful")
             else:
                 self.logger.error(f"AHA command error code: {status_code}")
+                if debug_logger is True:
+                    self.logger.debug(f"Url: {url}")
+                    self.logger.debug(f"Params: {params}")
 
             if not self._fritz_device.is_available():
                 self.set_device_availability(True)
@@ -2147,6 +2231,7 @@ class AVM(SmartPlugin):
             plain = self._request(url, params)
             if debug_logger is True:
                 self.logger.debug(f"Plain AHA request response is: {plain}")
+                self.logger.debug(f"Params are: {params}")
 
             if plain == "inval":
                 self.logger.error(f"Respone of AHA request {cmd} was invalid")
@@ -2168,6 +2253,7 @@ class AVM(SmartPlugin):
                 devices = dom.getElementsByTagName('device')
             except Exception as e:
                 self.logger.error(f'_get_aha_device_elements: error {e} during parsing')
+                self.logger.warning(f'_get_aha_device_elements: Debug plain={plain}')
         return devices
 
     def _update_aha_devices(self):
@@ -2421,12 +2507,78 @@ class AVM(SmartPlugin):
                             except AttributeError:
                                 pass
 
+                # information of AVM smarthome device having switch state
+                if 'on_off_device' in functions:
+                    simpleonoff_element = element.getElementsByTagName('simpleonoff')
+                    if len(simpleonoff_element) > 0:
+                        for child in simpleonoff_element:
+                            try:
+                                self._fritz_device.get_smarthome_devices()[ain]['simpleonoff'] = int(child.getElementsByTagName('state')[0].firstChild.data)
+                            except AttributeError:
+                                #Set device state to 0 (off) if device is not connected (= no state available in xml)
+                                self._fritz_device.get_smarthome_devices()[ain]['simpleonoff'] = 0
+                                pass
+                                                            
+                # information of AVM smarthome device having dimmer level information
+                if 'on_off_device' in functions:
+                    levelcontrol_element = element.getElementsByTagName('levelcontrol')
+                    if len(levelcontrol_element) > 0:
+                        for child in levelcontrol_element:
+                            try:
+                                self._fritz_device.get_smarthome_devices()[ain]['level'] = int(child.getElementsByTagName('level')[0].firstChild.data)
+                            except AttributeError:
+                                #Set dimmer level to 0 (off) if device is not connected (= no state available in xml)
+                                self._fritz_device.get_smarthome_devices()[ain]['level'] = 0
+                                pass 
+                            else:
+                                #Set Level to zero for consistency, if light is off:
+                                try:
+                                    onoff = self._fritz_device.get_smarthome_devices()[ain]['simpleonoff']
+                                    if onoff == 0:
+                                        self._fritz_device.get_smarthome_devices()[ain]['level'] = 0
+                                        if debug_logger:
+                                            self.logger.debug(f"Debug: Level set to zero due to onoff state")
+                                except AttributeError:
+                                    pass                                
+
+                # information of AVM smarthome device having color information
+                if 'color_device' in functions:
+                    colorcontrol_element = element.getElementsByTagName('colorcontrol')
+                    if len(colorcontrol_element) > 0:
+                        for child in colorcontrol_element:
+                            # Hue readout mode: currently not used
+                            #try:
+                            #    self._fritz_device.get_smarthome_devices()[ain]['current_mode'] = int(child.getAttribute('current_mode'))
+                            #    self._fritz_device.get_smarthome_devices()[ain]['supported_modes'] = int(child.getAttribute('supported_modes'))
+                            #except AttributeError:
+                            #    self._fritz_device.get_smarthome_devices()[ain]['current_mode'] = 0
+                            #    self._fritz_device.get_smarthome_devices()[ain]['supported_modes'] = 0
+                            #    pass
+                            #else:
+                            #    self.logger.warning(f"Debug: HanFun current_mode: {self._fritz_device.get_smarthome_devices()[ain]['current_mode']}")
+                            #    self.logger.warning(f"Debug: HanFun supported_modes: {self._fritz_device.get_smarthome_devices()[ain]['supported_modes']}")
+                            try:
+                                self._fritz_device.get_smarthome_devices()[ain]['hue'] = int(child.getElementsByTagName('hue')[0].firstChild.data)
+                            except AttributeError:
+                                self._fritz_device.get_smarthome_devices()[ain]['hue'] = 0
+                                pass    
+                            try:
+                                self._fritz_device.get_smarthome_devices()[ain]['saturation'] = int(child.getElementsByTagName('saturation')[0].firstChild.data)
+                            except AttributeError:
+                                self._fritz_device.get_smarthome_devices()[ain]['saturation'] = 0
+                                pass                                   
+        else:
+            self.logger.warning(f"Debug: _get_aha_device_elements returned no devices")
+
         # update items
         self._update_smarthome_items()
 
     def _update_smarthome_items(self):
         """Update smarthome items using dict '_smarthome_devices'"""
-        for item in self._fritz_device.get_smarthome_devices():
+
+        #self.logger.warning(f"Debug: get_smarthome_devices(): {self._fritz_device.get_smarthome_devices()}")
+        #for item in self._fritz_device.get_smarthome_devices():
+        for item in self._fritz_device._smarthome_items:
             # get AIN
             ainDevice = self._get_item_ain(item)
 
@@ -2438,12 +2590,29 @@ class AVM(SmartPlugin):
                 current_avm_data_type = self.get_iattr_value(item.conf, 'avm_data_type')
 
                 # set item value for relevant read-only items #Dict-Key muss dem jeweiligen avm_data_type entsprechen
-                if not current_avm_data_type.startswith('set_') and current_avm_data_type not in ['switch_toggle']:
+                #if not current_avm_data_type.startswith('set_') and current_avm_data_type not in ['switch_toggle']:
+                #    if current_avm_data_type in device:
+                #        item(device[current_avm_data_type], self.get_shortname())
+                #    else:
+                #        self.logger.warning(
+                #            f'Attribute <{current_avm_data_type}> at device <{ainDevice}> to be set to Item <{item}> is not available.')
+
+                # Attributes that are write only commands with no corresponding read commands
+                # are excluded from status updates via update black list:
+                update_black_list = ['switch_toggle', 'set_colortemperature']
+
+                #if current_avm_data_type.startswith('set_') and current_avm_data_type not in ['switch_toggle']:
+                if current_avm_data_type not in update_black_list:
+                    if current_avm_data_type.startswith('set_'):
+                        # Remove "set_" prefix:
+                        current_avm_data_type = current_avm_data_type[len('set_'):] 
+                    #self.logger.warning(f"Debug 1: {current_avm_data_type}")
                     if current_avm_data_type in device:
+                        #self.logger.warning(f"Debug 2: Device: {device[current_avm_data_type]}")
                         item(device[current_avm_data_type], self.get_shortname())
                     else:
-                        self.logger.warning(
-                            f'Attribute <{current_avm_data_type}> at device <{ainDevice}> to be set to Item <{item}> is not available.')
+                        self.logger.warning(f'Attribute <{current_avm_data_type}> at device <{ainDevice}> to be set to Item <{item}> is not available.')
+
             else:
                 self.logger.warning(f'No values for item {item.id()} with AIN {ainDevice} available.')
 
@@ -2492,6 +2661,22 @@ class AVM(SmartPlugin):
     def get_switch_energy(self, ain):
         """Get the switch energy."""
         return self._aha_request("getswitchenergy", ain=ain, rf=int)
+
+    def set_switch_onoff(self, ain, on):
+        """Set Led on/off."""
+        return self._aha_request("setsimpleonoff", ain=ain, param={'onoff': int(on)}, rf=bool)
+
+    def set_level(self, ain, level):
+        """Set Led dimmer level."""
+        return self._aha_request("setlevel", ain=ain, param={'level': int(level)}, rf=int)
+
+    def set_colortemperature(self, ain, colortemperature, duration=8):
+        """Set Led to specific color temperature in Kelvin (2700K-6500K)."""
+        return self._aha_request("setcolortemperature", ain=ain, param={'temperature': int(colortemperature), 'duration': int(duration)}, rf=int)
+    
+    def set_color(self, ain, hue, saturation, duration=3):
+        """Set Led color."""
+        return self._aha_request("setcolor", ain=ain, param={'hue': int(hue), 'saturation': int(saturation), 'duration': int(duration)}, rf=bool)
 
     def get_temperature(self, ain):
         """Get the device temperature sensor value."""

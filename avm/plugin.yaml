@@ -12,7 +12,7 @@ plugin:
     documentation: http://smarthomeng.de/user/plugins/avm/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/934835-avm-plugin
 
-    version: 1.6.1                 # Plugin version
+    version: 1.6.2                 # Plugin version
     sh_minversion: 1.6             # minimum shNG version to use this plugin
 #    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
@@ -139,18 +139,19 @@ item_attributes:
         - 'aha_device'
         - 'energy'
         - 'power'
-        - 'temperature'
-        - 'set_temperature_reduced'
-        - 'set_temperature_comfort'
         - 'hkr_device'
-        - 'firmware_version'
         - 'manufacturer'
         - 'product_name'
         - 'device_name'
         - 'connection_status'
         - 'device_id'
         - 'device_function'
-        # AHA Interface
+        # Deprecated avm data types. Please use alternate AHA interface type:
+        - 'temperature'
+        - 'set_temperature_reduced'
+        - 'set_temperature_comfort'
+        - 'firmware_version'
+        # AHA Interface attributes
         - 'device_id'
         - 'manufacturer'
         - 'product_name'
@@ -158,22 +159,28 @@ item_attributes:
         - 'connected'
         - 'device_name'
         - 'tx_busy'
-        - 'set_target_temperature'
-        - 'target_temperature'
+        - 'set_target_temperature'     # rw
+        - 'target_temperature'         # ro
         - 'current_temperature'
         - 'temperature_reduced'
         - 'temperature_comfort'
         - 'temperature_offset'
-        - 'set_hkrwindowopen'
         - 'windowopenactiveendtime'
-        - 'set_hkrboost'
+        - 'set_hkrboost'               # rw
+        - 'set_simpleonoff'            # rw
+        - 'set_level'                  # rw
+        - 'set_hue'
+        - 'set_saturation'
+        - 'set_colortemperature'       # wo
         - 'boost_active'
         - 'boostactiveendtime'
-        - 'battery_low'
-        - 'battery_level'
+        - 'battery_low'                # ro
+        - 'battery_level'              # ro
         - 'lock'
         - 'device_lock'
-        - 'window_open'
+#        - 'set_hkrwindowopen'
+        - 'set_window_open'            # rw
+        - 'window_open'                # ro
         - 'summer_active'
         - 'holiday_active'
         - 'errorcode'
@@ -196,6 +203,7 @@ item_attributes:
         - 'deflection_mode'             # r/o Modus der Rufumleitung; Angabe der Rufumleitung mit Parameter "avm_deflection_index" im Item bzw Parent-Item
         - 'deflection_outgoing'         # r/o Outgoing der Rufumleitung; Angabe der Rufumleitung mit Parameter "avm_deflection_index" im Item bzw Parent-Item
         - 'deflection_phonebook_id'     # r/o Phonebook_ID der Zielrufnummer (Only valid if Type==fromPB); Angabe der Rufumleitung mit Parameter "avm_deflection_index" im Item bzw Parent-Item
+
 
     avm_incoming_allowed:
         type: str
