@@ -37,7 +37,7 @@ parameters:
 
     unifi_password:
         type: str
-        mandatory: True
+        default: ''
         hide: True
         description:
             de: 'Passwort für den Login.'
@@ -122,4 +122,3 @@ plugin_functions: NONE
 
 logic_parameters: NONE
     # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)
-

@@ -127,6 +127,7 @@ class UZSU(SmartPlugin):
         self._interpolation_precision = self.get_parameter_value('interpolation_precision')
         self._backintime = self.get_parameter_value('backintime')
         self._suncalculation_cron = self.get_parameter_value('suncalculation_cron')
+        self.webif_pagelength = self.get_parameter_value('webif_pagelength')
         self._sh = smarthome
         self._items = {}
         self._lastvalues = {}

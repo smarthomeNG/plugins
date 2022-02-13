@@ -43,7 +43,6 @@ parameters:
     model:
         type: str
         default: ''
-        mandatory: True
         description:
             de: 'Name des Geräts. Es ist notwendig, eine Text-Datei mit dem hier angegebenen Dateinamen (Endung txt)
                 im Pluginunterordner ``models`` anzulegen. Der Aufbau dieser Datei wird im user_doc detailliert beschrieben.'
