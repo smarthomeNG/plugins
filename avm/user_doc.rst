@@ -1,6 +1,10 @@
+.. index:: avm plugin
+.. index:: Plugins; avm
 
-AVM
-###
+===
+avm
+===
+
 
 Changelog
 =========
