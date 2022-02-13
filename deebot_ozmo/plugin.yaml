@@ -7,7 +7,7 @@ plugin:
         en: 'Plugin for Deebot Ozmo 920 / 950 / 960'
         fr: 'Extension pour Deebot Ozmo 920 / 950 / 960'
     maintainer: Foxi352
-#    tester:                         # Who tests this plugin?
+    tester: Foxi352                 # Who tests this plugin?
     state: develop                  # change to ready when done with development
     keywords: iot vacuum robot clean
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
@@ -46,7 +46,7 @@ parameters:
             de: 'Roboter Name für diese Instanz. Default ist erster in der Liste'
             en: 'Robot name for this instance. Default is first in list'
             fr: 'Nom du robot pour cette instance. Premier dans liste par défaut'
-    
+
     interval:
         type: int
         mandatory: False
@@ -55,7 +55,7 @@ parameters:
             de: 'Interval der API Abfragen (Karten updates, Lifespan updates, ...)'
             en: 'Interval for API updates (map updates, lifespan updates, ...)'
             fr: 'Intervale des requetes API (MAJ des cartes, durée de vie des composantes, ...)'
-    
+
     country:
         type: str
         mandatory: False
@@ -72,7 +72,7 @@ parameters:
             en: 'Continent for API. Autodetected if empty'
             fr: "Continent pour l'API. Détection automatique si vide"
 
-item_attributes:
+item_attributes: NONE
     # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)
 
 item_structs:
@@ -89,39 +89,39 @@ item_structs:
             visu_acl: ro
             cache: Yes
             deebot_ozmo@instance: did
-    
+
         model:
             type: str
             visu_acl: ro
             cache: Yes
             deebot_ozmo@instance: model
-    
+
         icon_URL:
             type: str
             visu_acl: ro
             cache: Yes
             deebot_ozmo@instance: iconURL
-    
+
         available:
             type: bool
             visu_acl: ro
             deebot_ozmo@instance: available
-        
+
         state:
             type: str
             visu_acl: ro
             deebot_ozmo@instance: state
-    
+
         state_text:
             type: str
             visu_acl: ro
             deebot_ozmo@instance: state_text
-        
+
         battery_level:
             type: num
             visu_acl: ro
             deebot_ozmo@instance: battery_level
-    
+
     settings:
         name: Modifiable settings
         water_level:
@@ -135,19 +135,19 @@ item_structs:
             visu_acl: ro
             cache: Yes
             deebot_ozmo@instance: water_level_text
-    
+
         fan_speed:
             type: str
             visu_acl: rw
             cache: Yes
             deebot_ozmo@instance: fan_speed
-    
+
         fan_speed_text:
             type: str
             visu_acl: ro
             cache: Yes
             deebot_ozmo@instance: fan_speed_text
-    
+
     components:
         name: Components lifespan item_structs
         brush:
@@ -155,13 +155,13 @@ item_structs:
             visu_acl: ro
             cache: Yes
             deebot_ozmo@instance: brush
-    
+
         sideBrush:
             type: num
             visu_acl: ro
             cache: Yes
             deebot_ozmo@instance: sideBrush
-    
+
         filter:
             type: num
             visu_acl: ro
@@ -187,7 +187,7 @@ item_structs:
             visu_acl: ro
             cache: Yes
             deebot_ozmo@instance: rooms
-    
+
     history:
         name: Logs
         last_clean_logs:
@@ -218,7 +218,7 @@ item_structs:
             type: bool
             visu_acl: rw
             deebot_ozmo@instance: cmd_locate
-    
+
 
 plugin_functions:
     locate:
@@ -284,8 +284,8 @@ plugin_functions:
                 description:
                     de: "Saugstärke"
                     en: "Suction power"
-                    fr: "Puissance d'aspiration"   
-            
+                    fr: "Puissance d'aspiration"
+
     set_water_level:
         type: bool
         description:
@@ -298,7 +298,7 @@ plugin_functions:
                 description:
                     de: "Wasser Quanittät"
                     en: "Water quantity"
-                    fr: "Quantité d'eau"   
+                    fr: "Quantité d'eau"
 
 logic_parameters: NONE
     # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)
