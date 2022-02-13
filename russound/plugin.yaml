@@ -13,7 +13,7 @@ plugin:
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py
 
     version: 1.7.0                  # Plugin version
-    sh_minversion: 1.8.2a           # minimum shNG version to use this plugin
+    sh_minversion: 1.9.0            # minimum shNG version to use this plugin
     # sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: false           # plugin supports multi instance
     restartable: true
@@ -36,7 +36,7 @@ parameters:
             en: 'Russound port'
             fr: "Port de Russound"
 
-item_attributes: 
+item_attributes:
     rus_path:
         type: str
         description:
@@ -55,7 +55,7 @@ item_attributes:
                 * partymode = Party Modus Einstellung der Zone: Item muss vom Typ string sein. Gültige Werte [ON/OFF/MASTER]
                 * donotdisturb = "Nicht Stören" Einstellung der Zone: Item muss vom Typ string sein
                 * name = Name der Zone (nur lesbar)
-                
+
             en: >
                 Path with controller, zone and system parameter, separated by .
                 * status = zone On/Off: item type must be bool
