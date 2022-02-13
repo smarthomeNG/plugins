@@ -24,7 +24,6 @@ parameters:
     unifi_controller_url:
         type: str
         mandatory: True
-        default: ''
         description:
             de: 'Basis URL des Controller, z.B. https://unifi:8443'
             en: 'Base URL of the controller, e.g. https://unifi:8443'
@@ -32,7 +31,6 @@ parameters:
     unifi_user:
         type: str
         mandatory: True
-        default: ''
         description:
             de: 'Nutzername für den Login am Controller.'
             en: 'Login information (user).'
@@ -40,7 +38,6 @@ parameters:
     unifi_password:
         type: str
         mandatory: True
-        default: ''
         hide: True
         description:
             de: 'Passwort für den Login.'
