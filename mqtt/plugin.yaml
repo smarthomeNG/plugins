@@ -6,7 +6,7 @@ plugin:
         de: 'MQTT Plugin, welches das MQTT Module von SmartHomeNG zur Kommunikation nutzt.'
         en: 'MQTT plugin which utilizes the MQTT module of SmartHomeNG for communication'
     maintainer: msinn
-#    tester:                         # Who tests this plugin?
+    tester: msinn                  # Who tests this plugin?
     state: ready                   # change to ready when done with development
     keywords: iot
 #    documentation: http://smarthomeng.de/user/plugins/mqtt2/user_doc.html
