@@ -6,7 +6,7 @@ plugin:
         de: 'Easymeter Q3D Unterstützung - Parameter für serielle Devices sind aktuell fest auf 9600/7E1 gesetzt'
         en: 'Easymeter Q3D support - Parameter for serial device are currently set to fix 9600/7E1'
     maintainer: '?'
-#    tester: efgh                   # Who tests this plugin?
+    tester: '?'                     # Who tests this plugin?
 #    keywords: kwd1 kwd2            # keywords, where applicable
     state: deprecated               # No user or tester for SmartPlugin conversion could be found
 #    documentation: https://github.com/smarthomeNG/plugins/blob/develop/mqtt/README.md        # url of documentation (wiki) page
@@ -16,7 +16,8 @@ plugin:
     version: 1.0.0                  # Plugin version (must match the version specified in __init__.py)
     sh_minversion: 1.6              # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
-#    multi_instance: False
+    multi_instance: False
+    restartable: True
     classname: easymeter            # class containing the plugin
 
 parameters: NONE

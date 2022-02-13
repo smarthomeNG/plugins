@@ -47,7 +47,11 @@ item_attributes:
     dashbutton_value:
         type: list
         description:
-            de: ""
+            de: "If 'dashbutton_mode' is set to 'value', the attribute 'dashbutton_value' has to be set. It can be \
+                 a single value or a list af values. If the attribute value is a list, the values will be processed \
+                in the given order. After the last element of the list is reached, the next button press triggers the \
+                first element of the list. If a item value is changed by another action than a button press and the \
+                new item value is not in the configured list, the next dashbutton press triggers the first element."
             en: "If 'dashbutton_mode' is set to 'value', the attribute 'dashbutton_value' has to be set. It can be \
                  a single value or a list af values. If the attribute value is a list, the values will be processed \
                 in the given order. After the last element of the list is reached, the next button press triggers the \
@@ -57,7 +61,10 @@ item_attributes:
     dashbutton_reset:
         type: list
         description:
-            de: ""
+            de: "It is possible to configure a reset timer (in seconds). If there is no item value change after \
+                 the configured time in seconds (neither a button press nor another action), the first element of \
+                 the list is taken when the item is triggered the next time. This attribute will be ignored, if no \
+                 list is passed to the attribute 'dashbutton_value'."
             en: "It is possible to configure a reset timer (in seconds). If there is no item value change after \
                  the configured time in seconds (neither a button press nor another action), the first element of \
                  the list is taken when the item is triggered the next time. This attribute will be ignored, if no \

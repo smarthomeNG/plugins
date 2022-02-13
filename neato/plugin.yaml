@@ -33,7 +33,7 @@ parameters:
             en: 'Password of your Neato/Vorwerk account'
     robot_vendor:
         type: str
-        mandatory: True
+        #mandatory: True
         default: 'neato'
         valid_list:
           - neato

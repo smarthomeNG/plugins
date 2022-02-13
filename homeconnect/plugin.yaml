@@ -5,9 +5,9 @@ plugin:
     description:
         de: 'Anbindung der BSH/Siemens HomeConnect Schnittstelle mit Oauth2'
         en: 'Usage of the BSH/Siemens HomeConnect interface with oauth2'
-    maintainer: 'psilo909'
-    tester: 'psilo909'
-    state: development
+    maintainer: psilo909
+    tester: psilo909
+    state: develop
     keywords: smart devices
     documentation: 'http://smarthomeng.de/user/plugins_doc/config/withings_health.html'
     support: 'https://knx-user-forum.de/forum/supportforen/smarthome-py/1141179-nokia-health-plugin'
@@ -30,7 +30,7 @@ parameters:
 
     client_secret:
         type: str
-        default: 300
+        #default: 300     Default: 300 makes no sense for this parameter
         mandatory: True
         description:
             de: 'Client Secret von https://developer.home-connect.com/'
@@ -68,8 +68,12 @@ item_attributes:
             de: 'haId des jeweiligen Items (siehe Appliance Liste im WebInterface des Plugins).'
             en: 'haId of the respective item (see in appliance list in web interface of the plugin).'
 
-item_structs:
-  # Definition of item-structure templates for this plugin
+item_structs: NONE
+    # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
+
+#item_attribute_prefixes:
+    # Definition of item attributes that only have a common prefix (enter 'item_attribute_prefixes: NONE' or ommit this section, if section should be empty)
+    # NOTE: This section should only be used, if really nessesary (e.g. for the stateengine plugin)
 
 logic_parameters: NONE
     # Definition of logic parameters defined by this plugin

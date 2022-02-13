@@ -16,6 +16,7 @@ plugin:
     version: 1.6.0                 # Plugin version
     sh_minversion: 1.8             # minimum shNG version to use this plugin
     multi_instance: True           # plugin supports multi instance
+    restartable: unknown
     classname: snap7_logo          # class containing the plugin
 
 parameters:
@@ -57,6 +58,7 @@ parameters:
             en: 'time (sec) after a new link to Logo will be established to get updates'
 
 item_attributes:
+    # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)
     logo_read:
         type: str
         description:
@@ -69,3 +71,15 @@ item_attributes:
             de: 'Eingang, Ausgang, Merker in die Siemens-Logo schreiben'
             en: 'Input, Output, Mark to write from Siemens Logo'
 
+item_structs: NONE
+    # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
+
+#item_attribute_prefixes:
+    # Definition of item attributes that only have a common prefix (enter 'item_attribute_prefixes: NONE' or ommit this section, if section should be empty)
+    # NOTE: This section should only be used, if really nessesary (e.g. for the stateengine plugin)
+
+plugin_functions: NONE
+    # Definition of plugin functions defined by this plugin (enter 'plugin_functions: NONE', if section should be empty)
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)
