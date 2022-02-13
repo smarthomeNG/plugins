@@ -60,7 +60,7 @@ Dabei entspricht das Attribute ``zigbee2mqtt_topic`` dem Zigbee ``Friendly Name`
 
 Das Attribut ``zigbee2mqtt_attr`` entspricht dem jeweiligen Tag aus der Payload, der verwendet werden soll. Welche Tags beim jeweiligen Device verfügbar sind, kann man im WebIF des Pluigns sehen.
 
-Die folgenden Tags des Attributes ``zigbee2mqtt_attr``sind definiert und werden vom Plugin unterstützt:
+Die folgenden Tags des Attributes ``zigbee2mqtt_attr`` sind definiert und werden vom Plugin unterstützt:
 
 - online
 - bridge_permit_join
