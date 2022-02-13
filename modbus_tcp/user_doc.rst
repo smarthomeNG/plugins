@@ -26,6 +26,7 @@ plugin.yaml
 ~~~~~~~~~~~
 
 .. code-block:: yaml
+
     solaredge:
         plugin_name: modbus_tcp
         instance: solaredge
@@ -33,7 +34,7 @@ plugin.yaml
         port: 502
         cycle: 60
         plugin_enabled: true
-        
+
     logoMB:
         plugin_name: modbus_tcp
         instance: logomb
@@ -78,9 +79,9 @@ siehe auch example.yaml
         AI1:
             type: num
             name: AI1
-            modBusObjectType: InputRegister     #(optional) default: HoldingRegister  
+            modBusObjectType: InputRegister     #(optional) default: HoldingRegister
             modBusAddress: 0
-            modBusDataType: int16               #(optional) default: uint16  
+            modBusDataType: int16               #(optional) default: uint16
             #modBusByteOrder: 'Endian.Little'    #(optional) default: 'Endian.Big'
             #modBusWordOrder: 'Endian.Little'    #(optional) default: 'Endian.Big'
             modBusDirection: 'read_write'       #(optional) default: 'read'
@@ -92,15 +93,15 @@ siehe auch example.yaml
             name: AM1
             modBusObjectType: HoldingRegister
             modBusAddress: 528
-            modBusDirection: read_write         
-            #modBusFactor: 1                    
-            #modBusDataType: int16              
+            modBusDirection: read_write
+            #modBusFactor: 1
+            #modBusDataType: int16
         M1:
             type: bool
             name: M1
-            modBusObjectType: Coil              
+            modBusObjectType: Coil
             modBusAddress: 8256
-            modBusDataType: bit                 
+            modBusDataType: bit
             modBusDirection: read_write
         I1:
             type: bool
@@ -115,12 +116,12 @@ siehe auch example.yaml
             modBusAddress: 0
             modBusDirection: read_write
             modBusFactor: 0.01
-        
+
         geraetename:
             type: str
-            #modBusObjectType: HoldingRegister  #(optional) default: HoldingRegister  
+            #modBusObjectType: HoldingRegister  #(optional) default: HoldingRegister
             modBusAddress: 40030
-            modBusDataType: 'string16'          #(optional) default: uint16  
+            modBusDataType: 'string16'          #(optional) default: uint16
             #modBusFactor: '1000'               #(optional) default: 1
             modBusByteOrder: 'Endian.Little'    #(optional) default: 'Endian.Big'
             modBusWordOrder: 'Endian.Little'    #(optional) default: 'Endian.Big'
@@ -129,7 +130,7 @@ siehe auch example.yaml
         temperatur:
             type: num
             modBusAddress: 40052
-            modBusDataType: 'float32            #(optional) default: uint16  
+            modBusDataType: 'float32            #(optional) default: uint16
             #modBusFactor: '1'                  #(optional) default: 1
             modBusByteOrder: 'Endian.Little'    #(optional) default: 'Endian.Big'
             modBusWordOrder: 'Endian.Little'    #(optional) default: 'Endian.Big'
@@ -163,4 +164,4 @@ Das Plugin kann aus dem Admin Interface aufgerufen werden. Dazu auf der Seite Pl
 Zeile das Icon in der Spalte **Web Interface** anklicken.
 
 .. image:: assets/tab1_readed.png
-   :class: screenshot 
+   :class: screenshot
