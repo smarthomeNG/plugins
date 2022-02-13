@@ -24,7 +24,7 @@ Getestet ist das Plugin mit folgenden Zigbee-Geräten:
 Konfiguration
 =============
 
-Die Informationen zur Konfiguration des Plugins sind unter :doc:`/plugins_doc/config/avm` beschrieben bzw. in der **plugin.yaml** nachzulesen.
+Die Informationen zur Konfiguration des Plugins sind unter :doc:`/plugins_doc/config/zigbee2mqtt` beschrieben.
 
 Nachfolgend noch einige Zusatzinformationen.
 
