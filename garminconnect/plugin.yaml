@@ -5,8 +5,8 @@ plugin:
     description:                  # Alternative: description in multiple languages
         de: 'Ermöglicht den Abruf von Daten (Statistiken, Pulswerte) aus Garmin Connect.'
         en: 'Enables the retrieval of data (stats, heart rates) from Garmin Connect.'
-    maintainer: Marc René Frieß
-#    tester:                        # Who tests this plugin?
+    maintainer: psilo909
+    tester: psilo909              # Who tests this plugin?
     state: develop
     keywords: garmin
     documentation: 'http://smarthomeng.de/user/plugins_doc/config/garminconnect.html'   # url of documentation (wiki) page
@@ -16,6 +16,7 @@ plugin:
     sh_minversion: 1.6             # minimum shNG version to use this plugin
 #    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
+    restartable: unknown
     classname: GarminConnect       # class containing the plugin
 
 parameters:
