@@ -98,6 +98,9 @@ Alternativ kann das Plugin auch manuell konfiguriert werden.
 Konfiguration des Items
 =======================
 
+Die Informationen zur Konfiguration des Plugins sind unter :doc:`/plugins_doc/config/avm` beschrieben.
+
+
 Zur Konfiguration der Items stehen folgende Parameter zur Verfügung:
 
 avm_data_type
