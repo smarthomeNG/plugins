@@ -56,7 +56,7 @@ from . import conversion
 
 
 class DLMS(SmartPlugin, conversion.Conversion):
-    PLUGIN_VERSION = "1.9.1"
+    PLUGIN_VERSION = "1.9.4"
 
     """
     This class provides a Plugin for SmarthomeNG to reads out a smartmeter.
@@ -94,8 +94,13 @@ class DLMS(SmartPlugin, conversion.Conversion):
 
         self._instance = self.get_parameter_value('instance')               # the instance of the plugin for questioning multiple smartmeter
         self._update_cycle  = self.get_parameter_value('update_cycle')      # the frequency in seconds how often the device should be accessed
+        if self._update_cycle == 0:
+            self._update_cycle = None
         self._update_crontab  = self.get_parameter_value('update_crontab')  # the more complex way to specify the device query frequency
-        
+        if self._update_crontab == '':
+            self._update_crontab = None
+        if not (self._update_cycle or self._update_crontab):
+            self.logger.error(f"{self.get_fullname()}: no update cycle or crontab set. The smartmeter will not be queried automatically")
         self._sema = Semaphore()            # implement a semaphore to avoid multiple calls of the query function
         self._min_cycle_time = 0            # we measure the time for the value query and add some security value of 10 seconds
                                             
@@ -106,6 +111,7 @@ class DLMS(SmartPlugin, conversion.Conversion):
         self._last_readout = ""
         
         # dict especially for the interface
+        # 'serialport', 'device', 'querycode', 'speed', 'baudrate_fix', 'timeout', 'onlylisten', 'use_checksum'
         self._config = {}
         self._config['serialport'] = self.get_parameter_value('serialport')
         if not self._config['serialport']:
@@ -117,14 +123,15 @@ class DLMS(SmartPlugin, conversion.Conversion):
         self._config['device'] = self.get_parameter_value('device_address')
         self._config['querycode'] = self.get_parameter_value('querycode')
         self._config['timeout'] = self.get_parameter_value('timeout')
-
+        self._config['baudrate'] = self.get_parameter_value('baudrate')
+        self._config['baudrate_fix'] = self.get_parameter_value('baudrate_fix')
         self._config['use_checksum'] = self.get_parameter_value('use_checksum')
         self._config['onlylisten'] = self.get_parameter_value('only_listen')
         self._config['reset_baudrate'] = self.get_parameter_value('reset_baudrate')
         self._config['no_waiting'] = self.get_parameter_value('no_waiting')
-        self._config['baudrate_fix'] = self.get_parameter_value('baudrate_fix')
 
         self.logger.debug(f"Instance {self._instance if self._instance else 0} of DLMS configured to use serialport '{self._config.get('serialport')}' with update cycle of {self._update_cycle} seconds")
+        self.logger.debug(f"Config: {self._config}")
         self.init_webinterface()
 
         self.logger.debug("init done")
@@ -134,9 +141,10 @@ class DLMS(SmartPlugin, conversion.Conversion):
         """
         This is called when the plugins thread is about to run
         """
-       	self.logger.debug(f"Plugin '{self.get_fullname()}': run method called")
+        self.logger.debug(f"Plugin '{self.get_fullname()}': run method called")
         self.alive = True
-        self.scheduler_add('DLMS', self._update_values_callback, prio=5, cycle=self._update_cycle, cron=self._update_crontab, next=shtime.now())
+        if self._update_cycle or self._update_crontab:
+            self.scheduler_add(self.get_shortname(), self._update_values_callback, prio=5, cycle=self._update_cycle, cron=self._update_crontab, next=shtime.now())
         self.logger.debug("run dlms")
 
     def stop(self):
@@ -144,7 +152,7 @@ class DLMS(SmartPlugin, conversion.Conversion):
         This is called when the plugins thread is about to stop
         """
         self.alive = False
-        self.scheduler_remove('DLMS')
+        self.scheduler_remove(self.get_shortname())
         self.logger.debug(f"Plugin '{self.get_fullname()}': stop method called")
 
     def parse_item(self, item):
@@ -267,15 +275,27 @@ class DLMS(SmartPlugin, conversion.Conversion):
                     attribute = [attribute]
                 obis_code = attribute[0]
                 if obis_code == Code:
-                    #todo: error handling for key errors
-                    Index = int(attribute[1]) if len(attribute)>1 else 0
-                    Key = attribute[2] if len(attribute)>2 else 'Value'
-                    if not Key in ['Value', 'Unit']: Key = 'Value'
+                    try:
+                        Index = int(attribute[1]) if len(attribute)>1 else 0
+                        if Index < 0:
+                            self.logger.warning(f"Index '{attribute[1]}' is negative, please provide a positive index or zero")    
+                            Index = 0
+                    except:
+                        self.logger.warning(f"Index '{attribute[1]}' is not a positive integer")
+                        Index = 0
+                    try:
+                        Key = attribute[2] if len(attribute)>2 else 'Value'
+                    except:
+                        pass
+                    if not Key in ['Value', 'Unit']: 
+                        self.logger.warning(f"Key should be either 'Value' or 'Unit' but is '{Key}', change to 'Value'")
+                        Key = 'Value'
+                        
                     Converter = attribute[3] if len(attribute)>3 else ''
                     try:
                         itemValue = Values[Index][Key]
                         itemValue = self._convert_value(itemValue, Converter )
-                        item(itemValue, 'DLMS')
+                        item(itemValue, self.get_shortname())
                         self.logger.debug(f"Set item {item} for Obis Code {Code} to Value {itemValue}")
                     except IndexError as e:
                         self.logger.warning(f"Index Error '{str(e)}' while setting item {item} for Obis Code {Code} to Value "
@@ -286,6 +306,43 @@ class DLMS(SmartPlugin, conversion.Conversion):
                     except NameError as e:
                         self.logger.warning(f"Name error '{str(e)}' while setting item {item} for Obis Code {Code} to "
                                             "Key '{Key}' in '{Values[Index]}'")
+
+    def _split_header( self, readout, break_at_eod = True):
+        """if there is an empty line at second position within readout then seperate this"""
+        header = ''
+        obis = []
+        endofdata_count = 0
+        for linecount, line in enumerate(readout.splitlines()):
+            if linecount == 0 and line.startswith("/"):
+                has_header = True
+                header = line
+                continue
+
+            # an empty line separates the header from the codes, it must be suppressed here
+            if len(line) == 0 and linecount == 1 and has_header:
+                continue
+
+            # if there is an empty line other than directly after the header
+            # it is very likely that there is a faulty obis readout.
+            # It might be that checksum is disabled an thus no error could be catched
+            if len(line) == 0:
+                self.logger.error("An empty line was encountered unexpectedly!")
+                break
+
+            # '!' as single OBIS code line means 'end of data'
+            if line.startswith("!"):
+                self.logger.debug("No more data available to read")
+                if endofdata_count:
+                    self.logger.debug("Found {endofdata_count} end of data marker '!' in readout")
+                    if break_at_eod:    # omit the rest of data here
+                        break
+                endofdata_count +=1
+            else:
+                obis.append(line)
+        return header, obis
+
+
+
 
     def _update_values(self, readout):
         """
@@ -303,19 +360,10 @@ class DLMS(SmartPlugin, conversion.Conversion):
         self._update_dlms_obis_readout_items(readout)
         self.logger.debug(f"readout size is {len(readout)}")
 
+        header, obis = self._split_header(readout)
+
         try:
-            for line in re.split('\r\n', readout):
-                # '!' as single OBIS code line means 'end of data'
-                if line.startswith("!"):
-                    self.logger.debug("No more data available to read")
-                    break
-
-                # if there is an empty line it is very likely that an error occurred.
-                # It might be that checksum is disabled an thus no error could be catched
-                if len(line) == 0:
-                    self.logger.error("An empty line was encountered!")
-                    break
-
+            for line in obis:
                 # Now check if we can split between values and OBIS code
                 arguments = line.split('(')
                 if len(arguments)==1:

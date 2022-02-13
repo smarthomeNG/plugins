@@ -1,0 +1,148 @@
+{% extends "base_plugin.html" %}
+
+{% set logo_frame = false %}
+
+<!-- set update_interval to a value > 0 (in milliseconds) to enable periodic data updates -->
+{% set update_interval = 0 %}
+
+<!--
+	Additional script tag for plugin specific javascript code go into this block
+-->
+{% block pluginscripts %}
+<script>
+	function handleUpdatedData(response, dataSet=null) {
+		if (dataSet === 'devices_info' || dataSet === null) {
+			var objResponse = JSON.parse(response);
+			myProto = document.getElementById(dataSet);
+			for (var device in objResponse) {
+				<!--
+				shngInsertText (device+'_source', objResponse[device]['source']);
+				shngInsertText (device+'_powerState', objResponse[device]['powerState']);
+				-->
+			}
+		}
+	}
+</script>
+{% endblock pluginscripts %}
+
+
+{% block headtable %}
+<table class="table table-striped table-hover">
+	<tbody>
+		<tr>
+			<td class="py-1"><strong>Class</strong></td>
+			<td class="py-1">{{ classname }}</td>
+			<td class="py-1" width="50px"></td>
+			<td class="py-1"><strong>-</strong></td>
+			<td class="py-1">-</td>
+			<td class="py-1" width="50px"></td>
+		</tr>
+		<tr>
+			<td class="py-1"><strong>Cycle</strong></td>
+			<td class="py-1">{{ cycle }}</td>
+			<td></td>
+			<td class="py-1"><strong>-</strong></td>
+			<td class="py-1">-</td>
+			<td></td>
+		</tr>
+		<tr>
+			<td class="py-1"><strong>Pfad</strong></td>
+			<td class="py-1">{{ dirname }}</td>
+			<td></td>
+			<td class="py-1"><strong>-</strong></td>
+			<td class="py-1">-</td>
+			<td></td>
+		</tr>
+	</tbody>
+</table>
+{% endblock headtable %}
+
+
+<!--
+	Additional buttons for the web interface (if any are needed) - displayed below the headtable-section
+-->
+{% block buttons %}
+	<div>
+        <button type="button" class="btn btn-shng btn-sm" onclick="if (confirm('{{ _('Wollen Sie die Sensoren aktualisieren?') }}')) { jQuery.get('update_sensors'); }">{{ _('Update Sensors') }}</button>
+		<!-- <button id="btn1" class="btn btn-shng btn-sm" name="scan" onclick="shngPost('', {learn: 'on'})"><i class="fas fa-question"></i>&nbsp;&nbsp;&nbsp;{{ _('nach Devices suchen') }}&nbsp;</button> -->
+	</div>
+{% endblock %}
+
+<!--
+	Define the number of tabs for the body of the web interface (1 - 3)
+-->
+{% set tabcount = 2 %}
+
+
+<!--
+	Set the tab that will be visible on start, if another tab that 1 is wanted (1 - 3)
+-->
+{% if item_count==0 %}
+	{% set start_tab = 2 %}
+{% endif %}
+
+
+<!--
+	Content block for the first tab of the Webinterface
+-->
+{% set tab1title = "<strong>" ~ p.get_shortname() ~ " Items</strong> (" ~ len(items) ~ ")" %}
+{% block bodytab1 %}
+<div class="table-responsive" style="margin-left: 3px; margin-right: 3px;" class="row">
+    <div class="col-sm-12">
+        <table class="table table-striped table-hover pluginList">
+            <thead>
+                <tr>
+                    <th>{{ _('Item') }}</th>
+                    <th>{{ _('Typ') }}</th>
+                    <th>{{ _('Wert') }}</th>
+                    <th>{{ _('Aktualisiert') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                    <tr>
+                        <td class="py-1">{{ item._path }}</td>
+                        <td class="py-1">{{ item._type }}</td>
+                        <td class="py-1">{{ item._value }}</td>
+                        <td class="py-1">{{ item.property.last_update }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock bodytab1 %}
+
+
+<!--
+	Content block for the second tab of the Webinterface
+-->
+{% set tab2title = "<strong>" ~ p.get_shortname() ~ " Sensoren</strong> (" ~ p.anz_sensors ~ ")" %}
+{% block bodytab2 %}
+<div class="table-responsive" style="margin-left: 3px; margin-right: 3px;" class="row">
+    <div class="col-sm-12">
+        <table class="table table-striped table-hover pluginList">
+            <thead>
+                <tr>
+                    <th>{{ _('Name') }}</th>
+                    <th>{{ _('id') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for name in sensors %}
+                    <tr>
+                        <td class="py-1">{{ name }}</td>
+                        <td class="py-1">{{ sensors[name] }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock bodytab2 %}
+
+
+
+
+

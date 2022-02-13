@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
-#  Copyright 2021 De Filippis Ivan
+#  Copyright 2022 De Filippis Ivan
 #########################################################################
 #  This file is part of SmartHomeNG.   
 #
@@ -23,14 +23,15 @@
 #
 #########################################################################
 
-import threading
-
 from lib.model.smartplugin import *
 from lib.item import Items
 from datetime import datetime
 
+from .webif import WebInterface
+
 from pymodbus.constants import Endian
 from pymodbus.payload import BinaryPayloadDecoder
+from pymodbus.payload import BinaryPayloadBuilder
 from pymodbus.client.sync import ModbusTcpClient
 
 AttrAddress = 'modBusAddress'
@@ -38,9 +39,13 @@ AttrType = 'modBusDataType'
 AttrFactor = 'modBusFactor'
 AttrByteOrder = 'modBusByteOrder'
 AttrWordOrder = 'modBusWordOrder'
+AttrSlaveUnit = 'modBusUnit'
+AttrObjectType = 'modBusObjectType'
+AttrDirection = 'modBusDirection'
 
 class modbus_tcp(SmartPlugin):
-    PLUGIN_VERSION = '1.0.1'
+    ALLOW_MULTIINSTANCE = True
+    PLUGIN_VERSION = '1.0.6'
 
     def __init__(self, sh, *args, **kwargs):
         """
@@ -48,57 +53,29 @@ class modbus_tcp(SmartPlugin):
         :param sh:  The instance of the smarthome object, save it for later references
         """
         
+        self.logger.info('Init modbus_tcp plugin')
+        
+        # Call init code of parent class (SmartPlugin)
+        super().__init__()
+        
         self._host = self.get_parameter_value('host')
         self._port = int(self.get_parameter_value('port'))
         self._cycle = int(self.get_parameter_value('cycle'))
         self._slaveUnit = int(self.get_parameter_value('slaveUnit'))
+        self._slaveUnitRegisterDependend = False
         
         self._sh = sh
-        self.logger = logging.getLogger(__name__)
-        self._lock = threading.Lock()
-        self.connected = False
         self._regToRead = {}
+        self._regToWrite = {}
         self._pollStatus = {}
+        self.connected = False
         
-        self._sh.connections.monitor(self)  # damit connect ausgeführt wird
-        self.init_webinterface()
+        self._Mclient = ModbusTcpClient(self._host, port=self._port)
+        
+        self.init_webinterface(WebInterface)
         
         return
 
-    def connect(self):
-        """
-        method to connecto to the ModbusTcpClient
-        """
-        if self.connected:
-            return True
-        self._lock.acquire()
-        try:
-            self._Mclient = ModbusTcpClient(self._host, port=self._port)
-            if self._Mclient.connect():
-                self.connected = True
-                self.logger.info("connected to {0}".format(str(self._Mclient)))
-            else:
-                self.connected = False
-                self.logger.debug("could not connect to {0}:{1}".format(self._host, self._port))
-        except Exception as e:
-            self.connected = False
-            self.logger.error("connection expection: {0} {1}".format(str(self._Mclient), e))
-            return
-        finally:
-            self._lock.release()
-
-    def disconnect(self):
-        """
-        method to disconnect the ModbusTcpClient
-        """
-        if self.connected:
-            try:
-                self._Mclient.close()
-                self.logger.debug("connection closed {0}".format(str(self._Mclient)))
-                self.connected = False
-            except:
-                pass
-    
     def run(self):
         """
         Run method for the plugin
@@ -111,8 +88,10 @@ class modbus_tcp(SmartPlugin):
         Stop method for the plugin
         """
         self.alive = False
+        self.logger.debug("stop modbus_tcp plugin")
         self.scheduler_remove('modbusTCP_poll_device')
-        self.disconnect()
+        self._Mclient.close()
+        self.connected = False
         
     def parse_item(self, item):
         """
@@ -123,15 +102,35 @@ class modbus_tcp(SmartPlugin):
         :param item:    The item to process.
         """
         if self.has_iattr(item.conf, AttrAddress):
+            self.logger.debug("parse item: {0}".format(item))
             regAddr = int(self.get_iattr_value(item.conf, AttrAddress))
+            
+            objectType = 'HoldingRegister'
             value = item()
             dataType = 'uint16'
             factor = 1
             byteOrder = 'Endian.Big'
             wordOrder = 'Endian.Big'
-            self.logger.debug("parse read item: {0}".format(item))
+            slaveUnit = self._slaveUnit
+            dataDirection = 'read'
+            
             if self.has_iattr(item.conf, AttrType):
                 dataType = self.get_iattr_value(item.conf, AttrType)
+            if self.has_iattr(item.conf, AttrSlaveUnit):
+                slaveUnit = int(self.get_iattr_value(item.conf, AttrSlaveUnit))
+                if (slaveUnit) != self._slaveUnit:
+                    self._slaveUnitRegisterDependend = True
+            if self.has_iattr(item.conf, AttrObjectType):
+                objectType = self.get_iattr_value(item.conf, AttrObjectType)
+                
+            reg = str(objectType)   # dictionary key: objectType.regAddr.slaveUnit // HoldingRegister.528.1
+            reg += '.'
+            reg += str(regAddr)
+            reg += '.'
+            reg += str(slaveUnit)
+            
+            if self.has_iattr(item.conf, AttrDirection):
+                dataDirection = self.get_iattr_value(item.conf, AttrDirection)
             if self.has_iattr(item.conf, AttrFactor):
                 factor = float(self.get_iattr_value(item.conf, AttrFactor))
             if self.has_iattr(item.conf, AttrByteOrder):
@@ -144,17 +143,28 @@ class modbus_tcp(SmartPlugin):
                 byteOrder = Endian.Little
             else:
                 byteOrder = Endian.Big
-                self.logger.error("Invalid byte order -> default(Endian.Big) is used : {0}".format(regParameters['byteOrder']))
+                self.logger.warning("Invalid byte order -> default(Endian.Big) is used")
             if wordOrder == 'Endian.Big':   # Von String in Endian-Konstante "umwandeln"
                 wordOrder = Endian.Big
             elif wordOrder == 'Endian.Little':
                 wordOrder = Endian.Little
             else:
                 wordOrder = Endian.Big
-                self.logger.error("Invalid byte order -> default(Endian.Big) is used : {0}".format(regParameters['wordOrder']))    
+                self.logger.warning("Invalid byte order -> default(Endian.Big) is used")    
                 
-            regPara = {'dataType': dataType, 'factor': factor, 'byteOrder': byteOrder, 'wordOrder': wordOrder, 'item': item, 'value': value }
-            self._regToRead.update({regAddr: regPara})
+            regPara = {'regAddr': regAddr, 'slaveUnit': slaveUnit, 'dataType': dataType, 'factor': factor, 'byteOrder': byteOrder, 
+                       'wordOrder': wordOrder, 'item': item, 'value': value, 'objectType': objectType, 'dataDir': dataDirection }
+            if dataDirection == 'read':
+                self._regToRead.update({reg: regPara})
+                self.logger.info("parse item: {0} Attributes {1}".format(item, regPara))
+            elif dataDirection == 'read_write':
+                self._regToRead.update({reg: regPara})
+                self._regToWrite.update({reg: regPara})
+                self.logger.info("parse item: {0} Attributes {1}".format(item, regPara))
+                return self.update_item
+            else:
+                 self.logger.warning("Invalid data direction -> default(read) is used") 
+                 self._regToRead.update({reg: regPara})
             
     def poll_device(self):
         """
@@ -164,19 +174,33 @@ class modbus_tcp(SmartPlugin):
         changes on it's own, but has to be polled to get the actual status.
         It is called by the scheduler which is set within run() method.
         """
+        try:
+            if self._Mclient.connect():
+                self.logger.info("connected to {0}".format(str(self._Mclient)))
+                self.connected = True
+            else:
+                self.logger.error("could not connect to {0}:{1}".format(self._host, self._port))
+                self.connected = False
+                return
+                
+        except Exception as e:
+            self.logger.error("connection expection: {0} {1}".format(str(self._Mclient), e))
+            self.connected = False
+            return
+            
         startTime = datetime.now()
         regCount = 0
         try:
-            self.connect()
-            for regAddr, regPara in self._regToRead.items():
-                value = self.__read_Registers(regAddr, regPara)
+            for reg, regPara in self._regToRead.items():
+                regAddr = regPara['regAddr']
+                value = self.__read_Registers(regPara)
                 #self.logger.debug("value readed: {0} type: {1}".format(value, type(value)))
                 if value is not None:
                     item = regPara['item']
                     if regPara['factor'] != 1:
                         value = value * regPara['factor']
                         #self.logger.debug("value {0} multiply by: {1}".format(value, regPara['factor']))
-                    item(value)
+                    item(value, self.get_fullname())
                     regCount+=1
                     
                     if 'read_dt' in regPara:
@@ -195,155 +219,275 @@ class modbus_tcp(SmartPlugin):
             self.logger.debug("poll_device: {0} register readed requed-time: {1}".format(regCount, duration))
         except Exception as e:
             self.logger.error("something went wrong in the poll_device function: {0}".format(e))
-        # finally:
-            # self.disconnect()
+        finally:
+            self._Mclient.close()
+            #self.connected = False
         
-    def __read_Registers(self, address, regParameters):
-        dataTypeStr = regParameters['dataType']
+     # called each time an item changes.
+    def update_item(self, item, caller=None, source=None, dest=None):
+        """
+        Item has been updated
+
+        This method is called, if the value of an item has been updated by SmartHomeNG.
+        It should write the changed value out to the device (hardware/interface) that
+        is managed by this plugin.
+
+        :param item: item to be updated towards the plugin
+        :param caller: if given it represents the callers name
+        :param source: if given it represents the source
+        :param dest: if given it represents the dest
+        """
+        objectType = 'HoldingRegister'
+        slaveUnit = self._slaveUnit
+        dataDirection = 'read'
         
-        bo = regParameters['byteOrder']         
-        wo = regParameters['wordOrder']
+        
+        if caller == self.get_fullname():
+            #self.logger.debug('item was changed by the plugin itself - caller:{0} source:{1} dest:{2} '.format(caller, source, dest))
+            return
+
+        if self.has_iattr(item.conf, AttrDirection):
+            dataDirection = self.get_iattr_value(item.conf, AttrDirection)
+            if not dataDirection == 'read_write':
+                self.logger.debug('update_item:{0} Writing is not allowed - selected dataDirection:{1}'.format(item, dataDirection))
+                return
+            #else:
+            #    self.logger.debug('update_item:{0} dataDirection:{1}'.format(item, dataDirection))
+            if self.has_iattr(item.conf, AttrAddress):
+                regAddr = int(self.get_iattr_value(item.conf, AttrAddress))
+            else:
+                self.logger.warning('update_item:{0} Item has no register address'.format(item))
+                return
+            if self.has_iattr(item.conf, AttrSlaveUnit):
+                slaveUnit = int(self.get_iattr_value(item.conf, AttrSlaveUnit))
+                if (slaveUnit) != self._slaveUnit:
+                    self._slaveUnitRegisterDependend = True
+            if self.has_iattr(item.conf, AttrObjectType):
+                objectType = self.get_iattr_value(item.conf, AttrObjectType)
+            else:
+                return
+            
+            reg = str(objectType)   # Dict-key: HoldingRegister.528.1 *** objectType.regAddr.slaveUnit ***
+            reg += '.'
+            reg += str(regAddr)
+            reg += '.'
+            reg += str(slaveUnit)
+            if reg in self._regToWrite:
+                regPara = self._regToWrite[reg]
+                self.logger.debug('update_item:{0} value:{1} regToWrite:{2}'.format(item, item(), reg))
+                try:
+                    if self._Mclient.connect():
+                        self.logger.info("connected to {0}".format(str(self._Mclient)))
+                        self.connected = True
+                    else:
+                        self.logger.error("could not connect to {0}:{1}".format(self._host, self._port))
+                        self.connected = False
+                        return
+                        
+                except Exception as e:
+                    self.logger.error("connection expection: {0} {1}".format(str(self._Mclient), e))
+                    self.connected = False
+                    return
+                    
+                startTime = datetime.now()
+                regCount = 0
+                try:
+                    self.__write_Registers(regPara, item())
+                except Exception as e:
+                    self.logger.error("something went wrong in the __write_Registers function: {0}".format(e))
+                finally:
+                    self._Mclient.close()
+                
+    def __write_Registers(self, regPara, value):
+        objectType = regPara['objectType']
+        address = regPara['regAddr']
+        slaveUnit = regPara['slaveUnit']
+        bo = regPara['byteOrder']         
+        wo = regPara['wordOrder']
+        dataTypeStr = regPara['dataType']
+        dataType = ''.join(filter(str.isalpha, dataTypeStr))    # vom dataType die Ziffen entfernen z.B. uint16 = uint
+        registerCount = 0   # Anzahl der zu schreibenden Register (Words)
+        
+        try:
+            bits = int(''.join(filter(str.isdigit, dataTypeStr)))  # bit-Zahl aus aus dataType z.B. uint16 = 16
+        except:
+            bits = 16
+            
+        if dataType.lower() == 'string':    
+            registerCount = int(bits/2)  # bei string: bits = bytes !! string16 -> 16Byte - 8 registerCount
+        else:
+            registerCount = int(bits/16)
+        
+        if regPara['factor'] != 1:
+            #self.logger.debug("value {0} divided by: {1}".format(value, regPara['factor']))
+            value = value * (1/regPara['factor'])
+        
+        self.logger.debug("write {0} to {1}.{2}.{3} (address.slaveUnit) dataType:{4}".format(value, objectType, address, slaveUnit, dataTypeStr))
+        builder = BinaryPayloadBuilder(byteorder=bo,wordorder=wo)
+        
+        if dataType.lower() == 'uint':
+            if bits == 16:
+                builder.add_16bit_uint(int(value))
+            elif bits == 32:
+                builder.add_32bit_uint(int(value))
+            elif bits == 64:
+                builder.add_64bit_uint(int(value))
+            else:
+                self.logger.error("Number of bits or datatype not supportet : {0}".format(typeStr))
+        elif dataType.lower() == 'int':
+            if bits == 16:
+                builder.add_16bit_int(int(value))
+            elif bits == 32:
+                builder.add_32bit_int(int(value))
+            elif bits == 64:
+                builder.add_64bit_int(int(value))
+            else:
+                self.logger.error("Number of bits or datatype not supportet : {0}".format(typeStr))
+        elif dataType.lower() == 'float':
+            if bits == 32:
+                 builder.add_32bit_float(value)
+            if bits == 64:
+                 builder.add_64bit_float(value)
+            else:
+                self.logger.error("Number of bits or datatype not supportet : {0}".format(typeStr))
+        elif dataType.lower() == 'string':
+            builder.add_string(value)
+        elif dataType.lower() == 'bit':
+            if objectType == 'Coil' or objectType == 'DiscreteInput':
+                if not type(value) == type(True):   # test is boolean
+                    self.logger.error("Value is not boolean: {0}".format(value))
+                    return 
+            else:
+                if set(bitstr).issubset({'0', '1'}) and bool(bitstr):   # test is bit-string '00110101'
+                    builder.add_bits(value)
+                else:
+                    self.logger.error("Value is not a bitstring: {0}".format(value))
+        else:
+            self.logger.error("Number of bits or datatype not supportet : {0}".format(typeStr))
+            return None
+        
+        if objectType == 'Coil':
+            result = self._Mclient.write_coil(address, value, unit=slaveUnit)
+        elif objectType == 'HoldingRegister':
+            registers = builder.to_registers()
+            result = self._Mclient.write_registers(address, registers, unit=slaveUnit)
+        elif objectType == 'DiscreteInput':
+            self.logger.warning("this object type cannot be written {0}:{1} slaveUnit:{2}".format(objectType, address, slaveUnit))
+            return
+        elif objectType == 'InputRegister':
+            self.logger.warning("this object type cannot be written {0}:{1} slaveUnit:{2}".format(objectType, address, slaveUnit))
+            return
+        else:
+            return
+        if result.isError():
+            self.logger.error("write error: {0} {1}.{2}.{3} (address.slaveUnit)".format(result, objectType, address, slaveUnit))
+            return None
+        
+        if 'write_dt' in regPara:
+            regPara['last_write_dt'] = regPara['write_dt']
+            regPara['write_dt'] = datetime.now()
+        else:
+            regPara.update({'write_dt': datetime.now()})
+                    
+        if 'write_value' in regPara:
+            regPara['last_write_value'] = regPara['write_value']
+            regPara['write_value'] = value
+        else:
+            regPara.update({'write_value': value})
+                    
+        #regPara['write_dt'] = datetime.now()
+        #regPara['write_value'] = value
+        
+    
+    def __read_Registers(self, regPara):
+        objectType = regPara['objectType']
+        dataTypeStr = regPara['dataType']
         dataType = ''.join(filter(str.isalpha, dataTypeStr))
+        bo = regPara['byteOrder']         
+        wo = regPara['wordOrder']
+        slaveUnit = regPara['slaveUnit']
+        registerCount = 0
+        address = regPara['regAddr']
+        value = None
+        
         try:
             bits = int(''.join(filter(str.isdigit, dataTypeStr)))   
         except:
             bits = 16
             
         if dataType.lower() == 'string':    
-            words = int(bits/2)  # bei string: bits = bytes !! string16 -> 16Byte - 8 words
+            registerCount = int(bits/2)  # bei string: bits = bytes !! string16 -> 16Byte - 8 registerCount
         else:
-            words = int(bits/16)
-        #self.logger.debug("read register:{0} words:{1} slaveUnit:{2}".format(address, words, self._slaveUnit))
-        result = self._Mclient.read_holding_registers(address, words, unit=self._slaveUnit)
-        #self.logger.debug("read result: {0} ".format(result))
-        value = BinaryPayloadDecoder.fromRegisters(result.registers, byteorder=bo,wordorder=wo)
+            registerCount = int(bits/16)
+        
+        if self.connected == False:
+            self.logger.error(" not connect {0}:{1}".format(self._host, self._port))
+            return None
+            
+        #self.logger.debug("read {0}.{1}.{2} (address.slaveUnit) regCount:{3}".format(objectType, address, slaveUnit, registerCount))
+        if objectType == 'Coil':
+            result = self._Mclient.read_coils(address, registerCount, unit=slaveUnit)
+        elif objectType == 'DiscreteInput':
+            result = self._Mclient.read_discrete_inputs(address, registerCount, unit=slaveUnit)
+        elif objectType == 'InputRegister':
+            result = self._Mclient.read_input_registers(address, registerCount, unit=slaveUnit)
+        elif objectType == 'HoldingRegister':
+            result = self._Mclient.read_holding_registers(address, registerCount, unit=slaveUnit)
+        else:
+            self.logger.error("{0} not supported: {1}".format(AttrObjectType, objectType))
+            return None
+        
+        if result.isError():
+            self.logger.error("read error: {0} {1}.{2}.{3} (address.slaveUnit) regCount:{4}".format(result, objectType, address, slaveUnit, registerCount))
+            return None
+            
+        if objectType == 'Coil':
+            value = result.bits[0]
+        elif objectType == 'DiscreteInput':
+            value = result.bits[0]
+        elif objectType == 'InputRegister':
+            decoder = BinaryPayloadDecoder.fromRegisters(result.registers, byteorder=bo,wordorder=wo)
+        else:
+            decoder = BinaryPayloadDecoder.fromRegisters(result.registers, byteorder=bo,wordorder=wo)
+            
+        self.logger.debug("read {0}.{1}.{2} (address.slaveUnit) regCount:{3} result:{4}".format(objectType, address, slaveUnit, registerCount, result))
         
         if dataType.lower() == 'uint':
             if bits == 16:
-                return value.decode_16bit_uint()
+                return decoder.decode_16bit_uint()
             elif bits == 32:
-                return value.decode_32bit_uint()
+                return decoder.decode_32bit_uint()
             elif bits == 64:
-                return value.decode_64bit_uint()
+                return decoder.decode_64bit_uint()
             else:
                 self.logger.error("Number of bits or datatype not supportet : {0}".format(typeStr))
         elif dataType.lower() == 'int':
             if bits == 16:
-                return value.decode_16bit_int()
+                return decoder.decode_16bit_int()
             elif bits == 32:
-                return value.decode_32bit_int()
+                return decoder.decode_32bit_int()
             elif bits == 64:
-                return value.decode_64bit_int()
+                return decoder.decode_64bit_int()
             else:
                 self.logger.error("Number of bits or datatype not supportet : {0}".format(typeStr))
         elif dataType.lower() == 'float':
             if bits == 32:
-                return value.decode_32bit_float()
+                return decoder.decode_32bit_float()
             if bits == 64:
-                return value.decode_64bit_float()
+                return decoder.decode_64bit_float()
             else:
                 self.logger.error("Number of bits or datatype not supportet : {0}".format(typeStr))
         elif dataType.lower() == 'string':
             # bei string: bits = bytes !! string16 -> 16Byte
-            ret = value.decode_string(bits)
+            ret = decoder.decode_string(bits)
             return str( ret, 'ASCII')
+        elif dataType.lower() == 'bit':
+            if objectType == 'Coil' or objectType == 'DiscreteInput':
+                #self.logger.debug("readed bit value: {0}".format(value))
+                return value
+            else:
+                self.logger.debug("readed bits values: {0}".format(value.decode_bits()))
+                return decoder.decode_bits()
         else:
             self.logger.error("Number of bits or datatype not supportet : {0}".format(typeStr))
         return None
-        
-    def init_webinterface(self):
-        """
-        Initialize the web interface for this plugin
-
-        This method is only needed if the plugin is implementing a web interface
-        """
-        try:
-            self.mod_http = Modules.get_instance().get_module('http')   # try/except to handle running in a core version that does not support modules
-        except:
-             self.mod_http = None
-        if self.mod_http == None:
-            self.logger.error("Plugin '{}': Not initializing the web interface".format(self.get_shortname()))
-            return False
-        
-        import sys
-        if not "SmartPluginWebIf" in list(sys.modules['lib.model.smartplugin'].__dict__):
-            self.logger.warning("Plugin '{}': Web interface needs SmartHomeNG v1.5 and up. Not initializing the web interface".format(self.get_shortname()))
-            return False
-
-        # set application configuration for cherrypy
-        webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
-        config = {
-            '/': {
-                'tools.staticdir.root': webif_dir,
-            },
-            '/static': {
-                'tools.staticdir.on': True,
-                'tools.staticdir.dir': 'static'
-            }
-        }
-        
-        # Register the web interface as a cherrypy app
-        self.mod_http.register_webif(WebInterface(webif_dir, self), 
-                                     self.get_shortname(), 
-                                     config, 
-                                     self.get_classname(), self.get_instance_name(),
-                                     description='')
-                                   
-        return True
-        
-# ------------------------------------------
-#    Webinterface of the plugin
-# ------------------------------------------
-import cherrypy
-from jinja2 import Environment, FileSystemLoader
-
-class WebInterface(SmartPluginWebIf):
-
-    def __init__(self, webif_dir, plugin):
-        """
-        Initialization of instance of class WebInterface
-        
-        :param webif_dir: directory where the webinterface of the plugin resides
-        :param plugin: instance of the plugin
-        :type webif_dir: str
-        :type plugin: object
-        """
-        self.logger = logging.getLogger(__name__)
-        self.webif_dir = webif_dir
-        self.plugin = plugin
-        self.tplenv = self.init_template_environment()
-        
-        self.items = Items.get_instance()
-
-    @cherrypy.expose
-    def index(self, reload=None):
-        """
-        Build index.html for cherrypy
-
-        Render the template and return the html file to be delivered to the browser
-
-        :return: contents of the template after beeing rendered
-        """
-        tmpl = self.tplenv.get_template('index.html')
-        return tmpl.render(plugin_shortname=self.plugin.get_shortname(), plugin_version=self.plugin.get_version(), plugin_info=self.plugin.get_info(),
-                           interface=None,
-                           p=self.plugin,
-                           _regToRead=sorted(self.plugin._regToRead, key=lambda k: int(k)),
-                           )
-
-    @cherrypy.expose
-    def triggerAction(self, path, value):
-        if path is None:
-            self.plugin.logger.error(
-                "Plugin '{}': Path parameter is missing when setting action item value!".format(self.get_shortname()))
-            return
-        if value is None:
-            self.plugin.logger.error(
-                "Plugin '{}': Value parameter is missing when setting action item value!".format(self.get_shortname()))
-            return
-        item = self.plugin.items.return_item(path)
-        item(int(value), caller=self.plugin.get_shortname(), source='triggerAction()')
-        return
-
-
-        

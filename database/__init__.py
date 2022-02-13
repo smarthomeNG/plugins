@@ -1148,6 +1148,16 @@ class Database(SmartPlugin):
             self.logger.warning("remove_older_than_maxage skipped as db is not connected")
             return
 
+        # prevent creation of more than one thread
+        current_thread = threading.current_thread()
+        current_thread_name = current_thread.name
+        for t in threading.enumerate():
+            if t is current_thread:
+                continue
+            if t.name == current_thread_name:
+                self.logger.info("remove_older_than_maxage skipped as thread with this task is already running")
+                return
+
         if self._maxage_worklist == []:
             # Fill work list, if it is empty
             self._maxage_worklist = [i for i in self._items_with_maxage]
@@ -1165,7 +1175,7 @@ class Database(SmartPlugin):
             return
         time_end = self.get_maxage_ts(item)
         timestamp_end = self._timestamp(time_end)
-        self.logger.debug("remove_older_than_maxage: item = {} remove older than {}".format(item, time_end))
+        self.logger.info("remove_older_than_maxage: item = {} remove older than {}".format(item, time_end))
 
         # delete Log entries, no direct commit - Commmit is done by the next call to _dump (to preserve SD cards)
         self.deleteLog(item_id, time_end=timestamp_end, with_commit=False)

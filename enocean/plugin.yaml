@@ -16,7 +16,7 @@ plugin:
     # url of the support thread
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/26542-featurewunsch-enocean-plugin/page13
 
-    version: 1.3.5                 # Plugin version
+    version: 1.3.6                 # Plugin version
     sh_minversion: 1.3             # minimum shNG version to use this plugin
     #sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
@@ -38,6 +38,14 @@ parameters:
             de: 'Unique-ID oder Base-ID des EnOcean Moduls (8-stelliger hex Wert, z.B. FFFF4680)'
             en: 'Unique-ID or Base-ID of the EnOcean Module (8-digit hex value, e.g. FFFF4680)'
         mandatory: 'True'
+
+    log_unknown_messages:
+        type: bool
+        description:
+            de: 'Nachrichten von unbekannten Geraeten ins logfile schreiben'
+            en: 'Log messages from unknown devices to logfile'
+        default: 'False'
+
 
 item_attributes:
     # Definition of item attributes defined by this plugin
@@ -104,7 +112,13 @@ item_attributes:
         valid_list:
         - 'FSUD-230V'
         - 'FUD61NPN-230V'
-        - 'FSUD-230V'
+        - 'FSVA-230V'
+        - 'FSM60B'
+        - 'FLD61'
+        - 'FUD70S-230V'
+        - 'FBH63TF'
+        - 'NodOn-STP-2-1-03'
+        - 'SecuSignal'
 
     block_switch:
         type: str

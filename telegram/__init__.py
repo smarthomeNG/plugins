@@ -679,7 +679,7 @@ class Telegram(SmartPlugin):
             text = ""
             for item in self._items_info[key]:
                 if item.type():
-                    text += f"{item.id()} = {item.id()}\n"
+                    text += f"{item.id()} = {item()}\n"
                 else:
                     text += f"{item.id()}\n"
             if not text:

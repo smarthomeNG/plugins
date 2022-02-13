@@ -11,8 +11,8 @@ plugin:
     keywords: weather precipation irrigation
     documentation: 'http://smarthomeng.de/user/plugins/openweathermap/user_doc.html'
     support: 'https://knx-user-forum.de/forum/supportforen/smarthome-py/1246998-support-thread-zum-openweathermap-plugin'
-    version: 1.8.3                # Plugin version
-    sh_minversion: 1.8.2d         # minimum shNG version to use this plugin
+    version: 1.8.4                # Plugin version
+    sh_minversion: 1.9.0          # minimum shNG version to use this plugin
 #    sh_maxversion:               # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True          # plugin supports multi instance
     restartable: unknown
@@ -64,10 +64,10 @@ parameters:
     cycle:
         type: int
         mandatory: False
-        default: 300
+        default: 900
         description:
-            de: '(optional) Zeit zwischen zwei Updateläufen. Default ist 300 Sekunden.'
-            en: '(optional) Time period between two update cycles. Default is 300 seconds.'
+            de: '(optional) Zeit zwischen zwei Updateläufen.'
+            en: '(optional) Time period between two update cycles.'
 
     softfail_precipitation:
         type: str
@@ -358,9 +358,6 @@ item_structs:
                 initial_value: 1
                 type: num
                 cache: yes
-
-
-
 
     locals:
         name: OpenWeatherMap local data
@@ -985,6 +982,45 @@ item_structs:
             type: str
             owm_matchstring@instance: alerts/0/description
 
+    airpollution:
+        name: OpenWeatherMap airpollution data
+
+        aqi:
+            name: AirQualityIndex
+            type: num
+            owm_matchstring@instance: airpollution/main/aqi
+        co:
+            name: CO Wert
+            type: num
+            owm_matchstring@instance: airpollution/components/co
+        no:
+            name: NO Wert
+            type: num
+            owm_matchstring@instance: airpollution/components/no
+        no2:
+            name: NO2 Wert
+            type: num
+            owm_matchstring@instance: airpollution/components/no2
+        o3:
+            name: O3 Wert
+            type: num
+            owm_matchstring@instance: airpollution/components/o3
+        so2:
+            name: SO2 Wert
+            type: num
+            owm_matchstring@instance: airpollution/components/so2
+        pm25:
+            name: Partikel 2-5µm
+            type: num
+            owm_matchstring@instance: airpollution/components/pm2_5
+        pm10:
+            name: Partikel 10µm
+            type: num
+            owm_matchstring@instance: airpollution/components/pm10
+        nh3:
+            name: NH3 Wert
+            type: num
+            owm_matchstring@instance: airpollution/components/nh3
 
     darksky2owm_locals:
         name: Locals report openweathermap matching item defined in darksky-plugin struct

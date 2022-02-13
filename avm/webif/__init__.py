@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
-#  Copyright 2020-     <AUTHOR>                                   <EMAIL>
+#  Copyright 2021-      Michael Wenzel              wenzel_michael@web.de
 #########################################################################
 #  This file is part of SmartHomeNG.
 #  https://www.smarthomeNG.de
@@ -25,10 +25,6 @@
 #
 #########################################################################
 
-import datetime
-import time
-import os
-
 from lib.item import Items
 from lib.model.smartplugin import SmartPluginWebIf
 
@@ -38,7 +34,6 @@ from lib.model.smartplugin import SmartPluginWebIf
 # ------------------------------------------
 
 import cherrypy
-import csv
 from jinja2 import Environment, FileSystemLoader
 
 class WebInterface(SmartPluginWebIf):
@@ -52,25 +47,25 @@ class WebInterface(SmartPluginWebIf):
         :type webif_dir: str
         :type plugin: object
         """
+        self.logger = plugin.logger
         self.webif_dir = webif_dir
         self.plugin = plugin
-        self.logger = plugin.logger
+        self.items = Items.get_instance()
+
         self.tplenv = self.init_template_environment()
 
     @cherrypy.expose
     def index(self, reload=None, action=None):
         """
         Build index.html for cherrypy
-
         Render the template and return the html file to be delivered to the browser
-
         :return: contents of the template after beeing rendered
         """
-        tabcount = 3
+        tabcount = 5
         call_monitor_items = 0
         if self.plugin._call_monitor:
             call_monitor_items = self.plugin._monitoring_service.get_item_count_total()
-            tabcount = 4
+            tabcount = 6
 
         tmpl = self.tplenv.get_template('index.html')
         return tmpl.render(plugin_shortname=self.plugin.get_shortname(), plugin_version=self.plugin.get_version(),

@@ -1,1 +1,1 @@
-requests
+garminconnect>=0.1.28

@@ -463,6 +463,13 @@ class Service:
             `requests.exceptions.HTTPError`: if an http error occurs.
 
         """
+        # Determine the timeout for the request: use the value of
+        # config.REQUEST_TIMEOUT unless overridden by 'timeout'
+        # being provided as a kwarg by the caller, in which case
+        # use this and remove it from kwargs.
+        timeout = kwargs.pop("timeout", config.REQUEST_TIMEOUT)
+        log.debug("Request timeout set to %s", timeout)
+
         if args is None:
             args = self.compose_args(action, kwargs)
         if cache is None:
@@ -471,6 +478,7 @@ class Service:
         if result is not None:
             log.debug("Cache hit")
             return result
+
         # Cache miss, so go ahead and make a network call
         headers, body = self.build_command(action, args)
         log.debug("Sending %s %s to %s", action, args, self.soco.ip_address)
@@ -480,7 +488,7 @@ class Service:
             self.base_url + self.control_url,
             headers=headers,
             data=body.encode("utf-8"),
-            timeout=20,
+            timeout=timeout,
         )
 
         log.debug("Received %s, %s", response.headers, response.text)

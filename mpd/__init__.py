@@ -3,7 +3,7 @@
 #########################################################################
 # Copyright 2013 Marcus Popp                               marcus@popp.mx
 #           2017 Nino Coric                        mail2n.coric@gmail.com
-#           2020 Bernd Meiners                      Bernd.Meiners@mail.de
+#           2020,2022 Bernd Meiners                 Bernd.Meiners@mail.de
 #########################################################################
 #  This file is part of SmartHomeNG.    https://github.com/smarthomeNG//
 #
@@ -32,7 +32,7 @@ from lib.network import Tcp_client
 
 class MPD(SmartPlugin):
 
-    PLUGIN_VERSION = "1.5.0"
+    PLUGIN_VERSION = "1.5.2"
     STATUS        = 'mpd_status'
     SONGINFO      = 'mpd_songinfo'
     STATISTIC     = 'mpd_statistic'
@@ -116,10 +116,13 @@ class MPD(SmartPlugin):
             return
 
         self.alive = True
-        self.scheduler_add('MPD', self.update_status, cycle=self._cycle)
+        self.scheduler_add('update_status', self.update_status, cycle=self._cycle)
 
     def stop(self):
         self.alive = False
+        # added to effect better cleanup on stop
+        if self.scheduler_get('update_status'):
+            self.scheduler_remove('update_status')
         self._client.close()
 
     def handle_connect(self):
@@ -175,7 +178,7 @@ class MPD(SmartPlugin):
             self.orphanItems = []
 
     def update_statusitems(self, warn):
-        if not self._client.connected:
+        if not self._client.connected():
             if warn:
                 self.loggercmd("update_status while not connected", 'e')
             return
@@ -188,7 +191,7 @@ class MPD(SmartPlugin):
         self.refreshItems(self._status_items, status, warn)
 
     def update_currentsong(self, warn):
-        if not self.connected:
+        if not self._client.connected():
             if warn:
                 self.loggercmd("update_currentsong while not connected", 'e')
             return
@@ -201,7 +204,7 @@ class MPD(SmartPlugin):
         self.refreshItems(self._currentsong_items, currentsong, warn)
 
     def update_statistic(self, warn):
-        if not self.connected:
+        if not self._client.connected():
             if warn:
                 self.loggercmd("update_statistic while not connected", 'e')
             return

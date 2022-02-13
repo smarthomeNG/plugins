@@ -13,7 +13,7 @@ plugin:
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1278068-unifi-controller-api-wlan
 
     version: 1.6.2                  # Plugin version
-    sh_minversion: 1.8.2a           # minimum shNG version to use this plugin
+    sh_minversion: 1.9.0            # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False           # plugin supports multi instance
     restartable: True
@@ -24,7 +24,6 @@ parameters:
     unifi_controller_url:
         type: str
         mandatory: True
-        default: ''
         description:
             de: 'Basis URL des Controller, z.B. https://unifi:8443'
             en: 'Base URL of the controller, e.g. https://unifi:8443'
@@ -32,14 +31,12 @@ parameters:
     unifi_user:
         type: str
         mandatory: True
-        default: ''
         description:
             de: 'Nutzername für den Login am Controller.'
             en: 'Login information (user).'
 
     unifi_password:
         type: str
-        mandatory: True
         default: ''
         hide: True
         description:
@@ -125,4 +122,3 @@ plugin_functions: NONE
 
 logic_parameters: NONE
     # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)
-

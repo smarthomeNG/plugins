@@ -3,11 +3,14 @@ plugin:
     # Global plugin attributes
     type: interface                   # plugin type (gateway, interface, protocol, system, web)
     description:
-        de: 'AVM Smarthome Plugin für DECT Steckdosen, Heizkörperthermostate DECT301 und Comet DECT und DECT Smart-Home-Sensor basierend auf HTTP GET Request'
-        en: 'AVM Smarthome Plugin for DECT sockes, smart radiator control DECT301 and Comet DECT and DECT smart home sensors based on HTTP GET Request'
+        de: 'AVM Smarthome Plugin für DECT Steckdosen, Heizkörperthermostate DECT301 und Comet DECT und DECT \
+             Smart-Home-Sensor basierend auf HTTP GET Request - \
+             Diese Funktionalität wurde inzwischen in das avm Plugin integriert'
+        en: 'AVM Smarthome Plugin for DECT sockes, smart radiator control DECT301 and Comet DECT and DECT smart home\
+             sensors based on HTTP GET Request - In the meantime this functionality has been included in the acm plugin'
     maintainer: Michael Wenzel
 #    tester:                         # Who tests this plugin?
-    state: develop                  # change to ready when done with development
+    state: deprecated                # change to ready when done with development
     keywords: avm, fritzbox, dect
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
 #    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
@@ -27,7 +30,7 @@ parameters:
         description:
             de: '(optional) Zeit zwischen zwei Updateläufen. Default ist 300 Sekunden.'
             en: '(optional) Time period between two update cycles. Default is 300 seconds.'
-   
+
     username:
         type: str
         default: ''
@@ -202,13 +205,13 @@ item_structs:
             enforce_updates: yes
         set_switch_state:
             avm_smarthome_data: set_switch_state
-            type: bool        
+            type: bool
 
 plugin_functions: NONE
     # Definition of plugin functions defined by this plugin (enter 'plugin_functions: NONE', if section should be empty)
 
 logic_parameters: NONE
     # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)
-    
+
 
 

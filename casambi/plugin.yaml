@@ -12,7 +12,7 @@ plugin:
 #   documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1496182-supportthread-f%C3%BCr-casambi-plugin
 
-    version: 1.7.4                  # Plugin version (must match the version specified in __init__.py)
+    version: 1.7.5                  # Plugin version (must match the version specified in __init__.py)
     sh_minversion: 1.7              # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False           # plugin supports multi instance

@@ -216,7 +216,7 @@ class SubscriptionHandler(object):
                 if self._thread:
                     self.logger.info("Debug: Preparing to terminate thread")
                     self._thread.join(2)
-                    if not self._thread.isAlive(): 
+                    if not self._thread.is_alive(): 
                         self.logger.info("Debug: Thread killed") 
                     else:
                         self.logger.warning("Debug: Thread is still alive") 
@@ -2355,7 +2355,7 @@ class Speaker(object):
 
 class Sonos(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.6.0"
+    PLUGIN_VERSION = "1.6.2"
 
     def __init__(self, sh, *args, **kwargs):
         super().__init__(**kwargs)

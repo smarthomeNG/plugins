@@ -46,7 +46,7 @@ class OpenWeatherMapNoValueSoftException(Exception):
 
 
 class OpenWeatherMap(SmartPlugin):
-    PLUGIN_VERSION = "1.8.3"
+    PLUGIN_VERSION = "1.8.4"
 
     _base_url = 'https://api.openweathermap.org/%s'
     _base_img_url = 'https://tile.openweathermap.org/map/%s/%s/%s/%s.png?appid=%s'
@@ -446,7 +446,7 @@ class OpenWeatherMap(SmartPlugin):
                         self.logger.info(
                             "%s INFO: owm-string: %s --> %s from wrk=%s, Info: %s" % (item, owm_matchstring, changed_match_string, wrk_typ, ret_val))
                     elif isinstance(ret_val, Exception):
-                        self.logger.error(
+                        self.logger.info(
                             "%s ERROR: owm-string: %s --> %s from wrk=%s, Error: %s" % (item, owm_matchstring, changed_match_string, wrk_typ, ret_val))
                     else:
                         item(ret_val, self.get_shortname(),

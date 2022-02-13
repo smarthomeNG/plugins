@@ -27,6 +27,7 @@ import time
 from bin.smarthome import VERSION
 import RPi.GPIO as PiGPIO
 from lib.utils import Utils
+from .webif import WebInterface
 
 
 class GPIO(SmartPlugin, Utils):
@@ -34,7 +35,7 @@ class GPIO(SmartPlugin, Utils):
     Main class of the plugin.
     '''
 
-    PLUGIN_VERSION = '1.5.1'
+    PLUGIN_VERSION = '1.5.2'
     ALLOW_MULTIINSTANCE = False
 
     def __init__(self, sh):
@@ -44,10 +45,11 @@ class GPIO(SmartPlugin, Utils):
         super().__init__()
         if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
             self.logger = logging.getLogger(__name__)
-        self.init_webinterface()
+        self.init_webinterface(WebInterface)
 
         try:
             # initialize variables
+            self._item_values = {'in': {}, 'out': {}}
             self.alive = False
             self._items = []
             self._itemsdict = {}
@@ -72,7 +74,9 @@ class GPIO(SmartPlugin, Utils):
                 PiGPIO.setmode(PiGPIO.BCM)
             else:
                 PiGPIO.setmode(PiGPIO.BOARD)
-            self.logger.debug('Mode set to {}, bouncetime is {}, {}'.format(self._mode, self._bouncetime, self._get_pud_msg(self._pullupdown, 'global ')))
+            updown = self._get_pud_msg(self._pullupdown, 'global ')
+            self.logger.debug(f'Mode set to {self._mode}, bouncetime is {self._bouncetime}, {updown}')
+
 
         except Exception:
             self._init_complete = False
@@ -90,9 +94,9 @@ class GPIO(SmartPlugin, Utils):
         try:
             value = PiGPIO.input(pin)
             self._itemsdict[pin](value ^ self._is_item_inverted(None, pin), self.get_shortname(), 'pin_change')
-            self.logger.info('Read pin {} with value {} after event_detection'.format(pin, value))
+            self.logger.info(f'Read pin {pin} with value {value} after event_detection')
         except Exception as e:
-            self.logger.error('Problem reading pin {} after event_detection'.format(e))
+            self.logger.error(f'Problem reading pin {pin} after event_detection: {e}')
 
     def run(self):
         '''
@@ -115,18 +119,18 @@ class GPIO(SmartPlugin, Utils):
                     time.sleep(1)
                     try:
                         PiGPIO.add_event_detect(pin, PiGPIO.BOTH, callback=self.process_gpio_event, bouncetime=self._bouncetime)
-                        self.logger.info('Adding event detection for input pin {}, initial value is {}'.format(pin, item()))
+                        self.logger.info(f'Adding event detection for input pin {pin}, initial value is {item()}')
                     except RuntimeError as err:
-                        self.logger.warning('Problem adding event detection for input pin {}: {}. Retry {}/{}'.format(pin, err, attempt + 1, self._initretries))
+                        self.logger.warning(f'Problem adding event detection for input pin {pin}: RuntimeError {err}. Retry {attempt + 1}/{self._initretries}')
                         time.sleep(2)
                     except ValueError as err:
-                        self.logger.warning('Problem adding event detection for input pin {}: {}. Retry {}/{}'.format(pin, err, attempt + 1, self._initretries))
-                        break
+                        self.logger.warning(f'Problem adding event detection for input pin {pin}: ValueError {err}. Retry {attempt + 1}/{self._initretries}')
+                    except Exception as err:
+                        self.logger.warning(f'Problem adding event detection for input pin {pin}: {err}. Retry {attempt + 1}/{self._initretries}')
                     else:
-                        self.logger.warning('Unspecific problem adding event detection for input pin {}. Retry {}/{}'.format(pin, attempt + 1, self._initretries))
                         break
                 else:
-                    self.logger.error('Not adding event detection for input pin {}, given up'.format(pin))
+                    self.logger.error(f'Not adding event detection for input pin {pin}, given up')
         self.alive = True
 
     def stop(self):
@@ -134,6 +138,7 @@ class GPIO(SmartPlugin, Utils):
         Stop method for the plugin
         '''
         self.alive = False
+        self._item_values = {'in': {}, 'out': {}}
 
         # reset used ouput pins
         PiGPIO.cleanup()
@@ -186,9 +191,10 @@ class GPIO(SmartPlugin, Utils):
             except Exception:
                 self._initdict[in_pin] = False
             item(value, self.get_shortname(), 'init')
-
-            self.logger.debug('{} assigned to input on pin {}, {}'.format(item, in_pin, self._get_pud_msg(pullupdown, pud_add)))
+            updown = self._get_pud_msg(pullupdown, pud_add)
+            self.logger.debug(f'{item} assigned to input on pin {in_pin}, {updown}')
             self._items.append(item)
+            self._update_item_values(item, 'in', in_pin, value)
             self._itemsdict[in_pin] = item
             return
 
@@ -203,7 +209,8 @@ class GPIO(SmartPlugin, Utils):
                 value = self.to_bool(self.get_iattr_value(item.conf, 'gpio_init'))
                 pin_value = self._get_gpio_value(value, item)
                 PiGPIO.setup(out_pin, PiGPIO.OUT, initial=pin_value)
-                self.logger.debug('{} (output on pin {}) set to initial value {}'.format(item, out_pin, value))
+                self._update_item_values(item, 'out', out_pin, pin_value)
+                self.logger.debug(f'{item} (output on pin {out_pin}) set to initial value {value}')
             else:
 
                 # no initial value set, try to read the current value from pin
@@ -213,12 +220,12 @@ class GPIO(SmartPlugin, Utils):
                 else:
                     PiGPIO.setup(out_pin, PiGPIO.IN)
                 value = self._get_gpio_value(PiGPIO.input(out_pin), item)
-                self.logger.debug('{} (output on pin {}) reads initial value {}'.format(item, out_pin, value))
+                self.logger.debug(f'{item} (output on pin {out_pin}) reads initial value {value}')
                 PiGPIO.setup(out_pin, PiGPIO.OUT)
             # set item to initial value or current pin value
             item(value, self.get_shortname(), 'init')
 
-            self.logger.debug('{} assigned to output on pin {}'.format(item, out_pin))
+            self.logger.debug(f'{item} assigned to output on pin {out_pin}')
             self._items.append(item)
             self._itemsdict[out_pin] = item
             return self.update_item
@@ -239,13 +246,14 @@ class GPIO(SmartPlugin, Utils):
         '''
         if item is not None and caller != self.get_shortname():
             if self.has_iattr(item.conf, 'gpio_out'):
-                self.logger.debug('{} updated by {}.'.format(item, caller))
+                self.logger.debug(f'{item} updated by {caller}.')
                 out_pin = int(self.get_iattr_value(item.conf, 'gpio_out'))
                 value = self._get_gpio_value(item(), item)
-                self.logger.info('Setting pin {} to {} for {}'.format(out_pin, value, item))
+                self.logger.info(f'Setting pin {out_pin} to {value} for {item}')
+                self._update_item_values(item, 'out', out_pin, value)
                 self._set_gpio(out_pin, value)
             else:
-                self.logger.error('{} updated by {}, but no gpio_out set up'.format(item, caller))
+                self.logger.error(f'{item} updated by {caller}, but no gpio_out set up')
 
     def _is_item_inverted(self, item, pin=None):
         '''
@@ -281,7 +289,7 @@ class GPIO(SmartPlugin, Utils):
         :return: Value safe for GPIO output/setup methods
         '''
         inverted = self._is_item_inverted(item, pin)
-        self.logger.debug('Pin {0}, inverted: {1}, value:{2}'.format(pin, inverted, value))
+        self.logger.debug(f'Pin {pin}, inverted: {inverted}, value:{value}')
 
         return (inverted ^ value)
 
@@ -297,9 +305,9 @@ class GPIO(SmartPlugin, Utils):
         self._lock.acquire()
         try:
             PiGPIO.output(pin, value)
-            self.logger.debug('Pin {} successfully set to {}'.format(pin, value))
+            self.logger.debug(f'Pin {pin} successfully set to {value}')
         except:
-            self.logger.error('Setting pin {} to {} failed!'.format(pin, value))
+            self.logger.error(f'Setting pin {pin} to {value} failed!')
         finally:
             self._lock.release()
 
@@ -311,83 +319,18 @@ class GPIO(SmartPlugin, Utils):
         else:
             return 'no ' + add + 'pullup/pulldown set'
 
-    def init_webinterface(self):
-        ''''
-        Initialize the web interface for this plugin
+    def _update_item_values(self, item, in_out, pin, payload):
+        """
+        Update dict for periodic updates of the web interface
 
-        This method is only needed if the plugin is implementing a web interface
-        '''
-        try:
-            self.mod_http = Modules.get_instance().get_module('http')   # try/except to handle running in a core version that does not support modules
-        except:
-            self.mod_http = None
-        if self.mod_http is None:
-            self.logger.error('mod_http not loaded, not initializing the web interface')
-            return False
-
-        import sys
-        if 'SmartPluginWebIf' not in list(sys.modules['lib.model.smartplugin'].__dict__):
-            self.logger.error('Web interface needs SmartHomeNG v1.5 and up. Not initializing the web interface')
-            return False
-
-        # set application configuration for cherrypy
-        webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
-        config = {
-            '/': {
-                'tools.staticdir.root': webif_dir,
-            },
-            '/static': {
-                'tools.staticdir.on': True,
-                'tools.staticdir.dir': 'static'
-            }
-        }
-
-        # Register the web interface as a cherrypy app
-        self.mod_http.register_webif(WebInterface(webif_dir, self),
-                                     self.get_shortname(),
-                                     config,
-                                     self.get_classname(), self.get_instance_name(),
-                                     description='')
-
-        return True
-
-
-# ------------------------------------------
-#    Webinterface of the plugin
-# ------------------------------------------
-
-import cherrypy
-from jinja2 import Environment, FileSystemLoader
-
-
-class WebInterface(SmartPluginWebIf):
-
-    def __init__(self, webif_dir, plugin):
-        '''
-        Initialization of instance of class WebInterface
-
-        :param webif_dir: directory where the webinterface of the plugin resides
-        :param plugin: instance of the plugin
-        :type webif_dir: str
-        :type plugin: object
-        '''
-        self.logger = logging.getLogger(__name__)
-        self.webif_dir = webif_dir
-        self.plugin = plugin
-        self.tplenv = self.init_template_environment()
-
-    @cherrypy.expose
-    def index(self, action=None, item_id=None, item_path=None, reload=None):
-        '''
-        Build index.html for cherrypy
-
-        Render the template and return the html file to be delivered to the browser
-
-        :return: contents of the template after beeing rendered
-        '''
-        # item = self.plugin.get_sh().return_item(item_path)
-
-        tmpl = self.tplenv.get_template('index.html')
-        # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
-        return tmpl.render(p=self.plugin,
-                           language=self.plugin._sh.get_defaultlanguage(), now=self.plugin.shtime.now())
+        :param item:
+        :param payload:
+        """
+        if not self._item_values[in_out].get(item.id()):
+            self._item_values[in_out][item.id()] = {}
+        self._item_values[in_out][item.id()]['pin'] = pin
+        if isinstance(payload, bool):
+            self._item_values[in_out][item.id()]['value'] = str(payload)
+        else:
+            self._item_values[in_out][item.id()]['value'] = payload
+        return

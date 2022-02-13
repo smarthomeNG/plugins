@@ -38,11 +38,19 @@
 			<td class="py-1" width="50px"></td>
 		</tr>
 		<tr>
-			<td class="py-1"><strong>NetworkID </strong></td>
+			<td class="py-1"><strong>NetworkID</strong></td>
 			<td class="py-1">{% if p.networkIDValid() %}{{ _('Valide') }}{% else %}{{ _('Invalide') }}{% endif %}</td>
 			<td></td>
 			<td class="py-1"><strong>SessionID</strong></td>
 			<td class="py-1">{% if p.sessionIDValid() %}{{ _('Valide') }}{% else %}{{ _('Invalide') }}{% endif %}</td>
+			<td></td>
+		</tr>
+		<tr>
+			<td class="py-1"><strong>Event Thread</strong></td>
+			<td class="py-1">{% if p.thread.is_alive() %}{{ _('Aktiv') }}{% else %}{{ _('Inaktiv') }}{% endif %}</td>
+			<td></td>
+			<td class="py-1"><strong></strong></td>
+			<td class="py-1"></td>
 			<td></td>
 		</tr>
 	</tbody>
@@ -78,7 +86,8 @@
 <!--
 	Content block for the first tab of the Webinterface
 -->
-{% set tab1title = "<strong>" ~ p.get_shortname() ~ " Items</strong> (" ~ item_count ~ ")" %}
+{% set tab1title = "<strong>Casambi Items (" ~ p.get_rxItemLength() ~ ")" %}
+
 {% block bodytab1 %}
 <div class="container-fluid m-2">
 	{{ _('Liste der Casambi Items:') }}

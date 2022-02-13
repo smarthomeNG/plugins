@@ -47,7 +47,7 @@ plugin:
     documentation: https://www.smarthomeng.de/user/plugins/uzsu/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1364692-supportthread-für-uzsu-plugin
 
-    version: 1.6.0                 # Plugin version
+    version: 1.6.1                 # Plugin version
     sh_minversion: 1.5             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
@@ -108,6 +108,18 @@ parameters:
         description:
             de: 'Anzahl an Dezimalstellen bei der Berechnung der Interpolation'
             en: 'Amount of decimal places when calculating interpolation values'
+
+    webif_pagelength:
+        type: int
+        default: 100
+        valid_list:
+          - -1
+          - 25
+          - 50
+          - 100
+        description:
+            de: 'Anzahl an Items, die standardmäßig in einer Web Interface Tabelle pro Seite angezeigt werden'
+            en: 'Amount of items being listed in a web interface table per page by default'
 
 item_attributes:
     # Definition of item attributes defined by this plugin

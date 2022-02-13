@@ -13,8 +13,8 @@ plugin:
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1540433-support-thread-für-das-mpd-plugin
 
 # Following entries are for Smart-Plugins:
-    version: 1.5.0                 # Plugin version
-    sh_minversion: 1.8.2a          # minimum shNG version to use this plugin
+    version: 1.5.2                 # Plugin version
+    sh_minversion: 1.9.0           # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: true
     restartable: true
@@ -273,19 +273,19 @@ item_attributes:
         description:
             de: 'Untersucht die gegebene URL und versucht den Stream abzuspielen'
             en: 'Parses the defined url and tries to play the stream.'
-            
+
     mpd_localplaylist:
         type: str
         description:
             de: 'Sucht eine lokale Playlist mit einem gegebenen Namen und spielt sie ab wenn sie gefunden wurde'
             en: 'Searches for a local playlist with the defined filename and plays it if found.'
-            
+
     mpd_rawcommand:
         type: str
         description:
             de: 'Sendet den angegebenen Wert direkt an MPD'
             en: 'Takes whatever you assign to it and sends it directly to MPD.'
-            
+
     mpd_database:
         type: str
         description:

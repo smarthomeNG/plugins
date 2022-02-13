@@ -21,7 +21,7 @@ plugin:
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1352089-support-thread-zum-ical-plugin
 
     version: 1.6.0                 # Plugin version
-    sh_minversion: 1.8.2a          # minimum shNG version to use this plugin
+    sh_minversion: 1.9.0           # minimum shNG version to use this plugin
 #    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: false          # plugin supports multi instance
     restartable: true

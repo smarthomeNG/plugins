@@ -42,7 +42,7 @@ class Casambi(SmartPlugin):
     """
 
     # Use VERSION = '1.0.0' for your initial plugin Release
-    PLUGIN_VERSION = '1.7.4'    # (must match the version specified in plugin.yaml)
+    PLUGIN_VERSION = '1.7.5'    # (must match the version specified in plugin.yaml)
 
     def __init__(self, sh):
         """
@@ -198,13 +198,34 @@ class Casambi(SmartPlugin):
 
         pass
 
+#    def debugTest(self, item, id, key, error_count = 0):
+#        """
+#        Control message format for switching/dimming of casambi devices
+#        """
+#
+#        local_error_cnt = error_count
+#    
+#        self.logger.warning(f"debugTest executed with error_count {error_count}, local error count {local_error_cnt}")
+#
+#        local_error_cnt = local_error_cnt + 1
+#        time.sleep(3)
+#
+#        # Retry sending command only one time after a failure:
+#        if local_error_cnt == 1:
+#            self.logger.warning(f"Retry sending debugTest...(Local error count {local_error_cnt})")
+#            #self.debugTest(item, id, key, error_count = 1)
+#            self.debugTest(item, id, key, 1)
+#
+#        else: 
+#            self.logger.warning(f"debugTest does not retry sending debugTest: error_count {error_count}, local error count {local_error_cnt}")
 
 
-    def controlDevice(self, item, id, key):
+    def controlDevice(self, item, id, key, error_count = 0):
         """
         Control message format for switching/dimming of casambi devices
         """
         sendValue = 0
+        local_error_cnt = error_count
         
         if key == 'ON':
             sendValue = int(item() == True)
@@ -242,15 +263,29 @@ class Casambi(SmartPlugin):
                     if self.websocket:
                         self.websocket.close()
                     self.logger.warning("Closed websocket for reinitialization")
-           
-            if self.casambiBackendStatus == False:
-                self.logger.warning("Command sent but backend is not online.")
+                local_error_cnt = local_error_cnt + 1
             else:
-                self.logger.debug(f"Command {key} with value {sendValue} sent out via open websocket")
+                # Command was sent without exceptions. Now, analyse backend status:
+                if self.casambiBackendStatus == False:
+                    self.logger.warning("Command sent but backend is not online.")
+                else:
+                    self.logger.debug(f"Command {key} with value {sendValue} sent out via open websocket")
         else:
             self.logger.error("Unable to send command. Websocket is not open")
-            self.logger.debug(f"Debug: self.websocket: {self.websocket}, self.websocket.connected: {self.websocket.connected}.")
-            self.logger.debug(f"Debug: self.thread.is_alive(): {self.thread.is_alive()}")
+            self.logger.error(f"Debug: self.websocket: {self.websocket}, self.websocket.connected: {self.websocket.connected}.")
+            self.logger.error(f"Debug: self.thread.is_alive(): {self.thread.is_alive()}")
+
+        #Restart thread in case it is no longer active:
+        if not self.thread.is_alive():
+            self.logger.warning("Event thread is not alive. Restarting...")
+            self.run()
+            self.logger.warning("Event thread restarted.")
+            time.sleep(3)
+
+        # Retry sending command only after exactly one error occured:
+        if local_error_cnt == 1:
+            self.logger.warning(f"Retry sending command...(Error count {local_error_cnt})")
+            self.controlDevice(item, id, key, 2)
 
 
     def decodeEventData(self, receivedData):
@@ -359,19 +394,12 @@ class Casambi(SmartPlugin):
         Run method for the plugin
         """
         self.logger.debug("Run method called")
-        # setup scheduler for device poll loop   (disable the following line, if you don't need to poll the device. Rember to comment the self_cycle statement in __init__ as well)
-        #self.scheduler_add('poll_device', self.poll_device, cycle=self._cycle)
 
         self.alive = True
-        # if you need to create child threads, do not make them daemon = True!
-        # They will not shutdown properly. (It's a python bug)
-
         try:                    
             self.sessionID, self.networkID, self.numberNetworks = self.getSessionCredentials()
         except Exception as e:
-            self.logger.error(f"Exception during getSessionCredectials: {e}")
-
-        
+            self.logger.error(f"Exception during getSessionCredectials: {e}")        
 
         self.thread = threading.Thread(target=self.eventHandler, name='CasambiEventHandler')
         self.thread.daemon = False
@@ -451,13 +479,12 @@ class Casambi(SmartPlugin):
                     self.logger.error(f"Exception during getSessionCredectials: {e}")
 
                 noNetworkIDErrorCount = 0
-
         
         self.logger.debug(f"Debug Casambi: self.alive: {self.alive}")
         if self.websocket:
             self.websocket.close()
 
-        self.logger.debug("Casambi EventHandler thread stopped")
+        self.logger.debug("Debug Casambi EventHandler thread stopped")
 
 
     def stop(self):
@@ -557,8 +584,12 @@ class Casambi(SmartPlugin):
                 self.logger.debug(f"update_item was called with item '{item}' from caller '{caller}', source '{source}' and dest '{dest}'")
                 self.logger.debug(f"Update TX-item: {item} with casambi ID: {id} and tx key: {tx_key}")
                 self.controlDevice(item, id, tx_key)
+                #self.debugTest(item, id, tx_key) 
 
         pass
+
+    def get_rxItemLength(self):
+        return len(self._rx_items)
 
     def init_webinterface(self):
         """"

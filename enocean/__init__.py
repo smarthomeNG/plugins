@@ -165,7 +165,7 @@ SENT_ENCAPSULATED_RADIO_PACKET = 0xA6
 
 class EnOcean(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.3.5"
+    PLUGIN_VERSION = "1.3.6"
 
     
     def __init__(self, sh, *args, **kwargs):
@@ -179,10 +179,13 @@ class EnOcean(SmartPlugin):
         else:
             self.tx_id = int(tx_id, 16)
             self.logger.info(f"Stick TX ID configured via plugin.conf to: {tx_id}")
+        self._log_unknown_msg = self.get_parameter_value("log_unknown_messages")
         self._tcm = serial.Serial(self.port, 57600, timeout=1.5)
         self._cmd_lock = threading.Lock()
         self._response_lock = threading.Condition()
         self._rx_items = {}
+        self._used_tx_offsets = []
+        self._unused_tx_offset = None
         self.UTE_listen = False
         self.unknown_sender_id = 'None'
         self._block_ext_out_msg = False
@@ -334,7 +337,9 @@ class EnOcean(SmartPlugin):
                 self.logger.debug("Received repeated enocean stick message")
         else:
             self.unknown_sender_id = "{:08X}".format(sender_id)
-            self.logger.info("Unknown ID = {:08X}".format(sender_id))
+            if self._log_unknown_msg:
+                self.logger.info("Unknown ID = {:08X}".format(sender_id))
+                self.logger.warning("Unknown device sent radio message: choice = {:02x} / payload = [{}] / sender_id = {:08X} / status = {} / repeat = {}".format(choice, ', '.join(['0x%02x' % b for b in payload]), sender_id, status, repeater_cnt))
 
 
     def _process_packet_type_smart_ack_command(self, data, optional):
@@ -493,6 +498,11 @@ class EnOcean(SmartPlugin):
         hexstring = "{:08X}".format(self.tx_id)
         return hexstring
 
+    def get_log_unknown_msg(self):
+        return self._log_unknown_msg
+
+    def toggle_log_unknown_msg(self):
+        self._log_unknown_msg = not self._log_unknown_msg
     
     def _send_UTE_response(self, data, optional):
         self.logger.debug("enocean: call function << _send_UTE_response >>")
@@ -514,40 +524,66 @@ class EnOcean(SmartPlugin):
         if 'enocean_rx_key' in item.conf:
             # look for info from the most specific info to the broadest (key->eep->id) - one id might use multiple eep might define multiple keys
             eep_item = item
+            found_eep = True
+
             while (not 'enocean_rx_eep' in eep_item.conf):
                 eep_item = eep_item.return_parent()
                 if (eep_item is self._sh):
                     self.logger.error(f"Could not find enocean_rx_eep for item {item}")
-                    return None
+                    found_eep = False
+
             id_item = eep_item
+            found_rx_id = True
             while (not 'enocean_rx_id' in id_item.conf):
                 id_item = id_item.return_parent()
                 if (id_item is self._sh):
                     self.logger.error(f"Could not find enocean_rx_id for item {item}")
-                    return None
+                    found_rx_id = False
 
-            rx_key = item.conf['enocean_rx_key'].upper()
-            rx_eep = eep_item.conf['enocean_rx_eep'].upper()
-            rx_id = int(id_item.conf['enocean_rx_id'],16)
+            # Only proceed, if valid rx_id and eep could be found:
+            if found_rx_id and found_eep:
 
-            # check if there is a function to parse payload
-            if not self.eep_parser.CanParse(rx_eep):
-                return None
+                rx_key = item.conf['enocean_rx_key'].upper()
+                rx_eep = eep_item.conf['enocean_rx_eep'].upper()
+                rx_id = int(id_item.conf['enocean_rx_id'],16)
 
-            if (rx_key in ['A0', 'A1', 'B0', 'B1']):
-                self.logger.warning(f"Key \"{rx_key}\" does not match EEP - \"0\" (Zero, number) should be \"O\" (letter) (same for \"1\" and \"I\") - will be accepted for now")
-                rx_key = rx_key.replace('0', 'O').replace("1", 'I')
+                # check if there is a function to parse payload
+                if self.eep_parser.CanParse(rx_eep):
+               
+                    if (rx_key in ['A0', 'A1', 'B0', 'B1']):
+                        self.logger.warning(f"Key \"{rx_key}\" does not match EEP - \"0\" (Zero, number) should be \"O\" (letter) (same for \"1\" and \"I\") - will be accepted for now")
+                        rx_key = rx_key.replace('0', 'O').replace("1", 'I')
 
-            if (not rx_id in self._rx_items):
-                self._rx_items[rx_id] = {rx_eep: [item]}
-            elif (not rx_eep in self._rx_items[rx_id]):
-                self._rx_items[rx_id][rx_eep] = [item]
-            elif (not item in self._rx_items[rx_id][rx_eep]):
-                self._rx_items[rx_id][rx_eep].append(item)
+                    if (not rx_id in self._rx_items):
+                        self._rx_items[rx_id] = {rx_eep: [item]}
+                    elif (not rx_eep in self._rx_items[rx_id]):
+                        self._rx_items[rx_id][rx_eep] = [item]
+                    elif (not item in self._rx_items[rx_id][rx_eep]):
+                        self._rx_items[rx_id][rx_eep].append(item)
 
-            self.logger.info("Item {} listens to id {:08X} with eep {} key {}".format(item, rx_id, rx_eep, rx_key))
-            #self.logger.info(f"self._rx_items = {self._rx_items}")
+                    self.logger.info("Item {} listens to id {:08X} with eep {} key {}".format(item, rx_id, rx_eep, rx_key))
+                    #self.logger.info(f"self._rx_items = {self._rx_items}")
+    
+        if 'enocean_tx_eep' in item.conf:
+            self.logger.debug(f"TX eep found in item {item._name}")
+            
+            tx_offset = item.conf['enocean_tx_id_offset']
+            if not (tx_offset in self._used_tx_offsets):
+                self._used_tx_offsets.append(tx_offset)
+                self._used_tx_offsets.sort()
+                self.logger.debug(f"Debug offset list: {self._used_tx_offsets}")
+                for x in range(1, 127):
+                    if not x in self._used_tx_offsets:
+                        self._unused_tx_offset = x
+                        self.logger.debug(f"Next free offset set to {self._unused_tx_offset}")
+                        break
+            else:
+                self.logger.debug(f"tx_offset {tx_offset} of item {item._name} already used.")
+
+            # register item for event handling via smarthomeNG core. Needed for sending control actions:
             return self.update_item
+
+
 
     def update_item(self, item, caller=None, source=None, dest=None):
         logger_debug = self.logger.isEnabledFor(logging.DEBUG)
@@ -871,6 +907,9 @@ class WebInterface(SmartPluginWebIf):
             elif action == "toggle_UTE":
                 self.plugin.toggle_UTE_mode(device_offset)
                 self.logger.warning(f"UTE mode triggered via webinterface (Offset: {device_offset})")
+            elif action == "toggle_log_unknown":
+                self.plugin.toggle_log_unknown_msg()
+                self.logger.info(f"Toogle state of log unknown messages triggered via webinterface")
             elif action == "send_learn" and (device_id is not None) and not (device_id=="") and (device_offset is not None) and not(device_offset==""):
                 self.logger.warning(f"Learn telegram triggered via webinterface (ID:{device_id} Offset:{device_offset})")
                 ret = self.plugin.send_learn_protocol(int(device_offset), int(device_id))

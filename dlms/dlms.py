@@ -2,7 +2,7 @@
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
 #  Copyright 2013 - 2015 KNX-User-Forum e.V.    http://knx-user-forum.de/
-#  Copyright 2016 - 2021 Bernd Meiners              Bernd.Meiners@mail.de
+#  Copyright 2016 - 2022 Bernd Meiners              Bernd.Meiners@mail.de
 #########################################################################
 #
 #  DLMS plugin for SmartHomeNG
@@ -40,7 +40,7 @@ if __name__ == '__main__':
     logger = logging.getLogger(__name__)
     logger.debug(f"init standalone {__name__}")
 else:
-    logger = logging.getLogger()
+    logger = logging.getLogger(__name__)
     logger.debug(f"init plugin component {__name__}")
 
 import time
@@ -154,9 +154,9 @@ def query( config ):
     4. adjusts the speed of the communication accordingly
     5. reads out the block of OBIS information
     6. closes the serial communication
-    
-    config contains a dict with entries for        
-    'serialport', 'device', 'timeout', 'use_checksum', 'reset_baudrate', 'no_waiting', 'onlylisten', 'baudrate_fix'
+
+    config contains a dict with entries for
+    'serialport', 'device', 'querycode', 'baudrate', 'baudrate_fix', 'timeout', 'onlylisten', 'use_checksum'
     
     return: a textblock with the data response from smartmeter
     """
@@ -168,7 +168,7 @@ def query( config ):
 
     SerialPort = config.get('serialport')
     Device = config.get('device','')
-    InitialBaudrate = config.get('speed', 300)
+    InitialBaudrate = config.get('baudrate', 300)
     QueryCode = config.get('querycode', '?')
     use_checksum = config.get('use_checksum', True)
     baudrate_fix = config.get('baudrate_fix', False)
@@ -388,9 +388,10 @@ def query( config ):
     logger.debug(f"Whole communication with smartmeter took {format_time(time.time() - starttime)}")
 
     if response.startswith(Acknowledge):
-        logger.debug("Acknowledge echoed from smartmeter")
-        response = response[len(Acknowledge):]
-        
+        if not OnlyListen:
+            logger.debug("Acknowledge echoed from smartmeter")
+            response = response[len(Acknowledge):]
+
     if use_checksum:
         # data block in response may be capsuled within STX and ETX to provide error checking
         # thus the response will contain a sequence of
@@ -426,17 +427,18 @@ def query( config ):
     else:
         logger.debug("checksum calculation skipped")
 
-    if len(response) > 5:
-        result = str(response[1:-4], 'ascii')
-        logger.debug(f"parsing OBIS codes took {format_time(time.time()- runtime)}")
+    if not OnlyListen:
+        if len(response) > 5:
+            result = str(response[1:-4], 'ascii')
+            logger.debug(f"parsing OBIS codes took {format_time(time.time()- runtime)}")
+        else:
+            logger.debug("Sorry response did not contain enough data for OBIS decode")
     else:
-        logger.debug("Sorry response did not contain enough data for OBIS decode")
+        result = str(response, 'ascii')
 
     suggested_cycle = (time.time() - starttime) + 10.0
     config['suggested_cycle'] = suggested_cycle
     logger.debug(f"the whole query took {format_time(time.time()- starttime)}, suggested cycle thus is at least {format_time(suggested_cycle)}")
-
-
     return result
 
 if __name__ == '__main__':
@@ -449,7 +451,7 @@ if __name__ == '__main__':
     parser.add_argument('port', help='specify the port to use for the smartmeter query, e.g. /dev/ttyUSB0 or /dev/dlms0')    
     parser.add_argument('-v', '--verbose', help='print verbose information', action='store_true')
     parser.add_argument('-t', '--timeout', help='maximum time to wait for a message from the smartmeter', type=float, default=3.0 )
-    parser.add_argument('-s', '--speed', help='initial baudrate to start the communication with the smartmeter', type=int, default=300 )
+    parser.add_argument('-b', '--baudrate', help='initial baudrate to start the communication with the smartmeter', type=int, default=300 )
     parser.add_argument('-d', '--device', help='give a device address to include in the query', default='' )
     parser.add_argument('-q', '--querycode', help='define alternative query code\ndefault query code is ?\nsome smartmeters provide additional information when sending\nan alternative query code, e.g. 2 instead of ?', default='?' )
     parser.add_argument('-l', '--onlylisten', help='Only listen to serial, no active query', action='store_true' )
@@ -463,7 +465,7 @@ if __name__ == '__main__':
     config['serialport'] = args.port
     config['device'] = args.device
     config['querycode'] = args.querycode
-    config['speed'] = args.speed
+    config['baudrate'] = args.baudrate
     config['baudrate_fix'] = args.baudrate_fix
     config['timeout'] = args.timeout
     config['onlylisten'] = args.onlylisten

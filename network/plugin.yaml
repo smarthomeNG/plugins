@@ -13,7 +13,7 @@ plugin:
     documentation: https://www.smarthomeng.de/user/plugins_doc/config/network.html       # url of documentation (wiki) page
 
     version: 1.6.0                 # Plugin version
-    sh_minversion: 1.8.2a          # minimum shNG version to use this plugin
+    sh_minversion: 1.9.0           # minimum shNG version to use this plugin
 #    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: false          # plugin supports multi instance
     restartable: true

@@ -482,6 +482,8 @@ class SmartVisuGenerator:
                     shutil.copy2(os.path.join(self.shng_tpldir, fn), self.gen_tpldir)
             shutil.copy2(os.path.join(self.sv_tpldir, 'index.html'), self.gen_tpldir)
             shutil.copy2(os.path.join(self.sv_tpldir, 'rooms.html'), self.gen_tpldir)
+            if self.smartvisu_version >= '3.2':
+                shutil.copy2(os.path.join(self.sv_tpldir, 'infoblock.html'), self.gen_tpldir)
 
         else:  # sv v2.7 & v2.8
             # create output directory

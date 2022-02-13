@@ -43,6 +43,7 @@ from .AVDeviceFunctions import CreateResponse
 from .AVDeviceFunctions import Translate
 from .AVDeviceFunctions import ConvertValue
 from .AVDeviceFunctions import CreateExpectedResponse
+from .webif import WebInterface
 
 VERBOSE1 = logging.DEBUG - 1
 VERBOSE2 = logging.DEBUG - 2
@@ -52,13 +53,15 @@ logging.addLevelName(logging.DEBUG - 2, 'VERBOSE2')
 
 class AVDevice(SmartPlugin):
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = "1.6.2"
+    PLUGIN_VERSION = "1.6.3"
 
     def __init__(self, smarthome):
+        super().__init__()
         self.itemsApi = Items.get_instance()
         if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
             self.logger = logging.getLogger(__name__)
-        self.init_webinterface()
+        self.init_webinterface(WebInterface)
+        self._item_values = {}
         try:
             self.alive = False
             self._name = self.get_fullname()
@@ -194,6 +197,7 @@ class AVDevice(SmartPlugin):
                                 self._name, founditem, self._items[zone][itemlist]['Item'], search))
                             if founditem == search:
                                 founditem(previousvalue, 'AVDevice', self._tcp)
+                                self._update_item_values(founditem, previousvalue)
                                 self.logger.info("Resetting {}: Item {} to {}".format(
                                     self._name, founditem, previousvalue))
                                 resetting = founditem
@@ -204,6 +208,7 @@ class AVDevice(SmartPlugin):
                                         "Resetting {}: Search {} in {}.".format(self._name, founditem, compare))
                         if founditem == compare:
                             founditem(previousvalue, 'AVDevice', self._tcp)
+                            self._update_item_values(founditem, previousvalue)
                             self.logger.info("Resetting {}: Item {} to {}".format(
                                 self._name, founditem, previousvalue))
                             resetting = founditem
@@ -248,11 +253,13 @@ class AVDevice(SmartPlugin):
                             self._items_speakers[zone][itemlist]['Value'] = 0
                             speakeritem = self._items_speakers[zone][itemlist]['Item']
                             speakeritem(0, 'AVDevice', self._tcp)
+                            self._update_item_values(speakeritem, 0)
                             self.logger.log(VERBOSE1,
                                             'Resetting {}: Speakers to 0 for item {}'.format(self._name,
                                                                                              speakeritem))
                         speakeritem = self._items[zone]['speakers']['Item']
                         speakeritem(0, 'AVDevice', self._tcp)
+                        self._update_item_values(speakeritem, 0)
                         self.logger.log(VERBOSE1,
                                         'Resetting {}: Speakers to 0 for item {}'.format(self._name, speakeritem))
                     if 'volume' in self._items[zone].keys() and self._depend0_volume0 is True:
@@ -267,6 +274,21 @@ class AVDevice(SmartPlugin):
             self.logger.log(VERBOSE1,
                             'Resetting {}: Not resetting on disconnect because this feature is disabled in the plugin config.'.format(
                                 self._name))
+
+    def _update_item_values(self, item, payload):
+        """
+        Update dict for periodic updates of the web interface
+
+        :param item:
+        :param payload:
+        """
+        if not self._item_values.get(item.id()):
+            self._item_values[item.id()] = {}
+        if isinstance(payload, bool):
+            self._item_values[item.id()]['value'] = str(payload)
+        else:
+            self._item_values[item.id()]['value'] = payload
+        return
 
     # Store actual value to a temporary dict for resetting purposes
     def _write_itemsdict(self, data, found):
@@ -425,7 +447,7 @@ class AVDevice(SmartPlugin):
                                             "Initializing {}: Creating dependency for {} in {}: {}".format(self._name, info, zone, self._items[zone][info]))
 
     def _logics_dependencies(self, zone=None, item=None):
-        deps = {'a': [], 'b':[], 'c':[], 'd':[]}
+        deps = {'a': [], 'b': [], 'c': [], 'd': []}
         try:
             info = item.property.path
             search = 'Slave_item'
@@ -436,7 +458,7 @@ class AVDevice(SmartPlugin):
             depitem = self._dependencies[search][zone].get(info)
             for d in depitem:
                 deps[d.get('Group')].append("{}{}{}".format(d['Item'], d['Compare'], d['Dependvalue']))
-            deps = dict( [(k,v) for k,v in deps.items() if len(v)>0])
+            deps = dict([(k, v) for k, v in deps.items() if len(v) > 0])
         except Exception as err:
             deps = None
         return deps
@@ -530,7 +552,8 @@ class AVDevice(SmartPlugin):
 
         try:
             buffer = ''
-            tidy = lambda c: re.sub(
+
+            def tidy(c): return re.sub(
                 r'(^\s*[{0}]+|^\s*\Z)|(\s*\Z|\s*[{0}]+)'.format(self._lineending_response),
                 lambda m: self._lineending_response if m.lastindex == 2 else '',
                 c)
@@ -564,8 +587,8 @@ class AVDevice(SmartPlugin):
                 try:
                     cond1 = not self._sendingcommand == 'done' and not self._sendingcommand == 'gaveup'
                     try:
-                        cond2 = (self._sendingcommand.split(',')[2] == '' or self._sendingcommand.split(',')[2] == ' ' or
-                                 self._sendingcommand.split(',')[2] == 'none')
+                        cond2 = (self._sendingcommand.split(',')[2] == '' or self._sendingcommand.split(',')[2] == ' '
+                                 or self._sendingcommand.split(',')[2] == 'none')
                     except Exception:
                         cond2 = self._sendingcommand == ''
                     if cond1 and not cond2:
@@ -798,9 +821,9 @@ class AVDevice(SmartPlugin):
                 maximum = abs(self._response_buffer) if type(self._response_buffer) is int else 11
                 # Removing empty entries
                 bufferlist = list(filter(lambda a: a != '', bufferlist))
-                newbuffer = [buf for buf in bufferlist if not buf.startswith(tuple(self._ignore_response)) and
-                             '' not in self._ignore_response and
-                             buf.startswith(tuple(self._response_commands))]
+                newbuffer = [buf for buf in bufferlist if not buf.startswith(tuple(self._ignore_response))
+                             and '' not in self._ignore_response
+                             and buf.startswith(tuple(self._response_commands))]
                 bufferlist = newbuffer[-1 * max(min(len(newbuffer), maximum), 0):]
                 buffering = False
                 if bufferlist:
@@ -1922,6 +1945,7 @@ class AVDevice(SmartPlugin):
                                                                 self._name, av_function, value))
 
                                         item(value, 'AVDevice', self._tcp)
+                                        self._update_item_values(item, value)
                                         self.logger.debug("Parsing Input {}: Updated Item {} with {} Value: {}.".format(
                                             self._name, item, expectedtype, value))
                                         if av_function in self._items[zone].keys():
@@ -1983,7 +2007,7 @@ class AVDevice(SmartPlugin):
                         except Exception:
                             commanditem = None
                         if commanditem:
-                                command = '{};{}'.format(command_split, commanditem)
+                            command = '{};{}'.format(command_split, commanditem)
                         self.logger.log(VERBOSE1,
                                         "Parsing Input {}: Reorder command commandsplit {}, commanditem {}. Command: {}".format(
                                                 self._name, command_split, commanditem, command))
@@ -2111,10 +2135,10 @@ class AVDevice(SmartPlugin):
                     except Exception:
                         depending = False
                     self.logger.log(VERBOSE1, "Updating Item {}: Depending is {}.".format(self._name, depending))
-                    condition1 = (self.has_iattr(item.conf, 'avdevice') and
-                                  self.get_iattr_value(item.conf, 'avdevice') == 'reload')
-                    condition2 = (self.has_iattr(item.conf, 'avdevice_zone0') and
-                                  self.get_iattr_value(item.conf, 'avdevice_zone0') == 'reload')
+                    condition1 = (self.has_iattr(item.conf, 'avdevice')
+                                  and self.get_iattr_value(item.conf, 'avdevice') == 'reload')
+                    condition2 = (self.has_iattr(item.conf, 'avdevice_zone0')
+                                  and self.get_iattr_value(item.conf, 'avdevice_zone0') == 'reload')
                     if condition1 or condition2:
                         self._initialize()
                         self.logger.info("Initializing {}: Reloaded Text file and functions".format(self._name))
@@ -3048,108 +3072,3 @@ class AVDevice(SmartPlugin):
                 self._serialwrapper.close()
             except Exception:
                 self.logger.log(VERBOSE1, "Stopping {}: No Serial socket to close.".format(self._name))
-
-    def init_webinterface(self):
-        """"
-        Initialize the web interface for this plugin
-
-        This method is only needed if the plugin is implementing a web interface
-        """
-        try:
-            self.mod_http = Modules.get_instance().get_module('http')
-        except Exception:
-            self.mod_http = None
-        if self.mod_http is None:
-            self.logger.error("Plugin '{}': Not initializing the web interface".format(self.get_shortname()))
-            return False
-
-        import sys
-        if "SmartPluginWebIf" not in list(sys.modules['lib.model.smartplugin'].__dict__):
-            self.logger.warning("Plugin '{}': Web interface needs SmartHomeNG v1.5 and up. Not initializing the web interface".format(self.get_shortname()))
-            return False
-
-        # set application configuration for cherrypy
-        webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
-        config = {
-            '/': {
-                'tools.staticdir.root': webif_dir,
-            },
-            '/static': {
-                'tools.staticdir.on': True,
-                'tools.staticdir.dir': 'static'
-            }
-        }
-
-        # Register the web interface as a cherrypy app
-        self.mod_http.register_webif(WebInterface(webif_dir, self),
-                                     self.get_shortname(),
-                                     config,
-                                     self.get_classname(), self.get_instance_name(),
-                                     description='')
-
-        return True
-
-
-# ------------------------------------------
-#    Webinterface of the plugin
-# ------------------------------------------
-
-import cherrypy
-from jinja2 import Environment, FileSystemLoader
-
-
-class WebInterface(SmartPluginWebIf):
-
-    def __init__(self, webif_dir, plugin):
-        """
-        Initialization of instance of class WebInterface
-
-        :param webif_dir: directory where the webinterface of the plugin resides
-        :param plugin: instance of the plugin
-        :type webif_dir: str
-        :type plugin: object
-        """
-        self.logger = logging.getLogger(__name__)
-        self.webif_dir = webif_dir
-        self.plugin = plugin
-        self.tplenv = self.init_template_environment()
-
-    @cherrypy.expose
-    def index(self, action=None, item_id=None, item_path=None, reload=None):
-        """
-        Build index.html for cherrypy
-
-        Render the template and return the html file to be delivered to the browser
-
-        :return: contents of the template after beeing rendered
-        """
-        config_reloaded = False
-        keep_cleared = False
-        command_cleared = False
-        query_cleared = False
-        send_cleared = False
-        if action is not None:
-            if action == "reload":
-                self.plugin._initialize()
-                config_reloaded = True
-            if action == "connect":
-                self.plugin.connect('webif')
-            if action == "clear_query_history":
-                self.plugin._clear_history('query')
-                query_cleared = True
-            if action == "clear_send":
-                self.plugin._clear_history('send')
-                send_cleared = True
-            if action == "clear_command_history":
-                self.plugin._clear_history('command')
-                command_cleared = True
-            if action == "clear_keep_commands":
-                self.plugin._clear_history('keep')
-                keep_cleared = True
-
-        tmpl = self.tplenv.get_template('index.html')
-        # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
-        return tmpl.render(p=self.plugin,
-                           config_reloaded=config_reloaded, query_cleared=query_cleared,
-                           command_cleared=command_cleared, keep_cleared=keep_cleared, send_cleared=send_cleared,
-                           language=self.plugin._sh.get_defaultlanguage(), now=self.plugin.shtime.now())

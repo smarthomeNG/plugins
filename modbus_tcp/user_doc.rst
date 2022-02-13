@@ -1,18 +1,55 @@
+.. index:: modbus_tcp plugin
+.. index:: Plugins; modbus_tcp
+
+
+==========
 modbus_tcp
-=====================================================
+==========
+
 SmarthomeNG plugin, zum Lesen von Register über ModBusTCP
 
 Anforderungen
 -------------
 * Python > 3.6
-* pip install pymodbus
+* pymodbus >= 1.4.0
 * SmarthomeNG >= 1.8.0
+
+pymodbus
+~~~~~~~~
+das Paket sollte automatisch von SH installiert werden.
+
+pymodbus - manuelle Installation:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code:: shell-session
+
+    pip install pymodbus
 
 Konfiguration
 -------------
 
 plugin.yaml
 ~~~~~~~~~~~
+
+.. code-block:: yaml
+
+    solaredge:
+        plugin_name: modbus_tcp
+        instance: solaredge
+        host: 192.168.0.50
+        port: 502
+        cycle: 60
+        plugin_enabled: true
+
+    logoMB:
+        plugin_name: modbus_tcp
+        instance: logomb
+        host: 192.168.0.80
+        port: 502
+        cycle: 20
+        plugin_enabled: true
+
+* 'instance' = Name der Instanz, sollen mehrer Geräte angesprochen werden (Multiinstanz)
 
 Bitte die Dokumentation lesen, die aus den Metadaten der plugin.yaml erzeugt wurde.
 
@@ -28,6 +65,7 @@ logic.yaml
 
 Bitte die Dokumentation lesen, die aus den Metadaten der plugin.yaml erzeugt wurde.
 
+Beispiel: In der Datei example.yaml sind ein paar Items für einen Solaredge-Wechselrichter SE6000 angelegt.
 
 Funktionen
 ~~~~~~~~~~
@@ -39,46 +77,90 @@ Beispiele
 ---------
 Beispiel für SH-Item's
 
-siehe example.yaml
+siehe auch example.yaml
 
-mydevice:
-    geraetename:
-        type: str
-        value: ''
-        modBusAddress: 40030
-        modBusDataType: 'string16'        #(optional) default: uint16  
-        #modBusFactor: '1000'               #(optional) default: 1
-        modBusByteOrder: 'Endian.Little'   #(optional) default: 'Endian.Big'
-        modBusWordOrder: 'Endian.Little'   #(optional) default: 'Endian.Big'
-    leistung_AC:
-        type: num
-        value: '0'
-        modBusAddress: 40048
-        #modBusDataType: 'uint16'        #(optional) default: uint16  
-        modBusFactor: '0.001'           #(optional) default: 1
-        modBusByteOrder: 'Endian.Little'   #(optional) default: 'Endian.Big'
-        modBusWordOrder: 'Endian.Little'   #(optional) default: 'Endian.Big'
-    leistung_DC:
-        type: num
-        value: ''
-        modBusAddress: 40050
-        modBusDataType: 'int16'         #(optional) default: uint16  
-        modBusFactor: '0.001'           #(optional) default: 1
-        modBusByteOrder: 'Endian.Little'   #(optional) default: 'Endian.Big'
-        modBusWordOrder: 'Endian.Little'   #(optional) default: 'Endian.Big'
-    temperatur:
-        type: num
-        value: ''
-        modBusAddress: 40052
-        modBusDataType: 'float32        #(optional) default: uint16  
-        #modBusFactor: '1'               #(optional) default: 1
-        modBusByteOrder: 'Endian.Little'   #(optional) default: 'Endian.Big'
-        modBusWordOrder: 'Endian.Little'   #(optional) default: 'Endian.Big'
+.. code-block:: yaml
+
+    mydevice:
+        AI1:
+            type: num
+            name: AI1
+            modBusObjectType: InputRegister     #(optional) default: HoldingRegister
+            modBusAddress: 0
+            modBusDataType: int16               #(optional) default: uint16
+            #modBusByteOrder: 'Endian.Little'    #(optional) default: 'Endian.Big'
+            #modBusWordOrder: 'Endian.Little'    #(optional) default: 'Endian.Big'
+            modBusDirection: 'read_write'       #(optional) default: 'read'
+            modBusUnit: '71'                    #(optional) default: slaveUnit aus der Plugin-Konfig
+            #modBusFactor: 0.1                  #(optional) default: 1
+            #modBusDirection: read_write        #(optional) default: 'read'
+        AM1:
+            type: num
+            name: AM1
+            modBusObjectType: HoldingRegister
+            modBusAddress: 528
+            modBusDirection: read_write
+            #modBusFactor: 1
+            #modBusDataType: int16
+        M1:
+            type: bool
+            name: M1
+            modBusObjectType: Coil
+            modBusAddress: 8256
+            modBusDataType: bit
+            modBusDirection: read_write
+        I1:
+            type: bool
+            name: I1
+            modBusObjectType: DiscreteInput
+            modBusAddress: 0
+            modBusDataType: bit
+        VM0:
+            type: num
+            name: VM0
+            modBusObjectType: HoldingRegister
+            modBusAddress: 0
+            modBusDirection: read_write
+            modBusFactor: 0.01
+
+        geraetename:
+            type: str
+            #modBusObjectType: HoldingRegister  #(optional) default: HoldingRegister
+            modBusAddress: 40030
+            modBusDataType: 'string16'          #(optional) default: uint16
+            #modBusFactor: '1000'               #(optional) default: 1
+            modBusByteOrder: 'Endian.Little'    #(optional) default: 'Endian.Big'
+            modBusWordOrder: 'Endian.Little'    #(optional) default: 'Endian.Big'
+            modBusDirection: 'read_write'       #(optional) default: 'read'
+            modBusUnit: '71'                    #(optional) default: slaveUnit aus der Plugin-Konfig
+        temperatur:
+            type: num
+            modBusAddress: 40052
+            modBusDataType: 'float32            #(optional) default: uint16
+            #modBusFactor: '1'                  #(optional) default: 1
+            modBusByteOrder: 'Endian.Little'    #(optional) default: 'Endian.Big'
+            modBusWordOrder: 'Endian.Little'    #(optional) default: 'Endian.Big'
+            modBusUnit: '71'                    #(optional) default: slaveUnit aus der Plugin-Konfig
 
 Changelog
 ---------
-V1.0.1     slaveUnit zu plugin-Paramter hinzugefügt
-V1.0.0     Initial plugin version
+V1.0.6  schreiben von Register (HoldingRegister, Coil)
+
+V1.0.5  kleine Fehler behoben
+
+V1.0.4  ObjectType hinzugefügt (HoldingRegister, InputRegister, DiscreteInput, Coil)
+        Multiinstanz hinzugefügt
+        Verbindung schliessen nach Abruf aller Register
+
+V1.0.3  slaveUnit - Fehler behoben (_regToRead-key (adress.unit))
+        Bug Web Interface (Anzeige der Adresse)
+        example.yaml verbessert
+
+V1.0.2  slaveUnit zu Items hinzugefügt
+
+V1.0.1  slaveUnit zu plugin-Paramter hinzugefügt
+
+V1.0.0  Initial plugin version
 
 
 Web Interface
@@ -88,4 +170,4 @@ Das Plugin kann aus dem Admin Interface aufgerufen werden. Dazu auf der Seite Pl
 Zeile das Icon in der Spalte **Web Interface** anklicken.
 
 .. image:: assets/tab1_readed.png
-   :class: screenshot 
+   :class: screenshot

@@ -12,7 +12,7 @@ plugin:
     documentation: http://smarthomeng.de/user/plugins/dlms/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1002464-support-thread-für-dlms-plugin
 
-    version: 1.9.1                 # Plugin version
+    version: 1.9.4                 # Plugin version
     sh_minversion: 1.8             # minimum shNG version to use this plugin
     #sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     py_minversion: 3.6             # minimum Python version to use for this plugin, due to f-strings
@@ -43,11 +43,11 @@ parameters:
             en: 'Keep up baudrate in communication despite of change request'
     update_cycle:
         type: int
-        valid_min: 1
+        valid_min: 0
         default: 60
         description:
-            de: 'Zeitlicher Abstand zwischen zwei Abfragen des Smartmeters'
-            en: 'Time between two queries of smartmeter'
+            de: 'Zeitlicher Abstand zwischen zwei Abfragen des Smartmeters in Sekunden, setzen auf 0 schaltet cycle aus'
+            en: 'Time between two queries of smartmeter in seconds, set to zero will switch off usage of cycle'
     update_cycle_start_offset:
         type: int
         valid_min: 0

@@ -29,7 +29,7 @@ plugin:
         en: 'RPi.GPIO python module'
     keywords: iot gpio raspberrypi
 
-    version: 1.5.1                 # Plugin version
+    version: 1.5.2                 # Plugin version
     sh_minversion: 1.4             # minimum shNG version to use this plugin
     multi_instance: false          # plugin supports multi instance
     restartable: unknown
