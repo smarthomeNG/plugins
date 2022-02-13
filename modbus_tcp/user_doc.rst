@@ -1,5 +1,11 @@
+.. index:: modbus_tcp plugin
+.. index:: Plugins; modbus_tcp
+
+
+==========
 modbus_tcp
-=====================================================
+==========
+
 SmarthomeNG plugin, zum Lesen von Register über ModBusTCP
 
 Anforderungen
