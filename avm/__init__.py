@@ -2425,7 +2425,7 @@ class AVM(SmartPlugin):
 
     def _update_smarthome_items(self):
         """Update smarthome items using dict '_smarthome_devices'"""
-        for item in self._fritz_device.get_smarthome_devices():
+        for item in self._fritz_device.get_smarthome_items():
             # get AIN
             ainDevice = self._get_item_ain(item)
 
