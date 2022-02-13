@@ -5,14 +5,14 @@ plugin:
     description:
         de: 'Ansteuerung von AVM FRITZ!Boxen, WLAN-Repeatern, DECT Steckdosen, etc.'
         en: 'Get and send data from/to AVM devices such as the FRITZ!Box, Wifi Repeaters or DECT sockets.'
-    maintainer: psilo909
+    maintainer: psilo909, sisamiwe
     tester: Sandman60, cmalo
 #    keywords: iot xyz
     state: 'qa-passed'
     documentation: http://smarthomeng.de/user/plugins/avm/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/934835-avm-plugin
 
-    version: 1.5.12                # Plugin version
+    version: 1.6.1                 # Plugin version
     sh_minversion: 1.6             # minimum shNG version to use this plugin
 #    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
@@ -140,7 +140,6 @@ item_attributes:
         - 'energy'
         - 'power'
         - 'temperature'
-        - 'set_temperature'
         - 'set_temperature_reduced'
         - 'set_temperature_comfort'
         - 'hkr_device'
@@ -151,7 +150,52 @@ item_attributes:
         - 'connection_status'
         - 'device_id'
         - 'device_function'
+        # AHA Interface
+        - 'device_id'
+        - 'manufacturer'
+        - 'product_name'
+        - 'fw_version'
+        - 'connected'
+        - 'device_name'
+        - 'tx_busy'
+        - 'set_target_temperature'
+        - 'target_temperature'
+        - 'current_temperature'
+        - 'temperature_reduced'
+        - 'temperature_comfort'
+        - 'temperature_offset'
         - 'set_hkrwindowopen'
+        - 'windowopenactiveendtime'
+        - 'set_hkrboost'
+        - 'boost_active'
+        - 'boostactiveendtime'
+        - 'battery_low'
+        - 'battery_level'
+        - 'lock'
+        - 'device_lock'
+        - 'window_open'
+        - 'summer_active'
+        - 'holiday_active'
+        - 'errorcode'
+        - 'switch_state'
+        - 'switch_mode'
+        - 'switch_toggle'
+        - 'power'
+        - 'energy'
+        - 'voltage'
+        - 'humidity'                    # r/o Relative Luftfeuchtigkeit (FD440)
+        # - 'alert_state'
+        # Deflections
+        - 'number_of_deflections'       # r/o Anzahl der eingestellten Rufumleitungen
+        - 'deflection_details'          # r/o Details zur Rufumleitung (als dict); Angabe der Rufumleitung mit Parameter "avm_deflection_index" im Item
+        - 'deflections_details'         # r/o Details zu allen Rufumleitung (als dict)
+        - 'deflection_enable'           # r/w Rufumleitung Status an/aus; Angabe der Rufumleitung mit Parameter "avm_deflection_index" im Item bzw Parent-Item
+        - 'deflection_type'             # r/o Type der Rufumleitung; Angabe der Rufumleitung mit Parameter "avm_deflection_index" im Item bzw Parent-Item
+        - 'deflection_number'           # r/o Telefonnummer, die umgeleitet wird; Angabe der Rufumleitung mit Parameter "avm_deflection_index" im Item bzw Parent-Item
+        - 'deflection_to_number'        # r/o Zielrufnummer der Umleitung; Angabe der Rufumleitung mit Parameter "avm_deflection_index" im Item bzw Parent-Item
+        - 'deflection_mode'             # r/o Modus der Rufumleitung; Angabe der Rufumleitung mit Parameter "avm_deflection_index" im Item bzw Parent-Item
+        - 'deflection_outgoing'         # r/o Outgoing der Rufumleitung; Angabe der Rufumleitung mit Parameter "avm_deflection_index" im Item bzw Parent-Item
+        - 'deflection_phonebook_id'     # r/o Phonebook_ID der Zielrufnummer (Only valid if Type==fromPB); Angabe der Rufumleitung mit Parameter "avm_deflection_index" im Item bzw Parent-Item
 
     avm_incoming_allowed:
         type: str
@@ -170,6 +214,8 @@ item_attributes:
         description:
             de: '(optional) Definition des Wlans ueber index: (1: 2.4Ghz, 2: 5Ghz, 3: Gaeste).'
             en: '(optional) Definition of WiFi via index: (1: 2.4GHz, 2: 5GHz, 3: Guest)'
+        valid_min: 1
+        valid_max: 3
     avm_mac:
         type: mac
         mandatory: False
@@ -182,17 +228,378 @@ item_attributes:
         description:
             de: 'Definition der Aktor Identifikationsnummer (AIN)Items vom avm_data_type `aha_device`. Nur für diese Items mandatory!'
             en: 'Definition of the actor identification number (AIN) for items of avm_data_type `aha_device`. Only mandatory for these items!'
-
-    index:
-        type: num
+    avm_tam_index:
+        type: int
         mandatory: False
         description:
             de: 'Index für den Anrufbeantworter, normalerweise für den ersten eine "1". Es werden bis zu 5 Anrufbeantworter vom Gerät unterstützt.'
             en: 'Index für the answering machine, normally a "1" for the first one. Supported are up to 5 answering machines.'
+        valid_min: 1
+        valid_max: 5
+    avm_deflection_index:
+        type: int
+        mandatory: False
+        description:
+            de: 'Index für die Rufumleitung, normalerweise für die erste eine "1".'
+            en: 'Index deflection, normally a "1" for the first one.'
+        valid_min: 1
+        valid_max: 32
 
+item_structs:
+    info:
+        uptime:
+            type: num
+            visu_acl: ro
+            avm_data_type@instance: uptime
+        serial_number:
+            type: str
+            visu_acl: ro
+            avm_data_type@instance: serial_number
+        firmware:
+            type: str
+            visu_acl: ro
+            avm_data_type@instance: software_version
+        hardware_version:
+            type: str
+            visu_acl: ro
+            avm_data_type@instance: hardware_version
+        myfritz:
+            type: bool
+            avm_data_type@instance: myfritz_status
 
-item_structs: NONE
-  # Definition of item-structure templates for this plugin
+    monitor:
+        trigger:
+            type: bool
+            avm_data_type@instance: monitor_trigger
+            avm_incoming_allowed: xxxxxxxx
+            avm_target_number: xxxxxxxx
+            enforce_updates: yes
+
+        incoming:
+            is_call_incoming:
+                type: bool
+                avm_data_type@instance: is_call_incoming
+            duration:
+                type: num
+                avm_data_type@instance: call_duration_incoming
+            last_caller:
+                type: str
+                avm_data_type@instance: last_caller_incoming
+            last_calling_number:
+                type: str
+                avm_data_type@instance: last_number_incoming
+            last_called_number:
+                type: str
+                avm_data_type@instance: last_called_number_incoming
+            last_call_date:
+                type: str
+                avm_data_type@instance: last_call_date_incoming
+            event:
+                type: str
+                avm_data_type@instance: call_event_incoming
+
+        outgoing:
+            is_call_outgoing:
+                type: bool
+                avm_data_type@instance: is_call_outgoing
+            duration:
+                type: num
+                avm_data_type@instance: call_duration_outgoing
+            last_caller:
+                type: str
+                avm_data_type@instance: last_caller_outgoing
+            last_calling_number:
+                type: str
+                avm_data_type@instance: last_number_outgoing
+            last_called_number:
+                type: str
+                avm_data_type@instance: last_called_number_outgoing
+            last_call_date:
+                type: str
+                avm_data_type@instance: last_call_date_outgoing
+            event:
+                type: str
+                avm_data_type@instance: call_event_outgoing
+
+        newest:
+            direction:
+                type: str
+                avm_data_type@instance: call_direction
+                cache: yes
+            event:
+                type: str
+                avm_data_type@instance: call_event
+                cache: yes
+
+    tam:
+        type: bool
+        visu_acl: rw
+        avm_data_type@instance: tam
+        avm_tam_index@instance: 1
+
+        name:
+            type: str
+            visu_acl: ro
+            avm_data_type@instance: tam_name
+        message_number_old:
+            type: num
+            visu_acl: ro
+            avm_data_type@instance: tam_old_message_number
+            eval: (sh...message_number_total()-sh...message_number_new())
+            eval_trigger:
+              - ..message_number_total
+              - ..message_number_new
+        message_number_new:
+            type: num
+            visu_acl: ro
+            avm_data_type@instance: tam_new_message_number
+        message_number_total:
+            type: num
+            visu_acl: ro
+            avm_data_type@instance: tam_total_message_number
+
+    deflection:
+        type: bool
+        visu_acl: rw
+        avm_data_type@instance: deflection_enable
+        avm_deflection_index@instance: 1
+
+        deflection_type:
+            type: str
+            visu_acl: ro
+            avm_data_type@instance: deflection_type
+        deflection_number:
+            type: str
+            visu_acl: ro
+            avm_data_type@instance: deflection_number
+        deflection_to_number:
+            type: str
+            visu_acl: ro
+            avm_data_type@instance: deflection_to_number
+        deflection_mode:
+            type: str
+            visu_acl: ro
+            avm_data_type@instance: deflection_mode
+        deflection_outgoing:
+            type: str
+            visu_acl: ro
+            avm_data_type@instance: deflection_outgoing
+        deflection_phonebook_id:
+            type: num
+            visu_acl: ro
+            avm_data_type@instance: deflection_phonebook_id
+
+    wan:
+        connection_status:
+            type: str
+            visu_acl: ro
+            avm_data_type@instance: wan_connection_status
+        connection_error:
+            type: str
+            visu_acl: ro
+            avm_data_type@instance: wan_connection_error
+        is_connected:
+            type: bool
+            visu_acl: ro
+            avm_data_type@instance: wan_is_connected
+        uptime:
+            type: num
+            visu_acl: ro
+            avm_data_type@instance: wan_uptime
+        upstream:
+            type: num
+            visu_acl: ro
+            avm_data_type@instance: wan_upstream
+        downstream:
+            type: num
+            visu_acl: ro
+            avm_data_type@instance: wan_downstream
+        total_packets_sent:
+            type: num
+            visu_acl: ro
+            avm_data_type@instance: wan_total_packets_sent
+        total_packets_received:
+            type: num
+            visu_acl: ro
+            avm_data_type@instance: wan_total_packets_received
+        total_bytes_sent:
+            type: num
+            visu_acl: ro
+            avm_data_type@instance: wan_total_bytes_sent
+        total_bytes_received:
+            type: num
+            visu_acl: ro
+            avm_data_type@instance: wan_total_bytes_received
+        link:
+            type: bool
+            visu_acl: ro
+            avm_data_type@instance: wan_link
+        reconnect:
+            type: bool
+            visu_acl: rw
+            enforce_updates: yes
+
+    wlan:
+        wlan_1:
+            type: bool
+            visu_acl: rw
+            avm_data_type@instance: wlanconfig    # 2,4ghz
+            avm_wlan_index@instance: 1
+        wlan_1_ssid:
+            type: str
+            visu_acl: ro
+            avm_data_type@instance: wlanconfig_ssid    # 2,4ghz
+            avm_wlan_index@instance: 1
+        wlan_2:
+            type: bool
+            visu_acl: rw
+            avm_data_type@instance: wlanconfig    # 5 GHz
+            avm_wlan_index@instance: 2
+        wlan_gast:
+            type: bool
+            visu_acl: rw
+            avm_data_type@instance: wlanconfig    # Guest
+            avm_wlan_index@instance: 3
+        wlan_gast_ssid:
+            type: str
+            visu_acl: ro
+            avm_data_type@instance: wlanconfig_ssid    # Guest
+            avm_wlan_index@instance: 3
+        wlan_gast_tr:
+            type: num
+            visu_acl: rw
+            avm_data_type@instance: wlan_guest_time_remaining    # Guest
+            avm_wlan_index@instance: 3
+
+    device:
+        avm_data_type@instance: network_device
+        type: bool
+        visu_acl: ro
+
+        ip:
+            type: str
+            avm_data_type@instance: device_ip
+            visu_acl: ro
+
+        connection_type:
+            type: str
+            avm_data_type@instance: device_connection_type
+            visu_acl: ro
+
+        hostname:
+            type: str
+            avm_data_type@instance: device_hostname
+            visu_acl: ro
+
+    smarthome_general:
+        name:
+            avm_data_type@instance: device_name
+            type: str
+        identifier:
+            avm_data_type@instance: device_id
+            type: str
+        productname:
+            avm_data_type@instance: product_name
+            type: str
+        manufacturer:
+            avm_data_type@instance: manufacturer
+            type: str
+        firmware_version:
+            avm_data_type@instance: fw_version
+            type: str
+        present:
+            avm_data_type@instance: connected
+            type: bool
+
+    smarthome_hkr:
+        current_temperature:
+            avm_data_type@instance: current_temperature
+            type: num
+        target_temperature:
+            avm_data_type@instance: target_temperature
+            type: num
+        set_target_temperature:
+            avm_data_type@instance: set_target_temperature
+            type: num
+        comfort_temperature:
+            avm_data_type@instance: temperature_comfort
+            type: num
+        eco_temperature:
+            avm_data_type@instance: temperature_reduced
+            type: num
+        battery_low:
+            avm_data_type@instance: battery_low
+            type: bool
+        battery_level:
+            avm_data_type@instance: battery_level
+            type: num
+        window_open:
+            avm_data_type@instance: window_open
+            type: bool
+        summer_active:
+            avm_data_type@instance: summer_active
+            type: bool
+        holiday_active:
+            avm_data_type@instance: holiday_active
+            type: bool
+        errorcode:
+            avm_data_type@instance: errorcode
+            type: num
+        set_hkrwindowopen:
+            avm_data_type@instance: set_hkrwindowopen
+            type: bool
+        windowopenactiveendtime:
+            avm_data_type@instance: windowopenactiveendtime
+            type: num
+        set_hkrboost:
+            avm_data_type@instance: set_hkrboost
+            type: bool
+        boost_active:
+            avm_data_type@instance: boost_active
+            type: bool
+        boostactiveendtime:
+            avm_data_type@instance: boostactiveendtime
+            type: num
+        lock:
+            avm_data_type@instance: lock
+            type: bool
+        device_lock:
+            avm_data_type@instance: device_lock
+            type: bool
+
+    smarthome_temperatur_sensor:
+        temperatur:
+            avm_data_type@instance: current_temperature
+            type: num
+        temperature_offset:
+            avm_data_type@instance: temperature_offset
+            type: num
+
+    smarthome_alert:
+        state:
+            avm_data_type@instance: alert
+            type: bool
+
+    smarthome_switch:
+        switch_state:
+            avm_data_type@instance: switch_state
+            type: bool
+        switch_toggle:
+            avm_data_type@instance: switch_toggle
+            type: bool
+            enforce_updates: yes
+
+    smarthome_powermeter:
+        power:
+            avm_data_type@instance: power
+            type: num
+        energy:
+            avm_data_type@instance: energy
+            type: num
+        voltage:
+            avm_data_type@instance: voltage
+            type: num
+
 
 logic_parameters: NONE
     # Definition of logic parameters defined by this plugin
@@ -386,3 +793,48 @@ plugin_functions:
                 description:
                     de: "MAC Adresse"
                     en: "MAC address"
+
+    get_number_of_deflections:
+        type: bool
+        description:
+            de: "Liefert die Anzahl der Rufumleitungen zurück."
+            en: "Returns Number of set deflections."
+        parameters:
+        # This function has no parameters
+
+    get_deflection:
+        type: bool
+        description:
+            de: "Liefert die Details der Rufumleitung der angegebenen ID zurück (Default-ID = 0)"
+            en: "Returns details of deflection with given deflection_id (default id = 0)"
+        parameters:
+            deflection_id:
+                type: int
+                description:
+                    de: "Identifikator der abzufragenden Rufumleitung."
+                    en: "Identifier of deflection."
+
+    get_deflections:
+        type: bool
+        description:
+            de: "Liefert die Details aller Rufumleitungen zurück."
+            en: "Returns details of all deflections."
+        parameters:
+        # This function has no parameters
+
+    set_deflection_enable:
+        type: bool
+        description:
+            de: "Schaltet die Rufumleitung mit angegebener ID an oder aus."
+            en: "Enables or disables deflection with given ID."
+        parameters:
+            deflection_id:
+                type: int
+                description:
+                    de: "Identifikator der abzufragenden Rufumleitung."
+                    en: "identifier of deflection."
+            enable:
+                type: bool
+                description:
+                    de: "An / Aus"
+                    en: "Enable / Disable"
