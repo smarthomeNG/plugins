@@ -9,7 +9,7 @@ avm
 Changelog
 =========
 
-1.6.0
+1.6.1
 -----
 
 - Anbindung der Smarthome Devices über AHA-Interface hinzugefügt (getestet mit Fritz 440, Comet Dect)
