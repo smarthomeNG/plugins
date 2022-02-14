@@ -12,7 +12,7 @@ plugin:
     state: develop
     keywords: iot device
     # documentation: https://github.com/smarthomeNG/smarthome/wiki/MultiDevice-Plugin
-    # support: https://knx-user-forum.de/forum/supportforen/smarthome-py
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1742619-multidevice-plugin-universelles-plugin-framework
     version: 0.4.0
     sh_minversion: 1.8.2
     py_minversion: 3.6
