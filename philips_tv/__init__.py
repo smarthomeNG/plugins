@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
-#  Copyright 2019 Thomas Hengsberg <thomas@thomash.eu>
+#  Copyright 2021-2022 Alexander Schwithal
 #########################################################################
 #  This file is part of SmartHomeNG.   
 #
-#  Sample plugin for new plugins to run with SmartHomeNG version 1.4 and
+#  Sample plugin for new plugins to run with SmartHomeNG version 1.8 and
 #  upwards.
 #
 #  SmartHomeNG is free software: you can redistribute it and/or modify
@@ -90,9 +90,9 @@ class Philips_TV(SmartPlugin):
         self.alive = True
 
     def stop(self):
-        self.scheduler_remove('poll_device')
         self.logger.debug("Stop method called")
         self.alive = False
+        self.scheduler_remove('poll_device')
 
     def parse_item(self, item):
         
@@ -114,7 +114,7 @@ class Philips_TV(SmartPlugin):
         pass
 
     def update_item(self, item, caller=None, source=None, dest=None):
-        self.logger.debug(f"Update philips item: Caller: {caller}, pluginname: {self.get_shortname()}")
+        #self.logger.debug(f"Update philips item: Caller: {caller}, pluginname: {self.get_shortname()}")
         if caller != self.get_shortname():
             if self.has_iattr(item.conf, 'philips_tv_tx_key'):
                 tx_key = item.conf['philips_tv_tx_key'].upper()
@@ -164,7 +164,10 @@ class Philips_TV(SmartPlugin):
             if 'current' in value_json:
                 volume = value_json["current"]
                 #self.logger.debug(f"Volume state is: {volume}")
-         
+        
+        if not self.alive:
+            return
+ 
         value = self.get("activities/current", verbose=self.verbose, err_count=0, print_response=False)
         #self.logger.debug(f"Response: {value}")
         value_json = json.loads(value)
@@ -223,6 +226,8 @@ class Philips_TV(SmartPlugin):
         #            if 'label' in app:
         #                self.logger.debug(f"\t{app['label']}")
 
+        if not self.alive:
+            return
 
         value = self.get("powerstate", verbose=self.verbose, err_count=0, print_response=False)
         #self.logger.debug(f"Response: {value}")
@@ -231,6 +236,9 @@ class Philips_TV(SmartPlugin):
             if 'powerstate' in value_json:
                 powerstate = value_json["powerstate"]
                 #self.logger.debug(f"Powerstate is: {powerstate}")
+
+        if not self.alive:
+            return
 
         value = self.get("activities/tv", verbose=self.verbose, err_count=0, print_response=False)
         #self.logger.debug(f"Response: {value}")
