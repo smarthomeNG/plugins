@@ -1,8 +1,17 @@
 .. index:: Plugins; homematic (HomeMatic Unterstützung)
 .. index:: homematic HomeMaticIP
 
+=========
 homematic
-#########
+=========
+
+.. image:: webif/static/img/plugin_logo.jpg
+   :alt: plugin logo
+   :width: 300px
+   :height: 300px
+   :scale: 50 %
+   :align: left
+
 
 Das Plugin unterstützt HomeMatic und HomeMatic IP Geräte, die an einer HomeMatic CCU2 angelernt sind.
 Es wird eine große Zahl von HomeMatic Geräten unterstützt. Wenn ein Gerät nicht unterstützt wird,
