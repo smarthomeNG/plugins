@@ -2247,7 +2247,7 @@ class AVM(SmartPlugin):
         """Get the DOM elements for the device list using minidom."""
         devices = None
         plain = self._aha_request("getdevicelistinfos")
-        if plain is not None:
+        if plain:
             try:
                 dom = minidom.parseString(plain)
                 devices = dom.getElementsByTagName('device')
@@ -2577,8 +2577,7 @@ class AVM(SmartPlugin):
         """Update smarthome items using dict '_smarthome_devices'"""
 
         #self.logger.warning(f"Debug: get_smarthome_devices(): {self._fritz_device.get_smarthome_devices()}")
-        #for item in self._fritz_device.get_smarthome_devices():
-        for item in self._fritz_device._smarthome_items:
+        for item in self._fritz_device.get_smarthome_items():
             # get AIN
             ainDevice = self._get_item_ain(item)
 
