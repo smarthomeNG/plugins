@@ -1084,6 +1084,7 @@ class AVM(SmartPlugin):
                 response.raise_for_status()
             except requests.exceptions.HTTPError as e:
                 self.logger.error(f"POST request error: {e}")
+                self.logger.error(f"Debug-PostRequest: url:{url}, data:{data}, headers:{headers}, response:{response}")
                 self.set_device_availability(False)
 
             if response.status_code == 200:
