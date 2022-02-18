@@ -16,12 +16,14 @@ hue2
 Das Plugin unterstützt Philips Hue Bridges. Es ist eine komplette Neuentwicklung mit einem deutlich erweiterten
 Funktionsumfang gegenüber dem alten Hue Plugin.
 
-Es unterstützt die zweite Generation der Philips Hue Bridges und
-bisher auch noch die Bridges der ersten Generation, die von Philips inzwischen retired wurden und keine Unterstützung
-durch Philips mehr erfahren.
+Es unterstützt die zweite Generation der Philips Hue Bridges und bisher auch noch die Bridges der ersten Generation,
+die von Philips inzwischen retired wurden und keine Unterstützung durch Philips mehr erfahren.
 
 
-Das Plugin bietet zusätzlich folgende Features:
+Neue Features
+=============
+
+Das Plugin bietet im Vergleich zum **hue** Plugin zusätzlich folgende Features:
 
 - Die Authorisierung an der Hue Bride ist in das Plugin integriert und erfolgt über das Webinferface des Plugins.
 - Das Plugin hat eine Funktion um aktive Hue Bridges im lokalen Netzwerk zu finden.
