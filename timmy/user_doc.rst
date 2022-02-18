@@ -1,4 +1,5 @@
-Timmy
+
+timmy
 =====
 
 Timmy ist ein Plugin, das die Definition von separaten Ein- und Ausschaltverzögerungen, sowie Blinkmuster ermöglicht. Die Blinkmuster können z.B. als visuelle Rückmeldungsfunktion verwendet werden.
@@ -76,7 +77,7 @@ Beispiele
 
             defined_limit:
                 type: num
-                
+
             post_hysteresis:
                 type: bool
 
@@ -84,4 +85,3 @@ Web Interface
 -------------
 
 Dieses Plugin hat kein WebInterface.
- 
