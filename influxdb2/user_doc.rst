@@ -22,7 +22,12 @@ Software (v1.8 und davor) eingesetzt werden, kann dieses Plugin nicht verwendet 
 Einführung
 ==========
 
-...
+Dieses Plugin ermöglicht das Speichern von Daten in der Zeitreihen Datenbank InfluxDB. Es soll auch den Support
+für serien (Plots) in smartVISU sicherstellen. Dadurch ist das InfluxDB Plugin in der Lage, als Ersatz für das database
+Plugin zu fungieren. Um eine Migration zu erleichtern, kann das InfluxDB Plugin so konfiguriert werden, dass es alle
+Werte, die durch das database Plugin in eine SQLite3 bzw. MySQL Datenbank geschrieben werden, zusätzlich in die InfluxDB
+schreibt.
+
 
 Anforderungen
 =============
@@ -73,12 +78,9 @@ Beispiele
 
 Hier können ausführlichere Beispiele und Anwendungsfälle beschrieben werden.
 
+...
 
 Web Interface
 =============
 
-Die Datei ``dev/sample_plugin/webif/templates/index.html`` sollte als Grundlage für Webinterfaces genutzt werden. Um Tabelleninhalte nach Spalten filtern und sortieren zu können, muss der entsprechende Code Block mit Referenz auf die relevante Table ID eingefügt werden (siehe Doku).
-
-SmartHomeNG liefert eine Reihe Komponenten von Drittherstellern mit, die für die Gestaltung des Webinterfaces genutzt werden können. Erweiterungen dieser Komponenten usw. finden sich im Ordner ``/modules/http/webif/gstatic``.
-
-Wenn das Plugin darüber hinaus noch Komponenten benötigt, werden diese im Ordner ``webif/static`` des Plugins abgelegt.
+...
