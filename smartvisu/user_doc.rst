@@ -7,7 +7,24 @@
 smartvisu
 =========
 
-Das Plugin stellt das Bindeglied zur smartVISU dar. Es verfügt über folgende Features:
+.. image:: webif/static/img/plugin_logo.png
+   :alt: plugin logo
+   :width: 300px
+   :height: 300px
+   :scale: 50 %
+   :align: left
+
+Das Plugin stellt das Bindeglied zur smartVISU dar. Es implementiert das Nutzdatenprotokoll, welches über Websockets
+Daten zwischen der smartVISU und SmartHomeNG austauscht.
+
+Außerdem ermöglicht es das smartvisu Plugin, Seiten für
+die smartVISU aus den Item Definitionen von SmartHomeNG zu generieren.
+
+
+Einführung
+==========
+
+Das Plugin verfügt über folgende Features:
 
 - es kann mit Hilfe einiger Item Attribute Seiten für die smartVISU generieren
 - es kann Widgets, die in Plugins enthalten sind in die smartVISU installieren
