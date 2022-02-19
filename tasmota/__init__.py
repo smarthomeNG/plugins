@@ -24,7 +24,6 @@
 #########################################################################
 
 from datetime import datetime, timedelta
-import logging
 
 from lib.module import Modules
 from lib.model.mqttplugin import *
@@ -39,7 +38,7 @@ class Tasmota(MqttPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.2.0'
+    PLUGIN_VERSION = '1.2.1'
 
     def __init__(self, sh):
         """
@@ -80,6 +79,7 @@ class Tasmota(MqttPlugin):
         self.tasmota_items = []                     # to hold item information for web interface
         self.tasmota_meta = {}                      # to hold meta information for web interface
         self.tasmota_zigbee_bridge = {}             # to hold tasmota zigbee bridge status
+        self.alive = None
 
         self.tasmota_zigbee_bridge_stetting = {'SetOption89': 'OFF',     # SetOption89   Configure MQTT topic for Zigbee devices (also see SensorRetain); 0 = single tele/%topic%/SENSOR topic (default), 1 = unique device topic based on Zigbee device ShortAddr, Example: tele/Zigbee/5ADF/SENSOR = {"ZbReceived":{"0x5ADF":{"Dimmer":254,"Endpoint":1,"LinkQuality":70}}}
                                                'SetOption83': 'ON',      # SetOption83   Uses Zigbee device friendly name instead of 16 bits short addresses as JSON key when reporting values and commands; 0 = JSON key as short address, 1 = JSON key as friendly name
@@ -182,7 +182,7 @@ class Tasmota(MqttPlugin):
                     self.logger.warning(f"Probably for item {item.id()} the device short name as been used for attribute 'tasmota_zb_device'. Trying to make that work but it will cause exceptions. To prevent this, the short name need to be defined as string by using parentheses")
                     tasmota_zb_device = str(hex(tasmota_zb_device))
                     tasmota_zb_device = tasmota_zb_device[0:2]+tasmota_zb_device[2:len(tasmota_zb_device)].upper()
-                except:
+                except Exception:
                     pass
             tasmota_zb_attr = str(self.get_iattr_value(item.conf, 'tasmota_zb_attr')).lower()
 
@@ -248,7 +248,12 @@ class Tasmota(MqttPlugin):
             tasmota_attr = self.get_iattr_value(item.conf, 'tasmota_attr')
             tasmota_relay = self.get_iattr_value(item.conf, 'tasmota_relay')
             tasmota_zb_device = self.get_iattr_value(item.conf, 'tasmota_zb_device')
-            tasmota_zb_attr = self.get_iattr_value(item.conf, 'tasmota_zb_attr').lower()
+            tasmota_zb_attr = self.get_iattr_value(item.conf, 'tasmota_zb_attr')
+            if tasmota_zb_attr:
+                tasmota_zb_attr = tasmota_zb_attr.lower()
+
+            topic = tasmota_topic
+            detail = None
 
             if tasmota_attr in ['relay', 'hsb', 'white', 'ct', 'rf_send', 'rf_key_send', 'zb_permit_join']:
                 self.logger.info(f"update_item: {item.id()}, item has been changed in SmartHomeNG outside of this plugin in {caller} with value {item()}")
@@ -258,7 +263,6 @@ class Tasmota(MqttPlugin):
                     # publish topic with new relay state
                     if not tasmota_relay:
                         tasmota_relay = '1'
-                    topic = tasmota_topic
                     detail = 'POWER'
                     if tasmota_relay > '1':
                         detail += str(tasmota_relay)
@@ -269,7 +273,6 @@ class Tasmota(MqttPlugin):
                     # publish topic with new hsb value
                     # Format aus dem Item ist eine Liste mit drei int Werten bspw. [299, 100, 94]
                     # Format zum Senden ist ein String mit kommagetrennten Werten '299,100,94'
-                    topic = tasmota_topic
                     detail = 'HsbColor'
                     hsb = item()
                     if type(hsb) is list and len(hsb) == 3:
@@ -280,7 +283,6 @@ class Tasmota(MqttPlugin):
 
                 elif tasmota_attr == 'white':
                     # publish topic with new white value
-                    topic = tasmota_topic
                     detail = 'White'
                     white = item()
                     if type(white) is int and 0 <= white <= 100:
@@ -290,7 +292,6 @@ class Tasmota(MqttPlugin):
 
                 elif tasmota_attr == 'ct':
                     # publish topic with new ct value
-                    topic = tasmota_topic
                     detail = 'CT'
                     ct = item()
                     if type(ct) is int and 153 <= ct <= 500:
@@ -302,7 +303,6 @@ class Tasmota(MqttPlugin):
                     # publish topic with new rf data
                     # Format aus dem Item ist ein dict in folgendem Format: {'RfSync': 12220, 'RfLow': 440, 'RfHigh': 1210, 'RfCode':'#F06104'}
                     # Format zum Senden ist: "RfSync 12220; RfLow 440; RfHigh 1210; RfCode #F06104"
-                    topic = tasmota_topic
                     detail = 'Backlog'
                     rf_send = item()
                     if type(rf_send) is dict:
@@ -317,7 +317,6 @@ class Tasmota(MqttPlugin):
 
                 elif tasmota_attr == 'rf_key_send':
                     # publish topic for rf_keyX Default send
-                    topic = tasmota_topic
                     try:
                         rf_key = int(item())
                     except Exception:
@@ -331,14 +330,12 @@ class Tasmota(MqttPlugin):
 
                 elif tasmota_attr == 'ZbPermitJoin':
                     # publish topic for ZbPermitJoin
-                    topic = tasmota_topic
                     detail = 'ZbPermitJoin'
                     bool_values = ['0', '1']
                     value = item()
 
                 elif tasmota_attr == 'ZbForget':
                     # publish topic for ZbForget
-                    topic = tasmota_topic
                     detail = 'ZbForget'
                     value = item()
                     if item() in self.tasmota_zigbee_devices:
@@ -348,7 +345,6 @@ class Tasmota(MqttPlugin):
 
                 elif tasmota_attr == 'ZbPing':
                     # publish topic for ZbPing
-                    topic = tasmota_topic
                     detail = 'ZbPing'
                     if item() in self.tasmota_zigbee_devices:
                         value = item()
@@ -367,7 +363,7 @@ class Tasmota(MqttPlugin):
                     topic = tasmota_topic
                     detail = 'ZbSend'
                     bool_values = ['OFF', 'ON']
-                    payload = {'Device':tasmota_zb_device,'Send':{'Power':int(item())}}
+                    payload = {'Device': tasmota_zb_device, 'Send': {'Power': int(item())}}
                     
                 elif tasmota_zb_device and tasmota_zb_attr == 'dimmer':
                     topic = tasmota_topic
@@ -376,7 +372,7 @@ class Tasmota(MqttPlugin):
                     if value < 0 or value > 254:
                         self.logger.warning(f' commanded value for brightness not within allowed range; set to next valid value')
                         value = 0 if (value < 0) else 254
-                    payload = {'Device':tasmota_zb_device,'Send':{'Dimmer':value}}
+                    payload = {'Device': tasmota_zb_device, 'Send': {'Dimmer': value}}
                     
                 elif tasmota_zb_device and tasmota_zb_attr == 'hue':
                     topic = tasmota_topic
@@ -385,7 +381,7 @@ class Tasmota(MqttPlugin):
                     if value < 0 or value > 254:
                         self.logger.warning(f' commanded value for hue not within allowed range; set to next valid value')
                         value = 0 if (value < 0) else 254
-                    payload = {'Device':tasmota_zb_device,'Send':{'Hue':value}}
+                    payload = {'Device': tasmota_zb_device, 'Send': {'Hue': value}}
                     
                 elif tasmota_zb_device and tasmota_zb_attr == 'sat':
                     topic = tasmota_topic
@@ -394,7 +390,7 @@ class Tasmota(MqttPlugin):
                     if value < 0 or value > 254:
                         self.logger.warning(f' commanded value for saturation not within allowed range; set to next valid value')
                         value = 0 if (value < 0) else 254
-                    payload = {'Device':tasmota_zb_device,'Send':{'Sat':value}}
+                    payload = {'Device': tasmota_zb_device, 'Send': {'Sat': value}}
                     
                 elif tasmota_zb_device and tasmota_zb_attr == 'ct':
                     topic = tasmota_topic
@@ -403,9 +399,9 @@ class Tasmota(MqttPlugin):
                     if value < 0 or value > 65534:
                         self.logger.warning(f' commanded value for saturation not within allowed range; set to next valid value')
                         value = 0 if (value < 0) else 65534
-                    payload = {'Device':tasmota_zb_device,'Send':{'CT':value}}
+                    payload = {'Device': tasmota_zb_device, 'Send': {'CT': value}}
                     
-                if payload:
+                if payload and detail:
                     self.publish_tasmota_topic('cmnd', topic, detail, payload, item, bool_values=bool_values)
 
             else:
@@ -655,18 +651,17 @@ class Tasmota(MqttPlugin):
             self.logger.info(f"on_mqtt_message: topic_type={topic_type}, tasmota_topic={tasmota_topic}, info_topic={info_topic}, payload={payload}")
         except Exception as e:
             self.logger.error(f"received topic {topic} is not in correct format. Error was: {e}")
-
-        device = self.tasmota_devices.get(tasmota_topic, None)
-        if device:
-            if info_topic.startswith('POWER'):
-                tasmota_relay = str(info_topic[5:])
-                if not tasmota_relay:
-                    tasmota_relay = '1'
-                item_relay = 'item_relay'+tasmota_relay
-                self._set_item_value(tasmota_topic, item_relay, payload == 'ON', info_topic)
-                self.tasmota_devices[tasmota_topic]['relais'][info_topic] = payload
-                self.tasmota_meta['relais'] = True
-        return
+        else:
+            device = self.tasmota_devices.get(tasmota_topic, None)
+            if device:
+                if info_topic.startswith('POWER'):
+                    tasmota_relay = str(info_topic[5:])
+                    if not tasmota_relay:
+                        tasmota_relay = '1'
+                    item_relay = 'item_relay'+tasmota_relay
+                    self._set_item_value(tasmota_topic, item_relay, payload == 'ON', info_topic)
+                    self.tasmota_devices[tasmota_topic]['relais'][info_topic] = payload
+                    self.tasmota_meta['relais'] = True
 
     def _set_item_value(self, tasmota_topic, itemtype, value, info_topic=''):
         """
@@ -709,7 +704,7 @@ class Tasmota(MqttPlugin):
         """
         # topic_type=tele, tasmota_topic=SONOFF_ZB1, info_topic=ZbReceived, payload={'snzb-02_01': {'Device': '0x67FE', 'Name': 'snzb-02_01', 'Humidity': 31.94, 'Endpoint': 1, 'LinkQuality': 157}}
         for zigbee_device in payload:
-            if not zigbee_device in self.tasmota_zigbee_devices:
+            if zigbee_device not in self.tasmota_zigbee_devices:
                 self.logger.info(f"New Zigbee Device {zigbee_device} connected to Tasmota Zigbee Bridge discovered")
                 self.tasmota_zigbee_devices[zigbee_device] = {}
             else:
@@ -911,7 +906,7 @@ class Tasmota(MqttPlugin):
         :param payload:         MQTT message payload
         :return:
         """
-        power_dict = {key:val for key, val in payload.items() if key.startswith('POWER')}
+        power_dict = {key: val for key, val in payload.items() if key.startswith('POWER')}
         self.tasmota_devices[device]['relais'].update(power_dict)
         for power in power_dict:
             item_relay = 'item_relay'+str(power[5:])
@@ -986,7 +981,7 @@ class Tasmota(MqttPlugin):
                     self.tasmota_zigbee_devices[zigbee_device]['meta'].update(element)
                     
                     # Übertragen der Werte aus der Statusmeldung in Data
-                    bulb = ['Power','Dimmer','Hue','Sat','X','Y','CT','ColorMode']
+                    bulb = ['Power', 'Dimmer', 'Hue', 'Sat', 'X', 'Y', 'CT', 'ColorMode']
                     data = {}
                     for key in bulb:
                         x = element.get(key)
