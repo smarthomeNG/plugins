@@ -1,0 +1,84 @@
+# Metadata for the plugin
+plugin:
+    # Global plugin attributes
+    type: unknown                   # plugin type (gateway, interface, protocol, system, web)
+    description:
+        de: 'Beispiel Plugin für SmartHomeNG v1.5 und höher'
+        en: 'Sample plugin for SmartHomeNG v1.5 and up'
+    maintainer: <autor>
+#    tester:                         # Who tests this plugin?
+    state: develop                  # change to ready when done with development
+#    keywords: iot xyz
+#    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
+#    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
+
+    version: 1.0.0                  # Plugin version (must match the version specified in __init__.py)
+    sh_minversion: 1.8              # minimum shNG version to use this plugin
+#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+#    py_minversion: 3.6             # minimum Python version to use for this plugin
+#    py_maxversion:                 # maximum Python version to use for this plugin (leave empty if latest)
+    multi_instance: false           # plugin supports multi instance
+    restartable: unknown
+    classname: AVM2         # class containing the plugin
+
+parameters:
+    # Definition of parameters to be configured in etc/plugin.yaml
+    username:
+        type: str
+        default: ''
+        description:
+            de: '(optional) Nutzername für den Login. Kann für manche Features benötigt werden! (Speziell für Fritz!OS 7 ist die Konfiguration der Fritz!Box auf `Anmeldung mit FRITZ!Box-Benutzernamen und Kennwort` notwendig'
+            en: '(optional) Login information (user). Can be needed to use some features of the AVM device. (Specially for Firtz!OS 7 the Fritz!Box should be configured for login with username and password'
+    password:
+        type: str
+        default: ''
+        hide: True
+        description:
+            de: '(optional) Passwort für den Login. Wird in der Regel immer benötigt und aus Sicherheitsgründen empfohlen.'
+            en: '(optional) Password for login. Is normally always needed and recommended due to security reasons'
+    host:
+        type: str
+        default: 'fritz.box'
+        description:
+            de: '(optional) Hostname oder IP-Adresse des FritzDevice.'
+            en: '(optional) Hostname or ip address of the FritzDevice.'
+    port:
+        type: int
+        default: 49443
+        description:
+            de: '(optional) Port des FritzDevice, normalerweise 49433 für https oder 49000 für http'
+            en: '(optional) Port of the FritzDevice, typically 49433 for https or 49000 for http'
+    cycle:
+        type: int
+        default: 300
+        description:
+            de: '(optional) Zeit zwischen zwei Updateläufen. Default ist 300 Sekunden.'
+            en: '(optional) Time period between two update cycles. Default is 300 seconds.'
+    ssl:
+        type: bool
+        default: True
+        description:
+            de: '(optional) Mit True wird das FritzDevice via https, mit False via http angesprochen.'
+            en: '(optional) True will add "https", False "http" to the URLs in the plugin.'
+    verify:
+        type: bool
+        default: False
+        description:
+            de: '(optional) Schaltet die Zertifikate-Prüfung an oder aus. Normalerweise False.'
+            en: '(optional) Turns certificate verification on or off. Typically False'
+
+item_attributes: NONE
+    # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)
+
+item_structs: NONE
+    # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
+
+#item_attribute_prefixes:
+    # Definition of item attributes that only have a common prefix (enter 'item_attribute_prefixes: NONE' or ommit this section, if section should be empty)
+    # NOTE: This section should only be used, if really nessesary (e.g. for the stateengine plugin)
+
+plugin_functions: NONE
+    # Definition of plugin functions defined by this plugin (enter 'plugin_functions: NONE', if section should be empty)
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)
