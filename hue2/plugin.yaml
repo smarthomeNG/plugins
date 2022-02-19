@@ -96,6 +96,12 @@ parameters:
 item_attributes:
     # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)
 
+    dpt3_dim:
+        type: bool
+        description:
+            de: "Aktiviert DPT3 dimmen"
+            en: "Enabled DPT3 dimming"
+
     hue2_transitionTime:
         type: num
         description:
@@ -112,6 +118,13 @@ item_attributes:
           - group
           - scene
           - sensor
+
+    hue2_refence_light_id:
+        type: str
+        description:
+            de: "ID der des referenzwert gebenden Lichtes. Nur möglich wenn resource == group"
+            en: "ID of the light giving the reference value. Only possible if resource == group"
+
 
     hue2_id:
         type: str

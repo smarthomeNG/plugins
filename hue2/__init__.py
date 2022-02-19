@@ -199,6 +199,10 @@ class Hue2(SmartPlugin):
             conf_data['id'] = self.get_iattr_value(item.conf, 'hue2_id')
             conf_data['resource'] = self.get_iattr_value(item.conf, 'hue2_resource')
             conf_data['function'] = self.get_iattr_value(item.conf, 'hue2_function')
+            if self.has_iattr(item.conf, 'hue2_refence_light_id'):
+                if conf_data['resource'] == "group":
+                    conf_data['hue2_refence_light_id'] = self.get_iattr_value(item.conf, 'hue2_refence_light_id')
+
             conf_data['item'] = item
             self.plugin_items[item.path()] = conf_data
             if conf_data['resource'] == 'sensor':
@@ -216,6 +220,8 @@ class Hue2(SmartPlugin):
                 return self.update_item
             return
 
+        if 'dpt3_dim' in item.conf:
+            return self.dimDPT3
 
     def parse_logic(self, logic):
         """
@@ -224,6 +230,23 @@ class Hue2(SmartPlugin):
         if 'xxx' in logic.conf:
             # self.function(logic['name'])
             pass
+
+    def dimDPT3(self, item, caller=None, source=None, dest=None):
+        # Evaluation of the list values for the KNX data
+        # [1] for dimming
+        # [0] for direction
+        parent = item.return_parent()
+
+        if item()[1] == 1:
+            # dimmen
+            if item()[0] == 1:
+                # up
+                parent(254, self.get_shortname()+"dpt3")
+            else:
+                # down
+                parent(-254, self.get_shortname()+"dpt3")
+        else:
+            parent(0, self.get_shortname()+"dpt3")
 
     def update_item(self, item, caller=None, source=None, dest=None):
         """
@@ -239,7 +262,6 @@ class Hue2(SmartPlugin):
         :param dest: if given it represents the dest
         """
         if self.alive and caller != self.get_shortname():
-
             # code to execute if the plugin is not stopped
             # and only, if the item has not been changed by this this plugin:
             self.logger.info("update_item: {} has been changed by caller {} outside this plugin".format(item.id(), caller))
@@ -273,7 +295,7 @@ class Hue2(SmartPlugin):
                 else:
                     self.br.lights[plugin_item['id']]['state'](bri=value, transitiontime=hue_transition_time)
             elif plugin_item['function'] == 'bri_inc':
-                self.br.lights[plugin_item['id']]['state'](bri_inc=value, transitiontime=hue_transition_time)
+                self.br.lights[plugin_item['id']]['state'](on=True, bri_inc=value, transitiontime=hue_transition_time)
             elif plugin_item['function'] == 'hue':
                 self.br.lights[plugin_item['id']]['state'](hue=value, transitiontime=hue_transition_time)
             elif plugin_item['function'] == 'sat':
@@ -432,13 +454,14 @@ class Hue2(SmartPlugin):
             src = None
         for pi in self.plugin_items:
             plugin_item = self.plugin_items[pi]
-            if  plugin_item['resource'] == 'scene':
+            if plugin_item['resource'] == 'scene':
                 value = self._get_scene_item_value(plugin_item['id'], plugin_item['function'], plugin_item['item'].id())
                 if value is not None:
                     plugin_item['item'](value, self.get_shortname(), src)
-            if  plugin_item['resource'] == 'group':
-                value = self._get_group_item_value(plugin_item['id'], plugin_item['function'], plugin_item['item'].id())
-                plugin_item['item'](value, self.get_shortname(), src)
+            if plugin_item['resource'] == 'group':
+                if not "hue2_refence_light_id" in plugin_item:
+                    value = self._get_group_item_value(plugin_item['id'], plugin_item['function'], plugin_item['item'].id())
+                    plugin_item['item'](value, self.get_shortname(), src)
         return
 
 
@@ -467,10 +490,18 @@ class Hue2(SmartPlugin):
             src = None
         for pi in self.plugin_items:
             plugin_item = self.plugin_items[pi]
-            if  plugin_item['resource'] == 'light':
+            if plugin_item['resource'] == 'light':
                 value = self._get_light_item_value(plugin_item['id'], plugin_item['function'], plugin_item['item'].id())
                 if value is not None:
                     plugin_item['item'](value, self.get_shortname(), src)
+
+            if plugin_item['resource'] == 'group':
+                if "hue2_refence_light_id" in plugin_item:
+                    reference_light_id = plugin_item["hue2_refence_light_id"]
+                    value = self._get_light_item_value(reference_light_id, plugin_item['function'], plugin_item['item'].id())
+                    if value is not None:
+                        plugin_item['item'](value, self.get_shortname(), src)
+
         return
 
 
