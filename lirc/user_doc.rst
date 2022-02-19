@@ -1,8 +1,21 @@
 .. index:: Plugins; lirc
 .. index:: lirc
 
+====
 lirc
-####
+====
+
+.. image:: webif/static/img/plugin_logo.png
+   :alt: plugin logo
+   :width: 300px
+   :height: 300px
+   :scale: 50 %
+   :align: left
+
+LIRC ist die Abkürzung für Linux Infrared Remote Control. Es handelt sich dabei um ein Programm für Linux, mit dessen
+Hilfe man Befehle von IR-Fernbedienungen in Programmbefehle umsetzen kann. Nötig ist dafür lediglich ein
+Infrarot-Empfänger.
+
 
 Konfiguration
 =============
