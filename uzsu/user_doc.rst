@@ -5,6 +5,13 @@
 uzsu
 ====
 
+.. image:: webif/static/img/plugin_logo.svg
+   :alt: plugin logo
+   :width: 300px
+   :height: 300px
+   :scale: 50 %
+   :align: left
+
 Dieses Plugin ermöglicht gezielte Schaltvorgänge von Items zu bestimmten Uhrzeiten oder abhängig vom
 Sonnenstand. Die automatischen Schaltungen können dabei pro Wochentag separat definiert werden.
 
