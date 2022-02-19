@@ -7,6 +7,20 @@
 visu_smartvisu
 ==============
 
+.. image:: webif/static/img/plugin_logo.png
+   :alt: plugin logo
+   :width: 300px
+   :height: 300px
+   :scale: 50 %
+   :align: left
+
+Mit dem Plugin **visu\_smartvisu** können aus der Definition der Items
+in SmartHomeNG automatisch Visuseiten erstellt werden. Diese Visu Seiten
+werden im Verzeichnis ``smarthome`` des ``pages`` Verzeichnisses der smartVISU
+erstellt. Das Plugin unterstützt smartVISU Versionen von v2.7 bis zur releasten
+v2.9 (master branch).
+
+
 .. attention::
 
     Dieses Plugin ist veraltet (deprecated) und wird nicht mehr weiter gepflegt. Es wird dringend empfohlen stattdessen
@@ -15,11 +29,6 @@ visu_smartvisu
     Dieses Plugin wird in einem der kommenden Releases aus SmartHomeNG entfernt werden.
 
 
-Mit dem Plugin **visu\_smartvisu** können aus der Definition der Items
-in SmartHomeNG automatisch Visuseiten erstellt werden. Diese Visu Seiten
-werden im Verzeichnis ``smarthome`` des ``pages`` Verzeichnisses der smartVISU
-erstellt. Das Plugin unterstützt smartVISU Versionen von v2.7 bis zur releasten
-v2.9 (master branch).
 
 
 .. Ab SmartHomeNG v1.7.x werden
