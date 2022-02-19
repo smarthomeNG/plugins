@@ -72,7 +72,7 @@ class InfluxDB2(SmartPlugin):
         self.api_token = self.get_parameter_value('api_token')
         self.org = self.get_parameter_value('org')
         self.bucket = self.get_parameter_value('bucket')
-        self.recognize_database = self.get_parameter_value('recognize_database')'
+        self.recognize_database = self.get_parameter_value('recognize_database')
 
         # cycle time in seconds, only needed, if hardware/interface needs to be
         # polled for value changes by adding a scheduler entry in the run method of this plugin

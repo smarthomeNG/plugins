@@ -1,5 +1,5 @@
-.. index:: Plugins; sample
-.. index:: sample
+.. index:: Plugins; influxdb2
+.. index:: influxdb2
 
 =========
 influxdb2
@@ -12,21 +12,35 @@ influxdb2
    :scale: 50 %
    :align: left
 
+InfluxDB ist ein Open Source Datenbankmanagementsystem (DBMS), speziell für Zeitreihen (engl. time series).
+Es wird von der Firma InfluxData entwickelt und vertrieben.
+
+Das influxdb2 Plugin ist eine Neuentwicklung, die auf InfluxDB v2.x aufsetzt. Soll noch eine alte InfluxDB
+Software (v1.8 und davor) eingesetzt werden, kann dieses Plugin nicht verwendet werden.
+
 
 Einführung
 ==========
 
+...
+
 Anforderungen
 =============
 
-Anforderungen des Plugins auflisten. Werden spezielle Soft- oder Hardwarekomponenten benötigt?
+.. Anforderungen des Plugins auflisten. Werden spezielle Soft- oder Hardwarekomponenten benötigt?
 
-Installation und Konfiguration benötigter Software
---------------------------------------------------
+Um das Plugin zu nutzen, muss eine InfluxDB Datenbank der Version 2.x installiert und zur Nutzung durch SmartHomeNG
+konfiguriert sein.
 
-...
 
-Links in der Navigation sind Seiten mit weiteren Informationen zu InfluxDB verlinkt.
+.. Installation benötigter Software
+.. ================================
+
+Installation der InfluxDB Software
+==================================
+
+In der Navigation links sind Seiten mit weiteren Informationen zu InfluxDB, der Installation und zur Konfiguration
+der InfluxDB Software zur Nutzung mit SmartHomeNG verlinkt.
 
 .. toctree::
   :hidden:
@@ -36,46 +50,22 @@ Links in der Navigation sind Seiten mit weiteren Informationen zu InfluxDB verli
   user_doc/influxdb_konfiguration.rst
 
 
-Unterstützte Geräte
--------------------
-
-* die
-* unterstütze
-* Hardware
-* auflisten
+.. Unterstützte Geräte
+.. -------------------
+..
+.. * die
+.. * unterstütze
+.. * Hardware
+.. * auflisten
 
 
 Konfiguration
 =============
 
-Konfiguration der benötigten Software
--------------------------------------
+Die Konfiguration der InfluxDB Software ist weiter oben im Abschnitt **Installation der InfluxDB Software** beschrieben.
 
-Plugin Konfiguration
---------------------
-
-plugin.yaml
-~~~~~~~~~~~
-
-Bitte die Dokumentation lesen, die aus den Metadaten der plugin.yaml erzeugt wurde.
-
-
-items.yaml
-~~~~~~~~~~
-
-Bitte die Dokumentation lesen, die aus den Metadaten der plugin.yaml erzeugt wurde.
-
-
-logic.yaml
-~~~~~~~~~~
-
-Bitte die Dokumentation lesen, die aus den Metadaten der plugin.yaml erzeugt wurde.
-
-
-Funktionen
-~~~~~~~~~~
-
-Bitte die Dokumentation lesen, die aus den Metadaten der plugin.yaml erzeugt wurde.
+Die Plugin Parameter und die Informationen zur Item-spezifischen Konfiguration des Plugins sind
+unter :doc:`/plugins_doc/config/influxdb2` nachzulesen.
 
 
 Beispiele
@@ -85,7 +75,7 @@ Hier können ausführlichere Beispiele und Anwendungsfälle beschrieben werden.
 
 
 Web Interface
--------------
+=============
 
 Die Datei ``dev/sample_plugin/webif/templates/index.html`` sollte als Grundlage für Webinterfaces genutzt werden. Um Tabelleninhalte nach Spalten filtern und sortieren zu können, muss der entsprechende Code Block mit Referenz auf die relevante Table ID eingefügt werden (siehe Doku).
 
