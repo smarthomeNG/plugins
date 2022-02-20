@@ -99,6 +99,8 @@ class WithingsHealth(SmartPlugin):
 
                 if (self.shtime.now() < datetime.datetime.fromtimestamp(self.get_item(
                         'token_expiry')(), tz=self.shtime.tzinfo())):
+                    self.logger.debug("Token Time: %s, SHNG Time: %s" %(datetime.datetime.fromtimestamp(self.get_item(
+                        'token_expiry')(), tz=self.shtime.tzinfo())), self.shtime.now())
                     self.logger.debug(
                         "Token is valid, will expire on {}.".format(
                             datetime.datetime.fromtimestamp(self.get_item(
@@ -322,9 +324,9 @@ class WithingsHealth(SmartPlugin):
         for web_if in web_ifs:
             if web_if['Instance'] == self.get_instance_name():
                 callback_url = "http://{}:{}{}".format(ip, port, web_if['Mount'])
-                self.logger.debug("WebIf found, callback is {}".format(self.get_fullname(),
+                self.logger.debug("WebIf found for plugin {}, callback is {}".format(self.get_fullname(),
                                                                        callback_url))
             return callback_url
-        self.logger.error("Callback URL cannot be established.".format(self.get_fullname()))
+        self.logger.error("Callback URL for plugin {} cannot be established.".format(self.get_fullname()))
 
 
