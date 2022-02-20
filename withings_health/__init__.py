@@ -36,7 +36,7 @@ from withings_api.common import Credentials, CredentialsType, get_measure_value,
 from .webif import WebInterface
 
 class WithingsHealth(SmartPlugin):
-    PLUGIN_VERSION = "1.8.1"
+    PLUGIN_VERSION = "1.8.2"
 
     def __init__(self, sh):
         super().__init__()
