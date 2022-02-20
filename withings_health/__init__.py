@@ -32,8 +32,9 @@ from lib.shtime import Shtime
 from oauthlib.oauth2.rfc6749.errors import MissingTokenError
 from typing_extensions import Final
 from withings_api import AuthScope, WithingsApi, WithingsAuth
-from withings_api.common import Credentials, CredentialsType, get_measure_value, MeasureType
+from withings_api.common import Credentials, Credentials2, CredentialsType, get_measure_value, MeasureType
 from .webif import WebInterface
+
 
 class WithingsHealth(SmartPlugin):
     PLUGIN_VERSION = "1.8.2"
@@ -62,8 +63,10 @@ class WithingsHealth(SmartPlugin):
 
     def _store_tokens(self, credentials2):
         self.logger.debug(
-            "Updating tokens to items: access_token - {} token_expiry - {} token_type - {} refresh_token - {}".
-                format(credentials2.access_token, credentials2.expires_in, credentials2.token_type,
+            "Updating tokens to items: access_token: {} token_expires_in: {} token_expiry: {} token_type: {} refresh_token: {}".
+                format(credentials2.access_token, credentials2.expires_in,
+                       int((datetime.datetime.utcnow() - datetime.datetime(1970, 1, 1)).total_seconds()) + int(
+                           credentials2.expires_in), credentials2.token_type,
                        credentials2.refresh_token))
         self.get_item('access_token')(credentials2.access_token)
         self.get_item('token_expiry')(
@@ -91,16 +94,20 @@ class WithingsHealth(SmartPlugin):
             self.logger.error(
                 "Mandatory Items for OAuth2 Data do not exist. Verify that you have items with withings_type: token_expiry, token_type, refresh_token and access_token in your item tree.")
             return
-
+        self.logger.debug("access_token is {}".format(self.get_item('access_token')()))
+        self.logger.debug("token_expiry is > 0: {}".format(self.get_item('token_expiry')() > 0))
+        self.logger.debug("token_type is {}".format(self.get_item('token_type')()))
+        self.logger.debug("refresh_token is {}".format(self.get_item('refresh_token')()))
         if self._client is None:
+            self.logger.debug("Client is None")
             if self.get_item('access_token')() and self.get_item(
                     'token_expiry')() > 0 and self.get_item(
                 'token_type')() and self.get_item('refresh_token')():
 
+                self.logger.debug("Token Time: %s, SHNG Time: %s" % (datetime.datetime.fromtimestamp(self.get_item(
+                    'token_expiry')(), tz=self.shtime.tzinfo()), self.shtime.now()))
                 if (self.shtime.now() < datetime.datetime.fromtimestamp(self.get_item(
                         'token_expiry')(), tz=self.shtime.tzinfo())):
-                    self.logger.debug("Token Time: %s, SHNG Time: %s" %(datetime.datetime.fromtimestamp(self.get_item(
-                        'token_expiry')(), tz=self.shtime.tzinfo())), self.shtime.now())
                     self.logger.debug(
                         "Token is valid, will expire on {}.".format(
                             datetime.datetime.fromtimestamp(self.get_item(
@@ -122,6 +129,7 @@ class WithingsHealth(SmartPlugin):
                         userid=self._user_id,
                         client_id=self._client_id,
                         consumer_secret=self._consumer_secret)
+
                     self._client = WithingsApi(self._creds, refresh_cb=self._store_tokens)
                 else:
                     self.logger.error(
@@ -137,10 +145,10 @@ class WithingsHealth(SmartPlugin):
             measures = self._client.measure_get_meas(startdate=None, enddate=None, lastupdate=None)
         except Exception as e:
             self.logger.error(
-                "An exception occured when running measure_get_meas(): {}. Aborting update.".format(
+                "An exception occurred when running measure_get_meas(): {}. Aborting update.".format(
                     str(e)))
             return
-
+        self._client.refresh_token()
         if get_measure_value(measures,
                              with_measure_type=MeasureType.HEART_RATE) is not None and 'heart_rate' in self._items:
             self._items['heart_rate'](get_measure_value(measures, with_measure_type=MeasureType.HEART_RATE),
@@ -325,8 +333,6 @@ class WithingsHealth(SmartPlugin):
             if web_if['Instance'] == self.get_instance_name():
                 callback_url = "http://{}:{}{}".format(ip, port, web_if['Mount'])
                 self.logger.debug("WebIf found for plugin {}, callback is {}".format(self.get_fullname(),
-                                                                       callback_url))
+                                                                                     callback_url))
             return callback_url
         self.logger.error("Callback URL for plugin {} cannot be established.".format(self.get_fullname()))
-
-
