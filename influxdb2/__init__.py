@@ -74,6 +74,13 @@ class InfluxDB2(SmartPlugin):
         self.bucket = self.get_parameter_value('bucket')
         self.recognize_database = self.get_parameter_value('recognize_database')
 
+        self.tags = self.get_parameter_value('tags')
+
+        #self.value_field = self.get_parameter_value('value_field')
+        #self.str_value_field = self.get_parameter_value('str_value_field')
+        self.value_field = 'value'
+        self.str_value_field = 'str_value'
+
         # cycle time in seconds, only needed, if hardware/interface needs to be
         # polled for value changes by adding a scheduler entry in the run method of this plugin
         # (maybe you want to make it a plugin parameter?)
@@ -97,6 +104,9 @@ class InfluxDB2(SmartPlugin):
         """
         Run method for the plugin
         """
+        self.logger.warning(f"_plugin_item_dict:\n{self._plugin_item_dict }\n")
+        self.logger.warning(f"_lookop_plugin_item_dict:\n{self._lookop_plugin_item_dict }\n")
+
         self.logger.debug("Run method called")
         # setup scheduler for device poll loop   (disable the following line, if you don't need to poll the device. Rember to comment the self_cycle statement in __init__ as well)
         self.scheduler_add('poll_device', self.poll_device, cycle=self._cycle)
@@ -126,26 +136,56 @@ class InfluxDB2(SmartPlugin):
                         with the item, caller, source and dest as arguments and in case of the knx plugin the value
                         can be sent to the knx with a knx write function within the knx plugin.
         """
-        if self.recognize_database and self.has_iattr(item.conf, 'database'):
-            #self.logger.debug(f"parse item: {item}")
-
-            if item.type() not in ['num', 'bool']:
-                #self.logger.error(f"Item {item.id()} has type {item.type()}, only 'num' and 'bool' are supported by influxdb2")
-                return
-
+        influxdb2_attr = 'false'
         if self.has_iattr(item.conf, 'influxdb2'):
-            #self.logger.debug(f"parse item: {item}")
+            influxdb2_attr = self.get_iattr_value(item.conf, 'influxdb2').lower()
+        elif self.recognize_database:
+            if self.has_iattr(item.conf, 'database'):
+                influxdb2_attr = self.get_iattr_value(item.conf, 'database').lower()
 
-            if item.type() not in ['num', 'bool']:
-                self.logger.error(f"Item {item.id()} has type {item.type()}, only 'num' and 'bool' are supported by influxdb2")
-                return
+        if influxdb2_attr != 'false':
+            #self.logger.debug(f"parse item (influxdb2/database): {item}")
+
+
+            #if item.type() not in ['num', 'bool']:
+            #    self.logger.error(f"Item {item.id()} has type {item.type()}, only 'num' and 'bool' are supported by influxdb2")
+            #    return
+
+            config_data = {}
+
+            # define item_name for InfluxDB
+            if self.has_iattr(item.conf, 'influxdb2_name'):
+                config_data['name'] = self.get_iattr_value(item.conf, 'influxdb2_name')
+            else:
+                config_data['name'] = item.property.name
+
+            # define InfluxDB bucket for item
+            if self.has_iattr(item.conf, 'influxdb2_bucket'):
+                config_data['bucket'] = self.get_iattr_value(item.conf, 'influxdb2_bucket')
+            else:
+                config_data['bucket'] = self.bucket
+
+            # add item specific tag definitions
+            if self.has_iattr(item.conf, 'influxdb2_tags'):
+                tags_json = self.get_iattr_value(item.conf, 'influxdb2_name')
+                try:
+                    config_data['tags'] = json.loads( tags_json.replace("'", "\"") )
+                except Exception as e:
+                    self.logger.error(f"Item {item.property.path} has invalid data in 'influxdb2_tags' attribute: {tags_json}, parsing JSON failed with: {e}")
+
+            # store plugin specific configuration information for this item
+            self.add_pluginitem(item.property.path, config_data, device_command=None)
+
+            return self.update_item
+
+        return
 
         # todo
         # if interesting item for sending values:
         #   self._itemlist.append(item)
         #   return self.update_item
 
-            return self.update_item
+        return self.update_item
 
 
     def parse_logic(self, logic):
@@ -174,33 +214,32 @@ class InfluxDB2(SmartPlugin):
             # and only, if the item has not been changed by this this plugin:
             #self.logger.info(f"Update item: {item.property.path}, item has been changed outside this plugin")
 
-            if self.has_iattr(item.conf, 'database'):
-                #self.logger.debug(f"update_item was called with item {item.property.path} (value {item()}) from caller {caller}, source {source} and dest {dest}")
+            config_data = self.get_pluginitem_configdata(item.property.path)
 
-                tags = {
-                    'caller': caller.replace(' ', '\ '),
-                    'source': source,
-                    'dest': dest
-                }
-                tags['item_path'] = item.property.path
-                if item.property.path != item.property.name:
-                    tags['item_name'] = item.property.name.replace(' ', '\ ')
-                    tags['item_name'] = tags['item_name'].replace('ä', 'ae')
-                    tags['item_name'] = tags['item_name'].replace('ö', 'oe')
-                    tags['item_name'] = tags['item_name'].replace('ü', 'ue')
-                    tags['item_name'] = tags['item_name'].replace('ß', 'ss')
-                    tags['item_name'] = tags['item_name'].replace('Ä', 'Ae')
-                    tags['item_name'] = tags['item_name'].replace('Ö', 'Oe')
-                    tags['item_name'] = tags['item_name'].replace('Ü', 'Ue')
+            tags = {}
+            tags['caller'] = caller.replace(' ', '\ ')
+            if source is not None:
+                tags['source'] = source.replace(' ', '\ ')
+            if dest is not None:
+                tags['dest'] = dest.replace(' ', '\ ')
+            tags['item'] = item.property.path
 
-                fields = {}
-                fields['value'] = float(item())
+            tags.update(self.tags)                 # add global tag definitions to actual tags
+            if config_data.get('tags', None) is not None:
+                tags.update(config_data['tags'])   # add item specific tag definitions to actual tags
 
-                #line = self.create_line(name, tags, fields)
-                line = self.create_line(item.id(), tags, fields)
-                self.sendhttp(line)
+            fields = {}
+            if item.type() in ['num', 'bool']:
+                fields[self.value_field] = float(item())
+            else:
+                fields[self.value_field] = 0
+                tags[self.str_value_field] = str(item())
+            #fields[self.str_value_field] = '"'+str(item())+'"'
 
-            pass
+            #line = self.create_line(name, tags, fields)
+            line = self.create_line(config_data['name'], tags, fields)
+            self.influx_writedata(config_data['bucket'], line)
+
 
     def poll_device(self):
         """
@@ -228,46 +267,101 @@ class InfluxDB2(SmartPlugin):
 
 
 # =======================================================================================================
+# Folgende Methoden sollen später in die SmartPlugin Klasse übergehen
+
+    _plugin_item_dict = {}          # dict to hold the plugin specific information for an item
+    _lookop_plugin_item_dict = {}   # dict for the reverse lookup from a device_command to an plugin_item
+                                    # contains a list of item_pathes for each device_command
+
+    def add_pluginitem(self, item_path, config_data_dict, device_command=None):
+
+        if self._plugin_item_dict.get(item_path, None) is not None:
+            self.logging.error("Trying to add an plugin_item config for an plugin_item, which has a config already ")
+            return False
+
+        self._plugin_item_dict[item_path] = {}
+        self._plugin_item_dict[item_path]['device_command'] = device_command
+        self._plugin_item_dict[item_path]['config_data'] = config_data_dict
+
+        if device_command is not None:
+            if self._lookop_plugin_item_dict.get(device_command, None) is None:
+                self._lookop_plugin_item_dict[device_command] = []
+            self._lookop_plugin_item_dict[device_command].append(item_path)
+
+        return True
+
+
+    def get_pluginitem_configdata(self, item_path):
+
+        return self._plugin_item_dict[item_path]['config_data']
+
+
+
+# =======================================================================================================
+# Folgende Methoden sind InfuxDB spezifisch
+
+    def replace_unwanted_chars(self, str):
+
+        str = str.replace(' ', '\ ').replace('ß', 'ss')
+        str = str.replace('ä', 'ae').replace('Ä', 'Ae')
+        str = str.replace('ö', 'oe').replace('Ö', 'Oe')
+        str = str.replace('ü', 'ue').replace('Ü', 'Ue')
+        return str
+
 
     def create_line(self, name, tags, fields):
-        # https://docs.influxdata.com/influxdb/v1.0/guides/writing_data/
 
-        # build name & tags
+        # build name and tags
+        name = self.replace_unwanted_chars(name)
         kvs = [name]
         for tag_key in sorted(tags.keys()):
-            kvs.append("{k}={v}".format(k=tag_key, v=tags[tag_key]))
-        lineproto_name_tags = ','.join(kvs)
-
-        # replace ":ga=" with ",ga=" to avoid "invalid tag format" error
-        lineproto_name_tags = lineproto_name_tags.replace(":ga=", ",ga=")
+            k = tag_key
+            v = tags[tag_key]
+            # escape '=' in tag values
+            if v is not None:
+                v = v.replace("=", "\=")
+            kvs.append(f"{k}={v}")
+        line_tags = ','.join(kvs)
 
         # build fields (which include the actual value)
         kvs = []
         for field_key in sorted(fields.keys()):
             kvs.append("{k}={v}".format(k=field_key, v=fields[field_key]))
         lineproto_fields = ','.join(kvs)
+        #if tags['item'].startswith('test') or name.startswith('Spann'):
+        #    self.logger.warning(f"create_line: {name} -> line_fields -> {lineproto_fields}")
+        #    self.logger.warning(f"create_line: {name} -> line_tags   -> {line_tags}")
 
-        return lineproto_name_tags + ' ' + lineproto_fields
+        return line_tags + ' ' + lineproto_fields
 
 
-    def sendhttp(self, data):
+    def _url_base(self):
+        """
+        Build url base string from protocol, host address and port
+
+        :return: url base string
+        :rtype: str
+        """
+        return f"http://{self.host}:{self.http_port}"
+
+
+    def influx_writedata(self, bucket, data):
         try:
-            #url_string = f"http://{self.host}:{self.http_port}/api/v2/write?db={self.bucket}"
-            url_string = f"http://{self.host}:{self.http_port}/api/v2/write?bucket={self.bucket}&org={self.org}"
+            url_string = self._url_base() + f"/api/v2/write?bucket={bucket}&org={self.org}"
             r = requests.post(url_string, data=data, headers={'Authorization': 'Token '+self.api_token})
             if(r.status_code != 204):
                 self.logger.error(f"Request returns http {r.status_code} [{r.text}]")
         except Exception as e:
             self.logger.error(f"Failed sending HTTP datagram [{data}] to {url_string} with error: {e}")
         else:
-            #self.logger.debug(f"Sent HTTP datagram [{data}] to {url_string}")
+            #self.logger.debug(f"senthttp to {url_string} - Datagram [{data}] ")
+            #self.logger.debug(f"- r.text = {r.status_code} [{r.text}] ")
             pass
 
 
     def gethttp(self, endpoint, data=None, auth=False):
-        #api_token = 'd81TQsiK0ueTs1ql53hAywwdh_coW-KOhkvqnYiEYeJ3_jBEa-QrRn3Kb7ZzyLYJflfXzzA_iVUCWM2-1K1yQg=='
         try:
-            url_string = f"http://{'127.0.0.1'}:{'8086'}"
+            url_string = self._url_base()
             # r = requests.get(url_string, data=data, headers={'Authorization': 'Token '+self.api_token})
             if auth:
                 r = requests.get(url_string + endpoint, headers={'Authorization': 'Token ' + self.api_token})
@@ -289,7 +383,7 @@ class InfluxDB2(SmartPlugin):
                 return json.loads(r.text)
             except Exception as e:
                 pass
-            self.logger.debug(f"Received datagram [{r}]")
+            self.logger.debug(f"gethttp: Received datagram [{r}]")
         return
 
 

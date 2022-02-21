@@ -75,8 +75,8 @@
 			<td class="py-1"><strong>Port</strong></td>
 			<td class="py-1">{{ p.http_port }} (http)</td>
 			<td></td>
-			<td class="py-1"><strong>Prompt 5</strong></td>
-			<td class="py-1">-</td>
+			<td class="py-1"><strong>Atribut 'database'</strong></td>
+			<td class="py-1">{% if p.recognize_database %}{{ _('Akzeptiert') }}{% else %}{{ _('Ignoriert') }}{% endif %}</td>
 			<td></td>
 		</tr>
 		<tr>

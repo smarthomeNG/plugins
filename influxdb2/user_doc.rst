@@ -45,10 +45,10 @@ Installation der InfluxDB Software
 ==================================
 
 In der Navigation links sind Seiten mit weiteren Informationen zu InfluxDB, der Installation und zur Konfiguration
-der InfluxDB Software zur Nutzung mit SmartHomeNG verlinkt.
+der InfluxDB Software zur Nutzung mit SmartHomeNG unter folgenden Topics verlinkt:
 
 .. toctree::
-  :hidden:
+  :titlesonly:
 
   user_doc/influxdb_einfuehrung.rst
   user_doc/influxdb_installation.rst
@@ -62,6 +62,19 @@ der InfluxDB Software zur Nutzung mit SmartHomeNG verlinkt.
 .. * unterstütze
 .. * Hardware
 .. * auflisten
+
+
+Gespeicherte Daten
+==================
+
+Mit jedem Item Wert, der in einem InfluxDB Bucket abgelegt werden, werden folgende Tags als Metadaten gespeichert:
+
+- **item_path** - Pfadname des Items
+- **item_name** - Im Attribut **name** vergebener Name für das Item
+- **caller** - Auslöser für die Änderung des Item Wertes (Plugin, Logik, eval, etc.)
+- **source** - Quelle der Änderung: Item Instanz (mit Zusatzdaten), Item, etc.
+- **dest** - Ziel der Änderung (z.B. eine GA im knx Plugin)
+
 
 
 Konfiguration
