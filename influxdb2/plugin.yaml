@@ -51,7 +51,7 @@ parameters:
             en: "Organization for storing time-series data on the Influxdata server"
     bucket:
         type: str
-        default: smarthomeng
+        default: shng
         description:
             de: "Default-Bucket (benannte Lokation) zum speichern von Zeitserien auf dem Influxdata Server"
             en: "Default-Bucket (named location) for storing time-series data on the Influxdata server"
@@ -78,7 +78,6 @@ item_attributes:
             en: "This attribute enables the database logging when set (just use value 'yes' or 'true'). If value 'init' is used, an item will be initalized from the database after SmartHomeNG is restarted."
     influxdb2_bucket:
         type: str
-        default: smarthomeng
         description:
             de: "Default-Bucket (benannte Lokation) zum speichern von Zeitserien auf dem Influxdata Server"
             en: "Default-Bucket (named location) for storing time-series data on the Influxdata server"
@@ -88,7 +87,7 @@ item_attributes:
             de: "In der InfluxDB verwendeter Name für das Item (Optional)"
             en: "Name for the item to be used in InfluxDB (optional)"
     influxdb2_tags:
-        type: dict
+        type: str
         description:
             de: 'Angabe weiterer Tags, die mit dem Wert gespeichert werden sollen (z.B.: {"raum": "wohnen"})'
             en: 'Specify additional tags to be stored with the value (e.g.: {"room": "living"}'

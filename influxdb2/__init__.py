@@ -24,6 +24,7 @@
 #  along with SmartHomeNG. If not, see <http://www.gnu.org/licenses/>.
 #
 #########################################################################
+import ast
 
 import requests
 import json
@@ -65,6 +66,8 @@ class InfluxDB2(SmartPlugin):
 
         # Call init code of parent class (SmartPlugin)
         super().__init__()
+
+        self.items = Items.get_instance()
 
         # get the parameters for the plugin (as defined in metadata plugin.yaml):
         self.host = self.get_parameter_value('host')
@@ -167,11 +170,15 @@ class InfluxDB2(SmartPlugin):
 
             # add item specific tag definitions
             if self.has_iattr(item.conf, 'influxdb2_tags'):
-                tags_json = self.get_iattr_value(item.conf, 'influxdb2_name')
+                tags_json = self.get_iattr_value(item.conf, 'influxdb2_tags')
                 try:
-                    config_data['tags'] = json.loads( tags_json.replace("'", "\"") )
+                    # config_data['tags'] = json.loads( tags_json.replace("'", "\"") )
+                    import ast
+                    config_data['tags'] = ast.literal_eval( tags_json )
+                    #for k in config_data['tags'].keys():
+                    #    config_data['tags'][k] = config_data['tags'][k].replace(" ", "\ ")
                 except Exception as e:
-                    self.logger.error(f"Item {item.property.path} has invalid data in 'influxdb2_tags' attribute: {tags_json}, parsing JSON failed with: {e}")
+                    self.logger.error(f"parse_item: Item {item.property.path} has invalid data in 'influxdb2_tags' attribute: {tags_json}, ast.literal_eval failed with: {e}")
 
             # store plugin specific configuration information for this item
             self.add_pluginitem(item.property.path, config_data, device_command=None)
@@ -274,6 +281,28 @@ class InfluxDB2(SmartPlugin):
                                     # contains a list of item_pathes for each device_command
 
     def add_pluginitem(self, item_path, config_data_dict, device_command=None):
+        """
+        For items that are used/handled by a plugin, this method stores the configuration information
+        that is individual for the plugin. The configuration information is/has to be stored in a dictionary
+
+        The configuration information can be retrieved later by a call to the method get_pluginitem_configdata(<item_path>)
+
+        If data is beeing received by the plugin, a 'device_command' has to be specified as an optional 3rd parameter.
+        This allows a reverse lookup. The method get_pluginitemlist_for_devcie_command(<device_command>) returns a list
+        of item-pathes for the items that have defined the <device_command>. In most cases, the list will have only one
+        entry, but if multiple items should receive data from the same device (or command), the list can have more than
+        one entry.
+
+        :param item_path: Path of the item (item.property.path / item.id())
+        :param config_data_dict: Dictionary with the plugin-specific configuration information for the item
+        :param device_command: String identifing the origin (source/kind) of received data
+        :type item_path: str
+        :type config_data_dict: dict
+        :type device_command: str
+
+        :return: True, if the information has been added
+        :rtype: bool
+        """
 
         if self._plugin_item_dict.get(item_path, None) is not None:
             self.logging.error("Trying to add an plugin_item config for an plugin_item, which has a config already ")
@@ -291,10 +320,67 @@ class InfluxDB2(SmartPlugin):
         return True
 
 
+    def remove_pluginitem(self, item_path):
+        """
+        Remove configuration data for an item (and remove the item from the device_command's list
+
+        :param item_path: Path of the item (item.property.path / item.id()) to remove
+        :type item_path: str
+
+        :return: True, if the information has been removed
+        :rtype: bool
+        """
+        if self._plugin_item_dict.get(item_path, None) is None:
+            # There is no information stored for that item
+            return False
+
+        if self._plugin_item_dict[item_path]['device_command'] is not None:
+            # if a device_command was given for the item, the item is being removed from the list of the device_command
+            self._lookop_plugin_item_dict[self._plugin_item_dict[item_path]['device_command']].remove(item_path)
+
+        del self._plugin_item_dict[item_path]
+        return True
+
+
     def get_pluginitem_configdata(self, item_path):
+        """
+        Returns the plugin-specific configuration information for the given item_path
+
+        :param item_path: Path of the item (item.property.path / item.id()) to get config info for
+        :type item_path: str
+
+        :return: dict with the configuration information for the given item_path
+        :rtype: dict
+        """
 
         return self._plugin_item_dict[item_path]['config_data']
 
+
+    def get_pluginitem_list(self):
+
+        return self._plugin_item_dict.keys()
+
+
+    def get_pluginitems(self):
+
+        result = []
+        for path in self.get_pluginitem_list():
+            result.append(self.items.return_item(path))
+        return result
+
+
+    def get_pluginitemlist_for_devcie_command(self, device_command):
+        """
+        Returns a list with item_pathes that should receive data for the given device_command
+
+        :param device_command: device_command, for which the receiving items should be returned
+        :type device_command: str
+
+        :return: List of item_pathes
+        :rtype: list
+        """
+
+        return self._lookop_plugin_item_dict.get(device_command, [])
 
 
 # =======================================================================================================
@@ -320,6 +406,7 @@ class InfluxDB2(SmartPlugin):
             # escape '=' in tag values
             if v is not None:
                 v = v.replace("=", "\=")
+                v = v.replace(" ", "\ ")
             kvs.append(f"{k}={v}")
         line_tags = ','.join(kvs)
 
