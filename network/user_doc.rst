@@ -86,11 +86,12 @@ eine oder mehrere IP festgelegt werden, die Verbindungen akzeptieren.
 Das Atribut gilt sowohl für UDP als auch für TCP Verbindungen.
 Ein vorhandenes ``tcp_acl`` oder ``udp_acl`` Attribut wird in der Wirkung übersteuert.
 
-nw_udp_listen/nw_tcp_listen
+nw_udp_listen/nw_tcp_listen/nw_http_listen
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Mit den Atributen ``nw_udp_listen`` und ``nw_tcp_listen`` für ein Item 
-kann eine spezielle Verbindungskombination festgelegt werden.
+Mit den Atributen ``nw_udp_listen``, ``nw_tcp_listen`` und ``nw_http_listen``
+für ein Item kann eine spezielle Verbindungskombination festgelegt werden.
+Ein http listener quittiert wie ein herkoemmlicher HTTP Server eingehende POST und GET Anfragen.
 Das Argument kann ein Port sein oder die Kombination von IP und Port.
 
 .. code:: yaml
@@ -106,6 +107,12 @@ Das Argument kann ein Port sein oder die Kombination von IP und Port.
            type: str
            # bind to 0.0.0.0:7777 and 127.0.0.1:8888
            nw_udp_listen: 127.0.0.1:8888
+
+       item3:
+           type: str
+           # bind to 192.168.1.1:7778
+           nw_http_listen: 192.168.1.1:7778
+
 
 Wenn ein TCP/UDP Paket an den Port gesendet wird, wird das Item auf den Wert des 
 entsprechenden Datenpaketinhalts gesetzt.
