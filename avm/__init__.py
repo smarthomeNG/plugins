@@ -700,7 +700,7 @@ class AVM(SmartPlugin):
     Main class of the Plugin. Does all plugin specific stuff and provides the update functions for the different TR-064 services on the FritzDevice
     """
 
-    PLUGIN_VERSION = "1.6.5"
+    PLUGIN_VERSION = "1.6.6"
 
     _header = {'SOAPACTION': '', 'CONTENT-TYPE': 'text/xml; charset="utf-8"'}
 
@@ -1268,7 +1268,7 @@ class AVM(SmartPlugin):
 
     def _check_sid(self):
         """
-        Check if knows Session ID is still valid
+        Check if known Session ID is still valid
         """
 
         if self.debug_log:
@@ -1282,7 +1282,7 @@ class AVM(SmartPlugin):
             self.logger.debug(f"_check_sid: SID: {sid}, Challenge: {challenge}, BlockTime: {blocktime}")
 
         if sid == "0000000000000000":
-            self.logger.warning(f"Session ID is invalid. Try to generate new one.")
+            self.logger.warning(f"Session ID is invalid. Trying to generate new one.")
             self._get_sid()
         else:
             self.logger.info(f"Session ID is still valid.")
@@ -1593,7 +1593,7 @@ class AVM(SmartPlugin):
                     time.sleep(readafterwrite)
                     self._update_aha_devices()
 
-            # handle level percent
+            # handle level percentage
             elif avm_data_type in ['set_levelpercentage', 'levelpercentage']:
                 cmd_level = int(item())
                 if self.debug_log:
@@ -1663,20 +1663,27 @@ class AVM(SmartPlugin):
                 if self.debug_log:
                     self.logger.debug(f"Device AIN is {ain_device}")
 
-                # search saturation:
-                saturation = -1
-                parentItem = item.return_parent()
-                for child in parentItem.return_children():
-                    if self.has_iattr(child.conf, 'avm_data_type'):
-                        if self.get_iattr_value(child.conf, 'avm_data_type') in ['set_saturation', 'saturation']:
-                            saturation = int(child())
-                            # if self.debug_log:
-                            # self.logger.debug(f"Debug hue {hue_value}, saturation {saturation}")
-                            # write value
-                            self.set_color(ain_device, hue_value, saturation, duration=0)
-                if saturation == -1:
-                    self.logger.warning(
-                        f"Cannot execute hue command because saturation value cannot be found in item tree")
+                # Full RGB hue will be supported by Fritzbox approximately from Q2 2022 on:
+                # Currently, only use default RGB colors that are supported by default (getcolordefaults)
+                # These default colors have given saturation values, therefore, the following saturation command is 
+                # temporarily commented out.
+
+                self.set_color_discrete(ain_device, hue_value, duration=0)
+
+                ## search saturation:
+                #saturation = -1
+                #parentItem = item.return_parent()
+                #for child in parentItem.return_children():
+                #    if self.has_iattr(child.conf, 'avm_data_type'):
+                #        if self.get_iattr_value(child.conf, 'avm_data_type') in ['set_saturation', 'saturation']:
+                #            saturation = int(child())
+                #            #self.logger.debug(f"Debug hue {cmd_hue}, saturation {saturation}")
+                #            # write value
+                #            # RGB hue will be supported by Fritzbox approximately from Q2 2022 on:
+                #            #self.set_color(ain_device, hue_value, saturation, duration=0)
+                #if saturation == -1:
+                #    self.logger.warning(
+                #        f"Cannot execute hue command because saturation value cannot be found in item tree")
 
                 # read new value after writing
                 if readafterwrite:
@@ -1695,25 +1702,30 @@ class AVM(SmartPlugin):
                 if self.debug_log:
                     self.logger.debug(f"Device AIN is {ain_device}")
 
-                # search hue:
-                hue = -1
-                parentItem = item.return_parent()
-                for child in parentItem.return_children():
-                    if self.has_iattr(child.conf, 'avm_data_type'):
-                        if self.get_iattr_value(child.conf, 'avm_data_type') in ['set_hue', 'hue']:
-                            hue = int(child())
-                            # if self.debug_log:
-                            # self.logger.debug(f"Debug saturation {saturation_value}, hue {hue}")
-                            # write value
-                            self.set_color(ain_device, hue, saturation_value, duration=0)
-                if hue == -1:
-                    self.logger.warning(
-                        f"Cannot execute saturation command because hue value cannot be found in item tree")
+            # Currently, only use default RGB colors that are supported by default (getcolordefaults). 
+            # However, full RGB color control will be supported approximately from Q2 2022 on.
+            # These default colors have given saturation values, therefore, the following saturation command is 
+            # temporarily commented out.
 
-                # read new value after writing
-                if readafterwrite:
-                    time.sleep(readafterwrite)
-                    self._update_aha_devices()
+            #    # search hue:
+            #    hue = -1
+            #    parentItem = item.return_parent()
+            #    for child in parentItem.return_children():
+            #        if self.has_iattr(child.conf, 'avm_data_type'):
+            #            if self.get_iattr_value(child.conf, 'avm_data_type') in ['set_hue', 'hue']:
+            #                hue = int(child())
+            #                if self.debug_log:
+            #                    self.logger.debug(f"Debug saturation {saturation_value}, hue {hue}")
+            #                # write value
+            #                #self.set_color(ain_device, hue, saturation_value, duration=0)
+            #    if hue == -1:
+            #        self.logger.warning(
+            #            f"Cannot execute saturation command because hue value cannot be found in item tree")
+
+            #    # read new value after writing
+            #    if readafterwrite:
+            #        time.sleep(readafterwrite)
+            #        self._update_aha_devices()
 
             # handle set color temperature
             elif avm_data_type in ['set_colortemperature', 'colortemperature']:
@@ -2109,6 +2121,23 @@ class AVM(SmartPlugin):
         }
 
         self._host_info.update(host_info)
+
+
+    def _get_colordefaults(self, ain):
+        """
+        Get the DOM elements for the RGM default colors using minidom.
+        
+        """
+        colors = None
+        plain = self._aha_request("getcolordefaults", ain=ain)
+        if plain:
+            try:
+                dom = minidom.parseString(plain)
+                colors = dom.getElementsByTagName('colordefaults')
+            except Exception as e:
+                self.logger.error(f'_get_colordefaults: error {e} during parsing. Plain={plain}')
+        return colors
+
 
     def reconnect(self):
         """
@@ -2617,7 +2646,6 @@ class AVM(SmartPlugin):
     def _aha_request(self, cmd, ain=None, param=None, rf=str):
         """
         Create an request for AHA-device get response
-
         :param cmd:     command to be sent
         :type cmd:      str
         :param ain:     ain of device
@@ -3206,6 +3234,51 @@ class AVM(SmartPlugin):
         return self._aha_request("setcolor", ain=ain,
                                  param={'hue': int(hue), 'saturation': int(saturation), 'duration': int(duration)},
                                  rf=bool)
+
+    def set_color_discrete(self, ain, hue, duration=0):
+        """
+        Set Led color to closest discrete hue value. Currently, only those are supported for FritzDect500 RGB LED bulbs
+        """
+
+        if hue <= 20:
+            #self.logger.debug(f'setcolor to red (hue={hue})')
+            return self._aha_request("setcolor", ain=ain, param={'hue': 358, 'saturation': 180, 'duration': int(duration)}, rf=bool)
+        elif hue <= 45:
+            #self.logger.debug(f'setcolor to orange (hue={hue})')
+            return self._aha_request("setcolor", ain=ain, param={'hue': 35, 'saturation': 214, 'duration': int(duration)}, rf=bool)
+        elif hue <= 55:
+            #self.logger.debug(f'setcolor to yellow (hue={hue})')
+            return self._aha_request("setcolor", ain=ain, param={'hue': 52, 'saturation': 153, 'duration': int(duration)}, rf=bool)
+        elif hue <= 100:
+            #self.logger.debug(f'setcolor to grasgreen (hue={hue})')
+            return self._aha_request("setcolor", ain=ain, param={'hue': 92, 'saturation': 123, 'duration': int(duration)}, rf=bool)
+        elif hue <= 135:
+            #self.logger.debug(f'setcolor to green (hue={hue})')
+            return self._aha_request("setcolor", ain=ain, param={'hue': 120, 'saturation': 160, 'duration': int(duration)}, rf=bool)
+        elif hue <= 175:
+            #self.logger.debug(f'setcolor to turquoise (hue={hue})')
+            return self._aha_request("setcolor", ain=ain, param={'hue': 160, 'saturation': 145, 'duration': int(duration)}, rf=bool)
+        elif hue <= 210:
+            #self.logger.debug(f'setcolor to cyan (hue={hue})')
+            return self._aha_request("setcolor", ain=ain, param={'hue': 195, 'saturation': 179, 'duration': int(duration)}, rf=bool)
+        elif hue <= 240:
+            #self.logger.debug(f'setcolor to blue (hue={hue})')
+            return self._aha_request("setcolor", ain=ain, param={'hue': 225, 'saturation': 204, 'duration': int(duration)}, rf=bool)
+        elif hue <= 280:
+            #self.logger.debug(f'setcolor to violett (hue={hue})')
+            return self._aha_request("setcolor", ain=ain, param={'hue': 266, 'saturation': 169, 'duration': int(duration)}, rf=bool)
+        elif hue <= 310:
+            #self.logger.debug(f'setcolor to magenta (hue={hue})')
+            return self._aha_request("setcolor", ain=ain, param={'hue': 296, 'saturation': 140, 'duration': int(duration)}, rf=bool)
+        elif hue <= 350:
+            #self.logger.debug(f'setcolor to pink (hue={hue})')
+            return self._aha_request("setcolor", ain=ain, param={'hue': 335, 'saturation': 180, 'duration': int(duration)}, rf=bool)
+        elif hue <= 360:
+            #self.logger.debug(f'setcolor to red (hue={hue})')
+            return self._aha_request("setcolor", ain=ain, param={'hue': 358, 'saturation': 180, 'duration': int(duration)}, rf=bool)
+        else:
+            self.logger.error(f'setcolor hue out of range (hue={hue})')
+
 
     def get_temperature(self, ain):
         """
