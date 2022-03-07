@@ -1,61 +1,73 @@
 {% extends "base_plugin.html" %}
-
 {% set logo_frame = false %}
+{% set update_interval = 5000 %}
 
-<!-- set update_interval to a value > 0 (in milliseconds) to enable periodic data updates -->
-{% set update_interval = 0 %}
+{% block pluginstyles %}
+<style>
+  table th.no {
+    width: 50;
+  }
+  table th.value {
+    width: 250px;
+  }
+  #itemtable {
+     display: none;
+     table-layout: fixed;
+  }
+  #smarthomeitemtable {
+     display: none;
+  }
+</style>
+{% endblock pluginstyles %}
 
-<!--
-	Additional script tag for plugin specific javascript code go into this block
--->
 {% block pluginscripts %}
 <script>
-	function handleUpdatedData(response, dataSet=null) {
-		if (dataSet === 'devices_info' || dataSet === null) {
-			var objResponse = JSON.parse(response);
-			myProto = document.getElementById(dataSet);
-			for (var item in objResponse['item_values']) {
-				shngInsertText (item+'_value', objResponse['item_values'][item]['value']);
-				shngInsertText (item+'_last_update', objResponse['item_values'][item]['last_update']);
-				shngInsertText (item+'_last_change', objResponse['item_values'][item]['last_change']);
-			}
-		}
-	}
-</script>
-<!--
-	This part is used to implement datatable JS for the tables. It allows resorting tables by column, etc.
-	For each table you have to implement the code part $('#<table_id>').DataTable(..); where the <table_id> matches the id of a table tag
--->
-<script>
 	$(document).ready( function () {
-		$(window).trigger('datatables_defaults'); // loading default behaviour
+		$(window).trigger('datatables_defaults');
 		try {
-			$('#itemtable').DataTable( {} );
-            $('#smarthomeitemtable').DataTable( {} );
-            $('#logtable').DataTable( {} );
-            $('#call_monitortable').DataTable( {} );
-            $('#smarthome_devicetable').DataTable( {} );
-            $('#rftable').DataTable( {} );
-            $('#switchtable').DataTable( {} );
-            $('#zigbeetable').DataTable( {} );
-            $('#mtable1').DataTable( {} );
-            $('#mtable2').DataTable( {} );
+	  webif_pagelength = document.getElementById('webif_pagelength').innerHTML;
+			table0 = $('#itemtable').DataTable( { "pageLength": webif_pagelength } );
+            table1 = $('#smarthomeitemtable').DataTable( { "pageLength": webif_pagelength } );
+            table2 = $('#logtable').DataTable( {} );
+            table3 = $('#call_monitortable').DataTable( {} );
+            table4 = $('#smarthome_devicetable').DataTable( {} );
 			}
 		catch (e) {
 			console.log("Datatable JS not loaded, showing standard table without reorder option " + e)
 			}
 		});
 </script>
-
+<script>
+	function handleUpdatedData(response, dataSet=null) {
+		if (dataSet === 'devices_info' || dataSet === null) {
+			var objResponse = JSON.parse(response);
+			myProto = document.getElementById(dataSet);
+            
+			for (var item in objResponse['avm_items']) {
+                shngInsertText (item+'_avm_item_value', objResponse['avm_items'][item]['value'], 'itemtable');
+				shngInsertText (item+'_avm_item_last_update', objResponse['avm_items'][item]['last_update'], 'itemtable');
+				shngInsertText (item+'_avm_item_last_change', objResponse['avm_items'][item]['last_change'], 'itemtable');
+			}
+            for (var item in objResponse['avm_smarthome_items']) {
+                shngInsertText (item+'_avm_smarthome_item_value', objResponse['avm_smarthome_items'][item]['value'], 'itemtable');
+				shngInsertText (item+'_avm_smarthome_item_last_update', objResponse['avm_smarthome_items'][item]['last_update'], 'itemtable');
+				shngInsertText (item+'_avm_smarthome_item_last_change', objResponse['avm_smarthome_items'][item]['last_change'], 'itemtable');
+			}
+            for (var item in objResponse['call_monitor']) {
+                table3.cell( $('#' + $.escapeSelector(item+'_callmonitor_item_value')) ).data(objResponse['call_monitor'][item]['value']);
+			}
+		}
+	}
+</script>
 {% endblock pluginscripts %}
 
 {% set tabcount = 6 %}
 
-{% set tab1title = _("<strong>"'AVM Items'"</strong>") %}
-{% set tab2title = _("<strong>"'AVM Smarthome Items'"</strong>") %}
+{% set tab1title = _("<strong>"'AVM Items'"</strong> (" ~ avm_item_count ~ ") ") %}
+{% set tab2title = _("<strong>"'AVM Smarthome Items'"</strong> (" ~ smarthome_item_count ~ ") ") %}
 {% set tab3title = _("<strong>"'Plugin-API'"</strong>") %}
 {% set tab4title = _("<strong>"'Log-Einträge'"</strong>") %}
-{% set tab5title = _("<strong>"'Call Monitor Items'"</strong>") %}
+{% set tab5title = _("<strong>"'Call Monitor Items'"</strong> (" ~ call_monitor_item_count ~ ") ") %}
 {% set tab6title = _("<strong>"'AVM Smarthome Devices'"</strong>") %}
 
 {% set language = p.get_sh().get_defaultlanguage() %}
@@ -119,10 +131,14 @@
 
 {% block bodytab1 %}
 <div class="table-responsive" style="margin-left: 3px; margin-right: 3px;" class="row">
+	<div class="mb-2">
+        <span id='webif_pagelength' style="display:none">{{ webif_pagelength }}</span>
+    </div>
     <div class="col-sm-12">
-		<table id="itemtable" class="table table-striped table-hover pluginList display">
+		<table id="itemtable" class="table0 table-striped table-hover pluginList display">
 			<thead>
-				<tr class="shng_heading">
+				<tr>
+                    <!-- <th class="no">{{ _('#') }}</th> -->
 					<th>{{ _('Pfad') }}</th>
 					<th>{{ _('Typ') }}</th>
 					<th>{{ _('AVM Datentyp') }}</th>
@@ -132,19 +148,21 @@
 				</tr>
 			</thead>
 			<tbody>
-				{% for item in p._fritz_device.get_items() %}
+				{% for item in avm_items %}
+                    {% set item_id = item.id() %}
 					{% if p.get_instance_name() %}
 						{% set instance_key = "avm_data_type@"+p.get_instance_name() %}
 					{% else %}
 						{% set instance_key = "avm_data_type" %}
 					{% endif %}
-					<tr id="{{ loop.index }}_click">
-						<td class="py-1">{{ item.property.path }}</td>
+					<tr>
+                        <!-- <td class="py-1">{{ loop.index  }}</td> -->
+						<td class="py-1">{{ item_id }}</td>
 						<td class="py-1">{{ item.property.type }}</td>
 						<td class="py-1">{{ item.conf[instance_key] }}</td>
-						<td class="py-1">{{ item() }}</td>
-						<td class="py-1">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
-						<td class="py-1">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+						<td class="py-1" id="{{ item_id }}_avm_item_value">{{ _('.') }}{{ item() }}</td>
+						<td class="py-1" id="{{ item_id }}_avm_item_last_update">{{ _('.') }}{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+						<td class="py-1" id="{{ item_id }}_avm_item_last_change">{{ _('.') }}{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
 					</tr>
 				{% endfor %}
 			</tbody>
@@ -156,10 +174,13 @@
 
 {% block bodytab2 %}
 <div class="table-responsive" style="margin-left: 3px; margin-right: 3px;" class="row">
+	<div class="mb-2">
+        <span id='webif_pagelength' style="display:none">{{ webif_pagelength }}</span>
+    </div>
     <div class="col-sm-12">
-		<table id="smarthomeitemtable" class="table table-striped table-hover pluginList display">
+		<table id="smarthomeitemtable" class="table1 table-striped table-hover pluginList display">
 			<thead>
-				<tr class="shng_heading">
+				<tr>
 					<th>{{ _('Pfad') }}</th>
 					<th>{{ _('Typ') }}</th>
 					<th>{{ _('AVM Datentyp') }}</th>
@@ -169,19 +190,20 @@
 				</tr>
 			</thead>
 			<tbody>
-				{% for item in p._fritz_device.get_smarthome_items() %}
+				{% for item in smarthome_items %}
+                    {% set item_id = item.id() %}
 					{% if p.get_instance_name() %}
 						{% set instance_key = "avm_data_type@"+p.get_instance_name() %}
 					{% else %}
 						{% set instance_key = "avm_data_type" %}
 					{% endif %}
-					<tr id="{{ loop.index }}_click">
-						<td class="py-1">{{ item.property.path }}</td>
+					<tr>
+						<td class="py-1">{{ item_id }}</td>
 						<td class="py-1">{{ item.property.type }}</td>
 						<td class="py-1">{{ item.conf[instance_key] }}</td>
-						<td class="py-1">{{ item() }}</td>
-						<td class="py-1">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
-						<td class="py-1">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+						<td class="py-1" id="{{ item_id }}_avm_smarthome_item_value">{{ _('.') }}{{ item() }}</td>
+						<td class="py-1" id="{{ item_id }}_avm_smarthome_item_last_update">{{ _('.') }}{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+						<td class="py-1" id="{{ item_id }}_avm_smarthome_item_last_change">{{ _('.') }}{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
 					</tr>
 				{% endfor %}
 			</tbody>
@@ -230,7 +252,7 @@
 {% set logentries = p.get_device_log_from_lua() %}
 <div class="table-responsive" style="margin-left: 3px; margin-right: 3px;" class="row">
     <div class="col-sm-12">
-		<table id="logtable" class="table table-striped table-hover pluginList display">
+		<table id="logtable" class="table5 table-striped table-hover pluginList display">
 			<thead>
 				<tr>
 					<th>{{ _('Datum')}}</th>
@@ -241,19 +263,21 @@
 				</tr>
 			</thead>
 			<tbody>
-				{% for logentry in p.get_device_log_from_lua() %}
-					<tr>
-						<td class="py-1">{{ logentry[4] }}</td>
-						<td class="py-1">{{ logentry[5] }}</td>
-						<td class="py-1">{{ logentry[0] }}</td>
-						<td class="py-1">
-							<a class="text-shng" target="_blank" href="https://service.avm.de/help/de/FRITZ-Box-7590/019/hilfe_syslog_{{ logentry[1] }}">
-								{{ logentry[1] }}
-							</a>
-						</td>
-						<td class="py-1">{{ _('cat_'+logentry[2]|string) }}</td>
-					</tr>
-				{% endfor %}
+                {% if logentries %}
+                    {% for logentry in logentries %}
+                        <tr>
+                            <td class="py-1">{{ logentry[4] }}</td>
+                            <td class="py-1">{{ logentry[5] }}</td>
+                            <td class="py-1">{{ logentry[0] }}</td>
+                            <td class="py-1">
+                                <a class="text-shng" target="_blank" href="https://service.avm.de/help/de/FRITZ-Box-7590/019/hilfe_syslog_{{ logentry[1] }}">
+                                    {{ logentry[1] }}
+                                </a>
+                            </td>
+                            <td class="py-1">{{ _('cat_'+logentry[2]|string) }}</td>
+                        </tr>
+                    {% endfor %}
+                {% endif %}
 			</tbody>
 		</table>
 	</div>
@@ -264,6 +288,9 @@
 {% block bodytab5 %}
 {% if p._call_monitor %}
 <div class="table-responsive" style="margin-left: 3px; margin-right: 3px;" class="row">
+	<div class="mb-2">
+        <span id='webif_pagelength' style="display:none">{{ webif_pagelength }}</span>
+    </div>
     <div class="col-sm-12">
 		<table id="call_monitortable" class="table table-striped table-hover pluginList display">
 			<thead>
@@ -277,64 +304,20 @@
 				</tr>
 			</thead>
 			<tbody>
-				{% for item in p._monitoring_service.get_items() %}
+				{% for item in call_monitor_items %}
+                    {% set item_id = item.id() %}
 					{% if p.get_instance_name() %}
 						{% set instance_key = "avm_data_type@"+p.get_instance_name() %}
 					{% else %}
 						{% set instance_key = "avm_data_type" %}
 					{% endif %}
-					<tr id="{{ loop.index }}_click">
-						<td class="py-1">{{ item.property.path }}</td>
+					<tr>
+						<td class="py-1">{{ item_id }}</td>
 						<td class="py-1">{{ item.property.type }}</td>
 						<td class="py-1">{{ item.conf[instance_key] }}</td>
 						<td class="py-1">{{ item() }}</td>
 						<td class="py-1">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
 						<td class="py-1">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
-					</tr>
-				{% endfor %}
-				{% for item in p._monitoring_service.get_trigger_items() %}
-					{% if p.get_instance_name() %}
-						{% set instance_key = "avm_data_type@"+p.get_instance_name() %}
-					{% else %}
-						{% set instance_key = "avm_data_type" %}
-					{% endif %}
-					<tr id="{{ loop.index }}_click">
-						<td class="py-1">{{ item.id() }}</td>
-						<td class="py-1">{{ item.type() }}</td>
-						<td class="py-1">{{ item.conf[instance_key] }}</td>
-						<td class="py-1">{{ item() }}</td>
-						<td class="py-1">{{ item.last_update().strftime('%d.%m.%Y %H:%M:%S') }}</td>
-						<td class="py-1">{{ item.last_change().strftime('%d.%m.%Y %H:%M:%S') }}</td>
-					</tr>
-				{% endfor %}
-				{% for item in p._monitoring_service.get_items_incoming() %}
-					{% if p.get_instance_name() %}
-						{% set instance_key = "avm_data_type@"+p.get_instance_name() %}
-					{% else %}
-						{% set instance_key = "avm_data_type" %}
-					{% endif %}
-					<tr id="{{ loop.index }}_click">
-						<td class="py-1">{{ item.id() }}</td>
-						<td class="py-1">{{ item.type() }}</td>
-						<td class="py-1">{{ item.conf[instance_key] }}</td>
-						<td class="py-1">{{ item() }}</td>
-						<td class="py-1">{{ item.last_update().strftime('%d.%m.%Y %H:%M:%S') }}</td>
-						<td class="py-1">{{ item.last_change().strftime('%d.%m.%Y %H:%M:%S') }}</td>
-					</tr>
-				{% endfor %}
-				{% for item in p._monitoring_service.get_items_outgoing() %}
-					{% if p.get_instance_name() %}
-						{% set instance_key = "avm_data_type@"+p.get_instance_name() %}
-					{% else %}
-						{% set instance_key = "avm_data_type" %}
-					{% endif %}
-					<tr id="{{ loop.index }}_click">
-						<td class="py-1">{{ item.id() }}</td>
-						<td class="py-1">{{ item.type() }}</td>
-						<td class="py-1">{{ item.conf[instance_key] }}</td>
-						<td class="py-1">{{ item() }}</td>
-						<td class="py-1">{{ item.last_update().strftime('%d.%m.%Y %H:%M:%S') }}</td>
-						<td class="py-1">{{ item.last_change().strftime('%d.%m.%Y %H:%M:%S') }}</td>
 					</tr>
 				{% endfor %}
 			</tbody>
@@ -347,10 +330,13 @@
 {% block bodytab6 %}
 {% if p._fritz_device._smarthome_devices %}
 <div class="table-responsive" style="margin-left: 3px; margin-right: 3px;" class="row">
+	<div class="mb-2">
+        <span id='webif_pagelength' style="display:none">{{ webif_pagelength }}</span>
+    </div>
     <div class="col-sm-12">
-		<table id="smarthome_devicetable" class="table table-striped table-hover pluginList display">
+		<table id="smarthome_devicetable" class="table6 table-striped table-hover pluginList display">
 			<thead>
-				<tr class="shng_heading">
+				<tr>
 					<th>{{ _('No') }}</th>
 					<th>{{ _('Device ain') }}</th>
 					<th>{{ _('Device Details (dict)') }}</th>
@@ -368,5 +354,6 @@
 		</table>
 	</div>
 </div>
+
 {% endif %}
 {% endblock %}
