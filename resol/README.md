@@ -15,8 +15,6 @@ https://knx-user-forum.de/forum/supportforen/smarthome-py/919242-neues-plugin-re
 The following python packages need to be installed on your system:
 - none
 
-```
-
 ### plugin.yaml
 
 ```
@@ -30,7 +28,7 @@ resol:
 ```
 More information of resol parameter and sources, see here: 
 https://github.com/danielwippermann/resol-vbus
-https://danielwippermann.github.io/resol-vbus/vbus-packets.html
+https://danielwippermann.github.io/resol-vbus/#/vsf
 
 Install Programm Resol Service Center to read offset und Bituse:
 - They are provided in XML by RESOL as part of the RSC (Resol Service Center) download. Just download, install (on linux use wine, it will work) and get the required file for your installation from: {Install_dir}/eclipse/plugins/de.resol.servicecenter.vbus.resol_2.0.0/ -

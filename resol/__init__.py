@@ -30,6 +30,14 @@ class Resol(SmartPlugin):
 
 
     def __init__(self, sh, *args, **kwargs):
+        """
+        Initalizes the plugin.
+
+        """
+
+        # Call init code of parent class (SmartPlugin)
+        super().__init__()
+
         self._sh = sh
         self._items = []
         self._ip = self.get_parameter_value('ip')
@@ -127,6 +135,10 @@ class Resol(SmartPlugin):
         self.send("PASS %s\n" % self._password)
 
         dat = self.recv()
+        if not dat:
+            self.logger.warning("No data received following password send")
+            return False
+
         self.logger.debug("Response to pwd: " + str(dat))
 
         #Check if device accepted password
