@@ -169,6 +169,14 @@ class EnOcean(SmartPlugin):
 
     
     def __init__(self, sh, *args, **kwargs):
+        """
+        Initalizes the plugin.
+
+        """
+
+        # Call init code of parent class (SmartPlugin)
+        super().__init__()
+
         self._sh = sh
         self.port = self.get_parameter_value("serialport")
         self.logger = logging.getLogger(__name__)
