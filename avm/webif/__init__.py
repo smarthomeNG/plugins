@@ -25,6 +25,7 @@
 #
 #########################################################################
 
+import json
 from lib.item import Items
 from lib.model.smartplugin import SmartPluginWebIf
 
@@ -35,6 +36,7 @@ from lib.model.smartplugin import SmartPluginWebIf
 
 import cherrypy
 from jinja2 import Environment, FileSystemLoader
+
 
 class WebInterface(SmartPluginWebIf):
 
@@ -52,6 +54,7 @@ class WebInterface(SmartPluginWebIf):
         self.plugin = plugin
         self.items = Items.get_instance()
 
+        self.call_monitor_items = []
         self.tplenv = self.init_template_environment()
 
     @cherrypy.expose
@@ -61,18 +64,69 @@ class WebInterface(SmartPluginWebIf):
         Render the template and return the html file to be delivered to the browser
         :return: contents of the template after beeing rendered
         """
-        tabcount = 5
-        call_monitor_items = 0
+
         if self.plugin._call_monitor:
-            call_monitor_items = self.plugin._monitoring_service.get_item_count_total()
-            tabcount = 6
+            self.call_monitor_items = []
+            self.call_monitor_items.extend(self.plugin._monitoring_service.get_items())
+            self.call_monitor_items.extend(self.plugin._monitoring_service.get_trigger_items())
+            self.call_monitor_items.extend(self.plugin._monitoring_service.get_items_incoming())
+            self.call_monitor_items.extend(self.plugin._monitoring_service.get_items_outgoing())
 
         tmpl = self.tplenv.get_template('index.html')
-        return tmpl.render(plugin_shortname=self.plugin.get_shortname(), plugin_version=self.plugin.get_version(),
-                           plugin_info=self.plugin.get_info(), tabcount=tabcount,
-                           avm_items=self.plugin.get_fritz_device().get_item_count(),
-                           call_monitor_items=call_monitor_items,
-                           p=self.plugin)
+        return tmpl.render(plugin_shortname=self.plugin.get_shortname(),
+                           plugin_version=self.plugin.get_version(),
+                           plugin_info=self.plugin.get_info(),
+                           avm_items=sorted(self.plugin.get_fritz_device().get_items(), key=lambda k: str.lower(k['_path'])),
+                           avm_item_count=len(self.plugin.get_fritz_device().get_items()),
+                           call_monitor_items=sorted(self.call_monitor_items, key=lambda k: str.lower(k['_path'])),
+                           call_monitor_item_count=len(self.call_monitor_items),
+                           smarthome_items=sorted(self.plugin.get_fritz_device().get_smarthome_items(), key=lambda k: str.lower(k['_path'])),
+                           smarthome_item_count=len(self.plugin.get_fritz_device().get_smarthome_items()),
+                           p=self.plugin,
+                           webif_pagelength=self.plugin.webif_pagelength,
+                           )
+
+    @cherrypy.expose
+    def get_data_html(self, dataSet=None):
+        """
+        Return data to update the webpage
+
+        For the standard update mechanism of the web interface, the dataSet to return the data for is None
+
+        :param dataSet: Dataset for which the data should be returned (standard: None)
+        :return: dict with the data needed to update the web page.
+        """
+        if dataSet is None:
+            # get the new data
+            data = dict()
+            if self.plugin._call_monitor:
+                if self.call_monitor_items:
+                    data['call_monitor'] = {}
+                    for item in self.call_monitor_items:
+                        data['call_monitor'][item.id()] = {}
+                        data['call_monitor'][item.id()]['value'] = item()
+
+            if self.plugin.get_fritz_device().get_items():
+                data['avm_items'] = {}
+                for item in self.plugin.get_fritz_device().get_items():
+                    data['avm_items'][item.id()] = {}
+                    data['avm_items'][item.id()]['value'] = item()
+                    data['avm_items'][item.id()]['last_update'] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
+                    data['avm_items'][item.id()]['last_change'] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
+
+            if self.plugin.get_fritz_device().get_smarthome_items():
+                data['avm_smarthome_items'] = {}
+                for item in self.plugin.get_fritz_device().get_smarthome_items():
+                    data['avm_smarthome_items'][item.id()] = {}
+                    data['avm_smarthome_items'][item.id()]['value'] = item()
+                    data['avm_smarthome_items'][item.id()]['last_update'] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
+                    data['avm_smarthome_items'][item.id()]['last_change'] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
+
+            try:
+                return json.dumps(data, default=str)
+            except Exception as e:
+                self.logger.error(f"get_data_html exception: {e}")
+        return {}
 
     @cherrypy.expose
     def reboot(self):
