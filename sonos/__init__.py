@@ -2415,6 +2415,12 @@ class Sonos(SmartPlugin):
     PLUGIN_VERSION = "1.6.3"
 
     def __init__(self, sh, *args, **kwargs):
+        """
+        Initalizes the plugin.
+
+        """
+
+        # Call init code of parent class (SmartPlugin)
         super().__init__(**kwargs)
 
         self._sh = sh
