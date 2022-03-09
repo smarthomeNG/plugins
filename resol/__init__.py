@@ -26,7 +26,7 @@ from lib.model.smartplugin import *
 
 class Resol(SmartPlugin):
 
-    PLUGIN_VERSION = '1.0.5'    # (must match the version specified in plugin.yaml)
+    PLUGIN_VERSION = '1.0.6'    # (must match the version specified in plugin.yaml)
 
 
     def __init__(self, sh, *args, **kwargs):
@@ -120,8 +120,8 @@ class Resol(SmartPlugin):
         self.logger.info("6) Ending socket function")
         self.sock = None
 
-# Logs in onto the DeltaSol BS Plus over LAN. Also starts (and maintains) the
-# actual stream of data.
+    # Logs in onto the DeltaSol BS Plus over LAN. Also starts (and maintains) the
+    # actual stream of data.
     def login(self):
         dat = self.recv()
         self.logger.debug("Login response: " + str(dat))
@@ -256,6 +256,16 @@ class Resol(SmartPlugin):
     # Extract command from msg NOT USED AT THE MOMENT
     def get_command(self, msg):
         return self.format_byte(msg[6]) + self.format_byte(msg[5:6])[2:]
+
+    # Check header CRC byte:
+    def check_header_crc(self, msg):
+        header_crc = hex(ord(msg[8]))
+        calc_crc = self.calc_vbus_crc(msg, offset=0, length=8)
+        
+        if calc_crc == ord(msg[8]):
+            return True
+        else:
+            return False 
     
     # Get count of frames in msg
     def get_frame_count(self, msg):
@@ -271,11 +281,21 @@ class Resol(SmartPlugin):
                 self.logger.error("get_payload: index {0} out of range {1} for i={2}".format((15+(i*6)), len(msg), i))
                 return ''
         return payload
+
+    def calc_vbus_crc(self, msg, offset, length):
+        Crc = 0x7F
+        for i in range(length):
+            Crc = (Crc - ord(msg[offset + i]) ) & 0x7F
+        return Crc
     
     # parse payload and set item value
     def parse_payload_pv1(self, msg):
         logger_debug = self.logger.isEnabledFor(logging.DEBUG)
 
+        if not self.check_header_crc(msg):
+            self.logger.warning("CRC error")
+            return
+        
         command = self.get_command(msg)
         source = self.get_source(msg)
         destination = self.get_destination(msg)
@@ -325,30 +345,45 @@ class Resol(SmartPlugin):
             else:
                 self.logger.error(f"Resol item {item} missing attribute resol_bituse")
 
+            resol_factors = {}
+            if self.has_iattr(item.conf, 'resol_factor'):
+                resol_factors = self.get_iattr_value(item.conf, 'resol_factor')
+
+            resol_isSigned = {}
+            if self.has_iattr(item.conf, 'resol_isSigned'):
+                resol_isSigned = self.get_iattr_value(item.conf, 'resol_isSigned')
+
             end = int(resol_offset) + int((resol_bituse + 1) / 8)
             #self.logger.warning(f"Debug Start: {resol_offset}, End: {end}")
             
             value = 0
             count = 0
-            self.logger.debug(f"Starting for loop with {int(resol_offset)},{int((resol_bituse + 1) / 8)}")
+            #self.logger.debug(f"Starting for loop with {int(resol_offset)},{int((resol_bituse + 1) / 8)}")
             for byte_position in range(int(resol_offset), int(resol_offset + (resol_bituse + 1) / 8)):
                 byte_value = ord(payload[byte_position])
 
-                factor = 1
-                resol_factors = {}
-                if self.has_iattr(item.conf, 'resol_factor'):
-                    resol_factors = self.get_iattr_value(item.conf, 'resol_factor')
                 if len(resol_factors) > count:
                     factor = resol_factors[count]
+                else:
+                    factor = 1
+                    self.logger.warning(f"No attribute resol_factor defined for byte {count}. Using factor=1 instead")
+
+                if len(resol_isSigned) > count:
+                    isSigned = resol_isSigned[count]
+                else:
+                    isSigned = False
 
                 if logger_debug:
                     self.logger.debug("count {0} Index {1}, bytevalue {2}, factor {3}".format(count, byte_position, byte_value, factor))
+
+                if isSigned:
+                    byte_value = int.from_bytes(bytes([byte_value]), "little", signed=True)
 
                 value = value + byte_value * float(factor)
                 count = count + 1
             if logger_debug:
                 self.logger.debug(f"Value of item {item} is {value}, Source {source}, Destination {destination}")
-
+            
             item(value, self.get_shortname(), str(source), str(destination))
 
     def integrate_septett(self, frame):
@@ -367,8 +402,7 @@ class Resol(SmartPlugin):
     def gb(self, data, begin, end):  # GetBytes
         wbg = sum([0xff << (i * 8) for i, b in enumerate(data[begin:end])])
         s = sum([ord(b) << (i * 8) for i, b in enumerate(data[begin:end])])
-        
-        
+                
         if s >= wbg/2:
           s = -1 * (wbg - s)
         return s

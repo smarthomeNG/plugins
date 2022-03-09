@@ -76,6 +76,34 @@ resol:
          - '1000000'
          - '256000000'
 
+    solar:
+        resol_source@solar: '0x7721'
+        resol_destination@solar: '0x0010'
+        resol_command@solar: '0x0100'
+
+        sensordefektmaske:
+            type: num
+            visu_acl: ro
+            resol_offset@solar: 36
+            resol_bituse@solar: 16
+            resol_factor@solar:
+             - '1.0'
+             - '256.0'
+
+        temperatur_1:
+            name: 'Temperature Kollektor'
+            type: num
+            visu_acl: ro
+            database: init
+            database_maxage: 62
+            resol_offset@solar: 0
+            resol_bituse@solar: 16
+            resol_factor@solar: 
+             - '0.1'
+             - '25.6'
+            resol_isSigned@solar:
+             - False
+             - True
 
 
 ```
