@@ -72,60 +72,48 @@
 <table class="table table-striped table-hover">
 	<tbody>
 		<tr>
+			<td class="py-1">{{ _('Items@Fritzdevice') }}</td>
+			<td class="py-1">{{ p._fritz_device._items }}</td>
+		</tr>
+		<tr>
 			<td class="py-1">{{ _('model_name') }}</td>
 			<td class="py-1">{{ p._fritz_device.model_name }}</td>
 		</tr>
 		<tr>
-			<td class="py-1">{{ _('GetInfo') }}</td>
-			<td class="py-1">{{ p._fritz_device._DeviceInfo['GetInfo'] }}</td>
-		</tr>
-		<tr>
-			<td class="py-1">{{ _('safe_port') }}</td>
-			<td class="py-1">{{ p._fritz_device.safe_port }}</td>
-		</tr>
-		<tr>
-			<td class="py-1">{{ _('GetSecurityPort') }}</td>
-			<td class="py-1">{{ p._fritz_device._DeviceInfo['GetSecurityPort'] }}</td>
-		</tr>
-		<tr>
-			<td class="py-1">{{ _('GetGenericHostEntry') }}</td>
-			<td class="py-1">{{ p._fritz_device.GetGenericHostEntry(1) }}</td>
+			<td class="py-1">{{ _('test') }}</td>
+			<td class="py-1">{{ p._fritz_device.client.InternetGatewayDevice.X_AVM_DE_TAM.GetInfo(NewIndex=1) }}</td>
 		</tr>
 		<tr>
 			<td class="py-1">{{ _('WLANConfiguration[0]') }}</td>
 			<td class="py-1">{{ p._fritz_device.client.LANDevice.WLANConfiguration[0].GetInfo() }}</td>
 		</tr>
 		<tr>
-			<td class="py-1">{{ _('_Hosts') }}</td>
-			<td class="py-1">{{ p._fritz_device._Hosts }}</td>
+			<td class="py-1">{{ _('LANDevice') }}</td>
+			<td class="py-1">{{ p._fritz_device._data_cache['LANDevice'] }}</td>
 		</tr>
 		<tr>
-			<td class="py-1">{{ _('WANPPP') }}</td>
-			<td class="py-1">{{ p._fritz_device.client.WANConnectionDevice.WANPPPConnection.GetExternalIPAddress() }}</td>
+			<td class="py-1">{{ _('GetDefaultConnectionService') }}</td>
+			<td class="py-1">{{ p._fritz_device.client.InternetGatewayDevice.Layer3Forwarding.GetDefaultConnectionService() }}</td>
 		</tr>
 		<tr>
-			<td class="py-1">{{ _('WANIP') }}</td>
-			<td class="py-1">{{ p._fritz_device.client.WANConnectionDevice.WANIPConnection.GetInfo() }}</td>
+			<td class="py-1">{{ _('client_igd.devices') }}</td>
+			<td class="py-1">{{ p._fritz_device.client_igd.WANDevice.WANCommonInterfaceConfig.GetAddonInfos() }}</td>
 		</tr>
 		<tr>
-			<td class="py-1">{{ _('update_devices') }}</td>
-			<td class="py-1">{{ p._fritz_home.update_devices() }}</td>
+			<td class="py-1">{{ _('GetPhonebook') }}</td>
+			<td class="py-1">{{ p._fritz_device.client.InternetGatewayDevice.X_AVM_DE_OnTel.GetPhonebook(NewPhonebookID=0) }}</td>
 		</tr>
 		<tr>
-			<td class="py-1">{{ _('devices') }}</td>
-			<td class="py-1">{{ p._fritz_home._devices }}</td>
+			<td class="py-1">{{ _('get contact by phonenumber') }}</td>
+			<td class="py-1">{{ p._fritz_device.get_contact_name_by_phone_number('01735631526#') }}</td>
 		</tr>
 		<tr>
-			<td class="py-1">{{ _('aha_devices') }}</td>
-			<td class="py-1">{{ p.aha_devices }}</td>
+			<td class="py-1">{{ _('Device Log') }}</td>
+			<td class="py-1">{{ p._fritz_device.client.InternetGatewayDevice.DeviceInfo.GetInfo()['NewDeviceLog'] }}</td>
 		</tr>
 		<tr>
-			<td class="py-1">{{ _('get_device_by_ain') }}</td>
-			<td class="py-1">{{ p._fritz_home.get_device_by_ain('11963 0521424') }}</td>
-		</tr>
-		<tr>
-			<td class="py-1">{{ _('poll_aha') }}</td>
-			<td class="py-1">{{ p.poll_aha() }}</td>
+			<td class="py-1">{{ _('_monitoring_service._items') }}</td>
+			<td class="py-1">{{ p._monitoring_service._items }}</td>
 		</tr>
 	</tbody>
 </table>
