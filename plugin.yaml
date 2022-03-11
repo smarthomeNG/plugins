@@ -1,12 +1,12 @@
 # Metadata for the plugin
 plugin:
     # Global plugin attributes
-    type: unknown                   # plugin type (gateway, interface, protocol, system, web)
+    type: interface                   # plugin type (gateway, interface, protocol, system, web)
     description:
-        de: 'Beispiel Plugin für SmartHomeNG v1.5 und höher'
-        en: 'Sample plugin for SmartHomeNG v1.5 and up'
-    maintainer: <autor>
-#    tester:                         # Who tests this plugin?
+        de: 'Ansteuerung von AVM FRITZ!Boxen, WLAN-Repeatern, DECT Steckdosen, etc.'
+        en: 'Get and send data from/to AVM devices such as the FRITZ!Box, Wifi Repeaters or DECT sockets.'
+    maintainer: sisamiwe
+    tester: psilo, schuma, aschwith, bmx
     state: develop                  # change to ready when done with development
 #    keywords: iot xyz
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
@@ -17,7 +17,7 @@ plugin:
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
 #    py_minversion: 3.6             # minimum Python version to use for this plugin
 #    py_maxversion:                 # maximum Python version to use for this plugin (leave empty if latest)
-    multi_instance: false           # plugin supports multi instance
+    multi_instance: true            # plugin supports multi instance
     restartable: unknown
     classname: AVM2         # class containing the plugin
 
@@ -147,7 +147,7 @@ item_attributes:
         - 'wlanconfig_ssid'             # r/o
         - 'wlan_guest_time_remaining'   # r/o
         # Host Attribute
-        - 'network_device'              # r/o       Defines Network device via MAC-Adresse
+        - 'network_device'              # r/o       Verbindungsstatus // Defines Network device via MAC-Adresse
         - 'device_ip'                   # r/o       Geräte-IP (Muss Child von 'network_device' sein)            ipv4
         - 'device_connection_type'      # r/o       Verbindungstyp (Muss Child von 'network_device' sein)       str
         - 'device_hostname'             # r/o       Gerätename (Muss Child von 'network_device' sein)           str
@@ -376,17 +376,17 @@ item_structs:
     tam:
         type: bool
         visu_acl: rw
-        avm_data_type@instance: tam
-        avm_tam_index@instance: 1
+        avm2_data_type@instance: tam
+        avm2_tam_index@instance: 1
 
         name:
             type: str
             visu_acl: ro
-            avm_data_type@instance: tam_name
+            avm2_data_type@instance: tam_name
         message_number_old:
             type: num
             visu_acl: ro
-            avm_data_type@instance: tam_old_message_number
+            avm2_data_type@instance: tam_old_message_number
             eval: (sh...message_number_total()-sh...message_number_new())
             eval_trigger:
               - ..message_number_total
@@ -394,42 +394,42 @@ item_structs:
         message_number_new:
             type: num
             visu_acl: ro
-            avm_data_type@instance: tam_new_message_number
+            avm2_data_type@instance: tam_new_message_number
         message_number_total:
             type: num
             visu_acl: ro
-            avm_data_type@instance: tam_total_message_number
+            avm2_data_type@instance: tam_total_message_number
 
     deflection:
         type: bool
         visu_acl: rw
-        avm_data_type@instance: deflection_enable
-        avm_deflection_index@instance: 1
+        avm2_data_type@instance: deflection_enable
+        avm2_deflection_index@instance: 1
 
         deflection_type:
             type: str
             visu_acl: ro
-            avm_data_type@instance: deflection_type
+            avm2_data_type@instance: deflection_type
         deflection_number:
             type: str
             visu_acl: ro
-            avm_data_type@instance: deflection_number
+            avm2_data_type@instance: deflection_number
         deflection_to_number:
             type: str
             visu_acl: ro
-            avm_data_type@instance: deflection_to_number
+            avm2_data_type@instance: deflection_to_number
         deflection_mode:
             type: str
             visu_acl: ro
-            avm_data_type@instance: deflection_mode
+            avm2_data_type@instance: deflection_mode
         deflection_outgoing:
             type: str
             visu_acl: ro
-            avm_data_type@instance: deflection_outgoing
+            avm2_data_type@instance: deflection_outgoing
         deflection_phonebook_id:
             type: num
             visu_acl: ro
-            avm_data_type@instance: deflection_phonebook_id
+            avm2_data_type@instance: deflection_phonebook_id
 
     wan:
         connection_status:
@@ -519,136 +519,136 @@ item_structs:
             avm2_wlan_index@instance: 3
 
     device:
-        avm_data_type@instance: network_device
+        avm2_data_type@instance: network_device
         type: bool
         visu_acl: ro
 
         ip:
             type: str
-            avm_data_type@instance: device_ip
+            avm2_data_type@instance: device_ip
             visu_acl: ro
 
         connection_type:
             type: str
-            avm_data_type@instance: device_connection_type
+            avm2_data_type@instance: device_connection_type
             visu_acl: ro
 
         hostname:
             type: str
-            avm_data_type@instance: device_hostname
+            avm2_data_type@instance: device_hostname
             visu_acl: ro
 
     smarthome_general:
         name:
-            avm_data_type@instance: device_name
+            avm2_data_type@instance: device_name
             type: str
         identifier:
-            avm_data_type@instance: device_id
+            avm2_data_type@instance: device_id
             type: str
         productname:
-            avm_data_type@instance: product_name
+            avm2_data_type@instance: product_name
             type: str
         manufacturer:
-            avm_data_type@instance: manufacturer
+            avm2_data_type@instance: manufacturer
             type: str
         firmware_version:
-            avm_data_type@instance: fw_version
+            avm2_data_type@instance: fw_version
             type: str
         present:
-            avm_data_type@instance: connected
+            avm2_data_type@instance: connected
             type: bool
         functions:
-            avm_data_type@instance: device_functions
+            avm2_data_type@instance: device_functions
             type: list
 
     smarthome_hkr:
         current_temperature:
-            avm_data_type@instance: current_temperature
+            avm2_data_type@instance: current_temperature
             type: num
         target_temperature:
-            avm_data_type@instance: target_temperature
-            avm_read_after_write@instance: 5
+            avm2_data_type@instance: target_temperature
+            avm2_read_after_write@instance: 5
             type: num
         # set_target_temperature:
-        #     avm_data_type@instance: set_target_temperature
+        #     avm2_data_type@instance: set_target_temperature
         #     type: num
         comfort_temperature:
-            avm_data_type@instance: temperature_comfort
+            avm2_data_type@instance: temperature_comfort
             type: num
         eco_temperature:
-            avm_data_type@instance: temperature_reduced
+            avm2_data_type@instance: temperature_reduced
             type: num
         battery_low:
-            avm_data_type@instance: battery_low
+            avm2_data_type@instance: battery_low
             type: bool
         battery_level:
-            avm_data_type@instance: battery_level
+            avm2_data_type@instance: battery_level
             type: num
         window_open:
-            avm_data_type@instance: window_open
+            avm2_data_type@instance: window_open
             type: bool
         summer_active:
-            avm_data_type@instance: summer_active
+            avm2_data_type@instance: summer_active
             type: bool
         holiday_active:
-            avm_data_type@instance: holiday_active
+            avm2_data_type@instance: holiday_active
             type: bool
         errorcode:
-            avm_data_type@instance: errorcode
+            avm2_data_type@instance: errorcode
             type: num
         # set_window_open:
-        #     avm_data_type@instance: set_window_open
+        #     avm2_data_type@instance: set_window_open
         #     type: bool
         windowopenactiveendtime:
-            avm_data_type@instance: windowopenactiveendtime
+            avm2_data_type@instance: windowopenactiveendtime
             type: num
         # set_hkr_boost:
-        #     avm_data_type@instance: set_hkr_boost
+        #     avm2_data_type@instance: set_hkr_boost
         #     type: bool
         hkr_boost:
-            avm_data_type@instance: hkr_boost
+            avm2_data_type@instance: hkr_boost
             type: bool
         boostactiveendtime:
-            avm_data_type@instance: boostactiveendtime
+            avm2_data_type@instance: boostactiveendtime
             type: num
         lock:
-            avm_data_type@instance: lock
+            avm2_data_type@instance: lock
             type: bool
         device_lock:
-            avm_data_type@instance: device_lock
+            avm2_data_type@instance: device_lock
             type: bool
 
     smarthome_temperature_sensor:
         temperatur:
-            avm_data_type@instance: current_temperature
+            avm2_data_type@instance: current_temperature
             type: num
         temperature_offset:
-            avm_data_type@instance: temperature_offset
+            avm2_data_type@instance: temperature_offset
             type: num
 
     smarthome_alert:
         state:
-            avm_data_type@instance: alert
+            avm2_data_type@instance: alert
             type: bool
 
     smarthome_switch:
         switch_state:
-            avm_data_type@instance: switch_state
+            avm2_data_type@instance: switch_state
             type: bool
         switch_toggle:
-            avm_data_type@instance: switch_toggle
+            avm2_data_type@instance: switch_toggle
             type: bool
             enforce_updates: yes
 
     smarthome_powermeter:
         power:
-            avm_data_type@instance: power
+            avm2_data_type@instance: power
             type: num
         energy:
-            avm_data_type@instance: energy
+            avm2_data_type@instance: energy
             type: num
         voltage:
-            avm_data_type@instance: voltage
+            avm2_data_type@instance: voltage
             type: num
 
 #item_attribute_prefixes:
