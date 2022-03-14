@@ -31,7 +31,7 @@ plugin_translations:
         de: 'Wollen Sie das Senden wirklich umschalten?'
         en: 'Do you really want to change the sending state?'
         fr: "Changer le stade de l'emitteur?"
-    'Ãœbersicht':       {'de': 'Ãœbersicht', 'en': 'Overview', 'fr': "vue d'ensemble"}
+    'Uebersicht':       {'de': 'Uebersicht', 'en': 'Overview', 'fr': "vue d'ensemble"}
     'Wollen Sie ein Lerntelegramm schicken?':
         de: 'Wollen Sie ein Lerntelegramm schicken?'
         en: 'Do you really want to send a lern telegram?'
@@ -40,22 +40,41 @@ plugin_translations:
         de: 'Wollen Sie den UTE Modus umschalten?'
         en: 'Do you really want to toggle the UTE mode?'
         fr: "Confirmez de changer le mode UTE"
-    'Neu hinzufÃ¼gen':
-        de: 'GerÃ¤t hinzufÃ¼gen' 
+    'Neu hinzu':
+        de: 'Neu hinzufuegen' 
         en: 'Add devie'
         fr: 'Ajouter'
     'Unbekannte Sensor ID':
         de: 'Unbekannte Sensor ID'
         en: 'Unknown Sensor ID'
         fr: 'Capteur ID inconnu'
-    'Enocean GerÃ¤te anlernen':
-        de: 'Enocean GerÃ¤te anlernen'
+    'Naechster freier TX-Offset':
+        de: 'Naechster freier TX-Offset'
+        en: 'Next free tx offset'
+        fr: 'Prochain tx offset libre'
+    'Enocean Geraete anlernen':
+        de: 'Enocean Geraete anlernen'
         en: 'Teach-in new Enocean devices'
         fr: 'Ajouter nouveau acteur'
-    'GerÃ¤tetyp':       {'de': 'GerÃ¤tetyp', 'en': 'Device Type', 'fr': 'Type'}
+    'Anlerninformationen':
+        de: 'Anlerninformationen'
+        en: 'Teach-in informations'
+        fr: 'Ajouter informations'
+    'Choose sensor...':
+        de: 'Sensor waehlen...'
+        en: 'Choose sensor...'
+        fr: 'Selectez capteuer'
+    'Logging von unbekannten Enocean Nachrichten ins Logfile An/Aus':
+        de: 'Logging von unbekannten Enocean Nachrichten ins Logfile An/Aus'
+        en: 'Log unknown Enocean messages to logfile on/off'
+        fr: 'Log unknown Enocean messages to logfile on/off'
+
+    'Device Type':      {'de': 'Geraetetyp', 'en': 'Device Type', 'fr': 'Type'}
     'ID Offset':        {'de': 'ID Offset', 'en': 'ID Offset'}
     'Anlernen':         {'de': 'Anlernen', 'en': 'Teach-in', 'fr': 'Programmer'}
     'UTE An/Aus':       {'de': 'UTE An/Aus', 'en': 'UTE On/Off', 'fr': 'UTE On/Off'}
+    'Unknown An/Aus':   {'de': 'Unknown An/Aus', 'en': 'Unknown On/Off', 'fr': 'UTE On/Off'}
+
     'Die folgenden Items sind dieser Instanz des Enocean Plugins zugewiesen':
         de: 'Die folgenden Items sind dieser Instanz des Enocean Plugins zugewiesen'
         en: 'The following items are assigned to this instance of the Enocean plugin'

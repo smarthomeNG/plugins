@@ -301,7 +301,7 @@
 				readonly placeholder="{{ _('Vorwerk Token') }}" maxlength="200" style="width: 300px;">
 			</div>
 			<div class="col-md-6 mb-3">
-				<button type="button" class="btn btn-shng btn-sm" onclick="copyClipboardFunction()">{{ ('In Zwischenablage kopieren') }}</button>
+				<button type="button" class="btn btn-shng btn-sm" onclick="copyClipboardFunction()">{{ _('In Zwischenablage kopieren') }}</button>
 			</div>
 		</div>
 		<div class="row">
@@ -309,7 +309,7 @@
 			<div class="col-md-6 mb-3">
 			</div>
 			<div class="col-md-6 mb-3">
-				<button type="button" class="btn btn-shng btn-sm" onclick="copyToPluginFunction()">{{ ('In Plugin Konfig kopieren') }}</button>
+				<button type="button" class="btn btn-shng btn-sm" onclick="copyToPluginFunction()">{{ _('In Plugin Konfig kopieren') }}</button>
 			</div>
 		</div>
 
@@ -328,7 +328,7 @@
 		<div class="row">
 			<td style="min-width:190px;" style="padding-top:15px;">
 			<div class="col-md-6 mb-3">
-			Alarme im Backend loeschen
+			{{ _('Alarme im Backend loeschen') }}
 			</div>
 			<div class="col-md-6 mb-3">
 				<button type="button" class="btn btn-shng btn-sm" onclick="clearAlarmsCommand()" title= "{{ _('Loescht Fehlermeldungen, wie z.B. Staubbehaelter leeren.') }}">{{ _('Alarme loeschen') }}</button>
@@ -337,14 +337,14 @@
 		<div class="row">
 			<td style="min-width:190px;" style="padding-top:15px;">
 			<div class="col-md-3 mb-3">
-			Verfuegbare Boundary IDs (Raeume) ins Log schreiben
+			{{ _('Verfuegbare Boundary IDs (Raeume) ins Log schreiben') }}
 			</div>
 			<div class="col-md-3 mb-3">
 				<input type="text" class="form-control mb-1" id="input-mapid" placeholder="{{ _('Hier Map ID eintragen') }}" maxlength="25" style="width: 300px;">
 			</div>
 
 			<div class="col-md-6 mb-3">
-				<button type="button" class="btn btn-shng btn-sm" onclick="listAvailableMaps()" title= "{{ _('Schreibt die verfuegbaren Raeume ins Logfile.') }}">{{ _('List Raeume') }}</button>
+				<button type="button" class="btn btn-shng btn-sm" onclick="listAvailableMaps()" title= "{{ _('Schreibt die verfuegbaren Raeume ins Logfile') }}">{{ _('Liste Raeume') }}</button>
 			</div>
 		</div>
 	</div>

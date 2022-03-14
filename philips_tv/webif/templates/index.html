@@ -73,7 +73,7 @@
 <!--
 	Content block for the first tab of the Webinterface
 -->
-{% set tab1title = "<strong>Pairing with TV</strong>" %}
+{% set tab1title = "<strong>" ~_('Mit TV verbinden')~ "</strong>" %}
 
 
 {% block bodytab1 %}
@@ -120,11 +120,10 @@
 </div>
 
 <div class="row">
-
 	<div class="col-md-11 mb-3">
 		<div class="row">
 			<div class="col-md-3 mb-3">
-				{{ _('1) Philips TV IP ueberpruefen') }}:
+				1) {{  _('Philips TV IP ueberpruefen') }}:
 			</div>
 			<div class="col-md-3 mb-3">
 				<input type="text" class="form-control mb-1" id="input-ip" title="{{ _('Einstellung ueber plugin.yaml') }}" value= {{ p.ip }} readonly placeholder="{{ _('TV IP') }}" maxlength="32" style="width: 300px;">
@@ -137,7 +136,7 @@
 		<div class="row">
 		<td style="min-width:190px;" style="padding-top:15px;">
 			<div class="col-md-3 mb-3">
-				{{ _('2) Device ID') }}:
+				2) {{ _('Device ID') }}:
 			</div>
 			<div class="col-md-3 mb-3">
 				<input type="text" class="form-control mb-1" id="input-deviceID" readonly value = {{ p.deviceID }} 
@@ -148,17 +147,17 @@
 		<div class="row">
 		<td style="min-width:190px;" style="padding-top:15px;">
 			<div class="col-md-3 mb-3">
-				{{ _('4) Code des TVs eingeben:') }}:
+				3) {{ _('Code des TVs eingeben') }}:
 			</div>
 			<div class="col-md-3 mb-3">
 				<input type="text" class="form-control mb-1" id="input-code" placeholder="{{ _('Hier TV Code eintragen') }}" maxlength="6" style="width: 300px;"
-				title="{{ _('Paring Code wird vom TV angezeigt.') }}">
+				title="{{ _('Paring Code wird vom TV angezeigt') }}">
 			</div>
 		</div>
 		<div class="row">
 		<td style="min-width:190px;" style="padding-top:15px;">
 			<div class="col-md-6 mb-3">
-				{{ _('5) Freischaltung bestaetigen') }}:
+				4) {{ _('Freischaltung bestaetigen') }}:
 			</div>
 			<div class="col-md-6 mb-3">
 				<button type="button" class="btn btn-shng btn-sm" title="{{ _('Bestaetigen') }}" onclick="confirmPairCommand();">{{ _('Bestaetigen') }}</button>
