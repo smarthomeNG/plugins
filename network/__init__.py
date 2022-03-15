@@ -40,7 +40,7 @@ class TCPDispatcher(lib.network.Tcp_server):
     '''
     Encapsulation class for using lib.network.Tcp_server class
     '''
-    def __init__(self, parser, ip, port):
+    def __init__(self, parser, ip, port, plugin_name):
         '''
         Initializes the class
 
@@ -51,10 +51,9 @@ class TCPDispatcher(lib.network.Tcp_server):
         :param port: local port to bind to
         :type port: int
         '''
-        name = f'{ip}:{port}'
-        super().__init__(port, ip, name, b'\n')
-        self.parser = parser
         self.dest = f'tcp:{ip}:{port}'
+        super().__init__(port, ip, 'plugins.' + plugin_name + '_' + self.dest, b'\n')
+        self.parser = parser
         self.set_callbacks(data_received=self.handle_received_data, incoming_connection=self.handle_connection)
 
     def handle_connection(self, server, client):
@@ -87,7 +86,7 @@ class HTTPDispatcher(lib.network.Tcp_server):
     '''
     Encapsulation class for using lib.network.Tcp_server class with HTTP GET support
     '''
-    def __init__(self, parser, ip, port):
+    def __init__(self, parser, ip, port, plugin_name):
         '''
         Initializes the class
 
@@ -99,10 +98,9 @@ class HTTPDispatcher(lib.network.Tcp_server):
         :type port: int
         '''
 
-        name = f'{ip}:{port}'
-        super().__init__(port, ip, name, b'\n')
-        self.parser = parser
         self.dest = f'http:{ip}:{port}'
+        super().__init__(port, ip, 'plugins.' + plugin_name + '_' + self.dest, b'\n')
+        self.parser = parser
         self.set_callbacks(data_received=self.handle_received_data, incoming_connection=self.handle_connection)
 
     def handle_connection(self, server, client):
@@ -155,7 +153,7 @@ class UDPDispatcher(lib.network.Udp_server):
     '''
     Encapsulation class for using lib.network.Udp_server class
     '''
-    def __init__(self, parser, ip, port):
+    def __init__(self, parser, ip, port, plugin_name):
         '''
         Initializes the class
 
@@ -169,7 +167,7 @@ class UDPDispatcher(lib.network.Udp_server):
         self.logger = logging.getLogger(__name__)
         self.parser = parser
         self.dest = f'udp:{ip}:{port}'
-        super().__init__(port, ip)
+        super().__init__(port, ip, 'plugins.' + plugin_name + '_' + self.dest)
         self.set_callbacks(data_received=self.handle_received_data)
 
     def handle_received_data(self, addr, data):
@@ -192,7 +190,7 @@ class Network(SmartPlugin):
     Main class of the Plugin. Does all plugin specific stuff and provides
     the update functions for the items
     '''
-    PLUGIN_VERSION = '1.6.1'
+    PLUGIN_VERSION = '1.6.2'
 
     generic_listeners = {}
     special_listeners = {}
@@ -265,11 +263,11 @@ class Network(SmartPlugin):
         dest = f'{proto}:{ip}:{port}'
         self.logger.debug(f'Adding listener on: {dest}')
         if proto == 'tcp':
-            dispatcher = TCPDispatcher(self.parse_input, ip, port)
+            dispatcher = TCPDispatcher(self.parse_input, ip, port, self.get_fullname())
         elif proto == 'udp':
-            dispatcher = UDPDispatcher(self.parse_input, ip, port)
+            dispatcher = UDPDispatcher(self.parse_input, ip, port, self.get_fullname())
         elif proto == 'http':
-            dispatcher = HTTPDispatcher(self.parse_input, ip, port)
+            dispatcher = HTTPDispatcher(self.parse_input, ip, port, self.get_fullname())
         else:
             self.logger.error(f'Cannot add listener as protocol {proto} is not supported')
             return
