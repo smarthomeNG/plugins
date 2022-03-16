@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
-#  Copyright 2020-     <AUTHOR>                                   <EMAIL>
+#  Copyright 2022-      Michael Wenzel              wenzel_michael@web.de
 #########################################################################
 #  This file is part of SmartHomeNG.
 #  https://www.smarthomeNG.de
 #  https://knx-user-forum.de/forum/supportforen/smarthome-py
 #
-#  Sample plugin for new plugins to run with SmartHomeNG version 1.5 and
-#  upwards.
+#  Part of AVM2 Plugin
 #
 #  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -25,20 +24,15 @@
 #
 #########################################################################
 
-import datetime
-import time
-import os
-
+import json
 from lib.item import Items
 from lib.model.smartplugin import SmartPluginWebIf
-
 
 # ------------------------------------------
 #    Webinterface of the plugin
 # ------------------------------------------
 
 import cherrypy
-import csv
 from jinja2 import Environment, FileSystemLoader
 
 
@@ -53,29 +47,62 @@ class WebInterface(SmartPluginWebIf):
         :type webif_dir: str
         :type plugin: object
         """
+
         self.logger = plugin.logger
         self.webif_dir = webif_dir
         self.plugin = plugin
         self.items = Items.get_instance()
-
         self.tplenv = self.init_template_environment()
 
+        self.logger.debug(f"Init WebIF of {self.plugin.get_shortname()}")
 
     @cherrypy.expose
-    def index(self, reload=None):
+    def index(self, reload=None, action=None):
         """
         Build index.html for cherrypy
-
         Render the template and return the html file to be delivered to the browser
 
         :return: contents of the template after beeing rendered
         """
-        tmpl = self.tplenv.get_template('index.html')
-        # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
-        return tmpl.render(p=self.plugin,
-                           items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path'])),
-                           item_count=0)
 
+        if self.plugin.get_fritz_device():
+            raw_items = self.plugin.get_fritz_device().get_item_list()
+            tr064_items = sorted(raw_items, key=lambda k: str.lower(k['_path']))
+            tr064_item_count = len(raw_items)
+        else:
+            tr064_items = None
+            tr064_item_count = None
+
+        if self.plugin.get_fritz_home():
+            raw_items = self.plugin.get_fritz_home().get_item_list()
+            aha_items = sorted(raw_items, key=lambda k: str.lower(k['_path']))
+            aha_item_count = len(raw_items)
+        else:
+            aha_items = None
+            aha_item_count = None
+
+        if self.plugin.get_monitoring_service():
+            raw_items = self.plugin.get_monitoring_service().get_item_all_list()
+            call_monitor_items = sorted(raw_items, key=lambda k: str.lower(k['_path']))
+            call_monitor_item_count = len(raw_items)
+        else:
+            call_monitor_items = None
+            call_monitor_item_count = None
+
+        tmpl = self.tplenv.get_template('index.html')
+
+        return tmpl.render(plugin_shortname=self.plugin.get_shortname(),
+                           plugin_version=self.plugin.get_version(),
+                           plugin_info=self.plugin.get_info(),
+                           tr064_items=tr064_items,
+                           tr064_item_count=tr064_item_count,
+                           call_monitor_items=call_monitor_items,
+                           call_monitor_item_count=call_monitor_item_count,
+                           aha_items=aha_items,
+                           aha_item_count=aha_item_count,
+                           p=self.plugin,
+                           webif_pagelength=self.plugin.webif_pagelength,
+                           )
 
     @cherrypy.expose
     def get_data_html(self, dataSet=None):
@@ -87,18 +114,43 @@ class WebInterface(SmartPluginWebIf):
         :param dataSet: Dataset for which the data should be returned (standard: None)
         :return: dict with the data needed to update the web page.
         """
-        if dataSet is None:
-            # get the new data
-            data = {}
 
-            # data['item'] = {}
-            # for i in self.plugin.items:
-            #     data['item'][i]['value'] = self.plugin.getitemvalue(i)
-            #
-            # return it as json the the web page
-            # try:
-            #     return json.dumps(data)
-            # except Exception as e:
-            #     self.logger.error("get_data_html exception: {}".format(e))
+        if dataSet is None:
+            data = dict()
+            if self.plugin.get_monitoring_service():
+                data['call_monitor'] = {}
+                for item in self.plugin.get_monitoring_service().get_item_all_list():
+                    data['call_monitor'][item.id()] = {}
+                    data['call_monitor'][item.id()]['value'] = item()
+                    data['call_monitor'][item.id()]['last_update'] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
+                    data['call_monitor'][item.id()]['last_change'] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
+
+            if self.plugin.get_fritz_device():
+                data['tr064_items'] = {}
+                for item in self.plugin.get_fritz_device().get_item_list():
+                    data['tr064_items'][item.id()] = {}
+                    data['tr064_items'][item.id()]['value'] = item()
+                    data['tr064_items'][item.id()]['last_update'] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
+                    data['tr064_items'][item.id()]['last_change'] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
+
+            if self.plugin.get_fritz_home():
+                data['aha_items'] = {}
+                for item in self.plugin.get_fritz_home().get_item_list():
+                    data['aha_items'][item.id()] = {}
+                    data['aha_items'][item.id()]['value'] = item()
+                    data['aha_items'][item.id()]['last_update'] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
+                    data['aha_items'][item.id()]['last_change'] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
+
+            try:
+                return json.dumps(data, default=str)
+            except Exception as e:
+                self.logger.error(f"get_data_html exception: {e}")
         return {}
 
+    @cherrypy.expose
+    def reboot(self):
+        self.plugin.get_fritz_device().reboot()
+
+    @cherrypy.expose
+    def reconnect(self):
+        self.plugin.get_fritz_device().reconnect()

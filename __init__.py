@@ -65,122 +65,6 @@ TR064_SERVICE_NAMESPACE = {'': 'urn:dslforum-org:service-1-0'}
 
 
 """
-Definition DeviceGroupDicts
-"""
-
-InternetGatewayDevice = {
-    'DeviceInfo': {
-        'GetInfo': {},
-        'GetSecurityPort': {},
-    },
-    'DeviceConfig': {
-        'GetPersistentData': {},
-    },
-    'X_AVM_DE_MyFritz': {
-        'GetInfo': {},
-        'GetNumberOfServices': {},
-    },
-    'X_VoIP': {
-        'GetInfoEx': {},
-    },
-    'X_AVM_DE_OnTel': {
-        'GetInfo': {},
-        'GetInfoByIndex': {},
-        'GetNumberOfEntries': {},
-        'GetCallList': {},
-        'GetPhonebookList': {},
-        'GetPhonebook': {},
-        'GetNumberOfDeflections': {},
-        'GetDeflection': {},
-        'GetDeflections': {},
-        'GetDECTHandsetList': {},
-    },
-    'X_AVM_DE_Dect': {
-        'GetNumberOfDectEntries': {},
-        'GetGenericDectEntry': {},
-        'GetSpecificDectEntry': {},
-    },
-    'X_AVM_DE_TAM': {
-        'GetInfo': {},
-        'GetMessageList': {},
-        'GetList': {},
-    },
-    'X_AVM_DE_Homeauto': {
-        'GetInfo': {},
-        'GetGenericDeviceInfos': {},
-        'GetSpecificDeviceInfos': {},
-    },
-}
-
-LANDevice = {
-    'WLANConfiguration': {
-        'GetInfo': {},
-        'GetGenericAssociatedDeviceInfo': {},
-        'X_AVM_DE_GetSpecificAssociatedDeviceInfoByIp': {},
-        'GetStatistics': {},
-        'GetPacketStatistics': {},
-        'X_AVM_DE_GetWLANHybridMode': {},
-        'X_AVM_DE_GetWLANExtInfo': {},
-    },
-    'Hosts': {
-        'GetHostNumberOfEntries': {},
-        'GetSpecificHostEntry': {},
-        'GetGenericHostEntry': {},
-        'X_AVM_DE_GetSpecificHostEntryByIp': {},
-    },
-    'LANEthernetInterfaceConfig': {
-        'GetInfo': {},
-        'GetStatistics': {},
-    },
-    'LANHostConfigManagement': {
-        'GetInfo': {},
-    },
-}
-
-WANDevice = {
-    'WANCommonInterfaceConfig': {
-        'GetCommonLinkProperties': {},
-        'GetTotalBytesSent': {},
-        'GetTotalBytesReceived': {},
-        'GetTotalPacketsSent': {},
-        'GetTotalPacketsReceived': {},
-        'X_AVM_DE_GetOnlineMonitor': {},
-    },
-    'WANDSLInterfaceConfig': {
-        'GetInfo': {},
-        'GetStatisticsTotal': {},
-        'X_AVM_DE_GetDSLDiagnoseInfo': {},
-    },
-}
-
-WANConnectionDevice = {
-    'WANDSLLinkConfig': {
-        'GetInfo': {},
-        'GetDSLLinkInfo': {},
-        'GetDestinationAddress': {}
-    },
-    'WANEthernetLinkConfig': {
-        'GetEthernetLinkStatus': {}
-    },
-    'WANPPPConnection': {
-        'GetInfo': {},
-        'GetConnectionTypeInfo': {},
-        'GetStatusInfo': {},
-        'GetGenericPortMappingEntry': {},
-        'GetSpecificPortMappingEntry': {},
-        'GetExternalIPAddress': {}
-    },
-    'WANIPConnection': {
-        'GetInfo': {},
-        'GetConnectionTypeInfo': {},
-        'GetStatusInfo': {},
-        'GetGenericPortMappingEntry': {},
-        'GetSpecificPortMappingEntry': {},
-        'GetExternalIPAddress': {}
-    },
-}
-
-"""
 Definition of attribute value groups of avm_data_type
 """
 _aha_ro_attributes = ['device_id',
@@ -388,6 +272,7 @@ class AVM2(SmartPlugin):
         self._call_monitor = self.get_parameter_value('call_monitor')
         self._aha_http_interface = self.get_parameter_value('avm_home_automation')
         self._cycle = self.get_parameter_value('cycle')
+        self.webif_pagelength = self.get_parameter_value('webif_pagelength')
         self.alive = False
         ssl = self.get_parameter_value('ssl')
         if ssl and not _verify:
@@ -417,11 +302,9 @@ class AVM2(SmartPlugin):
         # init Call Monitor
         if self._call_monitor and self._fritz_device.connected:
             try:
-                self._monitoring_service = Callmonitor(_host,
-                                                       1012,
+                self._monitoring_service = Callmonitor(_host, 1012,
                                                        self._fritz_device.get_contact_name_by_phone_number,
-                                                       _call_monitor_incoming_filter,
-                                                       self)
+                                                       _call_monitor_incoming_filter, self)
             except Exception as e:
                 self.logger.warning(f"Error {e} establishing connection to Fritzdevice CallMonitor.")
                 self._monitoring_service = None
@@ -569,56 +452,23 @@ class AVM2(SmartPlugin):
     def get_calllist(self):
         return self._fritz_device.get_calllist_from_cache()
 
+    def get_monitoring_service(self):
+        return self._monitoring_service
+
+    def get_fritz_device(self):
+        return self._fritz_device
+
+    def get_fritz_home(self):
+        return self._fritz_home
+
 
 class FritzDevice:
     """
     This class encapsulates information related to a specific FritzDevice
-
-    # Devices / Services
-         InternetGatewayDevice
-            DeviceInfo
-                GetInfo
-                SetProvisioningCode
-                GetDeviceLog
-                GetSecurityPort
-            DeviceConfig
-            Layer3Forwarding
-            LANConfigSecurity
-            ManagementServer
-            Time
-            UserInterface
-            X_AVM-DE_Storage
-            X_AVM-DE_WebDAVClient
-            X_AVM-DE_UPnP
-            X_AVM-DE_Speedtest
-            X_AVM-DE_RemoteAccess
-            X_AVM-DE_MyFritz
-            X_VoIP
-            X_AVM-DE_OnTel
-            X_AVM-DE_Dect
-            X_AVM-DE_TAM
-            X_AVM-DE_AppSetup
-            X_AVM-DE_Homeauto
-            X_AVM-DE_Homeplug
-            X_AVM-DE_Filelinks
-            X_AVM-DE_Auth
-            X_AVM-DE_HostFilter
-        LANDevice
-            WLANConfiguration
-            Hosts
-            LANEthernetInterfaceConfig
-            LANHostConfigManagement
-        WANDevice
-            WANCommonInterfaceConfig
-            WANDSLInterfaceConfig
-        WANConnectionDevice
-            WANDSLLinkConfig
-            WANEthernetLinkConfig
-            WANPPPConnection
-            WANIPConnection
     """
 
     def __init__(self, host, port, ssl, verify, username, password, call_monitor_incoming_filter, plugin_instance=None):
+        """Init class FritzDevice"""
 
         self._plugin_instance = plugin_instance
         self._plugin_instance.logger.debug("Init FritzDevice")
@@ -657,6 +507,9 @@ class FritzDevice:
                 self._plugin_instance.logger.error(f"Unable to determine _default_connection_service. ErrorCode {_default_connection_service}.")
 
     def register_item(self, item, avm_data_type: str):
+        """
+        Parsed items valid fpr that class will be registered
+        """
 
         # handle wlan items
         if avm_data_type in _wlan_config_attributes:
@@ -690,25 +543,44 @@ class FritzDevice:
             self._items[item] = (avm_data_type, None)
 
     def handle_updated_item(self, item, avm_data_type: str, readafterwrite: int):
+        """
+        Updated Item will be processed and value communicated to AVM Device
+        """
 
-        # ToDo: Implement ReadafterWrite
+        # get index
+        _index = self._items[item][1]
 
-        index = self._items[item][1]
+        # to be set value
+        to_be_set_value = item()
 
+        # define command per avm_data_type
+        _dispatcher = {'wlanconfig': (self.set_wlan_config, self.get_wlan_config),
+                       'tam': (self.set_tam, self.get_tam),
+                       'deflection_enable': (self.set_deflection, self.get_deflection),
+                       }
+
+        # do logging
         if self._plugin_instance.debug_log:
-            self._plugin_instance.logger.debug(f"Item {item.id()} with avm_data_type={avm_data_type} has changed for index {index}; New value={bool(item())}")
+            self._plugin_instance.logger.debug(f"Item {item.id()} with avm_data_type={avm_data_type} has changed for index {_index}; New value={bool(item())}")
 
-        # handle wlan items
-        if avm_data_type == 'wlanconfig':
-            self.client.LANDevice.WLANConfiguration[index].SetEnable(NewEnable=bool(item()))
+        # call setting method
+        _dispatcher[avm_data_type][0](_index, bool(to_be_set_value))
 
-        # handle tam items
-        elif avm_data_type == 'tam':
-            self.client.InternetGatewayDevice.X_AVM_DE_TAM.SetEnable(NewIndex=index, NewEnable=bool(item()))
-
-        # handle deflection_enable
-        elif avm_data_type == 'deflection_enable':
-            self.client.InternetGatewayDevice.X_AVM_DE_OnTel.SetDeflectionEnable(NewDeflectionId=index, NewEnable=bool(item()))
+        # handle readafterwrite
+        if readafterwrite:
+            wait = float(readafterwrite)
+            time.sleep(wait)
+            try:
+                set_value = _dispatcher[avm_data_type][1](_index)
+            except Exception:
+                self._plugin_instance.logger.error(f"{avm_data_type} is not defined to be read.")
+            else:
+                item(set_value, self._plugin_instance.get_instance_name())
+                if set_value != to_be_set_value:
+                    self._plugin_instance.logger.warning(f"Setting AVM Device defined in Item={item.id()} with avm_data_type={avm_data_type} to value={to_be_set_value} FAILED!")
+                else:
+                    if self._plugin_instance.debug_log:
+                        self._plugin_instance.logger.debug(f"Setting AVM Device defined in Item={item.id()} with avm_data_type={avm_data_type} to value={to_be_set_value} successful!")
 
     def _build_url(self) -> str:
         """
@@ -716,6 +588,7 @@ class FritzDevice:
 
          :return: string of the url, dependent on settings of the FritzDevice
         """
+
         if self.is_ssl():
             url_prefix = "https"
         else:
@@ -894,6 +767,12 @@ class FritzDevice:
         """
         return self._password
 
+    def get_item_dict(self):
+        return self._items
+
+    def get_item_list(self):
+        return list(self._items.keys())
+
     @property
     def connected(self):
         return self._connected
@@ -933,9 +812,12 @@ class FritzDevice:
         return self._data_cache['InternetGatewayDevice']['DeviceInfo']['GetSecurityPort']['NewSecurityPort']
 
     # ----------------------------------
-    # TBD
+    # Update methods
     # ----------------------------------
     def update_item_values(self):
+        """
+        Updates Item Values
+        """
 
         if self._connected:
             for item in self._items:
@@ -949,6 +831,9 @@ class FritzDevice:
             self._plugin_instance.logger.warning(f"FritzDevice not connected. No update of item values possible.")
 
     def _poll_fritz_device(self, avm_data_type: str, index: Union[int, str]):
+        """
+        Poll Fritz Device and feed dictonary
+        """
 
         link_ppp = {
             'wan_connection_status':        ('WANConnectionDevice', 'WANPPPConnection', 'GetInfo', None, 'NewConnectionStatus'),
@@ -967,7 +852,7 @@ class FritzDevice:
         }
 
         link = {
-            # 'avm_data_type':               ('Device', 'Service', 'Action', 'In_Argument', 'Out_Argument'),
+            # 'avm_data_type':              ('Device', 'Service', 'Action', 'In_Argument', 'Out_Argument'),
             'uptime':                       ('InternetGatewayDevice', 'DeviceInfo', 'GetInfo', None, 'NewUpTime'),
             'serial_number':                ('InternetGatewayDevice', 'DeviceInfo', 'GetInfo', None, 'NewSerialNumber'),
             'software_version':             ('InternetGatewayDevice', 'DeviceInfo', 'GetInfo', None, 'NewSoftwareVersion'),
@@ -1024,6 +909,10 @@ class FritzDevice:
         return data
 
     def _update_data_cache(self, client: str, device: str, service: str, action: str, in_argument: str = None, out_argument: str = None, index: int = None) -> dict:
+        """
+        Update cache dict with poll data
+        """
+
         self._plugin_instance.logger.debug(f"_update_data_cache called with device={device}, service={service}, action={action}, in_argument={in_argument}, out_argument={out_argument}, index={index}")
         if device not in self._data_cache:
             self._data_cache[device] = {}
@@ -1052,11 +941,23 @@ class FritzDevice:
                 return self._data_cache[device][service][action][index][out_argument]
 
     def _request(self, url: str, timeout: int, verify: bool):
+        """
+        Do get request and return response
+        """
+
         request = requests.get(url, timeout=timeout, verify=verify)
         if request.status_code == 200:
             return request
+        else:
+            self._plugin_instance.logger.error(f"Request to URL0{url} failed with {request.status_code}")
+            request.raise_for_status()
 
-    def _request_response_to_xml(self, request):
+    @staticmethod
+    def _request_response_to_xml(request):
+        """
+        Parse request response to element object
+        """
+
         root = etree.fromstring(request.content)
         return root
 
@@ -1161,6 +1062,7 @@ class FritzDevice:
 
     def get_contact_name_by_phone_number(self, phone_number: str = '', phonebook_id: int = 0) -> str:
         """
+        Get contact from phone book by phone number
         """
 
         if phone_number.endswith('#'):
@@ -1182,7 +1084,9 @@ class FritzDevice:
 
     def get_phone_numbers_by_name(self, name: str = '', phonebook_id: int = 0) -> dict:
         """
+        Get phone number from phone book by contact
         """
+
         tel_type = {"mobile": "CELL", "work": "WORK", "home": "HOME"}
         result_numbers = {}
         phonebook_url = self.client.InternetGatewayDevice.X_AVM_DE_OnTel.GetPhonebook(NewPhonebookID=phonebook_id)[
@@ -1219,6 +1123,7 @@ class FritzDevice:
 
     def get_calllist(self, filter_incoming: str = '') -> list:
         """
+        request calllist from Fritz Device
         """
 
         calllist_url = self.client.InternetGatewayDevice.X_AVM_DE_OnTel.GetCallList()
@@ -1256,7 +1161,7 @@ class FritzDevice:
             self._plugin_instance.logger.error("Calllist not available on the FritzDevice")
 
     # ----------------------------------
-    # get logs methods
+    # logs methods
     # ----------------------------------
     def get_device_log_from_tr064(self) -> str:
         """
@@ -1272,7 +1177,7 @@ class FritzDevice:
         return device_log.split("\n")
 
     # ----------------------------------
-    # set wlan methods
+    # wlan methods
     # ----------------------------------
     def set_wlan_config(self, wlan_index: int, new_enable: bool = False):
         """
@@ -1290,8 +1195,12 @@ class FritzDevice:
                 if data is not None:
                     item(data, self._plugin_instance.get_shortname())
 
+    def get_wlan_config(self, wlan_index: int):
+        """Get WLAN ON/OFF State"""
+        return bool(self.client.LANDevice.WLANConfiguration[wlan_index].GetInfo()['NewEnable'])
+
     # ----------------------------------
-    # set tam methods
+    # tam methods
     # ----------------------------------
     def set_tam(self, tam_index: int = 0, new_enable: bool = False):
         """
@@ -1299,6 +1208,9 @@ class FritzDevice:
         """
 
         self.client.InternetGatewayDevice.X_AVM_DE_TAM.SetEnable(NewIndex=tam_index, NewEnable=int(new_enable))
+
+    def get_tam(self, tam_index: int = 0):
+        return bool(self.client.InternetGatewayDevice.X_AVM_DE_TAM.GetInfo(NewIndex=tam_index)['NewEnable'])
 
     # ----------------------------------
     # set home automation switch
@@ -1313,7 +1225,7 @@ class FritzDevice:
         self.client.InternetGatewayDevice.X_AVM_DE_Homeauto.SetSwitch(NewAIN=ain, NewSwitchState=switch_state)
 
     # ----------------------------------
-    # set deflection
+    # deflection
     # ----------------------------------
     def set_deflection(self, deflection_id: int = 0, new_enable: bool = False):
         """
@@ -1326,6 +1238,10 @@ class FritzDevice:
         """
 
         self.client.InternetGatewayDevice.X_AVM_DE_OnTel.SetDeflectionEnable(NewDeflectionId=deflection_id, NewEnable=int(new_enable))
+
+    def get_deflection(self, deflection_id: int = 0):
+        """Get Deflection state of deflection_id"""
+        return bool(self.client.InternetGatewayDevice.X_AVM_DE_OnTel.GetDeflection(NewDeflectionId=deflection_id)['NewEnable'])
 
     # ----------------------------------
     # Host
@@ -1386,9 +1302,64 @@ class FritzDevice:
 
     class Client:
         """TR-064 client.
-        :param str username:    Username with access to router.
-        :param str password:    Passwort to access router.
-        :param str base_url:    URL to router.
+
+        Description file provided by FritzDevice will be read. All DEVICES, SERVICES, ACTIONS definied in that desciption file can be used.
+        Format is: Client.DeviceName.ServiceName.ActionName(Arguments, ...) like Client.InternetGatewayDevice.Hosts.GetGenericHostEntry
+        Capital and lowercase letters must match with
+
+        If a service is offered multiple times, actions can be accessed by the zero-based square bracket operator:
+        Client.DeviceName.ServiceName[1].ActionName(Arguments, ...)
+
+        If services, actions or arguments contain a minus sign -, it must be replaced with an underscore _.
+
+        # Devices / Services / Actions
+         InternetGatewayDevice
+            DeviceInfo
+                GetInfo
+                SetProvisioningCode
+                GetDeviceLog
+                GetSecurityPort
+            DeviceConfig
+            Layer3Forwarding
+            LANConfigSecurity
+            ManagementServer
+            Time
+            UserInterface
+            X_AVM-DE_Storage
+            X_AVM-DE_WebDAVClient
+            X_AVM-DE_UPnP
+            X_AVM-DE_Speedtest
+            X_AVM-DE_RemoteAccess
+            X_AVM-DE_MyFritz
+            X_VoIP
+            X_AVM-DE_OnTel
+            X_AVM-DE_Dect
+            X_AVM-DE_TAM
+            X_AVM-DE_AppSetup
+            X_AVM-DE_Homeauto
+            X_AVM-DE_Homeplug
+            X_AVM-DE_Filelinks
+            X_AVM-DE_Auth
+            X_AVM-DE_HostFilter
+        LANDevice
+            WLANConfiguration
+            Hosts
+            LANEthernetInterfaceConfig
+            LANHostConfigManagement
+        WANDevice
+            WANCommonInterfaceConfig
+            WANDSLInterfaceConfig
+        WANConnectionDevice
+            WANDSLLinkConfig
+            WANEthernetLinkConfig
+            WANPPPConnection
+            WANIPConnection
+
+        :param str username:            Username with access to router.
+        :param str password:            Passwort to access router.
+        :param str base_url:            URL to router.
+        :param str description_file:    Description File to be read
+        :param plugin_instance:         instance of Plugin
         """
 
         def __init__(self, username, password, verify, base_url='https://192.168.178.1:49443', description_file=FRITZ_TR64_DESC_FILE, plugin_instance=None):
@@ -1412,8 +1383,9 @@ class FritzDevice:
                 return self.devices[name]
 
         def _fetch_devices(self, description_file):
-
-            """Fetch device description."""
+            """
+            Fetch device description.
+            """
 
             self._plugin_instance.logger.debug(f"_fetch_devices called for description file={description_file}")
 
@@ -1435,7 +1407,9 @@ class FritzDevice:
             self._plugin_instance.logger.debug(f"Client: {self.description_file} devices={self.devices}")
 
     class Device:
-        """TR-064 device.
+        """
+        TR-064 device.
+
         :param lxml.etree.Element xml:          XML device element
         :param HTTPBasicAuthHandler auth:       HTTPBasicAuthHandler object, e.g. HTTPDigestAuth
         :param str base_url:                    URL to router.
@@ -1484,7 +1458,9 @@ class FritzDevice:
                 return self.services[name]
 
     class ServiceList(list):
-        """Service list."""
+        """
+        Service list.
+        """
 
         def __getattr__(self, name: str):
             """Direct access to first list entry if brackets omit."""
@@ -1496,7 +1472,9 @@ class FritzDevice:
                 return super().__getitem__(index)
 
     class Service:
-        """TR-064 service."""
+        """
+        TR-064 service.
+        """
 
         def __init__(self, auth, verify, base_url, service_type, service_id, scpdurl, control_url, event_sub_url, description_file):
             # init logger
@@ -1526,7 +1504,10 @@ class FritzDevice:
                 return self.actions[name]
 
         def _fetch_actions(self, scpdurl: str):
-            """Fetch action description."""
+            """
+            Fetch action Actions.
+            """
+
             request = requests.get(f'{self.base_url}{scpdurl}', verify=self.verify)
             if request.status_code == 200:
                 xml = etree.parse(BytesIO(request.content))
@@ -1549,7 +1530,9 @@ class FritzDevice:
                 # self.logger.debug(f"Service: {self.description_file} scpdurl={self.scpdurl} with actions={self.actions}")
 
     class Action:
-        """TR-064 action.
+        """
+        TR-064 action.
+
         :param lxml.etree.Element xml:      XML action element
         :param HTTPBasicAuthHandler auth:   HTTPBasicAuthHandler object, e.g. HTTPDigestAuth
         :param str base_url:                URL to router.
@@ -1636,14 +1619,18 @@ class FritzDevice:
             return response
 
     class AttributeDict(dict):
-        """Direct access dict entries like attributes."""
+        """
+        Direct access dict entries like attributes.
+        """
 
         def __getattr__(self, name):
             return self[name]
 
 
 class FritzHome:
-    """Fritzhome object to communicate with the device."""
+    """
+    Fritzhome object to communicate with the device via AHA-HTTP Interface.
+    """
 
     _login_route = "/login_sid.lua?version=2"
     _event_route = '/query.lua?mq_log=logger:status/log&sid='
@@ -1651,6 +1638,9 @@ class FritzHome:
     _internet_status_route = '/internet/inetstat_monitor.lua?sid='
 
     def __init__(self, host, ssl, verify, user, password, plugin_instance):
+        """
+        Init the Class FritzHome
+        """
 
         self._plugin_instance = plugin_instance
         self._plugin_instance.logger.debug("Init Fritzhome")
@@ -1674,6 +1664,9 @@ class FritzHome:
         self.login()
 
     def register_item(self, item, avm_data_type: str):
+        """
+        Parsed items valid fpr that class will be registered
+        """
 
         # handle aha items
         avm_ain = self._get_item_ain(item)
@@ -1683,78 +1676,11 @@ class FritzHome:
         else:
             self._plugin_instance.logger.warning(f"Item {item.id()} with avm attribute found, but 'avm_ain' is not defined; Item will be ignored.")
 
-    def handle_updated_item(self, item, avm_data_type: str, readafterwrite: int):
-
-        # ToDo: Implement ReadafterWrite
-
-        # get AIN
-        ain = self._items[item][1]
-
-        # handle hkr window_open
-        if avm_data_type in ['set_window_open', 'window_open']:
-            # set windows open for 12h or closed
-            seconds = 12*60*60 if bool(item()) else 0
-            self.set_window_open(ain, seconds)
-
-        # handle target temperature
-        elif avm_data_type in ['set_target_temperature', 'target_temperature']:
-            #
-            self.set_target_temperature(ain, float(item()))
-
-        # handle hkr boost mode
-        elif avm_data_type in ['set_hkr_boost', 'hkr_boost']:
-            # set boost for 12h or off
-            seconds = 12 * 60 * 60 if bool(item()) else 0
-            self.set_boost(ain, seconds)
-
-        # handle light on/off
-        elif avm_data_type in ['set_simpleonoff', 'simpleonoff']:
-            if bool(item()):
-                self.set_state_on(ain)
-            else:
-                self.set_state_off(ain)
-
-        # handle level
-        elif avm_data_type in ['set_level', 'level']:
-            self.set_level(ain, item())
-
-        # handle level percentage
-        elif avm_data_type in ['set_levelpercentage', 'levelpercentage']:
-            self.set_level_percentage(ain, item())
-
-        # handle socket switch/relais on/off
-        elif avm_data_type == 'switch_state':
-            if bool(item()):
-                self.set_switch_state_on(ain)
-            else:
-                self.set_switch_state_off(ain)
-
-        # handle socket switch/relais toggle
-        elif avm_data_type == 'switch_toggle':
-            self.set_switch_state_toggle(ain)
-
-        # handle set hue
-        elif avm_data_type in ['set_hue', 'hue']:
-            # Full RGB hue will be supported by Fritzbox approximately from Q2 2022 on:
-            # Currently, only use default RGB colors that are supported by default (getcolordefaults)
-            # These default colors have given saturation values.
-            self.set_color_discrete(ain, int(item()), duration=0)
-            self._plugin_instance.logger.info(f"Full RGB hue will be supported by Fritzbox approximately from Q2 2022. Limited functionality.")
-
-        # handle set saturation
-        elif avm_data_type in ['set_saturation', 'saturation']:
-            self._plugin_instance.logger.info(f"Full RGB hue will be supported by Fritzbox approximately from Q2 2022. Limited functionality.")
-
-        elif avm_data_type in ['set_colortemperature', 'colortemperature']:
-            self._plugin_instance.set_color_temp(ain, item(), 8)
-
-        else:
-            self._plugin_instance.logger.error(f"{avm_data_type} is not defined to be updated.")
-
     def _get_item_ain(self, item) -> str:
         """
         Get AIN of device from item.conf
         """
+
         ain_device = None
 
         lookup_item = item
@@ -1785,6 +1711,9 @@ class FritzHome:
         return ain_device
 
     def _poll_aha(self):
+        """
+        Poll all AHA Devices for updates
+        """
 
         self._plugin_instance.logger.debug(f'Starting AHA update loop for instance {self._plugin_instance.get_instance_name()}.')
 
@@ -1851,9 +1780,9 @@ class FritzHome:
         _device_dict = self.get_devices_as_dict()
 
         for ain in _device_dict:
-            if not self._aha_devices.get(ain):
-                self._aha_devices[ain] = {}
-                self._aha_devices[ain]['device_functions'] = []
+            self._plugin_instance.logger.debug(f"_poll_aha: handle AIN={ain} with _device_dict[ain]={_device_dict[ain]}")
+            self._aha_devices[ain] = {}
+            self._aha_devices[ain]['device_functions'] = []
 
             for entry in _link_base:
                 self._aha_devices[ain][entry] = eval(f"_device_dict[ain].{_link_base[entry]}")
@@ -1873,7 +1802,7 @@ class FritzHome:
                 for entry in _link_button:
                     self._aha_devices[ain][entry] = eval(f"_device_dict[ain].{_link_button[entry]}")
 
-            if _device_dict[ain].has_button:
+            if _device_dict[ain].has_alarm:
                 self._aha_devices[ain]['device_functions'].append('alarm')
                 for entry in _link_alarm:
                     self._aha_devices[ain][entry] = eval(f"_device_dict[ain].{_link_alarm[entry]}")
@@ -1932,8 +1861,16 @@ class FritzHome:
             else:
                 self._plugin_instance.logger.warning(f'No values for item={item.id()} at device with AIN={_ain} available.')
 
+    def get_item_dict(self):
+        return self._items
+
+    def get_item_list(self):
+        return list(self._items.keys())
+
     def _request(self, url: str, params: dict = None, timeout: int = 10, result: str = 'text') -> Union[str, dict]:
-        """Send a request with parameters.
+        """
+        Send a request with parameters.
+
         :param url          URL to be requested
         :param params       params for request
         :param timeout      timeout
@@ -1942,51 +1879,58 @@ class FritzHome:
         :type return
         """
 
-        rsp = self._session.get(url, params=params, timeout=timeout, verify=self._verify)
-
-        status_code = rsp.status_code
-        if status_code == 200:
-            self._plugin_instance.logger.debug("Sending HTTP request successful")
-            if result == 'json':
-                try:
-                    data = rsp.json()
-                except JSONDecodeError:
-                    self._plugin_instance.logger.error('Error occurred during parsing request response to json')
-                else:
-                    self._plugin_instance.logger.error(type(data))
-                    return data
-            else:
-                return rsp.text.strip()
-        elif status_code == 403:
-            self._plugin_instance.logger.debug("HTTP access denied. Try to get new Session ID.")
+        try:
+            rsp = self._session.get(url, params=params, timeout=timeout, verify=self._verify)
+        except Exception as e:
+            self._plugin_instance.logger.error(f"Error during GET request {e} occurred.")
         else:
-            self._plugin_instance.logger.error(f"HTTP request error code: {status_code}")
-            rsp.raise_for_status()
-            self._plugin_instance.logger.debug(f"Url: {url}")
-            self._plugin_instance.logger.debug(f"Params: {params}")
+            status_code = rsp.status_code
+            if status_code == 200:
+                if self._plugin_instance.debug_log:
+                    self._plugin_instance.logger.debug("Sending HTTP request successful")
+                if result == 'json':
+                    try:
+                        data = rsp.json()
+                    except JSONDecodeError:
+                        self._plugin_instance.logger.error('Error occurred during parsing request response to json')
+                    else:
+                        return data
+                else:
+                    return rsp.text.strip()
+            elif status_code == 403:
+                if self._plugin_instance.debug_log:
+                    self._plugin_instance.logger.debug("HTTP access denied. Try to get new Session ID.")
+            else:
+                self._plugin_instance.logger.error(f"HTTP request error code: {status_code}")
+                rsp.raise_for_status()
+                if self._plugin_instance.debug_log:
+                    self._plugin_instance.logger.debug(f"Url: {url}")
+                    self._plugin_instance.logger.debug(f"Params: {params}")
 
     def _login_request(self, username=None, challenge_response=None):
-        """Send a login request with parameters."""
+        """
+        Send a login request with parameters.
+        """
+
         url = self.get_prefixed_host() + self._login_route
-        # self._plugin_instance.logger.debug(f"_login_request: url={url}")
         params = {}
         if username:
             params["username"] = username
         if challenge_response:
             params["response"] = challenge_response
-        # self._plugin_instance.logger.debug(f"_login_request: params={params}")
         plain = self._request(url, params)
-        # self._plugin_instance.logger.debug(f"_login_request: plain={plain}")
         dom = ElementTree.fromstring(plain)
         sid = dom.findtext("SID")
         challenge = dom.findtext("Challenge")
         blocktime = int(dom.findtext("BlockTime"))
 
-        # self._plugin_instance.logger.debug(f"_login_request: sid={sid}, challenge={challenge}, blocktime={blocktime}")
         return sid, challenge, blocktime
 
     def _logout_request(self):
-        """Send a logout request."""
+        """
+        Send a logout request.
+        """
+
         url = self.get_prefixed_host() + self._login_route
         params = {"logout": "1", "sid": self._sid}
 
@@ -2025,7 +1969,9 @@ class FritzHome:
         return f"{challenge_parts[4]}${hash2.hex()}"
 
     def _aha_request(self, cmd, ain=None, param=None, rf='str'):
-        """Send an AHA request."""
+        """
+        Send an AHA request.
+        """
 
         url = self.get_prefixed_host() + self._homeauto_route
         params = {"switchcmd": cmd, "sid": self._sid}
@@ -2079,7 +2025,10 @@ class FritzHome:
             self._logged_in = True
 
     def logout(self):
-        """Logout."""
+        """
+        Logout.
+        """
+
         self._plugin_instance.logger.debug("AHA logout called")
         self._logout_request()
         self._sid = None
@@ -2104,12 +2053,15 @@ class FritzHome:
             self._plugin_instance.logger.info(f"Session ID is still valid.")
 
     def get_prefixed_host(self):
-        """Choose the correct protocol prefix for the host.
+        """
+        Choose the correct protocol prefix for the host.
+
         Supports three input formats:
         - https://<host>(requests use strict certificate validation by default)
         - http://<host> (unecrypted)
         - <host> (unencrypted)
         """
+
         host = self._host
         if not host.startswith("https://") or not host.startswith("http://"):
             if self._ssl:
@@ -2118,7 +2070,13 @@ class FritzHome:
                 host = "http://" + host
         return host
 
+    # device-related commands
+
     def update_devices(self):
+        """
+        Updating AHA Devices respective dictonary
+        """
+
         self._plugin_instance.logger.info("Updating Devices ...")
         if self._devices is None:
             self._devices = {}
@@ -2134,7 +2092,10 @@ class FritzHome:
         return True
 
     def _get_listinfo_elements(self, entity_type):
-        """Get the DOM elements for the entity list."""
+        """
+        Get the DOM elements for the entity list.
+        """
+
         plain = self._aha_request("get" + entity_type + "listinfos")
 
         if plain is None:
@@ -2144,11 +2105,17 @@ class FritzHome:
         return dom.findall(entity_type)
 
     def get_device_elements(self):
-        """Get the DOM elements for the device list."""
+        """
+        Get the DOM elements for the device list.
+        """
+
         return self._get_listinfo_elements("device")
 
     def get_device_element(self, ain):
-        """Get the DOM element for the specified device."""
+        """
+        Get the DOM element for the specified device.
+        """
+
         elements = self.get_device_elements()
         for element in elements:
             if element.attrib["identifier"] == ain:
@@ -2156,69 +2123,125 @@ class FritzHome:
         return None
 
     def get_devices(self):
-        """Get the list of all known devices."""
+        """
+        Get the list of all known devices.
+        """
+
         return list(self.get_devices_as_dict().values())
 
     def get_devices_as_dict(self):
-        """Get the list of all known devices."""
+        """
+        Get the list of all known devices.
+        """
+
         # if self._devices is None:
         self.update_devices()
         return self._devices
 
     def get_device_by_ain(self, ain):
-        """Return a device specified by the AIN."""
+        """
+        Return a device specified by the AIN.
+        """
+
         return self.get_devices_as_dict()[ain]
 
     def get_device_present(self, ain):
-        """Get the device presence."""
+        """
+        Get the device presence.
+        """
+
         return self._aha_request("getswitchpresent", ain=ain, rf='bool')
 
     def get_device_name(self, ain):
-        """Get the device name."""
+        """
+        Get the device name.
+        """
+
         return self._aha_request("getswitchname", ain=ain)
 
     # switch-related commands
 
     def get_switch_state(self, ain):
-        """Get the switch state."""
+        """
+        Get the switch state.
+        """
+
         return self._aha_request("getswitchstate", ain=ain, rf='bool')
 
     def set_switch_state_on(self, ain):
-        """Set the switch to on state."""
+        """
+        Set the switch to on state.
+        """
+
         return self._aha_request("setswitchon", ain=ain, rf='bool')
 
     def set_switch_state_off(self, ain):
-        """Set the switch to off state."""
+        """
+        Set the switch to off state.
+        """
+
         return self._aha_request("setswitchoff", ain=ain, rf='bool')
 
     def set_switch_state_toggle(self, ain):
-        """Toggle the switch state."""
+        """
+        Toggle the switch state.
+        """
+
         return self._aha_request("setswitchtoggle", ain=ain, rf='bool')
 
+    def set_switch_state(self, ain, state):
+        """
+        Set the switch to on state.
+        """
+
+        if bool(state):
+            return self.set_switch_state_on(ain)
+        else:
+            return self.set_switch_state_off(ain)
+
     def get_switch_power(self, ain):
-        """Get the switch power consumption."""
+        """
+        Get the switch power consumption.
+        """
+
         return self._aha_request("getswitchpower", ain=ain, rf='int')
 
     def get_switch_energy(self, ain):
-        """Get the switch energy."""
+        """
+        Get the switch energy.
+        """
+
         return self._aha_request("getswitchenergy", ain=ain, rf='int')
 
     # thermostat-related commands
 
     def get_temperature(self, ain):
-        """Get the device temperature sensor value."""
+        """
+        Get the device temperature sensor value.
+        """
+
         return self._aha_request("gettemperature", ain=ain, rf='float') / 10.0
 
     def _get_temperature(self, ain, name):
+        """
+        Get temperature raw value
+        """
+
         plain = self._aha_request(name, ain=ain, rf='float')
         return (plain - 16) / 2 + 8
 
     def get_target_temperature(self, ain):
-        """Get the thermostate target temperature."""
+        """
+        Get the thermostate target temperature.
+        """
+
         return self._get_temperature(ain, "gethkrtsoll")
 
     def set_target_temperature(self, ain, temperature):
-        """Set the thermostate target temperature."""
+        """
+        Set the thermostate target temperature.
+        """
+
         temp = int(16 + ((float(temperature) - 8) * 2))
 
         if temp < min(range(16, 56)):
@@ -2229,46 +2252,108 @@ class FritzHome:
         self._aha_request("sethkrtsoll", ain=ain, param={'param': temp})
 
     def set_window_open(self, ain, seconds):
-        """Set the thermostate target temperature."""
+        """
+        Set windows open.
+        """
+
+        if isinstance(seconds, bool):
+            seconds = 12*60*60 if seconds else 0
         endtimestamp = int(time.time() + seconds)
 
         self._aha_request("sethkrwindowopen", ain=ain, param={'endtimestamp': endtimestamp})
 
+    def get_window_open(self, ain):
+        """
+        Get windows open.
+        """
+
+        return self.get_devices_as_dict()[ain].window_open
+
     def set_boost(self, ain, seconds):
-        """Set the thermostate target temperature."""
+        """
+        Set the thermostate to boost.
+        """
+
+        if isinstance(seconds, bool):
+            seconds = 12*60*60 if seconds else 0
         endtimestamp = int(time.time() + seconds)
 
         self._aha_request("sethkrboost", ain=ain, param={'endtimestamp': endtimestamp})
 
+    def get_boost(self, ain):
+        """
+        Get boost status.
+        """
+
+        return self.get_devices_as_dict()[ain].boost_active
+
     def get_comfort_temperature(self, ain):
-        """Get the thermostate comfort temperature."""
+        """
+        Get the thermostate comfort temperature.
+        """
+
         return self._get_temperature(ain, "gethkrkomfort")
 
     def get_eco_temperature(self, ain):
-        """Get the thermostate eco temperature."""
+        """
+        Get the thermostate eco temperature.
+        """
+
         return self._get_temperature(ain, "gethkrabsenk")
 
     def get_device_statistics(self, ain):
-        """Get device statistics."""
+        """
+        Get device statistics.
+        """
+
         plain = self._aha_request("getbasicdevicestats", ain=ain)
         return plain
 
     # Lightbulb-related commands
 
     def set_state_off(self, ain):
-        """Set the switch/actuator/lightbulb to on state."""
+        """
+        Set the switch/actuator/lightbulb to on state.
+        """
+
         self._aha_request("setsimpleonoff", ain=ain, param={'onoff': 0})
 
     def set_state_on(self, ain):
-        """Set the switch/actuator/lightbulb to on state."""
+        """
+        Set the switch/actuator/lightbulb to on state.
+        """
+
         self._aha_request("setsimpleonoff", ain=ain, param={'onoff': 1})
 
     def set_state_toggle(self, ain):
-        """Toggle the switch/actuator/lightbulb state."""
+        """
+        Toggle the switch/actuator/lightbulb state.
+        """
+
         self._aha_request("setsimpleonoff", ain=ain, param={'onoff': 2})
 
+    def set_state(self, ain, state):
+        """
+        Set the switch/actuator/lightbulb to a state.
+        """
+
+        if bool(state):
+            self.set_state_on(ain)
+        else:
+            self.set_state_off(ain)
+
+    def get_state(self, ain):
+        """
+        Get the switch/actuator/lightbulb to a state.
+        """
+
+        return self.get_devices_as_dict()[ain].state
+
     def set_level(self, ain, level):
-        """Set level/brightness/height in interval [0,255]."""
+        """
+        Set level/brightness/height in interval [0,255].
+        """
+
         if level < 0:
             level = 0  # 0%
         elif level > 255:
@@ -2276,17 +2361,41 @@ class FritzHome:
 
         self._aha_request("setlevel", ain=ain, param={'level': int(level)})
 
+    def get_level(self, ain):
+        """
+        get level/brightness/height in interval [0,255].
+        """
+
+        return self.get_devices_as_dict()[ain].level
+
     def set_level_percentage(self, ain, level):
-        """Set level/brightness/height in interval [0,100]."""
+        """
+        Set level/brightness/height in interval [0,100].
+        """
+
         # Scale percentage to [0,255] interval
         self.set_level(ain, int(level * 2.55))
 
+    def get_level_percentage(self, ain):
+        """
+        get level/brightness/height in interval [0,100].
+        """
+
+        return self.get_devices_as_dict()[ain].level_percentage
+
     def _get_colordefaults(self, ain):
+        """
+        Get colour defaults
+        """
+
         plain = self._aha_request("getcolordefaults", ain=ain)
         return ElementTree.fromstring(plain)
 
     def get_colors(self, ain):
-        """Get colors (HSV-space) supported by this lightbulb."""
+        """
+        Get colors (HSV-space) supported by this lightbulb.
+        """
+
         colordefaults = self._get_colordefaults(ain)
         colors = {}
         for hs in colordefaults.iter('hs'):
@@ -2304,10 +2413,12 @@ class FritzHome:
         return colors
 
     def set_color(self, ain, hsv, duration=0, mapped=True):
-        """Set hue and saturation.
+        """
+        Set hue and saturation.
         hsv: HUE colorspace element obtained from get_colors()
         duration: Speed of change in seconds, 0 = instant
         """
+
         params = {
             'hue': int(hsv[0]),
             'saturation': int(hsv[1]),
@@ -2363,28 +2474,50 @@ class FritzHome:
         else:
             self._plugin_instance.logger.error(f'setcolor hue out of range (hue={hue})')
 
+    def get_hue(self, ain):
+        """
+        Get Hue value.
+        """
+        return self.get_devices_as_dict()[ain].hue
+
     def get_color_temps(self, ain):
-        """Get temperatures supported by this lightbulb."""
+        """
+        Get temperatures supported by this lightbulb.
+        """
+
         colordefaults = self._get_colordefaults(ain)
         temperatures = []
         for temp in colordefaults.iter('temp'):
             temperatures.append(temp.get("value"))
         return temperatures
 
-    def set_color_temp(self, ain, temperature, duration=0):
-        """Set color temperature.
+    def set_color_temp(self, ain, temperature, duration=1):
+        """
+        Set color temperature.
         temperature: temperature element obtained from get_temperatures()
         duration: Speed of change in seconds, 0 = instant
         """
+
         params = {
             'temperature': int(temperature),
             "duration": int(duration) * 10
         }
         self._aha_request("setcolortemperature", ain=ain, param=params)
 
+    def get_color_temp(self, ain):
+        """
+        Get color temperature.
+        """
+
+        return self.get_devices_as_dict()[ain].color_temp
+
     # Template-related commands
 
     def update_templates(self):
+        """
+        Update templates
+        """
+
         self._plugin_instance.logger.info("Updating Templates ...")
         if self._templates is None:
             self._templates = {}
@@ -2402,25 +2535,40 @@ class FritzHome:
         return True
 
     def get_template_elements(self):
-        """Get the DOM elements for the template list."""
+        """
+        Get the DOM elements for the template list.
+        """
+
         return self._get_listinfo_elements("template")
 
     def get_templates(self):
-        """Get the list of all known templates."""
+        """
+        Get the list of all known templates.
+        """
+
         return list(self.get_templates_as_dict().values())
 
     def get_templates_as_dict(self):
-        """Get the list of all known templates."""
+        """
+        Get the list of all known templates.
+        """
+
         if self._templates is None:
             self.update_templates()
         return self._templates
 
     def get_template_by_ain(self, ain):
-        """Return a template specified by the AIN."""
+        """
+        Return a template specified by the AIN.
+        """
+
         return self.get_templates_as_dict()[ain]
 
     def apply_template(self, ain):
-        """Applies a template."""
+        """
+        Applies a template.
+        """
+
         self._aha_request("applytemplate", ain=ain)
 
     # Log-related commands
@@ -2428,6 +2576,7 @@ class FritzHome:
     def get_device_log_from_lua(self):
         """
         Gets the Device Log from the LUA HTTP Interface via LUA Scripts (more complete than the get_device_log TR-064 version.
+
         :return: Array of Device Log Entries (text, type, category, timestamp, date, time)
         """
 
@@ -2447,6 +2596,67 @@ class FritzHome:
             l_ts = int(datetime.datetime.timestamp(datetime.datetime.strptime(text[:17], '%d.%m.%y %H:%M:%S')))
             newlog.append([l_text, l_type, l_cat, l_ts, l_date, l_time])
         return newlog
+
+    # Handling of updated items
+
+    def handle_updated_item(self, item, avm_data_type: str, readafterwrite: int):
+        """
+        Updated Item will be processed and value communicated to AVM Device
+        """
+
+        # define set method per avm_data_type
+        _dispatcher = {'window_open': (self.set_window_open, self.get_window_open),
+                       'target_temperature': (self.set_target_temperature, self.get_target_temperature),
+                       'hkr_boost': (self.set_boost, self.get_boost),
+                       'simpleonoff': (self.set_state, self.get_state),
+                       'level': (self.set_level, self.get_level),
+                       'levelpercentage': (self.set_level_percentage, self.get_level_percentage),
+                       'switch_state': (self.set_switch_state, self.get_switch_state),
+                       'switch_toggle': (self.set_switch_state_toggle, self.get_switch_state),
+                       'colortemperature': (self.set_color_temp, self.get_color_temp),
+                       'hue': (self.set_color_discrete, self.get_hue),
+                       }
+
+        # get AIN
+        _ain = self._items[item][1]
+
+        # adapt avm_data_type by removing 'set_'
+        if avm_data_type.startswith('set_'):
+            avm_data_type = avm_data_type[len('set_'):]
+
+        # logs message for upcoming/limited functionality
+        if avm_data_type == 'hue':
+            # Full RGB hue will be supported by Fritzbox approximately from Q2 2022 on:
+            # Currently, only use default RGB colors that are supported by default (getcolordefaults)
+            # These default colors have given saturation values.
+            self._plugin_instance.logger.info(
+                f"Full RGB hue will be supported by Fritzbox approximately from Q2 2022. Limited functionality.")
+        elif avm_data_type == 'saturation':
+            self._plugin_instance.logger.info(
+                f"Full RGB hue will be supported by Fritzbox approximately from Q2 2022. Limited functionality.")
+
+        # Call set method per avm_data_type
+        to_be_set_value = item()
+        try:
+            _dispatcher[avm_data_type][0](_ain, to_be_set_value)
+        except Exception:
+            self._plugin_instance.logger.error(f"{avm_data_type} is not defined to be updated.")
+
+        # handle readafterwrite
+        if readafterwrite:
+            wait = float(readafterwrite)
+            time.sleep(wait)
+            try:
+                set_value = _dispatcher[avm_data_type][1](_ain)
+            except Exception:
+                self._plugin_instance.logger.error(f"{avm_data_type} is not defined to be read.")
+            else:
+                item(set_value, self._plugin_instance.get_instance_name())
+                if set_value != to_be_set_value:
+                    self._plugin_instance.logger.warning(f"Setting AVM Device defined in Item={item.id()} with avm_data_type={avm_data_type} to value={to_be_set_value} FAILED!")
+                else:
+                    if self._plugin_instance.debug_log:
+                        self._plugin_instance.logger.debug(f"Setting AVM Device defined in Item={item.id()} with avm_data_type={avm_data_type} to value={to_be_set_value} successful!")
 
     class FritzhomeDeviceFeatures(IntFlag):
 
@@ -2498,7 +2708,8 @@ class FritzHome:
 
         # XML Helpers
 
-        def get_node_value(self, elem, node):
+        @staticmethod
+        def get_node_value(elem, node):
             return elem.findtext(node)
 
         def get_node_value_as_int(self, elem, node) -> int:
@@ -2679,7 +2890,8 @@ class FritzHome:
             except ValueError:
                 pass
 
-        def get_node_value(self, elem, node):
+        @staticmethod
+        def get_node_value(elem, node):
             return elem.findtext(node)
 
         def get_node_value_as_int(self, elem, node) -> int:
@@ -2732,8 +2944,7 @@ class FritzHome:
             try:
                 self.color_mode = colorcontrol_element.attrib.get("current_mode")
 
-                self.supported_color_mode = colorcontrol_element.attrib.get(
-                    "supported_modes")
+                self.supported_color_mode = colorcontrol_element.attrib.get("supported_modes")
 
             except ValueError:
                 pass
@@ -2741,13 +2952,11 @@ class FritzHome:
             try:
                 self.hue = self.get_node_value_as_int(colorcontrol_element, "hue")
 
-                self.saturation = self.get_node_value_as_int(colorcontrol_element,
-                                                             "saturation")
+                self.saturation = self.get_node_value_as_int(colorcontrol_element, "saturation")
 
                 self.unmapped_hue = self.get_node_value_as_int(colorcontrol_element, "unmapped_hue")
 
-                self.unmapped_saturation = self.get_node_value_as_int(colorcontrol_element,
-                                                                      "unmapped_saturation")
+                self.unmapped_saturation = self.get_node_value_as_int(colorcontrol_element, "unmapped_saturation")
             except ValueError:
                 # reset values after color mode changed
                 self.hue = None
@@ -2756,8 +2965,7 @@ class FritzHome:
                 self.unmapped_saturation = None
 
             try:
-                self.color_temp = self.get_node_value_as_int(colorcontrol_element,
-                                                             "temperature")
+                self.color_temp = self.get_node_value_as_int(colorcontrol_element, "temperature")
 
             except ValueError:
                 # reset values after color mode changed
@@ -2926,24 +3134,19 @@ class FritzHome:
         def _update_temperature_from_node(self, node):
             temperature_element = node.find("temperature")
             try:
-                self.offset = (
-                        self.get_node_value_as_int(temperature_element, "offset") / 10.0
-                )
+                self.offset = (self.get_node_value_as_int(temperature_element, "offset") / 10.0)
             except ValueError:
                 pass
 
             try:
-                self.temperature = (
-                        self.get_node_value_as_int(temperature_element, "celsius") / 10.0
-                )
+                self.temperature = (self.get_node_value_as_int(temperature_element, "celsius") / 10.0)
             except ValueError:
                 pass
 
             humidity_element = node.find("humidity")
             if humidity_element is not None:
                 try:
-                    self.rel_humidity = self.get_node_value_as_int(humidity_element,
-                                                                   "rel_humidity")
+                    self.rel_humidity = self.get_node_value_as_int(humidity_element, "rel_humidity")
                 except ValueError:
                     pass
 
@@ -3046,12 +3249,11 @@ class FritzHome:
         def get_hkr_state(self):
             """Get the thermostate state."""
             try:
-                return {
-                    126.5: "off",
-                    127.0: "on",
-                    self.eco_temperature: "eco",
-                    self.comfort_temperature: "comfort",
-                }[self.target_temperature]
+                return {126.5: "off",
+                        127.0: "on",
+                        self.eco_temperature: "eco",
+                        self.comfort_temperature: "comfort",
+                        }[self.target_temperature]
             except KeyError:
                 return "manual"
 
@@ -3060,12 +3262,11 @@ class FritzHome:
             Possible values for state are: 'on', 'off', 'comfort', 'eco'.
             """
             try:
-                value = {
-                    "off": 0,
-                    "on": 100,
-                    "eco": self.eco_temperature,
-                    "comfort": self.comfort_temperature,
-                }[state]
+                value = {"off": 0,
+                         "on": 100,
+                         "eco": self.eco_temperature,
+                         "comfort": self.comfort_temperature,
+                         }[state]
             except KeyError:
                 return
 
@@ -3123,7 +3324,11 @@ class FritzHome:
 
 
 class Callmonitor:
+
     def __init__(self, host, port, callback, call_monitor_incoming_filter, plugin_instance):
+        """
+        Inits the Callmonitor class
+        """
 
         self._plugin_instance = plugin_instance
         self._plugin_instance.logger.debug("Init Callmonitor")
@@ -3178,6 +3383,7 @@ class Callmonitor:
         """
         Disconnects from the call monitor of the AVM device
         """
+
         self._plugin_instance.logger.debug("MonitoringService: disconnecting")
         self._listen_active = False
         self._stop_counter('incoming')
@@ -3236,6 +3442,9 @@ class Callmonitor:
             self._items[item] = (avm_data_type, None)
 
     def set_callmonitor_item_values_initially(self):
+        """
+        Set callmonitor related item values after startup
+        """
 
         _calllist = self._plugin_instance.get_calllist()
 
@@ -3359,17 +3568,20 @@ class Callmonitor:
                         item(duration, self._plugin_instance.get_shortname())
                         break
 
-    def get_items(self):
+    def get_item_list(self):
         return list(self._items.keys())
 
-    def get_trigger_items(self):
+    def get_trigger_item_list(self):
         return list(self._trigger_items.keys())
 
-    def get_items_incoming(self):
+    def get_item_incoming_list(self):
         return list(self._items_incoming.keys())
 
-    def get_items_outgoing(self):
+    def get_item_outgoing_list(self):
         return list(self._items_outgoing.keys())
+
+    def get_item_all_list(self):
+        return self.get_item_list() + self.get_trigger_item_list() + self.get_item_incoming_list() + self.get_item_outgoing_list()
 
     @property
     def get_item_count_total(self):
@@ -3489,13 +3701,13 @@ class Callmonitor:
         except Exception as e:
             self._plugin_instance.logger.error(f"MonitoringService: {type(e).__name__} while handling Callmonitor response: {e}")
 
-    def _trigger(self, call_from: str, call_to: str, time: str, callid: str, event: str, branch: str):
+    def _trigger(self, call_from: str, call_to: str, dt: str, callid: str, event: str, branch: str):
         """
         Triggers the event: sets item values and looks up numbers in the phone book.
         """
 
         if self._plugin_instance.debug_log:
-            self._plugin_instance.logger.debug(f"Event: {event}, Call From: {call_from}, Call To: {call_to}, Time: {time}, CallID: {callid}, Branch: {branch}")
+            self._plugin_instance.logger.debug(f"Event={event}, Call from={call_from}, Call to={call_to}, Time={dt}, CallID={callid}, Branch={branch}")
 
         # set generic item value
         for item in self._items:
@@ -3599,7 +3811,7 @@ class Callmonitor:
             if callid == self._call_outgoing_cid:
                 if self._duration_item_out is not None:  # start counter thread only if duration item set and call is outgoing
                     self._stop_counter('outgoing')  # stop potential running counter for parallel (older) outgoing call
-                    self._start_counter(time, 'outgoing')
+                    self._start_counter(dt, 'outgoing')
                 for item in self._items_outgoing:
                     avm_data_type = self._items[item][0]
                     if avm_data_type == 'call_event_outgoing':
@@ -3611,7 +3823,7 @@ class Callmonitor:
                     self._stop_counter('incoming')  # stop potential running counter for parallel (older) incoming call
                     if self._plugin_instance.debug_log:
                         self._plugin_instance.logger.debug("Starting Counter for Call Time")
-                    self._start_counter(time, 'incoming')
+                    self._start_counter(dt, 'incoming')
                 for item in self._items_incoming:
                     avm_data_type = self._items[item][0]
                     if avm_data_type == 'call_event_incoming':
