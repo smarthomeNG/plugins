@@ -223,7 +223,6 @@
 </div>
 {% endblock %}
 
-
 {% block bodytab3 %}
 <div class="table-responsive" style="margin-left: 3px; margin-right: 3px;" class="row">
     <div class="col-sm-12">
@@ -257,7 +256,6 @@
 	</div>
 </div>
 {% endblock %}
-
 
 {% block bodytab4 %}
 {% if p._fritz_home %}
@@ -296,7 +294,6 @@
 </div>
 {% endif %}
 {% endblock %}
-
 
 {% block bodytab5 %}
 <div class="table-responsive" style="margin-left: 3px; margin-right: 3px;" class="row">
@@ -341,7 +338,6 @@
 {% endblock %}
 
 {% block bodytab6 %}
-
 <div class="table-responsive" style="margin-left: 3px; margin-right: 3px;" class="row">
 	<div class="mb-2">
         <span id='webif_pagelength' style="display:none">{{ webif_pagelength }}</span>
@@ -369,5 +365,22 @@
 		</table>
 	</div>
 </div>
-
+<div class="table-responsive" style="margin-left: 3px; margin-right: 3px;" class="row">
+    <div class="col-sm-12">
+		<table id="12" class="table7 table-striped table-hover pluginList display">
+			<thead>
+				<tr>
+					<th>{{ _('1') }}</th>
+					<th>{{ _('2') }}</th>
+				</tr>
+			</thead>
+			<tbody>
+					<tr>
+						<td>{{ _('Call Items') }}</td>
+						<td>{{ p._monitoring_service._items_incoming }}</td>
+					</tr>
+			</tbody>
+		</table>
+	</div>
+</div>
 {% endblock %}

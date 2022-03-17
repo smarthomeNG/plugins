@@ -2081,7 +2081,12 @@ class FritzHome:
         if self._devices is None:
             self._devices = {}
 
-        for element in self.get_device_elements():
+        elements = self.get_device_elements()
+
+        if not elements:
+            return False
+
+        for element in elements:
             if element.attrib["identifier"] in self._devices.keys():
                 self._plugin_instance.logger.info("Updating already existing Device " + element.attrib["identifier"])
                 self._devices[element.attrib["identifier"]]._update_from_node(element)
@@ -2134,9 +2139,8 @@ class FritzHome:
         Get the list of all known devices.
         """
 
-        # if self._devices is None:
-        self.update_devices()
-        return self._devices
+        if self.update_devices():
+            return self._devices
 
     def get_device_by_ain(self, ain):
         """
@@ -3700,6 +3704,7 @@ class Callmonitor:
                 self._trigger('', '', '', line[2], line[1], '')
         except Exception as e:
             self._plugin_instance.logger.error(f"MonitoringService: {type(e).__name__} while handling Callmonitor response: {e}")
+            self._plugin_instance.logger.error(f"Callmonitor response: {line}")
 
     def _trigger(self, call_from: str, call_to: str, dt: str, callid: str, event: str, branch: str):
         """
@@ -3743,8 +3748,8 @@ class Callmonitor:
                     duration_item(0, self._plugin_instance.get_shortname())
 
                 # process items specific to incoming calls
-                for item in self._items_incoming:  # update items for incoming calls
-                    avm_data_type = self._items[item][0]
+                for item in self._items_incoming:
+                    avm_data_type = self._items_incoming[item][0]
                     if avm_data_type == 'is_call_incoming':
                         if self._plugin_instance.debug_log:
                             self._plugin_instance.logger.debug(f"Setting is_call_incoming: True")
@@ -3761,7 +3766,7 @@ class Callmonitor:
                     elif avm_data_type == 'last_call_date_incoming':
                         if self._plugin_instance.debug_log:
                             self._plugin_instance.logger.debug(f"Setting last_call_date_incoming: {time}")
-                        item(time, self._plugin_instance.get_shortname())
+                        item(str(time), self._plugin_instance.get_shortname())
                     elif avm_data_type == 'call_event_incoming':
                         if self._plugin_instance.debug_log:
                             self._plugin_instance.logger.debug(f"Setting call_event_incoming: {event.lower()}")
@@ -3787,7 +3792,7 @@ class Callmonitor:
 
             # process items specific to outgoing calls
             for item in self._items_outgoing:
-                avm_data_type = self._items[item][0]
+                avm_data_type = self._items_outgoing[item][0]
                 if avm_data_type == 'is_call_outgoing':
                     item(True, self._plugin_instance.get_shortname())
                 elif avm_data_type == 'last_caller_outgoing':
@@ -3813,7 +3818,7 @@ class Callmonitor:
                     self._stop_counter('outgoing')  # stop potential running counter for parallel (older) outgoing call
                     self._start_counter(dt, 'outgoing')
                 for item in self._items_outgoing:
-                    avm_data_type = self._items[item][0]
+                    avm_data_type = self._items_outgoing[item][0]
                     if avm_data_type == 'call_event_outgoing':
                         item(event.lower(), self._plugin_instance.get_shortname())
 
@@ -3825,7 +3830,7 @@ class Callmonitor:
                         self._plugin_instance.logger.debug("Starting Counter for Call Time")
                     self._start_counter(dt, 'incoming')
                 for item in self._items_incoming:
-                    avm_data_type = self._items[item][0]
+                    avm_data_type = self._items_incoming[item][0]
                     if avm_data_type == 'call_event_incoming':
                         if self._plugin_instance.debug_log:
                             self._plugin_instance.logger.debug(f"Setting call_event_incoming: {event.lower()}")
@@ -3836,7 +3841,7 @@ class Callmonitor:
             # handle OUTGOING calls
             if callid == self._call_outgoing_cid:
                 for item in self._items_outgoing:
-                    avm_data_type = self._items[item][0]
+                    avm_data_type = self._items_outgoing[item][0]
                     if avm_data_type == 'call_event_outgoing':
                         item(event.lower(), self._plugin_instance.get_shortname())
                     elif avm_data_type == 'is_call_outgoing':
@@ -3848,14 +3853,14 @@ class Callmonitor:
             # handle INCOMING calls
             elif callid == self._call_incoming_cid:
                 for item in self._items_incoming:
-                    avm_data_type = self._items[item][0]
+                    avm_data_type = self._items_incoming[item][0]
                     if avm_data_type == 'call_event_incoming':
                         if self._plugin_instance.debug_log:
                             self._plugin_instance.logger.debug(f"Setting call_event_incoming: {event.lower()}")
                         item(event.lower(), self._plugin_instance.get_shortname())
                     elif avm_data_type == 'is_call_incoming':
                         if self._plugin_instance.debug_log:
-                            self._plugin_instance.logger.debug(f"Setting is_call_incoming: {False}")
+                            self._plugin_instance.logger.debug(f"Setting is_call_incoming: False")
                         item(False, self._plugin_instance.get_shortname())
                 if self._duration_item_in is not None:  # stop counter threads
                     if self._plugin_instance.debug_log:
