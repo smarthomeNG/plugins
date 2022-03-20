@@ -2897,15 +2897,16 @@ class Sonos(SmartPlugin):
                 self.logger.debug("Pinging speaker with uid {0}".format(uid))
                 # don't trust the discover function, offline speakers can be cached
                 # we try to ping the speaker
-                with open(os.devnull, 'w') as DEVNULL:
-                    try:
-                        subprocess.check_call(['ping', '-i', '0.2', '-c', '2', zone.ip_address],
-                                              stdout=DEVNULL, stderr=DEVNULL, timeout=1)
-                        is_up = True
-                    except subprocess.CalledProcessError:
-                        is_up = False
-                    except subprocess.TimeoutExpired:
-                        is_up = False
+                try:
+                    proc_result = subprocess.run(['ping', '-i', '0.2', '-c', '2', zone.ip_address],
+                                                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=1)
+                    is_up = True
+                except subprocess.CalledProcessError:
+                    self.logger.debug("Debug: Ping process finished with return code {0}".format(proc_result.returncode))
+                    is_up = False
+                except subprocess.TimeoutExpired:
+                    self.logger.debug("Debug: Ping process timed out")
+                    is_up = False
 
             if is_up:
                 self.logger.info("Debug: Speaker found: {zone}, {uid}".format(zone=zone.ip_address, uid=uid))
