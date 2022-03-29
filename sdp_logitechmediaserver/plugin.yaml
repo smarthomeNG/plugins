@@ -1,0 +1,939 @@
+
+plugin:
+    type: interface
+    description: Squeezebox
+    maintainer: OnkelAndy
+    tester: Morg
+    state: develop
+    keywords: iot device
+    version: 1.0.0
+    sh_minversion: 1.9.1
+    py_minversion: 3.6
+    multi_instance: false
+    restartable: true
+    classname: sdp_logitechmediaserver
+
+parameters:
+
+    host:
+        type: str
+        mandatory: false
+
+        description:
+            de: Netzwerkziel/-host
+            en: network host
+
+    recursive_custom:
+        type: bool
+        default: true
+
+        description:
+            de: Vererbung von "custom" Itemattributen an untergeordnete Items aktivieren
+            en: enable inheritance of "custom" item attributes to sub-items
+
+    timeout:
+        type: num
+        default: 3
+
+        description:
+            de: Timeout für Geräteantwort
+            en: timeout for device replies
+
+    terminator:
+        type: str
+        default: "\r"
+
+        description:
+            de: Zeilen-/Antwortbegrenzer
+            en: line or reply terminator
+
+    binary:
+        type: bool
+        default: false
+
+        description:
+            de: Binärer Übertragungsmodus
+            en: binary communication mode
+
+    autoreconnect:
+        type: bool
+        default: true
+
+        description:
+            de: Automatisches Neuverbinden bei Abbruch
+            en: automatic reconnect on disconnect
+
+    autoconnect:
+        type: bool
+        default: true
+
+        description:
+            de: Automatisches Verbinden bei Senden
+            en: automatic connect on send
+
+    connect_retries:
+        type: num
+        default: 5
+
+        description:
+            de: Anzahl Verbindungsversuche
+            en: number of connect retries
+
+    connect_cycle:
+        type: num
+        default: 3
+
+        description:
+            de: Pause zwischen Verbindungsversuchen
+            en: wait time between connect retries
+
+    message_timeout:
+        type: num
+        default: 5
+
+        description:
+            de: Timeout für Antwort auf Protokollebene
+            en: timeout for reply at protocol level
+
+    message_repeat:
+        type: num
+        default: 3
+
+        description:
+            de: Anzahl Sendewiederholungen auf Protokollebene
+            en: number of message retries at protocol level
+
+    port:
+        type: int
+        default: 9000
+
+        description:
+            de: Port für Netzwerkverbindung
+            en: network port
+
+    conn_type:
+        type: str
+        default: net_tcp_request
+        valid_list:
+        -   ''
+        -   net_tcp_request
+        -   net_tcp_client
+        -   net_tcp_jsonrpc
+        -   net_udp_server
+        -   serial
+        -   serial_async
+
+        description:
+            de: Verbindungstyp
+            en: connection type
+
+    protocol:
+        type: str
+        default: jsonrpc
+        valid_list:
+        -   ''
+        -   jsonrpc
+        -   viessmann
+
+        description:
+            de: Protokolltyp für Verbindung
+            en: protocol type for connection
+
+    command_class:
+        type: str
+        default: SDPCommandJSON
+        valid_list:
+        -   SDPCommand
+        -   SDPCommandStr
+        -   SDPCommandParseStr
+        -   SDPCommandJSON
+        -   SDPCommandViessmann
+
+        description:
+            de: Klasse für Verarbeitung von Kommandos
+            en: class for command processing
+
+item_attributes:
+
+    lms_command:
+        type: str
+
+        description:
+            de: Legt das angegebene Kommando für das Item fest
+            en: Assigns the given command to the item
+
+    lms_read:
+        type: bool
+
+        description:
+            de: Item liest/erhält Werte vom Gerät
+            en: Item reads/receives data from the device
+
+    lms_read_group:
+        type: list(str)
+
+        description:
+            de: Weist das Item der angegebenen Gruppe zum gesammelten Lesen zu. Mehrere Gruppen können als Liste angegeben werden.
+            en: Assigns the item to the given group for collective reading. Multiple groups can be provided as a list.
+
+    lms_read_cycle:
+        type: num
+
+        description:
+            de: Konfiguriert ein Intervall in Sekunden für regelmäßiges Lesen
+            en: Configures a interval in seconds for cyclic read actions
+
+    lms_read_initial:
+        type: bool
+
+        description:
+            de: Legt fest, dass der Wert beim Start vom Gerät gelesen wird
+            en: Sets item value to be read from the device on startup
+
+    lms_write:
+        type: bool
+
+        description:
+            de: Änderung des Items werden an das Gerät gesendet
+            en: Changes to this item will be sent to the device
+
+    lms_read_group_trigger:
+        type: str
+
+        description:
+            de: Wenn diesem Item ein beliebiger Wert zugewiesen wird, werden alle zum Lesen konfigurierten Items der angegebenen Gruppe neu vom Gerät gelesen, bei Gruppe 0 werden alle zum Lesen konfigurierten Items neu gelesen. Das Item kann nicht gleichzeitig mit lms_command belegt werden.
+            en: When set to any value, all items configured for reading for the given group will update their value from the device, if group is 0, all items configured for reading will update. The item cannot be used with lms_command in parallel.
+
+    lms_lookup:
+        type: str
+
+        description:
+            de: Der Inhalt der Lookup-Tabelle mit dem angegebenen Namen wird beim Start einmalig als dict oder list in das Item geschrieben.
+            en: The lookup table with the given name will be assigned to the item in dict or list format once on startup.
+
+        description_long:
+            de: "Der Inhalt der Lookup-Tabelle mit dem angegebenen Namen wird beim\nStart einmalig als dict oder list in das Item geschrieben.\n\n\nDurch Anhängen von \"#<mode>\" an den Namen der Tabelle kann die Art\nder Tabelle ausgewählt werden:\n- fwd liefert die Tabelle Gerät -> SmartHomeNG (Standard)\n- rev liefert die Tabelle SmartHomeNG -> Gerät\n- rci liefert die Tabelle SmarthomeNG -> Gerät in Kleinbuchstaben\n- list liefert die Liste der Namen für SmartHomeNG (z.B. für Auswahllisten in der Visu)"
+            en: "The lookup table with the given name will be assigned to the item\nin dict or list format once on startup.\n\n\nBy appending \"#<mode>\" to the tables name the type of table can\nbe selected:\n- fwd returns the table device -> SmartHomeNG (default)\n- rev returns the table SmartHomeNG -> device\n- rci returns the table SmartHomeNG -> device in lower case\n- list return the list of names for SmartHomeNG (e.g. for selection dropdowns in visu applications)"
+
+    lms_custom1:
+        type: str
+
+        description:
+            de: MAC-Adresse des Wiedergabegerätes
+            en: MAC address of the playback device
+
+item_structs:
+
+    server:
+
+        server:
+
+            read:
+                type: bool
+                enforce_updates: true
+                lms_read_group_trigger: server
+
+            playercount:
+                type: num
+                lms_command: server.playercount
+                lms_read: true
+                lms_write: false
+                lms_read_group:
+                -   server
+                lms_read_initial: true
+                md_custom1: '"-"'
+
+            favoritescount:
+                type: num
+                lms_command: server.favoritescount
+                lms_read: true
+                lms_write: false
+                lms_read_group:
+                -   server
+                lms_read_initial: true
+                md_custom1: '"-"'
+
+            version:
+                type: str
+                lms_command: server.version
+                lms_read: true
+                lms_write: false
+                lms_read_group:
+                -   server
+                lms_read_initial: true
+                md_custom1: '"-"'
+
+    database:
+
+        database:
+
+            read:
+                type: bool
+                enforce_updates: true
+                lms_read_group_trigger: database
+
+            totalgenres:
+                type: num
+                lms_command: database.totalgenres
+                lms_read: true
+                lms_write: false
+                lms_read_group:
+                -   database
+                lms_read_initial: true
+                md_custom1: '"-"'
+
+            totalduration:
+                type: num
+                lms_command: database.totalduration
+                lms_read: true
+                lms_write: false
+                lms_read_group:
+                -   database
+                lms_read_initial: true
+                md_custom1: '"-"'
+
+            totalartists:
+                type: num
+                lms_command: database.totalartists
+                lms_read: true
+                lms_write: false
+                lms_read_group:
+                -   database
+                lms_read_initial: true
+                md_custom1: '"-"'
+
+            totalalbums:
+                type: num
+                lms_command: database.totalalbums
+                lms_read: true
+                lms_write: false
+                lms_read_group:
+                -   database
+                lms_read_initial: true
+                md_custom1: '"-"'
+
+            totalsongs:
+                type: num
+                lms_command: database.totalsongs
+                lms_read: true
+                lms_write: false
+                lms_read_group:
+                -   database
+                lms_read_initial: true
+                md_custom1: '"-"'
+
+    player:
+
+        player:
+
+            read:
+                type: bool
+                enforce_updates: true
+                lms_read_group_trigger: player
+
+            control:
+
+                read:
+                    type: bool
+                    enforce_updates: true
+                    lms_read_group_trigger: player.control
+
+                power:
+                    type: bool
+                    lms_command: player.control.power
+                    lms_read: true
+                    lms_write: true
+                    lms_read_group:
+                    -   player
+                    -   player.control
+                    lms_read_initial: true
+
+                playpause:
+                    type: bool
+                    lms_command: player.control.playpause
+                    lms_read: true
+                    lms_write: true
+                    lms_read_group:
+                    -   player
+                    -   player.control
+
+                volume:
+                    type: num
+                    lms_command: player.control.volume
+                    lms_read: true
+                    lms_write: true
+                    lms_read_group:
+                    -   player
+                    -   player.control
+
+                sleep:
+                    type: num
+                    lms_command: player.control.sleep
+                    lms_read: true
+                    lms_write: true
+                    lms_read_group:
+                    -   player
+                    -   player.control
+
+            info:
+
+                read:
+                    type: bool
+                    enforce_updates: true
+                    lms_read_group_trigger: player.info
+
+                status:
+                    type: dict
+                    lms_command: player.info.status
+                    lms_read: true
+                    lms_write: false
+                    lms_read_group:
+                    -   player
+                    -   player.info
+                    lms_read_initial: true
+                    lms_read_cycle: 5
+
+                connected:
+                    type: bool
+                    lms_command: player.info.connected
+                    lms_read: true
+                    lms_write: false
+
+                name:
+                    type: str
+                    lms_command: player.info.name
+                    lms_read: true
+                    lms_write: false
+
+                signalstrength:
+                    type: num
+                    lms_command: player.info.signalstrength
+                    lms_read: true
+                    lms_write: false
+
+                playmode:
+                    type: str
+                    lms_command: player.info.playmode
+                    lms_read: true
+                    lms_write: false
+
+                time:
+                    type: num
+                    lms_command: player.info.time
+                    lms_read: true
+                    lms_write: false
+
+                duration:
+                    type: num
+                    lms_command: player.info.duration
+                    lms_read: true
+                    lms_write: false
+
+                rate:
+                    type: num
+                    lms_command: player.info.rate
+                    lms_read: true
+                    lms_write: false
+
+                title:
+                    type: str
+                    lms_command: player.info.title
+                    lms_read: true
+                    lms_write: false
+
+            playlist:
+
+                read:
+                    type: bool
+                    enforce_updates: true
+                    lms_read_group_trigger: player.playlist
+
+                mode:
+                    type: bool
+                    lms_command: player.playlist.mode
+                    lms_read: true
+                    lms_write: false
+                    lms_read_group:
+                    -   player
+                    -   player.playlist
+
+                seq_no:
+                    type: str
+                    lms_command: player.playlist.seq_no
+                    lms_read: true
+                    lms_write: false
+                    lms_read_group:
+                    -   player
+                    -   player.playlist
+
+                index:
+                    type: num
+                    lms_command: player.playlist.index
+                    lms_read: true
+                    lms_write: false
+                    lms_read_group:
+                    -   player
+                    -   player.playlist
+
+                timestamp:
+                    type: num
+                    lms_command: player.playlist.timestamp
+                    lms_read: true
+                    lms_write: false
+                    lms_read_group:
+                    -   player
+                    -   player.playlist
+
+                tracks:
+                    type: num
+                    lms_command: player.playlist.tracks
+                    lms_read: true
+                    lms_write: false
+                    lms_read_group:
+                    -   player
+                    -   player.playlist
+
+                nextsong1:
+                    type: str
+                    lms_command: player.playlist.nextsong1
+                    lms_read: true
+                    lms_write: false
+                    lms_read_group:
+                    -   player
+                    -   player.playlist
+
+                nextsong2:
+                    type: str
+                    lms_command: player.playlist.nextsong2
+                    lms_read: true
+                    lms_write: false
+                    lms_read_group:
+                    -   player
+                    -   player.playlist
+
+                nextsong3:
+                    type: str
+                    lms_command: player.playlist.nextsong3
+                    lms_read: true
+                    lms_write: false
+                    lms_read_group:
+                    -   player
+                    -   player.playlist
+
+                nextsong4:
+                    type: str
+                    lms_command: player.playlist.nextsong4
+                    lms_read: true
+                    lms_write: false
+                    lms_read_group:
+                    -   player
+                    -   player.playlist
+
+                nextsong5:
+                    type: str
+                    lms_command: player.playlist.nextsong5
+                    lms_read: true
+                    lms_write: false
+                    lms_read_group:
+                    -   player
+                    -   player.playlist
+
+                repeat:
+                    type: str
+                    lms_command: player.playlist.repeat
+                    lms_read: true
+                    lms_write: true
+                    lms_read_group:
+                    -   player
+                    -   player.playlist
+                    remark: 0 = Off, 1 = Song, 2 = Playlist
+
+                    lookup:
+                        type: list
+                        lms_lookup: REPEAT#list
+
+                shuffle:
+                    type: str
+                    lms_command: player.playlist.shuffle
+                    lms_read: true
+                    lms_write: true
+                    lms_read_group:
+                    -   player
+                    -   player.playlist
+                    remark: 0 = Off, 1 = Song, 2 = Album
+
+                    lookup:
+                        type: list
+                        lms_lookup: SHUFFLE#list
+
+    ALL:
+
+        ALL:
+
+            read:
+                type: bool
+                enforce_updates: true
+                lms_read_group_trigger: ALL
+
+            server:
+
+                read:
+                    type: bool
+                    enforce_updates: true
+                    lms_read_group_trigger: ALL.server
+
+                playercount:
+                    type: num
+                    lms_command: server.playercount
+                    lms_read: true
+                    lms_write: false
+                    lms_read_group:
+                    -   ALL
+                    -   ALL.server
+                    lms_read_initial: true
+                    md_custom1: '"-"'
+
+                favoritescount:
+                    type: num
+                    lms_command: server.favoritescount
+                    lms_read: true
+                    lms_write: false
+                    lms_read_group:
+                    -   ALL
+                    -   ALL.server
+                    lms_read_initial: true
+                    md_custom1: '"-"'
+
+                version:
+                    type: str
+                    lms_command: server.version
+                    lms_read: true
+                    lms_write: false
+                    lms_read_group:
+                    -   ALL
+                    -   ALL.server
+                    lms_read_initial: true
+                    md_custom1: '"-"'
+
+            database:
+
+                read:
+                    type: bool
+                    enforce_updates: true
+                    lms_read_group_trigger: ALL.database
+
+                totalgenres:
+                    type: num
+                    lms_command: database.totalgenres
+                    lms_read: true
+                    lms_write: false
+                    lms_read_group:
+                    -   ALL
+                    -   ALL.database
+                    lms_read_initial: true
+                    md_custom1: '"-"'
+
+                totalduration:
+                    type: num
+                    lms_command: database.totalduration
+                    lms_read: true
+                    lms_write: false
+                    lms_read_group:
+                    -   ALL
+                    -   ALL.database
+                    lms_read_initial: true
+                    md_custom1: '"-"'
+
+                totalartists:
+                    type: num
+                    lms_command: database.totalartists
+                    lms_read: true
+                    lms_write: false
+                    lms_read_group:
+                    -   ALL
+                    -   ALL.database
+                    lms_read_initial: true
+                    md_custom1: '"-"'
+
+                totalalbums:
+                    type: num
+                    lms_command: database.totalalbums
+                    lms_read: true
+                    lms_write: false
+                    lms_read_group:
+                    -   ALL
+                    -   ALL.database
+                    lms_read_initial: true
+                    md_custom1: '"-"'
+
+                totalsongs:
+                    type: num
+                    lms_command: database.totalsongs
+                    lms_read: true
+                    lms_write: false
+                    lms_read_group:
+                    -   ALL
+                    -   ALL.database
+                    lms_read_initial: true
+                    md_custom1: '"-"'
+
+            player:
+
+                read:
+                    type: bool
+                    enforce_updates: true
+                    lms_read_group_trigger: ALL.player
+
+                control:
+
+                    read:
+                        type: bool
+                        enforce_updates: true
+                        lms_read_group_trigger: ALL.player.control
+
+                    power:
+                        type: bool
+                        lms_command: player.control.power
+                        lms_read: true
+                        lms_write: true
+                        lms_read_group:
+                        -   ALL
+                        -   ALL.player
+                        -   ALL.player.control
+                        lms_read_initial: true
+
+                    playpause:
+                        type: bool
+                        lms_command: player.control.playpause
+                        lms_read: true
+                        lms_write: true
+                        lms_read_group:
+                        -   ALL
+                        -   ALL.player
+                        -   ALL.player.control
+
+                    volume:
+                        type: num
+                        lms_command: player.control.volume
+                        lms_read: true
+                        lms_write: true
+                        lms_read_group:
+                        -   ALL
+                        -   ALL.player
+                        -   ALL.player.control
+
+                    sleep:
+                        type: num
+                        lms_command: player.control.sleep
+                        lms_read: true
+                        lms_write: true
+                        lms_read_group:
+                        -   ALL
+                        -   ALL.player
+                        -   ALL.player.control
+
+                info:
+
+                    read:
+                        type: bool
+                        enforce_updates: true
+                        lms_read_group_trigger: ALL.player.info
+
+                    status:
+                        type: dict
+                        lms_command: player.info.status
+                        lms_read: true
+                        lms_write: false
+                        lms_read_group:
+                        -   ALL
+                        -   ALL.player
+                        -   ALL.player.info
+                        lms_read_initial: true
+                        lms_read_cycle: 5
+
+                    connected:
+                        type: bool
+                        lms_command: player.info.connected
+                        lms_read: true
+                        lms_write: false
+
+                    name:
+                        type: str
+                        lms_command: player.info.name
+                        lms_read: true
+                        lms_write: false
+
+                    signalstrength:
+                        type: num
+                        lms_command: player.info.signalstrength
+                        lms_read: true
+                        lms_write: false
+
+                    playmode:
+                        type: str
+                        lms_command: player.info.playmode
+                        lms_read: true
+                        lms_write: false
+
+                    time:
+                        type: num
+                        lms_command: player.info.time
+                        lms_read: true
+                        lms_write: false
+
+                    duration:
+                        type: num
+                        lms_command: player.info.duration
+                        lms_read: true
+                        lms_write: false
+
+                    rate:
+                        type: num
+                        lms_command: player.info.rate
+                        lms_read: true
+                        lms_write: false
+
+                    title:
+                        type: str
+                        lms_command: player.info.title
+                        lms_read: true
+                        lms_write: false
+
+                playlist:
+
+                    read:
+                        type: bool
+                        enforce_updates: true
+                        lms_read_group_trigger: ALL.player.playlist
+
+                    mode:
+                        type: bool
+                        lms_command: player.playlist.mode
+                        lms_read: true
+                        lms_write: false
+                        lms_read_group:
+                        -   ALL
+                        -   ALL.player
+                        -   ALL.player.playlist
+
+                    seq_no:
+                        type: str
+                        lms_command: player.playlist.seq_no
+                        lms_read: true
+                        lms_write: false
+                        lms_read_group:
+                        -   ALL
+                        -   ALL.player
+                        -   ALL.player.playlist
+
+                    index:
+                        type: num
+                        lms_command: player.playlist.index
+                        lms_read: true
+                        lms_write: false
+                        lms_read_group:
+                        -   ALL
+                        -   ALL.player
+                        -   ALL.player.playlist
+
+                    timestamp:
+                        type: num
+                        lms_command: player.playlist.timestamp
+                        lms_read: true
+                        lms_write: false
+                        lms_read_group:
+                        -   ALL
+                        -   ALL.player
+                        -   ALL.player.playlist
+
+                    tracks:
+                        type: num
+                        lms_command: player.playlist.tracks
+                        lms_read: true
+                        lms_write: false
+                        lms_read_group:
+                        -   ALL
+                        -   ALL.player
+                        -   ALL.player.playlist
+
+                    nextsong1:
+                        type: str
+                        lms_command: player.playlist.nextsong1
+                        lms_read: true
+                        lms_write: false
+                        lms_read_group:
+                        -   ALL
+                        -   ALL.player
+                        -   ALL.player.playlist
+
+                    nextsong2:
+                        type: str
+                        lms_command: player.playlist.nextsong2
+                        lms_read: true
+                        lms_write: false
+                        lms_read_group:
+                        -   ALL
+                        -   ALL.player
+                        -   ALL.player.playlist
+
+                    nextsong3:
+                        type: str
+                        lms_command: player.playlist.nextsong3
+                        lms_read: true
+                        lms_write: false
+                        lms_read_group:
+                        -   ALL
+                        -   ALL.player
+                        -   ALL.player.playlist
+
+                    nextsong4:
+                        type: str
+                        lms_command: player.playlist.nextsong4
+                        lms_read: true
+                        lms_write: false
+                        lms_read_group:
+                        -   ALL
+                        -   ALL.player
+                        -   ALL.player.playlist
+
+                    nextsong5:
+                        type: str
+                        lms_command: player.playlist.nextsong5
+                        lms_read: true
+                        lms_write: false
+                        lms_read_group:
+                        -   ALL
+                        -   ALL.player
+                        -   ALL.player.playlist
+
+                    repeat:
+                        type: str
+                        lms_command: player.playlist.repeat
+                        lms_read: true
+                        lms_write: true
+                        lms_read_group:
+                        -   ALL
+                        -   ALL.player
+                        -   ALL.player.playlist
+                        remark: 0 = Off, 1 = Song, 2 = Playlist
+
+                        lookup:
+                            type: list
+                            lms_lookup: REPEAT#list
+
+                    shuffle:
+                        type: str
+                        lms_command: player.playlist.shuffle
+                        lms_read: true
+                        lms_write: true
+                        lms_read_group:
+                        -   ALL
+                        -   ALL.player
+                        -   ALL.player.playlist
+                        remark: 0 = Off, 1 = Song, 2 = Album
+
+                        lookup:
+                            type: list
+                            lms_lookup: SHUFFLE#list
+plugin_functions: NONE
+logic_parameters: NONE
