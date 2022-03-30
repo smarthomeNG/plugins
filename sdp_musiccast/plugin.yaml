@@ -472,274 +472,272 @@ item_structs:
 
     ALL:
 
-        ALL:
+        read:
+            type: bool
+            enforce_updates: true
+            ymc_read_group_trigger: ALL
+
+        info:
 
             read:
                 type: bool
                 enforce_updates: true
-                ymc_read_group_trigger: ALL
+                ymc_read_group_trigger: ALL.info
 
-            info:
+            track:
+                type: str
+                ymc_command: info.track
+                ymc_read: true
+                ymc_write: false
 
-                read:
-                    type: bool
-                    enforce_updates: true
-                    ymc_read_group_trigger: ALL.info
+            albumart:
+                type: str
+                ymc_command: info.albumart
+                ymc_read: true
+                ymc_write: false
 
-                track:
-                    type: str
-                    ymc_command: info.track
-                    ymc_read: true
-                    ymc_write: false
+            artist:
+                type: str
+                ymc_command: info.artist
+                ymc_read: true
+                ymc_write: false
 
-                albumart:
-                    type: str
-                    ymc_command: info.albumart
-                    ymc_read: true
-                    ymc_write: false
+            album:
+                type: str
+                ymc_command: info.album
+                ymc_read: true
+                ymc_write: false
 
-                artist:
-                    type: str
-                    ymc_command: info.artist
-                    ymc_read: true
-                    ymc_write: false
+            curtime:
+                type: num
+                ymc_command: info.curtime
+                ymc_read: true
+                ymc_write: false
 
-                album:
-                    type: str
-                    ymc_command: info.album
-                    ymc_read: true
-                    ymc_write: false
+            totaltime:
+                type: num
+                ymc_command: info.totaltime
+                ymc_read: true
+                ymc_write: false
 
-                curtime:
-                    type: num
-                    ymc_command: info.curtime
-                    ymc_read: true
-                    ymc_write: false
+            model:
+                type: str
+                ymc_command: info.model
+                ymc_read: true
+                ymc_write: false
 
-                totaltime:
-                    type: num
-                    ymc_command: info.totaltime
-                    ymc_read: true
-                    ymc_write: false
+            zones:
+                type: num
+                ymc_command: info.zones
+                ymc_read: true
+                ymc_write: false
 
-                model:
-                    type: str
-                    ymc_command: info.model
-                    ymc_read: true
-                    ymc_write: false
+            inputs_raw:
+                type: list
+                ymc_command: info.inputs_raw
+                ymc_read: true
+                ymc_write: false
 
-                zones:
-                    type: num
-                    ymc_command: info.zones
-                    ymc_read: true
-                    ymc_write: false
+            inputs_sys:
+                type: list
+                ymc_command: info.inputs_sys
+                ymc_read: false
+                ymc_write: false
 
-                inputs_raw:
-                    type: list
-                    ymc_command: info.inputs_raw
-                    ymc_read: true
-                    ymc_write: false
+            inputs_user:
+                type: list
+                ymc_command: info.inputs_user
+                ymc_read: false
+                ymc_write: false
 
-                inputs_sys:
-                    type: list
-                    ymc_command: info.inputs_sys
-                    ymc_read: false
-                    ymc_write: false
+            error:
+                type: str
+                ymc_command: info.error
+                ymc_read: false
+                ymc_write: false
 
-                inputs_user:
-                    type: list
-                    ymc_command: info.inputs_user
-                    ymc_read: false
-                    ymc_write: false
+        system:
 
-                error:
-                    type: str
-                    ymc_command: info.error
-                    ymc_read: false
-                    ymc_write: false
+            read:
+                type: bool
+                enforce_updates: true
+                ymc_read_group_trigger: ALL.system
 
-            system:
+            passthru:
+                type: str
+                ymc_command: system.passthru
+                ymc_read: true
+                ymc_write: true
+                enforce_updates: true
 
-                read:
-                    type: bool
-                    enforce_updates: true
-                    ymc_read_group_trigger: ALL.system
+            deviceinfo:
+                type: bool
+                ymc_command: system.deviceinfo
+                ymc_read: true
+                ymc_write: false
+                ymc_read_group:
+                -   ALL
+                -   ALL.system
+                enforce_updates: true
+                ymc_read_initial: true
 
-                passthru:
-                    type: str
-                    ymc_command: system.passthru
-                    ymc_read: true
-                    ymc_write: true
-                    enforce_updates: true
+            features:
+                type: bool
+                ymc_command: system.features
+                ymc_read: true
+                ymc_write: false
+                ymc_read_group:
+                -   ALL
+                -   ALL.system
+                enforce_updates: true
+                ymc_read_initial: true
 
-                deviceinfo:
-                    type: bool
-                    ymc_command: system.deviceinfo
-                    ymc_read: true
-                    ymc_write: false
-                    ymc_read_group:
-                    -   ALL
-                    -   ALL.system
-                    enforce_updates: true
-                    ymc_read_initial: true
+            names:
+                type: bool
+                ymc_command: system.names
+                ymc_read: true
+                ymc_write: false
+                ymc_read_group:
+                -   ALL
+                -   ALL.system
+                enforce_updates: true
+                ymc_read_initial: true
 
-                features:
-                    type: bool
-                    ymc_command: system.features
-                    ymc_read: true
-                    ymc_write: false
-                    ymc_read_group:
-                    -   ALL
-                    -   ALL.system
-                    enforce_updates: true
-                    ymc_read_initial: true
+        main:
 
-                names:
-                    type: bool
-                    ymc_command: system.names
-                    ymc_read: true
-                    ymc_write: false
-                    ymc_read_group:
-                    -   ALL
-                    -   ALL.system
-                    enforce_updates: true
-                    ymc_read_initial: true
+            read:
+                type: bool
+                enforce_updates: true
+                ymc_read_group_trigger: ALL.main
 
-            main:
+            status:
+                type: bool
+                ymc_command: main.status
+                ymc_read: true
+                ymc_write: false
+                ymc_read_group:
+                -   ALL
+                -   ALL.main
+                enforce_updates: true
+                ymc_read_initial: true
 
-                read:
-                    type: bool
-                    enforce_updates: true
-                    ymc_read_group_trigger: ALL.main
+            power:
+                type: bool
+                ymc_command: main.power
+                ymc_read: true
+                ymc_write: true
+                enforce_updates: true
 
-                status:
-                    type: bool
-                    ymc_command: main.status
-                    ymc_read: true
-                    ymc_write: false
-                    ymc_read_group:
-                    -   ALL
-                    -   ALL.main
-                    enforce_updates: true
-                    ymc_read_initial: true
+            sleep:
+                type: num
+                ymc_command: main.sleep
+                ymc_read: true
+                ymc_write: true
+                enforce_updates: true
 
-                power:
-                    type: bool
-                    ymc_command: main.power
-                    ymc_read: true
-                    ymc_write: true
-                    enforce_updates: true
+            input:
+                type: str
+                ymc_command: main.input
+                ymc_read: true
+                ymc_write: true
+                enforce_updates: true
 
-                sleep:
-                    type: num
-                    ymc_command: main.sleep
-                    ymc_read: true
-                    ymc_write: true
-                    enforce_updates: true
+            mute:
+                type: bool
+                ymc_command: main.mute
+                ymc_read: true
+                ymc_write: true
+                enforce_updates: true
 
-                input:
-                    type: str
-                    ymc_command: main.input
-                    ymc_read: true
-                    ymc_write: true
-                    enforce_updates: true
+            volume:
+                type: num
+                ymc_command: main.volume
+                ymc_read: true
+                ymc_write: true
+                enforce_updates: true
 
-                mute:
-                    type: bool
-                    ymc_command: main.mute
-                    ymc_read: true
-                    ymc_write: true
-                    enforce_updates: true
+            volume_max:
+                type: num
+                ymc_command: main.volume_max
+                ymc_read: true
+                ymc_write: false
 
-                volume:
-                    type: num
-                    ymc_command: main.volume
-                    ymc_read: true
-                    ymc_write: true
-                    enforce_updates: true
+        netusb:
 
-                volume_max:
-                    type: num
-                    ymc_command: main.volume_max
-                    ymc_read: true
-                    ymc_write: false
+            read:
+                type: bool
+                enforce_updates: true
+                ymc_read_group_trigger: ALL.netusb
 
-            netusb:
+            playinfo:
+                type: bool
+                ymc_command: netusb.playinfo
+                ymc_read: true
+                ymc_write: false
+                ymc_read_group:
+                -   ALL
+                -   ALL.netusb
+                enforce_updates: true
+                ymc_read_initial: true
 
-                read:
-                    type: bool
-                    enforce_updates: true
-                    ymc_read_group_trigger: ALL.netusb
+            preset:
+                type: num
+                ymc_command: netusb.preset
+                ymc_read: true
+                ymc_write: true
+                enforce_updates: true
 
-                playinfo:
-                    type: bool
-                    ymc_command: netusb.playinfo
-                    ymc_read: true
-                    ymc_write: false
-                    ymc_read_group:
-                    -   ALL
-                    -   ALL.netusb
-                    enforce_updates: true
-                    ymc_read_initial: true
+            playback:
+                type: str
+                ymc_command: netusb.playback
+                ymc_read: true
+                ymc_write: true
+                enforce_updates: true
 
-                preset:
-                    type: num
-                    ymc_command: netusb.preset
-                    ymc_read: true
-                    ymc_write: true
-                    enforce_updates: true
+            position:
+                type: num
+                ymc_command: netusb.position
+                ymc_read: true
+                ymc_write: true
+                enforce_updates: true
 
-                playback:
-                    type: str
-                    ymc_command: netusb.playback
-                    ymc_read: true
-                    ymc_write: true
-                    enforce_updates: true
+        alarm:
 
-                position:
-                    type: num
-                    ymc_command: netusb.position
-                    ymc_read: true
-                    ymc_write: true
-                    enforce_updates: true
+            read:
+                type: bool
+                enforce_updates: true
+                ymc_read_group_trigger: ALL.alarm
 
-            alarm:
+            update:
+                type: bool
+                ymc_command: alarm.update
+                ymc_read: true
+                ymc_write: false
+                ymc_read_group:
+                -   ALL
+                -   ALL.alarm
+                enforce_updates: true
+                ymc_read_initial: true
 
-                read:
-                    type: bool
-                    enforce_updates: true
-                    ymc_read_group_trigger: ALL.alarm
+            enable:
+                type: bool
+                ymc_command: alarm.enable
+                ymc_read: true
+                ymc_write: true
+                enforce_updates: true
 
-                update:
-                    type: bool
-                    ymc_command: alarm.update
-                    ymc_read: true
-                    ymc_write: false
-                    ymc_read_group:
-                    -   ALL
-                    -   ALL.alarm
-                    enforce_updates: true
-                    ymc_read_initial: true
+            time:
+                type: str
+                ymc_command: alarm.time
+                ymc_read: true
+                ymc_write: true
+                enforce_updates: true
 
-                enable:
-                    type: bool
-                    ymc_command: alarm.enable
-                    ymc_read: true
-                    ymc_write: true
-                    enforce_updates: true
-
-                time:
-                    type: str
-                    ymc_command: alarm.time
-                    ymc_read: true
-                    ymc_write: true
-                    enforce_updates: true
-
-                beep:
-                    type: bool
-                    ymc_command: alarm.beep
-                    ymc_read: true
-                    ymc_write: true
-                    enforce_updates: true
+            beep:
+                type: bool
+                ymc_command: alarm.beep
+                ymc_read: true
+                ymc_write: true
+                enforce_updates: true
 plugin_functions: NONE
 logic_parameters: NONE

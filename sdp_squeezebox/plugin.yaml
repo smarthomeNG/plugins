@@ -874,698 +874,696 @@ item_structs:
 
     ALL:
 
-        ALL:
+        read:
+            type: bool
+            enforce_updates: true
+            sqb_read_group_trigger: ALL
+
+        server:
 
             read:
                 type: bool
                 enforce_updates: true
-                sqb_read_group_trigger: ALL
+                sqb_read_group_trigger: ALL.server
 
-            server:
+            listenmode:
+                type: bool
+                sqb_command: server.listenmode
+                sqb_read: true
+                sqb_write: true
+
+            playercount:
+                type: num
+                sqb_command: server.playercount
+                sqb_read: true
+                sqb_write: false
+                sqb_read_group:
+                -   ALL
+                -   ALL.server
+                sqb_read_initial: true
+
+            favoritescount:
+                type: num
+                sqb_command: server.favoritescount
+                sqb_read: true
+                sqb_write: false
+                sqb_read_group:
+                -   ALL
+                -   ALL.server
+                sqb_read_initial: true
+
+        database:
+
+            read:
+                type: bool
+                enforce_updates: true
+                sqb_read_group_trigger: ALL.database
+
+            rescan:
 
                 read:
                     type: bool
                     enforce_updates: true
-                    sqb_read_group_trigger: ALL.server
+                    sqb_read_group_trigger: ALL.database.rescan
 
-                listenmode:
+                start:
+                    type: str
+                    sqb_command: database.rescan.start
+                    sqb_read: false
+                    sqb_write: true
+
+                running:
                     type: bool
-                    sqb_command: server.listenmode
+                    sqb_command: database.rescan.running
+                    sqb_read: true
+                    sqb_write: false
+                    sqb_read_group:
+                    -   ALL
+                    -   ALL.database
+                    -   ALL.database.rescan
+                    sqb_read_initial: true
+
+                progress:
+                    type: str
+                    sqb_command: database.rescan.progress
+                    sqb_read: true
+                    sqb_write: false
+
+                runningtime:
+                    type: str
+                    sqb_command: database.rescan.runningtime
+                    sqb_read: true
+                    sqb_write: false
+                    sqb_read_group:
+                    -   ALL
+                    -   ALL.database
+                    -   ALL.database.rescan
+
+                fail:
+                    type: str
+                    sqb_command: database.rescan.fail
+                    sqb_read: true
+                    sqb_write: false
+
+                abortscan:
+                    type: bool
+                    sqb_command: database.rescan.abortscan
                     sqb_read: true
                     sqb_write: true
 
-                playercount:
-                    type: num
-                    sqb_command: server.playercount
+                wipecache:
+                    type: bool
+                    sqb_command: database.rescan.wipecache
                     sqb_read: true
-                    sqb_write: false
-                    sqb_read_group:
-                    -   ALL
-                    -   ALL.server
-                    sqb_read_initial: true
+                    sqb_write: true
 
-                favoritescount:
-                    type: num
-                    sqb_command: server.favoritescount
-                    sqb_read: true
-                    sqb_write: false
-                    sqb_read_group:
-                    -   ALL
-                    -   ALL.server
-                    sqb_read_initial: true
+            totalgenres:
+                type: num
+                sqb_command: database.totalgenres
+                sqb_read: true
+                sqb_write: false
+                sqb_read_group:
+                -   ALL
+                -   ALL.database
+                sqb_read_initial: true
 
-            database:
+            totalduration:
+                type: num
+                sqb_command: database.totalduration
+                sqb_read: true
+                sqb_write: false
+                sqb_read_group:
+                -   ALL
+                -   ALL.database
+                sqb_read_initial: true
+
+            totalartists:
+                type: num
+                sqb_command: database.totalartists
+                sqb_read: true
+                sqb_write: false
+                sqb_read_group:
+                -   ALL
+                -   ALL.database
+                sqb_read_initial: true
+
+            totalalbums:
+                type: num
+                sqb_command: database.totalalbums
+                sqb_read: true
+                sqb_write: false
+                sqb_read_group:
+                -   ALL
+                -   ALL.database
+                sqb_read_initial: true
+
+            totalsongs:
+                type: num
+                sqb_command: database.totalsongs
+                sqb_read: true
+                sqb_write: false
+                sqb_read_group:
+                -   ALL
+                -   ALL.database
+                sqb_read_initial: true
+
+        player:
+
+            read:
+                type: bool
+                enforce_updates: true
+                sqb_read_group_trigger: ALL.player
+
+            control:
 
                 read:
                     type: bool
                     enforce_updates: true
-                    sqb_read_group_trigger: ALL.database
+                    sqb_read_group_trigger: ALL.player.control
 
-                rescan:
+                power:
+                    type: bool
+                    sqb_command: player.control.power
+                    sqb_read: true
+                    sqb_write: true
+                    sqb_read_group:
+                    -   ALL
+                    -   ALL.player
+                    -   ALL.player.control
+                    sqb_read_initial: true
 
-                    read:
+                playmode:
+                    type: str
+                    sqb_command: player.control.playmode
+                    sqb_read: true
+                    sqb_write: true
+                    sqb_read_group:
+                    -   ALL
+                    -   ALL.player
+                    -   ALL.player.control
+                    sqb_read_initial: true
+
+                playpause:
+                    type: bool
+                    sqb_command: player.control.playpause
+                    sqb_read: true
+                    sqb_write: true
+
+                stop:
+                    type: bool
+                    sqb_command: player.control.stop
+                    sqb_read: true
+                    sqb_write: true
+
+                mute:
+                    type: bool
+                    sqb_command: player.control.mute
+                    sqb_read: true
+                    sqb_write: true
+                    sqb_read_group:
+                    -   ALL
+                    -   ALL.player
+                    -   ALL.player.control
+                    sqb_read_initial: true
+
+                volume:
+                    type: num
+                    sqb_command: player.control.volume
+                    sqb_read: true
+                    sqb_write: true
+                    sqb_read_group:
+                    -   ALL
+                    -   ALL.player
+                    -   ALL.player.control
+                    sqb_read_initial: true
+
+                volume_fading:
+                    type: num
+                    sqb_command: player.control.volume_fading
+                    sqb_read: false
+                    sqb_write: true
+
+                    goal:
+                        type: num
+                        visu_acl: rw
+                        cache: 'True'
+
+                volume_low:
+                    type: num
+                    sqb_command: player.control.volume_low
+                    sqb_read: false
+                    sqb_write: true
+                    cache: true
+                    enforce_updates: true
+                    initial_value: 60
+
+                volume_high:
+                    type: num
+                    sqb_command: player.control.volume_high
+                    sqb_read: false
+                    sqb_write: true
+                    cache: true
+                    enforce_updates: true
+                    initial_value: 80
+
+                volumeup:
+                    type: num
+                    sqb_command: player.control.volumeup
+                    sqb_read: false
+                    sqb_write: true
+                    cache: true
+                    enforce_updates: true
+                    initial_value: 1
+
+                volumedown:
+                    type: num
+                    sqb_command: player.control.volumedown
+                    sqb_read: false
+                    sqb_write: true
+                    cache: true
+                    enforce_updates: true
+                    initial_value: 1
+
+                set_alarm:
+                    type: str
+                    sqb_command: player.control.set_alarm
+                    sqb_read: true
+                    sqb_write: true
+
+                alarms:
+                    type: dict
+                    sqb_command: player.control.alarms
+                    sqb_read: true
+                    sqb_write: false
+                    sqb_read_group:
+                    -   ALL
+                    -   ALL.player
+                    -   ALL.player.control
+                    -   player.control.alarms
+                    sqb_read_initial: true
+
+                    query:
                         type: bool
-                        enforce_updates: true
-                        sqb_read_group_trigger: ALL.database.rescan
+                        enforce_updates: 'true'
+                        sqb_read_group_trigger: player.control.alarms
 
-                    start:
-                        type: str
-                        sqb_command: database.rescan.start
-                        sqb_read: false
-                        sqb_write: true
+                sync:
+                    type: str
+                    sqb_command: player.control.sync
+                    sqb_read: true
+                    sqb_write: true
+                    sqb_read_group:
+                    -   ALL
+                    -   ALL.player
+                    -   ALL.player.control
+                    sqb_read_initial: true
 
-                    running:
+                unsync:
+                    type: bool
+                    sqb_command: player.control.unsync
+                    sqb_read: false
+                    sqb_write: true
+
+                display:
+                    type: str
+                    sqb_command: player.control.display
+                    sqb_read: true
+                    sqb_write: true
+                    sqb_read_group:
+                    -   ALL
+                    -   ALL.player
+                    -   ALL.player.control
+                    sqb_read_initial: true
+
+                connect:
+                    type: str
+                    sqb_command: player.control.connect
+                    sqb_read: true
+                    sqb_write: true
+
+                disconnect:
+                    type: str
+                    sqb_command: player.control.disconnect
+                    sqb_read: true
+                    sqb_write: true
+
+                time:
+                    type: num
+                    sqb_command: player.control.time
+                    sqb_read: true
+                    sqb_write: true
+                    sqb_read_group:
+                    -   ALL
+                    -   ALL.player
+                    -   ALL.player.control
+                    -   player.control.time_poll
+                    enforce_updates: true
+
+                    poll:
                         type: bool
-                        sqb_command: database.rescan.running
-                        sqb_read: true
-                        sqb_write: false
-                        sqb_read_group:
-                        -   ALL
-                        -   ALL.database
-                        -   ALL.database.rescan
-                        sqb_read_initial: true
+                        eval: True if sh....playmode() == "play" else None
+                        enforce_updates: 'true'
+                        cycle: 10 = True
+                        md_read_group_trigger: player.control.time_poll
+                        sqb_read_group_trigger: player.control.time_poll
 
-                    progress:
-                        type: str
-                        sqb_command: database.rescan.progress
-                        sqb_read: true
-                        sqb_write: false
-
-                    runningtime:
-                        type: str
-                        sqb_command: database.rescan.runningtime
-                        sqb_read: true
-                        sqb_write: false
-                        sqb_read_group:
-                        -   ALL
-                        -   ALL.database
-                        -   ALL.database.rescan
-
-                    fail:
-                        type: str
-                        sqb_command: database.rescan.fail
-                        sqb_read: true
-                        sqb_write: false
-
-                    abortscan:
-                        type: bool
-                        sqb_command: database.rescan.abortscan
-                        sqb_read: true
-                        sqb_write: true
-
-                    wipecache:
-                        type: bool
-                        sqb_command: database.rescan.wipecache
-                        sqb_read: true
-                        sqb_write: true
-
-                totalgenres:
+                forward:
                     type: num
-                    sqb_command: database.totalgenres
+                    sqb_command: player.control.forward
                     sqb_read: true
-                    sqb_write: false
+                    sqb_write: true
+                    enforce_updates: true
+                    initial_value: 10
+
+                rewind:
+                    type: num
+                    sqb_command: player.control.rewind
+                    sqb_read: true
+                    sqb_write: true
+                    enforce_updates: true
+                    initial_value: 10
+
+                playsong:
+                    type: str
+                    sqb_command: player.control.playsong
+                    sqb_read: false
+                    sqb_write: true
+
+                sleep:
+                    type: num
+                    sqb_command: player.control.sleep
+                    sqb_read: true
+                    sqb_write: true
                     sqb_read_group:
                     -   ALL
-                    -   ALL.database
+                    -   ALL.player
+                    -   ALL.player.control
                     sqb_read_initial: true
 
-                totalduration:
-                    type: num
-                    sqb_command: database.totalduration
-                    sqb_read: true
-                    sqb_write: false
-                    sqb_read_group:
-                    -   ALL
-                    -   ALL.database
-                    sqb_read_initial: true
-
-                totalartists:
-                    type: num
-                    sqb_command: database.totalartists
-                    sqb_read: true
-                    sqb_write: false
-                    sqb_read_group:
-                    -   ALL
-                    -   ALL.database
-                    sqb_read_initial: true
-
-                totalalbums:
-                    type: num
-                    sqb_command: database.totalalbums
-                    sqb_read: true
-                    sqb_write: false
-                    sqb_read_group:
-                    -   ALL
-                    -   ALL.database
-                    sqb_read_initial: true
-
-                totalsongs:
-                    type: num
-                    sqb_command: database.totalsongs
-                    sqb_read: true
-                    sqb_write: false
-                    sqb_read_group:
-                    -   ALL
-                    -   ALL.database
-                    sqb_read_initial: true
-
-            player:
+            playlist:
 
                 read:
                     type: bool
                     enforce_updates: true
-                    sqb_read_group_trigger: ALL.player
-
-                control:
-
-                    read:
-                        type: bool
-                        enforce_updates: true
-                        sqb_read_group_trigger: ALL.player.control
-
-                    power:
-                        type: bool
-                        sqb_command: player.control.power
-                        sqb_read: true
-                        sqb_write: true
-                        sqb_read_group:
-                        -   ALL
-                        -   ALL.player
-                        -   ALL.player.control
-                        sqb_read_initial: true
-
-                    playmode:
-                        type: str
-                        sqb_command: player.control.playmode
-                        sqb_read: true
-                        sqb_write: true
-                        sqb_read_group:
-                        -   ALL
-                        -   ALL.player
-                        -   ALL.player.control
-                        sqb_read_initial: true
-
-                    playpause:
-                        type: bool
-                        sqb_command: player.control.playpause
-                        sqb_read: true
-                        sqb_write: true
-
-                    stop:
-                        type: bool
-                        sqb_command: player.control.stop
-                        sqb_read: true
-                        sqb_write: true
-
-                    mute:
-                        type: bool
-                        sqb_command: player.control.mute
-                        sqb_read: true
-                        sqb_write: true
-                        sqb_read_group:
-                        -   ALL
-                        -   ALL.player
-                        -   ALL.player.control
-                        sqb_read_initial: true
-
-                    volume:
-                        type: num
-                        sqb_command: player.control.volume
-                        sqb_read: true
-                        sqb_write: true
-                        sqb_read_group:
-                        -   ALL
-                        -   ALL.player
-                        -   ALL.player.control
-                        sqb_read_initial: true
-
-                    volume_fading:
-                        type: num
-                        sqb_command: player.control.volume_fading
-                        sqb_read: false
-                        sqb_write: true
-
-                        goal:
-                            type: num
-                            visu_acl: rw
-                            cache: 'True'
-
-                    volume_low:
-                        type: num
-                        sqb_command: player.control.volume_low
-                        sqb_read: false
-                        sqb_write: true
-                        cache: true
-                        enforce_updates: true
-                        initial_value: 60
-
-                    volume_high:
-                        type: num
-                        sqb_command: player.control.volume_high
-                        sqb_read: false
-                        sqb_write: true
-                        cache: true
-                        enforce_updates: true
-                        initial_value: 80
-
-                    volumeup:
-                        type: num
-                        sqb_command: player.control.volumeup
-                        sqb_read: false
-                        sqb_write: true
-                        cache: true
-                        enforce_updates: true
-                        initial_value: 1
-
-                    volumedown:
-                        type: num
-                        sqb_command: player.control.volumedown
-                        sqb_read: false
-                        sqb_write: true
-                        cache: true
-                        enforce_updates: true
-                        initial_value: 1
-
-                    set_alarm:
-                        type: str
-                        sqb_command: player.control.set_alarm
-                        sqb_read: true
-                        sqb_write: true
-
-                    alarms:
-                        type: dict
-                        sqb_command: player.control.alarms
-                        sqb_read: true
-                        sqb_write: false
-                        sqb_read_group:
-                        -   ALL
-                        -   ALL.player
-                        -   ALL.player.control
-                        -   player.control.alarms
-                        sqb_read_initial: true
-
-                        query:
-                            type: bool
-                            enforce_updates: 'true'
-                            sqb_read_group_trigger: player.control.alarms
-
-                    sync:
-                        type: str
-                        sqb_command: player.control.sync
-                        sqb_read: true
-                        sqb_write: true
-                        sqb_read_group:
-                        -   ALL
-                        -   ALL.player
-                        -   ALL.player.control
-                        sqb_read_initial: true
-
-                    unsync:
-                        type: bool
-                        sqb_command: player.control.unsync
-                        sqb_read: false
-                        sqb_write: true
-
-                    display:
-                        type: str
-                        sqb_command: player.control.display
-                        sqb_read: true
-                        sqb_write: true
-                        sqb_read_group:
-                        -   ALL
-                        -   ALL.player
-                        -   ALL.player.control
-                        sqb_read_initial: true
-
-                    connect:
-                        type: str
-                        sqb_command: player.control.connect
-                        sqb_read: true
-                        sqb_write: true
-
-                    disconnect:
-                        type: str
-                        sqb_command: player.control.disconnect
-                        sqb_read: true
-                        sqb_write: true
-
-                    time:
-                        type: num
-                        sqb_command: player.control.time
-                        sqb_read: true
-                        sqb_write: true
-                        sqb_read_group:
-                        -   ALL
-                        -   ALL.player
-                        -   ALL.player.control
-                        -   player.control.time_poll
-                        enforce_updates: true
-
-                        poll:
-                            type: bool
-                            eval: True if sh....playmode() == "play" else None
-                            enforce_updates: 'true'
-                            cycle: 10 = True
-                            md_read_group_trigger: player.control.time_poll
-                            sqb_read_group_trigger: player.control.time_poll
-
-                    forward:
-                        type: num
-                        sqb_command: player.control.forward
-                        sqb_read: true
-                        sqb_write: true
-                        enforce_updates: true
-                        initial_value: 10
-
-                    rewind:
-                        type: num
-                        sqb_command: player.control.rewind
-                        sqb_read: true
-                        sqb_write: true
-                        enforce_updates: true
-                        initial_value: 10
-
-                    playsong:
-                        type: str
-                        sqb_command: player.control.playsong
-                        sqb_read: false
-                        sqb_write: true
-
-                    sleep:
-                        type: num
-                        sqb_command: player.control.sleep
-                        sqb_read: true
-                        sqb_write: true
-                        sqb_read_group:
-                        -   ALL
-                        -   ALL.player
-                        -   ALL.player.control
-                        sqb_read_initial: true
-
-                playlist:
-
-                    read:
-                        type: bool
-                        enforce_updates: true
-                        sqb_read_group_trigger: ALL.player.playlist
-
-                    repeat:
-                        type: str
-                        sqb_command: player.playlist.repeat
-                        sqb_read: true
-                        sqb_write: true
-                        sqb_read_group:
-                        -   ALL
-                        -   ALL.player
-                        -   ALL.player.playlist
-                        sqb_read_initial: true
-                        remark: 0 = Off, 1 = Song, 2 = Playlist
-
-                        lookup:
-                            type: list
-                            sqb_lookup: REPEAT#list
-
-                    shuffle:
-                        type: str
-                        sqb_command: player.playlist.shuffle
-                        sqb_read: true
-                        sqb_write: true
-                        sqb_read_group:
-                        -   ALL
-                        -   ALL.player
-                        -   ALL.player.playlist
-                        sqb_read_initial: true
-                        remark: 0 = Off, 1 = Song, 2 = Album
-
-                        lookup:
-                            type: list
-                            sqb_lookup: SHUFFLE#list
-
-                    index:
-                        type: str
-                        sqb_command: player.playlist.index
-                        sqb_read: true
-                        sqb_write: true
-                        sqb_read_group:
-                        -   ALL
-                        -   ALL.player
-                        -   ALL.player.playlist
-                        sqb_read_initial: true
-
-                    name:
-                        type: str
-                        sqb_command: player.playlist.name
-                        sqb_read: true
-                        sqb_write: true
-                        sqb_read_group:
-                        -   ALL
-                        -   ALL.player
-                        -   ALL.player.playlist
-                        sqb_read_initial: true
-
-                    id:
-                        type: num
-                        sqb_command: player.playlist.id
-                        sqb_read: true
-                        sqb_write: true
-
-                    save:
-                        type: str
-                        sqb_command: player.playlist.save
-                        sqb_read: true
-                        sqb_write: true
-
-                    load:
-                        type: str
-                        sqb_command: player.playlist.load
-                        sqb_read: true
-                        sqb_write: true
-
-                    loadalbum:
-                        type: str
-                        sqb_command: player.playlist.loadalbum
-                        sqb_read: true
-                        sqb_write: true
-
-                    loadtracks:
-                        type: str
-                        sqb_command: player.playlist.loadtracks
-                        sqb_read: true
-                        sqb_write: true
-
-                    add:
-                        type: str
-                        sqb_command: player.playlist.add
-                        sqb_read: true
-                        sqb_write: true
-
-                    addalbum:
-                        type: str
-                        sqb_command: player.playlist.addalbum
-                        sqb_read: true
-                        sqb_write: true
-
-                    addtracks:
-                        type: str
-                        sqb_command: player.playlist.addtracks
-                        sqb_read: true
-                        sqb_write: true
-
-                    insertalbum:
-                        type: str
-                        sqb_command: player.playlist.insertalbum
-                        sqb_read: true
-                        sqb_write: true
-
-                    inserttracks:
-                        type: str
-                        sqb_command: player.playlist.inserttracks
-                        sqb_read: true
-                        sqb_write: true
-
-                    tracks:
-                        type: num
-                        sqb_command: player.playlist.tracks
-                        sqb_read: true
-                        sqb_write: false
-                        sqb_read_group:
-                        -   ALL
-                        -   ALL.player
-                        -   ALL.player.playlist
-                        sqb_read_initial: true
-
-                    clear:
-                        type: bool
-                        sqb_command: player.playlist.clear
-                        sqb_read: true
-                        sqb_write: true
-                        enforce_updates: true
-                        eval: True if value else None
-
-                    delete:
-                        type: str
-                        sqb_command: player.playlist.delete
-                        sqb_read: true
-                        sqb_write: true
-
-                    deleteitem:
-                        type: str
-                        sqb_command: player.playlist.deleteitem
-                        sqb_read: true
-                        sqb_write: true
-
-                    deletealbum:
-                        type: str
-                        sqb_command: player.playlist.deletealbum
-                        sqb_read: true
-                        sqb_write: true
-
-                    preview:
-                        type: str
-                        sqb_command: player.playlist.preview
-                        sqb_read: true
-                        sqb_write: true
-
-                    next:
-                        type: num
-                        sqb_command: player.playlist.next
-                        sqb_read: false
-                        sqb_write: true
-                        enforce_updates: true
-                        initial_value: 1
-
-                    previous:
-                        type: num
-                        sqb_command: player.playlist.previous
-                        sqb_read: false
-                        sqb_write: true
-                        enforce_updates: true
-                        initial_value: 1
-
-                    customskip:
-                        type: str
-                        sqb_command: player.playlist.customskip
-                        sqb_read: false
-                        sqb_write: true
-                        cache: true
-
-                info:
-
-                    read:
-                        type: bool
-                        enforce_updates: true
-                        sqb_read_group_trigger: ALL.player.info
-
-                    connected:
-                        type: bool
-                        sqb_command: player.info.connected
-                        sqb_read: true
-                        sqb_write: false
-                        sqb_read_group:
-                        -   ALL
-                        -   ALL.player
-                        -   ALL.player.info
-                        sqb_read_initial: true
-
-                    name:
-                        type: str
-                        sqb_command: player.info.name
-                        sqb_read: true
-                        sqb_write: false
-                        sqb_read_group:
-                        -   ALL
-                        -   ALL.player
-                        -   ALL.player.info
-                        sqb_read_initial: true
-
-                    syncgroups:
-                        type: num
-                        sqb_command: player.info.syncgroups
-                        sqb_read: true
-                        sqb_write: false
-                        sqb_read_group:
-                        -   ALL
-                        -   ALL.player
-                        -   ALL.player.info
-                        sqb_read_initial: true
-
-                    signalstrength:
-                        type: num
-                        sqb_command: player.info.signalstrength
-                        sqb_read: true
-                        sqb_write: false
-                        sqb_read_group:
-                        -   ALL
-                        -   ALL.player
-                        -   ALL.player.info
-                        sqb_read_initial: true
-
-                    genre:
-                        type: str
-                        sqb_command: player.info.genre
-                        sqb_read: true
-                        sqb_write: false
-                        sqb_read_group:
-                        -   ALL
-                        -   ALL.player
-                        -   ALL.player.info
-
-                    artist:
-                        type: str
-                        sqb_command: player.info.artist
-                        sqb_read: true
-                        sqb_write: false
-                        sqb_read_group:
-                        -   ALL
-                        -   ALL.player
-                        -   ALL.player.info
-
-                    album:
-                        type: str
-                        sqb_command: player.info.album
-                        sqb_read: true
-                        sqb_write: false
-                        sqb_read_group:
-                        -   ALL
-                        -   ALL.player
-                        -   ALL.player.info
-                        sqb_read_initial: true
-
-                    title:
-                        type: str
-                        sqb_command: player.info.title
-                        sqb_read: true
-                        sqb_write: false
-                        sqb_read_group:
-                        -   ALL
-                        -   ALL.player
-                        -   ALL.player.info
-                        sqb_read_initial: true
-
-                    path:
-                        type: str
-                        sqb_command: player.info.path
-                        sqb_read: true
-                        sqb_write: false
-                        sqb_read_group:
-                        -   ALL
-                        -   ALL.player
-                        -   ALL.player.info
-
-                    duration:
-                        type: num
-                        sqb_command: player.info.duration
-                        sqb_read: true
-                        sqb_write: false
-                        sqb_read_group:
-                        -   ALL
-                        -   ALL.player
-                        -   ALL.player.info
-
-                    albumarturl:
-                        type: str
-                        sqb_command: player.info.albumarturl
-                        sqb_read: true
-                        sqb_write: false
+                    sqb_read_group_trigger: ALL.player.playlist
+
+                repeat:
+                    type: str
+                    sqb_command: player.playlist.repeat
+                    sqb_read: true
+                    sqb_write: true
+                    sqb_read_group:
+                    -   ALL
+                    -   ALL.player
+                    -   ALL.player.playlist
+                    sqb_read_initial: true
+                    remark: 0 = Off, 1 = Song, 2 = Playlist
+
+                    lookup:
+                        type: list
+                        sqb_lookup: REPEAT#list
+
+                shuffle:
+                    type: str
+                    sqb_command: player.playlist.shuffle
+                    sqb_read: true
+                    sqb_write: true
+                    sqb_read_group:
+                    -   ALL
+                    -   ALL.player
+                    -   ALL.player.playlist
+                    sqb_read_initial: true
+                    remark: 0 = Off, 1 = Song, 2 = Album
+
+                    lookup:
+                        type: list
+                        sqb_lookup: SHUFFLE#list
+
+                index:
+                    type: str
+                    sqb_command: player.playlist.index
+                    sqb_read: true
+                    sqb_write: true
+                    sqb_read_group:
+                    -   ALL
+                    -   ALL.player
+                    -   ALL.player.playlist
+                    sqb_read_initial: true
+
+                name:
+                    type: str
+                    sqb_command: player.playlist.name
+                    sqb_read: true
+                    sqb_write: true
+                    sqb_read_group:
+                    -   ALL
+                    -   ALL.player
+                    -   ALL.player.playlist
+                    sqb_read_initial: true
+
+                id:
+                    type: num
+                    sqb_command: player.playlist.id
+                    sqb_read: true
+                    sqb_write: true
+
+                save:
+                    type: str
+                    sqb_command: player.playlist.save
+                    sqb_read: true
+                    sqb_write: true
+
+                load:
+                    type: str
+                    sqb_command: player.playlist.load
+                    sqb_read: true
+                    sqb_write: true
+
+                loadalbum:
+                    type: str
+                    sqb_command: player.playlist.loadalbum
+                    sqb_read: true
+                    sqb_write: true
+
+                loadtracks:
+                    type: str
+                    sqb_command: player.playlist.loadtracks
+                    sqb_read: true
+                    sqb_write: true
+
+                add:
+                    type: str
+                    sqb_command: player.playlist.add
+                    sqb_read: true
+                    sqb_write: true
+
+                addalbum:
+                    type: str
+                    sqb_command: player.playlist.addalbum
+                    sqb_read: true
+                    sqb_write: true
+
+                addtracks:
+                    type: str
+                    sqb_command: player.playlist.addtracks
+                    sqb_read: true
+                    sqb_write: true
+
+                insertalbum:
+                    type: str
+                    sqb_command: player.playlist.insertalbum
+                    sqb_read: true
+                    sqb_write: true
+
+                inserttracks:
+                    type: str
+                    sqb_command: player.playlist.inserttracks
+                    sqb_read: true
+                    sqb_write: true
+
+                tracks:
+                    type: num
+                    sqb_command: player.playlist.tracks
+                    sqb_read: true
+                    sqb_write: false
+                    sqb_read_group:
+                    -   ALL
+                    -   ALL.player
+                    -   ALL.player.playlist
+                    sqb_read_initial: true
+
+                clear:
+                    type: bool
+                    sqb_command: player.playlist.clear
+                    sqb_read: true
+                    sqb_write: true
+                    enforce_updates: true
+                    eval: True if value else None
+
+                delete:
+                    type: str
+                    sqb_command: player.playlist.delete
+                    sqb_read: true
+                    sqb_write: true
+
+                deleteitem:
+                    type: str
+                    sqb_command: player.playlist.deleteitem
+                    sqb_read: true
+                    sqb_write: true
+
+                deletealbum:
+                    type: str
+                    sqb_command: player.playlist.deletealbum
+                    sqb_read: true
+                    sqb_write: true
+
+                preview:
+                    type: str
+                    sqb_command: player.playlist.preview
+                    sqb_read: true
+                    sqb_write: true
+
+                next:
+                    type: num
+                    sqb_command: player.playlist.next
+                    sqb_read: false
+                    sqb_write: true
+                    enforce_updates: true
+                    initial_value: 1
+
+                previous:
+                    type: num
+                    sqb_command: player.playlist.previous
+                    sqb_read: false
+                    sqb_write: true
+                    enforce_updates: true
+                    initial_value: 1
+
+                customskip:
+                    type: str
+                    sqb_command: player.playlist.customskip
+                    sqb_read: false
+                    sqb_write: true
+                    cache: true
+
+            info:
+
+                read:
+                    type: bool
+                    enforce_updates: true
+                    sqb_read_group_trigger: ALL.player.info
+
+                connected:
+                    type: bool
+                    sqb_command: player.info.connected
+                    sqb_read: true
+                    sqb_write: false
+                    sqb_read_group:
+                    -   ALL
+                    -   ALL.player
+                    -   ALL.player.info
+                    sqb_read_initial: true
+
+                name:
+                    type: str
+                    sqb_command: player.info.name
+                    sqb_read: true
+                    sqb_write: false
+                    sqb_read_group:
+                    -   ALL
+                    -   ALL.player
+                    -   ALL.player.info
+                    sqb_read_initial: true
+
+                syncgroups:
+                    type: num
+                    sqb_command: player.info.syncgroups
+                    sqb_read: true
+                    sqb_write: false
+                    sqb_read_group:
+                    -   ALL
+                    -   ALL.player
+                    -   ALL.player.info
+                    sqb_read_initial: true
+
+                signalstrength:
+                    type: num
+                    sqb_command: player.info.signalstrength
+                    sqb_read: true
+                    sqb_write: false
+                    sqb_read_group:
+                    -   ALL
+                    -   ALL.player
+                    -   ALL.player.info
+                    sqb_read_initial: true
+
+                genre:
+                    type: str
+                    sqb_command: player.info.genre
+                    sqb_read: true
+                    sqb_write: false
+                    sqb_read_group:
+                    -   ALL
+                    -   ALL.player
+                    -   ALL.player.info
+
+                artist:
+                    type: str
+                    sqb_command: player.info.artist
+                    sqb_read: true
+                    sqb_write: false
+                    sqb_read_group:
+                    -   ALL
+                    -   ALL.player
+                    -   ALL.player.info
+
+                album:
+                    type: str
+                    sqb_command: player.info.album
+                    sqb_read: true
+                    sqb_write: false
+                    sqb_read_group:
+                    -   ALL
+                    -   ALL.player
+                    -   ALL.player.info
+                    sqb_read_initial: true
+
+                title:
+                    type: str
+                    sqb_command: player.info.title
+                    sqb_read: true
+                    sqb_write: false
+                    sqb_read_group:
+                    -   ALL
+                    -   ALL.player
+                    -   ALL.player.info
+                    sqb_read_initial: true
+
+                path:
+                    type: str
+                    sqb_command: player.info.path
+                    sqb_read: true
+                    sqb_write: false
+                    sqb_read_group:
+                    -   ALL
+                    -   ALL.player
+                    -   ALL.player.info
+
+                duration:
+                    type: num
+                    sqb_command: player.info.duration
+                    sqb_read: true
+                    sqb_write: false
+                    sqb_read_group:
+                    -   ALL
+                    -   ALL.player
+                    -   ALL.player.info
+
+                albumarturl:
+                    type: str
+                    sqb_command: player.info.albumarturl
+                    sqb_read: true
+                    sqb_write: false
 plugin_functions: NONE
 logic_parameters: NONE
