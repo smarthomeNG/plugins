@@ -128,6 +128,11 @@ class sdp_squeezebox(SmartDevicePlugin):
             url = f'http://{host}:{port}/music/current/cover.jpg?player={custom}'
             _dispatch('player.info.albumarturl', url, custom)
 
+        # set playlist ID
+        if command == 'player.playlist.load':
+            _trigger_read('player.playlist.id', custom)
+            _trigger_read('player.playlist.name', custom)
+            
         # update on new song
         if command == 'player.info.title' or (command == 'player.control.playpause' and value == "True"):
             _trigger_read('player.control.playmode', custom)

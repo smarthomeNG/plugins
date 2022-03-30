@@ -29,7 +29,7 @@ commands = {
     'player': {
         'control': {
             'power': {'read': True, 'write': True, 'read_cmd': '{CUSTOM_ATTR1} power ?', 'item_type': 'bool', 'write_cmd': '{CUSTOM_ATTR1} power {RAW_VALUE:01}', 'dev_datatype': 'str', 'reply_pattern': r'{CUSTOM_PATTERN1} (?:prefset server\s)?power (\d)', 'item_attrs': {'initial': True}},
-            'playmode': {'read': True, 'write': True, 'read_cmd': '{CUSTOM_ATTR1} mode ?', 'item_type': 'str', 'write_cmd': '{CUSTOM_ATTR1} mode {VALUE}', 'dev_datatype': 'SqueezePlayMode', 'cmd_settings': {'valid_list_ci': ['PLAY', 'PAUSE', 'STOP']}, 'reply_pattern': [r'{CUSTOM_PATTERN1} mode {VALID_LIST_CI}', r'{CUSTOM_PATTERN1} playlist (pause \d|stop)'], 'item_attrs': {'initial': True}},
+            'playmode': {'read': True, 'write': True, 'read_cmd': '{CUSTOM_ATTR1} mode ?', 'item_type': 'str', 'write_cmd': '{CUSTOM_ATTR1} mode {VALUE}', 'dev_datatype': 'SqueezePlayMode', 'cmd_settings': {'valid_list_ci': ['PLAY', 'PAUSE', 'STOP']}, 'reply_pattern': r'{CUSTOM_PATTERN1} (?:mode|playlist) (play$|pause\s?\d?|stop$)', 'item_attrs': {'initial': True}},
             'playpause': {'read': True, 'write': True, 'item_type': 'bool', 'write_cmd': '{CUSTOM_ATTR1} {VALUE}', 'dev_datatype': 'SqueezePlay', 'reply_pattern': r'{CUSTOM_PATTERN1} (?:playlist\s)?(play|pause)(?:\s3)?$'},
             'stop': {'read': True, 'write': True, 'item_type': 'bool', 'write_cmd': '{CUSTOM_ATTR1} {VALUE}', 'dev_datatype': 'SqueezeStop', 'reply_pattern': r'{CUSTOM_PATTERN1} (?:playlist\s)?(stop)$'},
             'mute': {'read': True, 'write': True, 'read_cmd': '{CUSTOM_ATTR1} mixer muting ?', 'item_type': 'bool', 'write_cmd': '{CUSTOM_ATTR1} mixer muting {RAW_VALUE:01}', 'dev_datatype': 'str', 'reply_pattern': r'{CUSTOM_PATTERN1} (?:mixer muting|prefset server mute) (\d)', 'item_attrs': {'initial': True}},
@@ -50,14 +50,14 @@ commands = {
             'forward': {'read': True, 'write': True, 'write_cmd': '{CUSTOM_ATTR1} time +{VALUE}', 'item_type': 'num', 'dev_datatype': 'str', 'reply_pattern': r'{CUSTOM_PATTERN1} time \+(\d+(?:\.\d{2})?)', 'item_attrs': {'enforce': True, 'attributes': {'initial_value': 10}}},
             'rewind': {'read': True, 'write': True, 'write_cmd': '{CUSTOM_ATTR1} time -{VALUE}', 'item_type': 'num', 'dev_datatype': 'str', 'reply_pattern': r'{CUSTOM_PATTERN1} time \-(\d+(?:\.\d{2})?)', 'item_attrs': {'enforce': True, 'attributes': {'initial_value': 10}}},
             'playsong': {'read': False, 'write': True, 'write_cmd': '{CUSTOM_ATTR1} playlist play {VALUE}', 'item_type': 'str', 'dev_datatype': 'str'},
-            'sleep': {'read': True, 'write': True, 'read_cmd': '{CUSTOM_ATTR1} sleep ?', 'write_cmd': '{CUSTOM_ATTR1} sleep {VALUE}', 'item_type': 'num', 'dev_datatype': 'str', 'reply_pattern': '{CUSTOM_PATTERN1} sleep (.*)', 'item_attrs': {'initial': True}}
+            'sleep': {'read': True, 'write': True, 'read_cmd': '{CUSTOM_ATTR1} sleep ?', 'write_cmd': '{CUSTOM_ATTR1} sleep {VALUE}', 'item_type': 'num', 'dev_datatype': 'str', 'reply_pattern': '{CUSTOM_PATTERN1} sleep (.*[^?])', 'item_attrs': {'initial': True}}
         },
         'playlist': {
             'repeat': {'read': True, 'write': True, 'read_cmd': '{CUSTOM_ATTR1} playlist repeat ?', 'item_type': 'str', 'write_cmd': '{CUSTOM_ATTR1} playlist repeat {VALUE}', 'dev_datatype': 'str', 'reply_pattern': r'{CUSTOM_PATTERN1} playlist repeat {LOOKUP}', 'lookup': 'REPEAT', 'item_attrs': {'initial': True,  'attributes': {'remark': '0 = Off, 1 = Song, 2 = Playlist'}, 'lookup_item': True}},
             'shuffle': {'read': True, 'write': True, 'read_cmd': '{CUSTOM_ATTR1} playlist shuffle ?', 'item_type': 'str', 'write_cmd': '{CUSTOM_ATTR1} playlist shuffle {VALUE}', 'dev_datatype': 'str', 'reply_pattern': r'{CUSTOM_PATTERN1} playlist shuffle {LOOKUP}', 'lookup': 'SHUFFLE', 'item_attrs': {'initial': True,  'attributes': {'remark': '0 = Off, 1 = Song, 2 = Album'}, 'lookup_item': True}},
-            'index': {'read': True, 'write': True, 'read_cmd': '{CUSTOM_ATTR1} playlist index ?', 'write_cmd': '{CUSTOM_ATTR1} playlist index c', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'{CUSTOM_PATTERN1} playlist index (\d+)', 'item_attrs': {'initial': True}},
-            'name': {'read': True, 'write': True, 'read_cmd': '{CUSTOM_ATTR1} playlist name ?', 'write_cmd': '{CUSTOM_ATTR1} playlist name {VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': '{CUSTOM_PATTERN1} playlist name (.*)', 'item_attrs': {'initial': True}},
-            'id': {'read': True, 'write': True, 'write_cmd': '{CUSTOM_ATTR1} playlistcontrol cmd:load playlist_id:{VALUE}', 'item_type': 'num', 'dev_datatype': 'str', 'reply_pattern': r'{CUSTOM_PATTERN1} playlistcontrol cmd:load playlist_id:(\d+)'},
+            'index': {'read': True, 'write': True, 'read_cmd': '{CUSTOM_ATTR1} playlist index ?', 'write_cmd': '{CUSTOM_ATTR1} playlist index {VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'{CUSTOM_PATTERN1} playlist (?:index|newsong .*) (\d+)$', 'item_attrs': {'initial': True}},
+            'name': {'read': True, 'write': True, 'read_cmd': '{CUSTOM_ATTR1} playlist name ?', 'write_cmd': '{CUSTOM_ATTR1} playlist name {VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': '{CUSTOM_PATTERN1} playlist name (.*[^?])', 'item_attrs': {'initial': True}},
+            'id': {'read': True, 'write': True, 'read_cmd': '{CUSTOM_ATTR1} status - 1', 'write_cmd': '{CUSTOM_ATTR1} playlistcontrol cmd:load playlist_id:{VALUE}', 'item_type': 'num', 'dev_datatype': 'str', 'reply_pattern': r'{CUSTOM_PATTERN1} (?:status - 1 .*|playlist playlistsinfo |playlistcontrol cmd:load playlist_)id:(\d+)'},
             'save': {'read': True, 'write': True, 'write_cmd': '{CUSTOM_ATTR1} playlist save {VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': '{CUSTOM_PATTERN1} playlist save (.*)'},
             'load': {'read': True, 'write': True, 'write_cmd': '{CUSTOM_ATTR1} playlist resume {VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': '{CUSTOM_PATTERN1} playlist resume (.*)'},
             'loadalbum': {'read': True, 'write': True, 'write_cmd': '{CUSTOM_ATTR1} playlist loadalbum {VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': '{CUSTOM_PATTERN1} playlist loadalbum (.*)'},
@@ -67,7 +67,7 @@ commands = {
             'addtracks': {'read': True, 'write': True, 'write_cmd': '{CUSTOM_ATTR1} playlist addtracks {VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': '{CUSTOM_PATTERN1} playlist addtracks (.*)'},
             'insertalbum': {'read': True, 'write': True, 'write_cmd': '{CUSTOM_ATTR1} playlist insertalbum {VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': '{CUSTOM_PATTERN1} playlist insertalbum (.*)'},
             'inserttracks': {'read': True, 'write': True, 'write_cmd': '{CUSTOM_ATTR1} playlist insert {VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': '{CUSTOM_PATTERN1} playlist insert (.*)'},
-            'tracks': {'read': True, 'write': False, 'read_cmd': '{CUSTOM_ATTR1} playlist tracks ?', 'item_type': 'num', 'dev_datatype': 'str', 'reply_pattern': '{CUSTOM_PATTERN1} playlist tracks (.*)', 'item_attrs': {'initial': True}},
+            'tracks': {'read': True, 'write': False, 'read_cmd': '{CUSTOM_ATTR1} playlist tracks ?', 'item_type': 'num', 'dev_datatype': 'str', 'reply_pattern': '{CUSTOM_PATTERN1} playlist tracks (.*[^?])', 'item_attrs': {'initial': True}},
             'clear': {'read': True, 'write': True, 'write_cmd': '{CUSTOM_ATTR1} playlist clear', 'item_type': 'bool', 'dev_datatype': 'str', 'reply_pattern': '{CUSTOM_PATTERN1} playlist clear$', 'item_attrs': {'enforce': True, 'attributes': {'eval': 'True if value else None'}}},
             'delete': {'read': True, 'write': True, 'write_cmd': '{CUSTOM_ATTR1} playlist delete {VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': '{CUSTOM_PATTERN1} playlist delete (.*)'},
             'deleteitem': {'read': True, 'write': True, 'write_cmd': '{CUSTOM_ATTR1} playlist deleteitem {VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': '{CUSTOM_PATTERN1} playlist deleteitem (.*)'},
@@ -114,6 +114,7 @@ item_templates = {
                 'eval': 'True if sh....playmode() == "play" else None',
                 'enforce_updates': True,
                 'cycle': '10 = True',
+                'md_device': 'DEVICENAME',
                 'md_read_group_trigger': 'player.control.time_poll'
             }
     },
