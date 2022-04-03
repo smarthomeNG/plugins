@@ -1132,7 +1132,7 @@ class FritzDevice:
         calllist_url = calllist_url['NewCallListURL']
         calllist = self._request_response_to_xml(self._request(calllist_url, self._timeout, self._verify))
 
-        if calllist:
+        if calllist is not None:
             result_entries = []
             for calllist_entry in calllist.iter('Call'):
                 result_entry = {}
@@ -1633,7 +1633,8 @@ class FritzHome:
     """
 
     _login_route = "/login_sid.lua?version=2"
-    _event_route = '/query.lua?mq_log=logger:status/log&sid='
+    _log_route = '/query.lua?mq_log=logger:status/log'
+    _log_separate_route = '/query.lua?mq_log=logger:status/log_separate'
     _homeauto_route = '/webservices/homeautoswitch.lua'
     _internet_status_route = '/internet/inetstat_monitor.lua?sid='
 
@@ -1659,6 +1660,7 @@ class FritzHome:
         self._aha_devices = dict()
         self._session = requests.Session()
         self._connected = False
+        self._log_entry_count = 200
 
         # Login
         self.login()
@@ -1777,53 +1779,56 @@ class FritzHome:
                         'switch_mode': 'switch_mode',
                         'lock': 'lock'}
 
-        _device_dict = self.get_devices_as_dict()
+        try:
+            _device_dict = self.get_devices_as_dict()
+        except Exception as e:
+            self._plugin_instance.logger.warning(f"Error {e} eccurred during method _poll_aha.")
+        else:
+            for ain in _device_dict:
+                self._plugin_instance.logger.debug(f"_poll_aha: handle AIN={ain} with _device_dict[ain]={_device_dict[ain]}")
+                self._aha_devices[ain] = {}
+                self._aha_devices[ain]['device_functions'] = []
 
-        for ain in _device_dict:
-            self._plugin_instance.logger.debug(f"_poll_aha: handle AIN={ain} with _device_dict[ain]={_device_dict[ain]}")
-            self._aha_devices[ain] = {}
-            self._aha_devices[ain]['device_functions'] = []
+                for entry in _link_base:
+                    self._aha_devices[ain][entry] = eval(f"_device_dict[ain].{_link_base[entry]}")
 
-            for entry in _link_base:
-                self._aha_devices[ain][entry] = eval(f"_device_dict[ain].{_link_base[entry]}")
+                if _device_dict[ain].has_thermostat:
+                    self._aha_devices[ain]['device_functions'].append('thermostat')
+                    for entry in _link_thermostat:
+                        self._aha_devices[ain][entry] = eval(f"_device_dict[ain].{_link_thermostat[entry]}")
 
-            if _device_dict[ain].has_thermostat:
-                self._aha_devices[ain]['device_functions'].append('thermostat')
-                for entry in _link_thermostat:
-                    self._aha_devices[ain][entry] = eval(f"_device_dict[ain].{_link_thermostat[entry]}")
+                if _device_dict[ain].has_temperature_sensor:
+                    self._aha_devices[ain]['device_functions'].append('temperature_sensor')
+                    for entry in _link_temperature:
+                        self._aha_devices[ain][entry] = eval(f"_device_dict[ain].{_link_temperature[entry]}")
 
-            if _device_dict[ain].has_temperature_sensor:
-                self._aha_devices[ain]['device_functions'].append('temperature_sensor')
-                for entry in _link_temperature:
-                    self._aha_devices[ain][entry] = eval(f"_device_dict[ain].{_link_temperature[entry]}")
+                if _device_dict[ain].has_button:
+                    self._aha_devices[ain]['device_functions'].append('button')
+                    for entry in _link_button:
+                        self._aha_devices[ain][entry] = eval(f"_device_dict[ain].{_link_button[entry]}")
 
-            if _device_dict[ain].has_button:
-                self._aha_devices[ain]['device_functions'].append('button')
-                for entry in _link_button:
-                    self._aha_devices[ain][entry] = eval(f"_device_dict[ain].{_link_button[entry]}")
+                if _device_dict[ain].has_alarm:
+                    self._aha_devices[ain]['device_functions'].append('alarm')
+                    for entry in _link_alarm:
+                        self._aha_devices[ain][entry] = eval(f"_device_dict[ain].{_link_alarm[entry]}")
 
-            if _device_dict[ain].has_alarm:
-                self._aha_devices[ain]['device_functions'].append('alarm')
-                for entry in _link_alarm:
-                    self._aha_devices[ain][entry] = eval(f"_device_dict[ain].{_link_alarm[entry]}")
+                if _device_dict[ain].has_lightbulb:
+                    self._aha_devices[ain]['device_functions'].append('color_device')
+                    for entry in _link_lightbulb:
+                        self._aha_devices[ain][entry] = eval(f"_device_dict[ain].{_link_lightbulb[entry]}")
 
-            if _device_dict[ain].has_lightbulb:
-                self._aha_devices[ain]['device_functions'].append('color_device')
-                for entry in _link_lightbulb:
-                    self._aha_devices[ain][entry] = eval(f"_device_dict[ain].{_link_lightbulb[entry]}")
+                if _device_dict[ain].has_repeater:
+                    self._aha_devices[ain]['device_functions'].append('repeater')
 
-            if _device_dict[ain].has_repeater:
-                self._aha_devices[ain]['device_functions'].append('repeater')
+                if _device_dict[ain].has_powermeter:
+                    self._aha_devices[ain]['device_functions'].append('powermeter')
+                    for entry in _link_powermeter:
+                        self._aha_devices[ain][entry] = eval(f"_device_dict[ain].{_link_powermeter[entry]}")
 
-            if _device_dict[ain].has_powermeter:
-                self._aha_devices[ain]['device_functions'].append('powermeter')
-                for entry in _link_powermeter:
-                    self._aha_devices[ain][entry] = eval(f"_device_dict[ain].{_link_powermeter[entry]}")
-
-            if _device_dict[ain].has_switch:
-                self._aha_devices[ain]['device_functions'].append('powermeter')
-                for entry in _link_switch:
-                    self._aha_devices[ain][entry] = eval(f"_device_dict[ain].{_link_switch[entry]}")
+                if _device_dict[ain].has_switch:
+                    self._aha_devices[ain]['device_functions'].append('powermeter')
+                    for entry in _link_switch:
+                        self._aha_devices[ain][entry] = eval(f"_device_dict[ain].{_link_switch[entry]}")
 
     def update_items(self):
         """
@@ -2587,10 +2592,11 @@ class FritzHome:
         if not self._logged_in:
             self.login()
 
-        url = self.get_prefixed_host() + self._event_route
+        url = self.get_prefixed_host() + self._log_route
         params = {"sid": self._sid}
         data = self._request(url, params, result='json')['mq_log']
         newlog = []
+        idx = 0
         for text, typ, cat in data:
             l_date = text[:8]
             l_time = text[9:17]
@@ -2599,7 +2605,25 @@ class FritzHome:
             l_type = int(typ)
             l_ts = int(datetime.datetime.timestamp(datetime.datetime.strptime(text[:17], '%d.%m.%y %H:%M:%S')))
             newlog.append([l_text, l_type, l_cat, l_ts, l_date, l_time])
+            if idx == self._log_entry_count:
+                break
+            idx += 1
         return newlog
+
+    def get_device_log_from_lua_separated(self):
+        """
+        Gets the Device Log from the LUA HTTP Interface via LUA Scripts (more complete than the get_device_log TR-064 version).
+
+        :return: list of device logs list (date, time, log, type, category)
+        """
+
+        if not self._logged_in:
+            self.login()
+
+        url = self.get_prefixed_host() + self._log_separate_route
+        params = {"sid": self._sid}
+        data = self._request(url, params, result='json')['mq_log']
+        return data
 
     # Handling of updated items
 
@@ -3437,7 +3461,7 @@ class Callmonitor:
                 self._trigger_items[item] = (avm_data_type, avm_incoming_allowed, avm_target_number)
 
         elif avm_data_type in _call_duration_attributes:
-            if 'in' in avm_data_type:
+            if avm_data_type == 'call_duration_incoming':
                 self._duration_item_in[item] = (avm_data_type, None)
             else:
                 self._duration_item_out[item] = (avm_data_type, None)
@@ -3487,7 +3511,7 @@ class Callmonitor:
                     if element['Type'] in ['1', '2']:
                         date = str(element['Date'])
                         date = date[8:10] + "." + date[5:7] + "." + date[2:4] + " " + date[11:19]
-                        item(date, self._plugin_instance.get_shortname())
+                        item(str(time), self._plugin_instance.get_shortname())
                         break
 
             elif avm_data_type == 'call_event_incoming':
@@ -3528,7 +3552,7 @@ class Callmonitor:
                     if element['Type'] in ['3', '4']:
                         date = str(element['Date'])
                         date = date[8:10] + "." + date[5:7] + "." + date[2:4] + " " + date[11:19]
-                        item(date, self._plugin_instance.get_shortname())
+                        item(str(time), self._plugin_instance.get_shortname())
                         break
 
             elif avm_data_type == 'call_event_outgoing':
@@ -3689,9 +3713,9 @@ class Callmonitor:
         :param line: data line which is parsed
         """
 
+        line = line.split(";")
         if self._plugin_instance.debug_log:
             self._plugin_instance.logger.debug(line)
-        line = line.split(";")
 
         try:
             if line[1] == "RING":
@@ -3802,7 +3826,7 @@ class Callmonitor:
                     else:
                         item(call_to, self._plugin_instance.get_shortname())
                 elif avm_data_type == 'last_call_date_outgoing':
-                    item(time, self._plugin_instance.get_shortname())
+                    item(str(time), self._plugin_instance.get_shortname())
                 elif avm_data_type == 'call_event_outgoing':
                     item(event.lower(), self._plugin_instance.get_shortname())
                 elif avm_data_type == 'last_number_outgoing':

@@ -25,14 +25,9 @@
 #########################################################################
 
 import json
+import cherrypy
 from lib.item import Items
 from lib.model.smartplugin import SmartPluginWebIf
-
-# ------------------------------------------
-#    Webinterface of the plugin
-# ------------------------------------------
-
-import cherrypy
 from jinja2 import Environment, FileSystemLoader
 
 
@@ -91,6 +86,11 @@ class WebInterface(SmartPluginWebIf):
 
         tmpl = self.tplenv.get_template('index.html')
 
+        try:
+            pagelength = self.plugin.webif_pagelength
+        except Exception:
+            pagelength = 100
+
         return tmpl.render(plugin_shortname=self.plugin.get_shortname(),
                            plugin_version=self.plugin.get_version(),
                            plugin_info=self.plugin.get_info(),
@@ -101,7 +101,7 @@ class WebInterface(SmartPluginWebIf):
                            aha_items=aha_items,
                            aha_item_count=aha_item_count,
                            p=self.plugin,
-                           webif_pagelength=self.plugin.webif_pagelength,
+                           webif_pagelength=pagelength,
                            )
 
     @cherrypy.expose
