@@ -57,7 +57,7 @@
     }
     
     try {
-      table0 = $('#itemtable').DataTable( {
+      table = $('#itemtable').DataTable( {
         pageLength: webif_pagelength,
         pageResize: resize});
       table1 = $('#smarthomeitemtable').DataTable( {
@@ -173,7 +173,7 @@
 
 {% block bodytab1 %}
 <div class="container-fluid m-2 table-resize">
-    <table id="itemtable" class="table0 table-striped table-hover pluginList display">
+    <table id="itemtable" class="table table-striped table-hover pluginList dataTableAdditional">
         <thead>
             <tr>
                 <th class="item">{{ _('Pfad') }}</th>
@@ -210,7 +210,7 @@
 
 {% block bodytab2 %}
 <div class="container-fluid m-2 table-resize">
-    <table id="smarthomeitemtable" class="table1 table-striped table-hover pluginList display">
+    <table id="smarthomeitemtable" class="table table-striped table-hover pluginList dataTableAdditional">
         <thead>
             <tr>
                 <th class="item">{{ _('Pfad') }}</th>
@@ -282,7 +282,7 @@
     {% set logentries = p._fritz_home.get_device_log_from_lua_separated() %}
 {% endif %}
 <div class="container-fluid m-2 table-resize">
-    <table id="logtable" class="table5 table-striped table-hover pluginList display">
+    <table id="logtable" class="table table-striped table-hover pluginList dataTableAdditional">
         <thead>
             <tr>
                 <th style="width:100px">{{ _('Datum')}}</th>
@@ -318,7 +318,7 @@
 
 {% block bodytab5 %}
 <div class="container-fluid m-2 table-resize">
-    <table id="call_monitortable" class="table3 table-striped table-hover pluginList display">
+    <table id="call_monitortable" class="table table-striped table-hover pluginList dataTableAdditional">
         <thead>
             <tr class="shng_heading">
                 <th class="item">{{ _('Pfad') }}</th>
@@ -355,7 +355,7 @@
 
 {% block bodytab6 %}
 <div class="container-fluid m-2 table-resize">
-    <table id="smarthome_devicetable" class="table6 table-striped table-hover pluginList display">
+    <table id="smarthome_devicetable" class="table table-striped table-hover pluginList dataTableAdditional">
         <thead>
             <tr>
                 <th style="width: 5%">{{ _('No') }}</th>
@@ -378,7 +378,7 @@
 </div>
 <!-- <div class="table-responsive" style="margin-left: 3px; margin-right: 3px;" class="row"> -->
     <!-- <div class="col-sm-12"> -->
-		<!-- <table id="12" class="table7 table-striped table-hover pluginList display"> -->
+		<!-- <table id="12" class="table table-striped table-hover pluginList dataTableAdditional"> -->
 			<!-- <thead> -->
 				<!-- <tr> -->
 					<!-- <th>{{ _('1') }}</th> -->
