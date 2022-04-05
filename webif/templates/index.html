@@ -10,6 +10,9 @@
   table th.type {
     width: 100px;
     }
+  table th.type2 {
+    width: 50px;
+    }
   table th.datatype {
     width: 250px;
   }
@@ -18,22 +21,6 @@
   }
   table th.meldung {
     max-width: 450px;
-  }
-  #itemtable {
-    display: none;
-    table-layout: fixed;
-  }
-  #smarthomeitemtable {
-    display: none;
-    table-layout: fixed;
-  }
-  #smarthome_devicetable {
-    display: none;
-    table-layout: fixed;
-  } 
-  #logtable {
-    display: none;
-    table-layout: fixed;
   }
 </style>
 {% endblock pluginstyles %}
@@ -288,11 +275,11 @@
     <table id="logtable" class="table table-striped table-hover pluginList dataTableAdditional">
         <thead>
             <tr>
-                <th style="width:100px">{{ _('Datum')}}</th>
-                <th style="width:100px">{{ _('Uhrzeit')}}</th>
-                <th>{{ _('Meldung')}}</th>
-                <th style="width:100px">{{ _('Typ')}}</th>
-                <th style="width:100px">{{ _('Kategorie')}}</th>
+                <th class="type">{{ 'Datum' }}</th>
+                <th class="type">{{ 'Uhrzeit' }}</th>
+                <th class="meldung">{{ 'Meldung' }}</th>
+                <th class="type2">{{ 'Typ' }}</th>
+                <th class="type">{{ 'Kategorie' }}</th>
             </tr>
         </thead>
         <tbody>
@@ -318,7 +305,6 @@
     </table>
 </div>
 {% endblock %}
-
 
 
 {% block bodytab5 %}
@@ -357,6 +343,7 @@
     </table>
 </div>
 {% endblock %}
+
 
 {% block bodytab6 %}
 <div class="container-fluid m-2 table-resize">
