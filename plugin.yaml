@@ -84,6 +84,12 @@ parameters:
         description:
             de: '(optional) Aktiviert oder deaktiviert den Zugriff auf AVM Smarthome Geräte mit dem AHA HTTP Interface.'
             en: '(optional) Activates or deactivates access to AVM smarthome devices via AHA HTTP interface'
+    log_entry_count:
+        type: int
+        default: 200
+        description:
+            de: '(optional) Anzahl der Log-Messages, die verarbeitet/bereitgestellt werden. 0 = alle'
+            en: '(optional) Amount of Log-Messages, witch will be displayed. 0 = all'
     webif_pagelength:
         type: int
         default: 0

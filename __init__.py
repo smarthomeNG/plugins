@@ -269,9 +269,11 @@ class AVM2(SmartPlugin):
         _username = self.get_parameter_value('username')
         _passwort = self.get_parameter_value('password')
         _call_monitor_incoming_filter = self.get_parameter_value('call_monitor_incoming_filter')
+        _log_entry_count = self.get_parameter_value('log_entry_count')
         self._call_monitor = self.get_parameter_value('call_monitor')
         self._aha_http_interface = self.get_parameter_value('avm_home_automation')
         self._cycle = self.get_parameter_value('cycle')
+        self.log_entries = self.get_parameter_value('log_entries')
         self.webif_pagelength = self.get_parameter_value('webif_pagelength')
         self.alive = False
         ssl = self.get_parameter_value('ssl')
@@ -290,7 +292,7 @@ class AVM2(SmartPlugin):
         # init FritzHome
         if self._aha_http_interface:
             try:
-                self._fritz_home = FritzHome(_host, ssl, _verify, _username, _passwort, self)
+                self._fritz_home = FritzHome(_host, ssl, _verify, _username, _passwort, _log_entry_count, self)
             except Exception as e:
                 self.logger.warning(f"Error {e} establishing connection to Fritzdevice via AHA-HTTP-Interface.")
                 self._fritz_home = None
@@ -1638,7 +1640,7 @@ class FritzHome:
     _homeauto_route = '/webservices/homeautoswitch.lua'
     _internet_status_route = '/internet/inetstat_monitor.lua?sid='
 
-    def __init__(self, host, ssl, verify, user, password, plugin_instance):
+    def __init__(self, host, ssl, verify, user, password, _log_entry_count, plugin_instance):
         """
         Init the Class FritzHome
         """
@@ -1660,7 +1662,7 @@ class FritzHome:
         self._aha_devices = dict()
         self._session = requests.Session()
         self._connected = False
-        self._log_entry_count = 200
+        self._log_entry_count = _log_entry_count
 
         # Login
         self.login()
@@ -2594,9 +2596,16 @@ class FritzHome:
 
         url = self.get_prefixed_host() + self._log_route
         params = {"sid": self._sid}
+
+        # get data
         data = self._request(url, params, result='json')['mq_log']
+
+        # cut data if needed
+        if self._log_entry_count:
+            data = data[:self._log_entry_count]
+
+        # bring data to needed format
         newlog = []
-        idx = 0
         for text, typ, cat in data:
             l_date = text[:8]
             l_time = text[9:17]
@@ -2605,9 +2614,6 @@ class FritzHome:
             l_type = int(typ)
             l_ts = int(datetime.datetime.timestamp(datetime.datetime.strptime(text[:17], '%d.%m.%y %H:%M:%S')))
             newlog.append([l_text, l_type, l_cat, l_ts, l_date, l_time])
-            if idx == self._log_entry_count:
-                break
-            idx += 1
         return newlog
 
     def get_device_log_from_lua_separated(self):
@@ -2622,7 +2628,14 @@ class FritzHome:
 
         url = self.get_prefixed_host() + self._log_separate_route
         params = {"sid": self._sid}
+
+        # get data
         data = self._request(url, params, result='json')['mq_log']
+
+        # cut data if needed
+        if self._log_entry_count:
+            data = data[:self._log_entry_count]
+
         return data
 
     # Handling of updated items
