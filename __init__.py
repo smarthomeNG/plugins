@@ -289,17 +289,19 @@ class AVM2(SmartPlugin):
         else:
             self.logger.debug(f"Connection to FritzDevice established.")
 
-        # init FritzHome
-        if self._aha_http_interface:
-            try:
-                self._fritz_home = FritzHome(_host, ssl, _verify, _username, _passwort, _log_entry_count, self)
-            except Exception as e:
-                self.logger.warning(f"Error {e} establishing connection to Fritzdevice via AHA-HTTP-Interface.")
-                self._fritz_home = None
-            else:
-                self.logger.debug(f"Connection to FritzDevice via AHA-HTTP-Interface established.")
+        if self._fritz_device:
+            self.is_fritzbox = self._fritz_device.is_fritzbox
         else:
+            self.is_fritzbox = None
+
+        # init FritzHome
+        try:
+            self._fritz_home = FritzHome(_host, ssl, _verify, _username, _passwort, _log_entry_count, self)
+        except Exception as e:
+            self.logger.warning(f"Error {e} establishing connection to Fritzdevice via AHA-HTTP-Interface.")
             self._fritz_home = None
+        else:
+            self.logger.debug(f"Connection to FritzDevice via AHA-HTTP-Interface established.")
 
         # init Call Monitor
         if self._call_monitor and self._fritz_device.connected:
@@ -324,7 +326,7 @@ class AVM2(SmartPlugin):
         """
         self.logger.debug("Run method called")
         self.scheduler_add('poll_tr064', self._fritz_device.update_item_values, prio=5, cycle=self._cycle, offset=4)
-        if self._aha_http_interface:
+        if self._aha_http_interface and self.is_fritzbox:
             # add scheduler for updating items
             self.scheduler_add('poll_aha', self._fritz_home.update_items, prio=5, cycle=self._cycle, offset=2)
             # add scheduler for checking validity of session id
@@ -812,6 +814,13 @@ class FritzDevice:
         if not self._data_cache['InternetGatewayDevice']['DeviceInfo']['GetSecurityPort']:
             self._data_cache['InternetGatewayDevice']['DeviceInfo']['GetSecurityPort'] = self.client.InternetGatewayDevice.DeviceInfo.GetSecurityPort()
         return self._data_cache['InternetGatewayDevice']['DeviceInfo']['GetSecurityPort']['NewSecurityPort']
+
+    @property
+    def is_fritzbox(self):
+        if 'box' in self.model_name:
+            return True
+        else:
+            return False
 
     # ----------------------------------
     # Update methods
@@ -2043,7 +2052,7 @@ class FritzHome:
 
     def check_sid(self):
         """
-        Check if knows Session ID is still valid
+        Check if known Session ID is still valid
         """
 
         self._plugin_instance.logger.debug(f"check_sid called")
