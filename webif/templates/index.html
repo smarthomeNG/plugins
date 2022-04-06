@@ -22,9 +22,6 @@
   .logentry {
     max-width: 450px;
   }
-  .smarthomedetails {
-    max-width: 700px;
-  }
 </style>
 {% endblock pluginstyles %}
 
@@ -67,7 +64,6 @@
         pageResize: resize});
       table4 = $('#smarthome_devicetable').DataTable( {
         pageLength: webif_pagelength,
-        columnDefs: [{ "targets": [2], "className": "truncate smarthomedetails"}].concat($.fn.dataTable.defaults.columnDefs),
         pageResize: resize});
     }
     catch (e) {
@@ -116,6 +112,7 @@
     {% set language = 'en' %}
 {% endif %}
 
+
 {% block headtable %}
 <span id='webif_pagelength' style="display:none">{{ webif_pagelength }}</span>
 <table class="table table-striped table-hover">
@@ -163,10 +160,12 @@
 </table>
 {% endblock %}
 
+
 {% block buttons %}
     <button type="button" class="btn btn-shng btn-sm" onclick="if (confirm('{{ _('Wollen Sie das Gerät wirklich neu starten?') }}')) { jQuery.get('reboot'); }">{{ _('Reboot') }}</button>
     <button type="button" class="btn btn-shng btn-sm" onclick="if (confirm('{{ _('Wollen Sie die Internetverbindung wirklich neu aufbauen?') }}')) { jQuery.get('reconnect'); }">{{ _('Reconnect WAN') }}</button>
 {% endblock buttons %}
+
 
 {% block bodytab1 %}
 <div class="container-fluid m-2 table-resize">
@@ -205,6 +204,7 @@
 </div>
 {% endblock %}
 
+
 {% block bodytab2 %}
 <div class="container-fluid m-2 table-resize">
     <table id="smarthomeitemtable" class="table table-striped table-hover pluginList dataTableAdditional">
@@ -241,6 +241,7 @@
     </table>
 </div>
 {% endblock %}
+
 
 {% block bodytab3 %}
 <div class="container-fluid m-2 table-resize">
