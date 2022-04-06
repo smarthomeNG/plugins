@@ -289,11 +289,6 @@ class AVM2(SmartPlugin):
         else:
             self.logger.debug(f"Connection to FritzDevice established.")
 
-        if self._fritz_device:
-            self.is_fritzbox = self._fritz_device.is_fritzbox
-        else:
-            self.is_fritzbox = None
-
         # init FritzHome
         try:
             self._fritz_home = FritzHome(_host, ssl, _verify, _username, _passwort, _log_entry_count, self)
@@ -326,7 +321,7 @@ class AVM2(SmartPlugin):
         """
         self.logger.debug("Run method called")
         self.scheduler_add('poll_tr064', self._fritz_device.update_item_values, prio=5, cycle=self._cycle, offset=4)
-        if self._aha_http_interface and self.is_fritzbox:
+        if self._aha_http_interface and self._fritz_device.is_fritzbox:
             # add scheduler for updating items
             self.scheduler_add('poll_aha', self._fritz_home.update_items, prio=5, cycle=self._cycle, offset=2)
             # add scheduler for checking validity of session id
@@ -817,7 +812,7 @@ class FritzDevice:
 
     @property
     def is_fritzbox(self):
-        if 'box' in self.model_name:
+        if 'box' in self.model_name.lower():
             return True
         else:
             return False
@@ -2638,12 +2633,12 @@ class FritzHome:
         url = self.get_prefixed_host() + self._log_separate_route
         params = {"sid": self._sid}
 
-        # get data
-        data = self._request(url, params, result='json')['mq_log']
+        data = self._request(url, params, result='json')
 
-        # cut data if needed
-        if self._log_entry_count:
-            data = data[:self._log_entry_count]
+        if data:
+            data = data['mq_log']
+            if self._log_entry_count:
+                data = data[:self._log_entry_count]
 
         return data
 
