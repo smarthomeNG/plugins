@@ -226,6 +226,7 @@ item_structs:
                 sqb_command: server.listenmode
                 sqb_read: true
                 sqb_write: true
+                sqb_custom1: ''
 
             playercount:
                 type: num
@@ -235,6 +236,7 @@ item_structs:
                 sqb_read_group:
                 -   server
                 sqb_read_initial: true
+                sqb_custom1: ''
 
             favoritescount:
                 type: num
@@ -244,6 +246,7 @@ item_structs:
                 sqb_read_group:
                 -   server
                 sqb_read_initial: true
+                sqb_custom1: ''
 
     database:
 
@@ -266,6 +269,7 @@ item_structs:
                     sqb_command: database.rescan.start
                     sqb_read: false
                     sqb_write: true
+                    sqb_custom1: ''
 
                 running:
                     type: bool
@@ -276,12 +280,14 @@ item_structs:
                     -   database
                     -   database.rescan
                     sqb_read_initial: true
+                    sqb_custom1: ''
 
                 progress:
                     type: str
                     sqb_command: database.rescan.progress
                     sqb_read: true
                     sqb_write: false
+                    sqb_custom1: ''
 
                 runningtime:
                     type: str
@@ -291,24 +297,28 @@ item_structs:
                     sqb_read_group:
                     -   database
                     -   database.rescan
+                    sqb_custom1: ''
 
                 fail:
                     type: str
                     sqb_command: database.rescan.fail
                     sqb_read: true
                     sqb_write: false
+                    sqb_custom1: ''
 
                 abortscan:
                     type: bool
                     sqb_command: database.rescan.abortscan
                     sqb_read: true
                     sqb_write: true
+                    sqb_custom1: ''
 
                 wipecache:
                     type: bool
                     sqb_command: database.rescan.wipecache
                     sqb_read: true
                     sqb_write: true
+                    sqb_custom1: ''
 
             totalgenres:
                 type: num
@@ -318,6 +328,7 @@ item_structs:
                 sqb_read_group:
                 -   database
                 sqb_read_initial: true
+                sqb_custom1: ''
 
             totalduration:
                 type: num
@@ -327,6 +338,7 @@ item_structs:
                 sqb_read_group:
                 -   database
                 sqb_read_initial: true
+                sqb_custom1: ''
 
             totalartists:
                 type: num
@@ -336,6 +348,7 @@ item_structs:
                 sqb_read_group:
                 -   database
                 sqb_read_initial: true
+                sqb_custom1: ''
 
             totalalbums:
                 type: num
@@ -345,6 +358,7 @@ item_structs:
                 sqb_read_group:
                 -   database
                 sqb_read_initial: true
+                sqb_custom1: ''
 
             totalsongs:
                 type: num
@@ -354,6 +368,7 @@ item_structs:
                 sqb_read_group:
                 -   database
                 sqb_read_initial: true
+                sqb_custom1: ''
 
     player:
 
@@ -546,6 +561,7 @@ item_structs:
                         eval: True if sh....playmode() == "play" else None
                         enforce_updates: 'true'
                         cycle: 10 = True
+                        md_device: DEVICENAME
                         md_read_group_trigger: player.control.time_poll
                         sqb_read_group_trigger: player.control.time_poll
 
@@ -643,6 +659,9 @@ item_structs:
                     sqb_command: player.playlist.id
                     sqb_read: true
                     sqb_write: true
+                    sqb_read_group:
+                    -   player
+                    -   player.playlist
 
                 save:
                     type: str
@@ -891,6 +910,7 @@ item_structs:
                 sqb_command: server.listenmode
                 sqb_read: true
                 sqb_write: true
+                sqb_custom1: ''
 
             playercount:
                 type: num
@@ -901,6 +921,7 @@ item_structs:
                 -   ALL
                 -   ALL.server
                 sqb_read_initial: true
+                sqb_custom1: ''
 
             favoritescount:
                 type: num
@@ -911,6 +932,7 @@ item_structs:
                 -   ALL
                 -   ALL.server
                 sqb_read_initial: true
+                sqb_custom1: ''
 
         database:
 
@@ -931,6 +953,7 @@ item_structs:
                     sqb_command: database.rescan.start
                     sqb_read: false
                     sqb_write: true
+                    sqb_custom1: ''
 
                 running:
                     type: bool
@@ -942,12 +965,14 @@ item_structs:
                     -   ALL.database
                     -   ALL.database.rescan
                     sqb_read_initial: true
+                    sqb_custom1: ''
 
                 progress:
                     type: str
                     sqb_command: database.rescan.progress
                     sqb_read: true
                     sqb_write: false
+                    sqb_custom1: ''
 
                 runningtime:
                     type: str
@@ -958,24 +983,28 @@ item_structs:
                     -   ALL
                     -   ALL.database
                     -   ALL.database.rescan
+                    sqb_custom1: ''
 
                 fail:
                     type: str
                     sqb_command: database.rescan.fail
                     sqb_read: true
                     sqb_write: false
+                    sqb_custom1: ''
 
                 abortscan:
                     type: bool
                     sqb_command: database.rescan.abortscan
                     sqb_read: true
                     sqb_write: true
+                    sqb_custom1: ''
 
                 wipecache:
                     type: bool
                     sqb_command: database.rescan.wipecache
                     sqb_read: true
                     sqb_write: true
+                    sqb_custom1: ''
 
             totalgenres:
                 type: num
@@ -986,6 +1015,7 @@ item_structs:
                 -   ALL
                 -   ALL.database
                 sqb_read_initial: true
+                sqb_custom1: ''
 
             totalduration:
                 type: num
@@ -996,6 +1026,7 @@ item_structs:
                 -   ALL
                 -   ALL.database
                 sqb_read_initial: true
+                sqb_custom1: ''
 
             totalartists:
                 type: num
@@ -1006,6 +1037,7 @@ item_structs:
                 -   ALL
                 -   ALL.database
                 sqb_read_initial: true
+                sqb_custom1: ''
 
             totalalbums:
                 type: num
@@ -1016,6 +1048,7 @@ item_structs:
                 -   ALL
                 -   ALL.database
                 sqb_read_initial: true
+                sqb_custom1: ''
 
             totalsongs:
                 type: num
@@ -1026,6 +1059,7 @@ item_structs:
                 -   ALL
                 -   ALL.database
                 sqb_read_initial: true
+                sqb_custom1: ''
 
         player:
 
@@ -1224,6 +1258,7 @@ item_structs:
                         eval: True if sh....playmode() == "play" else None
                         enforce_updates: 'true'
                         cycle: 10 = True
+                        md_device: DEVICENAME
                         md_read_group_trigger: player.control.time_poll
                         sqb_read_group_trigger: player.control.time_poll
 
@@ -1326,6 +1361,10 @@ item_structs:
                     sqb_command: player.playlist.id
                     sqb_read: true
                     sqb_write: true
+                    sqb_read_group:
+                    -   ALL
+                    -   ALL.player
+                    -   ALL.player.playlist
 
                 save:
                     type: str
