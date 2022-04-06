@@ -132,7 +132,8 @@ class sdp_squeezebox(SmartDevicePlugin):
         if command == 'player.playlist.load':
             _trigger_read('player.playlist.id', custom)
             _trigger_read('player.playlist.name', custom)
-            
+            _trigger_read('player.control.playmode', custom)
+
         # update on new song
         if command == 'player.info.title' or (command == 'player.control.playpause' and value == "True"):
             _trigger_read('player.control.playmode', custom)
