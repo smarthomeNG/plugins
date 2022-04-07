@@ -113,7 +113,9 @@ item_templates = {
                 'type': 'bool',
                 'eval': 'True if sh....playmode() == "play" else None',
                 'enforce_updates': True,
-                'cycle': '10 = True'
+                'cycle': '10 = True',
+                'md_device': 'DEVICENAME',
+                'md_read_group_trigger': 'player.control.time_poll'
             }
     },
     'volume_fading': {
