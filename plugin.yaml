@@ -146,12 +146,12 @@ item_attributes:
         - 'call_event_outgoing'         # r/o
         - 'call_direction'              # r/o
         - 'call_event'                  # r/o
-        # TAM Attribute
-        - 'tam'                         # r/w
-        - 'tam_name'                    # r/o
-        - 'tam_old_message_number'      # r/o       not supported / implemented
-        - 'tam_new_message_number'      # r/o
-        - 'tam_total_message_number'    # r/o
+        # TAM Attribute                             alle Attribute benötigen zusätzlich das Attribut 'avm2_tam_index'
+        - 'tam'                         # r/w       TAM an/aus; benötig
+        - 'tam_name'                    # r/o       Name des TAM
+        - 'tam_old_message_number'      # r/o       Anzahl der alten Nachrichten
+        - 'tam_new_message_number'      # r/o       Anzahl der neuen Nachrichten
+        - 'tam_total_message_number'    # r/o       Gesamtanzahl der Nachrichten
         # WAN Attribute
         - 'wan_connection_status'       # r/o
         - 'wan_connection_error'        # r/o
@@ -198,7 +198,7 @@ item_attributes:
         - 'deflection_mode'             # r/o       Modus der Rufumleitung; Angabe der Rufumleitung mit Parameter "avm_deflection_index" im Item bzw Parent-Item
         - 'deflection_outgoing'         # r/o       Outgoing der Rufumleitung; Angabe der Rufumleitung mit Parameter "avm_deflection_index" im Item bzw Parent-Item
         - 'deflection_phonebook_id'     # r/o       Phonebook_ID der Zielrufnummer (Only valid if Type==fromPB); Angabe der Rufumleitung mit Parameter "avm_deflection_index" im Item bzw Parent-Item
-        # AHA Interface attributes
+        # AHA Interface attributes                  alle Attribute benötigen zusätzlich das Attribut 'avm2_tam_ain'
         - 'device_id'                   # r/o       Geräte -ID                                      str
         - 'manufacturer'                # r/o       Hersteller                                      str
         - 'product_name'                # r/o       Produktname                                     str
@@ -206,16 +206,16 @@ item_attributes:
         - 'connected'                   # r/o       Verbindungsstatus                               bool
         - 'device_name'                 # r/o       Gerätename                                      str
         - 'tx_busy'                     # r/o       Verbindung aktiv                                bool
-        - 'device_functions'            # r/o       Im Gerät verhandene Funktionen                  list
+        - 'device_functions'            # r/o       Im Gerät vorhandene Funktionen                  list
 
         - 'set_target_temperature'      # w/o       Soll-Temperatur Setzen                          num
-        - 'target_temperature'          # r/w       Soll-Temperatur (Status aund Setzen)            num
+        - 'target_temperature'          # r/w       Soll-Temperatur (Status und Setzen)            num
         - 'current_temperature'         # r/o       Ist-Temperatur                                  num
         - 'temperature_reduced'         # r/o       Eingestellte reduzierte Temperatur              num
         - 'temperature_comfort'         # r/o       Eingestellte Komfort-Temperatur                 num
         - 'temperature_offset'          # r/o       Eingestellter Temperatur-Offset                 num
         - 'set_window_open'             # w/o       "Window Open" Funktionen Setzen                 bool
-        - 'window_open'                 # r/w       "Window Open" Funktion (Status aund Setzen)     bool
+        - 'window_open'                 # r/w       "Window Open" Funktion (Status und Setzen)     bool
         - 'windowopenactiveendtime'     # r/o       Zeitliches Ende der "Window Open" Funktion      num
         - 'set_hkr_boost'               # w/o       "Boost" Funktion Setzen                         bool
         - 'hkr_boost'                   # r/w       "Boost" Funktion (Status aund Setzen)           bool
@@ -240,7 +240,7 @@ item_attributes:
         - 'hue'                         # w/r       Hue (Status und Setzen)                         num             neu 1.6.4
         - 'set_saturation'              # w/o       Saturation Setzen                               num
         - 'saturation'                  # w/r       Saturation (Status und Setzen)                  num             neu 1.6.4
-        - 'set_colortemperature'        # w/o       Farbtemperatur Setzten                          num
+        - 'set_colortemperature'        # w/o       Farbtemperatur Setzen                          num
         - 'colortemperature'            # w/r       Farbtemperatur (Status und Setzen)              num             neu 1.6.4
 
         - 'switch_state'                # r/w       Schaltzustand Steckdose (Status und Setzen)     bool
@@ -409,10 +409,6 @@ item_structs:
             type: num
             visu_acl: ro
             avm2_data_type@instance: tam_old_message_number
-            eval: (sh...message_number_total()-sh...message_number_new())
-            eval_trigger:
-              - ..message_number_total
-              - ..message_number_new
         message_number_new:
             type: num
             visu_acl: ro

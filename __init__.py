@@ -161,6 +161,7 @@ _wan_connection_attributes = ['wan_connection_status',
 _tam_attributes = ['tam',
                    'tam_name',
                    'tam_new_message_number',
+                   'tam_old_message_number',
                    'tam_total_message_number']
 
 _wlan_config_attributes = ['wlanconfig',
@@ -467,7 +468,9 @@ class FritzDevice:
     """
 
     def __init__(self, host, port, ssl, verify, username, password, call_monitor_incoming_filter, plugin_instance=None):
-        """Init class FritzDevice"""
+        """
+        Init class FritzDevice
+        """
 
         self._plugin_instance = plugin_instance
         self._plugin_instance.logger.debug("Init FritzDevice")
@@ -538,6 +541,18 @@ class FritzDevice:
             else:
                 self._plugin_instance.logger.warning(f"Item {item.id()} with avm attribute found, but 'avm_tam_index' is not defined; Item will be ignored.")
 
+        # handle deflection related items
+        elif avm_data_type in _deflection_attributes:
+            avm_deflection_index = self._get_deflection_index(item)
+            if avm_deflection_index is not None:
+                self._plugin_instance.logger.debug(
+                    f"Item {item.id()} with avm device attribute and defined 'avm_tam_index' found; append to list.")
+                self._items[item] = (avm_data_type, avm_deflection_index)
+            else:
+                self._plugin_instance.logger.warning(
+                    f"Item {item.id()} with avm attribute found, but 'avm_tam_index' is not defined; Item will be ignored.")
+
+        # handle all other items
         else:
             self._items[item] = (avm_data_type, None)
 
@@ -885,6 +900,29 @@ class FritzDevice:
             'device_hostname':              ('LANDevice', 'Hosts', 'GetSpecificHostEntry', 'NewMACAddress', 'NewHostName'),
             'network_device':               ('LANDevice', 'Hosts', 'GetSpecificHostEntry', 'NewMACAddress', 'NewActive'),
             'connection_status':            ('LANDevice', 'Hosts', 'GetSpecificHostEntry', 'NewMACAddress', 'NewActive'),
+            'aha_device':                   ('InternetGatewayDevice', 'Homeauto', 'GetSpecificDeviceInfos', 'NewAIN', 'NewSwitchState'),
+            'hkr_device':                   ('InternetGatewayDevice', 'Homeauto', 'GetSpecificDeviceInfos', 'NewAIN', 'NewHkrSetVentilStatus'),
+            'set_temperature':              ('InternetGatewayDevice', 'Homeauto', 'GetSpecificDeviceInfos', 'NewAIN', 'NewFirmwareVersion'),
+            'temperature':                  ('InternetGatewayDevice', 'Homeauto', 'GetSpecificDeviceInfos', 'NewAIN', 'NewTemperatureCelsius'),
+            'set_temperature_reduced':      ('InternetGatewayDevice', 'Homeauto', 'GetSpecificDeviceInfos', 'NewAIN', 'NewHkrReduceTemperature'),
+            'set_temperature_comfort':      ('InternetGatewayDevice', 'Homeauto', 'GetSpecificDeviceInfos', 'NewAIN', 'NewHkrComfortTemperature'),
+            'firmware_version':             ('InternetGatewayDevice', 'Homeauto', 'GetSpecificDeviceInfos', 'NewAIN', 'NewFirmwareVersion'),
+            'number_of_deflections':        ('InternetGatewayDevice', 'X_AVM_DE_OnTel', 'GetNumberOfDeflections', None, 'NewNumberOfDeflections'),
+            'deflection_details':           ('InternetGatewayDevice', 'X_AVM_DE_OnTel', 'GetDeflection', 'NewDeflectionId', None),
+            'deflections_details':          ('InternetGatewayDevice', 'X_AVM_DE_OnTel', 'GetDeflections', 'None', 'NewDeflectionList'),
+            'deflection_enable':            ('InternetGatewayDevice', 'X_AVM_DE_OnTel', 'GetDeflection', 'NewDeflectionId', 'NewEnable'),
+            'deflection_type':              ('InternetGatewayDevice', 'X_AVM_DE_OnTel', 'GetDeflection', 'NewDeflectionId', 'NewType'),
+            'deflection_number':            ('InternetGatewayDevice', 'X_AVM_DE_OnTel', 'GetDeflection', 'NewDeflectionId', 'NewNumber'),
+            'deflection_to_number':         ('InternetGatewayDevice', 'X_AVM_DE_OnTel', 'GetDeflection', 'NewDeflectionId', 'NewDeflectionToNumber'),
+            'deflection_mode':              ('InternetGatewayDevice', 'X_AVM_DE_OnTel', 'GetDeflection', 'NewDeflectionId', 'NewMode'),
+            'deflection_outgoing':          ('InternetGatewayDevice', 'X_AVM_DE_OnTel', 'GetDeflection', 'NewDeflectionId', 'NewOutgoing'),
+            'deflection_phonebook_id':      ('InternetGatewayDevice', 'X_AVM_DE_OnTel', 'GetDeflection', 'NewDeflectionId', 'NewPhonebookID'),
+        }
+
+        link2 = {
+            'tam_total_message_number': "self.get_tam_message_count(index, 'total')",
+            'tam_new_message_number':   "self.get_tam_message_count(index, 'new')",
+            'tam_old_message_number':   "self.get_tam_message_count(index, 'old')",
         }
 
         # Create link dict depending on connection type
@@ -898,12 +936,13 @@ class FritzDevice:
         if avm_data_type.startswith('wan_current'):
             client = 'client_igd'
 
-        # check if avm_data_type is linked
-        if avm_data_type not in link:
+        # check if avm_data_type is linked and gather data
+        if avm_data_type in link:
+            data = self._update_data_cache(client, link[avm_data_type][0], link[avm_data_type][1], link[avm_data_type][2], link[avm_data_type][3], link[avm_data_type][4], index)
+        elif avm_data_type in link2:
+            data = eval(link2[avm_data_type])
+        else:
             return
-
-        # gather data
-        data = self._update_data_cache(client, link[avm_data_type][0], link[avm_data_type][1], link[avm_data_type][2], link[avm_data_type][3], link[avm_data_type][4], index)
 
         # correct data
         if avm_data_type == 'wan_is_connected':
@@ -916,7 +955,7 @@ class FritzDevice:
 
     def _update_data_cache(self, client: str, device: str, service: str, action: str, in_argument: str = None, out_argument: str = None, index: int = None) -> dict:
         """
-        Update cache dict with poll data
+        Update cache dict by polling data
         """
 
         self._plugin_instance.logger.debug(f"_update_data_cache called with device={device}, service={service}, action={action}, in_argument={in_argument}, out_argument={out_argument}, index={index}")
@@ -1074,8 +1113,7 @@ class FritzDevice:
         if phone_number.endswith('#'):
             phone_number = phone_number.strip('#')
 
-        phonebook_url = self.client.InternetGatewayDevice.X_AVM_DE_OnTel.GetPhonebook(NewPhonebookID=phonebook_id)[
-            'NewPhonebookURL']
+        phonebook_url = self.client.InternetGatewayDevice.X_AVM_DE_OnTel.GetPhonebook(NewPhonebookID=phonebook_id)['NewPhonebookURL']
         phonebooks = self._request_response_to_xml(self._request(phonebook_url, self._timeout, self._verify))
         if phonebooks is not None:
             for phonebook in phonebooks.iter('phonebook'):
@@ -1211,12 +1249,56 @@ class FritzDevice:
     def set_tam(self, tam_index: int = 0, new_enable: bool = False):
         """
         Set TAM
+
+        uses: https://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/x_tam.pdf
         """
 
         self.client.InternetGatewayDevice.X_AVM_DE_TAM.SetEnable(NewIndex=tam_index, NewEnable=int(new_enable))
 
     def get_tam(self, tam_index: int = 0):
+        """
+        Get TAM
+
+        uses: https://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/x_tam.pdf
+        """
+
         return bool(self.client.InternetGatewayDevice.X_AVM_DE_TAM.GetInfo(NewIndex=tam_index)['NewEnable'])
+
+    def get_tam_list(self, tam_index: int = 0):
+        """
+        Get TAM Message list
+
+        uses: https://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/x_tam.pdf
+        """
+
+        url = self.client.InternetGatewayDevice.X_AVM_DE_TAM.GetMessageList(NewIndex=tam_index)['NewURL']
+        tam_list = self._request_response_to_xml(self._request(url, self._timeout, self._verify))
+
+        return tam_list
+
+    def get_tam_message_count(self, tam_index: int = 0, number: str = None):
+
+        tam_list = self.get_tam_list(tam_index)
+        total_count = 0
+        new_count = 0
+
+        if tam_list is not None:
+            for root in tam_list.iter('Root'):
+                for message in root.iter('Message'):
+                    for new in message.findall('.//New'):
+                        if new.text:
+                            total_count += 1
+                            if new.text.strip() == '1':
+                                new_count += 1
+
+        if number == 'total':
+            return total_count
+        elif number == 'new':
+            return new_count
+        elif number == 'old':
+            return total_count-new_count
+        else:
+            return total_count, new_count
 
     # ----------------------------------
     # set home automation switch
@@ -3527,7 +3609,7 @@ class Callmonitor:
                 for element in _calllist:
                     if element['Type'] in ['1', '2']:
                         date = str(element['Date'])
-                        date = date[8:10] + "." + date[5:7] + "." + date[2:4] + " " + date[11:19]
+                        time = date[8:10] + "." + date[5:7] + "." + date[2:4] + " " + date[11:19]
                         item(str(time), self._plugin_instance.get_shortname())
                         break
 
@@ -3568,7 +3650,7 @@ class Callmonitor:
                 for element in _calllist:
                     if element['Type'] in ['3', '4']:
                         date = str(element['Date'])
-                        date = date[8:10] + "." + date[5:7] + "." + date[2:4] + " " + date[11:19]
+                        time = date[8:10] + "." + date[5:7] + "." + date[2:4] + " " + date[11:19]
                         item(str(time), self._plugin_instance.get_shortname())
                         break
 
