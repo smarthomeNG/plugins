@@ -67,13 +67,25 @@ der InfluxDB Software zur Nutzung mit SmartHomeNG unter folgenden Topics verlink
 Gespeicherte Daten
 ==================
 
+Mit jedem gespeicherten Wert wird unter **_measurement** der Name des Items abgelegt. Mit dem Item-Attribut
+**influxdb2_name** kann für das Speichern in der InfluxDB ein Name explizit vergeben werden. Falls das Attribut
+**influxdb2_name** nicht definiert wurde, wird der Inhalt des Item-Attributes **name** als Name für die Datenbank
+verwendet. Falls **name** nicht spezifiziert ist, wird der Pfadname des Items verwendet.
+
+- **_time** - Der Timestamp wird **nicht** von SmartHomeNG übermittelt, sondern von InfluxDB bei EMpfang der Daten
+  bestimmt. Das erleichtert die Synchonisation von Zeitserien, die aus verschiedenen Systemen zusammen geführt werden.
+- **_value** - zu speichernder Item Wert
+
+
 Mit jedem Item Wert, der in einem InfluxDB Bucket abgelegt werden, werden folgende Tags als Metadaten gespeichert:
 
-- **item_path** - Pfadname des Items
+- **item** - Pfadname des Items
 - **item_name** - Im Attribut **name** vergebener Name für das Item
 - **caller** - Auslöser für die Änderung des Item Wertes (Plugin, Logik, eval, etc.)
 - **source** - Quelle der Änderung: Item Instanz (mit Zusatzdaten), Item, etc.
 - **dest** - Ziel der Änderung (z.B. eine GA im knx Plugin)
+- **str_value** - enthält nicht numerische Werte, die in der Datenbank abgelegt werden sollen.
+
 
 
 

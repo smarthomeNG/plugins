@@ -67,6 +67,20 @@ parameters:
             de: 'Steuert ob Items, die das Attribut **database** tragen, in die InfluxDB geschrieben werden sollen'
             en: 'Controls if items that carry the **database** attribute should be written ti the InfluxDB'
 
+    value_field:
+        type: str
+        default: 'value'
+        description:
+            de: 'Name des Fields in welches der Item Wert geschrieben werden soll (Sollte normalerweise auf dem Standardwert bleiben)'
+            en: "Name of the field, to store the items' value in ("
+
+    str_value_field:
+        type: str
+        default: 'str_value'
+        description:
+            de: 'Name des Fields in welches nicht-numerische Item Werte geschrieben werden sollen (Sollte normalerweise auf dem Standardwert bleiben)'
+            en: "Name of the field, to store the non-numeric values in"
+
 
 item_attributes:
     # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)

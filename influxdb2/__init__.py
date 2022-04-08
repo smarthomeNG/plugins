@@ -78,11 +78,9 @@ class InfluxDB2(SmartPlugin):
         self.recognize_database = self.get_parameter_value('recognize_database')
 
         self.tags = self.get_parameter_value('tags')
+        self.value_field = self.get_parameter_value('value_field')
 
-        #self.value_field = self.get_parameter_value('value_field')
-        #self.str_value_field = self.get_parameter_value('str_value_field')
-        self.value_field = 'value'
-        self.str_value_field = 'str_value'
+        self.str_value_field = self.get_parameter_value('str_value_field')
 
         # cycle time in seconds, only needed, if hardware/interface needs to be
         # polled for value changes by adding a scheduler entry in the run method of this plugin
