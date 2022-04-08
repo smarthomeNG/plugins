@@ -320,8 +320,10 @@ class AVM2(SmartPlugin):
         """
         Run method for the plugin
         """
+
         self.logger.debug("Run method called")
-        self.scheduler_add('poll_tr064', self._fritz_device.update_item_values, prio=5, cycle=self._cycle, offset=4)
+        if self._fritz_device is not None:
+            self.scheduler_add('poll_tr064', self._fritz_device.update_item_values, prio=5, cycle=self._cycle, offset=4)
         if self._aha_http_interface and self._fritz_device.is_fritzbox:
             # add scheduler for updating items
             self.scheduler_add('poll_aha', self._fritz_home.update_items, prio=5, cycle=self._cycle, offset=2)
@@ -335,6 +337,7 @@ class AVM2(SmartPlugin):
         """
         Stop method for the plugin
         """
+
         self.logger.debug("Stop method called")
         self.scheduler_remove('poll_tr064')
         if self._aha_http_interface:
@@ -397,6 +400,7 @@ class AVM2(SmartPlugin):
         """
         Default plugin parse_logic method
         """
+        
         if 'xxx' in logic.conf:
             # self.function(logic['name'])
             pass
