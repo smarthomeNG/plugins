@@ -640,11 +640,20 @@ item_structs:
                 type: str
                 sqb_command: player.playlist.name
                 sqb_read: true
-                sqb_write: true
+                sqb_write: false
                 sqb_read_group:
                 -   player
                 -   player.playlist
                 sqb_read_initial: true
+
+            count:
+                type: num
+                sqb_command: player.playlist.count
+                sqb_read: true
+                sqb_write: true
+                sqb_read_group:
+                -   player
+                -   player.playlist
 
             id:
                 type: num
