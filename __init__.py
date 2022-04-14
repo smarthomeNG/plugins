@@ -1876,51 +1876,54 @@ class FritzHome:
         except Exception as e:
             self._plugin_instance.logger.warning(f"Error {e} eccurred during method _poll_aha.")
         else:
-            for ain in _device_dict:
-                self._plugin_instance.logger.debug(f"_poll_aha: handle AIN={ain} with _device_dict[ain]={_device_dict[ain]}")
-                self._aha_devices[ain] = {}
-                self._aha_devices[ain]['device_functions'] = []
+            if isinstance(_device_dict, dict):
+                for ain in _device_dict:
+                    self._plugin_instance.logger.debug(f"_poll_aha: handle AIN={ain} with _device_dict[ain]={_device_dict[ain]}")
+                    self._aha_devices[ain] = {}
+                    self._aha_devices[ain]['device_functions'] = []
 
-                for entry in _link_base:
-                    self._aha_devices[ain][entry] = eval(f"_device_dict[ain].{_link_base[entry]}")
+                    for entry in _link_base:
+                        self._aha_devices[ain][entry] = eval(f"_device_dict[ain].{_link_base[entry]}")
 
-                if _device_dict[ain].has_thermostat:
-                    self._aha_devices[ain]['device_functions'].append('thermostat')
-                    for entry in _link_thermostat:
-                        self._aha_devices[ain][entry] = eval(f"_device_dict[ain].{_link_thermostat[entry]}")
+                    if _device_dict[ain].has_thermostat:
+                        self._aha_devices[ain]['device_functions'].append('thermostat')
+                        for entry in _link_thermostat:
+                            self._aha_devices[ain][entry] = eval(f"_device_dict[ain].{_link_thermostat[entry]}")
 
-                if _device_dict[ain].has_temperature_sensor:
-                    self._aha_devices[ain]['device_functions'].append('temperature_sensor')
-                    for entry in _link_temperature:
-                        self._aha_devices[ain][entry] = eval(f"_device_dict[ain].{_link_temperature[entry]}")
+                    if _device_dict[ain].has_temperature_sensor:
+                        self._aha_devices[ain]['device_functions'].append('temperature_sensor')
+                        for entry in _link_temperature:
+                            self._aha_devices[ain][entry] = eval(f"_device_dict[ain].{_link_temperature[entry]}")
 
-                if _device_dict[ain].has_button:
-                    self._aha_devices[ain]['device_functions'].append('button')
-                    for entry in _link_button:
-                        self._aha_devices[ain][entry] = eval(f"_device_dict[ain].{_link_button[entry]}")
+                    if _device_dict[ain].has_button:
+                        self._aha_devices[ain]['device_functions'].append('button')
+                        for entry in _link_button:
+                            self._aha_devices[ain][entry] = eval(f"_device_dict[ain].{_link_button[entry]}")
 
-                if _device_dict[ain].has_alarm:
-                    self._aha_devices[ain]['device_functions'].append('alarm')
-                    for entry in _link_alarm:
-                        self._aha_devices[ain][entry] = eval(f"_device_dict[ain].{_link_alarm[entry]}")
+                    if _device_dict[ain].has_alarm:
+                        self._aha_devices[ain]['device_functions'].append('alarm')
+                        for entry in _link_alarm:
+                            self._aha_devices[ain][entry] = eval(f"_device_dict[ain].{_link_alarm[entry]}")
 
-                if _device_dict[ain].has_lightbulb:
-                    self._aha_devices[ain]['device_functions'].append('color_device')
-                    for entry in _link_lightbulb:
-                        self._aha_devices[ain][entry] = eval(f"_device_dict[ain].{_link_lightbulb[entry]}")
+                    if _device_dict[ain].has_lightbulb:
+                        self._aha_devices[ain]['device_functions'].append('color_device')
+                        for entry in _link_lightbulb:
+                            self._aha_devices[ain][entry] = eval(f"_device_dict[ain].{_link_lightbulb[entry]}")
 
-                if _device_dict[ain].has_repeater:
-                    self._aha_devices[ain]['device_functions'].append('repeater')
+                    if _device_dict[ain].has_repeater:
+                        self._aha_devices[ain]['device_functions'].append('repeater')
 
-                if _device_dict[ain].has_powermeter:
-                    self._aha_devices[ain]['device_functions'].append('powermeter')
-                    for entry in _link_powermeter:
-                        self._aha_devices[ain][entry] = eval(f"_device_dict[ain].{_link_powermeter[entry]}")
+                    if _device_dict[ain].has_powermeter:
+                        self._aha_devices[ain]['device_functions'].append('powermeter')
+                        for entry in _link_powermeter:
+                            self._aha_devices[ain][entry] = eval(f"_device_dict[ain].{_link_powermeter[entry]}")
 
-                if _device_dict[ain].has_switch:
-                    self._aha_devices[ain]['device_functions'].append('powermeter')
-                    for entry in _link_switch:
-                        self._aha_devices[ain][entry] = eval(f"_device_dict[ain].{_link_switch[entry]}")
+                    if _device_dict[ain].has_switch:
+                        self._aha_devices[ain]['device_functions'].append('powermeter')
+                        for entry in _link_switch:
+                            self._aha_devices[ain][entry] = eval(f"_device_dict[ain].{_link_switch[entry]}")
+            else:
+                self._plugin_instance.logger.info(f"No AVM Smarthome Devices detected. Check Plugin settings or smarthome devices.")
 
     def update_items(self):
         """
@@ -2725,6 +2728,8 @@ class FritzHome:
             data = data['mq_log']
             if self._log_entry_count:
                 data = data[:self._log_entry_count]
+
+
 
         return data
 
