@@ -13,6 +13,9 @@
   table th.type2 {
     width: 50px;
     }
+  table th.type3 {
+    width: 160px;
+    }
   table th.datatype {
     width: 250px;
   }
@@ -105,7 +108,7 @@
 {% set tab3title = _("<strong>"'Plugin-API'"</strong>") %}
 {% set tab4title = _("<strong>"'Log-Einträge'"</strong>") %}
 {% set tab5title = _("<strong>"'Call Monitor Items'"</strong> (" ~ call_monitor_item_count ~ ") ") %}
-{% set tab6title = _("<strong>"'AVM2 AHA Devices'"</strong>") %}
+{% set tab6title = _("<strong>"'AVM2 AHA Devices'"</strong> (" ~ len(p._fritz_home._aha_devices) ~ ") ") %}
 
 {% set language = p.get_sh().get_defaultlanguage() %}
 {% if language not in ['en','de'] %}
@@ -201,6 +204,7 @@
             {% endif %}
         </tbody>
     </table>
+    {{ p._fritz_device.client.InternetGatewayDevice.X_AVM_DE_OnTel.GetDeflections }}
 </div>
 {% endblock %}
 
@@ -281,8 +285,7 @@
     <table id="logtable" class="table table-striped table-hover pluginList dataTableAdditional">
         <thead>
             <tr>
-                <th class="type">{{ 'Datum' }}</th>
-                <th class="type">{{ 'Uhrzeit' }}</th>
+                <th class="type3">{{ 'Datum/Uhrzeit' }}</th>
                 <th>{{ 'Meldung' }}</th>
                 <th class="type2" style="text-align: center">{{ 'Typ' }}</th>
                 <th class="type">{{ 'Kategorie' }}</th>
@@ -297,13 +300,12 @@
                     <tr>
                         <td class="py-1">{{ logentry[0] }}</td>
                         <td class="py-1">{{ logentry[1] }}</td>
-                        <td class="py-1">{{ logentry[2] }}</td>
                         <td class="py-1" style="text-align: center">
-                            <a class="text-shng" target="_blank" href="https://service.avm.de/help/de/FRITZ-Box-7590/019/hilfe_syslog_{{ logentry[3] }}">
-                                {{ logentry[3] }}
+                            <a class="text-shng" target="_blank" href="https://service.avm.de/help/de/FRITZ-Box-7590/019/hilfe_syslog_{{ logentry[2] }}">
+                                {{ logentry[2] }}
                             </a>
                         </td>
-                        <td class="py-1">{{ _('cat_'+logentry[4]|string) }}</td>
+                        <td class="py-1">{{ _('cat_'+logentry[3]|string) }}</td>
                     </tr>
                 {% endfor %}
             {% endif %}

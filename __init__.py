@@ -438,10 +438,13 @@ class AVM2(SmartPlugin):
                 self._fritz_device.handle_updated_item(item, avm_data_type, readafterwrite)
 
             # handle items updated by _aha_attributes
-            elif avm_data_type in _aha_attributes and self._fritz_home:
-                if self.debug_log:
-                    self.logger.debug(f"Updated item={item.id()} with avm_data_type={avm_data_type} identified as part of '_aha_attributes'")
-                self._fritz_home.handle_updated_item(item, avm_data_type, readafterwrite)
+            elif avm_data_type in _aha_attributes:
+                if self._fritz_home:
+                    if self.debug_log:
+                        self.logger.debug(f"Updated item={item.id()} with avm_data_type={avm_data_type} identified as part of '_aha_attributes'")
+                    self._fritz_home.handle_updated_item(item, avm_data_type, readafterwrite)
+                else:
+                    self.logger.warning(f"Smarthome Interface not activated or not available. Update for {avm_data_type} will not be executed.")
 
     @property
     def get_callmonitor(self):
@@ -851,6 +854,9 @@ class FritzDevice:
                 self._plugin_instance.logger.debug(f"FritzDevice: _update_items called: item={item} with avm_data_type={avm_data_type} and index={index}")
                 data = self._poll_fritz_device(avm_data_type, index)
                 if data is not None:
+                   if data == 500:
+                       self._plugin_instance.logger.error(f"Error {data} occured during update of item={item}. Check item configuration regards supported/activated function of AVM device. ")
+                   else:
                     item(data, self._plugin_instance.get_shortname())
         else:
             self._plugin_instance.logger.warning(f"FritzDevice not connected. No update of item values possible.")
@@ -971,21 +977,33 @@ class FritzDevice:
             self._data_cache[device][service][action] = {}
 
         if index is None:
+            # fill data in cache dict
             self._data_cache[device][service][action] = eval(f"self.{client}.{device}.{service}.{action}()")
+
+            # get data from cache dict an return
             if not out_argument:
                 return self._data_cache[device][service][action]
             else:
                 return self._data_cache[device][service][action][out_argument]
         else:
+            # create dict
             if index not in self._data_cache[device][service][action]:
                 self._data_cache[device][service][action][index] = {}
 
+            # fill data in cache dict
             if in_argument == 'WLAN':
                 self._data_cache[device][service][action][index] = eval(f"self.{client}.{device}.{service}[{index}].{action}()")
             else:
                 self._data_cache[device][service][action][index] = eval(f"self.{client}.{device}.{service}.{action}({in_argument}='{index}')")
+
+            # get data from cache dict an return
+            data = self._data_cache[device][service][action][index]
+
             if not out_argument:
-                return self._data_cache[device][service][action][index]
+                return data
+            elif isinstance(data, int):
+                self._plugin_instance.logger.debug(f"Response was ErrorCode: {data} for self.{client}.{device}.{service}.{action}({in_argument}='{index}')")
+                return data
             else:
                 return self._data_cache[device][service][action][index][out_argument]
 
@@ -2713,7 +2731,7 @@ class FritzHome:
         """
         Gets the Device Log from the LUA HTTP Interface via LUA Scripts (more complete than the get_device_log TR-064 version).
 
-        :return: list of device logs list (date, time, log, type, category)
+        :return: list of device logs list (datetime, log, type, category)
         """
 
         if not self._logged_in:
@@ -2729,9 +2747,13 @@ class FritzHome:
             if self._log_entry_count:
                 data = data[:self._log_entry_count]
 
+            data_formated = []
+            for entry in data:
+                dt = datetime.datetime.strptime(f"{entry[0]} {entry[1]}", '%d.%m.%y %H:%M:%S').strftime('%d.%m.%Y %H:%M:%S')
+                data_formated.append([dt, entry[2], entry[3], entry[4]])
 
-
-        return data
+            self._plugin_instance.logger.warning(f"data_formated={data_formated}")
+            return data_formated
 
     # Handling of updated items
 
