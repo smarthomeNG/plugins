@@ -122,6 +122,7 @@ class AVDevice(SmartPlugin):
             rs232_timeout = self.get_parameter_value('rs232_timeout')
             update_exclude = self.get_parameter_value('update_exclude')
             statusquery = self.get_parameter_value('statusquery')
+            self.webif_pagelength = self.get_parameter_value('webif_pagelength')
 
             # Initializing all variables
             self.logger.debug("Initializing {}: Resendwait: {}. Seconds to keep: {}.".format(self._name, self._resend_wait,

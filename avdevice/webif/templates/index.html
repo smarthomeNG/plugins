@@ -19,14 +19,30 @@
     $(document).ready( function () {
 		$(window).trigger('datatables_defaults');
 		try {
-			$('#maintable').DataTable( {} );
+			/* get pagelength from plugin. Also see hidden span element in bodytab1 block! */
+				webif_pagelength = parseInt(document.getElementById('webif_pagelength').innerHTML);
+			if (webif_pagelength == 0) {
+				resize = true;
+				webif_pagelength = -1;
+			}
+			else {
+				resize = false;
+			}
+		}
+		catch (e) {
+			webif_pagelength = 100;
+			resize = false;
+			console.log("Using default values for page length " + webif_pagelength + ", pageResize: " + resize);
+		}
+		try {
+			$('#zone0').DataTable( {pageLength: webif_pagelength, pageResize: resize} );
 			$('#querylog').DataTable( {responsive: false, columnDefs: [{ "width": "300px", "targets": 0 }]} );
 			$('#commandlog').DataTable( {responsive: false, columnDefs: [{ "width": "300px", "targets": 0 }]} );
 			$('#buffer').DataTable( {responsive: false, columnDefs: [{ "width": "300px", "targets": 0 }]} );
-			$('#zone1').DataTable( {} );
-			$('#zone2').DataTable( {} );
-			$('#zone3').DataTable( {} );
-			$('#zone4').DataTable( {} );
+			$('#zone1').DataTable( {pageLength: webif_pagelength, pageResize: resize} );
+			$('#zone2').DataTable( {pageLength: webif_pagelength, pageResize: resize} );
+			$('#zone3').DataTable( {pageLength: webif_pagelength, pageResize: resize} );
+			$('#zone4').DataTable( {pageLength: webif_pagelength, pageResize: resize} );
 		}
 		catch (e) {
 			console.log("Datatable JS not loaded, showing standard table without reorder option " + e)
@@ -72,10 +88,9 @@
 </script>
 {% endblock pluginscripts %}
 
-{%- block styles %}
-{{ super() }}
+{% block pluginstyles %}
 <link rel="stylesheet" href="static/avdevice.css" type="text/css"/>
-{%- endblock styles %}
+{% endblock pluginstyles %}
 
 {% set logo_frame = false %}
 
@@ -110,7 +125,7 @@
 
 
 {% block headtable %}
-
+<span id='webif_pagelength' style="display:none">{{ webif_pagelength }}</span>
 {% if (p._tcp and 'TCP' not in p._is_connected) or (p._rs232 and 'Serial' not in p._is_connected) %}
   {% set conn_color = 'red' %}
 {% else %}
@@ -149,11 +164,6 @@
       <td class="py-1 content" colspan=3><div class="oneliner">{% if p._ignore_response %}{{ p._ignore_response }}
         {% else %}None{% endif %}</div></td>
     </tr>
-    <tr>
-      <td class="py-1 header"><div class="oneliner"><strong>{{ _('Fehlermeldung') }}</strong></div></td>
-      <td class="py-1 content" colspan=3><div class="oneliner">{% if p._error_response %}{{ p._error_response }}
-        {% else %}None{% endif %}</div></td>
-    </tr>
   </tbody>
 </table>
 {% endblock headtable %}
@@ -171,13 +181,13 @@
 </div>
 {% endif %}
 
-{% endblock %}
+{% endblock buttons %}
 
 {% block bodytab1 %}
 <div class="container-fluid m-2">
 	<h3>{{ _('Abfrageprotokoll') }}&nbsp;
 	<button id="#clear_query" type="button" class="btn btn-shng btn-sm reload" title="{{ _('Abfrageprotokoll löschen') }}" onclick="location.href='?action=clear_query_history';"><i class="fas fa-trash-alt"></i></button></h3>
-<table id="querylog" class="table table-striped table-hover display">
+<table id="querylog" class="table table-striped table-hover dataTableAdditional">
   <thead>
     <tr>
       <th>
@@ -214,7 +224,7 @@
 
 <h3>{{ _('Kommandoprotokoll') }}&nbsp;
 <button id="#clear_command" type="button" class="btn btn-shng btn-sm reload" title="{{ _('Empty Command History') }}" onclick="location.href='?action=clear_command_history';"><i class="fas fa-trash-alt"></i></button></h3>
-<table id="commandlog" class="table table-striped table-hover display">
+<table id="commandlog" class="table table-striped table-hover dataTableAdditional">
   <thead>
     <tr>
       <th>
@@ -252,7 +262,7 @@
 
 <h3>{{ _('Zwischenspeicher') }}&nbsp;
 <button id="#clear_keep_commands" type="button" class="btn btn-shng btn-sm reload" title="{{ _('Empty Query History') }}" onclick="location.href='?action=clear_keep_commands';"><i class="fas fa-trash-alt"></i></button></h3>
-<table id="buffer" class="table table-striped table-hover display">
+<table id="buffer" class="table table-striped table-hover dataTableAdditional">
   <thead>
     <tr>
       <th>
@@ -318,12 +328,9 @@
 {% endblock bodytab1 %}
 
 {% block bodytab2 %}
-<div class="container-fluid m-2">
+<div class="container-fluid m-2 table-resize">
 {% if item_count_zone0>0 %}
-  <div class="mb-2">
-    {{ _('Die folgenden Items sind dieser Instanz des AVDevice Plugins zugewiesen') }}:
-  </div>
-  <table id="maintable" class="table table-striped table-hover pluginList display">
+  <table id="zone0" class="table table-striped table-hover pluginList dataTableAdditional">
     <thead>
     <tr>
       <th>{{ _('Item') }}</th>
@@ -358,12 +365,9 @@
   Content block for the second tab of the Webinterface
 -->
 {% block bodytab3 %}
-<div class="container-fluid m-2">
+<div class="container-fluid m-2 table-resize">
 {% if item_count_zone1>0 %}
-  <div class="mb-2">
-    {{ _('Die folgenden Items sind dieser Instanz des AVDevice Plugins zugewiesen') }}:
-  </div>
-  <table id="zone1" class="table table-striped table-hover pluginList display">
+  <table id="zone1" class="table table-striped table-hover pluginList dataTableAdditional">
     <thead>
     <tr>
       <th>{{ _('Item') }}</th>
@@ -393,12 +397,9 @@
 {% endblock bodytab3 %}
 
 {% block bodytab4 %}
-<div class="container-fluid m-2">
+<div class="container-fluid m-2 table-resize">
 {% if item_count_zone2>0 %}
-  <div class="mb-2">
-    {{ _('Die folgenden Items sind dieser Instanz des AVDevice Plugins zugewiesen') }}:
-  </div>
-  <table id="zone2" class="table table-striped table-hover pluginList display">
+  <table id="zone2" class="table table-striped table-hover pluginList dataTableAdditional">
     <thead>
     <tr>
       <th>{{ _('Item') }}</th>
@@ -429,12 +430,9 @@
 
 
 {% block bodytab5 %}
-<div class="container-fluid m-2">
+<div class="container-fluid m-2 table-resize">
 {% if item_count_zone3>0 %}
-  <div class="mb-2">
-    {{ _('Die folgenden Items sind dieser Instanz des Database Plugins zugewiesen') }}:
-  </div>
-  <table id="zone3" class="table table-striped table-hover pluginList display">
+  <table id="zone3" class="table table-striped table-hover pluginList dataTableAdditional">
     <thead>
     <tr>
       <th>{{ _('Item') }}</th>
@@ -464,12 +462,9 @@
 {% endblock bodytab5 %}
 
 {% block bodytab6 %}
-<div class="container-fluid m-2">
+<div class="container-fluid m-2 table-resize">
 {% if item_count_zone4>0 %}
-  <div class="mb-2">
-    {{ _('Die folgenden Items sind dieser Instanz des Database Plugins zugewiesen') }}:
-  </div>
-  <table id="zone4" class="table table-striped table-hover pluginList display">
+  <table id="zone4" class="table table-striped table-hover pluginList dataTableAdditional">
     <thead>
     <tr>
       <th>{{ _('Item') }}</th>
