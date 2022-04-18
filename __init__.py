@@ -471,8 +471,18 @@ class AVM2(SmartPlugin):
 
 class FritzDevice:
     """
-    This class encapsulates information related to a specific FritzDevice
+    This class encapsulates information related to a specific FritzDevice using TR-064
     """
+
+    errorcodes = {401: 'Unable to connect to FritzDevice. Invalid user and/or password.',
+                  402: 'Invalid arguments',
+                  500: 'Internal Server Error',
+                  501: 'Action failed',
+                  600: 'Argument invalid',
+                  713: 'Invalid array index',
+                  714: 'No such array entry in array',
+                  820: 'Internal Error',
+                  }
 
     def __init__(self, host, port, ssl, verify, username, password, call_monitor_incoming_filter, plugin_instance=None):
         """
@@ -494,6 +504,8 @@ class FritzDevice:
         self._calllist_cache = []
         self._timeout = 10
         self._items = {}
+        self._item_blacklist = []
+        self._item_errordict = {}
         self._session = requests.Session()
         self._connected = False
 
@@ -510,8 +522,8 @@ class FritzDevice:
             self._plugin_instance.logger.debug(f"FritzDevice alive")
         else:
             self._connected = False
-            if str(_default_connection_service) == '401':
-                self._plugin_instance.logger.error(f"Unable to connect to FritzDevice. Check user and password.")
+            if _default_connection_service in self.errorcodes:
+                self._plugin_instance.logger.error(f"Error {_default_connection_service}-'{self.errorcodes[_default_connection_service]}'")
             else:
                 self._plugin_instance.logger.error(f"Unable to determine _default_connection_service. ErrorCode {_default_connection_service}.")
 
@@ -847,19 +859,40 @@ class FritzDevice:
         Updates Item Values
         """
 
+        _item_errorlist = []
+
+        # iterate over items and get data
         if self._connected:
             for item in self._items:
+                if item in self._item_blacklist:
+                    self._plugin_instance.logger.info(f"Item={item} is blacklisted due to exceptions in former update cycles. Item will be ignored.")
+                    continue
+
                 avm_data_type = self._items[item][0]
                 index = self._items[item][1]
                 self._plugin_instance.logger.debug(f"FritzDevice: _update_items called: item={item} with avm_data_type={avm_data_type} and index={index}")
-                data = self._poll_fritz_device(avm_data_type, index)
-                if data is not None:
-                   if data == 500:
-                       self._plugin_instance.logger.error(f"Error {data} occured during update of item={item}. Check item configuration regards supported/activated function of AVM device. ")
-                   else:
-                    item(data, self._plugin_instance.get_shortname())
+
+                try:
+                    data = self._poll_fritz_device(avm_data_type, index)
+                except Exception as e:
+                    self._plugin_instance.logger.error(f"Error {e} occurred during update of item={item}. Check item configuration regards supported/activated function of AVM device. ")
+                    _item_errorlist.append(item)
+                else:
+                    if data is None:
+                        self._plugin_instance.logger.info(f"Value for item={item} is None.")
+                    elif data in self.errorcodes:
+                        self._plugin_instance.logger.error(f"Error {data} '{self.errorcodes.get(data, None)}' occurred during update of item={item}. Check item configuration regards supported/activated function of AVM device. ")
+                        _item_errorlist.append(item)
+                    else:
+                        item(data, self._plugin_instance.get_shortname())
         else:
             self._plugin_instance.logger.warning(f"FritzDevice not connected. No update of item values possible.")
+
+        # Create / update item blacklist
+        self.create_item_blacklist(_item_errorlist)
+
+        # clear data cache dict after update cycle
+        self._clear_data_cache()
 
     def _poll_fritz_device(self, avm_data_type: str, index: Union[int, str]):
         """
@@ -948,7 +981,7 @@ class FritzDevice:
 
         # check if avm_data_type is linked and gather data
         if avm_data_type in link:
-            data = self._update_data_cache(client, link[avm_data_type][0], link[avm_data_type][1], link[avm_data_type][2], link[avm_data_type][3], link[avm_data_type][4], index)
+            data = self._get_update_data(client, link[avm_data_type][0], link[avm_data_type][1], link[avm_data_type][2], link[avm_data_type][3], link[avm_data_type][4], index)
         elif avm_data_type in link2:
             data = eval(link2[avm_data_type])
         else:
@@ -963,12 +996,14 @@ class FritzDevice:
         # return result
         return data
 
-    def _update_data_cache(self, client: str, device: str, service: str, action: str, in_argument: str = None, out_argument: str = None, index: int = None) -> dict:
+    def _get_update_data(self, client: str, device: str, service: str, action: str, in_argument: str = None, out_argument: str = None, index: int = None) -> dict:
         """
-        Update cache dict by polling data
+        Get update data for cache dict; poll data if not yet cached from fritz device
         """
 
-        self._plugin_instance.logger.debug(f"_update_data_cache called with device={device}, service={service}, action={action}, in_argument={in_argument}, out_argument={out_argument}, index={index}")
+        self._plugin_instance.logger.debug(f"_get_update_data called with device={device}, service={service}, action={action}, in_argument={in_argument}, out_argument={out_argument}, index={index}")
+
+        # create cache dict structure
         if device not in self._data_cache:
             self._data_cache[device] = {}
         if service not in self._data_cache[device]:
@@ -976,36 +1011,42 @@ class FritzDevice:
         if action not in self._data_cache[device][service]:
             self._data_cache[device][service][action] = {}
 
+        # check if polling is needed and poll data in case
         if index is None:
-            # fill data in cache dict
-            self._data_cache[device][service][action] = eval(f"self.{client}.{device}.{service}.{action}()")
-
-            # get data from cache dict an return
-            if not out_argument:
-                return self._data_cache[device][service][action]
-            else:
-                return self._data_cache[device][service][action][out_argument]
+            if not self._data_cache[device][service][action]:
+                self._data_cache[device][service][action] = eval(f"self.{client}.{device}.{service}.{action}()")
         else:
-            # create dict
             if index not in self._data_cache[device][service][action]:
                 self._data_cache[device][service][action][index] = {}
-
-            # fill data in cache dict
             if in_argument == 'WLAN':
                 self._data_cache[device][service][action][index] = eval(f"self.{client}.{device}.{service}[{index}].{action}()")
             else:
                 self._data_cache[device][service][action][index] = eval(f"self.{client}.{device}.{service}.{action}({in_argument}='{index}')")
 
-            # get data from cache dict an return
+        # gather raw data from cache dict and return it
+        if index is None:
+            data = self._data_cache[device][service][action]
+        else:
             data = self._data_cache[device][service][action][index]
 
-            if not out_argument:
-                return data
-            elif isinstance(data, int):
-                self._plugin_instance.logger.debug(f"Response was ErrorCode: {data} for self.{client}.{device}.{service}.{action}({in_argument}='{index}')")
-                return data
-            else:
-                return self._data_cache[device][service][action][index][out_argument]
+        # return data
+        if not out_argument:
+            return data
+        elif isinstance(data, int) and 99 < data < 1000:
+            self._plugin_instance.logger.debug(f"Response was ErrorCode: {data} '{self.errorcodes.get(data, None)}' for self.{client}.{device}.{service}.{action}()")
+            return data
+        else:
+            return data[out_argument]
+
+    def _clear_data_cache(self):
+        """
+        Clears _data_cache dict and put needed content back
+        """
+
+        _default_connection_service = self._data_cache['InternetGatewayDevice']['Layer3Forwarding']['GetDefaultConnectionService']
+        self._data_cache.clear()
+        self._data_cache['InternetGatewayDevice'] = {'DeviceInfo': {'GetInfo': {}, 'GetSecurityPort': {}}, 'Layer3Forwarding': {}}
+        self._data_cache['InternetGatewayDevice']['Layer3Forwarding']['GetDefaultConnectionService'] = _default_connection_service
 
     def _request(self, url: str, timeout: int, verify: bool):
         """
@@ -1027,6 +1068,43 @@ class FritzDevice:
 
         root = etree.fromstring(request.content)
         return root
+
+    def update_item_errordict(self, item_errorlist: list):
+        """
+        Get list of item where an error during last data polling cycle occurred and feed dict of error items to count number of error per item.
+        """
+
+        for item in item_errorlist:
+            if item not in self._item_errordict:
+                self._item_errordict[item] = 1
+            else:
+                self._item_errordict[item] += 1
+
+        self._plugin_instance.logger.debug(f"_item_errordict={self._item_errordict}")
+
+    def create_item_blacklist(self, item_errorlist: list, errorcount: int = 2):
+        """
+        Get list of item where an error during last data polling cycle occurred, call update of item errordict and generate item blacklist.
+        Item blacklist will be ignored for further update cycles.
+        """
+
+        self.update_item_errordict(item_errorlist)
+
+        blacklist = set(self._item_blacklist)
+        for item in self._item_errordict:
+            if self._item_errordict[item] >= errorcount:
+                blacklist.add(item)
+        self._item_blacklist = list(blacklist)
+        self._plugin_instance.logger.debug(f"_item_blacklist={self._item_blacklist}")
+
+    def reset_item_blacklist(self):
+        """
+        Clean/reset Item errordict and blacklist
+        """
+
+        self._item_errordict.clear()
+        self._item_blacklist.clear()
+        self._plugin_instance.logger.info(f"Item Blacklist reset. item_blacklist={self._item_blacklist}")
 
     # ----------------------------------
     # Fritz Device methods, reboot, wol, reconnect
@@ -2751,8 +2829,6 @@ class FritzHome:
             for entry in data:
                 dt = datetime.datetime.strptime(f"{entry[0]} {entry[1]}", '%d.%m.%y %H:%M:%S').strftime('%d.%m.%Y %H:%M:%S')
                 data_formated.append([dt, entry[2], entry[3], entry[4]])
-
-            self._plugin_instance.logger.warning(f"data_formated={data_formated}")
             return data_formated
 
     # Handling of updated items

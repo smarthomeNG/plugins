@@ -154,3 +154,7 @@ class WebInterface(SmartPluginWebIf):
     @cherrypy.expose
     def reconnect(self):
         self.plugin.get_fritz_device().reconnect()
+
+    @cherrypy.expose
+    def reset_item_blacklist(self):
+        self.plugin.get_fritz_device().reset_item_blacklist()
