@@ -742,10 +742,10 @@ class Speaker(object):
 
     def _check_property(self):
         if not self.is_initialized:
-            self.logger.warning("Sonos: {uid}: speaker is not initialized.".format(uid=self.uid))
+            self.logger.warning(f"Speaker {self.uid} is not initialized.")
             return False
         if not self.coordinator:
-            self.logger.warning("Sonos: {uid}: coordinator is empty".format(uid=self.uid))
+            self.logger.warning(f"Speaker {self.uid}: coordinator is empty".format(uid=self.uid))
             return False
         if self.coordinator not in sonos_speaker:
             self.logger.warning("Sonos: {uid}: coordinator '{coordinator}' is not a valid speaker.".format
@@ -2412,7 +2412,7 @@ class Speaker(object):
 
 class Sonos(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.6.3"
+    PLUGIN_VERSION = "1.6.4"
 
     def __init__(self, sh, *args, **kwargs):
         """
@@ -2954,23 +2954,32 @@ class Sonos(SmartPlugin):
         self.zero_zone = False
 
         for zone in zones:
-            if zone.uid is None:
-                is_up = False
-            else:
-                uid = zone.uid.lower()
+            # Trying to extract Speaker ID (UID). Skip speaker otherwise:
 
-                self.logger.debug("Pinging speaker with uid {0}".format(uid))
-                # don't trust the discover function, offline speakers can be cached
-                # we try to ping the speaker
-                with open(os.devnull, 'w') as DEVNULL:
-                    try:
-                        subprocess.check_call(['ping', '-i', '0.2', '-c', '2', zone.ip_address],
-                                              stdout=DEVNULL, stderr=DEVNULL, timeout=1)
-                        is_up = True
-                    except subprocess.CalledProcessError:
-                        is_up = False
-                    except subprocess.TimeoutExpired:
-                        is_up = False
+            try:
+                uid = zone.uid
+            except Exception as e:
+                self.logger.debug(f"Exception in zone.uid for speaker {zone.ip_address}: {e}")
+                continue
+
+            if uid is None:
+                self.logger.warning(f"Zone has no valid uid. Cannot handle speaker {zone.ip_address}")
+                continue
+
+            uid = uid.lower()
+            self.logger.debug(f"Pinging speaker {uid} with ip {zone.ip_address}")
+            # don't trust the discover function, offline speakers can be cached
+            # we try to ping the speaker
+            try:
+                proc_result = subprocess.run(['ping', '-i', '0.2', '-c', '2', zone.ip_address],
+                                             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=1)
+                is_up = True
+            except subprocess.CalledProcessError:
+                self.logger.warning(f"Debug: Ping {zone.ip_address} process finished with return code {proc_result.returncode}")
+                is_up = False
+            except subprocess.TimeoutExpired:
+                self.logger.debug(f"Ping {zone.ip_address} process timed out")
+                is_up = False            
 
             if is_up:
                 self.logger.info("Debug: Speaker found: {zone}, {uid}".format(zone=zone.ip_address, uid=uid))
@@ -2988,7 +2997,7 @@ class Sonos(SmartPlugin):
 #                        sonos_speaker[uid].check_subscriptions()
 
                 else:
-                    self.logger.info("Debug: Initializing new speaker with uid={0}".format(uid))
+                    self.logger.warning(f"Debug: Initializing new speaker with uid={uid} and ip={zone.ip_address}")
                     _initialize_speaker(uid, self.logger)
                     sonos_speaker[uid].soco = zone
 
