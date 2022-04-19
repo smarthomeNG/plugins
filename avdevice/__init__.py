@@ -53,7 +53,7 @@ logging.addLevelName(logging.DEBUG - 2, 'VERBOSE2')
 
 class AVDevice(SmartPlugin):
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = "1.6.3"
+    PLUGIN_VERSION = "1.6.4"
 
     def __init__(self, smarthome):
         super().__init__()
