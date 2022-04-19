@@ -352,7 +352,7 @@ class AVM2(SmartPlugin):
         """
         Default plugin parse_item method. Is called when the plugin is initialized.
         The plugin can, corresponding to its attribute keywords, decide what to do with
-        the item in future, like adding it to an internal array for future reference
+        the item in the future, like adding it to an internal array for future reference
         :param item:    The item to process.
         :return:        If the plugin needs to be informed of an items change you should return a call back function
                         like the function update_item down below. An example when this is needed is the knx plugin
@@ -875,13 +875,13 @@ class FritzDevice:
                 try:
                     data = self._poll_fritz_device(avm_data_type, index)
                 except Exception as e:
-                    self._plugin_instance.logger.error(f"Error {e} occurred during update of item={item}. Check item configuration regards supported/activated function of AVM device. ")
+                    self._plugin_instance.logger.error(f"Error {e} occurred during update of item={item}. Check item configuration regarding supported/activated function of AVM device. ")
                     _item_errorlist.append(item)
                 else:
                     if data is None:
                         self._plugin_instance.logger.info(f"Value for item={item} is None.")
                     elif data in self.errorcodes:
-                        self._plugin_instance.logger.error(f"Error {data} '{self.errorcodes.get(data, None)}' occurred during update of item={item}. Check item configuration regards supported/activated function of AVM device. ")
+                        self._plugin_instance.logger.error(f"Error {data} '{self.errorcodes.get(data, None)}' occurred during update of item={item}. Check item configuration regarding supported/activated function of AVM device. ")
                         _item_errorlist.append(item)
                     else:
                         item(data, self._plugin_instance.get_shortname())
@@ -896,7 +896,7 @@ class FritzDevice:
 
     def _poll_fritz_device(self, avm_data_type: str, index: Union[int, str]):
         """
-        Poll Fritz Device and feed dictonary
+        Poll Fritz Device and feed dictionary
         """
 
         link_ppp = {
@@ -996,7 +996,7 @@ class FritzDevice:
         # return result
         return data
 
-    def _get_update_data(self, client: str, device: str, service: str, action: str, in_argument: str = None, out_argument: str = None, index: int = None) -> dict:
+    def _get_update_data(self, client: str, device: str, service: str, action: str, in_argument: str = None, out_argument: str = None, index: int = None) -> Union[dict, int]:
         """
         Get update data for cache dict; poll data if not yet cached from fritz device
         """
@@ -1866,7 +1866,7 @@ class FritzHome:
         else:
             self._plugin_instance.logger.warning(f"Item {item.id()} with avm attribute found, but 'avm_ain' is not defined; Item will be ignored.")
 
-    def _get_item_ain(self, item) -> str:
+    def _get_item_ain(self, item) -> Union[str, None]:
         """
         Get AIN of device from item.conf
         """
@@ -1884,8 +1884,7 @@ class FritzHome:
 
         if ain_device:
             # deprecated warning for attribute 'ain'
-            self._plugin_instance.logger.warning(
-                f"Item {item.id()} uses deprecated 'ain' attribute. Please consider to switch to 'avm_ain'.")
+            self._plugin_instance.logger.warning(f"Item {item.id()} uses deprecated 'ain' attribute. Please consider to switch to 'avm_ain'.")
         else:
             lookup_item = item
             for i in range(2):
@@ -1897,7 +1896,9 @@ class FritzHome:
                     lookup_item = lookup_item.return_parent()
 
         if ain_device is None:
-            self._plugin_instance.logger.error('Device AIN is not defined or instance not given')
+            self._plugin_instance.logger.error(f'Device AIN for {item.id()} is not defined or instance not given')
+            return None
+
         return ain_device
 
     def _poll_aha(self):
@@ -1948,7 +1949,6 @@ class FritzHome:
         _link_alarm = {'alarm': 'alert_state',
                        'last_alert_chgtimestamp': 'last_alert_chgtimestamp'}
 
-        # ToDo: split light bulb and level
         _link_lightbulb = {'state': 'state',
                            'level': 'level',
                            'hue': 'hue',
@@ -1970,7 +1970,7 @@ class FritzHome:
         try:
             _device_dict = self.get_devices_as_dict()
         except Exception as e:
-            self._plugin_instance.logger.warning(f"Error {e} eccurred during method _poll_aha.")
+            self._plugin_instance.logger.warning(f"Error {e} occurred during method _poll_aha.")
         else:
             if isinstance(_device_dict, dict):
                 for ain in _device_dict:
@@ -2033,6 +2033,7 @@ class FritzHome:
         # first update data
         self._poll_aha()
 
+        # feed items
         for item in self._items:
             # get avm_data_type and ain
             _avm_data_type = self._items[item][0]
@@ -2042,7 +2043,7 @@ class FritzHome:
             device = self._aha_devices.get(_ain, None)
 
             if device is not None:
-                # Attributes that are write only commands with no corresponding read commands are excluded from status updates via update black list:
+                # Attributes that are write-only commands with no corresponding read commands are excluded from status updates via update black list:
                 update_black_list = ['switch_toggle']
 
                 if _avm_data_type not in update_black_list:
@@ -2775,7 +2776,7 @@ class FritzHome:
 
     def get_device_log_from_lua(self):
         """
-        Gets the Device Log from the LUA HTTP Interface via LUA Scripts (more complete than the get_device_log TR-064 version.
+        Gets the Device Log from the LUA HTTP Interface via LUA Scripts (more complete than the get_device_log TR-064 version).
 
         :return: Array of Device Log Entries (text, type, category, timestamp, date, time)
         """
@@ -3237,7 +3238,7 @@ class FritzHome:
             self._fritz.set_color(self.ain, hsv, duration, False)
 
         def get_color_temps(self):
-            """Get the supported color temperatures energy."""
+            """Get the supported color temperature's energy."""
             return self._fritz.get_color_temps(self.ain)
 
         def set_color_temp(self, temperature, duration=0):
@@ -3716,8 +3717,8 @@ class Callmonitor:
                 for element in _calllist:
                     if element['Type'] in ['1', '2']:
                         date = str(element['Date'])
-                        time = date[8:10] + "." + date[5:7] + "." + date[2:4] + " " + date[11:19]
-                        item(str(time), self._plugin_instance.get_shortname())
+                        times = date[8:10] + "." + date[5:7] + "." + date[2:4] + " " + date[11:19]
+                        item(str(times), self._plugin_instance.get_shortname())
                         break
 
             elif avm_data_type == 'call_event_incoming':
@@ -3757,8 +3758,8 @@ class Callmonitor:
                 for element in _calllist:
                     if element['Type'] in ['3', '4']:
                         date = str(element['Date'])
-                        time = date[8:10] + "." + date[5:7] + "." + date[2:4] + " " + date[11:19]
-                        item(str(time), self._plugin_instance.get_shortname())
+                        times = date[8:10] + "." + date[5:7] + "." + date[2:4] + " " + date[11:19]
+                        item(str(times), self._plugin_instance.get_shortname())
                         break
 
             elif avm_data_type == 'call_event_outgoing':
@@ -3820,7 +3821,7 @@ class Callmonitor:
     @property
     def get_item_count_total(self):
         """
-        Returns number of added items (all items of MonitoringService service
+        Returns number of added items (all items of MonitoringService service)
 
         :return: number of items hold by the MonitoringService
         """

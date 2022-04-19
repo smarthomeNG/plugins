@@ -101,15 +101,34 @@
 </script>
 {% endblock pluginscripts %}
 
+<!-- Define tabcount, tabtitle and if tab should be hidden -->
 {% set tabcount = 6 %}
 
 {% set tab1title = _("<strong>"'AVM2 TR-064 Items'"</strong> (" ~ tr064_item_count ~ ") ") %}
-{% set tab2title = _("<strong>"'AVM2 AHA Items'"</strong> (" ~ aha_item_count ~ ") ") %}
-{% set tab3title = _("<strong>"'Plugin-API'"</strong>") %}
-{% set tab4title = _("<strong>"'Log-Einträge'"</strong>") %}
-{% set tab5title = _("<strong>"'Call Monitor Items'"</strong> (" ~ call_monitor_item_count ~ ") ") %}
-{% set tab6title = _("<strong>"'AVM2 AHA Devices'"</strong> (" ~ len(p._fritz_home._aha_devices) ~ ") ") %}
 
+{% if p._fritz_home and aha_item_count > 0 %} 
+    {% set tab2title = _("<strong>"'AVM2 AHA Items'"</strong> (" ~ aha_item_count ~ ") ") %}
+{% else %}
+    {% set tab2title = "hidden" %} 
+{% endif %}
+
+{% set tab3title = _("<strong>"'Plugin-API'"</strong>") %}
+
+{% set tab4title = _("<strong>"'Log-Einträge'"</strong>") %}
+
+{% if p._call_monitor and call_monitor_item_count > 0 %} 
+    {% set tab5title = _("<strong>"'Call Monitor Items'"</strong> (" ~ call_monitor_item_count ~ ") ") %}
+{% else %}
+    {% set tab5title = "hidden" %} 
+{% endif %}
+
+{% if p._fritz_home and len(p._fritz_home._aha_devices) > 0%} 
+    {% set tab6title = _("<strong>"'AVM2 AHA Devices'"</strong> (" ~ len(p._fritz_home._aha_devices) ~ ") ") %}
+{% else %}
+    {% set tab6title = "hidden" %} 
+{% endif %}
+
+<!-- Define language -->
 {% set language = p.get_sh().get_defaultlanguage() %}
 {% if language not in ['en','de'] %}
     {% set language = 'en' %}
