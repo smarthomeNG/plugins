@@ -139,6 +139,7 @@ item_attributes:
             en: "Function of the selected resource/id that shall be read/controlled"
         valid_list:
           - ''
+          - dict
           - on
           - bri
           - bri_inc
@@ -160,6 +161,7 @@ item_attributes:
         valid_list_description:
             de:
               - "<noch keine Funktion gewählt>"
+              - "Mehrere Funktionen aufeinmal -> dict, r/w (resource: light, group)"
               - "Ein-/Ausschalten -> bool, r/w (resource: light, group)"
               - "Helligkeit, 0 … 255 -> num, r/w (resource: light, group)"
               - "Farbton, 0 … 65535 -> num, r/w (resource: light), group"
@@ -177,6 +179,7 @@ item_attributes:
               - "Lichteffekt -> str (Werte: none, colorloop) (resource: light, group)"
             en:
               - "<no function choosen yet>"
+              - "Multiple functions at once -> dict, r/w (resource: light, group)"
               - "On/Off -> bool, r/w (resource: light, group)"
               - "Brightness, 0 … 255 -> num, r/w (resource: light, group)"
               - "Hue, 0 … 65535 -> num, r/w (resource: light, group)"
