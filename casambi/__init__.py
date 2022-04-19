@@ -271,9 +271,7 @@ class Casambi(SmartPlugin):
                 else:
                     self.logger.debug(f"Command {key} with value {sendValue} sent out via open websocket")
         else:
-            self.logger.error("Unable to send command. Websocket is not open")
-            self.logger.error(f"Debug: self.websocket: {self.websocket}, self.websocket.connected: {self.websocket.connected}.")
-            self.logger.error(f"Debug: self.thread.is_alive(): {self.thread.is_alive()}")
+            self.logger.warning("Unable to send command. Websocket is not open")
 
         #Restart thread in case it is no longer active:
         if not self.thread.is_alive():
@@ -284,7 +282,7 @@ class Casambi(SmartPlugin):
 
         # Retry sending command only after exactly one error occured:
         if local_error_cnt == 1:
-            self.logger.warning(f"Retry sending command...(Error count {local_error_cnt})")
+            self.logger.info(f"Retry sending command with rrror count {local_error_cnt}")
             self.controlDevice(item, id, key, 2)
 
 

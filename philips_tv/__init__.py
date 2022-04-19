@@ -40,6 +40,13 @@ class Philips_TV(SmartPlugin):
     PLUGIN_VERSION = '1.9.1'
 
     def __init__(self, sh, *args, **kwargs):
+        """
+        Initalizes the plugin.
+
+        """
+
+        # Call init code of parent class (SmartPlugin)
+        super().__init__()
 
         self._sh = sh
         self._cycle = 60
@@ -65,8 +72,6 @@ class Philips_TV(SmartPlugin):
         if not temp == '':
             self.deviceKey = temp
             self.logger.debug(f"Loaded deviceKey: {self.deviceKey}")
-
-
 
         # Check plugin parameters:
         if (len(self.ip) < 1):

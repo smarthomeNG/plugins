@@ -12,7 +12,7 @@
 
 {% set start_tab = 2 %}
 
-{% set tab1title = "<strong> " ~ _('Übersicht') ~ "</strong> " %}
+{% set tab1title = "<strong> " ~ _('Uebersicht') ~ "</strong> " %}
 {% block bodytab1 %}
 
 <script type="text/javascript" language="javascript">
@@ -74,7 +74,7 @@
 </table>
 {% endblock bodytab1 %}
 
-{% set tab2title = "<strong> " ~ _('Neu hinzufügen') ~ "</strong> " %}
+{% set tab2title = "<strong> " ~ _('Neu hinzu') ~ "</strong> " %}
 {% block bodytab2 %}
 
 {% if learn_triggered %}
@@ -110,12 +110,12 @@
 	<div class="col-md-6 mb-3">
 		<div class="row">
 			<div class="shng_heading">
-				{{ _('Enocean Geräte anlernen') }}:	
+				{{ _('Enocean Geraete anlernen') }}:	
 			</div>
 		</div>
 		<div class="row">
 			<div class="col-md-6 mb-3">
-				{{ _('Gerätetyp') }}:
+				{{ _('Device Type') }}:
 			</div>
 		
 			<div class="col-md-6 mb-3">
@@ -146,9 +146,6 @@
 		<div class="row">
 			<div class="col-md-2 mb-3">
 				<button type="button" class="btn btn-shng btn-sm" title="{{ _('Anlernen') }}" onclick="prepareLearnCommand();">{{ _('Anlernen') }}</button>
-			</div>
-			<div class="col-md-2 mb-3">
-				<button type="button" class="btn btn-shng btn-sm" title="{{ _('UTE An/Aus') }}" onclick="prepareUTECommand();">{{ _('UTE An/Aus') }}</button>
 			</div>
 		</div>
 	</div>

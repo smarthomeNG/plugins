@@ -32,7 +32,6 @@ import os
 from lib.item import Items
 from lib.model.smartplugin import SmartPluginWebIf
 
-
 # ------------------------------------------
 #    Webinterface of the plugin
 # ------------------------------------------
@@ -42,6 +41,7 @@ import csv
 from jinja2 import Environment, FileSystemLoader
 from withings_api import AuthScope, WithingsApi, WithingsAuth
 from withings_api.common import Credentials, CredentialsType, get_measure_value, MeasureType
+
 
 class WebInterface(SmartPluginWebIf):
 
@@ -83,7 +83,7 @@ class WebInterface(SmartPluginWebIf):
             )
 
         if not reload and code:
-            self.logger.debug("Got code as callback: {}".format(self.plugin.get_fullname(), code))
+            self.logger.debug("Got code as callback for plugin {}: {}".format(self.plugin.get_fullname(), code))
             credentials = None
             try:
                 credentials = self._auth.get_credentials(code)
@@ -94,7 +94,7 @@ class WebInterface(SmartPluginWebIf):
             if credentials is not None:
                 self._creds = credentials
                 self.logger.debug(
-                    "New credentials are: access_token {}, token_expiry {}, token_type {}, refresh_token {}".
+                    "New credentials for plugin {} are: access_token {}, token_expiry {}, token_type {}, refresh_token {}".
                         format(self.plugin.get_fullname(), self._creds.access_token, self._creds.token_expiry,
                                self._creds.token_type, self._creds.refresh_token))
                 self.plugin.get_item('access_token')(self._creds.access_token)

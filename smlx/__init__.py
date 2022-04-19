@@ -419,11 +419,12 @@ class Smlx(SmartPlugin):
                     # For a Holley DTZ541 with faulty Firmware remove the                ^[1] from this line ^.
 
                     # Convert some special OBIS values into nicer format
+                    # EMH ED300L: add additional OBIS codes
                     if entry['obis'] == '1-0:0.2.0*0':
                         entry['valueReal'] = entry['value'].decode()     # Firmware as UTF-8 string
-                    if entry['obis'] == '1-0:96.50.1*1':
+                    if entry['obis'] == '1-0:96.50.1*1' or entry['obis'] == '129-129:199.130.3*255':
                         entry['valueReal'] = entry['value'].decode()     # Manufacturer code as UTF-8 string
-                    if entry['obis'] == '1-0:96.1.0*255':
+                    if entry['obis'] == '1-0:96.1.0*255' or entry['obis'] == '1-0:0.0.9*255':
                         entry['valueReal'] = entry['value'].hex()        # ServerID (Seriel Number) as hex string as found on frontpanel
                     if entry['obis'] == '1-0:96.5.0*255':
                         entry['valueReal'] = bin(entry['value'] >> 8)    # Status as binary string, so not decoded into status bits as above

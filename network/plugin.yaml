@@ -12,7 +12,7 @@ plugin:
     keywords: network TCP UDP HTTP GET
     documentation: https://www.smarthomeng.de/user/plugins_doc/config/network.html       # url of documentation (wiki) page
 
-    version: 1.6.0                 # Plugin version
+    version: 1.6.2                 # Plugin version
     sh_minversion: 1.9.0           # minimum shNG version to use this plugin
 #    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: false          # plugin supports multi instance
@@ -95,6 +95,11 @@ item_attributes:
         description:
             de: "Über die nw_tcp_listen Einstellung kann ein dedizierter Listener spezifiziert werden. Das Argument kann ein Port oder IP:Port sein (z.B.: nw_tcp_listen: 127.0.0.1:8888 or nw_tcp_listen: 7777)."
             en: "You can specify the nw_tcp_listen attribute to an item to create a dedicated listener. The argument can be a port or ip:port. (e.g.: nw_tcp_listen: 127.0.0.1:8888 or nw_tcp_listen: 7777)"
+    nw_http_listen:
+        type: str
+        description:
+            de: "Über die nw_http_listen Einstellung kann ein dedizierter Listener spezifiziert werden. Das Argument kann ein Port oder IP:Port sein (z.B.: nw_http_listen: 127.0.0.1:8888 or nw_http_listen: 7777)."
+            en: "You can specify the nw_http_listen attribute to an item to create a dedicated listener. The argument can be a port or ip:port. (e.g.: nw_http_listen: 127.0.0.1:8888 or nw_http_listen: 7777)"
     nw_udp_send:
         type: str
         description:

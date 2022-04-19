@@ -18,6 +18,11 @@ For use of this plugin you need an EnOcean radio transceiver module like:
 - EnOcean PI 868 Funk Modul
 - etc.
 
+## Prerequisites
+Make sure that the user 'smarthome' belongs to the user group dialout to be able to access the linux devices via:
+
+sudo gpasswd --add smarthome dialout
+
 ## Configuration
 
 ### plugin.yaml

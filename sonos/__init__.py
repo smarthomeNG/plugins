@@ -279,6 +279,8 @@ class Speaker(object):
         self._night_mode = False
         self.dialog_mode_items = []
         self._dialog_mode = False
+        self.buttons_enabled_items = []
+        self._buttons_enabled = False
         self.cross_fade_items = []
         self._cross_fade = False
         self.snooze_items = []
@@ -433,6 +435,7 @@ class Speaker(object):
             if self.snooze > 0:
                 self.snooze = self.get_snooze()
         self.status_light = self.get_status_light()
+        self.buttons_enabled = self.get_buttons_enabled()
         self.sonos_playlists()
 
     def check_subscriptions(self) -> None:
@@ -485,6 +488,7 @@ class Speaker(object):
                         self.night_mode = event.variables['night_mode']
                     if 'dialog_mode' in event.variables:
                         self.dialog_mode = event.variables['dialog_mode']
+                    self.logger.debug(f"Debug Sonos: {self.uid}: event variables: {event.variables}")
                     sub_handler.event.events.task_done()
                     del event
                 except Empty:
@@ -502,6 +506,7 @@ class Speaker(object):
             while not sub_handler.signal.wait(1):
                 try:
                     event = sub_handler.event.events.get(timeout=0.5)
+                    #self.logger.debug(f"Debug Sonos alarms: {self.uid}: event variables: {event.variables}")
                     sub_handler.event.events.task_done()
                     del event
                 except Empty:
@@ -519,6 +524,7 @@ class Speaker(object):
             while not sub_handler.signal.wait(1):
                 try:
                     event = sub_handler.event.events.get(timeout=0.5)
+                    #self.logger.debug(f"Debug Sonos props: {self.uid}: event variables: {event.variables}")
                     sub_handler.event.events.task_done()
                     del event
                 except Empty:
@@ -583,6 +589,7 @@ class Speaker(object):
 
                                 # get some other properties
                                 self.status_light = self.get_status_light()
+                                self.buttons_enabledt = self.get_buttons_enabled()
                                 self.sonos_playlists()
 
                     sub_handler.event.events.task_done()
@@ -735,10 +742,10 @@ class Speaker(object):
 
     def _check_property(self):
         if not self.is_initialized:
-            self.logger.warning("Sonos: {uid}: speaker is not initialized.".format(uid=self.uid))
+            self.logger.warning(f"Speaker {self.uid} is not initialized.")
             return False
         if not self.coordinator:
-            self.logger.warning("Sonos: {uid}: coordinator is empty".format(uid=self.uid))
+            self.logger.warning(f"Speaker {self.uid}: coordinator is empty".format(uid=self.uid))
             return False
         if self.coordinator not in sonos_speaker:
             self.logger.warning("Sonos: {uid}: coordinator '{coordinator}' is not a valid speaker.".format
@@ -884,6 +891,56 @@ class Speaker(object):
             return True
         except Exception as ex:
             self.logger.warning("Sonos: {uid}: can't set night mode. Not supported.".format(uid=self.uid))
+            return False
+
+    @property
+    def buttons_enabled(self) -> bool:
+        """
+        Returns the current buttons enabled setting of the speaker.
+        :return: True or False
+        """
+        return self._buttons_enabled
+
+    @buttons_enabled.setter
+    def buttons_enabled(self, buttons_enabled: bool) -> None:
+        """
+        Setter for buttons_enabled (internal)
+        :param buttons_enabled: True or False
+        :rtype: None
+        :return: None
+        """
+        if self._buttons_enabled == buttons_enabled:
+            return
+        self._buttons_enabled = buttons_enabled
+        for item in self.buttons_enabled_items:
+            item(self.buttons_enabled, 'Sonos')
+
+    def set_buttons_enabled(self, buttons_enabled: bool) -> bool:
+        """
+        Calls the SoCo functionality buttons_enabled to set this setting to the speaker. This mode is not available for
+        non visible speakers (e.g. stereo slaves).
+        :rtype: bool
+        :param buttons_enabled: True or False
+        :return: 'True' if success, 'False' otherwise
+        """
+        try:
+            self.soco.buttons_enabled = buttons_enabled
+            self.buttons_enabled = buttons_enabled
+            return True
+        except Exception as ex:
+            self.logger.warning("Sonos: {uid}: can't set buttons enabled state. Not supported.".format(uid=self.uid))
+            return False
+
+    def get_buttons_enabled(self) -> bool:
+        """
+        Calls the SoCo function to get the buttons enabled status of the speaker.
+        :rtype: bool
+        :return: 'True' for buttons enabled, 'False' for buttons disabled
+        """
+        try:
+            return self.soco.buttons_enabled
+        except Exception as ex:
+            self.logger.error(ex)
             return False
 
     @property
@@ -2355,9 +2412,15 @@ class Speaker(object):
 
 class Sonos(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.6.2"
+    PLUGIN_VERSION = "1.6.4"
 
     def __init__(self, sh, *args, **kwargs):
+        """
+        Initalizes the plugin.
+
+        """
+
+        # Call init code of parent class (SmartPlugin)
         super().__init__(**kwargs)
 
         self._sh = sh
@@ -2694,6 +2757,8 @@ class Sonos(SmartPlugin):
                     sonos_speaker[uid].set_loudness(item(), group_command)
                 if command == "night_mode":
                     sonos_speaker[uid].set_night_mode(item())
+                if command == "buttons_enabled":
+                    sonos_speaker[uid].set_buttons_enabled(item())
                 if command == "dialog_mode":
                     sonos_speaker[uid].set_dialog_mode(item())
                 if command == "cross_fade":
@@ -2889,23 +2954,32 @@ class Sonos(SmartPlugin):
         self.zero_zone = False
 
         for zone in zones:
-            if zone.uid is None:
-                is_up = False
-            else:
-                uid = zone.uid.lower()
+            # Trying to extract Speaker ID (UID). Skip speaker otherwise:
 
-                self.logger.debug("Pinging speaker with uid {0}".format(uid))
-                # don't trust the discover function, offline speakers can be cached
-                # we try to ping the speaker
-                with open(os.devnull, 'w') as DEVNULL:
-                    try:
-                        subprocess.check_call(['ping', '-i', '0.2', '-c', '2', zone.ip_address],
-                                              stdout=DEVNULL, stderr=DEVNULL, timeout=1)
-                        is_up = True
-                    except subprocess.CalledProcessError:
-                        is_up = False
-                    except subprocess.TimeoutExpired:
-                        is_up = False
+            try:
+                uid = zone.uid
+            except Exception as e:
+                self.logger.debug(f"Exception in zone.uid for speaker {zone.ip_address}: {e}")
+                continue
+
+            if uid is None:
+                self.logger.warning(f"Zone has no valid uid. Cannot handle speaker {zone.ip_address}")
+                continue
+
+            uid = uid.lower()
+            self.logger.debug(f"Pinging speaker {uid} with ip {zone.ip_address}")
+            # don't trust the discover function, offline speakers can be cached
+            # we try to ping the speaker
+            try:
+                proc_result = subprocess.run(['ping', '-i', '0.2', '-c', '2', zone.ip_address],
+                                             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=1)
+                is_up = True
+            except subprocess.CalledProcessError:
+                self.logger.warning(f"Debug: Ping {zone.ip_address} process finished with return code {proc_result.returncode}")
+                is_up = False
+            except subprocess.TimeoutExpired:
+                self.logger.debug(f"Ping {zone.ip_address} process timed out")
+                is_up = False            
 
             if is_up:
                 self.logger.info("Debug: Speaker found: {zone}, {uid}".format(zone=zone.ip_address, uid=uid))
@@ -2923,7 +2997,7 @@ class Sonos(SmartPlugin):
 #                        sonos_speaker[uid].check_subscriptions()
 
                 else:
-                    self.logger.info("Debug: Initializing new speaker with uid={0}".format(uid))
+                    self.logger.warning(f"Debug: Initializing new speaker with uid={uid} and ip={zone.ip_address}")
                     _initialize_speaker(uid, self.logger)
                     sonos_speaker[uid].soco = zone
 

@@ -72,9 +72,15 @@ class WebInterface(SmartPluginWebIf):
         """
         tmpl = self.tplenv.get_template('index.html')
         # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
+        # return tmpl.render(p=self.plugin,
+        #                    items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path'])),
+        #                    item_count=0)
         return tmpl.render(p=self.plugin,
-                           items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path'])),
-                           item_count=0)
+                           items=self.plugin.get_pluginitems(),
+                           item_count=len(self.plugin.get_pluginitem_list()))
+        #return tmpl.render(p=self.plugin,
+        #                   items=sorted(self.plugin.get_pluginitem_list()),
+        #                   item_count=len(self.plugin.get_pluginitem_list()))
 
 
     @cherrypy.expose

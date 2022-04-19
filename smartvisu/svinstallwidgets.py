@@ -41,9 +41,14 @@ class SmartVisuInstallWidgets:
         self.tmpdir = self.smartvisu_dir + '/temp'
         self.pgbdir = self.smartvisu_dir + '/pages/base'          # pages/base directory
         if self.smartvisu_version >= '2.9':
+            # v2.9 & v3.x
             self.outdir = os.path.join(self.smartvisu_dir, 'dropins/widgets')
             self.pgbdir = os.path.join(self.smartvisu_dir, 'dropins')
-            self.icndir = os.path.join(self.smartvisu_dir, 'dropins/icons/ws')
+            self.icndir_ws = os.path.join(self.smartvisu_dir, 'dropins/icons/ws')
+            self.icndir_sw = os.path.join(self.smartvisu_dir, 'dropins/icons/sw')
+        if self.smartvisu_version >= '3.0':
+            # v3.x
+            self.outdir = os.path.join(self.smartvisu_dir, 'dropins/shwidgets')
 
         self.logger.debug("install_widgets: Installing from '{0}' to '{1}'".format(self._sh.base_dir, self.smartvisu_dir))
 
@@ -126,15 +131,28 @@ class SmartVisuInstallWidgets:
 
         # Open file for twig import statements (for root.html)
         for fn in os.listdir(srcdir):
+            if self.smartvisu_version >= '3.0':
+                # v3.x
+                # copy icons from subirectories ws and sw (if fn is one of the directories)
+                if (fn in ['ws', 'sw']) and os.path.isdir(os.path.join(srcdir, fn)):
+                    icondir = os.path.join(srcdir, fn)
+                    for icn in os.listdir(icondir):
+                        if fn == 'ws':
+                            shutil.copy2(os.path.join(icondir, icn), self.icndir_ws)
+                        if fn == 'sw':
+                            shutil.copy2(os.path.join(icondir, icn), self.icndir_sw)
+
+            # copy files from the widget directory (if it is not a marrkdown file)
             if (fn[-3:] != ".md"):
                 self.logger.info("copy_widgets (v{}): Copying widget-file: {} from {}".format(self.smartvisu_version, fn, plgdir))
                 if fn.startswith('widget_'):
                     self.plugin_instance.test_widget_for_deprecated_widgets(os.path.join(srcdir, fn))
 
                 if self.smartvisu_version >= '2.9':
+                    # v2.9 & v3.x
                     if os.path.splitext(fn)[1] == '.png' or os.path.splitext(fn)[1] == '.svg':
                         # copy icons to the icons directory
-                        shutil.copy2( os.path.join(srcdir, fn), self.icndir )
+                        shutil.copy2( os.path.join(srcdir, fn), self.icndir_ws )
                     else:
                         # the rest to the widgets directory & strip 'widgets_' from name
                         if fn.startswith('widget_'):

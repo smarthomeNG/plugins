@@ -22,21 +22,35 @@
 {% endblock pluginstyles %}
 {% block pluginscripts %}
 <script>
-    $(document).ready( function () {
+  $(document).ready( function () {
     $(window).trigger('datatables_defaults');
-		try
-			{
-      webif_pagelength = document.getElementById('webif_pagelength').innerHTML;
-			table = $('#maintable').DataTable( {
-        "columnDefs": [{ "targets": [8], "className": "none"}].concat($.fn.dataTable.defaults.columnDefs),
-        "pageLength": webif_pagelength });
-			}
-		catch (e)
-			{
+    try {
+      /* get pagelength from plugin. Also see hidden span element in bodytab1 block! */
+      webif_pagelength = parseInt(document.getElementById('webif_pagelength').innerHTML);
+      if (webif_pagelength == 0) {
+        resize = true;
+        webif_pagelength = -1;
+      }
+      else {
+        resize = false;
+      }
+    }
+    catch (e) {
+      webif_pagelength = 100;
+      resize = false;
+      console.log("Using default values for page length " + webif_pagelength + ", pageResize: " + resize);
+    }
+		try {
+      table = $('#maintable').DataTable( {
+        columnDefs: [{ "targets": [8], "className": "none"}].concat($.fn.dataTable.defaults.columnDefs),
+        pageLength: webif_pagelength,
+        pageResize: resize});
+		}
+		catch (e) {
 			console.log("Datatable JS not loaded, showing standard table without reorder option " +e);
     }
 
-    });
+  });
 </script>
 <script>
 	function handleUpdatedData(response, dataSet=null) {
@@ -55,7 +69,7 @@
           color = 'red';
         }
         else {
-          depend_text = objResponse[item]['depend']['item'] + ' (' + objResponse[item]['interpolation']['itemtype'] + ')';
+          depend_text = objResponse[item]['depend']['item'] + '&nbsp;(' + objResponse[item]['interpolation']['itemtype'] + ')';
         }
 
         if (objResponse[item]['interpolation'] == undefined) {
@@ -102,6 +116,7 @@
             sunset_text = '';
             entries_rise = objResponse[item]['sun']['sunrise'];
             entries_set = objResponse[item]['sun']['sunset'];
+
             dict_length = Object.keys(entries_rise).length;
             for (let i = 0; i < dict_length; i++) {
               sunrise_text += Object.keys(entries_rise)[i] + ': ';
@@ -112,20 +127,21 @@
                 sunrise_text += ', ';
                 sunset_text += ', ';
               }
+
             }
           }
         }
         $('#' + $.escapeSelector(item)).css({'color': color});
-        shngInsertText (item+'_interpolation', intpl_text, 'maintable');
-        shngInsertText (item+'_backintime', bit_text, 'maintable');
+        shngInsertText (item+'_interpolation', intpl_text, 'maintable', 10);
+        shngInsertText (item+'_backintime', bit_text, 'maintable', 10);
         shngInsertText (item+'_dict', objResponse[item]['dict'], 'maintable');
-        shngInsertText (item+'_dependvalue', objResponse[item]['depend']['value'], 'maintable');
-        shngInsertText (item+'_nextvalue', planned, 'maintable');
-        shngInsertText (item+'_nexttime', objResponse[item]['planned']['time'], 'maintable');
+        shngInsertText (item+'_dependvalue', objResponse[item]['depend']['value'], 'maintable', 10);
+        shngInsertText (item+'_nextvalue', planned, 'maintable', 10);
+        shngInsertText (item+'_nexttime', '&#x202a;'+objResponse[item]['planned']['time']+'&#x202c;', 'maintable', 10);
         shngInsertText (item+'_dependitem', depend_text, 'maintable');
-        shngInsertText (item+'_lastvalue', lastvalue, 'maintable');
-        shngInsertText ('sunrise', sunrise_text);
-        shngInsertText ('sunset', sunset_text);
+        shngInsertText (item+'_lastvalue', lastvalue, 'maintable', 10);
+        shngInsertText ('sunrise', sunrise_text, null, 2);
+        shngInsertText ('sunset', sunset_text, null, 2);
 			}
 		}
 	}
@@ -138,14 +154,14 @@
 {% set tabcount = 1 %}
 
 {% block headtable %}
-
+<span id='webif_pagelength' style="display:none">{{ webif_pagelength }}</span>
 <table class="table table-striped table-hover">
   <tbody>
     <tr>
       <td class="py-1"><strong>{{ _('Sonnenaufgang') }}</strong><br>
-        <span id="sunrise">-</span></td>
+        <span id="sunrise">...</span></td>
       <td class="py-1"><strong>{{ _('Sonnenuntergang') }}</strong><br>
-      <span id="sunset">-</span></td>
+      <span id="sunset">...</span></td>
     </tr>
     <tr>
       <td class="py-1" colspan="2"><strong>Items</strong>: {{ item_count }}</td>
@@ -157,13 +173,12 @@
 
 
 {% block bodytab1 %}
-
-<div class="container-fluid m-2">
+<div class="container-fluid m-2 table-resize dataTableAdditional">
   <div class="mb-2">
-    <span id='webif_pagelength' style="display:none">{{ webif_pagelength }}</span>
+
     {{ _('Die folgenden Items sind dem UZSU Plugin zugewiesen') }}.
   </div>
-  <table id="maintable" class="table table-striped table-hover pluginList display">
+  <table id="maintable" class="table table-striped table-hover pluginList">
     <thead>
     <tr>
       <th>{{ _('UZSU Item') }}</th>
@@ -177,6 +192,7 @@
       <th>{{ _('Dictionary') }}</th>
     </tr>
     </thead>
+    <tbody>
     {% for item in p._webdata %}
           <tr id="{{ item }}">
             <td class="py-1" id="{{ item }}_path">{{ item }}</td>
@@ -184,7 +200,7 @@
               {{ _('Initialisiere...') }}
             </td>
               <td class="py-1" id="{{ item }}_dependvalue">
-                ..
+                ...
               </td>
               <td class="py-1" id="{{ item }}_nextvalue">
                 ...
@@ -195,7 +211,7 @@
               <td class="py-1" id="{{ item }}_lastvalue">
                 ...
               </td>
-              <td class="py-1"id="{{ item }}_interpolation">
+              <td class="py-1" id="{{ item }}_interpolation">
                 ...
               </td>
               <td class="py-1" id="{{ item }}_backintime">
@@ -206,6 +222,7 @@
               </td>
 
     {% endfor %}
+    </tbody>
   </table>
 </div>
 {% endblock bodytab1 %}

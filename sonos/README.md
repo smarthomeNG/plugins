@@ -448,6 +448,13 @@ Returns a list of Sonos playlists. These playlists can be loaded by the ```load_
 Sets / gets the status light indicator of a speaker. 'True' to turn the light on, 'False' to turn it off. The value is 
 NOT updated in real-time. For each speaker discover cycle the item will be updated.
 
+#### buttons_enabled
+```read``` ```write```
+
+Sets / gets the state of the buttons/touch enabled feature of a speaker. 'True' to enable button/touch control, 'False' to disable it. The value is 
+NOT updated in real-time. For each speaker discover cycle the item will be updated.
+
+
 #### stop
 ```read``` ```write``` ```visu```
 

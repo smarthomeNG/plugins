@@ -51,10 +51,15 @@ parameters:
             en: "Organization for storing time-series data on the Influxdata server"
     bucket:
         type: str
-        default: smarthomeng
+        default: shng
         description:
             de: "Default-Bucket (benannte Lokation) zum speichern von Zeitserien auf dem Influxdata Server"
             en: "Default-Bucket (named location) for storing time-series data on the Influxdata server"
+    tags:
+        type: dict
+        description:
+            de: 'Globale Angabe zusätzlicher Tags, die mit den Werten aller Items gespeichert werden sollen (z.B.: {"raum": "wohnen"})'
+            en: 'Specify additional global tags to be stored with the value of all items (e.g.: {"room": "living"}'
 
     recognize_database:
         type: bool
@@ -62,18 +67,20 @@ parameters:
             de: 'Steuert ob Items, die das Attribut **database** tragen, in die InfluxDB geschrieben werden sollen'
             en: 'Controls if items that carry the **database** attribute should be written ti the InfluxDB'
 
-    param2:
+    value_field:
         type: str
-        default: 'value2'
-        valid_list:
-            - 'value1'
-            - 'value2'
-            - 'value3'
-            - 'value4'
-            - 'value5'
+        default: 'value'
         description:
-            de: 'Demo Parameter mit Gültigkeitsliste und Standardwert'
-            en: 'Demonstration parameter with valid-list and default value'
+            de: 'Name des Fields in welches der Item Wert geschrieben werden soll (Sollte normalerweise auf dem Standardwert bleiben)'
+            en: "Name of the field, to store the items' value in ("
+
+    str_value_field:
+        type: str
+        default: 'str_value'
+        description:
+            de: 'Name des Fields in welches nicht-numerische Item Werte geschrieben werden sollen (Sollte normalerweise auf dem Standardwert bleiben)'
+            en: "Name of the field, to store the non-numeric values in"
+
 
 item_attributes:
     # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)
@@ -85,13 +92,24 @@ item_attributes:
             en: "This attribute enables the database logging when set (just use value 'yes' or 'true'). If value 'init' is used, an item will be initalized from the database after SmartHomeNG is restarted."
     influxdb2_bucket:
         type: str
-        default: smarthomeng
         description:
             de: "Default-Bucket (benannte Lokation) zum speichern von Zeitserien auf dem Influxdata Server"
             en: "Default-Bucket (named location) for storing time-series data on the Influxdata server"
+    influxdb2_name:
+        type: str
+        description:
+            de: "In der InfluxDB verwendeter Name für das Item (Optional)"
+            en: "Name for the item to be used in InfluxDB (optional)"
+    influxdb2_tags:
+        type: str
+        description:
+            de: 'Angabe weiterer Tags, die mit dem Wert gespeichert werden sollen (z.B.: {"raum": "wohnen"})'
+            en: 'Specify additional tags to be stored with the value (e.g.: {"room": "living"}'
+
     database:
         type: str
         valid_list_ci: ['', 'yes', 'init', 'true']
+        duplicate_use: True
         description:
             de: "Wenn auf 'yes' oder 'true' gesetzt, werden die Werte des Items in die Datenbank geschrieben. Wenn auf 'init' gesetzt, wird zusätzlich beim Start von SmartHomeNG der Wert des Items aus der Datenbank gelesen."
             en: "This attribute enables the database logging when set (just use value 'yes' or 'true'). If value 'init' is used, an item will be initalized from the database after SmartHomeNG is restarted."

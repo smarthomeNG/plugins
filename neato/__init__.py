@@ -36,6 +36,13 @@ class Neato(SmartPlugin):
     robot = 'None'
 
     def __init__(self, sh, *args, **kwargs):
+        """
+        Initalizes the plugin.
+
+        """
+
+        # Call init code of parent class (SmartPlugin)
+        super().__init__()
 
         self.robot = Robot(self.get_parameter_value("account_email"), self.get_parameter_value("account_pass"), self.get_parameter_value("robot_vendor"), token=self.get_parameter_value("token"))
         self._sh = sh
