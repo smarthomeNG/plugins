@@ -32,6 +32,15 @@ from ``The KNX Standard v2.1`` chapter ``03 Volume 3 System Specifications``.
 """
 
 """
+Datapoint type raw
+"""
+
+def deraw(payload):
+    import binascii
+    return binascii.hexlify(payload).decode()
+
+
+"""
 Datapoint type one byte with one bit information
 """
 def en1(value):
@@ -563,7 +572,8 @@ decode = {
     '251': de251,       #RGBW
     '275.100' : de275100,
     'pa': depa,
-    'ga': dega
+    'ga': dega,
+    'raw': deraw
 }
 
 encode = {
