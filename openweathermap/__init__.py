@@ -781,7 +781,12 @@ class OpenWeatherMap(SmartPlugin):
             self.logger.error(f"Response for {data_source_key} from {url} was too short to be meaningful: '{response.content}'")
             return
 
-        json_obj = response.json()
+        try:
+            json_obj = response.json()
+        except Exception as e:
+            self.logger.error(f"Exception '{e}' trying to decode json resoponse: {response}")
+            self.logger.error(f" - resoponse: {response.text}")
+            json_obj = {}
 
         self._data_sources[data_source_key]['url'] = url
         self._data_sources[data_source_key]['fetched'] = datetime.now()
