@@ -416,20 +416,21 @@ class AVM2(SmartPlugin):
         :param item: item to be updated towards the plugin
         :param caller: if given it represents the callers name
         :param source: if given it represents the source
-        :param dest: if given it represents the dest
+        :param dest: if given it represents the destination
         """
 
-        if self.alive and caller != self.get_shortname() and item in self._items:
+        if self.alive and caller != self.get_fullname():
 
-            avm_data_type = self._items[item][0]
+            # get avm_data_type
+            avm_data_type = self.get_iattr_value(item.conf, 'avm2_data_type')
+
+            self.logger.info(f"Updated item: {item.property.path} with avm_data_type={avm_data_type} item has been changed outside this plugin from caller={caller}")
 
             readafterwrite = None
             if self.has_iattr(item.conf, 'avm2_read_after_write'):
                 readafterwrite = int(self.get_iattr_value(item.conf, 'avm2_read_after_write'))
                 if self.debug_log:
                     self.logger.debug(f'Attempting read after write for item: {item.id()}, avm_data_type: {avm_data_type}, delay: {readafterwrite}s')
-
-            self.logger.info(f"Update item: {item.property.path} with avm_data_type={avm_data_type} item has been changed outside this plugin")
 
             # handle items updated by tr-064 interface
             if avm_data_type in _tr064_attributes:
@@ -564,12 +565,10 @@ class FritzDevice:
         elif avm_data_type in _deflection_attributes:
             avm_deflection_index = self._get_deflection_index(item)
             if avm_deflection_index is not None:
-                self._plugin_instance.logger.debug(
-                    f"Item {item.id()} with avm device attribute and defined 'avm_tam_index' found; append to list.")
+                self._plugin_instance.logger.debug(f"Item {item.id()} with avm device attribute and defined 'avm_tam_index' found; append to list.")
                 self._items[item] = (avm_data_type, avm_deflection_index)
             else:
-                self._plugin_instance.logger.warning(
-                    f"Item {item.id()} with avm attribute found, but 'avm_tam_index' is not defined; Item will be ignored.")
+                self._plugin_instance.logger.warning(f"Item {item.id()} with avm attribute found, but 'avm_tam_index' is not defined; Item will be ignored.")
 
         # handle all other items
         else:
@@ -587,8 +586,8 @@ class FritzDevice:
         to_be_set_value = item()
 
         # define command per avm_data_type
-        _dispatcher = {'wlanconfig': (self.set_wlan_config, self.get_wlan_config),
-                       'tam': (self.set_tam, self.get_tam),
+        _dispatcher = {'wlanconfig':        (self.set_wlan, self.get_wlan),
+                       'tam':               (self.set_tam, self.get_tam),
                        'deflection_enable': (self.set_deflection, self.get_deflection),
                        }
 
@@ -601,19 +600,14 @@ class FritzDevice:
 
         # handle readafterwrite
         if readafterwrite:
-            wait = float(readafterwrite)
-            time.sleep(wait)
-            try:
-                set_value = _dispatcher[avm_data_type][1](_index)
-            except Exception:
-                self._plugin_instance.logger.error(f"{avm_data_type} is not defined to be read.")
+            time.sleep(readafterwrite)
+            set_value = _dispatcher[avm_data_type][1](_index)
+            item(set_value, self._plugin_instance.get_fullname())
+            if set_value != to_be_set_value:
+                self._plugin_instance.logger.warning(f"Setting AVM Device defined in Item={item.id()} with avm_data_type={avm_data_type} to value={to_be_set_value} FAILED!")
             else:
-                item(set_value, self._plugin_instance.get_instance_name())
-                if set_value != to_be_set_value:
-                    self._plugin_instance.logger.warning(f"Setting AVM Device defined in Item={item.id()} with avm_data_type={avm_data_type} to value={to_be_set_value} FAILED!")
-                else:
-                    if self._plugin_instance.debug_log:
-                        self._plugin_instance.logger.debug(f"Setting AVM Device defined in Item={item.id()} with avm_data_type={avm_data_type} to value={to_be_set_value} successful!")
+                if self._plugin_instance.debug_log:
+                    self._plugin_instance.logger.debug(f"Setting AVM Device defined in Item={item.id()} with avm_data_type={avm_data_type} to value={to_be_set_value} successful!")
 
     def _build_url(self) -> str:
         """
@@ -638,12 +632,8 @@ class FritzDevice:
         wlan_index = None
         for i in range(2):
             attribute = 'avm2_wlan_index'
-            attribute_w_instance = f"{attribute}@{self._plugin_instance.get_instance_name()}"
 
             wlan_index = self._plugin_instance.get_iattr_value(item.conf, attribute)
-            if wlan_index:
-                break
-            wlan_index = self._plugin_instance.get_iattr_value(item.conf, attribute_w_instance)
             if wlan_index:
                 break
             else:
@@ -665,12 +655,8 @@ class FritzDevice:
         tam_index = None
         for i in range(2):
             attribute = 'avm2_tam_index'
-            attribute_w_instance = f"{attribute}@{self._plugin_instance.get_instance_name()}"
 
             tam_index = self._plugin_instance.get_iattr_value(item.conf, attribute)
-            if tam_index:
-                break
-            tam_index = self._plugin_instance.get_iattr_value(item.conf, attribute_w_instance)
             if tam_index:
                 break
             else:
@@ -692,12 +678,8 @@ class FritzDevice:
         deflection_index = None
         for i in range(2):
             attribute = 'avm2_deflection_index'
-            attribute_w_instance = f"{attribute}@{self._plugin_instance.get_instance_name()}"
 
             deflection_index = self._plugin_instance.get_iattr_value(item.conf, attribute)
-            if deflection_index:
-                break
-            deflection_index = self._plugin_instance.get_iattr_value(item.conf, attribute_w_instance)
             if deflection_index:
                 break
             else:
@@ -719,12 +701,8 @@ class FritzDevice:
         mac = None
         for i in range(2):
             attribute = 'avm2_mac'
-            attribute_w_instance = f"{attribute}@{self._plugin_instance.get_instance_name()}"
 
             mac = self._plugin_instance.get_iattr_value(item.conf, attribute)
-            if mac:
-                break
-            mac = self._plugin_instance.get_iattr_value(item.conf, attribute_w_instance)
             if mac:
                 break
             else:
@@ -884,7 +862,7 @@ class FritzDevice:
                         self._plugin_instance.logger.error(f"Error {data} '{self.errorcodes.get(data, None)}' occurred during update of item={item}. Check item configuration regarding supported/activated function of AVM device. ")
                         _item_errorlist.append(item)
                     else:
-                        item(data, self._plugin_instance.get_shortname())
+                        item(data, self._plugin_instance.get_fullname())
         else:
             self._plugin_instance.logger.warning(f"FritzDevice not connected. No update of item values possible.")
 
@@ -1323,7 +1301,7 @@ class FritzDevice:
     # ----------------------------------
     # wlan methods
     # ----------------------------------
-    def set_wlan_config(self, wlan_index: int, new_enable: bool = False):
+    def set_wlan(self, wlan_index: int, new_enable: bool = False):
         """
         Set WLAN Config
 
@@ -1331,17 +1309,27 @@ class FritzDevice:
         """
 
         # set WLAN to ON/OFF
+        if self._plugin_instance.debug_log:
+            self._plugin_instance.logger.debug(f"set_wlan called: wlan_index={wlan_index}, new_enable={new_enable}")
         self.client.LANDevice.WLANConfiguration[wlan_index].SetEnable(NewEnable=int(new_enable))
+
         # check if remaining time is set as item
         for item in self._items:  # search for guest time remaining item.
             if self._items[item][0] == 'wlan_guest_time_remaining' and self._items[item][1] == wlan_index:
                 data = self._poll_fritz_device('wlan_guest_time_remaining', wlan_index)
                 if data is not None:
-                    item(data, self._plugin_instance.get_shortname())
+                    item(data, self._plugin_instance.get_fullname())
 
-    def get_wlan_config(self, wlan_index: int):
-        """Get WLAN ON/OFF State"""
-        return bool(self.client.LANDevice.WLANConfiguration[wlan_index].GetInfo()['NewEnable'])
+    def get_wlan(self, wlan_index: int):
+        """
+        Get WLAN ON/OFF State
+
+        uses: https://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/wlanconfigSCPD.pdf
+        """
+        if self._plugin_instance.debug_log:
+            self._plugin_instance.logger.debug(f"get_wlan called: wlan_index={wlan_index}")
+
+        return self.client.LANDevice.WLANConfiguration[wlan_index].GetInfo()['NewEnable']
 
     # ----------------------------------
     # tam methods
@@ -1362,7 +1350,7 @@ class FritzDevice:
         uses: https://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/x_tam.pdf
         """
 
-        return bool(self.client.InternetGatewayDevice.X_AVM_DE_TAM.GetInfo(NewIndex=tam_index)['NewEnable'])
+        return self.client.InternetGatewayDevice.X_AVM_DE_TAM.GetInfo(NewIndex=tam_index)['NewEnable']
 
     def get_tam_list(self, tam_index: int = 0):
         """
@@ -1429,7 +1417,7 @@ class FritzDevice:
 
     def get_deflection(self, deflection_id: int = 0):
         """Get Deflection state of deflection_id"""
-        return bool(self.client.InternetGatewayDevice.X_AVM_DE_OnTel.GetDeflection(NewDeflectionId=deflection_id)['NewEnable'])
+        return self.client.InternetGatewayDevice.X_AVM_DE_OnTel.GetDeflection(NewDeflectionId=deflection_id)['NewEnable']
 
     # ----------------------------------
     # Host
@@ -2052,7 +2040,7 @@ class FritzHome:
                         _avm_data_type = _avm_data_type[len('set_'):]
                     # set item
                     if _avm_data_type in device:
-                        item(device[_avm_data_type], self._plugin_instance.get_shortname())
+                        item(device[_avm_data_type], self._plugin_instance.get_fullname())
                     else:
                         self._plugin_instance.logger.warning(f'Attribute={_avm_data_type} at device with AIN={_ain} to be set to Item={item.id()} is not available.')
             else:
@@ -2886,7 +2874,7 @@ class FritzHome:
             except Exception:
                 self._plugin_instance.logger.error(f"{avm_data_type} is not defined to be read.")
             else:
-                item(set_value, self._plugin_instance.get_instance_name())
+                item(set_value, self._plugin_instance.get_fullname())
                 if set_value != to_be_set_value:
                     self._plugin_instance.logger.warning(f"Setting AVM Device defined in Item={item.id()} with avm_data_type={avm_data_type} to value={to_be_set_value} FAILED!")
                 else:
@@ -3693,24 +3681,24 @@ class Callmonitor:
                 for element in _calllist:
                     if element['Type'] in ['1', '2']:
                         if 'Name' in element:
-                            item(element['Name'], self._plugin_instance.get_shortname())
+                            item(element['Name'], self._plugin_instance.get_fullname())
                         else:
-                            item(element['Caller'], self._plugin_instance.get_shortname())
+                            item(element['Caller'], self._plugin_instance.get_fullname())
                         break
 
             elif avm_data_type == 'last_number_incoming':
                 for element in _calllist:
                     if element['Type'] in ['1', '2']:
                         if 'Caller' in element:
-                            item(element['Caller'], self._plugin_instance.get_shortname())
+                            item(element['Caller'], self._plugin_instance.get_fullname())
                         else:
-                            item("", self._plugin_instance.get_shortname())
+                            item("", self._plugin_instance.get_fullname())
                         break
 
             elif avm_data_type == 'last_called_number_incoming':
                 for element in _calllist:
                     if element['Type'] in ['1', '2']:
-                        item(element['CalledNumber'], self._plugin_instance.get_shortname())
+                        item(element['CalledNumber'], self._plugin_instance.get_fullname())
                         break
 
             elif avm_data_type == 'last_call_date_incoming':
@@ -3718,14 +3706,14 @@ class Callmonitor:
                     if element['Type'] in ['1', '2']:
                         date = str(element['Date'])
                         times = date[8:10] + "." + date[5:7] + "." + date[2:4] + " " + date[11:19]
-                        item(str(times), self._plugin_instance.get_shortname())
+                        item(str(times), self._plugin_instance.get_fullname())
                         break
 
             elif avm_data_type == 'call_event_incoming':
-                item('disconnect', self._plugin_instance.get_shortname())
+                item('disconnect', self._plugin_instance.get_fullname())
 
             elif avm_data_type == 'is_call_incoming':
-                item(0, self._plugin_instance.get_shortname())
+                item(0, self._plugin_instance.get_fullname())
 
         for item in self._items_outgoing:
             avm_data_type = self._items_outgoing[item][0]
@@ -3734,24 +3722,24 @@ class Callmonitor:
                 for element in _calllist:
                     if element['Type'] in ['3', '4']:
                         if 'Name' in element:
-                            item(element['Name'], self._plugin_instance.get_shortname())
+                            item(element['Name'], self._plugin_instance.get_fullname())
                         else:
-                            item(element['Called'], self._plugin_instance.get_shortname())
+                            item(element['Called'], self._plugin_instance.get_fullname())
                         break
 
             elif avm_data_type == 'last_number_outgoing':
                 for element in _calllist:
                     if element['Type'] in ['3', '4']:
                         if 'Caller' in element:
-                            item(''.join(filter(lambda x: x.isdigit(), element['Caller'])), self._plugin_instance.get_shortname())
+                            item(''.join(filter(lambda x: x.isdigit(), element['Caller'])), self._plugin_instance.get_fullname())
                         else:
-                            item("", self._plugin_instance.get_shortname())
+                            item("", self._plugin_instance.get_fullname())
                         break
 
             elif avm_data_type == 'last_called_number_outgoing':
                 for element in _calllist:
                     if element['Type'] in ['3', '4']:
-                        item(element['Called'], self._plugin_instance.get_shortname())
+                        item(element['Called'], self._plugin_instance.get_fullname())
                         break
 
             elif avm_data_type == 'last_call_date_outgoing':
@@ -3759,28 +3747,28 @@ class Callmonitor:
                     if element['Type'] in ['3', '4']:
                         date = str(element['Date'])
                         times = date[8:10] + "." + date[5:7] + "." + date[2:4] + " " + date[11:19]
-                        item(str(times), self._plugin_instance.get_shortname())
+                        item(str(times), self._plugin_instance.get_fullname())
                         break
 
             elif avm_data_type == 'call_event_outgoing':
-                item('disconnect', self._plugin_instance.get_shortname())
+                item('disconnect', self._plugin_instance.get_fullname())
 
             elif avm_data_type == 'is_call_outgoing':
-                item(0, self._plugin_instance.get_shortname())
+                item(0, self._plugin_instance.get_fullname())
 
         for item in self._items:
             avm_data_type = self._items[item][0]
 
             if avm_data_type == 'call_event':
-                item('disconnect', self._plugin_instance.get_shortname())
+                item('disconnect', self._plugin_instance.get_fullname())
 
             elif avm_data_type == 'call_direction':
                 for element in _calllist:
                     if element['Type'] in ['1', '2']:
-                        item('incoming', self._plugin_instance.get_shortname())
+                        item('incoming', self._plugin_instance.get_fullname())
                         break
                     if element['Type'] in ['3', '4']:
-                        item('outgoing', self._plugin_instance.get_shortname())
+                        item('outgoing', self._plugin_instance.get_fullname())
                         break
 
         for item in self._duration_item_in:
@@ -3790,7 +3778,7 @@ class Callmonitor:
                     if element['Type'] in ['1', '2']:
                         duration = element['Duration']
                         duration = int(duration[0:1]) * 3600 + int(duration[2:4]) * 60
-                        item(duration, self._plugin_instance.get_shortname())
+                        item(duration, self._plugin_instance.get_fullname())
                         break
 
         for item in self._duration_item_out:
@@ -3800,7 +3788,7 @@ class Callmonitor:
                     if element['Type'] in ['3', '4']:
                         duration = element['Duration']
                         duration = int(duration[0:1]) * 3600 + int(duration[2:4]) * 60
-                        item(duration, self._plugin_instance.get_shortname())
+                        item(duration, self._plugin_instance.get_fullname())
                         break
 
     def get_item_list(self):
@@ -3891,7 +3879,7 @@ class Callmonitor:
             if self._duration_item_in is not None:
                 duration = time.time() - self._call_connect_timestamp
                 duration_item = list(self._duration_item_in.keys())[0]
-                duration_item(int(duration), self._plugin_instance.get_shortname())
+                duration_item(int(duration), self._plugin_instance.get_fullname())
             time.sleep(1)
 
     def _count_duration_outgoing(self):
@@ -3904,7 +3892,7 @@ class Callmonitor:
             if self._duration_item_out is not None:
                 duration = time.time() - self._call_connect_timestamp
                 duration_item = list(self._duration_item_out.keys())[0]
-                duration_item(int(duration), self._plugin_instance.get_shortname())
+                duration_item(int(duration), self._plugin_instance.get_fullname())
             time.sleep(1)
 
     def _parse_line(self, line: str):
@@ -3949,12 +3937,12 @@ class Callmonitor:
         for item in self._items:
             avm_data_type = self._items[item][0]
             if avm_data_type == 'call_event':
-                item(event.lower(), self._plugin_instance.get_shortname())
+                item(event.lower(), self._plugin_instance.get_fullname())
             if avm_data_type == 'call_direction':
                 if event == 'RING':
-                    item("incoming", self._plugin_instance.get_shortname())
+                    item("incoming", self._plugin_instance.get_fullname())
                 else:
-                    item("outgoing", self._plugin_instance.get_shortname())
+                    item("outgoing", self._plugin_instance.get_fullname())
 
         # handle incoming call
         if event == 'RING':
@@ -3963,11 +3951,11 @@ class Callmonitor:
                 avm_data_type = self._trigger_items[trigger_item][0]
                 avm_incoming_allowed = self._trigger_items[trigger_item][1]
                 avm_target_number = self._trigger_items[trigger_item][2]
-                trigger_item(0, self._plugin_instance.get_shortname())
+                trigger_item(0, self._plugin_instance.get_fullname())
                 if self._plugin_instance.debug_log:
                     self._plugin_instance.logger.debug(f"{avm_data_type} {call_from} {call_to}")
                 if avm_incoming_allowed == call_from and avm_target_number == call_to:
-                    trigger_item(1, self._plugin_instance.get_shortname())
+                    trigger_item(1, self._plugin_instance.get_fullname())
 
             if self._call_monitor_incoming_filter in call_to:
                 # set call id for incoming call
@@ -3976,7 +3964,7 @@ class Callmonitor:
                 # reset duration for incoming calls
                 if self._duration_item_in is not None:
                     duration_item = list(self._duration_item_in.keys())[0]
-                    duration_item(0, self._plugin_instance.get_shortname())
+                    duration_item(0, self._plugin_instance.get_fullname())
 
                 # process items specific to incoming calls
                 for item in self._items_incoming:
@@ -3984,32 +3972,32 @@ class Callmonitor:
                     if avm_data_type == 'is_call_incoming':
                         if self._plugin_instance.debug_log:
                             self._plugin_instance.logger.debug(f"Setting is_call_incoming: True")
-                        item(True, self._plugin_instance.get_shortname())
+                        item(True, self._plugin_instance.get_fullname())
                     elif avm_data_type == 'last_caller_incoming':
                         if call_from != '' and call_from is not None:
                             name = self._callback(call_from)
                             if name != '' and name is not None:
-                                item(name, self._plugin_instance.get_shortname())
+                                item(name, self._plugin_instance.get_fullname())
                             else:
-                                item(call_from, self._plugin_instance.get_shortname())
+                                item(call_from, self._plugin_instance.get_fullname())
                         else:
-                            item("Unbekannt", self._plugin_instance.get_shortname())
+                            item("Unbekannt", self._plugin_instance.get_fullname())
                     elif avm_data_type == 'last_call_date_incoming':
                         if self._plugin_instance.debug_log:
                             self._plugin_instance.logger.debug(f"Setting last_call_date_incoming: {time}")
-                        item(str(time), self._plugin_instance.get_shortname())
+                        item(str(time), self._plugin_instance.get_fullname())
                     elif avm_data_type == 'call_event_incoming':
                         if self._plugin_instance.debug_log:
                             self._plugin_instance.logger.debug(f"Setting call_event_incoming: {event.lower()}")
-                        item(event.lower(), self._plugin_instance.get_shortname())
+                        item(event.lower(), self._plugin_instance.get_fullname())
                     elif avm_data_type == 'last_number_incoming':
                         if self._plugin_instance.debug_log:
                             self._plugin_instance.logger.debug(f"Setting last_number_incoming: {call_from}")
-                        item(call_from, self._plugin_instance.get_shortname())
+                        item(call_from, self._plugin_instance.get_fullname())
                     elif avm_data_type == 'last_called_number_incoming':
                         if self._plugin_instance.debug_log:
                             self._plugin_instance.logger.debug(f"Setting last_called_number_incoming: {call_to}")
-                        item(call_to, self._plugin_instance.get_shortname())
+                        item(call_to, self._plugin_instance.get_fullname())
 
         # handle outgoing call
         elif event == 'CALL':
@@ -4019,27 +4007,27 @@ class Callmonitor:
             # reset duration for outgoing calls
             if self._duration_item_out is not None:
                 duration_item = list(self._duration_item_out.keys())[0]
-                duration_item(0, self._plugin_instance.get_shortname())
+                duration_item(0, self._plugin_instance.get_fullname())
 
             # process items specific to outgoing calls
             for item in self._items_outgoing:
                 avm_data_type = self._items_outgoing[item][0]
                 if avm_data_type == 'is_call_outgoing':
-                    item(True, self._plugin_instance.get_shortname())
+                    item(True, self._plugin_instance.get_fullname())
                 elif avm_data_type == 'last_caller_outgoing':
                     name = self._callback(call_to)
                     if name != '' and name is not None:
-                        item(name, self._plugin_instance.get_shortname())
+                        item(name, self._plugin_instance.get_fullname())
                     else:
-                        item(call_to, self._plugin_instance.get_shortname())
+                        item(call_to, self._plugin_instance.get_fullname())
                 elif avm_data_type == 'last_call_date_outgoing':
-                    item(str(time), self._plugin_instance.get_shortname())
+                    item(str(time), self._plugin_instance.get_fullname())
                 elif avm_data_type == 'call_event_outgoing':
-                    item(event.lower(), self._plugin_instance.get_shortname())
+                    item(event.lower(), self._plugin_instance.get_fullname())
                 elif avm_data_type == 'last_number_outgoing':
-                    item(call_from, self._plugin_instance.get_shortname())
+                    item(call_from, self._plugin_instance.get_fullname())
                 elif avm_data_type == 'last_called_number_outgoing':
-                    item(call_to, self._plugin_instance.get_shortname())
+                    item(call_to, self._plugin_instance.get_fullname())
 
         # handle established connection
         elif event == 'CONNECT':
@@ -4051,7 +4039,7 @@ class Callmonitor:
                 for item in self._items_outgoing:
                     avm_data_type = self._items_outgoing[item][0]
                     if avm_data_type == 'call_event_outgoing':
-                        item(event.lower(), self._plugin_instance.get_shortname())
+                        item(event.lower(), self._plugin_instance.get_fullname())
 
             # handle INCOMING calls
             elif callid == self._call_incoming_cid:
@@ -4065,7 +4053,7 @@ class Callmonitor:
                     if avm_data_type == 'call_event_incoming':
                         if self._plugin_instance.debug_log:
                             self._plugin_instance.logger.debug(f"Setting call_event_incoming: {event.lower()}")
-                        item(event.lower(), self._plugin_instance.get_shortname())
+                        item(event.lower(), self._plugin_instance.get_fullname())
 
         # handle ended connection
         elif event == 'DISCONNECT':
@@ -4074,9 +4062,9 @@ class Callmonitor:
                 for item in self._items_outgoing:
                     avm_data_type = self._items_outgoing[item][0]
                     if avm_data_type == 'call_event_outgoing':
-                        item(event.lower(), self._plugin_instance.get_shortname())
+                        item(event.lower(), self._plugin_instance.get_fullname())
                     elif avm_data_type == 'is_call_outgoing':
-                        item(False, self._plugin_instance.get_shortname())
+                        item(False, self._plugin_instance.get_fullname())
                 if self._duration_item_out is not None:  # stop counter threads
                     self._stop_counter('outgoing')
                 self._call_outgoing_cid = None
@@ -4088,11 +4076,11 @@ class Callmonitor:
                     if avm_data_type == 'call_event_incoming':
                         if self._plugin_instance.debug_log:
                             self._plugin_instance.logger.debug(f"Setting call_event_incoming: {event.lower()}")
-                        item(event.lower(), self._plugin_instance.get_shortname())
+                        item(event.lower(), self._plugin_instance.get_fullname())
                     elif avm_data_type == 'is_call_incoming':
                         if self._plugin_instance.debug_log:
                             self._plugin_instance.logger.debug(f"Setting is_call_incoming: False")
-                        item(False, self._plugin_instance.get_shortname())
+                        item(False, self._plugin_instance.get_fullname())
                 if self._duration_item_in is not None:  # stop counter threads
                     if self._plugin_instance.debug_log:
                         self._plugin_instance.logger.debug("Stopping Counter for Call Time")

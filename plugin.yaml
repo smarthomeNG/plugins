@@ -400,6 +400,7 @@ item_structs:
         visu_acl: rw
         avm2_data_type@instance: tam
         avm2_tam_index@instance: 1
+        avm2_read_after_write@instance: 5
 
         name:
             type: str
@@ -422,6 +423,7 @@ item_structs:
         visu_acl: rw
         avm2_data_type@instance: deflection_enable
         avm2_deflection_index@instance: 1
+        avm2_read_after_write@instance: 5
 
         deflection_type:
             type: str
@@ -502,6 +504,7 @@ item_structs:
             visu_acl: rw
             avm2_data_type@instance: wlanconfig    # 2,4ghz
             avm2_wlan_index@instance: 1
+            avm2_read_after_write@instance: 5
         wlan_1_ssid:
             type: str
             visu_acl: ro
@@ -512,6 +515,7 @@ item_structs:
             visu_acl: rw
             avm2_data_type@instance: wlanconfig    # 5 GHz
             avm2_wlan_index@instance: 2
+            avm2_read_after_write@instance: 5
         wlan_2_ssid:
             type: str
             visu_acl: ro
@@ -522,6 +526,7 @@ item_structs:
             visu_acl: rw
             avm2_data_type@instance: wlanconfig    # Guest
             avm2_wlan_index@instance: 3
+            avm2_read_after_write@instance: 5
         wlan_gast_ssid:
             type: str
             visu_acl: ro
