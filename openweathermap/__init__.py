@@ -784,8 +784,9 @@ class OpenWeatherMap(SmartPlugin):
         try:
             json_obj = response.json()
         except Exception as e:
-            self.logger.error(f"Exception '{e}' trying to decode json resoponse: {response}")
-            self.logger.error(f" - resoponse: {response.text}")
+            self.logger.error(f"Exception trying to decode json resoponse: {e}")
+            self.logger.error(f" - Status code: {response.status_code}")
+            self.logger.info(f" - resoponse: {response.text}")
             json_obj = {}
 
         self._data_sources[data_source_key]['url'] = url
