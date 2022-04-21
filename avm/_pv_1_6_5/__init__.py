@@ -191,10 +191,10 @@ class MonitoringService:
     """
     Class which connects to the FritzBox service of the Callmonitor: http://www.wehavemorefun.de/fritzbox/Callmonitor
 
-    Can currently handle three items:
-    - avm_data_type = is_call_incoming, type = bool
-    - avm_data_type = last_caller, type = str
-    - avm_data_type = last_call_date, type = str
+    | Can currently handle three items:
+    | - avm_data_type = is_call_incoming, type = bool
+    | - avm_data_type = last_caller, type = str
+    | - avm_data_type = last_call_date, type = str
     """
 
     def __init__(self, host, port, callback, call_monitor_incoming_filter, plugin_instance):
@@ -229,7 +229,6 @@ class MonitoringService:
         """
         Connects to the call monitor of the AVM device
         """
-
         if self._listen_active:
             self._plugin_instance.logger.debug("MonitoringService: Connect called while listen active")
             return
@@ -242,14 +241,14 @@ class MonitoringService:
             self._plugin_instance.logger.debug("MonitoringService: connection established")
         except Exception as e:
             self.conn = None
-            self._plugin_instance.logger.error(f"MonitoringService: Cannot connect to {self._host} on port: {self._port}, CallMonitor activated by #96*5*? - Error: {e}")
+            self._plugin_instance.logger.error(
+                f"MonitoringService: Cannot connect to {self._host} on port: {self._port}, CallMonitor activated by #96*5*? - Error: {e}")
             return
 
     def disconnect(self):
         """
         Disconnects from the call monitor of the AVM device
         """
-
         self._plugin_instance.logger.debug("MonitoringService: disconnecting")
         self._listen_active = False
         self._stop_counter('incoming')
@@ -300,7 +299,7 @@ class MonitoringService:
 
     def get_item_count_total(self):
         """
-        Returns number of added items (all items of MonitoringService service)
+        Returns number of added items (all items of MonitoringService service
 
         :return: number of items hold by the MonitoringService
         """
@@ -701,7 +700,7 @@ class AVM(SmartPlugin):
     Main class of the Plugin. Does all plugin specific stuff and provides the update functions for the different TR-064 services on the FritzDevice
     """
 
-    PLUGIN_VERSION = "1.6.7"
+    PLUGIN_VERSION = "1.6.6"
 
     _header = {'SOAPACTION': '', 'CONTENT-TYPE': 'text/xml; charset="utf-8"'}
 
@@ -736,9 +735,6 @@ class AVM(SmartPlugin):
                      ('MyFritz', 'urn:dslforum-org:service:X_AVM-DE_MyFritz:1')])
 
     _login_sid_route = "/login_sid.lua?version=2"
-    _log_route = '/query.lua?mq_log=logger:status/log'
-    _log_separate_route = '/query.lua?mq_log=logger:status/log_separate'
-    _homeauto_route = '/webservices/homeautoswitch.lua'
 
     def __init__(self, sh):
         """
@@ -778,7 +774,6 @@ class AVM(SmartPlugin):
         self._call_monitor_incoming_filter = self.get_parameter_value('call_monitor_incoming_filter')
 
         self.aha_http_interface = self.get_parameter_value('avm_home_automation')
-        self.log_entry_count = self.get_parameter_value('log_entry_count')
         self._cycle = int(self.get_parameter_value('cycle'))
         self.webif_pagelength = self.get_parameter_value('webif_pagelength')
 
@@ -837,7 +832,7 @@ class AVM(SmartPlugin):
 
     def _assemble_soap_data(self, action, service, argument=''):
         """
-        Builds the soap data set (from body and envelope templates for a given request.)
+        Builds the soap data set (from body and envelope templates for a given request.
 
         :param action: string of the action
         :type action: str
@@ -934,7 +929,7 @@ class AVM(SmartPlugin):
         self._response_cache = dict()
 
         # update internal dict holding information of smarthome-devices queried via aha-http-interface if host is fritzbox and aha-http_interface is enabled for plugin instance
-        if self.aha_http_interface and self.is_fritzbox:
+        if self.aha_http_interface and 'box' in self._host_info['model'].lower():
             self._update_aha_devices()
 
         if self._call_monitor:
@@ -1117,26 +1112,31 @@ class AVM(SmartPlugin):
         elif avm_data_type in (_aha_attributes + _aha_attributes_old):
             if self._get_item_ain(item) is not None:
                 if self.debug_log:
-                    self.logger.debug(f"Item {item.id()} with avm smarthome attribute and defined AIN found; append to list.")
+                    self.logger.debug(
+                        f"Item {item.id()} with avm smarthome attribute and defined AIN found; append to list.")
                 self._fritz_device.get_smarthome_items().append(item)
             else:
-                self.logger.warning(f"Item {item.id()} with avm smarthome attribute found, but AIN is not defined; Item will be ignored.")
+                self.logger.warning(
+                    f"Item {item.id()} with avm smarthome attribute found, but AIN is not defined; Item will be ignored.")
 
         # handle network_device related items
         elif avm_data_type in _host_attribute:
             if self.has_iattr(item.conf, 'avm_mac'):
                 if self.debug_log:
-                    self.logger.debug(f"Item {item.id()} with avm attribute 'network_device' and defined 'avm_mac' found; append to list.")
+                    self.logger.debug(
+                        f"Item {item.id()} with avm attribute 'network_device' and defined 'avm_mac' found; append to list.")
                 self._fritz_device.get_items().append(item)
             else:
-                self.logger.warning(f"Item {item.id()} with avm attribute found, but 'avm_mac' is not defined; Item will be ignored.")
+                self.logger.warning(
+                    f"Item {item.id()} with avm attribute found, but 'avm_mac' is not defined; Item will be ignored.")
 
         # handle network_device related items (mac address in parent items defined)
         elif avm_data_type in _host_child_attributes:
             avm_mac = self._get_mac(item)
             if avm_mac:
                 if self.debug_log:
-                    self.logger.debug(f"Item {item.id()} with avm device attribute and defined 'avm_mac' found; append to list.")
+                    self.logger.debug(
+                        f"Item {item.id()} with avm device attribute and defined 'avm_mac' found; append to list.")
                 self._fritz_device.get_items().append(item)
             else:
                 self.logger.warning(
@@ -1147,20 +1147,24 @@ class AVM(SmartPlugin):
             avm_wlan_index = self._get_wlan_index(item)
             if avm_wlan_index is not None:
                 if self.debug_log:
-                    self.logger.debug(f"Item {item.id()} with avm device attribute and defined 'avm_wlan_index' found; append to list.")
+                    self.logger.debug(
+                        f"Item {item.id()} with avm device attribute and defined 'avm_wlan_index' found; append to list.")
                 self._fritz_device.get_items().append(item)
             else:
-                self.logger.warning(f"Item {item.id()} with avm attribute found, but 'avm_wlan_index' is not defined; Item will be ignored.")
+                self.logger.warning(
+                    f"Item {item.id()} with avm attribute found, but 'avm_wlan_index' is not defined; Item will be ignored.")
 
         # handle tam related items
         elif avm_data_type in _tam_attributes:
             avm_tam_index = self._get_tam_index(item)
             if avm_tam_index is not None:
                 if self.debug_log:
-                    self.logger.debug(f"Item {item.id()} with avm device attribute and defined 'avm_tam_index' found; append to list.")
+                    self.logger.debug(
+                        f"Item {item.id()} with avm device attribute and defined 'avm_tam_index' found; append to list.")
                 self._fritz_device.get_items().append(item)
             else:
-                self.logger.warning(f"Item {item.id()} with avm attribute found, but 'avm_tam_index' is not defined; Item will be ignored.")
+                self.logger.warning(
+                    f"Item {item.id()} with avm attribute found, but 'avm_tam_index' is not defined; Item will be ignored.")
 
         # handle remaining items not needing further attribute
         elif self.has_iattr(item.conf, 'avm_data_type'):
@@ -1259,7 +1263,7 @@ class AVM(SmartPlugin):
             self.logger.warning(f"_http_logout_request: SID: {sid}, Challenge: {challenge}, BlockTime: {blocktime}")
 
         if sid == "0000000000000000":
-            self.logger.debug(f"HTTP Logout successful.")
+            self.logger.warning(f"HTTP Logout successful.")
         self.sid = None
 
     def _check_sid(self):
@@ -1326,7 +1330,8 @@ class AVM(SmartPlugin):
                                                        self._fritz_device.get_password()), verify=self._verify)
         except Exception as e:
             if self._fritz_device.is_available():
-                self.logger.error(f"Exception when sending LUA POST request for updating item towards the FritzDevice: {e}")
+                self.logger.error(
+                    f"Exception when sending LUA POST request for updating item towards the FritzDevice: {e}")
                 self.set_device_availability(False)
             return
         if not self._fritz_device.is_available():
@@ -1360,7 +1365,8 @@ class AVM(SmartPlugin):
                     status_code = e.response.status_code
                     start = data.find('NewMACAddress') + 14
                     mac = data[start:start + 17]
-                    self.logger.warning(f'Error code {status_code} with Exception {e} while sending POST request. Check correctness of MAC-addresses {mac} in item.yaml')
+                    self.logger.warning(
+                        f'Error code {status_code} with Exception {e} while sending POST request. Check correctness of MAC-addresses {mac} in item.yaml')
                     if self._fritz_device.is_available():
                         self.set_device_availability(False)
                     return
@@ -1384,12 +1390,13 @@ class AVM(SmartPlugin):
 
     def update_item(self, item, caller=None, source=None, dest=None):
         """
-        Write items values - in case they were changed from somewhere else than the AVM plugin (=the FritzDevice) to the FritzDevice.
+        | Write items values - in case they were changed from somewhere else than the AVM plugin (=the FritzDevice) to
+        | the FritzDevice.
 
-        Uses:
-        - http://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/x_tam.pdf
-        - http://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/wlanconfigSCPD.pdf
-        - http://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/x_homeauto.pdf
+        | Uses:
+        | - http://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/x_tam.pdf
+        | - http://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/wlanconfigSCPD.pdf
+        | - http://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/x_homeauto.pdf
 
         :param item: item to be updated towards the FritzDevice (Supported item avm_data_types: wlanconfig, tam, aha_device)
         :param caller: caller
@@ -1405,7 +1412,8 @@ class AVM(SmartPlugin):
             if self.has_iattr(item.conf, 'avm_read_after_write'):
                 readafterwrite = int(self.get_iattr_value(item.conf, 'avm_read_after_write'))
                 if self.debug_log:
-                    self.logger.debug(f'Attempting read after write for item: {item.id()}, avm_data_type: {avm_data_type}, delay: {readafterwrite}s')
+                    self.logger.debug(
+                        f'Attempting read after write for item: {item.id()}, avm_data_type: {avm_data_type}, delay: {readafterwrite}s')
 
             # handle wlanconfig attributes
             if avm_data_type == 'wlanconfig':
@@ -1461,7 +1469,7 @@ class AVM(SmartPlugin):
                 if not deflection_index or deflection_index <= 0:
                     self.logger.error('Parameter <avm_deflection_index> for item not defined in item.conf')
                 else:
-                    self.set_deflection(deflection_index - 1, bool(item()))
+                    self.set_deflection(deflection_index, bool(item()))
 
                 # read new value after writing
                 if readafterwrite:
@@ -1663,9 +1671,9 @@ class AVM(SmartPlugin):
                 self.set_color_discrete(ain_device, hue_value, duration=0)
 
                 ## search saturation:
-                # saturation = -1
-                # parentItem = item.return_parent()
-                # for child in parentItem.return_children():
+                #saturation = -1
+                #parentItem = item.return_parent()
+                #for child in parentItem.return_children():
                 #    if self.has_iattr(child.conf, 'avm_data_type'):
                 #        if self.get_iattr_value(child.conf, 'avm_data_type') in ['set_saturation', 'saturation']:
                 #            saturation = int(child())
@@ -1673,8 +1681,9 @@ class AVM(SmartPlugin):
                 #            # write value
                 #            # RGB hue will be supported by Fritzbox approximately from Q2 2022 on:
                 #            #self.set_color(ain_device, hue_value, saturation, duration=0)
-                # if saturation == -1:
-                #    self.logger.warning(f"Cannot execute hue command because saturation value cannot be found in item tree")
+                #if saturation == -1:
+                #    self.logger.warning(
+                #        f"Cannot execute hue command because saturation value cannot be found in item tree")
 
                 # read new value after writing
                 if readafterwrite:
@@ -1710,7 +1719,8 @@ class AVM(SmartPlugin):
             #                # write value
             #                #self.set_color(ain_device, hue, saturation_value, duration=0)
             #    if hue == -1:
-            #        self.logger.warning(f"Cannot execute saturation command because hue value cannot be found in item tree")
+            #        self.logger.warning(
+            #            f"Cannot execute saturation command because hue value cannot be found in item tree")
 
             #    # read new value after writing
             #    if readafterwrite:
@@ -1750,14 +1760,18 @@ class AVM(SmartPlugin):
         headers = self._header.copy()
         action = 'SetEnable'
         headers['SOAPACTION'] = f"{self._urn_map['WLANConfiguration']}"[:43] + f"{wlan_index}#{action}"
-        soap_data = self._assemble_soap_data(action, f"{self._urn_map['WLANConfiguration']}"[:43] + f"{wlan_index}", {'NewEnable': int(new_enable)})
+        soap_data = self._assemble_soap_data(action, f"{self._urn_map['WLANConfiguration']}"[:43] + f"{wlan_index}",
+                                             {'NewEnable': int(new_enable)})
 
         self._get_lua_post_request(url, soap_data, headers)
 
         # check if remaining time is set as item
         for citem in self._fritz_device.get_items():  # search for guest time remaining item.
-            if self.get_iattr_value(citem.conf, 'avm_data_type') == 'wlan_guest_time_remaining' and int(self.get_iattr_value(citem.conf, 'avm_wlan_index')) == wlan_index:
-                self._response_cache.pop(f"wlanconfig_{self.get_iattr_value(citem.conf, 'avm_wlan_index')}_X_AVM-DE_GetWLANExtInfo", None)  # reset response cache
+            if self.get_iattr_value(citem.conf, 'avm_data_type') == 'wlan_guest_time_remaining' and int(
+                    self.get_iattr_value(citem.conf, 'avm_wlan_index')) == wlan_index:
+                self._response_cache.pop(
+                    f"wlanconfig_{self.get_iattr_value(citem.conf, 'avm_wlan_index')}_X_AVM-DE_GetWLANExtInfo",
+                    None)  # reset response cache
                 self._update_wlan_config(citem)  # immediately update remaining guest time
 
     def set_tam(self, tam_index=0, new_enable=False):
@@ -1769,7 +1783,8 @@ class AVM(SmartPlugin):
         headers = self._header.copy()
         action = 'SetEnable'
         headers['SOAPACTION'] = f"{self._urn_map['TAM']}#{action}"
-        soap_data = self._assemble_soap_data(action, self._urn_map['TAM'], {'NewIndex': tam_index, 'NewEnable': int(new_enable)})
+        soap_data = self._assemble_soap_data(action, self._urn_map['TAM'],
+                                             {'NewIndex': tam_index, 'NewEnable': int(new_enable)})
 
         self._get_lua_post_request(url, soap_data, headers)
 
@@ -1784,7 +1799,8 @@ class AVM(SmartPlugin):
         headers['SOAPACTION'] = f"{self._urn_map['Homeauto']}#{action}"
         # SwitchState: OFF, ON, TOGGLE, UNDEFINED
         switch_state = "ON" if set_switch is True else "OFF"
-        soap_data = self._assemble_soap_data(action, self._urn_map['Homeauto'], {'NewAIN': ain.strip(), 'NewSwitchState': switch_state})
+        soap_data = self._assemble_soap_data(action, self._urn_map['Homeauto'],
+                                             {'NewAIN': ain.strip(), 'NewSwitchState': switch_state})
 
         self._get_lua_post_request(url, soap_data, headers)
 
@@ -1792,8 +1808,8 @@ class AVM(SmartPlugin):
         """
         Searches the phonebook for a contact by a given (complete) phone number
 
-        Uses: http://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/x_contactSCPD.pdf
-        Implementation of this method used information from https://www.symcon.de/forum/threads/25745-FritzBox-mit-SOAP-auslesen-und-steuern
+        | Uses: http://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/x_contactSCPD.pdf
+        | Implementation of this method used information from https://www.symcon.de/forum/threads/25745-FritzBox-mit-SOAP-auslesen-und-steuern
 
         :param phone_number: full phone number of contact
         :param phonebook_id: ID of the phone book (default: 0)
@@ -1844,10 +1860,10 @@ class AVM(SmartPlugin):
         """
         Searches the phonebook for a contact by a given name
 
-        Uses: http://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/x_contactSCPD.pdf
-        CURL for testing which phonebooks exists:
-        curl  --anyauth -u user:'password' 'https://192.168.178.1:49443/upnp/control/x_contact' -H 'Content-Type: text/xml; charset="utf-8"' -H 'SoapAction: urn:dslforum-org:service:X_AVM-DE_OnTel:1#GetPhonebook' -d '<?xml version="1.0" encoding="utf-8"?> <s:Envelope s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" xmlns:s="http://schemas.xmlsoap.org/soap/envelope/"> <s:Body> <u:GetPhonebook xmlns:u="urn:dslforum-org:service:X_AVM-DE_OnTel:1"> <s:NewPhonebookID>0</s:NewPhonebookID> </u:GetPhonebook> </s:Body> </s:Envelope>' -s -k
-        Implementation of this method used information from https://www.symcon.de/forum/threads/25745-FritzBox-mit-SOAP-auslesen-und-steuern
+        | Uses: http://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/x_contactSCPD.pdf
+        | CURL for testing which phonebooks exists:
+        | curl  --anyauth -u user:'password' 'https://192.168.178.1:49443/upnp/control/x_contact' -H 'Content-Type: text/xml; charset="utf-8"' -H 'SoapAction: urn:dslforum-org:service:X_AVM-DE_OnTel:1#GetPhonebook' -d '<?xml version="1.0" encoding="utf-8"?> <s:Envelope s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" xmlns:s="http://schemas.xmlsoap.org/soap/envelope/"> <s:Body> <u:GetPhonebook xmlns:u="urn:dslforum-org:service:X_AVM-DE_OnTel:1"> <s:NewPhonebookID>0</s:NewPhonebookID> </u:GetPhonebook> </s:Body> </s:Envelope>' -s -k
+        | Implementation of this method used information from https://www.symcon.de/forum/threads/25745-FritzBox-mit-SOAP-auslesen-und-steuern
 
         :param name: partial or full name of contact as defined in the phonebook.
         :param phonebook_id: ID of the phone book (default: 0)
@@ -1965,7 +1981,9 @@ class AVM(SmartPlugin):
                                                 if filter_incoming not in called_number:
                                                     progress = False
                         if progress:
-                            attributes = ['Id', 'Type', 'Caller', 'Called', 'CalledNumber', 'Name', 'Numbertype', 'Device', 'Port', 'Date', 'Duration']
+                            attributes = ['Id', 'Type', 'Caller', 'Called', 'CalledNumber', 'Name', 'Numbertype',
+                                          'Device',
+                                          'Port', 'Date', 'Duration']
                             for attribute in attributes:
                                 attribute_value = calllist_entry.getElementsByTagName(attribute)
                                 if len(attribute_value) > 0:
@@ -1980,9 +1998,9 @@ class AVM(SmartPlugin):
                     return result_entries
                 else:
                     if self.debug_log:
-                        self.logger.debug("No call list entries on the FritzDevice")
+                        self.logger.debug("No calllist entries on the FritzDevice")
             else:
-                self.logger.error("Call list not available on the FritzDevice")
+                self.logger.error("Calllist not available on the FritzDevice")
 
             return
 
@@ -2104,11 +2122,12 @@ class AVM(SmartPlugin):
 
         self._host_info.update(host_info)
 
+
     def _get_colordefaults(self, ain):
         """
         Get the DOM elements for the RGM default colors using minidom.
+        
         """
-
         colors = None
         plain = self._aha_request("getcolordefaults", ain=ain)
         if plain:
@@ -2118,6 +2137,7 @@ class AVM(SmartPlugin):
             except Exception as e:
                 self.logger.error(f'_get_colordefaults: error {e} during parsing. Plain={plain}')
         return colors
+
 
     def reconnect(self):
         """
@@ -2242,12 +2262,11 @@ class AVM(SmartPlugin):
 
         if not self.sid:
             self._get_sid()
+        my_sid = self.sid
 
-        url = self._build_url(self._log_route, lua=True)
-        params = {"sid": self.sid}
-
+        query_string = f"/query.lua?mq_log=logger:status/log&sid={my_sid}"
         try:
-            r = self._lua_session.get(url, params=params, timeout=self._timeout, verify=self._verify)
+            r = self._lua_session.get(self._build_url(query_string, lua=True), timeout=self._timeout, verify=self._verify)
         except requests.exceptions.Timeout:
             self.logger.debug(f"get_device_log_from_lua: get request timed out.")
             return
@@ -2265,8 +2284,6 @@ class AVM(SmartPlugin):
 
         try:
             data = r.json()['mq_log']
-            if self.log_entry_count:
-                data = data[:self.log_entry_count]
             newlog = []
 
             for text, typ, cat in data:
@@ -2280,50 +2297,12 @@ class AVM(SmartPlugin):
 
             return newlog
         except JSONDecodeError:
-            self.logger.error('get_device_log_from_lua: SID seems invalid. Please try again.')
-
-    def get_device_log_from_lua_separated(self):
-        """
-        Gets the Device Log from the LUA HTTP Interface via LUA Scripts (more complete than the get_device_log TR-064 version).
-
-        :return: list of device logs list (date, time, log, type, category)
-        """
-
-        if not self.sid:
-            self._get_sid()
-
-        url = self._build_url(self._log_separate_route, lua=True)
-        params = {"sid": self.sid}
-
-        try:
-            r = self._lua_session.get(url, params=params, timeout=self._timeout, verify=self._verify)
-        except requests.exceptions.Timeout:
-            self.logger.debug(f"get_device_log_from_lua_separated: get request timed out.")
-            return
-        except Exception as e:
-            self.logger.debug(f"get_device_log_from_lua_separated: Error {e} occurred.")
-            return
-
-        status_code = r.status_code
-        if status_code == 200:
-            if self.debug_log:
-                self.logger.debug("get_device_log_from_lua_separated: Sending query.lua command successful")
-        else:
-            self.logger.error(f"get_device_log_from_lua_separated: query.lua command error code: {status_code}")
-            return
-
-        try:
-            data = r.json()['mq_log']
-            if self.log_entry_count:
-                data = data[:self.log_entry_count]
-            return data
-        except JSONDecodeError:
-            self.logger.error('get_device_log_from_lua_separated: SID seems invalid. Please try again.')
+            self.logger.error('get_device_log_from_web: SID seems invalid.Please try again.')
+        return
 
     def get_device_log_from_tr064(self):
         """
         Gets the Device Log via TR-064
-
         :return: Array of Device Log Entries (Strings)
         """
 
@@ -2416,8 +2395,8 @@ class AVM(SmartPlugin):
         """
         Retrieves information related to a network_device represented by its MAC address, e.g. the status of the network_device can be used for simple presence detection
 
-        Uses: http://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/hostsSCPD.pdf
-        Also reference: https://blog.pregos.info/2015/11/07/anwesenheitserkennung-fuer-smarthome-mit-der-fritzbox-via-tr-064/
+        | Uses: http://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/hostsSCPD.pdf
+        | Also reference: https://blog.pregos.info/2015/11/07/anwesenheitserkennung-fuer-smarthome-mit-der-fritzbox-via-tr-064/
 
         :param item: item to be updated (Supported item avm_data_types: network_device, child item avm_data_types: device_ip, device_connection_type, device_hostname)
         """
@@ -2433,9 +2412,11 @@ class AVM(SmartPlugin):
                 return
             action = 'GetSpecificHostEntry'
             headers['SOAPACTION'] = f"{self._urn_map['Hosts']}#{action}"
-            soap_data = self._assemble_soap_data(action, self._urn_map['Hosts'], {'NewMACAddress': self.get_iattr_value(item.conf, 'avm_mac')})
+            soap_data = self._assemble_soap_data(action, self._urn_map['Hosts'],
+                                                 {'NewMACAddress': self.get_iattr_value(item.conf, 'avm_mac')})
         else:
-            self.logger.error(f"Attribute {self.get_iattr_value(item.conf, 'avm_data_type')} not supported by plugin (_update_host)")
+            self.logger.error(
+                f"Attribute {self.get_iattr_value(item.conf, 'avm_data_type')} not supported by plugin (_update_host)")
             return
 
         xml = self._get_post_request_as_xml(url, soap_data, headers)
@@ -2467,12 +2448,14 @@ class AVM(SmartPlugin):
                         if data is not None:
                             child(data, self.get_shortname())
                         else:
-                            self.logger.info(f"Request of attribute {self.get_iattr_value(item.conf, 'avm_data_type')} returned None. Seems that data are not available/supported.")
+                            self.logger.info(
+                                f"Request of attribute {self.get_iattr_value(item.conf, 'avm_data_type')} returned None. Seems that data are not available/supported.")
 
         else:
             item(0)
             if self.debug_log:
-                self.logger.debug(f"MAC Address {self.get_iattr_value(item.conf, 'avm_mac')} for item {item.property.path} not available on the FritzDevice - ID: {self._fritz_device.get_identifier()}")
+                self.logger.debug(
+                    f"MAC Address {self.get_iattr_value(item.conf, 'avm_mac')} for item {item.property.path} not available on the FritzDevice - ID: {self._fritz_device.get_identifier()}")
 
     def _update_home_automation(self, item):
         """
@@ -2488,7 +2471,8 @@ class AVM(SmartPlugin):
         url = self._build_url("/upnp/control/x_homeauto")
         headers = self._header.copy()
 
-        if self.get_iattr_value(item.conf, 'avm_data_type') == 'aha_device' or self.get_iattr_value(item.conf, 'avm_data_type') == 'hkr_device':
+        if self.get_iattr_value(item.conf, 'avm_data_type') == 'aha_device' or self.get_iattr_value(item.conf,
+                                                                                                    'avm_data_type') == 'hkr_device':
             if not self.has_iattr(item.conf, 'ain'):
                 self.logger.error(f"Cannot update AVM item {item} as AIN is not specified.")
                 return
@@ -2497,7 +2481,8 @@ class AVM(SmartPlugin):
             headers['SOAPACTION'] = f"{self._urn_map['Homeauto']}#{action}"
             soap_data = self._assemble_soap_data(action, self._urn_map['Homeauto'], {'NewAIN': ain.strip()})
         else:
-            self.logger.error(f"Attribute {self.get_iattr_value(item.conf, 'avm_data_type')} not supported by plugin method (_update_home_automation)")
+            self.logger.error(
+                f"Attribute {self.get_iattr_value(item.conf, 'avm_data_type')} not supported by plugin method (_update_home_automation)")
             return
 
         xml = self._get_post_request_as_xml(url, soap_data, headers)
@@ -2514,7 +2499,8 @@ class AVM(SmartPlugin):
                     value = item()
                     item(not value, self.get_shortname())
                 else:
-                    self.logger.error(f'NewSwitchState für AHA Device has a non-supported value of {element_xml[0].firstChild.data}')
+                    self.logger.error(
+                        f'NewSwitchState für AHA Device has a non-supported value of {element_xml[0].firstChild.data}')
                 for child in item.return_children():
                     value = None
                     if self.has_iattr(child.conf, 'avm_data_type'):
@@ -2534,7 +2520,8 @@ class AVM(SmartPlugin):
                         if value:
                             child(value, self.get_shortname())
                         else:
-                            self.logger.info(f"Request of attribute {self.get_iattr_value(item.conf, 'avm_data_type')} returned None. Seems that data are not available/supported.")
+                            self.logger.info(
+                                f"Request of attribute {self.get_iattr_value(item.conf, 'avm_data_type')} returned None. Seems that data are not available/supported.")
             else:
                 self.logger.error(
                     f"Attribute {self.get_iattr_value(item.conf, 'avm_data_type')} not available on the FritzDevice")
@@ -2606,9 +2593,11 @@ class AVM(SmartPlugin):
                         if value:
                             child(value, self.get_shortname())
                         else:
-                            self.logger.info(f"Argument {self.get_iattr_value(child.conf, 'avm_data_type')} of Attribute {self.get_iattr_value(item.conf, 'avm_data_type')} not available on the FritzDevice with AIN {item.conf['ain'].strip()}.")
+                            self.logger.info(
+                                f"Argument {self.get_iattr_value(child.conf, 'avm_data_type')} of Attribute {self.get_iattr_value(item.conf, 'avm_data_type')} not available on the FritzDevice with AIN {item.conf['ain'].strip()}.")
             else:
-                self.logger.error(f"Attribute {self.get_iattr_value(item.conf, 'avm_data_type')} not available on the FritzDevice with AIN {item.conf['ain'].strip()}.")
+                self.logger.error(
+                    f"Attribute {self.get_iattr_value(item.conf, 'avm_data_type')} not available on the FritzDevice with AIN {item.conf['ain'].strip()}.")
 
     def _get_url_prefix(self):
         """
@@ -2656,8 +2645,7 @@ class AVM(SmartPlugin):
 
     def _aha_request(self, cmd, ain=None, param=None, rf=str):
         """
-        Create a request for AHA-device get response
-
+        Create an request for AHA-device get response
         :param cmd:     command to be sent
         :type cmd:      str
         :param ain:     ain of device
@@ -2667,13 +2655,12 @@ class AVM(SmartPlugin):
         :param rf:      type of returned value
         :type rf:       any
         :return:        response
+        :type return:   any
         """
 
-        if not self.aha_http_interface:
-            self.logger.warning(f"Smarthome Interface not enabled. Therefore command {cmd} will not be executed.")
-            return
-
-        url = self._build_url(self._homeauto_route, lua=True)
+        url = f"{self._get_url_prefix()}://{self._fritz_device.get_host()}/webservices/homeautoswitch.lua"
+        if self.debug_log:
+            self.logger.debug(f"_aha_request: built request url: {url}")
 
         if not self.sid:
             self._get_sid()
@@ -2691,7 +2678,8 @@ class AVM(SmartPlugin):
 
             plain = self._request(url, params)
             if self.debug_log:
-                self.logger.debug(f"Plain AHA request response is: {plain}; Params were: {params}")
+                self.logger.debug(f"Plain AHA request response is: {plain}")
+                self.logger.debug(f"Params were: {params}")
 
             if plain == "inval":
                 self.logger.error(f"Response of AHA request {cmd} was invalid")
@@ -2744,7 +2732,6 @@ class AVM(SmartPlugin):
                 # get functions of AVM smarthome device
                 functions = []
                 functionbitmask = int(element.getAttribute('functionbitmask'))
-                self.logger.debug(f"functionbitmask={functionbitmask}")
                 functions.append('light') if bool(functionbitmask & (1 << 2) > 0) is True else None
                 functions.append('alarm') if bool(functionbitmask & (1 << 4) > 0) is True else None
                 functions.append('button') if bool(functionbitmask & (1 << 5) > 0) is True else None
@@ -2764,32 +2751,38 @@ class AVM(SmartPlugin):
 
                 self._fritz_device.get_smarthome_devices()[ain]['device_functions'] = functions
 
-                # optional general information of AVM homeautomation device
+                # optional general information of AVM smarthome device
                 try:
-                    self._fritz_device.get_smarthome_devices()[ain]['batterylow'] = bool(int(element.getElementsByTagName('batterylow')[0].firstChild.data))
+                    self._fritz_device.get_smarthome_devices()[ain]['batterylow'] = bool(
+                        int(element.getElementsByTagName('batterylow')[0].firstChild.data))
                 except Exception:
                     if self.debug_log:
-                        self.logger.debug(f'AVM Homeautomation Device with AIN {ain} does not support Attribute {"batterylow"}.')
+                        self.logger.debug(
+                            f'DECT Smarthome Device with AIN {ain} does not support Attribute {"batterylow"}.')
                 try:
-                    self._fritz_device.get_smarthome_devices()[ain]['battery_level'] = int(element.getElementsByTagName('battery')[0].firstChild.data)
+                    self._fritz_device.get_smarthome_devices()[ain]['battery_level'] = int(
+                        element.getElementsByTagName('battery')[0].firstChild.data)
                 except Exception:
                     if self.debug_log:
-                        self.logger.debug(f'AVM Homeautomation Device with AIN {ain} does not support Attribute "battery".')
+                        self.logger.debug(f'DECT Smarthome Device with AIN {ain} does not support Attribute "battery".')
                 try:
-                    self._fritz_device.get_smarthome_devices()[ain]['connected'] = bool(int(element.getElementsByTagName('present')[0].firstChild.data))
+                    self._fritz_device.get_smarthome_devices()[ain]['connected'] = bool(
+                        int(element.getElementsByTagName('present')[0].firstChild.data))
                 except Exception:
                     if self.debug_log:
-                        self.logger.debug(f'AVM Homeautomation Device with AIN {ain} does not support Attribute "present".')
+                        self.logger.debug(f'DECT Smarthome Device with AIN {ain} does not support Attribute "present".')
                 try:
-                    self._fritz_device.get_smarthome_devices()[ain]['tx_busy'] = bool(int(element.getElementsByTagName('txbusy')[0].firstChild.data))
+                    self._fritz_device.get_smarthome_devices()[ain]['tx_busy'] = bool(
+                        int(element.getElementsByTagName('txbusy')[0].firstChild.data))
                 except Exception:
                     if self.debug_log:
-                        self.logger.debug(f'AVM Homeautomation Device with AIN {ain} does not support Attribute "txbusy".')
+                        self.logger.debug(f'DECT Smarthome Device with AIN {ain} does not support Attribute "txbusy".')
                 try:
-                    self._fritz_device.get_smarthome_devices()[ain]['device_name'] = str(element.getElementsByTagName('name')[0].firstChild.data)
+                    self._fritz_device.get_smarthome_devices()[ain]['device_name'] = str(
+                        element.getElementsByTagName('name')[0].firstChild.data)
                 except Exception:
                     if self.debug_log:
-                        self.logger.debug(f'AVM Homeautomation Device with AIN {ain} does not support Attribute "name".')
+                        self.logger.debug(f'DECT Smarthome Device with AIN {ain} does not support Attribute "name".')
 
                 # information of AVM smarthome device having thermostat
                 if 'thermostat' in functions:
@@ -2797,77 +2790,94 @@ class AVM(SmartPlugin):
                     if len(hkr) > 0:
                         for child in hkr:
                             try:
-                                self._fritz_device.get_smarthome_devices()[ain]['current_temperature'] = (int(child.getElementsByTagName('tist')[0].firstChild.data) - 16) / 2 + 8
+                                self._fritz_device.get_smarthome_devices()[ain]['current_temperature'] = (int(
+                                    child.getElementsByTagName('tist')[0].firstChild.data) - 16) / 2 + 8
                             except AttributeError:
                                 pass
                             try:
-                                self._fritz_device.get_smarthome_devices()[ain]['target_temperature'] = (int(child.getElementsByTagName('tsoll')[0].firstChild.data) - 16) / 2 + 8
+                                self._fritz_device.get_smarthome_devices()[ain]['target_temperature'] = (int(
+                                    child.getElementsByTagName('tsoll')[0].firstChild.data) - 16) / 2 + 8
                             except AttributeError:
                                 pass
                             try:
-                                self._fritz_device.get_smarthome_devices()[ain]['temperature_comfort'] = (int(child.getElementsByTagName('komfort')[0].firstChild.data) - 16) / 2 + 8
+                                self._fritz_device.get_smarthome_devices()[ain]['temperature_comfort'] = (int(
+                                    child.getElementsByTagName('komfort')[0].firstChild.data) - 16) / 2 + 8
                             except AttributeError:
                                 pass
                             try:
-                                self._fritz_device.get_smarthome_devices()[ain]['temperature_reduced'] = (int(child.getElementsByTagName('absenk')[0].firstChild.data) - 16) / 2 + 8
+                                self._fritz_device.get_smarthome_devices()[ain]['temperature_reduced'] = (int(
+                                    child.getElementsByTagName('absenk')[0].firstChild.data) - 16) / 2 + 8
                             except AttributeError:
                                 pass
                             try:
-                                self._fritz_device.get_smarthome_devices()[ain]['battery_level'] = int(child.getElementsByTagName('battery')[0].firstChild.data)
+                                self._fritz_device.get_smarthome_devices()[ain]['battery_level'] = int(
+                                    child.getElementsByTagName('battery')[0].firstChild.data)
                             except AttributeError:
                                 pass
                             try:
-                                self._fritz_device.get_smarthome_devices()[ain]['battery_low'] = bool(int(child.getElementsByTagName('batterylow')[0].firstChild.data))
+                                self._fritz_device.get_smarthome_devices()[ain]['battery_low'] = bool(
+                                    int(child.getElementsByTagName('batterylow')[0].firstChild.data))
                             except AttributeError:
                                 pass
                             try:
-                                self._fritz_device.get_smarthome_devices()[ain]['window_open'] = bool(int(child.getElementsByTagName('windowopenactiv')[0].firstChild.data))
+                                self._fritz_device.get_smarthome_devices()[ain]['window_open'] = bool(
+                                    int(child.getElementsByTagName('windowopenactiv')[0].firstChild.data))
                             except AttributeError:
                                 pass
                             try:
-                                self._fritz_device.get_smarthome_devices()[ain]['summer_active'] = bool(int(child.getElementsByTagName('summeractive')[0].firstChild.data))
+                                self._fritz_device.get_smarthome_devices()[ain]['summer_active'] = bool(
+                                    int(child.getElementsByTagName('summeractive')[0].firstChild.data))
                             except AttributeError:
                                 pass
                             try:
-                                self._fritz_device.get_smarthome_devices()[ain]['holiday_active'] = bool(int(child.getElementsByTagName('holidayactive')[0].firstChild.data))
+                                self._fritz_device.get_smarthome_devices()[ain]['holiday_active'] = bool(
+                                    int(child.getElementsByTagName('holidayactive')[0].firstChild.data))
                             except AttributeError:
                                 pass
                             try:
-                                self._fritz_device.get_smarthome_devices()[ain]['hkr_boost'] = bool(int(child.getElementsByTagName('boostactive')[0].firstChild.data))
+                                self._fritz_device.get_smarthome_devices()[ain]['hkr_boost'] = bool(
+                                    int(child.getElementsByTagName('boostactive')[0].firstChild.data))
                             except AttributeError:
                                 pass
                             try:
-                                self._fritz_device.get_smarthome_devices()[ain]['lock'] = bool(int(child.getElementsByTagName('lock')[0].firstChild.data))
+                                self._fritz_device.get_smarthome_devices()[ain]['lock'] = bool(
+                                    int(child.getElementsByTagName('lock')[0].firstChild.data))
                             except AttributeError:
                                 pass
                             try:
-                                self._fritz_device.get_smarthome_devices()[ain]['device_lock'] = bool(int(child.getElementsByTagName('devicelock')[0].firstChild.data))
+                                self._fritz_device.get_smarthome_devices()[ain]['device_lock'] = bool(
+                                    int(child.getElementsByTagName('devicelock')[0].firstChild.data))
                             except AttributeError:
                                 pass
                             try:
-                                self._fritz_device.get_smarthome_devices()[ain]['errorcode'] = int(child.getElementsByTagName('errorcode')[0].firstChild.data)
+                                self._fritz_device.get_smarthome_devices()[ain]['errorcode'] = int(
+                                    child.getElementsByTagName('errorcode')[0].firstChild.data)
                             except AttributeError:
                                 pass
                             try:
-                                self._fritz_device.get_smarthome_devices()[ain]['windowopenactiveendtime'] = int(child.getElementsByTagName('windowopenactiveendtime')[0].firstChild.data)
+                                self._fritz_device.get_smarthome_devices()[ain]['windowopenactiveendtime'] = int(
+                                    child.getElementsByTagName('windowopenactiveendtime')[0].firstChild.data)
                             except AttributeError:
                                 pass
                             try:
-                                self._fritz_device.get_smarthome_devices()[ain]['boostactiveendtime'] = int(child.getElementsByTagName('boostactiveendtime')[0].firstChild.data)
+                                self._fritz_device.get_smarthome_devices()[ain]['boostactiveendtime'] = int(
+                                    child.getElementsByTagName('boostactiveendtime')[0].firstChild.data)
                             except AttributeError:
                                 pass
 
-                # information of AVM Homeautomation Device having temperature sensor
+                # information of AVM smarthome device having temperature sensor
                 if 'temperature_sensor' in functions:
                     temperature_element = element.getElementsByTagName('temperature')
                     if len(temperature_element) > 0:
                         for child in temperature_element:
                             try:
-                                self._fritz_device.get_smarthome_devices()[ain]['current_temperature'] = int(child.getElementsByTagName('celsius')[0].firstChild.data) / 10
+                                self._fritz_device.get_smarthome_devices()[ain]['current_temperature'] = int(
+                                    child.getElementsByTagName('celsius')[0].firstChild.data) / 10
                             except AttributeError:
                                 pass
                             try:
-                                self._fritz_device.get_smarthome_devices()[ain]['temperature_offset'] = int(child.getElementsByTagName('offset')[0].firstChild.data) / 10
+                                self._fritz_device.get_smarthome_devices()[ain]['temperature_offset'] = int(
+                                    child.getElementsByTagName('offset')[0].firstChild.data) / 10
                             except AttributeError:
                                 pass
 
@@ -2875,92 +2885,106 @@ class AVM(SmartPlugin):
                     if len(humidity_element) > 0:
                         for child in humidity_element:
                             try:
-                                self._fritz_device.get_smarthome_devices()[ain]['humidity'] = int(child.getElementsByTagName('rel_humidity')[0].firstChild.data)
+                                self._fritz_device.get_smarthome_devices()[ain]['humidity'] = int(
+                                    child.getElementsByTagName('rel_humidity')[0].firstChild.data)
                             except AttributeError:
                                 pass
 
-                # information of AVM Homeautomation Device having switch
+                # information of AVM smarthome device having switch
                 if 'switch' in functions:
                     switch = element.getElementsByTagName('switch')
                     if len(switch) > 0:
                         for child in switch:
                             try:
-                                self._fritz_device.get_smarthome_devices()[ain]['switch_state'] = bool(int(child.getElementsByTagName('state')[0].firstChild.data))
+                                self._fritz_device.get_smarthome_devices()[ain]['switch_state'] = bool(
+                                    int(child.getElementsByTagName('state')[0].firstChild.data))
                             except AttributeError:
                                 pass
                             try:
-                                self._fritz_device.get_smarthome_devices()[ain]['switch_mode'] = str(child.getElementsByTagName('mode')[0].firstChild.data)
+                                self._fritz_device.get_smarthome_devices()[ain]['switch_mode'] = str(
+                                    child.getElementsByTagName('mode')[0].firstChild.data)
                             except AttributeError:
                                 pass
 
-                # information of AVM Homeautomation Device having powermeter
+                # information of AVM smarthome device having powermeter
                 if 'powermeter' in functions:
                     powermeter = element.getElementsByTagName('powermeter')
                     if len(powermeter) > 0:
                         for child in powermeter:
                             try:
-                                self._fritz_device.get_smarthome_devices()[ain]['power'] = int(child.getElementsByTagName('power')[0].firstChild.data) / 1000
+                                self._fritz_device.get_smarthome_devices()[ain]['power'] = int(
+                                    child.getElementsByTagName('power')[0].firstChild.data) / 1000
                             except AttributeError:
                                 pass
                             try:
-                                self._fritz_device.get_smarthome_devices()[ain]['energy'] = int(child.getElementsByTagName('energy')[0].firstChild.data) / 1000
+                                self._fritz_device.get_smarthome_devices()[ain]['energy'] = int(
+                                    child.getElementsByTagName('energy')[0].firstChild.data) / 1000
                             except AttributeError:
                                 pass
                             try:
-                                self._fritz_device.get_smarthome_devices()[ain]['voltage'] = int(child.getElementsByTagName('voltage')[0].firstChild.data) / 1000
+                                self._fritz_device.get_smarthome_devices()[ain]['voltage'] = int(
+                                    child.getElementsByTagName('voltage')[0].firstChild.data) / 1000
                             except AttributeError:
                                 pass
 
-                # information of AVM Homeautomation Device having button
+                # information of AVM smarthome device having button
                 if 'button' in functions:
                     button_element = element.getElementsByTagName('button')
                     if len(button_element) > 0:
                         for child in button_element:
-                            identifier = button_element.getAttribute('identifier')
-                            id = button_element.getAttribute('id')
-                            self._fritz_device.get_smarthome_devices()[ain][identifier] = id
                             try:
-                                self._fritz_device.get_smarthome_devices()[ain][identifier]['lastpressedtimestamp'] = int(child.getElementsByTagName('lastpressedtimestamp')[0].firstChild.data)
-                            except (AttributeError, IndexError):
+                                self._fritz_device.get_smarthome_devices()[ain]['lastpressedtimestamp'] = int(
+                                    child.getElementsByTagName('lastpressedtimestamp')[0].firstChild.data)
+                            except AttributeError:
                                 pass
                             try:
-                                self._fritz_device.get_smarthome_devices()[ain][identifier]['name'] = str(child.getElementsByTagName('name')[0].firstChild.data)
-                            except (AttributeError, IndexError):
+                                self._fritz_device.get_smarthome_devices()[ain]['identifier'] = str(
+                                    child.getElementsByTagName('identifier')[0].firstChild.data)
+                            except AttributeError:
+                                pass
+                            try:
+                                self._fritz_device.get_smarthome_devices()[ain]['id'] = str(
+                                    child.getElementsByTagName('id')[0].firstChild.data)
+                            except AttributeError:
                                 pass
 
-                # information of AVM Homeautomation Device having alarm
+                # information of AVM smarthome device having alarm
                 if 'alarm' in functions:
                     alarm_element = element.getElementsByTagName('alert')
                     if len(alarm_element) > 0:
                         for child in alarm_element:
                             try:
-                                self._fritz_device.get_smarthome_devices()[ain]['alarm'] = int(child.getElementsByTagName('state')[0].firstChild.data)
+                                self._fritz_device.get_smarthome_devices()[ain]['alarm'] = int(
+                                    child.getElementsByTagName('state')[0].firstChild.data)
                             except AttributeError:
                                 pass
                             try:
-                                self._fritz_device.get_smarthome_devices()[ain]['lastalertchgtimestamp'] = int(child.getElementsByTagName('lastalertchgtimestamp')[0].firstChild.data)
+                                self._fritz_device.get_smarthome_devices()[ain]['lastalertchgtimestamp'] = int(
+                                    child.getElementsByTagName('lastalertchgtimestamp')[0].firstChild.data)
                             except AttributeError:
                                 pass
 
-                # information of AVM Homeautomation Device having switch state
+                # information of AVM smarthome device having switch state
                 if 'on_off_device' in functions:
                     simpleonoff_element = element.getElementsByTagName('simpleonoff')
                     if len(simpleonoff_element) > 0:
                         for child in simpleonoff_element:
                             try:
-                                self._fritz_device.get_smarthome_devices()[ain]['simpleonoff'] = int(child.getElementsByTagName('state')[0].firstChild.data)
+                                self._fritz_device.get_smarthome_devices()[ain]['simpleonoff'] = int(
+                                    child.getElementsByTagName('state')[0].firstChild.data)
                             except AttributeError:
                                 # Set device state to 0 (off) if device is not connected (= no state available in xml)
                                 self._fritz_device.get_smarthome_devices()[ain]['simpleonoff'] = 0
                                 pass
 
-                # information of AVM Homeautomation Device having dimmer level information
+                # information of AVM smarthome device having dimmer level information
                 if 'dimmable_device' in functions:
                     levelcontrol_element = element.getElementsByTagName('levelcontrol')
                     if len(levelcontrol_element) > 0:
                         for child in levelcontrol_element:
                             try:
-                                self._fritz_device.get_smarthome_devices()[ain]['level'] = int(child.getElementsByTagName('level')[0].firstChild.data)
+                                self._fritz_device.get_smarthome_devices()[ain]['level'] = int(
+                                    child.getElementsByTagName('level')[0].firstChild.data)
                             except AttributeError:
                                 # Set dimmer level to 0 (off) if device is not connected (= no state available in xml)
                                 self._fritz_device.get_smarthome_devices()[ain]['level'] = 0
@@ -2976,7 +3000,8 @@ class AVM(SmartPlugin):
                                 except AttributeError:
                                     pass
                             try:
-                                self._fritz_device.get_smarthome_devices()[ain]['levelpercentage'] = int(child.getElementsByTagName('levelpercentage')[0].firstChild.data)
+                                self._fritz_device.get_smarthome_devices()[ain]['levelpercentage'] = int(
+                                    child.getElementsByTagName('levelpercentage')[0].firstChild.data)
                             except AttributeError:
                                 # Set dimmer level to 0 (off) if device is not connected (= no state available in xml)
                                 self._fritz_device.get_smarthome_devices()[ain]['levelpercentage'] = 0
@@ -2992,7 +3017,7 @@ class AVM(SmartPlugin):
                                 except AttributeError:
                                     pass
 
-                # information of AVM Homeautomation Device having color information
+                # information of AVM smarthome device having color information
                 if 'color_device' in functions:
                     colorcontrol_element = element.getElementsByTagName('colorcontrol')
                     if len(colorcontrol_element) > 0:
@@ -3009,22 +3034,25 @@ class AVM(SmartPlugin):
                             #    self.logger.warning(f"Debug: HanFun current_mode: {self._fritz_device.get_smarthome_devices()[ain]['current_mode']}")
                             #    self.logger.warning(f"Debug: HanFun supported_modes: {self._fritz_device.get_smarthome_devices()[ain]['supported_modes']}")
                             try:
-                                self._fritz_device.get_smarthome_devices()[ain]['hue'] = int(child.getElementsByTagName('hue')[0].firstChild.data)
+                                self._fritz_device.get_smarthome_devices()[ain]['hue'] = int(
+                                    child.getElementsByTagName('hue')[0].firstChild.data)
                             except AttributeError:
                                 self._fritz_device.get_smarthome_devices()[ain]['hue'] = 0
                                 pass
                             try:
-                                self._fritz_device.get_smarthome_devices()[ain]['saturation'] = int(child.getElementsByTagName('saturation')[0].firstChild.data)
+                                self._fritz_device.get_smarthome_devices()[ain]['saturation'] = int(
+                                    child.getElementsByTagName('saturation')[0].firstChild.data)
                             except AttributeError:
                                 self._fritz_device.get_smarthome_devices()[ain]['saturation'] = 0
                                 pass
                             try:
-                                self._fritz_device.get_smarthome_devices()[ain]['colortemperature'] = int(child.getElementsByTagName('temperature')[0].firstChild.data)
+                                self._fritz_device.get_smarthome_devices()[ain]['colortemperature'] = int(
+                                    child.getElementsByTagName('temperature')[0].firstChild.data)
                             except AttributeError:
                                 self._fritz_device.get_smarthome_devices()[ain]['colortemperature'] = 0
                                 pass
         else:
-            self.logger.debug(f"Debug: _get_aha_device_elements returned no devices")
+            self.logger.warning(f"Debug: _get_aha_device_elements returned no devices")
 
         # update items
         self._update_smarthome_items()
@@ -3055,7 +3083,8 @@ class AVM(SmartPlugin):
                     if current_avm_data_type in device:
                         item(device[current_avm_data_type], self.get_shortname())
                     else:
-                        self.logger.warning(f'Attribute <{current_avm_data_type}> at device <{ain_device}> to be set to Item <{item}> is not available.')
+                        self.logger.warning(
+                            f'Attribute <{current_avm_data_type}> at device <{ain_device}> to be set to Item <{item}> is not available.')
             else:
                 self.logger.warning(f'No values for item {item.id()} with AIN {ain_device} available.')
 
@@ -3150,7 +3179,8 @@ class AVM(SmartPlugin):
         """
 
         if not 0 <= int(level) <= 255:
-            self.logger.warning(f"Value for level={level} not in expected range of 0-255. Value will be limited to min/max.")
+            self.logger.warning(
+                f"Value for level={level} not in expected range of 0-255. Value will be limited to min/max.")
 
         # limit level it is out of range
         level = 0 if level < 0 else 255 if level > 255 else level
@@ -3163,7 +3193,8 @@ class AVM(SmartPlugin):
         """
 
         if not 0 <= int(level) <= 100:
-            self.logger.warning(f"Value for level={level} not in expected range of 0%-100%. Value will be limited to min/max.")
+            self.logger.warning(
+                f"Value for level={level} not in expected range of 0%-100%. Value will be limited to min/max.")
 
         # limit level it is out of range
         level = 0 if level < 0 else 100 if level > 100 else level
@@ -3176,12 +3207,14 @@ class AVM(SmartPlugin):
         """
 
         if not 2700 <= int(colortemperature) <= 6500:
-            self.logger.warning(f"Value for color temperature={colortemperature} not in expected range of 2700K-6500K. Value will be limited to min/max.")
+            self.logger.warning(
+                f"Value for colortemperature={colortemperature} not in expected range of 2700K-6500K. Value will be limited to min/max.")
 
         # limit colortemperature it is out of range
         colortemperature = 2700 if colortemperature < 2700 else 6500 if colortemperature > 6500 else colortemperature
 
-        return self._aha_request("setcolortemperature", ain=ain, param={'temperature': int(colortemperature), 'duration': int(duration)}, rf=int)
+        return self._aha_request("setcolortemperature", ain=ain,
+                                 param={'temperature': int(colortemperature), 'duration': int(duration)}, rf=int)
 
     def set_color(self, ain, hue, saturation, duration=3):
         """
@@ -3189,7 +3222,8 @@ class AVM(SmartPlugin):
         """
 
         if not 0 <= int(hue) <= 359 and not 0 <= int(saturation) <= 255:
-            self.logger.warning(f"Value for hue={hue} and/or saturation={saturation} not in expected range. Values will be limited to min/max.")
+            self.logger.warning(
+                f"Value for hue={hue} and/or saturation={saturation} not in expected range. Values will be limited to min/max.")
 
         # n = minn if n < minn else maxn if n > maxn else n
 
@@ -3197,7 +3231,9 @@ class AVM(SmartPlugin):
         hue = 0 if hue < 0 else 359 if hue > 359 else hue
         saturation = 0 if saturation < 0 else 255 if saturation > 255 else saturation
 
-        return self._aha_request("setcolor", ain=ain, param={'hue': int(hue), 'saturation': int(saturation), 'duration': int(duration)}, rf=bool)
+        return self._aha_request("setcolor", ain=ain,
+                                 param={'hue': int(hue), 'saturation': int(saturation), 'duration': int(duration)},
+                                 rf=bool)
 
     def set_color_discrete(self, ain, hue, duration=0):
         """
@@ -3205,43 +3241,44 @@ class AVM(SmartPlugin):
         """
 
         if hue <= 20:
-            # self.logger.debug(f'setcolor to red (hue={hue})')
+            #self.logger.debug(f'setcolor to red (hue={hue})')
             return self._aha_request("setcolor", ain=ain, param={'hue': 358, 'saturation': 180, 'duration': int(duration)}, rf=bool)
         elif hue <= 45:
-            # self.logger.debug(f'setcolor to orange (hue={hue})')
+            #self.logger.debug(f'setcolor to orange (hue={hue})')
             return self._aha_request("setcolor", ain=ain, param={'hue': 35, 'saturation': 214, 'duration': int(duration)}, rf=bool)
         elif hue <= 55:
-            # self.logger.debug(f'setcolor to yellow (hue={hue})')
+            #self.logger.debug(f'setcolor to yellow (hue={hue})')
             return self._aha_request("setcolor", ain=ain, param={'hue': 52, 'saturation': 153, 'duration': int(duration)}, rf=bool)
         elif hue <= 100:
-            # self.logger.debug(f'setcolor to grasgreen (hue={hue})')
+            #self.logger.debug(f'setcolor to grasgreen (hue={hue})')
             return self._aha_request("setcolor", ain=ain, param={'hue': 92, 'saturation': 123, 'duration': int(duration)}, rf=bool)
         elif hue <= 135:
-            # self.logger.debug(f'setcolor to green (hue={hue})')
+            #self.logger.debug(f'setcolor to green (hue={hue})')
             return self._aha_request("setcolor", ain=ain, param={'hue': 120, 'saturation': 160, 'duration': int(duration)}, rf=bool)
         elif hue <= 175:
-            # self.logger.debug(f'setcolor to turquoise (hue={hue})')
+            #self.logger.debug(f'setcolor to turquoise (hue={hue})')
             return self._aha_request("setcolor", ain=ain, param={'hue': 160, 'saturation': 145, 'duration': int(duration)}, rf=bool)
         elif hue <= 210:
-            # self.logger.debug(f'setcolor to cyan (hue={hue})')
+            #self.logger.debug(f'setcolor to cyan (hue={hue})')
             return self._aha_request("setcolor", ain=ain, param={'hue': 195, 'saturation': 179, 'duration': int(duration)}, rf=bool)
         elif hue <= 240:
-            # self.logger.debug(f'setcolor to blue (hue={hue})')
+            #self.logger.debug(f'setcolor to blue (hue={hue})')
             return self._aha_request("setcolor", ain=ain, param={'hue': 225, 'saturation': 204, 'duration': int(duration)}, rf=bool)
         elif hue <= 280:
-            # self.logger.debug(f'setcolor to violett (hue={hue})')
+            #self.logger.debug(f'setcolor to violett (hue={hue})')
             return self._aha_request("setcolor", ain=ain, param={'hue': 266, 'saturation': 169, 'duration': int(duration)}, rf=bool)
         elif hue <= 310:
-            # self.logger.debug(f'setcolor to magenta (hue={hue})')
+            #self.logger.debug(f'setcolor to magenta (hue={hue})')
             return self._aha_request("setcolor", ain=ain, param={'hue': 296, 'saturation': 140, 'duration': int(duration)}, rf=bool)
         elif hue <= 350:
-            # self.logger.debug(f'setcolor to pink (hue={hue})')
+            #self.logger.debug(f'setcolor to pink (hue={hue})')
             return self._aha_request("setcolor", ain=ain, param={'hue': 335, 'saturation': 180, 'duration': int(duration)}, rf=bool)
         elif hue <= 360:
-            # self.logger.debug(f'setcolor to red (hue={hue})')
+            #self.logger.debug(f'setcolor to red (hue={hue})')
             return self._aha_request("setcolor", ain=ain, param={'hue': 358, 'saturation': 180, 'duration': int(duration)}, rf=bool)
         else:
             self.logger.error(f'setcolor hue out of range (hue={hue})')
+
 
     def get_temperature(self, ain):
         """
@@ -3337,7 +3374,12 @@ class AVM(SmartPlugin):
         lookup_item = item
         for i in range(2):
             attribute = 'ain'
+            attribute_w_instance = f"{attribute}@{self.get_instance_name()}"
+
             ain_device = self.get_iattr_value(lookup_item.conf, attribute)
+            if ain_device is not None:
+                break
+            ain_device = self.get_iattr_value(lookup_item.conf, attribute_w_instance)
             if ain_device is not None:
                 break
             else:
@@ -3345,11 +3387,17 @@ class AVM(SmartPlugin):
 
         if ain_device:
             # deprecated warning for attribute 'ain'
-            self.logger.warning(f"Item {item.id()} uses deprecated 'ain' attribute. Please consider to switch to 'avm_ain'.")
+            self.logger.warning(
+                f"Item {item.id()} uses deprecated 'ain' attribute. Please consider to switch to 'avm_ain'.")
         else:
             lookup_item = item
             for i in range(2):
                 attribute = 'avm_ain'
+                attribute_w_instance = f"{attribute}@{self.get_instance_name()}"
+
+                ain_device = self.get_iattr_value(lookup_item.conf, attribute_w_instance)
+                if ain_device is not None:
+                    break
                 ain_device = self.get_iattr_value(lookup_item.conf, attribute)
                 if ain_device is not None:
                     break
@@ -3357,10 +3405,8 @@ class AVM(SmartPlugin):
                     lookup_item = lookup_item.return_parent()
 
         if ain_device is None:
-            self.logger.error(f'Device AIN for {item.id()} is not defined or instance not given')
-            return None
-
-        return ain_device
+            self.logger.error('Device AIN is not defined or instance not given')
+        return str(ain_device)
 
     def _get_wlan_index(self, item):
         """
@@ -3370,15 +3416,20 @@ class AVM(SmartPlugin):
         wlan_index = None
         for i in range(2):
             attribute = 'avm_wlan_index'
+            attribute_w_instance = f"{attribute}@{self.get_instance_name()}"
+
             wlan_index = self.get_iattr_value(item.conf, attribute)
+            if wlan_index:
+                break
+            wlan_index = self.get_iattr_value(item.conf, attribute_w_instance)
             if wlan_index:
                 break
             else:
                 item = item.return_parent()
 
         if wlan_index is not None:
-            wlan_index = int(wlan_index)
-            if not 1 <= wlan_index <= 3:
+            wlan_index = int(wlan_index) - 1
+            if not 0 <= wlan_index <= 2:
                 wlan_index = None
                 self.logger.warning(f"Attribute 'avm_wlan_index' for item {item.id()} not in valid range 1-3.")
 
@@ -3392,7 +3443,12 @@ class AVM(SmartPlugin):
         tam_index = None
         for i in range(2):
             attribute = 'avm_tam_index'
+            attribute_w_instance = f"{attribute}@{self.get_instance_name()}"
+
             tam_index = self.get_iattr_value(item.conf, attribute)
+            if tam_index:
+                break
+            tam_index = self.get_iattr_value(item.conf, attribute_w_instance)
             if tam_index:
                 break
             else:
@@ -3414,7 +3470,12 @@ class AVM(SmartPlugin):
         deflection_index = None
         for i in range(2):
             attribute = 'avm_deflection_index'
+            attribute_w_instance = f"{attribute}@{self.get_instance_name()}"
+
             deflection_index = self.get_iattr_value(item.conf, attribute)
+            if deflection_index:
+                break
+            deflection_index = self.get_iattr_value(item.conf, attribute_w_instance)
             if deflection_index:
                 break
             else:
@@ -3436,7 +3497,12 @@ class AVM(SmartPlugin):
         mac = None
         for i in range(2):
             attribute = 'avm_mac'
+            attribute_w_instance = f"{attribute}@{self.get_instance_name()}"
+
             mac = self.get_iattr_value(item.conf, attribute)
+            if mac:
+                break
+            mac = self.get_iattr_value(item.conf, attribute_w_instance)
             if mac:
                 break
             else:
@@ -3458,7 +3524,8 @@ class AVM(SmartPlugin):
         url = self._build_url("/upnp/control/deviceinfo")
         headers = self._header.copy()
 
-        if self.get_iattr_value(item.conf, 'avm_data_type') in ['uptime', 'software_version', 'hardware_version', 'serial_number']:
+        if self.get_iattr_value(item.conf, 'avm_data_type') in ['uptime', 'software_version', 'hardware_version',
+                                                                'serial_number']:
             action = 'GetInfo'
         else:
             self.logger.error(f"Attribute {self.get_iattr_value(item.conf, 'avm_data_type')} not supported by plugin")
@@ -3476,7 +3543,8 @@ class AVM(SmartPlugin):
 
         else:
             if self.debug_log:
-                self.logger.debug(f"Accessing dev_info response cache for action {action} and item {item.property.path}!")
+                self.logger.debug(
+                    f"Accessing dev_info response cache for action {action} and item {item.property.path}!")
 
         try:
             xml = minidom.parseString(self._response_cache[f"dev_info_{action}"])
@@ -3498,7 +3566,8 @@ class AVM(SmartPlugin):
         if len(element_xml) > 0:
             item(element_xml[0].firstChild.data, self.get_shortname())
         else:
-            self.logger.info(f"Request of attribute {self.get_iattr_value(item.conf, 'avm_data_type')} returned None. Seems that data are not available/supported.")
+            self.logger.info(
+                f"Request of attribute {self.get_iattr_value(item.conf, 'avm_data_type')} returned None. Seems that data are not available/supported.")
 
     def _update_tam(self, item):
         """
@@ -3546,13 +3615,15 @@ class AVM(SmartPlugin):
             if len(element_xml) > 0:
                 item(element_xml[0].firstChild.data, self.get_shortname())
             else:
-                self.logger.error(f"Attribute {self.get_iattr_value(item.conf, 'avm_data_type')} not available on the FritzDevice")
+                self.logger.error(
+                    f"Attribute {self.get_iattr_value(item.conf, 'avm_data_type')} not available on the FritzDevice")
         elif self.get_iattr_value(item.conf, 'avm_data_type') == 'tam_name':
             element_xml = xml.getElementsByTagName('NewName')
             if len(element_xml) > 0:
                 item(element_xml[0].firstChild.data, self.get_shortname())
             else:
-                self.logger.error(f"Attribute {self.get_iattr_value(item.conf, 'avm_data_type')} not available on the FritzDevice")
+                self.logger.error(
+                    f"Attribute {self.get_iattr_value(item.conf, 'avm_data_type')} not available on the FritzDevice")
         elif self.get_iattr_value(item.conf, 'avm_data_type') in ['tam_new_message_number', 'tam_total_message_number']:
             message_url_xml = xml.getElementsByTagName('NewURL')
             if len(message_url_xml) > 0:
@@ -3571,7 +3642,8 @@ class AVM(SmartPlugin):
                     self._response_cache["tam_messages"] = message_result.content
                 else:
                     if self.debug_log:
-                        self.logger.debug(f"Accessing tam_messages response cache for action {action} and item {item.property.path}!")
+                        self.logger.debug(
+                            f"Accessing tam_messages response cache for action {action} and item {item.property.path}!")
 
                 try:
                     message_xml = minidom.parseString(self._response_cache["tam_messages"])
@@ -3596,19 +3668,21 @@ class AVM(SmartPlugin):
 
     def _update_wlan_config(self, item):
         """
-        Updates wlan related information, all items of this method need a numeric avm_wlan_index (typically 1-3)
+        Updates wlan related information, all items of this method need an numeric avm_wlan_index (typically 1-3)
 
         Uses: http://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/wlanconfigSCPD.pdf
 
         :param item: item to be updated (Supported item avm_data_types: wlanconfig, wlan_guest_time_remaining
         """
 
-        wlan_index = self._get_wlan_index(item)
+        url = None
+        wlan_index = self.get_iattr_value(item.conf, 'avm_wlan_index')
 
         if wlan_index:
             url = self._build_url(f"/upnp/control/wlanconfig{wlan_index}")
         else:
-            self.logger.error(f'No or incorrect avm_wlan_index attribute provided for {item.id()}')
+            self.logger.error(f'No or incorrect avm_wlan_index attribute provided for {item}')
+        if not url:
             return
 
         if self.get_iattr_value(item.conf, 'avm_data_type') in ['wlanconfig', 'wlanconfig_ssid']:
@@ -3623,13 +3697,14 @@ class AVM(SmartPlugin):
         headers['SOAPACTION'] = f"{self._urn_map['WLANConfiguration']}"[:43] + f"{wlan_index}#{action}"
         soap_data = self._assemble_soap_data(action, f"{self._urn_map['WLANConfiguration']}"[:43] + f"{wlan_index}")
 
-        if f"wlanconfig_{wlan_index}_{action}" not in self._response_cache:
+        if f"wlanconfig_{wlan_index}_{action}" not in self._response_cache and url:
             response = self._get_post_request(url, soap_data, headers)
             if response is not None:
                 self._response_cache[f"wlanconfig_{wlan_index}_{action}"] = response.content
         else:
             if self.debug_log:
-                self.logger.debug(f"Accessing wlanconfig response cache for action {action} and item {item.property.path}!")
+                self.logger.debug(
+                    f"Accessing wlanconfig response cache for action {action} and item {item.property.path}!")
 
         try:
             xml = minidom.parseString(self._response_cache[f"wlanconfig_{wlan_index}_{action}"])
@@ -3656,7 +3731,8 @@ class AVM(SmartPlugin):
         if data is not None:
             item(data, self.get_shortname())
         else:
-            self.logger.info(f"Request of attribute {self.get_iattr_value(item.conf, 'avm_data_type')} returned None. Seems that data are not available/supported.")
+            self.logger.info(
+                f"Request of attribute {self.get_iattr_value(item.conf, 'avm_data_type')} returned None. Seems that data are not available/supported.")
 
     def _update_wan_dsl_interface_config(self, item):
         """
@@ -3686,7 +3762,8 @@ class AVM(SmartPlugin):
                 self._response_cache[f"wan_dsl_interface_config_{action}"] = response.content
         else:
             if self.debug_log:
-                self.logger.debug(f"Accessing wan_dsl_interface_config response cache for action {action} and item {item.property.path}!")
+                self.logger.debug(
+                    f"Accessing wan_dsl_interface_config response cache for action {action} and item {item.property.path}!")
 
         try:
             xml = minidom.parseString(self._response_cache[f"wan_dsl_interface_config_{action}"])
@@ -3705,7 +3782,8 @@ class AVM(SmartPlugin):
         if element_xml is not None and len(element_xml) > 0:
             item(int(element_xml[0].firstChild.data), self.get_shortname())
         else:
-            self.logger.info(f"Request of attribute {self.get_iattr_value(item.conf, 'avm_data_type')} returned None. Seems that data are not available/supported.")
+            self.logger.info(
+                f"Request of attribute {self.get_iattr_value(item.conf, 'avm_data_type')} returned None. Seems that data are not available/supported.")
 
     def _update_wan_common_interface_configuration(self, item):
         """
@@ -3752,7 +3830,8 @@ class AVM(SmartPlugin):
                 self._response_cache[f"wan_common_interface_configuration_{action}"] = response.content
         else:
             if self.debug_log:
-                self.logger.debug(f"Accessing wan_common_interface_configuration response cache for action {action} and item {item.property.path}!")
+                self.logger.debug(
+                    f"Accessing wan_common_interface_configuration response cache for action {action} and item {item.property.path}!")
 
         try:
             xml = minidom.parseString(self._response_cache[f"wan_common_interface_configuration_{action}"])
@@ -3788,7 +3867,8 @@ class AVM(SmartPlugin):
         if data is not None:
             item(data, self.get_shortname())
         else:
-            self.logger.info(f"Request of attribute {self.get_iattr_value(item.conf, 'avm_data_type')} returned None. Seems that data are not available/supported.")
+            self.logger.info(
+                f"Request of attribute {self.get_iattr_value(item.conf, 'avm_data_type')} returned None. Seems that data are not available/supported.")
 
     def _update_wan_ip_connection(self, item):
         """
@@ -3821,7 +3901,8 @@ class AVM(SmartPlugin):
                 self._response_cache[f"wan_ip_connection_{action}"] = response.content
         else:
             if self.debug_log:
-                self.logger.debug(f"Accessing wan_ip_connection response cache for action {action} and item {item.property.path}!")
+                self.logger.debug(
+                    f"Accessing wan_ip_connection response cache for action {action} and item {item.property.path}!")
 
         try:
             xml = minidom.parseString(self._response_cache[f"wan_ip_connection_{action}"])
@@ -3847,7 +3928,8 @@ class AVM(SmartPlugin):
         if data is not None:
             item(data, self.get_shortname())
         else:
-            self.logger.info(f"Request of attribute {self.get_iattr_value(item.conf, 'avm_data_type')} returned None. Seems that data are not available/supported.")
+            self.logger.info(
+                f"Request of attribute {self.get_iattr_value(item.conf, 'avm_data_type')} returned None. Seems that data are not available/supported.")
 
     @staticmethod
     def _get_value_from_xml_node(node, tag_name):
@@ -3864,9 +3946,8 @@ class AVM(SmartPlugin):
 
     def get_number_of_deflections(self):
         """
-        Get the number of deflection entries
-
-        Uses: http://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/x_contactSCPD.pdf
+        Get the number of deflection entrys
+        | Uses: http://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/x_contactSCPD.pdf
         :return: number of deflections
         """
 
@@ -3882,7 +3963,7 @@ class AVM(SmartPlugin):
 
     def _update_number_of_deflections(self, item):
         """
-        Updates the number of active deflections
+        Updates the number of acitve deflections
         """
 
         result = self.get_number_of_deflections()
@@ -3896,8 +3977,7 @@ class AVM(SmartPlugin):
         """
         Get the parameter for a deflection entry.
         DeflectionID is in the range of 0 .. NumberOfDeflections-1.
-
-        Uses: http://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/x_contactSCPD.pdf
+        | Uses: http://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/x_contactSCPD.pdf
         :param: deflection_id (default: 0)
         :return: dict with all deflection details of deflection_id
         """
@@ -3958,8 +4038,7 @@ class AVM(SmartPlugin):
     def get_deflections(self):
         """
         Returns a list of deflecttions
-
-        Uses: http://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/x_contactSCPD.pdf
+        | Uses: http://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/x_contactSCPD.pdf
         :return: dict with all deflection details
         """
 
@@ -3990,7 +4069,8 @@ class AVM(SmartPlugin):
         if len(item_list) > 0:
             for item in item_list:
                 deflection_id = int(item.getElementsByTagName('DeflectionId')[0].firstChild.data)
-                deflections[deflection_id] = {'Enable': '', 'Type': '', 'Number': '', 'DeflectionToNumber': '', 'Mode': '', 'Outgoing': '', 'PhonebookID': ''}
+                deflections[deflection_id] = {'Enable': '', 'Type': '', 'Number': '', 'DeflectionToNumber': '',
+                                              'Mode': '', 'Outgoing': '', 'PhonebookID': ''}
 
                 for attribute in deflections[deflection_id]:
                     attribute_value = item.getElementsByTagName(attribute)
@@ -4005,7 +4085,7 @@ class AVM(SmartPlugin):
         """
 
         result = self.get_deflections()
-        if isinstance(result, dict) and result:
+        if result is not None and dict:
             if self.get_iattr_value(item.conf, 'avm_data_type') == 'deflections_details':
                 item(result, self.get_shortname())
             else:
@@ -4015,32 +4095,30 @@ class AVM(SmartPlugin):
                 # Set Item values
                 if deflection_index is not None:
                     if self.get_iattr_value(item.conf, 'avm_data_type') == 'deflection_enable':
-                        item(result[deflection_index].get('Enable', None), self.get_shortname())
+                        item(result[deflection_index]['Enable'], self.get_shortname())
                     elif self.get_iattr_value(item.conf, 'avm_data_type') == 'deflection_type':
-                        item(result[deflection_index].get('Type', None), self.get_shortname())
+                        item(result[deflection_index]['Type'], self.get_shortname())
                     elif self.get_iattr_value(item.conf, 'avm_data_type') == 'deflection_number':
-                        item(result[deflection_index].get('Number', None), self.get_shortname())
+                        item(result[deflection_index]['Number'], self.get_shortname())
                     elif self.get_iattr_value(item.conf, 'avm_data_type') == 'deflection_to_number':
-                        item(result[deflection_index].get('DeflectionToNumber', None), self.get_shortname())
+                        item(result[deflection_index]['DeflectionToNumber'], self.get_shortname())
                     elif self.get_iattr_value(item.conf, 'avm_data_type') == 'deflection_mode':
-                        item(result[deflection_index].get('Mode', None), self.get_shortname())
+                        item(result[deflection_index]['Mode'], self.get_shortname())
                     elif self.get_iattr_value(item.conf, 'avm_data_type') == 'deflection_outgoing':
-                        item(result[deflection_index].get('Outgoing', None), self.get_shortname())
+                        item(result[deflection_index]['Outgoing'], self.get_shortname())
                     elif self.get_iattr_value(item.conf, 'avm_data_type') == 'deflection_phonebook_id':
-                        item(result[deflection_index].get('PhonebookID', None), self.get_shortname())
+                        item(result[deflection_index]['PhonebookID'], self.get_shortname())
                     else:
-                        self.logger.error(f"Attribute {self.get_iattr_value(item.conf, 'avm_data_type')} not available on the FritzDevice")
+                        self.logger.error(
+                            f"Attribute {self.get_iattr_value(item.conf, 'avm_data_type')} not available on the FritzDevice")
                 else:
                     self.logger.error(f"Deflection Index for {item} not defined")
-        else:
-            self.logger.info(f"Deflection configured in AVM Plugin/Items but probably not set in Fritzbox.")
 
     def set_deflection(self, deflection_id=0, new_enable=False):
         """
         Enable or disable a deflection.
         DeflectionID is in the range of 0 .. NumberOfDeflections-1
-
-        Uses: http://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/x_contactSCPD.pdf
+        | Uses: http://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/x_contactSCPD.pdf
         :param deflection_id: deflection id (default: 0)
         :param new_enable: new enable (default: False)
         """
@@ -4049,13 +4127,10 @@ class AVM(SmartPlugin):
         action = "SetDeflectionEnable"
         headers = self._header.copy()
         headers['SOAPACTION'] = f"{self._urn_map['OnTel']}#{action}"
-        soap_data = self._assemble_soap_data(action, self._urn_map['OnTel'], {'NewDeflectionId': deflection_id, 'NewEnable': int(new_enable)})
+        soap_data = self._assemble_soap_data(action, self._urn_map['OnTel'],
+                                             {'NewDeflectionId': deflection_id, 'NewEnable': int(new_enable)})
 
         self._get_post_request_as_xml(url, soap_data, headers)
 
         # read deflection after setting
         self._update_loop()
-
-    @property
-    def is_fritzbox(self):
-        return True if 'box' in self._host_info['model'].lower() else False

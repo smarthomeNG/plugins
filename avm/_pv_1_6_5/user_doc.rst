@@ -4,22 +4,10 @@ AVM
 
 Changelog
 ---------
-
-1.6.7
-~~~~~
-- Implement plugin configuration "avm_home_automation" to use AHA (AVM HomeAutomation) Interface (Default: False)
-- correct typo "temperatur" to "temperature" in struct
-- add method "get_device_log_from_lua_separated" to get log already as list of list
-- limit Log entries shown on WebIF to recent 200
-- Update WebIF with possibility to adapt table size to screen
-- Debugging for 'button' e.g. DECT440
-- Minor code correction / debugging
-- Adapt user_doc.rst
-
 1.6.6
 ~~~~~
 
-- Methode get_color_defaults implementiert, welche die aktuell von AVM unterstützen diskreten RGB Farben ausliest. 
+- Methode get_color_defaults implementiert, welche die aktuell von AVM unterstützen diskreten RGB Farben ausliest.
 - Methode set_color und color auf diskrete RGB farben umgestellt. Beliebige RGB Farbwerte werden erst ab Q2 2022 von AVM unterstützt.
 
 1.6.5
@@ -114,10 +102,6 @@ Dafür stehen die folgenden Einstellungen zur Verfügung:
 - `ssl`: True or False => True will add "https", False "http" to the URLs in the plugin
 - `verify`: True or False => Turns certificate verification on or off. Typically False
 - `call_monitor`: True or False => Activates or deactivates the MonitoringService, which connects to the FritzDevice's call monitor
-- 'call_monitor_incoming_filter': Filter only specific numbers to be watched by call monitor
-- 'avm_home_automation': True or False => Activates or deactivates the AHA Interface to communicate with HomeAutomation Devices,
-- 'log_entry_count': Number of Log-Messages, which will be displayed.
-- 'webif_pagelength': Number of items being listed in a web interface table per page by default.
 - `instance`: Unique identifier for each FritzDevice / each instance of the plugin
 
 Alternativ kann das Plugin auch manuell konfiguriert werden.
@@ -137,7 +121,6 @@ Alternativ kann das Plugin auch manuell konfiguriert werden.
         verify: False    # verify ssl certificate
         call_monitor: 'True'
         call_monitor_incoming_filter: "...    ## optional, don't set if you don't want to watch only one specific number with your call monitor"
-        avm_home_automation: 'True'
         instance: fritzbox_7490
 
     fb2:
@@ -151,12 +134,13 @@ Alternativ kann das Plugin auch manuell konfiguriert werden.
         ssl: True    # use https or not
         verify: False    # verify ssl certificate
         call_monitor: 'True'
-        avm_home_automation: 'False'
         instance: wlan_repeater_1750
 
-.. note:: Kürzere Updatezyklen können abhängig vm Fritzdevice aufgrund von CPU Auslastung und damit zu Problemen (u.a.
-zu Nichterreichbarkeit des Webservice) führen. Wird ein kürzerer Updatezyklus benötigt, sollte das shNG Log beobachtet
-werden. Dort werden entsprechende Fehlermeldungen hinterlegt.
+.. note::
+
+    Kürzere Updatezyklen können abhängig vm Fritzdevice aufgrund von CPU Auslastung und damit zu Problemen (u.a.
+    zu Nichterreichbarkeit des Webservice) führen. Wird ein kürzerer Updatezyklus benötigt, sollte das shNG Log
+    beobachtet werden. Dort werden entsprechende Fehlermeldungen hinterlegt.
 
 
 Konfiguration des Items
@@ -186,7 +170,7 @@ avm_mac
 ~~~~~~~
 Definition der MAC Adresse für Items vom avm_data_type `network_device`. Nur für diese Items mandatory!'
 
-avm_ain
+ain
 ~~~
 Definition der Aktor Identifikationsnummer (AIN)Items für smarthome Items. Nur für diese Items mandatory!'
 
@@ -205,18 +189,18 @@ item_structs
 Zur Vereinfachung der Einrichtung von Items sind für folgende Item-structs vordefiniert:
 
 - ``info``  -  General Information about Fritzbox
-- ``monitor``  -  Call Monitor
+- ``monitor``  -  Coll Monitor
 - ``tam``  -  (für einen) Anrufbeantworter
 - ``deflection``  -  (für eine) Rufumleitung
 - ``wan``  -  WAN Items
 - ``wlan``  -  Wireless Lan Items
-- ``device``  -  Items eines verbundenen Gerätes
-- ``smarthome_general``  -  Allgemeine Informationen eines AVM HomeAutomation Devices
-- ``smarthome_hkr``  -  spezifische Informationen eines AVM HomeAutomation Thermostat Devices
-- ``smarthome_temperatur_sensor``  -  spezifische Informationen eines AVM HomeAutomation Devices mit Temperatursensor
-- ``smarthome_alert``  -  spezifische Informationen eines AVM HomeAutomation Devices mit Alarmfunktion
-- ``smarthome_switch``  -  spezifische Informationen eines AVM HomeAutomation Devices mit Schalter
-- ``smarthome_powermeter``  -  spezifische Informationen eines AVM HomeAutomation Devices mit Strommessung
+- ``device``  -  Item eines verbundenen Gerätes
+- ``smarthome_general``  -  Allgemeine Informationen eines DECT smarthome Devices
+- ``smarthome_hkr``  -  spezifische Informationen eines DECT Thermostat Devices
+- ``smarthome_temperatur_sensor``  -  spezifische Informationen eines DECT smarthome Devices mit Temperatursensor
+- ``smarthome_alert``  -  spezifische Informationen eines DECT smarthome Devices mit Alarmfunktion
+- ``smarthome_switch``  -  spezifische Informationen eines DECT smarthome Devices mit Schalter
+- ``smarthome_powermeter``  -  spezifische Informationen eines DECT smarthome Devices mit Strommessung
 
 
 Item Beispiel mit Verwendung der structs ohne Instanz
@@ -265,7 +249,7 @@ Item Beispiel mit Verwendung der structs ohne Instanz
         smarthome:
             hkr_og_bad:
                 type: foo
-                avm_ain: 'xxxxx xxxxxxx'
+                ain: 'xxxxx xxxxxxx'
                 struct:
                   - avm.smarthome_general
                   - avm.smarthome_hkr

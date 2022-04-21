@@ -1,18 +1,18 @@
 # Metadata for the Smart-Plugin
 plugin:
     # Global plugin attributes
-    type: interface
+    type: interface                 # plugin type (gateway, interface, protocol, system, web)
     description:
         de: 'Ansteuerung von AVM FRITZ!Boxen, WLAN-Repeatern, DECT Steckdosen, etc.'
         en: 'Get and send data from/to AVM devices such as the FRITZ!Box, Wifi Repeaters or DECT sockets.'
     maintainer: psilo909, sisamiwe
-    tester: bmx, onkelandy, aschwith, schuma
+    tester: Sandman60, cmalo
 #    keywords: iot xyz
     state: 'qa-passed'
     documentation: http://smarthomeng.de/user/plugins/avm/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/934835-avm-plugin
 
-    version: 1.6.7                 # Plugin version
+    version: 1.6.6                 # Plugin version
     sh_minversion: 1.6             # minimum shNG version to use this plugin
 #    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
@@ -82,35 +82,19 @@ parameters:
         type: bool
         default: False
         description:
-            de: '(optional) Aktiviert oder deaktiviert den Zugriff auf AVM HomeAutomation Geräte mit dem AHA HTTP Interface.'
-            en: '(optional) Activates or deactivates access to AVM HomeAutomation devices via AHA HTTP interface'
-    log_entry_count:
-        type: int
-        default: 200
-        description:
-            de: '(optional) Anzahl der Log-Messages, die verarbeitet/bereitgestellt werden. 0 = alle'
-            en: '(optional) Number of Log-Messages, which will be displayed. 0 = all'
+            de: '(optional) Aktiviert oder deaktiviert den Zugriff auf AVM Smarthome Geräte mit dem AHA HTTP Interface.'
+            en: '(optional) Activates or deactivates access to AVM smarthome devices via AHA HTTP interface'
     webif_pagelength:
         type: int
-        default: 0
+        default: 100
         valid_list:
             - -1
-            - 0
             - 25
             - 50
             - 100
         description:
-            de: 'Anzahl an Items, die standardmäßig in einer Web Interface Tabelle pro Seite angezeigt werden.
-                 0 = automatisch, -1 = alle'
-            en: 'Number of items being listed in a web interface table per page by default.
-                 0 = automatic, -1 = all'
-        description_long:
-            de: 'Anzahl an Items, die standardmäßig in einer Web Interface Tabelle pro Seite angezeigt werden.\n
-                 Bei 0 wird die Tabelle automatisch an die Höhe des Browserfensters angepasst.\n
-                 Bei -1 werden alle Tabelleneinträge auf einer Seite angezeigt.'
-            en: 'Amount of items being listed in a web interface table per page by default.\n
-                 0 adjusts the table height automatically based on the height of the browser windows.\n
-                 -1 shows all table entries on one page.'
+            de: 'Anzahl an Items, die standardmäßig in einer Web Interface Tabelle pro Seite angezeigt werden'
+            en: 'Amount of items being listed in a web interface table per page by default'
 
 item_attributes:
     # Definition of item attributes defined by this plugin
@@ -240,7 +224,7 @@ item_attributes:
         - 'hue'                         # w/r       Hue (Status und Setzen)                         num             neu 1.6.4
         - 'set_saturation'              # w/o       Saturation Setzen                               num
         - 'saturation'                  # w/r       Saturation (Status und Setzen)                  num             neu 1.6.4
-        - 'set_colortemperature'        # w/o       Farbtemperatur setzten                          num
+        - 'set_colortemperature'        # w/o       Farbtemperatur Setzten                          num
         - 'colortemperature'            # w/r       Farbtemperatur (Status und Setzen)              num             neu 1.6.4
 
         - 'switch_state'                # r/w       Schaltzustand Steckdose (Status und Setzen)     bool
@@ -653,7 +637,7 @@ item_structs:
             type: bool
 
     smarthome_temperature_sensor:
-        temperature:
+        temperatur:
             avm_data_type@instance: current_temperature
             type: num
         temperature_offset:
