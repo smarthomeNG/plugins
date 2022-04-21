@@ -216,9 +216,9 @@
                     <td class="py-1">{{ item_id }}</td>
                     <td class="py-1">{{ item.property.type }}</td>
                     <td class="py-1">{{ item.conf[instance_key] }}</td>
-                    <td class="py-1" id="{{ item_id }}_avm_item_value">{{ _('.') }}{{ item() }}</td>
-                    <td class="py-1" id="{{ item_id }}_avm_item_last_update" style="text-align: center">{{ _('.') }}{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
-                    <td class="py-1" id="{{ item_id }}_avm_item_last_change" style="text-align: center">{{ _('.') }}{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                    <td class="py-1" id="{{ item_id }}_avm_item_value">{{ item() }}</td>
+                    <td class="py-1" id="{{ item_id }}_avm_item_last_update" style="text-align: center">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                    <td class="py-1" id="{{ item_id }}_avm_item_last_change" style="text-align: center">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
                 </tr>
             {% endfor %}
         </tbody>
@@ -251,9 +251,9 @@
                     <td class="py-1">{{ item_id }}</td>
                     <td class="py-1">{{ item.property.type }}</td>
                     <td class="py-1">{{ item.conf[instance_key] }}</td>
-                    <td class="py-1" id="{{ item_id }}_avm_smarthome_item_value">.{{ item() }}</td>
-                    <td class="py-1" id="{{ item_id }}_avm_smarthome_item_last_update" style="text-align: center">.{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
-                    <td class="py-1" id="{{ item_id }}_avm_smarthome_item_last_change" style="text-align: center">.{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                    <td class="py-1" id="{{ item_id }}_avm_smarthome_item_value">{{ item() }}</td>
+                    <td class="py-1" id="{{ item_id }}_avm_smarthome_item_last_update" style="text-align: center">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                    <td class="py-1" id="{{ item_id }}_avm_smarthome_item_last_change" style="text-align: center">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
                 </tr>
             {% endfor %}
         </tbody>
@@ -312,9 +312,9 @@
                         <td class="py-1">{{ item_id }}</td>
                         <td class="py-1">{{ item.property.type }}</td>
                         <td class="py-1">{{ item.conf[instance_key] }}</td>
-                        <td class="py-1" id="{{ item_id }}_callmonitor_item_value">.{{ item() }}</td>
-                        <td class="py-1" id="{{ item_id }}_callmonitor_item_last_update" style="text-align: center">.{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
-                        <td class="py-1" id="{{ item_id }}_callmonitor_item_last_change" style="text-align: center">.{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                        <td class="py-1" id="{{ item_id }}_callmonitor_item_value">{{ item() }}</td>
+                        <td class="py-1" id="{{ item_id }}_callmonitor_item_last_update" style="text-align: center">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                        <td class="py-1" id="{{ item_id }}_callmonitor_item_last_change" style="text-align: center">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
                     </tr>
                 {% endfor %}
             {% endif %}
