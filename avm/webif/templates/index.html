@@ -56,7 +56,7 @@
         pageResize: resize } );
       table2 = $('#logtable').DataTable( {
         pageLength: webif_pagelength,
-        columnDefs: [{ 'targets': [2], 'className': 'truncate logentry'}].concat($.fn.dataTable.defaults.columnDefs),
+        columnDefs: [{ 'targets': [1], 'className': 'truncate logentry'}].concat($.fn.dataTable.defaults.columnDefs),
         order: [[ 0, 'desc' ]],
         pageResize: resize } );
       table3 = $('#call_monitortable').DataTable( {
