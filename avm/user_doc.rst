@@ -15,6 +15,7 @@ Changelog
 - Debugging for 'button' e.g. DECT440
 - Minor code correction / debugging
 - Adapt user_doc.rst
+- feature provided by plugin avm_smarthome are completely integrated. Therefore tat plugin is marked as deprecated.
 
 1.6.6
 ~~~~~
@@ -484,10 +485,54 @@ Aufruf des Webinterfaces
 Das Plugin kann aus dem Admin-IF aufgerufen werden. Dazu auf der Seite Plugins in der entsprechenden
 Zeile das Icon in der Spalte **Web Interface** anklicken.
 
+Es werden nur die Tabs angezeigt, deren Funktionen im Plugin aktiviert sind bzw. die von Fritzdevice unterstützt werden.
+
 Im WebIF stehen folgende Reiter zur Verfügung:
- - AVM Items  -  Tabellarische Auflistung aller Items, die mit dem TR-064 Protokoll ausgelesen werden
- - AVM Smarthome Items  -  Tabellarische Auflistung aller Items, die mit dem AHA Protokoll ausgelesen werden (Items der Smarthome Geräte)
- - Plugin-API  -  Beschreibung der Plugin-API
- - Log-Einträge  -  Listung der Logeinträge der Fritzbox
- - Call Monitor Items  -  Tabellarische Auflistung des Anrufmonitors (nur wenn dieser konfiguriert ist)
- - AVM Smarthome Devices  -  Auflistung der mit der Fritzbox verbundenen Geräte
+
+AVM Items
+~~~~~~~~~
+
+Tabellarische Auflistung aller Items, die mit dem TR-064 Protokoll ausgelesen werden
+
+.. image:: user_doc/assets/webif_tab1.jpg
+   :class: screenshot
+
+AVM Smarthome Items
+~~~~~~~~~~~~~~~~~~~
+Tabellarische Auflistung aller Items, die mit dem AHA Protokoll ausgelesen werden (Items der AVM HomeAutomation Geräte)
+
+.. image:: user_doc/assets/webif_tab2.jpg
+   :class: screenshot
+
+AVM Smarthome Devices
+~~~~~~~~~~~~~~~~~~~~~
+
+Auflistung der mit der Fritzbox verbundenen AVM HomeAutomation Geräte
+
+.. image:: user_doc/assets/webif_tab3.jpg
+   :class: screenshot
+
+Call Monitor Items
+~~~~~~~~~~~~~~~~~~
+
+Tabellarische Auflistung des Anrufmonitors (nur wenn dieser konfiguriert ist)
+
+.. image:: user_doc/assets/webif_tab4.jpg
+   :class: screenshot
+
+Log-Einträge
+~~~~~~~~~~~~
+
+Listung der Logeinträge der Fritzbox
+
+.. image:: user_doc/assets/webif_tab5.jpg
+   :class: screenshot
+
+Plugin-API
+~~~~~~~~~~
+
+Beschreibung der Plugin-API
+
+.. image:: user_doc/assets/webif_tab6.jpg
+   :class: screenshot
+
