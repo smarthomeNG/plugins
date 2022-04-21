@@ -2316,9 +2316,16 @@ class AVM(SmartPlugin):
             data = r.json()['mq_log']
             if self.log_entry_count:
                 data = data[:self.log_entry_count]
-            return data
+
         except JSONDecodeError:
             self.logger.error('get_device_log_from_lua_separated: SID seems invalid. Please try again.')
+
+        else:
+            data_formated = []
+            for entry in data:
+                dt = datetime.strptime(f"{entry[0]} {entry[1]}", '%d.%m.%y %H:%M:%S').strftime('%d.%m.%Y %H:%M:%S')
+                data_formated.append([dt, entry[2], entry[3], entry[4]])
+            return data_formated
 
     def get_device_log_from_tr064(self):
         """
