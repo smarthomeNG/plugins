@@ -1,9 +1,16 @@
 .. index:: Plugins; Neato (Neato und Vorwerk Unterstützung)
 .. index:: Neato
 
-=============
-neato/vorwerk
-=============
+=====
+neato
+=====
+
+.. image:: webif/static/img/plugin_logo.png
+   :alt: plugin logo
+   :width: 300px
+   :height: 300px
+   :scale: 50 %
+   :align: left
 
 Neato plugin, mit Unterstützung für Neato und Vorwerk Saugroboter.
 
