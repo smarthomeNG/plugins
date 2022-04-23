@@ -1,9 +1,18 @@
+
 .. index:: Plugins; alexa4p3 (Amazon Echo/Alexa Unterstützung)
-.. index:: alexa4p3
+.. index:: Alexa; alexa4p3 Plugin
 
 ========
 alexa4p3
 ========
+
+.. image:: webif/static/img/plugin_logo.png
+   :alt: plugin logo
+   :width: 300px
+   :height: 300px
+   :scale: 50 %
+   :align: left
+
 
 Plugin zur Ansteuerung von SmartHomeNG via Amazon Echo bzw. Alexa
 
