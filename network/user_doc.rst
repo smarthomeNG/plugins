@@ -1,13 +1,24 @@
-Network
+
+.. index:: Plugins; network
+
+=======
+network
 =======
 
-Requirements
-------------
+.. image:: webif/static/img/plugin_logo.png
+   :alt: plugin logo
+   :width: 300px
+   :height: 300px
+   :scale: 50 %
+   :align: left
 
-Dieses Plugin besitzt keine Abhängigkeiten von anderen Bibliotheken.
 
 Konfiguration
 -------------
+
+Im folgenden ist die alte Dokumentation zu lesen. Die aktuelle Dokumentation zur Konfiguration ist
+unter :doc:`/plugins_doc/config/influxdb2` nachzulesen.
+
 
 .. _pluginyaml:
 
