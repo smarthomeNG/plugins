@@ -1,4 +1,6 @@
 
+.. index:: InfluxDB; Konfiguration
+
 InfluxDB Konfiguration
 ======================
 

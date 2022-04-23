@@ -1,7 +1,7 @@
 
 .. index:: Plugins; visu_smartvisu (smartVISU Unterstützung)
 .. index:: visu_smartvisu
-.. index:: smartVISU
+.. index:: smartVISU; visu_smartvisu Plugin
 
 ==============
 visu_smartvisu

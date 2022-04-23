@@ -1,7 +1,7 @@
-.. index:: tasmota plugin
+.. index:: tasmota
 .. index:: Plugins; tasmota
-.. index:: Plugins; mqtt
-.. index:: mqtt; tasmota plugin
+.. index:: mqtt; tasmota Plugin
+
 
 =======
 tasmota

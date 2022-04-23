@@ -1,5 +1,5 @@
 .. index:: avm_smarthome plugin
-.. index:: Plugins; avm
+.. index:: Plugins; avm_smarthome
 
 =============
 avm_smarthome

@@ -1,5 +1,5 @@
-.. index:: Plugins; MQTT (MQTT Protokoll Implementierung)
-.. index:: MQTT
+.. index:: Plugins; mqtt (MQTT Protokoll Implementierung)
+.. index:: mqtt; mqtt Plugin
 
 ====
 mqtt

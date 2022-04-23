@@ -1,4 +1,6 @@
 
+.. index:: InfluxDB; Installation
+
 InfluxDB Installation
 =====================
 

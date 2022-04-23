@@ -1,5 +1,5 @@
-.. index:: Plugins; Casambi (Casambi Unterstützung)
-.. index:: Casambi
+.. index:: Plugins; casambi (Casambi REST API Unterstützung)
+.. index:: casambi
 
 =======
 casambi

@@ -1,4 +1,4 @@
-.. index:: Plugins; Sonos 
+.. index:: Plugins; sonos
 .. index:: Sonos
 
 ========
@@ -10,7 +10,7 @@ Sonos plugin, mit Unterstützung für Sonos Lautsprecher
 Das Plugin basiert auf dem Sonos SoCo github projekt:
 https://github.com/SoCo/SoCo
 
-Official Sonos Seite: 
+Official Sonos Seite:
 https://www.sonos.com/
 
 

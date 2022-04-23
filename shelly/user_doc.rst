@@ -1,7 +1,6 @@
-.. index:: shelly plugin
+.. index:: shelly
 .. index:: Plugins; shelly
-.. index:: Plugins; mqtt
-.. index:: mqtt; shelly plugin
+.. index:: mqtt; shelly Plugin
 
 ======
 shelly
@@ -105,7 +104,7 @@ Zur Vereinfachung der Einrichtung von Items sind für folgende Shelly Devices It
 - shellyplug_s
 - shellyht
 - shellyflood
- 
+
 Unter Verwendung der entsprechenden Vorlage kann die Einrichtung einfach durch Angabe der shally_id des
 entsprechenden Devices erfolgen:
 
