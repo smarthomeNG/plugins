@@ -1,7 +1,7 @@
+:tocdepth: 5
 
 .. index:: Plugins; smartvisu (smartVISU Unterstützung)
-.. index:: smartvisu
-.. index:: smartVISU
+.. index:: smartVISU; smartvisu Plugin
 
 =========
 smartvisu
@@ -56,21 +56,41 @@ Konfiguration
 
 Die Informationen zur Konfiguration des Plugins sind unter :doc:`/plugins_doc/config/smartvisu` beschrieben.
 
+
 Weiterführende Informationen
 ============================
 
 .. note::
 
-    Das Plugin ist nur aktiv, wenn die Plugins gestartet werden. Nachdem es die Generierungs- und Kopier-Aktionen
-    abgeschlossen hat, stoppt es. Es wird in der Admin GUI in der Liste der Plugins daher als pausiert angezeigt.
+    Wird das Plugin pausiert und anschließend der Start Button für das Plugin gedrückt (der sichtbar ist, wenn die
+    Admin GUI im Entwickler Modus läuft), werden die Visu Seiten erneut generiert und die Widgets werden erneut kopiert.
 
-    Wird hier der Start Button für das Plugin gedrückt (der sichtbar ist, wenn die Admin GUI im Entwickler Modus läuft),
-    werden die Visu Seiten erneut generiert und die Widgets werden erneut kopiert. Das Plugin stoppt anschließend
-    wieder.
+
+Nutzdaten Protokoll
+-------------------
+
+Die Kommunikation zwischen der smartVISU und SmartHomeNG findet über Websockets statt. Dazu wird der Websocket Server
+des Websocket Moduls von SmartHomeNG genutzt.
+
+Das Nutzdaten Protokoll wird durch das smartvisu Plugin implementiert/aktiviert. Für Entwickler ist das Nutzdaten
+Protokoll im folgenden beschrieben.
+
+.. toctree::
+  :titlesonly:
+
+  user_doc/websocket_visu_requests.rst
+  user_doc/websocket_shng_requests.rst
+
+
+Automatische Seitengenerierung
+------------------------------
+
+Das Plugin dient dazu beim Start von SmartHomeNG automatisch Seiten für die smartVISU zu genrieren. Die Möglichkeiten
+hierzu sind unter :doc:`/visualisierung/automatic_generation` beschrieben-
 
 
 Mischung von generierten und manuell erstellten Seiten
-------------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 In der smartVISU ist es möglich generierte und manuell erstellte Seiten zu mischen. Dazu muss in der
 smartVISU unter ``pages`` ein weiteres Verzeichnis (z.B. mit dem Namen ``manuell`` angelegt werden und
