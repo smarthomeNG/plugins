@@ -1,12 +1,24 @@
-MPD Plugin
-==========
+
+.. index:: Plugins; mpd
+
+===
+mpd
+===
+
+.. image:: webif/static/img/plugin_logo.png
+   :alt: plugin logo
+   :width: 300px
+   :height: 300px
+   :scale: 50 %
+   :align: left
+
 
 Anforderungen
 -------------
 Eine oder mehrere Music Player Daemon müssen funktionsfähig installiert sein.
-Für detailierte Informationen zu den Kommandos des MPD siehe 
+Für detailierte Informationen zu den Kommandos des MPD siehe
 `Hauptseite <http://www.musicpd.org>`_ des Projektes
-und die `Dokumentation <https://mpd.readthedocs.io/en/latest/>`_ 
+und die `Dokumentation <https://mpd.readthedocs.io/en/latest/>`_
 
 Notwendige Software
 ~~~~~~~~~~~~~~~~~~~
@@ -42,7 +54,7 @@ Bitte die Dokumentation lesen, die aus den Metadaten der plugin.yaml erzeugt wur
 Beispiele
 ---------
 
-Für eine Nutzung von zwei Instanzen dient das folgende Konfigurationsbeispiel. 
+Für eine Nutzung von zwei Instanzen dient das folgende Konfigurationsbeispiel.
 Es soll je eine Instanz für ein Badezimmer und eine Küche angesteuert werden
 
 .. code:: yaml
