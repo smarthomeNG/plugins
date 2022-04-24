@@ -2250,6 +2250,9 @@ class AVM(SmartPlugin):
             r = self._lua_session.get(url, params=params, timeout=self._timeout, verify=self._verify)
         except requests.exceptions.Timeout:
             self.logger.debug(f"get_device_log_from_lua: get request timed out.")
+            if self._timeout < 31:
+                self._timeout += 5
+                self.logger.info(f"get_device_log_from_lua: got request timed out. timeout extended to {self._timeout}")
             return
         except Exception as e:
             self.logger.debug(f"get_device_log_from_lua: Error {e} occurred.")
@@ -2286,7 +2289,7 @@ class AVM(SmartPlugin):
         """
         Gets the Device Log from the LUA HTTP Interface via LUA Scripts (more complete than the get_device_log TR-064 version).
 
-        :return: list of device logs list (date, time, log, type, category)
+        :return: list of device logs list (datetime, log entry, type, category)
         """
 
         if not self.sid:
@@ -2299,6 +2302,9 @@ class AVM(SmartPlugin):
             r = self._lua_session.get(url, params=params, timeout=self._timeout, verify=self._verify)
         except requests.exceptions.Timeout:
             self.logger.debug(f"get_device_log_from_lua_separated: get request timed out.")
+            if self._timeout < 31:
+                self._timeout += 5
+                self.logger.info(f"get_device_log_from_lua: got request timed out. timeout extended to {self._timeout}")
             return
         except Exception as e:
             self.logger.debug(f"get_device_log_from_lua_separated: Error {e} occurred.")
