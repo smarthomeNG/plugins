@@ -1,0 +1,252 @@
+# Metadata for the plugin
+plugin:
+    # Global plugin attributes
+    type: interface                   # plugin type (gateway, interface, protocol, system, web)
+    description:
+        de: 'Husqvarna Automower Plugin'
+        en: 'Husqvarna automower plugin'
+    maintainer: <autor>
+#    tester:                         # Who tests this plugin?
+    state: develop                  # change to ready when done with development
+    keywords: mower, husqvarna, automover, lawn
+#    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
+#    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
+
+    version: 2.0.0                  # Plugin version (must match the version specified in __init__.py)
+    sh_minversion: 1.8              # minimum shNG version to use this plugin
+#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+#    py_minversion: 3.6             # minimum Python version to use for this plugin
+#    py_maxversion:                 # maximum Python version to use for this plugin (leave empty if latest)
+    multi_instance: false           # plugin supports multi instance
+    restartable: unknown
+    classname: Husky2         # class containing the plugin
+
+parameters:
+    # Definition of parameters to be configured in etc/plugin.yaml (enter 'parameters: NONE', if section should be empty)
+    userid:
+        type: str
+        default: ''
+        description:
+            de: 'Benutzer ID für den Husqvarna Service'
+            en: 'User ID for Husqvarna service'
+    password:
+        type: str
+        default: ''
+        hide: True
+        description:
+            de: 'Passwort für den Login'
+            en: 'Password for login'
+    apikey:
+        type: str
+        default: ''
+        description:
+            de: 'Husqvarna api key'
+            en: 'husqvarna api key'
+    device:
+        type: str
+        default: ''
+        description:
+            de: '(optional) ID oder Name des Mähroboters'
+            en: '(optional) id or name of the automower'
+    mapkey:
+        type: str
+        default: ''
+        description:
+            de: '(optional) google maps api key'
+            en: '(optional) google maps api key'
+
+item_attributes:
+    # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)
+    husky_info:
+        type: str
+        description:
+            de: 'Das Item, welches mit allgemeinen Informationen (z.B. Modell) durch das Plugin beschrieben werden soll'
+            en: 'Item that shoul receive general information (e.g. model) by the plugin'
+
+    husky_state:
+        type: str
+        description:
+            de: 'Das Item, welches mit Status Informationen (z.B. Aktivität) durch das Plugin beschrieben werden soll'
+            en: 'Item that should receive status information (e.g. activity) by the plugin'
+
+    husky_control:
+        type: str
+        description:
+            de: 'Das Item, mit dem der Mähroboter gesteuert werden soll (z.B. Start Kommando)'
+            en: 'Item to control the mower (e.g. start command)'
+
+item_structs:
+    # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
+    basic:
+        name: Default Mower Template
+
+        info:
+            name: Mower information
+
+            device:
+                husky_info: NAME
+                type: str
+                visu_acl: ro
+
+            model:
+                husky_info: MODEL
+                type: str
+                visu_acl: ro
+
+            id:
+                husky_info: ID
+                type: str
+                visu_acl: ro
+
+            serial:
+                husky_info: SERIAL
+                type: str
+                visu_acl: ro
+
+        state:
+            name: State information
+
+            connection:
+                name: mower connection state
+                husky_state: connection
+                type: bool
+                visu_acl: ro
+
+            inoperation:
+                name: mower in operation mode
+                type: bool
+                visu_acl: ro
+                eval: "sh...activity() in ['MOWING','MOVING','GOING_HOME', 'LEAVING']"
+                eval_trigger: ..activity
+
+            activity:
+                name: activity [ UNKNOWN, NOT_APPLICABLE, MOWING, GOING_HOME, CHARGING, LEAVING, PARKED_IN_CS ]
+                husky_state: activity
+                type: str
+                visu_acl: ro
+
+            errormessage:
+                husky_state: errormessage
+                type: str
+                visu_acl: ro
+                initial_value: 'no error'
+                
+            message:
+                husky_state: errormessage
+                type: str
+                visu_acl: ro
+                initial_value: 'Ok'
+
+            mode:
+                name: mode [ MAIN_AREA, SECONDARY_AREA, HOME, DEMO, UNKNOWN ]
+                husky_state: mode
+                type: str
+                visu_acl: ro
+
+            state:
+                name: state [ UNKNOWN, NOT_APPLICABLE, PAUSED, IN_OPERATION, WAIT_UPDATING, WAIT_POWER_UP, RESTRICTED, OFF, STOPPED, ERROR, FATAL_ERROR, ERROR_AT_POWER_UP ]
+                husky_state: state
+                type: str
+                visu_acl: ro
+
+            batterypercent:
+                husky_state: batterypercent
+                type: num
+                visu_acl: ro
+
+            battery255:
+                type: num
+                visu_acl: ro
+                eval: int(value * 255 / 100)
+                eval_trigger: ..batterypercent
+
+            longitude:
+                name: mower gps longitude
+                husky_state: longitude
+                type: num
+                visu_acl: ro
+
+            latitude:
+                name: mower gps latitude
+                husky_state: latitude
+                type: num
+                visu_acl: ro
+
+        control:
+            name: Steuerbefehle
+
+            start3H:
+                name: Start
+                type: num
+                husky_control: STARTTIME
+                visu_acl: rw
+                initial_value: 180
+                enforce_updates: True
+
+            resume:
+                name: Start
+                type: bool
+                husky_control: Resume
+                visu_acl: rw
+                enforce_updates: True
+
+            stop:
+                name: Stop
+                type: bool
+                husky_control: Pause
+                visu_acl: rw
+                enforce_updates: True
+
+            park:
+                name: Park
+                type: bool
+                husky_control: PARK
+                visu_acl: rw
+                enforce_updates: True
+
+            park3H:
+                name: Park
+                type: num
+                husky_control: PARKTIME
+                visu_acl: rw
+                initial_value: 180
+                enforce_updates: True
+
+            parkPermantent:
+                name: Park
+                type: bool
+                husky_control: PARKPERMANENT
+                visu_acl: rw
+                enforce_updates: True
+
+            parkUntilNext:
+                name: Park
+                type: bool
+                husky_control: PARKNEXT
+                visu_acl: rw
+                enforce_updates: True
+
+            cuttingHeight:
+                name: cuttingHeight
+                husky_control: cuttingHeight
+                type: num
+                visu_acl: rw
+                enforce_updates: True
+                cache: true
+
+            headLight:
+                husky_control: headLight
+                type: str
+                visu_acl: rw
+                initial_value: EVENING_AND_NIGHT
+                enforce_updates: True
+
+item_attribute_prefixes: NONE
+    # Definition of item attributes that only have a common prefix (enter 'item_attribute_prefixes: NONE' or ommit this section, if section should be empty)
+    # NOTE: This section should only be used, if really nessesary (e.g. for the stateengine plugin)
+
+plugin_functions: NONE
+    # Definition of plugin functions defined by this plugin (enter 'plugin_functions: NONE', if section should be empty)
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)
