@@ -28,7 +28,6 @@
 import datetime
 import time
 import os
-import json
 
 from lib.item import Items
 from lib.model.smartplugin import SmartPluginWebIf
@@ -61,8 +60,9 @@ class WebInterface(SmartPluginWebIf):
 
         self.tplenv = self.init_template_environment()
 
+
     @cherrypy.expose
-    def index(self, action=None, item_id=None, item_path=None, reload=None):
+    def index(self, scan=None, connect=None, disconnect=None, reload=None):
         """
         Build index.html for cherrypy
 
@@ -70,42 +70,48 @@ class WebInterface(SmartPluginWebIf):
 
         :return: contents of the template after beeing rendered
         """
-        config_reloaded = False
-        keep_cleared = False
-        command_cleared = False
-        query_cleared = False
-        send_cleared = False
-        if action is not None:
-            if action == "reload":
-                self.plugin._initialize()
-                config_reloaded = True
-            if action == "connect":
-                self.plugin.connect('webif')
-            if action == "clear_query_history":
-                self.plugin._clear_history('query')
-                query_cleared = True
-            if action == "clear_send":
-                self.plugin._clear_history('send')
-                send_cleared = True
-            if action == "clear_command_history":
-                self.plugin._clear_history('command')
-                command_cleared = True
-            if action == "clear_keep_commands":
-                self.plugin._clear_history('keep')
-                keep_cleared = True
 
-        tmpl = self.tplenv.get_template('index.html')
+        if scan == 'on':
+            self.plugin.discovered_bridges = self.plugin.discover_bridges()
+
+        if connect is not None:
+            self.logger.info("Connect: connect={}".format(connect))
+            for db in self.plugin.discovered_bridges:
+                if db['serialNumber'] == connect:
+                    user = self.plugin.create_new_username(db['ip'], db['port'])
+                    if user != '':
+                        self.plugin.bridge= db
+                        self.plugin.bridge['username'] = user
+                        self.plugin.bridgeinfo = self.plugin.get_bridgeinfo()
+                        self.plugin.update_plugin_config()
+
+        if disconnect is not None:
+            self.logger.info("Disconnect: disconnect={}".format(disconnect))
+            self.plugin.remove_username(self.plugin.bridge['ip'], self.plugin.bridge['port'], self.plugin.bridge['username'])
+            self.plugin.bridge = {}
+            self.plugin.bridgeinfo = {}
+            self.plugin.update_plugin_config()
+
         try:
-            pagelength = self.plugin.webif_pagelength
-        except Exception:
-            pagelength = 100
-        # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
-        return tmpl.render(p=self.plugin,
-                           config_reloaded=config_reloaded, query_cleared=query_cleared,
-                           command_cleared=command_cleared, keep_cleared=keep_cleared, send_cleared=send_cleared,
-                           language=self.plugin._sh.get_defaultlanguage(),
-                           webif_pagelength=pagelength,
-                           now=self.plugin.shtime.now())
+            tmpl = self.tplenv.get_template('index.html')
+        except:
+            self.logger.error("Template file 'index.html' not found")
+        else:
+            # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
+            return tmpl.render(p=self.plugin,
+                               #items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path'])),
+                               items=self.plugin.plugin_items,
+                               item_count=len(self.plugin.plugin_items),
+                               bridge=self.plugin.bridge,
+                               bridge_count=len(self.plugin.bridge),
+                               discovered_bridges=self.plugin.discovered_bridges,
+                               bridge_lights=self.plugin.bridge_lights,
+                               bridge_groups=self.plugin.bridge_groups,
+                               bridge_config=self.plugin.bridge_config,
+                               bridge_scenes=self.plugin.bridge_scenes,
+                               bridge_sensors=self.plugin.bridge_sensors,
+                               br_object=self.plugin.br)
+
 
     @cherrypy.expose
     def get_data_html(self, dataSet=None):
@@ -119,16 +125,16 @@ class WebInterface(SmartPluginWebIf):
         """
         if dataSet is None:
             # get the new data
-            data = {'sendcommands': '', 'sendingcommand': '', 'item_values': {}, 'query': {}, 'command': {}}
+            data = {}
 
-            data['sendcommands'] = self.plugin._send_commands
-            data['sendingcommand'] = self.plugin._sendingcommand
-            data['item_values'] = self.plugin._item_values
-            data['query'] = self.plugin._send_history['query']
-            data['command'] = self.plugin._send_history['command']
-
-            try:
-                return json.dumps(data)
-            except Exception as e:
-                self.logger.error("get_data_html exception: {}".format(e))
+            # data['item'] = {}
+            # for i in self.plugin.items:
+            #     data['item'][i]['value'] = self.plugin.getitemvalue(i)
+            #
+            # return it as json the the web page
+            # try:
+            #     return json.dumps(data)
+            # except Exception as e:
+            #     self.logger.error("get_data_html exception: {}".format(e))
         return {}
+
