@@ -44,8 +44,15 @@ parameters:
         mandatory: False
         default: ''
         description:
-            de: '(optional) ID oder Name des Mähroboters'
-            en: '(optional) Id or name of the automower'
+            de: '(optional) ID oder Name des Mähroboters, falls mehrere im Benutzkonto registriert sind'
+            en: '(optional) Id or name of the automower if there is more than one registered in the user account'
+    historylength:
+        type: num
+        mandatory: False
+        default: 200
+        description:
+            de: '(optional) Anzahl der Statusmeldungen die im Arbeitsspeicher für die Anzeige im Webinterface gespeichert werden soll'
+            en: '(optional) Number of state messages to be saved in ram for history display in the web interface'
 
 item_attributes:
     # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)
