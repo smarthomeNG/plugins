@@ -260,7 +260,13 @@
                     <tr>
                         <td class="py-1">{{ stamp }}</td>
                         <td class="py-1">{{ p.getTimedeltas()[loop.index0] }}</td>
-                        <td class="py-1">{{ p.translate(p.getActivities()[loop.index0]) }}</td>
+                        {% if p.getErrormessages()[loop.index0] == p.translate("No error") %}
+                            <td class="py-1">{{ p.translate(p.getActivities()[loop.index0]) + ", " +
+                                p.translate(p.getErrormessages()[loop.index0]) }}</td>
+                        {% else %}
+                            <td class="py-1" style="color:red">{{ p.translate(p.getActivities()[loop.index0]) + ", " +
+                                p.translate(p.getErrormessages()[loop.index0]) }}</td>
+                        {% endif %}
                         <td class="py-1">{{ p.getBatterypercents()[loop.index0] }} %</td>
                         <td class="py-1">{{ p.getLongitudes()[loop.index0] }}, {{ p.getLatitudes()[loop.index0] }}</td>
                     </tr>

@@ -669,6 +669,9 @@ class Husky2(SmartPlugin):
             deltas.append(f"{min}:{sec}")
         return deltas
 
+    def getErrormessages(self):
+        return self.mowerErrormsg.get_list()
+
     def getToken(self):
         return self.token
 
