@@ -87,8 +87,11 @@ The plugin supports the types `str`, `num` and `bool` which can be logged
 into the database.
 
 #### database
-This attribute enables the database logging when set (just use value `yes`). If value `init` is used, an item will 
-be initalized from the database after SmartHomeNG is restarted.
+This attribute enables the database logging when set (just use value `yes`).
+
+If value `init` is used, the item will
+be initialized from the database after SmartHomeNG is restarted. Also, in this
+case the item's inital_value is prevented from being written to the database.
 
 ```yaml
 some:

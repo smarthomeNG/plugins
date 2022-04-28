@@ -50,7 +50,7 @@ class Database(SmartPlugin):
     """
 
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = '1.5.17'
+    PLUGIN_VERSION = '1.5.18'
 
     # SQL queries: {item} = item table name, {log} = log table name
     # time, item_id, val_str, val_num, val_bool, changed
@@ -128,6 +128,7 @@ class Database(SmartPlugin):
         if not self._initialize_db():
             #self._init_complete = False
             #return
+            self.logger.debug("Init: DB could not be initialized")
             pass
 
         self.init_webinterface(WebInterface)
@@ -196,13 +197,18 @@ class Database(SmartPlugin):
                         prev_change = self._fetchone('SELECT MAX(time) from {log} WHERE item_id = :id',
                                                      {'id': cache[COL_ITEM_ID]}, cur=cur)
                         if (value is not None) and (prev_change is not None) and (prev_change[0] is not None):
+                            # Add item specific debugging here:
+                            #if item.id() == 'xyz':
+                            #    self.logger.debug(f"Parse item: ItemID: {item.id()}: {value}, {self._datetime(prev_change[0])}, {last_change}")
                             item.set(value, 'Database', source='Init', prev_change=self._datetime(prev_change[0]), last_change=last_change)
+                        else:
+                            self.logger.warning(f"Debug init for item {item.id()}: {value}, {prev_change}, {prev_change[0]}")
                         if value is not None and self.get_iattr_value(item.conf, 'database_acl') is not None and self.get_iattr_value(item.conf, 'database_acl').lower() == 'ro':
                             self._buffer_insert(item, [(self._timestamp(self.shtime.now()), None, value)])
                     except Exception as e:
                         self.logger.error("Reading cache value from database for {} failed: {}".format(item.id(), e))
                 else:
-                    self.logger.info("Cache not available in database for item {}".format(item.id() ))
+                    self.logger.warning("Cache not available in database for item {}".format(item.id() ))
                 cur.close()
                 self._db.release()
             elif self.get_iattr_value(item.conf, 'database').lower() == 'init':
@@ -237,6 +243,15 @@ class Database(SmartPlugin):
         :param dest: if given it represents the dest
         """
 
+        debug_item = False
+
+        # Uncomment to enable item specific debugging:
+        #if item.property.path.startswith('test.'):
+        #if item.id() == 'xyz':
+        #    self.logger.warning(f"Debug: updateItem, ItemID: {item.id()}: {item()}, {caller}, {dest}")
+        #    debug_item = True
+
+        #Determine if item is read/write or read-only:
         if self.has_iattr(item.conf, 'database_acl'):
             acl = self.get_iattr_value(item.conf, 'database_acl').lower()
             self.logger.debug("item '{}', database_acl = {}".format(item,  acl))
@@ -248,21 +263,39 @@ class Database(SmartPlugin):
             end = self._timestamp(item.last_change())
             if end - start < 0:
                 self.logger.warning("Negative duration: start: {0}, end {1}, prevChange: {2}, lastChange: {3}, item: {4}".format(start , end, item.prev_change(), item.last_change(), item ))
-            last = None if len(self._buffer[item]) == 0 or self._buffer[item][-1][1] is not None else \
-                self._buffer[item][-1]
-            if last:  # update current value with duration
-                if item.property.path.startswith('test.'):
-                    self.logger.debug("Setting value {} to item '{}' value because database_acl = {}".format(end-start, item, acl))
+
+            # Determine, if DB buffer has a valid "last" value:
+            if len(self._buffer[item]) == 0 or self._buffer[item][-1][1] is not None:
+                last = None
+            else: 
+                last = self._buffer[item][-1]
+        
+            if debug_item:
+                self.logger.warning(f"Debug: last {last}, len buffer_item {len(self._buffer[item])}, buffer_item {self._buffer[item]}")
+
+            # Update the DB buffer:
+            if last:  
+                # Step 1a): Alter current value with updated duration:
+                if debug_item:
+                    self.logger.warning(f"Debug 1a): Rewriting valid last value, start: {last[0]}, duration: {end - start}, value: {last[2]} to item '{item}'.")
                 self._buffer[item][-1] = (last[0], end - start, last[2])
-            else:  # append new value with none duration
-                if item.property.path.startswith('test.'):
-                    self.logger.debug("(last is None) Setting value {} to item '{}' value because database_acl = {}".format(end-start, item, acl))
+            else: 
+		# Step 1b): Append new value with none duration
+                    
+                #If item is configured to be initialized via database init (see database: init in item.yaml), do not update previous value if the latter qual to the regular initial_value.
+                # This is because configuring database: init aims at avoiding the regular item initial value to appear inside the DB:
+                if self.get_iattr_value(item.conf, 'database').lower() == 'init' and item.property.prev_change_by =='Init:Initial_Value':
+                    if debug_item:
+                        self.logger.warning(f"Debug 1b): Do not append previous value as it was set by Initial_Value")
+                else:
+                    if debug_item:
+                        self.logger.warning(f"Debug 1b): Appending prev_value: start: {start}, duration: {end-start}, prev_value: {item.prev_value()} to item '{item}'")
+                    self._buffer[item].append((start, end - start, item.prev_value()))
 
-                self._buffer[item].append((start, end - start, item.prev_value()))
+            # Step 2: Add current value with duration "none" to DB buffer. This entry is "none" because the duration cannot be determined yet as it's duration has not finished 
+            if debug_item:
+                self.logger.warning(f"Debug 2): Appending current value: start {end}, value {item()} to item '{item}'")
 
-            # add current value with None duration
-            if item.property.path.startswith('test.'):
-                self.logger.debug("Appending value {} to item '{}' value because database_acl = {}".format(end, item, acl))
             self._buffer[item].append((end, None, item()))
         else:
             self.logger.debug("Not writing item '{}' value because database_acl = {}".format(item,  acl))
@@ -720,6 +753,7 @@ class Database(SmartPlugin):
             'avg': 'MIN(time), ' + self._precision_query('AVG(val_num * duration) / AVG(duration)'),
             'avg.order': 'ORDER BY time ASC',
             'integrate': 'MIN(time), SUM(val_num * duration)',
+            'differentiate': 'MIN(time), (val_num - LAG(val_num,1, -1)) / duration',
             'count': 'MIN(time), SUM(CASE WHEN val_num{op}{value} THEN 1 ELSE 0 END)'.format(**expression['params']),
             'countall': 'MIN(time), COUNT(*)',
             'min': 'MIN(time), MIN(val_num)',
@@ -783,6 +817,7 @@ class Database(SmartPlugin):
         queries = {
             'avg': self._precision_query('AVG(val_num * duration) / AVG(duration)'),
             'integrate': 'SUM(val_num * duration)',
+            'differentiate': 'val_num - LAG(val_num) / duration',
             'count': 'SUM(CASE WHEN val_num{op}{value} THEN 1 ELSE 0 END)'.format(**expression['params']),
             'countall': 'COUNT(*)',
             'min': 'MIN(val_num)',
