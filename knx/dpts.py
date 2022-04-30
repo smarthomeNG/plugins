@@ -139,15 +139,15 @@ def de5999(payload):
 
 
 """
-Datapoint type raw
+Datapoint type hex/raw
 """
 
-def enraw(value):
+def enhex(value):
     import binascii
     return binascii.unhexlify(value)
 
 
-def deraw(payload):
+def dehex(payload):
     import binascii
     return binascii.hexlify(payload).decode()
 
@@ -579,7 +579,7 @@ decode = {
     '275.100' : de275100,
     'pa': depa,
     'ga': dega,
-    'raw': deraw
+    'hex': dehex
 }
 
 encode = {
@@ -634,6 +634,6 @@ encode = {
     '275.100' : en275100,   # Setpoint temperature, contains 4 values: Komfort, Standby, Night and Frost
     'pa': enpa,
     'ga': enga,
-    'raw': enraw
+    'hex': enhex
 
 }
