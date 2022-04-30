@@ -20,7 +20,7 @@ Changelog
 1.6.6
 ~~~~~
 
-- Methode get_color_defaults implementiert, welche die aktuell von AVM unterstützen diskreten RGB Farben ausliest. 
+- Methode get_color_defaults implementiert, welche die aktuell von AVM unterstützen diskreten RGB Farben ausliest.
 - Methode set_color und color auf diskrete RGB farben umgestellt. Beliebige RGB Farbwerte werden erst ab Q2 2022 von AVM unterstützt.
 
 1.6.5
@@ -155,9 +155,11 @@ Alternativ kann das Plugin auch manuell konfiguriert werden.
         avm_home_automation: 'False'
         instance: wlan_repeater_1750
 
-.. note:: Kürzere Updatezyklen können abhängig vm Fritzdevice aufgrund von CPU Auslastung und damit zu Problemen (u.a.
-zu Nichterreichbarkeit des Webservice) führen. Wird ein kürzerer Updatezyklus benötigt, sollte das shNG Log beobachtet
-werden. Dort werden entsprechende Fehlermeldungen hinterlegt.
+.. note::
+
+    Kürzere Updatezyklen können abhängig vm Fritzdevice aufgrund von CPU Auslastung und damit zu Problemen (u.a.
+    zu Nichterreichbarkeit des Webservice) führen. Wird ein kürzerer Updatezyklus benötigt, sollte das shNG Log
+    beobachtet werden. Dort werden entsprechende Fehlermeldungen hinterlegt.
 
 
 Konfiguration des Items
