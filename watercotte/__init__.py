@@ -102,7 +102,7 @@ class Waterkotte(SmartPlugin):
         'D8'
     }
 
-    def __init__(self, smarthome, ip, user="waterkotte", passwd="waterkotte", cycle=300):
+    def __init__(self, smarthome, ip, user="watercotte", passwd="watercotte", cycle=300):
         self._sh = smarthome
         self.ip = ip
         self.user = user
@@ -120,8 +120,8 @@ class Waterkotte(SmartPlugin):
         self.alive = False
 
     def parse_item(self, item):
-        if 'waterkotte' in item.conf:
-            waterkotte_key = item.conf['waterkotte']
+        if 'watercotte' in item.conf:
+            waterkotte_key = item.conf['watercotte']
             if waterkotte_key in self._key2tag:
                 self._items.append([item, waterkotte_key])
                 return self.update_item
