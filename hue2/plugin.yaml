@@ -161,9 +161,10 @@ item_attributes:
         valid_list_description:
             de:
               - "<noch keine Funktion gewählt>"
-              - "Mehrere Funktionen aufeinmal -> dict, r/w (resource: light, group)"
+              - "Mehrere Funktionen auf einmal -> dict, r/w (resource: light, group)"
               - "Ein-/Ausschalten -> bool, r/w (resource: light, group)"
               - "Helligkeit, 0 … 255 -> num, r/w (resource: light, group)"
+              - "Relative Helligkeitsveränderung 0 … 254, w/o (resource: light, group)"
               - "Farbton, 0 … 65535 -> num, r/w (resource: light), group"
               - "Sättigung, 0 … 255 -> num, r/w (resource: light, group)"
               - "ct Wert -> num, r/w (resource: light, group)"
@@ -182,6 +183,7 @@ item_attributes:
               - "Multiple functions at once -> dict, r/w (resource: light, group)"
               - "On/Off -> bool, r/w (resource: light, group)"
               - "Brightness, 0 … 255 -> num, r/w (resource: light, group)"
+              - "Relative change of brightness 0 … 254, w/o (resource: light, group)"
               - "Hue, 0 … 65535 -> num, r/w (resource: light, group)"
               - "Saturation, 0 … 255 -> num, r/w (resource: light, group)"
               - "ct value -> num, r/w (resource: light, group)"
