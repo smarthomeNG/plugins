@@ -3,8 +3,8 @@ plugin:
     # Global plugin attributes
     type: interface                   # plugin type (gateway, interface, protocol, system, web)
     description:
-        de: 'Husqvarna Automower Plugin'
-        en: 'Husqvarna automower plugin'
+        de: 'Husqvarna Automower Plugin (unterstützt das neue API)'
+        en: 'Husqvarna automower plugin (supporting the new API)'
     maintainer: gruberth
 #    tester:                         # Who tests this plugin?
     state: develop                  # change to ready when done with development
