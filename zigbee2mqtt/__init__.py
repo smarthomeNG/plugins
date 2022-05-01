@@ -36,7 +36,7 @@ class Zigbee2Mqtt(MqttPlugin):
     Main class of the Plugin. Does all plugin specific stuff and provides the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.1.0'
+    PLUGIN_VERSION = '1.1.1'
 
     def __init__(self, sh):
         """
@@ -506,10 +506,15 @@ class Zigbee2Mqtt(MqttPlugin):
                         payload.update({'last_seen': datetime.fromtimestamp(last_seen / 1000)})
                     elif isinstance(last_seen, str):
                         try:
-                            payload.update({'last_seen': datetime.strptime(last_seen, "%Y-%m-%dT%H:%M:%SZ")})
+                            payload.update({'last_seen': datetime.strptime(last_seen, "%Y-%m-%dT%H:%M:%S.%fZ").replace(microsecond=0)})
                         except Exception as e:
                             if self.debug_log:
-                                self.logger.debug(f"Error {e} occurred during decoding of last_seen.")
+                                self.logger.debug(f"Error {e} occurred during decoding of last_seen using format '%Y-%m-%dT%H:%M:%S.%fZ'.")
+                            try:
+                                payload.update({'last_seen': datetime.strptime(last_seen, "%Y-%m-%dT%H:%M:%SZ")})
+                            except Exception as e:
+                                if self.debug_log:
+                                    self.logger.debug(f"Error {e} occurred during decoding of last_seen using format '%Y-%m-%dT%H:%M:%SZ'.")
 
                 # Korrektur der Brightness von 0-254 auf 0-100%
                 if 'brightness' in payload:

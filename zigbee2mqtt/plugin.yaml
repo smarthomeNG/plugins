@@ -12,7 +12,7 @@ plugin:
     documentation: 
     support:
 
-    version: 1.1.0                 # Plugin version
+    version: 1.1.1                 # Plugin version
     sh_minversion: 1.8.2           # minimum shNG version to use this plugin
 #    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     py_minversion: 3.8             # minimum Python version to use for this plugin
