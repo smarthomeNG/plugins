@@ -1,5 +1,5 @@
 husky2
-=====
+======
 
 Ein Plugin um diverse Husqvarna Automower (R) mit SmartHomeNG ansteuern zu können, sowie deren Informationen abzufragen.
 
@@ -34,7 +34,7 @@ Bitte die Dokumentation lesen, die aus den Metadaten der plugin.yaml erzeugt wur
 
     am315x:
         plugin_name: husky2
-        userid: email@domain.de 
+        userid: email@domain.de
         password: mysecret
         apikey: mykey
 
@@ -57,10 +57,10 @@ Beispiele
 
 Beispielhafte Nutzung des Plugins mit SmartVisu:
 
-.. image:: assets/control_sv.jpg
+.. image:: assets/control_sv.png
    :class: screenshot
 
-.. image:: assets/state_sv.jpg
+.. image:: assets/state_sv.png
    :class: screenshot
 
 
@@ -71,7 +71,7 @@ Das Webinterface gibt einen Überblick über den aktuellen und vergangenen Statu
 Ihn mit Start, Stop und Parken grundlegend zu steuern. Weiters sind alle Items gelistet die im Zusammenhang mit dem
 Husky2 Plugin und somit dem Automower definiert wurden.
 
-.. image:: assets/webif.jpg
+.. image:: assets/webif.png
    :class: screenshot
 
 Credits
