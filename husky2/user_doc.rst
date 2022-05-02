@@ -1,26 +1,26 @@
-husky
+husky2
 =====
 
-Ein Plugin um Husqvarna Automower (R) mit SmartHomeNG ansteuern zu können.
+Ein Plugin um diverse Husqvarna Automower (R) mit SmartHomeNG ansteuern zu können, sowie deren Informationen abzufragen.
 
 Anforderungen
 -------------
-
-Es wird ein gültiges Konto bei Husqvarna benötigt.
-Um dieses Konto anzulegen wird die Husqvarna AMC App auf einem Smartphone verwendet.
-Die funktionierende App und das Konto mit Benutzer-ID und Password werden für das Plugin benötigt.
-Für die neue Api braucht man zusätzlich noch einen Api-Key der in der Plugin-Konfiguration hinterlegt werden muss. Dazu einfach auf https://developer.husqvarnagroup.cloud/apps mit dem bereits aus der App vorhandenen Benutzer und Passwort anmelden und eine neue Applikation erstellen. Nicht vergessen der Applikation dann noch die "Authentication API"und die "Automower Connect API" zu zuweisen.
-
+Zur Verwendung des Plugins wird zusätzlich zu einem gültigen Benutzerkonto, welches für die Automower Connect App
+verwendet wird, auch ein API-Key benötigt. Dieser Key muss in der Plugin-Konfiguration hinterlegt werden.
+Dazu auf https://developer.husqvarnagroup.cloud/apps mit dem bereits aus der App vorhandenen Benutzernamen und
+Passwort anmelden und eine neue Applikation erstellen. Abschließend der Applikation noch die "Authentication API" und
+die "Automower Connect API" zu zuweisen.
 
 Notwendige Software
 ~~~~~~~~~~~~~~~~~~~
 
-Keine
+Für die Kommunikation wird die Python-Bibliothek aioautomower benötigt. Diese wird bei der ersten Verwundung des Plugins
+automatisch zu SmarthomeNG hinzugefügt.
 
 Unterstützte Geräte
 ~~~~~~~~~~~~~~~~~~~
 
-Alle bekannten Automower Modelle sollten mit dem Plugin unterstützt werden.
+Alle bekannten Automower Modelle können mit dem Plugin angesteuert werden.
 
 Konfiguration
 -------------
@@ -43,41 +43,39 @@ Bitte die Dokumentation lesen, die aus den Metadaten der plugin.yaml erzeugt wur
 items.yaml
 ~~~~~~~~~~
 
-Bitte die Dokumentation lesen, die aus den Metadaten der plugin.yaml erzeugt wurde.
-
-
-logic.yaml
-~~~~~~~~~~
-
-Bitte die Dokumentation lesen, die aus den Metadaten der plugin.yaml erzeugt wurde.
-
+Als grundlegende Struktur für die Kommunikation wird empfohlen das Item-Struktur Template zu verwenden. Dieses kann
+anschließend natürlich nach belieben aus- und umgebaut werden.
 
 Funktionen
 ~~~~~~~~~~
 
-Bitte die Dokumentation lesen, die aus den Metadaten der plugin.yaml erzeugt wurde.
+Zur Zeit stehen keine Funktionen für dieses Plugin zur Verfügung.
 
 
 Beispiele
 ---------
 
-Hier können ausführlichere Beispiele und Anwendungsfälle beschrieben werden.
+Beispielhafte Nutzung des Plugins mit SmartVisu:
+
+.. image:: assets/control_sv.jpg
+   :class: screenshot
+
+.. image:: assets/state_sv.jpg
+   :class: screenshot
 
 
 Web Interface
 -------------
 
-SmartHomeNG liefert eine Reihe Komponenten von Drittherstellern mit, die für die Gestaltung des Webinterfaces genutzt werden können.
-Erweiterungen dieser Komponenten usw. finden sich im Ordner ``/modules/http/webif/gstatic``.
+Das Webinterface gibt einen Überblick über den aktuellen und vergangenen Status des Automowers, sowie die Möglichkeit
+Ihn mit Start, Stop und Parken grundlegend zu steuern. Weiters sind alle Items gelistet die im Zusammenhang mit dem
+Husky2 Plugin und somit dem Automower definiert wurden.
 
-Wenn das Plugin darüber hinaus noch Komponenten benötigt, werden diese im Ordner ``webif/static`` des Plugins abgelegt.
+.. image:: assets/webif.jpg
+   :class: screenshot
 
 Credits
 -------
 
 * SmartHome NG Team
-* Christophe Carré ([@crisz](https://github.com/chrisz) and his [pyhusmow](https://github.com/chrisz/pyhusmow) project)
-* David Karlsson ([@dinmammas](https://github.com/dinmammas) and his [homebridge-robonect](https://github.com/dinmammas/homebridge-robonect) project)
-* Jake Forrester ([@rannmann](https://github.com/rannmann) and his [node-husqvarna-automower](https://github.com/rannmann/node-husqvarna-automower) project)
-* NextDom Team ([@NextDom](https://github.com/NextDom) and his [plugin-husqvarna](https://github.com/NextDom/plugin-husqvarna) project)
-
+* Thomas Peter Protzner ([@Thomas55555](https://github.com/Thomas55555) and his [aioautomower](https://github.com/Thomas55555/aioautomower) project)
