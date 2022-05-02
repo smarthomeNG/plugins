@@ -88,9 +88,8 @@ class Resol(SmartPlugin):
                 self.logger.error(f"resol_offset found in item {item} but no bitsize given, specify bitsize in item with resol_bitsize = ")
 
     def update_item(self, item, caller=None, source=None, dest=None):
-        if caller != self.get_shortname():
-          #logger.debug(f"Update item {item.id()} with value {int(item())}")
-          value = str(int(item()))
+        # do nothing if items are changed from outside the plugin
+        pass
 
     def sock(self):
         if not self.alive:
