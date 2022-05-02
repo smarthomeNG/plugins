@@ -70,53 +70,25 @@
                 <small>{{ p.get_mower_id() }}</small></br>
                 <small>{{ p.get_mower_serial() }}</small></br>
 
-                {% if p.get_mower_model_name()=="HUSQVARNA AUTOMOWER® 105" %}
-                <img src="static/img/H310-0496 105.png" alt="{{ _('Gerät verfügbar') }}" style="width: 200px;"/></br>
-                {% elif p.get_mower_model_name()=="HUSQVARNA AUTOMOWER® 310" %}
-                <img src="static/img/H310-1049 310.png" alt="{{ _('Gerät verfügbar') }}" style="width: 200px;"/></br>
-                {% elif p.get_mower_model_name()=="HUSQVARNA AUTOMOWER® 315X" %}
-                <img src="static/img/H310-1610 315x.png" alt="{{ _('Gerät verfügbar') }}" style="width: 200px;"/></br>
-                {% elif p.get_mower_model_name()=="HUSQVARNA AUTOMOWER® 520" %}
-                <img src="static/img/H310-1659 520.png" alt="{{ _('Gerät verfügbar') }}" style="width: 200px;"/></br>
-                {% elif p.get_mower_model_name()=="HUSQVARNA AUTOMOWER® 420" %}
-                <img src="static/img/H310-0867 420.png" alt="{{ _('Gerät verfügbar') }}" style="width: 200px;"/></br>
-                {% elif p.get_mower_model_name()=="HUSQVARNA AUTOMOWER® 315" %}
-                <img src="static/img/H310-1050 315.png" alt="{{ _('Gerät verfügbar') }}" style="width: 200px;"/></br>
-                {% elif p.get_mower_model_name()=="HUSQVARNA AUTOMOWER® 430X" %}
-                <img src="static/img/H310-1611 430x.png" alt="{{ _('Gerät verfügbar') }}" style="width: 200px;"/></br>
-                {% elif p.get_mower_model_name()=="HUSQVARNA AUTOMOWER® 435XAWD" %}
-                <img src="static/img/H310-1892 435x AWD.png" alt="{{ _('Gerät verfügbar') }}"
-                     style="width: 200px;"/></br>
-                {% elif p.get_mower_model_name()=="HUSQVARNA AUTOMOWER® 440" %}
-                <img src="static/img/H310-0867 440.png" alt="{{ _('Gerät verfügbar') }}" style="width: 200px;"/></br>
-                {% elif p.get_mower_model_name()=="HUSQVARNA AUTOMOWER® 450X" %}
-                <img src="static/img/H310-1176 450x.png" alt="{{ _('Gerät verfügbar') }}" style="width: 200px;"/></br>
-                {% elif p.get_mower_model_name()=="HUSQVARNA AUTOMOWER® 550" %}
-                <img src="static/img/H310-1612 550.png" alt="{{ _('Gerät verfügbar') }}" style="width: 200px;"/></br>
-                {% elif p.get_mower_model_name()=="HUSQVARNA AUTOMOWER® 535AWD" %}
-                <img src="static/img/H310-1900 535 AWD.png" alt="{{ _('Gerät verfügbar') }}"
-                     style="width: 200px;"/></br>
-                {% endif %}
-
                 <span>
-		{{ p.translate(p.getLastActivity()) }}
+                {{ p.translate(p.getLastActivity()) }}
 
-		{% if p.getLastActivity()=="MOWING" %}
-			<i class="fas fa-cog fa-spin"></i>
-		{% elif p.getLastActivity()=="GOING_HOME" %}
-			<i class="fas fa-forward"></i>
-        {% elif p.getLastActivity()=="LEAVING" %}
-			<i class="fas fa-forward"></i>
-		{% elif p.getLastActivity()=="PARKED_IN_CS" %}
-			<i class="fas fa-warehouse"></i>
-		{% elif p.getLastActivity()=="CHARGING" %}
-			<i class="fas fa-warehouse"></i>
-		{% elif p.getLastActivity()=="NOT_APPLICABLE" %}
-			<i class="fas fa-cogs"></i>
-		{% elif p.getLastActivity()=="UNKNOWN" %}
-			<i class="fas fa-exclamation-triangle"></i>
-		{% endif %}
-        </span>
+                {% if p.getLastActivity()=="MOWING" %}
+                    <i class="fas fa-cog fa-spin"></i>
+                {% elif p.getLastActivity()=="GOING_HOME" %}
+                    <i class="fas fa-forward"></i>
+                {% elif p.getLastActivity()=="LEAVING" %}
+                    <i class="fas fa-forward"></i>
+                {% elif p.getLastActivity()=="PARKED_IN_CS" %}
+                    <i class="fas fa-warehouse"></i>
+                {% elif p.getLastActivity()=="CHARGING" %}
+                    <i class="fas fa-warehouse"></i>
+                {% elif p.getLastActivity()=="NOT_APPLICABLE" %}
+                    <i class="fas fa-cogs"></i>
+                {% elif p.getLastActivity()=="UNKNOWN" %}
+                    <i class="fas fa-exclamation-triangle"></i>
+                {% endif %}
+                </span>
                 <small style="float: right;">
 
                     {% if p.getLastConnection()==True %}
