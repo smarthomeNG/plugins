@@ -11,7 +11,7 @@ plugin:
     keywords: weather precipation irrigation
     documentation: 'http://smarthomeng.de/user/plugins/openweathermap/user_doc.html'
     support: 'https://knx-user-forum.de/forum/supportforen/smarthome-py/1246998-support-thread-zum-openweathermap-plugin'
-    version: 1.8.4                # Plugin version
+    version: 1.8.5                # Plugin version
     sh_minversion: 1.9.0          # minimum shNG version to use this plugin
 #    sh_maxversion:               # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True          # plugin supports multi instance

@@ -1,0 +1,313 @@
+# Metadata for the classic-plugin
+plugin:
+    # Global plugin attributes
+    type: gateway                    # plugin type (gateway, interface, protocol, system, web)
+    description:
+        de: 'Music Player Daemon (MPD) Unterstützung'
+        en: 'Music Player Daemon (MPD) support'
+    maintainer: 'E3EAT'
+    tester:  beavon, knxms          # Who tests this plugin?
+    keywords: MPD Music Player      # keywords, where applicable
+    state: ready
+    documentation: https://www.smarthomeng.de/user/plugins/mpd/README.html
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1540433-support-thread-für-das-mpd-plugin
+
+# Following entries are for Smart-Plugins:
+    version: 1.5.2                 # Plugin version
+    sh_minversion: 1.8.2a          # minimum shNG version to use this plugin
+#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    multi_instance: true
+    restartable: true
+    classname: MPD                 # class containing the plugin
+
+parameters:
+    # Definition of parameters to be configured in etc/plugin.yaml
+
+    host:
+        type: ip
+        mandatory: true
+        description:
+            de: 'IP oder Hostname des MPD'
+            en: 'IP or hostname of the MPD'
+
+    port:
+        type: int
+        default: 6600
+        description:
+            de: 'Der Port auf dem MPD lauscht.'
+            en: 'The port that is used by MPD.'
+
+    cycle:
+        type: int
+        default: 2
+        description:
+            de: 'Gibt an nach wie vielen Sekunden die Statusitems aktualisiert werden'
+            en: 'The time interval that will be used for update the status items'
+
+item_attributes:
+    # Definition of item attributes defined by this plugin
+    mpd_status:
+        type: str
+        description:
+            de: 'Implementiert Anweisungen um den MPD Status abzufragen'
+            en: "Implements commands that are used to query MPD's status."
+        valid_list:
+            - 'playpause'
+            - 'mute'
+            - 'volume'
+            - 'repeat'
+            - 'random'
+            - 'single'
+            - 'consume'
+            - 'playlist'
+            - 'playlistlength'
+            - 'mixrampdb'
+            - 'state'
+            - 'song'
+            - 'songid'
+            - 'time'
+            - 'elapsed'
+            - 'bitrate'
+            - 'audio'
+            - 'nextsong'
+            - 'nextsongid'
+            - 'duration'
+            - 'xfade'
+            - 'mixrampdelay'
+            - 'updating_db'
+            - 'error'
+        valid_list_description:
+            de:
+                - 'bool, 0 or 1, 1 während Musik abgespielt wird, auch als mpd_command genutzt'
+                - 'bool, 0 or 1, 1 wenn Laustärke auf 0% gesetzt ist, auch als mpd_command genutzt'
+                - 'num,  0-100 oder -1 wenn die Lautsärke nicht ermittelt werden kann, auch als mpd_command genutzt'
+                - 'bool, 0 or 1, auch als mpd_command genutzt'
+                - 'bool, 0 or 1, auch als mpd_command genutzt'
+                - 'bool, 0 or 1, auch als mpd_command genutzt'
+                - 'bool, 0 or 1, auch als mpd_command genutzt'
+                - 'num,  31-bit unsigned integer, Versionsnummer der Playlist'
+                - 'num,  integer, die Länge der Playlist'
+                - 'num,  mixramp threshold in dB'
+                - 'str,  Play, Stop, oder Pause'
+                - 'num,  Playlist Musikstücknummer des aktuellen Musikstückes'
+                - 'num,  Playlist Musikstück ID des aktuellen Musikstückes'
+                - 'str,  Gesamte abgelaufene Zeit des aktuell abgespielten/pausierten Musikstückes'
+                - 'str,  Gesamte abgelaufene Zeit des aktuell abgespielten/pausierten Musikstückes, aber mit höherer Auflösung'
+                - 'num,  Aktuelle Bitrate in kbps'
+                - 'str,  Das Format das vom Decoder beim Apielen gemeldet wurde. format: "samplerate:bits:channels"'
+                - 'num,  Playlist Nummer des nächsten abzuspielenden Musikstückes'
+                - 'num,  Playlist ID des nächsten abzuspielenden Musikstückes'
+                - 'num,  Dauer des aktuellen Musikstückes in Sekunden'
+                - 'num,  crossfade in Sekunden'
+                - 'num,  mixrampdelay in Sekunden'
+                - 'str,  job id'
+                - 'str,  Fehlermeldung des MPD'
+            en:
+                - 'bool, 0 or 1, 1 while music is played, also used as mpd_command'
+                - 'bool, 0 or 1, 1 when volume is set to 0%, also used as mpd_command'
+                - 'num,  0-100 or -1 if the volume cannot be determined, also used as mpd_command'
+                - 'bool, 0 or 1, also used as mpd_command'
+                - 'bool, 0 or 1, also used as mpd_command'
+                - 'bool, 0 or 1, also used as mpd_command'
+                - 'bool, 0 or 1, also used as mpd_command'
+                - 'num,  31-bit unsigned integer, the playlist version number'
+                - 'num,  integer, the length of the playlist'
+                - 'num,  mixramp threshold in dB'
+                - 'str,  play, stop, or pause'
+                - 'num,  playlist song number of the current song stopped on or playing'
+                - 'num,  playlist songid of the current song stopped on or playing'
+                - 'str,  total time elapsed (of current playing/paused song)'
+                - 'str,  Total time elapsed within the current song, but with higher resolution'
+                - 'num,  instantaneous bitrate in kbps'
+                - 'str,  The format emitted by the decoder plugin during playback, format: "samplerate:bits:channels"'
+                - 'num,  playlist song number of the next song to be played'
+                - 'num,  playlist songid of the next song to be played'
+                - 'num,  Duration of the current song in seconds'
+                - 'num,  crossfade in seconds'
+                - 'num,  mixrampdelay in seconds'
+                - 'str,  job id'
+                - 'str,  errormessage of MPD'
+
+    mpd_songinfo:
+        type: str
+        description:
+            de: 'Implementiert Kommandos und Informationen über das aktuell gespielte Musikstück zu erhalten'
+            en: 'Implements commands that are used to query information about the current playing song.'
+        valid_list:
+            - 'file'
+            - 'Last-Modified'
+            - 'Artist'
+            - 'Album'
+            - 'Title'
+            - 'Track'
+            - 'Time'
+            - 'Pos'
+            - 'Id'
+        valid_list_description:
+            de:
+                - 'str,  Pfad der aktuell spielenden Datei'
+                - 'str,  Datum der letzten Änderung des Musikstückes'
+                - 'str,  Artist des aktuell spielenden Musikstückes'
+                - 'str,  Album des aktuell spielenden Musikstückes'
+                - 'str,  Title des aktuell spielenden Musikstückes'
+                - 'str,  Track# des aktuell spielenden Musikstückes'
+                - 'str,  Länge des aktuell spielenden Musikstückes'
+                - 'str,  Position des Musikstückes in der Playlist'
+                - 'str,  Id des Musikstückes'
+            en:
+                - 'str,  path of the current playing file'
+                - 'str,  Date of last modification of the song'
+                - 'str,  Artist of the current playing song'
+                - 'str,  Album of the current playing song'
+                - 'str,  Title of the current playing song'
+                - 'str,  Track# of the current playing song'
+                - 'str,  length of the current song'
+                - 'str,  position of the song in the playlist'
+                - 'str,  Id of the song'
+
+    mpd_statistic:
+        type: str
+        description:
+            de: 'Implementiert Anweisungen die zur Statistikabfrage des MPD genutzt werden'
+            en: "Implements commands that are used to query MPD's statistics"
+        valid_list:
+            - 'artists'
+            - 'albums'
+            - 'songs'
+            - 'uptime'
+            - 'db_playtime'
+            - 'db_update'
+            - 'playtime'
+        valid_list_description:
+            de:
+                - 'num,  Anzahl der Künstler'
+                - 'num,  Anzahl der Alben'
+                - 'num,  Anzahl der Musikstücke'
+                - 'num,  bisherige Laufzeit des Daemons in Sekunden'
+                - 'num,  Summe der Dauer aller Musikstücke in der Datenbank'
+                - 'num,  Letztes Datenbankupdate in UNIX time'
+                - 'num,  Länge der gespielten Musik'
+            en:
+                - 'num,  number of artists'
+                - 'num,  number of albums'
+                - 'num,  number of songs'
+                - 'num,  daemon uptime in seconds'
+                - 'num,  sum of all song times in the db'
+                - 'num,  last db update in UNIX time'
+                - 'num,  time length of music played'
+
+    mpd_command:
+        type: str
+        description:
+            de: 'Implementiert Anweisungen die genutzt werden um das Abspielen von Musikstücken zu kontrollieren'
+            en: 'Implements commands that are used to control the playback.'
+        valid_list:
+            - 'playpause'
+            - 'mute'
+            - 'volume'
+            - 'repeat'
+            - 'random'
+            - 'single'
+            - 'consume'
+            - 'next'
+            - 'pause'
+            - 'play'
+            - 'playid'
+            - 'previous'
+            - 'seek'
+            - 'seekid'
+            - 'seekcur'
+            - 'stop'
+            - 'crossfade'
+            - 'mixrampdb'
+            - 'mixrampdelay'
+            - 'setvol'
+            - 'replay_gain_mode'
+        valid_list_description:
+            de:
+                - 'bool, 0 oder 1, 1 um Musik abzuspielen, auch genutzt als mpd_status'
+                - 'bool, 0 oder 1, 1 um die Lautstärke auf 0% zu setzen, auch genutzt als mpd_status'
+                - 'num,  0-100 um die Lautstärke zu setzen, auch genutzt als mpd_status'
+                - 'bool, 0 oder 1, auch genutzt als mpd_status'
+                - 'bool, 0 oder 1, auch genutzt als mpd_status'
+                - "bool, Schaltet Einzelwiedergabe um. Wenn Einzelwiedergabe eingeschaltet ist, stoppt der MPD nach dem aktuellen Titel oder das Musikstück wird wiederholt, wenn der 'repeat' Modus eingeschaltet ist. Auch genutzt als mpd_status"
+                - 'bool, Setzt den consume state to STATE, STATE sollte 0 oder 1 sein. Wenn consume aktiviert ist, wird jedes abgespielte Musikstück von der Playliste entfernt, auch genutzt als mpd_status'
+                - 'bool, Spielt das nächste Musikstück aus der Playliste'
+                - 'bool, Schaltet den Pausenstatus um, PAUSE ist 0 oder 1'
+                - 'num,  Beginnt die Playliste bei Musikstück Nummer <value> abzuspielen'
+                - 'num,  Beginnt die Playliste bei Musikstück <value> abzuspielen'
+                - 'bool, Spielt das vorhergehende Musikstück aus der Playliste ab'
+                - 'str,  Springt zur Zeit TIME (in Sekunden, float) des Eintrags SONGPOS in der Playliste, format: "SONGPOS TIME"'
+                - 'str,  Springt zur Zeit TIME (in Sekunden, float) des Eintrags SONGID in der Playliste, format: "SONGID TIME"'
+                - "str,  Springt zur Zeit TIME (in Sekunden, float) innerhalb des aktuellen Musikstücks. Wenn ein Prefix '+' oder '-' angegebene ist, wird die gegebene Zeit relativ zur aktuellen Position berechnet"
+                - 'bool, Stoppt das Abspielen'
+                - 'num,  Setzt Überblendung zwischen Musikstücken'
+                - 'num,  Setzt den Bereich der Überblendung zwischen zwei Musikstücken. Wie überblenden, aber die Laustärken werden nicht angepaßt sondern nur eine Überlappung zwischen den Musikstücken erreicht'
+                - 'num,  Zusätzlich abgezogene Zeit von der Überlappung die mit mixrampdb berechnet wurde'
+                - 'num,  Setzt die Laustärke auf VOL, der Bereich der Lautstärke ist zwischen 0 und 100'
+                - "str,  Setzt den replay gain Modus. Entweder 'off', 'track', 'album' oder 'auto'"
+            en:
+                - 'bool, 0 or 1, 1 to play music, also used as mpd_status'
+                - 'bool, 0 or 1, 1 to set the volume to 0%, also used as mpd_status'
+                - 'num,  0-100 to set the volume, also used as mpd_status'
+                - 'bool, 0 or 1, also used as mpd_status'
+                - 'bool, 0 or 1, also used as mpd_status'
+                - "bool, Toggles single state. When single is activated, playback is stopped after current song, or song is repeated if the 'repeat' mode is enabled, also used as mpd_status"
+                - 'bool, Sets consume state to STATE, STATE should be 0 or 1. When consume is activated, each song played is removed from playlist, also used as mpd_status'
+                - 'bool, Plays next song in the playlist'
+                - 'bool, Toggles pause/resumes playing, PAUSE is 0 or 1'
+                - 'num,  Begins playing the playlist at song number <value>'
+                - 'num,  Begins playing the playlist at song <value>'
+                - 'bool, Plays previous song in the playlist'
+                - 'str,  Seeks to the position TIME (in seconds; fractions allowed) of entry SONGPOS in the playlist format: "SONGPOS TIME"'
+                - 'str,  Seeks to the position TIME (in seconds; fractions allowed) of song SONGID format: "SONGID TIME"'
+                - "str,  Seeks to the position TIME (in seconds; fractions allowed) within the current song. If prefixed by '+' or '-', then the time is relative to the current playing position"
+                - 'bool, Stops playing'
+                - 'num,  Sets crossfading between songs'
+                - 'num,  Sets the threshold at which songs will be overlapped. Like crossfading but does not fade the track volume, just overlaps'
+                - 'num,  Additional time subtracted from the overlap calculated by mixrampdb'
+                - 'num,  Sets volume to VOL, the range of volume is 0-100'
+                - 'str,  ets the replay gain mode. One of off, track, album, auto'
+    mpd_url:
+        type: str
+        description:
+            de: 'Untersucht die gegebene URL und versucht den Stream abzuspielen'
+            en: 'Parses the defined url and tries to play the stream.'
+            
+    mpd_localplaylist:
+        type: str
+        description:
+            de: 'Sucht eine lokale Playlist mit einem gegebenen Namen und spielt sie ab wenn sie gefunden wurde'
+            en: 'Searches for a local playlist with the defined filename and plays it if found.'
+            
+    mpd_rawcommand:
+        type: str
+        description:
+            de: 'Sendet den angegebenen Wert direkt an MPD'
+            en: 'Takes whatever you assign to it and sends it directly to MPD.'
+            
+    mpd_database:
+        type: str
+        description:
+            de: 'Implementiert Anweisungen die zur Kontrolle der Datenbank genutzt werden können'
+            en: 'Implements commands that are used to control the database.'
+        valid_list:
+         - 'update'
+         - 'rescan'
+        valid_list_description:
+            de:
+             - 'Aktualisiert die Musikdatenbank, neue Dateien suchen, gelöschte entfernen, geänderte aktualisieren.'
+             - 'Aktualisiert die Musikdatenbank, neue Dateien suchen, gelöschte entfernen, alle Dateien aktualisieren.'
+            en:
+             - 'Updates the music database: find new files, remove deleted files, update modified files. <value> is a particular directory or song/file to update. If not specified, everything is updated'
+             - 'Updates the music database: find new files, remove deleted files, update all files. <value> is a particular directory or song/file to update. If not specified, everything is updated'
+
+plugin_functions: NONE
+    # Definition of plugin functions defined by this plugin
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin
+
+item_structs: NONE
+    # Definition of item-structure templates for this plugin
+

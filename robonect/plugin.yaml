@@ -7,7 +7,7 @@ plugin:
         en: 'Plugin to read data / to control a robotic lawnmower with Robonect HX module (https://robonect.de/).'
     maintainer: psilo
     tester: stoepf
-    state: develop                  # change to ready when done with development
+    state: ready                   # change to ready when done with development
     keywords: robonect, lawnmower, gardena, husqvarna, automower
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1515205-support-thread

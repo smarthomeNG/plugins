@@ -69,12 +69,12 @@ class WebInterface(SmartPluginWebIf):
         """
         self.plugin.get_broker_info()
 
-        # sort tasmota_items for display in web interface
-        self.plugin.tasmota_items = sorted(self.plugin.tasmota_items, key=lambda k: str.lower(k['_path']))
-
         tmpl = self.tplenv.get_template('index.html')
         # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
-        return tmpl.render(p=self.plugin, items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path'])))
+        return tmpl.render(p=self.plugin,
+                           webif_pagelength=self.plugin.webif_pagelength,
+                           items=sorted(self.plugin.tasmota_items, key=lambda k: str.lower(k['_path'])),
+                           item_count=len(self.plugin.tasmota_items))
 
     @cherrypy.expose
     def get_data_html(self, dataSet=None):
@@ -89,16 +89,36 @@ class WebInterface(SmartPluginWebIf):
         if dataSet is None:
             # get the new data
             self.plugin.get_broker_info()
-            data = {}
+            data = dict()
             data['broker_info'] = self.plugin._broker
             data['broker_uptime'] = self.plugin.broker_uptime()
-            data['item_values'] = self.plugin._item_values
+
+            data['item_values'] = {}
+            for item in self.plugin.tasmota_items:
+                data['item_values'][item.id()] = {}
+                data['item_values'][item.id()]['value'] = item.property.value
+                data['item_values'][item.id()]['last_update'] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
+                data['item_values'][item.id()]['last_change'] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
+
+            data['device_values'] = {}
+            for device in self.plugin.tasmota_devices:
+                data['device_values'][device] = {}
+                data['device_values'][device]['online'] = self.plugin.tasmota_devices[device].get('online', None)
+                data['device_values'][device]['uptime'] = self.plugin.tasmota_devices[device].get('uptime', None)
+                data['device_values'][device]['fw_ver'] = self.plugin.tasmota_devices[device].get('fw_ver', None)
+                data['device_values'][device]['wifi_signal'] = self.plugin.tasmota_devices[device].get('wifi_signal', None)
+                data['device_values'][device]['sensors'] = self.plugin.tasmota_devices[device].get('sensors', None)
+                data['device_values'][device]['lights'] = self.plugin.tasmota_devices[device].get('lights', None)
+                data['device_values'][device]['rf'] = self.plugin.tasmota_devices[device].get('rf', None)
+
+            data['tasmota_zigbee_devices'] = self.plugin.tasmota_zigbee_devices
+
+            data['tasmota_meta'] = self.plugin.tasmota_meta
 
             # return it as json the the web page
             try:
-                return json.dumps(data)
+                return json.dumps(data, default=str)
             except Exception as e:
                 self.logger.error("get_data_html exception: {}".format(e))
                 return {}
-
         return

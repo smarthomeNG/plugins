@@ -32,6 +32,7 @@ NW              = 'nw'
 NW_ACL          = 'nw_acl'
 NW_UDP_LISTEN   = 'nw_udp_listen'
 NW_TCP_LISTEN   = 'nw_tcp_listen'
+NW_HTTP_LISTEN  = 'nw_http_listen'
 NW_UDP_SEND     = 'nw_udp_send'
 
 
@@ -39,7 +40,7 @@ class TCPDispatcher(lib.network.Tcp_server):
     '''
     Encapsulation class for using lib.network.Tcp_server class
     '''
-    def __init__(self, parser, ip, port):
+    def __init__(self, parser, ip, port, plugin_name):
         '''
         Initializes the class
 
@@ -50,9 +51,9 @@ class TCPDispatcher(lib.network.Tcp_server):
         :param port: local port to bind to
         :type port: int
         '''
-        super().__init__(port, ip, 1, b'\n')
-        self.parser = parser
         self.dest = f'tcp:{ip}:{port}'
+        super().__init__(port, ip, 'plugins.' + plugin_name + '_' + self.dest, b'\n')
+        self.parser = parser
         self.set_callbacks(data_received=self.handle_received_data, incoming_connection=self.handle_connection)
 
     def handle_connection(self, server, client):
@@ -85,7 +86,7 @@ class HTTPDispatcher(lib.network.Tcp_server):
     '''
     Encapsulation class for using lib.network.Tcp_server class with HTTP GET support
     '''
-    def __init__(self, parser, ip, port):
+    def __init__(self, parser, ip, port, plugin_name):
         '''
         Initializes the class
 
@@ -96,9 +97,10 @@ class HTTPDispatcher(lib.network.Tcp_server):
         :param port: local port to bind to
         :type port: int
         '''
-        super().__init__(port, ip, 1, b'\n')
-        self.parser = parser
+
         self.dest = f'http:{ip}:{port}'
+        super().__init__(port, ip, 'plugins.' + plugin_name + '_' + self.dest, b'\n')
+        self.parser = parser
         self.set_callbacks(data_received=self.handle_received_data, incoming_connection=self.handle_connection)
 
     def handle_connection(self, server, client):
@@ -123,10 +125,11 @@ class HTTPDispatcher(lib.network.Tcp_server):
         :param data: received data
         :type data: string
         '''
-        self.logger.debug(f'Received packet from {client.ip}:{client.port} to {self.dest} via HTTP with content "{data}"')
+        self.logger.debug(f'Received packet from {client.ip}:{client.port} to {self.dest} via HTTP with content: "{data}"')
 
-        # find lines starting with GET and return remaining lines "HTTP-like" and return status
-        for line in data.splitlines():
+        # find lines starting with GET or POST and return remaining lines "HTTP-like" and return status
+        data_lines = data.splitlines()
+        for line in data_lines:
             if line.startswith('GET'):
                 request = line.split(' ')[1].strip('/')
                 if self.parser(client.ip, self.dest, urllib.parse.unquote(request)) is not False:
@@ -134,13 +137,23 @@ class HTTPDispatcher(lib.network.Tcp_server):
                 else:
                     client.send(b'HTTP/1.1 400 Bad Request\r\n\r\n')
                 client.close()
+            elif line.startswith('POST'):
+                #lines 0 - 5 contain the http post header. The data string begins with in line 6:
+                request = data_lines[6]
+                self.logger.debug(f'POST datastring: {request}')
+                if self.parser(client.ip, self.dest, urllib.parse.unquote(request)) is not False:
+                    client.send(b'HTTP/1.1 200 OK\r\n\r\n')
+                else:
+                    client.send(b'HTTP/1.1 400 Bad Request\r\n\r\n')
+                client.close()
+
 
 
 class UDPDispatcher(lib.network.Udp_server):
     '''
     Encapsulation class for using lib.network.Udp_server class
     '''
-    def __init__(self, parser, ip, port):
+    def __init__(self, parser, ip, port, plugin_name):
         '''
         Initializes the class
 
@@ -154,7 +167,7 @@ class UDPDispatcher(lib.network.Udp_server):
         self.logger = logging.getLogger(__name__)
         self.parser = parser
         self.dest = f'udp:{ip}:{port}'
-        super().__init__(port, ip)
+        super().__init__(port, ip, 'plugins.' + plugin_name + '_' + self.dest)
         self.set_callbacks(data_received=self.handle_received_data)
 
     def handle_received_data(self, addr, data):
@@ -177,7 +190,7 @@ class Network(SmartPlugin):
     Main class of the Plugin. Does all plugin specific stuff and provides
     the update functions for the items
     '''
-    PLUGIN_VERSION = '1.6.0'
+    PLUGIN_VERSION = '1.6.2'
 
     generic_listeners = {}
     special_listeners = {}
@@ -250,12 +263,13 @@ class Network(SmartPlugin):
         dest = f'{proto}:{ip}:{port}'
         self.logger.debug(f'Adding listener on: {dest}')
         if proto == 'tcp':
-            dispatcher = TCPDispatcher(self.parse_input, ip, port)
+            dispatcher = TCPDispatcher(self.parse_input, ip, port, self.get_fullname())
         elif proto == 'udp':
-            dispatcher = UDPDispatcher(self.parse_input, ip, port)
+            dispatcher = UDPDispatcher(self.parse_input, ip, port, self.get_fullname())
         elif proto == 'http':
-            dispatcher = HTTPDispatcher(self.parse_input, ip, port)
+            dispatcher = HTTPDispatcher(self.parse_input, ip, port, self.get_fullname())
         else:
+            self.logger.error(f'Cannot add listener as protocol {proto} is not supported')
             return
 
         self._dispatcher_list.append(dispatcher)
@@ -289,7 +303,7 @@ class Network(SmartPlugin):
                         * `logic|<logic_name>|<value>`
                         * `log|<loglevel>|message`  # loglevel could be info, warning or error
         '''
-        self.logger.debug(f'parse_input called with source={source}, dest={dest} and data={data}')
+        #self.logger.debug(f'parse_input called with source={source}, dest={dest} and data={data}')
         proto = dest.split(':')[0].upper()
         source_ip, __, __ = source.partition(':')
         if dest in self.generic_listeners:
@@ -357,7 +371,10 @@ class Network(SmartPlugin):
                 gacl = self.udp_acl
             elif proto == 'tcp':
                 gacl = self.tcp_acl
+            elif proto == 'http':
+                gacl = self.http_acl
             else:
+                self.logger.warning(f'Protocall {proto} is not supported. Aborting.')
                 return
             for entry in self.special_listeners[dest]['logics']:
                 lacl = self.special_listeners[dest]['logics'][entry]['acl']
@@ -506,3 +523,17 @@ class Network(SmartPlugin):
                     self.logger.warning(f'Could not add listener {dest} for {oid}')
             else:
                 self.special_listeners[dest][obj_type + 's'][oid] = {obj_type: obj, 'acl': acl}
+
+        if NW_HTTP_LISTEN in obj.conf:
+            ip, sep, port = obj.conf[NW_HTTP_LISTEN].rpartition(':')
+            if not ip:
+                ip = '0.0.0.0'
+            dest = 'http:' + ip + ':' + port
+            if dest not in self.special_listeners:
+                if self.add_listener('http', ip, port):
+                    self.special_listeners[dest][obj_type + 's'][oid] = {obj_type: obj, 'acl': acl}
+                else:
+                    self.logger.warning(f'Could not add listener {dest} for {oid}')
+            else:
+                self.special_listeners[dest][obj_type + 's'][oid] = {obj_type: obj, 'acl': acl}
+

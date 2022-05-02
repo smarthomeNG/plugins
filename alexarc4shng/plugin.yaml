@@ -1,13 +1,13 @@
 # Metadata for the plugin
 plugin:
     # Global plugin attributes
-    type: interface                # plugin type (gateway, interface, protocol, system, web)
+    type: web                # plugin type (gateway, interface, protocol, system, web)
     description:
         de: 'Plugin zur Steuerung von Amazon Echo Geräten Zugriff via Web-Browser API und Cookie'
         en: 'Plugin to remote control Echo Show/Spot/Fire'
     maintainer: AndreK
     tester: henfri, juergen, psilo
-    documentation: https://www.smarthomeng.de/user/plugins/alexarc4shng/user_doc.html       # url of documentation
+    #documentation: https://www.smarthomeng.de/user/plugins/alexarc4shng/user_doc.html       # url of documentation
     version: 1.0.2                              # Plugin version
     sh_minversion: 1.5.2                        # minimum shNG version to use this plugin
     multi_instance: False                       # plugin supports multi instance

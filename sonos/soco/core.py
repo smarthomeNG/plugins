@@ -15,6 +15,7 @@ from xml.parsers.expat import ExpatError
 import warnings
 import xmltodict
 
+
 import requests
 from requests.exceptions import ConnectionError as RequestsConnectionError
 from requests.exceptions import ConnectTimeout, ReadTimeout
@@ -49,7 +50,11 @@ from .services import (
     AudioIn,
     GroupRenderingControl,
 )
-from .utils import really_utf8, camel_to_underscore, deprecated
+from .utils import (
+    camel_to_underscore,
+    deprecated,
+    really_utf8,
+)
 from .xml import XML
 
 AUDIO_INPUT_FORMATS = {
@@ -156,6 +161,22 @@ def only_on_master(function):
     return inner_function
 
 
+def only_on_soundbars(function):
+    """Decorator to raise an exception on soundbar property access on non-soundbars."""
+
+    @wraps(function)
+    def inner_function(self, *args, **kwargs):
+        if not self.is_soundbar:
+            raise NotSupportedException(
+                "The device is not a soundbar and doesn't support %s."
+                % function.__name__
+            )
+
+        return function(self, *args, **kwargs)
+
+    return inner_function
+
+
 # pylint: disable=R0904,too-many-instance-attributes
 class SoCo(_SocoSingletonBase):
 
@@ -224,10 +245,10 @@ class SoCo(_SocoSingletonBase):
         is_bridge
         is_coordinator
         is_soundbar
-        surround_enabled
         is_satellite
         has_satellites
         sub_enabled
+        sub_gain
         is_subwoofer
         has_subwoofer
         channel
@@ -238,6 +259,11 @@ class SoCo(_SocoSingletonBase):
         audio_delay
         night_mode
         dialog_mode
+        surround_enabled
+        surround_full_volume_enabled
+        surround_volume_tv
+        surround_volume_music
+        soundbar_audio_input_format
         supports_fixed_volume
         fixed_volume
         soundbar_audio_input_format
@@ -1048,16 +1074,13 @@ class SoCo(_SocoSingletonBase):
         return bool(int(response["CurrentValue"]))
 
     @surround_enabled.setter
+    @only_on_soundbars
     def surround_enabled(self, enable):
         """Enable/disable the connected surround speakers.
 
         :param enable: Enable or disable surround speakers
         :type enable: bool
         """
-        if not self.is_soundbar:
-            message = "This device does not support surrounds"
-            raise NotSupportedException(message)
-
         self.renderingControl.SetEQ(
             [
                 ("InstanceID", 0),
@@ -1096,6 +1119,43 @@ class SoCo(_SocoSingletonBase):
                 ("InstanceID", 0),
                 ("EQType", "SubEnable"),
                 ("DesiredValue", int(enable)),
+            ]
+        )
+
+    @property
+    def sub_gain(self):
+        """int: The current subwoofer gain level.
+
+        Returns the current value or None if not supported.
+        """
+        if not self.has_subwoofer:
+            return None
+
+        response = self.renderingControl.GetEQ(
+            [("InstanceID", 0), ("EQType", "SubGain")]
+        )
+        return int(response["CurrentValue"])
+
+    @sub_gain.setter
+    def sub_gain(self, level):
+        """Set the subwoofer gain level.
+
+        :param level: Desired subwoofer gain level (-15 to 15)
+        :type level: int
+        """
+        if not self.has_subwoofer:
+            raise NotSupportedException("This group does not have a subwoofer")
+
+        if not -15 <= level <= 15:
+            raise ValueError(
+                "Invalid value, must be integer between -15 and 15 inclusive"
+            )
+
+        self.renderingControl.SetEQ(
+            [
+                ("InstanceID", 0),
+                ("EQType", "SubGain"),
+                ("DesiredValue", int(level)),
             ]
         )
 
@@ -1196,6 +1256,7 @@ class SoCo(_SocoSingletonBase):
         return bool(int(response["CurrentValue"]))
 
     @night_mode.setter
+    @only_on_soundbars
     def night_mode(self, night_mode):
         """Switch on/off the speaker's night mode.
 
@@ -1204,10 +1265,6 @@ class SoCo(_SocoSingletonBase):
         :raises NotSupportedException: If the device does not support
         night mode.
         """
-        if not self.is_soundbar:
-            message = "This device does not support night mode"
-            raise NotSupportedException(message)
-
         self.renderingControl.SetEQ(
             [
                 ("InstanceID", 0),
@@ -1231,6 +1288,7 @@ class SoCo(_SocoSingletonBase):
         return bool(int(response["CurrentValue"]))
 
     @dialog_mode.setter
+    @only_on_soundbars
     def dialog_mode(self, dialog_mode):
         """Switch on/off the speaker's dialog mode.
 
@@ -1239,15 +1297,103 @@ class SoCo(_SocoSingletonBase):
         :raises NotSupportedException: If the device does not support
         dialog mode.
         """
-        if not self.is_soundbar:
-            message = "This device does not support dialog mode"
-            raise NotSupportedException(message)
-
         self.renderingControl.SetEQ(
             [
                 ("InstanceID", 0),
                 ("EQType", "DialogLevel"),
                 ("DesiredValue", int(dialog_mode)),
+            ]
+        )
+
+    @property
+    def surround_full_volume_enabled(self):
+        """Return True if surround full volume is enabled for surround music
+        playback.
+
+        If False, playback on surround speakers uses ambient volume.
+
+        Note: does not apply to TV playback.
+        """
+        if not self.is_soundbar:
+            return None
+
+        response = self.renderingControl.GetEQ(
+            [("InstanceID", 0), ("EQType", "SurroundMode")]
+        )
+        return int(response["CurrentValue"])
+
+    @surround_full_volume_enabled.setter
+    @only_on_soundbars
+    def surround_full_volume_enabled(self, value):
+        """Toggle surround music playback mode.
+
+        True = full volume, False = ambient mode.
+
+        Note: this does not apply to TV playback.
+        """
+        self.renderingControl.SetEQ(
+            [
+                ("InstanceID", 0),
+                ("EQType", "SurroundMode"),
+                ("DesiredValue", int(value)),
+            ]
+        )
+
+    @property
+    def surround_volume_tv(self):
+        """Get the relative volume for surround speakers in TV
+        playback mode. Ranges from -15 to +15."""
+        if not self.is_soundbar:
+            return None
+
+        response = self.renderingControl.GetEQ(
+            [("InstanceID", 0), ("EQType", "SurroundLevel")]
+        )
+        return int(response["CurrentValue"])
+
+    @surround_volume_tv.setter
+    @only_on_soundbars
+    def surround_volume_tv(self, relative_volume):
+        """Set the relative volume for surround speakers in TV playback mode,
+        in the range -15 to +15.
+        """
+        if not -15 <= relative_volume <= 15:
+            raise ValueError("Value must be [-15, 15]")
+
+        self.renderingControl.SetEQ(
+            [
+                ("InstanceID", 0),
+                ("EQType", "SurroundLevel"),
+                ("DesiredValue", relative_volume),
+            ]
+        )
+
+    @property
+    def surround_volume_music(self):
+        """Return the relative volume for surround speakers in music mode,
+        in the range -15 to +15.
+        """
+        if not self.is_soundbar:
+            return None
+
+        response = self.renderingControl.GetEQ(
+            [("InstanceID", 0), ("EQType", "MusicSurroundLevel")]
+        )
+        return int(response["CurrentValue"])
+
+    @surround_volume_music.setter
+    @only_on_soundbars
+    def surround_volume_music(self, relative_volume):
+        """Set the relative volume for surround speakers in music mode,
+        in the range -15 to +15."""
+        if not -15 <= relative_volume <= 15:
+            raise ValueError("Value must be [-15, 15]")
+
+        self.renderingControl.SetEQ(
+            [
+                ("InstanceID", 0),
+                ("EQType", "MusicSurroundLevel"),
+                ("DesiredValue", relative_volume),
             ]
         )
 
@@ -1854,6 +2000,20 @@ class SoCo(_SocoSingletonBase):
         # used if needed by the client to restart a given URI
         track["metadata"] = metadata
 
+        def _title_in_uri(title):
+            """Returns True if the title contains URI components
+            and the track title is repeated inside the track URI.
+
+            Used to avoid using invalid values in title metadata.
+            """
+            if not title:
+                return False
+
+            if self.music_source_from_uri(track["uri"]) == MUSIC_SRC_LIBRARY:
+                return False
+
+            return title in track["uri"] or title in urllib.parse.unquote(track["uri"])
+
         def _parse_radio_metadata(metadata):
             """Try to parse trackinfo from radio metadata."""
             radio_track = {}
@@ -1887,26 +2047,31 @@ class SoCo(_SocoSingletonBase):
                     ".//{http://purl.org/dc/" "elements/1.1/}title"
                 )
                 # Avoid using URIs as the title
-                if title and (
-                    title in track["uri"] or title in urllib.parse.unquote(track["uri"])
-                ):
+                if _title_in_uri(title):
                     radio_track["title"] = trackinfo
                 else:
                     radio_track["title"] = title
 
             return radio_track
 
-        # Duration seems to be '0:00:00' when listening to radio
-        if metadata != "" and track["duration"] == "0:00:00":
-            metadata = XML.fromstring(really_utf8(metadata))
-            track.update(_parse_radio_metadata(metadata))
-
         # If the speaker is playing from the line-in source, querying for track
         # metadata will return "NOT_IMPLEMENTED".
-        elif metadata not in ("", "NOT_IMPLEMENTED", None):
+        if metadata in ("", "NOT_IMPLEMENTED", None):
+            return track
+
+        metadata = XML.fromstring(really_utf8(metadata))
+
+        # Duration seems to be '0:00:00' when listening to radio
+        if track["duration"] == "0:00:00":
+            track.update(_parse_radio_metadata(metadata))
+
+        # Track may have been processed as radio, but metadata may still be incomplete.
+        # This is necessary on Sonos Radio as it encodes metadata as a "regular" track.
+        if not track["artist"]:
             # Track metadata is returned in DIDL-Lite format
-            metadata = XML.fromstring(really_utf8(metadata))
             md_title = metadata.findtext(".//{http://purl.org/dc/elements/1.1/}title")
+            if _title_in_uri(md_title):
+                md_title = None
             md_artist = metadata.findtext(
                 ".//{http://purl.org/dc/elements/1.1/}creator"
             )
@@ -1914,15 +2079,10 @@ class SoCo(_SocoSingletonBase):
                 ".//{urn:schemas-upnp-org:metadata-1-0/upnp/}album"
             )
 
-            track["title"] = ""
-            if md_title:
-                track["title"] = md_title
-            track["artist"] = ""
-            if md_artist:
-                track["artist"] = md_artist
-            track["album"] = ""
-            if md_album:
-                track["album"] = md_album
+            # Preserve existing values if already processed
+            track["title"] = track["title"] or md_title or ""
+            track["artist"] = track["artist"] or md_artist or ""
+            track["album"] = track["album"] or md_album or ""
 
             album_art_url = metadata.findtext(
                 ".//{urn:schemas-upnp-org:metadata-1-0/upnp/}albumArtURI"
@@ -2864,6 +3024,7 @@ MUSIC_SRC_WEB_FILE = "WEB_FILE"
 MUSIC_SRC_LINE_IN = "LINE_IN"
 MUSIC_SRC_TV = "TV"
 MUSIC_SRC_AIRPLAY = "AIRPLAY"
+MUSIC_SRC_SPOTIFY_CONNECT = "SPOTIFY_CONNECT"
 MUSIC_SRC_UNKNOWN = "UNKNOWN"
 MUSIC_SRC_NONE = "NONE"
 
@@ -2875,12 +3036,14 @@ SOURCES = {
     r"^x-sonosapi-stream:": MUSIC_SRC_RADIO,
     r"^x-sonosapi-radio:": MUSIC_SRC_RADIO,
     r"^x-sonosapi-hls:": MUSIC_SRC_RADIO,
+    r"^x-sonos-http:sonos": MUSIC_SRC_RADIO,
     r"^aac:": MUSIC_SRC_RADIO,
     r"^hls-radio:": MUSIC_SRC_RADIO,
     r"^https?:": MUSIC_SRC_WEB_FILE,
     r"^x-rincon-stream:": MUSIC_SRC_LINE_IN,
     r"^x-sonos-htastream:": MUSIC_SRC_TV,
     r"^x-sonos-vli:.*,airplay:": MUSIC_SRC_AIRPLAY,
+    r"^x-sonos-vli:.*,spotify:": MUSIC_SRC_SPOTIFY_CONNECT,
 }
 
 # Soundbar product names

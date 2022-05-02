@@ -1,0 +1,333 @@
+{% extends "base_plugin.html" %}
+
+{% set logo_frame = false %}
+{% set items_count = items_control|length + items_state|length %}
+
+{% block headtable %}
+<table class="table table-striped table-hover pluginList display">
+    <tbody>
+    <tr>
+        <td class="py-1"><strong>Token</strong></td>
+        {% if p.getToken() %}
+        <td class="py-1">Yes</td>
+        {% else %}
+        <td class="py-1">No</td>
+        {% endif %}
+        <td></td>
+        <td class="py-1"><strong>{{ p.translate("Token expires in:") }}</strong></td>
+        <td class="py-1">{{ p.getTokenExp() }}</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td class="py-1"><strong>{{ p.translate("User ID") }}</strong></td>
+        <td class="py-1">{{ p.getUserId() }}</td>
+        <td></td>
+        <td class="py-1"><strong>{{ p.translate("ApiKey") }}</strong></td>
+        <td class="py-1">{{ p.getApiKey() }}</td>
+        <td></td>
+    </tr>
+    </tbody>
+</table>
+{% endblock headtable %}
+
+
+<!--
+	Additional buttons for the web interface (if any are needed) - displayed below the headtable-section
+-->
+{% block buttons %}
+{% if 1==2 %}
+<form action="" method="post">
+</form>
+{% endif %}
+{% endblock %}
+
+<!--
+	Define the number of tabs for the body of the web interface (1 - 3)
+-->
+{% set tabcount = 2 %}
+
+
+<!--
+	Set the tab that will be visible on start, if another tab that 1 is wanted (1 - 3)
+-->
+{% if item_count==0 %}
+{% set start_tab = 1 %}
+{% endif %}
+
+
+<!--
+	Content block for the first tab of the Webinterface
+-->
+{% set tab1title = "<strong>" ~ p.get_shortname() ~ " Geräte</strong> (" ~ device_count ~ ")" %}
+{% block bodytab1 %}
+<div class="container-fluid m-2">
+    <table class="table">
+        <tbody>
+        <tr>
+            <td class="py-1">
+                <strong>{{ p.get_mower_name() }}</strong></br>
+                <small>{{ p.get_mower_model_name() }}</small></br>
+                <small>{{ p.get_mower_id() }}</small></br>
+                <small>{{ p.get_mower_serial() }}</small></br>
+
+                <span>
+                {{ p.translate(p.getLastActivity()) }}
+
+                {% if p.getLastActivity()=="MOWING" %}
+                    <i class="fas fa-cog fa-spin"></i>
+                {% elif p.getLastActivity()=="GOING_HOME" %}
+                    <i class="fas fa-forward"></i>
+                {% elif p.getLastActivity()=="LEAVING" %}
+                    <i class="fas fa-forward"></i>
+                {% elif p.getLastActivity()=="PARKED_IN_CS" %}
+                    <i class="fas fa-warehouse"></i>
+                {% elif p.getLastActivity()=="CHARGING" %}
+                    <i class="fas fa-warehouse"></i>
+                {% elif p.getLastActivity()=="NOT_APPLICABLE" %}
+                    <i class="fas fa-cogs"></i>
+                {% elif p.getLastActivity()=="UNKNOWN" %}
+                    <i class="fas fa-exclamation-triangle"></i>
+                {% endif %}
+                </span>
+                <small style="float: right;">
+
+                    {% if p.getLastConnection()==True %}
+                    <i class="fas fa-wifi"></i>
+                    <i class="fas fa-link"></i>
+                    {% else %}
+                    <i style="color: #aaaaaa;" class="fas fa-wifi"></i>
+                    <i class="fas fa-unlink"></i>
+                    {% endif %}
+
+                    {% if p.getLastBatterypercent() >= 90 %}
+                    <i class="fas fa-battery-full"></i>
+                    {% elif p.getLastBatterypercent() >= 75 %}
+                    <i class="fas fa-battery-three-quarters"></i>
+                    {% elif p.getLastBatterypercent() >= 50 %}
+                    <i class="fas fa-attery-half"></i>
+                    {% elif p.getLastBatterypercent() >= 25 %}
+                    <i class="fas fa-battery-quarter"></i>
+                    {% else %}
+                    <i class="fas fa-battery-empty"></i>
+                    {% endif %}
+                    {{ p.getLastBatterypercent() }}%</small></br>
+
+                {{ p.getMessage()}}</br>
+
+                {{ p.getLastErrormsg()}}</br>
+
+                <form action="" method="post">
+                    <button type="button" class="btn btn-shng btn-sm" onclick="jQuery.get('mower_start');"><i
+                            class="fas fa-play"></i> {{ _('Start') }}
+                    </button>
+                    <button type="button" class="btn btn-shng btn-sm" onclick="jQuery.get('mower_stop');"><i
+                            class="fas fa-stop"></i> {{ _('Stop') }}
+                    </button>
+                    <button type="button" class="btn btn-shng btn-sm" onclick="jQuery.get('mower_park');"><i
+                            class="fas fa-home"></i> {{ _('Park Permanent') }}
+                    </button>
+                </form>
+            </td>
+            <td>
+                <div id="map-1" style="height: 300px; width: 500px;"></div>
+
+                <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.14.1/css/ol.css" type="text/css">
+                <link rel="stylesheet" href="https://raw.githack.com/walkermatt/ol-layerswitcher/master/src/ol-layerswitcher.css" />
+                <link rel="stylesheet" href="https://raw.githack.com/walkermatt/ol-layerswitcher/master/examples/layerswitcher.css" />
+                <script src="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.14.1/build/ol.js"></script>
+                <script src="https://raw.githack.com/walkermatt/ol-layerswitcher/master/dist/ol-layerswitcher.js"></script>
+                <script type="text/javascript">
+                    var mower_lon = {{ p.getLastLongitude() }}
+                    var mower_lat = {{ p.getLastLatitude() }}
+
+                    var map1 = new ol.Map({
+                        target: 'map-1',
+                        layers: [
+                            new ol.layer.Tile({
+                                source: new ol.source.OSM(),
+                                title: "OSM",
+                                type: 'base'
+                            }),
+                            new ol.layer.Tile({
+                                source: new ol.source.XYZ({
+                                    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+                                    maxZoom: 19
+                                }),
+                                title: 'ArcGIS',
+                                type: 'base'
+                            })
+                        ],
+                        view: new ol.View({
+                            center: ol.proj.fromLonLat([mower_lon, mower_lat]),
+                            zoom: 19
+                        })
+                    });
+
+                    var layerSwitcher = new ol.control.LayerSwitcher({
+                        tipLabel: 'Layer',
+                        groupSelectStyle: 'children'
+                    });
+                    map1.addControl(layerSwitcher);
+
+                    var mowerStyle = new ol.style.Style({
+                        image: new ol.style.Icon({
+                            src: "/plugin/husky2/static/img/plugin_logo.png",
+                            scale: 0.1
+                        })
+                    });
+
+                    var mower1 = new ol.Feature({
+                        geometry: new ol.geom.Point(ol.proj.fromLonLat([mower_lon, mower_lat]))
+                    });
+
+                    mower1.setStyle(mowerStyle)
+
+                    var mowers = [];
+                    mowers.push(mower1);
+                    var mowerSource = new ol.source.Vector({
+                        features: mowers
+                    });
+                    var mowerLayer = new ol.layer.Vector({
+                        source: mowerSource
+                    });
+
+                    map1.addLayer(mowerLayer);
+
+
+                    /** var mower_coordinates = [[lon, lat], [lon, lat], ... ]*/
+                    var mower_coordinates = {{ p.getLastCoordinates() }};
+
+                    var mowerLines = new ol.layer.Vector({
+                        source: new ol.source.Vector({
+                            features: [new ol.Feature({
+                                geometry: new ol.geom.LineString(mower_coordinates).transform('EPSG:4326', 'EPSG:3857'),
+                                name: 'Track'
+                            })]
+                        }),
+                    });
+                    map1.addLayer(mowerLines);
+
+                    setTimeout(function () {
+                        map1.updateSize();
+                    }, 100);
+                </script>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2">
+                <h2>{{ p.translate("History") }}</h2>
+                <table id="history_table" class="table table-striped table-hover pluginList display">
+                    <thead>
+                    <tr>
+                        <th>{{ p.translate("Timestamp") }}</th>
+                        <th>{{ p.translate("Timedelta min:sec") }}</th>
+                        <th>{{ p.translate("Activity") }}</th>
+                        <th>{{ p.translate("Battery") }}</th>
+                        <th>{{ p.translate("Coordinates") }}</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+
+                    {% for stamp in p.getTimestamps() %}
+                    <tr>
+                        <td class="py-1">{{ stamp }}</td>
+                        <td class="py-1">{{ p.getTimedeltas()[loop.index0] }}</td>
+                        {% if p.getErrormessages()[loop.index0] == p.translate("No error") %}
+                            <td class="py-1">{{ p.translate(p.getActivities()[loop.index0]) + ", " +
+                                p.translate(p.getErrormessages()[loop.index0]) }}</td>
+                        {% else %}
+                            <td class="py-1" style="color:red">{{ p.translate(p.getActivities()[loop.index0]) + ", " +
+                                p.translate(p.getErrormessages()[loop.index0]) }}</td>
+                        {% endif %}
+                        <td class="py-1">{{ p.getBatterypercents()[loop.index0] }} %</td>
+                        <td class="py-1">{{ p.getLongitudes()[loop.index0] }}, {{ p.getLatitudes()[loop.index0] }}</td>
+                    </tr>
+                    {% endfor %}
+
+                    </tbody>
+                </table>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+</div>
+
+{% endblock bodytab1 %}
+
+
+<!--
+	Content block for the second tab of the Webinterface
+-->
+{% set tab2title = "<strong>" ~ p.get_shortname() ~ " Items</strong> (" ~ items_count ~ ")" %}
+{% block bodytab2 %}
+<div class="container-fluid m-2">
+
+    <h2>Control Items</h2>
+    <table id="control_item_table" class="table table-striped table-hover pluginList display pluginList display">
+        <thead>
+        <tr>
+            <th>{{ p.translate("Key") }}</th>
+            <th>{{ p.translate("Description") }}</th>
+            <th>{{ p.translate("Path") }}</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for key in items_control %}
+        {% for item in items_control[key] %}
+        <tr>
+            <td class="py-1">{{ key }}</td>
+            <td class="py-1">{{ item }}</td>
+            <td class="py-1">{{ item._path }}</td>
+        </tr>
+        {% endfor %}
+        {% endfor %}
+        </tbody>
+    </table>
+
+
+    <h2>State Items</h2>
+    <table id="state_item_table" class="table table-striped table-hover pluginList display pluginList display">
+        <thead>
+        <tr>
+            <th>{{ p.translate("Key") }}</th>
+            <th>{{ p.translate("Path") }}</th>
+            <th>{{ p.translate("Value") }}</th>
+            <th>{{ p.translate("Last Update") }}</th>
+            <th>{{ p.translate("Last Change") }}</th>
+        </tr>
+        </thead>
+        <tbody>
+
+        {% for key in items_state %}
+        {% for item in items_state[key] %}
+        <tr>
+            <td class="py-1">{{ key }}</td>
+            <td class="py-1">{{ item._path }}</td>
+            <td class="py-1">{{ item() }}</td>
+            <td class="py-1">{{ item.last_update().strftime('%d.%m.%Y %H:%M:%S') }}</td>
+            <td class="py-1">{{ item.last_change().strftime('%d.%m.%Y %H:%M:%S') }}</td>
+
+        </tr>
+        {% endfor %}
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock bodytab2 %}
+
+{% block pluginscripts %}
+<script>
+    $(document).ready(function () {
+        $(window).trigger('datatables_defaults'); // loading default behaviour
+        try {
+            table_history = $('#history_table').DataTable({}); // put options into {} if needed
+            table_control = $('#control_item_table').DataTable({}); // put options into {} if needed
+            table_state = $('#state_item_table').DataTable({}); // put options into {} if needed
+        } catch (e) {
+            console.log("Datatable JS not loaded, showing standard table without reorder option " + e);
+        }
+    });
+</script>
+{% endblock pluginscripts %}
+

@@ -1,0 +1,202 @@
+# Metadata for the plugin
+plugin:
+    # Global plugin attributes
+    type: gateway                   # plugin type (gateway, interface, protocol, system, web)
+    description:
+        de: 'Plugin zur Ansteuerung von Bang & Olufsen Geräten über Beolink (Netlink) (REST API)'
+        en: 'Plugin for controlling Bang & Olufsen devices through Netlink (REST API)'
+    maintainer: msinn
+#    tester:                         # Who tests this plugin?
+    state: develop                  # change to ready when done with development
+#    keywords: iot xyz
+#    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
+#    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
+
+    version: 0.6.0                  # Plugin version
+    sh_minversion: 1.9              # minimum shNG version to use this plugin
+#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    multi_instance: False           # plugin supports multi instance
+    restartable: unknown
+    classname: BeoNetlink           # class containing the plugin
+
+parameters:
+    # Definition of parameters to be configured in etc/plugin.yaml (enter 'parameters: NONE', if section should be empty)
+    scan_fromip:
+        type: ipv4
+        description:
+            de: "Minimale IP Adresse des zu scannenden Subnetzes"
+            en: "Minimum ip address of subnet that is to be scanned"
+
+    scan_toip:
+        type: ipv4
+        description:
+            de: "Maximale IP Adresse des zu scannenden Subnetzes"
+            en: "Maximum ip address of subnet that is to be scanned"
+
+    rescan_on_start:
+        type: bool
+        default: False
+        description:
+            de: "Subnetz beim Start von SmartHomeNG erneut scannen, um geänderte IP Adressen (wg. DHCP) zu finden."
+            en: "Re-scan subnet on start of SmartHomeNG to find changed IP addresses (DHCP)"
+
+item_attributes:
+    # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)
+
+    beo_id:
+        type: str
+        description:
+            de: 'B&O Serial des anzusprechenden Bang & Olufsen Gerätes'
+#            en: 'B&O serial of Bang & Olufsen device to connect to'
+
+    beo_command:
+        type: str
+        valid_list_ci:
+          - stand
+          - vol_rel
+          - volume
+          - vol_up
+          - vol_down
+          - step_up
+          - step_dn
+          - muted
+        description:
+            de: 'B&O Control welches auf dem Bang & Olufsen Gerät angesprochen werden soll'
+            en: 'B&O control which should beaddressed on the Bang & Olufsen device'
+
+    beo_status:
+        type: str
+        valid_list:
+            - audiomode
+            - videomode
+            - powerstate
+            - stand
+            - source
+            - volume
+            - muted
+            - FriendlyName
+            - productType
+        description:
+            de: 'Auszulesende Statusinformation des B&O Gerätes'
+            en: 'Status information that should be read from the B&O device'
+
+item_structs:
+    # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
+    beodevice:
+        name: Vorlage-Struktur für ein Bang & Olufsen Device
+
+        type: foo
+        #beo_id: '31987227'
+
+        beoname:
+            type: str
+            beo_id: ..:.
+            beo_status: 'FriendlyName'
+
+        beotype:
+            type: str
+            beo_id: ..:.
+            beo_status: 'productType'
+
+        powerstate:
+            type: str
+            beo_id: ..:.
+            beo_status: 'powerstate'
+
+        source:
+            type: str
+            beo_id: ..:.
+            beo_status: 'source'
+
+        videomode:
+            type: str
+            beo_id: ..:.
+            beo_status: 'videomode'
+
+        audiomode:
+            type: str
+            beo_id: ..:.
+            beo_status: 'audiomode'
+
+    beosound:
+        name: Vorlage-Struktur für ein Bang & Olufsen Audio Device (BeoSound)
+
+        #beo_id: '31987227'
+        struct: beolink.beodevice
+
+        volume:
+            type: num
+            beo_id: ..:.
+            beo_status: 'volume'
+            beo_command: 'volume'
+            enforce_updates: True
+
+        volume_rel:
+            type: num
+            beo_id: ..:.
+            beo_command: 'vol_rel'
+            enforce_updates: True
+
+        muted:
+            type: bool
+            beo_id: ..:.
+            beo_status: 'muted'
+            beo_command: 'muted'
+            enforce_updates: True
+
+    beovision:
+        name: Vorlage-Struktur für ein Bang & Olufsen Video Device (BeoVision & BeoPlay)
+
+        #beo_id: '31987227'
+        struct: beolink.beosound
+
+        stand:
+            type: str
+            beo_id: ..:.
+            beo_status: 'stand'
+            enforce_updates: True
+
+
+    device_extended:
+        type: foo
+        #beo_id: '31987227'
+
+        videomode_nr:
+            type: num
+            beo_id: ..:.
+            beo_status: 'videomode'
+
+        audiomode_nr:
+            type: num
+            beo_id: ..:.
+            beo_status: 'audiomode'
+
+        stand_nr:
+            type: num
+            beo_id: ..:.
+            beo_status: 'stand'
+            enforce_updates: True
+
+        step_up:
+            type: bool
+            beo_id: ..:.
+            beo_command: 'step_up'
+            enforce_updates: True
+
+        step_dn:
+            type: bool
+            beo_id: ..:.
+            beo_command: 'step_dn'
+            enforce_updates: True
+
+
+item_attribute_prefixes: NONE
+    # Definition of item attributes that only have a common prefix (enter 'item_attribute_prefixes: NONE' or ommit this section, if section should be empty)
+    # NOTE: This section should only be used, if really nessesary (e.g. for the stateengine plugin)
+
+plugin_functions: NONE
+    # Definition of plugin functions defined by this plugin (enter 'plugin_functions: NONE', if section should be empty)
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)
+

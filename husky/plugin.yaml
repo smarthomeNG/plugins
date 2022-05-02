@@ -5,9 +5,9 @@ plugin:
     description:
         de: 'Husqvarna Automower Plugin'
         en: 'Husqvarna automower plugin'
-    maintainer: gama 
+    maintainer: gama
     tester: Scaramangas, manhartm, manu241   # Who tests this plugin?
-    state: develop                  # change to ready when done with development
+    state: deprecated               # change to ready when done with development
     keywords: mower, husqvarna, automover, lawn
     documentation: https://www.smarthomeng.de/user/plugins/husky/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1658386-support-thread-zum-husky-plugin
@@ -15,7 +15,7 @@ plugin:
     sh_minversion: 1.6              # minimum shNG version to use this plugin
     #sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False           # plugin supports multi instance
-    restartable: True 
+    restartable: True
     classname: Husky         # class containing the plugin
 
 parameters:
@@ -47,7 +47,7 @@ parameters:
             en: '(optional) google maps api key'
 
 
-item_attributes: 
+item_attributes:
     # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)
     husky_info:
         type: str
@@ -64,25 +64,25 @@ item_attributes:
     husky_control:
         type: str
         description:
-            de: 'Das Item, mit dem der Mähroboter gesteuert werden soll (z.B. Start Kommando)' 
-            en: 'Item to control the mower (e.g. start command)' 
+            de: 'Das Item, mit dem der Mähroboter gesteuert werden soll (z.B. Start Kommando)'
+            en: 'Item to control the mower (e.g. start command)'
 
     husky_operating:
-        type: str 
+        type: str
         description:
-            de: 'Das Item, welches Mähroboter Arbeitsdaten beinhaltet (z.B. Zeit in Bewegung)' 
-            en: 'Item to receive mower working data (e.g. time in movement)' 
+            de: 'Das Item, welches Mähroboter Arbeitsdaten beinhaltet (z.B. Zeit in Bewegung)'
+            en: 'Item to receive mower working data (e.g. time in movement)'
 
 item_structs:
     # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
     basic:
-        name: Default Mower Template 
+        name: Default Mower Template
 
         info:
             name: Mower information
 
             device:
-                husky_info: NAME 
+                husky_info: NAME
                 type: str
                 visu_acl: ro
 
@@ -92,57 +92,57 @@ item_structs:
                 visu_acl: ro
 
             id:
-                husky_info: ID 
+                husky_info: ID
                 type: str
                 visu_acl: ro
 
         state:
-            name: State information 
+            name: State information
 
             connection:
-                name: mower connection state 
-                husky_state: connection 
-                type: bool 
+                name: mower connection state
+                husky_state: connection
+                type: bool
                 visu_acl: ro
 
-            inoperation: 
-                name: mower in operation mode 
+            inoperation:
+                name: mower in operation mode
                 type: bool
                 visu_acl: ro
                 eval: "sh...activity() in ['CUTTING','MOVING','CHARGING']"
                 eval_trigger: ..activity
 
-            activity: 
+            activity:
                 name: activity name (CUTTING, MOVING, ...)
-                husky_state: activity 
-                type: str 
+                husky_state: activity
+                type: str
                 visu_acl: ro
 
-            errormessage: 
-                husky_state: errormessage 
-                type: str 
+            errormessage:
+                husky_state: errormessage
+                type: str
                 visu_acl: ro
                 value: 'no error'
                 telegram_message: 'MOWER ERROR: [VALUE]'
 
-            message: 
-                husky_state: message 
-                type: str 
+            message:
+                husky_state: message
+                type: str
                 visu_acl: ro
-                telegram_info: mower 
+                telegram_info: mower
 
-            color: 
-                husky_state: color 
-                type: str 
-                visu_acl: ro
-
-            batterypercent: 
-                husky_state: batterypercent 
-                type: num 
+            color:
+                husky_state: color
+                type: str
                 visu_acl: ro
 
-            battery255: 
-                type: num 
+            batterypercent:
+                husky_state: batterypercent
+                type: num
+                visu_acl: ro
+
+            battery255:
+                type: num
                 visu_acl: ro
                 eval: int(value * 255 / 100)
                 eval_trigger: ..batterypercent
@@ -152,47 +152,47 @@ item_structs:
 
             start:
                 name: Start
-                type: num 
+                type: num
                 husky_control: START_3H
                 visu_acl: rw
-                value: 180 
+                value: 180
                 enforce_updates: True
 
             stop:
-                name: Stop 
-                type: bool 
+                name: Stop
+                type: bool
                 husky_control: STOP
                 visu_acl: rw
                 enforce_updates: True
 
             park:
-                name: Park 
-                type: bool 
-                husky_control: PARK 
+                name: Park
+                type: bool
+                husky_control: PARK
                 visu_acl: rw
                 enforce_updates: True
 
         operating:
-            name: Betriebsdaten (Zwischenspeicher für das Plugin bei Neustart) 
+            name: Betriebsdaten (Zwischenspeicher für das Plugin bei Neustart)
 
             cutting:
-                name: Mähzeit in Millisekunden 
+                name: Mähzeit in Millisekunden
                 type: num
-                husky_operating: CUTTING 
+                husky_operating: CUTTING
                 visu_acl: ro
                 cache: 'True'
 
             parked:
-                name: Parkzeit in Millisekunden 
+                name: Parkzeit in Millisekunden
                 type: num
-                husky_operating: PARKED 
+                husky_operating: PARKED
                 visu_acl: ro
                 cache: 'True'
 
             charging:
-                name: Ladezeit in Millisekunden 
+                name: Ladezeit in Millisekunden
                 type: num
-                husky_operating: CHARGING 
+                husky_operating: CHARGING
                 visu_acl: ro
                 cache: 'True'
 
@@ -204,9 +204,9 @@ item_structs:
                 cache: 'True'
 
             error:
-                name: Fehlerzeit in Millisekunden 
+                name: Fehlerzeit in Millisekunden
                 type: num
-                husky_operating: ERROR 
+                husky_operating: ERROR
                 visu_acl: ro
                 cache: 'True'
 

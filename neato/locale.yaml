@@ -56,6 +56,31 @@ plugin_translations:
     'Vorwerk Token':
         de: '='
         en: '='
+    'Hier Map ID eintragen':
+        de: '='
+        en: 'Insert map ID here'
+    'Schreibt die verfuegbaren Raeume ins Logfile':
+        de: '='
+        en: 'Writes available rooms into logfile'
+    'Liste Raeume':
+        de: '='
+        en: 'List rooms'
+    'Alarme im Backend loeschen':
+        de: '='
+        en: 'Reset alarms in backend'
+    'Verfuegbare Boundary IDs (Raeume) ins Log schreiben':
+        de: '='
+        en: 'Write available boundary IDs (rooms) into logfile'
+
+
+
+
+
+
+
+
+
+
 
 
 

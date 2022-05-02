@@ -5,7 +5,9 @@
 #           2017 Nino Coric                        mail2n.coric@gmail.com
 #           2020,2022 Bernd Meiners                 Bernd.Meiners@mail.de
 #########################################################################
-#  This file is part of SmartHomeNG.    https://github.com/smarthomeNG//
+#  This file is part of SmartHomeNG.
+#  https://www.smarthomeNG.de
+#  https://knx-user-forum.de/forum/supportforen/smarthome-py
 #
 #  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -27,12 +29,14 @@ import re
 import datetime
 
 from lib.model.smartplugin import SmartPlugin
+from lib.item import Items
 from lib.network import Tcp_client
 
+from .webif import WebInterface
 
 class MPD(SmartPlugin):
 
-    PLUGIN_VERSION = "1.5.2"
+    PLUGIN_VERSION = "1.6.0"
     STATUS        = 'mpd_status'
     SONGINFO      = 'mpd_songinfo'
     STATISTIC     = 'mpd_statistic'
@@ -59,10 +63,7 @@ class MPD(SmartPlugin):
         # Call init code of parent class (SmartPlugin)
         super().__init__()
 
-        from bin.smarthome import VERSION
-        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
-            self.logger = logging.getLogger(__name__)
-
+		# get the parameters for the plugin (as defined in metadata plugin.yaml):
         self.instance = self.get_instance_name()
 
         self.host = self.get_parameter_value('host')
@@ -94,6 +95,20 @@ class MPD(SmartPlugin):
         self._mpd_rawCommand = ['rawcommand']
         self._mpd_databaseCommands = ['update', 'rescan']
 
+        
+        # On initialization error use:
+        #   self._init_complete = False
+        #   return
+
+        # if plugin should start even without web interface
+        self.init_webinterface(WebInterface)
+        # if plugin should not start without web interface
+        # if not self.init_webinterface():
+        #     self._init_complete = False
+
+        return
+
+
     def loggercmd(self, logstr, level):
         if not logstr:
             return
@@ -111,12 +126,19 @@ class MPD(SmartPlugin):
             self.logger.critical(logstr)
 
     def run(self):
+        """
+        Run method for the plugin
+        """
+        self.logger.debug("Run method called")
         if not self._client.connect():
             self.logger.error(f'Connection to {self.host}:{self.port} not possible. Plugin deactivated.')
             return
 
         self.alive = True
         self.scheduler_add('update_status', self.update_status, cycle=self._cycle)
+
+        # if you need to create child threads, do not make them daemon = True!
+        # They will not shutdown properly. (It's a python bug)
 
     def stop(self):
         self.alive = False

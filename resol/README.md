@@ -15,8 +15,6 @@ https://knx-user-forum.de/forum/supportforen/smarthome-py/919242-neues-plugin-re
 The following python packages need to be installed on your system:
 - none
 
-```
-
 ### plugin.yaml
 
 ```
@@ -28,7 +26,10 @@ resol:
     port: 7053    # port of VBUS LAN usualy is 7053!
     password: xxx
 ```
-More information of resol parameter and sources, see here: https://danielwippermann.github.io/resol-vbus/vbus-packets.html
+More information of resol parameter and sources, see here: 
+https://github.com/danielwippermann/resol-vbus
+https://danielwippermann.github.io/resol-vbus/#/vsf
+
 Install Programm Resol Service Center to read offset und Bituse:
 - They are provided in XML by RESOL as part of the RSC (Resol Service Center) download. Just download, install (on linux use wine, it will work) and get the required file for your installation from: {Install_dir}/eclipse/plugins/de.resol.servicecenter.vbus.resol_2.0.0/ -
 
@@ -75,6 +76,34 @@ resol:
          - '1000000'
          - '256000000'
 
+    solar:
+        resol_source@solar: '0x7721'
+        resol_destination@solar: '0x0010'
+        resol_command@solar: '0x0100'
+
+        sensordefektmaske:
+            type: num
+            visu_acl: ro
+            resol_offset@solar: 36
+            resol_bituse@solar: 16
+            resol_factor@solar:
+             - '1.0'
+             - '256.0'
+
+        temperatur_1:
+            name: 'Temperature Kollektor'
+            type: num
+            visu_acl: ro
+            database: init
+            database_maxage: 62
+            resol_offset@solar: 0
+            resol_bituse@solar: 16
+            resol_factor@solar: 
+             - '0.1'
+             - '25.6'
+            resol_isSigned@solar:
+             - False
+             - True
 
 
 ```

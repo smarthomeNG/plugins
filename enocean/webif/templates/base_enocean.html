@@ -29,5 +29,6 @@
 {% block buttons %}
 <button type="button" class="btn btn-shng btn-sm" title="{{ _('Senden An/Aus') }}" onclick="confirmDelete('?action=toggle_tx_blocking','{{ _('Wollen Sie das Senden wirklich umschalten?') }}')">{{ _('Senden An/Aus') }}</button>
 <button type="button" class="btn btn-shng btn-sm" title="{{ _('Logging von unbekannten Enocean Nachrichten ins Logfile An/Aus') }}" onclick="toggleLogUnknown()">{{ _('Unknown An/Aus') }}</button>
+<button type="button" class="btn btn-shng btn-sm" title="{{ _('UTE An/Aus') }}" onclick="prepareUTECommand();">{{ _('UTE An/Aus') }}</button>
 
 {% endblock buttons %}

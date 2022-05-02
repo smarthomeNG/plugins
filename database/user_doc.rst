@@ -1,5 +1,5 @@
-.. index:: Plugins; Database (Database Unterstützung)
-.. index:: Database
+.. index:: Plugins; database (Datenbank Unterstützung)
+.. index:: database
 
 ========
 database

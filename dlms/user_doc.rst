@@ -1,5 +1,5 @@
-.. index:: Plugins; DLMS (Auslesung von Smartmetern via DLMS)
-.. index:: DLMS
+.. index:: Plugins; dlms (Auslesen von Smartmetern via DLMS)
+.. index:: dlms
 
 ====
 dlms

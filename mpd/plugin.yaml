@@ -12,10 +12,10 @@ plugin:
     documentation: https://www.smarthomeng.de/user/plugins/mpd/README.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1540433-support-thread-für-das-mpd-plugin
 
-# Following entries are for Smart-Plugins:
-    version: 1.5.2                 # Plugin version
-    sh_minversion: 1.9.0           # minimum shNG version to use this plugin
-#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    version: 1.6.0                 # Plugin version
+    sh_minversion: 1.8.2a          # minimum shNG version to use this plugin
+    #sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    py_minversion: 3.6             # minimum Python version to use for this plugin
     multi_instance: true
     restartable: true
     classname: MPD                 # class containing the plugin

@@ -12,8 +12,8 @@ plugin:
     documentation: http://smarthomeng.de/user/plugins/visu_smartvisu/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1586800-support-thread-für-das-smartvisu-plugin
 
-    version: 1.8.3a                 # Plugin version
-    sh_minversion: 1.8.1            # minimum shNG version to use this plugin
+    version: 1.8.6                 # Plugin version
+    sh_minversion: 1.8.1           # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     py_minversion: 3.6             # minimum Python version to use for this plugin
 #    py_maxversion:                 # maximum Python version to use for this plugin (leave empty if latest)

@@ -73,7 +73,7 @@ The following attributes can be used in the plugin configuration:
      used to invoke the `connect()` function of the DB API 2 implementation
      (for SQLite lookup [here](http://docs.python.org/3.2/library/sqlite3.html#sqlite3.connect),
      other databases depends on implementation). An example connect string for pymysql could be
-     `connect = host:127.0.0.1 | user:db_user | passwd:db_password | db:smarthome`
+     `connect = host:127.0.0.1 | port:3306 | user:db_user | passwd:db_password | db:smarthome`
    * `prefix` - if you want to log into an existing database with other tables
      you can specify a prefix for the plugins' tables
    * `precision` - specifies the amount of digits after comma for values
@@ -87,8 +87,11 @@ The plugin supports the types `str`, `num` and `bool` which can be logged
 into the database.
 
 #### database
-This attribute enables the database logging when set (just use value `yes`). If value `init` is used, an item will 
-be initalized from the database after SmartHomeNG is restarted.
+This attribute enables the database logging when set (just use value `yes`).
+
+If value `init` is used, the item will
+be initialized from the database after SmartHomeNG is restarted. Also, in this
+case the item's inital_value is prevented from being written to the database.
 
 ```yaml
 some:

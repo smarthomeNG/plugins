@@ -31,7 +31,7 @@ plugin:
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1097870-neues-plugin-av-device-f%C3%BCr-yamaha-pioneer-denon-etc
 
-    version: 1.6.3                # Plugin version
+    version: 1.6.4                # Plugin version
     sh_minversion: 1.6            # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True          # plugin supports multi instance
@@ -268,6 +268,28 @@ parameters:
         description_long:
             de: "Verbindet sich das Plugin, werden die Werte automatisch abgefragt, auch wenn kein Depend=Init im Item angegeben ist. Sollen nur Items abgefragt werden, bei denen das depend-Attribut auf init gesetzt ist, sollte dieser Wert auf False gestellt werden."
             en: "As soon as the plugin connects to the device the values get queried automatically even if the Depend=Init is not set in the items. If you want to query only those items that are set explicitly change this value to False."
+
+    webif_pagelength:
+        type: int
+        default: 0
+        valid_list:
+            - -1
+            - 0
+            - 25
+            - 50
+            - 100
+        description:
+            de: 'Anzahl an Items, die standardmäßig in einer Web Interface Tabelle pro Seite angezeigt werden.
+                 0 = automatisch, -1 = alle'
+            en: 'Amount of items being listed in a web interface table per page by default.
+                 0 = automatic, -1 = all'
+        description_long:
+            de: 'Anzahl an Items, die standardmäßig in einer Web Interface Tabelle pro Seite angezeigt werden.\n
+                 Bei 0 wird die Tabelle automatisch an die Höhe des Browserfensters angepasst.\n
+                 Bei -1 werden alle Tabelleneinträge auf einer Seite angezeigt.'
+            en: 'Amount of items being listed in a web interface table per page by default.\n
+                 0 adjusts the table height automatically based on the height of the browser windows.\n
+                 -1 shows all table entries on one page.'
 
 item_attributes:
 

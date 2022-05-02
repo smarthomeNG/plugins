@@ -1,18 +1,19 @@
+
 .. index:: Plugins; Webservices (REST Interface)
 .. index:: Webservices
 .. index:: REST Interface
 
-webservices
+webservicew
 ===========
 
-Das Webservices Plugin stellt ein REST basiertes API für SmartHomeNG bereit. 
+Das Webservices Plugin stellt ein REST basiertes API für SmartHomeNG bereit.
 Es werden PUT und GET Kommandos unterstützt.
 
 Anforderungen
 -------------
 
 Das Plugin benötigt CherryPy um zu laufen, sowie ein konfiguriertes http Modul in SmartHomeNG.
-Grundsätzlich ist das http Modul in SmartHomeNG bereits konfiguriert. Die Konfiguration kann über das 
+Grundsätzlich ist das http Modul in SmartHomeNG bereits konfiguriert. Die Konfiguration kann über das
 Admin Interface geändert werden oder durch direkte Änderung in der Datei ``etc/module.yaml`` jeweils mit anschließendem
 Neustart von SmartHomeNG.
 
@@ -57,14 +58,14 @@ Zugriffen, die im Folgenden beschrieben werden.
 
    .. tab:: Einfaches Interface
 
-      .. tabs:: 
+      .. tabs::
 
          .. tab:: Itemwert abfragen
 
             Mit einer URL ``http://{SmartHomeNG IP}:{http_modul_services_port}/ws/items/{item_path}``
             wird ein Datensatz inklusive Metadaten abgefragt.
 
-            Beispielsweise liefern Abfragen wie ``http://192.168.1.1:8384/ws/items/knx.gf.office.light`` 
+            Beispielsweise liefern Abfragen wie ``http://192.168.1.1:8384/ws/items/knx.gf.office.light``
             folgende JSON formatierte Daten:
 
             .. code:: JSON
@@ -119,7 +120,7 @@ Zugriffen, die im Folgenden beschrieben werden.
             Mit der URL ``http://{SmartHomeNG IP}:{http_modul_services_port}/rest/items/{item_path}``
             (HTTP GET) wird ein Datensatz inklusive Metadaten abgefragt.
 
-            Beispielsweise liefern Abfragen wie ``http://192.168.1.1:8384/rest/items/knx.gf.office.light`` 
+            Beispielsweise liefern Abfragen wie ``http://192.168.1.1:8384/rest/items/knx.gf.office.light``
             folgende JSON formatierte Daten:
 
             .. code:: JSON
@@ -170,10 +171,10 @@ Web Interface
 Das webservices Plugin verfügt über ein Webinterface, mit dessen Hilfe die Items, die das Plugin nutzen kann,
 übersichtlich dargestellt werden.
 
-.. important:: 
+.. important::
 
    Das Webinterface des Plugins kann mit SmartHomeNG v1.4.2 und davor **nicht** genutzt werden.
-   Es wird dann nicht geladen. Diese Einschränkung gilt nur für das Webinterface. Ansonsten gilt 
+   Es wird dann nicht geladen. Diese Einschränkung gilt nur für das Webinterface. Ansonsten gilt
    für das Plugin die in den Metadaten angegebene minimale SmartHomeNG Version.
 
 
@@ -183,7 +184,7 @@ Aufruf des Webinterfaces
 Das Plugin kann aus dem Admin Interface aufgerufen werden. Dazu auf der Seite Plugins in der entsprechenden
 Zeile das Icon in der Spalte **Web Interface** anklicken.
 
-Außerdem kann das Webinterface direkt über ``http://\<SmartHomeNG_IP\>:\<http_modul_port\>/plugin/\<webservices\>`` 
+Außerdem kann das Webinterface direkt über ``http://\<SmartHomeNG_IP\>:\<http_modul_port\>/plugin/\<webservices\>``
 aufgerufen werden.
 
 ``http_modul_port`` steht in diesem Fall für den im http Modul definierten Port.
@@ -194,7 +195,7 @@ Beispiele
 
 Folgende Informationen können im Webinterface angezeigt werden:
 
-Oben rechts werden allgemeine Parameter zum Plugin angezeigt. 
+Oben rechts werden allgemeine Parameter zum Plugin angezeigt.
 
 Im unteren Teil werden die Items angezeigt, die per REST Interface abgefragt werden können:
 

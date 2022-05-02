@@ -1,0 +1,67 @@
+# Metadata for the Smart-Plugins
+plugin:
+# Global plugin attributes
+    type: interface                 # plugin type (gateway, interface, protocol, system, web)
+    description:
+        de: 'Implementiert LevelJET Regenwasser Fuellstandsanzeige (www.projet.de)'
+        en: 'Plugin implements LevelJET water level indicator (www.projet.de)'
+    maintainer: 'knatter'
+    tester: blobo                   # Who tests this plugin?
+    state: ready                    # change to ready when done with development
+#    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
+    version: 1.0.1                 # Plugin version
+    sh_minversion: 1.3             # minimum shNG version to use this plugin
+#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    multi_instance: False
+    restartable: unknown
+    classname: LevelJet                 # class containing the plugin
+
+parameters:
+    # Definition of parameters to be configured in etc/plugin.yaml
+    serialport:
+        type: str
+        mandatory: TRUE
+        description:
+            de: 'Pfad zu serieller USB Schnittstelle (default: /dev/ttyUSB1)'
+            en: 'Path to serail USB interface (optional, default: /dev/ttyUSB1)'
+
+    update_cycle:
+        type: str
+        mandatory: False
+        description:
+            de: 'zyklische Abfrage [sek.) (default: 240)'
+            en: 'cyclic update request [sec.] (default: 240)'
+
+    baudrate:
+        type: str
+        mandatory: False
+        description:
+            de: 'Baudrate (default: 19200)'
+            en: 'Baudrate (default: 19200)'
+
+item_attributes:
+    # Definition of item attributes defined by this plugin
+    ljet_cmd:
+        type: str
+        valid_list:
+        - dist
+        - level
+        - liter
+        - percent
+        - outflags
+        description:
+            de: 'Wert der von den leveljet Device in das Item eigelesen werden soll'
+            en: 'Data to read from the leveljet device into the item'
+
+item_structs: NONE
+    # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
+
+#item_attribute_prefixes:
+    # Definition of item attributes that only have a common prefix (enter 'item_attribute_prefixes: NONE' or ommit this section, if section should be empty)
+    # NOTE: This section should only be used, if really nessesary (e.g. for the stateengine plugin)
+
+plugin_functions: NONE
+    # Definition of plugin functions defined by this plugin (enter 'plugin_functions: NONE', if section should be empty)
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)

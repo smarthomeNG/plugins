@@ -1,0 +1,43 @@
+plugin_translations:
+    # Translations for the plugin specially for the web interface
+    'AVM Datentyp':     {'de': '=', 'en': 'AVM Data Type', 'fr': ''}
+    'AVM Items':        {'de': '=', 'en': '=', 'fr': ''}
+    'Pfad':             {'de': '=', 'en': 'Path', 'fr': ''}
+    'Typ':              {'de': '=', 'en': 'Type', 'fr': ''}
+    'Wert':             {'de': '=', 'en': 'Value', 'fr': ''}
+    'Letztes Update':   {'de': '=', 'en': 'Last Update', 'fr': ''}
+    'Letzter Change':   {'de': '=', 'en': 'Last Change', 'fr': ''}
+    'Plugin-API':       {'de': '=', 'en': 'Plugin API', 'fr': ''}
+    'Call Monitor Items':       {'de': '=', 'en': '=', 'fr': ''}
+    'Call Monitor':     {'de': '=', 'en': '=', 'fr': ''}
+    'Parameter':        {'de': '=', 'en': 'Parameters', 'fr': ''}
+    'Ja':               {'de': '=', 'en': 'Yes', 'fr': ''}
+    'Nein':             {'de': '=', 'en': 'No', 'fr': ''}
+    'Gerät verfügbar':  {'de': '=', 'en': 'Device Available', 'fr': ''}
+    'Gerät nicht verfügbar':  {'de': '=', 'en': 'Device Not Available', 'fr': ''}
+    'Call Monitor nicht verbunden':  {'de': '=', 'en': 'Call Monitor Not Connected', 'fr': ''}
+    'Call Monitor verbunden': {'de': '=', 'en': 'Device Connected', 'fr': ''}
+    'nicht verbunden': {'de': '=', 'en': 'not connected', 'fr': ''}
+    'Reboot': {'de': '=', 'en': '=', 'fr': ''}
+    'Log-Einträge': {'de': '=', 'en': 'Log Entries', 'fr': ''}
+    'cat_1': {'de': 'System', 'en': 'System', 'fr': ''}
+    'cat_2': {'de': 'Internetverbindung', 'en': 'Internet Connection', 'fr': ''}
+    'cat_3': {'de': 'Telefonie', 'en': 'Telephony', 'fr': ''}
+    'cat_4': {'de': 'WLAN', 'en': 'WiFi', 'fr': ''}
+    'cat_5': {'de': 'USB-Geräte', 'en': 'USB Devices', 'fr': ''}
+    'Nachrichtennummer': {'de': '=', 'en': 'Message Number', 'fr': ''}
+    'Keine Logeinträge oder Zugriffsfehler (ggf. SmartHomeNG Log prüfen).': {'de': '=', 'en': 'No log entries or problem during retrieval (perhaps check SmartHomeNG log files).', 'fr': ''}
+    'Meldung': {'de': '=', 'en': 'Message', 'fr': ''}
+    'Kategorie': {'de': '=', 'en': 'Category', 'fr': ''}
+    'Wollen Sie das Gerät wirklich neu starten?':
+        'de': '='
+        'en': 'Do you really want to reboot the device?'
+        'fr': ''
+    'Reconnect WAN': {'de': '=', 'en': '=', 'fr': ''}
+    'Wollen Sie die Internetverbindung wirklich neu aufbauen?':
+        'de': '='
+        'en': 'Do you really want to reconnect the internet connection?'
+        'fr': ''
+
+
+

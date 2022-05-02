@@ -5,8 +5,25 @@
 hue2
 ====
 
+.. image:: webif/static/img/plugin_logo.png
+   :alt: plugin logo
+   :width: 300px
+   :height: 300px
+   :scale: 50 %
+   :align: left
+
+
 Das Plugin unterstützt Philips Hue Bridges. Es ist eine komplette Neuentwicklung mit einem deutlich erweiterten
-Funktionsumfang gegenüber dem alten Hue Plugin:
+Funktionsumfang gegenüber dem alten Hue Plugin.
+
+Es unterstützt die zweite Generation der Philips Hue Bridges und bisher auch noch die Bridges der ersten Generation,
+die von Philips inzwischen retired wurden und keine Unterstützung durch Philips mehr erfahren.
+
+
+Neue Features
+=============
+
+Das Plugin bietet im Vergleich zum **hue** Plugin zusätzlich folgende Features:
 
 - Die Authorisierung an der Hue Bride ist in das Plugin integriert und erfolgt über das Webinferface des Plugins.
 - Das Plugin hat eine Funktion um aktive Hue Bridges im lokalen Netzwerk zu finden.
@@ -181,6 +198,10 @@ Die vollständige Übersicht über die unterstützen Funktionen und die Datentyp
 Seite :doc:`/plugins_doc/config/hue2` in der Beschreibung des Item Attributes ``hue2_function`` nachgelesen
 werden.
 
+.. note::
+
+    Pullrequest https://github.com/smarthomeNG/plugins/pull/590 implementierte zusätzliche für hue2_function die
+    zusätzlichen Optionen ``bri_inc`` und ``dict``, welche noch nicht vollständig dokumentiert sind.
 
 Um den Namen der Leuchte mit der Id 3 abzufragen, muss ein Item folgendermaßen konfiguriert werden:
 

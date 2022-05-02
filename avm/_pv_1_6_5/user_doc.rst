@@ -1,12 +1,57 @@
 
 AVM
-###
+===
 
 Changelog
-=========
+---------
+1.6.6
+~~~~~
+
+- Methode get_color_defaults implementiert, welche die aktuell von AVM unterstützen diskreten RGB Farben ausliest.
+- Methode set_color und color auf diskrete RGB farben umgestellt. Beliebige RGB Farbwerte werden erst ab Q2 2022 von AVM unterstützt.
+
+1.6.5
+~~~~~
+
+- Session_ID wird nur noch bei Bedarf erzeugt (bleibt nach Erstellung 20min gültig und verlängert sich bei erfolgreichem Login)
+- Update auf PBKDF2 zur Absicherung der Anmeldung; MD5 als Backup
+- Methoden "_get_sid", "_get_login_infos_from_http_request", "_http_logout_request", "_check_sid", "_calculate_pbkdf2_response", "_calculate_md5_response" hinzu
+- Bugfixing, Verbesserung der Logausgaben
+- Codevereinfachung und Korrektur
+- Plugin Parameter für WebIF Page Length hinzu
+- Plugin Parameter für Aktivierung der Nutzung des AHA-HTTP Interfaces hinzu
+
+1.6.4
+~~~~~
+
+- Attribut 'ain' deprecated gesetzt; Verwendung von 'avm_ain', so dass alle avm Plugin Attribute auch mit 'avm' beginnen
+- Überprüfung aller unterstützen Attributwerte avm_data_type
+- Anpassung der update_black_list
+- Verbesserung des Handling von avm_data_type für r/o, w/o und r/w Items
+- Vereinfachung des Code bei _update_x methods
+- Ergänzung weiterer Attributwerte bei avm_data_type
+
+1.6.3
+~~~~~
+
+- Debug des Attributs set_hkr_boost und hkr_boost
+- Update der Datatables im WebIF
+- Update des automatischen Update im WebIF
+- Information zu Attributwerten von 'avm_data_type' ergänzt
+- Beispiel für Anwendung der structs mit Instanz erstellt
+- Änderung von 'temperatur' auf 'temperature' im struct
+- Verbesserung der LogAusgabe, wenn AbfrageAttribut vorhanden aber Wert nicht vorhanden ist
+
+1.6.2
+~~~~~
+- Bugfixing der neuen Funktionen in 1.6.0
+
+1.6.1
+~~~~~
+- Bugfixing der neuen Funktionen in 1.6.0
 
 1.6.0
------
+~~~~~
 
 - Anbindung der Smarthome Devices über AHA-Interface hinzugefügt (getestet mit Fritz 440, Comet Dect)
 - Funktionen für Rufumleitungen hinzugefügt (getestet mit Fritzbox 7530)
@@ -15,26 +60,26 @@ Changelog
 - Verbesserung der Fehlerbehandlung (insbesondere bei Zugriffsfehlern auf des FritzDevice)
 
 Allgemeine Informationen
-========================
+------------------------
 
 Im Plugin wird das TR-064 Protokoll und das AHA Protokoll verwendet.
 
 Links zur Definition des TR-064 Protokolls:
-https://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/X_contactSCPD.pdf
-http://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/hostsSCPD.pdf
-http://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/wanipconnSCPD.pdf
-http://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/x_voipSCPD.pdf
+    https://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/X_contactSCPD.pdf
+    http://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/hostsSCPD.pdf
+    http://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/wanipconnSCPD.pdf
+    http://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/x_voipSCPD.pdf
 
 
 Links zur Definition des AHA Protokolls:
-https://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/AHA-HTTP-Interface.pdf
+    https://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/AHA-HTTP-Interface.pdf
 
 
 Unterstützung erhält man im Forum unter: https://knx-user-forum.de/forum/supportforen/smarthome-py/934835-avm-plugin
 
 
 Konfiguration der Fritz!Box
-===========================
+---------------------------
 
 Für die Nutzung der Informationen über Telefonereignisse muss der CallMonitor aktiviert werden. Dazu muss auf
 einem direkt an die Fritz!Box angeschlossenen Telefon (Analog, ISDN S0 oder DECT) \*96#5# eingegeben werden.
@@ -42,10 +87,11 @@ einem direkt an die Fritz!Box angeschlossenen Telefon (Analog, ISDN S0 oder DECT
 Bei neueren Firmware Versionen (ab Fritz!OS v7) Muss die Anmeldung an der Box von "nur mit Kennwort" auf "Benutzername
 und Kennwort umgestellt werden" und es sollte ein eigener User für das AVM Plugin auf der Fritz!Box eingerichtet werden.
 
-Konfiguration des Plugins
-=========================
 
-Die Konfigruation des Plugins erfolgt über das Admin-Interface.
+Konfiguration des Plugins
+---------------------------
+
+Die Konfiguration des Plugins erfolgt über das Admin-Interface.
 Dafür stehen die folgenden Einstellungen zur Verfügung:
 
 - `username`: Required login information
@@ -60,7 +106,8 @@ Dafür stehen die folgenden Einstellungen zur Verfügung:
 
 Alternativ kann das Plugin auch manuell konfiguriert werden.
 
-.. code:: yaml
+
+.. code-block:: yaml
 
     fb1:
         class_name: AVM
@@ -89,50 +136,56 @@ Alternativ kann das Plugin auch manuell konfiguriert werden.
         call_monitor: 'True'
         instance: wlan_repeater_1750
 
-.. note:: Kürzere Updatezyklen können abhängig vm Fritzdevice aufgrund von CPU Auslastung und damit zu Problemen (u.a. zu Nichterreichbarkeit des Webservice) führen. Wird ein kürzerer Updatezyklus benötigt, sollte das shNG Log beobachtet werden. Dort werden entsprechende Fehlermeldungen hinterlegt.
+.. note::
+
+    Kürzere Updatezyklen können abhängig vm Fritzdevice aufgrund von CPU Auslastung und damit zu Problemen (u.a.
+    zu Nichterreichbarkeit des Webservice) führen. Wird ein kürzerer Updatezyklus benötigt, sollte das shNG Log
+    beobachtet werden. Dort werden entsprechende Fehlermeldungen hinterlegt.
+
 
 Konfiguration des Items
-=======================
+-----------------------
 
 Zur Konfiguration der Items stehen folgende Parameter zur Verfügung:
 
 avm_data_type
--------------
+~~~~~~~~~~~~~
 This attribute defines supported functions that can be set for an item. Full set see plugin.yaml.
 For most items, the avm_data_type can be bound to an instance via @... . Only in some points the items
 are parsed as child items.
 
 avm_incoming_allowed
---------------------
+~~~~~~~~~~~~~~~~~~~~
 Definition der erlaubten eingehenden Rufnummer in Items vom avm_data_type `monitor_trigger`.'
 
 avm_target_number
------------------
+~~~~~~~~~~~~~~~~~
 Definition der erlaubten angerufenen Rufnummer in Items vom avm_data_type `monitor_trigger`.'
 
 avm_wlan_index
---------------
-Definition des Wlans über index: (1: 2.4Ghz, 2: 5Ghz, 3: Gäste).'
+~~~~~~~~~~~~~~
+Definition des Wlans ueber index: (1: 2.4Ghz, 2: 5Ghz, 3: Gaeste).'
 
 avm_mac
--------
+~~~~~~~
 Definition der MAC Adresse für Items vom avm_data_type `network_device`. Nur für diese Items mandatory!'
 
 ain
----
+~~~
 Definition der Aktor Identifikationsnummer (AIN)Items für smarthome Items. Nur für diese Items mandatory!'
 
 avm_tam_index
--------------
-Index für den Anrufbeantworter, normalerweise für den ersten eine "1". Es werden bis zu 5 Anrufbeantworter vom Gerät unterstützt.'
+~~~~~~~~~~~~~
+Index für den Anrufbeantworter, normalerweise für den ersten eine "1". Es werden bis zu 5 Anrufbeantworter vom Gerät
+unterstützt.'
 
 avm_deflection_index
---------------------
+~~~~~~~~~~~~~~~~~~~~
 Index für die Rufumleitung, normalerweise für die erste eine "1".'
 
 
 item_structs
-============
+------------
 Zur Vereinfachung der Einrichtung von Items sind für folgende Item-structs vordefiniert:
 
 - ``info``  -  General Information about Fritzbox
@@ -149,10 +202,11 @@ Zur Vereinfachung der Einrichtung von Items sind für folgende Item-structs vord
 - ``smarthome_switch``  -  spezifische Informationen eines DECT smarthome Devices mit Schalter
 - ``smarthome_powermeter``  -  spezifische Informationen eines DECT smarthome Devices mit Strommessung
 
-Item Beispiel mit Verwendung der structs
-----------------------------------------
 
-.. code:: yaml
+Item Beispiel mit Verwendung der structs ohne Instanz
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: yaml
 
     avm:
         fritzbox:
@@ -201,59 +255,84 @@ Item Beispiel mit Verwendung der structs
                   - avm.smarthome_hkr
                   - avm.smarthome_temperatur_sensor
 
+
+Item Beispiel mit Verwendung der structs mit Instanz
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: yaml
+
+    smarthome:
+        socket_3D_Drucker:
+            type: foo
+            ain@fritzbox_1: 'xxxxx xxxxxxx'
+            instance: fritzbox_1
+            struct:
+              - avm.smarthome_general
+              - avm.smarthome_switch
+              - avm.smarthome_powermeter
+              - avm.smarthome_temperature_sensor
+            temperature:
+                database: 'yes'
+            power:
+                database: 'yes'
+
+Hier wird zusätzlich das Item "smarthome.socket_3D_Drucker.temperature", welches durch das struct erstellt wird, um das
+Attribut "database" ergänzt, um den Wert in die Datenbank zuschreiben.
+
+
 Plugin Funktionen
-=================
+-----------------
 
 cancel_call
------------
+~~~~~~~~~~~
 
 Beendet einen aktiven Anruf.
 
 get_call_origin
----------------
+~~~~~~~~~~~~~~~
 
 Gib den Namen des Telefons zurück, das aktuell als 'call origin' gesetzt ist.
 
-.. code:: python
+.. code-block:: python
 
     phone_name = sh.fritzbox_7490.get_call_origin()
 
 
 CURL for this function:
-.. code:: bash
+
+.. code-block:: bash
 
     curl --anyauth -u user:password "https://fritz.box:49443/upnp/control/x_voip" -H "Content-Type: text/xml; charset="utf-8"" -H "SoapAction:urn:dslforum-org:service:X_VoIP:1#X_AVM-DE_DialGetConfig" -d "<?xml version='1.0' encoding='utf-8'?><s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'><s:Body><u:X_AVM-DE_DialGetConfig xmlns:u='urn:dslforum-org:service:X_VoIP:1' /></s:Body></s:Envelope>" -s -k
 
-
 get_calllist
-------------
+~~~~~~~~~~~~
 Ermittelt ein Array mit dicts aller Einträge der Anrufliste (Attribute 'Id', 'Type', 'Caller', 'Called', 'CalledNumber', 'Name', 'Numbertype', 'Device', 'Port', 'Date',' Duration' (einige optional)).
 
 get_contact_name_by_phone_number(phone_number)
-----------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Durchsucht das Telefonbuch mit einer (vollständigen) Telefonnummer nach Kontakten. Falls kein Name gefunden wird, wird die Telefonnummer zurückgeliefert.
 
 get_device_log_from_lua
------------------------
+~~~~~~~~~~~~~~~~~~~~~~~
 Ermittelt die Logeinträge auf dem Gerät über die LUA Schnittstelle /query.lua?mq_log=logger:status/log.
 
 get_device_log_from_tr064
--------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~
 Ermittelt die Logeinträge auf dem Gerät über die TR-064 Schnittstelle.
 
 get_host_details
-----------------
+~~~~~~~~~~~~~~~~
 Ermittelt die Informationen zu einem Host an einem angegebenen Index.
 dict keys: name, interface_type, ip_address, mac_address, is_active, lease_time_remaining
 
 get_hosts
----------
+~~~~~~~~~
 Ermittelt ein Array mit den Details aller verbundenen Hosts. Verwendet wird die Funktion "get_host_details"
 
 Beispiel einer Logik, die die Host von 3 verbundenen Geräten in eine Liste zusammenführt und in ein Item schreibt.
 'avm.devices.device_list'
 
-.. code:: python
+.. code-block:: python
 
     hosts = sh.fritzbox_7490.get_hosts(True)
     hosts_300 = sh.wlan_repeater_300.get_hosts(True)
@@ -283,19 +362,18 @@ Beispiel einer Logik, die die Host von 3 verbundenen Geräten in eine Liste zusa
     sh.avm.devices.device_list(string)
 
 get_phone_name
---------------
+~~~~~~~~~~~~~~
 Gibt den Namen eines Telefons an einem Index zurück. Der zurückgegebene Wert kann in 'set_call_origin' verwendet werden.
 
-.. code:: python
+.. code-block:: python
 
     phone_name = sh.fb1.get_phone_name(1)
 
-
 get_phone_numbers_by_name(name)
--------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Durchsucht das Telefonbuch mit einem Namen nach nach Kontakten und liefert die zugehörigen Telefonnummern.
 
-.. code:: python
+.. code-block:: python
 
     result_numbers = sh.fritzbox_7490.get_phone_numbers_by_name('Mustermann')
     result_string = ''
@@ -313,65 +391,66 @@ Durchsucht das Telefonbuch mit einem Namen nach nach Kontakten und liefert die z
     sh.general_items.number_search_results(result_string)
 
 is_host_active
---------------
-Prüft, ob eine MAC Adresse auf dem Gerät aktiv ist. Das kann bspw. für die Umsetzung einer Präsenzerkennung genutzt werden.
+~~~~~~~~~~~~~~
+Prüft, ob eine MAC Adresse auf dem Gerät aktiv ist. Das kann bspw. für die Umsetzung einer Präsenzerkennung genutzt
+werden.
 
 CURL for this function:
-.. code:: bash
+
+.. code-block:: bash
 
     curl --anyauth -u user:password "https://fritz.box:49443/upnp/control/hosts" -H "Content-Type: text/xml; charset="utf-8"" -H "SoapAction:urn:dslforum-org:service:Hosts:1#GetSpecificHostEntry" -d "<?xml version='1.0' encoding='utf-8'?><s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'><s:Body><u:GetSpecificHostEntry xmlns:u='urn:dslforum-org:service:Hosts:1'><s:NewMACAddress>XX:XX:XX:XX:XX:XX</s:NewMACAddress></u:GetSpecificHostEntry></s:Body></s:Envelope>" -s -k
 
 reboot
-------
+~~~~~~
 Startet das Gerät neu.
 
 reconnect
----------
+~~~~~~~~~
 Verbindet das Gerät neu mit dem WAN (Wide Area Network).
 
 set_call_origin
----------------
+~~~~~~~~~~~~~~~
 Setzt den 'call origin', bspw. vor dem Aufruf von 'start_call'. Typischerweise genutzt vor der Verwendung von "start_call".
-Der Origin kann auch mit direkt am Fritzdevice eingerichtet werden: "Telefonie -> Anrufe -> Wählhilfe verwenden -> Verbindung mit dem Telefon".
+Der Origin kann auch mit direkt am Fritzdevice eingerichtet werden: "Telefonie -> Anrufe -> Wählhilfe verwenden ->
+Verbindung mit dem Telefon".
 
-.. code:: python
+.. code-block:: python
 
     sh.fb1.set_call_origin("<phone_name>")
 
 start_call
-----------
+~~~~~~~~~~
 Startet einen Anruf an eine übergebene Telefonnummer (intern oder extern).
 
-.. code:: python
+.. code-block:: python
 
     sh.fb1.start_call('0891234567')
     sh.fb1.start_call('**9')
 
-
 wol(mac_address)
-----------------
+~~~~~~~~~~~~~~~~
 Sendet einen WOL (WakeOnLAN) Befehl an eine MAC Adresse.
 
 get_number_of_deflections
--------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~
 Liefert die Anzahl der Rufumleitungen zurück.
 
 get_deflection
---------------
+~~~~~~~~~~~~~~
 Liefert die Details der Rufumleitung der angegebenen ID zurück (Default-ID = 0)
 
 get_deflections
----------------
+~~~~~~~~~~~~~~~
 Liefert die Details aller Rufumleitungen zurück.
 
 set_deflection_enable
----------------------
+~~~~~~~~~~~~~~~~~~~~~
 Schaltet die Rufumleitung mit angegebener ID an oder aus.
 
 
-
 Web Interface
-=============
+-------------
 
 Das avm Plugin verfügt über ein Webinterface, mit dessen Hilfe die Items die das Plugin nutzen
 übersichtlich dargestellt werden.
@@ -384,7 +463,7 @@ Das avm Plugin verfügt über ein Webinterface, mit dessen Hilfe die Items die d
 
 
 Aufruf des Webinterfaces
-------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 Das Plugin kann aus dem Admin-IF aufgerufen werden. Dazu auf der Seite Plugins in der entsprechenden
 Zeile das Icon in der Spalte **Web Interface** anklicken.

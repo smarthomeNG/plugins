@@ -12,7 +12,7 @@ plugin:
   documentation: https://github.com/smarthomeNG/plugins/tree/master/sonos # url of documentation (wiki) page
   support: https://knx-user-forum.de/forum/supportforen/smarthome-py/25151-sonos-anbindung
 
-  version: 1.6.2                 # Plugin version
+  version: 1.6.4                 # Plugin version
   sh_minversion: 1.5.1           # minimum shNG version to use this plugin
   py_minversion: 3.5             # minimum Python version to use for this plugin
   multi_instance: False          # plugin supports multi instance
@@ -89,7 +89,6 @@ item_attributes:
       en: 'Sonos unique device ID'
     mandatory: 'False'
 
-
   sonos_recv:
     type: str
     description:
@@ -130,6 +129,7 @@ item_attributes:
     - tts_local_mode
     - night_mode
     - dialog_mode
+    - buttons_enabled
     - cross_fade
     - coordinator
     - snooze
@@ -184,6 +184,7 @@ item_attributes:
     - set_playlist
     - night_mode
     - dialog_mode
+    - buttons_enabled
     - cross_fade
     - snooze
     - status_light

@@ -12,7 +12,7 @@ plugin:
     documentation: http://smarthomeng.de/user/plugins/tasmota/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1520293-support-thread-für-das-tasmota-plugin
 
-    version: 1.2.0                 # Plugin version
+    version: 1.2.2                 # Plugin version
     sh_minversion: 1.7.2           # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     py_minversion: 3.6             # minimum Python version to use for this plugin
@@ -28,6 +28,7 @@ parameters:
         description:
             de: Vollständiges Topic (Prefix und Topic) zur Kommunikation mit den Tasmota Devices
             en: Full topic (prefix und topic) for communication with tasmota devices
+
     telemetry_period:
         type: int
         default: 300
@@ -36,6 +37,18 @@ parameters:
         description:
             de: Zeitabstand in Sekunden in dem die Tasmota Devices Telemetrie Daten senden sollen
             en: Timeperiod in seconds in which Tasmota devices shall send telemetry data
+
+    webif_pagelength:
+      type: int
+      default: 100
+      valid_list:
+        - -1
+        - 25
+        - 50
+        - 100
+      description:
+        de: 'Anzahl an Items, die standardmäßig in einer Web Interface Tabelle pro Seite angezeigt werden'
+        en: 'Amount of items being listed in a web interface table per page by default'
 
 item_attributes:
     # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)

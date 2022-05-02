@@ -276,6 +276,7 @@ class SmartVisuGenerator:
         self.copy_tpl('rooms_lite.html')
         self.copy_tpl('category.html')
         self.copy_tpl('index.html')
+        self.copy_tpl('infoblock.html')
 
 
 #########################################################################

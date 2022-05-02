@@ -46,7 +46,7 @@ class OpenWeatherMapNoValueSoftException(Exception):
 
 
 class OpenWeatherMap(SmartPlugin):
-    PLUGIN_VERSION = "1.8.4"
+    PLUGIN_VERSION = "1.8.5"
 
     _base_url = 'https://api.openweathermap.org/%s'
     _base_img_url = 'https://tile.openweathermap.org/map/%s/%s/%s/%s.png?appid=%s'
@@ -781,7 +781,13 @@ class OpenWeatherMap(SmartPlugin):
             self.logger.error(f"Response for {data_source_key} from {url} was too short to be meaningful: '{response.content}'")
             return
 
-        json_obj = response.json()
+        try:
+            json_obj = response.json()
+        except Exception as e:
+            self.logger.error(f"Exception trying to decode json resoponse: {e}")
+            self.logger.error(f" - Status code: {response.status_code}")
+            self.logger.info(f" - resoponse: {response.text}")
+            json_obj = {}
 
         self._data_sources[data_source_key]['url'] = url
         self._data_sources[data_source_key]['fetched'] = datetime.now()

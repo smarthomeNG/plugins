@@ -89,6 +89,7 @@ def de4002(payload):
         return None
     return payload.decode('iso-8859-1')
 
+
 """
 Datapoint type one byte with unsigned value
 """
@@ -135,6 +136,20 @@ def de5999(payload):
     if len(payload) != 1:
         return None
     return struct.unpack('>B', payload)[0] & 0x0f
+
+
+"""
+Datapoint type hex/raw
+"""
+
+def enhex(value):
+    import binascii
+    return binascii.unhexlify(value)
+
+
+def dehex(payload):
+    import binascii
+    return binascii.hexlify(payload).decode()
 
 
 """
@@ -563,7 +578,8 @@ decode = {
     '251': de251,       #RGBW
     '275.100' : de275100,
     'pa': depa,
-    'ga': dega
+    'ga': dega,
+    'hex': dehex
 }
 
 encode = {
@@ -617,5 +633,7 @@ encode = {
     '251': en251,       #RGBW
     '275.100' : en275100,   # Setpoint temperature, contains 4 values: Komfort, Standby, Night and Frost
     'pa': enpa,
-    'ga': enga
+    'ga': enga,
+    'hex': enhex
+
 }

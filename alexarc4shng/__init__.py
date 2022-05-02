@@ -3,7 +3,7 @@
 #########################################################################
 #  Copyright 2020 AndreK                    andre.kohler01@googlemail.com
 #########################################################################
-#  This file is part of SmartHomeNG.   
+#  This file is part of SmartHomeNG.
 #
 #  Sample plugin for new plugins to run with SmartHomeNG version 1.5.2 and
 #  upwards.
@@ -127,7 +127,7 @@ class AlexaRc4shNG(SmartPlugin):
         self.items = Items.get_instance()
         self.shngObjects = shngObjects()
         self.shtime = Shtime.get_instance()
-        
+
         # Init values
         self.header = ''
         self.cookie = {}
@@ -148,7 +148,7 @@ class AlexaRc4shNG(SmartPlugin):
 
         if not self.init_webinterface():
             self._init_complete = False
-        
+
         return
 
     def run(self):
@@ -158,12 +158,12 @@ class AlexaRc4shNG(SmartPlugin):
         self.logger.info("Plugin '{}': start method called".format(self.get_fullname()))
         # get additional parameters from files
         self.csrf = self.parse_cookie_file(self.cookiefile)
-        
+
         # Check login-state - if logged off and credentials are availabel login in
         if os.path.isfile(self.cookiefile):
             self.login_state=self.check_login_state()
             self.check_refresh_login()
-        
+
         if (self.login_state == False and self.credentials != ''):
             try:
                 os.remove(self.update_file)
@@ -171,19 +171,19 @@ class AlexaRc4shNG(SmartPlugin):
                 pass
             self.check_refresh_login()
             self.login_state=self.check_login_state()
-        
-        # Collect all devices    
+
+        # Collect all devices
         if (self.login_state):
             self.Echos = self.get_devices_by_request()
         else:
             self.Echos = None
         # enable scheduler if Login should be updated automatically
-        
+
         if self.credentials != '':
             self.scheduler_add('check_login', self.check_refresh_login,cycle=300)
             #self.scheduler.add('plugins.alexarc4shng.check_login', self.check_refresh_login,cycle=300,from_smartplugin=True)
         self.alive = True
-        
+
         # if you want to create child threads, do not make them daemon = True!
         # They will not shutdown properly. (It's a python bug)
 
@@ -198,41 +198,41 @@ class AlexaRc4shNG(SmartPlugin):
     def parse_item(self, item):
         itemFound=False
         i=1
-        
+
         myValue = 'alexa_cmd_{}'.format( '%0.2d' %(i))
         while myValue in item.conf:
-            
+
 
             self.logger.debug("Plugin '{}': parse item: {} Command {}".format(self.get_fullname(), item,myValue))
-            
+
             CmdItem_ID = item._name
             try:
                 myCommand = item.conf[myValue].split(":")
-                 
-                
+
+
                 if not self.shngObjects.exists(CmdItem_ID):
                     self.shngObjects.put(CmdItem_ID)
-                
+
                 actDevice = self.shngObjects.get(CmdItem_ID)
                 actDevice.Commands.append(Cmd(myValue))
-                
+
                 actCommand = len(actDevice.Commands)-1
-                
+
                 actDevice.Commands[actCommand].command = item.conf[myValue]
                 myCommand = actDevice.Commands[actCommand].command.split(":")
                 self.logger.info("Plugin '{}': parse item: {}".format(self.get_fullname(), item.conf[myValue]))
-                
+
                 actDevice.Commands[actCommand].ItemValue = myCommand[0]
                 actDevice.Commands[actCommand].EndPoint = myCommand[1]
                 actDevice.Commands[actCommand].Action = myCommand[2]
                 actDevice.Commands[actCommand].Value = myCommand[3]
                 itemFound=True
-                
+
             except Exception as err:
                 print("Error:" ,err)
             i += 1
             myValue = 'alexa_cmd_{}'.format( '%0.2d' %(i))
-            
+
         # todo
         # if interesting item for sending values:
         #   return update_item
@@ -240,18 +240,18 @@ class AlexaRc4shNG(SmartPlugin):
             return self.update_item
         else:
             return None
-    
+
     def parse_logic(self, logic):
         pass
 
     def update_item(self, item, caller=None, source=None, dest=None):
-        
+
         # Item was not changed but double triggered the Upate_Item-Function
         if (self.AlexaEnableItem != ""):
-            AlexaEnabledItem = self.items.return_item(self.AlexaEnableItem) 
+            AlexaEnabledItem = self.items.return_item(self.AlexaEnableItem)
             if AlexaEnabledItem() != True:
                 return
-        
+
         if item._type == "str":
             newValue=str(item())
             oldValue=str(item.prev_value())
@@ -261,24 +261,24 @@ class AlexaRc4shNG(SmartPlugin):
         else:
             newValue=str(item())
             oldValue=str(item.prev_value())
-        
+
         # Nur bei Wertänderung, sonst nix wie raus hier
         if(oldValue == newValue):
-            return         
+            return
         # End Test
-        
 
-        
+
+
         CmdItem_ID = item._name
-        
-    
+
+
         if self.shngObjects.exists(CmdItem_ID):
             self.logger.debug("Plugin '{}': update_item ws called with item '{}' from caller '{}', source '{}' and dest '{}'".format(self.get_fullname(), item, caller, source, dest))
-            
+
             actDevice = self.shngObjects.get(CmdItem_ID)
-            
+
             for myCommand in actDevice.Commands:
-                
+
                 newValue2Set = myCommand.Value
                 myItemBuffer = myCommand.ItemValue
                 # Spezialfall auf bigger / smaller
@@ -287,7 +287,7 @@ class AlexaRc4shNG(SmartPlugin):
                     myCompValue = myCommand.ItemValue.replace("<="," ")
                     myCompValue = myCompValue.replace(".",",")
                     myCompValue = float(myCompValue)
-                    myCommand.ItemValue = actValue                    
+                    myCommand.ItemValue = actValue
                     if  newValue > myCompValue:
                         return
                 elif myCommand.ItemValue.find(">=") >=0:
@@ -295,7 +295,7 @@ class AlexaRc4shNG(SmartPlugin):
                     myCompValue = myCommand.ItemValue.replace(">="," ")
                     myCompValue = myCompValue.replace(".",",")
                     myCompValue = float(myCompValue)
-                    myCommand.ItemValue = actValue        
+                    myCommand.ItemValue = actValue
                     if newValue < myCompValue:
                         return
                 elif myCommand.ItemValue.find("=") >=0 :
@@ -303,7 +303,7 @@ class AlexaRc4shNG(SmartPlugin):
                     myCompValue = myCommand.ItemValue.replace("="," ")
                     myCompValue = myCompValue.replace(".",",")
                     myCompValue = float(myCompValue)
-                    myCommand.ItemValue = actValue                    
+                    myCommand.ItemValue = actValue
                     if newValue != myCompValue:
                         return
                 elif myCommand.ItemValue.find("<") >=0:
@@ -324,7 +324,7 @@ class AlexaRc4shNG(SmartPlugin):
                         return
                 else:
                     actValue = str(item())
-                    
+
                 if ("volume" in myCommand.Action.lower()):
                     httpStatus, myPlayerInfo = self.receive_info_by_request(myCommand.EndPoint,"LoadPlayerInfo","")
                     # Store Player-Infos to Device
@@ -341,7 +341,7 @@ class AlexaRc4shNG(SmartPlugin):
                             actVolume = int(item())
                         except:
                             actVolume = 50
-                        
+
                 if ("volumeadj" in myCommand.Action.lower()):
                     myDelta = int(myCommand.Value)
                     if actVolume+myDelta < 0:
@@ -350,38 +350,38 @@ class AlexaRc4shNG(SmartPlugin):
                         newValue2Set = 100
                     else:
                         newValue2Set =actVolume+myDelta
-                
+
                 # neuen Wert speichern in item
                 if ("volume" in myCommand.Action.lower()):
                     item._value = newValue2Set
-                    
+
 
                 if (actValue == str(myCommand.ItemValue) and myCommand):
                     myCommand.ItemValue = myItemBuffer
                     self.send_cmd(myCommand.EndPoint,myCommand.Action,newValue2Set)
 
-    
-    
+
+
     # find Value for Key in Json-structure
-    
+
     def search(self,p, strsearch):
-        if type(p) is dict:  
+        if type(p) is dict:
             if strsearch in p:
                 tokenvalue = p[strsearch]
                 if not tokenvalue is None:
                  return tokenvalue
             else:
                 for i in p:
-                    tokenvalue = self.search(p[i], strsearch)  
+                    tokenvalue = self.search(p[i], strsearch)
                     if not tokenvalue is None:
                         return tokenvalue
-    
+
     # handle Protocoll Entries
     def _insert_protocoll_entry(self, entry):
         if len(self.rotating_log) > 400:
             del self.rotating_log[400:]
         self.rotating_log.insert (0,entry)
-        
+
     # Check if update of login is needed
     def check_refresh_login(self):
         my_file= self.update_file
@@ -392,7 +392,7 @@ class AlexaRc4shNG(SmartPlugin):
             fp.close()
         except:
             last_update_time = 0
-        
+
         mytime = time.time()
         if (last_update_time + self.LoginUpdateCycle < mytime):
             self.log_off()
@@ -405,10 +405,10 @@ class AlexaRc4shNG(SmartPlugin):
         else:
             self.last_update_time = datetime.fromtimestamp(last_update_time).strftime('%Y-%m-%d %H:%M:%S')
             self.next_update_time = datetime.fromtimestamp(last_update_time+self.LoginUpdateCycle).strftime('%Y-%m-%d %H:%M:%S')
-        
-        
-    
-    
+
+
+
+
     def replace_mutated_vowel(self,mValue):
         search =  ["ä" , "ö" , "ü" , "ß" , "Ä" , "Ö", "Ü",  "&"  , "é", "á", "ó", "ß"]
         replace = ["ae", "oe", "ue", "ss", "Ae", "Oe","Ue", "und", "e", "a", "o", "ss"]
@@ -421,16 +421,16 @@ class AlexaRc4shNG(SmartPlugin):
                 counter +=1
         except:
             pass
-            
+
         return myNewValue
 
-  
+
 
     ##############################################
     # Amazon API - Calls
     ##############################################
-    
-    
+
+
     def check_login_state(self):
         try:
             myHeader={
@@ -447,12 +447,12 @@ class AlexaRc4shNG(SmartPlugin):
             myHeader = response.headers
             myDict=json.loads(myContent)
             mySession.close()
-            
+
             self.logger.info('Status of check_login_state: %d' % response.status_code)
-            
+
             logline = str(self.shtime.now())[0:19] +' Status of check_login_state: %d' % response.status_code
             self._insert_protocoll_entry(logline)
-            
+
             myAuth =myDict['authentication']['authenticated']
             if (myAuth == True):
                 self.logger.info('Login-State checked - Result: Logged ON' )
@@ -461,17 +461,17 @@ class AlexaRc4shNG(SmartPlugin):
                 return True
             else:
                 self.logger.info('Login-State checked - Result: Logged OFF' )
-                logline = str(self.shtime.now())[0:19] +' Login-State checked - Result: Logged OFF' 
+                logline = str(self.shtime.now())[0:19] +' Login-State checked - Result: Logged OFF'
                 self._insert_protocoll_entry(logline)
                 return False
-            
-        
-        
+
+
+
         except Exception as err:
             self.logger.error('Login-State checked - Result: Logged OFF - try to login again')
             return False
-    
-    
+
+
     def receive_info_by_request(self,dvName,cmdName,mValue):
         actEcho = self.Echos.get(dvName)
         myUrl='https://'+self.host
@@ -484,9 +484,9 @@ class AlexaRc4shNG(SmartPlugin):
                             actEcho.family,
                             actEcho.deviceType,
                             actEcho.deviceOwnerCustomerId)
-        
+
         myDescription,myUrl,myDict = self.load_command_let(cmdName,None)
-        
+
         myHeader = { "Host": "alexa.amazon.de",
                    "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:65.0) Gecko/20100101 Firefox/65.0",
                    "Connection": "keep-alive",
@@ -495,7 +495,7 @@ class AlexaRc4shNG(SmartPlugin):
                    "Referer": "https://alexa.amazon.de/spa/index.html",
                    "Origin":"https://alexa.amazon.de",
                    "DNT": "1"
-                  }     
+                  }
         mySession = requests.Session()
         mySession.cookies.update(self.cookie)
         response= mySession.get(myUrl,headers=myHeader,allow_redirects=True)
@@ -504,13 +504,13 @@ class AlexaRc4shNG(SmartPlugin):
         myContent= response.content.decode()
         myHeader = response.headers
         myDict=json.loads(myContent)
-        mySession.close() 
+        mySession.close()
 
-        
+
         return myResult,myDict
-        
 
-    
+
+
     def get_last_alexa(self):
         myHeader = { "Host": "alexa.amazon.de",
                    "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:65.0) Gecko/20100101 Firefox/65.0",
@@ -520,7 +520,7 @@ class AlexaRc4shNG(SmartPlugin):
                    "Referer": "https://alexa.amazon.de/spa/index.html",
                    "Origin":"https://alexa.amazon.de",
                    "DNT": "1"
-                  }     
+                  }
         mySession = requests.Session()
         mySession.cookies.update(self.cookie)
         response= mySession.get('https://'+self.host+'/api/activities?startTime=&size=10&offset=0',
@@ -529,11 +529,11 @@ class AlexaRc4shNG(SmartPlugin):
         myContent= response.content.decode()
         myHeader = response.headers
         myDict=json.loads(myContent)
-        mySession.close() 
+        mySession.close()
         myDevice = myDict["activities"][0]["sourceDeviceIds"][0]["serialNumber"]
         myLastDevice = self.Echos.get_Device_by_Serial(myDevice)
         return myLastDevice
-    
+
     def send_cmd(self,dvName, cmdName,mValue,path=None):
         # Parse the value field for dynamic content
         if (str(mValue).find("#") >= 0 and str(mValue).find("/#") >0):
@@ -541,7 +541,7 @@ class AlexaRc4shNG(SmartPlugin):
             LastPos = str(mValue).find("/#",FirstPos)
             myItemName = str(mValue)[FirstPos+1:LastPos]
             myItem=self.items.return_item(myItemName)
-            
+
             if myItem._type == "num":
                 myValue = str(myItem())
                 myValue = myValue.replace(".", ",")
@@ -552,8 +552,8 @@ class AlexaRc4shNG(SmartPlugin):
             mValue = mValue[0:FirstPos]+myValue+mValue[LastPos:LastPos-2]+mValue[LastPos+2:len(mValue)]
 
         mValue = self.replace_mutated_vowel(mValue)
-                
-        
+
+
         buffer = BytesIO()
         actEcho = None
         try:
@@ -566,13 +566,13 @@ class AlexaRc4shNG(SmartPlugin):
             self.logger.warning('found no Echo with Name : {}'.format(dvName))
             self._insert_protocoll_entry('found no Echo with Name : {}'.format(dvName))
             return
-        
+
         myUrl='https://'+self.host
-        
+
         myDescriptions = ''
         myDict = {}
-        
-        
+
+
         myDescription,myUrl,myDict = self.load_command_let(cmdName,path)
         # complete the URL
         myUrl='https://'+self.host+myUrl
@@ -584,31 +584,31 @@ class AlexaRc4shNG(SmartPlugin):
                             actEcho.family,
                             actEcho.deviceType,
                             actEcho.deviceOwnerCustomerId)
-        
+
         # replace the placeholders in Payload
         myHeaders=self.create_request_header()
 
-        
+
         postfields = self.parse_json(myDict,
                                      mValue,
                                      actEcho.serialNumber,
                                      actEcho.family,
                                      actEcho.deviceType,
                                      actEcho.deviceOwnerCustomerId)
-        
-        
+
+
         myStatus,myRespHeader, myRespCookie, myContent = self.send_post_request(myUrl,myHeaders,self.cookie,postfields)
 
-        
+
         myResult = myStatus
-        
+
         if myResult == 200:
             self.logger.info('Status of send_cmd: %d' % myResult)
         else:
             self.logger.warning("itemStatus of send_cmd: {}: {}".format(myResult, myContent))
-        
-        return myResult 
-        
+
+        return myResult
+
     def get_devices_by_request(self):
         try:
             myHeader={
@@ -626,15 +626,15 @@ class AlexaRc4shNG(SmartPlugin):
             myDict=json.loads(myContent)
             mySession.close()
             myDevices = EchoDevices()
-            
+
             self.logger.info('Status of get_devices_by_request: %d' % response.status_code)
-            
-        
-        
+
+
+
         except Exception as err:
             self.logger.error('Error while getting Devices: %s' %err)
             return None
-        
+
         for device in myDict['devices']:
             deviceFamily=device['deviceFamily']
             #if deviceFamily == 'WHA' or deviceFamily == 'VOX' or deviceFamily == 'FIRE_TV' or deviceFamily == 'TABLET':
@@ -642,7 +642,7 @@ class AlexaRc4shNG(SmartPlugin):
             try:
                 actName = device['accountName']
                 myDevices.put(Echo(actName))
-        
+
                 actDevice = myDevices.get(actName)
                 actDevice.serialNumber=device['serialNumber']
                 actDevice.deviceType=device['deviceType']
@@ -652,12 +652,12 @@ class AlexaRc4shNG(SmartPlugin):
             except Exception as err:
                 self.logger.debug('Error while getting Devices: %s' %err)
                 myDevices = None
-                
+
         return myDevices
-    
-    
-    
-    
+
+
+
+
     def parse_cookie_file(self,cookiefile):
         self.cookie = {}
         csrf = 'N/A'
@@ -666,25 +666,25 @@ class AlexaRc4shNG(SmartPlugin):
                 for line in fp:
                     if line.find('amazon.de')<0:
                             continue
-                    
+
                     lineFields = line.strip().split('\t')
                     if len(lineFields) >= 7:
                         # add Line to self.cookie
                         if lineFields[2] == '/':
                             self.cookie[lineFields[5]]=lineFields[6]
-                        
-                        
+
+
                         if lineFields[5] == 'csrf':
                             csrf = lineFields[6]
             fp.close()
         except Exception as err:
             self.logger.debug('Cookiefile could not be opened %s' % cookiefile)
-        
+
         return csrf
-    
-    
+
+
     def parse_url(self,myDummy,mValue,serialNumber,familiy,deviceType,deviceOwnerCustomerId):
-        
+
         myDummy = myDummy.strip()
         myDummy=myDummy.replace(' ','')
         # for String
@@ -693,34 +693,34 @@ class AlexaRc4shNG(SmartPlugin):
         except Exception as err:
             print("no String")
         # for Numbers
-        try:    
+        try:
             myDummy=myDummy.replace('"<nValue>"',mValue)
         except Exception as err:
             print("no Integer")
-            
+
         # Inject the Device informations
         myDummy=myDummy.replace('<serialNumber>',serialNumber)
         myDummy=myDummy.replace('<familiy>',familiy)
         myDummy=myDummy.replace('<deviceType>',deviceType)
         myDummy=myDummy.replace('<deviceOwnerCustomerId>',deviceOwnerCustomerId)
-        
+
         return myDummy
 
-        
+
     def parse_json(self,myDict,mValue,serialNumber,familiy,deviceType,deviceOwnerCustomerId):
 
         myDummy = json.dumps(myDict, sort_keys=True)
-       
+
         count = 0
         for char in myDummy:
           if char == '{':
             count = count + 1
-         
-        
+
+
         if count > 1:
             # Find First Pos for inner Object
             FirstPos = myDummy.find("{",1)
-             
+
             # Find last Pos for inner Object
             LastPos = 0
             pos1 = 1
@@ -730,14 +730,14 @@ class AlexaRc4shNG(SmartPlugin):
                     correctPos = LastPos
                     LastPos = pos1
             LastPos = correctPos
-        
-        
+
+
             innerJson = myDummy[FirstPos+1:LastPos]
             innerJson = innerJson.replace('"','\\"')
-    
+
             myDummy = myDummy[0:FirstPos]+'"{'+innerJson+'}"'+myDummy[LastPos+1:myDummy.__len__()]
-        
-            
+
+
         myDummy = myDummy.strip()
         myDummy=myDummy.replace(' ','')
         # for String
@@ -746,20 +746,20 @@ class AlexaRc4shNG(SmartPlugin):
         except Exception as err:
             print("no String")
         # for Numbers
-        try:    
+        try:
             myDummy=myDummy.replace('"<nValue>"',str(mValue))
         except Exception as err:
             print("no Integer")
-        
+
         # Inject the Device informations
         myDummy=myDummy.replace('<serialNumber>',serialNumber)
         myDummy=myDummy.replace('<familiy>',familiy)
         myDummy=myDummy.replace('<deviceType>',deviceType)
         myDummy=myDummy.replace('<deviceOwnerCustomerId>',deviceOwnerCustomerId)
-        
+
         return myDummy
-    
-    
+
+
     def create_request_header(self):
         myheaders= {"Host": "alexa.amazon.de",
                     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:60.0) Gecko/20100101 Firefox/60.0",
@@ -774,16 +774,16 @@ class AlexaRc4shNG(SmartPlugin):
                     "Cache-Control": "no-cache"
                   }
         return myheaders
-    
+
     def load_command_let(self,cmdName,path=None):
         myDescription   = ''
         myUrl           = ''
         myJson          = ''
         retJson         = {}
-        
+
         if path==None:
             path=self.sh.get_basedir()+"/plugins/alexarc4shng/cmd/"
-            
+
         try:
             file=open(path+cmdName+'.cmd','r')
             for line in file:
@@ -804,12 +804,12 @@ class AlexaRc4shNG(SmartPlugin):
         except:
             self.logger.error("Error while loading Commandlet : {}".format(cmdName))
         return myDescription,myUrl,retJson
-    
 
-    
+
+
     def load_cmd_list(self):
         retValue=[]
-        
+
         files = os.listdir(self.sh.get_basedir()+'/plugins/alexarc4shng/cmd/')
         for line in files:
             try:
@@ -819,7 +819,7 @@ class AlexaRc4shNG(SmartPlugin):
                     retValue.append(newCmd)
             except:
                 pass
-        
+
         return json.dumps(retValue)
 
     def check_json(self,payload):
@@ -828,7 +828,7 @@ class AlexaRc4shNG(SmartPlugin):
             return 'Json OK'
         except Exception as err:
             return 'Json - Not OK - '+ err.args[0]
-        
+
     def delete_cmd_let(self,name):
         result = ""
         try:
@@ -838,7 +838,7 @@ class AlexaRc4shNG(SmartPlugin):
         except Exception as err:
             result =  "Status:failure\n"
             result += "value1:Error - "+err.args[1]+"\n"
-        
+
         ##################
         # prepare Response
         ##################
@@ -849,15 +849,15 @@ class AlexaRc4shNG(SmartPlugin):
             myFields=line.split(":")
             newEntry[myFields[0]] = myFields[1]
 
-        myResponse.append(newEntry)        
+        myResponse.append(newEntry)
         ##################
         return json.dumps(myResponse,sort_keys=True)
-    
+
     def test_cmd_let(self,selectedDevice,txtValue,txtDescription,txt_payload,txtApiUrl):
         result = ""
         if (txtApiUrl[0:1] != "/"):
             txtApiUrl = "/"+txtApiUrl
-            
+
         JsonResult = self.check_json(txt_payload)
         if (JsonResult != 'Json OK'):
             result =  "Status:failure\n"
@@ -871,7 +871,7 @@ class AlexaRc4shNG(SmartPlugin):
             except Exception as err:
                 result =  "Status:failure\n"
                 result += "value1:"+err.args[0]+"\n"
-                
+
         ##################
         # prepare Response
         ##################
@@ -882,7 +882,7 @@ class AlexaRc4shNG(SmartPlugin):
             myFields=line.split(":")
             newEntry[myFields[0]] = myFields[1]
 
-        myResponse.append(newEntry)        
+        myResponse.append(newEntry)
         ##################
         return json.dumps(myResponse,sort_keys=True)
 
@@ -906,25 +906,25 @@ class AlexaRc4shNG(SmartPlugin):
             myFields=line.split("|")
             newEntry[myFields[0]] = myFields[1]
 
-        myResponse.append(newEntry)        
+        myResponse.append(newEntry)
         ##################
         return json.dumps(myResponse,sort_keys=True)
-        
-        
+
+
     def save_cmd_let(self,name,description,payload,ApiURL,path=None):
         if path==None:
             path=self.sh.get_basedir()+"/plugins/alexarc4shng/cmd/"
-        
+
         result = ""
         mydummy = ApiURL[0:1]
         if (ApiURL[0:1] != "/"):
             ApiURL = "/"+ApiURL
-            
+
         JsonResult = self.check_json(payload)
         if (JsonResult != 'Json OK'):
             result =  "Status:failure\n"
             result += "value1:"+JsonResult+"\n"
-            
+
         else:
             try:
                 myDict = json.loads(payload)
@@ -936,13 +936,13 @@ class AlexaRc4shNG(SmartPlugin):
                 file.write("description|"+description+"\r\n")
                 file.write("json|"+myDump+"\r\n")
                 file.close
-    
+
                 result =  "Status:OK\n"
                 result += "value1:"+JsonResult + "\n"
                 result += "value2:Saved Commandlet\n"
             except Exception as err:
                 print (err)
-        
+
         ##################
         # prepare Response
         ##################
@@ -953,10 +953,10 @@ class AlexaRc4shNG(SmartPlugin):
             myFields=line.split(":")
             newEntry[myFields[0]] = myFields[1]
 
-        myResponse.append(newEntry)        
+        myResponse.append(newEntry)
         ##################
         return json.dumps(myResponse,sort_keys=True)
-    
+
     def send_get_request(self,url="", myHeader="",Cookie=""):
         mySession = requests.Session()
         mySession.cookies.update(Cookie)
@@ -964,7 +964,7 @@ class AlexaRc4shNG(SmartPlugin):
                         headers=myHeader,
                         allow_redirects=True)
         return response.status_code, response.headers, response.cookies, response.content.decode(),response.url
-    
+
     def send_post_request(self,url="", myHeader="",Cookie="",postdata=""):
         mySession = requests.Session()
         mySession.cookies.update(Cookie)
@@ -974,18 +974,18 @@ class AlexaRc4shNG(SmartPlugin):
                         allow_redirects=True)
         mySession.close()
         return response.status_code, response.headers, mySession.cookies, response.content.decode()
-    
+
     def parse_response_cookie_2_txt(self, cookie, CollectingTxtCookie):
         for c in cookie:
             if c.domain != '':
                 CollectingTxtCookie += c.domain+"\t"+str(c.domain_specified)+"\t"+ c.path+"\t"+ str(c.secure)+"\t"+ str(c.expires)+"\t"+ c.name+"\t"+ c.value+"\r\n"
         return CollectingTxtCookie
-    
+
     def parse_response_cookie(self, cookie, CollectingCookie):
         for c in cookie:
-            CollectingCookie[c.name] = c.value        
+            CollectingCookie[c.name] = c.value
         return CollectingCookie
-    
+
     def collect_postdata(self,content):
         content = str(content.replace('hidden', '\r\nhidden'))
         postdata = {}
@@ -995,12 +995,12 @@ class AlexaRc4shNG(SmartPlugin):
                 data = re.findall(r'hidden.*name="([^"]+).*value="([^"]+).*/',myLine)
                 if len(data) >0:
                     postdata[data[0][0]]= data[0][1]
-        
-        
+
+
         postdata['showPasswordChecked'] = 'false'
         return postdata
-    
-    
+
+
     def auto_login_by_request(self):
         if self.credentials == '':
             return False
@@ -1028,9 +1028,9 @@ class AlexaRc4shNG(SmartPlugin):
         myCollectionTxtCookie = self.parse_response_cookie_2_txt(myRespCookie,myCollectionTxtCookie)
         myCollectionCookie = self.parse_response_cookie(myRespCookie,myCollectionCookie)
         PostData = self.collect_postdata(myContent)
-        
+
         actSessionID = myRespCookie['session-id']
-        
+
         self.logger.info('Status of Auto-Login First Step: %d' % myStatus)
         myResults.append('HTTP : ' + str(myStatus)+'- Step 1 - get Session-ID')
         ####################################################
@@ -1049,17 +1049,17 @@ class AlexaRc4shNG(SmartPlugin):
                    }
         newUrl = "https://www.amazon.de"+"/ap/signin/"+actSessionID
         postfields = urllib3.request.urlencode(PostData)
-        
+
         myStatus,myRespHeader, myRespCookie, myContent = self.send_post_request(newUrl,myHeaders,myCollectionCookie,PostData)
         myCollectionTxtCookie = self.parse_response_cookie_2_txt(myRespCookie,myCollectionTxtCookie)
         myCollectionCookie = self.parse_response_cookie(myRespCookie,myCollectionCookie)
         PostData = self.collect_postdata(myContent)
-        
+
         #actSessionID = myRespCookie['session-id']
-        
+
         self.logger.info('Status of Auto-Login Second Step: %d' % myStatus)
         myResults.append('HTTP : ' + str(myStatus)+'- Step 2 - login blank to get referer')
-        
+
         ####################################################
         # Start Step 3 - login with form
         ####################################################
@@ -1080,23 +1080,23 @@ class AlexaRc4shNG(SmartPlugin):
 
         PostData['email'] =user
         PostData['password'] = pwd
-        
+
         postfields = urllib3.request.urlencode(PostData)
         myStatus,myRespHeader, myRespCookie, myContent = self.send_post_request(newUrl,myHeaders,myCollectionCookie,PostData)
         myCollectionTxtCookie = self.parse_response_cookie_2_txt(myRespCookie,myCollectionTxtCookie)
         myCollectionCookie = self.parse_response_cookie(myRespCookie,myCollectionCookie)
         PostData = self.collect_postdata(myContent)
-        
+
         self.logger.info('Status of Auto-Login third Step: %d' % myStatus)
         myResults.append('HTTP : ' + str(myStatus)+'- Step 3 - login with credentials')
         file=open("/tmp/alexa_step2.html","w")
         file.write(myContent)
         file.close
-        
+
         #################################################################
         ## done - third Step - logged in now go an get the goal (csrf)
         #################################################################
-        
+
         myHeaders ={
                     "User-Agent" : "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:65.0) Gecko/20100101 Firefox/65.0",
                     "Accept-Language" : "de,en-US;q=0.7,en;q=0.3",
@@ -1108,14 +1108,14 @@ class AlexaRc4shNG(SmartPlugin):
                    }
         Url = 'https://'+self.host+'/templates/oobe/d-device-pick.handlebars'
         #Url = 'https://'+self.host+'/api/language'
-        
+
         myStatus,myRespHeader, myRespCookie, myContent,myLocation = self.send_get_request(Url,myHeaders,myCollectionCookie)
         myCollectionTxtCookie = self.parse_response_cookie_2_txt(myRespCookie,myCollectionTxtCookie)
         myCollectionCookie = self.parse_response_cookie(myRespCookie,myCollectionCookie)
 
         myResults.append('HTTP : ' + str(myStatus)+'- Step 4 - get csrf')
         self.logger.info('Status of Auto-Login fourth Step: %d' % myStatus)
-        
+
         ####################################################
         # check the csrf
         ####################################################
@@ -1133,16 +1133,16 @@ class AlexaRc4shNG(SmartPlugin):
         ####################################################
         try:
             with open (self.cookiefile, 'w') as myFile:
-                
-                
+
+
                 myFile.write("# AlexaRc4shNG HTTP Cookie File"+"\r\n")
                 myFile.write("# https://www.smarthomeng.de/user/"+"\r\n")
                 myFile.write("# This file was generated by alexarc4shng@smarthomeNG! Edit at your own risk."+"\r\n")
                 myFile.write("\r\n")
                 for line in myCollectionTxtCookie.splitlines():
                     myFile.write(line+"\r\n")
-            myFile.close()            
-            
+            myFile.close()
+
             myResults.append('cookieFile- Step 6 - creation done')
             self.cookie = myCollectionCookie
             self.login_state= self.check_login_state()
@@ -1150,31 +1150,31 @@ class AlexaRc4shNG(SmartPlugin):
             file=open(self.update_file,"w")
             file.write(str(mytime)+"\r\n")
             file.close()
-            
+
             myResults.append('login state : %s' % self.login_state)
         except:
             myResults.append('cookieFile- Step 6 - error while writing new cookie-File')
-                        
+
         for entry in myResults:
-                logline = str(self.shtime.now())[0:19] + ' ' + entry 
+                logline = str(self.shtime.now())[0:19] + ' ' + entry
                 self._insert_protocoll_entry(logline)
         return myResults
-    
-            
-        
-    
-    
+
+
+
+
+
     def log_off(self):
         myUrl='https://'+self.host+"/logout"
         myHeaders={"DNT"       :"1",
                    "Connection":"keep-alive",
                    "User-Agent":"Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:65.0) Gecko/20100101 Firefox/65.0"
                   }
-        
+
         myStatus,myRespHeader, myRespCookie, myContent,myLocation = self.send_get_request(myUrl,myHeaders, self.cookie)
-        
+
         self.logger.info('Status of log_off: {}'.format(myStatus))
-        
+
         if myStatus == 200:
             logline = str(self.shtime.now())[0:19] +' successfully logged off'
             self._insert_protocoll_entry(logline)
@@ -1182,13 +1182,13 @@ class AlexaRc4shNG(SmartPlugin):
         else:
             logline = str(self.shtime.now())[0:19] +' Error while logging off'
             return "HTTP - " + str(myStatus)+" Error while logging off"
-        
 
-    
+
+
     ##############################################
     # Web-Interface
     ##############################################
-    
+
     def init_webinterface(self):
         """"
         Initialize the web interface for this plugin
@@ -1226,8 +1226,8 @@ class AlexaRc4shNG(SmartPlugin):
         return True
 
 
-    
- 
+
+
 
 # ------------------------------------------
 #    Webinterface of the plugin
@@ -1258,11 +1258,11 @@ class WebInterface(SmartPluginWebIf):
         """
 
         Render a template and add vars needed gobally (for navigation, etc.)
-    
+
         :param tmpl_name: Name of the template file to be rendered
         :param **kwargs: keyworded arguments to use while rendering
-        
-        :return: contents of the template after beeing rendered 
+
+        :return: contents of the template after beeing rendered
 
         """
         tmpl = self.tplenv.get_template(tmpl_name)
@@ -1271,7 +1271,7 @@ class WebInterface(SmartPluginWebIf):
                    **kwargs)
 
     def set_cookie_pic(self,CookieOK=False):
-        dstFile = self.plugin.sh.get_basedir()+'/plugins/alexarc4shng/webif/static/img/plugin_logo.png'
+        dstFile = self.plugin.sh.get_basedir()+'/plugins/alexarc4shng/webif/static/img/plugin_logo_old.png'
         srcGood = self.plugin.sh.get_basedir()+'/plugins/alexarc4shng/webif/static/img/alexa_cookie_good.png'
         srcBad = self.plugin.sh.get_basedir()+'/plugins/alexarc4shng/webif/static/img/alexa_cookie_bad.png'
         if os.path.isfile(dstFile):
@@ -1281,7 +1281,7 @@ class WebInterface(SmartPluginWebIf):
                 os.popen('cp '+srcGood + ' ' + dstFile)
         else:
             if os.path.isfile(srcBad):
-                os.popen('cp '+srcBad + ' ' + dstFile)            
+                os.popen('cp '+srcBad + ' ' + dstFile)
 
     @cherrypy.expose
     def index(self, reload=None):
@@ -1292,34 +1292,34 @@ class WebInterface(SmartPluginWebIf):
 
         :return: contents of the template after beeing rendered
         """
-        
+
         if (self.plugin.login_state != 'N/A'):
             self.set_cookie_pic(True)
         else:
             self.set_cookie_pic(False)
-            
+
         log_file = ''
         for line in self.plugin.rotating_log:
             log_file += str(line)+'\n'
-        
+
         myDevices = self.get_device_list()
         alexa_device_count = len(myDevices)
-        
-        login_info = self.plugin.last_update_time + '<font color="green"><strong>('+ self.plugin.next_update_time + ')</strong>' 
+
+        login_info = self.plugin.last_update_time + '<font color="green"><strong>('+ self.plugin.next_update_time + ')</strong>'
         return self.render_template('index.html',device_list=myDevices,csrf_cookie=self.plugin.csrf,alexa_device_count=alexa_device_count,time_auto_login=login_info, log_file=log_file)
-  
-   
+
+
     @cherrypy.expose
     def log_off_html(self,txt_Result=None):
         txt_Result=self.plugin.log_off()
         return json.dumps(txt_Result)
-    
+
     @cherrypy.expose
     def log_in_html(self,txt_Result=None):
         txt_Result=self.plugin.auto_login_by_request()
         return json.dumps(txt_Result)
-        
-                           
+
+
     @cherrypy.expose
     def handle_buttons_html(self,txtValue=None, selectedDevice=None,txtButton=None,txt_payload=None,txtCmdName=None,txtApiUrl=None,txtDescription=None):
         if txtButton=="BtnSave":
@@ -1335,21 +1335,21 @@ class WebInterface(SmartPluginWebIf):
             result = self.plugin.delete_cmd_let(txtCmdName)
         else:
             pass
-        
+
         #return self.render_template("index.html",txtresult=result)
         return result
-                
-    
+
+
     @cherrypy.expose
     def build_cmd_list_html(self,reload=None):
         myCommands = self.plugin.load_cmd_list()
         return myCommands
-    
-    
+
+
     def get_device_list(self):
         if (self.plugin.login_state == True):
             self.plugin.Echos = self.plugin.get_devices_by_request()
-        
+
         Device_items = []
         try:
             myDevices = self.plugin.Echos.devices
@@ -1362,10 +1362,10 @@ class WebInterface(SmartPluginWebIf):
                 newEntry['deviceType'] = Echo2Add.deviceType
                 newEntry['deviceOwnerCustomerId'] = Echo2Add.deviceOwnerCustomerId
                 Device_items.append(newEntry)
-            
+
         except Exception as err:
             self.logger.debug("No devices found: {}".format(err))
-        
+
         return Device_items
 
     @cherrypy.expose
@@ -1374,7 +1374,7 @@ class WebInterface(SmartPluginWebIf):
         myCredentials = user+':'+pwd
         byte_credentials = base64.b64encode(myCredentials.encode('utf-8'))
         encoded = byte_credentials.decode("utf-8")
-        txt_Result.append("encoded:"+encoded) 
+        txt_Result.append("encoded:"+encoded)
         txt_Result.append("Encoding done")
         conf_file=self.plugin.sh.get_basedir()+'/etc/plugin.yaml'
         if (store_2_config == 'true'):
@@ -1383,8 +1383,8 @@ class WebInterface(SmartPluginWebIf):
                 for line in myFile:
                     if line.find('alexa_credentials') > 0:
                         line = '    alexa_credentials: '+encoded+ "\r\n"
-                    new_conf += line 
-            myFile.close()         
+                    new_conf += line
+            myFile.close()
             txt_Result.append("replaced credentials in temporary file")
             with open (conf_file, 'w') as myFile:
                 for line in new_conf.splitlines():
@@ -1392,7 +1392,7 @@ class WebInterface(SmartPluginWebIf):
             myFile.close()
             txt_Result.append("stored new config to filesystem")
         return json.dumps(txt_Result)
-    
+
     @cherrypy.expose
     def storecookie_html(self, save=None, cookie_txt=None, txt_Result=None, txtUser=None, txtPwd=None, txtEncoded=None, store_2_config=None):
         myLines = cookie_txt.splitlines()
@@ -1405,13 +1405,13 @@ class WebInterface(SmartPluginWebIf):
         file.close()
         value1 = self.plugin.parse_cookie_file("/tmp/cookie.txt")
         self.plugin.login_state = self.plugin.check_login_state()
-        
+
         if (self.plugin.login_state == True):
             self.set_cookie_pic(True)
         else:
             self.set_cookie_pic(False)
-        
-        
+
+
         if (self.plugin.login_state == False) :
             # Cookies not found give back an error
             tmpl = self.tplenv.get_template('index.html')
@@ -1420,20 +1420,20 @@ class WebInterface(SmartPluginWebIf):
                            txt_Result='<font color="red"><i class="fas fa-exclamation-triangle"></i> Cookies are not saved missing csrf',
                            cookie_txt=cookie_txt,
                            csrf_cookie=value1)
-        
+
         # Store the Cookie-file for permanent use
         file=open(self.plugin.cookiefile,"w")
         for line in myLines:
             file.write(line+"\r\n")
         file.close()
-        
+
         self.plugin.csrf = value1
-        
-        
+
+
         myDevices = self.get_device_list()
         alexa_device_count = len(myDevices)
-        
-        
+
+
         tmpl = self.tplenv.get_template('index.html')
         return tmpl.render(plugin_shortname=self.plugin.get_shortname(), plugin_version=self.plugin.get_version(),
                            plugin_info=self.plugin.get_info(), p=self.plugin,
@@ -1442,7 +1442,7 @@ class WebInterface(SmartPluginWebIf):
                            csrf_cookie=value1,
                            device_list=myDevices,
                            alexa_device_count=alexa_device_count)
-                           
 
-        
+
+
 

@@ -1,4 +1,4 @@
-.. index:: Plugins; Simulation
+.. index:: Plugins; simulation
 .. index:: simulation
 
 

@@ -170,6 +170,7 @@ item_attributes:
          - '232'
          - '251'
          - '275.100'
+         - 'hex'
         valid_list_description:
             de:
              - 'Schalten (1 Bit) -> bool'
@@ -206,6 +207,7 @@ item_attributes:
              - 'RGB: [0, 0, 0] - [255, 255, 255] (3 Byte) -> list'
              - 'RGBW: [0, 0, 0, 0] - [255, 255, 255, 255] (4 Byte)-> list'
              - 'Quadrupel mit Solltemperaturen für Komfort, Standby, Nachtabsenkung, Frostschutz (4 Fließkommazahlen mit 16 Bit) -> list'
+             - 'Empfangen von Roh-/Hex-Daten (um Key IDs des alten Winkhaus Schließsystems auszulesen'
             en:
              - 'Switch (1 Bit) -> bool'
              - 'forced control (2 Bit) -> list'
@@ -241,6 +243,7 @@ item_attributes:
              - 'RGB: [0, 0, 0] - [255, 255, 255] (3 Byte) -> list'
              - 'RGBW: [0, 0, 0, 0] - [255, 255, 255, 255] (4 Byte)-> list'
              - 'Quadrupel with set temperatures comfort, standby, night reduction, frost protection (4 float with 16 Bit) -> list'
+             - 'Receive raw/hex data (to read out Key IDs from the old Winkhaus locking systems'
         description:
             de: 'Dieses Attribut setzt den Typ des KNX-Datenpunktes, der für die Konvertierung der KNX-Nachrichten in das interne SmartHomeNG-Format verwendet wird. Die Angabe ist zwingend erforderlich ist. Wenn Sie keinen Wert angeben, wird das Element vom Plugin ignoriert. Der DPT muss dem Typ des Artikels entsprechen!'
             en: "This attribute set the KNX datapoint type used for conversion of the KNX messages to internal SmartHomeNG format. It is mandatory. If you don't provide one the item will be ignored by the plugin. The DPT has to match the type of the item! BE CAREFUL to put the value in quotes to ensure they are interpreted as strings and not as numbers!"

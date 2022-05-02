@@ -214,7 +214,10 @@ class Robot:
             self.logger.warning("Message: {0}".format(str(response['message'])))
 
         if 'error' in response and response['error']:
-            self.logger.error("Robot: Error {0}".format(str(response['error'])))
+            if response['error'] == 'gen_picked_up':
+                self.logger.warning("Robot: Picked-up")
+            else:
+                self.logger.error("Robot: Error {0}".format(str(response['error'])))
 
         # Readout alert messages, e.g. dustbin_full
         if 'alert' in response:

@@ -1,0 +1,96 @@
+%YAML 1.1
+---
+
+husky_plugin:
+
+    mower:
+        name: Maehroboter 
+
+        info:
+            name: Mower information (not implemented yet)
+
+            device:
+                husky_info: NAME 
+                type: str
+                visu_acl: r
+
+            model:
+                husky_info: MODEL
+                type: str
+                visu_acl: r
+
+            id:
+                husky_info: ID 
+                type: str
+                visu_acl: r
+
+        state:
+            name: State information 
+
+            activity: 
+                husky_state: activity 
+                type: str 
+                visu_acl: r
+
+            message: 
+                husky_state: message 
+                type: str 
+                visu_acl: r
+
+            color: 
+                name: Color for the message, e.g 38761D
+                husky_state: color 
+                type: str 
+                visu_acl: r
+
+            batterypercent: 
+                name: Battery Level 0..100
+                husky_state: batterypercent 
+                type: num 
+                visu_acl: r
+
+            battery255:
+                name: Battery Level 0..255
+                type: num 
+                visu_acl: r
+                eval: int(value * 255 / 100)
+                eval_trigger: ..batterypercent
+
+        control:
+            name: Steuerbefehle
+
+            start:
+                name: Start
+                husky_control: START
+                type: bool 
+                visu_acl: rw
+                enforce_updates: True
+
+            start_3h:
+                name: Start (Override 3h)
+                husky_control: START_3H
+                type: bool 
+                visu_acl: rw
+                enforce_updates: True
+
+            stop:
+                name: Stop 
+                husky_control: STOP
+                type: bool 
+                visu_acl: rw
+                enforce_updates: True
+
+            park:
+                name: Park 
+                husky_control: PARK 
+                type: bool 
+                visu_acl: rw
+                enforce_updates: True
+
+            park:
+                name: Park until next Timer
+                husky_control: PARK_TIMER
+                type: bool 
+                visu_acl: rw
+                enforce_updates: True
+
