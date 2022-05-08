@@ -5,7 +5,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-20.04 #latest
-    name: Notify Unittests
     steps:
-      run: |
-      curl -XPOST -u \'${{ secrets.PAT_USERNAME}}:${{secrets.PAT_TOKEN}}\' -H \'Accept: application/vnd.github.everest-preview+json\' -H \'Content-Type: application/json\' https://api.github.com/repos/smarthomeNG/tests/dispatches --data \'{\"event_type\": \"build_application\"}\'
+     - name: Notidy Unit Tests
+       run: |
+         curl -XPOST -u "${{ secrets.PAT_USERNAME}}:${{secrets.PAT_TOKEN}}" -H "Accept:application/vnd.github.everest-preview+json" -H "Content-Type:application/json" https://api.github.com/repos/smarthomeNG/tests/dispatches --data "{\'event_type\':\'build_application\'}"
