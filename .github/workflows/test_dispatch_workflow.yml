@@ -1,6 +1,8 @@
 name: "SmartHomeNG Unittest Workflow"
 on: 
   push:
+    branches:
+      - develop
   workflow_dispatch:
 jobs:
   build:
