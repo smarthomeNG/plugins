@@ -27,6 +27,13 @@ class NUT(SmartPlugin):
   ALLOW_MULTIINSTANCE = True
 
   def __init__(self, sh, ups, cycle = 60, host = 'localhost', port = 3493, timeout = 5):
+    """
+    Initalizes the plugin.
+    """
+
+    # Call init code of parent class (SmartPlugin)
+    super().__init__()
+
     self._sh = sh
     self._cycle = int(cycle)
     self._host = host
