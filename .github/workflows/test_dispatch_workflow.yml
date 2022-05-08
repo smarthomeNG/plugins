@@ -1,5 +1,7 @@
 name: "SmartHomeNG Unittest Workflow"
-on: push
+on: 
+  push:
+  workflow_dispatch:
 jobs:
   build:
     runs-on: ubuntu-20.04 #latest
