@@ -105,7 +105,7 @@ parameters:
 
     port:
         type: int
-        default: 8102
+        default: 9090
 
         description:
             de: Port für Netzwerkverbindung
