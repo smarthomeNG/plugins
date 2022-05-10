@@ -20,12 +20,12 @@ jobs:
       - run: sudo apt-get install librrd-dev libpython3-dev
       - run: sudo apt-get install gcc --only-upgrade
       - uses: actions/checkout@v2
-      #- name: Checkout SmartHomeNG DEVELOP Branch
-      #  uses: actions/checkout@v2
-      #  with:
-      #    repository: smarthomeNG/smarthome
-      #    ref: develop
-      #    path: smarthomeng
+      - name: Checkout SmartHomeNG DEVELOP Branch
+        uses: actions/checkout@v2
+        with:
+          repository: smarthomeNG/smarthome
+          ref: develop
+          path: smarthomeng
       - name: Checkout SmartHomeNG/plugins DEVELOP Branch
         uses: actions/checkout@v2
         with:
