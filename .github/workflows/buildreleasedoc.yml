@@ -61,7 +61,7 @@ jobs:
       #    branch: release_doc # The branch the action should deploy to.
       #    folder: ./smarthomeng/doc/user/build/html # The folder the action should deploy.
 
-      - name: Deploy documentation to seperate repo dev_doc
+      - name: Deploy documentation to seperate repo smarthome
         uses: JamesIves/github-pages-deploy-action@v4.3.3
         with:
           branch: release_doc # The branch the action should deploy to.
