@@ -701,7 +701,7 @@ class AVM(SmartPlugin):
     Main class of the Plugin. Does all plugin specific stuff and provides the update functions for the different TR-064 services on the FritzDevice
     """
 
-    PLUGIN_VERSION = "1.6.7"
+    PLUGIN_VERSION = "1.6.8"
 
     _header = {'SOAPACTION': '', 'CONTENT-TYPE': 'text/xml; charset="utf-8"'}
 
@@ -1503,7 +1503,7 @@ class AVM(SmartPlugin):
                 new_value = float(item())
                 if self.debug_log:
                     self.logger.debug(f"{avm_data_type} caller is: {caller}; new value to be set is {new_value}")
-
+                
                 # get AIN
                 ain_device = self._get_item_ain(item)
                 if self.debug_log:
@@ -3282,12 +3282,12 @@ class AVM(SmartPlugin):
         """
         Set the thermostate target temperature.
         """
-
+        
         temp = int(16 + ((float(temperature) - 8) * 2))
 
         if temp < min(range(16, 56)):
             temp = 253
-        elif temp > max(range(16, 56)):
+        elif (temp > max(range(16, 56))) and (temp != 253):
             temp = 254
 
         self._aha_request("sethkrtsoll", ain=ain, param={'param': temp})
