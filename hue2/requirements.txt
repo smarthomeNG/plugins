@@ -1,4 +1,6 @@
 xmltodict
 qhue
 # zeroconf below v0.27, because newer versions need intensive testing and actual version has dropped support for Python 3.6
-zeroconf<=0.26.3
+#zeroconf<=0.26.3
+#Zeroconf >= 0.28 for testing (to resolve conflict with appletv plugin)
+zeroconf<=0.28.3
