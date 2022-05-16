@@ -60,7 +60,7 @@ jobs:
 
       - name: Install SmartHomeNG all requirements
         # all requirements are needed for pytest to run plugin tests
-        run: pip install -r smarthomeng/requirements/all.txt
+        run: pip install -r requirements/all.txt
 
       - name: '>>> Run Python Unittests for PLUGINS <<<'
         working-directory: ./plugins
