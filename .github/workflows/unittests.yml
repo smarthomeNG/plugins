@@ -63,6 +63,5 @@ jobs:
         run: pip install -r smarthomeng/requirements/all.txt
 
       - name: '>>> Run Python Unittests for PLUGINS <<<'
-      - name: Run Python Unittests for PLUGINS
         working-directory: ./plugins
         run: pytest
