@@ -16,10 +16,6 @@ jobs:
         python-version: [ '3.7', '3.8', '3.9', '3.10' ]
     name: Python ${{ matrix.python-version }}
     steps:
-      - name: Extract branch name
-        shell: bash
-        run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
-        id: extract_branch
       - name: update OS (Ubuntu)
         run: sudo apt-get update
       - run: sudo apt-get install libudev-dev
@@ -27,17 +23,17 @@ jobs:
       - run: sudo apt-get install gcc --only-upgrade
       - uses: actions/checkout@v2
 
-      - name: Checkout SmartHomeNG CORE ${{steps.extract_branch.outputs.branch}} Branch
+      - name: Checkout SmartHomeNG CORE DEVELOP Branch
         uses: actions/checkout@v2
         with:
           repository: smarthomeNG/smarthome
-          ref: ${{steps.extract_branch.outputs.branch}}
+          ref: develop
           path: smarthomeng
-      - name: Checkout SmartHomeNG PLUGINS ${{steps.extract_branch.outputs.branch}} Branch
+      - name: Checkout SmartHomeNG plugins DEVELOP Branch
         uses: actions/checkout@v2
         with:
           repository: smarthomeNG/plugins
-          ref: ${{steps.extract_branch.outputs.branch}}
+          ref: develop
           path: smarthomeng/plugins
 
       - name: Set up Python
