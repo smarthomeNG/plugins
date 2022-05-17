@@ -3,5 +3,6 @@ xmltodict>=0.11.0
 tinytag>=0.18.0
 gtts
 #
-# ifaddr is used by soco
+# These packages are used by SoCo:
 ifaddr
+appdirs
