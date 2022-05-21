@@ -2431,6 +2431,7 @@ class Sonos(SmartPlugin):
         self._local_webservice_path = self.get_parameter_value("local_webservice_path")
         self._snippet_duration_offset = float(self.get_parameter_value("snippet_duration_offset"))
         self.SoCo_nr_speakers = 0
+        self.zones = {}
 	
         from bin.smarthome import VERSION
         if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
@@ -2939,6 +2940,8 @@ class Sonos(SmartPlugin):
                 self.logger.error("Exception during soco discover function: %s" % str(e))
                 return
 
+        self.zones = zones
+
         if zones is None: 
             self.logger.debug("Discovery could not be executed.")
             return 
@@ -2959,7 +2962,7 @@ class Sonos(SmartPlugin):
             try:
                 uid = zone.uid
             except Exception as e:
-                self.logger.debug(f"Exception in zone.uid for speaker {zone.ip_address}: {e}")
+                self.logger.warning(f"Exception in zone.uid for speaker {zone.ip_address}: {e}")
                 continue
 
             if uid is None:
@@ -3126,9 +3129,21 @@ class WebInterface(SmartPluginWebIf):
 
         :return: contents of the template after beeing rendered
         """
+
+        speakerlist = []
+
+        for zone in self.plugin.zones:
+            speaker = dict()
+            speaker['name'] = zone.player_name
+            speaker['ip'] = zone.ip_address
+            speaker['uid'] = zone.uid
+            speakerlist.append(speaker)
+
+        speakerlist_sorted = sorted(speakerlist, key=lambda k: k['name'])
+
         tmpl = self.tplenv.get_template('index.html')
         # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
-        return tmpl.render(p=self.plugin, items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path'])))
+        return tmpl.render(p=self.plugin, items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path'])), speakerlist=speakerlist_sorted)
 
 
     @cherrypy.expose
