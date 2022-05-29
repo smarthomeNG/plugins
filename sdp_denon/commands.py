@@ -34,7 +34,7 @@ models = {
 
 commands = {
     'general': {
-        'custom_inputnames': {'read': True, 'write': False, 'read_cmd': 'SSFUN ?', 'item_type': 'dict', 'dev_datatype': 'str', 'reply_pattern': 'SSFUN(.*)', 'item_attrs': {'initial': True, 'item_template': 'custom_inputnames'}},
+        'custom_inputnames': {'read': True, 'write': False, 'read_cmd': 'SSFUN ?', 'item_type': 'dict', 'dev_datatype': 'str', 'reply_pattern': 'SSFUN(.*)', 'item_attrs': {'item_template': 'custom_inputnames'}},
         'power': {'read': True, 'write': True, 'read_cmd': 'PW?', 'write_cmd': 'PW{VALUE}', 'item_type': 'bool', 'dev_datatype': 'str', 'reply_pattern': 'PW{LOOKUP}', 'lookup': 'POWER'},
         'setupmenu': {'read': True, 'write': True, 'read_cmd': 'MNMEN?', 'write_cmd': 'MNMEN {VALUE}', 'item_type': 'bool', 'dev_datatype': 'onoff', 'reply_pattern': 'MNMEN (ON|OFF)'},
         'display': {'read': True, 'write': False, 'read_cmd': 'NSE', 'item_type': 'str', 'dev_datatype': 'DenonDisplay', 'reply_pattern': 'NSE(.*)'},
@@ -366,10 +366,10 @@ item_templates = {
         }
     },
     'input': {
-        'on_change': '.custom_name = sh...custom_inputnames()[value]',
+        'on_change': ".custom_name = '' if sh.....general.custom_inputnames() == {} else sh.....general.custom_inputnames()[value]",
         'custom_name': {
             'type': 'str',
-            'on_change': '.. = sh....custom_inputnames.reverse()[value]'
+            'on_change': ".. = '' if sh......general.custom_inputnames.reverse() == {} else sh......general.custom_inputnames.reverse()[value]"
         }
     }
 }

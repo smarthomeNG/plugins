@@ -455,11 +455,11 @@ item_structs:
                     -   zone1
                     -   zone1.control
                     denon_read_initial: true
-                    on_change: .custom_name = sh...custom_inputnames()[value]
+                    on_change: .custom_name = '' if sh.....general.custom_inputnames() == {} else sh.....general.custom_inputnames()[value]
 
                     custom_name:
                         type: str
-                        on_change: .. = sh....custom_inputnames.reverse()[value]
+                        on_change: .. = '' if sh......general.custom_inputnames.reverse() == {} else sh......general.custom_inputnames.reverse()[value]
 
                 listeningmode:
                     type: str
@@ -1023,11 +1023,11 @@ item_structs:
                     denon_read_group:
                     -   zone2
                     -   zone2.control
-                    on_change: .custom_name = sh...custom_inputnames()[value]
+                    on_change: .custom_name = '' if sh.....general.custom_inputnames() == {} else sh.....general.custom_inputnames()[value]
 
                     custom_name:
                         type: str
-                        on_change: .. = sh....custom_inputnames.reverse()[value]
+                        on_change: .. = '' if sh......general.custom_inputnames.reverse() == {} else sh......general.custom_inputnames.reverse()[value]
 
                 sleep:
                     type: num
@@ -1253,11 +1253,11 @@ item_structs:
                     denon_read_group:
                     -   zone3
                     -   zone3.control
-                    on_change: .custom_name = sh...custom_inputnames()[value]
+                    on_change: .custom_name = '' if sh.....general.custom_inputnames() == {} else sh.....general.custom_inputnames()[value]
 
                     custom_name:
                         type: str
-                        on_change: .. = sh....custom_inputnames.reverse()[value]
+                        on_change: .. = '' if sh......general.custom_inputnames.reverse() == {} else sh......general.custom_inputnames.reverse()[value]
 
             settings:
 
@@ -1599,11 +1599,11 @@ item_structs:
                     -   ALL.zone1
                     -   ALL.zone1.control
                     denon_read_initial: true
-                    on_change: .custom_name = sh...custom_inputnames()[value]
+                    on_change: .custom_name = '' if sh.....general.custom_inputnames() == {} else sh.....general.custom_inputnames()[value]
 
                     custom_name:
                         type: str
-                        on_change: .. = sh....custom_inputnames.reverse()[value]
+                        on_change: .. = '' if sh......general.custom_inputnames.reverse() == {} else sh......general.custom_inputnames.reverse()[value]
 
                 listeningmode:
                     type: str
@@ -2050,11 +2050,11 @@ item_structs:
                     -   ALL
                     -   ALL.zone2
                     -   ALL.zone2.control
-                    on_change: .custom_name = sh...custom_inputnames()[value]
+                    on_change: .custom_name = '' if sh.....general.custom_inputnames() == {} else sh.....general.custom_inputnames()[value]
 
                     custom_name:
                         type: str
-                        on_change: .. = sh....custom_inputnames.reverse()[value]
+                        on_change: .. = '' if sh......general.custom_inputnames.reverse() == {} else sh......general.custom_inputnames.reverse()[value]
 
                 sleep:
                     type: num
@@ -2335,11 +2335,11 @@ item_structs:
                     -   AVR-X6300H.zone1
                     -   AVR-X6300H.zone1.control
                     denon_read_initial: true
-                    on_change: .custom_name = sh...custom_inputnames()[value]
+                    on_change: .custom_name = '' if sh.....general.custom_inputnames() == {} else sh.....general.custom_inputnames()[value]
 
                     custom_name:
                         type: str
-                        on_change: .. = sh....custom_inputnames.reverse()[value]
+                        on_change: .. = '' if sh......general.custom_inputnames.reverse() == {} else sh......general.custom_inputnames.reverse()[value]
 
                 listeningmode:
                     type: str
@@ -2906,11 +2906,11 @@ item_structs:
                     -   AVR-X6300H
                     -   AVR-X6300H.zone2
                     -   AVR-X6300H.zone2.control
-                    on_change: .custom_name = sh...custom_inputnames()[value]
+                    on_change: .custom_name = '' if sh.....general.custom_inputnames() == {} else sh.....general.custom_inputnames()[value]
 
                     custom_name:
                         type: str
-                        on_change: .. = sh....custom_inputnames.reverse()[value]
+                        on_change: .. = '' if sh......general.custom_inputnames.reverse() == {} else sh......general.custom_inputnames.reverse()[value]
 
                 sleep:
                     type: num
@@ -3148,11 +3148,11 @@ item_structs:
                     -   AVR-X6300H
                     -   AVR-X6300H.zone3
                     -   AVR-X6300H.zone3.control
-                    on_change: .custom_name = sh...custom_inputnames()[value]
+                    on_change: .custom_name = '' if sh.....general.custom_inputnames() == {} else sh.....general.custom_inputnames()[value]
 
                     custom_name:
                         type: str
-                        on_change: .. = sh....custom_inputnames.reverse()[value]
+                        on_change: .. = '' if sh......general.custom_inputnames.reverse() == {} else sh......general.custom_inputnames.reverse()[value]
 
             settings:
 
@@ -3499,11 +3499,11 @@ item_structs:
                     -   AVR-X4300H.zone1
                     -   AVR-X4300H.zone1.control
                     denon_read_initial: true
-                    on_change: .custom_name = sh...custom_inputnames()[value]
+                    on_change: .custom_name = '' if sh.....general.custom_inputnames() == {} else sh.....general.custom_inputnames()[value]
 
                     custom_name:
                         type: str
-                        on_change: .. = sh....custom_inputnames.reverse()[value]
+                        on_change: .. = '' if sh......general.custom_inputnames.reverse() == {} else sh......general.custom_inputnames.reverse()[value]
 
                 listeningmode:
                     type: str
@@ -4094,11 +4094,11 @@ item_structs:
                     -   AVR-X4300H
                     -   AVR-X4300H.zone2
                     -   AVR-X4300H.zone2.control
-                    on_change: .custom_name = sh...custom_inputnames()[value]
+                    on_change: .custom_name = '' if sh.....general.custom_inputnames() == {} else sh.....general.custom_inputnames()[value]
 
                     custom_name:
                         type: str
-                        on_change: .. = sh....custom_inputnames.reverse()[value]
+                        on_change: .. = '' if sh......general.custom_inputnames.reverse() == {} else sh......general.custom_inputnames.reverse()[value]
 
                 sleep:
                     type: num
@@ -4336,11 +4336,11 @@ item_structs:
                     -   AVR-X4300H
                     -   AVR-X4300H.zone3
                     -   AVR-X4300H.zone3.control
-                    on_change: .custom_name = sh...custom_inputnames()[value]
+                    on_change: .custom_name = '' if sh.....general.custom_inputnames() == {} else sh.....general.custom_inputnames()[value]
 
                     custom_name:
                         type: str
-                        on_change: .. = sh....custom_inputnames.reverse()[value]
+                        on_change: .. = '' if sh......general.custom_inputnames.reverse() == {} else sh......general.custom_inputnames.reverse()[value]
 
             settings:
 
@@ -4712,11 +4712,11 @@ item_structs:
                     -   AVR-X3300W.zone1
                     -   AVR-X3300W.zone1.control
                     denon_read_initial: true
-                    on_change: .custom_name = sh...custom_inputnames()[value]
+                    on_change: .custom_name = '' if sh.....general.custom_inputnames() == {} else sh.....general.custom_inputnames()[value]
 
                     custom_name:
                         type: str
-                        on_change: .. = sh....custom_inputnames.reverse()[value]
+                        on_change: .. = '' if sh......general.custom_inputnames.reverse() == {} else sh......general.custom_inputnames.reverse()[value]
 
                 listeningmode:
                     type: str
@@ -5284,11 +5284,11 @@ item_structs:
                     -   AVR-X3300W
                     -   AVR-X3300W.zone2
                     -   AVR-X3300W.zone2.control
-                    on_change: .custom_name = sh...custom_inputnames()[value]
+                    on_change: .custom_name = '' if sh.....general.custom_inputnames() == {} else sh.....general.custom_inputnames()[value]
 
                     custom_name:
                         type: str
-                        on_change: .. = sh....custom_inputnames.reverse()[value]
+                        on_change: .. = '' if sh......general.custom_inputnames.reverse() == {} else sh......general.custom_inputnames.reverse()[value]
 
                 sleep:
                     type: num
@@ -5692,11 +5692,11 @@ item_structs:
                     -   AVR-X2300W.zone1
                     -   AVR-X2300W.zone1.control
                     denon_read_initial: true
-                    on_change: .custom_name = sh...custom_inputnames()[value]
+                    on_change: .custom_name = '' if sh.....general.custom_inputnames() == {} else sh.....general.custom_inputnames()[value]
 
                     custom_name:
                         type: str
-                        on_change: .. = sh....custom_inputnames.reverse()[value]
+                        on_change: .. = '' if sh......general.custom_inputnames.reverse() == {} else sh......general.custom_inputnames.reverse()[value]
 
                 listeningmode:
                     type: str
@@ -6263,11 +6263,11 @@ item_structs:
                     -   AVR-X2300W
                     -   AVR-X2300W.zone2
                     -   AVR-X2300W.zone2.control
-                    on_change: .custom_name = sh...custom_inputnames()[value]
+                    on_change: .custom_name = '' if sh.....general.custom_inputnames() == {} else sh.....general.custom_inputnames()[value]
 
                     custom_name:
                         type: str
-                        on_change: .. = sh....custom_inputnames.reverse()[value]
+                        on_change: .. = '' if sh......general.custom_inputnames.reverse() == {} else sh......general.custom_inputnames.reverse()[value]
 
                 sleep:
                     type: num
@@ -6604,11 +6604,11 @@ item_structs:
                     -   AVR-X1300W.zone1
                     -   AVR-X1300W.zone1.control
                     denon_read_initial: true
-                    on_change: .custom_name = sh...custom_inputnames()[value]
+                    on_change: .custom_name = '' if sh.....general.custom_inputnames() == {} else sh.....general.custom_inputnames()[value]
 
                     custom_name:
                         type: str
-                        on_change: .. = sh....custom_inputnames.reverse()[value]
+                        on_change: .. = '' if sh......general.custom_inputnames.reverse() == {} else sh......general.custom_inputnames.reverse()[value]
 
                 listeningmode:
                     type: str
@@ -7091,11 +7091,11 @@ item_structs:
                     -   AVR-X1300W
                     -   AVR-X1300W.zone2
                     -   AVR-X1300W.zone2.control
-                    on_change: .custom_name = sh...custom_inputnames()[value]
+                    on_change: .custom_name = '' if sh.....general.custom_inputnames() == {} else sh.....general.custom_inputnames()[value]
 
                     custom_name:
                         type: str
-                        on_change: .. = sh....custom_inputnames.reverse()[value]
+                        on_change: .. = '' if sh......general.custom_inputnames.reverse() == {} else sh......general.custom_inputnames.reverse()[value]
 
                 sleep:
                     type: num
