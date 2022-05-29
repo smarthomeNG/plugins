@@ -237,7 +237,7 @@ item_structs:
 
                 reverse:
                     type: dict
-                    eval: '"{v: k for (k, v) in sh...().items()}"'
+                    eval: '{v: k for (k, v) in sh...().items()}'
 
                     update:
                         type: bool
@@ -1400,7 +1400,7 @@ item_structs:
 
                 reverse:
                     type: dict
-                    eval: '"{v: k for (k, v) in sh...().items()}"'
+                    eval: '{v: k for (k, v) in sh...().items()}'
 
                     update:
                         type: bool
@@ -2136,7 +2136,7 @@ item_structs:
 
                 reverse:
                     type: dict
-                    eval: '"{v: k for (k, v) in sh...().items()}"'
+                    eval: '{v: k for (k, v) in sh...().items()}'
 
                     update:
                         type: bool
@@ -3300,7 +3300,7 @@ item_structs:
 
                 reverse:
                     type: dict
-                    eval: '"{v: k for (k, v) in sh...().items()}"'
+                    eval: '{v: k for (k, v) in sh...().items()}'
 
                     update:
                         type: bool
@@ -4488,7 +4488,7 @@ item_structs:
 
                 reverse:
                     type: dict
-                    eval: '"{v: k for (k, v) in sh...().items()}"'
+                    eval: '{v: k for (k, v) in sh...().items()}'
 
                     update:
                         type: bool
@@ -5468,7 +5468,7 @@ item_structs:
 
                 reverse:
                     type: dict
-                    eval: '"{v: k for (k, v) in sh...().items()}"'
+                    eval: '{v: k for (k, v) in sh...().items()}'
 
                     update:
                         type: bool
@@ -6380,7 +6380,7 @@ item_structs:
 
                 reverse:
                     type: dict
-                    eval: '"{v: k for (k, v) in sh...().items()}"'
+                    eval: '{v: k for (k, v) in sh...().items()}'
 
                     update:
                         type: bool

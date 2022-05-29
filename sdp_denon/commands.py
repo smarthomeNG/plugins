@@ -357,7 +357,7 @@ item_templates = {
         'cache': True,
         'reverse': {
             'type': 'dict',
-            'eval': '"{v: k for (k, v) in sh...().items()}"',
+            'eval': '{v: k for (k, v) in sh...().items()}',
             'update': {
                 'type': 'bool',
                 'eval': 'sh...timer(2, {})',
