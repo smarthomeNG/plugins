@@ -12,7 +12,7 @@ plugin:
     documentation: https://github.com/smarthomeng/plugins/blob/develop/neato/README.md
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1417295-support-thread-plugin-neato
 
-    version: 1.6.7                  # Plugin version
+    version: 1.6.8                  # Plugin version
     sh_minversion: 1.8.0            # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False           # plugin supports multi instance
@@ -66,7 +66,8 @@ item_attributes:
                  laed gerade
                  Ladestand
                  Nachricht
-                 fahr zur Basis
+                 Kommando fahr zur Basis verfuegbar
+                 Kommando start verfuegbar
                  reinige Einzelraum'
             en: 'Neato attributes:
                  name
@@ -79,7 +80,8 @@ item_attributes:
                  is charging
                  charge percentage
                  message
-                 go to base
+                 command go to base available
+                 command start available
                  clean room'
         valid_list:
           - name
@@ -93,6 +95,7 @@ item_attributes:
           - charge_percentage
           - message
           - command_goToBaseAvailable
+          - command_startAvailable
           - clean_room
 
 item_structs: NONE
