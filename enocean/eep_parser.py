@@ -212,11 +212,14 @@ class EEP_Parser():
         value = value / divisor
         self.logger.debug(f"Processing A5_12_01: powermeter: {value} W")
 
-        #debug output for wrong power values:
-        if value > 1500:
-            self.logger.warning(f"A5_12_01 exception: value {value}, divisor {divisor}, divenum {div_enum}, statusPayload {status_byte}, header status {status}")
-            self.logger.warning(f"A5_12_01 exception: payloads 0-3: {payload[0]},{payload[1]},{payload[2]},{payload[3]}")
+        # It is confirmed by Eltako that with the use of multiple repeaters in an Eltako network, values can be corrupted in random cases.
+        # Catching these random errors via plausibility check:
+        if value > 2300:
+            self.logger.warning(f"A5_12_01 plausibility error: power value {value} is greater than 2300W, which is not plausible. Skipping.")
+            #self.logger.warning(f"A5_12_01 exception: value {value}, divisor {divisor}, divenum {div_enum}, statusPayload {status_byte}, header status {status}")
+            #self.logger.warning(f"A5_12_01 exception: payloads 0-3: {payload[0]},{payload[1]},{payload[2]},{payload[3]}")
             results['DEBUG'] = 1
+            return results
 
         results['VALUE'] = value
         return results
