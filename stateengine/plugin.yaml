@@ -1181,8 +1181,8 @@ item_structs:
             se_item_suspend: ..suspend
             se_item_suspend_visu: ..suspend.visu
             se_item_release: ..release
-            se_item_suspend_end: ..suspend_end
-            se_item_suspend_start: ..suspend_start
+            se_item_suspend_end: ..suspend_end.date_time
+            se_item_suspend_start: ..suspend_start.date_time
             eval_trigger:
                 - ..release
 
@@ -1204,7 +1204,7 @@ item_structs:
                       - 'order: 3'
                     se_action_suspend_start:
                       - 'function: set'
-                      - 'to: '
+                      - 'to:  '
                       - 'order: 4'
                     se_action_release:
                       - 'function: set'
