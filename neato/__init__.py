@@ -32,7 +32,7 @@ from .robot import Robot
 
 
 class Neato(SmartPlugin):
-    PLUGIN_VERSION = '1.6.7'
+    PLUGIN_VERSION = '1.6.8'
     robot = 'None'
 
     def __init__(self, sh, *args, **kwargs):
@@ -209,6 +209,8 @@ class Neato(SmartPlugin):
                 value = self.robot.isScheduleEnabled 
             elif attribute == 'command_goToBaseAvailable':
                 value = self.robot.dockHasBeenSeen
+            elif attribute == 'command_startAvailable':
+                value = self.robot.commandStartAvailable
 
             # if a value was found, store it to item
             if value is not None:

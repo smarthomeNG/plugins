@@ -93,10 +93,10 @@ class WebserviceHttpHandler(BaseHTTPRequestHandler):
             for mime_type, key in mapping.items():
                 if extension == key:
                     return mime_type
-            raise Exception("Could not found mime-type for extension '{ext}'.".format(ext=extension))
+            raise Exception(f"Cannot determine mime-type for extension '{extension}'.")
 
         except Exception as err:
-            self.logger.warning(err)
+            self.logger.warning(f"Exception in _get_mime_type_by_filetype: {err}")
             return None
 
     def do_GET(self):
@@ -121,7 +121,7 @@ class WebserviceHttpHandler(BaseHTTPRequestHandler):
             mime_type = self._get_mime_type_by_filetype(file_path)
 
             if mime_type is None:
-                self.send_error(406, 'File With Unsupported Media-Type : %s' % self.path)
+                self.send_error(406, 'File with unsupported media type : %s' % self.path)
                 return
 
             client = "{ip}:{port}".format(ip=self.client_address[0], port=self.client_address[1])
@@ -133,9 +133,11 @@ class WebserviceHttpHandler(BaseHTTPRequestHandler):
             self.send_header('Content-Length', sys.getsizeof(file))
             self.end_headers()
             self.wfile.write(file)
+        except ConnectionResetError:
+            self.logger.debug("Connection reset by partner")
         except Exception as ex:
-            self.logger.error("Error delivering file {file}".format(file=file_path))
-            self.logger.error(ex)
+            self.logger.error(f"Error delivering file {file_path}")
+            self.logger.error(f"Exception: {ex}")
         finally:
             self.connection.close()
 
@@ -2170,9 +2172,10 @@ class Speaker(object):
                     # into e.g: MediaMetadataTrack
                     class_key = result_type_proper + raw_item['itemType'].title()
                     cls = get_class(class_key)
-                    from plugins.sonos.soco.music_services import Account
+                    #from plugins.sonos.soco.music_services.token_store import JsonFileTokenStore
                     items.append(
-                        cls.from_music_service(MusicService(service_name='TuneIn', account=Account()), raw_item))
+                        cls.from_music_service(MusicService(service_name='TuneIn'), raw_item))
+                        #cls.from_music_service(MusicService(service_name='TuneIn', token_store=JsonFileTokenStore()), raw_item))
 
             if not items:
                 exit(0)
