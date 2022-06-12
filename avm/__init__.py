@@ -2722,14 +2722,18 @@ class AVM(SmartPlugin):
         """
 
         devices = None
-        plain = self._aha_request("getdevicelistinfos")
-        if plain is not None:
+        plain = self._aha_request("getdevicelistinfos", rf=str)
+        
+        #Return value plain is a string, therefore checking none via string compare:
+        if plain != 'None':
             try:
                 dom = minidom.parseString(plain)
                 devices = dom.getElementsByTagName('device')
             except Exception as e:
                 self.logger.error(f'_get_aha_device_elements: error {e} during parsing')
-        return devices
+            else:
+                return devices
+        return None
 
     def _update_aha_devices(self):
         """
