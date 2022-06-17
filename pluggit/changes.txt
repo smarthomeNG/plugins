@@ -1,0 +1,15 @@
+29.08.2020:
+ - bool-Werte konnten nicht geschrieben werden
+
+24.02.2021:
+- Item-struct um Zugriffe für SmartVISU erweitert
+- item_attribut um pluggit_convert erweitert
+- scheduler.remove eingebaut
+
+16.02.2022:
+- CurentUnitMode.ManualBypass dem Item-struct zugefügt
+- Log-Level für verschiedene Ausgaben angepasst
+- CurrentUnitMode.AwayMode repariert
+
+22.05.2022:
+- Fehler mit manuellem Bypass behoben
