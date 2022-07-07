@@ -1,1 +1,1 @@
-aioautomower
+aioautomower==2022.3.1
