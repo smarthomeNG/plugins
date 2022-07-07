@@ -10,22 +10,22 @@ husky_plugin:
             name: Mower information
 
             device:
-                husky_info: NAME
+                husky_info: name
                 type: str
                 visu_acl: ro
 
             model:
-                husky_info: MODEL
+                husky_info: model
                 type: str
                 visu_acl: ro
 
             id:
-                husky_info: ID
+                husky_info: id
                 type: str
                 visu_acl: ro
 
             serial:
-                husky_info: SERIAL
+                husky_info: serial
                 type: num
                 visu_acl: ro
 
@@ -97,7 +97,7 @@ husky_plugin:
             start3H:
                 name: Start
                 type: num
-                husky_control: STARTTIME
+                husky_control: starttime
                 visu_acl: rw
                 initial_value: 180
                 enforce_updates: True
@@ -105,28 +105,28 @@ husky_plugin:
             resume:
                 name: Start
                 type: bool
-                husky_control: Resume
+                husky_control: resume
                 visu_acl: rw
                 enforce_updates: True
 
             stop:
                 name: Stop
                 type: bool
-                husky_control: Pause
+                husky_control: pause
                 visu_acl: rw
                 enforce_updates: True
 
             park:
                 name: Park
                 type: bool
-                husky_control: PARK
+                husky_control: park
                 visu_acl: rw
                 enforce_updates: True
 
             park3H:
                 name: Park
                 type: num
-                husky_control: PARKTIME
+                husky_control: parktime
                 visu_acl: rw
                 initial_value: 180
                 enforce_updates: True
@@ -134,20 +134,20 @@ husky_plugin:
             parkPermantent:
                 name: Park
                 type: bool
-                husky_control: PARKPERMANENT
+                husky_control: parkpermanent
                 visu_acl: rw
                 enforce_updates: True
 
             parkUntilNext:
                 name: Park
                 type: bool
-                husky_control: PARKNEXT
+                husky_control: parknext
                 visu_acl: rw
                 enforce_updates: True
 
             cuttingHeight:
                 name: cutting height [1, 2, 3, 4, 5, 6, 7, 8, 9]
-                husky_control: cuttingHeight
+                husky_control: cuttingheight
                 type: num
                 visu_acl: rw
                 enforce_updates: True
@@ -155,7 +155,7 @@ husky_plugin:
 
             headLight:
                 name: headLight settings [ ALWAYS_ON, ALWAYS_OFF, EVENING_ONLY, EVENING_AND_NIGHT ]
-                husky_control: headLight
+                husky_control: headlight
                 type: str
                 visu_acl: rw
                 enforce_updates: True
