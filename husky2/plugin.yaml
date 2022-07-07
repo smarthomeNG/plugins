@@ -58,18 +58,21 @@ item_attributes:
     # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)
     husky_info:
         type: str
+        valid_list: ['name', 'id', 'serial', 'model']
         description:
             de: 'Das Item, welches mit allgemeinen Informationen (z.B. Modell) durch das Plugin beschrieben werden soll'
             en: 'Item that shoul receive general information (e.g. model) by the plugin'
 
     husky_state:
         type: str
+        valid_list: ['message', 'state', 'activity', 'mode', 'errormessage', 'batterypercent', 'connection', 'longitude', 'latitude']
         description:
             de: 'Das Item, welches mit Status Informationen (z.B. Aktivität) durch das Plugin beschrieben werden soll'
             en: 'Item that should receive status information (e.g. activity) by the plugin'
 
     husky_control:
         type: str
+        valid_list: ['starttime', 'park', 'starttime', 'pause', 'parkpermanent', 'parktime', 'parknext', 'resume', 'cuttingheight', 'headlight']
         description:
             de: 'Das Item, mit dem der Mähroboter gesteuert werden soll (z.B. Start Kommando)'
             en: 'Item to control the mower (e.g. start command)'
@@ -83,23 +86,23 @@ item_structs:
             name: Mower information
 
             device:
-                husky_info: NAME
+                husky_info: name
                 type: str
                 visu_acl: ro
 
             model:
-                husky_info: MODEL
+                husky_info: model
                 type: str
                 visu_acl: ro
 
             id:
-                husky_info: ID
+                husky_info: id
                 type: str
                 visu_acl: ro
 
             serial:
-                husky_info: SERIAL
-                type: str
+                husky_info: serial
+                type: num
                 visu_acl: ro
 
         state:
@@ -110,13 +113,6 @@ item_structs:
                 husky_state: connection
                 type: bool
                 visu_acl: ro
-
-            inoperation:
-                name: mower in operation mode
-                type: bool
-                visu_acl: ro
-                eval: "sh...activity() in ['MOWING', 'GOING_HOME', 'LEAVING']"
-                eval_trigger: ..activity
 
             activity:
                 name: activity [ UNKNOWN, NOT_APPLICABLE, MOWING, GOING_HOME, CHARGING, LEAVING, PARKED_IN_CS ]
@@ -172,12 +168,12 @@ item_structs:
                 visu_acl: ro
 
         control:
-            name: Steuerbefehle
+            name: Control commands
 
             start3H:
                 name: Start
                 type: num
-                husky_control: STARTTIME
+                husky_control: starttime
                 visu_acl: rw
                 initial_value: 180
                 enforce_updates: True
@@ -185,28 +181,28 @@ item_structs:
             resume:
                 name: Start
                 type: bool
-                husky_control: Resume
+                husky_control: resume
                 visu_acl: rw
                 enforce_updates: True
 
             stop:
                 name: Stop
                 type: bool
-                husky_control: Pause
+                husky_control: pause
                 visu_acl: rw
                 enforce_updates: True
 
             park:
                 name: Park
                 type: bool
-                husky_control: PARK
+                husky_control: park
                 visu_acl: rw
                 enforce_updates: True
 
             park3H:
                 name: Park
                 type: num
-                husky_control: PARKTIME
+                husky_control: parktime
                 visu_acl: rw
                 initial_value: 180
                 enforce_updates: True
@@ -214,20 +210,20 @@ item_structs:
             parkPermantent:
                 name: Park
                 type: bool
-                husky_control: PARKPERMANENT
+                husky_control: parkpermanent
                 visu_acl: rw
                 enforce_updates: True
 
             parkUntilNext:
                 name: Park
                 type: bool
-                husky_control: PARKNEXT
+                husky_control: parknext
                 visu_acl: rw
                 enforce_updates: True
 
             cuttingHeight:
                 name: cutting height [1, 2, 3, 4, 5, 6, 7, 8, 9]
-                husky_control: cuttingHeight
+                husky_control: cuttingheight
                 type: num
                 visu_acl: rw
                 enforce_updates: True
@@ -235,7 +231,7 @@ item_structs:
 
             headLight:
                 name: headLight settings [ ALWAYS_ON, ALWAYS_OFF, EVENING_ONLY, EVENING_AND_NIGHT ]
-                husky_control: headLight
+                husky_control: headlight
                 type: str
                 visu_acl: rw
                 enforce_updates: True
