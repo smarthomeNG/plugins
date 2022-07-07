@@ -15,7 +15,8 @@ Notwendige Software
 ~~~~~~~~~~~~~~~~~~~
 
 Für die Kommunikation wird die Python-Bibliothek aioautomower benötigt. Diese wird bei der ersten Verwundung des Plugins
-automatisch zu SmarthomeNG hinzugefügt.
+automatisch zu SmarthomeNG hinzugefügt. Für das Plugin wird die Version 2022.3.1 verwendet, da bei
+neueren Versionen von aioautomower python 3.9 vorausgesetzt wird.
 
 Unterstützte Geräte
 ~~~~~~~~~~~~~~~~~~~
