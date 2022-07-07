@@ -4,93 +4,158 @@
 husky_plugin:
 
     mower:
-        name: Maehroboter 
+        name: Default Mower Template
 
         info:
-            name: Mower information (not implemented yet)
+            name: Mower information
 
             device:
-                husky_info: NAME 
+                husky_info: NAME
                 type: str
-                visu_acl: r
+                visu_acl: ro
 
             model:
                 husky_info: MODEL
                 type: str
-                visu_acl: r
+                visu_acl: ro
 
             id:
-                husky_info: ID 
+                husky_info: ID
                 type: str
-                visu_acl: r
+                visu_acl: ro
+
+            serial:
+                husky_info: SERIAL
+                type: num
+                visu_acl: ro
 
         state:
-            name: State information 
+            name: State information
 
-            activity: 
-                husky_state: activity 
-                type: str 
-                visu_acl: r
+            connection:
+                name: mower connection state
+                husky_state: connection
+                type: bool
+                visu_acl: ro
 
-            message: 
-                husky_state: message 
-                type: str 
-                visu_acl: r
+            activity:
+                name: activity [ UNKNOWN, NOT_APPLICABLE, MOWING, GOING_HOME, CHARGING, LEAVING, PARKED_IN_CS ]
+                husky_state: activity
+                type: str
+                visu_acl: ro
 
-            color: 
-                name: Color for the message, e.g 38761D
-                husky_state: color 
-                type: str 
-                visu_acl: r
+            errormessage:
+                husky_state: errormessage
+                type: str
+                visu_acl: ro
+                initial_value: 'no error'
 
-            batterypercent: 
-                name: Battery Level 0..100
-                husky_state: batterypercent 
-                type: num 
-                visu_acl: r
+            message:
+                husky_state: errormessage
+                type: str
+                visu_acl: ro
+                initial_value: 'Ok'
+
+            mode:
+                name: mode [ MAIN_AREA, SECONDARY_AREA, HOME, DEMO, UNKNOWN ]
+                husky_state: mode
+                type: str
+                visu_acl: ro
+
+            state:
+                name: state [ UNKNOWN, NOT_APPLICABLE, PAUSED, IN_OPERATION, WAIT_UPDATING, WAIT_POWER_UP, RESTRICTED, OFF, STOPPED, ERROR, FATAL_ERROR, ERROR_AT_POWER_UP ]
+                husky_state: state
+                type: str
+                visu_acl: ro
+
+            batterypercent:
+                husky_state: batterypercent
+                type: num
+                visu_acl: ro
 
             battery255:
-                name: Battery Level 0..255
-                type: num 
-                visu_acl: r
+                type: num
+                visu_acl: ro
                 eval: int(value * 255 / 100)
                 eval_trigger: ..batterypercent
 
-        control:
-            name: Steuerbefehle
+            longitude:
+                name: mower gps longitude
+                husky_state: longitude
+                type: num
+                visu_acl: ro
 
-            start:
+            latitude:
+                name: mower gps latitude
+                husky_state: latitude
+                type: num
+                visu_acl: ro
+
+        control:
+            name: Control commands
+
+            start3H:
                 name: Start
-                husky_control: START
-                type: bool 
+                type: num
+                husky_control: STARTTIME
                 visu_acl: rw
+                initial_value: 180
                 enforce_updates: True
 
-            start_3h:
-                name: Start (Override 3h)
-                husky_control: START_3H
-                type: bool 
+            resume:
+                name: Start
+                type: bool
+                husky_control: Resume
                 visu_acl: rw
                 enforce_updates: True
 
             stop:
-                name: Stop 
-                husky_control: STOP
-                type: bool 
+                name: Stop
+                type: bool
+                husky_control: Pause
                 visu_acl: rw
                 enforce_updates: True
 
             park:
-                name: Park 
-                husky_control: PARK 
-                type: bool 
+                name: Park
+                type: bool
+                husky_control: PARK
                 visu_acl: rw
                 enforce_updates: True
 
-            park:
-                name: Park until next Timer
-                husky_control: PARK_TIMER
-                type: bool 
+            park3H:
+                name: Park
+                type: num
+                husky_control: PARKTIME
+                visu_acl: rw
+                initial_value: 180
+                enforce_updates: True
+
+            parkPermantent:
+                name: Park
+                type: bool
+                husky_control: PARKPERMANENT
                 visu_acl: rw
                 enforce_updates: True
 
+            parkUntilNext:
+                name: Park
+                type: bool
+                husky_control: PARKNEXT
+                visu_acl: rw
+                enforce_updates: True
+
+            cuttingHeight:
+                name: cutting height [1, 2, 3, 4, 5, 6, 7, 8, 9]
+                husky_control: cuttingHeight
+                type: num
+                visu_acl: rw
+                enforce_updates: True
+                cache: true
+
+            headLight:
+                name: headLight settings [ ALWAYS_ON, ALWAYS_OFF, EVENING_ONLY, EVENING_AND_NIGHT ]
+                husky_control: headLight
+                type: str
+                visu_acl: rw
+                enforce_updates: True
