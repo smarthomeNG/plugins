@@ -1174,13 +1174,14 @@ class Speaker(object):
                 # raise Exception('Sonos: Volume has to be an integer between 0 and 100.')
 
             if self._check_max_volume_exceeded(volume, max_volume):
-                self.logger.debug("Sonos: Volume to set [{volume}] exceeds max volume [{max_volume}].".format(
+                self.logger.debug("Volume to set [{volume}] exceeds max volume [{max_volume}].".format(
                     volume=volume, max_volume=max_volume
                 ))
                 volume = max_volume
 
             if group_command:
                 for member in self.zone_group_members:
+                    self.logger.debug(f"Debug set_voloume: Setting {member} to volume {volume}")
                     sonos_speaker[member].soco.volume = volume
                     sonos_speaker[member].volume = volume
             else:
@@ -1458,8 +1459,15 @@ class Speaker(object):
         """
         if not self._check_property():
             return False
-        if not sonos_speaker[self.coordinator].soco.pause():
+        try:
+           ret = sonos_speaker[self.coordinator].soco.pause()
+        except Exception as e:
+            self.logger.warning(f"Exception during set_pause: {e}")
             return False
+        else:
+            if not ret:
+                return False
+
         sonos_speaker[self.coordinator].pause = True
         sonos_speaker[self.coordinator].play = False
         sonos_speaker[self.coordinator].stop = False
@@ -2257,6 +2265,7 @@ class Speaker(object):
             item(p_l, 'Sonos')
 
     def _play_snippet(self, file_path: str, webservice_url: str, volume: int = -1, duration_offset: float = 0, fade_in=False) -> None:
+        self.logger.debug(f"Debug _play_snippet with volume {volume}")
         if not self._check_property():
             return
         if not os.path.isfile(file_path):
@@ -2299,9 +2308,10 @@ class Speaker(object):
                     if 'Stop' in currentActions:
                         self.set_stop()
                     if volume == -1:
+                        self.logger.debug(f"Debug _play_snippet, volume is -1, reset to {self.volume}")
                         volume = self.volume
 
-                    self.set_volume(volume, True)
+                    self.set_volume(volume, group_command=True)
                     self.soco.play_uri(snippet_url, title="snippet")
                     time.sleep(duration)
                     if 'Stop' in currentActions:
@@ -2807,8 +2817,10 @@ class Sonos(SmartPlugin):
                                                 volume, self._snippet_duration_offset, fade_in)
                 if command == 'play_snippet':
                     if item() == "":
+                        self.logger.error("No item value when executing play_snippet command")
                         return
                     volume = self._resolve_child_command_int(item, 'snippet_volume', -1)
+                    self.logger.debug(f"Debug: play_snippet on uid {uid} with volume {volume}")
                     fade_in = self._resolve_child_command_bool(item, 'snippet_fade_in')
                     sonos_speaker[uid].play_snippet(item(), self._local_webservice_path_snippet, self._webservice_url, volume, self._snippet_duration_offset,
                                                     fade_in)
@@ -3136,10 +3148,23 @@ class WebInterface(SmartPluginWebIf):
         speakerlist = []
 
         for zone in self.plugin.zones:
+            #self.logger.debug(f"vars(zone): {vars(zone)}")
             speaker = dict()
-            speaker['name'] = zone.player_name
-            speaker['ip'] = zone.ip_address
-            speaker['uid'] = zone.uid
+            try:
+                speaker['name'] = zone.player_name
+            except:
+                speaker['name'] = 'unknown'
+
+            try:
+                speaker['ip'] = zone.ip_address
+            except:
+                speaker['ip'] = 'unknown'
+
+            try:
+                 speaker['uid'] = zone.uid
+            except:
+                speaker['uid'] = 'unknown'
+
             speakerlist.append(speaker)
 
         speakerlist_sorted = sorted(speakerlist, key=lambda k: k['name'])
