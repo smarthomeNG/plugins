@@ -68,6 +68,7 @@ class sdp_squeezebox(SmartDevicePlugin):
         self._custom_patterns = {1: '(?:[0-9a-fA-F]{2}[-:]){5}[0-9a-fA-F]{2}', 2: '', 3: ''}
         self._use_callbacks = True
         self._parameters[PLUGIN_ATTR_RECURSIVE] = 1
+        self._parameters['web_port'] = self.get_parameter_value('web_port')
 
     def on_connect(self, by=None):
         self.logger.debug("Activating listen mode after connection.")
@@ -124,7 +125,7 @@ class sdp_squeezebox(SmartDevicePlugin):
         # set album art URL
         if command == 'player.info.album':
             host = self._parameters.get(PLUGIN_ATTR_NET_HOST)
-            port = self._parameters.get(PLUGIN_ATTR_NET_PORT)
+            port = self._parameters.get('web_port')
             url = f'http://{host}:{port}/music/current/cover.jpg?player={custom}'
             _dispatch('player.info.albumarturl', url, custom)
 
