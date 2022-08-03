@@ -218,1160 +218,1152 @@ item_structs:
 
     general:
 
-        general:
+        read:
+            type: bool
+            enforce_updates: true
+            denon_read_group_trigger: general
 
-            read:
-                type: bool
-                enforce_updates: true
-                denon_read_group_trigger: general
+        custom_inputnames:
+            type: dict
+            denon_command: general.custom_inputnames
+            denon_read: true
+            denon_write: false
+            denon_read_group:
+            -   general
+            cache: true
 
-            custom_inputnames:
+            reverse:
                 type: dict
-                denon_command: general.custom_inputnames
-                denon_read: true
-                denon_write: false
-                denon_read_group:
-                -   general
-                denon_read_initial: true
-                cache: true
+                eval: '{v: k for (k, v) in sh...().items()}'
 
-                reverse:
-                    type: dict
-                    eval: '{v: k for (k, v) in sh...().items()}'
+                update:
+                    type: bool
+                    eval: sh...timer(2, {})
+                    eval_trigger: '...'
 
-                    update:
-                        type: bool
-                        eval: sh...timer(2, {})
-                        eval_trigger: '...'
+        power:
+            type: bool
+            denon_command: general.power
+            denon_read: true
+            denon_write: true
+            denon_read_group:
+            -   general
 
-            power:
-                type: bool
-                denon_command: general.power
-                denon_read: true
-                denon_write: true
-                denon_read_group:
-                -   general
+        setupmenu:
+            type: bool
+            denon_command: general.setupmenu
+            denon_read: true
+            denon_write: true
+            denon_read_group:
+            -   general
 
-            setupmenu:
-                type: bool
-                denon_command: general.setupmenu
-                denon_read: true
-                denon_write: true
-                denon_read_group:
-                -   general
+        display:
+            type: str
+            denon_command: general.display
+            denon_read: true
+            denon_write: false
+            denon_read_group:
+            -   general
 
-            display:
-                type: str
-                denon_command: general.display
-                denon_read: true
-                denon_write: false
-                denon_read_group:
-                -   general
+        soundmode:
+            type: str
+            denon_command: general.soundmode
+            denon_read: true
+            denon_write: false
+            denon_read_group:
+            -   general
+            denon_read_initial: true
 
-            soundmode:
-                type: str
-                denon_command: general.soundmode
-                denon_read: true
-                denon_write: false
-                denon_read_group:
-                -   general
-                denon_read_initial: true
+        inputsignal:
+            type: str
+            denon_command: general.inputsignal
+            denon_read: true
+            denon_write: false
+            denon_read_group:
+            -   general
+            denon_read_initial: true
 
-            inputsignal:
-                type: str
-                denon_command: general.inputsignal
-                denon_read: true
-                denon_write: false
-                denon_read_group:
-                -   general
-                denon_read_initial: true
+        inputrate:
+            type: num
+            denon_command: general.inputrate
+            denon_read: true
+            denon_write: false
+            denon_read_group:
+            -   general
+            denon_read_initial: true
 
-            inputrate:
-                type: num
-                denon_command: general.inputrate
-                denon_read: true
-                denon_write: false
-                denon_read_group:
-                -   general
-                denon_read_initial: true
+        inputformat:
+            type: str
+            denon_command: general.inputformat
+            denon_read: true
+            denon_write: false
+            denon_read_group:
+            -   general
+            denon_read_initial: true
 
-            inputformat:
-                type: str
-                denon_command: general.inputformat
-                denon_read: true
-                denon_write: false
-                denon_read_group:
-                -   general
-                denon_read_initial: true
+        inputresolution:
+            type: str
+            denon_command: general.inputresolution
+            denon_read: true
+            denon_write: false
+            denon_read_group:
+            -   general
+            denon_read_initial: true
 
-            inputresolution:
-                type: str
-                denon_command: general.inputresolution
-                denon_read: true
-                denon_write: false
-                denon_read_group:
-                -   general
-                denon_read_initial: true
+        outputresolution:
+            type: str
+            denon_command: general.outputresolution
+            denon_read: true
+            denon_write: false
 
-            outputresolution:
-                type: str
-                denon_command: general.outputresolution
-                denon_read: true
-                denon_write: false
-
-            ecomode:
-                type: str
-                denon_command: general.ecomode
-                denon_read: true
-                denon_write: true
-                denon_read_group:
-                -   general
+        ecomode:
+            type: str
+            denon_command: general.ecomode
+            denon_read: true
+            denon_write: true
+            denon_read_group:
+            -   general
 
     tuner:
 
-        tuner:
+        read:
+            type: bool
+            enforce_updates: true
+            denon_read_group_trigger: tuner
 
-            read:
-                type: bool
-                enforce_updates: true
-                denon_read_group_trigger: tuner
+        title:
+            type: str
+            denon_command: tuner.title
+            denon_read: true
+            denon_write: false
+            denon_read_group:
+            -   tuner
+            denon_read_initial: true
 
-            title:
-                type: str
-                denon_command: tuner.title
-                denon_read: true
-                denon_write: false
-                denon_read_group:
-                -   tuner
-                denon_read_initial: true
+        album:
+            type: str
+            denon_command: tuner.album
+            denon_read: true
+            denon_write: false
 
-            album:
-                type: str
-                denon_command: tuner.album
-                denon_read: true
-                denon_write: false
+        artist:
+            type: str
+            denon_command: tuner.artist
+            denon_read: true
+            denon_write: false
 
-            artist:
-                type: str
-                denon_command: tuner.artist
-                denon_read: true
-                denon_write: false
+        tunerpreset:
+            type: num
+            denon_command: tuner.tunerpreset
+            denon_read: true
+            denon_write: true
+            denon_read_group:
+            -   tuner
+            denon_read_initial: true
 
-            tunerpreset:
-                type: num
-                denon_command: tuner.tunerpreset
-                denon_read: true
-                denon_write: true
-                denon_read_group:
-                -   tuner
-                denon_read_initial: true
+        tunerpresetup:
+            type: bool
+            denon_command: tuner.tunerpresetup
+            denon_read: false
+            denon_write: true
 
-            tunerpresetup:
-                type: bool
-                denon_command: tuner.tunerpresetup
-                denon_read: false
-                denon_write: true
-
-            tunerpresetdown:
-                type: bool
-                denon_command: tuner.tunerpresetdown
-                denon_read: false
-                denon_write: true
+        tunerpresetdown:
+            type: bool
+            denon_command: tuner.tunerpresetdown
+            denon_read: false
+            denon_write: true
 
     zone1:
 
-        zone1:
+        read:
+            type: bool
+            enforce_updates: true
+            denon_read_group_trigger: zone1
+
+        control:
 
             read:
                 type: bool
                 enforce_updates: true
-                denon_read_group_trigger: zone1
+                denon_read_group_trigger: zone1.control
 
-            control:
+            power:
+                type: bool
+                denon_command: zone1.control.power
+                denon_read: true
+                denon_write: true
+                denon_read_group:
+                -   zone1
+                -   zone1.control
+                denon_read_initial: true
+
+            mute:
+                type: bool
+                denon_command: zone1.control.mute
+                denon_read: true
+                denon_write: true
+                denon_read_group:
+                -   zone1
+                -   zone1.control
+                denon_read_initial: true
+
+            volume:
+                type: num
+                denon_command: zone1.control.volume
+                denon_read: true
+                denon_write: true
+                denon_read_group:
+                -   zone1
+                -   zone1.control
+                denon_read_initial: true
+
+            volumeup:
+                type: bool
+                denon_command: zone1.control.volumeup
+                denon_read: false
+                denon_write: true
+
+            volumedown:
+                type: bool
+                denon_command: zone1.control.volumedown
+                denon_read: false
+                denon_write: true
+
+            volumemax:
+                type: num
+                denon_command: zone1.control.volumemax
+                denon_read: true
+                denon_write: false
+                denon_read_group:
+                -   zone1
+                -   zone1.control
+                denon_read_initial: true
+
+            input:
+                type: str
+                denon_command: zone1.control.input
+                denon_read: true
+                denon_write: true
+                denon_read_group:
+                -   zone1
+                -   zone1.control
+                denon_read_initial: true
+                on_change:
+                -   .custom_name = '' if sh.....general.custom_inputnames() == {} else sh.....general.custom_inputnames()[value]
+
+                custom_name:
+                    type: str
+                    on_change: .. = '' if sh......general.custom_inputnames.reverse() == {} else sh......general.custom_inputnames.reverse()[value]
+
+            listeningmode:
+                type: str
+                denon_command: zone1.control.listeningmode
+                denon_read: true
+                denon_write: true
+                denon_read_group:
+                -   zone1
+                -   zone1.control
+                denon_read_initial: true
+
+            sleep:
+                type: num
+                denon_command: zone1.control.sleep
+                denon_read: true
+                denon_write: true
+                denon_read_group:
+                -   zone1
+                -   zone1.control
+                denon_read_initial: true
+
+            standby:
+                type: num
+                denon_command: zone1.control.standby
+                denon_read: true
+                denon_write: true
+                denon_read_group:
+                -   zone1
+                -   zone1.control
+                denon_read_initial: true
+
+        settings:
+
+            read:
+                type: bool
+                enforce_updates: true
+                denon_read_group_trigger: zone1.settings
+
+            sound:
 
                 read:
                     type: bool
                     enforce_updates: true
-                    denon_read_group_trigger: zone1.control
+                    denon_read_group_trigger: zone1.settings.sound
 
-                power:
-                    type: bool
-                    denon_command: zone1.control.power
-                    denon_read: true
-                    denon_write: true
-                    denon_read_group:
-                    -   zone1
-                    -   zone1.control
-                    denon_read_initial: true
+                channel_level:
 
-                mute:
-                    type: bool
-                    denon_command: zone1.control.mute
-                    denon_read: true
-                    denon_write: true
-                    denon_read_group:
-                    -   zone1
-                    -   zone1.control
-                    denon_read_initial: true
+                    read:
+                        type: bool
+                        enforce_updates: true
+                        denon_read_group_trigger: zone1.settings.sound.channel_level
 
-                volume:
-                    type: num
-                    denon_command: zone1.control.volume
-                    denon_read: true
-                    denon_write: true
-                    denon_read_group:
-                    -   zone1
-                    -   zone1.control
-                    denon_read_initial: true
+                    front_left:
+                        type: num
+                        denon_command: zone1.settings.sound.channel_level.front_left
+                        denon_read: true
+                        denon_write: true
+                        denon_read_group:
+                        -   zone1
+                        -   zone1.settings
+                        -   zone1.settings.sound
+                        -   zone1.settings.sound.channel_level
 
-                volumeup:
-                    type: bool
-                    denon_command: zone1.control.volumeup
-                    denon_read: false
-                    denon_write: true
+                    front_right:
+                        type: num
+                        denon_command: zone1.settings.sound.channel_level.front_right
+                        denon_read: true
+                        denon_write: true
+                        denon_read_group:
+                        -   zone1
+                        -   zone1.settings
+                        -   zone1.settings.sound
+                        -   zone1.settings.sound.channel_level
 
-                volumedown:
-                    type: bool
-                    denon_command: zone1.control.volumedown
-                    denon_read: false
-                    denon_write: true
+                    front_height_left:
+                        type: num
+                        denon_command: zone1.settings.sound.channel_level.front_height_left
+                        denon_read: true
+                        denon_write: true
+                        denon_read_group:
+                        -   zone1
+                        -   zone1.settings
+                        -   zone1.settings.sound
+                        -   zone1.settings.sound.channel_level
 
-                volumemax:
-                    type: num
-                    denon_command: zone1.control.volumemax
-                    denon_read: true
-                    denon_write: false
-                    denon_read_group:
-                    -   zone1
-                    -   zone1.control
-                    denon_read_initial: true
+                    front_height_right:
+                        type: num
+                        denon_command: zone1.settings.sound.channel_level.front_height_right
+                        denon_read: true
+                        denon_write: true
+                        denon_read_group:
+                        -   zone1
+                        -   zone1.settings
+                        -   zone1.settings.sound
+                        -   zone1.settings.sound.channel_level
 
-                input:
-                    type: str
-                    denon_command: zone1.control.input
-                    denon_read: true
-                    denon_write: true
-                    denon_read_group:
-                    -   zone1
-                    -   zone1.control
-                    denon_read_initial: true
-                    on_change: .custom_name = '' if sh.....general.custom_inputnames() == {} else sh.....general.custom_inputnames()[value]
+                    front_center:
+                        type: num
+                        denon_command: zone1.settings.sound.channel_level.front_center
+                        denon_read: true
+                        denon_write: true
+                        denon_read_group:
+                        -   zone1
+                        -   zone1.settings
+                        -   zone1.settings.sound
+                        -   zone1.settings.sound.channel_level
 
-                    custom_name:
+                    surround_left:
+                        type: num
+                        denon_command: zone1.settings.sound.channel_level.surround_left
+                        denon_read: true
+                        denon_write: true
+                        denon_read_group:
+                        -   zone1
+                        -   zone1.settings
+                        -   zone1.settings.sound
+                        -   zone1.settings.sound.channel_level
+
+                    surround_right:
+                        type: num
+                        denon_command: zone1.settings.sound.channel_level.surround_right
+                        denon_read: true
+                        denon_write: true
+                        denon_read_group:
+                        -   zone1
+                        -   zone1.settings
+                        -   zone1.settings.sound
+                        -   zone1.settings.sound.channel_level
+
+                    surroundback_left:
+                        type: num
+                        denon_command: zone1.settings.sound.channel_level.surroundback_left
+                        denon_read: true
+                        denon_write: true
+                        denon_read_group:
+                        -   zone1
+                        -   zone1.settings
+                        -   zone1.settings.sound
+                        -   zone1.settings.sound.channel_level
+
+                    surroundback_right:
+                        type: num
+                        denon_command: zone1.settings.sound.channel_level.surroundback_right
+                        denon_read: true
+                        denon_write: true
+                        denon_read_group:
+                        -   zone1
+                        -   zone1.settings
+                        -   zone1.settings.sound
+                        -   zone1.settings.sound.channel_level
+
+                    rear_height_left:
+                        type: num
+                        denon_command: zone1.settings.sound.channel_level.rear_height_left
+                        denon_read: true
+                        denon_write: true
+                        denon_read_group:
+                        -   zone1
+                        -   zone1.settings
+                        -   zone1.settings.sound
+                        -   zone1.settings.sound.channel_level
+
+                    rear_height_right:
+                        type: num
+                        denon_command: zone1.settings.sound.channel_level.rear_height_right
+                        denon_read: true
+                        denon_write: true
+                        denon_read_group:
+                        -   zone1
+                        -   zone1.settings
+                        -   zone1.settings.sound
+                        -   zone1.settings.sound.channel_level
+
+                    subwoofer:
+                        type: num
+                        denon_command: zone1.settings.sound.channel_level.subwoofer
+                        denon_read: true
+                        denon_write: true
+                        denon_read_group:
+                        -   zone1
+                        -   zone1.settings
+                        -   zone1.settings.sound
+                        -   zone1.settings.sound.channel_level
+
+                    subwoofer2:
+                        type: num
+                        denon_command: zone1.settings.sound.channel_level.subwoofer2
+                        denon_read: true
+                        denon_write: true
+                        denon_read_group:
+                        -   zone1
+                        -   zone1.settings
+                        -   zone1.settings.sound
+                        -   zone1.settings.sound.channel_level
+
+                tone_control:
+
+                    read:
+                        type: bool
+                        enforce_updates: true
+                        denon_read_group_trigger: zone1.settings.sound.tone_control
+
+                    tone:
+                        type: bool
+                        denon_command: zone1.settings.sound.tone_control.tone
+                        denon_read: true
+                        denon_write: true
+                        denon_read_group:
+                        -   zone1
+                        -   zone1.settings
+                        -   zone1.settings.sound
+                        -   zone1.settings.sound.tone_control
+
+                    treble:
+                        type: num
+                        denon_command: zone1.settings.sound.tone_control.treble
+                        denon_read: true
+                        denon_write: true
+                        denon_read_group:
+                        -   zone1
+                        -   zone1.settings
+                        -   zone1.settings.sound
+                        -   zone1.settings.sound.tone_control
+
+                    trebleup:
+                        type: bool
+                        denon_command: zone1.settings.sound.tone_control.trebleup
+                        denon_read: false
+                        denon_write: true
+
+                    trebledown:
+                        type: bool
+                        denon_command: zone1.settings.sound.tone_control.trebledown
+                        denon_read: false
+                        denon_write: true
+
+                    bass:
+                        type: num
+                        denon_command: zone1.settings.sound.tone_control.bass
+                        denon_read: true
+                        denon_write: true
+                        denon_read_group:
+                        -   zone1
+                        -   zone1.settings
+                        -   zone1.settings.sound
+                        -   zone1.settings.sound.tone_control
+
+                    bassup:
+                        type: bool
+                        denon_command: zone1.settings.sound.tone_control.bassup
+                        denon_read: false
+                        denon_write: true
+
+                    bassdown:
+                        type: bool
+                        denon_command: zone1.settings.sound.tone_control.bassdown
+                        denon_read: false
+                        denon_write: true
+
+                general:
+
+                    read:
+                        type: bool
+                        enforce_updates: true
+                        denon_read_group_trigger: zone1.settings.sound.general
+
+                    cinema_eq:
+                        type: bool
+                        denon_command: zone1.settings.sound.general.cinema_eq
+                        denon_read: true
+                        denon_write: true
+                        denon_read_group:
+                        -   zone1
+                        -   zone1.settings
+                        -   zone1.settings.sound
+                        -   zone1.settings.sound.general
+
+                    speakersetup:
                         type: str
-                        on_change: .. = '' if sh......general.custom_inputnames.reverse() == {} else sh......general.custom_inputnames.reverse()[value]
+                        denon_command: zone1.settings.sound.general.speakersetup
+                        denon_read: true
+                        denon_write: true
+                        denon_read_group:
+                        -   zone1
+                        -   zone1.settings
+                        -   zone1.settings.sound
+                        -   zone1.settings.sound.general
 
-                listeningmode:
-                    type: str
-                    denon_command: zone1.control.listeningmode
-                    denon_read: true
-                    denon_write: true
-                    denon_read_group:
-                    -   zone1
-                    -   zone1.control
-                    denon_read_initial: true
+                    hdmiaudioout:
+                        type: str
+                        denon_command: zone1.settings.sound.general.hdmiaudioout
+                        denon_read: true
+                        denon_write: true
+                        denon_read_group:
+                        -   zone1
+                        -   zone1.settings
+                        -   zone1.settings.sound
+                        -   zone1.settings.sound.general
 
-                sleep:
-                    type: num
-                    denon_command: zone1.control.sleep
-                    denon_read: true
-                    denon_write: true
-                    denon_read_group:
-                    -   zone1
-                    -   zone1.control
-                    denon_read_initial: true
+                    dynamicrange:
+                        type: num
+                        denon_command: zone1.settings.sound.general.dynamicrange
+                        denon_read: true
+                        denon_write: true
+                        denon_read_group:
+                        -   zone1
+                        -   zone1.settings
+                        -   zone1.settings.sound
+                        -   zone1.settings.sound.general
 
-                standby:
-                    type: num
-                    denon_command: zone1.control.standby
-                    denon_read: true
-                    denon_write: true
-                    denon_read_group:
-                    -   zone1
-                    -   zone1.control
-                    denon_read_initial: true
+                    dialogtoggle:
+                        type: bool
+                        denon_command: zone1.settings.sound.general.dialogtoggle
+                        denon_read: true
+                        denon_write: true
+                        denon_read_group:
+                        -   zone1
+                        -   zone1.settings
+                        -   zone1.settings.sound
+                        -   zone1.settings.sound.general
 
-            settings:
+                    dialog:
+                        type: num
+                        denon_command: zone1.settings.sound.general.dialog
+                        denon_read: true
+                        denon_write: true
+                        denon_read_group:
+                        -   zone1
+                        -   zone1.settings
+                        -   zone1.settings.sound
+                        -   zone1.settings.sound.general
+
+                    dialogup:
+                        type: bool
+                        denon_command: zone1.settings.sound.general.dialogup
+                        denon_read: false
+                        denon_write: true
+
+                    dialogdown:
+                        type: bool
+                        denon_command: zone1.settings.sound.general.dialogdown
+                        denon_read: false
+                        denon_write: true
+
+                    dialogenhance:
+                        type: num
+                        denon_command: zone1.settings.sound.general.dialogenhance
+                        denon_read: true
+                        denon_write: true
+                        denon_read_group:
+                        -   zone1
+                        -   zone1.settings
+                        -   zone1.settings.sound
+                        -   zone1.settings.sound.general
+
+                    subwoofertoggle:
+                        type: bool
+                        denon_command: zone1.settings.sound.general.subwoofertoggle
+                        denon_read: true
+                        denon_write: true
+                        denon_read_group:
+                        -   zone1
+                        -   zone1.settings
+                        -   zone1.settings.sound
+                        -   zone1.settings.sound.general
+
+                    subwoofer:
+                        type: num
+                        denon_command: zone1.settings.sound.general.subwoofer
+                        denon_read: true
+                        denon_write: true
+                        denon_read_group:
+                        -   zone1
+                        -   zone1.settings
+                        -   zone1.settings.sound
+                        -   zone1.settings.sound.general
+
+                    subwooferup:
+                        type: bool
+                        denon_command: zone1.settings.sound.general.subwooferup
+                        denon_read: false
+                        denon_write: true
+
+                    subwooferdown:
+                        type: bool
+                        denon_command: zone1.settings.sound.general.subwooferdown
+                        denon_read: false
+                        denon_write: true
+
+                    lfe:
+                        type: num
+                        denon_command: zone1.settings.sound.general.lfe
+                        denon_read: true
+                        denon_write: true
+                        denon_read_group:
+                        -   zone1
+                        -   zone1.settings
+                        -   zone1.settings.sound
+                        -   zone1.settings.sound.general
+
+                    lfeup:
+                        type: bool
+                        denon_command: zone1.settings.sound.general.lfeup
+                        denon_read: false
+                        denon_write: true
+
+                    lfedown:
+                        type: bool
+                        denon_command: zone1.settings.sound.general.lfedown
+                        denon_read: false
+                        denon_write: true
+
+                    audioinput:
+                        type: str
+                        denon_command: zone1.settings.sound.general.audioinput
+                        denon_read: true
+                        denon_write: true
+                        denon_read_group:
+                        -   zone1
+                        -   zone1.settings
+                        -   zone1.settings.sound
+                        -   zone1.settings.sound.general
+
+            video:
 
                 read:
                     type: bool
                     enforce_updates: true
-                    denon_read_group_trigger: zone1.settings
+                    denon_read_group_trigger: zone1.settings.video
 
-                sound:
+                aspectratio:
+                    type: str
+                    denon_command: zone1.settings.video.aspectratio
+                    denon_read: true
+                    denon_write: true
+                    denon_read_group:
+                    -   zone1
+                    -   zone1.settings
+                    -   zone1.settings.video
 
-                    read:
-                        type: bool
-                        enforce_updates: true
-                        denon_read_group_trigger: zone1.settings.sound
+                hdmimonitor:
+                    type: num
+                    denon_command: zone1.settings.video.hdmimonitor
+                    denon_read: true
+                    denon_write: true
+                    denon_read_group:
+                    -   zone1
+                    -   zone1.settings
+                    -   zone1.settings.video
 
-                    channel_level:
+                hdmiresolution:
+                    type: str
+                    denon_command: zone1.settings.video.hdmiresolution
+                    denon_read: true
+                    denon_write: true
+                    denon_read_group:
+                    -   zone1
+                    -   zone1.settings
+                    -   zone1.settings.video
 
-                        read:
-                            type: bool
-                            enforce_updates: true
-                            denon_read_group_trigger: zone1.settings.sound.channel_level
+                videoprocessingmode:
+                    type: str
+                    denon_command: zone1.settings.video.videoprocessingmode
+                    denon_read: true
+                    denon_write: true
+                    denon_read_group:
+                    -   zone1
+                    -   zone1.settings
+                    -   zone1.settings.video
 
-                        front_left:
-                            type: num
-                            denon_command: zone1.settings.sound.channel_level.front_left
-                            denon_read: true
-                            denon_write: true
-                            denon_read_group:
-                            -   zone1
-                            -   zone1.settings
-                            -   zone1.settings.sound
-                            -   zone1.settings.sound.channel_level
+                videoresolution:
+                    type: str
+                    denon_command: zone1.settings.video.videoresolution
+                    denon_read: true
+                    denon_write: true
+                    denon_read_group:
+                    -   zone1
+                    -   zone1.settings
+                    -   zone1.settings.video
 
-                        front_right:
-                            type: num
-                            denon_command: zone1.settings.sound.channel_level.front_right
-                            denon_read: true
-                            denon_write: true
-                            denon_read_group:
-                            -   zone1
-                            -   zone1.settings
-                            -   zone1.settings.sound
-                            -   zone1.settings.sound.channel_level
+                pictureenhancer:
+                    type: num
+                    denon_command: zone1.settings.video.pictureenhancer
+                    denon_read: true
+                    denon_write: true
+                    denon_read_group:
+                    -   zone1
+                    -   zone1.settings
+                    -   zone1.settings.video
 
-                        front_height_left:
-                            type: num
-                            denon_command: zone1.settings.sound.channel_level.front_height_left
-                            denon_read: true
-                            denon_write: true
-                            denon_read_group:
-                            -   zone1
-                            -   zone1.settings
-                            -   zone1.settings.sound
-                            -   zone1.settings.sound.channel_level
-
-                        front_height_right:
-                            type: num
-                            denon_command: zone1.settings.sound.channel_level.front_height_right
-                            denon_read: true
-                            denon_write: true
-                            denon_read_group:
-                            -   zone1
-                            -   zone1.settings
-                            -   zone1.settings.sound
-                            -   zone1.settings.sound.channel_level
-
-                        front_center:
-                            type: num
-                            denon_command: zone1.settings.sound.channel_level.front_center
-                            denon_read: true
-                            denon_write: true
-                            denon_read_group:
-                            -   zone1
-                            -   zone1.settings
-                            -   zone1.settings.sound
-                            -   zone1.settings.sound.channel_level
-
-                        surround_left:
-                            type: num
-                            denon_command: zone1.settings.sound.channel_level.surround_left
-                            denon_read: true
-                            denon_write: true
-                            denon_read_group:
-                            -   zone1
-                            -   zone1.settings
-                            -   zone1.settings.sound
-                            -   zone1.settings.sound.channel_level
-
-                        surround_right:
-                            type: num
-                            denon_command: zone1.settings.sound.channel_level.surround_right
-                            denon_read: true
-                            denon_write: true
-                            denon_read_group:
-                            -   zone1
-                            -   zone1.settings
-                            -   zone1.settings.sound
-                            -   zone1.settings.sound.channel_level
-
-                        surroundback_left:
-                            type: num
-                            denon_command: zone1.settings.sound.channel_level.surroundback_left
-                            denon_read: true
-                            denon_write: true
-                            denon_read_group:
-                            -   zone1
-                            -   zone1.settings
-                            -   zone1.settings.sound
-                            -   zone1.settings.sound.channel_level
-
-                        surroundback_right:
-                            type: num
-                            denon_command: zone1.settings.sound.channel_level.surroundback_right
-                            denon_read: true
-                            denon_write: true
-                            denon_read_group:
-                            -   zone1
-                            -   zone1.settings
-                            -   zone1.settings.sound
-                            -   zone1.settings.sound.channel_level
-
-                        rear_height_left:
-                            type: num
-                            denon_command: zone1.settings.sound.channel_level.rear_height_left
-                            denon_read: true
-                            denon_write: true
-                            denon_read_group:
-                            -   zone1
-                            -   zone1.settings
-                            -   zone1.settings.sound
-                            -   zone1.settings.sound.channel_level
-
-                        rear_height_right:
-                            type: num
-                            denon_command: zone1.settings.sound.channel_level.rear_height_right
-                            denon_read: true
-                            denon_write: true
-                            denon_read_group:
-                            -   zone1
-                            -   zone1.settings
-                            -   zone1.settings.sound
-                            -   zone1.settings.sound.channel_level
-
-                        subwoofer:
-                            type: num
-                            denon_command: zone1.settings.sound.channel_level.subwoofer
-                            denon_read: true
-                            denon_write: true
-                            denon_read_group:
-                            -   zone1
-                            -   zone1.settings
-                            -   zone1.settings.sound
-                            -   zone1.settings.sound.channel_level
-
-                        subwoofer2:
-                            type: num
-                            denon_command: zone1.settings.sound.channel_level.subwoofer2
-                            denon_read: true
-                            denon_write: true
-                            denon_read_group:
-                            -   zone1
-                            -   zone1.settings
-                            -   zone1.settings.sound
-                            -   zone1.settings.sound.channel_level
-
-                    tone_control:
-
-                        read:
-                            type: bool
-                            enforce_updates: true
-                            denon_read_group_trigger: zone1.settings.sound.tone_control
-
-                        tone:
-                            type: bool
-                            denon_command: zone1.settings.sound.tone_control.tone
-                            denon_read: true
-                            denon_write: true
-                            denon_read_group:
-                            -   zone1
-                            -   zone1.settings
-                            -   zone1.settings.sound
-                            -   zone1.settings.sound.tone_control
-
-                        treble:
-                            type: num
-                            denon_command: zone1.settings.sound.tone_control.treble
-                            denon_read: true
-                            denon_write: true
-                            denon_read_group:
-                            -   zone1
-                            -   zone1.settings
-                            -   zone1.settings.sound
-                            -   zone1.settings.sound.tone_control
-
-                        trebleup:
-                            type: bool
-                            denon_command: zone1.settings.sound.tone_control.trebleup
-                            denon_read: false
-                            denon_write: true
-
-                        trebledown:
-                            type: bool
-                            denon_command: zone1.settings.sound.tone_control.trebledown
-                            denon_read: false
-                            denon_write: true
-
-                        bass:
-                            type: num
-                            denon_command: zone1.settings.sound.tone_control.bass
-                            denon_read: true
-                            denon_write: true
-                            denon_read_group:
-                            -   zone1
-                            -   zone1.settings
-                            -   zone1.settings.sound
-                            -   zone1.settings.sound.tone_control
-
-                        bassup:
-                            type: bool
-                            denon_command: zone1.settings.sound.tone_control.bassup
-                            denon_read: false
-                            denon_write: true
-
-                        bassdown:
-                            type: bool
-                            denon_command: zone1.settings.sound.tone_control.bassdown
-                            denon_read: false
-                            denon_write: true
-
-                    general:
-
-                        read:
-                            type: bool
-                            enforce_updates: true
-                            denon_read_group_trigger: zone1.settings.sound.general
-
-                        cinema_eq:
-                            type: bool
-                            denon_command: zone1.settings.sound.general.cinema_eq
-                            denon_read: true
-                            denon_write: true
-                            denon_read_group:
-                            -   zone1
-                            -   zone1.settings
-                            -   zone1.settings.sound
-                            -   zone1.settings.sound.general
-
-                        speakersetup:
-                            type: str
-                            denon_command: zone1.settings.sound.general.speakersetup
-                            denon_read: true
-                            denon_write: true
-                            denon_read_group:
-                            -   zone1
-                            -   zone1.settings
-                            -   zone1.settings.sound
-                            -   zone1.settings.sound.general
-
-                        hdmiaudioout:
-                            type: str
-                            denon_command: zone1.settings.sound.general.hdmiaudioout
-                            denon_read: true
-                            denon_write: true
-                            denon_read_group:
-                            -   zone1
-                            -   zone1.settings
-                            -   zone1.settings.sound
-                            -   zone1.settings.sound.general
-
-                        dynamicrange:
-                            type: num
-                            denon_command: zone1.settings.sound.general.dynamicrange
-                            denon_read: true
-                            denon_write: true
-                            denon_read_group:
-                            -   zone1
-                            -   zone1.settings
-                            -   zone1.settings.sound
-                            -   zone1.settings.sound.general
-
-                        dialogtoggle:
-                            type: bool
-                            denon_command: zone1.settings.sound.general.dialogtoggle
-                            denon_read: true
-                            denon_write: true
-                            denon_read_group:
-                            -   zone1
-                            -   zone1.settings
-                            -   zone1.settings.sound
-                            -   zone1.settings.sound.general
-
-                        dialog:
-                            type: num
-                            denon_command: zone1.settings.sound.general.dialog
-                            denon_read: true
-                            denon_write: true
-                            denon_read_group:
-                            -   zone1
-                            -   zone1.settings
-                            -   zone1.settings.sound
-                            -   zone1.settings.sound.general
-
-                        dialogup:
-                            type: bool
-                            denon_command: zone1.settings.sound.general.dialogup
-                            denon_read: false
-                            denon_write: true
-
-                        dialogdown:
-                            type: bool
-                            denon_command: zone1.settings.sound.general.dialogdown
-                            denon_read: false
-                            denon_write: true
-
-                        dialogenhance:
-                            type: num
-                            denon_command: zone1.settings.sound.general.dialogenhance
-                            denon_read: true
-                            denon_write: true
-                            denon_read_group:
-                            -   zone1
-                            -   zone1.settings
-                            -   zone1.settings.sound
-                            -   zone1.settings.sound.general
-
-                        subwoofertoggle:
-                            type: bool
-                            denon_command: zone1.settings.sound.general.subwoofertoggle
-                            denon_read: true
-                            denon_write: true
-                            denon_read_group:
-                            -   zone1
-                            -   zone1.settings
-                            -   zone1.settings.sound
-                            -   zone1.settings.sound.general
-
-                        subwoofer:
-                            type: num
-                            denon_command: zone1.settings.sound.general.subwoofer
-                            denon_read: true
-                            denon_write: true
-                            denon_read_group:
-                            -   zone1
-                            -   zone1.settings
-                            -   zone1.settings.sound
-                            -   zone1.settings.sound.general
-
-                        subwooferup:
-                            type: bool
-                            denon_command: zone1.settings.sound.general.subwooferup
-                            denon_read: false
-                            denon_write: true
-
-                        subwooferdown:
-                            type: bool
-                            denon_command: zone1.settings.sound.general.subwooferdown
-                            denon_read: false
-                            denon_write: true
-
-                        lfe:
-                            type: num
-                            denon_command: zone1.settings.sound.general.lfe
-                            denon_read: true
-                            denon_write: true
-                            denon_read_group:
-                            -   zone1
-                            -   zone1.settings
-                            -   zone1.settings.sound
-                            -   zone1.settings.sound.general
-
-                        lfeup:
-                            type: bool
-                            denon_command: zone1.settings.sound.general.lfeup
-                            denon_read: false
-                            denon_write: true
-
-                        lfedown:
-                            type: bool
-                            denon_command: zone1.settings.sound.general.lfedown
-                            denon_read: false
-                            denon_write: true
-
-                        audioinput:
-                            type: str
-                            denon_command: zone1.settings.sound.general.audioinput
-                            denon_read: true
-                            denon_write: true
-                            denon_read_group:
-                            -   zone1
-                            -   zone1.settings
-                            -   zone1.settings.sound
-                            -   zone1.settings.sound.general
-
-                video:
-
-                    read:
-                        type: bool
-                        enforce_updates: true
-                        denon_read_group_trigger: zone1.settings.video
-
-                    aspectratio:
-                        type: str
-                        denon_command: zone1.settings.video.aspectratio
-                        denon_read: true
-                        denon_write: true
-                        denon_read_group:
-                        -   zone1
-                        -   zone1.settings
-                        -   zone1.settings.video
-
-                    hdmimonitor:
-                        type: num
-                        denon_command: zone1.settings.video.hdmimonitor
-                        denon_read: true
-                        denon_write: true
-                        denon_read_group:
-                        -   zone1
-                        -   zone1.settings
-                        -   zone1.settings.video
-
-                    hdmiresolution:
-                        type: str
-                        denon_command: zone1.settings.video.hdmiresolution
-                        denon_read: true
-                        denon_write: true
-                        denon_read_group:
-                        -   zone1
-                        -   zone1.settings
-                        -   zone1.settings.video
-
-                    videoprocessingmode:
-                        type: str
-                        denon_command: zone1.settings.video.videoprocessingmode
-                        denon_read: true
-                        denon_write: true
-                        denon_read_group:
-                        -   zone1
-                        -   zone1.settings
-                        -   zone1.settings.video
-
-                    videoresolution:
-                        type: str
-                        denon_command: zone1.settings.video.videoresolution
-                        denon_read: true
-                        denon_write: true
-                        denon_read_group:
-                        -   zone1
-                        -   zone1.settings
-                        -   zone1.settings.video
-
-                    pictureenhancer:
-                        type: num
-                        denon_command: zone1.settings.video.pictureenhancer
-                        denon_read: true
-                        denon_write: true
-                        denon_read_group:
-                        -   zone1
-                        -   zone1.settings
-                        -   zone1.settings.video
-
-                    videoinput:
-                        type: str
-                        denon_command: zone1.settings.video.videoinput
-                        denon_read: true
-                        denon_write: true
-                        denon_read_group:
-                        -   zone1
-                        -   zone1.settings
-                        -   zone1.settings.video
+                videoinput:
+                    type: str
+                    denon_command: zone1.settings.video.videoinput
+                    denon_read: true
+                    denon_write: true
+                    denon_read_group:
+                    -   zone1
+                    -   zone1.settings
+                    -   zone1.settings.video
 
     zone2:
 
-        zone2:
+        read:
+            type: bool
+            enforce_updates: true
+            denon_read_group_trigger: zone2
+
+        control:
 
             read:
                 type: bool
                 enforce_updates: true
-                denon_read_group_trigger: zone2
+                denon_read_group_trigger: zone2.control
 
-            control:
+            power:
+                type: bool
+                denon_command: zone2.control.power
+                denon_read: true
+                denon_write: true
+                denon_read_group:
+                -   zone2
+                -   zone2.control
 
-                read:
-                    type: bool
-                    enforce_updates: true
-                    denon_read_group_trigger: zone2.control
+            mute:
+                type: bool
+                denon_command: zone2.control.mute
+                denon_read: true
+                denon_write: true
+                denon_read_group:
+                -   zone2
+                -   zone2.control
 
-                power:
-                    type: bool
-                    denon_command: zone2.control.power
-                    denon_read: true
-                    denon_write: true
-                    denon_read_group:
-                    -   zone2
-                    -   zone2.control
+            volume:
+                type: num
+                denon_command: zone2.control.volume
+                denon_read: true
+                denon_write: true
+                denon_read_group:
+                -   zone2
+                -   zone2.control
 
-                mute:
-                    type: bool
-                    denon_command: zone2.control.mute
-                    denon_read: true
-                    denon_write: true
-                    denon_read_group:
-                    -   zone2
-                    -   zone2.control
+            volumeup:
+                type: bool
+                denon_command: zone2.control.volumeup
+                denon_read: false
+                denon_write: true
 
-                volume:
-                    type: num
-                    denon_command: zone2.control.volume
-                    denon_read: true
-                    denon_write: true
-                    denon_read_group:
-                    -   zone2
-                    -   zone2.control
+            volumedown:
+                type: bool
+                denon_command: zone2.control.volumedown
+                denon_read: false
+                denon_write: true
 
-                volumeup:
-                    type: bool
-                    denon_command: zone2.control.volumeup
-                    denon_read: false
-                    denon_write: true
+            input:
+                type: str
+                denon_command: zone2.control.input
+                denon_read: true
+                denon_write: true
+                denon_read_group:
+                -   zone2
+                -   zone2.control
+                on_change:
+                -   .custom_name = '' if sh.....general.custom_inputnames() == {} else sh.....general.custom_inputnames()[value]
 
-                volumedown:
-                    type: bool
-                    denon_command: zone2.control.volumedown
-                    denon_read: false
-                    denon_write: true
-
-                input:
+                custom_name:
                     type: str
-                    denon_command: zone2.control.input
-                    denon_read: true
-                    denon_write: true
-                    denon_read_group:
-                    -   zone2
-                    -   zone2.control
-                    on_change: .custom_name = '' if sh.....general.custom_inputnames() == {} else sh.....general.custom_inputnames()[value]
+                    on_change: .. = '' if sh......general.custom_inputnames.reverse() == {} else sh......general.custom_inputnames.reverse()[value]
 
-                    custom_name:
-                        type: str
-                        on_change: .. = '' if sh......general.custom_inputnames.reverse() == {} else sh......general.custom_inputnames.reverse()[value]
+            sleep:
+                type: num
+                denon_command: zone2.control.sleep
+                denon_read: true
+                denon_write: true
+                denon_read_group:
+                -   zone2
+                -   zone2.control
 
-                sleep:
-                    type: num
-                    denon_command: zone2.control.sleep
-                    denon_read: true
-                    denon_write: true
-                    denon_read_group:
-                    -   zone2
-                    -   zone2.control
+            standby:
+                type: num
+                denon_command: zone2.control.standby
+                denon_read: true
+                denon_write: true
+                denon_read_group:
+                -   zone2
+                -   zone2.control
 
-                standby:
-                    type: num
-                    denon_command: zone2.control.standby
-                    denon_read: true
-                    denon_write: true
-                    denon_read_group:
-                    -   zone2
-                    -   zone2.control
+        settings:
 
-            settings:
+            read:
+                type: bool
+                enforce_updates: true
+                denon_read_group_trigger: zone2.settings
+
+            sound:
 
                 read:
                     type: bool
                     enforce_updates: true
-                    denon_read_group_trigger: zone2.settings
+                    denon_read_group_trigger: zone2.settings.sound
 
-                sound:
+                channel_level:
 
                     read:
                         type: bool
                         enforce_updates: true
-                        denon_read_group_trigger: zone2.settings.sound
+                        denon_read_group_trigger: zone2.settings.sound.channel_level
 
-                    channel_level:
+                    front_left:
+                        type: num
+                        denon_command: zone2.settings.sound.channel_level.front_left
+                        denon_read: true
+                        denon_write: true
+                        denon_read_group:
+                        -   zone2
+                        -   zone2.settings
+                        -   zone2.settings.sound
+                        -   zone2.settings.sound.channel_level
 
-                        read:
-                            type: bool
-                            enforce_updates: true
-                            denon_read_group_trigger: zone2.settings.sound.channel_level
+                    front_right:
+                        type: num
+                        denon_command: zone2.settings.sound.channel_level.front_right
+                        denon_read: true
+                        denon_write: true
+                        denon_read_group:
+                        -   zone2
+                        -   zone2.settings
+                        -   zone2.settings.sound
+                        -   zone2.settings.sound.channel_level
 
-                        front_left:
-                            type: num
-                            denon_command: zone2.settings.sound.channel_level.front_left
-                            denon_read: true
-                            denon_write: true
-                            denon_read_group:
-                            -   zone2
-                            -   zone2.settings
-                            -   zone2.settings.sound
-                            -   zone2.settings.sound.channel_level
+                tone_control:
 
-                        front_right:
-                            type: num
-                            denon_command: zone2.settings.sound.channel_level.front_right
-                            denon_read: true
-                            denon_write: true
-                            denon_read_group:
-                            -   zone2
-                            -   zone2.settings
-                            -   zone2.settings.sound
-                            -   zone2.settings.sound.channel_level
+                    read:
+                        type: bool
+                        enforce_updates: true
+                        denon_read_group_trigger: zone2.settings.sound.tone_control
 
-                    tone_control:
+                    treble:
+                        type: num
+                        denon_command: zone2.settings.sound.tone_control.treble
+                        denon_read: true
+                        denon_write: true
+                        denon_read_group:
+                        -   zone2
+                        -   zone2.settings
+                        -   zone2.settings.sound
+                        -   zone2.settings.sound.tone_control
 
-                        read:
-                            type: bool
-                            enforce_updates: true
-                            denon_read_group_trigger: zone2.settings.sound.tone_control
+                    trebleup:
+                        type: bool
+                        denon_command: zone2.settings.sound.tone_control.trebleup
+                        denon_read: false
+                        denon_write: true
 
-                        treble:
-                            type: num
-                            denon_command: zone2.settings.sound.tone_control.treble
-                            denon_read: true
-                            denon_write: true
-                            denon_read_group:
-                            -   zone2
-                            -   zone2.settings
-                            -   zone2.settings.sound
-                            -   zone2.settings.sound.tone_control
+                    trebledown:
+                        type: bool
+                        denon_command: zone2.settings.sound.tone_control.trebledown
+                        denon_read: false
+                        denon_write: true
 
-                        trebleup:
-                            type: bool
-                            denon_command: zone2.settings.sound.tone_control.trebleup
-                            denon_read: false
-                            denon_write: true
+                    bass:
+                        type: num
+                        denon_command: zone2.settings.sound.tone_control.bass
+                        denon_read: true
+                        denon_write: true
+                        denon_read_group:
+                        -   zone2
+                        -   zone2.settings
+                        -   zone2.settings.sound
+                        -   zone2.settings.sound.tone_control
 
-                        trebledown:
-                            type: bool
-                            denon_command: zone2.settings.sound.tone_control.trebledown
-                            denon_read: false
-                            denon_write: true
+                    bassup:
+                        type: bool
+                        denon_command: zone2.settings.sound.tone_control.bassup
+                        denon_read: false
+                        denon_write: true
 
-                        bass:
-                            type: num
-                            denon_command: zone2.settings.sound.tone_control.bass
-                            denon_read: true
-                            denon_write: true
-                            denon_read_group:
-                            -   zone2
-                            -   zone2.settings
-                            -   zone2.settings.sound
-                            -   zone2.settings.sound.tone_control
+                    bassdown:
+                        type: bool
+                        denon_command: zone2.settings.sound.tone_control.bassdown
+                        denon_read: false
+                        denon_write: true
 
-                        bassup:
-                            type: bool
-                            denon_command: zone2.settings.sound.tone_control.bassup
-                            denon_read: false
-                            denon_write: true
+                general:
 
-                        bassdown:
-                            type: bool
-                            denon_command: zone2.settings.sound.tone_control.bassdown
-                            denon_read: false
-                            denon_write: true
+                    read:
+                        type: bool
+                        enforce_updates: true
+                        denon_read_group_trigger: zone2.settings.sound.general
 
-                    general:
+                    hdmiout:
+                        type: str
+                        denon_command: zone2.settings.sound.general.hdmiout
+                        denon_read: true
+                        denon_write: true
+                        denon_read_group:
+                        -   zone2
+                        -   zone2.settings
+                        -   zone2.settings.sound
+                        -   zone2.settings.sound.general
 
-                        read:
-                            type: bool
-                            enforce_updates: true
-                            denon_read_group_trigger: zone2.settings.sound.general
-
-                        hdmiout:
-                            type: str
-                            denon_command: zone2.settings.sound.general.hdmiout
-                            denon_read: true
-                            denon_write: true
-                            denon_read_group:
-                            -   zone2
-                            -   zone2.settings
-                            -   zone2.settings.sound
-                            -   zone2.settings.sound.general
-
-                        HPF:
-                            type: bool
-                            denon_command: zone2.settings.sound.general.HPF
-                            denon_read: true
-                            denon_write: true
-                            denon_read_group:
-                            -   zone2
-                            -   zone2.settings
-                            -   zone2.settings.sound
-                            -   zone2.settings.sound.general
+                    HPF:
+                        type: bool
+                        denon_command: zone2.settings.sound.general.HPF
+                        denon_read: true
+                        denon_write: true
+                        denon_read_group:
+                        -   zone2
+                        -   zone2.settings
+                        -   zone2.settings.sound
+                        -   zone2.settings.sound.general
 
     zone3:
 
-        zone3:
+        read:
+            type: bool
+            enforce_updates: true
+            denon_read_group_trigger: zone3
+
+        control:
 
             read:
                 type: bool
                 enforce_updates: true
-                denon_read_group_trigger: zone3
+                denon_read_group_trigger: zone3.control
 
-            control:
+            power:
+                type: bool
+                denon_command: zone3.control.power
+                denon_read: true
+                denon_write: true
+                denon_read_group:
+                -   zone3
+                -   zone3.control
 
-                read:
-                    type: bool
-                    enforce_updates: true
-                    denon_read_group_trigger: zone3.control
+            mute:
+                type: bool
+                denon_command: zone3.control.mute
+                denon_read: true
+                denon_write: true
+                denon_read_group:
+                -   zone3
+                -   zone3.control
 
-                power:
-                    type: bool
-                    denon_command: zone3.control.power
-                    denon_read: true
-                    denon_write: true
-                    denon_read_group:
-                    -   zone3
-                    -   zone3.control
+            volume:
+                type: num
+                denon_command: zone3.control.volume
+                denon_read: true
+                denon_write: true
+                denon_read_group:
+                -   zone3
+                -   zone3.control
 
-                mute:
-                    type: bool
-                    denon_command: zone3.control.mute
-                    denon_read: true
-                    denon_write: true
-                    denon_read_group:
-                    -   zone3
-                    -   zone3.control
+            volumeup:
+                type: bool
+                denon_command: zone3.control.volumeup
+                denon_read: false
+                denon_write: true
 
-                volume:
-                    type: num
-                    denon_command: zone3.control.volume
-                    denon_read: true
-                    denon_write: true
-                    denon_read_group:
-                    -   zone3
-                    -   zone3.control
+            volumedown:
+                type: bool
+                denon_command: zone3.control.volumedown
+                denon_read: false
+                denon_write: true
 
-                volumeup:
-                    type: bool
-                    denon_command: zone3.control.volumeup
-                    denon_read: false
-                    denon_write: true
+            sleep:
+                type: num
+                denon_command: zone3.control.sleep
+                denon_read: true
+                denon_write: true
+                denon_read_group:
+                -   zone3
+                -   zone3.control
 
-                volumedown:
-                    type: bool
-                    denon_command: zone3.control.volumedown
-                    denon_read: false
-                    denon_write: true
+            standby:
+                type: num
+                denon_command: zone3.control.standby
+                denon_read: true
+                denon_write: true
+                denon_read_group:
+                -   zone3
+                -   zone3.control
 
-                sleep:
-                    type: num
-                    denon_command: zone3.control.sleep
-                    denon_read: true
-                    denon_write: true
-                    denon_read_group:
-                    -   zone3
-                    -   zone3.control
+            input:
+                type: str
+                denon_command: zone3.control.input
+                denon_read: true
+                denon_write: true
+                denon_read_group:
+                -   zone3
+                -   zone3.control
+                on_change:
+                -   .custom_name = '' if sh.....general.custom_inputnames() == {} else sh.....general.custom_inputnames()[value]
 
-                standby:
-                    type: num
-                    denon_command: zone3.control.standby
-                    denon_read: true
-                    denon_write: true
-                    denon_read_group:
-                    -   zone3
-                    -   zone3.control
-
-                input:
+                custom_name:
                     type: str
-                    denon_command: zone3.control.input
-                    denon_read: true
-                    denon_write: true
-                    denon_read_group:
-                    -   zone3
-                    -   zone3.control
-                    on_change: .custom_name = '' if sh.....general.custom_inputnames() == {} else sh.....general.custom_inputnames()[value]
+                    on_change: .. = '' if sh......general.custom_inputnames.reverse() == {} else sh......general.custom_inputnames.reverse()[value]
 
-                    custom_name:
-                        type: str
-                        on_change: .. = '' if sh......general.custom_inputnames.reverse() == {} else sh......general.custom_inputnames.reverse()[value]
+        settings:
 
-            settings:
+            read:
+                type: bool
+                enforce_updates: true
+                denon_read_group_trigger: zone3.settings
+
+            sound:
 
                 read:
                     type: bool
                     enforce_updates: true
-                    denon_read_group_trigger: zone3.settings
+                    denon_read_group_trigger: zone3.settings.sound
 
-                sound:
+                channel_level:
 
                     read:
                         type: bool
                         enforce_updates: true
-                        denon_read_group_trigger: zone3.settings.sound
+                        denon_read_group_trigger: zone3.settings.sound.channel_level
 
-                    channel_level:
+                    front_left:
+                        type: num
+                        denon_command: zone3.settings.sound.channel_level.front_left
+                        denon_read: true
+                        denon_write: true
+                        denon_read_group:
+                        -   zone3
+                        -   zone3.settings
+                        -   zone3.settings.sound
+                        -   zone3.settings.sound.channel_level
 
-                        read:
-                            type: bool
-                            enforce_updates: true
-                            denon_read_group_trigger: zone3.settings.sound.channel_level
+                    front_right:
+                        type: num
+                        denon_command: zone3.settings.sound.channel_level.front_right
+                        denon_read: true
+                        denon_write: true
+                        denon_read_group:
+                        -   zone3
+                        -   zone3.settings
+                        -   zone3.settings.sound
+                        -   zone3.settings.sound.channel_level
 
-                        front_left:
-                            type: num
-                            denon_command: zone3.settings.sound.channel_level.front_left
-                            denon_read: true
-                            denon_write: true
-                            denon_read_group:
-                            -   zone3
-                            -   zone3.settings
-                            -   zone3.settings.sound
-                            -   zone3.settings.sound.channel_level
+                tone_control:
 
-                        front_right:
-                            type: num
-                            denon_command: zone3.settings.sound.channel_level.front_right
-                            denon_read: true
-                            denon_write: true
-                            denon_read_group:
-                            -   zone3
-                            -   zone3.settings
-                            -   zone3.settings.sound
-                            -   zone3.settings.sound.channel_level
+                    read:
+                        type: bool
+                        enforce_updates: true
+                        denon_read_group_trigger: zone3.settings.sound.tone_control
 
-                    tone_control:
+                    treble:
+                        type: num
+                        denon_command: zone3.settings.sound.tone_control.treble
+                        denon_read: true
+                        denon_write: true
+                        denon_read_group:
+                        -   zone3
+                        -   zone3.settings
+                        -   zone3.settings.sound
+                        -   zone3.settings.sound.tone_control
 
-                        read:
-                            type: bool
-                            enforce_updates: true
-                            denon_read_group_trigger: zone3.settings.sound.tone_control
+                    trebleup:
+                        type: bool
+                        denon_command: zone3.settings.sound.tone_control.trebleup
+                        denon_read: false
+                        denon_write: true
 
-                        treble:
-                            type: num
-                            denon_command: zone3.settings.sound.tone_control.treble
-                            denon_read: true
-                            denon_write: true
-                            denon_read_group:
-                            -   zone3
-                            -   zone3.settings
-                            -   zone3.settings.sound
-                            -   zone3.settings.sound.tone_control
+                    trebledown:
+                        type: bool
+                        denon_command: zone3.settings.sound.tone_control.trebledown
+                        denon_read: false
+                        denon_write: true
 
-                        trebleup:
-                            type: bool
-                            denon_command: zone3.settings.sound.tone_control.trebleup
-                            denon_read: false
-                            denon_write: true
+                    bass:
+                        type: num
+                        denon_command: zone3.settings.sound.tone_control.bass
+                        denon_read: true
+                        denon_write: true
+                        denon_read_group:
+                        -   zone3
+                        -   zone3.settings
+                        -   zone3.settings.sound
+                        -   zone3.settings.sound.tone_control
 
-                        trebledown:
-                            type: bool
-                            denon_command: zone3.settings.sound.tone_control.trebledown
-                            denon_read: false
-                            denon_write: true
+                    bassup:
+                        type: bool
+                        denon_command: zone3.settings.sound.tone_control.bassup
+                        denon_read: false
+                        denon_write: true
 
-                        bass:
-                            type: num
-                            denon_command: zone3.settings.sound.tone_control.bass
-                            denon_read: true
-                            denon_write: true
-                            denon_read_group:
-                            -   zone3
-                            -   zone3.settings
-                            -   zone3.settings.sound
-                            -   zone3.settings.sound.tone_control
+                    bassdown:
+                        type: bool
+                        denon_command: zone3.settings.sound.tone_control.bassdown
+                        denon_read: false
+                        denon_write: true
 
-                        bassup:
-                            type: bool
-                            denon_command: zone3.settings.sound.tone_control.bassup
-                            denon_read: false
-                            denon_write: true
+                general:
 
-                        bassdown:
-                            type: bool
-                            denon_command: zone3.settings.sound.tone_control.bassdown
-                            denon_read: false
-                            denon_write: true
+                    read:
+                        type: bool
+                        enforce_updates: true
+                        denon_read_group_trigger: zone3.settings.sound.general
 
-                    general:
-
-                        read:
-                            type: bool
-                            enforce_updates: true
-                            denon_read_group_trigger: zone3.settings.sound.general
-
-                        HPF:
-                            type: bool
-                            denon_command: zone3.settings.sound.general.HPF
-                            denon_read: true
-                            denon_write: true
-                            denon_read_group:
-                            -   zone3
-                            -   zone3.settings
-                            -   zone3.settings.sound
-                            -   zone3.settings.sound.general
+                    HPF:
+                        type: bool
+                        denon_command: zone3.settings.sound.general.HPF
+                        denon_read: true
+                        denon_write: true
+                        denon_read_group:
+                        -   zone3
+                        -   zone3.settings
+                        -   zone3.settings.sound
+                        -   zone3.settings.sound.general
 
     ALL:
 
@@ -1395,7 +1387,6 @@ item_structs:
                 denon_read_group:
                 -   ALL
                 -   ALL.general
-                denon_read_initial: true
                 cache: true
 
                 reverse:
@@ -1599,7 +1590,8 @@ item_structs:
                     -   ALL.zone1
                     -   ALL.zone1.control
                     denon_read_initial: true
-                    on_change: .custom_name = '' if sh.....general.custom_inputnames() == {} else sh.....general.custom_inputnames()[value]
+                    on_change:
+                    -   .custom_name = '' if sh.....general.custom_inputnames() == {} else sh.....general.custom_inputnames()[value]
 
                     custom_name:
                         type: str
@@ -2050,7 +2042,8 @@ item_structs:
                     -   ALL
                     -   ALL.zone2
                     -   ALL.zone2.control
-                    on_change: .custom_name = '' if sh.....general.custom_inputnames() == {} else sh.....general.custom_inputnames()[value]
+                    on_change:
+                    -   .custom_name = '' if sh.....general.custom_inputnames() == {} else sh.....general.custom_inputnames()[value]
 
                     custom_name:
                         type: str
@@ -2131,7 +2124,6 @@ item_structs:
                 denon_read_group:
                 -   AVR-X6300H
                 -   AVR-X6300H.general
-                denon_read_initial: true
                 cache: true
 
                 reverse:
@@ -2335,7 +2327,8 @@ item_structs:
                     -   AVR-X6300H.zone1
                     -   AVR-X6300H.zone1.control
                     denon_read_initial: true
-                    on_change: .custom_name = '' if sh.....general.custom_inputnames() == {} else sh.....general.custom_inputnames()[value]
+                    on_change:
+                    -   .custom_name = '' if sh.....general.custom_inputnames() == {} else sh.....general.custom_inputnames()[value]
 
                     custom_name:
                         type: str
@@ -2906,7 +2899,8 @@ item_structs:
                     -   AVR-X6300H
                     -   AVR-X6300H.zone2
                     -   AVR-X6300H.zone2.control
-                    on_change: .custom_name = '' if sh.....general.custom_inputnames() == {} else sh.....general.custom_inputnames()[value]
+                    on_change:
+                    -   .custom_name = '' if sh.....general.custom_inputnames() == {} else sh.....general.custom_inputnames()[value]
 
                     custom_name:
                         type: str
@@ -3148,7 +3142,8 @@ item_structs:
                     -   AVR-X6300H
                     -   AVR-X6300H.zone3
                     -   AVR-X6300H.zone3.control
-                    on_change: .custom_name = '' if sh.....general.custom_inputnames() == {} else sh.....general.custom_inputnames()[value]
+                    on_change:
+                    -   .custom_name = '' if sh.....general.custom_inputnames() == {} else sh.....general.custom_inputnames()[value]
 
                     custom_name:
                         type: str
@@ -3295,7 +3290,6 @@ item_structs:
                 denon_read_group:
                 -   AVR-X4300H
                 -   AVR-X4300H.general
-                denon_read_initial: true
                 cache: true
 
                 reverse:
@@ -3499,7 +3493,8 @@ item_structs:
                     -   AVR-X4300H.zone1
                     -   AVR-X4300H.zone1.control
                     denon_read_initial: true
-                    on_change: .custom_name = '' if sh.....general.custom_inputnames() == {} else sh.....general.custom_inputnames()[value]
+                    on_change:
+                    -   .custom_name = '' if sh.....general.custom_inputnames() == {} else sh.....general.custom_inputnames()[value]
 
                     custom_name:
                         type: str
@@ -4094,7 +4089,8 @@ item_structs:
                     -   AVR-X4300H
                     -   AVR-X4300H.zone2
                     -   AVR-X4300H.zone2.control
-                    on_change: .custom_name = '' if sh.....general.custom_inputnames() == {} else sh.....general.custom_inputnames()[value]
+                    on_change:
+                    -   .custom_name = '' if sh.....general.custom_inputnames() == {} else sh.....general.custom_inputnames()[value]
 
                     custom_name:
                         type: str
@@ -4336,7 +4332,8 @@ item_structs:
                     -   AVR-X4300H
                     -   AVR-X4300H.zone3
                     -   AVR-X4300H.zone3.control
-                    on_change: .custom_name = '' if sh.....general.custom_inputnames() == {} else sh.....general.custom_inputnames()[value]
+                    on_change:
+                    -   .custom_name = '' if sh.....general.custom_inputnames() == {} else sh.....general.custom_inputnames()[value]
 
                     custom_name:
                         type: str
@@ -4483,7 +4480,6 @@ item_structs:
                 denon_read_group:
                 -   AVR-X3300W
                 -   AVR-X3300W.general
-                denon_read_initial: true
                 cache: true
 
                 reverse:
@@ -4712,7 +4708,8 @@ item_structs:
                     -   AVR-X3300W.zone1
                     -   AVR-X3300W.zone1.control
                     denon_read_initial: true
-                    on_change: .custom_name = '' if sh.....general.custom_inputnames() == {} else sh.....general.custom_inputnames()[value]
+                    on_change:
+                    -   .custom_name = '' if sh.....general.custom_inputnames() == {} else sh.....general.custom_inputnames()[value]
 
                     custom_name:
                         type: str
@@ -5284,7 +5281,8 @@ item_structs:
                     -   AVR-X3300W
                     -   AVR-X3300W.zone2
                     -   AVR-X3300W.zone2.control
-                    on_change: .custom_name = '' if sh.....general.custom_inputnames() == {} else sh.....general.custom_inputnames()[value]
+                    on_change:
+                    -   .custom_name = '' if sh.....general.custom_inputnames() == {} else sh.....general.custom_inputnames()[value]
 
                     custom_name:
                         type: str
@@ -5463,7 +5461,6 @@ item_structs:
                 denon_read_group:
                 -   AVR-X2300W
                 -   AVR-X2300W.general
-                denon_read_initial: true
                 cache: true
 
                 reverse:
@@ -5692,7 +5689,8 @@ item_structs:
                     -   AVR-X2300W.zone1
                     -   AVR-X2300W.zone1.control
                     denon_read_initial: true
-                    on_change: .custom_name = '' if sh.....general.custom_inputnames() == {} else sh.....general.custom_inputnames()[value]
+                    on_change:
+                    -   .custom_name = '' if sh.....general.custom_inputnames() == {} else sh.....general.custom_inputnames()[value]
 
                     custom_name:
                         type: str
@@ -6263,7 +6261,8 @@ item_structs:
                     -   AVR-X2300W
                     -   AVR-X2300W.zone2
                     -   AVR-X2300W.zone2.control
-                    on_change: .custom_name = '' if sh.....general.custom_inputnames() == {} else sh.....general.custom_inputnames()[value]
+                    on_change:
+                    -   .custom_name = '' if sh.....general.custom_inputnames() == {} else sh.....general.custom_inputnames()[value]
 
                     custom_name:
                         type: str
@@ -6375,7 +6374,6 @@ item_structs:
                 denon_read_group:
                 -   AVR-X1300W
                 -   AVR-X1300W.general
-                denon_read_initial: true
                 cache: true
 
                 reverse:
@@ -6604,7 +6602,8 @@ item_structs:
                     -   AVR-X1300W.zone1
                     -   AVR-X1300W.zone1.control
                     denon_read_initial: true
-                    on_change: .custom_name = '' if sh.....general.custom_inputnames() == {} else sh.....general.custom_inputnames()[value]
+                    on_change:
+                    -   .custom_name = '' if sh.....general.custom_inputnames() == {} else sh.....general.custom_inputnames()[value]
 
                     custom_name:
                         type: str
@@ -7091,7 +7090,8 @@ item_structs:
                     -   AVR-X1300W
                     -   AVR-X1300W.zone2
                     -   AVR-X1300W.zone2.control
-                    on_change: .custom_name = '' if sh.....general.custom_inputnames() == {} else sh.....general.custom_inputnames()[value]
+                    on_change:
+                    -   .custom_name = '' if sh.....general.custom_inputnames() == {} else sh.....general.custom_inputnames()[value]
 
                     custom_name:
                         type: str

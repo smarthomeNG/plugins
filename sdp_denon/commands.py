@@ -366,7 +366,7 @@ item_templates = {
         }
     },
     'input': {
-        'on_change': ".custom_name = '' if sh.....general.custom_inputnames() == {} else sh.....general.custom_inputnames()[value]",
+        'on_change': [".custom_name = '' if sh.....general.custom_inputnames() == {} else sh.....general.custom_inputnames()[value]",],
         'custom_name': {
             'type': 'str',
             'on_change': ".. = '' if sh......general.custom_inputnames.reverse() == {} else sh......general.custom_inputnames.reverse()[value]"
