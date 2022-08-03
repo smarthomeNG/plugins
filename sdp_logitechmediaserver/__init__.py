@@ -60,6 +60,7 @@ class sdp_logitechmediaserver(SmartDevicePlugin):
         self._custom_patterns = {1: '(?:[0-9a-fA-F]{2}[-:]){5}[0-9a-fA-F]{2}', 2: '', 3: ''}
         self._use_callbacks = True
         self._parameters[PLUGIN_ATTR_RECURSIVE] = 1
+        self._parameters['web_port'] = self.get_parameter_value('web_port')
 
     def _get_custom_value(self, command, data):
         """ extract custom value from data. At least PATTERN Needs to be overwritten """

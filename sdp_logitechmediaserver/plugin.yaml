@@ -103,13 +103,21 @@ parameters:
             de: Anzahl Sendewiederholungen auf Protokollebene
             en: number of message retries at protocol level
 
-    port:
+    web_port:
         type: int
         default: 9000
 
         description:
-            de: Port für Netzwerkverbindung
-            en: network port
+            de: Port für Webinterface-Verbindung (nötig für coverarturl)
+            en: port for web interface connection (necessary for coverarturl)
+
+    port:
+        type: int
+        default: 9090
+
+        description:
+            de: Port für CLI Netzwerkverbindung
+            en: CLI network port
 
     conn_type:
         type: str
