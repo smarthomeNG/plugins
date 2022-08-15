@@ -3,10 +3,10 @@ plugin:
     # Global plugin attributes
     type: interface                  # plugin type (gateway, interface, protocol, system, web)
     description:
-        de: 'Zugriff und Steuern eines Xiaomi Saugroboters'
-        en: 'Control a Xioami Vacuum Robot'
-    maintainer: Bonze
-    state: ready
+        de: 'Zugriff und Steuern eines Xiaomi Saugroboters. Es wird empfohlen, den Staubsauger mit der neuesten Valetudo Firmware zu bespielen und MQTT anstelle dieses Plugins zu nutzen.'
+        en: 'Control a Xioami Vacuum Robot. It is recommended to flash the vacuum with the latest Valetudo firmware and use MQTT instead of this plugin.'
+    maintainer: Bonze, onkelandy
+    state: qa-passed
     tester: Bonze, henfri, onkelandy
     keywords: communication, iot
     requirements:
@@ -15,12 +15,14 @@ plugin:
     requirements_long:
         de: 'Das Plugin benötigt das python-miio Modul. Die richtige Version wird automatisch beim Start von smarthomeNG installiert.\n
              Die Bibliothek benötigt den Token des Roboters zur Kommunikation. Hierzu ist bitte die `Anleitung auf github <https://python-miio.readthedocs.io/en/latest/discovery.html#installation>`_ zu befolgen.
+             Bei neueren Valetudo Versionen ist das Token im Log als LocalSecret hinterlegt. Dieses muss hier https://gchq.github.io/CyberChef/#recipe=To_Hex in ein 32 Zeichen langes Token umgewandelt werden.
              '
         en: 'This plugin needs the python-miio module. The correct version is installed automatically at the smarthomeNG start.\n
              The module needs the token of the robot for communication. Please follow the `instructions on github <https://python-miio.readthedocs.io/en/latest/discovery.html#installation>`_.
+             In newer Valetudo versions you find the token in the log as LocalSecret. Convert the token at https://gchq.github.io/CyberChef/#recipe=To_Hex to 32 characters.
              '
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1453597-support-thread-f%C3%BCr-xiaomi-saugroboter-plugin
-    version: 1.2.0            # Plugin version
+    version: 1.2.01           # Plugin version
     sh_minversion: 1.4           # minimum shNG version to use this plugin
     multi_instance: False          # plugin supports multi instance
     classname: Robvac                # class containing the plugin
