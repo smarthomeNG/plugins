@@ -50,7 +50,7 @@ from bin.smarthome import VERSION
 
 class Robvac(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.2.0"
+    PLUGIN_VERSION = "1.2.1"
 
     def __init__(self, smarthome):
         self._ip = self.get_parameter_value("ip")
@@ -136,94 +136,129 @@ class Robvac(SmartPlugin):
                     self._data['clean_details_last0'] = (
                         self.vakuum.clean_details(self._data['clean_ids'][0], return_list=False))
                 except Exception:
-                    self._data['clean_details_last0'] = (
-                        self.vakuum.clean_details(self._data['clean_ids'][0]))
-                self._data['last0_area'] = (
-                    round(self._data['clean_details_last0'].area, 2))
-                self._data['last0_complete'] = self._data['clean_details_last0'].complete
-                self._data['last0_duration'] = (
-                    round(self._data['clean_details_last0'].duration.total_seconds() / 60, 2))
-                self._data['last0_start_date'] = (
-                    self._data['clean_details_last0'].start.strftime("%d.%m.%Y"))
-                self._data['last0_start_time'] = (
-                    self._data['clean_details_last0'].start.strftime("%H:%M"))
-                self._data['last0_end_date'] = (
-                    self._data['clean_details_last0'].start.strftime("%d.%m.%Y"))
-                self._data['last0_end_time'] = (
-                    (self._data['clean_details_last0'].start
-                     + self._data['clean_details_last0'].duration).strftime("%H:%M"))
+                    try:
+                        self._data['clean_details_last0'] = (
+                            self.vakuum.clean_details(self._data['clean_ids'][0]))
+                    except Exception as e:
+                        self._data['clean_details_last0'] = []
+                        self.logger.info("No details for last0 clean found")
+                try:
+                    self._data['last0_area'] = (
+                        round(self._data['clean_details_last0'].area, 2))
+                    self._data['last0_complete'] = self._data['clean_details_last0'].complete
+                    self._data['last0_duration'] = (
+                        round(self._data['clean_details_last0'].duration.total_seconds() / 60, 2))
+                    self._data['last0_start_date'] = (
+                        self._data['clean_details_last0'].start.strftime("%d.%m.%Y"))
+                    self._data['last0_start_time'] = (
+                        self._data['clean_details_last0'].start.strftime("%H:%M"))
+                    self._data['last0_end_date'] = (
+                        self._data['clean_details_last0'].start.strftime("%d.%m.%Y"))
+                    self._data['last0_end_time'] = (
+                        (self._data['clean_details_last0'].start
+                         + self._data['clean_details_last0'].duration).strftime("%H:%M"))
+                except Exception:
+                    self._data['last0_complete'] = ''
+                    pass
 
                 try:
                     self._data['clean_details_last1'] = (
                         self.vakuum.clean_details(self._data['clean_ids'][1], return_list=False))
                 except Exception:
-                    self._data['clean_details_last1'] = (
-                        self.vakuum.clean_details(self._data['clean_ids'][1]))
-                self._data['last1_area'] = (
-                    round(self._data['clean_details_last1'].area, 2))
-                self._data['last1_complete'] = self._data['clean_details_last1'].complete
-                self._data['last1_duration'] = (
-                    round(self._data['clean_details_last1'].duration.total_seconds() / 60, 2))
-                self._data['last1_start_date'] = (
-                    self._data['clean_details_last1'].start.strftime("%d.%m.%Y"))
-                self._data['last1_start_time'] = (
-                    self._data['clean_details_last1'].start.strftime("%H:%M"))
-                self._data['last1_end_date'] = (
-                    self._data['clean_details_last1'].start.strftime("%d.%m.%Y"))
-                self._data['last1_end_time'] = (
-                    (self._data['clean_details_last1'].start
-                     + self._data['clean_details_last1'].duration).strftime("%H:%M"))
+                    try:
+                        self._data['clean_details_last1'] = (
+                            self.vakuum.clean_details(self._data['clean_ids'][1]))
+                    except Exception as e:
+                        self._data['clean_details_last1'] = []
+                        self.logger.info("No details for last1 clean found")
+
+                try:
+                    self._data['last1_area'] = (
+                        round(self._data['clean_details_last1'].area, 2))
+                    self._data['last1_complete'] = self._data['clean_details_last1'].complete
+                    self._data['last1_duration'] = (
+                        round(self._data['clean_details_last1'].duration.total_seconds() / 60, 2))
+                    self._data['last1_start_date'] = (
+                        self._data['clean_details_last1'].start.strftime("%d.%m.%Y"))
+                    self._data['last1_start_time'] = (
+                        self._data['clean_details_last1'].start.strftime("%H:%M"))
+                    self._data['last1_end_date'] = (
+                        self._data['clean_details_last1'].start.strftime("%d.%m.%Y"))
+                    self._data['last1_end_time'] = (
+                        (self._data['clean_details_last1'].start
+                         + self._data['clean_details_last1'].duration).strftime("%H:%M"))
+                except Exception:
+                    self._data['last1_complete'] = ''
+                    pass
 
                 try:
                     self._data['clean_details_last2'] = (
                         self.vakuum.clean_details(self._data['clean_ids'][2], return_list=False))
                 except Exception:
-                    self._data['clean_details_last2'] = (
-                        self.vakuum.clean_details(self._data['clean_ids'][2]))
-                self._data['last2_area'] = (
-                    round(self._data['clean_details_last2'].area, 2))
-                self._data['last2_complete'] = self._data['clean_details_last2'].complete
-                self._data['last2_duration'] = (
-                    round(self._data['clean_details_last2'].duration.total_seconds() / 60, 2))
-                self._data['last2_start_date'] = (
-                    self._data['clean_details_last2'].start.strftime("%d.%m.%Y"))
-                self._data['last2_start_time'] = (
-                    self._data['clean_details_last2'].start.strftime("%H:%M"))
-                self._data['last2_end_date'] = (
-                    self._data['clean_details_last2'].start.strftime("%d.%m.%Y"))
-                self._data['last2_end_time'] = (
-                     (self._data['clean_details_last2'].start
-                      + self._data['clean_details_last2'].duration).strftime("%H:%M"))
+                    try:
+                        self._data['clean_details_last2'] = (
+                            self.vakuum.clean_details(self._data['clean_ids'][2]))
+                    except Exception as e:
+                        self._data['clean_details_last2'] = []
+                        self.logger.info("No details for last2 clean found")
+
+                try:
+                    self._data['last2_area'] = (
+                        round(self._data['clean_details_last2'].area, 2))
+                    self._data['last2_complete'] = self._data['clean_details_last2'].complete
+                    self._data['last2_duration'] = (
+                        round(self._data['clean_details_last2'].duration.total_seconds() / 60, 2))
+                    self._data['last2_start_date'] = (
+                        self._data['clean_details_last2'].start.strftime("%d.%m.%Y"))
+                    self._data['last2_start_time'] = (
+                        self._data['clean_details_last2'].start.strftime("%H:%M"))
+                    self._data['last2_end_date'] = (
+                        self._data['clean_details_last2'].start.strftime("%d.%m.%Y"))
+                    self._data['last2_end_time'] = (
+                         (self._data['clean_details_last2'].start
+                          + self._data['clean_details_last2'].duration).strftime("%H:%M"))
+                except Exception:
+                    self._data['last2_complete'] = ''
+                    pass
 
                 try:
                     self._data['clean_details_last3'] = (
                         self.vakuum.clean_details(self._data['clean_ids'][3], return_list=False))
                 except Exception:
-                    self._data['clean_details_last3'] = (
-                        self.vakuum.clean_details(self._data['clean_ids'][3]))
-                self._data['last3_area'] = (
-                    round(self._data['clean_details_last3'].area, 2))
-                self._data['last3_complete'] = self._data['clean_details_last3'].complete
-                self._data['last3_duration'] = (
-                    round(self._data['clean_details_last3'].duration.total_seconds() / 60, 2))
-                self._data['last3_start_date'] = (
-                    self._data['clean_details_last3'].start.strftime("%d.%m.%Y"))
-                self._data['last3_start_time'] = (
-                    self._data['clean_details_last3'].start.strftime("%H:%M"))
-                self._data['last3_end_date'] = (
-                    self._data['clean_details_last3'].start.strftime("%d.%m.%Y"))
-                self._data['last3_end_time'] = (
-                    (self._data['clean_details_last3'].start
-                     + self._data['clean_details_last3'].duration).strftime("%H:%M"))
+                    try:
+                        self._data['clean_details_last3'] = (
+                            self.vakuum.clean_details(self._data['clean_ids'][3]))
+                    except Exception as e:
+                        self._data['clean_details_last3'] = []
+                        self.logger.info("No details for last3 clean found")
+
+                try:
+                    self._data['last3_area'] = (
+                        round(self._data['clean_details_last3'].area, 2))
+                    self._data['last3_complete'] = self._data['clean_details_last3'].complete
+                    self._data['last3_duration'] = (
+                        round(self._data['clean_details_last3'].duration.total_seconds() / 60, 2))
+                    self._data['last3_start_date'] = (
+                        self._data['clean_details_last3'].start.strftime("%d.%m.%Y"))
+                    self._data['last3_start_time'] = (
+                        self._data['clean_details_last3'].start.strftime("%H:%M"))
+                    self._data['last3_end_date'] = (
+                        self._data['clean_details_last3'].start.strftime("%d.%m.%Y"))
+                    self._data['last3_end_time'] = (
+                        (self._data['clean_details_last3'].start
+                         + self._data['clean_details_last3'].duration).strftime("%H:%M"))
+                except Exception:
+                    self._data['last3_complete'] = ''
+                    pass
 
                 self.logger.debug("Xiaomi_Robvac: historic id1 {}, "
-                                  "id2{}, id3 {}".format(
+                                  "id2 {}, id3 {}".format(
                                         self._data['clean_details_last0'],
                                         self._data['clean_details_last1'],
                                         self._data['clean_details_last2']))
 
                 self.logger.debug("Xiaomi_Robvac: Clean Run complete id1 {}, "
-                                  "id2{}, id3 {}".format(
+                                  "id2 {}, id3 {}".format(
                                        self._data['last1_complete'],
                                        self._data['last2_complete'],
                                        self._data['last3_complete'],))
