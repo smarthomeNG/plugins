@@ -38,7 +38,7 @@ class Mqtt2(MqttPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '2.0.2'
+    PLUGIN_VERSION = '2.0.3'
 
 
     def __init__(self, sh, *args, **kwargs):
@@ -64,7 +64,7 @@ class Mqtt2(MqttPlugin):
 
         # get the parameters for the plugin (as defined in metadata plugin.yaml):
         try:
-        #     self.param1 = self.get_parameter_value('param1')
+            self.webif_pagelength = self.get_parameter_value('webif_pagelength')
             pass
         except KeyError as e:
             self.logger.critical("Plugin '{}': Inconsistent plugin (invalid metadata definition: {} not defined)".format(self.get_shortname(), e))
@@ -256,4 +256,3 @@ class Mqtt2(MqttPlugin):
         #     # the source should be included when updating the the value:
         #     item(device_value, self.get_shortname(), source=device_source_id)
         pass
-
