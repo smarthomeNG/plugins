@@ -203,9 +203,8 @@ class Husky2(SmartPlugin):
         super().__init__()
 
         # get the parameters for the plugin (as defined in metadata plugin.yaml):
-        self.userid = self.get_parameter_value('userid')
-        self.password = self.get_parameter_value('password')
         self.apikey = self.get_parameter_value('apikey')
+        self.apisecret = self.get_parameter_value('apisecret')
         self.instance = self.get_parameter_value('device')
         self.historylength = int(self.get_parameter_value('historylength'))
 
@@ -495,8 +494,8 @@ class Husky2(SmartPlugin):
         self.apiSession.register_token_callback(self.token_callback, schedule_immediately=True)
 
         # Login to get a token and connect to the api
-        await self.apiSession.login(self.userid, self.password)
-        self.logger.debug(f"Logged in successfully as {self.userid}")
+        await self.apiSession.logincc(self.apisecret)
+        self.logger.debug(f"Logged in successfully")
 
         await self.apiSession.connect()
         self.logger.debug("Connected successfully")
@@ -680,9 +679,6 @@ class Husky2(SmartPlugin):
 
     def getTokenExp(self):
         return self.tokenExp
-
-    def getUserId(self):
-        return self.userid
 
     def getApiKey(self):
         return self.apikey

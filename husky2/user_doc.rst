@@ -6,17 +6,17 @@ Ein Plugin um diverse Husqvarna Automower (R) mit SmartHomeNG ansteuern zu könn
 Anforderungen
 -------------
 Zur Verwendung des Plugins wird zusätzlich zu einem gültigen Benutzerkonto, welches für die Automower Connect App
-verwendet wird, auch ein API-Key benötigt. Dieser Key muss in der Plugin-Konfiguration hinterlegt werden.
-Dazu auf https://developer.husqvarnagroup.cloud/apps mit dem bereits aus der App vorhandenen Benutzernamen und
-Passwort anmelden und eine neue Applikation erstellen. Abschließend der Applikation noch die "Authentication API" und
-die "Automower Connect API" zu zuweisen.
+verwendet wird, auch ein API-Key und dessen Api-Secret benötigt. Diese müssen in der Plugin-Konfiguration hinterlegt
+werden. Dazu auf https://developer.husqvarnagroup.cloud/applications mit dem bereits aus der App vorhandenen
+Benutzernamen und Passwort anmelden und eine neue Applikation erstellen. Als redirect URL kann dabei z.B.
+"http://localhost:8080" eingetragen werden. Abschließend der Applikation noch die "Authentication API" und die
+"Automower Connect API" zu zuweisen.
 
 Notwendige Software
 ~~~~~~~~~~~~~~~~~~~
 
 Für die Kommunikation wird die Python-Bibliothek aioautomower benötigt. Diese wird bei der ersten Verwundung des Plugins
-automatisch zu SmarthomeNG hinzugefügt. Für das Plugin wird die Version 2022.3.1 verwendet, da bei
-neueren Versionen von aioautomower python 3.9 vorausgesetzt wird.
+automatisch zu SmarthomeNG hinzugefügt.
 
 Unterstützte Geräte
 ~~~~~~~~~~~~~~~~~~~
