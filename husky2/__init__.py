@@ -55,7 +55,7 @@ class Husky2(SmartPlugin):
 
     VALID_INFOS = ['name', 'id', 'serial', 'model']
     VALID_STATES = ['message', 'state', 'activity', 'mode', 'errormessage', 'batterypercent', 'connection', 'longitude',
-                    'latitude']
+                    'latitude', 'gpspoints']
     VALID_COMMANDS = ['starttime', 'park', 'starttime', 'pause', 'parkpermanent', 'parktime', 'parknext', 'resume',
                       'cuttingheight', 'headlight']
 
@@ -207,6 +207,7 @@ class Husky2(SmartPlugin):
         self.apisecret = self.get_parameter_value('apisecret')
         self.instance = self.get_parameter_value('device')
         self.historylength = int(self.get_parameter_value('historylength'))
+        self.maxgpspoints = int(self.get_parameter_value('maxgpspoints'))
 
         self.token = None
         self.tokenExp = 0
@@ -224,6 +225,7 @@ class Husky2(SmartPlugin):
         self.mowerErrormsg = LengthList(self.historylength, '')
         self.mowerLongitude = LengthList(self.historylength, 0.0)
         self.mowerLatitude = LengthList(self.historylength, 0.0)
+        self.mowerGpspoints = LengthList(self.maxgpspoints, [0.0, 0.0])
 
         self.message = 'Ok'
 
@@ -422,6 +424,22 @@ class Husky2(SmartPlugin):
         self.mowerTimestamp.push(data['attributes']['metadata']['statusTimestamp'])
         self.logger.debug("Data callback: " + json.dumps(data))
 
+        posindex = -1
+        for gpsindex, gpspoint in enumerate(data['attributes']['positions']):
+            if (gpspoint['longitude'] == self.mowerGpspoints.get_last()[0]) and (gpspoint['latitude'] == self.mowerGpspoints.get_last()[1]):
+                posindex = gpsindex - 1
+                break
+            elif gpsindex >= self.maxgpspoints:
+                posindex = gpsindex
+                break
+            else:
+                posindex = gpsindex
+        for i in range(posindex, -1, -1):
+            self.mowerGpspoints.push([data['attributes']['positions'][i]['longitude'],
+                                      data['attributes']['positions'][i]['latitude']])
+        if 'gpspoints' in self._items_state:
+            for item in self._items_state['gpspoints']:
+                item(self.mowerGpspoints.get_list()[::-1], self.get_shortname())
         self.mowerLongitude.push(data['attributes']['positions'][0]['longitude'])
         if 'longitude' in self._items_state:
             for item in self._items_state['longitude']:
@@ -629,19 +647,7 @@ class Husky2(SmartPlugin):
         return self.mowerLatitude.get_last()
 
     def getLastCoordinates(self):
-        maxpoints = 50
-        lat = self.mowerLatitude.get_list()
-        lon = self.mowerLongitude.get_list()
-
-        if len(lat) < maxpoints:
-            maxpoints = len(lat)
-        if len(lon) < maxpoints:
-            maxpoints = len(lon)
-
-        coord = []
-        for i in range(maxpoints):
-            coord.append([lon[i], lat[i]])
-        return coord
+        return self.mowerGpspoints.get_list()[::-1]
 
     # get entire historical Data
     def getTimestamps(self):

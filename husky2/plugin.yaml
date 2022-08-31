@@ -46,6 +46,13 @@ parameters:
         description:
             de: '(optional) Anzahl der Statusmeldungen die im Arbeitsspeicher für die Anzeige im Webinterface gespeichert werden sollen'
             en: '(optional) Number of state messages to be saved in ram for history display in the web interface'
+    maxgpspoints:
+        type: num
+        mandatory: False
+        default: 20
+        description:
+            de: '(optional) Anzahl der letzten GPS Punkte die im gpsoints-Item gespeichert werden sollen'
+            en: '(optional) Number of last gps points to be saved in the gpspoints item'
 
 item_attributes:
     # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)
@@ -58,7 +65,7 @@ item_attributes:
 
     husky_state:
         type: str
-        valid_list: ['message', 'state', 'activity', 'mode', 'errormessage', 'batterypercent', 'connection', 'longitude', 'latitude']
+        valid_list: ['message', 'state', 'activity', 'mode', 'errormessage', 'batterypercent', 'connection', 'longitude', 'latitude', 'gpspoints']
         description:
             de: 'Das Item, welches mit Status Informationen (z.B. Aktivität) durch das Plugin beschrieben werden soll'
             en: 'Item that should receive status information (e.g. activity) by the plugin'
@@ -158,6 +165,12 @@ item_structs:
                 name: mower gps latitude
                 husky_state: latitude
                 type: num
+                visu_acl: ro
+
+            gpspoints:
+                name: mower last gps points
+                husky_state: gpspoints
+                type: list
                 visu_acl: ro
 
         control:

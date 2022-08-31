@@ -91,6 +91,12 @@ husky_plugin:
                 type: num
                 visu_acl: ro
 
+            gpspoints:
+                name: mower last gps points
+                husky_state: gpspoints
+                type: list
+                visu_acl: ro
+
         control:
             name: Control commands
 
