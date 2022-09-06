@@ -435,8 +435,8 @@ class Husky2(SmartPlugin):
             else:
                 posindex = gpsindex
         for i in range(posindex, -1, -1):
-            self.mowerGpspoints.push([data['attributes']['positions'][i]['longitude'],
-                                      data['attributes']['positions'][i]['latitude']])
+            self.mowerGpspoints.push([data['attributes']['positions'][i]['latitude'],
+                                      data['attributes']['positions'][i]['longitude']])
         if 'gpspoints' in self._items_state:
             for item in self._items_state['gpspoints']:
                 item(self.mowerGpspoints.get_list()[::-1], self.get_shortname())
