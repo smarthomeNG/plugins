@@ -647,7 +647,10 @@ class Husky2(SmartPlugin):
         return self.mowerLatitude.get_last()
 
     def getLastCoordinates(self):
-        return self.mowerGpspoints.get_list()[::-1]
+        points = []
+        for data in self.mowerGpspoints.get_list()[::-1]:
+            points.append([data[1], data[0]])
+        return points
 
     # get entire historical Data
     def getTimestamps(self):
