@@ -519,7 +519,7 @@ class Husky2(SmartPlugin):
         """
 
         self.token = token['access_token']
-        self.tokenExp = token['expires_in']
+        self.tokenExp = datetime.fromtimestamp(token['expires_at']).strftime("%d.%m.%Y %H:%M:%S")
 
         self.logger.debug("Token callback: " + json.dumps(token))
 
@@ -591,6 +591,8 @@ class Husky2(SmartPlugin):
 
         await self.apiSession.close()
         self.logger.debug("Closed Session")
+
+        asyncio.get_event_loop().close()
 
     async def send_worker(self, cmd, value):
         commands = {
