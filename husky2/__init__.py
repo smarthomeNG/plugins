@@ -31,10 +31,30 @@ import json
 
 from lib.module import Modules
 from lib.model.smartplugin import *
-from lib.item import Items
 
 import cherrypy
-import aioautomower
+from aioautomower import session
+
+
+class Husky2AutomowerSession(session.AutomowerSession):
+    def setClientSecret(self, client_secret):
+        self.client_secret = client_secret
+
+    async def refresh_token(self):
+        """Refresh token via Rest."""
+        if "refresh_token" in self.token:
+            session._LOGGER.debug("Refresh access token using refresh_token")
+            r = session.rest.RefreshAccessToken(self.api_key, self.token["refresh_token"])
+            self.token = await r.async_refresh_access_token()
+            self._schedule_token_callbacks()
+        else:
+            session._LOGGER.debug("Refresh access token doing relogin")
+            await self.close()
+            session._LOGGER.debug("Closed old session")
+            await self.logincc(self.client_secret)
+            session._LOGGER.debug("Logged in successfully")
+            await self.connect()
+            session._LOGGER.debug("Connected successfully")
 
 
 class Husky2(SmartPlugin):
@@ -504,7 +524,8 @@ class Husky2(SmartPlugin):
         self.logger.debug("Token callback: " + json.dumps(token))
 
     async def worker(self):
-        self.apiSession = aioautomower.AutomowerSession(self.apikey, token=None)
+        self.apiSession = Husky2AutomowerSession(self.apikey, token=None)
+        self.apiSession.setClientSecret(self.apisecret)
 
         self.asyncLoop = asyncio.get_event_loop()
 
@@ -568,8 +589,6 @@ class Husky2(SmartPlugin):
     async def destroy(self):
         asyncio.set_event_loop(self.asyncLoop)
 
-        await self.apiSession.invalidate_token()
-        self.logger.debug("Invalidated Token")
         await self.apiSession.close()
         self.logger.debug("Closed Session")
 
