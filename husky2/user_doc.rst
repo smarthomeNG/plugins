@@ -35,17 +35,9 @@ Bitte die Dokumentation lesen, die aus den Metadaten der plugin.yaml erzeugt wur
 
     am315x:
         plugin_name: husky2
-        userid: email@domain.de
-        password: mysecret
         apikey: mykey
+        apisecret: mysecret
 
-
-
-items.yaml
-~~~~~~~~~~
-
-Als grundlegende Struktur für die Kommunikation wird empfohlen das Item-Struktur Template zu verwenden. Dieses kann
-anschließend natürlich nach belieben aus- und umgebaut werden.
 
 Funktionen
 ~~~~~~~~~~
