@@ -40,21 +40,25 @@ class Husky2AutomowerSession(session.AutomowerSession):
     def setClientSecret(self, client_secret):
         self.client_secret = client_secret
 
+    def setSmarthomeLogger(self, shLogger):
+        self.shLogger = shLogger
+
     async def refresh_token(self):
-        """Refresh token via Rest."""
         if "refresh_token" in self.token:
             session._LOGGER.debug("Refresh access token using refresh_token")
+            self.shLogger.debug("Refresh access token using refresh_token")
             r = session.rest.RefreshAccessToken(self.api_key, self.token["refresh_token"])
             self.token = await r.async_refresh_access_token()
             self._schedule_token_callbacks()
         else:
             session._LOGGER.debug("Refresh access token doing relogin")
+            self.shLogger.debug("Refresh access token doing relogin")
             await self.close()
-            session._LOGGER.debug("Closed old session")
+            self.shLogger.debug("Closed old session")
             await self.logincc(self.client_secret)
-            session._LOGGER.debug("Logged in successfully")
+            self.shLogger.debug("Logged in successfully")
             await self.connect()
-            session._LOGGER.debug("Connected successfully")
+            self.shLogger.debug("Connected successfully")
 
 
 class Husky2(SmartPlugin):
@@ -526,6 +530,7 @@ class Husky2(SmartPlugin):
     async def worker(self):
         self.apiSession = Husky2AutomowerSession(self.apikey, token=None)
         self.apiSession.setClientSecret(self.apisecret)
+        self.apiSession.setSmarthomeLogger(self.logger)
 
         self.asyncLoop = asyncio.get_event_loop()
 
