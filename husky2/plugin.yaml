@@ -115,7 +115,7 @@ item_structs:
                 visu_acl: ro
 
             activity:
-                name: activity [ UNKNOWN, NOT_APPLICABLE, MOWING, GOING_HOME, CHARGING, LEAVING, PARKED_IN_CS ]
+                name: activity [ UNKNOWN, NOT_APPLICABLE, MOWING, GOING_HOME, CHARGING, LEAVING, PARKED_IN_CS, STOPPED_IN_GARDEN ] # See locale.yaml
                 husky_state: activity
                 type: str
                 visu_acl: ro
@@ -133,13 +133,13 @@ item_structs:
                 initial_value: 'Ok'
 
             mode:
-                name: mode [ MAIN_AREA, SECONDARY_AREA, HOME, DEMO, UNKNOWN ]
+                name: mode [ MAIN_AREA, SECONDARY_AREA, HOME, DEMO, UNKNOWN ] # See locale.yaml
                 husky_state: mode
                 type: str
                 visu_acl: ro
 
             state:
-                name: state [ UNKNOWN, NOT_APPLICABLE, PAUSED, IN_OPERATION, WAIT_UPDATING, WAIT_POWER_UP, RESTRICTED, OFF, STOPPED, ERROR, FATAL_ERROR, ERROR_AT_POWER_UP ]
+                name: state [ UNKNOWN, NOT_APPLICABLE, PAUSED, IN_OPERATION, WAIT_UPDATING, WAIT_POWER_UP, RESTRICTED, OFF, STOPPED, ERROR, FATAL_ERROR, ERROR_AT_POWER_UP ] # See locale.yaml
                 husky_state: state
                 type: str
                 visu_acl: ro
