@@ -592,6 +592,7 @@ class Husky2(SmartPlugin):
         await self.apiSession.close()
         self.logger.debug("Closed Session")
 
+        asyncio.get_running_loop().stop()
         asyncio.get_event_loop().close()
 
     async def send_worker(self, cmd, value):
