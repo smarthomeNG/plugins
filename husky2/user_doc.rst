@@ -38,6 +38,16 @@ Bitte die Dokumentation lesen, die aus den Metadaten der plugin.yaml erzeugt wur
         apikey: mykey
         apisecret: mysecret
 
+Items
+~~~~~
+
+Die husky_state Attribute können die Werte wie in der Dokumentation von Husqvarna
+( https://developer.husqvarnagroup.cloud/apis/automower-connect-api#status%20description%20and%20error%20codes )
+beschrieben annehmen. Zu beachten ist jedoch, dass diese ebenfalls in die Sprachen, die in der locale.yaml definiert
+sind, übersetzt werden. Somit ist bei einer Überprüfung auf einen bestimmten Zustand, der Status in der jeweiligen
+Sprache zu verwenden. Z.B. die Aktivität "GOING_HOME" entspricht in deutsch "Unterwegs zur Ladestation". Genauso
+werden auch Fehlermeldungen gehandhabt. Für die vollständige Auflistung bitte in der locale.yaml nachlesen.
+
 
 Funktionen
 ~~~~~~~~~~
