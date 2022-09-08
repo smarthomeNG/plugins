@@ -635,7 +635,7 @@ class Husky2(SmartPlugin):
             newstatus = await self.apiSession.get_status()
             self.data_callback(newstatus)
         else:
-            self.logger.error("available commands: {}".format(commands.keys()))
+            self.logger.error("'{0}' not in available commands: {1}".format(cmd, commands.keys()))
 
     # ------------------------------------------
     #    Webinterface methods of the plugin
