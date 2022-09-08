@@ -71,7 +71,7 @@ class Husky2(SmartPlugin):
     are already available!
     """
 
-    PLUGIN_VERSION = '2.0.0'  # (must match the version specified in plugin.yaml), use '1.0.0' for your initial plugin Release
+    PLUGIN_VERSION = '2.1.0'  # (must match the version specified in plugin.yaml), use '1.0.0' for your initial plugin Release
 
     ITEM_INFO = "husky_info"
     ITEM_CONTROL = "husky_control"
