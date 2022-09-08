@@ -4,6 +4,8 @@ $.widget("sv.husky2_map", $.sv.widget, {
 
     options: {
 		mapskey: '',
+        zoomlevel: 19,
+        pathcolor: '#3afd02',
 	},
 
     _create: function () {
@@ -14,7 +16,7 @@ $.widget("sv.husky2_map", $.sv.widget, {
     _create_map: function () {
         try {
             this.map = new google.maps.Map(this.element[0], {
-                zoom: 19,
+                zoom: this.options.zoomlevel,
                 mapTypeId: 'hybrid',
                 center: new google.maps.LatLng(0.0, 0.0),
          });
@@ -55,7 +57,7 @@ $.widget("sv.husky2_map", $.sv.widget, {
 
     this.linePath = new google.maps.Polyline({
       path: [],
-      strokeColor: '#3afd02',
+      strokeColor: this.options.pathcolor,
       strokeOpacity: 0.6,
       strokeWeight: 2,
       map: this.map
