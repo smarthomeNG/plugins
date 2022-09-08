@@ -1,0 +1,26 @@
+/**
+* -----------------------------------------------------------------------------
+* @package     smartVISU
+* @author      gruberth
+* @copyright   2018 - 2022
+* @license     GPL [http://www.gnu.de]
+* -----------------------------------------------------------------------------
+*/
+
+/**
+ * Displays a google maps (from https://www.smarthomeng.de/google-maps-widget-fuer-smartvisu-2-9 ) map with the position and the path of the mower
+ *
+ * @param {id=} unique id for this widget
+ * @param {item(txt)=""} a gad/item with the name of the mower
+ * @param {item(num)} a gad/item for latitude
+ * @param {item(num)} a gad/item for longitude
+ * @param {item(list)=[]} a gad/item for gps points
+ * @param {text} the google maps key
+ */
+{% macro husky2_map(id, gad_name, gad_lat, gad_lon, gad_points, mapskey) %}
+<div id="{{ uid(page, id) }}"
+     style="width: 100%; height: 400px;"
+     data-widget="husky2_map" data-mapskey="{{ mapskey }}"
+     data-item="{{ gad_lat }}, {{ gad_lon}}, {{ gad_points}}, {{ gad_name }}">
+</div>
+{% endmacro %}
