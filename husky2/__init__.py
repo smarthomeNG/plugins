@@ -586,11 +586,6 @@ class Husky2(SmartPlugin):
         while self.runworker:
             await asyncio.sleep(0.1)
 
-        await self.apiSession.invalidate_token()
-        self.logger.debug("Invalidated Token")
-        await self.apiSession.close()
-        self.logger.debug("Closed Session")
-
     async def destroy(self):
         asyncio.set_event_loop(self.asyncLoop)
 
