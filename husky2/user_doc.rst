@@ -66,6 +66,14 @@ Beispielhafte Nutzung des Plugins mit SmartVisu:
 .. image:: assets/state_sv.png
    :class: screenshot
 
+SV Widget
+---------
+
+Für die Anzeige der aktuellen Position sowie den Pfad zwischen den letzten Positionen des Mähers, steht das widget
+map zur Verfügung. Dieses ist auf basis von https://www.smarthomeng.de/google-maps-widget-fuer-smartvisu-2-9 mit
+google maps erstellt worden. Das widget benötigt generell einen google maps api key, für Testzwecke
+kann es jedoch auch ohne diesen verwendet werden.
+
 
 Web Interface
 -------------
