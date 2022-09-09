@@ -80,7 +80,7 @@ class Husky2(SmartPlugin):
     VALID_INFOS = ['name', 'id', 'serial', 'model']
     VALID_STATES = ['message', 'state', 'activity', 'mode', 'errormessage', 'batterypercent', 'connection', 'longitude',
                     'latitude', 'gpspoints']
-    VALID_COMMANDS = ['starttime', 'park', 'starttime', 'pause', 'parkpermanent', 'parktime', 'parknext', 'resume',
+    VALID_COMMANDS = ['starttime', 'starttime', 'pause', 'parkpermanent', 'parktime', 'parknext', 'resume',
                       'cuttingheight', 'headlight']
 
     MOWERERROR = {
