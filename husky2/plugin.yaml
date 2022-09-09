@@ -72,7 +72,7 @@ item_attributes:
 
     husky_control:
         type: str
-        valid_list: ['starttime', 'park', 'starttime', 'pause', 'parkpermanent', 'parktime', 'parknext', 'resume', 'cuttingheight', 'headlight']
+        valid_list: ['starttime', 'starttime', 'pause', 'parkpermanent', 'parktime', 'parknext', 'resume', 'cuttingheight', 'headlight']
         description:
             de: 'Das Item, mit dem der Mähroboter gesteuert werden soll (z.B. Start Kommando)'
             en: 'Item to control the mower (e.g. start command)'
@@ -195,13 +195,6 @@ item_structs:
                 name: Stop
                 type: bool
                 husky_control: pause
-                visu_acl: rw
-                enforce_updates: True
-
-            park:
-                name: Park
-                type: bool
-                husky_control: park
                 visu_acl: rw
                 enforce_updates: True
 
