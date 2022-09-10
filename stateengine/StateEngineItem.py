@@ -441,10 +441,10 @@ class SeItem:
                     else:
                         self.__logger.info("Staying at {0} ('{1}') based on conditionset {2} ('{3}')",
                                            new_state.id, new_state.name, _last_conditionset_id, _last_conditionset_name)
-                    # New state is last state
+
+                    new_state.run_stay(self.__repeat_actions.get())
                     if self.__laststate_internal_name != new_state.name:
                         self.__laststate_set(new_state)
-                    new_state.run_stay(self.__repeat_actions.get())
 
                 else:
                     if last_state is not None and _leaveactions_run is True:
@@ -468,8 +468,9 @@ class SeItem:
                     else:
                         self.__logger.info("Entering {0} ('{1}') based on conditionset {2} ('{3}')",
                                            new_state.id, new_state.name, _last_conditionset_id, _last_conditionset_name)
-                    self.__laststate_set(new_state)
+
                     new_state.run_enter(self.__repeat_actions.get())
+                    self.__laststate_set(new_state)
                 if _leaveactions_run is True and self.__ab_alive:
                     _key_leave = ['{}'.format(last_state.id), 'leave']
                     _key_stay = ['{}'.format(last_state.id), 'stay']
