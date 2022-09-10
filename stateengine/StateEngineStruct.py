@@ -21,7 +21,7 @@
 from . import StateEngineTools
 from . import StateEngineFunctions
 import collections.abc
-import copy
+#import copy
 from lib.item import Items
 
 

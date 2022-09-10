@@ -58,28 +58,67 @@ class WebInterface(StateEngineTools.SeItemChild):
     def __repr__(self):
         return "WebInterface item: {}, id {}.".format(self.__states, self.__name) if REQUIRED_PACKAGE_IMPORTED else "None"
 
-    def _actionlabel(self, state, label_type, conditionset, label_format='table'):
+    def _actionlabel(self, state, label_type, conditionset, previousconditionset, previousstate_conditionset, label_format='table'):
         actionlabel = '<<table border="0">' if label_format == 'table' else '<'
         originaltype = label_type
         types = [label_type] if label_type == 'actions_leave' else ['actions_enter_or_stay', label_type]
         for label_type in types:
             for action in self.__states[state].get(label_type):
-                condition_to_meet = self.__states[state][label_type][action].get('conditionset')
-                condition_to_meet = StateEngineTools.flatten_list(condition_to_meet)
-                condition_met = True if condition_to_meet == 'None' else False
-                condition_to_meet = condition_to_meet if isinstance(condition_to_meet, list) else [condition_to_meet]
                 _repeat = self.__states[state][label_type][action].get('repeat')
                 _delay = self.__states[state][label_type][action].get('delay') or 0
+                condition_necessary = 0
+                condition_met = True
+                condition_count = 0
+                condition_to_meet = self.__states[state][label_type][action].get('conditionset')
+                condition_to_meet = StateEngineTools.flatten_list(condition_to_meet)
+                condition_necessary += 1 if condition_to_meet != 'None' else 0
+                condition_to_meet = condition_to_meet if isinstance(condition_to_meet, list) else [condition_to_meet]
                 for cond in condition_to_meet:
                     try:
                         cond = re.compile(cond)
                         matching = cond.fullmatch(conditionset)
                     except Exception:
                         matching = True
-                    condition_met = True if matching else condition_met
-                fontcolor = "white" if not condition_met or (_repeat is False and originaltype == 'actions_stay')\
+                    condition_count += 1 if matching else 0
+                    condition1 = True if matching else False
+
+                previouscondition_to_meet = self.__states[state][label_type][action].get('previousconditionset')
+                previouscondition_to_meet = StateEngineTools.flatten_list(previouscondition_to_meet)
+                condition_necessary += 1 if previouscondition_to_meet != 'None' else 0
+                previouscondition_to_meet = previouscondition_to_meet if isinstance(previouscondition_to_meet, list) else [previouscondition_to_meet]
+                for cond in previouscondition_to_meet:
+                    try:
+                        cond = re.compile(cond)
+                        matching = cond.fullmatch(previousconditionset)
+                    except Exception:
+                        matching = True
+                    condition_count += 1 if matching else 0
+                    condition2 = True if matching else False
+
+                previousstate_condition_to_meet = self.__states[state][label_type][action].get('previousstate_conditionset')
+                previousstate_condition_to_meet = StateEngineTools.flatten_list(previousstate_condition_to_meet)
+                condition_necessary += 1 if previousstate_condition_to_meet != 'None' else 0
+                previousstate_condition_to_meet = previousstate_condition_to_meet if isinstance(previousstate_condition_to_meet, list) else [previousstate_condition_to_meet]
+                for cond in previousstate_condition_to_meet:
+                    try:
+                        cond = re.compile(cond)
+                        matching = cond.fullmatch(previousstate_conditionset)
+                    except Exception:
+                        matching = True
+                    condition_count += 1 if matching else 0
+                    condition3 = True if matching else False
+
+                if condition_count < condition_necessary:
+                    condition_met = False
+                cond1 = conditionset in ['', self.__active_conditionset] and state == self.__active_state
+                cond2 = self.__states[state]['conditionsets'].get(conditionset) is not None
+                fontcolor = "white" if cond1 and cond2 and (not condition_met or (_repeat is False and originaltype == 'actions_stay'))\
                             else "#5c5646" if _delay > 0 else "darkred" if _delay < 0 else "black"
-                additionaltext = " ({} not met)".format(condition_to_meet) if not condition_met\
+                condition_info = condition_to_meet if condition1 is False\
+                                 else previouscondition_to_meet if condition2 is False\
+                                 else previousstate_condition_to_meet if condition3 is False\
+                                 else ""
+                additionaltext = " ({} not met)".format(condition_info) if not condition_met\
                                  else " (no repeat)" if _repeat is False and originaltype == 'actions_stay'\
                                  else " (delay: {})".format(_delay) if _delay > 0\
                                  else " (wrong delay!)" if _delay < 0 else ""
@@ -138,12 +177,16 @@ class WebInterface(StateEngineTools.SeItemChild):
                     textlength = len(str(condition_dict.get('item')))
                     condition_tooltip += '{}&#13;&#10;&#13;&#10;'.format(condition_dict.get('item')) \
                         if textlength > self.__textlimit else ''
-                    info = str(condition_dict.get('item'))[:self.__textlimit] + '.. &nbsp;' * (textlength > self.__textlimit)
+                    info_item = str(condition_dict.get('item'))[:self.__textlimit] + '.. &nbsp;' * (textlength > self.__textlimit)
+                    info_eval = str(condition_dict.get('eval'))[:self.__textlimit] + '.. &nbsp;' * (textlength > self.__textlimit)
+                    info_value = str(condition_dict.get(compare))[:self.__textlimit] + '.. &nbsp;' * \
+                        (len(str(condition_dict.get(compare))) > self.__textlimit)
+                    info = info_eval if info_item == "None" and info_eval != "None" else info_item
                     conditionlist += '{}'.format(info) if not item_none else ''
                     textlength = len(str(condition_dict.get('eval')))
                     condition_tooltip += '{}&#13;&#10;&#13;&#10;'.format(condition_dict.get('eval')) \
                         if textlength > self.__textlimit else ''
-                    info = str(condition_dict.get('eval'))[:self.__textlimit] + '.. &nbsp;' * (textlength > self.__textlimit)
+                    info = info_value if info_item == "None" and info_eval != "None" else info_eval
                     conditionlist += '{}'.format(info) if not eval_none and item_none else ''
                     conditionlist += '</b></td>'
                     comparison = "&#62;=" if not min_none and compare == "min"\
@@ -164,8 +207,7 @@ class WebInterface(StateEngineTools.SeItemChild):
                     textlength = len(str(condition_dict.get(compare)))
                     condition_tooltip += '{}&#13;&#10;&#13;&#10;'.format(condition_dict.get(compare)) \
                         if textlength > self.__textlimit else ''
-                    info = str(condition_dict.get(compare))[:self.__textlimit] + '.. &nbsp;' * \
-                        (len(str(condition_dict.get(compare))) > self.__textlimit)
+                    info = info_value
                     conditionlist += '{}'.format(info) if not condition_dict.get(compare) == 'None' and (
                                      (eval_none and not item_none) or (not eval_none and item_none)) else ''
                     conditionlist += ' (negate)' if condition_dict.get('negate') == 'True' and "age" \
@@ -220,6 +262,9 @@ class WebInterface(StateEngineTools.SeItemChild):
         new_y = 2
         previous_state = ''
         previous_conditionset = ''
+        previousconditionset = ''
+        previousstate = ''
+        previousstate_conditionset = ''
         #self._log_debug('STATES {}', self.__states)
         for i, state in enumerate(self.__states):
             #self._log_debug('Adding state for webif {}', self.__states[state])
@@ -271,13 +316,13 @@ class WebInterface(StateEngineTools.SeItemChild):
                 new_x = 0.9
                 for j, conditionset in enumerate(self.__states[state]['conditionsets']):
                     if len(self.__states[state].get('actions_enter')) > 0 or len(self.__states[state].get('actions_enter_or_stay')) > 0:
-                        actionlist_enter = self._actionlabel(state, 'actions_enter', conditionset, 'list')
+                        actionlist_enter = self._actionlabel(state, 'actions_enter', conditionset, previousconditionset, previousstate_conditionset, 'list')
 
                     if len(self.__states[state].get('actions_stay')) > 0 or len(self.__states[state].get('actions_enter_or_stay')) > 0:
-                        actionlist_stay = self._actionlabel(state, 'actions_stay', conditionset, 'list')
+                        actionlist_stay = self._actionlabel(state, 'actions_stay', conditionset, previousconditionset, previousstate_conditionset, 'list')
 
                     if len(self.__states[state].get('actions_leave')) > 0:
-                        actionlist_leave = self._actionlabel(state, 'actions_leave', conditionset, 'list')
+                        actionlist_leave = self._actionlabel(state, 'actions_leave', conditionset, previousconditionset, previousstate_conditionset, 'list')
 
                     new_y -= 1 * self.__scalefactor if j == 0 else 2 * self.__scalefactor
                     position = '{},{}!'.format(0.5, new_y)

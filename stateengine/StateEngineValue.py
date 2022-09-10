@@ -82,8 +82,18 @@ class SeValue(StateEngineTools.SeItemChild):
     # item: item containing the attribute
     # attribute_name: name of attribute to use
     # default_value: default value to be used if item contains no such attribute
-    def set_from_attr(self, item, attribute_name, default_value=None, reset=True):
-        value = item.conf.get(attribute_name) or default_value
+    def set_from_attr(self, item, attribute_name, default_value=None, reset=True, attr_type=None):
+        value = copy.deepcopy(item.conf.get(attribute_name)) or default_value
+        if value is not None:
+            self._log_develop("Processing value {0} from attribute name {1}, reset {2}", value, attribute_name, reset)
+        value_list = []
+        if value is not None and isinstance(value, list) and attr_type is not None:
+            for i, entry in enumerate(value):
+                if isinstance(attr_type, list):
+                    value_list.append("{}:{}".format(attr_type[i], entry))
+                else:
+                    value_list.append("{}:{}".format(attr_type, entry))
+            value = value_list
         # Convert weird string representation of OrderedDict correctly
         if isinstance(value, str) and value.startswith("["):
             value = re.split('(, (?![^(]*\)))', value.strip(']['))
@@ -98,9 +108,12 @@ class SeValue(StateEngineTools.SeItemChild):
             value = result
         try:
             value = ast.literal_eval(value)
-        except Exception:
+        except Exception as ex:
             pass
-        self.set(value, attribute_name, reset)
+        if value is not None:
+            self._log_develop("Setting value {0}, attribute name {1}, reset {2}", value, attribute_name, reset)
+        _returnvalue, _returntype = self.set(value, attribute_name, reset, item)
+        return _returnvalue, _returntype
 
     def _set_additional(self, _additional_sources):
         for _use in _additional_sources:
@@ -123,7 +136,7 @@ class SeValue(StateEngineTools.SeItemChild):
     # Set value
     # value: string indicating value or source of value
     # name: name of object ("time" is being handled differently)
-    def set(self, value, name="", reset=True):
+    def set(self, value, name="", reset=True, item=None):
         if reset:
             self.__resetvalue()
         if isinstance(value, list):
@@ -259,7 +272,7 @@ class SeValue(StateEngineTools.SeItemChild):
                     self.__value = [] if self.__value is None else [self.__value] if not isinstance(self.__value, list) else self.__value
                     self.__value.append(None if s != "value" else self.__do_cast(field_value[i]))
                 self.__item = [] if self.__item is None else [self.__item] if not isinstance(self.__item, list) else self.__item
-                self.__item.append(None if s != "item" else self._abitem.return_item(field_value[i]))
+                self.__item.append(None if s != "item" else self.__absolute_item(self._abitem.return_item(field_value[i]), field_value[i]))
                 self.__eval = [] if self.__eval is None else [self.__eval] if not isinstance(self.__eval, list) else self.__eval
                 self.__eval.append(None if s != "eval" else field_value[i])
                 self.__regex = [] if self.__regex is None else [self.__regex] if not isinstance(self.__regex, list) else self.__regex
@@ -282,7 +295,7 @@ class SeValue(StateEngineTools.SeItemChild):
             self.__varname = self.__varname[0] if len(self.__varname) == 1 else None if len(self.__varname) == 0 else self.__varname
 
         else:
-            self.__item = None if source != "item" else self._abitem.return_item(field_value)
+            self.__item = None if source != "item" else self.__absolute_item(self._abitem.return_item(field_value), field_value)
             self.__eval = None if source != "eval" else field_value
             self.__regex = None if source != "regex" else field_value
             self.__struct = None if source != "struct" else StateEngineStructs.create(self._abitem, field_value)
@@ -296,23 +309,7 @@ class SeValue(StateEngineTools.SeItemChild):
                 self.__value = None
         self.__listorder = StateEngineTools.flatten_list(self.__listorder)
         self.__type_listorder = StateEngineTools.flatten_list(self.__type_listorder)
-        '''
-        if self.__struct is not None:
-            if not isinstance(self.__struct, list):
-                self.__struct = [self.__struct]
-            for struct in self.__struct:
-                if struct is not None and 'se_use' in struct.conf:
-                    _use = struct.conf.get('se_use')
-                    self._log_debug("SE_USE in list struct {}. Content is {}", struct, _use)
-                    if isinstance(_use, list):
-                        for _use in struct.conf.get('se_use'):
-                            self._additional_sources.append(_use)
-                    else:
-                        self._additional_sources.append(_use)
-
-        if self._additional_sources:
-            self._set_additional(self._additional_sources)
-        '''
+        return self.__listorder, self.__type_listorder
 
     # Set cast function
     # cast_func: cast function
@@ -340,6 +337,7 @@ class SeValue(StateEngineTools.SeItemChild):
             returnvalues.append(self.__get_from_item())
         if self.__varname is not None:
             returnvalues.append(self.__get_from_variable())
+
         returnvalues = StateEngineTools.flatten_list(returnvalues)
         returnvalues = returnvalues if len(self.__listorder) <= 1 or originalorder is False \
             else StateEngineTools.flatten_list(self.__listorder)
@@ -452,14 +450,46 @@ class SeValue(StateEngineTools.SeItemChild):
             self._log_error("Can't cast {0} to item/struct! {1}".format(value, e))
             return value
 
+    def __update_item_listorder(self, value, newvalue, id=None):
+        if value is None:
+            _id_value = "item:{}".format(id)
+            self.__listorder[self.__listorder.index(_id_value)] = newvalue
+        if value in self.__listorder:
+            self.__listorder[self.__listorder.index(value)] = newvalue
+        if isinstance(value, self.__itemClass):
+            _item_value = "item:{}".format(value.property.path)
+            if _item_value in self.__listorder:
+                self.__listorder[self.__listorder.index(_item_value)] = newvalue
+            if id:
+                _item_value = "item:{}".format(id)
+                if _item_value in self.__listorder:
+                    self.__listorder[self.__listorder.index(_item_value)] = "item:{}".format(newvalue.property.path)
+                    self._log_develop("Updated relative declaration {} with absolute item path {}. Listorder is now: {}",
+                                      _item_value, newvalue.property.path, self.__listorder)
+
+    def __absolute_item(self, value, id=None):
+        if isinstance(value, list):
+            valuelist = []
+            idlist = [] if id is None else [id] if not isinstance(id, list) else id
+            for i, element in enumerate(value):
+                element = self.cast_item(element)
+                self.__update_item_listorder(value, element, id[i])
+            value = valuelist
+        else:
+            _newvalue = self.cast_item(value)
+            self.__update_item_listorder(value, _newvalue, id)
+            value = _newvalue
+        return value
+
     # Cast given value, if cast-function is set
     # value: value to cast
-    def __do_cast(self, value):
+    def __do_cast(self, value, id=None):
         if value is not None and self.__cast_func is not None:
             try:
                 if isinstance(value, list):
                     valuelist = []
-                    for element in value:
+                    idlist = [] if id is None else [id] if not isinstance(id, list) else id
+                    for i, element in enumerate(value):
                         try:
                             _newvalue = element if element == 'novalue' else self.__cast_func(element)
                         except Exception as ex:
@@ -469,24 +499,21 @@ class SeValue(StateEngineTools.SeItemChild):
                         if element in self.__listorder:
                             self.__listorder[self.__listorder.index(element)] = _newvalue
                         if isinstance(element, self.__itemClass):
-                            _item_value = "item:{}".format(element.property.path)
-                            if _item_value in self.__listorder:
-                                self.__listorder[self.__listorder.index(_item_value)] = _newvalue
+                            self.__update_item_listorder(value, _newvalue, id[i])
+
                         if isinstance(element, StateEngineStruct.SeStruct):
                             _item_value = "struct:{}".format(element.property.path)
                             if _item_value in self.__listorder:
                                 self.__listorder[self.__listorder.index(_item_value)] = _newvalue
                     value = valuelist
                 else:
-                    #value = ":".join([i.strip() for i in value.split(":")])
                     try:
                         _newvalue = self.__cast_func(value)
                         if value in self.__listorder:
                             self.__listorder[self.__listorder.index(value)] = _newvalue
                         if isinstance(value, self.__itemClass):
-                            _item_value = "item:{}".format(value.property.path)
-                            if _item_value in self.__listorder:
-                                self.__listorder[self.__listorder.index(_item_value)] = _newvalue
+                            self.__update_item_listorder(value, _newvalue, id)
+
                         if isinstance(value, StateEngineStruct.SeStruct):
                             _item_value = "struct:{}".format(value.property.path)
                             if _item_value in self.__listorder:
@@ -680,7 +707,6 @@ class SeValue(StateEngineTools.SeItemChild):
                 self.__listorder[self.__listorder.index('item:{}'.format(self.__item))] = _newvalue
             values = _newvalue
         if values is not None:
-            self._log_debug("Item '{0}' result: {1}", self.__item, values)
             return values
 
         try:
