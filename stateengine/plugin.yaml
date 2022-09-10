@@ -365,6 +365,97 @@ item_attributes:
                  It can be used for visualization, actions and conditions.
                  '
 
+    se_previousstate_item_name:
+        type: str
+        description:
+            de: 'Id des Items, in dem der Name des vorherigen Zustands abgelegt wird'
+            en: 'Id of the item that saves the name of the previous state'
+        description_long:
+            de: '**Id des Items, in dem der Name des vorherigen Zustands abgelegt wird:**\n
+                In das hier verknüpfte Item wird der Name des vorigen Zustands
+                abgelegt. Das Item kann für Displayzwecke und Bedingungen verwendet werden.
+                '
+            en: '**Id of the item that saves the name of the previous state:**\n
+                 The item defined here saves the name of the previous state for
+                 visualization purposes and conditions.
+                 '
+
+    se_previousstate_item_id:
+        type: str
+        description:
+            de: 'Id des Items, in dem die ID des vorherigen Zustands abgelegt wird'
+            en: 'Id of the item that saves the ID of the previous state'
+        description_long:
+            de: '**Id des Items, in dem der vorherige Zustand abgelegt wird:**\n
+                In das hier verknüpfte Item wird die Id des vorherigen Zustands
+                abgelegt. Das Item kann mit dem Attribut ``cache: yes``
+                versehen werden, dann bleibt der vor-vorherige Zustand bei einem
+                Neustart von smarthomeNG erhalten.
+                '
+            en: '**Id of the item that saves the id of the previous state:**\n
+                 In combination with the attribute ``cache: yes`` the defined item
+                 can be used to load the previous state after the plugin start.
+                 '
+    se_previousconditionset_item_name:
+        type: str
+        description:
+            de: 'Name des Items, in dem der Name des vorherigen Zustandsets abgelegt wird'
+            en: 'Name of the item that saves the name of the previously used condition set'
+        description_long:
+            de: '**Name des Items, in dem der Name des vorherigen Zustandsets abgelegt wird:**\n
+                In das hier verknüpfte Item wird der Name des vorherigen Zustandsets
+                abgelegt. Das Item kann für Displayzwecke, Aktionen und Bedingungen genutzt werden.
+                '
+            en: '**Name of the item that saves the name of the previous condition set:**\n
+                 The item defined here saves the name of the previously active condition set.
+                 It can be used for visualization, actions and conditions.
+                 '
+
+    se_previousconditionset_item_id:
+        type: str
+        description:
+            de: 'ID des Items, in dem der Name des vorherigen Zustandsets abgelegt wird'
+            en: 'ID of the item that saves the name of the previously used condition set'
+        description_long:
+            de: '**ID des Items, in dem der Name des vorherigen Zustandsets abgelegt wird:**\n
+                In das hier verknüpfte Item wird der Name des vorherigen Zustandsets
+                abgelegt. Das Item kann für Displayzwecke, Aktionen und Bedingungen genutzt werden.
+                '
+            en: '**ID of the item that saves the name of the previous condition set:**\n
+                 The item defined here saves the name of the previously active condition set.
+                 It can be used for visualization, actions and conditions.
+                 '
+
+    se_previousstate_conditionset_item_name:
+        type: str
+        description:
+            de: 'Name des Items, in dem der Name des Zustandsets vom vorigen Zustand abgelegt wird'
+            en: 'Name of the item that saves the name of the previous state condition set'
+        description_long:
+            de: '**Name des Items, in dem der Name des Zustandsets vom vorherigen Zustand abgelegt wird:**\n
+                In das hier verknüpfte Item wird der Name des Zustandssets des vorherigen Zustands
+                abgelegt. Das Item kann für Displayzwecke, Aktionen und Bedingungen genutzt werden.
+                '
+            en: '**Name of the item that saves the name of the condition set of the previous state:**\n
+                 The item defined here saves the name of the previous state condition set.
+                 It can be used for visualization, actions and conditions.
+                 '
+
+    se_previousstate_conditionset_item_id:
+        type: str
+        description:
+            de: 'ID des Items, in dem der Name des Zustandsets vom vorigen Zustand abgelegt wird'
+            en: 'ID of the item that saves the name of the previous state condition set'
+        description_long:
+            de: '**ID des Items, in dem der Name des Zustandsets vom vorherigen Zustand abgelegt wird:**\n
+                In das hier verknüpfte Item wird der Name des Zustandssets des vorherigen Zustands
+                abgelegt. Das Item kann für Displayzwecke, Aktionen und Bedingungen genutzt werden.
+                '
+            en: '**ID of the item that saves the name of the condition set of the previous state:**\n
+                 The item defined here saves the name of the previous state condition set.
+                 It can be used for visualization, actions and conditions.
+                 '
+
     se_shouldnotrelease_item:
         type: str
         description:
@@ -552,6 +643,42 @@ item_structs:
             visu_acl: ro
             cache: True
 
+        previousconditionset_id:
+            remark: The id/path of the previous condition set is assigned to this item by the stateengine
+            type: str
+            visu_acl: ro
+            cache: True
+
+        previousconditionset_name:
+            remark: The name of the previous condition set is assigned to this item by the stateengine
+            type: str
+            visu_acl: ro
+            cache: True
+            
+        previousstate_id:
+            remark: The id/path of the previous state is assigned to this item by the stateengine
+            type: str
+            visu_acl: ro
+            cache: True
+
+        previousstate_name:
+            remark: The name of the previous state is assigned to this item by the stateengine
+            type: str
+            visu_acl: ro
+            cache: True
+
+        previousstate_conditionset_id:
+            remark: The id/path of the condition set of the previous state is assigned to this item by the stateengine
+            type: str
+            visu_acl: ro
+            cache: True
+
+        previousstate_conditionset_name:
+            remark: The name of the condition set of the previous state is assigned to this item by the stateengine
+            type: str
+            visu_acl: ro
+            cache: True
+
         shouldnotrelease:
             remark: Helper item for releasedby function
             type: dict
@@ -591,6 +718,12 @@ item_structs:
             se_laststate_item_name: ..state_name
             se_lastconditionset_item_id: ..conditionset_id
             se_lastconditionset_item_name: ..conditionset_name
+            se_previousconditionset_item_id: ..previousconditionset_id
+            se_previousconditionset_item_name: ..previousconditionset_name
+            se_previousstate_item_id: ..previousstate_id
+            se_previousstate_item_name: ..previousstate_name
+            se_previousstate_conditionset_item_id: ..previousstate_conditionset_id
+            se_previousstate_conditionset_item_name: ..previousstate_conditionset_name
             se_shouldnotrelease_item: ..shouldnotrelease
             se_hasreleased_item: ..hasreleased
 
@@ -1204,7 +1337,7 @@ item_structs:
                       - 'order: 3'
                     se_action_suspend_start:
                       - 'function: set'
-                      - 'to:  '
+                      - 'to: '
                       - 'order: 4'
                     se_action_release:
                       - 'function: set'
