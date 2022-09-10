@@ -691,7 +691,7 @@ item_templates = {
             }
     },
     'power': {
-        'md_read_initial': True,
+        'pioneer_read_initial': True,
         'on_change': 'sh....read.timer(sh..readdelay(), True) if value else None',
         'readdelay': {
             'type': 'num',
@@ -700,7 +700,7 @@ item_templates = {
         }
     },
     'tone': {
-        'md_read_initial': True,
+        'pioneer_read_initial': True,
         'on_change': 'sh...read(True) if value else None'
     }
 }
