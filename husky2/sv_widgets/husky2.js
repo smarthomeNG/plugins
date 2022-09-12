@@ -1,6 +1,6 @@
 
-$.widget("sv.map", $.sv.widget, {
-    initSelector: 'div[data-widget="map"]',
+$.widget("sv.husky2", $.sv.widget, {
+    initSelector: 'div[data-widget="husky2.map"]',
 
     options: {
 		mapskey: '',

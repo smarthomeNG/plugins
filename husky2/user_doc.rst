@@ -74,6 +74,17 @@ map zur Verfügung. Dieses ist auf basis von https://www.smarthomeng.de/google-m
 google maps erstellt worden. Das widget benötigt generell einen google maps api key, für Testzwecke
 kann es jedoch auch ohne diesen verwendet werden.
 
+Nachfolgend sind die Parameter für das Widget aufgelistet.
+
+.. code-block:: html
+
+    {{ husky2.map(id, name, latitude, longitude, gpspoints, mapskey, zoomlevel, pathcolor) }}
+
+Eine Beispielhafte Verwendung könnte dabei so aussehen:
+
+.. code-block:: html
+
+    {{ husky2.map('', 'mower.info.device', 'mower.state.latitude', 'mower.state.longitude', 'mower.state.gpspoints', '4ADdsf665dSF53fdg5DGdasfg43SDF51', 19, '#3afd02') }}
 
 Web Interface
 -------------

@@ -22,7 +22,7 @@
 {% macro map(id, gad_name, gad_lat, gad_lon, gad_points, mapskey, zoomlevel, pathcolor) %}
 <div id="{{ uid(page, id) }}"
      style="width: 100%; height: 400px;"
-     data-widget="map"
+     data-widget="husky2.map"
      data-mapskey="{{ mapskey|default('') }}"
      data-zoomlevel="{{ zoomlevel|default(19) }}"
      data-pathcolor="{{ pathcolor|default('#3afd02') }}"
