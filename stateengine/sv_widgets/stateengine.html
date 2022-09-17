@@ -18,7 +18,7 @@
 * @param {text} id of the popup widget to open on longpress
 */
 {% macro state(id, item, lock, release, icon, value, popup) %}
-  {% import "basic.html" as basic %}
+  {% import config_version_full >= "3.2.c" ? "@widgets/basic.html" : "basic.html" as basic %}
   
   /** enable definitions from e.g. config.ini by string using comma as separator */
   {% if (value is iterable and value|length == 1 and ',' in value[0]) or (value is not iterable and ',' in value) %} {% set value = implode(value)|split(',') %} {% endif %}
