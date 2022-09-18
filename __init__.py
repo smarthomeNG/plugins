@@ -7,9 +7,6 @@
 #  https://www.smarthomeNG.de
 #  https://knx-user-forum.de/forum/supportforen/smarthome-py
 #
-#  Sample plugin for new plugins to run with SmartHomeNG version 1.8 and
-#  upwards.
-#
 #  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation, either version 3 of the License, or
@@ -445,7 +442,7 @@ class AVM2(SmartPlugin):
                         self.logger.debug(f"Updated item={item.id()} with avm_data_type={avm_data_type} identified as part of '_aha_attributes'")
                     self._fritz_home.handle_updated_item(item, avm_data_type, readafterwrite)
                 else:
-                    self.logger.warning(f"Smarthome Interface not activated or not available. Update for {avm_data_type} will not be executed.")
+                    self.logger.warning(f"AVM Homeautomation Interface not activated or not available. Update for {avm_data_type} will not be executed.")
 
     @property
     def get_callmonitor(self):
@@ -469,6 +466,9 @@ class AVM2(SmartPlugin):
     def get_fritz_home(self):
         return self._fritz_home
 
+    @property
+    def get_log_level(self):
+        return self.logger.getEffectiveLevel()
 
 class FritzDevice:
     """
@@ -537,38 +537,38 @@ class FritzDevice:
         if avm_data_type in _wlan_config_attributes:
             avm_wlan_index = self._get_wlan_index(item)
             if avm_wlan_index is not None:
-                self._plugin_instance.logger.debug(f"Item {item.id()} with avm device attribute and defined 'avm_wlan_index' found; append to list.")
+                self._plugin_instance.logger.debug(f"Item {item.id()} with avm device attribute and defined 'avm2_wlan_index' found; append to list.")
                 self._items[item] = (avm_data_type, avm_wlan_index)
             else:
-                self._plugin_instance.logger.warning(f"Item {item.id()} with avm attribute found, but 'avm_wlan_index' is not defined; Item will be ignored.")
+                self._plugin_instance.logger.warning(f"Item {item.id()} with avm attribute found, but 'avm2_wlan_index' is not defined; Item will be ignored.")
 
         # handle network_device related items
         elif avm_data_type in (_host_attribute + _host_child_attributes):
             avm_mac = self._get_mac(item)
             if avm_mac is not None:
                 if avm_mac is not None:
-                    self._plugin_instance.logger.debug(f"Item {item.id()} with avm device attribute and defined 'avm_mac' found; append to list.")
+                    self._plugin_instance.logger.debug(f"Item {item.id()} with avm device attribute and defined 'avm2_mac' found; append to list.")
                     self._items[item] = (avm_data_type, avm_mac)
                 else:
-                    self._plugin_instance.logger.warning("Item {item.id()} with avm attribute found, but 'avm_mac' is not defined; Item will be ignored.")
+                    self._plugin_instance.logger.warning("Item {item.id()} with avm attribute found, but 'avm2_mac' is not defined; Item will be ignored.")
 
         # handle tam related items
         elif avm_data_type in _tam_attributes:
             avm_tam_index = self._get_tam_index(item)
             if avm_tam_index is not None:
-                self._plugin_instance.logger.debug(f"Item {item.id()} with avm device attribute and defined 'avm_tam_index' found; append to list.")
+                self._plugin_instance.logger.debug(f"Item {item.id()} with avm device attribute and defined 'avm2_tam_index' found; append to list.")
                 self._items[item] = (avm_data_type, avm_tam_index)
             else:
-                self._plugin_instance.logger.warning(f"Item {item.id()} with avm attribute found, but 'avm_tam_index' is not defined; Item will be ignored.")
+                self._plugin_instance.logger.warning(f"Item {item.id()} with avm attribute found, but 'avm2_tam_index' is not defined; Item will be ignored.")
 
         # handle deflection related items
         elif avm_data_type in _deflection_attributes:
             avm_deflection_index = self._get_deflection_index(item)
             if avm_deflection_index is not None:
-                self._plugin_instance.logger.debug(f"Item {item.id()} with avm device attribute and defined 'avm_tam_index' found; append to list.")
+                self._plugin_instance.logger.debug(f"Item {item.id()} with avm device attribute and defined 'avm2_tam_index' found; append to list.")
                 self._items[item] = (avm_data_type, avm_deflection_index)
             else:
-                self._plugin_instance.logger.warning(f"Item {item.id()} with avm attribute found, but 'avm_tam_index' is not defined; Item will be ignored.")
+                self._plugin_instance.logger.warning(f"Item {item.id()} with avm attribute found, but 'avm2_tam_index' is not defined; Item will be ignored.")
 
         # handle all other items
         else:
@@ -778,9 +778,11 @@ class FritzDevice:
         """
         return self._password
 
+    @property
     def get_item_dict(self):
         return self._items
 
+    @property
     def get_item_list(self):
         return list(self._items.keys())
 
@@ -1132,7 +1134,7 @@ class FritzDevice:
         :return: String phone name
         """
 
-        phone_name = self.client.InternetGatewayDevice.X_VoIP.X_AVM_DE_DialGetConfig()['NewX_AVM-DE_PhoneName']
+        phone_name = self.client.InternetGatewayDevice.X_VoIP.X_AVM_DE_DialGetConfig()['NewX_AVM_DE_PhoneName']
         if phone_name is None:
             self._plugin_instance.logger.error("No call origin available.")
         return phone_name
@@ -1147,7 +1149,7 @@ class FritzDevice:
         :return: String phone name
         """
 
-        phone_name = self.client.InternetGatewayDevice.X_VoIP.X_AVM_DE_GetPhonePort()['NewX_AVM-DE_PhoneName']
+        phone_name = self.client.InternetGatewayDevice.X_VoIP.X_AVM_DE_GetPhonePort()['NewX_AVM_DE_PhoneName']
         if phone_name is None:
             self._plugin_instance.logger.error(f"No phone name available at provided index {index}")
         return phone_name
@@ -1958,9 +1960,12 @@ class FritzHome:
         try:
             _device_dict = self.get_devices_as_dict()
         except Exception as e:
-            self._plugin_instance.logger.warning(f"Error {e} occurred during method _poll_aha.")
+            self._plugin_instance.logger.warning(f"Error {e} occurred while getting device infos.")
         else:
             if isinstance(_device_dict, dict):
+
+                initial_run = True if not self._aha_devices else False
+
                 for ain in _device_dict:
                     self._plugin_instance.logger.debug(f"_poll_aha: handle AIN={ain} with _device_dict[ain]={_device_dict[ain]}")
                     self._aha_devices[ain] = {}
@@ -2003,11 +2008,17 @@ class FritzHome:
                             self._aha_devices[ain][entry] = eval(f"_device_dict[ain].{_link_powermeter[entry]}")
 
                     if _device_dict[ain].has_switch:
-                        self._aha_devices[ain]['device_functions'].append('powermeter')
+                        self._aha_devices[ain]['device_functions'].append('switch')
                         for entry in _link_switch:
                             self._aha_devices[ain][entry] = eval(f"_device_dict[ain].{_link_switch[entry]}")
+
+                if initial_run:
+                    self._plugin_instance.logger.info(f"The following AVM Homeautomation Devices were discovered:")
+                    for ain in self._aha_devices:
+                        self._plugin_instance.logger.info(f" - AIN: {ain}, Product Name: {self._aha_devices[ain]['product_name']}, Device Name: {self._aha_devices[ain]['device_name']}, Functions: {', '.join(self._aha_devices[ain]['device_functions'])}")
+
             else:
-                self._plugin_instance.logger.info(f"No AVM Smarthome Devices detected. Check Plugin settings or smarthome devices.")
+                self._plugin_instance.logger.info(f"No AVM Homeautomation Device detected. Check Plugin settings for AVM Homeautomation devices.")
 
     def update_items(self):
         """
@@ -2046,9 +2057,11 @@ class FritzHome:
             else:
                 self._plugin_instance.logger.warning(f'No values for item={item.id()} at device with AIN={_ain} available.')
 
+    @property
     def get_item_dict(self):
         return self._items
 
+    @property
     def get_item_list(self):
         return list(self._items.keys())
 
@@ -2097,7 +2110,7 @@ class FritzHome:
         Send a login request with parameters.
         """
 
-        url = self.get_prefixed_host() + self._login_route
+        url = self._get_prefixed_host() + self._login_route
         params = {}
         if username:
             params["username"] = username
@@ -2116,7 +2129,7 @@ class FritzHome:
         Send a logout request.
         """
 
-        url = self.get_prefixed_host() + self._login_route
+        url = self._get_prefixed_host() + self._login_route
         params = {"logout": "1", "sid": self._sid}
 
         self._request(url, params)
@@ -2158,7 +2171,7 @@ class FritzHome:
         Send an AHA request.
         """
 
-        url = self.get_prefixed_host() + self._homeauto_route
+        url = self._get_prefixed_host() + self._homeauto_route
         params = {"switchcmd": cmd, "sid": self._sid}
         if param:
             params.update(param)
@@ -2225,7 +2238,7 @@ class FritzHome:
         """
 
         self._plugin_instance.logger.debug(f"check_sid called")
-        url = self.get_prefixed_host() + self._login_route
+        url = self._get_prefixed_host() + self._login_route
         params = {"sid": self._sid}
         plain = self._request(url, params)
         dom = ElementTree.fromstring(plain)
@@ -2237,7 +2250,7 @@ class FritzHome:
         else:
             self._plugin_instance.logger.info(f"Session ID is still valid.")
 
-    def get_prefixed_host(self):
+    def _get_prefixed_host(self):
         """
         Choose the correct protocol prefix for the host.
 
@@ -2259,7 +2272,7 @@ class FritzHome:
 
     def update_devices(self):
         """
-        Updating AHA Devices respective dictonary
+        Updating AHA Devices respective dictionary
         """
 
         self._plugin_instance.logger.info("Updating Devices ...")
@@ -2772,7 +2785,7 @@ class FritzHome:
         if not self._logged_in:
             self.login()
 
-        url = self.get_prefixed_host() + self._log_route
+        url = self._get_prefixed_host() + self._log_route
         params = {"sid": self._sid}
 
         # get data
@@ -2804,7 +2817,7 @@ class FritzHome:
         if not self._logged_in:
             self.login()
 
-        url = self.get_prefixed_host() + self._log_separate_route
+        url = self._get_prefixed_host() + self._log_separate_route
         params = {"sid": self._sid}
 
         data = self._request(url, params, result='json')
@@ -3791,20 +3804,25 @@ class Callmonitor:
                         item(duration, self._plugin_instance.get_fullname())
                         break
 
+    @property
     def get_item_list(self):
         return list(self._items.keys())
 
+    @property
     def get_trigger_item_list(self):
         return list(self._trigger_items.keys())
 
+    @property
     def get_item_incoming_list(self):
         return list(self._items_incoming.keys())
 
+    @property
     def get_item_outgoing_list(self):
         return list(self._items_outgoing.keys())
 
+    @property
     def get_item_all_list(self):
-        return self.get_item_list() + self.get_trigger_item_list() + self.get_item_incoming_list() + self.get_item_outgoing_list()
+        return self.get_item_list + self.get_trigger_item_list + self.get_item_incoming_list + self.get_item_outgoing_list
 
     @property
     def get_item_count_total(self):

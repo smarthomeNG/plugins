@@ -9,8 +9,8 @@ plugin:
     tester: psilo, schuma, aschwith, bmx
     state: develop                  # change to ready when done with development
 #    keywords: iot xyz
-#    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
-#    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
+    documentation: http://smarthomeng.de/user/plugins/avm/user_doc.html
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/934835-avm-plugin
 
     version: 1.0.0                  # Plugin version (must match the version specified in __init__.py)
     sh_minversion: 1.8              # minimum shNG version to use this plugin
@@ -553,7 +553,7 @@ item_structs:
             type: str
             avm2_data_type@instance: device_hostname
             visu_acl: ro
-    smarthome_general:
+    aha_general:
         name:
             avm2_data_type@instance: device_name
             type: str
@@ -575,16 +575,10 @@ item_structs:
         functions:
             avm2_data_type@instance: device_functions
             type: list
-    smarthome_hkr:
-        current_temperature:
-           avm2_data_type@instance: current_temperature
-           type: num
+    aha_thermostat:
         target_temperature:
             avm2_data_type@instance: target_temperature
             avm2_read_after_write@instance: 5
-            type: num
-        set_target_temperature:
-            avm2_data_type@instance: set_target_temperature
             type: num
         comfort_temperature:
             avm2_data_type@instance: temperature_comfort
@@ -601,6 +595,9 @@ item_structs:
         window_open:
             avm2_data_type@instance: window_open
             type: bool
+        windowopenactiveendtime:
+            avm2_data_type@instance: windowopenactiveendtime
+            type: num
         summer_active:
             avm2_data_type@instance: summer_active
             type: bool
@@ -610,15 +607,6 @@ item_structs:
         errorcode:
             avm2_data_type@instance: errorcode
             type: num
-        set_window_open:
-            avm2_data_type@instance: set_window_open
-            type: bool
-        windowopenactiveendtime:
-            avm2_data_type@instance: windowopenactiveendtime
-            type: num
-        set_hkr_boost:
-            avm2_data_type@instance: set_hkr_boost
-            type: bool
         hkr_boost:
             avm2_data_type@instance: hkr_boost
             type: bool
@@ -631,18 +619,18 @@ item_structs:
         device_lock:
             avm2_data_type@instance: device_lock
             type: bool
-    smarthome_temperature_sensor:
+    aha_temperature_sensor:
         current_temperature:
             avm2_data_type@instance: current_temperature
             type: num
         temperature_offset:
             avm2_data_type@instance: temperature_offset
             type: num
-    smarthome_alert:
+    aha_alert:
         state:
             avm2_data_type@instance: alert
             type: bool
-    smarthome_switch:
+    aha_switch:
         switch_state:
             avm2_data_type@instance: switch_state
             type: bool
@@ -650,7 +638,7 @@ item_structs:
             avm2_data_type@instance: switch_toggle
             type: bool
             enforce_updates: yes
-    smarthome_powermeter:
+    aha_powermeter:
         power:
             avm2_data_type@instance: power
             type: num

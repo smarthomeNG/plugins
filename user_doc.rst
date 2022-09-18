@@ -153,12 +153,12 @@ Zur Vereinfachung der Einrichtung von Items sind für folgende Item-structs vord
 - ``wan``  -  WAN Items
 - ``wlan``  -  Wireless Lan Items
 - ``device``  -  Items eines verbundenen Gerätes
-- ``smarthome_general``  -  Allgemeine Informationen eines AVM HomeAutomation Devices
-- ``smarthome_hkr``  -  spezifische Informationen eines AVM HomeAutomation Thermostat Devices
-- ``smarthome_temperatur_sensor``  -  spezifische Informationen eines AVM HomeAutomation Devices mit Temperatursensor
-- ``smarthome_alert``  -  spezifische Informationen eines AVM HomeAutomation Devices mit Alarmfunktion
-- ``smarthome_switch``  -  spezifische Informationen eines AVM HomeAutomation Devices mit Schalter
-- ``smarthome_powermeter``  -  spezifische Informationen eines AVM HomeAutomation Devices mit Strommessung
+- ``aha_general``  -  Allgemeine Informationen eines AVM HomeAutomation Devices
+- ``aha_hkr``  -  spezifische Informationen eines AVM HomeAutomation Thermostat Devices
+- ``aha_temperatur_sensor``  -  spezifische Informationen eines AVM HomeAutomation Devices mit Temperatursensor
+- ``aha_alert``  -  spezifische Informationen eines AVM HomeAutomation Devices mit Alarmfunktion
+- ``aha_switch``  -  spezifische Informationen eines AVM HomeAutomation Devices mit Schalter
+- ``aha_powermeter``  -  spezifische Informationen eines AVM HomeAutomation Devices mit Strommessung
 
 
 Item Beispiel mit Verwendung der structs ohne Instanz
@@ -209,9 +209,9 @@ Item Beispiel mit Verwendung der structs ohne Instanz
                 type: foo
                 avm_ain: 'xxxxx xxxxxxx'
                 struct:
-                  - avm.smarthome_general
-                  - avm.smarthome_hkr
-                  - avm.smarthome_temperatur_sensor
+                  - avm.aha_general
+                  - avm.aha_thermostat
+                  - avm.aha_temperatur_sensor
 
 
 Item Beispiel mit Verwendung der structs mit Instanz
@@ -225,10 +225,10 @@ Item Beispiel mit Verwendung der structs mit Instanz
             ain@fritzbox_1: 'xxxxx xxxxxxx'
             instance: fritzbox_1
             struct:
-              - avm.smarthome_general
-              - avm.smarthome_switch
-              - avm.smarthome_powermeter
-              - avm.smarthome_temperature_sensor
+              - avm.aha_general
+              - avm.aha_switch
+              - avm.aha_powermeter
+              - avm.aha_temperature_sensor
             temperature:
                 database: 'yes'
             power:
@@ -426,10 +426,53 @@ Aufruf des Webinterfaces
 Das Plugin kann aus dem Admin-IF aufgerufen werden. Dazu auf der Seite Plugins in der entsprechenden
 Zeile das Icon in der Spalte **Web Interface** anklicken.
 
+Es werden nur die Tabs angezeigt, deren Funktionen im Plugin aktiviert sind bzw. die von Fritzdevice unterstützt werden.
+
 Im WebIF stehen folgende Reiter zur Verfügung:
- - AVM Items  -  Tabellarische Auflistung aller Items, die mit dem TR-064 Protokoll ausgelesen werden
- - AVM Smarthome Items  -  Tabellarische Auflistung aller Items, die mit dem AHA Protokoll ausgelesen werden (Items der Smarthome Geräte)
- - Plugin-API  -  Beschreibung der Plugin-API
- - Log-Einträge  -  Listung der Logeinträge der Fritzbox
- - Call Monitor Items  -  Tabellarische Auflistung des Anrufmonitors (nur wenn dieser konfiguriert ist)
- - AVM Smarthome Devices  -  Auflistung der mit der Fritzbox verbundenen Geräte
+
+AVM Items
+~~~~~~~~~
+
+Tabellarische Auflistung aller Items, die mit dem TR-064 Protokoll ausgelesen werden
+
+.. image:: user_doc/assets/webif_tab1.jpg
+   :class: screenshot
+
+AVM Smarthome Items
+~~~~~~~~~~~~~~~~~~~
+Tabellarische Auflistung aller Items, die mit dem AHA Protokoll ausgelesen werden (Items der AVM HomeAutomation Geräte)
+
+.. image:: user_doc/assets/webif_tab2.jpg
+   :class: screenshot
+
+AVM Smarthome Devices
+~~~~~~~~~~~~~~~~~~~~~
+
+Auflistung der mit der Fritzbox verbundenen AVM HomeAutomation Geräte
+
+.. image:: user_doc/assets/webif_tab3.jpg
+   :class: screenshot
+
+Call Monitor Items
+~~~~~~~~~~~~~~~~~~
+
+Tabellarische Auflistung des Anrufmonitors (nur wenn dieser konfiguriert ist)
+
+.. image:: user_doc/assets/webif_tab4.jpg
+   :class: screenshot
+
+Log-Einträge
+~~~~~~~~~~~~
+
+Listung der Logeinträge der Fritzbox
+
+.. image:: user_doc/assets/webif_tab5.jpg
+   :class: screenshot
+
+Plugin-API
+~~~~~~~~~~
+
+Beschreibung der Plugin-API
+
+.. image:: user_doc/assets/webif_tab6.jpg
+   :class: screenshot

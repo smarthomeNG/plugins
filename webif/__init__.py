@@ -61,28 +61,27 @@ class WebInterface(SmartPluginWebIf):
         """
 
         if self.plugin.get_fritz_device():
-            raw_items = self.plugin.get_fritz_device().get_item_list()
-            tr064_items = sorted(raw_items, key=lambda k: str.lower(k['_path']))
-            tr064_item_count = len(raw_items)
+            tr064_items = sorted(self.plugin.get_fritz_device().get_item_list, key=lambda k: str.lower(k['_path']))
+            tr064_item_count = len(tr064_items)
         else:
             tr064_items = None
             tr064_item_count = None
 
         if self.plugin.get_fritz_home():
-            raw_items = self.plugin.get_fritz_home().get_item_list()
-            aha_items = sorted(raw_items, key=lambda k: str.lower(k['_path']))
-            aha_item_count = len(raw_items)
+            aha_items = sorted(self.plugin.get_fritz_home().get_item_list, key=lambda k: str.lower(k['_path']))
+            aha_item_count = len(aha_items)
         else:
             aha_items = None
             aha_item_count = None
 
         if self.plugin.get_monitoring_service():
-            raw_items = self.plugin.get_monitoring_service().get_item_all_list()
-            call_monitor_items = sorted(raw_items, key=lambda k: str.lower(k['_path']))
-            call_monitor_item_count = len(raw_items)
+            call_monitor_items = sorted(self.plugin.get_monitoring_service().get_item_all_list, key=lambda k: str.lower(k['_path']))
+            call_monitor_item_count = len(call_monitor_items)
         else:
             call_monitor_items = None
             call_monitor_item_count = None
+
+        maintenance = True if self.plugin.get_log_level <= 20 else False
 
         tmpl = self.tplenv.get_template('index.html')
 
@@ -102,6 +101,7 @@ class WebInterface(SmartPluginWebIf):
                            aha_item_count=aha_item_count,
                            p=self.plugin,
                            webif_pagelength=pagelength,
+                           maintenance=maintenance,
                            )
 
     @cherrypy.expose
@@ -119,7 +119,7 @@ class WebInterface(SmartPluginWebIf):
             data = dict()
             if self.plugin.get_monitoring_service():
                 data['call_monitor'] = {}
-                for item in self.plugin.get_monitoring_service().get_item_all_list():
+                for item in self.plugin.get_monitoring_service().get_item_all_list:
                     data['call_monitor'][item.id()] = {}
                     data['call_monitor'][item.id()]['value'] = item()
                     data['call_monitor'][item.id()]['last_update'] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
@@ -127,7 +127,7 @@ class WebInterface(SmartPluginWebIf):
 
             if self.plugin.get_fritz_device():
                 data['tr064_items'] = {}
-                for item in self.plugin.get_fritz_device().get_item_list():
+                for item in self.plugin.get_fritz_device().get_item_list:
                     data['tr064_items'][item.id()] = {}
                     data['tr064_items'][item.id()]['value'] = item()
                     data['tr064_items'][item.id()]['last_update'] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
@@ -135,7 +135,7 @@ class WebInterface(SmartPluginWebIf):
 
             if self.plugin.get_fritz_home():
                 data['aha_items'] = {}
-                for item in self.plugin.get_fritz_home().get_item_list():
+                for item in self.plugin.get_fritz_home().get_item_list:
                     data['aha_items'][item.id()] = {}
                     data['aha_items'][item.id()]['value'] = item()
                     data['aha_items'][item.id()]['last_update'] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')

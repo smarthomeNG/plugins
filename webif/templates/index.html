@@ -101,6 +101,10 @@
 </script>
 {% endblock pluginscripts %}
 
+<!--	Set the tab that will be visible on start, if another tab that 1 is wanted (1 - 3) -->
+{% set start_tab = 5 %}
+
+
 <!-- Define tabcount, tabtitle and if tab should be hidden -->
 {% set tabcount = 6 %}
 
@@ -332,7 +336,72 @@
 
 
 {% block bodytab5 %}
+
 <div class="container-fluid m-2 table-resize">
+
+    <table id="" class="table table-striped table-hover">
+        <thead>
+            <tr>
+                <th class="type">{{ 'Befehl' }}</th>
+                <th class="type">{{ 'Ergebnis' }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td class="py-1">{{ 'p._fritz_device.get_call_origin()' }}</td>
+                <td class="py-1">{{ p._fritz_device.get_call_origin() }}</td>
+            </tr>
+            <tr>
+                <td class="py-1">{{ "X_AVM_DE_NumberOfClients" }}</td>
+                <td class="py-1">{{ p._fritz_device.client.InternetGatewayDevice.X_VoIP.X_AVM_DE_GetNumberOfClients()['NewX_AVM_DE_NumberOfClients'] }}</td>
+            </tr>
+            <tr>
+                <td class="py-1">{{ "NewX_AVM_DE_ClientIndex=0" }}</td>
+                <td class="py-1">{{ p._fritz_device.client.InternetGatewayDevice.X_VoIP.X_AVM_DE_GetClient2(NewX_AVM_DE_ClientIndex=0) }}</td>
+            </tr>
+            <tr>
+                <td class="py-1">{{ "NewX_AVM_DE_ClientIndex=1" }}</td>
+                <td class="py-1">{{ p._fritz_device.client.InternetGatewayDevice.X_VoIP.X_AVM_DE_GetClient2(NewX_AVM_DE_ClientIndex=1) }}</td>
+            </tr>
+            <tr>
+                <td class="py-1">{{ "NewX_AVM_DE_ClientIndex=2" }}</td>
+                <td class="py-1">{{ p._fritz_device.client.InternetGatewayDevice.X_VoIP.X_AVM_DE_GetClient2(NewX_AVM_DE_ClientIndex=2) }}</td>
+            </tr>
+            <tr>
+                <td class="py-1">{{ "NewX_AVM_DE_ClientIndex=3" }}</td>
+                <td class="py-1">{{ p._fritz_device.client.InternetGatewayDevice.X_VoIP.X_AVM_DE_GetClient2(NewX_AVM_DE_ClientIndex=3) }}</td>
+            </tr>
+            <tr>
+                <td class="py-1">{{ "NewX_AVM_DE_ClientIndex=0" }}</td>
+                <td class="py-1">{{ p._fritz_device.client.InternetGatewayDevice.X_VoIP.X_AVM_DE_GetClient3(NewX_AVM_DE_ClientIndex=0) }}</td>
+            </tr>
+            <tr>
+                <td class="py-1">{{ "NewX_AVM_DE_ClientIndex=1" }}</td>
+                <td class="py-1">{{ p._fritz_device.client.InternetGatewayDevice.X_VoIP.X_AVM_DE_GetClient3(NewX_AVM_DE_ClientIndex=1) }}</td>
+            </tr>
+            <tr>
+                <td class="py-1">{{ "NewX_AVM_DE_ClientIndex=2" }}</td>
+                <td class="py-1">{{ p._fritz_device.client.InternetGatewayDevice.X_VoIP.X_AVM_DE_GetClient3(NewX_AVM_DE_ClientIndex=2) }}</td>
+            </tr>
+            <tr>
+                <td class="py-1">{{ "NewX_AVM_DE_ClientIndex=3" }}</td>
+                <td class="py-1">{{ p._fritz_device.client.InternetGatewayDevice.X_VoIP.X_AVM_DE_GetClient3(NewX_AVM_DE_ClientIndex=3) }}</td>
+            </tr>
+            <tr>
+                <td class="py-1">{{ "X_AVM_DE_GetClients" }}</td>
+                <td class="py-1">{{ p._fritz_device.client.InternetGatewayDevice.X_VoIP.X_AVM_DE_GetClients() }}</td>
+            </tr>
+            <tr>
+                <td class="py-1">{{ "X_AVM_DE_DialSetConfig" }}</td>
+                <td class="py-1">{{ p._fritz_device.client.InternetGatewayDevice.X_VoIP.X_AVM_DE_DialSetConfig(NewX_AVM_DE_PhoneName='Torklingel') }}</td>
+            </tr>
+            <tr>
+                <td class="py-1">{{ "p._fritz_device.client.InternetGatewayDevice.X_VoIP.X_AVM_DE_DialGetConfig()" }}</td>
+                <td class="py-1">{{ p._fritz_device.client.InternetGatewayDevice.X_VoIP.X_AVM_DE_DialGetConfig() }}</td>
+            </tr>
+        </tbody>
+    </table>
+<!---
     <table id="logtable" class="table table-striped table-hover pluginList dataTableAdditional">
         <thead>
             <tr>
@@ -362,6 +431,10 @@
             {% endif %}
         </tbody>
     </table>
+    
+-->
+
+
 </div>
 {% endblock %}
 
