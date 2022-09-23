@@ -16,8 +16,8 @@
 */
 {% macro rtr(id, txt, item_actual, item_set, item_comfort, item_night, item_frost, item_state, item_txt, step, item_offset, supplements, item_actuator, item_endtime) %}
 
-	{% import "device.html" as device %}
-	{% import "basic.html" as basic %}
+	{% import config_version_full >= "3.2.c" ? "@widgets/device.html" : "device.html" as device %}
+	{% import config_version_full >= "3.2.c" ? "@widgets/basic.html" : "basic.html" as basic %}
 
 	{{ device.rtr(id, txt, item_actual, item_set, item_comfort, item_night, item_frost, item_state, item_txt, step, item_offset, supplements) }}
 	{% if item_actuator %}{{ basic.print(id~"print_actuator", item_actuator, 'Heizt mit %d %')}}{% endif %}
