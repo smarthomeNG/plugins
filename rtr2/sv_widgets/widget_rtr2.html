@@ -8,8 +8,8 @@
 */
 {% macro rtr(item_rtr, step, txt) %}
 
-	{% import "device.html" as device %}
-	{% import "basic.html" as basic %}
+	{% import config_version_full >= "3.2.c" ? "@widgets/device.html" : "device.html" as device %}
+	{% import config_version_full >= "3.2.c" ? "@widgets/basic.html" : "basic.html" as basic %}
 
 	{% if txt is empty %}
 		{% set txt = "heizt mit" %}
@@ -28,7 +28,7 @@
 */
 {% macro plot(item_rtr, label, add_item, add_label, add_item2, add_label2) %}
 
-	{% import "plot.html" as plot %}
+	{% import config_version_full >= "3.2.c" ? "@widgets/plot.html" : "plot.html" as plot %}
 
 	<!--
 	rot:  '#B53300' (35%)
