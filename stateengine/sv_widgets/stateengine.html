@@ -19,6 +19,7 @@
 */
 {% macro state(id, item, lock, release, icon, value, popup) %}
   {% import config_version_full >= "3.2.c" ? "@widgets/basic.html" : "basic.html" as basic %}
+  {% set icon = icon|default('time_automatic') %}
   
   /** enable definitions from e.g. config.ini by string using comma as separator */
   {% if (value is iterable and value|length == 1 and ',' in value[0]) or (value is not iterable and ',' in value) %} {% set value = implode(value)|split(',') %} {% endif %}
@@ -27,7 +28,7 @@
   {% set value = (value|default([0,1]) is iterable ? value|default([0,1]) : [value]) %}
      <a style="display:none"></a>
     <span id="{{ uid(page, id) }}" data-widget="stateengine.state" data-item="{{ item }}" lock-item="{{ lock }}" release-item="{{ release }}" data-value="{{ value|first }}"
-        data-vals="{{ implode(value) }}"  data-img="{{ implode(icon|deficon('time_automatic')) }}" data-val-on="1" data-val-off="0"
+        data-vals="{{ implode(value) }}"  data-img="{{ implode(icon) }}" data-val-on="1" data-val-off="0"
         class="symbol {{ lock == '' ? '' : 'ui-link' }}" data-role="symbol" data-inline="true" data-iconpos="center" data-mode="{{ mode|default('or') }}" rel="{{ popup }}">
   
   	{% for val in value %}
