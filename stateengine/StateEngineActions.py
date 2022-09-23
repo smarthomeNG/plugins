@@ -46,6 +46,8 @@ class SeActions(StateEngineTools.SeItemChild):
         self.__unassigned_instantevals = {}
         self.__unassigned_orders = {}
         self.__unassigned_conditionsets = {}
+        self.__unassigned_previousconditionsets = {}
+        self.__unassigned_previousstate_conditionsets = {}
         self.__unassigned_modes = {}
         self.__queue = queue.Queue()
         self._action_lock = threading.Lock()
@@ -98,10 +100,26 @@ class SeActions(StateEngineTools.SeItemChild):
                 else:
                     self.__actions[name].update_conditionsets(value)
                 return
+            elif func == "se_previousconditionset":
+                # set conditionset
+                if name not in self.__actions:
+                    # If we do not have the action yet (conditionset-attribute before action-attribute), ...
+                    self.__unassigned_previousconditionsets[name] = value
+                else:
+                    self.__actions[name].update_previousconditionsets(value)
+                return
+            elif func == "se_previousstate_conditionset":
+                # set conditionset
+                if name not in self.__actions:
+                    # If we do not have the action yet (conditionset-attribute before action-attribute), ...
+                    self.__unassigned_previousstate_conditionsets[name] = value
+                else:
+                    self.__actions[name].update_previousstate_conditionsets(value)
+                return
             elif func == "se_mode":
                 # set remove mode
                 if name not in self.__actions:
-                    # If we do not have the action yet (conditionset-attribute before action-attribute), ...
+                    # If we do not have the action yet (mode-attribute before action-attribute), ...
                     self.__unassigned_modes[name] = value
                 else:
                     self.__actions[name].update_modes(value)
@@ -182,6 +200,14 @@ class SeActions(StateEngineTools.SeItemChild):
             action.update_conditionsets(self.__unassigned_conditionsets[name])
             del self.__unassigned_conditionsets[name]
 
+        if name in self.__unassigned_previousconditionsets:
+            action.update_previousconditionsets(self.__unassigned_previousconditionsets[name])
+            del self.__unassigned_previousconditionsets[name]
+
+        if name in self.__unassigned_previousstate_conditionsets:
+            action.update_previousconditionsets(self.__unassigned_previousstate_conditionsets[name])
+            del self.__unassigned_previousstate_conditionsets[name]
+
         self.__actions[name] = action
         return True
 
@@ -194,7 +220,7 @@ class SeActions(StateEngineTools.SeItemChild):
 
         # parse parameters
         parameter = {'function': None, 'force': None, 'repeat': None, 'delay': 0, 'order': None, 'conditionset': None,
-                     'mode': None, 'instanteval': None}
+                     'previousconditionset': None, 'previousstate_conditionset': None, 'mode': None, 'instanteval': None}
         for entry in value_list:
             if isinstance(entry, dict):
                 entry = list("{!s}:{!s}".format(k, v) for (k, v) in entry.items())[0]
@@ -330,6 +356,10 @@ class SeActions(StateEngineTools.SeItemChild):
                 self.__actions[name].update_order(parameter['order'])
             if parameter['conditionset'] is not None:
                 self.__actions[name].update_conditionsets(parameter['conditionset'])
+            if parameter['previousconditionset'] is not None:
+                self.__actions[name].update_previousconditionsets(parameter['previousconditionset'])
+            if parameter['previousstate_conditionset'] is not None:
+                self.__actions[name].update_previousstate_conditionsets(parameter['previousstate_conditionset'])
             if parameter['mode'] is not None:
                 self.__actions[name].update_modes(parameter['mode'])
 

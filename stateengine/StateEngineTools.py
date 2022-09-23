@@ -245,7 +245,7 @@ def cast_time(value):
             return datetime.time(hour, minute)
 
 
-# find a certain attribute for a generic condition. If an "use"-attribute is found, the "use"-item is searched
+# find a certain attribute for a generic condition. If a "use"-attribute is found, the "use"-item is searched
 # recursively
 # smarthome: instance of smarthome.py base class
 # base_item: base item to search in
@@ -338,4 +338,3 @@ def get_original_caller(elog, caller, source, item=None, eval_keyword=['Eval'], 
         return original_caller, original_source
     else:
         return original_caller, original_source, original_item
-
