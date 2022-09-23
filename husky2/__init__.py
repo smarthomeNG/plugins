@@ -25,6 +25,8 @@
 #
 #########################################################################
 import asyncio
+import threading
+from concurrent.futures import CancelledError
 from datetime import datetime
 import time
 import json
@@ -261,6 +263,7 @@ class Husky2(SmartPlugin):
 
         self.asyncLoop = None
         self.apiSession = None
+        self.pluginThread = None
 
         # On initialization error use:
         #   self._init_complete = False
@@ -278,32 +281,76 @@ class Husky2(SmartPlugin):
         """
         Run method for the plugin
         """
-        self.logger.debug("Run method called")
-        self.alive = True
-
-        self.runworker = True
-        asyncio.run(self.worker())
         # if you need to create child threads, do not make them daemon = True!
         # They will not shutdown properly. (It's a python bug)
+        self.logger.debug("Run method called")
+
+        try:
+            self.pluginThread = threading.Thread(target=self.huky2Thread, daemon=False)
+            self.pluginThread.start()
+            self.logger.debug("Starting Thread...")
+        except Exception as e:
+            self.logger.error(f"Cannot start Thread - Error: {e}")
+        return
+
+    def huky2Thread(self):
+        self.asyncLoop = asyncio.new_event_loop()
+
+        task = self.asyncLoop.create_task(self.initWorker())
+        task.add_done_callback(self.startFinished)
+
+        try:
+            self.asyncLoop.run_forever()
+        finally:
+            try:
+                self.asyncLoop.run_until_complete(self.closeSession())
+
+                self.logger.debug("Shutting down Eventloop")
+                self.asyncLoop.run_until_complete(self.asyncLoop.shutdown_asyncgens())
+            except Exception as e:
+                self.logger.warning(f"husky2_thread: finally *1 - Exception {e}")
+            try:
+                for task in asyncio.Task.all_tasks(self.asyncLoop):
+                    try:
+                        task.cancel()
+                        self.asyncLoop.run_until_complete(task)
+                    except CancelledError:
+                        pass
+
+            except Exception as e:
+                self.logger.warning(f"husky2_thread: finally *2 - Exception {e}")
+            try:
+                self.asyncLoop.close()
+                self.logger.debug("Eventloop closed")
+            except Exception as e:
+                self.logger.warning(f"husky2_thread: finally *3 - Exception {e}")
+
+    def startFinished(self, args):
+        self.alive = True
+        self.logger.debug("Init finished, husky2 plugin is running")
 
     def stop(self):
         """
         Stop method for the plugin
         """
-        self.logger.debug("Stop method called")
-        self.runworker = False
-
-        if self.asyncLoop:
-            tsk = self.asyncLoop.create_task(self.destroy())
-            tsk.add_done_callback(lambda t: self.stopfinished())
-        else:
-            self.logger.warning("No Eventloop")
-            asyncio.run(self.destroy())
+        self.logger.debug("Stop method called. Shutting down Thread...")
+        self.asyncLoop.call_soon_threadsafe(self.asyncLoop.stop)
+        time.sleep(2)
+        try:
+            self.pluginThread.join()
+            self.logger.debug("Thread Stopped")
+        except Exception as err:
+            self.logger.debug(f"Stopping Thread error: {err}")
+            pass
+        finally:
+            self.logger.debug("Stop finished, husky2 plugin is shutdown")
             self.alive = False
+        return
 
-    def stopfinished(self):
-        self.logger.debug("Finished destroy ")
-        self.alive = False
+    async def closeSession(self):
+        self.logger.debug("Closing Session")
+        await self.apiSession.close()
+        return
 
     def parse_item(self, item):
         """
@@ -409,12 +456,7 @@ class Husky2(SmartPlugin):
 
     def sendCmd(self, cmd, value=-1):
         self.writeToStatusItem(self.translate("Sending command") + ": " + cmd)
-
-        if self.asyncLoop:
-            tsk = self.asyncLoop.create_task(self.send_worker(cmd, value))
-            tsk.add_done_callback(lambda t: self.writeToStatusItem("Ok"))
-        else:
-            self.logger.warning("No Eventloop")
+        asyncio.run_coroutine_threadsafe(self.send_worker(cmd, value), self.asyncLoop)
 
     def writeToStatusItem(self, txt):
         self.message = txt
@@ -527,12 +569,10 @@ class Husky2(SmartPlugin):
 
         self.logger.debug("Token callback: " + json.dumps(token))
 
-    async def worker(self):
+    async def initWorker(self):
         self.apiSession = Husky2AutomowerSession(self.apikey, token=None)
         self.apiSession.setClientSecret(self.apisecret)
         self.apiSession.setSmarthomeLogger(self.logger)
-
-        self.asyncLoop = asyncio.get_event_loop()
 
         self.apiSession.register_data_callback(self.data_callback, schedule_immediately=True)
         self.apiSession.register_token_callback(self.token_callback, schedule_immediately=True)
@@ -582,18 +622,7 @@ class Husky2(SmartPlugin):
                 item(self.mowerModel, self.get_shortname())
 
         self.data_callback(status_all)
-
-        while self.runworker:
-            await asyncio.sleep(0.1)
-
-    async def destroy(self):
-        asyncio.set_event_loop(self.asyncLoop)
-
-        await self.apiSession.close()
-        self.logger.debug("Closed Session")
-
-        asyncio.get_running_loop().stop()
-        asyncio.get_event_loop().close()
+        return
 
     async def send_worker(self, cmd, value):
         commands = {
@@ -630,8 +659,10 @@ class Husky2(SmartPlugin):
             await self.apiSession.action(self.mowerId, commands[cmd]['payload'], commands[cmd]['type'])
             newstatus = await self.apiSession.get_status()
             self.data_callback(newstatus)
+            self.writeToStatusItem("Ok")
         else:
             self.logger.error("'{0}' not in available commands: {1}".format(cmd, commands.keys()))
+        return
 
     # ------------------------------------------
     #    Webinterface methods of the plugin
