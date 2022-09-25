@@ -42,7 +42,7 @@ class Russound(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.7.0'
+    PLUGIN_VERSION = '1.7.1'
 
     def __init__(self, sh, *args, **kwargs):
         """
@@ -69,7 +69,8 @@ class Russound(SmartPlugin):
         self._client.set_callbacks(data_received=self.found_terminator)
         self.params = {}
         self.sources = {}
-
+        self.suspended = False
+        
         self.init_webinterface()
         return
 
@@ -81,10 +82,17 @@ class Russound(SmartPlugin):
         if not self._client.connect():
             self.logger.debug(f'Connection to {self.host}:{self.port} not possible. Plugin deactivated.')
             return
-
         self.alive = True
-#
-        # self.close()
+
+    def activate(self):
+        self.logger.debug("Activate method called, queries to russound will be resumes and data will be written again")
+        self.suspended = False
+        self._client.connect()
+        
+    def suspend(self):
+        self.logger.debug("Suspend method called, queries to russound will not be made and data will not be written")
+        self.suspended = True
+        self._client.close()
 
     def stop(self):
         """
@@ -261,6 +269,11 @@ class Russound(SmartPlugin):
         if not self.alive:
             self.logger.error('Trying to send data but plugin is not running')
             return
+        
+        if self.suspended:
+            self.logger.debug('Plugin is suspended, data will not be written')
+            return
+
         self.logger.debug("Sending request: {0}".format(cmd))
 
         # if connection is closed we don't wait for sh.con to reopen it
