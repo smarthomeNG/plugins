@@ -205,10 +205,7 @@ class UZSU(SmartPlugin):
         :type caller:   str
         """
         for item in self._items:
-            success = self._update_sun(item)
-            if success:
-                self.logger.debug('Updating sun info for item {}'.format(item))
-                self._update_item(item, 'UZSU Plugin', 'update_all_suns')
+            self._update_item(item, 'UZSU Plugin', 'update_all_suns')
 
     def _update_sun(self, item, caller=None):
         """
@@ -407,7 +404,6 @@ class UZSU(SmartPlugin):
         if not self._items[item].get('active'):
             self._items[item]['active'] = False
 
-
     def parse_item(self, item):
         """
         Default plugin parse_item method. Is called when the plugin is initialized.
@@ -538,12 +534,23 @@ class UZSU(SmartPlugin):
             self._update_item(item, 'UZSU Plugin', 'update')
 
     def _update_item(self, item, caller="", comment=""):
-        self._get_sun4week(item, caller="_update_item")
-        self.logger.debug('Updating weekly sun info for item {} caller : {} comment : {}'.format(item, caller, comment))
-        self._series_calculate(item, caller, comment)
-        self.logger.debug('Updating seriesCalculated for item {} caller : {} comment : {}'.format(item, caller, comment))
-        self._update_sun(item, caller="_update_item")
-        self.logger.debug('Updating sunset calculations for item {} caller : {} comment : {}'.format(item, caller, comment))
+        success = self._get_sun4week(item, caller="_update_item")
+        if success:
+            self.logger.debug('Updated weekly sun info for item {} caller : {} comment : {}'.format(item, caller, comment))
+        else:
+            self.logger.debug('Issues with updating weekly sun info for item {} caller : {} comment : {}'.format(item, caller, comment))
+        success = False
+        success = self._series_calculate(item, caller, comment)
+        if success:
+            self.logger.debug('Updated seriesCalculated for item {} caller : {} comment : {}'.format(item, caller, comment))
+        else:
+            self.logger.debug('Issues with updating seriesCalculated for item {} caller : {} comment : {}'.format(item, caller, comment))
+        success = False
+        success = self._update_sun(item, caller="_update_item")
+        if success:
+            self.logger.debug('Updated sunset/rise calculations for item {} caller : {} comment : {}'.format(item, caller, comment))
+        else:
+            self.logger.debug('Issues with updating sunset/rise calculations for item {} caller : {} comment : {}'.format(item, caller, comment))
         item(self._items[item], caller, comment)
         self._webdata[item.id()].update({'interpolation': self._items[item].get('interpolation')})
         self._webdata[item.id()].update({'active': str(self._items[item].get('active'))})
@@ -873,6 +880,7 @@ class UZSU(SmartPlugin):
                 Calculate serie-entries for next 168 hour (7 days) - from now to now-1 second
                 and writes the list to "seriesCalculated" in item
                 :param item:      an item with series entry
+                :return:          True if everything went smoothly, otherwise False
         """
         if not self._items[item].get('list'):
             return
@@ -1012,8 +1020,18 @@ class UZSU(SmartPlugin):
 
         except Exception as e:
             self.logger.warning("Series for item {} could not be calculated. Error: {}".format(item, e))
+        return True
 
     def _get_sun4week(self, item, caller=None):
+        """
+        Getting the values for sunrise and sunset for the whole upcoming 7 days. Relevant for time series.
+
+        :param item:    uzsu item
+        :type item:     item
+        :param caller:  Method calling this method
+        :type caller:   string
+        :return:        True at the end of the method
+        """
         dayrule = rrulestr("FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR,SA,SU"+";COUNT=7", dtstart=datetime.now().replace(hour=0, minute=0, second=0))
         daycounter = 0
         myNewDict = {'sunrise': {}, 'sunset': {}}
