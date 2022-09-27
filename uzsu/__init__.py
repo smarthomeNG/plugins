@@ -526,6 +526,8 @@ class UZSU(SmartPlugin):
             self.logger.debug('lastvalue for item {} set to None because UZSU is deactivated'.format(item))
         if cond:
             self._schedule(item, caller='update')
+        elif source == 'update_sun':
+            self.logger.info('Not running dry run of scheduler calculation for item {} because of update_sun source'.format(item))
         else:
             self.logger.info('Dry run of scheduler calculation for item {} to get calculated sunset/rise entries'.format(item))
             self._schedule(item, caller='dry_run')
