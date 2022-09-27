@@ -17,7 +17,7 @@
 * @param {item(str)} the simulation message item
 */
 {% macro info(id, header, status, tank, control, message) %}
-    {% import "basic.html" as basic %}
+    {% import config_version_full >= "3.2.c" ? "@widgets/basic.html" : "basic.html" as basic %}
     {% if header is empty %} {% set header = "Anwesenheitssimulation" %} {% endif %}
     <div class="block" id="{{ uid(page, id) }}">
     	<div class="set-2" data-role="collapsible-set" data-theme="c" data-content-theme="a" data-mini="true">

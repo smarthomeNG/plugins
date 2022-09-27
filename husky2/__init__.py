@@ -25,16 +25,42 @@
 #
 #########################################################################
 import asyncio
+import threading
+from concurrent.futures import CancelledError
 from datetime import datetime
 import time
 import json
 
 from lib.module import Modules
 from lib.model.smartplugin import *
-from lib.item import Items
 
 import cherrypy
-import aioautomower
+from aioautomower import session
+
+
+class Husky2AutomowerSession(session.AutomowerSession):
+    def setClientSecret(self, client_secret):
+        self.client_secret = client_secret
+
+    def setSmarthomeLogger(self, shLogger):
+        self.shLogger = shLogger
+
+    async def refresh_token(self):
+        if "refresh_token" in self.token:
+            session._LOGGER.debug("Refresh access token using refresh_token")
+            self.shLogger.debug("Refresh access token using refresh_token")
+            r = session.rest.RefreshAccessToken(self.api_key, self.token["refresh_token"])
+            self.token = await r.async_refresh_access_token()
+            self._schedule_token_callbacks()
+        else:
+            session._LOGGER.debug("Refresh access token doing relogin")
+            self.shLogger.debug("Refresh access token doing relogin")
+            await self.close()
+            self.shLogger.debug("Closed old session")
+            await self.logincc(self.client_secret)
+            self.shLogger.debug("Logged in successfully")
+            await self.connect()
+            self.shLogger.debug("Connected successfully")
 
 
 class Husky2(SmartPlugin):
@@ -47,7 +73,7 @@ class Husky2(SmartPlugin):
     are already available!
     """
 
-    PLUGIN_VERSION = '2.0.0'  # (must match the version specified in plugin.yaml), use '1.0.0' for your initial plugin Release
+    PLUGIN_VERSION = '2.1.0'  # (must match the version specified in plugin.yaml), use '1.0.0' for your initial plugin Release
 
     ITEM_INFO = "husky_info"
     ITEM_CONTROL = "husky_control"
@@ -55,8 +81,8 @@ class Husky2(SmartPlugin):
 
     VALID_INFOS = ['name', 'id', 'serial', 'model']
     VALID_STATES = ['message', 'state', 'activity', 'mode', 'errormessage', 'batterypercent', 'connection', 'longitude',
-                    'latitude']
-    VALID_COMMANDS = ['starttime', 'park', 'starttime', 'pause', 'parkpermanent', 'parktime', 'parknext', 'resume',
+                    'latitude', 'gpspoints']
+    VALID_COMMANDS = ['starttime', 'starttime', 'pause', 'parkpermanent', 'parktime', 'parknext', 'resume',
                       'cuttingheight', 'headlight']
 
     MOWERERROR = {
@@ -203,11 +229,11 @@ class Husky2(SmartPlugin):
         super().__init__()
 
         # get the parameters for the plugin (as defined in metadata plugin.yaml):
-        self.userid = self.get_parameter_value('userid')
-        self.password = self.get_parameter_value('password')
         self.apikey = self.get_parameter_value('apikey')
+        self.apisecret = self.get_parameter_value('apisecret')
         self.instance = self.get_parameter_value('device')
         self.historylength = int(self.get_parameter_value('historylength'))
+        self.maxgpspoints = int(self.get_parameter_value('maxgpspoints'))
 
         self.token = None
         self.tokenExp = 0
@@ -225,6 +251,7 @@ class Husky2(SmartPlugin):
         self.mowerErrormsg = LengthList(self.historylength, '')
         self.mowerLongitude = LengthList(self.historylength, 0.0)
         self.mowerLatitude = LengthList(self.historylength, 0.0)
+        self.mowerGpspoints = LengthList(self.maxgpspoints, [0.0, 0.0])
 
         self.message = 'Ok'
 
@@ -236,6 +263,7 @@ class Husky2(SmartPlugin):
 
         self.asyncLoop = None
         self.apiSession = None
+        self.pluginThread = None
 
         # On initialization error use:
         #   self._init_complete = False
@@ -253,32 +281,76 @@ class Husky2(SmartPlugin):
         """
         Run method for the plugin
         """
-        self.logger.debug("Run method called")
-        self.alive = True
-
-        self.runworker = True
-        asyncio.run(self.worker())
         # if you need to create child threads, do not make them daemon = True!
         # They will not shutdown properly. (It's a python bug)
+        self.logger.debug("Run method called")
+
+        try:
+            self.pluginThread = threading.Thread(target=self.huky2Thread, daemon=False)
+            self.pluginThread.start()
+            self.logger.debug("Starting Thread...")
+        except Exception as e:
+            self.logger.error(f"Cannot start Thread - Error: {e}")
+        return
+
+    def huky2Thread(self):
+        self.asyncLoop = asyncio.new_event_loop()
+
+        task = self.asyncLoop.create_task(self.initWorker())
+        task.add_done_callback(self.startFinished)
+
+        try:
+            self.asyncLoop.run_forever()
+        finally:
+            try:
+                self.asyncLoop.run_until_complete(self.closeSession())
+
+                self.logger.debug("Shutting down Eventloop")
+                self.asyncLoop.run_until_complete(self.asyncLoop.shutdown_asyncgens())
+            except Exception as e:
+                self.logger.warning(f"husky2_thread: finally *1 - Exception {e}")
+            try:
+                for task in asyncio.Task.all_tasks(self.asyncLoop):
+                    try:
+                        task.cancel()
+                        self.asyncLoop.run_until_complete(task)
+                    except CancelledError:
+                        pass
+
+            except Exception as e:
+                self.logger.warning(f"husky2_thread: finally *2 - Exception {e}")
+            try:
+                self.asyncLoop.close()
+                self.logger.debug("Eventloop closed")
+            except Exception as e:
+                self.logger.warning(f"husky2_thread: finally *3 - Exception {e}")
+
+    def startFinished(self, args):
+        self.alive = True
+        self.logger.debug("Init finished, husky2 plugin is running")
 
     def stop(self):
         """
         Stop method for the plugin
         """
-        self.logger.debug("Stop method called")
-        self.runworker = False
-
-        if self.asyncLoop:
-            tsk = self.asyncLoop.create_task(self.destroy())
-            tsk.add_done_callback(lambda t: self.stopfinished())
-        else:
-            self.logger.warning("No Eventloop")
-            asyncio.run(self.destroy())
+        self.logger.debug("Stop method called. Shutting down Thread...")
+        self.asyncLoop.call_soon_threadsafe(self.asyncLoop.stop)
+        time.sleep(2)
+        try:
+            self.pluginThread.join()
+            self.logger.debug("Thread Stopped")
+        except Exception as err:
+            self.logger.debug(f"Stopping Thread error: {err}")
+            pass
+        finally:
+            self.logger.debug("Stop finished, husky2 plugin is shutdown")
             self.alive = False
+        return
 
-    def stopfinished(self):
-        self.logger.debug("Finished destroy ")
-        self.alive = False
+    async def closeSession(self):
+        self.logger.debug("Closing Session")
+        await self.apiSession.close()
+        return
 
     def parse_item(self, item):
         """
@@ -384,12 +456,7 @@ class Husky2(SmartPlugin):
 
     def sendCmd(self, cmd, value=-1):
         self.writeToStatusItem(self.translate("Sending command") + ": " + cmd)
-
-        if self.asyncLoop:
-            tsk = self.asyncLoop.create_task(self.send_worker(cmd, value))
-            tsk.add_done_callback(lambda t: self.writeToStatusItem("Ok"))
-        else:
-            self.logger.warning("No Eventloop")
+        asyncio.run_coroutine_threadsafe(self.send_worker(cmd, value), self.asyncLoop)
 
     def writeToStatusItem(self, txt):
         self.message = txt
@@ -423,6 +490,22 @@ class Husky2(SmartPlugin):
         self.mowerTimestamp.push(data['attributes']['metadata']['statusTimestamp'])
         self.logger.debug("Data callback: " + json.dumps(data))
 
+        posindex = -1
+        for gpsindex, gpspoint in enumerate(data['attributes']['positions']):
+            if (gpspoint['longitude'] == self.mowerGpspoints.get_last()[0]) and (gpspoint['latitude'] == self.mowerGpspoints.get_last()[1]):
+                posindex = gpsindex - 1
+                break
+            elif gpsindex >= self.maxgpspoints:
+                posindex = gpsindex
+                break
+            else:
+                posindex = gpsindex
+        for i in range(posindex, -1, -1):
+            self.mowerGpspoints.push([data['attributes']['positions'][i]['latitude'],
+                                      data['attributes']['positions'][i]['longitude']])
+        if 'gpspoints' in self._items_state:
+            for item in self._items_state['gpspoints']:
+                item(self.mowerGpspoints.get_list()[::-1], self.get_shortname())
         self.mowerLongitude.push(data['attributes']['positions'][0]['longitude'])
         if 'longitude' in self._items_state:
             for item in self._items_state['longitude']:
@@ -482,21 +565,21 @@ class Husky2(SmartPlugin):
         """
 
         self.token = token['access_token']
-        self.tokenExp = token['expires_in']
+        self.tokenExp = datetime.fromtimestamp(token['expires_at']).strftime("%d.%m.%Y %H:%M:%S")
 
         self.logger.debug("Token callback: " + json.dumps(token))
 
-    async def worker(self):
-        self.apiSession = aioautomower.AutomowerSession(self.apikey, token=None)
-
-        self.asyncLoop = asyncio.get_event_loop()
+    async def initWorker(self):
+        self.apiSession = Husky2AutomowerSession(self.apikey, token=None)
+        self.apiSession.setClientSecret(self.apisecret)
+        self.apiSession.setSmarthomeLogger(self.logger)
 
         self.apiSession.register_data_callback(self.data_callback, schedule_immediately=True)
         self.apiSession.register_token_callback(self.token_callback, schedule_immediately=True)
 
         # Login to get a token and connect to the api
-        await self.apiSession.login(self.userid, self.password)
-        self.logger.debug(f"Logged in successfully as {self.userid}")
+        await self.apiSession.logincc(self.apisecret)
+        self.logger.debug(f"Logged in successfully")
 
         await self.apiSession.connect()
         self.logger.debug("Connected successfully")
@@ -539,22 +622,7 @@ class Husky2(SmartPlugin):
                 item(self.mowerModel, self.get_shortname())
 
         self.data_callback(status_all)
-
-        while self.runworker:
-            await asyncio.sleep(0.1)
-
-        await self.apiSession.invalidate_token()
-        self.logger.debug("Invalidated Token")
-        await self.apiSession.close()
-        self.logger.debug("Closed Session")
-
-    async def destroy(self):
-        asyncio.set_event_loop(self.asyncLoop)
-
-        await self.apiSession.invalidate_token()
-        self.logger.debug("Invalidated Token")
-        await self.apiSession.close()
-        self.logger.debug("Closed Session")
+        return
 
     async def send_worker(self, cmd, value):
         commands = {
@@ -591,8 +659,10 @@ class Husky2(SmartPlugin):
             await self.apiSession.action(self.mowerId, commands[cmd]['payload'], commands[cmd]['type'])
             newstatus = await self.apiSession.get_status()
             self.data_callback(newstatus)
+            self.writeToStatusItem("Ok")
         else:
-            self.logger.error("available commands: {}".format(commands.keys()))
+            self.logger.error("'{0}' not in available commands: {1}".format(cmd, commands.keys()))
+        return
 
     # ------------------------------------------
     #    Webinterface methods of the plugin
@@ -630,19 +700,10 @@ class Husky2(SmartPlugin):
         return self.mowerLatitude.get_last()
 
     def getLastCoordinates(self):
-        maxpoints = 50
-        lat = self.mowerLatitude.get_list()
-        lon = self.mowerLongitude.get_list()
-
-        if len(lat) < maxpoints:
-            maxpoints = len(lat)
-        if len(lon) < maxpoints:
-            maxpoints = len(lon)
-
-        coord = []
-        for i in range(maxpoints):
-            coord.append([lon[i], lat[i]])
-        return coord
+        points = []
+        for data in self.mowerGpspoints.get_list()[::-1]:
+            points.append([data[1], data[0]])
+        return points
 
     # get entire historical Data
     def getTimestamps(self):
@@ -680,9 +741,6 @@ class Husky2(SmartPlugin):
 
     def getTokenExp(self):
         return self.tokenExp
-
-    def getUserId(self):
-        return self.userid
 
     def getApiKey(self):
         return self.apikey

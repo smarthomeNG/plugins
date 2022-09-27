@@ -151,6 +151,5 @@ plugin_translations:
   'Value': { 'de': 'Wert', 'en': '=', 'fr': '' }
   'Last Update': { 'de': 'Letztes Update', 'en': '=', 'fr': '' }
   'Last Change': { 'de': 'Letzte Änderung', 'en': '=', 'fr': '' }
-  'User ID': { 'de': 'Benutzer ID', 'en': '=', 'fr': '' }
   'ApiKey': { 'de': '=', 'en': '=', 'fr': '' }
   'Token expires in:': { 'de': 'Token läuft ab:', 'en': '=', 'fr': '' }

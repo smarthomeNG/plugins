@@ -12,7 +12,7 @@ plugin:
     documentation: https://www.smarthomeng.de/user/plugins/husky2/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1764058-support-thread
 
-    version: 2.0.0                  # Plugin version (must match the version specified in __init__.py)
+    version: 2.1.0                  # Plugin version (must match the version specified in __init__.py)
     sh_minversion: 1.8              # minimum shNG version to use this plugin
     multi_instance: false           # plugin supports multi instance
     restartable: unknown
@@ -20,25 +20,18 @@ plugin:
 
 parameters:
     # Definition of parameters to be configured in etc/plugin.yaml (enter 'parameters: NONE', if section should be empty)
-    userid:
-        type: str
-        mandatory: True
-        description:
-            de: 'Benutzer ID für den Husqvarna Service'
-            en: 'User ID for Husqvarna service'
-    password:
-        type: str
-        mandatory: True
-        hide: True
-        description:
-            de: 'Passwort für den Login'
-            en: 'Password for login'
     apikey:
         type: str
         mandatory: True
         description:
             de: 'Husqvarna api key'
             en: 'Husqvarna api key'
+    apisecret:
+        type: str
+        mandatory: True
+        description:
+            de: 'Husqvarna api secret für den Login'
+            en: 'Husqvarna api secret login'
     device:
         type: str
         mandatory: False
@@ -53,6 +46,13 @@ parameters:
         description:
             de: '(optional) Anzahl der Statusmeldungen die im Arbeitsspeicher für die Anzeige im Webinterface gespeichert werden sollen'
             en: '(optional) Number of state messages to be saved in ram for history display in the web interface'
+    maxgpspoints:
+        type: num
+        mandatory: False
+        default: 20
+        description:
+            de: '(optional) Anzahl der letzten GPS Punkte die im gpsoints-Item gespeichert werden sollen'
+            en: '(optional) Number of last gps points to be saved in the gpspoints item'
 
 item_attributes:
     # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)
@@ -65,14 +65,14 @@ item_attributes:
 
     husky_state:
         type: str
-        valid_list: ['message', 'state', 'activity', 'mode', 'errormessage', 'batterypercent', 'connection', 'longitude', 'latitude']
+        valid_list: ['message', 'state', 'activity', 'mode', 'errormessage', 'batterypercent', 'connection', 'longitude', 'latitude', 'gpspoints']
         description:
             de: 'Das Item, welches mit Status Informationen (z.B. Aktivität) durch das Plugin beschrieben werden soll'
             en: 'Item that should receive status information (e.g. activity) by the plugin'
 
     husky_control:
         type: str
-        valid_list: ['starttime', 'park', 'starttime', 'pause', 'parkpermanent', 'parktime', 'parknext', 'resume', 'cuttingheight', 'headlight']
+        valid_list: ['starttime', 'starttime', 'pause', 'parkpermanent', 'parktime', 'parknext', 'resume', 'cuttingheight', 'headlight']
         description:
             de: 'Das Item, mit dem der Mähroboter gesteuert werden soll (z.B. Start Kommando)'
             en: 'Item to control the mower (e.g. start command)'
@@ -115,7 +115,7 @@ item_structs:
                 visu_acl: ro
 
             activity:
-                name: activity [ UNKNOWN, NOT_APPLICABLE, MOWING, GOING_HOME, CHARGING, LEAVING, PARKED_IN_CS ]
+                name: activity [ UNKNOWN, NOT_APPLICABLE, MOWING, GOING_HOME, CHARGING, LEAVING, PARKED_IN_CS, STOPPED_IN_GARDEN ] # See locale.yaml
                 husky_state: activity
                 type: str
                 visu_acl: ro
@@ -133,13 +133,13 @@ item_structs:
                 initial_value: 'Ok'
 
             mode:
-                name: mode [ MAIN_AREA, SECONDARY_AREA, HOME, DEMO, UNKNOWN ]
+                name: mode [ MAIN_AREA, SECONDARY_AREA, HOME, DEMO, UNKNOWN ] # See locale.yaml
                 husky_state: mode
                 type: str
                 visu_acl: ro
 
             state:
-                name: state [ UNKNOWN, NOT_APPLICABLE, PAUSED, IN_OPERATION, WAIT_UPDATING, WAIT_POWER_UP, RESTRICTED, OFF, STOPPED, ERROR, FATAL_ERROR, ERROR_AT_POWER_UP ]
+                name: state [ UNKNOWN, NOT_APPLICABLE, PAUSED, IN_OPERATION, WAIT_UPDATING, WAIT_POWER_UP, RESTRICTED, OFF, STOPPED, ERROR, FATAL_ERROR, ERROR_AT_POWER_UP ] # See locale.yaml
                 husky_state: state
                 type: str
                 visu_acl: ro
@@ -167,6 +167,12 @@ item_structs:
                 type: num
                 visu_acl: ro
 
+            gpspoints:
+                name: mower last gps points
+                husky_state: gpspoints
+                type: list
+                visu_acl: ro
+
         control:
             name: Control commands
 
@@ -189,13 +195,6 @@ item_structs:
                 name: Stop
                 type: bool
                 husky_control: pause
-                visu_acl: rw
-                enforce_updates: True
-
-            park:
-                name: Park
-                type: bool
-                husky_control: park
                 visu_acl: rw
                 enforce_updates: True
 

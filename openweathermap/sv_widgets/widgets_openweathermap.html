@@ -1,6 +1,6 @@
 {% macro irrigation(id, info_title, gad_irrigation_valve_root) %}
-{% import "basic.html" as basic %}
-{% import "device.html" as device %}
+{% import config_version_full >= "3.2.c" ? "@widgets/basic.html" : "basic.html" as basic %}
+{% import config_version_full >= "3.2.c" ? "@widgets/device.html" : "device.html" as device %}
 <div class="cells" style="height: 60px;">
     <div class="cell3" style="text-align: left;">{{ basic.stateswitch(id~'sw', gad_irrigation_valve_root, 'icon', '', [ icon_off | default('sani_water_tap.svg'), icon_on | default('sani_irrigation.svg')]) }} &nbsp;
         &nbsp;{{ info_title }}</div>
@@ -58,8 +58,8 @@
 {% endmacro %}
 
 {% macro irrigation_weekly(id, info_title, gad_irrigation_valve_root, icon_on, icon_off) %}
-{% import "basic.html" as basic %}
-{% import "device.html" as device %}
+{% import config_version_full >= "3.2.c" ? "@widgets/basic.html" : "basic.html" as basic %}
+{% import config_version_full >= "3.2.c" ? "@widgets/device.html" : "device.html" as device %}
 <div class="cells" style="height: 60px;">
     <div class="cell3" style="text-align: left;">{{ basic.stateswitch(id~'sw', gad_irrigation_valve_root, 'icon', '', [ icon_off | default('sani_irrigation_pop_up_off.svg'), icon_on | default('sani_irrigation_pop_up_on.svg')]) }} &nbsp;
         &nbsp;{{ info_title }}</div>
