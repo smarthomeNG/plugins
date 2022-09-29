@@ -206,7 +206,10 @@ class UZSU(SmartPlugin):
         :type caller:   str
         """
         for item in self._items:
-            self._update_item(item, 'UZSU Plugin', 'update_all_suns')
+            success = self._update_sun(item)
+            if success:
+                self.logger.debug('Updating sun info for item {}. Caller: {}'.format(item, caller))
+                self._update_item(item, 'UZSU Plugin', 'update_all_suns')
 
     def _update_sun(self, item, caller=None):
         """
@@ -770,6 +773,10 @@ class UZSU(SmartPlugin):
                             simulate getting time even if entry is not active
         """
         try:
+            time = entry['time']
+        except Exception:
+            time = None
+        try:
             if not isinstance(entry, dict):
                 return None, None
             if 'value' not in entry:
@@ -912,134 +919,192 @@ class UZSU(SmartPlugin):
                     pass
                 if mydict.get('series', None) is None:
                     continue
+                try:
+                    #####################
+                    daycount = mydict['series'].get('timeSeriesCount', None)
+                    serieend = mydict['series'].get('timeSeriesMax', None)
+                    seriebegin = mydict['series'].get('timeSeriesMin', None)
+                    intervall = mydict['series'].get('timeSeriesIntervall', None)
+                    # Fix empty values in series dict
+                    if seriebegin == '':
+                        self.logger.warning("No starttime for series set. Setting it to midnight 00:00")
+                        seriebegin = '00:00'
+                        mydict['series']['timeSeriesMin'] = '00:00'
+                    if serieend == '':
+                        self.logger.warning("No endtime for series set. Setting it to midnight 23:59")
+                        serieend = '23:59'
+                        mydict['series']['timeSeriesMax'] = '23:59'
+                    if daycount == '':
+                        self.logger.warning("No count for series set. Setting it to 1")
+                        daycount = '1'
+                        mydict['series']['timeSeriesCount'] = '1'
 
-                #####################
-                daycount = mydict['series'].get('timeSeriesCount', None)
-                serieend = mydict['series'].get('timeSeriesMax', None)
-                seriebegin = mydict['series'].get('timeSeriesMin', None)
-                intervall = mydict['series'].get('timeSeriesIntervall', None)
-                seriesstart = mydict['series']['timeSeriesMin']
+                    seriesstart = mydict['series'].get('timeSeriesMin', None)
 
-                if intervall is None or intervall == "":
-                    self.logger.warning("Could not calculate serie for item {} - because intervall is None - {}".format(item, mydict))
-                    return
+                    if intervall is None or intervall == "":
+                        self.logger.warning("Could not calculate serie for item {}"
+                                            " - because intervall is None - {}".format(item, mydict))
+                        return
 
-                if daycount is None and serieend is None:
-                    self.logger.warning("Could not calculate serie because timeSeriesCount is NONE and TimeSeriesMax is NONE")
-                    return
+                    if (daycount == '' or daycount is None) and serieend is None:
+                        self.logger.warning("Could not calculate series"
+                                            " because timeSeriesCount is NONE and TimeSeriesMax is NONE")
+                        return
 
-                intervall = int(intervall.split(":")[0])*60 + int(mydict['series']['timeSeriesIntervall'].split(":")[1])
+                    intervall = int(intervall.split(":")[0]) * 60 + int(mydict['series']['timeSeriesIntervall'].split(":")[1])
 
-                if intervall == 0:
-                    self.logger.warning("Could not calculate serie because intervall is ZERO - {}".format(mydict))
-                    return
+                    if intervall == 0:
+                        self.logger.warning("Could not calculate serie because intervall is ZERO - {}".format(mydict))
+                        return
 
-                if daycount is not None:
-                    if (int(daycount)*intervall >= 1440):
-                        org_daycount = daycount
-                        daycount = int(1439 / intervall)
-                        self.logger.warning("Cut your SerieCount to {} - because intervall {} x SerieCount {} is more than 24h".format(daycount, intervall, org_daycount))
+                    if daycount is not None and daycount != '':
+                        if int(daycount) * intervall >= 1440:
+                            org_daycount = daycount
+                            daycount = int(1439 / intervall)
+                            self.logger.warning("Cut your SerieCount to {} -"
+                                                " because intervall {} x SerieCount {}"
+                                                " is more than 24h".format(daycount, intervall, org_daycount))
 
-                if 'sun' not in mydict['series']['timeSeriesMin']:
-                    startTime = datetime.strptime(mydict['series']['timeSeriesMin'], "%H:%M")
-                else:
-                    myTime = self._sun(datetime.now().replace(hour=0, minute=0, second=0).astimezone(self._timezone), seriesstart, "next")
-                    startTime = ("{:02d}".format(myTime.hour)+":"+"{:02d}".format(myTime.minute))
-                    startTime = datetime.strptime(startTime, "%H:%M")
+                    if 'sun' not in mydict['series']['timeSeriesMin']:
+                        starttime = datetime.strptime(mydict['series']['timeSeriesMin'], "%H:%M")
+                    else:
+                        mytime = self._sun(datetime.now().replace(hour=0, minute=0, second=0).astimezone(self._timezone),
+                                           seriesstart, "next")
+                        starttime = ("{:02d}".format(mytime.hour) + ":" + "{:02d}".format(mytime.minute))
+                        starttime = datetime.strptime(starttime, "%H:%M")
 
-                # calculate End of Serie by Count
-                if serieend is None:
-                    endtime = startTime
-                    endtime += timedelta(minutes=intervall*int(daycount))
+                    # calculate End of Serie by Count
+                    if serieend is None:
+                        endtime = starttime
+                        endtime += timedelta(minutes=intervall * int(daycount))
 
+                    if serieend is not None and 'sun' in serieend:
+                        mytime = self._sun(datetime.now().replace(hour=0, minute=0, second=0).astimezone(self._timezone),
+                                           serieend, "next")
+                        endtime = ("{:02d}".format(mytime.hour) + ":" + "{:02d}".format(mytime.minute))
+                        endtime = datetime.strptime(endtime, "%H:%M")
+                    elif serieend is not None and 'sun' not in serieend:
+                        endtime = datetime.strptime(serieend, "%H:%M")
 
-                if serieend is not None and 'sun' in serieend:
-                    myTime = self._sun(datetime.now().replace(hour=0, minute=0, second=0).astimezone(self._timezone), serieend, "next")
-                    endtime = ("{:02d}".format(myTime.hour)+":"+"{:02d}".format(myTime.minute))
-                    endtime = datetime.strptime(endtime, "%H:%M")
-                elif serieend is not None and not 'sun' in serieend:
-                    endtime = datetime.strptime(serieend, "%H:%M")
+                    if serieend is None:
+                        serieend = str(endtime.time())[:5]
 
-                if serieend is None:
-                    serieend = str(endtime.time())[:5]
+                    if endtime <= starttime:
+                        endtime += timedelta(days=1)
 
-                if endtime <= startTime:
-                    endtime += timedelta(days=1)
+                    timediff = endtime - starttime
+                    original_daycount = daycount
 
-                timeDiff = endtime - startTime
-                if daycount is None:
-                    daycount = int(timeDiff.total_seconds() / 60 / intervall)
-                else:
-                    daycount = int(daycount)
+                    if daycount is None:
+                        daycount = int(timediff.total_seconds() / 60 / intervall)
+                    else:
+                        new_daycount = int(timediff.total_seconds() / 60 / intervall)
+                        if int(daycount) > new_daycount:
+                            self.logger.warning("Cut your SerieCount to {} - because intervall {}"
+                                                " x SerieCount {} is not possible between {} and {}".format(
+                                                    new_daycount, intervall, daycount, starttime, endtime))
+                            daycount = new_daycount
 
+                    #####################
 
-                #####################
+                    if seriebegin is not None and "sun" not in seriebegin and serieend is not None and "sun" not in serieend:
+                        # simple rule
+                        pass
+                    else:
+                        # advanced rule including all sun times
+                        rrule = rrulestr(mydict['rrule'] + ";COUNT=7",
+                                         dtstart=datetime.combine(datetime.now(),
+                                                                  parser.parse(str(starttime.hour) + ':' +
+                                                                               str(starttime.minute)).time()))
+                        mynewlist = []
 
-                if seriebegin is not None and not "sun" in seriebegin and serieend is not None and not "sun" in serieend:
-                    # simple rule
-                    pass
-                    '''
-                    myNewList = []
-                    mytpl = {}
-                    mytpl['seriesMin'] = str(startTime.time())[:5]
-                    mytpl['seriesMax'] = str((startTime+timedelta(minutes=intervall*(daycount-1))).time())[:5]
-                    mytpl['seriesDay'] = mydict['rrule'].split("=")[2]
-                    myNewList.append(mytpl)
-                    '''
-                else:
-                    # advanced rule inclugin all sun times
-                    rrule = rrulestr(mydict['rrule']+";COUNT=7", dtstart=datetime.combine(datetime.now(), parser.parse(str(startTime.hour)+':'+str(startTime.minute)).time()))
-                    myNewList = []
-
-                    intervall = int(mydict['series']['timeSeriesIntervall'].split(":")[0])*60 + int(mydict['series']['timeSeriesIntervall'].split(":")[1])
-                    for day in list(rrule):
-                        if not mydays[day.weekday()] in mydict['rrule']:
-                            continue
-                        myRuleNext = "FREQ=MINUTELY;COUNT={};INTERVAL={}".format(daycount, intervall)
-                        if not 'sun' in mydict['series']['timeSeriesMin']:
-                            startTime = datetime.strptime(mydict['series']['timeSeriesMin'], "%H:%M")
-                        else:
-                            seriesstart = mydict['series']['timeSeriesMin']
-                            myTime = self._sun(day.replace(hour=0, minute=0, second=0).astimezone(self._timezone), seriesstart, "next")
-                            startTime = ("{:02d}".format(myTime.hour)+":"+"{:02d}".format(myTime.minute))
-                            startTime = datetime.strptime(startTime, "%H:%M")
-                        dayrule = rrulestr(myRuleNext, dtstart=day.replace(hour=startTime.hour, minute=startTime.minute, second=0))
-                        dayrule.after(day.replace(hour=0, minute=0))    # First Entry for this day
-                        count = 0
-                        actDay = mydays[list(dayrule)[0].weekday()]
-                        SerieStartTime = None
-                        for time in list(dayrule):
-                            if mydays[time.weekday()] != actDay:
-                                if SerieStartTime is not None:
-                                    mytpl = {}
-                                    mytpl['seriesMin'] = str(SerieStartTime.time())[:5]
-                                    mytpl['seriesMax'] = str((SerieStartTime+timedelta(minutes=intervall*(count))).time())[:5]
-                                    mytpl['seriesDay'] = actDay
-                                    myNewList.append(mytpl)
-                                count = 0
-                                SerieStartTime = None
-                                actDay = mydays[time.weekday()]
-                            if time.time() < datetime.now().time() and time.date() <= datetime.now().date():
+                        intervall = int(mydict['series']['timeSeriesIntervall'].split(":")[0])*60 + \
+                                    int(mydict['series']['timeSeriesIntervall'].split(":")[1])
+                        for day in list(rrule):
+                            if not mydays[day.weekday()] in mydict['rrule']:
                                 continue
-                            if time >= datetime.now()+timedelta(days=7):
-                                continue
-                            if SerieStartTime is None:
-                                SerieStartTime = time
-                            count += 1
-                        # add the last Time for this day
-                        if SerieStartTime is not None:
-                            mytpl = {}
-                            mytpl['seriesMin'] = str(SerieStartTime.time())[:5]
-                            mytpl['seriesMax'] = str((SerieStartTime+timedelta(minutes=intervall*(count))).time())[:5]
-                            mytpl['seriesDay'] = actDay
-                            myNewList.append(mytpl)
+                            myrulenext = "FREQ=MINUTELY;COUNT={};INTERVAL={}".format(daycount, intervall)
 
+                            if 'sun' not in mydict['series']['timeSeriesMin']:
+                                starttime = datetime.strptime(mydict['series']['timeSeriesMin'], "%H:%M")
+                            else:
+                                seriesstart = mydict['series']['timeSeriesMin']
+                                mytime = self._sun(day.replace(hour=0, minute=0, second=0).astimezone(self._timezone),
+                                                   seriesstart, "next")
+                                starttime = ("{:02d}".format(mytime.hour) + ":" + "{:02d}".format(mytime.minute))
+                                starttime = datetime.strptime(starttime, "%H:%M")
+                            dayrule = rrulestr(myrulenext, dtstart=day.replace(hour=starttime.hour,
+                                                                               minute=starttime.minute, second=0))
+                            dayrule.after(day.replace(hour=0, minute=0))    # First Entry for this day
+                            count = 0
+                            try:
+                                actday = mydays[list(dayrule)[0].weekday()]
+                            except Exception:
+                                max_interval = endtime - starttime
+                                self.logger.info("Item {}: Between starttime {} and endtime {}"
+                                                 " is a maximum valid interval of {:02d}:{:02d}. "
+                                                 "{} is set too high for a continuous series trigger. "
+                                                 "The UZSU will only be scheduled for the start time.".format(
+                                                    item, datetime.strftime(starttime, "%H:%M"),
+                                                    datetime.strftime(endtime, "%H:%M"),
+                                                    max_interval.seconds // 3600, max_interval.seconds % 3600//60,
+                                                    mydict['series']['timeSeriesIntervall']))
+                                max_interval = int(max_interval.total_seconds() / 60)
+                                myrulenext = "FREQ=MINUTELY;COUNT=1;INTERVAL={}".format(max_interval)
+                                dayrule = rrulestr(myrulenext, dtstart=day.replace(hour=starttime.hour,
+                                                                                   minute=starttime.minute, second=0))
+                                dayrule.after(day.replace(hour=0, minute=0))
+                                actday = mydays[day.weekday()] if list(dayrule) is None else mydays[list(dayrule)[0].weekday()]
+                            seriestarttime = None
+                            for time in list(dayrule):
+                                if mydays[time.weekday()] != actday:
+                                    if seriestarttime is not None:
+                                        mytpl = {'seriesMin': str(seriestarttime.time())[:5]}
+                                        if original_daycount is not None:
+                                            mytpl['seriesMax'] = str((seriestarttime +
+                                                                      timedelta(minutes=intervall * count)).time())[:5]
+                                        else:
+                                            mytpl['seriesMax'] = "{:02d}".format(endtime.hour) + ":" + \
+                                                                 "{:02d}".format(endtime.minute)
+                                        mytpl['seriesDay'] = actday
+                                        self.logger.debug("Mytpl: {}, count {}, interval {}".format(mytpl, count, intervall))
+                                        mynewlist.append(mytpl)
+                                    count = 0
+                                    seriestarttime = None
+                                    actday = mydays[time.weekday()]
+                                if time.time() < datetime.now().time() and time.date() <= datetime.now().date():
+                                    continue
+                                if time >= datetime.now()+timedelta(days=7):
+                                    continue
+                                if seriestarttime is None:
+                                    seriestarttime = time
+                                count += 1
+                            # add the last Time for this day
+                            if seriestarttime is not None:
+                                mytpl = {'seriesMin': str(seriestarttime.time())[:5]}
+                                if original_daycount is not None:
+                                    mytpl['seriesMax'] = str((seriestarttime + timedelta(minutes=intervall * count)).time())[:5]
+                                else:
+                                    mytpl['seriesMax'] = "{:02d}".format(endtime.hour) + ":" + "{:02d}".format(endtime.minute)
+                                mytpl['seriesDay'] = actday
+                                self.logger.debug("Mytpl start not none: {},"
+                                                  " count {} daycount {},"
+                                                  " interval {}".format(mytpl, count, original_daycount, intervall))
+                                mynewlist.append(mytpl)
 
-                    self._items[item]['list'][i]['seriesCalculated'] = myNewList
+                        if mynewlist:
+                            self._items[item]['list'][i]['seriesCalculated'] = mynewlist
+                            self.logger.debug("Series for item {} calculated: {}".format(
+                                item, self._items[item]['list'][i]['seriesCalculated']))
+                except Exception as e:
+                    self.logger.warning("Error: {}. Series entry {} for item {} could not be calculated."
+                                        " Skipping series calculation".format(e, mydict, item))
+                    continue
+            return True
 
         except Exception as e:
-            self.logger.warning("Series for item {} could not be calculated. Error: {}".format(item, e))
-        return True
+            self.logger.warning("Series for item {} could not be calculated for list {}. Error: {}".format(
+                item, self._items[item]['list'], e))
 
     def _get_sun4week(self, item, caller=None):
         """
@@ -1050,16 +1115,17 @@ class UZSU(SmartPlugin):
         :type caller:   string
         :return:        True at the end of the method
         """
-        dayrule = rrulestr("FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR,SA,SU"+";COUNT=7", dtstart=datetime.now().replace(hour=0, minute=0, second=0))
-        daycounter = 0
-        myNewDict = {'sunrise': {}, 'sunset': {}}
+        dayrule = rrulestr("FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR,SA,SU" + ";COUNT=7",
+                           dtstart=datetime.now().replace(hour=0, minute=0, second=0))
+        self.logger.debug("Get sun4week for item {} called by {}".format(item, caller))
+        mynewdict = {'sunrise': {}, 'sunset': {}}
         for day in (list(dayrule)):
-            actDay = ['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU'][day.weekday()]
-            mySunrise = self._sun(day.astimezone(self._timezone), "sunrise", "next")
-            mySunset = self._sun(day.astimezone(self._timezone), "sunset", "next")
-            myNewDict['sunrise'][actDay] = ("{:02d}".format(mySunrise.hour)+":"+"{:02d}".format(mySunrise.minute))
-            myNewDict['sunset'][actDay] = ("{:02d}".format(mySunset.hour)+":"+"{:02d}".format(mySunset.minute))
-        self._items[item]['SunCalculated'] = myNewDict
+            actday = ['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU'][day.weekday()]
+            mysunrise = self._sun(day.astimezone(self._timezone), "sunrise", "next")
+            mysunset = self._sun(day.astimezone(self._timezone), "sunset", "next")
+            mynewdict['sunrise'][actday] = ("{:02d}".format(mysunrise.hour) + ":" + "{:02d}".format(mysunrise.minute))
+            mynewdict['sunset'][actday] = ("{:02d}".format(mysunset.hour) + ":" + "{:02d}".format(mysunset.minute))
+        self._items[item]['SunCalculated'] = mynewdict
         return True
 
     def _series_get_time(self, mydict, timescan=''):
@@ -1069,83 +1135,99 @@ class UZSU(SmartPlugin):
                 :param timescan:    direction to search for next/previous
         """
 
-        returnValue = None
-        count = mydict['series'].get('timeSeriesCount', None)
+        returnvalue = None
+        daycount = mydict['series'].get('timeSeriesCount', None)
         serieend = mydict['series'].get('timeSeriesMax', None)
         intervall = mydict['series'].get('timeSeriesIntervall', None)
         if intervall is not None and intervall != "":
             intervall = int(intervall.split(":")[0])*60 + int(mydict['series']['timeSeriesIntervall'].split(":")[1])
         else:
-            return returnValue
+            return returnvalue
         if intervall == 0:
             self.logger.warning("Could not calculate serie because intervall is ZERO - {}".format(mydict))
-            return returnValue
+            return returnvalue
 
-        if not 'sun' in mydict['series']['timeSeriesMin']:
-            startTime = datetime.strptime(mydict['series']['timeSeriesMin'], "%H:%M")
+        if 'sun' not in mydict['series']['timeSeriesMin']:
+            starttime = datetime.strptime(mydict['series']['timeSeriesMin'], "%H:%M")
         else:
             seriesstart = mydict['series']['timeSeriesMin']
-            myTime = self._sun(datetime.now().replace(hour=0, minute=0, second=0).astimezone(self._timezone), seriesstart, "next")
-            startTime = ("{:02d}".format(myTime.hour)+":"+"{:02d}".format(myTime.minute))
-            startTime = datetime.strptime(startTime, "%H:%M")
+            mytime = self._sun(datetime.now().replace(hour=0, minute=0, second=0).astimezone(self._timezone),
+                               seriesstart, "next")
+            starttime = ("{:02d}".format(mytime.hour) + ":" + "{:02d}".format(mytime.minute))
+            starttime = datetime.strptime(starttime, "%H:%M")
 
-        if count is None and serieend is not None:
+        if daycount is None and serieend is not None:
             if 'sun' in serieend:
-                myTime = self._sun(datetime.now().replace(hour=0, minute=0, second=0).astimezone(self._timezone), serieend, "next")
-                serieend = ("{:02d}".format(myTime.hour)+":"+"{:02d}".format(myTime.minute))
+                mytime = self._sun(datetime.now().replace(hour=0, minute=0, second=0).astimezone(self._timezone),
+                                   serieend, "next")
+                serieend = ("{:02d}".format(mytime.hour) + ":" + "{:02d}".format(mytime.minute))
                 endtime = datetime.strptime(serieend, "%H:%M")
             else:
                 endtime = datetime.strptime(serieend, "%H:%M")
-            if endtime < startTime:
+            if endtime < starttime:
                 endtime += timedelta(days=1)
-            timeDiff = endtime - startTime
-            count = int(timeDiff.total_seconds() / 60 / intervall)
+            timediff = endtime - starttime
+            daycount = int(timediff.total_seconds() / 60 / intervall)
         else:
             if serieend is None:
-                endtime = startTime
-                endtime += timedelta(minutes=intervall*int(count))
-                timeDiff = endtime - startTime
-                count = int(timeDiff.total_seconds() / 60 / intervall)
+                endtime = starttime
+                endtime += timedelta(minutes=intervall * int(daycount))
+                timediff = endtime - starttime
+                daycount = int(timediff.total_seconds() / 60 / intervall)
+            else:
+                endtime = datetime.strptime(serieend, "%H:%M")
+                timediff = endtime - starttime
 
-        if count is not None:
-            if (int(count)*intervall >= 1440):
-                org_count = count
+        if daycount is not None and daycount != '':
+            if serieend is None and (int(daycount) * intervall >= 1440):
+                org_count = daycount
                 count = int(1439 / intervall)
-                self.logger.warning("Cut your SerieCount to {} - because intervall {} x SerieCount {} is more than 24h".format(count, intervall, org_count))
-
-        myList = OrderedDict()
+                self.logger.warning("Cut your SerieCount to {} - because intervall {}"
+                                    " x SerieCount {} is more than 24h".format(count, intervall, org_count))
+            else:
+                new_daycount = int(timediff.total_seconds() / 60 / intervall)
+                #self.logger.debug("new daycount: {}, serieend {}".format(new_daycount, serieend))
+                if int(daycount) > new_daycount:
+                    self.logger.warning("Cut your SerieCount to {} - because intervall {}"
+                                        " x SerieCount {} is not possible between {} and {}".format(
+                                            new_daycount, intervall, daycount, datetime.strftime(starttime, "%H:%M"),
+                                            datetime.strftime(endtime, "%H:%M")))
+                    daycount = new_daycount
+        mylist = OrderedDict()
         actrrule = mydict['rrule'] + ';COUNT=9'
-        rrule = rrulestr(actrrule, dtstart=datetime.combine(datetime.now()-timedelta(days=7), parser.parse(str(startTime.hour)+':'+str(startTime.minute)).time()))
+        rrule = rrulestr(actrrule, dtstart=datetime.combine(datetime.now()-timedelta(days=7),
+                                                            parser.parse(str(starttime.hour) + ':' +
+                                                                         str(starttime.minute)).time()))
         for day in list(rrule):
-            myCount = 1
+            mycount = 1
             timestamp = day
-            myList[timestamp] = 'x'
-            while myCount < count:
+            mylist[timestamp] = 'x'
+            while mycount < daycount:
                 timestamp = timestamp + timedelta(minutes=intervall)
-                myList[timestamp] = 'x'
-                myCount += 1
+                mylist[timestamp] = 'x'
+                mycount += 1
 
         now = datetime.now()
-        myList[now] = 'now'
-        mySortedList = sorted(myList)
-        myIndex = mySortedList.index(now)
-        if (timescan == 'next'):
-            returnValue = mySortedList[myIndex+1]
+        mylist[now] = 'now'
+        mysortedlist = sorted(mylist)
+        myindex = mysortedlist.index(now)
+        if timescan == 'next':
+            returnvalue = mysortedlist[myindex+1]
         else:
-            returnValue = mySortedList[myIndex-1]
-
+            returnvalue = mysortedlist[myindex-1]
 
         # Get correct "sun" for this Day
-        if 'sun' in mydict['series']['timeSeriesMin'] and returnValue is not None:
-            myTime = self._sun(returnValue.replace(hour=0, minute=0, second=0).astimezone(self._timezone), mydict['series']['timeSeriesMin'], "next")
-            delta_dt1 = returnValue.replace(hour=myTime.hour, minute=myTime.minute, second=0)
-            delta_dt2 = returnValue.replace(hour=startTime.hour, minute=startTime.minute, second=0)
+        if 'sun' in mydict['series']['timeSeriesMin'] and returnvalue is not None:
+            mytime = self._sun(returnvalue.replace(hour=0, minute=0, second=0).astimezone(self._timezone),
+                               mydict['series']['timeSeriesMin'], "next")
+            delta_dt1 = returnvalue.replace(hour=mytime.hour, minute=mytime.minute, second=0)
+            delta_dt2 = returnvalue.replace(hour=starttime.hour, minute=starttime.minute, second=0)
             delta_time = delta_dt1.minute - delta_dt2.minute
-            returnValue += timedelta(minutes=delta_time)
-        if returnValue is not None:
-            returnValue = returnValue.replace(tzinfo=self._timezone)
+            returnvalue += timedelta(minutes=delta_time)
+        if returnvalue is not None:
+            returnvalue = returnvalue.replace(tzinfo=self._timezone)
 
-        return returnValue
+        return returnvalue
 
     def _sun(self, dt, tstr, timescan):
         """
