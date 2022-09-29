@@ -28,7 +28,8 @@
 # Each UZSU item is of type list. Each list entry has to be a dict with specific key and value pairs.
 # Here are the possible keys and their purpose:
 #
-#     dtstart:  a datetime object. Exact datetime as start value for the rrule algorithm. Important e.g. for FREQ=MINUTELY rrules (optional).
+#     dtstart:  a datetime object. Exact datetime as start value for the rrule algorithm. 
+#               Important e.g. for FREQ=MINUTELY rrules (optional).
 #
 #     value:    the value which will be set to the item.
 #
@@ -43,15 +44,17 @@
 #                     17:00<sunset
 #                     sunrise>8:00
 #                     17:00<sunset.
-#               C) 'serie' to indicate the use of a time series; definition of a time series is mandatory using dict key 'series'
+#               C) 'serie' to indicate the use of a time series; definition of a 
+#                   time series is mandatory using dict key 'series'
 #
-#     series:   definition of the time series as dict using keys 'active', 'timeSeriesMin', 'timeSeriesMax', 'timeSeriesIntervall'
+#     series:   definition of the time series as dict using keys 'active', 'timeSeriesMin',
+#               'timeSeriesMax', 'timeSeriesIntervall'
 #                   example:
 #                       "series":{"active":true,
 #                                 "timeSeriesMin":"06:15",
 #                                 "timeSeriesMax":"15:30",
 #                                 "timeSeriesIntervall":"01:00"}
-#               alternativly to 'timeSeriesMax', which indicated the end time of the time series, the key 'timeSeriesCount'
+#               alternative to 'timeSeriesMax', which indicated the end time of the time series, the key 'timeSeriesCount'
 #               can be used to define the number of cycles to be run
 #                   example:
 #                       "series":{"active":true,
@@ -99,8 +102,6 @@ except Exception:
 ITEM_TAG = ['uzsu_item']
 
 
-
-
 class UZSU(SmartPlugin):
     """
     Main class of the UZSU Plugin. Does all plugin specific stuff and provides
@@ -113,9 +114,8 @@ class UZSU(SmartPlugin):
 
     def __init__(self, smarthome):
         """
-        Initalizes the plugin. The parameters describe for this method are pulled from the entry in plugin.conf.
-
-        :param sh:  The instance of the smarthome object, save it for later references
+        Initializes the plugin. The parameters describe for this method are pulled from the entry in plugin.conf.
+        :param smarthome:  The instance of the smarthome object, save it for later references
         """
         if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
             self.logger = logging.getLogger(__name__)
@@ -148,7 +148,8 @@ class UZSU(SmartPlugin):
         """
         self.logger.debug("run method called")
         self.alive = True
-        self.scheduler_add('uzsu_sunupdate', self._update_all_suns, value={'caller': 'scheduler'}, cron=self._suncalculation_cron)
+        self.scheduler_add('uzsu_sunupdate', self._update_all_suns,
+                           value={'caller': 'scheduler'}, cron=self._suncalculation_cron)
         self.logger.info("Adding sun update schedule for midnight")
 
         for item in self._items:
@@ -169,7 +170,7 @@ class UZSU(SmartPlugin):
             try:
                 self._items[item].pop('lastvalue')
                 self._update_item(item, 'UZSU Plugin', 'lastvalue removed')
-                self.logger.DEBUG("Item '{}': removed lastvalue dict entry as it is deprecated.".format(item))
+                self.logger.debug("Item '{}': removed lastvalue dict entry as it is deprecated.".format(item))
             except Exception:
                 pass
             self._check_rruleandplanned(item)
@@ -181,7 +182,8 @@ class UZSU(SmartPlugin):
                 self._webdata[item.id()].update({'planned': {'value': '-', 'time': '-'}})
             else:
                 self.logger.debug("Not scheduling item {}, cond1 {}, cond2 {}".format(item, cond1, cond2))
-                self.logger.info('Dry run of scheduler calculation for item {} to get calculated sunset/rise entries'.format(item))
+                self.logger.info('Dry run of scheduler calculation for item {}'
+                                 'to get calculated sunset/rise entries'.format(item))
                 self._schedule(item, caller='dry_run')
 
     def stop(self):
@@ -200,7 +202,6 @@ class UZSU(SmartPlugin):
     def _update_all_suns(self, caller=None):
         """
         Update sun information for all uzsu items
-
         :param caller:  if given it represents the callers name
         :type caller:   str
         """
@@ -210,7 +211,6 @@ class UZSU(SmartPlugin):
     def _update_sun(self, item, caller=None):
         """
         Update general sunrise and sunset information for visu
-
         :param caller:  if given it represents the callers name
         :param item:    uzsu item
         :type caller:   str
@@ -262,7 +262,6 @@ class UZSU(SmartPlugin):
     def _add_type(self, item):
         """
         Adding the type of the item that is changed by the uzsu to the item dict
-
         :param item:    uzsu item
         :type item:     item
         :return:        The item type of the item that is changed
@@ -283,7 +282,8 @@ class UZSU(SmartPlugin):
             if _itemtype is None:
                 self.logger.warning("Item to be set by uzsu '{}' does not exist. Error: {}".format(_itemforuzsu, err))
             else:
-                self.logger.warning("Item to be set by uzsu '{}' does not have a type attribute. Error: {}".format(_itemforuzsu, err))
+                self.logger.warning("Item to be set by uzsu '{}' does not have a type attribute."
+                                    "Error: {}".format(_itemforuzsu, err))
         return _itemtype
 
     def _logics_lastvalue(self, by=None, item=None):
@@ -299,7 +299,8 @@ class UZSU(SmartPlugin):
         self._logics_activate(True, item)
         lastvalue = self._logics_lastvalue(item)
         self._set(item=item, value=lastvalue, caller='logic')
-        self.logger.info("Resuming item {}: Acitivated and value set to {}".format(item, lastvalue))
+        self.logger.info("Resuming item {}: Activated and value set to {}."
+                         "Active value: {}".format(item, lastvalue, activevalue))
         return lastvalue
 
     def _logics_activate(self, activevalue=None, item=None):
@@ -322,21 +323,21 @@ class UZSU(SmartPlugin):
         if activevalue is None:
             return self._items[item].get('active')
 
-    def _logics_interpolation(self, type=None, interval=None, backintime=None, item=None):
+    def _logics_interpolation(self, intpl_type=None, interval=None, backintime=None, item=None):
         interval = self._interpolation_interval if interval is None else interval
         backintime = self._backintime if backintime is None else backintime
-        if type is None:
+        if intpl_type is None:
             return self._items[item].get('interpolation')
         else:
             if '.'.join(VERSION.split('.', 3)[:3]) > '1.5.1':
                 self._items[item] = item()
             else:
                 self._items[item] = copy.deepcopy(item())
-            self._items[item]['interpolation']['type'] = str(type).lower()
+            self._items[item]['interpolation']['type'] = str(intpl_type).lower()
             self._items[item]['interpolation']['interval'] = abs(int(interval))
             self._items[item]['interpolation']['initage'] = int(backintime)
             self.logger.info("Item {} interpolation is set via logic to: type={}, interval={}, backintime={}".format(
-                item, type, abs(interval), backintime))
+                item, intpl_type, abs(interval), backintime))
             self._update_item(item, 'UZSU Plugin', 'logic')
             return self._items[item].get('interpolation')
 
@@ -387,8 +388,7 @@ class UZSU(SmartPlugin):
     def _add_dicts(self, item):
         """
         Method to add interpolation dict if it's not available
-
-        :param item:    The item to process.
+        :param item:    The item to process
         :type item:     item
         """
         if not self._items[item].get('interpolation'):
@@ -408,9 +408,8 @@ class UZSU(SmartPlugin):
         """
         Default plugin parse_item method. Is called when the plugin is initialized.
         The plugin can, corresponding to its attribute keywords, decide what to do with
-        the item in future, like adding it to an internal array for future reference
-
-        :param item:    The item to process.
+        the item in the future, like adding it to an internal array for future reference
+        :param item:    The item to process
         :type item:     item
         :return:        If the plugin needs to be informed of an items change you should return a call back function
                         like the function update_item down below. An example when this is needed is the knx plugin
@@ -502,7 +501,6 @@ class UZSU(SmartPlugin):
         """
         This is called by smarthome engine when the item changes, e.g. by Visu or by the command line interface
         The relevant item is put into the internal item list and registered to the scheduler
-
         :param item:    item to be updated towards the plugin
         :param caller:  if given it represents the callers name
         :param source:  if given it represents the source
@@ -517,7 +515,8 @@ class UZSU(SmartPlugin):
         if self._remove_duplicates is True and self._items[item].get('list') and cond:
             self._remove_dupes(item)
         self._add_dicts(item)
-        if not self._items[item]['interpolation'].get('itemtype') or self._items[item]['interpolation']['itemtype'] == 'none':
+        if not self._items[item]['interpolation'].get('itemtype') or \
+                self._items[item]['interpolation']['itemtype'] == 'none':
             self._items[item]['interpolation']['itemtype'] = self._add_type(item)
         if cond and self._items[item].get('active') is False and not source == 'update_sun':
             self._lastvalues[item] = None
@@ -526,10 +525,12 @@ class UZSU(SmartPlugin):
             self.logger.debug('lastvalue for item {} set to None because UZSU is deactivated'.format(item))
         if cond:
             self._schedule(item, caller='update')
-        elif source == 'update_sun':
-            self.logger.info('Not running dry run of scheduler calculation for item {} because of update_sun source'.format(item))
+        elif 'update' in source:
+            self.logger.info('Not running dry run of scheduler calculation for item {}'
+                             ' because of {} source'.format(item, source))
         else:
-            self.logger.info('Dry run of scheduler calculation for item {} to get calculated sunset/rise entries'.format(item))
+            self.logger.info('Dry run of scheduler calculation for item {}'
+                             ' to get calculated sunset/rise entries. Source: {}'.format(item, source))
             self._schedule(item, caller='dry_run')
 
         if self._items[item] != self.itemsApi.return_item(str(item)) and cond:
@@ -538,21 +539,27 @@ class UZSU(SmartPlugin):
     def _update_item(self, item, caller="", comment=""):
         success = self._get_sun4week(item, caller="_update_item")
         if success:
-            self.logger.debug('Updated weekly sun info for item {} caller : {} comment : {}'.format(item, caller, comment))
+            self.logger.debug('Updated weekly sun info for item {}'
+                              ' caller : {} comment : {}'.format(item, caller, comment))
         else:
-            self.logger.debug('Issues with updating weekly sun info for item {} caller : {} comment : {}'.format(item, caller, comment))
+            self.logger.debug('Issues with updating weekly sun info'
+                              ' for item {} caller : {} comment : {}'.format(item, caller, comment))
         success = False
         success = self._series_calculate(item, caller, comment)
         if success:
-            self.logger.debug('Updated seriesCalculated for item {} caller : {} comment : {}'.format(item, caller, comment))
+            self.logger.debug('Updated seriesCalculated for item {}'
+                              ' caller : {} comment : {}'.format(item, caller, comment))
         else:
-            self.logger.debug('Issues with updating seriesCalculated for item {} caller : {} comment : {}'.format(item, caller, comment))
+            self.logger.debug('Issues with updating seriesCalculated'
+                              ' for item {} caller : {} comment : {}'.format(item, caller, comment))
         success = False
         success = self._update_sun(item, caller="_update_item")
         if success:
-            self.logger.debug('Updated sunset/rise calculations for item {} caller : {} comment : {}'.format(item, caller, comment))
+            self.logger.debug('Updated sunset/rise calculations for item {}'
+                              ' caller : {} comment : {}'.format(item, caller, comment))
         else:
-            self.logger.debug('Issues with updating sunset/rise calculations for item {} caller : {} comment : {}'.format(item, caller, comment))
+            self.logger.debug('Issues with updating sunset/rise calculations'
+                              ' for item {} caller : {} comment : {}'.format(item, caller, comment))
         item(self._items[item], caller, comment)
         self._webdata[item.id()].update({'interpolation': self._items[item].get('interpolation')})
         self._webdata[item.id()].update({'active': str(self._items[item].get('active'))})
@@ -560,17 +567,17 @@ class UZSU(SmartPlugin):
         self._webdata[item.id()].update({'dict': self.get_itemdict(item)})
         if not comment == "init":
             _uzsuitem, _itemvalue = self._get_dependant(item)
-            id = None if _uzsuitem is None else _uzsuitem.id()
-            self._webdata[item.id()].update({'depend': {'item': id, 'value': str(_itemvalue)}})
+            item_id = None if _uzsuitem is None else _uzsuitem.id()
+            self._webdata[item.id()].update({'depend': {'item': item_id, 'value': str(_itemvalue)}})
 
     def _schedule(self, item, caller=None):
         """
         This function schedules an item: First the item is removed from the scheduler.
         If the item is active then the list is searched for the nearest next execution time.
         No matter if active or not the calculation for the execution time is triggered.
-
         :param item:    item to be updated towards the plugin
-        :param caller:  if given it represents the callers name. If the caller is set to "dry_run" the evaluation of sun entries takes place but no scheduler will be set
+        :param caller:  if given it represents the callers name. If the caller is set 
+                        to "dry_run" the evaluation of sun entries takes place but no scheduler will be set
         """
         if caller != "dry_run":
             self.scheduler_remove('{}'.format(item.property.path))
@@ -585,13 +592,16 @@ class UZSU(SmartPlugin):
         _value = None
         self._update_sun(item, caller=_caller)
         self._add_dicts(item)
-        if not self._items[item]['interpolation'].get('itemtype') or self._items[item]['interpolation']['itemtype'] == 'none':
+        if not self._items[item]['interpolation'].get('itemtype') or \
+                self._items[item]['interpolation']['itemtype'] == 'none':
             self._items[item]['interpolation']['itemtype'] = self._add_type(item)
         if self._items[item].get('interpolation') is None:
-            self.logger.error("Something is wrong with your UZSU item. You most likely use a wrong smartVISU widget version!"
+            self.logger.error("Something is wrong with your UZSU item. You most likely use a"
+                              " wrong smartVISU widget version!"
                               " Use the latest device.uzsu SV 2.9. or higher "
                               "If you write your uzsu dict directly please use the format given in the documentation: "
-                              "https://www.smarthomeng.de/user/plugins/uzsu/user_doc.html and include the interpolation array correctly!")
+                              "https://www.smarthomeng.de/user/plugins/uzsu/user_doc.html and "
+                              "include the interpolation array correctly!")
             return
         elif not self._items[item]['interpolation'].get('itemtype'):
             self.logger.error("item '{}' to be set by uzsu does not exist.".format(
@@ -722,7 +732,8 @@ class UZSU(SmartPlugin):
                 self._planned.update({item: {'value': _value, 'next': _next.strftime('%Y-%m-%d %H:%M')}})
                 self._webdata[item.id()].update({'planned': {'value': _value, 'time': _next.strftime('%d.%m.%Y %H:%M')}})
                 self._update_count['done'] = self._update_count.get('done') + 1
-                self.scheduler_add('{}'.format(item.property.path), self._set, value={'item': item, 'value': _value}, next=_next)
+                self.scheduler_add('{}'.format(item.property.path), self._set,
+                                   value={'item': item, 'value': _value}, next=_next)
                 if self._update_count.get('done') == self._update_count.get('todo'):
                     self.scheduler_trigger('uzsu_sunupdate', by='UZSU Plugin')
                     self._update_count = {'done': 0, 'todo': 0}
@@ -734,7 +745,6 @@ class UZSU(SmartPlugin):
     def _set(self, item=None, value=None, caller=None):
         """
         This function sets the specific item
-
         :param item:    item to be updated towards the plugin
         :param value:   value the item should be set to
         :param caller:  if given it represents the callers name
@@ -756,7 +766,8 @@ class UZSU(SmartPlugin):
                             dtstart
         :param item:        item to be updated towards the plugin
         :param timescan:    defines whether to find values in the future or past
-        :param caller:      defines the caller of the method. If it's name is dry_run just simulate getting time even if entry is not active
+        :param caller:      defines the caller of the method. If it's name is dry_run just 
+                            simulate getting time even if entry is not active
         """
         try:
             if not isinstance(entry, dict):
@@ -793,7 +804,8 @@ class UZSU(SmartPlugin):
                         if 'sun' in time:
                             rrule = rrulestr(entry['rrule'], dtstart=datetime.combine(
                                 weekbefore, self._sun(datetime.combine(weekbefore.date(),
-                                                                       datetime.min.time()).replace(tzinfo=self._timezone), time, timescan).time()))
+                                                                       datetime.min.time()).replace(tzinfo=self._timezone),
+                                                                       time, timescan).time()))
                             self.logger.debug("Looking for {} sun-related time. Found rrule: {}".format(
                                 timescan, str(rrule).replace('\n', ';')))
                         else:
@@ -807,7 +819,9 @@ class UZSU(SmartPlugin):
                         return None, None
                     if 'sun' in time:
                         sleep(0.01)
-                        next = self._sun(datetime.combine(dt.date(), datetime.min.time()).replace(tzinfo=self._timezone), time, timescan)
+                        next = self._sun(datetime.combine(dt.date(),
+                                                          datetime.min.time()).replace(tzinfo=self._timezone),
+                                                          time, timescan)
                         self.logger.debug("Result parsing time (rrule) {}: {}".format(time, next))
                         if entryindex is not None and timescan == 'next':
                             self._update_suncalc(item, entry, entryindex, next.strftime("%H:%M"))
@@ -877,13 +891,16 @@ class UZSU(SmartPlugin):
             self.logger.error("Error '{}' parsing time: {}".format(time, e))
         return None, None
 
-    def _series_calculate(self, item, caller, source=None):
+    def _series_calculate(self, item, caller=None, source=None):
         """
                 Calculate serie-entries for next 168 hour (7 days) - from now to now-1 second
                 and writes the list to "seriesCalculated" in item
                 :param item:      an item with series entry
+                :param caller:    caller of the method
+                :param source:    source of the method caller
                 :return:          True if everything went smoothly, otherwise False
         """
+        self.logger.debug("Series Calculate method for item {} called by {}. Source: {}".format(item, caller, source))
         if not self._items[item].get('list'):
             return
         try:
@@ -1026,8 +1043,7 @@ class UZSU(SmartPlugin):
 
     def _get_sun4week(self, item, caller=None):
         """
-        Getting the values for sunrise and sunset for the whole upcoming 7 days. Relevant for time series.
-
+        Getting the values for sunrise and sunset for the whole upcoming 7 days - relevant for time series
         :param item:    uzsu item
         :type item:     item
         :param caller:  Method calling this method
@@ -1133,9 +1149,8 @@ class UZSU(SmartPlugin):
 
     def _sun(self, dt, tstr, timescan):
         """
-        parses a given string with a time range to determine it's timely boundaries and
+        parses a given string with a time range to determine its timely boundaries and
         returns a time
-
         :param dt:          contains a datetime object,
         :param tstr:        contains a string with '[H:M<](sunrise|sunset)[+|-][offset][<H:M]' like e.g. '6:00<sunrise<8:00'
         :param timescan:    defines whether to find values in the future or past, for logging purposes
@@ -1249,7 +1264,6 @@ class UZSU(SmartPlugin):
     def _get_dependant(self, item):
         """
         Getting the value of the dependent item for the webif
-
         :param item:    uzsu item
         :type item:     item
         :return:        The item value of the item that is changed
@@ -1273,7 +1287,7 @@ class UZSU(SmartPlugin):
         """
         Getting a sorted item list with uzsu config
         :item:          uzsu item
-        :return:        sanitzed dict from uzsu item
+        :return:        sanitized dict from uzsu item
         """
 
         return html.escape(json.dumps(self._items[item]))
