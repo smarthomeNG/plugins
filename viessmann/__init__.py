@@ -64,7 +64,7 @@ class Viessmann(SmartPlugin):
     '''
     ALLOW_MULTIINSTANCE = False
 
-    PLUGIN_VERSION = '1.2.2'
+    PLUGIN_VERSION = '1.2.3'
 
 #
 # public methods
@@ -1678,7 +1678,7 @@ class Viessmann(SmartPlugin):
         :return: Converted value
         :rtype: int
         '''
-        return int.from_bytes(rawbytes, byteorder='little', signed=signed)
+        return int.from_bytes(rawbytes, byteorder='big', signed=signed)
 
     def _bytes2hexstring(self, bytesvalue):
         '''
