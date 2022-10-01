@@ -1255,7 +1255,7 @@ class Viessmann(SmartPlugin):
                     value = bool(value)
                 else:
                     value = int(value)
-                valuebytes = self._int2bytes(value, commandvaluebytes)
+                valuebytes = self._int2bytes(value, commandvaluebytes, byteorder='little')
                 self.logger.debug(f'Created value bytes for type {valuetype} as hexstring: {self._bytes2hexstring(valuebytes)} and as bytes: {valuebytes}')
             else:
                 self.logger.error(f'Type {valuetype} not definied for creating write command bytes')
@@ -1650,7 +1650,7 @@ class Viessmann(SmartPlugin):
             self.logger.error('No bytes received to calculate checksum')
         return checksum
 
-    def _int2bytes(self, value, length, signed=False):
+    def _int2bytes(self, value, length, signed=False, byteorder='big'):
         '''
         Convert value to bytearray with respect to defined length and sign format.
         Value exceeding limit set by length and sign will be truncated
@@ -1665,7 +1665,7 @@ class Viessmann(SmartPlugin):
         :rtype: bytearray
         '''
         value = value % (2 ** (length * 8))
-        return value.to_bytes(length, byteorder='big', signed=signed)
+        return value.to_bytes(length, byteorder=byteorder, signed=signed)
 
     def _bytes2int(self, rawbytes, signed):
         '''
@@ -1678,7 +1678,7 @@ class Viessmann(SmartPlugin):
         :return: Converted value
         :rtype: int
         '''
-        return int.from_bytes(rawbytes, byteorder='big', signed=signed)
+        return int.from_bytes(rawbytes, byteorder='little', signed=signed)
 
     def _bytes2hexstring(self, bytesvalue):
         '''
