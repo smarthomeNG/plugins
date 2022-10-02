@@ -401,7 +401,7 @@ aktive Bedingungsgruppe des vorherigen Zustands haben darf.
 Beispiel: Der Zustand Suspend wird durch enter_manuell eingenommen. Bei der nächsten
 Evaluierung bleibt der Zustand auf Grund von enter_stay aktiv. Der Zustand wird schließlich verlassen,
 stattdessen ist nun z.B. der Sperrzustand (lock) aktiv. ``se_value_previousstate_conditionset_name``
-gibt nun ``enter_stay``zurück.
+gibt nun ``enter_stay`` zurück.
 
 **trigger_item, trigger_caller, trigger_source, trigger_dest**
 *item, caller, source und dest-Werte, durch die die
