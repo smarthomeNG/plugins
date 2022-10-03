@@ -888,6 +888,9 @@ class UZSU(SmartPlugin):
                 self._itpl[item][next.timestamp() * 1000.0] = value
                 self.logger.debug("Return next tomorrow: {}, value {}".format(next, value))
                 return next, value
+            if 'series' in time and next and cond_next:
+                self.logger.debug("Return next for series: {}, value {}".format(next, value))
+                return next, value
             if next and cond_today and cond_previous_today:
                 self._itpl[item][(next - timedelta(seconds=1)).timestamp() * 1000.0] = value
                 self.logger.debug("Not returning previous today {} because it's in the past.".format(next))
