@@ -692,9 +692,9 @@ class UZSU(SmartPlugin):
                 self.logger.warning("Interpolation is set to {} but interval is {}. Ignoring interpolation".format(
                     _interpolation, _interval))
             elif cond2 and _itemtype not in ['num']:
-                self.logger.warning("Interpolation is set to {} but type of item is {}."
+                self.logger.warning("Interpolation is set to {} but type of item {} is {}."
                                     " Ignoring interpolation and setting UZSU interpolation to none.".format(
-                                        _interpolation, _itemtype))
+                                        item, _interpolation, _itemtype))
                 _reset_interpolation = True
             elif _interpolation.lower() == 'cubic' and _interval > 0:
                 try:
