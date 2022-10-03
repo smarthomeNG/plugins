@@ -993,96 +993,93 @@ class UZSU(SmartPlugin):
                             daycount = new_daycount
 
                     #####################
+                    # advanced rule including all sun times, start and end times  and calculated max counts, etc.
+                    rrule = rrulestr(mydict['rrule'] + ";COUNT=7",
+                                     dtstart=datetime.combine(datetime.now(),
+                                                              parser.parse(str(starttime.hour) + ':' +
+                                                                           str(starttime.minute)).time()))
+                    mynewlist = []
 
-                    if seriebegin is not None and "sun" not in seriebegin and serieend is not None and "sun" not in serieend:
-                        # simple rule
-                        pass
-                    else:
-                        # advanced rule including all sun times
-                        rrule = rrulestr(mydict['rrule'] + ";COUNT=7",
-                                         dtstart=datetime.combine(datetime.now(),
-                                                                  parser.parse(str(starttime.hour) + ':' +
-                                                                               str(starttime.minute)).time()))
-                        mynewlist = []
+                    intervall = int(mydict['series']['timeSeriesIntervall'].split(":")[0])*60 + \
+                                int(mydict['series']['timeSeriesIntervall'].split(":")[1])
+                    for day in list(rrule):
+                        if not mydays[day.weekday()] in mydict['rrule']:
+                            continue
+                        myrulenext = "FREQ=MINUTELY;COUNT={};INTERVAL={}".format(daycount, intervall)
 
-                        intervall = int(mydict['series']['timeSeriesIntervall'].split(":")[0])*60 + \
-                                    int(mydict['series']['timeSeriesIntervall'].split(":")[1])
-                        for day in list(rrule):
-                            if not mydays[day.weekday()] in mydict['rrule']:
-                                continue
-                            myrulenext = "FREQ=MINUTELY;COUNT={};INTERVAL={}".format(daycount, intervall)
-
-                            if 'sun' not in mydict['series']['timeSeriesMin']:
-                                starttime = datetime.strptime(mydict['series']['timeSeriesMin'], "%H:%M")
-                            else:
-                                seriesstart = mydict['series']['timeSeriesMin']
-                                mytime = self._sun(day.replace(hour=0, minute=0, second=0).astimezone(self._timezone),
-                                                   seriesstart, "next")
-                                starttime = ("{:02d}".format(mytime.hour) + ":" + "{:02d}".format(mytime.minute))
-                                starttime = datetime.strptime(starttime, "%H:%M")
+                        if 'sun' not in mydict['series']['timeSeriesMin']:
+                            starttime = datetime.strptime(mydict['series']['timeSeriesMin'], "%H:%M")
+                        else:
+                            seriesstart = mydict['series']['timeSeriesMin']
+                            mytime = self._sun(day.replace(hour=0, minute=0, second=0).astimezone(self._timezone),
+                                               seriesstart, "next")
+                            starttime = ("{:02d}".format(mytime.hour) + ":" + "{:02d}".format(mytime.minute))
+                            starttime = datetime.strptime(starttime, "%H:%M")
+                        dayrule = rrulestr(myrulenext, dtstart=day.replace(hour=starttime.hour,
+                                                                           minute=starttime.minute, second=0))
+                        dayrule.after(day.replace(hour=0, minute=0))    # First Entry for this day
+                        count = 0
+                        try:
+                            actday = mydays[list(dayrule)[0].weekday()]
+                        except Exception:
+                            max_interval = endtime - starttime
+                            self.logger.info("Item {}: Between starttime {} and endtime {}"
+                                             " is a maximum valid interval of {:02d}:{:02d}. "
+                                             "{} is set too high for a continuous series trigger. "
+                                             "The UZSU will only be scheduled for the start time.".format(
+                                                item, datetime.strftime(starttime, "%H:%M"),
+                                                datetime.strftime(endtime, "%H:%M"),
+                                                max_interval.seconds // 3600, max_interval.seconds % 3600//60,
+                                                mydict['series']['timeSeriesIntervall']))
+                            max_interval = int(max_interval.total_seconds() / 60)
+                            myrulenext = "FREQ=MINUTELY;COUNT=1;INTERVAL={}".format(max_interval)
                             dayrule = rrulestr(myrulenext, dtstart=day.replace(hour=starttime.hour,
                                                                                minute=starttime.minute, second=0))
-                            dayrule.after(day.replace(hour=0, minute=0))    # First Entry for this day
-                            count = 0
-                            try:
-                                actday = mydays[list(dayrule)[0].weekday()]
-                            except Exception:
-                                max_interval = endtime - starttime
-                                self.logger.info("Item {}: Between starttime {} and endtime {}"
-                                                 " is a maximum valid interval of {:02d}:{:02d}. "
-                                                 "{} is set too high for a continuous series trigger. "
-                                                 "The UZSU will only be scheduled for the start time.".format(
-                                                    item, datetime.strftime(starttime, "%H:%M"),
-                                                    datetime.strftime(endtime, "%H:%M"),
-                                                    max_interval.seconds // 3600, max_interval.seconds % 3600//60,
-                                                    mydict['series']['timeSeriesIntervall']))
-                                max_interval = int(max_interval.total_seconds() / 60)
-                                myrulenext = "FREQ=MINUTELY;COUNT=1;INTERVAL={}".format(max_interval)
-                                dayrule = rrulestr(myrulenext, dtstart=day.replace(hour=starttime.hour,
-                                                                                   minute=starttime.minute, second=0))
-                                dayrule.after(day.replace(hour=0, minute=0))
-                                actday = mydays[day.weekday()] if list(dayrule) is None else mydays[list(dayrule)[0].weekday()]
-                            seriestarttime = None
-                            for time in list(dayrule):
-                                if mydays[time.weekday()] != actday:
-                                    if seriestarttime is not None:
-                                        mytpl = {'seriesMin': str(seriestarttime.time())[:5]}
-                                        if original_daycount is not None:
-                                            mytpl['seriesMax'] = str((seriestarttime +
-                                                                      timedelta(minutes=intervall * count)).time())[:5]
-                                        else:
-                                            mytpl['seriesMax'] = "{:02d}".format(endtime.hour) + ":" + \
-                                                                 "{:02d}".format(endtime.minute)
-                                        mytpl['seriesDay'] = actday
-                                        self.logger.debug("Mytpl: {}, count {}, interval {}".format(mytpl, count, intervall))
-                                        mynewlist.append(mytpl)
-                                    count = 0
-                                    seriestarttime = None
-                                    actday = mydays[time.weekday()]
-                                if time.time() < datetime.now().time() and time.date() <= datetime.now().date():
-                                    continue
-                                if time >= datetime.now()+timedelta(days=7):
-                                    continue
-                                if seriestarttime is None:
-                                    seriestarttime = time
-                                count += 1
-                            # add the last Time for this day
-                            if seriestarttime is not None:
-                                mytpl = {'seriesMin': str(seriestarttime.time())[:5]}
-                                if original_daycount is not None:
-                                    mytpl['seriesMax'] = str((seriestarttime + timedelta(minutes=intervall * count)).time())[:5]
-                                else:
-                                    mytpl['seriesMax'] = "{:02d}".format(endtime.hour) + ":" + "{:02d}".format(endtime.minute)
-                                mytpl['seriesDay'] = actday
-                                self.logger.debug("Mytpl start not none: {},"
-                                                  " count {} daycount {},"
-                                                  " interval {}".format(mytpl, count, original_daycount, intervall))
-                                mynewlist.append(mytpl)
+                            dayrule.after(day.replace(hour=0, minute=0))
+                            actday = mydays[day.weekday()] if list(dayrule) is None else mydays[list(dayrule)[0].weekday()]
+                        seriestarttime = None
+                        for time in list(dayrule):
+                            if mydays[time.weekday()] != actday:
+                                if seriestarttime is not None:
+                                    mytpl = {'seriesMin': str(seriestarttime.time())[:5]}
+                                    if original_daycount is not None:
+                                        mytpl['seriesMax'] = str((seriestarttime +
+                                                                  timedelta(minutes=intervall * count)).time())[:5]
+                                    else:
+                                        mytpl['seriesMax'] = "{:02d}".format(endtime.hour) + ":" + \
+                                                             "{:02d}".format(endtime.minute)
+                                    mytpl['seriesDay'] = actday
+                                    mytpl['maxCountCalculated'] = daycount
+                                    self.logger.debug("Mytpl: {}, count {}, interval {}".format(mytpl, count, intervall))
+                                    mynewlist.append(mytpl)
+                                count = 0
+                                seriestarttime = None
+                                actday = mydays[time.weekday()]
+                            if time.time() < datetime.now().time() and time.date() <= datetime.now().date():
+                                continue
+                            if time >= datetime.now()+timedelta(days=7):
+                                continue
+                            if seriestarttime is None:
+                                seriestarttime = time
+                            count += 1
+                        # add the last Time for this day
+                        if seriestarttime is not None:
+                            mytpl = {'seriesMin': str(seriestarttime.time())[:5]}
+                            if original_daycount is not None:
+                                mytpl['seriesMax'] = str((seriestarttime + timedelta(minutes=intervall * count)).time())[:5]
+                            else:
+                                mytpl['seriesMax'] = "{:02d}".format(endtime.hour) + ":" + "{:02d}".format(endtime.minute)
+                            mytpl['maxCountCalculated'] = daycount
+                            mytpl['seriesDay'] = actday
+                            self.logger.debug("Mytpl start not none: {},"
+                                              " count {} daycount {},"
+                                              " interval {}".format(mytpl, count, original_daycount, intervall))
+                            mynewlist.append(mytpl)
 
-                        if mynewlist:
-                            self._items[item]['list'][i]['seriesCalculated'] = mynewlist
-                            self.logger.debug("Series for item {} calculated: {}".format(
-                                item, self._items[item]['list'][i]['seriesCalculated']))
+                    if mynewlist:
+                        self._items[item]['list'][i]['seriesCalculated'] = mynewlist
+                        self.logger.debug("Series for item {} calculated: {}".format(
+                            item, self._items[item]['list'][i]['seriesCalculated']))
                 except Exception as e:
                     self.logger.warning("Error: {}. Series entry {} for item {} could not be calculated."
                                         " Skipping series calculation".format(e, mydict, item))
