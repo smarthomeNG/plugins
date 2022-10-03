@@ -924,32 +924,16 @@ class UZSU(SmartPlugin):
                     continue
                 try:
                     #####################
-                    daycount = mydict['series'].get('timeSeriesCount', None)
-                    serieend = mydict['series'].get('timeSeriesMax', None)
-                    seriebegin = mydict['series'].get('timeSeriesMin', None)
+                    seriesbegin, seriesend, daycount, mydict = self._fix_empty_values(mydict)
                     intervall = mydict['series'].get('timeSeriesIntervall', None)
-                    # Fix empty values in series dict
-                    if seriebegin == '':
-                        self.logger.warning("No starttime for series set. Setting it to midnight 00:00")
-                        seriebegin = '00:00'
-                        mydict['series']['timeSeriesMin'] = '00:00'
-                    if serieend == '':
-                        self.logger.warning("No endtime for series set. Setting it to midnight 23:59")
-                        serieend = '23:59'
-                        mydict['series']['timeSeriesMax'] = '23:59'
-                    if daycount == '':
-                        self.logger.warning("No count for series set. Setting it to 1")
-                        daycount = '1'
-                        mydict['series']['timeSeriesCount'] = '1'
-
-                    seriesstart = mydict['series'].get('timeSeriesMin', None)
+                    seriesstart = seriesbegin
 
                     if intervall is None or intervall == "":
                         self.logger.warning("Could not calculate serie for item {}"
                                             " - because intervall is None - {}".format(item, mydict))
                         return
 
-                    if (daycount == '' or daycount is None) and serieend is None:
+                    if (daycount == '' or daycount is None) and seriesend is None:
                         self.logger.warning("Could not calculate series"
                                             " because timeSeriesCount is NONE and TimeSeriesMax is NONE")
                         return
@@ -977,20 +961,20 @@ class UZSU(SmartPlugin):
                         starttime = datetime.strptime(starttime, "%H:%M")
 
                     # calculate End of Serie by Count
-                    if serieend is None:
+                    if seriesend is None:
                         endtime = starttime
                         endtime += timedelta(minutes=intervall * int(daycount))
 
-                    if serieend is not None and 'sun' in serieend:
+                    if seriesend is not None and 'sun' in seriesend:
                         mytime = self._sun(datetime.now().replace(hour=0, minute=0, second=0).astimezone(self._timezone),
-                                           serieend, "next")
+                                           seriesend, "next")
                         endtime = ("{:02d}".format(mytime.hour) + ":" + "{:02d}".format(mytime.minute))
                         endtime = datetime.strptime(endtime, "%H:%M")
-                    elif serieend is not None and 'sun' not in serieend:
-                        endtime = datetime.strptime(serieend, "%H:%M")
+                    elif seriesend is not None and 'sun' not in seriesend:
+                        endtime = datetime.strptime(seriesend, "%H:%M")
 
-                    if serieend is None:
-                        serieend = str(endtime.time())[:5]
+                    if seriesend is None:
+                        seriesend = str(endtime.time())[:5]
 
                     if endtime <= starttime:
                         endtime += timedelta(days=1)
@@ -1131,6 +1115,25 @@ class UZSU(SmartPlugin):
         self._items[item]['SunCalculated'] = mynewdict
         return True
 
+    def _fix_empty_values(self, mydict):
+        daycount = mydict['series'].get('timeSeriesCount', None)
+        seriesend = mydict['series'].get('timeSeriesMax', None)
+        seriesbegin = mydict['series'].get('timeSeriesMin', None)
+        # Fix empty values in series dict
+        if seriesbegin == '':
+            self.logger.warning("No starttime for series set. Setting it to midnight 00:00")
+            seriesbegin = '00:00'
+            mydict['series']['timeSeriesMin'] = seriesbegin
+        if seriesend == '':
+            self.logger.warning("No endtime for series set. Setting it to midnight 23:59")
+            seriesend = '23:59'
+            mydict['series']['timeSeriesMax'] = seriesend
+        if daycount == '':
+            self.logger.warning("No count for series set. Setting it to 1")
+            daycount = '1'
+            mydict['series']['timeSeriesCount'] = daycount
+        return seriesbegin, seriesend, daycount, mydict
+            
     def _series_get_time(self, mydict, timescan=''):
         """
                 Returns the next time/date for a serie
@@ -1139,9 +1142,10 @@ class UZSU(SmartPlugin):
         """
 
         returnvalue = None
-        daycount = mydict['series'].get('timeSeriesCount', None)
-        serieend = mydict['series'].get('timeSeriesMax', None)
+        seriesbegin, seriesend, daycount, mydict = self._fix_empty_values(mydict)
         intervall = mydict['series'].get('timeSeriesIntervall', None)
+        seriesstart = seriesbegin
+        
         if intervall is not None and intervall != "":
             intervall = int(intervall.split(":")[0])*60 + int(mydict['series']['timeSeriesIntervall'].split(":")[1])
         else:
@@ -1153,43 +1157,42 @@ class UZSU(SmartPlugin):
         if 'sun' not in mydict['series']['timeSeriesMin']:
             starttime = datetime.strptime(mydict['series']['timeSeriesMin'], "%H:%M")
         else:
-            seriesstart = mydict['series']['timeSeriesMin']
             mytime = self._sun(datetime.now().replace(hour=0, minute=0, second=0).astimezone(self._timezone),
                                seriesstart, "next")
             starttime = ("{:02d}".format(mytime.hour) + ":" + "{:02d}".format(mytime.minute))
             starttime = datetime.strptime(starttime, "%H:%M")
 
-        if daycount is None and serieend is not None:
-            if 'sun' in serieend:
+        if daycount is None and seriesend is not None:
+            if 'sun' in seriesend:
                 mytime = self._sun(datetime.now().replace(hour=0, minute=0, second=0).astimezone(self._timezone),
-                                   serieend, "next")
-                serieend = ("{:02d}".format(mytime.hour) + ":" + "{:02d}".format(mytime.minute))
-                endtime = datetime.strptime(serieend, "%H:%M")
+                                   seriesend, "next")
+                seriesend = ("{:02d}".format(mytime.hour) + ":" + "{:02d}".format(mytime.minute))
+                endtime = datetime.strptime(seriesend, "%H:%M")
             else:
-                endtime = datetime.strptime(serieend, "%H:%M")
+                endtime = datetime.strptime(seriesend, "%H:%M")
             if endtime < starttime:
                 endtime += timedelta(days=1)
             timediff = endtime - starttime
             daycount = int(timediff.total_seconds() / 60 / intervall)
         else:
-            if serieend is None:
+            if seriesend is None:
                 endtime = starttime
                 endtime += timedelta(minutes=intervall * int(daycount))
                 timediff = endtime - starttime
                 daycount = int(timediff.total_seconds() / 60 / intervall)
             else:
-                endtime = datetime.strptime(serieend, "%H:%M")
+                endtime = datetime.strptime(seriesend, "%H:%M")
                 timediff = endtime - starttime
 
         if daycount is not None and daycount != '':
-            if serieend is None and (int(daycount) * intervall >= 1440):
+            if seriesend is None and (int(daycount) * intervall >= 1440):
                 org_count = daycount
                 count = int(1439 / intervall)
                 self.logger.warning("Cut your SerieCount to {} - because intervall {}"
                                     " x SerieCount {} is more than 24h".format(count, intervall, org_count))
             else:
                 new_daycount = int(timediff.total_seconds() / 60 / intervall)
-                #self.logger.debug("new daycount: {}, serieend {}".format(new_daycount, serieend))
+                #self.logger.debug("new daycount: {}, seriesend {}".format(new_daycount, seriesend))
                 if int(daycount) > new_daycount:
                     self.logger.warning("Cut your SerieCount to {} - because intervall {}"
                                         " x SerieCount {} is not possible between {} and {}".format(
