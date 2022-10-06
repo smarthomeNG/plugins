@@ -28,7 +28,7 @@
 # Each UZSU item is of type list. Each list entry has to be a dict with specific key and value pairs.
 # Here are the possible keys and their purpose:
 #
-#     dtstart:  a datetime object. Exact datetime as start value for the rrule algorithm. 
+#     dtstart:  a datetime object. Exact datetime as start value for the rrule algorithm.
 #               Important e.g. for FREQ=MINUTELY rrules (optional).
 #
 #     value:    the value which will be set to the item.
@@ -44,7 +44,7 @@
 #                     17:00<sunset
 #                     sunrise>8:00
 #                     17:00<sunset.
-#               C) 'serie' to indicate the use of a time series; definition of a 
+#               C) 'serie' to indicate the use of a time series; definition of a
 #                   time series is mandatory using dict key 'series'
 #
 #     series:   definition of the time series as dict using keys 'active', 'timeSeriesMin',
@@ -400,8 +400,7 @@ class UZSU(SmartPlugin):
             self._items[item]['interpolation']['initialized'] = False
             self._items[item]['interpolation']['interval'] = self._interpolation_interval
             self._items[item]['interpolation']['initage'] = self._backintime
-        if not self._items[item].get('plugin_version'):
-            self._items[item]['plugin_version'] = self.PLUGIN_VERSION
+        self._items[item]['plugin_version'] = self.PLUGIN_VERSION
         if not self._items[item].get('list'):
             self._items[item]['list'] = []
         if not self._items[item].get('active'):
@@ -579,7 +578,7 @@ class UZSU(SmartPlugin):
         If the item is active then the list is searched for the nearest next execution time.
         No matter if active or not the calculation for the execution time is triggered.
         :param item:    item to be updated towards the plugin
-        :param caller:  if given it represents the callers name. If the caller is set 
+        :param caller:  if given it represents the callers name. If the caller is set
                         to "dry_run" the evaluation of sun entries takes place but no scheduler will be set
         """
         if caller != "dry_run":
@@ -769,7 +768,7 @@ class UZSU(SmartPlugin):
                             dtstart
         :param item:        item to be updated towards the plugin
         :param timescan:    defines whether to find values in the future or past
-        :param caller:      defines the caller of the method. If it's name is dry_run just 
+        :param caller:      defines the caller of the method. If it's name is dry_run just
                             simulate getting time even if entry is not active
         """
         try:
@@ -1130,7 +1129,7 @@ class UZSU(SmartPlugin):
             daycount = '1'
             mydict['series']['timeSeriesCount'] = daycount
         return seriesbegin, seriesend, daycount, mydict
-            
+
     def _series_get_time(self, mydict, timescan=''):
         """
                 Returns the next time/date for a serie
@@ -1142,7 +1141,7 @@ class UZSU(SmartPlugin):
         seriesbegin, seriesend, daycount, mydict = self._fix_empty_values(mydict)
         intervall = mydict['series'].get('timeSeriesIntervall', None)
         seriesstart = seriesbegin
-        
+
         if intervall is not None and intervall != "":
             intervall = int(intervall.split(":")[0])*60 + int(mydict['series']['timeSeriesIntervall'].split(":")[1])
         else:
