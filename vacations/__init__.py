@@ -31,7 +31,7 @@ class Vacations(SmartPlugin):
     """
     Retrieves the German school vacations.
     """
-    PLUGIN_VERSION = "1.0.2"
+    PLUGIN_VERSION = "1.0.3"
     ALLOWED_PROVINCES = ['BW', 'BY', 'BE', 'BB', 'HB', 'HH', 'HE', 'MV', 'NI', 'NW', 'RP', 'SL', 'SN', 'ST', 'SH', 'TH']
 
     def __init__(self, sh, *args, **kwargs):
