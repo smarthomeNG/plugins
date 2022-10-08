@@ -1,0 +1,115 @@
+{% extends "base_plugin.html" %}
+
+{% set logo_frame = false %}
+
+<!-- set update_interval to a value > 0 (in milliseconds) to enable periodic data updates -->
+{% set update_interval = 0 %}
+
+<!--
+	Additional script tag for plugin specific javascript code go into this block
+-->
+{% block pluginscripts %}
+{% endblock pluginscripts %}
+
+
+{% block headtable %}
+<table class="table table-striped table-hover">
+	<tbody>
+		<tr>
+			<td class="py-1"><strong>Letzte Aktualisierung</strong></td>
+			<td class="py-1">{{ p.last_update }}</td>
+			<td class="py-1" width="50px"></td>
+			<td class="py-1"><strong>Latitude</strong></td>
+			<td class="py-1">{{ p.latitude }}</td>
+			<td class="py-1" width="50px"></td>
+		</tr>
+		<tr>
+			<td class="py-1"><strong>Declination</strong></td>
+			<td class="py-1">{{ p.declination }}</td>
+			<td></td>
+			<td class="py-1"><strong>Longitude</strong></td>
+			<td class="py-1">{{ p.longitude }}</td>
+			<td class="py-1" width="50px"></td>
+		</tr>
+		<tr>
+			<td class="py-1"><strong>Azimuth</strong></td>
+			<td class="py-1">{{ p.azimuth }}</td>
+			<td></td>
+			<td class="py-1"><strong>kW Peak</strong></td>
+			<td class="py-1">{{ p.kwp }}</td>
+			<td class="py-1" width="50px"></td>
+		</tr>
+
+	</tbody>
+</table>
+{% endblock headtable %}
+
+
+<!--
+	Additional buttons for the web interface (if any are needed) - displayed below the headtable-section
+-->
+
+<!--
+	Define the number of tabs for the body of the web interface (1 - 3)
+-->
+{% set tabcount = 1 %}
+
+
+<!--
+	Set the tab that will be visible on start, if another tab that 1 is wanted (1 - 3)
+-->
+
+{% set start_tab = 1 %}
+
+<!--
+	Content block for the first tab of the Webinterface
+-->
+{% set tab1title = "<strong>SolarForecast Items" %}
+
+{% block bodytab1 %}
+<div class="container-fluid m-2">
+	{{ _('Liste der Solar Items:') }} ({{ p.get_items()|length }})
+
+<table class="table table-striped table-hover pluginList">
+			<thead>
+				<tr class="shng_heading">
+					<th>Pfad</th>
+					<th>Typ</th>
+					<th>solar_attribute</th>
+					<th>Wert</th>
+					<th>Letztes Update</th>
+					<th>Letzter Change</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for key, items in p.get_items().items() %}
+					{% for item in items %}
+					{% set value = item()|string %}
+					{% set l = value | length %}
+					{% if l > 50 %}
+						{% set moreclasses = ' hidelargetext' %}
+						{% set togglelargetext = "onclick='$(this).toggleClass(\"hidelargetext\")'" %}
+					{% else %}
+						{% set moreclasses = '' %}
+						{% set togglelargetext = '' %}
+					{% endif %}
+					<tr id="{{ loop.index }}_click">
+						<td class="py-1 item">{{ item.property.path }}</td>
+						<td class="py-1 type">{{ item.property.type }}</td>
+						<td class="py-1 matchstring">{{ key }}</td>
+						<td class="py-1 value{{ moreclasses }}" {{ togglelargetext }}>{{ item() }}</td>
+						<td class="py-1 date">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+						<td class="py-1 date">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+					</tr>
+					{% endfor %}
+				{% endfor %}
+			</tbody>
+</table>
+
+
+</div>
+{% endblock bodytab1 %}
+
+
+
+

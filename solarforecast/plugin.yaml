@@ -1,0 +1,97 @@
+# Metadata for the plugin
+plugin:
+    # Global plugin attributes
+    type: web                   # plugin type (gateway, interface, protocol, system, web)
+    description:
+        de: 'Plugin zur Anbindung an eine Web-basierte Solaretragsvorhersage'
+        en: 'Plugin to connect to a web-based solar forecast service'
+    maintainer: Alexander Schwithal (aschwith)
+    tester: aschwith
+    state: develop                  # change to ready when done with development
+    keywords: solar.forecast, solar
+#    documentation: https://github.com/smarthomeng/plugins/blob/develop/solarforecast/README.md
+#    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1417295-support-thread-plugin-solarforecast
+
+    version: 1.9.0                  # Plugin version
+    sh_minversion: 1.8.0            # minimum shNG version to use this plugin
+#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    multi_instance: False           # plugin supports multi instance
+    restartable: unknown
+    classname: Solarforecast        # class containing the plugin
+
+
+parameters:
+    latitude:
+        type: num
+        mandatory: True
+        description:
+            de: 'Breitengrad der Solaranlage in dezimalen Grad'
+            en: 'Latitude of solar system in decimal degree'
+    longitude:
+        type: num
+        mandatory: True
+        description:
+            de: 'Laengengrad der Solaranlage in dezimalen Grad'
+            en: 'Longitude of solar system in decimal degree'
+    declination:
+        type: num
+        mandatory: True
+        description:
+            de: 'Declinationswinkel Solaranlage in Grad'
+            en: 'Panel declination in degree'
+    azimuth:
+        type: num
+        mandatory: True
+        description:
+            de: 'Azimutwinkel der Panelausrichtung. 0 Grad enstspricht Sueden'
+            en: 'Azimuth angle of panel direction. 0 degree is equivalent to southern direction'
+    kwp:
+        type: num
+        mandatory: True
+        description:
+            de: 'Leistung der Solaranlage in kW Peak'
+            en: 'Power of solar system in kw peak'
+    service:
+        type: str
+        default: 'solarforecast'
+        valid_list:
+          - solarforecast
+        valid_list_description:
+            de: ['solar.forecast']
+            en: ['solar.forecast']
+        description:
+            de: 'Webservice fuer Vorhersage'
+            en: 'Webservice for forecast'
+
+item_attributes:
+    # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)
+    solarforecast_attribute:
+        type: str
+        description:
+            de: 'Solarforecast Attribute:
+                 Vorhersage Leistung morgen
+                 Vorhersage Leistung heute
+                 Datum morgen
+                 Datum heute'
+            en: 'Solarforecast attributes:
+                 Forecast power tomorrow
+                 Forecast power today
+                 Date tomorrow
+                 Date today'
+        valid_list:
+          - power_tomorrow
+          - power_today
+          - date_tomorrow
+          - date_today
+
+item_structs: NONE
+    # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
+    #item_structs: NONE
+
+plugin_functions: NONE
+    
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)
+    #logic_parameters: NONE
+
