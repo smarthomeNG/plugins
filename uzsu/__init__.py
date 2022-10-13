@@ -1053,8 +1053,8 @@ class UZSU(SmartPlugin):
                                         mytpl['seriesMax'] = "{:02d}".format(endtime.hour) + ":" + \
                                                              "{:02d}".format(endtime.minute)
                                     mytpl['seriesDay'] = actday
-                                    mytpl['maxCountCalculated'] = daycount
-                                    self.logger.debug("Mytpl: {}, count {}, interval {}".format(mytpl, count, intervall))
+                                    mytpl['maxCountCalculated'] = count
+                                    self.logger.debug("Mytpl: {}, count {}, daycount {}, interval {}".format(mytpl, count, daycount, intervall))
                                     mynewlist.append(mytpl)
                                 count = 0
                                 seriestarttime = None
@@ -1073,9 +1073,9 @@ class UZSU(SmartPlugin):
                                 mytpl['seriesMax'] = str((seriestarttime + timedelta(minutes=intervall * count)).time())[:5]
                             else:
                                 mytpl['seriesMax'] = "{:02d}".format(endtime.hour) + ":" + "{:02d}".format(endtime.minute)
-                            mytpl['maxCountCalculated'] = daycount
+                            mytpl['maxCountCalculated'] = count
                             mytpl['seriesDay'] = actday
-                            self.logger.debug("Mytpl start not none: {},"
+                            self.logger.debug("Mytpl for last time of day: {},"
                                               " count {} daycount {},"
                                               " interval {}".format(mytpl, count, original_daycount, intervall))
                             mynewlist.append(mytpl)
