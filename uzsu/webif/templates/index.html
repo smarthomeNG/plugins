@@ -1,5 +1,5 @@
 {% extends "base_plugin.html" %}
-{% set update_interval = 2000 %}
+{% set update_interval = 5000 %}
 {% block pluginstyles %}
 <style>
   table th.bit {
@@ -57,41 +57,41 @@
 		if (dataSet === 'devices_info' || dataSet === null) {
 			objResponse = JSON.parse(response);
 			myProto = document.getElementById(dataSet);
-			for (item in objResponse) {
-        planned = objResponse[item]['planned']['value'];
-        lastvalue = objResponse[item]['lastvalue'];
-        if (objResponse[item]['active'] == 'True' && planned == '-') {color = 'red';}
-        else if (planned == '-'){color = 'gray';}
+			for (item in objResponse['items']) {
+        planned = objResponse['items'][item]['planned']['value'];
+        lastvalue = objResponse['items'][item]['lastvalue'];
+        if (objResponse['items'][item]['active'] == 'True' && planned == '-') {color = 'red';}
+        else if (planned == '-' || objResponse['items'][item]['active'] == 'False' ){color = 'gray';}
         else {color = 'green'}
 
-        if (objResponse[item]['depend']['item'] == null) {
+        if (objResponse['items'][item]['depend']['item'] == null) {
           depend_text = '{{ _('Item existiert nicht!') }}';
           color = 'red';
         }
         else {
-          depend_text = objResponse[item]['depend']['item'] + '&nbsp;(' + objResponse[item]['interpolation']['itemtype'] + ')';
+          depend_text = objResponse['items'][item]['depend']['item'] + '&nbsp;(' + objResponse['items'][item]['interpolation']['itemtype'] + ')';
         }
 
-        if (objResponse[item]['interpolation'] == undefined) {
+        if (objResponse['items'][item]['interpolation'] == undefined) {
           intpl_text = "{{ _('fehlt!') }}";
           bit_text = "{{ _('fehlt!') }}";
           color = 'red';
         }
         else {
-          if (objResponse[item]['interpolation']['itemtype'] == 'bool') {
+          if (objResponse['items'][item]['interpolation']['itemtype'] == 'bool') {
             if (planned == 1) {planned = 'True';}
             else if (planned == 0) {planned = 'False';}
             if (lastvalue == 1) {lastvalue = 'True';}
             else if (lastvalue == 0) {lastvalue = 'False';}
           }
-          if (objResponse[item]['interpolation']['initage'] == '') {
+          if (objResponse['items'][item]['interpolation']['initage'] === '') {
             bit_text = '0';
           }
           else {
-            bit_text = objResponse[item]['interpolation']['initage'];
+            bit_text = objResponse['items'][item]['interpolation']['initage'];
           }
-          if (objResponse[item]['interpolation']['interval'] == '' || objResponse[item]['interpolation']['interval'] == undefined) {
-            if (objResponse[item]['interpolation']['type'] == 'none') {
+          if (objResponse['items'][item]['interpolation']['interval'] == '' || objResponse['items'][item]['interpolation']['interval'] == undefined) {
+            if (objResponse['items'][item]['interpolation']['type'] == 'none') {
               interval = '';
             }
             else {
@@ -99,23 +99,23 @@
             }
           }
           else {
-            if (objResponse[item]['interpolation']['type'] == 'none') {
+            if (objResponse['items'][item]['interpolation']['type'] == 'none') {
               interval = '';
             }
             else {
-            interval = ' (' + objResponse[item]['interpolation']['interval'] + ')';
+            interval = ' (' + objResponse['items'][item]['interpolation']['interval'] + ')';
             }
           }
-          intpl_text = objResponse[item]['interpolation']['type'] + interval;
-          if (objResponse[item]['sun'] == undefined) {
+          intpl_text = objResponse['items'][item]['interpolation']['type'] + interval;
+          if (objResponse['items'][item]['sun'] == undefined) {
             sunrise_text = '';
             sunset_text = '';
           }
           else {
             sunrise_text = '';
             sunset_text = '';
-            entries_rise = objResponse[item]['sun']['sunrise'];
-            entries_set = objResponse[item]['sun']['sunset'];
+            entries_rise = objResponse['items'][item]['sun']['sunrise'];
+            entries_set = objResponse['items'][item]['sun']['sunset'];
 
             dict_length = Object.keys(entries_rise).length;
             for (let i = 0; i < dict_length; i++) {
@@ -134,10 +134,13 @@
         $('#' + $.escapeSelector(item)).css({'color': color});
         shngInsertText (item+'_interpolation', intpl_text, 'maintable', 10);
         shngInsertText (item+'_backintime', bit_text, 'maintable', 10);
-        shngInsertText (item+'_dict', objResponse[item]['dict'], 'maintable');
-        shngInsertText (item+'_dependvalue', objResponse[item]['depend']['value'], 'maintable', 10);
+        shngInsertText (item+'_dict', objResponse['items'][item]['dict'], 'maintable');
+        shngInsertText (item+'_dependvalue', objResponse['items'][item]['depend']['value'], 'maintable', 10);
         shngInsertText (item+'_nextvalue', planned, 'maintable', 10);
-        shngInsertText (item+'_nexttime', '&#x202a;'+objResponse[item]['planned']['time']+'&#x202c;', 'maintable', 10);
+        if (objResponse['items'][item]['planned']['time'] == '-')
+          shngInsertText (item+'_nexttime', '-', 'maintable', 10);
+        else
+          shngInsertText (item+'_nexttime', '&#x202a;'+objResponse['items'][item]['planned']['time']+'&#x202c;', 'maintable', 10);
         shngInsertText (item+'_dependitem', depend_text, 'maintable');
         shngInsertText (item+'_lastvalue', lastvalue, 'maintable', 10);
         shngInsertText ('sunrise', sunrise_text, null, 2);
@@ -155,13 +158,28 @@
 
 {% block headtable %}
 <span id='webif_pagelength' style="display:none">{{ webif_pagelength }}</span>
+{% set sun = namespace() %}
+{% set sun.sunrise_text = '' %}
+{% set sun.sunset_text = '' %}
+{% set entries_rise = p._webdata['sunCalculated']['sunrise'] %}
+{% set entries_set = p._webdata['sunCalculated']['sunset'] %}
+{% for i in entries_rise %}
+  {% set sun.sunrise_text = sun.sunrise_text ~ i ~ ': ' %}
+  {% set sun.sunrise_text = sun.sunrise_text ~ p._webdata['sunCalculated']['sunrise'][i] %}
+  {% set sun.sunset_text = sun.sunset_text ~ i ~ ': ' %}
+  {% set sun.sunset_text = sun.sunset_text ~ p._webdata['sunCalculated']['sunset'][i] %}
+  {% if not loop.last %}
+    {% set sun.sunrise_text = sun.sunrise_text ~ ', ' %}
+    {% set sun.sunset_text = sun.sunset_text ~ ', ' %}
+  {% endif %}
+{% endfor %}
 <table class="table table-striped table-hover">
   <tbody>
     <tr>
       <td class="py-1"><strong>{{ _('Sonnenaufgang') }}</strong><br>
-        <span id="sunrise">...</span></td>
+        <span id="sunrise">{{ sun.sunrise_text }}</span></td>
       <td class="py-1"><strong>{{ _('Sonnenuntergang') }}</strong><br>
-      <span id="sunset">...</span></td>
+      <span id="sunset">{{ sun.sunset_text }}</span></td>
     </tr>
     <tr>
       <td class="py-1" colspan="2"><strong>Items</strong>: {{ item_count }}</td>
@@ -173,12 +191,12 @@
 
 
 {% block bodytab1 %}
-<div class="container-fluid m-2 table-resize dataTableAdditional">
+<div class="container-fluid m-2" id="resize_wrapper">
   <div class="mb-2">
 
     {{ _('Die folgenden Items sind dem UZSU Plugin zugewiesen') }}.
   </div>
-  <table id="maintable" class="table table-striped table-hover pluginList">
+  <table id="maintable" class="table table-striped table-hover pluginList display">
     <thead>
     <tr>
       <th>{{ _('UZSU Item') }}</th>
@@ -193,33 +211,66 @@
     </tr>
     </thead>
     <tbody>
-    {% for item in p._webdata %}
-          <tr id="{{ item }}">
-            <td class="py-1" id="{{ item }}_path">{{ item }}</td>
-            <td class="py-1" id="{{ item }}_dependitem">
-              {{ _('Initialisiere...') }}
+    {% for item in p._webdata['items'] %}
+        {% set planned = p._webdata['items'][item]['planned']['value'] %}
+        {% if (p._webdata['items'][item]['active'] == 'True' and planned == '-') or
+            p._webdata['items'][item]['interpolation'] is not defined or p._webdata['items'][item]['interpolation']['itemtype'] == none %}
+          {% set color = 'red' %}
+        {% elif p._webdata['items'][item]['planned'] == '-' or p._webdata['items'][item]['active'] == 'False' %}
+          {% set color = 'gray' %}
+        {% else %}
+          {% set color = 'green' %}
+        {% endif %}
+        <tr id="{{ item }}" style="color: {{ color }}">
+          <td class="py-1" id="{{ item }}_path">{{ item }}</td>
+          <td class="py-1" id="{{ item }}_dependitem">
+            {% if p._webdata['items'][item]['interpolation'] is not defined %}
+
+            {% elif p._webdata['items'][item]['interpolation']['itemtype'] == none %}
+              {{ _('Item existiert nicht!') }}
+            {% else %}{{ p._webdata['items'][item]['depend']['item'] }}&nbsp;({{ p._webdata['items'][item]['interpolation']['itemtype'] }})
+            {% endif %}
+          </td>
+            <td class="py-1" id="{{ item }}_dependvalue">
+              {% if p._webdata['items'][item]['depend']['value'] is defined %}
+                {{ p._webdata['items'][item]['depend']['value'] }}
+              {% endif %}
             </td>
-              <td class="py-1" id="{{ item }}_dependvalue">
-                ...
-              </td>
-              <td class="py-1" id="{{ item }}_nextvalue">
-                ...
-              </td>
-              <td class="py-1" id="{{ item }}_nexttime">
-                ...
-              </td>
-              <td class="py-1" id="{{ item }}_lastvalue">
-                ...
-              </td>
-              <td class="py-1" id="{{ item }}_interpolation">
-                ...
-              </td>
-              <td class="py-1" id="{{ item }}_backintime">
-                ...
-              </td>
-              <td id="{{ item }}_dict">
-                ...
-              </td>
+            <td class="py-1" id="{{ item }}_nextvalue">
+              {{ p._webdata['items'][item]['planned']['value'] }}
+            </td>
+            <td class="py-1" id="{{ item }}_nexttime">
+              {% if p._webdata['items'][item]['planned']['time'] == '-' %}
+              -
+              {% else %}
+                &#x202a;{{ p._webdata['items'][item]['planned']['time'] }}&#x202c;
+              {% endif %}
+            </td>
+            <td class="py-1" id="{{ item }}_lastvalue">
+                {{ p._webdata['items'][item]['lastvalue'] }}
+            </td>
+            <td class="py-1" id="{{ item }}_interpolation">
+              {% if p._webdata['items'][item]['interpolation'] is not defined %}
+                {{ _('fehlt!') }}
+              {% elif p._webdata['items'][item]['interpolation']['type'] %}
+                {{ p._webdata['items'][item]['interpolation']['type'] }}
+                {% if p._webdata['items'][item]['interpolation']['type'] != 'none' and p._webdata['items'][item]['interpolation']['interval'] %}
+                  ({{ p._webdata['items'][item]['interpolation']['interval'] }})
+                {% endif %}
+              {% else %}-
+              {% endif %}
+            </td>
+            <td class="py-1" id="{{ item }}_backintime">
+              {% if p._webdata['items'][item]['interpolation'] is not defined %}
+                {{ _('fehlt!') }}
+              {% elif p._webdata['items'][item]['interpolation']['initage'] is defined %}
+                {{ p._webdata['items'][item]['interpolation']['initage'] }}
+              {% else %}-
+              {% endif %}
+            </td>
+            <td id="{{ item }}_dict">
+              {{ p._webdata['items'][item]['dict'] }}
+            </td>
 
     {% endfor %}
     </tbody>
