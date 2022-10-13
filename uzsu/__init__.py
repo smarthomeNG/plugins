@@ -153,6 +153,7 @@ class UZSU(SmartPlugin):
         self.logger.info("Adding sun update schedule for midnight")
 
         for item in self._items:
+            self._add_dicts(item)
             self._items[item]['interpolation']['itemtype'] = self._add_type(item)
             self._lastvalues[item] = None
             self._webdata[item.id()].update({'lastvalue': '-'})
@@ -396,14 +397,18 @@ class UZSU(SmartPlugin):
         """
         if not self._items[item].get('interpolation'):
             self._items[item]['interpolation'] = {}
+        if not self._items[item]['interpolation'].get('type'):
             self._items[item]['interpolation']['type'] = 'none'
+        if not self._items[item]['interpolation'].get('initialized'):
             self._items[item]['interpolation']['initialized'] = False
+        if not self._items[item]['interpolation'].get('interval'):
             self._items[item]['interpolation']['interval'] = self._interpolation_interval
+        if not self._items[item]['interpolation'].get('initage'):
             self._items[item]['interpolation']['initage'] = self._backintime
         self._items[item]['plugin_version'] = self.PLUGIN_VERSION
         if not self._items[item].get('list'):
             self._items[item]['list'] = []
-        if not self._items[item].get('active'):
+        if self._items[item].get('active') is None:
             self._items[item]['active'] = False
 
     def parse_item(self, item):
