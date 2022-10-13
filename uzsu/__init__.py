@@ -1010,6 +1010,7 @@ class UZSU(SmartPlugin):
 
                     intervall = int(mydict['series']['timeSeriesIntervall'].split(":")[0])*60 + \
                                 int(mydict['series']['timeSeriesIntervall'].split(":")[1])
+                    exceptions = 0
                     for day in list(rrule):
                         if not mydays[day.weekday()] in mydict['rrule']:
                             continue
@@ -1027,18 +1028,21 @@ class UZSU(SmartPlugin):
                                                                            minute=starttime.minute, second=0))
                         dayrule.after(day.replace(hour=0, minute=0))    # First Entry for this day
                         count = 0
+
                         try:
                             actday = mydays[list(dayrule)[0].weekday()]
                         except Exception:
                             max_interval = endtime - starttime
-                            self.logger.info("Item {}: Between starttime {} and endtime {}"
-                                             " is a maximum valid interval of {:02d}:{:02d}. "
-                                             "{} is set too high for a continuous series trigger. "
-                                             "The UZSU will only be scheduled for the start time.".format(
-                                                item, datetime.strftime(starttime, "%H:%M"),
-                                                datetime.strftime(endtime, "%H:%M"),
-                                                max_interval.seconds // 3600, max_interval.seconds % 3600//60,
-                                                mydict['series']['timeSeriesIntervall']))
+                            if exceptions == 0:
+                                self.logger.info("Item {}: Between starttime {} and endtime {}"
+                                                 " is a maximum valid interval of {:02d}:{:02d}. "
+                                                 "{} is set too high for a continuous series trigger. "
+                                                 "The UZSU will only be scheduled for the start time.".format(
+                                                    item, datetime.strftime(starttime, "%H:%M"),
+                                                    datetime.strftime(endtime, "%H:%M"),
+                                                    max_interval.seconds // 3600, max_interval.seconds % 3600//60,
+                                                    mydict['series']['timeSeriesIntervall']))
+                            exceptions += 1
                             max_interval = int(max_interval.total_seconds() / 60)
                             myrulenext = "FREQ=MINUTELY;COUNT=1;INTERVAL={}".format(max_interval)
                             dayrule = rrulestr(myrulenext, dtstart=day.replace(hour=starttime.hour,
@@ -1057,7 +1061,7 @@ class UZSU(SmartPlugin):
                                         mytpl['seriesMax'] = "{:02d}".format(endtime.hour) + ":" + \
                                                              "{:02d}".format(endtime.minute)
                                     mytpl['seriesDay'] = actday
-                                    mytpl['maxCountCalculated'] = count
+                                    mytpl['maxCountCalculated'] = count if exceptions == 0 else 0
                                     self.logger.debug("Mytpl: {}, count {}, daycount {}, interval {}".format(mytpl, count, daycount, intervall))
                                     mynewlist.append(mytpl)
                                 count = 0
@@ -1077,7 +1081,7 @@ class UZSU(SmartPlugin):
                                 mytpl['seriesMax'] = str((seriestarttime + timedelta(minutes=intervall * count)).time())[:5]
                             else:
                                 mytpl['seriesMax'] = "{:02d}".format(endtime.hour) + ":" + "{:02d}".format(endtime.minute)
-                            mytpl['maxCountCalculated'] = count
+                            mytpl['maxCountCalculated'] = count if exceptions == 0 else 0
                             mytpl['seriesDay'] = actday
                             self.logger.debug("Mytpl for last time of day: {},"
                                               " count {} daycount {},"
