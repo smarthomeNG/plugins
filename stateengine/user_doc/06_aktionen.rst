@@ -328,11 +328,11 @@ soll, wenn der Zustand durch die angegebene Bedingungsgruppe eingenommen wurde.
 Zum Vergleich wird immer der volle Pfad (die ID) der Bedingungsgruppe herangezogen.
 Conditionset erlaubt sowohl einzelne Werte mittels value, regex oder eval, als auch eine Liste.
 Die Liste kann zum einen wie oben angeführt mit eckigen Klammern, als auch wie gewohnt mit
-"-"" in einzelnen Zeilen (siehe unten) angegeben werden. Wichtig ist, im ersten Fall reguläre Ausdrücke
+"-" in einzelnen Zeilen (siehe unten) angegeben werden. Wichtig ist, im ersten Fall reguläre Ausdrücke
 unter Anführungszeichen zu setzen (und dann Hochkomma um den gesamten Eintrag). Im zweiten Fall sind keine
 Anführungszeichen notwendig.
 
-Die einzelnen Angaben einer Liste werden als ``OR` evaluiert.
+Die einzelnen Angaben einer Liste werden als ``OR`` evaluiert.
 
 .. code-block:: yaml
 
