@@ -50,7 +50,7 @@ class Database(SmartPlugin):
     """
 
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = '1.5.18'
+    PLUGIN_VERSION = '1.6.0'
 
     # SQL queries: {item} = item table name, {log} = log table name
     # time, item_id, val_str, val_num, val_bool, changed
@@ -176,6 +176,9 @@ class Database(SmartPlugin):
             if self.has_iattr(item.conf, 'database_maxage'):
                 maxage = self.get_iattr_value(item.conf, 'database_maxage')
                 if float(maxage) > 0:
+                    #if self.get_iattr_value(item.conf, 'database') == 'init':
+                    #    self.logger.warning(f"Item {item.id()} configured with database_maxage and init could lead to no values in DB for initialization.")
+
                     self._items_with_maxage.append(item)
 
             self.logger.debug(item.conf)
@@ -200,10 +203,11 @@ class Database(SmartPlugin):
                             # Add item specific debugging here:
                             #if item.id() == 'xyz':
                             #    self.logger.debug(f"Parse item: ItemID: {item.id()}: {value}, {self._datetime(prev_change[0])}, {last_change}")
-                            item.set(value, 'Database', source='Init', prev_change=self._datetime(prev_change[0]), last_change=last_change)
+                            item.set(value, 'Database', source='DBInit', prev_change=self._datetime(prev_change[0]), last_change=last_change)
                         else:
                             self.logger.warning(f"Debug init for item {item.id()}: {value}, {prev_change}, {prev_change[0]}")
                         if value is not None and self.get_iattr_value(item.conf, 'database_acl') is not None and self.get_iattr_value(item.conf, 'database_acl').lower() == 'ro':
+                            #self.logger.debug(f"DEBUG: Parse item, doing buffer insert for ItemID: {item.id()}: {value}, databse_acl {self.get_iattr_value(item.conf, 'database_acl').lower()}")
                             self._buffer_insert(item, [(self._timestamp(self.shtime.now()), None, value)])
                     except Exception as e:
                         self.logger.error("Reading cache value from database for {} failed: {}".format(item.id(), e))
@@ -282,7 +286,7 @@ class Database(SmartPlugin):
             else: 
 		# Step 1b): Append new value with none duration
                     
-                #If item is configured to be initialized via database init (see database: init in item.yaml), do not update previous value if the latter qual to the regular initial_value.
+                #If item is configured to be initialized via database init (see database: init in item.yaml), do not update previous value if the latter equals to the regular initial_value.
                 # This is because configuring database: init aims at avoiding the regular item initial value to appear inside the DB:
                 if self.get_iattr_value(item.conf, 'database').lower() == 'init' and item.property.prev_change_by =='Init:Initial_Value':
                     if debug_item:
@@ -347,6 +351,7 @@ class Database(SmartPlugin):
             id = self.readItem(str(item.id()), cur=cur)
         except Exception as e:
             self.logger.warning(f"id(): No id found for item {item.id()} - Exception {e}")
+            id = None
 
         if id is None and create == True:
             id = [self.insertItem(item.id(), cur)]
@@ -630,6 +635,8 @@ class Database(SmartPlugin):
         result = self._fetchall("SELECT count(*) FROM {log} WHERE item_id = :id;", params, cur=cur)
         if result == []:
             return 0
+        if result is None:
+            return 0
         try:
             return result[0][0]
         except Exception as e:
@@ -664,7 +671,11 @@ class Database(SmartPlugin):
             self.logger.error("Exception in function deleteLog: {}".format(e))
             self._db.rollback()
 
-        self._item_logcount[id] = self.readLogCount(id)
+        try:
+            self._item_logcount[id] = self.readLogCount(id)
+        except Exception as e:
+            self.logger.error("Exception in function deleteLog during readLogCount: {}".format(e))
+
         return
 
 
@@ -1110,12 +1121,31 @@ class Database(SmartPlugin):
 
                     # When finalizing (e.g. plugin shutdown) add current value to item and log
                     if finalize:
-                        _update = (end, val, changed)
 
-                        current = (start, end - start, val)
-                        tuples.append(current)
+                        # When plugin is shutdown, by default, every registered item is rewritten into the DB no matter 
+                        # if it has been changed or not. This behavior is not wanted for items that are rarely updated 
+                        # because these database entries would lead indicate item updates that in reality aren't really there.
+                        # Therefore, if item attribute database_write_on_shutdown is set to False, no double entries are written 
+                        # to the database and only the last entry is updated.
+                        
+                        #self.logger.debug(f"DEBUG _dump: Finalizing item {item} with value {val}")
+                        if self.get_iattr_value(item.conf, 'database_write_on_shutdown') == False:
+                            self.logger.debug(f"DEBUG _dump: Blocking rewrite to DB for item {item} with value {val}")
+
+                            #if item.id() == 'xyz':
+                            #    self.logger.warning(f"DEBUG _dump: update debug item with start {start}, val {val}, changed {changed}")
+
+                            _update = (start, val, changed)
+
+                        else:
+                            # Perform item update and rewrite current value to database:
+                            _update = (end, val, changed)
+
+                            current = (start, end - start, val)
+                            tuples.append(current)
 
                     else:
+                        # only perform DB item update for regular dumps (not at plugin shutdown)
                         _update = (start, val, changed)
 
                     cur = self._db.cursor()

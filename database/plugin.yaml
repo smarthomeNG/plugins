@@ -12,7 +12,7 @@ plugin:
     documentation: http://smarthomeng.de/user/plugins/database/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1021844-neues-database-plugin
 
-    version: 1.5.18                # Plugin version
+    version: 1.6.0                 # Plugin version
     sh_minversion: 1.8.0           # minimum shNG version to use this plugin
 #    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
@@ -63,7 +63,6 @@ item_attributes:
     database:
         type: str
         valid_list_ci: ['', 'yes', 'init', 'true']
-        duplicate_use: True
         description:
             de: "Wenn auf 'yes' oder 'true' gesetzt, werden die Werte des Items in die Datenbank geschrieben. Wenn auf 'init' gesetzt, wird zusätzlich beim Start von SmartHomeNG der Wert des Items aus der Datenbank gelesen."
             en: "This attribute enables the database logging when set (just use value 'yes' or 'true'). If value 'init' is used, an item will be initalized from the database after SmartHomeNG is restarted."
@@ -82,6 +81,14 @@ item_attributes:
         description:
             de: "Muss normalerweise nicht konfiguriert werden, dann wird der Standard 'rw' genutzt. Es kann nützlich sein Werte als 'ro' zu deklarieren, falls die Datenbank Daten aus anderen Quellen enthält, die durch SmartNomeNG nicht verändert werden sollen."
             en: "Usually does not need to be configured, in this case the standard 'rw' is used. It can be useful to declare values as 'ro' if the database contains data from other sources that SmartNomeNG should not change."
+
+    database_write_on_shutdown:
+        type: bool
+        default: True
+        description:
+            de: "Muss normalerweise nicht konfiguriert werden, dann wird der Standard 'True' genutzt. Das bedeutet, dass das item vor dem Beenden von smarthomeNG nochmal in die DB geschrieben wird (auch wenn keine echte Aenderung statt fand). Wird das Attribut auf 'False' gesetzt, wird das Schreiben beim Beenden unterdrueckt."
+            en: "Usually does not need to be configured, in this case the default 'True' is used. This means that the item value is written to the DB once again on smarthomeNG shutdown. (even though the item has not been updated). Setting the attribute to 'False', supresses the rewrite on shutdown."
+
 
 item_structs: NONE
   # Definition of item-structure templates for this plugin
