@@ -6,7 +6,7 @@ plugin:
         de: 'Database plugin, mit Unterstützung für SQLite 3 und MySQL'
         en: 'Database plugin, with support for SQLite 3 and MySQL'
     maintainer: ohinckel, msinn
-    tester: psilo909, onkelandy, brandst
+    tester: psilo909, onkelandy, brandst, aschwith
     state: ready
     keywords: database
     documentation: http://smarthomeng.de/user/plugins/database/user_doc.html

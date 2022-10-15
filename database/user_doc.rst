@@ -31,6 +31,12 @@ Die Informationen zur Konfiguration des Plugins sind unter :doc:`/plugins_doc/co
    **KEIN** **instance** Attribut konfiguriert werden darf, da sonst die Systemdaten nicht gespeichert werden und
    Abfragen aus dem Admin Interface und der smartVISU ins Leere laufen und Fehlermeldungen produzieren.
 
+Standarmässig schreibt das Plugin vor dem Beenden von SmarthomeNG alle am Plugin registrierten Items nochmal mit aktuellem
+Wert in die Datenbank. Die kann durch Setzen des Item Attributes database_write_on_shutdown: False unterdrückt werden.
+Ein typischer Anwendungsfall sind zum Beispiel monoton steigende Werte wie Zählerstände, die selten geschrieben werden
+und für die doppelte Einträge durch smarthomeNG Neustarts stoerend in Datenbank und optionalen Plots in einer
+Visualisierung sind.
+
 
 Web Interface
 =============
