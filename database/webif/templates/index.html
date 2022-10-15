@@ -48,6 +48,7 @@
 	<thead>
 	<tr>
 		<th>{{ _('Item') }}</th>
+		<th>{{ _('Init') }}</th>
 		<th>{{ _('Typ') }}</th>
 		<th>{{ _('Wert') }}</th>
 		<th>{{ _('Item-ID in der Datenbank') }}</th>
@@ -62,6 +63,7 @@
 		{% if p.has_iattr(item.conf, 'database') %}
 			<tr>
 				<td class="py-1">{{ item.property.path }}</td>
+				<td class="py-1">{{ _('Init') if p.get_iattr_value(item.conf, 'database').lower() == 'init' else '-'}}</td>
 				<td class="py-1">{{ item.property.type }}</td>
 				<td class="py-1">{{ item.property.value }}</td>
 				<td class="py-1">{{ p.id(item, create=False) }}</td>

@@ -50,7 +50,7 @@ class Database(SmartPlugin):
     """
 
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = '1.6.0'
+    PLUGIN_VERSION = '1.6.1'
 
     # SQL queries: {item} = item table name, {log} = log table name
     # time, item_id, val_str, val_num, val_bool, changed
@@ -99,7 +99,8 @@ class Database(SmartPlugin):
         self._dump_cycle = self.get_parameter_value('cycle')
         self._precision = self.get_parameter_value('precision')
         self.count_logentries = self.get_parameter_value('count_logentries')
-
+        self.max_delete_logentries = self.get_parameter_value('max_delete_logentries')
+        
         self._replace = {table: table if self._prefix == "" else self._prefix + table for table in ["log", "item"]}
         self._replace['item_columns'] = ", ".join(COL_ITEM)
         self._replace['log_columns'] = ", ".join(COL_LOG)
@@ -606,21 +607,52 @@ class Database(SmartPlugin):
 
     def readOldestLog(self, id, cur=None):
         """
-        Read the oldest log record for given database ID
+        Read the time of oldest log record for given database ID
 
         This is a public function of the plugin
 
         :param id: Database ID of item to read the record for
-        :param time: Time for the given value
         :param cur: A database cursor object if available (optional)
 
-        :return: Log record for the database ID
+        :return: Time of oldest log record for the database ID
         """
         params = {'id': id}
         return self._fetchall("SELECT min(time) FROM {log} WHERE item_id = :id;", params, cur=cur)[0][0]
 
+    #def readOldestLogs(self, id, cur=None):
+    #    """
+    #    Read the time of oldest log record for given database ID
+    #
+    #    This is a public function of the plugin
+    #
+    #    :param id: Database ID of item to read the record for
+    #    :param cur: A database cursor object if available (optional)
+    #
+    #    :return: Log record for the database ID
+    #    """
+    #    params = {'id': id}
+    #    return self._fetchall("SELECT min(time) FROM {log} GROUP BY item_id", params, cur=cur)[0]
 
-    def readLogCount(self, id, cur=None):
+    def readLatestLog(self, id, dt=None, cur=None):
+        """
+        Read the time of latest log record for given database ID and if dt given up to this time
+
+        This is a public function of the plugin
+
+        :param id: Database ID of item to read the record for
+        :param dt: datetime as maximum timestamp for the given value
+        :param cur: A database cursor object if available (optional)
+
+        :return: Log record for the database ID
+        """
+        if dt is None:
+            params = {'id': id}
+            return self._fetchall("SELECT max(time) FROM {log} WHERE item_id = :id;", params, cur=cur)[0][0]
+        else:
+            params = {'id': id, 'dt': self._timestamp(dt)}
+            return self._fetchall("SELECT max(time) FROM {log} WHERE item_id = :id AND time <= :dt", params, cur=cur)[0][0]
+
+    def readLogCount(self, id, time_start=None, time_end=None, cur=None):
         """
         Read database log count for given database ID
 
@@ -631,8 +663,15 @@ class Database(SmartPlugin):
 
         :return: Number of log records for the database ID
         """
-        params = {'id': id}
-        result = self._fetchall("SELECT count(*) FROM {log} WHERE item_id = :id;", params, cur=cur)
+        params = {'id': id, 'time_start': time_start, 'time_end': time_end}
+        if time_start is None and time_end is None:
+            result = self._fetchall("SELECT count(*) FROM {log} WHERE item_id = :id;", params, cur=cur)
+        elif time_start is None:
+            result = self._fetchall("SELECT count(*) FROM {log} WHERE item_id = :id AND time <= :time_end;", params, cur=cur)
+        elif time_end is None:
+            result = self._fetchall("SELECT count(*) FROM {log} WHERE item_id = :id AND time >= :time_start;", params, cur=cur)
+        else:
+            result = self._fetchall("SELECT count(*) FROM {log} WHERE item_id = :id AND time >= :time_start AND time <= :time_end;", params, cur=cur)
         if result == []:
             return 0
         if result is None:
@@ -952,7 +991,7 @@ class Database(SmartPlugin):
     def _parse_ts(self, dts):
         """
         Parse a duration-timestamp in the form '1w 2y 3h 1d 39i 15s' and return the duration in seconds as
-        an interger value
+        an integer value
 
         :return:
         """
@@ -1226,25 +1265,73 @@ class Database(SmartPlugin):
         if self._maxage_worklist == []:
             # Fill work list, if it is empty
             self._maxage_worklist = [i for i in self._items_with_maxage]
-            self.logger.info("remove_older_than_maxage: Worklist filled with {} items".format(len(self._items_with_maxage)))
+            self.logger.info(f"remove_older_than_maxage: Worklist filled with {len(self._items_with_maxage)} items")
 
         item = self._maxage_worklist.pop(0)
+        itempath = item.property.path
 
         try:
             item_id = self.id(item, create=False)
         except:
             if item_id is None:
-                self.logger.info("remove_older_than_maxage: no id for item {}".format(item))
+                self.logger.info(f"remove_older_than_maxage: no id for item {itempath}")
             else:
-                self.logger.critical("remove_older_than_maxage: no id for item {}".format(item))
+                self.logger.critical(f"remove_older_than_maxage: no id for item {itempath}")
             return
+
+        # it might well be that introducing database_maxage to a very old SmartHomeNG installation will try to start
+        # a deletion of thousands of logentries. This might take days with SQLite if so.
+        # so strategies might be
+        # a) delete only records for one day
+        # b) to just delete a limited number of log entries
         time_end = self.get_maxage_ts(item)
         timestamp_end = self._timestamp(time_end)
-        self.logger.info("remove_older_than_maxage: item = {} remove older than {}".format(item, time_end))
+        self.logger.info(f"remove_older_than_maxage: item = {itempath} remove older than {time_end}")
 
-        # delete Log entries, no direct commit - Commmit is done by the next call to _dump (to preserve SD cards)
-        self.deleteLog(item_id, time_end=timestamp_end, with_commit=False)
+        # if delete would also remove the last logged value for the item then there might be no chance for 
+        # ``database: init`` to retrieve the latest value.
+        remaining = 1
+        if self.get_iattr_value(item.conf, 'database').lower() == 'init':
+            # find out if there are still log entries after deletion of the logs
+            remaining = self.readLogCount(item_id,self._timestamp( time_end + datetime.timedelta(microseconds=1)))
+            # remaining can be larger than self._item_logcount[item_id], it depends on the rate of database updates
+            #self.logger.info(f"remove_older_than_maxage: item = {itempath} has attribute init with {self._item_logcount[item_id]} log entries and will have {remaining} log entries after deletion")
+        
+        if remaining <= 0:
+            # no log entries will be there after deletion, need to go back in time for the latest logentry
+            new_must_keep_timestamp = self.readLatestLog(item_id, timestamp_end)
+            new_must_keep_time = self._datetime(new_must_keep_timestamp)
+            self.logger.info(f"remove_older_than_maxage: item = {itempath} no remaining log entry between {time_end} and now, thus can not remove log entries older than maxage, latest log is {new_must_keep_time}")
+            time_end = new_must_keep_time + datetime.timedelta(microseconds=-1)
+            timestamp_end = self._timestamp( time_end )
 
+        count_log_records_to_delete = self.readLogCount(item_id,time_end=self._timestamp( time_end))
+
+        # prevent to many deletions with strategy b)
+        # assumption is made that logentries are evenly distributed over time
+        # there will be actually be some more or less deletions than given in self.max_delete_logentries
+        # since only a linear approximation over time and counts is used, but it should do the trick
+        # to prevent from database lockups after setting database_maxage to old/ancient items
+        if count_log_records_to_delete > self.max_delete_logentries:
+            old_count_log_records_to_delete = count_log_records_to_delete
+            timestamp_oldest = self.readOldestLog( item_id)
+            time_oldest = self._datetime( timestamp_oldest)
+            timespan_deletion = timestamp_end - timestamp_oldest
+            assumed_chunk_size = count_log_records_to_delete / self.max_delete_logentries
+            new_deletion_timespan = timespan_deletion / assumed_chunk_size
+            timestamp_end = timestamp_oldest + new_deletion_timespan
+            time_end = self._datetime( timestamp_end)
+            count_log_records_to_delete = self.readLogCount(item_id,time_end=self._timestamp( time_end))
+            self.logger.info(f"remove_older_than_maxage: item = {itempath} old count to delete {old_count_log_records_to_delete} was higher than {self.max_delete_logentries}")
+            self.logger.info(f"remove_older_than_maxage: item = {itempath} new count to delete {count_log_records_to_delete} has end {time_end}")
+
+        if count_log_records_to_delete:
+            time_start_deletion = time.time()
+            self.deleteLog(item_id, time_end=timestamp_end, with_commit=False)
+            time_used_for_deletion = time.time() - time_start_deletion
+            self.logger.info(f"remove_older_than_maxage: item = {itempath} deleted {count_log_records_to_delete} log entries until {time_end} took {time_used_for_deletion} seconds, averaging {time_used_for_deletion/count_log_records_to_delete} per second")
+
+        # update the logCount for the item
         self._item_logcount[item_id] = self.readLogCount(item_id)
         return
 
@@ -1259,6 +1346,7 @@ class Database(SmartPlugin):
         maxage = self.get_iattr_value(item.conf, 'database_maxage')
         if maxage:
             dt = self.shtime.now()
+            dt = dt.replace(hour=0, minute=0, second=0, microsecond=0)
             dt = dt - datetime.timedelta(float(maxage))
             return dt
         return None

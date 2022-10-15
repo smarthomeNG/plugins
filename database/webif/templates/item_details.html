@@ -70,13 +70,13 @@ function confirmDelete(url, text) {
 		{% for dataset in log_array %}
 			<tr>
 				<td class="py-1">{{ dataset[1] }}</td>
-				<td class="py-1">{{ dataset[0].strftime('%d.%m.%Y %H:%M:%S') }}</td>
+				<td class="py-1">{{ dataset[0].strftime('%d.%m.%Y %H:%M:%S.%f') }}</td>
 				<td class="py-1" style="text-align:right">{{ p._seconds(dataset[2]) }}</td>
 				{% if item.property.type == 'num' %}<td class="py-1">{{ dataset[4] }}</td>{% endif %}
 				{% if item.property.type == 'bool' %}<td class="py-1">{{ dataset[5] }}</td>{% endif %}
 				{% if item.property.type == 'str' %}<td class="py-1">{{ dataset[3] }}</td>{% endif %}
 				{% if item.property.type == 'foo' %}<td class="py-1">{{ dataset[3] }}</td>{% endif %}
-				<td class="py-1">{{ dataset[6].strftime('%d.%m.%Y %H:%M:%S') }} </td>
+				<td class="py-1">{{ dataset[6].strftime('%d.%m.%Y %H:%M:%S.%f') }} </td>
 				<td class="py-1"><button {% if loop.index < 3 and (day is none or (day+" "+month+" "+year == now.strftime('%d %m %Y'))) %}disabled{% endif %} type="button"
 				class="btn btn-{% if loop.index < 3 and (day is none or (day+" "+month+" "+year == now.strftime('%d %m %Y'))) %}secondary{% else %}danger{% endif %} btn-sm"
 				title="{% if loop.index < 3 and (day is none or (day+" "+month+" "+year == now.strftime('%d %m %Y'))) %}{{ _('Wert löschen fuer aktuellen Wert nicht verfuegbar.') }}{% else %}{{ _('Wert löschen') }}{% endif %}"
