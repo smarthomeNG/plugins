@@ -1,56 +1,123 @@
 {% extends "base_plugin.html" %}
-
 {% set logo_frame = false %}
+{% set update_interval = 15000 %}
 
-<!-- set update_interval to a value > 0 (in milliseconds) to enable periodic data updates -->
-{% set update_interval = 0 %}
+<!--
+	Additional styles go into this block. Examples are for datatables
+-->
+{% block pluginstyles %}
+<style>
+  table th.value {
+    width: 100px;
+  }
+  These are used for highlight effect in web interface when a value changes. If you don't want to overwrite the
+  default color, you can remove the entries here as the classes are already defined in smarthomeng.css
+  */
+  .shng_effect_highlight {
+    background-color: #FFFFE0;
+  }
+  .shng_effect_standard {
+    background-color: none;
+  }
+</style>
+{% endblock pluginstyles %}
 
 <!--
 	Additional script tag for plugin specific javascript code go into this block
 -->
 {% block pluginscripts %}
 <script>
-	function handleUpdatedData(response, dataSet=null) {
-		if (dataSet === 'devices_info' || dataSet === null) {
-			var objResponse = JSON.parse(response);
-			myProto = document.getElementById(dataSet);
-			for (var device in objResponse) {
-				<!--
-				shngInsertText (device+'_source', objResponse[device]['source']);
-				shngInsertText (device+'_powerState', objResponse[device]['powerState']);
-				-->
+    function handleUpdatedData(response, dataSet=null) {
+        if (dataSet === 'devices_info' || dataSet === null) {
+            var objResponse = JSON.parse(response);
+            myProto = document.getElementById(dataSet);
+
+            for (item in objResponse['items']) {
+                shngInsertText(item+'_value', String(objResponse['items'][item]['value']), 'maintable', 5);
+                shngInsertText(item+'_last_update', objResponse['items'][item]['last_update'], 'maintable');
+                shngInsertText(item+'_last_change', objResponse['items'][item]['last_change'], 'maintable');
 			}
 		}
 	}
 </script>
+
+<script>
+    $(document).ready( function () {
+	  $(window).trigger('datatables_defaults');
+      try {
+        webif_pagelength = parseInt(document.getElementById('webif_pagelength').innerHTML);
+        if (isNaN(parseFloat(webif_pagelength)) || webif_pagelength == 0) {
+          resize = true;
+          webif_pagelength = -1;
+  		  console.log('Activating automatic table resize');
+        }
+        else {
+          resize = false;
+        }
+      }
+      catch (e) {
+        webif_pagelength = 100;
+        resize = false;
+        console.log("Using default values for page length " + webif_pagelength + ", pageResize: " + resize);
+      }
+      try {
+        table = $('#maintable').DataTable( {
+          pageLength: webif_pagelength,
+          pageResize: resize});
+        table = $('#datatable').DataTable( {
+          pageLength: webif_pagelength,
+          pageResize: resize});
+        table = $('#datatable2').DataTable( {
+          pageLength: webif_pagelength,
+          pageResize: resize});
+      }
+      catch (e) {
+        console.warn("Datatable JS not loaded, showing standard table without reorder option " + e);
+      }
+    });
+</script>
+
+<!--
+This is an example on how to update the page refresh method. You can set the dataSet, update interval, special parameters or (de)activate the auto refresh
+In the example the update is deactivated on the 12th of December 2022 (what might make no sense at all)
+<script>
+  var today = new Date();
+  var today_date = String(today.getDate()) + String(today.getMonth() + 1) + today.getFullYear();
+  let test_date = "12122022";
+  if (today_date === test_date)
+      window.refresh.update({dataSet:'test', update_params:'specialitem', update_interval: 2000, update_active:false});
+  </script>
+-->
 {% endblock pluginscripts %}
 
 
 {% block headtable %}
+<span id='webif_pagelength' style="display:none">{{ webif_pagelength }}</span>
+
 <table class="table table-striped table-hover">
 	<tbody>
 		<tr>
-			<td class="py-1"><strong>Prompt 1</strong></td>
-			<td class="py-1">{% if 1 == 2 %}{{ _('Ja') }}{% else %}{{ _('Nein') }}{% endif %}</td>
+			<td class="py-1"><strong>Anschluss</strong></td>
+			<td class="py-1">{% if p.host %}{{ p.host }}{{ _(':') }}{{ p.port }}{% else %}{{ (p.serialport) }}{% endif %}</td>
 			<td class="py-1" width="50px"></td>
-			<td class="py-1"><strong>Prompt 4</strong></td>
-			<td class="py-1">{{ _('Wert 4') }}</td>
+			<td class="py-1"><strong>Timeout</strong></td>
+			<td class="py-1">{{ p.timeout }}s</td>
 			<td class="py-1" width="50px"></td>
 		</tr>
 		<tr>
-			<td class="py-1"><strong>Prompt 2</strong></td>
-			<td class="py-1">{{ _('Wert 2') }}</td>
+			<td class="py-1"><strong>Buffer Size</strong></td>
+			<td class="py-1">{{ p.buffersize }}</td>
 			<td></td>
-			<td class="py-1"><strong>Prompt 5</strong></td>
-			<td class="py-1">-</td>
+			<td class="py-1"><strong>Date Offset</strong></td>
+			<td class="py-1">{{ p.date_offset }}</td>
 			<td></td>
 		</tr>
 		<tr>
-			<td class="py-1"><strong>Prompt 3</strong></td>
-			<td class="py-1">-</td>
+			<td class="py-1"><strong>Verbunden</strong></td>
+			<td class="py-1">{% if p.connected %}{{ _('Ja') }}{% else %}{{ _('Nein') }}{% endif %}</td>
 			<td></td>
-			<td class="py-1"><strong>Prompt 6</strong></td>
-			<td class="py-1">-</td>
+			<td class="py-1"><strong>Zykluszeit</strong></td>
+			<td class="py-1">{{ p.cycle }}s</td>
 			<td></td>
 		</tr>
 	</tbody>
@@ -74,51 +141,237 @@
 -->
 {% set tabcount = 4 %}
 
-
 <!--
 	Set the tab that will be visible on start, if another tab that 1 is wanted (1 - 3)
 -->
-{% if item_count==0 %}
+{% if item_count == 0 %}
 	{% set start_tab = 2 %}
 {% endif %}
 
+<!--
+	Set the tab title
+-->
+{% set tab1title = "<strong>" ~ p.get_shortname() ~ " Items</strong> (" ~ item_count ~ ")" %}
+{% set tab2title = "<strong>" ~ p.get_shortname() ~ " Obis Data</strong>" %}
+{% if '1-0:1.8.0*255' in p.values %}
+    {% set tab3title = "<strong>" ~ p.get_shortname() ~ " Zählerstatus</strong>" %}
+{% else %}
+    {% set tab3title = "hidden" %}
+{% endif %}
+{% if maintenance %}
+    {% set tab4title = "<strong>" ~ p.get_shortname() ~ " Maintenance</strong>" %}
+{% else %}
+    {% set tab4title = "hidden" %}
+{% endif %}
 
 <!--
 	Content block for the first tab of the Webinterface
 -->
-{% set tab1title = "<strong>" ~ p.get_shortname() ~ " Items</strong> (" ~ item_count ~ ")" %}
+
 {% block bodytab1 %}
-<div class="container-fluid m-2">
-	{{ _('Hier kommt der Inhalt des Webinterfaces hin.') }}
+<div class="container-fluid m-2" id="resize_wrapper">
+	<table id="maintable" class="table table-striped table-hover pluginList display">
+		<thead>
+			<tr>
+			    <th>{{ _('Item') }}</th>
+				<th class="attribute">{{ _('Attribut') }}</th>
+				<th class="type">{{_('Typ')}}</th>
+                <th class="value" style="text-align: right">{{_('Wert')}}</th>
+                <th style="text-align: center">{{_('Letztes Update')}}</th>
+                <th style="text-align: center">{{_('Letzter Change')}}</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for item in items %}
+			<tr>
+			    <td class="py-1">{{ item._path }}</td>
+				<td class="py-1">{{ p.get_iattr_value(item.conf, 'sml_obis') }}</td>
+				<td class="py-1">{{ item._type }}</td>
+				<td class="py-1" id="{{ item._path }}_value" style="text-align: right">.{{ item._value }}</td>
+				<td class="py-1" id="{{ item._path }}_last_update" style="text-align: center">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+				<td class="py-1" id="{{ item._path }}_last_change" style="text-align: center">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+
 </div>
 {% endblock bodytab1 %}
-
 
 <!--
 	Content block for the second tab of the Webinterface
 -->
-{% set tab2title = "<strong>" ~ p.get_shortname() ~ " Geräte</strong> (" ~ device_count ~ ")" %}
 {% block bodytab2 %}
-{% endblock bodytab2 %}
+<div class="container-fluid m-2" id="resize_wrapper">
+    <table id="datatable" class="table table-striped table-hover pluginList display">
+        <thead>
+            <tr>
+                <th style="width: 200px">{{ _('OBIS Codes') }}</th>
+                <th style="width: 400px; text-align: right">{{ _('Value') }}</th>
+                <th>{{ _('Unit') }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for entry in p.values %}
+            <tr>
+                <td class="py-1">{{ entry }}</td>
+                <td class="py-1" style="text-align: right">{{ p.values[entry]['valueReal'] }}</td>
+                <td class="py-1">{{ p.values[entry]['unitName'] }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 
+    <br>
+    <br>
+    <b> OBIS Raw data </b>
+    <table id="datatable4" class="table table-striped table-hover pluginList display">
+        <thead>
+            <tr>
+                <th style="width: 100px">{{ _('OBIS Codes') }}</th>
+                <th style="width: 600px">{{ _('Data') }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for entry in p.values %}
+            <tr>
+                <td class="py-1">{{ entry }}</td>
+                <td class="py-1">{{ p.values[entry] }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock bodytab2 %}
 
 <!--
 	Content block for the third tab of the Webinterface
-	If wanted, a title for the tab can be defined as:
-		{% set tab3title = "<strong>" ~ p.get_shortname() ~ " Geräte</strong>" %}
-
-	It has to be defined before (and outside) the block bodytab3
 -->
 {% block bodytab3 %}
+<div class="container-fluid m-2" id="resize_wrapper">
+    {% if '1-0:1.8.0*255' in p.values %}
+    <table id="datatable3" class="table table-striped table-hover pluginList display">
+        <thead>
+            <tr>
+                <th style="width: 400px">{{ _('Status') }}</th>
+                <th>{{ _('Value') }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if 'statRun' in p.values['1-0:1.8.0*255'] %}
+            <tr>
+                <td class="py-1">{{ _('Zähler in Betrieb') }}</td>
+                <td class="py-1">{% if p.values['1-0:1.8.0*255']['statRun'] %}{{ _('Ja') }}{% else %}{{ _('Nein') }}{% endif %}</td>
+            </tr>
+            {% endif %}
+            {% if 'statFraudMagnet' in p.values['1-0:1.8.0*255'] %}
+            <tr>
+                <td class="py-1">{{ _('magnetische Manipulation') }}</td>
+                <td class="py-1">{% if p.values['1-0:1.8.0*255']['statFraudMagnet'] %}{{ _('Ja') }}{% else %}{{ _('Nein') }}{% endif %}</td>
+            </tr>
+            {% endif %}
+            {% if 'statFraudCover' in p.values['1-0:1.8.0*255'] %}
+            <tr>
+                <td class="py-1">{{ _('Manipulation der Abdeckung') }}</td>
+                <td class="py-1">{% if p.values['1-0:1.8.0*255']['statFraudCover'] %}{{ _('Ja') }}{% else %}{{ _('Nein') }}{% endif %}</td>
+            </tr>
+            {% endif %}
+            {% if 'statEnergyTotal' in p.values['1-0:1.8.0*255'] %}
+            <tr>
+                <td class="py-1">{{ _('Stromfluss gesamt') }}</td>
+                <td class="py-1">{% if p.values['1-0:1.8.0*255']['statEnergyTotal'] %}{{ _('-A') }}{% else %}{{ _('+A') }}{% endif %}</td>
+            </tr>
+            {% endif %}
+            {% if 'statEnergyL1' in p.values['1-0:1.8.0*255'] %}
+            <tr>
+                <td class="py-1">{{ _('Stromfluss L1') }}</td>
+                <td class="py-1">{% if p.values['1-0:1.8.0*255']['statEnergyL1'] %}{{ _('-A') }}{% else %}{{ _('+A') }}{% endif %}</td>
+            </tr>
+            {% endif %}
+            {% if 'statEnergyL2' in p.values['1-0:1.8.0*255'] %}
+            <tr>
+                <td class="py-1">{{ _('Stromfluss L2') }}</td>
+                <td class="py-1">{% if p.values['1-0:1.8.0*255']['statEnergyL2'] %}{{ _('-A') }}{% else %}{{ _('+A') }}{% endif %}</td>
+            </tr>
+            {% endif %}
+            {% if 'statEnergyL3' in p.values['1-0:1.8.0*255'] %}
+            <tr>
+                <td class="py-1">{{ _('Stromfluss L3') }}</td>
+                <td class="py-1">{% if p.values['1-0:1.8.0*255']['statEnergyL3'] %}{{ _('-A') }}{% else %}{{ _('+A') }}{% endif %}</td>
+            </tr>
+            {% endif %}
+            {% if 'statVoltageL1' in p.values['1-0:1.8.0*255'] %}
+            <tr>
+                <td class="py-1">{{ _('Spannung an L1') }}</td>
+                <td class="py-1">{% if p.values['1-0:1.8.0*255']['statVoltageL1'] %}{{ _('OK') }}{% else %}{{ _('NOK') }}{% endif %}</td>
+            </tr>
+            {% endif %}
+            {% if 'statVoltageL2' in p.values['1-0:1.8.0*255'] %}
+            <tr>
+                <td class="py-1">{{ _('Spannung an L2') }}</td>
+                <td class="py-1">{% if p.values['1-0:1.8.0*255']['statVoltageL2'] %}{{ _('OK') }}{% else %}{{ _('NOK') }}{% endif %}</td>
+            </tr>
+            {% endif %}
+            {% if 'statVoltageL3' in p.values['1-0:1.8.0*255'] %}
+            <tr>
+                <td class="py-1">{{ _('Spannung an L3') }}</td>
+                <td class="py-1">{% if p.values['1-0:1.8.0*255']['statVoltageL3'] %}{{ _('OK') }}{% else %}{{ _('NOK') }}{% endif %}</td>
+            </tr>
+            {% endif %}
+            {% if 'statRotaryField' in p.values['1-0:1.8.0*255'] %}
+            <tr>
+                <td class="py-1">{{ _('Drehfeld') }}</td>
+                <td class="py-1">{% if p.values['1-0:1.8.0*255']['statRotaryField'] %}{{ _('NOK') }}{% else %}{{ _('OK') }}{% endif %}</td>
+            </tr>
+            {% endif %}
+            {% if 'statBackstop' in p.values['1-0:1.8.0*255'] %}
+            <tr>
+                <td class="py-1">{{ _('Backstop') }}</td>
+                <td class="py-1">{% if p.values['1-0:1.8.0*255']['statBackstop'] %}{{ _('Active') }}{% else %}{{ _('Nein') }}{% endif %}</td>
+            </tr>
+            {% endif %}
+            {% if 'statCalFault' in p.values['1-0:1.8.0*255'] %}
+            <tr>
+                <td class="py-1">{{ _('Fataler Fehler') }}</td>
+                <td class="py-1">{% if p.values['1-0:1.8.0*255']['statCalFault'] %}{{ _('FAULT') }}{% else %}{{ _('Keiner') }}{% endif %}</td>
+            </tr>
+            {% endif %}
+        </tbody>
+    </table>
+    {% endif %}
+</div>
 {% endblock bodytab3 %}
 
-
 <!--
-	Content block for the fourth tab of the Webinterface
-	If wanted, a title for the tab can be defined as:
-		{% set tab4title = "<strong>" ~ p.get_shortname() ~ " Geräte</strong>" %}
-
-	It has to be defined before (and outside) the block bodytab4
+	Content block for the third tab of the Webinterface
 -->
 {% block bodytab4 %}
+<div class="container-fluid m-2" id="resize_wrapper">
+    <table id="mtable2" class="table table-striped table-hover pluginList display">
+        <thead>
+            <tr>
+                <th style="width: 150px">{{ _('dict/list') }}</th>
+                <th style="width: 50px">{{ _('count') }}</th>
+                <th style="width: 500px">{{ _('content') }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td class="py-1">{{ _('_items') }}</td>
+                <td class="py-1">{{ len(p._items) }}</td>
+                <td class="py-1">{{ p._items }}</td>
+            </tr>
+            <tr>
+                <td class="py-1">{{ _('_item_dict') }}</td>
+                <td class="py-1">{{ len(p._item_dict) }}</td>
+                <td class="py-1">{{ p._item_dict }}</td>
+            </tr>
+            <tr>
+                <td class="py-1">{{ _('values') }}</td>
+                <td class="py-1">{{ len(p.values) }}</td>
+                <td class="py-1">{{ p.values }}</td>
+            </tr>
+         </tbody>
+    </table>
+</div>
 {% endblock bodytab4 %}
