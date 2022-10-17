@@ -6,13 +6,13 @@ plugin:
         de: 'Auslesen von Stromzählern mit SML-Protokoll'
         en: 'Readout of smartmeter with SML protocol'
     maintainer: bmxp
-    tester: sisamiwe,morg          # Who tests this plugin?
+    tester: sisamiwe, morg         # Who tests this plugin?
     state: ready                   # change to ready when done with development
     keywords: sml smartmeter
     documentation: https://www.smarthomeng.de/developer/plugins/smlx/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/39119-sml-plugin-datenblock-größenfehler
     restartable: True
-    version: 1.1.5                 # Plugin version
+    version: 1.1.6                 # Plugin version
     sh_minversion: 1.4.2           # minimum shNG version to use this plugin
     #sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
@@ -77,7 +77,7 @@ parameters:
         description:
             de: 'Polynom für die crc Berechnung'
             en: 'Polynomial for crc calculation'
-            
+
     reflect_in:
         type: bool
         default: True
@@ -89,7 +89,7 @@ parameters:
         type: int
         default: 0xffff
         description:
-            de: 'Initaler Wert für XOR Berechnung'
+            de: 'Initialer Wert für XOR Berechnung'
             en: 'Initial value for XOR calculation'
 
     reflect_out:
@@ -115,17 +115,43 @@ parameters:
 
 item_attributes:
     # Definition of item attributes defined by this plugin
-    sml_obis: 
+    sml_obis:
         type: str
         description:
             de: 'Wert des angegebenen OBIS codes einem Item zuweisen'
             en: 'Assigns the value for the given OBIS code to the item'
 
-    sml_prop: 
+    sml_prop:
         type: str
         description:
             de: 'Andere Eigenschaft des Obis Codes nutzen, z.B. unitName'
             en: 'Used to assign other information for an OBIS code to the item'
+        default: 'valueReal'
+        valid_list:
+            - 'valueReal'               # num     Der echte Wert, der sich unter Berücksichtigung des Skalierungsfaktors errechnet
+            - 'unitName'                # str     Die Bezeichnung der Einheit
+            - 'actualTime'              # str     ein String mit Datum und Zeit der tatsächlichen Zeit (z.B. 'Fri Oct 18 09:34:21 2019')
+            - 'statRun'                 # bool    True: Zähler in Betrieb, False: Zähler nicht in Betrieb
+            - 'statFraudMagnet'         # bool    True: magnetische Manipulation erkannt, False: ok
+            - 'statFraudCover'          # bool    True: Manipulation der Abdeckung erkannt, False: ok
+            - 'statEnergyTotal'         # bool    Stromfluss gesamt. True: -A, False: +A
+            - 'statEnergyL1'            # bool    Stromfluss L1. True: -A, False: +A
+            - 'statEnergyL2'            # bool    Stromfluss L2. True: -A, False: +A
+            - 'statEnergyL3'            # bool    Stromfluss L3. True: -A, False: +A
+            - 'statRotaryField'         # bool    True: Drehfeld nicht L1->L2->L3, False: ok
+            - 'statBackstop'            # bool    True: Backstop aktive, False: Backstop nicht aktive
+            - 'statCalFault'            # bool    True: Fataler Fehler mit Auswirkung auf Kalibrierung, False: ok
+            - 'statVoltageL1'           # bool    True: Spannung an L1 vorhanden, False: nicht vorhanden
+            - 'statVoltageL2'           # bool    True: Spannung an L2 vorhanden, False: nicht vorhanden
+            - 'statVoltageL3'           # bool    True: Spannung an L3 vorhanden, False: nicht vorhanden
+            - 'obis'                    # str     OBIS Code
+            - 'objName'                 # str     der OBIS Code als Zeichenkette / binäre Daten
+            - 'status'                  # str     ein Statuswert
+            - 'valTime'                 # str     die Zeit entsprechend dem Wert (als Sekunden der Einheit start oder als Zeitstempel)
+            - 'unit'                    # str     Identifiziert die Einheit des entsprechenden Wertes (z.B. W, kWh, V, A, ...)
+            - 'scaler'                  # str     der Skalierungsfaktor (10-factor shift) der benutzt wird um den echten Wert zu berechnen
+            - 'value'                   # num     der Wert
+            - 'signature'               # str     Die Signatur um die Daten zu schützen
 
 item_structs: NONE
     # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
