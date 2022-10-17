@@ -128,30 +128,30 @@ item_attributes:
             en: 'Used to assign other information for an OBIS code to the item'
         default: 'valueReal'
         valid_list:
-            - 'valueReal'           # Der echte Wert, der sich unter Berücksichtigung des Skalierungsfaktors errechnet
-            - 'unitName'            # Die Bezeichnung der Einheit
-            - 'actualTime'          # ein String mit Datum und Zeit der tatsächlichen Zeit (z.B. 'Fri Oct 18 09:34:21 2019')
-            - 'statRun'             # True: Zähler in Betrieb, False: Zähler nicht in Betrieb
-            - 'statFraudMagnet'     # True: magnetische Manipulation erkannt, False: ok
-            - 'statFraudCover'      # True: Manipulation der Abdeckung erkannt, False: ok
-            - 'statEnergyTotal'     # Stromfluss gesamt. True: -A, False: +A
-            - 'statEnergyL1'        # Stromfluss L1. True: -A, False: +A
-            - 'statEnergyL2'        # Stromfluss L2. True: -A, False: +A
-            - 'statEnergyL3'        # Stromfluss L3. True: -A, False: +A
-            - 'statRotaryField'     # True: Drehfeld nicht L1->L2->L3, False: ok
-            - 'statBackstop'        # True: Backstop aktive, False: Backstop nicht aktive
-            - 'statCalFault'        # True: Fataler Fehler mit Auswirkung auf Kalibrierung, False: ok
-            - 'statVoltageL1'       # True: Spannung an L1 vorhanden, False: nicht vorhanden
-            - 'statVoltageL2'       # True: Spannung an L2 vorhanden, False: nicht vorhanden
-            - 'statVoltageL3'       # True: Spannung an L3 vorhanden, False: nicht vorhanden
-            - 'obis'                # OBIS Code
-            - 'objName'             # der OBIS Code als Zeichenkette / binäre Daten
-            - 'status'              # ein Statuswert
-            - 'valTime'             # die Zeit entsprechend dem Wert (als Sekunden der Einheit start oder als Zeitstempel)
-            - 'unit'                # Identifiziert die Einheit des entsprechenden Wertes (z.B. W, kWh, V, A, ...)
-            - 'scaler'              # der Skalierungsfaktor (10-factor shift) der benutzt wird um den echten Wert zu berechnen
-            - 'value'               # der Wert
-            - 'signature'           # Die Signatur um die Daten zu schützen
+            - 'valueReal'               # num     Der echte Wert, der sich unter Berücksichtigung des Skalierungsfaktors errechnet
+            - 'unitName'                # str     Die Bezeichnung der Einheit
+            - 'actualTime'              # str     ein String mit Datum und Zeit der tatsächlichen Zeit (z.B. 'Fri Oct 18 09:34:21 2019')
+            - 'statRun'                 # bool    True: Zähler in Betrieb, False: Zähler nicht in Betrieb
+            - 'statFraudMagnet'         # bool    True: magnetische Manipulation erkannt, False: ok
+            - 'statFraudCover'          # bool    True: Manipulation der Abdeckung erkannt, False: ok
+            - 'statEnergyTotal'         # bool    Stromfluss gesamt. True: -A, False: +A
+            - 'statEnergyL1'            # bool    Stromfluss L1. True: -A, False: +A
+            - 'statEnergyL2'            # bool    Stromfluss L2. True: -A, False: +A
+            - 'statEnergyL3'            # bool    Stromfluss L3. True: -A, False: +A
+            - 'statRotaryField'         # bool    True: Drehfeld nicht L1->L2->L3, False: ok
+            - 'statBackstop'            # bool    True: Backstop aktive, False: Backstop nicht aktive
+            - 'statCalFault'            # bool    True: Fataler Fehler mit Auswirkung auf Kalibrierung, False: ok
+            - 'statVoltageL1'           # bool    True: Spannung an L1 vorhanden, False: nicht vorhanden
+            - 'statVoltageL2'           # bool    True: Spannung an L2 vorhanden, False: nicht vorhanden
+            - 'statVoltageL3'           # bool    True: Spannung an L3 vorhanden, False: nicht vorhanden
+            - 'obis'                    # str     OBIS Code
+            - 'objName'                 # str     der OBIS Code als Zeichenkette / binäre Daten
+            - 'status'                  # str     ein Statuswert
+            - 'valTime'                 # str     die Zeit entsprechend dem Wert (als Sekunden der Einheit start oder als Zeitstempel)
+            - 'unit'                    # str     Identifiziert die Einheit des entsprechenden Wertes (z.B. W, kWh, V, A, ...)
+            - 'scaler'                  # str     der Skalierungsfaktor (10-factor shift) der benutzt wird um den echten Wert zu berechnen
+            - 'value'                   # num     der Wert
+            - 'signature'               # str     Die Signatur um die Daten zu schützen
 
 item_structs: NONE
     # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
