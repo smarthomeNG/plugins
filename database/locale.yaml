@@ -96,6 +96,6 @@ plugin_translations:
     'Anzahl Datensätze in LOG Tabelle':
         'de': '='
         'en': 'Number of data sets in LOG table'
-    'Wert löschen fuer aktuellen Wert nicht verfügbar.':
+    'Wert löschen für aktuellen Wert nicht verfügbar.':
         'de': '='
         'en': 'Deletion of value not available for the most recent value.'
