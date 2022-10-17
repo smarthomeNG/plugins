@@ -1,0 +1,320 @@
+# Metadata for the plugin
+plugin:
+    # Global plugin attributes
+    type: interface                   # plugin type (gateway, interface, protocol, system, web)
+    description:
+        de: 'Plugin zum Auslesen Informationen über den Host Raspberry Pi'
+        en: 'Plugin to readout information about Host Raspberry Pi'
+    maintainer: sisamiwe
+#    tester:                         # Who tests this plugin?
+    state: develop                   # change to ready when done with development
+#    keywords: iot xyz
+#    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
+#    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
+
+    version: 1.0.0                  # Plugin version (must match the version specified in __init__.py)
+    sh_minversion: 1.8              # minimum shNG version to use this plugin
+#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+#    py_minversion: 3.6             # minimum Python version to use for this plugin
+#    py_maxversion:                 # maximum Python version to use for this plugin (leave empty if latest)
+    multi_instance: false           # plugin supports multi instance
+    restartable: unknown
+    classname: RPi_Info             # class containing the plugin
+
+parameters:
+    webif_pagelength:
+        type: int
+        default: 100
+        valid_list:
+          - -1
+          - 0
+          - 25
+          - 50
+          - 100
+        description:
+            de: 'Anzahl an Items, die standardmäßig in einer Web Interface Tabelle pro Seite angezeigt werden.
+                 0 = automatisch, -1 = alle'
+            en: 'Amount of items being listed in a web interface table per page by default.
+                 0 = automatic, -1 = all'
+        description_long:
+            de: 'Anzahl an Items, die standardmäßig in einer Web Interface Tabelle pro Seite angezeigt werden.\n
+                 Bei 0 wird die Tabelle automatisch an die Höhe des Browserfensters angepasst.\n
+                 Bei -1 werden alle Tabelleneinträge auf einer Seite angezeigt.'
+            en: 'Amount of items being listed in a web interface table per page by default.\n
+                 0 adjusts the table height automatically based on the height of the browser windows.\n
+                 -1 shows all table entries on one page.'
+
+    poll_cycle:
+        type: int
+        default: 120
+        description:
+            de: 'Zyklus, in dem die Informationen abgefragt werden sollen.'
+            en: 'Poll cycle of information.'
+
+
+item_attributes:
+    rpiinfo_func:
+        type: str
+        description:
+            de: 'Funktion des Rpi_Info Plugins'
+            en: 'Function of Rpi_Info Plugins'
+        valid_list:
+            - 'uptime'
+            - 'uptime_string'
+            - 'cpu_temperature'
+            - 'frequency'
+            - 'under_voltage'
+            - 'frequency_capped'
+            - 'throttled'
+            - 'temperature_limit'
+            - 'under_voltage_last_reboot'
+            - 'throttled_last_reboot'
+            - 'frequency_capped_last_reboot'
+            - 'temperature_limit_last_reboot'
+
+    rpiinfo_sys:
+        type: str
+        description:
+            de: 'Attribut für globale Plugin Items zum Triggern eines Update'
+            en: 'Attribute for global plugin items to trigger value read update'
+        valid_list:
+          - update
+        valid_list_description:
+            de:
+                - 'Startet bei Triggerung ein Update der Daten'
+            en:
+                - 'Rereads rpi data'
+
+item_structs:
+    rpi_info:
+        name: Struct für Information über den RPi
+
+        update_rpi_info:
+            type: bool
+            rpiinfo_sys: update
+
+        temperature:
+            type: num
+            rpiinfo_func: cpu_temperature
+            visu_acl: ro
+
+        uptime:
+            type: num
+            rpiinfo_func: uptime
+            visu_acl: ro
+
+            text:
+                type: str
+                eval: str(datetime.timedelta(seconds=value)) if value else None
+                eval_trigger: ..
+                visu_acl: ro
+
+        uptime_str:
+            type: str
+            rpiinfo_func: uptime_string
+            visu_acl: ro
+
+        frequency:
+            type: num
+            rpiinfo_func: frequency
+            visu_acl: ro
+
+        under_voltage:
+            type: bool
+            rpiinfo_func: under_voltage
+            visu_acl: ro
+
+        frequency_capped:
+            type: bool
+            rpiinfo_func: frequency_capped
+            visu_acl: ro
+
+        throttled:
+            type: bool
+            rpiinfo_func: throttled
+            visu_acl: ro
+
+        temperature_limit:
+            type: bool
+            rpiinfo_func: temperature_limit
+            visu_acl: ro
+
+        under_voltage_last_reboot:
+            type: bool
+            rpiinfo_func: under_voltage_last_reboot
+            visu_acl: ro
+
+        frequency_capped_last_reboot:
+            type: bool
+            rpiinfo_func: frequency_capped_last_reboot
+            visu_acl: ro
+
+        throttled_last_reboot:
+            type: bool
+            rpiinfo_func: throttled_last_reboot
+            visu_acl: ro
+
+        temperature_limit_last_reboot:
+            type: bool
+            rpiinfo_func: temperature_limit_last_reboot
+            visu_acl: ro
+
+    rpi_info_db:
+        name: Struct für Information über den RPi mit database
+
+        update_rpi_info:
+            type: bool
+            rpiinfo_sys: update
+
+        temperature:
+            type: num
+            rpiinfo_func: cpu_temperature
+            database: true
+            visu_acl: ro
+
+        uptime:
+            type: num
+            rpiinfo_func: uptime
+            visu_acl: ro
+
+            text:
+                type: str
+                eval: str(datetime.timedelta(seconds=value)) if value else None
+                eval_trigger: ..
+                visu_acl: ro
+
+        uptime_str:
+            type: str
+            rpiinfo_func: uptime_string
+            visu_acl: ro
+
+        frequency:
+            type: num
+            rpiinfo_func: frequency
+            database: true
+            visu_acl: ro
+
+        under_voltage:
+            type: bool
+            rpiinfo_func: under_voltage
+            database: true
+            visu_acl: ro
+
+        frequency_capped:
+            type: bool
+            rpiinfo_func: frequency_capped
+            visu_acl: ro
+
+        throttled:
+            type: bool
+            rpiinfo_func: throttled
+            visu_acl: ro
+
+        temperature_limit:
+            type: bool
+            rpiinfo_func: temperature_limit
+            visu_acl: ro
+
+        under_voltage_last_reboot:
+            type: bool
+            rpiinfo_func: under_voltage_last_reboot
+            visu_acl: ro
+
+        frequency_capped_last_reboot:
+            type: bool
+            rpiinfo_func: frequency_capped_last_reboot
+            visu_acl: ro
+
+        throttled_last_reboot:
+            type: bool
+            rpiinfo_func: throttled_last_reboot
+            visu_acl: ro
+
+        temperature_limit_last_reboot:
+            type: bool
+            rpiinfo_func: temperature_limit_last_reboot
+            visu_acl: ro
+
+item_attribute_prefixes: NONE
+
+plugin_functions:
+    uptime:
+        type: int
+        description:
+            de: 'Laufzeit des RPi'
+            en: 'Uptime of PRi'
+
+    uptime_str:
+        type: str
+        description:
+            de: 'Laufzeit des RPi as String'
+            en: 'Uptime of PRi as string'
+
+    cpu_temp:
+        type: num
+        description:
+            de: 'Temperatur der CPU in °C'
+            en: 'Temperature of CPU in °C'
+
+    frequency:
+        type: int
+        description:
+            de: 'CPU-Taktrate'
+            en: 'CPU frequency'
+
+    under_voltage:
+        type: bool
+        description:
+            de: 'Unterspannung detektiert'
+            en: 'under voltage detected'
+
+    frequency_capped:
+        type: bool
+        description:
+            de: 'Ist die Taktrate der CPU begrenzt'
+            en: 'Is CPU frequency currently capped'
+
+    throttled:
+        type: bool
+        description:
+            de: 'Ist der RPI aktuell gedrosselt'
+            en: 'Is the RPI currently throttled'
+
+    temperature_limit:
+        type: bool
+        description:
+            de: 'Temperaturlimit der CPU erreicht'
+            en: 'temperature limit of CPU reached'
+
+    under_voltage_last_reboot:
+        type: bool
+        description:
+            de: 'Wurde seit dem letzten Neustart Unterspannung festgestellt'
+            en: 'Has there been under voltage since last reboot'
+
+    throttled_last_reboot:
+        type: bool
+        description:
+            de: 'Wurde der RPI seit dem letzten Neustart gedrosselt'
+            en: 'Has the RPI been throttled since last reboot'
+
+    frequency_capped_last_reboot:
+        type: bool
+        description:
+            de: 'Wurde seit dem letzten Neustart die Taktrate reduziert'
+            en: 'Has the frequency being capping since last reboot'
+
+    temperature_limit_last_reboot:
+        type: bool
+        description:
+            de: 'Wurde seit dem letzten Neustart das Temperaturlimit erreicht'
+            en: 'Has the temperature limit been reached since last reboot'
+
+    suspend:
+        type: bool
+        description:
+            de: 'Pausiert das Plugins'
+            en: 'Suspends plugin'
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)
