@@ -52,7 +52,7 @@ parameters:
         type: int
         default: 300
         description:
-            de: '(optional) Zeit zwischen zwei Updateläufen. Default ist 300 Sekunden.'
+            de: '(optional) Zeit zwischen zwei Runs. Default ist 300 Sekunden.'
             en: '(optional) Time period between two update cycles. Default is 300 seconds.'
     ssl:
         type: bool
@@ -122,138 +122,138 @@ item_attributes:
             en: 'AVM Data Type of the respective item.'
         valid_list:
         # Fritzdevice Attribute
-        - 'uptime'                      # r/o
-        - 'serial_number'               # r/o
-        - 'software_version'            # r/o
-        - 'hardware_version'            # r/o
-        # Myfritz Attribute
-        - 'myfritz_status'              # r/o
-        # Call Monitor Attribute
-        - 'monitor_trigger'             # r/o
-        - 'is_call_incoming'            # r/o
-        - 'call_duration_incoming'      # r/o
-        - 'last_caller_incoming'        # r/o
-        - 'last_number_incoming'        # r/o
-        - 'last_called_number_incoming' # r/o
-        - 'last_call_date_incoming'     # r/o
-        - 'call_event_incoming'         # r/o
-        - 'is_call_outgoing'            # r/o
-        - 'call_duration_outgoing'      # r/o
-        - 'last_caller_outgoing'        # r/o
-        - 'last_number_outgoing'        # r/o
-        - 'last_called_number_outgoing' # r/o
-        - 'last_call_date_outgoing'     # r/o
-        - 'call_event_outgoing'         # r/o
-        - 'call_direction'              # r/o
-        - 'call_event'                  # r/o
-        # TAM Attribute                             alle Attribute benötigen zusätzlich das Attribut 'avm2_tam_index'
-        - 'tam'                         # r/w       TAM an/aus; benötig
-        - 'tam_name'                    # r/o       Name des TAM
-        - 'tam_old_message_number'      # r/o       Anzahl der alten Nachrichten
-        - 'tam_new_message_number'      # r/o       Anzahl der neuen Nachrichten
-        - 'tam_total_message_number'    # r/o       Gesamtanzahl der Nachrichten
-        # WAN Attribute
-        - 'wan_connection_status'       # r/o
-        - 'wan_connection_error'        # r/o
-        - 'wan_is_connected'            # r/o
-        - 'wan_uptime'                  # r/o
-        - 'wan_ip'                      # r/o
-        - 'wan_upstream'                # r/o
-        - 'wan_downstream'              # r/o
-        - 'wan_total_packets_sent'      # r/o
-        - 'wan_total_packets_received'  # r/o
-        - 'wan_current_packets_sent'    # r/o
-        - 'wan_current_packets_received' # r/o
-        - 'wan_total_bytes_sent'        # r/o
-        - 'wan_total_bytes_received'    # r/o
-        - 'wan_current_bytes_sent'      # r/o
-        - 'wan_current_bytes_received'  # r/o
-        - 'wan_link'                    # r/o
-        # WLAN Attribute
-        - 'wlanconfig'                  # r/w
-        - 'wlanconfig_ssid'             # r/o
-        - 'wlan_guest_time_remaining'   # r/o
-        # Host Attribute
-        - 'network_device'              # r/o       Verbindungsstatus // Defines Network device via MAC-Adresse
-        - 'device_ip'                   # r/o       Geräte-IP (Muss Child von 'network_device' sein)            ipv4
-        - 'device_connection_type'      # r/o       Verbindungstyp (Muss Child von 'network_device' sein)       str
-        - 'device_hostname'             # r/o       Gerätename (Muss Child von 'network_device' sein)           str
-        - 'connection_status'           # r/o       Verbindungsstatus (Muss Child von 'network_device' sein)    bool
+          - 'uptime'                                  # r/o       num     Laufzeit des Fritzdevice in Sekunden
+          - 'serial_number'                           # r/o       str     Serialnummer des Fritzdevice
+          - 'software_version'                        # r/o       str     Software Version
+          - 'hardware_version'                        # r/o       str     Hardware Version
+        # Myfritz Attribute                                     
+          - 'myfritz_status'                          # r/o       bool    MyFritz Status
+        # Call Monitor Attribute                                
+          - 'monitor_trigger'                         # r/o       bool      Monitortrigger
+          - 'is_call_incoming'                        # r/o       bool      Eingehender Anruf erkannt
+          - 'call_duration_incoming'                  # r/o       num       Dauer des eingehenden Anrufs
+          - 'last_caller_incoming'                    # r/o       str       Letzter Anrufer
+          - 'last_number_incoming'                    # r/o       str       Nummer des letzten eingehenden Anrufes
+          - 'last_called_number_incoming'             # r/o       str       Angerufene Nummer des letzten eingehenden Anrufs
+          - 'last_call_date_incoming'                 # r/o       str       Zeitpunkt des letzten eingehenden Anrufs
+          - 'call_event_incoming'                     # r/o       str       Status des letzten eingehenden Anrufs
+          - 'is_call_outgoing'                        # r/o       bool      Ausgehender Anruf erkannt
+          - 'call_duration_outgoing'                  # r/o       num       Dauer des ausgehenden Anrufs
+          - 'last_caller_outgoing'                    # r/o       str       Letzter angerufener Kontakt    
+          - 'last_number_outgoing'                    # r/o       str       Letzte angerufene Nummer   
+          - 'last_called_number_outgoing'             # r/o       str       Letzter verwendete Telefonnummer für ausgehenden Anruf
+          - 'last_call_date_outgoing'                 # r/o       str       Zeitpunkt des letzten ausgehenden Anrufs
+          - 'call_event_outgoing'                     # r/o       str       Status des letzten ausgehenden Anrufs
+          - 'call_direction'                          # r/o       str       Richtung des letzten Anrufes
+          - 'call_event'                              # r/o       str       Status des letzten Anrufes
+        # TAM Attribute                      Hinweis: alle Attribute benötigen zusätzlich das Attribut 'avm2_tam_index'
+          - 'tam'                                     # r/w       bool      TAM an/aus
+          - 'tam_name'                                # r/o       str       Name des TAM
+          - 'tam_old_message_number'                  # r/o       num       Anzahl der alten Nachrichten
+          - 'tam_new_message_number'                  # r/o       num       Anzahl der neuen Nachrichten
+          - 'tam_total_message_number'                # r/o       num       Gesamtanzahl der Nachrichten
+        # WAN Attribute                             
+          - 'wan_connection_status'                   # r/o       str       WAN Verbindungsstatus
+          - 'wan_connection_error'                    # r/o       str       WAN Verbindungsfehler
+          - 'wan_is_connected'                        # r/o       bool      WAN Verbindung aktiv
+          - 'wan_uptime'                              # r/o       str       WAN Verbindungszeit
+          - 'wan_ip'                                  # r/o       str       WAN IP Adresse
+          - 'wan_upstream'                            # r/o       num       WAN Upstream Datenmenge
+          - 'wan_downstream'                          # r/o       num       WAN Downstream Datenmenge
+          - 'wan_total_packets_sent'                  # r/o       num       WAN Verbindung-Anzahl insgesamt versendeter Pakete
+          - 'wan_total_packets_received'              # r/o       num       WAN Verbindung-Anzahl insgesamt empfangener Pakete
+          - 'wan_current_packets_sent'                # r/o       num       WAN Verbindung-Anzahl aktuell versendeter Pakete
+          - 'wan_current_packets_received'            # r/o       num       WAN Verbindung-Anzahl aktuell empfangener Pakete
+          - 'wan_total_bytes_sent'                    # r/o       num       WAN Verbindung-Anzahl insgesamt versendeter Bytes
+          - 'wan_total_bytes_received'                # r/o       num       WAN Verbindung-Anzahl insgesamt empfangener Bytes
+          - 'wan_current_bytes_sent'                  # r/o       num       WAN Verbindung-Anzahl insgesamt versendeter Bytes
+          - 'wan_current_bytes_received'              # r/o       num       WAN Verbindung-Anzahl insgesamt empfangener Bytes
+          - 'wan_link'                                # r/o       bool      WAN Link
+        # WLAN Attribute                     Hinweis: alle Attribute benötigen zusätzlich das Attribut 'avm2_wlan_index'      
+          - 'wlanconfig'                              # r/w       bool      WLAN An/Aus
+          - 'wlanconfig_ssid'                         # r/o       str       WLAN SSID
+          - 'wlan_guest_time_remaining'               # r/o       num       Verbleibende Zeit, bis zum automatischen Abschalten des Gäste-WLAN
+        # Host Attribute                     Hinweis: alle Attribute benötigen zusätzlich das Attribut 'avm2_mac'           
+          - 'network_device'                          # r/o       bool      Verbindungsstatus // Defines Network device via MAC-Adresse
+          - 'device_ip'                               # r/o       str       Geräte-IP (Muss Child von 'network_device' sein)           
+          - 'device_connection_type'                  # r/o       str       Verbindungstyp (Muss Child von 'network_device' sein)       
+          - 'device_hostname'                         # r/o       str       Gerätename (Muss Child von 'network_device' sein)           
+          - 'connection_status'                       # r/o       bool      Verbindungsstatus (Muss Child von 'network_device' sein)    
         # Smarthome Attribute (Deprecated avm data types. Please use alternative AHA interface type)
-        - 'aha_device'                  # r/w       Steckdose schalten; siehe "switch_state"
-        - 'hkr_device'                  # r/o       Status des HKR (OPEN; CLOSED; TEMP)
-        - 'set_temperature'             # r/o       siehe "target_temperature"
-        - 'temperature'                 # r/o       siehe "current_temperature"
-        - 'set_temperature_reduced'     # r/o       siehe "temperature_reduced"
-        - 'set_temperature_comfort'     # r/o       siehe "temperature_comfort"
-        - 'firmware_version'            # r/o       siehe "fw_version"
-        # Deflections
-        - 'number_of_deflections'       # r/o       Anzahl der eingestellten Rufumleitungen
-        - 'deflection_details'          # r/o       Details zur Rufumleitung (als dict); Angabe der Rufumleitung mit Parameter "avm_deflection_index" im Item
-        - 'deflections_details'         # r/o       Details zu allen Rufumleitung (als dict)
-        - 'deflection_enable'           # r/w       Rufumleitung Status an/aus; Angabe der Rufumleitung mit Parameter "avm_deflection_index" im Item bzw Parent-Item
-        - 'deflection_type'             # r/o       Type der Rufumleitung; Angabe der Rufumleitung mit Parameter "avm_deflection_index" im Item bzw Parent-Item
-        - 'deflection_number'           # r/o       Telefonnummer, die umgeleitet wird; Angabe der Rufumleitung mit Parameter "avm_deflection_index" im Item bzw Parent-Item
-        - 'deflection_to_number'        # r/o       Zielrufnummer der Umleitung; Angabe der Rufumleitung mit Parameter "avm_deflection_index" im Item bzw Parent-Item
-        - 'deflection_mode'             # r/o       Modus der Rufumleitung; Angabe der Rufumleitung mit Parameter "avm_deflection_index" im Item bzw Parent-Item
-        - 'deflection_outgoing'         # r/o       Outgoing der Rufumleitung; Angabe der Rufumleitung mit Parameter "avm_deflection_index" im Item bzw Parent-Item
-        - 'deflection_phonebook_id'     # r/o       Phonebook_ID der Zielrufnummer (Only valid if Type==fromPB); Angabe der Rufumleitung mit Parameter "avm_deflection_index" im Item bzw Parent-Item
-        # AHA Interface attributes                  alle Attribute benötigen zusätzlich das Attribut 'avm2_tam_ain'
-        - 'device_id'                   # r/o       Geräte -ID                                      str
-        - 'manufacturer'                # r/o       Hersteller                                      str
-        - 'product_name'                # r/o       Produktname                                     str
-        - 'fw_version'                  # r/o       Firmware Version                                str
-        - 'connected'                   # r/o       Verbindungsstatus                               bool
-        - 'device_name'                 # r/o       Gerätename                                      str
-        - 'tx_busy'                     # r/o       Verbindung aktiv                                bool
-        - 'device_functions'            # r/o       Im Gerät vorhandene Funktionen                  list
-
-        - 'set_target_temperature'      # w/o       Soll-Temperatur Setzen                          num
-        - 'target_temperature'          # r/w       Soll-Temperatur (Status und Setzen)            num
-        - 'current_temperature'         # r/o       Ist-Temperatur                                  num
-        - 'temperature_reduced'         # r/o       Eingestellte reduzierte Temperatur              num
-        - 'temperature_comfort'         # r/o       Eingestellte Komfort-Temperatur                 num
-        - 'temperature_offset'          # r/o       Eingestellter Temperatur-Offset                 num
-        - 'set_window_open'             # w/o       "Window Open" Funktionen Setzen                 bool
-        - 'window_open'                 # r/w       "Window Open" Funktion (Status und Setzen)     bool
-        - 'windowopenactiveendtime'     # r/o       Zeitliches Ende der "Window Open" Funktion      num
-        - 'set_hkr_boost'               # w/o       "Boost" Funktion Setzen                         bool
-        - 'hkr_boost'                   # r/w       "Boost" Funktion (Status aund Setzen)           bool
-        # - 'boost_active'                # r/o       Status der "Boost" Funktion                     bool           deprecated
-        - 'boostactiveendtime'          # r/o       Zeitliches Ende der "Boost" Funktion            num
-        - 'summer_active'               # r/o       Status der "Sommer" Funktion                    bool
-        - 'holiday_active'              # r/o       Status der "Holiday" Funktion                   bool
-        - 'battery_low'                 # r/o       "Battery low" Status                            bool
-        - 'battery_level'               # r/o       Batterie-Status in %                            num
-        - 'lock'                        # r/o       Tastensperre über UI/API aktiv                  bool
-        - 'device_lock'                 # r/o       Tastensperre direkt am Gerät ein                bool
-        - 'errorcode'                   # r/o       Fehlercodes die der HKR liefert                 num
-
-        - 'set_simpleonoff'             # w/o       Gerät/Aktor/Lampe an-/ausschalten               bool
-        - 'simpleonoff'                 # w/r       Gerät/Aktor/Lampe (Status und Setzen)           bool            neu 1.6.4
-
-        - 'set_level'                   # w/o       Level/Niveau von 0 bis 255 Setzen               num
-        - 'level'                       # w/r       Level/Niveau von 0 bis 255 (Setzen & Status)    num             neu 1.6.4
-        - 'set_levelpercentage'         # w/o       Level/Niveau von 0% bis 100% Setzen             num
-        - 'levelpercentage'             # w/r       Level/Niveau von 0% bis 100% (Setzen & Status)  num             neu 1.6.4
-        - 'set_hue'                     # w/o       Hue Setzen                                      num
-        - 'hue'                         # w/r       Hue (Status und Setzen)                         num             neu 1.6.4
-        - 'set_saturation'              # w/o       Saturation Setzen                               num
-        - 'saturation'                  # w/r       Saturation (Status und Setzen)                  num             neu 1.6.4
-        - 'set_colortemperature'        # w/o       Farbtemperatur Setzen                          num
-        - 'colortemperature'            # w/r       Farbtemperatur (Status und Setzen)              num             neu 1.6.4
-
-        - 'switch_state'                # r/w       Schaltzustand Steckdose (Status und Setzen)     bool
-        - 'switch_mode'                 # r/o       Zeitschaltung oder manuell schalten             bool
-        - 'switch_toggle'               # w/o       Schaltzustand umschalten (toggle)               bool
-
-        - 'power'                       # r/o       Leistung in W (Aktualisierung alle 2 min)       num
-        - 'energy'                      # r/o       absoluter Verbrauch seit Inbetriebnahme         num
-        - 'voltage'                     # r/o       Spannung in V (Aktualisierung alle 2 min)       num
-
-        - 'humidity'                    # r/o       Relative Luftfeuchtigkeit in % (FD440)          num
-        - 'alert_state'                 # r/o       letzter übermittelter Alarmzustand              bool
-
+          - 'aha_device'                              # r/w       bool      Steckdose schalten; siehe "switch_state"
+          - 'hkr_device'                              # r/o       str       Status des HKR (OPEN; CLOSED; TEMP)
+          - 'set_temperature'                         # r/o       num       siehe "target_temperature"
+          - 'temperature'                             # r/o       num       siehe "current_temperature"
+          - 'set_temperature_reduced'                 # r/o       num       siehe "temperature_reduced"
+          - 'set_temperature_comfort'                 # r/o       num       siehe "temperature_comfort"
+          - 'firmware_version'                        # r/o       str       siehe "fw_version"
+        # Deflections                        Hinweis: alle Attribute benötigen zusätzlich das Attribut 'avm2_deflection_index'    
+          - 'number_of_deflections'                   # r/o       num       Anzahl der eingestellten Rufumleitungen
+          - 'deflection_details'                      # r/o       dict      Details zur Rufumleitung (als dict); Angabe der Rufumleitung mit Parameter "avm_deflection_index" im Item
+          - 'deflections_details'                     # r/o       dict      Details zu allen Rufumleitung (als dict)
+          - 'deflection_enable'                       # r/w       bool      Rufumleitung Status an/aus; Angabe der Rufumleitung mit Parameter "avm_deflection_index" im Item bzw Parent-Item
+          - 'deflection_type'                         # r/o       str       Type der Rufumleitung; Angabe der Rufumleitung mit Parameter "avm_deflection_index" im Item bzw Parent-Item
+          - 'deflection_number'                       # r/o       str       Telefonnummer, die umgeleitet wird; Angabe der Rufumleitung mit Parameter "avm_deflection_index" im Item bzw Parent-Item
+          - 'deflection_to_number'                    # r/o       str       Zielrufnummer der Umleitung; Angabe der Rufumleitung mit Parameter "avm_deflection_index" im Item bzw Parent-Item
+          - 'deflection_mode'                         # r/o       str       Modus der Rufumleitung; Angabe der Rufumleitung mit Parameter "avm_deflection_index" im Item bzw Parent-Item
+          - 'deflection_outgoing'                     # r/o       str       Outgoing der Rufumleitung; Angabe der Rufumleitung mit Parameter "avm_deflection_index" im Item bzw Parent-Item
+          - 'deflection_phonebook_id'                 # r/o       str       Phonebook_ID der Zielrufnummer (Only valid if Type==fromPB); Angabe der Rufumleitung mit Parameter "avm_deflection_index" im Item bzw Parent-Item
+        # AHA Interface attributes           Hinweis: alle Attribute benötigen zusätzlich das Attribut 'avm2_tam_ain'
+          - 'device_id'                               # r/o       str       Geräte -ID                                    
+          - 'manufacturer'                            # r/o       str       Hersteller                                    
+          - 'product_name'                            # r/o       str       Produktname                                   
+          - 'fw_version'                              # r/o       str       Firmware Version                              
+          - 'connected'                               # r/o       bool      Verbindungsstatus                             
+          - 'device_name'                             # r/o       str       Gerätename                                    
+          - 'tx_busy'                                 # r/o       bool      Verbindung aktiv                              
+          - 'device_functions'                        # r/o       list      Im Gerät vorhandene Funktionen                
+                                                      
+          - 'set_target_temperature'                  # w/o       num       Soll-Temperatur Setzen                          
+          - 'target_temperature'                      # r/w       num       Soll-Temperatur (Status und Setzen)             
+          - 'current_temperature'                     # r/o       num       Ist-Temperatur                                  
+          - 'temperature_reduced'                     # r/o       num       Eingestellte reduzierte Temperatur              
+          - 'temperature_comfort'                     # r/o       num       Eingestellte Komfort-Temperatur                 
+          - 'temperature_offset'                      # r/o       num       Eingestellter Temperatur-Offset                 
+          - 'set_window_open'                         # w/o       bool      "Window Open" Funktionen Setzen                 
+          - 'window_open'                             # r/w       bool      "Window Open" Funktion (Status und Setzen)      
+          - 'windowopenactiveendtime'                 # r/o       num       Zeitliches Ende der "Window Open" Funktion      
+          - 'set_hkr_boost'                           # w/o       bool      "Boost" Funktion Setzen                         
+          - 'hkr_boost'                               # r/w       bool      "Boost" Funktion (Status aund Setzen)           
+          - 'boost_active'                            # r/o       bool      Status der "Boost" Funktion                     deprecated
+          - 'boostactiveendtime'                      # r/o       num       Zeitliches Ende der "Boost" Funktion            
+          - 'summer_active'                           # r/o       bool      Status der "Sommer" Funktion                    
+          - 'holiday_active'                          # r/o       bool      Status der "Holiday" Funktion                   
+          - 'battery_low'                             # r/o       bool      "Battery low" Status                            
+          - 'battery_level'                           # r/o       num       Batterie-Status in %                            
+          - 'lock'                                    # r/o       bool      Tastensperre über UI/API aktiv                  
+          - 'device_lock'                             # r/o       bool      Tastensperre direkt am Gerät ein                
+          - 'errorcode'                               # r/o       num       Fehlercodes die der HKR liefert                 
+                                                      
+          - 'set_simpleonoff'                         # w/o       bool      Gerät/Aktor/Lampe an-/ausschalten               
+          - 'simpleonoff'                             # w/r       bool      Gerät/Aktor/Lampe (Status und Setzen)           neu 1.6.4
+                                                      
+          - 'set_level'                               # w/o       num       Level/Niveau von 0 bis 255 Setzen               
+          - 'level'                                   # w/r       num       Level/Niveau von 0 bis 255 (Setzen & Status)    neu 1.6.4
+          - 'set_levelpercentage'                     # w/o       num       Level/Niveau von 0% bis 100% Setzen             
+          - 'levelpercentage'                         # w/r       num       Level/Niveau von 0% bis 100% (Setzen & Status)  neu 1.6.4
+          - 'set_hue'                                 # w/o       num       Hue Setzen                                      
+          - 'hue'                                     # w/r       num       Hue (Status und Setzen)                         neu 1.6.4
+          - 'set_saturation'                          # w/o       num       Saturation Setzen                               
+          - 'saturation'                              # w/r       num       Saturation (Status und Setzen)                  neu 1.6.4
+          - 'set_colortemperature'                    # w/o       num       Farbtemperatur Setzen                           
+          - 'colortemperature'                        # w/r       num       Farbtemperatur (Status und Setzen)              neu 1.6.4
+                                                      
+          - 'switch_state'                            # r/w       bool      Schaltzustand Steckdose (Status und Setzen)     
+          - 'switch_mode'                             # r/o       bool      Zeitschaltung oder manuell schalten             
+          - 'switch_toggle'                           # w/o       bool      Schaltzustand umschalten (toggle)               
+                                                      
+          - 'power'                                   # r/o       num       Leistung in W (Aktualisierung alle 2 min)       
+          - 'energy'                                  # r/o       num       absoluter Verbrauch seit Inbetriebnahme         
+          - 'voltage'                                 # r/o       num       Spannung in V (Aktualisierung alle 2 min)       
+                                                      
+          - 'humidity'                                # r/o       num       Relative Luftfeuchtigkeit in % (FD440)          
+          - 'alert_state'                             # r/o       bool      letzter übermittelter Alarmzustand              
+                                                      
     avm2_incoming_allowed:
         type: str
         mandatory: False
@@ -280,22 +280,22 @@ item_attributes:
         type: mac
         mandatory: False
         description:
-            de: 'Definition der MAC Adresse für Items vom avm_data_type `network_device`. Nur für diese Items mandatory!'
-            en: 'Definition of the MAC address for items of avm_data_type `network_device`. Only mandatory for these items!'
+            de: '(optional) Definition der MAC Adresse für Items vom avm_data_type `network_device`. Nur für diese Items mandatory!'
+            en: '(optional) Definition of the MAC address for items of avm_data_type `network_device`. Only mandatory for these items!'
 
     avm2_ain:
         type: str
         mandatory: False
         description:
-            de: "Definition der AktorIdentifikationsNummer (AIN) Items vom avm_data_types für `AHA-Interface`. Nur für diese Items mandatory!"
-            en: "Definition of the ActorIdentificationNumber (AIN) for items of avm_data_types `AHA-Interface`. Only mandatory for these items!"
+            de: "(optional) Definition der AktorIdentifikationsNummer (AIN) Items vom avm_data_types für `AHA-Interface`. Nur für diese Items mandatory!"
+            en: "(optional) Definition of the ActorIdentificationNumber (AIN) for items of avm_data_types `AHA-Interface`. Only mandatory for these items!"
 
     avm2_tam_index:
         type: int
         mandatory: False
         description:
-            de: 'Index für den Anrufbeantworter, normalerweise für den ersten eine "1". Es werden bis zu 5 Anrufbeantworter vom Gerät unterstützt.'
-            en: 'Index für the answering machine, normally a "1" for the first one. Supported are up to 5 answering machines.'
+            de: '(optional) Index für den Anrufbeantworter, normalerweise für den ersten eine "1". Es werden bis zu 5 Anrufbeantworter vom Gerät unterstützt.'
+            en: '(optional) Index für the answering machine, normally a "1" for the first one. Supported are up to 5 answering machines.'
         valid_min: 1
         valid_max: 5
 
@@ -303,16 +303,16 @@ item_attributes:
         type: int
         mandatory: False
         description:
-            de: 'Index für die Rufumleitung, normalerweise für die erste eine "1".'
-            en: 'Index deflection, normally a "1" for the first one.'
+            de: '(optional) Index für die Rufumleitung, normalerweise für die erste eine "1".'
+            en: '(optional) Index deflection, normally a "1" for the first one.'
         valid_min: 1
         valid_max: 32
 
     avm2_read_after_write:
         type: int
         description:
-            de: 'Konfiguriert eine Verzögerung in Sekunden nachdem ein Lesekommando nach einem Schreibkommando gesendet wird.'
-            en: 'Configures delay in seconds to issue a read command after write command'
+            de: '(optional) Konfiguriert eine Verzögerung in Sekunden nachdem ein Lesekommando nach einem Schreibkommando gesendet wird.'
+            en: '(optional) Configures delay in seconds to issue a read command after write command'
 
 item_structs:
     info:
@@ -651,7 +651,7 @@ item_structs:
 
 #item_attribute_prefixes:
     # Definition of item attributes that only have a common prefix (enter 'item_attribute_prefixes: NONE' or ommit this section, if section should be empty)
-    # NOTE: This section should only be used, if really nessesary (e.g. for the stateengine plugin)
+    # NOTE: This section should only be used, if really necessary (e.g. for the stateengine plugin)
 
 plugin_functions:
     # Definition of function interface of the plugin
@@ -796,16 +796,12 @@ plugin_functions:
         description:
             de: "Startet das Gerät neu."
             en: "Reboots the device."
-        parameters:
-        # This function has no parameters
 
     reconnect:
         type: void
         description:
             de: "Verbindet das Gerät neu mit dem WAN (Wide Area Network)."
             en: "Reconnects the device to the WAN (Wide Area Network)."
-        parameters:
-        # This function has no parameters
 
     set_call_origin:
         type: void
@@ -816,8 +812,8 @@ plugin_functions:
             phone_name:
                 type: mac
                 description:
-                    de: "Identifikator des Telefons, dass als 'call origin' gesetzt werden soll. Bspw. zwei Sterne gefolgt von '610' für ein internes Gerät."
-                    en: "Full phone identifier, could be e.g. two asterix followed by '610' for an internal device."
+                    de: "Identifikator des Telefons, dass als 'call origin' gesetzt werden soll. bspw. zwei Sterne gefolgt von '610' für ein internes Gerät."
+                    en: "Full phone identifier, could be e.g. two asterisk followed by '610' for an internal device."
 
     start_call:
         type: void
