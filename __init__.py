@@ -242,7 +242,7 @@ class AVM2(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.0.0'
+    PLUGIN_VERSION = '2.0.0'
 
     def __init__(self, sh):
         """
@@ -467,8 +467,9 @@ class AVM2(SmartPlugin):
         return self._fritz_home
 
     @property
-    def get_log_level(self):
+    def log_level(self):
         return self.logger.getEffectiveLevel()
+
 
 class FritzDevice:
     """
@@ -2069,12 +2070,11 @@ class FritzHome:
         """
         Send a request with parameters.
 
-        :param url          URL to be requested
-        :param params       params for request
-        :param timeout      timeout
-        :param result       type of result
-        :return             request response
-        :type return
+        :param url:          URL to be requested
+        :param params:       params for request
+        :param timeout:      timeout
+        :param result:       type of result
+        :return:             request response
         """
 
         try:

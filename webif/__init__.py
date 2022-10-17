@@ -81,8 +81,6 @@ class WebInterface(SmartPluginWebIf):
             call_monitor_items = None
             call_monitor_item_count = None
 
-        maintenance = True if self.plugin.get_log_level <= 20 else False
-
         tmpl = self.tplenv.get_template('index.html')
 
         try:
@@ -101,7 +99,7 @@ class WebInterface(SmartPluginWebIf):
                            aha_item_count=aha_item_count,
                            p=self.plugin,
                            webif_pagelength=pagelength,
-                           maintenance=maintenance,
+                           maintenance=True if self.plugin.log_level <= 20 else False,
                            )
 
     @cherrypy.expose
@@ -145,7 +143,6 @@ class WebInterface(SmartPluginWebIf):
                 return json.dumps(data, default=str)
             except Exception as e:
                 self.logger.error(f"get_data_html exception: {e}")
-        return {}
 
     @cherrypy.expose
     def reboot(self):
