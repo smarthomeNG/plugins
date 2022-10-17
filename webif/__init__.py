@@ -139,6 +139,8 @@ class WebInterface(SmartPluginWebIf):
                     data['aha_items'][item.id()]['last_update'] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
                     data['aha_items'][item.id()]['last_change'] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
 
+            data['maintenance'] = True if self.plugin.log_level <= 20 else False
+
             try:
                 return json.dumps(data, default=str)
             except Exception as e:
