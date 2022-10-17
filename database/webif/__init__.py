@@ -99,19 +99,22 @@ class WebInterface(SmartPluginWebIf):
 
                 rows = self.plugin.readLogs(item_id, time_start=time_start, time_end=time_end)
                 log_array = []
-                for row in rows:
-                    value_dict = {}
-                    for key in [COL_LOG_TIME, COL_LOG_ITEM_ID, COL_LOG_DURATION, COL_LOG_VAL_STR, COL_LOG_VAL_NUM,
-                                COL_LOG_VAL_BOOL, COL_LOG_CHANGED]:
-                        if key not in [COL_LOG_TIME, COL_LOG_CHANGED]:
-                            value_dict[key] = row[key]
-                        else:
-                            value_dict[key] = datetime.datetime.fromtimestamp(row[key] / 1000,
-                                                                              tz=self.plugin.shtime.tzinfo())
-                            value_dict["%s_orig" % key] = row[key]
+                if rows is None:
+                    reversed_arr = []
+                else:
+                    for row in rows:
+                        value_dict = {}
+                        for key in [COL_LOG_TIME, COL_LOG_ITEM_ID, COL_LOG_DURATION, COL_LOG_VAL_STR, COL_LOG_VAL_NUM,
+                                    COL_LOG_VAL_BOOL, COL_LOG_CHANGED]:
+                            if key not in [COL_LOG_TIME, COL_LOG_CHANGED]:
+                                value_dict[key] = row[key]
+                            else:
+                                value_dict[key] = datetime.datetime.fromtimestamp(row[key] / 1000,
+                                                                                  tz=self.plugin.shtime.tzinfo())
+                                value_dict["%s_orig" % key] = row[key]
 
-                    log_array.append(value_dict)
-                reversed_arr = log_array[::-1]
+                        log_array.append(value_dict)
+                    reversed_arr = log_array[::-1]
                 return tmpl.render(p=self.plugin,
                                    webif_pagelength=pagelength,
                                    items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path']),
@@ -158,19 +161,22 @@ class WebInterface(SmartPluginWebIf):
             else:
                 rows = []
             log_array = []
-            for row in rows:
-                value_dict = {}
-                for key in [COL_LOG_TIME, COL_LOG_ITEM_ID, COL_LOG_DURATION, COL_LOG_VAL_STR, COL_LOG_VAL_NUM,
-                            COL_LOG_VAL_BOOL, COL_LOG_CHANGED]:
-                    if key not in [COL_LOG_TIME, COL_LOG_CHANGED]:
-                        value_dict[key] = row[key]
-                    else:
-                        value_dict[key] = datetime.datetime.fromtimestamp(row[key] / 1000,
-                                                                          tz=self.plugin.shtime.tzinfo()).isoformat()
-                        value_dict["%s_orig" % key] = row[key]
+            if rows is None:
+                reversed_arr = []
+            else:
+                for row in rows:
+                    value_dict = {}
+                    for key in [COL_LOG_TIME, COL_LOG_ITEM_ID, COL_LOG_DURATION, COL_LOG_VAL_STR, COL_LOG_VAL_NUM,
+                                COL_LOG_VAL_BOOL, COL_LOG_CHANGED]:
+                        if key not in [COL_LOG_TIME, COL_LOG_CHANGED]:
+                            value_dict[key] = row[key]
+                        else:
+                            value_dict[key] = datetime.datetime.fromtimestamp(row[key] / 1000,
+                                                                              tz=self.plugin.shtime.tzinfo()).isoformat()
+                            value_dict["%s_orig" % key] = row[key]
 
-                log_array.append(value_dict)
-            reversed_arr = log_array[::-1]
+                    log_array.append(value_dict)
+                reversed_arr = log_array[::-1]
             try:
                 data = json.dumps(reversed_arr)
                 if data:
@@ -194,15 +200,17 @@ class WebInterface(SmartPluginWebIf):
         else:
             rows = self.plugin.readLogs(item_id)
             log_array = []
-            for row in rows:
-                value_dict = {}
-                for key in [COL_LOG_TIME, COL_LOG_ITEM_ID, COL_LOG_DURATION, COL_LOG_VAL_STR, COL_LOG_VAL_NUM,
-                            COL_LOG_VAL_BOOL, COL_LOG_CHANGED]:
-                    value_dict[key] = row[key]
-                log_array.append(value_dict)
-            reversed_arr = log_array[::-1]
-            csv_file_path = '%s/var/db/%s_item_%s.csv' % (
-                self.plugin._sh.base_dir, self.plugin.get_instance_name(), item_id)
+            if rows is None:
+                reversed_arr = []
+            else:
+                for row in rows:
+                    value_dict = {}
+                    for key in [COL_LOG_TIME, COL_LOG_ITEM_ID, COL_LOG_DURATION, COL_LOG_VAL_STR, COL_LOG_VAL_NUM,
+                                COL_LOG_VAL_BOOL, COL_LOG_CHANGED]:
+                        value_dict[key] = row[key]
+                    log_array.append(value_dict)
+                reversed_arr = log_array[::-1]
+            csv_file_path = f'{self.plugin._sh.base_dir}/var/db/{self.plugin.get_instance_name()}_item_{item_id}.csv'
 
             with open(csv_file_path, 'w', encoding='utf-8') as f:
                 writer = csv.writer(f, dialect="excel")
