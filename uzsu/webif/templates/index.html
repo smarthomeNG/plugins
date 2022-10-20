@@ -14,10 +14,6 @@
   table th.nexttime {
     width: 130px;
   }
-  #maintable {
-     display: none;
-     table-layout: fixed;
-  }
 </style>
 {% endblock pluginstyles %}
 {% block pluginscripts %}
@@ -27,7 +23,7 @@
     try {
       /* get pagelength from plugin. Also see hidden span element in bodytab1 block! */
       webif_pagelength = parseInt(document.getElementById('webif_pagelength').innerHTML);
-      if (webif_pagelength == 0) {
+      if (isNaN(parseFloat(webif_pagelength)) || webif_pagelength == 0) {
         resize = true;
         webif_pagelength = -1;
       }
@@ -191,12 +187,12 @@
 
 
 {% block bodytab1 %}
-<div class="container-fluid m-2" id="resize_wrapper">
+<div class="container-fluid m-2 table-resize">
   <div class="mb-2">
 
     {{ _('Die folgenden Items sind dem UZSU Plugin zugewiesen') }}.
   </div>
-  <table id="maintable" class="table table-striped table-hover pluginList display">
+  <table id="maintable">
     <thead>
     <tr>
       <th>{{ _('UZSU Item') }}</th>
