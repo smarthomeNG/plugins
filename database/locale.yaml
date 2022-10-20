@@ -63,7 +63,7 @@ plugin_translations:
     'CSV Export der Werte':
         'de': '='
         'en': 'CSV Export of Values'
-    'CSV Export nicht möglich':
+    'CSV Export nicht verfügbar':
         'de': '='
         'en': 'CSV Export not available'
     'Historische Daten':
