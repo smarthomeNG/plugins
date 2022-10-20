@@ -58,14 +58,14 @@
 		}
 	}
 </script>
-<div class="container-fluid m-2 table-resize dataTableAdditional">
+<div class="container-fluid m-2 table-resize">
 	<div class="mb-2">
 		{{ _('Die folgenden {items} Items sind dieser Instanz des Database Plugins zugewiesen, {with_maxage} Items haben ein maxage.', vars={'items': len(p._handled_items), 'with_maxage': len(p._items_with_maxage)}) }}
 		{%  if len(p._handled_items) != p.readItemCount() %}
 			- ({{_( 'Die Datenbank enthält Daten zu {dbitems} Items', vars={'dbitems': p.readItemCount()}) }} )
 		{%  endif %}
 	</div>
-	<table class="table table-striped table-hover pluginList" id="itemtable">
+	<table class="table table-striped table-hover pluginList dataTableAdditional" id="itemtable">
 		<thead>
 		<tr>
 			<th>{{ _('Item') }}</th>
