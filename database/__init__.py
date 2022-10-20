@@ -208,6 +208,7 @@ class Database(SmartPlugin):
                             #    self.logger.debug(f"Parse item: ItemID: {item.id()}: {value}, {self._datetime(prev_change[0])}, {last_change}")
                             self._webdata[item.id()].update({'last_change': last_change.isoformat()})
                             self._webdata[item.id()].update({'value': value})
+                            self._webdata[item.id()].update({'type': item.property.type})
                             item.set(value, 'Database', source='DBInit', prev_change=self._datetime(prev_change[0]), last_change=last_change)
                         else:
                             self.logger.warning(f"Debug init for item {item.id()}: {value}, {prev_change}, {prev_change[0]}")
@@ -222,6 +223,9 @@ class Database(SmartPlugin):
                 self._db.release()
             elif self.get_iattr_value(item.conf, 'database').lower() == 'init':
                 self.logger.warning("Db not initialized. Cannot read database value for item {}".format(item.id()))
+            else:
+                self._webdata[item.id()].update({'value': item.property.value})
+                self._webdata[item.id()].update({'type': item.property.type})
 
             return self.update_item
         else:
@@ -1163,6 +1167,7 @@ class Database(SmartPlugin):
                     val = item()
                     try:
                         self._webdata[item.id()].update({'value': val})
+                        self._webdata[item.id()].update({'type': item.property.type})
                     except Exception as e:
                         self.logger.warning("Problem webdata value update {}: {}".format(item.id(), e))
 

@@ -30,6 +30,7 @@ function checkDate() {
 			console.warning("Can not update auto-refresh parameters.");
 		}
 		return false;
+	}
 	else return true;
 }
 checkDate();
@@ -174,10 +175,13 @@ checkDate();
                 duration = "None";
             }
             let value;
-            {% if item.property.type == 'num' %} value = objResponse[item][4]{% endif %}
-            {% if item.property.type == 'bool' %} value = objResponse[item][5]{% endif %}
-            {% if item.property.type == 'str' %} value = objResponse[item][3]{% endif %}
-            {% if item.property.type == 'foo' %} value = objResponse[item][3]{% endif %}
+            {% if item.property.type == 'num' %}
+							var tenToN = 10 ** 2;
+							value = (Math.round(objResponse[item][4] * tenToN)) / tenToN;
+						{% endif %}
+            {% if item.property.type == 'bool' %} value = objResponse[item][5];{% endif %}
+            {% if item.property.type == 'str' %} value = objResponse[item][3];{% endif %}
+            {% if item.property.type == 'foo' %} value = objResponse[item][3];{% endif %}
             let changed = new Date(Date.parse(objResponse[item][6]));
             let changed_day = String(changed.getDate()).padStart(2, '0');
             let changed_month = String((changed.getMonth()+1)).padStart(2, '0');

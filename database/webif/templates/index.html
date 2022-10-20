@@ -45,10 +45,16 @@
 			objResponse = JSON.parse(response);
 			myProto = document.getElementById(dataSet);
 			for (item in objResponse) {
-				var value = objResponse[item]['value'];
+				let value = objResponse[item]['value'];
+				let type = objResponse[item]['type'];
 				if (value != null)
 				{
-					value = value.toString().replace("true", "True").replace("false", "False");
+					if (type == 'num'){
+						var tenToN = 10 ** 2;
+						value = (Math.round(value * tenToN)) / tenToN;
+					}
+					else
+						value = value.toString().replace("true", "True").replace("false", "False");
 					shngInsertText (item+'_value', value, 'itemtable', 10);
 				}
 
@@ -83,12 +89,24 @@
 		<tbody>
 		{% for item in items %}
 			{% if p.has_iattr(item.conf, 'database') %}
-			{% set val = item.property.value %}
+				{% if item.property.type == 'bool' %}
+					{% if item.property.value == 0 %}
+						{% set val = 'False' %}
+					{% else %}
+						{% set val = 'True' %}
+					{% endif %}
+				{% else %}
+					{% if item.property.type == 'num' %}
+						{% set val = ("%.2f"|format(item.property.value|float)).rstrip('0').rstrip('.')  %}
+					{% else %}
+						{% set val = item.property.value %}
+					{% endif %}
+				{% endif %}
 				<tr>
 					<td class="py-1" id="{{ item }}_path">{{ item.property.path }}</td>
 					<td class="py-1">{{ _('Init') if p.get_iattr_value(item.conf, 'database').lower() == 'init' else '-'}}</td>
 					<td class="py-1" id="{{ item }}_type">{{ item.property.type }}</td>
-					<td class="py-1" id="{{ item }}_value">{{ ("%.2f"|format(val|float)).rstrip('0').rstrip('.') }}</td>
+					<td class="py-1" id="{{ item }}_value">{{ val }}</td>
 					<td class="py-1" id="{{ item }}_id">{{ p.id(item, create=False) }}</td>
 					{%  if p.count_logentries %}
 						<td class="py-1" style="width: 120px; text-align:right" id="{{ item }}_logcount">{{ p._item_logcount[p.id(item, create=False)] }}</td>
