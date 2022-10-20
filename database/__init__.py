@@ -50,7 +50,7 @@ class Database(SmartPlugin):
     """
 
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = '1.6.1'
+    PLUGIN_VERSION = '1.6.2'
 
     # SQL queries: {item} = item table name, {log} = log table name
     # time, item_id, val_str, val_num, val_bool, changed
@@ -100,7 +100,10 @@ class Database(SmartPlugin):
         self._precision = self.get_parameter_value('precision')
         self.count_logentries = self.get_parameter_value('count_logentries')
         self.max_delete_logentries = self.get_parameter_value('max_delete_logentries')
-        
+
+        self.webif_pagelength = self.get_parameter_value('webif_pagelength')
+        self._webdata = {}
+
         self._replace = {table: table if self._prefix == "" else self._prefix + table for table in ["log", "item"]}
         self._replace['item_columns'] = ", ".join(COL_ITEM)
         self._replace['log_columns'] = ", ".join(COL_LOG)
@@ -171,8 +174,8 @@ class Database(SmartPlugin):
                         with the item, caller, source and dest as arguments and in case of the knx plugin the value
                         can be sent to the knx with a knx write function within the knx plugin.
         """
-
         if self.has_iattr(item.conf, 'database'):
+            self._webdata.update({item.id(): {}})
             self._handled_items.append(item)
             if self.has_iattr(item.conf, 'database_maxage'):
                 maxage = self.get_iattr_value(item.conf, 'database_maxage')
@@ -187,7 +190,6 @@ class Database(SmartPlugin):
             item.series = functools.partial(self._series, item=item.id())  # Zur Nutzung im Websocket Plugin
             item.db = functools.partial(self._single, item=item.id())      # Nie genutzt??? -> Doch
             item.dbplugin = self                                           # genutzt zum Zugriff auf die Plugin Instanz z.B. durch Logiken
-
             if self._db_initialized and self.get_iattr_value(item.conf, 'database').lower() == 'init':
                 if not self._db.lock(5):
                     self.logger.error("Can not acquire lock for database to read value for item {}".format(item.id()))
@@ -204,6 +206,8 @@ class Database(SmartPlugin):
                             # Add item specific debugging here:
                             #if item.id() == 'xyz':
                             #    self.logger.debug(f"Parse item: ItemID: {item.id()}: {value}, {self._datetime(prev_change[0])}, {last_change}")
+                            self._webdata[item.id()].update({'last_change': last_change.isoformat()})
+                            self._webdata[item.id()].update({'value': value})
                             item.set(value, 'Database', source='DBInit', prev_change=self._datetime(prev_change[0]), last_change=last_change)
                         else:
                             self.logger.warning(f"Debug init for item {item.id()}: {value}, {prev_change}, {prev_change[0]}")
@@ -272,22 +276,22 @@ class Database(SmartPlugin):
             # Determine, if DB buffer has a valid "last" value:
             if len(self._buffer[item]) == 0 or self._buffer[item][-1][1] is not None:
                 last = None
-            else: 
+            else:
                 last = self._buffer[item][-1]
-        
+
             if debug_item:
                 self.logger.warning(f"Debug: last {last}, len buffer_item {len(self._buffer[item])}, buffer_item {self._buffer[item]}")
 
             # Update the DB buffer:
-            if last:  
+            if last:
                 # Step 1a): Alter current value with updated duration:
                 if debug_item:
                     self.logger.warning(f"Debug 1a): Rewriting valid last value, start: {last[0]}, duration: {end - start}, value: {last[2]} to item '{item}'.")
                 self._buffer[item][-1] = (last[0], end - start, last[2])
-            else: 
+            else:
 		# Step 1b): Append new value with none duration
-                    
-                #If item is configured to be initialized via database init (see database: init in item.yaml), do not update previous value if the latter equals to the regular initial_value.
+
+                #If item is configured to be initialized via database init (see database: init in item.yaml), do not update previous value if the latter qual to the regular initial_value.
                 # This is because configuring database: init aims at avoiding the regular item initial value to appear inside the DB:
                 if self.get_iattr_value(item.conf, 'database').lower() == 'init' and item.property.prev_change_by =='Init:Initial_Value':
                     if debug_item:
@@ -297,7 +301,7 @@ class Database(SmartPlugin):
                         self.logger.warning(f"Debug 1b): Appending prev_value: start: {start}, duration: {end-start}, prev_value: {item.prev_value()} to item '{item}'")
                     self._buffer[item].append((start, end - start, item.prev_value()))
 
-            # Step 2: Add current value with duration "none" to DB buffer. This entry is "none" because the duration cannot be determined yet as it's duration has not finished 
+            # Step 2: Add current value with duration "none" to DB buffer. This entry is "none" because the duration cannot be determined yet as it's duration has not finished
             if debug_item:
                 self.logger.warning(f"Debug 2): Appending current value: start {end}, value {item()} to item '{item}'")
 
@@ -1157,16 +1161,20 @@ class Database(SmartPlugin):
                     start = self._timestamp(item.last_change())
                     end = changed
                     val = item()
+                    try:
+                        self._webdata[item.id()].update({'value': val})
+                    except Exception as e:
+                        self.logger.warning("Problem webdata value update {}: {}".format(item.id(), e))
 
                     # When finalizing (e.g. plugin shutdown) add current value to item and log
                     if finalize:
 
-                        # When plugin is shutdown, by default, every registered item is rewritten into the DB no matter 
-                        # if it has been changed or not. This behavior is not wanted for items that are rarely updated 
+                        # When plugin is shutdown, by default, every registered item is rewritten into the DB no matter
+                        # if it has been changed or not. This behavior is not wanted for items that are rarely updated
                         # because these database entries would lead indicate item updates that in reality aren't really there.
-                        # Therefore, if item attribute database_write_on_shutdown is set to False, no double entries are written 
+                        # Therefore, if item attribute database_write_on_shutdown is set to False, no double entries are written
                         # to the database and only the last entry is updated.
-                        
+
                         #self.logger.debug(f"DEBUG _dump: Finalizing item {item} with value {val}")
                         if self.get_iattr_value(item.conf, 'database_write_on_shutdown') == False:
                             self.logger.debug(f"DEBUG _dump: Blocking rewrite to DB for item {item} with value {val}")
@@ -1288,7 +1296,7 @@ class Database(SmartPlugin):
         timestamp_end = self._timestamp(time_end)
         self.logger.info(f"remove_older_than_maxage: item = {itempath} remove older than {time_end}")
 
-        # if delete would also remove the last logged value for the item then there might be no chance for 
+        # if delete would also remove the last logged value for the item then there might be no chance for
         # ``database: init`` to retrieve the latest value.
         remaining = 1
         if self.get_iattr_value(item.conf, 'database').lower() == 'init':
@@ -1296,7 +1304,7 @@ class Database(SmartPlugin):
             remaining = self.readLogCount(item_id,self._timestamp( time_end + datetime.timedelta(microseconds=1)))
             # remaining can be larger than self._item_logcount[item_id], it depends on the rate of database updates
             #self.logger.info(f"remove_older_than_maxage: item = {itempath} has attribute init with {self._item_logcount[item_id]} log entries and will have {remaining} log entries after deletion")
-        
+
         if remaining <= 0:
             # no log entries will be there after deletion, need to go back in time for the latest logentry
             new_must_keep_timestamp = self.readLatestLog(item_id, timestamp_end)
@@ -1332,7 +1340,10 @@ class Database(SmartPlugin):
             self.logger.info(f"remove_older_than_maxage: item = {itempath} deleted {count_log_records_to_delete} log entries until {time_end} took {time_used_for_deletion} seconds, averaging {time_used_for_deletion/count_log_records_to_delete} per second")
 
         # update the logCount for the item
-        self._item_logcount[item_id] = self.readLogCount(item_id)
+        logcount = self.readLogCount(item_id)
+        self._item_logcount[item_id] = logcount
+        self._webdata[item.id()].update({'logcount': logcount})
+
         return
 
     def get_maxage_ts(self, item):
@@ -1361,7 +1372,9 @@ class Database(SmartPlugin):
         self.logger.info("_count_logentries: # handled items = {}".format(len(self._handled_items)))
         for item in self._handled_items:
             item_id = self.id(item, create=False)
-            self._item_logcount[item_id] = self.readLogCount(item_id)
+            logcount = self.readLogCount(item_id)
+            self._item_logcount[item_id] = logcount
+            self._webdata[item.id()].update({'logcount': logcount})
 
         return
 
@@ -1525,4 +1538,3 @@ class Database(SmartPlugin):
 
     def _len(self, l):
         return len(l)
-

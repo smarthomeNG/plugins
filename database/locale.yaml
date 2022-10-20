@@ -63,6 +63,9 @@ plugin_translations:
     'CSV Export der Werte':
         'de': '='
         'en': 'CSV Export of Values'
+    'CSV Export nicht verfügbar':
+        'de': '='
+        'en': 'CSV Export not available'
     'Historische Daten':
         'de': '='
         'en': 'Historical Data'
@@ -96,6 +99,6 @@ plugin_translations:
     'Anzahl Datensätze in LOG Tabelle':
         'de': '='
         'en': 'Number of data sets in LOG table'
-    'Wert löschen fuer aktuellen Wert nicht verfügbar.':
+    'Wert löschen für aktuellen Wert nicht verfügbar.':
         'de': '='
         'en': 'Deletion of value not available for the most recent value.'

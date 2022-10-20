@@ -1,5 +1,6 @@
 {% extends "base_database.html" %}
-
+{% set update_interval = 5000 %}
+{% set dataSet = 'overview' %}
 {% set tab1title = _('Database Items') %}
 {% block bodytab1 %}
 <script type="text/javascript" language="javascript">
@@ -38,52 +39,80 @@
     });
 </script>
 
-<div class="mb-2">
-	{{ _('Die folgenden {items} Items sind dieser Instanz des Database Plugins zugewiesen, {with_maxage} Items haben ein maxage.', vars={'items': len(p._handled_items), 'with_maxage': len(p._items_with_maxage)}) }}
-	{%  if len(p._handled_items) != p.readItemCount() %}
-		- ({{_( 'Die Datenbank enthält Daten zu {dbitems} Items', vars={'dbitems': p.readItemCount()}) }} )
-	{%  endif %}
+<script>
+	function handleUpdatedData(response, dataSet='overview') {
+		if (dataSet === 'overview' || dataSet === null) {
+			objResponse = JSON.parse(response);
+			myProto = document.getElementById(dataSet);
+			for (item in objResponse) {
+				var value = objResponse[item]['value'];
+				if (value != null)
+				{
+					value = value.toString().replace("true", "True").replace("false", "False");
+					shngInsertText (item+'_value', value, 'itemtable', 10);
+				}
+
+				if (objResponse[item]['logcount'] != null)
+					shngInsertText (item+'_logcount', objResponse[item]['logcount'], 'itemtable', 10);
+			}
+		}
+	}
+</script>
+<div class="container-fluid m-2 table-resize">
+	<div class="mb-2">
+		{{ _('Die folgenden {items} Items sind dieser Instanz des Database Plugins zugewiesen, {with_maxage} Items haben ein maxage.', vars={'items': len(p._handled_items), 'with_maxage': len(p._items_with_maxage)}) }}
+		{%  if len(p._handled_items) != p.readItemCount() %}
+			- ({{_( 'Die Datenbank enthält Daten zu {dbitems} Items', vars={'dbitems': p.readItemCount()}) }} )
+		{%  endif %}
+	</div>
+	<table class="table table-striped table-hover pluginList dataTableAdditional" id="itemtable">
+		<thead>
+		<tr>
+			<th>{{ _('Item') }}</th>
+			<th>{{ _('Init') }}</th>
+			<th>{{ _('Typ') }}</th>
+			<th>{{ _('Wert') }}</th>
+			<th>{{ _('Item-ID in der Datenbank') }}</th>
+			{%  if p.count_logentries %}
+				<th style="width: 120px; text-align:right">{{ _('Anzahl Einträge') }}</th>
+			{% endif %}
+			<th>{{ _('konfiguriertes max. Alter') }}</th>
+			<th class="no-sort">{{ _('Aktionen') }}</th>
+		</tr>
+		</thead>
+		<tbody>
+		{% for item in items %}
+			{% if p.has_iattr(item.conf, 'database') %}
+			{% set val = item.property.value %}
+				<tr>
+					<td class="py-1" id="{{ item }}_path">{{ item.property.path }}</td>
+					<td class="py-1">{{ _('Init') if p.get_iattr_value(item.conf, 'database').lower() == 'init' else '-'}}</td>
+					<td class="py-1" id="{{ item }}_type">{{ item.property.type }}</td>
+					<td class="py-1" id="{{ item }}_value">{{ ("%.2f"|format(val|float)).rstrip('0').rstrip('.') }}</td>
+					<td class="py-1" id="{{ item }}_id">{{ p.id(item, create=False) }}</td>
+					{%  if p.count_logentries %}
+						<td class="py-1" style="width: 120px; text-align:right" id="{{ item }}_logcount">{{ p._item_logcount[p.id(item, create=False)] }}</td>
+					{% endif %}
+					{%  if p.get_iattr_value(item.conf, 'database_maxage') %}
+						<td class="py-1" id="{{ item }}_maxage">{{ p.get_maxage_ts(item).strftime('%d.%m.%Y %H:%M:%S') }} ({{ p.get_iattr_value(item.conf, 'database_maxage') }} {{ _('Tage') }})</td>
+					{% else %}
+						<td class="py-1">-</td>
+					{% endif %}
+					<td class="py-1">
+						{% if p.id(item, create=False) == None %}
+							<button type="button" disabled class="btn btn-shng btn-sm" title="{{ _('CSV Export nicht möglich') }}">CSV</button>
+						{% else %}
+							<button type="button" class="btn btn-shng btn-sm" title="{{ _('CSV Export der Werte') }}" onclick="window.open('item.csv?item_id={{ p.id(item, create=False) }}')">CSV</button>
+						{% endif %}
+						<button type="button" class="btn btn-shng btn-sm" title="{{ _('Historische Daten') }}" onclick="location.href='?action=item_details&item_id={{ p.id(item, create=False) }}&item_path={{ item.property.path }}';"><i class="fas fa-search"></i></button>
+						<button type="button" class="btn btn-danger btn-sm" title="{{ _('Wertehistorie löschen') }}" onclick="confirmDelete('?action=delete_log&item_id={{ p.id(item, create=False) }}&item_path={{ item.property.path }}','{{ _('Wollen Sie die historischen Daten (Tabelle log) dieses Items wirklich löschen?') }}')"><i class="fas fa-history"></i></button>
+					</td>
+				</tr>
+			{% endif %}
+		{% endfor %}
+		</tbody>
+	</table>
 </div>
-<table class="table table-striped table-hover pluginList" id="itemtable">
-	<thead>
-	<tr>
-		<th>{{ _('Item') }}</th>
-		<th>{{ _('Init') }}</th>
-		<th>{{ _('Typ') }}</th>
-		<th>{{ _('Wert') }}</th>
-		<th>{{ _('Item-ID in der Datenbank') }}</th>
-		{%  if p.count_logentries %}
-			<th style="width: 120px; text-align:right">{{ _('Anzahl Einträge') }}</th>
-		{% endif %}
-		<th>{{ _('konfiguriertes max. Alter') }}</th>
-		<th class="no-sort">{{ _('Aktionen') }}</th>
-	</tr>
-	</thead>
-	{% for item in items %}
-		{% if p.has_iattr(item.conf, 'database') %}
-			<tr>
-				<td class="py-1">{{ item.property.path }}</td>
-				<td class="py-1">{{ _('Init') if p.get_iattr_value(item.conf, 'database').lower() == 'init' else '-'}}</td>
-				<td class="py-1">{{ item.property.type }}</td>
-				<td class="py-1">{{ item.property.value }}</td>
-				<td class="py-1">{{ p.id(item, create=False) }}</td>
-				{%  if p.count_logentries %}
-					<td class="py-1" style="width: 120px; text-align:right">{{ p._item_logcount[p.id(item, create=False)] }}</td>
-				{% endif %}
-				{%  if p.get_iattr_value(item.conf, 'database_maxage') %}
-					<td class="py-1">{{ p.get_maxage_ts(item).strftime('%d.%m.%Y %H:%M:%S') }} ({{ p.get_iattr_value(item.conf, 'database_maxage') }} {{ _('Tage') }})</td>
-				{% else %}
-					<td class="py-1">-</td>
-				{% endif %}
-				<td class="py-1">
-					<button type="button" class="btn btn-shng btn-sm" title="{{ _('CSV Export der Werte') }}" onclick="window.open('item.csv?item_id={{ p.id(item, create=False) }}')">CSV</button>
-					<button type="button" class="btn btn-shng btn-sm" title="{{ _('Historische Daten') }}" onclick="location.href='?action=item_details&item_id={{ p.id(item, create=False) }}&item_path={{ item.property.path }}';"><i class="fas fa-search"></i></button>
-					<button type="button" class="btn btn-danger btn-sm" title="{{ _('Wertehistorie löschen') }}" onclick="confirmDelete('?action=delete_log&item_id={{ p.id(item, create=False) }}&item_path={{ item.property.path }}','{{ _('Wollen Sie die historischen Daten (Tabelle log) dieses Items wirklich löschen?') }}')"><i class="fas fa-history"></i></button>
-				</td>
-			</tr>
-		{% endif %}
-	{% endfor %}
-</table>
 {% endblock bodytab1 %}
 
 {% block buttons %}

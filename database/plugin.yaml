@@ -12,7 +12,7 @@ plugin:
     documentation: http://smarthomeng.de/user/plugins/database/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1021844-neues-database-plugin
 
-    version: 1.6.1                 # Plugin version
+    version: 1.6.2                 # Plugin version
     sh_minversion: 1.8.0           # minimum shNG version to use this plugin
 #    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
@@ -65,6 +65,28 @@ parameters:
         description:
             de: "Maximal auf einmal zu löschende Anzahl an Log Einträgen mit dem database_maxage Attribut, reduziert die Belastung der Datenbank bei alten Datenbeständen"
             en: "Maximum number of Logentries to delete at once with database_maxage attribute, reduces load on database with old datasets"
+
+    webif_pagelength:
+        type: int
+        default: 100
+        valid_list:
+          - -1
+          - 0
+          - 25
+          - 50
+          - 100
+        description:
+            de: 'Anzahl an Items, die standardmäßig in einer Web Interface Tabelle pro Seite angezeigt werden.
+                 0 = automatisch, -1 = alle'
+            en: 'Amount of items being listed in a web interface table per page by default.
+                 0 = automatic, -1 = all'
+        description_long:
+            de: 'Anzahl an Items, die standardmäßig in einer Web Interface Tabelle pro Seite angezeigt werden.\n
+                 Bei 0 wird die Tabelle automatisch an die Höhe des Browserfensters angepasst.\n
+                 Bei -1 werden alle Tabelleneinträge auf einer Seite angezeigt.'
+            en: 'Amount of items being listed in a web interface table per page by default.\n
+                 0 adjusts the table height automatically based on the height of the browser windows.\n
+                 -1 shows all table entries on one page.'
 
 item_attributes:
     # Definition of item attributes defined by this plugin
