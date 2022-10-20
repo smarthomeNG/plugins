@@ -17,9 +17,10 @@
     try {
       /* get pagelength from plugin. Also see hidden span element in bodytab1 block! */
       webif_pagelength = parseInt(document.getElementById('webif_pagelength').innerHTML);
-      if (webif_pagelength == 0) {
+      if (isNaN(parseFloat(webif_pagelength)) || webif_pagelength == 0) {
         resize = true;
         webif_pagelength = -1;
+        console.log('Activating automatic table resize');
       }
       else {
         resize = false;
