@@ -1,5 +1,5 @@
 {% extends "base_database.html" %}
-{% set update_interval = 5000 %}
+{% set update_interval = 10000 %}
 {% set dataSet = 'overview' %}
 {% set tab1title = _('Database Items') %}
 {% block bodytab1 %}
@@ -71,7 +71,7 @@
 			- ({{_( 'Die Datenbank enthält Daten zu {dbitems} Items', vars={'dbitems': p.readItemCount()}) }} )
 		{%  endif %}
 	</div>
-	<table class="table table-striped table-hover pluginList dataTableAdditional" id="itemtable">
+	<table id="itemtable">
 		<thead>
 		<tr>
 			<th>{{ _('Item') }}</th>

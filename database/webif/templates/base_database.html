@@ -33,16 +33,16 @@
     }
 		try {
       itemtable = $('#itemtable').DataTable( {
-        pageLength: webif_pagelength,
-        pageResize: resize});
+        pageResize: resize,
+        pageLength: webif_pagelength});
       detailtable = $('#item_details_table').DataTable( {
         pageLength: webif_pagelength,
         order: [[1, 'desc']],
         createdRow: function (row, data, index) {
             $('td', row).addClass('py-1 truncate');
-            $.fn.dataTable.tables({ visible: true, api: true }).columns.adjust();
-            $.fn.dataTable.tables({ visible: true, api: true }).fixedHeader.adjust();
-            $.fn.dataTable.tables({ visible: true, api: true }).responsive.recalc();
+            this.api().columns.adjust();
+            this.api().fixedHeader.adjust();
+            this.api().responsive.recalc();
         },
         pageResize: resize});
 		}
