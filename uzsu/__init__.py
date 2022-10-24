@@ -87,7 +87,6 @@ from dateutil import parser
 from dateutil.tz import tzutc
 from unittest import mock
 from collections import OrderedDict
-from bin.smarthome import VERSION
 import copy
 import html
 import json
@@ -117,8 +116,6 @@ class UZSU(SmartPlugin):
         Initializes the plugin. The parameters describe for this method are pulled from the entry in plugin.conf.
         :param smarthome:  The instance of the smarthome object, save it for later references
         """
-        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
-            self.logger = logging.getLogger(__name__)
         self.itemsApi = Items.get_instance()
         self._timezone = Shtime.get_instance().tzinfo()
         self._remove_duplicates = self.get_parameter_value('remove_duplicates')
@@ -221,10 +218,7 @@ class UZSU(SmartPlugin):
         :type item:     item
         """
         if caller != "_update_item":
-            if '.'.join(VERSION.split('.', 3)[:3]) > '1.5.1':
-                self._items[item] = item()
-            else:
-                self._items[item] = copy.deepcopy(item())
+            self._items[item] = item()
         try:
             _sunrise = self._sh.sun.rise()
             _sunset = self._sh.sun.set()
@@ -316,10 +310,7 @@ class UZSU(SmartPlugin):
             else:
                 self.logger.warning("Value to activate item '{}' has to be True or False".format(item))
         if isinstance(activevalue, bool):
-            if '.'.join(VERSION.split('.', 3)[:3]) > '1.5.1':
-                self._items[item] = item()
-            else:
-                self._items[item] = copy.deepcopy(item())
+            self._items[item] = item()
             self._items[item]['active'] = activevalue
             self.logger.info("Item {} is set via logic to: {}".format(item, activevalue))
             self._update_item(item, 'UZSU Plugin', 'logic')
@@ -333,10 +324,7 @@ class UZSU(SmartPlugin):
         if intpl_type is None:
             return self._items[item].get('interpolation')
         else:
-            if '.'.join(VERSION.split('.', 3)[:3]) > '1.5.1':
-                self._items[item] = item()
-            else:
-                self._items[item] = copy.deepcopy(item())
+            self._items[item] = item()
             self._items[item]['interpolation']['type'] = str(intpl_type).lower()
             self._items[item]['interpolation']['interval'] = abs(int(interval))
             self._items[item]['interpolation']['initage'] = int(backintime)
@@ -438,10 +426,7 @@ class UZSU(SmartPlugin):
             item.planned = functools.partial(self._logics_planned, item=item)
             item.itpl = functools.partial(self._logics_itpl, item=item)
 
-            if '.'.join(VERSION.split('.', 3)[:3]) > '1.5.1':
-                self._items[item] = item()
-            else:
-                self._items[item] = copy.deepcopy(item())
+            self._items[item] = item()
             if self._items[item].get('interpolation'):
                 self._items[item]['interpolation']['initialized'] = False
             if self._items[item].get('list'):
