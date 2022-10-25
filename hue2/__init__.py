@@ -464,8 +464,9 @@ class Hue2(SmartPlugin):
                     plugin_item['item'](value, self.get_shortname(), src)
             if plugin_item['resource'] == 'group':
                 if not "hue2_refence_light_id" in plugin_item:
-                    value = self._get_group_item_value(plugin_item['id'], plugin_item['function'], plugin_item['item'].id())
-                    plugin_item['item'](value, self.get_shortname(), src)
+                    if plugin_item['function'] != 'dict':
+                        value = self._get_group_item_value(plugin_item['id'], plugin_item['function'], plugin_item['item'].id())
+                        plugin_item['item'](value, self.get_shortname(), src)
         return
 
 
@@ -494,17 +495,18 @@ class Hue2(SmartPlugin):
             src = None
         for pi in self.plugin_items:
             plugin_item = self.plugin_items[pi]
-            if plugin_item['resource'] == 'light':
-                value = self._get_light_item_value(plugin_item['id'], plugin_item['function'], plugin_item['item'].id())
-                if value is not None:
-                    plugin_item['item'](value, self.get_shortname(), src)
-
-            if plugin_item['resource'] == 'group':
-                if "hue2_refence_light_id" in plugin_item:
-                    reference_light_id = plugin_item["hue2_refence_light_id"]
-                    value = self._get_light_item_value(reference_light_id, plugin_item['function'], plugin_item['item'].id())
+            if plugin_item['function'] != 'dict':
+                if plugin_item['resource'] == 'light':
+                    value = self._get_light_item_value(plugin_item['id'], plugin_item['function'], plugin_item['item'].id())
                     if value is not None:
                         plugin_item['item'](value, self.get_shortname(), src)
+
+                if plugin_item['resource'] == 'group':
+                    if "hue2_refence_light_id" in plugin_item:
+                        reference_light_id = plugin_item["hue2_refence_light_id"]
+                        value = self._get_light_item_value(reference_light_id, plugin_item['function'], plugin_item['item'].id())
+                        if value is not None:
+                            plugin_item['item'](value, self.get_shortname(), src)
 
         return
 
