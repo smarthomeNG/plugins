@@ -1,7 +1,7 @@
 {% extends "base_database.html" %}
 {% set dataSet = 'item_details' %}
 {% set update_params = item_id %}
-{% set update_interval = 10000 %}
+{% set update_interval = (200 * (log_array | length)) %}
 {% set tab1title = _('Database Items')+' ('+item_path+')' %}
 {% block buttons %}
 {{ super() }}
@@ -78,15 +78,15 @@ checkDate();
 	<table class="table table-striped table-hover pluginList dataTableAdditional" id="item_details_table">
 		<thead>
 		<tr>
-			<th style="width: 90px;">{{ _('Item ID') }}</th>
-			<th style="width: 190px;">{{ _('Zeit') }}</th>
-			<th style="width: 120px; text-align:right">{{ _('Dauer') }} (sec)</th>
+			<th style="width: 40px;">{{ _('Item ID') }}</th>
+			<th style="width: 100px;">{{ _('Zeit') }}</th>
+			<th style="width: 60px; text-align:right">{{ _('Dauer') }} (sec)</th>
 			{% if item.property.type == 'num' %}<th style="width: 120px;">VAL_NUM</th>{% endif %}
 			{% if item.property.type == 'bool' %}<th style="width: 120px;">VAL_BOOL</th>{% endif %}
 			{% if item.property.type == 'str' %}<th>VAL_STR</th>{% endif %}
 			{% if item.property.type == 'foo' %}<th>VAL_STR</th>{% endif %}
-			<th style="width: 190px;">{{ _('Geändert') }}</th>
-			<th class="no-sort">{{ _('Aktionen') }}</th>
+			<th style="width: 100px;">{{ _('Geändert') }}</th>
+			<th class="no-sort" style="width:40px;">{{ _('Aktionen') }}</th>
 		</tr>
 		</thead>
 		<tbody>
