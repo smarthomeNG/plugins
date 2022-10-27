@@ -1,9 +1,9 @@
 .. index:: Plugins; solarforecast (Solarforecast REST API Unterstützung)
 .. index:: solarforecast
 
-=======
+=============
 solarforecast
-=======
+=============
 
 Dieses Plugin unterstützt Solare.forecast Vorhersagen von Solaretrag (Leistung).
 
@@ -24,7 +24,7 @@ The plugin does not need a license key in public mode. An API key can be optaine
 Beispiele
 =========
 
-Beispiel für jeweils zwei Items mit vorhergesagtem Leistungsertrag f�r heute und morgen.
+Beispiel für jeweils zwei Items mit vorhergesagtem Leistungsertrag f�r heute und morgen.
 
 .. code:: yaml
 
@@ -34,7 +34,7 @@ solarforecast:
         type: num
         visu_acl: ro
         solarforecast_attribute: power_today
-            
+
         date:
             type: str
             visu_acl: ro
