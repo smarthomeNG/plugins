@@ -46,7 +46,7 @@ AttrDirection = 'modBusDirection'
 
 class modbus_tcp(SmartPlugin):
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = '1.0.6'
+    PLUGIN_VERSION = '1.0.7'
 
     def __init__(self, sh, *args, **kwargs):
         """
@@ -336,7 +336,7 @@ class modbus_tcp(SmartPlugin):
             elif bits == 64:
                 builder.add_64bit_uint(int(value))
             else:
-                self.logger.error("Number of bits or datatype not supported : {0}".format(typeStr))
+                self.logger.error("Number of bits or datatype not supported : {0}".format(dataTypeStr))
         elif dataType.lower() == 'int':
             if bits == 16:
                 builder.add_16bit_int(int(value))
@@ -345,14 +345,14 @@ class modbus_tcp(SmartPlugin):
             elif bits == 64:
                 builder.add_64bit_int(int(value))
             else:
-                self.logger.error("Number of bits or datatype not supported : {0}".format(typeStr))
+                self.logger.error("Number of bits or datatype not supported : {0}".format(dataTypeStr))
         elif dataType.lower() == 'float':
             if bits == 32:
                  builder.add_32bit_float(value)
             if bits == 64:
                  builder.add_64bit_float(value)
             else:
-                self.logger.error("Number of bits or datatype not supported : {0}".format(typeStr))
+                self.logger.error("Number of bits or datatype not supported : {0}".format(dataTypeStr))
         elif dataType.lower() == 'string':
             builder.add_string(value)
         elif dataType.lower() == 'bit':
@@ -361,12 +361,12 @@ class modbus_tcp(SmartPlugin):
                     self.logger.error("Value is not boolean: {0}".format(value))
                     return 
             else:
-                if set(bitstr).issubset({'0', '1'}) and bool(bitstr):   # test is bit-string '00110101'
+                if set(value).issubset({'0', '1'}) and bool(value):   # test is bit-string '00110101'
                     builder.add_bits(value)
                 else:
                     self.logger.error("Value is not a bitstring: {0}".format(value))
         else:
-            self.logger.error("Number of bits or datatype not supported : {0}".format(typeStr))
+            self.logger.error("Number of bits or datatype not supported : {0}".format(dataTypeStr))
             return None
         
         if objectType == 'Coil':
@@ -463,7 +463,7 @@ class modbus_tcp(SmartPlugin):
             elif bits == 64:
                 return decoder.decode_64bit_uint()
             else:
-                self.logger.error("Number of bits or datatype not supported : {0}".format(typeStr))
+                self.logger.error("Number of bits or datatype not supported : {0}".format(dataTypeStr))
         elif dataType.lower() == 'int':
             if bits == 16:
                 return decoder.decode_16bit_int()
@@ -472,14 +472,14 @@ class modbus_tcp(SmartPlugin):
             elif bits == 64:
                 return decoder.decode_64bit_int()
             else:
-                self.logger.error("Number of bits or datatype not supported : {0}".format(typeStr))
+                self.logger.error("Number of bits or datatype not supported : {0}".format(dataTypeStr))
         elif dataType.lower() == 'float':
             if bits == 32:
                 return decoder.decode_32bit_float()
             if bits == 64:
                 return decoder.decode_64bit_float()
             else:
-                self.logger.error("Number of bits or datatype not supported : {0}".format(typeStr))
+                self.logger.error("Number of bits or datatype not supported : {0}".format(dataTypeStr))
         elif dataType.lower() == 'string':
             # bei string: bits = bytes !! string16 -> 16Byte
             ret = decoder.decode_string(bits)
@@ -492,5 +492,5 @@ class modbus_tcp(SmartPlugin):
                 self.logger.debug("readed bits values: {0}".format(value.decode_bits()))
                 return decoder.decode_bits()
         else:
-            self.logger.error("Number of bits or datatype not supported : {0}".format(typeStr))
+            self.logger.error("Number of bits or datatype not supported : {0}".format(dataTypeStr))
         return None
