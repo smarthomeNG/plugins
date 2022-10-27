@@ -24,7 +24,7 @@ The plugin does not need a license key in public mode. An API key can be optaine
 Beispiele
 =========
 
-Beispiel für jeweils zwei Items mit vorhergesagtem Leistungsertrag f�r heute und morgen.
+Beispiel für jeweils zwei Items mit vorhergesagtem Leistungsertrag für heute und morgen.
 
 .. code:: yaml
 
