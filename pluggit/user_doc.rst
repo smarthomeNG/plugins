@@ -36,7 +36,7 @@ Statt
         ...
 
 
-muss die Version des zu verwendenden Plugins zusätzlich angegeben werden:
+muss die zu verwendende Version des Plugins zusätzlich angegeben werden:
 
 .. code:: yaml
 
@@ -103,21 +103,26 @@ Version History
 ===============
 
 V2.0.3 - 25.10.2022
+
 - Support für pymodbus 3.0
 
-22.05.2022:
+22.05.2022
+
 - Fehler mit manuellem Bypass behoben
 
-16.02.2022:
+16.02.2022
+
 - CurentUnitMode.ManualBypass dem Item-struct zugefügt
 - Log-Level für verschiedene Ausgaben angepasst
 - CurrentUnitMode.AwayMode repariert
 
-24.02.2021:
+24.02.2021
+
 - Item-struct um Zugriffe für SmartVISU erweitert
 - item_attribut um pluggit_convert erweitert
 - scheduler.remove eingebaut
 
-29.08.2020:
+29.08.2020
+
  - bool-Werte konnten nicht geschrieben werden
 
