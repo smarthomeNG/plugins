@@ -16,10 +16,35 @@ pluggit
 Das pluggit plugin dient zur Ansteuerung einer Pluggit AP310 KWL.
 
 
-.. Einführung
-.. ==========
+Einführung
+==========
 
-.. ...
+Die aktuelle Version 2.x des Plugins ist eine Neuentwicklung auf Basis der Version v1.2.3 des pluggit Plugins.
+Die Version 2.x ist nicht konfigurations-kompatibel zur Version 1.x. Die Konfiguration der Plugin Parameter und der
+Item Attribute ist daher neu entsprechend der aktuellen Dokumentation vorzunehmen.
+
+Es ist bei Bedarf jedoch möglich erstmal die alte Version v1.2.3 des pluggit Plugins weiter zu nutzen.
+Dazu muss nur ein Eintrag in der Plugin Konfiguration in der etc/plugin.yaml angepasst/eingefügt werden.
+
+Statt
+
+.. code:: yaml
+
+    pluggit:
+        plugin_name: pluggit
+
+        ...
+
+
+muss die Version des zu verwendenden Plugins zusätzlich angegeben werden:
+
+.. code:: yaml
+
+    pluggit:
+        plugin_name: pluggit
+        plugin_version: 1.2.3
+
+        ...
 
 
 Vorteile gegenüber der Plugin Version v1.2.3
@@ -37,13 +62,12 @@ Es fehlen auch noch ein paar Dinge
 - eine Dokumentation der Parameter
 
 
-Anforderungen
-=============
+.. Anforderungen
+.. =============
 
 .. Anforderungen des Plugins auflisten. Werden spezielle Soft- oder Hardwarekomponenten benötigt?
 
-Um das Plugin zu nutzen, muss eine InfluxDB Datenbank der Version 2.x installiert und zur Nutzung durch SmartHomeNG
-konfiguriert sein.
+.. Um das Plugin zu nutzen, muss ...
 
 
 .. Installation benötigter Software
