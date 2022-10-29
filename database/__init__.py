@@ -641,24 +641,24 @@ class Database(SmartPlugin):
     #    params = {'id': id}
     #    return self._fetchall("SELECT min(time) FROM {log} GROUP BY item_id", params, cur=cur)[0]
 
-    def readLatestLog(self, id, dt=None, cur=None):
+    def readLatestLog(self, id, time=None, cur=None):
         """
-        Read the time of latest log record for given database ID and if dt given up to this time
+        Read the time of latest log record for given database ID and if time given up to this time
 
         This is a public function of the plugin
 
         :param id: Database ID of item to read the record for
-        :param dt: datetime as maximum timestamp for the given value
+        :param time: a maximum timestamp for the given value
         :param cur: A database cursor object if available (optional)
 
         :return: Log record for the database ID
         """
-        if dt is None:
+        if time is None:
             params = {'id': id}
             return self._fetchall("SELECT max(time) FROM {log} WHERE item_id = :id;", params, cur=cur)[0][0]
         else:
-            params = {'id': id, 'dt': self._timestamp(dt)}
-            return self._fetchall("SELECT max(time) FROM {log} WHERE item_id = :id AND time <= :dt", params, cur=cur)[0][0]
+            params = {'id': id, 'time': time}
+            return self._fetchall("SELECT max(time) FROM {log} WHERE item_id = :id AND time <= :time", params, cur=cur)[0][0]
 
     def readLogCount(self, id, time_start=None, time_end=None, cur=None):
         """
@@ -1521,8 +1521,8 @@ class Database(SmartPlugin):
         """
         Get timestamp from datetime
 
-        :param dt:
-        :return:
+        :param dt: datetime
+        :return: integer containing a timestamp
         """
         val = int(time.mktime(dt.timetuple())) * 1000 + int(dt.microsecond / 1000)
         #self.logger.debug("Debug timestamp {0}, val {1}, epoche timestamp {2}, micrsec {3}".format(dt, val, time.mktime(dt.timetuple()), dt.microsecond) )
