@@ -34,6 +34,11 @@
 		try {
       itemtable = $('#itemtable').DataTable( {
         pageResize: resize,
+        columnDefs: [
+        { responsivePriority: 1, targets: 0 },
+        { responsivePriority: 3, targets: 3 },
+        { responsivePriority: 2, targets: -1 }
+        ].concat($.fn.dataTable.defaults.columnDefs),
         pageLength: webif_pagelength});
       detailtable = $('#item_details_table').DataTable( {
         pageLength: webif_pagelength,
@@ -61,9 +66,31 @@
 <!-- <link rel="stylesheet" type="text/css" href="static/datatables.css"> -->
 <style>
     .duration {
-    text-align:right;}
+      text-align:right;}
     .hidden {
-    display:none;}
+      display:none;}
+    .logcount {
+      width: 100px;
+      text-align:right;
+    }
+    .actions {
+      width: 110px;
+    }
+    .maxage {
+      width: 230px;
+    }
+    .id {
+      width: 80px;
+    }
+    .value {
+      width: 120px;
+    }
+    .type {
+      width: 60px;
+    }
+    .init {
+      width: 50px;
+    }
 </style>
 {%- endblock styles %}
 
