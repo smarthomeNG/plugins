@@ -80,7 +80,7 @@ class KNXD():
     CACHE_ENABLE               = 112   # 0x0070
     CACHE_DISABLE              = 113   # 0x0071
     CACHE_CLEAR                = 114   # 0x0072
-    CACHE_REMOVE               = 115   # 0x0073
+    CACHE_REMOVE               = 115   # 0x0073 remove a cache entry for a group address
     CACHE_READ                 = 116   # 0x0074
     CACHE_READ_NOWAIT          = 117   # 0x0075
     CACHE_LAST_UPDATES         = 118   # 0x0076

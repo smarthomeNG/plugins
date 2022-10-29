@@ -365,8 +365,14 @@ class KNX(SmartPlugin):
             client.terminator = 2
 
         knxd_msg_type = struct.unpack(">H", data[0:2])[0]
-        if (knxd_msg_type != KNXD.GROUP_PACKET and knxd_msg_type != KNXD.CACHE_READ) or len(data) < 8:
+        if not knxd_msg_type in [KNXD.GROUP_PACKET, KNXD.CACHE_READ, KNXD.CACHE_READ_NOWAIT]:
             self.handle_other_knxd_messages(knxd_msg_type, data[2:])
+            return
+
+        if len(data) < 8:
+            payloadstr = binascii.hexlify(data).decode()
+            msg = f"KNXD message {KNXD.MessageDescriptions[knxd_msg_type]} received {payloadstr} but not enough data {len(data)} bytes where at least 7 bytes are needed"
+            self.logger.warning(msg)
             return
 
         if (data[6] & 0x03 or (data[7] & 0xC0) == 0xC0):
