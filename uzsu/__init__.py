@@ -666,15 +666,15 @@ class UZSU(SmartPlugin):
             cond3 = _initialized is False
             cond4 = _initage > 0
             cond5 = isinstance(_value, float)
+            cond6 = caller != 'set' and _caller != "dry_run"
             self._itpl[item] = OrderedDict(itpl_list)
             if not cond2 and cond3 and cond4:
                 self.logger.info("Looking if there was a value set after {} for item {}".format(
                     _timediff, item))
                 self._items[item]['interpolation']['initialized'] = True
                 self._update_item(item, 'UZSU Plugin', 'init')
-            if cond1 and not cond2 and cond3:
-                if caller != 'set' and _caller != "dry_run":
-                    self._set(item=item, value=_initvalue, caller=_caller)
+            if cond1 and not cond2 and cond3 and cond6:
+                self._set(item=item, value=_initvalue, caller=_caller)
                 self.logger.info("Updated item {} on startup with value {} from time {}".format(
                     item, _initvalue, datetime.fromtimestamp(_inittime/1000.0)))
             _itemtype = self._items[item]['interpolation'].get('itemtype')
