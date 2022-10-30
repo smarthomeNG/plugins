@@ -186,7 +186,9 @@ $(document).ready(
 					<td class="py-1">{{ item.conf['knx_dpt'] }}</td>
 					<td class="py-1">
 					{% if 'knx_cache' in item.conf %}
-						knx_cache: {{ item.conf['knx_cache'] }}<br>
+						{% if item.conf['knx_cache'] in p.get_unsatisfied_cache_read_ga() %}<span style="color: red;">{% endif %}
+						knx_cache: {{ item.conf['knx_cache'] }}
+						{% if item.conf['knx_cache'] in p.get_unsatisfied_cache_read_ga() %}</span>{% endif %}<br>
 					{% endif %}
 					{% if 'knx_init' in item.conf %}
 						knx_init: {{ item.conf['knx_init'] }}<br>
