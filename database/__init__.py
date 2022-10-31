@@ -50,7 +50,7 @@ class Database(SmartPlugin):
     """
 
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = '1.6.2'
+    PLUGIN_VERSION = '1.6.3'
 
     # SQL queries: {item} = item table name, {log} = log table name
     # time, item_id, val_str, val_num, val_bool, changed
@@ -97,6 +97,9 @@ class Database(SmartPlugin):
         if self._prefix != '':
             self._prefix += '_'
         self._dump_cycle = self.get_parameter_value('cycle')
+        self._removeold_cycle = self.get_parameter_value('removeold_cycle')
+        if self._removeold_cycle == self._dump_cycle:
+            self._removeold_cycle += 2
         self._precision = self.get_parameter_value('precision')
         self.count_logentries = self.get_parameter_value('count_logentries')
         self.max_delete_logentries = self.get_parameter_value('max_delete_logentries')
@@ -111,10 +114,13 @@ class Database(SmartPlugin):
         self._buffer_lock = threading.Lock()
         self._dump_lock = threading.Lock()
 
+        self.skipping_dump = False
+
         self._handled_items = []        # items that have a 'database' attribute set
         self._items_with_maxage = []    # items that have a 'database_maxage' attribute set
         self._maxage_worklist = []      # work copy of self._items_with_maxage
         self._item_logcount = {}        # dict to store the number of log records for an item
+        self._items_total_entries = 0   # total number of log entries
 
         self.cleanup_active = False
 
@@ -322,7 +328,8 @@ class Database(SmartPlugin):
             self.scheduler_add('Count logs', self._count_logentries, cycle=6*3600, prio=6)
         self.scheduler_add('Buffer dump', self._dump, cycle=self._dump_cycle, prio=5)
         if len(self._items_with_maxage) > 0:
-            self.scheduler_add('Remove old', self.remove_older_than_maxage, cycle=91, prio=6)
+            # self.scheduler_add('Remove old', self.remove_older_than_maxage, cycle=91, prio=6)
+            self.scheduler_add('Remove old', self.remove_older_than_maxage, cycle=self._removeold_cycle, prio=6)
         return
 
 
@@ -1114,9 +1121,14 @@ class Database(SmartPlugin):
         """
         if self._dump_lock.acquire(timeout=60) == False:
             self.logger.warning('Skipping dump, since an other database operation running! Data is buffered and dumped later.')
+            self.skipping_dump = True
             return
 
         self.logger.debug('Starting dump')
+
+        if self.skipping_dump:
+            self.logger.warning('Dumping buffered data from skipped dump(s).')
+            self.skipping_dump = False
 
         if not self._initialize_db():
             self._dump_lock.release()
@@ -1375,10 +1387,12 @@ class Database(SmartPlugin):
         called by scheduler once on start
         """
         self.logger.info("_count_logentries: # handled items = {}".format(len(self._handled_items)))
+        self._items_total_entries = 0
         for item in self._handled_items:
             item_id = self.id(item, create=False)
             logcount = self.readLogCount(item_id)
             self._item_logcount[item_id] = logcount
+            self._items_total_entries += logcount
             self._webdata[item.id()].update({'logcount': logcount})
 
         return
