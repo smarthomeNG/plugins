@@ -31,7 +31,7 @@ class Vacations(SmartPlugin):
     """
     Retrieves the German school vacations.
     """
-    PLUGIN_VERSION = "1.0.1"
+    PLUGIN_VERSION = "1.0.3"
     ALLOWED_PROVINCES = ['BW', 'BY', 'BE', 'BB', 'HB', 'HH', 'HE', 'MV', 'NI', 'NW', 'RP', 'SL', 'SN', 'ST', 'SH', 'TH']
 
     def __init__(self, sh, *args, **kwargs):
@@ -64,7 +64,12 @@ class Vacations(SmartPlugin):
         pass
 
     def _update_vacations(self):
-        new_vacations = ferien.all_vacations()
+        new_vactions = None
+        try:
+            new_vacations = ferien.all_vacations()
+        except Exception as e:
+            self.logger.error("An exception occurred when calling \"all_vacations()\" in ferien_api library: %s" % e)
+            return
         if new_vacations is not None:
             for province_code in self._province_codes:
                 self._vacation_list[province_code] = []
@@ -86,12 +91,12 @@ class Vacations(SmartPlugin):
             else:
                 province = self.shtime.config.get('location', None).get('province')
                 if province is None:
-                    logger.error(
+                    self.logger.error(
                         'No province configured in etc/holidays.yaml. Please set country to DE and province value to one of '
                         'those supported by this plugin: BW, BY, BE, BB, HB, HH, HE, MV, NI, NW, RP, SL, SN, ST, SH, TH ')
                     return
                 elif province not in self._province_codes:
-                    logger.error(
+                    self.logger.error(
                         'Province %s is not available in this plugin. Please ensure you are using one of the following provinces: '
                         'BW, BY, BE, BB, HB, HH, HE, MV, NI, NW, RP, SL, SN, ST, SH, TH. Not specifying the parameter will use '
                         'the province configuration of your SmartHomeNG instance in etc/holidays.yaml.')

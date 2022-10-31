@@ -9,13 +9,12 @@ import weakref
 
 import requests
 
-from .. import discovery
+from .. import config, discovery
 from ..xml import XML
 
 log = logging.getLogger(__name__)  # pylint: disable=C0103
 
 
-# pylint: disable=too-many-instance-attributes
 class Account:
 
     """An account for a Music Service.
@@ -76,7 +75,7 @@ class Account:
         device = soco or discovery.any_soco()
         log.debug("Fetching account data from %s", device)
         settings_url = "http://{}:1400/status/accounts".format(device.ip_address)
-        result = requests.get(settings_url).content
+        result = requests.get(settings_url, timeout=config.REQUEST_TIMEOUT).content
         log.debug("Account data: %s", result)
         return result
 

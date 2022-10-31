@@ -32,6 +32,7 @@ from xml.sax.saxutils import escape
 
 import requests
 
+from . import config
 from .exceptions import SoCoException
 from .utils import prettify
 from .xml import XML
@@ -92,8 +93,6 @@ class SoapFault(SoCoException):
 #       </ns:MethodName>
 #   </s:Body>
 # </s:Envelope>
-
-# pylint: disable=too-many-instance-attributes, too-many-arguments
 
 
 class SoapMessage:
@@ -289,10 +288,13 @@ class SoapMessage:
         if _LOG.isEnabledFor(logging.DEBUG):
             _LOG.debug("Sending %s, %s", headers, prettify(data))
 
+        timeout = self.request_args.pop("timeout", config.REQUEST_TIMEOUT)
+
         response = requests.post(
             self.endpoint,
             headers=headers,
             data=data.encode("utf-8"),
+            timeout=timeout,
             **self.request_args
         )
         _LOG.debug("Received %s, %s", response.headers, response.text)

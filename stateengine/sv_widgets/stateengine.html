@@ -1,7 +1,7 @@
 /**
 * -----------------------------------------------------------------------------
 * @package     smartVISU
-* @author      Onkel Andy
+* @author      Onkel Andy, Wolfram v. Hülsen
 * @copyright   2018 - 2020
 * @license     GPL [http://www.gnu.de]
 * -----------------------------------------------------------------------------
@@ -12,19 +12,31 @@
 * @param {id=} unique id for this widget (optional)
 * @param {item} an item the state should be shown for
 * @param {item=} lock state item for your item (optional)
-* @param {release=} release state item for your item. If available this state is activated when you click on the icon (optional)
+* @param {item=} release state item for your item. If available this state is activated when you click on the icon (optional)
 * @param {image[]} array of icons to be shown corresponding to the values stated in the next attribute
 * @param {text[]} array of values corresponding to the icons stated in the previous attribute
 * @param {text} id of the popup widget to open on longpress
 */
-{% macro state(id, item, lock, release, pic, val, popup) %}
-  {% import "basic.html" as basic %}
-    <a style="display:none"></a>
-    <span id="{{ uid(page, id) }}" data-widget="stateengine.state" data-item="{{ item }}" lock-item="{{ lock }}" release-item="{{ release }}"
-        data-vals="{{ implode(val) }}"  data-img="{{ implode(pic|deficon) }}" data-val-on="1" data-val-off="0"
+{% macro state(id, item, lock, release, icon, value, popup) %}
+  {% import config_version_full >= "3.2.c" ? "@widgets/basic.html" : "basic.html" as basic %}
+  {% set icon = icon|default('time_automatic') %}
+  
+  /** enable definitions from e.g. config.ini by string using comma as separator */
+  {% if (value is iterable and value|length == 1 and ',' in value[0]) or (value is not iterable and ',' in value) %} {% set value = implode(value)|split(',') %} {% endif %}
+  {% if (icon is iterable and icon|length == 1 and ',' in icon[0]) or (icon is not iterable and ',' in icon) %} {% set icon = implode(icon)|split(',')%} {% endif %}
+
+  {% set value = (value|default([0,1]) is iterable ? value|default([0,1]) : [value]) %}
+     <a style="display:none"></a>
+    <span id="{{ uid(page, id) }}" data-widget="stateengine.state" data-item="{{ item }}" lock-item="{{ lock }}" release-item="{{ release }}" data-value="{{ value|first }}"
+        data-vals="{{ implode(value) }}"  data-img="{{ implode(icon) }}" data-val-on="1" data-val-off="0"
         class="symbol {{ lock == '' ? '' : 'ui-link' }}" data-role="symbol" data-inline="true" data-iconpos="center" data-mode="{{ mode|default('or') }}" rel="{{ popup }}">
-    <a data-widget="stateengine.state">
-    {{ basic.icon(pic[0]|deficon('time_automatic'), 'icon0') }}
-    </a>
+  
+  	{% for val in value %}
+  		{% set pic = icon is iterable ? icon[loop.index0]|trim : icon %}
+		<a data-widget="stateengine.state" data-val="{{ val|trim }}" data-index="{{ loop.index0 }}" style="{{loop.index0 != 0 ? 'display:none;': '' }}">
+			{{ basic.icon(pic, 'icon0') }}
+		</a>
+	{% endfor %}
     </span>
 {% endmacro %}
+

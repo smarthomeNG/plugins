@@ -93,10 +93,10 @@ class WebserviceHttpHandler(BaseHTTPRequestHandler):
             for mime_type, key in mapping.items():
                 if extension == key:
                     return mime_type
-            raise Exception("Could not found mime-type for extension '{ext}'.".format(ext=extension))
+            raise Exception(f"Cannot determine mime-type for extension '{extension}'.")
 
         except Exception as err:
-            self.logger.warning(err)
+            self.logger.warning(f"Exception in _get_mime_type_by_filetype: {err}")
             return None
 
     def do_GET(self):
@@ -121,7 +121,7 @@ class WebserviceHttpHandler(BaseHTTPRequestHandler):
             mime_type = self._get_mime_type_by_filetype(file_path)
 
             if mime_type is None:
-                self.send_error(406, 'File With Unsupported Media-Type : %s' % self.path)
+                self.send_error(406, 'File with unsupported media type : %s' % self.path)
                 return
 
             client = "{ip}:{port}".format(ip=self.client_address[0], port=self.client_address[1])
@@ -133,9 +133,11 @@ class WebserviceHttpHandler(BaseHTTPRequestHandler):
             self.send_header('Content-Length', sys.getsizeof(file))
             self.end_headers()
             self.wfile.write(file)
+        except ConnectionResetError:
+            self.logger.debug("Connection reset by partner")
         except Exception as ex:
-            self.logger.error("Error delivering file {file}".format(file=file_path))
-            self.logger.error(ex)
+            self.logger.error(f"Error delivering file {file_path}")
+            self.logger.error(f"Exception: {ex}")
         finally:
             self.connection.close()
 
@@ -1172,13 +1174,14 @@ class Speaker(object):
                 # raise Exception('Sonos: Volume has to be an integer between 0 and 100.')
 
             if self._check_max_volume_exceeded(volume, max_volume):
-                self.logger.debug("Sonos: Volume to set [{volume}] exceeds max volume [{max_volume}].".format(
+                self.logger.debug("Volume to set [{volume}] exceeds max volume [{max_volume}].".format(
                     volume=volume, max_volume=max_volume
                 ))
                 volume = max_volume
 
             if group_command:
                 for member in self.zone_group_members:
+                    self.logger.debug(f"Debug set_volume: Setting {member} to volume {volume}")
                     sonos_speaker[member].soco.volume = volume
                     sonos_speaker[member].volume = volume
             else:
@@ -1308,6 +1311,7 @@ class Speaker(object):
                     self.logger.info("Debug: Unsubscribe av event for uid {0} in fct zone_group_members".format(self.uid)) 
                     member.av_subscription.unsubscribe()
                 else:
+                    # Why are the member speakers un- and subscribed again? 
                     self.logger.info("Debug: Un/Subscribe av event for uid {0} in fct zone_group_members".format(self.uid)) 
                     member.av_subscription.unsubscribe()
                     member.av_subscription.subscribe()
@@ -1456,8 +1460,15 @@ class Speaker(object):
         """
         if not self._check_property():
             return False
-        if not sonos_speaker[self.coordinator].soco.pause():
+        try:
+           ret = sonos_speaker[self.coordinator].soco.pause()
+        except Exception as e:
+            self.logger.warning(f"Exception during set_pause: {e}")
             return False
+        else:
+            if not ret:
+                return False
+
         sonos_speaker[self.coordinator].pause = True
         sonos_speaker[self.coordinator].play = False
         sonos_speaker[self.coordinator].stop = False
@@ -2170,9 +2181,10 @@ class Speaker(object):
                     # into e.g: MediaMetadataTrack
                     class_key = result_type_proper + raw_item['itemType'].title()
                     cls = get_class(class_key)
-                    from plugins.sonos.soco.music_services import Account
+                    #from plugins.sonos.soco.music_services.token_store import JsonFileTokenStore
                     items.append(
-                        cls.from_music_service(MusicService(service_name='TuneIn', account=Account()), raw_item))
+                        cls.from_music_service(MusicService(service_name='TuneIn'), raw_item))
+                        #cls.from_music_service(MusicService(service_name='TuneIn', token_store=JsonFileTokenStore()), raw_item))
 
             if not items:
                 exit(0)
@@ -2254,6 +2266,7 @@ class Speaker(object):
             item(p_l, 'Sonos')
 
     def _play_snippet(self, file_path: str, webservice_url: str, volume: int = -1, duration_offset: float = 0, fade_in=False) -> None:
+        self.logger.debug(f"Debug _play_snippet with volume {volume}")
         if not self._check_property():
             return
         if not os.path.isfile(file_path):
@@ -2296,9 +2309,10 @@ class Speaker(object):
                     if 'Stop' in currentActions:
                         self.set_stop()
                     if volume == -1:
+                        self.logger.debug(f"Debug _play_snippet, volume is -1, reset to {self.volume}")
                         volume = self.volume
 
-                    self.set_volume(volume, True)
+                    self.set_volume(volume, group_command=True)
                     self.soco.play_uri(snippet_url, title="snippet")
                     time.sleep(duration)
                     if 'Stop' in currentActions:
@@ -2412,7 +2426,7 @@ class Speaker(object):
 
 class Sonos(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.6.4"
+    PLUGIN_VERSION = "1.6.5"
 
     def __init__(self, sh, *args, **kwargs):
         """
@@ -2431,6 +2445,7 @@ class Sonos(SmartPlugin):
         self._local_webservice_path = self.get_parameter_value("local_webservice_path")
         self._snippet_duration_offset = float(self.get_parameter_value("snippet_duration_offset"))
         self.SoCo_nr_speakers = 0
+        self.zones = {}
 	
         from bin.smarthome import VERSION
         if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
@@ -2803,8 +2818,10 @@ class Sonos(SmartPlugin):
                                                 volume, self._snippet_duration_offset, fade_in)
                 if command == 'play_snippet':
                     if item() == "":
+                        self.logger.error("No item value when executing play_snippet command")
                         return
                     volume = self._resolve_child_command_int(item, 'snippet_volume', -1)
+                    self.logger.debug(f"Debug: play_snippet on uid {uid} with volume {volume}")
                     fade_in = self._resolve_child_command_bool(item, 'snippet_fade_in')
                     sonos_speaker[uid].play_snippet(item(), self._local_webservice_path_snippet, self._webservice_url, volume, self._snippet_duration_offset,
                                                     fade_in)
@@ -2939,6 +2956,8 @@ class Sonos(SmartPlugin):
                 self.logger.error("Exception during soco discover function: %s" % str(e))
                 return
 
+        self.zones = zones
+
         if zones is None: 
             self.logger.debug("Discovery could not be executed.")
             return 
@@ -2958,12 +2977,19 @@ class Sonos(SmartPlugin):
 
             try:
                 uid = zone.uid
+            except requests.ConnectionError as e:
+                self.logger.info(f"Exception requests connection error in zone.uid for speaker {zone.ip_address}: {e}")
+                uid = None
+            except requests.Timeout as e:
+                self.logger.warning(f"Exception requests timeout in zone.uid for speaker {zone.ip_address}: {e}")
+                uid = None
             except Exception as e:
-                self.logger.debug(f"Exception in zone.uid for speaker {zone.ip_address}: {e}")
+                self.logger.warning(f"Exception in zone.uid for speaker {zone.ip_address}: {e}")
+                uid = None
                 continue
 
             if uid is None:
-                self.logger.warning(f"Zone has no valid uid. Cannot handle speaker {zone.ip_address}")
+                self.logger.debug(f"Zone has no valid uid. Cannot handle speaker {zone.ip_address}")
                 continue
 
             uid = uid.lower()
@@ -2985,16 +3011,21 @@ class Sonos(SmartPlugin):
                 self.logger.info("Debug: Speaker found: {zone}, {uid}".format(zone=zone.ip_address, uid=uid))
                 online_speaker_count = online_speaker_count + 1 
                 if uid in sonos_speaker:
-                    if zone is not sonos_speaker[uid].soco:
-                        self.logger.info("Debug: zone is not in speaker list jet. Adding and subscribing zone {0}".format(zone))
-                        sonos_speaker[uid].soco = zone
-                        sonos_speaker[uid].subscribe_base_events()
+                    try:
+                        zone_compare = sonos_speaker[uid].soco
+                    except Exception as e:
+                        self.logger.warning(f"Exception in discover -> sonos_speaker[uid].soco: {e}")
                     else:
-                        self.logger.info("Debug: SoCo instance {0} already initiated, skipping.".format(zone))
-#                        # The following check subscriptions functions triggers an unsubscribe/subscribe. However, this causes
-#                        # a massive memory leak increasing with every check_subscription call. 
-#                        self.logger.info("Debug: checking subscriptions")
-#                        sonos_speaker[uid].check_subscriptions()
+                        if zone is not zone_compare:
+                            self.logger.info("Debug: zone is not in speaker list jet. Adding and subscribing zone {0}".format(zone))
+                            sonos_speaker[uid].soco = zone
+                            sonos_speaker[uid].subscribe_base_events()
+                        else:
+                            self.logger.info("Debug: SoCo instance {0} already initiated, skipping.".format(zone))
+#                            # The following check subscriptions functions triggers an unsubscribe/subscribe. However, this causes
+#                            # a massive memory leak increasing with every check_subscription call. 
+#                            self.logger.info("Debug: checking subscriptions")
+#                            sonos_speaker[uid].check_subscriptions()
 
                 else:
                     self.logger.warning(f"Debug: Initializing new speaker with uid={uid} and ip={zone.ip_address}")
@@ -3005,6 +3036,7 @@ class Sonos(SmartPlugin):
                 sonos_speaker[uid].refresh_static_properties()
 
             else:
+                # Speaker is not online. Disposing...
                 if sonos_speaker[uid].soco is not None:
                     self.logger.info(
                         "Debug: Disposing offline speaker: {zone}, {uid}".format(zone=zone.ip_address, uid=uid))
@@ -3126,9 +3158,34 @@ class WebInterface(SmartPluginWebIf):
 
         :return: contents of the template after beeing rendered
         """
+
+        speakerlist = []
+
+        for zone in self.plugin.zones:
+            #self.logger.debug(f"vars(zone): {vars(zone)}")
+            speaker = dict()
+            try:
+                speaker['name'] = zone.player_name
+            except:
+                speaker['name'] = 'unknown'
+
+            try:
+                speaker['ip'] = zone.ip_address
+            except:
+                speaker['ip'] = 'unknown'
+
+            try:
+                 speaker['uid'] = zone.uid
+            except:
+                speaker['uid'] = 'unknown'
+
+            speakerlist.append(speaker)
+
+        speakerlist_sorted = sorted(speakerlist, key=lambda k: k['name'])
+
         tmpl = self.tplenv.get_template('index.html')
         # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
-        return tmpl.render(p=self.plugin, items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path'])))
+        return tmpl.render(p=self.plugin, items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path'])), speakerlist=speakerlist_sorted)
 
 
     @cherrypy.expose

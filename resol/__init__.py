@@ -26,7 +26,7 @@ from lib.model.smartplugin import *
 
 class Resol(SmartPlugin):
 
-    PLUGIN_VERSION = '1.0.6'    # (must match the version specified in plugin.yaml)
+    PLUGIN_VERSION = '1.0.7'    # (must match the version specified in plugin.yaml)
 
 
     def __init__(self, sh, *args, **kwargs):
@@ -88,9 +88,8 @@ class Resol(SmartPlugin):
                 self.logger.error(f"resol_offset found in item {item} but no bitsize given, specify bitsize in item with resol_bitsize = ")
 
     def update_item(self, item, caller=None, source=None, dest=None):
-        if caller != self.get_shortname():
-          #logger.debug(f"Update item {item.id()} with value {int(item())}")
-          value = str(int(item()))
+        # do nothing if items are changed from outside the plugin
+        pass
 
     def sock(self):
         if not self.alive:
@@ -195,6 +194,7 @@ class Resol(SmartPlugin):
     # Receive 1024 bytes from stream
     def recv(self):
         if not self.sock:
+            self.logger.error("Error during data reception: Socket is not valid")
             return None
         self.sock.settimeout(5)
         try:
@@ -214,6 +214,9 @@ class Resol(SmartPlugin):
     # Read Data until minimum 1 message is received
     def readstream(self):
         data = self.recv()
+        if data is None:
+            # No error logging because error was logged in recv function
+            return None
         if not data:
             self.logger.warning("No data received during readstream()")
             return None
@@ -222,6 +225,10 @@ class Resol(SmartPlugin):
 
         while data.count(chr(0xAA)) < 4:
             data_rcv = self.recv()
+            if data_rcv is None:
+                # No error logging because error was logged in recv function
+                return None
+
             if not data_rcv:
                 self.logger.warning("No data received during readstream() count")
                 return None
@@ -259,7 +266,7 @@ class Resol(SmartPlugin):
 
     # Check header CRC byte:
     def check_header_crc(self, msg):
-        header_crc = hex(ord(msg[8]))
+        #header_crc = hex(ord(msg[8]))
         calc_crc = self.calc_vbus_crc(msg, offset=0, length=8)
         
         if calc_crc == ord(msg[8]):
@@ -274,12 +281,29 @@ class Resol(SmartPlugin):
     # Extract payload from msg
     def get_payload(self, msg):
         payload = ''
-        for i in range(self.get_frame_count(msg)):
-            if (15+(i*6)) <= len(msg): 
-                payload += self.integrate_septett(msg[9+(i*6):15+(i*6)])
-            else:
-                self.logger.error("get_payload: index {0} out of range {1} for i={2}".format((15+(i*6)), len(msg), i))
+        frame_count = self.get_frame_count(msg)
+
+        # Check if enough bytes are in message buffer:
+        if (15+((frame_count-1)*6)) > len(msg):
+            self.logger.warning(f"get_payload - Not enough data in msg buffer. Expected {15+((frame_count-1)*6)}, received {len(msg)}")
+            return ''
+
+        for i in range(frame_count):
+            frame_data = msg[9+(i*6):15+(i*6)]
+            #working test data: frame_data = str(b'\x38\x22\x38\x22\x05\x46', 'utf-8')
+            isFrameCrc = ord(frame_data[5])
+            frame_crc = self.calc_vbus_crc(frame_data, offset=0, length=5)
+
+#           self.logger.debug(f"frame {i}: {hex(ord(frame_data[0]))},{hex(ord(frame_data[1]))},{hex(ord(frame_data[2]))},{hex(ord(frame_data[3]))},{hex(ord(frame_data[4]))},{hex(ord(frame_data[5]))}")
+#           self.logger.debug(f"frame {i}: isFrameCRC= {hex(isFrameCrc)}, calcFrame_crc={hex(frame_crc)}")
+
+            if frame_crc != isFrameCrc:
+                self.logger.warning(f"Wrong frame CRC in frame {i}")
                 return ''
+
+            #Integrate septett byte into all frames:
+            payload += self.integrate_septett(msg[9+(i*6):15+(i*6)])
+
         return payload
 
     def calc_vbus_crc(self, msg, offset, length):
@@ -293,7 +317,7 @@ class Resol(SmartPlugin):
         logger_debug = self.logger.isEnabledFor(logging.DEBUG)
 
         if not self.check_header_crc(msg):
-            self.logger.warning("CRC error")
+            self.logger.warning("Header crc error")
             return
         
         command = self.get_command(msg)

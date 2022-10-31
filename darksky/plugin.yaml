@@ -281,6 +281,7 @@ item_structs:
                 type: num
                 ds_matchstring@instance: currently/precipIntensity
                 database: init
+                database_maxage: 731    # 2 Jahre
 
             precipIntensityError:
                 type: num
@@ -290,6 +291,7 @@ item_structs:
                 type: num
                 ds_matchstring@instance: currently/precipProbability
                 database: init
+                database_maxage: 731    # 2 Jahre
 
             precipType:
                 type: str
@@ -299,71 +301,85 @@ item_structs:
                 type: num
                 ds_matchstring@instance: currently/temperature
                 database: init
+                database_maxage: 731    # 2 Jahre
 
             apparenttemperature:
                 type: num
                 ds_matchstring@instance: currently/apparentTemperature
                 database: init
+                database_maxage: 731    # 2 Jahre
 
             dewpoint:
                 type: num
                 ds_matchstring@instance: currently/dewPoint
                 database: init
+                database_maxage: 731    # 2 Jahre
 
             humidity:
                 type: num
                 ds_matchstring@instance: currently/humidity
                 database: init
+                database_maxage: 731    # 2 Jahre
 
             pressure:
                 type: num
                 ds_matchstring@instance: currently/pressure
                 database: init
+                database_maxage: 731    # 2 Jahre
 
             windSpeed:
                 type: num
                 ds_matchstring@instance: currently/windSpeed
                 database: init
+                database_maxage: 731    # 2 Jahre
 
             windGust:
                 type: num
                 ds_matchstring@instance: currently/windGust
                 database: init
+                database_maxage: 731    # 2 Jahre
 
             windBearing:
                 type: num
                 ds_matchstring@instance: currently/windBearing
                 database: init
+                database_maxage: 731    # 2 Jahre
 
             cloudCover:
                 type: num
                 ds_matchstring@instance: currently/cloudCover
                 database: init
+                database_maxage: 731    # 2 Jahre
 
             uvIndex:
                 type: num
                 ds_matchstring@instance: currently/uvIndex
                 database: init
+                database_maxage: 731    # 2 Jahre
 
             visibility:
                 type: num
                 ds_matchstring@instance: currently/visibility
                 database: init
+                database_maxage: 731    # 2 Jahre
 
             ozone:
                 type: num
                 ds_matchstring@instance: currently/ozone
                 database: init
+                database_maxage: 731    # 2 Jahre
 
             date:
                 type: str
                 ds_matchstring@instance: currently/date
                 database: init
+                database_maxage: 731    # 2 Jahre
 
             day:
                 type: num
                 ds_matchstring@instance: currently/day
                 database: init
+                database_maxage: 731    # 2 Jahre
 
     forecast_hourly:
         name: Hourly forcast of Weather report from darksky.net - Data is written do database

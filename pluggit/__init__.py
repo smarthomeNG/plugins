@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
-# vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
+#
 #########################################################################
-# Copyright 2017 Henning Behrend; Version 2.0
-# Copyright 2020 Ronny
+# Copyright 2017 Henning Behrend
+# Copyright 2020-2022 Ronny Schulz
 #########################################################################
+#
 #  This file is part of SmartHomeNG.
-#  https://github.com/smarthomeNG/smarthome
-#  http://knx-user-forum.de/
 #
 #  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation, either version 3 of the License, or
 #  (at your option) any later version.
+#
 #
 #  SmartHomeNG is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -20,42 +20,47 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with SmartHomeNG. If not, see <http://www.gnu.org/licenses/>.
+#
 #########################################################################
 
-# Änderungen:
-# - BinaryPayloadDecoder: Fehler korrigiert
-# - fanSpeed kann jetzt direkt geändert werden
-# - activatePowerBoost entfernt
-# - fan1rpm und fan2rpm können ausgelesen werden
-# - systemid kann ausgelesen werden
-# - serialnum kann ausgelesen werden
-# - DHCP-Status und IP-Adressen können ausgelesen werden
-# - bypassstate liefert jetzt True und False, anstatt Texte zurück
-# - prmRamIdxUnitMode, anstatt nach == zu prüfen, wird mit & geprüft
-# - prmRamIdxUnitMode liefert jetzt Zahlenwert zurück
-# - diverse Änderungen
+from datetime import datetime
 import time
 import threading
 import logging
 from lib.model.smartplugin import SmartPlugin
 
-# import pydevd
+# pymodbus library from https://github.com/riptideio/pymodbus
 
-# pymodbus library from https://code.google.com/p/pymodbus/
-from pymodbus.client.sync import ModbusTcpClient
+#from pymodbus.client.tcp import ModbusTcpClient
+#from pymodbus.client import ModbusTcpClient
+#from pymodbus.client.sync import ModbusTcpClient
+
+try:
+    # for newer versions of pymodbus
+    from pymodbus.client.tcp import ModbusTcpClient
+except:
+    # for older versions of pymodbus
+    from pymodbus.client.sync import ModbusTcpClient
+
 from pymodbus.constants import Endian
 from pymodbus.payload import BinaryPayloadDecoder
 from pymodbus.payload import BinaryPayloadBuilder
 
-class PluggitException(Exception):
-    pass
-
 class Pluggit(SmartPlugin):
-    ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION="1.2.3"
+    PLUGIN_VERSION="2.0.3"
 
-    _myTempReadDict = {}
-    _myTempWriteDict = {}
+    _itemReadDictionary = {}
+    _itemWriteDictionary = {}
+    
+    DICT_READ_ADDRESS = 0
+    DICT_WRITE_ADDRESS = 1
+    DICT_ADDRESS_QUANTITY = 2
+    DICT_VALUE_TYPE = 3
+    DICT_ALLOWED_CONV_LIST = 4
+    DICT_ROUND_VALUE = 5
+    DICT_MIN_VALUE = 6
+    DICT_MAX_VALUE = 7
+    
     #============================================================================#
     # define variables for most important modbus registers of KWL "Pluggit AP310"
     #
@@ -64,51 +69,186 @@ class Pluggit(SmartPlugin):
     # that means e.g. holding register "40169" is "40168" and so on
     #============================================================================#
 
-    # dictionary for modbus registers
-    _modbusRegisterDic = {
-        'prmSystemID': 2,                       # 40003: system information
-        'prmSystemSerialNum': 4,                # 40005: system serial
-        #'prmSystemName': 8,                     # 40009: system name
-        'prmFWVersion': 24,                     # 40025: firmware version
-        'prmDHCPEN': 26,                        # 40027: DHCP enable
-        'prmCurrentIPAddress': 28,              # 40029: current IP-Adress
-        'prmCurrentIPMask': 32,                 # 40033: current IP-Mask
-        'prmCurrentIPGateway': 36,              # 40037: current IP-Gateway
-        'prmMACAddr': 40,                       # 40041: current MAC-Adress
-        'prmDateTime': 108,                     # 40109: Current Date/Time in Unix time (amount of seconds from 1.1.1970)
-        'prmHALTaho1': 100,                     # 40101: fan1 rpm
-        'prmHALTaho2': 102,                     # 40103: fan2 rpm
-        'prmDateTimeSet': 110,                  # 40111: set current Date/Time in Unix time (amount of seconds from 1.1.1970)
-        'prmRamIdxT1': 132,                     # 40133: T1, °C, Frischluft
-        'prmRamIdxT2': 134,                     # 40135: T2, °C, Zuluft
-        'prmRamIdxT3': 136,                     # 40137: T3, °C, Abluft
-        'prmRamIdxT4': 138,                     # 40139: T4, °C, Fortluft
-        # 'prmRamIdxT5': 140,                   # 40141: T5, °C
-        'prmRamIdxUnitMode': 168,               # 40169: Active Unit mode> 0x0004 Manual Mode; 0x0008 WeekProgram
-        'prmRamIdxBypassActualState': 198,      # 40199: Bypass state: Closed 0x0000; In process 0x0001; Closing 0x0020; Opening 0x0040; Opened 0x00FF -> opened = summer
-        'prmRamIdxBypassManualTimeout': 264,    # 40265: Manual bypass duration in minutes
-        'prmRomIdxSpeedLevel': 324,             # 40325: Speed level of Fans in Manual mode; shows a current speed level [4-0]; used for changing of the fan speed level
-        # 'prmVOC': 430,                        # 40431: VOC sensor value (read from VOC); ppm. If VOC is not installed, then 0.
-        'prmBypassTmin': 444,                   # 40445: Minimum temperature of Bypass openning (°C), if T1 < Tmin then bypass should be closed
-        'prmBypassTmax': 446,                   # 40447: Maximum temperature of Bypass openning (°C), if T1 > Tmax or Tmax is 0 then bypass should be closed
-        'prmNumOfWeekProgram': 466,             # 40467: Number of the Active Week Program (for Week Program mode)
-        'prmFilterRemainingTime': 554,          # 40555: Remaining time of the Filter Lifetime (Days)
-        'prmWorkTime': 624,                     # 40625: Work time of system, in hours
-        'prmStartExploitationDateStamp': 668    # 40669: installation date/time in UNIX format
+    # 1: Bezeichnung des Registers (key)
+    # 2: Lese-Adresse des Registers (0)
+    # 3: Schreib-Adresse des Registers (1)
+    # 4: Anzahl der zu lesenden/schreibenden Register (2)
+    # 5: Typ des Wertes (3)
+    # 6: erlaubte Umwandlungen des Types (4)
+    # 7: Anzahl Kommastellen bei Rundungen oder -1 für keine (5)
+    # 8: minimaler Wert oder -1 für nicht verwendet (6)
+    # 9: maximaler Wert oder -1 für nicht verwendet (7)
+    _modbusRegisterDictionary = {
+        'prmSystemID': [2, -1, 2, 'uint', ['SID_FP1', 'SID_Week', 'SID_Bypass', 'SID_LRSwitch', 'SID_InternalPreheater', 'SID_ServoFlow', 'SID_RHSensor', 'SID_VOCSensor', 'SID_ExtOverride', 'SID_HAC1', 'SID_HRC2', 'SID_PCTool', 'SID_Apps', 'SID_ZeegBee', 'SID_DI1Override', 'SID_DI2Override'], -1, -1, -1],
+        'prmSystemSerialNum': [4, -1, 4, 'uint', [], -1, -1, -1],
+        'prmSystemName': [8, 8, 16, 'str', [], -1, -1, -1],
+        'prmFWVersion': [24, -1, 1, 'version', [], -1, -1, -1],
+        'prmDHCPEN': [26, -1, 1, 'bool', [], -1, 0, 1],
+        'prmCurrentIPAddress': [28, -1, 2, 'ip', [], -1, -1, -1],
+        'prmCurrentIPMask': [32, -1, 2, 'ip', [], -1, -1, -1],
+        'prmCurrentIPGateway': [36, -1, 2, 'ip', [], -1, -1, -1],
+        'prmMACAddr': [40, -1, 4, 'mac', [], -1, -1, -1],
+        'prmHALLeft': [84, -1, 1, 'bool', [], -1, 0, 1],
+        'prmHALRight': [86, -1, 1, 'bool', [], -1, 0, 1],
+        'prmHALTaho1': [100, -1, 2, 'float', [], 0, 0, 5000],
+        'prmHALTaho2': [102, -1, 2, 'float', [], 0, 0, 5000],
+        'prmDateTime': [108, 110, 2, 'timestamp', ['ToDateTime', 'ToDate', 'ToTime'], -1, -1, -1],
+        'prmDateTimeSet': [108, 110, 2, 'timestamp', ['ToDateTime', 'ToDate', 'ToTime'], -1, -1, -1],
+        'prmRamIdxT1': [132, -1, 2, 'float', [], 2, -327.67, 327.67],
+        'prmRamIdxT2': [134, -1, 2, 'float', [], 2, -327.67, 327.67],
+        'prmRamIdxT3': [136, -1, 2, 'float', [], 2, -327.67, 327.67],
+        'prmRamIdxT4': [138, -1, 2, 'float', [], 2, -327.67, 327.67],
+        'prmRamIdxT5': [140, -1, 2, 'float', [], 2, -327.67, 327.67],
+        'prmPreheaterDutyCycle': [160, -1, 1, 'uint', [], -1, 0, 100],
+        'prmRamIdxUnitMode': [168, 168, 1, 'uint', ['UM_DemandMode', 'UM_ManualMode', 'UM_WeekProgramMode', 'UM_AwayMode', 'UM_FireplaceMode', 'UM_SummerMode', 'UM_NightMode', 'UM_ManualBypass'], -1, 0, 65535],
+        'prmRamIdxHac1FirmwareVersion': [192, -1, 2, 'version_bcd', [], -1, -1, -1],
+        'prmRamIdxRh3Corrected': [196, -1, 1, 'uint', [], -1, 0, 100],
+        'prmRamIdxBypassActualState': [198, -1, 1, 'uint', ['ToBool', 'ToBool_inverted', 'ToString'], -1, 0, 255],
+        'prmRamIdxHac1Components': [244, -1, 1, 'uint', ['ToString'], -1, 0, 255],
+        'prmRamIdxBypassManualTimeout': [264, -1, 1, 'uint', [], -1, 60, 480],
+        'prmRomIdxSpeedLevel': [324, 324, 1, 'uint', [], -1, 0, 4],
+        'prmRomIdxNightModeStartHour': [332, 332, 1, 'uint', [], -1, 0, 23],
+        'prmRomIdxNightModeStartMin': [334, 334, 1, 'uint', [], -1, 0, 59],
+        'prmRomIdxNightModeEndHour': [336, 336, 1, 'uint', [], -1, 0, 23],
+        'prmRomIdxNightModeEndMin': [338, 338, 1, 'uint', [], -1, 0, 59],
+        'prmRomIdxRhSetPoint': [340, -1, 1, 'uint', [], -1, 35, 65],
+        'prmRomIdxAfterHeaterT2SetPoint': [344, 344, 1, [], 'uint', -1, 0, 30],
+        'prmRomIdxAfterHeaterT3SetPoint': [346, 346, 1, [], 'uint', -1, 0, 30],
+        'prmRomIdxAfterHeaterT5SetPoint': [348, 348, 1, [], 'uint', -1, 0, 30],
+        'prmVOC': [430, -1, 1, 'uint', [], -1, 0, 65536],
+        'prmBypassTmin': [444, -1, 2, 'float', [], 1, 12.0, 15.0],
+        'prmBypassTmax': [446, -1, 2, 'float', [], 1, 21.0, 27.0],
+        'prmNumOfWeekProgram': [466, 467, 1, 'uint', [], -1, 0, 10],
+        'prmCurrentBLState': [472, -1, 1, 'uint', ['ToString'], -1, -1, -1],
+        'prmSetAlarmNum': [514, 514, 1, 'uint', [], -1, 0, 15],
+        'prmLastActiveAlarm': [516, 516, 1, 'uint', ['ToString'], -1, -1, -1],
+        'prmRefValEx': [518, -1, 1, 'uint', [], -1, 0, 65535],
+        'prmRefValSupl': [520, -1, 1, 'uint', [], -1, 0, 65535],
+        'prmFireplacePreset': [540, -1, 1, 'bool', [], -1, 0, 1],
+        'prmFilterRemainingTime': [554, -1, 1, 'uint', [], -1, 0, 360],
+        'prmFilterDefaultTime': [556, 556, 1, 'uint', [], -1, 0, 360],
+        'prmFilterReset': [558, 558, 1, 'bool', [], -1, 0, 1],
+        'prmPPM1Unit': [562, 562, 2, 'uint', [], -1, 0, 65535],
+        'prmPPM2Unit': [564, 564, 2, 'uint', [], -1, 0, 65535],
+        'prmPPM3Unit': [566, 566, 2, 'uint', [], -1, 0, 65535],
+        'prmPPM1External': [568, 568, 1, 'uint', [], -1, 0, 65535],
+        'prmPPM2External': [570, 570, 1, 'uint', [], -1, 0, 65535],
+        'prmPPM3External': [572, 572, 1, 'uint', [], -1, 0, 65535],
+        'prmHACCO2Val': [574, -1, 1, 'uint', [], -1, 0, 65535],
+        'prmSystemIDComponents': [611, -1, 2, 'uint', [], -1, -1, -1],
+        'prmWorkTime': [624, -1, 2, 'uint', [], -1, -1, -1],
+        'PrmWeekMon': [626, 626, 6, 'weekprogram', [], -1, -1, -1],
+        'PrmWeekTue': [632, 632, 6, 'weekprogram', [], -1, -1, -1],
+        'PrmWeekWed': [638, 638, 6, 'weekprogram', [], -1, -1, -1],
+        'PrmWeekThu': [644, 644, 6, 'weekprogram', [], -1, -1, -1],
+        'PrmWeekFri': [650, 650, 6, 'weekprogram', [], -1, -1, -1],
+        'PrmWeekSat': [656, 656, 6, 'weekprogram', [], -1, -1, -1],
+        'PrmWeekSun': [662, 662, 6, 'weekprogram', [], -1, -1, -1],
+        'prmStartExploitationDateStamp': [668, -1, 2, 'timestamp', ['ToDateTime', 'ToDate'], -1, -1, -1]
+    }
+
+    SID_DICT_VALUE_ENABLE = 0
+    SID_DICT_TEXT = 1
+
+    _SystemIDDict = {
+        'SID_FP1': [0x0001, 'FP1'],
+        'SID_Week': [0x0002, 'Week'],
+        'SID_Bypass': [0x0004, 'Bypass'],
+        'SID_LRSwitch': [0x0008, 'LRSwitch'],
+        'SID_InternalPreheater': [0x0010, 'Internal preheater'],
+        'SID_ServoFlow': [0x0020, 'Servo flow'],
+        'SID_RHSensor': [0x0040, 'RH sensor'],
+        'SID_VOCSensor': [0x0080, 'VOC sensor'],
+        'SID_ExtOverride': [0x0100, 'Ext Override'],
+        'SID_HAC1': [0x0200, 'HAC1'],
+        'SID_HRC2': [0x0400, 'HRC2'],
+        'SID_PCTool': [0x0800, 'PC Tool'],
+        'SID_Apps': [0x1000, 'Apps'],
+        'SID_ZeegBee': [0x2000, 'ZeegBee'],
+        'SID_DI1Override': [0x4000, 'DI1 Override'],
+        'SID_DI2Override': [0x8000, 'DI2 Override']
+    }
+
+    _CurrentBLStateDic = {
+        0: 'Standby',
+        1: 'Manual',
+        2: 'Demand',
+        3: 'Week program',
+        4: 'Servo-flow',
+        5: 'Away',
+        6: 'Summer',
+        7: 'DI Override',
+        8: 'Hygrostat override',
+        9: 'Fireplace',
+        10: 'Installer',
+        11: 'Fail Safe 1',
+        12: 'Fail Safe 2',
+        13: 'Fail Off',
+        14: 'Defrost Off',
+        15: 'Defrost',
+        16: 'Night'
+    }
+
+    UM_DICT_VALUE_ENABLE = 0
+    UM_DICT_VALUE_DISABLE = 1
+    UM_DICT_TEXT = 2
+
+    _RamIdxUnitModeDic = {
+        'UM_DemandMode': [0x0002, -1, 'Demand Mode'],
+        'UM_ManualMode': [0x0004, -1, 'Manual Mode'],
+        'UM_WeekProgramMode': [0x0008, -1, 'Week Program Mode',],
+        'UM_AwayMode': [0x0010, 0x8010, 'Away Mode',],
+        'UM_NightMode': [0x0020, 0x8020, 'Night Mode'],
+        'UM_FireplaceMode': [0x0040, 0x8040, 'Fireplace Mode',],
+        'UM_ManualBypass': [0x0080, 0x8080, 'Manual Bypass'],
+        'UM_SummerMode': [0x0800, 0x8800, 'Summer Mode']
+    }
+
+    _AlarmDic = {
+        0: 'No Alarm',
+        1: 'Exhaust FAN Alarm',
+        2: 'Supply FAN Alarm',
+        3: 'Bypass Alarm',
+        4: 'T1 Alarm',
+        5: 'T2 Alarm',
+        6: 'T3 Alarm',
+        7: 'T4 Alarm',
+        8: 'T5 Alarm',
+        9: 'RH Alarm',
+        10: 'Outdoor13 Alarm',
+        11: 'Supply5 Alarm',
+        12: 'Fire Alarm',
+        13: 'Communication Alarm',
+        14: 'FireTermostat Alarm',
+        15: 'High waterlevel Alarm'
+    }
+
+    _RamIdxBypassActualStateDic = {
+        0: 'Closed',
+        1: 'In process',
+        32: 'Closing',
+        64: 'Opening',
+        255: 'Opened'
+    }
+    
+    _RamIdxHac1ComponentsDic = {
+        0x0001: 'CO2 Sensor',
+        0x0004: 'PreHeater',
+        0x0008: 'PreCooler',
+        0x0010: 'AfterHeater',
+        0x0020: 'AfterCooler',
+        0x0040: 'Hygrostat'
     }
 
     # Initialize connection
-    def __init__(self, smarthome, host, port=502, cycle=50):
+    def __init__(self, sh, *args, **kwargs):
         self.logger = logging.getLogger(__name__)
-        self._host = host
-        self._port = int(port)
-        self._sh = smarthome
-        self._cycle = int(cycle)
+        self._host = self.get_parameter_value('host')
+        self._port = int(self.get_parameter_value('port'))
+        self._cycle = int(self.get_parameter_value('cycle'))
         self._lock = threading.Lock()
         self._is_connected = False
-        self._items = {}
         self.connect()
-        # pydevd.settrace("10.20.0.125")
 
     def connect(self):
         start_time = time.time()
@@ -140,365 +280,265 @@ class Pluggit(SmartPlugin):
         self.logger.debug("Pluggit: disconnect took {0} seconds".format(end_time - start_time))
 
     def run(self):
+        self.scheduler_add(__name__, self._refresh, cycle=self._cycle)
         self.alive = True
-        self._sh.scheduler.add('Pluggit', self._refresh, cycle=self._cycle)
 
     def stop(self):
+        self.scheduler_remove(__name__)
         self.alive = False
 
-    # parse items in pluggit.conf
     def parse_item(self, item):
-        # check for smarthome.py attribute 'pluggit_listen' in pluggit.conf
-        if self.has_iattr(item.conf, 'pluggit_listen'):
+        # check for smarthome.py attribute 'pluggit_read' in pluggit.conf
+        if self.has_iattr(item.conf, 'pluggit_read'):
             self.logger.debug("Pluggit: parse read item: {0}".format(item))
-            pluggit_key = self.get_iattr_value(item.conf, 'pluggit_listen')
-            if pluggit_key in self._modbusRegisterDic:
-                self._myTempReadDict[pluggit_key] = item
-                self.logger.debug("Pluggit: Inhalt des dicts _myTempReadDict nach Zuweisung zu item: '{0}'".format(self._myTempReadDict))
+            pluggit_key = self.get_iattr_value(item.conf, 'pluggit_read')
+            if pluggit_key in self._modbusRegisterDictionary:
+                self._itemReadDictionary[item] = pluggit_key
+                self.logger.debug("Pluggit: Inhalt des dicts _itemReadDictionary nach Zuweisung zu item: '{0}'".format(self._itemReadDictionary))
             else:
-                self.logger.warn("Pluggit: invalid key {0} configured".format(pluggit_key))
-        # check for smarthome.py attribute 'pluggit_send' in pluggit.conf
-        if self.has_iattr(item.conf, 'pluggit_send'):
-            self.logger.debug("Pluggit: parse send item: {0}".format(item))
-            pluggit_sendKey = self.get_iattr_value(item.conf, 'pluggit_send')
-            if pluggit_sendKey is None:
-                return None
-            else:
-                self._myTempWriteDict[pluggit_sendKey] = item
-                self.logger.debug("Pluggit: Inhalt des dicts _myTempWriteDict nach Zuweisung zu send item: '{0}'".format(self._myTempWriteDict))
+                self.logger.warning("Pluggit: invalid key {0} configured".format(pluggit_key))
+        # check for smarthome.py attribute 'pluggit_write' in pluggit.conf
+        if self.has_iattr(item.conf, 'pluggit_write'):
+            self.logger.debug("Pluggit: parse write item: {0}".format(item))
+            pluggit_sendKey = self.get_iattr_value(item.conf, 'pluggit_write')
+            if pluggit_sendKey in self._modbusRegisterDictionary:
+                self._itemWriteDictionary[item] = pluggit_sendKey
+                self.logger.debug("Pluggit: Inhalt des dicts _itemWriteDictionary nach Zuweisung zu write item: '{0}'".format(self._itemWriteDictionary))
                 return self.update_item
+            else:
+                self.logger.warning("Pluggit: invalid key {0} configured".format(pluggit_key))
         else:
             return None
 
-    def parse_logic(self, logic):
-        pass
-
     def update_item(self, item, caller=None, source=None, dest=None):
         if caller != 'Pluggit':
-            if self.has_iattr(item.conf, 'pluggit_send'):
-                command = self.get_iattr_value(item.conf, 'pluggit_send')
-                value = item()
-                self.logger.info("Pluggit: {0} set {1} to {2} for {3}".format(caller, command, value, item.id()))
-                if (command == 'prmDateTimeSet') and (isinstance(value, int)):
-                    self._setDateTime(value)
-                if (command == 'prmRamIdxUnitMode') and (isinstance(value, int)):
-                    self._setUnitMode(value)
-                if (command == 'prmRomIdxSpeedLevel') and (isinstance(value, int)):
-                    self._setFanSpeedLevel(value)
-            pass
+            pluggit_sendkey = self._itemWriteDictionary[item]
+            pluggit_paramList = self._modbusRegisterDictionary[pluggit_sendkey]
+            value = item()
+            writeItemValue = None
 
-    # TODO: 32bit
-    def _setDateTime(self, date_time):
-      
-        self.logger.debug("Pluggit: Start => set DateTime: {0}".format(date_time))
-        self._Pluggit.write_registers(self._modbusRegisterDic['prmDateTimeSet'], date_time)
-        self.logger.debug("Pluggit: Finished => set DateTime: {0}".format(date_time))
+            if value is not None:
+                if pluggit_paramList[self.DICT_WRITE_ADDRESS] != -1:
+                    # check for conditions
+                    # unit mode = manual?
+                    if pluggit_sendkey == 'prmRomIdxSpeedLevel':
+                        self.SetUnitMode('UM_ManualMode', True)
+                    # check for conversion
+                    if self.has_iattr(item.conf, 'pluggit_convert'):
+                        # with conversion
+                        convType = self.get_iattr_value(item.conf, 'pluggit_convert')
+                        if convType in pluggit_paramList[self.DICT_ALLOWED_CONV_LIST]:
+                            value = self.ConvertValueFromItem(value, convType, pluggit_sendkey)
+                        else:
+                            self.logger.warning('Umwandlung von {} zu {} bei Item {} nicht zulässig.'.format(pluggit_paramList[self.DICT_VALUE_TYPE], convType, item))
+                    if value is not None:
+                        if pluggit_paramList[self.DICT_VALUE_TYPE] == 'uint' or pluggit_paramList[self.DICT_VALUE_TYPE] == 'bool' or pluggit_paramList[self.DICT_VALUE_TYPE] == 'timestamp':
+                            writeItemValue = value & 0xFFFF, value >> 16 & 0xFFFF
+                        if pluggit_paramList[self.DICT_VALUE_TYPE] == 'str':
+                            writeItemValue = self.StringToBinWord(value, pluggit_paramList[self.DICT_ADDRESS_QUANTITY])
+                        if writeItemValue is not None:
+                            # write values to pluggit via modbus client registers
+                            self.logger.debug('VALUE: {}'.format(writeItemValue))
+                            self._Pluggit.write_registers(pluggit_paramList[self.DICT_WRITE_ADDRESS], writeItemValue)
+                else:
+                    self.logger.warning("Parameter {} bei Item {} kann nur gelesen werden.".format(pluggit_sendkey, item))
 
-    def _setUnitMode(self, unit_mode_value):
-      
-        self.logger.debug("Pluggit: Start => Write to unit moden: {0}".format(unit_mode_value))
-        self._Pluggit.write_registers(self._modbusRegisterDic['prmRamIdxUnitMode'], unit_mode_value)
-        self.logger.debug("Pluggit: Finished => Write to unit mode: {0}".format(unit_mode_value))
+    def BinWordToString(self, binWord):
+        result = ''
+        for word in binWord:
+            char = word & 0xFF
+            if char == 0:
+                break
+            result += chr(char)
+            char = word >> 8
+            if char == 0:
+                break
+            result += chr(char)
+        return result
 
-    def _setFanSpeedLevel(self, fan_speed_level):
+    def StringToBinWord(self, bwString, wordCount):
+        result = []
+        vlen = len(bwString)
+        for i in range (0, wordCount):
+            binval1 = 0
+            binval2 = 0
+            if vlen > i*2:
+                binval1 = ord(bwString[i*2])
+            if vlen > i*2+1:
+                binval2 = ord(bwString[i*2+1])
+            result.append(binval1 | binval2 << 8)
+        return result
 
-        active_unit_mode_value = 4, 0
-        fan_speed_level_value = fan_speed_level, 0
+    def SetUnitMode(self, modekey, enable):
+        if 'prmRamIdxUnitMode' in self._modbusRegisterDictionary:
+            if modekey in self._RamIdxUnitModeDic:
+                unitmode = self._RamIdxUnitModeDic[modekey]
+                if bool(enable):
+                    unitstate = unitmode[self.UM_DICT_VALUE_ENABLE]
+                else:
+                    unitstate = unitmode[self.UM_DICT_VALUE_DISABLE]
+                if unitstate != -1:
+                    pluggit_paramList = self._modbusRegisterDictionary['prmRamIdxUnitMode']
+                    registerValue = self._Pluggit.read_holding_registers(pluggit_paramList[self.DICT_READ_ADDRESS], pluggit_paramList[self.DICT_ADDRESS_QUANTITY])
+                    vdecoder = BinaryPayloadDecoder.fromRegisters(registerValue.registers, byteorder=Endian.Big, wordorder=Endian.Little)
+                    readItemValue = vdecoder.decode_16bit_uint()
+                    #if readItemValue & unitstate != unitstate:
+                        # workaround for manual bypass timeout
+                    self.logger.info('SetUnitMode(): Mode \"{}\".'.format(modekey))
+                        #if modekey == 'UM_ManualBypass' & bool(enable):
+                            #self._Pluggit.write_registers(pluggit_paramList[self.DICT_WRITE_ADDRESS], unitmode[self.UM_DICT_VALUE_DISABLE])
+                            #time.sleep(0.5)
+                        # write value to registers
+                    self._Pluggit.write_registers(pluggit_paramList[self.DICT_WRITE_ADDRESS], unitstate)
+                    time.sleep(0.5)
+            else:
+                self.logger.warning('SetUnitMode(): Illegal mode \"{}\".'.format(modekey))
+        else:
+            self.logger.warning('SetUnitMode(): Parameter \"prmRamIdxUnitMode\" for UnitMode not found in dictionary.')
 
-        # Change Unit Mode to manual
-        self.logger.debug("Pluggit: Start => Change Unit mode to manual: {0}".format(active_unit_mode_value))
-        self._Pluggit.write_registers(self._modbusRegisterDic['prmRamIdxUnitMode'], active_unit_mode_value)
-        self.logger.debug("Pluggit: Finished => Change Unit mode to manual: {0}".format(active_unit_mode_value))
+    def ConvertValueFromItem(self, value, conversionType, pluggitKey):
+        conversionValue = None
 
-        # wait 500ms before changing fan speed
-        self.logger.debug("Pluggit: Wait 500ms before changing fan speed")
-        time.sleep(0.5)
+        pluggit_paramList = self._modbusRegisterDictionary[pluggitKey]
 
-        # Change Fan Speed
-        self.logger.debug("Pluggit: Start => Change Fan Speed to Level {0}".format(fan_speed_level))
-        self._Pluggit.write_registers(self._modbusRegisterDic['prmRomIdxSpeedLevel'], fan_speed_level_value)
-        self.logger.debug("Pluggit: Finished => Change Fan Speed to Level {0}".format(fan_speed_level))
+        if pluggit_paramList[self.DICT_VALUE_TYPE] == 'uint':
+            if conversionType == 'ToBool':
+                conversionValue = int(value)
+            if conversionType == 'ToBool_inverted':
+                conversionValue = int(not value)
 
-        # self._refresh()
-        # check new active unit mode
-        active_unit_mode = self._Pluggit.read_holding_registers(self._modbusRegisterDic['prmRamIdxUnitMode'], read_qty = 1).getRegister(0)
+            if pluggit_paramList [self.DICT_VALUE_TYPE] == 'timestamp':
+                if conversionType == 'ToDateTime':
+                    conversionValue = datetime(value).strftime("%s")
+                # TODO: ToDate
+                # TODO: ToTime
 
-        if active_unit_mode & 8 == 8:
-            self.logger.debug("Pluggit: Active Unit Mode: Week program")
-        elif active_unit_mode & 4 == 4:
-            self.logger.debug("Pluggit: Active Unit Mode: Manual")
+        # pluggit_key = prmRamIdxUnitMode
+        if conversionType in self._RamIdxUnitModeDic:
+            if bool(value):
+                conversionValue = self._RamIdxUnitModeDic[conversionType][self.UM_DICT_VALUE_ENABLE]
+            else:
+                conversionValue = self._RamIdxUnitModeDic[conversionType][self.UM_DICT_VALUE_DISABLE]
 
-        # check new fan speed
-        fan_speed_level = self._Pluggit.read_holding_registers(self._modbusRegisterDic['prmRomIdxSpeedLevel'], read_qty = 1).getRegister(0)
-        self.logger.debug("Pluggit: Fan Speed: {0}".format(fan_speed_level))
+        self.logger.debug("conVersion: {}".format(conversionValue))
+        return conversionValue
 
-    def _activateWeekProgram(self):
+    def ConvertValueToItem(self, value, conversionType, pluggitKey):
+        conversionValue = None
 
-        active_unit_mode_value = 8, 0
+        if conversionType == 'ToBool':
+            conversionValue = bool(value)
 
-        # Change Unit Mode to "Week Program"
-        self.logger.debug("Pluggit: Start => Change Unit mode to 'Week Program': {0}".format(active_unit_mode_value))
-        self._Pluggit.write_registers(self._modbusRegisterDic['prmRamIdxUnitMode'], active_unit_mode_value)
-        self.logger.debug("Pluggit: Finished => Change Unit mode to 'Week Program': {0}".format(active_unit_mode_value))
+        if conversionType == 'ToBool_inverted':
+            conversionValue = not bool(value)
 
-        # self._refresh()
+        if conversionType == 'ToDateTime':
+            conversionValue = datetime.utcfromtimestamp(value)
 
-        # check new active unit mode
-        active_unit_mode = self._Pluggit.read_holding_registers(self._modbusRegisterDic['prmRamIdxUnitMode'], read_qty = 1).getRegister(0)
+        if conversionType == 'ToDate':
+            conversionValue = datetime.utcfromtimestamp(value).date()
 
-        if active_unit_mode & 8 == 8:
-            self.logger.debug("Pluggit: Active Unit Mode: Week program")
-        elif active_unit_mode & 4 == 4:
-            self.logger.debug("Pluggit: Active Unit Mode: Manual")
+        if conversionType == 'ToTime':
+            conversionValue = datetime.utcfromtimestamp(value).time()
 
-        # wait 100ms before checking fan speed
-        time.sleep(0.1)
+        if conversionType == 'ToString':
+            if pluggitKey == 'prmCurrentBLState':
+                conversionValue = self._CurrentBLStateDic[value]
+            if pluggitKey == 'prmLastActiveAlarm':
+                conversionValue = self._AlarmDic[value]
+            if pluggitKey == 'prmRamIdxBypassActualState':
+                conversionValue = self._RamIdxBypassActualStateDic[value]
 
-        # check new fan speed
-        fan_speed_level = self._Pluggit.read_holding_registers(self._modbusRegisterDic['prmRomIdxSpeedLevel'], read_qty = 1).getRegister(0)
-        self.logger.debug("Pluggit: Fan Speed: {0}".format(fan_speed_level))
+        # pluggit_key = prmSystemID
+        if conversionType in self._SystemIDDict:
+            conversionValue = bool(value & self._SystemIDDict[conversionType][self.SID_DICT_VALUE_ENABLE])
+
+        # pluggit_key = prmRamIdxUnitMode
+        if conversionType in self._RamIdxUnitModeDic:
+            conversionValue = bool(value & self._RamIdxUnitModeDic[conversionType][self.UM_DICT_VALUE_ENABLE])
+
+        return conversionValue
 
     def _refresh(self):
-        start_time = time.time()
-        try:
-            myCounter = 1
-            for pluggit_key in self._myTempReadDict:
-                self.logger.debug("Pluggit: ---------------------------------> Wir sind in der Refresh Schleife")
-                values = self._modbusRegisterDic[pluggit_key]
-                self.logger.debug("Pluggit: Refresh Schleife: Inhalt von values ist {0}".format(values))
-                # 2015-01-07 23:53:08,296 DEBUG    Pluggit      Pluggit: Refresh Schleife: Inhalt von values ist 168 -- __init__.py:_refresh:158
-                item = self._myTempReadDict[pluggit_key]
-                self.logger.debug("Pluggit: Refresh Schleife: Inhalt von item ist {0}".format(item))
-                # 2015-01-07 23:53:08,316 DEBUG    Pluggit      Pluggit: Refresh Schleife: Inhalt von item ist pluggit.unitMode -- __init__.py:_refresh:160
+        readCacheDictionary = {}
+        
+        for item in self._itemReadDictionary:
+            pluggit_key = self._itemReadDictionary[item]
+            pluggit_paramList = self._modbusRegisterDictionary[pluggit_key]
+            
+            # read values from pluggit via modbus client registers, if not in cache
+            if pluggit_paramList[self.DICT_READ_ADDRESS] != -1:
+                if pluggit_key in readCacheDictionary:
+                    registerValue = readCacheDictionary[pluggit_key] 
+                else:
+                    registerValue = self._Pluggit.read_holding_registers(pluggit_paramList[self.DICT_READ_ADDRESS], pluggit_paramList[self.DICT_ADDRESS_QUANTITY])
+                    # TODO: auswerten, wenn Reigister nicht auslesbar
+                    readCacheDictionary[pluggit_key] = registerValue
+                vdecoder = BinaryPayloadDecoder.fromRegisters(registerValue.registers, byteorder=Endian.Big, wordorder=Endian.Little)
 
-                #=======================================================#
-                # read values from pluggit via modbus client registers
-                #=======================================================#
+                readItemValue = None
+                    
+                if pluggit_paramList[self.DICT_VALUE_TYPE] == 'uint':
+                    if pluggit_paramList[self.DICT_ADDRESS_QUANTITY] == 1 or pluggit_paramList[self.DICT_ADDRESS_QUANTITY] == 2:
+                        readItemValue = vdecoder.decode_16bit_uint()
+                    if pluggit_paramList[self.DICT_ADDRESS_QUANTITY] == 4:
+                        readItemValue = vdecoder.decode_64bit_uint()
 
-                self.logger.debug("Pluggit: ------------------------------------------> Wir sind vor dem Auslesen der Werte")
-                registerValue = None
-                registerValue = self._Pluggit.read_holding_registers(values, read_qty = 1).getRegister(0)
-                self.logger.debug("Pluggit: Read parameter '{0}' with register '{1}': Value is '{2}'".format(pluggit_key, values, registerValue))
+                if pluggit_paramList[self.DICT_VALUE_TYPE] == 'float':
+                    if pluggit_paramList[self.DICT_ADDRESS_QUANTITY] == 2:
+                        readItemValue = vdecoder.decode_32bit_float()
+                        if pluggit_paramList[self.DICT_ROUND_VALUE] != -1:
+                            readItemValue = round(readItemValue, pluggit_paramList[self.DICT_ROUND_VALUE])
 
-                # system id
-                if values == self._modbusRegisterDic['prmSystemID']:
-                    sid = self._Pluggit.read_holding_registers(values, 2)
-                    decodersid = BinaryPayloadDecoder.fromRegisters(sid.registers, byteorder=Endian.Big, wordorder=Endian.Little)
-                    sid = decodersid.decode_32bit_int()
-                    item(sid, 'Pluggit')
-                    self.logger.debug("Pluggit: System ID: {0}".format(sid))
+                if pluggit_paramList[self.DICT_VALUE_TYPE] == 'bool':
+                    if pluggit_paramList[self.DICT_ADDRESS_QUANTITY] == 1:
+                        readItemValue = bool(vdecoder.decode_16bit_uint())
 
-                # system serial num
-                if values == self._modbusRegisterDic['prmSystemSerialNum']:
-                    serialvalues = self._Pluggit.read_holding_registers(values, 4)
-                    decodersv = BinaryPayloadDecoder.fromRegisters(serialvalues.registers, byteorder=Endian.Big, wordorder=Endian.Little)
-                    serialnum = decodersv.decode_64bit_uint()
-                    self.logger.debug("Pluggit: System serial number: {0}".format(serialnum))
-                    item(serialnum, 'Pluggit')
+                if pluggit_paramList[self.DICT_VALUE_TYPE] == 'timestamp':
+                    if pluggit_paramList[self.DICT_ADDRESS_QUANTITY] == 2:
+                        readItemValue = vdecoder.decode_32bit_uint()
 
-                # Firmware version
-                if values == self._modbusRegisterDic['prmFWVersion']:
-                    fw = '{}.{}'.format(registerValue >> 8, registerValue & 255)
-                    self.logger.debug("Pluggit: Firmware version: {0}".format(fw))
-                    item(fw, 'Pluggit')
+                if pluggit_paramList[self.DICT_VALUE_TYPE] == 'str':
+                    readItemValue = self.BinWordToString(registerValue.registers)
 
-                # DHCP enabled
-                if values == self._modbusRegisterDic['prmDHCPEN']:
-                    if registerValue == 1:
-                        self.logger.debug("Pluggit: DHCP enabled")
-                        item(True, 'Pluggit')
+                if pluggit_paramList[self.DICT_VALUE_TYPE] == 'ip':
+                    readItemValue = '{}.{}.{}.{}'.format(registerValue.registers[1] >> 8, registerValue.registers[1] & 0xFF, registerValue.registers[0] >> 8, registerValue.registers[0] & 0xFF)
+
+                if pluggit_paramList[self.DICT_VALUE_TYPE] == 'mac':
+                    readItemValue = '{:02x}:{:02x}:{:02x}:{:02x}:{:02x}:{:02x}'.format(registerValue.registers[0] >> 8, registerValue.registers[0] & 0xFF, registerValue.registers[3] >> 8, registerValue.registers[3] & 0xFF, registerValue.registers[2] >> 8, registerValue.registers[2] & 0xFF)
+
+                if pluggit_paramList[self.DICT_VALUE_TYPE] == 'version':
+                    vresult = vdecoder.decode_16bit_uint()
+                    readItemValue = '{}.{}'.format(vresult >> 8 & 0xFF, vresult & 0xFF)
+
+                if pluggit_paramList[self.DICT_VALUE_TYPE] == 'version_bcd':
+                    vresult = vdecoder.decode_16bit_uint()
+                    readItemValue = '{}.{}{}'.format(vresult >> 12 & 0x0F, vresult >> 8 & 0x0F, vresult >> 4 & 0x0F, vresult & 0x0F)
+
+                if pluggit_paramList[self.DICT_VALUE_TYPE] == 'weekprogram':
+                    # 6 Register, 1 h = 4 Bit, 2 h = 8 bit, 4 h = 16 bit = 1 Register
+                    #readItemValue = registerValue.registers
+                    #readItemValue = str(registerValue.registers[0] & 0x0F)
+                    #self.logger.info('{}'.format(readItemValue))
+                    pass
+
+                # check for conversion
+                convItemValue = None
+                if readItemValue is not None:
+                    if self.has_iattr(item.conf, 'pluggit_convert'):
+                        convType = self.get_iattr_value(item.conf, 'pluggit_convert')
+                        if convType in pluggit_paramList[self.DICT_ALLOWED_CONV_LIST]:
+                            convItemValue = self.ConvertValueToItem(readItemValue, convType, pluggit_key)
+                            if convItemValue is not None:
+                                item(convItemValue, 'Pluggit')
+                            else:
+                                self.logger.warning("Fehler bei der Umwandlung von Item {}.".format(item))
+                        else:
+                            self.logger.warn("Umwandlung von {} zu {} bei Item {} nicht zulässig.".format(pluggit_paramList[self.DICT_VALUE_TYPE], convType, item))
                     else:
-                        self.logger.debug("Pluggit: DHCP disabled")
-                        item(False, 'Pluggit')
+                        if readItemValue is not None:
+                            item(readItemValue, 'Pluggit')
+                        else:
+                            self.logger.warning("Unbekannter Wert-Typ: {} bei Item {}.".format(pluggit_paramList[self.DICT_VALUE_TYPE]), item)
 
-                # current IP adress
-                if values == self._modbusRegisterDic['prmCurrentIPAddress']:
-                    ipvalues = self._Pluggit.read_holding_registers(values, 2)
-                    ipadress = '{}.{}.{}.{}'.format(ipvalues.registers[1] >> 8, ipvalues.registers[1] & 255, ipvalues.registers[0] >> 8, ipvalues.registers[0] & 255)
-                    self.logger.debug("Pluggit: current IP adress: {0}".format(ipadress))
-                    item(ipadress, 'Pluggit')
-
-                # current IP mask
-                if values == self._modbusRegisterDic['prmCurrentIPMask']:
-                    ipvalues = self._Pluggit.read_holding_registers(values, 2)
-                    ipmask = '{}.{}.{}.{}'.format(ipvalues.registers[1] >> 8, ipvalues.registers[1] & 255, ipvalues.registers[0] >> 8, ipvalues.registers[0] & 255)
-                    self.logger.debug("Pluggit: current IP mask: {0}".format(ipmask))
-                    item(ipmask, 'Pluggit')
-
-                # current IP gateway
-                if values == self._modbusRegisterDic['prmCurrentIPGateway']:
-                    ipvalues = self._Pluggit.read_holding_registers(values, 2)
-                    ipgateway = '{}.{}.{}.{}'.format(ipvalues.registers[1] >> 8, ipvalues.registers[1] & 255, ipvalues.registers[0] >> 8, ipvalues.registers[0] & 255)
-                    self.logger.debug("Pluggit: current IP adress: {0}".format(ipgateway))
-                    item(ipgateway, 'Pluggit')
-
-                # MAC adress
-                if values == self._modbusRegisterDic['prmMACAddr']:
-                    macvalues = self._Pluggit.read_holding_registers(values, 4)
-                    macadress = '{:02x}:{:02x}:{:02x}:{:02x}:{:02x}:{:02x}'.format(macvalues.registers[0] >> 8, macvalues.registers[0] & 255, macvalues.registers[3] >> 8, macvalues.registers[3] & 255, macvalues.registers[2] >> 8, macvalues.registers[2] & 255)
-                    self.logger.debug("Pluggit: MAC adress: {0}".format(macadress))
-                    item(macadress, 'Pluggit')
-
-                # date time in UNIX format
-                if values == self._modbusRegisterDic['prmDateTime']:
-                    dt1 = self._Pluggit.read_holding_registers(values, 2)
-                    decoderdt1 = BinaryPayloadDecoder.fromRegisters(dt1.registers, byteorder=Endian.Big, wordorder=Endian.Little)
-                    dt1 = decoderdt1.decode_32bit_int()
-                    self.logger.debug("Pluggit: DateTime: {0}".format(dt1))
-                    item(dt1, 'Pluggit')
-
-                # week program: possible values 0-10
-                if values == self._modbusRegisterDic['prmNumOfWeekProgram']:
-                    registerValue += 1
-                    item(registerValue, 'Pluggit')
-                    # 2015-01-07 23:53:08,435 DEBUG    Pluggit      Item pluggit.unitMode = 8 via Pluggit None None -- item.py:__update:363
-                    self.logger.debug("Pluggit: Week Program Number: {0}".format(registerValue))
-                    # 2015-01-07 23:53:08,422 DEBUG    Pluggit      Pluggit: Active Unit Mode: Week program -- __init__.py:_refresh:177
-
-                # active unit mode
-                if values == self._modbusRegisterDic['prmRamIdxUnitMode'] and registerValue & 8 == 8:
-                    self.logger.debug("Pluggit: Active Unit Mode: Week program")
-                    #item('Woche', 'Pluggit')
-                if values == self._modbusRegisterDic['prmRamIdxUnitMode'] and registerValue & 4 == 4:
-                    self.logger.debug("Pluggit: Active Unit Mode: Manual")
-                    #item('Manuell', 'Pluggit')
-                if values == self._modbusRegisterDic['prmRamIdxUnitMode']:
-                    item(registerValue, 'Pluggit')
-
-                # fan speed
-                if values == self._modbusRegisterDic['prmRomIdxSpeedLevel']:
-                    self.logger.debug("Pluggit: Fan Speed: {0}".format(registerValue))
-                    item(registerValue, 'Pluggit')
-
-                # remaining filter lifetime
-                if values == self._modbusRegisterDic['prmFilterRemainingTime']:
-                    self.logger.debug("Pluggit: Remaining filter lifetime: {0}".format(registerValue))
-                    item(registerValue, 'Pluggit')
-
-                # bypass state
-                if values == self._modbusRegisterDic['prmRamIdxBypassActualState'] and registerValue == 255:
-                    self.logger.debug("Pluggit: Bypass state: opened")
-                    #item('geöffnet', 'Pluggit')
-                    item(True, 'Pluggit')
-                if values == self._modbusRegisterDic['prmRamIdxBypassActualState'] and registerValue == 0:
-                    self.logger.debug("Pluggit: Bypass state: closed")
-                    #item('geschlossen', 'Pluggit')
-                    item(False, 'Pluggit')
-
-                # Manual bypass duration in minutes
-                if values == self._modbusRegisterDic['prmRamIdxBypassManualTimeout']:
-                    self.logger.debug("Pluggit: Manual bypass duration in minutes: {0}".format(registerValue))
-                    item(registerValue, 'Pluggit')
-
-                # fan speed rpm
-                # fan 1
-                if values == self._modbusRegisterDic['prmHALTaho1']:
-                    f1 = self._Pluggit.read_holding_registers(values, 2, unit=22)
-                    decoderf1 = BinaryPayloadDecoder.fromRegisters(f1.registers, byteorder=Endian.Big, wordorder=Endian.Little)
-                    f1 = decoderf1.decode_32bit_float()
-                    f1 = round(f1, 0)
-                    self.logger.debug("Pluggit: Drehzahl Lüfter 1: {0}".format(f1))
-                    item(f1, 'Pluggit')
-
-                # fan speed rpm
-                # fan 2
-                if values == self._modbusRegisterDic['prmHALTaho2']:
-                    f2 = self._Pluggit.read_holding_registers(values, 2, unit=22)
-                    decoderf2 = BinaryPayloadDecoder.fromRegisters(f2.registers, byteorder=Endian.Big, wordorder=Endian.Little)
-                    f2 = decoderf2.decode_32bit_float()
-                    f2 = round(f2, 0)
-                    self.logger.debug("Pluggit: Drehzahl Lüfter 2: {0}".format(f2))
-                    item(f2, 'Pluggit')
-
-                # Temperatures
-                # Frischluft außen
-                if values == self._modbusRegisterDic['prmRamIdxT1']:
-                    t1 = self._Pluggit.read_holding_registers(values, 2, unit=22)
-                    decodert1 = BinaryPayloadDecoder.fromRegisters(t1.registers, byteorder=Endian.Big, wordorder=Endian.Little)
-                    t1 = decodert1.decode_32bit_float()
-                    t1 = round(t1, 2)
-                    self.logger.debug("Pluggit: Frischluft außen: {0:4.1f}".format(t1))
-                    self.logger.debug("Pluggit: Frischluft außen: {0}".format(t1))
-                    item(t1, 'Pluggit')
-
-                # Zuluft innen
-                if values == self._modbusRegisterDic['prmRamIdxT2']:
-                    t2 = self._Pluggit.read_holding_registers(values, 2, unit=22)
-                    decodert2 = BinaryPayloadDecoder.fromRegisters(t2.registers, byteorder=Endian.Big, wordorder=Endian.Little)
-                    t2 = decodert2.decode_32bit_float()
-                    t2 = round(t2, 2)
-                    self.logger.debug("Pluggit: Zuluft innen: {0:4.1f}".format(t2))
-                    self.logger.debug("Pluggit: Zuluft innen: {0}".format(t2))
-                    item(t2, 'Pluggit')
-
-                # Abluft innen
-                if values == self._modbusRegisterDic['prmRamIdxT3']:
-                    t3 = self._Pluggit.read_holding_registers(values, 2, unit=22)
-                    decodert3 = BinaryPayloadDecoder.fromRegisters(t3.registers, byteorder=Endian.Big, wordorder=Endian.Little)
-                    t3 = decodert3.decode_32bit_float()
-                    t3 = round(t3, 2)
-                    self.logger.debug("Pluggit: Abluft innen: {0:4.1f}".format(t3))
-                    self.logger.debug("Pluggit: Abluft innen: {0}".format(t3))
-                    item(t3, 'Pluggit')
-
-                # Fortluft außen
-                if values == self._modbusRegisterDic['prmRamIdxT4']:
-                    t4 = self._Pluggit.read_holding_registers(values, 2, unit=22)
-                    decodert4 = BinaryPayloadDecoder.fromRegisters(t4.registers, byteorder=Endian.Big, wordorder=Endian.Little)
-                    t4 = decodert4.decode_32bit_float()
-                    t4 = round(t4, 2)
-                    self.logger.debug("Pluggit: Fortluft außen: {0:4.1f}".format(t4))
-                    self.logger.debug("Pluggit: Fortluft außen: {0}".format(t4))
-                    item(t4, 'Pluggit')
-
-                # Bypass minimum Temperatur
-                if values == self._modbusRegisterDic['prmBypassTmin']:
-                    t5 = self._Pluggit.read_holding_registers(values, 2, unit=22)
-                    decodert5 = BinaryPayloadDecoder.fromRegisters(t5.registers, byteorder=Endian.Big, wordorder=Endian.Little)
-                    t5 = decodert5.decode_32bit_float()
-                    t5 = round(t5, 2)
-                    self.logger.debug("Pluggit: Bypass minimum Temperatur: {0:4.1f}".format(t5))
-                    self.logger.debug("Pluggit: Bypass minimum Temperatur: {0}".format(t5))
-                    item(t5, 'Pluggit')
-
-                # Bypass maximum Temperatur
-                if values == self._modbusRegisterDic['prmBypassTmax']:
-                    t6 = self._Pluggit.read_holding_registers(values, 2, unit=22)
-                    decodert6 = BinaryPayloadDecoder.fromRegisters(t6.registers, byteorder=Endian.Big, wordorder=Endian.Little)
-                    t6 = decodert6.decode_32bit_float()
-                    t6 = round(t6, 2)
-                    self.logger.debug("Pluggit: Bypass maximum Temperatur: {0:4.1f}".format(t6))
-                    self.logger.debug("Pluggit: Bypass maximum Temperatur: {0}".format(t6))
-                    item(t6, 'Pluggit')
-
-                # start time in hours
-                if values == self._modbusRegisterDic['prmWorkTime']:
-                    dt2 = self._Pluggit.read_holding_registers(values, 2)
-                    decoderdt2 = BinaryPayloadDecoder.fromRegisters(dt2.registers, byteorder=Endian.Big, wordorder=Endian.Little)
-                    dt2 = decoderdt2.decode_32bit_int()
-                    self.logger.debug("Pluggit: WorkTime: {0}".format(dt2))
-                    item(dt2, 'Pluggit')
-
-                # installation date/time in UNIX format
-                if values == self._modbusRegisterDic['prmStartExploitationDateStamp']:
-                    dt3 = self._Pluggit.read_holding_registers(values, 2)
-                    decoderdt3 = BinaryPayloadDecoder.fromRegisters(dt3.registers, byteorder=Endian.Big, wordorder=Endian.Little)
-                    dt3 = decoderdt3.decode_32bit_int()
-                    self.logger.debug("Pluggit: StartExploitation: {0}".format(dt3))
-                    item(dt3, 'Pluggit')
-
-                self.logger.debug("Pluggit: ------------------------------------------> Ende der Schleife vor sleep, Durchlauf Nr. {0}".format(myCounter))
-                time.sleep(0.1)
-                myCounter += 1
-
-        except Exception as e:
-            self.logger.error("Pluggit: something went wrong in the refresh function: {0}".format(e))
-            return
-        end_time = time.time()
-        cycletime = end_time - start_time
-        self.logger.debug("Pluggit: cycle took {0} seconds".format(cycletime))
-
-if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO)
-    myplugin = Plugin('Pluggit')
-    myplugin.run()
+            time.sleep(0.1)

@@ -105,9 +105,9 @@ class SeState(StateEngineTools.SeItemChild):
         result = self.__conditions.one_conditionset_matching()
         self._log_decrease_indent()
         if result:
-            self._log_info("State can be entered")
+            self._log_info("State {} can be entered", self.id)
         else:
-            self._log_info("State can not be entered")
+            self._log_info("State {} can not be entered", self.id)
         return result
 
     # log state data
@@ -226,11 +226,30 @@ class SeState(StateEngineTools.SeItemChild):
         self._log_decrease_indent()
 
     def refill(self):
-        if not self.__use.is_empty() and "eval" in self.__use.get_type():
-            self._log_debug("State {}: se_use attribute including eval - updating state conditions and actions", self.__name)
+        cond1 = not self.__use.is_empty() and "eval" in self.__use.get_type()
+        cond2 = not self.__release.is_empty() and ("eval" in self.__release.get_type() or "item" in self.__release.get_type())
+        if cond1 and cond2:
+            self._log_debug("State {}: se_use attribute including eval and se_released_by "
+                            "attribute including item or eval - updating state conditions and actions", self.__name)
             self._log_increase_indent()
             self.__fill(self.__item, 0, "refill")
             self._log_decrease_indent()
+        elif cond1:
+            self._log_debug("State {}: se_use attribute including eval "
+                            "- updating state conditions and actions", self.__name)
+            self._log_increase_indent()
+            self.__fill(self.__item, 0, "refill")
+            self._log_decrease_indent()
+        elif cond2:
+            self._log_debug("State {}: se_released_by attribute including eval or item "
+                            "- updating released by states", self.__name)
+            self._log_increase_indent()
+            self._abitem.update_releasedby(self)
+            self._log_decrease_indent()
+
+    def update_releasedby_internal(self):
+        _returnvalue, _returntype = self.__release.set_from_attr(self.__item, "se_released_by")
+        return _returnvalue, _returntype, self.releasedby
 
     def update_name(self, item_state, recursion_depth=0):
         # if an item name is given, or if we do not have a name after returning from all recursions,
@@ -292,8 +311,9 @@ class SeState(StateEngineTools.SeItemChild):
                         self.__use_done.append(element)
                         self.__fill(element, recursion_depth + 1, _name)
         if "se_released_by" in item_state.conf:
-            self.__release.set_from_attr(item_state, "se_released_by")
-            self._log_debug("State {} has released attribute, self.release = {}", item_state.property.path, self.__release)
+            #_release_by_value, _release_by_type = self.__release.set_from_attr(item_state, "se_released_by")
+            _release_result = self.releasedby
+            self._log_debug("(fill) State {} has released attribute result: {}", item_state.property.path, _release_result)
 
         # Get action sets and condition sets
         parent_item = item_state.return_parent()

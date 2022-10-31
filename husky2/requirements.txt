@@ -1,1 +1,1 @@
-aioautomower
+aioautomower==2022.9.0

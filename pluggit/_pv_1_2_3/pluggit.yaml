@@ -1,0 +1,165 @@
+pluggit:
+    type: foo
+
+    systemId:
+        type: num
+        visu_acl: ro
+        pluggit_listen: prmSystemID
+
+    systemSerialNum:
+        type: num
+        visu_acl: ro
+        pluggit_listen: prmSystemSerialNum
+
+    FirmwareVersion:
+        type: str
+        visual_acl: ro
+        pluggit_listen: prmFWVersion
+
+    DHCPEnabled:
+        type: bool
+        visu_acl: ro
+        pluggit_listen: prmDHCPEN
+
+    IPAdress:
+        type: str
+        visu_acl: ro
+        pluggit_listen: prmCurrentIPAddress
+
+    IPMask:
+        type: str
+        visu_acl: ro
+        pluggit_listen: prmCurrentIPMask
+
+    IPGateway:
+        type: str
+        visu_acl: ro
+        pluggit_listen: prmCurrentIPGateway
+
+    MACAdress:
+        type: str
+        visu_acl: ro
+        pluggit_listen: prmMACAddr
+
+    DateTime:
+        type: num
+        visu_acl: ro
+        pluggit_listen: prmDateTime
+
+    WorkHours:
+        type: num
+        visu_acl: ro
+        pluggit_listen: prmWorkTime
+
+    ExploitationDateTime:
+        type: num
+        visu_acl: ro
+        pluggit_listen: prmStartExploitationDateStamp
+
+    UnitMode:
+        type: num
+        visu_acl: ro
+        pluggit_listen: prmRamIdxUnitMode
+        Set:
+            type: num
+            visu_acl: rw
+            pluggit_send: prmRamIdxUnitMode
+        Text:
+            type: str
+            visu_acl: ro
+            eval: str('Demand') if sh...self() & 2 == 2 else str('Manuell') if sh...self() & 4 == 4 else str('Woche') if sh...self() & 8 == 8 else str('')
+            eval_trigger: ..self
+
+    weekProgram:
+        type: num
+        visu_acl: ro
+        pluggit_listen: prmNumOfWeekProgram
+
+    fanSpeed:
+        type: num
+        visu_acl: rw
+        pluggit_listen: prmRomIdxSpeedLevel
+        pluggit_send: prmRomIdxSpeedLevel
+
+    remainingFilterLifetime:
+        type: num
+        visu_acl: ro
+        pluggit_listen: prmFilterRemainingTime
+
+    fan1rpm:
+        type: num
+        visu_acl: ro
+        pluggit_listen: prmHALTaho1
+
+    fan2rpm:
+        type: num
+        visu_acl: ro
+        pluggit_listen: prmHALTaho2
+
+    frischluft:
+        type: num
+        visu_acl: ro
+        pluggit_listen: prmRamIdxT1
+        visu_acl: ro
+        database: yes
+
+    zuluft:
+        type: num
+        visu_acl: ro
+        pluggit_listen: prmRamIdxT2
+        database: yes
+
+    abluft:
+        type: num
+        visu_acl: ro
+        pluggit_listen: prmRamIdxT3
+        database: yes
+
+    fortluft:
+        type: num
+        visu_acl: ro
+        pluggit_listen: prmRamIdxT4
+        database: yes
+
+    Bypass:
+        State:
+            type: bool
+            visu_acl: ro
+            pluggit_listen: prmRamIdxBypassActualState
+            Text:
+                type: str
+                visu_acl: ro
+                eval: str('geöffnet') if value else str('geschlossen')
+                eval_trigger: ..self
+
+        Tmin:
+            type: num
+            visu_acl: ro
+            pluggit_listen: prmBypassTmin
+
+        Tmax:
+            type: num
+            visu_acl: ro
+            pluggit_listen: prmBypassTmax
+
+        ManualMode:
+            type: bool
+            visu_acl: ro
+            eval: False if sh....UnitMode() & 32896 == 32896 else True if sh....UnitMode() & 128 == 128 else False
+            eval_trigger: ...UnitMode
+            Set:
+                type: bool
+                visu_acl: rw
+                enforce_updates: yes
+                on_update: ....UnitMode.Set = 128 if value else 32896
+            Text:
+                type: str
+                visu_acl: ro
+                eval: str('manuell') if value else str('automatisch')
+                eval_trigger: ..self
+
+        # manual bypass timout in minutes
+        ManualTimeout:
+            type: num
+            visu_acl: ro
+            pluggit_listen: prmRamIdxBypassManualTimeout

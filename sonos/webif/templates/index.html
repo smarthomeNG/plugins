@@ -44,6 +44,36 @@
 -->
 {% set tab1title = "<strong>" ~ p.get_shortname() ~ " </strong> " %}
 {% block bodytab1 %}
+
+<div style="margin-left: 10px; margin-right: 10px;">
+	<div class="table-responsive">
+		<table class="table table-striped table-hover">
+			<thead>
+				<tr class="shng_heading">
+					<th width="180px">{{ _('Speaker') }}</th>
+					<th width="80px">{{ _('IP') }}</th>
+					<th width="50px">{{ _('UID') }}</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% if speakerlist %}
+					{% for speaker in speakerlist %}
+					<tr>
+						<td class="py-1">{{ speaker.name }}</td>
+						<td class="py-1">{{ speaker.ip }}</td>
+						<td class="py-1">{{ speaker.uid }}</td>
+					</tr>
+					{% endfor %}
+				{% else %}
+					<tr>
+						<td class="py-1" colspan="7">{{ _('Keine aktiven Speaker') }}</td>
+					</tr>
+				{% endif %}
+			</tbody>
+		</table>
+	</div>
+</div>
+
 {% endblock bodytab1 %}
 
 
