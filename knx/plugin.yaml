@@ -14,7 +14,7 @@ plugin:
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1552531-support-thread-zum-knx-plugin
 
     sh_minversion: 1.9.0          # minimum shNG version to use this plugin
-    version: 1.8.0                 # Plugin version
+    version: 1.8.2                 # Plugin version
 #    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: true           # plugin supports multi instance
     restartable: true
@@ -58,6 +58,34 @@ parameters:
         description:
             de: "Wenn auf 'on'/'true' gesetzt, wird jedes KNX-Paket im Standard-Logger protokolliert. Wenn 'logger' eingestellt ist, werden alle KNX-Meldungen in einem separaten Logger 'knx_busmonitor' protokolliert."
             en: "If set to 'on'/'true' every KNX packet will be logged to the default plugin logger. If set to 'logger', all knx messages will be logged to a separate logger 'knx_busmonitor'"
+
+    loglevel_knxd_cache_problems:
+        type: str
+        default: 'INFO'
+        valid_list:
+          - 'DEBUG'
+          - 'WARNING'
+          - 'INFO'
+          - 'ERROR'
+          - 'NOTSET'
+        #   CRITICAL    50
+        #   ERROR       40
+        #   WARNING     30
+        #   INFO        20
+        #   DEBUG       10
+        #   NOTSET      0
+        valid_list_description:
+            de: ['DEBUG', 'WARNING', 'INFO', 'ERROR', 'NOTSET']
+            en: ['DEBUG', 'WARNING', 'INFO', 'ERROR', 'NOTSET']
+        description:
+            de: >
+                Beim Start von SmartHomeNG werden Items mit dem Attribut knx_cache direkt vom knxd eingelesen. 
+                Wenn die Werte der Gruppenadressen nicht verfügbar sind, liefert der knxd ein fehlerhaftes Paket. 
+                Mit dem hier festgelegten Loglevel wird dieses Paket protokolliert.
+            en: >
+                At start of SmartHomeNG items with attribute knx_cache will be read directly from knxd.
+                If the requested group adresses are not available, knxd will deliver a malformed telegram.
+                This malformed telegram will be logged with this loglevel.
 
     log_own_packets:
         type: bool

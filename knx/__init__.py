@@ -77,7 +77,7 @@ DPT = 'dpt'
 
 class KNX(SmartPlugin):
 
-    PLUGIN_VERSION = "1.8.0"
+    PLUGIN_VERSION = "1.8.2"
 
     # tags actually used by the plugin are shown here
     # can be used later for backend item editing purposes, to check valid item attributes
@@ -93,6 +93,7 @@ class KNX(SmartPlugin):
         self.provider = self.get_parameter_value('provider')
         self.host = self.get_parameter_value('host')
         self.port = self.get_parameter_value('port')
+        self.loglevel_knxd_cache_problems = self.get_parameter_value('loglevel_knxd_cache_problems')
 
         from bin.smarthome import VERSION
         if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
@@ -374,23 +375,6 @@ class KNX(SmartPlugin):
 
         knx_data = data[2:]
 
-        if len(knx_data) < 6:
-            knx_data_str = binascii.hexlify(knx_data).decode()
-            src = ""
-            dst = ""
-            try:
-                src = self.decode(knx_data[0:2], 'pa')
-                dst = self.decode(knx_data[2:4], 'ga')
-            finally:
-                self.logger.warning(f"{len(knx_data)} bytes [{knx_data_str}] from {src} for ga/pa {dst} is not enough data to parse")
-            return
-
-        # test if flags provide normal knx telegram data or if they are special
-        if len(knx_data) >= 6 and (knx_data[4] & 0x03 or (knx_data[5] & KNX_FLAG_MASK) == FLAG_RESERVED):
-            if self.logger.isEnabledFor(logging.DEBUG):
-                self.logger.debug("Unknown Application Protocol Data Unit")
-            return
-
         # parse rest of data in assumption of a valid knx telegram
         """
         knx telegram consists of at least 6 bytes
@@ -399,7 +383,29 @@ class KNX(SmartPlugin):
             2 byte command/data
             n byte data optional, only indicated by length 
         """
-        assert(len(knx_data)>=6)
+
+        # knxd will only deliver 4 bytes and no command/data payload when it is unable to provide a group address from cache.
+        if len(knx_data) < 6:
+            knx_data_str = binascii.hexlify(knx_data).decode()
+            src = ""
+            dst = ""
+            try:
+                src = self.decode(knx_data[0:2], 'pa')
+                dst = self.decode(knx_data[2:4], 'ga')
+            finally:
+                self._cache_ga_response_no_value.append(dst)
+                loglevel = logging.getLevelName(self.loglevel_knxd_cache_problems)
+                if not isinstance( loglevel, int):
+                  loglevel = logging.getLevelName(loglevel)
+                self.logger.log(loglevel, f"{len(knx_data)} bytes [{knx_data_str}] from {src} for ga/pa {dst} is not enough data to parse")
+            return
+
+        # test if flags provide normal knx telegram data or if they are special
+        if len(knx_data) >= 6 and (knx_data[4] & 0x03 or (knx_data[5] & KNX_FLAG_MASK) == FLAG_RESERVED):
+            if self.logger.isEnabledFor(logging.DEBUG):
+                self.logger.debug("Unknown Application Protocol Data Unit")
+            return
+
 
         src = self.decode(knx_data[0:2], 'pa')
         dst = self.decode(knx_data[2:4], 'ga')
