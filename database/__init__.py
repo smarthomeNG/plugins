@@ -1325,6 +1325,8 @@ class Database(SmartPlugin):
         if remaining <= 0:
             # no log entries will be there after deletion, need to go back in time for the latest logentry
             new_must_keep_timestamp = self.readLatestLog(item_id, timestamp_end)
+            if new_must_keep_timestamp is None:
+                return
             new_must_keep_time = self._datetime(new_must_keep_timestamp)
             self.logger.info(f"remove_older_than_maxage: item = {itempath} no remaining log entry between {time_end} and now, thus can not remove log entries older than maxage, latest log is {new_must_keep_time}")
             time_end = new_must_keep_time + datetime.timedelta(microseconds=-1)
