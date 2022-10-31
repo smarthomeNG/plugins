@@ -71,8 +71,12 @@
 			- {{_( 'Die Datenbank enthält Daten zu {dbitems} Items', vars={'dbitems': p.readItemCount()}) }}
 		{%  endif %}
 		{%  if p._items_total_entries > 0 %}
-			- {{ "{:,}".format(p._items_total_entries).replace(",",".") }} Log Einträge zu dieser Instanz
-		{%  endif %}
+	        -
+			{%  if p._items_still_counting %}
+				{{ _('Mindestens') }}
+			{%  endif %}
+			{{ "{:,}".format(p._items_total_entries).replace(",",".") }} {{ _('Log Einträge zu dieser Instanz') }}
+		{% endif %}
 	</div>
 	<table id="itemtable">
 		<thead>
@@ -117,7 +121,11 @@
 					{%  if p.get_iattr_value(item.conf, 'database_maxage') %}
 						<td class="py-1" id="{{ item }}_maxage">{{ p.get_iattr_value(item.conf, 'database_maxage') }} {{ _('Tage') }}: {{ p.get_maxage_ts(item).strftime('%d.%m.%Y %H:%M') }}</td>
 					{% else %}
-						<td class="py-1">-</td>
+						{%  if p._default_maxage > 0 %}
+							<td class="py-1">default: {{ p._default_maxage }} {{ _('Tage') }}</td>
+						{% else %}
+							<td class="py-1">-</td>
+						{% endif %}
 					{% endif %}
 					<td class="py-1">
 						{% if p.id(item, create=False) == None %}

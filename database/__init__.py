@@ -103,6 +103,7 @@ class Database(SmartPlugin):
         self._precision = self.get_parameter_value('precision')
         self.count_logentries = self.get_parameter_value('count_logentries')
         self.max_delete_logentries = self.get_parameter_value('max_delete_logentries')
+        self._default_maxage = float(self.get_parameter_value('default_maxage'))
 
         self.webif_pagelength = self.get_parameter_value('webif_pagelength')
         self._webdata = {}
@@ -116,11 +117,12 @@ class Database(SmartPlugin):
 
         self.skipping_dump = False
 
-        self._handled_items = []        # items that have a 'database' attribute set
-        self._items_with_maxage = []    # items that have a 'database_maxage' attribute set
-        self._maxage_worklist = []      # work copy of self._items_with_maxage
-        self._item_logcount = {}        # dict to store the number of log records for an item
-        self._items_total_entries = 0   # total number of log entries
+        self._handled_items = []           # items that have a 'database' attribute set
+        self._items_with_maxage = []       # items that have a 'database_maxage' attribute set
+        self._maxage_worklist = []         # work copy of self._items_with_maxage
+        self._item_logcount = {}           # dict to store the number of log records for an item
+        self._items_total_entries = 0      # total number of log entries
+        self._items_still_counting = False # total number of log entries
 
         self.cleanup_active = False
 
@@ -666,6 +668,25 @@ class Database(SmartPlugin):
         else:
             params = {'id': id, 'time': time}
             return self._fetchall("SELECT max(time) FROM {log} WHERE item_id = :id AND time <= :time", params, cur=cur)[0][0]
+
+
+    def readTotalLogCount(self, id=None, time_start=None, time_end=None, cur=None):
+        """
+        Read database log count for the hole database
+
+        :param id:
+        :param time_start:
+        :param time_end:
+        :param cur:
+
+        :return: Number of log records
+        """
+        params = {'id': id, 'time_start': time_start, 'time_end': time_end}
+        result = self._fetchall("SELECT count(*) FROM {log};", params, cur=cur)
+        if result == []:
+            return 0
+        return result[0][0]
+
 
     def readLogCount(self, id, time_start=None, time_end=None, cur=None):
         """
@@ -1289,7 +1310,10 @@ class Database(SmartPlugin):
 
         if self._maxage_worklist == []:
             # Fill work list, if it is empty
-            self._maxage_worklist = [i for i in self._items_with_maxage]
+            if self._default_maxage == 0:
+                self._maxage_worklist = [i for i in self._items_with_maxage]
+            else:
+                self._maxage_worklist = [i for i in self._handled_items]
             self.logger.info(f"remove_older_than_maxage: Worklist filled with {len(self._items_with_maxage)} items")
 
         item = self._maxage_worklist.pop(0)
@@ -1373,7 +1397,11 @@ class Database(SmartPlugin):
 
         :return:
         """
-        maxage = self.get_iattr_value(item.conf, 'database_maxage')
+        if self.has_iattr(item.conf, 'database_maxage'):
+            maxage = self.get_iattr_value(item.conf, 'database_maxage')
+        elif self._default_maxage > 0:
+            maxage = self._default_maxage
+
         if maxage:
             dt = self.shtime.now()
             dt = dt.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -1389,6 +1417,7 @@ class Database(SmartPlugin):
         called by scheduler once on start
         """
         self.logger.info("_count_logentries: # handled items = {}".format(len(self._handled_items)))
+        self._items_still_counting = True
         self._items_total_entries = 0
         for item in self._handled_items:
             item_id = self.id(item, create=False)
@@ -1397,6 +1426,7 @@ class Database(SmartPlugin):
             self._items_total_entries += logcount
             self._webdata[item.id()].update({'logcount': logcount})
 
+        self._items_still_counting = False
         return
 
 

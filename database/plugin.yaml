@@ -66,11 +66,19 @@ parameters:
 
     max_delete_logentries:
         type: int
-        default: 1000
+        default: 1500
         valid_min: 20
         description:
             de: "Maximal auf einmal zu löschende Anzahl an Log Einträgen mit dem database_maxage Attribut, reduziert die Belastung der Datenbank bei alten Datenbeständen"
             en: "Maximum number of Logentries to delete at once with database_maxage attribute, reduces load on database with old datasets"
+
+    default_maxage:
+        type: int
+        default: 0
+        valid_min: 0
+        description:
+            de: "Falls dieser Parameter einen Wert größer 0 enthält: Standard maxage für Items, die kein maxage gesetzt haben"
+            en: "If this parameter is > 0: maxage for Items that don't have a maxage set."
 
     webif_pagelength:
         type: int
