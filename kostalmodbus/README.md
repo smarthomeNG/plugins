@@ -27,7 +27,7 @@ This plugin connects your Kostal inverter (https://www.kostal-solar-electric.com
 | PLENTICORE plus 5.5 | yes          | no      |
 | PLENTICORE plus 7.0 | yes          | yes     |
 | PLENTICORE plus 8.5 | yes          | yes     |
-| PLENTICORE plus 10  | yes          | no      |
+| PLENTICORE plus 10  | yes          | yes      |
 | PIKO IQ 4.2         | yes          | no      |
 | PIKO IQ 5.5         | yes          | no      |
 | PIKO IQ 7.0         | yes          | no      |
