@@ -59,7 +59,7 @@ class StateEngine(SmartPlugin):
             StateEngineDefaults.log_level = log_level
             log_directory = self.__log_directory
             self.logger.info("Init StateEngine (log_level={0}, log_directory={1})".format(log_level, log_directory))
-
+            self.webif_pagelength = self.get_parameter_value('webif_pagelength')
             StateEngineDefaults.startup_delay = self.get_parameter_value("startup_delay_default")
             StateEngineDefaults.suspend_time = self.get_parameter_value("suspend_time_default")
             StateEngineDefaults.instant_leaveaction = self.get_parameter_value("instant_leaveaction")
