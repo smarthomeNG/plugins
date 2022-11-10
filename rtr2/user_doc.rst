@@ -255,7 +255,7 @@ Die Paramter hierfür sind wie folgt anzugeben:
 
     test_rtr:
         rtr2_id: dusche
-        rtr_settings:
+        rtr2_settings:
           - 22.0 # Temperatur Komfort Modus
           - 3.0  # Temperaturreduktion Nacht Modus
           - 1.0  # Temperaturreduktion Standby Modus
@@ -274,7 +274,7 @@ Möchte man z.B nur eine neue Temperaturreduktion für den Nacht Modus angeben, 
 
     test_rtr:
         rtr2_id: dusche
-        rtr_settings:
+        rtr2_settings:
           - 22.0
           - 2.0
 
