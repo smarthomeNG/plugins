@@ -164,9 +164,16 @@ class Rtr2(SmartPlugin):
                 # Create a new rtr
                 parent_item = item.return_parent()
                 if self.has_iattr(parent_item.conf, 'rtr2_settings'):
-                    self._rtr[rtr_id] = Rtr_object(self, self.get_iattr_value(parent_item.conf, 'rtr2_settings'))
+                    rtr_ts = self.get_iattr_value(parent_item.conf, 'rtr2_settings')
                 else:
-                    self._rtr[rtr_id] = Rtr_object(self, [])     # use plugin parameters as defaults
+                    rtr_ts = [] # use plugin parameters as defaults
+
+                if self.has_iattr(parent_item.conf, 'rtr2_controller_settings'):
+                    rtr_cs = self.get_iattr_value(parent_item.conf, 'rtr2_controller_settings')
+                else:
+                    rtr_cs = [] # use plugin parameters as defaults
+
+                self._rtr[rtr_id] = Rtr_object(self, rtr_ts, rtr_cs)
                 self._rtr[rtr_id].id = rtr_id
                 self._rtr[rtr_id].valve_protect = self.default_valve_protect
 
