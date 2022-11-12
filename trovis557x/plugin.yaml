@@ -92,12 +92,12 @@ parameters:
 
     modbus_port:
         type: str
-        default: '/dev/ttytrovis'
+        default: '/dev/trovis'
         # USB: z.B./eg. /dev/ttyUSB0, /dev/ttyUSB1, /dev/ttyAMA0
         # chmod 777 /dev/<yourport> wird empfohlen / is recommended
         description:
-            de: 'Modbus-Port, über den die Trovis verbunden ist'
-            en: 'Modbus Port the Trovis is connected through'
+            de: 'Gerät für Trovis-Verbindung - für TCP: IP:Port'
+            en: 'Device to connect to Trovis- for TCP: IP:port'
 
     modbus_trovis_address:
         type: int
@@ -115,8 +115,8 @@ parameters:
         type: str
         default: 'rtu'
         description:
-            de: 'Wie die Modbus-Kommunikation duchgeführt wird (zur Zeit auf rtu belassen)'
-            en: 'How modbus communication is done (leave to rtu, tcp not yet supported)'
+            de: 'Wie die Modbus-Kommunikation duchgeführt wird (tcp oder rtu)'
+            en: 'How modbus communication is done (tcp oder rtu)'
 
     modbus_timeout:
         type: num
