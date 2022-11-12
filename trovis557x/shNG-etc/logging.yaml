@@ -1,3 +1,5 @@
+# manual install: add this to your shNG/etc/logging.yaml:
+
 # uncomment only if you want to have debug messages
 # WARNING - can produce big amounts of data within short time
 
