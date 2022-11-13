@@ -1,130 +1,113 @@
-{% extends "base_plugin.html" %}
+{% extends "base.html" %}
 
 {% set logo_frame = false %}
 
-{% block headtable %}
-{% endblock headtable %}
+{% block pluginscripts %}
+<!-- scripts here -->
+{% endblock pluginscripts %}
 
 
-<!--
-	Additional buttons for the web interface (if any are needed) - displayed below the headtable-section
--- >
-{% block buttons %}
-{% if 1==2 %}
-	<form action="" method="post">
-	<button id="btn1" class="btn btn-shng btn-sm" name="learn" type="submit" value="on"><i class="fas fa-wifi"></i>&nbsp;&nbsp;&nbsp;Mach was&nbsp;</button>
-	</form>
-{% endif %}
-{% endblock %}
-
-<!--
-	Define the number of tabs for the body of the web interface (1 - 3)
--->
-
-{% set tabcount = 2 %}
-
-<!--
-	Set the tab that will be visible on start, if another tab that 1 is wanted (1 - 3)
--->
-{% if item_count==0 %}
-	{% set start_tab = 1 %}
-{% endif %}
-
-
-<!--
-	Content block for the first tab of the Webinterface
--->
-
-{% set tab1title = "<strong>" ~ _('Eval Ausdruck') ~ "</strong>" %}
-{% block bodytab1 %}
-
-<script>
-function geteval(){
-    console.log("Evaluate a line ...");
-    param = $('#pycode').val();
-		itempath = $('#itempath').val();
-    console.log('Param = '+encodeURIComponent(param) + ', Item path = '+encodeURIComponent(itempath));
-    $.get('evaluate', { eline: param, path: itempath}, function(data){
-        $('result').html(data);
-        console.log('Data:'+data);
-    });
-    console.log('Evaluation of a line is done');
-};
-
-$(document).ready(function(){
-    $('#pycode').keypress(function(e){
-      if(e.keyCode==13) {
-        $('#doeval').click();
-        return false;
-      };
-    });
-});
-</script>
-<style>
-input#pycode{
-    width: 100%;
-}
-
-input#itempath{
-    width: 100%;
-}
-button#doeval {
-    margin-top: 1em;
-    margin-bottom: 1em;
-    display: block;
-}
-
-result {
-    border: 1px solid green;
-    padding: 0.5em;
-    width: 100%;
-    display: block;
-}
-</style>
-
-
-<div class="container-fluid m-2">
-    <div id="section1">
-				<p>
-        <label for="pycode">{{ _('Evalausdruck eingeben:') }}</label> <br>
-        <input type="text" name="pycode" id="pycode" />
-        </p><p>
-				<label for="itempath">{{ _('Itempfad angeben (optional zum Testen relativer Itemangaben):') }}</label> <br>
-        <input type="text" name="itempath" id="itempath" />
-        </p>
-        <button onclick="geteval()" id="doeval">{{ _('Ausführen!') }}</button>
-        <label for="result">{{ _('Ergebnis') }}</label><br>
-        <result></result>
-    </div>
-</div>
-{% endblock bodytab1 %}
-
-{% set tab2title = "<strong>" ~ _('Python Code') ~ "</strong>" %}
-{% block bodytab2 %}
+{% block content -%}
 
 <script>
 var te_python;
 var cmPython;
 var te_resulttext;
 var cmResult;
+var max_script_entries; 
+max_script_entries = {{ p._script_entries }};
+console.log("max_script_entries=",max_script_entries);
 
 function getexecution() {
     console.log("Sending code for execution ...");
     param = cmPython.doc.getValue();
+    /* clear results */
+    cmResult.doc.setValue("... processing ...");
+    cmResult.refresh();
+    /* should set hourglass cursor here */
+	document.body.style.cursor = "wait";
     console.log('Param ='+encodeURIComponent(param));
-    $.get('evaluatetext', { eline: param}, function(data){
+    $.get('exec_code', { eline: param}, function(data){
         cmResult.doc.setValue(data);
         console.log('Data:'+data);
-    }); console.log('erledigt');    console.log('Execution of code is done');
+    }); 
+    /* should remove hourglass cursor here */
+	document.body.style.cursor = "default";
+    console.log('erledigt');
+    console.log('Execution of code is done');
 };
+
+function get_filelist() {
+    console.log("getting list of files ...");
+    $.get('get_filelist', {}, function(data){
+		$('#filelist').empty();
+		var lines;
+		lines = data.split(/\r\n|\n\r|\n|\r/);
+		for (line in lines) {
+			$('#filelist').append(new Option(lines[line], lines[line]));
+		};
+		var size;
+		if (max_script_entries == 0) { size = 0; }
+		else if (lines.length > max_script_entries) { size = max_script_entries; }
+		else { size = lines.length; };
+		console.log("Size: ",size);
+		$('#filelist').attr('size',size);
+        console.log('Data:'+data);
+    });
+};
+
+function selectFile(selectObject) {
+	var value = selectObject.value;
+	$('#savefilename').val(value);
+	console.log("selected ",value);
+};
+
+function doubleclickFile(selectObject) {
+	var value = selectObject.value;  
+	console.log("doubleclicked ",value);
+	loadfromfile(value);
+};
+
+function btnloadfromfile(selectObject) {
+	var value = $('#savefilename').val()
+	console.log("clicked ",value);
+	loadfromfile(value);
+};
+
+function loadfromfile(filenametoload) {
+	console.log('load from file'+filenametoload);
+	$.get('get_code', { filename: filenametoload}, function(data) {
+		console.log('Data:'+data);
+		cmPython.getDoc().setValue(data);
+	});
+};
+
+function savetofile() {
+	var filenametosave = $('#savefilename').val();
+	console.log('save to file'+filenametosave);
+	$.get('save_code', { filename: filenametosave, code: cmPython.doc.getValue()}, function(result) {
+		console.log('Result:'+result);
+	});
+	get_filelist();
+};
+
+function deletefile() {
+	var filenametodelete = $('#savefilename').val();
+	console.log('file to delete'+filenametodelete);
+	$.get('delete_file', { filename: filenametodelete}, function(result) {
+		console.log('Result:'+result);
+	});
+	get_filelist();
+};
+
 
 $(document).ready(function(){
     te_python = document.getElementById('pycodetext');
     te_resulttext = document.getElementById('resulttext');
-    cmPython = CodeMirror.fromTextArea(te_python, {
+    cmPython = CodeMirror(te_python, {
         mode: "python",
         lineNumbers: true,
-        extraKeys: {
+        extraKeys: {	
             "Ctrl-Q": function(cm){ cm.foldCode(cm.getCursor()); },
             Tab: function(cm) {
                 var spaces = Array(cm.getOption("indentUnit") + 1).join(" ");
@@ -136,46 +119,163 @@ $(document).ready(function(){
     });
     cmPython.refresh();
 
-    cmResult = CodeMirror.fromTextArea(te_resulttext, {
+    cmResult = CodeMirror(te_resulttext, {
         lineNumbers: true
     });
 	cmResult.refresh();
 
+	get_filelist();
 });
 </script>
 <style>
+body {
+	margin: 0!important;
+}
+
+#app {
+	display: grid;
+	grid-template-columns: 1fr;
+	grid-template-rows: auto 1fr 1fr;
+	grid-template-areas: 
+		'header'
+		'main'
+		'footer';
+	height: 100vh;
+	min-width: 0;
+}
+
+#app > header {
+	grid-area: header;
+	background: lightgray;
+	padding: 1rem!important;
+}
+
+#app > main {
+	grid-area: main;
+	overflow: auto;
+}
+
+#app > footer {
+	grid-area: footer;
+	overflow: auto;
+	background: #dfc;
+}
 
 #pycodetext {
-    padding-left: 4em;
-    width: 100%;
-    height: 100%;
+    /* width: 100%;
+    height: 100%; */
     display: block;
     margin-bottom: 5px;
 }
+select {
+	padding: 0.2rem;
+}
 
 button#doexec{
-    margin-top: 1em;
+    margin-top: .2em;
     margin-bottom: 1em;
     display: block;
 }
+button {
+	padding-left: 1em;
+	padding-right: 1em;
+}
 
-resulttext {
+button#savefile{
+    margin-top: .2em;
+    margin-bottom: 1em;
+    /* display: block; */
+}
+button#deletefile{
+    margin-top: .2em;
+    margin-bottom: 1em;
+    /* display: block; */
+}
+
+input#savefilename {
+    margin-top: .2	em;
+ }
+
+#resulttext {
     border: green solid 1px;
     width: 100%;
-    min-height: 2em;
+    /* min-height: 2em; */
     display: block;
     margin-bottom: 5px;
     overflow: auto;
 }
+
+button#loadfilename {
+    display: block;
+    width: 100%;
+}
 </style>
 
-<div class="container-fluid m-2">
-    <div id="section2">
-        <label for="pycodetext">{{ _('Zeile zum Ausführen in Python eingeben:') }}</label> <br>
-        <textarea id="pycodetext"></textarea>
-        <button onclick="getexecution()" id="doexec">{{ _('Ausführen!') }}</button><br>
-        <label for="resulttext">{{ _('Ergebnis') }}</label><br>
-        <textarea id="resulttext" placeholder="Ergebnisse erscheinen hier"></textarea>
-    </div>
-</div>
-{% endblock bodytab2 %}
+<div id="app">
+	<header>
+		<div class="container-fluid">
+			<div class="row" id="webif-toprow">
+				<div class="{% if logo_frame %}card {% endif %} col-sm-auto" style="height:150px;" id="webif-pluginlogo">
+					{% if isfile("static/img/plugin_logo.png") %}
+						<img src="static/img/plugin_logo.png" alt="plugin_logo" style="object-fit:contain; width:100%; height:100%; margin-left: auto; margin-right: auto; display: block;">
+					{% elif isfile("static/img/plugin_logo.jpg") %}
+						<img src="static/img/plugin_logo.jpg" alt="plugin_logo" style="object-fit:contain; width:100%; height:100%; margin-left: auto; margin-right: auto; display: block;">
+					{% elif isfile("static/img/plugin_logo.svg") %}
+						<img src="static/img/plugin_logo.svg" alt="plugin_logo" style="object-fit:contain; width:100%; height:100%; margin-left: auto; margin-right: auto; display: block;">
+					{% else %}
+						{% set plgtype_logo = "/gstatic/img/plugin_"+p._plgtype+".svg" %}
+						{% if isfile(plgtype_logo) %}
+							<img src="{{ plgtype_logo }}" style="object-fit:contain; width:100%; height:100%; margin-left: auto; margin-right: auto; display: block;">
+						{% else %}
+							<img src="/gstatic/img/plugin_unknown.svg" alt="plugin_logo_unknown" style="object-fit:contain; width:100%; height:100%; margin-left: auto; margin-right: auto; display: block;">
+						{% endif %}
+					{% endif %}
+				</div>
+				<div class="col-sm-auto" id="webif-plugininfo">
+					<h3 id="webif_shng_logo"><img src="/gstatic/img/logo_long.png" alt="shng_logo_long" height="40" valign="top" align="left" style="align: left; display: block;"></h3>
+					<div class="m-3">
+					<br>
+					</div>
+					<h5>{{ _('Plugin') }} : <span id="webif_plugin_name"><strong>{{ p.get_shortname() }}</strong></span> v<span id="webif_plugin_version">{{ p.get_version() }}</span></h5>
+					{% if p.get_instance_name() != '' %}
+						<h5>{{ _('Instanz') }}: <span id="webif_plugin_instance">{{ p.get_instance_name() }}</span></h5>
+					{% else %}
+						<br>
+					{% endif %}
+					<h6>{{ _('Plugin') }} &nbsp; &nbsp; : <span id="webif_plugin_state">{% if p.alive %}{{ _('Aktiv') }}{% else %}{{ _('Gestoppt') }}{% endif %}</span></h6>
+				</div>
+				<div class="col-sm">
+				<label for="filelist">{{ _('Gespeicherte Skripte') }}</label>
+					<select style="width: 100%" id="filelist" size=10 onchange="selectFile(this)" ondblclick="doubleclickFile(this)">
+					<option value="Test 1">Test 1</option>
+					<option value="Test 2">Test 2</option>
+					<option value="Test 3">Test 3</option>
+					</select>
+					<button onclick="btnloadfromfile(this)" id="loadfilename" type="button">{{ _('aus Datei laden') }}</button>
+				</div>
+				<div class="col-sm">
+					<label for="savefilename">{{ _('Dateiname') }}</label>
+					<input style="width: 100%;" type="text" id="savefilename" name="savefilename" minlength="4"/>
+					<div style="display: flex; flex-direction: row; flex-wrap: wrap; margin-left: auto; margin-right: auto;">
+						<button onclick="savetofile()" id="savefile" type="button">{{ _('Aktuellen Code speichern') }}</button>
+						<button onclick="deletefile()" id="deletefile" type="button">{{ _('Datei löschen') }}</button>
+					</div>
+					<button onclick="getexecution()" id="doexec">{{ _('Code ausführen!') }}</button>
+				</div>
+			</div>
+		</div>
+	</header>
+	<main>
+		<div class="container-fluid m-3">
+			<label for="pycodetext">{{ _('Python Code') }}</label><br>
+			<div id="pycodetext"></div>
+		</div>
+	</main>
+	<footer> 
+		<div class="container-fluid m-3">
+			<label for="resulttext">{{ _('Ergebnis') }}</label><br>
+			<div id="resulttext" placeholder="Ergebnisse erscheinen hier"></div>
+		</div>
+	</footer>
+<div>
+{%- endblock content %}
