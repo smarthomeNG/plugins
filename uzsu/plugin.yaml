@@ -111,7 +111,6 @@ parameters:
 
     webif_pagelength:
         type: int
-        default: 100
         valid_list:
           - -1
           - 0

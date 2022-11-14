@@ -72,10 +72,15 @@ class WebInterface(SmartPluginWebIf):
         :return: contents of the template after beeing rendered
         """
         tmpl = self.tplenv.get_template('index.html')
+        global_pagelength = cherrypy.config.get("webif_pagelength")
+        if global_pagelength:
+            pagelength = global_pagelength
+            self.logger.debug("Global pagelength {}".format(pagelength))
         try:
             pagelength = self.plugin.webif_pagelength
+            self.logger.debug("Plugin pagelength {}".format(pagelength))
         except Exception:
-            pagelength = 100
+            pass
         # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
         return tmpl.render(p=self.plugin,
                            webif_pagelength=pagelength,
