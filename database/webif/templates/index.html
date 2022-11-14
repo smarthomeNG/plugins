@@ -80,17 +80,17 @@
 	</div>
 	<table id="itemtable">
 		<thead>
-		<tr>
-			<th class="item">{{ _('Item') }}</th>
-			<th class="init">{{ _('Init') }}</th>
-			<th class="type">{{ _('Typ') }}</th>
-			<th class="value">{{ _('Wert') }}</th>
-			<th class="id">{{ _('Item-ID in der Datenbank') }}</th>
+		<tr><th></th>
+			<th>{{ _('Item') }}</th>
+			<th>{{ _('Init') }}</th>
+			<th>{{ _('Typ') }}</th>
+			<th>{{ _('Wert') }}</th>
+			<th>{{ _('Item-ID in der Datenbank') }}</th>
 			{%  if p.count_logentries %}
 				<th class="logcount">{{ _('Anzahl Einträge') }}</th>
 			{% endif %}
-			<th class="maxage">{{ _('konfiguriertes max. Alter') }}</th>
-			<th class="no-sort actions">{{ _('Aktionen') }}</th>
+			<th>{{ _('konfiguriertes max. Alter') }}</th>
+			<th>{{ _('Aktionen') }}</th>
 		</tr>
 		</thead>
 		<tbody>
@@ -110,6 +110,7 @@
 					{% endif %}
 				{% endif %}
 				<tr>
+					<td></td>
 					<td class="py-1" id="{{ item }}_path">{{ item.property.path }}</td>
 					<td class="py-1">{{ _('Init') if p.get_iattr_value(item.conf, 'database').lower() == 'init' else '-'}}</td>
 					<td class="py-1" id="{{ item }}_type">{{ item.property.type }}</td>

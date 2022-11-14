@@ -2,7 +2,6 @@
 
 {% set logo_frame = false %}
 
-
 {%- block scripts %}
 {{ super() }}
 <script src="/gstatic/bootstrap-datepicker/js/bootstrap-datepicker.min.js"></script>
@@ -35,9 +34,16 @@
       itemtable = $('#itemtable').DataTable( {
         pageResize: resize,
         columnDefs: [
-        { responsivePriority: 1, targets: 0 },
-        { responsivePriority: 3, targets: 3 },
-        { responsivePriority: 2, targets: -1 }
+        { responsivePriority: 1, targets: 1 },
+        { responsivePriority: 3, targets: 4 },
+        { responsivePriority: 2, targets: -1 },
+        { className: "item", targets: 1 },
+        { className: "init", targets: 2 },
+        { className: "type", targets: 3 },
+        { className: "value", targets: 4 },
+        { className: "id", targets: 5 },
+        { className: "maxage", targets: -2 },
+        { className: "no-sort actions", targets: -1 }
         ].concat($.fn.dataTable.defaults.columnDefs),
         pageLength: webif_pagelength});
       detailtable = $('#item_details_table').DataTable( {
@@ -114,7 +120,7 @@
 					{% if key != "passwd" %}
 					<td class="py-1"><strong>{{ key }}</strong></td><td class="py-1">{{ value }}</td>
 					{% else %}
-					<td class="py-1"><strong>{{ key }}</strong></td><td class="py-1">{% for letter in value %}*{% endfor %}</td>
+					<td class="py-1"><strong>{{ key }}</strong></td><td class="py-1" onclick="document.getElementById('pwd').innerHTML = '{{ value }}'"><span id="pwd" title="Click to show password">{% for letter in value %}*{% endfor %}</span></td>
 					{% endif %}
 					{% if loop.index % 3 > 0 and loop.last %}
 						<td class="py-1" colspan="{{ loop.index % 3 }}"></td>
