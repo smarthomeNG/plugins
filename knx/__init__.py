@@ -65,6 +65,7 @@ class KNX(SmartPlugin):
         self.host = self.get_parameter_value('host')
         self.port = self.get_parameter_value('port')
         self.loglevel_knxd_cache_problems = self.get_parameter_value('loglevel_knxd_cache_problems')
+        self.webif_pagelength = self.get_parameter_value('webif_pagelength')
 
         from bin.smarthome import VERSION
         if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
@@ -84,7 +85,7 @@ class KNX(SmartPlugin):
         self._cache_ga = []             # group addresses which should be initalized by the knxd cache
         self._cache_ga_response_pending = []    # group adresses for which a read request was sent to knxd
         self._cache_ga_response_no_value = []   # group adresses for which a response from knxd did not provide a value
-        
+
         self.time_ga = self.get_parameter_value('time_ga')
         self.date_ga = self.get_parameter_value('date_ga')
         self._send_time_do = self.get_parameter_value('send_time')
@@ -339,7 +340,7 @@ class KNX(SmartPlugin):
         # expecting the type of the following knxd telegram as an unsigned short integer
         knxd_msg_type = struct.unpack(">H", data[0:2])[0]
 
-        # knxd 
+        # knxd
         if not knxd_msg_type in [KNXD.GROUP_PACKET, KNXD.CACHE_READ, KNXD.CACHE_READ_NOWAIT]:
             self.handle_other_knxd_messages(knxd_msg_type, data[2:])
             return
@@ -352,7 +353,7 @@ class KNX(SmartPlugin):
             2 byte source as physical address
             2 byte destination as group address
             2 byte command/data
-            n byte data optional, only indicated by length 
+            n byte data optional, only indicated by length
         """
 
         # knxd will only deliver 4 bytes and no command/data payload when it is unable to provide a group address from cache.
@@ -392,7 +393,7 @@ class KNX(SmartPlugin):
         else:
             self.logger.warning("Unknown flag: {:02x} src: {} dest: {}".format(flg, src, dst))
             return
-            
+
         if len(knx_data) == 6:
             payload = bytearray([knx_data[5] & KNX_DATA_MASK ]) # 0x3f
         else:
