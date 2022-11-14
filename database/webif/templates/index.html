@@ -1,5 +1,5 @@
 {% extends "base_database.html" %}
-{% set update_interval = 10000 %}
+{% set update_interval = [(10 * (p._handled_items | length)), 5000]|max %}
 {% set dataSet = 'overview' %}
 {% set tab1title = _('Database Items') %}
 {% block bodytab1 %}
