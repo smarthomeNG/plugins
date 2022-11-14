@@ -1,7 +1,22 @@
 {% extends "base_plugin.html" %}
 
 {% set logo_frame = false %}
-
+{% block pluginstyles %}
+<style>
+  table th.item {
+    width: 300px;
+  }
+  table th.type {
+    width: 40px;
+  }
+  table th.value {
+    width: 120px;
+  }
+  table th.dpt {
+    width: 60px;
+  }
+</style>
+{% endblock pluginstyles %}
 {% block pluginscripts %}
 <script>
   $(document).ready( function () {
@@ -23,7 +38,21 @@
       console.log("Using default values for page length " + webif_pagelength + ", pageResize: " + resize);
     }
     try {
-      itemtable = $('#itemtable').DataTable( {pageLength: webif_pagelength, pageResize: resize} );
+      itemtable = $('#itemtable').DataTable( {
+        order: [[1, 'asc']],
+        columnDefs: [
+        { className: "item", targets: 1 },
+        { className: "type", targets: 2 },
+        { className: "value", targets: 3 },
+        { className: "dpt", targets: 4 },
+        { className: "cache", targets: 5 },
+        { className: "send", targets: 6 },
+        { className: "reply", targets: 7 },
+        { className: "status", targets: 8 },
+        { className: "poll", targets: 9 }
+        ].concat($.fn.dataTable.defaults.columnDefs),
+        pageLength: webif_pagelength,
+        pageResize: resize} );
       gatable = $('#gatable').DataTable( {pageLength: webif_pagelength, pageResize: resize} );
       patable = $('#patable').DataTable( {pageLength: webif_pagelength, pageResize: resize} );
       {% if p.knxproj_ga is not none %}
