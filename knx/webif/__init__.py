@@ -32,7 +32,7 @@ import json
 
 from lib.item import Items
 from lib.model.smartplugin import SmartPluginWebIf
-from .. import globals
+from ..globals import *
 
 
 # ------------------------------------------

@@ -41,7 +41,7 @@ from lib.shtime import Shtime
 from . import dpts
 from . import knxproj
 from .knxd import KNXD
-from . import globals
+from .globals import *
 # WebIf
 from .webif import WebInterface
 
