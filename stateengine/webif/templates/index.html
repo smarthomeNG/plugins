@@ -36,8 +36,7 @@ $("a").click(function() {
   $(document).ready( function () {
     $(window).trigger('datatables_defaults');
     try {
-      /* get pagelength from plugin. Also see hidden span element in bodytab1 block! */
-      webif_pagelength = parseInt(document.getElementById('webif_pagelength').innerHTML);
+      {% if webif_pagelength is defined %}webif_pagelength = {{ webif_pagelength|int }};{% endif %}
       if (isNaN(parseFloat(webif_pagelength)) || webif_pagelength == 0) {
         resize = true;
         webif_pagelength = -1;
@@ -45,6 +44,7 @@ $("a").click(function() {
       else {
         resize = false;
       }
+      console.log("Using page length from http module/plugin " + webif_pagelength + ", pageResize: " + resize);
     }
     catch (e) {
       webif_pagelength = 100;
@@ -98,8 +98,7 @@ $("a").click(function() {
 {% set tabcount = 1 %}
 
 {% block headtable %}
-<span id='webif_pagelength' style="display:none">{{ webif_pagelength }}</span>
-<table class="table table-striped table-hover" style="min-width:610px;">
+<table class="table table-striped table-hover">
   <tbody>
     <tr>
       <td class="py-1"><strong>{{ _('Log Level') }}</strong></td>
@@ -141,6 +140,7 @@ $("a").click(function() {
       <th>{{ _('Zustände') }}</th>
     </tr>
     </thead>
+    <tbody>
     {% for item in p.get_items() %}
     <tr><td></td>
         <td class="py-1">{{ item }}</td>
@@ -155,6 +155,7 @@ $("a").click(function() {
       </tr>
 
     {% endfor %}
+    </tbody>
   </table>
 </div>
 
