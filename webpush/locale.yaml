@@ -1,0 +1,10 @@
+plugin_translations:
+  'Delete all subscribers': { 'de': 'Alle Abonnenten löschen', 'en': '=', 'fr': '' }
+  'Message groups': { 'de': 'Nachrichten-Gruppen', 'en': '=', 'fr': '' }
+  'Group': { 'de': 'Gruppe', 'en': '=', 'fr': '' }
+  'Number of subscribers': { 'de': 'Anzahl Abonnenten', 'en': '=', 'fr': '' }
+  'Database path': { 'de': 'Pfad zur Datenbank', 'en': '=', 'fr': '' }
+  'Private key path': { 'de': 'Pfad zum privaten Schlüssel', 'en': '=', 'fr': '' }
+  'Item name': { 'de': 'Item Name', 'en': '=', 'fr': '' }
+  'Item path': { 'de': 'Item Pfad', 'en': '=', 'fr': '' }
+  'Item value': { 'de': 'Item Wert', 'en': '=', 'fr': '' }
