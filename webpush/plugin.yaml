@@ -9,8 +9,8 @@ plugin:
 #    tester:                         # Who tests this plugin?
     state: develop                  # change to ready when done with development
     keywords: web, push, webpush, messages
-    documentation: https://www.smarthomeng.de/user/plugins/webpush/user_doc.html
-    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1807776-neues-plugin-webpush
+    documentation: https://smarthomeng.github.io/smarthome/plugins/webpush/user_doc.html
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1817454-support-thread
 
     version: 1.1.0                  # Plugin version (must match the version specified in __init__.py)
     sh_minversion: 1.8              # minimum shNG version to use this plugin
