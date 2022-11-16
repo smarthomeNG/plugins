@@ -38,10 +38,10 @@ Bitte die Dokumentation lesen, die aus den Metadaten der plugin.yaml erzeugt wur
 .. code-block:: yaml
 
     webpush:
-    plugin_name: webpush
-    grouplist:
-    -   alarm
-    -   info
+        plugin_name: webpush
+        grouplist:
+            - alarm
+            - info
 
 Items
 ~~~~~
@@ -69,22 +69,22 @@ returnval Parameter hilfreich z.B.:
 
 .. code-block:: yaml
 
-  TestBool:
-    type: bool
-    eval: sh.webpush.sendPushNotification("Test Bool" + str(value), "info", "INFO Bool", returnval=value)
-  TestNum:
-    type: num
-    eval: sh.webpush.sendPushNotification("Test Num = 100", "alarm", "ALARM Num", returnval=value) if int(value)==100 else value
+    TestBool:
+        type: bool
+        eval: sh.webpush.sendPushNotification("Test Bool" + str(value), "info", "INFO Bool", returnval=value)
+    TestNum:
+        type: num
+        eval: sh.webpush.sendPushNotification("Test Num = 100", "alarm", "ALARM Num", returnval=value) if int(value)==100 else value
 
-  TestBoolUpdate:
-    type: bool
-    on_update:
-      - sh.webpush.sendPushNotification("Test Bool", "info", "INFO Bool", returnval=None) if int(value)==1 else None
-  TestNumChange:
-    type: num
-    on_change:
-      - sh.webpush.sendPushNotification("Test Num = 50", "alarm", "ALARM Num", returnval=None) if int(value)==50 else None
-      - sh.webpush.sendPushNotification("Test Num = 100", "alarm", "ALARM Num", returnval=None) if int(value)==100 else None
+    TestBoolUpdate:
+        type: bool
+        on_update:
+            - sh.webpush.sendPushNotification("Test Bool", "info", "INFO Bool", returnval=None) if int(value)==1 else None
+    TestNumChange:
+        type: num
+        on_change:
+            - sh.webpush.sendPushNotification("Test Num = 50", "alarm", "ALARM Num", returnval=None) if int(value)==50 else None
+            - sh.webpush.sendPushNotification("Test Num = 100", "alarm", "ALARM Num", returnval=None) if int(value)==100 else None
 
 Für eine genaue Beschreibung aller Parameter, bitte die aus der plugin.yaml erzeugte Dokumentation beachten.
 
