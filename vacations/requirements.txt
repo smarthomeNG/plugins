@@ -1,1 +1,1 @@
-ferien-api>=0.3.6
+ferien-api>=0.3.7

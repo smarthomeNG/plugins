@@ -3,103 +3,638 @@ plugin:
     # Global plugin attributes
     type: interface                 # plugin type (gateway, interface, protocol, system, web)
     description:
-        de: 'Anbindung einer KWL Pluggit AP310 über das Modbus Protokoll'
-        en: 'Connection of a Pluggit AP310 unit using Modbus protocol'
-    maintainer: '? (Henning Behrend / ratzi82)'
-    tester: '?'                    # Who tests this plugin?
-    state: ready
+        de: 'Anbindung einer KWL Pluggit AP310 über das Modbus-Protokoll.'
+        en: ''
+    maintainer: 'Cannon'
+#    tester:                        # Who tests this plugin?
+#    state:
     keywords: modbus
-#    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
-#    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
-
-    version: 1.2.3                 # Plugin version
-    sh_minversion: 1.2             # minimum shNG version to use this plugin
+#    documentation:
+#    support:
+    version: 2.0.3                  # Plugin version
+    sh_minversion: 1.8              # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
-    multi_instance: False          # plugin supports multi instance
-    restartable: unknown
-    classname: Pluggit             # class containing the plugin
+    multi_instance: False           # plugin supports multi instance
+    classname: Pluggit              # class containing the plugin
 
 parameters:
     # Definition of parameters to be configured in etc/plugin.yaml
     host:
         type: str
+        mandatory: True
         description:
-            de: "Hostname oder IP Adresse des Pluggit Dienstes"
-            en: "Hostname or IP address of the Pluggit service"
+            de: 'Hostname oder IP Adresse des Pluggit Dienstes.'
+            en: 'Hostname or IP address of the Pluggit service.'
 
     port:
         type: int
+        mandatory: False
         default: 502
         valid_min: 0
         valid_max: 65535
         description:
-            de: "Port Nummer des Pluggit Dienstes"
-            en: "Port number of Pluggit service"
+            de: 'Port Nummer des Pluggit Dienstes.'
+            en: 'Port number of Pluggit service.'
 
     cycle:
         type: int
+        mandatory: False
         default: 50
         description:
-            de: "Zykluszeit"
-            en: "Cycle time"
-
+            de: 'Zykluszeit.'
+            en: 'Cycle time.'
 
 item_attributes:
     # Definition of item attributes defined by this plugin
-
-    pluggit_listen:
+    pluggit_read:
         type: str
-        valid_list:
-          - prmRamIdxUnitMode
-          - prmNumOfWeekProgram
-          - prmRomIdxSpeedLevel
-          - prmFilterRemainingTime
-          - prmRamIdxT1
-          - prmRamIdxT2
-          - prmRamIdxT3
-          - prmRamIdxT4
-        valid_list_description:
-            de:
-              - Aktiver Modus der Einheit> 0x0004 Manueller Modus; 0x0008 Wochenprogramm
-              - Nummer des Wochenprogrammes (für Week Programmier-Modus)
-              - Geschwindigkeit des Lüfters im manuellen Modus; zeigt den aktuellen Gschwindigkeits-Level [4-0]
-              - Verbleibende Zeit der Lebensdauer des Filters (in Tagen)
-              - Frischluft Temperatur in °C
-              - Zuluft Temperatur in °C
-              - Abluft Temperatur in °C
-              - Fortluft Temperatur in °C
-            en:
-              - Active Unit mode> 0x0004 Manual Mode; 0x0008 WeekProgram
-              - Number of the Active Week Program (for Week Program mode)
-              - Speed level of Fans in Manual mode; shows a current speed level [4-0]; used for changing of the fan speed level
-              - Remaining time of the Filter Lifetime (Days)
-              - Frischluft temperature in degree
-              - Zuluft temperature in degree
-              - Abluft temperature in degree
-              - Fortluft temperature in degree
         description:
-            de: "In das Item zu lesende Daten"
-            en: "Data to be read into the item"
+            de: 'Aus der Pluggit-Einheit zu lesende Daten.'
+            en: 'Data to be read from the Pluggit unit.'
 
-    pluggit_send:
+    pluggit_write:
         type: str
-        valid_list:
-          - activatePowerBoost
-        valid_list_description:
-            de:
-              - Bool Variable welche den Unit Mode auf manuellen Modus ändert und den Lüfter Gschwindikeits-Level auf den höchsten Wert (4) setzt.
-            en:
-              - bool variable that changes the Unit Mode to manual mode and sets the fan speed level to the highest level (4)
         description:
-            de: "In die Pluggit Einheit zu schreibender Wert"
-            en: "Value to be written to Plugitt unit"
+            de: 'In die Pluggit-Einheit zu schreibender Wert.'
+            en: 'Value to be written to the Pluggit unit.'
 
-item_structs: NONE
-  # Definition of item-structure templates for this plugin
+    pluggit_convert:
+        type: str
+        description:
+            de: 'Wandelt den gelesenen oder den zu schreibenden Wert in bzw. von ein anderes Format um.'
+            en: 'Convert the read or write to value to or from another format.'
 
-plugin_functions: NONE
-    # Definition of plugin functions defined by this plugin
+item_structs:
+    pluggit:
+        DHCPEnabled:
+            type: bool
+            pluggit_read: prmDHCPEN
+            visu_acl: ro
+
+        IPAdress:
+            type: str
+            pluggit_read: prmCurrentIPAddress
+            visu_acl: ro
+
+        IPMask:
+            type: str
+            pluggit_read: prmCurrentIPMask
+            visu_acl: ro
+
+        IPGateway:
+            type: str
+            pluggit_read: prmCurrentIPGateway
+            visu_acl: ro
+
+        MACAdress:
+            type: str
+            pluggit_read: prmMACAddr
+            visu_acl: ro
+
+        SystemComponents:
+            type: num
+            pluggit_read: prmSystemID
+            visu_acl: ro
+
+            FP1:
+                type: bool
+                pluggit_read: prmSystemID
+                pluggit_convert: SID_FP1
+                visu_acl: ro
+
+            Week:
+                type: bool
+                pluggit_read: prmSystemID
+                pluggit_convert: SID_Week
+                visu_acl: ro
+
+            Bypass:
+                type: bool
+                pluggit_read: prmSystemID
+                pluggit_convert: SID_Bypass
+                visu_acl: ro
+
+            LRSwitch:
+                type: bool
+                pluggit_read: prmSystemID
+                pluggit_convert: SID_LRSwitch
+                visu_acl: ro
+
+            InternalPreheater:
+                type: bool
+                pluggit_read: prmSystemID
+                pluggit_convert: SID_InternalPreheater
+                visu_acl: ro
+
+            ServoFlow:
+                type: bool
+                pluggit_read: prmSystemID
+                pluggit_convert: SID_ServoFlow
+                visu_acl: ro
+
+            RHSensor:
+                type: bool
+                pluggit_read: prmSystemID
+                pluggit_convert: SID_RHSensor
+                visu_acl: ro
+
+            VOCSensor:
+                type: bool
+                pluggit_read: prmSystemID
+                pluggit_convert: SID_VOCSensor
+                visu_acl: ro
+
+            ExtOverride:
+                type: bool
+                pluggit_read: prmSystemID
+                pluggit_convert: SID_ExtOverride
+                visu_acl: ro
+
+            HAC1:
+                type: bool
+                pluggit_read: prmSystemID
+                pluggit_convert: SID_HAC1
+                visu_acl: ro
+
+            HRC2:
+                type: bool
+                pluggit_read: prmSystemID
+                pluggit_convert: SID_HRC2
+                visu_acl: ro
+
+            PCTool:
+                type: bool
+                pluggit_read: prmSystemID
+                pluggit_convert: SID_PCTool
+                visu_acl: ro
+
+            Apps:
+                type: bool
+                pluggit_read: prmSystemID
+                pluggit_convert: SID_Apps
+                visu_acl: ro
+
+            ZeegBee:
+                type: bool
+                pluggit_read: prmSystemID
+                pluggit_convert: SID_ZeegBee
+                visu_acl: ro
+
+            DI1Override:
+                type: bool
+                pluggit_read: prmSystemID
+                pluggit_convert: SID_DI1Override
+                visu_acl: ro
+
+            DI2Override:
+                type: bool
+                pluggit_read: prmSystemID
+                pluggit_convert: SID_DI2Override
+                visu_acl: ro
+
+        SystemSerialNum:
+            type: num
+            pluggit_read: prmSystemSerialNum
+            visu_acl: ro
+
+        SystemName:
+            type: str
+            pluggit_read: prmSystemName
+            pluggit_write: prmSystemName
+            visu_acl: rw
+
+        SwitchInBPosition:
+            type: bool
+            pluggit_read: prmHALLeft
+            visu_acl: ro
+
+        SwitchInAPosition:
+            type: bool
+            pluggit_read: prmHALRight
+            visu_acl: ro
+
+        FirmwareVersion:
+            type: num
+            pluggit_read: prmFWVersion
+            visu_acl: ro
+
+        HACFirmwareVersion:
+            type: num
+            pluggit_read: prmRamIdxHac1FirmwareVersion
+            visu_acl: ro
+
+        SystemTime:
+            type: num
+            pluggit_read: prmDateTime
+            pluggit_write: prmDateTimeSet
+            visu_acl: rw
+
+            DateTime:
+                type: foo
+                pluggit_read: prmDateTime
+                pluggit_write: prmDateTimeSet
+                pluggit_convert: ToDateTime
+                visu_acl: rw
+
+            Date:
+                type: foo
+                pluggit_read: prmDateTime
+                pluggit_convert: ToDate
+                visu_acl: ro
+
+            Time:
+                type: foo
+                pluggit_read: prmDateTime
+                pluggit_convert: ToTime
+                visu_acl: ro
+
+        WorkTime:
+            type: num
+            pluggit_read: prmWorkTime
+            visu_acl: ro
+
+        ExploitationDate:
+            type: foo
+            pluggit_read: prmStartExploitationDateStamp
+            visu_acl: ro
+
+            Date:
+                type: foo
+                pluggit_read: prmStartExploitationDateStamp
+                pluggit_convert: ToDate
+                visu_acl: ro
+
+        BLState:
+            type: num
+            pluggit_read: prmCurrentBLState
+            visu_acl: ro
+
+            Text:
+                type: str
+                pluggit_read: prmCurrentBLState
+                pluggit_convert: ToString
+                visu_acl: ro
+
+        CurrentUnitMode:
+            type: num
+            pluggit_read: prmRamIdxUnitMode
+            pluggit_write: prmRamIdxUnitMode
+            visu_acl: rw
+
+            DemandMode:
+                type: bool
+                pluggit_read: prmRamIdxUnitMode
+                pluggit_write: prmRamIdxUnitMode
+                pluggit_convert: UM_DemandMode
+                visu_acl: rw
+
+            ManualMode:
+                type: bool
+                pluggit_read: prmRamIdxUnitMode
+                pluggit_write: prmRamIdxUnitMode
+                pluggit_convert: UM_ManualMode
+                visu_acl: rw
+
+            WeekProgramMode:
+                type: bool
+                pluggit_read: prmRamIdxUnitMode
+                pluggit_write: prmRamIdxUnitMode
+                pluggit_convert: UM_WeekProgramMode
+                visu_acl: rw
+
+            AwayMode:
+                type: bool
+                pluggit_read: prmRamIdxUnitMode
+                pluggit_write: prmRamIdxUnitMode
+                pluggit_convert: UM_AwayMode
+                visu_acl: rw
+
+            FireplaceMode:
+                type: bool
+                pluggit_read: prmRamIdxUnitMode
+                pluggit_write: prmRamIdxUnitMode
+                pluggit_convert: UM_FireplaceMode
+                visu_acl: rw
+
+            SummerMode:
+                type: bool
+                pluggit_read: prmRamIdxUnitMode
+                pluggit_write: prmRamIdxUnitMode
+                pluggit_convert: UM_SummerMode
+                visu_acl: rw
+
+            NightMode:
+                type: bool
+                pluggit_read: prmRamIdxUnitMode
+                pluggit_write: prmRamIdxUnitMode
+                pluggit_convert: UM_NightMode
+                visu_acl: rw
+
+                NightMode_StartHour:
+                    type: num
+                    pluggit_read: prmRomIdxNightModeStartHour
+                    pluggit_write: prmRomIdxNightModeStartHour
+                    visu_acl: rw
+
+                NightMode_StartMin:
+                    type: num
+                    pluggit_read: prmRomIdxNightModeStartMin
+                    pluggit_write: prmRomIdxNightModeStartMin
+                    visu_acl: rw
+
+                NightMode_EndHour:
+                    type: num
+                    pluggit_read: prmRomIdxNightModeEndHour
+                    pluggit_write: prmRomIdxNightModeEndHour
+                    visu_acl: rw
+
+                NightMode_EndMin:
+                    type: num
+                    pluggit_read: prmRomIdxNightModeEndMin
+                    pluggit_write: prmRomIdxNightModeEndMin
+                    visu_acl: rw
+
+            ManualBypass:
+                type: bool
+                pluggit_read: prmRamIdxUnitMode
+                pluggit_write: prmRamIdxUnitMode
+                pluggit_convert: UM_ManualBypass
+                visu_acl: rw
+
+        FanSpeedLevel:
+            type: num
+            pluggit_read: prmRomIdxSpeedLevel
+            pluggit_write: prmRomIdxSpeedLevel
+            visu_acl: rw
+
+        Fan1rpm:
+            type: num
+            pluggit_read: prmHALTaho1
+            visu_acl: ro
+
+        Fan2rpm:
+            type: num
+            pluggit_read: prmHALTaho2
+            visu_acl: ro
+
+        # Frischluft
+        OutdoorTemperature:
+            type: num
+            pluggit_read: prmRamIdxT1
+            visu_acl: ro
+
+        # Zuluft
+        SupplyTemperature:
+            type: num
+            pluggit_read: prmRamIdxT2
+            visu_acl: ro
+
+        # Abluft
+        ExtractTemperature:
+            type: num
+            pluggit_read: prmRamIdxT3
+            visu_acl: ro
+
+        # Fortluft
+        ExhaustTemperature:
+            type: num
+            pluggit_read: prmRamIdxT4
+            visu_acl: ro
+
+        # Raumtemperatur, kabellos
+        RoomTemperature:
+            type: num
+            pluggit_read: prmRamIdxT5
+            visu_acl: ro
+
+        FilterRemainingLifetime:
+            type: num
+            pluggit_read: prmFilterRemainingTime
+            visu_acl: ro
+
+        FilterDefaultTime:
+            type: num
+            pluggit_read: prmFilterDefaultTime
+            pluggit_write: prmFilterDefaultTime
+            visu_acl: rw
+
+        FilterReset:
+            type: bool
+            pluggit_read: prmFilterReset
+            pluggit_write: prmFilterReset
+            visu_acl: rw
+
+        Alarm:
+            type: num
+            pluggit_read: prmLastActiveAlarm
+            visu_acl: ro
+            Text:
+                type: str
+                pluggit_read: prmLastActiveAlarm
+                pluggit_convert: ToString
+                visu_acl: ro
+            ClearAlarm:
+                type: num
+                pluggit_write: prmSetAlarmNum
+                visu_acl: rw
+
+        WeekProgram:
+            type: num
+            pluggit_read: prmNumOfWeekProgram
+            pluggit_write: prmNumOfWeekProgram
+            visu_acl: rw
+
+            Monday:
+                type: list
+                pluggit_read: PrmWeekMon
+                pluggit_write: PrmWeekMon
+                visu_acl: rw
+
+            Tuesday:
+                type: list
+                pluggit_read: PrmWeekTue
+                pluggit_write: PrmWeekTue
+                visu_acl: rw
+
+            Wednesday:
+                type: list
+                pluggit_read: PrmWeekWed
+                pluggit_write: PrmWeekWed
+                visu_acl: rw
+
+            Thursday:
+                type: list
+                pluggit_read: PrmWeekThu
+                pluggit_write: PrmWeekThu
+                visu_acl: rw
+
+            Friday:
+                type: list
+                pluggit_read: PrmWeekFri
+                pluggit_write: PrmWeekFri
+                visu_acl: rw
+
+            Saturday:
+                type: list
+                pluggit_read: PrmWeekSat
+                pluggit_write: PrmWeekSat
+                visu_acl: rw
+
+            Sunday:
+                type: list
+                pluggit_read: PrmWeekSun
+                pluggit_write: PrmWeekSun
+                visu_acl: rw
+
+        Bypass:
+            type: num
+            pluggit_read: prmRamIdxBypassActualState
+            visu_acl: ro
+
+            Text:
+                type: str
+                pluggit_read: prmRamIdxBypassActualState
+                pluggit_convert: ToString
+                visu_acl: ro
+
+            Open:
+                type: bool
+                pluggit_read: prmRamIdxBypassActualState
+                pluggit_convert: ToBool
+                visu_acl: ro
+
+            Tmin:
+                type: num
+                pluggit_read: prmBypassTmin
+                visu_acl: ro
+
+            Tmax:
+                type: num
+                pluggit_read: prmBypassTmax
+                visu_acl: ro
+
+            ManualMode:
+                type: bool
+                enforce_updates: yes
+                pluggit_read: prmRamIdxUnitMode
+                pluggit_write: prmRamIdxUnitMode
+                pluggit_convert: UM_ManualBypass
+                visu_acl: rw
+
+            ManualTimeout:
+                type: num
+                pluggit_read: prmRamIdxBypassManualTimeout
+                visu_acl: ro
+
+        PreheaterPower:
+            type: num
+            pluggit_read: prmPreheaterDutyCycle
+            visu_acl: ro
+
+        ReferenceExtractFanSpeed:
+            type: num
+            pluggit_read: prmRefValEx
+            visu_acl: ro
+
+        ReferenceSupplyFanSpeed:
+            type: num
+            pluggit_read: prmRefValSupl
+            visu_acl: ro
+
+        FireplacePresent:
+            type: bool
+            pluggit_read: prmFireplacePreset
+            visu_acl: ro
+
+        VOC_Sensor:
+            SensorValue:
+                type: num
+                pluggit_read: prmVOC
+                visu_acl: ro
+
+            LowTreshold:
+                type: num
+                pluggit_read: prmPPM1Unit
+                pluggit_write: prmPPM1Unit
+                visu_acl: rw
+
+            MiddleTreshold:
+                type: num
+                pluggit_read: prmPPM2Unit
+                pluggit_write: prmPPM2Unit
+                visu_acl: rw
+
+            HighTreshold:
+                type: num
+                pluggit_read: prmPPM3Unit
+                pluggit_write: prmPPM3Unit
+                visu_acl: rw
+
+        RH_Sensor:
+            SensorValue:
+                type: num
+                pluggit_read: prmRamIdxRh3Corrected
+                visu_acl: ro
+
+            SetPoint:
+                type: num
+                pluggit_read: prmRomIdxRhSetPoint
+                visu_acl: ro
+
+        HAC_Parts:
+            SystemIDComponents:
+                type: num
+                pluggit_read: prmSystemIDComponents
+                visu_acl: ro
+
+            CO2_Level:
+                type: num
+                pluggit_read: prmHACCO2Val
+                visu_acl: ro
+
+            CO2_LowTreshold:
+                type: num
+                pluggit_read: prmPPM1External
+                pluggit_write: prmPPM1External
+                visu_acl: rw
+
+            CO2_MiddleTreshold:
+                type: num
+                pluggit_read: prmPPM2External
+                pluggit_write: prmPPM2External
+                visu_acl: rw
+
+            CO2_HighTreshold:
+                type: num
+                pluggit_read: prmPPM3External
+                pluggit_write: prmPPM3External
+                visu_acl: rw
+
+            IdxHac1Components:
+                type: num
+                pluggit_read: prmRamIdxHac1Components
+                visu_acl: ro
+
+            SetpointT2:
+                type: num
+                pluggit_read: prmRomIdxAfterHeaterT2SetPoint
+                pluggit_write: prmRomIdxAfterHeaterT2SetPoint
+                visu_acl: rw
+
+            SetpointT3:
+                type: num
+                pluggit_read: prmRomIdxAfterHeaterT3SetPoint
+                pluggit_write: prmRomIdxAfterHeaterT3SetPoint
+                visu_acl: rw
+
+            SetpointT5:
+                type: num
+                pluggit_read: prmRomIdxAfterHeaterT5SetPoint
+                pluggit_write: prmRomIdxAfterHeaterT5SetPoint
+                visu_acl: rw
 
 logic_parameters: NONE
     # Definition of logic parameters defined by this plugin
 
+plugin_functions:
+    # Definition of function interface of the plugin

@@ -12,7 +12,7 @@ plugin:
     documentation: 'http://smarthomeng.de/user/plugins_doc/config/vacations.html'   # url of documentation (wiki) page
     support: 'https://knx-user-forum.de/forum/supportforen/smarthome-py/1443788-support-thread-f%C3%BCr-das-vacations-plugin'
 
-    version: 1.0.1                 # Plugin version
+    version: 1.0.3                 # Plugin version
     sh_minversion: 1.6             # minimum shNG version to use this plugin
 #    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance

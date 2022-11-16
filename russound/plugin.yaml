@@ -9,10 +9,10 @@ plugin:
     tester: alex,fritz              # Who tests this plugin?
     state: develop                  # change to ready when done with development
     keywords: russound audio device multiroom net
-    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
-    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
+    documentation: https://www.smarthomeng.de/developer/plugins/russound/user_doc.html        # url of documentation (wiki) page
+    support:       https://knx-user-forum.de/forum/supportforen/smarthome-py/1800440-support-thread-für-das-russound-plugin
 
-    version: 1.7.0                  # Plugin version
+    version: 1.7.1                  # Plugin version
     sh_minversion: 1.9.0            # minimum shNG version to use this plugin
     # sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: false           # plugin supports multi instance
@@ -76,8 +76,18 @@ item_attributes:
 item_structs: NONE
     # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
 
-plugin_functions: NONE
-    # Definition of plugin functions defined by this plugin (enter 'plugin_functions: NONE', if section should be empty)
+plugin_functions: 
+    suspend:
+        type: foo
+        description:
+            de: "Schliesst vorübergehend die Kommunikation mit Russound"
+            en: "Closes communication with Russound and does neither send data nor query settings"
+
+    activate:
+        type: foo
+        description:
+            de: "Startet die Kommunikation mit Russound neu"
+            en: "Open up communication with Russound again and enable sending data and query settings"
 
 logic_parameters: NONE
     # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)

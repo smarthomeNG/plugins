@@ -21,7 +21,7 @@
 #########################################################################
 
 
-"""The types from knxd\src\include\eibtypes.h are partially defined here and encapsulated in KNXD namespace"""
+"""The types from knxd/src/include/eibtypes.h are partially defined here and encapsulated in KNXD namespace"""
 
 class KNXD():
     INVALID_REQUEST            = 0     # 0x0000
@@ -37,7 +37,7 @@ class KNXD():
     BUSMONITOR_PACKET          = 20    # 0x0014
     BUSMONITOR_PACKET_TS       = 21    # 0x0015
     OPEN_BUSMONITOR_TS         = 22    # 0x0016
-    OPEN_VBUSMONITOR_TS        = 23    # 0x0017  
+    OPEN_VBUSMONITOR_TS        = 23    # 0x0017
 
     OPEN_T_CONNECTION          = 32    # 0x0020
     OPEN_T_INDIVIDUAL          = 33    # 0x0021
@@ -80,11 +80,11 @@ class KNXD():
     CACHE_ENABLE               = 112   # 0x0070
     CACHE_DISABLE              = 113   # 0x0071
     CACHE_CLEAR                = 114   # 0x0072
-    CACHE_REMOVE               = 115   # 0x0073
+    CACHE_REMOVE               = 115   # 0x0073 remove a cache entry for a group address
     CACHE_READ                 = 116   # 0x0074
     CACHE_READ_NOWAIT          = 117   # 0x0075
     CACHE_LAST_UPDATES         = 118   # 0x0076
-    CACHE_LAST_UPDATES_2       = 119   # 0x0077    
+    CACHE_LAST_UPDATES_2       = 119   # 0x0077
 
     MessageDescriptions = {
         0  : 'INVALID_REQUEST',

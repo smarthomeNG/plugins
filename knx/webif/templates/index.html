@@ -3,37 +3,6 @@
 {% set logo_frame = false %}
 
 {% block pluginscripts %}
-{#
-<script>
-	function handleUpdatedData(response, dataSet=null) {
-		if (dataSet === 'devices_info' || dataSet === null) {
-			var objResponse = JSON.parse(response);
-			myProto = document.getElementById(dataSet);
-			for (var device in objResponse) {
-				<!--
-				shngInsertText (device+'_source', objResponse[device]['source']);
-				shngInsertText (device+'_powerState', objResponse[device]['powerState']);
-				-->
-			}
-		}
-	}
-</script>
-#}
-
-/*
- * The combined file was created by the DataTables downloader builder:
- *   https://datatables.net/download
- *
- * To rebuild or modify this file with the latest versions of the included
- * software please visit:
- *   https://datatables.net/download/#dt/dt-1.10.21/fh-3.1.7/r-2.2.5
- *
- * Included libraries:
- *   DataTables 1.10.21, FixedHeader 3.1.7, Responsive 2.2.5
- */
-<link rel="stylesheet" type="text/css" href="static/datatables.css">
-<script type="text/javascript" charset="utf8" src="static/datatables.js"></script>
-
 <script>
 $(document).ready( function () {
     $('#itemtable').DataTable( {
@@ -186,7 +155,9 @@ $(document).ready(
 					<td class="py-1">{{ item.conf['knx_dpt'] }}</td>
 					<td class="py-1">
 					{% if 'knx_cache' in item.conf %}
-						knx_cache: {{ item.conf['knx_cache'] }}<br>
+						{% if item.conf['knx_cache'] in p.get_unsatisfied_cache_read_ga() %}<span style="color: red;">{% endif %}
+						knx_cache: {{ item.conf['knx_cache'] }}
+						{% if item.conf['knx_cache'] in p.get_unsatisfied_cache_read_ga() %}</span>{% endif %}<br>
 					{% endif %}
 					{% if 'knx_init' in item.conf %}
 						knx_init: {{ item.conf['knx_init'] }}<br>

@@ -253,7 +253,7 @@ class SeEval(StateEngineTools.SeItemChild):
             suspend_remaining = suspend_time - suspend_over
             self._log_debug("Remaining suspend time: {0}", suspend_remaining)
             if suspend_remaining < 0:
-                self._log_debug("Eval-Method 'insert_suspend_time': Suspend should alredy be finished!")
+                self._log_debug("Eval-Method 'insert_suspend_time': Suspend should already be finished!")
                 self._eval_lock.release()
                 return "Suspend already over."
             suspend_until = self._abitem.shtime.now() + datetime.timedelta(seconds=suspend_remaining)

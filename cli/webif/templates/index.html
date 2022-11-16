@@ -4,7 +4,7 @@
 
 <!-- set update_interval to a value > 0 (in milliseconds) to enable periodic data updates -->
 {% set update_interval = 0 %}
-
+{% set buttons = false %}
 <!--
 	Additional script tag for plugin specific javascript code go into this block
 -->
@@ -32,34 +32,19 @@
 		<tr>
 			<td class="py-1"><strong> {{ _('Hörende IP') }} </strong></td>
 			<td class="py-1">{{ p.ip }}</td>
-			<td class="py-1" width="50px"></td>
 			<td class="py-1"><strong>{{ _('Updates erlaubt') }}</strong></td>
 			<td class="py-1">{{ p.updates_allowed }}</td>
-			<td class="py-1" width="50px"></td>
 		</tr>
 		<tr>
 			<td class="py-1"><strong>Port</strong></td>
 			<td class="py-1">{{ p.port }}</td>
-			<td></td>
 			<td class="py-1"><strong>{{ _('Hashed Passwort') }}</strong></td>
 			<td class="py-1">{{ p.hashed_password }}</td>
-			<td></td>
 		</tr>
 	</tbody>
 </table>
 {% endblock headtable %}
 
-
-<!--
-	Additional buttons for the web interface (if any are needed) - displayed below the headtable-section
--->
-{% block buttons %}
-{% if 1==2 %}
-	<div>
-		<button id="btn1" class="btn btn-shng btn-sm" name="scan" onclick="shngPost('', {learn: 'on'})"><i class="fas fa-question"></i>&nbsp;&nbsp;&nbsp;{{ _('nach Devices suchen') }}&nbsp;</button>
-	</div>
-{% endif %}
-{% endblock %}
 
 <!--
 	Define the number of tabs for the body of the web interface (1 - 3)

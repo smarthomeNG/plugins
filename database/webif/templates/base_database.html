@@ -8,40 +8,94 @@
 <script src="/gstatic/bootstrap-datepicker/js/bootstrap-datepicker.min.js"></script>
 <script src="/gstatic/bootstrap-datepicker/locales/bootstrap-datepicker.de.min.js"></script>
 <script src="/gstatic/bootstrap-datepicker/locales/bootstrap-datepicker.fr.min.js"></script>
-<script type="text/javascript" charset="utf8" src="static/datatables.js"></script>
 {%- endblock scripts %}
 
 {%- block pluginscripts %}
 <script>
-$(document).ready( function () {
-    $('#itemtable').DataTable( {
-        "paging": false,
-        fixedHeader: true,
-        columnDefs: [{
-          orderable: false,
-          targets: "no-sort"
-        }]
-        } );
-    $('#item_details_table').DataTable( {
-        "paging": false,
-        fixedHeader: true,
-        columnDefs: [{
-          orderable: false,
-          targets: "no-sort"
-        }]
-        } );
-} );
+  $(document).ready( function () {
+    $(window).trigger('datatables_defaults');
+    try {
+      /* get pagelength from plugin. Also see hidden span element in bodytab1 block! */
+      webif_pagelength = parseInt(document.getElementById('webif_pagelength').innerHTML);
+      if (isNaN(parseFloat(webif_pagelength)) || webif_pagelength == 0) {
+        resize = true;
+        webif_pagelength = -1;
+        console.log('Activating automatic table resize');
+      }
+      else {
+        resize = false;
+      }
+    }
+    catch (e) {
+      webif_pagelength = 100;
+      resize = false;
+      console.log("Using default values for page length " + webif_pagelength + ", pageResize: " + resize);
+    }
+		try {
+      itemtable = $('#itemtable').DataTable( {
+        pageResize: resize,
+        columnDefs: [
+        { responsivePriority: 1, targets: 0 },
+        { responsivePriority: 3, targets: 3 },
+        { responsivePriority: 2, targets: -1 }
+        ].concat($.fn.dataTable.defaults.columnDefs),
+        pageLength: webif_pagelength});
+      detailtable = $('#item_details_table').DataTable( {
+        pageLength: webif_pagelength,
+        order: [[1, 'desc']],
+        createdRow: function (row, data, index) {
+            $('td', row).addClass('py-1 truncate');
+            this.api().columns.adjust();
+            this.api().fixedHeader.adjust();
+            this.api().responsive.recalc();
+        },
+        pageResize: resize});
+		}
+		catch (e) {
+			console.log("Datatable JS not loaded, showing standard table without reorder option " +e);
+    }
 
+  });
 </script>
+
 {%- endblock pluginscripts %}
 
 {%- block styles %}
 {{ super() }}
 <link rel="stylesheet" href="/gstatic/bootstrap-datepicker/css/bootstrap-datepicker.min.css" type="text/css"/>
-<link rel="stylesheet" type="text/css" href="static/datatables.css">
+<!-- <link rel="stylesheet" type="text/css" href="static/datatables.css"> -->
+<style>
+    .duration {
+      text-align:right;}
+    .hidden {
+      display:none;}
+    .logcount {
+      width: 100px;
+      text-align:right;
+    }
+    .actions {
+      width: 110px;
+    }
+    .maxage {
+      width: 230px;
+    }
+    .id {
+      width: 80px;
+    }
+    .value {
+      width: 120px;
+    }
+    .type {
+      width: 60px;
+    }
+    .init {
+      width: 50px;
+    }
+</style>
 {%- endblock styles %}
 
 {% block headtable %}
+<span id='webif_pagelength' style="display:none">{{ webif_pagelength }}</span>
 <table class="table table-striped table-hover">
 	<tbody>
 		<tr>

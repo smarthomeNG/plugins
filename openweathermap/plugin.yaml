@@ -492,6 +492,12 @@ item_structs:
             eval: datetime.datetime.fromtimestamp(value, datetime.timezone.utc).astimezone().strftime('%Y-%m-%d %H:%M:%S %Z%z')
             owm_match_prefix@instance: ..:.
             owm_matchstring@instance: /dt
+        dt_weekday:
+            name: Time of the forecasted data, Unix, UTC
+            type: str
+            eval: datetime.datetime.fromtimestamp(value, datetime.timezone.utc).astimezone().strftime('%A')
+            owm_match_prefix@instance: ..:.
+            owm_matchstring@instance: /dt
         sunrise:
             name: Sunrise time, Unix, UTC
             type: str

@@ -12,7 +12,7 @@ plugin:
   documentation: https://github.com/smarthomeNG/plugins/tree/master/sonos # url of documentation (wiki) page
   support: https://knx-user-forum.de/forum/supportforen/smarthome-py/25151-sonos-anbindung
 
-  version: 1.6.4                 # Plugin version
+  version: 1.6.6                 # Plugin version
   sh_minversion: 1.5.1           # minimum shNG version to use this plugin
   py_minversion: 3.5             # minimum Python version to use for this plugin
   multi_instance: False          # plugin supports multi instance
@@ -206,10 +206,10 @@ item_attributes:
     - 'tts_volume'
     - 'tts_fade_in'
     - 'start_after'
-    - snippet_fade_in
-    - snippet_volume
-    - clear_queue
-    - start_track
+    - 'snippet_fade_in'
+    - 'snippet_volume'
+    - 'clear_queue'
+    - 'start_track'
 
   sonos_dpt3_step:
     type: int

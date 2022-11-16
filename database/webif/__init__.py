@@ -27,6 +27,7 @@
 import datetime
 import time
 import os
+import json
 
 from lib.item import Items
 from lib.model.smartplugin import SmartPluginWebIf
@@ -70,6 +71,10 @@ class WebInterface(SmartPluginWebIf):
 
         :return: contents of the template after beeing rendered
         """
+        try:
+            pagelength = self.plugin.webif_pagelength
+        except Exception:
+            pagelength = 100
         if item_path is not None:
             item = self.plugin.items.return_item(item_path)
         delete_triggered = False
@@ -94,20 +99,24 @@ class WebInterface(SmartPluginWebIf):
 
                 rows = self.plugin.readLogs(item_id, time_start=time_start, time_end=time_end)
                 log_array = []
-                for row in rows:
-                    value_dict = {}
-                    for key in [COL_LOG_TIME, COL_LOG_ITEM_ID, COL_LOG_DURATION, COL_LOG_VAL_STR, COL_LOG_VAL_NUM,
-                                COL_LOG_VAL_BOOL, COL_LOG_CHANGED]:
-                        if key not in [COL_LOG_TIME, COL_LOG_CHANGED]:
-                            value_dict[key] = row[key]
-                        else:
-                            value_dict[key] = datetime.datetime.fromtimestamp(row[key] / 1000,
-                                                                              tz=self.plugin.shtime.tzinfo())
-                            value_dict["%s_orig" % key] = row[key]
+                if rows is None:
+                    reversed_arr = []
+                else:
+                    for row in rows:
+                        value_dict = {}
+                        for key in [COL_LOG_TIME, COL_LOG_ITEM_ID, COL_LOG_DURATION, COL_LOG_VAL_STR, COL_LOG_VAL_NUM,
+                                    COL_LOG_VAL_BOOL, COL_LOG_CHANGED]:
+                            if key not in [COL_LOG_TIME, COL_LOG_CHANGED]:
+                                value_dict[key] = row[key]
+                            else:
+                                value_dict[key] = datetime.datetime.fromtimestamp(row[key] / 1000,
+                                                                                  tz=self.plugin.shtime.tzinfo())
+                                value_dict["%s_orig" % key] = row[key]
 
-                    log_array.append(value_dict)
-                reversed_arr = log_array[::-1]
+                        log_array.append(value_dict)
+                    reversed_arr = log_array[::-1]
                 return tmpl.render(p=self.plugin,
+                                   webif_pagelength=pagelength,
                                    items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path']),
                                                 reverse=False), item=item,
                                    tabcount=2, action=action, item_id=item_id, item_path=item_path,
@@ -116,11 +125,68 @@ class WebInterface(SmartPluginWebIf):
                                    delete_triggered=delete_triggered)
 
         tmpl = self.tplenv.get_template('index.html')
+
         return tmpl.render(p=self.plugin,
+                           webif_pagelength=pagelength,
                            items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path']), reverse=False),
                            tabcount=2, action=action, item_id=item_id, delete_triggered=delete_triggered,
                            language=self.plugin.get_sh().get_defaultlanguage())
 
+    @cherrypy.expose
+    def get_data_html(self, dataSet=None, params=None):
+        """
+        Return data to update the webpage
+
+        For the standard update mechanism of the web interface, the dataSet to return the data for is None
+
+        :param dataSet: Dataset for which the data should be returned (standard: None)
+        :return: dict with the data needed to update the web page.
+        """
+        if dataSet == 'overview':
+            # get the new data
+            data = self.plugin._webdata
+            try:
+                data = json.dumps(data)
+                return data
+            except Exception as e:
+                self.logger.error(f"get_data_html exception: {e}")
+        if dataSet == "item_details":
+            item_id = params
+            now = self.plugin.shtime.now()
+            time_start = time.mktime(datetime.datetime.strptime("%s/%s/%s" % (now.month, now.day, now.year),
+                                                                "%m/%d/%Y").timetuple()) * 1000
+            time_end = time_start + 24 * 60 * 60 * 1000
+            if item_id is not None:
+                rows = self.plugin.readLogs(item_id, time_start=time_start, time_end=time_end)
+            else:
+                rows = []
+            log_array = []
+            if rows is None:
+                reversed_arr = []
+            else:
+                for row in rows:
+                    value_dict = {}
+                    for key in [COL_LOG_TIME, COL_LOG_ITEM_ID, COL_LOG_DURATION, COL_LOG_VAL_STR, COL_LOG_VAL_NUM,
+                                COL_LOG_VAL_BOOL, COL_LOG_CHANGED]:
+                        if key not in [COL_LOG_TIME, COL_LOG_CHANGED]:
+                            value_dict[key] = row[key]
+                        else:
+                            value_dict[key] = datetime.datetime.fromtimestamp(row[key] / 1000,
+                                                                              tz=self.plugin.shtime.tzinfo()).isoformat()
+                            value_dict["%s_orig" % key] = row[key]
+
+                    log_array.append(value_dict)
+                reversed_arr = log_array[::-1]
+            try:
+                data = json.dumps(reversed_arr)
+                if data:
+                    return data
+                else:
+                    return None
+            except Exception as e:
+                self.logger.error(f"get_data_html exception: {e}")
+
+        return {}
 
     @cherrypy.expose
     def item_csv(self, item_id):
@@ -134,22 +200,24 @@ class WebInterface(SmartPluginWebIf):
         else:
             rows = self.plugin.readLogs(item_id)
             log_array = []
-            for row in rows:
-                value_dict = {}
-                for key in [COL_LOG_TIME, COL_LOG_ITEM_ID, COL_LOG_DURATION, COL_LOG_VAL_STR, COL_LOG_VAL_NUM,
-                            COL_LOG_VAL_BOOL, COL_LOG_CHANGED]:
-                    value_dict[key] = row[key]
-                log_array.append(value_dict)
-            reversed_arr = log_array[::-1]
-            csv_file_path = '%s/var/db/%s_item_%s.csv' % (
-                self.plugin._sh.base_dir, self.plugin.get_instance_name(), item_id)
+            if rows is None:
+                reversed_arr = []
+            else:
+                for row in rows:
+                    value_dict = {}
+                    for key in [COL_LOG_TIME, COL_LOG_ITEM_ID, COL_LOG_DURATION, COL_LOG_VAL_STR, COL_LOG_VAL_NUM,
+                                COL_LOG_VAL_BOOL, COL_LOG_CHANGED]:
+                        value_dict[key] = row[key]
+                    log_array.append(value_dict)
+                reversed_arr = log_array[::-1]
+            csv_file_path = f'{self.plugin._sh.base_dir}/var/db/{self.plugin.get_instance_name()}_item_{item_id}.csv'
 
             with open(csv_file_path, 'w', encoding='utf-8') as f:
                 writer = csv.writer(f, dialect="excel")
                 writer.writerow(['time', 'item_id', 'duration', 'val_str', 'val_num', 'val_bool', 'changed'])
-                for dataset in reversed_arr:
+                for data in reversed_arr:
                     writer.writerow(
-                        [dataset[0], dataset[1], dataset[2], dataset[3], dataset[4], dataset[5], dataset[6]])
+                        [data[0], data[1], data[2], data[3], data[4], data[5], data[6]])
 
             cherrypy.request.fileName = csv_file_path
             cherrypy.request.hooks.attach('on_end_request', self.download_complete)

@@ -1,4 +1,7 @@
 {% extends "base_database.html" %}
+{% set dataSet = 'item_details' %}
+{% set update_params = item_id %}
+{% set update_interval = (200 * (log_array | length)) %}
 {% set tab1title = _('Database Items')+' ('+item_path+')' %}
 {% block buttons %}
 {{ super() }}
@@ -13,6 +16,25 @@ function confirmDelete(url, text) {
 	}
 	return false;
 }
+function checkDate() {
+	var today = new Date();
+	var today_date = String(today.getDate()) + String(today.getMonth() + 1) + today.getFullYear();
+	const url = new URL(window.location.href);
+	let url_date = url.searchParams.get('day') + url.searchParams.get('month') + url.searchParams.get('year');
+	if (today_date != url_date && url_date != 0) {
+		try {
+		window.refresh.update({update_active:false});
+		window.update_blocked = true;
+		}
+		catch (e) {
+			console.warning("Can not update auto-refresh parameters.");
+		}
+		return false;
+	}
+	else return true;
+}
+checkDate();
+
 </script>
 {% if action == 'delete_log' %}
 	<div class="mb-2 alert alert-success alert-dismissible fade show" role="alert">
@@ -33,8 +55,9 @@ function confirmDelete(url, text) {
 	</div>
 {% endif %}
 <div class="mb-2">
-	{{ _('Die folgenden Einträge entstammen der log Tabelle mit historischen Daten für das Item') }} 
-	<strong>{{ item_path }}</strong> {{ _('am') }} <strong>
+	{{ _('Die folgenden Einträge entstammen der log Tabelle mit historischen Daten für das Item') }}
+	<strong id="item_path">{{ item_path }}</strong> {{ _('am') }} <strong>
+
 	{% if day and month and year %}
 		{% if language == 'en' %}{{ month }}/{{ day }}/{{ year }}
 		{% else %}{{ day }}.{{ month }}.{{ year }}
@@ -51,53 +74,46 @@ function confirmDelete(url, text) {
 </div>
 <div style="float:right; width:20%;" id="datepicker">
 </div>
-<div style="float:left; width:80%;">
-<table class="table table-striped table-hover pluginList" id="item_details_table">
-	<thead>
-	<tr>
-		<th style="width: 90px;">{{ _('Item ID') }}</th>
-		<th style="width: 190px;">{{ _('Zeit') }}</th>
-		<th style="width: 120px; text-align:right">{{ _('Dauer') }} (sec)</th>
-		{% if item.property.type == 'num' %}<th style="width: 120px;">VAL_NUM</th>{% endif %}
-		{% if item.property.type == 'bool' %}<th style="width: 120px;">VAL_BOOL</th>{% endif %}
-		{% if item.property.type == 'str' %}<th>VAL_STR</th>{% endif %}
-		{% if item.property.type == 'foo' %}<th>VAL_STR</th>{% endif %}
-		<th style="width: 190px;">{{ _('Geändert') }}</th>
-		<th class="no-sort">{{ _('Aktionen') }}</th>
-	</tr>
-	</thead>
-	{% if log_array | length > 0 %}
-		{% for dataset in log_array %}
-			<tr>
-				<td class="py-1">{{ dataset[1] }}</td>
-				<td class="py-1">{{ dataset[0].strftime('%d.%m.%Y %H:%M:%S') }}</td>
-				<td class="py-1" style="text-align:right">{{ p._seconds(dataset[2]) }}</td>
-				{% if item.property.type == 'num' %}<td class="py-1">{{ dataset[4] }}</td>{% endif %}
-				{% if item.property.type == 'bool' %}<td class="py-1">{{ dataset[5] }}</td>{% endif %}
-				{% if item.property.type == 'str' %}<td class="py-1">{{ dataset[3] }}</td>{% endif %}
-				{% if item.property.type == 'foo' %}<td class="py-1">{{ dataset[3] }}</td>{% endif %}
-				<td class="py-1">{{ dataset[6].strftime('%d.%m.%Y %H:%M:%S') }} </td>
-				<td class="py-1"><button {% if loop.index < 3 and (day is none or (day+" "+month+" "+year == now.strftime('%d %m %Y'))) %}disabled{% endif %} type="button"
-				class="btn btn-{% if loop.index < 3 and (day is none or (day+" "+month+" "+year == now.strftime('%d %m %Y'))) %}secondary{% else %}danger{% endif %} btn-sm"
-				title="{% if loop.index < 3 and (day is none or (day+" "+month+" "+year == now.strftime('%d %m %Y'))) %}{{ _('Wert löschen fuer aktuellen Wert nicht verfuegbar.') }}{% else %}{{ _('Wert löschen') }}{% endif %}"
-				onclick="confirmDelete('?action=delete_log&item_id={{ dataset[1] }}&item_path={{ item_path }}&time_orig={{ dataset['0_orig'] }}&changed_orig={{ dataset['6_orig'] }}{% if day and month and year %}&day={{ day }}&month={{ month }}&year={{ year }}{% endif %}','{{ _('Wollen Sie den Datensatz (Tabelle log) dieses Items wirklich löschen?') }}')"><i class="fas fa-trash-alt"></i></button></td>
-
-
-			</tr>
-		{% endfor %}
-	{% else %}
+<div style="float:left; width:80%;" class="table-resize">
+	<table class="table table-striped table-hover pluginList dataTableAdditional" id="item_details_table">
+		<thead>
 		<tr>
-			<td class="py-1">-</td>
-			<td class="py-1">-</td>
-			<td class="py-1">-</td>
-			<td class="py-1">-</td>
-			{{ item.type() == 'num'}}<td class="py-1">-</td>
-			{{ item.type() == 'bool'}}<td class="py-1">-</td>
-			{{ item.type() == 'str'}}<td class="py-1">-</td>
-			<td class="py-1">-</td>
+			<th style="width: 40px;">{{ _('Item ID') }}</th>
+			<th style="width: 100px;">{{ _('Zeit') }}</th>
+			<th style="width: 60px; text-align:right">{{ _('Dauer') }} (sec)</th>
+			{% if item.property.type == 'num' %}<th style="width: 120px;">VAL_NUM</th>{% endif %}
+			{% if item.property.type == 'bool' %}<th style="width: 120px;">VAL_BOOL</th>{% endif %}
+			{% if item.property.type == 'str' %}<th>VAL_STR</th>{% endif %}
+			{% if item.property.type == 'foo' %}<th>VAL_STR</th>{% endif %}
+			<th style="width: 100px;">{{ _('Geändert') }}</th>
+			<th class="no-sort" style="width:40px;">{{ _('Aktionen') }}</th>
 		</tr>
-	{% endif %}
-</table>
+		</thead>
+		<tbody>
+			{% for data in log_array %}
+			  <tr id="{{ data[0] }}_{{ data[2] }}">
+			    <td class="py-1" id="{{ data[0] }}_{{ data[2] }}_id">{{ data[1] }}</td>
+			    <td class="py-1" id="{{ data[0] }}_{{ data[2] }}_time">{% if language == 'en' %}{{ data[0].strftime('%m/%d/%Y %H:%M:%S') }}{% else %}{{ data[0].strftime('%d.%m.%Y %H:%M:%S') }}{% endif %}</td>
+			    <td class="py-1 duration" id="{{ data[0] }}_{{ data[2] }}_duration">{% if p._seconds(data[2]) == none %}{{ p._seconds(data[2]) }}{% else %}{{ ("%.2f"|format(p._seconds(data[2])|float)).rstrip('0').rstrip('.') }}{% endif %}</td>
+			    {% if item.property.type == 'num' %}<td class="py-1" id="{{ data[0] }}_{{ data[2] }}_value">{{ ("%.2f"|format(data[4]|float)).rstrip('0').rstrip('.') }}</td>{% endif %}
+			    {% if item.property.type == 'bool' %}<td class="py-1" id="{{ data[0] }}_{{ data[2] }}_value">{{ data[5] }}</td>{% endif %}
+			    {% if item.property.type == 'str' %}<td class="py-1" id="{{ data[0] }}_{{ data[2] }}_value">{{ data[3] }}</td>{% endif %}
+			    {% if item.property.type == 'foo' %}<td class="py-1" id="{{ data[0] }}_{{ data[2] }}_value">{{ data[3] }}</td>{% endif %}
+			    <td class="py-1" id="{{ data[0] }}_{{ data[2] }}_changed">{% if language == 'en' %}{{ data[6].strftime('%m/%d/%Y %H:%M:%S') }}{% else %}{{ data[6].strftime('%d.%m.%Y %H:%M:%S') }}{% endif %}</td>
+			    <td class="py-1" id="{{ data[0] }}_{{ data[2] }}_buttons">
+			    {% if loop.index < 3 and (day is none or (day+" "+month+" "+year == now.strftime('%d %m %Y'))) %}
+			      {% set is_disabled = true %}
+			    {% else %}
+			      {% set is_disabled = false %}
+			    {% endif %}
+			    <button {% if is_disabled %}disabled{% endif %} type="button"
+			    class="btn btn-{% if is_disabled %}secondary{% else %}danger{% endif %} btn-sm"
+			    title="{% if is_disabled %}{{ _('Wert löschen für aktuellen Wert nicht verfügbar.') }}{% else %}{{ _('Wert löschen') }}{% endif %}"
+			    onclick="confirmDelete('?action=delete_log&item_id={{ data[1] }}&item_path={{ item_path }}&time_orig={{ data['0_orig'] }}&changed_orig={{ data['6_orig'] }}{% if day and month and year %}&day={{ day }}&month={{ month }}&year={{ year }}{% endif %}','{{ _('Wollen Sie den Datensatz (Tabelle log) dieses Items wirklich löschen?') }}')"><i class="fas fa-trash-alt"></i></button></td>
+			  </tr>
+			{% endfor %}
+		</tbody>
+	</table>
 </div>
 <script>
 	$('#datepicker').datepicker({
@@ -112,5 +128,100 @@ function confirmDelete(url, text) {
 		location.href='?action={{ action }}&item_id={{ item_id }}&item_path={{ item_path }}&day='+date.getDate()+'&month='+(date.getMonth()+1)+'&year='+date.getFullYear();
     });
     $('#datepicker').datepicker('update', '{% if day and month and year %}{% if language == "en" %}{{ month }}/{{ day }}/{{ year }}{% else %}{{ day }}.{{ month }}.{{ year }}{% endif %}{% else %}{% if language == "en" %}{{ now.strftime('%m/%d/%Y') }}{% else %}{{ now.strftime('%d.%m.%Y') }}{% endif %}{% endif %}');
+
+    function handleUpdatedData(response, dataSet) {
+			if (dataSet === 'item_details') {
+				objResponse = JSON.parse(response);
+				myProto = document.getElementById(dataSet);
+				if (checkDate()) {
+          if ( $.fn.dataTable.isDataTable('#item_details_table') ) {
+              item_details_table = $('#item_details_table').DataTable();
+          }
+					// It's necessary to completely clear the current table and refill it later on.
+          item_details_table.clear();
+          let i = 1;
+					let now = new Date();
+					let now_day = String(now.getDate()).padStart(2, '0');
+					let now_month = String((now.getMonth()+1)).padStart(2, '0');
+					let now_year = String(now.getFullYear()).padStart(2, '0');
+					let now_date = now_day + " " + now_month + " " + now_year;
+          for (item in objResponse) {
+						let item_id = objResponse[item][1];
+						let item_path = "{{ item_path }}";
+
+            let date = new Date(Date.parse(objResponse[item][0]));
+            let day = String(date.getDate()).padStart(2, '0');
+            let month = String((date.getMonth()+1)).padStart(2, '0');
+            let year = String(date.getFullYear()).padStart(2, '0');
+            let time =  String(date.getHours()).padStart(2, '0')+
+                        ":"+String(date.getMinutes()).padStart(2, '0')+
+                        ":"+String(date.getSeconds()).padStart(2, '0');
+            let date_time;
+						let is_disabled = null;
+						if (i < 3 && (day == null || (day+" "+month+" "+year == now_date)))
+							is_disabled = true;
+						else
+							is_disabled = false;
+
+            {% if language == 'en' %}
+                date_time = month+"/"+day+"/"+year+" "+time;
+            {% else %}
+                date_time = day + "." + month + "." + year + " " + time;
+            {% endif %}
+            let orig_duration = objResponse[item][2];
+            let duration = Math.round(objResponse[item][2]/1000 * 10) / 10;
+            if (orig_duration == null) {
+                orig_duration = "None";
+                duration = "None";
+            }
+            let value;
+            {% if item.property.type == 'num' %}
+							var tenToN = 10 ** 2;
+							value = (Math.round(objResponse[item][4] * tenToN)) / tenToN;
+						{% endif %}
+            {% if item.property.type == 'bool' %} value = objResponse[item][5];{% endif %}
+            {% if item.property.type == 'str' %} value = objResponse[item][3];{% endif %}
+            {% if item.property.type == 'foo' %} value = objResponse[item][3];{% endif %}
+            let changed = new Date(Date.parse(objResponse[item][6]));
+            let changed_day = String(changed.getDate()).padStart(2, '0');
+            let changed_month = String((changed.getMonth()+1)).padStart(2, '0');
+            let changed_year = String(changed.getFullYear()).padStart(2, '0');
+            let changed_time =  String(changed.getHours()).padStart(2, '0')+
+                        ":"+String(changed.getMinutes()).padStart(2, '0')+
+                        ":"+String(changed.getSeconds()).padStart(2, '0');
+            let changed_date_time;
+						let buttons = "";
+						let day_month_year = "";
+						if (day && month && year) day_month_year = "&day=" + day + "&month=" + month + "&year=" + year;
+						if (is_disabled)
+						{
+						  buttons = "<button disabled type='button' class='btn btn-secondary btn-sm' title='{{ _('Wert löschen für aktuellen Wert nicht verfügbar.') }}'><i class='fas fa-trash-alt'></i></button>";
+						}
+
+						else
+						{
+							buttons = "<button type='button' class='btn btn-danger btn-sm' title='{{ _('Wert löschen') }}' onclick=\"confirmDelete('?action=delete_log&item_id=" + item_id + "&item_path=" + item_path + "&time_orig=" + objResponse[item]['0_orig'] + "&changed_orig=" + objResponse[item]['6_orig'] + day_month_year + "','{{ _('Wollen Sie den Datensatz (Tabelle log) dieses Items wirklich löschen?') }}')\"><i class='fas fa-trash-alt'></i></button>";
+						}
+            {% if language == 'en' %}
+                changed_date_time = changed_month+"/"+changed_day+"/"+changed_year+" "+changed_time;
+            {% else %}
+                changed_date_time = changed_day + "." + changed_month + "." + changed_year + " " + changed_time;
+            {% endif %}
+            let entry_id = objResponse[item][0].replace("T", " ");
+            let newRow = item_details_table.row.add( [ item_id, date_time, duration, value, changed_date_time, buttons ] ).draw(false).node();
+            newRow.id = entry_id+"_"+orig_duration;
+            $('td:eq(0)', newRow).attr('id', entry_id+'_'+orig_duration+'_id');
+            $('td:eq(1)', newRow).attr('id', entry_id+'_'+orig_duration+'_time');
+            $('td:eq(2)', newRow).attr('id', entry_id+'_'+orig_duration+'_duration').addClass('duration');
+            $('td:eq(3)', newRow).attr('id', entry_id+'_'+orig_duration+'_value');
+            $('td:eq(4)', newRow).attr('id', entry_id+'_'+orig_duration+'_changed');
+            $('td:eq(5)', newRow).attr('id', entry_id+'_'+orig_duration+'_buttons');
+            i += 1;
+            console.log("Added new row: " + entry_id+"_"+orig_duration);
+        	}
+				item_details_table.draw(false);
+				}
+			}
+		}
 </script>
 {% endblock bodytab1 %}

@@ -284,7 +284,7 @@ class SmartVisuGenerator:
     def create_menuentry(self, menu, entry_name, item_path, separator, img_name, nav_aside, nav_aside2, from_navconfig=False):
         for menu_entry in self.navigation[menu]:
             if menu_entry['name'] == entry_name:
-                if menu_entry.get('img', '') == ''and menu_entry['img_set'] == False:
+                if menu_entry.get('img', '') == '' and menu_entry.get('img_set', False) == False:
                     menu_entry['img'] = img_name
                 if menu_entry['item_path'] == '':
                     menu_entry['item_path'] = item_path
