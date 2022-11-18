@@ -5,7 +5,7 @@ import locale
 import time
 import logging
 import pymodbus
-
+ 
 from lib.model.smartplugin import *
 
 # pymodbus library from https://github.com/riptideio/pymodbus
