@@ -1,5 +1,6 @@
 {% extends "base_database.html" %}
-{% set update_interval = [(10 * (p._handled_items | length)), 5000]|max %}
+{% set update_interval = [(((10 * (p._handled_items | length)) / 1000) | round | int) * 1000, 5000]|max %}
+
 {% set dataSet = 'overview' %}
 {% set tab1title = _('Database Items') %}
 {% block bodytab1 %}
@@ -85,7 +86,7 @@
 			<th>{{ _('Init') }}</th>
 			<th>{{ _('Typ') }}</th>
 			<th>{{ _('Wert') }}</th>
-			<th>{{ _('Item-ID in der Datenbank') }}</th>
+			<th title="{{ _('Item-ID in der Datenbank') }}">{{ _('DB-ID') }}</th>
 			{%  if p.count_logentries %}
 				<th class="logcount">{{ _('Anzahl Einträge') }}</th>
 			{% endif %}
@@ -111,24 +112,24 @@
 				{% endif %}
 				<tr>
 					<td></td>
-					<td class="py-1" id="{{ item }}_path">{{ item.property.path }}</td>
-					<td class="py-1">{{ _('Init') if p.get_iattr_value(item.conf, 'database').lower() == 'init' else '-'}}</td>
-					<td class="py-1" id="{{ item }}_type">{{ item.property.type }}</td>
-					<td class="py-1" id="{{ item }}_value">{{ val }}</td>
-					<td class="py-1" id="{{ item }}_id">{{ p.id(item, create=False) }}</td>
+					<td id="{{ item }}_path">{{ item.property.path }}</td>
+					<td>{{ _('Init') if p.get_iattr_value(item.conf, 'database').lower() == 'init' else '-'}}</td>
+					<td id="{{ item }}_type">{{ item.property.type }}</td>
+					<td id="{{ item }}_value">{{ val }}</td>
+					<td id="{{ item }}_id">{{ p.id(item, create=False) }}</td>
 					{%  if p.count_logentries %}
-						<td class="py-1" id="{{ item }}_logcount">{{ p._item_logcount[p.id(item, create=False)] }}</td>
+						<td id="{{ item }}_logcount">{{ p._item_logcount[p.id(item, create=False)] }}</td>
 					{% endif %}
 					{%  if p.get_iattr_value(item.conf, 'database_maxage') %}
-						<td class="py-1" id="{{ item }}_maxage">{{ p.get_iattr_value(item.conf, 'database_maxage') }} {{ _('Tage') }}: {{ p.get_maxage_ts(item).strftime('%d.%m.%Y %H:%M') }}</td>
+						<td id="{{ item }}_maxage">{{ p.get_iattr_value(item.conf, 'database_maxage') }} {{ _('Tage') }}: {{ p.get_maxage_ts(item).strftime('%d.%m.%Y %H:%M') }}</td>
 					{% else %}
 						{%  if p._default_maxage > 0 %}
-							<td class="py-1">default: {{ p._default_maxage }} {{ _('Tage') }}</td>
+							<td>default: {{ p._default_maxage }} {{ _('Tage') }}</td>
 						{% else %}
-							<td class="py-1">-</td>
+							<td>-</td>
 						{% endif %}
 					{% endif %}
-					<td class="py-1">
+					<td>
 						{% if p.id(item, create=False) == None %}
 							<button type="button" disabled class="btn btn-shng btn-sm" title="{{ _('CSV Export nicht möglich') }}">CSV</button>
 						{% else %}
