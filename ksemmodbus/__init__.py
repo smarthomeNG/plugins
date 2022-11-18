@@ -28,7 +28,7 @@ from lib.model.smartplugin import *
 from .ksem import Ksem
 
 class Ksemmodbus(SmartPlugin):
-    PLUGIN_VERSION = '1.6.0'
+    PLUGIN_VERSION = '1.6.1'
     ksem = 'None'
     _items = []
 
