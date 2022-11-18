@@ -45,6 +45,10 @@ class SeItem:
         return self.__id
 
     @property
+    def log_level(self):
+        return self.__log_level
+
+    @property
     def variables(self):
         return self.__variables
 

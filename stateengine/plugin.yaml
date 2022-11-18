@@ -40,7 +40,7 @@ plugin:
     documentation: https://www.smarthomeng.de/user/plugins/stateengine/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1303071-stateengine-plugin-support
 
-    version: 1.9.2
+    version: 1.9.3
     sh_minversion: 1.6
     multi_instance: False
     classname: StateEngine
@@ -244,6 +244,27 @@ parameters:
                 vor dem Eintreten in einen neuen Zustand getriggert.'
             en: 'If this parameter is set to True the "on leave" actions are run immediately after not entering the
                 current state again. By default the actions are triggered directly before entering a new state.'
+
+    webif_pagelength:
+        type: int
+        valid_list:
+          - -1
+          - 0
+          - 25
+          - 50
+          - 100
+        description:
+            de: 'Anzahl an Items, die standardmäßig in einer Web Interface Tabelle pro Seite angezeigt werden.
+                 0 = automatisch, -1 = alle'
+            en: 'Amount of items being listed in a web interface table per page by default.
+                 0 = automatic, -1 = all'
+        description_long:
+            de: 'Anzahl an Items, die standardmäßig in einer Web Interface Tabelle pro Seite angezeigt werden.\n
+                 Bei 0 wird die Tabelle automatisch an die Höhe des Browserfensters angepasst.\n
+                 Bei -1 werden alle Tabelleneinträge auf einer Seite angezeigt.'
+            en: 'Amount of items being listed in a web interface table per page by default.\n
+                 0 adjusts the table height automatically based on the height of the browser windows.\n
+                 -1 shows all table entries on one page.'
 
 item_attributes:
     # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)
@@ -654,7 +675,7 @@ item_structs:
             type: str
             visu_acl: ro
             cache: True
-            
+
         previousstate_id:
             remark: The id/path of the previous state is assigned to this item by the stateengine
             type: str
