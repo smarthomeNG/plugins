@@ -1,7 +1,7 @@
 plugin_translations:
     # Translations for the plugin specially for the web interface
     'Die folgenden Items verfügen über ein StateEngine Item':       {'de': '=', 'en': 'The following items have a StateEngine item assigned'}
-    'Klick auf die entsprechende Zeile öffnet die Visualisierung':  {'de': '=', 'en': 'Clicking a specific line opens the visualization'}
+    'Klick auf das Lupensymbol öffnet die Visualisierung!':  {'de': '=', 'en': 'Clicking the magnifying symbol opens the visualization'}
     'Visualisierung':                                               {'de': '=', 'en': 'Visualization'}
     'Zustände':                                                     {'de': '=', 'en': 'States'}
     'aktueller Zustand':                                            {'de': '=', 'en': 'current state'}
@@ -12,3 +12,4 @@ plugin_translations:
     'Suspend Dauer':                                                {'de': '=', 'en': 'Suspend Duration'}
     'Items':                                                        {'de': '=', 'en': '='}
     'SE Item':                                                      {'de': '=', 'en': '='}
+    'Detailvisualisierung':                                         {'de': '=', 'en': 'Detailed Visualization'}

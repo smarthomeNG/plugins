@@ -20,10 +20,10 @@ plugin_translations:
     'Typ':             {'de': '=', 'en': 'Type'}
     'Tabelle':         {'de': '=', 'en': 'Table'}
 
-    'Plugin-API':      {'de': '=', 'en': 'Plugin API', 'fr': ''}
-    'Database Items':  {'de': '=', 'en': '=', 'fr': ''}
-    'Parameter':       {'de': '=', 'en': 'Parameters', 'fr': ''}
-
+    'Plugin-API':      {'de': '=', 'en': 'Plugin API'}
+    'Database Items':  {'de': '=', 'en': '='}
+    'Parameter':       {'de': '=', 'en': 'Parameters'}
+    'DB-ID':           {'de': '=', 'en': '='}
     'Item-ID in der Datenbank':
         'de': 'Item-ID in der DB'
         'en': 'Item ID in db'
