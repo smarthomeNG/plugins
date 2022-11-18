@@ -7,7 +7,18 @@ import logging
 import pymodbus
 
 from lib.model.smartplugin import *
-from pymodbus.client.sync import ModbusTcpClient
+
+# pymodbus library from https://github.com/riptideio/pymodbus
+from pymodbus.version import version
+pymodbus_baseversion = int(version.short().split('.')[0])
+
+if pymodbus_baseversion > 2:
+    # for newer versions of pymodbus
+    from pymodbus.client.tcp import ModbusTcpClient
+else:
+    # for older versions of pymodbus
+    from pymodbus.client.sync import ModbusTcpClient
+
 from pymodbus.payload import BinaryPayloadDecoder
 from pymodbus.constants import Endian
 
