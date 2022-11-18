@@ -14,7 +14,7 @@ plugin:
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1552531-support-thread-zum-knx-plugin
 
     sh_minversion: 1.9.0          # minimum shNG version to use this plugin
-    version: 1.8.2                 # Plugin version
+    version: 1.8.3                 # Plugin version
 #    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: true           # plugin supports multi instance
     restartable: true
@@ -79,8 +79,8 @@ parameters:
             en: ['DEBUG', 'WARNING', 'INFO', 'ERROR', 'NOTSET']
         description:
             de: >
-                Beim Start von SmartHomeNG werden Items mit dem Attribut knx_cache direkt vom knxd eingelesen. 
-                Wenn die Werte der Gruppenadressen nicht verfügbar sind, liefert der knxd ein fehlerhaftes Paket. 
+                Beim Start von SmartHomeNG werden Items mit dem Attribut knx_cache direkt vom knxd eingelesen.
+                Wenn die Werte der Gruppenadressen nicht verfügbar sind, liefert der knxd ein fehlerhaftes Paket.
                 Mit dem hier festgelegten Loglevel wird dieses Paket protokolliert.
             en: >
                 At start of SmartHomeNG items with attribute knx_cache will be read directly from knxd.
@@ -158,6 +158,27 @@ parameters:
         description:
             de: 'Legt optional ein Passwort für den Zugriff auf eine knxproj Datei fest'
             en: 'Set a pasword to be able to unzip a knxproj file'
+
+    webif_pagelength:
+        type: int
+        valid_list:
+          - -1
+          - 0
+          - 25
+          - 50
+          - 100
+        description:
+            de: 'Anzahl an Items, die standardmäßig in einer Web Interface Tabelle pro Seite angezeigt werden.
+                 0 = automatisch, -1 = alle'
+            en: 'Amount of items being listed in a web interface table per page by default.
+                 0 = automatic, -1 = all'
+        description_long:
+            de: 'Anzahl an Items, die standardmäßig in einer Web Interface Tabelle pro Seite angezeigt werden.\n
+                 Bei 0 wird die Tabelle automatisch an die Höhe des Browserfensters angepasst.\n
+                 Bei -1 werden alle Tabelleneinträge auf einer Seite angezeigt.'
+            en: 'Amount of items being listed in a web interface table per page by default.\n
+                 0 adjusts the table height automatically based on the height of the browser windows.\n
+                 -1 shows all table entries on one page.'
 
 item_attributes:
     # Definition of item attributes defined by this plugin
