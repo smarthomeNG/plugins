@@ -63,7 +63,7 @@ class SMAModbus(SmartPlugin):
     are already available!
     """
 
-    PLUGIN_VERSION = '1.5.2'    # (must match the version specified in plugin.yaml), use '1.0.0' for your initial plugin Release
+    PLUGIN_VERSION = '1.5.3'    # (must match the version specified in plugin.yaml), use '1.0.0' for your initial plugin Release
 
     def __init__(self, sh):
         """
