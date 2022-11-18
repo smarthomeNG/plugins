@@ -3,6 +3,36 @@
 
 {% set dataSet = 'overview' %}
 {% set tab1title = _('Database Items') %}
+
+{%- block pluginscripts %}
+{{ super() }}
+<script>
+	function handleUpdatedData(response, dataSet='overview') {
+		if (dataSet === 'overview' || dataSet === null) {
+			objResponse = JSON.parse(response);
+			myProto = document.getElementById(dataSet);
+			for (item in objResponse) {
+				let value = objResponse[item]['value'];
+				let type = objResponse[item]['type'];
+				if (value != null)
+				{
+					if (type == 'num'){
+						var tenToN = 10 ** 2;
+						value = (Math.round(value * tenToN)) / tenToN;
+					}
+					else
+						value = value.toString().replace("true", "True").replace("false", "False");
+					shngInsertText (item+'_value', value, 'itemtable', 10);
+				}
+
+				if (objResponse[item]['logcount'] != null)
+					shngInsertText (item+'_logcount', objResponse[item]['logcount'], 'itemtable', 10);
+			}
+		}
+	}
+</script>
+{%- endblock pluginscripts %}
+
 {% block bodytab1 %}
 <script type="text/javascript" language="javascript">
 	function confirmDelete(url, text) {
@@ -40,31 +70,6 @@
     });
 </script>
 
-<script>
-	function handleUpdatedData(response, dataSet='overview') {
-		if (dataSet === 'overview' || dataSet === null) {
-			objResponse = JSON.parse(response);
-			myProto = document.getElementById(dataSet);
-			for (item in objResponse) {
-				let value = objResponse[item]['value'];
-				let type = objResponse[item]['type'];
-				if (value != null)
-				{
-					if (type == 'num'){
-						var tenToN = 10 ** 2;
-						value = (Math.round(value * tenToN)) / tenToN;
-					}
-					else
-						value = value.toString().replace("true", "True").replace("false", "False");
-					shngInsertText (item+'_value', value, 'itemtable', 10);
-				}
-
-				if (objResponse[item]['logcount'] != null)
-					shngInsertText (item+'_logcount', objResponse[item]['logcount'], 'itemtable', 10);
-			}
-		}
-	}
-</script>
 <div class="container-fluid m-2 table-resize">
 	<div class="mb-2">
 		{{ _('Die folgenden {items} Items sind dieser Instanz zugewiesen, {with_maxage} Items haben ein maxage.', vars={'items': len(p._handled_items), 'with_maxage': len(p._items_with_maxage)}) }}
