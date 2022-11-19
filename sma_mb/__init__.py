@@ -180,7 +180,7 @@ class SMAModbus(SmartPlugin):
         changes on it's own, but has to be polled to get the actual status.
         It is called by the scheduler which is set within run() method.
         """
-        client = ModbusClient(self._host, self._port)
+        client = ModbusTcpClient(self._host, self._port)
         if not client.connect():
             self.logger.warning(
                 f"poll_device: Unable to establish connection to host {self._host}")
@@ -203,7 +203,10 @@ class SMAModbus(SmartPlugin):
             else:
                 register_count = 2
             try:
-                result = client.read_holding_registers((int(read_parameter)), register_count, unit=3)
+                if pymodbus_baseversion > 2:
+                    result = client.read_holding_registers((int(read_parameter)), register_count, slave=3)
+                else:
+                    result = client.read_holding_registers((int(read_parameter)), register_count, unit=3)
             except Exception as e:
                 self.logger.error(f"poll_device: Item {self._items[read_parameter].property.path} - Error trying to get result, got Exception {e}")
             else:
