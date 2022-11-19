@@ -445,9 +445,15 @@ class modbus_tcp(SmartPlugin):
             else:
                 result = self._Mclient.read_coils(address, registerCount, unit=slaveUnit)
         elif objectType == 'DiscreteInput':
-            result = self._Mclient.read_discrete_inputs(address, registerCount, unit=slaveUnit)
+            if pymodbus_baseversion > 2:
+                result = self._Mclient.read_discrete_inputs(address, registerCount, slave=slaveUnit)
+            else:
+                result = self._Mclient.read_discrete_inputs(address, registerCount, unit=slaveUnit)
         elif objectType == 'InputRegister':
-            result = self._Mclient.read_input_registers(address, registerCount, unit=slaveUnit)
+            if pymodbus_baseversion > 2:
+                result = self._Mclient.read_input_registers(address, registerCount, slave=slaveUnit)
+            else:
+                result = self._Mclient.read_input_registers(address, registerCount, unit=slaveUnit)
         elif objectType == 'HoldingRegister':
             if pymodbus_baseversion > 2:
                 result = self._Mclient.read_holding_registers(address, registerCount, slave=slaveUnit)
