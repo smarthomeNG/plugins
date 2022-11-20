@@ -163,20 +163,21 @@ class WebInterface(SmartPluginWebIf):
                         values = [value]
                     else:
                         values = value
-                    for ga in values:
-                        # create ga_usage_by_Item entries
-                        if ga not in ga_usage_by_Item:
-                            ga_usage_by_Item[ga] = {}
-                        if item not in ga_usage_by_Item[ga]:
-                            ga_usage_by_Item[ga][item] = {}
-                        ga_usage_by_Item[ga][item][elem] = True
+                    if values is not None:
+                        for ga in values:
+                            # create ga_usage_by_Item entries
+                            if ga not in ga_usage_by_Item:
+                                ga_usage_by_Item[ga] = {}
+                            if item not in ga_usage_by_Item[ga]:
+                                ga_usage_by_Item[ga][item] = {}
+                            ga_usage_by_Item[ga][item][elem] = True
 
-                        # create ga_usage_by_Attrib entries
-                        if ga not in ga_usage_by_Attrib:
-                            ga_usage_by_Attrib[ga] = {}
-                        if item not in ga_usage_by_Attrib[ga]:
-                            ga_usage_by_Attrib[ga][elem] = {}
-                        ga_usage_by_Attrib[ga][elem][item] = True
+                            # create ga_usage_by_Attrib entries
+                            if ga not in ga_usage_by_Attrib:
+                                ga_usage_by_Attrib[ga] = {}
+                            if item not in ga_usage_by_Attrib[ga]:
+                                ga_usage_by_Attrib[ga][elem] = {}
+                            ga_usage_by_Attrib[ga][elem][item] = True
 
         tmpl = self.tplenv.get_template('index.html')
         # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
