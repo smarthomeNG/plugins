@@ -55,7 +55,7 @@
 
 <div id="cleanup" class="mb-2 alert alert-success alert-dismissible fade show" role="alert">
     <strong>{{ _('Datenbank-Cleanup wurde erfolgreich initiiert!') }}</strong><br/>
-    {{ _('Das Löschen von Einträgen, für die es keine Items mehr gibt, kann je nach Datenbank Größe einige Zeit dauern und die Ausführung kann erst nach Abschluß der bestehenden Transaktionen erfolgen.') }}
+    {{ _('Das Löschen von Einträgen, für die es keine Items mehr gibt, kann je nach Datenbank Größe einige Zeit dauern und wird parallel zur aktuellen Funktion des Plugins erfolgen.') }}
     <button type="button" class="close" data-hide="alert" aria-label="Close">
         <span aria-hidden="true">&times;</span>
     </button>
@@ -91,9 +91,9 @@
 			<th>{{ _('Init') }}</th>
 			<th>{{ _('Typ') }}</th>
 			<th>{{ _('Wert') }}</th>
-			<th title="{{ _('Item-ID in der Datenbank') }}">{{ _('DB-ID') }}</th>
+			<th class="dt-head-right" title="{{ _('Item-ID in der Datenbank') }}">{{ _('DB-ID') }}</th>
 			{%  if p.count_logentries %}
-				<th class="logcount">{{ _('Anzahl Einträge') }}</th>
+				<th class="logcount, dt-head-right">{{ _('Anzahl Einträge') }}</th>
 			{% endif %}
 			<th>{{ _('konfiguriertes max. Alter') }}</th>
 			<th>{{ _('Aktionen') }}</th>
@@ -152,6 +152,15 @@
 {% endblock bodytab1 %}
 
 {% block buttons %}
-<button type="button" class="btn btn-shng btn-sm" onclick="window.open('db.dump')">{{ _('Datenbank-Dump') }}</button>
-<button type="button" class="btn btn-shng btn-sm" onclick="if (confirm('{{ _('Wollen Sie alle Datensätze ohne zugehöriges Item wirklich löschen?') }}')) { jQuery.get('cleanup'); $('#cleanup').show(); }">{{ _('Datenbank-Cleanup') }}</button>
+{%  if p.driver == 'sqlite3' %}
+	<button type="button" class="btn btn-shng btn-sm" onclick="window.open('db.sqldump')">{{ _('SQL Dump') }}</button>
+{%  endif %}
+
+<button type="button" class="btn btn-shng btn-sm" onclick="window.open('db.csvdump')">{{ _('CSV Dump') }}</button>
+
+{% if p.remove_orphan or len(p.orphanlist) == 0 %}
+	<button type="button" disabled class="btn btn-shng btn-sm" onclick="if (confirm('{{ _('Wollen Sie alle Datensätze ohne zugehöriges Item wirklich löschen?') }}')) { jQuery.get('cleanup'); $('#cleanup').show();}">{{ _('Cleanup aktivieren') }}</button>
+{%  else %}
+	<button type="button" class="btn btn-shng btn-sm" onclick="if (confirm('{{ _('Wollen Sie alle Datensätze ohne zugehöriges Item wirklich löschen?') }}')) { jQuery.get('cleanup'); $('#cleanup').show(); setTimeout(window.location.reload(), 3000); }">{{ _('Cleanup aktivieren') }}</button>
+{%  endif %}
 {% endblock buttons %}

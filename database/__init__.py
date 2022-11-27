@@ -50,7 +50,7 @@ class Database(SmartPlugin):
     """
 
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = '1.6.4'
+    PLUGIN_VERSION = '1.6.5'
 
     # SQL queries: {item} = item table name, {log} = log table name
     # time, item_id, val_str, val_num, val_bool, changed
@@ -105,6 +105,9 @@ class Database(SmartPlugin):
         self.max_delete_logentries = self.get_parameter_value('max_delete_logentries')
         self._default_maxage = float(self.get_parameter_value('default_maxage'))
 
+        self._copy_database = self.get_parameter_value('copy_database')
+        self._copy_database_name = self.get_parameter_value('copy_database_name')
+
         self.webif_pagelength = self.get_parameter_value('webif_pagelength')
         self._webdata = {}
 
@@ -116,17 +119,26 @@ class Database(SmartPlugin):
         self._dump_lock = threading.Lock()
 
         self.skipping_dump = False
+        self._remove_older_skipped = False
+        self.lock_remove_older = False
 
-        self._handled_items = []           # items that have a 'database' attribute set
-        self._items_with_maxage = []       # items that have a 'database_maxage' attribute set
-        self._maxage_worklist = []         # work copy of self._items_with_maxage
-        self._item_logcount = {}           # dict to store the number of log records for an item
-        self._items_total_entries = 0      # total number of log entries
-        self._items_still_counting = False # total number of log entries
+        self.orphanlist = []                    # list with item names of orphant database entries
+        self.remove_orphan = False              # set to True to remove orphans during remove_older
+        self.delete_orphan_chunk_size = 20000   # Delete x log entries for orphan items at a time
+        self._handled_items = []                # items that have a 'database' attribute set
+        self._items_with_maxage = []            # items that have a 'database_maxage' attribute set
+        self._maxage_worklist = []              # work copy of self._items_with_maxage
+        self._item_logcount = {}                # dict to store the number of log records for an item
+        self._items_total_entries = 0           # total number of log entries
+        self._items_still_counting = False      # total number of log entries
 
         self.cleanup_active = False
 
         self.last_connect_time  = 0     # mechanism for limiting db connection requests
+
+        # Copy SQLite3 database file (if configured)
+        if self._copy_database:
+            self.copy_databasefile()
 
         # Setup db and test if connection is possible
         self._db = lib.db.Database(("" if self._prefix == ""  else self._prefix.capitalize()) + "Database", self.driver, self._connect)
@@ -154,6 +166,7 @@ class Database(SmartPlugin):
         """
         self.logger.debug("Run method called")
         self._initialize_db()
+        self.build_orphanlist(True)
         self._start_schedulers()
         self.alive = True
 
@@ -331,7 +344,7 @@ class Database(SmartPlugin):
         self.scheduler_add('Buffer dump', self._dump, cycle=self._dump_cycle, prio=5)
         if len(self._items_with_maxage) > 0:
             # self.scheduler_add('Remove old', self.remove_older_than_maxage, cycle=91, prio=6)
-            self.scheduler_add('Remove old', self.remove_older_than_maxage, cycle=self._removeold_cycle, prio=6)
+            self.scheduler_add('Remove old', self.remove_older_than_maxage, cycle=self._removeold_cycle, prio=7)
         return
 
 
@@ -351,6 +364,41 @@ class Database(SmartPlugin):
     #    Database specific public functions of the plugin
     # ------------------------------------------------------
 
+    def copy_databasefile(self):
+        """
+        For SQLite3 databases only: Copy the databasefile before it is opened
+
+        This can be used to make a backup or to use the copy for a VACUUM
+
+        :return:
+        """
+        if not self.driver.lower() == 'sqlite3':
+            self.logger.warning("Copying of database fie is only possible for SQLite3 databases")
+            param_dict = {"copy_database": False}
+            self.update_config_section(param_dict)
+            return
+
+        # get source and destination names
+        try:
+            database_name = self._connect[0]
+            database_name = database_name[9:].strip()
+        except:
+            database_name = ''
+
+        # copy the database file
+        self.logger.warning( f"Starting to copy SQLite3 database file from {database_name} to {self._copy_database_name}")
+        import shutil
+        try:
+            shutil.copy2(database_name, self._copy_database_name)
+            self.logger.warning("Finished copying SQLite3 database file")
+        except Exception as e:
+            self.logger.Error( f"Error copying SQLite3 database file: {e}")
+
+        param_dict = {"copy_database": False}
+        self.update_config_section(param_dict)
+        return
+
+
     def id(self, item, create=True, cur=None):
         """
         Returns the ID of the given item
@@ -366,7 +414,11 @@ class Database(SmartPlugin):
         """
 
         try:
-            id = self.readItem(str(item.id()), cur=cur)
+            item_path = str(item.id())
+        except:
+            item_path = item
+        try:
+            id = self.readItem(item_path, cur=cur)
         except Exception as e:
             self.logger.warning(f"id(): No id found for item {item.id()} - Exception {e}")
             id = None
@@ -394,7 +446,7 @@ class Database(SmartPlugin):
     def dump(self, dumpfile, id=None, time=None, time_start=None, time_end=None, changed=None, changed_start=None,
              changed_end=None, cur=None):
         """
-        Creates a database dump for given criterias
+        Creates a database dump for given criterias in csv format
 
         This is a public function of the plugin
 
@@ -437,6 +489,19 @@ class Database(SmartPlugin):
                 f.write(s.join(cols) + "\n")
         f.close()
         self.logger.info("File dump completed ({} items) ...".format(len(item_ids)))
+        return
+
+
+    def sqlite_dump(self, dumpfile='smarthomeng_dump.sql'):
+
+        self.logger.info("Starting SQL file dump of the sqlite3 database to {} ...".format(dumpfile))
+
+        with open(dumpfile, 'w') as f:
+            for line in self._db._conn.iterdump():
+                f.write(f"{line}\n")
+
+        self.logger.info("SQL file dump of sqlite3 database completed")
+
         return
 
 
@@ -754,6 +819,103 @@ class Database(SmartPlugin):
         return
 
 
+    def build_orphanlist(self, log_activity=False):
+        """
+        Create a list of database entries which have no corresponding item in the item tree
+
+        called by run() once on start
+
+        :return:
+        """
+        if log_activity:
+            self.logger.info("build_orphan_list: Started")
+        self.orphanitemlist = []
+        self.orphanlist = []
+
+        items = [item.id() for item in self._buffer]
+        cur = self._db.cursor()
+        try:
+            for item in self.readItems(cur=cur):
+                if item[COL_ITEM_NAME] not in items:
+                    if log_activity:
+                        self.logger.info(f"- Found data for item w/o database attribute: {item[COL_ITEM_NAME]}")
+                    self.orphanitemlist.append(item)
+                    self.orphanlist.append(item[COL_ITEM_NAME])
+        except Exception as e:
+            self.logger.error("Database build_orphan_list failed: {}".format(e))
+        cur.close()
+        if log_activity:
+            self.logger.info("build_orphan_list: Finished")
+
+        return
+
+
+    def _count_orphanlogentries(self):
+        """
+        count number of log entries for all items in database
+
+        to be called by eval syntax checker
+        """
+        self.logger.info("_count_orphanlogentries: # orphan items = {}".format(len(self.orphanlist)))
+        self._items_total_entries = 0
+        for item in self.orphanlist:
+            item_id = self.id(item, create=False)
+            logcount = self.readLogCount(item_id)
+            logcount_str = f"{logcount:,}".replace(',','.')
+            self.logger.info(f"Orphan {item} (id={item_id}): {logcount_str} entries")
+            #self._item_logcount[item_id] = logcount
+            #self._items_total_entries += logcount
+            #self._webdata[item.id()].update({'logcount': logcount})
+
+        return
+
+
+    def _delete_orphan(self, item_path):
+        """
+        Delete orphan item or logentries it
+
+        :param item_path: path_name of the (orphan) item to work on
+        :param limit: Maximum log entries to delete
+
+        :return: True, if item was deleted; False if only logentries were deleted
+        """
+        item_id = self.id(item_path, create=False)
+        logcount = self.readLogCount(item_id)
+        if logcount == 0:
+            self.logger.info(f"_delete_orphan: Item {item_path} has no log entries")
+            cur = self._db.cursor()
+            self._execute(self._prepare("DELETE FROM {item} WHERE id = :id;"), {'id': item_id}, cur=cur)
+            self.logger.info(f"_delete_orphan: Deleted item entry for {item_path}")
+            cur.close()
+            return True
+
+        cur = self._db.cursor()
+        self._execute(self._prepare("DELETE FROM {log} WHERE item_id = :id ORDER BY time ASC LIMIT :maxrecords;"), {'id': item_id, 'maxrecords': self.delete_orphan_chunk_size}, cur=cur)
+        delete_orphan_chunk_size_str = f"{self.delete_orphan_chunk_size:,}".replace(',', '.')
+        self.logger.info(f"_delete_orphan: Deleted (up to) {delete_orphan_chunk_size_str} log entries for Item {item_path}")
+        cur.close()
+
+        return False
+
+
+    def remove_orphan_items(self):
+        """
+        Delete item and logdata of items that have no correspondance in itemtree
+        """
+        if len(self.orphanlist) == 0:
+            self.build_orphanlist()
+
+        item = self.orphanlist.pop(0)
+        if not self._delete_orphan(item):
+            self.orphanlist.append(item)
+
+        if len(self.orphanlist) == 0:
+            self.remove_orphan = False
+            self.logger.info("remove_orphan_items: Database cleanup finished")
+
+        return
+
+
     def cleanup(self):
         """
         Cleanup database
@@ -763,25 +925,35 @@ class Database(SmartPlugin):
 
         :return:
         """
+        self.remove_orphan = True
         self.cleanup_active = True
         self.logger.info("Database cleanup started (removal of entries without defined item)")
-        items = [item.id() for item in self._buffer]
-        if not self._db.lock(60):
-            self.logger.error("Can not acquire lock for database cleanup")
-            self.cleanup_active = False
-            return
-        cur = self._db.cursor()
-        try:
-            for item in self.readItems(cur=cur):
-                if item[COL_ITEM_NAME] not in items:
-                    self.deleteItem(item[COL_ITEM_ID], cur=cur)
-        except Exception as e:
-            self.logger.error("Database cleanup failed: {}".format(e))
-        cur.close()
-        self._db.release()
-        self.logger.info("Database cleanup finished")
-        self.cleanup_active = False
         return
+
+        # self.cleanup_active = True
+        # self.logger.info("Database cleanup started (removal of entries without defined item)")
+        # items = [item.id() for item in self._buffer]
+        # if not self._db.lock(60):
+        #     self.logger.error("Can not acquire lock for database cleanup")
+        #     self.cleanup_active = False
+        #     return
+        # cur = self._db.cursor()
+        # self._force_exitloop = False
+        # try:
+        #     for item in self.readItems(cur=cur):
+        #         if item[COL_ITEM_NAME] not in items:
+        #             self.logger.info(f"Deleting data for item w/o database attribute: {item[COL_ITEM_NAME]}")
+        #             self.deleteItem(item[COL_ITEM_ID], cur=cur)
+        #         # allow exit via assignement through eval syntax checker
+        #         if self._force_exitloop:
+        #             break
+        # except Exception as e:
+        #     self.logger.error("Database cleanup failed: {}".format(e))
+        # cur.close()
+        # self._db.release()
+        # self.logger.info("Database cleanup finished")
+        # self.cleanup_active = False
+        # return
 
 
     def _slice_condition(self, id, time=None, time_start=None, time_end=None, changed=None,
@@ -1141,6 +1313,9 @@ class Database(SmartPlugin):
         :return:
         """
         if self._dump_lock.acquire(timeout=60) == False:
+#            try:
+#                self.logger.notice('Skipping dump, since an other database operation running! Data is buffered and dumped later.')
+#            except:
             self.logger.warning('Skipping dump, since an other database operation running! Data is buffered and dumped later.')
             self.skipping_dump = True
             return
@@ -1148,6 +1323,9 @@ class Database(SmartPlugin):
         self.logger.debug('Starting dump')
 
         if self.skipping_dump:
+#            try:
+#                self.logger.notice('Dumping buffered data from skipped dump(s).')
+#            except:
             self.logger.warning('Dumping buffered data from skipped dump(s).')
             self.skipping_dump = False
 
@@ -1292,11 +1470,17 @@ class Database(SmartPlugin):
         """
         Remove log entries older than maxage of an item
 
-        Calls by scheduler
+        Called by scheduler
         """
-        if not self._db.connected():
-            self.logger.warning("remove_older_than_maxage skipped as db is not connected")
+        if self.lock_remove_older:
+            if not self._remove_older_skipped:
+                self.logger.info("remove_older_than_maxage task is manually locked")
+                self._remove_older_skipped = True
             return
+
+        if not self._db.connected():
+            self.logger.warning("remove_older_than_maxage skipped because db is not connected")
+            return False
 
         # prevent creation of more than one thread
         current_thread = threading.current_thread()
@@ -1305,16 +1489,24 @@ class Database(SmartPlugin):
             if t is current_thread:
                 continue
             if t.name == current_thread_name:
-                self.logger.info("remove_older_than_maxage skipped as thread with this task is already running")
+                if not self._remove_older_skipped:
+                    self.logger.info("remove_older_than_maxage skipped because a thread with this task is already running")
+                self._remove_older_skipped = True
                 return
 
+        self._remove_older_skipped = False
+
+        if self.remove_orphan:
+            self.remove_orphan_items()
+
+        # go to work
         if self._maxage_worklist == []:
             # Fill work list, if it is empty
             if self._default_maxage == 0:
                 self._maxage_worklist = [i for i in self._items_with_maxage]
             else:
                 self._maxage_worklist = [i for i in self._handled_items]
-            self.logger.info(f"remove_older_than_maxage: Worklist filled with {len(self._items_with_maxage)} items")
+            self.logger.info(f"remove_older_: Worklist filled with {len(self._items_with_maxage)} items")
 
         item = self._maxage_worklist.pop(0)
         itempath = item.property.path
@@ -1323,9 +1515,9 @@ class Database(SmartPlugin):
             item_id = self.id(item, create=False)
         except:
             if item_id is None:
-                self.logger.info(f"remove_older_than_maxage: no id for item {itempath}")
+                self.logger.info(f"remove_older_: no id for item {itempath}")
             else:
-                self.logger.critical(f"remove_older_than_maxage: no id for item {itempath}")
+                self.logger.critical(f"remove_older_: no id for item {itempath}")
             return
 
         # it might well be that introducing database_maxage to a very old SmartHomeNG installation will try to start
@@ -1335,16 +1527,15 @@ class Database(SmartPlugin):
         # b) to just delete a limited number of log entries
         time_end = self.get_maxage_ts(item)
         timestamp_end = self._timestamp(time_end)
-        self.logger.info(f"remove_older_than_maxage: item = {itempath} remove older than {time_end}")
 
         # if delete would also remove the last logged value for the item then there might be no chance for
         # ``database: init`` to retrieve the latest value.
         remaining = 1
         if self.get_iattr_value(item.conf, 'database').lower() == 'init':
             # find out if there are still log entries after deletion of the logs
-            remaining = self.readLogCount(item_id,self._timestamp( time_end + datetime.timedelta(microseconds=1)))
+            remaining = self.readLogCount(item_id, time_start=self._timestamp( time_end + datetime.timedelta(microseconds=1)))
             # remaining can be larger than self._item_logcount[item_id], it depends on the rate of database updates
-            #self.logger.info(f"remove_older_than_maxage: item = {itempath} has attribute init with {self._item_logcount[item_id]} log entries and will have {remaining} log entries after deletion")
+            #self.logger.info(f"remove_older_: {itempath} has attribute init with {self._item_logcount[item_id]} log entries and will have {remaining} log entries after deletion")
 
         if remaining <= 0:
             # no log entries will be there after deletion, need to go back in time for the latest logentry
@@ -1352,11 +1543,15 @@ class Database(SmartPlugin):
             if new_must_keep_timestamp is None:
                 return
             new_must_keep_time = self._datetime(new_must_keep_timestamp)
-            self.logger.info(f"remove_older_than_maxage: item = {itempath} no remaining log entry between {time_end} and now, thus can not remove log entries older than maxage, latest log is {new_must_keep_time}")
+            self.logger.info(f"remove_older_: {itempath} no remaining log entry between {time_end} and now, thus can not remove log entries older than maxage, latest log is {new_must_keep_time}")
             time_end = new_must_keep_time + datetime.timedelta(microseconds=-1)
             timestamp_end = self._timestamp( time_end )
 
-        count_log_records_to_delete = self.readLogCount(item_id,time_end=self._timestamp( time_end))
+        count_log_records_to_delete = self.readLogCount(item_id, time_end=self._timestamp( time_end))
+        count_log_records_to_delete_str = f"{count_log_records_to_delete:,}".replace(',','.')
+        max_delete_logentries_str = f"{self.max_delete_logentries:,}".replace(',','.')
+        time_end_str = time_end.strftime("%d.%m.%Y - %H:%M")
+        self.logger.info(f"remove_older_: {itempath} remove older than {time_end_str} - {count_log_records_to_delete_str} records to delete")
 
         # prevent to many deletions with strategy b)
         # assumption is made that logentries are evenly distributed over time
@@ -1364,28 +1559,43 @@ class Database(SmartPlugin):
         # since only a linear approximation over time and counts is used, but it should do the trick
         # to prevent from database lockups after setting database_maxage to old/ancient items
         if count_log_records_to_delete > self.max_delete_logentries:
-            old_count_log_records_to_delete = count_log_records_to_delete
-            timestamp_oldest = self.readOldestLog( item_id)
-            time_oldest = self._datetime( timestamp_oldest)
-            timespan_deletion = timestamp_end - timestamp_oldest
-            assumed_chunk_size = count_log_records_to_delete / self.max_delete_logentries
-            new_deletion_timespan = timespan_deletion / assumed_chunk_size
-            timestamp_end = timestamp_oldest + new_deletion_timespan
-            time_end = self._datetime( timestamp_end)
-            count_log_records_to_delete = self.readLogCount(item_id,time_end=self._timestamp( time_end))
-            self.logger.info(f"remove_older_than_maxage: item = {itempath} old count to delete {old_count_log_records_to_delete} was higher than {self.max_delete_logentries}")
-            self.logger.info(f"remove_older_than_maxage: item = {itempath} new count to delete {count_log_records_to_delete} has end {time_end}")
+            #old_count_log_records_to_delete = count_log_records_to_delete
+            #timestamp_oldest = self.readOldestLog( item_id)
+            #time_oldest = self._datetime( timestamp_oldest)
+            #timespan_deletion = timestamp_end - timestamp_oldest
+            #assumed_chunk_size = count_log_records_to_delete / self.max_delete_logentries
+            #new_deletion_timespan = timespan_deletion / assumed_chunk_size
+            #timestamp_end = timestamp_oldest + new_deletion_timespan
+            #time_end = self._datetime( timestamp_end)
+            #count_log_records_to_delete = self.readLogCount(item_id,time_end=self._timestamp( time_end))
+            #time_end_str = time_end.strftime("%d.%m.%Y - %H:%M")
+            #self.logger.info(f"remove_older_: {itempath} old count to delete {old_count_log_records_to_delete} was higher than {self.max_delete_logentries} - new count to delete {count_log_records_to_delete} has end {time_end_str}")
 
-        if count_log_records_to_delete:
+            # Aus dem löschen von Orphans:
+            time_start_deletion = time.time()
+            cur = self._db.cursor()
+            self._execute(self._prepare("DELETE FROM {log} WHERE item_id = :id ORDER BY time ASC LIMIT :maxrecords;"), {'id': item_id, 'maxrecords': self.max_delete_logentries}, cur=cur)
+            cur.close()
+            time_used_for_deletion = time.time() - time_start_deletion
+            self.logger.info(f"remove_older_: {itempath} deleted {max_delete_logentries_str} of {count_log_records_to_delete_str} log entries - took {time_used_for_deletion:.2f} seconds, averaging {100*time_used_for_deletion/self.max_delete_logentries:.4f} seconds per 100 entries")
+
+            # Re-Add item to worklist, since there are more records to be deleted
+            self._maxage_worklist.append(item)
+
+        elif count_log_records_to_delete:
             time_start_deletion = time.time()
             self.deleteLog(item_id, time_end=timestamp_end, with_commit=False)
             time_used_for_deletion = time.time() - time_start_deletion
-            self.logger.info(f"remove_older_than_maxage: item = {itempath} deleted {count_log_records_to_delete} log entries until {time_end} took {time_used_for_deletion} seconds, averaging {time_used_for_deletion/count_log_records_to_delete} per second")
+            time_end_str = time_end.strftime("%d.%m.%Y - %H:%M")
+            self.logger.info(f"remove_older_: {itempath} deleted {count_log_records_to_delete_str} log entries until {time_end_str} took {time_used_for_deletion:.2f} seconds, averaging {100*time_used_for_deletion/count_log_records_to_delete:.4f} seconds per 100 entries")
+        #else:
+        #    self.logger.info(f"remove_older_: {itempath} - No records to delete")
 
         # update the logCount for the item
         logcount = self.readLogCount(item_id)
         self._item_logcount[item_id] = logcount
         self._webdata[item.id()].update({'logcount': logcount})
+        #self._webdata[item.id()].update({'logcount': f"{logcount:,}".replace(',', '.')})
 
         return
 
@@ -1425,9 +1635,20 @@ class Database(SmartPlugin):
             self._item_logcount[item_id] = logcount
             self._items_total_entries += logcount
             self._webdata[item.id()].update({'logcount': logcount})
+            #self._webdata[item.id()].update({'logcount': f"{logcount:,}".replace(',', '.')})
 
         self._items_still_counting = False
         return
+
+
+    #def item_logcount_as_str(self, item):
+    #    """
+    #    Formatted logcount of an item for the webinterface
+    #
+    #    :param item:
+    #    :return:
+    #    """
+    #    return f"{self._item_logcount.get(self.id(item, create=False), 0):,}".replace(',','.')
 
 
     # ------------------------------------------

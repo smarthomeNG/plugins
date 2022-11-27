@@ -34,7 +34,8 @@
         { className: "init", targets: 2 },
         { className: "type", targets: 3 },
         { className: "value", targets: 4 },
-        { className: "id", targets: 5 },
+        { className: "id", targets: 5, render: $.fn.dataTable.render.number('.', ',', 0, '')  },
+        { className: "logcount", targets: 6, render: $.fn.dataTable.render.number('.', ',', 0, '') },
         { className: "maxage", targets: -2 },
         { className: "no-sort actions", targets: -1 }
         ].concat($.fn.dataTable.defaults.columnDefs),
@@ -93,6 +94,7 @@
     }
     .id {
       width: 50px;
+      text-align:right;
     }
     .value {
       width: 120px;
@@ -114,6 +116,14 @@
 			<td class="py-1">{% if p._db._connected %}{{ _('Ja') }}{% else %}{{ _('Nein') }}{% endif %}</td>
 			<td class="py-1" width="150px"><strong>{{ _('Treiber') }}</strong></td>
 			<td class="py-1">{{ p.driver }}</td>
+			<td class="py-1"></td>
+			<td class="py-1"></td>
+		</tr>
+		<tr>
+			<td class="py-1" width="150px"><strong>{{ _('Cleanup ist aktiv') }}</strong></td>
+			<td class="py-1">{% if p.remove_orphan %}{{ _('Ja') }}{% else %}{{ _('Nein') }}{% endif %}</td>
+			<td class="py-1" width="150px"><strong></strong></td>
+			<td class="py-1"></td>
 			<td class="py-1"></td>
 			<td class="py-1"></td>
 		</tr>

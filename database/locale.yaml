@@ -1,29 +1,36 @@
 plugin_translations:
     # Translations for the plugin specially for the web interface
-    'Aktionen':        {'de': '=', 'en': 'Actions'}
-    'Verbunden':       {'de': '=', 'en': 'Connected'}
-    'Treiber  ':       {'de': '=', 'en': 'Driver'}
-    'Ja':              {'de': '=', 'en': 'Yes'}
-    'Nein':            {'de': '=', 'en': 'No'}
-    'mit':             {'de': '=', 'en': 'with'}
-    'Datenbank-Dump':  {'de': '=', 'en': 'Database Dump'}
-    'Zeit':            {'de': '=', 'en': 'Time'}
-    'Item ID':         {'de': '=', 'en': '='}
-    'Dauer':           {'de': '=', 'en': 'Duration'}
-    'Geändert':        {'de': '=', 'en': 'Changed'}
-    'Übersicht':       {'de': '=', 'en': 'Overview'}
-    'am':              {'de': '=', 'en': 'on the'}
-    'Gesamt':          {'de': '=', 'en': 'Total'}
-    'Datensätze':      {'de': '=', 'en': 'Data Sets'}
-    'Aktueller Wert':  {'de': '=', 'en': 'Recent Value'}
-    'ältester Wert':   {'de': '=', 'en': 'oldest Value'}
-    'Typ':             {'de': '=', 'en': 'Type'}
-    'Tabelle':         {'de': '=', 'en': 'Table'}
+    'Aktionen':           {'de': '=', 'en': 'Actions'}
+    'Verbunden':          {'de': '=', 'en': 'Connected'}
+    'Treiber  ':          {'de': '=', 'en': 'Driver'}
+    'Ja':                 {'de': '=', 'en': 'Yes'}
+    'Nein':               {'de': '=', 'en': 'No'}
+    'mit':                {'de': '=', 'en': 'with'}
+    'SQL Dump':           {'de': '=', 'en': '='}
+    'CSV Dump':           {'de': '=', 'en': '='}
+    'Zeit':               {'de': '=', 'en': 'Time'}
+    'Item ID':            {'de': '=', 'en': '='}
+    'Dauer':              {'de': '=', 'en': 'Duration'}
+    'Geändert':           {'de': '=', 'en': 'Changed'}
+    'Übersicht':          {'de': '=', 'en': 'Overview'}
+    'am':                 {'de': '=', 'en': 'on the'}
+    'Gesamt':             {'de': '=', 'en': 'Total'}
+    'Datensätze':         {'de': '=', 'en': 'Data Sets'}
+    'Aktueller Wert':     {'de': '=', 'en': 'Recent Value'}
+    'ältester Wert':      {'de': '=', 'en': 'oldest Value'}
+    'Typ':                {'de': '=', 'en': 'Type'}
+    'Tabelle':            {'de': '=', 'en': 'Table'}
 
-    'Plugin-API':      {'de': '=', 'en': 'Plugin API'}
-    'Database Items':  {'de': '=', 'en': '='}
-    'Parameter':       {'de': '=', 'en': 'Parameters'}
-    'DB-ID':           {'de': '=', 'en': '='}
+    'Plugin-API':         {'de': '=', 'en': 'Plugin API'}
+    'Database Items':     {'de': '=', 'en': '='}
+    'Parameter':          {'de': '=', 'en': 'Parameters'}
+
+    'Wert':               {'de': '=', 'en': 'Value'}
+    'DB-ID':              {'de': '=', 'en': '='}
+    'VAL_NUM':            {'de': 'num. Wert', 'en': 'Value'}
+    'VAL_STR':            {'de': 'Wert', 'en': 'Value'}
+    'VAL_BOOL':           {'de': 'bool. Wert', 'en': 'Bool-Value'}
+
     'Item-ID in der Datenbank':
         'de': 'Item-ID in der DB'
         'en': 'Item ID in db'
@@ -78,9 +85,12 @@ plugin_translations:
     'Zeige Einträge vom':
         'de': '='
         'en': 'Show entries from'
-    'Datenbank-Cleanup':
+    'Cleanup aktivieren':
         'de': '='
-        'en': 'Database Cleanup'
+        'en': 'Start Cleanup'
+    'Cleanup ist aktiv':
+        'de': '='
+        'en': 'Cleanup is active'
     'Datenbank-Cleanup wurde erfolgreich initiiert!':
         'de': '='
         'en': 'Database cleanup successfully initiated!'
