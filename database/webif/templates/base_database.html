@@ -40,6 +40,20 @@
         { className: "no-sort actions", targets: -1 }
         ].concat($.fn.dataTable.defaults.columnDefs),
         pageLength: webif_pagelength});
+
+      orphantable = $('#orphantable').DataTable( {
+        pageResize: resize,
+        columnDefs: [
+        { responsivePriority: 1, targets: 1 },
+        { responsivePriority: 2, targets: 2 },
+        { className: "item", targets: 1 },
+        { className: "time", targets: 2 },
+        { className: "type", targets: 3 },
+        { className: "id", targets: 4, render: $.fn.dataTable.render.number('.', ',', 0, '')  },
+        { className: "logcount", targets: 5, render: $.fn.dataTable.render.number('.', ',', 0, '') },
+        ].concat($.fn.dataTable.defaults.columnDefs),
+        pageLength: webif_pagelength});
+
       detailtable = $('#item_details_table').DataTable( {
         pageLength: webif_pagelength,
         order: [[2, 'desc']],
@@ -84,7 +98,7 @@
       text-align:right;
     }
     .time {
-      width: 100px;
+      width: 150px;
     }
     .actions {
       width: 110px;
@@ -100,7 +114,7 @@
       width: 120px;
     }
     .type {
-      width: 60px;
+      width: 80px;
     }
     .init {
       width: 50px;

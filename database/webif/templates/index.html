@@ -93,7 +93,7 @@
 			<th>{{ _('Wert') }}</th>
 			<th class="dt-head-right" title="{{ _('Item-ID in der Datenbank') }}">{{ _('DB-ID') }}</th>
 			{%  if p.count_logentries %}
-				<th class="logcount, dt-head-right">{{ _('Anzahl Einträge') }}</th>
+				<th class="logcount dt-head-right">{{ _('Anzahl Einträge') }}</th>
 			{% endif %}
 			<th>{{ _('konfiguriertes max. Alter') }}</th>
 			<th>{{ _('Aktionen') }}</th>
@@ -151,6 +151,51 @@
 </div>
 {% endblock bodytab1 %}
 
+
+{% if len(p.orphanlist) > 0 %}
+	{% set tabcount = 3 %}
+{%  endif %}
+
+{% set tab3title = _('Verwaiste Items') %}
+{% block bodytab3 %}
+	<div class="mb-2">
+		<div id="webif-orphanbuttons" style="margin-left: 10px; margin-bottom: 10px; float:right; white-space: nowrap;">
+			{% if p.remove_orphan or len(p.orphanlist) == 0 %}
+				<button type="button" disabled class="btn btn-shng btn-sm" onclick="if (confirm('{{ _('Wollen Sie alle Datensätze ohne zugehöriges Item wirklich löschen?') }}')) { jQuery.get('cleanup'); $('#cleanup').show();}">{{ _('Datenbank-Cleanup starten') }}</button>
+			{% else %}
+				<button type="button" class="btn btn-shng btn-sm" onclick="if (confirm('{{ _('Wollen Sie alle Datensätze ohne zugehöriges Item wirklich löschen?') }}')) { jQuery.get('cleanup'); $('#cleanup').show(); setTimeout(window.location.reload(), 3000); }">{{ _('Datenbank-Cleanup starten') }}</button>
+			{% endif %}
+		</div>
+	</div>
+	<table id="orphantable">
+		<thead>
+		<tr><th></th>
+			<th>{{ _('Verwaistes Item') }}</th>
+			<th>{{ _('Letzte Änderung') }}</th>
+			<th>{{ _('Typ') }}</th>
+			<th class="dt-head-right" title="{{ _('Item-ID in der Datenbank') }}">{{ _('DB-ID') }}</th>
+			{%  if p.count_logentries %}
+				<th class="logcount dt-head-right">{{ _('Anzahl Einträge') }}</th>
+			{% endif %}
+		</tr>
+		</thead>
+		<tbody>
+		{% for item in p.orphanlist %}
+			<tr>
+				<td></td>
+				<td id="{{ item }}_orphan_path">{{ item }}</td>
+			    <td id="{{ item }}_orphan_time">{% if language == 'en' %}{{ p.db_lastchange(item).strftime('%m/%d/%Y %H:%M:%S') }}{% else %}{{ p.db_lastchange(item).strftime('%d.%m.%Y %H:%M:%S') }}{% endif %}</td>
+				<td id="{{ item }}_orphan_type">{{ _(p.db_itemtype(item)) }}</td>
+				<td id="{{ item }}_orphan_id">{{ p.id(item, create=False) }}</td>
+				{%  if p.count_logentries %}
+					<td id="{{ item }}_orphan_logcount">{{ p._orphan_logcount[p.id(item, create=False)] }}</td>
+				{% endif %}
+			</tr>
+		{% endfor %}
+		</tbody>
+	</table>
+{% endblock bodytab3 %}
+
 {% block buttons %}
 {%  if p.driver == 'sqlite3' %}
 	<button type="button" class="btn btn-shng btn-sm" onclick="window.open('db.sqldump')">{{ _('SQL Dump') }}</button>
@@ -158,9 +203,11 @@
 
 <button type="button" class="btn btn-shng btn-sm" onclick="window.open('db.csvdump')">{{ _('CSV Dump') }}</button>
 
+<!--
 {% if p.remove_orphan or len(p.orphanlist) == 0 %}
 	<button type="button" disabled class="btn btn-shng btn-sm" onclick="if (confirm('{{ _('Wollen Sie alle Datensätze ohne zugehöriges Item wirklich löschen?') }}')) { jQuery.get('cleanup'); $('#cleanup').show();}">{{ _('Cleanup aktivieren') }}</button>
 {%  else %}
 	<button type="button" class="btn btn-shng btn-sm" onclick="if (confirm('{{ _('Wollen Sie alle Datensätze ohne zugehöriges Item wirklich löschen?') }}')) { jQuery.get('cleanup'); $('#cleanup').show(); setTimeout(window.location.reload(), 3000); }">{{ _('Cleanup aktivieren') }}</button>
 {%  endif %}
+-->
 {% endblock buttons %}

@@ -81,10 +81,10 @@ checkDate();
 			<th title="{{ _('Item-ID in der Datenbank') }}">{{ _('DB-ID') }}</th>
 			<th>{{ _('Zeit') }}</th>
 			<th>{{ _('Dauer') }} (sec)</th>
-			{% if item.property.type == 'num' %}<th style="width: 120px;">VAL_NUM</th>{% endif %}
-			{% if item.property.type == 'bool' %}<th style="width: 120px;">VAL_BOOL</th>{% endif %}
-			{% if item.property.type == 'str' %}<th>VAL_STR</th>{% endif %}
-			{% if item.property.type == 'foo' %}<th>VAL_STR</th>{% endif %}
+			{% if item.property.type == 'num' %}<th style="width: 120px;">{{ _('VAL_NUM') }}</th>{% endif %}
+			{% if item.property.type == 'bool' %}<th style="width: 120px;">{{ _('VAL_BOOL') }}</th>{% endif %}
+			{% if item.property.type == 'str' %}<th>{{ _('VAL_STR') }}</th>{% endif %}
+			{% if item.property.type == 'foo' %}<th>{{ _('VAL_STR') }}</th>{% endif %}
 			<th>{{ _('Geändert') }}</th>
 			<th>{{ _('Aktionen') }}</th>
 		</tr>

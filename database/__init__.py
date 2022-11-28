@@ -50,7 +50,7 @@ class Database(SmartPlugin):
     """
 
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = '1.6.5'
+    PLUGIN_VERSION = '1.6.7'
 
     # SQL queries: {item} = item table name, {log} = log table name
     # time, item_id, val_str, val_num, val_bool, changed
@@ -123,6 +123,7 @@ class Database(SmartPlugin):
         self.lock_remove_older = False
 
         self.orphanlist = []                    # list with item names of orphant database entries
+        self._orphan_logcount = {}              # dict to store the number of log records for an orphan
         self.remove_orphan = False              # set to True to remove orphans during remove_older
         self.delete_orphan_chunk_size = 20000   # Delete x log entries for orphan items at a time
         self._handled_items = []                # items that have a 'database' attribute set
@@ -156,7 +157,6 @@ class Database(SmartPlugin):
             pass
 
         self.init_webinterface(WebInterface)
-
         return
 
 
@@ -420,7 +420,7 @@ class Database(SmartPlugin):
         try:
             id = self.readItem(item_path, cur=cur)
         except Exception as e:
-            self.logger.warning(f"id(): No id found for item {item.id()} - Exception {e}")
+            self.logger.warning(f"id(): No id found for item {item_path} - Exception {e}")
             id = None
 
         if id is None and create == True:
@@ -429,6 +429,81 @@ class Database(SmartPlugin):
         if (id is None) or (COL_ITEM_ID >= len(id)) :
             return None
         return int(id[COL_ITEM_ID])
+
+
+    def db_itemtype(self, item):
+        """
+        Returns the itemtype of the given item, determined from the item-table of the database
+
+        This is a public function of the plugin
+
+        :param item: Item to get the ID for
+
+        :return: id of the item within the database
+        :rtype: int | None
+        """
+
+        try:
+            item_path = str(item.id())
+        except:
+            item_path = item
+        try:
+            row = self.readItem(item_path, cur=None)
+        except Exception as e:
+            self.logger.warning(f"db_itemtype: No id found for item {item_path} - Exception {e}")
+            row = None
+
+        if (row is None) or (COL_ITEM_ID >= len(row)) :
+            return None
+
+        id = int(row[COL_ITEM_ID])
+        strval = row[COL_ITEM_VAL_STR]
+        numval = row[COL_ITEM_VAL_NUM]
+        boolval = row[COL_ITEM_VAL_BOOL]
+        #self.logger.info(f"db_itemtype: {item_path} (id={id}) - strval={strval}, numval={numval}, boolval={boolval}")
+
+        if (strval is not None) and (numval is None):
+            return 'str'
+
+        if (strval is None) and (numval is not None):
+            if float(numval) != int(boolval):
+                return 'num'
+            return 'num, bool'
+
+        return "unbekannt"
+
+
+    def db_lastchange(self, item):
+        """
+        Returns the itemtype of the given item, determined from the item-table of the database
+
+        This is a public function of the plugin
+
+        :param item: Item to get the ID for
+        :param cur: A database cursor object if available (optional)
+
+        :return: id of the item within the database
+        :rtype: int | None
+        """
+
+        try:
+            item_path = str(item.id())
+        except:
+            item_path = item
+        try:
+            row = self.readItem(item_path, cur=None)
+        except Exception as e:
+            self.logger.warning(f"db_lastchange: No id found for item {item_path} - Exception {e}")
+            row = None
+
+        if (row is None) or (COL_ITEM_ID >= len(row)):
+            return None
+
+        id = int(row[COL_ITEM_ID])
+        last_change = row[COL_ITEM_TIME]
+        #self.logger.info(f"db_lastchange: {item_path} (id={id}) - last_change={last_change}")
+
+        return self._datetime(last_change)
 
 
     def db(self):
@@ -492,17 +567,20 @@ class Database(SmartPlugin):
         return
 
 
-    def sqlite_dump(self, dumpfile='smarthomeng_dump.sql'):
+    def sqlite_dump(self, dumpfile):
 
-        self.logger.info("Starting SQL file dump of the sqlite3 database to {} ...".format(dumpfile))
+        if self.driver != 'sqlite3':
+            self.logger.warning("SQL dump is only possible for sqlite3 databases")
+            return False
+
+        self.logger.info(f"Starting SQL file dump of the sqlite3 database to {dumpfile} ...")
 
         with open(dumpfile, 'w') as f:
             for line in self._db._conn.iterdump():
                 f.write(f"{line}\n")
 
         self.logger.info("SQL file dump of sqlite3 database completed")
-
-        return
+        return True
 
 
     def insertItem(self, name, cur=None):
@@ -844,6 +922,7 @@ class Database(SmartPlugin):
         except Exception as e:
             self.logger.error("Database build_orphan_list failed: {}".format(e))
         cur.close()
+        self._count_orphanlogentries()
         if log_activity:
             self.logger.info("build_orphan_list: Finished")
 
@@ -863,7 +942,7 @@ class Database(SmartPlugin):
             logcount = self.readLogCount(item_id)
             logcount_str = f"{logcount:,}".replace(',','.')
             self.logger.info(f"Orphan {item} (id={item_id}): {logcount_str} entries")
-            #self._item_logcount[item_id] = logcount
+            self._orphan_logcount[item_id] = logcount
             #self._items_total_entries += logcount
             #self._webdata[item.id()].update({'logcount': logcount})
 

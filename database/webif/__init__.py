@@ -273,11 +273,12 @@ class WebInterface(SmartPluginWebIf):
             filename += '_' + self.plugin.get_instance_name() + extension
         pathname = os.path.join(self.plugin.get_sh().base_dir, 'var', 'db', filename)
 
-        self.plugin.sqlite_dump(pathname)
+        if self.plugin.sqlite_dump(pathname):
+            mime = 'application/octet-stream'
+            # disposition should bie 'attachment' or 'inline'
+            return cherrypy.lib.static.serve_file(pathname, mime, disposition='attachment', name=filename)
 
-        mime = 'application/octet-stream'
-        # disposition should bie 'attachment' or 'inline'
-        return cherrypy.lib.static.serve_file(pathname, mime, disposition='attachment', name=filename)
+        return
 
 
     @cherrypy.expose
