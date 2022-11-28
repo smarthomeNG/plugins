@@ -4,6 +4,6 @@ trovis557x:
     class_name: trovis557x
     class_path: plugins.trovis557x
     modbus_mode: 'rtu'
-    modbus_port: '/dev/trovis'
+    modbus_port: /dev/trovis
     # modbus_mode: 'tcp'
-    # modbus_port: '192.168.178.59:502'    
+    # modbus_port: '192.168.178.59:502'
