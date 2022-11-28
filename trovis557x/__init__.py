@@ -188,13 +188,13 @@ class trovis557x(SmartPlugin):
         
         self._modbus_mode = self.get_parameter_value('modbus_mode')
         self._modbus_port = self.get_parameter_value('modbus_port')
+        if self._modbus_mode == 'tcp':
+            self._modbus_trovis_ip = self._modbus_port.split(':')[0]
+            self._modbus_trovis_ip_port = self._modbus_port.split(':')[1]
         self._modbus_speed = self.get_parameter_value('modbus_speed')
         self._modbus_timeout = self.get_parameter_value('modbus_timeout')
         self._modbus_trovis_address = self.get_parameter_value('modbus_trovis_address')
         self._modbus_debug = self.get_parameter_value('modbus_debug')
-        
-        self._modbus_trovis_ip = self.get_parameter_value('modbus_port').split(':')[0]
-        self._modbus_trovis_ip_port = self.get_parameter_value('modbus_port').split(':')[1]
         
         self._cycle = self.get_parameter_value('cycle')
 
@@ -394,5 +394,5 @@ class WebInterface(SmartPluginWebIf):
         """
         tmpl = self.tplenv.get_template('index.html')
         # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
-        return tmpl.render(p=self.plugin)
-
+        return tmpl.render(p=self.plugin)  
+    
