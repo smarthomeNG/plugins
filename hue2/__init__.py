@@ -313,7 +313,7 @@ class Hue2(SmartPlugin):
             elif plugin_item['function'] == 'effect':
                 self.br.lights[plugin_item['id']]['state'](effect=value)
         except qhue.qhue.QhueException as e:
-            self.logger.error(f"update_light_from_item: item {plugin_item['item'].id()} - qhue exception '{e}'")
+            self.logger.error(f"update_light_from_item: item {plugin_item['item'].id()} - qhue exception '{e.message}'")
         return
 
 
@@ -322,7 +322,6 @@ class Hue2(SmartPlugin):
         self.logger.debug("update_scene_from_item: plugin_item = {}".format(plugin_item))
         if plugin_item['function'] == 'name':
             self.br.scenes[plugin_item['id']](name=value)
-
         return
 
 
@@ -356,9 +355,12 @@ class Hue2(SmartPlugin):
                 self.br.groups[plugin_item['id']]['action'](xy=value, transitiontime=hue_transition_time)
             elif plugin_item['function'] == 'activate_scene':
                 self.br.groups(plugin_item['id'], 'action', scene=value, transitiontime=hue_transition_time)
+            elif plugin_item['function'] == 'modify_scene':
+                self.br.groups(plugin_item['id'], 'scenes', value['scene_id'], 'lights', value['light_id'], 'state', **(value['state']))
+
 
         except qhue.qhue.QhueException as e:
-            self.logger.error(f"update_group_from_item: item {plugin_item['item'].id()} - qhue exception '{e}'")
+            self.logger.error(f"update_group_from_item: item {plugin_item['item'].id()} - qhue exception '{e.message}'")
 
         return
 
@@ -464,7 +466,7 @@ class Hue2(SmartPlugin):
                     plugin_item['item'](value, self.get_shortname(), src)
             if plugin_item['resource'] == 'group':
                 if not "hue2_refence_light_id" in plugin_item:
-                    if plugin_item['function'] != 'dict':
+                    if plugin_item['function'] != 'dict' and plugin_item['function'] != 'modify_scene':
                         value = self._get_group_item_value(plugin_item['id'], plugin_item['function'], plugin_item['item'].id())
                         plugin_item['item'](value, self.get_shortname(), src)
         return
@@ -495,7 +497,7 @@ class Hue2(SmartPlugin):
             src = None
         for pi in self.plugin_items:
             plugin_item = self.plugin_items[pi]
-            if plugin_item['function'] != 'dict':
+            if plugin_item['function'] != 'dict' and plugin_item['function'] != 'modify_scene':
                 if plugin_item['resource'] == 'light':
                     value = self._get_light_item_value(plugin_item['id'], plugin_item['function'], plugin_item['item'].id())
                     if value is not None:
