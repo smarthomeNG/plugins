@@ -50,7 +50,7 @@ class Database(SmartPlugin):
     """
 
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = '1.6.2'
+    PLUGIN_VERSION = '1.6.3'
 
     # SQL queries: {item} = item table name, {log} = log table name
     # time, item_id, val_str, val_num, val_bool, changed
@@ -97,9 +97,13 @@ class Database(SmartPlugin):
         if self._prefix != '':
             self._prefix += '_'
         self._dump_cycle = self.get_parameter_value('cycle')
+        self._removeold_cycle = self.get_parameter_value('removeold_cycle')
+        if self._removeold_cycle == self._dump_cycle:
+            self._removeold_cycle += 2
         self._precision = self.get_parameter_value('precision')
         self.count_logentries = self.get_parameter_value('count_logentries')
         self.max_delete_logentries = self.get_parameter_value('max_delete_logentries')
+        self._default_maxage = float(self.get_parameter_value('default_maxage'))
 
         self.webif_pagelength = self.get_parameter_value('webif_pagelength')
         self._webdata = {}
@@ -111,10 +115,14 @@ class Database(SmartPlugin):
         self._buffer_lock = threading.Lock()
         self._dump_lock = threading.Lock()
 
-        self._handled_items = []        # items that have a 'database' attribute set
-        self._items_with_maxage = []    # items that have a 'database_maxage' attribute set
-        self._maxage_worklist = []      # work copy of self._items_with_maxage
-        self._item_logcount = {}        # dict to store the number of log records for an item
+        self.skipping_dump = False
+
+        self._handled_items = []           # items that have a 'database' attribute set
+        self._items_with_maxage = []       # items that have a 'database_maxage' attribute set
+        self._maxage_worklist = []         # work copy of self._items_with_maxage
+        self._item_logcount = {}           # dict to store the number of log records for an item
+        self._items_total_entries = 0      # total number of log entries
+        self._items_still_counting = False # total number of log entries
 
         self.cleanup_active = False
 
@@ -322,7 +330,8 @@ class Database(SmartPlugin):
             self.scheduler_add('Count logs', self._count_logentries, cycle=6*3600, prio=6)
         self.scheduler_add('Buffer dump', self._dump, cycle=self._dump_cycle, prio=5)
         if len(self._items_with_maxage) > 0:
-            self.scheduler_add('Remove old', self.remove_older_than_maxage, cycle=91, prio=6)
+            # self.scheduler_add('Remove old', self.remove_older_than_maxage, cycle=91, prio=6)
+            self.scheduler_add('Remove old', self.remove_older_than_maxage, cycle=self._removeold_cycle, prio=6)
         return
 
 
@@ -641,24 +650,43 @@ class Database(SmartPlugin):
     #    params = {'id': id}
     #    return self._fetchall("SELECT min(time) FROM {log} GROUP BY item_id", params, cur=cur)[0]
 
-    def readLatestLog(self, id, dt=None, cur=None):
+    def readLatestLog(self, id, time=None, cur=None):
         """
-        Read the time of latest log record for given database ID and if dt given up to this time
+        Read the time of latest log record for given database ID and if time given up to this time
 
         This is a public function of the plugin
 
         :param id: Database ID of item to read the record for
-        :param dt: datetime as maximum timestamp for the given value
+        :param time: a maximum timestamp for the given value
         :param cur: A database cursor object if available (optional)
 
         :return: Log record for the database ID
         """
-        if dt is None:
+        if time is None:
             params = {'id': id}
             return self._fetchall("SELECT max(time) FROM {log} WHERE item_id = :id;", params, cur=cur)[0][0]
         else:
-            params = {'id': id, 'dt': self._timestamp(dt)}
-            return self._fetchall("SELECT max(time) FROM {log} WHERE item_id = :id AND time <= :dt", params, cur=cur)[0][0]
+            params = {'id': id, 'time': time}
+            return self._fetchall("SELECT max(time) FROM {log} WHERE item_id = :id AND time <= :time", params, cur=cur)[0][0]
+
+
+    def readTotalLogCount(self, id=None, time_start=None, time_end=None, cur=None):
+        """
+        Read database log count for the hole database
+
+        :param id:
+        :param time_start:
+        :param time_end:
+        :param cur:
+
+        :return: Number of log records
+        """
+        params = {'id': id, 'time_start': time_start, 'time_end': time_end}
+        result = self._fetchall("SELECT count(*) FROM {log};", params, cur=cur)
+        if result == []:
+            return 0
+        return result[0][0]
+
 
     def readLogCount(self, id, time_start=None, time_end=None, cur=None):
         """
@@ -1114,9 +1142,14 @@ class Database(SmartPlugin):
         """
         if self._dump_lock.acquire(timeout=60) == False:
             self.logger.warning('Skipping dump, since an other database operation running! Data is buffered and dumped later.')
+            self.skipping_dump = True
             return
 
         self.logger.debug('Starting dump')
+
+        if self.skipping_dump:
+            self.logger.warning('Dumping buffered data from skipped dump(s).')
+            self.skipping_dump = False
 
         if not self._initialize_db():
             self._dump_lock.release()
@@ -1277,7 +1310,10 @@ class Database(SmartPlugin):
 
         if self._maxage_worklist == []:
             # Fill work list, if it is empty
-            self._maxage_worklist = [i for i in self._items_with_maxage]
+            if self._default_maxage == 0:
+                self._maxage_worklist = [i for i in self._items_with_maxage]
+            else:
+                self._maxage_worklist = [i for i in self._handled_items]
             self.logger.info(f"remove_older_than_maxage: Worklist filled with {len(self._items_with_maxage)} items")
 
         item = self._maxage_worklist.pop(0)
@@ -1313,6 +1349,8 @@ class Database(SmartPlugin):
         if remaining <= 0:
             # no log entries will be there after deletion, need to go back in time for the latest logentry
             new_must_keep_timestamp = self.readLatestLog(item_id, timestamp_end)
+            if new_must_keep_timestamp is None:
+                return
             new_must_keep_time = self._datetime(new_must_keep_timestamp)
             self.logger.info(f"remove_older_than_maxage: item = {itempath} no remaining log entry between {time_end} and now, thus can not remove log entries older than maxage, latest log is {new_must_keep_time}")
             time_end = new_must_keep_time + datetime.timedelta(microseconds=-1)
@@ -1359,7 +1397,11 @@ class Database(SmartPlugin):
 
         :return:
         """
-        maxage = self.get_iattr_value(item.conf, 'database_maxage')
+        if self.has_iattr(item.conf, 'database_maxage'):
+            maxage = self.get_iattr_value(item.conf, 'database_maxage')
+        elif self._default_maxage > 0:
+            maxage = self._default_maxage
+
         if maxage:
             dt = self.shtime.now()
             dt = dt.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -1375,12 +1417,16 @@ class Database(SmartPlugin):
         called by scheduler once on start
         """
         self.logger.info("_count_logentries: # handled items = {}".format(len(self._handled_items)))
+        self._items_still_counting = True
+        self._items_total_entries = 0
         for item in self._handled_items:
             item_id = self.id(item, create=False)
             logcount = self.readLogCount(item_id)
             self._item_logcount[item_id] = logcount
+            self._items_total_entries += logcount
             self._webdata[item.id()].update({'logcount': logcount})
 
+        self._items_still_counting = False
         return
 
 
@@ -1521,8 +1567,8 @@ class Database(SmartPlugin):
         """
         Get timestamp from datetime
 
-        :param dt:
-        :return:
+        :param dt: datetime
+        :return: integer containing a timestamp
         """
         val = int(time.mktime(dt.timetuple())) * 1000 + int(dt.microsecond / 1000)
         #self.logger.debug("Debug timestamp {0}, val {1}, epoche timestamp {2}, micrsec {3}".format(dt, val, time.mktime(dt.timetuple()), dt.microsecond) )

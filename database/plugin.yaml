@@ -12,7 +12,7 @@ plugin:
     documentation: http://smarthomeng.de/user/plugins/database/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1021844-neues-database-plugin
 
-    version: 1.6.2                 # Plugin version
+    version: 1.6.3                 # Plugin version
     sh_minversion: 1.8.0           # minimum shNG version to use this plugin
 #    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
@@ -43,7 +43,13 @@ parameters:
         default: 60
         description:
             de: 'Dump Cycle bestimmt wie oft die Daten auf Platte geschrieben werden (in Sekunden).'
-            en: 'Dump cycle defined how often the database is dumped to disc (in seconds).'
+            en: 'Dump cycle defines how often the database is dumped to disc (in seconds).'
+    removeold_cycle:
+        type: int
+        default: 91
+        description:
+            de: 'Remove old Cycle bestimmt wie oft die Prüfung auf veraltete Daten gestartet werden soll (in Sekunden).'
+            en: 'Remove old cycle defines how often the database will be checked for old data (in seconds).'
     precision:
         type: int
         default: 2
@@ -60,11 +66,19 @@ parameters:
 
     max_delete_logentries:
         type: int
-        default: 1000
+        default: 1500
         valid_min: 20
         description:
             de: "Maximal auf einmal zu löschende Anzahl an Log Einträgen mit dem database_maxage Attribut, reduziert die Belastung der Datenbank bei alten Datenbeständen"
             en: "Maximum number of Logentries to delete at once with database_maxage attribute, reduces load on database with old datasets"
+
+    default_maxage:
+        type: int
+        default: 0
+        valid_min: 0
+        description:
+            de: "Falls dieser Parameter einen Wert größer 0 enthält: Standard maxage für Items, die kein maxage gesetzt haben"
+            en: "If this parameter is > 0: maxage for Items that don't have a maxage set."
 
     webif_pagelength:
         type: int

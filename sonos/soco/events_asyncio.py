@@ -137,6 +137,15 @@ class EventNotifyHandler(EventNotifyHandlerBase):
             else:
                 variables = parse_event_xml(content)
 
+            if "zone_group_state" in variables:
+                # Pass ZGS payload to associated SoCo instance to update
+                # attributes. Keeps cache warm and avoids network calls.
+                service.soco.zone_group_state.process_payload(
+                    payload=variables["zone_group_state"],
+                    source="event",
+                    source_ip=service.soco.ip_address,
+                )
+
             # Build the Event object
             event = Event(sid, seq, service, timestamp, variables)
             # pass the event details on to the service so it can update
@@ -155,7 +164,7 @@ class EventNotifyHandler(EventNotifyHandlerBase):
         log.debug("Event %s received for %s service at %s", seq, service_id, timestamp)
 
 
-class EventListener(EventListenerBase):  # pylint: disable=too-many-instance-attributes
+class EventListener(EventListenerBase):
     """The Event Listener.
 
     Runs an http server which is an endpoint for ``NOTIFY``
@@ -475,7 +484,7 @@ class Subscription(SubscriptionBase):
             self._auto_renew_task.cancel()
             self._auto_renew_task = None
 
-    # pylint: disable=no-self-use, too-many-branches, too-many-arguments
+    # pylint: disable=no-self-use
     def _request(self, method, url, headers, success, unconditional=None):
         """Sends an HTTP request.
 

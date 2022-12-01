@@ -1181,7 +1181,7 @@ class Speaker(object):
 
             if group_command:
                 for member in self.zone_group_members:
-                    self.logger.debug(f"Debug set_voloume: Setting {member} to volume {volume}")
+                    self.logger.debug(f"Debug set_volume: Setting {member} to volume {volume}")
                     sonos_speaker[member].soco.volume = volume
                     sonos_speaker[member].volume = volume
             else:
@@ -1311,6 +1311,7 @@ class Speaker(object):
                     self.logger.info("Debug: Unsubscribe av event for uid {0} in fct zone_group_members".format(self.uid)) 
                     member.av_subscription.unsubscribe()
                 else:
+                    # Why are the member speakers un- and subscribed again? 
                     self.logger.info("Debug: Un/Subscribe av event for uid {0} in fct zone_group_members".format(self.uid)) 
                     member.av_subscription.unsubscribe()
                     member.av_subscription.subscribe()
@@ -2425,7 +2426,7 @@ class Speaker(object):
 
 class Sonos(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.6.4"
+    PLUGIN_VERSION = "1.6.5"
 
     def __init__(self, sh, *args, **kwargs):
         """
@@ -2976,12 +2977,19 @@ class Sonos(SmartPlugin):
 
             try:
                 uid = zone.uid
+            except requests.ConnectionError as e:
+                self.logger.info(f"Exception requests connection error in zone.uid for speaker {zone.ip_address}: {e}")
+                uid = None
+            except requests.Timeout as e:
+                self.logger.warning(f"Exception requests timeout in zone.uid for speaker {zone.ip_address}: {e}")
+                uid = None
             except Exception as e:
                 self.logger.warning(f"Exception in zone.uid for speaker {zone.ip_address}: {e}")
+                uid = None
                 continue
 
             if uid is None:
-                self.logger.warning(f"Zone has no valid uid. Cannot handle speaker {zone.ip_address}")
+                self.logger.debug(f"Zone has no valid uid. Cannot handle speaker {zone.ip_address}")
                 continue
 
             uid = uid.lower()
@@ -3003,16 +3011,21 @@ class Sonos(SmartPlugin):
                 self.logger.info("Debug: Speaker found: {zone}, {uid}".format(zone=zone.ip_address, uid=uid))
                 online_speaker_count = online_speaker_count + 1 
                 if uid in sonos_speaker:
-                    if zone is not sonos_speaker[uid].soco:
-                        self.logger.info("Debug: zone is not in speaker list jet. Adding and subscribing zone {0}".format(zone))
-                        sonos_speaker[uid].soco = zone
-                        sonos_speaker[uid].subscribe_base_events()
+                    try:
+                        zone_compare = sonos_speaker[uid].soco
+                    except Exception as e:
+                        self.logger.warning(f"Exception in discover -> sonos_speaker[uid].soco: {e}")
                     else:
-                        self.logger.info("Debug: SoCo instance {0} already initiated, skipping.".format(zone))
-#                        # The following check subscriptions functions triggers an unsubscribe/subscribe. However, this causes
-#                        # a massive memory leak increasing with every check_subscription call. 
-#                        self.logger.info("Debug: checking subscriptions")
-#                        sonos_speaker[uid].check_subscriptions()
+                        if zone is not zone_compare:
+                            self.logger.info("Debug: zone is not in speaker list jet. Adding and subscribing zone {0}".format(zone))
+                            sonos_speaker[uid].soco = zone
+                            sonos_speaker[uid].subscribe_base_events()
+                        else:
+                            self.logger.info("Debug: SoCo instance {0} already initiated, skipping.".format(zone))
+#                            # The following check subscriptions functions triggers an unsubscribe/subscribe. However, this causes
+#                            # a massive memory leak increasing with every check_subscription call. 
+#                            self.logger.info("Debug: checking subscriptions")
+#                            sonos_speaker[uid].check_subscriptions()
 
                 else:
                     self.logger.warning(f"Debug: Initializing new speaker with uid={uid} and ip={zone.ip_address}")
@@ -3023,6 +3036,7 @@ class Sonos(SmartPlugin):
                 sonos_speaker[uid].refresh_static_properties()
 
             else:
+                # Speaker is not online. Disposing...
                 if sonos_speaker[uid].soco is not None:
                     self.logger.info(
                         "Debug: Disposing offline speaker: {zone}, {uid}".format(zone=zone.ip_address, uid=uid))

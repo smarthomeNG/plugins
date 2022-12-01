@@ -66,24 +66,31 @@
 </script>
 <div class="container-fluid m-2 table-resize">
 	<div class="mb-2">
-		{{ _('Die folgenden {items} Items sind dieser Instanz des Database Plugins zugewiesen, {with_maxage} Items haben ein maxage.', vars={'items': len(p._handled_items), 'with_maxage': len(p._items_with_maxage)}) }}
+		{{ _('Die folgenden {items} Items sind dieser Instanz zugewiesen, {with_maxage} Items haben ein maxage.', vars={'items': len(p._handled_items), 'with_maxage': len(p._items_with_maxage)}) }}
 		{%  if len(p._handled_items) != p.readItemCount() %}
-			- ({{_( 'Die Datenbank enthält Daten zu {dbitems} Items', vars={'dbitems': p.readItemCount()}) }} )
+			- {{_( 'Die Datenbank enthält Daten zu {dbitems} Items', vars={'dbitems': p.readItemCount()}) }}
 		{%  endif %}
+		{%  if p._items_total_entries > 0 %}
+	        -
+			{%  if p._items_still_counting %}
+				{{ _('Mindestens') }}
+			{%  endif %}
+			{{ "{:,}".format(p._items_total_entries).replace(",",".") }} {{ _('Log Einträge zu dieser Instanz') }}
+		{% endif %}
 	</div>
 	<table id="itemtable">
 		<thead>
 		<tr>
-			<th>{{ _('Item') }}</th>
-			<th>{{ _('Init') }}</th>
-			<th>{{ _('Typ') }}</th>
-			<th>{{ _('Wert') }}</th>
-			<th>{{ _('Item-ID in der Datenbank') }}</th>
+			<th class="item">{{ _('Item') }}</th>
+			<th class="init">{{ _('Init') }}</th>
+			<th class="type">{{ _('Typ') }}</th>
+			<th class="value">{{ _('Wert') }}</th>
+			<th class="id">{{ _('Item-ID in der Datenbank') }}</th>
 			{%  if p.count_logentries %}
-				<th style="width: 120px; text-align:right">{{ _('Anzahl Einträge') }}</th>
+				<th class="logcount">{{ _('Anzahl Einträge') }}</th>
 			{% endif %}
-			<th>{{ _('konfiguriertes max. Alter') }}</th>
-			<th class="no-sort">{{ _('Aktionen') }}</th>
+			<th class="maxage">{{ _('konfiguriertes max. Alter') }}</th>
+			<th class="no-sort actions">{{ _('Aktionen') }}</th>
 		</tr>
 		</thead>
 		<tbody>
@@ -109,12 +116,16 @@
 					<td class="py-1" id="{{ item }}_value">{{ val }}</td>
 					<td class="py-1" id="{{ item }}_id">{{ p.id(item, create=False) }}</td>
 					{%  if p.count_logentries %}
-						<td class="py-1" style="width: 120px; text-align:right" id="{{ item }}_logcount">{{ p._item_logcount[p.id(item, create=False)] }}</td>
+						<td class="py-1" id="{{ item }}_logcount">{{ p._item_logcount[p.id(item, create=False)] }}</td>
 					{% endif %}
 					{%  if p.get_iattr_value(item.conf, 'database_maxage') %}
-						<td class="py-1" id="{{ item }}_maxage">{{ p.get_maxage_ts(item).strftime('%d.%m.%Y %H:%M:%S') }} ({{ p.get_iattr_value(item.conf, 'database_maxage') }} {{ _('Tage') }})</td>
+						<td class="py-1" id="{{ item }}_maxage">{{ p.get_iattr_value(item.conf, 'database_maxage') }} {{ _('Tage') }}: {{ p.get_maxage_ts(item).strftime('%d.%m.%Y %H:%M') }}</td>
 					{% else %}
-						<td class="py-1">-</td>
+						{%  if p._default_maxage > 0 %}
+							<td class="py-1">default: {{ p._default_maxage }} {{ _('Tage') }}</td>
+						{% else %}
+							<td class="py-1">-</td>
+						{% endif %}
 					{% endif %}
 					<td class="py-1">
 						{% if p.id(item, create=False) == None %}

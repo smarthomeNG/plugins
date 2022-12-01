@@ -4,7 +4,7 @@
 #  Copyright 2012-2013 Marcus Popp                         marcus@popp.mx
 #  Copyright 2016- Christian Strassburg               c.strassburg@gmx.de
 #  Copyright 2017- Serge Wagener                     serge@wagener.family
-#  Copyright 2017-2021 Bernd Meiners                Bernd.Meiners@mail.de
+#  Copyright 2017-2022 Bernd Meiners                Bernd.Meiners@mail.de
 #########################################################################
 #  This file is part of SmartHomeNG.py.
 #  Visit:  https://github.com/smarthomeNG/
@@ -50,9 +50,12 @@ import os
 KNXD_CACHEREAD_DELAY  = 0.35
 KNXD_CACHEREAD_DELAY  = 0.0
 
-KNXREAD = 0x00
-KNXRESP = 0x40
-KNXWRITE = 0x80
+KNX_DATA_MASK =     0b00111111 # 0x3f up to 6 bits form data content
+KNX_FLAG_MASK =     0b11000000 # 0xC0
+FLAG_KNXREAD =      0b00000000 # 0x00
+FLAG_KNXRESPONSE =  0b01000000 # 0x40
+FLAG_KNXWRITE =     0b10000000 # 0x80
+FLAG_RESERVED =     0b11000000 # 0xC0 none of the above flags, one need to examine the previous byte for lowest two bits then
 
 # attribute keywords
 KNX_DPT      = 'knx_dpt'          # data point type
@@ -74,7 +77,7 @@ DPT = 'dpt'
 
 class KNX(SmartPlugin):
 
-    PLUGIN_VERSION = "1.8.0"
+    PLUGIN_VERSION = "1.8.2"
 
     # tags actually used by the plugin are shown here
     # can be used later for backend item editing purposes, to check valid item attributes
@@ -90,6 +93,7 @@ class KNX(SmartPlugin):
         self.provider = self.get_parameter_value('provider')
         self.host = self.get_parameter_value('host')
         self.port = self.get_parameter_value('port')
+        self.loglevel_knxd_cache_problems = self.get_parameter_value('loglevel_knxd_cache_problems')
 
         from bin.smarthome import VERSION
         if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
@@ -107,7 +111,9 @@ class KNX(SmartPlugin):
         self.gar = {}                   # group addresses to reply if requested from knx, {DPT: dpt, ITEM: item, LOGIC: None}
         self._init_ga = []
         self._cache_ga = []             # group addresses which should be initalized by the knxd cache
-        self._cache_ga_response_pending = []
+        self._cache_ga_response_pending = []    # group adresses for which a read request was sent to knxd
+        self._cache_ga_response_no_value = []   # group adresses for which a response from knxd did not provide a value
+        
         self.time_ga = self.get_parameter_value('time_ga')
         self.date_ga = self.get_parameter_value('date_ga')
         self._send_time_do = self.get_parameter_value('send_time')
@@ -204,9 +210,9 @@ class KNX(SmartPlugin):
             self.logger.warning(self.translate('problem encoding payload {} for dpt {}').format(payload,dpt))
             return
         if flag == 'write':
-            flag = KNXWRITE
+            flag = FLAG_KNXWRITE
         elif flag == 'response':
-            flag = KNXRESP
+            flag = FLAG_KNXRESPONSE
         else:
             self.logger.warning(self.translate(
                 "groupwrite telegram for {} with unknown flag: {}. Please choose beetween write and response.").format(
@@ -239,7 +245,7 @@ class KNX(SmartPlugin):
         except:
             self.logger.warning(self.translate('problem encoding ga: {}').format(ga))
             return
-        pkt.extend([0, KNXREAD])
+        pkt.extend([0, FLAG_KNXREAD])
         self._send(pkt)
 
     def _poll(self, **kwargs):
@@ -339,13 +345,7 @@ class KNX(SmartPlugin):
         2 byte length
         2 byte knxd message type   --> see eibtypes.h
 
-        knx telegram then consists of
-            1 byte control byte
-            2 byte source as physical address
-            2 byte destination as group address
-            2 byte command/data
-            n byte data
-        thus at least 7 bytes
+        knx telegram then consists of least 6 bytes if valid
 
         The process consists of two steps:
         * At first the variable ``self._isLength`` is True and the length for the
@@ -356,39 +356,83 @@ class KNX(SmartPlugin):
         if self._isLength:
             self._isLength = False
             try:
+                # expecting an unsigned short integer:
                 client.terminator = struct.unpack(">H", data)[0]
             except:
-                self.logger.error("KNX[{0}]: problem unpacking length: {1}".format(self.get_instance_name(), data))
+                self.logger.error(f"KNX[{self.get_instance_name()}]: problem unpacking length: {data}")
             return
         else:
             self._isLength = True
             client.terminator = 2
 
+        # expecting the type of the following knxd telegram as an unsigned short integer
         knxd_msg_type = struct.unpack(">H", data[0:2])[0]
-        if (knxd_msg_type != KNXD.GROUP_PACKET and knxd_msg_type != KNXD.CACHE_READ) or len(data) < 8:
+
+        # knxd 
+        if not knxd_msg_type in [KNXD.GROUP_PACKET, KNXD.CACHE_READ, KNXD.CACHE_READ_NOWAIT]:
             self.handle_other_knxd_messages(knxd_msg_type, data[2:])
             return
 
-        if (data[6] & 0x03 or (data[7] & 0xC0) == 0xC0):
-            if self.logger.isEnabledFor(logging.DEBUG):
-                self.logger.debug("Unknown APDU")
+        knx_data = data[2:]
+
+        # parse rest of data in assumption of a valid knx telegram
+        """
+        knx telegram consists of at least 6 bytes
+            2 byte source as physical address
+            2 byte destination as group address
+            2 byte command/data
+            n byte data optional, only indicated by length 
+        """
+
+        # knxd will only deliver 4 bytes and no command/data payload when it is unable to provide a group address from cache.
+        if len(knx_data) < 6:
+            knx_data_str = binascii.hexlify(knx_data).decode()
+            src = ""
+            dst = ""
+            try:
+                src = self.decode(knx_data[0:2], 'pa')
+                dst = self.decode(knx_data[2:4], 'ga')
+            finally:
+                self._cache_ga_response_no_value.append(dst)
+                loglevel = logging.getLevelName(self.loglevel_knxd_cache_problems)
+                if not isinstance( loglevel, int):
+                  loglevel = logging.getLevelName(loglevel)
+                self.logger.log(loglevel, f"{len(knx_data)} bytes [{knx_data_str}] from {src} for ga/pa {dst} is not enough data to parse")
             return
-        src = self.decode(data[2:4], 'pa')
-        dst = self.decode(data[4:6], 'ga')
-        flg = data[7] & 0xC0
-        if flg == KNXWRITE:
+
+        # test if flags provide normal knx telegram data or if they are special
+        if len(knx_data) >= 6 and (knx_data[4] & 0x03 or (knx_data[5] & KNX_FLAG_MASK) == FLAG_RESERVED):
+            if self.logger.isEnabledFor(logging.DEBUG):
+                self.logger.debug("Unknown Application Protocol Data Unit")
+            return
+
+
+        src = self.decode(knx_data[0:2], 'pa')
+        dst = self.decode(knx_data[2:4], 'ga')
+
+        flg = knx_data[5] & KNX_FLAG_MASK
+        is_ga = knx_data[4] & 0b1000000
+        if flg == FLAG_KNXWRITE:
             flg = 'write'
-        elif flg == KNXREAD:
+        elif flg == FLAG_KNXREAD:
             flg = 'read'
-        elif flg == KNXRESP:
+        elif flg == FLAG_KNXRESPONSE:
             flg = 'response'
         else:
             self.logger.warning("Unknown flag: {:02x} src: {} dest: {}".format(flg, src, dst))
             return
-        if len(data) == 8:
-            payload = bytearray([data[7] & 0x3f])
+            
+        if len(knx_data) == 6:
+            payload = bytearray([knx_data[5] & KNX_DATA_MASK ]) # 0x3f
         else:
-            payload = data[8:]
+            payload = knx_data[6:]
+
+        if len(payload) == 0:
+            # this is an error!!!
+            payloadstr = binascii.hexlify(payload).decode()
+            msg = f"KNXD message {KNXD.MessageDescriptions[knxd_msg_type]} from {src} for GA {dst} received but payload {payloadstr} has not enough data"
+            self.logger.warning(msg)
+            return
 
         if self.enable_stats:
             # update statistics on used group addresses

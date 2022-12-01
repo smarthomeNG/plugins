@@ -1,6 +1,6 @@
-======
+========
 RPi_Info
-======
+========
 
 .. image:: webif/static/img/plugin_logo.png
    :alt: plugin logo

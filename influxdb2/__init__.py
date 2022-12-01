@@ -105,8 +105,8 @@ class InfluxDB2(SmartPlugin):
         """
         Run method for the plugin
         """
-        self.logger.warning(f"_plugin_item_dict:\n{self._plugin_item_dict }\n")
-        self.logger.warning(f"_lookop_plugin_item_dict:\n{self._lookop_plugin_item_dict }\n")
+        self.logger.info(f"_plugin_item_dict:\n{self._plugin_item_dict }\n")
+        self.logger.info(f"_lookop_plugin_item_dict:\n{self._lookop_plugin_item_dict }\n")
 
         self.logger.debug("Run method called")
         # setup scheduler for device poll loop   (disable the following line, if you don't need to poll the device. Rember to comment the self_cycle statement in __init__ as well)

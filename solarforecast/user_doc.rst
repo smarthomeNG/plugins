@@ -1,9 +1,9 @@
 .. index:: Plugins; solarforecast (Solarforecast REST API Unterstützung)
 .. index:: solarforecast
 
-=======
+=============
 solarforecast
-=======
+=============
 
 Dieses Plugin unterstützt Solare.forecast Vorhersagen von Solaretrag (Leistung).
 
@@ -24,31 +24,31 @@ The plugin does not need a license key in public mode. An API key can be optaine
 Beispiele
 =========
 
-Beispiel für jeweils zwei Items mit vorhergesagtem Leistungsertrag f�r heute und morgen.
+Beispiel für jeweils zwei Items mit vorhergesagtem Leistungsertrag für heute und morgen.
 
 .. code:: yaml
 
-solarforecast:
+    solarforecast:
 
-    today:
-        type: num
-        visu_acl: ro
-        solarforecast_attribute: power_today
-            
-        date:
-            type: str
+        today:
+            type: num
             visu_acl: ro
-            solarforecast_attribute: date_today
+            solarforecast_attribute: power_today
 
-    tomorrow:
-        type: num
-        visu_acl: ro
-        solarforecast_attribute: power_tomorrow
+            date:
+                type: str
+                visu_acl: ro
+                solarforecast_attribute: date_today
 
-        date:
-            type: str
+        tomorrow:
+            type: num
             visu_acl: ro
-            solarforecast_attribute: date_tomorrow
+            solarforecast_attribute: power_tomorrow
+
+            date:
+                type: str
+                visu_acl: ro
+                solarforecast_attribute: date_tomorrow
 
 
 Web Interface
@@ -58,9 +58,9 @@ Das solarforecast Plugin verfügt über ein Webinterface.
 
 .. important::
 
-   Das Webinterface des Plugins kann mit SmartHomeNG v1.4.2 und davor **nicht** genutzt werden.
-   Es wird dann nicht geladen. Diese Einschränkung gilt nur für das Webinterface. Ansonsten gilt
-   für das Plugin die in den Metadaten angegebene minimale SmartHomeNG Version.
+    Das Webinterface des Plugins kann mit SmartHomeNG v1.4.2 und davor **nicht** genutzt werden.
+    Es wird dann nicht geladen. Diese Einschränkung gilt nur für das Webinterface. Ansonsten gilt
+    für das Plugin die in den Metadaten angegebene minimale SmartHomeNG Version.
 
 
 Aufruf des Webinterfaces
