@@ -50,7 +50,7 @@ class Database(SmartPlugin):
     """
 
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = '1.6.7'
+    PLUGIN_VERSION = '1.6.8'
 
     # SQL queries: {item} = item table name, {log} = log table name
     # time, item_id, val_str, val_num, val_bool, changed
@@ -460,7 +460,6 @@ class Database(SmartPlugin):
         strval = row[COL_ITEM_VAL_STR]
         numval = row[COL_ITEM_VAL_NUM]
         boolval = row[COL_ITEM_VAL_BOOL]
-        #self.logger.info(f"db_itemtype: {item_path} (id={id}) - strval={strval}, numval={numval}, boolval={boolval}")
 
         if (strval is not None) and (numval is None):
             return 'str'
@@ -470,7 +469,7 @@ class Database(SmartPlugin):
                 return 'num'
             return 'num, bool'
 
-        return "unbekannt"
+        return 'unbekannt'
 
 
     def db_lastchange(self, item):
@@ -501,8 +500,6 @@ class Database(SmartPlugin):
 
         id = int(row[COL_ITEM_ID])
         last_change = row[COL_ITEM_TIME]
-        #self.logger.info(f"db_lastchange: {item_path} (id={id}) - last_change={last_change}")
-
         return self._datetime(last_change)
 
 
@@ -569,7 +566,7 @@ class Database(SmartPlugin):
 
     def sqlite_dump(self, dumpfile):
 
-        if self.driver != 'sqlite3':
+        if self.driver.lower() != 'sqlite3':
             self.logger.warning("SQL dump is only possible for sqlite3 databases")
             return False
 
@@ -779,19 +776,6 @@ class Database(SmartPlugin):
         params = {'id': id}
         return self._fetchall("SELECT min(time) FROM {log} WHERE item_id = :id;", params, cur=cur)[0][0]
 
-    #def readOldestLogs(self, id, cur=None):
-    #    """
-    #    Read the time of oldest log record for given database ID
-    #
-    #    This is a public function of the plugin
-    #
-    #    :param id: Database ID of item to read the record for
-    #    :param cur: A database cursor object if available (optional)
-    #
-    #    :return: Log record for the database ID
-    #    """
-    #    params = {'id': id}
-    #    return self._fetchall("SELECT min(time) FROM {log} GROUP BY item_id", params, cur=cur)[0]
 
     def readLatestLog(self, id, time=None, cur=None):
         """
@@ -943,8 +927,6 @@ class Database(SmartPlugin):
             logcount_str = f"{logcount:,}".replace(',','.')
             self.logger.info(f"Orphan {item} (id={item_id}): {logcount_str} entries")
             self._orphan_logcount[item_id] = logcount
-            #self._items_total_entries += logcount
-            #self._webdata[item.id()].update({'logcount': logcount})
 
         return
 
@@ -1008,31 +990,6 @@ class Database(SmartPlugin):
         self.cleanup_active = True
         self.logger.info("Database cleanup started (removal of entries without defined item)")
         return
-
-        # self.cleanup_active = True
-        # self.logger.info("Database cleanup started (removal of entries without defined item)")
-        # items = [item.id() for item in self._buffer]
-        # if not self._db.lock(60):
-        #     self.logger.error("Can not acquire lock for database cleanup")
-        #     self.cleanup_active = False
-        #     return
-        # cur = self._db.cursor()
-        # self._force_exitloop = False
-        # try:
-        #     for item in self.readItems(cur=cur):
-        #         if item[COL_ITEM_NAME] not in items:
-        #             self.logger.info(f"Deleting data for item w/o database attribute: {item[COL_ITEM_NAME]}")
-        #             self.deleteItem(item[COL_ITEM_ID], cur=cur)
-        #         # allow exit via assignement through eval syntax checker
-        #         if self._force_exitloop:
-        #             break
-        # except Exception as e:
-        #     self.logger.error("Database cleanup failed: {}".format(e))
-        # cur.close()
-        # self._db.release()
-        # self.logger.info("Database cleanup finished")
-        # self.cleanup_active = False
-        # return
 
 
     def _slice_condition(self, id, time=None, time_start=None, time_end=None, changed=None,
@@ -1341,42 +1298,6 @@ class Database(SmartPlugin):
         return ts
 
 
-    # def _parse_ts(self, frame):
-    #     """
-    #     Parse one frame of a duration-timestamp to a duration (in seconds)
-    #
-    #     :param frame:
-    #     :return:
-    #     """
-    #     minute = 60 * 1000
-    #     hour = 60 * minute
-    #     day = 24 * hour
-    #     week = 7 * day
-    #     month = 30 * day
-    #     year = 365 * day
-    #
-    #     _frames = {'i': minute, 'h': hour, 'd': day, 'w': week, 'm': month, 'y': year}
-    #     try:
-    #         return int(frame)
-    #     except:
-    #         pass
-    #     ts = self._timestamp(self.shtime.now())
-    #     if frame == 'now':
-    #         fac = 0
-    #         frame = 0
-    #     elif frame[-1] in _frames:
-    #         fac = _frames[frame[-1]]
-    #         frame = frame[:-1]
-    #     else:
-    #         # return parameter unchaned
-    #         return frame
-    #     try:
-    #         ts = ts - int(float(frame) * fac)
-    #     except:
-    #         self.logger.warning("Database: Unknown time frame '{0}'".format(frame))
-    #     return ts
-
-
     # --------------------------------------------------------
     #    Database buffer routines (dump, insert and remove)
     # --------------------------------------------------------
@@ -1392,20 +1313,14 @@ class Database(SmartPlugin):
         :return:
         """
         if self._dump_lock.acquire(timeout=60) == False:
-#            try:
-#                self.logger.notice('Skipping dump, since an other database operation running! Data is buffered and dumped later.')
-#            except:
-            self.logger.warning('Skipping dump, since an other database operation running! Data is buffered and dumped later.')
+            self.logger.notice('Skipping dump, since an other database operation running! Data is buffered and dumped later.')
             self.skipping_dump = True
             return
 
         self.logger.debug('Starting dump')
 
         if self.skipping_dump:
-#            try:
-#                self.logger.notice('Dumping buffered data from skipped dump(s).')
-#            except:
-            self.logger.warning('Dumping buffered data from skipped dump(s).')
+            self.logger.notice('Dumping buffered data from skipped dump(s).')
             self.skipping_dump = False
 
         if not self._initialize_db():
@@ -1630,7 +1545,7 @@ class Database(SmartPlugin):
         count_log_records_to_delete_str = f"{count_log_records_to_delete:,}".replace(',','.')
         max_delete_logentries_str = f"{self.max_delete_logentries:,}".replace(',','.')
         time_end_str = time_end.strftime("%d.%m.%Y - %H:%M")
-        self.logger.info(f"remove_older_: {itempath} remove older than {time_end_str} - {count_log_records_to_delete_str} records to delete")
+        self.logger.debug(f"remove_older_: {itempath} remove older than {time_end_str} - {count_log_records_to_delete_str} records to delete")
 
         # prevent to many deletions with strategy b)
         # assumption is made that logentries are evenly distributed over time
@@ -1638,19 +1553,6 @@ class Database(SmartPlugin):
         # since only a linear approximation over time and counts is used, but it should do the trick
         # to prevent from database lockups after setting database_maxage to old/ancient items
         if count_log_records_to_delete > self.max_delete_logentries:
-            #old_count_log_records_to_delete = count_log_records_to_delete
-            #timestamp_oldest = self.readOldestLog( item_id)
-            #time_oldest = self._datetime( timestamp_oldest)
-            #timespan_deletion = timestamp_end - timestamp_oldest
-            #assumed_chunk_size = count_log_records_to_delete / self.max_delete_logentries
-            #new_deletion_timespan = timespan_deletion / assumed_chunk_size
-            #timestamp_end = timestamp_oldest + new_deletion_timespan
-            #time_end = self._datetime( timestamp_end)
-            #count_log_records_to_delete = self.readLogCount(item_id,time_end=self._timestamp( time_end))
-            #time_end_str = time_end.strftime("%d.%m.%Y - %H:%M")
-            #self.logger.info(f"remove_older_: {itempath} old count to delete {old_count_log_records_to_delete} was higher than {self.max_delete_logentries} - new count to delete {count_log_records_to_delete} has end {time_end_str}")
-
-            # Aus dem löschen von Orphans:
             time_start_deletion = time.time()
             cur = self._db.cursor()
             self._execute(self._prepare("DELETE FROM {log} WHERE item_id = :id ORDER BY time ASC LIMIT :maxrecords;"), {'id': item_id, 'maxrecords': self.max_delete_logentries}, cur=cur)
@@ -1667,14 +1569,11 @@ class Database(SmartPlugin):
             time_used_for_deletion = time.time() - time_start_deletion
             time_end_str = time_end.strftime("%d.%m.%Y - %H:%M")
             self.logger.info(f"remove_older_: {itempath} deleted {count_log_records_to_delete_str} log entries until {time_end_str} took {time_used_for_deletion:.2f} seconds, averaging {100*time_used_for_deletion/count_log_records_to_delete:.4f} seconds per 100 entries")
-        #else:
-        #    self.logger.info(f"remove_older_: {itempath} - No records to delete")
 
         # update the logCount for the item
         logcount = self.readLogCount(item_id)
         self._item_logcount[item_id] = logcount
         self._webdata[item.id()].update({'logcount': logcount})
-        #self._webdata[item.id()].update({'logcount': f"{logcount:,}".replace(',', '.')})
 
         return
 
@@ -1720,16 +1619,6 @@ class Database(SmartPlugin):
         return
 
 
-    #def item_logcount_as_str(self, item):
-    #    """
-    #    Formatted logcount of an item for the webinterface
-    #
-    #    :param item:
-    #    :return:
-    #    """
-    #    return f"{self._item_logcount.get(self.id(item, create=False), 0):,}".replace(',','.')
-
-
     # ------------------------------------------
     #    Database specific stuff
     # ------------------------------------------
@@ -1753,11 +1642,8 @@ class Database(SmartPlugin):
                     {i: [self._prepare(query[0]), self._prepare(query[1])] for i, query in self._setup.items()})
                 self._db_initialized = True
         except Exception as e:
-            #self.logger.error("Database: Initialization failed: {}".format(e))
-            #return False
-
             self.logger.critical("Database: Initialization failed: {}".format(e))
-            if self.driver.lower() == "sqlite3":
+            if self.driver.lower() == 'sqlite3':
                 self._sh.restart('SmartHomeNG (Database plugin stalled)')
                 exit(0)
             else:
