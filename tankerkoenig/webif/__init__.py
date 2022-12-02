@@ -61,7 +61,6 @@ class WebInterface(SmartPluginWebIf):
 
         self.tplenv = self.init_template_environment()
 
-
     @cherrypy.expose
     def index(self, reload=None):
         """
@@ -124,10 +123,10 @@ class WebInterface(SmartPluginWebIf):
         Submit handler for Ajax
         """
 
-        self.logger.warning(f"submit called with {button=}, {lat=}, {lon=}, {rad=}")
+        self.logger.warning(f"submit called with button={button}, lat={lat}, lon={lon}, rad={rad}")
         if button is not None:
             result = self.plugin.get_petrol_stations(lat=lat, lon=lon, rad=rad)
-            self.logger.warning(f"{result=}")
+            self.logger.warning(f"result={result}")
 
         elif clear:
             for addr in self._last_read:
