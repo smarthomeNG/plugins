@@ -92,7 +92,7 @@ class Smlx(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.1.7'
+    PLUGIN_VERSION = '1.1.6'
 
     _units = {  # Blue book @ http://www.dlms.com/documentation/overviewexcerptsofthedlmsuacolouredbooks/index.html
        1 : 'a',    2 : 'mo',    3 : 'wk',  4 : 'd',    5 : 'h',     6 : 'min.',  7 : 's',     8 : '°',     9 : '°C',    10 : 'currency',
@@ -194,7 +194,7 @@ class Smlx(SmartPlugin):
                 self._items[obis][prop] = []
             self._items[obis][prop].append(item)
             self._item_dict[item] = (obis, prop)
-            self.logger.debug(f'Attach {item.id()} with obis={obis} and prop={prop}')
+            self.logger.debug(f'Attach {item.id()} with {obis=} and {prop=}')
         return None
 
     def parse_logic(self, logic):
@@ -294,6 +294,9 @@ class Smlx(SmartPlugin):
             self.logger.warning('Triggered cyclic poll_device, but previous cyclic run is still active. Therefore request will be skipped.')
             return
 
+        # set lock
+        self._cyclic_update_active = True
+
         self.logger.debug('Polling Smartmeter now')
         start_sequence = bytearray.fromhex('1B 1B 1B 1B 01 01 01 01')
         end_sequence = bytearray.fromhex('1B 1B 1B 1B 1A')
@@ -305,9 +308,6 @@ class Smlx(SmartPlugin):
             return
         else:
             self.logger.debug('Connected, try to query')
-
-        # set lock
-        self._cyclic_update_active = True
 
         start = time.time()
         data_is_valid = False
