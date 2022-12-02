@@ -122,7 +122,7 @@ class TankerKoenig(SmartPlugin):
             tankerkoenig_attr = self.get_iattr_value(item.conf, 'tankerkoenig_attr')
 
             if station_id and tankerkoenig_attr:
-                self.logger.debug(f"parse_item: {tankerkoenig_attr=} with {station_id=} detected, item added")
+                self.logger.debug(f"parse_item: tankerkoenig_attr={tankerkoenig_attr} with station_id={station_id} detected, item added")
                 self.item_dict[item] = {'station_id': station_id, 'tankerkoenig_attr': tankerkoenig_attr.lower()}
 
                 if station_id not in self.station_ids:
@@ -340,7 +340,7 @@ class TankerKoenig(SmartPlugin):
             station_id = self.item_dict[item]['station_id']
             tankerkoenig_attr = self.item_dict[item]['tankerkoenig_attr']
             value = self.station_prices.get(station_id, None).get(tankerkoenig_attr, None)
-            self.logger.debug(f"set_item_status_values: {station_id=}, {tankerkoenig_attr}, {value=}")
+            self.logger.debug(f"set_item_status_values: station_id={station_id}, tankerkoenig_attr={tankerkoenig_attr}, value={value}")
             if value:
                 item(value, self.get_shortname())
                             
@@ -353,7 +353,7 @@ class TankerKoenig(SmartPlugin):
             station_id = self.item_dict[item]['station_id']
             tankerkoenig_attr = self.item_dict[item]['tankerkoenig_attr']
             value = self.station_details.get(station_id, None).get(tankerkoenig_attr, None)
-            self.logger.debug(f"set_item_detail_values: {station_id=}, {tankerkoenig_attr}, {value=}")
+            self.logger.debug(f"set_item_detail_values: station_id={station_id}, tankerkoenig_attr={tankerkoenig_attr}, value={value}")
             if value:
                 item(value, self.get_shortname())
 
