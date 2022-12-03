@@ -248,7 +248,7 @@ class TankerKoenig(SmartPlugin):
 
         return station_details
 
-    def get_petrolstation_prices(self, station_ids: list) -> list:
+    def get_petrol_station_prices(self, station_ids: list) -> list:
         """
         Returns a list of prices for an array of petrol station ids
 
