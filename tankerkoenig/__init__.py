@@ -37,7 +37,7 @@ from .webif import WebInterface
 
 
 class TankerKoenig(SmartPlugin):
-    PLUGIN_VERSION = "2.0.0"
+    PLUGIN_VERSION = "2.0.1"
     
     _base_url = 'https://creativecommons.tankerkoenig.de/json'
     _detail_url_suffix = 'detail.php'
@@ -206,7 +206,7 @@ class TankerKoenig(SmartPlugin):
                 result_stations.append(result_station)
         return result_stations
 
-    def get_petrol_station_detail(self, station_id: str) -> dict:
+    def get_petrol_station_detail_full(self, station_id: str) -> dict:
         """
         Returns detail information for a petrol station id
 
@@ -229,9 +229,15 @@ class TankerKoenig(SmartPlugin):
 
         return result_station
 
-    def get_station_detail(self, station_id: str) -> dict:
+    def get_petrol_station_detail_reduced(self, station_id: str) -> dict:
+        """
+        Returns reduced detail information (no príces and "open" status) for a petrol station id
 
-        station_details = self._request_station_detail(station_id).get('station', None)
+        Should not be used extensively, due to performance issues on tankerkoenig side.
+
+        @param station_id: Internal ID of petrol station to retrieve information for
+        """
+        station_details = self.get_petrol_station_detail_full(station_id)
 
         # clean dict
         keys_to_be_deleted = ['e5', 'e10', 'diesel', 'isOpen']
@@ -248,38 +254,7 @@ class TankerKoenig(SmartPlugin):
 
         return station_details
 
-    def get_petrol_station_prices(self, station_ids: list) -> list:
-        """
-        Returns a list of prices for an array of petrol station ids
-
-        Recommended to be used by tankerkoenig team due to performance issues!!!
-
-        @param station_ids: Array of tankerkoenig internal petrol station ids to retrieve the prices for
-        """
-
-        json_obj = self._request_station_prices(station_ids)
-
-        keys = ['e5', 'e10', 'diesel', 'status']
-        resultstation_prices = []
-
-        for station_id in station_ids:
-            if 'prices' in json_obj:
-                if station_id in json_obj['prices']:
-                    result_station = dict()
-                    result_station['id'] = station_id
-                    for key in keys:
-                        if key in json_obj['prices'][station_id]:
-                            result_station[key] = json_obj['prices'][station_id][key]
-                        else:
-                            result_station[key] = ""
-                    resultstation_prices.append(result_station)
-                else:
-                    self.logger.error(f"Plugin '{self.get_fullname()}': No result for station with id {station_id}. Check manually!")
-            else:
-                self.logger.error(f"Plugin '{self.get_fullname()}': 'prices' key missing in json response for station with id {station_id}. Check manually!")
-        return resultstation_prices
-
-    def get_station_prices(self, station_ids: list) -> dict:
+    def get_petrol_station_prices(self, station_ids: list) -> dict:
         """
         Returns a dict of prices for an array of petrol station ids
 
@@ -289,6 +264,9 @@ class TankerKoenig(SmartPlugin):
         """
 
         _price_dict = self._request_station_prices(station_ids).get('prices', None)
+        for station_id in station_ids:
+            if station_id not in _price_dict:
+               self.logger.error(f"Plugin '{self.get_fullname()}': No result for station with id {station_id}. Check manually!")
 
         if _price_dict and isinstance(_price_dict, dict):
             for station_id in _price_dict:
@@ -306,7 +284,7 @@ class TankerKoenig(SmartPlugin):
         Gets price and status data for all defined stations and updates item values
         """
         
-        self.station_prices = self.get_station_prices(self.station_ids)
+        self.station_prices = self.get_petrol_station_prices(self.station_ids)
         return self.set_item_status_values()
         
     def update_detail_data(self):
@@ -325,7 +303,7 @@ class TankerKoenig(SmartPlugin):
         stations_details = {}
         
         for station_id in self.station_ids:
-            station_details = self.get_station_detail(station_id)
+            station_details = self.get_petrol_station_detail_reduced(station_id)
             stations_details[station_id] = station_details
         
         return stations_details
