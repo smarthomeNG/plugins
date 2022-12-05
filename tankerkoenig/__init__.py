@@ -189,7 +189,7 @@ class TankerKoenig(SmartPlugin):
             sort = 'price'
         
         # limit radius to 25km
-        if rad > 25:
+        if float(rad) > 25:
             self.logger.error(f"Plugin '{self.get_fullname()}': Used value={rad} for 'rad' at 'get_petrol_stations' not allowed. Set to max allowed value '25km'.")
             rad = 25
         
