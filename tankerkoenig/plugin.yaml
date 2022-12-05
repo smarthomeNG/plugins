@@ -217,7 +217,7 @@ plugin_functions:
                     en: "Search radius in km, max: 25"
 
 
-    get_petrol_station_detail_full:
+    get_petrol_station_detail:
         type: dict
         description:
             de: "Diese Funktion gibt Details über eine Tankstelle als DICT mit folgenden Keys zurück: 'e5', 'e10', 'diesel', 'street', 'houseNumber', 'postCode', 'place', 'brand', 'id', 'lng', 'name', 'lat', 'isOpen'"

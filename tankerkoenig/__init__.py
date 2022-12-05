@@ -64,6 +64,7 @@ class TankerKoenig(SmartPlugin):
         self.alive = False
 
         # get the parameters for the plugin (as defined in metadata plugin.yaml):
+        # get the parameters for the plugin (as defined in metadata plugin.yaml):
         try:
             self.webif_pagelength = self.get_parameter_value('webif_pagelength')
             self._apikey = self.get_parameter_value('apikey')
@@ -206,7 +207,7 @@ class TankerKoenig(SmartPlugin):
                 result_stations.append(result_station)
         return result_stations
 
-    def get_petrol_station_detail_full(self, station_id: str) -> dict:
+    def get_petrol_station_detail(self, station_id: str) -> dict:
         """
         Returns detail information for a petrol station id
 
@@ -237,7 +238,7 @@ class TankerKoenig(SmartPlugin):
 
         @param station_id: Internal ID of petrol station to retrieve information for
         """
-        station_details = self.get_petrol_station_detail_full(station_id)
+        station_details = self.get_petrol_station_detail(station_id)
 
         # clean dict
         keys_to_be_deleted = ['e5', 'e10', 'diesel', 'isOpen']
