@@ -49,7 +49,7 @@ class Hue2(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '2.2.2'    # (must match the version specified in plugin.yaml)
+    PLUGIN_VERSION = '2.2.3'    # (must match the version specified in plugin.yaml)
 
     hue_group_action_values          = ['on', 'bri', 'hue', 'sat', 'ct', 'xy', 'bri_inc', 'colormode', 'alert', 'effect']
     hue_light_action_writable_values = ['on', 'bri', 'hue', 'sat', 'ct', 'xy', 'bri_inc']
@@ -130,6 +130,7 @@ class Hue2(SmartPlugin):
                         self.bridge['datastoreversion'] = api_config.get('datastoreversion', '')
                         self.bridge['apiversion'] = api_config.get('apiversion', '')
                         self.bridge['swversion'] = api_config.get('swversion', '')
+                        self.bridge['modelid'] = api_config.get('modelid', '')
 
 
         self.bridge['username'] = self.bridge_user
@@ -142,9 +143,6 @@ class Hue2(SmartPlugin):
             self.logger.warning("Bridge '{}' is treated as unconfigured".format(self.bridge_serial))
         else:
             self.logger.info("Bridgeinfo for configured bridge '{}' = {}".format(self.bridge_serial, self.bridge))
-
-        my_api_config = self.get_api_config_of_bridge('http://' + self.bridge['ip'] + ':' + str(self.bridge['port']) + '/')
-        self.bridge['modelid'] = my_api_config.get('modelid', '')
 
         # dict to store information about items handled by this plugin
         self.plugin_items = {}
@@ -316,10 +314,15 @@ class Hue2(SmartPlugin):
             elif plugin_item['function'] == 'effect':
                 self.br.lights[plugin_item['id']]['state'](effect=value)
         except qhue.qhue.QhueException as e:
-            if str(e).startswith('QhueException: 201 ') and str(e).endswith('is not modifiable. Device is set to off.'):
-                self.logger.notice(f"update_light_from_item: item {plugin_item['item'].id()} - qhue exception '{e}'")
+            if self.bridge['modelid'] == 'deCONZ':
+                msg = f"qhue exception {e.message}"
             else:
-                self.logger.error(f"update_light_from_item: item {plugin_item['item'].id()} - qhue exception '{e}'")
+                msg = f"{e}"
+            msg = f"update_light_from_item: item {plugin_item['item'].id()} - function={plugin_item['function']} - '{msg}'"
+            if msg.find(' 201 ') >= 0:
+                self.logger.info(msg)
+            else:
+                self.logger.error(msg)
         return
 
 
@@ -328,7 +331,6 @@ class Hue2(SmartPlugin):
         self.logger.debug("update_scene_from_item: plugin_item = {}".format(plugin_item))
         if plugin_item['function'] == 'name':
             self.br.scenes[plugin_item['id']](name=value)
-
         return
 
 
@@ -362,9 +364,19 @@ class Hue2(SmartPlugin):
                 self.br.groups[plugin_item['id']]['action'](xy=value, transitiontime=hue_transition_time)
             elif plugin_item['function'] == 'activate_scene':
                 self.br.groups(plugin_item['id'], 'action', scene=value, transitiontime=hue_transition_time)
+            elif plugin_item['function'] == 'modify_scene':
+                 self.br.groups(plugin_item['id'], 'scenes', value['scene_id'], 'lights', value['light_id'], 'state', **(value['state']))
 
         except qhue.qhue.QhueException as e:
-            self.logger.error(f"update_group_from_item: item {plugin_item['item'].id()} - qhue exception '{e}'")
+            if self.bridge['modelid'] == 'deCONZ':
+                msg = f"qhue exception {e.message}"
+            else:
+                msg = f"{e}"
+            msg = f"update_light_from_item: item {plugin_item['item'].id()} - function={plugin_item['function']} - '{msg}'"
+            if msg.find(' 201 ') >= 0:
+                self.logger.info(msg)
+            else:
+                self.logger.error(msg)
 
         return
 
@@ -416,7 +428,7 @@ class Hue2(SmartPlugin):
             result['datastoreversion'] = api_config.get('datastoreversion', '')
             result['apiversion'] = api_config.get('apiversion', '')
             result['swversion'] = api_config.get('swversion', '')
-            self.logger.notice(f"get_data_from_discovered_bridges: modelid={api_config.get('modelid', '')}")
+            result['modelid'] = api_config.get('modelid', '')
 
         return result
 
@@ -471,7 +483,7 @@ class Hue2(SmartPlugin):
                     plugin_item['item'](value, self.get_shortname(), src)
             if plugin_item['resource'] == 'group':
                 if not "hue2_refence_light_id" in plugin_item:
-                    if plugin_item['function'] != 'dict':
+                    if plugin_item['function'] != 'dict' and plugin_item['function'] != 'modify_scene':
                         value = self._get_group_item_value(plugin_item['id'], plugin_item['function'], plugin_item['item'].id())
                         plugin_item['item'](value, self.get_shortname(), src)
         return
@@ -503,12 +515,7 @@ class Hue2(SmartPlugin):
         for pi in self.plugin_items:
             plugin_item = self.plugin_items[pi]
             if plugin_item['resource'] == 'light':
-                if plugin_item['function'] != 'dict':
-                    value = self._get_light_item_value(plugin_item['id'], plugin_item['function'], plugin_item['item'].id())
-                    if value is not None:
-                        plugin_item['item'](value, self.get_shortname(), src)
-                else:
-                    # work in progress
+                if plugin_item['function'] != 'modify_scene':
                     value = self._get_light_item_value(plugin_item['id'], plugin_item['function'], plugin_item['item'].id())
                     if value is not None:
                         plugin_item['item'](value, self.get_shortname(), src)
@@ -765,6 +772,7 @@ class Hue2(SmartPlugin):
             br_info['datastoreversion'] = api_config.get('datastoreversion', '')
             br_info['apiversion'] = api_config.get('apiversion', '')
             br_info['swversion'] = api_config.get('swversion', '')
+            br_info['modelid'] = api_config.get('modelid', '')
 
         return br_info
 

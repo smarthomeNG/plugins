@@ -196,6 +196,7 @@ Für den Resource-Typ ``light`` sind die folgenden Funktionen implementiert (ein
     - ``modelid``
     - ``swversion``
     - ``activate_scene``
+    - ``modify_scene``
     - ``alert``
     - ``effect``
 
