@@ -175,8 +175,10 @@ class TankerKoenig(SmartPlugin):
         """
 
         # set default for lat and lon
-        lat = self._lat if not lat else None
-        lon = self._lon if not lon else None
+        if lat is None:
+            lat = self._lat
+        if lon is None:
+            lon = self._lon
 
         # check if value for price
         if price not in ['e5', 'e10', 'diesel', 'all']:
@@ -195,7 +197,7 @@ class TankerKoenig(SmartPlugin):
         
         result_stations = []
         json_obj = self._request_stations(lat=lat, lon=lon, price=price, sort=sort, rad=rad)
-                
+
         keys = ['place', 'brand', 'houseNumber', 'street', 'id', 'lng', 'name', 'lat', 'price', 'dist', 'isOpen', 'postCode']
         if json_obj.get('stations', None) is None:
             self.logger.warning(f"Plugin '{self.get_fullname()}': Tankerkönig didn't return any station")
