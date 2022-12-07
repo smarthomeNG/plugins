@@ -2,7 +2,8 @@
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
 #  Copyright 2012-2014 Oliver Hinckel                  github@ollisnet.de
-#  Copyright 2018-2021                              Bernd.Meiners@mail.de
+#  Copyright 2018-2022 Bernd Meiners                Bernd.Meiners@mail.de
+#  Copyright 2022- Michael Wenzel                   wenzel_michael@web.de
 #########################################################################
 #
 #  This file is part of SmartHomeNG.    https://github.com/smarthomeNG//
@@ -21,7 +22,6 @@
 #  along with SmartHomeNG. If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
 
-import logging
 import time
 import re
 import serial
@@ -30,61 +30,24 @@ import struct
 import socket
 import errno
 
-from lib.module import Modules
+from lib.model.smartplugin import SmartPlugin
 from lib.item import Items
-
-from lib.model.smartplugin import *
-
-if __name__ == '__main__':
-    logger = logging.getLogger(__name__)
-    logger.debug("Init standalone {}".format(__name__))
-    logging.getLogger().setLevel(logging.DEBUG)
-    ch = logging.StreamHandler()
-    ch.setLevel(logging.DEBUG)
-    # just like print
-    formatter = logging.Formatter('%(message)s')
-    ch.setFormatter(formatter)
-    # add the handlers to the logger
-    logging.getLogger().addHandler(ch)
-else:
-    logger = logging.getLogger()
-    logger.debug("Init plugin component {}".format(__name__))
 
 from . import algorithms
 from .webif import WebInterface
 
 
-def to_Hex(data):
-    """
-    Returns the hex representation of the given data
-    """
-    # try:
-    #    return data.hex()
-    # except:
-    #    return "".join("%02x " % b for b in data).rstrip()
-    # logger.debug("Hextype: {}".format(type(data)))
-    if isinstance(data, int):
-        return hex(data)
-
-    return "".join("%02x " % b for b in data).rstrip()
-
-
-def swap16(x):
-    return (((x << 8) & 0xFF00) |
-            ((x >> 8) & 0x00FF))
-
-
-def swap32(x):
-    return (((x << 24) & 0xFF000000) |
-            ((x <<  8) & 0x00FF0000) |
-            ((x >>  8) & 0x0000FF00) |
-            ((x >> 24) & 0x000000FF))
-
-
-# start_sequence = bytearray.fromhex('1B 1B 1B 1B 01 01 01 01')
-# end_sequence = bytearray.fromhex('1B 1B 1B 1B 1A')
+START_SEQUENCE = bytearray.fromhex('1B 1B 1B 1B 01 01 01 01')
+END_SEQUENCE = bytearray.fromhex('1B 1B 1B 1B 1A')
+UNITS = {  # Blue book @ http://www.dlms.com/documentation/overviewexcerptsofthedlmsuacolouredbooks/index.html
+          1: 'a', 2: 'mo', 3: 'wk', 4: 'd', 5: 'h', 6: 'min.', 7: 's', 8: '°', 9: '°C', 10: 'currency',
+         11: 'm', 12: 'm/s', 13: 'm³', 14: 'm³', 15: 'm³/h', 16: 'm³/h', 17: 'm³/d', 18: 'm³/d', 19: 'l', 20: 'kg',
+         21: 'N', 22: 'Nm', 23: 'Pa', 24: 'bar', 25: 'J', 26: 'J/h', 27: 'W', 28: 'VA', 29: 'var', 30: 'Wh',
+         31: 'WAh', 32: 'varh', 33: 'A', 34: 'C', 35: 'V', 36: 'V/m', 37: 'F', 38: 'Ω', 39: 'Ωm²/h', 40: 'Wb',
+         41: 'T', 42: 'A/m', 43: 'H', 44: 'Hz', 45: 'Rac', 46: 'Rre', 47: 'Rap', 48: 'V²h', 49: 'A²h', 50: 'kg/s',
+         51: 'Smho'
+         }
 SML_SCHEDULER_NAME = 'Smlx'
-
 
 class Smlx(SmartPlugin):
     """
@@ -92,20 +55,12 @@ class Smlx(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.1.6'
+    PLUGIN_VERSION = '1.1.7'
 
-    _units = {  # Blue book @ http://www.dlms.com/documentation/overviewexcerptsofthedlmsuacolouredbooks/index.html
-       1 : 'a',    2 : 'mo',    3 : 'wk',  4 : 'd',    5 : 'h',     6 : 'min.',  7 : 's',     8 : '°',     9 : '°C',    10 : 'currency',
-      11 : 'm',   12 : 'm/s',  13 : 'm³', 14 : 'm³',  15 : 'm³/h', 16 : 'm³/h', 17 : 'm³/d', 18 : 'm³/d', 19 : 'l',     20 : 'kg',
-      21 : 'N',   22 : 'Nm',   23 : 'Pa', 24 : 'bar', 25 : 'J',    26 : 'J/h',  27 : 'W',    28 : 'VA',   29 : 'var',   30 : 'Wh',
-      31 : 'WAh', 32 : 'varh', 33 : 'A',  34 : 'C',   35 : 'V',    36 : 'V/m',  37 : 'F',    38 : 'Ω',    39 : 'Ωm²/h', 40 : 'Wb',
-      41 : 'T',   42 : 'A/m',  43 : 'H',  44 : 'Hz',  45 : 'Rac',  46 : 'Rre',  47 : 'Rap',  48 : 'V²h',  49 : 'A²h',   50 : 'kg/s',
-      51 : 'Smho'
-    }
     # Lookup table for smartmeter names to data format
     _devices = {
-      'smart-meter-gateway-com-1' : 'hex'
-    }
+                'smart-meter-gateway-com-1' : 'hex'
+                }
 
     def __init__(self, sh):
         """
@@ -116,14 +71,13 @@ class Smlx(SmartPlugin):
         super().__init__()
 
         self.cycle = self.get_parameter_value('cycle')
-
-        self.host = self.get_parameter_value('host')  # None
-        self.port = self.get_parameter_value('port')  # 0
-        self.serialport = self.get_parameter_value('serialport')    # None
-        device = self.get_parameter_value('device')    # raw
-        self.timeout = self.get_parameter_value('timeout')    # 5
-        self.buffersize = self.get_parameter_value('buffersize')    # 1024
-        self.date_offset = self.get_parameter_value('date_offset')    # 0
+        self.host = self.get_parameter_value('host')                        # None
+        self.port = self.get_parameter_value('port')                        # 0
+        self.serialport = self.get_parameter_value('serialport')            # None
+        device = self.get_parameter_value('device')                         # raw
+        self.timeout = self.get_parameter_value('timeout')                  # 5
+        self.buffersize = self.get_parameter_value('buffersize')            # 1024
+        self.date_offset = self.get_parameter_value('date_offset')          # 0
 
         # Get base values for CRC calculation
         self.poly = self.get_parameter_value('poly')                        # 0x1021
@@ -139,11 +93,10 @@ class Smlx(SmartPlugin):
         self._sock = None
         self._target = None
         self._dataoffset = 0
-        self._cyclic_update_active = False
         self._items = {}
         self._item_dict = {}
         self._lock = threading.Lock()
-        self.logger = logging.getLogger(__name__)
+        self._parse_lock = threading.Lock()
 
         if device in self._devices:
             device = self._devices[device]
@@ -155,7 +108,9 @@ class Smlx(SmartPlugin):
         else:
             self.logger.warning(f"Device type \"{device}\" not supported - defaulting to \"raw\"")
             self._prepare = self._prepareRaw
+
         self.logger.debug(f"Using CRC params poly={self.poly}, reflect_in={self.reflect_in}, xor_in={self.xor_in}, reflect_out={self.reflect_out}, xor_out={self.xor_out}, swap_crc_bytes={self.swap_crc_bytes}")
+
         self.init_webinterface(WebInterface)
 
     def run(self):
@@ -194,7 +149,7 @@ class Smlx(SmartPlugin):
                 self._items[obis][prop] = []
             self._items[obis][prop].append(item)
             self._item_dict[item] = (obis, prop)
-            self.logger.debug(f'Attach {item.id()} with {obis=} and {prop=}')
+            self.logger.debug(f'Attach {item.id()} with obis={obis} and prop={prop}')
         return None
 
     def parse_logic(self, logic):
@@ -290,101 +245,92 @@ class Smlx(SmartPlugin):
         """
 
         # check if another cyclic cmd run is still active
-        if self._cyclic_update_active:
-            self.logger.warning('Triggered cyclic poll_device, but previous cyclic run is still active. Therefore request will be skipped.')
-            return
-
-        # set lock
-        self._cyclic_update_active = True
-
-        self.logger.debug('Polling Smartmeter now')
-        start_sequence = bytearray.fromhex('1B 1B 1B 1B 01 01 01 01')
-        end_sequence = bytearray.fromhex('1B 1B 1B 1B 1A')
-
-        self.connect()
-
-        if not self.connected:
-            self.logger.error('Not connected, no query possible')
-            return
-        else:
-            self.logger.debug('Connected, try to query')
-
-        start = time.time()
-        data_is_valid = False
-        try:
-            data = self._read(self.buffersize)
-            if len(data) == 0:
-                self.logger.error('Reading data from device returned 0 bytes!')
-                return
-            else:
-                self.logger.debug(f'Read {len(data)} bytes')
-
-            if start_sequence in data:
-                prev, _, data = data.partition(start_sequence)
-                self.logger.debug('Start sequence marker {} found'.format(''.join(' {:02x}'.format(x) for x in start_sequence)))
-                if end_sequence in data:
-                    data, _, rest = data.partition(end_sequence)
-                    self.logger.debug('End sequence marker {} found'.format(''.join(' {:02x}'.format(x) for x in end_sequence)))
-                    self.logger.debug(f'Packet size is {len(data)}')
-                    if len(rest) > 3:
-                        filler = rest[0]
-                        self.logger.debug(f'{filler} fill byte(s) ')
-                        checksum = int.from_bytes(rest[1:3], byteorder='little')
-                        self.logger.debug(f'Checksum is {to_Hex(checksum)}')
-                        buffer = bytearray()
-                        buffer += start_sequence + data + end_sequence + rest[0:1]
-                        self.logger.debug(f'Buffer length is {len(buffer)}')
-                        self.logger.debug('Buffer: {}'.format(''.join(' {:02x}'.format(x) for x in buffer)))
-                        crc16 = algorithms.Crc(width=16, poly=self.poly,
-                            reflect_in=self.reflect_in, xor_in=self.xor_in,
-                            reflect_out=self.reflect_out, xor_out=self.xor_out)
-                        crc_calculated = crc16.table_driven(buffer)
-                        if not self.swap_crc_bytes:
-                            self.logger.debug(f'Calculated checksum is {to_Hex(crc_calculated)}, given CRC is {to_Hex(checksum)}')
-                            data_is_valid = crc_calculated == checksum
-                        else:
-                            self.logger.debug(f'Calculated and swapped checksum is {to_Hex(swap16(crc_calculated))}, given CRC is {to_Hex(checksum)}')
-                            data_is_valid = swap16(crc_calculated) == checksum
-                    else:
-                        self.logger.debug('Not enough bytes read at end to satisfy checksum calculation')
-                        return
-                else:
-                    self.logger.debug('No End sequence marker found in data')
-            else:
-                self.logger.debug('No Start sequence marker found in data')
-        except Exception as e:
-            self.logger.error(f'Reading data from {self._target} failed with exception {e}')
-            return
-
-        if data_is_valid:
-            self.logger.debug("Checksum was ok, now parse the data_package")
+        if self._parse_lock.acquire(timeout=1):
             try:
-                values = self._parse(self._prepare(data))
-            except Exception as e:
-                self.logger.error(f'Preparing and parsing data failed with exception {e}')
-            else:
-                for obis in values:
-                    self.logger.debug(f'Entry {values[obis]}')
+                self.logger.debug('Polling Smartmeter now')
 
-                    if obis in self._items:
-                        for prop in self._items[obis]:
-                            for item in self._items[obis][prop]:
-                                try:
-                                    value = values[obis][prop]
-                                except Exception:
-                                    pass
+                self.connect()
+                if not self.connected:
+                    self.logger.error('Not connected, no query possible')
+                    return
+                else:
+                    self.logger.debug('Connected, try to query')
+
+                start = time.time()
+                data_is_valid = False
+                try:
+                    data = self._read(self.buffersize)
+                    if len(data) == 0:
+                        self.logger.error('Reading data from device returned 0 bytes!')
+                        return
+                    else:
+                        self.logger.debug(f'Read {len(data)} bytes')
+
+                    if START_SEQUENCE in data:
+                        prev, _, data = data.partition(START_SEQUENCE)
+                        self.logger.debug('Start sequence marker {} found'.format(''.join(' {:02x}'.format(x) for x in START_SEQUENCE)))
+                        if END_SEQUENCE in data:
+                            data, _, rest = data.partition(END_SEQUENCE)
+                            self.logger.debug('End sequence marker {} found'.format(''.join(' {:02x}'.format(x) for x in END_SEQUENCE)))
+                            self.logger.debug(f'Packet size is {len(data)}')
+                            if len(rest) > 3:
+                                filler = rest[0]
+                                self.logger.debug(f'{filler} fill byte(s) ')
+                                checksum = int.from_bytes(rest[1:3], byteorder='little')
+                                self.logger.debug(f'Checksum is {to_Hex(checksum)}')
+                                buffer = bytearray()
+                                buffer += START_SEQUENCE + data + END_SEQUENCE + rest[0:1]
+                                self.logger.debug(f'Buffer length is {len(buffer)}')
+                                self.logger.debug('Buffer: {}'.format(''.join(' {:02x}'.format(x) for x in buffer)))
+                                crc16 = algorithms.Crc(width=16, poly=self.poly, reflect_in=self.reflect_in, xor_in=self.xor_in, reflect_out=self.reflect_out, xor_out=self.xor_out)
+                                crc_calculated = crc16.table_driven(buffer)
+                                if not self.swap_crc_bytes:
+                                    self.logger.debug(f'Calculated checksum is {to_Hex(crc_calculated)}, given CRC is {to_Hex(checksum)}')
+                                    data_is_valid = crc_calculated == checksum
                                 else:
-                                    item(value, self.get_shortname())
+                                    self.logger.debug(f'Calculated and swapped checksum is {to_Hex(swap16(crc_calculated))}, given CRC is {to_Hex(checksum)}')
+                                    data_is_valid = swap16(crc_calculated) == checksum
+                            else:
+                                self.logger.debug('Not enough bytes read at end to satisfy checksum calculation')
+                                return
+                        else:
+                            self.logger.debug('No End sequence marker found in data')
+                    else:
+                        self.logger.debug('No Start sequence marker found in data')
+                except Exception as e:
+                    self.logger.error(f'Reading data from {self._target} failed with exception {e}')
+                    return
+
+                if data_is_valid:
+                    self.logger.debug("Checksum was ok, now parse the data_package")
+                    try:
+                        values = self._parse(self._prepare(data))
+                    except Exception as e:
+                        self.logger.error(f'Preparing and parsing data failed with exception {e}')
+                    else:
+                        for obis in values:
+                            self.logger.debug(f'Entry {values[obis]}')
+
+                            if obis in self._items:
+                                for prop in self._items[obis]:
+                                    for item in self._items[obis][prop]:
+                                        try:
+                                            value = values[obis][prop]
+                                        except Exception:
+                                            pass
+                                        else:
+                                            item(value, self.get_shortname())
+                else:
+                    self.logger.debug("Checksum was not ok, will not parse the data_package")
+
+                cycletime = time.time() - start
+
+                self.logger.debug(f"Polling Smartmeter done. Poll cycle took {cycletime} seconds.")
+            finally:
+                self.disconnect()
+                self._parse_lock.release()
         else:
-            self.logger.debug("Checksum was not ok, will not parse the data_package")
-
-        cycletime = time.time() - start
-
-        self.disconnect()
-        self.logger.debug(f"Polling Smartmeter done. Poll cycle took {cycletime} seconds.")
-
-        # release lock
-        self._cyclic_update_active = False
+            self.logger.warning('Triggered poll_device, but could not acquire lock. Request will be skipped.')
 
     def _parse(self, data):
         # Search SML List Entry sequences like:
@@ -434,7 +380,7 @@ class Smlx(SmartPlugin):
                     # Add additional calculated fields
                     entry['obis'] = f"{entry['objName'][0]}-{entry['objName'][1]}:{entry['objName'][2]}.{entry['objName'][3]}.{entry['objName'][4]}*{entry['objName'][5]}"
                     entry['valueReal'] = round(entry['value'] * 10 ** entry['scaler'], 1) if entry['scaler'] is not None else entry['value']
-                    entry['unitName'] = self._units[entry['unit']] if entry['unit'] is not None and entry['unit'] in self._units else None
+                    entry['unitName'] = UNITS[entry['unit']] if entry['unit'] is not None and entry['unit'] in UNITS else None
                     entry['actualTime'] = time.ctime(self.date_offset + entry['valTime'][1]) if entry['valTime'] is not None else None  # Decodes valTime into date/time string
                     # For a Holley DTZ541 with faulty Firmware remove the                ^[1] from this line ^.
 
@@ -522,7 +468,7 @@ class Smlx(SmartPlugin):
         return data
 
     def _prepareHex(self, data):
-        data = data.decode("iso-8859-1").lower();
+        data = data.decode("iso-8859-1").lower()
         data = re.sub("[^a-f0-9]", " ", data)
         data = re.sub("( +[a-f0-9]|[a-f0-9] +)", "", data)
         data = data.encode()
@@ -535,3 +481,34 @@ class Smlx(SmartPlugin):
     @property
     def log_level(self):
         return self.logger.getEffectiveLevel()
+
+##########################################################
+#   Helper Functions
+##########################################################
+
+
+def to_Hex(data):
+    """
+    Returns the hex representation of the given data
+    """
+    # try:
+    #    return data.hex()
+    # except:
+    #    return "".join("%02x " % b for b in data).rstrip()
+    # logger.debug("Hextype: {}".format(type(data)))
+    if isinstance(data, int):
+        return hex(data)
+
+    return "".join("%02x " % b for b in data).rstrip()
+
+
+def swap16(x):
+    return (((x << 8) & 0xFF00) |
+            ((x >> 8) & 0x00FF))
+
+
+def swap32(x):
+    return (((x << 24) & 0xFF000000) |
+            ((x <<  8) & 0x00FF0000) |
+            ((x >>  8) & 0x0000FF00) |
+            ((x >> 24) & 0x000000FF))
