@@ -265,8 +265,12 @@ class TankerKoenig(SmartPlugin):
 
         @param station_ids: Array of tankerkoenig internal petrol station ids to retrieve the prices for
         """
-
-        _price_dict = self._request_station_prices(station_ids).get('prices', None)
+        _station_id_prices = self._request_station_prices(station_ids)
+        if _station_id_prices is None:
+            self.logger.error(
+                f"get_petrol_station_prices: self._request_station_prices(station_ids) returned invalid result")
+            return None
+        _price_dict = _station_id_prices.get('prices', None)
         for station_id in station_ids:
             if station_id not in _price_dict:
                self.logger.error(f"Plugin '{self.get_fullname()}': No result for station with id {station_id}. Check manually!")
