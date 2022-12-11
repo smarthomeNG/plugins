@@ -584,12 +584,16 @@ class Telegram(SmartPlugin):
                                 msg = f"{dicCtl['name']} \n change to:On(True)"
                                 self._bot.sendMessage(chat_id=update.message.chat.id, text=msg)
                                 item(True)
+                                self._waitAnswer = None
+                                self._bot.send_message(chat_id=update.message.chat.id, text=self.translate("Control/Change item-values:"), reply_markup={"keyboard":self.create_control_reply_markup()})
                         elif text == 'Off':
                             if dicCtl['type'] == 'onoff':
                                 item = dicCtl['item']
                                 msg = f"{dicCtl['name']} \n change to:Off(False)"
                                 self._bot.sendMessage(chat_id=update.message.chat.id, text=msg)
                                 item(False)
+                                self._waitAnswer = None
+                                self._bot.send_message(chat_id=update.message.chat.id, text=self.translate("Control/Change item-values:"), reply_markup={"keyboard":self.create_control_reply_markup()})
                         elif text == 'Yes':
                             if self.scheduler_get('telegram_change_item_timeout'):
                                 self.scheduler_remove('telegram_change_item_timeout')
