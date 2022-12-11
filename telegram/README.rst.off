@@ -305,10 +305,10 @@ Beispiel
         cache: True
         telegram_control: "name:Dachfenster, type:num, min:0, max:100, timeout:30"
      Kamera:
-        # Item triggert z.B. eine logik welche ein Photo von der Kamera an den bot sendet
         type: bool
         cache: True
         telegram_control: "name:Kamera, type:toggle
+        eval: sh.plugins.return_plugin("telegram").photo_broadcast("http://192.168.0.78/snapshot/view0.jpg", datetime.datetime.now().strftime("%H:%M %d.%m.%Y"))
 
 
 Das Kommando ``/control`` veranlasst den Bot zu antworten mit
