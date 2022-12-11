@@ -8,6 +8,7 @@
 					$(window).trigger('datatables_defaults');
 					$('#table_out').DataTable( {} );
 					$('#table_in').DataTable( {} );
+                    $('#table_control').DataTable( {} );
 				}
 			catch (e)
 				{
@@ -120,6 +121,36 @@
 						<td class="py-1">{{ item() }}</td>
 						<td class="py-1">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
 						<td class="py-1">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+					</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+	</div>
+</div>
+<div style="margin-top: 10px;">
+<strong>Telegram Controls</strong>
+</div>
+<div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
+	<div class="col-sm-12" style="margin-top: 10px;">
+		<table class="table table-striped table-hover pluginList display" id="table_control">
+			<thead>
+				<tr class="shng_heading">
+					<th>{{ _('Control') }}</th>
+                    <th>{{ _('Pfad') }}</th>
+					<th>{{ _('Typ') }}</th>
+					<th>{{ _('Wert') }}</th>
+					<th>{{ _('Letzter Change') }}</th>
+                    <th>{{ _('letzter Wert') }}</th>
+			</thead>
+			<tbody>
+				{% for key in p._items_control %}
+                    <tr id="{{ loop.index }}_click">
+                        <td class="py-1">{{ key }}</td>
+                        <td class="py-1">{{ p._items_control[key].item.property.path }}</td>
+						<td class="py-1">{{ p._items_control[key].item.property.type }}</td>
+						<td class="py-1">{{ p._items_control[key].item() }}</td>
+						<td class="py-1">{{ p._items_control[key].item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                        <td class="py-1">{{ p._items_control[key].item.property.last_value }}</td>
 					</tr>
 				{% endfor %}
 			</tbody>
