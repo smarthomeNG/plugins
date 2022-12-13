@@ -207,6 +207,7 @@
     <table id="itemtable">
         <thead>
             <tr>
+                <th></th>
                 <th class="item">{{ _('Pfad') }}</th>
                 <th class="type">{{ _('Typ') }}</th>
                 <th class="datatype">{{ _('AVM Datentyp') }}</th>
@@ -225,6 +226,7 @@
                         {% set instance_key = "avm2_data_type" %}
                     {% endif %}
                     <tr>
+                        <td></td>
                         <td class="py-1">{{ item_id }}</td>
                         <td class="py-1">{{ item.property.type }}</td>
                         <td class="py-1">{{ item.conf[instance_key] }}</td>
@@ -245,6 +247,7 @@
     <table id="smarthomeitemtable">
         <thead>
             <tr>
+                <th></th>
                 <th class="item">{{ _('Pfad') }}</th>
                 <th class="type">{{ _('Typ') }}</th>
                 <th class="datatype">{{ _('AVM Datentyp') }}</th>
@@ -263,6 +266,7 @@
                         {% set instance_key = "avm2_data_type" %}
                     {% endif %}
                     <tr>
+                        <td></td>
                         <td class="py-1">{{ item_id }}</td>
                         <td class="py-1">{{ item.property.type }}</td>
                         <td class="py-1">{{ item.conf[instance_key] }}</td>
@@ -283,6 +287,7 @@
     <table id="smarthome_devicetable">
         <thead>
             <tr>
+                <th></th>
                 <th class="type2">{{ 'No' }}</th>
                 <th class="type">{{ 'Device AIN' }}</th>
                 <th>{{ 'Device Details (dict)' }}</th>
@@ -292,6 +297,7 @@
             {% if p._fritz_home %}
                 {% for ain in p._fritz_home._aha_devices %}
                     <tr>
+                        <td></td>
                         <td class="py-1">{{ loop.index }}</td>
                         <td class="py-1">{{ ain }}</td>
                         <td class="py-1">{{ p._fritz_home._aha_devices[ain] }}</td>
@@ -309,6 +315,7 @@
     <table id="call_monitortable">
         <thead>
             <tr class="shng_heading">
+                <th></th>
                 <th class="item">{{ _('Pfad') }}</th>
                 <th class="type">{{ _('Typ') }}</th>
                 <th class="datatype">{{ _('AVM Datentyp') }}</th>
@@ -327,6 +334,7 @@
                         {% set instance_key = "avm2_data_type" %}
                     {% endif %}
                     <tr>
+                        <td></td>
                         <td class="py-1">{{ item_id }}</td>
                         <td class="py-1">{{ item.property.type }}</td>
                         <td class="py-1">{{ instance_key }}</td>
@@ -347,6 +355,7 @@
     <table id="logtable">
         <thead>
             <tr>
+                <th></th>
                 <th class="type3">{{ 'Datum/Uhrzeit' }}</th>
                 <th>{{ 'Meldung' }}</th>
                 <th class="type2" style="text-align: center">{{ 'Typ' }}</th>
@@ -360,6 +369,7 @@
             {% if logentries %}
                 {% for logentry in logentries%}
                     <tr>
+                        <td></td>
                         <td class="py-1">{{ logentry[0] }}</td>
                         <td class="py-1">{{ logentry[1] }}</td>
                         <td class="py-1" style="text-align: center">
