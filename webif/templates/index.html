@@ -1,6 +1,6 @@
 {% extends "base_plugin.html" %}
 {% set logo_frame = false %}
-{% set update_interval = 5000 %}
+{% set update_interval = ((50 * len(tr064_items) / 1000) | round | int) * 1000 %}
 
 {% block pluginstyles %}
 <style>
@@ -204,7 +204,7 @@
 
 {% block bodytab1 %}
 <div class="container-fluid m-2 table-resize">
-    <table id="itemtable" class="table table-striped table-hover pluginList dataTableAdditional">
+    <table id="itemtable">
         <thead>
             <tr>
                 <th class="item">{{ _('Pfad') }}</th>
@@ -242,7 +242,7 @@
 
 {% block bodytab2 %}
 <div class="container-fluid m-2 table-resize">
-    <table id="smarthomeitemtable" class="table table-striped table-hover pluginList dataTableAdditional">
+    <table id="smarthomeitemtable">
         <thead>
             <tr>
                 <th class="item">{{ _('Pfad') }}</th>
@@ -280,7 +280,7 @@
 
 {% block bodytab3 %}
 <div class="container-fluid m-2 table-resize">
-    <table id="smarthome_devicetable" class="table table-striped table-hover pluginList dataTableAdditional">
+    <table id="smarthome_devicetable">
         <thead>
             <tr>
                 <th class="type2">{{ 'No' }}</th>
@@ -306,7 +306,7 @@
 
 {% block bodytab4 %}
 <div class="container-fluid m-2 table-resize">
-    <table id="call_monitortable" class="table table-striped table-hover pluginList dataTableAdditional">
+    <table id="call_monitortable">
         <thead>
             <tr class="shng_heading">
                 <th class="item">{{ _('Pfad') }}</th>
@@ -344,7 +344,7 @@
 
 {% block bodytab5 %}
 <div class="container-fluid m-2 table-resize">
-    <table id="logtable" class="table table-striped table-hover pluginList dataTableAdditional">
+    <table id="logtable">
         <thead>
             <tr>
                 <th class="type3">{{ 'Datum/Uhrzeit' }}</th>
@@ -382,11 +382,17 @@
 <div class="container-fluid m-2 table-resize">
     {% if not maintenance %}
         {%  for function, dict in p.metadata.plugin_functions.items() %}
-            <div class="card mb-2">
-              <div class="card-header p-2">
-                  <strong>{{ dict['type'] }} {{ function }}({% if dict['parameters'] is not none %}{%  for name, paramdict in dict['parameters'].items() %}{% if loop.index > 1 %}, {% endif %}{{  name }}: {{ paramdict['type'] }}{% endfor %}{% endif %})</strong>
-              </div>
-              <div class="card-body p-2">
+            <div class="card-header p-2">
+                <strong>
+                {{ dict['type'] }} {{ function }}
+                ({% if dict['parameters'] is not none %}
+                    {%  for name in dict['parameters'] %}
+                        {% if loop.index > 1 %}, {% endif %}{{  name }}: {{ dict['parameters'][name]['type'] }}
+                    {% endfor %}
+                {% endif %})
+                </strong>
+            </div>
+            <div class="card-body p-2">
                   {{ dict['description'][language] }}<br/>
                   {% if dict['parameters'] is not none %}
                       <div class="card mt-2">
@@ -395,10 +401,10 @@
                           </div>
                           <div class="card-body p-2">
                               <ul class="list-group">
-                              {%  for name, paramdict in dict['parameters'].items() %}
+                              {%  for name in dict['parameters'] %}
                                 <li class="list-group-item p-2">
-                                    <strong>{{  name }}: {{ paramdict['type'] }}</strong><br/>
-                                {{ paramdict['description'][language] }}
+                                    <strong>{{  name }}: {{ dict['parameters'][name]['type'] }}</strong><br/>
+                                {{ dict['parameters'][name]['description'][language] }}
                                 </li>
                               {% endfor %}
                               </ul>
@@ -406,7 +412,6 @@
                       </div>
                   {% endif %}
               </div>
-            </div>
         {% endfor %}
     {% endif %}
 
