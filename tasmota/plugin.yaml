@@ -5,17 +5,17 @@ plugin:
     description:
         de: 'Plugin zur Steuerung von Switches, die mit Tasmota Firmware ausgestattet sind. Die Kommunikation erfolgt über das MQTT Module von SmartHomeNG.'
         en: 'Plugin to control switches which are equipped with Tasmote firmware. Communication is handled through the MQTT module of SmartHomeNG.'
-    maintainer: msinn
+    maintainer: sisamiwe
     tester: msinn                  # Who tests this plugin?
     state: ready                   # change to ready when done with development
     keywords: iot
     documentation: http://smarthomeng.de/user/plugins/tasmota/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1520293-support-thread-für-das-tasmota-plugin
 
-    version: 1.2.2                 # Plugin version
-    sh_minversion: 1.7.2           # minimum shNG version to use this plugin
-#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
-    py_minversion: 3.6             # minimum Python version to use for this plugin
+    version: 1.3.0                 # Plugin version
+    sh_minversion: 1.9.3           # minimum shNG version to use this plugin
+#    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
+#    py_minversion:                # minimum Python version to use for this plugin
     multi_instance: True           # plugin supports multi instance
     restartable: unknown
     classname: Tasmota             # class containing the plugin
@@ -26,8 +26,8 @@ parameters:
         type: str
         default: '%prefix%/%topic%/'
         description:
-            de: Vollständiges Topic (Prefix und Topic) zur Kommunikation mit den Tasmota Devices
-            en: Full topic (prefix und topic) for communication with tasmota devices
+            de: 'Vollständiges Topic (Prefix und Topic) zur Kommunikation mit den Tasmota Devices'
+            en: 'Full topic (prefix und topic) for communication with tasmota devices'
 
     telemetry_period:
         type: int
@@ -35,8 +35,8 @@ parameters:
         valid_min: 10
         valid_max: 3600
         description:
-            de: Zeitabstand in Sekunden in dem die Tasmota Devices Telemetrie Daten senden sollen
-            en: Timeperiod in seconds in which Tasmota devices shall send telemetry data
+            de: 'Zeitabstand in Sekunden in dem die Tasmota Devices Telemetrie Daten senden sollen'
+            en: 'Timeperiod in seconds in which Tasmota devices shall send telemetry data'
 
     webif_pagelength:
       type: int
@@ -51,7 +51,6 @@ parameters:
         en: 'Amount of items being listed in a web interface table per page by default'
 
 item_attributes:
-    # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)
     tasmota_topic:
         type: str
         description:
@@ -64,8 +63,7 @@ item_attributes:
         description:
             de: "Zu lesendes/schreibendes Attribut des Tasmota Devices. Achtung: Nicht jedes Attribut ist auf allen Device-Typen vorhanden."
             en: "Attribute of Tasmota device that shall be read/written. Note: Not every attribute is available on all device types"
-        valid_list_ci:
-            - ''
+        valid_list:
             - relay
             - online
             - voltage
@@ -84,11 +82,13 @@ item_attributes:
             - rf_recv
             - rf_send
             - rf_key_send
+            - rf_key_recv
+            - rf_key
             - zb_permit_join
-
+            - zb_forget
+            - zb_ping
         valid_list_description:
             de:
-              - "<noch kein Attribut gewählt>"
               - "Schalten des Relais -> bool, r/w"
               - "Online Status des Tasmota Devices -> bool, r/o"
               - "Spannung in Volt bei Tasmota Devices mit ENERGY Sensor -> num, r/o"
@@ -104,41 +104,140 @@ item_attributes:
               - "Color Temperature in Kelvin bei RGBW Tasmota Devices (H801) -> num, r/w"
               - "Color Temperature in Kelvin bei RGBW Tasmota Devices (H801) -> num, r/w"
               - "Dimmwert in % Tasmota Devices -> num, r/w"
-              - "Emfangene RF Daten bei Tasmota Device mit RF Sendemöglichkeit (SONOFF Bridge) -> dict, r/o"
-              - "Zu sendende RF Daten bei Tasmota Device mit RF Sendemöglichkeit (SONOFF Bridge) -> dict, r/w"
-              - "Zu sendende RF-Key Tasmota Device mit RF Sendemöglichkeit (SONOFF Bridge) -> num [1-16], r/w"
+              - "Empfangene RF Daten bei Tasmota Device mit RF Sendemöglichkeit (SONOFF RF Bridge) -> dict, r/o"
+              - "Zu sendende RF Daten bei Tasmota Device mit RF Sendemöglichkeit (SONOFF RF Bridge) -> dict {'RfSync': 12220, 'RfLow': 440, 'RfHigh': 1210, 'RfCode':'#F06104'}, r/w"
+              - "Zu sendender RF-Key Tasmota Device mit RF Sendemöglichkeit (SONOFF RF Bridge) -> num [1-16], r/w"
+              - "Zu empfangender RF-Key Tasmota Device mit RF Sendemöglichkeit (SONOFF RF Bridge) -> num [1-16], r/w"
+              - 'RF Key'
               - "Schaltet das Pairing an der ZigBee Bridge ein/aus -> bool, r/w"
+              - "Löscht das Zigbee-Gerät aus dem Item Wert aus der Liste bekannter Geräte in der Zigbee-Bridge -> str, r/w"
+              - "Sendet ein Ping zum Zigbee-Gerät aus dem Item Wert -> str, r/w"
 
     tasmota_relay:
-        type: str
-        default: '1'
-        valid_list:
-          - '1'
-          - '2'
-          - '3'
-          - '4'
+        type: int
+        default: 1
+        valid_min: 1
+        valid_max: 4
         description:
             de: "Nummer des zu schaltenden Relais im Tasmota Device"
             en: "Number of the relay in Tasmota device to use for switching command"
-            
+
+    tasmota_rf_details:
+        type: str
+        default: 1
+        description:
+            de: "Nummer des auszulösenden RF Keys im Tasmota Device=Aktion bei Empfang"
+            en: "Number of rf keys to be used for sending command"
+
     tasmota_zb_device:
         type: str
         description:
             de: "Friendly Name oder Kurzname des Zigbee Devices. ACHTUNG: Wird der Kurzname verwendet und beginnt dieser mit 0x, muss die Schreibweise '0x9CB9' verwendet werden"
             en: "Friendly Name oder Short Name of Zigbee Devices"
-    
+
+    tasmota_zb_group:
+        type: num
+        description:
+          de: "Zigbee Control Group: Werte werden an diese Gruppe gesendet. Gruppennachrichten werden nicht empfangen. https://tasmota.github.io/docs/Device-Groups/#zigbee"
+          en: "Zigbee Control Group: Values will be sent to group. return messages will not be received"
+
     tasmota_zb_attr: 
         type: str
         description:
-            de: "Schlüssel der Json-Dict, der vom Zigbee-Device bereitgestellt wird; Key aus dem sub-dict 'data' des tasmota_zb_device"
+            de: "Schlüssel der Json-Dict, der vom Zigbee-Device bereitgestellt wird; Key aus dem dict des tasmota_zb_device"
             en: "Dict Key of provided data; can be seen in Plugin WebIF"
+        valid_list_ci:
+          - device
+          - power
+          - dimmer
+          - hue
+          - sat
+          - ct
+          - ct_k
+          - temperature
+          - humidity
+          - reachable
+          - batterypercentage
+          - batterylastseenepoch
+          - lastseen
+          - lastseenepoch
+          - linkquality
+          - ieeeaddr
+          - modelid
+          - manufacturer
+          - colormode
+          - zonestatus
+          - contact
+        #
+          - colortempstepup
+          - colortempstepdown
+          - dimmerstepup
+          - dimmerstepdown
+          - dimmermove
+          - power
+          - aqaravibrationmode
+          - aqaravibration505
+          - batteryvoltage
+          - shutterclose
+          - shutteropen
+          - endpoint
+          - huemove
+          - 0300!0a
+          - 0300!01
+          - 0300!03
+          - 0300!4c
+          - 0006!00
+          - 0006!01
+          - 0008!01
+          - 0008!02
+          - 0008!03
+          - 0008!04
+          - 0008!05
+          -
+        valid_list_description:
+          de:
+            - "Geräte_ID Kurzform                      -> str,  r/o"
+            - "Schalter                     true/false -> bool, r/w"
+            - "Helligkeit                        0-100 -> num,  r/w"
+            - "Farbwert                          0-360 -> num,  r/w"
+            - "Sättigung                         0-100 -> num,  r/w"
+            - "Farbtemperatur (mired scale),   150-500 -> num,  r/w"
+            - "Farbtemperatur (Kelvin),      2000-6700 -> num,  r/w"
+            - "Temperatur                              -> num,  r/o"
+            - "Feuchtigkeit                            -> num,  r/o"
+            - "Erreichbarkeit                          -> bool, r/o"
+            - "Batteriefüllung in %                    -> num,  r/o"
+            - "Letzte Batteriemeldung                  -> datetime, r/o"
+            - "Letzter Kontakt vor xx Sekunden         -> num,  r/o"
+            - "Letzter Kontakt                         -> datetime,  r/o"
+            - "Verbindungsqualität                     -> num,  r/o"
+            - "IEEE-Adresse                            -> str,  r/o"
+            - "Model-ID                                -> str,  r/o"
+            - "Hersteller                              -> str,  r/o"
+            - "Farbmodus                               -> num,  r/o"
+            - "Zonenstatus                             -> num,  r/o"
+            - "Kontakt                                 -> bool, r/o"
+
+    tasmota_zb_cluster:
+      type: bool
+      default: False
+      description:
+        de: "Ergänzung des Sendebefehls um entsprechendes Zigbee-Cluster"
+        en: "Use zigbee cluster in send command additionally"
+
+    tasmota_admin:
+        type: str
+        default: delete_retained_messages
+        description:
+            de: ""
+            en: ""
+        valid_list:
+            - delete_retained_messages
 
 item_structs: NONE
-    # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
 
 plugin_functions: NONE
-    # Definition of plugin functions defined by this plugin (enter 'plugin_functions: NONE', if section should be empty)
 
 logic_parameters: NONE
-    # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)
+
 
