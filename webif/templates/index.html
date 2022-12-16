@@ -1,7 +1,7 @@
 {% extends "base_plugin.html" %}
 {% set logo_frame = false %}
 {% set update_interval = 10 %}
-{% if len(tr064_items) > 0 %}
+{% if tr064_items %}
     {% set update_interval = ((50 * len(tr064_items) / 1000) | round | int) * 1000 %}
 {% else %}
     {% set update_interval = 10 %}
@@ -140,7 +140,7 @@
 {% if not maintenance %}
     {% set tab6title = _("<strong>"'Plugin-API'"</strong>") %}
 {% else %}
-    {% set tab5title = _("<strong>"'Maintenance'"</strong>") %}
+    {% set tab6title = _("<strong>"'Maintenance'"</strong>") %}
 {% endif %}
 
 <!-- Define language -->
