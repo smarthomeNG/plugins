@@ -3661,11 +3661,8 @@ class Callmonitor:
             self._items[item] = (avm_data_type, None)
 
         elif avm_data_type in _call_monitor_attributes_trigger:
-            self._plugin_instance.logger.warning(f"############{item.conf=}")
-
             avm_incoming_allowed = self._plugin_instance.get_iattr_value(item.conf, 'avm2_incoming_allowed')
             avm_target_number = self._plugin_instance.get_iattr_value(item.conf, 'avm2_target_number')
-            self._plugin_instance.logger.warning(f"{avm_incoming_allowed=}, {avm_target_number=}")
 
             if not avm_incoming_allowed or not avm_target_number:
                 self._plugin_instance.logger.error(f"For Trigger-item={item.id()} both 'avm2_incoming_allowed' and 'avm2_target_number' must be specified as attributes. Item will be ignored.")
