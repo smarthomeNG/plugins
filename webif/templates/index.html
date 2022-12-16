@@ -1,6 +1,11 @@
 {% extends "base_plugin.html" %}
 {% set logo_frame = false %}
-{% set update_interval = ((50 * len(tr064_items) / 1000) | round | int) * 1000 %}
+{% set update_interval = 10 %}
+{% if len(tr064_items) > 0 %}
+    {% set update_interval = ((50 * len(tr064_items) / 1000) | round | int) * 1000 %}
+{% else %}
+    {% set update_interval = 10 %}
+{% endif %}
 
 {% block pluginstyles %}
 <style>

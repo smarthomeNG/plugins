@@ -3718,8 +3718,8 @@ class Callmonitor:
                 for element in _calllist:
                     if element['Type'] in ['1', '2']:
                         date = str(element['Date'])
-                        times = date[8:10] + "." + date[5:7] + "." + date[2:4] + " " + date[11:19]
-                        item(str(times), self._plugin_instance.get_fullname())
+                        date_str = f"{date[8:10]}.{date[5:7]}.{date[2:4]} {date[11:19]}"
+                        item(date_str, self._plugin_instance.get_fullname())
                         break
 
             elif avm_data_type == 'call_event_incoming':
@@ -3759,8 +3759,8 @@ class Callmonitor:
                 for element in _calllist:
                     if element['Type'] in ['3', '4']:
                         date = str(element['Date'])
-                        times = date[8:10] + "." + date[5:7] + "." + date[2:4] + " " + date[11:19]
-                        item(str(times), self._plugin_instance.get_fullname())
+                        date_str = f"{date[8:10]}.{date[5:7]}.{date[2:4]} {date[11:19]}"
+                        item(date_str, self._plugin_instance.get_fullname())
                         break
 
             elif avm_data_type == 'call_event_outgoing':
