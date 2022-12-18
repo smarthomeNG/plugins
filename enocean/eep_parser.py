@@ -275,7 +275,7 @@ class EEP_Parser():
         if not (payload[3] == 0x0F):
             self.logger.error("EEP A5_30_03 not according to spec.")
             return results
-        # Data_byte2 = Temperatur 0..40�C (255..0)
+        # Data_byte2 = Temperatur 0..40 °C (255..0)
         results['TEMP']  = 40 - (payload[1]/255*40) 
         # Data_byte1 = 0x0F = Alarm, 0x1F = kein Alarm
         results['ALARM'] = (payload[2]  == 0x0F)
