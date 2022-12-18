@@ -1,0 +1,29 @@
+plugin_translations:
+    # Translations for the plugin specially for the web interface
+    'Stations':     {'de': 'Stationen', 'en': 'Stations', 'fr': ''}
+    'Items':     {'de': '=', 'en': '=', 'fr': ''}
+    'Plugin-API':   {'de': '=', 'en': '=', 'fr': ''}
+    'Start':   {'de': '=', 'en': '=', 'fr': ''}
+    'Ende':   {'de': '=', 'en': 'End', 'fr': ''}
+    'Validated':   {'de': 'Geprüft', 'en': '=', 'fr': ''}
+    'yes':   {'de': 'ja', 'en': '=', 'fr': ''}
+    'no':   {'de': 'nein', 'en': '=', 'fr': ''}
+    'Name of the measurand':   {'de': 'Bezeichnung der Messgröße', 'en': '=', 'fr': ''}
+    'Duration of the measurement period':   {'de': 'Dauer der Messperiode', 'en': '=', 'fr': ''}
+    'Status':   {'de': '=', 'en': '=', 'fr': ''}
+    'kenn':   {'de': 'Messstellen- kennung', 'en': 'Measuring point identifier', 'fr': ''}
+    'PLZ':   {'de': '=', 'en': 'Postal Code', 'fr': ''}
+    'Name':   {'de': '=', 'en': '=', 'fr': ''}
+    'Value (Cosmic / Terrestrial)':   {'de': 'Wert (kosmisch / terrestrisch)', 'en': 'Value (Cosmic / Terrestrial)', 'fr': ''}
+    'Unit':   {'de': 'Einheit', 'en': '=', 'fr': ''}
+    'Time':   {'de': 'Zeitpunkt', 'en': '=', 'fr': ''}
+    'in Betrieb':   {'de': '=', 'en': 'in operation', 'fr': ''}
+    'defekt':   {'de': '=', 'en': 'malfunction', 'fr': ''}
+    'Wollen Sie die Daten wirklich aktualisieren?':   {'de': '=', 'en': 'Do you really want to update the data?', 'fr': ''}
+    'Update Manually':   {'de': 'Manuell aktualisieren', 'en': '=', 'fr': ''}
+    'Pfad': { 'de': '=', 'en': 'Path', 'fr': '' }
+    'Typ': { 'de': '=', 'en': 'Type', 'fr': '' }
+    'Wert': { 'de': '=', 'en': 'Value', 'fr': '' }
+    'Letztes Update': { 'de': '=', 'en': 'Last Update', 'fr': '' }
+    'Letzter Change': { 'de': '=', 'en': 'Last Change', 'fr': '' }
+    'ODLInfo Datentyp': { 'de': '=', 'en': 'ODLInfo Data Type', 'fr': '' }

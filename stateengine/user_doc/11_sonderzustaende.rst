@@ -252,10 +252,22 @@ Reihenfolge. In der Regel wird der Suspend-Zustand in der
 Definition der zweite Zustand nach dem Lock-Zustand sein. Allerdings wird es
 auch Setups geben, wo ein anderer - theoretisch untergeordneter - Zustand
 den Manuellbetrieb aufheben soll. Typischerweise, wenn abends die Jalousien zugehen
-sollen, selbst wenn man diese zuvor manuell betätigt hatte. In diesem Fall ist es nötig,
-den Suspendzustand zwei Mal einzubinden und den "auflösenden" Zustand, also z.B. Nacht
-als Burgerpatty dazwischen zu stecken. Um dieses Setup dennoch möglichst einfach zu halten,
-bietet es sich an, das ``se_use`` Attribut zu nutzen.
+sollen, selbst wenn man diese zuvor manuell betätigt hatte. In diesem Fall gibt es zwei Möglichkeiten:
+
+- den Suspendzustand zwei Mal einbinden und den "auflösenden" Zustand, also z.B. Nacht
+  als Burgerpatty dazwischen zu stecken. Um dieses Setup dennoch möglichst einfach zu halten,
+  bietet es sich an, das ``se_use`` Attribut zu nutzen.
+- das ``se_releasedby`` Attribut zu nutzen. Hier können Zustände
+  deklariert werden, die den Suspendzustand auflösen können. Dabei
+  versucht das Plugin, bei jedem Durchlauf zu eruieren, ob der
+  auflösende Zustand (z.B. Nacht) eingenommen werden könnte, obwohl
+  aktuell der Suspendzustand aktiv ist. Kann/könnte der auflösende
+  Zustand eingenommen werden, wird der Suspendzustand deaktiviert und
+  der in der Hierarchie als nächstes folgende Zustand eingenommen,
+  dessen Bedingungen erfüllt werden. Dies muss nicht zwingend der
+  auflösende Zustand sein.
+
+Weiter Details hierzu sind unter :ref:`Sonstiges` zu finden.
 
 Dauer der zeitweisen Deaktivierung
 ----------------------------------
@@ -272,7 +284,7 @@ abweichend sein soll, kann dort das Attribut
 
 angegeben werden. Der Parameter kann auch durch ein Item oder eval festgelegt werden.
 Letzteres ermöglicht es, je nach Situation die Suspenddauer von verschiedenen Items
-abhängig zu machen. Im struct wird hier das Item automatik.settings.suspendduration.seconds verknüpft bzw.
+abhängig zu machen. Im struct ``state_suspend_dynamic`` wird hier das Item automatik.settings.suspendduration.seconds verknüpft bzw.
 für die verschiedenen "suspendvariants" automatik.settings.suspendvariant.suspendduration[0-2].seconds.
 Hierzu ist im struct ein Item settings.suspendvariant integriert, das einen numerischen Wert zwischen 0
 und 2 erwartet. 0 ist dabei die "normale" Funktionsweise, eine 1 würde auf die duration1 und eine 2 auf die

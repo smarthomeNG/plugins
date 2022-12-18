@@ -1,0 +1,386 @@
+# Metadata for the plugin
+plugin:
+    # Global plugin attributes
+    type: gateway                   # plugin type (gateway, interface, protocol, system, web)
+    description:
+        de: 'Anbindung des Philips/Signify Hue Systems über eine Hue Bridge (v1 oder v2)'
+        en: 'Gateway for connection to the Philips/Signify Hue system using one bridge (v1 or v2)'
+    maintainer: msinn
+#    tester:                         # Who tests this plugin?
+    state: ready                    # change to ready when done with development
+#    keywords: iot xyz
+#    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1586861-support-thread-für-das-hue2-plugin
+
+    version: 2.1.0                  # Plugin version (must match the version specified in __init__.py)
+    sh_minversion: 1.8.2            # minimum shNG version to use this plugin
+#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+#    py_minversion: 3.6             # minimum Python version to use for this plugin
+#    py_maxversion:                 # maximum Python version to use for this plugin (leave empty if latest)
+    multi_instance: True            # plugin supports multi instance
+    restartable: unknown
+    configuration_needed: False     # False: The plugin will be enabled by the Admin GUI without configuration
+    classname: Hue2                 # class containing the plugin
+
+parameters:
+    # Definition of parameters to be configured in etc/plugin.yaml (enter 'parameters: NONE', if section should be empty)
+    polltime_lights:
+        type: int
+        default: 5
+        valid_min: 1
+        description:
+            de: 'Zykluszeit in Sekunden (kurz) für die Abfrage von Informationen über Leuchten'
+            en: 'Polltime in seconds (short) for polling light information'
+
+    polltime_sensors:
+        type: int
+        default: 2
+        valid_min: 1
+        description:
+            de: 'Zykluszeit in Sekunden (kurz) für die Abfrage von Sensoren'
+            en: 'Polltime in seconds (short) for polling sensor information'
+
+    polltime_bridge:
+        type: int
+        default: 90
+        description:
+            de: 'Zykluszeit in Sekunden (lang) für die Abfrage der weiteren Informationen der Hue Bridge'
+            en: 'Polltime in seconds (long) for polling other informationen from the Hue bridge'
+
+    bridge_serial:
+        type: str
+        gui_type: readonly
+        description:
+            de: 'Seriennummer der Philips/Signify Hue Bridge
+                 Dieser Parameter wird durch das Plugins in den Konfigurationsdaten abgelegt. Er ist in der Admin GUI nicht änderbar'
+            en: 'Serial number of the Philips/Signify hue bridge
+                 The plugin ist saving this dats to the configuration. This parameter cannot be changed in the admin GUI'
+
+    bridge_user:
+        type: str
+        gui_type: readonly
+        description:
+            de: 'Username/Anwendungsschlüssel um auf die Philips/Signify Hue Bridge zuzugreifen
+                 Dieser Parameter wird durch das Plugins in den Konfigurationsdaten abgelegt. Er ist in der Admin GUI nicht änderbar'
+            en: 'Username/application key to access to the Philips/Signify hue bridge
+                 The plugin ist saving this dats to the configuration. This parameter cannot be changed in the admin GUI'
+
+    bridge_ip:
+        type: ip
+        gui_type: readonly
+        description:
+            de: 'IP Adresse der Philips/Signify Hue Bridge
+                 Dieser Parameter wird durch das Plugins in den Konfigurationsdaten abgelegt. Er ist in der Admin GUI nicht änderbar'
+            en: 'ip address of the Philips/Signify hue bridge
+                 The plugin ist saving this dats to the configuration. This parameter cannot be changed in the admin GUI'
+
+    bridge_port:
+        type: int
+        gui_type: readonly
+        default: 80
+        valid_min: 0
+        description:
+            de: 'Port der Philips/Signify Hue Bridge
+                 Dieser Parameter wird durch das Plugins in den Konfigurationsdaten abgelegt. Er ist in der Admin GUI nicht änderbar'
+            en: 'Port of the Philips/Signify hue bridge
+                 The plugin ist saving this dats to the configuration. This parameter cannot be changed in the admin GUI'
+
+item_attributes:
+    # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)
+
+    hue2_resource:
+        type: str
+        description:
+            de: "Anzusteuernde Resource, falls nicht angegeben wird 'light' angenommen"
+            en: "Resource type to control/read"
+        valid_list:
+          - light
+          - group
+          - scene
+          - sensor
+
+    hue2_id:
+        type: str
+        description:
+            de: "ID der anzusteuernden resouce. Der Typ der resource wird mit 'hue2_recource' festgelegt."
+            en: "ID of the resource to conteol/read. The type of the resoucre is defined by 'hue2_recource' attribute"
+
+    hue2_function:
+        type: str
+        description:
+            de: "Anzusteuernde Funktion für die gewählte Resource/ID"
+            en: "Function of the selected resource/id that shall be read/controlled"
+        valid_list:
+          - ''
+          - on
+          - bri
+          - hue
+          - sat
+          - ct
+          - name
+          - reachable
+          - colormode
+          - xy
+          - type
+          - modelid
+          - swversion
+          - activate_scene
+          - alert
+          - effect
+
+
+        valid_list_description:
+            de:
+              - "<noch keine Funktion gewählt>"
+              - "Ein-/Ausschalten -> bool, r/w (resource: light, group)"
+              - "Helligkeit, 0 … 255 -> num, r/w (resource: light, group)"
+              - "Farbton, 0 … 65535 -> num, r/w (resource: light), group"
+              - "Sättigung, 0 … 255 -> num, r/w (resource: light, group)"
+              - "ct Wert -> num, r/w (resource: light, group)"
+              - "Name -> str, r/w (resource: light, group, scene, sensor)"
+              - "Erreichbar -> bool, r/o (resource: light)"
+              - "Farb-Mode -> str (Werte: ct, hs, xy), r/o (resource: light, group)"
+              - "xy Werte -> list, r/w (resource: light, group)"
+              - "Typ des Leuchtmittels -> str, r/o (resource: light)"
+              - "Model Id des Leuchtmittels -> str, r/o (resource: light)"
+              - "Software Version des Leuchtmittels -> str, r/o (resource: light)"
+              - "Aktivieren einer Szene für Leuchten in der selektierten Gruppe (hue2_id) -> str w/o (resource: group)"
+              - "Benachrichtigung -> str (Werte: none, select, lselect) (resource: light, group)"
+              - "Lichteffekt -> str (Werte: none, colorloop) (resource: light, group)"
+            en:
+              - "<no function choosen yet>"
+              - "On/Off -> bool, r/w (resource: light, group)"
+              - "Brightness, 0 … 255 -> num, r/w (resource: light, group)"
+              - "Hue, 0 … 65535 -> num, r/w (resource: light, group)"
+              - "Saturation, 0 … 255 -> num, r/w (resource: light, group)"
+              - "ct value -> num, r/w (resource: light, group)"
+              - "Name -> str, r/w (resource: light, group, scene, sensor)"
+              - "Reachable -> bool, r/o (resource: light)"
+              - "Color-mode -> str (Werte: ct, hs, xy), r/o (resource: light, group)"
+              - "xy values -> list, r/w (resource: light, group)"
+              - "Typ of lamp -> str, r/o (resource: light)"
+              - "Model id of lamp -> str, r/o (resource: light)"
+              - "Software version lamp -> str, r/o (resource: light)"
+              - "Activate a scene for lights in the selected grpup (hue2_id) -> str w/o (resource: group)"
+              - "Alert -> str (values: none, select, lselect) (resource: light, group)"
+              - "Effect -> str (values: none, colorloop) (resource: light, group)"
+
+item_structs:
+    # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
+    light:
+        name: Vorlage-Struktur für eine Hue Leuchte
+        struct: hue2._light_basic
+
+        hue:
+            type: num
+            hue2_resource@instance: ..:.
+            hue2_id@instance: ..:.
+            hue2_function@instance: hue
+
+        sat:
+            type: num
+            hue2_resource@instance: ..:.
+            hue2_id@instance: ..:.
+            hue2_function@instance: sat
+
+        xy:
+            type: list
+            enforce_updates: True
+            hue2_resource@instance: ..:.
+            hue2_id@instance: ..:.
+            hue2_function@instance: xy
+
+
+    light_ww:
+        name: Vorlage-Struktur für eine Hue Leuchte (warm white)
+        struct: hue2._light_basic
+
+
+    light_xy:
+        name: Vorlage-Struktur für eine Hue Leuchte (Farbe nur über xy)
+        struct: hue2._light_basic
+
+        xy:
+            type: list
+            enforce_updates: True
+            hue2_resource@instance: ..:.
+            hue2_id@instance: ..:.
+            hue2_function@instance: xy
+
+
+    light_extended:
+        name: Vorlage-Struktur für eine Hue Leuchte mit erweiteten Attributen/Sub-Items
+        struct:
+          - hue2.light
+          - hue2._light_extended
+
+
+    light_ww_extended:
+        name: Vorlage-Struktur für eine Hue Leuchte mit erweiteten Attributen/Sub-Items (warm white)
+        struct:
+          - hue2.light_ww
+          - hue2._light_extended
+
+
+    light_xy_extended:
+        name: Vorlage-Struktur für eine Hue Leuchte mit erweiteten Attributen/Sub-Items (Farbe nur über xy)
+        struct:
+          - hue2.light_xy
+          - hue2._light_extended
+
+
+    group_activate_scene:
+        name: Vorlage-Struktur zum aktivieren von Hue Szenen
+        type: str
+        hue2_resource@instance: group
+        hue2_function@instance: activate_scene
+        #hue2_id@instance: 1
+
+    group:
+        name: Vorlage-Struktur für eine Hue Gruppe
+
+        type: foo
+        hue2_resource@instance: group
+        #hue2_id@instance: 1
+
+        onoff:
+            type: bool
+            enforce_updates: True
+            hue2_resource@instance: ..:.
+            hue2_id@instance: ..:.
+            hue2_function@instance: on
+
+        level:
+            type: num
+            enforce_updates: True
+            hue2_resource@instance: ..:.
+            hue2_id@instance: ..:.
+            hue2_function@instance: bri
+
+        hue:
+            type: num
+            enforce_updates: True
+            hue2_resource@instance: ..:.
+            hue2_id@instance: ..:.
+            hue2_function@instance: hue
+
+        sat:
+            type: num
+            enforce_updates: True
+            hue2_resource@instance: ..:.
+            hue2_id@instance: ..:.
+            hue2_function@instance: sat
+
+        ct:
+            type: num
+            enforce_updates: True
+            hue2_resource@instance: ..:.
+            hue2_id@instance: ..:.
+            hue2_function@instance: ct
+
+        colormode:
+            type: str
+            hue2_resource@instance: ..:.
+            hue2_id@instance: ..:.
+            hue2_function@instance: colormode
+
+        xy:
+            type: list
+            enforce_updates: True
+            hue2_resource@instance: ..:.
+            hue2_id@instance: ..:.
+            hue2_function@instance: xy
+
+
+
+    _light_basic:
+        name: interne Vorlage-Struktur für eine Hue Leuchte (basic)
+
+        type: foo
+        hue2_resource@instance: light
+        #hue2_id@instance: 1
+
+        onoff:
+            type: bool
+            enforce_updates: True
+            hue2_resource@instance: ..:.
+            hue2_id@instance: ..:.
+            hue2_function@instance: on
+
+        level:
+            type: num
+            enforce_updates: True
+            hue2_resource@instance: ..:.
+            hue2_id@instance: ..:.
+            hue2_function@instance: bri
+
+        ct:
+            type: num
+            enforce_updates: True
+            hue2_resource@instance: ..:.
+            hue2_id@instance: ..:.
+            hue2_function@instance: ct
+
+        colormode:
+            type: str
+            hue2_resource@instance: ..:.
+            hue2_id@instance: ..:.
+            hue2_function@instance: colormode
+
+        alert:
+            type: str
+            hue2_resource@instance: ..:.
+            hue2_id@instance: ..:.
+            hue2_function@instance: alert
+
+        effect:
+            type: str
+            hue2_resource@instance: ..:.
+            hue2_id@instance: ..:.
+            hue2_function@instance: effect
+
+
+    _light_extended:
+        name: interne Vorlage-Struktur für eine Hue Leuchte (extended attributes)
+        lightname:
+            type: str
+            hue2_resource@instance: ..:.
+            hue2_id@instance: ..:.
+            hue2_function@instance: name
+
+        reachable:
+            type: bool
+            hue2_resource@instance: ..:.
+            hue2_id@instance: ..:.
+            hue2_function@instance: reachable
+
+        lighttype:
+            type: str
+            hue2_resource@instance: ..:.
+            hue2_id@instance: ..:.
+            hue2_function@instance: type
+
+        modelid:
+            type: str
+            hue2_resource@instance: ..:.
+            hue2_id@instance: ..:.
+            hue2_function@instance: modelid
+
+        swversion:
+            type: str
+            hue2_resource@instance: ..:.
+            hue2_id@instance: ..:.
+            hue2_function@instance: swversion
+
+
+
+#item_attribute_prefixes:
+    # Definition of item attributes that only have a common prefix (enter 'item_attribute_prefixes: NONE' or ommit this section, if section should be empty)
+    # NOTE: This section should only be used, if really nessesary (e.g. for the stateengine plugin)
+
+plugin_functions: NONE
+    # Definition of plugin functions defined by this plugin (enter 'plugin_functions: NONE', if section should be empty)
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)
+

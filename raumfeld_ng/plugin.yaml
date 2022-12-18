@@ -47,16 +47,16 @@ parameters:
 item_attributes:
     rf_renderer_name:
         type: str
-        description: 
+        description:
             de: "ToDo: rf_renderer_name"
             en: "ToDo: rf_renderer_name"
-    
+
     rf_scope:
         type: str
         description:
             de: "Beschreibung auf welchen Bereich sich die Aktion bezieht"
             en: "Description which scope an action has"
-    
+
     rf_attr:
         type: str
         valid_list:
@@ -66,6 +66,7 @@ item_attributes:
             - load_playlist
             - load_track
             - set_volume
+            - get_mediainfo
         description:
             de: "Kennzeichnet die Verwendung des Items z.B. um die Lautstärke einzustellen, ein Plpaylist zu laden, ..."
             en: "Attribut to mark usage of item, e.g. set volume, load a playlist, ..."

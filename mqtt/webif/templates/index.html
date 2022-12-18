@@ -5,19 +5,65 @@
 <!-- set update_interval to a value > 0 (in milliseconds) to enable periodic data updates -->
 {% set update_interval = 2000 %}
 
+{% block pluginstyles %}
+<style>
+  table th.type {
+    width: 40px;
+  }
+  table th.value {
+    width: 120px;
+  }
+  table th.change_update {
+    width: 150px;
+  }
+</style>
+{% endblock pluginstyles %}
 <!--
 	Additional script tag for plugin specific javascript code go into this block
 -->
 {% block pluginscripts %}
+<script>
+  $(document).ready( function () {
+    $(window).trigger('datatables_defaults');
+    try {
+      {% if webif_pagelength is defined %}webif_pagelength = {{ webif_pagelength|int }};{% endif %}
+      if (isNaN(parseFloat(webif_pagelength)) || webif_pagelength == 0) {
+        resize = true;
+        webif_pagelength = -1;
+				console.log('Activating automatic table resize');
+      }
+      else {
+        resize = false;
+      }
+    }
+    catch (e) {
+      webif_pagelength = 100;
+      resize = false;
+      console.log("Using default values for page length " + webif_pagelength + ", pageResize: " + resize);
+    }
+		try {
+      table1 = $('#maintable').DataTable( {
+        columnDefs: [{ "targets": [2], "className": "type"}, { "targets": [3], "className": "value"}, { "targets": [5,6], "className": "change_update"}].concat($.fn.dataTable.defaults.columnDefs),
+        pageLength: webif_pagelength,
+        pageResize: resize});
+      table2 = $('#brokermonitor').DataTable( {
+        searching: false, paging: false, info: false});
+		}
+		catch (e) {
+			console.warn("Datatable JS not loaded, showing standard table without reorder option " +e);
+    }
+
+  });
+</script>
 <script>
 	function handleUpdatedData(response, dataSet=null) {
 		if (dataSet === 'devices_info' || dataSet === null) {
 			var objResponse = JSON.parse(response);
 			myProto = document.getElementById(dataSet);
 			for (var item in objResponse['item_values']) {
-				shngInsertText (item+'_value', objResponse['item_values'][item]['value']);
-				shngInsertText (item+'_last_update', objResponse['item_values'][item]['last_update']);
-				shngInsertText (item+'_last_change', objResponse['item_values'][item]['last_change']);
+				shngInsertText (item+'_value', objResponse['item_values'][item]['value'], 'maintable', 10);
+				shngInsertText (item+'_last_update', objResponse['item_values'][item]['last_update'], 'maintable', 10);
+				shngInsertText (item+'_last_change', objResponse['item_values'][item]['last_change'], 'maintable', 10);
 			}
 			shngInsertText ('broker_uptime', objResponse['broker_uptime']);
 
@@ -27,14 +73,15 @@
 			shngInsertText ('stored_messages', objResponse['broker_info']['stored_messages']);
 			shngInsertText ('retained_messages', objResponse['broker_info']['retained_messages']);
 
-			shngInsertText ('msg_rcv_1min', objResponse['broker_info']['msg_rcv_1min']);
-			shngInsertText ('msg_rcv_5min', objResponse['broker_info']['msg_rcv_5min']);
-			shngInsertText ('msg_rcv_15min', objResponse['broker_info']['msg_rcv_15min']);
-			shngInsertText ('msg_snt_1min', objResponse['broker_info']['msg_snt_1min']);
-			shngInsertText ('msg_snt_5min', objResponse['broker_info']['msg_snt_5min']);
-			shngInsertText ('msg_snt_15min', objResponse['broker_info']['msg_snt_15min']);
+			shngInsertText ('msg_rcv_1min', objResponse['broker_info']['msg_rcv_1min'], 'brokermonitor', 1);
+			shngInsertText ('msg_rcv_5min', objResponse['broker_info']['msg_rcv_5min'], 'brokermonitor', 1);
+			shngInsertText ('msg_rcv_15min', objResponse['broker_info']['msg_rcv_15min'], 'brokermonitor', 1);
+			shngInsertText ('msg_snt_1min', objResponse['broker_info']['msg_snt_1min'], 'brokermonitor', 1);
+			shngInsertText ('msg_snt_5min', objResponse['broker_info']['msg_snt_5min'], 'brokermonitor', 1);
+			shngInsertText ('msg_snt_15min', objResponse['broker_info']['msg_snt_15min'], 'brokermonitor', 1);
 
 		}
+
 	}
 </script>
 {% endblock pluginscripts %}
@@ -46,30 +93,24 @@
 			<tr>
 				<td class="py-1"><strong>{{_('Broker Host')}}</strong></td>
 				<td class="py-1">{{ p.broker_config.host }}</td>
-				<td class="py-1" width="50px"></td>
 				<td class="py-1"><strong>{{_('Broker Port')}}</strong></td>
 				<td class="py-1">{{ p.broker_config.port }}</td>
-				<td class="py-1" width="50px"></td>
 			</tr>
 			<tr>
 				<td class="py-1"><strong>{{_('Benutzer')}}</strong></td>
 				<td class="py-1">{{ p.broker_config.user }}</td>
-				<td></td>
 				<td class="py-1"><strong>{{_('Passwort')}}</strong></td>
 				<td class="py-1">
 				{% if p.broker_config.password %}
 					{% for letter in p.broker_config.password %}*{% endfor %}
 				{% endif %}
 				</td>
-				<td></td>
 			</tr>
 			<tr>
 				<td class="py-1"><strong>{{_('QoS')}}</strong></td>
 				<td class="py-1">{{ p.broker_config.qos }}</td>
-				<td></td>
 				<td class="py-1"><strong>{{_('')}}</strong></td>
 				<td class="py-1">{{ '' }}</td>
-				<td></td>
 			</tr>
 		</tbody>
 	</table>
@@ -101,34 +142,35 @@
 -->
 {% set tab1title = "<strong>" ~ p.get_shortname() ~ " Items</strong>" %}
 {% block bodytab1 %}
-<table class="table table-striped table-hover pluginList">
-	<thead>
-	<tr>
-		<th>Item</th>
-		<th>Typ</th>
-		<th>Wert</th>
-		<th>Topic In / Out</th>
-		<th>Letztes Update</th>
-		<th>Letzter Change</th>
-	</tr>
-	</thead>
-	{% for item in items %}
-		{% if p.has_iattr(item.conf, 'mqtt_topic_in') or p.has_iattr(item.conf, 'mqtt_topic_out') %}
-			<tr>
-				<td class="py-1">{{ item._path }}</td>
-				<td class="py-1">{{ item._type }}</td>
-				<td id="{{ item.id() }}_value" class="py-1">{{ item() }}</td>
-				<td class="py-1">{% if p.has_iattr(item.conf, 'mqtt_topic_in') %}<strong>in &nbsp; : </strong>{{ p.get_iattr_value(item.conf, 'mqtt_topic_in') }}<br>{% endif %}
-					{% if p.has_iattr(item.conf, 'mqtt_topic_out') %}<strong>out: </strong>{{ p.get_iattr_value(item.conf, 'mqtt_topic_out') }}{% endif %}</td>
-				<td id="{{ item.id() }}_last_update" class="py-1">{{ item.last_update().strftime('%d.%m.%Y %H:%M:%S') }}</td>
-				<td id="{{ item.id() }}_last_change" class="py-1">{{ item.last_change().strftime('%d.%m.%Y %H:%M:%S') }}</td>
-			</tr>
-		{% endif %}
-	{% endfor %}
-</table>
+<div class="container-fluid m-2 table-resize">
+	<table id="maintable">
+		<thead>
+		<tr><th></th>
+			<th>Item</th>
+			<th>Typ</th>
+			<th>Wert</th>
+			<th>Topic In / Out</th>
+			<th>Letztes Update</th>
+			<th>Letzter Change</th>
+		</tr>
+		</thead>
+		{% for item in items %}
+			{% if p.has_iattr(item.conf, 'mqtt_topic_in') or p.has_iattr(item.conf, 'mqtt_topic_out') %}
+				<tr><td></td>
+					<td class="py-1">{{ item._path }}</td>
+					<td class="py-1">{{ item._type }}</td>
+					<td id="{{ item.id() }}_value" class="py-1">{{ item() }}</td>
+					<td class="py-1">{% if p.has_iattr(item.conf, 'mqtt_topic_in') %}<strong>in &nbsp; : </strong>{{ p.get_iattr_value(item.conf, 'mqtt_topic_in') }}<br>{% endif %}
+						{% if p.has_iattr(item.conf, 'mqtt_topic_out') %}<strong>out: </strong>{{ p.get_iattr_value(item.conf, 'mqtt_topic_out') }}{% endif %}</td>
+					<td id="{{ item.id() }}_last_update" class="py-1">{{ item.last_update().strftime('%d.%m.%Y %H:%M:%S') }}</td>
+					<td id="{{ item.id() }}_last_change" class="py-1">{{ item.last_change().strftime('%d.%m.%Y %H:%M:%S') }}</td>
+				</tr>
+			{% endif %}
+		{% endfor %}
+	</table>
+</div>
 {% endblock %}
 
-get_iattr_value(self, conf, attr)
 
 <!--
 	Content block for the second tab of the Webinterface
@@ -136,33 +178,31 @@ get_iattr_value(self, conf, attr)
 {% set tab2title = "<strong>" ~ " Broker Information</strong>" %}
 {% block bodytab2 %}
 <table class="table table-striped table-hover pluginList">
+  <tbody>
 	<tr>
 		<td class="py-1"><strong>{{ 'Broker Version' }}</strong></td>
 		<td id="version" class="py-1">{{ p._broker.version }}</td>
 		<td class="py-1">{{ connection_result }}</td>
-<!--
-        <td width="500"></td>
--->
 	</tr>
 	<tr>
 		<td class="py-1"><strong>{{ 'Active Clients' }}</strong></td>
 		<td id="active_clients" class="py-1">{{ p._broker.active_clients }}</td>
-        <td></td>
+    <td></td>
 	</tr>
 	<tr>
 		<td class="py-1"><strong>{{ 'Subscriptions' }}</strong></td>
 		<td id="subscriptions" class="py-1">{{ p._broker.subscriptions }}</td>
-        <td></td>
+    <td></td>
 	</tr>
 	<tr>
 		<td class="py-1"><strong>{{ 'Messages stored' }}</strong></td>
 		<td id="stored_messages" class="py-1">{{ p._broker.stored_messages }}</td>
-        <td></td>
+    <td></td>
 	</tr>
 	<tr>
 		<td class="py-1"><strong>{{ 'Retained Messages' }}</strong></td>
 		<td id="retained_messages" class="py-1">{{ p._broker.retained_messages }}</td>
-        <td></td>
+    <td></td>
 	</tr>
 	{% if p.broker_monitoring %}
 	<tr>
@@ -177,36 +217,36 @@ get_iattr_value(self, conf, attr)
 		<td class="py-1" colspan="3"><strong>&nbsp;</strong></td>
 	</tr>
 	{% endif %}
+  </tbody>
 </table>
 
 {% if p.broker_monitoring %}
-<table class="table table-striped table-hover pluginList">
-	<thead>
-		<th class="py-1">{{ _('Message Durchsatz') }}</th>
-		<th class="py-1">{{ _('letzte Minute') }}</th>
-		<th class="py-1">{{ _('letzte 5 Min.') }}</th>
-		<th class="py-1">{{ _('letzte 15 Min.') }}</th>
-		<th width="500"></th>
-	</thead>
-	<tr>
-		<td class="py-1">{{ _('Durchschnittlich Messages je Minute empfangen') }}</td>
-		<td id="msg_rcv_1min" class="py-1">{{ p._broker.msg_rcv_1min }}</td>
-		<td id="msg_rcv_5min" class="py-1"> &nbsp; &nbsp; {{ p._broker.msg_rcv_5min }}</td>
-		<td id="msg_rcv_15min" class="py-1"> &nbsp; &nbsp; {{ p._broker.msg_rcv_15min }}</td>
-		<td></td>
-	</tr>
-	<tr>
-		<td class="py-1">{{ _('Durchschnittlich Messages je Minute gesendet') }}</td>
-		<td id="msg_snt_1min" class="py-1">{{ p._broker.msg_snt_1min }}</td>
-		<td id="msg_snt_5min" class="py-1"> &nbsp; &nbsp; {{ p._broker.msg_snt_5min }}</td>
-		<td id="msg_snt_15min" class="py-1"> &nbsp; &nbsp; {{ p._broker.msg_snt_15min }}</td>
-		<td></td>
-	</tr>
-</table>
+<div class="container-fluid m-2">
+  <table id="brokermonitor">
+  	<thead><th></th>
+  		<th class="py-1">{{ _('Message Durchsatz') }}</th>
+  		<th class="py-1">{{ _('letzte Minute') }}</th>
+  		<th class="py-1">{{ _('letzte 5 Min.') }}</th>
+  		<th class="py-1">{{ _('letzte 15 Min.') }}</th>
+  	</thead>
+  	<tr><td></td>
+  		<td class="py-1">{{ _('Durchschnittlich Messages je Minute empfangen') }}</td>
+  		<td id="msg_rcv_1min" class="py-1">{{ p._broker.msg_rcv_1min }}</td>
+  		<td id="msg_rcv_5min" class="py-1"> &nbsp; &nbsp; {{ p._broker.msg_rcv_5min }}</td>
+  		<td id="msg_rcv_15min" class="py-1"> &nbsp; &nbsp; {{ p._broker.msg_rcv_15min }}</td>
+  	</tr>
+  	<tr><td></td>
+  		<td class="py-1">{{ _('Durchschnittlich Messages je Minute gesendet') }}</td>
+  		<td id="msg_snt_1min" class="py-1">{{ p._broker.msg_snt_1min }}</td>
+  		<td id="msg_snt_5min" class="py-1"> &nbsp; &nbsp; {{ p._broker.msg_snt_5min }}</td>
+  		<td id="msg_snt_15min" class="py-1"> &nbsp; &nbsp; {{ p._broker.msg_snt_15min }}</td>
+  	</tr>
+  </table>
+</div>
 {% endif %}
 
 {% endblock %}
-msg_rcv_1min
+
 
 <!--
 	Content block for the third tab of the Webinterface
@@ -216,30 +256,7 @@ msg_rcv_1min
 	It has to be defined before (and outside) the block bodytab3
 -->
 {% block bodytab3 %}
-<table class="table table-striped table-hover pluginList">
-	<thead>
-	<tr>
-		<th>Item</th>
-		<th>Typ</th>
-		<th>Wert</th>
-		<th>Topic In</th>
-		<th>Letztes Update</th>
-		<th>Letzter Change</th>
-	</tr>
-	</thead>
-	{% for item in items %}
-		{% if p.has_iattr(item.conf, 'mqtt_topic_in') or p.has_iattr(item.conf, 'mqtt_topic_out') %}
-			<tr>
-				<td class="py-1">{{ item._path }}</td>
-				<td class="py-1">{{ item._type }}</td>
-				<td class="py-1">{{ item() }}</td>
-				<td class="py-1">{% if p.has_iattr(item.conf, 'mqtt_topic_in') %}{{ p.get_iattr_value(item.conf, 'mqtt_topic_in') }}{% endif %}</td>
-				<td class="py-1">{{ item.last_update().strftime('%d.%m.%Y %H:%M:%S') }}</td>
-				<td class="py-1">{{ item.last_change().strftime('%d.%m.%Y %H:%M:%S') }}</td>
-			</tr>
-		{% endif %}
-	{% endfor %}
-</table>
+
 {% endblock %}
 
 

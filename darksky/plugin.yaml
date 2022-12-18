@@ -7,14 +7,13 @@ plugin:
         en: 'Weather data via darksky.net.'
     maintainer: psilo909
     tester: onkelandy, henfri, cannon
-    state: 'qa-passed'
-#    keywords: iot xyz
+    state: 'deprecated'
+    keywords: weather sun wind rain precipitation
     documentation: 'https://www.smarthomeng.de/user/plugins/darksky/user_doc.html'
-    support: 'https://knx-user-forum.de/forum/supportforen/smarthome-py/1244744-neues-plugin-wetterdaten-via-darksky-net-forecast-io'
-    keywords: weather
-    version: 1.7.0                # Plugin version
+    support: 'https://knx-user-forum.de/forum/supportforen/smarthome-py/1244744'
+    version: 1.7.2                # Plugin version
     sh_minversion: 1.7            # minimum shNG version to use this plugin
-#    sh_maxversion:               # maximum shNG version to use this plugin (leave empty if latest)
+    #sh_maxversion:               # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True          # plugin supports multi instance
     restartable: True
     classname: DarkSky            # class containing the plugin
@@ -51,10 +50,10 @@ parameters:
     units:
         type: str
         mandatory: False
-        default: 'auto'
+        default: 'ca'
         description:
-            de: 'Einheit der zurückgelieferten Daten. Mögliche Werte siehe https://darksky.net/dev/docs.'
-            en: 'Unit of the returned data. Possible values see https://darksky.net/dev/docs.'
+            de: 'Einheit der zurückgelieferten Daten. Mögliche Werte siehe https://darksky.net/dev/docs. Default: "ca".'
+            en: 'Unit of the returned data. Possible values see https://darksky.net/dev/docs. Default: "ca".'
     cycle:
         type: int
         mandatory: False
@@ -282,6 +281,7 @@ item_structs:
                 type: num
                 ds_matchstring@instance: currently/precipIntensity
                 database: init
+                database_maxage: 731    # 2 Jahre
 
             precipIntensityError:
                 type: num
@@ -291,6 +291,7 @@ item_structs:
                 type: num
                 ds_matchstring@instance: currently/precipProbability
                 database: init
+                database_maxage: 731    # 2 Jahre
 
             precipType:
                 type: str
@@ -300,71 +301,85 @@ item_structs:
                 type: num
                 ds_matchstring@instance: currently/temperature
                 database: init
+                database_maxage: 731    # 2 Jahre
 
             apparenttemperature:
                 type: num
                 ds_matchstring@instance: currently/apparentTemperature
                 database: init
+                database_maxage: 731    # 2 Jahre
 
             dewpoint:
                 type: num
                 ds_matchstring@instance: currently/dewPoint
                 database: init
+                database_maxage: 731    # 2 Jahre
 
             humidity:
                 type: num
                 ds_matchstring@instance: currently/humidity
                 database: init
+                database_maxage: 731    # 2 Jahre
 
             pressure:
                 type: num
                 ds_matchstring@instance: currently/pressure
                 database: init
+                database_maxage: 731    # 2 Jahre
 
             windSpeed:
                 type: num
                 ds_matchstring@instance: currently/windSpeed
                 database: init
+                database_maxage: 731    # 2 Jahre
 
             windGust:
                 type: num
                 ds_matchstring@instance: currently/windGust
                 database: init
+                database_maxage: 731    # 2 Jahre
 
             windBearing:
                 type: num
                 ds_matchstring@instance: currently/windBearing
                 database: init
+                database_maxage: 731    # 2 Jahre
 
             cloudCover:
                 type: num
                 ds_matchstring@instance: currently/cloudCover
                 database: init
+                database_maxage: 731    # 2 Jahre
 
             uvIndex:
                 type: num
                 ds_matchstring@instance: currently/uvIndex
                 database: init
+                database_maxage: 731    # 2 Jahre
 
             visibility:
                 type: num
                 ds_matchstring@instance: currently/visibility
                 database: init
+                database_maxage: 731    # 2 Jahre
 
             ozone:
                 type: num
                 ds_matchstring@instance: currently/ozone
                 database: init
+                database_maxage: 731    # 2 Jahre
 
             date:
                 type: str
                 ds_matchstring@instance: currently/date
                 database: init
+                database_maxage: 731    # 2 Jahre
 
             day:
                 type: num
                 ds_matchstring@instance: currently/day
                 database: init
+                database_maxage: 731    # 2 Jahre
 
     forecast_hourly:
         name: Hourly forcast of Weather report from darksky.net - Data is written do database

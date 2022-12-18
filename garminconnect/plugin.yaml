@@ -5,17 +5,18 @@ plugin:
     description:                  # Alternative: description in multiple languages
         de: 'Ermöglicht den Abruf von Daten (Statistiken, Pulswerte) aus Garmin Connect.'
         en: 'Enables the retrieval of data (stats, heart rates) from Garmin Connect.'
-    maintainer: Marc René Frieß
-#    tester:                        # Who tests this plugin?
+    maintainer: psilo909
+    tester: psilo909              # Who tests this plugin?
     state: develop
     keywords: garmin
     documentation: 'http://smarthomeng.de/user/plugins_doc/config/garminconnect.html'   # url of documentation (wiki) page
-    support: 'https://knx-user-forum.de/forum/supportforen/smarthome-py/1451496-support-thread-f%C3%BCr-das-garminconnect-pluginn'
+    support: 'https://knx-user-forum.de/forum/supportforen/smarthome-py/1451496-support-thread-f%C3%BCr-das-garminconnect-plugin'
 
-    version: 1.0.0                 # Plugin version
+    version: 1.2.0                 # Plugin version
     sh_minversion: 1.6             # minimum shNG version to use this plugin
 #    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
+    restartable: unknown
     classname: GarminConnect       # class containing the plugin
 
 parameters:
@@ -24,14 +25,20 @@ parameters:
         type: str
         mandatory: True
         description:
-            de: 'E-Mail des Garmin Connect Users'
+            de: 'E-Mail des Garmin Connect Users.'
             en: 'Email of the Garmin Connect user.'
     password:
         type: str
         mandatory: True
         description:
-            de: 'Passwort des Garmin Connect Users'
+            de: 'Passwort des Garmin Connect Users.'
             en: 'Password of the Garmin Connect user.'
+    is_cn:
+        type: bool
+        default: False
+        description:
+            de: 'Flag, ob Garmin Connect in China genutzt wird.'
+            en: 'Flag, if Garmin Connect in China is being used.'
 
 item_attributes: NONE
     # Definition of item attributes defined by this plugin

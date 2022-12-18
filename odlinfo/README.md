@@ -1,9 +1,9 @@
 # ODLInfo
 
-Version 0.1
-
-This plugin retrieves the Gamma-Ortsdosisleistung (ODL) in µSv/h from several measuring stations in Germany.
+This plugin retrieves the Gamma-Ortsdosisleistung (ODL) in µSv/h (and some more information) from measuring stations in Germany.
 For more information see https://odlinfo.bfs.de.
+From version 1.5.2 it uses the novel interface, described in detail at https://odlinfo.bfs.de/ODL/DE/service/datenschnittstelle/datenschnittstelle_node.html.
+Also take care to read the terms of use at https://www.imis.bfs.de/geoportal/resources/sitepolicy.html.
 
 ## Requirements
 This plugin requires lib requests. You can install this lib with:
@@ -16,19 +16,21 @@ All mappings to items need to be done via your own logic.
 
 Forum thread to the plugin: https://knx-user-forum.de/forum/supportforen/smarthome-py/986480-odlinfo-plugin-f%C3%BCr-strahlungsdaten
 
-The odlinfo id can be retrieved by selecting your station on the map on https://odlinfo.bfs.de and looking in the URL
+The odlinfo measuring point identifier can be retrieved by selecting your station on the map on https://odlinfo.bfs.de and looking in the URL
 of the station, e.g. for 86949 Windach: https://odlinfo.bfs.de/DE/aktuelles/messstelle/091811461.html => id = 091811461
 
-Take care not to request the interface too often, e.g. only once every hour (cycle = 3600).
-The one hour medians that are retrieved by this plugin are typically updated in odlinfo.bfs.de at 04:30 UTC, 10:30 UTC,
-16:30 UTC, and 22:30 UTC.
+Alternatively you can use the webinterface of the plugin to determine the international measuring point id (e.g. DEZ1419) 
+or the odlinfo measuring point identifier (e.g. 091811461). Both can be used for the methods provided by this plugin.
 
-The data published by ODL can be used freely for registred users. The data provided by odlinfo is
-copyrighted by Bundesamt für Strahlenschutz (BfS), Willy-Brandt-Straße 5, 38226 Salzgitter, Deutschland
+Take care not to request the interface too often, e.g. only once every hour (cycle = 3600). Data sets are typically updated
+hourly.
+
+The data provided by odlinfo is copyrighted by Bundesamt für Strahlenschutz (BfS), Willy-Brandt-Straße 5, 38226 Salzgitter, Deutschland
 Do not directly link the data interface / URL of ODLINFO in any context.
 
 ## Nutzung der Daten / Terms of Service
-(in German only - most recent version see https://odlinfo.bfs.de/DE/service/downloadbereich.html)
+(in German only - most recent version see https://www.imis.bfs.de/geoportal/resources/sitepolicy.html and
+https://odlinfo.bfs.de/ODL/DE/service/downloadbereich/downloadbereich_node.html)
 
 Bei der Nutzung der vom Bundesamt für Strahlenschutz erhobenen Daten ist zu beachten:
 
@@ -78,13 +80,8 @@ Dies führt dazu, dass einzelne Zeitreihen abrupt enden.
 odlinfo:
     class_name: ODLInfo
     class_path: plugins.odlinfo
-    user: <your own user>
-    password: <your own password>
+    cycle: 3600
 ```
-
-#### Attributes
-  * `user`: Your own personal user for odlinfo.bfs.de. Instructions see https://odlinfo.bfs.de/DE/service/datenschnittstelle.html
-  * `password`: Your own personal password for odlinfo.bfs.de. Instructions see https://odlinfo.bfs.de/DE/service/datenschnittstelle.html
 
 ### items.yaml
 
@@ -93,28 +90,45 @@ odlinfo:
 ```yaml
 outside:
 
-    radiation:
+    radiation: #this item will be updated via logic
         type: num
+        cache: 'yes'
+
+        wessling: #these items will be auto updated by the plugin, using the international and odlinfo id
+            radiation: 
+                type: num
+                odl_station: '091881441'
+                odl_data_type: 'value'
+
+            radiation_terrestrial:
+                type: num
+                odl_station: '091881441'
+                odl_data_type: 'value_terrestrial'
+
+            radiation_cosmic:
+                type: num
+                odl_station: 'DEZ1453'
+                odl_data_type: 'value_cosmic'
 ```
 
 ## Functions
 
-### get_radiation_for_ids(odlinfo_ids):
-Gets a list of radiaton values and according stations to an array of internal odlinfo_ids
-Dict keys per entry: 'ort', 'kenn', 'plz', 'status', 'kid', 'hoehe', 'lon', 'lat', 'mw'
-Description see stamm.json (https://odlinfo.bfs.de/downloads/Datenbereitstellung-2016-04-21.pdf)
+### get_stations_for_ids(odlinfo_ids):
+Gets a list of measuring stations (incl. radiation values) and according stations to an array of internal odlinfo_ids
+Dict keys per station entry: 'id', 'kenn', 'plz', 'name', 'site_status', 'site_status_text', 'kid', 'height_above_sea', 'start_measure', 'end_measure', 'value', 'value_cosmic', 'value_terrestrial', 'unit', 'validated', 'nuclide', 'duration'
+Description see https://odlinfo.bfs.de/ODL/DE/service/datenschnittstelle/datenschnittstelle_node.html
 
 ```python
-sh.odlinfo.get_radiation_for_ids(['010620461','091811461']) # station Meddewade and Windach
+sh.odlinfo.get_stations_for_ids(['010620461','091811461']) # station Meddewade and Windach
 ```
 
-### get_radiation_for_id(odlinfo_id)
-Gets a list of radiaton values and according stations to an internal odlinfo_id
-Dict keys per entry: 'ort', 'kenn', 'plz', 'status', 'kid', 'hoehe', 'lon', 'lat', 'mw'
-Description see stamm.json (https://odlinfo.bfs.de/downloads/Datenbereitstellung-2016-04-21.pdf)
+### get_station_for_id(odlinfo_id)
+Gets a measuring station (incl. radiaton value) to an internal odlinfo_id
+Dict keys per station entry: 'id', 'kenn', 'plz', 'name', 'site_status', 'site_status_text', 'kid', 'height_above_sea', 'start_measure', 'end_measure', 'value', 'value_cosmic', 'value_terrestrial', 'unit', 'validated', 'nuclide', 'duration'
+Description see https://odlinfo.bfs.de/ODL/DE/service/datenschnittstelle/datenschnittstelle_node.html
 
 ```python
-sh.odlinfo.get_radiation_for_id('091811461') # station Windach
+sh.odlinfo.get_station_for_id('091811461') # station Windach
 ```
 
 ## Logics
@@ -122,6 +136,6 @@ sh.odlinfo.get_radiation_for_id('091811461') # station Windach
 ### Fill item with radiation data
 
 ```python
-radiation = sh.odlinfo.get_radiation_for_id('091811461') # station Windach
-sh.outside.radiation(radiation['mw'])
+station_data = sh.odlinfo.get_station_for_id('091811461') # station Windach
+sh.outside.radiation(station_data['value'])
 ```

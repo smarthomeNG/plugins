@@ -6,14 +6,14 @@ plugin:
         de: 'Database plugin, mit Unterstützung für SQLite 3 und MySQL'
         en: 'Database plugin, with support for SQLite 3 and MySQL'
     maintainer: ohinckel, msinn
-    tester: psilo909, onkelandy, brandst
+    tester: psilo909, onkelandy, brandst, aschwith
     state: ready
     keywords: database
     documentation: http://smarthomeng.de/user/plugins/database/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1021844-neues-database-plugin
 
-    version: 1.5.15                # Plugin version
-    sh_minversion: 1.8.0           # minimum shNG version to use this plugin
+    version: 1.6.8                 # Plugin version
+    sh_minversion: 1.9.3.2         # minimum shNG version to use this plugin
 #    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
     restartable: unknown
@@ -43,7 +43,13 @@ parameters:
         default: 60
         description:
             de: 'Dump Cycle bestimmt wie oft die Daten auf Platte geschrieben werden (in Sekunden).'
-            en: 'Dump cycle defined how often the database is dumped to disc (in seconds).'
+            en: 'Dump cycle defines how often the database is dumped to disc (in seconds).'
+    removeold_cycle:
+        type: int
+        default: 91
+        description:
+            de: 'Remove old Cycle bestimmt wie oft die Prüfung auf veraltete Daten gestartet werden soll (in Sekunden).'
+            en: 'Remove old cycle defines how often the database will be checked for old data (in seconds).'
     precision:
         type: int
         default: 2
@@ -58,11 +64,62 @@ parameters:
             de: "Auf True setzen, um für das Web Interface die Anzahl der Logeinträge für jedes Item zu zählen und als extra Spalte anzuzeigen"
             en: "Set to True to count the number of log entries for each item for the web interface and show as extra column"
 
+    max_delete_logentries:
+        type: int
+        default: 20000
+        valid_min: 1000
+        description:
+            de: "Maximal auf einmal zu löschende Anzahl an Log Einträgen mit dem database_maxage Attribut, reduziert die Belastung der Datenbank bei alten Datenbeständen"
+            en: "Maximum number of Logentries to delete at once with database_maxage attribute, reduces load on database with old datasets"
+
+    default_maxage:
+        type: int
+        default: 0
+        valid_min: 0
+        description:
+            de: "Falls dieser Parameter einen Wert größer 0 enthält: Standard maxage für Items, die kein maxage gesetzt haben"
+            en: "If this parameter is > 0: maxage for Items that don't have a maxage set."
+
+    copy_database:
+        type: bool
+        default: False
+        description:
+            de: "Nur für SQLite3: Auf True setzen, um beim Start von SmartHomeNG eine Kopie der Datenbank Datei zu erzeugen"
+            en: "For SQLite3 only: Set to True to make a copy of the database file on startup of SmartHomeNG"
+
+    copy_database_name:
+        type: str
+        description:
+            de: "Nur für SQLite3: Pfad/Name der Datenbank Kopie"
+            en: "For SQLite3 only: Path/Name of the copy of the database file"
+
+    webif_pagelength:
+        type: int
+        valid_list:
+          - -1
+          - 0
+          - 25
+          - 50
+          - 100
+        description:
+            de: 'Anzahl an Items, die standardmäßig in einer Web Interface Tabelle pro Seite angezeigt werden.
+                 0 = automatisch, -1 = alle'
+            en: 'Amount of items being listed in a web interface table per page by default.
+                 0 = automatic, -1 = all'
+        description_long:
+            de: 'Anzahl an Items, die standardmäßig in einer Web Interface Tabelle pro Seite angezeigt werden.\n
+                 Bei 0 wird die Tabelle automatisch an die Höhe des Browserfensters angepasst.\n
+                 Bei -1 werden alle Tabelleneinträge auf einer Seite angezeigt.'
+            en: 'Amount of items being listed in a web interface table per page by default.\n
+                 0 adjusts the table height automatically based on the height of the browser windows.\n
+                 -1 shows all table entries on one page.'
+
 item_attributes:
     # Definition of item attributes defined by this plugin
     database:
         type: str
         valid_list_ci: ['', 'yes', 'init', 'true']
+        duplicate_use: True
         description:
             de: "Wenn auf 'yes' oder 'true' gesetzt, werden die Werte des Items in die Datenbank geschrieben. Wenn auf 'init' gesetzt, wird zusätzlich beim Start von SmartHomeNG der Wert des Items aus der Datenbank gelesen."
             en: "This attribute enables the database logging when set (just use value 'yes' or 'true'). If value 'init' is used, an item will be initalized from the database after SmartHomeNG is restarted."
@@ -81,6 +138,14 @@ item_attributes:
         description:
             de: "Muss normalerweise nicht konfiguriert werden, dann wird der Standard 'rw' genutzt. Es kann nützlich sein Werte als 'ro' zu deklarieren, falls die Datenbank Daten aus anderen Quellen enthält, die durch SmartNomeNG nicht verändert werden sollen."
             en: "Usually does not need to be configured, in this case the standard 'rw' is used. It can be useful to declare values as 'ro' if the database contains data from other sources that SmartNomeNG should not change."
+
+    database_write_on_shutdown:
+        type: bool
+        default: True
+        description:
+            de: "Muss normalerweise nicht konfiguriert werden, dann wird der Standard 'True' genutzt. Das bedeutet, dass das item vor dem Beenden von smarthomeNG nochmal in die DB geschrieben wird (auch wenn keine echte Aenderung statt fand). Wird das Attribut auf 'False' gesetzt, wird das Schreiben beim Beenden unterdrueckt."
+            en: "Usually does not need to be configured, in this case the default 'True' is used. This means that the item value is written to the DB once again on smarthomeNG shutdown. (even though the item has not been updated). Setting the attribute to 'False', supresses the rewrite on shutdown."
+
 
 item_structs: NONE
   # Definition of item-structure templates for this plugin
@@ -222,11 +287,21 @@ plugin_functions:
     readItem:
         type: foo
         description:
-            de: 'Item-Datenbankeintrag für angegebene Datenbank-ID auslesen'
-            en: 'Read database item record for given database ID'
+            de: "Item-Datenbankeintrag für angegebene Datenbank-ID auslesen
+
+                 Diese Methode liest die Item-Daten einschließlich aller Felder. Wenn der ID Parameter ein String
+                 ist, wird angenommen, dass das Element über den Item Namen ausgewählt werden soll
+                 und nicht die Item-ID.
+                "
+            en: "Read database item record for given database ID
+
+                 This method will read the item data including all fields. If the id
+                 parameter is a string it is assumed that the item should be selected by
+                 the items name and not by the items ID.
+                "
         parameters:
             id:
-                type: int
+                type: int/str
                 description:
                     de: "Datenbank-ID des Items für das der Eintrag ausgelesen werden soll"
                     en: "Database ID of item to read the record for"
@@ -239,14 +314,9 @@ plugin_functions:
     readItems:
         type: foo
         description:
-            de: 'Item-Datenbankeinträge auslesen'
-            en: 'Read database item records'
+            de: 'Alle Item-Datenbankeinträge incl. aller Felder auslesen'
+            en: 'This method will read all items data including all fields.'
         parameters:
-            id:
-                type: int
-                description:
-                    de: "Datenbank-ID des Items für das der Eintrag ausgelesen werden soll"
-                    en: "Database ID of item to read the record for"
             cur:
                 type: foo
                 description:
@@ -256,8 +326,8 @@ plugin_functions:
     deleteItem:
         type: void
         description:
-            de: 'Item-Datenbankeintrag für angegebene Datenbank-ID löschen'
-            en: 'Delete database item record for given database ID'
+            de: 'Löschen eines Item-Datenbankeintrags und von dessen Log Daten'
+            en: 'This method will delete the item and its log data'
         parameters:
             id:
                 type: int
@@ -463,6 +533,16 @@ plugin_functions:
     cleanup:
         type: void
         description:
-            de: 'Datenbank aufräumen (löscht ungenutzte Item/Log Einträge aus der Datenbank)'
-            en: 'Cleanup database (deletes unused item/log records in the database)'
+            de: "Datenbank aufräumen (löscht ungenutzte Item/Log Einträge aus der Datenbank)
 
+                 Diese Methode entfernt alle Elemente und Logs aus der Datenbank der Elemente, welche derzeit nicht
+                 für die Protokollierung in der Datenbank konfiguriert sind. Vorsicht vor dieser Verwendung
+                 in einem Setup mit mehreren Plugin Instanzen, da eine Instanz die Items der anderen Instanz nicht kennt!
+                "
+            en: "Cleanup database (deletes unused item/log records in the database)
+
+                 This method will remove all items and logs from database of items which
+                 are currenlty not configured to be logged to database. Beware of this using
+                 in a multi-instance setup, since one instance does not know the item of
+                 the other instance!
+            "

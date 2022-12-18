@@ -1,0 +1,68 @@
+# Metadata for the plugin
+plugin:
+    # Global plugin attributes
+    type: web                       # plugin type (gateway, interface, protocol, system, web)
+    description:
+        de: 'Sprach Parser'
+        en: 'Speech parser'
+    maintainer: bmxp
+    tester: henfri                  # Who tests this plugin?
+    state: develop                  # change to ready when done with development
+    keywords: speech recognition parser
+    documentation: http://smarthomeng.de/user/plugins/speech/user_doc.html
+    support: http://knx-user-forum.de/forum/supportforen/smarthome-py/39857-plugin-speech-parser
+    version: 1.6.0                  # Plugin version
+    sh_minversion: 1.5              # minimum shNG version to use this plugin
+    # sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
+    multi_instance: False           # plugin supports multi instance
+    restartable: true
+    classname: Speech_Parser        # class containing the plugin
+
+parameters:
+    listen_ip:
+        type: ip
+        default: '0.0.0.0'
+        description:
+            de: 'IP Adresse auf der gehört werden soll'
+            en: 'IP address to listen to'
+    listen_port:
+        type: int
+        default: 2788
+        description:
+            de: 'Gibt den Port an auf dem der Speech Parser auf Textpakete wartet'
+            en: 'Specifies communication port that the parser listens on'
+    acl:
+        type: str
+        default: '*'
+        description:
+            de: 'Zugriffskontrolle'
+            en: 'access control'
+    default_access:
+        type: str
+        default: ''
+        description:
+            de: 'Zugriffskontrolle default'
+            en: 'default access control'
+    config_file:
+        type: str
+        default: 'speech.py'
+        description:
+            de: 'Konfigurationsdatei'
+            en: 'config file'
+
+item_attributes:
+    sp:
+        type: str
+        default: 'ro'
+        description:
+            de: 'Zugriffskontrolle für den Speechparser'
+            en: 'Access Control for speech parser'
+
+item_structs: NONE
+
+plugin_functions: NONE
+    # Definition of plugin functions defined by this plugin (enter 'plugin_functions: NONE', if section should be empty)
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)
+

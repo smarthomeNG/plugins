@@ -58,17 +58,17 @@ $.widget("sv.stateengine", $.sv.widget, {
   },
   _update: function (response) {
     // get list of values and images
-    list_val = this.element.attr('data-vals').explode();
-    list_img = this.element.attr('data-img').explode();
+     list_val = this.element.attr('data-vals').explode();
+     list_img = this.element.attr('data-img').explode();
 
     // get the index of the value received
     idx = list_val.indexOf(response.toString());
 
     // update the image
-    $('#' + this.element.attr("id") + ' img').attr('src', list_img[idx]);
-
-    $('#' + this.element.attr("id")).show();
+   this.element.children().hide()
+   this.element.find('[data-val="' + response.toString() + '"]').show();
     console.log('ID '+this.element.attr('id')+' image '+list_img[idx]);
+
     // memorise the index for next use
     this.element.val(idx);
   }

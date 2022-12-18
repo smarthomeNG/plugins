@@ -7,6 +7,40 @@
 {% set tab2title = 'JSON Data' %}
 
 {% block headtable %}
+<table class="table table-striped table-hover">
+	<tbody>
+        <tr>
+            <td class="py-1" style="font-weight:bold; width: 50px;">Lat</td>
+			<td class="py-1" style="width: 100px;">
+                {{ p._lat }}
+            </td>
+            <td class="py-1" style="font-weight:bold; width: 50px;" >Lon</td>
+			<td class="py-1" style="width: 100px;">
+               {{ p._lon }}
+            </td>
+            <td class="py-1" style="font-weight:bold; width: 50px;">Units</td>
+			<td class="py-1">
+                {{ p._units }}
+            </td>
+        </tr>
+        <tr>
+            <td class="py-1" style="font-weight:bold; width: 50px;">Cycle</td>
+			<td class="py-1">
+               {{ p._cycle }}
+            </td>
+            <td class="py-1" style="font-weight:bold; width: 50px;">Key</td>
+			<td class="py-1" colspan="5">
+               {{ p._key }}
+            </td>
+        </tr>
+		<tr>
+            <td class="py-1" style="font-weight:bold;">URL</td>
+			<td class="py-1" colspan="5">
+                <a class="text-shng" target="_blank" href="{{ p._build_url() }}">{{ p._build_url() }}</a>
+            </td>
+        </tr>
+    </tbody>
+</table>
 {% endblock %}
 
 {% block bodytab1 %}

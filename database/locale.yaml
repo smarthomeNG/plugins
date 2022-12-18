@@ -1,39 +1,49 @@
 plugin_translations:
     # Translations for the plugin specially for the web interface
-    'Aktionen':        {'de': '=', 'en': 'Actions'}
-    'Verbunden':       {'de': '=', 'en': 'Connected'}
-    'Treiber  ':       {'de': '=', 'en': 'Driver'}
-    'Ja':              {'de': '=', 'en': 'Yes'}
-    'Nein':            {'de': '=', 'en': 'No'}
-    'mit':             {'de': '=', 'en': 'with'}
-    'Datenbank-Dump':  {'de': '=', 'en': 'Database Dump'}
-    'Zeit':            {'de': '=', 'en': 'Time'}
-    'Item ID':         {'de': '=', 'en': '='}
-    'Dauer':           {'de': '=', 'en': 'Duration'}
-    'Geändert':        {'de': '=', 'en': 'Changed'}
-    'Übersicht':       {'de': '=', 'en': 'Overview'}
-    'am':              {'de': '=', 'en': 'on the'}
-    'Gesamt':          {'de': '=', 'en': 'Total'}
-    'Datensätze':      {'de': '=', 'en': 'Data Sets'}
-    'Aktueller Wert':  {'de': '=', 'en': 'Recent Value'}
-    'ältester Wert':   {'de': '=', 'en': 'oldest Value'}
-    'Typ':             {'de': '=', 'en': 'Type'}
-    'Tabelle':         {'de': '=', 'en': 'Table'}
+    'Aktionen':           {'de': '=', 'en': 'Actions'}
+    'Verbunden':          {'de': '=', 'en': 'Connected'}
+    'Treiber':            {'de': '=', 'en': 'Driver'}
+    'Ja':                 {'de': '=', 'en': 'Yes'}
+    'Nein':               {'de': '=', 'en': 'No'}
+    'mit':                {'de': '=', 'en': 'with'}
+    'SQL Dump':           {'de': '=', 'en': '='}
+    'CSV Dump':           {'de': '=', 'en': '='}
+    'Zeit':               {'de': '=', 'en': 'Time'}
+    'Item ID':            {'de': '=', 'en': '='}
+    'Dauer':              {'de': '=', 'en': 'Duration'}
+    'Geändert':           {'de': '=', 'en': 'Changed'}
+    'Übersicht':          {'de': '=', 'en': 'Overview'}
+    'am':                 {'de': '=', 'en': 'on the'}
+    'Gesamt':             {'de': '=', 'en': 'Total'}
+    'Datensätze':         {'de': '=', 'en': 'Data Sets'}
+    'Aktueller Wert':     {'de': '=', 'en': 'Recent Value'}
+    'ältester Wert':      {'de': '=', 'en': 'oldest Value'}
+    'Letzte Änderung':    {'de': '=', 'en': 'Last change'}
+    'Typ':                {'de': '=', 'en': 'Type'}
+    'Tabelle':            {'de': '=', 'en': 'Table'}
+    'Verwaistes Item':    {'de': '=', 'en': 'Orphan item'}
 
-    'Plugin-API':      {'de': '=', 'en': 'Plugin API', 'fr': ''}
-    'Database Items':  {'de': '=', 'en': '=', 'fr': ''}
-    'Parameter':       {'de': '=', 'en': 'Parameters', 'fr': ''}
+    'Plugin-API':         {'de': '=', 'en': 'Plugin API'}
+    'Database Items':     {'de': '=', 'en': '='}
+    'Verwaiste Items':    {'de': '=', 'en': 'Orphan Items'}
+    'Parameter':          {'de': '=', 'en': 'Parameters'}
+
+    'Wert':               {'de': '=', 'en': 'Value'}
+    'DB-ID':              {'de': '=', 'en': '='}
+    'VAL_NUM':            {'de': 'Wert: Numerisch', 'en': 'Value: Numeric'}
+    'VAL_STR':            {'de': 'Wert: String', 'en': 'Value: String'}
+    'VAL_BOOL':           {'de': 'Wert: Boolean', 'en': 'Value: Boolean'}
 
     'Item-ID in der Datenbank':
         'de': 'Item-ID in der DB'
         'en': 'Item ID in db'
-    'Die folgenden {items} Items sind dieser Instanz des Database Plugins zugewiesen, {with_maxage} Items haben ein maxage.':
+    'Die folgenden {items} Items sind dieser Instanz zugewiesen, {with_maxage} Items haben ein maxage.':
         'de': '='
         'en': 'The following {items} items are assigned to this instance of the database plugin, {with_maxage} items have a  maxage.'
     'Die Datenbank enthält Daten zu {dbitems} Items':
         'de': '='
         'en': ' The database contains data for {dbitems} items'
-    'konfiguriertes max. Altermax. Alter':
+    'konfiguriertes max. Alter':
         'de': '='
         'en': 'configured max. age'
     'Löschauftrag für die Einträge von Item ID {item_id} in der Tabelle "log" wurde erfolgreich initiiert!':
@@ -63,6 +73,9 @@ plugin_translations:
     'CSV Export der Werte':
         'de': '='
         'en': 'CSV Export of Values'
+    'CSV Export nicht verfügbar':
+        'de': '='
+        'en': 'CSV Export not available'
     'Historische Daten':
         'de': '='
         'en': 'Historical Data'
@@ -75,9 +88,12 @@ plugin_translations:
     'Zeige Einträge vom':
         'de': '='
         'en': 'Show entries from'
-    'Datenbank-Cleanup':
+    'Datenbank-Cleanup starten':
         'de': '='
-        'en': 'Database Cleanup'
+        'en': 'Start Database-Cleanup'
+    'Cleanup ist aktiv':
+        'de': '='
+        'en': 'Cleanup is active'
     'Datenbank-Cleanup wurde erfolgreich initiiert!':
         'de': '='
         'en': 'Database cleanup successfully initiated!'
@@ -87,6 +103,9 @@ plugin_translations:
     'Wollen Sie alle Datensätze ohne zugehöriges Item wirklich löschen?':
         'de': '='
         'en': 'Do you really want to delete all data sets without corresponding item?'
+    'Anzahl Einträge':
+        'de': '='
+        'en': '# of entries'
     'Anzahl Einträge in LOG Tabelle für Item':
         'de': '='
         'en': 'Number of data sets in LOG table for item'
@@ -96,6 +115,6 @@ plugin_translations:
     'Anzahl Datensätze in LOG Tabelle':
         'de': '='
         'en': 'Number of data sets in LOG table'
-    'Wert löschen fuer aktuellen Wert nicht verfügbar.':
+    'Wert löschen für aktuellen Wert nicht verfügbar.':
         'de': '='
         'en': 'Deletion of value not available for the most recent value.'

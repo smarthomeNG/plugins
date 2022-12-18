@@ -34,13 +34,13 @@ plugin:
              - graphviz: ``sudo apt install graphviz``\n
              - Python Modul pydotplus: ``pip3 install pydotplus``\n
              '
-    maintainer: i-am-offline, onkelandy
+    maintainer: onkelandy
     tester: '?'
     state: ready
     documentation: https://www.smarthomeng.de/user/plugins/stateengine/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1303071-stateengine-plugin-support
 
-    version: 1.8.1
+    version: 1.9.3
     sh_minversion: 1.6
     multi_instance: False
     classname: StateEngine
@@ -121,12 +121,13 @@ parameters:
           - 0
           - 1
           - 2
+          - 3
         valid_list_description:
-            de: ['deaktiviert', 'Info', 'Debug']
-            en: ['deactivated', 'Info', 'Debug']
+            de: ['deaktiviert', 'Info', 'Debug', 'Develop']
+            en: ['deactivated', 'Info', 'Debug', 'Develop']
         description:
-            de: 'Erweiterte Protokollierung: Loglevel (0: aus, 1: Info, 2: Debug)'
-            en: 'Extended Logging: Loglevel (0: off, 1: Info, 2: Debug)'
+            de: 'Erweiterte Protokollierung: Loglevel (0: aus, 1: Info, 2: Debug, 3: Develop/Verbose)'
+            en: 'Extended Logging: Loglevel (0: off, 1: Info, 2: Debug, 3: Develop/Verbose)'
         description_long:
             de: '**Erweiterte Protokollierung:**\n
                  Bei einem Wert von 1 oder 2 wird pro Item eine eigene Logdatei im unter log_directory
@@ -142,26 +143,32 @@ parameters:
 
     log_directory:
         type: str
-        default: 'var/log/StateEngine/'
+        default: 'var/log/stateengine/'
         description:
             de: 'Erweiterte Protokollierung: Verzeichnis für die Protokolldateien'
             en: 'Extended Logging: Directory for log files'
         description_long:
             de: '**Verzeichnis für die Protokolldateien:**\n
                  Die Logdateien der erweiterten Protokollierung werden in das
-                 hier angegebene Verzeichnis geschrieben.
+                 hier angegebene Verzeichnis geschrieben.\n
                  Wenn der angegebene Verzeichnisname mit "/" beginnt wird er als
                  absoluter Verzeichnisname behandelt. Alle anderen
                  Verzeichnisnamen werden als Unterverzeichnisse des smarthomeNG
                  Basisverzeichnisses behandelt. Das angegebene Verzeichnis wird
-                 angelegt, wenn es nicht existiert.
+                 angelegt, wenn es nicht existiert.\n
                  Wenn hier kein abweichendes Verzeichnis angegeben ist, wird das
-                 Verzeichnis ``<smarthome_base_directory>/var/log/AutoState/``
+                 Verzeichnis ``<smarthome_base_directory>/var/log/stateengine/``
                  verwendet.
                  '
             en: '**Directory for log files**:\n
+                The extended log files are saved in the directory defined with
+                this parameter.\n
+                If the folder name starts with a "/" it is
+                interpreted as an absolut path, otherwise relative to the smarthomeNG
+                base folder. The folder is created on the first plugin start if
+                it does not exist.\n
                 If the parameter is absent the log files will be saved to
-                ``<smarthome_base_directory>/var/log/AutoState/``
+                ``<smarthome_base_directory>/var/log/stateengine/``
                 '
     log_maxage:
         type: int
@@ -194,13 +201,70 @@ parameters:
                 Everything gets deleted from the given directory, not just log files!
                 '
 
+    lamella_open_value:
+        type: num
+        default: 0
+        valid_min: 0
+        valid_max: 100
+        description:
+            de: 'Je nach Lamellenart muss für die sun_tracking() Funktion die sonnenstandsbezogene Berechnung
+                der Lamellenausrichtung angepasst werden.
+                Hier ist der Prozentwert der Lamellen im komplett waagrechten Zustand anzugeben.'
+            en: 'Depending on the lamella variant it might be necessary to adapt the calculation of the lamella
+                orientation for a correct sun_tracking() function.
+                This value defines the complete open, horizontal lamella state in percent.'
+        description_long:
+            de: 'Je nach Lamellenart muss die sonnenstandsbezogene Berechnung der Lamellenausrichtung angepasst werden.
+                Für z-Lamellen kann hier der standardmäßige Wert 0 gewählt werden, hat man jedoch normale Lamellen,
+                die sich nach oben und unten drehen, werden die Lamellen in der Regel bei 50% komplett offen, also
+                waagrecht stehen. Somit sollte hier der Wert 50 angegeben werden, um eine korrekte Ausrichtung beim
+                Nutzen der sun_tracking Funktion zu gewährleisten.'
+            en: 'Depending on the lamella variant it might be necessary to adapt the calculation of the lamella orientation.
+                If you have z-lamella you can use the standard value 0. But if you have normal lamella that can turn up
+                or down, the lamella are most likely fully open at 50%. In this case you have to set this parameter
+                to 50 to have a correct orientation using the sun_tracking() function.'
+
+    lamella_offset:
+        type: num
+        default: 0
+        valid_min: -90
+        valid_max: 90
+        description:
+            de: 'Gibt es ein Problem mit dem automatischen Ausrichten der Lamellen mittels sun_tracking Funktion,
+                kann ein globaler Offset eingestellt werden, der für alle Aufrufe besagter Funktion berücksichtigt wird.'
+            en: 'If there is a problem with the automatic orientation of lamellas using the sun_tracking function,
+                a global offset can be defined that is used for all instances of the aforementioned function.'
+
     instant_leaveaction:
         type: bool
         default: False
         description:
-            de: 'Ist dieser Parameter auf True gesetzt, werden "on leave" Aktionen sofort ausgeführt, wenn der aktuelle Zustand nicht mehr eingenommen wird. Standardmäßig werden die Aktionen erst direkt vor dem Eintreten in einen neuen Zustand getriggert.'
-            en: 'If this parameter is set to True the "on leave" actions are run immediately after not entering the current state
-            again. By default the actions are triggered directly before entering a new state.'
+            de: 'Ist dieser Parameter auf True gesetzt, werden "on leave" Aktionen sofort ausgeführt,
+                wenn der aktuelle Zustand nicht mehr eingenommen wird. Standardmäßig werden die Aktionen erst direkt
+                vor dem Eintreten in einen neuen Zustand getriggert.'
+            en: 'If this parameter is set to True the "on leave" actions are run immediately after not entering the
+                current state again. By default the actions are triggered directly before entering a new state.'
+
+    webif_pagelength:
+        type: int
+        valid_list:
+          - -1
+          - 0
+          - 25
+          - 50
+          - 100
+        description:
+            de: 'Anzahl an Items, die standardmäßig in einer Web Interface Tabelle pro Seite angezeigt werden.
+                 0 = automatisch, -1 = alle'
+            en: 'Amount of items being listed in a web interface table per page by default.
+                 0 = automatic, -1 = all'
+        description_long:
+            de: 'Anzahl an Items, die standardmäßig in einer Web Interface Tabelle pro Seite angezeigt werden.\n
+                 Bei 0 wird die Tabelle automatisch an die Höhe des Browserfensters angepasst.\n
+                 Bei -1 werden alle Tabelleneinträge auf einer Seite angezeigt.'
+            en: 'Amount of items being listed in a web interface table per page by default.\n
+                 0 adjusts the table height automatically based on the height of the browser windows.\n
+                 -1 shows all table entries on one page.'
 
 item_attributes:
     # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)
@@ -322,6 +386,132 @@ item_attributes:
                  It can be used for visualization, actions and conditions.
                  '
 
+    se_previousstate_item_name:
+        type: str
+        description:
+            de: 'Id des Items, in dem der Name des vorherigen Zustands abgelegt wird'
+            en: 'Id of the item that saves the name of the previous state'
+        description_long:
+            de: '**Id des Items, in dem der Name des vorherigen Zustands abgelegt wird:**\n
+                In das hier verknüpfte Item wird der Name des vorigen Zustands
+                abgelegt. Das Item kann für Displayzwecke und Bedingungen verwendet werden.
+                '
+            en: '**Id of the item that saves the name of the previous state:**\n
+                 The item defined here saves the name of the previous state for
+                 visualization purposes and conditions.
+                 '
+
+    se_previousstate_item_id:
+        type: str
+        description:
+            de: 'Id des Items, in dem die ID des vorherigen Zustands abgelegt wird'
+            en: 'Id of the item that saves the ID of the previous state'
+        description_long:
+            de: '**Id des Items, in dem der vorherige Zustand abgelegt wird:**\n
+                In das hier verknüpfte Item wird die Id des vorherigen Zustands
+                abgelegt. Das Item kann mit dem Attribut ``cache: yes``
+                versehen werden, dann bleibt der vor-vorherige Zustand bei einem
+                Neustart von smarthomeNG erhalten.
+                '
+            en: '**Id of the item that saves the id of the previous state:**\n
+                 In combination with the attribute ``cache: yes`` the defined item
+                 can be used to load the previous state after the plugin start.
+                 '
+    se_previousconditionset_item_name:
+        type: str
+        description:
+            de: 'Name des Items, in dem der Name des vorherigen Zustandsets abgelegt wird'
+            en: 'Name of the item that saves the name of the previously used condition set'
+        description_long:
+            de: '**Name des Items, in dem der Name des vorherigen Zustandsets abgelegt wird:**\n
+                In das hier verknüpfte Item wird der Name des vorherigen Zustandsets
+                abgelegt. Das Item kann für Displayzwecke, Aktionen und Bedingungen genutzt werden.
+                '
+            en: '**Name of the item that saves the name of the previous condition set:**\n
+                 The item defined here saves the name of the previously active condition set.
+                 It can be used for visualization, actions and conditions.
+                 '
+
+    se_previousconditionset_item_id:
+        type: str
+        description:
+            de: 'ID des Items, in dem der Name des vorherigen Zustandsets abgelegt wird'
+            en: 'ID of the item that saves the name of the previously used condition set'
+        description_long:
+            de: '**ID des Items, in dem der Name des vorherigen Zustandsets abgelegt wird:**\n
+                In das hier verknüpfte Item wird der Name des vorherigen Zustandsets
+                abgelegt. Das Item kann für Displayzwecke, Aktionen und Bedingungen genutzt werden.
+                '
+            en: '**ID of the item that saves the name of the previous condition set:**\n
+                 The item defined here saves the name of the previously active condition set.
+                 It can be used for visualization, actions and conditions.
+                 '
+
+    se_previousstate_conditionset_item_name:
+        type: str
+        description:
+            de: 'Name des Items, in dem der Name des Zustandsets vom vorigen Zustand abgelegt wird'
+            en: 'Name of the item that saves the name of the previous state condition set'
+        description_long:
+            de: '**Name des Items, in dem der Name des Zustandsets vom vorherigen Zustand abgelegt wird:**\n
+                In das hier verknüpfte Item wird der Name des Zustandssets des vorherigen Zustands
+                abgelegt. Das Item kann für Displayzwecke, Aktionen und Bedingungen genutzt werden.
+                '
+            en: '**Name of the item that saves the name of the condition set of the previous state:**\n
+                 The item defined here saves the name of the previous state condition set.
+                 It can be used for visualization, actions and conditions.
+                 '
+
+    se_previousstate_conditionset_item_id:
+        type: str
+        description:
+            de: 'ID des Items, in dem der Name des Zustandsets vom vorigen Zustand abgelegt wird'
+            en: 'ID of the item that saves the name of the previous state condition set'
+        description_long:
+            de: '**ID des Items, in dem der Name des Zustandsets vom vorherigen Zustand abgelegt wird:**\n
+                In das hier verknüpfte Item wird der Name des Zustandssets des vorherigen Zustands
+                abgelegt. Das Item kann für Displayzwecke, Aktionen und Bedingungen genutzt werden.
+                '
+            en: '**ID of the item that saves the name of the condition set of the previous state:**\n
+                 The item defined here saves the name of the previous state condition set.
+                 It can be used for visualization, actions and conditions.
+                 '
+
+    se_shouldnotrelease_item:
+        type: str
+        description:
+            de: 'ID des Items, in dem interne Informationen für das released_by Feature gespeichert werden'
+            en: 'ID of the item that saves internal information for the released_by feature'
+        description_long:
+            de: '**ID des Items, in dem interne Informationen für das released_by Feature gespeichert werden:**\n
+               Ein Dictionary mit den Stati als Keys, die ein se_released_by Attribut haben und den Stati/Items
+               als Values, die zuvor schon aktiv waren und erst bei einem erneuten Wechsel von "can not be entered"
+               auf "can be entered" den entsprechenden Status released, also (vorübergehend) auflöst.
+               '
+            en: '**ID of the item that saves internal information for the released_by feature:**\n
+                A dictionary with the states as keys that have an se_released_by attribute and the states/items
+                as values that have been active before already and only release/overrule the relevant state
+                if they change from "can not be entered" to "can be entered".
+                '
+
+    se_hasreleased_item:
+        type: str
+        description:
+            de: 'ID des Items, in dem interne Informationen für das released_by Feature gespeichert werden'
+            en: 'ID of the item that saves internal information for the released_by feature'
+        description_long:
+            de: '**ID des Items, in dem interne Informationen für das released_by Feature gespeichert werden:**\n
+               Ein Dictionary mit den Stati als Keys, die ein se_released_by Attribut haben und den Stati/Items
+               als Values, die jene Items bereits aufgelöst haben und somit erst bei erneutem Wechsel
+               von "can not be entered" auf "can be entered" den enstprechenden Status released, also (vorübergehend)
+               auflösen.
+               '
+            en: '**ID of the item that saves internal information for the released_by feature:**\n
+                A dictionary with the states as keys that have an se_released_by attribute and the states/items
+                as values that have released them already and only release/overrule the relevant state
+                if they change from "can not be entered" to "can be entered" again.
+                '
+
     se_repeat_actions:
         type: bool
         description:
@@ -401,9 +591,10 @@ item_attributes:
           - 0
           - 1
           - 2
+          - 3
         valid_list_description:
-            de: ['deaktiviert', 'Info', 'Debug']
-            en: ['deactivated', 'Info', 'Debug']
+            de: ['deaktiviert', 'Info', 'Debug', 'Develop']
+            en: ['deactivated', 'Info', 'Debug', 'Develop']
         description:
             de: 'Loglevel für ein konkretes Stateengine Item'
             en: 'Log level for a distinct stateengine item'
@@ -431,6 +622,17 @@ item_attributes:
                 In the specific state item the template or any struct can get referenced by using the attribute
                 se_use. The templates that should be used can even be dynamically changed during runtime
                 by using the **eval:** declaration in front of a valid eval expression
+                '
+
+    se_released_by:
+        type: list(str)
+        description:
+            de: 'Definieren von untergeordneten Zuständen, die den aktuellen Zustand auflösen können'
+            en: 'Definition of subordinate states that can release the current state'
+        description_long:
+            de: '
+                '
+            en: '
                 '
 
 item_structs:
@@ -462,6 +664,56 @@ item_structs:
             visu_acl: ro
             cache: True
 
+        previousconditionset_id:
+            remark: The id/path of the previous condition set is assigned to this item by the stateengine
+            type: str
+            visu_acl: ro
+            cache: True
+
+        previousconditionset_name:
+            remark: The name of the previous condition set is assigned to this item by the stateengine
+            type: str
+            visu_acl: ro
+            cache: True
+
+        previousstate_id:
+            remark: The id/path of the previous state is assigned to this item by the stateengine
+            type: str
+            visu_acl: ro
+            cache: True
+
+        previousstate_name:
+            remark: The name of the previous state is assigned to this item by the stateengine
+            type: str
+            visu_acl: ro
+            cache: True
+
+        previousstate_conditionset_id:
+            remark: The id/path of the condition set of the previous state is assigned to this item by the stateengine
+            type: str
+            visu_acl: ro
+            cache: True
+
+        previousstate_conditionset_name:
+            remark: The name of the condition set of the previous state is assigned to this item by the stateengine
+            type: str
+            visu_acl: ro
+            cache: True
+
+        shouldnotrelease:
+            remark: Helper item for releasedby function
+            type: dict
+            visu_acl: ro
+            cache: True
+            initial_value: "{}"
+
+        hasreleased:
+            remark: Helper item for releasedby function
+            type: dict
+            visu_acl: ro
+            cache: True
+            initial_value: "{'initial': 'start'}"
+
         retrigger:
             remark: Item to retrigger the rule set evaluation
             type: bool
@@ -487,6 +739,14 @@ item_structs:
             se_laststate_item_name: ..state_name
             se_lastconditionset_item_id: ..conditionset_id
             se_lastconditionset_item_name: ..conditionset_name
+            se_previousconditionset_item_id: ..previousconditionset_id
+            se_previousconditionset_item_name: ..previousconditionset_name
+            se_previousstate_item_id: ..previousstate_id
+            se_previousstate_item_name: ..previousstate_name
+            se_previousstate_conditionset_item_id: ..previousstate_conditionset_id
+            se_previousstate_conditionset_item_name: ..previousstate_conditionset_name
+            se_shouldnotrelease_item: ..shouldnotrelease
+            se_hasreleased_item: ..hasreleased
 
     state_lock:
         name: Zustandsvorlage zum Sperren der Evaluierung
@@ -538,7 +798,7 @@ item_structs:
             unix_timestamp:
                 type: num
                 visu_acl: ro
-                eval: "0 if not any(char.isdigit() for char in sh...date_time()) else  sh.tools.dt2ts(shtime.datetime_transform(sh...date_time())) * 1000"
+                eval: "0 if not any(char.isdigit() for char in sh...date_time()) else  shtime.datetime_transform(sh...date_time()).timestamp() * 1000"
                 eval_trigger: ..date_time
                 crontab: init
 
@@ -558,7 +818,7 @@ item_structs:
                 remark: Can be used for the clock.countdown widget
                 type: num
                 visu_acl: ro
-                eval: "0 if not any(char.isdigit() for char in sh...date_time()) else  sh.tools.dt2ts(shtime.datetime_transform(sh...date_time())) * 1000"
+                eval: "0 if not any(char.isdigit() for char in sh...date_time()) else  shtime.datetime_transform(sh...date_time()).timestamp() * 1000"
                 eval_trigger: ..date_time
                 crontab: init
 
@@ -728,7 +988,7 @@ item_structs:
             unix_timestamp:
                 type: num
                 visu_acl: ro
-                eval: "0 if not any(char.isdigit() for char in sh...date_time()) else  sh.tools.dt2ts(shtime.datetime_transform(sh...date_time())) * 1000"
+                eval: "0 if not any(char.isdigit() for char in sh...date_time()) else  shtime.datetime_transform(sh...date_time()).timestamp() * 1000"
                 eval_trigger: ..date_time
                 crontab: init
 
@@ -748,7 +1008,7 @@ item_structs:
                 remark: Can be used for the clock.countdown widget
                 type: num
                 visu_acl: ro
-                eval: "0 if not any(char.isdigit() for char in sh...date_time()) else  sh.tools.dt2ts(shtime.datetime_transform(sh...date_time())) * 1000"
+                eval: "0 if not any(char.isdigit() for char in sh...date_time()) else  shtime.datetime_transform(sh...date_time()).timestamp() * 1000"
                 eval_trigger: ..date_time
                 crontab: init
 
@@ -1046,7 +1306,7 @@ item_structs:
             unix_timestamp:
                 type: num
                 visu_acl: ro
-                eval: "0 if not any(char.isdigit() for char in sh...date_time()) else  sh.tools.dt2ts(shtime.datetime_transform(sh...date_time())) * 1000"
+                eval: "0 if not any(char.isdigit() for char in sh...date_time()) else  shtime.datetime_transform(sh...date_time()).timestamp() * 1000"
                 eval_trigger: ..date_time
                 crontab: init
 
@@ -1066,7 +1326,7 @@ item_structs:
                 remark: Can be used for the clock.countdown widget
                 type: num
                 visu_acl: ro
-                eval: "0 if not any(char.isdigit() for char in sh...date_time()) else  sh.tools.dt2ts(shtime.datetime_transform(sh...date_time())) * 1000"
+                eval: "0 if not any(char.isdigit() for char in sh...date_time()) else  shtime.datetime_transform(sh...date_time()).timestamp() * 1000"
                 eval_trigger: ..date_time
                 crontab: init
 
@@ -1075,8 +1335,8 @@ item_structs:
             se_item_suspend: ..suspend
             se_item_suspend_visu: ..suspend.visu
             se_item_release: ..release
-            se_item_suspend_end: ..suspend_end
-            se_item_suspend_start: ..suspend_start
+            se_item_suspend_end: ..suspend_end.date_time
+            se_item_suspend_start: ..suspend_start.date_time
             eval_trigger:
                 - ..release
 

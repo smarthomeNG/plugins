@@ -1,0 +1,37 @@
+/**
+* -----------------------------------------------------------------------------
+* @package     smartVISU
+* @author      gruberth
+* @copyright   2018 - 2022
+* @license     GPL [http://www.gnu.de]
+* -----------------------------------------------------------------------------
+*/
+
+{% extends "custom/widget_custom.html" %}
+
+
+{% block example %}
+<div>
+  <p>You just have to implement the widget with the relevant attributes for the husky2 items.
+  </p>
+
+  <div class="twig">Example:<br>
+		<code class="prettyprint">{% filter trim|escape|nl2br %}{% verbatim %}
+      {{ husky2.map('', 'mower.info.device', 'mower.state.latitude', 'mower.state.longitude', 'mower.state.gpspoints', '4ADdsf665dSF53fdg5DGdasfg43SDF51', 19, '#3afd02') }}
+		{% endverbatim %}{% endfilter %}</code>
+	</div>
+	<div class="html">
+    {{ husky2.map('', 'mower.info.device', 'mower.state.latitude', 'mower.state.longitude', 'mower.state.gpspoints', '', 19, '#3afd02') }}
+	</div>
+</div>
+
+<script type="text/javascript">
+  $( document ).ready(function() {
+       io.write('mower.info.device', 'Husky' );
+       io.write('mower.state.latitude', '48.356755723016576' );
+       io.write('mower.state.longitude', '9.946746744558883' );
+       io.write('mower.state.gpspoints', [[48.35675403884638, 9.946744210030106], [48.35683937184078, 9.946864828815501], [48.356884820451505, 9.947158530691501], [48.356720848802446, 9.947029784663666], [48.35669233194006, 9.946848735562021]] );
+    });
+
+</script>
+{% endblock %}

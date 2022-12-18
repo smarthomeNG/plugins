@@ -4,6 +4,7 @@ import hmac
 import locale
 import time
 import requests
+import json
 import logging
 
 from lib.model.smartplugin import *
@@ -30,6 +31,7 @@ class Robot:
 
         self._session = requests.Session()
         self._timeout = 10
+        self._verifySSL = False
         self._token = token
         self._clientIDHash = 'KY4YbVAvtgB7lp8vIbWQ7zLk3hssZlhR'
         self._numberRobots = 0
@@ -75,6 +77,13 @@ class Robot:
         self.spotCleaning = ''
         self.wifi = ''
 
+        # Neato Available commands:
+        self.commandStartAvailable = False
+        self.commandStopAvailable = False
+        self.commandPausetAvailable = False
+        self.commandResumeAvailable = False
+        self.commandGoToBaseAvailable = False
+
     def numberRobots(self):
         return self._numberRobots
 
@@ -85,15 +94,19 @@ class Robot:
         self._clientIDHash = hash
 
     # Send command to robot. Return None if not successful   
-    def robot_command(self, command):
+    def robot_command(self, command, arg1 = None, arg2 = None):
 
         if self.__secretKey == '':
             self.logger.warning("Robot: Cannot execute command. SecretKey still invalid. Aborting.")
             return None
 
+        log_message = False
+
         # Neato Available Commands
         if command == 'start':
-            n = self.__cleaning_start_string()
+            n = self.__cleaning_start_string(arg1, arg2 )
+        elif command == 'start_non-persistent-map':
+            n = self.__cleaning_start_string(fallback_category=2)
         elif command == 'pause':
             n = '{"reqId": "77","cmd": "pauseCleaning"}'
         elif command == 'resume':
@@ -108,9 +121,17 @@ class Robot:
             n = '{"reqId": "77","cmd": "enableSchedule"}'
         elif command == 'disableSchedule':
             n = '{"reqId": "77","cmd": "disableSchedule"}'
+        elif command == 'getMapBoundaries':
+            jsonCommand  = {"reqId": "1", "cmd": "getMapBoundaries", "params": {"mapId": str(arg1)}}
+            n = json.dumps(jsonCommand)
+            log_message = True
+        elif command == 'dismiss_current_alert':
+            n = '{"reqId": "2", "cmd": "dismissCurrentAlert"}'
         else:
-            self.logger.warning("Robot: Command unknown '{}'".format(command))
+            self.logger.warning("Robot: Command unknown {0}".format(command))
             return None
+
+        self.logger.debug("Robot: Json Command {0}".format(n))
         message = self.serial.lower() + '\n' + self.__get_current_date() + '\n' + n
         h = hmac.new(self.__secretKey.encode('utf-8'), message.encode('utf8'), hashlib.sha256)
 
@@ -119,7 +140,7 @@ class Robot:
                 self.__urlNucleo + "/vendors/"+self.__vendor+"/robots/" + self.serial + "/messages", data=n,
                 headers={'X-Date': self.__get_current_date(), 'X-Agent': 'ios-7|iPhone 4|0.11.3-142',
                      'Date': self.__get_current_date(), 'Accept': 'application/vnd.neato.nucleo.v1',
-                     'Authorization': 'NEATOAPP ' + h.hexdigest()}, timeout=self._timeout )
+                     'Authorization': 'NEATOAPP ' + h.hexdigest()}, timeout=self._timeout, verify=self._verifySSL )
         except Exception as e:
             self.logger.error("Robot: Exception during command request: %s" % str(e))
             return None
@@ -127,10 +148,18 @@ class Robot:
         #error handling
         responseJson = start_cleaning_response.json()
         self.logger.debug("Debug: send command response: {0}".format(start_cleaning_response.text))
+        if log_message:
+            self.logger.info("Requested Info: {0}".format(start_cleaning_response.text))
 
         if 'result' in responseJson:
             if str(responseJson['result']) == 'ok':
                 self.logger.debug("Sending command successful")
+            elif str(responseJson['result']) == 'not_on_charge_base':
+                self.logger.warning(f"Command returned {str(responseJson['result'])}: Retry starting with non-persistent-map")
+                return self.robot_command(command = 'start_non-persistent-map')
+            else:
+                self.logger.error("Sending command failed. Result: {0}".format(str(responseJson['result']) ))
+                self.logger.error("Debug: send command response: {0}".format(start_cleaning_response.text))
         else:
             if 'message' in responseJson:
                 self.logger.error("Sending command failed. Message: {0}".format(str(responseJson['message'])))
@@ -171,7 +200,7 @@ class Robot:
                                                                      'X-Agent': 'ios-7|iPhone 4|0.11.3-142',
                                                                      'Date': self.__get_current_date(),
                                                                      'Accept': 'application/vnd.neato.nucleo.v1',
-                                                                     'Authorization': 'NEATOAPP ' + h.hexdigest()}, timeout=self._timeout )
+                                                                     'Authorization': 'NEATOAPP ' + h.hexdigest()}, timeout=self._timeout, verify=self._verifySSL )
  
         except Exception as e:
             self.logger.error("Robot: Exception during cloud state request: %s" % str(e))
@@ -182,19 +211,25 @@ class Robot:
             self.logger.debug("Sending cloud state request successful")
         elif statusCode == 403:
             self.logger.debug("Sending cloud state request returned: Forbidden. Aquire new session key.")
+        elif statusCode == 404:
+            self.logger.warning("Robot is not reachable for backend. Is robot online?")
+            return 'error'
         else:
             self.logger.error("Sending cloud state request error: {0}, msg: {1}".format(statusCode,robot_cloud_state_response.text ))
             return 'error'
 
         response = robot_cloud_state_response.json()
-        #self.logger.info("Robot update_robot: {0}".format(response))
+        self.logger.debug("Robot update_robot: {0}".format(response))
 
         #Error message:
         if 'message' in response:
             self.logger.warning("Message: {0}".format(str(response['message'])))
 
         if 'error' in response and response['error']:
-            self.logger.error("Robot: Error {0}".format(str(response['error'])))
+            if response['error'] == 'gen_picked_up':
+                self.logger.warning("Robot: Picked-up")
+            else:
+                self.logger.error("Robot: Error {0}".format(str(response['error'])))
 
         # Readout alert messages, e.g. dustbin_full
         if 'alert' in response:
@@ -210,7 +245,7 @@ class Robot:
         if 'action' in response:
             self.state_action = str(response['action'])
 
-        # get the Details first
+        # get the Details 
         if 'details' in response:
             self.isCharging = response['details']['isCharging']
             self.isDocked = response['details']['isDocked']
@@ -218,7 +253,15 @@ class Robot:
             self.dockHasBeenSeen = response['details']['dockHasBeenSeen']
             self.chargePercentage = response['details']['charge']
 
-        # get available services for robot second
+        # get available commands for robot 
+        if 'availableCommands' in response:
+            self.commandStartAvailable = response['availableCommands']['start']
+            self.commandStopAvailable = response['availableCommands']['stop']
+            self.commandPausetAvailable = response['availableCommands']['pause']
+            self.commandResumeAvailable = response['availableCommands']['resume']
+            self.commandGoToBaseAvailable = response['availableCommands']['goToBase']
+
+        # get available services for robot 
         if 'availableServices' in response:
             self.findMe = response['availableServices']['findMe']
             self.generalInfo = response['availableServices']['generalInfo']
@@ -322,24 +365,57 @@ class Robot:
         locale.setlocale(locale.LC_TIME, saved_locale)
         return date
 
-    def __cleaning_start_string(self):
-        self.logger.info("Robot: houseCleaning {0}, spotCleaning {1}".format(self.houseCleaning, self.spotCleaning ))
+    def __cleaning_start_string(self, boundary_id=None, map_id=None, fallback_category=None):
+        # mode & navigation_mode used if applicable to service version
+        # mode: 1 eco, 2 turbo
+        # boundary_id: the id of the zone to clean
+        # map_id: the id of the map to clean
+        # category: 2 non-persistent map, 4 persistent map
 
+        self.logger.debug("Robot: houseCleaning {0}, spotCleaning {1}".format(self.houseCleaning, self.spotCleaning ))
+
+        local_category = self.category
+
+        if ( (local_category is None) or (local_category == '') or (local_category != 4 and local_category != 2)):
+            # Default to using the persistent map if we support basic-3 or basic-4.
+            if self.houseCleaning in ["basic-3", "basic-4"]:
+                local_category = 4
+            else:
+                local_category = 2
+
+            self.logger.info("Robot: category changed for send command from {0} (received) to {1}".format(self.category, local_category ))
+
+        # If external fallback category is given, overwrite local_category:
+        # This feature is needed for instance if this method shall be triggered explicitly for using the non-persistant map (category = 2)
+        if fallback_category != None:
+            self.logger.info(f"Robot: category changed via external category for send command from {local_category} (received) to {fallback_category}")
+            local_category = fallback_category
+  
         if self.houseCleaning == 'basic-1':
             return '{"reqId": "77","cmd": "startCleaning","params": {"category": ' + str(
-                self.category) + ',"mode": ' + str(self.mode) + ', "modifier": ' + str(self.modifier) + '}}'
+                local_category) + ',"mode": ' + str(self.mode) + ', "modifier": ' + str(self.modifier) + '}}'
         if self.houseCleaning == 'minimal-2':
             return '{"reqId": "77","cmd": "startCleaning","params": {"category": ' + str(
-                self.category) + ',"navigationMode": ' + str(self.navigationMode) + '}}'
+                local_category) + ',"navigationMode": ' + str(self.navigationMode) + '}}'
         if self.houseCleaning == 'minimal-3':
             return '{"reqId": "77","cmd": "startCleaning","params": {"category": ' + str(
-                self.category) + ',"navigationMode": ' + str(self.navigationMode) + '}}'
-        if self.houseCleaning == 'basic-3':
-            return '{"reqId": "77","cmd": "startCleaning","params": {"category": ' + str(
-                self.category) + ',"mode": ' + str(self.mode) + ', "navigationMode": ' + str(self.navigationMode) + '}}'
-        if self.houseCleaning == 'basic-4':
-            return '{"reqId": "77","cmd": "startCleaning","params": {"category": ' + str(
-                self.category) + ',"mode": ' + str(self.mode) + ', "navigationMode": ' + str(self.navigationMode) + '}}'
+                local_category) + ',"navigationMode": ' + str(self.navigationMode) + '}}'
+        if self.houseCleaning in ["basic-3", "basic-4"]:
+            jsonCommand = {
+                "reqId": "77",
+                "cmd": "startCleaning",
+                "params": {
+                    "category": str(local_category),
+                    "mode": str(self.mode),
+                    "navigationMode": str(self.navigationMode)}}
+            if boundary_id:
+                jsonCommand ["params"]["boundaryId"] = boundary_id
+            if map_id:
+                jsonCommand ["params"]["mapId"] = map_id
+
+            self.logger.debug("Debug: Json.dumps: {0}".format(json.dumps(jsonCommand)))
+            return json.dumps(jsonCommand)
+        
 
     ########################
     # Oauth2 functions for new login feature with Vorwerk's myKobold APP

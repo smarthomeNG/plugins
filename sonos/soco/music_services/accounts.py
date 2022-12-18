@@ -1,25 +1,21 @@
-# -*- coding: utf-8 -*-
-
 # Disable while we have Python 2.x compatability
 # pylint: disable=useless-object-inheritance,no-else-continue
 
 """This module contains classes relating to Third Party music services."""
 
-from __future__ import absolute_import, unicode_literals
 
 import logging
 import weakref
 
 import requests
 
-from .. import discovery
+from .. import config, discovery
 from ..xml import XML
 
 log = logging.getLogger(__name__)  # pylint: disable=C0103
 
 
-# pylint: disable=too-many-instance-attributes
-class Account(object):
+class Account:
 
     """An account for a Music Service.
 
@@ -79,7 +75,7 @@ class Account(object):
         device = soco or discovery.any_soco()
         log.debug("Fetching account data from %s", device)
         settings_url = "http://{}:1400/status/accounts".format(device.ip_address)
-        result = requests.get(settings_url).content
+        result = requests.get(settings_url, timeout=config.REQUEST_TIMEOUT).content
         log.debug("Account data: %s", result)
         return result
 

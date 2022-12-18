@@ -7,6 +7,7 @@ plugin:
         en: 'Controls an Apple TV'
         fr: 'Contrôle un Apple TV'
     maintainer: Foxi352
+    tester: Foxi352
     state: ready
     keywords: appletv media
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
@@ -15,6 +16,7 @@ plugin:
     version: 1.6.1                  # Plugin version
     sh_minversion: 1.6              # minimum shNG version to use this plugin
     multi_instance: True            # plugin supports multi instance
+    restartable: unknown
     classname: AppleTV              # class containing the plugin
 
 parameters:
@@ -33,7 +35,7 @@ parameters:
             en: 'Timeout in seconds to scan the local network for AppleTV devices'
             fr: "Délai d'attente en secondes du scan réseau pour trouver les appareils AppleTV"
 
-item_attributes:
+item_attributes: NONE
     # Definition of item attributes defined by this plugin
 
 item_structs:
@@ -99,7 +101,7 @@ item_structs:
             type: str
             visu_acl: ro
             cache: Yes
-            appletv@instance: playing_fingerprint             
+            appletv@instance: playing_fingerprint
         genre:
             type: str
             visu_acl: ro
@@ -155,7 +157,7 @@ item_structs:
             type: str
             visu_acl: ro
             cache: Yes
-            appletv@instance: playing_repeat_text      
+            appletv@instance: playing_repeat_text
         shuffle:
             type: num
             visu_acl: rw

@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# pylint: disable = star-args, too-many-arguments, unsupported-membership-test
+# pylint: disable = star-args, unsupported-membership-test
 # pylint: disable = not-an-iterable
 
 # Disable while we have Python 2.x compatability
@@ -9,7 +8,6 @@
 
 # This needs to be integrated with Music Library data structures
 
-from __future__ import unicode_literals
 
 from .exceptions import DIDLMetadataError
 from .utils import camel_to_underscore
@@ -42,7 +40,7 @@ def tags_with_text(xml, tags=None):
     return tags
 
 
-class MusicServiceItem(object):
+class MusicServiceItem:
 
     """Class that represents a music service item."""
 

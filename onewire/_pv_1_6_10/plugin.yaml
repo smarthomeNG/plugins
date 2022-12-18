@@ -1,0 +1,289 @@
+plugin:
+    # Global plugin attributes
+    type: gateway                    # plugin type (gateway, interface, protocol, system, web)
+    description:
+        de: '1-Wire Unterstützung über owserver'
+        en: '1-Wire support via owserver'
+        fr: 'Support de 1-Wire à travers owserver'
+    maintainer: bmxp
+    tester: 'henfri, chester4444'
+    state: ready
+    keywords: 1wire onewire dallas ibutton sensor temperature humidity
+    documentation: https://www.smarthomeng.de/user/plugins_doc/config/onewire.html
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1493319-support-thread-zum-onewire-plugin
+    version: 1.6.10                # Plugin version
+    sh_minversion: 1.4             # minimum shNG version to use this plugin
+    multi_instance: True
+    restartable: True
+    classname: OneWire             # class containing the plugin
+
+parameters:
+    host:
+        type: ip
+        default: 127.0.0.1
+        description:
+            de: 'owserver Hostname oder IP Adresse'
+            en: 'owserver hostname or ip address'
+            fr: "Nom de l'hôte ou adresse IP de l'owserver"
+
+    port:
+        type: int
+        default: 4304
+        description:
+            de: 'owserver Port'
+            en: 'owserver port'
+            fr: "Port de l'owserver"
+
+    cycle:
+        type: int
+        default: 300
+        description:
+            de: > 
+                Zeitraum in Sekunden zwischen zwei Sensor-Abfragezyklen.
+                Wenn dieser Wert zu stark gesenkt wird, kann das den Bus durch
+                erhöhten Stromverbrauch destabilisieren.
+
+            en: >
+                Time period in seconds between two sensor cycles.
+                If you decrease the cycle to much you could destabilise the bus,
+                because of the increased power consumption.
+
+            fr: >
+                Période en secondes entre deux cycles de capteur. 
+                Si vous diminuez trop le cycle, vous risquez de déstabiliser le bus,
+                en raison de l'augmentation de la consommation d'énergie.
+
+    log_counter_cycle_time:
+        type: int
+        default: 5
+        description:
+            de: >
+                Anzahl der Messungen der tatsächlichen Abfragezeit für Sensor-Abfragezyklen. 
+                Der Zähler wird heruntergezählt und wenn er auf 0 steht wird nicht mehr geloggt.
+                Wird er auf -1 gesetzt, wird dauerhaft geloggt.
+
+            en: >
+                Count of measurements of actual sensor cycles time.
+                The counter is decremented until it reaches 0, then logging will be turned off.
+                If set to -1, logging cycle time is always on'
+
+    cycle_discovery:
+        type: int
+        default: 600
+        description:
+            de: >
+                Zeitraum in Sekunden zwischen zwei Auflistungen aller Sensoren.
+                Wenn dieser Wert zu stark gesenkt wird, kann das den Bus durch erhöhten Stromverbrauch destabilisieren.
+
+            en: >
+                Time period in seconds between two discovery cycles. 
+                If you decrease the cycle to much you could destabilise the bus,
+                because of the increased power consumption.
+
+            fr: >
+                Période en secondes entre deux cycles de découverte.
+                Si vous diminuez trop le cycle, vous risquez de déstabiliser le bus,
+                en raison de l'augmentation de la consommation d'énergie."
+
+    log_counter_cycle_discovery_time:
+        type: int
+        default: 5
+        description:
+            de: >
+                Anzahl der Messungen der tatsächlichen Abfragezeit für Sensorauflistung.
+                Der Zähler wird heruntergezählt und wenn er auf 0 steht wird nicht mehr geloggt.
+                Wird er auf -1 gesetzt, wird dauerhaft geloggt.
+            en: >
+                Count of measurements of actual discovery cycles time.
+                The counter is decremented until it reaches 0, then logging will be turned off.
+                If set to -1, logging cycle time is always on
+
+    io_wait:
+        type: num
+        default: 5
+        description:
+            de: 'Zeitraum zwischen zwei Anfragen an den 1-wire I/O Chip.'
+            en: 'Time period between two requests of 1-wire I/O chip.'
+            fr: 'Délai entre deux demandes de puce 1-wire I/O.'
+
+    log_counter_io_loop_time:
+        type: num
+        default: 10
+        description:
+            de: >
+                Anzahl der Messungen der tatsächlichen Abfragezeit für IO.
+                Der Zähler wird heruntergezählt und wenn er auf 0 steht wird nicht mehr geloggt.
+                Wird er auf -1 gesetzt, wird dauerhaft geloggt.
+            en: >
+                Count of measurements of actual IO loop time.
+                The counter is decremented until it reaches 0, then logging will be turned off.
+                If set to -1, logging cycle time is always on
+
+    button_wait:
+        type: num
+        default: 0.5
+        description:
+            de: 'Zeitraum zwischen zwei Anfragen an einen iButton Busmaster'
+            en: 'Time period between two requests of ibutton busmaster.'
+            fr: 'Délai entre deux demandes de ibutton busmaster.'
+
+item_attributes:
+    ow_addr:
+        type: str
+        description:
+            de: >
+                Sensoradresse im Format xx.yyyyyyyyyyyy
+                (Bitte darauf achten, dass bei rein numerischen Sensoradressen diese in '' eingeschlossen werden müssen)
+                oder ein Alias (use_ow_aliases muss dafür True sein)
+            en: >
+                Sensor address in xx.yyyyyyyyyyyy format 
+                (Please note: If the sensor address is numerical, it has to be enclosed in quotes)
+                or an alias (use_ow_aliases must be true)'
+            fr: >
+                Adresse du capteur au format xx.yyyyyyyyyyyy
+
+    ow_sensor:
+        type: str
+        valid_list:
+          - T
+          - T9
+          - T10
+          - T11
+          - T12
+          - H
+          - L
+          - V
+          - IA
+          - IB
+          - I0
+          - I1
+          - I2
+          - I3
+          - I4
+          - I5
+          - I6
+          - I7
+          - OA
+          - OB
+          - O0
+          - O1
+          - O2
+          - O3
+          - O4
+          - O5
+          - O6
+          - O7
+          - VDD
+          - BM
+          - B
+          - VOC
+        valid_list_description:
+            de: 
+                - 'Temperatur'
+                - 'Temperatur (9 Bit)'
+                - 'Temperatur (10 Bit)'
+                - 'Temperatur (11 Bit)'
+                - 'Temperatur (12 Bit)'
+                - 'Feuchtigkeit'
+                - 'Lichtstärke'
+                - 'Spannung'
+                - 'Eingang A'
+                - 'Eingang B'
+                - 'Eingang 0'
+                - 'Eingang 1'
+                - 'Eingang 2'
+                - 'Eingang 3'
+                - 'Eingang 4'
+                - 'Eingang 5'
+                - 'Eingang 6'
+                - 'Eingang 7'
+                - 'Ausgang A'
+                - 'Ausgang B'
+                - 'Ausgang 0'
+                - 'Ausgang 1'
+                - 'Ausgang 2'
+                - 'Ausgang 3'
+                - 'Ausgang 4'
+                - 'Ausgang 5'
+                - 'Ausgang 6'
+                - 'Ausgang 7'
+                - 'Busspannung'
+                - 'Busmaster'
+                - 'iButton'
+                - 'VOC Sensor'
+            en: 
+                - 'Temperature'
+                - 'Temperature (9 Bit)'
+                - 'Temperature (10 Bit)'
+                - 'Temperature (11 Bit)'
+                - 'Temperature (12 Bit)'
+                - 'Humidity'
+                - 'Light Intensity'
+                - 'Voltage'
+                - 'Input A'
+                - 'Input B'
+                - 'Input 0'
+                - 'Input 1'
+                - 'Input 2'
+                - 'Input 3'
+                - 'Input 4'
+                - 'Input 5'
+                - 'Input 6'
+                - 'Input 7'
+                - 'Output A'
+                - 'Output B'
+                - 'Output 0'
+                - 'Output 1'
+                - 'Output 2'
+                - 'Output 3'
+                - 'Output 4'
+                - 'Output 5'
+                - 'Output 6'
+                - 'Output 7'
+                - 'Bus voltage'
+                - 'Busmaster'
+                - 'iButton'
+                - 'VOC Sensor'
+        description:
+            de: 'Sensortyp. Unterstützte Typen sind in der Plugin Dokumentation zu finden'
+            en: 'Sensor type. See plugin docu for supported types'
+            fr: 'Type du capteur. Voir dans documente du plugin pour formats supportés'
+
+item_structs: NONE
+  # Definition of item-structure templates for this plugin
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin
+
+plugin_functions: NONE
+    # Definition of function interface of the plugin
+
+#   ibutton_hook:
+#       type: void
+#       description:
+#           de: >
+#               Dieses ist eine spezielle Funktion, die aufgerufen wird,
+#               wenn ein unbekannter iButton an den Bus gehängt wird.
+#               Falls der unbekannte iButton bereits erkannt wurde, wird die Id zwischengespeichert
+#               und die Funktion nicht erneut aufgerufen. Der Cache wird alle 10 Minuten geleert.
+#               Der Funktion müssen zwei Argumente übergeben werden:
+#               Um die Funktionalität zu nutzen, muss eine (sinnvolle) Funktion zugewiesen werden. (z.B.: sh.ow.ibutton_hook = intruder_alert)
+#           en: >
+#               This is a special function which is called if an unknown ibutton is attached to the bus.
+#               If the unknown ibutton is already seen, the id will be cached 
+#               and the function is not called again. The cache will be reset every ten minutes. 
+#               The function takes two arguments. 
+#               The first will be the id of the ibutton and the second is the item of the ibutton busmaster
+#               (e.g. sh.home.key_hanger). - To use it you have to assign a (useful) function. (e.g.: sh.ow.ibutton_hook = intruder_alert)
+#       parameter:
+#           ibutton:
+#               type: str
+#               description:
+#                   de: 'Id des iButton der genutzt wird'
+#                   en: 'Id of the iButton that is used'
+#           item:
+#               type: str
+#               description:
+#                   de: 'Id des Busmasters an dem der iButton verwendet werden soll'
+#                   en: 'item of the busmaster at which the ibutton is used'
+

@@ -11,7 +11,7 @@ plugin:
     documentation: https://github.com/smarthomeNG/plugins/tree/master/bose_soundtouch # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py
 
-    version: 1.0.0                  # Plugin version
+    version: 1.0.1                  # Plugin version
     sh_minversion: 1.6              # minimum shNG version to use this plugin
     multi_instance: False           # plugin supports multi instance
     restartable: True

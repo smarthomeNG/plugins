@@ -1,0 +1,32 @@
+
+$ time sqlite3 smarthomeng_copy.db "VACUUM;"
+
+vorher: 12896934912 Nov 25 13:23 smarthomeng_copy.db
+nachher: Abgebrochen: Error: database disk image is malformed
+
+
+
+(py_38) smarthome@SmartHomeNG:/usr/local/shng_dev/var/db$ ls -l
+insgesamt 35822208
+drwxrwsr-x 2 smarthome smarthome        4096 Nov 25 12:55 alte_dbs
+-rw-r--r-- 1 smarthome smarthome    25784320 Nov 22 10:53 dbtest.db
+-rw-rw-r-- 1 smarthome smarthome    25784320 Nov 22 10:53 dbtest_kopie.db
+-rw-rw-r-- 1 smarthome smarthome    18939904 Nov 25 13:39 dbtest_vacuumed.db
+drwxrwsr-x 2 smarthome smarthome        4096 Nov 25 13:34 Sicherung
+-rw-r--r-- 1 smarthome smarthome      126976 Apr 28  2020 smarthome.db
+-rw-rw-r-- 1 smarthome smarthome 12896934912 Nov 25 13:23 smarthomeng_copy.db
+-rw-rw-r-- 1 smarthome smarthome 12896934912 Nov 25 14:28 smarthomeng.db
+-rw-rw-r-- 1 smarthome smarthome     4558032 Nov 25 14:27 smarthomeng.db-journal
+-rw-r--r-- 1 smarthome smarthome 10812834330 Nov 25 14:26 smarthomeng_dump.sql
+->
+-rw-rw-r-- 1 smarthome smarthome 12896934912 Nov 25 13:23 smarthomeng_copy.db
+-rw-rw-r-- 1 smarthome smarthome 12896934912 Nov 25 16:12 smarthomeng.db
+-rw-r--r-- 1 smarthome smarthome 10812834330 Nov 25 14:48 smarthomeng_dump.sql
+-rw-r--r-- 1 smarthome smarthome  9837748224 Nov 25 16:05 smarthomeng_neu.db
+
+smarthomeng_neu.db:
+select count() from item;
+629
+
+select count() from log;
+140.889.225

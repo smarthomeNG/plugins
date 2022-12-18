@@ -1,27 +1,23 @@
-# -*- coding: utf-8 -*-
 # pylint: disable=not-context-manager
 
 # NOTE: The pylint not-content-manager warning is disabled pending the fix of
 # a bug in pylint. See https://github.com/PyCQA/pylint/issues/782
 
-# Disable while we have Python 2.x compatability
-# pylint: disable=useless-object-inheritance
-
 
 """Base classes used by :py:mod:`soco.events` and
 :py:mod:`soco.events_twisted`."""
 
-from __future__ import unicode_literals
 
 import atexit
+from functools import lru_cache
 import logging
 import socket
 import time
 import threading
 import weakref
+from queue import Queue
 
 from . import config
-from .compat import Queue
 from .data_structures_entry import from_didl_string
 from .exceptions import SoCoException, SoCoFault, EventParseException
 from .utils import camel_to_underscore
@@ -30,7 +26,7 @@ from .xml import XML
 log = logging.getLogger(__name__)  # pylint: disable=C0103
 
 
-# pylint: disable=too-many-branches
+@lru_cache()
 def parse_event_xml(xml_event):
     """Parse the body of a UPnP event.
 
@@ -107,7 +103,7 @@ def parse_event_xml(xml_event):
                         try:
                             value = from_didl_string(value)[0]
                         except SoCoException as original_exception:
-                            log.warning(
+                            log.debug(
                                 "Event contains illegal metadata"
                                 "for '%s'.\n"
                                 "Error message: '%s'\n"
@@ -131,7 +127,7 @@ def parse_event_xml(xml_event):
     return result
 
 
-class Event(object):
+class Event:
     """A read-only object representing a received event.
 
     The values of the evented variables can be accessed via the ``variables``
@@ -162,8 +158,6 @@ class Event(object):
 
     """
 
-    # pylint: disable=too-few-public-methods, too-many-arguments
-
     def __init__(self, sid, seq, service, timestamp, variables=None):
         # Initialisation has to be done like this, because __setattr__ is
         # overridden, and will not allow direct setting of attributes
@@ -188,12 +182,10 @@ class Event(object):
         raise TypeError("Event object does not support attribute assignment")
 
 
-class EventNotifyHandlerBase(object):
+class EventNotifyHandlerBase:
     """Base class for `soco.events.EventNotifyHandler` and
     `soco.events_twisted.EventNotifyHandler`.
     """
-
-    # pylint: disable=too-many-public-methods
 
     def handle_notification(self, headers, content):
         """Handle a ``NOTIFY`` request by building an `Event` object and
@@ -256,7 +248,7 @@ class EventNotifyHandlerBase(object):
         raise NotImplementedError
 
 
-class EventListenerBase(object):
+class EventListenerBase:
     """Base class for `soco.events.EventListener` and
     `soco.events_twisted.EventListener`.
     """
@@ -285,31 +277,21 @@ class EventListenerBase(object):
         # Find our local network IP address which is accessible to the
         # Sonos net, see http://stackoverflow.com/q/166506
         with self._start_lock:
-            if not self.is_running:
-                # Use configured IP address if there is one, else detect
-                # automatically.
-                if config.EVENT_LISTENER_IP:
-                    ip_address = config.EVENT_LISTENER_IP
-                else:
-                    temp_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-                    try:
-                        # doesn't have to be reachable
-                        temp_sock.connect(
-                            (any_zone.ip_address, config.EVENT_LISTENER_PORT)
-                        )
-                        ip_address = temp_sock.getsockname()[0]
-                    except socket.error:
-                        log.exception("Could not start Event Listener: check network.")
-                        ip_address = None
-                    finally:
-                        temp_sock.close()
-                if ip_address:  # Otherwise, no point trying to start server
-                    # Check what port we actually got (twisted only)
-                    port = self.listen(ip_address)
-                    if port:
-                        self.address = (ip_address, port)
-                        self.is_running = True
-                        log.info("Event Listener started")
+            if self.is_running:
+                return
+            # Use configured IP address if there is one, else detect
+            # automatically.
+            ip_address = get_listen_ip(any_zone.ip_address)
+            if not ip_address:
+                log.exception("Could not start Event Listener: check network.")
+                # Otherwise, no point trying to start server
+                return
+            port = self.listen(ip_address)
+            if not port:
+                return
+            self.address = (ip_address, port)
+            self.is_running = True
+            log.debug("Event Listener started")
 
     def stop(self):
         """Stop the Event Listener."""
@@ -317,7 +299,7 @@ class EventListenerBase(object):
             return
         self.is_running = False
         self.stop_listening(self.address)
-        log.info("Event Listener stopped")
+        log.debug("Event Listener stopped")
 
     # pylint: disable=missing-docstring
     def listen(self, ip_address):
@@ -347,12 +329,10 @@ class EventListenerBase(object):
         raise NotImplementedError
 
 
-class SubscriptionBase(object):
+class SubscriptionBase:
     """Base class for `soco.events.Subscription` and
     `soco.events_twisted.Subscription`
     """
-
-    # pylint: disable=too-many-instance-attributes
 
     def __init__(self, service, event_queue=None):
         """
@@ -458,7 +438,7 @@ class SubscriptionBase(object):
                 self.timeout = int(timeout.lstrip("Second-"))
             self._timestamp = time.time()
             self.is_subscribed = True
-            log.info(
+            log.debug(
                 "Subscribed to %s, sid: %s",
                 service.base_url + service.event_subscription_url,
                 self.sid,
@@ -507,7 +487,7 @@ class SubscriptionBase(object):
             log_msg = "Autorenewing subscription %s"
         else:
             log_msg = "Renewing subscription %s"
-        log.info(log_msg, self.sid)
+        log.debug(log_msg, self.sid)
 
         if self._has_been_unsubscribed:
             raise SoCoException("Cannot renew subscription once unsubscribed")
@@ -538,7 +518,7 @@ class SubscriptionBase(object):
                 self.timeout = int(timeout.lstrip("Second-"))
             self._timestamp = time.time()
             self.is_subscribed = True
-            log.info(
+            log.debug(
                 "Renewed subscription to %s, sid: %s",
                 self.service.base_url + self.service.event_subscription_url,
                 self.sid,
@@ -561,8 +541,6 @@ class SubscriptionBase(object):
         if self._has_been_unsubscribed or not self.is_subscribed:
             return None
 
-        self._cancel_subscription()
-
         # If the subscription has timed out, an attempt to
         # unsubscribe from it will fail silently.
         if self.time_left == 0:
@@ -576,7 +554,7 @@ class SubscriptionBase(object):
 
         # pylint: disable=missing-docstring, unused-argument
         def success(*arg):
-            log.info(
+            log.debug(
                 "Unsubscribed from %s, sid: %s",
                 self.service.base_url + self.service.event_subscription_url,
                 self.sid,
@@ -587,6 +565,7 @@ class SubscriptionBase(object):
             self.service.base_url + self.service.event_subscription_url,
             headers,
             success,
+            self._cancel_subscription,
         )
 
     def send_event(self, event):
@@ -609,7 +588,11 @@ class SubscriptionBase(object):
         if callback and hasattr(callback, "__call__"):
             callback(event)
         else:
-            self.events.put(event)
+            try:
+                self.events.put(event)
+            # pylint: disable=broad-except
+            except Exception as ex:
+                log.warning("Error putting event %s, ex=%s", event, ex)
 
     # pylint: disable=missing-docstring
     def _auto_renew_start(self, interval):
@@ -631,8 +614,8 @@ class SubscriptionBase(object):
         """
         raise NotImplementedError
 
-    # pylint: disable=missing-docstring, too-many-arguments
-    def _request(self, method, url, headers, success):
+    # pylint: disable=missing-docstring
+    def _request(self, method, url, headers, success, unconditional=None):
         """Send a HTTP request
 
         Args:
@@ -643,6 +626,9 @@ class SubscriptionBase(object):
             success (function): A function to be called if the
                 request succeeds. The function will be called with a dict
                 of response headers as its only parameter.
+            unconditional (function): An optional function to be called after
+                the request is complete, regardless of its success. Takes
+                no parameters.
 
         Note:
             This method must be overridden in the class that inherits from
@@ -670,7 +656,7 @@ class SubscriptionBase(object):
         # Cancel any auto renew
         self._auto_renew_cancel()
         if msg:
-            log.info(msg)
+            log.debug(msg)
 
     @property
     def time_left(self):
@@ -694,7 +680,7 @@ class SubscriptionBase(object):
         self.unsubscribe()
 
 
-class SubscriptionsMap(object):
+class SubscriptionsMap:
     """Maintains a mapping of sids to `soco.events.Subscription` instances
     and the thread safe lock to go with it. Registers each subscription to
     be unsubscribed at exit.
@@ -777,3 +763,17 @@ class SubscriptionsMap(object):
         """
         with self.subscriptions_lock:
             return len(self.subscriptions)
+
+
+def get_listen_ip(ip_address):
+    """Find the listen ip address."""
+    if config.EVENT_LISTENER_IP:
+        return config.EVENT_LISTENER_IP
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        sock.connect((ip_address, config.EVENT_LISTENER_PORT))
+        return sock.getsockname()[0]
+    except socket.error:
+        return None
+    finally:
+        sock.close()

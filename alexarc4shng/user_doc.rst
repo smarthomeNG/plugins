@@ -1,10 +1,19 @@
-.. index:: Plugins; Remote Control for Alexa devices
-.. index:: alexarc4shng
+
+.. index:: Plugins; alexarc4shng (Remote Control for Alexa devices)
+.. index:: Alexa; alexarc4shng Plugin
 
 
 ============
 alexarc4shng
 ============
+
+.. image:: webif/static/img/plugin_logo.png
+   :alt: plugin logo
+   :width: 300px
+   :height: 300px
+   :scale: 50 %
+   :align: left
+
 
 Plugin zur Steuerung von Amazon Echo Geräten Zugriff via Web-Browser API und Cookie.
 

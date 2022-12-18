@@ -48,6 +48,8 @@ class ComfoAir(SmartPlugin):
         self._connection_attempts = 0
         self._connection_errorlog = 60
         self._initread = False
+
+        # automatically (re)connect
         smarthome.connections.monitor(self)
 
         # Load controlset and commandset

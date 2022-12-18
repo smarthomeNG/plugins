@@ -5,8 +5,25 @@
 hue2
 ====
 
+.. image:: webif/static/img/plugin_logo.png
+   :alt: plugin logo
+   :width: 300px
+   :height: 300px
+   :scale: 50 %
+   :align: left
+
+
 Das Plugin unterstützt Philips Hue Bridges. Es ist eine komplette Neuentwicklung mit einem deutlich erweiterten
-Funktionsumfang gegenüber dem alten Hue Plugin:
+Funktionsumfang gegenüber dem alten Hue Plugin.
+
+Es unterstützt die zweite Generation der Philips Hue Bridges und bisher auch noch die Bridges der ersten Generation,
+die von Philips inzwischen retired wurden und keine Unterstützung durch Philips mehr erfahren.
+
+
+Neue Features
+=============
+
+Das Plugin bietet im Vergleich zum **hue** Plugin zusätzlich folgende Features:
 
 - Die Authorisierung an der Hue Bride ist in das Plugin integriert und erfolgt über das Webinferface des Plugins.
 - Das Plugin hat eine Funktion um aktive Hue Bridges im lokalen Netzwerk zu finden.
@@ -71,7 +88,20 @@ Verwendung von structs
 ----------------------
 
 Mit der Hilfe von Struktur Templates wird die Einrichtung von Items stark vereinfacht. Hierzu werden für
-Leuchten die Templates **hue2.light** und **hue2.light_extended** vom Plugin mitgeliefert.
+Leuchten Templates vom Plugin mitgeliefert.
+
+Grundsätzliche Item Definitionen für Leuchten:
+
+- **hue2.light** - Standard Definition für Philips Hue Leuchten
+- **hue2.light_ww** - Standard Definition für Philips Warmwhite Leuchten
+- **hue2.light_xy** - Standard Definition für Leuchten von Dritt-Anbietern, die kein **sat** und **hue** unterstützen, sondern nur **xy**
+
+Erweiterte Item Definitionen für oben genannten Leuchten-Typen:
+
+- **hue2.light_extended**
+- **hue2.light_ww_extended**
+- **hue2.light_xy_extended**
+
 
 Ein Item für eine Hue Leuchte kann einfach folgendermaßen konfiguriert werden, indem nur die Id der zu
 steuernden Leuchts als ``hue2_id`` angegeben wird:
@@ -89,7 +119,9 @@ Das hat die selbe Wirkung, als hätte man ohne Struktur Template folgende Item-K
 
 .. code-block:: yaml
 
-        test_leuchte:
+    test_leuchte:
+        hue2_id: 3
+
         name: Vorlage-Struktur für eine Hue Leuchte
         type: foo
         hue2_resource: light
@@ -116,7 +148,7 @@ Das hat die selbe Wirkung, als hätte man ohne Struktur Template folgende Item-K
             type: num
             hue2_resource: ..:.
             hue2_id: ..:.
-            hue2_functione: sat
+            hue2_function: sat
 
         ct:
             type: num
@@ -151,9 +183,11 @@ Für den Resource-Typ ``light`` sind die folgenden Funktionen implementiert (ein
 
     - ``on``
     - ``bri``
+    - ``bri_inc``
     - ``hue``
     - ``sat``
     - ``ct``
+    - ``dict``
     - ``name``
     - ``reachable``
     - ``colormode``
@@ -162,12 +196,19 @@ Für den Resource-Typ ``light`` sind die folgenden Funktionen implementiert (ein
     - ``modelid``
     - ``swversion``
     - ``activate_scene``
+    - ``modify_scene``
+    - ``alert``
+    - ``effect``
 
 
 Die vollständige Übersicht über die unterstützen Funktionen und die Datentypen dazu kann auf der
 Seite :doc:`/plugins_doc/config/hue2` in der Beschreibung des Item Attributes ``hue2_function`` nachgelesen
 werden.
 
+.. note::
+
+    Pullrequest https://github.com/smarthomeNG/plugins/pull/590 implementierte zusätzliche für hue2_function die
+    zusätzlichen Optionen ``bri_inc`` und ``dict``, welche noch nicht vollständig dokumentiert sind.
 
 Um den Namen der Leuchte mit der Id 3 abzufragen, muss ein Item folgendermaßen konfiguriert werden:
 

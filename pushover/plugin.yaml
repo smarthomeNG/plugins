@@ -8,10 +8,12 @@ plugin:
         fr: "Connexion au service Pushover"
 
     maintainer: 'Thomas Creutz'
+    tester: None
     state: ready
     version: 1.6.1                 # Plugin version
     sh_minversion: 1.5             # minimum shNG version to use this plugin
     multi_instance: True           # plugin supports multi instance
+    restartable: unknown
     classname: Pushover            # class containing the plugin
 
 parameters:
@@ -40,6 +42,18 @@ parameters:
             en: 'The device of the user'
             fr: "Appareil de l'utilisateur"
 
-item_attributes:
-    # Definition of item attributes defined by this plugin
+item_attributes: NONE
+    # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)
 
+item_structs: NONE
+    # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
+
+#item_attribute_prefixes:
+    # Definition of item attributes that only have a common prefix (enter 'item_attribute_prefixes: NONE' or ommit this section, if section should be empty)
+    # NOTE: This section should only be used, if really nessesary (e.g. for the stateengine plugin)
+
+plugin_functions: NONE
+    # Definition of plugin functions defined by this plugin (enter 'plugin_functions: NONE', if section should be empty)
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)

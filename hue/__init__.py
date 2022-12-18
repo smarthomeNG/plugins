@@ -56,7 +56,7 @@ client = Tools()
 
 class HUE(SmartPlugin):
 
-    PLUGIN_VERSION = "1.4.5"
+    PLUGIN_VERSION = "1.4.6"
 
     def __init__(self, smarthome, hue_ip = '', hue_user = '', hue_port = '80', cycle_lamps = '10', cycle_bridges = '60', default_transitionTime = '0.4'):
 
@@ -478,10 +478,10 @@ class HUE(SmartPlugin):
                 # lampe ist an (status in sh). dann können alle befehle gesendet werden
                 if hueSendGroup == 'on':
                     # wenn der status in sh true ist, aber mit dem befehl on, dann muss die lampe auf der hue seite erst eingeschaltet werden
-                    if hueIndex + '.bri' in self._sendLampItems:
+                    if hueIndex + '.bri' in self._sendGroupItems:
                         # wenn eingeschaltet wird und ein bri item vorhanden ist, dann wird auch die hellgkeit
                         # mit gesetzt, weil die gruppe das im ausgeschalteten zustand vergisst.
-                        self._set_group_state(hueBridgeId, hueGroupId, {'on': True, 'bri': int(self._sendLampItems[(hueIndex + '.bri')]()) , 'transitiontime': hueTransitionTime})
+                        self._set_group_state(hueBridgeId, hueGroupId, {'on': True, 'bri': int(self._sendGroupItems[(hueIndex + '.bri')]()) , 'transitiontime': hueTransitionTime})
                     else:
                         # ansonst wird nur eingeschaltet
                         self._set_group_state(hueBridgeId, hueGroupId, {'on': True , 'transitiontime': hueTransitionTime})

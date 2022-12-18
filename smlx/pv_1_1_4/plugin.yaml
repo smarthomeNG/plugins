@@ -1,0 +1,138 @@
+# Metadata for the Smart-Plugin
+plugin:
+    # Global plugin attributes
+    type: gateway                  # plugin type (gateway, interface, protocol, system, web)
+    description:
+        de: 'Auslesen von Stromzählern via SML-Protokoll'
+        en: 'Readout of smartmeter with SML protocol'
+    maintainer: bmxp
+    tester: sisamiwe,morg          # Who tests this plugin?
+    state: ready                   # change to ready when done with development
+    keywords: sml smartmeter
+    documentation: https://www.smarthomeng.de/developer/plugins/smlx/user_doc.html
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/39119-sml-plugin-datenblock-größenfehler
+    restartable: True
+    version: 1.1.4                 # Plugin version
+    sh_minversion: 1.4.2           # minimum shNG version to use this plugin
+    #sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
+    multi_instance: True           # plugin supports multi instance
+    classname: Smlx                # class containing the plugin
+
+parameters:
+    # Definition of parameters to be configured in etc/plugin.yaml
+    serialport:
+        type: str
+        default: ''
+        description:
+            de: 'Serieller Port an dem der Smartmeter angeschlossen ist'
+            en: 'Serial port the Smartmeter is attached to'
+    timeout:
+        type: int
+        default: 8
+        description:
+            de: 'Maximale Wartezeit bis serielles Lesen abgebrochen wird'
+            en: 'Maximum delay time until serial read will end'
+    buffersize:
+        type: int
+        default: 1024
+        description:
+            de: 'Größe des Lesepuffers. Mindestens doppelte Größe der maximalen Nachrichtenlänge in Bytes'
+            en: 'Size of read buffer. At least twice the size of maximum message length'
+    host:
+        type: str
+        description:
+            de: 'Host der eine IP Schnittstelle bereitstellt'
+            en: 'Host that provides an IP interface'
+    port:
+        type: int
+        description:
+            de: 'Port für die Kommunikation'
+            en: 'Port for communication'
+
+    cycle:
+        type: int
+        default: 60
+        description:
+            de: 'Zeitlicher Abstand in Sekunden zwischen zwei Abfragen des Smartmeters'
+            en: 'Time in seconds between two queries of Smartmeter'
+
+    device:
+        type: str
+        default: 'raw'
+        description:
+            de: 'Name des Gerätes'
+            en: 'Name of Smartmeter'
+
+    date_offset:
+        type: int
+        default: 0
+        description:
+            de: 'Unix timestamp der Smartmeter Inbetriebnahme'
+            en: 'Unix timestamp of Smartmeter start-up after installation'
+
+    # for crc generation
+    poly:
+        type: int
+        default: 0x1021
+        description:
+            de: 'Polynom für die crc Berechnung'
+            en: 'Polynomial for crc calculation'
+            
+    reflect_in:
+        type: bool
+        default: True
+        description:
+            de: 'Umkehren der Bitreihenfolge für die Eingabe'
+            en: 'Reflect the octets in the input'
+
+    xor_in:
+        type: int
+        default: 0xffff
+        description:
+            de: 'Initaler Wert für XOR Berechnung'
+            en: 'Initial value for XOR calculation'
+
+    reflect_out:
+        type: bool
+        default: True
+        description:
+            de: 'Umkehren der Bitreihenfolge der Checksumme vor der Anwendung des XOR Wertes'
+            en: 'Reflect the octet of checksum before application of XOR value'
+
+    xor_out:
+        type: int
+        default: 0xffff
+        description:
+            de: 'XOR Berechnung der CRC mit diesem Wert'
+            en: 'XOR final CRC value with this value'
+
+    swap_crc_bytes:
+        type: bool
+        default: False
+        description:
+            de: 'Bytereihenfolge der berechneten Checksumme vor dem Vergleich mit der vorgegeben Checksumme tauschen'
+            en: 'Swap bytes of calculated checksum prior to comparison with given checksum'
+
+item_attributes:
+    # Definition of item attributes defined by this plugin
+    sml_obis: 
+        type: str
+        description:
+            de: 'Wert des angegebenen OBIS codes einem Item zuweisen'
+            en: 'Assigns the value for the given OBIS code to the item'
+
+    sml_prop: 
+        type: str
+        description:
+            de: 'Andere Eigenschaft des Obis Codes nutzen, z.B. unitName'
+            en: 'Used to assign other information for an OBIS code to the item'
+
+item_structs: NONE
+    # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
+
+plugin_functions: NONE
+    # Definition of plugin functions defined by this plugin (enter 'plugin_functions: NONE', if section should be empty)
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)
+

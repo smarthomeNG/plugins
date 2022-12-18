@@ -73,7 +73,7 @@ The following attributes can be used in the plugin configuration:
      used to invoke the `connect()` function of the DB API 2 implementation
      (for SQLite lookup [here](http://docs.python.org/3.2/library/sqlite3.html#sqlite3.connect),
      other databases depends on implementation). An example connect string for pymysql could be
-     `connect = host:127.0.0.1 | user:db_user | passwd:db_password | db:smarthome`
+     `connect = host:127.0.0.1 | port:3306 | user:db_user | passwd:db_password | db:smarthome`
    * `prefix` - if you want to log into an existing database with other tables
      you can specify a prefix for the plugins' tables
    * `precision` - specifies the amount of digits after comma for values
@@ -87,8 +87,11 @@ The plugin supports the types `str`, `num` and `bool` which can be logged
 into the database.
 
 #### database
-This attribute enables the database logging when set (just use value `yes`). If value `init` is used, an item will 
-be initalized from the database after SmartHomeNG is restarted.
+This attribute enables the database logging when set (just use value `yes`).
+
+If value `init` is used, the item will
+be initialized from the database after SmartHomeNG is restarted. Also, in this
+case the item's inital_value is prevented from being written to the database.
 
 ```yaml
 some:
@@ -107,6 +110,13 @@ current state.
 Use "rw" to specify that changes will also populate to the database, use "ro" to simple ignore
 changes on the items and do not populate them to the database. Only read items from the database
 when using the methods described below for retrieving data.
+
+#### database_write_on_shutdown
+By default, every item with set database attribute is rewritten into the database on 
+plugin shutdown. This is done no matter if the item has been updated or not. 
+These values with double entries in the database do not represent the actual value behavior
+especially for items, that are monotonously increasing but rarely updated. 
+By setting this attribute to False, a rewrite on plugin shutdown will be prevented.
 
 ## Functions
 This plugin adds functions to retrieve data for items.
@@ -277,6 +287,11 @@ item (in the `item` database table).
 dbplugin.updateItem(id, 12345, 0, 100)       # update item value in database for timestamp 12345, duration 0, value 100
 ```
 
+
+%--------------------------------------------
+# Vollständig übernommen in plugin.yaml
+%--------------------------------------------
+
 #### dbplugin.readItem(id, cur=None)
 
 This method will read the item data including all fields. When the id
@@ -295,6 +310,7 @@ This method will read all items data including all fields.
 ```python
 items = dbplugin.readItems()                 # read all fields of all item which contains the last item status
 ```
+
 #### dbplugin.deleteItem(id, cur=None)
 
 This method will delete the item and its log data.

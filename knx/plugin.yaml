@@ -13,11 +13,11 @@ plugin:
     documentation: http://smarthomeng.de/user/plugins/knx/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1552531-support-thread-zum-knx-plugin
 
-    version: 1.7.5                 # Plugin version
-    sh_minversion: 1.7             # minimum shNG version to use this plugin
+    sh_minversion: 1.9.0          # minimum shNG version to use this plugin
+    version: 1.8.3                 # Plugin version
 #    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
-    multi_instance: True           # plugin supports multi instance
-    restartable: unknown
+    multi_instance: true           # plugin supports multi instance
+    restartable: true
     classname: KNX                 # class containing the plugin
     attribute_prefix: knx          # prefix of the item-attributes, so attributes have to start with 'knx_'
 
@@ -58,6 +58,41 @@ parameters:
         description:
             de: "Wenn auf 'on'/'true' gesetzt, wird jedes KNX-Paket im Standard-Logger protokolliert. Wenn 'logger' eingestellt ist, werden alle KNX-Meldungen in einem separaten Logger 'knx_busmonitor' protokolliert."
             en: "If set to 'on'/'true' every KNX packet will be logged to the default plugin logger. If set to 'logger', all knx messages will be logged to a separate logger 'knx_busmonitor'"
+
+    loglevel_knxd_cache_problems:
+        type: str
+        default: 'INFO'
+        valid_list:
+          - 'DEBUG'
+          - 'WARNING'
+          - 'INFO'
+          - 'ERROR'
+          - 'NOTSET'
+        #   CRITICAL    50
+        #   ERROR       40
+        #   WARNING     30
+        #   INFO        20
+        #   DEBUG       10
+        #   NOTSET      0
+        valid_list_description:
+            de: ['DEBUG', 'WARNING', 'INFO', 'ERROR', 'NOTSET']
+            en: ['DEBUG', 'WARNING', 'INFO', 'ERROR', 'NOTSET']
+        description:
+            de: >
+                Beim Start von SmartHomeNG werden Items mit dem Attribut knx_cache direkt vom knxd eingelesen.
+                Wenn die Werte der Gruppenadressen nicht verfügbar sind, liefert der knxd ein fehlerhaftes Paket.
+                Mit dem hier festgelegten Loglevel wird dieses Paket protokolliert.
+            en: >
+                At start of SmartHomeNG items with attribute knx_cache will be read directly from knxd.
+                If the requested group adresses are not available, knxd will deliver a malformed telegram.
+                This malformed telegram will be logged with this loglevel.
+
+    log_own_packets:
+        type: bool
+        default: False
+        description:
+            de: 'Wenn der Wert auf "True" gesetzt ist, loggt der Busmonitor auch Pakete, die vom Plugin selbst geschrieben werden.'
+            en: 'If set to True, the busmonitor also logs packets coming from the plugin.'
 
     provider:
         type: str
@@ -117,6 +152,33 @@ parameters:
             de: 'Wenn diese Option auf "True" gesetzt ist, kann eine ETS Projektdatei hochgeladen und die enthaltenen Gruppenadressen angezeigt werden'
             en: 'if set to True, an ETS project file might be uploaded and contained group addresses shown'
 
+    project_file_password:
+        type: str
+        default: ''
+        description:
+            de: 'Legt optional ein Passwort für den Zugriff auf eine knxproj Datei fest'
+            en: 'Set a pasword to be able to unzip a knxproj file'
+
+    webif_pagelength:
+        type: int
+        valid_list:
+          - -1
+          - 0
+          - 25
+          - 50
+          - 100
+        description:
+            de: 'Anzahl an Items, die standardmäßig in einer Web Interface Tabelle pro Seite angezeigt werden.
+                 0 = automatisch, -1 = alle'
+            en: 'Amount of items being listed in a web interface table per page by default.
+                 0 = automatic, -1 = all'
+        description_long:
+            de: 'Anzahl an Items, die standardmäßig in einer Web Interface Tabelle pro Seite angezeigt werden.\n
+                 Bei 0 wird die Tabelle automatisch an die Höhe des Browserfensters angepasst.\n
+                 Bei -1 werden alle Tabelleneinträge auf einer Seite angezeigt.'
+            en: 'Amount of items being listed in a web interface table per page by default.\n
+                 0 adjusts the table height automatically based on the height of the browser windows.\n
+                 -1 shows all table entries on one page.'
 
 item_attributes:
     # Definition of item attributes defined by this plugin
@@ -155,7 +217,9 @@ item_attributes:
          - '24'
          - '229'
          - '232'
+         - '251'
          - '275.100'
+         - 'hex'
         valid_list_description:
             de:
              - 'Schalten (1 Bit) -> bool'
@@ -190,7 +254,9 @@ item_attributes:
              - 'Unlimitierte Zeichenkette [8859_1] (var) -> str'
              - 'Smartmeter Werte Tripel: [Ganzzahl -2147483648 - 2147483647(32 Bit), 0-255 (8 Bit), 0-255 (8 Bit)] (6 Byte) -> list'
              - 'RGB: [0, 0, 0] - [255, 255, 255] (3 Byte) -> list'
+             - 'RGBW: [0, 0, 0, 0] - [255, 255, 255, 255] (4 Byte)-> list'
              - 'Quadrupel mit Solltemperaturen für Komfort, Standby, Nachtabsenkung, Frostschutz (4 Fließkommazahlen mit 16 Bit) -> list'
+             - 'Empfangen von Roh-/Hex-Daten (um Key IDs des alten Winkhaus Schließsystems auszulesen'
             en:
              - 'Switch (1 Bit) -> bool'
              - 'forced control (2 Bit) -> list'
@@ -224,7 +290,9 @@ item_attributes:
              - 'unlimited string [8859_1] (var) -> str'
              - 'Smartmeter value triple: [Integer -2147483648 - 2147483647(32 Bit), 0-255 (8 Bit), 0-255 (8 Bit)] (6 Byte) -> list'
              - 'RGB: [0, 0, 0] - [255, 255, 255] (3 Byte) -> list'
+             - 'RGBW: [0, 0, 0, 0] - [255, 255, 255, 255] (4 Byte)-> list'
              - 'Quadrupel with set temperatures comfort, standby, night reduction, frost protection (4 float with 16 Bit) -> list'
+             - 'Receive raw/hex data (to read out Key IDs from the old Winkhaus locking systems'
         description:
             de: 'Dieses Attribut setzt den Typ des KNX-Datenpunktes, der für die Konvertierung der KNX-Nachrichten in das interne SmartHomeNG-Format verwendet wird. Die Angabe ist zwingend erforderlich ist. Wenn Sie keinen Wert angeben, wird das Element vom Plugin ignoriert. Der DPT muss dem Typ des Artikels entsprechen!'
             en: "This attribute set the KNX datapoint type used for conversion of the KNX messages to internal SmartHomeNG format. It is mandatory. If you don't provide one the item will be ignored by the plugin. The DPT has to match the type of the item! BE CAREFUL to put the value in quotes to ensure they are interpreted as strings and not as numbers!"
@@ -361,6 +429,7 @@ plugin_functions:
                  - '24'
                  - '229'
                  - '232'
+                 - '251'
                  - '275.100'
                 valid_list_description:
                     de:
@@ -396,6 +465,7 @@ plugin_functions:
                      - 'Unlimitierte Zeichenkette [8859_1] (var) -> str'
                      - 'Smartmeter Werte Tripel: [Ganzzahl -2147483648 - 2147483647(32 Bit), 0-255 (8 Bit), 0-255 (8 Bit)] (6 Byte) -> list'
                      - 'RGB: [0, 0, 0] - [255, 255, 255] (3 Byte) -> list'
+                     - 'RGBW: [0, 0, 0, 0] - [255, 255, 255, 255] (4 Byte)-> list'
                      - 'Quadrupel mit Solltemperaturen für Komfort, Standby, Nachtabsenkung, Frostschutz (4 Fließkommazahlen mit 16 Bit) -> list'
                     en:
                      - 'Switch (1 Bit) -> bool'
@@ -430,6 +500,7 @@ plugin_functions:
                      - 'unlimited string [8859_1] (var) -> str'
                      - 'Smartmeter value triple: [Integer -2147483648 - 2147483647(32 Bit), 0-255 (8 Bit), 0-255 (8 Bit)] (6 Byte) -> list'
                      - 'RGB: [0, 0, 0] - [255, 255, 255] (3 Byte) -> list'
+                     - 'RGBW: [0, 0, 0, 0] - [255, 255, 255, 255] (4 Byte)-> list'
                      - 'Quadrupel with set temperatures comfort, standby, night reduction, frost protection (4 float with 16 Bit) -> list'
                 description:
                     de: "KNX Datenpunkttyp"
@@ -469,4 +540,3 @@ plugin_functions:
                 description:
                     de: "Gruppenadresse an die das Datum gesendet wird"
                     en: "Group address to send the date to"
-

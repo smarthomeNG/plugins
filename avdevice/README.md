@@ -13,8 +13,8 @@ Hopefully several different AV devices based on TCP or Serial RS232 connections
 Tested with Pioneer (< 2016 models) and Denon AV receivers, Epson projector Oppo Bluray player
 
 ## Changelog
-### planned for v1.6.3
-* include model file for Anthem AV
+### v1.6.3
+* updated webinterface implementation, realtime values, fixes
 
 ### v1.6.2
 * implement lineending send and response parameters

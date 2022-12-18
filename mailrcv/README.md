@@ -10,7 +10,7 @@ This plugin has no requirements or dependencies.
 
 ```yaml
 imap:
-    plugin.mailrcv
+    plugin_name: mailrcv
     host: mail.example.com
     username: smarthome
     password: secret

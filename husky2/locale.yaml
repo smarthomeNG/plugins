@@ -1,0 +1,155 @@
+plugin_translations:
+  # Errorcodes
+  'No error': { 'de': 'Keine Fehler', 'en': '=', 'fr': '' }
+  'Outside working area': { 'de': 'Außerhalb des Arbeitsbereichs', 'en': '=', 'fr': '' }
+  'No loop signal': { 'de': 'Kein Schleifen Signal', 'en': '=', 'fr': '' }
+  'Wrong loop signal': { 'de': 'Falsches Schleifen Signal', 'en': '=', 'fr': '' }
+  'Loop sensor problem, front': { 'de': 'Schleifensensor-Problem vorne', 'en': '=', 'fr': '' }
+  'Loop sensor problem, rear': { 'de': 'Schleifensensor-Problem hinten', 'en': '=', 'fr': '' }
+  'Loop sensor problem, left': { 'de': 'Schleifensensor-Problem links', 'en': '=', 'fr': '' }
+  'Loop sensor problem, right': { 'de': 'Schleifensensor-Problem rechts', 'en': '=', 'fr': '' }
+  'Wrong PIN code': { 'de': 'Falscher Pin Code', 'en': '=', 'fr': '' }
+  'Trapped': { 'de': 'Eingeschlossen', 'en': '=', 'fr': '' }
+  'Upside down': { 'de': 'Kopfüber', 'en': '=', 'fr': '' }
+  'Low battery': { 'de': 'Schwache Batterie', 'en': '=', 'fr': '' }
+  'Empty battery': { 'de': 'Leere Batterie', 'en': '=', 'fr': '' }
+  'No drive': { 'de': 'Kein Antrieb', 'en': '=', 'fr': '' }
+  'Mower lifted': { 'de': 'Mäher angehoben', 'en': '=', 'fr': '' }
+  'Lifted': { 'de': 'Angehoben', 'en': '=', 'fr': '' }
+  'Stuck in charging station': { 'de': 'In Ladestation festgefahren', 'en': '=', 'fr': '' }
+  'Charging station blocked': { 'de': 'Ladestation blockiert', 'en': '=', 'fr': '' }
+  'Collision sensor problem, rear': { 'de': 'Kollisionssensor-Problem hinten', 'en': '=', 'fr': '' }
+  'Collision sensor problem, front': { 'de': 'Kollisionssensor-Problem vorne', 'en': '=', 'fr': '' }
+  'Wheel motor blocked, right': { 'de': 'Radmotor blockiert rechts', 'en': '=', 'fr': '' }
+  'Wheel motor blocked, left': { 'de': 'Radmotor blockiert links', 'en': '=', 'fr': '' }
+  'Wheel drive problem, right': { 'de': 'Radantrieb blockiert rechts', 'en': '=', 'fr': '' }
+  'Wheel drive problem, left': { 'de': 'Radantrieb blockiert links', 'en': '=', 'fr': '' }
+  'Cutting system blocked': { 'de': 'Schneidesystem blockiert', 'en': '=', 'fr': '' }
+  'Invalid sub-device combination': { 'de': 'Ungültige Untergerätekombination', 'en': '=', 'fr': '' }
+  'Settings restored': { 'de': 'Einstellungen wiederhergestellt', 'en': '=', 'fr': '' }
+  'Memory circuit problem': { 'de': 'Speicherschaltung Problem', 'en': '=', 'fr': '' }
+  'Slope too steep': { 'de': 'Hang zu steil', 'en': '=', 'fr': '' }
+  'STOP button problem': { 'de': 'Stop Taste Problem', 'en': '=', 'fr': '' }
+  'Tilt sensor problem': { 'de': 'Neigungssensor Problem', 'en': '=', 'fr': '' }
+  'Mower tilted': { 'de': 'Mäher geneigt', 'en': '=', 'fr': '' }
+  'Cutting stopped - slope too steep': { 'de': 'Mähen gestoppt - Hang zu steil', 'en': '=', 'fr': '' }
+  'Wheel motor overloaded, right': { 'de': 'Radmotor überlastet rechts', 'en': '=', 'fr': '' }
+  'Wheel motor overloaded, left': { 'de': 'Radmotor überlastet links', 'en': '=', 'fr': '' }
+  'Charging current too high': { 'de': 'Ladestrom zu hoch', 'en': '=', 'fr': '' }
+  'Electronic problem': { 'de': 'Elektronik Problem', 'en': '=', 'fr': '' }
+  'Cutting motor problem': { 'de': 'Schneidemotor Problem', 'en': '=', 'fr': '' }
+  'Unexpected cutting height adj': { 'de': 'Unerwartete Schneidehöhe Einstellung', 'en': '=', 'fr': '' }
+  'Limited cutting height range': { 'de': 'Limitierter Schneidehöhe-Bereich', 'en': '=', 'fr': '' }
+  'Cutting height problem, drive': { 'de': 'Schneidehöhe Antrieb Problem', 'en': '=', 'fr': '' }
+  'Cutting height problem, curr': { 'de': 'Schneidehöhe curr Problem', 'en': '=', 'fr': '' }
+  'Cutting height problem, dir': { 'de': 'Schneidehöhe dir Problem', 'en': '=', 'fr': '' }
+  'Cutting height blocked': { 'de': 'Schneidehöhe Blockiert', 'en': '=', 'fr': '' }
+  'Cutting height problem': { 'de': 'Schneidehöhe Problem', 'en': '=', 'fr': '' }
+  'No response from charger': { 'de': 'Keine Antwort vom Ladegerät', 'en': '=', 'fr': '' }
+  'Ultrasonic problem': { 'de': 'Ultraschall Problem', 'en': '=', 'fr': '' }
+  'Guide 1 not found': { 'de': 'Leitlinie 1 nicht gefunden', 'en': '=', 'fr': '' }
+  'Guide 2 not found': { 'de': 'Leitlinie 2 nicht gefunden', 'en': '=', 'fr': '' }
+  'Guide 3 not found': { 'de': 'Leitlinie 3 nicht gefunden', 'en': '=', 'fr': '' }
+  'GPS navigation problem': { 'de': 'GPS Navigations Problem', 'en': '=', 'fr': '' }
+  'Weak GPS signal': { 'de': 'Schwaches GPS Signal', 'en': '=', 'fr': '' }
+  'Difficult finding home': { 'de': 'Schwierigkeiten Station zu finden', 'en': '=', 'fr': '' }
+  'Guide calibration accomplished': { 'de': 'Leitlinien Kalibration abgeschlossen', 'en': '=', 'fr': '' }
+  'Guide calibration failed': { 'de': 'Leitlinien Kalibration fehlgeschlagen', 'en': '=', 'fr': '' }
+  'Temporary battery problem': { 'de': 'Temporäres Batterie Problem', 'en': '=', 'fr': '' }
+  'Battery problem': { 'de': 'Batterie Problem', 'en': '=', 'fr': '' }
+  'Alarm! Mower switched off': { 'de': 'Alarm! Mäher ausgeschaltet', 'en': '=', 'fr': '' }
+  'Alarm! Mower stopped': { 'de': 'Alarm! Mäher gestoppt', 'en': '=', 'fr': '' }
+  'Alarm! Mower lifted': { 'de': 'Alarm! Mäher angehoben', 'en': '=', 'fr': '' }
+  'Alarm! Mower tilted': { 'de': 'Alarm! Mäher gekippt', 'en': '=', 'fr': '' }
+  'Alarm! Mower in motion': { 'de': 'Alarm! Mäher in Bewegung', 'en': '=', 'fr': '' }
+  'Alarm! Outside geofence': { 'de': 'Alarm! Mäher außerhalb des erlaubten Geo Bereichs', 'en': '=', 'fr': '' }
+  'Connection changed': { 'de': 'Verbindung geändert', 'en': '=', 'fr': '' }
+  'Connection NOT changed': { 'de': 'Verbindung NICHT geändert', 'en': '=', 'fr': '' }
+  'Com board not available': { 'de': 'Com-Board nicht verfügbar', 'en': '=', 'fr': '' }
+  'Slipped - Mower has Slipped. Situation not solved with moving pattern': { 'de': 'Abgerutscht – Mäher abgerutscht. Situation mit Bewegungsmuster nicht gelöst', 'en': '=', 'fr': '' }
+  'Invalid battery combination - Invalid combination of different battery types.': { 'de': 'Ungültige Batteriekombination - Ungültige Kombination von unterschiedlichen Batterietypen', 'en': '=', 'fr': '' }
+  'Cutting system imbalance': { 'de': 'Schneidesystem Unwucht', 'en': '=', 'fr': '' }
+  'Safety function faulty': { 'de': 'Sicherheitsfunktion fehlerhaft', 'en': '=', 'fr': '' }
+  'Wheel motor blocked, rear right': { 'de': 'Radmotor blockiert hinten rechts', 'en': '=', 'fr': '' }
+  'Wheel motor blocked, rear left': { 'de': 'Radmotor blockiert hinten links', 'en': '=', 'fr': '' }
+  'Wheel drive problem, rear right': { 'de': 'Radantrieb Problem hinten rechts', 'en': '=', 'fr': '' }
+  'Wheel drive problem, rear left': { 'de': 'Radantrieb Problem hinten links', 'en': '=', 'fr': '' }
+  'Wheel motor overloaded, rear right': { 'de': 'Radmotor überlastet hinten rechts', 'en': '=', 'fr': '' }
+  'Wheel motor overloaded, rear left': { 'de': 'Radmotor überlastet hinten links', 'en': '=', 'fr': '' }
+  'Angular sensor problem': { 'de': 'Winkelsensor Problem', 'en': '=', 'fr': '' }
+  'Invalid system configuration': { 'de': 'Ungültige System Konfiguration', 'en': '=', 'fr': '' }
+  'No power in charging station': { 'de': 'Ladestation hat keinen Strom', 'en': '=', 'fr': '' }
+  'Switch cord problem': { 'de': 'Switch Kabel Problem', 'en': '=', 'fr': '' }
+  'Work area not valid': { 'de': 'Arbeitsbereich ungültig', 'en': '=', 'fr': '' }
+  'No accurate position from satellites': { 'de': 'Ungenaue Satellitenposition', 'en': '=', 'fr': '' }
+  'Reference station communication problem': { 'de': 'Referenzstation Kommunikations Problem', 'en': '=', 'fr': '' }
+  'Folding sensor activated': { 'de': 'Klappsensor aktiviert', 'en': '=', 'fr': '' }
+  'Right brush motor overloaded': { 'de': 'Bürstenmotor rechts überlastet', 'en': '=', 'fr': '' }
+  'Left brush motor overloaded': { 'de': 'Bürstenmotor links überlastet', 'en': '=', 'fr': '' }
+  'Ultrasonic Sensor 1 defect': { 'de': 'Ultraschallsensor 1 defekt', 'en': '=', 'fr': '' }
+  'Ultrasonic Sensor 2 defect': { 'de': 'Ultraschallsensor 2 defekt', 'en': '=', 'fr': '' }
+  'Ultrasonic Sensor 3 defect': { 'de': 'Ultraschallsensor 3 defekt', 'en': '=', 'fr': '' }
+  'Ultrasonic Sensor 4 defect': { 'de': 'Ultraschallsensor 4 defekt', 'en': '=', 'fr': '' }
+  'Cutting drive motor 1 defect': { 'de': 'Schneidemotor 1 defekt', 'en': '=', 'fr': '' }
+  'Cutting drive motor 2 defect': { 'de': 'Schneidemotor 2 defekt', 'en': '=', 'fr': '' }
+  'Cutting drive motor 3 defect': { 'de': 'Schneidemotor 3 defekt', 'en': '=', 'fr': '' }
+  'Lift Sensor defect': { 'de': 'Anhebesensor defekt', 'en': '=', 'fr': '' }
+  'Collision sensor defect': { 'de': 'Kollisionssensor defekt', 'en': '=', 'fr': '' }
+  'Docking sensor defect': { 'de': 'Andocksensor defekt', 'en': '=', 'fr': '' }
+  'Folding cutting deck sensor defect': { 'de': 'Sensor für klappbares Mähwerk defekt', 'en': '=', 'fr': '' }
+  'Loop sensor defect': { 'de': 'Schleifensensor defekt', 'en': '=', 'fr': '' }
+  'Collision sensor error': { 'de': 'Kollisionssensor Fehler', 'en': '=', 'fr': '' }
+  'No confirmed position': { 'de': 'Keine bestätigte Position', 'en': '=', 'fr': '' }
+  'Cutting system major imbalance': { 'de': 'Schneidesystem große Unwucht', 'en': '=', 'fr': '' }
+  'Complex working area': { 'de': 'Komplexer Arbeitsbereich', 'en': '=', 'fr': '' }
+  'Too high discharge current': { 'de': 'Zu hoher entlade Strom', 'en': '=', 'fr': '' }
+  'Too high internal current': { 'de': 'Zu hoher interner Strom', 'en': '=', 'fr': '' }
+  'High charging power loss': { 'de': 'Große Ladeleistungs-Verluste', 'en': '=', 'fr': '' }
+  'High internal power loss': { 'de': 'Große interne Leistungs-Verluste', 'en': '=', 'fr': '' }
+  'Charging system problem': { 'de': 'Ladesystem Problem', 'en': '=', 'fr': '' }
+  'Zone generator problem': { 'de': 'Zonen Generator Problem', 'en': '=', 'fr': '' }
+  'Internal voltage error': { 'de': 'Interne Spannung Problem', 'en': '=', 'fr': '' }
+  'High internal temerature': { 'de': 'Hohe interne Temperatur', 'en': '=', 'fr': '' }
+  'CAN error': { 'de': 'CAN Fehler', 'en': '=', 'fr': '' }
+  'Destination not reachable': { 'de': 'Ziel nicht erreichbar', 'en': '=', 'fr': '' }
+  # Mixed
+  'Unknown error code': { 'de': 'Unbekannter Fehlercode', 'en': '=', 'fr': '' }
+  'Sending command': { 'de': 'Sende Befehl', 'en': '=', 'fr': '' }
+  # State, Activity, Mode
+  'MAIN_AREA': { 'de': 'Hauptbereich', 'en': 'main area', 'fr': '' }
+  'DEMO': { 'de': 'Demo', 'en': 'demo', 'fr': '' }
+  'SECONDARY_AREA': { 'de': 'Nebenbereich', 'en': 'secondary area', 'fr': '' }
+  'HOME': { 'de': 'In Ladestation', 'en': 'in charging station', 'fr': '' }
+  'UNKNOWN': { 'de': 'Unbekannt', 'en': 'unknown', 'fr': '' }
+  'NOT_APPLICABLE': { 'de': 'Manueller Start nötig', 'en': 'Manual starting required', 'fr': '' }
+  'MOWING': { 'de': 'Mähen', 'en': 'mowing', 'fr': '' }
+  'GOING_HOME': { 'de': 'Unterwegs zur Ladestation', 'en': 'going to charging station', 'fr': '' }
+  'CHARGING': { 'de': 'Laden', 'en': 'charging', 'fr': '' }
+  'LEAVING': { 'de': 'Verlässt Ladestation', 'en': 'leaving charging station', 'fr': '' }
+  'PARKED_IN_CS': { 'de': 'In Ladestation geparkt', 'en': 'parked in charging station', 'fr': '' }
+  'STOPPED_IN_GARDEN': { 'de': 'Im Arbeitsbereich gestoppt', 'en': 'stopped in working area', 'fr': '' }
+  'PAUSED': { 'de': 'Pausiert', 'en': 'paused', 'fr': '' }
+  'IN_OPERATION': { 'de': 'In Betrieb', 'en': 'in operation', 'fr': '' }
+  'WAIT_UPDATING': { 'de': 'Wird upgedatet', 'en': 'being updated', 'fr': '' }
+  'WAIT_POWER_UP': { 'de': 'Wird eingeschaltet', 'en': 'being powered up', 'fr': '' }
+  'RESTRICTED': { 'de': 'Geparkt bis auf weiteres', 'en': 'parked until further notice', 'fr': '' }
+  'OFF': { 'de': 'Ausgeschaltet', 'en': 'switched off', 'fr': '' }
+  'STOPPED': { 'de': 'Gestoppt', 'en': 'stopped', 'fr': '' }
+  'ERROR': { 'de': 'Fehler', 'en': 'error', 'fr': '' }
+  'FATAL_ERROR': { 'de': 'Grober Fehler', 'en': 'fatal error', 'fr': '' }
+  'ERROR_AT_POWER_UP': { 'de': 'Fehler beim einschalten', 'en': 'error on power up', 'fr': '' }
+  # Webinterface
+  'Activity': { 'de': 'Aktivität', 'en': '=', 'fr': '' }
+  'Timestamp': { 'de': 'Zeitstempel', 'en': '=', 'fr': '' }
+  'Battery': { 'de': 'Batterie', 'en': '=', 'fr': '' }
+  'Coordinates': { 'de': 'Koordinaten', 'en': '=', 'fr': '' }
+  'Timedelta min:sec': { 'de': 'Vor min:sek', 'en': '=', 'fr': '' }
+  'History': { 'de': 'Aufzeichnungen', 'en': '=', 'fr': '' }
+  'Key': { 'de': 'Index', 'en': '=', 'fr': '' }
+  'Path': { 'de': 'Pfad', 'en': '=', 'fr': '' }
+  'Description': { 'de': 'Beschreibung', 'en': '=', 'fr': '' }
+  'Value': { 'de': 'Wert', 'en': '=', 'fr': '' }
+  'Last Update': { 'de': 'Letztes Update', 'en': '=', 'fr': '' }
+  'Last Change': { 'de': 'Letzte Änderung', 'en': '=', 'fr': '' }
+  'ApiKey': { 'de': '=', 'en': '=', 'fr': '' }
+  'Token expires in:': { 'de': 'Token läuft ab:', 'en': '=', 'fr': '' }

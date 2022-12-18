@@ -26,7 +26,6 @@ parameters:
 
     host:
         type: ip
-        default: False
         mandatory: True
         description:
             de: "IP Adresse"
@@ -35,7 +34,6 @@ parameters:
 
     key:
         type: str
-        default: False
         mandatory: True
         description:
             de: "key - zu erzeugen auf https://ssl-account.com/km200.andreashahn.info/"

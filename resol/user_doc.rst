@@ -1,5 +1,5 @@
-.. index:: Plugins; Resol (Resol Unterstützung)
-.. index:: Resol
+.. index:: Plugins; resol (Resol Unterstützung)
+.. index:: resol
 
 ========
 resol

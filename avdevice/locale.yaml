@@ -13,12 +13,13 @@ plugin_translations:
     'Fehlermeldung':                                        {'de': '=', 'en': 'Error message'}
     'Config neuladen':                                      {'de': '=', 'en': 'Reload config'}
     'Die folgenden Items sind dieser Instanz des AVDevice Plugins zugewiesen': {'de': '=', 'en': 'The following items are assigned to this instance of the AV device plugin'}
-    'DEBUGGING':                                            {'de': '=', 'en': '='}
+    'Debugging':                                            {'de': '=', 'en': '='}
     'Abfrageprotokoll':                                     {'de': '=', 'en': 'Query history'}
     'Abfrageprotokoll löschen':                             {'de': '=', 'en': 'Empty query history'}
     'Gelöscht':                                             {'de': '=', 'en': 'Erased'}
     'Zeit':                                                 {'de': '=', 'en': 'Time'}
     'Abfrage':                                              {'de': '=', 'en': 'Query'}
+    'Aktuelles':                                            {'de': '=', 'en': 'Current values'}
     'noch keine Abfrage gesendet':                          {'de': '=', 'en': 'No query sent yet'}
     'noch kein Kommando gesendet':                          {'de': '=', 'en': 'No command sent yet'}
     'Zwischenspeicher':                                     {'de': '=', 'en': 'Buffer'}

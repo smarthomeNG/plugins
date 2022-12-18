@@ -1,74 +1,91 @@
 {% extends "base_plugin.html" %}
 
 {% set logo_frame = false %}
-
+{% block pluginstyles %}
+<style>
+  table th.item {
+    width: 300px;
+  }
+  table th.type {
+    width: 40px;
+  }
+  table th.value {
+    width: 120px;
+  }
+  table th.dpt {
+    width: 60px;
+  }
+</style>
+{% endblock pluginstyles %}
 {% block pluginscripts %}
-{#
 <script>
-	function handleUpdatedData(response, dataSet=null) {
-		if (dataSet === 'devices_info' || dataSet === null) {
-			var objResponse = JSON.parse(response);
-			myProto = document.getElementById(dataSet);
-			for (var device in objResponse) {
-				<!--
-				shngInsertText (device+'_source', objResponse[device]['source']);
-				shngInsertText (device+'_powerState', objResponse[device]['powerState']);
-				-->
-			}
-		}
-	}
-</script>
-#}
+  $(document).ready( function () {
+    $(window).trigger('datatables_defaults');
+    try {
+      {% if webif_pagelength is defined %}webif_pagelength = {{ webif_pagelength|int }};{% endif %}
+      if (isNaN(parseFloat(webif_pagelength)) || webif_pagelength == 0) {
+        resize = true;
+        webif_pagelength = -1;
+        console.log('Activating automatic table resize');
+      }
+      else {
+        resize = false;
+      }
+    }
+    catch (e) {
+      webif_pagelength = 100;
+      resize = false;
+      console.log("Using default values for page length " + webif_pagelength + ", pageResize: " + resize);
+    }
+    try {
+      itemtable = $('#itemtable').DataTable( {
+        order: [[1, 'asc']],
+        columnDefs: [
+        { className: "item", targets: 1 },
+        { className: "type", targets: 2 },
+        { className: "value", targets: 3 },
+        { className: "dpt", targets: 4 },
+        { className: "cache", targets: 5 },
+        { className: "send", targets: 6 },
+        { className: "reply", targets: 7 },
+        { className: "status", targets: 8 },
+        { className: "poll", targets: 9 }
+        ].concat($.fn.dataTable.defaults.columnDefs),
+        pageLength: webif_pagelength,
+        pageResize: resize} );
+      gatable = $('#gatable').DataTable( {pageLength: webif_pagelength, pageResize: resize} );
+      patable = $('#patable').DataTable( {pageLength: webif_pagelength, pageResize: resize} );
+      {% if p.knxproj_ga is not none %}
+        knxprojtable = $('#knxprojtable').DataTable( {pageLength: webif_pagelength, pageResize: resize} );
+      {% endif %}
+    }
+    catch (e) {
+      console.warn("Datatable JS not loaded, showing standard table without reorder option " +e);
+    }
 
-/*
- * The combined file was created by the DataTables downloader builder:
- *   https://datatables.net/download
- *
- * To rebuild or modify this file with the latest versions of the included
- * software please visit:
- *   https://datatables.net/download/#dt/dt-1.10.21/fh-3.1.7/r-2.2.5
- *
- * Included libraries:
- *   DataTables 1.10.21, FixedHeader 3.1.7, Responsive 2.2.5
- */
-<link rel="stylesheet" type="text/css" href="static/datatables.css">
-<script type="text/javascript" charset="utf8" src="static/datatables.js"></script>
+  });
 
-<script>
-$(document).ready( function () {
-    $('#itemtable').DataTable( {
-        "paging": false,
-        fixedHeader: true
-        } );
-    $('#gatable').DataTable( {
-        "paging": false,
-        fixedHeader: true
-        } );
-    $('#patable').DataTable( {
-        "paging": false,
-        fixedHeader: true
-        } );
-} );
-{% if p.knxproj_ga is not none %}
-    $(document).ready( function () {
-        $('#knxprojtable').DataTable( {
-            "paging": false,
-            fixedHeader: true
-            } );
-    } );
-{% endif %}
-
-
+$(document).ready(
+    function(){
+        $('#fupload').change(
+            function(){
+                if ($(this).val()) {
+                    $('#btnupload').attr('disabled',false);
+                } else {
+                    $('#btnupload').attr('disabled',true);
+                }
+            }
+            );
+    });
 </script>
 {% endblock pluginscripts %}
 
 {% block headtable %}
-	<table class="table table-striped table-hover">
+	<table class="table table-striped table-hover" style="min-width: 550px;">
 		<tbody>
 			<tr>
 				<td class="py-1"><strong>{{ _('KNX Service') }}</strong></td>
 				<td class="py-1">{{ knxdaemon }}</td>
-				<td></td>
 				<td class="py-1"><strong>{{ _('Statistiken') }}</strong></td>
 				<td class="py-1">{% if p.enable_stats %}{{ _('aktiviert') }}{% else %}{{ _('deaktiviert') }}{% endif %}</td>
 			</tr>
@@ -79,30 +96,29 @@ $(document).ready( function () {
 					{{ p.get_stats_last_action().strftime('%d.%m.%Y %H:%M:%S %Z') }}
 				{% endif %}
 				</td>
-				<td></td>
 				<td class="py-1"><strong></strong></td>
 				<td class="py-1"></td>
 			</tr>
 			{% if p.use_project_file %}
+                <form method="post" action="index" enctype="multipart/form-data">
 				{% if p.projectpath %}
 				<tr>
 					<td class="py-1"><strong>{{ _('Pfad zur KNX Projektdatei') }}</strong></td>
 					<td class="py-1">{{ p.projectpath }}</td>
-					<td></td>
 					<td class="py-1"><strong>{{ _('gültig') }}</strong></td>
 					<td class="py-1">{% if p.knxproj_ga is not none %}{{ _('Ja') }} ({{ p.knxproj_ga|length }}){% else %}{{ _('Nein') }}{% endif %}</td>
 				</tr>
 				{% endif %}
 				<tr>
-					<td class="py-1"><strong>{{ _('Projektdatei hochladen') }}</strong></td>
-					<td class="py-1" colspan="4">
-						<form method="post" action="index" enctype="multipart/form-data">
-							<label for="fupload">{{ _('Projektdatei auswählen') }}</label>
+					<td class="py-1"><strong>{{ _('Projektdatei') }}</strong></td>
+					<td class="py-1">
 							<input id="fupload" type="file" name="knxprojfile" accept="*.knxproj|*.esf"/>
-							<button>hochladen</button>
-						</form>
+							<button id="btnupload" disabled="True">{{ _('hochladen') }}</button>
 					</td>
+					<td class="py-1"><strong>{{ _('optionales Passwort') }}</strong></td>
+					<td class="py-1"><input id="pwd" type="password" name="password"/></td>
 				</tr>
+                </form>
 			{% endif %}
 		</tbody>
 	</table>
@@ -148,11 +164,10 @@ $(document).ready( function () {
 -->
 {% set tab1title = "<strong>" ~ p.get_shortname() ~ " Items</strong> (" ~ items|length ~ ")" %}
 {% block bodytab1 %}
-<div class="table-responsive" style="margin-left: 3px; margin-right: 3px;" class="row">
-	<div class="col-sm-12">
-		<table id="itemtable" class="table table-striped table-hover">
+<div class="container-fluid m-2 table-resize">
+		<table id="itemtable">
 			<thead>
-				<tr>
+				<tr><th></th>
 					<th style="border-bottom: 1px solid var(--shng-border);">{{ _('Item') }}</th>
 					<th style="border-bottom: 1px solid var(--shng-border);">{{ _('Typ') }}</th>
 					<th style="border-bottom: 1px solid var(--shng-border); width: 100;">{{ _('Wert') }}</th>
@@ -166,14 +181,16 @@ $(document).ready( function () {
 			</thead>
 			<tbody>
 			{% for item in items %}
-				<tr>
+				<tr><td></td>
 					<td class="py-1">{{ item._path }}</td>
 					<td class="py-1">{{ item._type }}</td>
 					<td class="py-1">{{ item() }}</td>
 					<td class="py-1">{{ item.conf['knx_dpt'] }}</td>
 					<td class="py-1">
 					{% if 'knx_cache' in item.conf %}
-						knx_cache: {{ item.conf['knx_cache'] }}<br>
+						{% if item.conf['knx_cache'] in p.get_unsatisfied_cache_read_ga() %}<span style="color: red;">{% endif %}
+						knx_cache: {{ item.conf['knx_cache'] }}
+						{% if item.conf['knx_cache'] in p.get_unsatisfied_cache_read_ga() %}</span>{% endif %}<br>
 					{% endif %}
 					{% if 'knx_init' in item.conf %}
 						knx_init: {{ item.conf['knx_init'] }}<br>
@@ -198,7 +215,6 @@ $(document).ready( function () {
 			{% endfor %}
 			</tbody>
 		</table>
-	</div>
 </div>
 {% endblock %}
 
@@ -208,11 +224,10 @@ $(document).ready( function () {
 -->
 {% set tab2title = "<strong>GA " ~ _('Statistiken') ~ " </strong> (" ~ stats_ga_list|length ~ ")" %}
 {% block bodytab2 %}
-<div class="table-responsive" style="margin-left: 3px; margin-right: 3px;" class="row">
-	<div class="col-sm-12">
-		<table id="gatable" class="table table-striped table-hover">
+<div class="container-fluid m-2 table-resize">
+		<table id="gatable">
 			<thead>
-				<tr>
+				<tr><th></th>
 					<th style="border-bottom: 1px solid var(--shng-border);">{{ _('Gruppen Adresse') }}</th>
 					<th style="border-bottom: 1px solid var(--shng-border);">{{ _('# gelesen') }}</th>
 					<th style="border-bottom: 1px solid var(--shng-border);">{{ _('# geschrieben') }}</th>
@@ -224,7 +239,7 @@ $(document).ready( function () {
 			</thead>
 			<tbody>
 			{% for ga in stats_ga_list %}
-				<tr>
+				<tr><td></td>
 					<td class="py-1">{{ ga }}</td>
 					<td class="py-1">{{ stats_ga[ga].read }}</td>
 					<td class="py-1">{{ stats_ga[ga].write }}</td>
@@ -248,7 +263,6 @@ $(document).ready( function () {
 			{% endfor %}
 			</tbody>
 		</table>
-	</div>
 </div>
 {% endblock bodytab2 %}
 
@@ -262,11 +276,10 @@ $(document).ready( function () {
 -->
 {% set tab3title = "<strong>PA " ~ _('Statistiken') ~ " </strong> (" ~ stats_pa_list|length ~ ")" %}
 {% block bodytab3 %}
-<div class="table-responsive" style="margin-left: 3px; margin-right: 3px;" class="row">
-	<div class="col-sm-12">
-		<table id="patable" class="table table-striped table-hover">
+<div class="container-fluid m-2 table-resize">
+		<table id="patable">
 			<thead>
-				<tr>
+				<tr><th></th>
 					<th style="border-bottom: 1px solid var(--shng-border);">{{ _('Physische Adresse') }}</th>
 					<th style="border-bottom: 1px solid var(--shng-border);">{{ _('# gelesen') }}</th>
 					<th style="border-bottom: 1px solid var(--shng-border);">{{ _('# geschrieben') }}</th>
@@ -278,7 +291,7 @@ $(document).ready( function () {
 			</thead>
 			<tbody>
 			{% for pa in stats_pa_list %}
-				<tr>
+				<tr><td></td>
 					<td class="py-1">{{ pa }}</td>
 					<td class="py-1">{{ stats_pa[pa].read }}</td>
 					<td class="py-1">{{ stats_pa[pa].write }}</td>
@@ -302,7 +315,6 @@ $(document).ready( function () {
 			{% endfor %}
 			</tbody>
 		</table>
-	</div>
 </div>
 {% endblock bodytab3 %}
 
@@ -331,12 +343,11 @@ $(document).ready( function () {
 {% if p.use_project_file %}
 	{% set tab4title = "<strong>" ~ _('ETS KNX Projekt') ~ " " ~ num_ga_knxproj ~ "</strong>" %}
 	{% block bodytab4 %}
-	<div class="table-responsive" style="margin-left: 3px; margin-right: 3px;" class="row">
-		<div class="col-sm-12">
+<div class="container-fluid m-2 table-resize">
 			{% if p.knxproj_ga is not none %}
-			<table id="knxprojtable" class="table table-striped table-hover" >
+			<table id="knxprojtable">
 				<thead>
-					<tr>
+					<tr><th></th>
 						<th style="border-bottom: 1px solid var(--shng-border);">{{ _('Gruppen Adresse') }}</th>
 						<th style="border-bottom: 1px solid var(--shng-border);">{{ _('Name') }}</th>
 						<th style="border-bottom: 1px solid var(--shng-border);">{{ _('Beschreibung') }}</th>
@@ -347,7 +358,7 @@ $(document).ready( function () {
 				</thead>
 				<tbody>
 					{% for ga in p.knxproj_ga %}
-					<tr><td id="GA-{{ ga }}">{% if not (ga in ga_usage_by_Item) %}<span style="color:#bbb;">{% endif %}{{ ga }}{% if not (ga in ga_usage_by_Item) %}</span>{% endif %}</td>
+					<tr><td></td><td id="GA-{{ ga }}">{% if not (ga in ga_usage_by_Item) %}<span style="color:#bbb;">{% endif %}{{ ga }}{% if not (ga in ga_usage_by_Item) %}</span>{% endif %}</td>
 						<td>{% if not (ga in ga_usage_by_Item) %}<span style="color:#bbb;">{% endif %}{{ p.knxproj_ga[ga]["HG"] }} / {{ p.knxproj_ga[ga]["MG"] }} / {{ p.knxproj_ga[ga]["Name"] }}{% if not (ga in ga_usage_by_Item) %}</span>{% endif %}</td>
 						<td>{% if not (ga in ga_usage_by_Item) %}<span style="color:#bbb;">{% endif %}{{ p.knxproj_ga[ga]["Description"] }}{% if not (ga in ga_usage_by_Item) %}</span>{% endif %}</td>
 						<td>{% if not (ga in ga_usage_by_Item) %}<span style="color:#bbb;">{% endif %}{{ p.knxproj_ga[ga]["Comment"] }}{% if not (ga in ga_usage_by_Item) %}</span>{% endif %}</td>
@@ -383,7 +394,6 @@ $(document).ready( function () {
 			{% else %}
 				{{ _('Keine ETS5 Projektdatei gefunden') }}
 			{% endif %}
-		</div>
 	</div>
 
 	{% endblock bodytab4 %}

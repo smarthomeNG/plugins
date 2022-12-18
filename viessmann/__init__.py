@@ -64,7 +64,7 @@ class Viessmann(SmartPlugin):
     '''
     ALLOW_MULTIINSTANCE = False
 
-    PLUGIN_VERSION = '1.2.2'
+    PLUGIN_VERSION = '1.2.3'
 
 #
 # public methods
@@ -359,7 +359,7 @@ class Viessmann(SmartPlugin):
                 commandname = self._commandname_by_commandcode(addr)
                 self.logger.debug(f'Triggering cyclic read command: {commandname}')
                 self._send_command(commandname, )
-                entry['nexttime'] = currenttime + entry['cycle']
+                self._cyclic_cmds[addr]['nexttime'] = currenttime + self._cyclic_cmds[addr]['cycle']
                 read_items += 1
 
         self._cyclic_update_active = False
@@ -963,8 +963,8 @@ class Viessmann(SmartPlugin):
                         elif chunk[:1] != self._int2bytes(self._controlset['Acknowledge'], 1):
                             self.logger.error(f'Received invalid chunk, not starting with ACK! response was: {chunk}')
                             self._error_count += 1
-                            if self._error_count > 5:
-                                self.log.warning('Encountered 5 invalid chunks in sequence. Maybe communication was lost, re-initializing')
+                            if self._error_count >= 5:
+                                self.logger.warning('Encountered 5 invalid chunks in sequence. Maybe communication was lost, re-initializing')
                                 self._initialized = False
                         else:
                             response_packet.extend(chunk)
@@ -1255,7 +1255,7 @@ class Viessmann(SmartPlugin):
                     value = bool(value)
                 else:
                     value = int(value)
-                valuebytes = self._int2bytes(value, commandvaluebytes)
+                valuebytes = self._int2bytes(value, commandvaluebytes, byteorder='little')
                 self.logger.debug(f'Created value bytes for type {valuetype} as hexstring: {self._bytes2hexstring(valuebytes)} and as bytes: {valuebytes}')
             else:
                 self.logger.error(f'Type {valuetype} not definied for creating write command bytes')
@@ -1650,7 +1650,7 @@ class Viessmann(SmartPlugin):
             self.logger.error('No bytes received to calculate checksum')
         return checksum
 
-    def _int2bytes(self, value, length, signed=False):
+    def _int2bytes(self, value, length, signed=False, byteorder='big'):
         '''
         Convert value to bytearray with respect to defined length and sign format.
         Value exceeding limit set by length and sign will be truncated
@@ -1665,7 +1665,7 @@ class Viessmann(SmartPlugin):
         :rtype: bytearray
         '''
         value = value % (2 ** (length * 8))
-        return value.to_bytes(length, byteorder='big', signed=signed)
+        return value.to_bytes(length, byteorder=byteorder, signed=signed)
 
     def _bytes2int(self, rawbytes, signed):
         '''

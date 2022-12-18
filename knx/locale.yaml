@@ -49,6 +49,11 @@ plugin_translations:
         en: '='
         fr: ''
 
+    "problem encoding payload {} for dpt {}":
+        de: "Daten {} konnten nicht für Datenpunkt Typ {} codiert werden"
+        en: "="
+        fr: ''
+
     "reading knxd cache for ga: {}":
         de: "Lese den knxd cache für Gruppenadresse {}"
         en: '='

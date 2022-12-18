@@ -1,9 +1,9 @@
-.. index:: Plugins; Vacations (Deutsche Schulferien)
-.. index:: Vacations
+.. index:: Plugins; vacations (Deutsche Schulferien)
+.. index:: vacations
 .. index:: Ferien; vactions
 
 vacations
-############
+#########
 
 Konfiguration
 =============

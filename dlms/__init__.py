@@ -2,12 +2,12 @@
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
 #  Copyright 2013 - 2015 KNX-User-Forum e.V.    http://knx-user-forum.de/
-#  Copyright 2016 - 2018 Bernd Meiners              Bernd.Meiners@mail.de
+#  Copyright 2016 - 2021 Bernd Meiners              Bernd.Meiners@mail.de
 #########################################################################
 #
-#  DLMS plugin for SmartHomeNG.py.
+#  DLMS plugin for SmartHomeNG
 #
-#  This file is part of SmartHomeNG.py.
+#  This file is part of SmartHomeNG
 #  Visit:  https://github.com/smarthomeNG/
 #          https://knx-user-forum.de/forum/supportforen/smarthome-py
 #
@@ -56,10 +56,10 @@ from . import conversion
 
 
 class DLMS(SmartPlugin, conversion.Conversion):
-    PLUGIN_VERSION = "1.5.3"
+    PLUGIN_VERSION = "1.9.4"
 
     """
-    This class provides a Plugin for SmarthomeNG which reads out a smartmeter.
+    This class provides a Plugin for SmarthomeNG to reads out a smartmeter.
     The smartmeter needs to have an infrared interface and an IR-Adapter is needed for USB
     It is possible to use dlms.py standalone to test the results 
     prior to use it in SmarthomeNG
@@ -69,50 +69,49 @@ class DLMS(SmartPlugin, conversion.Conversion):
     """
 
     # tags this plugin handles
-    ITEM_TAG = [
-        'dlms_obis_code',           # a single code in form of '1-1:1.8.1'
-        'dlms_obis_readout']        # complete readout from smartmeter, if you want to examine codes yourself in a logic
+    DLMS_OBIS_CODE = 'dlms_obis_code'       # a single code in form of '1-1:1.8.1'
+    DLMS_OBIS_READOUT = 'dlms_obis_readout' # complete readout from smartmeter, if you want to examine codes yourself in a logic
+    
+    ITEM_TAG = [DLMS_OBIS_CODE,DLMS_OBIS_READOUT]
+
 
     def __init__(self, sh, *args, **kwargs ):
         """
         Initializes the DLMS plugin
-        The params may be obtained through get_parameter_value(parameter_name)
-
-        serialport
-        baudrate="auto"
-        update_cycle="60"
-        device_address = b''
-        querycode = '?'
-        timeout = 2
-        use_checksum = True
-        reset_baudrate = True
-        no_waiting = False
+        The parameter are retrieved from get_parameter_value(parameter_name)
         """
         from bin.smarthome import VERSION
         if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
             self.logger = logging.getLogger(__name__)
 
-        self.logger.debug("init {}".format(__name__))
+        self.logger.debug(f"init {__name__}")
         self._init_complete = False
 
         # Exit if the required package(s) could not be imported
         if not REQUIRED_PACKAGE_IMPORTED:
-            self.logger.error("{}: Unable to import Python package 'pyserial'".format(self.get_fullname()))
+            self.logger.error(f"{self.get_fullname()}: Unable to import Python package 'pyserial'")
             return
 
-        self._instance = self.get_parameter_value('instance')    # the instance of the plugin for questioning multiple smartmeter
-        self._update_cycle  = self.get_parameter_value('update_cycle')       # the frequency in seconds how often the device should be accessed
-        
-        self._sema = Semaphore()                                # implement a semaphore to avoid multiple calls of the query function
-        self._min_cycle_time = 0                                # we measure the time for the value query and add some security value of 10 seconds
-
-        self.dlms_obis_code_items = []                          # this is a list of items to be updated
-        self.dlms_obis_codes = []                               # this is a list of codes that are to be parsed
-
-        self.dlms_obis_readout_items = []                       # this is a list of items that receive the full readout
+        self._instance = self.get_parameter_value('instance')               # the instance of the plugin for questioning multiple smartmeter
+        self._update_cycle  = self.get_parameter_value('update_cycle')      # the frequency in seconds how often the device should be accessed
+        if self._update_cycle == 0:
+            self._update_cycle = None
+        self._update_crontab  = self.get_parameter_value('update_crontab')  # the more complex way to specify the device query frequency
+        if self._update_crontab == '':
+            self._update_crontab = None
+        if not (self._update_cycle or self._update_crontab):
+            self.logger.error(f"{self.get_fullname()}: no update cycle or crontab set. The smartmeter will not be queried automatically")
+        self._sema = Semaphore()            # implement a semaphore to avoid multiple calls of the query function
+        self._min_cycle_time = 0            # we measure the time for the value query and add some security value of 10 seconds
+                                            
+        self.dlms_obis_code_items = []      # this is a list of items to be updated
+        self.dlms_obis_codes = []           # this is a list of codes that are to be parsed
+                                            
+        self.dlms_obis_readout_items = []   # this is a list of items that receive the full readout
         self._last_readout = ""
         
         # dict especially for the interface
+        # 'serialport', 'device', 'querycode', 'speed', 'baudrate_fix', 'timeout', 'onlylisten', 'use_checksum'
         self._config = {}
         self._config['serialport'] = self.get_parameter_value('serialport')
         if not self._config['serialport']:
@@ -124,12 +123,15 @@ class DLMS(SmartPlugin, conversion.Conversion):
         self._config['device'] = self.get_parameter_value('device_address')
         self._config['querycode'] = self.get_parameter_value('querycode')
         self._config['timeout'] = self.get_parameter_value('timeout')
-
+        self._config['baudrate'] = self.get_parameter_value('baudrate')
+        self._config['baudrate_fix'] = self.get_parameter_value('baudrate_fix')
         self._config['use_checksum'] = self.get_parameter_value('use_checksum')
+        self._config['onlylisten'] = self.get_parameter_value('only_listen')
         self._config['reset_baudrate'] = self.get_parameter_value('reset_baudrate')
         self._config['no_waiting'] = self.get_parameter_value('no_waiting')
 
-        self.logger.debug("Instance {} of DLMS configured to use serialport '{}' with update cycle of {} seconds".format( self._instance if self._instance else 0,self._config.get('serialport'), self._update_cycle))
+        self.logger.debug(f"Instance {self._instance if self._instance else 0} of DLMS configured to use serialport '{self._config.get('serialport')}' with update cycle of {self._update_cycle} seconds")
+        self.logger.debug(f"Config: {self._config}")
         self.init_webinterface()
 
         self.logger.debug("init done")
@@ -139,9 +141,10 @@ class DLMS(SmartPlugin, conversion.Conversion):
         """
         This is called when the plugins thread is about to run
         """
-       	self.logger.debug("Plugin '{}': run method called".format(self.get_fullname()))
+        self.logger.debug(f"Plugin '{self.get_fullname()}': run method called")
         self.alive = True
-        self.scheduler_add('DLMS', self._update_values_callback, prio=5, cycle=self._update_cycle, next=shtime.now())
+        if self._update_cycle or self._update_crontab:
+            self.scheduler_add(self.get_shortname(), self._update_values_callback, prio=5, cycle=self._update_cycle, cron=self._update_crontab, next=shtime.now())
         self.logger.debug("run dlms")
 
     def stop(self):
@@ -149,8 +152,8 @@ class DLMS(SmartPlugin, conversion.Conversion):
         This is called when the plugins thread is about to stop
         """
         self.alive = False
-        self.scheduler_remove('DLMS')
-        self.logger.debug("Plugin '{}': stop method called".format(self.get_fullname()))
+        self.scheduler_remove(self.get_shortname())
+        self.logger.debug(f"Plugin '{self.get_fullname()}': stop method called")
 
     def parse_item(self, item):
         """
@@ -158,19 +161,19 @@ class DLMS(SmartPlugin, conversion.Conversion):
         :param item: The item to process.
         """
 
-        if self.has_iattr(item.conf, self.ITEM_TAG[0]):
+        if self.has_iattr(item.conf, self.DLMS_OBIS_CODE):
             self.dlms_obis_code_items.append(item)
-            self.logger.debug("Item '{}' has Attribute '{}' so it is added to the list of items "
-                              "to receive OBIS Code Values".format(item, self.ITEM_TAG[0]))
-            obis_code = self.get_iattr_value(item.conf, self.ITEM_TAG[0])
+            self.logger.debug(f"Item '{item}' has Attribute '{self.DLMS_OBIS_CODE}' so it is added to the list of items "
+                              "to receive OBIS Code Values")
+            obis_code = self.get_iattr_value(item.conf, self.DLMS_OBIS_CODE)
             if isinstance(obis_code, list):
                 obis_code = obis_code[0]
             self.dlms_obis_codes.append( obis_code )
-            self.logger.debug("The OBIS Code '{}' is added to the list of codes to inspect".format(obis_code))
-        elif self.has_iattr(item.conf, self.ITEM_TAG[1]):
+            self.logger.debug(f"The OBIS Code '{obis_code}' is added to the list of codes to inspect")
+        elif self.has_iattr(item.conf, self.DLMS_OBIS_READOUT):
             self.dlms_obis_readout_items.append(item)
-            self.logger.debug("Item '{}' has Attribute '{}' so it is added to the list of items "
-                              "to receive full OBIS Code readout".format(item, self.ITEM_TAG[1]))
+            self.logger.debug(f"Item '{item}' has Attribute '{self.DLMS_OBIS_READOUT}' so it is added to the list of items "
+                              "to receive full OBIS Code readout")
 
     def init_webinterface(self):
         """
@@ -183,12 +186,12 @@ class DLMS(SmartPlugin, conversion.Conversion):
         except:
              self.mod_http = None
         if self.mod_http == None:
-            self.logger.error("Plugin '{}': Not initializing the web interface".format(self.get_shortname()))
+            self.logger.error(f"Plugin '{self.get_shortname()}': Not initializing the web interface")
             return False
         
         import sys
         if not "SmartPluginWebIf" in list(sys.modules['lib.model.smartplugin'].__dict__):
-            self.logger.warning("Plugin '{}': Web interface needs SmartHomeNG v1.5 and up. Not initializing the web interface".format(self.get_shortname()))
+            self.logger.warning(f"Plugin '{self.get_shortname()}': Web interface needs SmartHomeNG v1.5 and up. Not initializing the web interface")
             return False
 
         # set application configuration for cherrypy
@@ -228,7 +231,7 @@ class DLMS(SmartPlugin, conversion.Conversion):
                 else:
                     self._update_values( result )
             except Exception as e:
-                    self.logger.debug("Exception '{0}' occurred, please inform plugin author!".format(e))
+                    self.logger.debug(f"Exception '{e}' occurred, please inform plugin author!")
             finally:
                     self._sema.release()
         else:
@@ -252,9 +255,9 @@ class DLMS(SmartPlugin, conversion.Conversion):
         :return: returns true if code is in user defined OBIS codes to scan for
         """
         if code in self.dlms_obis_codes:
-            #self.logger.debug("Wanted OBIS Code found: '{}'".format(code))
+            #self.logger.debug(f"Wanted OBIS Code found: '{code}'")
             return True
-        #self.logger.debug("OBIS Code '{}' is not interesting...".format(code))
+        #self.logger.debug(f"OBIS Code '{code}' is not interesting...")
         return False
 
 
@@ -265,32 +268,81 @@ class DLMS(SmartPlugin, conversion.Conversion):
         :param Values: list of dictionaries with Value / Unit entries
         """
         for item in self.dlms_obis_code_items:
-            if self.has_iattr(item.conf, self.ITEM_TAG[0]):
-                attribute = self.get_iattr_value(item.conf, self.ITEM_TAG[0])
+            if self.has_iattr(item.conf, self.DLMS_OBIS_CODE):
+                attribute = self.get_iattr_value(item.conf, self.DLMS_OBIS_CODE)
                 if not isinstance(attribute, list):
-                    self.logger.warning("Attribute '{}' is a single argument, not a list".format(attribute))
+                    self.logger.warning(f"Attribute '{attribute}' is a single argument, not a list")
                     attribute = [attribute]
                 obis_code = attribute[0]
                 if obis_code == Code:
-                    #todo: error handling for key errors
-                    Index = int(attribute[1]) if len(attribute)>1 else 0
-                    Key = attribute[2] if len(attribute)>2 else 'Value'
-                    if not Key in ['Value', 'Unit']: Key = 'Value'
+                    try:
+                        Index = int(attribute[1]) if len(attribute)>1 else 0
+                        if Index < 0:
+                            self.logger.warning(f"Index '{attribute[1]}' is negative, please provide a positive index or zero")    
+                            Index = 0
+                    except:
+                        self.logger.warning(f"Index '{attribute[1]}' is not a positive integer")
+                        Index = 0
+                    try:
+                        Key = attribute[2] if len(attribute)>2 else 'Value'
+                    except:
+                        pass
+                    if not Key in ['Value', 'Unit']: 
+                        self.logger.warning(f"Key should be either 'Value' or 'Unit' but is '{Key}', change to 'Value'")
+                        Key = 'Value'
+                        
                     Converter = attribute[3] if len(attribute)>3 else ''
                     try:
                         itemValue = Values[Index][Key]
                         itemValue = self._convert_value(itemValue, Converter )
-                        item(itemValue, 'DLMS')
-                        self.logger.debug("Set item {} for Obis Code {} to Value {}".format(item, Code, itemValue))
+                        item(itemValue, self.get_shortname())
+                        self.logger.debug(f"Set item {item} for Obis Code {Code} to Value {itemValue}")
                     except IndexError as e:
-                        self.logger.warning("Index Error '{}' while setting item {} for Obis Code {} to Value "
-                                            "with Index '{}' in '{}'".format(str(e), item, Code, Index, Values))
+                        self.logger.warning(f"Index Error '{str(e)}' while setting item {item} for Obis Code {Code} to Value "
+                                            "with Index '{Index}' in '{Values}'")
                     except KeyError as e:
-                        self.logger.warning("Key error '{}' while setting item {} for Obis Code {} to "
-                                            "Key '{}' in '{}'".format(str(e), item, Code, Key, Values[Index]))
+                        self.logger.warning(f"Key error '{str(e)}' while setting item {item} for Obis Code {Code} to "
+                                            "Key '{Key}' in '{Values[Index]}'")
                     except NameError as e:
-                        self.logger.warning("Name error '{}' while setting item {} for Obis Code {} to "
-                                            "Key '{}' in '{}'".format(str(e), item, Code, Key, Values[Index]))
+                        self.logger.warning(f"Name error '{str(e)}' while setting item {item} for Obis Code {Code} to "
+                                            "Key '{Key}' in '{Values[Index]}'")
+
+    def _split_header( self, readout, break_at_eod = True):
+        """if there is an empty line at second position within readout then seperate this"""
+        header = ''
+        obis = []
+        endofdata_count = 0
+        for linecount, line in enumerate(readout.splitlines()):
+            if linecount == 0 and line.startswith("/"):
+                has_header = True
+                header = line
+                continue
+
+            # an empty line separates the header from the codes, it must be suppressed here
+            if len(line) == 0 and linecount == 1 and has_header:
+                continue
+
+            # if there is an empty line other than directly after the header
+            # it is very likely that there is a faulty obis readout.
+            # It might be that checksum is disabled an thus no error could be catched
+            if len(line) == 0:
+                self.logger.error("An empty line was encountered unexpectedly!")
+                break
+
+            # '!' as single OBIS code line means 'end of data'
+            if line.startswith("!"):
+                self.logger.debug("No more data available to read")
+                if endofdata_count:
+                    self.logger.debug("Found {endofdata_count} end of data marker '!' in readout")
+                    if break_at_eod:    # omit the rest of data here
+                        break
+                endofdata_count +=1
+            else:
+                obis.append(line)
+        return header, obis
+
+
+
 
     def _update_values(self, readout):
         """
@@ -306,58 +358,55 @@ class DLMS(SmartPlugin, conversion.Conversion):
 
         # update all items marked for a full readout
         self._update_dlms_obis_readout_items(readout)
+        self.logger.debug(f"readout size is {len(readout)}")
 
-        for line in re.split('\r\n', readout):
-            # '!' as single OBIS code line means 'end of data'
-            if line.startswith("!"):
-                self.logger.debug("No more data available to read")
-                break
+        header, obis = self._split_header(readout)
 
-            # if there is an empty line it is very likely that an error occurred.
-            # It might be that checksum is disabled an thus no error could be catched
-            if len(line) == 0:
-                self.logger.error("An empty line was encountered!")
-                break
+        try:
+            for line in obis:
+                # Now check if we can split between values and OBIS code
+                arguments = line.split('(')
+                if len(arguments)==1:
+                    # no values found at all; that seems to be a wrong OBIS code line then
+                    arguments = arguments[0]
+                    values = ""
+                    self.logger.warning("Any line with OBIS Code should have at least one data item")
+                else:
+                    # ok, found some values to the right, lets isolate them
+                    values = arguments[1:]
+                    obis_code = arguments[0]
 
-            # Now check if we can split between values and OBIS code
-            arguments = line.split('(')
-            if len(arguments)==1:
-                # no values found at all; that seems to be a wrong OBIS code line then
-                arguments = arguments[0]
-                values = ""
-                self.logger.warning("Any line with OBIS Code should have at least one data item")
-            else:
-                # ok, found some values to the right, lets isolate them
-                values = arguments[1:]
-                obis_code = arguments[0]
+                    if self._is_obis_code_wanted(obis_code):
+                        TempValues = values
+                        values = []
+                        for s in TempValues:
+                            s = s.replace(')','')
+                            if len(s) > 0:
+                                # we now should have a list with values that may contain a number
+                                # separated from a unit by a '*' or a date
+                                # so see, if there is an '*' within
+                                vu = s.split('*')
+                                if len(vu) > 2:
+                                    self.logger.error(f"Too many entries found in '{s}' of '{line}'")
+                                elif len(vu) == 2:
+                                    # just a value and a unit
+                                    v = vu[0]
+                                    u = vu[1]
+                                    values.append( { 'Value': v, 'Unit': u} )
+                                else:
+                                    # just a value, no unit
+                                    v = vu[0]
+                                    values.append( { 'Value': v } )
+                        # uncomment the following line to check the generation of the values dictionary
+                        self.logger.debug(f"{line:40} ---> {values}")
+                        try:
+                            self._update_items(obis_code, values)
+                        except:
+                            self.logger.error(f"tried to update items for Obis Code {obis_code} to Values {values} failed with {sys.exc_info()[0]}")
+            self.logger.debug("All lines inspected, no more data")
+        except Exception as e:
+            self.logger.debug("Exception '{e}' occurred, please inform plugin author!")
 
-                if self._is_obis_code_wanted(obis_code):
-                    TempValues = values
-                    values = []
-                    for s in TempValues:
-                        s = s.replace(')','')
-                        if len(s) > 0:
-                            # we now should have a list with values that may contain a number
-                            # separated from a unit by a '*' or a date
-                            # so see, if there is an '*' within
-                            vu = s.split('*')
-                            if len(vu) > 2:
-                                self.logger.error("Too many entries found in '{}' of '{}'".format(s, line))
-                            elif len(vu) == 2:
-                                # just a value and a unit
-                                v = vu[0]
-                                u = vu[1]
-                                values.append( { 'Value': v, 'Unit': u} )
-                            else:
-                                # just a value, no unit
-                                v = vu[0]
-                                values.append( { 'Value': v } )
-                    # uncomment the following line to check the generation of the values dictionary
-                    # self.logger.debug("{:40} ---> {}".format(line, Values))
-                    try:
-                        self._update_items(obis_code, values)
-                    except:
-                        self.logger.error("tried to update items for Obis Code {} to Values {} failed with {}".format(obis_code, values, sys.exc_info()[0]))
 
 # ------------------------------------------
 #    Webinterface of the plugin
@@ -394,5 +443,5 @@ class WebInterface(SmartPluginWebIf):
         """
         tmpl = self.tplenv.get_template('index.html')
         # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
-        return tmpl.render(p=self.plugin, i=self.plugin._instance, c=self.plugin._config, r=self.plugin._last_readout, cycle=self.plugin._update_cycle, items=self.plugin.dlms_obis_readout_items )
+        return tmpl.render(p=self.plugin, i=self.plugin._instance, c=self.plugin._config, r=self.plugin._last_readout, cycle=self.plugin._update_cycle, cron=self.plugin._update_crontab, readout_items=self.plugin.dlms_obis_readout_items, code_items=self.plugin.dlms_obis_code_items )
 

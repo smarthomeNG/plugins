@@ -52,7 +52,7 @@ def is_knxproject(filename):
         return False
     return True
 
-def parse_projectfile(filename):
+def parse_projectfile(filename, password=None):
     """
     parse a Project file and return a dictionary with entries for every found group address
     { "0/1/5" : {'Id': 'P-0185-0_GA-8', 'Name': 'Lamellenstellung', 'Description': 'Wohnzimmer Markise', 'Comment' : '', 'DatapointType': 'DPST-5-1', 'Puid': '47'},
@@ -61,7 +61,7 @@ def parse_projectfile(filename):
     so this dictionary can be walked through by ga as key
     """
     if is_knxproject(filename):
-        return _parse_knxproject(filename)
+        return _parse_knxproject(filename, password)
 
     return _parse_esfproject(filename)
 
@@ -134,7 +134,7 @@ def _parse_esfproject(filename):
     return GAs
 
 
-def _parse_knxproject(filename):
+def _parse_knxproject(filename, password=None):
     """
     Details can be found in ``KNX-XML Project-Schema-v17 - Description.pdf`` [1]
     As of ETS 5.x the zipfile contains one file named ``knx_master.xml`` which is not interesting for parsing the structure
@@ -181,12 +181,24 @@ def _parse_knxproject(filename):
     </Project>
     </KNX>
     ```
+    
+    
     """
+    # Zipfiles can have an empty password though it does not make sense except for confusion
+    if password is None: 
+        password = ''
+
+    if isinstance(password, str):
+        password = password.encode()
+
+    xmldict = {}
+
     knxproj = zipfile.ZipFile(filename, 'r')
 
     # see which project files can be found
     subprojects = []
     for file in knxproj.filelist:
+        logger.debug(f"File: {file}")
         if file.filename[0] != 'P':
             continue
 
@@ -196,17 +208,52 @@ def _parse_knxproject(filename):
         subprojects.append(file)
         logger.debug("Subfile '{}' found".format(file))
 
-    if len(subprojects) == 0:
+    zipped_subprojects = []
+    for file in knxproj.filelist:
+        print(file)
+        if file.filename[0] != 'P':
+            continue
+
+        # According to Project Schema Description, page 41 future files can be named [0...16].xml
+        if not file.filename.endswith('.zip'):
+            continue
+        zipped_subprojects.append(file)
+        logger.debug("Zipped Subfile '{}' found".format(file))
+
+    # currently only exactly one project file is allowed
+    if len(subprojects) + len(zipped_subprojects) == 0:
         logger.error("No project file found to examine")
         return None
 
-    if len(subprojects) > 1:
+    if len(subprojects) + len(zipped_subprojects) > 1:
         logger.error("More than one project file found to examine, giving up!")
         return None
 
-    xmlfile = knxproj.open(subprojects[0].filename)
-    xmldict = xmltodict.parse(xmlfile.read())
+    xmlfile = None
     
+    if (len(subprojects) == 0):
+        zipped_subproject = knxproj.open(zipped_subprojects[0].filename)
+        subproject = zipfile.ZipFile(zipped_subproject, 'r')
+        logger.debug(f"subproject is {subproject}")
+        for file in subproject.filelist:
+            # According to Project Schema Description, page 41 future files can be named [0...16].xml
+            if file.filename.split("/")[-1] != '0.xml':
+                continue
+            try:
+                xmlfile = subproject.open(file.filename, pwd=password)
+                xmldict = xmltodict.parse(xmlfile.read())
+            except (RuntimeError, ValueError) as known_exception:
+                logger.error(f"provided password does not work to open {file.filename}")
+            except Exception as ex:
+                logger.error(f"Error {ex}: could not open {file.filename} and read project file")
+            break
+    else:
+        try:
+            xmlfile = knxproj.open(subprojects[0].filename)
+            xmldict = xmltodict.parse(xmlfile.read())
+        except Exception as ex:
+            logger.error(f"Error {ex}: could not open {subprojects[0].filename} and read project file")
+
     GAs = {}
 
     try:

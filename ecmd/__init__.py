@@ -116,7 +116,6 @@ class ECMD(ECMD1wireBase):
         ECMD1wireBase.__init__(self, host, port)
         self._sh = smarthome
         self._cycle = int(cycle)
-        smarthome.connections.monitor(self)
 
     def _refresh(self):
         start = time.time()

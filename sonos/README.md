@@ -22,7 +22,7 @@
 * Python3 libraries ```requests```, ```tinytag``` and ```xmltodict```
 * available ```ping``` executable on the host system
 * tested on Sonos software 10.3
-* SoCo 0.20 (it will be necessary to update the Sonos software to ≥10.1)
+* SoCo 0.22 (it will be necessary to update the Sonos software to ≥10.1)
 
 To install all necessary libraries for SmarthomeNG, you can run following bash command:
 
@@ -447,6 +447,13 @@ Returns a list of Sonos playlists. These playlists can be loaded by the ```load_
 
 Sets / gets the status light indicator of a speaker. 'True' to turn the light on, 'False' to turn it off. The value is 
 NOT updated in real-time. For each speaker discover cycle the item will be updated.
+
+#### buttons_enabled
+```read``` ```write```
+
+Sets / gets the state of the buttons/touch enabled feature of a speaker. 'True' to enable button/touch control, 'False' to disable it. The value is 
+NOT updated in real-time. For each speaker discover cycle the item will be updated.
+
 
 #### stop
 ```read``` ```write``` ```visu```

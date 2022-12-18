@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # pylint: disable=not-context-manager,import-error,wrong-import-position
 
 # NOTE: The pylint not-content-manager warning is disabled pending the fix of
@@ -63,7 +62,6 @@ twisted.python.failure.Failure.html
 
 """
 
-from __future__ import unicode_literals
 
 import sys
 import logging
@@ -71,9 +69,8 @@ import logging
 # Hack to make docs build without twisted installed
 if "sphinx" in sys.modules:
 
-    class Resource(object):  # pylint: disable=no-init
+    class Resource:  # pylint: disable=no-init
         """Fake Resource class to use when building docs"""
-
 
 else:
     from twisted.internet import reactor
@@ -130,7 +127,7 @@ class EventNotifyHandler(Resource, EventNotifyHandlerBase):
 
     # pylint: disable=no-self-use, missing-docstring
     def log_event(self, seq, service_id, timestamp):
-        log.info("Event %s received for %s service at %s", seq, service_id, timestamp)
+        log.debug("Event %s received for %s service at %s", seq, service_id, timestamp)
 
 
 class EventListener(EventListenerBase):
@@ -175,7 +172,7 @@ class EventListener(EventListenerBase):
         ):
             try:
                 if port_number > self.requested_port_number:
-                    log.warning("Trying next port (%d)", port_number)
+                    log.debug("Trying next port (%d)", port_number)
                 # pylint: disable=no-member
                 self.port = reactor.listenTCP(
                     port_number, factory, interface=ip_address
@@ -187,7 +184,7 @@ class EventListener(EventListenerBase):
                 continue
 
         if self.port:
-            log.info("Event listener running on %s", (ip_address, self.port.port))
+            log.debug("Event listener running on %s", (ip_address, self.port.port))
             return self.port.port
         else:
             return None
@@ -338,8 +335,8 @@ class Subscription(SubscriptionBase):
             self._auto_renew_loop.stop()
             self._auto_renew_loop = None
 
-    # pylint: disable=no-self-use, too-many-branches, too-many-arguments
-    def _request(self, method, url, headers, success):
+    # pylint: disable=no-self-use
+    def _request(self, method, url, headers, success, unconditional=None):
         """Sends an HTTP request.
 
         Args:
@@ -350,12 +347,15 @@ class Subscription(SubscriptionBase):
             success (function): A function to be called if the
                 request succeeds. The function will be called with a dict
                 of response headers as its only parameter.
+            unconditional (function): An optional function to be called after
+                the request is complete, regardless of its success. Takes
+                no parameters.
 
         """
         agent = BrowserLikeRedirectAgent(Agent(reactor))
 
         if headers:
-            for k in headers.keys():
+            for k in list(headers.keys()):
                 header = headers[k]
                 del headers[k]
                 if isinstance(header, (list,)):
@@ -378,6 +378,8 @@ class Subscription(SubscriptionBase):
             return self
 
         d.addCallback(on_success)
+        if unconditional:
+            d.addBoth(unconditional)
         return d
 
     def _wrap(self, method, strict, *args, **kwargs):

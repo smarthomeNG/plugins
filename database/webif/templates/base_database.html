@@ -1,19 +1,126 @@
 {% extends "base_plugin.html" %}
-
 {% set logo_frame = false %}
+{%- block pluginscripts %}
+<script src="/gstatic/bootstrap-datepicker/js/bootstrap-datepicker.min.js"></script>
+<script src="/gstatic/bootstrap-datepicker/locales/bootstrap-datepicker.de.min.js"></script>
+<script src="/gstatic/bootstrap-datepicker/locales/bootstrap-datepicker.fr.min.js"></script>
+<script>
+  $(document).ready( function () {
+    $(window).trigger('datatables_defaults');
+    try {
+      {% if webif_pagelength is defined %}webif_pagelength = {{ webif_pagelength|int }};{% endif %}
+      if (isNaN(parseFloat(webif_pagelength)) || webif_pagelength == 0) {
+        resize = true;
+        webif_pagelength = -1;
+        console.log('Activating automatic table resize');
+      }
+      else {
+        resize = false;
+      }
+    }
+    catch (e) {
+      webif_pagelength = 100;
+      resize = false;
+      console.log("Using default values for page length " + webif_pagelength + ", pageResize: " + resize);
+    }
+		try {
+      itemtable = $('#itemtable').DataTable( {
+        pageResize: resize,
+        columnDefs: [
+        { responsivePriority: 1, targets: 1 },
+        { responsivePriority: 3, targets: 4 },
+        { responsivePriority: 2, targets: -1 },
+        { className: "item", targets: 1 },
+        { className: "init", targets: 2 },
+        { className: "type", targets: 3 },
+        { className: "value", targets: 4 },
+        { className: "id", targets: 5, render: $.fn.dataTable.render.number('.', ',', 0, '')  },
+        { className: "logcount", targets: 6, render: $.fn.dataTable.render.number('.', ',', 0, '') },
+        { className: "maxage", targets: -2 },
+        { className: "no-sort actions", targets: -1 }
+        ].concat($.fn.dataTable.defaults.columnDefs),
+        pageLength: webif_pagelength});
 
+      orphantable = $('#orphantable').DataTable( {
+        pageResize: resize,
+        columnDefs: [
+        { responsivePriority: 1, targets: 1 },
+        { responsivePriority: 2, targets: 2 },
+        { className: "item", targets: 1 },
+        { className: "time", targets: 2 },
+        { className: "type", targets: 3 },
+        { className: "id", targets: 4, render: $.fn.dataTable.render.number('.', ',', 0, '')  },
+        { className: "logcount", targets: 5, render: $.fn.dataTable.render.number('.', ',', 0, '') },
+        ].concat($.fn.dataTable.defaults.columnDefs),
+        pageLength: webif_pagelength});
 
-{%- block scripts %}
-{{ super() }}
-<script src="/gstatic/bootstrap-datepicker/dist/js/bootstrap-datepicker.min.js"></script>
-<script src="/gstatic/bootstrap-datepicker/dist/locales/bootstrap-datepicker.de.min.js"></script>
-<script src="/gstatic/bootstrap-datepicker/dist/locales/bootstrap-datepicker.fr.min.js"></script>
-{%- endblock scripts %}
+      detailtable = $('#item_details_table').DataTable( {
+        pageLength: webif_pagelength,
+        order: [[2, 'desc']],
+        columnDefs: [
+        { responsivePriority: 1, targets: 1 },
+        { responsivePriority: 2, targets: 2 },
+        { responsivePriority: 3, targets: -1 },
+        { className: "id", targets: 1 },
+        { className: "time", targets: 2 },
+        { className: "duration", targets: 3 },
+        { className: "value", targets: 4 },
+        { className: "time", targets: 5 },
+        { className: "no-sort actions", targets: -1 }
+        ].concat($.fn.dataTable.defaults.columnDefs),
+        createdRow: function (row, data, index) {
+            $('td', row).addClass('py-1 truncate');
+            this.api().columns.adjust();
+            this.api().fixedHeader.adjust();
+            this.api().responsive.recalc();
+        },
+        pageResize: resize});
+		}
+		catch (e) {
+			console.log("Datatable JS not loaded, showing standard table without reorder option " +e);
+    }
 
-{%- block styles %}
-{{ super() }}
-<link rel="stylesheet" href="/gstatic/bootstrap-datepicker/dist/css/bootstrap-datepicker.min.css" type="text/css"/>
-{%- endblock styles %}
+  });
+</script>
+{%- endblock pluginscripts %}
+
+{%- block pluginstyles %}
+<link rel="stylesheet" href="/gstatic/bootstrap-datepicker/css/bootstrap-datepicker.min.css" type="text/css"/>
+<style>
+    .hidden {
+      display:none;}
+    .logcount {
+      width: 100px;
+      text-align:right;
+    }
+    .duration {
+      width: 60px;
+      text-align:right;
+    }
+    .time {
+      width: 150px;
+    }
+    .actions {
+      width: 110px;
+    }
+    .maxage {
+      width: 230px;
+    }
+    .id {
+      width: 50px;
+      text-align:right;
+    }
+    .value {
+      width: 120px;
+    }
+    .type {
+      width: 80px;
+    }
+    .init {
+      width: 50px;
+    }
+</style>
+{%- endblock pluginstyles %}
 
 {% block headtable %}
 <table class="table table-striped table-hover">
@@ -26,6 +133,14 @@
 			<td class="py-1"></td>
 			<td class="py-1"></td>
 		</tr>
+		<tr>
+			<td class="py-1" width="150px"><strong>{{ _('Cleanup ist aktiv') }}</strong></td>
+			<td class="py-1">{% if p.remove_orphan %}{{ _('Ja') }}{% else %}{{ _('Nein') }}{% endif %}</td>
+			<td class="py-1" width="150px"><strong></strong></td>
+			<td class="py-1"></td>
+			<td class="py-1"></td>
+			<td class="py-1"></td>
+		</tr>
 		{% set first = True %}
 		{% for key, value in p._db._params.items() %}
 			{% if loop.index % 4 == 0 %}
@@ -34,7 +149,8 @@
 					{% if key != "passwd" %}
 					<td class="py-1"><strong>{{ key }}</strong></td><td class="py-1">{{ value }}</td>
 					{% else %}
-					<td class="py-1"><strong>{{ key }}</strong></td><td class="py-1">{% for letter in value %}*{% endfor %}</td>
+					<td class="py-1"><strong>{{ key }}</strong></td><td class="py-1" onclick="document.getElementById('pwd').innerHTML = '{{ value }}'"><span id="pwd" title="Click to show password">{% for letter in value %}*{% endfor %}</span></td>
+
 					{% endif %}
 					{% if loop.index % 3 > 0 and loop.last %}
 						<td class="py-1" colspan="{{ loop.index % 3 }}"></td>

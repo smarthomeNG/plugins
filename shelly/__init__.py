@@ -29,6 +29,8 @@ from lib.module import Modules
 from lib.model.mqttplugin import *
 from lib.item import Items
 
+from .webif import WebInterface
+
 
 class Shelly(MqttPlugin):
     """
@@ -36,7 +38,7 @@ class Shelly(MqttPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.1.3'
+    PLUGIN_VERSION = '1.2.0'
 
 
     def __init__(self, sh):
@@ -73,7 +75,7 @@ class Shelly(MqttPlugin):
         self.add_subscription('shellies/+/online', 'bool', bool_values=['false', 'true'], callback=self.on_mqtt_online)
 
         # if plugin should start even without web interface
-        self.init_webinterface()
+        self.init_webinterface(WebInterface)
 
         return
 
@@ -143,7 +145,34 @@ class Shelly(MqttPlugin):
             bool_values = None
             if shelly_attr:
                 shelly_attr = shelly_attr.lower()
-            if shelly_attr in ['relay', None]:
+
+            # shellyht, shellydw2 and shellyflood needs another topic path than the relay devices:
+            if shelly_type == 'shellyht' or shelly_type == 'shellydw2' or shelly_type == 'shellyflood':
+                if shelly_attr == 'humidity':
+                    topic = 'shellies/' + shelly_id + '/sensor/humidity'
+                elif shelly_attr == 'state':
+                    topic = 'shellies/' + shelly_id + '/sensor/state'
+                elif shelly_attr == 'tilt':
+                    topic = 'shellies/' + shelly_id + '/sensor/tilt'
+                elif shelly_attr == 'vibration':
+                    topic = 'shellies/' + shelly_id + '/sensor/vibration'
+                elif shelly_attr == 'lux':
+                    topic = 'shellies/' + shelly_id + '/sensor/lux'
+                elif shelly_attr == 'illumination':
+                    topic = 'shellies/' + shelly_id + '/sensor/illumination'
+                elif shelly_attr == 'flood':
+                    topic = 'shellies/' + shelly_id + '/sensor/flood'
+                elif shelly_attr == 'battery':
+                    topic = 'shellies/' + shelly_id + '/sensor/battery'
+                elif shelly_attr == 'temp':
+                    topic = 'shellies/' + shelly_id + '/sensor/temperature'
+                elif shelly_attr == 'error':
+                    topic = 'shellies/' + shelly_id + '/sensor/error'
+                elif shelly_attr == 'online':
+                    topic = 'shellies/' + shelly_id + '/online'
+                else:
+                    self.logger.warning("parse_item: unknown attribute shelly_attr = {} for type {}".format(shelly_attr, shelly_type))
+            elif shelly_attr in ['relay', None]:
                 topic = 'shellies/' + shelly_id + '/relay/' + shelly_relay
                 bool_values = ['off', 'on']
             elif shelly_attr == 'power':
@@ -158,7 +187,7 @@ class Shelly(MqttPlugin):
             elif shelly_attr == 'temp_f':
                 topic = 'shellies/' + shelly_id + '/temperature_f'
             else:
-                self.logger.warning("parse_item: unknown attribute shelly_attr = {}".format(shelly_attr))
+                self.logger.warning("parse_item: unknown attribute shelly_attr = {} for type {}".format(shelly_attr, shelly_type))
 
             if topic:
                 # append to list used for web interface
@@ -252,122 +281,6 @@ class Shelly(MqttPlugin):
             self.shelly_devices[shelly_id]['connected_to_item'] = False
 
         self.shelly_devices[shelly_id]['online'] = payload
-
-        return
-
-    # -----------------------------------------------------------------------
-
-    def init_webinterface(self):
-        """"
-        Initialize the web interface for this plugin
-
-        This method is only needed if the plugin is implementing a web interface
-        """
-        try:
-            self.mod_http = Modules.get_instance().get_module('http')  # try/except to handle running in a core version that does not support modules
-        except:
-            self.mod_http = None
-        if self.mod_http == None:
-            self.logger.error("Not initializing the web interface")
-            return False
-
-        import sys
-        if not "SmartPluginWebIf" in list(sys.modules['lib.model.smartplugin'].__dict__):
-            self.logger.warning("Web interface needs SmartHomeNG v1.5 and up. Not initializing the web interface")
-            return False
-
-        # set application configuration for cherrypy
-        webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
-        config = {
-            '/': {
-                'tools.staticdir.root': webif_dir,
-            },
-            '/static': {
-                'tools.staticdir.on': True,
-                'tools.staticdir.dir': 'static'
-            }
-        }
-
-        # Register the web interface as a cherrypy app
-        self.mod_http.register_webif(WebInterface(webif_dir, self),
-                                     self.get_shortname(),
-                                     config,
-                                     self.get_classname(), self.get_instance_name(),
-                                     description='')
-
-        return True
-
-
-
-# -----------------------------------------------------------------------
-#    Webinterface of the plugin
-# -----------------------------------------------------------------------
-
-import cherrypy
-from jinja2 import Environment, FileSystemLoader
-
-
-class WebInterface(SmartPluginWebIf):
-
-    def __init__(self, webif_dir, plugin):
-        """
-        Initialization of instance of class WebInterface
-
-        :param webif_dir: directory where the webinterface of the plugin resides
-        :param plugin: instance of the plugin
-        :type webif_dir: str
-        :type plugin: object
-        """
-        self.logger = logging.getLogger(__name__)
-        self.webif_dir = webif_dir
-        self.plugin = plugin
-        self.tplenv = self.init_template_environment()
-
-        self.items = Items.get_instance()
-
-    @cherrypy.expose
-    def index(self, reload=None):
-        """
-        Build index.html for cherrypy
-
-        Render the template and return the html file to be delivered to the browser
-
-        :return: contents of the template after beeing rendered
-        """
-        self.plugin.get_broker_info()
-
-        # sort shelly_items for display in web interface
-        self.plugin.shelly_items = sorted(self.plugin.shelly_items, key=lambda k: str.lower(k['_path']))
-
-        tmpl = self.tplenv.get_template('index.html')
-        # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
-        return tmpl.render(p=self.plugin, items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path'])))
-
-
-    @cherrypy.expose
-    def get_data_html(self, dataSet=None):
-        """
-        Return data to update the webpage
-
-        For the standard update mechanism of the web interface, the dataSet to return the data for is None
-
-        :param dataSet: Dataset for which the data should be returned (standard: None)
-        :return: dict with the data needed to update the web page.
-        """
-        if dataSet is None:
-            # get the new data
-            self.plugin.get_broker_info()
-            data = {}
-            data['broker_info'] = self.plugin._broker
-            data['broker_uptime'] = self.plugin.broker_uptime()
-            data['item_values'] = self.plugin._item_values
-
-            # return it as json the the web page
-            try:
-                return json.dumps(data)
-            except Exception as e:
-                self.logger.error("get_data_html exception: {}".format(e))
-                return {}
 
         return
 

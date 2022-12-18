@@ -130,7 +130,7 @@ class OwBase(object):
         """
         return self._request(path, cmd=OWMSG_DIRALLSLASH).decode().strip('\x00').split(',')
 
-    def tree(self, path='/'):
+    def tree(self, path='/', max_depth=None, with_values=False):
         """
         Calls itself recursively to create a tree of all mounted sensors, devices, settings, etc.
         Warnung: This can result in a couple of thousand lines and might take a long time
@@ -138,12 +138,30 @@ class OwBase(object):
         result = ""
         try:
             items = self.dir(path)
-        except Exception:
-            return
-        for item in items:
-            result = result + item + "\n"
-            if item.endswith('/'):
-                self.tree(item)
+        except Exception as e:
+            if self.logger.isEnabledFor(logging.DEBUG):
+                self.logger.debug(f"dir({path}) raised an exception {e}, giving up")
+        else:
+            for item in items:
+                if item.endswith('/'):
+                    result = result + item + "\n"
+                    if max_depth is not None and max_depth > 0:
+                        subresult = self.tree(item, max_depth=max_depth-1, with_values=with_values)
+                        if subresult is not None:
+                            result += subresult
+                else:
+                    vstr = ""
+                    if with_values:
+                        try:
+                            value = self.read(item)
+                        except Exception as e:
+                            value = ">>> value could not be read <<<"
+                        else:
+                            if value is not None:
+                                vstr = f" --> {value}"
+                            else:
+                                vstr = "(None)"
+                    result = result + item + vstr + "\n"
         return result
 
     def _request(self, path, cmd=OWMSG_GETSLASH, value=None):
@@ -181,7 +199,7 @@ class OwBase(object):
             #    self.logger.debug("no connection while request() was called. Retrying ...")
             self.connect()
         if not self.connected:
-            raise owex("No connection to owserver.")
+            raise ConnectionError("No connection to owserver.")
         islocked = self._lock.acquire()
         if islocked:
             try:

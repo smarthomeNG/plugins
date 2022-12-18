@@ -3,17 +3,17 @@ plugin:
     # Global plugin attributes
     type: web                      # plugin type (gateway, interface, protocol, system, web)
     description:
-        de: 'Dieses Plugin liefert die Gamme-Ortsdosisleistung (ODL) in µSv/h  von mehreren Stationen in Deutschland (zur Verfügung gestellt durch das Bundesamt für Strahlenschutz). Mehr Informationen unter https://odlinfo.bfs.de.'
-        en: 'This plugin retrieves the Gamma-Ortsdosisleistung (ODL) in from several measuring stations (by "Bundesamt für Strahlenschutz") in Germany. For more information see https://odlinfo.bfs.de.'
+        de: 'Dieses Plugin liefert die Gamma-Ortsdosisleistung (ODL) in µSv/h  von mehreren Stationen in Deutschland (zur Verfügung gestellt durch das Bundesamt für Strahlenschutz). Mehr Informationen unter https://odlinfo.bfs.de. Nutzungsbedingungen siehe https://www.imis.bfs.de/geoportal/resources/sitepolicy.html.'
+        en: 'This plugin retrieves the Gamma-Ortsdosisleistung (ODL) in from several measuring stations (by "Bundesamt für Strahlenschutz") in Germany. For more information see https://odlinfo.bfs.de. For the terms of use see https://www.imis.bfs.de/geoportal/resources/sitepolicy.html.'
     maintainer: psilo909
     tester: Sandman60
     state: ready
     keywords: radioactivity
-    documentation: http://smarthomeng.de/user/plugins_doc/config/odlinfo.html
+    documentation: https://smarthomeng.de/user/plugins_doc/config/odlinfo.html
     support: https://knx-user-forum.de/node/986480
 
-    version: 1.4.3                 # Plugin version
-    sh_minversion: 1.4             # minimum shNG version to use this plugin
+    version: 1.5.2                 # Plugin version
+    sh_minversion: 1.6             # minimum shNG version to use this plugin
 #    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
     restartable: unknown
@@ -21,22 +21,31 @@ plugin:
 
 parameters:
     # Definition of parameters to be configured in etc/plugin.yaml
-    user:
-        type: str
-        mandatory: True
+    cycle:
+        type: int
+        default: 1800
         description:
-            de: 'Persönlicher User für odlinfo.bfs.de. Anleitung unter https://odlinfo.bfs.de/DE/service/datenschnittstelle.html.'
-            en: 'Your own personal user for odlinfo.bfs.de. Instructions see https://odlinfo.bfs.de/DE/service/datenschnittstelle.html.'
+            de: '(optional) Zeit zwischen zwei Updateläufen. Default ist 3600 Sekunden.'
+            en: '(optional) Time period between two update cycles. Default is 3600 seconds.'
 
-    password:
-        type: str
-        mandatory: True
-        description:
-            de: 'Persönliches Passwort für odlinfo.bfs.de. Anleitung unter https://odlinfo.bfs.de/DE/service/datenschnittstelle.html.'
-            en: 'Your own personal password for odlinfo.bfs.de. Instructions see https://odlinfo.bfs.de/DE/service/datenschnittstelle.html.'
-
-item_attributes: NONE
+item_attributes:
     # Definition of item attributes defined by this plugin
+    odl_station:
+        type: str
+        mandatory: True
+        description:
+            de: 'Internationale ID oder ODL Messstellenkennung der Station.'
+            en: 'International ID or ODL masuring point identifier of the station.'
+    odl_data_type:
+        type: str
+        mandatory: True
+        description:
+            de: 'Daten, die dem Item zugeordnet werden sollen.'
+            en: 'Data to add to the item.'
+        valid_list:
+            - 'value'
+            - 'value_terrestrial'
+            - 'value_cosmic'
 
 item_structs: NONE
   # Definition of item-structure templates for this plugin
@@ -46,28 +55,74 @@ logic_parameters: NONE
 
 plugin_functions:
 
-    get_radiation_data_for_id:
+    get_update_timestamp:
+        type: foo
+        description:
+            de: "Gibt das datetime Objekt zurück, wann die intern im Plugin gecachten Daten zuletzt aktualisiert wurden."
+            en: "Returns the datetime, when the internally cached data were last updated."
+
+    get_stations:
+        type: list(dict)
+        description:
+            de: "Gibt ein Array of DICTs mit allen verfügbaren Messstationen zurück. Keys eines DICTs:<br/><br/>
+            <strong>id:</strong> Die internationale ID der Messstelle.<br/>
+            <strong>kenn:</strong> Die Messstellenkennung, wie sie auch auf ODL-Info verwendet wird.<br/>
+            <strong>plz:</strong> Die Postleitzahl der Messstelle.<br/>
+            <strong>name:</strong> Der Name bzw. Ortsname der Messstelle.<br/>
+            <strong>site_status:</strong> Der Status der Messstelle als Zahl. (1 = in Betrieb, 2 = Defekt, 3 = Testbetrieb)<br/>
+            <strong>site_status_text:</strong> Der Status der Messstelle als Text.<br/>
+            <strong>kid:</strong> ID des Messnetzknotens, dem die Messstelle zugeordnet ist. (1 = Freiburg, 2 = Berlin, 3 = München, 4 = Bonn, 5 = Salzgitter, 6 = Rendsburg)<br/>
+            <strong>height_above_sea:</strong> Höhe der Messstelle über NN.<br/>
+            <strong>start_measure:</strong> Startzeitpunkt der Messperiode für den gegebenen Messwert.<br/>
+            <strong>end_measure:</strong> Endzeitpunkt der Messperiode für den gegebenen Messwert.<br/>
+            <strong>value:</strong> Der Messwert.<br/>
+            <strong>value_cosmic:</strong> Kosmischer Anteil des Messwertes.<br/>
+            <strong>value_terrestrial:</strong> Terrestrischer Anteil des Messwertes.<br/>
+            <strong>unit:</strong> Einheit zu dem Messwert.<br/>
+            <strong>validated:</strong> Prüfstatus des Messwertes. (1 = geprüft, 2 = ungeprüft)<br/>
+            <strong>nuclide:</strong> Bezeichnung der Messgröße.<br/>
+            <strong>duration:</strong> Dauer der Messperiode."
+            en: "Returns an Array of DICTs with all available measuring stations. Key of a DICT:<br/><br/>
+            <strong>id:</strong> International ID of a measuring point.<br/>
+            <strong>kenn:</strong> The masuring point identifier, as used in ODL-Info.<br/>
+            <strong>plz:</strong> The postal code of the measuring point.<br/>
+            <strong>name:</strong> The name / city name of the measuring point.<br/>
+            <strong>site_status:</strong> The status of the measuring point as number. (1 = operating normally, 2 = malfunction, 3 = in test)<br/>
+            <strong>site_status_text:</strong> The status of the measuring point as text.<br/>
+            <strong>kid:</strong> ID of the measuring network node, the which the measuring point is associated. (1 = Freiburg, 2 = Berlin, 3 = München, 4 = Bonn, 5 = Salzgitter, 6 = Rendsburg)<br/>
+            <strong>height_above_sea:</strong> Height above sea of the measuring point.<br/>
+            <strong>start_measure:</strong> Start time of the measuring period of the given measuring value.<br/>
+            <strong>end_measure:</strong> End time of the measuring period of the given measuring value.<br/>
+            <strong>value:</strong> The measuring value.<br/>
+            <strong>value_cosmic:</strong> Cosmic part of the measuring value.<br/>
+            <strong>value_terrestrial:</strong> Terrestrial part of the measuring value.<br/>
+            <strong>unit:</strong> Unit of the measuring value.<br/>
+            <strong>validated:</strong> Check status of the measuring value. (1 = validated, 2 = unvalidated)<br/>
+            <strong>nuclide:</strong> Name of the measurand.<br/>
+            <strong>duration:</strong> Duration of the measurement period."
+
+    get_station_for_id:
         type: dict
         description:
-            de: "Gibt ein DICT mit Infos zur einer Messstation zurück. Keys: 'plz', 'kid', 'lon', 'lat', 'ort', 'hoehe', 'mw', 'status'."
-            en: "Returns a DICT with Infos of a measuring station. Keys: 'plz', 'kid', 'lon', 'lat', 'ort', 'hoehe', 'mw', 'status'."
+            de: "Gibt ein DICT mit Infos zur einer Messstation zurück. Keys: 'id', 'kenn', 'plz', 'name', 'site_status', 'site_status_text', 'kid', 'height_above_sea', 'start_measure', 'end_measure', 'value', 'value_cosmic', 'value_terrestrial', 'unit', 'validated', 'nuclide', 'duration'."
+            en: "Returns a DICT with Infos of a measuring station. Keys: 'id', 'kenn', 'plz', 'name', 'site_status', 'site_status_text', 'kid', 'height_above_sea', 'start_measure', 'end_measure', 'value', 'value_cosmic', 'value_terrestrial', 'unit', 'validated', 'nuclide', 'duration'."
 
         parameters:
             odlinfo_id:
                 type: str
                 description:
-                    de: "ID der Messstation. Siehe https://odlinfo.bfs.de."
-                    en: "ID of measuring station. See https://odlinfo.bfs.de."
+                    de: "Array der IDs ('id' oder 'kenn') der Messstationen. Siehe Web-Interface des Plugins oder https://odlinfo.bfs.de/ODL/DE/service/datenschnittstelle/datenschnittstelle_node.html."
+                    en: "Array of IDs ('id' or 'kenn') of measuring stations. See web interface of plugin or https://odlinfo.bfs.de/ODL/DE/service/datenschnittstelle/datenschnittstelle_node.html."
 
-    get_radiation_data_for_ids:
+    get_stations_for_ids:
         type: list(dict)
         description:
-            de: "Gibt ein Array von DICTs mit Infos zu Messstationen zurück. Keys: 'plz', 'kid', 'lon', 'lat', 'ort', 'hoehe', 'mw', 'status'."
-            en: "Returns an array of DICTs with Infos of measuring stations. Keys: 'plz', 'kid', 'lon', 'lat', 'ort', 'hoehe', 'mw', 'status'."
+            de: "Gibt ein Array von DICTs mit Infos zu Messstationen zurück. Keys: 'id', 'kenn', 'plz', 'name', 'site_status', 'site_status_text', 'kid', 'height_above_sea', 'start_measure', 'end_measure', 'value', 'value_cosmic', 'value_terrestrial', 'unit', 'validated', 'nuclide', 'duration'."
+            en: "Returns an array of DICTs with Infos of measuring stations. Keys: 'id', 'kenn', 'plz', 'name', 'site_status', 'site_status_text', 'kid', 'height_above_sea', 'start_measure', 'end_measure', 'value', 'value_cosmic', 'value_terrestrial', 'unit', 'validated', 'nuclide', 'duration'."
 
         parameters:
             odlinfo_ids:
                 type: list(str)
                 description:
-                    de: "Array der IDs der Messstationen. Siehe https://odlinfo.bfs.de."
-                    en: "Array of IDs of measuring stations. See https://odlinfo.bfs.de."
+                    de: "Array der IDs ('id' oder 'kenn') der Messstationen. Siehe Web-Interface des Plugins oder https://odlinfo.bfs.de/ODL/DE/service/datenschnittstelle/datenschnittstelle_node.html."
+                    en: "Array of IDs ('id' or 'kenn') of measuring stations. See web interface of plugin or https://odlinfo.bfs.de/ODL/DE/service/datenschnittstelle/datenschnittstelle_node.html."

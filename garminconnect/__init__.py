@@ -23,43 +23,40 @@
 #
 #########################################################################
 
-import requests
+import logging
+import json
 import re
+from garminconnect import (
+    Garmin,
+    GarminConnectConnectionError,
+    GarminConnectTooManyRequestsError,
+    GarminConnectAuthenticationError,
+)
+from enum import Enum, auto
 from lib.model.smartplugin import *
-
-BASE_URL = 'https://connect.garmin.com'
-SSO_URL = 'https://sso.garmin.com/sso'
-MODERN_URL = 'https://connect.garmin.com/modern'
-SIGNIN_URL = 'https://sso.garmin.com/sso/signin'
-
 
 class GarminConnect(SmartPlugin):
     """
     Retrieves Garmin Connect Stats and Heart Rates.
     """
-    PLUGIN_VERSION = "1.0.0"
-    url_activities = MODERN_URL + '/proxy/usersummary-service/usersummary/daily/'
-    url_heartrates = MODERN_URL + '/proxy/wellness-service/wellness/dailyHeartRate/'
-
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36',
-        'origin': 'https://sso.garmin.com'
-    }
+    PLUGIN_VERSION = "1.2.0"
 
     def __init__(self, sh, *args, **kwargs):
         # Call init code of parent class (SmartPlugin or MqttPlugin)
         super().__init__()
 
         self._shtime = Shtime.get_instance()
-        self._email = self.get_parameter_value("email")
+        self._username = self.get_parameter_value("email")
         self._password = self.get_parameter_value("password")
-        self._session = requests.session()
-        self._login(self._email, self._password)
+        self._is_cn = self.get_parameter_value("is_cn")
+        self._api = None
+
 
         self.init_webinterface()
 
     def run(self):
         self.alive = True
+
 
     def stop(self):
         """
@@ -76,72 +73,31 @@ class GarminConnect(SmartPlugin):
     def update_item(self, item, caller=None, source=None, dest=None):
         pass
 
-    def _login(self, username, password):
-        """
-        Login to portal
-        """
-        params = {
-            'webhost': BASE_URL,
-            'service': MODERN_URL,
-            'source': SIGNIN_URL,
-            'redirectAfterAccountLoginUrl': MODERN_URL,
-            'redirectAfterAccountCreationUrl': MODERN_URL,
-            'gauthHost': SSO_URL,
-            'locale': 'en_US',
-            'id': 'gauth-widget',
-            'cssUrl': 'https://static.garmincdn.com/com.garmin.connect/ui/css/gauth-custom-v1.2-min.css',
-            'clientId': 'GarminConnect',
-            'rememberMeShown': 'true',
-            'rememberMeChecked': 'false',
-            'createAccountShown': 'true',
-            'openCreateAccount': 'false',
-            'usernameShown': 'false',
-            'displayNameShown': 'false',
-            'consumeServiceTicket': 'false',
-            'initialFocus': 'true',
-            'embedWidget': 'false',
-            'generateExtraServiceTicket': 'false'
-        }
-
-        data = {
-            'username': username,
-            'password': password,
-            'embed': 'true',
-            'lt': 'e1s1',
-            '_eventId': 'submit',
-            'displayNameRequired': 'false'
-        }
-
-        response = self._session.post(SIGNIN_URL, headers=self.headers, params=params, data=data)
-        response.raise_for_status()
-
-        response_url = re.search(r'"(https:[^"]+?ticket=[^"]+)"', response.text)
-        if not response_url:
-            raise Exception('Could not find response URL')
-        response_url = re.sub(r'\\', '', response_url.group(1))
-        response = self._session.get(response_url)
-
-        self.user_prefs = self.parse_json(response.text, 'VIEWER_USERPREFERENCES')
-        self.display_name = self.user_prefs['displayName']
-        response.raise_for_status()
-
-    def parse_json(self, html, key):
-        """
-        Find and return json data
-        """
-        found = re.search(key + r" = JSON.parse\(\"(.*)\"\);", html, re.M)
-        if found:
-            text = found.group(1).replace('\\"', '"')
-            return json.loads(text)
+    def login(self):
+        try:
+            self._api = Garmin(self._username, self._password, is_cn=self._is_cn)
+            self._api.login()
+            self.logger.info(self._api.get_full_name())
+            self.logger.info(self._api.get_unit_system())
+        except (
+                GarminConnectConnectionError,
+                GarminConnectAuthenticationError,
+                GarminConnectTooManyRequestsError,
+        ) as err:
+            self._api = Garmin(self._username, self._password, is_cn=self._is_cn)
+            self._api.login()
+            self.logger.error("Error occurred during Garmin Connect communication: %s", err)
 
     def get_stats(self, date_str=None):
         date = self._get_date(date_str)
-        stats = self._fetch_stats(date.strftime('%Y-%m-%d'))
+        self.login()
+        stats = self._api.get_stats(date.strftime('%Y-%m-%d'))
         return stats
 
     def get_heart_rates(self, date_str=None):
         date = self._get_date(date_str)
-        heart_rates = self._fetch_heart_rates(date.strftime('%Y-%m-%d'))
+        self.login()
+        heart_rates = self._api.get_heart_rates(date.strftime('%Y-%m-%d'))
         return heart_rates
 
     def _get_date(self, date_str):
@@ -150,61 +106,6 @@ class GarminConnect(SmartPlugin):
         else:
             date = self._shtime.now()
         return date
-
-    def _fetch_stats(self, cdate):  # cDate = 'YYY-mm-dd'
-        """
-        Fetch available activity data
-        """
-        getURL = self.url_activities + self.display_name + '?' + 'calendarDate=' + cdate
-
-        try:
-            response = self._session.get(getURL, headers=self.headers)
-            if response.status_code == 429:
-                raise GarminConnectTooManyRequestsError("Too many requests")
-
-            self.logger.debug("Statistics response code %s", response.status_code)
-            response.raise_for_status()
-        except requests.exceptions.HTTPError as e:
-            self.logger.error("Exception occured during stats retrieval: %s" % e)
-            raise GarminConnectConnectionError("Error connecting") from err
-
-        if response.json()['privacyProtected'] is True:
-            self.logger.info(
-                "Session expired - trying relogin.")
-            self._login(self._email, self._password)
-            try:
-                response = self._session.get(getURL, headers=self.headers)
-                if response.status_code == 429:
-                    raise GarminConnectTooManyRequestsError("Too many requests")
-
-                self.logger.debug("Statistics response code %s", response.status_code)
-                response.raise_for_status()
-
-            except requests.exceptions.HTTPError as e:
-                self.logger.error("Exception occured during stats retrieval: %s" % e)
-                raise GarminConnectConnectionError("Error connecting") from err
-
-        return response.json()
-
-    def _fetch_heart_rates(self, cdate):  # cDate = 'YYYY-mm-dd'
-        """
-        Fetch available heart rates data
-        """
-        getURL = self.url_heartrates + self.display_name + '?date=' + cdate
-        try:
-            response = self._session.get(getURL, headers=self.headers)
-            response.raise_for_status()
-        except requests.exceptions.HTTPError as e:
-            self.logger.info(
-                "Exception occured during heart rate retrieval - perhaps session expired - trying relogin: %s" % e)
-            self._login(self._email, self._password)
-            try:
-                response = self._session.get(getURL, headers=self.headers)
-                response.raise_for_status()
-            except requests.exceptions.HTTPError as e:
-                self.logger.error("Exception occured during stats retrieval, relogin without effect: %s" % e)
-                return
-        return response.json()
 
     def init_webinterface(self):
         """

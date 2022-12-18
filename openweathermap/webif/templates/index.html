@@ -3,38 +3,242 @@
 {% set logo_frame = false %}
 {% set use_bodytabs = true %}
 {% set tabcount = 3 %}
-{% set tab1title = 'Items' %}
-{% set tab2title = 'JSON Data (Weather)' %}
-{% set tab3title = 'JSON Data (UV Index)' %}
+{% set tab1title = _('Items') %}
+{% set tab2title = _('JSON Data') %}
+{% set tab3title = _('Tester') %}
+
+{% set start_tab = 2 %}
+
+{% set json_data = p._get_all_data_for_webif() %}
+{% set item_data = p._items %}
+
+{% block pluginscripts %}
+<link rel="stylesheet" href="static/leaflet/leaflet.css" />
+<script src="static/leaflet/leaflet.js"></script>
+<link rel="stylesheet" type="text/css" href="static/datatables/datatables.css">
+<script type="text/javascript" charset="utf8" src="static/datatables/datatables.js"></script>
+<script src="/gstatic/codemirror/mode/javascript/javascript.js"></script>
+<script>
+    $(document).ready( function () {
+		try
+			{
+			$('#items_table').DataTable( {
+				"paging": false,
+				fixedHeader: true
+				} );
+			}
+		catch (e)
+			{
+			console.log("Datatable JS not loaded, showing standard table without reorder option")
+			}
+
+		$('#test_match_string').click(function() {
+			wait_indicator(true);
+			$.get('test_match_string', $.param({match_string:  $('#owm_string_source').val()}), function(match_string_eval_result) {
+				wait_indicator(false);
+				parsed_result = JSON.parse(match_string_eval_result);
+				$('#result_output').empty();
+				$('#result_output').append("<div>" + (parsed_result.success ? '<img src="static/img/lamp_green.png" alt="{{ _('Erfolg') }}" style="width: 17px;padding-bottom: 3px;"/>' : '<img src="static/img/lamp_red.png" alt="{{ _('Fehler') }}" style="width: 17px;padding-bottom: 3px;"/>') + parsed_result.value + "</div>");
+				$('#result_output').append("<div id='goto_source' class='clickable'>{{ _('Gehe zu Datenquelle') }}: " + parsed_result.queried_source + " / {{ _('Pfad in der Datenquelle') }}: " + parsed_result.path_in_source + "</div>");
+				$('#goto_source').click(function() {
+					wait_indicator(true);
+					$('.nav-tabs a[href="#bodytab_2"]').tab('show');
+					enable_block($("#owm_block_" + parsed_result.queried_source.replace('-', '_minus_') + "_nav"));
+					pos_hint = parsed_result.position_in_file.split(",");
+					line_hint = pos_hint[0];
+					char_hint_start = pos_hint[1];
+					char_hint_end = pos_hint[2] - 1;
+					window.bodytab2_json_editor.markText({line: line_hint, ch: 0}, {line: line_hint, ch: char_hint_end}, {css: "background: yellow;"}); //{className: "styled-background"});
+					window.bodytab2_json_editor.scrollIntoView({line: line_hint, ch: 0}, 200);
+					wait_indicator(false);
+				});
+			});
+		});
+
+		enable_block($("#code_nav .owm_nav_box").first());
+		// enable_example($("#example_nav .owm_nav_box").first());
+	});
+
+	function wait_indicator(yes_no) {
+		document.getElementById('progress_indicator').style.display = yes_no ? "block" : "none";
+	}
+
+	function show_hide_map() {
+		var map_div = document.getElementById('detail_map');
+		if (map_div.style.display == "none") {
+			map_div.style.display = "block";
+			if (mapInstance) {
+				return;
+			}
+			var mapInstance = L.map('detail_map').setView([{{ p._lat }}, {{ p._lon }}], 10);
+
+			L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+				attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+			}).addTo(mapInstance);
+
+			L.marker([{{ p._lat }}, {{ p._lon }}]).addTo(mapInstance);
+		} else {
+			map_div.style.display = "none";
+		}
+	}
+
+	function enable_block(block) {
+		$(".owm_c_active").toggleClass("owm_c_active");
+		$(".owm_c_nav_active").toggleClass("owm_c_nav_active");
+		block.toggleClass("owm_c_nav_active");
+
+		selected_block = "#" + block.attr("id").replace('_nav', '');
+		$(selected_block).toggleClass("owm_c_active");
+
+		src_origin = selected_block + " textarea";
+		window.bodytab2_json_editor.setValue($(src_origin).val());
+		window.bodytab2_json_editor.setSize($('#outer_box').width() - 200, ($('#measure_bar').height() - $(selected_block).height()) - 5);
+	}
+
+	function enable_example(block) {
+		$(".owm_e_active").toggleClass("owm_e_active");
+		$(".owm_e_nav_active").toggleClass("owm_e_nav_active");
+		block.toggleClass("owm_e_nav_active");
+
+		selected_block = "#" + block.attr("id").replace('_nav', '');
+		$(selected_block).toggleClass("owm_e_active");
+	}
+
+	$(function() {
+		$(".owm_codeblock").each(function( index ) {
+			$("#"+$(this).attr("id")+'_nav').click(function() {
+				enable_block($(this));
+			});
+		});
+	});
+
+	$(function() {
+		$(".owm_exampleblock").each(function( index ) {
+			$("#"+$(this).attr("id")+'_nav').click(function() {
+				enable_example($(this));
+			});
+		});
+	});
+</script>
+<style>
+	h5 {
+		margin-top: 10px;
+	}
+
+	.owm_codeblock {
+		display: none;
+		flex: 0 1 auto;
+	}
+	.owm_exampleblock {
+		display: none;
+	}
+
+	.owm_c_active {
+		display: block;
+	}
+
+	.owm_e_active {
+		display: block;
+	}
+
+	.owm_c_nav_active {
+		font-weight: bold;
+	}
+
+	.owm_e_nav_active {
+		font-weight: bold;
+	}
+
+	.owm_codeblock textarea {
+		display: none;
+	}
+
+	.owm_nav_box {
+		border-width: 1px;
+		border-style: solid;
+		border-color: #ddd;
+		width: 190px;
+		background: #ddd;
+		padding: 3px;
+		margin-bottom: 3px;
+		cursor: pointer;
+	}
+
+	.owm_nav_box:hover {
+		border-color: red;
+	}
+
+	.clickable {
+		cursor: pointer;
+	}
+
+	.styled-background {
+		background: yellow;
+	}
+</style>
+
+{% endblock pluginscripts %}
 
 {% block headtable %}
-{% endblock %}
+<table class="table table-striped table-hover">
+	<tbody>
+		<tr>
+			<td class="py-1 clickable" onClick="show_hide_map()" width="150px"><strong>{{ _('Breitengrad') }}</strong></td>
+			<td class="py-1 clickable" onClick="show_hide_map()">{{ p._lat }}</td>
+			<td class="py-1" width="150px"><strong>{{ _('Sprache') }}</strong></td>
+			<td class="py-1">{{ p._lang }}</td>
+		</tr>
+		<tr>
+			<td class="py-1 clickable" onClick="show_hide_map()" width="150px"><strong>{{ _('Längengrad') }}</strong></td>
+			<td class="py-1 clickable" onClick="show_hide_map()">{{ p._lon }}</td>
+			<td class="py-1" width="150px"><strong>{{ _('Einheiten') }}</strong></td>
+			<td class="py-1">{{ p._units }}</td>
+		</tr>
+		<tr>
+			<td class="py-1 clickable" onClick="show_hide_map()" width="150px"><strong>{{ _('Höhe in m') }}</strong></td>
+			<td class="py-1 clickable" onClick="show_hide_map()" class="">{{ p._elev }}</td>
+			<td class="py-1" width="150px"><strong>{{ _('Ladezyklus (s)') }}</strong></td>
+			<td class="py-1">{{ p._cycle }}</td>
+		</tr>
+<!--
+		<tr>
+			<td class="py-1" width="150px"><strong>{{ _('API-Schlüssel') }}</strong></td>
+			<td class="py-1" colspan="3"><div title="{{ p._key }}">{% for letter in p._key %}*{% endfor %}</div></td>
+		</tr>
+-->
+	</tbody>
+</table>
+<div id="progress_indicator" style="position:fixed;bottom:0px;right: 0px;width:100%; height: 100%; display:none; opacity: 0.5; background: white;" class="mb-2 alert alert-success alert-dismissible fade show" role="alert">
+	&nbsp;
+</div>
+<div id="detail_map" style="position:fixed;bottom:10px;right: 5%;width:50%; height: 50%; display:none" class="mb-2 alert alert-success alert-dismissible fade show" role="alert"></div>
+{% endblock headtable %}
 
 {% block bodytab1 %}
 <div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
 	<div class="col-sm-12">
-		<h5>OpenWeatherMap Plugin Items ({{ p.get_items()|length }})</h5>
+		<h5>{{ _('Items with relation to this OWM-plugin instance') }} ({{ item_data|length }})</h5>
 
-		<table class="table table-striped table-hover pluginList">
+		<table class="table table-striped table-hover pluginList" id="items_table">
 			<thead>
 				<tr class="shng_heading">
-					<th>Pfad</th>
-					<th>Typ</th>
+					<th>{{ _('Pfad') }}</th>
+					<th>{{ _('Typ') }}</th>
 					<th>owm_matchstring</th>
-					<th>Wert</th>
-					<th>Letztes Update</th>
-					<th>Letzter Change</th>
+					<th>{{ _('Wert') }}</th>
+					<th>{{ _('Letztes Update') }}</th>
+					<th>{{ _('Letzter Change') }}</th>
 				</tr>
 			</thead>
 			<tbody>
-				{% for key, item in p.get_items().items() %}
+				{% for key, item in item_data.items() %}
 					<tr id="{{ loop.index }}_click">
-						<td class="py-1">{{ item.property.path }}</td>
-						<td class="py-1">{{ item.property.type }}</td>
-						<td class="py-1">{{ key }}</td>
-						<td class="py-1">{% if key in ['precipitation_new', 'clouds_new', 'pressure_new', 'wind_new', 'temp_new'] %}<a class="text-shng" target="_blank" href="{{ item() }}">{{ item() }}</a>{% else %} {{ item() }} {% endif %}</td>
-						<td class="py-1">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
-						<td class="py-1">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+						<td class="py-1">{{ item[1].property.path }}</td>
+						<td class="py-1">{{ item[1].property.type }}</td>
+						<td class="py-1">{{ item[0] }}</td>
+						<td class="py-1">{% if key in ['precipitation_new', 'clouds_new', 'pressure_new', 'wind_new', 'temp_new'] %}<a class="text-shng" target="_blank" href="{{ item() }}">{{ item[1]() }}</a>{% else %} {{ item[1]() }} {% endif %}</td>
+						<td class="py-1">{{ item[1].property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}<br />{{ item[1].property.last_update_by }}</td>
+						<td class="py-1">{{ item[1].property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
 					</tr>
 				{% endfor %}
 			</tbody>
@@ -42,17 +246,76 @@
 	</div>
 </div>
 {% endblock %}
+
 {% block bodytab2 %}
-
-<div class="container-fluid m-2">
-	({{ json_data_weather }})
+<div id="outer_box">
+	<div style="float: left; width: 190px; display: block;" id="code_nav">
+		{% for data_source in json_data %}
+			<div class="owm_nav_box code" id="owm_block_{{ data_source.key }}_nav">{{ data_source.key | replace('_minus_', '-') }}</div>
+		{% endfor %}
+	</div>
+	<div style="float: left; height: calc(100vh - 245px); width: 10px;" id="measure_bar">&nbsp;</div>
+	<div style="display: flex; flex-flow: column; height: calc(100vh - 245px);">
+		{% for data_source in json_data %}
+			<div class="owm_codeblock" id="owm_block_{{ data_source.key }}">
+				<h5>{{ data_source.key | replace('_minus_', '-') }}</h5>
+				<table>
+					<tr>
+						<td>{{ _('Origin') }}:</td>
+						<td><a href="{{ data_source.url }}">{{ data_source.url | replace(p._key, "(key)") }}</a></td>
+					</tr>
+					<tr>
+						<td>{{ _('Fetched') }}: &nbsp; </td>
+						<td>{{ data_source.fetched }}</td>
+					</tr>
+				</table>
+				<textarea autocomplete="off">{{ data_source.data }}</textarea>
+			</div>
+		{% endfor %}
+		<div style="flex: 1 1 auto;">
+			<textarea autocomplete="off" id="bodytab2_editor"></textarea>
+			<script type="text/javascript" language="javascript">
+				window.bodytab2_json_editor = CodeMirror.fromTextArea(document.getElementById("bodytab2_editor"), {
+					mode: {name: "javascript", json: true},
+					lineNumbers: true,
+					readOnly: true,
+					lineWrapping: true,
+					extraKeys: {"Ctrl-Q": function(cm){ cm.foldCode(cm.getCursor()); }},
+					foldGutter: true,
+					gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
+				});
+			</script>
+		</div>
+	</div>
 </div>
-
 {% endblock %}
+
 {% block bodytab3 %}
-
-<div class="container-fluid m-2">
-	({{ json_data_uvi }})
+<div style="width: 100%;">
+	<input type="text" name="owm_string_source" id="owm_string_source"></input>
+	<button type="button" class="btn btn-shng btn-sm" id="test_match_string">Testen</button>
+	<div id="result_output"></div>
 </div>
+{#
+	TODO: Später mal sollte hier eine Anleitung entstehen.
+	<br style="clear:both;"/>
+	<div style="float: left; width: 220px; display: block;" id="example_nav">
+		<div class="owm_nav_box" id="owm_block_exampl_rain_nav">Regen</div>
+		<div class="owm_nav_box" id="owm_block_exampl_temp_nav">Temperaturen</div>
+	</div>
+	<div id="owm_block_exampl_rain" class="owm_exampleblock">
+		<h5>Regen</h5>
+		Und seine Freunde
+	</div>
+	<div id="owm_block_exampl_temp" class="owm_exampleblock">
+		<h5>Temperaturen</h5>
+		Und deren Freunde
+	</div>
+#}
+{% endblock %}
 
+
+
+{% block buttons %}
+<button type="button" class="btn btn-shng btn-sm" onclick="if (confirm('{{ _('Sollen nun einmalig alle Dateien abgefragt werden?') }}')) { wait_indicator(true); jQuery.get('force_download_all',  function( data ) { location.reload(); }); }">{{ _('Alle Dateien herunterladen') }}</button>
 {% endblock %}

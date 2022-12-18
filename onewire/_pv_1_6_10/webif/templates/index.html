@@ -1,0 +1,136 @@
+{% extends "base_plugin.html" %}
+
+{% set logo_frame = false %}
+
+<!-- set update_interval to a value > 0 (in milliseconds) to enable periodic data updates -->
+{% set update_interval = 0 %}
+
+<!--
+	Additional script tag for plugin specific javascript code go into this block
+-->
+{% block pluginscripts %}
+<script>
+	function handleUpdatedData(response, dataSet=null) {
+		if (dataSet === 'devices_info' || dataSet === null) {
+			var objResponse = JSON.parse(response);
+			myProto = document.getElementById(dataSet);
+			for (var device in objResponse) {
+				<!--
+				shngInsertText (device+'_source', objResponse[device]['source']);
+				shngInsertText (device+'_powerState', objResponse[device]['powerState']);
+				-->
+			}
+		}
+	}
+</script>
+{% endblock pluginscripts %}
+
+
+{% block headtable %}
+<table class="table table-striped table-hover">
+	<tbody>
+		<tr>
+			<td class="py-1"><strong>{{ _('Host') }}</strong></td>
+			<td class="py-1">{{ p.host }}</td>
+			<td class="py-1" width="50px"></td>
+			<td class="py-1"><strong>{{ _('IO Wartezeit') }}</strong></td>
+			<td class="py-1">{{ p._io_wait }}</td>
+			<td class="py-1" width="50px"></td>
+		</tr>
+		<tr>
+			<td class="py-1"><strong>{{ _('Port') }}</strong></td>
+			<td class="py-1">{{ p.port }}</td>
+			<td></td>
+			<td class="py-1"><strong>{{ _('iButton Wartezeit') }}</strong></td>
+			<td class="py-1">{{ p._button_wait }}</td>
+			<td></td>
+		</tr>
+		<tr>
+			<td class="py-1"><strong>{{ _('Cycle') }}</strong></td>
+			<td class="py-1">{{ p._cycle }}</td>
+			<td></td>
+			<td class="py-1"><strong>{{ _('Alias verwenden') }}</strong></td>
+			<td class="py-1">{{ p._use_ow_aliases }}</td>
+			<td></td>
+		</tr>
+	</tbody>
+</table>
+{% endblock headtable %}
+
+
+<!--
+	Additional buttons for the web interface (if any are needed) - displayed below the headtable-section
+-->
+{% block buttons %}
+{% if 1==2 %}
+	<div>
+		<button id="btn1" class="btn btn-shng btn-sm" name="scan" onclick="shngPost('', {learn: 'on'})"><i class="fas fa-question"></i>&nbsp;&nbsp;&nbsp;{{ _('nach Devices suchen') }}&nbsp;</button>
+	</div>
+{% endif %}
+{% endblock %}
+<!--
+	Define the number of tabs for the body of the web interface (1 - 3)
+-->
+{% set tabcount = 1 %}
+{% set start_tab = 1 %}
+
+<!--
+	Content block for the first tab of the Webinterface
+-->
+{% set tab1title = "<strong>" ~ p.get_shortname() ~ " " ~ _(('Geräte')) ~ "</strong>" %}
+
+{% block bodytab1 %}
+<div class="container-fluid m-2">
+
+{% if p._buses|length %}
+<div><strong>{{ p._buses|length }}-{{ _('Bus gefunden') }}</strong></div>
+<table class="table table-striped table-hover">
+<tr><th>{{ _('Bus') }}</th><th>{{ _('angeschlossene Sensoren') }}</th></tr>
+{% for bus in p._buses %}
+	<tr><td>{{ bus }}</td><td>{{ p._buses[bus] }}</td></tr>
+{% endfor %}
+</table>
+{% endif %}
+
+{% if p._sensors|length %}
+<div><strong>{{ p._sensors|length }} {{ _('Sensoren in SmartHomeNG Items definiert') }}</strong></div>
+<table class="table table-striped table-hover">
+<tr><th>{{ _('Sensor') }}</th><th>{{ _('Item') }}</th><th>{{ _('Wert') }}</th><th>{{ _('Letzte Änderung') }}</th></tr>
+{% for sensor in p._sensors %}
+	{% for entry in p._sensors[sensor] %}
+	<tr><td>{{ sensor }}</td><td>{{ p._sensors[sensor][entry]['item'].id() }}</td><td>{{ p._sensors[sensor][entry]['item']() }}</td><td>{{ p._sensors[sensor][entry]['item'].property.last_change }}</td></tr>
+	{% endfor %}
+{% endfor %}
+</table>
+{% endif %}
+
+{% if p._ios|length %}
+<div><strong>{{ p._ios|length }} {{ _('IO Geräte in SmartHomeNG Items definiert') }}</strong></div>
+<table class="table table-striped table-hover">
+<tr><th>{{ _('Sensor') }}</th><th>{{ _('Item') }}</th><th>{{ _('Wert') }}</th><th>{{ _('Letzte Änderung') }}</th></tr>
+{% for sensor in p._ios %}
+	{% for entry in p._ios[sensor] %}
+	<tr><td>{{ sensor }}</td><td>{{ p._ios[sensor][entry]['item'].id() }}</td><td>{{ p._ios[sensor][entry]['item']() }}</td><td>{{ p._ios[sensor][entry]['item'].property.last_change }}</td></tr>
+	{% endfor %}
+{% endfor %}
+</table>
+{% endif %}
+
+
+{% if p._ibuttons|length %}
+<div><strong>{{ p._ibuttons|length }} {{ _('IO Geräte in SmartHomeNG Items definiert') }}</strong></div>
+<table class="table table-striped table-hover">
+<tr><th>{{ _('Sensor') }}</th><th>{{ _('Item') }}</th><th>{{ _('Wert') }}</th><th>{{ _('Letzte Änderung') }}</th></tr>
+{% for sensor in p._ibuttons %}
+	{% for entry in p._ibuttons[sensor] %}
+	<tr><td>{{ sensor }}</td><td>{{ p._ibuttons[sensor][entry]['item'].id() }}</td><td>{{ p._ibuttons[sensor][entry]['item']() }}</td><td>{{ p._ibuttons[sensor][entry]['item'].property.last_change }}</td></tr>
+	{% endfor %}
+{% endfor %}
+</table>
+{% endif %}
+
+
+
+
+</div>
+{% endblock bodytab1 %}

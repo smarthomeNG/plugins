@@ -1,3 +1,9 @@
 #requests requirement moved to core
 xmltodict>=0.11.0
 tinytag>=0.18.0
+gtts
+#
+# These packages are used by SoCo:
+ifaddr
+appdirs
+lxml

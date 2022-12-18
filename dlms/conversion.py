@@ -140,14 +140,22 @@ class Conversion:
             try:
                 return float(v)
             except ValueError:
-                self.logger.error("Could not convert from '{}' to a float".format(v))
+                if ',' in v:
+                    v2 = v.replace(',','.')
+                else: 
+                    self.logger.error(f"Could not convert from '{v}' to a float")
+                    return None
+            try:
+                return float(v2)
+            except ValueError:
+                self.logger.error(f"Could not convert from '{v}' to a float")
                 return None
 
         if converter == 'int':
             try:
                 return int(v)
             except ValueError:
-                self.logger.error("Could not convert from '{}' to an integer".format(v))
+                self.logger.error(f"Could not convert from '{v}' to an integer")
                 return None
 
         if converter == 'ZST10':
@@ -156,7 +164,7 @@ class Conversion:
                 v = self._to_datetime_ZST10(v)
                 return v
             else:
-                self.logger.error("Could not convert from '{}' to a Datetime".format(v))
+                self.logger.error(f"Could not convert from '{v}' to a Datetime")
 
         if converter == 'ZST12':
             if len(v) == 12 and v.isdigit():
@@ -164,7 +172,7 @@ class Conversion:
                 v = self._to_datetime_ZST12(v)
                 return v
             else:
-                self.logger.error("Could not convert from '{}' to a Datetime".format(v))
+                self.logger.error(f"Could not convert from '{v}' to a Datetime")
 
         if converter == 'D6':
             if len(v) == 6 and v.isdigit():
@@ -172,7 +180,7 @@ class Conversion:
                 v = self._to_date_D6(v)
                 return v
             else:
-                self.logger.error("Could not convert from '{}' to a Datetime".format(v))
+                self.logger.error(f"Could not convert from '{v}' to a Datetime")
 
         if converter == 'Z6':
             if len(v) == 6 and v.isdigit():
@@ -180,7 +188,7 @@ class Conversion:
                 v = self._to_time_Z6(v)
                 return v
             else:
-                self.logger.error("Could not convert from '{}' to a Datetime".format(v))
+                self.logger.error(f"Could not convert from '{v}' to a Datetime")
 
         if converter == 'Z4':
             if len(v) == 4 and v.isdigit():
@@ -188,7 +196,7 @@ class Conversion:
                 v = self._to_time_Z4(v)
                 return v
             else:
-                self.logger.error("Could not convert from '{}' to a Datetime".format(v))
+                self.logger.error(f"Could not convert from '{v}' to a Datetime")
 
         if converter == 'num':
             try:
@@ -199,7 +207,16 @@ class Conversion:
             try:
                 return float(v)
             except ValueError:
-                pass
+                if ',' in v:
+                    v2 = v.replace(',','.')
+                else: 
+                    self.logger.error(f"Could not convert from '{v}' to a num")
+                    return None
+            try:
+                return float(v2)
+            except ValueError:
+                self.logger.error(f"Could not convert from '{v}' to a num")
+                return None
 
         return v
 
