@@ -199,9 +199,9 @@ class Hue2(SmartPlugin):
             conf_data['id'] = self.get_iattr_value(item.conf, 'hue2_id')
             conf_data['resource'] = self.get_iattr_value(item.conf, 'hue2_resource')
             conf_data['function'] = self.get_iattr_value(item.conf, 'hue2_function')
-            if self.has_iattr(item.conf, 'hue2_refence_light_id'):
+            if self.has_iattr(item.conf, 'hue2_reference_light_id'):
                 if conf_data['resource'] == "group":
-                    conf_data['hue2_refence_light_id'] = self.get_iattr_value(item.conf, 'hue2_refence_light_id')
+                    conf_data['hue2_reference_light_id'] = self.get_iattr_value(item.conf, 'hue2_reference_light_id')
 
             conf_data['item'] = item
             self.plugin_items[item.path()] = conf_data
@@ -463,7 +463,7 @@ class Hue2(SmartPlugin):
                 if value is not None:
                     plugin_item['item'](value, self.get_shortname(), src)
             if plugin_item['resource'] == 'group':
-                if not "hue2_refence_light_id" in plugin_item:
+                if not "hue2_reference_light_id" in plugin_item:
                     if plugin_item['function'] != 'dict':
                         value = self._get_group_item_value(plugin_item['id'], plugin_item['function'], plugin_item['item'].id())
                         plugin_item['item'](value, self.get_shortname(), src)
@@ -502,8 +502,8 @@ class Hue2(SmartPlugin):
                         plugin_item['item'](value, self.get_shortname(), src)
 
                 if plugin_item['resource'] == 'group':
-                    if "hue2_refence_light_id" in plugin_item:
-                        reference_light_id = plugin_item["hue2_refence_light_id"]
+                    if "hue2_reference_light_id" in plugin_item:
+                        reference_light_id = plugin_item["hue2_reference_light_id"]
                         value = self._get_light_item_value(reference_light_id, plugin_item['function'], plugin_item['item'].id())
                         if value is not None:
                             plugin_item['item'](value, self.get_shortname(), src)
