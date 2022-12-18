@@ -275,7 +275,7 @@ class EEP_Parser():
         if not (payload[3] == 0x0F):
             self.logger.error("EEP A5_30_03 not according to spec.")
             return results
-        # Data_byte2 = Temperatur 0..40°C (255..0)
+        # Data_byte2 = Temperatur 0..40ï¿½C (255..0)
         results['TEMP']  = 40 - (payload[1]/255*40) 
         # Data_byte1 = 0x0F = Alarm, 0x1F = kein Alarm
         results['ALARM'] = (payload[2]  == 0x0F)
@@ -311,16 +311,16 @@ class EEP_Parser():
         Key Description:
             MOVE: runtime of movement in s (with direction: "-" = up; "+" = down)
         '''
-        self.logger.debug("eep-parser processing A5_0G_03 4BS telegram: shutter movement feedback")
-        self.logger.debug("eep-parser input payload = [{}]".format(', '.join(['0x%02X' % b for b in payload])))
-        self.logger.debug(f"eep-parser input status = {status}")
+        self.logger.info("eep-parser processing A5_0G_03 4BS telegram: shutter movement feedback")
+        self.logger.info("eep-parser input payload = [{}]".format(', '.join(['0x%02X' % b for b in payload])))
+        self.logger.info(f"eep-parser input status = {status}")
         results = {}
         runtime_s = ((payload[0] << 8) + payload[1]) / 10
         if (payload[2] == 1):
-            self.logger.debug(f"Shutter moved {runtime_s} s 'upwards'")
+            self.logger.info(f"Shutter moved {runtime_s} s 'upwards'")
             results['MOVE'] = runtime_s * -1
         elif (payload[2] == 2):
-            self.logger.debug(f"Shutter moved {runtime_s} s 'downwards'")
+            self.logger.info(f"Shutter moved {runtime_s} s 'downwards'")
             results['MOVE'] = runtime_s
         return results
 
@@ -449,7 +449,9 @@ class EEP_Parser():
             STATUS: Info what the shutter does
             B: status of the shutter actor (command) 
         '''
-        self.logger.debug("Processing F6_0G_03: shutter actor")
+        self.logger.info("Processing F6_0G_03: shutter actor")
+        self.logger.info("payload = [{}]".format(', '.join(['0x%02X' % b for b in payload])))
+        self.logger.info("status: {}".format(status))
         results = {}
         if (payload[0] == 0x70):
             results['POSITION'] = 0
@@ -458,9 +460,10 @@ class EEP_Parser():
             results['POSITION'] = 255
             results['B'] = 0
         elif (payload[0] == 0x01):
-            results['STATUS'] = 'Start movin up'
+            results['STATUS'] = 'Start moving up'
             results['B'] = 1
         elif (payload[0] == 0x02):
-            results['STATUS'] = 'Start movin down'
+            results['STATUS'] = 'Start moving down'
             results['B'] = 2
+        self.logger.info('parse_eep_F6_0G_03 returns: {}'.format(results))
         return results
