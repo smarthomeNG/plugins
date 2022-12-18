@@ -465,8 +465,12 @@ class Hue2(SmartPlugin):
             if plugin_item['resource'] == 'group':
                 if not "hue2_reference_light_id" in plugin_item:
                     if plugin_item['function'] != 'dict':
-                        value = self._get_group_item_value(plugin_item['id'], plugin_item['function'], plugin_item['item'].id())
-                        plugin_item['item'](value, self.get_shortname(), src)
+                        if plugin_item['function'] == 'on':
+                            value = self._get_group_item_value(plugin_item['id'], 'any_on', plugin_item['item'].id())
+                        else:
+                            value = self._get_group_item_value(plugin_item['id'], plugin_item['function'], plugin_item['item'].id())
+                        if value is not None:
+                            plugin_item['item'](value, self.get_shortname(), src)
         return
 
 
@@ -486,6 +490,7 @@ class Hue2(SmartPlugin):
             if self.br is not None:
                 try:
                     self.bridge_lights = self.br.lights()
+                    self.bridge_groups = self.br.groups()
                 except Exception as e:
                     self.logger.error(f"poll_bridge_lights: Exception {e}")
 
@@ -505,6 +510,10 @@ class Hue2(SmartPlugin):
                     if "hue2_reference_light_id" in plugin_item:
                         reference_light_id = plugin_item["hue2_reference_light_id"]
                         value = self._get_light_item_value(reference_light_id, plugin_item['function'], plugin_item['item'].id())
+                        if value is not None:
+                            plugin_item['item'](value, self.get_shortname(), src)
+                    elif plugin_item['function'] == 'on':
+                        value = self._get_group_item_value(plugin_item['id'], 'any_on', plugin_item['item'].id())
                         if value is not None:
                             plugin_item['item'](value, self.get_shortname(), src)
 
@@ -595,6 +604,8 @@ class Hue2(SmartPlugin):
 
             if function in self.hue_group_action_values:
                 result = group['action'].get(function, '')
+            elif function == 'any_on':
+                result = group['state'].get(function, '')
             elif function == 'name':
                 result = group['name']
         return result
