@@ -545,7 +545,7 @@ class Hue2(SmartPlugin):
 
     def _get_light_item_value(self, light_id, function, item_path):
         """
-        Update item that hat hue_resource == 'light'
+        Update item that has hue_resource == 'light'
         :param id:
         :param function:
         :return:
@@ -579,7 +579,7 @@ class Hue2(SmartPlugin):
 
     def _get_group_item_value(self, group_id, function, item_path):
         """
-        Update item that hat hue_resource == 'light'
+        Update item that has hue_resource == 'group'
         :param id:
         :param function:
         :return:
@@ -602,7 +602,7 @@ class Hue2(SmartPlugin):
 
     def _get_scene_item_value(self, scene_id, function, item_path):
         """
-        Update item that hat hue_resource == 'light'
+        Update item that has hue_resource == 'scene'
         :param id:
         :param function:
         :return:
