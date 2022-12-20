@@ -169,18 +169,21 @@ item_attributes:
           - 'wan_current_bytes_sent'                  # r/o       num       WAN Verbindung-Anzahl insgesamt versendeter Bytes
           - 'wan_current_bytes_received'              # r/o       num       WAN Verbindung-Anzahl insgesamt empfangener Bytes
           - 'wan_link'                                # r/o       bool      WAN Link
-        # WLAN Attribute                     Hinweis: alle Attribute benötigen zusätzlich das Attribut 'avm2_wlan_index'      
+        # WLAN Config Attribute              Hinweis: alle Attribute benötigen zusätzlich das Attribut 'avm2_wlan_index'
           - 'wlanconfig'                              # r/w       bool      WLAN An/Aus
           - 'wlanconfig_ssid'                         # r/o       str       WLAN SSID
           - 'wlan_guest_time_remaining'               # r/o       num       Verbleibende Zeit, bis zum automatischen Abschalten des Gäste-WLAN
           - 'wlan_associates'                         # r/o       num       Anzahl der verbundenen Geräte im jeweiligen WLAN
+        # WLAN Attribute
           - 'wlan_total_associates'                   # r/o       num       Anzahl der verbundenen Geräte im WLAN
         # Host Attribute                     Hinweis: alle Attribute benötigen zusätzlich das Attribut 'avm2_mac'           
           - 'network_device'                          # r/o       bool      Verbindungsstatus // Defines Network device via MAC-Adresse
           - 'device_ip'                               # r/o       str       Geräte-IP (Muss Child von 'network_device' sein)           
           - 'device_connection_type'                  # r/o       str       Verbindungstyp (Muss Child von 'network_device' sein)       
           - 'device_hostname'                         # r/o       str       Gerätename (Muss Child von 'network_device' sein)           
-          - 'connection_status'                       # r/o       bool      Verbindungsstatus (Muss Child von 'network_device' sein)    
+          - 'connection_status'                       # r/o       bool      Verbindungsstatus (Muss Child von 'network_device' sein)
+        # Hosts Attribute
+          - 'hosts_count'
         # Smarthome Attribute (Deprecated avm data types. Please use alternative AHA interface type)
           - 'aha_device'                              # r/w       bool      Steckdose schalten; siehe "switch_state"
           - 'hkr_device'                              # r/o       str       Status des HKR (OPEN; CLOSED; TEMP)

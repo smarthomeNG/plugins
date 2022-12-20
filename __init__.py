@@ -450,8 +450,20 @@ class AVM2(SmartPlugin):
                     self.logger.warning(f"AVM Homeautomation Interface not activated or not available. Update for {avm_data_type} will not be executed.")
 
     @property
-    def get_callmonitor(self):
-        return self._call_monitor
+    def get_monitoring_service(self):
+        return self._monitoring_service
+
+    @property
+    def get_fritz_device(self):
+        return self._fritz_device
+
+    @property
+    def get_fritz_home(self):
+        return self._fritz_home
+
+    @property
+    def log_level(self):
+        return self.logger.getEffectiveLevel()
 
     def monitoring_service_connect(self):
         self._monitoring_service.connect()
@@ -459,21 +471,74 @@ class AVM2(SmartPlugin):
     def monitoring_service_disconnect(self):
         self._monitoring_service.disconnect()
 
+    def start_call(self, phone_number):
+        return self._fritz_device.start_call(phone_number)
+
+    def cancel_call(self):
+        return self._fritz_device.cancel_call()
+
+    def get_call_origin(self):
+        return self._fritz_device.get_call_origin()
+
+    def set_call_origin(self, phone_name: str):
+        return self._fritz_device.set_call_origin(phone_name)
+
     def get_calllist(self):
         return self._fritz_device.get_calllist_from_cache()
 
-    def get_monitoring_service(self):
-        return self._monitoring_service
+    def get_phone_name(self, index: int = 1):
+        return self._fritz_device.get_phone_name(index)
 
-    def get_fritz_device(self):
-        return self._fritz_device
+    def get_phone_numbers_by_name(self, name: str = '', phonebook_id: int = 0):
+        return self._fritz_device.get_phone_numbers_by_name(name, phonebook_id)
 
-    def get_fritz_home(self):
-        return self._fritz_home
+    def get_contact_name_by_phone_number(self, phone_number: str = '', phonebook_id: int = 0):
+        return self._fritz_device.get_phone_numbers_by_name(phone_number, phonebook_id)
 
-    @property
-    def log_level(self):
-        return self.logger.getEffectiveLevel()
+    def get_device_log_from_lua(self):
+        return self._fritz_home.get_device_log_from_lua()
+
+    def get_device_log_from_lua_separated(self):
+        return self._fritz_home.get_device_log_from_lua_separated()
+
+    def get_device_log_from_tr064(self):
+        return self._fritz_device.get_device_log_from_tr064()
+
+    def get_host_details(self, index: int):
+        return self._fritz_device.get_host_details(index)
+
+    def get_hosts(self, only_active: bool = False):
+        return self._fritz_device.get_hosts(only_active)
+
+    def get_hosts_dict(self):
+        return self._fritz_device.get_hosts_dict()
+
+    def get_mesh(self):
+        return self._fritz_device.get_mesh()
+
+    def is_host_active(self, mac_address: str):
+        return self._fritz_device.is_host_active(mac_address)
+
+    def reboot(self):
+        return self._fritz_device.reboot()
+
+    def reconnect(self):
+        return self._fritz_device.reconnect()
+
+    def wol(self, mac_address: str):
+        return self._fritz_device.wol(mac_address)
+
+    def get_number_of_deflections(self):
+        return self._fritz_device.get_number_of_deflections()
+
+    def get_deflection(self, deflection_id: int = 0):
+        return self._fritz_device.get_deflection(deflection_id)
+
+    def get_deflections(self):
+        return self._fritz_device.get_deflections()
+
+    def set_deflection_enable(self, deflection_id: int = 0, new_enable: bool = False):
+        return self._fritz_device.set_deflection(deflection_id, new_enable)
 
 
 class FritzDevice:
@@ -716,33 +781,6 @@ class FritzDevice:
 
         return str(mac)
 
-    def _lxml_element_to_dict(self, node):
-        """
-        Parse lxml Element to dictionary
-        """
-
-        result = {}
-
-        for element in node.iterchildren():
-            # Remove namespace prefix
-            key = element.tag.split('}')[1] if '}' in element.tag else element.tag
-
-            # Process element as tree element if the inner XML contains non-whitespace content
-            if element.text and element.text.strip():
-                value = element.text
-            else:
-                value = self._lxml_element_to_dict(element)
-            if key in result:
-
-                if type(result[key]) is list:
-                    result[key].append(value)
-                else:
-                    tempvalue = result[key].copy()
-                    result[key] = [tempvalue, value]
-            else:
-                result[key] = value
-        return result
-
     # --------------------------------------
     # Properties of FritzDevice
     # --------------------------------------
@@ -894,13 +932,13 @@ class FritzDevice:
                 try:
                     data = self._poll_fritz_device(avm_data_type, index)
                 except Exception as e:
-                    self._plugin_instance.logger.error(f"Error {e} occurred during update of item={item}. Check item configuration regarding supported/activated function of AVM device. ")
+                    self._plugin_instance.logger.error(f"Error {e} occurred during update of item={item} with avm_data_type={avm_data_type} and index={index}. Check item configuration regarding supported/activated function of AVM device. ")
                     _item_errorlist.append(item)
                 else:
                     if data is None:
                         self._plugin_instance.logger.info(f"Value for item={item} is None.")
                     elif data in self.errorcodes:
-                        self._plugin_instance.logger.error(f"Error {data} '{self.errorcodes.get(data, None)}' occurred during update of item={item}. Check item configuration regarding supported/activated function of AVM device. ")
+                        self._plugin_instance.logger.error(f"Error {data} '{self.errorcodes.get(data, None)}' occurred during update of item={item} with avm_data_type={avm_data_type} and index={index}. Check item configuration regarding supported/activated function of AVM device. ")
                         _item_errorlist.append(item)
                     else:
                         item(data, self._plugin_instance.get_fullname())
@@ -1077,7 +1115,7 @@ class FritzDevice:
         if request.status_code == 200:
             return request
         else:
-            self._plugin_instance.logger.error(f"Request to URL0{url} failed with {request.status_code}")
+            self._plugin_instance.logger.error(f"Request to URL={url} failed with {request.status_code}")
             request.raise_for_status()
 
     @staticmethod
@@ -1088,6 +1126,33 @@ class FritzDevice:
 
         root = etree.fromstring(request.content)
         return root
+
+    def _lxml_element_to_dict(self, node):
+        """
+        Parse lxml Element to dictionary
+        """
+
+        result = {}
+
+        for element in node.iterchildren():
+            # Remove namespace prefix
+            key = element.tag.split('}')[1] if '}' in element.tag else element.tag
+
+            # Process element as tree element if the inner XML contains non-whitespace content
+            if element.text and element.text.strip():
+                value = element.text
+            else:
+                value = self._lxml_element_to_dict(element)
+            if key in result:
+
+                if type(result[key]) is list:
+                    result[key].append(value)
+                else:
+                    tempvalue = result[key].copy()
+                    result[key] = [tempvalue, value]
+            else:
+                result[key] = value
+        return result
 
     def update_item_errordict(self, item_errorlist: list):
         """
@@ -1475,6 +1540,14 @@ class FritzDevice:
         """Get Deflection state of deflection_id"""
         return self.client.InternetGatewayDevice.X_AVM_DE_OnTel.GetDeflection(NewDeflectionId=deflection_id)['NewEnable']
 
+    def get_number_of_deflections(self):
+        """Get number of deflections """
+        return self.client.InternetGatewayDevice.X_AVM_DE_OnTel.GetNumberOfDeflections()['NewNumberOfDeflections']
+
+    def get_deflections(self):
+        """Get deflections as dict"""
+        return self.client.InternetGatewayDevice.X_AVM_DE_OnTel.GetDeflections()['NewDeflectionList']
+
     # ----------------------------------
     # Host
     # ----------------------------------
@@ -1489,7 +1562,7 @@ class FritzDevice:
         :return: True or False, depending if the host is active on the FritzDevice
         """
 
-        is_active = self.client.InternetGatewayDevice.Hosts.GetSpecificHostEntry(NewMACAddress=mac_address)['NewActive']
+        is_active = self.client.LANDevice.Hosts.GetSpecificHostEntry(NewMACAddress=mac_address)['NewActive']
         return bool(is_active)
 
     def get_hosts(self, only_active: bool = False) -> list:
@@ -1502,10 +1575,12 @@ class FritzDevice:
         :return: Array host dicts (see get_host_details)
         """
 
-        number_of_hosts = self.client.InternetGatewayDevice.Hosts.GetHostNumberOfEntries()['NewHostNumberOfEntries']
+        number_of_hosts = int(self.client.LANDevice.Hosts.GetHostNumberOfEntries()['NewHostNumberOfEntries'])
+
         hosts = []
         for i in range(1, number_of_hosts):
             host = self.get_host_details(i)
+
             if not only_active or (only_active and host['is_active']):
                 hosts.append(host)
         return hosts
@@ -1520,23 +1595,86 @@ class FritzDevice:
         :return: Dict host data: name, interface_type, ip_address, address_source, mac_address, is_active, lease_time_remaining
         """
 
-        host_info = self.client.InternetGatewayDevice.Hosts.GetGenericHostEntry(NewIndex=index)
-        host = {
-            'name': host_info['NewHostName'],
-            'interface_type': host_info['NewInterfaceType'],
-            'ip_address': host_info['NewIPAddress'],
-            'address_source': host_info['NewAddressSource'],
-            'mac_address': host_info['NewMACAddress'],
-            'is_active': bool(host_info['NewActive']),
-            'lease_time_remaining': host_info['NewLeaseTimeRemaining']
-        }
-        return host
+        host_info = self.client.LANDevice.Hosts.GetGenericHostEntry(NewIndex=index)
+
+        if isinstance(host_info, int):
+            self._plugin_instance.logger.error(f"Error {host_info} '{self.errorcodes.get(host_info)}' occurred during {index}.")
+            return
+        elif len(host_info) == 7:
+            host = {
+                'name': host_info.get('NewHostName'),
+                'interface_type': host_info.get('NewInterfaceType'),
+                'ip_address': host_info.get('NewIPAddress'),
+                'address_source': host_info.get('NewAddressSource'),
+                'mac_address': host_info.get('NewMACAddress'),
+                'is_active': bool(host_info.get('NewActive')),
+                'lease_time_remaining': host_info.get('NewLeaseTimeRemaining')
+            }
+            return host
+
+    def get_hosts_dict(self) -> dict:
+        """
+        Get all Hosts connected to Fritzdevice as dict
+        """
+        # ToDo: als item_attribute implementieren
+        # ToDo: mit in plugin.yaml aufnehmen
+        hosts_url = self.client.LANDevice.Hosts.X_AVM_DE_GetHostListPath()['NewX_AVM_DE_HostListPath']
+        if not hosts_url:
+            return
+
+        url = f"{self._build_url()}{hosts_url}"
+
+        hosts_xml = self._request_response_to_xml(self._request(url, self._timeout, self._verify))
+        if not hosts_xml:
+            return
+
+        host_dict = {}
+        for item in hosts_xml:
+            for attr in item:
+                if attr.tag == 'Index':
+                    index = int(attr.text)
+                    if index not in host_dict:
+                        host_dict[index] = {}
+                else:
+                    key = str(attr.tag)
+                    value = str(attr.text)
+                    key = key[9:] if key.startswith('X_AVM-DE_') else key
+                    value = int(value) if value.isdigit() else value
+                    if key in ['Active', 'Guest', 'Disallow', 'UpdateAvailable', 'VPN']:
+                        value = bool(value)
+                    host_dict[index][key] = value
+
+        return host_dict
+
+    def get_mesh(self) -> dict:
+        """
+        Get mesh topology information as dict
+        """
+        # ToDo: als item_attribute implementieren
+        # ToDo: mit in plugin.yaml aufnehmen
+
+        mesh_url = self.client.LANDevice.Hosts.X_AVM_DE_GetMeshListPath()['NewX_AVM_DE_MeshListPath']
+        self._plugin_instance.logger.warning(f"mesh_url={mesh_url}")
+        if not mesh_url:
+            return
+
+        url = f"{self._build_url()}{mesh_url}"
+        mesh_response = self._request(url, self._timeout, self._verify)
+
+        if mesh_response:
+            try:
+                mesh = mesh_response.json()
+            except Exception:
+                mesh = None
+                pass
+
+            return mesh
 
     class Client:
         """TR-064 client.
 
         Description file provided by FritzDevice will be read. All DEVICES, SERVICES, ACTIONS definied in that desciption file can be used.
-        Format is: Client.DeviceName.ServiceName.ActionName(Arguments, ...) like Client.InternetGatewayDevice.Hosts.GetGenericHostEntry
+        Format is: Client.DeviceName.ServiceName.ActionName(Arguments, ...) like Client.LANDevice.Hosts.GetGenericHostEntry
         Capital and lowercase letters must match with
 
         If a service is offered multiple times, actions can be accessed by the zero-based square bracket operator:

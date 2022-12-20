@@ -157,7 +157,7 @@
 	<tbody>
 		<tr>
 			<td class="py-1">
-                {% if p.get_fritz_device()  %}
+                {% if p.get_fritz_device  %}
                 <img src="static/img/lamp_green.png" alt="{{ _('Gerät verfügbar') }}" style="width: 17px;padding-bottom: 3px;"/>
                 {% else %}
                 <img src="static/img/lamp_red.png" alt="{{ _('Gerät nicht verfügbar') }}" style="width: 17px;padding-bottom: 3px;"/>
@@ -165,8 +165,8 @@
                 <strong>{{ _('Verbunden') }}</strong>
             </td>
 			<td class="py-1">
-                {% if p.get_fritz_device()  %}
-                    {{ _('Ja') }}{% if p.get_fritz_device().is_ssl() %}, SSL{% endif %}
+                {% if p.get_fritz_device  %}
+                    {{ _('Ja') }}{% if p.get_fritz_device.is_ssl() %}, SSL{% endif %}
                 {% else %}
                      {{ _('Nein') }}
                 {% endif %}
@@ -176,7 +176,7 @@
 		</tr>
 		<tr>
 			<td class="py-1">
-                {% if p.get_monitoring_service() and p._monitoring_service._listen_active %}
+                {% if p.get_monitoring_service and p._monitoring_service._listen_active %}
                     <img src="static/img/lamp_green.png" alt="{{ _('Call Monitor verbunden') }}" style="width: 17px;padding-bottom: 3px;"/>
                 {% else %}
                     <img src="static/img/lamp_red.png" alt="{{ _('Call Monitor nicht verbunden') }}" style="width: 17px;padding-bottom: 3px;"/>
@@ -184,7 +184,7 @@
                 <strong>{{ _('Call Monitor') }}</strong>
             </td>
 			<td class="py-1">
-                {% if p.get_monitoring_service()  %}{{ _('Ja') }}{% if not p.get_monitoring_service()._listen_active %}, {{ _('nicht verbunden') }}{% endif %}{% else %}{{ _('Nein') }}{% endif %}</td>
+                {% if p.get_monitoring_service  %}{{ _('Ja') }}{% if not p.get_monitoring_service._listen_active %}, {{ _('nicht verbunden') }}{% endif %}{% else %}{{ _('Nein') }}{% endif %}</td>
 			<td class="py-1"><strong>{{ _('Passwort') }}</strong></td>
 			<td class="py-1">{{ p.get_parameter_value_for_display('password') }}</td>
 		</tr>
@@ -192,7 +192,7 @@
 			<td class="py-1"><strong>{{ _('Host') }}</strong></td>
 			<td class="py-1"><a class="text-shng" href="http://{{ p._fritz_device.get_host() }}" target="_blank">{{ p._fritz_device.get_host() }}</a></td>
 			<td class="py-1"><strong>{{ _('Port') }}</strong></td>
-			<td class="py-1">{{ p.get_fritz_device().get_port() }} {% if p.get_fritz_device().is_ssl() %}(HTTPS){% endif %}</td>
+			<td class="py-1">{{ p.get_fritz_device.get_port() }} {% if p.get_fritz_device.is_ssl() %}(HTTPS){% endif %}</td>
 		</tr>
 	</tbody>
 </table>
@@ -440,22 +440,28 @@
                 <td class="py-1">{{ 'GetInfo' }}</td>
                 <td class="py-1">{{ p._fritz_device.client.LANDevice.WLANConfiguration[2].GetInfo() }}</td>
             </tr>
+
+
             <tr>
-                <td class="py-1">{{ 'GetTotalAssociations 2' }}</td>
-                <td class="py-1">{{ p._fritz_device.client.LANDevice.WLANConfiguration[2].GetTotalAssociations() }}</td>
+                <td class="py-1">{{ 'GetHostNumberOfEntries' }}</td>
+                <td class="py-1">{{ p._fritz_device.client.LANDevice.Hosts.GetHostNumberOfEntries()['NewHostNumberOfEntries'] }}</td>
             </tr>
             <tr>
-                <td class="py-1">{{ 'GetTotalAssociations 1' }}</td>
-                <td class="py-1">{{ p._fritz_device.client.LANDevice.WLANConfiguration[1].GetTotalAssociations() }}</td>
+                <td class="py-1">{{ 'GetGenericHostEntry' }}</td>
+                <td class="py-1">{{ p._fritz_device.client.LANDevice.Hosts.GetGenericHostEntry(NewIndex=1) }}</td>
             </tr>
+
             <tr>
-                <td class="py-1">{{ 'GetTotalAssociations 0' }}</td>
-                <td class="py-1">{{ p._fritz_device.client.LANDevice.WLANConfiguration[0].GetTotalAssociations() }}</td>
+                <td class="py-1">{{ 'NewDeflectionList' }}</td>
+                <td class="py-1">{{ p._fritz_device.client.InternetGatewayDevice.X_AVM_DE_OnTel.GetDeflections() }}</td>
             </tr>
+
             <tr>
-                <td class="py-1">{{ 'get_wlan_devices 0' }}</td>
-                <td class="py-1">{{ p._fritz_device.get_wlan_devices(1) }}</td>
+                <td class="py-1">{{ 'NewNumberOfDeflections' }}</td>
+                <td class="py-1">{{ p._fritz_device.client.InternetGatewayDevice.X_AVM_DE_OnTel.GetNumberOfDeflections() }}</td>
             </tr>
+
+
             <tr>
                 <td class="py-1">{{ 'p._fritz_device.get_call_origin()' }}</td>
                 <td class="py-1">{{ p._fritz_device.get_call_origin() }}</td>
