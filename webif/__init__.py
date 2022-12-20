@@ -68,11 +68,13 @@ class WebInterface(SmartPluginWebIf):
             tr064_item_count = None
 
         if self.plugin.get_fritz_home():
-            aha_items = sorted(self.plugin.get_fritz_home().get_item_list, key=lambda k: str.lower(k['_path']))
+            aha_items = self.plugin.get_fritz_home().get_item_list
             aha_item_count = len(aha_items)
+            logentries = self.plugin.get_fritz_home().get_device_log_from_lua_separated()
         else:
             aha_items = None
             aha_item_count = None
+            logentries = None
 
         if self.plugin.get_monitoring_service():
             call_monitor_items = sorted(self.plugin.get_monitoring_service().get_item_all_list, key=lambda k: str.lower(k['_path']))
@@ -97,6 +99,7 @@ class WebInterface(SmartPluginWebIf):
                            call_monitor_item_count=call_monitor_item_count,
                            aha_items=aha_items,
                            aha_item_count=aha_item_count,
+                           logentries=logentries,
                            p=self.plugin,
                            webif_pagelength=pagelength,
                            maintenance=True if self.plugin.log_level <= 20 else False,

@@ -163,7 +163,11 @@ _tam_attributes = ['tam',
 
 _wlan_config_attributes = ['wlanconfig',
                            'wlanconfig_ssid',
-                           'wlan_guest_time_remaining']
+                           'wlan_guest_time_remaining',
+                           'wlan_associates',
+                           ]
+
+_wlan_attributes = ['wlan_total_associates']
 
 _wan_common_interface_attributes = ['wan_total_packets_sent',
                                     'wan_total_packets_received',
@@ -226,6 +230,7 @@ _deprecated_attributes = ['temperature',
 _tr064_attributes = [*_wan_connection_attributes,
                      *_tam_attributes,
                      *_wlan_config_attributes,
+                     *_wlan_attributes,
                      *_wan_common_interface_attributes,
                      *_fritz_device_attributes,
                      *_host_attributes,
@@ -711,6 +716,33 @@ class FritzDevice:
 
         return str(mac)
 
+    def _lxml_element_to_dict(self, node):
+        """
+        Parse lxml Element to dictionary
+        """
+
+        result = {}
+
+        for element in node.iterchildren():
+            # Remove namespace prefix
+            key = element.tag.split('}')[1] if '}' in element.tag else element.tag
+
+            # Process element as tree element if the inner XML contains non-whitespace content
+            if element.text and element.text.strip():
+                value = element.text
+            else:
+                value = self._lxml_element_to_dict(element)
+            if key in result:
+
+                if type(result[key]) is list:
+                    result[key].append(value)
+                else:
+                    tempvalue = result[key].copy()
+                    result[key] = [tempvalue, value]
+            else:
+                result[key] = value
+        return result
+
     # --------------------------------------
     # Properties of FritzDevice
     # --------------------------------------
@@ -832,6 +864,12 @@ class FritzDevice:
         else:
             return False
 
+    @property
+    def wlan_devices_count(self):
+        wlan_devices = self.get_wlan_devices()
+        if wlan_devices:
+            return wlan_devices.get('TotalAssociations', None)
+
     # ----------------------------------
     # Update methods
     # ----------------------------------
@@ -919,6 +957,7 @@ class FritzDevice:
             'wlanconfig':                   ('LANDevice', 'WLANConfiguration', 'GetInfo', 'WLAN', 'NewEnable'),
             'wlanconfig_ssid':              ('LANDevice', 'WLANConfiguration', 'GetInfo', 'WLAN', 'NewSSID'),
             'wlan_guest_time_remaining':    ('LANDevice', 'WLANConfiguration', 'X_AVM_DE_GetWLANExtInfo', 'WLAN', 'NewX_AVM_DE_TimeRemain'),
+            'wlan_associates':              ('LANDevice', 'WLANConfiguration', 'GetTotalAssociations', 'WLAN', 'NewTotalAssociations'),
             'device_ip':                    ('LANDevice', 'Hosts', 'GetSpecificHostEntry', 'NewMACAddress', 'NewIPAddress'),
             'device_connection_type':       ('LANDevice', 'Hosts', 'GetSpecificHostEntry', 'NewMACAddress', 'NewInterfaceType'),
             'device_hostname':              ('LANDevice', 'Hosts', 'GetSpecificHostEntry', 'NewMACAddress', 'NewHostName'),
@@ -947,6 +986,7 @@ class FritzDevice:
             'tam_total_message_number': "self.get_tam_message_count(index, 'total')",
             'tam_new_message_number':   "self.get_tam_message_count(index, 'new')",
             'tam_old_message_number':   "self.get_tam_message_count(index, 'old')",
+            'wlan_total_associates':    "self.wlan_devices_count"
         }
 
         # Create link dict depending on connection type
@@ -1033,7 +1073,6 @@ class FritzDevice:
         """
         Do get request and return response
         """
-
         request = requests.get(url, timeout=timeout, verify=verify)
         if request.status_code == 200:
             return request
@@ -1214,8 +1253,7 @@ class FritzDevice:
 
         tel_type = {"mobile": "CELL", "work": "WORK", "home": "HOME"}
         result_numbers = {}
-        phonebook_url = self.client.InternetGatewayDevice.X_AVM_DE_OnTel.GetPhonebook(NewPhonebookID=phonebook_id)[
-            'NewPhonebookURL']
+        phonebook_url = self.client.InternetGatewayDevice.X_AVM_DE_OnTel.GetPhonebook(NewPhonebookID=phonebook_id)['NewPhonebookURL']
         phonebooks = self._request_response_to_xml(self._request(phonebook_url, self._timeout, self._verify))
         if phonebooks is not None:
             for phonebook in phonebooks.iter('phonebook'):
@@ -1333,6 +1371,21 @@ class FritzDevice:
             self._plugin_instance.logger.debug(f"get_wlan called: wlan_index={wlan_index}")
 
         return self.client.LANDevice.WLANConfiguration[wlan_index].GetInfo()['NewEnable']
+
+    def get_wlan_devices(self, wlan_index: int = 0):
+        """
+        Get all WLAN Devices connected to Fritzdevice
+        """
+        wlandevice_url = self.client.LANDevice.WLANConfiguration[wlan_index].X_AVM_DE_GetWLANDeviceListPath()['NewX_AVM_DE_WLANDeviceListPath']
+        if not wlandevice_url:
+            return
+
+        url = f"{self._build_url()}{wlandevice_url}"
+        wlandevices_xml = self._request_response_to_xml(self._request(url, self._timeout, self._verify))
+        if not wlandevices_xml:
+            return
+
+        return self._lxml_element_to_dict(wlandevices_xml)
 
     # ----------------------------------
     # tam methods
@@ -1811,7 +1864,7 @@ class FritzHome:
     Fritzhome object to communicate with the device via AHA-HTTP Interface.
     """
 
-    _login_route = "/login_sid.lua?version=2"
+    _login_route = '/login_sid.lua?version=2'
     _log_route = '/query.lua?mq_log=logger:status/log'
     _log_separate_route = '/query.lua?mq_log=logger:status/log_separate'
     _homeauto_route = '/webservices/homeautoswitch.lua'

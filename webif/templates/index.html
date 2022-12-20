@@ -368,9 +368,6 @@
             </tr>
         </thead>
         <tbody>
-            {% if p._fritz_home %}
-                {% set logentries = p._fritz_home.get_device_log_from_lua_separated() %}
-            {% endif %}
             {% if logentries %}
                 {% for logentry in logentries%}
                     <tr>
@@ -439,6 +436,26 @@
             </tr>
         </thead>
         <tbody>
+            <tr>
+                <td class="py-1">{{ 'GetInfo' }}</td>
+                <td class="py-1">{{ p._fritz_device.client.LANDevice.WLANConfiguration[2].GetInfo() }}</td>
+            </tr>
+            <tr>
+                <td class="py-1">{{ 'GetTotalAssociations 2' }}</td>
+                <td class="py-1">{{ p._fritz_device.client.LANDevice.WLANConfiguration[2].GetTotalAssociations() }}</td>
+            </tr>
+            <tr>
+                <td class="py-1">{{ 'GetTotalAssociations 1' }}</td>
+                <td class="py-1">{{ p._fritz_device.client.LANDevice.WLANConfiguration[1].GetTotalAssociations() }}</td>
+            </tr>
+            <tr>
+                <td class="py-1">{{ 'GetTotalAssociations 0' }}</td>
+                <td class="py-1">{{ p._fritz_device.client.LANDevice.WLANConfiguration[0].GetTotalAssociations() }}</td>
+            </tr>
+            <tr>
+                <td class="py-1">{{ 'get_wlan_devices 0' }}</td>
+                <td class="py-1">{{ p._fritz_device.get_wlan_devices(1) }}</td>
+            </tr>
             <tr>
                 <td class="py-1">{{ 'p._fritz_device.get_call_origin()' }}</td>
                 <td class="py-1">{{ p._fritz_device.get_call_origin() }}</td>

@@ -173,6 +173,8 @@ item_attributes:
           - 'wlanconfig'                              # r/w       bool      WLAN An/Aus
           - 'wlanconfig_ssid'                         # r/o       str       WLAN SSID
           - 'wlan_guest_time_remaining'               # r/o       num       Verbleibende Zeit, bis zum automatischen Abschalten des Gäste-WLAN
+          - 'wlan_associates'                         # r/o       num       Anzahl der verbundenen Geräte im jeweiligen WLAN
+          - 'wlan_total_associates'                   # r/o       num       Anzahl der verbundenen Geräte im WLAN
         # Host Attribute                     Hinweis: alle Attribute benötigen zusätzlich das Attribut 'avm2_mac'           
           - 'network_device'                          # r/o       bool      Verbindungsstatus // Defines Network device via MAC-Adresse
           - 'device_ip'                               # r/o       str       Geräte-IP (Muss Child von 'network_device' sein)           
@@ -508,8 +510,13 @@ item_structs:
         wlan_1_ssid:
             type: str
             visu_acl: ro
-            avm2_data_type@instance: wlanconfig_ssid    # 2,4ghz
+            avm2_data_type@instance: wlanconfig_ssid
             avm2_wlan_index@instance: 1
+        wlan_1_associates:
+          type: num
+          visu_acl: ro
+          avm2_data_type@instance: wlan_associates
+          avm2_wlan_index@instance: 1
         wlan_2:
             type: bool
             visu_acl: rw
@@ -519,8 +526,13 @@ item_structs:
         wlan_2_ssid:
             type: str
             visu_acl: ro
-            avm2_data_type@instance: wlanconfig_ssid    # 5 GHz
+            avm2_data_type@instance: wlanconfig_ssid
             avm2_wlan_index@instance: 2
+        wlan_2_associates:
+          type: num
+          visu_acl: ro
+          avm2_data_type@instance: wlan_associates
+          avm2_wlan_index@instance: 2
         wlan_gast:
             type: bool
             visu_acl: rw
@@ -530,12 +542,17 @@ item_structs:
         wlan_gast_ssid:
             type: str
             visu_acl: ro
-            avm2_data_type@instance: wlanconfig_ssid    # Guest
+            avm2_data_type@instance: wlanconfig_ssid
             avm2_wlan_index@instance: 3
+        wlan_gast_associates:
+          type: num
+          visu_acl: ro
+          avm2_data_type@instance: wlan_associates
+          avm2_wlan_index@instance: 3
         wlan_gast_tr:
             type: num
             visu_acl: rw
-            avm2_data_type@instance: wlan_guest_time_remaining    # Guest
+            avm2_data_type@instance: wlan_guest_time_remaining
             avm2_wlan_index@instance: 3
     device:
         avm2_data_type@instance: network_device
