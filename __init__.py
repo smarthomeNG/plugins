@@ -2501,7 +2501,7 @@ class FritzHome:
 
         if temp < min(range(16, 56)):
             temp = 253
-        elif temp > max(range(16, 56)):
+        elif (temp > max(range(16, 56))) and (temp != 253):
             temp = 254
 
         self._aha_request("sethkrtsoll", ain=ain, param={'param': temp})
