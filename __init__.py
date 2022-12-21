@@ -184,7 +184,10 @@ _fritz_device_attributes = ['uptime',
                             'hardware_version',
                             'serial_number']
 
-_host_attribute = ['network_device']
+_host_attribute = ['network_device',
+                   'hosts_count',
+                   'hosts_info',
+                   'mesh_topology']
 
 _host_child_attributes = ['device_ip',
                           'device_connection_type',
@@ -513,8 +516,8 @@ class AVM2(SmartPlugin):
     def get_hosts_dict(self):
         return self._fritz_device.get_hosts_dict()
 
-    def get_mesh(self):
-        return self._fritz_device.get_mesh()
+    def get_mesh_topology(self):
+        return self._fritz_device.get_mesh_topology()
 
     def is_host_active(self, mac_address: str):
         return self._fritz_device.is_host_active(mac_address)
@@ -937,7 +940,7 @@ class FritzDevice:
                 else:
                     if data is None:
                         self._plugin_instance.logger.info(f"Value for item={item} is None.")
-                    elif data in self.errorcodes:
+                    elif isinstance(data, int) and data in self.errorcodes:
                         self._plugin_instance.logger.error(f"Error {data} '{self.errorcodes.get(data, None)}' occurred during update of item={item} with avm_data_type={avm_data_type} and index={index}. Check item configuration regarding supported/activated function of AVM device. ")
                         _item_errorlist.append(item)
                     else:
@@ -1001,13 +1004,13 @@ class FritzDevice:
             'device_hostname':              ('LANDevice', 'Hosts', 'GetSpecificHostEntry', 'NewMACAddress', 'NewHostName'),
             'network_device':               ('LANDevice', 'Hosts', 'GetSpecificHostEntry', 'NewMACAddress', 'NewActive'),
             'connection_status':            ('LANDevice', 'Hosts', 'GetSpecificHostEntry', 'NewMACAddress', 'NewActive'),
-            'aha_device':                   ('InternetGatewayDevice', 'Homeauto', 'GetSpecificDeviceInfos', 'NewAIN', 'NewSwitchState'),
-            'hkr_device':                   ('InternetGatewayDevice', 'Homeauto', 'GetSpecificDeviceInfos', 'NewAIN', 'NewHkrSetVentilStatus'),
-            'set_temperature':              ('InternetGatewayDevice', 'Homeauto', 'GetSpecificDeviceInfos', 'NewAIN', 'NewFirmwareVersion'),
-            'temperature':                  ('InternetGatewayDevice', 'Homeauto', 'GetSpecificDeviceInfos', 'NewAIN', 'NewTemperatureCelsius'),
-            'set_temperature_reduced':      ('InternetGatewayDevice', 'Homeauto', 'GetSpecificDeviceInfos', 'NewAIN', 'NewHkrReduceTemperature'),
-            'set_temperature_comfort':      ('InternetGatewayDevice', 'Homeauto', 'GetSpecificDeviceInfos', 'NewAIN', 'NewHkrComfortTemperature'),
-            'firmware_version':             ('InternetGatewayDevice', 'Homeauto', 'GetSpecificDeviceInfos', 'NewAIN', 'NewFirmwareVersion'),
+            'aha_device':                   ('InternetGatewayDevice', 'X_AVM_DE_Homeauto', 'GetSpecificDeviceInfos', 'NewAIN', 'NewSwitchState'),
+            'hkr_device':                   ('InternetGatewayDevice', 'X_AVM_DE_Homeauto', 'GetSpecificDeviceInfos', 'NewAIN', 'NewHkrSetVentilStatus'),
+            'set_temperature':              ('InternetGatewayDevice', 'X_AVM_DE_Homeauto', 'GetSpecificDeviceInfos', 'NewAIN', 'NewFirmwareVersion'),
+            'temperature':                  ('InternetGatewayDevice', 'X_AVM_DE_Homeauto', 'GetSpecificDeviceInfos', 'NewAIN', 'NewTemperatureCelsius'),
+            'set_temperature_reduced':      ('InternetGatewayDevice', 'X_AVM_DE_Homeauto', 'GetSpecificDeviceInfos', 'NewAIN', 'NewHkrReduceTemperature'),
+            'set_temperature_comfort':      ('InternetGatewayDevice', 'X_AVM_DE_Homeauto', 'GetSpecificDeviceInfos', 'NewAIN', 'NewHkrComfortTemperature'),
+            'firmware_version':             ('InternetGatewayDevice', 'X_AVM_DE_Homeauto', 'GetSpecificDeviceInfos', 'NewAIN', 'NewFirmwareVersion'),
             'number_of_deflections':        ('InternetGatewayDevice', 'X_AVM_DE_OnTel', 'GetNumberOfDeflections', None, 'NewNumberOfDeflections'),
             'deflection_details':           ('InternetGatewayDevice', 'X_AVM_DE_OnTel', 'GetDeflection', 'NewDeflectionId', None),
             'deflections_details':          ('InternetGatewayDevice', 'X_AVM_DE_OnTel', 'GetDeflections', 'None', 'NewDeflectionList'),
@@ -1024,7 +1027,10 @@ class FritzDevice:
             'tam_total_message_number': "self.get_tam_message_count(index, 'total')",
             'tam_new_message_number':   "self.get_tam_message_count(index, 'new')",
             'tam_old_message_number':   "self.get_tam_message_count(index, 'old')",
-            'wlan_total_associates':    "self.wlan_devices_count"
+            'wlan_total_associates':    "self.wlan_devices_count",
+            'hosts_info':               "self.get_hosts_dict()",
+            'hosts_count':              "self.get_hosts_count()",
+            'mesh_topology':            "self.get_mesh_topology()",
         }
 
         # Create link dict depending on connection type
@@ -1291,9 +1297,7 @@ class FritzDevice:
         self.client.InternetGatewayDevice.X_VoIP.X_AVM_DE_DialHangup()
 
     def get_contact_name_by_phone_number(self, phone_number: str = '', phonebook_id: int = 0) -> str:
-        """
-        Get contact from phone book by phone number
-        """
+        """Get contact from phone book by phone number"""
 
         if phone_number.endswith('#'):
             phone_number = phone_number.strip('#')
@@ -1312,9 +1316,7 @@ class FritzDevice:
             self._plugin_instance.logger.error("Phonebook not available on the FritzDevice")
 
     def get_phone_numbers_by_name(self, name: str = '', phonebook_id: int = 0) -> dict:
-        """
-        Get phone number from phone book by contact
-        """
+        """Get phone number from phone book by contact"""
 
         tel_type = {"mobile": "CELL", "work": "WORK", "home": "HOME"}
         result_numbers = {}
@@ -1337,11 +1339,7 @@ class FritzDevice:
             self._plugin_instance.logger.error("Phonebook not available on the FritzDevice")
 
     def get_calllist_from_cache(self) -> list:
-        """
-        returns the cached calllist when all items are initialized. The filter set by plugin.conf is applied.
-
-        :return: Array of calllist entries
-        """
+        """returns the cached calllist when all items are initialized. The filter set by plugin.conf is applied."""
 
         if not self._calllist_cache:
             self._calllist_cache = self.get_calllist(self._call_monitor_incoming_filter)
@@ -1350,9 +1348,7 @@ class FritzDevice:
         return self._calllist_cache
 
     def get_calllist(self, filter_incoming: str = '') -> list:
-        """
-        request calllist from Fritz Device
-        """
+        """request calllist from AVM Device"""
 
         calllist_url = self.client.InternetGatewayDevice.X_AVM_DE_OnTel.GetCallList()
         if isinstance(calllist_url, int):
@@ -1438,9 +1434,7 @@ class FritzDevice:
         return self.client.LANDevice.WLANConfiguration[wlan_index].GetInfo()['NewEnable']
 
     def get_wlan_devices(self, wlan_index: int = 0):
-        """
-        Get all WLAN Devices connected to Fritzdevice
-        """
+        """Get all WLAN Devices connected to AVM-Device"""
         wlandevice_url = self.client.LANDevice.WLANConfiguration[wlan_index].X_AVM_DE_GetWLANDeviceListPath()['NewX_AVM_DE_WLANDeviceListPath']
         if not wlandevice_url:
             return
@@ -1486,6 +1480,7 @@ class FritzDevice:
         return tam_list
 
     def get_tam_message_count(self, tam_index: int = 0, number: str = None):
+        """Return count to tam messages"""
 
         tam_list = self.get_tam_list(tam_index)
         total_count = 0
@@ -1513,9 +1508,7 @@ class FritzDevice:
     # set home automation switch
     # ----------------------------------
     def set_aha_device(self, ain: str = '', set_switch: bool = False):
-        """
-        Set AHA-Device via TR-064 protocol
-        """
+        """Set AHA-Device via TR-064 protocol"""
 
         # SwitchState: OFF, ON, TOGGLE, UNDEFINED
         switch_state = "ON" if set_switch is True else "OFF"
@@ -1612,12 +1605,9 @@ class FritzDevice:
             }
             return host
 
-    def get_hosts_dict(self) -> dict:
-        """
-        Get all Hosts connected to Fritzdevice as dict
-        """
-        # ToDo: als item_attribute implementieren
-        # ToDo: mit in plugin.yaml aufnehmen
+    def get_hosts_dict(self) -> Union[dict, None]:
+        """Get all Hosts connected to AVM device as dict"""
+
         hosts_url = self.client.LANDevice.Hosts.X_AVM_DE_GetHostListPath()['NewX_AVM_DE_HostListPath']
         if not hosts_url:
             return
@@ -1628,33 +1618,34 @@ class FritzDevice:
         if not hosts_xml:
             return
 
-        host_dict = {}
+        hosts_dict = {}
         for item in hosts_xml:
+            host_dict = {}
+            index = None
             for attr in item:
                 if attr.tag == 'Index':
                     index = int(attr.text)
-                    if index not in host_dict:
-                        host_dict[index] = {}
-                else:
-                    key = str(attr.tag)
-                    value = str(attr.text)
-                    key = key[9:] if key.startswith('X_AVM-DE_') else key
-                    value = int(value) if value.isdigit() else value
-                    if key in ['Active', 'Guest', 'Disallow', 'UpdateAvailable', 'VPN']:
-                        value = bool(value)
-                    host_dict[index][key] = value
+                key = str(attr.tag)
+                value = str(attr.text)
+                key = key[9:] if key.startswith('X_AVM-DE_') else key
+                value = int(value) if value.isdigit() else value
+                if key in ['Active', 'Guest', 'Disallow', 'UpdateAvailable', 'VPN']:
+                    value = bool(value)
+                host_dict[key] = value
+            if index:
+                hosts_dict[index] = host_dict
 
-        return host_dict
+        return hosts_dict
 
-    def get_mesh(self) -> dict:
-        """
-        Get mesh topology information as dict
-        """
-        # ToDo: als item_attribute implementieren
-        # ToDo: mit in plugin.yaml aufnehmen
+    def get_hosts_count(self) -> int:
+        """Returns count of hosts"""
+
+        return len(self.get_hosts_dict())
+
+    def get_mesh_topology(self) -> Union[dict, None]:
+        """Get mesh topology information as dict"""
 
         mesh_url = self.client.LANDevice.Hosts.X_AVM_DE_GetMeshListPath()['NewX_AVM_DE_MeshListPath']
-        self._plugin_instance.logger.warning(f"mesh_url={mesh_url}")
         if not mesh_url:
             return
 

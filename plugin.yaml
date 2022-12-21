@@ -183,7 +183,9 @@ item_attributes:
           - 'device_hostname'                         # r/o       str       Gerätename (Muss Child von 'network_device' sein)           
           - 'connection_status'                       # r/o       bool      Verbindungsstatus (Muss Child von 'network_device' sein)
         # Hosts Attribute
-          - 'hosts_count'
+          - 'hosts_count'                             #r/o        num       Anzahl der Hosts
+          - 'hosts_info'                              #r/o        dict      Informationen über die Hosts
+          - 'mesh_topology'                           #r/o        dict      Topologie des Mesh
         # Smarthome Attribute (Deprecated avm data types. Please use alternative AHA interface type)
           - 'aha_device'                              # r/w       bool      Steckdose schalten; siehe "switch_state"
           - 'hkr_device'                              # r/o       str       Status des HKR (OPEN; CLOSED; TEMP)
@@ -340,6 +342,7 @@ item_structs:
         myfritz:
             type: bool
             avm2_data_type@instance: myfritz_status
+
     monitor:
         trigger:
             type: bool
@@ -400,6 +403,7 @@ item_structs:
                 type: str
                 avm2_data_type@instance: call_event
                 cache: yes
+
     tam:
         type: bool
         visu_acl: rw
@@ -423,6 +427,7 @@ item_structs:
             type: num
             visu_acl: ro
             avm2_data_type@instance: tam_total_message_number
+
     deflection:
         type: bool
         visu_acl: rw
@@ -454,6 +459,7 @@ item_structs:
             type: num
             visu_acl: ro
             avm2_data_type@instance: deflection_phonebook_id
+
     wan:
         connection_status:
             type: str
@@ -503,6 +509,7 @@ item_structs:
             type: bool
             visu_acl: rw
             enforce_updates: yes
+
     wlan:
         wlan_1:
             type: bool
@@ -557,6 +564,7 @@ item_structs:
             visu_acl: rw
             avm2_data_type@instance: wlan_guest_time_remaining
             avm2_wlan_index@instance: 3
+
     device:
         avm2_data_type@instance: network_device
         type: bool
@@ -573,6 +581,7 @@ item_structs:
             type: str
             avm2_data_type@instance: device_hostname
             visu_acl: ro
+
     aha_general:
         name:
             avm2_data_type@instance: device_name
@@ -595,6 +604,7 @@ item_structs:
         functions:
             avm2_data_type@instance: device_functions
             type: list
+
     aha_thermostat:
         target_temperature:
             avm2_data_type@instance: target_temperature
@@ -639,6 +649,7 @@ item_structs:
         device_lock:
             avm2_data_type@instance: device_lock
             type: bool
+
     aha_temperature_sensor:
         current_temperature:
             avm2_data_type@instance: current_temperature
@@ -646,10 +657,12 @@ item_structs:
         temperature_offset:
             avm2_data_type@instance: temperature_offset
             type: num
+
     aha_alert:
         state:
             avm2_data_type@instance: alert
             type: bool
+
     aha_switch:
         switch_state:
             avm2_data_type@instance: switch_state
@@ -658,6 +671,7 @@ item_structs:
             avm2_data_type@instance: switch_toggle
             type: bool
             enforce_updates: yes
+
     aha_powermeter:
         power:
             avm2_data_type@instance: power
@@ -674,7 +688,6 @@ item_structs:
     # NOTE: This section should only be used, if really necessary (e.g. for the stateengine plugin)
 
 plugin_functions:
-    # Definition of function interface of the plugin
 
     cancel_call:
         type: void
@@ -903,6 +916,22 @@ plugin_functions:
                 description:
                     de: "An / Aus"
                     en: "Enable / Disable"
+
+    get_mesh_topology:
+      type: dict
+      description:
+        de: "Liefert die Mesh-Topologie als Dictionary"
+        en: "Lists mesh topology as dict"
+      parameters:
+      # This function has no parameters
+
+    get_hosts_dict:
+      type: dict
+      description:
+        de: "Liefert Informationen aller Hosts als Dictionary"
+        en: "Lists information of all hosts as dict"
+      parameters:
+      # This function has no parameters
 
 logic_parameters: NONE
     # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)
