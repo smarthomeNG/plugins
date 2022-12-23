@@ -436,20 +436,17 @@
             </tr>
         </thead>
         <tbody>
-            <tr>
-                <td class="py-1">{{ 'GetInfo' }}</td>
-                <td class="py-1">{{ p._fritz_device.client.LANDevice.WLANConfiguration[2].GetInfo() }}</td>
-            </tr>
-
 
             <tr>
-                <td class="py-1">{{ 'GetHostNumberOfEntries' }}</td>
-                <td class="py-1">{{ p._fritz_device.client.LANDevice.Hosts.GetHostNumberOfEntries()['NewHostNumberOfEntries'] }}</td>
+                <td class="py-1">{{ 'NewPhonebookURL' }}</td>
+                <td class="py-1">{{ p._fritz_device.client.InternetGatewayDevice.X_AVM_DE_OnTel.GetPhonebook(NewPhonebookID=0) }}</td>
             </tr>
+
             <tr>
-                <td class="py-1">{{ 'GetGenericHostEntry' }}</td>
-                <td class="py-1">{{ p._fritz_device.client.LANDevice.Hosts.GetGenericHostEntry(NewIndex=1) }}</td>
+                <td class="py-1">{{ 'Frizdevice Items' }}</td>
+                <td class="py-1">{{ p._fritz_device._items }}</td>
             </tr>
+
 
             <tr>
                 <td class="py-1">{{ 'NewDeflectionList' }}</td>

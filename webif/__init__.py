@@ -60,15 +60,15 @@ class WebInterface(SmartPluginWebIf):
         :return: contents of the template after being rendered
         """
 
-        if self.plugin.get_fritz_device:
-            tr064_items = self.plugin.get_fritz_device.get_item_list
+        if self.plugin.fritz_device:
+            tr064_items = self.plugin.fritz_device.item_list
             tr064_item_count = len(tr064_items)
         else:
             tr064_items = None
             tr064_item_count = None
 
-        if self.plugin.get_fritz_home:
-            aha_items = self.plugin.get_fritz_home.get_item_list
+        if self.plugin.fritz_home:
+            aha_items = self.plugin.fritz_home.item_list
             aha_item_count = len(aha_items)
             logentries = self.plugin.get_device_log_from_lua_separated()
         else:
@@ -76,8 +76,8 @@ class WebInterface(SmartPluginWebIf):
             aha_item_count = None
             logentries = None
 
-        if self.plugin.get_monitoring_service:
-            call_monitor_items = self.plugin.get_monitoring_service.get_item_all_list
+        if self.plugin.monitoring_service:
+            call_monitor_items = self.plugin.monitoring_service.item_all_list
             call_monitor_item_count = len(call_monitor_items)
         else:
             call_monitor_items = None
@@ -118,25 +118,25 @@ class WebInterface(SmartPluginWebIf):
 
         if dataSet is None:
             data = dict()
-            if self.plugin.get_monitoring_service:
+            if self.plugin.monitoring_service:
                 data['call_monitor'] = {}
-                for item in self.plugin.get_monitoring_service.get_item_all_list:
+                for item in self.plugin.monitoring_service.item_all_list:
                     data['call_monitor'][item.id()] = {}
                     data['call_monitor'][item.id()]['value'] = item()
                     data['call_monitor'][item.id()]['last_update'] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
                     data['call_monitor'][item.id()]['last_change'] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
 
-            if self.plugin.get_fritz_device:
+            if self.plugin.fritz_device:
                 data['tr064_items'] = {}
-                for item in self.plugin.get_fritz_device.get_item_list:
+                for item in self.plugin.fritz_device.item_list:
                     data['tr064_items'][item.id()] = {}
                     data['tr064_items'][item.id()]['value'] = item()
                     data['tr064_items'][item.id()]['last_update'] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
                     data['tr064_items'][item.id()]['last_change'] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
 
-            if self.plugin.get_fritz_home:
+            if self.plugin.fritz_home:
                 data['aha_items'] = {}
-                for item in self.plugin.get_fritz_home.get_item_list:
+                for item in self.plugin.fritz_home.item_list:
                     data['aha_items'][item.id()] = {}
                     data['aha_items'][item.id()]['value'] = item()
                     data['aha_items'][item.id()]['last_update'] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')

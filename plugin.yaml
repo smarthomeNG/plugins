@@ -174,6 +174,9 @@ item_attributes:
           - 'wlanconfig_ssid'                         # r/o       str       WLAN SSID
           - 'wlan_guest_time_remaining'               # r/o       num       Verbleibende Zeit, bis zum automatischen Abschalten des Gäste-WLAN
           - 'wlan_associates'                         # r/o       num       Anzahl der verbundenen Geräte im jeweiligen WLAN
+          - 'wps_active'                              # r/w       bool      Schaltet WPS für das entsprechende WlAN an / aus
+          - 'wps_status'                              # r/o       str       WPS Status des entsprechenden WlAN
+          - 'wps_mode'                                # r/o       str       WPS Modus des entsprechenden WlAN
         # WLAN Attribute
           - 'wlan_total_associates'                   # r/o       num       Anzahl der verbundenen Geräte im WLAN
         # Host Attribute                     Hinweis: alle Attribute benötigen zusätzlich das Attribut 'avm2_mac'           

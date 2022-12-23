@@ -31,11 +31,11 @@ import hashlib
 import time
 import lxml.etree as etree
 
-from typing import Union
 from requests.packages import urllib3
 from requests.auth import HTTPDigestAuth
 from io import BytesIO
 from xml.etree import ElementTree
+from typing import Union
 from typing import Dict
 from enum import IntFlag
 from abc import ABC
@@ -44,6 +44,7 @@ from json.decoder import JSONDecodeError
 from lib.model.smartplugin import SmartPlugin
 from lib.item import Items
 from .webif import WebInterface
+
 
 """
 Definition of TR-064 details
@@ -165,7 +166,9 @@ _wlan_config_attributes = ['wlanconfig',
                            'wlanconfig_ssid',
                            'wlan_guest_time_remaining',
                            'wlan_associates',
-                           ]
+                           'wps_active',
+                           'wps_status',
+                           'wps_mode']
 
 _wlan_attributes = ['wlan_total_associates']
 
@@ -253,9 +256,7 @@ class AVM2(SmartPlugin):
     PLUGIN_VERSION = '2.0.0'
 
     def __init__(self, sh):
-        """
-        Initializes the plugin.
-        """
+        """Initializes the plugin."""
 
         # Call init code of parent class (SmartPlugin)
         super().__init__()
@@ -263,10 +264,7 @@ class AVM2(SmartPlugin):
         self.logger.info('Init AVM2 Plugin')
 
         # Enable / Disable debug log generation depending on log level
-        if self.logger.isEnabledFor(logging.DEBUG):
-            self.debug_log = True
-        else:
-            self.debug_log = False
+        self.debug_log = True if self.logger.isEnabledFor(logging.DEBUG) else False
 
         # Get/Define Properties
         _host = self.get_parameter_value('host')
@@ -307,9 +305,7 @@ class AVM2(SmartPlugin):
         # init Call Monitor
         if self._call_monitor and self._fritz_device.connected:
             try:
-                self._monitoring_service = Callmonitor(_host, 1012,
-                                                       self._fritz_device.get_contact_name_by_phone_number,
-                                                       _call_monitor_incoming_filter, self)
+                self._monitoring_service = Callmonitor(_host, 1012, self._fritz_device.get_contact_name_by_phone_number, _call_monitor_incoming_filter, self)
             except Exception as e:
                 self.logger.warning(f"Error {e} establishing connection to Fritzdevice CallMonitor.")
                 self._monitoring_service = None
@@ -401,15 +397,6 @@ class AVM2(SmartPlugin):
             if avm_data_type in (_avm_rw_attributes + _aha_wo_attributes + _aha_rw_attributes + _homeauto_rw_attributes):
                 return self.update_item
 
-    def parse_logic(self, logic):
-        """
-        Default plugin parse_logic method
-        """
-        
-        if 'xxx' in logic.conf:
-            # self.function(logic['name'])
-            pass
-
     def update_item(self, item, caller=None, source=None, dest=None):
         """
         Item has been updated
@@ -453,15 +440,15 @@ class AVM2(SmartPlugin):
                     self.logger.warning(f"AVM Homeautomation Interface not activated or not available. Update for {avm_data_type} will not be executed.")
 
     @property
-    def get_monitoring_service(self):
+    def monitoring_service(self):
         return self._monitoring_service
 
     @property
-    def get_fritz_device(self):
+    def fritz_device(self):
         return self._fritz_device
 
     @property
-    def get_fritz_home(self):
+    def fritz_home(self):
         return self._fritz_home
 
     @property
@@ -649,9 +636,7 @@ class FritzDevice:
             self._items[item] = (avm_data_type, None)
 
     def handle_updated_item(self, item, avm_data_type: str, readafterwrite: int):
-        """
-        Updated Item will be processed and value communicated to AVM Device
-        """
+        """Updated Item will be processed and value communicated to AVM Device"""
 
         # get index
         _index = self._items[item][1]
@@ -660,28 +645,49 @@ class FritzDevice:
         to_be_set_value = item()
 
         # define command per avm_data_type
-        _dispatcher = {'wlanconfig':        (self.set_wlan, self.get_wlan),
-                       'tam':               (self.set_tam, self.get_tam),
-                       'deflection_enable': (self.set_deflection, self.get_deflection),
+        _dispatcher = {'wlanconfig':        (self.set_wlan,       ('set_wlan',       f"NewEnable={int(to_be_set_value)}",                           _index)),
+                       'wps_active':        (self.set_wps,        ('set_wps',        f"NewX_AVM_DE_WPSEnable={int(to_be_set_value)}",               _index)),
+                       'tam':               (self.set_tam,        ('set_tam',        f"NewIndex={_index}, NewEnable={int(to_be_set_value)}",        None)),
+                       'deflection_enable': (self.set_deflection, ('set_deflection', f"NewDeflectionId={_index}, NewEnable={int(to_be_set_value)}", None)),
                        }
 
         # do logging
         if self._plugin_instance.debug_log:
-            self._plugin_instance.logger.debug(f"Item {item.id()} with avm_data_type={avm_data_type} has changed for index {_index}; New value={bool(item())}")
+            self._plugin_instance.logger.debug(f"Item {item.id()} with avm_data_type={avm_data_type} has changed for index {_index}; New value={to_be_set_value}")
 
         # call setting method
-        _dispatcher[avm_data_type][0](_index, bool(to_be_set_value))
+            # _dispatcher[avm_data_type][0](_index, bool(to_be_set_value))
+        cmd, args, index = _dispatcher[avm_data_type][1]
+        self._set_fritz_device(cmd, args, index)
+        if self._plugin_instance.debug_log:
+            self._plugin_instance.logger.debug(f"Setting AVM Device with successful.")
 
         # handle readafterwrite
         if readafterwrite:
-            time.sleep(readafterwrite)
-            set_value = _dispatcher[avm_data_type][1](_index)
-            item(set_value, self._plugin_instance.get_fullname())
-            if set_value != to_be_set_value:
-                self._plugin_instance.logger.warning(f"Setting AVM Device defined in Item={item.id()} with avm_data_type={avm_data_type} to value={to_be_set_value} FAILED!")
-            else:
-                if self._plugin_instance.debug_log:
-                    self._plugin_instance.logger.debug(f"Setting AVM Device defined in Item={item.id()} with avm_data_type={avm_data_type} to value={to_be_set_value} successful!")
+            self._read_after_write(item, avm_data_type, _index, readafterwrite, to_be_set_value)
+
+    def _read_after_write(self, item, avm_data_type, _index, delay, to_be_set_value):
+        """read the new item value and compares with to_be_set_value, update item to confirm correct value"""
+
+        # do logging
+        if self._plugin_instance.debug_log:
+            self._plugin_instance.logger.warning(f"_readafterwrite called with: item={item.id()}, avm_data_type={avm_data_type}, index={_index}; delay={delay}, to_be_set_value={to_be_set_value}")
+
+        # sleep
+        time.sleep(delay)
+
+        # get current value from AVM device
+        current_value = self._poll_fritz_device(avm_data_type, _index)
+
+        # write current value back to item
+        item(current_value, self._plugin_instance.get_fullname())
+
+        # do logging
+        if current_value != to_be_set_value:
+            self._plugin_instance.logger.warning(f"Setting AVM Device defined in Item={item.id()} with avm_data_type={avm_data_type} to value={to_be_set_value} FAILED!")
+        else:
+            if self._plugin_instance.debug_log:
+                self._plugin_instance.logger.debug(f"Setting AVM Device defined in Item={item.id()} with avm_data_type={avm_data_type} to value={to_be_set_value} successful!")
 
     def _build_url(self) -> str:
         """
@@ -690,7 +696,7 @@ class FritzDevice:
          :return: string of the url, dependent on settings of the FritzDevice
         """
 
-        if self.is_ssl():
+        if self.ssl:
             url_prefix = "https"
         else:
             url_prefix = "http"
@@ -788,7 +794,8 @@ class FritzDevice:
     # Properties of FritzDevice
     # --------------------------------------
 
-    def get_host(self):
+    @property
+    def host(self):
         """
         Returns the hostname / IP of the FritzDevice
 
@@ -796,7 +803,8 @@ class FritzDevice:
         """
         return self._host
 
-    def get_port(self):
+    @property
+    def port(self):
         """
         Returns the port of the FritzDevice
 
@@ -804,15 +812,17 @@ class FritzDevice:
         """
         return self._port
 
-    def get_verify(self):
+    @property
+    def verify(self):
         """
-        Returns the wether to verify or not
+        Returns the whether to verify or not
 
         :return: verify
         """
         return self._verify
 
-    def is_ssl(self):
+    @property
+    def ssl(self):
         """
         Returns information if SSL is enabled
 
@@ -820,7 +830,8 @@ class FritzDevice:
         """
         return self._ssl
 
-    def is_available(self):
+    @property
+    def available(self):
         """
         Returns information if the device is currently available
 
@@ -828,15 +839,8 @@ class FritzDevice:
         """
         return self._available
 
-    def set_available(self, is_available):
-        """
-        Sets the boolean, if the device is available
-
-        :param is_available: boolean of the availability status
-        """
-        self._available = is_available
-
-    def get_user(self):
+    @property
+    def user(self):
         """
         Returns the user for the FritzDevice
 
@@ -844,7 +848,8 @@ class FritzDevice:
         """
         return self._username
 
-    def get_password(self):
+    @property
+    def password(self):
         """
         Returns the password for the FritzDevice
 
@@ -853,11 +858,11 @@ class FritzDevice:
         return self._password
 
     @property
-    def get_item_dict(self):
+    def item_dict(self):
         return self._items
 
     @property
-    def get_item_list(self):
+    def item_list(self):
         return list(self._items.keys())
 
     @property
@@ -900,173 +905,191 @@ class FritzDevice:
 
     @property
     def is_fritzbox(self):
-        if 'box' in self.model_name.lower():
-            return True
-        else:
-            return False
+        return True if 'box' in self.model_name.lower() else False
 
     @property
     def wlan_devices_count(self):
         wlan_devices = self.get_wlan_devices()
-        if wlan_devices:
-            return wlan_devices.get('TotalAssociations', None)
+        return wlan_devices.get('TotalAssociations') if wlan_devices else 0
 
     # ----------------------------------
     # Update methods
     # ----------------------------------
     def update_item_values(self):
-        """
-        Updates Item Values
-        """
+        """Updates Item Values"""
 
-        _item_errorlist = []
+        if not self._connected:
+            self._plugin_instance.logger.warning(f"FritzDevice not connected. No update of item values possible.")
+            return
 
         # iterate over items and get data
-        if self._connected:
-            for item in self._items:
-                if item in self._item_blacklist:
-                    self._plugin_instance.logger.info(f"Item={item} is blacklisted due to exceptions in former update cycles. Item will be ignored.")
-                    continue
+        _item_errorlist = []
+        for item in self._items:
+            if item in self._item_blacklist:
+                self._plugin_instance.logger.info(f"Item={item} is blacklisted due to exceptions in former update cycles. Item will be ignored.")
+                continue
 
-                avm_data_type = self._items[item][0]
-                index = self._items[item][1]
-                self._plugin_instance.logger.debug(f"FritzDevice: _update_items called: item={item} with avm_data_type={avm_data_type} and index={index}")
+            avm_data_type = self._items[item][0]
+            index = self._items[item][1]
+            self._plugin_instance.logger.debug(f"FritzDevice: _update_items called: item={item} with avm_data_type={avm_data_type} and index={index}")
 
-                try:
-                    data = self._poll_fritz_device(avm_data_type, index)
-                except Exception as e:
-                    self._plugin_instance.logger.error(f"Error {e} occurred during update of item={item} with avm_data_type={avm_data_type} and index={index}. Check item configuration regarding supported/activated function of AVM device. ")
+            try:
+                data = self._poll_fritz_device(avm_data_type, index)
+            except Exception as e:
+                self._plugin_instance.logger.error(f"Error {e} occurred during update of item={item} with avm_data_type={avm_data_type} and index={index}. Check item configuration regarding supported/activated function of AVM device. ")
+                _item_errorlist.append(item)
+            else:
+                if data is None:
+                    self._plugin_instance.logger.info(f"Value for item={item} is None.")
+                elif isinstance(data, int) and data in self.errorcodes:
+                    self._plugin_instance.logger.error(f"Error {data} '{self.errorcodes.get(data, None)}' occurred during update of item={item} with avm_data_type={avm_data_type} and index={index}. Check item configuration regarding supported/activated function of AVM device. ")
                     _item_errorlist.append(item)
                 else:
-                    if data is None:
-                        self._plugin_instance.logger.info(f"Value for item={item} is None.")
-                    elif isinstance(data, int) and data in self.errorcodes:
-                        self._plugin_instance.logger.error(f"Error {data} '{self.errorcodes.get(data, None)}' occurred during update of item={item} with avm_data_type={avm_data_type} and index={index}. Check item configuration regarding supported/activated function of AVM device. ")
-                        _item_errorlist.append(item)
-                    else:
-                        item(data, self._plugin_instance.get_fullname())
-        else:
-            self._plugin_instance.logger.warning(f"FritzDevice not connected. No update of item values possible.")
+                    item(data, self._plugin_instance.get_fullname())
 
-        # Create / update item blacklist
+        # create / update item blacklist
         self.create_item_blacklist(_item_errorlist)
 
         # clear data cache dict after update cycle
         self._clear_data_cache()
 
-    def _poll_fritz_device(self, avm_data_type: str, index: Union[int, str]):
+    def _poll_fritz_device(self, avm_data_type: str, index=None) -> Union[str, dict, None]:
         """
-        Poll Fritz Device and feed dictionary
+        Poll Fritz Device, feed dictionary and return data
         """
 
         link_ppp = {
-            'wan_connection_status':        ('WANConnectionDevice', 'WANPPPConnection', 'GetInfo', None, 'NewConnectionStatus'),
-            'wan_connection_error':         ('WANConnectionDevice', 'WANPPPConnection', 'GetInfo', None, 'NewLastConnectionError'),
-            'wan_is_connected':             ('WANConnectionDevice', 'WANPPPConnection', 'GetInfo', None, 'NewConnectionStatus'),
-            'wan_uptime':                   ('WANConnectionDevice', 'WANPPPConnection', 'GetInfo', None, 'NewUptime'),
-            'wan_ip':                       ('WANConnectionDevice', 'WANPPPConnection', 'GetExternalIPAddress', None, 'NewExternalIPAddress'),
-        }
-
-        link_ip = {
-            'wan_connection_status':        ('WANConnectionDevice', 'WANIPConnection', 'GetInfo', None, 'NewConnectionStatus'),
-            'wan_connection_error':         ('WANConnectionDevice', 'WANIPConnection', 'GetInfo', None, 'NewLastConnectionError'),
-            'wan_is_connected':             ('WANConnectionDevice', 'WANIPConnection', 'GetInfo', None, 'NewConnectionStatus'),
-            'wan_uptime':                   ('WANConnectionDevice', 'WANIPConnection', 'GetInfo', None, 'NewUptime'),
-            'wan_ip':                       ('WANConnectionDevice', 'WANIPConnection', 'GetExternalIPAddress', None, 'NewExternalIPAddress'),
+            'wan_connection_status':        ('WANConnectionDevice',   'WANPPPConnection',         'GetInfo',                       None,               'NewConnectionStatus'),
+            'wan_connection_error':         ('WANConnectionDevice',   'WANPPPConnection',         'GetInfo',                       None,               'NewLastConnectionError'),
+            'wan_is_connected':             ('WANConnectionDevice',   'WANPPPConnection',         'GetInfo',                       None,               'NewConnectionStatus'),
+            'wan_uptime':                   ('WANConnectionDevice',   'WANPPPConnection',         'GetInfo',                       None,               'NewUptime'),
+            'wan_ip':                       ('WANConnectionDevice',   'WANPPPConnection',         'GetExternalIPAddress',          None,               'NewExternalIPAddress'),
+        }                                                                                                                                              
+                                                                                                                                                       
+        link_ip = {                                                                                                                                    
+            'wan_connection_status':        ('WANConnectionDevice',   'WANIPConnection',          'GetInfo',                       None,               'NewConnectionStatus'),
+            'wan_connection_error':         ('WANConnectionDevice',   'WANIPConnection',          'GetInfo',                       None,               'NewLastConnectionError'),
+            'wan_is_connected':             ('WANConnectionDevice',   'WANIPConnection',          'GetInfo',                       None,               'NewConnectionStatus'),
+            'wan_uptime':                   ('WANConnectionDevice',   'WANIPConnection',          'GetInfo',                       None,               'NewUptime'),
+            'wan_ip':                       ('WANConnectionDevice',   'WANIPConnection',          'GetExternalIPAddress',          None,               'NewExternalIPAddress'),
         }
 
         link = {
-            # 'avm_data_type':              ('Device', 'Service', 'Action', 'In_Argument', 'Out_Argument'),
-            'uptime':                       ('InternetGatewayDevice', 'DeviceInfo', 'GetInfo', None, 'NewUpTime'),
-            'serial_number':                ('InternetGatewayDevice', 'DeviceInfo', 'GetInfo', None, 'NewSerialNumber'),
-            'software_version':             ('InternetGatewayDevice', 'DeviceInfo', 'GetInfo', None, 'NewSoftwareVersion'),
-            'hardware_version':             ('InternetGatewayDevice', 'DeviceInfo', 'GetInfo', None, 'NewHardwareVersion'),
-            'myfritz_status':               ('InternetGatewayDevice', 'X_AVM_DE_MyFritz', 'GetInfo', None, 'NewEnabled'),
-            'tam':                          ('InternetGatewayDevice', 'X_AVM_DE_TAM', 'GetInfo', 'NewIndex', 'NewEnable'),
-            'tam_name':                     ('InternetGatewayDevice', 'X_AVM_DE_TAM', 'GetInfo', 'NewIndex', 'NewName'),
-            'wan_upstream':                 ('WANDevice', 'WANDSLInterfaceConfig', 'GetInfo', None, 'NewUpstreamCurrRate'),
-            'wan_downstream':               ('WANDevice', 'WANDSLInterfaceConfig', 'GetInfo', None, 'NewDownstreamCurrRate'),
-            'wan_total_packets_sent':       ('WANDevice', 'WANCommonInterfaceConfig', 'GetTotalPacketsSent', None, 'NewTotalPacketsSent'),
-            'wan_total_packets_received':   ('WANDevice', 'WANCommonInterfaceConfig', 'GetTotalPacketsReceived', None, 'NewTotalPacketsReceived'),
-            'wan_current_packets_sent':     ('WANDevice', 'WANCommonInterfaceConfig', 'GetAddonInfos', None, 'NewPacketSendRate'),
-            'wan_current_packets_received': ('WANDevice', 'WANCommonInterfaceConfig', 'GetAddonInfos', None, 'NewPacketReceiveRate'),
-            'wan_total_bytes_sent':         ('WANDevice', 'WANCommonInterfaceConfig', 'GetTotalBytesSent', None, 'NewTotalBytesSent'),
-            'wan_total_bytes_received':     ('WANDevice', 'WANCommonInterfaceConfig', 'GetTotalBytesReceived', None, 'NewTotalBytesReceived'),
-            'wan_current_bytes_sent':       ('WANDevice', 'WANCommonInterfaceConfig', 'GetAddonInfos', None, 'NewByteSendRate'),
-            'wan_current_bytes_received':   ('WANDevice', 'WANCommonInterfaceConfig', 'GetAddonInfos', None, 'NewByteReceiveRate'),
-            'wan_link':                     ('WANDevice', 'WANCommonInterfaceConfig', 'GetCommonLinkProperties', None, 'NewPhysicalLinkStatus'),
-            'wlanconfig':                   ('LANDevice', 'WLANConfiguration', 'GetInfo', 'WLAN', 'NewEnable'),
-            'wlanconfig_ssid':              ('LANDevice', 'WLANConfiguration', 'GetInfo', 'WLAN', 'NewSSID'),
-            'wlan_guest_time_remaining':    ('LANDevice', 'WLANConfiguration', 'X_AVM_DE_GetWLANExtInfo', 'WLAN', 'NewX_AVM_DE_TimeRemain'),
-            'wlan_associates':              ('LANDevice', 'WLANConfiguration', 'GetTotalAssociations', 'WLAN', 'NewTotalAssociations'),
-            'device_ip':                    ('LANDevice', 'Hosts', 'GetSpecificHostEntry', 'NewMACAddress', 'NewIPAddress'),
-            'device_connection_type':       ('LANDevice', 'Hosts', 'GetSpecificHostEntry', 'NewMACAddress', 'NewInterfaceType'),
-            'device_hostname':              ('LANDevice', 'Hosts', 'GetSpecificHostEntry', 'NewMACAddress', 'NewHostName'),
-            'network_device':               ('LANDevice', 'Hosts', 'GetSpecificHostEntry', 'NewMACAddress', 'NewActive'),
-            'connection_status':            ('LANDevice', 'Hosts', 'GetSpecificHostEntry', 'NewMACAddress', 'NewActive'),
-            'aha_device':                   ('InternetGatewayDevice', 'X_AVM_DE_Homeauto', 'GetSpecificDeviceInfos', 'NewAIN', 'NewSwitchState'),
-            'hkr_device':                   ('InternetGatewayDevice', 'X_AVM_DE_Homeauto', 'GetSpecificDeviceInfos', 'NewAIN', 'NewHkrSetVentilStatus'),
-            'set_temperature':              ('InternetGatewayDevice', 'X_AVM_DE_Homeauto', 'GetSpecificDeviceInfos', 'NewAIN', 'NewFirmwareVersion'),
-            'temperature':                  ('InternetGatewayDevice', 'X_AVM_DE_Homeauto', 'GetSpecificDeviceInfos', 'NewAIN', 'NewTemperatureCelsius'),
-            'set_temperature_reduced':      ('InternetGatewayDevice', 'X_AVM_DE_Homeauto', 'GetSpecificDeviceInfos', 'NewAIN', 'NewHkrReduceTemperature'),
-            'set_temperature_comfort':      ('InternetGatewayDevice', 'X_AVM_DE_Homeauto', 'GetSpecificDeviceInfos', 'NewAIN', 'NewHkrComfortTemperature'),
-            'firmware_version':             ('InternetGatewayDevice', 'X_AVM_DE_Homeauto', 'GetSpecificDeviceInfos', 'NewAIN', 'NewFirmwareVersion'),
-            'number_of_deflections':        ('InternetGatewayDevice', 'X_AVM_DE_OnTel', 'GetNumberOfDeflections', None, 'NewNumberOfDeflections'),
-            'deflection_details':           ('InternetGatewayDevice', 'X_AVM_DE_OnTel', 'GetDeflection', 'NewDeflectionId', None),
-            'deflections_details':          ('InternetGatewayDevice', 'X_AVM_DE_OnTel', 'GetDeflections', 'None', 'NewDeflectionList'),
-            'deflection_enable':            ('InternetGatewayDevice', 'X_AVM_DE_OnTel', 'GetDeflection', 'NewDeflectionId', 'NewEnable'),
-            'deflection_type':              ('InternetGatewayDevice', 'X_AVM_DE_OnTel', 'GetDeflection', 'NewDeflectionId', 'NewType'),
-            'deflection_number':            ('InternetGatewayDevice', 'X_AVM_DE_OnTel', 'GetDeflection', 'NewDeflectionId', 'NewNumber'),
-            'deflection_to_number':         ('InternetGatewayDevice', 'X_AVM_DE_OnTel', 'GetDeflection', 'NewDeflectionId', 'NewDeflectionToNumber'),
-            'deflection_mode':              ('InternetGatewayDevice', 'X_AVM_DE_OnTel', 'GetDeflection', 'NewDeflectionId', 'NewMode'),
-            'deflection_outgoing':          ('InternetGatewayDevice', 'X_AVM_DE_OnTel', 'GetDeflection', 'NewDeflectionId', 'NewOutgoing'),
-            'deflection_phonebook_id':      ('InternetGatewayDevice', 'X_AVM_DE_OnTel', 'GetDeflection', 'NewDeflectionId', 'NewPhonebookID'),
+            # 'avm_data_type':              ('Device',                'Service',                  'Action',                        'In_Argument',      'Out_Argument'),
+            'uptime':                       ('InternetGatewayDevice', 'DeviceInfo',               'GetInfo',                        None,              'NewUpTime'),
+            'serial_number':                ('InternetGatewayDevice', 'DeviceInfo',               'GetInfo',                        None,              'NewSerialNumber'),
+            'software_version':             ('InternetGatewayDevice', 'DeviceInfo',               'GetInfo',                        None,              'NewSoftwareVersion'),
+            'hardware_version':             ('InternetGatewayDevice', 'DeviceInfo',               'GetInfo',                        None,              'NewHardwareVersion'),
+            'device_log':                   ('InternetGatewayDevice', 'DeviceInfo',               'GetDeviceLog',                   None,              'NewDeviceLog'),
+            'myfritz_status':               ('InternetGatewayDevice', 'X_AVM_DE_MyFritz',         'GetInfo',                        None,              'NewEnabled'),
+            'tam':                          ('InternetGatewayDevice', 'X_AVM_DE_TAM',             'GetInfo',                        'NewIndex',        'NewEnable'),
+            'tam_name':                     ('InternetGatewayDevice', 'X_AVM_DE_TAM',             'GetInfo',                        'NewIndex',        'NewName'),
+            'tamlist_url':                  ('InternetGatewayDevice', 'X_AVM_DE_TAM',             'GetMessageList',                 'NewIndex',        'NewURL'),
+            'aha_device':                   ('InternetGatewayDevice', 'X_AVM_DE_Homeauto',        'GetSpecificDeviceInfos',         'NewAIN',          'NewSwitchState'),
+            'hkr_device':                   ('InternetGatewayDevice', 'X_AVM_DE_Homeauto',        'GetSpecificDeviceInfos',         'NewAIN',          'NewHkrSetVentilStatus'),
+            'set_temperature':              ('InternetGatewayDevice', 'X_AVM_DE_Homeauto',        'GetSpecificDeviceInfos',         'NewAIN',          'NewFirmwareVersion'),
+            'temperature':                  ('InternetGatewayDevice', 'X_AVM_DE_Homeauto',        'GetSpecificDeviceInfos',         'NewAIN',          'NewTemperatureCelsius'),
+            'set_temperature_reduced':      ('InternetGatewayDevice', 'X_AVM_DE_Homeauto',        'GetSpecificDeviceInfos',         'NewAIN',          'NewHkrReduceTemperature'),
+            'set_temperature_comfort':      ('InternetGatewayDevice', 'X_AVM_DE_Homeauto',        'GetSpecificDeviceInfos',         'NewAIN',          'NewHkrComfortTemperature'),
+            'firmware_version':             ('InternetGatewayDevice', 'X_AVM_DE_Homeauto',        'GetSpecificDeviceInfos',         'NewAIN',          'NewFirmwareVersion'),
+            'number_of_deflections':        ('InternetGatewayDevice', 'X_AVM_DE_OnTel',           'GetNumberOfDeflections',         None,              'NewNumberOfDeflections'),
+            'deflection_details':           ('InternetGatewayDevice', 'X_AVM_DE_OnTel',           'GetDeflection',                  'NewDeflectionId',  None),
+            'deflections_details':          ('InternetGatewayDevice', 'X_AVM_DE_OnTel',           'GetDeflections',                 None,              'NewDeflectionList'),
+            'deflection_enable':            ('InternetGatewayDevice', 'X_AVM_DE_OnTel',           'GetDeflection',                  'NewDeflectionId', 'NewEnable'),
+            'deflection_type':              ('InternetGatewayDevice', 'X_AVM_DE_OnTel',           'GetDeflection',                  'NewDeflectionId', 'NewType'),
+            'deflection_number':            ('InternetGatewayDevice', 'X_AVM_DE_OnTel',           'GetDeflection',                  'NewDeflectionId', 'NewNumber'),
+            'deflection_to_number':         ('InternetGatewayDevice', 'X_AVM_DE_OnTel',           'GetDeflection',                  'NewDeflectionId', 'NewDeflectionToNumber'),
+            'deflection_mode':              ('InternetGatewayDevice', 'X_AVM_DE_OnTel',           'GetDeflection',                  'NewDeflectionId', 'NewMode'),
+            'deflection_outgoing':          ('InternetGatewayDevice', 'X_AVM_DE_OnTel',           'GetDeflection',                  'NewDeflectionId', 'NewOutgoing'),
+            'deflection_phonebook_id':      ('InternetGatewayDevice', 'X_AVM_DE_OnTel',           'GetDeflection',                  'NewDeflectionId', 'NewPhonebookID'),
+            'calllist_url':                 ('InternetGatewayDevice', 'X_AVM_DE_OnTel',           'GetCallList',                    None,              'NewCallListURL'),
+            'phonebook_url':                ('InternetGatewayDevice', 'X_AVM_DE_OnTel',           'GetPhonebook',                   'NewPhonebookID',  'NewPhonebookURL'),
+            'call_origin':                  ('InternetGatewayDevice', 'X_VoIP',                   'X_AVM_DE_DialGetConfig',         None,              'NewX_AVM_DE_PhoneName'),
+            'phone_name':                   ('InternetGatewayDevice', 'X_VoIP',                   'X_AVM_DE_GetPhonePort', '        NewIndex',         'NewX_AVM_DE_PhoneName'),
+            'wan_upstream':                 ('WANDevice',             'WANDSLInterfaceConfig',    'GetInfo',                        None,              'NewUpstreamCurrRate'),
+            'wan_downstream':               ('WANDevice',             'WANDSLInterfaceConfig',    'GetInfo',                        None,              'NewDownstreamCurrRate'),
+            'wan_total_packets_sent':       ('WANDevice',             'WANCommonInterfaceConfig', 'GetTotalPacketsSent',            None,              'NewTotalPacketsSent'),
+            'wan_total_packets_received':   ('WANDevice',             'WANCommonInterfaceConfig', 'GetTotalPacketsReceived',        None,              'NewTotalPacketsReceived'),
+            'wan_current_packets_sent':     ('WANDevice',             'WANCommonInterfaceConfig', 'GetAddonInfos',                  None,              'NewPacketSendRate'),
+            'wan_current_packets_received': ('WANDevice',             'WANCommonInterfaceConfig', 'GetAddonInfos',                  None,              'NewPacketReceiveRate'),
+            'wan_total_bytes_sent':         ('WANDevice',             'WANCommonInterfaceConfig', 'GetTotalBytesSent',              None,              'NewTotalBytesSent'),
+            'wan_total_bytes_received':     ('WANDevice',             'WANCommonInterfaceConfig', 'GetTotalBytesReceived',          None,              'NewTotalBytesReceived'),
+            'wan_current_bytes_sent':       ('WANDevice',             'WANCommonInterfaceConfig', 'GetAddonInfos',                  None,              'NewByteSendRate'),
+            'wan_current_bytes_received':   ('WANDevice',             'WANCommonInterfaceConfig', 'GetAddonInfos',                  None,              'NewByteReceiveRate'),
+            'wan_link':                     ('WANDevice',             'WANCommonInterfaceConfig', 'GetCommonLinkProperties',        None,              'NewPhysicalLinkStatus'),
+            'wlanconfig':                   ('LANDevice',             'WLANConfiguration',        'GetInfo',                        'NewWLAN',         'NewEnable'),
+            'wlanconfig_ssid':              ('LANDevice',             'WLANConfiguration',        'GetInfo',                        'NewWLAN',         'NewSSID'),
+            'wlan_guest_time_remaining':    ('LANDevice',             'WLANConfiguration',        'X_AVM_DE_GetWLANExtInfo',        'NewWLAN',         'NewX_AVM_DE_TimeRemain'),
+            'wlan_associates':              ('LANDevice',             'WLANConfiguration',        'GetTotalAssociations',           'NewWLAN',         'NewTotalAssociations'),
+            'wps_status':                   ('LANDevice',             'WLANConfiguration',        'X_AVM_DE_GetWPSInfo',            'NewWLAN',         'NewX_AVM_DE_WPSStatus'),
+            'wps_mode':                     ('LANDevice',             'WLANConfiguration',        'X_AVM_DE_GetWPSInfo',            'NewWLAN',         'NewX_AVM_DE_WPSMode'),
+            'wps_active':                   ('LANDevice',             'WLANConfiguration',        'X_AVM_DE_GetWPSInfo',            'NewWLAN',         'NewX_AVM_DE_WPSMode'),
+            'wlandevice_url':               ('LANDevice',             'WLANConfiguration',        'X_AVM_DE_GetWLANDeviceListPath', 'NewWLAN',         'NewX_AVM_DE_WLANDeviceListPath'),
+            'device_ip':                    ('LANDevice',             'Hosts',                    'GetSpecificHostEntry',           'NewMACAddress',   'NewIPAddress'),
+            'device_connection_type':       ('LANDevice',             'Hosts',                    'GetSpecificHostEntry',           'NewMACAddress',   'NewInterfaceType'),
+            'device_hostname':              ('LANDevice',             'Hosts',                    'GetSpecificHostEntry',           'NewMACAddress',   'NewHostName'),
+            'network_device':               ('LANDevice',             'Hosts',                    'GetSpecificHostEntry',           'NewMACAddress',   'NewActive'),
+            'connection_status':            ('LANDevice',             'Hosts',                    'GetSpecificHostEntry',           'NewMACAddress',   'NewActive'),
+            'is_host_active':               ('LANDevice',             'Hosts',                    'GetSpecificHostEntry',           'NewMACAddress',   'NewActive'),
+            'number_of_hosts':              ('LANDevice',             'Hosts',                    'GetHostNumberOfEntries',         None,              'NewHostNumberOfEntries'),
+            'host_info':                    ('LANDevice',             'Hosts',                    'GetGenericHostEntry',            'NewIndex',        None),
+            'hosts_url':                    ('LANDevice',             'Hosts',                    'X_AVM_DE_GetHostListPath',       None,              'NewX_AVM_DE_HostListPath'),
+            'mesh_url':                     ('LANDevice',             'Hosts',                    'X_AVM_DE_GetMeshListPath',       None,              'NewX_AVM_DE_MeshListPath'),
         }
 
         link2 = {
-            'tam_total_message_number': "self.get_tam_message_count(index, 'total')",
-            'tam_new_message_number':   "self.get_tam_message_count(index, 'new')",
-            'tam_old_message_number':   "self.get_tam_message_count(index, 'old')",
-            'wlan_total_associates':    "self.wlan_devices_count",
-            'hosts_info':               "self.get_hosts_dict()",
-            'hosts_count':              "self.get_hosts_count()",
-            'mesh_topology':            "self.get_mesh_topology()",
+            'tam_total_message_number': 'self.get_tam_message_count(index, "total")',
+            'tam_new_message_number':   'self.get_tam_message_count(index, "new")',
+            'tam_old_message_number':   'self.get_tam_message_count(index, "old")',
+            'wlan_total_associates':    'self.wlan_devices_count',
+            'hosts_info':               'self.get_hosts_dict()',
+            'hosts_count':              'self.get_hosts_count()',
+            'mesh_topology':            'self.get_mesh_topology()',
+        }
+
+        # turn data to True of string is as listed
+        str_to_bool = {
+            'wan_is_connected':  'Connected',
+            'wan_link':          'Up',
+            'wps_active':        'active',
+            'wlanconfig':        '1',
+            'tam':               '1',
+            'deflection_enable': '1',
+            'myfritz_status':    '1'
         }
 
         # Create link dict depending on connection type
-        if 'PPP' in self.default_connection_service:
-            link.update(link_ppp)
-        else:
-            link.update(link_ip)
+        link.update(link_ppp) if 'PPP' in self.default_connection_service else link.update(link_ip)
 
         # define client
-        client = 'client'
-        if avm_data_type.startswith('wan_current'):
-            client = 'client_igd'
+        client = 'client' if not avm_data_type.startswith('wan_current') else 'client_igd'
 
         # check if avm_data_type is linked and gather data
         if avm_data_type in link:
-            data = self._get_update_data(client, link[avm_data_type][0], link[avm_data_type][1], link[avm_data_type][2], link[avm_data_type][3], link[avm_data_type][4], index)
+            device, service, action, in_arg, out_arg = link[avm_data_type]
+            if in_arg is not None and index is None:
+                self._plugin_instance.logger.warning(f"avm_data_type={avm_data_type} used but required index '{in_arg[3:]}' not given. Request will be aborted.")
+                return
+            data = self._get_update_data(client, device, service, action, in_arg, out_arg, index)
         elif avm_data_type in link2:
             data = eval(link2[avm_data_type])
         else:
             return
 
-        # correct data
-        if avm_data_type == 'wan_is_connected':
-            data = True if data == 'Connected' else False
-        elif avm_data_type == 'wan_link':
-            data = True if data == 'Up' else False
+        # correct data / adapt type of data
+        if avm_data_type in str_to_bool:
+            data = True if data == str_to_bool[avm_data_type] else False
 
         # return result
         return data
 
-    def _get_update_data(self, client: str, device: str, service: str, action: str, in_argument: str = None, out_argument: str = None, index: int = None) -> Union[dict, int]:
+    def _get_update_data(self, client: str, device: str, service: str, action: str, in_argument: str = None, out_argument: str = None, in_argument_value=None):
         """
         Get update data for cache dict; poll data if not yet cached from fritz device
         """
 
-        self._plugin_instance.logger.debug(f"_get_update_data called with device={device}, service={service}, action={action}, in_argument={in_argument}, out_argument={out_argument}, index={index}")
+        self._plugin_instance.logger.debug(f"_get_update_data called with device={device}, service={service}, action={action}, in_argument={in_argument}, out_argument={out_argument}, in_argument_value={in_argument_value}")
+        data = None
 
         # create cache dict structure
         if device not in self._data_cache:
@@ -1076,32 +1099,68 @@ class FritzDevice:
         if action not in self._data_cache[device][service]:
             self._data_cache[device][service][action] = {}
 
-        # check if polling is needed and poll data in case
-        if index is None:
+        # poll data from device or cache dict
+        if in_argument is None:
+            # fill cache dicts
             if not self._data_cache[device][service][action]:
                 self._data_cache[device][service][action] = eval(f"self.{client}.{device}.{service}.{action}()")
-        else:
-            if index not in self._data_cache[device][service][action]:
-                self._data_cache[device][service][action][index] = {}
-            if in_argument == 'WLAN':
-                self._data_cache[device][service][action][index] = eval(f"self.{client}.{device}.{service}[{index}].{action}()")
-            else:
-                self._data_cache[device][service][action][index] = eval(f"self.{client}.{device}.{service}.{action}({in_argument}='{index}')")
-
-        # gather raw data from cache dict and return it
-        if index is None:
+            #  gather data from cache dict
             data = self._data_cache[device][service][action]
-        else:
-            data = self._data_cache[device][service][action][index]
+        elif in_argument is not None and in_argument_value is not None:
+            # fill cache dicts
+            if in_argument_value not in self._data_cache[device][service][action]:
+                self._data_cache[device][service][action][in_argument_value] = {}
+            if service.lower().startswith('wlan'):
+                self._data_cache[device][service][action][in_argument_value] = eval(f"self.{client}.{device}.{service}[{in_argument_value}].{action}()")
+            else:
+                self._data_cache[device][service][action][in_argument_value] = eval(f"self.{client}.{device}.{service}.{action}({in_argument}='{in_argument_value}')")
+            #  gather data from cache dict
+            data = self._data_cache[device][service][action][in_argument_value]
 
         # return data
-        if not out_argument:
-            return data
+        if data is None:
+            self._plugin_instance.logger.info(f"No data for 'self.{client}.{device}.{service}.{action}()' received.")
+            return
         elif isinstance(data, int) and 99 < data < 1000:
-            self._plugin_instance.logger.debug(f"Response was ErrorCode: {data} '{self.errorcodes.get(data, None)}' for self.{client}.{device}.{service}.{action}()")
+            self._plugin_instance.logger.info(f"Response was ErrorCode: {data} '{self.errorcodes.get(data, None)}' for self.{client}.{device}.{service}.{action}()")
             return data
         else:
-            return data[out_argument]
+            return data if not out_argument else data[out_argument]
+
+    def _set_fritz_device(self, avm_data_type: str, args: str = None, wlan_index=None) -> None:
+        """Set AVM Device based on avm_data_type and args"""
+
+        if self._plugin_instance.debug_log:
+            self._plugin_instance.logger.debug(f"_set_fritz_device called: avm_data_type={avm_data_type}, args={args}, wlan_index={wlan_index}")
+
+        link = {
+            'set_call_origin': ('InternetGatewayDevice', 'X_VoIP',            'X_AVM_DE_DialSetConfig'),
+            'set_tam':         ('InternetGatewayDevice', 'X_AVM_DE_TAM',      'SetEnable'),
+            'set_aha_device':  ('InternetGatewayDevice', 'X_AVM_DE_Homeauto', 'SetSwitch'),
+            'set_deflection':  ('InternetGatewayDevice', 'X_AVM_DE_OnTel',    'SetDeflectionEnable'),
+            'set_wlan':        ('LANDevice',             'WLANConfiguration', 'SetEnable'),
+            'set_wps':         ('LANDevice',             'WLANConfiguration', 'X_AVM_DE_SetWPSEnable'),
+            'reboot':          ('InternetGatewayDevice', 'DeviceConfig',      'Reboot'),
+            'wol':             ('LanDevice',             'Hosts',             'X_AVM_DE_GetAutoWakeOnLANByMACAddress'),
+            'reconnect_ppp':   ('WANConnectionDevice',   'WANPPPConnection',  'ForceTermination'),
+            'reconnect_ipp':   ('WANConnectionDevice',   'WANIPPConnection',  'ForceTermination'),
+            'start_call':      ('InternetGatewayDevice', 'X_VoIP',            'X_AVM_DE_DialNumber'),
+            'cancel_call':     ('InternetGatewayDevice', 'X_VoIP',            'X_AVM_DE_DialHangup'),
+        }
+
+        if avm_data_type not in link:
+            return
+
+        device, service, action = link[avm_data_type]
+        self._plugin_instance.logger.debug(device, service, action, )
+
+        if service.lower().startswith('wlan'):
+            wlan_index = "" if not wlan_index else wlan_index
+            eval(f"self.client.{device}.{service}[{wlan_index}].{action}({args})")
+        elif args is None:
+            eval(f"self.client.{device}.{service}.{action}()")
+        else:
+            eval(f"self.client.{device}.{service}.{action}({args})")
 
     def _clear_data_cache(self):
         """
@@ -1134,9 +1193,7 @@ class FritzDevice:
         return root
 
     def _lxml_element_to_dict(self, node):
-        """
-        Parse lxml Element to dictionary
-        """
+        """Parse lxml Element to dictionary"""
 
         result = {}
 
@@ -1185,6 +1242,7 @@ class FritzDevice:
         for item in self._item_errordict:
             if self._item_errordict[item] >= errorcount:
                 blacklist.add(item)
+                self._plugin_instance.logger.info(f"Item {item} will be blacklisted, since it caused an error {errorcount} times during update. Item will not be updated until restart or blacklist is cleaned via WebIF")
         self._item_blacklist = list(blacklist)
         self._plugin_instance.logger.debug(f"_item_blacklist={self._item_blacklist}")
 
@@ -1208,7 +1266,8 @@ class FritzDevice:
         Uses: http://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/deviceconfigSCPD.pdf
         """
 
-        self.client.InternetGatewayDevice.DeviceConfig.Reboot()
+        # self.client.InternetGatewayDevice.DeviceConfig.Reboot()
+        self._set_fritz_device('reboot')
 
     def reconnect(self):
         """
@@ -1219,9 +1278,11 @@ class FritzDevice:
         """
 
         if 'PPP' in self.default_connection_service:
-            self.client.WANConnectionDevice.WANPPPConnection.ForceTermination()
+            # self.client.WANConnectionDevice.WANPPPConnection.ForceTermination()
+            self._set_fritz_device('reconnect_ppp')
         else:
-            self.client.WANConnectionDevice.WANIPPConnection.ForceTermination()
+            # self.client.WANConnectionDevice.WANIPPConnection.ForceTermination()
+            self._set_fritz_device('reconnect_ipp')
 
     def wol(self, mac_address: str):
         """
@@ -1232,7 +1293,8 @@ class FritzDevice:
         :param mac_address: MAC address of the device to wake up
         """
 
-        self.client.LanDevice.Hosts.X_AVM_DE_GetAutoWakeOnLANByMACAddress(NewMACAddress=mac_address)
+        #self.client.LanDevice.Hosts.X_AVM_DE_GetAutoWakeOnLANByMACAddress(NewMACAddress=mac_address)
+        self._set_fritz_device('wol', f"NewMACAddress={mac_address}")
 
     # ----------------------------------
     # caller methods
@@ -1245,7 +1307,9 @@ class FritzDevice:
         :return: String phone name
         """
 
-        phone_name = self.client.InternetGatewayDevice.X_VoIP.X_AVM_DE_DialGetConfig()['NewX_AVM_DE_PhoneName']
+        # phone_name = self.client.InternetGatewayDevice.X_VoIP.X_AVM_DE_DialGetConfig()['NewX_AVM_DE_PhoneName']
+        phone_name = self._poll_fritz_device('call_origin')
+
         if phone_name is None:
             self._plugin_instance.logger.error("No call origin available.")
         return phone_name
@@ -1260,7 +1324,9 @@ class FritzDevice:
         :return: String phone name
         """
 
-        phone_name = self.client.InternetGatewayDevice.X_VoIP.X_AVM_DE_GetPhonePort()['NewX_AVM_DE_PhoneName']
+        # phone_name = self.client.InternetGatewayDevice.X_VoIP.X_AVM_DE_GetPhonePort()['NewX_AVM_DE_PhoneName']
+        phone_name = self._poll_fritz_device('phone_name', index)
+
         if phone_name is None:
             self._plugin_instance.logger.error(f"No phone name available at provided index {index}")
         return phone_name
@@ -1274,7 +1340,8 @@ class FritzDevice:
         :param phone_name: full phone identifier, could be e.g. '\*\*610' for an internal device
         """
 
-        self.client.InternetGatewayDevice.X_VoIP.X_AVM_DE_DialSetConfig(NewX_AVM_DE_PhoneName=phone_name.strip())
+        # self.client.InternetGatewayDevice.X_VoIP.X_AVM_DE_DialSetConfig(NewX_AVM_DE_PhoneName=phone_name.strip())
+        self._set_fritz_device('set_call_origin', f"NewX_AVM_DE_PhoneName={phone_name.strip()}")
 
     def start_call(self, phone_number: str):
         """
@@ -1285,7 +1352,8 @@ class FritzDevice:
         :param phone_number: full phone number to call
         """
 
-        self.client.InternetGatewayDevice.X_VoIP.X_AVM_DE_DialNumber(NewX_AVM_DE_PhoneNumber=phone_number.strip())
+        # self.client.InternetGatewayDevice.X_VoIP.X_AVM_DE_DialNumber(NewX_AVM_DE_PhoneNumber=phone_number.strip())
+        self._set_fritz_device('start_call', f"NewX_AVM_DE_PhoneNumber={phone_number.strip()}")
 
     def cancel_call(self):
         """
@@ -1294,7 +1362,8 @@ class FritzDevice:
         Uses: http://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/x_voipSCPD.pdf
         """
 
-        self.client.InternetGatewayDevice.X_VoIP.X_AVM_DE_DialHangup()
+        # self.client.InternetGatewayDevice.X_VoIP.X_AVM_DE_DialHangup()
+        self._set_fritz_device('cancel_call')
 
     def get_contact_name_by_phone_number(self, phone_number: str = '', phonebook_id: int = 0) -> str:
         """Get contact from phone book by phone number"""
@@ -1302,7 +1371,11 @@ class FritzDevice:
         if phone_number.endswith('#'):
             phone_number = phone_number.strip('#')
 
-        phonebook_url = self.client.InternetGatewayDevice.X_AVM_DE_OnTel.GetPhonebook(NewPhonebookID=phonebook_id)['NewPhonebookURL']
+        # phonebook_url = self.client.InternetGatewayDevice.X_AVM_DE_OnTel.GetPhonebook(NewPhonebookID=phonebook_id)['NewPhonebookURL']
+        phonebook_url = self._poll_fritz_device('phonebook_url', phonebook_id)
+        if not phonebook_url:
+            return ""
+
         phonebooks = self._request_response_to_xml(self._request(phonebook_url, self._timeout, self._verify))
         if phonebooks is not None:
             for phonebook in phonebooks.iter('phonebook'):
@@ -1320,7 +1393,12 @@ class FritzDevice:
 
         tel_type = {"mobile": "CELL", "work": "WORK", "home": "HOME"}
         result_numbers = {}
-        phonebook_url = self.client.InternetGatewayDevice.X_AVM_DE_OnTel.GetPhonebook(NewPhonebookID=phonebook_id)['NewPhonebookURL']
+
+        # phonebook_url = self.client.InternetGatewayDevice.X_AVM_DE_OnTel.GetPhonebook(NewPhonebookID=phonebook_id)['NewPhonebookURL']
+        phonebook_url = self._poll_fritz_device('phonebook_url', phonebook_id)
+        if not phonebook_url:
+            return {}
+
         phonebooks = self._request_response_to_xml(self._request(phonebook_url, self._timeout, self._verify))
         if phonebooks is not None:
             for phonebook in phonebooks.iter('phonebook'):
@@ -1350,10 +1428,12 @@ class FritzDevice:
     def get_calllist(self, filter_incoming: str = '') -> list:
         """request calllist from AVM Device"""
 
-        calllist_url = self.client.InternetGatewayDevice.X_AVM_DE_OnTel.GetCallList()
-        if isinstance(calllist_url, int):
+        # calllist_url = self.client.InternetGatewayDevice.X_AVM_DE_OnTel.GetCallList()
+        calllist_url = self._poll_fritz_device('calllist_url')
+
+        if not calllist_url:
             return []
-        calllist_url = calllist_url['NewCallListURL']
+
         calllist = self._request_response_to_xml(self._request(calllist_url, self._timeout, self._verify))
 
         if calllist is not None:
@@ -1387,7 +1467,7 @@ class FritzDevice:
     # ----------------------------------
     # logs methods
     # ----------------------------------
-    def get_device_log_from_tr064(self) -> str:
+    def get_device_log_from_tr064(self) -> Union[list, str, dict]:
         """
         uses: https://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/deviceinfoSCPD.pdf
 
@@ -1395,27 +1475,38 @@ class FritzDevice:
         :return: Array of Device Log Entries (Strings)
         """
 
-        device_log = self.client.InternetGatewayDevice.DeviceInfo.GetDeviceLog()['NewDeviceLog']
+        # device_log = self.client.InternetGatewayDevice.DeviceInfo.GetDeviceLog()['NewDeviceLog']
+        device_log = self._poll_fritz_device('device_log')
+
         if device_log is None:
             return ""
-        return device_log.split("\n")
+        if isinstance(device_log, str):
+            return device_log.split("\n")
+        else:
+            return device_log
 
     # ----------------------------------
     # wlan methods
     # ----------------------------------
     def set_wlan(self, wlan_index: int, new_enable: bool = False):
         """
-        Set WLAN Config
+        Set WLAN to ON/OFF
 
         uses: https://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/wlanconfigSCPD.pdf
         """
 
-        # set WLAN to ON/OFF
         if self._plugin_instance.debug_log:
             self._plugin_instance.logger.debug(f"set_wlan called: wlan_index={wlan_index}, new_enable={new_enable}")
-        self.client.LANDevice.WLANConfiguration[wlan_index].SetEnable(NewEnable=int(new_enable))
+
+        # self.client.LANDevice.WLANConfiguration[wlan_index].SetEnable(NewEnable=int(new_enable))
+        self._set_fritz_device('set_wlan', f"NewEnable={int(new_enable)}", wlan_index)
 
         # check if remaining time is set as item
+        self.set_wlan_time_remaining(wlan_index)
+
+    def set_wlan_time_remaining(self, wlan_index: int):
+        """look for item and set time remaining"""
+
         for item in self._items:  # search for guest time remaining item.
             if self._items[item][0] == 'wlan_guest_time_remaining' and self._items[item][1] == wlan_index:
                 data = self._poll_fritz_device('wlan_guest_time_remaining', wlan_index)
@@ -1431,11 +1522,14 @@ class FritzDevice:
         if self._plugin_instance.debug_log:
             self._plugin_instance.logger.debug(f"get_wlan called: wlan_index={wlan_index}")
 
-        return self.client.LANDevice.WLANConfiguration[wlan_index].GetInfo()['NewEnable']
+        return self._poll_fritz_device('wlanconfig', wlan_index)
 
     def get_wlan_devices(self, wlan_index: int = 0):
         """Get all WLAN Devices connected to AVM-Device"""
-        wlandevice_url = self.client.LANDevice.WLANConfiguration[wlan_index].X_AVM_DE_GetWLANDeviceListPath()['NewX_AVM_DE_WLANDeviceListPath']
+
+        # wlandevice_url = self.client.LANDevice.WLANConfiguration[wlan_index].X_AVM_DE_GetWLANDeviceListPath()['NewX_AVM_DE_WLANDeviceListPath']
+        wlandevice_url = self._poll_fritz_device('wlandevice_url', wlan_index)
+
         if not wlandevice_url:
             return
 
@@ -1445,6 +1539,32 @@ class FritzDevice:
             return
 
         return self._lxml_element_to_dict(wlandevices_xml)
+
+    def set_wps(self, wlan_index: int, wps_enable: bool = False):
+        """
+        Sets WPS at AVM device ON/OFF
+
+        uses: https://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/wlanconfigSCPD.pdf
+        """
+
+        if self._plugin_instance.debug_log:
+            self._plugin_instance.logger.debug(f"set_wps called: wlan_index={wlan_index}, wps_enable={wps_enable}")
+
+        # self.client.LANDevice.WLANConfiguration[wlan_index].X_AVM_DE_SetWPSEnable(NewX_AVM_DE_WPSEnable=int(wps_enable))
+        self._set_fritz_device('set_wps', f"NewX_AVM_DE_WPSEnable={int(wps_enable)}", wlan_index)
+
+    def get_wps(self, wlan_index: int):
+        """
+        Get WPS state
+
+        uses: https://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/wlanconfigSCPD.pdf
+        """
+        if self._plugin_instance.debug_log:
+            self._plugin_instance.logger.debug(f"get_wps called: wlan_index={wlan_index}")
+
+        status = self._poll_fritz_device('wps_status', wlan_index)
+
+        return True if status == 'active' else False
 
     # ----------------------------------
     # tam methods
@@ -1456,7 +1576,8 @@ class FritzDevice:
         uses: https://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/x_tam.pdf
         """
 
-        self.client.InternetGatewayDevice.X_AVM_DE_TAM.SetEnable(NewIndex=tam_index, NewEnable=int(new_enable))
+        # self.client.InternetGatewayDevice.X_AVM_DE_TAM.SetEnable(NewIndex=tam_index, NewEnable=int(new_enable))
+        self._set_fritz_device('set_tam', f"NewIndex={tam_index}, NewEnable={int(new_enable)}")
 
     def get_tam(self, tam_index: int = 0):
         """
@@ -1465,7 +1586,8 @@ class FritzDevice:
         uses: https://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/x_tam.pdf
         """
 
-        return self.client.InternetGatewayDevice.X_AVM_DE_TAM.GetInfo(NewIndex=tam_index)['NewEnable']
+        # return self.client.InternetGatewayDevice.X_AVM_DE_TAM.GetInfo(NewIndex=tam_index)['NewEnable']
+        return self._poll_fritz_device('tam', tam_index)
 
     def get_tam_list(self, tam_index: int = 0):
         """
@@ -1474,10 +1596,11 @@ class FritzDevice:
         uses: https://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/x_tam.pdf
         """
 
-        url = self.client.InternetGatewayDevice.X_AVM_DE_TAM.GetMessageList(NewIndex=tam_index)['NewURL']
-        tam_list = self._request_response_to_xml(self._request(url, self._timeout, self._verify))
+        # tamlist_url = self.client.InternetGatewayDevice.X_AVM_DE_TAM.GetMessageList(NewIndex=tam_index)['NewURL']
+        tamlist_url = self._poll_fritz_device('tamlist_url', tam_index)
 
-        return tam_list
+        if tamlist_url:
+            return self._request_response_to_xml(self._request(tamlist_url, self._timeout, self._verify))
 
     def get_tam_message_count(self, tam_index: int = 0, number: str = None):
         """Return count to tam messages"""
@@ -1512,7 +1635,9 @@ class FritzDevice:
 
         # SwitchState: OFF, ON, TOGGLE, UNDEFINED
         switch_state = "ON" if set_switch is True else "OFF"
-        self.client.InternetGatewayDevice.X_AVM_DE_Homeauto.SetSwitch(NewAIN=ain, NewSwitchState=switch_state)
+
+        #self.client.InternetGatewayDevice.X_AVM_DE_Homeauto.SetSwitch(NewAIN=ain, NewSwitchState=switch_state)
+        self._set_fritz_device('set_aha_device', f"NewAIN={ain}, NewSwitchState={switch_state}")
 
     # ----------------------------------
     # deflection
@@ -1527,19 +1652,23 @@ class FritzDevice:
         :param new_enable: new enable (default: False)
         """
 
-        self.client.InternetGatewayDevice.X_AVM_DE_OnTel.SetDeflectionEnable(NewDeflectionId=deflection_id, NewEnable=int(new_enable))
+        # self.client.InternetGatewayDevice.X_AVM_DE_OnTel.SetDeflectionEnable(NewDeflectionId=deflection_id, NewEnable=int(new_enable))
+        self._set_fritz_device('set_deflection', f"NewDeflectionId={deflection_id}, NewEnable={int(new_enable)}")
 
     def get_deflection(self, deflection_id: int = 0):
         """Get Deflection state of deflection_id"""
-        return self.client.InternetGatewayDevice.X_AVM_DE_OnTel.GetDeflection(NewDeflectionId=deflection_id)['NewEnable']
+        # return self.client.InternetGatewayDevice.X_AVM_DE_OnTel.GetDeflection(NewDeflectionId=deflection_id)['NewEnable']
+        return self._poll_fritz_device('deflection_enable', deflection_id)
 
     def get_number_of_deflections(self):
         """Get number of deflections """
-        return self.client.InternetGatewayDevice.X_AVM_DE_OnTel.GetNumberOfDeflections()['NewNumberOfDeflections']
+        # return self.client.InternetGatewayDevice.X_AVM_DE_OnTel.GetNumberOfDeflections()['NewNumberOfDeflections']
+        return self._poll_fritz_device('number_of_deflections')
 
     def get_deflections(self):
         """Get deflections as dict"""
-        return self.client.InternetGatewayDevice.X_AVM_DE_OnTel.GetDeflections()['NewDeflectionList']
+        # return self.client.InternetGatewayDevice.X_AVM_DE_OnTel.GetDeflections()['NewDeflectionList']
+        return self._poll_fritz_device('deflections_details')
 
     # ----------------------------------
     # Host
@@ -1555,8 +1684,8 @@ class FritzDevice:
         :return: True or False, depending if the host is active on the FritzDevice
         """
 
-        is_active = self.client.LANDevice.Hosts.GetSpecificHostEntry(NewMACAddress=mac_address)['NewActive']
-        return bool(is_active)
+        # is_active = self.client.LANDevice.Hosts.GetSpecificHostEntry(NewMACAddress=mac_address)['NewActive']
+        return bool(self._poll_fritz_device('is_host_active', mac_address))
 
     def get_hosts(self, only_active: bool = False) -> list:
         """
@@ -1568,7 +1697,8 @@ class FritzDevice:
         :return: Array host dicts (see get_host_details)
         """
 
-        number_of_hosts = int(self.client.LANDevice.Hosts.GetHostNumberOfEntries()['NewHostNumberOfEntries'])
+        # number_of_hosts = int(self.client.LANDevice.Hosts.GetHostNumberOfEntries()['NewHostNumberOfEntries'])
+        number_of_hosts = int(self._poll_fritz_device('number_of_hosts'))
 
         hosts = []
         for i in range(1, number_of_hosts):
@@ -1588,7 +1718,8 @@ class FritzDevice:
         :return: Dict host data: name, interface_type, ip_address, address_source, mac_address, is_active, lease_time_remaining
         """
 
-        host_info = self.client.LANDevice.Hosts.GetGenericHostEntry(NewIndex=index)
+        # host_info = self.client.LANDevice.Hosts.GetGenericHostEntry(NewIndex=index)
+        host_info = self._poll_fritz_device('host_info', index)
 
         if isinstance(host_info, int):
             self._plugin_instance.logger.error(f"Error {host_info} '{self.errorcodes.get(host_info)}' occurred during {index}.")
@@ -1608,7 +1739,9 @@ class FritzDevice:
     def get_hosts_dict(self) -> Union[dict, None]:
         """Get all Hosts connected to AVM device as dict"""
 
-        hosts_url = self.client.LANDevice.Hosts.X_AVM_DE_GetHostListPath()['NewX_AVM_DE_HostListPath']
+        # hosts_url = self.client.LANDevice.Hosts.X_AVM_DE_GetHostListPath()['NewX_AVM_DE_HostListPath']
+        hosts_url = self._poll_fritz_device('hosts_url')
+
         if not hosts_url:
             return
 
@@ -1645,7 +1778,9 @@ class FritzDevice:
     def get_mesh_topology(self) -> Union[dict, None]:
         """Get mesh topology information as dict"""
 
-        mesh_url = self.client.LANDevice.Hosts.X_AVM_DE_GetMeshListPath()['NewX_AVM_DE_MeshListPath']
+        # mesh_url = self.client.LANDevice.Hosts.X_AVM_DE_GetMeshListPath()['NewX_AVM_DE_MeshListPath']
+        mesh_url = self._poll_fritz_device('mesh_url')
+
         if not mesh_url:
             return
 
@@ -2241,11 +2376,11 @@ class FritzHome:
                 self._plugin_instance.logger.warning(f'No values for item={item.id()} at device with AIN={_ain} available.')
 
     @property
-    def get_item_dict(self):
+    def item_dict(self):
         return self._items
 
     @property
-    def get_item_list(self):
+    def item_list(self):
         return list(self._items.keys())
 
     def _request(self, url: str, params: dict = None, timeout: int = 10, result: str = 'text') -> Union[str, dict]:
@@ -3988,27 +4123,27 @@ class Callmonitor:
                         break
 
     @property
-    def get_item_list(self):
+    def item_list(self):
         return list(self._items.keys())
 
     @property
-    def get_trigger_item_list(self):
+    def trigger_item_list(self):
         return list(self._trigger_items.keys())
 
     @property
-    def get_item_incoming_list(self):
+    def item_incoming_list(self):
         return list(self._items_incoming.keys())
 
     @property
-    def get_item_outgoing_list(self):
+    def item_outgoing_list(self):
         return list(self._items_outgoing.keys())
 
     @property
-    def get_item_all_list(self):
-        return self.get_item_list + self.get_trigger_item_list + self.get_item_incoming_list + self.get_item_outgoing_list
+    def item_all_list(self):
+        return self.item_list + self.trigger_item_list + self.item_incoming_list + self.item_outgoing_list
 
     @property
-    def get_item_count_total(self):
+    def item_count_total(self):
         """
         Returns number of added items (all items of MonitoringService service)
 
