@@ -436,33 +436,6 @@
             </tr>
         </thead>
         <tbody>
-
-            <tr>
-                <td class="py-1">{{ 'NewPhonebookURL' }}</td>
-                <td class="py-1">{{ p._fritz_device.client.InternetGatewayDevice.X_AVM_DE_OnTel.GetPhonebook(NewPhonebookID=0) }}</td>
-            </tr>
-
-            <tr>
-                <td class="py-1">{{ 'Frizdevice Items' }}</td>
-                <td class="py-1">{{ p._fritz_device._items }}</td>
-            </tr>
-
-
-            <tr>
-                <td class="py-1">{{ 'NewDeflectionList' }}</td>
-                <td class="py-1">{{ p._fritz_device.client.InternetGatewayDevice.X_AVM_DE_OnTel.GetDeflections() }}</td>
-            </tr>
-
-            <tr>
-                <td class="py-1">{{ 'NewNumberOfDeflections' }}</td>
-                <td class="py-1">{{ p._fritz_device.client.InternetGatewayDevice.X_AVM_DE_OnTel.GetNumberOfDeflections() }}</td>
-            </tr>
-
-
-            <tr>
-                <td class="py-1">{{ 'p._fritz_device.get_call_origin()' }}</td>
-                <td class="py-1">{{ p._fritz_device.get_call_origin() }}</td>
-            </tr>
             <tr>
                 <td class="py-1">{{ "X_AVM_DE_NumberOfClients" }}</td>
                 <td class="py-1">{{ p._fritz_device.client.InternetGatewayDevice.X_VoIP.X_AVM_DE_GetNumberOfClients()['NewX_AVM_DE_NumberOfClients'] }}</td>
