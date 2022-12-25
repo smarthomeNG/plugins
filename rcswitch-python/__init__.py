@@ -27,7 +27,6 @@
 
 from lib.model.smartplugin import SmartPlugin
 from lib.item import Items
-from datetime import datetime, timedelta
 from .cRcSocketSwitch import cRcSocketSwitch
 import time
 import threading
