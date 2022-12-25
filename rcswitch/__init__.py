@@ -21,7 +21,6 @@
 
 import logging
 from lib.model.smartplugin import SmartPlugin
-from datetime import datetime, timedelta
 from socket import gethostname
 import time
 import threading
