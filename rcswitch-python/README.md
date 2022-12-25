@@ -44,7 +44,10 @@ rcSwitchpython:
 * `rcswitch_sendDuration`: Minimal time between two send acivations
 
 ## Setup the Item
-In the `../items` an item can be defined like this example:</br>
+The items should be configured as described in the following picture:</br>
+
+<img src="./pictures/RCS1000N_switches.png" alt="Pi4" width="400"/>
+
 
 ### items.yaml
 Just add following attributes to the items which shall be connected with rcswitch-python:
@@ -60,6 +63,8 @@ For compatibility reasons you can also use the "old attributes" of the rcswitch 
 rc_code:   <SystemCode of the device [00000 - 11111]>
 rc_device: <ButtonConde of the device [A-E]>
 ```
+In the `../items` an item can be defined like this example:</br>
+
 <img src="./pictures/SHNG_Item_example.PNG" alt="Pi4" width="400"/>
 
 #### Example:
