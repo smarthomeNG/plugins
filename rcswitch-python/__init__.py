@@ -39,16 +39,16 @@ class rcSwitch_python(SmartPlugin):
 
 	def __init__(self, sh):
 		"""
-        Initalizes the plugin.
+		Initalizes the plugin.
 
-        If you need the sh object at all, use the method self.get_sh() to get it. There should be almost no need for
-        a reference to the sh object any more.
+		If you need the sh object at all, use the method self.get_sh() to get it. There should be almost no need for
+		a reference to the sh object any more.
 
-        Plugins have to use the new way of getting parameter values:
-        use the SmartPlugin method get_parameter_value(parameter_name). Anywhere within the Plugin you can get
-        the configured (and checked) value for a parameter by calling self.get_parameter_value(parameter_name). It
-        returns the value in the datatype that is defined in the metadata.
-        """
+		Plugins have to use the new way of getting parameter values:
+		use the SmartPlugin method get_parameter_value(parameter_name). Anywhere within the Plugin you can get
+		the configured (and checked) value for a parameter by calling self.get_parameter_value(parameter_name). It
+		returns the value in the datatype that is defined in the metadata.
+		"""
 		# Call init code of parent class (SmartPlugin)
 		super().__init__()
 		# Initialization code goes here
@@ -79,14 +79,14 @@ class rcSwitch_python(SmartPlugin):
 
 	def parse_item(self, item):
 		# generate warnings for incomplete configured itemns
-		if self.has_iattr(item.conf, 'rc_SystemCode'):
-			if self.has_iattr(item.conf, 'rc_ButtonCode'):
+		if self.has_iattr(item.conf, 'rc_SystemCode') or self.has_iattr(item.conf, 'rc_code'):
+			if self.has_iattr(item.conf, 'rc_ButtonCode') or self.has_iattr(item.conf, 'rc_device'):
 				return self.update_item
 			else:
-				self.logger.warning('Warning: attribute rc_ButtonCode for {} missing. Item will be ignored by rcSwitch_python plugin'.format(item))
+				self.logger.warning('Warning: attribute <rc_ButtonCode>/<rc_device> for {} missing. Item will be ignored by rcSwitch_python plugin'.format(item))
 				return None
-		elif 'rc_ButtonCode' in item.conf: 
-			self.logger.warning('Warning: attribute rc_SystemCode for {} missing. Item will be ignored by RCswitch plugin'.format(item))
+		elif self.has_iattr(item.conf, 'rc_ButtonCode') or self.has_iattr(item.conf, 'rc_device'): 
+			self.logger.warning('Warning: attribute <rc_SystemCode>/<rc_code> for {} missing. Item will be ignored by RCswitch plugin'.format(item))
 			return None
 		else:
 			return None
@@ -95,28 +95,36 @@ class rcSwitch_python(SmartPlugin):
 	def update_item(self, item, caller=None, source=None, dest=None):
 		# send commands to devices
 		# if 'rc_ButtonCode' in item.conf and 'rc_SystemCode' in item.conf and self.setupOK:
-		if self.alive and caller != self.get_shortname(): 
+		if self.alive and caller != self.get_shortname():
+
+		# if SystemCode and Buttoncode used
 			if self.has_iattr(item.conf, 'rc_SystemCode') and self.has_iattr(item.conf, 'rc_ButtonCode'):
-				self.logger.info(f"update_item was called with item {item.property.path} from caller {caller}, source {source} and dest {dest}")
-				# prepare parameters
-				value = int(item())
-				SystemCode = self.get_iattr_value(item.conf, 'rc_SystemCode') 
+				SystemCode = self.get_iattr_value(item.conf, 'rc_SystemCode')
 				ButtonCode = self.get_iattr_value(item.conf, 'rc_ButtonCode')
-				values = (SystemCode, ButtonCode, value)
+
+			# if rc_code and rc_device used
+			elif self.has_iattr(item.conf, 'rc_code') and self.has_iattr(item.conf, 'rc_device'):
+				SystemCode = self.get_iattr_value(item.conf, 'rc_code')
+				ButtonCode = self.get_iattr_value(item.conf, 'rc_device')
+
+			self.logger.info(f"update_item was called with item {item.property.path} from caller {caller}, source {source} and dest {dest}")
+			# prepare parameters
+			value = int(item())
+			values = (SystemCode, ButtonCode, value)
 			
-				# avoid parallel access by use of semaphore
-				self.lock.acquire()
-				# sending commands
-				try:
-					# create Brennenstuhl RCS1000N object 
-					obj = cRcSocketSwitch.RCS1000N(self._gpio)
-					# prepare and send values
-					obj.send(*values)
-				except Exception as err:
-					self.logger.error('Error: during instantiation of object or during send to device: {}'.format(err))
-				else:
-					self.logger.info('Info: setting Device {} with SystemCode {} to {}'.format(ButtonCode, SystemCode, value))
-				finally:
-					# give the transmitter time to complete sending of the command (but not more than 10s)
-					time.sleep(min(self._send_duration, 10))
-					self.lock.release()
+			# avoid parallel access by use of semaphore
+			self.lock.acquire()
+			# sending commands
+			try:
+				# create Brennenstuhl RCS1000N object 
+				obj = cRcSocketSwitch.RCS1000N(self._gpio)
+				# prepare and send values
+				obj.send(*values)
+			except Exception as err:
+				self.logger.error('Error: during instantiation of object or during send to device: {}'.format(err))
+			else:
+				self.logger.info('Info: setting Device {} with SystemCode {} to {}'.format(ButtonCode, SystemCode, value))
+			finally:
+				# give the transmitter time to complete sending of the command (but not more than 10s)
+				time.sleep(min(self._send_duration, 10))
+				self.lock.release()
