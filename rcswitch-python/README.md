@@ -47,7 +47,14 @@ rcSwitchpython:
 In the `../items` an item can be defined like this example:</br>
 
 ### items.yaml
-Just add following attributes to the items which shall be connected with rcswitch:
+Just add following attributes to the items which shall be connected with rcswitch-python:
+
+```
+rc_SystemCode: <SystemCode of the device [00000 - 11111]>
+rc_ButtonCode: <ButtonConde of the device [A-E]>
+```
+
+For compatibility reasons you can also use the "old attributes" of the rcswitch plugin.
 
 ```
 rc_code:   <SystemCode of the device [00000 - 11111]>
