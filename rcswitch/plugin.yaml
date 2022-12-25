@@ -62,7 +62,17 @@ item_attributes:
     # Definition of item attributes defined by this plugin
     rc_device:
         type: str
-        valid_list: ['A', 'B', 'C', 'D', 'E']
+        valid_list:
+            - 'A'
+            - 'B'
+            - 'C'
+            - 'D'
+            - 'E'
+            - '10000'
+            - '01000'
+            - '00100'
+            - '00010'
+            - '00001'
         description:
             de: "ButtonCode (oder Buchstabe) des Gerätes"
             en: "ButtonCode (or letter) of the device"
