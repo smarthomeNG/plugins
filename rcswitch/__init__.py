@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
+#  Copyright 2017      Daniel Frank               knx-user-forum.de:dafra 
 #  Copyright 2022      Frank Häfele                  mail@frankhaefele.de
 #########################################################################
 #  This file is part of SmartHomeNG.
 #  https://www.smarthomeNG.de
 #  https://knx-user-forum.de/forum/supportforen/smarthome-py
 #
-#  Sample plugin for new plugins to run with SmartHomeNG version 1.8 and
+#  Sample plugin for new plugins to run with SmartHomeNG version 1.9 and
 #  upwards.
 #
 #  SmartHomeNG is free software: you can redistribute it and/or modify
@@ -32,7 +33,7 @@ import time
 import threading
 
 
-class rcSwitch_python(SmartPlugin):
+class RCswitch(SmartPlugin):
 
 	ALLOW_MULTIINSTANCE = False
 	PLUGIN_VERSION = "2.0.0"
