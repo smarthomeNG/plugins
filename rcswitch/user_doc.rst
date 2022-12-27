@@ -119,7 +119,7 @@ v0.3
 
 * add import os at the init
 
-v1.2.4
+v1.2.2
 ~~~~~~
 
 * add hostname support
