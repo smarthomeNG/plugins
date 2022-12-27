@@ -50,7 +50,7 @@ class Database(SmartPlugin):
     """
 
     ALLOW_MULTIINSTANCE = True
-    PLUGIN_VERSION = '1.6.8'
+    PLUGIN_VERSION = '1.6.9'
 
     # SQL queries: {item} = item table name, {log} = log table name
     # time, item_id, val_str, val_num, val_bool, changed
@@ -135,7 +135,8 @@ class Database(SmartPlugin):
 
         self.cleanup_active = False
 
-        self.last_connect_time  = 0     # mechanism for limiting db connection requests
+        self.last_connect_time  = 0             # mechanism for limiting db connection requests
+        self.last_maint_connect_time  = 0       # mechanism for limiting db maintenance connection requests
 
         # Copy SQLite3 database file (if configured)
         if self._copy_database:
@@ -149,12 +150,22 @@ class Database(SmartPlugin):
             self._init_complete = False
             return
 
+        # Setup db maintenance connection and test if connection is possible
+        self._db_maint = lib.db.Database(("" if self._prefix == ""  else self._prefix.capitalize()) + "Database", self.driver, self._connect)
+        if self._db_maint.api_initialized == False:
+            # Error initializeng the database driver (e.g.: Python module for database driver not found)
+            self.logger.error("Initialization of database API failed for maintenance connection")
+            self._init_complete = False
+            return
+
         self._db_initialized = False
+        self._db_maint_initialized = False
         if not self._initialize_db():
             #self._init_complete = False
             #return
             self.logger.debug("Init: DB could not be initialized")
             pass
+
 
         self.init_webinterface(WebInterface)
         return
@@ -180,6 +191,7 @@ class Database(SmartPlugin):
         self._stop_schedulers()
         self._dump(True)
         self._db.close()
+        self._db_maint.close()
 
 
     def parse_item(self, item):
@@ -895,7 +907,7 @@ class Database(SmartPlugin):
         self.orphanlist = []
 
         items = [item.id() for item in self._buffer]
-        cur = self._db.cursor()
+        cur = self._db_maint.cursor()
         try:
             for item in self.readItems(cur=cur):
                 if item[COL_ITEM_NAME] not in items:
@@ -944,17 +956,19 @@ class Database(SmartPlugin):
         logcount = self.readLogCount(item_id)
         if logcount == 0:
             self.logger.info(f"_delete_orphan: Item {item_path} has no log entries")
-            cur = self._db.cursor()
+            cur = self._db_maint.cursor()
             self._execute(self._prepare("DELETE FROM {item} WHERE id = :id;"), {'id': item_id}, cur=cur)
             self.logger.info(f"_delete_orphan: Deleted item entry for {item_path}")
             cur.close()
+            self._db_maint.commit()
             return True
 
-        cur = self._db.cursor()
+        cur = self._db_maint.cursor()
         self._execute(self._prepare("DELETE FROM {log} WHERE item_id = :id ORDER BY time ASC LIMIT :maxrecords;"), {'id': item_id, 'maxrecords': self.delete_orphan_chunk_size}, cur=cur)
         delete_orphan_chunk_size_str = f"{self.delete_orphan_chunk_size:,}".replace(',', '.')
         self.logger.info(f"_delete_orphan: Deleted (up to) {delete_orphan_chunk_size_str} log entries for Item {item_path}")
         cur.close()
+        self._db_maint.commit()
 
         return False
 
@@ -1624,6 +1638,7 @@ class Database(SmartPlugin):
     # ------------------------------------------
 
     def _initialize_db(self):
+        # initialize main db connection
         try:
             if not self._db.connected():
                 # limit connection requests to 20 seconds.
@@ -1643,6 +1658,32 @@ class Database(SmartPlugin):
                 self._db_initialized = True
         except Exception as e:
             self.logger.critical("Database: Initialization failed: {}".format(e))
+            if self.driver.lower() == 'sqlite3':
+                self._sh.restart('SmartHomeNG (Database plugin stalled)')
+                exit(0)
+            else:
+                return False
+
+        # initialize db maintenance connection
+        try:
+            if not self._db_maint.connected():
+                # limit connection requests to 20 seconds.
+                current_time = time.time()
+                time_delta_last_maint_connect = current_time - self.last_maint_connect_time
+                self.logger.debug("DEBUG: delta {0}".format(time_delta_last_maint_connect))
+                if (time_delta_last_maint_connect >  20):
+                    self.last_maint_connect_time = time.time()
+                    self._db_maint.connect()
+                else:
+                    self.logger.error("Database reconnect (maintenance connection) supressed: Delta time: {0}".format(time_delta_last_connect))
+                    return False
+
+            if not self._db_maint_initialized:
+                self._db_maint.setup(
+                    {i: [self._prepare(query[0]), self._prepare(query[1])] for i, query in self._setup.items()})
+                self._db_maint_initialized = True
+        except Exception as e:
+            self.logger.critical("Database: Initialization of maintenance connection failed: {}".format(e))
             if self.driver.lower() == 'sqlite3':
                 self._sh.restart('SmartHomeNG (Database plugin stalled)')
                 exit(0)

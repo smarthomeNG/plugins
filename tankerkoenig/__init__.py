@@ -38,7 +38,7 @@ from .webif import WebInterface
 
 class TankerKoenig(SmartPlugin):
     PLUGIN_VERSION = "2.0.1"
-    
+
     _base_url = 'https://creativecommons.tankerkoenig.de/json'
     _detail_url_suffix = 'detail.php'
     _prices_url_suffix = 'prices.php'
@@ -50,10 +50,10 @@ class TankerKoenig(SmartPlugin):
 
         For accessing the free "Tankerkönig-Spritpreis-API" you need a personal api key. For your own key register to https://creativecommons.tankerkoenig.de
         """
-        
+
         # Call init code of parent class (SmartPlugin)
         super().__init__()
-        
+
         self.item_dict = {}
         self.station_ids = []
         self.station_details = {}
@@ -82,7 +82,7 @@ class TankerKoenig(SmartPlugin):
         """
         Run method for the plugin
         """
-        
+
         self.logger.debug("Run method called")
 
         # create scheduler for price data updates
@@ -98,11 +98,11 @@ class TankerKoenig(SmartPlugin):
         """
         Stop method for the plugin
         """
-        
+
         self.logger.debug("Stop method called")
         self.scheduler_remove('update_status_data')
         self.alive = False
-        
+
     def parse_item(self, item):
         """
         Default plugin parse_item method. Is called when the plugin is initialized.
@@ -116,7 +116,7 @@ class TankerKoenig(SmartPlugin):
                         with the item, caller, source and dest as arguments and in case of the knx plugin the value
                         can be sent to the knx with a knx write function within the knx plugin.
         """
-        
+
         if self.has_iattr(item.conf, 'tankerkoenig_id'):
             self.logger.debug(f"parse item: {item}")
             station_id = self.get_iattr_value(item.conf, 'tankerkoenig_id')
@@ -148,7 +148,7 @@ class TankerKoenig(SmartPlugin):
         :param source: if given it represents the source
         :param dest: if given it represents the dest
         """
-        
+
         if self.alive and caller != self.get_shortname():
             self.logger.info(f"Update item: {item.property.path}, item has been changed outside this plugin")
 
@@ -184,17 +184,17 @@ class TankerKoenig(SmartPlugin):
         if price not in ['e5', 'e10', 'diesel', 'all']:
             self.logger.error(f"Plugin '{self.get_fullname()}': Used value={price} for 'price' at 'get_petrol_stations' not allowed. Set to default 'all'.")
             price = 'all'
-        
+
         # check if value for sort
         if sort not in ['price']:
             self.logger.error(f"Plugin '{self.get_fullname()}': Used value={sort} for 'sort' at 'get_petrol_stations' not allowed. Set to default 'price'.")
             sort = 'price'
-        
+
         # limit radius to 25km
         if float(rad) > 25:
             self.logger.error(f"Plugin '{self.get_fullname()}': Used value={rad} for 'rad' at 'get_petrol_stations' not allowed. Set to max allowed value '25km'.")
             rad = 25
-        
+
         result_stations = []
         json_obj = self._request_stations(lat=lat, lon=lon, price=price, sort=sort, rad=rad)
 
@@ -290,10 +290,10 @@ class TankerKoenig(SmartPlugin):
         """
         Gets price and status data for all defined stations and updates item values
         """
-        
+
         self.station_prices = self.get_petrol_station_prices(self.station_ids)
         return self.set_item_status_values()
-        
+
     def update_detail_data(self):
         """
         Gets price and status data for all defined stations and updates item values
@@ -301,18 +301,18 @@ class TankerKoenig(SmartPlugin):
 
         self.station_details = self.get_station_details()
         return self.set_item_detail_values()
-        
+
     def get_station_details(self):
         """
         Gets details for all defined stations and put it to plugin dict.
         """
-        
+
         stations_details = {}
-        
+
         for station_id in self.station_ids:
             station_details = self.get_petrol_station_detail_reduced(station_id)
             stations_details[station_id] = station_details
-        
+
         return stations_details
 
     def set_item_status_values(self):
@@ -328,7 +328,7 @@ class TankerKoenig(SmartPlugin):
             self.logger.debug(f"set_item_status_values: station_id={station_id}, tankerkoenig_attr={tankerkoenig_attr}, value={value}")
             if value:
                 item(value, self.get_shortname())
-                            
+
     def set_item_detail_values(self):
         """
         Set values of details items
