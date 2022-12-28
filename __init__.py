@@ -677,7 +677,7 @@ class FritzDevice:
         time.sleep(delay)
 
         # get current value from AVM device
-        current_value = self._poll_fritz_device(avm_data_type, _index)
+        current_value = self._poll_fritz_device(avm_data_type, _index, enforce_read=True)
 
         # write current value back to item
         item(current_value, self._plugin_instance.get_fullname())
@@ -953,9 +953,13 @@ class FritzDevice:
         # clear data cache dict after update cycle
         self._clear_data_cache()
 
-    def _poll_fritz_device(self, avm_data_type: str, index=None) -> Union[str, dict, None]:
+    def _poll_fritz_device(self, avm_data_type: str, index=None, enforce_read: bool = False) -> Union[str, dict, None]:
         """
         Poll Fritz Device, feed dictionary and return data
+
+        :param avm_data_type:   data item to be called
+        :param index:           index or avm_data_type
+        :param enforce_read:    reading of data from fritz device will be enforced (currently cached data will not be used)
         """
 
         link_ppp = {
@@ -1070,7 +1074,7 @@ class FritzDevice:
             if in_arg is not None and index is None:
                 self._plugin_instance.logger.warning(f"avm_data_type={avm_data_type} used but required index '{in_arg[3:]}' not given. Request will be aborted.")
                 return
-            data = self._get_update_data(client, device, service, action, in_arg, out_arg, index)
+            data = self._get_update_data(client, device, service, action, in_arg, out_arg, index, enforce_read)
         elif avm_data_type in link2:
             data = eval(link2[avm_data_type])
         else:
@@ -1083,12 +1087,12 @@ class FritzDevice:
         # return result
         return data
 
-    def _get_update_data(self, client: str, device: str, service: str, action: str, in_argument: str = None, out_argument: str = None, in_argument_value=None):
+    def _get_update_data(self, client: str, device: str, service: str, action: str, in_argument: str = None, out_argument: str = None, in_argument_value=None, enforce_read: bool = False):
         """
         Get update data for cache dict; poll data if not yet cached from fritz device
         """
 
-        self._plugin_instance.logger.debug(f"_get_update_data called with device={device}, service={service}, action={action}, in_argument={in_argument}, out_argument={out_argument}, in_argument_value={in_argument_value}")
+        self._plugin_instance.logger.debug(f"_get_update_data called with device={device}, service={service}, action={action}, in_argument={in_argument}, out_argument={out_argument}, in_argument_value={in_argument_value}, enforce_read={enforce_read}")
         data = None
 
         # create cache dict structure
@@ -1101,21 +1105,30 @@ class FritzDevice:
 
         # poll data from device or cache dict
         if in_argument is None:
-            # fill cache dicts
-            if not self._data_cache[device][service][action]:
-                self._data_cache[device][service][action] = eval(f"self.{client}.{device}.{service}.{action}()")
-            #  gather data from cache dict
-            data = self._data_cache[device][service][action]
-        elif in_argument is not None and in_argument_value is not None:
-            # fill cache dicts
-            if in_argument_value not in self._data_cache[device][service][action]:
-                self._data_cache[device][service][action][in_argument_value] = {}
-            if service.lower().startswith('wlan'):
-                self._data_cache[device][service][action][in_argument_value] = eval(f"self.{client}.{device}.{service}[{in_argument_value}].{action}()")
+            # fill cache dicts and/or get data
+            if not self._data_cache.get(device, {}).get(device, {}).get(action, None) or enforce_read:
+                data = eval(f"self.{client}.{device}.{service}.{action}()")
+                try:
+                    self._data_cache[device][service][action] = data
+                except Exception:
+                    pass
             else:
-                self._data_cache[device][service][action][in_argument_value] = eval(f"self.{client}.{device}.{service}.{action}({in_argument}='{in_argument_value}')")
-            #  gather data from cache dict
-            data = self._data_cache[device][service][action][in_argument_value]
+                data = self._data_cache.get(device, {}).get(service, {}).get(action)
+
+        elif in_argument is not None and in_argument_value is not None:
+            # fill cache dicts and/or get data
+            if not self._data_cache.get(device, {}).get(device, {}).get(action, None) or in_argument_value not in self._data_cache[device][service][action] or enforce_read:
+                self._data_cache[device][service][action][in_argument_value] = {}
+                if service.lower().startswith('wlan'):
+                    data = eval(f"self.{client}.{device}.{service}[{in_argument_value}].{action}()")
+                else:
+                    data = eval(f"self.{client}.{device}.{service}.{action}({in_argument}='{in_argument_value}')")
+                try:
+                    self._data_cache[device][service][action][in_argument_value] = data
+                except Exception:
+                    pass
+            else:
+                data = self._data_cache.get(device, {}).get(service, {}).get(action, {}).get(in_argument_value)
 
         # return data
         if data is None:
@@ -1123,7 +1136,7 @@ class FritzDevice:
             return
         elif isinstance(data, int) and 99 < data < 1000:
             self._plugin_instance.logger.info(f"Response was ErrorCode: {data} '{self.errorcodes.get(data, None)}' for self.{client}.{device}.{service}.{action}()")
-            return data
+            return
         else:
             return data if not out_argument else data[out_argument]
 
@@ -1166,6 +1179,8 @@ class FritzDevice:
         """
         Clears _data_cache dict and put needed content back
         """
+
+        self._plugin_instance.logger.warning('_clear_data_cache called')
 
         _default_connection_service = self._data_cache['InternetGatewayDevice']['Layer3Forwarding']['GetDefaultConnectionService']
         self._data_cache.clear()
@@ -1293,7 +1308,7 @@ class FritzDevice:
         :param mac_address: MAC address of the device to wake up
         """
 
-        #self.client.LanDevice.Hosts.X_AVM_DE_GetAutoWakeOnLANByMACAddress(NewMACAddress=mac_address)
+        # self.client.LanDevice.Hosts.X_AVM_DE_GetAutoWakeOnLANByMACAddress(NewMACAddress=mac_address)
         self._set_fritz_device('wol', f"NewMACAddress={mac_address}")
 
     # ----------------------------------
@@ -1308,7 +1323,7 @@ class FritzDevice:
         """
 
         # phone_name = self.client.InternetGatewayDevice.X_VoIP.X_AVM_DE_DialGetConfig()['NewX_AVM_DE_PhoneName']
-        phone_name = self._poll_fritz_device('call_origin')
+        phone_name = self._poll_fritz_device('call_origin', enforce_read=True)
 
         if phone_name is None:
             self._plugin_instance.logger.error("No call origin available.")
@@ -1325,7 +1340,7 @@ class FritzDevice:
         """
 
         # phone_name = self.client.InternetGatewayDevice.X_VoIP.X_AVM_DE_GetPhonePort()['NewX_AVM_DE_PhoneName']
-        phone_name = self._poll_fritz_device('phone_name', index)
+        phone_name = self._poll_fritz_device('phone_name', index, enforce_read=True)
 
         if phone_name is None:
             self._plugin_instance.logger.error(f"No phone name available at provided index {index}")
@@ -1372,7 +1387,7 @@ class FritzDevice:
             phone_number = phone_number.strip('#')
 
         # phonebook_url = self.client.InternetGatewayDevice.X_AVM_DE_OnTel.GetPhonebook(NewPhonebookID=phonebook_id)['NewPhonebookURL']
-        phonebook_url = self._poll_fritz_device('phonebook_url', phonebook_id)
+        phonebook_url = self._poll_fritz_device('phonebook_url', phonebook_id, enforce_read=True)
         if not phonebook_url:
             return ""
 
@@ -1395,7 +1410,7 @@ class FritzDevice:
         result_numbers = {}
 
         # phonebook_url = self.client.InternetGatewayDevice.X_AVM_DE_OnTel.GetPhonebook(NewPhonebookID=phonebook_id)['NewPhonebookURL']
-        phonebook_url = self._poll_fritz_device('phonebook_url', phonebook_id)
+        phonebook_url = self._poll_fritz_device('phonebook_url', phonebook_id, enforce_read=True)
         if not phonebook_url:
             return {}
 
@@ -1429,7 +1444,7 @@ class FritzDevice:
         """request calllist from AVM Device"""
 
         # calllist_url = self.client.InternetGatewayDevice.X_AVM_DE_OnTel.GetCallList()
-        calllist_url = self._poll_fritz_device('calllist_url')
+        calllist_url = self._poll_fritz_device('calllist_url', enforce_read=True)
 
         if not calllist_url:
             return []
@@ -1476,7 +1491,7 @@ class FritzDevice:
         """
 
         # device_log = self.client.InternetGatewayDevice.DeviceInfo.GetDeviceLog()['NewDeviceLog']
-        device_log = self._poll_fritz_device('device_log')
+        device_log = self._poll_fritz_device('device_log', enforce_read=True)
 
         if device_log is None:
             return ""
@@ -1509,7 +1524,7 @@ class FritzDevice:
 
         for item in self._items:  # search for guest time remaining item.
             if self._items[item][0] == 'wlan_guest_time_remaining' and self._items[item][1] == wlan_index:
-                data = self._poll_fritz_device('wlan_guest_time_remaining', wlan_index)
+                data = self._poll_fritz_device('wlan_guest_time_remaining', wlan_index, enforce_read=True)
                 if data is not None:
                     item(data, self._plugin_instance.get_fullname())
 
@@ -1522,13 +1537,13 @@ class FritzDevice:
         if self._plugin_instance.debug_log:
             self._plugin_instance.logger.debug(f"get_wlan called: wlan_index={wlan_index}")
 
-        return self._poll_fritz_device('wlanconfig', wlan_index)
+        return self._poll_fritz_device('wlanconfig', wlan_index, enforce_read=True)
 
     def get_wlan_devices(self, wlan_index: int = 0):
         """Get all WLAN Devices connected to AVM-Device"""
 
         # wlandevice_url = self.client.LANDevice.WLANConfiguration[wlan_index].X_AVM_DE_GetWLANDeviceListPath()['NewX_AVM_DE_WLANDeviceListPath']
-        wlandevice_url = self._poll_fritz_device('wlandevice_url', wlan_index)
+        wlandevice_url = self._poll_fritz_device('wlandevice_url', wlan_index, enforce_read=True)
 
         if not wlandevice_url:
             return
@@ -1562,7 +1577,7 @@ class FritzDevice:
         if self._plugin_instance.debug_log:
             self._plugin_instance.logger.debug(f"get_wps called: wlan_index={wlan_index}")
 
-        status = self._poll_fritz_device('wps_status', wlan_index)
+        status = self._poll_fritz_device('wps_status', wlan_index, enforce_read=True)
 
         return True if status == 'active' else False
 
@@ -1587,7 +1602,7 @@ class FritzDevice:
         """
 
         # return self.client.InternetGatewayDevice.X_AVM_DE_TAM.GetInfo(NewIndex=tam_index)['NewEnable']
-        return self._poll_fritz_device('tam', tam_index)
+        return self._poll_fritz_device('tam', tam_index, enforce_read=True)
 
     def get_tam_list(self, tam_index: int = 0):
         """
@@ -1597,7 +1612,7 @@ class FritzDevice:
         """
 
         # tamlist_url = self.client.InternetGatewayDevice.X_AVM_DE_TAM.GetMessageList(NewIndex=tam_index)['NewURL']
-        tamlist_url = self._poll_fritz_device('tamlist_url', tam_index)
+        tamlist_url = self._poll_fritz_device('tamlist_url', tam_index, enforce_read=True)
 
         if tamlist_url:
             return self._request_response_to_xml(self._request(tamlist_url, self._timeout, self._verify))
@@ -1658,17 +1673,17 @@ class FritzDevice:
     def get_deflection(self, deflection_id: int = 0):
         """Get Deflection state of deflection_id"""
         # return self.client.InternetGatewayDevice.X_AVM_DE_OnTel.GetDeflection(NewDeflectionId=deflection_id)['NewEnable']
-        return self._poll_fritz_device('deflection_enable', deflection_id)
+        return self._poll_fritz_device('deflection_enable', deflection_id, enforce_read=True)
 
     def get_number_of_deflections(self):
         """Get number of deflections """
         # return self.client.InternetGatewayDevice.X_AVM_DE_OnTel.GetNumberOfDeflections()['NewNumberOfDeflections']
-        return self._poll_fritz_device('number_of_deflections')
+        return self._poll_fritz_device('number_of_deflections', enforce_read=True)
 
     def get_deflections(self):
         """Get deflections as dict"""
         # return self.client.InternetGatewayDevice.X_AVM_DE_OnTel.GetDeflections()['NewDeflectionList']
-        return self._poll_fritz_device('deflections_details')
+        return self._poll_fritz_device('deflections_details', enforce_read=True)
 
     # ----------------------------------
     # Host
@@ -1685,7 +1700,7 @@ class FritzDevice:
         """
 
         # is_active = self.client.LANDevice.Hosts.GetSpecificHostEntry(NewMACAddress=mac_address)['NewActive']
-        return bool(self._poll_fritz_device('is_host_active', mac_address))
+        return bool(self._poll_fritz_device('is_host_active', mac_address, enforce_read=True))
 
     def get_hosts(self, only_active: bool = False) -> list:
         """
@@ -1698,7 +1713,7 @@ class FritzDevice:
         """
 
         # number_of_hosts = int(self.client.LANDevice.Hosts.GetHostNumberOfEntries()['NewHostNumberOfEntries'])
-        number_of_hosts = int(self._poll_fritz_device('number_of_hosts'))
+        number_of_hosts = int(self._poll_fritz_device('number_of_hosts', enforce_read=True))
 
         hosts = []
         for i in range(1, number_of_hosts):
@@ -1719,9 +1734,11 @@ class FritzDevice:
         """
 
         # host_info = self.client.LANDevice.Hosts.GetGenericHostEntry(NewIndex=index)
-        host_info = self._poll_fritz_device('host_info', index)
+        host_info = self._poll_fritz_device('host_info', index, enforce_read=True)
 
-        if isinstance(host_info, int):
+        if not host_info:
+            return
+        elif isinstance(host_info, int):
             self._plugin_instance.logger.error(f"Error {host_info} '{self.errorcodes.get(host_info)}' occurred during {index}.")
             return
         elif len(host_info) == 7:
@@ -1740,7 +1757,7 @@ class FritzDevice:
         """Get all Hosts connected to AVM device as dict"""
 
         # hosts_url = self.client.LANDevice.Hosts.X_AVM_DE_GetHostListPath()['NewX_AVM_DE_HostListPath']
-        hosts_url = self._poll_fritz_device('hosts_url')
+        hosts_url = self._poll_fritz_device('hosts_url', enforce_read=True)
 
         if not hosts_url:
             return
@@ -1779,7 +1796,7 @@ class FritzDevice:
         """Get mesh topology information as dict"""
 
         # mesh_url = self.client.LANDevice.Hosts.X_AVM_DE_GetMeshListPath()['NewX_AVM_DE_MeshListPath']
-        mesh_url = self._poll_fritz_device('mesh_url')
+        mesh_url = self._poll_fritz_device('mesh_url', enforce_read=True)
 
         if not mesh_url:
             return
@@ -1947,8 +1964,6 @@ class FritzDevice:
                     )
                 )
 
-            # self.logger.debug(f"Device: {description_file} services={self.services}")
-
         def __getattr__(self, name: str):
             if name in self.services:
                 return self.services[name]
@@ -2005,6 +2020,9 @@ class FritzDevice:
             """
 
             request = requests.get(f'{self.base_url}{scpdurl}', verify=self.verify)
+
+            # self.logger.warning(f"Service _fetch_actions request={request.content}")
+
             if request.status_code == 200:
                 xml = etree.parse(BytesIO(request.content))
 
@@ -2102,6 +2120,9 @@ class FritzDevice:
                                     auth=self.auth,
                                     data=data,
                                     verify=self.verify)
+
+            # self.logger.warning(f"Action call request={request.content}")
+
             if request.status_code != 200:
                 return request.status_code
 
@@ -2111,7 +2132,6 @@ class FritzDevice:
             for arg in list(xml.find('.//{{{}}}{}Response'.format(self.service_type, self.name))):
                 name = self.out_arguments[arg.tag]
                 response[name] = arg.text
-            # self.logger.debug(f"__call__: control_url={self.control_url} response={response}")
             return response
 
     class AttributeDict(dict):
