@@ -635,9 +635,9 @@ class Tasmota(MqttPlugin):
                     self._handle_wifi(tasmota_topic, payload)
 
                 # Handling of Uptime
-                if tasmota_topic in self.tasmota_devices:
-                    self.logger.info(f"Received Message will be checked for Uptime.")
-                    self.tasmota_devices[tasmota_topic]['uptime'] = payload.get('Uptime', '-')
+                if type(payload) is dict and 'Uptime' in payload:
+                    self.logger.info(f"Received Message contains Uptime information.")
+                    self.tasmota_devices[tasmota_topic]['uptime'] = payload.get('Uptime')
 
                 # setting new online-timeout
                 self.tasmota_devices[tasmota_topic]['online_timeout'] = datetime.now() + timedelta(
@@ -938,6 +938,38 @@ class Tasmota(MqttPlugin):
                     if 'Today' in energy:
                         self.tasmota_devices[device]['sensors']['ENERGY']['today'] = energy['Today']
                         self._set_item_value(device, 'item_power_today', energy['Today'], function)
+
+            # ANALOG sensors
+            analog = payload.get('ANALOG')
+            if analog:
+                self.logger.info(f"Received Message decoded as ANALOG Sensor message.")
+                if type(analog) is dict:
+                    if 'Temperature' in analog:
+                        self.tasmota_devices[device]['sensors']['ANALOG'] = {}
+                        self.tasmota_devices[device]['sensors']['ANALOG']['temp'] = analog['Temperature']
+                        self._set_item_value(device, 'item_temp', analog, function)
+                    if 'Temperature1' in analog:
+                        self.tasmota_devices[device]['sensors']['ANALOG'] = {}
+                        self.tasmota_devices[device]['sensors']['ANALOG']['temp'] = analog['Temperature1']
+                        self._set_item_value(device, 'item_temp', analog, function)
+                    if 'A0' in analog:
+                        self.tasmota_devices[device]['sensors']['ENERGY'] = {}
+                        self.tasmota_devices[device]['sensors']['ENERGY']['voltage'] = analog['A0']/1000
+                        self._set_item_value(device, 'item_voltage', energy['Voltage'], function)
+                    if 'Range' in analog:
+                        self.tasmota_devices[device]['sensors']['ENERGY'] = {}
+                        self.tasmota_devices[device]['sensors']['ENERGY']['voltage'] = analog['Range']/1000
+
+            # ESP32 sensors
+            esp32 = payload.get('ESP32')
+            if esp32:
+                self.logger.info(f"Received Message decoded as ESP32 Sensor message.")
+                if not self.tasmota_devices[device]['sensors'].get('ESP32'):
+                    self.tasmota_devices[device]['sensors']['ESP32'] = {}
+                if type(esp32) is dict:
+                    if 'Temperature' in esp32:
+                        self.tasmota_devices[device]['sensors']['ESP32']['temp'] = esp32['Temperature']
+                        self._set_item_value(device, 'item_temp', esp32['Temperature'], function)
 
             # DS18B20 sensors
             ds18b20 = payload.get('DS18B20')
@@ -1258,6 +1290,10 @@ class Tasmota(MqttPlugin):
                 self.tasmota_meta['rf'] = True
             if self.tasmota_devices[tasmota_topic]['lights']:
                 self.tasmota_meta['lights'] = True
+            if self.tasmota_devices[tasmota_topic]['sensors'].get('ESP32'):
+                self.tasmota_meta['esp32'] = True
+            if self.tasmota_devices[tasmota_topic]['sensors'].get('ANALOG'):
+                self.tasmota_meta['analog'] = True
             if self.tasmota_devices[tasmota_topic]['sensors'].get('DS18B20'):
                 self.tasmota_meta['ds18b20'] = True
             if self.tasmota_devices[tasmota_topic]['sensors'].get('AM2301'):
