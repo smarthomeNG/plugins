@@ -1180,8 +1180,6 @@ class FritzDevice:
         Clears _data_cache dict and put needed content back
         """
 
-        self._plugin_instance.logger.warning('_clear_data_cache called')
-
         _default_connection_service = self._data_cache['InternetGatewayDevice']['Layer3Forwarding']['GetDefaultConnectionService']
         self._data_cache.clear()
         self._data_cache['InternetGatewayDevice'] = {'DeviceInfo': {'GetInfo': {}, 'GetSecurityPort': {}}, 'Layer3Forwarding': {}}
