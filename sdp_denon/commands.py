@@ -160,7 +160,7 @@ commands = {
         'control': {
             'power': {'read': True, 'write': True, 'read_cmd': 'Z3?', 'write_cmd': 'Z3{VALUE}', 'item_type': 'bool', 'dev_datatype': 'onoff', 'reply_pattern': 'Z3(ON|OFF)'},
             'mute': {'read': True, 'write': True, 'read_cmd': 'Z3MU?', 'write_cmd': 'Z3MU{VALUE}', 'item_type': 'bool', 'dev_datatype': 'onoff', 'reply_pattern': 'Z3MU(ON|OFF)'},
-            'volume': {'read': True, 'write': True, 'read_cmd': 'Z3?', 'item_type': 'num', 'dev_datatype': 'DenonVol', 'reply_pattern': r'Z3(\d{2,3})', 'cmd_settings': {'force_min': 0.0, 'valid_max': 98.0}},
+            'volume': {'read': True, 'write': True, 'read_cmd': 'Z3?', 'write_cmd': 'Z3{VALUE}', 'item_type': 'num', 'dev_datatype': 'DenonVol', 'reply_pattern': r'Z3(\d{2,3})', 'cmd_settings': {'force_min': 0.0, 'valid_max': 98.0}},
             'volumeup': {'read': False, 'write': True, 'item_type': 'bool', 'write_cmd': 'Z3UP', 'dev_datatype': 'raw'},
             'volumedown': {'read': False, 'write': True, 'write_cmd': 'Z3DOWN', 'item_type': 'bool', 'dev_datatype': 'raw'},
             'sleep': {'read': True, 'write': True, 'item_type': 'num', 'read_cmd': 'Z3SLP?', 'write_cmd': 'Z3SLP{VALUE}', 'dev_datatype': 'convert0', 'reply_pattern': r'Z3SLP(\d{3}|OFF)', 'cmd_settings': {'force_min': 0, 'valid_max': 120}},
