@@ -27,6 +27,7 @@
 #########################################################################
 
 from lib.model.smartplugin import SmartPlugin
+from .webif import WebInterface
 from lib.item import Items
 from .cRcSocketSwitch import cRcSocketSwitch
 import time
@@ -64,7 +65,7 @@ class RCswitch(SmartPlugin):
 		#   return
 
 		# if plugin should start even without web interface
-		#self.init_webinterface(WebInterface)
+		self.init_webinterface(WebInterface)
 		# if plugin should not start without web interface
 		# if not self.init_webinterface():
 		#     self._init_complete = False
