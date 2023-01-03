@@ -269,10 +269,10 @@ class SeActionBase(StateEngineTools.SeItemChild):
                 delay, self._scheduler_name)
             _delay_info = 0
             if delay is None:
-                self._log_warning("Action'{0}: Ignored because of errors while determining the delay!", self._name)
+                self._log_warning("Action '{0}': Ignored because of errors while determining the delay!", self._name)
                 _delay_info = -1
             elif delay < 0:
-                self._log_warning("Action'{0}: Ignored because of delay is negative!", self._name)
+                self._log_warning("Action '{0}': Ignored because delay is negative!", self._name)
                 _delay_info = -1
             else:
                 self._waitforexecute(actionname, self._name, repeat_text, delay, current_condition_met, previous_condition_met, previousstate_condition_met)
