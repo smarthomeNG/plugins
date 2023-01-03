@@ -264,6 +264,7 @@ item_attributes:
           - 'humidity'                                # r/o       num       Relative Luftfeuchtigkeit in % (FD440)          
           - 'alert_state'                             # r/o       bool      letzter übermittelter Alarmzustand              
                                                       
+
     avm2_incoming_allowed:
         type: str
         mandatory: False
@@ -324,24 +325,35 @@ item_attributes:
             de: '(optional) Konfiguriert eine Verzögerung in Sekunden nachdem ein Lesekommando nach einem Schreibkommando gesendet wird.'
             en: '(optional) Configures delay in seconds to issue a read command after write command'
 
+    avm2_data_cycle:
+        type: int
+        mandatory: False
+        description:
+            de: 'Poll-Zyklus des AVM Datentypes des jeweiligen Items. 0-Nur beim Initialisieren Lesen; 10+ - Zyklisch Lesen'
+            en: 'Poll cycle of AVM Data Type of the respective item. 0-Just read at init; 10+ - cyclic reading'
+
 item_structs:
     info:
         uptime:
             type: num
             visu_acl: ro
             avm2_data_type@instance: uptime
+            avm2_data_cycle@instance: 600
         serial_number:
             type: str
             visu_acl: ro
             avm2_data_type@instance: serial_number
+            avm2_data_cycle@instance: 0
         firmware:
             type: str
             visu_acl: ro
             avm2_data_type@instance: software_version
+            avm2_data_cycle@instance: 3600
         hardware_version:
             type: str
             visu_acl: ro
             avm2_data_type@instance: hardware_version
+            avm2_data_cycle@instance: 0
         myfritz:
             type: bool
             avm2_data_type@instance: myfritz_status
@@ -587,26 +599,33 @@ item_structs:
 
     aha_general:
         name:
+            type: str
             avm2_data_type@instance: device_name
-            type: str
+            avm2_data_cycle@instance: 0
         identifier:
+            type: str
             avm2_data_type@instance: device_id
-            type: str
+            avm2_data_cycle@instance: 0
         productname:
+            type: str
             avm2_data_type@instance: product_name
-            type: str
+            avm2_data_cycle@instance: 0
         manufacturer:
+            type: str
             avm2_data_type@instance: manufacturer
-            type: str
+            avm2_data_cycle@instance: 0
         firmware_version:
-            avm2_data_type@instance: fw_version
             type: str
+            avm2_data_type@instance: fw_version
+            avm2_data_cycle@instance: 0
         present:
-            avm2_data_type@instance: connected
             type: bool
+            avm2_data_type@instance: connected
+            avm2_data_cycle@instance: 0
         functions:
-            avm2_data_type@instance: device_functions
             type: list
+            avm2_data_type@instance: device_functions
+            avm2_data_cycle@instance: 0
 
     aha_thermostat:
         target_temperature:

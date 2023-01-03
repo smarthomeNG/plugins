@@ -324,14 +324,19 @@ class AVM2(SmartPlugin):
 
         self.logger.debug("Run method called")
         if self._fritz_device is not None:
-            self.scheduler_add('poll_tr064', self._fritz_device.update_item_values, prio=5, cycle=self._cycle, offset=4)
-        if self._aha_http_interface and self._fritz_device.is_fritzbox:
+            self.create_cyclic_scheduler(target='tr064', items=self.fritz_device.item_dict, fct=self.fritz_device.cyclic_item_update, offset=2)
+            self._fritz_device.cyclic_item_update(read_all=True)
+
+        if self._aha_http_interface and self.fritz_device.is_fritzbox:
             # add scheduler for updating items
-            self.scheduler_add('poll_aha', self._fritz_home.update_items, prio=5, cycle=self._cycle, offset=2)
+            self.create_cyclic_scheduler(target='aha', items=self.fritz_home.item_dict, fct=self.fritz_home.cyclic_item_update, offset=4)
+            self._fritz_home.cyclic_item_update(read_all=True)
             # add scheduler for checking validity of session id
             self.scheduler_add('check_sid', self._fritz_home.check_sid, prio=5, cycle=900, offset=30)
+
         if self._monitoring_service:
             self._monitoring_service.set_callmonitor_item_values_initially()
+
         self.alive = True
 
     def stop(self):
@@ -366,8 +371,10 @@ class AVM2(SmartPlugin):
         if self.has_iattr(item.conf, 'avm2_data_type'):
             self.logger.debug(f"parse item: {item}")
 
-            # get avm_data_type
+            # get avm_data_type and avm_data_cycle
             avm_data_type = self.get_iattr_value(item.conf, 'avm2_data_type')
+            avm_data_cycle = self.get_iattr_value(item.conf, 'avm2_data_cycle') if self.has_iattr(item.conf, 'avm2_data_cycle') else self._cycle
+            avm_data_cycle = 30 if 1 < avm_data_cycle < 29 else avm_data_cycle
 
             # handle items specific to call monitor
             if avm_data_type in (_call_monitor_attributes + _call_duration_attributes):
@@ -379,14 +386,14 @@ class AVM2(SmartPlugin):
             # handle smarthome items using aha-interface (new)
             elif avm_data_type in _aha_attributes:
                 if self._fritz_home:
-                    self._fritz_home.register_item(item, avm_data_type)
+                    self._fritz_home.register_item(item, avm_data_type, avm_data_cycle)
                 else:
                     self.logger.warning(f"Items with avm attribute found, which needs aha-http-interface. This is not available/enabled for that plugin; Item will be ignored.")
 
             # handle items updated by tr-064 interface
             elif avm_data_type in _tr064_attributes:
                 if self._fritz_device:
-                    self._fritz_device.register_item(item, avm_data_type)
+                    self._fritz_device.register_item(item, avm_data_type, avm_data_cycle)
                 else:
                     self.logger.warning(f"Items with avm attribute found, which needs tr064 interface. This is not available/enabled; Item will be ignored.")
             # handle anything else
@@ -438,6 +445,29 @@ class AVM2(SmartPlugin):
                     self._fritz_home.handle_updated_item(item, avm_data_type, readafterwrite)
                 else:
                     self.logger.warning(f"AVM Homeautomation Interface not activated or not available. Update for {avm_data_type} will not be executed.")
+
+    def create_cyclic_scheduler(self, target: str, items: dict, fct, offset: int):
+        """Create the scheduler to handle cyclic read commands and find the proper time for the cycle."""
+
+        # find shortest cycle
+        shortestcycle = -1
+        for item in items:
+            item_cycle = items[item][2]
+            if item_cycle != 0 and (shortestcycle == -1 or item_cycle < shortestcycle):
+                shortestcycle = item_cycle
+
+        # Start the worker thread
+        if shortestcycle != -1:
+            # Balance unnecessary calls and precision
+            workercycle = int(shortestcycle / 2)
+            # just in case it already exists...
+            if self.scheduler_get(f'poll_{target}'):
+                self.scheduler_remove(f'poll_{target}')
+            self.scheduler_add(f'poll_{target}', fct, cycle=workercycle, prio=5, offset=offset)
+            self.logger.info(f'{target}: Added cyclic worker thread ({workercycle} sec cycle). Shortest item update cycle found: {shortestcycle} sec')
+            return True
+        else:
+            return False
 
     @property
     def monitoring_service(self):
@@ -589,51 +619,47 @@ class FritzDevice:
             else:
                 self._plugin_instance.logger.error(f"Unable to determine _default_connection_service. ErrorCode {_default_connection_service}.")
 
-    def register_item(self, item, avm_data_type: str):
+    def register_item(self, item, avm_data_type: str, avm_data_cycle: int):
         """
-        Parsed items valid fpr that class will be registered
+        Parsed items valid for that class will be registered
         """
+
+        index = None
 
         # handle wlan items
         if avm_data_type in _wlan_config_attributes:
-            avm_wlan_index = self._get_wlan_index(item)
-            if avm_wlan_index is not None:
+            index = self._get_wlan_index(item)
+            if index is not None:
                 self._plugin_instance.logger.debug(f"Item {item.id()} with avm device attribute and defined 'avm2_wlan_index' found; append to list.")
-                self._items[item] = (avm_data_type, avm_wlan_index)
             else:
                 self._plugin_instance.logger.warning(f"Item {item.id()} with avm attribute found, but 'avm2_wlan_index' is not defined; Item will be ignored.")
 
         # handle network_device related items
         elif avm_data_type in (_host_attribute + _host_child_attributes):
-            avm_mac = self._get_mac(item)
-            if avm_mac is not None:
-                if avm_mac is not None:
-                    self._plugin_instance.logger.debug(f"Item {item.id()} with avm device attribute and defined 'avm2_mac' found; append to list.")
-                    self._items[item] = (avm_data_type, avm_mac)
-                else:
-                    self._plugin_instance.logger.warning("Item {item.id()} with avm attribute found, but 'avm2_mac' is not defined; Item will be ignored.")
+            index = self._get_mac(item)
+            if index is not None:
+                self._plugin_instance.logger.debug(f"Item {item.id()} with avm device attribute and defined 'avm2_mac' found; append to list.")
+            else:
+                self._plugin_instance.logger.warning("Item {item.id()} with avm attribute found, but 'avm2_mac' is not defined; Item will be ignored.")
 
         # handle tam related items
         elif avm_data_type in _tam_attributes:
-            avm_tam_index = self._get_tam_index(item)
-            if avm_tam_index is not None:
+            index = self._get_tam_index(item)
+            if index is not None:
                 self._plugin_instance.logger.debug(f"Item {item.id()} with avm device attribute and defined 'avm2_tam_index' found; append to list.")
-                self._items[item] = (avm_data_type, avm_tam_index)
             else:
                 self._plugin_instance.logger.warning(f"Item {item.id()} with avm attribute found, but 'avm2_tam_index' is not defined; Item will be ignored.")
 
         # handle deflection related items
         elif avm_data_type in _deflection_attributes:
-            avm_deflection_index = self._get_deflection_index(item)
-            if avm_deflection_index is not None:
+            index = self._get_deflection_index(item)
+            if index is not None:
                 self._plugin_instance.logger.debug(f"Item {item.id()} with avm device attribute and defined 'avm2_tam_index' found; append to list.")
-                self._items[item] = (avm_data_type, avm_deflection_index)
             else:
                 self._plugin_instance.logger.warning(f"Item {item.id()} with avm attribute found, but 'avm2_tam_index' is not defined; Item will be ignored.")
 
-        # handle all other items
-        else:
-            self._items[item] = (avm_data_type, None)
+        # register item
+        self._items[item] = (avm_data_type, index, avm_data_cycle, time.time())
 
     def handle_updated_item(self, item, avm_data_type: str, readafterwrite: int):
         """Updated Item will be processed and value communicated to AVM Device"""
@@ -915,43 +941,74 @@ class FritzDevice:
     # ----------------------------------
     # Update methods
     # ----------------------------------
-    def update_item_values(self):
+    def cyclic_item_update(self, read_all: bool = False):
         """Updates Item Values"""
 
         if not self._connected:
             self._plugin_instance.logger.warning(f"FritzDevice not connected. No update of item values possible.")
             return
 
-        # iterate over items and get data
+        current_time = int(time.time())
         _item_errorlist = []
-        for item in self._items:
-            if item in self._item_blacklist:
-                self._plugin_instance.logger.info(f"Item={item} is blacklisted due to exceptions in former update cycles. Item will be ignored.")
-                continue
 
+        # iterate over items and get data
+        for item in self._items:
             avm_data_type = self._items[item][0]
             index = self._items[item][1]
-            self._plugin_instance.logger.debug(f"FritzDevice: _update_items called: item={item} with avm_data_type={avm_data_type} and index={index}")
+            cycle = self._items[item][2]
+            next_time = self._items[item][3]
 
-            try:
-                data = self._poll_fritz_device(avm_data_type, index)
-            except Exception as e:
-                self._plugin_instance.logger.error(f"Error {e} occurred during update of item={item} with avm_data_type={avm_data_type} and index={index}. Check item configuration regarding supported/activated function of AVM device. ")
+            # check it item is on blacklist
+            if item in self._item_blacklist:
+                self._plugin_instance.logger.info(f"Item={item.id()} is blacklisted due to exceptions in former update cycles. Item will be ignored.")
+                continue
+
+            # read items with cycle == 0 just at init
+            if not read_all and cycle == 0:
+                # self._plugin_instance.logger.debug(f"Item={item.id()} just read at init. No further update.")
+                continue
+
+            # check if item is already due
+            if next_time > current_time:
+                # self._plugin_instance.logger.debug(f"Item={item.id()} is not due, yet.")
+                continue
+
+            self._plugin_instance.logger.info(f"Item={item.id()} with avm_data_type={avm_data_type} and index={index} will be updated")
+
+            # set new due date
+            lst = list(self._items[item])
+            lst[3] = current_time + cycle
+            self._items[item] = tuple(lst)
+
+            # get data and set item value
+            if self._update_item_value(item, avm_data_type, index) is False:
+                self._plugin_instance.logger.debug(f"{item.id()} caused error, append item to _item_errorlist")
                 _item_errorlist.append(item)
-            else:
-                if data is None:
-                    self._plugin_instance.logger.info(f"Value for item={item} is None.")
-                elif isinstance(data, int) and data in self.errorcodes:
-                    self._plugin_instance.logger.error(f"Error {data} '{self.errorcodes.get(data, None)}' occurred during update of item={item} with avm_data_type={avm_data_type} and index={index}. Check item configuration regarding supported/activated function of AVM device. ")
-                    _item_errorlist.append(item)
-                else:
-                    item(data, self._plugin_instance.get_fullname())
 
         # create / update item blacklist
         self.create_item_blacklist(_item_errorlist)
 
         # clear data cache dict after update cycle
         self._clear_data_cache()
+
+    def _update_item_value(self, item, avm_data_type: str, index: str) -> bool:
+        """ Polls data and set item value; Return True if action was successful, else False"""
+
+        try:
+            data = self._poll_fritz_device(avm_data_type, index)
+        except Exception as e:
+            self._plugin_instance.logger.error(f"Error {e} occurred during update of item={item} with avm_data_type={avm_data_type} and index={index}. Check item configuration regarding supported/activated function of AVM device. ")
+            return False
+        else:
+            if data is None:
+                self._plugin_instance.logger.info(f"Value for item={item} is None.")
+                return False
+            elif isinstance(data, int) and data in self.errorcodes:
+                self._plugin_instance.logger.error(f"Error {data} '{self.errorcodes.get(data, None)}' occurred during update of item={item} with avm_data_type={avm_data_type} and index={index}. Check item configuration regarding supported/activated function of AVM device. ")
+                return False
+            else:
+                item(data, self._plugin_instance.get_fullname())
+                return True
 
     def _poll_fritz_device(self, avm_data_type: str, index=None, enforce_read: bool = False) -> Union[str, dict, None]:
         """
@@ -1136,7 +1193,7 @@ class FritzDevice:
             return
         elif isinstance(data, int) and 99 < data < 1000:
             self._plugin_instance.logger.info(f"Response was ErrorCode: {data} '{self.errorcodes.get(data, None)}' for self.{client}.{device}.{service}.{action}()")
-            return
+            return data
         else:
             return data if not out_argument else data[out_argument]
 
@@ -1649,7 +1706,7 @@ class FritzDevice:
         # SwitchState: OFF, ON, TOGGLE, UNDEFINED
         switch_state = "ON" if set_switch is True else "OFF"
 
-        #self.client.InternetGatewayDevice.X_AVM_DE_Homeauto.SetSwitch(NewAIN=ain, NewSwitchState=switch_state)
+        # self.client.InternetGatewayDevice.X_AVM_DE_Homeauto.SetSwitch(NewAIN=ain, NewSwitchState=switch_state)
         self._set_fritz_device('set_aha_device', f"NewAIN={ain}, NewSwitchState={switch_state}")
 
     # ----------------------------------
@@ -2179,18 +2236,20 @@ class FritzHome:
         # Login
         self.login()
 
-    def register_item(self, item, avm_data_type: str):
+    def register_item(self, item, avm_data_type: str, avm_data_cycle: int):
         """
         Parsed items valid fpr that class will be registered
         """
 
         # handle aha items
-        avm_ain = self._get_item_ain(item)
-        if avm_ain is not None:
-            self._plugin_instance.logger.debug(f"Item {item.id()} with avm device attribute and defined avm_ain={avm_ain} found; append to list.")
-            self._items[item] = (avm_data_type, avm_ain)
+        index = self._get_item_ain(item)
+        if index is not None:
+            self._plugin_instance.logger.debug(f"Item {item.id()} with avm device attribute and defined avm_ain={index} found; append to list.")
         else:
             self._plugin_instance.logger.warning(f"Item {item.id()} with avm attribute found, but 'avm_ain' is not defined; Item will be ignored.")
+
+        # register item
+        self._items[item] = (avm_data_type, index, avm_data_cycle, time.time())
 
     def _get_item_ain(self, item) -> Union[str, None]:
         """
@@ -2356,7 +2415,7 @@ class FritzHome:
             else:
                 self._plugin_instance.logger.info(f"No AVM Homeautomation Device detected. Check Plugin settings for AVM Homeautomation devices.")
 
-    def update_items(self):
+    def cyclic_item_update(self, read_all: bool = False):
         """
         Update smarthome item values using information from dict '_aha_devices'
         """
@@ -2368,30 +2427,52 @@ class FritzHome:
         # first update data
         self._poll_aha()
 
+        # get current_time
+        current_time = int(time.time())
+
         # feed items
         for item in self._items:
             # get avm_data_type and ain
-            _avm_data_type = self._items[item][0]
-            _ain = self._items[item][1]
+            avm_data_type = self._items[item][0]
+            ain = self._items[item][1]
+            cycle = self._items[item][2]
+            next_time = self._items[item][3]
+
+            # Just read items with cycle == 0 at init
+            if not read_all and cycle == 0:
+                # self._plugin_instance.logger.debug(f"Item={item.id()} just read at init. No further update.")
+                continue
+
+            # check if item is already due
+            if next_time > current_time:
+                # self._plugin_instance.logger.debug(f"Item={item.id()} is not due, yet.")
+                continue
+
+            self._plugin_instance.logger.info(f"Item={item.id()} with avm_data_type={avm_data_type} and ain={ain} will be updated")
+
+            # set new due date
+            lst = list(self._items[item])
+            lst[3] = current_time + cycle
+            self._items[item] = tuple(lst)
 
             # get device sub-dict from dict
-            device = self._aha_devices.get(_ain, None)
+            device = self._aha_devices.get(ain, None)
 
             if device is not None:
                 # Attributes that are write-only commands with no corresponding read commands are excluded from status updates via update black list:
                 update_black_list = ['switch_toggle']
 
-                if _avm_data_type not in update_black_list:
+                if avm_data_type not in update_black_list:
                     # Remove "set_" prefix to set corresponding r/o or r/w item to returned value:
-                    if _avm_data_type.startswith('set_'):
-                        _avm_data_type = _avm_data_type[len('set_'):]
+                    if avm_data_type.startswith('set_'):
+                        avm_data_type = avm_data_type[len('set_'):]
                     # set item
-                    if _avm_data_type in device:
-                        item(device[_avm_data_type], self._plugin_instance.get_fullname())
+                    if avm_data_type in device:
+                        item(device[avm_data_type], self._plugin_instance.get_fullname())
                     else:
-                        self._plugin_instance.logger.warning(f'Attribute={_avm_data_type} at device with AIN={_ain} to be set to Item={item.id()} is not available.')
+                        self._plugin_instance.logger.warning(f'Attribute={avm_data_type} at device with AIN={ain} to be set to Item={item.id()} is not available.')
             else:
-                self._plugin_instance.logger.warning(f'No values for item={item.id()} at device with AIN={_ain} available.')
+                self._plugin_instance.logger.warning(f'No values for item={item.id()} at device with AIN={ain} available.')
 
     @property
     def item_dict(self):
@@ -2622,7 +2703,7 @@ class FritzHome:
         for element in elements:
             if element.attrib["identifier"] in self._devices.keys():
                 self._plugin_instance.logger.info("Updating already existing Device " + element.attrib["identifier"])
-                self._devices[element.attrib["identifier"]]._update_from_node(element)
+                self._devices[element.attrib["identifier"]].update_from_node(element)
             else:
                 self._plugin_instance.logger.info("Adding new Device " + element.attrib["identifier"])
                 device = FritzHome.FritzhomeDevice(self, node=element)
@@ -3890,7 +3971,7 @@ class FritzHome:
         def __init__(self, fritz=None, node=None):
             super().__init__(fritz, node)
 
-        def _update_from_node(self, node):
+        def update_from_node(self, node):
             super()._update_from_node(node)
 
 
@@ -4159,6 +4240,10 @@ class Callmonitor:
     @property
     def item_all_list(self):
         return self.item_list + self.trigger_item_list + self.item_incoming_list + self.item_outgoing_list
+
+    @property
+    def item_all_dict(self):
+        return {**self._items, **self._trigger_items, **self._items_incoming, **self._items_outgoing}
 
     @property
     def item_count_total(self):

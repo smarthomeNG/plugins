@@ -1,34 +1,54 @@
 {% extends "base_plugin.html" %}
 {% set logo_frame = false %}
-{% set update_interval = 10 %}
 {% if tr064_items %}
-    {% set update_interval = ((50 * len(tr064_items) / 1000) | round | int) * 1000 %}
+    {% set update_interval = [(((10 * (tr064_items | length)) / 1000) | round | int) * 1000, 5000]|max %}
 {% else %}
-    {% set update_interval = 10 %}
+    {% set update_interval = 5 %}
 {% endif %}
 
 {% block pluginstyles %}
 <style>
   table th.item {
-    width: 450px;
+    width: 400px;
   }
   table th.type {
-    width: 100px;
+    width: 75px;
     }
-  table th.type2 {
+  table th.cycle {
     width: 50px;
     }
-  table th.type3 {
+  table th.datetime {
     width: 160px;
     }
+  table th.update {
+    width: 100px;
+    }
   table th.datatype {
-    width: 250px;
+    width: 150px;
   }
   table th.value {
     width: 250px;
   }
+  table th.no {
+    width: 50px;
+  }
+  table th.ain {
+    width: 200px;
+  }
+  table th.logtype {
+    width: 100px;
+  }
   .logentry {
     max-width: 450px;
+  }
+  .items {
+    max-width: 400px;
+  }
+  .shng_effect_highlight {
+    background-color: #FFFFE0;
+  }
+  .shng_effect_standard {
+    background-color: none;
   }
 </style>
 {% endblock pluginstyles %}
@@ -40,6 +60,7 @@
     
     try {
       webif_pagelength = parseInt(document.getElementById('webif_pagelength').innerHTML);
+      console.log("webif_pagelength " + webif_pagelength)
       if (isNaN(parseFloat(webif_pagelength)) || webif_pagelength == 0) {
         resize = true;
         webif_pagelength = -1;
@@ -56,23 +77,33 @@
     }
     
     try {
-      table = $('#itemtable').DataTable( {
+      table0 = $('#itemtable').DataTable( {
         pageLength: webif_pagelength,
-        pageResize: resize});
+        pageResize: resize
+        } );
+        console.log("Init table0 for page length " + webif_pagelength + ", pageResize: " + resize);
       table1 = $('#smarthomeitemtable').DataTable( {
         pageLength: webif_pagelength,
-        pageResize: resize});
+        pageResize: resize
+        } );
+        console.log("Init table1 for page length " + webif_pagelength + ", pageResize: " + resize);
       table2 = $('#logtable').DataTable( {
         pageLength: webif_pagelength,
         order: [[ 0, 'desc' ]],
         columnDefs: [{ "targets": [2], "className": "truncate logentry"}].concat($.fn.dataTable.defaults.columnDefs),
-        pageResize: resize});
+        pageResize: resize
+        } );
+        console.log("Init table2 for page length " + webif_pagelength + ", pageResize: " + resize);
       table3 = $('#call_monitortable').DataTable( {
         pageLength: webif_pagelength,
-        pageResize: resize});
+        pageResize: resize
+        } );
+        console.log("Init table3 for page length " + webif_pagelength + ", pageResize: " + resize);
       table4 = $('#smarthome_devicetable').DataTable( {
-        pageLength: webif_pagelength,
-        pageResize: resize});
+        pageLength: -1,
+        pageResize: resize
+        } );
+        console.log("Init table4 for page length -1, pageResize: " + resize);
     }
     catch (e) {
         console.log("Datatable JS not loaded, showing standard table without reorder option " +e);
@@ -115,7 +146,11 @@
 {% set tabcount = 6 %}
 
 <!-- Define tabtitle and if tab should be hidden -->
-{% set tab1title = _("<strong>"'AVM2 TR-064 Items'"</strong> (" ~ tr064_item_count ~ ") ") %}
+{% if p._fritz_device and tr064_item_count > 0 %}
+    {% set tab1title = _("<strong>"'AVM2 TR-064 Items'"</strong> (" ~ tr064_item_count ~ ") ") %}
+{% else %}
+    {% set tab2title = "hidden" %} 
+{% endif %}
 
 {% if p._fritz_home and aha_item_count > 0 %}
     {% set tab2title = _("<strong>"'AVM2 AHA Items'"</strong> (" ~ aha_item_count ~ ") ") %}
@@ -149,7 +184,7 @@
     {% set language = 'en' %}
 {% endif %}
 
-
+<!-- Define Headtable -->
 {% block headtable %}
 <span id='webif_pagelength' style="display:none">{{ webif_pagelength }}</span>
 
@@ -199,14 +234,14 @@
 {% endblock %}
 
 
-<!-- Define content -->
+<!-- Define Buttons -->
 {% block buttons %}
     <button type="button" class="btn btn-shng btn-sm" onclick="if (confirm('{{ _('Wollen Sie das Gerät wirklich neu starten?') }}')) { jQuery.get('reboot'); }">{{ _('Reboot Fritzdevice') }}</button>
     <button type="button" class="btn btn-shng btn-sm" onclick="if (confirm('{{ _('Wollen Sie die Internetverbindung wirklich neu aufbauen?') }}')) { jQuery.get('reconnect'); }">{{ _('Reconnect WAN') }}</button>
     <button type="button" class="btn btn-shng btn-sm" onclick="if (confirm('{{ _('Wollen Sie die Item-Blacklist zurücksetzen?') }}')) { jQuery.get('reset_item_blacklist'); }">{{ _('Reset Item Blacklist') }}</button>
 {% endblock buttons %}
 
-
+<!-- Define Bodytab1 -->
 {% block bodytab1 %}
 <div class="container-fluid m-2 table-resize">
     <table id="itemtable">
@@ -216,28 +251,24 @@
                 <th class="item">{{ _('Pfad') }}</th>
                 <th class="type">{{ _('Typ') }}</th>
                 <th class="datatype">{{ _('AVM Datentyp') }}</th>
+                <th class="cycle" style="text-align: right">{{ _('Cycle') }}</th>
                 <th class="value">{{ _('Wert') }}</th>
-                <th style="text-align: center">{{ _('Letztes Update') }}</th>
-                <th style="text-align: center">{{ _('Letzter Change') }}</th>
+                <th class="update" style="text-align: center">{{ _('Letztes Update') }}</th>
+                <th class="update" style="text-align: center">{{ _('Letzter Change') }}</th>
             </tr>
         </thead>
         <tbody>
             {% if tr064_items %}  
                 {% for item in tr064_items %}
-                    {% set item_id = item.id() %}
-                    {% if p.get_instance_name() %}
-                        {% set instance_key = "avm2_data_type@"+p.get_instance_name() %}
-                    {% else %}
-                        {% set instance_key = "avm2_data_type" %}
-                    {% endif %}
                     <tr>
                         <td></td>
-                        <td class="py-1">{{ item_id }}</td>
+                        <td class="py-1">{{ item.id() }}</td>
                         <td class="py-1">{{ item.property.type }}</td>
-                        <td class="py-1">{{ item.conf[instance_key] }}</td>
-                        <td class="py-1" id="{{ item_id }}_tr064_value">.{{ item() }}</td>
-                        <td class="py-1" id="{{ item_id }}_tr064_last_update" style="text-align: center">.{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
-                        <td class="py-1" id="{{ item_id }}_tr064_last_change" style="text-align: center">.{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                        <td class="py-1">{{ p.fritz_device.item_dict[item][0] }}</td>
+                        <td class="py-1" style="text-align: right">{{ p.fritz_device.item_dict[item][2] }}</td>
+                        <td class="py-1" id="{{ item.id() }}_tr064_value">.{{ item.property.value }}</td>
+                        <td class="py-1" id="{{ item.id() }}_tr064_last_update" style="text-align: center">.{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                        <td class="py-1" id="{{ item.id() }}_tr064_last_change" style="text-align: center">.{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
                     </tr>
                 {% endfor %}
             {% endif %}
@@ -256,28 +287,24 @@
                 <th class="item">{{ _('Pfad') }}</th>
                 <th class="type">{{ _('Typ') }}</th>
                 <th class="datatype">{{ _('AVM Datentyp') }}</th>
+                <th class="cycle" style="text-align: right">{{ _('Cycle') }}</th>
                 <th class="value">{{ _('Wert') }}</th>
-                <th style="text-align: center">{{ _('Letztes Update') }}</th>
-                <th style="text-align: center">{{ _('Letzter Change') }}</th>
+                <th class="update" style="text-align: center">{{ _('Letztes Update') }}</th>
+                <th class="update" style="text-align: center">{{ _('Letzter Change') }}</th>
             </tr>
         </thead>
         <tbody>
             {% if aha_items %}   
                 {% for item in aha_items %}
-                    {% set item_id = item.id() %}
-                    {% if p.get_instance_name() %}
-                        {% set instance_key = "avm2_data_type@"+p.get_instance_name() %}
-                    {% else %}
-                        {% set instance_key = "avm2_data_type" %}
-                    {% endif %}
                     <tr>
                         <td></td>
-                        <td class="py-1">{{ item_id }}</td>
+                        <td class="py-1">{{ item.id() }}</td>
                         <td class="py-1">{{ item.property.type }}</td>
-                        <td class="py-1">{{ item.conf[instance_key] }}</td>
-                        <td class="py-1" id="{{ item_id }}_aha_value">.{{ item() }}</td>
-                        <td class="py-1" id="{{ item_id }}_aha_last_update" style="text-align: center">.{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
-                        <td class="py-1" id="{{ item_id }}_aha_last_change" style="text-align: center">.{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                        <td class="py-1">{{ p.fritz_home.item_dict[item][0] }}</td>
+                        <td class="py-1" style="text-align: right">{{ p.fritz_home.item_dict[item][2] }}</td>
+                        <td class="py-1" id="{{ item.id() }}_aha_value">.{{ item.property.value }}</td>
+                        <td class="py-1" id="{{ item.id() }}_aha_last_update" style="text-align: center">.{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                        <td class="py-1" id="{{ item.id() }}_aha_last_change" style="text-align: center">.{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
                     </tr>
                 {% endfor %}
             {% endif %}
@@ -293,9 +320,10 @@
         <thead>
             <tr>
                 <th></th>
-                <th class="type2">{{ 'No' }}</th>
-                <th class="type">{{ 'Device AIN' }}</th>
+                <th class="ain">{{ 'Device AIN' }}</th>
+                <th>{{ '' }}</th>
                 <th>{{ 'Device Details (dict)' }}</th>
+                
             </tr>
         </thead>
         <tbody>
@@ -303,9 +331,10 @@
                 {% for ain in p._fritz_home._aha_devices %}
                     <tr>
                         <td></td>
-                        <td class="py-1">{{ loop.index }}</td>
-                        <td class="py-1">{{ ain }}</td>
+                        <td class="py-1">{{ ain }}
+                        <td class="py-1"></td>
                         <td class="py-1">{{ p._fritz_home._aha_devices[ain] }}</td>
+                        
                     </tr>
                 {% endfor %}
             {% endif %}
@@ -342,8 +371,8 @@
                         <td></td>
                         <td class="py-1">{{ item_id }}</td>
                         <td class="py-1">{{ item.property.type }}</td>
-                        <td class="py-1">{{ instance_key }}</td>
-                        <td class="py-1" id="{{ item_id }}_call_value">.{{ item() }}</td>
+                        <td class="py-1">{{ item.conf[instance_key]}}</td>
+                        <td class="py-1" id="{{ item_id }}_call_value">.{{ item.property.value }}</td>
                         <td class="py-1" id="{{ item_id }}_call_last_update" style="text-align: center">.{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
                         <td class="py-1" id="{{ item_id }}_call_last_change" style="text-align: center">.{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
                     </tr>
@@ -361,9 +390,9 @@
         <thead>
             <tr>
                 <th></th>
-                <th class="type3">{{ 'Datum/Uhrzeit' }}</th>
+                <th class="datetime">{{ 'Datum/Uhrzeit' }}</th>
                 <th>{{ 'Meldung' }}</th>
-                <th class="type2" style="text-align: center">{{ 'Typ' }}</th>
+                <th class="logtype" style="text-align: center">{{ 'Typ' }}</th>
                 <th class="type">{{ 'Kategorie' }}</th>
             </tr>
         </thead>
@@ -436,6 +465,18 @@
             </tr>
         </thead>
         <tbody>
+            <tr>
+                <td class="py-1">{{ "fritz_device._items" }}</td>
+                <td class="py-1">{{ p.fritz_device._items }}</td>
+            </tr>
+            <tr>
+                <td class="py-1">{{ "fritz_device._item_blacklist" }}</td>
+                <td class="py-1">{{ p.fritz_device._item_blacklist }}</td>
+            </tr>
+            <tr>
+                <td class="py-1">{{ "_fritz_home._items" }}</td>
+                <td class="py-1">{{ p.fritz_home._items }}</td>
+            </tr>
             <tr>
                 <td class="py-1">{{ "X_AVM_DE_NumberOfClients" }}</td>
                 <td class="py-1">{{ p._fritz_device.client.InternetGatewayDevice.X_VoIP.X_AVM_DE_GetNumberOfClients()['NewX_AVM_DE_NumberOfClients'] }}</td>
