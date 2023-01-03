@@ -124,6 +124,7 @@ class sdp_squeezebox(SmartDevicePlugin):
 
         # set album art URL
         if command == 'player.info.album':
+            self.logger.debug(f"Got command album {command} data {data} value {value} custom {custom} by {by}")
             host = self._parameters.get(PLUGIN_ATTR_NET_HOST)
             port = self._parameters.get('web_port')
             url = f'http://{host}:{port}/music/current/cover.jpg?player={custom}'
@@ -131,26 +132,49 @@ class sdp_squeezebox(SmartDevicePlugin):
 
         # set playlist ID
         if command == 'player.playlist.load':
+            self.logger.debug(f"Got command load {command} data {data} value {value} custom {custom} by {by}")
             _trigger_read('player.playlist.id', custom)
             _trigger_read('player.playlist.name', custom)
             _trigger_read('player.control.playmode', custom)
 
         # update on new song
-        if command == 'player.info.title' or (command == 'player.control.playpause' and value == "True"):
-            _trigger_read('player.control.playmode', custom)
-            _trigger_read('player.playlist.index', custom)
+        if command == 'player.info.title':
+            #_trigger_read('player.control.playmode', custom)
+            #_trigger_read('player.playlist.index', custom)
             _trigger_read('player.info.duration', custom)
             _trigger_read('player.info.album', custom)
             _trigger_read('player.info.artist', custom)
             _trigger_read('player.info.genre', custom)
             _trigger_read('player.info.path', custom)
 
+        # update on new song
+        if command == 'player.control.playpause' and value == True:
+            _trigger_read('player.control.playmode', custom)
+            _trigger_read('player.info.duration', custom)
+            _trigger_read('player.info.album', custom)
+            _trigger_read('player.info.artist', custom)
+            _trigger_read('player.info.genre', custom)
+            _trigger_read('player.info.path', custom)
+
+        # update on new song
+        if command == 'player.playlist.index':
+            self.logger.debug(f"Got command index {command} data {data} value {value} custom {custom} by {by}")
+            _trigger_read('player.control.playmode', custom)
+            _trigger_read('player.info.duration', custom)
+            _trigger_read('player.info.album', custom)
+            _trigger_read('player.info.artist', custom)
+            _trigger_read('player.info.genre', custom)
+            _trigger_read('player.info.path', custom)
+            _trigger_read('player.info.title', custom)
+
         # update current time info
         if command in ['player.control.forward', 'player.control.rewind']:
+            self.logger.debug(f"Got command forward/rewind {command} data {data} value {value} custom {custom} by {by}")
             _trigger_read('player.control.time', custom)
 
         # update play and stop items based on playmode
         if command == 'player.control.playmode':
+            self.logger.debug(f"Got command playmode {command} data {data} value {value} custom {custom} by {by}")
             mode = data.split("mode")[-1].strip()
             mode = mode.split("playlist")[-1].strip()
             _dispatch('player.control.playpause', True if mode in ["play", "pause 0"] else False, custom)
@@ -158,7 +182,8 @@ class sdp_squeezebox(SmartDevicePlugin):
             _trigger_read('player.control.time', custom)
 
         # update play and stop items based on playmode
-        if command == 'player.control.stop' or (command == 'player.control.playpause' and value == "False"):
+        if command == 'player.control.stop' or (command == 'player.control.playpause' and value == False):
+            self.logger.debug(f"Got command stop or pause {command} data {data} value {value} custom {custom} by {by}")
             _trigger_read('player.control.playmode', custom)
 
 

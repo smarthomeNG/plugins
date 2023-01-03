@@ -12,16 +12,16 @@ commands = {
     },
     'database': {
         'rescan': {
-            'start': {'read': False, 'write': True, 'write_cmd': 'rescan {VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'item_attrs': {'custom1': ''}},
-            'running': {'read': True, 'write': False, 'read_cmd': 'rescan ?', 'item_type': 'bool', 'dev_datatype': 'SqueezeRescan', 'reply_pattern': 'rescan (.*)', 'item_attrs': {'initial': True, 'custom1': ''}},
+            'start': {'read': False, 'write': True, 'write_cmd': 'rescan {VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'cmd_settings': {'valid_list': ['playlists', 'onlinelibrary', 'external', 'full']}, 'item_attrs': {'attributes': {'remark': 'playlists|onlinelibrary|external|full|full file://some/path'}, 'custom1': ''}},
+            'running': {'read': True, 'write': False, 'read_cmd': 'rescan ?', 'item_type': 'bool', 'dev_datatype': 'SqueezeRescan', 'reply_pattern': 'rescan (.*)', 'item_attrs': {'cycle': '60 = True', 'initial': True, 'custom1': ''}},
             'progress': {'read': True, 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': 'scanner notify progress:(.*)', 'item_attrs': {'custom1': ''}},
-            'runningtime': {'read': True, 'read_cmd': 'rescanprogress totaltime', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': 'rescanprogress totaltime .* totaltime:([0-9]{2}:[0-9]{2}:[0-9]{2})', 'item_attrs': {'custom1': ''}},
+            'runningtime': {'read': True, 'read_cmd': 'rescanprogress totaltime', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': 'rescanprogress totaltime .* rescan:([0-9]{2}:[0-9]{2}:[0-9]{2})', 'item_attrs': {'custom1': ''}},
             'fail': {'read': True, 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': 'rescanprogress totaltime rescan:0 lastscanfailed:(.*)', 'item_attrs': {'custom1': ''}},
             'abortscan': {'read': True, 'write': True, 'write_cmd': 'abortscan', 'item_type': 'bool', 'dev_datatype': 'str', 'reply_pattern': 'abortscan', 'item_attrs': {'custom1': ''}},
             'wipecache': {'read': True, 'write': True, 'write_cmd': 'wipecache', 'item_type': 'bool', 'dev_datatype': 'str', 'reply_pattern': 'wipecache', 'item_attrs': {'custom1': ''}}
         },
         'totalgenres': {'read': True, 'write': False, 'read_cmd': 'info total genres ?', 'item_type': 'num', 'dev_datatype': 'str', 'reply_pattern': r'info total genres (\d+)', 'item_attrs': {'initial': True, 'custom1': ''}},
-        'totalduration': {'read': True, 'write': False, 'read_cmd': 'info total duration ?', 'item_type': 'num', 'dev_datatype': 'str', 'reply_pattern': r'info total duration ([0-9.]*)', 'item_attrs': {'initial': True, 'custom1': ''}},
+        'totalduration': {'read': True, 'write': False, 'read_cmd': 'info total duration ?', 'item_type': 'num', 'dev_datatype': 'str', 'reply_pattern': r'info total duration ([0-9.]*)', 'item_attrs': {'item_template': 'duration', 'initial': True, 'custom1': ''}},
         'totalartists': {'read': True, 'write': False, 'read_cmd': 'info total artists ?', 'item_type': 'num', 'dev_datatype': 'str', 'reply_pattern': r'info total artists (\d+)', 'item_attrs': {'initial': True, 'custom1': ''}},
         'totalalbums': {'read': True, 'write': False, 'read_cmd': 'info total albums ?', 'item_type': 'num', 'dev_datatype': 'str', 'reply_pattern': r'info total albums (\d+)', 'item_attrs': {'initial': True, 'custom1': ''}},
         'totalsongs': {'read': True, 'write': False, 'read_cmd': 'info total songs ?', 'item_type': 'num', 'dev_datatype': 'str', 'reply_pattern': r'info total songs (\d+)', 'item_attrs': {'initial': True, 'custom1': ''}}
@@ -33,7 +33,7 @@ commands = {
             'playpause': {'read': True, 'write': True, 'item_type': 'bool', 'write_cmd': '{CUSTOM_ATTR1} {VALUE}', 'dev_datatype': 'SqueezePlay', 'reply_pattern': r'{CUSTOM_PATTERN1} (?:playlist\s)?(play|pause)(?:\s3)?$', 'item_attrs': {'enforce': True}},
             'stop': {'read': True, 'write': True, 'item_type': 'bool', 'write_cmd': '{CUSTOM_ATTR1} {VALUE}', 'dev_datatype': 'SqueezeStop', 'reply_pattern': r'{CUSTOM_PATTERN1} (?:playlist\s)?(stop)$', 'item_attrs': {'enforce': True}},
             'mute': {'read': True, 'write': True, 'read_cmd': '{CUSTOM_ATTR1} mixer muting ?', 'item_type': 'bool', 'write_cmd': '{CUSTOM_ATTR1} mixer muting {RAW_VALUE:01}', 'dev_datatype': 'str', 'reply_pattern': r'{CUSTOM_PATTERN1} (?:mixer muting|prefset server mute) (\d)', 'item_attrs': {'initial': True, 'enforce': True}},
-            'volume': {'read': True, 'write': True, 'read_cmd': '{CUSTOM_ATTR1} mixer volume ?', 'item_type': 'num', 'write_cmd': '{CUSTOM_ATTR1} mixer volume {VALUE}', 'dev_datatype': 'str', 'reply_pattern': r'{CUSTOM_PATTERN1} (?:mixer volume |prefset server volume \-?)(\d{1,3})', 'item_attrs': {'initial': True}},
+            'volume': {'read': True, 'write': True, 'read_cmd': '{CUSTOM_ATTR1} mixer volume ?', 'item_type': 'num', 'write_cmd': '{CUSTOM_ATTR1} mixer volume {VALUE}', 'dev_datatype': 'str', 'reply_pattern': r'{CUSTOM_PATTERN1} (?:mixer volume \-?|prefset server volume \-?)(\d{1,3})', 'item_attrs': {'initial': True}},
             'volume_fading': {'read': False, 'write': True, 'item_type': 'num', 'write_cmd': '{CUSTOM_ATTR1} mixer volume {VALUE}', 'dev_datatype': 'str', 'item_attrs': {'item_template': 'volume_fading'}},
             'volume_low': {'read': False, 'write': True, 'item_type': 'num', 'write_cmd': '{CUSTOM_ATTR1} mixer volume {VALUE}', 'dev_datatype': 'str', 'item_attrs': {'attributes': {'cache': True, 'enforce_updates': True, 'initial_value': 60}}},
             'volume_high': {'read': False, 'write': True, 'item_type': 'num', 'write_cmd': '{CUSTOM_ATTR1} mixer volume {VALUE}', 'dev_datatype': 'str', 'item_attrs': {'attributes': {'cache': True, 'enforce_updates': True, 'initial_value': 80}}},
@@ -42,14 +42,14 @@ commands = {
             'set_alarm': {'read': True, 'write': True, 'item_type': 'str', 'write_cmd': '{CUSTOM_ATTR1} alarm {VALUE}', 'dev_datatype': 'str', 'reply_pattern': '{CUSTOM_PATTERN1} alarm (.*)'},
             'alarms': {'read': True, 'write': False, 'item_type': 'dict', 'read_cmd': '{CUSTOM_ATTR1} alarms 0 100 all', 'dev_datatype': 'SqueezeAlarms', 'reply_pattern': r'{CUSTOM_PATTERN1} alarms 0 100 all fade:\d+ count:\d+ (.*)', 'item_attrs': {'initial': True, 'read_groups': [{'name': 'player.control.alarms', 'trigger': 'query'}]}},
             'sync': {'read': True, 'write': True, 'read_cmd': '{CUSTOM_ATTR1} sync ?', 'write_cmd': '{CUSTOM_ATTR1} sync {VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': '{CUSTOM_PATTERN1} sync (.*)', 'item_attrs': {'initial': True}},
-            'unsync': {'read': False, 'write': True, 'write_cmd': '{CUSTOM_ATTR1} sync -', 'item_type': 'bool', 'dev_datatype': 'str'},
+            'unsync': {'read': False, 'write': True, 'write_cmd': '{CUSTOM_ATTR1} sync -', 'item_type': 'bool', 'dev_datatype': 'str', 'item_attrs': {'attributes': {'autotimer': '1s = 0'}}},
             'display': {'read': True, 'write': True, 'read_cmd': '{CUSTOM_ATTR1} display ? ?', 'item_type': 'str', 'write_cmd': '{CUSTOM_ATTR1} display {VALUE}', 'dev_datatype': 'str', 'reply_pattern': r'{CUSTOM_PATTERN1} display\s?(.*)', 'item_attrs': {'initial': True}},
-            'connect': {'read': True, 'write': True, 'item_type': 'str', 'write_cmd': '{CUSTOM_ATTR1} connect {VALUE}', 'dev_datatype': 'str', 'reply_pattern': '{CUSTOM_PATTERN1} connect (.*)'},
-            'disconnect': {'read': True, 'write': True, 'item_type': 'str', 'write_cmd': 'disconnect {CUSTOM_ATTR1} {VALUE}', 'dev_datatype': 'str', 'reply_pattern': 'disconnect {CUSTOM_PATTERN1} (.*)'},
+            'connect': {'read': True, 'write': True, 'item_type': 'str', 'write_cmd': '{CUSTOM_ATTR1} connect {VALUE}', 'dev_datatype': 'str', 'reply_pattern': '{CUSTOM_PATTERN1} connect (.*)', 'item_attrs': {'attributes': {'remark': 'ip|www.mysqueezebox.com|www.test.mysqueezebox.com'}}},
+            'disconnect': {'read': True, 'write': True, 'item_type': 'str', 'write_cmd': 'disconnect {CUSTOM_ATTR1} {VALUE}', 'dev_datatype': 'str', 'reply_pattern': 'disconnect {CUSTOM_PATTERN1} (.*)', 'item_attrs': {'attributes': {'remark': 'ip|www.mysqueezebox.com|www.test.mysqueezebox.com'}}},
             'time': {'read': True, 'write': True, 'read_cmd': '{CUSTOM_ATTR1} time ?', 'write_cmd': '{CUSTOM_ATTR1} time {VALUE}', 'item_type': 'num', 'dev_datatype': 'str', 'reply_pattern': r'{CUSTOM_PATTERN1} time (\d+(?:\.\d{2})?)', 'item_attrs': {'item_template': 'time', 'enforce': True, 'read_groups': [{'name': 'player.control.time_poll', 'trigger': 'poll'}]}},
             'forward': {'read': True, 'write': True, 'write_cmd': '{CUSTOM_ATTR1} time +{VALUE}', 'item_type': 'num', 'dev_datatype': 'str', 'reply_pattern': r'{CUSTOM_PATTERN1} time \+(\d+(?:\.\d{2})?)', 'item_attrs': {'enforce': True, 'attributes': {'initial_value': 10}}},
             'rewind': {'read': True, 'write': True, 'write_cmd': '{CUSTOM_ATTR1} time -{VALUE}', 'item_type': 'num', 'dev_datatype': 'str', 'reply_pattern': r'{CUSTOM_PATTERN1} time \-(\d+(?:\.\d{2})?)', 'item_attrs': {'enforce': True, 'attributes': {'initial_value': 10}}},
-            'playsong': {'read': False, 'write': True, 'write_cmd': '{CUSTOM_ATTR1} playlist play {VALUE}', 'item_type': 'str', 'dev_datatype': 'str'},
+            'playsong': {'read': False, 'write': True, 'write_cmd': '{CUSTOM_ATTR1} playlist play {VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'item_attrs': {'attributes': {'remark': 'song URL, playlist or directory'}}},
             'sleep': {'read': True, 'write': True, 'read_cmd': '{CUSTOM_ATTR1} sleep ?', 'write_cmd': '{CUSTOM_ATTR1} sleep {VALUE}', 'item_type': 'num', 'dev_datatype': 'str', 'reply_pattern': '{CUSTOM_PATTERN1} sleep (.*[^?])', 'item_attrs': {'initial': True}}
         },
         'playlist': {
@@ -108,6 +108,14 @@ lookups = {
 }
 
 item_templates = {
+    'duration': {
+        'duration_format':
+            {
+                'type': 'str',
+                'eval': "'{}d {}h {}i {}s'.format(int(sh...()//86400), int((sh...()%86400)//3600), int((sh...()%3600)//60), round((sh...()%3600)%60))",
+                'eval_trigger': '..'
+            }
+    },
     'time': {
         'poll':
             {
