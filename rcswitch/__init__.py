@@ -63,7 +63,8 @@ class RCswitch(SmartPlugin):
 		# On initialization error use:
 		#   self._init_complete = False
 		#   return
-
+		
+		self.webif_pagelength = self.get_parameter_value('webif_pagelength')
 		# if plugin should start even without web interface
 		self.init_webinterface(WebInterface)
 		# if plugin should not start without web interface

@@ -74,20 +74,25 @@ class WebInterface(SmartPluginWebIf):
         try:
             pagelength = self.plugin.webif_pagelength
         except Exception:
-            pagelength = 25
+            pagelength = 100
         
         # get list of items with the attribute rc_SystemCode
-        plgitems = []
-        for item in self.items.return_items():
-            if 'rc_SystemCode' in item.conf:
-                plgitems.append(item)
-        self.logger.warning("{}".format(plgitems))
+        plgin_items = []
+        for item in self.items.find_items('rc_SystemCode'):
+                myitem = self.items.return_item(item.id())
+                i = {}
+                i['path'] = item.id()
+                i['SystemCode'] = myitem.property.rc_SystemCode
+                i['ButtonCode'] = myitem.property.rc_ButtonCode
+                i['value'] = item()
+                plgin_items.append(i)
+        #self.logger.info("{}".format(plgin_items))
 
         # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
         return tmpl.render(p=self.plugin,
                            webif_pagelength=pagelength,
-                           items=sorted(plgitems, key=lambda k: str.lower(k['_path']))
-                           )
+                           items=sorted(plgin_items, key=lambda cat: str.lower(cat['path']), reverse=False),
+                           item_count = len(plgin_items))
 
 
     @cherrypy.expose
