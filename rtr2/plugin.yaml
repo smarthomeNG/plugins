@@ -12,7 +12,7 @@ plugin:
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1586747-support-thread-für-das-rtr2-plugin
 
-    version: 2.0.0                  # Plugin version (must match the version specified in __init__.py)
+    version: 2.1.0                  # Plugin version (must match the version specified in __init__.py)
     sh_minversion: 1.8.0            # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     py_minversion: 3.6             # minimum Python version to use for this plugin
@@ -195,14 +195,24 @@ item_attributes:
     rtr2_settings:
         type: list
         description:
-            de: "Initale Einstellungen für den Rtr"
-            en: "Inital settings for the Rtr"
+            de: "Initale Einstellungen für den Rtr. Bitte beachten: Wenn die Werte über dieses Attribut gesetzt werdeen,
+                 werden sie bei jedem Neustart von SmartHomeNG wieder gesetzt.
+                 [<comfort_temp>, <night_reduction>, <standby_reduction>, <fixed_reduction>, <hvac_mode>, <frost_temp>]
+                "
+            en: "Inital settings for the Rtr. Please note: If the values are set using this attribute, they are set
+                 on every restart of SmartHomeNG.
+                 [<comfort_temp>, <night_reduction>, <standby_reduction>, <fixed_reduction>, <hvac_mode>, <frost_temp>]
+                "
 
     rtr2_controller_settings:
         type: list
         description:
-            de: "Initale Einstellungen für den Controller, falls abweichend von den Plugin Standardwerten"
-            en: "Inital settings for the controller, if different from the plugin defaults"
+            de: "Initale Einstellungen für den Controller, falls abweichend von den Plugin Standardwerten
+                [<Kp>, <Ki>]
+                "
+            en: "Inital settings for the controller, if different from the plugin defaults
+                [<Kp>, <Ki>]
+                "
 
 item_structs:
     # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
