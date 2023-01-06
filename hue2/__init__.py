@@ -49,7 +49,7 @@ class Hue2(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '2.2.3'    # (must match the version specified in plugin.yaml)
+    PLUGIN_VERSION = '2.2.4'    # (must match the version specified in plugin.yaml)
 
     hue_group_action_values          = ['on', 'bri', 'hue', 'sat', 'ct', 'xy', 'bri_inc', 'colormode', 'alert', 'effect']
     hue_light_action_writable_values = ['on', 'bri', 'hue', 'sat', 'ct', 'xy', 'bri_inc']
@@ -200,9 +200,9 @@ class Hue2(SmartPlugin):
             conf_data['id'] = self.get_iattr_value(item.conf, 'hue2_id')
             conf_data['resource'] = self.get_iattr_value(item.conf, 'hue2_resource')
             conf_data['function'] = self.get_iattr_value(item.conf, 'hue2_function')
-            if self.has_iattr(item.conf, 'hue2_refence_light_id'):
+            if self.has_iattr(item.conf, 'hue2_reference_light_id'):
                 if conf_data['resource'] == "group":
-                    conf_data['hue2_refence_light_id'] = self.get_iattr_value(item.conf, 'hue2_refence_light_id')
+                    conf_data['hue2_reference_light_id'] = self.get_iattr_value(item.conf, 'hue2_reference_light_id')
 
             conf_data['item'] = item
             self.plugin_items[item.path()] = conf_data
@@ -319,7 +319,7 @@ class Hue2(SmartPlugin):
             else:
                 msg = f"{e}"
             msg = f"update_light_from_item: item {plugin_item['item'].id()} - function={plugin_item['function']} - '{msg}'"
-            if msg.find(' 201 ') >= 0:
+            if msg.find(' 201 ') >= 0 or msg.find(' 201,201 ') >= 0:
                 self.logger.info(msg)
             else:
                 self.logger.error(msg)
@@ -482,16 +482,20 @@ class Hue2(SmartPlugin):
                 if value is not None:
                     plugin_item['item'](value, self.get_shortname(), src)
             if plugin_item['resource'] == 'group':
-                if not "hue2_refence_light_id" in plugin_item:
+                if not "hue2_reference_light_id" in plugin_item:
                     if plugin_item['function'] != 'dict' and plugin_item['function'] != 'modify_scene':
-                        value = self._get_group_item_value(plugin_item['id'], plugin_item['function'], plugin_item['item'].id())
-                        plugin_item['item'](value, self.get_shortname(), src)
+                        if plugin_item['function'] == 'on':
+                            value = self._get_group_item_value(plugin_item['id'], 'any_on', plugin_item['item'].id())
+                        else:
+                            value = self._get_group_item_value(plugin_item['id'], plugin_item['function'], plugin_item['item'].id())
+                        if value is not None:
+                            plugin_item['item'](value, self.get_shortname(), src)
         return
 
 
     def poll_bridge_lights(self):
         """
-        Polls for updates of lights of the device
+        Polls for updates of lights and groups of the device
 
         This method is only needed, if the device (hardware/interface) does not propagate
         changes on it's own, but has to be polled to get the actual status.
@@ -505,6 +509,7 @@ class Hue2(SmartPlugin):
             if self.br is not None:
                 try:
                     self.bridge_lights = self.br.lights()
+                    self.bridge_groups = self.br.groups()
                 except Exception as e:
                     self.logger.error(f"poll_bridge_lights: Exception {e}")
 
@@ -521,12 +526,15 @@ class Hue2(SmartPlugin):
                         plugin_item['item'](value, self.get_shortname(), src)
 
             if plugin_item['resource'] == 'group' and plugin_item['function'] != 'dict':
-                if "hue2_refence_light_id" in plugin_item:
-                    reference_light_id = plugin_item["hue2_refence_light_id"]
+                if "hue2_reference_light_id" in plugin_item:
+                    reference_light_id = plugin_item["hue2_reference_light_id"]
                     value = self._get_light_item_value(reference_light_id, plugin_item['function'], plugin_item['item'].id())
                     if value is not None:
                         plugin_item['item'](value, self.get_shortname(), src)
-
+                elif plugin_item['function'] == 'on':
+                    value = self._get_group_item_value(plugin_item['id'], 'any_on', plugin_item['item'].id())
+                    if value is not None:
+                        plugin_item['item'](value, self.get_shortname(), src)
         return
 
 
@@ -564,7 +572,7 @@ class Hue2(SmartPlugin):
 
     def _get_light_item_value(self, light_id, function, item_path):
         """
-        Update item that hat hue_resource == 'light'
+        Update item that has hue_resource == 'light'
         :param id:
         :param function:
         :return:
@@ -618,7 +626,7 @@ class Hue2(SmartPlugin):
 
     def _get_group_item_value(self, group_id, function, item_path):
         """
-        Update item that hat hue_resource == 'light'
+        Update item that has hue_resource == 'group'
         :param id:
         :param function:
         :return:
@@ -634,6 +642,8 @@ class Hue2(SmartPlugin):
 
             if function in self.hue_group_action_values:
                 result = group['action'].get(function, '')
+            elif function == 'any_on':
+                result = group['state'].get(function, '')
             elif function == 'name':
                 result = group['name']
         return result
@@ -641,7 +651,7 @@ class Hue2(SmartPlugin):
 
     def _get_scene_item_value(self, scene_id, function, item_path):
         """
-        Update item that hat hue_resource == 'light'
+        Update item that has hue_resource == 'scene'
         :param id:
         :param function:
         :return:
@@ -660,7 +670,7 @@ class Hue2(SmartPlugin):
 
     def _get_sensor_item_value(self, sensor_id, function, item_path):
         """
-        Update item that hat hue_resource == 'light'
+        Update item that has hue_resource == 'sensor'
         :param id:
         :param function:
         :return:

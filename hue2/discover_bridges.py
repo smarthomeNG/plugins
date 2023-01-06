@@ -158,7 +158,7 @@ def discover_via_upnp():
     ssdp_list = ssdp_discover("ssdp:all", timeout=10)
     t2 = datetime.now()
 
-    devices = [u for u in ssdp_list if 'IpBridge' in u.server]
+    devices = [u for u in ssdp_list if (u.server is not None and 'IpBridge' in u.server)]
     for d in devices:
         ip_port = d.location.split('/')[2]
         ip = ip_port.split(':')[0]
