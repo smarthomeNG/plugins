@@ -57,8 +57,8 @@ class RCswitch(SmartPlugin):
 		# internal member variables
 		self._gpio = int(self.get_parameter_value('rcswitch_gpio'))
 		self._send_duration = float(self.get_parameter_value('rcswitch_sendDuration'))
-		# setup semaphore
-		self.lock = threading.Lock()
+		# create threading.Lock() obj 
+		self._lock = threading.Lock()
 		
 		# On initialization error use:
 		#   self._init_complete = False
@@ -70,7 +70,7 @@ class RCswitch(SmartPlugin):
 		# if plugin should not start without web interface
 		# if not self.init_webinterface():
 		#     self._init_complete = False
-		return
+		return None
 		
 	def run(self):
 		self.logger.debug("Run method called")
@@ -83,13 +83,17 @@ class RCswitch(SmartPlugin):
 	def parse_item(self, item):
 		# generate warnings for incomplete configured itemns
 		if self.has_iattr(item.conf, 'rc_SystemCode') or self.has_iattr(item.conf, 'rc_code'):
+			if self.has_iattr(item.conf, 'rc_code'):
+				self.logger.warning('Warning: attribute <rc_code> used for {}! Please consider to rename the attribute to <rc_SystemCode>'.format(item.id()))
 			if self.has_iattr(item.conf, 'rc_ButtonCode') or self.has_iattr(item.conf, 'rc_device'):
+				if self.has_iattr(item.conf, 'rc_device'):
+					self.logger.warning('Warning: attribute <rc_device> used for {}! Please consider to rename the attribute to <rc_ButtonCode>'.format(item.id()))
 				return self.update_item
 			else:
-				self.logger.warning('Warning: attribute <rc_ButtonCode>/<rc_device> for {} missing. Item will be ignored by rcSwitch_python plugin'.format(item))
+				self.logger.warning('Warning: attribute <rc_ButtonCode>/<rc_device> for {} missing. Item will be ignored by rcSwitch_python plugin'.format(item.id()))
 				return None
 		elif self.has_iattr(item.conf, 'rc_ButtonCode') or self.has_iattr(item.conf, 'rc_device'): 
-			self.logger.warning('Warning: attribute <rc_SystemCode>/<rc_code> for {} missing. Item will be ignored by RCswitch plugin'.format(item))
+			self.logger.warning('Warning: attribute <rc_SystemCode>/<rc_code> for {} missing. Item will be ignored by RCswitch plugin'.format(item.id()))
 			return None
 		else:
 			return None
@@ -110,24 +114,22 @@ class RCswitch(SmartPlugin):
 				SystemCode = self.get_iattr_value(item.conf, 'rc_code')
 				ButtonCode = self.get_iattr_value(item.conf, 'rc_device')
 
-			self.logger.info(f"update_item was called with item {item.property.path} from caller {caller}, source {source} and dest {dest}")
+			self.logger.info(f"update_item was called with item {item.id()} from caller {caller}, source {source} and dest {dest}")
 			# prepare parameters
 			value = int(item())
 			values = (SystemCode, ButtonCode, value)
 			
-			# avoid parallel access by use of semaphore
-			self.lock.acquire()
-			# sending commands
-			try:
-				# create Brennenstuhl RCS1000N object 
-				obj = cRcSocketSwitch.RCS1000N(self._gpio)
-				# prepare and send values
-				obj.send(*values)
-			except Exception as err:
-				self.logger.error('Error: during instantiation of object or during send to device: {}'.format(err))
-			else:
-				self.logger.info('Info: setting Device {} with SystemCode {} to {}'.format(ButtonCode, SystemCode, value))
-			finally:
-				# give the transmitter time to complete sending of the command (but not more than 10s)
-				time.sleep(min(self._send_duration, 10))
-				self.lock.release()
+			# sending commands and avoid parallel access by threading.Lock()
+			with self._lock:
+				try:
+					# create Brennenstuhl RCS1000N object 
+					obj = cRcSocketSwitch.RCS1000N(self._gpio)
+					# prepare and send values
+					obj.send(*values)
+				except Exception as err:
+					self.logger.error('Error: during instantiation of object or during send to device: {}'.format(err))
+				else:
+					self.logger.info('Info: setting Device {} with SystemCode {} to {}'.format(ButtonCode, SystemCode, value))
+				finally:
+					# give the transmitter time to complete sending of the command (but not more than 10s)
+					time.sleep(min(self._send_duration, 10))

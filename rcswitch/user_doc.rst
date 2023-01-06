@@ -62,8 +62,8 @@ Hier ein Beispiel wie das Item konfiguriert werden kann.
             remark: Brennenstuhl RCS 1000 N
             schalten:
                 type: bool
-                #rc_device: 'A'
-                #rc_code: 11010
+                #rc_device: 'A'   # -> deprecated attribute
+                #rc_code: 11010   # -> deprecated attribute
                 rc_SystemCode: 11010
                 rc_ButtonCode: 'A'
                 visu_acl: rw
