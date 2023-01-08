@@ -85,10 +85,23 @@ class RCswitch(SmartPlugin):
 		if self.has_iattr(item.conf, 'rc_SystemCode') or self.has_iattr(item.conf, 'rc_code'):
 			if self.has_iattr(item.conf, 'rc_code'):
 				self.logger.warning('Warning: attribute <rc_code> used for {}! Please consider to rename the attribute to <rc_SystemCode>'.format(item.id()))
+				# do a sanity check for rc_code
+				systemcode_ok = cRcSocketSwitch.RCS1000N.sanity_check_Systemcode(self.get_iattr_value(item.conf, 'rc_code'))
+			else:
+				# do a sanity check for rc_SystemCode
+				systemcode_ok = cRcSocketSwitch.RCS1000N.sanity_check_Systemcode(self.get_iattr_value(item.conf, 'rc_SystemCode'))
 			if self.has_iattr(item.conf, 'rc_ButtonCode') or self.has_iattr(item.conf, 'rc_device'):
 				if self.has_iattr(item.conf, 'rc_device'):
 					self.logger.warning('Warning: attribute <rc_device> used for {}! Please consider to rename the attribute to <rc_ButtonCode>'.format(item.id()))
-				return self.update_item
+					# do a sanity check for rc_device
+					buttoncode_ok = cRcSocketSwitch.RCS1000N.sanity_check_Buttoncode(self.get_iattr_value(item.conf, 'rc_device'))
+				else:
+					# do a sanity check for rc_device
+					buttoncode_ok = cRcSocketSwitch.RCS1000N.sanity_check_Buttoncode(self.get_iattr_value(item.conf, 'rc_ButtonCode'))
+				if systemcode_ok and buttoncode_ok:
+					return self.update_item
+				else:
+					self.logger.warning('Warning: Item {} is NOT correctly configured!. Item will be ignored by rcSwitch_python plugin'.format(item.id()))
 			else:
 				self.logger.warning('Warning: attribute <rc_ButtonCode>/<rc_device> for {} missing. Item will be ignored by rcSwitch_python plugin'.format(item.id()))
 				return None
