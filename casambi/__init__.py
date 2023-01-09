@@ -42,7 +42,7 @@ class Casambi(SmartPlugin):
     """
 
     # Use VERSION = '1.0.0' for your initial plugin Release
-    PLUGIN_VERSION = '1.7.5'    # (must match the version specified in plugin.yaml)
+    PLUGIN_VERSION = '1.7.6'    # (must match the version specified in plugin.yaml)
 
     def __init__(self, sh):
         """
@@ -328,8 +328,7 @@ class Casambi(SmartPlugin):
 
         elif method == 'unitChanged':
             unitID = None
-            on = None          # on status represents the status of the BLE module in the device, not the light status.
-            status = None
+            status = None       # Health status of sensor
             dimValue = None
             verticalValue = None
             cctValue = None
@@ -337,10 +336,11 @@ class Casambi(SmartPlugin):
             self.logger.debug("Debug Json unitChanged: {0}".format(dataJson))
             if 'id' in dataJson:
                 unitID = int(dataJson['id'])
-            if 'on' in dataJson:
-                on = bool(dataJson['on'])
             if 'status' in dataJson:
                 status = str(dataJson['status'])
+                if status != 'ok':
+                    self.logger.warning(f"Sensor with ID  {unitID} reported status {status}") 
+
             if 'controls' in dataJson:
                 controls = dataJson['controls']
                 self.logger.debug(f"Debug controls Json: {controls}")
@@ -360,15 +360,15 @@ class Casambi(SmartPlugin):
                     elif type == 'CCT':
                         cctValue = value
 
-
-            self.logger.debug(f"Received {method} status from unit {unitID}, on: {on}, value: {dimValue}, vertical: {verticalValue}, cct: {cctValue}.")
+            self.logger.debug(f"Received {method} status from unit {unitID}, value: {dimValue}, vertical: {verticalValue}, cct: {cctValue}.")
 
             #Copy data into casambi item:
             if unitID and (unitID in self._rx_items):
                 #self.logger.debug("Casambi ID found in rx item list")
                 # iterate over all items having this id 
                 for item in self._rx_items[unitID]:
-                    if on and (item.conf['casambi_rx_key'].upper() == 'ON'):
+                    #if on and (item.conf['casambi_rx_key'].upper() == 'ON'):
+                    if (item.conf['casambi_rx_key'].upper() == 'ON'):
                         item(not (dimValue == 0), self.get_shortname())
                     elif item.conf['casambi_rx_key'].upper() == 'DIMMER':
                         item(dimValue * 100, self.get_shortname())
@@ -379,6 +379,15 @@ class Casambi(SmartPlugin):
 
             elif unitID and not (unitID in self._rx_items):
                 self.logger.warning(f"Received status information for ID {unitID} which has no equivalent item.")
+
+        elif method == 'networkUpdated':
+            self.logger.warning(f"Casambi network has been updated with persistent changes")
+            self.logger.warning(f"Debug: decodeData(), receivedData: {receivedData}")
+
+        elif method == 'networkLog':
+            self.logger.debug(f"Casambi network sent network logging information")
+            self.logger.debug(f"Debug: decodeData(), receivedData: {receivedData}")
+
         else:
             self.logger.warning(f"Received unknown method {method} which is not supported.")
             self.logger.warning(f"Debug: decodeData(), receivedData: {receivedData}")
