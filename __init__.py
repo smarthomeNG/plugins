@@ -1773,9 +1773,9 @@ class FritzDevice:
         hosts = []
         for i in range(1, number_of_hosts):
             host = self.get_host_details(i)
-
-            if not only_active or (only_active and host['is_active']):
-                hosts.append(host)
+            if host is not None:
+                if not only_active or (only_active and host['is_active']):
+                    hosts.append(host)
         return hosts
 
     def get_host_details(self, index: int):
@@ -1794,7 +1794,7 @@ class FritzDevice:
         if not host_info:
             return
         elif isinstance(host_info, int):
-            self._plugin_instance.logger.error(f"Error {host_info} '{self.errorcodes.get(host_info)}' occurred during {index}.")
+            self._plugin_instance.logger.error(f"Error {host_info} '{self.errorcodes.get(host_info)}' occurred during getting details of host  #{index}.")
             return
         elif len(host_info) == 7:
             host = {
