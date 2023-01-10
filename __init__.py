@@ -1773,9 +1773,10 @@ class FritzDevice:
         hosts = []
         for i in range(1, number_of_hosts):
             host = self.get_host_details(i)
-            if host is not None:
-                if not only_active or (only_active and host['is_active']):
-                    hosts.append(host)
+            if host is None:
+                continue
+            if not only_active or (only_active and host['is_active']):
+                hosts.append(host)
         return hosts
 
     def get_host_details(self, index: int):
