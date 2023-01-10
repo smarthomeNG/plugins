@@ -1795,7 +1795,7 @@ class FritzDevice:
         if not host_info:
             return
         elif isinstance(host_info, int):
-            self._plugin_instance.logger.error(f"Error {host_info} '{self.errorcodes.get(host_info)}' occurred during getting details of host  #{index}.")
+            self._plugin_instance.logger.error(f"Error {host_info} '{self.errorcodes.get(host_info)}' occurred during getting details of host #{index}.")
             return
         elif len(host_info) == 7:
             host = {
