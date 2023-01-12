@@ -46,9 +46,9 @@ class OpenWeatherMapNoValueSoftException(Exception):
 
 
 class OpenWeatherMap(SmartPlugin):
-    PLUGIN_VERSION = "1.8.6"
+    PLUGIN_VERSION = "1.8.7"
 
-    _base_url = 'https://api.openweathermap.org/%s'
+    _base_url = 'https://api.openweathermap.org/'
     _base_img_url = 'https://tile.openweathermap.org/map/%s/%s/%s/%s.png?appid=%s'
 
     # source for german descriptions https://www.smarthomeng.de/vom-winde-verweht
@@ -103,6 +103,8 @@ class OpenWeatherMap(SmartPlugin):
             self._elev = self.get_sh()._elev
         self._lang = self.get_parameter_value('lang')
         self._units = self.get_parameter_value('units')
+        self._api_version = self.get_parameter_value('api_version')
+
 
         softfail_mode_precipitation = self.get_parameter_value('softfail_precipitation')
         softfail_mode_wind_gust = self.get_parameter_value('softfail_wind_gust')
@@ -444,8 +446,12 @@ class OpenWeatherMap(SmartPlugin):
                         self.logger.info(
                             "%s INFO: owm-string: %s --> %s from wrk=%s, Info: %s" % (item, owm_matchstring, changed_match_string, wrk_typ, ret_val))
                     elif isinstance(ret_val, Exception):
-                        self.logger.error(
-                            "%s ERROR: owm-string: %s --> %s from wrk=%s, Error: %s" % (item, owm_matchstring, changed_match_string, wrk_typ, ret_val))
+                        if str(ret_val) == 'cannot unpack non-iterable NoneType object':
+                            self.logger.debug(
+                                "%s ERROR: owm-string: %s --> %s from wrk=%s, Error: %s" % (item, owm_matchstring, changed_match_string, wrk_typ, ret_val))
+                        else:
+                            self.logger.error(
+                                "%s ERROR: owm-string: %s --> %s from wrk=%s, Error: %s" % (item, owm_matchstring, changed_match_string, wrk_typ, ret_val))
                     else:
                         item(ret_val, self.get_shortname(),
                              f"{wrk_typ} // {changed_match_string}")
@@ -629,6 +635,12 @@ class OpenWeatherMap(SmartPlugin):
         """
         Uses string s as a path to navigate to the requested value in dict wrk.
         """
+ 
+        # Check if dictionary data in variable wrk are invalid. This occurs, if download fails.
+        if wrk == 'Not downloaded!':
+            self.logger.debug(f"{correlation_hint} __get_val_from_dict function aborted because dictionary data are invalid.")
+            return
+
         successful_path = []
         last_popped = None
         sp = s.split('/')
@@ -749,6 +761,7 @@ class OpenWeatherMap(SmartPlugin):
     def __query_api(self, data_source_key, delta_t=0, force=False):
         """
         Requests the weather information at openweathermap.com
+        Return true on success and false on errors.
         """
         try:
             url = self.__build_url(
@@ -757,7 +770,7 @@ class OpenWeatherMap(SmartPlugin):
         except Exception as e:
             self.logger.error(
                 f"Request failed for DataSource {data_source_key}: {str(e)}")
-            return
+            return False
 
         if response.ok:
             num_bytes = len(response.content)
@@ -766,21 +779,25 @@ class OpenWeatherMap(SmartPlugin):
             if num_bytes < 50:
                 self.logger.error(
                     f"Response for {data_source_key} from {url} was too short to be meaningful ({num_bytes} bytes): '{response.content}'")
-                return
+                return False
             try:
                 json_obj = response.json()
 
                 self._data_sources[data_source_key]['url'] = url
                 self._data_sources[data_source_key]['fetched'] = datetime.now()
                 self._data_sources[data_source_key]['data'] = json_obj
+                return True
             except json.JSONDecodeError as decode_error:
                 self.logger.error(
                     f"Response for {data_source_key} from {url} could not be parsed: '{decode_error.msg}'")
+                return False
         elif response.status_code == 401:
             self.logger.error(f"Access denied for {url}, received: '{response.text}'")
+            return False
         else:
             self.logger.error(
                 f"Response for {data_source_key} from {url} returned status-code: '{response.status_code}'")
+            return False
 
     def parse_item(self, item):
         """
@@ -888,37 +905,37 @@ class OpenWeatherMap(SmartPlugin):
         """
         url = ''
         if url_type is None or url_type == self._data_source_key_weather:
-            url = self._base_url % 'data/2.5/weather'
+            url = self._base_url + 'data/' + self._api_version + '/weather'
             parameters = "?lat=%s&lon=%s&appid=%s&lang=%s&units=%s" % (self._lat, self._lon, self._key, self._lang,
                                                                        self._units)
             url = '%s%s' % (url, parameters)
         elif url_type == self._data_source_key_forecast:
-            url = self._base_url % 'data/2.5/forecast'
+            url = self._base_url + 'data/' + self._api_version + '/forecast'
             parameters = "?lat=%s&lon=%s&appid=%s&lang=%s&units=%s" % (self._lat, self._lon, self._key, self._lang,
                                                                        self._units)
             url = '%s%s' % (url, parameters)
         elif url_type == self._data_source_key_uvi:
-            url = self._base_url % 'data/2.5/uvi'
+            url = self._base_url + 'data/' + self._api_version + '/uvi'
             parameters = "?lat=%s&lon=%s&appid=%s&lang=%s&units=%s" % (self._lat, self._lon, self._key, self._lang,
                                                                        self._units)
             url = '%s%s' % (url, parameters)
         elif url_type == self._data_source_key_airpollution_current:
-            url = self._base_url % 'data/2.5/air_pollution'
+            url = self._base_url + 'data/' + self._api_version + '/air_pollution'
             parameters = "?lat=%s&lon=%s&appid=%s" % (
                 self._lat, self._lon, self._key)
             url = '%s%s' % (url, parameters)
         elif url_type == self._data_source_key_airpollution_forecast:
-            url = self._base_url % 'data/2.5/air_pollution/history'
+            url = self._base_url + 'data/' + self._api_version + '/air_pollution/history'
             parameters = "?lat=%s&lon=%s&start=%i&end=%i&appid=%s" % (
                 self._lat, self._lon, datetime.utcnow().timestamp(), self.__get_timestamp_for_delta_days(5), self._key)
             url = '%s%s' % (url, parameters)
         elif url_type.startswith('airpollution-'):
-            url = self._base_url % 'data/2.5/air_pollution/history'
+            url = self._base_url + 'data/' + self._api_version + '/air_pollution/history'
             parameters = "?lat=%s&lon=%s&start=%i&end=%i&appid=%s" % (self._lat, self._lon,  self.__get_timestamp_for_delta_days(
                 delta_t), self.__get_timestamp_for_delta_days(delta_t + 1), self._key)
             url = '%s%s' % (url, parameters)
         elif url_type == self._data_source_key_onecall:
-            url = self._base_url % 'data/2.5/onecall'
+            url = self._base_url + 'data/' + self._api_version + '/onecall'
             if force:
                 exclude = ""
             else:
@@ -938,7 +955,7 @@ class OpenWeatherMap(SmartPlugin):
                                                                                   self._key, self._lang, self._units)
             url = '%s%s' % (url, parameters)
         elif url_type.startswith('onecall-'):
-            url = self._base_url % 'data/2.5/onecall/timemachine'
+            url = self._base_url + 'data/' + self._api_version + '/onecall/timemachine'
             parameters = "?lat=%s&lon=%s&dt=%i&appid=%s&lang=%s&units=%s" % (self._lat, self._lon, self.__get_timestamp_for_delta_days(delta_t),
                                                                              self._key, self._lang, self._units)
             url = '%s%s' % (url, parameters)
