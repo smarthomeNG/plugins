@@ -77,8 +77,8 @@ parameters:
           - '2.5'
           - '3.0'
         description:
-            de: 'Version der Openweathermap API. Neue User nutzen 3.0'
-            en: 'Openweathermap API version. New users use 3.0 by default'
+            de: 'Version der Openweathermap Onecall API. Neue User nutzen 3.0'
+            en: 'Openweathermap Oncecall API version. New users shall use 3.0 by default'
 
     softfail_precipitation:
         type: str

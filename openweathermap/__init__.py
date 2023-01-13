@@ -905,36 +905,37 @@ class OpenWeatherMap(SmartPlugin):
         """
         url = ''
         if url_type is None or url_type == self._data_source_key_weather:
-            url = self._base_url + 'data/' + self._api_version + '/weather'
+            url = self._base_url + 'data/' + '2.5' + '/weather'
             parameters = "?lat=%s&lon=%s&appid=%s&lang=%s&units=%s" % (self._lat, self._lon, self._key, self._lang,
                                                                        self._units)
             url = '%s%s' % (url, parameters)
         elif url_type == self._data_source_key_forecast:
-            url = self._base_url + 'data/' + self._api_version + '/forecast'
+            url = self._base_url + 'data/' + '2.5' + '/forecast'
             parameters = "?lat=%s&lon=%s&appid=%s&lang=%s&units=%s" % (self._lat, self._lon, self._key, self._lang,
                                                                        self._units)
             url = '%s%s' % (url, parameters)
         elif url_type == self._data_source_key_uvi:
-            url = self._base_url + 'data/' + self._api_version + '/uvi'
+            url = self._base_url + 'data/' + '2.5' + '/uvi'
             parameters = "?lat=%s&lon=%s&appid=%s&lang=%s&units=%s" % (self._lat, self._lon, self._key, self._lang,
                                                                        self._units)
             url = '%s%s' % (url, parameters)
         elif url_type == self._data_source_key_airpollution_current:
-            url = self._base_url + 'data/' + self._api_version + '/air_pollution'
+            url = self._base_url + 'data/' + '2.5' + '/air_pollution'
             parameters = "?lat=%s&lon=%s&appid=%s" % (
                 self._lat, self._lon, self._key)
             url = '%s%s' % (url, parameters)
         elif url_type == self._data_source_key_airpollution_forecast:
-            url = self._base_url + 'data/' + self._api_version + '/air_pollution/history'
+            url = self._base_url + 'data/' + '2.5' + '/air_pollution/history'
             parameters = "?lat=%s&lon=%s&start=%i&end=%i&appid=%s" % (
                 self._lat, self._lon, datetime.utcnow().timestamp(), self.__get_timestamp_for_delta_days(5), self._key)
             url = '%s%s' % (url, parameters)
         elif url_type.startswith('airpollution-'):
-            url = self._base_url + 'data/' + self._api_version + '/air_pollution/history'
+            url = self._base_url + 'data/' + '2.5' + '/air_pollution/history'
             parameters = "?lat=%s&lon=%s&start=%i&end=%i&appid=%s" % (self._lat, self._lon,  self.__get_timestamp_for_delta_days(
                 delta_t), self.__get_timestamp_for_delta_days(delta_t + 1), self._key)
             url = '%s%s' % (url, parameters)
         elif url_type == self._data_source_key_onecall:
+            # Two different API versions exists for the onecall API: 2.5 and 3.0, configurable via plugin config.
             url = self._base_url + 'data/' + self._api_version + '/onecall'
             if force:
                 exclude = ""
@@ -955,6 +956,7 @@ class OpenWeatherMap(SmartPlugin):
                                                                                   self._key, self._lang, self._units)
             url = '%s%s' % (url, parameters)
         elif url_type.startswith('onecall-'):
+            # Two different API versions exists for the onecall API: 2.5 and 3.0, configurable via plugin config.
             url = self._base_url + 'data/' + self._api_version + '/onecall/timemachine'
             parameters = "?lat=%s&lon=%s&dt=%i&appid=%s&lang=%s&units=%s" % (self._lat, self._lon, self.__get_timestamp_for_delta_days(delta_t),
                                                                              self._key, self._lang, self._units)
