@@ -48,6 +48,7 @@ Sicher unterstützt werden zur Zeit:
 * DATANAB DS2438 (Temperatur/Feuchtigkeit)
 * D2PC (2-fach I/O DS2406)
 
+|
 
 Konfiguration
 =============
@@ -116,6 +117,13 @@ Wenn ein iButton master verwendet wird, fragt das Plugin häufiger ab.
 Die Abfrage mit ``B`` liefert ``True`` wenn der iButton erkannt wird, ansonsten ``False``
 Wenn I/O Sensoren (2406) verwendet werden, fragt das Plugin diese häufiger ab.
 
+.. note::
+
+    Das Item sollte mit ``cache: true`` oder (falls die Daten in die Datenbank geschrieben werden sollen) mit
+    ``database: init`` konfiguriert werden, da es einige Zeit dauern kann, bis alle 1-Wire Devices discovered
+    wurden und sonst der Item Wert solange 0 ist.
+
+
 logic.yaml
 ----------
 
@@ -144,6 +152,8 @@ Beispielhafte Zuweisung in einer Logik:
 
     sh.ow.ibutton_hook = sabotagealarm
 
+|
+
 Beispiel
 ========
 
@@ -153,47 +163,56 @@ Beispiel
         bm_ibutton:
             name: ibutton busmaster to identify ibutton buses
             type: bool
+            cache: true
             ow_addr: '81.75172D000000'
             ow_sensor: BM
         ib_guest:
             name: ibutton guest
             type: bool
+            cache: true
             ow_addr: '01.787D58130000'
             ow_sensor: B
         temp_outside:
             name: temperature outside
             type: num
+            cache: true
             ow_addr: '28.8DEAAA030000'
             # could be T, T9, T10, T11, T12
             ow_sensor: T
         lux_outside:
             name: lux / lightintensity outside
             type: num
+            cache: true
             ow_addr: '26.8DD76B010000'
             ow_sensor: L
         humidity_outside:
             name: humidity outside
             type: num
+            cache: true
             ow_addr: '26.8DD76B010000'
             ow_sensor: H
         input_water_leak:
             name: input water leak detection
             type: bool
+            cache: true
             ow_addr: '3A.C6CC07000000'
             # could be IA, IB
             ow_sensor: IA
         output_led1:
             name: output led1 keys
             type: bool
+            cache: true
             ow_addr: '3A.C6CC07000000'
             # could be OA, OB
             ow_sensor: OB
         voltage_sensor:
             name: voltage of the sensor input (0-10V)
             type: num
+            cache: true
             ow_addr: '26.A9D76B010000'
             ow_sensor: V
 
+|
 
 Web Interface
 =============
@@ -201,8 +220,10 @@ Web Interface
 Das Plugin liefert eine Übersicht über die im Zusammenhang mit diesem Plugin definierten Items und über die erkannten
 1-Wire Busse und die daran vorhandenen Busteilnehmer.
 
-Tab 1
------
+|
+
+Tab 1: Items
+------------
 
 Das erste Tab zeigt alle definierten Items zu diesem Plugin an. Zu jedem Item werden folgende Informationen angezeigt:
 
@@ -210,9 +231,9 @@ Das erste Tab zeigt alle definierten Items zu diesem Plugin an. Zu jedem Item we
 - Datentyp des Items
 - 1-Wire Adresse des Devices/Sensors
 - Geräteklasse des Devices (sensor, IO, iButton, iButton master)
-- Aktueller Wert des Items. Der Wert wid mit Informationen aus dem 1-Wire Sensor um eine Maßeinheit ergänzt angezeigt
+- Aktueller Wert des Items. Der Wert wird mit Informationen aus dem 1-Wire Sensor um eine Maßeinheit ergänzt angezeigt
 - Zeitpunkt des letzten Updates des Item Wertes
-- Zeitpunkt der letzten nderung des Item Wertes
+- Zeitpunkt der letzten Änderung des Item Wertes
 
 .. image:: assets/webif_tab1.jpg
    :class: screenshot
@@ -220,12 +241,13 @@ Das erste Tab zeigt alle definierten Items zu diesem Plugin an. Zu jedem Item we
 Falls das entsprechende 1-Wire Device seit dem letzten Start von SmartHomeNG noch nicht erkannt wurde, werden für das
 Item die Werte Sensor, Geräteklasse und Wert in rot angezeigt. In diesem Fall fehlt beim Wert auch die Maßeinheit, da
 die Information zur Maßeinheit aus dem 1-Wire Device stammt. Der angezeigte Wert des Items ist in diesem Fall der
-gechachte Wert aus SmartHomeNG, bzw. der letzte gespeicherte Wert aus der Datenbank (falls das Item mit ``database: init``
+gecachte Wert aus SmartHomeNG, bzw. der letzte gespeicherte Wert aus der Datenbank (falls das Item mit ``database: init``
 konfiguriert wurde)
 
+|
 
-Tab 2
------
+Tab 2: 1-Wire Busse
+-------------------
 
 Das zweite Tab zeigt alle per Discovery gefundenen 1-Wire Devices an. Zu jedem Device werden folgende Informationen
 angezeigt:
