@@ -11,8 +11,8 @@ plugin:
     keywords: 1wire onewire dallas ibutton sensor temperature humidity
     documentation: https://www.smarthomeng.de/user/plugins_doc/config/onewire.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1493319-support-thread-zum-onewire-plugin
-    version: 1.8.1                 # Plugin version
-    sh_minversion: 1.4             # minimum shNG version to use this plugin
+    version: 1.9.0                 # Plugin version
+    sh_minversion: 1.9.3.3         # minimum shNG version to use this plugin
     multi_instance: True
     restartable: True
     classname: OneWire             # class containing the plugin
@@ -178,7 +178,7 @@ item_attributes:
           - B
           - VOC
         valid_list_description:
-            de: 
+            de:
                 - 'Temperatur'
                 - 'Temperatur (9 Bit)'
                 - 'Temperatur (10 Bit)'
@@ -211,7 +211,7 @@ item_attributes:
                 - 'Busmaster'
                 - 'iButton'
                 - 'VOC Sensor'
-            en: 
+            en:
                 - 'Temperature'
                 - 'Temperature (9 Bit)'
                 - 'Temperature (10 Bit)'
@@ -270,9 +270,9 @@ plugin_functions: NONE
 #               Um die Funktionalität zu nutzen, muss eine (sinnvolle) Funktion zugewiesen werden. (z.B.: sh.ow.ibutton_hook = intruder_alert)
 #           en: >
 #               This is a special function which is called if an unknown ibutton is attached to the bus.
-#               If the unknown ibutton is already seen, the id will be cached 
-#               and the function is not called again. The cache will be reset every ten minutes. 
-#               The function takes two arguments. 
+#               If the unknown ibutton is already seen, the id will be cached
+#               and the function is not called again. The cache will be reset every ten minutes.
+#               The function takes two arguments.
 #               The first will be the id of the ibutton and the second is the item of the ibutton busmaster
 #               (e.g. sh.home.key_hanger). - To use it you have to assign a (useful) function. (e.g.: sh.ow.ibutton_hook = intruder_alert)
 #       parameter:

@@ -1,3 +1,4 @@
+=======
 onewire
 =======
 
@@ -5,16 +6,16 @@ Der 1-Wire bzw. One-Wire oder Eindraht-Bus ist ein Bussystem das mit 2 oder 3 Ei
 Es gibt einen parasitären Modus in dem nur 2 Adern genutzt werden und einen Modus in dem eine Zusatzspannung von 5V genutzt wird.
 
 Es gibt für dieses System recht günstige Sensoren so das die Nutzung zur
-Temperaturmessung, Feuchtigkeitsmesung, Akkuüberwachung etc. 
+Temperaturmessung, Feuchtigkeitsmesung, Akkuüberwachung etc.
 im Vergleich zu anderen Systemen wie z.B. KNX recht kostengünstig ist.
 
 Anforderungen
--------------
+=============
 Eine vorhandene 1-Wire Schnittstelle mit mindestens einem Sensor wird benötigt sowie ein installiertes
 owserver wird benötigt um das Plugin nutzen zu können.
 
 Notwendige Software
-~~~~~~~~~~~~~~~~~~~
+-------------------
 
 Das Plugin benötigt einen installierten und lauffähigen `owserver <https://owfs.org>`_.
 Die Installation und Konfiguration ist je nach Schnittstelle und Linux Variante und Version leicht unterschiedlich.
@@ -31,7 +32,7 @@ Der owserver kann auch auf einem anderen System laufen und muß nicht lokal inst
 
 
 Unterstützte Geräte
-~~~~~~~~~~~~~~~~~~~
+-------------------
 
 Alle 1-Wire Geräte die Unterstützung durch owserver haben werden prinzipiell unterstützt.
 Es gibt jedoch einige Geräte deren Werte vom Plugin aktuell nicht auf Items abgebildet werden
@@ -49,21 +50,23 @@ Sicher unterstützt werden zur Zeit:
 
 
 Konfiguration
--------------
+=============
 
 Die Plugin Parameter und die Informationen zur Item-spezifischen Konfiguration des Plugins sind
 unter :doc:`/plugins_doc/config/onewire` beschrieben.
 
-plugin.yaml
-~~~~~~~~~~~
 
-Bitte die Dokumentation lesen, die aus den Metadaten der plugin.yaml erzeugt wurde (siehe oben).
+plugin.yaml
+-----------
+
+Bitte die Dokumentation :doc:`Dokumentation </plugins_doc/config/onewire>` lesen, die aus den Metadaten der plugin.yaml
+erzeugt wurde (siehe oben).
 
 
 items.yaml
-~~~~~~~~~~
+----------
 
-Bitte die Dokumentation lesen, die aus den Metadaten der plugin.yaml erzeugt wurde.
+Bitte die :doc:`Dokumentation </plugins_doc/config/onewire>` lesen, die aus den Metadaten der plugin.yaml erzeugt wurde.
 
 Eine Onewire Adresse startet mit einem zweistelligen Code.
 Auf der `Webseite <https://owfs.org/index_php_page_family-code-list.html>`_
@@ -114,13 +117,13 @@ Die Abfrage mit ``B`` liefert ``True`` wenn der iButton erkannt wird, ansonsten 
 Wenn I/O Sensoren (2406) verwendet werden, fragt das Plugin diese häufiger ab.
 
 logic.yaml
-~~~~~~~~~~
+----------
 
-Bitte die Dokumentation lesen, die aus den Metadaten der plugin.yaml erzeugt wurde.
+Bitte die :doc:`Dokumentation </plugins_doc/config/onewire>` lesen, die aus den Metadaten der plugin.yaml erzeugt wurde.
 
 
 Funktionen
-~~~~~~~~~~
+----------
 
 Das Plugin bietet aktuell keine Funktionen. Es kann jedoch das Attribut ``ibutton_hook``
 gesetzt werden auf eine Call-Back Funktion die als Parameter dann die iButton ID und das
@@ -142,7 +145,7 @@ Beispielhafte Zuweisung in einer Logik:
     sh.ow.ibutton_hook = sabotagealarm
 
 Beispiel
---------
+========
 
 .. code:: yaml
 
@@ -193,6 +196,45 @@ Beispiel
 
 
 Web Interface
--------------
+=============
 
-Das Plugin liefert eine Übersicht über die erkannten 1-Wire Busse und die daran vorhandenen Busteilnehmer
+Das Plugin liefert eine Übersicht über die im Zusammenhang mit diesem Plugin definierten Items und über die erkannten
+1-Wire Busse und die daran vorhandenen Busteilnehmer.
+
+Tab 1
+-----
+
+Das erste Tab zeigt alle definierten Items zu diesem Plugin an. Zu jedem Item werden folgende Informationen angezeigt:
+
+- Pfad der Items
+- Datentyp des Items
+- 1-Wire Adresse des Devices/Sensors
+- Geräteklasse des Devices (sensor, IO, iButton, iButton master)
+- Aktueller Wert des Items. Der Wert wid mit Informationen aus dem 1-Wire Sensor um eine Maßeinheit ergänzt angezeigt
+- Zeitpunkt des letzten Updates des Item Wertes
+- Zeitpunkt der letzten nderung des Item Wertes
+
+.. image:: assets/webif_tab1.jpg
+   :class: screenshot
+
+Falls das entsprechende 1-Wire Device seit dem letzten Start von SmartHomeNG noch nicht erkannt wurde, werden für das
+Item die Werte Sensor, Geräteklasse und Wert in rot angezeigt. In diesem Fall fehlt beim Wert auch die Maßeinheit, da
+die Information zur Maßeinheit aus dem 1-Wire Device stammt. Der angezeigte Wert des Items ist in diesem Fall der
+gechachte Wert aus SmartHomeNG, bzw. der letzte gespeicherte Wert aus der Datenbank (falls das Item mit ``database: init``
+konfiguriert wurde)
+
+
+Tab 2
+-----
+
+Das zweite Tab zeigt alle per Discovery gefundenen 1-Wire Devices an. Zu jedem Device werden folgende Informationen
+angezeigt:
+
+- 1-Wire Bus an den das Device angeschlossen ist
+- Geräteklasse des Devices (sensor, IO, iButton, iButton master)
+- Device Typ
+- Ob Items zu diesem Device definiert sind und wenn ja, wie viele
+- Die vom Device unterstützten Keys für Sensoren bzw. I/O Kanäle
+
+.. image:: assets/webif_tab2.jpg
+   :class: screenshot
