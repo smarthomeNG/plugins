@@ -1,9 +1,14 @@
 {% extends "base_plugin.html" %}
 
+{ % set data Set = 'item_details' % }
+<!--
+{ % set update_params = item_id % }
+-->
+
 {% set logo_frame = false %}
 
 <!-- set update_interval to a value > 0 (in milliseconds) to enable periodic data updates -->
-{% set update_interval = 0 %}
+{% set update_interval = 10000 %}
 
 {% block pluginstyles %}
 <style>
@@ -12,6 +17,13 @@
   }
   .sensor {
     width: 160px;
+  }
+  .not_discovered {
+    color:indianred;
+  }
+  .sensor_blue {
+    width: 160px;
+    color:blue;
   }
   .deviceclass {
     width: 130px;
@@ -60,79 +72,181 @@
       }
     }
     catch (e) {
-      webif_pagelength = 100;
-      resize = false;
-      console.log("Using default values for page length " + webif_pagelength + ", pageResize: " + resize);
-    }
-		try {
-      table1 = $('#maintable').DataTable( {
-        columnDefs: [
-			{ "targets": [2], "className": "type"},
-			{ "targets": [3], "className": "sensor"},
-			{ "targets": [4], "className": "deviceclass"},
-			{ "targets": [5], "className": "value" },
-			{ "targets": [6,7], "className": "change_update"}
-		].concat($.fn.dataTable.defaults.columnDefs),
-        pageLength: webif_pagelength,
-        pageResize: resize});
-      table2 = $('#bustable').DataTable( {
-        columnDefs: [
-			{ "targets": [1], "className": "sensor"},
-			{ "targets": [2], "className": "bus"},
-			{ "targets": [3], "className": "deviceclass"},
-			{ "targets": [4], "className": "devicetype"},
-			{ "targets": [5], "className": "bool"},
-			{ "targets": [6], "className": "keys"}
-		].concat($.fn.dataTable.defaults.columnDefs),
-        pageLength: webif_pagelength,
-        pageResize: resize});
+		webif_pagelength = 100;
+		resize = false;
+		console.log("Using default values for page length " + webif_pagelength + ", pageResize: " + resize);
+	}
+	try {
+		itemtable = $('#itemtable').DataTable( {
+			columnDefs: [
+				{
+					title: '{{ _('Item') }}',
+					targets: [1]
+				},
+				{
+					title: '{{ _('Typ') }}',
+					targets: [2], "className": "type"
+				},
+				{
+					title: '{{ _('not discovered') }}',
+					targets: [3], visible: false
+				},
+				{
+					title: '{{ _('Sensor') }}',
+					targets: [4], "className": "sensor",
+					"createdCell": function (td, cellData, rowData, row, col) {
+						if (rowData[3] == true) {
+							$(td).css('color', 'indianred')
+						}
+					}
+		  		},
+				{
+					title: '{{ _('Geräteklasse') }}',
+					targets: [5], "className": "deviceclass",
+					"createdCell": function (td, cellData, rowData, row, col) {
+						if (rowData[3] == true) {
+							$(td).css('color', 'indianred')
+						}
+					}
+		  		},
+				{
+					title: '{{ _('Wert') }}',
+					targets: [6], "className": "value dt-head-right",
+					"createdCell": function (td, cellData, rowData, row, col) {
+						if (rowData[3] == true) {
+							$(td).css('color', 'indianred')
+						}
+					}
+		  		},
+				{
+					title: '{{ _('Letztes Update') }}',
+					targets: [7], "className": "change_update"
+				},
+				{
+					title: '{{ _('Letzte Änderung') }}',
+					targets: [8], "className": "change_update"
+				}
+			].concat($.fn.dataTable.defaults.columnDefs),
+			pageLength: webif_pagelength,
+			pageResize: resize});
+
+		bustable = $('#bustable').DataTable( {
+			columnDefs: [
+				{
+					title: '{{ _('Device') }}',
+					targets: [1], "className": "sensor"
+				},
+				{
+					title: '{{ _('Bus') }}',
+					targets: [2], "className": "bus"
+				},
+				{
+					title: '{{ _('Geräteklasse') }}',
+					targets: [3], "className": "deviceclass"
+				},
+				{
+					title: '{{ _('Devicetyp') }}',
+					targets: [4], "className": "devicetype"
+				},
+				{
+					title: '{{ _('Items definiert') }}',
+					targets: [5], "className": "bool"
+				},
+				{
+					title: '{{ _('Keys') }}',
+					targets: [6], "className": "keys"
+				}
+			].concat($.fn.dataTable.defaults.columnDefs),
+			pageLength: webif_pagelength,
+			pageResize: resize});
 		}
 		catch (e) {
-			console.warn("Datatable JS not loaded, showing standard table without reorder option " +e);
+			console.warn("Datatable Javascript not loaded: " +e);
     }
 
   });
 </script>
+
 <script>
 	function handleUpdatedData(response, dataSet=null) {
-		if (dataSet === 'devices_info' || dataSet === null) {
+		if (dataSet === null) {
 			var objResponse = JSON.parse(response);
 			myProto = document.getElementById(dataSet);
-			for (var item in objResponse['item_values']) {
-				shngInsertText (item+'_value', objResponse['item_values'][item]['value'], 'maintable', 10);
-				shngInsertText (item+'_last_update', objResponse['item_values'][item]['last_update'], 'maintable', 10);
-				shngInsertText (item+'_last_change', objResponse['item_values'][item]['last_change'], 'maintable', 10);
+
+			// Update item table
+			let sensorcount = 0
+			let iodevicecount = 0
+			let ibuttoncount = 0
+			itemtable.clear();
+			let items = objResponse['items'];
+			for (item in items) {
+				let item_id = items[item]['path'];
+				let item_type = items[item]['type'];
+				let not_discovered = items[item]['not_discovered'];
+				let sensor_addr = items[item]['sensor_addr'];
+				let deviceclass = items[item]['deviceclass'];
+				let value_unit = items[item]['value_unit'];
+				let item_value = items[item]['value'];
+				if (value_unit !== '') {
+					item_value = String(items[item]['value']) + ' ' + value_unit;
+				}
+				let last_update = items[item]['last_update'];
+				let last_change = items[item]['last_change'];
+
+				let newRow = itemtable.row.add( [ null, item_id, item_type, not_discovered, sensor_addr, deviceclass, item_value, last_update, last_change ] ).draw(false).node();
+				if (deviceclass == 'sensor') {
+					sensorcount += 1
+				} else if (deviceclass == 'IO') {
+					iodevicecount += 1
+				} else if (deviceclass == 'iButton') {
+					ibuttoncount += 1
+				}
 			}
-			shngInsertText ('broker_uptime', objResponse['broker_uptime']);
+			let iteminfo = '<strong>{{ _('Geräte in Items') }}:</strong> ';
+			iteminfo += String(sensorcount) + ' {{ _('Sensoradresse(n)') }}, ';
+			iteminfo += String(iodevicecount) + ' {{ _('I/O-Geräteadresse(n)') }}, ';
+			iteminfo += String(ibuttoncount) + ' {{ _('iButtonadresse(n)') }}';
+			shngInsertText ('iteminfo', iteminfo);
+			itemtable.draw(false);
 
-			shngInsertText ('msg_rcv_1min', objResponse['broker_info']['msg_rcv_1min'], 'bustable', 1);
-			shngInsertText ('msg_rcv_5min', objResponse['broker_info']['msg_rcv_5min'], 'bustable', 1);
-			shngInsertText ('msg_rcv_15min', objResponse['broker_info']['msg_rcv_15min'], 'bustable', 1);
-			shngInsertText ('msg_snt_1min', objResponse['broker_info']['msg_snt_1min'], 'bustable', 1);
-			shngInsertText ('msg_snt_5min', objResponse['broker_info']['msg_snt_5min'], 'bustable', 1);
-			shngInsertText ('msg_snt_15min', objResponse['broker_info']['msg_snt_15min'], 'bustable', 1);
+			// Update bus table
+			bustable.clear();
+			let devices = objResponse['devices'];
+			for (device in devices) {
+				let device_addr = devices[device]['device'];
+				let bus = devices[device]['bus'];
+				let deviceclass = devices[device]['deviceclass'];
+				let devicetype = devices[device]['devicetype'];
+				let items_defined = devices[device]['items_defined'];
+				if (items_defined == 0) {
+					items_defined = '{{ _('Nein') }}'
+				}
+				let keys = '';
+				for (key in devices[device]['keys']) {
+					if (keys !== '') {
+						keys = keys + ', &nbsp;'
+					}
+					keys = keys + key + ': ' + devices[device]['keys'][key]
+				}
+				let newRow = bustable.row.add( [ null, device_addr, bus, deviceclass, devicetype, items_defined, keys] ).draw(false).node();
+			}
 
+			let businfo = '';
+			let buses = objResponse['buses'];
+			for (bus in buses) {
+				if (businfo !== '') {
+					businfo += ', '
+				}
+				businfo += '<strong>' + buses[bus]['bus'] + ' </strong>: ' + buses[bus]['devicecount'] +' {{ _('Gerät(e)') }}'
+			}
+			shngInsertText ('buscount', objResponse['buses'].length);
+			shngInsertText ('businfo', businfo);
+			bustable.draw(false);
 		}
 
 	}
 </script>
 
-<!--
-<script>
-	function handleUpdatedData(response, dataSet=null) {
-		if (dataSet === 'devices_info' || dataSet === null) {
-			var objResponse = JSON.parse(response);
-			myProto = document.getElementById(dataSet);
-			for (var device in objResponse) {
-				< !--
-				shngInsertText (device+'_source', objResponse[device]['source']);
-				shngInsertText (device+'_powerState', objResponse[device]['powerState']);
-				-- >
-			}
-		}
-	}
-</script>
--->
 {% endblock pluginscripts %}
 
 
@@ -188,6 +302,7 @@
 {% set tabcount = 2 %}
 {% set start_tab = 1 %}
 
+
 <!--
 	Content block for the first tab of the Webinterface
 -->
@@ -195,43 +310,13 @@
 
 {% block bodytab1 %}
 
+<script>
+	shngGetUpdatedData();
+</script>
+
 <div class="container-fluid m-2 table-resize">
-	<div><strong>{{ _('Geräte in Items') }}:</strong> {{ p._sensors|length }} {{ _('Sensoradresse(n)') }}, {{ p._ios|length }} {{ _('IO Gerätadresse(n)') }}, {{ p._ibuttons|length }} {{ _('iButtonadresse(n)') }}</div>
-
-	<table id="maintable">
-		<thead>
-		<tr><th></th>
-			<th>{{ _('Item') }}</th>
-			<th>Typ</th>
-			<th>{{ _('Sensor') }}</th>
-			<th>{{ _('Geräteklasse') }}</th>
-			<th class="dt-head-right" >{{ _('Wert') }}</th>
-			<th>{{ _('Letztes Update') }}</th>
-			<th>{{ _('Letzte Änderung') }}</th>
-		</tr>
-		</thead>
-
-		{% for item in p.get_item_list() %}
-			<tr><td></td>
-				<td>{{ item.id() }}</td>
-				<td>{{ item.type() }}</td>
-
-				{% if (p.get_item_config(item)['sensor_addr'] in p._buses['bus.0']) or (p.get_item_config(item)['sensor_addr'] in p._buses['bus.1']) or (p.get_item_config(item)['sensor_addr'] in p._buses['bus.2']) %}
-					<td>{{ p.get_item_config(item)['sensor_addr'] }}</td>
-					<td>{{ p.get_item_config(item)['deviceclass'] }}</td>
-					<td>{{ item() }} {{ p.get_item_config(item)['unit'] }}</td>
-				{% else %}
-					<td style="color:indianred">{{ p.get_item_config(item)['sensor_addr'] }}</td>
-					<td style="color:indianred">{{ p.get_item_config(item)['deviceclass'] }}</td>
-					<td style="color:indianred">{{ item() }}</td>
-				{% endif %}
-
-				<td>{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
-				<td>{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
-			</tr>
-		{% endfor %}
-
-	</table>
+	<div id="iteminfo">Item Information</div>
+	<table id="itemtable"></table>
 </div>
 
 {% endblock bodytab1 %}
@@ -240,61 +325,13 @@
 <!--
 	Content block for the second tab of the Webinterface
 -->
-{% if p._buses|length > 1 %}
-	{% set tab2title = "<strong>" ~ p.get_shortname() ~ " " ~ _('Busse') ~ "</strong> (" ~ p._buses|length ~ ")" %}
-{% else %}
-	{% set tab2title = "<strong>" ~ p.get_shortname() ~ " " ~ _('Bus') ~ "</strong>" %}
-{% endif %}
+{% set tab2title = "<strong>" ~ p.get_shortname() ~ " " ~ _('Busse') ~ "</strong> (<span id=buscount>" ~ p._buses|length ~ "</span>)" %}
 
 {% block bodytab2 %}
 
 <div class="container-fluid m-2 table-resize">
-
-	{% if p._buses|length > 2 %}
-		<div><strong>bus.0</strong>: {{ p._webif_buses['bus.0']|length }} {{ _('Gerät(e)') }}, <strong>bus.1</strong>: {{ p._webif_buses['bus.1']|length }} {{ _('Gerät(e)') }}, <strong>bus.2</strong>: {{ p._webif_buses['bus.2']|length }} {{ _('Gerät(e)') }}</div>
-	{% elif p._buses|length > 1 %}
-		<div><strong>bus.0</strong>: {{ p._webif_buses['bus.0']|length }} {{ _('Gerät(e)') }}, <strong>bus.1</strong>: {{ p._webif_buses['bus.1']|length }} {{ _('Gerät(e)') }}</div>
-	{% else %}
-		<div><strong>bus.0</strong>: {{ p._webif_buses['bus.0']|length }} {{ _('Gerät(e)') }}</div>
-	{% endif %}
-
-	<table id="bustable">
-		<thead>
-		<tr><th></th>
-			<th>{{ _('Device') }}</th>
-			<th>{{ _('Bus') }}</th>
-			<th>{{ _('Geräteklasse') }}</th>
-			<th>{{ _('Devicetyp') }}</th>
-			<th>{{ _('Items definiert') }}</th>
-			<th>{{ _('Keys') }}</th>
-		</tr>
-		</thead>
-
-	{% for bus in p._buses %}
-		{% for device in p._webif_buses[bus] %}
-				<tr><td></td>
-					<td>{{ device }}</td>
-					<td>{{ bus }}</td>
-					<td>{{ p._webif_buses[bus][device]['deviceclass'] }}</td>
-					<td>{{ p._webif_buses[bus][device]['devicetype'] }}</td>
-<!--
-					{ % if len(p.get_item_list_for_command(device)) > 0 % }
-						<td>{{ _('Ja') }}</td>
-					{ % else % }
-						<td>{{ _('Nein') }}</td>
-					{ % endif % }
--->
-					{% if p.count_items_for_device(device) > 0 %}
-						<td>{{ p.count_items_for_device(device) }}</td>
-					{% else %}
-						<td>{{ _('Nein') }}</td>
-					{% endif %}
-					<td>{{ p._webif_buses[bus][device]['keys'] }}</td>
-				</tr>
-			{% endfor %}
-		{% endfor %}
-
-	</table>
+	<div id="businfo">Bus Information</div>
+	<table id="bustable"></table>
 </div>
 
 {% endblock bodytab2 %}

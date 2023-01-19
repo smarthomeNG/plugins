@@ -102,18 +102,60 @@ class WebInterface(SmartPluginWebIf):
         :return: dict with the data needed to update the web page.
         """
         if dataSet is None:
-            # get the new data
-            self.plugin.get_broker_info()
-            data = {}
-            data['broker_info'] = self.plugin._broker
-            data['broker_uptime'] = self.plugin.broker_uptime()
-            data['item_values'] = self.plugin._item_values
+            result_array = []
 
-            # return it as json the the web page
+            # callect data for 'items' tab
+            item_list = []
+            for item in self.plugin.get_item_list():
+                item_config = self.plugin.get_item_config(item)
+                value_dict = {}
+                value_dict['path'] = item.id()
+                value_dict['type'] = item.type()
+                value_dict['not_discovered'] = (item_config['bus'] == '')
+                value_dict['sensor_addr'] = item_config['sensor_addr']
+                value_dict['deviceclass'] = item_config['deviceclass']
+                value_dict['value'] = item()
+                value_dict['value_unit'] = item_config['unit']
+                value_dict['last_update'] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
+                value_dict['last_change'] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
+                item_list.append(value_dict)
+
+            # callect data for 'buses' tab
+            bus_dict = {}
+            device_list = []
+            for bus in self.plugin._buses:
+                if bus_dict.get(bus, None) is None:
+                    bus_dict[bus] = 0
+
+                for device in self.plugin._webif_buses[bus]:
+                    bus_dict[bus] += 1
+                    value_dict = {}
+                    value_dict['device'] = device
+                    value_dict['bus'] = bus
+                    value_dict['deviceclass'] = self.plugin._webif_buses[bus][device]['deviceclass']
+                    value_dict['devicetype'] = self.plugin._webif_buses[bus][device]['devicetype']
+                    value_dict['items_defined'] = self.plugin.count_items_for_device(device)
+                    value_dict['keys'] = self.plugin._webif_buses[bus][device]['keys']
+                    device_list.append(value_dict)
+
+            bus_list = []
+            for bus in bus_dict:
+                value_dict = {}
+                value_dict['bus'] = bus
+                value_dict['devicecount'] = bus_dict[bus]
+                bus_list.append(value_dict)
+
+            bus_list = sorted(bus_list, key=lambda d: d['bus'])
+            result = {'items': item_list, 'buses': bus_list, 'devices': device_list}
+
+            # send result to wen interface
             try:
-                return json.dumps(data)
+                data = json.dumps(result)
+                if data:
+                    return data
+                else:
+                    return None
             except Exception as e:
-                self.logger.error("get_data_html exception: {}".format(e))
-                return {}
+                self.logger.error(f"get_data_html exception: {e}")
 
-        return
+        return {}

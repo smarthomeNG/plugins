@@ -477,7 +477,7 @@ class OneWire(SmartPlugin):
                     if not addr in self._webif_buses[bus]:
                         self.logger.info(f"_discovery_process_bus: Skipping unsupported sensor {sensor} for {bus}")
                         self._webif_buses[bus][addr] = {}
-                        self._webif_buses[bus][addr]['keys'] = {'UNSUPPORTED': 'unsupported'}
+                        self._webif_buses[bus][addr]['keys'] = {'UN': 'unsupported'}
                         self._webif_buses[bus][addr]['devicetype'] = sensortype
                         self._webif_buses[bus][addr]['deviceclass'] = 'unknown'
                     continue
@@ -495,6 +495,10 @@ class OneWire(SmartPlugin):
                     if addr in self._ibutton_masters:
                         self._ibutton_buses[bus] = self._ibutton_masters[addr]
                     self._webif_buses[bus][addr]['deviceclass'] = 'iButton master'
+                    items = self.get_items_for_command(addr + '-' + 'BM')
+                    for item in items:
+                        config_dict = self.get_item_config(item)
+                        config_dict['bus'] = bus
                     continue
                 else:
                     table = self._sensors
@@ -618,6 +622,8 @@ class OneWire(SmartPlugin):
         :param item:    The item to process.
         """
         config_data = {}
+        config_data['bus'] = ''
+        config_data['unit'] = ''
         if not self.has_iattr(item.conf, 'ow_addr'):
             return
         if not self.has_iattr(item.conf, 'ow_sensor'):
