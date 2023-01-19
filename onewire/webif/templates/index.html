@@ -206,6 +206,7 @@
 			iteminfo += String(sensorcount) + ' {{ _('Sensoradresse(n)') }}, ';
 			iteminfo += String(iodevicecount) + ' {{ _('I/O-Geräteadresse(n)') }}, ';
 			iteminfo += String(ibuttoncount) + ' {{ _('iButtonadresse(n)') }}';
+			shngInsertText ('itemcount', objResponse['items'].length);
 			shngInsertText ('iteminfo', iteminfo);
 			itemtable.draw(false);
 
@@ -306,7 +307,7 @@
 <!--
 	Content block for the first tab of the Webinterface
 -->
-{% set tab1title = "<strong>" ~ p.get_shortname() ~ " " ~ _(('Items')) ~ "</strong> (" ~ p._plg_item_dict|length ~ ")" %}
+{% set tab1title = "<strong>" ~ p.get_shortname() ~ " " ~ _(('Items')) ~ "</strong> (<span id=itemcount>" ~ p._plg_item_dict|length ~ "</span>)" %}
 
 {% block bodytab1 %}
 
