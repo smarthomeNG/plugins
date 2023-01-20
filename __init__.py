@@ -1795,7 +1795,7 @@ class FritzDevice:
         if not host_info:
             return
         elif isinstance(host_info, int):
-            self._plugin_instance.logger.error(f"Error {host_info} '{self.errorcodes.get(host_info)}' occurred during getting details of host #{index}.")
+            self._plugin_instance.logger.info(f"Error {host_info} '{self.errorcodes.get(host_info)}' occurred during getting details of host #{index}.")
             return
         elif len(host_info) == 7:
             host = {
@@ -3239,16 +3239,17 @@ class FritzHome:
 
         data = self._request(url, params, result='json')
 
-        if data:
-            data = data['mq_log']
-            if self._log_entry_count:
-                data = data[:self._log_entry_count]
+        if isinstance(data, dict):
+            data = data.get('mq_log')
+            if data is not None:
+                if self._log_entry_count:
+                    data = data[:self._log_entry_count]
 
-            data_formated = []
-            for entry in data:
-                dt = datetime.datetime.strptime(f"{entry[0]} {entry[1]}", '%d.%m.%y %H:%M:%S').strftime('%d.%m.%Y %H:%M:%S')
-                data_formated.append([dt, entry[2], entry[3], entry[4]])
-            return data_formated
+                data_formated = []
+                for entry in data:
+                    dt = datetime.datetime.strptime(f"{entry[0]} {entry[1]}", '%d.%m.%y %H:%M:%S').strftime('%d.%m.%Y %H:%M:%S')
+                    data_formated.append([dt, entry[2], entry[3], entry[4]])
+                return data_formated
 
     # Handling of updated items
 
