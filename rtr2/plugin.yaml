@@ -273,6 +273,7 @@ item_structs:
 
         stellwert:
             type: num
+            cache: True
             rtr2_id@instance: ..:.
             rtr2_function@instance: control_output
 
