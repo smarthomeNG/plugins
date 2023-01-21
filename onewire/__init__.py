@@ -134,7 +134,7 @@ class OneWire(SmartPlugin):
         self._cycle_discovery = self.get_parameter_value('cycle_discovery')
         self.log_counter_cycle_discovery_time = self.get_parameter_value('log_counter_cycle_discovery_time')
         self.log_counter_io_loop_time = self.get_parameter_value('log_counter_io_loop_time')
-
+        self.warn_after = self.get_parameter_value('warn_after')
 
         # Initialization code goes here
         self._buses = {}                    # buses reported by owserver (each bus entry consists of a list of device addresses
@@ -311,10 +311,10 @@ class OneWire(SmartPlugin):
                         raise
                     except Exception as e:
                         self._ios[addr][key]['readerrors'] = self._ios[addr][key].get('readerrors', 0) + 1
-                        if self._ios[addr][key]['readerrors'] % 5 == 0:
+                        if self._ios[addr][key]['readerrors'] % self.warn_after == 0:
                             self.logger.warning(f"_io_cycle: {self._ios[addr][key]['readerrors']}. problem reading {addr}-{key}, error: {e}")
                         continue
-                    if self._ios[addr][key].get('readerrors', 0) >= 5:
+                    if self._ios[addr][key].get('readerrors', 0) >= self.warn_after:
                         self.logger.notice(f"_io_cycle: Success reading {addr}-{key}, up to now there were : {self._ios[addr][key]['readerrors']} problems")
                         self._ios[addr][key]['readerrors'] = 0
                     for item in items:
@@ -411,7 +411,7 @@ class OneWire(SmartPlugin):
                         continue
                 except Exception as e:
                     self._sensors[addr][key]['readerrors'] = self._sensors[addr][key].get('readerrors', 0) + 1
-                    if self._sensors[addr][key]['readerrors'] % 5 == 0:
+                    if self._sensors[addr][key]['readerrors'] % self.warn_after == 0:
                         self.logger.warning(f"_sensor_cycle: {self._sensors[addr][key]['readerrors']}. problem reading {addr}-{key}, error: {e}")
                 else:  #only if no exception
                     if key == 'L':  # light lux conversion
@@ -422,7 +422,7 @@ class OneWire(SmartPlugin):
                     elif key == 'VOC':
                         value = value * 310 + 450
 
-                    if self._sensors[addr][key].get('readerrors', 0) >= 5:
+                    if self._sensors[addr][key].get('readerrors', 0) >= self.warn_after:
                         self.logger.notice(f"_sensor_cycle: Success reading {addr}-{key}, up to now there were : {self._sensors[addr][key]['readerrors']} problems")
                         self._sensors[addr][key]['readerrors'] = 0
                     for item in items:

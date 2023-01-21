@@ -98,6 +98,13 @@ parameters:
                 The counter is decremented until it reaches 0, then logging will be turned off.
                 If set to -1, logging cycle time is always on
 
+    warn_after:
+        type: int
+        default: 10
+        description:
+            de: 'Warnung nach dieser Anzahl aufeinanderfolgender Lesefehler für einen Sensor'
+            en: 'Warn after this number of consecutive read errors for a sensor'
+
     io_wait:
         type: num
         default: 5
