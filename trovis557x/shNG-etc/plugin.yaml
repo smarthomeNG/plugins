@@ -1,4 +1,9 @@
+# This code needs to be copied into the existing <shNG>/etc/plugin.yaml
+
 trovis557x:
     class_name: trovis557x
     class_path: plugins.trovis557x
-    cycle: '60'
+    modbus_mode: 'rtu'
+    modbus_port: /dev/trovis
+    # modbus_mode: 'tcp'
+    # modbus_port: '192.168.178.59:502'
