@@ -45,7 +45,7 @@ class Rtr2(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '2.1.1'    # (must match the version specified in plugin.yaml), use '1.0.0' for your initial plugin Release
+    PLUGIN_VERSION = '2.2.0'    # (must match the version specified in plugin.yaml), use '1.0.0' for your initial plugin Release
 
     _rtr = {}  # dict containing data of the rtrs. Key is the attribute rtr2_id
 
