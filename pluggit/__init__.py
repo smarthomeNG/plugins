@@ -30,15 +30,13 @@ import logging
 from lib.model.smartplugin import SmartPlugin
 
 # pymodbus library from https://github.com/riptideio/pymodbus
+from pymodbus.version import version
+pymodbus_baseversion = int(version.short().split('.')[0])
 
-#from pymodbus.client.tcp import ModbusTcpClient
-#from pymodbus.client import ModbusTcpClient
-#from pymodbus.client.sync import ModbusTcpClient
-
-try:
+if pymodbus_baseversion > 2:
     # for newer versions of pymodbus
     from pymodbus.client.tcp import ModbusTcpClient
-except:
+else:
     # for older versions of pymodbus
     from pymodbus.client.sync import ModbusTcpClient
 
@@ -47,7 +45,7 @@ from pymodbus.payload import BinaryPayloadDecoder
 from pymodbus.payload import BinaryPayloadBuilder
 
 class Pluggit(SmartPlugin):
-    PLUGIN_VERSION="2.0.3"
+    PLUGIN_VERSION="2.0.4"
 
     _itemReadDictionary = {}
     _itemWriteDictionary = {}

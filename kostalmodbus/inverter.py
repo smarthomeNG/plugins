@@ -7,7 +7,18 @@ import logging
 import pymodbus
 
 from lib.model.smartplugin import *
-from pymodbus.client.sync import ModbusTcpClient
+
+# pymodbus library from https://github.com/riptideio/pymodbus
+from pymodbus.version import version
+pymodbus_baseversion = int(version.short().split('.')[0])
+
+if pymodbus_baseversion > 2:
+    # for newer versions of pymodbus
+    from pymodbus.client.tcp import ModbusTcpClient
+else:
+    # for older versions of pymodbus
+    from pymodbus.client.sync import ModbusTcpClient
+
 from pymodbus.payload import BinaryPayloadDecoder
 from pymodbus.constants import Endian
 
@@ -43,27 +54,42 @@ class Inverter:
         return self.registers
 
     def __read_float(self, adr_dec):
-        result = self.client.read_holding_registers(adr_dec, 2, unit=71)
+        if pymodbus_baseversion > 2:
+            result = self.client.read_holding_registers(adr_dec, 2, slave=71)
+        else:
+            result = self.client.read_holding_registers(adr_dec, 2, unit=71)
         float_value = BinaryPayloadDecoder.fromRegisters(result.registers,byteorder=Endian.Big,wordorder=Endian.Little)
         return round(float_value.decode_32bit_float(), 2)
 
     def __read_u16(self, adr_dec):
-        result = self.client.read_holding_registers(adr_dec, 1, unit=71)
+        if pymodbus_baseversion > 2:
+            result = self.client.read_holding_registers(adr_dec, 1, slave=71)
+        else:
+            result = self.client.read_holding_registers(adr_dec, 1, unit=71)
         u16_value = BinaryPayloadDecoder.fromRegisters(result.registers, byteorder=Endian.Big,wordorder=Endian.Little)
         return u16_value.decode_16bit_uint()
 
     def __read_u16_2(self, adr_dec):
-        result = self.client.read_holding_registers(adr_dec, 2, unit=71)
+        if pymodbus_baseversion > 2:
+            result = self.client.read_holding_registers(adr_dec, 2, slave=71)
+        else:
+            result = self.client.read_holding_registers(adr_dec, 2, unit=71)
         u16_2_value = BinaryPayloadDecoder.fromRegisters(result.registers, byteorder=Endian.Big,wordorder=Endian.Little)
         return u16_2_value.decode_16bit_uint()
 
     def __read_u32(self, adr_dec):
-        result = self.client.read_holding_registers(adr_dec, 2, unit=71)
+        if pymodbus_baseversion > 2:
+            result = self.client.read_holding_registers(adr_dec, 2, slave=71)
+        else:
+            result = self.client.read_holding_registers(adr_dec, 2, unit=71)
         u32_value = BinaryPayloadDecoder.fromRegisters(result.registers, byteorder=Endian.Big,wordorder=Endian.Little)
         return u32_value.decode_32bit_uint()
 
     def __read_s16(self, adr_dec):
-        result = self.client.read_holding_registers(adr_dec, 1, unit=71)
+        if pymodbus_baseversion > 2:
+            result = self.client.read_holding_registers(adr_dec, 1, slave=71)
+        else:
+            result = self.client.read_holding_registers(adr_dec, 1, unit=71)
         s16_value = BinaryPayloadDecoder.fromRegisters(result.registers, byteorder=Endian.Big,wordorder=Endian.Little)
         return s16_value.decode_16bit_uint()
 

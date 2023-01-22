@@ -1,6 +1,3 @@
-# Metadata for the Smart-Plugin
-
-
 plugin:
 
     type: interface
@@ -8,18 +5,17 @@ plugin:
         de: 'Plugin zum Auslesen von SAMSON TROVIS 557x Heizungsreglern'
         en: 'Plugin to read out SAMSON TROVIS 557x heating controllers'
     maintainer: Tom-Bom-badil
-#    tester:                        # Who tests this plugin?
-    state: develop                  # change to ready when done with development
-    keywords: samson trovis 5576 iot
+    # tester:                     # Who tests this plugin?
+    state: ready                  # change to ready when done with development
+    keywords: iot samson trovis 5573 5576 5578 5579
     documentation: https://github.com/Tom-Bom-badil/samson_trovis_557x/wiki
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1390281-trovis-557x-heizungsregler-plugin
-    version: 0.1.a
+    version: 2.0.0
     sh_minversion: 1.5
-#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    # sh_maxversion:              # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False
     restartable: unknown
     classname: trovis557x
-
 
 item_attributes:
 
@@ -51,37 +47,41 @@ item_attributes:
             de: 'Enthält alle Item-Informationen (Buswert, umgerechneter Wert, Einheit oder Listentext)'
             en: 'Contains the full item information (bus value, real value, unit or list text)'
             
-    visu_acl:
-        type: str
+    werte:
+        type: list
         mandatory: False
         description:
-            de: 'Alle Items sollten für die Visu auf nur lesen gesetzt werden'
-            en: 'You shopuld set all items for the visu to read only'
-
+            de: 'Für Register, die stufenweise mit Werten belegt sind'
+            en: 'For registers that contain step values'
+            
+    invalid_to_zero:
+        type: bool
+        mandatory: False
+        description:
+            de: 'Setzt 32767 (=NaN, nicht verfügbar) auf 0 fuer ausgeschaltete oder nicht verfuegbare Register'
+            en: 'Sets 32767 (=NaN, unavailable) to 0 for switched-off or unavailable registers'
 
 parameters:
 
-    cycle:
-        type: int
-        default: 60
-        description:
-            de: 'Ausleseintervall'
-            en: 'Reading interval'
+    # Wichtige Parameter
+    # Important parameters
 
-    model:
-        type: int
-        default: 5576
+    modbus_mode:
+        type: str
+        default: 'rtu' # rtu (serial) or tcp (LAN)
         description:
-            de: 'Modell des Heizungsreglers (5573, 5576, 5578, 5579)'
-            en: 'Model of the heting controller (5573, 5576, 5578, 5579)'
-            
-    revision:
-        type: int
-        default: 003
+            de: 'Wie die Modbus-Kommunikation duchgeführt wird (rtu oder tcp)'
+            en: 'How modbus communication is done (rtu or tcp)'
+
+    modbus_port:
+        type: str
+        default: '/dev/ttytrovis'
+        # rtu: z.B./eg. /dev/ttyUSB0, /dev/ttyUSB1, /dev/ttyAMA0, /dev/ttytrovis, /dev/trovis
+        # rtu remark: chmod 777 /dev/<yourport> wird empfohlen / is recommended
+        # tcp: xxx.xxx.xxx.xxx:Port, e.g. '192.168.178.59:502'. You MUST specify the port at the end!
         description:
-            # Steht auf dem Aufkleber auf der Seite des Reglers
-            de: 'Baureihe des Heizungsreglers (001, 002, 003 usw)'
-            en: 'Revision of the heating controller (001, 002, 003 usw)'
+            de: 'Modbus Verbindung, z.B. /dev/ttyUSB0 (rtu mit socat/mbusd) oder 192.168.178.52:502 (tcp)'
+            en: 'Modbus connection, e.g. /dev/ttyUSB0 (rtu with socat/mbusd) or 192.168.178.52:502 (tcp)'
 
     modbus_speed:
         type: int
@@ -90,34 +90,28 @@ parameters:
             de: 'Modbus-Geschwindigkeit (Trovis: PA6 - Modbus, Baudrate)'
             en: 'Modbus speed (Trovis: PA6 - Modbus, Baudrate)'
 
-    modbus_port:
-        type: str
-        default: '/dev/ttytrovis'
-        # USB: z.B./eg. /dev/ttyUSB0, /dev/ttyUSB1, /dev/ttyAMA0
-        # chmod 777 /dev/<yourport> wird empfohlen / is recommended
-        description:
-            de: 'Modbus-Port, über den die Trovis verbunden ist'
-            en: 'Modbus Port the Trovis is connected through'
-
     modbus_trovis_address:
         type: int
-        # Unbedingt richtige Adresse in der Trovis einstellen!
-        # You MUST set the right address in the Trovis!
-        default: 247  # !!! Standard: 255; Modbus-Spec: <=247 !!!
+        # Unbedingt richtige Stationsadresse in der Trovis einstellen!
+        # You MUST set the right station address in the Trovis!
+        default: 247  # !!! Factory default Trovis: 255; Modbus spec says <=247 !!!
         description:
-            de: 'Modbus-Adresse der Trovis (Trovis: PA6 - Modbus, ST.-NR)'
-            en: 'Modbus address of the Trovis (Trovis: PA6 - Modbus, ST.-NR)'
+            de: 'Stationsadresse der Trovis (Trovis: PA6 - Modbus, ST.-NR <=247!)'
+            en: 'Station address of the Trovis (Trovis: PA6 - Modbus, ST.-NR <=247!)'
+
+    # Optionale Parameter
+    # Optional parameters
+
+    cycle:
+        type: int
+        default: 60
+        description:
+            de: 'Ausleseintervall'
+            en: 'Reading interval'
 
     # Diese Parameter sollten so belassen werden:
-    # You should leave these parameters as they are:
+    # You should leave these parameters as is:
     
-    modbus_mode:
-        type: str
-        default: 'rtu'
-        description:
-            de: 'Wie die Modbus-Kommunikation duchgeführt wird (zur Zeit auf rtu belassen)'
-            en: 'How modbus communication is done (leave to rtu, tcp not yet supported)'
-
     modbus_timeout:
         type: num
         default: 0.5
@@ -127,11 +121,29 @@ parameters:
             
     modbus_debug:
         type: bool
-        default: False  # ToDo / Einschalten des Debug-Modus noch herausfinden
+        default: False  # ToDo / Einschalten des Debug-Modus in pymodbus noch herausfinden
         description:
             de: 'Debug-Meldungen von pymodbus'
             en: 'Debug messages from pymodbus'
 
+
+    # Entfallene Parameter
+    # Deprecated parameters
+    
+    #model:
+    #    type: int
+    #    default: 5576
+    #    description:
+    #        de: 'Modell des Heizungsreglers (5573, 5576, 5578, 5579)'
+    #        en: 'Model of the heating controller (5573, 5576, 5578, 5579)'
+            
+    #revision:
+    #    type: int
+    #    default: 003
+    #    description:
+    #        # Steht auf dem Aufkleber auf der Seite des Reglers
+    #        de: 'Baureihe des Heizungsreglers (001, 002, 003 usw)'
+    #        en: 'Revision of the heating controller (001, 002, 003 usw)'
 
 plugin_functions: NONE
 item_structs: NONE

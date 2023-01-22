@@ -3,6 +3,7 @@
 #########################################################################
 #  Copyright 2017-      Klaus Bühl                           kla.b@gmx.de
 #  Copyright 2021-      Martin Sinn                         m.sinn@gmx.de
+#  Copyright 2022-      Ronny Schulz                      r.schulz@gmx.de
 #########################################################################
 #  This file is part of SmartHomeNG.
 #  https://www.smarthomeNG.de
@@ -34,15 +35,23 @@ from lib.item import Items
 from .webif import WebInterface
 
 import time
-# Modbus
+
+# pymodbus library from https://github.com/riptideio/pymodbus
+from pymodbus.version import version
+pymodbus_baseversion = int(version.short().split('.')[0])
+
+if pymodbus_baseversion > 2:
+    # for newer versions of pymodbus
+    from pymodbus.client.tcp import ModbusTcpClient
+else:
+    # for older versions of pymodbus
+    from pymodbus.client.sync import ModbusTcpClient
+
 from pymodbus.constants import Endian
 from pymodbus.payload import BinaryPayloadDecoder
-from pymodbus.client.sync import ModbusTcpClient as ModbusClient
-
 
 # If a needed package is imported, which might be not installed in the Python environment,
 # add it to a requirements.txt file within the plugin's directory
-
 
 class SMAModbus(SmartPlugin):
     """
@@ -54,7 +63,7 @@ class SMAModbus(SmartPlugin):
     are already available!
     """
 
-    PLUGIN_VERSION = '1.5.2'    # (must match the version specified in plugin.yaml), use '1.0.0' for your initial plugin Release
+    PLUGIN_VERSION = '1.5.3'    # (must match the version specified in plugin.yaml), use '1.0.0' for your initial plugin Release
 
     def __init__(self, sh):
         """
@@ -171,7 +180,7 @@ class SMAModbus(SmartPlugin):
         changes on it's own, but has to be polled to get the actual status.
         It is called by the scheduler which is set within run() method.
         """
-        client = ModbusClient(self._host, self._port)
+        client = ModbusTcpClient(self._host, self._port)
         if not client.connect():
             self.logger.warning(
                 f"poll_device: Unable to establish connection to host {self._host}")
@@ -194,7 +203,10 @@ class SMAModbus(SmartPlugin):
             else:
                 register_count = 2
             try:
-                result = client.read_holding_registers((int(read_parameter)), register_count, unit=3)
+                if pymodbus_baseversion > 2:
+                    result = client.read_holding_registers((int(read_parameter)), register_count, slave=3)
+                else:
+                    result = client.read_holding_registers((int(read_parameter)), register_count, unit=3)
             except Exception as e:
                 self.logger.error(f"poll_device: Item {self._items[read_parameter].property.path} - Error trying to get result, got Exception {e}")
             else:
