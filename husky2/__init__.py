@@ -55,12 +55,14 @@ class Husky2AutomowerSession(session.AutomowerSession):
         else:
             session._LOGGER.debug("Refresh access token doing relogin")
             self.shLogger.debug("Refresh access token doing relogin")
-            await self.close()
-            self.shLogger.debug("Closed old session")
+            #await self.close()
+            #self.shLogger.debug("Closed old session")
+            await asyncio.sleep(5)
             await self.logincc(self.client_secret)
             self.shLogger.debug("Logged in successfully")
-            await self.connect()
-            self.shLogger.debug("Connected successfully")
+            await asyncio.sleep(5)
+            #await self.connect()
+            #self.shLogger.debug("Connected successfully")
 
 
 class Husky2(SmartPlugin):

@@ -1,7 +1,10 @@
-# uncomment only if you want to have debug messages
-# WARNING - can produce big amounts of data within short time
+# This code needs to be copied into the existing <shNG>/etc/logging.yaml
+# The corresponding logs can be found in <shNG>/var/log
+#
+# WARNING - changing to 'DEBUG can produce huge amounts of data within short time
 
-# loggers:
-#    plugins.trovis557x:
-#        handlers: [shng_details_file]
-#        level: DEBUG
+loggers:
+    plugins.trovis557x:
+        handlers: [shng_details_file]
+        level: WARNING
+        # level: DEBUG

@@ -199,6 +199,9 @@ class Resol(SmartPlugin):
         self.sock.settimeout(5)
         try:
             dat = self.sock.recv(1024).decode('Cp1252')
+        except socket.timeout:
+            self.logger.info("Exception in recv(): Socket reception timeout")
+            return None
         except Exception as e:
             self.logger.error("Exception during socket recv.decode: %s" % str(e))
             return None

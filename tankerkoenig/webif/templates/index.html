@@ -1,0 +1,303 @@
+{% extends "base_plugin.html" %}
+
+{% set logo_frame = false %}
+
+<!-- set update_interval to a value > 0 (in milliseconds) to enable periodic data updates -->
+{% set update_interval = ((50 * item_count / 1000) | round | int) * 1000 %}
+
+<!--
+	Additional styles go into this block. Examples are for datatables
+-->
+{% block pluginstyles %}
+<style>
+  table th.item {
+    width: 350px;
+  }
+  table th.station_id {
+    width: 350px;
+  }
+  table th.attribute {
+    width: 100px;
+  }
+  table th.value {
+    width: 300px;
+  }
+  table th.station_name {
+    width: 200px;
+  }
+  table th.brand {
+    width: 100px;
+  }
+  table th.price {
+    width: 100px;
+  }
+  table th.wholeday {
+    width: 50px;
+  }
+  These are used for highligt effect in web interface when a value changes. If you don't want to overwrite the
+  default color, you can remove the entries here as the classes are already defined in smarthomeng.css
+  */
+  .shng_effect_highlight {
+    background-color: #FFFFE0;
+  }
+  .shng_effect_standard {
+    background-color: none;
+  }
+</style>
+{% endblock pluginstyles %}
+
+<!--Additional script tag for plugin specific javascript code go into this block-->
+{% block pluginscripts %}
+<script>
+	function handleUpdatedData(response, dataSet=null) {
+		if (dataSet === 'devices_info' || dataSet === null) {
+			var objResponse = JSON.parse(response);
+			myProto = document.getElementById(dataSet);
+			for (item in objResponse['items']) {
+                value = String(objResponse['items'][item]['value']);
+                if (value.includes('\n')) {
+                    value.replace('\n', '</br>' );
+                }
+				shngInsertText(item+'_value', value, 'maintable', 5);
+                shngInsertText(item+'_last_update', objResponse['items'][item]['last_update'], 'maintable');
+                shngInsertText(item+'_last_change', objResponse['items'][item]['last_change'], 'maintable');
+			}
+			for (station_id in objResponse['prices']) {
+                prices_str = 'E5: ' + objResponse['prices'][station_id]['e5'] + '</br>' + 'E10: ' + objResponse['prices'][station_id]['e10'] + '</br>' + 'Diesel: ' + objResponse['prices'][station_id]['diesel'] + '</br>'  + 'Status: ' + objResponse['prices'][station_id]['status'];
+                console.log(prices_str);
+				shngInsertText(station_id+'_prices', prices_str, 'stations', 5);
+			}
+		}
+	}
+</script>
+<!--
+	This part is used to implement datatable JS for the tables. It allows resorting tables by column, etc.
+	For each table you have to implement the code part $('#<table_id>').DataTable(..); where the <table_id> matches the id of a table tag
+-->
+<script>
+    $(document).ready( function () {
+			$(window).trigger('datatables_defaults');
+      try {
+        webif_pagelength = parseInt(document.getElementById('webif_pagelength').innerHTML);
+        if (isNaN(parseFloat(webif_pagelength)) || webif_pagelength == 0) {
+          resize = true;
+          webif_pagelength = -1;
+  				console.log('Activating automatic table resize');
+        }
+        else {
+          resize = false;
+        }
+      }
+      catch (e) {
+        webif_pagelength = 100;
+        resize = false;
+        console.log("Using default values for page length " + webif_pagelength + ", pageResize: " + resize);
+      }
+      try {
+        table = $('#maintable').DataTable( {
+          pageLength: webif_pagelength,
+          pageResize: resize});
+
+		table = $('#stations').DataTable( {
+          pageLength: webif_pagelength,
+          pageResize: resize});
+
+	    table = $('#maintenance').DataTable( {
+          pageLength: webif_pagelength,
+          pageResize: resize});
+      }
+      catch (e) {
+        console.warn("Datatable JS not loaded, showing standard table without reorder option " + e);
+      }
+      
+        // Handler für Formular - das "submit"-Element (Senden) wird abgefangen
+        $("#button_pressed").submit(function(e) {
+            console.log("submit");
+            // keine HTML-Aktion ausführen (z.B. Formular senden)
+            e.preventDefault();
+
+            // die Kennung des gedrückten Buttons per AJAX senden
+            console.log("submit");
+            $.post('submit', {
+					lat: $("#cust_lat").val(),
+					lon: $("#cust_lon").val(),
+					rad: $("#cust_rad").val()
+				}, function(data) {
+
+		            // and set the title with the result
+		            var cmd = data.last.cmd;
+		            var val = data.last.val;
+
+            return false ;
+            });
+        
+        });
+
+    });
+</script>
+<!--
+This is an example on how to update the page refresh method. You can set the dataSet, update interval, special parameters or (de)activate the auto refresh
+In the example the update is deactivated on the 12th of December 2022 (what might make no sense at all)
+<script>
+  var today = new Date();
+  var today_date = String(today.getDate()) + String(today.getMonth() + 1) + today.getFullYear();
+  let test_date = "12122022";
+  if (today_date === test_date)
+      window.refresh.update({dataSet:'test', update_params:'specialitem', update_interval: 2000, update_active:false});
+  </script>
+-->
+{% endblock pluginscripts %}
+
+
+{% block headtable %}
+<!--This span needs to be put somewhere on the page to read the table pagelength from the plugin / users' plugin.yaml-->
+<span id='webif_pagelength' style="display:none">{{ webif_pagelength }}</span>
+
+<table class="table table-striped table-hover">
+	<tbody>
+		<tr>
+			<td class="py-1"><strong>Price Update Cycle</strong></td>
+			<td class="py-1">{{ p.price_update_cycle }}s</td>
+			<td class="py-1"><strong>Details Update Cycle</strong></td>
+			<td class="py-1">{{ p.details_update_cycle }}</td>
+			<td class="py-1"><strong>API Key</strong></td>
+			<td class="py-1">{{ p._apikey }}</td>
+		</tr>
+	</tbody>
+</table>
+{% endblock headtable %}
+
+
+<!--Additional buttons for the web interface (if any are needed) - displayed below the headtable-section-->
+{% block buttons %}
+	<div>
+		<button id="recalc" type="button" class="btn btn-shng btn-sm" onclick="if (confirm('{{ _('Daten aktualisieren?') }}')) { jQuery.get('recalc_all'); }" title="Aktualisierung aller Items"><i class="fas fa-redo"></i></button>
+	</div>
+{% endblock %}
+
+
+<!-- Define the number of tabs for the body of the web interface (1 - 6) -->
+{% set tabcount = 3 %}
+
+{% set tab1title = "<strong>" ~ p.get_shortname() ~ " Items</strong> (" ~ item_count ~ ")" %}
+{% set tab2title = "<strong>" ~ p.get_shortname() ~ " Tankstellen</strong> (" ~ len(p.station_ids) ~ ")" %}
+{% if maintenance %}
+    {% set tab3title = "<strong>" ~ p.get_shortname() ~ " Maintenance</strong>" %}
+{% else %}
+    {% set tab3title = "hidden" %}
+{% endif %}
+
+<!-- Set the tab that will be visible on start, if another tab that 1 is wanted (1 - 3) -->
+{% if item_count > 0 %}
+	{% set start_tab = 3 %}
+{% endif %}
+
+<!--Content block for the first tab of the Webinterface-->
+{% block bodytab1 %}
+<div class="container-fluid m-2 table-resize">
+	<table id="maintable">
+		<thead>
+			<tr>
+			  	<th class="item">{{ _('Item') }}</th>
+				<th class="station_id">{{ _('Station_ID') }}</th>
+				<th class="attribute">{{ _('Attribut') }}</th>
+			  	<th class="value">{{ _('Wert') }}</th>
+				<th class="last" style="text-align: center">{{_('Letztes Update')}}</th>
+                <th class="last" style="text-align: center">{{_('Letzter Change')}}</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for item in items %}
+					<tr>
+					  	<td class="py-1" id="{{ item._path }}">{{ item._path }}</td>
+						<td class="py-1">{{ item.conf['tankerkoenig_id'] }}</td>
+						<td class="py-1">{{ item.conf['tankerkoenig_attr'] }}</td>
+					  	<td class="py-1" id="{{ item._path }}_value">{{ item() | replace('\n', '</br>') }}</td>
+						<td class="py-1" id="{{ item._path }}_last_update" style="text-align: center">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                    	<td class="py-1" id="{{ item._path }}_last_change" style="text-align: center">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+					</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+</div>
+{% endblock bodytab1 %}
+
+<!--Content block for the second tab of the Webinterface-->
+{% block bodytab2 %}
+<div class="container-fluid m-2 table-resize">
+	<table id="stations">
+		<thead>
+			<tr>
+				<th class="station_name">{{ _('Station Name') }}</th>
+			  	<th class="brand">{{ _('Marke') }}</th>
+				<th class="value">{{ _('Adresse') }}</th>
+				<th class="price">{{ _('Preise') }}</th>
+				<th class="station_name">{{ _('Öffnungszeiten') }}</th>
+				<th class="station_id">{{ _('Station ID') }}</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for id in p.station_details %}
+					<tr>
+					  	<td class="py-1">{{ p.station_details[id]['name'] }}</td>
+						<td class="py-1">{{ p.station_details[id]['brand'] }}</td>
+						<td class="py-1">{{ p.station_details[id]['address'] | replace('\n', '</br>') }}</td>
+						{% if p.station_prices.get(id) %}
+							{% set prices = 'E5: ' ~ p.station_prices[id].get('e5') + '\n' + 'E10: ' ~ p.station_prices[id].get('e10') + '\n' + 'Diesel: ' ~ p.station_prices[id].get('diesel')  + '\n' + 'Status: ' ~ p.station_prices[id].get('status')  %}
+                            <td class="py-1" id="{{ id }}_prices">{{ prices | replace('\n', '</br>') }} </td>
+						{% else %}
+							<td class="py-1">{{ _('-') }} </td>
+						{% endif %}
+
+						{% if p.station_details[id]['wholeDay'] %}
+							<td class="py-1">{{ _('24/7') }}</td>
+						{% elif not p.station_details[id]['wholeDay'] and p.station_details[id]['openingTimes']%}
+							<td class="py-1">
+								{% for entry in p.station_details[id]['openingTimes'] %}
+									{{ entry['text'] }}</br>
+									{{ entry['start'] }} {{ _('-') }} {{ entry['end'] }}</br>
+								{% endfor %}
+							</td>
+						{% else %}
+							<td class="py-1">{{ _('??') }}</td>
+						{% endif %}
+
+						<td class="py-1">{{ id }}</td>
+					</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+</div>
+{% endblock bodytab2 %}
+
+<!--Content block for the third tab of the Webinterface-->
+{% block bodytab3 %}
+<div class="container-fluid m-2 table-resize">
+	<table id="maintenance">
+		<thead>
+			<tr>
+			  <th>{{ _('Item') }}</th>
+			  <th>{{ _('Wert') }}</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+			  <td class="py-1">{{ _('item_dict') }}</td>
+			  <td class="py-1">{{ p.item_dict }}</td>
+			</tr>
+			<tr>
+			  <td class="py-1">{{ _('station_ids') }}</td>
+			  <td class="py-1">{{ p.station_ids }}</td>
+			</tr>
+			<tr>
+			  <td class="py-1">{{ _('station_details') }}</td>
+			  <td class="py-1">{{ p.station_details }}</td>
+			</tr>
+			<tr>
+			  <td class="py-1">{{ _('station_prices') }}</td>
+			  <td class="py-1">{{ p.station_prices }}</td>
+			</tr>
+		</tbody>
+	</table>
+</div>
+{% endblock bodytab3 %}

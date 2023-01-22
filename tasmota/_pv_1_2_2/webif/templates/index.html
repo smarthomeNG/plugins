@@ -1,0 +1,610 @@
+{% extends "base_plugin.html" %}
+
+{% set logo_frame = false %}
+
+<!-- set update_interval to a value > 0 (in milliseconds) to enable periodic data updates -->
+{% set update_interval = 2000 %}
+
+<!--
+	Additional script tag for plugin specific javascript code go into this block
+-->
+{% block pluginscripts %}
+<script>
+	$(document).ready( function () {
+		$(window).trigger('datatables_defaults');
+		try {
+      webif_pagelength = document.getElementById('webif_pagelength').innerHTML;
+			table = $('#itemtable').DataTable( { "pageLength": webif_pagelength } );
+            table_2 = $('#devicetable').DataTable( { "pageLength": webif_pagelength } );
+            table_3 = $('#energytable').DataTable( { "bLengthChange": false, "paging": false, "bFilter": false } );
+            table_4 = $('#environtable').DataTable( { "bLengthChange": false, "paging": false, "bFilter": false } );
+            table_5 = $('#lightstable').DataTable( { "bLengthChange": false, "paging": false, "bFilter": false } );
+            table_6 = $('#rftable').DataTable( { "bLengthChange": false, "paging": false, "bFilter": false } );
+            table_8 = $('#zigbeetable').DataTable( {} );
+            table_9 = $('#mtable1').DataTable( {} );
+            table_10 = $('#mtable2').DataTable( {} );
+			}
+		catch (e) {
+			console.log("Datatable JS not loaded, showing standard table without reorder option " + e)
+        }
+    });
+</script>
+<script>
+	function handleUpdatedData(response, dataSet=null) {
+		if (dataSet === 'devices_info' || dataSet === null) {
+			var objResponse = JSON.parse(response);
+			myProto = document.getElementById(dataSet);
+
+            for (var item in objResponse['item_values']) {
+				shngInsertText (item+'_value', objResponse['item_values'][item]['value'], 'itemtable');
+				shngInsertText (item+'_last_update', objResponse['item_values'][item]['last_update'], 'itemtable');
+				shngInsertText (item+'_last_change', objResponse['item_values'][item]['last_change'], 'itemtable');
+			}
+
+            for (var device in objResponse['device_values']) {
+				shngInsertText (device+'_online', objResponse['device_values'][device]['online'], 'devicetable');
+				shngInsertText (device+'_uptime', objResponse['device_values'][device]['uptime'], 'devicetable');
+				shngInsertText (device+'_fw', objResponse['device_values'][device]['fw_ver'], 'devicetable');
+                shngInsertText (device+'_wifi', objResponse['device_values'][device]['wifi_signal']+' dbm', 'devicetable');
+			}
+
+			for (var device in objResponse['device_values']) {
+			    if (objResponse['device_values'][device]['sensors'] != null) {
+			        if (objResponse['device_values'][device]['sensors']['ENERGY'] != null) {
+				        shngInsertText (device+'_voltage', objResponse['device_values'][device]['sensors']['ENERGY']['voltage']+ 'V', 'energytable');
+                        shngInsertText (device+'_current', objResponse['device_values'][device]['sensors']['ENERGY']['current']+ 'A', 'energytable');
+                        shngInsertText (device+'_power', objResponse['device_values'][device]['sensors']['ENERGY']['power']+ 'W', 'energytable');
+                        shngInsertText (device+'_apparent_power', objResponse['device_values'][device]['sensors']['ENERGY']['apparent_power']+ 'W', 'energytable');
+                        shngInsertText (device+'_reactive_power', objResponse['device_values'][device]['sensors']['ENERGY']['reactive_power']+ 'VA', 'energytable');
+                        shngInsertText (device+'_today', objResponse['device_values'][device]['sensors']['ENERGY']['today']+ 'kWh', 'energytable');
+                        shngInsertText (device+'_yesterday', objResponse['device_values'][device]['sensors']['ENERGY']['yesterday']+ 'kWh', 'energytable');
+                        shngInsertText (device+'_total', objResponse['device_values'][device]['sensors']['ENERGY']['total']+ 'kWh', 'energytable');
+                        shngInsertText (device+'_total_starttime', objResponse['device_values'][device]['sensors']['ENERGY']['total_starttime'], 'energytable');
+	                }
+                    if (objResponse['device_values'][device]['sensors']['DS18B20'] != null) {
+				        shngInsertText (device+'DS18B20_temp', objResponse['device_values'][device]['sensors']['DS18B20']['temp']+ '°C', 'environtable');
+	                }
+                    if (objResponse['device_values'][device]['sensors']['AM2301'] != null) {
+				        shngInsertText (device+'AM2301_temp', objResponse['device_values'][device]['sensors']['AM2301']['temp']+ '°C', 'environtable');
+                        shngInsertText (device+'AM2301_hum', objResponse['device_values'][device]['sensors']['AM2301']['hum']+ '%rH', 'environtable');
+                        shngInsertText (device+'AM2301_dew', objResponse['device_values'][device]['sensors']['AM2301']['dewpoint']+ '°C', 'environtable');
+	                }
+                }
+                if (objResponse['device_values'][device]['lights'] != null) {
+                    if (objResponse['device_values'][device]['lights']['hsb'] != undefined) {
+                        shngInsertText (device+'hsb', objResponse['device_values'][device]['lights']['hsb'], 'lightstable');
+                    }
+                    if (objResponse['device_values'][device]['lights']['dimmer'] != undefined) {
+                        shngInsertText (device+'dimmer', objResponse['device_values'][device]['lights']['dimmer'], 'lightstable');
+                    }
+                    if (objResponse['device_values'][device]['lights']['color'] != undefined) {
+                        shngInsertText (device+'color', objResponse['device_values'][device]['lights']['color'], 'lightstable');
+                    }
+                    if (objResponse['device_values'][device]['lights']['ct'] != undefined) {
+                        shngInsertText (device+'ct', objResponse['device_values'][device]['lights']['ct'], 'lightstable');
+                    }
+                    if (objResponse['device_values'][device]['lights']['scheme'] != undefined) {
+                        shngInsertText (device+'scheme', bjResponse['device_values'][device]['lights']['scheme'], 'lightstable');
+                    }
+                    if (objResponse['device_values'][device]['lights']['fade'] != undefined) {
+                        shngInsertText (device+'fade', objResponse['device_values'][device]['lights']['fade'], 'lightstable');
+                    }
+                    if (objResponse['device_values'][device]['lights']['speed'] != undefined) {
+                        shngInsertText (device+'speed', objResponse['device_values'][device]['lights']['speed'], 'lightstable');
+                    }
+                    if (objResponse['device_values'][device]['lights']['ledtable'] != undefined) {
+                        shngInsertText (device+'ledtable', objResponse['device_values'][device]['lights']['ledtable'], 'lightstable');
+                    }
+                }
+                if (objResponse['device_values'][device]['rf'] != null) {
+                    if (objResponse['device_values'][device]['rf']['rf_received'] != undefined) {
+                        shngInsertText (device+'rf_received', objResponse['device_values'][device]['rf']['rf_received'], 'rftable');
+                    }
+                    if (objResponse['device_values'][device]['rf']['rf_send_result'] != undefined) {
+                        shngInsertText (device+'rf_send_result', objResponse['device_values'][device]['rf']['rf_send_result'], 'rftable');
+                    }
+                    if (objResponse['device_values'][device]['rf']['rfkey_result'] != undefined) {
+                        shngInsertText (device+'rfkey_result', objResponse['device_values'][device]['rf']['rfkey_result'], 'rftable');
+                    }
+                }
+			}
+
+			shngInsertText ('broker_uptime', objResponse['broker_uptime']);
+
+			shngInsertText ('version', objResponse['broker_info']['version']);
+			shngInsertText ('active_clients', objResponse['broker_info']['active_clients']);
+			shngInsertText ('subscriptions', objResponse['broker_info']['subscriptions']);
+			shngInsertText ('stored_messages', objResponse['broker_info']['stored_messages']);
+			shngInsertText ('retained_messages', objResponse['broker_info']['retained_messages']);
+
+			shngInsertText ('msg_rcv_1min', objResponse['broker_info']['msg_rcv_1min']);
+			shngInsertText ('msg_rcv_5min', objResponse['broker_info']['msg_rcv_5min']);
+			shngInsertText ('msg_rcv_15min', objResponse['broker_info']['msg_rcv_15min']);
+			shngInsertText ('msg_snt_1min', objResponse['broker_info']['msg_snt_1min']);
+			shngInsertText ('msg_snt_5min', objResponse['broker_info']['msg_snt_5min']);
+			shngInsertText ('msg_snt_15min', objResponse['broker_info']['msg_snt_15min']);
+		}
+	}
+</script>
+{% endblock pluginscripts %}
+
+{% block headtable %}
+    <table class="table table-striped table-hover">
+        <tbody>
+			<tr>
+				<td class="py-1"><strong>{{_('Broker Host')}}</strong></td>
+				<td class="py-1">{{ p.broker_config.host }}</td>
+				<td class="py-1" width="50px"></td>
+				<td class="py-1"><strong>{{_('Broker Port')}}</strong></td>
+				<td class="py-1">{{ p.broker_config.port }}</td>
+				<td class="py-1" width="50px"></td>
+			</tr>
+			<tr>
+				<td class="py-1"><strong>{{_('Benutzer')}}</strong></td>
+				<td class="py-1">{{ p.broker_config.user }}</td>
+				<td class="py-1"></td>
+				<td class="py-1"><strong>{{_('Passwort')}}</strong></td>
+				<td class="py-1">
+				{% if p.broker_config.password %}
+					{% for letter in p.broker_config.password %}*{% endfor %}
+				{% endif %}
+				</td>
+				<td class="py-1"></td>
+			</tr>
+			<tr>
+				<td class="py-1"><strong>{{_('QoS')}}</strong></td>
+				<td class="py-1">{{ p.broker_config.qos }}</td>
+				<td class="py-1"></td>
+				<td class="py-1"><strong>{{_('full_topic')}}</strong></td>
+				<td class="py-1">{{ p.full_topic }}</td>
+				<td class="py-1"></td>
+			</tr>
+		</tbody>
+	</table>
+{% endblock headtable %}
+
+
+<!--
+	Additional buttons for the web interface (if any are needed) - displayed below the headtable-section
+-->
+{% block buttons %}
+{% endblock %}
+
+<!--
+	Define the number of tabs for the body of the web interface (1 - 3)
+-->
+{% set tabcount = 6 %}
+
+
+<!--
+	Set the tab that will be visible on start, if another tab that 1 is wanted (1 - 3)
+-->
+{% if p.tasmota_items == [] %}
+	{% set start_tab = 2 %}
+{% endif %}
+
+
+<!--
+	Content block for Webinterface tabs
+-->
+{% set tab1title = _("<strong>" ~ p.get_shortname() ~ " Items</strong>") %}
+{% block bodytab1 %}
+<div class="table-responsive" style="margin-left: 3px; margin-right: 3px;" class="row">
+    <div class="mb-2">
+        <span id='webif_pagelength' style="display:none">{{ webif_pagelength }}</span>
+    </div>
+    <div class="col-sm-12">
+        <table id="itemtable" class="table table-striped table-hover pluginList">
+            <thead>
+                <tr class="shng_heading">
+                    <th>{{ _('Item') }}</th>
+                    <th>{{ _('Typ') }}</th>
+                    <th>{{ _('Wert') }}</th>
+                    <th>{{ _('Tasmota Topic') }}</th>
+                    <th>{{ _('Relais') }}</th>
+                    <th>{{ _('Letztes Update') }}</th>
+                    <th>{{ _('Letzter Change') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in p.tasmota_items %}
+                    {% set item_id = item.id() %}
+                    <tr>
+                        <td class="py-1">{{ item._path }}</td>
+                        <td class="py-1">{{ item._type }}</td>
+                        <td class="py-1" id="{{ item_id }}_value">{{ _('.') }}{{ item() }}</td>
+                        <td class="py-1">{{ p.get_iattr_value(item.conf, 'tasmota_topic') }}</td>
+                        {%  if p.get_iattr_value(item.conf, 'tasmota_relay') is in ['1', '2', '3', '4', '5', '6', '7', '8'] %}
+                            <td class="py-1">{{ p.get_iattr_value(item.conf, 'tasmota_relay') }}</td>
+                        {%  elif p.get_iattr_value(item.conf, 'tasmota_attr') == 'relay' %}
+                            <td class="py-1">1</td>
+                        {% else %}
+                            <td class="py-1">-</td>
+                        {% endif %}
+                        <td class="py-1" id="{{ item_id }}_last_update">{{ _('.') }}{{ item.last_update().strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                        <td class="py-1" id="{{ item_id }}_last_change">{{ _('.') }}{{ item.last_change().strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+
+{% set tab2title = _("<strong>" ~ p.get_shortname() ~ " Devices</strong>") %}
+{% block bodytab2 %}
+<div class="table-responsive" style="margin-left: 3px; margin-right: 3px;" class="row">
+    <div class="mb-2">
+        <span id='webif_pagelength' style="display:none">{{ webif_pagelength }}</span>
+    </div>
+    <div class="col-sm-12">
+        <table id="devicetable" class="table_2 table-striped table-hover pluginList display">
+            <thead>
+                <tr class="shng_heading">
+                    <th>{{ _('Tasmota Topic') }}</th>
+                    <th>{{ _('Online') }}</th>
+                    <th>{{ _('Friendy Name') }}</th>
+                    <th>{{ _('Mac Adresse') }}</th>
+                    <th>{{ _('IP Adresse') }}</th>
+                    <th>{{ _('Uptime') }}</th>
+                    <th>{{ _('Sensor Type') }}</th>
+                    <th>{{ _('Firmware Version') }}</th>
+                    <th>{{ _('Module') }}</th>
+                    <th>{{ _('Wifi') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for device in p.tasmota_devices %}
+                    {% if 'fw_ver' in p.tasmota_devices[device] %}  <!-- Nur die Devices darstellen, die wirklich TASMOTA Devices sind; Zur Prüfung wird die Firmware hergenommen -->
+                        <tr>
+                            <td class="py-1"><a class="text-shng" href="http://{{ p.tasmota_devices[device].ip }}" target="_blank">{{ device }}</a></td>
+                            <td class="py-1" id="{{ device }}_online">.{{ p.tasmota_devices[device].online }}</td>
+                            <td class="py-1">{{ p.tasmota_devices[device].friendly_name }}</td>
+                            <td class="py-1">{{ p.tasmota_devices[device].mac }}</td>
+                            <td class="py-1">{{ p.tasmota_devices[device].ip }}</td>
+                            <td class="py-1" id="{{ device }}_uptime">.{{ p.tasmota_devices[device].uptime }}</td>
+                            <td class="py-1">
+                                {% if p.tasmota_devices[device]['sensors'] != {} %}
+                                    {% for key in p.tasmota_devices[device]['sensors'] %}
+                                        {{ key }}
+                                        {%if not loop.last%}, {%endif%}
+                                    {% endfor %}
+                                {% else %}
+                                        -
+                                {% endif %}
+                            </td>
+                            <td class="py-1" id="{{ device }}_fw">.{{ p.tasmota_devices[device].fw_ver }}</td>
+                            <td class="py-1">{{ p.tasmota_devices[device].module }}</td>
+                            {%  if p.tasmota_devices[device]['wifi_signal'] %}
+                                <td class="py-1" id="{{ device }}_wifi">.{{ p.tasmota_devices[device].wifi_signal }} dBm </td>
+                            {% else %}
+                                <td class="py-1"></td>
+                            {% endif %}
+                        </tr>
+                    {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+
+{% set tab3title = _("<strong>" ~ p.get_shortname() ~ " " ~ _('Details') ~ "</strong>") %}
+{% block bodytab3 %}
+<div class="table-responsive" style="margin-left: 3px; margin-right: 3px;" class="row">
+    <div class="col-sm-12">
+        <table id="energytable" class="table_3 table-striped table-hover pluginList display">
+            <caption>ENERGY SENSORS</caption>
+            <thead>
+                <tr class="shng_heading">
+                    <th>{{ _('Tasmota Topic') }}</th>
+                    <th>{{ _('Spannung') }}</th>
+                    <th>{{ _('Strom') }}</th>
+                    <th>{{ _('Leistung') }}</th>
+                    <!--
+                    <th>{{ _('Schein Leistung') }}</th>
+                    <th>{{ _('Blind Leistung') }}</th>
+                    -->
+                    <th>{{ _('Heute') }}</th>
+                    <th>{{ _('Gestern') }}</th>
+                    <th>{{ _('Gesamt') }}</th>
+                    <th width="200">{{ _('Gesamt - Startzeit') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for device in p.tasmota_devices %}
+                    {% if p.tasmota_devices[device]['sensors']['ENERGY'] %}
+                        <tr>
+                            <td class="py-1"><a class="text-shng" href="http://{{ p.tasmota_devices[device].ip }}" target="_blank">{{ device }}</a></td>
+                            <td class="py-1" id="{{ device }}_voltage">{{ p.tasmota_devices[device]['sensors']['ENERGY']['voltage'] }}V.</td>
+                            <td class="py-1" id="{{ device }}_current">{{ p.tasmota_devices[device]['sensors']['ENERGY']['current'] }}A.</td>
+                            <td class="py-1" id="{{ device }}_power">{{ p.tasmota_devices[device]['sensors']['ENERGY']['power'] }}W</td>
+                    <!--
+                            <td class="py-1" id="{{ device }}_apparent_power">{{ p.tasmota_devices[device]['sensors']['ENERGY'].apparent_power }}W</td>
+                            <td class="py-1" id="{{ device }}_reactive_power">{{ p.tasmota_devices[device]['sensors']['ENERGY'].reactive_power }}VA</td>
+                    -->
+                            <td class="py-1" id="{{ device }}_today">{{ p.tasmota_devices[device]['sensors']['ENERGY']['today'] }}kWh</td>
+                            <td class="py-1" id="{{ device }}_yesterday">{{ p.tasmota_devices[device]['sensors']['ENERGY']['yesterday'] }}kWh</td>
+                            <td class="py-1" id="{{ device }}_total">{{ p.tasmota_devices[device]['sensors']['ENERGY']['total'] }}kWh</td>
+                            <td class="py-1" id="{{ device }}_total_starttime">{{ p.tasmota_devices[device]['sensors']['ENERGY']['total_starttime'] }}</td>
+                        </tr>
+                        {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="container-fluid m-2">
+    <table id="environtable" class="table_4 table-striped table-hover pluginList display">
+        <caption>ENVIRONMENTAL SENSORS</caption>
+        <thead>
+            <tr class="shng_heading">
+                <th>{{ _('Tasmota Topic') }}</th>
+                <th>{{ _('Temperatur') }}</th>
+                <th>{{ _('Luftfeuchtigkeit') }}</th>
+                <th>{{ _('Taupunkt') }}</th>
+                <th>{{ _('1w-ID') }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if p.tasmota_meta['ds18b20'] == True %}
+                {% for device in p.tasmota_devices %}
+                    {% if p.tasmota_devices[device]['sensors'] %}
+                        {% if p.tasmota_devices[device]['sensors']['DS18B20'] %}
+                            <tr>
+                                <td class="py-1"><a class="text-shng" href="http://{{ p.tasmota_devices[device].ip }}" target="_blank">{{ device }}</a></td>
+                                <td class="py-1" id="{{ device }}DS18B20_temp">{{ p.tasmota_devices[device]['sensors']['DS18B20'].temp }}°C.</td>
+                                <td class="py-1">-</td>
+                                <td class="py-1">-</td>
+                                <td class="py-1">{{ p.tasmota_devices[device]['sensors']['DS18B20'].id }}</td>
+                            </tr>
+                        {% endif %}
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+            {% if p.tasmota_meta['am2301'] == True %}
+                {% for device in p.tasmota_devices %}
+                    {% if p.tasmota_devices[device]['sensors'] %}
+                        {% if p.tasmota_devices[device]['sensors']['AM2301'] %}
+                            <tr>
+                                <td class="py-1"><a class="text-shng" href="http://{{ p.tasmota_devices[device].ip }}" target="_blank">{{ device }}</a></td>
+                                <td class="py-1" id="{{ device }}AM2301_temp">{{ p.tasmota_devices[device]['sensors']['AM2301'].temp }}°C.</td>
+                                <td class="py-1" id="{{ device }}AM2301_hum">{{ p.tasmota_devices[device]['sensors']['AM2301'].hum }}%rH.</td>
+                                <td class="py-1" id="{{ device }}AM2301_dew">{{ p.tasmota_devices[device]['sensors']['AM2301'].dewpoint }}°C.</td>
+                                <td class="py-1">-</td>
+                            </tr>
+                        {% endif %}
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+
+<div class="container-fluid m-2">
+    <table id="lightstable" class="table_5 table-striped table-hover pluginList display">
+        <caption>LIGHTS</caption>
+        <thead>
+            <tr class="shng_heading">
+                <th>{{ _('Tasmota Topic') }}</th>
+                <th>{{ _('HSB') }}</th>
+                <th>{{ _('Dimmer') }}</th>
+                <th>{{ _('Color') }}</th>
+                <th>{{ _('CT') }}</th>
+                <th>{{ _('Scheme') }}</th>
+                <th>{{ _('Fade') }}</th>
+                <th>{{ _('Speed') }}</th>
+                <th>{{ _('LED-Table') }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if p.tasmota_meta['lights'] == True %}
+                {% for device in p.tasmota_devices %}
+                    {% if p.tasmota_devices[device]['lights'] %}
+                        <tr>
+                            <td class="py-1"><a class="text-shng" href="http://{{ p.tasmota_devices[device].ip }}" target="_blank">{{ device }}</a></td>
+                            <td class="py-1" id="{{ device }}hsb">{{ p.tasmota_devices[device]['lights'].hsb }}.</td>
+                            <td class="py-1" id="{{ device }}dimmer">{{ p.tasmota_devices[device]['lights'].dimmer }}.</td>
+                            <td class="py-1" id="{{ device }}color">{{ p.tasmota_devices[device]['lights'].color }}.</td>
+                            <td class="py-1" id="{{ device }}ct">{{ p.tasmota_devices[device]['lights'].ct }}.</td>
+                            <td class="py-1" id="{{ device }}scheme">{{ p.tasmota_devices[device]['lights'].scheme }}.</td>
+                            <td class="py-1" id="{{ device }}fade">{{ p.tasmota_devices[device]['lights'].fade }}.</td>
+                            <td class="py-1" id="{{ device }}speed">{{ p.tasmota_devices[device]['lights'].speed }}.</td>
+                            <td class="py-1" id="{{ device }}ledtable">{{ p.tasmota_devices[device]['lights'].ledtable }}.</td>
+                        </tr>
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+
+<div class="container-fluid m-2">
+    <table id="rftable" class="table_6 table-striped table-hover pluginList display">
+    <caption>RF</caption>
+        <thead>
+            <tr class="shng_heading">
+                <th>{{ _('Tasmota Topic') }}</th>
+                <th>{{ _('RF-Received') }}</th>
+                <th>{{ _('RF-Send Result') }}</th>
+                <th>{{ _('RF-Key Result') }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if p.tasmota_meta['rf'] == True %}
+                {% for device in p.tasmota_devices %}
+                    {% if p.tasmota_devices[device]['rf'] %}
+                        <tr>
+                            <td class="py-1"><a class="text-shng" href="http://{{ p.tasmota_devices[device].ip }}" target="_blank">{{ device }}</a></td>
+                            <td class="py-1" id="{{ device }}rf_received">{{ p.tasmota_devices[device]['rf'].rf_received }}</td>
+                            <td class="py-1" id="{{ device }}rf_send_result">{{ p.tasmota_devices[device]['rf'].rf_send_result }}</td>
+                            <td class="py-1" id="{{ device }}rfkey_result">{{ p.tasmota_devices[device]['rf'].rfkey_result }}</td>
+                        </tr>
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+
+
+{% set tab4title = _("<strong>" ~ p.get_shortname() ~ " " ~ _('Zigbee Devices') ~ "</strong>") %}
+{% block bodytab4 %}
+<div class="container-fluid m-2">
+    <table id="zigbeetable" class="table table-striped table-hover pluginList display">
+        <thead>
+            <tr class="shng_heading">
+                <th>{{ _('#') }}</th>
+                <th>{{ _('Device ID') }}</th>
+                <th>{{ _('Meta Data') }}</th>
+                <th>{{ _('Content Data') }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for device in p.tasmota_zigbee_devices %}
+                <tr>
+                    <td class="py-1">{{ loop.index }}</td>
+                    <td class="py-1">{{ device }}</td>
+                    <td class="py-1">{{ p.tasmota_zigbee_devices[device]['meta'] }}</td>
+                    <td class="py-1">{{ p.tasmota_zigbee_devices[device]['data'] }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+
+
+{% set tab5title = _("<strong>" ~ " Broker Information</strong>") %}
+{% block bodytab5 %}
+<table class="table table-striped table-hover pluginList">
+    <tbody>
+        <tr>
+            <td><strong>{{ 'Broker Version' }}</strong></td>
+            <td id="version" class="py-1">{{ p._broker.version }}</td>
+            <td>{{ connection_result }}</td>
+    <!--
+            <td width="500"></td>
+    -->
+        </tr>
+        <tr>
+            <td><strong>{{ 'Active Clients' }}</strong></td>
+            <td id="active_clients" class="py-1">.{{ p._broker.active_clients }}</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td><strong>{{ 'Subscriptions' }}</strong></td>
+            <td id="subscriptions" class="py-1">.{{ p._broker.subscriptions }}</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td><strong>{{ 'Messages stored' }}</strong></td>
+            <td id="stored_messages" class="py-1">.{{ p._broker.stored_messages }}</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td><strong>{{ 'Retained Messages' }}</strong></td>
+            <td id="retained_messages" class="py-1">.{{ p._broker.retained_messages }}</td>
+            <td></td>
+        </tr>
+        {% if p.broker_monitoring %}
+            <tr>
+                <td class="py-1" colspan="3"><strong>&nbsp;</strong></td>
+            </tr>
+            <tr>
+                <td><strong>{{ _('Laufzeit') }}</strong></td>
+                <td id="broker_uptime" class="py-1">.{{ p.broker_uptime() }}</td>
+                <td width="500"></td>
+            </tr>
+            <tr>
+                <td class="py-1" colspan="3"><strong>&nbsp;</strong></td>
+            </tr>
+        {% endif %}
+    </tbody>
+</table>
+
+{% if p.broker_monitoring %}
+<table class="table table-striped table-hover pluginList">
+	<thead>
+		<th class="py-1">{{ _('Message Durchsatz') }}</th>
+		<th class="py-1">{{ _('letzte Minute') }}</th>
+		<th class="py-1">{{ _('letzte 5 Min.') }}</th>
+		<th class="py-1">{{ _('letzte 15 Min.') }}</th>
+		<th width="500"></th>
+	</thead>
+    <tbody>
+        <tr>
+            <td>{{ _('Durchschnittlich Messages je Minute empfangen') }}</td>
+            <td id="msg_rcv_1min" class="py-1">.{{ p._broker.msg_rcv_1min }}</td>
+            <td id="msg_rcv_5min" class="py-1"> &nbsp; &nbsp; .{{ p._broker.msg_rcv_5min }}</td>
+            <td id="msg_rcv_15min" class="py-1"> &nbsp; &nbsp; .{{ p._broker.msg_rcv_15min }}</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>{{ _('Durchschnittlich Messages je Minute gesendet') }}</td>
+            <td id="msg_snt_1min" class="py-1">.{{ p._broker.msg_snt_1min }}</td>
+            <td id="msg_snt_5min" class="py-1"> &nbsp; &nbsp; .{{ p._broker.msg_snt_5min }}</td>
+            <td id="msg_snt_15min" class="py-1"> &nbsp; &nbsp; .{{ p._broker.msg_snt_15min }}</td>
+            <td></td>
+        </tr>
+    </tbody>
+</table>
+{% endif %}
+{% endblock %}
+
+
+{% set tab6title = _("<strong>" ~ p.get_shortname() ~ " " ~ _('Maintenance') ~ "</strong>") %}
+{% block bodytab6 %}
+<div class="container-fluid m-2">
+    <table id="mtable1" class="table table-striped table-hover pluginList">
+        <thead>
+            <tr class="shng_heading">
+                <th>{{ _('Tasmota Device') }}</th>
+                <th>{{ _('Tasmota Device Details') }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for device in p.tasmota_devices %}
+                <tr>
+                    <td>{{ device }}</td>
+                    <td>{{ p.tasmota_devices[device] }}</td>
+                </tr>
+            {% endfor %}
+            <tr>
+                <td>p.tasmota_zigbee_bridge</td>
+                <td>{{ p.tasmota_zigbee_bridge }}</td>
+            </tr>
+            <tr>
+                <td>META-Daten</td>
+                <td>{{ p.tasmota_meta }}</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<div class="container-fluid m-2">
+    <table id="mtable2" class="table table-striped table-hover pluginList">
+        <thead>
+            <tr class="shng_heading">
+                <th>{{ _('Zigbee Device') }}</th>
+                <th>{{ _('Zigbee Device Details') }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for device in p.tasmota_zigbee_devices %}
+                <tr>
+                    <td>{{ device }}</td>
+                    <td>{{ p.tasmota_zigbee_devices[device] }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+
+
+

@@ -73,7 +73,7 @@ Im ersten Tab Vorwerk OAuth2 findet sich direkt die Schritt fuer Schritt Anleitu
 Changelog
 ---------
 V1.6.8     added decoding of command availability status, e.g. "start" command available
-           If start command with persisten map is rejected due to "not_on_charge_base" error, retry start with non-persistent map.
+           If start command with persistent map is rejected due to "not_on_charge_base" error, retry start with non-persistent map.
 
 V1.6.6     added option to clear errors/alarms in neato/vorwerk backend via plugin's webif
 

@@ -1,0 +1,10 @@
+# translations for the web interface
+plugin_translations:
+    # Translations for the plugin specially for the web interface
+    'Zeile zum Ausführen in Python eingeben:':          {'de': '=', 'en': 'Command to execute in python'}
+    'Ausführen!':                                       {'de': '=', 'en': 'Execute!'}
+    'Ergebnis':                                         {'de': '=', 'en': 'Result'}
+    'Python Code':                                      {'de': '=', 'en': '='}
+    'Evalausdruck eingeben:':                           {'de': '=', 'en': 'Eval term to execute:'}
+    'Eval Ausdruck':                                    {'de': '=', 'en': 'Eval term'}
+    'Itempfad angeben (optional zum Testen relativer Itemangaben):': {'de': '=', 'en': 'Item path (optional to check relative item evaluation)'}

@@ -135,6 +135,15 @@ class WebserviceHttpHandler(BaseHTTPRequestHandler):
             self.wfile.write(file)
         except ConnectionResetError:
             self.logger.debug("Connection reset by partner")
+        except IOError as ex:
+            if ex.errno == errno.EPIPE:
+                # EPIPE error
+                self.logger.error(f"EPipe exception occured while delivering file {file_path}")
+                self.logger.error(f"Exception: {ex}")
+            else:
+                # Other error
+                self.logger.error(f"Error delivering file {file_path}")
+                self.logger.error(f"Exception: {ex}")
         except Exception as ex:
             self.logger.error(f"Error delivering file {file_path}")
             self.logger.error(f"Exception: {ex}")
@@ -1578,18 +1587,25 @@ class Speaker(object):
             for item in sonos_speaker[member].mute_items:
                 item(value, 'Sonos')
 
-    def set_mute(self, value: bool) -> bool:
+    def set_mute(self, value: bool, group_command: bool = True) -> bool:
         """
         Calls the SoCo mute method and mutes /un-mutes the speaker.
         :param value: True for mute, False for un-mute
+        :param group_command: Should the mute command be set to all speaker of the group? Default: True
         :return: True, if successful, otherwise False.
         """
         #self.logger.info("Debug: set_mute: check_property: {0}".format(self._check_property()))
         self.logger.info("Debug: set_mute: self.coordinator: {0}".format(self.coordinator))
         try:
             if not self._check_property():
-                return False
-            sonos_speaker[self.coordinator].soco.mute = value
+                return False            
+
+            if group_command:
+                for member in self.zone_group_members:
+                    sonos_speaker[member].soco.mute = value
+            else:
+                sonos_speaker[self.coordinator].soco.mute = value
+
             return True
         except Exception as ex:
             self.logger.error(ex)
@@ -2426,7 +2442,7 @@ class Speaker(object):
 
 class Sonos(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.6.5"
+    PLUGIN_VERSION = "1.6.7"
 
     def __init__(self, sh, *args, **kwargs):
         """

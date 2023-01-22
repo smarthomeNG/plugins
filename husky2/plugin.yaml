@@ -9,7 +9,7 @@ plugin:
 #    tester:                         # Who tests this plugin?
     state: develop                  # change to ready when done with development
     keywords: mower, husqvarna, automover, lawn
-    documentation: https://www.smarthomeng.de/user/plugins/husky2/user_doc.html
+    documentation: https://smarthomeng.github.io/smarthome/plugins/husky2/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1764058-support-thread
 
     version: 2.1.0                  # Plugin version (must match the version specified in __init__.py)

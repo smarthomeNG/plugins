@@ -143,9 +143,24 @@ item_attributes:
         description:
             de: 'URL für das Standbild einer Kamera'
             en: 'URL for the preview picture of the camera'
-#    alexa_alias:
-#        type: str
-#        mandatory: False
-#        description:
-#            de: 'nur für Payload-V2 benötigt'
-#            en: 'only for Payload V2 needed'
+
+    alexa_alias:
+        type: str
+        mandatory: False
+        description:
+            de: 'Alternative Alexa-Gerätenamen, um das Gerät anzusprechen'
+            en: 'alternative Alexa device names to access the device'
+
+    alexa_range_delta:
+        type: str
+        mandatory: False
+        description:
+            de: ''
+            en: ''
+
+    alexa_color_temp_delta:
+        type: str
+        mandatory: False
+        description:
+            de: ''
+            en: ''

@@ -12,8 +12,8 @@ plugin:
     documentation: http://smarthomeng.de/user/plugins/database/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1021844-neues-database-plugin
 
-    version: 1.6.3                 # Plugin version
-    sh_minversion: 1.8.0           # minimum shNG version to use this plugin
+    version: 1.6.9                 # Plugin version
+    sh_minversion: 1.9.3.2         # minimum shNG version to use this plugin
 #    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
     restartable: unknown
@@ -66,8 +66,8 @@ parameters:
 
     max_delete_logentries:
         type: int
-        default: 1500
-        valid_min: 20
+        default: 20000
+        valid_min: 1000
         description:
             de: "Maximal auf einmal zu löschende Anzahl an Log Einträgen mit dem database_maxage Attribut, reduziert die Belastung der Datenbank bei alten Datenbeständen"
             en: "Maximum number of Logentries to delete at once with database_maxage attribute, reduces load on database with old datasets"
@@ -80,9 +80,21 @@ parameters:
             de: "Falls dieser Parameter einen Wert größer 0 enthält: Standard maxage für Items, die kein maxage gesetzt haben"
             en: "If this parameter is > 0: maxage for Items that don't have a maxage set."
 
+    copy_database:
+        type: bool
+        default: False
+        description:
+            de: "Nur für SQLite3: Auf True setzen, um beim Start von SmartHomeNG eine Kopie der Datenbank Datei zu erzeugen"
+            en: "For SQLite3 only: Set to True to make a copy of the database file on startup of SmartHomeNG"
+
+    copy_database_name:
+        type: str
+        description:
+            de: "Nur für SQLite3: Pfad/Name der Datenbank Kopie"
+            en: "For SQLite3 only: Path/Name of the copy of the database file"
+
     webif_pagelength:
         type: int
-        default: 0
         valid_list:
           - -1
           - 0
