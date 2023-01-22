@@ -104,13 +104,13 @@ class Ksem:
         return round((u64_value.decode_64bit_uint() * 0.0001),2)
 
 
-    decRow = [0, 2, 512, 516]
+    decRow = [0, 2, 4, 6, 16, 18, 24, 512, 516, 520, 524, 544, 548]
 
-    __descriptionRow = ['Active Power -', 'Active Power +', 'Active energy+', 'Active energy-']
+    __descriptionRow = ['Active Power +', 'Active Power -', 'Reactive Power +', 'Reactive Power -', 'Apparent power +', 'Apparent power -', 'Power Factor', 'Active energy+', 'Active energy-', 'Reactive energy+', 'Reactive energy-', 'Apparent energy+', 'Apparent energy-']
 
-    __unitRow = ['W', 'W', 'Wh', 'Wh']
+    __unitRow = ['W', 'W', 'var', 'var', 'VA', 'VA', '', 'Wh', 'Wh' ,'varh', 'varh', 'VAh', 'VAh']
 
-    __typeRow = ['U32', 'U32', 'U64', 'U64']
+    __typeRow = ['U32', 'U32', 'U32', 'U32', 'U32', 'U32', 'Float', 'U64', 'U64', 'U64', 'U64', 'U64', 'U64']
 
 
 class Register:

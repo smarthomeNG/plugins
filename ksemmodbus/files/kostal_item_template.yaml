@@ -8,11 +8,51 @@ Kostal:
       ksem_2: ''
       visu_acl: ro
       type: num
+    ksem_0:
+      ksem_0: ''
+      visu_acl: ro
+      type: num
+    ksem_4:
+      ksem_4: ''
+      visu_acl: ro
+      type: num
+    ksem_6:
+      ksem_6: ''
+      visu_acl: ro
+      type: num
+    ksem_16:
+      ksem_16: ''
+      visu_acl: ro
+      type: num
+    ksem_18:
+      ksem_18: ''
+      visu_acl: ro
+      type: num
+    ksem_24:
+      ksem_24: ''
+      visu_acl: ro
+      type: num
     ksem_512:
       ksem_512: ''
       visu_acl: ro
       type: num
     ksem_516:
       ksem_516: ''
+      visu_acl: ro
+      type: num
+    ksem_5520:
+      ksem_520: ''
+      visu_acl: ro
+      type: num
+    ksem_524:
+      ksem_524: ''
+      visu_acl: ro
+      type: num
+    ksem_544:
+      ksem_544: ''
+      visu_acl: ro
+      type: num
+    ksem_548:
+      ksem_548: ''
       visu_acl: ro
       type: num
