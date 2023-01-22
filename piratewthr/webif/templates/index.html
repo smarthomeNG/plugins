@@ -1,0 +1,117 @@
+{% extends "base_plugin.html" %}
+
+{% set logo_frame = false %}
+{% set use_bodytabs = true %}
+{% set tabcount = 2 %}
+
+{% block headtable %}
+<table class="table table-striped table-hover">
+	<tbody>
+        <tr>
+            <td class="py-1" style="font-weight:bold; width: 50px;">Lat</td>
+			<td class="py-1" style="width: 100px;">
+                {{ p._lat }}
+            </td>
+            <td class="py-1" style="font-weight:bold; width: 50px;">Lang</td>
+			<td class="py-1">
+                {{ p._lang }}
+            </td>
+            <td class="py-1" style="font-weight:bold; width: 50px;">Units</td>
+			<td class="py-1">
+                {{ p._units }}
+            </td>
+        </tr>
+        <tr>
+            <td class="py-1" style="font-weight:bold; width: 50px;" >Lon</td>
+			<td class="py-1" style="width: 100px;">
+               {{ p._lon }}
+            </td>
+            <td class="py-1" style="font-weight:bold; width: 50px;">Key</td>
+			<td class="py-1" colspan="3">
+               {{ p._key }}
+            </td>
+        </tr>
+		<tr>
+            <td class="py-1" style="font-weight:bold; width: 50px;">Cycle</td>
+			<td class="py-1">
+               {{ p._cycle }}
+            </td>
+            <td class="py-1" style="font-weight:bold;">URL</td>
+			<td class="py-1" colspan="3">
+                <a  target="_blank" href="{{ p._build_url() }}">{{ p._base_url }}[apikey]/...</a>
+            </td>
+        </tr>
+    </tbody>
+</table>
+{% endblock headtable %}
+
+
+{% set tab1title = "<strong>" ~ _('Items') ~ "</strong> (" ~ p.get_items()|length ~ ")" %}
+{% block bodytab1 %}
+<style>
+td.py-1.date {
+	min-width: 11em;
+}
+.hidelargetext {
+	max-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	cursor: zoom-in;
+	font-weight: 600;
+}
+
+.haslargetext {
+}
+
+</style>
+<div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
+	<div class="col-sm-12">
+		<table class="table table-striped table-hover pluginList">
+			<thead>
+				<tr class="shng_heading">
+					<th>{{ _('Pfad') }}</th>
+					<th>{{ _('Typ') }}</th>
+					<th>{{ _('ds_matchstring') }}</th>
+					<th>{{ _('Wert') }}</th>
+					<th>{{ _('Letztes Update') }}</th>
+					<th>{{ _('Letzter Change') }}</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for key, items in p.get_items().items() %}
+					{% for item in items %}
+					{% set value = item()|string %}
+					{% set l = value | length %}
+					{% if l > 50 %}
+						{% set moreclasses = ' hidelargetext' %}
+						{% set togglelargetext = "onclick='$(this).toggleClass(\"hidelargetext\")'" %}
+					{% else %}
+						{% set moreclasses = '' %}
+						{% set togglelargetext = '' %}
+					{% endif %}
+					<tr id="{{ loop.index }}_click">
+						<td class="py-1 item">{{ item.property.path }}</td>
+						<td class="py-1 type">{{ item.property.type }}</td>
+						<td class="py-1 matchstring">{{ key }}</td>
+						<td class="py-1 value{{ moreclasses }}" {{ togglelargetext }}>{{ item() }}</td>
+						<td class="py-1 date">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+						<td class="py-1 date">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+					</tr>
+					{% endfor %}
+				{% endfor %}
+			</tbody>
+		</table>
+	</div>
+</div>
+{% endblock bodytab1 %}
+
+
+{% set tab2title = "<strong>" ~ _('JSON Daten') ~ "</strong>" %}
+{% block bodytab2 %}
+
+<div class="container-fluid m-2">
+	({{ json_data }})
+</div>
+
+{% endblock bodytab2 %}
