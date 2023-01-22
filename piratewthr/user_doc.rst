@@ -120,7 +120,7 @@ Oben rechts werden allgemeine Parameter zum Plugin angezeigt.
 
 Im ersten Tab werden die Items angezeigt, die das piratewthr Plugin nutzen:
 
-.. image:: assets/webi_tab1.jpg
+.. image:: assets/webif_tab1.jpg
    :class: screenshot
 
 Im zweiten Tab werden die piratewthr Rohdaten (JSON Format) angezeigt:

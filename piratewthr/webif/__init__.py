@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
-#  Copyright 2020-     <AUTHOR>                                   <EMAIL>
+#  Copyright 2023-  Martin Sinn                             m.sinn@gmx.de
 #########################################################################
 #  This file is part of SmartHomeNG.
 #  https://www.smarthomeNG.de
@@ -25,9 +25,7 @@
 #
 #########################################################################
 
-import datetime
-import time
-import os
+import json
 from collections import OrderedDict
 
 from lib.item import Items
@@ -103,3 +101,47 @@ class WebInterface(SmartPluginWebIf):
         pf = printdict(self.plugin.get_json_data())
         return tmpl.render(plugin_shortname=self.plugin.get_shortname(), plugin_version=self.plugin.get_version(),
                            plugin_info=self.plugin.get_info(), p=self.plugin, json_data=pf.replace('\n', '<br>').replace(' ', '&nbsp;'),)
+
+
+    @cherrypy.expose
+    def get_data_html(self, dataSet=None):
+        """
+        Return data to update the webpage
+
+        For the standard update mechanism of the web interface, the dataSet to return the data for is None
+
+        :param dataSet: Dataset for which the data should be returned (standard: None)
+        :return: dict with the data needed to update the web page.
+        """
+        if dataSet is None:
+            result_array = []
+
+            # callect data for 'items' tab
+            item_list = []
+            # for item in self.plugin.get_item_list():
+            #     item_config = self.plugin.get_item_config(item)
+            #     value_dict = {}
+            #     value_dict['path'] = item.id()
+            #     value_dict['type'] = item.type()
+            #     value_dict['not_discovered'] = (item_config['bus'] == '')
+            #     value_dict['sensor_addr'] = item_config['sensor_addr']
+            #     value_dict['deviceclass'] = item_config['deviceclass']
+            #     value_dict['value'] = item()
+            #     value_dict['value_unit'] = item_config['unit']
+            #     value_dict['last_update'] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
+            #     value_dict['last_change'] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
+            #     item_list.append(value_dict)
+
+            result = {'items': item_list}
+
+            # send result to wen interface
+            try:
+                data = json.dumps(result)
+                if data:
+                    return data
+                else:
+                    return None
+            except Exception as e:
+                self.logger.error(f"get_data_html exception: {e}")
+
+        return {}

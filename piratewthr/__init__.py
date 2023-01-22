@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 #
 #########################################################################
-#  Copyright 2018 René Frieß                      rene.friess(a)gmail.com
-#  Version 1.5.0.2
+#  Copyright 2023-  Martin Sinn                             m.sinn@gmx.de
+# based on darksky plugin:
+#  Copyright 2018   René Frieß                    rene.friess(a)gmail.com
 #########################################################################
 #
 #  This file is part of SmartHomeNG.
@@ -36,7 +37,7 @@ from .webif import WebInterface
 class PirateWeather(SmartPlugin):
 
 
-    PLUGIN_VERSION = "1.0.0"
+    PLUGIN_VERSION = "1.0.1"
 
     # https://api.pirateweather.net/forecast/[apikey]/[latitude],[longitude]
     _base_url = 'https://api.pirateweather.net/forecast/'
@@ -84,6 +85,7 @@ class PirateWeather(SmartPlugin):
     def stop(self):
         self.alive = False
 
+
     def _update_loop(self):
         """
         Starts the update loop for all known items.
@@ -93,6 +95,7 @@ class PirateWeather(SmartPlugin):
             return
 
         self._update()
+
 
     def _update(self):
         """
@@ -141,12 +144,12 @@ class PirateWeather(SmartPlugin):
                                 wrk = wrk[int(sp[0])]
                             else:
                                 self.logger.error(
-                                    "_update: invalid ds_matchstring '{}'; integer too large in matchstring".format(
+                                    "_update: invalid pw_matchstring '{}'; integer too large in matchstring".format(
                                         s))
                                 break
                         else:
                             self.logger.error(
-                                "_update: invalid ds_matchstring '{}'; integer expected in matchstring".format(
+                                "_update: invalid pw_matchstring '{}'; integer expected in matchstring".format(
                                     s))
                             break
                     else:
@@ -154,7 +157,7 @@ class PirateWeather(SmartPlugin):
                     if len(sp) == 1:
                         spl = s.split('/')
                         self.logger.debug(
-                            "_update: ds_matchstring split len={}, content={} -> '{}'".format(str(len(spl)),
+                            "_update: pw_matchstring split len={}, content={} -> '{}'".format(str(len(spl)),
                                                                                               str(spl),
                                                                                               str(wrk)))
                     sp.pop(0)
@@ -294,14 +297,14 @@ class PirateWeather(SmartPlugin):
     def parse_item(self, item):
         """
         Default plugin parse_item method. Is called when the plugin is initialized. Selects each item corresponding to
-        the ds_matchstring and adds it to an internal array
+        the pw_matchstring and adds it to an internal array
 
         :param item: The item to process.
         """
-        if self.get_iattr_value(item.conf, 'ds_matchstring'):
-            if not self.get_iattr_value(item.conf, 'ds_matchstring') in self._items:
-                self._items[self.get_iattr_value(item.conf, 'ds_matchstring')] = []
-            self._items[self.get_iattr_value(item.conf, 'ds_matchstring')].append(item)
+        if self.get_iattr_value(item.conf, 'pw_matchstring'):
+            if not self.get_iattr_value(item.conf, 'pw_matchstring') in self._items:
+                self._items[self.get_iattr_value(item.conf, 'pw_matchstring')] = []
+            self._items[self.get_iattr_value(item.conf, 'pw_matchstring')].append(item)
 
     def get_items(self):
         return self._items
