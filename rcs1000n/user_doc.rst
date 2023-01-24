@@ -93,7 +93,11 @@ Aktuell keine weiteren Beispiele notwendig.
 Web Interface
 -------------
 
-Aktuell beitzt dieses Plugin kein Web Interface.
+Diese plugin verfügt über ein Webinterface.
+
+.. image:: pictures/rcs1000n_webif.png
+  :width: 300
+  :alt: Webinterface des Plugins RCS 1000 N
 
 
 Version History
