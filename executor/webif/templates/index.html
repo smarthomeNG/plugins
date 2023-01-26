@@ -15,6 +15,8 @@ var cmPython;
 var te_resulttext;
 var cmResult;
 var max_script_entries; 
+var myItems;
+myItems == [];
 max_script_entries = {{ p._script_entries }};
 console.log("max_script_entries=",max_script_entries);
 
@@ -100,6 +102,93 @@ function deletefile() {
 	get_filelist();
 };
 
+function get_Dict(cmPython) {
+    $.ajax({
+        url: "get_autocomplete",
+        method: "GET",
+        dataType: "json",
+        success: function(myDict) {
+            console.log("got Autocomplete")
+            myAutocomplete = [];
+            for (i = 0; i < myDict.items.length; i++) {
+                if (myDict.items[i] != "." && myDict.items != "..") {
+                    myAutocomplete.push({
+                        text: myDict.items[i],
+                        displayText: myDict.items[i] + " | Item"
+                    });
+                }
+            }
+            for (i = 0; i < myDict.plugins.length; i++) {
+                if (myDict.plugins[i] != "." && myDict.plugins != "..") {
+                    myAutocomplete.push({
+                        text: myDict.plugins[i],
+                        displayText: myDict.plugins[i] + " | Plugin"
+                    });
+                }
+            }
+            registerAutocompleteHelper('autocompleteHint', myAutocomplete);
+            console.log('Stored entries to Autocomplete dict')
+            CodeMirror.commands.autocomplete_items = function(cmPython) {
+                CodeMirror.showHint(cmPython, CodeMirror.hint.autocompleteHint);
+            }
+        },
+        error: function(result) {
+            console.log("Error while receiving Autocomplete")
+
+        }
+    });
+}
+
+
+// ************************************************************************
+// registerAutocompleteHelper - seen at Web-Interface of logics from shNG
+// ************************************************************************
+function registerAutocompleteHelper(name, curDict) {
+    CodeMirror.registerHelper('hint', name, function(editor) {
+        cur = editor.getCursor();
+        curLine = editor.getLine(cur.line);
+        var start = cur.ch,
+            end = start;
+
+        console.log('Autocomplete called - autocompleteHint')
+        var charexp = /[\w\.$]+/;
+        while (end < curLine.length && charexp.test(curLine.charAt(end))) ++end;
+        while (start && charexp.test(curLine.charAt(start - 1))) --start;
+        var curWord = start != end && curLine.slice(start, end);
+        if (curWord.length > 1) {
+            curWord = curWord.trim();
+        }
+
+        var regex = new RegExp('^' + curWord, 'i');
+
+        if (searchtype == 2) {
+            searchtype = 1
+            curWord = "..."
+            var regex = new RegExp('' + curWord, 'i');
+        }
+
+        if (curWord.length >= 3) {
+            var oCompletions = {
+                list: (!curWord ? [] : curDict.filter(function(item) {
+                    return (item['displayText'].match(regex) && item['displayText']);
+                })).sort(function(a, b) {
+                    var nameA = a.text.toLowerCase(),
+                        nameB = b.text.toLowerCase()
+                    if (nameA < nameB) // sort string ascending
+                        return -1
+                    if (nameA > nameB)
+                        return 1
+                    return 0 // default return value (no sorting)
+                }),
+                from: CodeMirror.Pos(cur.line, start),
+                to: CodeMirror.Pos(cur.line, end)
+            };
+
+            return oCompletions;
+        }
+    });
+}
+
 
 $(document).ready(function(){
     te_python = document.getElementById('pycodetext');
@@ -108,6 +197,10 @@ $(document).ready(function(){
         mode: "python",
         lineNumbers: true,
         extraKeys: {	
+            "Ctrl-Space": function(cm) {
+            searchtype = 2;
+            CodeMirror.showHint(cm, CodeMirror.hint.autocompleteHint)
+            },
             "Ctrl-Q": function(cm){ cm.foldCode(cm.getCursor()); },
             Tab: function(cm) {
                 var spaces = Array(cm.getOption("indentUnit") + 1).join(" ");
@@ -117,6 +210,27 @@ $(document).ready(function(){
         foldGutter: true,
         gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
     });
+    
+    cmPython.on("keyup", function (cm, event)
+    {
+ 	searchtype = 1;
+    if (!cm.state.completionActive && /*Enables keyboard navigation in autocomplete list*/
+		(event.keyCode != 8 &&
+		event.keyCode != 9 &&
+		event.keyCode != 13 &&
+		event.keyCode != 27 &&
+		event.keyCode != 37 &&
+		event.keyCode != 38 &&
+		event.keyCode != 39 &&
+		event.keyCode != 40 &&
+		event.keyCode != 46))
+     {
+		CodeMirror.commands.autocomplete_items(cm, null, {completeSingle: false});
+	 };
+
+    });
+    get_Dict(cmPython);
+    
     cmPython.refresh();
 
     cmResult = CodeMirror(te_resulttext, {
