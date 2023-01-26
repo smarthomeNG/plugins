@@ -4351,7 +4351,7 @@ class Callmonitor:
 
         line = line.split(";")
         if self._plugin_instance.debug_log:
-            self._plugin_instance.logger.debug(line)
+            self._plugin_instance.logger.debug(f"_parse_line: line={line} to be parsed")
 
         try:
             if line[1] == "RING":
@@ -4372,7 +4372,7 @@ class Callmonitor:
         """
 
         if self._plugin_instance.debug_log:
-            self._plugin_instance.logger.debug(f"Event={event}, Call from={call_from}, Call to={call_to}, Time={dt}, CallID={callid}, Branch={branch}")
+            self._plugin_instance.logger.debug(f"_trigger: Event={event}, Call from={call_from}, Call to={call_to}, Time={dt}, CallID={callid}, Branch={branch}")
 
         # set generic item value
         for item in self._items:
@@ -4426,7 +4426,7 @@ class Callmonitor:
                     elif avm_data_type == 'last_call_date_incoming':
                         if self._plugin_instance.debug_log:
                             self._plugin_instance.logger.debug(f"Setting last_call_date_incoming: {time}")
-                        item(str(time), self._plugin_instance.get_fullname())
+                        item(str(dt), self._plugin_instance.get_fullname())
                     elif avm_data_type == 'call_event_incoming':
                         if self._plugin_instance.debug_log:
                             self._plugin_instance.logger.debug(f"Setting call_event_incoming: {event.lower()}")
@@ -4462,7 +4462,7 @@ class Callmonitor:
                     else:
                         item(call_to, self._plugin_instance.get_fullname())
                 elif avm_data_type == 'last_call_date_outgoing':
-                    item(str(time), self._plugin_instance.get_fullname())
+                    item(str(dt), self._plugin_instance.get_fullname())
                 elif avm_data_type == 'call_event_outgoing':
                     item(event.lower(), self._plugin_instance.get_fullname())
                 elif avm_data_type == 'last_number_outgoing':
