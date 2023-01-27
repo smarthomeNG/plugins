@@ -40,7 +40,7 @@
         { className: "no-sort actions", targets: -1 }
         ].concat($.fn.dataTable.defaults.columnDefs),
         pageLength: webif_pagelength});
-
+      {%  if p.count_logentries %}
       orphantable = $('#orphantable').DataTable( {
         pageResize: resize,
         columnDefs: [
@@ -53,6 +53,19 @@
         { className: "logcount", targets: 5, render: $.fn.dataTable.render.number('.', ',', 0, '') },
         ].concat($.fn.dataTable.defaults.columnDefs),
         pageLength: webif_pagelength});
+      {% else %}
+      orphantable = $('#orphantable').DataTable( {
+        pageResize: resize,
+        columnDefs: [
+        { responsivePriority: 1, targets: 1 },
+        { responsivePriority: 2, targets: 2 },
+        { className: "item", targets: 1 },
+        { className: "time", targets: 2 },
+        { className: "type", targets: 3 },
+        { className: "id", targets: 4, render: $.fn.dataTable.render.number('.', ',', 0, '')  },
+        ].concat($.fn.dataTable.defaults.columnDefs),
+        pageLength: webif_pagelength});
+      {% endif %}
 
       detailtable = $('#item_details_table').DataTable( {
         pageLength: webif_pagelength,
