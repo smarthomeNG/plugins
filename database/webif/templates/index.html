@@ -158,15 +158,15 @@
 
 {% set tab3title = _('Verwaiste Items') %}
 {% block bodytab3 %}
-	<div class="mb-2">
-		<div id="webif-orphanbuttons" style="margin-left: 10px; margin-bottom: 10px; float:right; white-space: nowrap;">
-			{% if p.remove_orphan or len(p.orphanlist) == 0 %}
-				<button type="button" disabled class="btn btn-shng btn-sm" onclick="if (confirm('{{ _('Wollen Sie alle Datensätze ohne zugehöriges Item wirklich löschen?') }}')) { jQuery.get('cleanup'); $('#cleanup').show();}">{{ _('Datenbank-Cleanup starten') }}</button>
-			{% else %}
-				<button type="button" class="btn btn-shng btn-sm" onclick="if (confirm('{{ _('Wollen Sie alle Datensätze ohne zugehöriges Item wirklich löschen?') }}')) { jQuery.get('cleanup'); $('#cleanup').show(); setTimeout(window.location.reload(), 3000); }">{{ _('Datenbank-Cleanup starten') }}</button>
-			{% endif %}
-		</div>
+<div class="container-fluid m-2 table-resize">
+	<div id="webif-orphanbuttons" style="margin-left: 10px; margin-bottom: 10px; float:right; white-space: nowrap;" class="mb-2">
+		{% if p.remove_orphan or len(p.orphanlist) == 0 %}
+			<button type="button" disabled class="btn btn-shng btn-sm" onclick="if (confirm('{{ _('Wollen Sie alle Datensätze ohne zugehöriges Item wirklich löschen?') }}')) { jQuery.get('cleanup'); $('#cleanup').show();}">{{ _('Datenbank-Cleanup starten') }}</button>
+		{% else %}
+			<button type="button" class="btn btn-shng btn-sm" onclick="if (confirm('{{ _('Wollen Sie alle Datensätze ohne zugehöriges Item wirklich löschen?') }}')) { jQuery.get('cleanup'); $('#cleanup').show(); setTimeout(window.location.reload(), 3000); }">{{ _('Datenbank-Cleanup starten') }}</button>
+		{% endif %}
 	</div>
+
 	<table id="orphantable">
 		<thead>
 		<tr><th></th>
@@ -194,6 +194,7 @@
 		{% endfor %}
 		</tbody>
 	</table>
+</div>
 {% endblock bodytab3 %}
 
 {% block buttons %}
