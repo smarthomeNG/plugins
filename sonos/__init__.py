@@ -135,6 +135,15 @@ class WebserviceHttpHandler(BaseHTTPRequestHandler):
             self.wfile.write(file)
         except ConnectionResetError:
             self.logger.debug("Connection reset by partner")
+        except IOError as ex:
+            if ex.errno == errno.EPIPE:
+                # EPIPE error
+                self.logger.error(f"EPipe exception occured while delivering file {file_path}")
+                self.logger.error(f"Exception: {ex}")
+            else:
+                # Other error
+                self.logger.error(f"Error delivering file {file_path}")
+                self.logger.error(f"Exception: {ex}")
         except Exception as ex:
             self.logger.error(f"Error delivering file {file_path}")
             self.logger.error(f"Exception: {ex}")
@@ -2433,7 +2442,7 @@ class Speaker(object):
 
 class Sonos(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.6.6"
+    PLUGIN_VERSION = "1.6.7"
 
     def __init__(self, sh, *args, **kwargs):
         """

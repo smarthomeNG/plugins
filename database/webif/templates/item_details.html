@@ -1,7 +1,7 @@
 {% extends "base_database.html" %}
 {% set dataSet = 'item_details' %}
 {% set update_params = item_id %}
-{% set update_interval = (200 * (log_array | length)) %}
+{% set update_interval = (((600 * (log_array | length)) / 1000) | round | int) * 1000 %}
 {% set tab1title = _('Database Items')+' ('+item_path+')' %}
 {% block buttons %}
 {{ super() }}
@@ -77,30 +77,31 @@ checkDate();
 <div style="float:left; width:80%;" class="table-resize">
 	<table class="table table-striped table-hover pluginList dataTableAdditional" id="item_details_table">
 		<thead>
-		<tr>
-			<th style="width: 40px;">{{ _('Item ID') }}</th>
-			<th style="width: 100px;">{{ _('Zeit') }}</th>
-			<th style="width: 60px; text-align:right">{{ _('Dauer') }} (sec)</th>
-			{% if item.property.type == 'num' %}<th style="width: 120px;">VAL_NUM</th>{% endif %}
-			{% if item.property.type == 'bool' %}<th style="width: 120px;">VAL_BOOL</th>{% endif %}
-			{% if item.property.type == 'str' %}<th>VAL_STR</th>{% endif %}
-			{% if item.property.type == 'foo' %}<th>VAL_STR</th>{% endif %}
-			<th style="width: 100px;">{{ _('Geändert') }}</th>
-			<th class="no-sort" style="width:40px;">{{ _('Aktionen') }}</th>
+		<tr><th></th>
+			<th title="{{ _('Item-ID in der Datenbank') }}">{{ _('DB-ID') }}</th>
+			<th>{{ _('Zeit') }}</th>
+			<th>{{ _('Dauer') }} (sec)</th>
+			{% if item.property.type == 'num' %}<th style="width: 120px;">{{ _('VAL_NUM') }}</th>{% endif %}
+			{% if item.property.type == 'bool' %}<th style="width: 120px;">{{ _('VAL_BOOL') }}</th>{% endif %}
+			{% if item.property.type == 'str' %}<th>{{ _('VAL_STR') }}</th>{% endif %}
+			{% if item.property.type == 'foo' %}<th>{{ _('VAL_STR') }}</th>{% endif %}
+			<th>{{ _('Geändert') }}</th>
+			<th>{{ _('Aktionen') }}</th>
 		</tr>
 		</thead>
 		<tbody>
 			{% for data in log_array %}
 			  <tr id="{{ data[0] }}_{{ data[2] }}">
-			    <td class="py-1" id="{{ data[0] }}_{{ data[2] }}_id">{{ data[1] }}</td>
-			    <td class="py-1" id="{{ data[0] }}_{{ data[2] }}_time">{% if language == 'en' %}{{ data[0].strftime('%m/%d/%Y %H:%M:%S') }}{% else %}{{ data[0].strftime('%d.%m.%Y %H:%M:%S') }}{% endif %}</td>
-			    <td class="py-1 duration" id="{{ data[0] }}_{{ data[2] }}_duration">{% if p._seconds(data[2]) == none %}{{ p._seconds(data[2]) }}{% else %}{{ ("%.2f"|format(p._seconds(data[2])|float)).rstrip('0').rstrip('.') }}{% endif %}</td>
+					<td></td>
+			    <td id="{{ data[0] }}_{{ data[2] }}_id">{{ data[1] }}</td>
+			    <td id="{{ data[0] }}_{{ data[2] }}_time">{% if language == 'en' %}{{ data[0].strftime('%m/%d/%Y %H:%M:%S') }}{% else %}{{ data[0].strftime('%d.%m.%Y %H:%M:%S') }}{% endif %}</td>
+			    <td id="{{ data[0] }}_{{ data[2] }}_duration">{% if p._seconds(data[2]) == none %}{{ p._seconds(data[2]) }}{% else %}{{ ("%.2f"|format(p._seconds(data[2])|float)).rstrip('0').rstrip('.') }}{% endif %}</td>
 			    {% if item.property.type == 'num' %}<td class="py-1" id="{{ data[0] }}_{{ data[2] }}_value">{{ ("%.2f"|format(data[4]|float)).rstrip('0').rstrip('.') }}</td>{% endif %}
 			    {% if item.property.type == 'bool' %}<td class="py-1" id="{{ data[0] }}_{{ data[2] }}_value">{{ data[5] }}</td>{% endif %}
 			    {% if item.property.type == 'str' %}<td class="py-1" id="{{ data[0] }}_{{ data[2] }}_value">{{ data[3] }}</td>{% endif %}
 			    {% if item.property.type == 'foo' %}<td class="py-1" id="{{ data[0] }}_{{ data[2] }}_value">{{ data[3] }}</td>{% endif %}
-			    <td class="py-1" id="{{ data[0] }}_{{ data[2] }}_changed">{% if language == 'en' %}{{ data[6].strftime('%m/%d/%Y %H:%M:%S') }}{% else %}{{ data[6].strftime('%d.%m.%Y %H:%M:%S') }}{% endif %}</td>
-			    <td class="py-1" id="{{ data[0] }}_{{ data[2] }}_buttons">
+			    <td id="{{ data[0] }}_{{ data[2] }}_changed">{% if language == 'en' %}{{ data[6].strftime('%m/%d/%Y %H:%M:%S') }}{% else %}{{ data[6].strftime('%d.%m.%Y %H:%M:%S') }}{% endif %}</td>
+			    <td id="{{ data[0] }}_{{ data[2] }}_buttons">
 			    {% if loop.index < 3 and (day is none or (day+" "+month+" "+year == now.strftime('%d %m %Y'))) %}
 			      {% set is_disabled = true %}
 			    {% else %}
@@ -208,14 +209,14 @@ checkDate();
                 changed_date_time = changed_day + "." + changed_month + "." + changed_year + " " + changed_time;
             {% endif %}
             let entry_id = objResponse[item][0].replace("T", " ");
-            let newRow = item_details_table.row.add( [ item_id, date_time, duration, value, changed_date_time, buttons ] ).draw(false).node();
+            let newRow = item_details_table.row.add( [ null, item_id, date_time, duration, value, changed_date_time, buttons ] ).draw(false).node();
             newRow.id = entry_id+"_"+orig_duration;
-            $('td:eq(0)', newRow).attr('id', entry_id+'_'+orig_duration+'_id');
-            $('td:eq(1)', newRow).attr('id', entry_id+'_'+orig_duration+'_time');
-            $('td:eq(2)', newRow).attr('id', entry_id+'_'+orig_duration+'_duration').addClass('duration');
-            $('td:eq(3)', newRow).attr('id', entry_id+'_'+orig_duration+'_value');
-            $('td:eq(4)', newRow).attr('id', entry_id+'_'+orig_duration+'_changed');
-            $('td:eq(5)', newRow).attr('id', entry_id+'_'+orig_duration+'_buttons');
+            $('td:eq(1)', newRow).attr('id', entry_id+'_'+orig_duration+'_id');
+            $('td:eq(2)', newRow).attr('id', entry_id+'_'+orig_duration+'_time');
+            $('td:eq(3)', newRow).attr('id', entry_id+'_'+orig_duration+'_duration').addClass('duration');
+            $('td:eq(4)', newRow).attr('id', entry_id+'_'+orig_duration+'_value');
+            $('td:eq(5)', newRow).attr('id', entry_id+'_'+orig_duration+'_changed');
+            $('td:eq(6)', newRow).attr('id', entry_id+'_'+orig_duration+'_buttons');
             i += 1;
             console.log("Added new row: " + entry_id+"_"+orig_duration);
         	}

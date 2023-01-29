@@ -183,9 +183,11 @@ Für den Resource-Typ ``light`` sind die folgenden Funktionen implementiert (ein
 
     - ``on``
     - ``bri``
+    - ``bri_inc``
     - ``hue``
     - ``sat``
     - ``ct``
+    - ``dict``
     - ``name``
     - ``reachable``
     - ``colormode``
@@ -194,6 +196,9 @@ Für den Resource-Typ ``light`` sind die folgenden Funktionen implementiert (ein
     - ``modelid``
     - ``swversion``
     - ``activate_scene``
+    - ``modify_scene``
+    - ``alert``
+    - ``effect``
 
 
 Die vollständige Übersicht über die unterstützen Funktionen und die Datentypen dazu kann auf der

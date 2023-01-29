@@ -15,5 +15,4 @@ listen_tabelle = {      # TROVIS-Listen
     'Liste_HA':         {0: 'halt', 1: 'auf'},
     'Liste_FA':         {0: 'ferngesteuert', 1: 'autark'},
     'Liste_FS':         {0: 'fallend', 1: 'steigend'},
-    
 }

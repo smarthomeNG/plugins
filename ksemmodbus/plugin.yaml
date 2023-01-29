@@ -11,7 +11,7 @@ plugin:
     documentation:
     support:
 
-    version: 1.6.0                  # Plugin version
+    version: 1.6.2                  # Plugin version
     sh_minversion: 1.6              # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False           # plugin supports multi instance
@@ -44,9 +44,27 @@ item_attributes:
         type: num
     ksem_2:
         type: num
+    ksem_4:
+        type: num
+    ksem_6:
+        type: num
+    ksem_16:
+        type: num
+    ksem_18:
+        type: num
+    ksem_24:
+        type: num
     ksem_512:
         type: num
     ksem_516:
+        type: num
+    ksem_520:
+        type: num
+    ksem_524:
+        type: num
+    ksem_544:
+        type: num
+    ksem_548:
         type: num
 
 item_structs: NONE
@@ -60,4 +78,3 @@ plugin_functions: NONE
 logic_parameters: NONE
     # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)
     #logic_parameters: NONE
-

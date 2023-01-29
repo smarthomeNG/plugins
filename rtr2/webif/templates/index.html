@@ -3,22 +3,56 @@
 {% set logo_frame = false %}
 
 <!-- set update_interval to a value > 0 (in milliseconds) to enable periodic data updates -->
-{% set update_interval = 0 %}
+{% set update_interval = 5000 %}
+{% set reload_button = false %}
 
 <!--
 	Additional script tag for plugin specific javascript code go into this block
 -->
 {% block pluginscripts %}
 <script>
+    function onOff(boolvalue) {
+		if (boolvalue) {
+			return '{{ _('EIN') }}';
+		} else {
+			return '{{ _('AUS') }}';
+		}
+	}
+
 	function handleUpdatedData(response, dataSet=null) {
-		if (dataSet === 'devices_info' || dataSet === null) {
+		if (dataSet === null) {
 			var objResponse = JSON.parse(response);
 			myProto = document.getElementById(dataSet);
-			for (var device in objResponse) {
-				<!--
-				shngInsertText (device+'_source', objResponse[device]['source']);
-				shngInsertText (device+'_powerState', objResponse[device]['powerState']);
-				-->
+			for (var r in objResponse) {
+				// updata data of tab 1
+				shngInsertText (r+'_temp_actual', objResponse[r]['temp_actual'].toFixed(2)+'°C');
+				shngInsertText (r+'_temp_set', objResponse[r]['temp_set'].toFixed(1)+'°C');
+				shngInsertText (r+'_control_output', objResponse[r]['control_output'].toFixed(1)+'%');
+				shngInsertText (r+'_mode', objResponse[r]['mode']);
+				shngInsertText (r + '_lock_status',onOff(objResponse[r]['lock_status']));
+				shngInsertText (r+'_setting_temp_comfort', objResponse[r]['setting_temp_comfort'].toFixed(1)+'°C');
+				shngInsertText (r+'_setting_temp_standby', objResponse[r]['setting_temp_standby'].toFixed(1)+'°C');
+				shngInsertText (r+'_setting_temp_night', objResponse[r]['setting_temp_night'].toFixed(1)+'°C');
+				shngInsertText (r+'_setting_temp_frost', objResponse[r]['setting_temp_frost'].toFixed(1)+'°C');
+
+
+				// update data of tab 2
+				shngInsertText (r+'_controller_type', objResponse[r]['controller_type']);
+				shngInsertText (r+'_controller_Kp', objResponse[r]['controller_Kp'].toFixed(1));
+				shngInsertText (r+'_controller_Ki', objResponse[r]['controller_Ki'].toFixed(1));
+				shngInsertText (r+'_controller_Kd', objResponse[r]['controller_Kd']);
+				shngInsertText (r+'_valve_protect', onOff(objResponse[r]['valve_protect']));
+
+				shngInsertText (r+'_setting_standby_reduction', objResponse[r]['setting_standby_reduction'].toFixed(1)+'°C');
+				shngInsertText (r+'_setting_night_reduction', objResponse[r]['setting_night_reduction'].toFixed(1)+'°C');
+				if (objResponse[r]['setting_fixed_reduction'] == false) {
+					shngInsertText (r+'_setting_standby_reduction', '('+objResponse[r]['setting_temp_standby'].toFixed(1)+'°C)');
+					shngInsertText (r+'_setting_night_reduction', '('+objResponse[r]['setting_night_reduction'].toFixed(1)+'°C)');
+				}
+				shngInsertText (r+'_setting_fixed_reduction',  onOff(objResponse[r]['setting_fixed_reduction']));
+				shngInsertText (r+'_setting_min_output', objResponse[r]['setting_min_output'].toFixed(0)+'%');
+				shngInsertText (r+'_setting_max_output', objResponse[r]['setting_max_output'].toFixed(0)+'%');
+
 			}
 		}
 	}
@@ -112,15 +146,15 @@
 					{% for r in rtr %}
 						<tr id="{{ loop.index }}_click" style="cursor: pointer;">
 							<td class="py-1">{{ r }}</td>
-							<td class="py-1">{% if rtr[r].temp_actual_item != None %}{{ rtr[r].temp_actual_item()|round(2) }}°C{% endif %}</td>
-							<td class="py-1">{% if rtr[r].temp_set_item != None %}{{ rtr[r].temp_set_item()|round(2) }}°C{% endif %}</td>
-							<td class="py-1">{% if rtr[r].control_output_item != None %}{{ rtr[r].control_output_item() }}%{% endif %}</td>
-							<td class="py-1">{{ rtr[r]._mode }}</td>
-							<td class="py-1">{% if rtr[r].lock_status_item != None %}{{ _(rtr[r].lock_status_item()) }}{% else %}-{% endif %}</td>
-							<td class="py-1">{% if rtr[r].setting_temp_comfort_item != None %}{{ rtr[r].setting_temp_comfort_item() }}°C{% endif %}</td>
-							<td class="py-1">{% if rtr[r].setting_temp_standby_item != None %}{{ rtr[r].setting_temp_standby_item() }}°C{% endif %}</td>
-							<td class="py-1">{% if rtr[r].setting_temp_night_item != None %}{{ rtr[r].setting_temp_night_item() }}°C{% endif %}</td>
-							<td class="py-1">{% if rtr[r].setting_temp_frost_item != None %}{{ rtr[r].setting_temp_frost_item() }}°C{% endif %}</td>
+							<td class="py-1" id="{{ r }}_temp_actual">{% if rtr[r].temp_actual_item != None %}{{ rtr[r].temp_actual_item()|round(2) }}°C{% endif %}</td>
+							<td class="py-1" id="{{ r }}_temp_set">{% if rtr[r].temp_set_item != None %}{{ rtr[r].temp_set_item()|round(2) }}°C{% endif %}</td>
+							<td class="py-1" id="{{ r }}_control_output">{% if rtr[r].control_output_item != None %}{{ rtr[r].control_output_item() }}%{% endif %}</td>
+							<td class="py-1" id="{{ r }}_mode">{{ rtr[r]._mode }}</td>
+							<td class="py-1" id="{{ r }}_lock_status">{% if rtr[r].lock_status_item != None %}{{ _(rtr[r].lock_status_item()) }}{% else %}-{% endif %}</td>
+							<td class="py-1" id="{{ r }}_setting_temp_comfort">{% if rtr[r].setting_temp_comfort_item != None %}{{ rtr[r].setting_temp_comfort_item() }}°C{% endif %}</td>
+							<td class="py-1" id="{{ r }}_setting_temp_standby">{% if rtr[r].setting_temp_standby_item != None %}{{ rtr[r].setting_temp_standby_item() }}°C{% endif %}</td>
+							<td class="py-1" id="{{ r }}_setting_temp_night">{% if rtr[r].setting_temp_night_item != None %}{{ rtr[r].setting_temp_night_item() }}°C{% endif %}</td>
+							<td class="py-1" id="{{ r }}_setting_temp_frost">{% if rtr[r].setting_temp_frost_item != None %}{{ rtr[r].setting_temp_frost_item() }}°C{% endif %}</td>
 							<td class="py-1"></td>
 						</tr>
 
@@ -313,22 +347,22 @@
 					{% for r in rtr %}
 						<tr id="{{ loop.index }}_clickip" style="cursor: pointer;">
 							<td class="py-1">{{ r }}</td>
-							<td class="py-1">{{ rtr[r].controller.controller_type }}</td>
-							<td class="py-1">{{ rtr[r].controller._Kp }}</td>
-							<td class="py-1">{{ rtr[r].controller._Ki }}</td>
-							<td class="py-1">{% if rtr[r].controller.controller_type == 'PID' %}{{ rtr[r].controller._Kd }}{% else %}-{% endif %}</td>
-							<td class="py-1">{{ _(rtr[r].valve_protect) }}</td>
+							<td class="py-1" id="{{ r }}_controller_type">{{ rtr[r].controller.controller_type }}</td>
+							<td class="py-1" id="{{ r }}_controller_Kp">{{ rtr[r].controller._Kp }}</td>
+							<td class="py-1" id="{{ r }}_controller_Ki">{{ rtr[r].controller._Ki }}</td>
+							<td class="py-1" id="{{ r }}_controller_Kd">{% if rtr[r].controller.controller_type == 'PID' %}{{ rtr[r].controller._Kd }}{% else %}-{% endif %}</td>
+							<td class="py-1" id="{{ r }}_valve_protect">{{ _(rtr[r].valve_protect) }}</td>
 							{% if (rtr[r].setting_fixed_reduction_item != None) and (rtr[r].setting_fixed_reduction_item() == False) %}
-								<td class="py-1">{% if rtr[r].setting_standby_reduction_item != None %}({{ rtr[r].setting_standby_reduction_item() }}°C){% endif %}</td>
-								<td class="py-1">{% if rtr[r].setting_night_reduction_item != None %}({{ rtr[r].setting_night_reduction_item() }}°C){% endif %}</td>
+								<td class="py-1" id="{{ r }}_setting_standby_reduction">{% if rtr[r].setting_standby_reduction_item != None %}({{ rtr[r].setting_standby_reduction_item() }}°C){% endif %}</td>
+								<td class="py-1" id="{{ r }}_setting_night_reduction">{% if rtr[r].setting_night_reduction_item != None %}({{ rtr[r].setting_night_reduction_item() }}°C){% endif %}</td>
 							{% else %}
-								<td class="py-1">{% if rtr[r].setting_standby_reduction_item != None %}{{ rtr[r].setting_standby_reduction_item() }}°C{% endif %}</td>
-								<td class="py-1">{% if rtr[r].setting_night_reduction_item != None %}{{ rtr[r].setting_night_reduction_item() }}°C{% endif %}</td>
+								<td class="py-1" id="{{ r }}_setting_standby_reduction">{% if rtr[r].setting_standby_reduction_item != None %}{{ rtr[r].setting_standby_reduction_item() }}°C{% endif %}</td>
+								<td class="py-1" id="{{ r }}_setting_night_reduction">{% if rtr[r].setting_night_reduction_item != None %}{{ rtr[r].setting_night_reduction_item() }}°C{% endif %}</td>
 							{% endif %}
-							<td class="py-1">{% if rtr[r].setting_fixed_reduction_item != None %}{{ _(rtr[r].setting_fixed_reduction_item()) }}{% endif %}</td>
+							<td class="py-1" id="{{ r }}_setting_fixed_reduction">{% if rtr[r].setting_fixed_reduction_item != None %}{{ _(rtr[r].setting_fixed_reduction_item()) }}{% endif %}</td>
 
-							<td class="py-1">{% if rtr[r].setting_min_output_item != None %}{{ rtr[r].setting_min_output_item() }}%{% else %}-{% endif %}</td>
-							<td class="py-1">{% if rtr[r].setting_max_output_item != None %}{{ rtr[r].setting_max_output_item() }}%{% else %}-{% endif %}</td>
+							<td class="py-1" id="{{ r }}_setting_min_output">{% if rtr[r].setting_min_output_item != None %}{{ rtr[r].setting_min_output_item() }}%{% else %}-{% endif %}</td>
+							<td class="py-1" id="{{ r }}_setting_max_output">{% if rtr[r].setting_max_output_item != None %}{{ rtr[r].setting_max_output_item() }}%{% else %}-{% endif %}</td>
 							<td class="py-1"></td>
 						</tr>
 					{% endfor %}

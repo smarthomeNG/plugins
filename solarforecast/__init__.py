@@ -30,7 +30,7 @@ import datetime
 
 
 class Solarforecast(SmartPlugin):
-    PLUGIN_VERSION = '1.9.0'
+    PLUGIN_VERSION = '1.9.1'
 
     def __init__(self, sh, *args, **kwargs):
         """
@@ -109,11 +109,16 @@ class Solarforecast(SmartPlugin):
 
         #self.logger.debug(f"DEBUG URL: {urlService + functionURL}")
 
-        sessionrequest_response = self.session.get(
-            urlService + functionURL, 
-            headers={'content-type': 'application/json'}, timeout=10, verify=False)
+        try:
+            sessionrequest_response = self.session.get(
+                urlService + functionURL, 
+                headers={'content-type': 'application/json'}, timeout=10, verify=False)
         
-#        self.logger.debug(f"Session request response: {sessionrequest_response.text}")
+#            self.logger.debug(f"Session request response: {sessionrequest_response.text}")
+        except Exception as e:
+            self.logger.error(f"Exception during get command: {str(e)}")
+            return
+
         statusCode = sessionrequest_response.status_code
         if statusCode == 200:
             pass

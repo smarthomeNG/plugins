@@ -31,7 +31,7 @@ class Join(SmartPlugin):
     SEND_URL = URL_PREFIX+'messaging/v1/sendPush?apikey='
     LIST_URL = URL_PREFIX+'registration/v1/listDevices?apikey='
 
-    PLUGIN_VERSION = "1.4.2"
+    PLUGIN_VERSION = "1.4.3"
 
 
     def __init__(self, sh):
@@ -55,7 +55,7 @@ class Join(SmartPlugin):
     def send(self, title=None, text=None, icon=None, find=None, smallicon=None, device_id=None, device_ids=None,
              device_names=None, url=None, image=None, sound=None, group=None, clipboard=None, file=None,
              callnumber=None, smsnumber=None, smstext=None, mmsfile=None, wallpaper=None, lockWallpaper=None,
-             interruptionFilter=None, mediaVolume=None, ringVolume=None, alarmVolume=None):
+             interruptionFilter=None, mediaVolume=None, ringVolume=None, alarmVolume=None, say=None, language=None):
         req_url = self.SEND_URL + self._api_key
         if title:
             req_url += "&title=" + title
@@ -107,6 +107,10 @@ class Join(SmartPlugin):
             req_url += "&deviceId=" + device_id
         else:
             req_url += "&deviceId=" + self._device_id
+        if say:
+            req_url += "&say=" + say
+        if language:
+            req_url += "&language=" + language
         self.logger.debug(req_url)
         try:
             requests.get(req_url)

@@ -12,7 +12,7 @@ plugin:
     documentation:
     support:
 
-    version: 1.6.0                  # Plugin version
+    version: 1.6.2                  # Plugin version
     sh_minversion: 1.6              # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     py_minversion: 3.6              # minimum Python version to use this plugin
@@ -43,6 +43,11 @@ parameters:
 
 item_attributes:
     # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)
+    
+    kostal_06:
+        type: str
+    kostal_14:
+        type: str
     kostal_30:
         type: num
     kostal_32:
@@ -51,9 +56,15 @@ item_attributes:
         type: num
     kostal_36:
         type: num
+    kostal_38:
+        type: str
+    kostal_46:
+        type: str
     kostal_54:
         type: num
     kostal_56:
+        type: num
+    kostal_98:
         type: num
     kostal_100:
         type: num
@@ -191,18 +202,36 @@ item_attributes:
         type: num
     kostal_326:
         type: num
+    kostal_384:
+        type: str
+    kostal_420:
+        type: str
+    kostal_428:
+        type: str
+    kostal_436:
+        type: str
+    kostal_446:
+        type: str
+    kostal_454:
+        type: str
     kostal_512:
         type: num
     kostal_514:
         type: num
     kostal_515:
         type: num
+    kostal_517:
+        type: str
     kostal_525:
         type: num
     kostal_529:
         type: num
     kostal_531:
         type: num
+    kostal_535:
+        type: str
+    kostal_559:
+        type: str
     kostal_575:
         type: num
     kostal_577:
@@ -213,6 +242,23 @@ item_attributes:
         type: num
     kostal_588:
         type: num
+    kostal_768:
+        type: str
+    kostal_800:
+        type: str
+    kostal_1056:
+        type: num
+    kostal_1058:
+        type: num
+    kostal_1060:
+        type: num
+    kostal_1062:
+        type: num
+    kostal_1064:
+        type: num
+    kostal_1066:
+        type: num
+
 
 item_structs: NONE
     # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)

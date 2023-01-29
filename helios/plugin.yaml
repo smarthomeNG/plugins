@@ -9,13 +9,13 @@ plugin:
     keywords: 'helios vallox ventilation'
     documentation: https://github.com/Tom-Bom-badil/helios/wiki
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/40092-erweiterung-helios-vallox-plugin
-    version: 1.4.2                 # Plugin version
-    sh_minversion: 1.1             # minimum shNG version to use this plugin
-    multi_instance:  False         # plugin supports multi instance
+    version: 1.4.2
+    sh_minversion: 1.1
+    multi_instance:  False
     restartable: unknown
-    classname: 'Helios'            # class containing the plugin
+    classname: 'Helios'
 
-parameters:                        # Definition of parameters to be configured in etc/plugin.yaml
+parameters:
     tty:
         type: str
         default: '/dev/ttyUSB0'
@@ -32,19 +32,84 @@ parameters:                        # Definition of parameters to be configured i
 
 
 item_attributes:
-# Definition of item attributes defined by this plugin
     helios_var:
         type: str
         description:
             de: 'Keine Beschreibung angegeben. (Bitte in den Support Thread im SmatHomeNG Forum schauen)'
             en: 'No description given (Please visit the support thread in the SmartHomeNG Forum)'
 
+    e0:  # These attributes have been used by the plugin for 9 years - included only to prevent startup errors
+        type: str
+        description:
+            de: 'Kein Fehler, Anlage arbeitet normal'
+            en: 'No error, device is working properly'
+
+    e1:
+        type: str
+        description:
+            de: 'Nicht dokumentierter Fehler 1'
+            en: 'Unknown error 1'
+
+    e2:
+        type: str
+        description:
+            de: 'Nicht dokumentierter Fehler 2'
+            en: 'Unknown error 2'
+
+    e3:
+        type: str
+        description:
+            de: 'Nicht dokumentierter Fehler 3'
+            en: 'Unknown error 3'
+
+    e4:
+        type: str
+        description:
+            de: 'Nicht dokumentierter Fehler 4'
+            en: 'Unknown error 4'
+
+    e5:
+        type: str
+        description:
+            de: '5:Zuluftsensor defekt'
+            en: 'Supply air sensor defect'
+
+    e6:
+        type: str
+        description:
+            de: 'CO2-Alarm'
+            en: 'CO2 alarm'
+
+    e7:
+        type: str
+        description:
+            de: 'Außenluftsensor defekt'
+            en: 'Outside air sensor defect'
+
+    e8:
+        type: str
+        description:
+            de: 'Abluftsensor defekt'
+            en: 'Extract air sensor defect'
+
+    e9:
+        type: str
+        description:
+            de: 'Frostwarnung - Außenluft <0°C'
+            en: 'Frost warning - outside air <0°C'
+
+    e10:
+        type: str
+        description:
+            de: 'Fortluftsensor defekt'
+            en: 'Exhaust air sensor defect'
+            
+    filter_warning:
+        type: str
+        description:
+            de: 'Filter wechseln'
+            en: 'Exchange filter'
 
 item_structs: NONE
-  # Definition of item-structure templates for this plugin
-
 plugin_functions: NONE
-# Definition of plugin functions defined by this plugin
-
 logic_parameters: NONE
-# Definition of logic parameters defined by this plugin
