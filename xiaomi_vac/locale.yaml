@@ -8,3 +8,4 @@ plugin_translations:
     'Host':                           {'de': '=', 'en': '='}
     'Token':                          {'de': '=', 'en': '='}
     'Item':                           {'de': '=', 'en': '='}
+    'Die folgenden Items sind dem Xiamo_Vac Plugin zugewiesen':         {'de': '=', 'en': 'The following items are assigned to the Xiamo_Vac plugin'}
