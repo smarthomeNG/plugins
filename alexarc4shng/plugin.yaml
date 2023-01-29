@@ -1,14 +1,14 @@
 # Metadata for the plugin
 plugin:
     # Global plugin attributes
-    type: web                # plugin type (gateway, interface, protocol, system, web)
+    type: interface                # plugin type (gateway, interface, protocol, system, web)
     description:
         de: 'Plugin zur Steuerung von Amazon Echo Geräten Zugriff via Web-Browser API und Cookie'
         en: 'Plugin to remote control Echo Show/Spot/Fire'
     maintainer: AndreK
     tester: henfri, juergen, psilo
-    #documentation: https://www.smarthomeng.de/user/plugins/alexarc4shng/user_doc.html       # url of documentation
-    version: 1.0.2                              # Plugin version
+    documentation: https://www.smarthomeng.de/user/plugins/alexarc4shng/user_doc.html       # url of documentation
+    version: 1.0.3                              # Plugin version
     sh_minversion: 1.5.2                        # minimum shNG version to use this plugin
     multi_instance: False                       # plugin supports multi instance
     classname: AlexaRc4shNG                     # class containing the plugin
@@ -53,6 +53,13 @@ parameters:
             de: 'Sekunden bis zum automatischen refreshen des Cookie-files'
             en: 'seconds till the next automatic login to get a new cookie'
 
+    mfa_secret:
+        type: str
+        default: ''
+        description:
+            de: 'Das OTP MFA Secret welches auf der Amazon-Login-Seite angegben wird'
+            en: 'The OTP MFA Secret from the Amazon Login-Page'
+
 logic_parameters: NONE               # No logic parameters for this plugin
 item_structs: NONE                   # no item structure needed
 item_attributes: NONE                # no item attributes needed
@@ -92,6 +99,23 @@ plugin_functions:
                     de: "Wert, der gesendet werden soll, numerische Werte ohne Hochkomma als Zahl"
                     en: "Value to send, numeric Values without Quotes as Num"
 
+    get_list:
+        type: str
+        description:
+            de: "Liefert die Alexa-Shopping-Liste als dict-zurück"
+            en: "gives back a dict with the Alexa-Shopping-List"
+        parameters:
+            type:
+                type: str
+                description:
+                    de: "Art der Liste 'SHOPPING_LIST' oder 'TO_DO'"
+                    en: "type of the List 'SHOPPING_LIST' or 'TO_DO'"
+                valid_list:
+                    - 'SHOPPING_LIST'
+                    - 'TO_DO'
+
+
+            
     get_last_alexa:
         type: str
         description:
