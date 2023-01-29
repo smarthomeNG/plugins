@@ -19,7 +19,7 @@ plugin_translations:
     'Proxy-Authorization':           {'de': 'Proxy-Authorisierungs-Typ', 'en': '=', 'fr': '='}
     'Video-Buffer-Size :':           {'de': 'Video-Puffer-Grösse', 'en': '=', 'fr': '='}
     'Authorization :':               {'de': 'Authorisierungs-Typ', 'en': '=', 'fr': '='}
-    'Encode':                        {'de': 'enkodieren', 'en': '=', 'fr': 'Encoder'}
+    'Encode, save and login':        {'de': 'enkodieren,speichern und einloggen', 'en': '=', 'fr': 'Encoder'}
     'encoded Cred.:':                {'de': 'enkodierte Zugangsdaten', 'en': '=', 'fr': 'Cred. encodés'}
     'Result :':                      {'de': 'Ergebnis', 'en': '=', 'fr': 'Résultat'}
     'Value':                         {'de': 'Wert', 'en': '=', 'fr': 'Valeur'}
@@ -27,7 +27,7 @@ plugin_translations:
     'Threads existing ...':          {'de': 'existierende Threads', 'en': '=', 'fr': '='}
     'Auto Update ( 2 sec.)':         {'de': 'Auto Update ( 2 Sek.)', 'en': '=', 'fr': '='}
     'last/next Auto-Login' :         {'de': 'letztes/nächstes Auto-Login', 'en': '=', 'fr': '='}
-    'selected Device'      :         {'de': 'gwähltes Gerät', 'en': '=', 'fr': '='}
+    'selected Device'      :         {'de': 'gewähltes Gerät', 'en': '=', 'fr': '='}
     'No. of Alexa-Devices':          {'de': 'Anzahl Alexa-Geräte', 'en': '=', 'fr': '='}
     'LogOff':                        {'de': 'Ausloggen', 'en': '=', 'fr': 'Déconnection'}
     'LogIn':                         {'de': 'Einloggen', 'en': '=', 'fr': 'Connection'}
@@ -35,6 +35,8 @@ plugin_translations:
     'Paste the Cookie-File here':    {'de': 'Cookie File hier einfügen', 'en': '=', 'fr': 'Coller le fichier cookie ici'}
     'existing Commands':             {'de': 'existierende Kommandos', 'en': '=', 'fr': '='}
     'Command-Name':                  {'de': 'Kommando-Name', 'en': '=', 'fr': '='}
+    'Step'      :                    {'de': 'Schritt', 'en': '=', 'fr': '='}    
+    'Reload Page' :                  {'de': 'Seite neu laden', 'en': '=', 'fr': '='}    
 
 
 #    '':      {'de': 'Proxy-Authorisierungs-Typ', 'en': '=', 'fr': ''}
