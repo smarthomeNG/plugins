@@ -35,7 +35,7 @@ class GPIO(SmartPlugin, Utils):
     Main class of the plugin.
     '''
 
-    PLUGIN_VERSION = '1.5.2'
+    PLUGIN_VERSION = '1.5.3'
     ALLOW_MULTIINSTANCE = False
 
     def __init__(self, sh):
@@ -61,6 +61,7 @@ class GPIO(SmartPlugin, Utils):
             self._bouncetime = self.get_parameter_value('bouncetime')
             self._initretries = self.get_parameter_value('initretries')
             pud_param = self.get_parameter_value('pullupdown')
+            self.webif_pagelength = self.get_parameter_value('webif_pagelength')
             if pud_param.upper() == 'UP':
                 self._pullupdown = PiGPIO.PUD_UP
             elif pud_param.upper() == 'DOWN':
