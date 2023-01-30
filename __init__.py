@@ -50,17 +50,17 @@ from .webif import WebInterface
 Definition of TR-064 details
 """
 
-FRITZ_TR64_DESC_FILE = "tr64desc.xml"
-FRITZ_IGD_DESC_FILE = "igddesc.xml"
-FRITZ_IGD2_DESC_FILE = "igd2desc.xml"
-FRITZ_L2TPV3_FILE = "l2tpv3.xml"
-FRITZ_FBOX_DESC_FILE = "fboxdesc.xml"
+#FRITZ_TR64_DESC_FILE = "tr64desc.xml"
+#FRITZ_IGD_DESC_FILE = "igddesc.xml"
+#FRITZ_IGD2_DESC_FILE = "igd2desc.xml"
+#FRITZ_L2TPV3_FILE = "l2tpv3.xml"
+#FRITZ_FBOX_DESC_FILE = "fboxdesc.xml"
 
-IGD_DEVICE_NAMESPACE = {'': 'urn:schemas-upnp-org:device-1-0'}
-IGD_SERVICE_NAMESPACE = {'': 'urn:schemas-upnp-org:service-1-0'}
-TR064_DEVICE_NAMESPACE = {'': 'urn:dslforum-org:device-1-0'}
-TR064_SERVICE_NAMESPACE = {'': 'urn:dslforum-org:service-1-0'}
-TR064_CONTROL_NAMESPACE = {'': 'urn:dslforum-org:control-1-0'}
+#IGD_DEVICE_NAMESPACE = {'': 'urn:schemas-upnp-org:device-1-0'}
+#IGD_SERVICE_NAMESPACE = {'': 'urn:schemas-upnp-org:service-1-0'}
+#TR064_DEVICE_NAMESPACE = {'': 'urn:dslforum-org:device-1-0'}
+#TR064_SERVICE_NAMESPACE = {'': 'urn:dslforum-org:service-1-0'}
+#TR064_CONTROL_NAMESPACE = {'': 'urn:dslforum-org:control-1-0'}
 
 
 """
@@ -570,26 +570,44 @@ class FritzDevice:
     This class encapsulates information related to a specific FritzDevice using TR-064
     """
 
-    errorcodes = {401: 'Unable to connect to FritzDevice. Invalid user and/or password.',
-                  402: 'Invalid arguments',
-                  500: 'Internal Server Error',
-                  501: 'Action failed',
-                  600: 'Argument invalid',
-                  713: 'Invalid array index',
-                  714: 'No such array entry in array',
-                  820: 'Internal Error',
-                  403: 'SIP_FORBIDDEN, Beschreibung steht in der Hilfe (Webinterface)',
-                  404: 'SIP_NOT_FOUND, Gegenstelle nicht erreichbar (local part der SIP-URL nicht erreichbar (Host schon))',
-                  405: 'SIP_METHOD_NOT_ALLOWED',
-                  406: 'SIP_NOT_ACCEPTED',
-                  408: 'SIP_NO_ANSWER',
-                  484: 'SIP_ADDRESS_INCOMPLETE, Beschreibung steht in der Hilfe (Webinterface)',
-                  485: 'SIP_AMBIGUOUS, Beschreibung steht in der Hilfe (Webinterface)',
-                  486: 'SIP_BUSY_HERE, Ziel besetzt (vermutlich auch andere Gründe bei der Gegenstelle)',
-                  487: 'SIP_REQUEST_TERMINATED, Anrufversuch beendet (Gegenstelle nahm nach ca. 30 Sek. nicht ab)',
-                  866: 'second factor authentication required',
-                  867: 'second factor authentication blocked',
-                  }
+    """
+    Definition of TR-064 Error Codes
+    """
+    ERROR_CODES = {401: 'Unable to connect to FritzDevice. Invalid user and/or password.',
+                   402: 'Invalid arguments',
+                   500: 'Internal Server Error',
+                   501: 'Action failed',
+                   600: 'Argument invalid',
+                   713: 'Invalid array index',
+                   714: 'No such array entry in array',
+                   820: 'Internal Error',
+                   403: 'SIP_FORBIDDEN, Beschreibung steht in der Hilfe (Webinterface)',
+                   404: 'SIP_NOT_FOUND, Gegenstelle nicht erreichbar (local part der SIP-URL nicht erreichbar (Host schon))',
+                   405: 'SIP_METHOD_NOT_ALLOWED',
+                   406: 'SIP_NOT_ACCEPTED',
+                   408: 'SIP_NO_ANSWER',
+                   484: 'SIP_ADDRESS_INCOMPLETE, Beschreibung steht in der Hilfe (Webinterface)',
+                   485: 'SIP_AMBIGUOUS, Beschreibung steht in der Hilfe (Webinterface)',
+                   486: 'SIP_BUSY_HERE, Ziel besetzt (vermutlich auch andere Gründe bei der Gegenstelle)',
+                   487: 'SIP_REQUEST_TERMINATED, Anrufversuch beendet (Gegenstelle nahm nach ca. 30 Sek. nicht ab)',
+                   866: 'second factor authentication required',
+                   867: 'second factor authentication blocked',
+                   }
+
+    """
+    Definition of TR-064 details
+    """
+    FRITZ_TR64_DESC_FILE = "tr64desc.xml"
+    FRITZ_IGD_DESC_FILE = "igddesc.xml"
+    FRITZ_IGD2_DESC_FILE = "igd2desc.xml"
+    FRITZ_L2TPV3_FILE = "l2tpv3.xml"
+    FRITZ_FBOX_DESC_FILE = "fboxdesc.xml"
+
+    IGD_DEVICE_NAMESPACE = {'': 'urn:schemas-upnp-org:device-1-0'}
+    IGD_SERVICE_NAMESPACE = {'': 'urn:schemas-upnp-org:service-1-0'}
+    TR064_DEVICE_NAMESPACE = {'': 'urn:dslforum-org:device-1-0'}
+    TR064_SERVICE_NAMESPACE = {'': 'urn:dslforum-org:service-1-0'}
+    TR064_CONTROL_NAMESPACE = {'': 'urn:dslforum-org:control-1-0'}
 
     def __init__(self, host, port, ssl, verify, username, password, call_monitor_incoming_filter, plugin_instance=None):
         """
@@ -617,8 +635,8 @@ class FritzDevice:
         self._connected = False
 
         # get client objects
-        self.client = FritzDevice.Client(self._username, self._password, self._verify, base_url=self._build_url(), description_file=FRITZ_TR64_DESC_FILE, plugin_instance=plugin_instance)
-        self.client_igd = FritzDevice.Client(self._username, self._password, self._verify, base_url=self._build_url(), description_file=FRITZ_IGD_DESC_FILE, plugin_instance=plugin_instance)
+        self.client = FritzDevice.Client(self._username, self._password, self._verify, base_url=self._build_url(), description_file=self.FRITZ_TR64_DESC_FILE, plugin_instance=plugin_instance)
+        self.client_igd = FritzDevice.Client(self._username, self._password, self._verify, base_url=self._build_url(), description_file=self.FRITZ_IGD_DESC_FILE, plugin_instance=plugin_instance)
 
         # get GetDefaultConnectionService
         _default_connection_service = self.client.InternetGatewayDevice.Layer3Forwarding.GetDefaultConnectionService()
@@ -629,8 +647,8 @@ class FritzDevice:
             self._plugin_instance.logger.debug(f"FritzDevice alive")
         else:
             self._connected = False
-            if _default_connection_service in self.errorcodes:
-                self._plugin_instance.logger.error(f"Error {_default_connection_service}-'{self.errorcodes[_default_connection_service]}'")
+            if _default_connection_service in self.ERROR_CODES:
+                self._plugin_instance.logger.error(f"Error {_default_connection_service}-'{self.ERROR_CODES[_default_connection_service]}'")
             else:
                 self._plugin_instance.logger.error(f"Unable to determine _default_connection_service. ErrorCode {_default_connection_service}.")
 
@@ -1017,8 +1035,8 @@ class FritzDevice:
             if data is None:
                 self._plugin_instance.logger.info(f"Value for item={item} is None.")
                 return False
-            elif isinstance(data, int) and data in self.errorcodes:
-                self._plugin_instance.logger.error(f"Error {data} '{self.errorcodes.get(data, None)}' occurred during update of item={item} with avm_data_type={avm_data_type} and index={index}. Check item configuration regarding supported/activated function of AVM device. ")
+            elif isinstance(data, int) and data in self.ERROR_CODES:
+                self._plugin_instance.logger.error(f"Error {data} '{self.ERROR_CODES.get(data, None)}' occurred during update of item={item} with avm_data_type={avm_data_type} and index={index}. Check item configuration regarding supported/activated function of AVM device. ")
                 return False
             else:
                 item(data, self._plugin_instance.get_fullname())
@@ -1039,9 +1057,9 @@ class FritzDevice:
             'wan_is_connected':             ('WANConnectionDevice',   'WANPPPConnection',         'GetInfo',                       None,               'NewConnectionStatus'),
             'wan_uptime':                   ('WANConnectionDevice',   'WANPPPConnection',         'GetInfo',                       None,               'NewUptime'),
             'wan_ip':                       ('WANConnectionDevice',   'WANPPPConnection',         'GetExternalIPAddress',          None,               'NewExternalIPAddress'),
-        }                                                                                                                                              
-                                                                                                                                                       
-        link_ip = {                                                                                                                                    
+        }
+
+        link_ip = {
             'wan_connection_status':        ('WANConnectionDevice',   'WANIPConnection',          'GetInfo',                       None,               'NewConnectionStatus'),
             'wan_connection_error':         ('WANConnectionDevice',   'WANIPConnection',          'GetInfo',                       None,               'NewLastConnectionError'),
             'wan_is_connected':             ('WANConnectionDevice',   'WANIPConnection',          'GetInfo',                       None,               'NewConnectionStatus'),
@@ -1206,7 +1224,7 @@ class FritzDevice:
             self._plugin_instance.logger.info(f"No data for 'self.{client}.{device}.{service}.{action}()' received.")
             return
         elif isinstance(data, int) and 99 < data < 1000:
-            self._plugin_instance.logger.info(f"Response was ErrorCode: {data} '{self.errorcodes.get(data, None)}' for self.{client}.{device}.{service}.{action}()")
+            self._plugin_instance.logger.info(f"Response was ErrorCode: {data} '{self.ERROR_CODES.get(data, None)}' for self.{client}.{device}.{service}.{action}()")
             return data
         else:
             return data if not out_argument else data[out_argument]
@@ -1254,7 +1272,7 @@ class FritzDevice:
         if response is None:
             self._plugin_instance.logger.info(f"No response for 'self.client.{device}.{service}.{action}({args})' received.")
         elif isinstance(response, int) and 99 < response < 1000:
-            self._plugin_instance.logger.info(f"Response was ErrorCode: {response} '{self.errorcodes.get(response, None)}' for self.client.{device}.{service}.{action}({args})")
+            self._plugin_instance.logger.info(f"Response was ErrorCode: {response} '{self.ERROR_CODES.get(response, None)}' for self.client.{device}.{service}.{action}({args})")
         return response
 
     def _clear_data_cache(self):
@@ -1822,7 +1840,7 @@ class FritzDevice:
         if not host_info:
             return
         elif isinstance(host_info, int):
-            self._plugin_instance.logger.info(f"Error {host_info} '{self.errorcodes.get(host_info)}' occurred during getting details of host #{index}.")
+            self._plugin_instance.logger.info(f"Error {host_info} '{self.ERROR_CODES.get(host_info)}' occurred during getting details of host #{index}.")
             return
         elif len(host_info) == 7:
             host = {
@@ -1958,7 +1976,7 @@ class FritzDevice:
         :param plugin_instance:         instance of Plugin
         """
 
-        def __init__(self, username, password, verify, base_url='https://192.168.178.1:49443', description_file=FRITZ_TR64_DESC_FILE, plugin_instance=None):
+        def __init__(self, username, password, verify, base_url='https://192.168.178.1:49443', description_file='tr64desc.xml', plugin_instance=None):
 
             # handle plugin instance
             self._plugin_instance = plugin_instance
@@ -1988,9 +2006,9 @@ class FritzDevice:
             request = requests.get(f'{self.base_url}/{description_file}', verify=self.verify)
 
             if description_file == 'igddesc.xml':
-                namespaces = IGD_DEVICE_NAMESPACE
+                namespaces = FritzDevice.IGD_DEVICE_NAMESPACE
             else:
-                namespaces = TR064_DEVICE_NAMESPACE
+                namespaces = FritzDevice.TR064_DEVICE_NAMESPACE
 
             if request.status_code == 200:
                 xml = etree.parse(BytesIO(request.content))
@@ -2018,9 +2036,9 @@ class FritzDevice:
             self.verify = verify
 
             if description_file == 'igddesc.xml':
-                namespaces = IGD_DEVICE_NAMESPACE
+                namespaces = FritzDevice.IGD_DEVICE_NAMESPACE
             else:
-                namespaces = TR064_DEVICE_NAMESPACE
+                namespaces = FritzDevice.TR064_DEVICE_NAMESPACE
 
             for service in xml.findall('./serviceList/service', namespaces=namespaces):
                 service_type = service.findtext('serviceType', namespaces=namespaces)
@@ -2086,9 +2104,9 @@ class FritzDevice:
             self.description_file = description_file
 
             if description_file == 'igddesc.xml':
-                self.namespaces = IGD_SERVICE_NAMESPACE
+                self.namespaces = FritzDevice.IGD_SERVICE_NAMESPACE
             else:
-                self.namespaces = TR064_SERVICE_NAMESPACE
+                self.namespaces = FritzDevice.TR064_SERVICE_NAMESPACE
 
         def __getattr__(self, name: str):
             if name not in self.actions:
@@ -2154,10 +2172,8 @@ class FritzDevice:
             etree.register_namespace('h', 'http://soap-authentication.org/digest/2001/10/')
 
             self.headers = {'content-type': 'text/xml; charset="utf-8"'}
-            self.envelope = etree.Element(
-                '{http://schemas.xmlsoap.org/soap/envelope/}Envelope',
-                attrib={
-                    '{http://schemas.xmlsoap.org/soap/envelope/}encodingStyle':
+            self.envelope = etree.Element('{http://schemas.xmlsoap.org/soap/envelope/}Envelope',
+                attrib={'{http://schemas.xmlsoap.org/soap/envelope/}encodingStyle':
                         'http://schemas.xmlsoap.org/soap/encoding/'})
             self.body = etree.SubElement(self.envelope, '{http://schemas.xmlsoap.org/soap/envelope/}Body')
 
@@ -2202,8 +2218,7 @@ class FritzDevice:
             if request.status_code != 200:
                 xml = etree.parse(BytesIO(request.content))
                 try:
-                    # error_code = int(xml.find('.//{urn:dslforum-org:control-1-0}errorCode').text)
-                    error_code = int(xml.find(f".//{{{TR064_CONTROL_NAMESPACE['']}}}errorCode").text)
+                    error_code = int(xml.find(f".//{{{FritzDevice.TR064_CONTROL_NAMESPACE['']}}}errorCode").text)
                 except Exception:
                     error_code = None
                     pass
@@ -2213,7 +2228,6 @@ class FritzDevice:
             # Translate response and prepare dict
             xml = etree.parse(BytesIO(request.content))
             response = FritzDevice.AttributeDict()
-            #for arg in list(xml.find('.//{{{}}}{}Response'.format(self.service_type, self.name))):
             for arg in list(xml.find(f".//{{{self.service_type}}}{self.name}Response")):
                 name = self.out_arguments[arg.tag]
                 response[name] = arg.text
@@ -2233,11 +2247,14 @@ class FritzHome:
     Fritzhome object to communicate with the device via AHA-HTTP Interface.
     """
 
-    _login_route = '/login_sid.lua?version=2'
-    _log_route = '/query.lua?mq_log=logger:status/log'
-    _log_separate_route = '/query.lua?mq_log=logger:status/log_separate'
-    _homeauto_route = '/webservices/homeautoswitch.lua'
-    _internet_status_route = '/internet/inetstat_monitor.lua?sid='
+    """
+    Definition of AHA Routes
+    """
+    LOGIN_ROUTE = '/login_sid.lua?version=2'
+    LOG_ROUTE = '/query.lua?mq_log=logger:status/log'
+    LOG_SEPARATE_ROUTE = '/query.lua?mq_log=logger:status/log_separate'
+    HOMEAUTO_ROUTE = '/webservices/homeautoswitch.lua'
+    INTERNET_STATUS_ROUTE = '/internet/inetstat_monitor.lua?sid='
 
     def __init__(self, host, ssl, verify, user, password, _log_entry_count, plugin_instance):
         """
@@ -2556,7 +2573,7 @@ class FritzHome:
         Send a login request with parameters.
         """
 
-        url = self._get_prefixed_host() + self._login_route
+        url = self._get_prefixed_host() + self.LOGIN_ROUTE
         params = {}
         if username:
             params["username"] = username
@@ -2575,7 +2592,7 @@ class FritzHome:
         Send a logout request.
         """
 
-        url = self._get_prefixed_host() + self._login_route
+        url = self._get_prefixed_host() + self.LOGIN_ROUTE
         params = {"logout": "1", "sid": self._sid}
 
         self._request(url, params)
@@ -2617,7 +2634,7 @@ class FritzHome:
         Send an AHA request.
         """
 
-        url = self._get_prefixed_host() + self._homeauto_route
+        url = self._get_prefixed_host() + self.HOMEAUTO_ROUTE
         params = {"switchcmd": cmd, "sid": self._sid}
         if param:
             params.update(param)
@@ -2684,7 +2701,7 @@ class FritzHome:
         """
 
         self._plugin_instance.logger.debug(f"check_sid called")
-        url = self._get_prefixed_host() + self._login_route
+        url = self._get_prefixed_host() + self.LOGIN_ROUTE
         params = {"sid": self._sid}
         plain = self._request(url, params)
         dom = ElementTree.fromstring(plain)
@@ -2757,14 +2774,12 @@ class FritzHome:
         """
         Get the DOM elements for the device list.
         """
-
         return self._get_listinfo_elements("device")
 
     def get_device_element(self, ain):
         """
         Get the DOM element for the specified device.
         """
-
         elements = self.get_device_elements()
         for element in elements:
             if element.attrib["identifier"] == ain:
@@ -2775,14 +2790,12 @@ class FritzHome:
         """
         Get the list of all known devices.
         """
-
         return list(self.get_devices_as_dict().values())
 
     def get_devices_as_dict(self):
         """
         Get the list of all known devices.
         """
-
         if self.update_devices():
             return self._devices
 
@@ -2790,21 +2803,18 @@ class FritzHome:
         """
         Return a device specified by the AIN.
         """
-
         return self.get_devices_as_dict()[ain]
 
     def get_device_present(self, ain):
         """
         Get the device presence.
         """
-
         return self._aha_request("getswitchpresent", ain=ain, rf='bool')
 
     def get_device_name(self, ain):
         """
         Get the device name.
         """
-
         return self._aha_request("getswitchname", ain=ain)
 
     # switch-related commands
@@ -2813,28 +2823,24 @@ class FritzHome:
         """
         Get the switch state.
         """
-
         return self._aha_request("getswitchstate", ain=ain, rf='bool')
 
     def set_switch_state_on(self, ain):
         """
         Set the switch to on state.
         """
-
         return self._aha_request("setswitchon", ain=ain, rf='bool')
 
     def set_switch_state_off(self, ain):
         """
         Set the switch to off state.
         """
-
         return self._aha_request("setswitchoff", ain=ain, rf='bool')
 
     def set_switch_state_toggle(self, ain):
         """
         Toggle the switch state.
         """
-
         return self._aha_request("setswitchtoggle", ain=ain, rf='bool')
 
     def set_switch_state(self, ain, state):
@@ -2858,7 +2864,6 @@ class FritzHome:
         """
         Get the switch energy.
         """
-
         return self._aha_request("getswitchenergy", ain=ain, rf='int')
 
     # thermostat-related commands
@@ -2867,7 +2872,6 @@ class FritzHome:
         """
         Get the device temperature sensor value.
         """
-
         return self._aha_request("gettemperature", ain=ain, rf='float') / 10.0
 
     def _get_temperature(self, ain, name):
@@ -3080,47 +3084,50 @@ class FritzHome:
 
     def set_color_discrete(self, ain, hue, duration=0):
         """
-        Set Led color to closest discrete hue value. Currently, only those are supported for FritzDect500 RGB LED bulbs
+        Set Led color to the closest discrete hue value. Currently, only those are supported for FritzDect500 RGB LED bulbs
         """
 
         if hue <= 20:
             # self._plugin_instance.logger.debug(f'setcolor to red (hue={hue})')
-            return self._aha_request("setcolor", ain=ain, param={'hue': 358, 'saturation': 180, 'duration': int(duration)}, rf='bool')
+            param = {'hue': 358, 'saturation': 180, 'duration': int(duration)}
         elif hue <= 45:
             # self._plugin_instance.logger.debug(f'setcolor to orange (hue={hue})')
-            return self._aha_request("setcolor", ain=ain, param={'hue': 35, 'saturation': 214, 'duration': int(duration)}, rf='bool')
+            param = {'hue': 35, 'saturation': 214, 'duration': int(duration)}
         elif hue <= 55:
             # self._plugin_instance.logger.debug(f'setcolor to yellow (hue={hue})')
-            return self._aha_request("setcolor", ain=ain, param={'hue': 52, 'saturation': 153, 'duration': int(duration)}, rf='bool')
+            param = {'hue': 52, 'saturation': 153, 'duration': int(duration)}
         elif hue <= 100:
             # self._plugin_instance.logger.debug(f'setcolor to grasgreen (hue={hue})')
-            return self._aha_request("setcolor", ain=ain, param={'hue': 92, 'saturation': 123, 'duration': int(duration)}, rf='bool')
+            param = {'hue': 92, 'saturation': 123, 'duration': int(duration)}
         elif hue <= 135:
             # self._plugin_instance.logger.debug(f'setcolor to green (hue={hue})')
-            return self._aha_request("setcolor", ain=ain, param={'hue': 120, 'saturation': 160, 'duration': int(duration)}, rf='bool')
+            param = {'hue': 120, 'saturation': 160, 'duration': int(duration)}
         elif hue <= 175:
             # self._plugin_instance.logger.debug(f'setcolor to turquoise (hue={hue})')
-            return self._aha_request("setcolor", ain=ain, param={'hue': 160, 'saturation': 145, 'duration': int(duration)}, rf='bool')
+            param = {'hue': 160, 'saturation': 145, 'duration': int(duration)}
         elif hue <= 210:
             # self._plugin_instance.logger.debug(f'setcolor to cyan (hue={hue})')
-            return self._aha_request("setcolor", ain=ain, param={'hue': 195, 'saturation': 179, 'duration': int(duration)}, rf='bool')
+            param = {'hue': 195, 'saturation': 179, 'duration': int(duration)}
         elif hue <= 240:
             # self._plugin_instance.logger.debug(f'setcolor to blue (hue={hue})')
-            return self._aha_request("setcolor", ain=ain, param={'hue': 225, 'saturation': 204, 'duration': int(duration)}, rf='bool')
+            param = {'hue': 225, 'saturation': 204, 'duration': int(duration)}
         elif hue <= 280:
             # self._plugin_instance.logger.debug(f'setcolor to violett (hue={hue})')
-            return self._aha_request("setcolor", ain=ain, param={'hue': 266, 'saturation': 169, 'duration': int(duration)}, rf='bool')
+            param = {'hue': 266, 'saturation': 169, 'duration': int(duration)}
         elif hue <= 310:
             # self._plugin_instance.logger.debug(f'setcolor to magenta (hue={hue})')
-            return self._aha_request("setcolor", ain=ain, param={'hue': 296, 'saturation': 140, 'duration': int(duration)}, rf='bool')
+            param = {'hue': 296, 'saturation': 140, 'duration': int(duration)}
         elif hue <= 350:
             # self._plugin_instance.logger.debug(f'setcolor to pink (hue={hue})')
-            return self._aha_request("setcolor", ain=ain, param={'hue': 335, 'saturation': 180, 'duration': int(duration)}, rf='bool')
+            param = {'hue': 335, 'saturation': 180, 'duration': int(duration)}
         elif hue <= 360:
             # self._plugin_instance.logger.debug(f'setcolor to red (hue={hue})')
-            return self._aha_request("setcolor", ain=ain, param={'hue': 358, 'saturation': 180, 'duration': int(duration)}, rf='bool')
+            param = {'hue': 358, 'saturation': 180, 'duration': int(duration)}
         else:
             self._plugin_instance.logger.error(f'setcolor hue out of range (hue={hue})')
+            return
+
+        return self._aha_request("setcolor", ain=ain, param=param, rf='bool')
 
     def get_hue(self, ain):
         """
@@ -3229,7 +3236,7 @@ class FritzHome:
         if not self._logged_in:
             self.login()
 
-        url = self._get_prefixed_host() + self._log_route
+        url = self._get_prefixed_host() + self.LOG_ROUTE
         params = {"sid": self._sid}
 
         # get data
@@ -3261,7 +3268,7 @@ class FritzHome:
         if not self._logged_in:
             self.login()
 
-        url = self._get_prefixed_host() + self._log_separate_route
+        url = self._get_prefixed_host() + self.LOG_SEPARATE_ROUTE
         params = {"sid": self._sid}
 
         data = self._request(url, params, result='json')
