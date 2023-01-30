@@ -6,7 +6,7 @@ plugin:
         de: 'Database plugin, mit Unterstützung für SQLite 3 und MySQL'
         en: 'Database plugin, with support for SQLite 3 and MySQL'
     maintainer: ohinckel, msinn, onkelandy
-    tester: psilo909, onkelandy, brandst, aschwith
+    tester: psilo909, brandst, aschwith
     state: ready
     keywords: database
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1021844-neues-database-plugin
