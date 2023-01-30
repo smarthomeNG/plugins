@@ -60,6 +60,7 @@ IGD_DEVICE_NAMESPACE = {'': 'urn:schemas-upnp-org:device-1-0'}
 IGD_SERVICE_NAMESPACE = {'': 'urn:schemas-upnp-org:service-1-0'}
 TR064_DEVICE_NAMESPACE = {'': 'urn:dslforum-org:device-1-0'}
 TR064_SERVICE_NAMESPACE = {'': 'urn:dslforum-org:service-1-0'}
+TR064_CONTROL_NAMESPACE = {'': 'urn:dslforum-org:control-1-0'}
 
 
 """
@@ -560,6 +561,9 @@ class AVM2(SmartPlugin):
     def set_deflection_enable(self, deflection_id: int = 0, new_enable: bool = False):
         return self._fritz_device.set_deflection(deflection_id, new_enable)
 
+    def set_tam(self, tam_index: int = 0, new_enable: bool = False):
+        return self._fritz_device.set_tam(tam_index, new_enable)
+
 
 class FritzDevice:
     """
@@ -574,6 +578,17 @@ class FritzDevice:
                   713: 'Invalid array index',
                   714: 'No such array entry in array',
                   820: 'Internal Error',
+                  403: 'SIP_FORBIDDEN, Beschreibung steht in der Hilfe (Webinterface)',
+                  404: 'SIP_NOT_FOUND, Gegenstelle nicht erreichbar (local part der SIP-URL nicht erreichbar (Host schon))',
+                  405: 'SIP_METHOD_NOT_ALLOWED',
+                  406: 'SIP_NOT_ACCEPTED',
+                  408: 'SIP_NO_ANSWER',
+                  484: 'SIP_ADDRESS_INCOMPLETE, Beschreibung steht in der Hilfe (Webinterface)',
+                  485: 'SIP_AMBIGUOUS, Beschreibung steht in der Hilfe (Webinterface)',
+                  486: 'SIP_BUSY_HERE, Ziel besetzt (vermutlich auch andere Gründe bei der Gegenstelle)',
+                  487: 'SIP_REQUEST_TERMINATED, Anrufversuch beendet (Gegenstelle nahm nach ca. 30 Sek. nicht ab)',
+                  866: 'second factor authentication required',
+                  867: 'second factor authentication blocked',
                   }
 
     def __init__(self, host, port, ssl, verify, username, password, call_monitor_incoming_filter, plugin_instance=None):
@@ -682,11 +697,10 @@ class FritzDevice:
             self._plugin_instance.logger.debug(f"Item {item.id()} with avm_data_type={avm_data_type} has changed for index {_index}; New value={to_be_set_value}")
 
         # call setting method
-            # _dispatcher[avm_data_type][0](_index, bool(to_be_set_value))
         cmd, args, index = _dispatcher[avm_data_type][1]
-        self._set_fritz_device(cmd, args, index)
+        response = self._set_fritz_device(cmd, args, index)
         if self._plugin_instance.debug_log:
-            self._plugin_instance.logger.debug(f"Setting AVM Device with successful.")
+            self._plugin_instance.logger.debug(f"Setting AVM Device with successful with response={response}.")
 
         # handle readafterwrite
         if readafterwrite:
@@ -997,7 +1011,7 @@ class FritzDevice:
         try:
             data = self._poll_fritz_device(avm_data_type, index)
         except Exception as e:
-            self._plugin_instance.logger.error(f"Error {e} occurred during update of item={item} with avm_data_type={avm_data_type} and index={index}. Check item configuration regarding supported/activated function of AVM device. ")
+            self._plugin_instance.logger.error(f"Error '{e}' occurred during update of item={item} with avm_data_type={avm_data_type} and index={index}. Check item configuration regarding supported/activated function of AVM device. ")
             return False
         else:
             if data is None:
@@ -1197,7 +1211,7 @@ class FritzDevice:
         else:
             return data if not out_argument else data[out_argument]
 
-    def _set_fritz_device(self, avm_data_type: str, args: str = None, wlan_index=None) -> None:
+    def _set_fritz_device(self, avm_data_type: str, args: str = None, wlan_index=None):
         """Set AVM Device based on avm_data_type and args"""
 
         if self._plugin_instance.debug_log:
@@ -1222,15 +1236,26 @@ class FritzDevice:
             return
 
         device, service, action = link[avm_data_type]
-        self._plugin_instance.logger.debug(device, service, action, )
+        if self._plugin_instance.debug_log:
+            self._plugin_instance.logger.debug(f"avm_data_type={avm_data_type} -> {device}.{service}.{action}")
 
         if service.lower().startswith('wlan'):
             wlan_index = "" if not wlan_index else wlan_index
-            eval(f"self.client.{device}.{service}[{wlan_index}].{action}({args})")
+            response = eval(f"self.client.{device}.{service}[{wlan_index}].{action}({args})")
         elif args is None:
-            eval(f"self.client.{device}.{service}.{action}()")
+            response = eval(f"self.client.{device}.{service}.{action}()")
         else:
-            eval(f"self.client.{device}.{service}.{action}({args})")
+            response = eval(f"self.client.{device}.{service}.{action}({args})")
+
+        if self._plugin_instance.debug_log:
+            self._plugin_instance.logger.debug(f"response={response} for {device}.{service}.{action} with args={args}")
+
+        # return response
+        if response is None:
+            self._plugin_instance.logger.info(f"No response for 'self.client.{device}.{service}.{action}({args})' received.")
+        elif isinstance(response, int) and 99 < response < 1000:
+            self._plugin_instance.logger.info(f"Response was ErrorCode: {response} '{self.errorcodes.get(response, None)}' for self.client.{device}.{service}.{action}({args})")
+        return response
 
     def _clear_data_cache(self):
         """
@@ -1337,7 +1362,7 @@ class FritzDevice:
         """
 
         # self.client.InternetGatewayDevice.DeviceConfig.Reboot()
-        self._set_fritz_device('reboot')
+        return self._set_fritz_device('reboot')
 
     def reconnect(self):
         """
@@ -1349,10 +1374,10 @@ class FritzDevice:
 
         if 'PPP' in self.default_connection_service:
             # self.client.WANConnectionDevice.WANPPPConnection.ForceTermination()
-            self._set_fritz_device('reconnect_ppp')
+            return self._set_fritz_device('reconnect_ppp')
         else:
             # self.client.WANConnectionDevice.WANIPPConnection.ForceTermination()
-            self._set_fritz_device('reconnect_ipp')
+            return self._set_fritz_device('reconnect_ipp')
 
     def wol(self, mac_address: str):
         """
@@ -1364,7 +1389,7 @@ class FritzDevice:
         """
 
         # self.client.LanDevice.Hosts.X_AVM_DE_GetAutoWakeOnLANByMACAddress(NewMACAddress=mac_address)
-        self._set_fritz_device('wol', f"NewMACAddress={mac_address}")
+        return self._set_fritz_device('wol', f"NewMACAddress={mac_address}")
 
     # ----------------------------------
     # caller methods
@@ -1407,11 +1432,11 @@ class FritzDevice:
 
         Uses: http://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/x_voipSCPD.pdf
 
-        :param phone_name: full phone identifier, could be e.g. '\*\*610' for an internal device
+        :param phone_name: full phone identifier, could be e.g. '**610' for an internal device
         """
 
         # self.client.InternetGatewayDevice.X_VoIP.X_AVM_DE_DialSetConfig(NewX_AVM_DE_PhoneName=phone_name.strip())
-        self._set_fritz_device('set_call_origin', f"NewX_AVM_DE_PhoneName={phone_name.strip()}")
+        return self._set_fritz_device('set_call_origin', f"NewX_AVM_DE_PhoneName='{phone_name.strip()}'")
 
     def start_call(self, phone_number: str):
         """
@@ -1423,7 +1448,7 @@ class FritzDevice:
         """
 
         # self.client.InternetGatewayDevice.X_VoIP.X_AVM_DE_DialNumber(NewX_AVM_DE_PhoneNumber=phone_number.strip())
-        self._set_fritz_device('start_call', f"NewX_AVM_DE_PhoneNumber={phone_number.strip()}")
+        return self._set_fritz_device('start_call', f"NewX_AVM_DE_PhoneNumber={phone_number.strip()}")
 
     def cancel_call(self):
         """
@@ -1433,7 +1458,7 @@ class FritzDevice:
         """
 
         # self.client.InternetGatewayDevice.X_VoIP.X_AVM_DE_DialHangup()
-        self._set_fritz_device('cancel_call')
+        return self._set_fritz_device('cancel_call')
 
     def get_contact_name_by_phone_number(self, phone_number: str = '', phonebook_id: int = 0) -> str:
         """Get contact from phone book by phone number"""
@@ -1569,10 +1594,12 @@ class FritzDevice:
             self._plugin_instance.logger.debug(f"set_wlan called: wlan_index={wlan_index}, new_enable={new_enable}")
 
         # self.client.LANDevice.WLANConfiguration[wlan_index].SetEnable(NewEnable=int(new_enable))
-        self._set_fritz_device('set_wlan', f"NewEnable={int(new_enable)}", wlan_index)
+        response = self._set_fritz_device('set_wlan', f"NewEnable={int(new_enable)}", wlan_index)
 
         # check if remaining time is set as item
         self.set_wlan_time_remaining(wlan_index)
+
+        return response
 
     def set_wlan_time_remaining(self, wlan_index: int):
         """look for item and set time remaining"""
@@ -1621,7 +1648,7 @@ class FritzDevice:
             self._plugin_instance.logger.debug(f"set_wps called: wlan_index={wlan_index}, wps_enable={wps_enable}")
 
         # self.client.LANDevice.WLANConfiguration[wlan_index].X_AVM_DE_SetWPSEnable(NewX_AVM_DE_WPSEnable=int(wps_enable))
-        self._set_fritz_device('set_wps', f"NewX_AVM_DE_WPSEnable={int(wps_enable)}", wlan_index)
+        return self._set_fritz_device('set_wps', f"NewX_AVM_DE_WPSEnable={int(wps_enable)}", wlan_index)
 
     def get_wps(self, wlan_index: int):
         """
@@ -1647,7 +1674,7 @@ class FritzDevice:
         """
 
         # self.client.InternetGatewayDevice.X_AVM_DE_TAM.SetEnable(NewIndex=tam_index, NewEnable=int(new_enable))
-        self._set_fritz_device('set_tam', f"NewIndex={tam_index}, NewEnable={int(new_enable)}")
+        return self._set_fritz_device('set_tam', f"NewIndex={tam_index}, NewEnable={int(new_enable)}")
 
     def get_tam(self, tam_index: int = 0):
         """
@@ -1707,7 +1734,7 @@ class FritzDevice:
         switch_state = "ON" if set_switch is True else "OFF"
 
         # self.client.InternetGatewayDevice.X_AVM_DE_Homeauto.SetSwitch(NewAIN=ain, NewSwitchState=switch_state)
-        self._set_fritz_device('set_aha_device', f"NewAIN={ain}, NewSwitchState={switch_state}")
+        return self._set_fritz_device('set_aha_device', f"NewAIN={ain}, NewSwitchState={switch_state}")
 
     # ----------------------------------
     # deflection
@@ -1723,7 +1750,7 @@ class FritzDevice:
         """
 
         # self.client.InternetGatewayDevice.X_AVM_DE_OnTel.SetDeflectionEnable(NewDeflectionId=deflection_id, NewEnable=int(new_enable))
-        self._set_fritz_device('set_deflection', f"NewDeflectionId={deflection_id}, NewEnable={int(new_enable)}")
+        return self._set_fritz_device('set_deflection', f"NewDeflectionId={deflection_id}, NewEnable={int(new_enable)}")
 
     def get_deflection(self, deflection_id: int = 0):
         """Get Deflection state of deflection_id"""
@@ -2097,8 +2124,6 @@ class FritzDevice:
                         self.namespaces
                     )
 
-                # self.logger.debug(f"Service: {self.description_file} scpdurl={self.scpdurl} with actions={self.actions}")
-
     class Action:
         """
         TR-064 action.
@@ -2159,33 +2184,37 @@ class FritzDevice:
                 self.logger.warning('Unknown argument(s) \'' + "', '".join(unknown_arguments) + '\'')
 
             # Add SOAP action to header
-            self.headers['soapaction'] = '"{}#{}"'.format(self.service_type, self.name)
+            self.headers['soapaction'] = f'"{self.service_type}#{self.name}"'
             etree.register_namespace('u', self.service_type)
 
             # Prepare body for request
             self.body.clear()
-            action = etree.SubElement(self.body, '{{{}}}{}'.format(self.service_type, self.name))
+            action = etree.SubElement(self.body, f'{{{self.service_type}}}{self.name}')
             for key in kwargs:
                 arg = etree.SubElement(action, self.in_arguments[key])
                 arg.text = str(kwargs[key])
 
             # soap._InitChallenge(header)
             data = etree.tostring(self.envelope, encoding='utf-8', xml_declaration=True).decode()
-            request = requests.post(f'{self.base_url}{self.control_url}',
-                                    headers=self.headers,
-                                    auth=self.auth,
-                                    data=data,
-                                    verify=self.verify)
+            request = requests.post(f'{self.base_url}{self.control_url}', headers=self.headers, auth=self.auth, data=data, verify=self.verify)
 
-            # self.logger.warning(f"Action call request={request.content}")
-
+            # handle response of failed action
             if request.status_code != 200:
-                return request.status_code
+                xml = etree.parse(BytesIO(request.content))
+                try:
+                    # error_code = int(xml.find('.//{urn:dslforum-org:control-1-0}errorCode').text)
+                    error_code = int(xml.find(f".//{{{TR064_CONTROL_NAMESPACE['']}}}errorCode").text)
+                except Exception:
+                    error_code = None
+                    pass
+                # self.logger.debug(f"status_code={request.status_code}, error_code={error_code.text}")
+                return error_code if error_code is not None else request.status_code
 
             # Translate response and prepare dict
             xml = etree.parse(BytesIO(request.content))
             response = FritzDevice.AttributeDict()
-            for arg in list(xml.find('.//{{{}}}{}Response'.format(self.service_type, self.name))):
+            #for arg in list(xml.find('.//{{{}}}{}Response'.format(self.service_type, self.name))):
+            for arg in list(xml.find(f".//{{{self.service_type}}}{self.name}Response")):
                 name = self.out_arguments[arg.tag]
                 response[name] = arg.text
             return response
@@ -3422,13 +3451,7 @@ class FritzHome:
 
         def __repr__(self):
             """Return a string."""
-            return "{ain} {identifier} {manuf} {prod} {name}".format(
-                ain=self.ain,
-                identifier=self.identifier,
-                manuf=self.manufacturer,
-                prod=self.productname,
-                name=self.name,
-            )
+            return f"{self.ain} {self.identifier} {self.manufacturer} {self.productname} {self.name}"
 
         def update(self):
             """Update the device values."""
@@ -4270,7 +4293,7 @@ class Callmonitor:
                 self._plugin_instance.logger.error("CallMonitor connection not open anymore.")
             else:
                 if self._plugin_instance.debug_log:
-                    self._plugin_instance.logger.debug(f"Data Received from CallMonitor: {data.decode('utf-8')}")
+                    self._plugin_instance.logger.debug(f"Data Received from CallMonitor: {data.decode('utf-8').strip()}")
             buffer += data.decode("utf-8")
             while buffer.find("\n") != -1:
                 line, buffer = buffer.split("\n", 1)
