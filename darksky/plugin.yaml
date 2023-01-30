@@ -261,6 +261,10 @@ item_structs:
                 eval_trigger: ..time_epoch
                 eval: datetime.datetime.fromtimestamp(sh...time_epoch()).strftime('%HH:%MM')
 
+            weekday:
+                type: str
+                ds_matchstring@instance: currently/weekday
+
             summary:
                 type: str
                 ds_matchstring@instance: currently/summary

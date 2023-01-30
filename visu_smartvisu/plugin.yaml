@@ -10,7 +10,7 @@ plugin:
     #state: qa-passed
     state: deprecated
 #    keywords: iot xyz
-    documentation: http://smarthomeng.de/user/plugins/visu_smartvisu/user_doc.html
+#    documentation: ''              # Hier eine url zu evtl. vorhandener Doku einfügen - NICHT die url der user_doc!!!
 
     version: 1.3.4                 # Plugin version
     sh_minversion: 1.4             # minimum shNG version to use this plugin

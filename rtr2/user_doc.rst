@@ -1,8 +1,16 @@
 .. index:: Plugins; rtr2 (Raumtemperatur Regler v2)
-.. index:: rtr rtr2
+.. index:: rtr2 rtr
 
+====
 rtr2
-####
+====
+
+.. image:: webif/static/img/plugin_logo.png
+   :alt: plugin logo
+   :width: 300px
+   :height: 300px
+   :scale: 50 %
+   :align: left
 
 Das Plugin implementiert einen oder mehrere Raumtemperatur Regler. Es ist eine komplette Neuentwicklung mit einem
 erweiterten Funktionsumfang gegenüber dem alten rtr Plugin:
