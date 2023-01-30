@@ -5,11 +5,10 @@ plugin:
     description:                  # Alternative: description in multiple languages
         de: 'Database plugin, mit Unterstützung für SQLite 3 und MySQL'
         en: 'Database plugin, with support for SQLite 3 and MySQL'
-    maintainer: ohinckel, msinn
+    maintainer: ohinckel, msinn, onkelandy
     tester: psilo909, onkelandy, brandst, aschwith
     state: ready
     keywords: database
-    documentation: http://smarthomeng.de/user/plugins/database/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1021844-neues-database-plugin
 
     version: 1.6.9                 # Plugin version

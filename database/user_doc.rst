@@ -5,6 +5,13 @@
 database
 ========
 
+.. image:: webif/static/img/plugin_logo.png
+   :alt: plugin logo
+   :width: 300px
+   :height: 300px
+   :scale: 50 %
+   :align: left
+
 Database plugin, mit Unterstützung für SQLite3 und MySQL.
 
 Verwenden Sie dieses Plugin, um Itemwerte in einer Datenbank zu speichern. Es unterstützt
@@ -24,10 +31,10 @@ Die Informationen zur Konfiguration des Plugins sind unter :doc:`/plugins_doc/co
    **KEIN** **instance** Attribut konfiguriert werden darf, da sonst die Systemdaten nicht gespeichert werden und
    Abfragen aus dem Admin Interface und der smartVISU ins Leere laufen und Fehlermeldungen produzieren.
 
-Standarmässig schreibt das Plugin vor dem Beenden von SmarthomeNG alle am Plugin registrierten Items nochmal mit aktuellem
+Standarmäßig schreibt das Plugin vor dem Beenden von SmarthomeNG alle am Plugin registrierten Items nochmal mit aktuellem
 Wert in die Datenbank. Die kann durch Setzen des Item Attributes database_write_on_shutdown: False unterdrückt werden.
 Ein typischer Anwendungsfall sind zum Beispiel monoton steigende Werte wie Zählerstände, die selten geschrieben werden
-und für die doppelte Einträge durch smarthomeNG Neustarts stoerend in Datenbank und optionalen Plots in einer
+und für die doppelte Einträge durch smarthomeNG Neustarts störend in Datenbank und optionalen Plots in einer
 Visualisierung sind.
 
 
@@ -113,8 +120,8 @@ von SQLite3 zur Verfügung steht.
 Der Export wird gestartet, indem einer der beiden Buttons im Kopfbereich des Plugins geklickt wird.
 Anschließend wird auf dem System auf dem SmartHomeNG läuft, lokal ein Export der Daten erzeugt und anschließend
 herunter geladen. Während die Erzeugung es Exports läuft, wird im Browser ein leeres Fenster angezeigt. Das
-Fenster muss bis zum Abschluß des Exports geöffnet bleiben. Der Export kann, je nach Datenbank Größe, bis
-zu über einer Stunde dauern. Nach Abschluß des Exports wird die Datei herunter geladen und im Fenster wird wieder das
+Fenster muss bis zum Abschluss des Exports geöffnet bleiben. Der Export kann, je nach Datenbank Größe, bis
+zu über einer Stunde dauern. Nach Abschluss des Exports wird die Datei herunter geladen und im Fenster wird wieder das
 Web Interface des database Plugins angezeigt.
 
 
@@ -202,7 +209,7 @@ Die `item` Tabelle enthält die folgenden Spalten:
 Die `log` Tabelle enthält die folgenden Spalten:
 
   * Column `time` - Ein UNIX Zeitstempel in eine Auflösung von Mikrosekunden
-  * Column `item_id` - Eine Referenz auf eine eindeutige Kennung eines Items in der Tabelle ìtem
+  * Column `item_id` - Eine Referenz auf eine eindeutige Kennung eines Items in der Tabelle `item`
   * Column `duration` - Die Dauer in Mikrosekunden
   * Column `val_str` - Der Itemwert als Zeichenkette wenn das Item den Typ `str` hat
   * Column `val_num` - Der Itemwert als Zahl, wenn das Item den Typ `num` hat
