@@ -3148,8 +3148,8 @@ class FritzHome:
 
         params = {
             'temperature': int(temperature),
-            "duration": int(duration) * 10
-        }
+            'duration': int(duration) * 10
+            }
         self._aha_request("setcolortemperature", ain=ain, param=params)
 
     def get_color_temp(self, ain):
@@ -3172,9 +3172,7 @@ class FritzHome:
 
         for element in self.get_template_elements():
             if element.attrib["identifier"] in self._templates.keys():
-                self._plugin_instance.logger.info(
-                    "Updating already existing Template " + element.attrib["identifier"]
-                )
+                self._plugin_instance.logger.info(f"Updating already existing Template {element.attrib['identifier']}")
                 self._templates[element.attrib["identifier"]]._update_from_node(element)
             else:
                 self._plugin_instance.logger.info("Adding new Template " + element.attrib["identifier"])
