@@ -40,8 +40,10 @@ if __name__ == '__main__':
 else:
     builtins.SDP_standalone = False
 
-from lib.model.sdp.globals import PLUGIN_ATTR_SERIAL_PORT
+from lib.model.sdp.globals import PLUGIN_ATTR_SERIAL_PORT, PLUGIN_ATTR_PROTOCOL
 from lib.model.smartdeviceplugin import SmartDevicePlugin, Standalone
+from .protocol import SDPProtocolViessmann
+
 
 if not SDP_standalone:
     from .webif import WebInterface
@@ -58,6 +60,8 @@ class sdp_viessmann(SmartDevicePlugin):
 
         if not SDP_standalone:
             self._webif = WebInterface
+
+        self._parameters[PLUGIN_ATTR_PROTOCOL] = SDPProtocolViessmann
 
 #
 # methods for standalone mode

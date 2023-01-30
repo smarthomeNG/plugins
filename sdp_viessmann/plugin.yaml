@@ -1,3 +1,5 @@
+%YAML 1.1
+---
 
 plugin:
     type: gateway
@@ -39,11 +41,6 @@ parameters:
         type: str
         default: SDPCommandViessmann
         description: Name der Klasse für Commands
-
-    protocol:
-        type: str
-        default: SDPProtocolViessmann
-        description: Name der Klasse für Connection protocol
 
     clean_structs:
         type: bool
