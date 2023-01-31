@@ -7,7 +7,7 @@ plugin:
         en: 'Plugin to connect a Philips TV with SmartHomeNG'
     maintainer: aschwith 
     tester: 'n/a'
-    state: develop                  # change to ready when done with development
+    state: ready
     keywords: Philips, TV
     documentation: https://github.com/smarthomeNG/plugins/blob/develop/philips_tv/user_doc.rst
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1698335-supportthread-f%C3%BCr-philips_tv-plugin

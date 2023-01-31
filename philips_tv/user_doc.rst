@@ -1,14 +1,21 @@
-.. index:: Plugins; Philips (Philips TV Unterstützung)
-.. index:: Philips
+.. index:: Plugins; philips_tv
+.. index:: philips_tv
 
-=============
+==========
 philips_tv
-=============
+==========
 
-SmarthomeNG plugin, mit Unterstützung für Philips TVs mit OAuth Identifizierung.
+.. image:: webif/static/img/plugin_logo.png
+   :alt: plugin logo
+   :width: 300px
+   :height: 300px
+   :scale: 50 %
+   :align: left
 
 Konfiguration
 =============
+
+SmarthomeNG plugin, mit Unterstützung für Philips TVs mit OAuth Identifizierung.
 
 Die Informationen zur Konfiguration des Plugins sind unter :doc:`/plugins_doc/config/philips_tv` beschrieben.
 
