@@ -1259,20 +1259,22 @@ class FritzDevice:
 
         if service.lower().startswith('wlan'):
             wlan_index = "" if not wlan_index else wlan_index
-            response = eval(f"self.client.{device}.{service}[{wlan_index}].{action}({args})")
+            cmd = f"self.client.{device}.{service}[{wlan_index}].{action}({args})"
         elif args is None:
-            response = eval(f"self.client.{device}.{service}.{action}()")
+            cmd = f"self.client.{device}.{service}.{action}()"
         else:
-            response = eval(f"self.client.{device}.{service}.{action}({args})")
+            cmd = f"self.client.{device}.{service}.{action}({args})"
+        response = eval(cmd)
+
 
         if self._plugin_instance.debug_log:
-            self._plugin_instance.logger.debug(f"response={response} for {device}.{service}.{action} with args={args}")
+            self._plugin_instance.logger.debug(f"response={response} for cmd={cmd}.")
 
         # return response
         if response is None:
-            self._plugin_instance.logger.info(f"No response for 'self.client.{device}.{service}.{action}({args})' received.")
+            self._plugin_instance.logger.info(f"No response for cmd={cmd} received.")
         elif isinstance(response, int) and 99 < response < 1000:
-            self._plugin_instance.logger.info(f"Response was ErrorCode: {response} '{self.ERROR_CODES.get(response, None)}' for self.client.{device}.{service}.{action}({args})")
+            self._plugin_instance.logger.info(f"Response was ErrorCode: {response} '{self.ERROR_CODES.get(response, None)}' for cmd={cmd}")
         return response
 
     def _clear_data_cache(self):
@@ -1407,7 +1409,7 @@ class FritzDevice:
         """
 
         # self.client.LanDevice.Hosts.X_AVM_DE_GetAutoWakeOnLANByMACAddress(NewMACAddress=mac_address)
-        return self._set_fritz_device('wol', f"NewMACAddress={mac_address}")
+        return self._set_fritz_device('wol', f"NewMACAddress='{mac_address}'")
 
     # ----------------------------------
     # caller methods
@@ -1466,7 +1468,7 @@ class FritzDevice:
         """
 
         # self.client.InternetGatewayDevice.X_VoIP.X_AVM_DE_DialNumber(NewX_AVM_DE_PhoneNumber=phone_number.strip())
-        return self._set_fritz_device('start_call', f"NewX_AVM_DE_PhoneNumber={phone_number.strip()}")
+        return self._set_fritz_device('start_call', f"NewX_AVM_DE_PhoneNumber='{phone_number.strip()}'")
 
     def cancel_call(self):
         """
@@ -1612,7 +1614,7 @@ class FritzDevice:
             self._plugin_instance.logger.debug(f"set_wlan called: wlan_index={wlan_index}, new_enable={new_enable}")
 
         # self.client.LANDevice.WLANConfiguration[wlan_index].SetEnable(NewEnable=int(new_enable))
-        response = self._set_fritz_device('set_wlan', f"NewEnable={int(new_enable)}", wlan_index)
+        response = self._set_fritz_device('set_wlan', f"NewEnable='{int(new_enable)}'", wlan_index)
 
         # check if remaining time is set as item
         self.set_wlan_time_remaining(wlan_index)
@@ -1666,7 +1668,7 @@ class FritzDevice:
             self._plugin_instance.logger.debug(f"set_wps called: wlan_index={wlan_index}, wps_enable={wps_enable}")
 
         # self.client.LANDevice.WLANConfiguration[wlan_index].X_AVM_DE_SetWPSEnable(NewX_AVM_DE_WPSEnable=int(wps_enable))
-        return self._set_fritz_device('set_wps', f"NewX_AVM_DE_WPSEnable={int(wps_enable)}", wlan_index)
+        return self._set_fritz_device('set_wps', f"NewX_AVM_DE_WPSEnable='{int(wps_enable)}'", wlan_index)
 
     def get_wps(self, wlan_index: int):
         """
@@ -1692,7 +1694,7 @@ class FritzDevice:
         """
 
         # self.client.InternetGatewayDevice.X_AVM_DE_TAM.SetEnable(NewIndex=tam_index, NewEnable=int(new_enable))
-        return self._set_fritz_device('set_tam', f"NewIndex={tam_index}, NewEnable={int(new_enable)}")
+        return self._set_fritz_device('set_tam', f"NewIndex={tam_index}, NewEnable='{int(new_enable)}'")
 
     def get_tam(self, tam_index: int = 0):
         """
@@ -1752,7 +1754,7 @@ class FritzDevice:
         switch_state = "ON" if set_switch is True else "OFF"
 
         # self.client.InternetGatewayDevice.X_AVM_DE_Homeauto.SetSwitch(NewAIN=ain, NewSwitchState=switch_state)
-        return self._set_fritz_device('set_aha_device', f"NewAIN={ain}, NewSwitchState={switch_state}")
+        return self._set_fritz_device('set_aha_device', f"NewAIN={ain}, NewSwitchState='{switch_state}'")
 
     # ----------------------------------
     # deflection
@@ -1768,7 +1770,7 @@ class FritzDevice:
         """
 
         # self.client.InternetGatewayDevice.X_AVM_DE_OnTel.SetDeflectionEnable(NewDeflectionId=deflection_id, NewEnable=int(new_enable))
-        return self._set_fritz_device('set_deflection', f"NewDeflectionId={deflection_id}, NewEnable={int(new_enable)}")
+        return self._set_fritz_device('set_deflection', f"NewDeflectionId='{deflection_id}', NewEnable='{int(new_enable)}'")
 
     def get_deflection(self, deflection_id: int = 0):
         """Get Deflection state of deflection_id"""
@@ -1866,7 +1868,7 @@ class FritzDevice:
         url = f"{self._build_url()}{hosts_url}"
 
         hosts_xml = self._request_response_to_xml(self._request(url, self._timeout, self._verify))
-        if not hosts_xml:
+        if hosts_xml is not None:
             return
 
         hosts_dict = {}
