@@ -61,6 +61,8 @@ from plugins.sonos.soco.events import event_listener
 from plugins.sonos.soco.music_services.data_structures import get_class
 from plugins.sonos.soco.snapshot import Snapshot
 from plugins.sonos.soco.xml import XML
+from plugins.sonos.soco.plugins.sharelink import ShareLinkPlugin
+
 import time
 
 from gtts import gTTS
@@ -1269,6 +1271,19 @@ class Speaker(object):
             self.logger.error(ex)
             return False
 
+    def get_reboot_count(self) -> int:
+        """
+        Calls the SoCo function to get the number of reboots.
+        :rtype: int
+        :return: number of reboots
+        """
+        try:
+            return self.soco.boot_seqnum
+        except Exception as ex:
+            self.logger.error(ex)
+            return 0
+
+
     @property
     def coordinator(self) -> str:
         """
@@ -2217,6 +2232,45 @@ class Speaker(object):
             if start:
                 self.soco.play()
 
+    def play_sharelink(self, url: str, start: bool = True) -> None:
+        """
+        Plays a sharelink from a given url
+        :param start: Start playing after setting the url? Default: True
+        :param url: url to be played
+        :return: None
+        """
+        if not self._check_property():
+            return
+
+        if not self.is_coordinator:
+            try:
+                device = sonos_speaker[self.coordinator]
+                share_link = ShareLinkPlugin(device)
+
+                if not share_link.is_share_link(url):
+                    self.logger.warning(f"Url: {url} is not a valid share link")
+                    return False
+
+                queue_position = share_link.add_share_link_to_queue(url)
+                sonos_speaker[self.coordinator].play_from_queue(index=queue_position)
+            except SoCoUPnPException as ex:
+                self.logger.warning("Exception in play_from_queue() a): {ex}".format(ex=ex))
+                return
+        else:
+            try:
+                device = self.soco
+                share_link = ShareLinkPlugin(device)
+
+                if not share_link.is_share_link(url):
+                    self.logger.warning(f"Url: {url} is not a valid share link")
+                    return False
+
+                queue_position = share_link.add_share_link_to_queue(url)
+                self.soco.play_from_queue(index=queue_position)
+            except SoCoUPnPException as ex:
+                self.logger.warning("Exception in play_sharelink() b): {ex}".format(ex=ex))
+                return
+
     def play_url(self, url: str, start: bool = True) -> None:
         """
         Plays a track from a given url
@@ -2442,7 +2496,7 @@ class Speaker(object):
 
 class Sonos(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.6.7"
+    PLUGIN_VERSION = "1.6.8"
 
     def __init__(self, sh, *args, **kwargs):
         """
@@ -2814,6 +2868,9 @@ class Sonos(SmartPlugin):
                 if command == "play_url":
                     start = self._resolve_child_command_bool(item, 'start_after')
                     sonos_speaker[uid].play_url(item(), start)
+                if command == "play_sharelink":
+                    start = self._resolve_child_command_bool(item, 'start_after')
+                    sonos_speaker[uid].play_sharelink(item(), start)
                 if command == "join":
                     sonos_speaker[uid].join(item())
                 if command == "unjoin":
