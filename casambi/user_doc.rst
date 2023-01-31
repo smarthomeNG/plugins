@@ -1,9 +1,16 @@
-.. index:: Plugins; casambi (Casambi REST API Unterstützung)
+.. index:: Plugins; casambi
 .. index:: casambi
 
 =======
 casambi
 =======
+
+.. image:: webif/static/img/plugin_logo.png
+   :alt: plugin logo
+   :width: 300px
+   :height: 300px
+   :scale: 50 %
+   :align: left
 
 Dieses Plugin unterstützt Casambi und Occhio Lichter durch die Verwendung des Casambi Backend API.
 Die Kommunikation erfolgt über Bluetooth Low Energy (BLE) und die Casambi Produkte sind in vielen
