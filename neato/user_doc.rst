@@ -1,5 +1,5 @@
-.. index:: Plugins; Neato (Neato und Vorwerk Unterstützung)
-.. index:: Neato
+.. index:: Plugins; neato
+.. index:: neato
 
 =====
 neato
