@@ -52,7 +52,8 @@ from lib.item import Items
 from lib.module import Modules
 from plugins.sonos.soco import *
 from lib.model.smartplugin import SmartPlugin
-from lib.model.smartplugin import SmartPluginWebIf
+from .webif import WebInterface
+#from lib.model.smartplugin import SmartPluginWebIf
 #from lib.model.smartplugin import *
 
 
@@ -2658,7 +2659,7 @@ class Sonos(SmartPlugin):
         logging.getLogger('plugins.sonos.soco.services').setLevel(logging.WARNING)
         self.logger.info("Set all SoCo loglevel to WARNING")
 
-        self.init_webinterface()
+        self.init_webinterface(WebInterface)
 
     def run(self):
         self.logger.debug("Run method called")
@@ -3137,50 +3138,6 @@ class Sonos(SmartPlugin):
         self.SoCo_nr_speakers = online_speaker_count 
 
 
-    def init_webinterface(self):
-        """"
-        Initialize the web interface for this plugin
-
-        This method is only needed if the plugin is implementing a web interface
-        """
-        try:
-            self.mod_http = Modules.get_instance().get_module(
-                'http')  # try/except to handle running in a core version that does not support modules
-        except:
-            self.mod_http = None
-        if self.mod_http == None:
-            self.logger.error("Not initializing the web interface")
-            return False
-
-        import sys
-        if not "SmartPluginWebIf" in list(sys.modules['lib.model.smartplugin'].__dict__):
-            self.logger.warning("Web interface needs SmartHomeNG v1.5 and up. Not initializing the web interface")
-            return False
-
-        # set application configuration for cherrypy
-        webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
-        config = {
-            '/': {
-                'tools.staticdir.root': webif_dir,
-            },
-            '/static': {
-                'tools.staticdir.on': True,
-                'tools.staticdir.dir': 'static'
-            }
-        }
-
-        # Register the web interface as a cherrypy app
-        self.mod_http.register_webif(WebInterface(webif_dir, self),
-                                     self.get_shortname(),
-                                     config,
-                                     self.get_classname(), self.get_instance_name(),
-                                     description='')
-
-        return True
-
-
-
-
 def _initialize_speaker(uid: str, logger: logging) -> None:
     """
     Create a Speaker object by a given uuid
@@ -3195,95 +3152,4 @@ def _initialize_speaker(uid: str, logger: logging) -> None:
             sonos_speaker[uid] = Speaker(uid=uid, logger=logger)
 
 
-
-# ------------------------------------------
-#    Webinterface of the plugin
-# ------------------------------------------
-
-import cherrypy
-from jinja2 import Environment, FileSystemLoader
-
-
-class WebInterface(SmartPluginWebIf):
-
-    def __init__(self, webif_dir, plugin):
-        """
-        Initialization of instance of class WebInterface
-
-        :param webif_dir: directory where the webinterface of the plugin resides
-        :param plugin: instance of the plugin
-        :type webif_dir: str
-        :type plugin: object
-        """
-        self.logger = logging.getLogger(__name__)
-        self.webif_dir = webif_dir
-        self.plugin = plugin
-        self.tplenv = self.init_template_environment()
-
-        self.items = Items.get_instance()
-
-    @cherrypy.expose
-    def index(self, reload=None):
-        """
-        Build index.html for cherrypy
-
-        Render the template and return the html file to be delivered to the browser
-
-        :return: contents of the template after beeing rendered
-        """
-
-        speakerlist = []
-
-        for zone in self.plugin.zones:
-            #self.logger.debug(f"vars(zone): {vars(zone)}")
-            speaker = dict()
-            try:
-                speaker['name'] = zone.player_name
-            except:
-                speaker['name'] = 'unknown'
-
-            try:
-                speaker['ip'] = zone.ip_address
-            except:
-                speaker['ip'] = 'unknown'
-
-            try:
-                 speaker['uid'] = zone.uid
-            except:
-                speaker['uid'] = 'unknown'
-
-            speakerlist.append(speaker)
-
-        speakerlist_sorted = sorted(speakerlist, key=lambda k: k['name'])
-
-        tmpl = self.tplenv.get_template('index.html')
-        # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
-        return tmpl.render(p=self.plugin, items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path'])), speakerlist=speakerlist_sorted)
-
-
-    @cherrypy.expose
-    def get_data_html(self, dataSet=None):
-        """
-        Return data to update the webpage
-
-        For the standard update mechanism of the web interface, the dataSet to return the data for is None
-
-        :param dataSet: Dataset for which the data should be returned (standard: None)
-        :return: dict with the data needed to update the web page.
-        """
-        if dataSet is None:
-            # get the new data
-            data = {}
-
-            # data['item'] = {}
-            # for i in self.plugin.items:
-            #     data['item'][i]['value'] = self.plugin.getitemvalue(i)
-            #
-            # return it as json the the web page
-            # try:
-            #     return json.dumps(data)
-            # except Exception as e:
-            #     self.logger.error("get_data_html exception: {}".format(e))
-        return {}
-
-
+   

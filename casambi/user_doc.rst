@@ -141,3 +141,22 @@ Im ersten Tab werden die Items angezeigt, die das Casambi Plugin nutzen:
 
 .. image:: assets/webif1.jpg
    :class: screenshot
+
+
+Changelog
+=========
+
+V1.7.5
+    improved webinterface
+    improved command sending, if connection is no longer available (broken pipe). Resent once immediately.
+
+V1.7.4
+    added backend online status parsing to item
+    removed unjustified warning messages
+
+V1.7.3
+    added support for tunable white devices
+
+V1.7.1
+    Initial release
+

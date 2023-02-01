@@ -19,7 +19,7 @@
 	}
 	
 	function confirmPairCommand() {
-		if (confirm('{{ _('Wollen Sie die Bindung mit dem TV bestaetigen?') }}')) {
+		if (confirm('{{ _('Wollen Sie die Bindung mit dem TV bestätigen?') }}')) {
 			codeInputField = $('#input-code');
 			window.location.href='?action=confirmCode&code=' + codeInputField.val();
 		}
@@ -81,7 +81,7 @@
 {% if codeRequestSuccessfull %}
 	<div class="mb-2 alert alert-success alert-dismissible fade show" role="alert">
 		<strong>{{ _('Bindungsanfrage') }}</strong><br/>
-		{{ _('Anfrage an TV Geraet gesendet. Bitte Code notieren.') }}
+		{{ _('Anfrage an TV Gerät gesendet. Bitte Code notieren.') }}
 		<button type="button" class="close" data-dismiss="alert" aria-label="Close">
 			<span aria-hidden="true">&times;</span>
 		</button>
@@ -90,7 +90,7 @@
 {% if codeRequestSuccessfull == False%}
 	<div class="mb-2 alert alert-warning alert-dismissible fade show" role="alert">
 		<strong>{{ _('Bindungsanfrage') }}</strong><br/>
-		{{ _('Fehler beim Initiierung der Bindung. Siehe Logfile fuer Details.') }}
+		{{ _('Fehler beim Initiierung der Bindung. Siehe Logfile für Details.') }}
 		<button type="button" class="close" data-dismiss="alert" aria-label="Close">
 			<span aria-hidden="true">&times;</span>
 		</button>
@@ -108,7 +108,7 @@
 {% if pairingCompleted == False %}
 	<div class="mb-2 alert alert-warning alert-dismissible fade show" role="alert">
 		<strong>{{ _('Bindung') }}</strong><br/>
-		{{ _('Bindung nicht erfolgreich. Siehe Logfile fuer Details.') }}
+		{{ _('Bindung nicht erfolgreich. Siehe Logfile für Details.') }}
 		<button type="button" class="close" data-dismiss="alert" aria-label="Close">
 			<span aria-hidden="true">&times;</span>
 		</button>
@@ -123,10 +123,10 @@
 	<div class="col-md-11 mb-3">
 		<div class="row">
 			<div class="col-md-3 mb-3">
-				1) {{  _('Philips TV IP ueberpruefen') }}:
+				1) {{  _('Philips TV IP überprüfen') }}:
 			</div>
 			<div class="col-md-3 mb-3">
-				<input type="text" class="form-control mb-1" id="input-ip" title="{{ _('Einstellung ueber plugin.yaml') }}" value= {{ p.ip }} readonly placeholder="{{ _('TV IP') }}" maxlength="32" style="width: 300px;">
+				<input type="text" class="form-control mb-1" id="input-ip" title="{{ _('Einstellung über plugin.yaml') }}" value= {{ p.ip }} readonly placeholder="{{ _('TV IP') }}" maxlength="32" style="width: 300px;">
 			</div>
 			<div class="col-md-4 mb-3">
 				<button type="button" class="btn btn-shng btn-sm" title="{{ _('Request pairing') }}" onclick="requestPairCommand();">{{ _('Request pairing') }}</button>
@@ -140,7 +140,7 @@
 			</div>
 			<div class="col-md-3 mb-3">
 				<input type="text" class="form-control mb-1" id="input-deviceID" readonly value = {{ p.deviceID }} 
-				placeholder="{{ _('Device ID') }}" maxlength="32" style="width: 300px;" title="{{ _('Automatisch generiert oder Einstellung ueber plugin.yaml') }}">
+				placeholder="{{ _('Device ID') }}" maxlength="32" style="width: 300px;" title="{{ _('Automatisch generiert oder Einstellung über plugin.yaml') }}">
 			</div>
 		</div>
 
@@ -157,10 +157,10 @@
 		<div class="row">
 		<td style="min-width:190px;" style="padding-top:15px;">
 			<div class="col-md-6 mb-3">
-				4) {{ _('Freischaltung bestaetigen') }}:
+				4) {{ _('Freischaltung bestätigen') }}:
 			</div>
 			<div class="col-md-6 mb-3">
-				<button type="button" class="btn btn-shng btn-sm" title="{{ _('Bestaetigen') }}" onclick="confirmPairCommand();">{{ _('Bestaetigen') }}</button>
+				<button type="button" class="btn btn-shng btn-sm" title="{{ _('Bestätigen') }}" onclick="confirmPairCommand();">{{ _('Bestätigen') }}</button>
 			</div>
 		</div>
 	</div>

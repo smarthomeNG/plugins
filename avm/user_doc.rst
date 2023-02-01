@@ -1,83 +1,20 @@
+.. index:: Plugins; avm
+.. index:: avm
 
-AVM
+===
+avm
 ===
 
-Changelog
----------
+.. image:: webif/static/img/plugin_logo.png
+   :alt: plugin logo
+   :width: 300px
+   :height: 300px
+   :scale: 50 %
+   :align: left
 
-1.6.8
-~~~~~
-- HKR: Allow set temperature to be set directly to value 126.5 (off=frost protection mode). Until now, a bug mapped value off (=126.5) to maximum heating (=127).
-
-1.6.7
-~~~~~
-- Implement plugin configuration "avm_home_automation" to use AHA (AVM HomeAutomation) Interface (Default: False)
-- correct typo "temperatur" to "temperature" in struct
-- add method "get_device_log_from_lua_separated" to get log already as list of list
-- limit Log entries shown on WebIF to recent 200
-- Update WebIF with possibility to adapt table size to screen
-- Debugging for 'button' e.g. DECT440
-- Minor code correction / debugging
-- Adapt user_doc.rst
-- feature provided by plugin avm_smarthome are completely integrated. Therefore tat plugin is marked as deprecated.
-
-1.6.6
-~~~~~
-
-- Methode get_color_defaults implementiert, welche die aktuell von AVM unterstützen diskreten RGB Farben ausliest.
-- Methode set_color und color auf diskrete RGB farben umgestellt. Beliebige RGB Farbwerte werden erst ab Q2 2022 von AVM unterstützt.
-
-1.6.5
-~~~~~
-
-- Session_ID wird nur noch bei Bedarf erzeugt (bleibt nach Erstellung 20min gültig und verlängert sich bei erfolgreichem Login)
-- Update auf PBKDF2 zur Absicherung der Anmeldung; MD5 als Backup
-- Methoden "_get_sid", "_get_login_infos_from_http_request", "_http_logout_request", "_check_sid", "_calculate_pbkdf2_response", "_calculate_md5_response" hinzu
-- Bugfixing, Verbesserung der Logausgaben
-- Codevereinfachung und Korrektur
-- Plugin Parameter für WebIF Page Length hinzu
-- Plugin Parameter für Aktivierung der Nutzung des AHA-HTTP Interfaces hinzu
-
-1.6.4
-~~~~~
-
-- Attribut 'ain' deprecated gesetzt; Verwendung von 'avm_ain', so dass alle avm Plugin Attribute auch mit 'avm' beginnen
-- Überprüfung aller unterstützen Attributwerte avm_data_type
-- Anpassung der update_black_list
-- Verbesserung des Handling von avm_data_type für r/o, w/o und r/w Items
-- Vereinfachung des Code bei _update_x methods
-- Ergänzung weiterer Attributwerte bei avm_data_type
-
-1.6.3
-~~~~~
-
-- Debug des Attributs set_hkr_boost und hkr_boost
-- Update der Datatables im WebIF
-- Update des automatischen Update im WebIF
-- Information zu Attributwerten von 'avm_data_type' ergänzt
-- Beispiel für Anwendung der structs mit Instanz erstellt
-- Änderung von 'temperatur' auf 'temperature' im struct
-- Verbesserung der LogAusgabe, wenn AbfrageAttribut vorhanden aber Wert nicht vorhanden ist
-
-1.6.2
-~~~~~
-- Bugfixing der neuen Funktionen in 1.6.0
-
-1.6.1
-~~~~~
-- Bugfixing der neuen Funktionen in 1.6.0
-
-1.6.0
-~~~~~
-
-- Anbindung der Smarthome Devices über AHA-Interface hinzugefügt (getestet mit Fritz 440, Comet Dect)
-- Funktionen für Rufumleitungen hinzugefügt (getestet mit Fritzbox 7530)
-- Plugin Parameter "index" in "avm_tam_index" umbenannt
-- Code Cleanup (add new functions to minimize code repetitions)
-- Verbesserung der Fehlerbehandlung (insbesondere bei Zugriffsfehlern auf des FritzDevice)
 
 Allgemeine Informationen
-------------------------
+========================
 
 Im Plugin wird das TR-064 Protokoll und das AHA Protokoll verwendet.
 
@@ -473,7 +410,7 @@ Schaltet die Rufumleitung mit angegebener ID an oder aus.
 
 
 Web Interface
--------------
+=============
 
 Das avm Plugin verfügt über ein Webinterface, mit dessen Hilfe die Items die das Plugin nutzen
 übersichtlich dargestellt werden.
@@ -486,7 +423,7 @@ Das avm Plugin verfügt über ein Webinterface, mit dessen Hilfe die Items die d
 
 
 Aufruf des Webinterfaces
-~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------
 
 Das Plugin kann aus dem Admin-IF aufgerufen werden. Dazu auf der Seite Plugins in der entsprechenden
 Zeile das Icon in der Spalte **Web Interface** anklicken.
@@ -541,4 +478,79 @@ Beschreibung der Plugin-API
 
 .. image:: user_doc/assets/webif_tab6.jpg
    :class: screenshot
+
+
+Changelog
+=========
+
+1.6.8
+~~~~~
+- HKR: Allow set temperature to be set directly to value 126.5 (off=frost protection mode). Until now, a bug mapped value off (=126.5) to maximum heating (=127).
+
+1.6.7
+~~~~~
+- Implement plugin configuration "avm_home_automation" to use AHA (AVM HomeAutomation) Interface (Default: False)
+- correct typo "temperatur" to "temperature" in struct
+- add method "get_device_log_from_lua_separated" to get log already as list of list
+- limit Log entries shown on WebIF to recent 200
+- Update WebIF with possibility to adapt table size to screen
+- Debugging for 'button' e.g. DECT440
+- Minor code correction / debugging
+- Adapt user_doc.rst
+- feature provided by plugin avm_smarthome are completely integrated. Therefore tat plugin is marked as deprecated.
+
+1.6.6
+~~~~~
+
+- Methode get_color_defaults implementiert, welche die aktuell von AVM unterstützen diskreten RGB Farben ausliest.
+- Methode set_color und color auf diskrete RGB farben umgestellt. Beliebige RGB Farbwerte werden erst ab Q2 2022 von AVM unterstützt.
+
+1.6.5
+~~~~~
+
+- Session_ID wird nur noch bei Bedarf erzeugt (bleibt nach Erstellung 20min gültig und verlängert sich bei erfolgreichem Login)
+- Update auf PBKDF2 zur Absicherung der Anmeldung; MD5 als Backup
+- Methoden "_get_sid", "_get_login_infos_from_http_request", "_http_logout_request", "_check_sid", "_calculate_pbkdf2_response", "_calculate_md5_response" hinzu
+- Bugfixing, Verbesserung der Logausgaben
+- Codevereinfachung und Korrektur
+- Plugin Parameter für WebIF Page Length hinzu
+- Plugin Parameter für Aktivierung der Nutzung des AHA-HTTP Interfaces hinzu
+
+1.6.4
+~~~~~
+
+- Attribut 'ain' deprecated gesetzt; Verwendung von 'avm_ain', so dass alle avm Plugin Attribute auch mit 'avm' beginnen
+- Überprüfung aller unterstützen Attributwerte avm_data_type
+- Anpassung der update_black_list
+- Verbesserung des Handling von avm_data_type für r/o, w/o und r/w Items
+- Vereinfachung des Code bei _update_x methods
+- Ergänzung weiterer Attributwerte bei avm_data_type
+
+1.6.3
+~~~~~
+
+- Debug des Attributs set_hkr_boost und hkr_boost
+- Update der Datatables im WebIF
+- Update des automatischen Update im WebIF
+- Information zu Attributwerten von 'avm_data_type' ergänzt
+- Beispiel für Anwendung der structs mit Instanz erstellt
+- Änderung von 'temperatur' auf 'temperature' im struct
+- Verbesserung der LogAusgabe, wenn AbfrageAttribut vorhanden aber Wert nicht vorhanden ist
+
+1.6.2
+~~~~~
+- Bugfixing der neuen Funktionen in 1.6.0
+
+1.6.1
+~~~~~
+- Bugfixing der neuen Funktionen in 1.6.0
+
+1.6.0
+~~~~~
+
+- Anbindung der Smarthome Devices über AHA-Interface hinzugefügt (getestet mit Fritz 440, Comet Dect)
+- Funktionen für Rufumleitungen hinzugefügt (getestet mit Fritzbox 7530)
+- Plugin Parameter "index" in "avm_tam_index" umbenannt
+- Code Cleanup (add new functions to minimize code repetitions)
+- Verbesserung der Fehlerbehandlung (insbesondere bei Zugriffsfehlern auf des FritzDevice)
 

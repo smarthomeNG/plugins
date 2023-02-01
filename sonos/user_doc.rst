@@ -1,9 +1,9 @@
 .. index:: Plugins; sonos
 .. index:: sonos
 
-======
+=====
 sonos
-======
+=====
 
 .. image:: webif/static/img/plugin_logo.png
    :alt: plugin logo
