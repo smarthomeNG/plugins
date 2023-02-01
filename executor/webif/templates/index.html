@@ -14,7 +14,7 @@ var te_python;
 var cmPython;
 var te_resulttext;
 var cmResult;
-var max_script_entries; 
+var max_script_entries;
 max_script_entries = {{ p._script_entries }};
 console.log("max_script_entries=",max_script_entries);
 
@@ -30,7 +30,7 @@ function getexecution() {
     $.get('exec_code', { eline: param}, function(data){
         cmResult.doc.setValue(data);
         console.log('Data:'+data);
-    }); 
+    });
     /* should remove hourglass cursor here */
 	document.body.style.cursor = "default";
     console.log('erledigt');
@@ -63,7 +63,7 @@ function selectFile(selectObject) {
 };
 
 function doubleclickFile(selectObject) {
-	var value = selectObject.value;  
+	var value = selectObject.value;
 	console.log("doubleclicked ",value);
 	loadfromfile(value);
 };
@@ -89,7 +89,7 @@ function savetofile() {
 		console.log('Result:'+result);
         get_filelist();
 	});
-	
+
 };
 
 function deletefile() {
@@ -99,7 +99,7 @@ function deletefile() {
 		console.log('Result:'+result);
         get_filelist();
 	});
-	
+
 };
 
 function get_Dict(cmPython) {
@@ -196,7 +196,7 @@ $(document).ready(function(){
     cmPython = CodeMirror(te_python, {
         mode: "python",
         lineNumbers: true,
-        extraKeys: {	
+        extraKeys: {
             "Ctrl-Space": function(cm) {
             searchtype = 2;
             CodeMirror.showHint(cm, CodeMirror.hint.autocompleteHint)
@@ -210,7 +210,7 @@ $(document).ready(function(){
         foldGutter: true,
         gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
     });
-    
+
     cmPython.on("keyup", function (cm, event)
     {
  	searchtype = 1;
@@ -230,7 +230,7 @@ $(document).ready(function(){
 
     });
     get_Dict(cmPython);
-    
+
     cmPython.refresh();
 
     cmResult = CodeMirror(te_resulttext, {
@@ -250,7 +250,7 @@ body {
 	display: grid;
 	grid-template-columns: 1fr;
 	grid-template-rows: auto 1fr 1fr;
-	grid-template-areas: 
+	grid-template-areas:
 		'header'
 		'main'
 		'footer';
@@ -385,7 +385,7 @@ button#loadfilename {
 			<div id="pycodetext"></div>
 		</div>
 	</main>
-	<footer> 
+	<footer>
 		<div class="container-fluid m-3">
 			<label for="resulttext">{{ _('Ergebnis') }}</label><br>
 			<div id="resulttext" placeholder="Ergebnisse erscheinen hier"></div>

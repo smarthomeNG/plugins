@@ -12,7 +12,7 @@ plugin:
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1586861-support-thread-für-das-hue2-plugin
 
-    version: 2.2.4                  # Plugin version (must match the version specified in __init__.py)
+    version: 2.3.0                  # Plugin version (must match the version specified in __init__.py)
     sh_minversion: 1.8.2            # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
 #    py_minversion: 3.6             # minimum Python version to use for this plugin
@@ -157,7 +157,11 @@ item_attributes:
           - modify_scene
           - alert
           - effect
-
+          - daylight
+          - temperature
+          - presence
+          - lightlevel
+          - status
 
         valid_list_description:
             de:
@@ -180,6 +184,11 @@ item_attributes:
               - "Anpassen einer Szene für Leuchten in der selektierten Gruppe (hue2_id) -> str w/o (resource: group)"
               - "Benachrichtigung -> str (Werte: none, select, lselect) (resource: light, group)"
               - "Lichteffekt -> str (Werte: none, colorloop) (resource: light, group)"
+              - "Tageslicht -> bool, r/o (resource: sensor)"
+              - "Temperatur -> num r/o (resource: sensor)"
+              - "Präsenz -> bool, r/o (resource: sensor)"
+              - "Sensor 'lightlevel' -> num r/o (resource: sensor)"
+              - "Sensor 'status' -> num, r/o (resource: sensor)"
             en:
               - "<no function choosen yet>"
               - "Multiple functions at once -> dict, r/w (resource: light, group)"
@@ -200,6 +209,11 @@ item_attributes:
               - "Change a scene for lights in the selected group (hue2_id) -> str w/o (resource: group)"
               - "Alert -> str (values: none, select, lselect) (resource: light, group)"
               - "Effect -> str (values: none, colorloop) (resource: light, group)"
+              - "Sensor 'daylight' -> bool, r/o (resource: sensor)"
+              - "Sensor 'temperature' -> num r/o (resource: sensor)"
+              - "Sensor 'presence' -> bool, r/o (resource: sensor)"
+              - "Sensor 'lightlevel' -> num r/o (resource: sensor)"
+              - "Sensor 'status' -> num, r/o (resource: sensor)"
 
 item_structs:
     # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
