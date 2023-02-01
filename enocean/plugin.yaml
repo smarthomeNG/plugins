@@ -8,7 +8,7 @@ plugin:
         en: 'EnOcean Interface'
     maintainer: Robert Budde / A. Schwithal
     # Who tests this plugin?
-    tester:
+    tester: n/a
     state: ready
     keywords: EnOcean, Eltako
     # url of documentation (wiki) page
