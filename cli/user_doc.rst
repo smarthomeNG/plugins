@@ -5,7 +5,7 @@
 cli
 ===
 
-.. image:: webif/static/img/plugin_logo.png
+.. image:: webif/static/img/plugin_logo.svg
    :alt: plugin logo
    :width: 300px
    :height: 300px
