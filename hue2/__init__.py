@@ -55,6 +55,7 @@ class Hue2(SmartPlugin):
     hue_light_state_values           = ['on', 'bri', 'hue', 'sat', 'ct', 'xy', 'colormode', 'reachable', 'alert', 'effect']
     hue_light_state_writable_values  = ['on', 'bri', 'hue', 'sat', 'ct', 'xy', 'alert', 'effect']
     hue_sensor_state_values          = ['daylight', 'temperature', 'presence', 'lightlevel', 'status']
+    hue_sensor_config_values         = ['reachable', 'battery', 'on', 'sunriseoffset', 'sunsetoffset']
 
     br = None               # Bridge object for communication with the bridge
     bridge_lights = {}
@@ -202,6 +203,8 @@ class Hue2(SmartPlugin):
             conf_data['id'] = self.get_iattr_value(item.conf, 'hue2_id')
             conf_data['resource'] = self.get_iattr_value(item.conf, 'hue2_resource')
             conf_data['function'] = self.get_iattr_value(item.conf, 'hue2_function')
+            if conf_data['resource'] == 'sensor':
+                self.logger.notice(f"parse_item: hue2_id={conf_data['id']}, hue2_function={conf_data['function']}")
             if self.has_iattr(item.conf, 'hue2_reference_light_id'):
                 if conf_data['resource'] == "group":
                     conf_data['hue2_reference_light_id'] = self.get_iattr_value(item.conf, 'hue2_reference_light_id')
@@ -219,7 +222,7 @@ class Hue2(SmartPlugin):
                 # bridge updates are allways scheduled
                 self.logger.debug("parse_item: configured group item = {}".format(conf_data))
 
-            if not conf_data['function'] in ['reachable', 'colormode'] and \
+            if not conf_data['function'] in ['reachable', 'colormode', 'battery'] and \
                not conf_data['function'] in self.hue_sensor_state_values:
                 return self.update_item
             return
@@ -681,19 +684,27 @@ class Hue2(SmartPlugin):
         result = ''
         try:
             sensor = self.bridge_sensors[sensor_id]
+            self.logger.notice(f"_get_sensor_item_value: Sensor {sensor_id}={sensor}")
         except KeyError:
             self.logger.error(f"poll_bridge_sensors: Sensor '{sensor_id}' not defined on bridge (item '{item_path}')")
             return None
         except Exception as e :
             self.logger.exception(f"poll_bridge_sensors: Sensor '{sensor_id}' on bridge (item '{item_path}') - exception: {e}")
             return None
-
         if function in self.hue_sensor_state_values:
             try:
                 result = sensor['state'][function]
             except KeyError:
                 self.logger.warning(
-                    f"poll_bridge_sensors: Function {function} not supported by sensors '{sensor_id}' (item '{item_path}')")
+                    f"poll_bridge_sensors: Function {function} not supported by sensor '{sensor_id}' (item '{item_path}')")
+                result = ''
+        elif function in self.hue_sensor_config_values:
+            try:
+                result = sensor['config'][function]
+                self.logger.notice(f"_get_sensor_item_value: sensor['config'][{function}]={result}")
+            except KeyError:
+                self.logger.warning(
+                    f"poll_bridge_sensors: Function {function} not supported by sensor '{sensor_id}' (item '{item_path}')")
                 result = ''
         elif function == 'name':
             result = sensor['name']

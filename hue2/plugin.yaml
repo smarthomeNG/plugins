@@ -158,6 +158,8 @@ item_attributes:
           - alert
           - effect
           - daylight
+          - sunriseoffset
+          - sunsetoffset
           - temperature
           - presence
           - lightlevel
@@ -185,6 +187,8 @@ item_attributes:
               - "Benachrichtigung -> str (Werte: none, select, lselect) (resource: light, group)"
               - "Lichteffekt -> str (Werte: none, colorloop) (resource: light, group)"
               - "Tageslicht -> bool, r/o (resource: sensor)"
+              - "Tageslicht: sunriseoffset -> num r/o (resource: sensor)"
+              - "Tageslicht: sunsetoffset -> num r/o (resource: sensor)"
               - "Temperatur -> num r/o (resource: sensor)"
               - "Präsenz -> bool, r/o (resource: sensor)"
               - "Sensor 'lightlevel' -> num r/o (resource: sensor)"
@@ -210,6 +214,8 @@ item_attributes:
               - "Alert -> str (values: none, select, lselect) (resource: light, group)"
               - "Effect -> str (values: none, colorloop) (resource: light, group)"
               - "Sensor 'daylight' -> bool, r/o (resource: sensor)"
+              - "Sensor 'daylight': sunriseoffset -> num r/o (resource: sensor)"
+              - "Sensor 'daylight': sunsetoffset -> num r/o (resource: sensor)"
               - "Sensor 'temperature' -> num r/o (resource: sensor)"
               - "Sensor 'presence' -> bool, r/o (resource: sensor)"
               - "Sensor 'lightlevel' -> num r/o (resource: sensor)"
