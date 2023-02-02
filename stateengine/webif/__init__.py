@@ -71,15 +71,7 @@ class WebInterface(SmartPluginWebIf):
         item = self.plugin.itemsApi.return_item(item_path)
 
         tmpl = self.tplenv.get_template('{}.html'.format(page))
-        global_pagelength = cherrypy.config.get("webif_pagelength")
-        if global_pagelength:
-            pagelength = global_pagelength
-            self.logger.debug("Global pagelength {}".format(pagelength))
-        try:
-            pagelength = self.plugin.webif_pagelength
-            self.logger.debug("Plugin pagelength {}".format(pagelength))
-        except Exception:
-            pass
+        pagelength = self.plugin.get_parameter_value('webif_pagelength')
         if action == "get_graph" and abitem is not None:
             if isinstance(abitem, str):
                 try:

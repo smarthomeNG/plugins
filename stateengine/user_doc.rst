@@ -48,7 +48,7 @@ Das Webinterface bietet folgende Übersichtsinformationen:
 
 -  **Zustände**: sämtliche konfigurierte Zustände des Items
 
-  .. image:: webif_stateengine_overview.png
+  .. image:: user_doc/assets/webif_stateengine_overview.png
      :height: 1602px
      :width: 3320px
      :scale: 25%
@@ -57,7 +57,7 @@ Das Webinterface bietet folgende Übersichtsinformationen:
 
 Ein Klick auf das Lupensymbol in der Visu-Spalte öffnet die Detailansicht. Hier ist zu sehen, welcher Zustand eingenommen werden könnte, welcher aktiv ist und welche Aktionen bei welcher Bedingung ausgeführt werden.
 
-  .. image:: webif_stateengine_detail.png
+  .. image:: user_doc/assets/webif_stateengine_detail.png
      :height: 1656px
      :width: 3312px
      :scale: 25%
