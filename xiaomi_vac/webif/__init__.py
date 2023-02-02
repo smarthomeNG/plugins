@@ -74,15 +74,7 @@ class WebInterface(SmartPluginWebIf):
                 plgitems.append(item)
         self.logger.debug("Plugin : Render index Webif")
         tmpl = self.tplenv.get_template('index.html')
-        global_pagelength = cherrypy.config.get("webif_pagelength")
-        if global_pagelength:
-            pagelength = global_pagelength
-            self.logger.debug("Global pagelength {}".format(pagelength))
-        try:
-            pagelength = self.plugin.webif_pagelength
-            self.logger.debug("Plugin pagelength {}".format(pagelength))
-        except Exception:
-            pass
+        pagelength = self.plugin.get_parameter_value('webif_pagelength')
         return tmpl.render(plugin_shortname=self.plugin.get_shortname(),
                            plugin_version=self.plugin.get_version(),
                            plugin_info=self.plugin.get_info(),
