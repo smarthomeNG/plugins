@@ -20,7 +20,6 @@
 <script>
   $(document).ready( function () {
     $(window).trigger('datatables_defaults');
-    try {
       /* get pagelength from http module or plugin. */
 	    {% if webif_pagelength is defined %}webif_pagelength = {{ webif_pagelength|int }};{% endif %}
       if (isNaN(parseFloat(webif_pagelength)) || webif_pagelength == 0) {
@@ -31,12 +30,7 @@
         resize = false;
       }
 	  console.log("Webif page length " + webif_pagelength + ", pageResize: " + resize);
-    }
-    catch (e) {
-      webif_pagelength = 100;
-      resize = false;
-      console.log("Using default values for page length " + webif_pagelength + ", pageResize: " + resize);
-    }
+
 		try {
       table = $('#maintable').DataTable( {
         columnDefs: [{ "targets": [8], "className": "none"}].concat($.fn.dataTable.defaults.columnDefs),

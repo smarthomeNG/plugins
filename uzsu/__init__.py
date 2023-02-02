@@ -109,7 +109,7 @@ class UZSU(SmartPlugin):
 
     ALLOW_MULTIINSTANCE = False
 
-    PLUGIN_VERSION = "1.6.4"      # item buffer for all uzsu enabled items
+    PLUGIN_VERSION = "1.6.5"      # item buffer for all uzsu enabled items
 
     def __init__(self, smarthome):
         """
@@ -124,7 +124,6 @@ class UZSU(SmartPlugin):
         self._interpolation_precision = self.get_parameter_value('interpolation_precision')
         self._backintime = self.get_parameter_value('backintime')
         self._suncalculation_cron = self.get_parameter_value('suncalculation_cron')
-        self.webif_pagelength = self.get_parameter_value('webif_pagelength')
         self._sh = smarthome
         self._items = {}
         self._lastvalues = {}
