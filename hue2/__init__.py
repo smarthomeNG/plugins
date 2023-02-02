@@ -203,8 +203,6 @@ class Hue2(SmartPlugin):
             conf_data['id'] = self.get_iattr_value(item.conf, 'hue2_id')
             conf_data['resource'] = self.get_iattr_value(item.conf, 'hue2_resource')
             conf_data['function'] = self.get_iattr_value(item.conf, 'hue2_function')
-            if conf_data['resource'] == 'sensor':
-                self.logger.notice(f"parse_item: hue2_id={conf_data['id']}, hue2_function={conf_data['function']}")
             if self.has_iattr(item.conf, 'hue2_reference_light_id'):
                 if conf_data['resource'] == "group":
                     conf_data['hue2_reference_light_id'] = self.get_iattr_value(item.conf, 'hue2_reference_light_id')
@@ -684,7 +682,6 @@ class Hue2(SmartPlugin):
         result = ''
         try:
             sensor = self.bridge_sensors[sensor_id]
-            self.logger.notice(f"_get_sensor_item_value: Sensor {sensor_id}={sensor}")
         except KeyError:
             self.logger.error(f"poll_bridge_sensors: Sensor '{sensor_id}' not defined on bridge (item '{item_path}')")
             return None
@@ -701,7 +698,6 @@ class Hue2(SmartPlugin):
         elif function in self.hue_sensor_config_values:
             try:
                 result = sensor['config'][function]
-                self.logger.notice(f"_get_sensor_item_value: sensor['config'][{function}]={result}")
             except KeyError:
                 self.logger.warning(
                     f"poll_bridge_sensors: Function {function} not supported by sensor '{sensor_id}' (item '{item_path}')")
