@@ -5,8 +5,7 @@
 #########################################################################
 #  This file is part of SmartHomeNG.
 #
-#  Sample plugin for new plugins to run with SmartHomeNG version 1.4 and
-#  upwards.
+#  Plugin for MQTT communication, needs mqtt module
 #
 #  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -38,7 +37,7 @@ class Mqtt2(MqttPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '2.0.4'
+    PLUGIN_VERSION = '2.0.5'
 
 
     def __init__(self, sh, *args, **kwargs):
@@ -61,15 +60,6 @@ class Mqtt2(MqttPlugin):
 
         # Call init code of parent class (SmartPlugin or MqttPlugin)
         super().__init__()
-
-        # get the parameters for the plugin (as defined in metadata plugin.yaml):
-        try:
-            self.webif_pagelength = self.get_parameter_value('webif_pagelength')
-            pass
-        except KeyError as e:
-            self.logger.critical("Plugin '{}': Inconsistent plugin (invalid metadata definition: {} not defined)".format(self.get_shortname(), e))
-            self._init_complete = False
-            return
 
         # Initialization code goes here
 
