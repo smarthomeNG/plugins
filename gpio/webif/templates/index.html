@@ -15,21 +15,14 @@ function mainpage() {
 <script>
     $(document).ready( function () {
 			$(window).trigger('datatables_defaults');
-      try {
-        {% if webif_pagelength is defined %}webif_pagelength = {{ webif_pagelength|int }};{% endif %}
-        if (isNaN(parseFloat(webif_pagelength)) || webif_pagelength == 0) {
-          resize = true;
-          webif_pagelength = -1;
-        }
-        else {
-          resize = false;
-        }
-        console.log("Using page length from http module/plugin " + webif_pagelength + ", pageResize: " + resize);
+      {% if webif_pagelength is defined %}webif_pagelength = {{ webif_pagelength|int }};{% endif %}
+      if (isNaN(parseFloat(webif_pagelength)) || webif_pagelength == 0) {
+        resize = true;
+        webif_pagelength = -1;
+        console.log('Activating automatic table resize ' + webif_pagelength);
       }
-      catch (e) {
-        webif_pagelength = 100;
+      else {
         resize = false;
-        console.log("Using default values for page length " + webif_pagelength + ", pageResize: " + resize);
       }
 			try
 				{
@@ -100,7 +93,7 @@ function mainpage() {
   <div class="mb-2">
     {{ _('Die folgenden Items sind dem GPIO Plugin als IN Pin zugewiesen') }}:
   </div>
-  <table id="table_in">
+  <table id="table_in" class="dataTableAdditional">
     <thead>
     <tr>
       <th></th>
@@ -137,7 +130,7 @@ function mainpage() {
   <div class="mb-2">
     {{ _('Die folgenden Items sind dem GPIO Plugin als OUT Pin zugewiesen') }}:
   </div>
-    <table id="table_out">
+    <table id="table_out" class="dataTableAdditional">
       <thead>
       <tr>
         <th></th>
