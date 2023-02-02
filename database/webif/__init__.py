@@ -72,16 +72,7 @@ class WebInterface(SmartPluginWebIf):
         :return: contents of the template after beeing rendered
         """
         # try to get the webif pagelength from the module.yaml configuration
-        global_pagelength = cherrypy.config.get("webif_pagelength")
-        if global_pagelength:
-            pagelength = global_pagelength
-            self.logger.debug("Global pagelength {}".format(pagelength))
-        # try to get the webif pagelength from the plugin specific plugin.yaml configuration
-        try:
-            pagelength = self.plugin.webif_pagelength
-            self.logger.debug("Plugin pagelength {}".format(pagelength))
-        except Exception:
-            pass
+        pagelength = self.plugin.get_parameter_value('webif_pagelength')
         if item_path is not None:
             item = self.plugin.items.return_item(item_path)
         delete_triggered = False

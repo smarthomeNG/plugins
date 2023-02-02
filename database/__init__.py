@@ -108,7 +108,6 @@ class Database(SmartPlugin):
         self._copy_database = self.get_parameter_value('copy_database')
         self._copy_database_name = self.get_parameter_value('copy_database_name')
 
-        self.webif_pagelength = self.get_parameter_value('webif_pagelength')
         self._webdata = {}
 
         self._replace = {table: table if self._prefix == "" else self._prefix + table for table in ["log", "item"]}
