@@ -1,10 +1,15 @@
 #!/usr/bin/env python3
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
-#  Copyright 2012-2014 Marcus Popp                         marcus@popp.mx
-#  Copyright 2019-2021 Bernd Meiners                Bernd.Meiners@mail.de
+#  Copyright 2012-2014  Marcus Popp                        marcus@popp.mx
+#  Copyright 2019-2021  Bernd Meiners               Bernd.Meiners@mail.de
+#  Copyright 2023-      Martin Sinn                         m.sinn@gmx.de
 #########################################################################
-#  This file is part of SmartHomeNG.    https://github.com/smarthomeNG//
+#  This file is part of SmartHomeNG.
+#  https://www.smarthomeNG.de
+#  https://knx-user-forum.de/forum/supportforen/smarthome-py
+#
+#  onewire plugin to run with SmartHomeNG
 #
 #  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -99,15 +104,6 @@ class OneWire(SmartPlugin):
 
         # Call init code of parent class (SmartPlugin or MqttPlugin)
         super().__init__()
-
-        # get the parameters for the plugin (as defined in metadata plugin.yaml):
-        try:
-            self.webif_pagelength = self.get_parameter_value('webif_pagelength')
-            pass
-        except KeyError as e:
-            self.logger.critical(f"Plugin '{self.get_shortname()}': Inconsistent plugin (invalid metadata definition: {e} not defined)")
-            self._init_complete = False
-            return
 
         # Initialization code goes here
 
