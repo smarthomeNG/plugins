@@ -51,13 +51,12 @@ from bin.smarthome import VERSION
 
 class Robvac(SmartPlugin):
     ALLOW_MULTIINSTANCE = False
-    PLUGIN_VERSION = "1.2.2"
+    PLUGIN_VERSION = "1.2.3"
 
     def __init__(self, smarthome):
         self._ip = self.get_parameter_value("ip")
         self._token = self.get_parameter_value("token")
         self._cycle = self.get_parameter_value("read_cycle")
-        self.webif_pagelength = self.get_parameter_value('webif_pagelength')
         self._discovererror = 0
         if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
             self.logger = logging.getLogger(__name__)
