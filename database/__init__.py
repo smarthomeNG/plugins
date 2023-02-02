@@ -1514,7 +1514,7 @@ class Database(SmartPlugin):
                 self._maxage_worklist = [i for i in self._items_with_maxage]
             else:
                 self._maxage_worklist = [i for i in self._handled_items]
-            self.logger.info(f"remove_older_: Worklist filled with {len(self._items_with_maxage)} items")
+            self.logger.info(f"remove_older_: Worklist filled with {len(self._maxage_worklist)} items")
 
         item = self._maxage_worklist.pop(0)
         itempath = item.property.path

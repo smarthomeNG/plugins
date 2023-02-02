@@ -131,98 +131,98 @@ checkDate();
     $('#datepicker').datepicker('update', '{% if day and month and year %}{% if language == "en" %}{{ month }}/{{ day }}/{{ year }}{% else %}{{ day }}.{{ month }}.{{ year }}{% endif %}{% else %}{% if language == "en" %}{{ now.strftime('%m/%d/%Y') }}{% else %}{{ now.strftime('%d.%m.%Y') }}{% endif %}{% endif %}');
 
     function handleUpdatedData(response, dataSet) {
-			if (dataSet === 'item_details') {
-				objResponse = JSON.parse(response);
-				myProto = document.getElementById(dataSet);
-				if (checkDate()) {
-          if ( $.fn.dataTable.isDataTable('#item_details_table') ) {
-              item_details_table = $('#item_details_table').DataTable();
-          }
-					// It's necessary to completely clear the current table and refill it later on.
-          item_details_table.clear();
-          let i = 1;
-					let now = new Date();
-					let now_day = String(now.getDate()).padStart(2, '0');
-					let now_month = String((now.getMonth()+1)).padStart(2, '0');
-					let now_year = String(now.getFullYear()).padStart(2, '0');
-					let now_date = now_day + " " + now_month + " " + now_year;
-          for (item in objResponse) {
-						let item_id = objResponse[item][1];
-						let item_path = "{{ item_path }}";
-
-            let date = new Date(Date.parse(objResponse[item][0]));
-            let day = String(date.getDate()).padStart(2, '0');
-            let month = String((date.getMonth()+1)).padStart(2, '0');
-            let year = String(date.getFullYear()).padStart(2, '0');
-            let time =  String(date.getHours()).padStart(2, '0')+
-                        ":"+String(date.getMinutes()).padStart(2, '0')+
-                        ":"+String(date.getSeconds()).padStart(2, '0');
-            let date_time;
-						let is_disabled = null;
-						if (i < 3 && (day == null || (day+" "+month+" "+year == now_date)))
-							is_disabled = true;
-						else
-							is_disabled = false;
-
-            {% if language == 'en' %}
-                date_time = month+"/"+day+"/"+year+" "+time;
-            {% else %}
-                date_time = day + "." + month + "." + year + " " + time;
-            {% endif %}
-            let orig_duration = objResponse[item][2];
-            let duration = Math.round(objResponse[item][2]/1000 * 10) / 10;
-            if (orig_duration == null) {
-                orig_duration = "None";
-                duration = "None";
-            }
-            let value;
-            {% if item.property.type == 'num' %}
-							var tenToN = 10 ** 2;
-							value = (Math.round(objResponse[item][4] * tenToN)) / tenToN;
-						{% endif %}
-            {% if item.property.type == 'bool' %} value = objResponse[item][5];{% endif %}
-            {% if item.property.type == 'str' %} value = objResponse[item][3];{% endif %}
-            {% if item.property.type == 'foo' %} value = objResponse[item][3];{% endif %}
-            let changed = new Date(Date.parse(objResponse[item][6]));
-            let changed_day = String(changed.getDate()).padStart(2, '0');
-            let changed_month = String((changed.getMonth()+1)).padStart(2, '0');
-            let changed_year = String(changed.getFullYear()).padStart(2, '0');
-            let changed_time =  String(changed.getHours()).padStart(2, '0')+
-                        ":"+String(changed.getMinutes()).padStart(2, '0')+
-                        ":"+String(changed.getSeconds()).padStart(2, '0');
-            let changed_date_time;
-						let buttons = "";
-						let day_month_year = "";
-						if (day && month && year) day_month_year = "&day=" + day + "&month=" + month + "&year=" + year;
-						if (is_disabled)
-						{
-						  buttons = "<button disabled type='button' class='btn btn-secondary btn-sm' title='{{ _('Wert löschen für aktuellen Wert nicht verfügbar.') }}'><i class='fas fa-trash-alt'></i></button>";
-						}
-
-						else
-						{
-							buttons = "<button type='button' class='btn btn-danger btn-sm' title='{{ _('Wert löschen') }}' onclick=\"confirmDelete('?action=delete_log&item_id=" + item_id + "&item_path=" + item_path + "&time_orig=" + objResponse[item]['0_orig'] + "&changed_orig=" + objResponse[item]['6_orig'] + day_month_year + "','{{ _('Wollen Sie den Datensatz (Tabelle log) dieses Items wirklich löschen?') }}')\"><i class='fas fa-trash-alt'></i></button>";
-						}
-            {% if language == 'en' %}
-                changed_date_time = changed_month+"/"+changed_day+"/"+changed_year+" "+changed_time;
-            {% else %}
-                changed_date_time = changed_day + "." + changed_month + "." + changed_year + " " + changed_time;
-            {% endif %}
-            let entry_id = objResponse[item][0].replace("T", " ");
-            let newRow = item_details_table.row.add( [ null, item_id, date_time, duration, value, changed_date_time, buttons ] ).draw(false).node();
-            newRow.id = entry_id+"_"+orig_duration;
-            $('td:eq(1)', newRow).attr('id', entry_id+'_'+orig_duration+'_id');
-            $('td:eq(2)', newRow).attr('id', entry_id+'_'+orig_duration+'_time');
-            $('td:eq(3)', newRow).attr('id', entry_id+'_'+orig_duration+'_duration').addClass('duration');
-            $('td:eq(4)', newRow).attr('id', entry_id+'_'+orig_duration+'_value');
-            $('td:eq(5)', newRow).attr('id', entry_id+'_'+orig_duration+'_changed');
-            $('td:eq(6)', newRow).attr('id', entry_id+'_'+orig_duration+'_buttons');
-            i += 1;
-            console.log("Added new row: " + entry_id+"_"+orig_duration);
-        	}
-				item_details_table.draw(false);
+		if (dataSet === 'item_details') {
+			objResponse = JSON.parse(response);
+			myProto = document.getElementById(dataSet);
+			if (checkDate()) {
+				if ( $.fn.dataTable.isDataTable('#item_details_table') ) {
+					item_details_table = $('#item_details_table').DataTable();
 				}
+				// It's necessary to completely clear the current table and refill it later on.
+				item_details_table.clear();
+				let i = 1;
+				let now = new Date();
+				let now_day = String(now.getDate()).padStart(2, '0');
+				let now_month = String((now.getMonth()+1)).padStart(2, '0');
+				let now_year = String(now.getFullYear()).padStart(2, '0');
+				let now_date = now_day + " " + now_month + " " + now_year;
+				for (item in objResponse) {
+					let item_id = objResponse[item][1];
+					let item_path = "{{ item_path }}";
+
+					let date = new Date(Date.parse(objResponse[item][0]));
+					let day = String(date.getDate()).padStart(2, '0');
+            		let month = String((date.getMonth()+1)).padStart(2, '0');
+            		let year = String(date.getFullYear()).padStart(2, '0');
+            		let time =  String(date.getHours()).padStart(2, '0')+
+                                ":"+String(date.getMinutes()).padStart(2, '0')+
+                        		":"+String(date.getSeconds()).padStart(2, '0');
+					let date_time;
+					let is_disabled = null;
+					if (i < 3 && (day == null || (day+" "+month+" "+year == now_date)))
+						is_disabled = true;
+					else
+						is_disabled = false;
+
+					{% if language == 'en' %}
+						date_time = month+"/"+day+"/"+year+" "+time;
+					{% else %}
+						date_time = day + "." + month + "." + year + " " + time;
+					{% endif %}
+					let orig_duration = objResponse[item][2];
+					let duration = Math.round(objResponse[item][2]/1000 * 10) / 10;
+					if (orig_duration == null) {
+						orig_duration = "None";
+						duration = "None";
+					}
+		            let value;
+		            {% if item.property.type == 'num' %}
+						var tenToN = 10 ** 2;
+						value = (Math.round(objResponse[item][4] * tenToN)) / tenToN;
+					{% endif %}
+					{% if item.property.type == 'bool' %} value = objResponse[item][5];{% endif %}
+					{% if item.property.type == 'str' %} value = objResponse[item][3];{% endif %}
+					{% if item.property.type == 'foo' %} value = objResponse[item][3];{% endif %}
+					let changed = new Date(Date.parse(objResponse[item][6]));
+					let changed_day = String(changed.getDate()).padStart(2, '0');
+					let changed_month = String((changed.getMonth()+1)).padStart(2, '0');
+					let changed_year = String(changed.getFullYear()).padStart(2, '0');
+					let changed_time =  String(changed.getHours()).padStart(2, '0')+
+								":"+String(changed.getMinutes()).padStart(2, '0')+
+								":"+String(changed.getSeconds()).padStart(2, '0');
+		            let changed_date_time;
+					let buttons = "";
+					let day_month_year = "";
+					if (day && month && year) day_month_year = "&day=" + day + "&month=" + month + "&year=" + year;
+					if (is_disabled)
+					{
+					  buttons = "<button disabled type='button' class='btn btn-secondary btn-sm' title='{{ _('Wert löschen für aktuellen Wert nicht verfügbar.') }}'><i class='fas fa-trash-alt'></i></button>";
+					}
+
+					else
+					{
+						buttons = "<button type='button' class='btn btn-danger btn-sm' title='{{ _('Wert löschen') }}' onclick=\"confirmDelete('?action=delete_log&item_id=" + item_id + "&item_path=" + item_path + "&time_orig=" + objResponse[item]['0_orig'] + "&changed_orig=" + objResponse[item]['6_orig'] + day_month_year + "','{{ _('Wollen Sie den Datensatz (Tabelle log) dieses Items wirklich löschen?') }}')\"><i class='fas fa-trash-alt'></i></button>";
+					}
+					{% if language == 'en' %}
+						changed_date_time = changed_month+"/"+changed_day+"/"+changed_year+" "+changed_time;
+					{% else %}
+						changed_date_time = changed_day + "." + changed_month + "." + changed_year + " " + changed_time;
+					{% endif %}
+					let entry_id = objResponse[item][0].replace("T", " ");
+					let newRow = item_details_table.row.add( [ null, item_id, date_time, duration, value, changed_date_time, buttons ] ).draw(false).node();
+					newRow.id = entry_id+"_"+orig_duration;
+					$('td:eq(1)', newRow).attr('id', entry_id+'_'+orig_duration+'_id');
+					$('td:eq(2)', newRow).attr('id', entry_id+'_'+orig_duration+'_time');
+					$('td:eq(3)', newRow).attr('id', entry_id+'_'+orig_duration+'_duration').addClass('duration');
+					$('td:eq(4)', newRow).attr('id', entry_id+'_'+orig_duration+'_value');
+					$('td:eq(5)', newRow).attr('id', entry_id+'_'+orig_duration+'_changed');
+					$('td:eq(6)', newRow).attr('id', entry_id+'_'+orig_duration+'_buttons');
+					i += 1;
+					console.log("Added new row: " + entry_id+"_"+orig_duration);
+				}
+				item_details_table.draw(false);
 			}
 		}
+	}
 </script>
 {% endblock bodytab1 %}
