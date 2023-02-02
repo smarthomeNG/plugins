@@ -25,21 +25,14 @@
 <script>
   $(document).ready( function () {
     $(window).trigger('datatables_defaults');
-    try {
-      {% if webif_pagelength is defined %}webif_pagelength = {{ webif_pagelength|int }};{% endif %}
-      if (isNaN(parseFloat(webif_pagelength)) || webif_pagelength == 0) {
-        resize = true;
-        webif_pagelength = -1;
-				console.log('Activating automatic table resize');
-      }
-      else {
-        resize = false;
-      }
+    /* get pagelength from http module or plugin. */
+    {% if webif_pagelength is defined %}webif_pagelength = {{ webif_pagelength|int }};{% endif %}
+    if (isNaN(parseFloat(webif_pagelength)) || webif_pagelength == 0) {
+      resize = true;
+      webif_pagelength = -1;
     }
-    catch (e) {
-      webif_pagelength = 100;
+    else {
       resize = false;
-      console.log("Using default values for page length " + webif_pagelength + ", pageResize: " + resize);
     }
 		try {
       table1 = $('#maintable').DataTable( {
@@ -143,7 +136,7 @@
 {% set tab1title = "<strong>" ~ p.get_shortname() ~ " Items</strong>" %}
 {% block bodytab1 %}
 <div class="container-fluid m-2 table-resize">
-	<table id="maintable">
+	<table id="maintable" class="dataTableAdditional">
 		<thead>
 		<tr><th></th>
 			<th>Item</th>
@@ -221,8 +214,8 @@
 </table>
 
 {% if p.broker_monitoring %}
-<div class="container-fluid m-2">
-  <table id="brokermonitor">
+<div class="container-fluid m-2 table-resize">
+	<table id="brokermonitor" class="dataTableAdditional">
   	<thead><th></th>
   		<th class="py-1">{{ _('Message Durchsatz') }}</th>
   		<th class="py-1">{{ _('letzte Minute') }}</th>
