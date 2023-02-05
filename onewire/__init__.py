@@ -43,7 +43,7 @@ class OneWire(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.9.0'
+    PLUGIN_VERSION = '1.9.1'
 
     _flip = {0: '1', False: '1', 1: '0', True: '0', '0': True, '1': False}
 
@@ -661,7 +661,7 @@ class OneWire(SmartPlugin):
         elif key == 'BM':
             self._ibutton_masters[addr] = item.id()
             config_data['deviceclass'] = 'iButton master'
-            self.add_item(item, device_command=addr+'-'+key, config_data_dict=config_data)
+            self.add_item(item, mapping=addr+'-'+key, config_data_dict=config_data)
             return
         else:
             table = self._sensors
@@ -683,10 +683,10 @@ class OneWire(SmartPlugin):
             table[addr] = {key: {'item': item, 'path': path}}
         if key.startswith('O'):
             item._ow_path = table[addr][key]
-            self.add_item(item, device_command=addr+'-'+key, config_data_dict=config_data)
+            self.add_item(item, mapping=addr+'-'+key, config_data_dict=config_data)
             return self.update_item
 
-        self.add_item(item, device_command=addr+'-'+key, config_data_dict=config_data)
+        self.add_item(item, mapping=addr+'-'+key, config_data_dict=config_data)
         return
 
     def update_item(self, item, caller=None, source=None, dest=None):
@@ -712,7 +712,7 @@ class OneWire(SmartPlugin):
         :return: dnumber of items
         :rtype: int
         """
-        device_list = self.get_device_commands()
+        device_list = self.get_mappings()
         count = 0
         for device in device_list:
             if device.startswith(addr):
