@@ -208,7 +208,11 @@ $(document).ready(
 						knx_init: {{ item.conf['knx_init'] }}<br>
 					{% endif %}
 					{% if 'knx_listen' in item.conf %}
-						knx_listen: {{ item.conf['knx_listen'] }}<br>
+						{% if item.conf['knx_listen']|length == 1 %}
+                            				knx_listen: {{ item.conf['knx_listen'][0] }}<br>
+                        			{% else %}
+                            				knx_listen: {{ item.conf['knx_listen'] }}<br>
+                        			{% endif %}
 					{% endif %}
 					</td>
 					{% if item.conf['knx_send']|length == 1 %}
