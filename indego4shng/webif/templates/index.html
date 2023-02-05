@@ -1,0 +1,616 @@
+{% extends "base.html" %}
+
+{% block title %}
+{{ p.get_fullname() }} Plugin
+{% endblock title %}
+
+<!--
+	add additional attributes for body tag if body_attribs is set in the plugin index.html
+-->
+{% block body_attribs -%}
+	{% if body_attribs is defined %} {{ body_attribs }}"
+	{% endif %}
+{%- endblock body_attribs %}
+
+{% block scripts -%}
+{{ super() }}
+
+<!-- Functions in Scripts-->
+<script src="./static/js/jscolor.js"></script>
+<script src="./static/js/handler.js"></script>
+
+<style>
+.CodeMirror {
+    font-size: 12px;
+}
+</style>
+
+<script>
+	function initVariables() {
+		// Make refresh variable, dataSet and update_params available for plugins html files.
+		window.refresh = new timer();
+		window.dataSet = null;
+		window.update_params = null;
+		window.update_interval = 0;
+		window.update_active = false;
+		window.update_blocked = false;
+		// window.row_count = 0; If you want to get the row count on the current page, put this line in the resepctive plugin index.html
+		{%- if dataSet is defined %}
+		  window.dataSet = '{{ dataSet }}';
+		{%- endif %}
+		{%- if update_params is defined %}
+		  window.update_params = '{{ update_params }}';
+		{%- endif %}
+		{%- if update_interval is defined %}
+		  window.update_interval = {{ update_interval|int }};
+		  {%- if update_interval > 0 %}
+				{%- if update_active is defined %}
+					window.update_active = {{ update_active|lower }};
+				{%- else %}
+					{% set update_active = true %}
+				{%- endif %}
+			{%- else %}
+				{% set update_active = false %}
+		  {%- endif %}
+		{%- else %}
+		  window.update_interval = 0;
+		  {% set update_active = false %}
+		{%- endif %}
+		window.update_active = {{ update_active|lower }};
+		{%- if update_blocked is defined %}
+			window.update_blocked = {{ update_blocked|lower }};
+		{%- endif %}
+
+		// Start page refresh method
+		{%- if update_interval is defined and update_interval > 0 and update_active %}
+		  // update_interval defines the time between refreshes in ms
+		  refresh.start(function(){
+		      shngGetUpdatedData();
+		  }, window.update_interval, false, true);
+		  console.log("Starting autorefresh with dataset " + window.dataSet + " and params " + window.update_params + " on start using interval " + window.update_interval + " refresh: " + window.update_active);
+		{%- else %}
+		  // update_interval is set to 0 so no update will happen. Refresh still has to be started to work.
+		  refresh.start(function(){
+		      shngGetUpdatedData();
+		  }, 0, false, true);
+		  console.log("Initializing autorefresh (not active) with dataset " + window.dataSet + " and params " + window.update_params + " using interval " + window.update_interval);
+		{%- endif %}
+	}
+  initVariables();
+</script>
+
+<script src="/gstatic/js/smarthomeng_pageupdate.js"></script>
+{%- endblock scripts %}
+
+{% block content -%}
+
+{% if scroll_heading is not defined %}
+<div id="webif-navbar" style="position: fixed; top: 0; width: 100%; height: 180px; background: RGB(255, 255, 255); z-index: 10;">
+{% endif %}
+
+<div class="container-fluid m-3" id="webif-top">
+	<div style="margin-right: 2px;" class="row">
+
+		<div class="{% if logo_frame %}card {% endif %} col-sm-2" style="height:150px;">
+		    {% if isfile("static/img/plugin_logo.png") %}
+				<img src="static/img/plugin_logo.png" alt="plugin_logo" style="object-fit:contain; width:100%; height:100%; margin-left: auto; margin-right: auto; display: block;">
+		    {% elif isfile("static/img/plugin_logo.jpg") %}
+				<img src="static/img/plugin_logo.jpg" alt="plugin_logo" style="object-fit:contain; width:100%; height:100%; margin-left: auto; margin-right: auto; display: block;">
+		    {% elif isfile("static/img/plugin_logo.svg") %}
+				<img src="static/img/plugin_logo.svg" alt="plugin_logo" style="object-fit:contain; width:100%; height:100%; margin-left: auto; margin-right: auto; display: block;">
+		    {% else %}
+			    {% set plgtype_logo = "/gstatic/img/plugin_"+p._plgtype+".svg" %}
+				{% if isfile(plgtype_logo) %}
+					<img src="{{ plgtype_logo }}" style="object-fit:contain; width:100%; height:100%; margin-left: auto; margin-right: auto; display: block;">
+				{% else %}
+					<img src="/gstatic/img/plugin_unknown.svg" alt="plugin_logo_unknown" style="object-fit:contain; width:100%; height:100%; margin-left: auto; margin-right: auto; display: block;">
+				{% endif %}
+			{% endif %}
+		</div>
+		<div class="col-sm-3">
+			<h3 id="webif_plugin_logo"><img src="/gstatic/img/logo_long.png" alt="shng_logo_long" height="40" valign="top" align="left" style="align: left; display: block;"></h3>
+			<div class="m-3">
+			<br>
+			</div>
+			<h5>{{ _('Plugin') }} : <span id="webif_plugin_name"><strong>{{ p.get_shortname() }}</strong></span> v<span id="webif_plugin_version">{{ p.get_version() }}</span></h5>
+			{% if p.get_instance_name() != '' %}
+				<h5>{{ _('Instanz') }}: <span id="webif_plugin_instance">{{ p.get_instance_name() }}</span></h5>
+			{% else %}
+				<br>
+			{% endif %}
+			<h6>{{ _('Plugin') }} &nbsp; &nbsp; : <span id="webif_plugin_state">{% if p.alive %}{{ _('Aktiv') }}{% else %}{{ _('Gestoppt') }}{% endif %}</span></h6>
+		</div>
+
+		<div class="col-sm-7">
+
+			{% block headtable %}
+        <table class="table table-striped table-hover">
+	        <tbody>
+		        <tr>
+			        <td class="py-1" style="vertical-align: middle"><strong>Login-State</strong></td>
+			        <td style="text-align: right;">
+                        {% if p.logged_in %}
+                        <img id="grafic_logged_in" src="static/img/lamp_green.png" alt="{{ _('logged in') }}" style="width: 17px;padding-bottom: 3px;"/>
+                        <strong id="text_logged_in">{{ _('logged in') }}</strong>
+                        {% else %}
+                        <img id="grafic_logged_in" src="static/img/lamp_red.png" alt="{{ _('logged out') }}" style="width: 17px;padding-bottom: 3px;"/>
+                        <strong id="text_logged_in">{{ _('logged off') }}</strong>
+                        {% endif %}
+
+                    </td>
+		        </tr>
+		        <tr>
+			        <td class="py-1"><strong>Session-ID</strong></td>
+			        <td id="text_session_id" class="py-1" style="text-align: right;">{{ p.context_id }}</td>
+		        </tr>
+		        <tr>
+			        <td class="py-1"><strong>{{_('last Login / Login Experiation')}}:</strong></td>
+			        <td id="text_experitation" class="py-1" style="text-align: right;">{{ myLastLogin }} / {{ myExperitation_Time }}</td>
+		        </tr>
+	        </tbody>
+        </table>			
+			{% endblock %}
+
+			<table style="width:100%" id="webif-buttons">
+				<tr>
+					<td colspan="3">
+						{% block buttons %}
+						{% endblock buttons %}
+					</td>
+
+					<td colspan="2" align="right">
+
+							<span id="autorefresh" style="visibility:hidden">
+								{{ _('Autom. Aktualisierung') }}
+								<input title="{{ _('(De)Aktiviere automatische Seitenaktualisierung') }}" type="checkbox" id="update_active" name="update_active" value="active" oninput="set_update_interval()">
+								<input title="{{ _('Aktualisierungsintervall in Sekunden') }}" style="width:60px" type="number" id="update_interval" name="update_interval" min="0" oninput="set_update_interval()"> {{ _('Sekunden') }}
+							</span>
+							
+						<button id="reload" class="btn btn-shng btn-sm" onclick="window.location.reload();"><i class="fas fa-redo"></i>&nbsp;&nbsp;&nbsp;{{ _('Aktualisieren') }}&nbsp;</button>
+						<button id="close" class="btn btn-shng btn-sm" title="{{ _('Schließen') }}" onclick="window.close();" ><i class="fas fa-times"></i>&nbsp;&nbsp;&nbsp;{{ _('Schließen') }}&nbsp;</button>
+					</td>
+				</tr>
+			</table>
+		</div>
+	</div>
+</div>
+
+{% if scroll_heading is not defined %}
+</div>
+
+<div style="margin: 180px auto 0; z-index: 9;">
+{% endif %}
+
+{% if tabcount is not defined %}
+	{% set tabcount = 4 %}
+{% endif %}
+
+{% if start_tab is not defined %}
+	{% set start_tab = 1 %}
+{% endif %}
+{% if start_tab > tabcount %}
+	{% set start_tab = tabcount %}
+{% endif %}
+
+{% if tabcount > 6 %}
+	{% set tabcount = 6 %}
+{% endif %}
+{% if tabcount < 1 %}
+	{% set tabcount = 1 %}
+{% endif %}
+
+
+{% set tab1title = "Items (" ~ item_count ~ ")" %}
+{% set tab2title =  _('Gartenkarte/Settings')  %}
+{% set tab3title = _('State-Protokoll') %}
+{% set tab4title =  _('Kommunikations-Protokoll') %}
+
+
+{% if tab1title is not defined %}
+	{% set tab1title = "<strong>" ~ p.get_shortname() ~ "</strong> tab1" %}
+{% endif %}
+{% if tab2title is not defined %}
+	{% set tab2title = "<strong>" ~ p.get_shortname() ~ "</strong> tab2" %}
+{% endif %}
+{% if tab3title is not defined %}
+	{% set tab3title = "<strong>" ~ p.get_shortname() ~ "</strong> tab3" %}
+{% endif %}
+{% if tab4title is not defined %}
+	{% set tab4title = "<strong>" ~ p.get_shortname() ~ "</strong> tab4" %}
+{% endif %}
+{% if tab5title is not defined %}
+	{% set tab5title = "<strong>" ~ p.get_shortname() ~ "</strong> tab5" %}
+{% endif %}
+{% if tab6title is not defined %}
+	{% set tab6title = "<strong>" ~ p.get_shortname() ~ "</strong> tab6" %}
+{% endif %}
+
+
+<div id="webif-tabs" class="container-fluid" style="position: fixed; background-color: white; top:180px; z-index: 8;">
+	<ul class="nav nav-tabs">
+		{% if tabcount == 1 and tab1title != "hidden" %}
+			<li id="tab_1" class="nav-item"><a class="text-dark nav-link active" href="#bodytab_1">{{ tab1title }}</a></li>
+		{% endif %}
+		{% if tabcount > 1 %}
+			{% if tab1title != "hidden" %}
+				<li id="tab_1" class="nav-item"><a class="text-dark nav-link {% if start_tab==1 %}active{% endif %}" data-toggle="tab" href="#bodytab_1">{{ tab1title }}</a></li>
+			{% endif %}
+			{% if tab2title != "hidden" %}
+				<li id="tab_2" class="nav-item"><a class="text-dark nav-link {% if start_tab==2 %}active{% endif %}" data-toggle="tab" href="#bodytab_2">{{ tab2title }}</a></li>
+			{% endif %}
+		{% endif %}
+		{% if tabcount > 2 and tab3title != "hidden" %}
+			<li id="tab_3" class="nav-item"><a class="text-dark nav-link {% if start_tab==3 %}active{% endif %}" data-toggle="tab" href="#bodytab_3">{{ tab3title }}</a></li>
+		{% endif %}
+		{% if tabcount > 3 and tab4title != "hidden" %}
+			<li id="tab_4" class="nav-item"><a class="text-dark nav-link {% if start_tab==4 %}active{% endif %}" data-toggle="tab" href="#bodytab_4">{{ tab4title }}</a></li>
+		{% endif %}
+		{% if tabcount > 4 and tab5title != "hidden" %}
+			<li id="tab_5" class="nav-item"><a class="text-dark nav-link {% if start_tab==5 %}active{% endif %}" data-toggle="tab" href="#bodytab_5">{{ tab5title }}</a></li>
+		{% endif %}
+		{% if tabcount > 5 and tab6title != "hidden" %}
+			<li id="tab_6" class="nav-item"><a class="text-dark nav-link {% if start_tab==6 %}active{% endif %}" data-toggle="tab" href="#bodytab_6">{{ tab6title }}</a></li>
+		{% endif %}
+	</ul>
+</div>
+
+<div style="margin-left: 10px; margin-right: 10px;" class="tab-content" id="resize_wrapper">
+
+	<div id="bodytab_1" class="table-resize tab-pane {% if start_tab==1 %}in active{% endif %}" role="tabpanel">
+		{% block bodytab1 %}
+
+    <div class="container-fluid m-2">
+		    <table class="table table-striped table-hover pluginList" style="width:100%">
+			    <thead>
+				    <tr>
+					    <th style="max-width:20%">{{ _('Item') }}</th>
+					    <th style="max-width:20%">{{ _('Typ') }}</th>
+					    <th style="max-width:60%">{{ _('Wert') }}</th>
+					    </tr>
+			    </thead>
+			    <tbody>
+			    {% for item in items %}
+				    <tr>
+					    <td class="py-1" style="max-width:20%">{{ item._path }}</td>
+					    <td class="py-1" style="max-width:20%">{{ item._type }}</td>
+					    <td class="py-1" style="max-width:60%">{{ item() }}</td>
+				    </tr>
+			    {% endfor %}
+			    </tbody>
+		    </table>
+    </div>		
+		
+		{% endblock bodytab1 %}
+	</div>
+
+	<div id="bodytab_2" class="table-resize tab-pane {% if start_tab==2 %}in active{% endif %}" role="tabpanel">
+		{% block bodytab2 %}
+      <div class="container-fluid m-2">
+      <div class="table-responsive" style="margin-left: 2px; margin-right: 2px; margin-bottom: 5px;margin-top: 5px;" class="row">
+
+	      <table class="table table-striped table-hover">
+			      <tr style="height: 10px;font-size: 12px" valign = "middle">
+				      <td style="width: 10%; vertical-align:middle;align:left">{{ _('Credentials') }}</td>
+				      <td style="width: 15%" valign = "middle" align="left">
+			                <input type="input" style="margin-bottom: 1px; margin-left: 5px; width: 100%;font-size: 12px" class="form-control" name="txtUser" id="txtUser" placeholder="{{ _('Indego-User') }}" value="">			
+				      </td>
+				      <td style="width: 15%" valign = "middle" align="left">
+			                <input type="input" style="margin-bottom: 1px; margin-left: 5px; width: 100%;font-size: 12px" class="form-control" name="txtPwd" id="txtPwd" placeholder="{{ _('Indego-Password') }}" value="">			
+				      </td>
+				      <td style="width: 10%; vertical-align:middle;align:left">
+				      <div class="custom-control custom-checkbox" style =" vertical-align:middle;align:left">
+				          <input type="checkbox" class="custom-control-input" id="store_2_config" name="store_2_config">
+				          <label class="custom-control-label" for="store_2_config">{{ _('Store to Config') }}</label>
+				      </div>
+                      </td>
+                      <td style="width:10%">
+			                <button type="button" onclick="BtnEncode()" style="margin-left : 5px" class="btn btn-shng btn-sm" value="btnEncode" id="btnEncode">&nbsp;{{ _('Encode') }}</button>
+                      <td>
+				      <td style="width: 10%; vertical-align:middle;align:left">{{ _('encoded Cred.:') }}
+                      </td>
+                      <td style="width: 45%; vertical-align:middle;align:left">
+			                <input type="input" style="margin-bottom: 1px; margin-left: 5px; width: 100%;font-size: 12px" class="form-control" name="txtEncoded" id="txtEncoded" placeholder="{{ _('Encoded Credentials') }}" value="">			
+				      </td>
+			      </tr>
+                  <tr>
+                  <td>
+                  <strong>{{ _('Protokoll :') }} </strong>
+                  </td>
+                  <td colspan="5">
+					      <textarea type="input" rows="2" style="width: 100%;height: 100%;font-size: 12px;" class="form-control" name="txt_Result" id="txt_Result" placeholder="{{ _('...') }}" disabled >{{ txt_Result }}</textarea>
+                  </td>
+                  </tr>
+
+                  <tr>
+                  <td>
+                  <strong>{{ _('zusätzliche Garden-Map Vektoren') }} </strong>
+                  </td>
+                  <td colspan="7">
+					      <textarea type="input" rows="2" style="width: 100%;height: 100%;font-size: 12px;" class="form-control" name="txt_add_svg" id="txt_add_svg" placeholder="{{ _('...') }}" onChange="Store_add_svg(this.value)"> {{ txt_add_svg }} </textarea>
+                  </td>
+                  </tr>
+
+
+	      </table>
+
+      </div>
+      <!----------------------------------------->
+
+		      <table class="table table-striped table-hover pluginList">
+			      <thead>
+				      <tr>
+					      <th style="width: 50%;">{{ _('Original-Karte') }}</th>
+					      <th style="width: 40%;">{{ _('Settings') }}</th>
+					      <th style="width: 10%;">{{ _('Wert') }}</th>
+					      </tr>
+			      </thead>
+			      <tbody>
+				      <tr height="10px">
+					      <td style="width: 50%;" rowspan="15">
+                                  {{ myMap }}
+                          </td>
+					      <td class="py-1" style="vertical-align: middle;">{{ _('Farbwert für Mäher') }}</td>
+					      <td align=right>
+                              <input id="mowercolour" class="jscolor {onFineChange:'SaveColor(this)'}" value={{myColour}}>
+                          </td>
+				      </tr>
+				      <tr height="10%">
+	          			<td style="width: 5%; vertical-align:middle;align:left;font-size: 20px"><strong>State-Triggers</strong></td>
+                          <td></td>                 
+                      </tr>
+                      </tr>
+				      <tr height="10%">
+          				<td style="width: 15%; align:left; vertical-align: middle;">State-Event für Trigger 1:</td>
+                          <td style="width: 25%">
+      <select name="state_trigger_1" id="state_trigger_1" style="width:400px" onChange="selectStateTrigger(this.id)">
+          {% for state in selectStates %}
+              {% set selected = '' %}
+                  {% if (state.ID ~ '-' ~ state.Caption) == Trigger_1_state %}
+                     {% set selected = 'selected' %}
+                  {% endif %}
+              <option value="{{state.ID}} {{state.Caption}}" id="{{ state.ID }}" {{ selected }}>{{state.ID}}-{{state.Caption}} </option>
+          {% endfor %}
+      </select>
+                          </td>                 
+                      </tr>
+				      <tr height="10%">
+          				<td style="width: 15%; align:left; vertical-align: middle;">State-Event für Trigger 2:</td>
+                          <td style="width: 25%">
+      <select name="state_trigger_2" id="state_trigger_2" style="width:400px" onChange="selectStateTrigger(this.id)">
+          {% for state in selectStates %}
+              {% set selected = '' %}
+                  {% if (state.ID ~ '-' ~ state.Caption) == Trigger_2_state %}
+                     {% set selected = 'selected' %}
+                  {% endif %}
+              <option value="{{state.ID}} {{state.Caption}}" id="{{ state.ID }}" {{ selected }}>{{state.ID}}-{{state.Caption}} </option>
+          {% endfor %}
+      </select>
+      </td>
+                      </tr>
+				      <tr height="10%">
+          				<td style="width: 15%; align:left; vertical-align: middle;">State-Event für Trigger 3:</td>
+                          <td style="width: 25%">
+      <select name="state_trigger_3" id="state_trigger_3" style="width:400px" onChange="selectStateTrigger(this.id)">
+          {% for state in selectStates %}
+              {% set selected = '' %}
+                  {% if (state.ID ~ '-' ~ state.Caption) == Trigger_3_state %}
+                     {% set selected = 'selected' %}
+                  {% endif %}
+              <option value="{{state.ID}} {{state.Caption}}" id="{{ state.ID }}" {{ selected }}>{{state.ID}}-{{state.Caption}} </option>
+          {% endfor %}
+      </select>
+      </td>
+                      </tr>
+                      </tr>
+				      <tr height="10%">
+          				<td style="width: 15%; align:left; vertical-align: middle;">State-Event für Trigger 4:</td>
+                          <td style="width: 25%">
+      <select name="state_trigger_4" id="state_trigger_4" style="width:400px" onChange="selectStateTrigger(this.id)">
+          {% for state in selectStates %}
+              {% set selected = '' %}
+                  {% if (state.ID ~ '-' ~ state.Caption) == Trigger_4_state %}
+                     {% set selected = 'selected' %}
+                  {% endif %}
+              <option value="{{state.ID}} {{state.Caption}}" id="{{ state.ID }}" {{ selected }}>{{state.ID}}-{{state.Caption}} </option>
+          {% endfor %}
+      </select>
+      </td>
+                      </tr>
+				      <tr height="10%">
+	          			<td style="width: 5%; vertical-align:middle;align:left;font-size: 20px"><strong>Alarm-Triggers</strong></td>
+                          <td></td>                 
+                      </tr>
+				      <tr height="10%">
+          				<td style="width: 15%; align:left; vertical-align: middle;">Alarm-Event für Trigger 1:</td>
+                          <td>
+			                <input type="input" style="margin-bottom: 1px; margin-left: 5px; width: 100%;font-size: 12px" class="form-control" name="alarm_trigger_1" id="alarm_trigger_1" placeholder="{{ _('Alarm-Text') }}" value="{{ Alarm_Trigger_1}}" onChange="selectAlarmTrigger(this.id)">			
+                          </td>                 
+                      </tr>
+				      <tr height="10%">
+          				<td style="width: 15%; align:left; vertical-align: middle;">Alarm-Event für Trigger 2:</td>
+                          <td>
+			                <input type="input" style="margin-bottom: 1px; margin-left: 5px; width: 100%;font-size: 12px" class="form-control" name="alarm_trigger_2" id="alarm_trigger_2" placeholder="{{ _('Alarm-Text') }}" value="{{ Alarm_Trigger_2}}" onChange="selectAlarmTrigger(this.id)">			
+                          </td>                 
+                      </tr>
+				      <tr height="10%">
+          				<td style="width: 15%; align:left; vertical-align: middle;">Alarm-Event für Trigger 3:</td>
+                          <td>
+			                <input type="input" style="margin-bottom: 1px; margin-left: 5px; width: 100%;font-size: 12px" class="form-control" name="alarm_trigger_3" id="alarm_trigger_3" placeholder="{{ _('Alarm-Text') }}" value="{{ Alarm_Trigger_3}}" onChange="selectAlarmTrigger(this.id)">			
+                          </td>                 
+                      </tr>
+                      </tr>
+				      <tr height="10%">
+          				<td style="width: 15%; align:left; vertical-align: middle;">Alarm-Event für Trigger 4:</td>
+                          <td>
+			                <input type="input" style="margin-bottom: 1px; margin-left: 5px; width: 100%;font-size: 12px" class="form-control" name="alarm_trigger_4" id="alarm_trigger_4" placeholder="{{ _('Alarm-Text') }}" value="{{ Alarm_Trigger_4}}" onChange="selectAlarmTrigger(this.id)">			
+                          </td>                 
+                      </tr>
+				      <tr height="10%">
+	          			<td colspan=2 style="width: 5%; vertical-align:middle;align:left;font-size: 20px"><strong>Location-Settings using : {{ myText }} </strong></td>
+
+                      </tr>                
+				      <tr height="10%">
+          				<td style="width: 15%; align:left; vertical-align: middle;">latitude:</td>
+                  <td>                
+       			          <input type="input" style="margin-bottom: 1px; margin-left: 5px; width: 100%;font-size: 12px" class="form-control" name="txtlatitude" id="txtlatitude" placeholder="{{ _('latitude') }}" value="{{ myLatitude }}">			
+                  </td> 			          
+              </tr>
+				      <tr height="10%">
+          				<td style="width: 15%; align:left; vertical-align: middle;">longitude:</td>
+                  <td>                
+       			          <input type="input" style="margin-bottom: 1px; margin-left: 5px; width: 100%;font-size: 12px" class="form-control" name="txtlongitude" id="txtlongitude" placeholder="{{ _('longitude') }}" value="{{ myLongitude }}">			
+                  </td> 			          
+              </tr>        
+              <tr>
+                <td style="width:10%">
+                <button type="button" onclick="BtnStoreLocation()" style="margin-left : 5px" class="btn btn-shng btn-sm" value="btnStoreLocation" id="btnStoreLocation">&nbsp;{{ _('Store locations-settings to Items & Bosch-cloud') }}</button>
+                </td>
+                <td>
+                <textarea type="input" rows="2" style="width: 100%;height: 100%;font-size: 12px;" class="form-control" name="txt_LocationResult" id="txt_LocationResult" placeholder="{{ _('...') }}" disabled ></textarea>
+                </td>
+              </tr>
+			      </tbody>
+		      </table>
+
+
+      </div>
+
+      <script>
+      function setTextColor(picker) {
+	      document.getElementsByTagName('body')[0].style.color = '#' + picker.toString()
+          
+      }
+      </script>
+
+		
+		{% endblock bodytab2 %}
+	</div>
+
+	<div id="bodytab_3" class="table-resize tab-pane {% if start_tab==3 %}in active{% endif %}" role="tabpanel">
+		{% block bodytab3 %}
+      <table class="table table-striped table-hover">
+	      <tbody>
+          <tr>
+              <td>
+              	<button id="btn_clear_proto_states" class="btn btn-shng btn-sm" name="btn_clear_proto_states" value="on" onclick="DeleteProto(this.name)"><i class="fas fa-trash-alt"></i>&nbsp;&nbsp;&nbsp;{{ _('States Protokoll löschen')}}&nbsp;</button>
+              </td>
+              <td>
+                  <div class="custom-control custom-checkbox" style =" vertical-align:middle;align:left">
+                      <input type="checkbox" class="custom-control-input" id="proto_states_check" name="proto_states_check">
+                      <label class="custom-control-label" for="proto_states_check">{{ _('automatisch akutalisieren ( 5 Sek.)') }}</label>
+                  </div>
+              </td>
+          </tr>
+          </tbody>
+      </table>
+      <div class="container-fluid" style="overflow: none; border-left: 1px solid #ccc;height: 60%">
+          <div style="margin-bottom: 10px;height: 100%">
+
+
+              {% if state_log_lines %}<textarea style="height: 100%" autocomplete="off" id="state_log_file" name="state_log_file">{% for line in state_log_lines %}{% if not loop.last %}{{ line }}{% else %}{{ line  | replace('\n', '') }}{% endif %}{% endfor %}</textarea>{% else %}{{ _('no data available') }}{% endif %}
+          </div>
+      </div>
+      <div class="container-fluid">
+          <table>
+              <tr>
+                 <td Hinweis>
+              </tr>   
+          </table>
+      </div>
+      <script type="text/javascript" language="javascript">
+      var statelogCodeMirror = CodeMirror.fromTextArea(document.getElementById("state_log_file"),
+       {
+          lineNumbers: true,
+          readOnly: true,
+          indentUnit: 4,
+          lineSeparator: '\n',
+          mode: 'ttcn',
+          lineWrapping: false,
+          indentWithTabs: false,
+          autoRefresh : true
+      });
+
+      window.addEventListener("resize", function(){resizeCodeMirror(statelogCodeMirror, 10)}, false);
+      resizeCodeMirror(statelogCodeMirror, 10);
+      statelogCodeMirror.refresh();
+      console.log ("refreshed CodeMirrot")
+      </script>
+		
+		{% endblock bodytab3 %}
+	</div>
+
+	<div id="bodytab_4" class="table-resize tab-pane {% if start_tab==4 %}in active{% endif %}" role="tabpanel">
+		{% block bodytab4 %}
+        <table class="table table-striped table-hover">
+	        <tbody>
+            <tr>
+                <td>
+                	<button id="btn_clear_proto_commun" class="btn btn-shng btn-sm" name="btn_clear_proto_commun" value="on" onclick="DeleteProto(this.name)"><i class="fas fa-trash-alt"></i>&nbsp;&nbsp;&nbsp;{{ _('Kommuinkations  Protokoll löschen') }}&nbsp;</button>
+                </td>
+                <td>
+                    <div class="custom-control custom-checkbox" style =" vertical-align:middle;align:left">
+                        <input type="checkbox" class="custom-control-input" id="proto_commun_check" name="proto_commun_check">
+                        <label class="custom-control-label" for="proto_commun_check">{{ _('automatisch akutalisieren ( 5 Sek.)') }}</label>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+        <div class="container-fluid" style="overflow: none; border-left: 1px solid #ccc;height: 60%">
+            <div style="margin-bottom: 10px;">
+                {% if com_log_lines %}<textarea autocomplete="off" id="Com_log_file" name="Com_log_file" onload="run()">{% for line in com_log_lines %}{% if not loop.last %}{{ line }}{% else %}{{ line  | replace('\n', '') }}{% endif %}{% endfor %}</textarea>{% else %}{{ _('no data available') }}{% endif %}
+            </div>
+        </div>
+
+        <script type="text/javascript" language="javascript">
+
+        var logCodeMirror = CodeMirror.fromTextArea(document.getElementById("Com_log_file"),
+         {
+            lineNumbers: true,
+            mode: "{{ mode }}",
+            readOnly: true,
+            indentUnit: 4,
+            lineSeparator: '\n',
+            mode: 'ttcn',
+            lineWrapping: false,
+            indentWithTabs: false,
+        });
+
+
+        window.addEventListener("resize", function(){resizeCodeMirror(logCodeMirror, 20)}, false);
+        resizeCodeMirror(logCodeMirror, 20);
+        logCodeMirror.refresh();
+
+        $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+          var target = $(e.target).attr("href") // activated tab
+          if (target == "#bodytab_4")
+                { logCodeMirror.refresh(); }
+          else if (target == "#bodytab_3")
+                { statelogCodeMirror.refresh(); }
+
+        $("svg")[0].style ="width:700px";
+        $("svg")[1].style ="width:700px";
+        });
+
+        </script>		
+		{% endblock bodytab4 %}
+	</div>
+
+	<div id="bodytab_5" class="table-resize tab-pane {% if start_tab==5 %}in active{% endif %}" role="tabpanel">
+		{% block bodytab5 %}
+		{% endblock bodytab5 %}
+	</div>
+
+	<div id="bodytab_6" class="table-resize tab-pane {% if start_tab==6 %}in active{% endif %}" role="tabpanel">
+		{% block bodytab6 %}
+		{% endblock bodytab6 %}
+	</div>
+</div>
+
+
+{%- endblock content %}
+
+{% if scroll_heading is not defined %}
+</div>
+{% endif %}
