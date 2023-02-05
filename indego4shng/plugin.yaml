@@ -1,7 +1,7 @@
 # Metadata for the Indego plugin
 plugin:
     # Global plugin attributes
-    type: interface                # plugin type (gateway, interface, protocol, system, web)
+    type: web                # plugin type (gateway, interface, protocol, system, web)
     description:
         de: 'Indego Plugin zum Auslesen und steuern von Bosch Indego Mährobotern mit Connect Ausstattung'
         en: 'Indego Plugin to read out and control Bosch Indego mower robots with Connect interface'
@@ -10,7 +10,7 @@ plugin:
     state: ready                    # change to ready when done with development
     keywords: Indego smartmower bosch connect
     documentation: http://smarthomeng.de/user/plugins_doc/config/indego.html        # url of documentation (wiki) page
-    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/966612-indego-connect
 
     version: 3.0.2                  # Plugin version
     sh_minversion: 1.6              # minimum shNG version to use this plugin
