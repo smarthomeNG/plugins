@@ -77,33 +77,33 @@
     }
     
     try {
-      table0 = $('#itemtable').DataTable( {
+      itemtable = $('#itemtable').DataTable( {
         pageLength: webif_pagelength,
         pageResize: resize
         } );
-        console.log("Init table0 for page length " + webif_pagelength + ", pageResize: " + resize);
-      table1 = $('#smarthomeitemtable').DataTable( {
+        console.log("Init itemtable for page length " + webif_pagelength + ", pageResize: " + resize);
+      smarthomeitemtable = $('#smarthomeitemtable').DataTable( {
         pageLength: webif_pagelength,
         pageResize: resize
         } );
-        console.log("Init table1 for page length " + webif_pagelength + ", pageResize: " + resize);
-      table2 = $('#logtable').DataTable( {
+        console.log("Init smarthomeitemtable for page length " + webif_pagelength + ", pageResize: " + resize);
+      logtable = $('#logtable').DataTable( {
         pageLength: webif_pagelength,
         order: [[ 0, 'desc' ]],
         columnDefs: [{ "targets": [2], "className": "truncate logentry"}].concat($.fn.dataTable.defaults.columnDefs),
         pageResize: resize
         } );
-        console.log("Init table2 for page length " + webif_pagelength + ", pageResize: " + resize);
-      table3 = $('#call_monitortable').DataTable( {
+        console.log("Init logtable for page length " + webif_pagelength + ", pageResize: " + resize);
+      call_monitortable = $('#call_monitortable').DataTable( {
         pageLength: webif_pagelength,
         pageResize: resize
         } );
-        console.log("Init table3 for page length " + webif_pagelength + ", pageResize: " + resize);
-      table4 = $('#smarthome_devicetable').DataTable( {
+        console.log("Init call_monitortable for page length " + webif_pagelength + ", pageResize: " + resize);
+      smarthome_devicetable = $('#smarthome_devicetable').DataTable( {
         pageLength: -1,
         pageResize: resize
         } );
-        console.log("Init table4 for page length -1, pageResize: " + resize);
+        console.log("Init smarthome_devicetable for page length -1, pageResize: " + resize);
     }
     catch (e) {
         console.log("Datatable JS not loaded, showing standard table without reorder option " +e);
