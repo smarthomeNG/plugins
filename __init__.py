@@ -1893,7 +1893,9 @@ class FritzDevice:
     def get_hosts_count(self) -> int:
         """Returns count of hosts"""
 
-        return len(self.get_hosts_dict())
+        host_dict = self.get_hosts_dict()
+
+        return len(host_dict) if host_dict else None
 
     def get_mesh_topology(self) -> Union[dict, None]:
         """Get mesh topology information as dict"""
