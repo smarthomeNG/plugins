@@ -52,6 +52,8 @@ parameters:
           - 'logger'
           - 'true'
           - 'false'
+          - 'True'
+          - 'False'
         valid_list_description:
             de: ['Ein', 'Aus', 'in eigenen Logger', 'Ein', 'Aus']
             en: ['On', 'Off', 'to own logger', 'On', 'Off']
