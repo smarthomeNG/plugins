@@ -27,14 +27,13 @@ Die Informationen zur Konfiguration des Plugins sind unter :doc:`/plugins_doc/co
 Gateway Hardware
 ================
 
-According to the Casambi concept, a mobile device (cell phone or tablet) is used as hardware gateway between local
-BLE network and Casambi backend.
+Das Casambi Konzept sieht vor, ein Mobilgerät (z.B. Handy oder Tablett) als Hardwaregateway zwischen dem lokalen BLE Netzwerk und dem Casambi Backend
+enzusetzen.
 
-Requirements
+Anforderungen
 ============
-
-The plugin needs a valid Casambi API key which can be obtained from Casambi under:
-support@casambi.com
+Das Casambi Plugin benötigt einen validen Casambi API key, der hier beantragt werden kann:
+``support@casambi.com``
 
 
 Beispiele
