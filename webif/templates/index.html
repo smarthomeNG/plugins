@@ -108,7 +108,6 @@
     catch (e) {
         console.log("Datatable JS not loaded, showing standard table without reorder option " +e);
     }
-
   });
 </script>
 <script>
@@ -363,9 +362,9 @@
                 {% for item in call_monitor_items %}
                     {% set item_id = item.id() %}
                     {% if p.get_instance_name() %}
-                        {% set instance_key = "avm2_data_type@"+p.get_instance_name() %}
+                        {% set instance_key = "avm_data_type@"+p.get_instance_name() %}
                     {% else %}
-                        {% set instance_key = "avm2_data_type" %}
+                        {% set instance_key = "avm_data_type" %}
                     {% endif %}
                     <tr>
                         <td></td>

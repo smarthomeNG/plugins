@@ -19,7 +19,7 @@ plugin:
 #    py_maxversion:                 # maximum Python version to use for this plugin (leave empty if latest)
     multi_instance: true            # plugin supports multi instance
     restartable: unknown
-    classname: AVM2                 # class containing the plugin
+    classname: AVM                  # class containing the plugin
 
 parameters:
     # Definition of parameters to be configured in etc/plugin.yaml
@@ -114,7 +114,7 @@ parameters:
 
 item_attributes:
     # Definition of item attributes defined by this plugin
-    avm2_data_type:
+    avm_data_type:
         type: str
         mandatory: True
         description:
@@ -146,7 +146,7 @@ item_attributes:
           - 'call_event_outgoing'                     # r/o       str       Status des letzten ausgehenden Anrufs
           - 'call_direction'                          # r/o       str       Richtung des letzten Anrufes
           - 'call_event'                              # r/o       str       Status des letzten Anrufes
-        # TAM Attribute                      Hinweis: alle Attribute benötigen zusätzlich das Attribut 'avm2_tam_index'
+        # TAM Attribute                      Hinweis: alle Attribute benötigen zusätzlich das Attribut 'avm_tam_index'
           - 'tam'                                     # r/w       bool      TAM an/aus
           - 'tam_name'                                # r/o       str       Name des TAM
           - 'tam_old_message_number'                  # r/o       num       Anzahl der alten Nachrichten
@@ -169,7 +169,7 @@ item_attributes:
           - 'wan_current_bytes_sent'                  # r/o       num       WAN Verbindung-Anzahl insgesamt versendeter Bytes
           - 'wan_current_bytes_received'              # r/o       num       WAN Verbindung-Anzahl insgesamt empfangener Bytes
           - 'wan_link'                                # r/o       bool      WAN Link
-        # WLAN Config Attribute              Hinweis: alle Attribute benötigen zusätzlich das Attribut 'avm2_wlan_index'
+        # WLAN Config Attribute              Hinweis: alle Attribute benötigen zusätzlich das Attribut 'avm_wlan_index'
           - 'wlanconfig'                              # r/w       bool      WLAN An/Aus
           - 'wlanconfig_ssid'                         # r/o       str       WLAN SSID
           - 'wlan_guest_time_remaining'               # r/o       num       Verbleibende Zeit, bis zum automatischen Abschalten des Gäste-WLAN
@@ -179,7 +179,7 @@ item_attributes:
           - 'wps_mode'                                # r/o       str       WPS Modus des entsprechenden WlAN
         # WLAN Attribute
           - 'wlan_total_associates'                   # r/o       num       Anzahl der verbundenen Geräte im WLAN
-        # Host Attribute                     Hinweis: alle Attribute benötigen zusätzlich das Attribut 'avm2_mac'           
+        # Host Attribute                     Hinweis: alle Attribute benötigen zusätzlich das Attribut 'avm_mac'           
           - 'network_device'                          # r/o       bool      Verbindungsstatus // Defines Network device via MAC-Adresse
           - 'device_ip'                               # r/o       str       Geräte-IP (Muss Child von 'network_device' sein)           
           - 'device_connection_type'                  # r/o       str       Verbindungstyp (Muss Child von 'network_device' sein)       
@@ -197,7 +197,7 @@ item_attributes:
           - 'set_temperature_reduced'                 # r/o       num       siehe "temperature_reduced"
           - 'set_temperature_comfort'                 # r/o       num       siehe "temperature_comfort"
           - 'firmware_version'                        # r/o       str       siehe "fw_version"
-        # Deflections                        Hinweis: alle Attribute benötigen zusätzlich das Attribut 'avm2_deflection_index'    
+        # Deflections                        Hinweis: alle Attribute benötigen zusätzlich das Attribut 'avm_deflection_index'    
           - 'number_of_deflections'                   # r/o       num       Anzahl der eingestellten Rufumleitungen
           - 'deflection_details'                      # r/o       dict      Details zur Rufumleitung (als dict); Angabe der Rufumleitung mit Parameter "avm_deflection_index" im Item
           - 'deflections_details'                     # r/o       dict      Details zu allen Rufumleitung (als dict)
@@ -208,7 +208,7 @@ item_attributes:
           - 'deflection_mode'                         # r/o       str       Modus der Rufumleitung; Angabe der Rufumleitung mit Parameter "avm_deflection_index" im Item bzw Parent-Item
           - 'deflection_outgoing'                     # r/o       str       Outgoing der Rufumleitung; Angabe der Rufumleitung mit Parameter "avm_deflection_index" im Item bzw Parent-Item
           - 'deflection_phonebook_id'                 # r/o       str       Phonebook_ID der Zielrufnummer (Only valid if Type==fromPB); Angabe der Rufumleitung mit Parameter "avm_deflection_index" im Item bzw Parent-Item
-        # AHA Interface attributes           Hinweis: alle Attribute benötigen zusätzlich das Attribut 'avm2_tam_ain'
+        # AHA Interface attributes           Hinweis: alle Attribute benötigen zusätzlich das Attribut 'avm_tam_ain'
           - 'device_id'                               # r/o       str       Geräte -ID                                    
           - 'manufacturer'                            # r/o       str       Hersteller                                    
           - 'product_name'                            # r/o       str       Produktname                                   
@@ -265,21 +265,21 @@ item_attributes:
           - 'alert_state'                             # r/o       bool      letzter übermittelter Alarmzustand              
                                                       
 
-    avm2_incoming_allowed:
+    avm_incoming_allowed:
         type: str
         mandatory: False
         description:
             de: '(optional) Definition der erlaubten eingehenden Rufnummer in Items vom avm_data_type `monitor_trigger`.'
             en: '(optional) Definition of the allowed incoming number. Only in items of avm_data_type `monitor_trigger`.'
 
-    avm2_target_number:
+    avm_target_number:
         type: str
         mandatory: False
         description:
             de: '(optional) Definition der erlaubten angerufenen Rufnummer in Items vom avm_data_type `monitor_trigger`.'
             en: '(optional) Definition of the allowed called number. Only in items of avm_data_type `monitor_trigger`.'
 
-    avm2_wlan_index:
+    avm_wlan_index:
         type: int
         description:
             de: '(optional) Definition des Wlans ueber index: (1: 2.4Ghz, 2: 5Ghz, 3: Gaeste).'
@@ -287,21 +287,21 @@ item_attributes:
         valid_min: 1
         valid_max: 3
 
-    avm2_mac:
+    avm_mac:
         type: mac
         mandatory: False
         description:
             de: '(optional) Definition der MAC Adresse für Items vom avm_data_type `network_device`. Nur für diese Items mandatory!'
             en: '(optional) Definition of the MAC address for items of avm_data_type `network_device`. Only mandatory for these items!'
 
-    avm2_ain:
+    avm_ain:
         type: str
         mandatory: False
         description:
             de: "(optional) Definition der AktorIdentifikationsNummer (AIN) Items vom avm_data_types für `AHA-Interface`. Nur für diese Items mandatory!"
             en: "(optional) Definition of the ActorIdentificationNumber (AIN) for items of avm_data_types `AHA-Interface`. Only mandatory for these items!"
 
-    avm2_tam_index:
+    avm_tam_index:
         type: int
         mandatory: False
         description:
@@ -310,7 +310,7 @@ item_attributes:
         valid_min: 1
         valid_max: 5
 
-    avm2_deflection_index:
+    avm_deflection_index:
         type: int
         mandatory: False
         description:
@@ -319,13 +319,13 @@ item_attributes:
         valid_min: 1
         valid_max: 32
 
-    avm2_read_after_write:
+    avm_read_after_write:
         type: int
         description:
             de: '(optional) Konfiguriert eine Verzögerung in Sekunden nachdem ein Lesekommando nach einem Schreibkommando gesendet wird.'
             en: '(optional) Configures delay in seconds to issue a read command after write command'
 
-    avm2_data_cycle:
+    avm_data_cycle:
         type: int
         mandatory: False
         description:
@@ -337,189 +337,189 @@ item_structs:
         uptime:
             type: num
             visu_acl: ro
-            avm2_data_type@instance: uptime
-            avm2_data_cycle@instance: 600
+            avm_data_type@instance: uptime
+            avm_data_cycle@instance: 600
         serial_number:
             type: str
             visu_acl: ro
-            avm2_data_type@instance: serial_number
-            avm2_data_cycle@instance: 0
+            avm_data_type@instance: serial_number
+            avm_data_cycle@instance: 0
         firmware:
             type: str
             visu_acl: ro
-            avm2_data_type@instance: software_version
-            avm2_data_cycle@instance: 3600
+            avm_data_type@instance: software_version
+            avm_data_cycle@instance: 3600
         hardware_version:
             type: str
             visu_acl: ro
-            avm2_data_type@instance: hardware_version
-            avm2_data_cycle@instance: 0
+            avm_data_type@instance: hardware_version
+            avm_data_cycle@instance: 0
         myfritz:
             type: bool
-            avm2_data_type@instance: myfritz_status
+            avm_data_type@instance: myfritz_status
 
     monitor:
         trigger:
             type: bool
-            avm2_data_type@instance: monitor_trigger
-            avm2_incoming_allowed@instance: xxxxxxxx
-            avm2_target_number@instance: xxxxxxxx
+            avm_data_type@instance: monitor_trigger
+            avm_incoming_allowed@instance: xxxxxxxx
+            avm_target_number@instance: xxxxxxxx
             enforce_updates: yes
         incoming:
             is_call_incoming:
                 type: bool
-                avm2_data_type@instance: is_call_incoming
+                avm_data_type@instance: is_call_incoming
             duration:
                 type: num
-                avm2_data_type@instance: call_duration_incoming
+                avm_data_type@instance: call_duration_incoming
             last_caller:
                 type: str
-                avm2_data_type@instance: last_caller_incoming
+                avm_data_type@instance: last_caller_incoming
             last_calling_number:
                 type: str
-                avm2_data_type@instance: last_number_incoming
+                avm_data_type@instance: last_number_incoming
             last_called_number:
                 type: str
-                avm2_data_type@instance: last_called_number_incoming
+                avm_data_type@instance: last_called_number_incoming
             last_call_date:
                 type: str
-                avm2_data_type@instance: last_call_date_incoming
+                avm_data_type@instance: last_call_date_incoming
             event:
                 type: str
-                avm2_data_type@instance: call_event_incoming
+                avm_data_type@instance: call_event_incoming
         outgoing:
             is_call_outgoing:
                 type: bool
-                avm2_data_type@instance: is_call_outgoing
+                avm_data_type@instance: is_call_outgoing
             duration:
                 type: num
-                avm2_data_type@instance: call_duration_outgoing
+                avm_data_type@instance: call_duration_outgoing
             last_caller:
                 type: str
-                avm2_data_type@instance: last_caller_outgoing
+                avm_data_type@instance: last_caller_outgoing
             last_calling_number:
                 type: str
-                avm2_data_type@instance: last_number_outgoing
+                avm_data_type@instance: last_number_outgoing
             last_called_number:
                 type: str
-                avm2_data_type@instance: last_called_number_outgoing
+                avm_data_type@instance: last_called_number_outgoing
             last_call_date:
                 type: str
-                avm2_data_type@instance: last_call_date_outgoing
+                avm_data_type@instance: last_call_date_outgoing
             event:
                 type: str
-                avm2_data_type@instance: call_event_outgoing
+                avm_data_type@instance: call_event_outgoing
         newest:
             direction:
                 type: str
-                avm2_data_type@instance: call_direction
+                avm_data_type@instance: call_direction
                 cache: yes
             event:
                 type: str
-                avm2_data_type@instance: call_event
+                avm_data_type@instance: call_event
                 cache: yes
 
     tam:
         type: bool
         visu_acl: rw
-        avm2_data_type@instance: tam
-        avm2_tam_index@instance: 1
-        avm2_read_after_write@instance: 5
+        avm_data_type@instance: tam
+        avm_tam_index@instance: 1
+        avm_read_after_write@instance: 5
 
         name:
             type: str
             visu_acl: ro
-            avm2_data_type@instance: tam_name
+            avm_data_type@instance: tam_name
         message_number_old:
             type: num
             visu_acl: ro
-            avm2_data_type@instance: tam_old_message_number
+            avm_data_type@instance: tam_old_message_number
         message_number_new:
             type: num
             visu_acl: ro
-            avm2_data_type@instance: tam_new_message_number
+            avm_data_type@instance: tam_new_message_number
         message_number_total:
             type: num
             visu_acl: ro
-            avm2_data_type@instance: tam_total_message_number
+            avm_data_type@instance: tam_total_message_number
 
     deflection:
         type: bool
         visu_acl: rw
-        avm2_data_type@instance: deflection_enable
-        avm2_deflection_index@instance: 1
-        avm2_read_after_write@instance: 5
+        avm_data_type@instance: deflection_enable
+        avm_deflection_index@instance: 1
+        avm_read_after_write@instance: 5
 
         deflection_type:
             type: str
             visu_acl: ro
-            avm2_data_type@instance: deflection_type
+            avm_data_type@instance: deflection_type
         deflection_number:
             type: str
             visu_acl: ro
-            avm2_data_type@instance: deflection_number
+            avm_data_type@instance: deflection_number
         deflection_to_number:
             type: str
             visu_acl: ro
-            avm2_data_type@instance: deflection_to_number
+            avm_data_type@instance: deflection_to_number
         deflection_mode:
             type: str
             visu_acl: ro
-            avm2_data_type@instance: deflection_mode
+            avm_data_type@instance: deflection_mode
         deflection_outgoing:
             type: str
             visu_acl: ro
-            avm2_data_type@instance: deflection_outgoing
+            avm_data_type@instance: deflection_outgoing
         deflection_phonebook_id:
             type: num
             visu_acl: ro
-            avm2_data_type@instance: deflection_phonebook_id
+            avm_data_type@instance: deflection_phonebook_id
 
     wan:
         connection_status:
             type: str
             visu_acl: ro
-            avm2_data_type@instance: wan_connection_status
+            avm_data_type@instance: wan_connection_status
         connection_error:
             type: str
             visu_acl: ro
-            avm2_data_type@instance: wan_connection_error
+            avm_data_type@instance: wan_connection_error
         is_connected:
             type: bool
             visu_acl: ro
-            avm2_data_type@instance: wan_is_connected
+            avm_data_type@instance: wan_is_connected
         uptime:
             type: num
             visu_acl: ro
-            avm2_data_type@instance: wan_uptime
+            avm_data_type@instance: wan_uptime
         upstream:
             type: num
             visu_acl: ro
-            avm2_data_type@instance: wan_upstream
+            avm_data_type@instance: wan_upstream
         downstream:
             type: num
             visu_acl: ro
-            avm2_data_type@instance: wan_downstream
+            avm_data_type@instance: wan_downstream
         total_packets_sent:
             type: num
             visu_acl: ro
-            avm2_data_type@instance: wan_total_packets_sent
+            avm_data_type@instance: wan_total_packets_sent
         total_packets_received:
             type: num
             visu_acl: ro
-            avm2_data_type@instance: wan_total_packets_received
+            avm_data_type@instance: wan_total_packets_received
         total_bytes_sent:
             type: num
             visu_acl: ro
-            avm2_data_type@instance: wan_total_bytes_sent
+            avm_data_type@instance: wan_total_bytes_sent
         total_bytes_received:
             type: num
             visu_acl: ro
-            avm2_data_type@instance: wan_total_bytes_received
+            avm_data_type@instance: wan_total_bytes_received
         link:
             type: bool
             visu_acl: ro
-            avm2_data_type@instance: wan_link
+            avm_data_type@instance: wan_link
         reconnect:
             type: bool
             visu_acl: rw
@@ -529,180 +529,180 @@ item_structs:
         wlan_1:
             type: bool
             visu_acl: rw
-            avm2_data_type@instance: wlanconfig    # 2,4ghz
-            avm2_wlan_index@instance: 1
-            avm2_read_after_write@instance: 5
+            avm_data_type@instance: wlanconfig    # 2,4ghz
+            avm_wlan_index@instance: 1
+            avm_read_after_write@instance: 5
         wlan_1_ssid:
             type: str
             visu_acl: ro
-            avm2_data_type@instance: wlanconfig_ssid
-            avm2_wlan_index@instance: 1
+            avm_data_type@instance: wlanconfig_ssid
+            avm_wlan_index@instance: 1
         wlan_1_associates:
           type: num
           visu_acl: ro
-          avm2_data_type@instance: wlan_associates
-          avm2_wlan_index@instance: 1
+          avm_data_type@instance: wlan_associates
+          avm_wlan_index@instance: 1
         wlan_2:
             type: bool
             visu_acl: rw
-            avm2_data_type@instance: wlanconfig    # 5 GHz
-            avm2_wlan_index@instance: 2
-            avm2_read_after_write@instance: 5
+            avm_data_type@instance: wlanconfig    # 5 GHz
+            avm_wlan_index@instance: 2
+            avm_read_after_write@instance: 5
         wlan_2_ssid:
             type: str
             visu_acl: ro
-            avm2_data_type@instance: wlanconfig_ssid
-            avm2_wlan_index@instance: 2
+            avm_data_type@instance: wlanconfig_ssid
+            avm_wlan_index@instance: 2
         wlan_2_associates:
           type: num
           visu_acl: ro
-          avm2_data_type@instance: wlan_associates
-          avm2_wlan_index@instance: 2
+          avm_data_type@instance: wlan_associates
+          avm_wlan_index@instance: 2
         wlan_gast:
             type: bool
             visu_acl: rw
-            avm2_data_type@instance: wlanconfig    # Guest
-            avm2_wlan_index@instance: 3
-            avm2_read_after_write@instance: 5
+            avm_data_type@instance: wlanconfig    # Guest
+            avm_wlan_index@instance: 3
+            avm_read_after_write@instance: 5
         wlan_gast_ssid:
             type: str
             visu_acl: ro
-            avm2_data_type@instance: wlanconfig_ssid
-            avm2_wlan_index@instance: 3
+            avm_data_type@instance: wlanconfig_ssid
+            avm_wlan_index@instance: 3
         wlan_gast_associates:
           type: num
           visu_acl: ro
-          avm2_data_type@instance: wlan_associates
-          avm2_wlan_index@instance: 3
+          avm_data_type@instance: wlan_associates
+          avm_wlan_index@instance: 3
         wlan_gast_tr:
             type: num
             visu_acl: rw
-            avm2_data_type@instance: wlan_guest_time_remaining
-            avm2_wlan_index@instance: 3
+            avm_data_type@instance: wlan_guest_time_remaining
+            avm_wlan_index@instance: 3
 
     device:
-        avm2_data_type@instance: network_device
+        avm_data_type@instance: network_device
         type: bool
         visu_acl: ro
         ip:
             type: str
-            avm2_data_type@instance: device_ip
+            avm_data_type@instance: device_ip
             visu_acl: ro
         connection_type:
             type: str
-            avm2_data_type@instance: device_connection_type
+            avm_data_type@instance: device_connection_type
             visu_acl: ro
         hostname:
             type: str
-            avm2_data_type@instance: device_hostname
+            avm_data_type@instance: device_hostname
             visu_acl: ro
 
     aha_general:
         name:
             type: str
-            avm2_data_type@instance: device_name
-            avm2_data_cycle@instance: 0
+            avm_data_type@instance: device_name
+            avm_data_cycle@instance: 0
         identifier:
             type: str
-            avm2_data_type@instance: device_id
-            avm2_data_cycle@instance: 0
+            avm_data_type@instance: device_id
+            avm_data_cycle@instance: 0
         productname:
             type: str
-            avm2_data_type@instance: product_name
-            avm2_data_cycle@instance: 0
+            avm_data_type@instance: product_name
+            avm_data_cycle@instance: 0
         manufacturer:
             type: str
-            avm2_data_type@instance: manufacturer
-            avm2_data_cycle@instance: 0
+            avm_data_type@instance: manufacturer
+            avm_data_cycle@instance: 0
         firmware_version:
             type: str
-            avm2_data_type@instance: fw_version
-            avm2_data_cycle@instance: 0
+            avm_data_type@instance: fw_version
+            avm_data_cycle@instance: 0
         present:
             type: bool
-            avm2_data_type@instance: connected
-            avm2_data_cycle@instance: 0
+            avm_data_type@instance: connected
+            avm_data_cycle@instance: 0
         functions:
             type: list
-            avm2_data_type@instance: device_functions
-            avm2_data_cycle@instance: 0
+            avm_data_type@instance: device_functions
+            avm_data_cycle@instance: 0
 
     aha_thermostat:
         target_temperature:
-            avm2_data_type@instance: target_temperature
-            avm2_read_after_write@instance: 5
+            avm_data_type@instance: target_temperature
+            avm_read_after_write@instance: 5
             type: num
         comfort_temperature:
-            avm2_data_type@instance: temperature_comfort
+            avm_data_type@instance: temperature_comfort
             type: num
         eco_temperature:
-            avm2_data_type@instance: temperature_reduced
+            avm_data_type@instance: temperature_reduced
             type: num
         battery_low:
-            avm2_data_type@instance: battery_low
+            avm_data_type@instance: battery_low
             type: bool
         battery_level:
-            avm2_data_type@instance: battery_level
+            avm_data_type@instance: battery_level
             type: num
         window_open:
-            avm2_data_type@instance: window_open
+            avm_data_type@instance: window_open
             type: bool
         windowopenactiveendtime:
-            avm2_data_type@instance: windowopenactiveendtime
+            avm_data_type@instance: windowopenactiveendtime
             type: num
         summer_active:
-            avm2_data_type@instance: summer_active
+            avm_data_type@instance: summer_active
             type: bool
         holiday_active:
-            avm2_data_type@instance: holiday_active
+            avm_data_type@instance: holiday_active
             type: bool
         errorcode:
-            avm2_data_type@instance: errorcode
+            avm_data_type@instance: errorcode
             type: num
         hkr_boost:
-            avm2_data_type@instance: hkr_boost
+            avm_data_type@instance: hkr_boost
             type: bool
         boostactiveendtime:
-            avm2_data_type@instance: boostactiveendtime
+            avm_data_type@instance: boostactiveendtime
             type: num
         lock:
-            avm2_data_type@instance: lock
+            avm_data_type@instance: lock
             type: bool
         device_lock:
-            avm2_data_type@instance: device_lock
+            avm_data_type@instance: device_lock
             type: bool
 
     aha_temperature_sensor:
         current_temperature:
-            avm2_data_type@instance: current_temperature
+            avm_data_type@instance: current_temperature
             type: num
         temperature_offset:
-            avm2_data_type@instance: temperature_offset
+            avm_data_type@instance: temperature_offset
             type: num
 
     aha_alert:
         state:
-            avm2_data_type@instance: alert
+            avm_data_type@instance: alert
             type: bool
 
     aha_switch:
         switch_state:
-            avm2_data_type@instance: switch_state
+            avm_data_type@instance: switch_state
             type: bool
         switch_toggle:
-            avm2_data_type@instance: switch_toggle
+            avm_data_type@instance: switch_toggle
             type: bool
             enforce_updates: yes
 
     aha_powermeter:
         power:
-            avm2_data_type@instance: power
+            avm_data_type@instance: power
             type: num
         energy:
-            avm2_data_type@instance: energy
+            avm_data_type@instance: energy
             type: num
         voltage:
-            avm2_data_type@instance: voltage
+            avm_data_type@instance: voltage
             type: num
 
 #item_attribute_prefixes:

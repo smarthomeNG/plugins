@@ -47,23 +47,6 @@ from .webif import WebInterface
 
 
 """
-Definition of TR-064 details
-"""
-
-#FRITZ_TR64_DESC_FILE = "tr64desc.xml"
-#FRITZ_IGD_DESC_FILE = "igddesc.xml"
-#FRITZ_IGD2_DESC_FILE = "igd2desc.xml"
-#FRITZ_L2TPV3_FILE = "l2tpv3.xml"
-#FRITZ_FBOX_DESC_FILE = "fboxdesc.xml"
-
-#IGD_DEVICE_NAMESPACE = {'': 'urn:schemas-upnp-org:device-1-0'}
-#IGD_SERVICE_NAMESPACE = {'': 'urn:schemas-upnp-org:service-1-0'}
-#TR064_DEVICE_NAMESPACE = {'': 'urn:dslforum-org:device-1-0'}
-#TR064_SERVICE_NAMESPACE = {'': 'urn:dslforum-org:service-1-0'}
-#TR064_CONTROL_NAMESPACE = {'': 'urn:dslforum-org:control-1-0'}
-
-
-"""
 Definition of attribute value groups of avm_data_type
 """
 _aha_ro_attributes = ['device_id',
@@ -248,10 +231,9 @@ _tr064_attributes = [*_wan_connection_attributes,
                      *_avm_rw_attributes]
 
 
-class AVM2(SmartPlugin):
+class AVM(SmartPlugin):
     """
-    Main class of the Plugin. Does all plugin specific stuff and provides
-    the update functions for the items
+    Main class of the Plugin. Does all plugin specific stuff
     """
 
     PLUGIN_VERSION = '2.0.0'
@@ -369,12 +351,12 @@ class AVM2(SmartPlugin):
                         can be sent to the knx with a knx write function within the knx plugin.
         """
 
-        if self.has_iattr(item.conf, 'avm2_data_type'):
+        if self.has_iattr(item.conf, 'avm_data_type'):
             self.logger.debug(f"parse item: {item}")
 
             # get avm_data_type and avm_data_cycle
-            avm_data_type = self.get_iattr_value(item.conf, 'avm2_data_type')
-            avm_data_cycle = self.get_iattr_value(item.conf, 'avm2_data_cycle') if self.has_iattr(item.conf, 'avm2_data_cycle') else self._cycle
+            avm_data_type = self.get_iattr_value(item.conf, 'avm_data_type')
+            avm_data_cycle = self.get_iattr_value(item.conf, 'avm_data_cycle') if self.has_iattr(item.conf, 'avm_data_cycle') else self._cycle
             avm_data_cycle = 30 if 1 < avm_data_cycle < 29 else avm_data_cycle
 
             # handle items specific to call monitor
@@ -422,13 +404,13 @@ class AVM2(SmartPlugin):
         if self.alive and caller != self.get_fullname():
 
             # get avm_data_type
-            avm_data_type = self.get_iattr_value(item.conf, 'avm2_data_type')
+            avm_data_type = self.get_iattr_value(item.conf, 'avm_data_type')
 
             self.logger.info(f"Updated item: {item.property.path} with avm_data_type={avm_data_type} item has been changed outside this plugin from caller={caller}")
 
             readafterwrite = None
-            if self.has_iattr(item.conf, 'avm2_read_after_write'):
-                readafterwrite = int(self.get_iattr_value(item.conf, 'avm2_read_after_write'))
+            if self.has_iattr(item.conf, 'avm_read_after_write'):
+                readafterwrite = int(self.get_iattr_value(item.conf, 'avm_read_after_write'))
                 if self.debug_log:
                     self.logger.debug(f'Attempting read after write for item: {item.id()}, avm_data_type: {avm_data_type}, delay: {readafterwrite}s')
 
@@ -663,33 +645,33 @@ class FritzDevice:
         if avm_data_type in _wlan_config_attributes:
             index = self._get_wlan_index(item)
             if index is not None:
-                self._plugin_instance.logger.debug(f"Item {item.id()} with avm device attribute and defined 'avm2_wlan_index' found; append to list.")
+                self._plugin_instance.logger.debug(f"Item {item.id()} with avm device attribute and defined 'avm_wlan_index' found; append to list.")
             else:
-                self._plugin_instance.logger.warning(f"Item {item.id()} with avm attribute found, but 'avm2_wlan_index' is not defined; Item will be ignored.")
+                self._plugin_instance.logger.warning(f"Item {item.id()} with avm attribute found, but 'avm_wlan_index' is not defined; Item will be ignored.")
 
         # handle network_device related items
         elif avm_data_type in (_host_attribute + _host_child_attributes):
             index = self._get_mac(item)
             if index is not None:
-                self._plugin_instance.logger.debug(f"Item {item.id()} with avm device attribute and defined 'avm2_mac' found; append to list.")
+                self._plugin_instance.logger.debug(f"Item {item.id()} with avm device attribute and defined 'avm_mac' found; append to list.")
             else:
-                self._plugin_instance.logger.warning("Item {item.id()} with avm attribute found, but 'avm2_mac' is not defined; Item will be ignored.")
+                self._plugin_instance.logger.warning("Item {item.id()} with avm attribute found, but 'avm_mac' is not defined; Item will be ignored.")
 
         # handle tam related items
         elif avm_data_type in _tam_attributes:
             index = self._get_tam_index(item)
             if index is not None:
-                self._plugin_instance.logger.debug(f"Item {item.id()} with avm device attribute and defined 'avm2_tam_index' found; append to list.")
+                self._plugin_instance.logger.debug(f"Item {item.id()} with avm device attribute and defined 'avm_tam_index' found; append to list.")
             else:
-                self._plugin_instance.logger.warning(f"Item {item.id()} with avm attribute found, but 'avm2_tam_index' is not defined; Item will be ignored.")
+                self._plugin_instance.logger.warning(f"Item {item.id()} with avm attribute found, but 'avm_tam_index' is not defined; Item will be ignored.")
 
         # handle deflection related items
         elif avm_data_type in _deflection_attributes:
             index = self._get_deflection_index(item)
             if index is not None:
-                self._plugin_instance.logger.debug(f"Item {item.id()} with avm device attribute and defined 'avm2_tam_index' found; append to list.")
+                self._plugin_instance.logger.debug(f"Item {item.id()} with avm device attribute and defined 'avm_tam_index' found; append to list.")
             else:
-                self._plugin_instance.logger.warning(f"Item {item.id()} with avm attribute found, but 'avm2_tam_index' is not defined; Item will be ignored.")
+                self._plugin_instance.logger.warning(f"Item {item.id()} with avm attribute found, but 'avm_tam_index' is not defined; Item will be ignored.")
 
         # register item
         self._items[item] = (avm_data_type, index, avm_data_cycle, time.time())
@@ -769,7 +751,7 @@ class FritzDevice:
 
         wlan_index = None
         for i in range(2):
-            attribute = 'avm2_wlan_index'
+            attribute = 'avm_wlan_index'
 
             wlan_index = self._plugin_instance.get_iattr_value(item.conf, attribute)
             if wlan_index:
@@ -781,7 +763,7 @@ class FritzDevice:
             wlan_index = int(wlan_index) - 1
             if not 0 <= wlan_index <= 2:
                 wlan_index = None
-                self._plugin_instance.logger.warning(f"Attribute 'avm2_wlan_index' for item {item.id()} not in valid range 1-3.")
+                self._plugin_instance.logger.warning(f"Attribute 'avm_wlan_index' for item {item.id()} not in valid range 1-3.")
 
         return wlan_index
 
@@ -792,7 +774,7 @@ class FritzDevice:
 
         tam_index = None
         for i in range(2):
-            attribute = 'avm2_tam_index'
+            attribute = 'avm_tam_index'
 
             tam_index = self._plugin_instance.get_iattr_value(item.conf, attribute)
             if tam_index:
@@ -815,7 +797,7 @@ class FritzDevice:
 
         deflection_index = None
         for i in range(2):
-            attribute = 'avm2_deflection_index'
+            attribute = 'avm_deflection_index'
 
             deflection_index = self._plugin_instance.get_iattr_value(item.conf, attribute)
             if deflection_index:
@@ -838,7 +820,7 @@ class FritzDevice:
 
         mac = None
         for i in range(2):
-            attribute = 'avm2_mac'
+            attribute = 'avm_mac'
 
             mac = self._plugin_instance.get_iattr_value(item.conf, attribute)
             if mac:
@@ -1265,7 +1247,6 @@ class FritzDevice:
         else:
             cmd = f"self.client.{device}.{service}.{action}({args})"
         response = eval(cmd)
-
 
         if self._plugin_instance.debug_log:
             self._plugin_instance.logger.debug(f"response={response} for cmd={cmd}.")
@@ -2177,8 +2158,8 @@ class FritzDevice:
 
             self.headers = {'content-type': 'text/xml; charset="utf-8"'}
             self.envelope = etree.Element('{http://schemas.xmlsoap.org/soap/envelope/}Envelope',
-                attrib={'{http://schemas.xmlsoap.org/soap/envelope/}encodingStyle':
-                        'http://schemas.xmlsoap.org/soap/encoding/'})
+                                          attrib={'{http://schemas.xmlsoap.org/soap/envelope/}encodingStyle':
+                                                  'http://schemas.xmlsoap.org/soap/encoding/'})
             self.body = etree.SubElement(self.envelope, '{http://schemas.xmlsoap.org/soap/envelope/}Body')
 
             self.in_arguments = {}
@@ -2324,7 +2305,7 @@ class FritzHome:
         else:
             lookup_item = item
             for i in range(2):
-                attribute = 'avm2_ain'
+                attribute = 'avm_ain'
                 ain_device = self._plugin_instance.get_iattr_value(lookup_item.conf, attribute)
                 if ain_device is not None:
                     break
@@ -4111,11 +4092,11 @@ class Callmonitor:
             self._items[item] = (avm_data_type, None)
 
         elif avm_data_type in _call_monitor_attributes_trigger:
-            avm_incoming_allowed = self._plugin_instance.get_iattr_value(item.conf, 'avm2_incoming_allowed')
-            avm_target_number = self._plugin_instance.get_iattr_value(item.conf, 'avm2_target_number')
+            avm_incoming_allowed = self._plugin_instance.get_iattr_value(item.conf, 'avm_incoming_allowed')
+            avm_target_number = self._plugin_instance.get_iattr_value(item.conf, 'avm_target_number')
 
             if not avm_incoming_allowed or not avm_target_number:
-                self._plugin_instance.logger.error(f"For Trigger-item={item.id()} both 'avm2_incoming_allowed' and 'avm2_target_number' must be specified as attributes. Item will be ignored.")
+                self._plugin_instance.logger.error(f"For Trigger-item={item.id()} both 'avm_incoming_allowed' and 'avm_target_number' must be specified as attributes. Item will be ignored.")
             else:
                 self._trigger_items[item] = (avm_data_type, avm_incoming_allowed, avm_target_number)
 
