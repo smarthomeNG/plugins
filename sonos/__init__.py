@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
-#  Copyright 2016-       pfischi, aswitch, sisamiwe                     #
+#  Copyright 2016-       pfischi, aschwith, sisamiwe                    #
 #########################################################################
 #  This file is part of SmartHomeNG.   
 #
@@ -2535,7 +2535,7 @@ class Sonos(SmartPlugin):
     """
     Main class of the Plugin. Does all plugin specific stuff
     """
-    PLUGIN_VERSION = "1.6.9"
+    PLUGIN_VERSION = "1.7.0"
 
     def __init__(self, sh):
         """Initializes the plugin."""
@@ -2604,8 +2604,7 @@ class Sonos(SmartPlugin):
         
         # do initial speaker discovery and set scheduler
         self._discover()
-        if not self._speaker_ips:
-            self.scheduler_add("sonos_discover_scheduler", self._discover, prio=3, cron=None, cycle=self._discover_cycle, value=None, offset=None, next=None)
+        self.scheduler_add("sonos_discover_scheduler", self._discover, prio=3, cron=None, cycle=self._discover_cycle, value=None, offset=None, next=None)
 
         # set plugin to alive
         self.alive = True
