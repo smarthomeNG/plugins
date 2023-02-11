@@ -3007,7 +3007,7 @@ class Sonos(SmartPlugin):
                     volume = self._resolve_child_command_int(item, 'tts_volume', -1)
                     fade_in = self._resolve_child_command_bool(item, 'tts_fade_in')
                     sonos_speaker[uid].play_tts(item(), language, self._local_webservice_path, self._webservice_url, volume, self._snippet_duration_offset, fade_in)
-                elif command == 'play_snippet' and item() != "":
+                elif command == 'play_snippet':
                     if item() == "":
                         self.logger.error("No item value when executing 'play_snippet' command")
                         return

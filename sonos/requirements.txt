@@ -1,4 +1,4 @@
-# These packages are used by the pluign itself:
+# These packages are used by the plugin itself:
 xmltodict>=0.11.0
 tinytag>=0.18.0
 gtts
