@@ -392,6 +392,7 @@ item_structs:
 
         dict:
             type: dict
+            enforce_updates: True
             hue2_resource@instance: ..:.
             hue2_id@instance: ..:.
             hue2_function@instance: dict
