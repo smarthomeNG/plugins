@@ -6,7 +6,7 @@ plugin:
         de: 'Ansteuerung von AVM FRITZ!Boxen, WLAN-Repeatern, DECT Steckdosen, etc.'
         en: 'Get and send data from/to AVM devices such as the FRITZ!Box, Wifi Repeaters or DECT sockets.'
     maintainer: sisamiwe
-    tester: psilo, schuma, aschwith, bmx
+    tester: psilo, onkelandy, aschwith, bmx
     state: develop                  # change to ready when done with development
 #    keywords: iot xyz
     documentation: http://smarthomeng.de/user/plugins/avm/user_doc.html
@@ -90,27 +90,6 @@ parameters:
         description:
             de: '(optional) Anzahl der Log-Messages, die verarbeitet/bereitgestellt werden. 0 = alle'
             en: '(optional) Amount of Log-Messages, witch will be displayed. 0 = all'
-    webif_pagelength:
-        type: int
-        default: 0
-        valid_list:
-            - -1
-            - 0
-            - 25
-            - 50
-            - 100
-        description:
-            de: 'Anzahl an Items, die standardmäßig in einer Web Interface Tabelle pro Seite angezeigt werden.
-                 0 = automatisch, -1 = alle'
-            en: 'Amount of items being listed in a web interface table per page by default.
-                 0 = automatic, -1 = all'
-        description_long:
-            de: 'Anzahl an Items, die standardmäßig in einer Web Interface Tabelle pro Seite angezeigt werden.\n
-                 Bei 0 wird die Tabelle automatisch an die Höhe des Browserfensters angepasst.\n
-                 Bei -1 werden alle Tabelleneinträge auf einer Seite angezeigt.'
-            en: 'Amount of items being listed in a web interface table per page by default.\n
-                 0 adjusts the table height automatically based on the height of the browser windows.\n
-                 -1 shows all table entries on one page.'
 
 item_attributes:
     # Definition of item attributes defined by this plugin
@@ -240,18 +219,18 @@ item_attributes:
           - 'errorcode'                               # r/o       num       Fehlercodes die der HKR liefert                 
                                                       
           - 'set_simpleonoff'                         # w/o       bool      Gerät/Aktor/Lampe an-/ausschalten               
-          - 'simpleonoff'                             # w/r       bool      Gerät/Aktor/Lampe (Status und Setzen)           neu 1.6.4
+          - 'simpleonoff'                             # w/r       bool      Gerät/Aktor/Lampe (Status und Setzen)
                                                       
           - 'set_level'                               # w/o       num       Level/Niveau von 0 bis 255 Setzen               
-          - 'level'                                   # w/r       num       Level/Niveau von 0 bis 255 (Setzen & Status)    neu 1.6.4
+          - 'level'                                   # w/r       num       Level/Niveau von 0 bis 255 (Setzen & Status)
           - 'set_levelpercentage'                     # w/o       num       Level/Niveau von 0% bis 100% Setzen             
-          - 'levelpercentage'                         # w/r       num       Level/Niveau von 0% bis 100% (Setzen & Status)  neu 1.6.4
+          - 'levelpercentage'                         # w/r       num       Level/Niveau von 0% bis 100% (Setzen & Status)
           - 'set_hue'                                 # w/o       num       Hue Setzen                                      
-          - 'hue'                                     # w/r       num       Hue (Status und Setzen)                         neu 1.6.4
+          - 'hue'                                     # w/r       num       Hue (Status und Setzen)
           - 'set_saturation'                          # w/o       num       Saturation Setzen                               
-          - 'saturation'                              # w/r       num       Saturation (Status und Setzen)                  neu 1.6.4
+          - 'saturation'                              # w/r       num       Saturation (Status und Setzen)
           - 'set_colortemperature'                    # w/o       num       Farbtemperatur Setzen                           
-          - 'colortemperature'                        # w/r       num       Farbtemperatur (Status und Setzen)              neu 1.6.4
+          - 'colortemperature'                        # w/r       num       Farbtemperatur (Status und Setzen)
                                                       
           - 'switch_state'                            # r/w       bool      Schaltzustand Steckdose (Status und Setzen)     
           - 'switch_mode'                             # r/o       bool      Zeitschaltung oder manuell schalten             
@@ -263,7 +242,6 @@ item_attributes:
                                                       
           - 'humidity'                                # r/o       num       Relative Luftfeuchtigkeit in % (FD440)          
           - 'alert_state'                             # r/o       bool      letzter übermittelter Alarmzustand              
-                                                      
 
     avm_incoming_allowed:
         type: str

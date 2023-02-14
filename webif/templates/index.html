@@ -146,35 +146,35 @@
 
 <!-- Define tabtitle and if tab should be hidden -->
 {% if p._fritz_device and tr064_item_count > 0 %}
-    {% set tab1title = _("<strong>"'AVM2 TR-064 Items'"</strong> (" ~ tr064_item_count ~ ") ") %}
+    {% set tab1title = _("<strong>"'AVM TR-064 Items'"</strong> (" ~ tr064_item_count ~ ") ") %}
 {% else %}
     {% set tab2title = "hidden" %} 
 {% endif %}
 
 {% if p._fritz_home and aha_item_count > 0 %}
-    {% set tab2title = _("<strong>"'AVM2 AHA Items'"</strong> (" ~ aha_item_count ~ ") ") %}
+    {% set tab2title = _("<strong>"'AVM AHA Items'"</strong> (" ~ aha_item_count ~ ") ") %}
 {% else %}
     {% set tab2title = "hidden" %} 
 {% endif %}
 
 {% if p._fritz_home and len(p._fritz_home._aha_devices) > 0%}
-    {% set tab3title = _("<strong>"'AVM2 AHA Devices'"</strong> (" ~ len(p._fritz_home._aha_devices) ~ ") ") %}
+    {% set tab3title = _("<strong>"'AVM AHA Devices'"</strong> (" ~ len(p._fritz_home._aha_devices) ~ ") ") %}
 {% else %}
     {% set tab3title = "hidden" %} 
 {% endif %}
 
 {% if p._call_monitor and call_monitor_item_count > 0 %} 
-    {% set tab4title = _("<strong>"'Call Monitor Items'"</strong> (" ~ call_monitor_item_count ~ ") ") %}
+    {% set tab4title = _("<strong>"'AVM Call Monitor Items'"</strong> (" ~ call_monitor_item_count ~ ") ") %}
 {% else %}
     {% set tab4title = "hidden" %} 
 {% endif %}
 
-{% set tab5title = _("<strong>"'Log-Einträge'"</strong>") %}
+{% set tab5title = _("<strong>"'AVM Log-Einträge'"</strong>") %}
 
 {% if not maintenance %}
-    {% set tab6title = _("<strong>"'Plugin-API'"</strong>") %}
+    {% set tab6title = _("<strong>"'AVM Plugin-API'"</strong>") %}
 {% else %}
-    {% set tab6title = _("<strong>"'Maintenance'"</strong>") %}
+    {% set tab6title = _("<strong>"'AVM Maintenance'"</strong>") %}
 {% endif %}
 
 <!-- Define language -->
@@ -265,9 +265,9 @@
                         <td class="py-1">{{ item.property.type }}</td>
                         <td class="py-1">{{ p.fritz_device.item_dict[item][0] }}</td>
                         <td class="py-1" style="text-align: right">{{ p.fritz_device.item_dict[item][2] }}</td>
-                        <td class="py-1" id="{{ item.id() }}_tr064_value">.{{ item.property.value }}</td>
-                        <td class="py-1" id="{{ item.id() }}_tr064_last_update" style="text-align: center">.{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
-                        <td class="py-1" id="{{ item.id() }}_tr064_last_change" style="text-align: center">.{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                        <td class="py-1" id="{{ item.id() }}_tr064_value">{{ item.property.value }}</td>
+                        <td class="py-1" id="{{ item.id() }}_tr064_last_update" style="text-align: center">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                        <td class="py-1" id="{{ item.id() }}_tr064_last_change" style="text-align: center">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
                     </tr>
                 {% endfor %}
             {% endif %}
@@ -301,9 +301,9 @@
                         <td class="py-1">{{ item.property.type }}</td>
                         <td class="py-1">{{ p.fritz_home.item_dict[item][0] }}</td>
                         <td class="py-1" style="text-align: right">{{ p.fritz_home.item_dict[item][2] }}</td>
-                        <td class="py-1" id="{{ item.id() }}_aha_value">.{{ item.property.value }}</td>
-                        <td class="py-1" id="{{ item.id() }}_aha_last_update" style="text-align: center">.{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
-                        <td class="py-1" id="{{ item.id() }}_aha_last_change" style="text-align: center">.{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                        <td class="py-1" id="{{ item.id() }}_aha_value">{{ item.property.value }}</td>
+                        <td class="py-1" id="{{ item.id() }}_aha_last_update" style="text-align: center">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                        <td class="py-1" id="{{ item.id() }}_aha_last_change" style="text-align: center">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
                     </tr>
                 {% endfor %}
             {% endif %}
@@ -371,9 +371,9 @@
                         <td class="py-1">{{ item_id }}</td>
                         <td class="py-1">{{ item.property.type }}</td>
                         <td class="py-1">{{ item.conf[instance_key]}}</td>
-                        <td class="py-1" id="{{ item_id }}_call_value">.{{ item.property.value }}</td>
-                        <td class="py-1" id="{{ item_id }}_call_last_update" style="text-align: center">.{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
-                        <td class="py-1" id="{{ item_id }}_call_last_change" style="text-align: center">.{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                        <td class="py-1" id="{{ item_id }}_call_value">{{ item.property.value }}</td>
+                        <td class="py-1" id="{{ item_id }}_call_last_update" style="text-align: center">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                        <td class="py-1" id="{{ item_id }}_call_last_change" style="text-align: center">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
                     </tr>
                 {% endfor %}
             {% endif %}
@@ -480,7 +480,7 @@
                 <td class="py-1">{{ "self._data_cache" }}</td>
                 <td class="py-1">{{ p._fritz_device._data_cache }}</td>
             </tr>
-            <!--
+            <!-- {#
             <tr>
                 <td class="py-1">{{ "X_AVM_DE_GetClients" }}</td>
                 <td class="py-1">{{ p._fritz_device.client.InternetGatewayDevice.X_VoIP.X_AVM_DE_GetClients() }}</td>
@@ -493,7 +493,7 @@
                 <td class="py-1">{{ "p._fritz_device.client.InternetGatewayDevice.X_VoIP.X_AVM_DE_DialGetConfig()" }}</td>
                 <td class="py-1">{{ p._fritz_device.client.InternetGatewayDevice.X_VoIP.X_AVM_DE_DialGetConfig() }}</td>
             </tr>
-            -->
+            #} -->
         </tbody>
     </table>
     {% endif %}

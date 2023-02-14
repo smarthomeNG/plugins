@@ -261,7 +261,6 @@ class AVM(SmartPlugin):
         self._aha_http_interface = self.get_parameter_value('avm_home_automation')
         self._cycle = self.get_parameter_value('cycle')
         self.log_entries = self.get_parameter_value('log_entries')
-        self.webif_pagelength = self.get_parameter_value('webif_pagelength')
         self.alive = False
         ssl = self.get_parameter_value('ssl')
         if ssl and not _verify:

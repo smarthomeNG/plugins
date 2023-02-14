@@ -83,12 +83,8 @@ class WebInterface(SmartPluginWebIf):
             call_monitor_items = None
             call_monitor_item_count = None
 
+        pagelength = self.plugin.get_parameter_value('webif_pagelength')
         tmpl = self.tplenv.get_template('index.html')
-
-        try:
-            pagelength = self.plugin.webif_pagelength
-        except Exception:
-            pagelength = 100
 
         return tmpl.render(plugin_shortname=self.plugin.get_shortname(),
                            plugin_version=self.plugin.get_version(),

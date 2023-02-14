@@ -1,17 +1,6 @@
 
-AVM
+avm
 ===
-
-Changelog
----------
-
-2.0.0
-~~~~~
-- complete re-writing of plugin, but all attributes and functions are available
-- News:
-    - Das Fritzdevice wird während des Inits über verfügbare Services, Actions etc abgefragt. Diese stehen dem Plugin zur Verfügung.
-    - Konfigurierte Items, bei deren Update Fehler entstehen, werden nach 3 Versuchen auf eine Blacklist gesetzt und bei weiteren Updates ignoriert. Ein Reset der Blacklist ist über das WebIF möglich.
-
 
 Allgemeine Informationen
 ------------------------
@@ -56,10 +45,9 @@ Dafür stehen die folgenden Einstellungen zur Verfügung:
 - `ssl`: True or False => True will add "https", False "http" to the URLs in the plugin
 - `verify`: True or False => Turns certificate verification on or off. Typically False
 - `call_monitor`: True or False => Activates or deactivates the MonitoringService, which connects to the FritzDevice's call monitor
-- 'call_monitor_incoming_filter': Filter only specific numbers to be watched by call monitor
-- 'avm_home_automation': True or False => Activates or deactivates the AHA Interface to communicate with HomeAutomation Devices,
-- 'log_entry_count': Number of Log-Messages, which will be displayed.
-- 'webif_pagelength': Number of items being listed in a web interface table per page by default.
+- `call_monitor_incoming_filter`: Filter only specific numbers to be watched by call monitor
+- `avm_home_automation`: True or False => Activates or deactivates the AHA Interface to communicate with HomeAutomation Devices,
+- `log_entry_count`: Number of Log-Messages, which will be displayed.
 - `instance`: Unique identifier for each FritzDevice / each instance of the plugin
 
 Alternativ kann das Plugin auch manuell konfiguriert werden.
@@ -68,30 +56,28 @@ Alternativ kann das Plugin auch manuell konfiguriert werden.
 .. code-block:: yaml
 
     fb1:
-        class_name: AVM
-        class_path: plugins.avm
+        plugin_name: avm
         username: ...    # optional
         password: '...'
         host: fritz.box
         port: 49443
         cycle: 300
-        ssl: True    # use https or not
-        verify: False    # verify ssl certificate
+        ssl: True
+        verify: False
         call_monitor: 'True'
         call_monitor_incoming_filter: "...    ## optional, don't set if you don't want to watch only one specific number with your call monitor"
         avm_home_automation: 'True'
         instance: fritzbox_7490
 
     fb2:
-        class_name: AVM
-        class_path: plugins.avm
+        plugin_name: avm
         username: ...    # optional
         password: '...'
         host: '...'
         port: 49443
         cycle: 300
-        ssl: True    # use https or not
-        verify: False    # verify ssl certificate
+        ssl: True
+        verify: False
         call_monitor: 'True'
         avm_home_automation: 'False'
         instance: wlan_repeater_1750
@@ -430,30 +416,30 @@ Es werden nur die Tabs angezeigt, deren Funktionen im Plugin aktiviert sind bzw.
 
 Im WebIF stehen folgende Reiter zur Verfügung:
 
-AVM Items
-~~~~~~~~~
+AVM AVM TR-064 Items
+~~~~~~~~~~~~~~~~~~~~
 
 Tabellarische Auflistung aller Items, die mit dem TR-064 Protokoll ausgelesen werden
 
 .. image:: user_doc/assets/webif_tab1.jpg
    :class: screenshot
 
-AVM Smarthome Items
-~~~~~~~~~~~~~~~~~~~
+AVM AHA Items
+~~~~~~~~~~~~~
 Tabellarische Auflistung aller Items, die mit dem AHA Protokoll ausgelesen werden (Items der AVM HomeAutomation Geräte)
 
 .. image:: user_doc/assets/webif_tab2.jpg
    :class: screenshot
 
-AVM Smarthome Devices
-~~~~~~~~~~~~~~~~~~~~~
+AVM AHA Devices
+~~~~~~~~~~~~~~~
 
 Auflistung der mit der Fritzbox verbundenen AVM HomeAutomation Geräte
 
 .. image:: user_doc/assets/webif_tab3.jpg
    :class: screenshot
 
-Call Monitor Items
+AVM Call Monitor Items
 ~~~~~~~~~~~~~~~~~~
 
 Tabellarische Auflistung des Anrufmonitors (nur wenn dieser konfiguriert ist)
@@ -461,7 +447,7 @@ Tabellarische Auflistung des Anrufmonitors (nur wenn dieser konfiguriert ist)
 .. image:: user_doc/assets/webif_tab4.jpg
    :class: screenshot
 
-Log-Einträge
+AVM Log-Einträge
 ~~~~~~~~~~~~
 
 Listung der Logeinträge der Fritzbox
@@ -469,7 +455,7 @@ Listung der Logeinträge der Fritzbox
 .. image:: user_doc/assets/webif_tab5.jpg
    :class: screenshot
 
-Plugin-API
+AVM Plugin-API
 ~~~~~~~~~~
 
 Beschreibung der Plugin-API
