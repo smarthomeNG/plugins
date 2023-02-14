@@ -12,7 +12,7 @@ plugin:
   documentation: https://github.com/smarthomeNG/plugins/blob/master/sonos/README.md
   support: https://knx-user-forum.de/forum/supportforen/smarthome-py/25151-sonos-anbindung
 
-  version: 1.7.0                 # Plugin version
+  version: 1.8.0                 # Plugin version
   sh_minversion: 1.5.1           # minimum shNG version to use this plugin
   py_minversion: 3.8             # minimum Python version to use for this plugin
   multi_instance: False          # plugin supports multi instance
@@ -220,6 +220,12 @@ item_attributes:
     - status_light
     - switch_linein
     - switch_tv
+    # new
+    - play_favorite_title
+    - play_favorite_number
+    - play_favorite_radio_title
+    - play_favorite_radio_number
+    - play_sonos_radio
 
   sonos_attrib:
     type: str
@@ -497,6 +503,15 @@ item_structs:
         initial_value: True
         sonos_attrib: start_after
 
+    play_sonos_radio:
+      type: str
+      sonos_send: play_sonos_radio
+
+      start_after:
+        type: bool
+        initial_value: True
+        sonos_attrib: start_after
+
     play_url:
       type: str
       sonos_send: play_url
@@ -571,6 +586,23 @@ item_structs:
       type: bool
       initial_value: True
       sonos_attrib: snippet_fade_in
+
+  play_favorites:
+    play_favorite_title:
+      type: str
+      sonos_send: play_favorite_title
+
+    play_favorite_number:
+      type: num
+      sonos_send: play_favorite_number
+
+    play_favorite_radio_title:
+      type: str
+      sonos_send: play_favorite_radio_title
+
+    play_favorite_radio_number:
+      type: num
+      sonos_send: play_favorite_radio_number
 
   standard:
     # sonos_uid: rincon_xxxxxxxxxxxxxxxxx
