@@ -1633,7 +1633,7 @@ class FritzDevice:
 
         url = f"{self._build_url()}{wlandevice_url}"
         wlandevices_xml = self._request_response_to_xml(self._request(url, self._timeout, self._verify))
-        if not wlandevices_xml:
+        if wlandevices_xml is None:
             return
 
         return self._lxml_element_to_dict(wlandevices_xml)
@@ -1820,7 +1820,7 @@ class FritzDevice:
         # host_info = self.client.LANDevice.Hosts.GetGenericHostEntry(NewIndex=index)
         host_info = self._poll_fritz_device('host_info', index, enforce_read=True)
 
-        if not host_info:
+        if host_info is None:
             return
         elif isinstance(host_info, int):
             self._plugin_instance.logger.info(f"Error {host_info} '{self.ERROR_CODES.get(host_info)}' occurred during getting details of host #{index}.")
@@ -1843,7 +1843,7 @@ class FritzDevice:
         # hosts_url = self.client.LANDevice.Hosts.X_AVM_DE_GetHostListPath()['NewX_AVM_DE_HostListPath']
         hosts_url = self._poll_fritz_device('hosts_url', enforce_read=True)
 
-        if not hosts_url:
+        if hosts_url is None:
             return
 
         url = f"{self._build_url()}{hosts_url}"
@@ -1884,7 +1884,7 @@ class FritzDevice:
         # mesh_url = self.client.LANDevice.Hosts.X_AVM_DE_GetMeshListPath()['NewX_AVM_DE_MeshListPath']
         mesh_url = self._poll_fritz_device('mesh_url', enforce_read=True)
 
-        if not mesh_url:
+        if mesh_url is None:
             return
 
         url = f"{self._build_url()}{mesh_url}"
@@ -2729,7 +2729,7 @@ class FritzHome:
 
         elements = self.get_device_elements()
 
-        if not elements:
+        if elements is None:
             return False
 
         for element in elements:
@@ -4116,7 +4116,7 @@ class Callmonitor:
 
         _calllist = self._plugin_instance.get_calllist()
 
-        if not _calllist:
+        if _calllist is None:
             return
 
         for item in self._items_incoming:
