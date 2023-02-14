@@ -431,7 +431,7 @@ class AVM(SmartPlugin):
     def create_cyclic_scheduler(self, target: str, items: dict, fct, offset: int):
         """Create the scheduler to handle cyclic read commands and find the proper time for the cycle."""
 
-        # find shortest cycle
+        # find the shortest cycle
         shortestcycle = -1
         for item in items:
             item_cycle = items[item][2]
