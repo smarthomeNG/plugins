@@ -21,7 +21,7 @@
         </div>
         {{ basic.print(id~'phone_status.fritz.last_caller', gad_last_caller)}},
         {{ basic.print(id~'phone_status.fritz.last_call_date', gad_last_call_date)}}<br/>
-        Dauer: {{ basic.print(id~'gad_duration', gad_duration)}} Sekunden
+        Dauer: {{ basic.print(id~'gad_duration', gad_duration, 'float', 'VAR / 60')}} Minuten
     </div>
 {% endmacro %}
 
