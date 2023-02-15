@@ -21,7 +21,7 @@
         </div>
         {{ basic.print(id~'phone_status.fritz.last_caller', gad_last_caller)}},
         {{ basic.print(id~'phone_status.fritz.last_call_date', gad_last_call_date)}}<br/>
-        Dauer: {{ basic.print(id~'gad_duration', gad_duration)}} Sekunden
+        Dauer: {{ basic.print(id~'gad_duration', gad_duration, 'float', 'VAR / 60')}} Minuten
     </div>
 {% endmacro %}
 
@@ -64,7 +64,7 @@
     {% import config_version_full >= "3.2.c" ? "@widgets/basic.html" : "basic.html" as basic %}
     {% set uid = uid(page, id) %}
     <div id="{{ uid }}">
-        {% if gad_uptime %}Uptime: {{ basic.print(id~'uptime', gad_uptime, 'float', 'VAR / 3600') }} hours<br/>{% endif %}
+        {% if gad_uptime %}Uptime: {{ basic.print(id~'uptime', gad_uptime, 'float', 'VAR / 3600') }} Stunden<br/>{% endif %}
         {% if gad_firmware %}Firmware: {{ basic.print(id~'firmware', gad_firmware) }}<br/>{% endif %}
         {% if gad_hardware_version %}Gerätetyp: {{ basic.print(id~'hardware_version', gad_hardware_version) }}<br/>{% endif %}
         {% if gad_serial_number %}Seriennummer: {{ basic.print(id~'serial_number', gad_serial_number) }}{% endif %}
@@ -92,14 +92,14 @@
     {% set uid = uid(page, id) %}
     <div id="{{ uid }}">
         {% if gad_ip %}Internet-IP: {{ basic.print(id~'ip', gad_ip) }}<br/> {% endif %}
-        {% if gad_uptime %}WAN-Uptime: {{ basic.print(id~'wan_uptime', gad_uptime, 'float', 'VAR / 3600') }} hours<br/>{% endif %}
+        {% if gad_uptime %}WAN-Uptime: {{ basic.print(id~'wan_uptime', gad_uptime, 'float', 'VAR / 3600') }} Stunden<br/>{% endif %}
         {% if gad_connection_status %}Verbindungsstatus: {{ basic.print(id~'connection_status', gad_connection_status) }}<br/>{% endif %}
         {% if gad_connection_error %}Letzter Fehler: {{ basic.print(id~'wan_connection_error', gad_connection_error) }}<br/>{% endif %}
         {% if gad_total_packets_sent %}Gesendete Pakete: {{ basic.print(id~'total_packets_sent', gad_total_packets_sent) }}<br/>{% endif %}
         {% if gad_total_packets_received %}Empfangene Pakete: {{ basic.print(id~'total_packets_rcv', gad_total_packets_received) }}<br/>{% endif %}
-        {% if gad_total_bytes_sent %}Gesendetes Bytes: {{ basic.print(id~'total_bytes_sent', gad_total_bytes_sent, 'float', 'VAR / (1024*1024)') }} mb<br/>{% endif %}
-        {% if gad_total_bytes_received %}Empfangene Bytes: {{ basic.print(id~'total_bytes_received', gad_total_bytes_received, 'float', 'VAR / (1024*1024)') }} mb<br/>{% endif %}
-        {% if gad_upstream %}Upstream: {{ basic.print(id~'upstream', gad_upstream, 'float', 'VAR / (1000)') }} mbit<br/>{% endif %}
-        {% if gad_downstream %}Downstream: {{ basic.print(id~'downstream', gad_downstream, 'float', 'VAR / (1000)') }} mbit{% endif %}
+        {% if gad_total_bytes_sent %}Gesendetes Bytes: {{ basic.print(id~'total_bytes_sent', gad_total_bytes_sent, 'float', 'VAR / (1024*1024)') }} MB<br/>{% endif %}
+        {% if gad_total_bytes_received %}Empfangene Bytes: {{ basic.print(id~'total_bytes_received', gad_total_bytes_received, 'float', 'VAR / (1024*1024)') }} MB<br/>{% endif %}
+        {% if gad_upstream %}Upstream: {{ basic.print(id~'upstream', gad_upstream, 'float', 'VAR / (1000)') }} MBit<br/>{% endif %}
+        {% if gad_downstream %}Downstream: {{ basic.print(id~'downstream', gad_downstream, 'float', 'VAR / (1000)') }} MBit{% endif %}
     </div>
 {% endmacro %}
