@@ -12,7 +12,7 @@ plugin:
   documentation: https://github.com/smarthomeNG/plugins/blob/master/sonos/README.md
   support: https://knx-user-forum.de/forum/supportforen/smarthome-py/25151-sonos-anbindung
 
-  version: 1.8.0                 # Plugin version
+  version: 1.8.1                 # Plugin version
   sh_minversion: 1.5.1           # minimum shNG version to use this plugin
   py_minversion: 3.8             # minimum Python version to use for this plugin
   multi_instance: False          # plugin supports multi instance
@@ -497,6 +497,7 @@ item_structs:
     play_tunein:
       type: str
       sonos_send: play_tunein
+      enforce_updates: true
 
       start_after:
         type: bool
@@ -506,6 +507,7 @@ item_structs:
     play_sonos_radio:
       type: str
       sonos_send: play_sonos_radio
+      enforce_updates: True
 
       start_after:
         type: bool
@@ -515,6 +517,7 @@ item_structs:
     play_url:
       type: str
       sonos_send: play_url
+      enforce_updates: True
 
       start_after:
         type: bool
@@ -591,18 +594,22 @@ item_structs:
     play_favorite_title:
       type: str
       sonos_send: play_favorite_title
+      enforce_updates: True
 
     play_favorite_number:
       type: num
       sonos_send: play_favorite_number
+      enforce_updates: True
 
     play_favorite_radio_title:
       type: str
       sonos_send: play_favorite_radio_title
+      enforce_updates: True
 
     play_favorite_radio_number:
       type: num
       sonos_send: play_favorite_radio_number
+      enforce_updates: True
 
   standard:
     # sonos_uid: rincon_xxxxxxxxxxxxxxxxx
@@ -819,6 +826,7 @@ item_structs:
     play_tunein:
       type: str
       sonos_send: play_tunein
+      enforce_updates: True
 
       start_after:
         type: bool
@@ -828,6 +836,7 @@ item_structs:
     play_url:
       type: str
       sonos_send: play_url
+      enforce_updates: True
 
       start_after:
         type: bool
