@@ -304,6 +304,7 @@ class OneWire(SmartPlugin):
                         else:
                             value = self._flip[self.owbase.read('/uncached' + path).decode()]
                     except ConnectionError as e:
+                        self.logger.warning(f"_io_cycle: 'raise' {self._ios[addr][key]['readerrors']}. problem connecting to {addr}-{key}, error: {e}")
                         raise
                     except Exception as e:
                         self._ios[addr][key]['readerrors'] = self._ios[addr][key].get('readerrors', 0) + 1
@@ -311,7 +312,7 @@ class OneWire(SmartPlugin):
                             self.logger.warning(f"_io_cycle: {self._ios[addr][key]['readerrors']}. problem reading {addr}-{key}, error: {e}")
                         continue
                     if self._ios[addr][key].get('readerrors', 0) >= self.warn_after:
-                        self.logger.notice(f"_io_cycle: Success reading {addr}-{key}, up to now there were : {self._ios[addr][key]['readerrors']} problems")
+                        self.logger.notice(f"_io_cycle: Success reading {addr}-{key} {value=}, up to now there were : {self._ios[addr][key]['readerrors']} problems")
                         self._ios[addr][key]['readerrors'] = 0
                     for item in items:
                         item(value, self.get_shortname(), path)

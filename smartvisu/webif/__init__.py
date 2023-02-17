@@ -187,3 +187,4 @@ class WebInterface(SmartPluginWebIf):
                 self.logger.error(f"get_data_html exception: {e}")
 
         return {}
+
