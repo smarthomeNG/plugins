@@ -2570,7 +2570,7 @@ class Speaker(object):
 
         favorites = self.soco.music_library.get_sonos_favorites(complete_result=True)
 
-        if favorite_number:
+        if favorite_number is not None:
             err_msg = f"Favorite number must be integer between 1 and {len(favorites)}"
             try:
                 favorite_number = int(favorite_number)
@@ -2667,7 +2667,7 @@ class Speaker(object):
         stations = self.soco.music_library.get_favorite_radio_stations(preset, limit)
 
         # get station_title by station_number
-        if station_number:
+        if station_number is not None:
             err_msg = f"Favorite station number must be integer between 1 and {len(stations)}"
             try:
                 station_number = int(station_number)
@@ -2769,7 +2769,7 @@ class Sonos(SmartPlugin):
     """
     Main class of the Plugin. Does all plugin specific stuff
     """
-    PLUGIN_VERSION = "1.8.0"
+    PLUGIN_VERSION = "1.8.1"
 
     def __init__(self, sh):
         """Initializes the plugin."""

@@ -108,7 +108,7 @@ Folgendermaßen werden Speaker statisch in der plugin.yaml konfiguriert:
     Die zyklische Discover Funktionalität prüft, ob neue Speaker hinzugekommen sind oder ob
     bekannte Speaker inzwischen offline sind. Die Funktionalität sollte aus Performancegründen nicht
     unnötig strapaziert werden.
-    In der ``plugin.yaml`` kann hierzu im Parameter ``discover_cycle'`` (in Sekunden=) definiert werden, wie oft die
+    In der ``plugin.yaml`` kann hierzu im Parameter ``discover_cycle`` (in Sekunden) definiert werden, wie oft die
     Detektion ausgeführt werden soll.
 
     Es wird nicht empfohlen, den Wert kleiner als 60 Sekunden zu wählen.
@@ -216,16 +216,16 @@ is_coordinator
 ``read``
 
 Gibt den Status zurück, ob ein Speaker Koordinator eine Gruppe ist, oder nicht. Das Item ist vom Typ Boolean.
-Rückgabe von `True` falls der Speaker der Koordinator ist, `False` falls der Koordinator ein anderer Speaker ist.
+Rückgabe von `True`, falls der Speaker der Koordinator ist, `False`, falls der Koordinator ein anderer Speaker ist.
 Das Item wird über Sonos Events aktualisiert und zeigt daher immer den aktuellen Status an.
 
 is_initialized
 --------------
-```read```
+``read``
 
 Gibt den Status zurück, ob ein Speaker initialisiert und erreichbar ist. Das Item ist vom Typ Boolean.
 `True` bedeutet, dass der Speaker initialisiert und erreichbar ist. Bei `False` ist der Speaker entweder offline oder nicht vollständig initialisiert. 
-Nutze dieses item in Logiken oder Szenen bevor weitere Kommendos an den Speaker gesendet werden, siehe Beispiel 3).
+Nutze dieses Item in Logiken oder Szenen, bevor weitere Kommendos an den Speaker gesendet werden, siehe Beispiel 3).
 
 join
 ----
@@ -246,19 +246,19 @@ Unteritem  ``start_after``:
 Wird ein untergeordnetes item vom Typ Boolean mit dem Attribut ``sonos_attrib: start_after`` angelegt, kann das Verhalten
 nach Laden der Playliste bestimmt werden. Wird das Item auf `True` gesetzt, startet der Speaker direkt die Wiedergabe.
 Wird das Item auf `False` gesetzt, wird nur die Playliste geladen und es erfolgt keine direkte Wiedergabe.
-Wird dieses Item weggelassen, ist der Standardverhalten `False`.
+Wird dieses Item weggelassen, ist das Standardverhalten `False`.
 
 Unteritem ``clear_queue``:
 Wird ein untergeordnetes item vom Typ Boolean mit dem Attribut ``sonos_attrib: clear_queue`` angelegt, wird bei Wert
 `True` die bestehende Sonos Playlist gelöscht bevor die neue Playlist geladen wird. Bei Wert `False` bleibt die bestehende Liste
 erhalten und die Songs der neu zu ladenden Playliste werden angehängt.
-Wird dieses Item weggelassen, ist der Standardverhalten `False`.
+Wird dieses Item weggelassen, ist das Standardverhalten `False`.
  
 Unteritem  ``start_track``:
 Wird ein untergeordnetes item vom Typ Number mit dem Attribut ``sonos_attrib: start_track`` angelegt, kann die Indexposition
 innerhalb der geladen Playliste definiert werden, von wo die Wiedergabe startet. Der erste Song in der Playliste entspricht der
 Indexposition `0`. 
-Wird dieses Item weggelassen, ist der Standardverhalten ein Start bei Indexposition `0`.
+Wird dieses Item weggelassen, ist das Standardverhalten ein Start bei Indexposition `0`.
 
 loudness
 --------
@@ -369,7 +369,7 @@ play_tts
 --------
 ``write``
 
-Spielt eine definierte Nachtlicht ab (Text-to-Speech). Das Item ist vom Typ String. Aus der Nachricht im String wird von dem Google TTS API eine
+Spielt eine definierte Nachricht ab (Text-to-Speech). Das Item ist vom Typ String. Aus der Nachricht im String wird von dem Google TTS API eine
 Audiodatei erzeugt, die lokal gespeichert und abgespielt wird. 
 Für die Nutzung dieses Features müssen mindestens zwei Parameter in der ``plugin.yaml`` gesetzt sein:
 ``tts`` und ``local_webservice_path``.
@@ -400,15 +400,15 @@ Der Befehl ist ein Gruppenbefehl und wird für alle Speaker einer Gruppe angewen
 
 Unteritem ``start_after``:
 Wird ein untergeordnetes Item vom Typ Boolean mit Attribut ``sonos_attrib: start_after`` definiert, wird das 
-Verhalten nach dem Laden der Radiostation definiert. Wurde der obige ``group_command`` auf `True` gesetzt,
-startet die Wiedergabe automatisch. Existiert das Unteritem nicht, ist die Standardeinstellung `True`.
+Verhalten nach dem Laden der Radiostation definiert. Der Wert `True`, startet die Wiedergabe automatisch.
+Existiert das Unteritem nicht, ist die Standardeinstellung `True`.
 Der Befehl ist ein Gruppenbefehl und wird für alle Speaker einer Gruppe angewendet. 
 
 play_url
 --------
 ``write``
 
-Spielt eine gegeben URL. Das Item ist vom Typ String, in dem die URL übergeben wird.
+Spielt eine gegebene URL. Das Item ist vom Typ String, in dem die URL übergeben wird.
 
 Unteritem ``start_after``:
 Wird ein untergeordnetes Item vom Typ Boolean mit Attribut ``sonos_attrib: start_after`` definiert, wird das 
@@ -435,7 +435,7 @@ previous
 
 Setzt den aktuellen Track auf den Vorherigen zurück. Das Item ist vom Typ Boolean. Der Wert `True` triggert das Schalten
 auf den vorherigen Track, der Wert `False` hat keinen Effekt.
-Zusätzlich muss für das Item das smarthomeNG item Attribut ``enforce_update: True`` gesetzt werden.
+Zusätzlich muss für das Item das smarthomeNG Item Attribut ``enforce_update: True`` gesetzt werden.
 Der Befehl ist ein Gruppenbefehl und wird für alle Speaker einer Gruppe angewendet. 
 
 radio_station
@@ -499,7 +499,7 @@ stream_content
 ``read`` ``visu``
 
 Gibt den Inhalt wieder, der aktuell für einen Radiosender bereitgestellt wird, z.B.
-aktuell gespielter Titel und Interpret. Das Item ist vom Typ String. Falls kein Radio gespielt wird, siehe ``streamtype``
+aktuell gespielter Titel und Interpret. Das Item ist vom Typ String. Falls kein Radio gespielt wird, siehe ``streamtype``,
 ist das Item leer.
 Das Item wird über Sonos Events aktualisiert und zeigt daher immer den aktuellen Status an.
 
@@ -572,13 +572,13 @@ unjoin
 ------
 ``write``
 
-Entkoppelt ein Speaker aus einer Gruppe.
+Entkoppelt einen Speaker aus einer Gruppe.
 
 Unteritem ``start_after``:
-Wird ein untergeordnetes Item vom Typ Boolean mit Attribut ``sonos_attrib: start_after`` definiert, wird das Verhalten
-nach Entkopplung definiert.
+Wird ein untergeordnetes Item vom Typ Boolean mit Attribut ``sonos_attrib: start_after`` definiert, wird dadurch das Verhalten
+nach Entkopplung festgelegt.
 Ein Wert `True` bedeutet, der entkoppelte Speaker startet seine individuelle Wiedergabe, `False` startet keine Wiedergabe.
-Dieses unteritem ist optional und kann weggelassen werden. In dem Fall greift das Standardverhalten als keine Wiedergabe.
+Dieses Unteritem ist optional und kann weggelassen werden. In dem Fall greift das Standardverhalten als keine Wiedergabe.
 
 volume
 ------
@@ -628,15 +628,15 @@ play_favorite_title
 
 Spielt einen gespeicherten Sonos Favoriten anhand eines Namens. Das Item ist vom Typ String.
 Der Befehl ist ein Gruppenbefehl und wird für alle Speaker einer Gruppe angewendet.
-Die Liste der gespeicherten Favoriten kann mit dem Attribute ``sonos_favorites`` einem Item zugewiesen werden.
+Die Liste der gespeicherten Favoriten kann mit dem Attribut ``sonos_favorites`` einem Item zugewiesen werden.
 
 play_favorite_number
 --------------------
 ``write``
 
-Spielt einen gespeicherten Sonos Favoriten anhand der Nummer des Listeneintrages. Das Item ist vom Typ num.
+Spielt einen gespeicherten Sonos Favoriten anhand der Nummer des Listeneintrages. Das Item ist vom Typ Number
+und muss zwischen 1 und Länge der Favoritenliste liegen. Letztere kann mit dem Attribut ``sonos_favorites`` einem Item zugewiesen werden.
 Der Befehl ist ein Gruppenbefehl und wird für alle Speaker einer Gruppe angewendet.
-Die Liste der gespeicherten Favoriten kann mit dem Attribute ``sonos_favorites`` einem Item zugewiesen werden.
 
 play_favorite_radio_title
 -------------------------
@@ -644,22 +644,22 @@ play_favorite_radio_title
 
 Spielt einen gespeicherten Tunein Radio Favoriten anhand eines Namens. Das Item ist vom Typ String.
 Der Befehl ist ein Gruppenbefehl und wird für alle Speaker einer Gruppe angewendet.
-Die Liste der gespeicherten Favoriten kann mit dem Attribute ``favorite_radio_stations`` einem Item zugewiesen werden.
+Die Liste der gespeicherten Favoriten kann mit dem Attribut ``favorite_radio_stations`` einem Item zugewiesen werden.
 
 play_favorite_radio_number
 --------------------------
 ``write``
 
-Spielt einen gespeicherten Tunein Radio Favoriten anhand der Nummer des Listeneintrages. Das Item ist vom Typ num.
+Spielt einen gespeicherten Tunein Radio Favoriten anhand der Nummer des Listeneintrages. Das Item ist vom Typ Number
+und muss zwischen 1 und Länge der Radiofavoritenliste liegen. Letztere kann mit dem Attribut ``favorite_radio_stations`` einem Item zugewiesen werden.
 Der Befehl ist ein Gruppenbefehl und wird für alle Speaker einer Gruppe angewendet.
-Die Liste der gespeicherten Favoriten kann mit dem Attribute ``favorite_radio_stations`` einem Item zugewiesen werden.
 
 
 Nicht echtzeitfähige Eigenschaften
 ----------------------------------
 
 Einige Eigenschaften sind nicht Event basiert. Das bedeutet, dass sie nicht direkt nach
-Änderung über ein Event aktualisiert werden sondern die Änderung erst bei der nächsten
+Änderung über ein Event aktualisiert werden, sondern die Änderung erst bei der nächsten
 zyklischen Abfrage bei smarthomeNG ankommt.
 Folgende Eigenschaften sind **nicht** Event basiert:
  * snooze
@@ -716,15 +716,15 @@ Alle verfügbaren Playlists werden mit ``sonos_playlist`` angezeigt.
 -------------------------------------------
 
 Nach Start dauert es etwas, bis alle Sonos Speaker im Netzwerk initialisiert sind. Es ist deshalb angeraten,
-die Methode ``is_initialized`` in Logiken zu verwenden. Gibt die Eigenschaft True zurück, so ist der Speaker
-erreichbar und funktional. ``False`` bedeutet, der Speaker ist noch nicht initialisiert oder offline.
+die Methode ``is_initialized`` in Logiken zu verwenden. Gibt die Eigenschaft `True` zurück, so ist der Speaker
+erreichbar und funktional. `False` bedeutet, der Speaker ist noch nicht initialisiert oder offline.
 
 Beispiel:
 
 .. code-block:: python
 
-if sh.MySonosPlayer.is_initialized():
-    do_something()
+    if sh.MySonosPlayer.is_initialized():
+        do_something()
 
 4a) Lautstärke inkrementell verstellen (via KNX dpt3)
 ----------------------------------------------------
