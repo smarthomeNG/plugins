@@ -1,29 +1,54 @@
 {% extends "base_plugin.html" %}
 {% set logo_frame = false %}
-{% set update_interval = 5000 %}
+{% if tr064_items %}
+    {% set update_interval = [(((10 * (tr064_items | length)) / 1000) | round | int) * 1000, 5000]|max %}
+{% else %}
+    {% set update_interval = 5 %}
+{% endif %}
 
 {% block pluginstyles %}
 <style>
   table th.item {
-    width: 450px;
+    width: 400px;
   }
-  table th.datetime {
-    width: 150px;
-    }
   table th.type {
+    width: 75px;
+    }
+  table th.cycle {
     width: 50px;
     }
-  table th.cat {
+  table th.datetime {
+    width: 160px;
+    }
+  table th.update {
     width: 100px;
     }
   table th.datatype {
-    width: 250px;
+    width: 150px;
   }
   table th.value {
     width: 250px;
   }
- .logentry {
+  table th.no {
+    width: 50px;
+  }
+  table th.ain {
+    width: 200px;
+  }
+  table th.logtype {
+    width: 100px;
+  }
+  .logentry {
     max-width: 450px;
+  }
+  .items {
+    max-width: 400px;
+  }
+  .shng_effect_highlight {
+    background-color: #FFFFE0;
+  }
+  .shng_effect_standard {
+    background-color: none;
   }
 </style>
 {% endblock pluginstyles %}
@@ -35,9 +60,11 @@
     
     try {
       webif_pagelength = parseInt(document.getElementById('webif_pagelength').innerHTML);
-      if (webif_pagelength == 0) {
+      console.log("webif_pagelength " + webif_pagelength)
+      if (isNaN(parseFloat(webif_pagelength)) || webif_pagelength == 0) {
         resize = true;
         webif_pagelength = -1;
+  	    console.log('Activating automatic table resize');
       }
       else {
         resize = false;
@@ -47,32 +74,40 @@
       webif_pagelength = 100;
       resize = false;
       console.log("Using default values for page length " + webif_pagelength + ", pageResize: " + resize);
-      console.log("Error was " + e);
     }
     
     try {
-      table = $('#itemtable').DataTable( {
+      itemtable = $('#itemtable').DataTable( {
         pageLength: webif_pagelength,
-        pageResize: resize } );
-      table1 = $('#smarthomeitemtable').DataTable( {
+        pageResize: resize
+        } );
+        console.log("Init itemtable for page length " + webif_pagelength + ", pageResize: " + resize);
+      smarthomeitemtable = $('#smarthomeitemtable').DataTable( {
         pageLength: webif_pagelength,
-        pageResize: resize } );
-      table2 = $('#logtable').DataTable( {
+        pageResize: resize
+        } );
+        console.log("Init smarthomeitemtable for page length " + webif_pagelength + ", pageResize: " + resize);
+      logtable = $('#logtable').DataTable( {
         pageLength: webif_pagelength,
-        columnDefs: [{ 'targets': [1], 'className': 'truncate logentry'}].concat($.fn.dataTable.defaults.columnDefs),
         order: [[ 0, 'desc' ]],
-        pageResize: resize } );
-      table3 = $('#call_monitortable').DataTable( {
+        columnDefs: [{ "targets": [2], "className": "truncate logentry"}].concat($.fn.dataTable.defaults.columnDefs),
+        pageResize: resize
+        } );
+        console.log("Init logtable for page length " + webif_pagelength + ", pageResize: " + resize);
+      call_monitortable = $('#call_monitortable').DataTable( {
         pageLength: webif_pagelength,
-        pageResize: resize } );
-      table4 = $('#smarthome_devicetable').DataTable( {
-        pageLength: webif_pagelength,
-        pageResize: resize } );
+        pageResize: resize
+        } );
+        console.log("Init call_monitortable for page length " + webif_pagelength + ", pageResize: " + resize);
+      smarthome_devicetable = $('#smarthome_devicetable').DataTable( {
+        pageLength: -1,
+        pageResize: resize
+        } );
+        console.log("Init smarthome_devicetable for page length -1, pageResize: " + resize);
     }
     catch (e) {
         console.log("Datatable JS not loaded, showing standard table without reorder option " +e);
     }
-
   });
 </script>
 <script>
@@ -81,54 +116,66 @@
 			var objResponse = JSON.parse(response);
 			myProto = document.getElementById(dataSet);
             
-			for (var item in objResponse['avm_items']) {
-                shngInsertText (item+'_avm_item_value', objResponse['avm_items'][item]['value'], 'itemtable', 5);
-				shngInsertText (item+'_avm_item_last_update', objResponse['avm_items'][item]['last_update'], 'itemtable');
-				shngInsertText (item+'_avm_item_last_change', objResponse['avm_items'][item]['last_change'], 'itemtable');
+			for (var item in objResponse['tr064_items']) {
+                shngInsertText (item+'_tr064_value', objResponse['tr064_items'][item]['value'], 'itemtable', 5);
+				shngInsertText (item+'_tr064_last_update', objResponse['tr064_items'][item]['last_update'], 'itemtable');
+				shngInsertText (item+'_tr064_last_change', objResponse['tr064_items'][item]['last_change'], 'itemtable');
 			}
-            for (var item in objResponse['avm_smarthome_items']) {
-                shngInsertText (item+'_avm_smarthome_item_value', objResponse['avm_smarthome_items'][item]['value'], 'smarthomeitemtable', 5);
-				shngInsertText (item+'_avm_smarthome_item_last_update', objResponse['avm_smarthome_items'][item]['last_update'], 'smarthomeitemtable');
-				shngInsertText (item+'_avm_smarthome_item_last_change', objResponse['avm_smarthome_items'][item]['last_change'], 'smarthomeitemtable');
+            for (var item in objResponse['aha_items']) {
+                shngInsertText (item+'_aha_value', objResponse['aha_items'][item]['value'], 'smarthomeitemtable', 5);
+				shngInsertText (item+'_aha_last_update', objResponse['aha_items'][item]['last_update'], 'smarthomeitemtable');
+				shngInsertText (item+'_aha_last_change', objResponse['aha_items'][item]['last_change'], 'smarthomeitemtable');
 			}
             for (var item in objResponse['call_monitor']) {
-                shngInsertText (item+'_callmonitor_item_value', objResponse['call_monitor'][item]['value'], 'call_monitortable', 5);
-				shngInsertText (item+'_callmonitor_item_last_update', objResponse['call_monitor'][item]['last_update'], 'call_monitortable');
-				shngInsertText (item+'_callmonitor_item_last_change', objResponse['call_monitor'][item]['last_change'], 'call_monitortable');
+                shngInsertText (item+'_call_value', objResponse['call_monitor'][item]['value'], 'call_monitortable', 5);
+				shngInsertText (item+'_call_last_update', objResponse['call_monitor'][item]['last_update'], 'call_monitortable');
+				shngInsertText (item+'_call_last_change', objResponse['call_monitor'][item]['last_change'], 'call_monitortable');
 			}
 		}
 	}
 </script>
 {% endblock pluginscripts %}
 
+<!--	Set the tab that will be visible on start, if another tab that 1 is wanted (1 - 3) -->
+{% if tr064_item_count > 0 %}
+	{% set start_tab = 1 %}
+{% endif %}
 
-<!-- Define tabcount, tabtitle and if tab should be hidden -->
+<!-- Define tabcount -->
 {% set tabcount = 6 %}
 
-{% set tab1title = _("<strong>"'AVM Items'"</strong> (" ~ avm_item_count ~ ") ") %}
-
-{% if p.aha_http_interface and smarthome_item_count > 0 %} 
-    {% set tab2title = _("<strong>"'AVM Smarthome Items'"</strong> (" ~ smarthome_item_count ~ ") ") %}
+<!-- Define tabtitle and if tab should be hidden -->
+{% if p._fritz_device and tr064_item_count > 0 %}
+    {% set tab1title = _("<strong>"'AVM TR-064 Items'"</strong> (" ~ tr064_item_count ~ ") ") %}
 {% else %}
     {% set tab2title = "hidden" %} 
 {% endif %}
 
-{% if p.aha_http_interface %} 
-    {% set tab3title = _("<strong>"'AVM Smarthome Devices'"</strong> (" ~ len(p._fritz_device._smarthome_devices) ~ ") ") %}
+{% if p._fritz_home and aha_item_count > 0 %}
+    {% set tab2title = _("<strong>"'AVM AHA Items'"</strong> (" ~ aha_item_count ~ ") ") %}
+{% else %}
+    {% set tab2title = "hidden" %} 
+{% endif %}
+
+{% if p._fritz_home and len(p._fritz_home._aha_devices) > 0%}
+    {% set tab3title = _("<strong>"'AVM AHA Devices'"</strong> (" ~ len(p._fritz_home._aha_devices) ~ ") ") %}
 {% else %}
     {% set tab3title = "hidden" %} 
 {% endif %}
 
 {% if p._call_monitor and call_monitor_item_count > 0 %} 
-    {% set tab4title = _("<strong>"'Call Monitor Items'"</strong> (" ~ call_monitor_item_count ~ ") ") %}
+    {% set tab4title = _("<strong>"'AVM Call Monitor Items'"</strong> (" ~ call_monitor_item_count ~ ") ") %}
 {% else %}
     {% set tab4title = "hidden" %} 
 {% endif %}
 
-{% set tab5title = _("<strong>"'Log-Einträge'"</strong>") %}
+{% set tab5title = _("<strong>"'AVM Log-Einträge'"</strong>") %}
 
-{% set tab6title = _("<strong>"'Plugin-API'"</strong>") %}
-
+{% if not maintenance %}
+    {% set tab6title = _("<strong>"'AVM Plugin-API'"</strong>") %}
+{% else %}
+    {% set tab6title = _("<strong>"'AVM Maintenance'"</strong>") %}
+{% endif %}
 
 <!-- Define language -->
 {% set language = p.get_sh().get_defaultlanguage() %}
@@ -136,13 +183,15 @@
     {% set language = 'en' %}
 {% endif %}
 
+<!-- Define Headtable -->
 {% block headtable %}
 <span id='webif_pagelength' style="display:none">{{ webif_pagelength }}</span>
+
 <table class="table table-striped table-hover">
 	<tbody>
 		<tr>
 			<td class="py-1">
-                {% if p.get_fritz_device().is_available() %}
+                {% if p._fritz_device  %}
                 <img src="static/img/lamp_green.png" alt="{{ _('Gerät verfügbar') }}" style="width: 17px;padding-bottom: 3px;"/>
                 {% else %}
                 <img src="static/img/lamp_red.png" alt="{{ _('Gerät nicht verfügbar') }}" style="width: 17px;padding-bottom: 3px;"/>
@@ -150,8 +199,8 @@
                 <strong>{{ _('Verbunden') }}</strong>
             </td>
 			<td class="py-1">
-                {% if p.get_fritz_device().is_available() %}
-                    {{ _('Ja') }}{% if p._fritz_device.is_ssl() %}, SSL{% endif %}
+                {% if p._fritz_device  %}
+                    {{ _('Ja') }}{% if p._fritz_device.ssl %}, SSL{% endif %}
                 {% else %}
                      {{ _('Nein') }}
                 {% endif %}
@@ -161,160 +210,64 @@
 		</tr>
 		<tr>
 			<td class="py-1">
-                {% if p._call_monitor %}
-                    {% if p.get_monitoring_service()._listen_active %}
+                {% if p._monitoring_service and p._monitoring_service._listen_active %}
                     <img src="static/img/lamp_green.png" alt="{{ _('Call Monitor verbunden') }}" style="width: 17px;padding-bottom: 3px;"/>
-                    {% else %}
+                {% else %}
                     <img src="static/img/lamp_red.png" alt="{{ _('Call Monitor nicht verbunden') }}" style="width: 17px;padding-bottom: 3px;"/>
-                    {% endif %}
                 {% endif %}
                 <strong>{{ _('Call Monitor') }}</strong>
             </td>
-			<td class="py-1">{% if p._call_monitor %}{{ _('Ja') }}{% if not p.get_monitoring_service()._listen_active %}, {{ _('nicht verbunden') }}{% endif %}{% else %}{{ _('Nein') }}{% endif %}</td>
+			<td class="py-1">
+                {% if p._monitoring_service  %}{{ _('Ja') }}{% if not p._monitoring_service._listen_active %}, {{ _('nicht verbunden') }}{% endif %}{% else %}{{ _('Nein') }}{% endif %}</td>
 			<td class="py-1"><strong>{{ _('Passwort') }}</strong></td>
 			<td class="py-1">{{ p.get_parameter_value_for_display('password') }}</td>
 		</tr>
 		<tr>
 			<td class="py-1"><strong>{{ _('Host') }}</strong></td>
-			<td class="py-1"><a class="text-shng" href="http://{{ p._fritz_device.get_host() }}" target="_blank">{{ p._fritz_device.get_host() }}</a></td>
+			<td class="py-1"><a class="text-shng" href="http://{{ p._fritz_device.host }}" target="_blank">{{ p._fritz_device.host }}</a></td>
 			<td class="py-1"><strong>{{ _('Port') }}</strong></td>
-			<td class="py-1">{{ p._fritz_device.get_port() }} {% if p._fritz_device.is_ssl() %}(HTTPS){% endif %}</td>
+			<td class="py-1">{{ p._fritz_device.port }} {% if p._fritz_device.ssl %}(HTTPS){% endif %}</td>
 		</tr>
 	</tbody>
 </table>
 {% endblock %}
 
 
-<!-- Define Content -->
+<!-- Define Buttons -->
 {% block buttons %}
-    <button type="button" class="btn btn-shng btn-sm" onclick="if (confirm('{{ _('Wollen Sie das Gerät wirklich neu starten?') }}')) { jQuery.get('reboot'); }">{{ _('Reboot') }}</button>
+    <button type="button" class="btn btn-shng btn-sm" onclick="if (confirm('{{ _('Wollen Sie das Gerät wirklich neu starten?') }}')) { jQuery.get('reboot'); }">{{ _('Reboot Fritzdevice') }}</button>
     <button type="button" class="btn btn-shng btn-sm" onclick="if (confirm('{{ _('Wollen Sie die Internetverbindung wirklich neu aufbauen?') }}')) { jQuery.get('reconnect'); }">{{ _('Reconnect WAN') }}</button>
+    <button type="button" class="btn btn-shng btn-sm" onclick="if (confirm('{{ _('Wollen Sie die Item-Blacklist zurücksetzen?') }}')) { jQuery.get('reset_item_blacklist'); }">{{ _('Reset Item Blacklist') }}</button>
 {% endblock buttons %}
 
+<!-- Define Bodytab1 -->
 {% block bodytab1 %}
 <div class="container-fluid m-2 table-resize">
-    <table id="itemtable" class="table table-striped table-hover pluginList dataTableAdditional">
+    <table id="itemtable">
         <thead>
             <tr>
+                <th></th>
                 <th class="item">{{ _('Pfad') }}</th>
                 <th class="type">{{ _('Typ') }}</th>
                 <th class="datatype">{{ _('AVM Datentyp') }}</th>
+                <th class="cycle" style="text-align: right">{{ _('Cycle') }}</th>
                 <th class="value">{{ _('Wert') }}</th>
-                <th style="text-align: center">{{ _('Letztes Update') }}</th>
-                <th style="text-align: center">{{ _('Letzter Change') }}</th>
+                <th class="update" style="text-align: center">{{ _('Letztes Update') }}</th>
+                <th class="update" style="text-align: center">{{ _('Letzter Change') }}</th>
             </tr>
         </thead>
         <tbody>
-            {% for item in avm_items %}
-                {% set item_id = item.id() %}
-                {% if p.get_instance_name() %}
-                    {% set instance_key = "avm_data_type@"+p.get_instance_name() %}
-                {% else %}
-                    {% set instance_key = "avm_data_type" %}
-                {% endif %}
-                <tr>
-                    <td class="py-1">{{ item_id }}</td>
-                    <td class="py-1">{{ item.property.type }}</td>
-                    <td class="py-1">{{ item.conf[instance_key] }}</td>
-                    <td class="py-1" id="{{ item_id }}_avm_item_value">{{ item() }}</td>
-                    <td class="py-1" id="{{ item_id }}_avm_item_last_update" style="text-align: center">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
-                    <td class="py-1" id="{{ item_id }}_avm_item_last_change" style="text-align: center">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
-{% endblock %}
-
-{% block bodytab2 %}
-<div class="container-fluid m-2 table-resize">
-    <table id="smarthomeitemtable" class="table table-striped table-hover pluginList dataTableAdditional">
-        <thead>
-            <tr>
-                <th class="item">{{ _('Pfad') }}</th>
-                <th class="type">{{ _('Typ') }}</th>
-                <th class="datatype">{{ _('AVM Datentyp') }}</th>
-                <th class="value">{{ _('Wert') }}</th>
-                <th style="text-align: center">{{ _('Letztes Update') }}</th>
-                <th style="text-align: center">{{ _('Letzter Change') }}</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for item in smarthome_items %}
-                {% set item_id = item.id() %}
-                {% if p.get_instance_name() %}
-                    {% set instance_key = "avm_data_type@"+p.get_instance_name() %}
-                {% else %}
-                    {% set instance_key = "avm_data_type" %}
-                {% endif %}
-                <tr>
-                    <td class="py-1">{{ item_id }}</td>
-                    <td class="py-1">{{ item.property.type }}</td>
-                    <td class="py-1">{{ item.conf[instance_key] }}</td>
-                    <td class="py-1" id="{{ item_id }}_avm_smarthome_item_value">{{ item() }}</td>
-                    <td class="py-1" id="{{ item_id }}_avm_smarthome_item_last_update" style="text-align: center">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
-                    <td class="py-1" id="{{ item_id }}_avm_smarthome_item_last_change" style="text-align: center">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
-{% endblock %}
-
-{% block bodytab3 %}
-{% if p._fritz_device._smarthome_devices %}
-<div class="container-fluid m-2 table-resize">
-    <table id="smarthome_devicetable" class="table table-striped table-hover pluginList dataTableAdditional">
-        <thead>
-            <tr>
-                <th class="cat">{{ 'No' }}</th>
-                <th class="type">{{ 'Device AIN' }}</th>
-                <th>{{ 'Device Details (dict)' }}</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for ain in p._fritz_device._smarthome_devices %}
-                <tr>
-                    <td class="py-1">{{ loop.index }}</td>
-                    <td class="py-1">{{ ain }}</td>
-                    <td class="py-1">{{ p._fritz_device._smarthome_devices[ain] }}</td>
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
-{% endif %}
-{% endblock %}
-
-{% block bodytab4 %}
-<div class="container-fluid m-2 table-resize">
-    <table id="call_monitortable" class="table table-striped table-hover pluginList dataTableAdditional">
-        <thead>
-            <tr class="shng_heading">
-                <th class="item">{{ _('Pfad') }}</th>
-                <th class="type">{{ _('Typ') }}</th>
-                <th class="datatype">{{ _('AVM Datentyp') }}</th>
-                <th class="value">{{ _('Wert') }}</th>
-                <th style="text-align: center">{{ _('Letztes Update') }}</th>
-                <th style="text-align: center">{{ _('Letzter Change') }}</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% if p._call_monitor %}
-                {% for item in call_monitor_items %}
-                    {% set item_id = item.id() %}
-                    {% if p.get_instance_name() %}
-                        {% set instance_key = "avm_data_type@"+p.get_instance_name() %}
-                    {% else %}
-                        {% set instance_key = "avm_data_type" %}
-                    {% endif %}
+            {% if tr064_items %}  
+                {% for item in tr064_items %}
                     <tr>
-                        <td class="py-1">{{ item_id }}</td>
+                        <td></td>
+                        <td class="py-1">{{ item.id() }}</td>
                         <td class="py-1">{{ item.property.type }}</td>
-                        <td class="py-1">{{ item.conf[instance_key] }}</td>
-                        <td class="py-1" id="{{ item_id }}_callmonitor_item_value">{{ item() }}</td>
-                        <td class="py-1" id="{{ item_id }}_callmonitor_item_last_update" style="text-align: center">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
-                        <td class="py-1" id="{{ item_id }}_callmonitor_item_last_change" style="text-align: center">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                        <td class="py-1">{{ p.fritz_device.item_dict[item][0] }}</td>
+                        <td class="py-1" style="text-align: right">{{ p.fritz_device.item_dict[item][2] }}</td>
+                        <td class="py-1" id="{{ item.id() }}_tr064_value">{{ item.property.value }}</td>
+                        <td class="py-1" id="{{ item.id() }}_tr064_last_update" style="text-align: center">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                        <td class="py-1" id="{{ item.id() }}_tr064_last_change" style="text-align: center">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
                     </tr>
                 {% endfor %}
             {% endif %}
@@ -323,22 +276,130 @@
 </div>
 {% endblock %}
 
-{% block bodytab5 %}
+
+{% block bodytab2 %}
 <div class="container-fluid m-2 table-resize">
-    <table id="logtable" class="table table-striped table-hover pluginList dataTableAdditional">
+    <table id="smarthomeitemtable">
         <thead>
             <tr>
-                <th class="datetime">{{ 'Datum/Uhrzeit' }}</th>
-                <th>{{ 'Meldung' }}</th>
-                <th class="type" style="text-align: center">{{ 'Typ' }}</th>
-                <th class="cat">{{ 'Kategorie' }}</th>
+                <th></th>
+                <th class="item">{{ _('Pfad') }}</th>
+                <th class="type">{{ _('Typ') }}</th>
+                <th class="datatype">{{ _('AVM Datentyp') }}</th>
+                <th class="cycle" style="text-align: right">{{ _('Cycle') }}</th>
+                <th class="value">{{ _('Wert') }}</th>
+                <th class="update" style="text-align: center">{{ _('Letztes Update') }}</th>
+                <th class="update" style="text-align: center">{{ _('Letzter Change') }}</th>
             </tr>
         </thead>
         <tbody>
-            {% set logentries = p.get_device_log_from_lua_separated() %}
+            {% if aha_items %}   
+                {% for item in aha_items %}
+                    <tr>
+                        <td></td>
+                        <td class="py-1">{{ item.id() }}</td>
+                        <td class="py-1">{{ item.property.type }}</td>
+                        <td class="py-1">{{ p.fritz_home.item_dict[item][0] }}</td>
+                        <td class="py-1" style="text-align: right">{{ p.fritz_home.item_dict[item][2] }}</td>
+                        <td class="py-1" id="{{ item.id() }}_aha_value">{{ item.property.value }}</td>
+                        <td class="py-1" id="{{ item.id() }}_aha_last_update" style="text-align: center">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                        <td class="py-1" id="{{ item.id() }}_aha_last_change" style="text-align: center">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                    </tr>
+                {% endfor %}
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+
+
+{% block bodytab3 %}
+<div class="container-fluid m-2 table-resize">
+    <table id="smarthome_devicetable">
+        <thead>
+            <tr>
+                <th></th>
+                <th class="ain">{{ 'Device AIN' }}</th>
+                <th>{{ '' }}</th>
+                <th>{{ 'Device Details (dict)' }}</th>
+                
+            </tr>
+        </thead>
+        <tbody>
+            {% if p._fritz_home %}
+                {% for ain in p._fritz_home._aha_devices %}
+                    <tr>
+                        <td></td>
+                        <td class="py-1">{{ ain }}
+                        <td class="py-1"></td>
+                        <td class="py-1">{{ p._fritz_home._aha_devices[ain] }}</td>
+                        
+                    </tr>
+                {% endfor %}
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+
+
+{% block bodytab4 %}
+<div class="container-fluid m-2 table-resize">
+    <table id="call_monitortable">
+        <thead>
+            <tr class="shng_heading">
+                <th></th>
+                <th class="item">{{ _('Pfad') }}</th>
+                <th class="type">{{ _('Typ') }}</th>
+                <th class="datatype">{{ _('AVM Datentyp') }}</th>
+                <th class="value">{{ _('Wert') }}</th>
+                <th style="text-align: center">{{ _('Letztes Update') }}</th>
+                <th style="text-align: center">{{ _('Letzter Change') }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if call_monitor_items %}
+                {% for item in call_monitor_items %}
+                    {% set item_id = item.id() %}
+                    {% if p.get_instance_name() %}
+                        {% set instance_key = "avm_data_type@"+p.get_instance_name() %}
+                    {% else %}
+                        {% set instance_key = "avm_data_type" %}
+                    {% endif %}
+                    <tr>
+                        <td></td>
+                        <td class="py-1">{{ item_id }}</td>
+                        <td class="py-1">{{ item.property.type }}</td>
+                        <td class="py-1">{{ item.conf[instance_key]}}</td>
+                        <td class="py-1" id="{{ item_id }}_call_value">{{ item.property.value }}</td>
+                        <td class="py-1" id="{{ item_id }}_call_last_update" style="text-align: center">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                        <td class="py-1" id="{{ item_id }}_call_last_change" style="text-align: center">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                    </tr>
+                {% endfor %}
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+
+
+{% block bodytab5 %}
+<div class="container-fluid m-2 table-resize">
+    <table id="logtable">
+        <thead>
+            <tr>
+                <th></th>
+                <th class="datetime">{{ 'Datum/Uhrzeit' }}</th>
+                <th>{{ 'Meldung' }}</th>
+                <th class="logtype" style="text-align: center">{{ 'Typ' }}</th>
+                <th class="type">{{ 'Kategorie' }}</th>
+            </tr>
+        </thead>
+        <tbody>
             {% if logentries %}
                 {% for logentry in logentries%}
                     <tr>
+                        <td></td>
                         <td class="py-1">{{ logentry[0] }}</td>
                         <td class="py-1">{{ logentry[1] }}</td>
                         <td class="py-1" style="text-align: center">
@@ -352,37 +413,89 @@
             {% endif %}
         </tbody>
     </table>
+
 </div>
 {% endblock %}
 
+
 {% block bodytab6 %}
 <div class="container-fluid m-2 table-resize">
-    {%  for function, dict in p.metadata.plugin_functions.items() %}
-        <div class="card mb-2">
-          <div class="card-header p-2">
-              <strong>{{ dict['type'] }} {{ function }}({% if dict['parameters'] is not none %}{%  for name, paramdict in dict['parameters'].items() %}{% if loop.index > 1 %}, {% endif %}{{  name }}: {{ paramdict['type'] }}{% endfor %}{% endif %})</strong>
-          </div>
-          <div class="card-body p-2">
-              {{ dict['description'][language] }}<br/>
-              {% if dict['parameters'] is not none %}
-                  <div class="card mt-2">
-                      <div class="card-header p-2">
-                        <strong>{{ _('Parameter') }}:</strong>
+    {% if not maintenance %}
+        {%  for function, dict in p.metadata.plugin_functions.items() %}
+            <div class="card-header p-2">
+                <strong>
+                {{ dict['type'] }} {{ function }}
+                ({% if dict['parameters'] is not none %}
+                    {%  for name in dict['parameters'] %}
+                        {% if loop.index > 1 %}, {% endif %}{{  name }}: {{ dict['parameters'][name]['type'] }}
+                    {% endfor %}
+                {% endif %})
+                </strong>
+            </div>
+            <div class="card-body p-2">
+                  {{ dict['description'][language] }}<br/>
+                  {% if dict['parameters'] is not none %}
+                      <div class="card mt-2">
+                          <div class="card-header p-2">
+                            <strong>{{ _('Parameter') }}:</strong>
+                          </div>
+                          <div class="card-body p-2">
+                              <ul class="list-group">
+                              {%  for name in dict['parameters'] %}
+                                <li class="list-group-item p-2">
+                                    <strong>{{  name }}: {{ dict['parameters'][name]['type'] }}</strong><br/>
+                                {{ dict['parameters'][name]['description'][language] }}
+                                </li>
+                              {% endfor %}
+                              </ul>
+                          </div>
                       </div>
-                      <div class="card-body p-2">
-                          <ul class="list-group">
-                          {%  for name, paramdict in dict['parameters'].items() %}
-                            <li class="list-group-item p-2">
-                                <strong>{{  name }}: {{ paramdict['type'] }}</strong><br/>
-                            {{ paramdict['description'][language] }}
-                            </li>
-                          {% endfor %}
-                          </ul>
-                      </div>
-                  </div>
-              {% endif %}
-          </div>
-        </div>
-    {% endfor %}
+                  {% endif %}
+              </div>
+        {% endfor %}
+    {% endif %}
+
+    {% if maintenance %}
+    <table id="" class="table table-striped table-hover">
+        <thead>
+            <tr>
+                <th class="type">{{ 'Befehl' }}</th>
+                <th class="type">{{ 'Ergebnis' }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td class="py-1">{{ "fritz_device._items" }}</td>
+                <td class="py-1">{{ p.fritz_device._items }}</td>
+            </tr>
+            <tr>
+                <td class="py-1">{{ "fritz_device._item_blacklist" }}</td>
+                <td class="py-1">{{ p.fritz_device._item_blacklist }}</td>
+            </tr>
+            <tr>
+                <td class="py-1">{{ "_fritz_home._items" }}</td>
+                <td class="py-1">{{ p.fritz_home._items }}</td>
+            </tr>
+            <tr>
+                <td class="py-1">{{ "self._data_cache" }}</td>
+                <td class="py-1">{{ p._fritz_device._data_cache }}</td>
+            </tr>
+            <!-- {#
+            <tr>
+                <td class="py-1">{{ "X_AVM_DE_GetClients" }}</td>
+                <td class="py-1">{{ p._fritz_device.client.InternetGatewayDevice.X_VoIP.X_AVM_DE_GetClients() }}</td>
+            </tr>
+            <tr>
+                <td class="py-1">{{ "X_AVM_DE_DialSetConfig" }}</td>
+                <td class="py-1">{{ p._fritz_device.client.InternetGatewayDevice.X_VoIP.X_AVM_DE_DialSetConfig(NewX_AVM_DE_PhoneName='Torklingel') }}</td>
+            </tr>
+            <tr>
+                <td class="py-1">{{ "p._fritz_device.client.InternetGatewayDevice.X_VoIP.X_AVM_DE_DialGetConfig()" }}</td>
+                <td class="py-1">{{ p._fritz_device.client.InternetGatewayDevice.X_VoIP.X_AVM_DE_DialGetConfig() }}</td>
+            </tr>
+            #} -->
+        </tbody>
+    </table>
+    {% endif %}
 </div>
 {% endblock %}
