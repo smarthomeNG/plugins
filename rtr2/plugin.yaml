@@ -46,14 +46,14 @@ parameters:
 
     comfort_temp:
         type: num
-        default: 22.0
+        default: 21.0
         description:
             de: 'Standard Vorgabe für die Temperatur im Komfort Modus'
             en: 'Starting/default value for the temperature in comfort mode'
 
     standby_reduction:
         type: num
-        default: 1.0
+        default: 1.5
         description:
             de: 'Standard Vorgabe für die Temperaturreduktion im Standby Modus'
             en: 'Starting/default value for the temperature reduction in standby mode'

@@ -1,12 +1,19 @@
 
 .. index:: Plugins; piratewthr (pirateweather.net / forecast.io Wetterdaten)
-.. index:: darksky
+.. index:: piratewthr
 .. index:: Wetter; piratewthr
 .. index:: struct; piratewthr
 
 ==========
 piratewthr
 ==========
+
+.. image:: webif/static/img/plugin_logo.png
+   :alt: plugin logo
+   :width: 300px
+   :height: 300px
+   :scale: 50 %
+   :align: left
 
 Wetterdaten von `pirateweather.net <https://pirateweather.net>`_ lesen.
 

@@ -37,6 +37,7 @@ import os
 
 from lib.item import Items
 from lib.model.smartplugin import SmartPluginWebIf
+from lib.model.smartplugin import SmartPlugin
 
 
 # ------------------------------------------
@@ -251,6 +252,8 @@ class WebInterface(SmartPluginWebIf):
             if self.plugin.executor_scripts is not None and filename != '' and code != '':
                 if '/' in filename or '\\' in filename or '..' in filename:
                     raise ValueError("Special Characters not allowed in filename")
+                if (filename[-3:] != '.py'):
+                    filename += '.py'
                 filepath = os.path.join(self.plugin.executor_scripts,filename)
                 self.logger.debug(f"{filepath=}")
                 with open(filepath, "w") as code_file:
@@ -270,6 +273,7 @@ class WebInterface(SmartPluginWebIf):
                 if os.path.exists(filepath) and os.path.isfile(filepath):
                     os.remove(filepath)
                     self.logger.debug(f"{filepath} successfully deleted")
+                    return f"{filepath} successfully deleted"
                 else:
                     self.logger.debug(f"{filepath} was not deleted")
         except Exception as e:
@@ -292,3 +296,25 @@ class WebInterface(SmartPluginWebIf):
             return files
 
         return ''
+    
+    @cherrypy.expose
+    def get_autocomplete(self):
+        _sh = self.plugin.get_sh()
+        plugins = _sh.plugins.get_instance()
+        plugin_list = []
+        for x in plugins.return_plugins():
+          if isinstance(x, SmartPlugin):
+            plugin_config_name = x.get_configname()
+            if x.metadata is not None:
+              api = x.metadata.get_plugin_function_defstrings(with_type=True, with_default=True)
+              if api is not None:
+                for function in api:
+                  plugin_list.append("sh."+plugin_config_name + "." + function)
+        
+
+        myItems = _sh.return_items()
+        itemList = []
+        for item in myItems:
+          itemList.append("sh."+str(item)+"()")
+        retValue = {'items':itemList,'plugins':plugin_list}
+        return (json.dumps(retValue))

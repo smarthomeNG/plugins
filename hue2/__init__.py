@@ -7,8 +7,7 @@
 #  https://www.smarthomeNG.de
 #  https://knx-user-forum.de/forum/supportforen/smarthome-py
 #
-#  hue plugin for new plugins to run with SmartHomeNG version 1.8 and
-#  upwards.
+#  hue2 plugin to run with SmartHomeNG
 #
 #  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -49,13 +48,14 @@ class Hue2(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '2.2.4'    # (must match the version specified in plugin.yaml)
+    PLUGIN_VERSION = '2.3.0'    # (must match the version specified in plugin.yaml)
 
     hue_group_action_values          = ['on', 'bri', 'hue', 'sat', 'ct', 'xy', 'bri_inc', 'colormode', 'alert', 'effect']
     hue_light_action_writable_values = ['on', 'bri', 'hue', 'sat', 'ct', 'xy', 'bri_inc']
     hue_light_state_values           = ['on', 'bri', 'hue', 'sat', 'ct', 'xy', 'colormode', 'reachable', 'alert', 'effect']
     hue_light_state_writable_values  = ['on', 'bri', 'hue', 'sat', 'ct', 'xy', 'alert', 'effect']
-
+    hue_sensor_state_values          = ['daylight', 'temperature', 'presence', 'lightlevel', 'status']
+    hue_sensor_config_values         = ['reachable', 'battery', 'on', 'sunriseoffset', 'sunsetoffset']
 
     br = None               # Bridge object for communication with the bridge
     bridge_lights = {}
@@ -134,13 +134,16 @@ class Hue2(SmartPlugin):
 
 
         self.bridge['username'] = self.bridge_user
-        if self.bridge['ip'] != self.bridge_ip:
+        if self.bridge.get('ip', '') != self.bridge_ip:
             # if ip address of bridge has changed, store new ip address in configuration data
             self.update_plugin_config()
 
         if not self.get_bridgeinfo():
             self.bridge = {}
-            self.logger.warning("Bridge '{}' is treated as unconfigured".format(self.bridge_serial))
+            if self.bridge_serial == '':
+                self.logger.notice("No bridge is configured")
+            else:
+                self.logger.notice("Bridge '{}' is treated as unconfigured".format(self.bridge_serial))
         else:
             self.logger.info("Bridgeinfo for configured bridge '{}' = {}".format(self.bridge_serial, self.bridge))
 
@@ -217,7 +220,8 @@ class Hue2(SmartPlugin):
                 # bridge updates are allways scheduled
                 self.logger.debug("parse_item: configured group item = {}".format(conf_data))
 
-            if conf_data['function'] != 'reachable':
+            if not conf_data['function'] in ['reachable', 'colormode', 'battery'] and \
+               not conf_data['function'] in self.hue_sensor_state_values:
                 return self.update_item
             return
 
@@ -684,8 +688,21 @@ class Hue2(SmartPlugin):
         except Exception as e :
             self.logger.exception(f"poll_bridge_sensors: Sensor '{sensor_id}' on bridge (item '{item_path}') - exception: {e}")
             return None
-
-        if function == 'name':
+        if function in self.hue_sensor_state_values:
+            try:
+                result = sensor['state'][function]
+            except KeyError:
+                self.logger.warning(
+                    f"poll_bridge_sensors: Function {function} not supported by sensor '{sensor_id}' (item '{item_path}')")
+                result = ''
+        elif function in self.hue_sensor_config_values:
+            try:
+                result = sensor['config'][function]
+            except KeyError:
+                self.logger.warning(
+                    f"poll_bridge_sensors: Function {function} not supported by sensor '{sensor_id}' (item '{item_path}')")
+                result = ''
+        elif function == 'name':
             result = sensor['name']
         return result
 

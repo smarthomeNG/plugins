@@ -88,6 +88,10 @@ class OpenWeatherMap(SmartPlugin):
         """
         Initializes the plugin
         """
+
+        # Call init code of parent class (SmartPlugin)
+        super().__init__()
+
         if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
             self.logger = logging.getLogger(__name__)
         self._key = self.get_parameter_value('key')
@@ -196,11 +200,8 @@ class OpenWeatherMap(SmartPlugin):
         self._origins_layer = [
             'clouds_new', 'precipitation_new', 'pressure_new', 'wind_new', 'temp_new']
 
-        if not self.init_webinterface(WebInterface):
-            self.logger.error("Unable to start Webinterface")
-            self._init_complete = False
-        else:
-            self.logger.debug("Init complete")
+        self.init_webinterface(WebInterface)
+
 
     def run(self):
         self.scheduler_add(__name__, self._update_loop,
@@ -450,7 +451,7 @@ class OpenWeatherMap(SmartPlugin):
                             self.logger.debug(
                                 "%s ERROR: owm-string: %s --> %s from wrk=%s, Error: %s" % (item, owm_matchstring, changed_match_string, wrk_typ, ret_val))
                         else:
-                            self.logger.error(
+                            self.logger.info(
                                 "%s ERROR: owm-string: %s --> %s from wrk=%s, Error: %s" % (item, owm_matchstring, changed_match_string, wrk_typ, ret_val))
                     else:
                         item(ret_val, self.get_shortname(),
@@ -635,7 +636,7 @@ class OpenWeatherMap(SmartPlugin):
         """
         Uses string s as a path to navigate to the requested value in dict wrk.
         """
- 
+
         # Check if dictionary data in variable wrk are invalid. This occurs, if download fails.
         if wrk == 'Not downloaded!':
             self.logger.debug(f"{correlation_hint} __get_val_from_dict function aborted because dictionary data are invalid.")

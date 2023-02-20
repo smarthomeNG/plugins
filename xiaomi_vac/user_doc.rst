@@ -1,8 +1,16 @@
-.. index:: Plugins; xiamo_vac
-.. index:: xiamo_vac
+.. index:: Plugins; xiaomi_vac
+.. index:: xiaomi_vac
 
-xiamo_vac
-#########
+==========
+xiaomi_vac
+==========
+
+.. image:: webif/static/img/plugin_logo.png
+   :alt: plugin logo
+   :width: 303px
+   :height: 166px
+   :scale: 100 %
+   :align: left
 
 Konfiguration
 =============
@@ -68,7 +76,7 @@ Web Interface
 
 Das Webinterface bietet einen schnellen und einfachen Überblick über die Statusinformationen des Roboters.
 
-.. image:: webif_xiaomi.png
+.. image:: assets/webif_xiaomi.png
    :height: 1652px
    :width: 3326px
    :scale: 25%

@@ -5,8 +5,7 @@
 #########################################################################
 #  This file is part of SmartHomeNG.   
 #
-#  Sample plugin for new plugins to run with SmartHomeNG version 1.8 and
-#  upwards.
+#  Plugin to connect with Philips SmartTVs
 #
 #  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -25,6 +24,8 @@
 
 from lib.model.smartplugin import *
 from lib.item import Items
+from .webif import WebInterface
+
 import binascii
 import sys
 import requests
@@ -81,7 +82,7 @@ class Philips_TV(SmartPlugin):
         else:
             self.logger.info(f"Philips TV configured on IP: {self.ip}")
         self.logger.debug("Init completed.")
-        self.init_webinterface()
+        self.init_webinterface(WebInterface)
         self._items = {}
         return 
 
@@ -422,135 +423,4 @@ class Philips_TV(SmartPlugin):
         else:
             self.logger.info(json.dumps({"error":"Can not reach the API"}))
             return json.dumps({"error":"Can not reach the API"})
-
-    def init_webinterface(self):
-        """"
-        Initialize the web interface for this plugin
-
-        This method is only needed if the plugin is implementing a web interface
-        """
-        try:
-            self.mod_http = Modules.get_instance().get_module(
-                'http')  # try/except to handle running in a core version that does not support modules
-        except:
-            self.mod_http = None
-        if self.mod_http == None:
-            self.logger.error("Not initializing the web interface")
-            return False
-
-        import sys
-        if not "SmartPluginWebIf" in list(sys.modules['lib.model.smartplugin'].__dict__):
-            self.logger.warning("Web interface needs SmartHomeNG v1.5 and up. Not initializing the web interface")
-            return False
-
-        # set application configuration for cherrypy
-        webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
-        config = {
-            '/': {
-                'tools.staticdir.root': webif_dir,
-            },
-            '/static': {
-                'tools.staticdir.on': True,
-                'tools.staticdir.dir': 'static'
-            }
-        }
-
-        # Register the web interface as a cherrypy app
-        self.mod_http.register_webif(WebInterface(webif_dir, self),
-                                     self.get_shortname(),
-                                     config,
-                                     self.get_classname(), self.get_instance_name(),
-                                     description='')
-
-        return True
-
-
-# ------------------------------------------
-#    Webinterface of the plugin
-# ------------------------------------------
-
-import cherrypy
-from jinja2 import Environment, FileSystemLoader
-
-
-class WebInterface(SmartPluginWebIf):
-
-    def __init__(self, webif_dir, plugin):
-        """
-        Initialization of instance of class WebInterface
-
-        :param webif_dir: directory where the webinterface of the plugin resides
-        :param plugin: instance of the plugin
-        :type webif_dir: str
-        :type plugin: object
-        """
-        self.logger = logging.getLogger(__name__)
-        self.webif_dir = webif_dir
-        self.plugin = plugin
-        self.tplenv = self.init_template_environment()
-
-        self.items = Items.get_instance()
-
-    @cherrypy.expose
-    def index(self, reload=None, action=None, email=None, hashInput=None, code=None, tokenInput=None):
-        """
-        Build index.html for cherrypy
-
-        Render the template and return the html file to be delivered to the browser
-
-        :return: contents of the template after beeing rendered
-        """
-        
-        codeRequestSuccessfull = None
-        pairingCompleted = None
-
-        if action is not None:
-            if action == "requestCode":
-                self.logger.info("Request code triggered via webinterface")
-                codeRequestSuccessfull = self.plugin.startPairing()
-            elif action == "confirmCode":
-                self.logger.info("Confirm code triggered via webinterface")
-                if (code is not None) and (not code == ''):
-                    pairingCompleted = self.plugin.completePairing(code)
-                elif (code is None) or (code == ''):
-                    self.logger.error("Confirmation not possible: TV Paring code missing.")
-                    pairingCompleted = False
-                else:
-                    self.logger.error("Confirmation no possible: Missing argument.")
-                    pairingCompleted = False
-            else:
-                self.logger.error("Unknown command received via webinterface")
-
-        tmpl = self.tplenv.get_template('index.html')
-        # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
-        return tmpl.render(p=self.plugin, 
-                           codeRequestSuccessfull=codeRequestSuccessfull,
-                           pairingCompleted=pairingCompleted)
-
-
-    @cherrypy.expose
-    def get_data_html(self, dataSet=None):
-        """
-        Return data to update the webpage
-
-        For the standard update mechanism of the web interface, the dataSet to return the data for is None
-
-        :param dataSet: Dataset for which the data should be returned (standard: None)
-        :return: dict with the data needed to update the web page.
-        """
-        if dataSet is None:
-            # get the new data
-            data = {}
-
-            # data['item'] = {}
-            # for i in self.plugin.items:
-            #     data['item'][i]['value'] = self.plugin.getitemvalue(i)
-            #
-            # return it as json the the web page
-            # try:
-            #     return json.dumps(data)
-            # except Exception as e:
-            #     self.logger.error(f"get_data_html exception: {e}")
-        return {}
-
 

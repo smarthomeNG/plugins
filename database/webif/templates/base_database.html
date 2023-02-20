@@ -7,22 +7,17 @@
 <script>
   $(document).ready( function () {
     $(window).trigger('datatables_defaults');
-    try {
       {% if webif_pagelength is defined %}webif_pagelength = {{ webif_pagelength|int }};{% endif %}
+      console.log('pagelength ' + webif_pagelength);
       if (isNaN(parseFloat(webif_pagelength)) || webif_pagelength == 0) {
         resize = true;
         webif_pagelength = -1;
-        console.log('Activating automatic table resize');
+        console.log('Activating automatic table resize ' + webif_pagelength);
       }
       else {
         resize = false;
       }
-    }
-    catch (e) {
-      webif_pagelength = 100;
-      resize = false;
-      console.log("Using default values for page length " + webif_pagelength + ", pageResize: " + resize);
-    }
+
 		try {
       itemtable = $('#itemtable').DataTable( {
         pageResize: resize,

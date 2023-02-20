@@ -1,10 +1,15 @@
 #!/usr/bin/env python3
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
-#  Copyright 2012-2014 Marcus Popp                         marcus@popp.mx
-#  Copyright 2019-2021 Bernd Meiners                Bernd.Meiners@mail.de
+#  Copyright 2012-2014  Marcus Popp                        marcus@popp.mx
+#  Copyright 2019-2021  Bernd Meiners               Bernd.Meiners@mail.de
+#  Copyright 2023-      Martin Sinn                         m.sinn@gmx.de
 #########################################################################
-#  This file is part of SmartHomeNG.    https://github.com/smarthomeNG//
+#  This file is part of SmartHomeNG.
+#  https://www.smarthomeNG.de
+#  https://knx-user-forum.de/forum/supportforen/smarthome-py
+#
+#  onewire plugin to run with SmartHomeNG
 #
 #  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -38,7 +43,7 @@ class OneWire(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.9.0'
+    PLUGIN_VERSION = '1.9.1'
 
     _flip = {0: '1', False: '1', 1: '0', True: '0', '0': True, '1': False}
 
@@ -99,15 +104,6 @@ class OneWire(SmartPlugin):
 
         # Call init code of parent class (SmartPlugin or MqttPlugin)
         super().__init__()
-
-        # get the parameters for the plugin (as defined in metadata plugin.yaml):
-        try:
-            self.webif_pagelength = self.get_parameter_value('webif_pagelength')
-            pass
-        except KeyError as e:
-            self.logger.critical(f"Plugin '{self.get_shortname()}': Inconsistent plugin (invalid metadata definition: {e} not defined)")
-            self._init_complete = False
-            return
 
         # Initialization code goes here
 
@@ -308,6 +304,7 @@ class OneWire(SmartPlugin):
                         else:
                             value = self._flip[self.owbase.read('/uncached' + path).decode()]
                     except ConnectionError as e:
+                        self.logger.warning(f"_io_cycle: 'raise' {self._ios[addr][key]['readerrors']}. problem connecting to {addr}-{key}, error: {e}")
                         raise
                     except Exception as e:
                         self._ios[addr][key]['readerrors'] = self._ios[addr][key].get('readerrors', 0) + 1
@@ -315,7 +312,7 @@ class OneWire(SmartPlugin):
                             self.logger.warning(f"_io_cycle: {self._ios[addr][key]['readerrors']}. problem reading {addr}-{key}, error: {e}")
                         continue
                     if self._ios[addr][key].get('readerrors', 0) >= self.warn_after:
-                        self.logger.notice(f"_io_cycle: Success reading {addr}-{key}, up to now there were : {self._ios[addr][key]['readerrors']} problems")
+                        self.logger.notice(f"_io_cycle: Success reading {addr}-{key} {value=}, up to now there were : {self._ios[addr][key]['readerrors']} problems")
                         self._ios[addr][key]['readerrors'] = 0
                     for item in items:
                         item(value, self.get_shortname(), path)
@@ -665,7 +662,7 @@ class OneWire(SmartPlugin):
         elif key == 'BM':
             self._ibutton_masters[addr] = item.id()
             config_data['deviceclass'] = 'iButton master'
-            self.add_item(item, device_command=addr+'-'+key, config_data_dict=config_data)
+            self.add_item(item, mapping=addr+'-'+key, config_data_dict=config_data)
             return
         else:
             table = self._sensors
@@ -687,10 +684,10 @@ class OneWire(SmartPlugin):
             table[addr] = {key: {'item': item, 'path': path}}
         if key.startswith('O'):
             item._ow_path = table[addr][key]
-            self.add_item(item, device_command=addr+'-'+key, config_data_dict=config_data)
+            self.add_item(item, mapping=addr+'-'+key, config_data_dict=config_data)
             return self.update_item
 
-        self.add_item(item, device_command=addr+'-'+key, config_data_dict=config_data)
+        self.add_item(item, mapping=addr+'-'+key, config_data_dict=config_data)
         return
 
     def update_item(self, item, caller=None, source=None, dest=None):
@@ -716,7 +713,7 @@ class OneWire(SmartPlugin):
         :return: dnumber of items
         :rtype: int
         """
-        device_list = self.get_device_commands()
+        device_list = self.get_mappings()
         count = 0
         for device in device_list:
             if device.startswith(addr):

@@ -70,11 +70,12 @@ class WebInterface(SmartPluginWebIf):
 
         :return: contents of the template after beeing rendered
         '''
-        # item = self.plugin.get_sh().return_item(item_path)
+        pagelength = self.plugin.get_parameter_value('webif_pagelength')
 
         tmpl = self.tplenv.get_template('index.html')
         # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
         return tmpl.render(p=self.plugin,
+                           webif_pagelength=pagelength,
                            language=self.plugin._sh.get_defaultlanguage(), now=self.plugin.shtime.now())
 
     @cherrypy.expose

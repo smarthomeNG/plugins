@@ -105,17 +105,7 @@ class WebInterface(SmartPluginWebIf):
         Render the template and return the html file to be delivered to the browser
         :return: contents of the template after beeing rendered
         """
-        global_pagelength = cherrypy.config.get("webif_pagelength")
-        if global_pagelength:
-            pagelength = global_pagelength
-            self.logger.debug("Global pagelength {}".format(pagelength))
-        # try to get the webif pagelength from the plugin specific plugin.yaml configuration
-        try:
-            pagelength = self.plugin.webif_pagelength
-            self.logger.debug("Plugin pagelength {}".format(pagelength))
-        except Exception:
-            pass
-
+        pagelength = self.plugin.get_parameter_value('webif_pagelength')
         if password is not None:
             if password != '':
                 self.plugin.project_file_password = password
@@ -204,6 +194,30 @@ class WebInterface(SmartPluginWebIf):
         :param dataSet: Dataset for which the data should be returned (standard: None)
         :return: dict with the data needed to update the web page.
         """
+        if dataSet == 'itemtable':
+            # get the new data
+            data = self.plugin._webdata
+            try:
+                data = json.dumps(data)
+                return data
+            except Exception as e:
+                self.logger.error(f"get_data_html exception: {e}")
+        if dataSet == 'patable':
+            # get the new data
+            data = self.plugin.get_stats_pa()
+            try:
+                data = json.dumps(data)
+                return data
+            except Exception as e:
+                self.logger.error(f"get_data_html exception: {e}")
+        if dataSet == 'gatable':
+            # get the new data
+            data = self.plugin.get_stats_ga()
+            try:
+                data = json.dumps(data)
+                return data
+            except Exception as e:
+                self.logger.error(f"get_data_html exception: {e}")
         if dataSet is None:
             # get the new data
             data = {}

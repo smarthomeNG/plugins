@@ -97,10 +97,14 @@ class WebInterface(SmartPluginWebIf):
                 s += "\n"
             return s
 
+        json_data = json.dumps(self.plugin.get_json_data(), indent=4)
+
         tmpl = self.tplenv.get_template('index.html')
-        pf = printdict(self.plugin.get_json_data())
-        return tmpl.render(plugin_shortname=self.plugin.get_shortname(), plugin_version=self.plugin.get_version(),
-                           plugin_info=self.plugin.get_info(), p=self.plugin, json_data=pf.replace('\n', '<br>').replace(' ', '&nbsp;'),)
+        return tmpl.render(p=self.plugin,
+                           webif_pagelength=self.plugin.get_parameter_value('webif_pagelength'),
+                           items=sorted(self.plugin.get_item_list(), key=lambda k: str.lower(k['_path'])),
+
+                           json_data=json_data )
 
 
     @cherrypy.expose
@@ -118,19 +122,16 @@ class WebInterface(SmartPluginWebIf):
 
             # callect data for 'items' tab
             item_list = []
-            # for item in self.plugin.get_item_list():
-            #     item_config = self.plugin.get_item_config(item)
-            #     value_dict = {}
-            #     value_dict['path'] = item.id()
-            #     value_dict['type'] = item.type()
-            #     value_dict['not_discovered'] = (item_config['bus'] == '')
-            #     value_dict['sensor_addr'] = item_config['sensor_addr']
-            #     value_dict['deviceclass'] = item_config['deviceclass']
-            #     value_dict['value'] = item()
-            #     value_dict['value_unit'] = item_config['unit']
-            #     value_dict['last_update'] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
-            #     value_dict['last_change'] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
-            #     item_list.append(value_dict)
+            for item in self.plugin.get_item_list():
+                item_config = self.plugin.get_item_config(item)
+                value_dict = {}
+                value_dict['path'] = item.id()
+                value_dict['type'] = item.type()
+                value_dict['matchstring'] = self.plugin.get_item_mapping(item)
+                value_dict['value'] = item()
+                value_dict['last_update'] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
+                value_dict['last_change'] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
+                item_list.append(value_dict)
 
             result = {'items': item_list}
 

@@ -42,13 +42,12 @@ from . import dpts
 from . import knxproj
 from .knxd import KNXD
 from .globals import *
-# WebIf
 from .webif import WebInterface
 
 
 class KNX(SmartPlugin):
 
-    PLUGIN_VERSION = "1.8.3"
+    PLUGIN_VERSION = "1.8.5"
 
     # tags actually used by the plugin are shown here
     # can be used later for backend item editing purposes, to check valid item attributes
@@ -65,7 +64,6 @@ class KNX(SmartPlugin):
         self.host = self.get_parameter_value('host')
         self.port = self.get_parameter_value('port')
         self.loglevel_knxd_cache_problems = self.get_parameter_value('loglevel_knxd_cache_problems')
-        self.webif_pagelength = self.get_parameter_value('webif_pagelength')
 
         from bin.smarthome import VERSION
         if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
@@ -173,7 +171,7 @@ class KNX(SmartPlugin):
         try:
             pkt.extend(self.encode(ga, 'ga'))
         except:
-            self.logger.warning(self.translate('problem encoding ga: {}').format(ga))
+            self.logger.warning('groupwrite: ' + self.translate("problem encoding ga: {}").format(ga))
             return
         pkt.extend([0])
         try:
@@ -203,7 +201,7 @@ class KNX(SmartPlugin):
         try:
             pkt.extend(self.encode(ga, 'ga'))
         except:
-            self.logger.warning(self.translate('problem encoding ga: {}').format(ga))
+            self.logger.warning("_cacheread: " + self.translate('problem encoding ga: {}').format(ga))
             return
         pkt.extend([0, 0])
         if self.logger.isEnabledFor(logging.DEBUG):
@@ -215,7 +213,7 @@ class KNX(SmartPlugin):
         try:
             pkt.extend(self.encode(ga, 'ga'))
         except:
-            self.logger.warning(self.translate('problem encoding ga: {}').format(ga))
+            self.logger.warning("groupread: " + self.translate('problem encoding ga: {}').format(ga))
             return
         pkt.extend([0, FLAG_KNXREAD])
         self._send(pkt)
@@ -275,9 +273,10 @@ class KNX(SmartPlugin):
             for ga in self._cache_ga:
                 self._cache_ga_response_pending.append(ga)
             for ga in self._cache_ga:
-                self._cacheread(ga)
-                # wait a little to not overdrive the knxd unless there is a fix
-                time.sleep(KNXD_CACHEREAD_DELAY)
+                if ga != '':
+                    self._cacheread(ga)
+                    # wait a little to not overdrive the knxd unless there is a fix
+                    time.sleep(KNXD_CACHEREAD_DELAY)
             self._cache_ga = []
             if self.logger.isEnabledFor(logging.DEBUG):
                 self.logger.debug(self.translate('finished reading knxd cache'))
@@ -601,7 +600,8 @@ class KNX(SmartPlugin):
             else:
                 if item not in self.gal[ga][ITEMS]:
                     self.gal[ga][ITEMS].append(item)
-            self._cache_ga.append(ga)
+            if ga != '':
+                self._cache_ga.append(ga)
 
         if self.has_iattr(item.conf, KNX_REPLY):
             knx_reply = self.get_iattr_value(item.conf, KNX_REPLY)

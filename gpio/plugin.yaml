@@ -6,7 +6,7 @@ plugin:
         de: 'GPIO-Unterstützung für Rasberry Pi, **seit SmartHomeNG v1.3**'
         en: 'GPIO support for Raspberry Pi, **since SmarthomeNG v1.3**'
     description_long:
-        de: 'GPIO-Unterstützung für den Rasberry Pi.\n
+        de: 'GPIO-Unterstützung für den Raspberry Pi.\n
             Dieses Plugin unterstützt über das RPi.GPIO-Modul das Einbinden von externen Sensoren und Aktoren,
             die direkt am Raspberry Pi angeschlossen werden. Damit ist es beispielsweise möglich,
             den Zustand von Reedkontakten einzulesen oder LEDs zu aktivieren und beispielsweise eine
@@ -24,12 +24,13 @@ plugin:
     maintainer: onkelandy
     tester: cmalo, ohinckel, morg
     state: ready
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1842450-support-thread-f%C3%BCr-das-gpio-plugin
     requirements:
         de: 'RPi.GPIO Python Modul'
         en: 'RPi.GPIO python module'
     keywords: iot gpio raspberrypi
 
-    version: 1.5.2                 # Plugin version
+    version: 1.5.4                 # Plugin version
     sh_minversion: 1.4             # minimum shNG version to use this plugin
     multi_instance: false          # plugin supports multi instance
     restartable: unknown
@@ -93,6 +94,7 @@ parameters:
                 Define the global preset for pullup/pulldown settings. This can be overridden
                 individually by the corresponding item option.
                 '
+
 item_attributes:
     # Definition of item attributes defined by this plugin
     gpio_in:

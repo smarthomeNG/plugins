@@ -9,7 +9,7 @@ plugin:
     tester: Sisamiwe, jentz1986
     state: qa-passed
     keywords: weather precipation irrigation
-    documentation: 'http://smarthomeng.de/user/plugins/openweathermap/user_doc.html'
+    documentation: ''
     support: 'https://knx-user-forum.de/forum/supportforen/smarthome-py/1246998-support-thread-zum-openweathermap-plugin'
     version: 1.8.7                # Plugin version
     sh_minversion: 1.9.0          # minimum shNG version to use this plugin
@@ -1475,8 +1475,8 @@ plugin_functions:
     get_beaufort_description:
         type: str
         description:
-            de: ""
-            en: ""
+            de: "Gibt die angegebene Windstärke als beschreibeneden Text aus"
+            en: "Returns a descriptive text for the given wind-speed"
         parameters:
             speed_in_bft:
                 type: num

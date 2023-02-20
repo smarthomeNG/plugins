@@ -5,7 +5,7 @@ plugin_translations:
     'Info from the items:':    {'de': 'Infos von den Items:', 'en': '=', 'fr': 'Info sur les Items:'}
     'unknown command %s':       {'de': 'Unbekanntes Kommando %s:', 'en': '=', 'fr': 'commande inconnue %s:'}
     'no items found with the attribute %s':       {'de': 'Keine Items mit Attribut %s gefunden', 'en': '=', 'fr': 'Ne pas trouvée une Item avec %s'}
-    
+    'insert a value':       {'de': 'Wert eingeben', 'en': '=', 'fr': 'insérer une valeur'}
 
     # Alternative format for translations of longer texts:
 #    'Hier kommt der Inhalt des Webinterfaces hin.':

@@ -28,6 +28,7 @@
 import datetime
 import time
 import os
+import json
 
 from lib.item import Items
 from lib.logic import Logics
@@ -97,6 +98,7 @@ class WebInterface(SmartPluginWebIf):
             except:
                 client['name'] = client['ip']
 
+            client['proto'] = clientinfo.get('proto', '')
             client['sw'] = clientinfo.get('sw', '')
             client['swversion'] = clientinfo.get('swversion', '')
             client['protocol'] = clientinfo.get('protocol', '')
@@ -118,6 +120,7 @@ class WebInterface(SmartPluginWebIf):
 
         tmpl = self.tplenv.get_template('index.html')
         return tmpl.render(p=self.plugin,
+                           webif_pagelength=self.plugin.get_parameter_value('webif_pagelength'),
                            items=sorted(plgitems, key=lambda k: str.lower(k['_path'])),
                            logics=sorted(plglogics, key=lambda k: str.lower(k['name'])),
                            clients=clients_sorted, client_count=len(clients_sorted))
@@ -134,17 +137,54 @@ class WebInterface(SmartPluginWebIf):
         :return: dict with the data needed to update the web page.
         """
         if dataSet is None:
-            # get the new data
-            data = {}
+            result_array = []
 
-            # data['item'] = {}
-            # for i in self.plugin.items:
-            #     data['item'][i]['value'] = self.plugin.getitemvalue(i)
-            #
-            # return it as json the the web page
-            # try:
-            #     return json.dumps(data)
-            # except Exception as e:
-            #     self.logger.error("get_data_html exception: {}".format(e))
+            # callect data for 'items' tab
+            item_list = []
+            # for item in self.plugin.get_item_list():
+            #     item_config = self.plugin.get_item_config(item)
+            #     value_dict = {}
+            #     value_dict['path'] = item.id()
+            #     value_dict['type'] = item.type()
+            #     value_dict['not_discovered'] = (item_config['bus'] == '')
+            #     value_dict['sensor_addr'] = item_config['sensor_addr']
+            #     value_dict['deviceclass'] = item_config['deviceclass']
+            #     value_dict['value'] = item()
+            #     value_dict['value_unit'] = item_config['unit']
+            #     value_dict['last_update'] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
+            #     value_dict['last_change'] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
+            #     item_list.append(value_dict)
+
+            # callect data for 'clients' tab
+            client_list = []
+            for clientinfo in self.plugin.return_clients():
+                value_dict = {}
+                value_dict['ip'] = clientinfo.get('ip', '')
+                value_dict['port'] = clientinfo.get('port', '')
+                try:
+                    value_dict['name'] = socket.gethostbyaddr(value_dict['ip'])[0]
+                except:
+                    value_dict['name'] = value_dict['ip']
+                value_dict['proto'] = clientinfo.get('proto', '')
+                value_dict['sw'] = clientinfo.get('sw', '')
+                value_dict['swversion'] = clientinfo.get('swversion', '')
+                value_dict['protocol'] = clientinfo.get('protocol', '')
+                value_dict['hostname'] = clientinfo.get('hostname', '')
+                value_dict['browser'] = clientinfo.get('browser', '')
+                value_dict['browserversion'] = clientinfo.get('browserversion', '')
+                client_list.append(value_dict)
+
+            result = {'items': item_list, 'clients': client_list}
+
+            # send result to wen interface
+            try:
+                data = json.dumps(result)
+                if data:
+                    return data
+                else:
+                    return None
+            except Exception as e:
+                self.logger.error(f"get_data_html exception: {e}")
+
         return {}
 

@@ -1,5 +1,5 @@
 .. index:: Plugins; hue2 (Philips Hue v2)
-.. index:: hue hue2
+.. index:: hue2 hue
 
 ====
 hue2
@@ -173,7 +173,7 @@ Mit ``hue2_resource`` wird festgelegt, auf welche Resource der Bridge zugegriffe
 
 .. note::
 
-    Bisher sind nur die Resouce-Typen ``light`` und ``group`` implementiert.
+    Bisher sind nur die Resouce-Typen ``light``, ``group`` und ``sensor`` implementiert.
 
 Mit ``hue2_id`` wird festgelegt auf welche Resource des gewählten Typs zugegriffen werden soll. Die Id kann im
 Web Interface im Tab des entsprechenden Resource-Typs nachgesehen werden.
@@ -199,6 +199,15 @@ Für den Resource-Typ ``light`` sind die folgenden Funktionen implementiert (ein
     - ``modify_scene``
     - ``alert``
     - ``effect``
+
+Für den Resource-Typ ``sensor`` sind die folgenden Funktionen implementiert, welche nur die Abfrage erlauben:
+
+    - ``daylight``
+    - ``temperature``
+    - ``presence``
+    - ``lightlevel``
+    - ``status``
+
 
 
 Die vollständige Übersicht über die unterstützen Funktionen und die Datentypen dazu kann auf der

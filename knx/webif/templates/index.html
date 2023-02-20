@@ -15,32 +15,29 @@
   table th.dpt {
     width: 60px;
   }
+  table th.special {
+    border-bottom: 1px solid var(--shng-border);
+  }
 </style>
 {% endblock pluginstyles %}
 {% block pluginscripts %}
 <script>
   $(document).ready( function () {
     $(window).trigger('datatables_defaults');
-    try {
-      {% if webif_pagelength is defined %}webif_pagelength = {{ webif_pagelength|int }};{% endif %}
-      if (isNaN(parseFloat(webif_pagelength)) || webif_pagelength == 0) {
-        resize = true;
-        webif_pagelength = -1;
-        console.log('Activating automatic table resize');
-      }
-      else {
-        resize = false;
-      }
+    /* get pagelength from http module or plugin. */
+    {% if webif_pagelength is defined %}webif_pagelength = {{ webif_pagelength|int }};{% endif %}
+    if (isNaN(parseFloat(webif_pagelength)) || webif_pagelength == 0) {
+      resize = true;
+      webif_pagelength = -1;
     }
-    catch (e) {
-      webif_pagelength = 100;
+    else {
       resize = false;
-      console.log("Using default values for page length " + webif_pagelength + ", pageResize: " + resize);
     }
     try {
       itemtable = $('#itemtable').DataTable( {
         order: [[1, 'asc']],
         columnDefs: [
+        { className: "special", targets: [1,2,3,4,5,6,7,8,9] },
         { className: "item", targets: 1 },
         { className: "type", targets: 2 },
         { className: "value", targets: 3 },
@@ -53,10 +50,25 @@
         ].concat($.fn.dataTable.defaults.columnDefs),
         pageLength: webif_pagelength,
         pageResize: resize} );
-      gatable = $('#gatable').DataTable( {pageLength: webif_pagelength, pageResize: resize} );
-      patable = $('#patable').DataTable( {pageLength: webif_pagelength, pageResize: resize} );
+      gatable = $('#gatable').DataTable( {
+        columnDefs: [
+        { className: "special", targets: [1,2,3,4,5,6,7] }
+        ].concat($.fn.dataTable.defaults.columnDefs),
+        pageLength: webif_pagelength,
+        pageResize: resize} );
+      patable = $('#patable').DataTable( {
+        columnDefs: [
+        { className: "special", targets: [1,2,3,4,5,6,7] }
+        ].concat($.fn.dataTable.defaults.columnDefs),
+        pageLength: webif_pagelength,
+        pageResize: resize} );
       {% if p.knxproj_ga is not none %}
-        knxprojtable = $('#knxprojtable').DataTable( {pageLength: webif_pagelength, pageResize: resize} );
+        knxprojtable = $('#knxprojtable').DataTable( {
+          columnDefs: [
+          { className: "special", targets: [1,2,3,4,5,6] }
+          ].concat($.fn.dataTable.defaults.columnDefs),
+          pageLength: webif_pagelength,
+          pageResize: resize} );
       {% endif %}
     }
     catch (e) {
@@ -165,28 +177,28 @@ $(document).ready(
 {% set tab1title = "<strong>" ~ p.get_shortname() ~ " Items</strong> (" ~ items|length ~ ")" %}
 {% block bodytab1 %}
 <div class="container-fluid m-2 table-resize">
-		<table id="itemtable">
+		<table id="itemtable" class="dataTableAdditional">
 			<thead>
 				<tr><th></th>
-					<th style="border-bottom: 1px solid var(--shng-border);">{{ _('Item') }}</th>
-					<th style="border-bottom: 1px solid var(--shng-border);">{{ _('Typ') }}</th>
-					<th style="border-bottom: 1px solid var(--shng-border); width: 100;">{{ _('Wert') }}</th>
-					<th style="border-bottom: 1px solid var(--shng-border);">{{ 'knx_dpt' }}</th>
-					<th style="border-bottom: 1px solid var(--shng-border);">cache/init/listen</th>
-					<th style="border-bottom: 1px solid var(--shng-border);">{{ 'knx_send' }}</th>
-					<th style="border-bottom: 1px solid var(--shng-border);">{{ 'knx_reply' }}</th>
-					<th style="border-bottom: 1px solid var(--shng-border);">{{ 'knx_status' }}</th>
-					<th style="border-bottom: 1px solid var(--shng-border);">{{ 'knx_poll' }}</th>
+					<th>{{ _('Item') }}</th>
+					<th>{{ _('Typ') }}</th>
+					<th>{{ _('Wert') }}</th>
+					<th>{{ 'knx_dpt' }}</th>
+					<th>cache/init/listen</th>
+					<th>{{ 'knx_send' }}</th>
+					<th>{{ 'knx_reply' }}</th>
+					<th>{{ 'knx_status' }}</th>
+					<th>{{ 'knx_poll' }}</th>
 					</tr>
 			</thead>
 			<tbody>
 			{% for item in items %}
 				<tr><td></td>
-					<td class="py-1">{{ item._path }}</td>
-					<td class="py-1">{{ item._type }}</td>
-					<td class="py-1">{{ item() }}</td>
-					<td class="py-1">{{ item.conf['knx_dpt'] }}</td>
-					<td class="py-1">
+					<td class="py-1" id="{{ item }}_path">{{ item._path }}</td>
+					<td class="py-1" id="{{ item }}_type">{{ item._type }}</td>
+					<td class="py-1" id="{{ item }}_value">{{ item() }}</td>
+					<td class="py-1" id="{{ item }}_dpt">{{ item.conf['knx_dpt'] }}</td>
+					<td class="py-1" id="{{ item }}_cacheinitlisten">
 					{% if 'knx_cache' in item.conf %}
 						{% if item.conf['knx_cache'] in p.get_unsatisfied_cache_read_ga() %}<span style="color: red;">{% endif %}
 						knx_cache: {{ item.conf['knx_cache'] }}
@@ -196,21 +208,25 @@ $(document).ready(
 						knx_init: {{ item.conf['knx_init'] }}<br>
 					{% endif %}
 					{% if 'knx_listen' in item.conf %}
-						knx_listen: {{ item.conf['knx_listen'] }}<br>
+						{% if item.conf['knx_listen']|length == 1 %}
+                            				knx_listen: {{ item.conf['knx_listen'][0] }}<br>
+                        			{% else %}
+                            				knx_listen: {{ item.conf['knx_listen'] }}<br>
+                        			{% endif %}
 					{% endif %}
 					</td>
 					{% if item.conf['knx_send']|length == 1 %}
-						<td class="py-1">{{ item.conf['knx_send'][0] }}</td>
+						<td class="py-1" id="{{ item }}_send">{{ item.conf['knx_send'][0] }}</td>
 					{% else %}
-						<td class="py-1">{{ item.conf['knx_send'] }}</td>
+						<td class="py-1" id="{{ item }}_send">{{ item.conf['knx_send'] }}</td>
 					{% endif %}
-					<td class="py-1">{{ item.conf['knx_reply'] }}</td>
+					<td class="py-1" id="{{ item }}_reply">{{ item.conf['knx_reply'] }}</td>
 					{% if item.conf['knx_status']|length == 1 %}
-						<td class="py-1">{{ item.conf['knx_status'][0] }}</td>
+						<td class="py-1" id="{{ item }}_reply">{{ item.conf['knx_status'][0] }}</td>
 					{% else %}
-						<td class="py-1">{{ item.conf['knx_status'] }}</td>
+						<td class="py-1" id="{{ item }}_status">{{ item.conf['knx_status'] }}</td>
 					{% endif %}
-					<td class="py-1">{{ item.conf['knx_poll'] }}</td>
+					<td class="py-1" id="{{ item }}_status">{{ item.conf['knx_poll'] }}</td>
 				</tr>
 			{% endfor %}
 			</tbody>
@@ -225,39 +241,39 @@ $(document).ready(
 {% set tab2title = "<strong>GA " ~ _('Statistiken') ~ " </strong> (" ~ stats_ga_list|length ~ ")" %}
 {% block bodytab2 %}
 <div class="container-fluid m-2 table-resize">
-		<table id="gatable">
+		<table id="gatable" class="dataTableAdditional">
 			<thead>
 				<tr><th></th>
-					<th style="border-bottom: 1px solid var(--shng-border);">{{ _('Gruppen Adresse') }}</th>
-					<th style="border-bottom: 1px solid var(--shng-border);">{{ _('# gelesen') }}</th>
-					<th style="border-bottom: 1px solid var(--shng-border);">{{ _('# geschrieben') }}</th>
-					<th style="border-bottom: 1px solid var(--shng-border);">{{ _('# geantwortet') }}</th>
-					<th style="border-bottom: 1px solid var(--shng-border);">{{ _('last_read') }}</th>
-					<th style="border-bottom: 1px solid var(--shng-border);">{{ _('last_write') }}</th>
-					<th style="border-bottom: 1px solid var(--shng-border);">{{ _('last_response') }}</th>
+					<th>{{ _('Gruppen Adresse') }}</th>
+					<th>{{ _('# gelesen') }}</th>
+					<th>{{ _('# geschrieben') }}</th>
+					<th>{{ _('# geantwortet') }}</th>
+					<th>{{ _('last_read') }}</th>
+					<th>{{ _('last_write') }}</th>
+					<th>{{ _('last_response') }}</th>
 					</tr>
 			</thead>
 			<tbody>
 			{% for ga in stats_ga_list %}
 				<tr><td></td>
-					<td class="py-1">{{ ga }}</td>
-					<td class="py-1">{{ stats_ga[ga].read }}</td>
-					<td class="py-1">{{ stats_ga[ga].write }}</td>
-					<td class="py-1">{{ stats_ga[ga].response }}</td>
+					<td class="py-1" id="{{ ga }}_ga_ga">{{ ga }}</td>
+					<td class="py-1" id="{{ ga }}_ga_read">{{ stats_ga[ga].read }}</td>
+					<td class="py-1" id="{{ ga }}_ga_write">{{ stats_ga[ga].write }}</td>
+					<td class="py-1" id="{{ ga }}_ga_response">{{ stats_ga[ga].response }}</td>
 					{% if stats_ga[ga].last_read %}
-					<td class="py-1">{{ stats_ga[ga].last_read.strftime('%d.%m.%Y %H:%M:%S %Z') }}</td>
+					<td class="py-1" id="{{ ga }}_ga_lastread">{{ stats_ga[ga].last_read.strftime('%d.%m.%Y %H:%M:%S %Z') }}</td>
 					{% else %}
-					<td class="py-1"></td>
+					<td class="py-1" id="{{ ga }}_ga_lastread"></td>
 					{% endif %}
 					{% if stats_ga[ga].last_write %}
-					<td class="py-1">{{ stats_ga[ga].last_write.strftime('%d.%m.%Y %H:%M:%S %Z') }}</td>
+					<td class="py-1" id="{{ ga }}_ga_lastwrite">{{ stats_ga[ga].last_write.strftime('%d.%m.%Y %H:%M:%S %Z') }}</td>
 					{% else %}
-					<td class="py-1"></td>
+					<td class="py-1" id="{{ ga }}_ga_lastwrite"></td>
 					{% endif %}
 					{% if stats_ga[ga].last_response %}
-					<td class="py-1">{{ stats_ga[ga].last_response.strftime('%d.%m.%Y %H:%M:%S %Z') }}</td>
+					<td class="py-1" id="{{ ga }}_ga_lastresponse">{{ stats_ga[ga].last_response.strftime('%d.%m.%Y %H:%M:%S %Z') }}</td>
 					{% else %}
-					<td class="py-1"></td>
+					<td class="py-1" id="{{ ga }}_ga_lastresponse"></td>
 					{% endif %}
 				</tr>
 			{% endfor %}
@@ -277,39 +293,39 @@ $(document).ready(
 {% set tab3title = "<strong>PA " ~ _('Statistiken') ~ " </strong> (" ~ stats_pa_list|length ~ ")" %}
 {% block bodytab3 %}
 <div class="container-fluid m-2 table-resize">
-		<table id="patable">
+		<table id="patable" class="dataTableAdditional">
 			<thead>
 				<tr><th></th>
-					<th style="border-bottom: 1px solid var(--shng-border);">{{ _('Physische Adresse') }}</th>
-					<th style="border-bottom: 1px solid var(--shng-border);">{{ _('# gelesen') }}</th>
-					<th style="border-bottom: 1px solid var(--shng-border);">{{ _('# geschrieben') }}</th>
-					<th style="border-bottom: 1px solid var(--shng-border);">{{ _('# geantwortet') }}</th>
-					<th style="border-bottom: 1px solid var(--shng-border);">{{ _('last_read') }}</th>
-					<th style="border-bottom: 1px solid var(--shng-border);">{{ _('last_write') }}</th>
-					<th style="border-bottom: 1px solid var(--shng-border);">{{ _('last_response') }}</th>
+					<th>{{ _('Physische Adresse') }}</th>
+					<th>{{ _('# gelesen') }}</th>
+					<th>{{ _('# geschrieben') }}</th>
+					<th>{{ _('# geantwortet') }}</th>
+					<th>{{ _('last_read') }}</th>
+					<th>{{ _('last_write') }}</th>
+					<th>{{ _('last_response') }}</th>
 					</tr>
 			</thead>
 			<tbody>
 			{% for pa in stats_pa_list %}
 				<tr><td></td>
-					<td class="py-1">{{ pa }}</td>
-					<td class="py-1">{{ stats_pa[pa].read }}</td>
-					<td class="py-1">{{ stats_pa[pa].write }}</td>
-					<td class="py-1">{{ stats_pa[pa].response }}</td>
+					<td class="py-1" id="{{ pa }}_pa_pa">{{ pa }}</td>
+					<td class="py-1" id="{{ pa }}_pa_read">{{ stats_pa[pa].read }}</td>
+					<td class="py-1" id="{{ pa }}_pa_write">{{ stats_pa[pa].write }}</td>
+					<td class="py-1" id="{{ pa }}_pa_response">{{ stats_pa[pa].response }}</td>
 					{% if stats_pa[pa].last_read %}
-					<td class="py-1">{{ stats_pa[pa].last_read.strftime('%d.%m.%Y %H:%M:%S %Z') }}</td>
+					<td class="py-1" id="{{ pa }}_pa_lastread">{{ stats_pa[pa].last_read.strftime('%d.%m.%Y %H:%M:%S %Z') }}</td>
 					{% else %}
-					<td class="py-1"></td>
+					<td class="py-1" id="{{ pa }}_pa_lastread"></td>
 					{% endif %}
 					{% if stats_pa[pa].last_write %}
-					<td class="py-1">{{ stats_pa[pa].last_write.strftime('%d.%m.%Y %H:%M:%S %Z') }}</td>
+					<td class="py-1" id="{{ pa }}_pa_lastwrite">{{ stats_pa[pa].last_write.strftime('%d.%m.%Y %H:%M:%S %Z') }}</td>
 					{% else %}
-					<td class="py-1"></td>
+					<td class="py-1" id="{{ pa }}_pa_lastwrite"></td>
 					{% endif %}
 					{% if stats_pa[pa].last_response %}
-					<td class="py-1">{{ stats_pa[pa].last_response.strftime('%d.%m.%Y %H:%M:%S %Z') }}</td>
+					<td class="py-1" id="{{ pa }}_pa_lastresponse">{{ stats_pa[pa].last_response.strftime('%d.%m.%Y %H:%M:%S %Z') }}</td>
 					{% else %}
-					<td class="py-1"></td>
+					<td class="py-1" id="{{ pa }}_pa_lastresponse"></td>
 					{% endif %}
 				</tr>
 			{% endfor %}
@@ -345,20 +361,21 @@ $(document).ready(
 	{% block bodytab4 %}
 <div class="container-fluid m-2 table-resize">
 			{% if p.knxproj_ga is not none %}
-			<table id="knxprojtable">
+			<table id="knxprojtable" class="dataTableAdditional">
 				<thead>
 					<tr><th></th>
-						<th style="border-bottom: 1px solid var(--shng-border);">{{ _('Gruppen Adresse') }}</th>
-						<th style="border-bottom: 1px solid var(--shng-border);">{{ _('Name') }}</th>
-						<th style="border-bottom: 1px solid var(--shng-border);">{{ _('Beschreibung') }}</th>
-						<th style="border-bottom: 1px solid var(--shng-border);">{{ _('Kommentar') }}</th>
-						<th style="border-bottom: 1px solid var(--shng-border);">{{ _('Datenpunkt') }}</th>
-						<th style="border-bottom: 1px solid var(--shng-border); border-left: 1px solid var(--shng-border);">Item(s)</th>
+						<th>{{ _('Gruppen Adresse') }}</th>
+						<th>{{ _('Name') }}</th>
+						<th>{{ _('Beschreibung') }}</th>
+						<th>{{ _('Kommentar') }}</th>
+						<th>{{ _('Datenpunkt') }}</th>
+						<th style="border-left: 1px solid var(--shng-border);">Item(s)</th>
 					</tr>
 				</thead>
 				<tbody>
 					{% for ga in p.knxproj_ga %}
-					<tr><td></td><td id="GA-{{ ga }}">{% if not (ga in ga_usage_by_Item) %}<span style="color:#bbb;">{% endif %}{{ ga }}{% if not (ga in ga_usage_by_Item) %}</span>{% endif %}</td>
+					<tr><td></td>
+            <td id="GA-{{ ga }}">{% if not (ga in ga_usage_by_Item) %}<span style="color:#bbb;">{% endif %}{{ ga }}{% if not (ga in ga_usage_by_Item) %}</span>{% endif %}</td>
 						<td>{% if not (ga in ga_usage_by_Item) %}<span style="color:#bbb;">{% endif %}{{ p.knxproj_ga[ga]["HG"] }} / {{ p.knxproj_ga[ga]["MG"] }} / {{ p.knxproj_ga[ga]["Name"] }}{% if not (ga in ga_usage_by_Item) %}</span>{% endif %}</td>
 						<td>{% if not (ga in ga_usage_by_Item) %}<span style="color:#bbb;">{% endif %}{{ p.knxproj_ga[ga]["Description"] }}{% if not (ga in ga_usage_by_Item) %}</span>{% endif %}</td>
 						<td>{% if not (ga in ga_usage_by_Item) %}<span style="color:#bbb;">{% endif %}{{ p.knxproj_ga[ga]["Comment"] }}{% if not (ga in ga_usage_by_Item) %}</span>{% endif %}</td>

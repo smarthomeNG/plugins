@@ -15,10 +15,27 @@ function mainpage() {
 <script>
     $(document).ready( function () {
 			$(window).trigger('datatables_defaults');
+      {% if webif_pagelength is defined %}webif_pagelength = {{ webif_pagelength|int }};{% endif %}
+      if (isNaN(parseFloat(webif_pagelength)) || webif_pagelength == 0) {
+        resize = true;
+        webif_pagelength = -1;
+        console.log('Activating automatic table resize ' + webif_pagelength);
+      }
+      else {
+        resize = false;
+      }
 			try
 				{
-					$('#table_out').DataTable( {} );
-					$('#table_in').DataTable( {} );
+					$('#table_out').DataTable( {
+            pageLength: webif_pagelength,
+            order: [[1, 'asc']],
+            pageResize: resize
+          } );
+					$('#table_in').DataTable( {
+            pageLength: webif_pagelength,
+            order: [[1, 'asc']],
+            pageResize: resize
+          } );
 				}
 			catch (e)
 				{
@@ -32,10 +49,14 @@ function mainpage() {
 			var objResponse = JSON.parse(response);
 			myProto = document.getElementById(dataSet);
 			for (var item in objResponse['in']) {
-				shngInsertText (item+'_invalue', objResponse['in'][item]['value']);
+        if (objResponse['in'][item]['value'] == 1) {val = 'True';}
+        else if (objResponse['in'][item]['value'] == 0) {val = 'False';}
+				shngInsertText (item+'_invalue', val, 'table_in', 10);
 			}
       for (var item in objResponse['out']) {
-        shngInsertText (item+'_outvalue', objResponse['out'][item]['value']);
+        if (objResponse['out'][item]['value'] == 1) {val = 'True';}
+        else if (objResponse['out'][item]['value'] == 0) {val = 'False';}
+        shngInsertText (item+'_outvalue', val, 'table_out', 10);
       }
 		}
 	}
@@ -68,13 +89,14 @@ function mainpage() {
 
 {% block bodytab1 %}
 
-<div class="container-fluid m-2">
+<div class="container-fluid m-2 table-resize">
   <div class="mb-2">
     {{ _('Die folgenden Items sind dem GPIO Plugin als IN Pin zugewiesen') }}:
   </div>
-  <table id="table_in" class="table table-striped table-hover pluginList display">
+  <table id="table_in" class="dataTableAdditional">
     <thead>
     <tr>
+      <th></th>
       <th>{{ _('Item') }}</th>
       <th>{{ _('Pin IN') }}</th>
       <th>{{ _('Wert') }}</th>
@@ -90,6 +112,7 @@ function mainpage() {
         {% set color = 'red' %}
       {% endif %}
         <tr>
+          <td></td>
           <td class="py-1">{{ item._path }}</td>
           <td class="py-1">{{ p.get_iattr_value(item.conf, 'gpio_in') }}</td>
           <td class="py-1" id="{{ item }}_invalue">{{ item() }}</td>
@@ -103,13 +126,14 @@ function mainpage() {
 {% endblock bodytab1 %}
 
 {% block bodytab2 %}
-<div class="container-fluid m-2">
+<div class="container-fluid m-2 table-resize">
   <div class="mb-2">
     {{ _('Die folgenden Items sind dem GPIO Plugin als OUT Pin zugewiesen') }}:
   </div>
-    <table id="table_out" class="table table-striped table-hover pluginList display">
+    <table id="table_out" class="dataTableAdditional">
       <thead>
       <tr>
+        <th></th>
         <th>{{ _('Item') }}</th>
         <th>{{ _('Pin OUT') }}</th>
         <th>{{ _('Wert') }}</th>
@@ -119,6 +143,7 @@ function mainpage() {
 
         {% if p.has_iattr(item.conf, 'gpio_out') %}
           <tr>
+            <td></td>
             <td class="py-1">{{ item._path }}</td>
             <td class="py-1">{{ p.get_iattr_value(item.conf, 'gpio_out') }}</td>
             <td class="py-1" id="{{ item }}_outvalue">{{ item() }}</td>

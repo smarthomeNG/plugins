@@ -3,11 +3,144 @@
 {% set logo_frame = false %}
 
 <!-- set update_interval to a value > 0 (in milliseconds) to enable periodic data updates -->
-{% set update_interval = 0 %}
+{% set update_interval = 5000 %}
+
+
+<!-- {# for data-heavy plugins it might be useful to set the update interval based on the amount of data
+{% set update_interval = (200 * (log_array | length)) %}
+#} -->
+<!-- {# set dataSet if you need specific data to be updated automatically. Also see init.py in plugin webif!
+{% set dataSet = 'devices_info' %}
+#} -->
+<!-- {# set update_params if you need to provide additional parameters for the auto-update function
+{% set update_params = item_id %}
+#} -->
+<!-- {# if you don't need any buttons in the header, disable them completely
+{% set buttons = false %}
+#} -->
+<!-- {# if you don't need any auto-refresh elements in the header, disable them
+{% set autorefresh_buttons = false %}
+#} -->
+<!-- {# if you don't need the reload_button in the header, disable it
+{% set reload_button = false %}
+#} -->
+<!-- {# if you don't need the close in the header, disable it
+{% set close_button = false %}
+#} -->
+
+<!--
+	Additional styles go into this block. Examples are for datatables
+-->
+{% block pluginstyles %}
+<style>
+  table th.value {
+    width: 100px;
+  }
+  table th.attr {
+    width: 50px;
+  }
+  table th.item {
+    width: 100px;
+  }
+  table th.type {
+    width: 25px;
+  }
+  table th.zone {
+    width: 50px;
+  }
+  /*
+  These are used for highlight effect in web interface when a value changes. If you don't want to overwrite the
+  default color, you can remove the entries here as the classes are already defined in smarthomeng.css
+  */
+  .shng_effect_highlight {
+    background-color: #FFFFE0;
+  }
+  .shng_effect_standard {
+    background-color: none;
+  }
+</style>
+{% endblock pluginstyles %}
 
 <!--
 	Additional script tag for plugin specific javascript code go into this block
 -->
+{% block pluginscripts %}
+<script>
+	function handleUpdatedData(response, dataSet=null) {
+		if (dataSet === 'devices_info' || dataSet === null) {
+			var objResponse = JSON.parse(response);
+			myProto = document.getElementById(dataSet);
+
+			for (var item in objResponse['items']) {
+				console.log("handleUpdatedData: item: " + item);
+                shngInsertText (item+'_value', objResponse['items'][item]['value'], 'itemtable', 5);
+                shngInsertText (item+'_last_update', objResponse['items'][item]['last_update'], 'itemtable');
+                shngInsertText (item+'_last_change', objResponse['items'][item]['last_change'], 'itemtable');
+			}
+		}
+	}
+</script>
+<!--
+	This part is used to implement datatable JS for the tables. It allows resorting tables by column, etc.
+	For each table you have to implement the code part $('#<table_id>').DataTable(..); where the <table_id> matches the id of a table tag
+-->
+<script>
+    $(document).ready( function () {
+			/*
+			loading defaults from /modules/http/webif/gstatic/datatables/datatables.defaults.js
+			You can copy that file, put it in your plugin directory, rename the "bind" function and
+			trigger that function here instead of datatables_defaults if you want to change the behaviour.
+			Of course you can also overwrite defaults by putting the option declarations in {} below.
+			*/
+			$(window).trigger('datatables_defaults');
+      try {
+        {% if webif_pagelength is defined %}webif_pagelength = {{ webif_pagelength|int }};{% endif %}
+        if (isNaN(parseFloat(webif_pagelength)) || webif_pagelength == 0) {
+          resize = true;
+          webif_pagelength = -1;
+        }
+        else {
+          resize = false;
+        }
+        console.log("Using page length from http module/plugin " + webif_pagelength + ", pageResize: " + resize);
+      }
+      catch (e) {
+        webif_pagelength = 100;
+        resize = false;
+        console.log("Using default values for page length " + webif_pagelength + ", pageResize: " + resize);
+      }
+      try {
+        /*
+        Copy this part for every datatable on your page. Adjust options if necessary.
+        pageLength and pageResize should be included as they are to adjust it based on the plugin settings
+        */
+        itemtable = $('#itemtable').DataTable( {
+          /* If you want to define your own columnDefs options (e.g. for hiding a column by default), use the concat function shown here.
+          */
+          columnDefs: [{ "targets": [2], "className": "value"}].concat($.fn.dataTable.defaults.columnDefs),
+          pageLength: webif_pagelength,
+          pageResize: resize});
+
+		zonestable = $('#zonestable').DataTable( {} );
+        speakerstable = $('#speakerstable').DataTable( {} );
+      }
+      catch (e) {
+        console.warn("Datatable JS not loaded, showing standard table without reorder option " + e);
+      }
+    });
+</script>
+<!--
+This is an example on how to update the page refresh method. You can set the dataSet, update interval, special parameters or (de)activate the auto refresh
+In the example the update is deactivated on the 12th of December 2022 (what might make no sense at all)
+<script>
+  var today = new Date();
+  var today_date = String(today.getDate()) + String(today.getMonth() + 1) + today.getFullYear();
+  let test_date = "12122022";
+  if (today_date === test_date)
+      window.refresh.update({dataSet:'test', update_params:'specialitem', update_interval: 2000, update_active:false});
+  </script>
+-->
+{% endblock pluginscripts %}
 
 
 {% block headtable %}
@@ -24,56 +157,216 @@
 {% endblock headtable %}
 
 
-<!--
-	Additional buttons for the web interface (if any are needed) - displayed below the headtable-section
--->
+<!--Additional buttons for the web interface (if any are needed) - displayed below the headtable-section-->
+{% block buttons %}
+    <button type="button" class="btn btn-shng btn-sm" onclick="if (confirm('{{ _('Wollen Sie nach neuen Speaker suchen?') }}')) { jQuery.get('discover'); }">{{ _('Re-Discover') }}</button>
+{% endblock buttons %}
 
-<!--
-	Define the number of tabs for the body of the web interface (1 - 3)
--->
-{% set tabcount = 1 %}
+<!--Define the number of tabs for the body of the web interface (1 - 3)-->
+{% set tabcount = 3 %}
 
 
-<!--
-	Set the tab that will be visible on start, if another tab that 1 is wanted (1 - 3)
--->
-{% set start_tab = 1 %}
+<!--Set the tab that will be visible on start, if another tab that 1 is wanted (1 - 3)-->
+{% if item_count > 0 %}
+	{% set start_tab = 1 %}
+{% else %}
+    {% set start_tab = 2 %}
+{% endif %}
 
-<!--
-	Content block for the first tab of the Webinterface
--->
-{% set tab1title = "<strong>" ~ p.get_shortname() ~ " </strong> " %}
+<!--Set titles for the Webinterface tabs-->
+{% set tab1title = "<strong>" ~ plugin_shortname ~ " Items</strong> (" ~ item_count ~ ")" %}
+{% set tab2title = "<strong>" ~ plugin_shortname ~ " Zones and Speakers</strong> " %}
+{% set tab3title = "<strong>" ~ plugin_shortname ~ " Maintenance</strong>" %}
+
+{% if maintenance %}
+    {% set tab3title = "<strong>" ~ plugin_shortname ~ " Maintenance</strong>" %}
+{% else %}
+    {% set tab3title = "hidden" %}
+{% endif %}
+
+
+<!--Content blocks for the Webinterface tabs-->
 {% block bodytab1 %}
+<div class="container-fluid m-2 table-resize">
+	<table id="itemtable">
+        <thead>
+            <tr>
+                <th class="plus"></th>
+                <th class="item">{{_('Item')}}</th>
+                <th class="type">{{_('Typ')}}</th>
+				<th class="zone">{{_('Zone')}}</th>
+				<th class="attr">{{_('sonos_recv')}}</th>
+				<th class="attr">{{_('sonos_send')}}</th>
+				<th class="attr">{{_('sonos_attrib')}}</th>
+				<th class="attr">{{_('sonos_dpt3_step')}}</th>
+				<th class="attr">{{_('sonos_dpt3_time')}}</th>
+				<th class="value">{{ _('Wert') }}</th>
+				<!-- <th>{{ _('item.conf') }}</th> -->
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in item_list %}
+                <tr>
+                    <td></td>
+                    <td class="py-1">{{ item._path }}</td>
+                    <td class="py-1">{{ item._type }}</td>
+					<td class="py-1">
+						{% if 'sonos_uid' in item.conf %}
+							{{ p._get_zone_name_from_uid(item.conf['sonos_uid']) }}
+						{% elif 'sonos_recv' in item.conf %}
+							{{ p._get_zone_name_from_uid(p._resolve_uid(item)) }}
+						{% elif 'sonos_send' in item.conf %}
+							{{ p._get_zone_name_from_uid(p._resolve_uid(item)) }}
+						{% else %}
+							{{_('-')}}
+						{% endif %}</td>
+					<td class="py-1">{% if 'sonos_recv' in item.conf %} {{ item.conf['sonos_recv'] }} {% else %} {{_('-')}} {% endif %}</td>
+					<td class="py-1">{% if 'sonos_send' in item.conf %} {{ item.conf['sonos_send'] }} {% else %} {{_('-')}} {% endif %}</td>
+					<td class="py-1">{% if 'sonos_attrib' in item.conf %} {{ item.conf['sonos_attrib'] }} {% else %} {{_('-')}} {% endif %}</td>
+					<td class="py-1">{% if 'sonos_dpt3_step' in item.conf %} {{ item.conf['sonos_dpt3_step'] }} {% else %} {{_('-')}} {% endif %}</td>
+					<td class="py-1">{% if 'sonos_dpt3_time' in item.conf %} {{ item.conf['sonos_dpt3_time'] }} {% else %} {{_('-')}} {% endif %}</td>
+					<td class="py-1" id="{{ item.id() }}_value">.{{ item._value }}</td>
+					<!--  <td class="py-1">{{ item.conf }}</td> -->
+                </tr>
+             {% endfor %}
+        </tbody>
+	</table>
+</div>
+{% endblock bodytab1 %}
 
+{% block bodytab2 %}
 <div style="margin-left: 10px; margin-right: 10px;">
-	<div class="table-responsive">
-		<table class="table table-striped table-hover">
+	</br>
+	<caption><h3><strong>Zones</strong></h3></caption>
+	<div class="container-fluid m-2 table-resize">
+		<table id="zonestable">
 			<thead>
-				<tr class="shng_heading">
-					<th width="180px">{{ _('Speaker') }}</th>
+				<tr>
+					<th class="plus"></th>
+					<th width="180px">{{ _('Zone') }}</th>
 					<th width="80px">{{ _('IP') }}</th>
 					<th width="50px">{{ _('UID') }}</th>
+					<th width="50px">{{ _('Is Coordinator') }}</th>
+					<th width="50px">{{ _('Has Satellites') }}</th>
+					<th width="50px">{{ _('Is Satellite') }}</th>
 				</tr>
 			</thead>
 			<tbody>
-				{% if speakerlist %}
-					{% for speaker in speakerlist %}
+				{% for zone in p.zones %}
 					<tr>
-						<td class="py-1">{{ speaker.name }}</td>
-						<td class="py-1">{{ speaker.ip }}</td>
-						<td class="py-1">{{ speaker.uid }}</td>
+						<td></td>
+						<td class="py-1">{{ zone._player_name }}</td>
+						<td class="py-1">{{ zone.ip_address }}</td>
+						<td class="py-1">{{ zone.uid }}</td>
+						<td class="py-1">{{ zone.is_coordinator }}</td>
+						<td class="py-1">{{ zone.has_satellites }}</td>
+						<td class="py-1">{{ zone._is_satellite }}</td>
 					</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+	</div>
+	</br>
+	<caption><h3><strong>Speakers</strong></h3></caption>
+	<div class="container-fluid m-2 table-resize">
+		<table id="speakerstable">
+			<thead>
+				<tr>
+					<th class="plus"></th>
+					<th width="20">{{ _('No') }}</th>
+					<th width="180px">{{ _('Name') }}</th>
+					<th width="50px">{{ _('UID') }}</th>
+					<th width="50px">{{ _('Play Status') }}</th>
+				</tr>
+			</thead>
+			<tbody>
+					{% for speaker in p.sonos_speaker %}
+						{% if p.sonos_speaker[speaker]._uid %}
+						<tr>
+							<td></td>
+							<td class="py-1">{{ loop.index }}</td>
+							<td class="py-1">{{ p.sonos_speaker[speaker].player_name }}</td>
+							<td class="py-1">{{ p.sonos_speaker[speaker]._uid }}</td>
+							<td class="py-1">
+								{% if p.sonos_speaker[speaker]._play %}
+									{{ _('Play') }}
+							  	{% elif p.sonos_speaker[speaker]._pause %}
+									{{ _('Pause') }}
+							  	{% elif p.sonos_speaker[speaker]._stop %}
+									{{ _('Stop') }}
+							  	{% else %}
+									{{ _('Unknown') }}
+								{% endif %}
+							</td>
+						</tr>
+						{% endif %}
 					{% endfor %}
-				{% else %}
-					<tr>
-						<td class="py-1" colspan="7">{{ _('Keine aktiven Speaker') }}</td>
-					</tr>
-				{% endif %}
 			</tbody>
 		</table>
 	</div>
 </div>
+{% endblock bodytab2 %}
 
-{% endblock bodytab1 %}
+{% block bodytab3 %}
+<div style="margin-left: 10px; margin-right: 10px;">
+<!-- {#
+	<div class="table-responsive">
+		<table class="table table-striped table-hover">
+			<thead>
+				<tr class="shng_heading">
+					<th>{{ _('Item') }}</th>
+					<th>{{ _('Item') }}</th>
+					<th>{{ _('Item Details') }}</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td class="py-1">{{ ('Item List') }}</td>
+					<td class="py-1">{{ len(p.item_list) }}</td>
+					<td class="py-1">{{ p.item_list }}</td>
+				</tr>
 
+			</tbody>
+		</table>
+	</div>
+#} -->
 
+	<div class="table-responsive">
+		<table class="table table-striped table-hover">
+			<thead>
+				<tr class="shng_heading">
+					<th width="100px">{{ _('Zone') }}</th>
+					<th>{{ _('Zone Details') }}</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for zone in p.zones %}
+					<tr>
+						<td class="py-1">{{ loop.index }}</td>
+						<td class="py-1">{{ zone.__dict__ }}</td>
+					</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+	</div>
+
+	<div class="table-responsive">
+		<table class="table table-striped table-hover">
+			<thead>
+				<tr class="shng_heading">
+					<th width="100px">{{ _('Speaker') }}</th>
+					<th>{{ _('Speaker Details') }}</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for speaker in p.sonos_speaker %}
+					<tr>
+						<td class="py-1">{{ loop.index }}</td>
+						<td class="py-1">{{ p.sonos_speaker[speaker].__dict__ }}</td>
+					</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+	</div>
+</div>
+{% endblock bodytab3 %}
