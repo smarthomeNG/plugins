@@ -45,7 +45,7 @@ from .svinstallwidgets import SmartVisuInstallWidgets
 #########################################################################
 
 class SmartVisu(SmartPlugin):
-    PLUGIN_VERSION="1.8.7"
+    PLUGIN_VERSION="1.8.8"
     ALLOW_MULTIINSTANCE = True
 
     visu_definition = None
@@ -94,10 +94,15 @@ class SmartVisu(SmartPlugin):
             self.mod_websocket = Modules.get_instance().get_module('websocket')
         except:
             self.mod_websocket = None
-        if self.mod_websocket == None:
             self.logger.info("Module 'websocket' could not be initialized.")
-        else:
-            self.mod_websocket.set_smartvisu_support(protocol_enabled=True, default_acl=self.default_acl, query_definitions=False, series_updatecycle=0)
+
+        self.payload_smartvisu = None
+        if self.mod_websocket is not None:
+            self.payload_smartvisu = self.mod_websocket.get_payload_protocol_by_id('sv')
+            try:
+                self.payload_smartvisu.set_smartvisu_support(protocol_enabled=True, default_acl=self.default_acl, query_definitions=False, series_updatecycle=0)
+            except:
+                self.logger.exception("Payload protocol 'smartvisu' of module 'websocket' could not be found.")
 
         self.port = ''
         self.tls_port = ''
@@ -450,7 +455,10 @@ class SmartVisu(SmartPlugin):
             self.logger.error("Cannot send url to visu because websocket module is not loaded")
             return False
 
-        result = self.mod_websocket.set_visu_url(url, clientip)
+        try:
+            result = self.payload_smartvisu.set_visu_url(url, clientip)
+        except:
+            self.logger.notice("Payload protocol 'smartvisu' of module 'websocket' could not be found.")
 
         return result
 
@@ -464,6 +472,11 @@ class SmartVisu(SmartPlugin):
         if self.mod_websocket is None:
             return {}
 
-        client_info = self.mod_websocket.get_visu_client_info()
-        self.logger.info(f"client_info = {client_info}")
+        try:
+            client_info = self.payload_smartvisu.get_visu_client_info()
+            self.logger.info(f"client_info = {client_info}")
+        except:
+            self.logger.notice("Payload protocol 'smartvisu' of module 'websocket' could not be found.")
+            client_info = {}
+
         return client_info
