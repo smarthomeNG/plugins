@@ -11,7 +11,7 @@ from lib.utils import Utils
 
 
 class Harmony(SmartPlugin):
-    PLUGIN_VERSION = "1.4.0"
+    PLUGIN_VERSION = "1.4.2"
     ALLOW_MULTIINSTANCE = False
 
     def __init__(self, sh):
