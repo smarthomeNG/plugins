@@ -40,10 +40,10 @@ class Harmony(SmartPlugin):
     def _message(self, message):
         self._logger.debug("Harmony: message: {msg}".format(msg=message))
         # we have to check two response due to some version changes in harmony device
-        match = re.match(r".*?startActivityFinished\">activityId=(\d+):errorCode=200.*",
+        match = re.match(r".*?startActivityFinished\">activityId=(-?\d+):errorCode=200.*",
                          html.unescape(str(message)))
         if not match:
-            match = re.match(r".*?startActivityFinished\">errorCode=200:errorString=OK:activityId=(\d+)",
+            match = re.match(r".*?startActivityFinished\">errorCode=200:errorString=OK:activityId=(-?\d+)",
                              html.unescape(str(message)))
         if match:
             self._set_current_activity(int(match.group(1)))
