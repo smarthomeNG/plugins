@@ -277,57 +277,63 @@ class SmartVisu(SmartPlugin):
             widget = widget[:-5]
 
         used_widgets = []
-        for widget_name in self.removed_widgets:
-            if widget_code.find(widget_name) > -1:
-                used_widgets.append(widget_name)
-        if used_widgets != []:
-            self.removed_plugin_widgets.append(widget)
-            if self.list_deprecated_warnings:
-                self.logger.error("deprecated_widgets ({}): Removed widget(s) {} used in plugin-widget '{}' of plugin '{}'".format(self.smartvisu_version, used_widgets, widget, plugin))
+        if self.removed_widgets is not None:
+            for widget_name in self.removed_widgets:
+                if widget_code.find(widget_name) > -1:
+                    used_widgets.append(widget_name)
+            if used_widgets != []:
+                self.removed_plugin_widgets.append(widget)
+                if self.list_deprecated_warnings:
+                    self.logger.error("deprecated_widgets ({}): Removed widget(s) {} used in plugin-widget '{}' of plugin '{}'".format(self.smartvisu_version, used_widgets, widget, plugin))
 
         used_widgets2 = []
-        for widget_name in self.deprecated_widgets:
-            if widget_code.find(widget_name) > -1:
-                used_widgets2.append(widget_name)
-        if used_widgets2 != []:
-            self.deprecated_plugin_widgets.append(widget)
-            if self.list_deprecated_warnings:
-                self.logger.warning("deprecated_widgets ({}): Deprecate widget(s) {} used in plugin-widget '{}' of plugin '{}'".format(self.smartvisu_version, used_widgets2, widget, plugin))
+        if self.deprecated_widgets is not None:
+            for widget_name in self.deprecated_widgets:
+                if widget_code.find(widget_name) > -1:
+                    used_widgets2.append(widget_name)
+            if used_widgets2 != []:
+                self.deprecated_plugin_widgets.append(widget)
+                if self.list_deprecated_warnings:
+                    self.logger.warning("deprecated_widgets ({}): Deprecate widget(s) {} used in plugin-widget '{}' of plugin '{}'".format(self.smartvisu_version, used_widgets2, widget, plugin))
 
         used_widgets = []
-        for widget_name in self.deprecated_widgets:
-            if widget_code.find(widget_name) > -1:
-                self.deprecated_plugin_widgets.append(widget)
-                used_widgets.append(widget_name)
-        if used_widgets != []:
-            self.logger.warning("test_widget_for_deprecated_widgets ({}): Deprecated widget(s) {} used in plugin-widget '{}' of plugin '{}'".format(self.smartvisu_version, used_widgets, widget, plugin))
+        if self.deprecated_widgets is not None:
+            for widget_name in self.deprecated_widgets:
+                if widget_code.find(widget_name) > -1:
+                    self.deprecated_plugin_widgets.append(widget)
+                    used_widgets.append(widget_name)
+            if used_widgets != []:
+                self.logger.warning("test_widget_for_deprecated_widgets ({}): Deprecated widget(s) {} used in plugin-widget '{}' of plugin '{}'".format(self.smartvisu_version, used_widgets, widget, plugin))
         return
 
     def test_item_for_deprecated_widgets(self, item):
         """
         Test if a deprecated or removed widget is used in an item
         """
-        for widget in self.removed_widgets:
-            if self.r_usage.get(widget, None) is None:
-                self.r_usage[widget] = 0
-            self.test_item_widget_attribute(item, 'sv_widget', widget, self.r_usage, 'removed')
-            self.test_item_widget_attribute(item, 'sv_widget2', widget, self.r_usage, 'removed')
-            self.test_item_widget_attribute(item, 'sv_nav_aside', widget, self.r_usage, 'removed')
-            self.test_item_widget_attribute(item, 'sv_nav_aside2', widget, self.r_usage, 'removed')
+        if self.removed_widgets is not None:
+            for widget in self.removed_widgets:
+                if self.r_usage.get(widget, None) is None:
+                    self.r_usage[widget] = 0
+                self.test_item_widget_attribute(item, 'sv_widget', widget, self.r_usage, 'removed')
+                self.test_item_widget_attribute(item, 'sv_widget2', widget, self.r_usage, 'removed')
+                self.test_item_widget_attribute(item, 'sv_nav_aside', widget, self.r_usage, 'removed')
+                self.test_item_widget_attribute(item, 'sv_nav_aside2', widget, self.r_usage, 'removed')
 
-        for widget in self.deprecated_widgets:
-            if self.d_usage.get(widget, None) is None:
-                self.d_usage[widget] = 0
-            self.test_item_widget_attribute(item, 'sv_widget', widget, self.d_usage)
-            self.test_item_widget_attribute(item, 'sv_widget2', widget, self.d_usage)
-            self.test_item_widget_attribute(item, 'sv_nav_aside', widget, self.d_usage)
-            self.test_item_widget_attribute(item, 'sv_nav_aside2', widget, self.d_usage)
+        if self.deprecated_widgets is not None:
+            for widget in self.deprecated_widgets:
+                if self.d_usage.get(widget, None) is None:
+                    self.d_usage[widget] = 0
+                self.test_item_widget_attribute(item, 'sv_widget', widget, self.d_usage)
+                self.test_item_widget_attribute(item, 'sv_widget2', widget, self.d_usage)
+                self.test_item_widget_attribute(item, 'sv_nav_aside', widget, self.d_usage)
+                self.test_item_widget_attribute(item, 'sv_nav_aside2', widget, self.d_usage)
 
-        for widget in self.deprecated_plugin_widgets:
-            self.test_item_widget_attribute(item, 'sv_widget', widget+'.', None, 'plugin-widget')
-            self.test_item_widget_attribute(item, 'sv_widget2', widget+'.', None, 'plugin-widget')
-            self.test_item_widget_attribute(item, 'sv_nav_aside', widget+'.', None, 'plugin-widget')
-            self.test_item_widget_attribute(item, 'sv_nav_aside2', widget+'.', None, 'plugin-widget')
+        if self.deprecated_plugin_widgets is not None:
+            for widget in self.deprecated_plugin_widgets:
+                self.test_item_widget_attribute(item, 'sv_widget', widget+'.', None, 'plugin-widget')
+                self.test_item_widget_attribute(item, 'sv_widget2', widget+'.', None, 'plugin-widget')
+                self.test_item_widget_attribute(item, 'sv_nav_aside', widget+'.', None, 'plugin-widget')
+                self.test_item_widget_attribute(item, 'sv_nav_aside2', widget+'.', None, 'plugin-widget')
 
         return
 
