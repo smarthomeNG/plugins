@@ -16,7 +16,7 @@ enocean
 Allgemein
 =========
 
-Enocean plugin zur Integration von Enocean Funksensoren und -aktoren, z.B. von Eltako.
+Enocean plugin zur Integration von Enocean Funksensoren und -aktoren, z.B. von Eltako, Gira, Hoppe, Peha.
 
 Anforderungen
 =============
@@ -29,13 +29,17 @@ Es wird ein Hardware Radio Transceiver Modul benötigt, z.B.:
 
 .. important::
 
-   Der user `samrthome`, unter dem smarthomeNG ausgeführt wird, muss die nötigen Zugriffsrechte 
+   Der user `smarthome`, unter dem smarthomeNG ausgeführt wird, muss die nötigen Zugriffsrechte 
    auf die Linux Gruppe `dialout` besitzen, damit die Hardware über Linux devices angesprochen und konfiguriert werden kann. 
 
 Hierzu folgendes in der Linux Konsole ausführen:
 
 .. code-block:: bash
+
     sudo gpasswd --add smarthome dialout
+
+Aktoren, Schalter oder Stellglieder, die vom Enocean plugin gesteuert werden sollen, müssen vorher einmalig angelert werden. Der Anlernvorgang wird unten im Kaptiel Webinterface beschrieben.
+Für das Auslesen von Statusinfromationen von Enocean Sensoren ist kein Anlernvorgang nötig.
 
 
 Konfiguration
@@ -46,40 +50,147 @@ Die Informationen zur Konfiguration des Plugins sind unter :doc:`/plugins_doc/co
 plugin.yaml
 -----------
 
-*serialport*
+**serialport**
 
 Hier wird der `serialport` zum Enocean Hardwareadapter angegeben werden.
 Unter Linux wird empfohlen, das entsprechende Linux Uart device über eine Udev-Regel auf einen Link zu mappen und diesen Link dann als `serialport` anzugeben.
 
-*tx_id*
+**tx_id**
+
 Die tx_id ist die Transmitter ID der Enocean Hardware und als achtstelliger Hexadezimalwert definiert. Die Angabe ist erstmal optional und muss nur zwingend angegeben werden,
 falls Enocean Aktoren geschaltet werden sollen, d.h. der Hardware Kontroller auch Senebefehle absetzen muss.
  
 Werden mehrere Aktuatoren betrieben, sollte die Base-ID (**not Unique-ID or Chip-ID**) der Enocean Hardware als Transmitter ID angegeben werden. 
 Weitere Information zum Unterschied zwischen Base-ID und Chip-ID finden sich unter:
-``https://www.enocean.com/en/knowledge-base-doku/enoceansystemspecification%3Aissue%3Awhat_is_a_base_id/``
+
+https://www.enocean.com/en/knowledge-base-doku/enoceansystemspecification%3Aissue%3Awhat_is_a_base_id/
 
 Über die Angabe der Base-ID können für die Kommunikation mit den Aktuatoren 128 verschiedene Sende-IDs im Wertebereich von (Base-ID und Base-ID + 127) vergeben werden.
 
-*Wie bekommt man die Base-ID des Enocean Adapters?*
+**Wie bekommt man die Base-ID des Enocean Adapters?**
+
 Es gibt zwei verschiedene Wege, um die Base ID der Enocean Hardware auszulesen:
 
  a) Über das Enocean Plugin Webinterface
+
  b) Über die smarthomeNG Logdateien, die durch das Enocean plugin erzeugt werden.
 
-Zu a) 
+
+Zu a)
+ 
 1. Konfiguriere das Enocean plugin in der plugin.yaml mit leerer tx_id (oder tx_id = 0).
+
 2. Starte SmarthomeNG neu.
-3. Öffne das Enocean webinterface des Plugins unter: http://localip:8383/enocean/
+
+3. Öffne das Enocean webinterface des Plugins unter: http://smarthome.local:8383/enocean
+
 4. Ablesen der Transceiver's BaseID, welches auf der oberen recten Seite angezeigt wird. 
+
 5. Übernahme der im Webinterface angezeigten Base-ID in die plugin.yaml als Parameter `tx_id`.
 
+
 Zu b)
+
 1. Konfiguriere das Enocean plugin in der plugin.yaml mit leerer tx_id (oder tx_id = 0).
+
 2. Konfiguriere das Loglevel INFO in logger.yaml für das Enocean Plugin. Alternativ über das Admin Interface unter Logger
+
 3. Starte SmarthomeNG neu.
+
 4. Nach dem Neustart das Logfile öffnen und nach dem Eintrag ``enocean: Base ID = 0xYYYYZZZZ`` suchen.
+
 6. Übernahme dieser im Log angezeigten Base-ID in die plugin.yaml als Parameter `tx_id`.
+
+
+item.yaml
+---------
+
+#### enocean_rx_id, enocean_rx_eep and enocean_tx_id_offset
+Ein EnOcean Item (Sensor oder Aktor) muss mindestens ein ``enocean_rx_id`` und ein ``enocean_rx_eep`` Attribut definieren.
+Der Attribut ``enocean_rx_id'' gibt dabei die eindeutige ID (EnOcean Identification Number) als hexadezimaler String an. Dieser ist auf dem Gerät vermerkt.
+Alternativ kann über das Webinterface unbekannte IDs von sendeden Enocean Geräten in der Nähe angezeigt werden.
+
+Die Enocean EEP gibt das EnOcean Equipment Profile an. Das Datenblatt des Enocean Geräts verrät, welche EEPs unterstützt werden.
+In einer Nachricht einer bestimmten Nachricht können sich verschiedene Signale wie z.B. Batteriestatus, Schaltstatus (an/aus) etc. befinden. Um diese Signale den einzelnen smarthomeNG
+Items zuzuordnen, werden abgekürzte `Keys` verwendet und als Attribut ``enocean_rx_key angegeben. 
+
+Im Beispiel sind die verschiedenen `Keys` ersichtlich. Folgende `Keys` werden vom Plugin unterstützt:
+
+ **Schalter mit zwei Tastern**, (EEP F6_02_01 oder F6_02_02)
+
+  AI = left rocker down
+  A0 = left rocker up
+  BI = right rocker down
+  B0 = right rocker up
+
+
+ **Schalter mit zwei Tastern), (EEP F6_02_03)
+
+  AI = left rocker down
+  A0 = left rocker up
+  BI = right rocker down
+  B0 = right rocker up
+  A = last state of left rocker
+  B = last state of right rocker
+
+
+ **Fenstergriff**, (EEP F6_10_0)
+
+  STATUS = handle_status
+
+
+ 
+Sendende Items, z.B. um Schaltaktoren zu schalten, benötigen weiterhin eine Transmitting ID. Diese wird im Attribut ``enocean_tx_id_offset`` definiert.
+
+
+Enocean Equipment Profiles
+==========================
+
+Das Encoean Protokoll basiert auf sogenannten EnOcean Equipment Profilen (EEPs). Sie definieren den Nachrichtentyp der vm EnOcean Gerät gesendet wird. 
+EEPs sind standardisiert. Informationen dazu können unter http://www.enocean-alliance.org/eep/ gefunden werden.
+
+
+Status EEPs
+-----------
+
+Die folgenden Status EEPs werden vom Plugin aktuell unterstützt:
+
+ * A5_02_01 - A5_02_0B	Temperature Sensors (40Â°C overall range, various starting offsets, 1/6Â°C resolution)
+ * A5_02_10 - A5_02_1B	Temperature Sensors (80Â°C overall range, various starting offsets, 1/3Â°C resolution)
+ * A5_02_20		High Precision Temperature Sensor (ranges -10*C to +41.2Â°C, 1/20Â°C resolution)
+ * A5_02_30		High Precision Temperature Sensor (ranges -40*C to +62.3Â°C, 1/10Â°C resolution)
+ * A5_04_02		Energy (optional), humidity and temperature sensor
+ * A5_07_03		Occupancy sensor, e.g. NodOn PIR-2-1-0x
+ * A5_08_01		Brightness and movement sensor
+ * A5_11_04		Dimmer status feedback
+ * A5_12_01		Power Measurement, e.g. Eltako FSVA-230V
+ * A5_0G_03		shutter feedback in s if actor is stopped before reaching his position (for calculation of new position)
+ * A5_30_01		Alarm sensor, e.g. Eltako FSM60B water leak sensor
+ * A5_30_03		Alarm sensor, e.g. Eltako FSM60B water leak sensor
+ * D2_01_07		Simple electronic switch
+ * D2_01_12		Simple electronic switch with 2 channels, like NodOn In-Wall module
+ * D5_00_01		Door/Window Contact, e.g. Eltako FTK, FTKB
+ * F6_02_01		2-Button-Rocker
+ * F6_02_02		2-Button-Rocker
+ * F6_02_03		2-Button-Rocker, Status feedback from manual buttons on different actors, e.g. Eltako FT55, FSUD-230, FSVA-230V, FSB61NP-230V or Gira switches.
+ * F6_10_00		Mechanical Handle (value: 0(closed), 1(open), 2(tilted)
+ * F6_0G_03		Feedback of shutter actor (Eltako FSB14, FSB61, FSB71 - actor for Shutter) if reaching the endposition and if motor is active 
+
+Eine vollständige Liste aller EEPs mit detallierten Informationen findet sich unter [EnOcean Alliance](http://www.enocean-alliance.org/eep/)
+
+
+Steuer EEPs
+-----------
+
+Die folgenden Sende EEPs werden vom Plugin aktuell unterstützt:
+
+ * A5_38_08_01		Regular switch actor command (on/off)
+ * A5_38_08_02		Dimmer command with fix on off command (on: 100, off:0)
+ * A5_38_08_03		Dimmer command with specified dim level (0-100)
+ * A5_3F_7F		Universal actuator command, e.g. blind control
+ * D2_01_07		Simple electronic switch
+ * D2_01_12		Simple electronic switch with 2 channels
+
 
 Web Interface
 =============
@@ -93,7 +204,32 @@ Aufruf des Webinterfaces
 Das Plugin kann aus dem Admin Interface aufgerufen werden. Dazu auf der Seite Plugins in der entsprechenden
 Zeile das Icon in der Spalte **Web Interface** anklicken.
 
-Außerdem kann das Webinterface direkt über ``http://smarthome.local:8383/enocean`` aufgerufen werden.
+Außerdem kann das Webinterface direkt über http://smarthome.local:8383/enocean aufgerufen werden.
+
+Das Webinterface zeigt oben rechts allgemeine Informationen, wie 
+
+ * die BaseID der verwendeten Hardware
+ * ob der Sendemodus aktiviert ist
+ * ob empfangene Enocean Nachrichten von unbekannten (nicht konfigurierten) Geräten in die Konsole geloggt werden sollen
+ * ob der UTE Anlernmodus aktiviert ist.
+
+Weiterhin können über Schaltflächen
+
+ * der Sendemodus aktiviert und deaktiviert werden
+ * der UTE Anlernmodus aktiviert und deaktiviert werden
+ * das Logging von empfangenen Nachrichten unbekannten Enocean Geräte aktiviert und deaktiviert werden.
+
+Unter dem TAB `Übersicht` werden alle konfigurierten Enocean items angezeigt.
+
+Unter dem TAB 'Neu anlerenen' können neue Enocean Aktuatoren angelernt werden. Hierzu wird 
+
+  a) Der entsprechende Aktor/Stellglied in den Anlernmodus gebracht (siehe jeweilige Bedienungsanleitung)
+  b) Eine Transmit ID ausgewählt (TX ID). Enocean unterstützt bis zu 127 verschiedene IDs.
+  c) Als Hinweis bzw. Vorschlag wird die erste freie ID auf der linken Seite angezeigt.
+  c) Der Aktortyp ausgwählt. Im Plugin wird anhand des Typs das Lerntelegram ausgewählt. 
+  d) Auf die Schaltfläche ``Anlernen`` klicken. Das Anlerntelegram wird gesendet und der Aktor sollte den Anlernvorgang quittieren (siehe jeweilige Bedienungsanleitung).
+
+
 
 
 Beispiele
