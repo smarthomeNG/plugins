@@ -18,32 +18,34 @@
 <script>
     $(document).ready( function () {
 		$(window).trigger('datatables_defaults');
+		{% if webif_pagelength is defined %}webif_pagelength = {{ webif_pagelength|int }};{% endif %}
+		if (isNaN(parseFloat(webif_pagelength)) || webif_pagelength == 0) {
+			resize = true;
+			webif_pagelength = -1;
+		console.log('Activating automatic table resize');
+		}
+		else {
+			resize = false;
+		}
 		try {
-      /* get pagelength from http module or plugin. */
-	    {% if webif_pagelength is defined %}webif_pagelength = {{ webif_pagelength|int }};{% endif %}
-      if (isNaN(parseFloat(webif_pagelength)) || webif_pagelength == 0) {
-        resize = true;
-        webif_pagelength = -1;
-      }
-      else {
-        resize = false;
-      }
-	  console.log("Webif page length " + webif_pagelength + ", pageResize: " + resize);
-    }
-    catch (e) {
-      webif_pagelength = 100;
-      resize = false;
-      console.log("Using default values for page length " + webif_pagelength + ", pageResize: " + resize);
-    }
-		try {
+			{% if p.init.get_items('zone0')|length>0 %}
 			$('#zone0').DataTable( {pageLength: webif_pagelength, pageResize: resize} );
+			{% endif %}
 			$('#querylog').DataTable( {responsive: false, columnDefs: [{ "width": "300px", "targets": 0 }]} );
 			$('#commandlog').DataTable( {responsive: false, columnDefs: [{ "width": "300px", "targets": 0 }]} );
 			$('#buffer').DataTable( {responsive: false, columnDefs: [{ "width": "300px", "targets": 0 }]} );
+			{% if p.init.get_items('zone0')|length>0 %}
 			$('#zone1').DataTable( {pageLength: webif_pagelength, pageResize: resize} );
+			{% endif %}
+			{% if p.init.get_items('zone0')|length>0 %}
 			$('#zone2').DataTable( {pageLength: webif_pagelength, pageResize: resize} );
+			{% endif %}
+			{% if p.init.get_items('zone0')|length>0 %}
 			$('#zone3').DataTable( {pageLength: webif_pagelength, pageResize: resize} );
+			{% endif %}
+			{% if p.init.get_items('zone0')|length>0 %}
 			$('#zone4').DataTable( {pageLength: webif_pagelength, pageResize: resize} );
+			{% endif %}
 		}
 		catch (e) {
 			console.log("Datatable JS not loaded, showing standard table without reorder option " + e)
@@ -330,7 +332,7 @@
 {% block bodytab2 %}
 <div class="container-fluid m-2 table-resize">
 {% if item_count_zone0>0 %}
-  <table id="zone0">
+  <table id="zone0" class="dataTableAdditional">
     <thead>
     <tr>
 			<th></th>
@@ -369,7 +371,7 @@
 {% block bodytab3 %}
 <div class="container-fluid m-2 table-resize">
 {% if item_count_zone1>0 %}
-  <table id="zone1">
+  <table id="zone1" class="dataTableAdditional">
     <thead>
     <tr>
 			<th></th>
@@ -403,7 +405,7 @@
 {% block bodytab4 %}
 <div class="container-fluid m-2 table-resize">
 {% if item_count_zone2>0 %}
-  <table id="zone2">
+  <table id="zone2" class="dataTableAdditional">
     <thead>
     <tr>
 			<th></th>
@@ -438,7 +440,7 @@
 {% block bodytab5 %}
 <div class="container-fluid m-2 table-resize">
 {% if item_count_zone3>0 %}
-  <table id="zone3">
+  <table id="zone3" class="dataTableAdditional">
     <thead>
     <tr>
 			<th></th>
@@ -472,7 +474,7 @@
 {% block bodytab6 %}
 <div class="container-fluid m-2 table-resize">
 {% if item_count_zone4>0 %}
-  <table id="zone4">
+  <table id="zone4" class="dataTableAdditional">
     <thead>
     <tr>
       <th>{{ _('Item') }}</th>
