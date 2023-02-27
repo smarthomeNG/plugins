@@ -31,9 +31,9 @@
 			{% if p.init.get_items('zone0')|length>0 %}
 			$('#zone0').DataTable( {pageLength: webif_pagelength, pageResize: resize} );
 			{% endif %}
-			$('#querylog').DataTable( {responsive: false, columnDefs: [{ "width": "300px", "targets": 0 }]} );
-			$('#commandlog').DataTable( {responsive: false, columnDefs: [{ "width": "300px", "targets": 0 }]} );
-			$('#buffer').DataTable( {responsive: false, columnDefs: [{ "width": "300px", "targets": 0 }]} );
+			$('#querylog').DataTable( {responsive: false, order: [[0, 'desc']], columnDefs: [{ "width": "300px", "targets": 0 }].concat($.fn.dataTable.defaults.columnDefs)} );
+			$('#commandlog').DataTable( {responsive: false, order: [[0, 'desc']], columnDefs: [{ "width": "300px", "targets": 0 }].concat($.fn.dataTable.defaults.columnDefs)} );
+			$('#buffer').DataTable( {responsive: false, order: [[0, 'desc']], columnDefs: [{ "width": "300px", "targets": 0 }].concat($.fn.dataTable.defaults.columnDefs)} );
 			{% if p.init.get_items('zone0')|length>0 %}
 			$('#zone1').DataTable( {pageLength: webif_pagelength, pageResize: resize} );
 			{% endif %}
