@@ -43,7 +43,7 @@ class OneWire(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.9.1'
+    PLUGIN_VERSION = '1.9.2'
 
     _flip = {0: '1', False: '1', 1: '0', True: '0', '0': True, '1': False}
 
@@ -289,7 +289,7 @@ class OneWire(SmartPlugin):
                     if key.startswith('O'):  # ignore output
                         continue
                     path = self._ios[addr][key]['path']
-                    items = self.get_items_for_command(addr + '-' + key)
+                    items = self.get_items_for_mapping(addr + '-' + key)
                     if path is None:
                         if debugLog:
                             self.logger.debug(f"_io_cycle: path not found for {item.id()}")
@@ -395,7 +395,7 @@ class OneWire(SmartPlugin):
                 break
             for key in self._sensors[addr]:
                 path = self._sensors[addr][key]['path']
-                items = self.get_items_for_command(addr+'-'+key)
+                items = self.get_items_for_mapping(addr+'-'+key)
                 if path is None:
                     if debugLog:
                         self.logger.debug(f"_sensor_cycle: path not found for {item.id()}")
@@ -492,7 +492,7 @@ class OneWire(SmartPlugin):
                     if addr in self._ibutton_masters:
                         self._ibutton_buses[bus] = self._ibutton_masters[addr]
                     self._webif_buses[bus][addr]['deviceclass'] = 'iButton master'
-                    items = self.get_items_for_command(addr + '-' + 'BM')
+                    items = self.get_items_for_mapping(addr + '-' + 'BM')
                     for item in items:
                         config_dict = self.get_item_config(item)
                         config_dict['bus'] = bus
@@ -513,7 +513,7 @@ class OneWire(SmartPlugin):
                     for key in keys:
                         if key in table[addr]:
                             table[addr][key]['path'] = sensor + keys[key]
-                        items = self.get_items_for_command(addr + '-' + key)
+                        items = self.get_items_for_mapping(addr + '-' + key)
                         for item in items:
                             config_dict = self.get_item_config(item)
                             config_dict['sensor_key'] = key
