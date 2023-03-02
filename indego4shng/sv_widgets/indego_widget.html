@@ -1,0 +1,163 @@
+/*********************************************
+*
+*  Widget for the Spinner
+*
+*********************************************/
+
+{% macro spinner(id, item,_backend ) %}
+
+{% import "basic.html" as basic %}
+<div{% if not id is empty %} id="{{ uid(page, id) }}"{% endif %} data-widget="indego.spinner" data-item="{{ item }}" data-designType="{{ _backend }}">
+
+<html>
+<body>
+  <div id="{{uid('overlay', id) }}" class="spinnerHidden">
+      <div id="{{uid('spinner', id) }}" class="loader"></div>
+  </div>
+<script>
+  spinner = document.getElementById("{{uid('spinner', id) }}");
+</script>
+</body>
+</html>
+</div>
+
+
+{% endmacro %}
+
+
+/*********************************************
+*
+*  Widget for the alerts
+*
+*********************************************/
+
+{% macro alerts(id, item,_backend ) %}
+
+{% import "basic.html" as basic %}
+<div{% if not id is empty %} id="{{ uid(page, id) }}"{% endif %} data-widget="indego.alerts" data-item="{{ item }}" data-designType="{{ _backend }}"></div>
+{% endmacro %}
+
+
+/*********************************************
+*
+*  Widget for the params
+*
+*********************************************/
+
+{% macro params(id, item,_backend ) %}
+<div{% if not id is empty %} id="{{ uid(page, id) }}"{% endif %} data-widget="indego.params" data-item="{{ item }}" data-designType="{{ _backend }}"></div>
+{% endmacro %}
+
+/*********************************************
+*
+*  Widget for the garden-map
+*
+*********************************************/
+{% macro garden_map(id, item,_backend) %}
+	<div{% if not id is empty %} id="{{ uid(page, id) }}"{% endif %} data-widget="indego.garden_map" data-item="{{ item }}" data-designType="{{ _backend }}"></div>
+{% endmacro %}
+
+
+
+
+/*********************************************
+*
+*  Widget for the Indego-Symbols
+*
+*********************************************/
+/**
+* @param unique id for this widget
+* @param one or more item(s). More items in array form: [ item1 , item2 ]
+* @param the pic, shown when item has value val
+* @param value (default 1)
+* @param the mode, 'or', 'and' (default 'or')
+* @param the text, shown above the picture
+
+*/
+
+{% macro symbol(id, items, pic, val, mode,text, ignore_text) %}
+	{% import "basic.html" as basic %}
+	<div id="{{ uid(page, id) }}" data-widget="indego.symbol" data-item="{{ implode(items) }}" data-val="{{ val|default('1') }}"
+		data-mode="{{ mode|default('or') }}" class="symbol hide">
+        {% if not text is empty %}<font style="font-size:200%" color="red"><strong>{{  text }}</strong></font><br><br>{% endif %}
+		<img src="{{  pic }}" style="width:100%;height:100%;">
+	</div>
+{% endmacro %}
+
+
+
+/*********************************************
+*
+*  Widget for the SmartMowCalendar
+*
+*********************************************/
+{% macro smartmow_calendar(id, item,_backend ) %}
+
+{% import "basic.html" as basic %}
+	<div{% if not id is empty %} id="{{ uid(page, id) }}"{% endif %} data-widget="indego.smartmow_calendar" data-item="{{ item }}" data-designType="{{ _backend }}"></div>
+{% endmacro %}
+
+
+/*********************************************
+*
+*  Widget for the Mow Calendar
+*
+*********************************************/
+{% macro mow_calendar(id, item,_backend ) %}
+
+{% import "basic.html" as basic %}
+	<div{% if not id is empty %} id="{{ uid(page, id) }}"{% endif %} data-widget="indego.calendar" data-item="{{ item }}" data-designType="{{ _backend }}"></div>
+{% endmacro %}
+
+
+
+/*********************************************
+*
+*  Widget for the predictive Calendar
+*
+*********************************************/
+
+
+{% macro predictive_calendar(id, item,_backend ) %}
+
+{% import "basic.html" as basic %}
+	<div{% if not id is empty %} id="{{ uid(page, id) }}"{% endif %} data-widget="indego.calendar_predictive_list" data-item="{{ item }}" data-designType="{{ _backend }}"></div>
+{% endmacro %}
+
+
+/*********************************************
+*
+*  Widget for the Weather-Pictures
+*
+*********************************************/
+/**
+* Displays an image witch is been reloaded after a given time
+*
+* @param {id} unique id for this widget
+* @param {image} the path/url to the image
+
+*/
+{% macro image(id, item) %}
+
+	<img id="{{ uid(page, id) }}" data-widget="indego.image" alt="indego.image" data-item="{{ item }}" data-designType="{{ _backend }}"
+		{% if mode == 'corner' %}
+			class="ui-corner-all"
+		{% elseif mode == 'corner-bottom' %}
+			class="ui-corner-bottom"
+		{% elseif mode == 'fill' %}
+			style="width: 100%"
+		{% endif %}
+		src="pages/base/pics/trans.png" style="width:100%" />
+
+{% endmacro %}
+
+/*********************************************
+*
+*  Widget for the Mode
+*
+*********************************************/
+{% macro mode(id, item,_backend ) %}
+
+{% import "basic.html" as basic %}
+	<div{% if not id is empty %} id="{{ uid(page, id) }}"{% endif %} data-widget="indego.mode" data-item="{{ item }}" data-designType="{{ _backend }}"></div>
+{% endmacro %}

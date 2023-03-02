@@ -1,0 +1,66 @@
+/*********************************************
+*
+*  Widget for the Indego-Statussymbol Anzeige
+*
+*********************************************/
+/**
+* @param ID     :	(Optional)
+* @param item   :   item for the Mower Type
+*
+*/
+{% macro status(id, item) %}
+	{% import "basic.html" as basic %}
+	{% import "indego_widget.html" as indego %}
+        
+
+    /** # Get general Informations if files are existing ----------------------- */
+
+    {% if isfile("dropins/icons/ws/indego-s.png") %}
+        {% set logo_small = "OK" %}
+        <input id="logo_small_OK" type="hidden" name="logo_small" value="1">
+    {% else %}
+        {% set logo_small = "NIO" %}
+        <input id="logo_small_OK" type="hidden" name="logo_small" value="0">
+	{% endif %}
+
+    {% if isfile("dropins/icons/ws/indego.png") %}
+        {% set logo_big = "OK" %}
+        <input id="logo_big_OK" type="hidden" name="logo_big" value="1">
+    {% else %}
+        {% set logo_big = "NIO" %}
+        <input id="logo_big_OK" type="hidden" name="logo_big" value="0">
+	{% endif %}
+        
+	<div id="{{ uid(page, id) }}" data-widget="indego.status" data-item="{{ implode(item) }}">
+
+        <div id="Indego_small" style="display: none;">
+            {{ indego.symbol('state_offline_s','indego.online','dropins/icons/ws/indego-s.png',0,'','Offline') }}
+			{{ indego.symbol('state_docked_s',['indego.docked','indego.online'],'dropins/icons/ws/indego-s-docked.png','','and') }}
+			{{ indego.symbol('state_moving_s',['indego.moving','indego.online'],'dropins/icons/ws/indego-s-mowing.png','','and') }}
+			{{ indego.symbol('state_pause_s',['indego.pause','indego.online'],'dropins/icons/ws/indego-s.png','','and','Pause') }}
+			{{ indego.symbol('state_help_s','indego.help','dropins/icons/ws/indego-s.png','','','Brauche Hilfe') }}
+        </div>
+
+        <div id="Indego_big" style="display: none;">
+			{{ indego.symbol('state_offline_b','indego.online','dropins/icons/ws/indego.png',0,'and','Offline') }}
+			{{ indego.symbol('state_docked_b', ['indego.docked','indego.online'],'dropins/icons/ws/indego-docked.png','','and') }}
+			{{ indego.symbol('state_moving_b', ['indego.moving','indego.online'],'dropins/icons/ws/indego-mowing.png','','and') }}
+			{{ indego.symbol('state_pause_b',  ['indego.pause','indego.online'],'dropins/icons/ws/indego.png','','and','Pause') }}
+			{{ indego.symbol('state_help_b',   'indego.help','dropins/icons/ws/indego.png','','','Brauche Hilfe') }}
+        </div>
+
+        <div id="Indego_unknown" style="display: none;">
+		    {{ basic.symbol('state_offline_u', 'indego.online','','dropins/icons/ws/scene_robo_lawnmower_offline.svg',0,'','#f00') }}
+		    {{ basic.symbol('state_docked_u', ['indego.docked','indego.online'],'','dropins/icons/ws/scene_robo_lawnmower_docked.svg','','and') }}
+		    {{ basic.symbol('state_moving_u', ['indego.moving','indego.online'],'','dropins/icons/ws/scene_robo_lawnmower_moving.svg','','and','icon1') }}
+		    {{ basic.symbol('state_pause_u', ['indego.pause','indego.online'],'','dropins/icons/ws/scene_robo_lawnmower_stopp.svg','','and') }}
+		    {{ basic.symbol('state_help_u', 'indego.help','','dropins/icons/ws/scene_robo_lawnmower_help.svg','','','#f00') }}
+        </div>
+        <br />
+        <center>
+                <font style="font-size:200%">{{ basic.print('', 'indego.mowedPercent', '%') }}</br></font>
+                <font style="font-size:100%"></font>
+        </center>
+
+    </div>
+{% endmacro %}
