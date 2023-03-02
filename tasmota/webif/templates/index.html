@@ -2,7 +2,7 @@
 {% set logo_frame = false %}
 
 <!-- set update_interval to a value > 0 (in milliseconds) to enable periodic data updates -->
-{% set update_interval = ((50 * item_count / 1000) | round | int) * 1000 %}
+{% set update_interval = [(((10 * item_count) / 1000) | round | int) * 1000, 5000]|max %}
 
 <!-- Additional styles go into this block. Examples are for datatables -->
 {% block pluginstyles %}
@@ -76,6 +76,9 @@
         table = $('#rftable').DataTable( { 
             pageLength: webif_pagelength,
             pageResize: resize });
+        table = $('#othersensortable').DataTable( {
+            pageLength: webif_pagelength,
+            pageResize: resize });
         table = $('#zigbeetable').DataTable( { 
             pageLength: webif_pagelength,
             pageResize: resize} );
@@ -132,6 +135,11 @@
 				        shngInsertText (device+'AM2301_temp', objResponse['device_values'][device]['sensors']['AM2301']['temperature']+ '°C', 'environtable');
                         shngInsertText (device+'AM2301_hum', objResponse['device_values'][device]['sensors']['AM2301']['hum']+ '%rH', 'environtable');
                         shngInsertText (device+'AM2301_dew', objResponse['device_values'][device]['sensors']['AM2301']['dewpoint']+ '°C', 'environtable');
+	                }
+	                if (objResponse['device_values'][device]['sensors']['SHT3X'] != null) {
+				        shngInsertText (device+'AM2301_temp', objResponse['device_values'][device]['sensors']['SHT3X']['temperature']+ '°C', 'environtable');
+                        shngInsertText (device+'AM2301_hum', objResponse['device_values'][device]['sensors']['SHT3X']['hum']+ '%rH', 'environtable');
+                        shngInsertText (device+'AM2301_dew', objResponse['device_values'][device]['sensors']['SHT3X']['dewpoint']+ '°C', 'environtable');
 	                }
                 }
                 if (objResponse['device_values'][device]['lights'] != null) {
@@ -241,17 +249,17 @@
 {% endif %}
 
 <!--Set TabTitle-->
-{% if p.tasmota_items != [] %}
-    {% set tab1title = _("<strong>" ~ p.get_shortname() ~ " Items</strong>") %}
+{% if items != [] %}
+    {% set tab1title = _("<strong>" ~ plugin_shortname ~ " Items</strong>") %}
 {% else %}
     {% set tab1title = "hidden" %}
 {% endif %}
-{% set tab2title = _("<strong>" ~ p.get_shortname() ~ " Devices</strong>") %}
-{% set tab3title = _("<strong>" ~ p.get_shortname() ~ " " ~ _('Details') ~ "</strong>") %}
-{% set tab4title = _("<strong>" ~ p.get_shortname() ~ " " ~ _('Zigbee Devices') ~ "</strong>") %}
+{% set tab2title = _("<strong>" ~ plugin_shortname ~ " Devices</strong>") %}
+{% set tab3title = _("<strong>" ~ plugin_shortname ~ " " ~ _('Details') ~ "</strong>") %}
+{% set tab4title = _("<strong>" ~ plugin_shortname ~ " " ~ _('Zigbee Devices') ~ "</strong>") %}
 {% set tab5title = _("<strong>" ~ " Broker Information</strong>") %}
 {% if maintenance %}
-    {% set tab6title = _("<strong>" ~ p.get_shortname() ~ " " ~ _('Maintenance') ~ "</strong>") %}
+    {% set tab6title = _("<strong>" ~ plugin_shortname ~ " " ~ _('Maintenance') ~ "</strong>") %}
 {% else %}
     {% set tab6title = "hidden" %}
 {% endif %}
@@ -263,7 +271,7 @@
     <table id="itemtable">
         <thead>
             <tr>
-                <th></th>
+                <th class="plus"></th>
                 <th>{{ _('Item') }}</th>
                 <th class="typ">{{ _('Typ') }}</th>
                 <th class="value">{{ _('Wert') }}</th>
@@ -274,7 +282,7 @@
             </tr>
         </thead>
         <tbody>
-            {% for item in p.tasmota_items %}
+            {% for item in items %}
                 <tr>
                     <td></td>
                     <td class="py-1">{{ item._path }}</td>
@@ -304,7 +312,7 @@
     <table id="devicetable">
         <thead>
             <tr>
-                <th></th>
+                <th class="plus"></th>
                 <th>{{ _('Tasmota Topic') }}</th>
                 <th class="online">{{ _('Online') }}</th>
                 <th>{{ _('Friendy Name') }}</th>
@@ -324,11 +332,11 @@
                     <tr>
                         <td></td>
                         <td class="py-1"><a class="text-shng" href="http://{{ p.tasmota_devices[device].ip }}" target="_blank">{{ device }}</a></td>
-                        <td class="py-1" id="{{ device }}_online">.{{ p.tasmota_devices[device].online }}</td>
+                        <td class="py-1" id="{{ device }}_online">{{ p.tasmota_devices[device].online }}</td>
                         <td class="py-1">{{ p.tasmota_devices[device].friendly_name }}</td>
                         <td class="py-1">{{ p.tasmota_devices[device].mac }}</td>
                         <td class="py-1">{{ p.tasmota_devices[device].ip }}</td>
-                        <td class="py-1" id="{{ device }}_uptime">.{{ p.tasmota_devices[device].uptime }}</td>
+                        <td class="py-1" id="{{ device }}_uptime">{{ p.tasmota_devices[device].uptime }}</td>
                         <td class="py-1">
                             {% if p.tasmota_devices[device]['sensors'] != {} %}
                                 {% for key in p.tasmota_devices[device]['sensors'] %}
@@ -339,10 +347,10 @@
                                     -
                             {% endif %}
                         </td>
-                        <td class="py-1" id="{{ device }}_fw">.{{ p.tasmota_devices[device].fw_ver }}</td>
+                        <td class="py-1" id="{{ device }}_fw">{{ p.tasmota_devices[device].fw_ver }}</td>
                         <td class="py-1">{{ p.tasmota_devices[device].module }}</td>
                         {%  if p.tasmota_devices[device]['wifi_signal'] %}
-                            <td class="py-1" id="{{ device }}_wifi">.{{ p.tasmota_devices[device].wifi_signal }} dBm </td>
+                            <td class="py-1" id="{{ device }}_wifi">{{ p.tasmota_devices[device].wifi_signal }} dBm </td>
                         {% else %}
                             <td class="py-1"></td>
                         {% endif %}
@@ -373,7 +381,7 @@
     <table id="energytable">
         <thead>
             <tr>
-                <th></th>
+                <th class="plus"></th>
                 <th>{{ _('Tasmota Topic') }}</th>
                 <th>{{ _('Spannung') }}</th>
                 <th>{{ _('Strom') }}</th>
@@ -419,7 +427,7 @@
     <table id="environtable">
         <thead>
             <tr>
-                <th></th>
+                <th class="plus"></th>
                 <th>{{ _('Tasmota Topic') }}</th>
                 <th>{{ _('Temperatur') }}</th>
                 <th>{{ _('Luftfeuchtigkeit') }}</th>
@@ -474,6 +482,32 @@
     </table>
     </br>
     </br>
+{% endif %}
+
+{% if p.has_other_sensor %}
+    <caption><h3><strong>OTHER SENSORS</strong></h3></caption>
+    <table id="othersensortable">
+        <thead>
+            <tr>
+                <th class="plus"></th>
+                <th>{{ _('Sensor') }}</th>
+                <th>{{ _('Sensor Details') }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for device in p.tasmota_devices %}
+                {% for sensor in p.tasmota_devices[device]['sensors'] %}
+                    {% if sensor not in p.SENSORS %}
+                        <tr>
+                            <td></td>
+                            <td class="py-1">{{ sensor }}</td>
+                            <td class="py-1" id="{{ device }}_{{ sensor }}">{{ p.tasmota_devices[device]['sensors'][sensor] }}</td>
+                        </tr>
+                    {% endif %}
+                {% endfor %}
+            {% endfor %}
+        </tbody>
+    </table>
 {% endif %}
 
 {% if p.has_lights %}
@@ -547,6 +581,9 @@
             {% endif %}
         </tbody>
     </table>
+
+    </br>
+    </br>
 {% endif %}
 </div>
 {% endblock %}
@@ -574,12 +611,12 @@
                 <tr>
                     <td></td>
                     <td class="py-1">{{ device }}</td>
-                    <td class="py-1">{{ p.tasmota_zigbee_devices[device]['IEEEAddr'] }}</td>
-                    <td class="py-1">{{ p.tasmota_zigbee_devices[device]['Manufacturer'] }}</td>
-                    <td class="py-1">{{ p.tasmota_zigbee_devices[device]['ModelId'] }}</td>
-                    <td class="py-1">{{ p.tasmota_zigbee_devices[device]['LinkQuality'] }}</td>
-                    <td class="py-1">{{ p.tasmota_zigbee_devices[device]['BatteryPercentage'] }}</td>
-                    <td class="py-1">{{ p.tasmota_zigbee_devices[device]['LastSeenEpoch'] }}</td>
+                    <td class="py-1">{{ p.tasmota_zigbee_devices[device]['ieeeaddr'] }}</td>
+                    <td class="py-1">{{ p.tasmota_zigbee_devices[device]['manufacturer'] }}</td>
+                    <td class="py-1">{{ p.tasmota_zigbee_devices[device]['modelid'] }}</td>
+                    <td class="py-1">{{ p.tasmota_zigbee_devices[device]['linkquality'] }}</td>
+                    <td class="py-1">{{ p.tasmota_zigbee_devices[device]['batterypercentage'] }}</td>
+                    <td class="py-1">{{ p.tasmota_zigbee_devices[device]['lastseenepoch'] }}</td>
                     <td class="py-1">{{ p.tasmota_zigbee_devices[device] }}</td>
                 </tr>
             {% endfor %}
@@ -606,25 +643,25 @@
             </tr>
             <tr>
                 <td>{{ 'Active Clients' }}</td>
-                <td id="active_clients">.{{ p._broker.active_clients }}</td>
+                <td id="active_clients">{{ p._broker.active_clients }}</td>
             </tr>
             <tr>
                 <td>{{ 'Subscriptions' }}</td>
-                <td id="subscriptions">.{{ p._broker.subscriptions }}</td>
+                <td id="subscriptions">{{ p._broker.subscriptions }}</td>
             </tr>
             <tr>
                 <td>{{ 'Messages stored' }}</td>
-                <td id="stored_messages">.{{ p._broker.stored_messages }}</td>
+                <td id="stored_messages">{{ p._broker.stored_messages }}</td>
             </tr>
             <tr>
                 <td>{{ 'Retained Messages' }}</td>
-                <td id="retained_messages">.{{ p._broker.retained_messages }}</td>
+                <td id="retained_messages">{{ p._broker.retained_messages }}</td>
             </tr>
             
             {% if p.broker_monitoring %}
                  <tr>
                     <td>{{ _('Laufzeit') }}</td>
-                    <td id="broker_uptime">.{{ p.broker_uptime() }}</td>
+                    <td id="broker_uptime">{{ p.broker_uptime() }}</td>
                 </tr>
             {% endif %}
             
@@ -645,15 +682,15 @@
         <tbody>
             <tr>
                 <td>{{ _('Durchschnittlich Messages je Minute empfangen') }}</td>
-                <td id="msg_rcv_1min">.{{ p._broker.msg_rcv_1min }}</td>
-                <td id="msg_rcv_5min"> &nbsp; &nbsp; .{{ p._broker.msg_rcv_5min }}</td>
-                <td id="msg_rcv_15min"> &nbsp; &nbsp; .{{ p._broker.msg_rcv_15min }}</td>
+                <td id="msg_rcv_1min"> &nbsp; &nbsp; {{ p._broker.msg_rcv_1min }}</td>
+                <td id="msg_rcv_5min"> &nbsp; &nbsp; {{ p._broker.msg_rcv_5min }}</td>
+                <td id="msg_rcv_15min"> &nbsp; &nbsp; {{ p._broker.msg_rcv_15min }}</td>
             </tr>
             <tr>
                 <td>{{ _('Durchschnittlich Messages je Minute gesendet') }}</td>
-                <td id="msg_snt_1min">.{{ p._broker.msg_snt_1min }}</td>
-                <td id="msg_snt_5min"> &nbsp; &nbsp; .{{ p._broker.msg_snt_5min }}</td>
-                <td id="msg_snt_15min"> &nbsp; &nbsp; .{{ p._broker.msg_snt_15min }}</td>
+                <td id="msg_snt_1min"> &nbsp; &nbsp; {{ p._broker.msg_snt_1min }}</td>
+                <td id="msg_snt_5min"> &nbsp; &nbsp; {{ p._broker.msg_snt_5min }}</td>
+                <td id="msg_snt_15min"> &nbsp; &nbsp; {{ p._broker.msg_snt_15min }}</td>
             </tr>
         </tbody>
     </table>
@@ -663,6 +700,27 @@
 
 
 {% block bodytab6 %}
+<!--
+<div class="container-fluid m-2">
+    <table id="" class="table table-striped table-hover pluginList">
+        <thead>
+            <tr class="shng_heading">
+                <th>{{ _('Tasmota Device') }}</th>
+                <th>{{ _('Tasmota Device Details') }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for device in p.tasmota_objects_dict %}
+                <tr>
+                    <td>{{ device }}</td>
+                    <td>{{ p.tasmota_objects_dict[device] }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+-->
+
 <div class="container-fluid m-2">
     <table id="" class="table table-striped table-hover pluginList">
         <thead>
@@ -678,6 +736,15 @@
                     <td>{{ p.tasmota_devices[device] }}</td>
                 </tr>
             {% endfor %}
+            <tr>
+                <td>{{ 'DEVICE_DICT_1' }}</td>
+                <td>{{ p.DEVICE_DICT_1 }}</td>
+            </tr>
+            <tr>
+                <td>{{ 'DEVICE_DICT_2' }}</td>
+                <td>{{ p.DEVICE_DICT_2 }}</td>
+            </tr>
+
         </tbody>
     </table>
 </div>
@@ -700,7 +767,6 @@
         </tbody>
     </table>
 </div>
-
 {% endblock %}
 
 

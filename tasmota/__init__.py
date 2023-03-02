@@ -32,14 +32,16 @@ class Tasmota(MqttPlugin):
     Main class of the Plugin. Does all plugin specific stuff and provides the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.3.0'
+    PLUGIN_VERSION = '1.4.0'
 
     LIGHT_MSG = ['HSBColor', 'Dimmer', 'Color', 'CT', 'Scheme', 'Fade', 'Speed', 'LedTable', 'White']
+
     RF_MSG = ['RfSync', 'RfLow', 'RfHigh', 'RfCode']
-    ZIGBEE_BRIDGE_DEFAULT_OPTIONS = {'SetOption89': 'OFF',
+
+    ZIGBEE_BRIDGE_DEFAULT_OPTIONS = {'SetOption89':  'OFF',
                                      'SetOption101': 'OFF',
                                      'SetOption120': 'OFF',
-                                     'SetOption83': 'ON',
+                                     'SetOption83':  'ON',
                                      'SetOption112': 'OFF',
                                      'SetOption110': 'OFF',
                                      'SetOption119': 'OFF',
@@ -47,30 +49,54 @@ class Tasmota(MqttPlugin):
                                      'SetOption125': 'ON',
                                      }
     TASMOTA_ATTR_R_W = ['relay', 'hsb', 'white', 'ct', 'rf_send', 'rf_key_send', 'zb_permit_join', 'zb_forget', 'zb_ping', 'rf_key']
+
     TASMOTA_ZB_ATTR_R_W = ['power', 'hue', 'sat', 'ct', 'dimmer', 'ct_k']
-    ENERGY_SENSOR_KEYS = {'Voltage': 'item_voltage', 'Current': 'item_current', 'Power': 'item_power',
-                          'ApparentPower': 'item_apparent_power', 'ReactivePower': 'item_reactive_power',
-                          'Factor': 'item_power_factor',
-                          'TotalStartTime': 'item_total_starttime', 'Total': 'item_power_total',
-                          'Yesterday': 'item_power_yesterday', 'Today': 'item_power_today'}
+
+    ENERGY_SENSOR_KEYS = {'Voltage':        'item_voltage',
+                          'Current':        'item_current',
+                          'Power':          'item_power',
+                          'ApparentPower':  'item_apparent_power',
+                          'ReactivePower':  'item_reactive_power',
+                          'Factor':         'item_power_factor',
+                          'TotalStartTime': 'item_total_starttime',
+                          'Total':          'item_power_total',
+                          'Yesterday':      'item_power_yesterday',
+                          'Today':          'item_power_today'}
+
     ENV_SENSOR = ['DS18B20', 'AM2301', 'SHT3X', 'BMP280', 'DHT11']
-    ENV_SENSOR_KEYS = {'Temperature': 'item_temp', 'Humidity': 'item_hum', 'DewPoint': 'item_dewpoint', 'Pressure': 'item_pressure', 'Id': 'item_1wid'}
+
+    ENV_SENSOR_KEYS = {'Temperature': 'item_temp',
+                       'Humidity':    'item_hum',
+                       'DewPoint':    'item_dewpoint',
+                       'Pressure':    'item_pressure',
+                       'Id':          'item_1wid'}
+
+    ANALOG_SENSOR_KEYS = {'Temperature':  'item_analog_temp',
+                          'Temperature1': 'item_analog_temp1',
+                          'A0':           'item_analog_a0',
+                          'Range':        'item_analog_range'}
+
+    ESP32_SENSOR_KEYS = {'Temperature': 'item_esp32_temp'}
+
+    SENSORS = [*ENV_SENSOR,
+               'ENERGY',
+               ]
 
     def __init__(self, sh):
         """
         Initializes the plugin.
         """
+
         # Call init code of parent class (MqttPlugin)
         super().__init__()
         if not self._init_complete:
             return
 
         # get the parameters for the plugin (as defined in metadata plugin.yaml):
-        self.webif_pagelength = self.get_parameter_value('webif_pagelength')
         self.telemetry_period = self.get_parameter_value('telemetry_period')
+        self.full_topic = self.get_parameter_value('full_topic').lower()
 
         # crate full_topic
-        self.full_topic = self.get_parameter_value('full_topic').lower()
         if self.full_topic.find('%prefix%') == -1 or self.full_topic.find('%topic%') == -1:
             self.full_topic = '%prefix%/%topic%/'
         if self.full_topic[-1] != '/':
@@ -81,6 +107,7 @@ class Tasmota(MqttPlugin):
         self.tasmota_zigbee_devices = {}            # to hold tasmota zigbee device information for web interface
         self.tasmota_items = []                     # to hold item information for web interface
         self.topics_of_retained_messages = []       # to hold all topics of retained messages
+
         self.alive = None
 
         # Add subscription to get device discovery
@@ -142,19 +169,23 @@ class Tasmota(MqttPlugin):
         if self.has_iattr(item.conf, 'tasmota_topic'):
             tasmota_topic = self.get_iattr_value(item.conf, 'tasmota_topic')
             self.logger.info(f"parsing item: {item.id()} with tasmota_topic={tasmota_topic}")
+
             tasmota_attr = self.get_iattr_value(item.conf, 'tasmota_attr')
+            tasmota_relay = self.get_iattr_value(item.conf, 'tasmota_relay')
+            tasmota_rf_details = self.get_iattr_value(item.conf, 'tasmota_rf_key')
             tasmota_zb_device = self.get_iattr_value(item.conf, 'tasmota_zb_device')
             tasmota_zb_group = self.get_iattr_value(item.conf, 'tasmota_zb_group')
             tasmota_zb_attr = self.get_iattr_value(item.conf, 'tasmota_zb_attr')
-            tasmota_relay = self.get_iattr_value(item.conf, 'tasmota_relay')
-            tasmota_rf_details = self.get_iattr_value(item.conf, 'tasmota_rf_key')
             tasmota_zb_attr = tasmota_zb_attr.lower() if tasmota_zb_attr else None
+            tasmota_sml_device = self.get_iattr_value(item.conf, 'tasmota_sml_device')
+            tasmota_sml_attr = self.get_iattr_value(item.conf, 'tasmota_sml_attr')
+            tasmota_sml_attr = tasmota_sml_attr.lower() if tasmota_sml_attr else None
 
             # handle tasmota devices without zigbee
             if tasmota_attr:
                 self.logger.info(f"Item={item.id()} identified for Tasmota with tasmota_attr={tasmota_attr}")
                 tasmota_attr = tasmota_attr.lower()
-                tasmota_relay = 1 if not tasmota_relay else None
+                tasmota_relay = 1 if not tasmota_relay else tasmota_relay
 
                 if tasmota_rf_details and '=' in tasmota_rf_details:
                     tasmota_rf_details, tasmota_rf_key_param = tasmota_rf_details.split('=')
@@ -176,6 +207,10 @@ class Tasmota(MqttPlugin):
             elif tasmota_zb_group and tasmota_zb_attr:
                 self.logger.info(f"Item={item.id()} identified for Tasmota Zigbee with tasmota_zb_group={tasmota_zb_group} and tasmota_zb_attr={tasmota_zb_attr}")
 
+            # handle tasmota smartmeter devices
+            elif tasmota_sml_device and tasmota_sml_attr:
+                self.logger.info(f"Item={item.id()} identified for Tasmota SML with tasmota_sml_device={tasmota_sml_device} and tasmota_sml_attr={tasmota_sml_attr}")
+
             # handle everything else
             else:
                 self.logger.info(f"Definition of attributes for item={item.id()} incomplete. Item will be ignored.")
@@ -189,13 +224,16 @@ class Tasmota(MqttPlugin):
             # fill tasmota_device dict
             self.tasmota_devices[tasmota_topic]['connected_to_item'] = True
             if tasmota_attr == 'relay' and tasmota_relay:
-                self.tasmota_devices[tasmota_topic]['connected_items'][f'item_{tasmota_attr}{tasmota_relay}'] = item
+                item_type = f'item_{tasmota_attr}{tasmota_relay}'
             elif tasmota_attr == 'rf_key' and tasmota_rf_details:
-                self.tasmota_devices[tasmota_topic]['connected_items'][f'item_{tasmota_attr}{tasmota_rf_details}'] = item
+                item_type = f'item_{tasmota_attr}{tasmota_rf_details}'
             elif tasmota_zb_device and tasmota_zb_attr:
-                self.tasmota_devices[tasmota_topic]['connected_items'][f'item_{tasmota_zb_device}.{tasmota_zb_attr}'] = item
+                item_type = f'item_{tasmota_zb_device}.{tasmota_zb_attr}'
+            elif tasmota_sml_device and tasmota_sml_attr:
+                item_type = f'item_{tasmota_sml_device}.{tasmota_sml_attr}'
             else:
-                self.tasmota_devices[tasmota_topic]['connected_items'][f'item_{tasmota_attr}'] = item
+                item_type = f'item_{tasmota_attr}'
+            self.tasmota_devices[tasmota_topic]['connected_items'][item_type] = item
 
             # append to list used for web interface
             if item not in self.tasmota_items:
@@ -250,17 +288,17 @@ class Tasmota(MqttPlugin):
 
                 value = item()
                 link = {
-                       # 'attribute':      (detail,         data_type, bool_values,   min_value, max_value)
-                         'relay':          (f'Power',       bool,      ['OFF', 'ON'], None,      None),
-                         'hsb':            ('HsbColor',     list,      None,          None,      None),
-                         'white':          ('White',        int,       None,          0,         120),
-                         'ct':             ('CT',           int,       None,          153,       500),
-                         'rf_send':        ('Backlog',      dict,      None,          None,      None),
-                         'rf_key_send':    (f'RfKey',       int,       None,          1,         16),
-                         'rf_key':         (f'RfKey',       bool,      None,          None,      None),
-                         'zb_permit_join': ('ZbPermitJoin', bool,      ['0', '1'],    None,      None),
-                         'zb_forget':      ('ZbForget',     bool,      ['0', '1'],    None,      None),
-                         'zb_ping':        ('ZbPing',       bool,      ['0', '1'],    None,      None),
+                      # 'attribute':      (detail,         data_type, bool_values,   min_value, max_value)
+                        'relay':          (f'Power',       bool,      ['OFF', 'ON'], None,      None),
+                        'hsb':            ('HsbColor',     list,      None,          None,      None),
+                        'white':          ('White',        int,       None,          0,         120),
+                        'ct':             ('CT',           int,       None,          153,       500),
+                        'rf_send':        ('Backlog',      dict,      None,          None,      None),
+                        'rf_key_send':    (f'RfKey',       int,       None,          1,         16),
+                        'rf_key':         (f'RfKey',       bool,      None,          None,      None),
+                        'zb_permit_join': ('ZbPermitJoin', bool,      ['0', '1'],    None,      None),
+                        'zb_forget':      ('ZbForget',     bool,      ['0', '1'],    None,      None),
+                        'zb_ping':        ('ZbPing',       bool,      ['0', '1'],    None,      None),
                         }
 
                 if tasmota_attr not in link:
@@ -325,97 +363,6 @@ class Tasmota(MqttPlugin):
                         self.logger.error(f"Device {value} not known by plugin, no action taken.")
                         return
 
-                """
-
-                ###  Altes Format
-                if tasmota_attr == 'relay':
-                    detail = 'POWER'
-                    detail = f"{detail}{tasmota_relay}" if tasmota_relay > '1' else detail
-                    bool_values = ['OFF', 'ON']
-                    value = item()
-
-                elif tasmota_attr == 'hsb':
-                    # Format aus dem Item ist eine Liste mit drei int Werten bspw. [299, 100, 94] // Format zum Senden ist ein String mit kommagetrennten Werten '299,100,94'
-                    detail = 'HsbColor'
-                    hsb = item()
-                    if isinstance(hsb, list) and len(hsb) == 3:
-                        hsb = list(map(int, hsb))
-                        value = ','.join(str(v) for v in hsb)
-                    else:
-                        self.logger.debug(f"update_item: hsb value received but not in correct format/content; expected format is list like [299, 100, 94]")
-
-                elif tasmota_attr == 'white':
-                    detail = 'White'
-                    white = item()
-                    if isinstance(white, int) and 0 <= white <= 100:
-                        value = white
-                    else:
-                        self.logger.debug(f"update_item: white value received but not in correct format/content; expected format is integer value between 0 and 100")
-
-                elif tasmota_attr == 'ct':
-                    # publish topic with new ct value
-                    detail = 'CT'
-                    ct = item()
-                    if isinstance(ct, int) and 153 <= ct <= 500:
-                        value = ct
-                    else:
-                        self.logger.debug(f"update_item: ct value received but not in correct format/content; expected format is integer value between 153 for cold white and 500 for warm white")
-
-                elif tasmota_attr == 'rf_send':
-                    # Format aus dem Item ist ein dict in folgendem Format: {'RfSync': 12220, 'RfLow': 440, 'RfHigh': 1210, 'RfCode':'#F06104'} // Format zum Senden ist: "RfSync 12220; RfLow 440; RfHigh 1210; RfCode #F06104"
-                    detail = 'Backlog'
-                    rf_send = item()
-                    if isinstance(rf_send, dict):
-                        rf_send_lower = eval(repr(rf_send).lower())
-                        if 'rfsync' and 'rflow' and 'rfhigh' and 'rfcode' in rf_send_lower:
-                            value = 'RfSync' + ' ' + str(rf_send_lower['rfsync']) + '; ' + 'RfLow' + ' ' + str(
-                                rf_send_lower['rflow']) + '; ' + 'RfHigh' + ' ' + str(
-                                rf_send_lower['rfhigh']) + '; ' + 'RfCode' + ' ' + str(rf_send_lower['rfcode'])
-                        else:
-                            self.logger.debug(f"update_item: rf_send received but not with correct content; expected content is: {'RfSync': 12220, 'RfLow': 440, 'RfHigh': 1210, 'RfCode':'#F06104'}")
-                    else:
-                        self.logger.debug(f"update_item: rf_send received but not in correct format; expected format is: {'RfSync': 12220, 'RfLow': 440, 'RfHigh': 1210, 'RfCode':'#F06104'}")
-
-                elif tasmota_attr == 'rf_key_send':
-                    # publish topic for rf_keyX Default send
-                    try:
-                        rf_key = int(item())
-                    except Exception:
-                        self.logger.debug(f"update_item: rf_key_send received but with correct format; expected format integer or string 1-16")
-                    else:
-                        if rf_key in range(1, 17):
-                            detail = 'RfKey' + str(rf_key)
-                            value = 1
-                        else:
-                            self.logger.debug(f"update_item: rf_key_send received but with correct content; expected format value 1-16")
-
-                elif tasmota_attr == 'ZbPermitJoin':
-                    # publish topic for ZbPermitJoin
-                    detail = 'ZbPermitJoin'
-                    bool_values = ['0', '1']
-                    value = item()
-
-                elif tasmota_attr == 'ZbForget':
-                    # publish topic for ZbForget
-                    zigbee_device_to_be_handled = item()
-                    if zigbee_device_to_be_handled not in self.tasmota_zigbee_devices:
-                        self.logger.error(f"Device {item()} not known by plugin, no action taken.")
-                        return
-
-                    detail = 'ZbForget'
-                    value = zigbee_device_to_be_handled
-
-                elif tasmota_attr == 'ZbPing':
-                    # publish topic for ZbPing
-                    zigbee_device_to_be_handled = item()
-                    if zigbee_device_to_be_handled not in self.tasmota_zigbee_devices:
-                        self.logger.error(f"Device {item()} not known by plugin, no action taken.")
-                        return
-
-                    detail = 'ZbPing'
-                    value = zigbee_device_to_be_handled
-                """
-
                 if value is not None:
                     self.publish_tasmota_topic('cmnd', tasmota_topic, detail, value, item, bool_values=bool_values)
 
@@ -473,6 +420,8 @@ class Tasmota(MqttPlugin):
     ############################################################
     #   Callbacks
     ############################################################
+
+    # ToDo: 2023-01-20  17:21:04 ERROR    modules.mqtt                             _on_log: Caught exception in on_message: 'ip'
 
     def on_mqtt_discovery_message(self, topic: str, payload: dict, qos: int = None, retain: bool = None) -> None:
         """
@@ -545,7 +494,7 @@ class Tasmota(MqttPlugin):
                     self.tasmota_devices[tasmota_topic]['device_id'] = device_id
                     self.tasmota_devices[tasmota_topic]['module'] = payload['md']
                     self.tasmota_devices[tasmota_topic]['mac'] = ':'.join(device_id[i:i + 2] for i in range(0, 12, 2))
-                    self.tasmota_devices[tasmota_topic]['discovery_config'] = self.rename_discovery_keys(payload)
+                    self.tasmota_devices[tasmota_topic]['discovery_config'] = self._rename_discovery_keys(payload)
                     self.tasmota_devices[tasmota_topic]['status'] = 'discovered'
 
                     # start device interview
@@ -750,24 +699,24 @@ class Tasmota(MqttPlugin):
 
         try:
             (topic_type, tasmota_topic, info_topic) = topic.split('/')
-            self.logger.info(f"on_mqtt_message: topic_type={topic_type}, tasmota_topic={tasmota_topic}, info_topic={info_topic}, payload={payload}")
+            self.logger.debug(f"on_mqtt_message: topic_type={topic_type}, tasmota_topic={tasmota_topic}, info_topic={info_topic}, payload={payload}")
         except Exception as e:
             self.logger.error(f"received topic {topic} is not in correct format. Error was: {e}")
         else:
             if info_topic == 'INFO1':
                 # payload={'Info1': {'Module': 'Sonoff Basic', 'Version': '11.0.0(tasmota)', 'FallbackTopic': 'cmnd/DVES_2EB8AE_fb/', 'GroupTopic': 'cmnd/tasmotas/'}}
-                self.logger.info(f"Received Message decoded as INFO1 message.")
+                self.logger.debug(f"Received Message decoded as INFO1 message.")
                 self.tasmota_devices[tasmota_topic]['fw_ver'] = payload['Info1']['Version'].split('(')[0]
                 self.tasmota_devices[tasmota_topic]['module_no'] = payload['Info1']['Module']
 
             elif info_topic == 'INFO2':
                 # payload={'Info2': {'WebServerMode': 'Admin', 'Hostname': 'SONOFF-B1-6318', 'IPAddress': '192.168.2.25'}}
-                self.logger.info(f"Received Message decoded as INFO2 message.")
+                self.logger.debug(f"Received Message decoded as INFO2 message.")
                 self.tasmota_devices[tasmota_topic]['ip'] = payload['Info2']['IPAddress']
 
             elif info_topic == 'INFO3':
                 # payload={'Info3': {'RestartReason': 'Software/System restart', 'BootCount': 1395}}
-                self.logger.info(f"Received Message decoded as INFO3 message.")
+                self.logger.debug(f"Received Message decoded as INFO3 message.")
                 restart_reason = payload['Info3']['RestartReason']
                 self.logger.warning(f"Device {tasmota_topic} (IP={self.tasmota_devices[tasmota_topic]['ip']}) just startet. Reason={restart_reason}")
 
@@ -929,6 +878,23 @@ class Tasmota(MqttPlugin):
         elif any([i in payload for i in self.ENV_SENSOR]):
             self._handle_sensor_env(device, function, payload)
 
+        # Handling of Analog Sensors
+        elif 'ANALOG' in payload:
+            self.logger.info(f"Received Message decoded as ANALOG Sensor message.")
+            self._handle_sensor_analog(device, function, payload['ANALOG'])
+
+        # Handling of Sensors of ESP32
+        elif 'ESP32' in payload:
+            self.logger.info(f"Received Message decoded as ESP32 Sensor message.")
+            self._handle_sensor_esp32(device, function, payload['ESP32'])
+
+        # Handling of any other Sensor e.g. all SML devices
+        else:
+            if len(payload) == 2 and isinstance(payload[list(payload.keys())[1]], dict):  # wenn payload 2 Einträge und der zweite Eintrag vom Typ dict
+                self.logger.info(f"Received Message decoded as other Sensor message (e.g. smartmeter).")
+                sensor = list(payload.keys())[1]
+                self._handle_sensor_other(device, sensor, function, payload[sensor])
+
     def _handle_sensor_zigbee(self, device: str, function: str, payload: dict) -> None:
         """
         Handles Zigbee Sensor information and set items
@@ -944,7 +910,7 @@ class Tasmota(MqttPlugin):
         # self.logger.debug(f"_handle_sensor_zigbee: {device=}, {function=}, {payload=}")
 
         for zigbee_device in payload:
-            if zigbee_device not in self.tasmota_zigbee_devices:
+            if zigbee_device != '0x0000' and zigbee_device not in self.tasmota_zigbee_devices:
                 self.logger.info(f"New Zigbee Device '{zigbee_device}'based on {function}-Message from {device} discovered")
                 self.tasmota_zigbee_devices[zigbee_device] = {}
 
@@ -960,6 +926,7 @@ class Tasmota(MqttPlugin):
                 zigbee_device_dict.update({'hue': _254_to_360(zigbee_device_dict['hue'])})
             if 'ct' in zigbee_device_dict:
                 zigbee_device_dict['ct_k'] = _mired_to_kelvin(zigbee_device_dict['ct'])
+
             # Korrektur des LastSeenEpoch von Timestamp zu datetime
             if 'lastseenepoch' in zigbee_device_dict:
                 zigbee_device_dict.update({'lastseenepoch': datetime.fromtimestamp(zigbee_device_dict['lastseenepoch'])})
@@ -970,7 +937,6 @@ class Tasmota(MqttPlugin):
             self.tasmota_zigbee_devices[zigbee_device].update(zigbee_device_dict)
 
             # Iterate over payload and set corresponding items
-            self.logger.debug(f"Item to be checked for update based in Zigbee Message and updated")
             for element in zigbee_device_dict:
                 itemtype = f"item_{zigbee_device}.{element.lower()}"
                 value = zigbee_device_dict[element]
@@ -998,15 +964,15 @@ class Tasmota(MqttPlugin):
         """
         Handle Environmental Sensor Information
         :param device:
-        :param payload:
         :param function:
+        :param payload:
         """
 
         for sensor in self.ENV_SENSOR:
             data = payload.get(sensor)
 
             if data and isinstance(data, dict):
-                self.logger.info(f"Received Message decoded as {sensor} Sensor message.")
+                self.logger.debug(f"Received Message decoded as {sensor} Sensor message.")
                 if sensor not in self.tasmota_devices[device]['sensors']:
                     self.tasmota_devices[device]['sensors'][sensor] = {}
 
@@ -1014,6 +980,64 @@ class Tasmota(MqttPlugin):
                     if key in data:
                         self.tasmota_devices[device]['sensors'][sensor][key.lower()] = data[key]
                         self._set_item_value(device, self.ENV_SENSOR_KEYS[key], data[key], function)
+
+    def _handle_sensor_analog(self, device: str, function: str, analog: dict):
+        """
+        Handle Analog Sensor Information
+        :param device:
+        :param function:
+        :param analog:
+        """
+
+        if 'ANALOG' not in self.tasmota_devices[device]['sensors']:
+            self.tasmota_devices[device]['sensors']['ANALOG'] = {}
+
+        for key in self.ANALOG_SENSOR_KEYS:
+            if key in analog:
+                self.tasmota_devices[device]['sensors']['ANALOG'][key.lower()] = analog[key]
+                self._set_item_value(device, self.ANALOG_SENSOR_KEYS[key], analog[key], function)
+
+    def _handle_sensor_esp32(self, device: str, function: str, esp32: dict):
+        """
+        Handle ESP32 Sensor Information
+        :param device:
+        :param function:
+        :param esp32:
+        """
+
+        if 'ESP32' not in self.tasmota_devices[device]['sensors']:
+            self.tasmota_devices[device]['sensors']['ESP32'] = {}
+
+        for key in self.ESP32_SENSOR_KEYS:
+            if key in esp32:
+                self.tasmota_devices[device]['sensors']['ESP32'][key.lower()] = esp32[key]
+                self._set_item_value(device, self.ESP32_SENSOR_KEYS[key], esp32[key], function)
+
+    def _handle_sensor_other(self, device: str, sensor: str, function: str, payload: dict):
+        """
+        Handle Other Sensor Information
+        :param device: Tasmota Device
+        :param sensor: Sensor Device
+        :param function: Messages Information will be taken from
+        :param payload: dict with infos
+        """
+
+        self.logger.debug(f"Received Message decoded as {sensor} Sensor message with payload={payload}.")
+
+        if sensor not in self.tasmota_devices[device]['sensors']:
+            self.tasmota_devices[device]['sensors'][sensor] = {}
+
+        # Make all keys of SML-Device Payload Dict lowercase to match itemtype from parse_item
+        sensor_dict = {k.lower(): v for k, v in payload.items()}
+
+        # Udpate des Sub-Dicts
+        self.tasmota_devices[device]['sensors'][sensor].update(sensor_dict)
+
+        # Iterate over payload and set corresponding items
+        for element in sensor_dict:
+            itemtype = f"item_{sensor}.{element.lower()}"
+            value = sensor_dict[element]
+            self._set_item_value(device, itemtype, value, function)
 
     def _handle_lights(self, device: str, function: str, payload: dict) -> None:
         """
@@ -1175,7 +1199,7 @@ class Tasmota(MqttPlugin):
             if not zigbee_device:
                 zigbee_device = element['Device']
 
-            if zigbee_device not in self.tasmota_zigbee_devices:
+            if zigbee_device != '0x0000' and zigbee_device not in self.tasmota_zigbee_devices:
                 self.logger.info(f"New Zigbee Device '{zigbee_device}'based on 'ZbStatus1'-Message from {device} discovered")
                 self.tasmota_zigbee_devices[zigbee_device] = {}
 
@@ -1264,7 +1288,7 @@ class Tasmota(MqttPlugin):
 
     def _handle_uptime_sec(self, tasmota_topic: str, uptime_sec: int) -> None:
         self.logger.debug(f"Received Message contains UptimeSec information. uptime={uptime_sec}")
-        self.tasmota_devices[tasmota_topic]['UptimeSec'] = int(uptime_sec)
+        self.tasmota_devices[tasmota_topic]['uptime_sec'] = int(uptime_sec)
 
     ############################################################
     #   MQTT Settings & Config
@@ -1355,6 +1379,9 @@ class Tasmota(MqttPlugin):
             self._set_telemetry_period(device)
 
     def clear_retained_messages(self, retained_msg=None):
+        """
+        Method to clear all retained messages
+        """
 
         if not retained_msg:
             retained_msg = self.topics_of_retained_messages
@@ -1446,18 +1473,8 @@ class Tasmota(MqttPlugin):
         self._interview_device(tasmota_topic)
 
     def _add_new_device_to_tasmota_devices(self, tasmota_topic):
-
-        self.tasmota_devices[tasmota_topic] = {}
-        self.tasmota_devices[tasmota_topic]['connected_to_item'] = False
-        self.tasmota_devices[tasmota_topic]['online'] = False
-        self.tasmota_devices[tasmota_topic]['status'] = 'None'
-        self.tasmota_devices[tasmota_topic]['connected_items'] = {}
-        self.tasmota_devices[tasmota_topic]['uptime'] = '-'
-        self.tasmota_devices[tasmota_topic]['lights'] = {}
-        self.tasmota_devices[tasmota_topic]['rf'] = {}
-        self.tasmota_devices[tasmota_topic]['sensors'] = {}
-        self.tasmota_devices[tasmota_topic]['relais'] = {}
-        self.tasmota_devices[tasmota_topic]['zigbee'] = {}
+        self.tasmota_devices[tasmota_topic] = self._get_device_dict_1_template()
+        self.tasmota_devices[tasmota_topic].update(self._get_device_dict_2_template())
 
     def _set_device_offline(self, tasmota_topic):
 
@@ -1466,14 +1483,10 @@ class Tasmota(MqttPlugin):
         self.logger.info(f"{tasmota_topic} is not online any more - online_timeout={self.tasmota_devices[tasmota_topic]['online_timeout']}, now={datetime.now()}")
 
         # clean data from dict to show correct status
-        self.tasmota_devices[tasmota_topic]['lights'] = {}
-        self.tasmota_devices[tasmota_topic]['rf'] = {}
-        self.tasmota_devices[tasmota_topic]['sensors'] = {}
-        self.tasmota_devices[tasmota_topic]['relais'] = {}
-        self.tasmota_devices[tasmota_topic]['zigbee'] = {}
+        self.tasmota_devices[tasmota_topic].update(self._get_device_dict_2_template())
 
     @staticmethod
-    def rename_discovery_keys(payload: dict) -> dict:
+    def _rename_discovery_keys(payload: dict) -> dict:
 
         link = {'ip':    'IP',
                 'dn':    'DeviceName',
@@ -1509,6 +1522,25 @@ class Tasmota(MqttPlugin):
                 new_payload[k_new] = payload[k_old]
 
         return new_payload
+
+    @staticmethod
+    def _get_device_dict_1_template():
+        return {'connected_to_item': False,
+                'online': False,
+                'status': None,
+                'connected_items': {},
+                'uptime': '-',
+                }
+
+    @staticmethod
+    def _get_device_dict_2_template():
+        return {'lights': {},
+                'rf': {},
+                'sensors': {},
+                'relais': {},
+                'zigbee': {},
+                'sml': {},
+                }
 
     ############################################################
     #   Zigbee
@@ -1652,10 +1684,18 @@ class Tasmota(MqttPlugin):
                 return True
         return False
 
+    @property
+    def has_other_sensor(self):
+        for tasmota_topic in self.tasmota_devices:
+            for sensor in self.tasmota_devices[tasmota_topic]['sensors']:
+                if sensor not in self.SENSORS:
+                    return True
+        return False
 
 ##################################################################
 #    Utilities
 ##################################################################
+
 
 def _254_to_100(value):
     return int(round(value * 100 / 254, 0))
