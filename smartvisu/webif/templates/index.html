@@ -38,73 +38,67 @@
 <script>
   $(document).ready( function () {
     $(window).trigger('datatables_defaults');
-    try {
-      {% if webif_pagelength is defined %}webif_pagelength = {{ webif_pagelength|int }};{% endif %}
-      if (isNaN(parseFloat(webif_pagelength)) || webif_pagelength == 0) {
-        resize = true;
-        webif_pagelength = -1;
-		  console.log('Activating automatic table resize');
-      }
-      else {
-        resize = false;
-      }
+    {% if webif_pagelength is defined %}webif_pagelength = {{ webif_pagelength|int }};{% endif %}
+    if (isNaN(parseFloat(webif_pagelength)) || webif_pagelength == 0) {
+      resize = true;
+      webif_pagelength = -1;
+	  console.log('Activating automatic table resize');
     }
-    catch (e) {
-		webif_pagelength = 100;
-		resize = false;
-		console.log("Using default values for page length " + webif_pagelength + ", pageResize: " + resize);
-	}
-	try {
-		clienttable = $('#clienttable').DataTable({
-			columnDefs: [
-				{
-					title: '{{ _('Visu Client') }}',
-					targets: [1], "className": "visuclient"
-				},
-				{
-					title: '{{ _('IP') }}',
-					targets: [2], "className": "ip"
-				},
-				{
-					title: '{{ _('Port') }}',
-					targets: [3], "className": "port"
-				},
-				{
-					title: '{{ _('Protokoll') }}',
-					targets: [4], "className": "protocol"
-				},
-				{
-					title: '{{ _('Client Software') }}',
-					targets: [5], "className": "clientsw"
-				},
-				{
-					title: '{{ _('Browser') }}',
-					targets: [6], "className": "browser"
-				},
-				{
-					title: '{{ _('') }}',
-					targets: [7], "className": "hostname"
-				},
-			].concat($.fn.dataTable.defaults.columnDefs),
-			pageLength: webif_pagelength,
-			pageResize: resize
-		});
+    else {
+      resize = false;
+    }
 
-		itemtable = $('#itemtable').DataTable({
-			columnDefs: [
-				{
-					title: '{{ _('Item') }}',
-					targets: [1]
-				},
-				{
-					title: '{{ _('Typ') }}',
-					targets: [2], "className": "type"
-				},
-			].concat($.fn.dataTable.defaults.columnDefs),
-			pageLength: webif_pagelength,
-			pageResize: resize
-		});
-	}
+  	try {
+  		clienttable = $('#clienttable').DataTable({
+  			columnDefs: [
+  				{
+  					title: '{{ _('Visu Client') }}',
+  					targets: [1], "className": "visuclient"
+  				},
+  				{
+  					title: '{{ _('IP') }}',
+  					targets: [2], "className": "ip"
+  				},
+  				{
+  					title: '{{ _('Port') }}',
+  					targets: [3], "className": "port"
+  				},
+  				{
+  					title: '{{ _('Protokoll') }}',
+  					targets: [4], "className": "protocol"
+  				},
+  				{
+  					title: '{{ _('Client Software') }}',
+  					targets: [5], "className": "clientsw"
+  				},
+  				{
+  					title: '{{ _('Browser') }}',
+  					targets: [6], "className": "browser"
+  				},
+  				{
+  					title: '{{ _('') }}',
+  					targets: [7], "className": "hostname"
+  				},
+  			].concat($.fn.dataTable.defaults.columnDefs),
+  			pageLength: webif_pagelength,
+  			pageResize: resize
+  		});
+
+  		itemtable = $('#itemtable').DataTable({
+  			columnDefs: [
+  				{
+  					title: '{{ _('Item') }}',
+  					targets: [1]
+  				},
+  				{
+  					title: '{{ _('Typ') }}',
+  					targets: [2], "className": "type"
+  				},
+  			].concat($.fn.dataTable.defaults.columnDefs),
+  			pageLength: webif_pagelength,
+  			pageResize: resize
+  		});
+  	}
 		catch (e) {
 			console.warn("Datatable Javascript not loaded: " +e);
     }
