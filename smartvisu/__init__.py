@@ -58,6 +58,10 @@ class SmartVisu(SmartPlugin):
 
 
     def __init__(self, sh):
+
+        # Call init code of parent class (SmartPlugin)
+        super().__init__()
+
         #self.logger = logging.getLogger(__name__)
         self._sh = sh
 
