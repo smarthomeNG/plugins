@@ -1,9 +1,9 @@
-.. index:: Plugins rcs1000n (Brennenstuhl RCS 1000 N)
+.. index:: Plugins; rcs1000n (Brennenstuhl RCS 1000 N)
 .. index:: rcs1000n
 
-================
+========
 rcs1000n
-================
+========
 
 .. image:: webif/static/img/plugin_logo.png
    :alt: plugin logo
