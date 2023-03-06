@@ -38,17 +38,6 @@ parameters:
             de: 'Zeitabstand in Sekunden in dem die Tasmota Devices Telemetrie Daten senden sollen'
             en: 'Timeperiod in seconds in which Tasmota devices shall send telemetry data'
 
-    webif_pagelength:
-      type: int
-      default: 100
-      valid_list:
-        - -1
-        - 25
-        - 50
-        - 100
-      description:
-        de: 'Anzahl an Items, die standardmäßig in einer Web Interface Tabelle pro Seite angezeigt werden'
-        en: 'Amount of items being listed in a web interface table per page by default'
 
 item_attributes:
     tasmota_topic:
@@ -157,7 +146,7 @@ item_attributes:
           de: "Zigbee Control Group: Werte werden an diese Gruppe gesendet. Gruppennachrichten werden nicht empfangen. https://tasmota.github.io/docs/Device-Groups/#zigbee"
           en: "Zigbee Control Group: Values will be sent to group. return messages will not be received"
 
-    tasmota_zb_attr: 
+    tasmota_zb_attr:
         type: str
         description:
             de: "Schlüssel der Json-Dict, der vom Zigbee-Device bereitgestellt wird; Key aus dem dict des tasmota_zb_device"
