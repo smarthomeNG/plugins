@@ -60,6 +60,8 @@ Folgende Zähler wurden mit dem Plugin bisher ausgelesen:
 Konfiguration
 =============
 
+Die Informationen zur Konfiguration des Plugins sind unter :doc:`/plugins_doc/config/sml2` beschrieben.
+
 plugin.yaml
 -----------
 
