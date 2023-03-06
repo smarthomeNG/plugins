@@ -40,7 +40,8 @@ Konfiguration
 =============
 
 Diese Plugin Parameter und die Informationen zur Item-spezifischen Konfiguration des Plugins sind
-unter :doc:/plugins_doc/config/rcs1000n beschrieben.
+unter :doc:`/plugins_doc/config/rcs1000n` beschrieben.
+
 
 plugin.yaml
 -----------
@@ -56,7 +57,7 @@ Hier ein Beispiel wie das Plugin konfiguriert werden kann.
         rcs1000n_gpio: '17'
         rcs1000n_sendDuration: '0.1'
 
-    
+
 
 items.yaml
 ----------
@@ -94,11 +95,6 @@ Funktionen
 
 Bitte die Dokumentation lesen, die aus den Metadaten der plugin.yaml erzeugt wurde.
 
-
-Beispiele
-=========
-
-Aktuell keine weiteren Beispiele notwendig.
 
 Web Interface
 =============
