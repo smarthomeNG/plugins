@@ -29,7 +29,7 @@ parameters:
         description:
             de: 'Persönlicher API Key für TankerKoenig. Registrierung unter https://creativecommons.tankerkoenig.de.'
             en: 'Your own personal API key for TankerKoenig. For your own key register to https://creativecommons.tankerkoenig.de.'
-            
+
     price_update_cycle:
         type: int
         mandatory: False
@@ -50,28 +50,7 @@ parameters:
             - daily
             - weekly
             - monthly
-    
-    webif_pagelength:
-        type: int
-        default: 100
-        valid_list:
-          - -1
-          - 0
-          - 25
-          - 50
-          - 100
-        description:
-            de: 'Anzahl an Items, die standardmäßig in einer Web Interface Tabelle pro Seite angezeigt werden.
-                 0 = automatisch, -1 = alle'
-            en: 'Amount of items being listed in a web interface table per page by default.
-                 0 = automatic, -1 = all'
-        description_long:
-            de: 'Anzahl an Items, die standardmäßig in einer Web Interface Tabelle pro Seite angezeigt werden.\n
-                 Bei 0 wird die Tabelle automatisch an die Höhe des Browserfensters angepasst.\n
-                 Bei -1 werden alle Tabelleneinträge auf einer Seite angezeigt.'
-            en: 'Amount of items being listed in a web interface table per page by default.\n
-                 0 adjusts the table height automatically based on the height of the browser windows.\n
-                 -1 shows all table entries on one page.'
+
 
 item_attributes:
     # Definition of item attributes defined by this plugin
@@ -80,7 +59,7 @@ item_attributes:
         description:
             de: 'Id der Tankstelle auf tankerkoenig.de'
             en: 'Id of the gaz station on tankerkoenig.de'
-            
+
     tankerkoenig_admin:
         type: str
         description:
@@ -90,7 +69,7 @@ item_attributes:
             - 'update'
         valid_list_description:
             - 'Sofortiges Laden/Update der Daten'
-            
+
     tankerkoenig_attr:
         type: str
         description:
@@ -138,7 +117,7 @@ item_attributes:
             - 'str'
             - 'num'
             - 'num'
-        
+
 item_structs:
     petrol_station:
             isopen:
