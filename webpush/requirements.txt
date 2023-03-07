@@ -1,0 +1,3 @@
+py-vapid==1.8.2
+pywebpush==1.14.0
+cryptography

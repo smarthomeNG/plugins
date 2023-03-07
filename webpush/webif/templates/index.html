@@ -1,0 +1,126 @@
+{% extends "base_plugin.html" %}
+
+{% set logo_frame = false %}
+
+{% block headtable %}
+<table class="table table-striped table-hover pluginList display">
+    <tbody>
+    <tr>
+        <td class="py-1"><strong>Application Server Key</strong></td>
+        <td class="py-1">{{ p.getPublicKey() }}</td>
+    </tr>
+    <tr>
+    </tr>
+    <tr>
+        <td class="py-1"><strong>{{ p.translate("Database path") }}</strong></td>
+        <td class="py-1">{{ p.getDatabasePath() }}</td>
+    </tr>
+    <tr>
+        <td class="py-1"><strong>{{ p.translate("Private key path") }}</strong></td>
+        <td class="py-1">{{ p.getPrivateKeyFilePath() }}</td>
+    </tr>
+    </tbody>
+</table>
+{% endblock headtable %}
+
+
+<!--
+	Additional buttons for the web interface (if any are needed) - displayed below the headtable-section
+-->
+{% block buttons %}
+
+{% endblock %}
+
+<!--
+	Define the number of tabs for the body of the web interface (1 - 3)
+-->
+{% set tabcount = 2 %}
+
+
+<!--
+	Set the tab that will be visible on start, if another tab that 1 is wanted (1 - 3)
+-->
+
+{% set start_tab = 1 %}
+
+<!--
+	Content block for the first tab of the Webinterface
+-->
+{% set tab1title = "<strong>" ~ p.get_shortname() ~ " </strong>" %}
+{% block bodytab1 %}
+<div class="container-fluid m-2">
+    <table class="table">
+        <tbody>
+        <tr>
+            <td class="py-1">
+                <form action="" method="post">
+                    <br>
+                    <button type="button" class="btn btn-shng btn-sm" onclick="jQuery.get('unsubscribeAll');"><i
+                            class="fas fa-play"></i> {{ p.translate("Delete all subscribers") }}
+                    </button>
+                    <br>
+                    <br>
+                </form>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2">
+                <h2>{{ p.translate("Message groups") }} ({{ p.getSubscriptionGroupCount() }})</h2>
+                <table id="history_table" class="table table-striped table-hover pluginList display">
+                    <thead>
+                    <tr>
+                        <th>{{ p.translate("Group") }}</th>
+                        <th>{{ p.translate("Number of subscribers") }}</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for group, count in p.getSubscritionsPerGroup() %}
+                        <tr>
+                            <td class="py-1">{{ group }}</td>
+                            <td class="py-1">{{ count }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+</div>
+{% endblock bodytab1 %}
+
+<!--
+	Content block for the second tab of the Webinterface
+-->
+{% set tab2title = "<strong>" ~ p.get_shortname() ~ " Items</strong>" %}
+{% block bodytab2 %}
+<div class="container-fluid m-2">
+    <h2>Basic Items</h2>
+    <table class="table">
+        <thead>
+        <tr>
+            <th>{{ p.translate("Item name") }}</th>
+            <th>{{ p.translate("Item path") }}</th>
+            <th>{{ p.translate("Item value") }}</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for name, path, value in p.getPluginItems() %}
+            <tr>
+                <td class="py-1">{{ name }}</td>
+                <td class="py-1">{{ path }}</td>
+                <td class="py-1">{{ value }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+</div>
+{% endblock bodytab2 %}
+
+
+{% block pluginscripts %}
+
+{% endblock pluginscripts %}
+
