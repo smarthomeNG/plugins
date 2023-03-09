@@ -8,8 +8,9 @@ from bs4 import BeautifulSoup
 
 import lib.item
 
-from plugins.backend import WebInterface as Root
-from plugins.backend.tests.cptestcase import BaseCherryPyTestCase
+#from plugins.backend import WebInterface as Root
+#from plugins.backend.tests.cptestcase import BaseCherryPyTestCase
+from .cptestcase import BaseCherryPyTestCase
 from tests.mock.core import MockSmartHome
 
 
@@ -31,9 +32,9 @@ teardown_module = tearDownModule
 class TestCherryPyApp(BaseCherryPyTestCase):
     def test_blockly(self):
         pass
-        # dummy, because tests are from the tightly coupled 1. try do integrate blockly 
+        # dummy, because tests are from the tightly coupled 1. try do integrate blockly
         # (before it became a seperate plugin)
-        
+
 #    def test_backendIntegration(self):
 #        response = self.request('index')
 #        self.assertEqual(response.output_status, b'200 OK')
