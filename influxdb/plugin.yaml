@@ -20,6 +20,7 @@ plugin:
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
     restartable: unknown
+    startorder: early              # set start priority of plugin (early/normal/late)
     classname: InfluxDB            # class containing the plugin
 
 parameters:
@@ -77,7 +78,7 @@ parameters:
         valid_max: 65535
         description:
             de: "Portnummer der InfluxData Datenbank für HTTP-Zugriff"
-            en: "Port of the InfluxData database for HTTP access"    
+            en: "Port of the InfluxData database for HTTP access"
 
 item_attributes:
     # Definition of item attributes defined by this plugin

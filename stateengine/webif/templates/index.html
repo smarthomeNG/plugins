@@ -35,22 +35,16 @@ $("a").click(function() {
 <script>
   $(document).ready( function () {
     $(window).trigger('datatables_defaults');
-    try {
-      {% if webif_pagelength is defined %}webif_pagelength = {{ webif_pagelength|int }};{% endif %}
-      if (isNaN(parseFloat(webif_pagelength)) || webif_pagelength == 0) {
-        resize = true;
-        webif_pagelength = -1;
-      }
-      else {
-        resize = false;
-      }
-      console.log("Using page length from http module/plugin " + webif_pagelength + ", pageResize: " + resize);
+    {% if webif_pagelength is defined %}webif_pagelength = {{ webif_pagelength|int }};{% endif %}
+    if (isNaN(parseFloat(webif_pagelength)) || webif_pagelength == 0) {
+      resize = true;
+      webif_pagelength = -1;
     }
-    catch (e) {
-      webif_pagelength = 100;
+    else {
       resize = false;
-      console.log("Using default values for page length " + webif_pagelength + ", pageResize: " + resize);
     }
+    console.log("Using page length from http module/plugin " + webif_pagelength + ", pageResize: " + resize);
+
 		try {
       table = $('#maintable').DataTable( {
         pageLength: webif_pagelength,

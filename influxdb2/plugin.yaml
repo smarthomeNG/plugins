@@ -19,6 +19,7 @@ plugin:
 #    py_maxversion:                 # maximum Python version to use for this plugin (leave empty if latest)
     multi_instance: false           # plugin supports multi instance
     restartable: unknown
+    startorder: early               # set start priority of plugin (early/normal/late)
     classname: InfluxDB2            # class containing the plugin
 
 parameters:

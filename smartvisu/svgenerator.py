@@ -343,6 +343,7 @@ class SmartVisuGenerator:
 
     def write_navigation_and_pages(self, menu, navigation_file):
 
+        #self.logger.notice(f"write_navigation_and_pages: {menu=}, {navigation_file=}")
         nav_list = ''
         for menu_entry in self.navigation[menu]:
             #parse_list = [('{{ visu_page }}', menu_entry['page']), ('{{ visu_name }}', menu_entry['name']),
@@ -361,12 +362,20 @@ class SmartVisuGenerator:
                 nav_list += self.parse_tpl('navi_sep.html', [('{{ name }}', menu_entry['name'])])
             else:
                 #menu_entry['html'] = self.parse_tpl('navi.html', parse_list)
-                nav_list += self.parse_tpl('navi.html', parse_list)
+                if self.smartvisu_version >= '3.3' and menu_entry['img'].lower().endswith('.svg'):
+                    #self.logger.notice(f" - nav_list svg entry: {menu_entry['img']=}, parse_list={parse_list}")
+                    nav_list += self.parse_tpl('navi_svg.html', parse_list)
+                else:
+                    #self.logger.notice(f" - nav_list png entry: {menu_entry['img']=}, parse_list={parse_list}")
+                    self.logger.debug(f" - nav_list entry: entry={self.parse_tpl('navi.html', parse_list)}")
+                    nav_list += self.parse_tpl('navi.html', parse_list)
 
             # build page code
             if menu_entry['separator'] == False:
+                # build and write file for a single room
                 r = self.parse_tpl(menu+'_page.html', [('{{ visu_name }}', menu_entry['name']), ('{{ visu_widgets }}', menu_entry['content']),
                                                        ('{{ visu_img }}', menu_entry['img']), ('{{ visu_heading }}', menu_entry['heading'])])
+
                 # write page file
                 self.logger.debug("write_navigation_and_pages: Writing page '{}'".format(menu_entry['page'] + '.html'))
                 self.write_parseresult(menu_entry['page'] + '.html', r)

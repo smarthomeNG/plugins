@@ -16,6 +16,7 @@ plugin:
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
     restartable: unknown
+    startorder: early              # set start priority of plugin (early/normal/late)
     classname: InfluxData          # class containing the plugin
 
 parameters:
