@@ -12,7 +12,7 @@ plugin:
     documentation: http://smarthomeng.de/user/plugins/telegram/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1548691-support-thread-für-das-telegram-plugin
 
-    version: 1.7.0                  # Plugin version
+    version: 1.7.1                  # Plugin version
     sh_minversion: 1.8              # minimum shNG version to use this plugin
     # sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     py_minversion: 3.6              # minimum Python version to use for this plugin
@@ -86,7 +86,7 @@ item_attributes:
         description:
             de: 'Mitteilung senden wenn sich der Itemwert ändert'
             en: 'Send message on item change'
-            
+
     telegram_condition:
         type: str
         default: 'on_update'
