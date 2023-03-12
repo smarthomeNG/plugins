@@ -62,9 +62,9 @@ class DMX(SmartPlugin):
         the configured (and checked) value for a parameter by calling self.get_parameter_value(parameter_name). It
         returns the value in the datatype that is defined in the metadata.
         """
-        from bin.smarthome import VERSION
-        if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
-            self.logger = logging.getLogger(__name__)
+
+        # Call init code of parent class (SmartPlugin)
+        super().__init__()
 
         # If an package import with try/except is done, handle an import error like this:
 
@@ -95,8 +95,8 @@ class DMX(SmartPlugin):
                 return
             else:
                 self._is_connected = True
-                
-                
+
+
             if self._interface == 'nanodmx':
                 self.send = self.send_nanodmx
                 if not self._send_nanodmx("C?"):
