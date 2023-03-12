@@ -45,7 +45,7 @@ from .svinstallwidgets import SmartVisuInstallWidgets
 #########################################################################
 
 class SmartVisu(SmartPlugin):
-    PLUGIN_VERSION="1.8.8"
+    PLUGIN_VERSION="1.8.9"
     ALLOW_MULTIINSTANCE = True
 
     visu_definition = None
@@ -58,6 +58,10 @@ class SmartVisu(SmartPlugin):
 
 
     def __init__(self, sh):
+
+        # Call init code of parent class (SmartPlugin)
+        super().__init__()
+
         #self.logger = logging.getLogger(__name__)
         self._sh = sh
 

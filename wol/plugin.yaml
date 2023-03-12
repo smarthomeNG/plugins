@@ -9,7 +9,7 @@ plugin:
     tester: ohinckel
     state: qa-passed
     keywords: Wake, on, LAN, magic, paket, packet,
-    documentation: https://www.smarthomeng.de/user/plugins_doc/config/wol.html
+    #documentation:
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1661427
     version: 1.2.0                 # Plugin version
     sh_minversion: 1.8             # minimum shNG version to use this plugin

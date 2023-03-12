@@ -66,13 +66,8 @@ class WebInterface(SmartPluginWebIf):
         """
         self.plugin.get_broker_info()
 
+        pagelength = self.plugin.get_parameter_value('webif_pagelength')
         tmpl = self.tplenv.get_template('index.html')
-        # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
-
-        try:
-            pagelength = self.plugin.webif_pagelength
-        except Exception:
-            pagelength = 100
 
         return tmpl.render(p=self.plugin,
                            webif_pagelength=pagelength,

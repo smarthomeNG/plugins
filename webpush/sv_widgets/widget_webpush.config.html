@@ -1,0 +1,36 @@
+/**
+* -----------------------------------------------------------------------------
+* @package     smartVISU
+* @author      gruberth
+* @copyright   2018 - 2022
+* @license     GPL [http://www.gnu.de]
+* -----------------------------------------------------------------------------
+*/
+
+{% extends "custom/widget_custom.html" %}
+
+
+{% block example %}
+<div>
+  <p>You just have to implement the widget with the relevant attributes for the webpush items.
+  </p>
+
+  <div class="twig">Example:<br>
+		<code class="prettyprint">{% filter trim|escape|nl2br %}{% verbatim %}
+      {{ webpush.config('', 'System.webpush.config.grouplist', 'System.webpush.config.publickey', 'System.webpush.comunication.fromclient', 'Übernehmen') }}
+		{% endverbatim %}{% endfilter %}</code>
+	</div>
+	<div class="html">
+    {{ webpush.config('', 'System.webpush.config.grouplist', 'System.webpush.config.publickey', 'System.webpush.comunication.fromclient', 'Übernehmen') }}
+	</div>
+</div>
+
+<script type="text/javascript">
+  $( document ).ready(function() {
+       io.write('System.webpush.config.grouplist', ["alarm", "info"] );
+       io.write('System.webpush.config.publickey', '5456ss5df3d54g35s4dfg654sdf3g321d' );
+       io.write('System.webpush.comunication.fromclient', '' );
+    });
+
+</script>
+{% endblock %}
