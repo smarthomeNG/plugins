@@ -72,6 +72,9 @@ class Viessmann(SmartPlugin):
 
     def __init__(self, sh, *args, standalone='', logger=None, **kwargs):
 
+        # Call init code of parent class (SmartPlugin)
+        super().__init__()
+
         # standalone mode: just setup basic info
         if standalone:
             self._serialport = standalone
