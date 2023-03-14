@@ -1,9 +1,10 @@
+
 .. index:: Plugins; db_addon (Datenbank Unterstützung)
 .. index:: db_addon
 
-==============
+========
 db_addon
-==============
+========
 
 .. image:: webif/static/img/plugin_logo.png
    :alt: plugin logo
@@ -12,8 +13,6 @@ db_addon
    :scale: 50 %
    :align: left
 
-Was macht das Plugin?
-=====================
 
 Das Plugin bietet eine Funktionserweiterung zum Database Plugin und ermöglicht die einfache Auswertung von Messdaten.
 Basierend auf den Daten in der Datenbank können bspw. Auswertungen zu Verbrauch (heute, gestern, ...) oder zu Minimal-
@@ -47,6 +46,7 @@ Bsp:
                 type: num
                 db_addon_fct: heute_minus1_max
 
+|
 
 Anforderungen
 =============
@@ -77,23 +77,10 @@ Dazu folgenden Block am Ende der Datei */etc/mysql/my.cnf* einfügen bzw den exi
 Konfiguration
 =============
 
-plugin.yaml
------------
+Diese Plugin Parameter und die Informationen zur Item-spezifischen Konfiguration des Plugins sind
+unter :doc:`/plugins_doc/config/db_addon` beschrieben.
 
-Bitte die Dokumentation lesen, die aus den Metadaten der plugin.yaml erzeugt wurde.
-
-
-items.yaml
-----------
-
-Bitte die Dokumentation lesen, die aus den Metadaten der plugin.yaml erzeugt wurde.
-
-
-Funktionen
-----------
-
-Bitte die Dokumentation lesen, die aus den Metadaten der plugin.yaml erzeugt wurde.
-
+|
 
 Hinweise
 ========
@@ -109,6 +96,7 @@ Hinweise
  - Das Plugin enthält sehr ausführliche Logginginformation. Bei unerwartetem Verhalten, den LogLevel entsprechend anpassen, um mehr information zu erhalten.
  - Berechnungen des Plugins können im WebIF unterbrochen werden. Auch das gesamte Plugin kann pausiert werden. Dies kann be starker Systembelastung nützlich sein.
 
+|
 
 Beispiele
 =========
@@ -158,6 +146,7 @@ Soll bspw. die minimalen und maximalen Temperaturen ausgewertet werden, kann die
 Die Temperaturwerte werden in die Datenbank geschrieben und darauf basierend ausgewertet. Die structs
 'db_addon.minmax_1' und 'db_addon.minmax_2' stellen entsprechende Items für die min/max Auswertung zur Verfügung.
 
+|
 
 Web Interface
 =============
@@ -178,14 +167,14 @@ Achtung: Das Auslösen einer kompletten Neuberechnung aller Items kann zu einer 
 aufgrund vieler Leseanfragen führen.
 
 
-DatabaseAddOn Items
--------------------
+db_addon Items
+--------------
 
 Dieser Reiter des Webinterface zeigt die Items an, für die ein DatabaseAddon Attribut konfiguriert ist.
 
 
-DatabaseAddOn Maintenance
--------------------------
+db_addon Maintenance
+--------------------
 
 Das Webinterface zeigt detaillierte Informationen über die im Plugin verfügbaren Daten an.
 Dies dient der Maintenance bzw. Fehlersuche. Dieser Tab ist nur bei Log-Level "Debug" verfügbar.
