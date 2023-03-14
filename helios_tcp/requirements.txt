@@ -1,1 +1,2 @@
-pymodbus3 >= 1.0.0
+pymodbus>=2.3,<3.0;python_version<'3.8'
+pymodbus>=3.0.2;python_version>="3.8"

@@ -1,0 +1,254 @@
+{% extends "base_plugin.html" %}
+
+{% set logo_frame = false %}
+
+<!-- set update_interval to a value > 0 (in milliseconds) to enable periodic data updates -->
+{% set update_interval = 10000 %}
+{% set reload_button = false %}
+
+{% set use_bodytabs = true %}
+{% set tabcount = 2 %}
+{% set start_tab = 1 %}
+
+{% block pluginstyles %}
+<style>
+  .type {
+    width: 50px;
+  }
+  .sensor {
+    width: 160px;
+  }
+  .not_discovered {
+    color:indianred;
+  }
+  .sensor_blue {
+    width: 160px;
+    color:blue;
+  }
+  .deviceclass {
+    width: 130px;
+  }
+  .devicetype {
+    width: 130px;
+  }
+  .value {
+      text-align:right;
+	  width: 120px;
+  }
+  .change_update {
+    width: 150px;
+  }
+  .bus {
+    width: 60px;
+  }
+  .bool {
+    width: 70px;
+  }
+  .keys {
+    min-width: 240px;
+  }
+</style>
+{% endblock pluginstyles %}
+
+<!--
+	Additional script tag for plugin specific javascript code go into this block
+-->
+{% block pluginscripts %}
+<script>
+    function defineTables() {
+		try {
+			itemtable = $('#itemtable').DataTable( {
+				columnDefs: [
+					{
+						title: '{{ _('Item') }}',
+						targets: [1]
+					},
+					{
+						title: '{{ _('Typ') }}',
+						targets: [2], "className": "type"
+					},
+					{
+						title: 'matchstring',
+						targets: [3]
+					},
+					{
+						title: '{{ _('Wert') }}',
+						targets: [4], "className": "value dt-head-right"
+					},
+					{
+						title: '{{ _('Letztes Update') }}',
+						targets: [5], "className": "change_update"
+					},
+					{
+						title: '{{ _('Letzte Änderung') }}',
+						targets: [6], "className": "change_update"
+					}
+				].concat($.fn.dataTable.defaults.columnDefs),
+				pageLength: webif_pagelength,
+				pageResize: resize});
+			}
+			catch (e) {
+				console.warn("Datatable Javascript not loaded: " +e);
+		}
+	}
+
+  $(document).ready( function () {
+    $(window).trigger('datatables_defaults');
+    try {
+      {% if webif_pagelength is defined %}webif_pagelength = {{ webif_pagelength|int }};{% endif %}
+      if (isNaN(parseFloat(webif_pagelength)) || webif_pagelength == 0) {
+        resize = true;
+        webif_pagelength = -1;
+		  console.log('Activating automatic table resize');
+      }
+      else {
+        resize = false;
+      }
+    }
+    catch (e) {
+		webif_pagelength = 100;
+		resize = false;
+		console.log("Using default values for page length " + webif_pagelength + ", pageResize: " + resize);
+	}
+    defineTables();
+  });
+</script>
+
+<script>
+	function handleUpdatedData(response, dataSet=null) {
+		if (dataSet === null) {
+			console.log('Beginn handleUpdatedData');
+			var objResponse = JSON.parse(response);
+			myProto = document.getElementById(dataSet);
+
+			// Update item table
+			let items = objResponse['items'];
+			for (item in items) {
+				let item_path = items[item]['path'];
+				shngInsertText(item_path + '_value', items[item]['value'], 'itemtable', 10);
+				shngInsertText(item_path + '_last_update', items[item]['last_update'], 'itemtable', 10);
+				shngInsertText(item_path + '_last_change', items[item]['last_change'], 'itemtable', 10);
+			}
+			shngInsertText ('itemcount', objResponse['items'].length);
+		}
+
+	}
+</script>
+
+{% endblock pluginscripts %}
+
+{% block headtable %}
+<table class="table table-striped table-hover">
+	<tbody>
+        <tr>
+            <td class="py-1" style="font-weight:bold; width: 50px;">Lat</td>
+			<td class="py-1" style="width: 100px;">
+                {{ p._lat }}
+            </td>
+            <td class="py-1" style="font-weight:bold; width: 50px;">Lang</td>
+			<td class="py-1">
+                {{ p._lang }}
+            </td>
+            <td class="py-1" style="font-weight:bold; width: 50px;">Units</td>
+			<td class="py-1">
+                {{ p._units }}
+            </td>
+            </td>
+        </tr>
+        <tr>
+            <td class="py-1" style="font-weight:bold; width: 50px;" >Lon</td>
+			<td class="py-1" style="width: 100px;">
+               {{ p._lon }}
+            </td>
+            <td class="py-1" style="font-weight:bold; width: 50px;">Key</td>
+			<td class="py-1" colspan="3">
+               {{ p._key }}
+            </td>
+        </tr>
+		<tr>
+            <td class="py-1" style="font-weight:bold; width: 50px;">Cycle</td>
+			<td class="py-1">
+               {{ p._cycle }} {{ _('Sek') }}
+            </td>
+            <td class="py-1" style="font-weight:bold;">URL</td>
+			<td class="py-1" colspan="3">
+                <a  target="_blank" href="{{ p._build_url() }}">{{ p._base_url }}[apikey]/...</a>
+            </td>
+        </tr>
+    </tbody>
+</table>
+{% endblock headtable %}
+
+
+{% set tab1title = "<strong>" ~ _('Items') ~ "</strong> (" ~ p.get_items()|length ~ ")" %}
+{% block bodytab1 %}
+
+<script>
+	// shngGetUpdatedData();
+</script>
+
+<div class="container-fluid m-2 table-resize">
+	<table id="itemtable">
+		<tbody>
+		{% for item in items %}
+			<tr>
+				<td></td>
+				<td id="{{ item.property.path }}_path">{{ item.property.path }}</td>
+				<td id="{{ item.property.path }}_type">{{ item.property.type }}</td>
+				<td id="{{ item.property.path }}_matchstring">{{ p.get_item_mapping(item) }}</td>
+				<td id="{{ item.property.path }}_value">{{ item.property.value }}</td>
+				<td id="{{ item.property.path }}_last_update">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+				<td id="{{ item.property.path }}_last_change">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+			</tr>
+		{% endfor %}
+		</tbody>
+	</table>
+
+	</table>
+</div>
+
+{% endblock bodytab1 %}
+
+{% set tab2title = "<strong>" ~ _('JSON Daten') ~ "</strong>" %}
+{% block bodytab2 %}
+
+<div id="tab2" class="container-fluid m-2" onshow="console.log('onshow');" style="height: calc(100vh - 245px); border-width: 1px">
+
+	<textarea autocomplete="off" id="bodytab2_editor" style="height: calc(100vh - 265px); width: 100%">{{ json_data }}</textarea>
+
+	<script>
+		$(document).on('shown.bs.tab', 'a[data-toggle="tab"]', function (e) {
+			// the displayed tab has changed
+			// https://getbootstrap.com/docs/4.5/components/navs/#tabs
+			// console.warn('TAB CHANGED from ' + e.relatedTarget, 'to ', e.target);
+			window.bodytab2_json_editor.refresh();
+			window.bodytab2_json_editor.focus();
+		})
+	</script>
+
+	<script type="text/javascript" language="javascript">
+		window.bodytab2_json_editor = CodeMirror.fromTextArea(document.getElementById("bodytab2_editor"), {
+			indentUnit: 4,
+			tabSize: 4,
+			mode: {name: "javascript", json: true},
+			lineNumbers: true,
+			readOnly: true,
+			lineSeparator: '\n',
+			lineWrapping: false,
+			firstLineNumber: 1,
+			autofocus: false,
+			autorefresh: true,
+			fixedGutter: true,
+			extraKeys: {
+				"Ctrl-Q": function(cm){ cm.foldCode(cm.getCursor()); },
+				"Ctrl-L": function(cm){ cm.setOption("lineWrapping", !cm.getOption("lineWrapping")); },
+			},
+			foldGutter: true,
+			gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
+		});
+		window.bodytab2_json_editor.setSize(null, "calc(100vh - 245px)");
+	</script>
+
+</div>
+
+{% endblock bodytab2 %}

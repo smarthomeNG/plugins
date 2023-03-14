@@ -1,0 +1,76 @@
+# Metadata for the Smart-Plugin
+plugin:
+    # Global plugin attributes
+    type: gateway                 # plugin type (gateway, interface, protocol, system, web)
+    description:                  # Alternative: description in multiple languages
+        de: 'Schalten von 433 MHz Funksteckdosen z.B. für Brennenstuhl RCS 1000 N'
+        en: 'Support for 433 MHz wireless sockets e.g. for Brennenstuhl RCS 1000 N'
+    maintainer: hasenradball
+    tester: hasenradball          # Who tests this plugin?
+    state: ready
+    keywords: 433MHz Brennenstuhl rcs1000n
+    documentation: https://github.com/hasenradball/rcSwitch-python       # url of documentation (wiki) page
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/39094-logic-und-howto-für-433mhz-steckdosen
+
+    version: 1.0.0                # Plugin version
+    sh_minversion: 1.9            # minimum shNG version to use this plugin
+#    sh_maxversion:               # maximum shNG version to use this plugin (leave empty if latest)
+    multi_instance: False         # plugin supports multi instance
+    restartable: unknown
+    classname: RCS1000N           # class containing the plugin
+
+parameters:
+
+    rcs1000n_gpio:
+        type: num
+        default: 17
+        valid_min: 0
+        valid_max: 40
+        description:
+            de: "GPIO-Pin an dem der 433 MHz Sender angeschlossen ist"
+            en: "GPIO-Pin to which the 433 MHz sender is connected to"
+            
+    rcs1000n_sendDuration:
+        type: num
+        default: 0.1
+        valid_min: 0.0
+        valid_max: 2.0
+        description:
+            de: "Minimale Zeit in Sekunden zwischen dem Senden von verschiedenen Befehlen"
+            en: "Minimum time in s between sending of different commands"
+
+
+item_attributes:
+    # Definition of item attributes defined by this plugin
+    rcs_SystemCode:
+        type: str
+        description:
+            de: "SystemCode des Gerätes - Muss in der Form von 5 binären Digits angegeben werden [00000 - 11111]"
+            en: "SystemCode of device - Must be 5 binary digits [00000 - 11111]"
+    
+    rcs_ButtonCode:
+        type: str
+        valid_list:
+            - 'A'
+            - 'B'
+            - 'C'
+            - 'D'
+            - 'E'
+            - '10000'
+            - '01000'
+            - '00100'
+            - '00010'
+            - '00001'  
+        description:
+            de: "ButtonCode (oder Buchstabe) des Gerätes"
+            en: "ButtonCode (or letter) of the device"
+
+    
+item_structs: NONE
+    # Definition of item-structure templates for this plugin
+
+plugin_functions: NONE
+    # Definition of plugin functions defined by this plugin
+
+logic_parameters: NONE
+    # Definition of logic parameters defined by this plugin

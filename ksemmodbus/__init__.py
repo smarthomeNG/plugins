@@ -2,6 +2,7 @@
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
 #  Copyright 2019 Thomas Hengsberg <thomas@thomash.eu>
+#  Copyright 2022 Ronny Schulz
 #########################################################################
 #  This file is part of SmartHomeNG.   
 #
@@ -28,7 +29,7 @@ from lib.model.smartplugin import *
 from .ksem import Ksem
 
 class Ksemmodbus(SmartPlugin):
-    PLUGIN_VERSION = '1.6.0'
+    PLUGIN_VERSION = '1.6.2'
     ksem = 'None'
     _items = []
 

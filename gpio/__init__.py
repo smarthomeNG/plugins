@@ -35,7 +35,7 @@ class GPIO(SmartPlugin, Utils):
     Main class of the plugin.
     '''
 
-    PLUGIN_VERSION = '1.5.2'
+    PLUGIN_VERSION = '1.5.4'
     ALLOW_MULTIINSTANCE = False
 
     def __init__(self, sh):

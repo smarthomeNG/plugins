@@ -1,7 +1,7 @@
 # Metadata for the Smart-Plugin
 plugin:
     # Global plugin attributes
-    type: web                      # plugin type (gateway, interface, protocol, system, web)
+    type: web
     description:
         de: 'Benzinpreise über die API von Tankerkönig. Bitte sicherstellen, die API nicht zu oft aufzurufen. Bitte Hinweise unter https://creativecommons.tankerkoenig.de/#techInfo beachten!'
         en: 'Petrol station prices by the API of TankerKönig. Take care not to request the interface too often or for too many petrol stations. Please follow instructions given on https://creativecommons.tankerkoenig.de/#techInfo.'
@@ -12,9 +12,11 @@ plugin:
     documentation: http://smarthomeng.de/user/plugins_doc/config/tankerkoenig.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/938924-benzinpreis-plugin
     keywords: petrol station, fuel prices, petrol prices
-    version: 1.4.1                 # Plugin version
-    sh_minversion: 1.4             # minimum shNG version to use this plugin
+    version: 2.0.1                 # Plugin version
+    sh_minversion: 1.9             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+#    py_minversion:                 # minimum Python version to use for this plugin
+#    py_maxversion:                 # maximum Python version to use for this plugin (leave empty if latest)
     multi_instance: False          # plugin supports multi instance
     restartable: unknown
     classname: TankerKoenig        # class containing the plugin
@@ -28,6 +30,28 @@ parameters:
             de: 'Persönlicher API Key für TankerKoenig. Registrierung unter https://creativecommons.tankerkoenig.de.'
             en: 'Your own personal API key for TankerKoenig. For your own key register to https://creativecommons.tankerkoenig.de.'
 
+    price_update_cycle:
+        type: int
+        mandatory: False
+        default: 900
+        valid_min: 60
+        description:
+            de: '(optional) Zeit zwischen zwei Preisaktualisierungen.'
+            en: '(optional) Time period between two price update cycles.'
+
+    details_update_cycle:
+        type: str
+        mandatory: False
+        default: weekly
+        description:
+            de: '(optional) Zeit zwischen zwei Aktualisierung der Tankstellen Details.'
+            en: '(optional) Time period between two update cycles for petrol station details.'
+        valid_list:
+            - daily
+            - weekly
+            - monthly
+
+
 item_attributes:
     # Definition of item attributes defined by this plugin
     tankerkoenig_id:
@@ -36,8 +60,98 @@ item_attributes:
             de: 'Id der Tankstelle auf tankerkoenig.de'
             en: 'Id of the gaz station on tankerkoenig.de'
 
-item_structs: NONE
-  # Definition of item-structure templates for this plugin
+    tankerkoenig_admin:
+        type: str
+        description:
+            de: 'Admin-Funktionen des Plugins'
+            en: 'Admin functions of plugin'
+        valid_list_ci:
+            - 'update'
+        valid_list_description:
+            - 'Sofortiges Laden/Update der Daten'
+
+    tankerkoenig_attr:
+        type: str
+        description:
+            de: ''
+            en: ''
+        valid_list:
+            - 'E5'
+            - 'E10'
+            - 'Diesel'
+            - 'Open'
+            - 'street'
+            - 'houseNumber'
+            - 'postCode'
+            - 'place'
+            - 'address'
+            - 'brand'
+            - 'name'
+            - 'lng'
+            - 'lat'
+        valid_list_description:
+            - 'Preis für Benzin E5'
+            - 'Preis für Benzin E10'
+            - 'Preis für Diesel'
+            - 'Tankstelle geöffnet'
+            - 'Straße'
+            - 'Hausnummer'
+            - 'PLZ'
+            - 'Ort'
+            - 'Adresse'
+            - 'Marke'
+            - 'Name'
+            - 'Longitute'
+            - 'Latitute'
+        valid_list_datatype:
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'bool'
+            - 'str'
+            - 'str'
+            - 'num'
+            - 'str'
+            - 'str'
+            - 'str'
+            - 'str'
+            - 'num'
+            - 'num'
+
+item_structs:
+    petrol_station:
+            isopen:
+                type: bool
+                tankerkoenig_id: ..:.
+                tankerkoenig_attr: Open
+                visu_acl: ro
+
+            e5:
+                type: num
+                tankerkoenig_id: ..:.
+                tankerkoenig_attr: E5
+                visu_acl: ro
+                database: yes
+
+            e10:
+                type: num
+                tankerkoenig_id: ..:.
+                tankerkoenig_attr: E10
+                visu_acl: ro
+                database: yes
+
+            diesel:
+                type: num
+                tankerkoenig_id: ..:.
+                tankerkoenig_attr: Diesel
+                visu_acl: ro
+                database: yes
+
+            adresse:
+                type: str
+                tankerkoenig_id: ..:.
+                tankerkoenig_attr: address
+                visu_acl: ro
 
 logic_parameters: NONE
     # Definition of logic parameters defined by this plugin
@@ -95,10 +209,23 @@ plugin_functions:
                     de: "UUID für die anzufragende Tankstelle."
                     en: "UUID for requested petrol station."
 
+    get_petrol_station_detail_reduced:
+        type: dict
+        description:
+            de: "Diese Funktion gibt Details über eine Tankstelle als DICT mit folgenden Keys zurück: 'street', 'houseNumber', 'postCode', 'place', 'brand', 'id', 'lng', 'name', 'lat'"
+            en: "This function returns details about a petrol station as DICT with keys: 'street', 'houseNumber', 'postCode', 'place', 'brand', 'id', 'lng', 'name', 'lat'"
+
+        parameters:
+            id:
+                type: str
+                description:
+                    de: "UUID für die anzufragende Tankstelle."
+                    en: "UUID for requested petrol station."
+
     get_petrol_station_prices:
         type: dict
         description:
-            de: "Gibt ein DICT mit Preisen für ein Array an Tankstellen-IDs zurück. Benutzung wird vom Tankerkoenig Team aus Performanzgründen empfeohlen!!!"
+            de: "Gibt ein DICT mit Preisen für ein Array an Tankstellen-IDs zurück. Benutzung wird vom Tankerkoenig Team aus Performanzgründen empfohlen!!!"
             en: "Returns a list of prices for an array of petrol station ids. Recommended to be used by tankerkoenig team due to performance issues!!!"
 
         parameters:

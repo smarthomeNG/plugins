@@ -12,8 +12,8 @@ plugin:
     documentation: http://smarthomeng.de/user/plugins/telegram/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1548691-support-thread-für-das-telegram-plugin
 
-    version: 1.6.8                  # Plugin version
-    sh_minversion: 1.3              # minimum shNG version to use this plugin
+    version: 1.7.1                  # Plugin version
+    sh_minversion: 1.8              # minimum shNG version to use this plugin
     # sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     py_minversion: 3.6              # minimum Python version to use for this plugin
     # py_maxversion:                # maximum Python version to use for this plugin (leave empty if latest)
@@ -86,7 +86,7 @@ item_attributes:
         description:
             de: 'Mitteilung senden wenn sich der Itemwert ändert'
             en: 'Send message on item change'
-            
+
     telegram_condition:
         type: str
         default: 'on_update'
@@ -129,6 +129,12 @@ item_attributes:
             description:
                 de: 'Chat_ID, zu der diese Message gesendet werden soll'
                 en: 'Chat_ID the message should be sent to'
+
+    telegram_control:
+        type: str
+        description:
+            de: 'Item schreiben per Telegram Keyboard. Der Wert des Attributes (mit mehreren Paramtern) bestimmt das Telegram Keyboard Kommando'
+            en: 'Write items with telegram keyboard. The value of the attribute (with parameters) defines the telegram keyboard command'
 
 logic_parameters: NONE
     # Definition of logic parameters defined by this plugin

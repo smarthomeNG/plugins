@@ -1,0 +1,12 @@
+# translations for the web interface
+plugin_translations:
+    # Translations for the plugin specially for the web interface
+    'daily':     {'de': 'täglich', 'en': 'daily'}
+    'weekly':    {'de': 'wöchentlich', 'en': '='}
+    'monthly':   {'de': 'monatlich', 'en': '='}
+    'yearly':    {'de': 'jährlich', 'en': '='}
+
+    # Alternative format for translations of longer texts:
+    'Hier kommt der Inhalt des Webinterfaces hin.':
+        de: '='
+        en: 'Here goes the content of the web interface.'

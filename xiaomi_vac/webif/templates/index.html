@@ -23,19 +23,27 @@ reload_table();
 }, 30000 );
 </script>
 <script>
-    $(document).ready( function () {
-		try
-			{
-			$('#maintable').DataTable( {
-				"paging": false,
-				fixedHeader: true
-				} );
-			}
-		catch (e)
-			{
-			console.log("Datatable JS not loaded, showing standard table without reorder option" + e)
-			}
-        });
+  $(document).ready( function () {
+    $(window).trigger('datatables_defaults');
+    /* get pagelength from http module or plugin. */
+    {% if webif_pagelength is defined %}webif_pagelength = {{ webif_pagelength|int }};{% endif %}
+    if (isNaN(parseFloat(webif_pagelength)) || webif_pagelength == 0) {
+      resize = true;
+      webif_pagelength = -1;
+    }
+    else {
+      resize = false;
+    }
+		try {
+      table = $('#maintable').DataTable( {
+        pageLength: webif_pagelength,
+        pageResize: resize});
+		}
+		catch (e) {
+			console.log("Datatable JS not loaded, showing standard table without reorder option " +e);
+    }
+
+  });
 </script>
 {% endblock pluginscripts %}
 
@@ -70,15 +78,16 @@ reload_table();
 {{ connection.info}}
 {% endblock headtable %}
 
-
-
 {% set tab1title = "<strong>" ~ p.get_shortname() ~ " " ~ _('Items') ~ "</strong> (" ~ items|length ~ ")" %}
 {% block bodytab1 %}
-<div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
-	<div class="col-sm-12">
-		<table id="maintable" class="table table-striped table-hover pluginList">
+<div class="container-fluid m-2 table-resize">
+  <div class="mb-2">
+    {{ _('Die folgenden Items sind dem Xiaomi_Vac Plugin zugewiesen') }}.
+  </div>
+  <table id="maintable" class="dataTableAdditional">
 			<thead>
 				<tr>
+          <th></th>
 					<th>#</th>
 					<th>{{ _('Item') }}</th>
 
@@ -89,6 +98,7 @@ reload_table();
 			</thead>
 			{% for item in items %}
 				<tr>
+          <td></td>
 					<td class="py-1">{{ loop.index}}</td>
 					<td class="py-1">{{ item._path }}</td>
 
@@ -99,6 +109,5 @@ reload_table();
 				</tr>
 			{% endfor %}
 		</table>
-	</div>
 </div>
 {% endblock bodytab1 %}

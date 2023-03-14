@@ -1,4 +1,19 @@
 {% extends "base_plugin.html" %}
+{% set update_interval = 5000 %}
+{% block pluginstyles %}
+<style>
+  table th.state {
+    min-width: 200px;
+  }
+  table th.conditionset {
+    width: 20%;
+    min-width: 200px;
+  }
+  table th.loglevel {
+    width: 80px;
+  }
+</style>
+{% endblock pluginstyles %}
 {% block pluginscripts %}
 {{ super() }}
 <script>
@@ -18,49 +33,80 @@ $("a").click(function() {
 });
 </script>
 <script>
-    $(document).ready( function () {
-			$(window).trigger('datatables_defaults');
-			try
-				{
-					$('#maintable').DataTable( {} );
-				}
-			catch (e)
-				{
-					console.log("Datatable JS not loaded, showing standard table without reorder option " + e)
-				}
-    });
+  $(document).ready( function () {
+    $(window).trigger('datatables_defaults');
+    {% if webif_pagelength is defined %}webif_pagelength = {{ webif_pagelength|int }};{% endif %}
+    if (isNaN(parseFloat(webif_pagelength)) || webif_pagelength == 0) {
+      resize = true;
+      webif_pagelength = -1;
+    }
+    else {
+      resize = false;
+    }
+    console.log("Using page length from http module/plugin " + webif_pagelength + ", pageResize: " + resize);
+
+		try {
+      table = $('#maintable').DataTable( {
+        pageLength: webif_pagelength,
+        order: [[1, 'asc']],
+        columnDefs: [
+        { responsivePriority: 1, targets: 1 },
+        { responsivePriority: 2, targets: 4 },
+        { width: '20px', targets: 4 },
+        { width: '15%', targets: 3 },
+        { width: '15%', targets: 2 },
+        { className: "item", targets: 1 },
+        { className: "state", targets: 2 },
+        { className: "conditionset", targets: 3 },
+        { className: "visu", targets: 4 },
+        { className: "loglevel", targets: 5 },
+        { className: "states", targets: 6 }
+        ].concat($.fn.dataTable.defaults.columnDefs),
+        pageResize: resize});
+		}
+		catch (e) {
+			console.log("Datatable JS not loaded, showing standard table without reorder option " +e);
+    }
+
+  });
+</script>
+<script>
+	function handleUpdatedData(response, dataSet=null) {
+		if (dataSet === 'devices_info' || dataSet === null) {
+			objResponse = JSON.parse(response);
+			myProto = document.getElementById(dataSet);
+			for (item in objResponse) {
+        shngInsertText (item+'_laststate', objResponse[item]['laststate'], 'maintable', 10);
+        shngInsertText (item+'_lastconditionset', objResponse[item]['lastconditionset'], 'maintable', 10);
+			}
+		}
+	}
 </script>
 {% endblock pluginscripts %}
 {% set logo_frame = false %}
 
-
-{% set item_count = p.__items|length %}
 {% set tab1title = "<strong>Items</strong>" %}
 {% set tab2title = "<strong>" ~ _('Visualisierung')  ~ "</strong>" %}
 {% set tabcount = 1 %}
 
 {% block headtable %}
-
 <table class="table table-striped table-hover">
   <tbody>
     <tr>
       <td class="py-1"><strong>{{ _('Log Level') }}</strong></td>
       <td class="py-1">{{ p.get_parameter_value_for_display('log_level') }}</td>
-      <td class="py-1" width="50px"></td>
       <td class="py-1"><strong>{{ _('Log Verzeichnis') }}</strong></td>
       <td class="py-1">{{ p.get_parameter_value_for_display('log_directory') }}</td>
     </tr>
     <tr>
       <td class="py-1"><strong>{{ _('Startverzögerung') }}</strong></td>
       <td class="py-1">{{ p.get_parameter_value_for_display('startup_delay_default') }}</td>
-      <td class="py-1" width="50px"></td>
       <td class="py-1"><strong>{{ _('Suspend Dauer') }}</strong></td>
       <td class="py-1">{{ p.get_parameter_value_for_display('suspend_time_default') }}</td>
     </tr>
     <tr>
       <td class="py-1"><strong>{{ _('Items') }}</strong></td>
       <td class="py-1">{{ item_count }}</td>
-      <td class="py-1" width="50px"></td>
       <td class="py-1"></td>
       <td class="py-1"></td>
     </tr>
@@ -70,33 +116,38 @@ $("a").click(function() {
 
 {% block bodytab1 %}
 
-<div class="container-fluid m-2" role="tabpanel">
+<div class="container-fluid m-2 table-resize">
   <div class="mb-2">
     {{ _('Die folgenden Items verfügen über ein StateEngine Item') }}.
-    <strong>{{ _('Klick auf die entsprechende Zeile öffnet die Visualisierung!') }}</strong>
+    <strong>{{ _('Klick auf das Lupensymbol öffnet die Visualisierung!') }}</strong>
   </div>
-  <table id="maintable" class="table table-striped table-hover pluginList display">
+  <table id="maintable">
     <thead>
-    <tr>
+    <tr><th></th>
       <th>{{ _('SE Item') }}</th>
-      <th>{{ _('Zustände') }}</th>
       <th>{{ _('aktueller Zustand') }}</th>
       <th>{{ _('aktuelles Bedingungsset') }}</th>
+      <th>Visu</th>
+      <th>{{ _('Log Level') }}</th>
+      <th>{{ _('Zustände') }}</th>
     </tr>
     </thead>
+    <tbody>
     {% for item in p.get_items() %}
-    <tr onclick="location.href='?action=get_graph&abitem={{ item }}';">
+    <tr><td></td>
         <td class="py-1">{{ item }}</td>
-        <td class="py-1">{% for cond in item.webif_infos.keys() %}{% if not p.itemsApi.return_item(cond) == None %}
-                          {% if loop.index > 1%},{% endif %}
-                         {{ p.itemsApi.return_item(cond)._name.split('.')[-1] }}{% endif %}{% endfor %}</td>
-        <td class="py-1">{{ item.laststate_name }}</td>
-        <td class="py-1">{{ item.lastconditionset_name }}</td>
-
+        <td class="py-1" id="{{ item }}_laststate">{{ item.laststate_name }}</td>
+        <td class="py-1" id="{{ item }}_lastconditionset">
+          {% if item.lastconditionset_name == "" %}-{% else %}{{ item.lastconditionset_name }}{% endif %}</td>
+        <td>
+          <button type="button" class="btn btn-shng btn-sm" title="{{ _('Detailvisualisierung') }}" onclick="location.href='?action=get_graph&abitem={{ item }}';"><i class="fas fa-search"></i></button></td>
+        <td class="py-1">{{ item.log_level }}</td>
+        <td class="py-1">{% for cond in item.webif_infos.keys() %}{% if not p.itemsApi.return_item(cond) == None %}{% if loop.index > 1 %},{% endif %}{{ p.itemsApi.return_item(cond)._name.split('.')[-1] }}{% endif %}{% endfor %}</td>
 
       </tr>
 
     {% endfor %}
+    </tbody>
   </table>
 </div>
 

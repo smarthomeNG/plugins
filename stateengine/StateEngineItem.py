@@ -45,6 +45,10 @@ class SeItem:
         return self.__id
 
     @property
+    def log_level(self):
+        return self.__log_level
+
+    @property
     def variables(self):
         return self.__variables
 
@@ -471,8 +475,11 @@ class SeItem:
                     if last_state is None:
                         self.__logger.info("No matching state found, no previous state available. Doing nothing.")
                     else:
-                        _last_conditionset_id = self.__conditionsets[_wouldenter][0]
-                        _last_conditionset_name = self.__conditionsets[_wouldenter][1]
+                        try:
+                            _last_conditionset_id = self.__conditionsets[_wouldenter][0]
+                            _last_conditionset_name = self.__conditionsets[_wouldenter][1]
+                        except:
+                            pass
                         if last_state.conditions.count() == 0:
                             self.lastconditionset_set('', '')
                             _last_conditionset_id = ''

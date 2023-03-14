@@ -12,7 +12,7 @@ plugin:
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1586747-support-thread-für-das-rtr2-plugin
 
-    version: 2.0.0                  # Plugin version (must match the version specified in __init__.py)
+    version: 2.2.0                  # Plugin version (must match the version specified in __init__.py)
     sh_minversion: 1.8.0            # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     py_minversion: 3.6             # minimum Python version to use for this plugin
@@ -29,55 +29,55 @@ parameters:
         default: 4
         description:
             de: 'Gebäuchliche Werte: Wasserheizung=4 K, Fußbodenheitzung=4 K, Split Unit=4 K'
-            en: '...'
+            en: 'Common values: Wasser heating=4 K, underfloor heating=4 K, split unit=4 K'
 
     default_Ki:
         type: num
         default: 120
         description:
             de: 'Gebäuchliche Werte: Wasserheizung=120 Min, Fußbodenheitzung=150 Min, Split Unit=60 Min'
-            en: '...'
+            en: 'Common values: Wasser heating=120 min, underfloor heating=150 min, split unit=60 min'
 
-    #default_Kd:
-    #    type: num
-    #    description:
-    #        de: '(Zukünftige Erweiterung für PID-Regler)'
-    #        en: '...'
+    default_Kd:
+        type: num
+        description:
+            de: '[Zukünftige Erweiterung] Wird noch nicht verwendet, ist ein Parameter für den noch nicht implementierten PID Regler'
+            en: '[Future expansion]'
 
     comfort_temp:
         type: num
-        default: 22.0
+        default: 21.0
         description:
             de: 'Standard Vorgabe für die Temperatur im Komfort Modus'
-            en: '...'
+            en: 'Starting/default value for the temperature in comfort mode'
 
     standby_reduction:
         type: num
-        default: 1.0
+        default: 1.5
         description:
-            de: 'Standard Vorgabe für die Temperatur im Standby Modus'
-            en: '...'
+            de: 'Standard Vorgabe für die Temperaturreduktion im Standby Modus'
+            en: 'Starting/default value for the temperature reduction in standby mode'
 
     night_reduction:
         type: num
         default: 3.0
         description:
-            de: 'Standard Vorgabe für die Temperatur im Nacht Modus (bei Nachtabsenkung)'
-            en: '...'
+            de: 'Standard Vorgabe für die Temperaturreduktion im Nacht Modus (bei Nachtabsenkung)'
+            en: 'Starting/default value for the temperature reduction in night mode'
 
     fixed_reduction:
         type: bool
         default: True
         description:
             de: 'Soll die Temperatur Differenz zwischen Komfort Modus und den anderen Modi konstant sein?'
-            en: '...'
+            en: 'if True, the temperature difference between comfort mode and the other modes is constant'
 
     frost_temp:
         type: num
         default: 7.0
         description:
             de: 'Standard Vorgabe für die Temperatur im Frostschutz Modus'
-            en: '...'
+            en: 'Starting/default value for the temperature in frost prevention mode'
 
     hvac_mode:
         type: int
@@ -85,15 +85,15 @@ parameters:
         valid_min: 1
         valid_max: 4
         description:
-            de: 'Modus Standard Vorgabe: 1=Komfort, 2=Standby, 3=Nacht, 4=Frostschutz'
-            en: '...'
+            de: 'hvac Modus Standard Vorgabe: 1=Komfort, 2=Standby, 3=Nacht, 4=Frostschutz'
+            en: 'Starting/default value for the hvac mode: 1=Comfort, 2=Standby, 3=Night, 4=Frost prevention'
 
     valve_protect:
         type: bool
         default: True
         description:
             de: "Standard Vorgabe für die Aktivierung der Ventilschutz Einstellung der Regler."
-            en: "..."
+            en: "Default value for the valve protection mode"
 
     max_output:
         type: num
@@ -102,7 +102,7 @@ parameters:
         default: 100
         description:
             de: "Standard Vorgabe für den maximalen Stellwert der Regler."
-            en: "..."
+            en: "Default for the maximum control value"
 
     min_output:
         type: num
@@ -111,7 +111,7 @@ parameters:
         default: 0
         description:
             de: "Standard Vorgabe für den minimalen Stellwert der Regler."
-            en: "..."
+            en: "Default for the minimum control value"
 
 item_attributes:
     # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)
@@ -195,14 +195,28 @@ item_attributes:
     rtr2_settings:
         type: list
         description:
-            de: "Initale Einstellungen für den Rtr"
-            en: "Inital settings for the Rtr"
+            de: "Initale Einstellungen für den Rtr. Bitte beachten: Wenn die Werte über dieses Attribut gesetzt werdeen,
+                 werden sie bei jedem Neustart von SmartHomeNG wieder gesetzt. \n
+                 \n
+                 [<comfort_temp>, <night_reduction>, <standby_reduction>, <fixed_reduction>, <hvac_mode>, <frost_temp>]
+                "
+            en: "Inital settings for the Rtr. Please note: If the values are set using this attribute, they are set
+                 on every restart of SmartHomeNG. \n
+                 \n
+                 [<comfort_temp>, <night_reduction>, <standby_reduction>, <fixed_reduction>, <hvac_mode>, <frost_temp>]
+                "
 
     rtr2_controller_settings:
         type: list
         description:
-            de: "Initale Einstellungen für den Controller, falls abweichend von den Plugin Standardwerten"
-            en: "Inital settings for the controller, if different from the plugin defaults"
+            de: "Initale Einstellungen für den Controller, falls abweichend von den Plugin Standardwerten \n
+                 \n
+                 [<Kp>, <Ki>]
+                "
+            en: "Inital settings for the controller, if different from the plugin defaults \n
+                 \n
+                 [<Kp>, <Ki>]
+                "
 
 item_structs:
     # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
@@ -259,6 +273,7 @@ item_structs:
 
         stellwert:
             type: num
+            cache: True
             rtr2_id@instance: ..:.
             rtr2_function@instance: control_output
 

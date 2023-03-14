@@ -39,7 +39,7 @@ logging.addLevelName(StateEngineDefaults.VERBOSE, 'DEVELOP')
 
 
 class StateEngine(SmartPlugin):
-    PLUGIN_VERSION = '1.9.2'
+    PLUGIN_VERSION = '1.9.5'
 
     # Constructor
     # noinspection PyUnusedLocal,PyMissingConstructor
@@ -47,7 +47,7 @@ class StateEngine(SmartPlugin):
         super().__init__()
         StateEngineDefaults.logger = self.logger
         self.itemsApi = Items.get_instance()
-        self.__items = self.abitems = {}
+        self._items = self.abitems = {}
         self.mod_http = None
         self.__sh = sh
         self.alive = False
@@ -59,7 +59,6 @@ class StateEngine(SmartPlugin):
             StateEngineDefaults.log_level = log_level
             log_directory = self.__log_directory
             self.logger.info("Init StateEngine (log_level={0}, log_directory={1})".format(log_level, log_directory))
-
             StateEngineDefaults.startup_delay = self.get_parameter_value("startup_delay_default")
             StateEngineDefaults.suspend_time = self.get_parameter_value("suspend_time_default")
             StateEngineDefaults.instant_leaveaction = self.get_parameter_value("instant_leaveaction")
@@ -116,16 +115,16 @@ class StateEngine(SmartPlugin):
                 try:
                     abitem = StateEngineItem.SeItem(self.get_sh(), item, self)
                     abitem.ab_alive = True
-                    self.__items[abitem.id] = abitem
+                    self._items[abitem.id] = abitem
                 except ValueError as ex:
                     self.logger.error("Problem with Item: {0}: {1}".format(item.property.path, ex))
 
-        if len(self.__items) > 0:
-            self.logger.info("Using StateEngine for {} items".format(len(self.__items)))
+        if len(self._items) > 0:
+            self.logger.info("Using StateEngine for {} items".format(len(self._items)))
         else:
             self.logger.info("StateEngine deactivated because no items have been found.")
 
-        self.__cli = StateEngineCliCommands.SeCliCommands(self.get_sh(), self.__items, self.logger)
+        self.__cli = StateEngineCliCommands.SeCliCommands(self.get_sh(), self._items, self.logger)
         self.alive = True
         self.get_sh().stateengine_plugin_functions.ab_alive = True
 
@@ -133,11 +132,11 @@ class StateEngine(SmartPlugin):
     def stop(self):
         self.logger.debug("stop method called")
         self.scheduler_remove('StateEngine: Remove old logfiles')
-        for item in self.__items:
-            self.__items[item].ab_alive = False
+        for item in self._items:
+            self._items[item].ab_alive = False
             self.scheduler_remove('{}'.format(item))
             self.scheduler_remove('{}-Startup Delay'.format(item))
-            self.__items[item].remove_all_schedulers()
+            self._items[item].remove_all_schedulers()
 
         self.alive = False
         self.get_sh().stateengine_plugin_functions.ab_alive = False
@@ -175,16 +174,16 @@ class StateEngine(SmartPlugin):
 
         :return:        sorted itemlist
         """
-        sortedlist = sorted([k for k in self.__items.keys()])
+        sortedlist = sorted([k for k in self._items.keys()])
 
         finallist = []
         for i in sortedlist:
-            finallist.append(self.__items[i])
+            finallist.append(self._items[i])
         return finallist
 
     def get_graph(self, abitem, graphtype='link'):
         if isinstance(abitem, str):
-            abitem = self.__items[abitem]
+            abitem = self._items[abitem]
         webif = StateEngineWebif.WebInterface(self.__sh, abitem)
         try:
             os.makedirs(self.path_join(self.get_plugin_dir(), 'webif/static/img/visualisations/'))

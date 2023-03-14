@@ -426,14 +426,16 @@ class EEP_Parser():
         return results 
 
     def _parse_eep_F6_10_00(self, payload, status):
-        self.logger.debug("Processing F6_10_00: Mechanical Handle")
+        self.logger.debug(f"Processing F6_10_00: Mechanical Handle sends payload {payload[0]}")
         results = {}
-        if (payload[0] == 0xF0):
+        # Eltako defines 0xF0 for closed status. Enocean spec defines masking of lower 4 bit:
+        if (payload[0] & 0b11110000) == 0b11110000:
             results['STATUS'] = 0
-        elif ((payload[0]) == 0xE0) or ((payload[0]) == 0xC0):
+        # Eltako defines 0xE0 for window open (horizontal) up status. Enocean spec defines the following masking:
+        elif (payload[0] & 0b11010000) == 0b11000000:
             results['STATUS'] = 1
-        # Typo error in older Eltako Datasheet for 0x0D instead of the right 0xD0
-        elif (payload[0] == 0xD0):
+        # Eltako defines 0xD0 for open/right up status. Enocean spec defines masking of lower 4 bit:
+        elif (payload[0] & 0b11110000) == 0b11010000:
             results['STATUS'] = 2
         else:
             self.logger.error(f"Error in F6_10_00 handle status, payload: {payload[0]} unknown")

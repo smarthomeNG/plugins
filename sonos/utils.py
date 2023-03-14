@@ -12,7 +12,6 @@ def is_valid_port(port):
         return True
     return False
 
-
 def unique_list(seq, idfun=None):
     # order preserving
     if idfun is None:
@@ -28,7 +27,6 @@ def unique_list(seq, idfun=None):
         seen[marker] = 1
         result.append(item)
     return result
-
 
 def is_open_port(port):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -46,7 +44,6 @@ def get_local_ip_address():
         return "0.0.0.0"
     return s.getsockname()[0]
 
-
 def file_size(size):
     _suffixes = ['bytes', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB']
     # determine binary order in steps of size 10
@@ -58,11 +55,9 @@ def file_size(size):
     # should never resort to exponent values)
     return '{:.4g} {}'.format(size / (1 << (order * 10)), _suffixes[order])
 
-
 def get_free_diskspace(folder):
     statvfs = os.statvfs(folder)
     return statvfs.f_frsize * statvfs.f_bfree
-
 
 def get_folder_size(folder):
     total_size = 0
@@ -71,7 +66,6 @@ def get_folder_size(folder):
             fp = os.path.join(dir_path, f)
             total_size += os.path.getsize(fp)
     return total_size
-
 
 def get_tts_local_file_path(local_directory, tts_string, tts_language):
     m = hashlib.md5()

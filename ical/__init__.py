@@ -33,7 +33,7 @@ from bin.smarthome import VERSION
 
 
 class iCal(SmartPlugin):
-    PLUGIN_VERSION = "1.6.0"
+    PLUGIN_VERSION = "1.6.1"
     ALLOW_MULTIINSTANCE = False
     DAYS = ("MO", "TU", "WE", "TH", "FR", "SA", "SU")
     FREQ = ("YEARLY", "MONTHLY", "WEEKLY", "DAILY", "HOURLY", "MINUTELY", "SECONDLY")
@@ -297,10 +297,16 @@ class iCal(SmartPlugin):
                 if 'RRULE' in event:
                     event['RRULE'] = self._parse_rrule(event, tzinfo)
                 if event['UID'] in events:
+                    # UID already parsed. Check if new events UID is marked as recurring:
                     if 'RECURRENCE-ID' in event:
                         events[event['UID']]['EXDATES'].append(event['RECURRENCE-ID'])
                         events[event['UID'] + event['DTSTART'].isoformat()] = event
+                    # Check if already known event's UID is marked as recurring:
+                    elif 'RECURRENCE-ID' in events[event['UID']]:
+                        self.logger.debug(f"UID already known for event {event['SUMMARY']}, marked as recurring")
+                        events[event['UID'] + event['DTSTART'].isoformat()] = event
                     else:
+                        # Neither event's UID is marked as recurring and therefore dublicate. Ouput warning:
                         self.logger.warning("problem parsing {0} duplicate UID: {1} ({2})".format(ics, event['UID'], event['SUMMARY']))
                         continue
                 else:

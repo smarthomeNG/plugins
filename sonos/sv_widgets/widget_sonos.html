@@ -1,5 +1,5 @@
 /**
-* Displas a Sonos title 
+* Displays a Sonos title
 *
 * @param {uid} unique id for this widget
 * @param {artist} artist item for sonos player
@@ -13,7 +13,7 @@
 {% endmacro %}
 
 /**
-* Displas a Sonos title 
+* Displays a Sonos title
 *
 * @param {uid} unique id for this widget
 * @param {title} title item for sonos player
@@ -29,7 +29,7 @@
 
 
 /**
-* Displas a Sonos cover 
+* Displays a Sonos cover
 *
 * @param {uid} unique id for this widget
 * @param {cover} cover item for sonos player
@@ -45,7 +45,7 @@
 
 
 /**
-* Displas a Sonos album name 
+* Displays a Sonos album name
 *
 * @param {uid} unique id for this widget
 * @param {album} album item for sonos player
@@ -58,7 +58,7 @@
 
 
 /**
-* Displas a Sonos play button 
+* Displays a Sonos play button
 *
 * @param {uid} unique id for this widget
 * @param {play} play item for sonos player
@@ -67,7 +67,7 @@
 * @info  by Pfischi
 */
 {% macro play(uid, play, current_transport_actions) %}
-	{% import "basic.html" as basic %}
+	{% import config_version_full >= "3.2.c" ? "@widgets/basic.html" : "basic.html" as basic %}
   <div id="{{ uid }}" class="play" data-widget="sonos.play" data-item="{{ play }}, {{ current_transport_actions }}">
     {{ basic.stateswitch(uid, play, 'icon', [0, 1], ['audio_play.svg', 'audio_pause.svg' ]) }}
   </div>
@@ -75,7 +75,7 @@
 
 
 /**
-* Displas a Sonos previous button 
+* Displays a Sonos previous button
 *
 * @param {uid} unique id for this widget
 * @param {next} trigger next item for sonos player
@@ -84,7 +84,7 @@
 * @info  by Pfischi
 */
 {% macro next(uid, next, current_transport_actions) %}
-	{% import "basic.html" as basic %}
+	{% import config_version_full >= "3.2.c" ? "@widgets/basic.html" : "basic.html" as basic %}
   <div id="{{ uid }}" class="next" data-widget="sonos.next" data-item="{{ next }}, {{ current_transport_actions }}">
     {{ basic.stateswitch(uid, next, 'icon', [1], ['audio_ff.svg']) }}
   </div>
@@ -92,7 +92,7 @@
 
 
 /**
-* Displas a Sonos previous button 
+* Displays a Sonos previous button
 *
 * @param {uid} unique id for this widget
 * @param {previous} previous item for sonos player
@@ -101,14 +101,14 @@
 * @info  by Pfischi
 */
 {% macro previous(uid, previous, current_transport_actions) %}
-	{% import "basic.html" as basic %}
+	{% import config_version_full >= "3.2.c" ? "@widgets/basic.html" : "basic.html" as basic %}
   <div id="{{ uid }}" class="previous" data-widget="sonos.previous" data-item="{{ previous }}, {{ current_transport_actions }}">
       {{ basic.stateswitch(uid, previous, 'icon', [1], ['audio_rew.svg']) }}
   </div>
 {% endmacro %}
 
 /**
-* Displas a Sonos volume slider 
+* Displays a Sonos volume slider
 *
 * @param {uid} unique id for this widget
 * @param {volume} volume item for sonos player
@@ -116,7 +116,7 @@
 * @info  by Pfischi
 */
 {% macro volume(uid, volume) %}
-  {% import "basic.html" as basic %}
+  {% import config_version_full >= "3.2.c" ? "@widgets/basic.html" : "basic.html" as basic %}
   <div id="{{ uid }}" class="volslider">
     {{ basic.slider(uid, volume, 0, 100, 1, 'none', 'none') }}
   </div>
@@ -132,7 +132,7 @@
 * @info  by Pfischi
 */
 {% macro mute(uid, mute) %}
-  {% import "basic.html" as basic %}
+  {% import config_version_full >= "3.2.c" ? "@widgets/basic.html" : "basic.html" as basic %}
   <div id="{{ uid }}" class="mute">
     {{ basic.stateswitch(uid, mute, 'icon', [0, 1], ['audio_volume_low.svg', 'audio_volume_mute.svg']) }}
   </div>
@@ -140,7 +140,7 @@
 
 
 /**
-* Displas a Sonos playlist 
+* Displays a Sonos playlist
 *
 * @param {uid} unique id for this widget
 * @param {sonos_playlist} item for sonos playlist
@@ -186,7 +186,7 @@
   {% set sonos_playlists            = '.sonos_playlists' %}
   {% set load_sonos_playlist        = '.load_sonos_playlist' %}
   {% set cover_default              = 'pages/base/pics/trans.png' %}
-  {% import "basic.html" as basic %}
+  {% import config_version_full >= "3.2.c" ? "@widgets/basic.html" : "basic.html" as basic %}
   {% import _self as mysonos %}
 
 <div class="sonos">

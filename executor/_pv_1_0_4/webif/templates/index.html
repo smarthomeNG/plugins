@@ -1,0 +1,181 @@
+{% extends "base_plugin.html" %}
+
+{% set logo_frame = false %}
+
+{% block headtable %}
+{% endblock headtable %}
+
+
+<!--
+	Additional buttons for the web interface (if any are needed) - displayed below the headtable-section
+-- >
+{% block buttons %}
+{% if 1==2 %}
+	<form action="" method="post">
+	<button id="btn1" class="btn btn-shng btn-sm" name="learn" type="submit" value="on"><i class="fas fa-wifi"></i>&nbsp;&nbsp;&nbsp;Mach was&nbsp;</button>
+	</form>
+{% endif %}
+{% endblock %}
+
+<!--
+	Define the number of tabs for the body of the web interface (1 - 3)
+-->
+
+{% set tabcount = 2 %}
+
+<!--
+	Set the tab that will be visible on start, if another tab that 1 is wanted (1 - 3)
+-->
+{% if item_count==0 %}
+	{% set start_tab = 1 %}
+{% endif %}
+
+
+<!--
+	Content block for the first tab of the Webinterface
+-->
+
+{% set tab1title = "<strong>" ~ _('Eval Ausdruck') ~ "</strong>" %}
+{% block bodytab1 %}
+
+<script>
+function geteval(){
+    console.log("Evaluate a line ...");
+    param = $('#pycode').val();
+		itempath = $('#itempath').val();
+    console.log('Param = '+encodeURIComponent(param) + ', Item path = '+encodeURIComponent(itempath));
+    $.get('evaluate', { eline: param, path: itempath}, function(data){
+        $('result').html(data);
+        console.log('Data:'+data);
+    });
+    console.log('Evaluation of a line is done');
+};
+
+$(document).ready(function(){
+    $('#pycode').keypress(function(e){
+      if(e.keyCode==13) {
+        $('#doeval').click();
+        return false;
+      };
+    });
+});
+</script>
+<style>
+input#pycode{
+    width: 100%;
+}
+
+input#itempath{
+    width: 100%;
+}
+button#doeval {
+    margin-top: 1em;
+    margin-bottom: 1em;
+    display: block;
+}
+
+result {
+    border: 1px solid green;
+    padding: 0.5em;
+    width: 100%;
+    display: block;
+}
+</style>
+
+
+<div class="container-fluid m-2">
+    <div id="section1">
+				<p>
+        <label for="pycode">{{ _('Evalausdruck eingeben:') }}</label> <br>
+        <input type="text" name="pycode" id="pycode" />
+        </p><p>
+				<label for="itempath">{{ _('Itempfad angeben (optional zum Testen relativer Itemangaben):') }}</label> <br>
+        <input type="text" name="itempath" id="itempath" />
+        </p>
+        <button onclick="geteval()" id="doeval">{{ _('Ausführen!') }}</button>
+        <label for="result">{{ _('Ergebnis') }}</label><br>
+        <result></result>
+    </div>
+</div>
+{% endblock bodytab1 %}
+
+{% set tab2title = "<strong>" ~ _('Python Code') ~ "</strong>" %}
+{% block bodytab2 %}
+
+<script>
+var te_python;
+var cmPython;
+var te_resulttext;
+var cmResult;
+
+function getexecution() {
+    console.log("Sending code for execution ...");
+    param = cmPython.doc.getValue();
+    console.log('Param ='+encodeURIComponent(param));
+    $.get('evaluatetext', { eline: param}, function(data){
+        cmResult.doc.setValue(data);
+        console.log('Data:'+data);
+    }); console.log('erledigt');    console.log('Execution of code is done');
+};
+
+$(document).ready(function(){
+    te_python = document.getElementById('pycodetext');
+    te_resulttext = document.getElementById('resulttext');
+    cmPython = CodeMirror.fromTextArea(te_python, {
+        mode: "python",
+        lineNumbers: true,
+        extraKeys: {
+            "Ctrl-Q": function(cm){ cm.foldCode(cm.getCursor()); },
+            Tab: function(cm) {
+                var spaces = Array(cm.getOption("indentUnit") + 1).join(" ");
+                cm.replaceSelection(spaces);},
+            "Ctrl-Enter": function(cm){ getexecution(); }
+        },
+        foldGutter: true,
+        gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
+    });
+    cmPython.refresh();
+
+    cmResult = CodeMirror.fromTextArea(te_resulttext, {
+        lineNumbers: true
+    });
+	cmResult.refresh();
+
+});
+</script>
+<style>
+
+#pycodetext {
+    padding-left: 4em;
+    width: 100%;
+    height: 100%;
+    display: block;
+    margin-bottom: 5px;
+}
+
+button#doexec{
+    margin-top: 1em;
+    margin-bottom: 1em;
+    display: block;
+}
+
+resulttext {
+    border: green solid 1px;
+    width: 100%;
+    min-height: 2em;
+    display: block;
+    margin-bottom: 5px;
+    overflow: auto;
+}
+</style>
+
+<div class="container-fluid m-2">
+    <div id="section2">
+        <label for="pycodetext">{{ _('Zeile zum Ausführen in Python eingeben:') }}</label> <br>
+        <textarea id="pycodetext"></textarea>
+        <button onclick="getexecution()" id="doexec">{{ _('Ausführen!') }}</button><br>
+        <label for="resulttext">{{ _('Ergebnis') }}</label><br>
+        <textarea id="resulttext" placeholder="Ergebnisse erscheinen hier"></textarea>
+    </div>
+</div>
+{% endblock bodytab2 %}

@@ -1,5 +1,14 @@
 Kostal:
   Inverter:
+
+    kostal_06:
+      type: str
+      kostal_06: ''
+      visu_acl: ro
+    kostal_14:
+      kostal_14: ''
+      visu_acl: ro
+      type: str
     kostal_30:
       type: num
       kostal_30: ''
@@ -16,12 +25,24 @@ Kostal:
       type: num
       kostal_36: ''
       visu_acl: ro
+    kostal_38:
+      kostal_38: ''
+      visu_acl: ro
+      type: str
+    kostal_46:
+      kostal_46: ''
+      visu_acl: ro
+      type: str
     kostal_54:
       kostal_54: ''
       visu_acl: ro
       type: num
     kostal_56:
       kostal_56: ''
+      visu_acl: ro
+      type: num
+    kostal_98:
+      kostal_98: ''
       visu_acl: ro
       type: num
     kostal_100:
@@ -296,6 +317,30 @@ Kostal:
       kostal_326: ''
       visu_acl: ro
       type: num
+    kostal_384:
+      kostal_384: ''
+      visu_acl: ro
+      type: str
+    kostal_420:
+      kostal_420: ''
+      visu_acl: ro
+      type: str
+    kostal_428:
+      kostal_428: ''
+      visu_acl: ro
+      type: str
+    kostal_436:
+      kostal_436: ''
+      visu_acl: ro
+      type: str
+    kostal_446:
+      kostal_446: ''
+      visu_acl: ro
+      type: str
+    kostal_454:
+      kostal_454: ''
+      visu_acl: ro
+      type: str
     kostal_512:
       kostal_512: ''
       visu_acl: ro
@@ -308,6 +353,10 @@ Kostal:
       kostal_515: ''
       visu_acl: ro
       type: num
+    kostal_517:
+      kostal_517: ''
+      visu_acl: ro
+      type: str
     kostal_525:
       kostal_525: ''
       visu_acl: ro
@@ -320,6 +369,14 @@ Kostal:
       kostal_531: ''
       visu_acl: ro
       type: num
+    kostal_535:
+      kostal_535: ''
+      visu_acl: ro
+      type: str
+    kostal_559:
+      kostal_559: ''
+      visu_acl: ro
+      type: str
     kostal_575:
       kostal_575: ''
       visu_acl: ro
@@ -338,5 +395,37 @@ Kostal:
       type: num
     kostal_588:
       kostal_588: ''
+      visu_acl: ro
+      type: num
+    kostal_768:
+      kostal_768: ''
+      visu_acl: ro
+      type: str
+    kostal_800:
+      kostal_800: ''
+      visu_acl: ro
+      type: str
+    kostal_1056:
+      kostal_1056: ''
+      visu_acl: ro
+      type: num
+    kostal_1058:
+      kostal_1058: ''
+      visu_acl: ro
+      type: num
+    kostal_1060:
+      kostal_1060: ''
+      visu_acl: ro
+      type: num
+    kostal_1062:
+      kostal_1062: ''
+      visu_acl: ro
+      type: num
+    kostal_1064:
+      kostal_1064: ''
+      visu_acl: ro
+      type: num
+    kostal_1066:
+      kostal_1066: ''
       visu_acl: ro
       type: num

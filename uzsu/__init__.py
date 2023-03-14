@@ -91,12 +91,7 @@ import copy
 import html
 import json
 from .webif import WebInterface
-
-try:
-    from scipy import interpolate
-    REQUIRED_PACKAGE_IMPORTED = True
-except Exception:
-    REQUIRED_PACKAGE_IMPORTED = False
+from scipy import interpolate
 
 ITEM_TAG = ['uzsu_item']
 
@@ -109,7 +104,7 @@ class UZSU(SmartPlugin):
 
     ALLOW_MULTIINSTANCE = False
 
-    PLUGIN_VERSION = "1.6.3"      # item buffer for all uzsu enabled items
+    PLUGIN_VERSION = "1.6.5"      # item buffer for all uzsu enabled items
 
     def __init__(self, smarthome):
         """
@@ -124,7 +119,6 @@ class UZSU(SmartPlugin):
         self._interpolation_precision = self.get_parameter_value('interpolation_precision')
         self._backintime = self.get_parameter_value('backintime')
         self._suncalculation_cron = self.get_parameter_value('suncalculation_cron')
-        self.webif_pagelength = self.get_parameter_value('webif_pagelength')
         self._sh = smarthome
         self._items = {}
         self._lastvalues = {}
@@ -134,9 +128,6 @@ class UZSU(SmartPlugin):
         self._itpl = {}
         self.init_webinterface(WebInterface)
         self.logger.info("Init with timezone {}".format(self._timezone))
-        if not REQUIRED_PACKAGE_IMPORTED:
-            self.logger.warning("Unable to import Python package 'scipy' which is necessary for interpolation.")
-            self._init_complete = False
 
     def run(self):
         """
@@ -678,10 +669,7 @@ class UZSU(SmartPlugin):
                 self.logger.info("Updated item {} on startup with value {} from time {}".format(
                     item, _initvalue, datetime.fromtimestamp(_inittime/1000.0)))
             _itemtype = self._items[item]['interpolation'].get('itemtype')
-            if cond2 and not REQUIRED_PACKAGE_IMPORTED:
-                self.logger.warning("Interpolation is set to {} but scipy not installed. Ignoring interpolation".format(
-                    _interpolation))
-            elif cond2 and _interval < 1:
+            if cond2 and _interval < 1:
                 self.logger.warning("Interpolation is set to {} but interval is {}. Ignoring interpolation".format(
                     _interpolation, _interval))
             elif cond2 and _itemtype not in ['num']:

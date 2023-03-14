@@ -1,44 +1,11 @@
 {% extends "base_database.html" %}
-{% set update_interval = 10000 %}
+{% set update_interval = [(((10 * (p._handled_items | length)) / 1000) | round | int) * 1000, 5000]|max %}
+
 {% set dataSet = 'overview' %}
 {% set tab1title = _('Database Items') %}
-{% block bodytab1 %}
-<script type="text/javascript" language="javascript">
-	function confirmDelete(url, text) {
-		if (confirm(text)) {
-			window.location.href=url;
-		}
-		return false;
-	}
-</script>
 
-{% if delete_triggered %}
-	<div class="mb-2 alert alert-success alert-dismissible fade show" role="alert">
-		<strong>{{ _('Löschauftrag für die Einträge von Item ID {item_id} in der Tabelle "log" wurde erfolgreich initiiert!', vars={'item_id': item_id}) }}</strong><br/>
-		{{ _('Das Löschen kann noch kurze Zeit dauern, da die Ausführung des Delete Queries erst nach Abschluß der bestehenden Transaktionen erfolgen kann.') }}
-		<button type="button" class="close" data-hide="alert" aria-label="Close">
-			<span aria-hidden="true">&times;</span>
-		</button>
-	</div>
-{% endif %}
-
-<div id="cleanup" class="mb-2 alert alert-success alert-dismissible fade show" role="alert">
-    <strong>{{ _('Datenbank-Cleanup wurde erfolgreich initiiert!') }}</strong><br/>
-    {{ _('Das Löschen von Einträgen, für die es keine Items mehr gibt, kann je nach Datenbank Größe einige Zeit dauern und die Ausführung kann erst nach Abschluß der bestehenden Transaktionen erfolgen.') }}
-    <button type="button" class="close" data-hide="alert" aria-label="Close">
-        <span aria-hidden="true">&times;</span>
-    </button>
-</div>
-
-<script>
-    $('#cleanup').hide();
-    $(function(){
-        $("[data-hide]").on("click", function(){
-            $("." + $(this).attr("data-hide")).hide();
-        });
-    });
-</script>
-
+{%- block pluginscripts %}
+{{ super() }}
 <script>
 	function handleUpdatedData(response, dataSet='overview') {
 		if (dataSet === 'overview' || dataSet === null) {
@@ -64,6 +31,45 @@
 		}
 	}
 </script>
+{%- endblock pluginscripts %}
+
+{% block bodytab1 %}
+<script type="text/javascript" language="javascript">
+	function confirmDelete(url, text) {
+		if (confirm(text)) {
+			window.location.href=url;
+		}
+		return false;
+	}
+</script>
+
+{% if delete_triggered %}
+	<div class="mb-2 alert alert-success alert-dismissible fade show" role="alert">
+		<strong>{{ _('Löschauftrag für die Einträge von Item ID {item_id} in der Tabelle "log" wurde erfolgreich initiiert!', vars={'item_id': item_id}) }}</strong><br/>
+		{{ _('Das Löschen kann noch kurze Zeit dauern, da die Ausführung des Delete Queries erst nach Abschluß der bestehenden Transaktionen erfolgen kann.') }}
+		<button type="button" class="close" data-hide="alert" aria-label="Close">
+			<span aria-hidden="true">&times;</span>
+		</button>
+	</div>
+{% endif %}
+
+<div id="cleanup" class="mb-2 alert alert-success alert-dismissible fade show" role="alert">
+    <strong>{{ _('Datenbank-Cleanup wurde erfolgreich initiiert!') }}</strong><br/>
+    {{ _('Das Löschen von Einträgen, für die es keine Items mehr gibt, kann je nach Datenbank Größe einige Zeit dauern und wird parallel zur aktuellen Funktion des Plugins erfolgen.') }}
+    <button type="button" class="close" data-hide="alert" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+    </button>
+</div>
+
+<script>
+    $('#cleanup').hide();
+    $(function(){
+        $("[data-hide]").on("click", function(){
+            $("." + $(this).attr("data-hide")).hide();
+        });
+    });
+</script>
+
 <div class="container-fluid m-2 table-resize">
 	<div class="mb-2">
 		{{ _('Die folgenden {items} Items sind dieser Instanz zugewiesen, {with_maxage} Items haben ein maxage.', vars={'items': len(p._handled_items), 'with_maxage': len(p._items_with_maxage)}) }}
@@ -80,17 +86,17 @@
 	</div>
 	<table id="itemtable">
 		<thead>
-		<tr>
-			<th class="item">{{ _('Item') }}</th>
-			<th class="init">{{ _('Init') }}</th>
-			<th class="type">{{ _('Typ') }}</th>
-			<th class="value">{{ _('Wert') }}</th>
-			<th class="id">{{ _('Item-ID in der Datenbank') }}</th>
+		<tr><th></th>
+			<th>{{ _('Item') }}</th>
+			<th>{{ _('Init') }}</th>
+			<th>{{ _('Typ') }}</th>
+			<th>{{ _('Wert') }}</th>
+			<th class="dt-head-right" title="{{ _('Item-ID in der Datenbank') }}">{{ _('DB-ID') }}</th>
 			{%  if p.count_logentries %}
-				<th class="logcount">{{ _('Anzahl Einträge') }}</th>
+				<th class="logcount dt-head-right">{{ _('Anzahl Einträge') }}</th>
 			{% endif %}
-			<th class="maxage">{{ _('konfiguriertes max. Alter') }}</th>
-			<th class="no-sort actions">{{ _('Aktionen') }}</th>
+			<th>{{ _('konfiguriertes max. Alter') }}</th>
+			<th>{{ _('Aktionen') }}</th>
 		</tr>
 		</thead>
 		<tbody>
@@ -110,24 +116,25 @@
 					{% endif %}
 				{% endif %}
 				<tr>
-					<td class="py-1" id="{{ item }}_path">{{ item.property.path }}</td>
-					<td class="py-1">{{ _('Init') if p.get_iattr_value(item.conf, 'database').lower() == 'init' else '-'}}</td>
-					<td class="py-1" id="{{ item }}_type">{{ item.property.type }}</td>
-					<td class="py-1" id="{{ item }}_value">{{ val }}</td>
-					<td class="py-1" id="{{ item }}_id">{{ p.id(item, create=False) }}</td>
+					<td></td>
+					<td id="{{ item }}_path">{{ item.property.path }}</td>
+					<td>{{ _('Init') if p.get_iattr_value(item.conf, 'database').lower() == 'init' else '-'}}</td>
+					<td id="{{ item }}_type">{{ item.property.type }}</td>
+					<td id="{{ item }}_value">{{ val }}</td>
+					<td id="{{ item }}_id">{{ p.id(item, create=False) }}</td>
 					{%  if p.count_logentries %}
-						<td class="py-1" id="{{ item }}_logcount">{{ p._item_logcount[p.id(item, create=False)] }}</td>
+						<td id="{{ item }}_logcount">{{ p._item_logcount[p.id(item, create=False)] }}</td>
 					{% endif %}
 					{%  if p.get_iattr_value(item.conf, 'database_maxage') %}
-						<td class="py-1" id="{{ item }}_maxage">{{ p.get_iattr_value(item.conf, 'database_maxage') }} {{ _('Tage') }}: {{ p.get_maxage_ts(item).strftime('%d.%m.%Y %H:%M') }}</td>
+						<td id="{{ item }}_maxage">{{ p.get_iattr_value(item.conf, 'database_maxage') }} {{ _('Tage') }}: {{ p.get_maxage_ts(item).strftime('%d.%m.%Y %H:%M') }}</td>
 					{% else %}
 						{%  if p._default_maxage > 0 %}
-							<td class="py-1">default: {{ p._default_maxage }} {{ _('Tage') }}</td>
+							<td>default: {{ p._default_maxage }} {{ _('Tage') }}</td>
 						{% else %}
-							<td class="py-1">-</td>
+							<td>-</td>
 						{% endif %}
 					{% endif %}
-					<td class="py-1">
+					<td>
 						{% if p.id(item, create=False) == None %}
 							<button type="button" disabled class="btn btn-shng btn-sm" title="{{ _('CSV Export nicht möglich') }}">CSV</button>
 						{% else %}
@@ -144,7 +151,64 @@
 </div>
 {% endblock bodytab1 %}
 
+
+{% if len(p.orphanlist) > 0 %}
+	{% set tabcount = 3 %}
+{%  endif %}
+
+{% set tab3title = _('Verwaiste Items') %}
+{% block bodytab3 %}
+<div class="container-fluid m-2 table-resize">
+	<div id="webif-orphanbuttons" style="margin-left: 10px; margin-bottom: 10px; float:right; white-space: nowrap;" class="mb-2">
+		{% if p.remove_orphan or len(p.orphanlist) == 0 %}
+			<button type="button" disabled class="btn btn-shng btn-sm" onclick="if (confirm('{{ _('Wollen Sie alle Datensätze ohne zugehöriges Item wirklich löschen?') }}')) { jQuery.get('cleanup'); $('#cleanup').show();}">{{ _('Datenbank-Cleanup starten') }}</button>
+		{% else %}
+			<button type="button" class="btn btn-shng btn-sm" onclick="if (confirm('{{ _('Wollen Sie alle Datensätze ohne zugehöriges Item wirklich löschen?') }}')) { jQuery.get('cleanup'); $('#cleanup').show(); setTimeout(window.location.reload(), 3000); }">{{ _('Datenbank-Cleanup starten') }}</button>
+		{% endif %}
+	</div>
+
+	<table id="orphantable">
+		<thead>
+		<tr><th></th>
+			<th>{{ _('Verwaistes Item') }}</th>
+			<th>{{ _('Letzte Änderung') }}</th>
+			<th>{{ _('Typ') }}</th>
+			<th class="dt-head-right" title="{{ _('Item-ID in der Datenbank') }}">{{ _('DB-ID') }}</th>
+			{%  if p.count_logentries %}
+				<th class="logcount dt-head-right">{{ _('Anzahl Einträge') }}</th>
+			{% endif %}
+		</tr>
+		</thead>
+		<tbody>
+		{% for item in p.orphanlist %}
+			<tr>
+				<td></td>
+				<td id="{{ item }}_orphan_path">{{ item }}</td>
+			    <td id="{{ item }}_orphan_time">{% if language == 'en' %}{{ p.db_lastchange(item).strftime('%m/%d/%Y %H:%M:%S') }}{% else %}{{ p.db_lastchange(item).strftime('%d.%m.%Y %H:%M:%S') }}{% endif %}</td>
+				<td id="{{ item }}_orphan_type">{{ _(p.db_itemtype(item)) }}</td>
+				<td id="{{ item }}_orphan_id">{{ p.id(item, create=False) }}</td>
+				{%  if p.count_logentries %}
+					<td id="{{ item }}_orphan_logcount">{{ p._orphan_logcount[p.id(item, create=False)] }}</td>
+				{% endif %}
+			</tr>
+		{% endfor %}
+		</tbody>
+	</table>
+</div>
+{% endblock bodytab3 %}
+
 {% block buttons %}
-<button type="button" class="btn btn-shng btn-sm" onclick="window.open('db.dump')">{{ _('Datenbank-Dump') }}</button>
-<button type="button" class="btn btn-shng btn-sm" onclick="if (confirm('{{ _('Wollen Sie alle Datensätze ohne zugehöriges Item wirklich löschen?') }}')) { jQuery.get('cleanup'); $('#cleanup').show(); }">{{ _('Datenbank-Cleanup') }}</button>
+{%  if p.driver == 'sqlite3' %}
+	<button type="button" class="btn btn-shng btn-sm" onclick="window.open('db.sqldump')">{{ _('SQL Dump') }}</button>
+{%  endif %}
+
+<button type="button" class="btn btn-shng btn-sm" onclick="window.open('db.csvdump')">{{ _('CSV Dump') }}</button>
+
+<!--
+{% if p.remove_orphan or len(p.orphanlist) == 0 %}
+	<button type="button" disabled class="btn btn-shng btn-sm" onclick="if (confirm('{{ _('Wollen Sie alle Datensätze ohne zugehöriges Item wirklich löschen?') }}')) { jQuery.get('cleanup'); $('#cleanup').show();}">{{ _('Cleanup aktivieren') }}</button>
+{%  else %}
+	<button type="button" class="btn btn-shng btn-sm" onclick="if (confirm('{{ _('Wollen Sie alle Datensätze ohne zugehöriges Item wirklich löschen?') }}')) { jQuery.get('cleanup'); $('#cleanup').show(); setTimeout(window.location.reload(), 3000); }">{{ _('Cleanup aktivieren') }}</button>
+{%  endif %}
+-->
 {% endblock buttons %}

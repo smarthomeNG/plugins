@@ -5,59 +5,21 @@ plugin:
   description:                  # Alternative: description in multiple languages
       de: 'Anbindung von Sonos Lautsprechern'
       en: 'Sonos plugin'
-  maintainer: pfischi
-  tester: pfischi
+  maintainer: aschwith
+  tester: sisamiwe
   state: ready
   keywords: Sonos sonos multimedia
-  documentation: https://github.com/smarthomeNG/plugins/tree/master/sonos # url of documentation (wiki) page
+  documentation: https://github.com/smarthomeNG/plugins/blob/master/sonos/README.md
   support: https://knx-user-forum.de/forum/supportforen/smarthome-py/25151-sonos-anbindung
 
-  version: 1.6.5                 # Plugin version
+  version: 1.8.1                 # Plugin version
   sh_minversion: 1.5.1           # minimum shNG version to use this plugin
-  py_minversion: 3.5             # minimum Python version to use for this plugin
+  py_minversion: 3.8             # minimum Python version to use for this plugin
   multi_instance: False          # plugin supports multi instance
   restartable: unknown
   classname: Sonos               # class containing the plugin
 
-plugin_functions: NONE
-
-logic_parameters: NONE
-
-item_structs: NONE
-
 parameters:
-  tts:
-    type: bool
-    default: False
-    description:
-      de: "(optional) Aktiviert die Google TTS Funktionalität."
-      en: "(optional) Enables the Google TTS functionality"
-
-  local_webservice_path:
-    type: str
-    description:
-      de: "(optional) In dieses Verzeichnis werden alle TTS-Dateien automatisch gespeichert. Is die Option 'tts' aktiviert, dann muss diese Option gesetzt sein."
-      en: "(optional) All tts files will be stored here automatically. If 'tts' is enabled, this option is mandatory."
-
-  local_webservice_path_snippet:
-    type: str
-    description:
-      de: "(optional) Die eigenen Audio-Snippet Dateien können beim Setzen dieser Option getrennt von den autmotisch generierten TTS-Dateien gespeichert werden. Wird diese Option nicht gesetzt und 'tts' ist aktiviert, so wird der Wert von 'local_webservice_path' für Snippets benutzt."
-      en: "(optional) The sniipet audio files can be stored separatly from the TTS audio files by activating this option. If 'tts' is enabled and this option is not set, the value 'local_webservice_path' is used for the audio snippet path."
-
-  webservice_ip:
-    type: ip
-    description:
-      de: "(optional) Für TTS und die Audio-Snippet-Funktionalität wird ein simpler Webservice gestartet. Die IP-Adresse wird per default automatisch ermittelt, kann hier aber manuell gesetzt werden."
-      en: "(optional) For the TTS and audio snippet functionality, a simple webservice is started. By default the IP is detected automatically and can be manually overridden here."
-
-  webservice_port:
-    type: int
-    default: 23500
-    description:
-      de: "(optional) Webservice-Port"
-      en: "(optional) Webservice port"
-
   speaker_ips:
     type: list
     description:
@@ -72,6 +34,49 @@ parameters:
       de: "Zeitintervall, nach dem (erneut) nach (neuen) Lautsprechern im Netzwerk gesucht wird."
       en: "Time interval to search again for (new) speakers in the network."
 
+  tts:
+    type: bool
+    default: False
+    description:
+      de: "(optional) Aktiviert die Google TTS Funktionalität."
+      en: "(optional) Enables the Google TTS functionality"
+
+  local_webservice_path:
+    type: str
+    default: /tmp/tts
+    description:
+      de: '(optional) In dieses Verzeichnis werden alle TTS-Dateien automatisch gespeichert. \n
+           Ist die Option "tts" aktiviert, dann muss diese Option gesetzt sein.'
+      en: '(optional) All tts files will be stored here automatically. \n 
+           If "tts" is enabled, this option is mandatory.'
+
+  local_webservice_path_snippet:
+    type: str
+    default: ''
+    description:
+      de: '(optional) Die eigenen Audio-Snippet Dateien können beim Setzen dieser Option getrennt von den automatisch generierten \n
+            TTS-Dateien gespeichert werden. Wird diese Option nicht gesetzt und "tts" ist aktiviert, so wird der Wert \n
+            von "local_webservice_path" für Snippets benutzt.'
+      en: '(optional) The snippet audio files can be stored separately from the TTS audio files by activating this option. \n
+            If "tts" is enabled and this option is not set, the value "local_webservice_path" is used for the audio snippet path.'
+
+  webservice_ip:
+    type: ip
+    description:
+      de: '(optional) Für TTS und die Audio-Snippet-Funktionalität wird ein simpler Webservice gestartet. \n 
+           Die IP-Adresse wird per default automatisch ermittelt, kann hier aber manuell gesetzt werden.'
+      en: '(optional) For the TTS and audio snippet functionality, a simple webservice is started. \n
+           By default the IP is detected automatically and can be manually overridden here.'
+
+  webservice_port:
+    type: int
+    default: 23500
+    valid_min: 1024
+    valid_max: 65535
+    description:
+      de: "(optional) Für TTS und die Audio-Snippet-Funktionalität wird ein simpler Webservice gestartet. Der Webservice-Port dafür wird hier definiert"
+      en: "(optional) For the TTS and audio snippet functionality, a simple webservice is started. The Webservice port can be defined here."
+
   snippet_duration_offset:
     type: num
     default: 0
@@ -80,94 +85,98 @@ parameters:
       de: "(optional) Verlängert die Dauer von Snippet Audio Dateien um einen festen Offset in Sekunden."
       en: "(optional) Extend snippet duration by a fixed offset specified in seconds"
 
+
 item_attributes:
-  # Definition of item attributes defined by this plugin
   sonos_uid:
     type: str
     description:
-      de: 'Sonos unique device ID'
-      en: 'Sonos unique device ID'
-    mandatory: 'False'
+      de: 'Sonos eindeutige Geräte/Zone Identifikation (Unique Device ID)'
+      en: 'Sonos unique device ID (UID)'
+    mandatory: False
 
   sonos_recv:
     type: str
     description:
-      de: 'Empfangsattribut'
-      en: 'Receive attribute'
-    mandatory: 'False'
+      de: 'Sonos Zonen/Speaker Attribut für den Emfang von Daten/Ergebnissen'
+      en: 'Sonos zone attribute to receive data'
+    mandatory: False
     valid_list:
-    - 'is_initialized'
-    - 'volume'
-    - 'play'
-    - is_coordiantor
-    - mute
-    - stop
-    - seek
-    - pause
-    - track_title
-    - track_artist
-    - track_uri
-    - track_album
-    - track_album_art
-    - bass
-    - treble
-    - loudness
-    - play_mode
-    - radio_show
-    - radio_station
-    - serial_number
-    - software_version
-    - hardware_version
-    - model
-    - uid
-    - ip
-    - mac_address
-    - status
-    - additional_zone_members
-    - alarms
-    - is_coordinator
-    - tts_local_mode
-    - night_mode
-    - dialog_mode
-    - buttons_enabled
-    - cross_fade
-    - coordinator
-    - snooze
-    - status_light
-    - zone_group_members
-    - player_name
-    - household_id
-    - streamtype
-    - current_track
-    - number_of_tracks
-    - current_transport_actions
-    - current_valid_play_modes
-    - sonos_playlists
-    - stream_content
-    - current_track_duration
+      - is_initialized
+      - volume
+      - play
+      - is_coordiantor
+      - mute
+      - stop
+      - seek
+      - pause
+      - track_title
+      - track_artist
+      - track_uri
+      - track_album
+      - track_album_art
+      - bass
+      - treble
+      - loudness
+      - play_mode
+      - radio_show
+      - radio_station
+      - serial_number
+      - software_version
+      - hardware_version
+      - model
+      - uid
+      - ip
+      - mac_address
+      - status
+      - additional_zone_members
+      - alarms
+      - is_coordinator
+      - tts_local_mode
+      - night_mode
+      - dialog_mode
+      - buttons_enabled
+      - cross_fade
+      - coordinator
+      - snooze
+      - status_light
+      - zone_group_members
+      - player_name
+      - household_id
+      - streamtype
+      - current_track
+      - number_of_tracks
+      - current_transport_actions
+      - current_valid_play_modes
+      - sonos_playlists
+      - stream_content
+      - current_track_duration
+      # new
+      - sonos_favorites
+      - favorite_radio_stations
 
   sonos_send:
     type: str
     description:
-      de: 'Sendeattribut'
-      en: 'Sending attribute'
+      de: 'Sonos Zonen/Speaker Attribut für das Senden von Daten/Kommandos'
+      en: 'Sonos zone attribute to send data/commands'
     mandatory: 'False'
     valid_list:
-    - 'volume'
-    - 'play'
-    - 'pause'
-    - 'stop'
-    - 'mute'
-    - 'cross_fade'
-    - 'snooze'
-    - 'play_mode'
-    - 'next'
-    - 'previous'
-    - 'play_tunein'
-    - 'play_url'
-    - 'load_sonos_playlist'
-    - 'play_snippet'
-    - 'play_tts'
+    - volume
+    - play
+    - pause
+    - stop
+    - mute
+    - cross_fade
+    - snooze
+    - play_mode
+    - next
+    - previous
+    - play_tunein
+    - play_url
+    - play_sharelink
+    - load_sonos_playlist
+    - play_snippet
+    - play_tts
     - join
     - unjoin
     - volume_up
@@ -190,38 +199,706 @@ item_attributes:
     - status_light
     - switch_linein
     - switch_tv
+    # new
+    - play_favorite_title
+    - play_favorite_number
+    - play_favorite_radio_title
+    - play_favorite_radio_number
+    - play_sonos_radio
 
   sonos_attrib:
     type: str
     description:
-      de: 'Empfangsattribut'
-      en: 'Receive attribute'
-    mandatory: 'False'
+      de: 'ergänzende Attribute, die immer Child-Items des sendenden Items sein müssen'
+      en: 'additional attribute, which need to be always child-items of the sending item'
+    mandatory: False
     valid_list:
-    - 'group'
-    - 'dpt3_helper'
-    - 'vol_dpt3'
-    - 'max_volume'
-    - 'tts_language'
-    - 'tts_volume'
-    - 'tts_fade_in'
-    - 'start_after'
-    - 'snippet_fade_in'
-    - 'snippet_volume'
-    - 'clear_queue'
-    - 'start_track'
+       - group
+       - dpt3_helper
+       - vol_dpt3
+       - max_volume
+       - tts_language
+       - tts_volume
+       - tts_fade_in
+       - start_after
+       - snippet_fade_in
+       - snippet_volume
+       - clear_queue
+       - start_track
 
   sonos_dpt3_step:
     type: int
     description:
       de: 'Relatives dpt3 Inkrement'
       en: 'Relative dpt3 increment'
-    mandatory: 'False'
-
+    mandatory: False
 
   sonos_dpt3_time:
     type: int
     description:
       de: 'Dpt3 Zeitinkrement'
       en: 'Dpt3 time increment'
-    mandatory: 'False'
+    mandatory: False
+
+item_structs:
+  basic_control:
+    volume:
+      type: num
+      sonos_recv: volume
+      sonos_send: volume
+      enforce_updates: true
+
+      group_command:
+        type: bool
+        initial_value: false
+        sonos_attrib: group
+
+      max_volume:
+        type: num
+        initial_value: -1
+        sonos_attrib: max_volume
+
+      volume_dpt3:
+        type: list
+        sonos_attrib: vol_dpt3
+        sonos_dpt3_step: 2
+        sonos_dpt3_time: 1
+
+        helper:
+          sonos_attrib: dpt3_helper
+          type: num
+          sonos_send: volume
+
+    play:
+      type: bool
+      sonos_recv: play
+      sonos_send: play
+
+    stop:
+      type: bool
+      sonos_recv: stop
+      sonos_send: stop
+
+    pause:
+      type: bool
+      sonos_recv: pause
+      sonos_send: pause
+
+    next:
+      type: bool
+      sonos_send: next
+      enforce_updates: true
+
+    previous:
+      type: bool
+      sonos_send: previous
+      enforce_updates: true
+
+    mute:
+      type: bool
+      sonos_recv: mute
+      sonos_send: mute
+
+    play_mode:
+      type: str
+      sonos_recv: play_mode
+      sonos_send: play_mode
+
+  settings:
+    bass:
+      type: num
+      sonos_recv: bass
+      sonos_send: bass
+
+      group_command:
+        type: bool
+        initial_value: false
+        sonos_attrib: group
+
+    treble:
+      type: num
+      sonos_recv: treble
+      sonos_send: treble
+
+      group_command:
+        type: bool
+        initial_value: false
+        sonos_attrib: group
+
+    loudness:
+      type: bool
+      sonos_recv: loudness
+      sonos_send: loudness
+
+      group_command:
+        type: bool
+        initial_value: false
+        sonos_attrib: group
+
+    night_mode:
+      # only supported by Playbar
+      type: bool
+      sonos_recv: night_mode
+      sonos_send: night_mode
+
+    dialog_mode:
+      # only supported by Playbar
+      type: bool
+      sonos_recv: dialog_mode
+      sonos_send: dialog_mode
+
+    cross_fade:
+      type: bool
+      sonos_recv: cross_fade
+      sonos_send: cross_fade
+
+    snooze:
+      type: num
+      sonos_recv: snooze
+      sonos_send: snooze
+
+    status_light:
+      type: bool
+      sonos_recv: status_light
+      sonos_send: status_light
+
+    join:
+      type: str
+      sonos_send: join
+      enforce_updates: True
+
+    unjoin:
+      type: bool
+      sonos_send: unjoin
+      enforce_updates: True
+
+      start_after:
+        type: bool
+        initial_value: False
+        sonos_attrib: start_after
+
+  status:
+      uid:
+        type: str
+        sonos_recv: uid
+
+      is_initialized:
+        type: bool
+        sonos_recv: is_initialized
+
+      is_coordinator:
+        type: bool
+        sonos_recv: is_coordinator
+
+      coordinator:
+        type: str
+        sonos_recv: coordinator
+
+      zone_group_members:
+        type: list
+        sonos_recv: zone_group_members
+
+      player_name:
+        type: str
+        sonos_recv: player_name
+
+      household_id:
+        type: str
+        sonos_recv: household_id
+
+  content:
+    track_uri:
+      type: str
+      sonos_recv: track_uri
+
+    streamtype:
+      type: str
+      sonos_recv: streamtype
+
+    switch_linein:
+      # only supported by Play5 yet (or all speakers with line-in)
+      type: bool
+      sonos_send: switch_linein
+
+    switch_tv:
+      # only supported by Playbar
+      type: bool
+      sonos_send: switch_tv
+
+    track_artist:
+      type: str
+      sonos_recv: track_artist
+
+    track_title:
+      type: str
+      sonos_recv: track_title
+
+    track_album:
+      type: str
+      sonos_recv: track_album
+
+    track_album_art:
+      type: str
+      sonos_recv: track_album_art
+
+    radio_station:
+      type: str
+      sonos_recv: radio_station
+
+    radio_show:
+      type: str
+      sonos_recv: radio_show
+
+    current_track:
+      type: num
+      sonos_recv: current_track
+
+    number_of_tracks:
+      type: num
+      sonos_recv: number_of_tracks
+
+    current_track_duration:
+      type: str
+      sonos_recv: current_track_duration
+
+    current_transport_actions:
+      type: str
+      sonos_recv: current_transport_actions
+
+    current_valid_play_modes:
+      type: str
+      sonos_recv: current_valid_play_modes
+
+    stream_content:
+      type: str
+      sonos_recv: stream_content
+
+    play_tunein:
+      type: str
+      sonos_send: play_tunein
+      enforce_updates: true
+
+      start_after:
+        type: bool
+        initial_value: True
+        sonos_attrib: start_after
+
+    play_sonos_radio:
+      type: str
+      sonos_send: play_sonos_radio
+      enforce_updates: True
+
+      start_after:
+        type: bool
+        initial_value: True
+        sonos_attrib: start_after
+
+    play_url:
+      type: str
+      sonos_send: play_url
+      enforce_updates: True
+
+      start_after:
+        type: bool
+        initial_value: True
+        sonos_attrib: start_after
+
+    sonos_playlists:
+      type: list
+      sonos_recv: sonos_playlists
+
+    load_sonos_playlist:
+      type: str
+      sonos_send: load_sonos_playlist
+      enforce_updates: True
+
+      start_after:
+        type: bool
+        initial_value: False
+        sonos_attrib: start_after
+
+      start_track:
+        type: num
+        initial_value: 0
+        sonos_attrib: start_track
+
+      clear_queue:
+        type: bool
+        initial_value: False
+        sonos_attrib: clear_queue
+
+    sonos_favorites:
+      type: list
+      sonos_recv: sonos_favorites
+
+    favorite_radio_stations::
+      type: list
+      sonos_recv: favorite_radio_stations
+
+  play_tts:
+    type: str
+    sonos_send: play_tts
+    enforce_updates: True
+
+    tts_language:
+      type: str
+      initial_value: de
+      sonos_attrib: tts_language
+
+    tts_volume:
+      type: num
+      initial_value: -1
+      sonos_attrib: tts_volume
+
+    tts_fade_in:
+      type: bool
+      sonos_attrib: tts_fade_in
+
+  play_snippet:
+    type: str
+    sonos_send: play_snippet
+    enforce_updates: True
+
+    snippet_volume:
+      type: num
+      initial_value: 25
+      sonos_attrib: snippet_volume
+
+    snippet_fade_in:
+      type: bool
+      initial_value: True
+      sonos_attrib: snippet_fade_in
+
+  play_favorites:
+    play_favorite_title:
+      type: str
+      sonos_send: play_favorite_title
+      enforce_updates: True
+
+    play_favorite_number:
+      type: num
+      sonos_send: play_favorite_number
+      enforce_updates: True
+
+    play_favorite_radio_title:
+      type: str
+      sonos_send: play_favorite_radio_title
+      enforce_updates: True
+
+    play_favorite_radio_number:
+      type: num
+      sonos_send: play_favorite_radio_number
+      enforce_updates: True
+
+  standard:
+    # sonos_uid: rincon_xxxxxxxxxxxxxxxxx
+
+    is_initialized:
+      type: bool
+      sonos_recv: is_initialized
+
+    volume:
+      type: num
+      sonos_recv: volume
+      sonos_send: volume
+      enforce_updates: true
+
+      group_command:
+        type: bool
+        initial_value: false
+        sonos_attrib: group
+
+      max_volume:
+        type: num
+        initial_value: -1
+        sonos_attrib: max_volume
+
+      volume_dpt3:
+        type: list
+        sonos_attrib: vol_dpt3
+        sonos_dpt3_step: 2
+        sonos_dpt3_time: 1
+
+        helper:
+          sonos_attrib: dpt3_helper
+          type: num
+          sonos_send: volume
+
+    play:
+      type: bool
+      sonos_recv: play
+      sonos_send: play
+
+    stop:
+      type: bool
+      sonos_recv: stop
+      sonos_send: stop
+
+    pause:
+      type: bool
+      sonos_recv: pause
+      sonos_send: pause
+
+    next:
+      type: bool
+      sonos_send: next
+      enforce_updates: true
+
+    previous:
+      type: bool
+      sonos_send: previous
+      enforce_updates: true
+
+    mute:
+      type: bool
+      sonos_recv: mute
+      sonos_send: mute
+
+    play_mode:
+      type: str
+      sonos_recv: play_mode
+      sonos_send: play_mode
+
+    bass:
+      type: num
+      sonos_recv: bass
+      sonos_send: bass
+
+      group_command:
+        type: bool
+        initial_value: false
+        sonos_attrib: group
+
+    treble:
+      type: num
+      sonos_recv: treble
+      sonos_send: treble
+
+      group_command:
+        type: bool
+        initial_value: false
+        sonos_attrib: group
+
+    loudness:
+      type: bool
+      sonos_recv: loudness
+      sonos_send: loudness
+
+      group_command:
+        type: bool
+        initial_value: false
+        sonos_attrib: group
+
+    night_mode:
+      # only supported by Playbar
+      type: bool
+      sonos_recv: night_mode
+      sonos_send: night_mode
+
+    dialog_mode:
+      # only supported by Playbar
+      type: bool
+      sonos_recv: dialog_mode
+      sonos_send: dialog_mode
+
+    cross_fade:
+      type: bool
+      sonos_recv: cross_fade
+      sonos_send: cross_fade
+
+    snooze:
+      type: num
+      sonos_recv: snooze
+      sonos_send: snooze
+
+    is_coordinator:
+      type: bool
+      sonos_recv: is_coordinator
+
+    coordinator:
+      type: str
+      sonos_recv: coordinator
+
+    zone_group_members:
+      type: list
+      sonos_recv: zone_group_members
+
+    status_light:
+      type: bool
+      sonos_recv: status_light
+      sonos_send: status_light
+
+    player_name:
+      type: str
+      sonos_recv: player_name
+
+    household_id:
+      type: str
+      sonos_recv: household_id
+
+    track_uri:
+      type: str
+      sonos_recv: track_uri
+
+    streamtype:
+      type: str
+      sonos_recv: streamtype
+
+    switch_linein:
+      # only supported by Play5 yet (or all speakers with line-in)
+      type: bool
+      sonos_send: switch_linein
+
+    switch_tv:
+      # only supported by Playbar
+      type: bool
+      sonos_send: switch_tv
+
+    track_artist:
+      type: str
+      sonos_recv: track_artist
+
+    track_title:
+      type: str
+      sonos_recv: track_title
+
+    track_album:
+      type: str
+      sonos_recv: track_album
+
+    track_album_art:
+      type: str
+      sonos_recv: track_album_art
+
+    radio_station:
+      type: str
+      sonos_recv: radio_station
+
+    radio_show:
+      type: str
+      sonos_recv: radio_show
+
+    current_track:
+      type: num
+      sonos_recv: current_track
+
+    number_of_tracks:
+      type: num
+      sonos_recv: number_of_tracks
+
+    current_track_duration:
+      type: str
+      sonos_recv: current_track_duration
+
+    current_transport_actions:
+      type: str
+      sonos_recv: current_transport_actions
+
+    current_valid_play_modes:
+      type: str
+      sonos_recv: current_valid_play_modes
+
+    stream_content:
+      type: str
+      sonos_recv: stream_content
+
+    play_tunein:
+      type: str
+      sonos_send: play_tunein
+      enforce_updates: True
+
+      start_after:
+        type: bool
+        initial_value: True
+        sonos_attrib: start_after
+
+    play_url:
+      type: str
+      sonos_send: play_url
+      enforce_updates: True
+
+      start_after:
+        type: bool
+        initial_value: True
+        sonos_attrib: start_after
+
+    join:
+      type: str
+      sonos_send: join
+      enforce_updates: True
+
+    unjoin:
+      type: bool
+      sonos_send: unjoin
+      enforce_updates: True
+
+      start_after:
+        type: bool
+        initial_value: False
+        sonos_attrib: start_after
+
+    sonos_playlists:
+      type: list
+      sonos_recv: sonos_playlists
+
+    load_sonos_playlist:
+      type: str
+      sonos_send: load_sonos_playlist
+      enforce_updates: True
+
+      start_after:
+        type: bool
+        initial_value: False
+        sonos_attrib: start_after
+
+      start_track:
+        type: num
+        initial_value: 0
+        sonos_attrib: start_track
+
+      clear_queue:
+        type: bool
+        initial_value: False
+        sonos_attrib: clear_queue
+
+    uid:
+      type: str
+      sonos_recv: uid
+
+    play_tts:
+      type: str
+      sonos_send: play_tts
+      enforce_updates: True
+
+      tts_language:
+        type: str
+        initial_value: de
+        sonos_attrib: tts_language
+
+      tts_volume:
+        type: num
+        initial_value: -1
+        sonos_attrib: tts_volume
+
+      tts_fade_in:
+        type: bool
+        sonos_attrib: tts_fade_in
+
+    play_snippet:
+      type: str
+      sonos_send: play_snippet
+      enforce_updates: True
+
+      snippet_volume:
+        type: num
+        initial_value: 25
+        sonos_attrib: snippet_volume
+
+      snippet_fade_in:
+        type: bool
+        initial_value: True
+        sonos_attrib: snippet_fade_in
+
+plugin_functions: NONE
+
+logic_parameters: NONE

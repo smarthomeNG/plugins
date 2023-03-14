@@ -20,9 +20,8 @@
 <script>
   $(document).ready( function () {
     $(window).trigger('datatables_defaults');
-    try {
-      /* get pagelength from plugin. Also see hidden span element in bodytab1 block! */
-      webif_pagelength = parseInt(document.getElementById('webif_pagelength').innerHTML);
+      /* get pagelength from http module or plugin. */
+	    {% if webif_pagelength is defined %}webif_pagelength = {{ webif_pagelength|int }};{% endif %}
       if (isNaN(parseFloat(webif_pagelength)) || webif_pagelength == 0) {
         resize = true;
         webif_pagelength = -1;
@@ -30,12 +29,8 @@
       else {
         resize = false;
       }
-    }
-    catch (e) {
-      webif_pagelength = 100;
-      resize = false;
-      console.log("Using default values for page length " + webif_pagelength + ", pageResize: " + resize);
-    }
+	  console.log("Webif page length " + webif_pagelength + ", pageResize: " + resize);
+
 		try {
       table = $('#maintable').DataTable( {
         columnDefs: [{ "targets": [8], "className": "none"}].concat($.fn.dataTable.defaults.columnDefs),
@@ -153,7 +148,6 @@
 {% set tabcount = 1 %}
 
 {% block headtable %}
-<span id='webif_pagelength' style="display:none">{{ webif_pagelength }}</span>
 {% set sun = namespace() %}
 {% set sun.sunrise_text = '' %}
 {% set sun.sunset_text = '' %}
@@ -169,22 +163,23 @@
     {% set sun.sunset_text = sun.sunset_text ~ ', ' %}
   {% endif %}
 {% endfor %}
-<table class="table table-striped table-hover">
+<table class="table table-striped table-hover" style="min-width:550px;">
   <tbody>
     <tr>
       <td class="py-1"><strong>{{ _('Sonnenaufgang') }}</strong><br>
         <span id="sunrise">{{ sun.sunrise_text }}</span></td>
-      <td class="py-1"><strong>{{ _('Sonnenuntergang') }}</strong><br>
-      <span id="sunset">{{ sun.sunset_text }}</span></td>
     </tr>
     <tr>
-      <td class="py-1" colspan="2"><strong>Items</strong>: {{ item_count }}</td>
+    <td class="py-1"><strong>{{ _('Sonnenuntergang') }}</strong><br>
+    <span id="sunset">{{ sun.sunset_text }}</span></td>
+    </tr>
+    <tr>
+      <td class="py-1"><strong>Items</strong>: {{ item_count }}</td>
     </tr>
 
   </tbody>
 </table>
 {% endblock headtable %}
-
 
 {% block bodytab1 %}
 <div class="container-fluid m-2 table-resize">
@@ -195,6 +190,7 @@
   <table id="maintable">
     <thead>
     <tr>
+      <th></th>
       <th>{{ _('UZSU Item') }}</th>
       <th>{{ _('Abhängige Items (mit Typ)') }}</th>
       <th class="value">{{ _('Wert') }}</th>
@@ -218,6 +214,7 @@
           {% set color = 'green' %}
         {% endif %}
         <tr id="{{ item }}" style="color: {{ color }}">
+          <td></td>
           <td class="py-1" id="{{ item }}_path">{{ item }}</td>
           <td class="py-1" id="{{ item }}_dependitem">
             {% if p._webdata['items'][item]['interpolation'] is not defined %}

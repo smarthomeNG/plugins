@@ -46,9 +46,9 @@ class OpenWeatherMapNoValueSoftException(Exception):
 
 
 class OpenWeatherMap(SmartPlugin):
-    PLUGIN_VERSION = "1.8.5"
+    PLUGIN_VERSION = "1.8.7"
 
-    _base_url = 'https://api.openweathermap.org/%s'
+    _base_url = 'https://api.openweathermap.org/'
     _base_img_url = 'https://tile.openweathermap.org/map/%s/%s/%s/%s.png?appid=%s'
 
     # source for german descriptions https://www.smarthomeng.de/vom-winde-verweht
@@ -88,6 +88,10 @@ class OpenWeatherMap(SmartPlugin):
         """
         Initializes the plugin
         """
+
+        # Call init code of parent class (SmartPlugin)
+        super().__init__()
+
         if '.'.join(VERSION.split('.', 2)[:2]) <= '1.5':
             self.logger = logging.getLogger(__name__)
         self._key = self.get_parameter_value('key')
@@ -103,6 +107,8 @@ class OpenWeatherMap(SmartPlugin):
             self._elev = self.get_sh()._elev
         self._lang = self.get_parameter_value('lang')
         self._units = self.get_parameter_value('units')
+        self._api_version = self.get_parameter_value('api_version')
+
 
         softfail_mode_precipitation = self.get_parameter_value('softfail_precipitation')
         softfail_mode_wind_gust = self.get_parameter_value('softfail_wind_gust')
@@ -194,11 +200,8 @@ class OpenWeatherMap(SmartPlugin):
         self._origins_layer = [
             'clouds_new', 'precipitation_new', 'pressure_new', 'wind_new', 'temp_new']
 
-        if not self.init_webinterface(WebInterface):
-            self.logger.error("Unable to start Webinterface")
-            self._init_complete = False
-        else:
-            self.logger.debug("Init complete")
+        self.init_webinterface(WebInterface)
+
 
     def run(self):
         self.scheduler_add(__name__, self._update_loop,
@@ -236,7 +239,7 @@ class OpenWeatherMap(SmartPlugin):
 
         self.__query_api_if(self._data_source_key_onecall, force=True)
 
-        self.__query_api_if(self._data_source_key_back0day,force=True, delta_t=0)
+        self.__query_api_if(self._data_source_key_back0day, force=True, delta_t=0)
         self.__query_api_if(self._data_source_key_back1day, force=True, delta_t=-1)
         self.__query_api_if(self._data_source_key_back2day, force=True, delta_t=-2)
         self.__query_api_if(self._data_source_key_back3day, force=True, delta_t=-3)
@@ -431,10 +434,8 @@ class OpenWeatherMap(SmartPlugin):
             if owm_matchstring in self._origins_layer:
                 ret_val = self.__build_url('owm_layer', item)
                 wrk_typ = 'owm_layer'
-                item(ret_val, self.get_shortname(),
-                     f"{wrk_typ} // {owm_matchstring}")
-                self.logger.debug(
-                    "%s OK: owm-string: %s as layer" % (item, owm_matchstring))
+                item(ret_val, self.get_shortname(), f"{wrk_typ} // {owm_matchstring}")
+                self.logger.debug("%s OK: owm-string: %s as layer" % (item, owm_matchstring))
             else:
                 try:
                     ret_val, wrk_typ, changed_match_string, was_ok = self.get_value_with_meta(
@@ -446,8 +447,12 @@ class OpenWeatherMap(SmartPlugin):
                         self.logger.info(
                             "%s INFO: owm-string: %s --> %s from wrk=%s, Info: %s" % (item, owm_matchstring, changed_match_string, wrk_typ, ret_val))
                     elif isinstance(ret_val, Exception):
-                        self.logger.info(
-                            "%s ERROR: owm-string: %s --> %s from wrk=%s, Error: %s" % (item, owm_matchstring, changed_match_string, wrk_typ, ret_val))
+                        if str(ret_val) == 'cannot unpack non-iterable NoneType object':
+                            self.logger.debug(
+                                "%s ERROR: owm-string: %s --> %s from wrk=%s, Error: %s" % (item, owm_matchstring, changed_match_string, wrk_typ, ret_val))
+                        else:
+                            self.logger.info(
+                                "%s ERROR: owm-string: %s --> %s from wrk=%s, Error: %s" % (item, owm_matchstring, changed_match_string, wrk_typ, ret_val))
                     else:
                         item(ret_val, self.get_shortname(),
                              f"{wrk_typ} // {changed_match_string}")
@@ -458,8 +463,7 @@ class OpenWeatherMap(SmartPlugin):
                             self.logger.warning(
                                 "%s OK, FIXED: owm-string: %s --> %s from wrk=%s" % (item, owm_matchstring, changed_match_string, wrk_typ))
                 except Exception as e:
-                    self.logger.error(
-                        "%s FATAL: owm-string: %s, Error: %s" % (item, owm_matchstring, e))
+                    self.logger.error("%s FATAL: owm-string: %s, Error: %s" % (item, owm_matchstring, e))
 
         return
 
@@ -473,21 +477,14 @@ class OpenWeatherMap(SmartPlugin):
         """
         self.logger.debug("%s _calculate_eto: for %s" %
                           ((correlation_hint, s)))
-        sunrise_value = self.get_value_or_raise(
-            s.replace('/eto', "/sunrise"), correlation_hint)
+        sunrise_value = self.get_value_or_raise(s.replace('/eto', "/sunrise"), correlation_hint)
         climate_sunrise = datetime.utcfromtimestamp(int(sunrise_value))
-        climate_humidity = self.get_value_or_raise(
-            s.replace('/eto', "/humidity"), correlation_hint)
-        climate_pressure = self.get_value_or_raise(
-            s.replace('/eto', "/pressure"), correlation_hint)
-        climate_min = self.get_value_or_raise(
-            s.replace('/eto', "/temp" if s.startswith('day/-') else "/temp/min"), correlation_hint)
-        climate_max = self.get_value_or_raise(
-            s.replace('/eto', "/temp" if s.startswith('day/-') else "/temp/max"), correlation_hint)
-        climate_speed = self.get_value_or_raise(
-            s.replace('/eto', "/wind_speed"), correlation_hint)
-        solarRad = self.get_value_or_raise(
-            s.replace('/eto', "/uvi"), correlation_hint)
+        climate_humidity = self.get_value_or_raise(s.replace('/eto', "/humidity"), correlation_hint)
+        climate_pressure = self.get_value_or_raise(s.replace('/eto', "/pressure"), correlation_hint)
+        climate_min = self.get_value_or_raise(s.replace('/eto', "/temp" if s.startswith('day/-') else "/temp/min"), correlation_hint)
+        climate_max = self.get_value_or_raise(s.replace('/eto', "/temp" if s.startswith('day/-') else "/temp/max"), correlation_hint)
+        climate_speed = self.get_value_or_raise(s.replace('/eto', "/wind_speed"), correlation_hint)
+        solarRad = self.get_value_or_raise(s.replace('/eto', "/uvi"), correlation_hint)
         alt = float(self._elev)
         lat = float(self._lat)
 
@@ -495,7 +492,7 @@ class OpenWeatherMap(SmartPlugin):
         rS = solarRad * 3.6
         U_2 = climate_speed * 0.748
         slopeSvpc = 4098 * (0.6108 * math.exp((17.27 * tMean) /
-                            (tMean + 237.3))) / math.pow((tMean + 237.3), 2)
+                                              (tMean + 237.3))) / math.pow((tMean + 237.3), 2)
         pA = climate_pressure / 10
         pSc = pA * 0.000665
         DT = slopeSvpc / (slopeSvpc + (pSc * (1 + (0.34 * U_2))))
@@ -553,16 +550,14 @@ class OpenWeatherMap(SmartPlugin):
         if mode == 'next':
             if unit == 'h':
                 if number > 48:
-                    raise Exception(
-                        "Cannot get value further than 48h in future, switch unit to 'd' to see further into the future")
+                    raise Exception("Cannot get value further than 48h in future, switch unit to 'd' to see further into the future")
                 for hr in range(0, number):
                     val = self.get_value(f'hour/{hr}/{data_field}', correlation_hint)
                     if not isinstance(val, Exception):
                         pool.append(val)
             elif unit == 'd':
                 if number > 6:
-                    raise Exception(
-                        "Cannot get value further than 6d in future")
+                    raise Exception("Cannot get value further than 6d in future")
                 for day in range(0, number):
                     val = self.get_value(f'day/{day}/{data_field}', correlation_hint)
                     if not isinstance(val, Exception):
@@ -574,13 +569,11 @@ class OpenWeatherMap(SmartPlugin):
                 hours = number
 
             days_back = int(hours / 24) + 1
-            self.logger.debug(
-                f"PAST: {virtual_ms} into: hrs:{hours}, days_back:{days_back}")
+            self.logger.debug(f"PAST: {virtual_ms} into: hrs:{hours}, days_back:{days_back}")
             for day_back in range(days_back, -1, -1):
                 for hr in range(0, 24):
                     try:
-                        val = self.get_value(
-                            f'day/-{day_back}/hour/{hr}/{data_field}', correlation_hint)
+                        val = self.get_value(f'day/-{day_back}/hour/{hr}/{data_field}', correlation_hint)
                         if not isinstance(val, Exception):
                             pool.append(val)
                     except:
@@ -597,13 +590,11 @@ class OpenWeatherMap(SmartPlugin):
         elif operation == "avg":
             if len(pool) == 0:
                 return 0
-            return round(functools.reduce(
-                lambda x, y: x + y, pool) / len(pool), 2)
+            return round(functools.reduce(lambda x, y: x + y, pool) / len(pool), 2)
         elif operation == "sum":
             if len(pool) == 0:
                 return 0
-            return round(functools.reduce(
-                lambda x, y: x + y, pool), 2)
+            return round(functools.reduce(lambda x, y: x + y, pool), 2)
         elif operation == "all":
             return pool
         else:
@@ -621,7 +612,7 @@ class OpenWeatherMap(SmartPlugin):
             elif soft_fail_mode == "no_update":
                 changed_match_string = '/'.join(successful_path) + missing_child_path
                 self.logger.debug(
-                            "%s DEBUG: owm-string: %s --> %s, Missing Child, Soft-Fail to no_update" % (correlation_hint, original_match_string, changed_match_string))
+                    "%s DEBUG: owm-string: %s --> %s, Missing Child, Soft-Fail to no_update" % (correlation_hint, original_match_string, changed_match_string))
                 return None
             elif soft_fail_mode.startswith("number="):
                 return int(soft_fail_mode.replace("number=", ""))
@@ -638,23 +629,27 @@ class OpenWeatherMap(SmartPlugin):
                 new_match_string = "/".join(match_path)
                 self.logger.debug(f"{correlation_hint} '{original_match_string}' is matching soft_fail '{fail_match_string}' and will query '{new_match_string}'")
                 return self.get_value_or_raise(new_match_string, correlation_hint)
-
         raise OpenWeatherMapNoValueHardException(
             f"Missing child '{last_popped}' after '{'/'.join(successful_path)}' (complete path missing: {missing_child_path})")
-
-
 
     def __get_val_from_dict(self, s, wrk, correlation_hint, original_match_string):
         """
         Uses string s as a path to navigate to the requested value in dict wrk.
         """
+
+        # Check if dictionary data in variable wrk are invalid. This occurs, if download fails.
+        if wrk == 'Not downloaded!':
+            self.logger.debug(f"{correlation_hint} __get_val_from_dict function aborted because dictionary data are invalid.")
+            return
+
         successful_path = []
         last_popped = None
         sp = s.split('/')
         while True:
             if (len(sp) == 0) or (wrk is None):
                 if wrk is None:
-                    wrk = self.__handle_fail(last_popped, sp, successful_path, original_match_string, correlation_hint)
+                    wrk = self.__handle_fail(
+                        last_popped, sp, successful_path, original_match_string, correlation_hint)
                 break
 
             if type(wrk) is list:
@@ -767,31 +762,43 @@ class OpenWeatherMap(SmartPlugin):
     def __query_api(self, data_source_key, delta_t=0, force=False):
         """
         Requests the weather information at openweathermap.com
+        Return true on success and false on errors.
         """
         try:
-            url = self.__build_url(data_source_key, delta_t=delta_t, force=force)
+            url = self.__build_url(
+                data_source_key, delta_t=delta_t, force=force)
             response = self._session.get(url)
         except Exception as e:
             self.logger.error(
-                "__query_api: Exception when sending GET request for data_source_key '%s': %s" % (data_source_key, str(e)))
-            return
-        num_bytes = len(response.content)
-        self.logger.debug(f"Received {num_bytes} bytes for {data_source_key} from {url}")
-        if num_bytes < 50:
-            self.logger.error(f"Response for {data_source_key} from {url} was too short to be meaningful: '{response.content}'")
-            return
+                f"Request failed for DataSource {data_source_key}: {str(e)}")
+            return False
 
-        try:
-            json_obj = response.json()
-        except Exception as e:
-            self.logger.error(f"Exception trying to decode json resoponse: {e}")
-            self.logger.error(f" - Status code: {response.status_code}")
-            self.logger.info(f" - resoponse: {response.text}")
-            json_obj = {}
+        if response.ok:
+            num_bytes = len(response.content)
+            self.logger.debug(
+                f"Received {num_bytes} bytes for {data_source_key} from {url}")
+            if num_bytes < 50:
+                self.logger.error(
+                    f"Response for {data_source_key} from {url} was too short to be meaningful ({num_bytes} bytes): '{response.content}'")
+                return False
+            try:
+                json_obj = response.json()
 
-        self._data_sources[data_source_key]['url'] = url
-        self._data_sources[data_source_key]['fetched'] = datetime.now()
-        self._data_sources[data_source_key]['data'] = json_obj
+                self._data_sources[data_source_key]['url'] = url
+                self._data_sources[data_source_key]['fetched'] = datetime.now()
+                self._data_sources[data_source_key]['data'] = json_obj
+                return True
+            except json.JSONDecodeError as decode_error:
+                self.logger.error(
+                    f"Response for {data_source_key} from {url} could not be parsed: '{decode_error.msg}'")
+                return False
+        elif response.status_code == 401:
+            self.logger.error(f"Access denied for {url}, received: '{response.text}'")
+            return False
+        else:
+            self.logger.error(
+                f"Response for {data_source_key} from {url} returned status-code: '{response.status_code}'")
+            return False
 
     def parse_item(self, item):
         """
@@ -899,37 +906,38 @@ class OpenWeatherMap(SmartPlugin):
         """
         url = ''
         if url_type is None or url_type == self._data_source_key_weather:
-            url = self._base_url % 'data/2.5/weather'
+            url = self._base_url + 'data/' + '2.5' + '/weather'
             parameters = "?lat=%s&lon=%s&appid=%s&lang=%s&units=%s" % (self._lat, self._lon, self._key, self._lang,
                                                                        self._units)
             url = '%s%s' % (url, parameters)
         elif url_type == self._data_source_key_forecast:
-            url = self._base_url % 'data/2.5/forecast'
+            url = self._base_url + 'data/' + '2.5' + '/forecast'
             parameters = "?lat=%s&lon=%s&appid=%s&lang=%s&units=%s" % (self._lat, self._lon, self._key, self._lang,
                                                                        self._units)
             url = '%s%s' % (url, parameters)
         elif url_type == self._data_source_key_uvi:
-            url = self._base_url % 'data/2.5/uvi'
+            url = self._base_url + 'data/' + '2.5' + '/uvi'
             parameters = "?lat=%s&lon=%s&appid=%s&lang=%s&units=%s" % (self._lat, self._lon, self._key, self._lang,
                                                                        self._units)
             url = '%s%s' % (url, parameters)
         elif url_type == self._data_source_key_airpollution_current:
-            url = self._base_url % 'data/2.5/air_pollution'
+            url = self._base_url + 'data/' + '2.5' + '/air_pollution'
             parameters = "?lat=%s&lon=%s&appid=%s" % (
                 self._lat, self._lon, self._key)
             url = '%s%s' % (url, parameters)
         elif url_type == self._data_source_key_airpollution_forecast:
-            url = self._base_url % 'data/2.5/air_pollution/history'
+            url = self._base_url + 'data/' + '2.5' + '/air_pollution/history'
             parameters = "?lat=%s&lon=%s&start=%i&end=%i&appid=%s" % (
                 self._lat, self._lon, datetime.utcnow().timestamp(), self.__get_timestamp_for_delta_days(5), self._key)
             url = '%s%s' % (url, parameters)
         elif url_type.startswith('airpollution-'):
-            url = self._base_url % 'data/2.5/air_pollution/history'
+            url = self._base_url + 'data/' + '2.5' + '/air_pollution/history'
             parameters = "?lat=%s&lon=%s&start=%i&end=%i&appid=%s" % (self._lat, self._lon,  self.__get_timestamp_for_delta_days(
                 delta_t), self.__get_timestamp_for_delta_days(delta_t + 1), self._key)
             url = '%s%s' % (url, parameters)
         elif url_type == self._data_source_key_onecall:
-            url = self._base_url % 'data/2.5/onecall'
+            # Two different API versions exists for the onecall API: 2.5 and 3.0, configurable via plugin config.
+            url = self._base_url + 'data/' + self._api_version + '/onecall'
             if force:
                 exclude = ""
             else:
@@ -949,7 +957,8 @@ class OpenWeatherMap(SmartPlugin):
                                                                                   self._key, self._lang, self._units)
             url = '%s%s' % (url, parameters)
         elif url_type.startswith('onecall-'):
-            url = self._base_url % 'data/2.5/onecall/timemachine'
+            # Two different API versions exists for the onecall API: 2.5 and 3.0, configurable via plugin config.
+            url = self._base_url + 'data/' + self._api_version + '/onecall/timemachine'
             parameters = "?lat=%s&lon=%s&dt=%i&appid=%s&lang=%s&units=%s" % (self._lat, self._lon, self.__get_timestamp_for_delta_days(delta_t),
                                                                              self._key, self._lang, self._units)
             url = '%s%s' % (url, parameters)

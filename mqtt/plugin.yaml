@@ -6,42 +6,19 @@ plugin:
         de: 'MQTT Plugin, welches das MQTT Module von SmartHomeNG zur Kommunikation nutzt.'
         en: 'MQTT plugin which utilizes the MQTT module of SmartHomeNG for communication'
     maintainer: msinn
-    tester: msinn                  # Who tests this plugin?
+    tester: msinn, onkelandy                  # Who tests this plugin?
     state: ready                   # change to ready when done with development
     keywords: iot
-#    documentation: http://smarthomeng.de/user/plugins/mqtt2/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1089334-neues-mqtt-plugin
 
-    version: 2.0.3                 # Plugin version
+    version: 2.0.5                 # Plugin version
     sh_minversion: 1.7             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True           # plugin supports multi instance
     restartable: unknown
     classname: Mqtt2               # class containing the plugin
 
-parameters:
-    # Definition of parameters to be configured in etc/plugin.yaml (enter 'parameters: NONE', if section should be empty)
-    webif_pagelength:
-        type: int
-        default: 100
-        valid_list:
-          - -1
-          - 0
-          - 25
-          - 50
-          - 100
-        description:
-            de: 'Anzahl an Items, die standardmäßig in einer Web Interface Tabelle pro Seite angezeigt werden.
-                 0 = automatisch, -1 = alle'
-            en: 'Amount of items being listed in a web interface table per page by default.
-                 0 = automatic, -1 = all'
-        description_long:
-            de: 'Anzahl an Items, die standardmäßig in einer Web Interface Tabelle pro Seite angezeigt werden.\n
-                 Bei 0 wird die Tabelle automatisch an die Höhe des Browserfensters angepasst.\n
-                 Bei -1 werden alle Tabelleneinträge auf einer Seite angezeigt.'
-            en: 'Amount of items being listed in a web interface table per page by default.\n
-                 0 adjusts the table height automatically based on the height of the browser windows.\n
-                 -1 shows all table entries on one page.'
+parameters: NONE
 
 item_attributes:
     # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)

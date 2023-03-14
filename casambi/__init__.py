@@ -7,9 +7,6 @@
 #  https://www.smarthomeNG.de
 #  https://knx-user-forum.de/forum/supportforen/smarthome-py
 #
-#  Sample plugin for new plugins to run with SmartHomeNG version 1.4 and
-#  upwards.
-#
 #  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation, either version 3 of the License, or
@@ -28,6 +25,7 @@
 from lib.module import Modules
 from lib.model.smartplugin import *
 from lib.item import Items
+from .webif import WebInterface
 
 import threading
 import requests
@@ -42,7 +40,7 @@ class Casambi(SmartPlugin):
     """
 
     # Use VERSION = '1.0.0' for your initial plugin Release
-    PLUGIN_VERSION = '1.7.5'    # (must match the version specified in plugin.yaml)
+    PLUGIN_VERSION = '1.7.6'    # (must match the version specified in plugin.yaml)
 
     def __init__(self, sh):
         """
@@ -90,8 +88,8 @@ class Casambi(SmartPlugin):
             self._init_complete = False
             return
 
-        self.init_webinterface()
-        
+        self.init_webinterface(WebInterface)
+
         return
 
     def sessionIDValid(self):
@@ -328,8 +326,7 @@ class Casambi(SmartPlugin):
 
         elif method == 'unitChanged':
             unitID = None
-            on = None          # on status represents the status of the BLE module in the device, not the light status.
-            status = None
+            status = None       # Health status of sensor
             dimValue = None
             verticalValue = None
             cctValue = None
@@ -337,10 +334,11 @@ class Casambi(SmartPlugin):
             self.logger.debug("Debug Json unitChanged: {0}".format(dataJson))
             if 'id' in dataJson:
                 unitID = int(dataJson['id'])
-            if 'on' in dataJson:
-                on = bool(dataJson['on'])
             if 'status' in dataJson:
                 status = str(dataJson['status'])
+                if status != 'ok':
+                    self.logger.warning(f"Sensor with ID  {unitID} reported status {status}") 
+
             if 'controls' in dataJson:
                 controls = dataJson['controls']
                 self.logger.debug(f"Debug controls Json: {controls}")
@@ -360,15 +358,15 @@ class Casambi(SmartPlugin):
                     elif type == 'CCT':
                         cctValue = value
 
-
-            self.logger.debug(f"Received {method} status from unit {unitID}, on: {on}, value: {dimValue}, vertical: {verticalValue}, cct: {cctValue}.")
+            self.logger.debug(f"Received {method} status from unit {unitID}, value: {dimValue}, vertical: {verticalValue}, cct: {cctValue}.")
 
             #Copy data into casambi item:
             if unitID and (unitID in self._rx_items):
                 #self.logger.debug("Casambi ID found in rx item list")
                 # iterate over all items having this id 
                 for item in self._rx_items[unitID]:
-                    if on and (item.conf['casambi_rx_key'].upper() == 'ON'):
+                    #if on and (item.conf['casambi_rx_key'].upper() == 'ON'):
+                    if (item.conf['casambi_rx_key'].upper() == 'ON'):
                         item(not (dimValue == 0), self.get_shortname())
                     elif item.conf['casambi_rx_key'].upper() == 'DIMMER':
                         item(dimValue * 100, self.get_shortname())
@@ -379,6 +377,15 @@ class Casambi(SmartPlugin):
 
             elif unitID and not (unitID in self._rx_items):
                 self.logger.warning(f"Received status information for ID {unitID} which has no equivalent item.")
+
+        elif method == 'networkUpdated':
+            self.logger.warning(f"Casambi network has been updated with persistent changes")
+            self.logger.warning(f"Debug: decodeData(), receivedData: {receivedData}")
+
+        elif method == 'networkLog':
+            self.logger.debug(f"Casambi network sent network logging information")
+            self.logger.debug(f"Debug: decodeData(), receivedData: {receivedData}")
+
         else:
             self.logger.warning(f"Received unknown method {method} which is not supported.")
             self.logger.warning(f"Debug: decodeData(), receivedData: {receivedData}")
@@ -588,111 +595,4 @@ class Casambi(SmartPlugin):
 
     def get_rxItemLength(self):
         return len(self._rx_items)
-
-    def init_webinterface(self):
-        """"
-        Initialize the web interface for this plugin
-
-        This method is only needed if the plugin is implementing a web interface
-        """
-        try:
-            self.mod_http = Modules.get_instance().get_module(
-                'http')  # try/except to handle running in a core version that does not support modules
-        except:
-            self.mod_http = None
-        if self.mod_http == None:
-            self.logger.error("Not initializing the web interface")
-            return False
-
-        import sys
-        if not "SmartPluginWebIf" in list(sys.modules['lib.model.smartplugin'].__dict__):
-            self.logger.warning("Web interface needs SmartHomeNG v1.5 and up. Not initializing the web interface")
-            return False
-
-        # set application configuration for cherrypy
-        webif_dir = self.path_join(self.get_plugin_dir(), 'webif')
-        config = {
-            '/': {
-                'tools.staticdir.root': webif_dir,
-            },
-            '/static': {
-                'tools.staticdir.on': True,
-                'tools.staticdir.dir': 'static'
-            }
-        }
-
-        # Register the web interface as a cherrypy app
-        self.mod_http.register_webif(WebInterface(webif_dir, self),
-                                     self.get_shortname(),
-                                     config,
-                                     self.get_classname(), self.get_instance_name(),
-                                     description='')
-
-        return True
-
-
-# ------------------------------------------
-#    Webinterface of the plugin
-# ------------------------------------------
-
-import cherrypy
-from jinja2 import Environment, FileSystemLoader
-
-
-class WebInterface(SmartPluginWebIf):
-
-    def __init__(self, webif_dir, plugin):
-        """
-        Initialization of instance of class WebInterface
-
-        :param webif_dir: directory where the webinterface of the plugin resides
-        :param plugin: instance of the plugin
-        :type webif_dir: str
-        :type plugin: object
-        """
-        self.logger = logging.getLogger(__name__)
-        self.webif_dir = webif_dir
-        self.plugin = plugin
-        self.tplenv = self.init_template_environment()
-
-        self.items = Items.get_instance()
-
-    @cherrypy.expose
-    def index(self, reload=None):
-        """
-        Build index.html for cherrypy
-
-        Render the template and return the html file to be delivered to the browser
-
-        :return: contents of the template after beeing rendered
-        """
-        tmpl = self.tplenv.get_template('index.html')
-        # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
-        return tmpl.render(p=self.plugin, items=sorted(self.items.return_items(), key=lambda k: str.lower(k['_path'])))
-
-
-    @cherrypy.expose
-    def get_data_html(self, dataSet=None):
-        """
-        Return data to update the webpage
-
-        For the standard update mechanism of the web interface, the dataSet to return the data for is None
-
-        :param dataSet: Dataset for which the data should be returned (standard: None)
-        :return: dict with the data needed to update the web page.
-        """
-        if dataSet is None:
-            # get the new data
-            data = {}
-
-            # data['item'] = {}
-            # for i in self.plugin.items:
-            #     data['item'][i]['value'] = self.plugin.getitemvalue(i)
-            #
-            # return it as json the the web page
-            # try:
-            #     return json.dumps(data)
-            # except Exception as e:
-            #     self.logger.error(f"get_data_html exception: {e}")
-        return {}
 

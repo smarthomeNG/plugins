@@ -12,7 +12,7 @@ plugin:
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1586861-support-thread-für-das-hue2-plugin
 
-    version: 2.2.0                  # Plugin version (must match the version specified in __init__.py)
+    version: 2.3.0                  # Plugin version (must match the version specified in __init__.py)
     sh_minversion: 1.8.2            # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
 #    py_minversion: 3.6             # minimum Python version to use for this plugin
@@ -119,7 +119,7 @@ item_attributes:
           - scene
           - sensor
 
-    hue2_refence_light_id:
+    hue2_reference_light_id:
         type: str
         description:
             de: "ID der des referenzwert gebenden Lichtes. Nur möglich wenn resource == group"
@@ -139,13 +139,13 @@ item_attributes:
             en: "Function of the selected resource/id that shall be read/controlled"
         valid_list:
           - ''
-          - dict
           - on
           - bri
           - bri_inc
           - hue
           - sat
           - ct
+          - dict
           - name
           - reachable
           - colormode
@@ -154,9 +154,16 @@ item_attributes:
           - modelid
           - swversion
           - activate_scene
+          - modify_scene
           - alert
           - effect
-
+          - daylight
+          - sunriseoffset
+          - sunsetoffset
+          - temperature
+          - presence
+          - lightlevel
+          - status
 
         valid_list_description:
             de:
@@ -176,8 +183,16 @@ item_attributes:
               - "Model Id des Leuchtmittels -> str, r/o (resource: light)"
               - "Software Version des Leuchtmittels -> str, r/o (resource: light)"
               - "Aktivieren einer Szene für Leuchten in der selektierten Gruppe (hue2_id) -> str w/o (resource: group)"
+              - "Anpassen einer Szene für Leuchten in der selektierten Gruppe (hue2_id) -> str w/o (resource: group)"
               - "Benachrichtigung -> str (Werte: none, select, lselect) (resource: light, group)"
               - "Lichteffekt -> str (Werte: none, colorloop) (resource: light, group)"
+              - "Tageslicht -> bool, r/o (resource: sensor)"
+              - "Tageslicht: sunriseoffset -> num r/o (resource: sensor)"
+              - "Tageslicht: sunsetoffset -> num r/o (resource: sensor)"
+              - "Temperatur -> num r/o (resource: sensor)"
+              - "Präsenz -> bool, r/o (resource: sensor)"
+              - "Sensor 'lightlevel' -> num r/o (resource: sensor)"
+              - "Sensor 'status' -> num, r/o (resource: sensor)"
             en:
               - "<no function choosen yet>"
               - "Multiple functions at once -> dict, r/w (resource: light, group)"
@@ -194,9 +209,17 @@ item_attributes:
               - "Typ of lamp -> str, r/o (resource: light)"
               - "Model id of lamp -> str, r/o (resource: light)"
               - "Software version lamp -> str, r/o (resource: light)"
-              - "Activate a scene for lights in the selected grpup (hue2_id) -> str w/o (resource: group)"
+              - "Activate a scene for lights in the selected group (hue2_id) -> str w/o (resource: group)"
+              - "Change a scene for lights in the selected group (hue2_id) -> str w/o (resource: group)"
               - "Alert -> str (values: none, select, lselect) (resource: light, group)"
               - "Effect -> str (values: none, colorloop) (resource: light, group)"
+              - "Sensor 'daylight' -> bool, r/o (resource: sensor)"
+              - "Sensor 'daylight': sunriseoffset -> num r/o (resource: sensor)"
+              - "Sensor 'daylight': sunsetoffset -> num r/o (resource: sensor)"
+              - "Sensor 'temperature' -> num r/o (resource: sensor)"
+              - "Sensor 'presence' -> bool, r/o (resource: sensor)"
+              - "Sensor 'lightlevel' -> num r/o (resource: sensor)"
+              - "Sensor 'status' -> num, r/o (resource: sensor)"
 
 item_structs:
     # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
@@ -347,6 +370,13 @@ item_structs:
             hue2_id@instance: ..:.
             hue2_function@instance: bri
 
+        level_inc:
+            type: num
+            enforce_updates: True
+            hue2_resource@instance: ..:.
+            hue2_id@instance: ..:.
+            hue2_function@instance: bri_inc
+
         ct:
             type: num
             enforce_updates: True
@@ -359,6 +389,13 @@ item_structs:
             hue2_resource@instance: ..:.
             hue2_id@instance: ..:.
             hue2_function@instance: colormode
+
+        dict:
+            type: dict
+            enforce_updates: True
+            hue2_resource@instance: ..:.
+            hue2_id@instance: ..:.
+            hue2_function@instance: dict
 
         alert:
             type: str

@@ -28,7 +28,7 @@ from lib.model.smartplugin import *
 from .inverter import Inverter
 
 class Kostalmodbus(SmartPlugin):
-    PLUGIN_VERSION = '1.6.0'
+    PLUGIN_VERSION = '1.6.2'
     inverter = 'None'
     _items = []
 

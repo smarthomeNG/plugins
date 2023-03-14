@@ -71,10 +71,8 @@ class WebInterface(SmartPluginWebIf):
 
         :return: contents of the template after beeing rendered
         """
-        try:
-            pagelength = self.plugin.webif_pagelength
-        except Exception:
-            pagelength = 100
+        # try to get the webif pagelength from the module.yaml configuration
+        pagelength = self.plugin.get_parameter_value('webif_pagelength')
         if item_path is not None:
             item = self.plugin.items.return_item(item_path)
         delete_triggered = False
@@ -229,17 +227,49 @@ class WebInterface(SmartPluginWebIf):
 
 
     @cherrypy.expose
-    def db_dump(self):
+    def db_csvdump(self):
         """
-        returns the smarthomeNG sqlite database as download
+        returns the smarthomeNG database as download in csv format
         """
 
-        self.plugin.dump(
-            '%s/var/db/smarthomedb_%s.dump' % (self.plugin.get_sh().base_dir, self.plugin.get_instance_name()))
+        filename = 'smarthomeng'
+        extension = '_dump.csv'
+        if self.plugin.get_instance_name() == '':
+            filename += extension
+        else:
+            filename += '_' + self.plugin.get_instance_name() + extension
+        pathname = os.path.join(self.plugin.get_sh().base_dir, 'var', 'db', filename)
+
+        self.plugin.dump(pathname)
+        #self.plugin.dump(
+        #    '%s/var/db/smarthomedb_%s.dump' % (self.plugin.get_sh().base_dir, self.plugin.get_instance_name()))
+
         mime = 'application/octet-stream'
-        return cherrypy.lib.static.serve_file(
-            "%s/var/db/smarthomedb_%s.dump" % (self.plugin.get_sh().base_dir, self.plugin.get_instance_name()),
-            mime, "%s/var/db/" % self.plugin.get_sh().base_dir)
+        # disposition should bie 'attachment' or 'inline'
+        return cherrypy.lib.static.serve_file(pathname, mime, disposition='attachment', name=filename)
+        #return cherrypy.lib.static.serve_file(
+        #    "%s/var/db/smarthomedb_%s.dump" % (self.plugin.get_sh().base_dir, self.plugin.get_instance_name()),
+        #    mime, "%s/var/db/" % self.plugin.get_sh().base_dir)
+
+    @cherrypy.expose
+    def db_sqldump(self):
+        """
+        returns the smarthomeNG sqlite database as download of a complete sql dump
+        """
+        filename = 'smarthomeng'
+        extension = '_dump.sql'
+        if self.plugin.get_instance_name() == '':
+            filename += extension
+        else:
+            filename += '_' + self.plugin.get_instance_name() + extension
+        pathname = os.path.join(self.plugin.get_sh().base_dir, 'var', 'db', filename)
+
+        if self.plugin.sqlite_dump(pathname):
+            mime = 'application/octet-stream'
+            # disposition should bie 'attachment' or 'inline'
+            return cherrypy.lib.static.serve_file(pathname, mime, disposition='attachment', name=filename)
+
+        return
 
 
     @cherrypy.expose

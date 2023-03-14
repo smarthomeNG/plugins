@@ -212,9 +212,13 @@ class Robot:
         elif statusCode == 403:
             self.logger.debug("Sending cloud state request returned: Forbidden. Aquire new session key.")
         elif statusCode == 404:
-            self.logger.error("Robot is not reachable for backend. Is robot online?")
+            self.logger.warning("Robot is not reachable for backend. Is robot online?")
+            return 'error'
+        elif statusCode == 500:
+            self.logger.warning(f"Internal Backend Server Error 500, Optional message: {robot_cloud_state_response.text}")
+            return 'error'
         else:
-            self.logger.error("Sending cloud state request error: {0}, msg: {1}".format(statusCode,robot_cloud_state_response.text ))
+            self.logger.error(f"Sending cloud state request error: {statusCode}, msg: {robot_cloud_state_response.text}")
             return 'error'
 
         response = robot_cloud_state_response.json()

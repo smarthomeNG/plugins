@@ -5,14 +5,14 @@ plugin:
         de: '1-Wire Unterstützung über owserver'
         en: '1-Wire support via owserver'
         fr: 'Support de 1-Wire à travers owserver'
-    maintainer: bmxp
+    maintainer: bmxp, msinn
     tester: 'henfri, chester4444'
     state: ready
     keywords: 1wire onewire dallas ibutton sensor temperature humidity
-    documentation: https://www.smarthomeng.de/user/plugins_doc/config/onewire.html
+    documentation: ''
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1493319-support-thread-zum-onewire-plugin
-    version: 1.8.1                 # Plugin version
-    sh_minversion: 1.4             # minimum shNG version to use this plugin
+    version: 1.9.2                 # Plugin version
+    sh_minversion: 1.9.3.5         # minimum shNG version to use this plugin
     multi_instance: True
     restartable: True
     classname: OneWire             # class containing the plugin
@@ -98,6 +98,13 @@ parameters:
                 The counter is decremented until it reaches 0, then logging will be turned off.
                 If set to -1, logging cycle time is always on
 
+    warn_after:
+        type: int
+        default: 10
+        description:
+            de: 'Warnung nach dieser Anzahl aufeinanderfolgender Lesefehler für einen Sensor'
+            en: 'Warn after this number of consecutive read errors for a sensor'
+
     io_wait:
         type: num
         default: 5
@@ -178,7 +185,7 @@ item_attributes:
           - B
           - VOC
         valid_list_description:
-            de: 
+            de:
                 - 'Temperatur'
                 - 'Temperatur (9 Bit)'
                 - 'Temperatur (10 Bit)'
@@ -211,7 +218,7 @@ item_attributes:
                 - 'Busmaster'
                 - 'iButton'
                 - 'VOC Sensor'
-            en: 
+            en:
                 - 'Temperature'
                 - 'Temperature (9 Bit)'
                 - 'Temperature (10 Bit)'
@@ -270,9 +277,9 @@ plugin_functions: NONE
 #               Um die Funktionalität zu nutzen, muss eine (sinnvolle) Funktion zugewiesen werden. (z.B.: sh.ow.ibutton_hook = intruder_alert)
 #           en: >
 #               This is a special function which is called if an unknown ibutton is attached to the bus.
-#               If the unknown ibutton is already seen, the id will be cached 
-#               and the function is not called again. The cache will be reset every ten minutes. 
-#               The function takes two arguments. 
+#               If the unknown ibutton is already seen, the id will be cached
+#               and the function is not called again. The cache will be reset every ten minutes.
+#               The function takes two arguments.
 #               The first will be the id of the ibutton and the second is the item of the ibutton busmaster
 #               (e.g. sh.home.key_hanger). - To use it you have to assign a (useful) function. (e.g.: sh.ow.ibutton_hook = intruder_alert)
 #       parameter:

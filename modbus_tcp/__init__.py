@@ -2,6 +2,7 @@
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
 #  Copyright 2022 De Filippis Ivan
+#  Copyright 2022 Ronny Schulz
 #########################################################################
 #  This file is part of SmartHomeNG.   
 #
@@ -33,7 +34,17 @@ from .webif import WebInterface
 from pymodbus.constants import Endian
 from pymodbus.payload import BinaryPayloadDecoder
 from pymodbus.payload import BinaryPayloadBuilder
-from pymodbus.client.sync import ModbusTcpClient
+
+# pymodbus library from https://github.com/riptideio/pymodbus
+from pymodbus.version import version
+pymodbus_baseversion = int(version.short().split('.')[0])
+
+if pymodbus_baseversion > 2:
+    # for newer versions of pymodbus
+    from pymodbus.client.tcp import ModbusTcpClient
+else:
+    # for older versions of pymodbus
+    from pymodbus.client.sync import ModbusTcpClient
 
 AttrAddress = 'modBusAddress'
 AttrType = 'modBusDataType'
@@ -429,13 +440,25 @@ class modbus_tcp(SmartPlugin):
             
         #self.logger.debug("read {0}.{1}.{2} (address.slaveUnit) regCount:{3}".format(objectType, address, slaveUnit, registerCount))
         if objectType == 'Coil':
-            result = self._Mclient.read_coils(address, registerCount, unit=slaveUnit)
+            if pymodbus_baseversion > 2:
+                result = self._Mclient.read_coils(address, registerCount, slave=slaveUnit)
+            else:
+                result = self._Mclient.read_coils(address, registerCount, unit=slaveUnit)
         elif objectType == 'DiscreteInput':
-            result = self._Mclient.read_discrete_inputs(address, registerCount, unit=slaveUnit)
+            if pymodbus_baseversion > 2:
+                result = self._Mclient.read_discrete_inputs(address, registerCount, slave=slaveUnit)
+            else:
+                result = self._Mclient.read_discrete_inputs(address, registerCount, unit=slaveUnit)
         elif objectType == 'InputRegister':
-            result = self._Mclient.read_input_registers(address, registerCount, unit=slaveUnit)
+            if pymodbus_baseversion > 2:
+                result = self._Mclient.read_input_registers(address, registerCount, slave=slaveUnit)
+            else:
+                result = self._Mclient.read_input_registers(address, registerCount, unit=slaveUnit)
         elif objectType == 'HoldingRegister':
-            result = self._Mclient.read_holding_registers(address, registerCount, unit=slaveUnit)
+            if pymodbus_baseversion > 2:
+                result = self._Mclient.read_holding_registers(address, registerCount, slave=slaveUnit)
+            else:
+                result = self._Mclient.read_holding_registers(address, registerCount, unit=slaveUnit)
         else:
             self.logger.error("{0} not supported: {1}".format(AttrObjectType, objectType))
             return None

@@ -1,24 +1,23 @@
 # translations for the web interface
 plugin_translations:
     # Translations for the plugin specially for the web interface
-    'Host': { 'de': '=', 'en': 'host' }
-    'IO Wartezeit': { 'de': '=', 'en': 'IO wait time' }
-    'Port': { 'de': '=', 'en': 'port' }
-    'iButton Wartezeit': { 'de': '=', 'en': 'iButton wait time' }
-    'Cycle': { 'de': '=', 'en': 'cylce' }
+    'IO Wartezeit'              : { 'de': '=', 'en': 'IO wait time' }
+    'iButton Wartezeit'         : { 'de': '=', 'en': 'iButton wait time' }
+    'Cycle'                     : { 'de': '=', 'en': '=' }
     'Sensorsuchlauf erfolgreich': { 'de': '=', 'en': 'discovery successful' }
-    'Ja': { 'de': '=', 'en': 'yes' }
-    'Nein': { 'de': '=', 'en': 'no' }
-    'nach Devices suchen': { 'de': '=', 'en': 'search for devices' }
-    'Bus gefunden': { 'de': '=', 'en': 'bus found' }
-    'Bus': { 'de': '=', 'en': 'bus' }
-    'angeschlossene Sensoren': { 'de': '=', 'en': 'attached sensors' }
-    'Sensoren in SmartHomeNG Items definiert': { 'de': '=', 'en': 'sensor defined in SmartHomeNG' }
-    'Sensor': { 'de': '=', 'en': 'sensor' }
-    'Item': { 'de': '=', 'en': 'item' }
-    'Wert': { 'de': '=', 'en': 'value' }
-    'Letzte Änderung': { 'de': '=', 'en': 'Last change' }
-    'IO Geräte in SmartHomeNG Items definiert': { 'de': '=', 'en': 'IO devices defined in SmartHomeNG' }
+    'Bus'                       : { 'de': '=', 'en': 'Bus' }
+    'Busse'                     : { 'de': '=', 'en': 'Buse' }
+    'angeschlossene Sensoren'   : { 'de': '=', 'en': 'attached sensors' }
+    'Sensor'                    : { 'de': '=', 'en': '=' }
+    'Geräteklasse'              : { 'de': '=', 'en': 'Deviceclass' }
+    'Deviceclass'               : { 'de': '=', 'en': '=' }
+    'Devicetyp'                 : { 'de': '=', 'en': 'Devicetype' }
+    'Items definiert'           : { 'de': '=', 'en': 'Items Defined' }
+    'Geräte in Items'           : { 'de': '=', 'en': 'Devices in items' }
+    'Sensoradresse(n)'          : { 'de': '=', 'en': 'Sensoraddress(es)' }
+    'I/O-Geräteadresse(n)'      : { 'de': '=', 'en': 'I/O-Devicesaddress(es)' }
+    'iButtonadresse(n)'         : { 'de': '=', 'en': 'iButtonaddress(es)' }
+    'Gerät(e)'                  : { 'de': '=', 'en': 'Device(s)' }
 
     # Alternative format for translations of longer texts:
     'Hier kommt der Inhalt des Webinterfaces hin.':

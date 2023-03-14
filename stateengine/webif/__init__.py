@@ -29,6 +29,7 @@ import datetime
 import time
 import os
 import logging
+import json
 
 from lib.item import Items
 from lib.model.smartplugin import SmartPluginWebIf
@@ -70,7 +71,7 @@ class WebInterface(SmartPluginWebIf):
         item = self.plugin.itemsApi.return_item(item_path)
 
         tmpl = self.tplenv.get_template('{}.html'.format(page))
-
+        pagelength = self.plugin.get_parameter_value('webif_pagelength')
         if action == "get_graph" and abitem is not None:
             if isinstance(abitem, str):
                 try:
@@ -85,6 +86,8 @@ class WebInterface(SmartPluginWebIf):
                                language=self.plugin.get_sh().get_defaultlanguage(), now=self.plugin.shtime.now())
         # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
         return tmpl.render(p=self.plugin,
+                           webif_pagelength=pagelength,
+                           item_count=len(self.plugin._items),
                            language=self.plugin.get_sh().get_defaultlanguage(), now=self.plugin.shtime.now())
 
     @cherrypy.expose
@@ -100,14 +103,12 @@ class WebInterface(SmartPluginWebIf):
         if dataSet is None:
             # get the new data
             data = {}
-
-            # data['item'] = {}
-            # for i in self.plugin.items:
-            #     data['item'][i]['value'] = self.plugin.getitemvalue(i)
-            #
-            # return it as json the the web page
-            # try:
-            #     return json.dumps(data)
-            # except Exception as e:
-            #     self.logger.error("get_data_html exception: {}".format(e))
+            for item in self.plugin.get_items():
+                conditionset = item.lastconditionset_name
+                conditionset = "-" if conditionset == "" else conditionset
+                data.update({item.id: {'laststate': item.laststate_name, 'lastconditionset': conditionset}})
+            try:
+                return json.dumps(data)
+            except Exception as e:
+                self.logger.error(f"get_data_html exception: {e}")
         return {}
