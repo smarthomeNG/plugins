@@ -59,9 +59,20 @@ Die Konfiguration des DatabaseAddon-Plugin erfolgt automatisch bei Start.
 Hinweis: Das Plugin selbst ist aktuell nicht multi-instance fähig. Das bedeutet, dass das Plugin aktuell nur eine Instanz
 des Database-Plugin abgebunden werden kann.
 
+|
+
+Konfiguration
+=============
+
+Diese Plugin Parameter und die Informationen zur Item-spezifischen Konfiguration des Plugins sind
+unter :doc:`/plugins_doc/config/db_addon` beschrieben.
+
+mysql Datenbank
+---------------
 
 Bei Verwendung von mysql sollten einige Variablen der Datenbank angepasst werden, so dass die komplexeren Anfragen
 ohne Fehler bearbeitet werden.
+
 Dazu folgenden Block am Ende der Datei */etc/mysql/my.cnf* einfügen bzw den existierenden ergänzen.
 
 
@@ -72,13 +83,6 @@ Dazu folgenden Block am Ende der Datei */etc/mysql/my.cnf* einfügen bzw den exi
     net_read_timeout = 60
     wait_timeout = 28800
     interactive_timeout = 28800
-
-
-Konfiguration
-=============
-
-Diese Plugin Parameter und die Informationen zur Item-spezifischen Konfiguration des Plugins sind
-unter :doc:`/plugins_doc/config/db_addon` beschrieben.
 
 |
 

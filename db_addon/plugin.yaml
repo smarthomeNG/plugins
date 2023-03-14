@@ -3,11 +3,11 @@ plugin:
     # Global plugin attributes
     type: system                   # plugin type (gateway, interface, protocol, system, web)
     description:
-        de: 'AddOn für Database-Plugin zur Datenauswertung'
-        en: 'AddOn for Database-Plugin for data evaluation'
+        de: 'Add-On für das database Plugin zur Datenauswertung'
+        en: 'Add-On for the database plugin for data evaluation'
     maintainer: sisamiwe
     tester: bmx, onkelandy          # Who tests this plugin?
-    state: develop                  # change to ready when done with development
+    state: ready                    # change to ready when done with development
 #    keywords: iot xyz
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1848494-support-thread-databaseaddon-plugin
@@ -92,14 +92,14 @@ item_attributes:
             - 'verbrauch_jahreszeitraum_minus3'             #num    daily       Verbrauch seit dem 1.1. bis zum heutigen Tag vor 3 Jahren
             # Zaehlerstand
             - 'zaehlerstand_heute_minus1'                   #num    daily       Zählerstand / Wert am Ende des letzten Tages (heute -1 Tag)
-            - 'zaehlerstand_woche_minus1'                   #num    weekly      Zählerstand / Wert am Ende der letzten Woche (aktuelle Woche -1 Woche)    
-            - 'zaehlerstand_woche_minus2'                   #num    weekly      Zählerstand / Wert am Ende der vorletzten Woche (aktuelle Woche -2 Woche)        
+            - 'zaehlerstand_woche_minus1'                   #num    weekly      Zählerstand / Wert am Ende der letzten Woche (aktuelle Woche -1 Woche)
+            - 'zaehlerstand_woche_minus2'                   #num    weekly      Zählerstand / Wert am Ende der vorletzten Woche (aktuelle Woche -2 Woche)
             - 'zaehlerstand_woche_minus3'                   #num    weekly      Zählerstand / Wert am Ende der aktuellen Woche -3 Woche
-            - 'zaehlerstand_monat_minus1'                   #num    monthly     Zählerstand / Wert am Ende des letzten Monates (aktueller Monat -1 Monat)   
-            - 'zaehlerstand_monat_minus2'                   #num    monthly     Zählerstand / Wert am Ende des vorletzten Monates (aktueller Monat -2 Monate)   
+            - 'zaehlerstand_monat_minus1'                   #num    monthly     Zählerstand / Wert am Ende des letzten Monates (aktueller Monat -1 Monat)
+            - 'zaehlerstand_monat_minus2'                   #num    monthly     Zählerstand / Wert am Ende des vorletzten Monates (aktueller Monat -2 Monate)
             - 'zaehlerstand_monat_minus3'                   #num    monthly     Zählerstand / Wert am Ende des aktuellen Monats -3 Monate
-            - 'zaehlerstand_jahr_minus1'                    #num    yearly      Zählerstand / Wert am Ende des letzten Jahres (aktuelles Jahr -1 Jahr)   
-            - 'zaehlerstand_jahr_minus2'                    #num    yearly      Zählerstand / Wert am Ende des vorletzten Jahres (aktuelles Jahr -2 Jahre)   
+            - 'zaehlerstand_jahr_minus1'                    #num    yearly      Zählerstand / Wert am Ende des letzten Jahres (aktuelles Jahr -1 Jahr)
+            - 'zaehlerstand_jahr_minus2'                    #num    yearly      Zählerstand / Wert am Ende des vorletzten Jahres (aktuelles Jahr -2 Jahre)
             - 'zaehlerstand_jahr_minus3'                    #num    yearly      Zählerstand / Wert am Ende des aktuellen Jahres -3 Jahre
             # Wertehistorie min/max
             - 'minmax_last_24h_min'                         #num    daily       minimaler Wert der letzten 24h
@@ -111,15 +111,15 @@ item_attributes:
             - 'minmax_heute_min'                            #num    onchange    Minimalwert seit Tagesbeginn
             - 'minmax_heute_max'                            #num    onchange    Maximalwert seit Tagesbeginn
             - 'minmax_heute_minus1_min'                     #num    daily       Minimalwert gestern (heute -1 Tag)
-            - 'minmax_heute_minus1_max'                     #num    daily       Maximalwert gestern (heute -1 Tag) 
-            - 'minmax_heute_minus1_avg'                     #num    daily       Durchschnittswert gestern (heute -1 Tag) 
+            - 'minmax_heute_minus1_max'                     #num    daily       Maximalwert gestern (heute -1 Tag)
+            - 'minmax_heute_minus1_avg'                     #num    daily       Durchschnittswert gestern (heute -1 Tag)
             - 'minmax_heute_minus2_min'                     #num    daily       Minimalwert vorgestern (heute -2 Tage)
             - 'minmax_heute_minus2_max'                     #num    daily       Maximalwert vorgestern (heute -2 Tage)
             - 'minmax_heute_minus2_avg'                     #num    daily       Durchschnittswert vorgestern (heute -2 Tage)
             - 'minmax_heute_minus3_min'                     #num    daily       Minimalwert heute vor 3 Tagen
             - 'minmax_heute_minus3_max'                     #num    daily       Maximalwert heute vor 3 Tagen
             - 'minmax_heute_minus3_avg'                     #num    daily       Durchschnittswert heute vor 3 Tagen
-            - 'minmax_woche_min'                            #num    onchange    Minimalwert seit Wochenbeginn    
+            - 'minmax_woche_min'                            #num    onchange    Minimalwert seit Wochenbeginn
             - 'minmax_woche_max'                            #num    onchange    Maximalwert seit Wochenbeginn
             - 'minmax_woche_minus1_min'                     #num    weekly      Minimalwert Vorwoche (aktuelle Woche -1)
             - 'minmax_woche_minus1_max'                     #num    weekly      Maximalwert Vorwoche (aktuelle Woche -1)
@@ -127,7 +127,7 @@ item_attributes:
             - 'minmax_woche_minus2_min'                     #num    weekly      Minimalwert aktuelle Woche -2 Wochen
             - 'minmax_woche_minus2_max'                     #num    weekly      Maximalwert aktuelle Woche -2 Wochen
             - 'minmax_woche_minus2_avg'                     #num    weekly      Durchschnittswert aktuelle Woche -2 Wochen
-            - 'minmax_monat_min'                            #num    onchange    Minimalwert seit Monatsbeginn 
+            - 'minmax_monat_min'                            #num    onchange    Minimalwert seit Monatsbeginn
             - 'minmax_monat_max'                            #num    onchange    Maximalwert seit Monatsbeginn
             - 'minmax_monat_minus1_min'                     #num    monthly     Minimalwert Vormonat (aktueller Monat -1)
             - 'minmax_monat_minus1_max'                     #num    monthly     Maximalwert Vormonat (aktueller Monat -1)
@@ -135,8 +135,8 @@ item_attributes:
             - 'minmax_monat_minus2_min'                     #num    monthly     Minimalwert aktueller Monat -2 Monate
             - 'minmax_monat_minus2_max'                     #num    monthly     Maximalwert aktueller Monat -2 Monate
             - 'minmax_monat_minus2_avg'                     #num    monthly     Durchschnittswert aktueller Monat -2 Monate
-            - 'minmax_jahr_min'                             #num    onchange    Minimalwert seit Jahresbeginn 
-            - 'minmax_jahr_max'                             #num    onchange    Maximalwert seit Jahresbeginn    
+            - 'minmax_jahr_min'                             #num    onchange    Minimalwert seit Jahresbeginn
+            - 'minmax_jahr_max'                             #num    onchange    Maximalwert seit Jahresbeginn
             - 'minmax_jahr_minus1_min'                      #num    yearly      Minimalwert Vorjahr (aktuelles Jahr -1 Jahr)
             - 'minmax_jahr_minus1_max'                      #num    yearly      Maximalwert Vorjahr (aktuelles Jahr -1 Jahr)
             - 'minmax_jahr_minus1_avg'                      #num    yearly      Durchschnittswert Vorjahr (aktuelles Jahr -1 Jahr)
@@ -250,7 +250,7 @@ item_attributes:
                Berechnungszyklus = jährlich'
             - 'Zählerstand / Wert am Ende des aktuellen Jahres -3 Jahre -> num \n
                Berechnungszyklus = jährlich'
-            # Wertehistorie min/max 
+            # Wertehistorie min/max
             - 'minimaler Wert der letzten 24h -> num \n
                Berechnungszyklus = täglich'
             - 'maximaler Wert der letzten 24h -> num \n
@@ -381,85 +381,85 @@ item_attributes:
 
         valid_list_item_type:
             # Verbrauch
-            - num 
-            - num 
-            - num 
-            - num 
-            - num 
-            - num 
-            - num 
-            - num 
-            - num 
-            - num 
-            - num 
-            - num 
-            - num 
-            - num 
-            - num 
-            - num 
-            - num 
-            - num 
-            - num 
-            - num 
-            - num 
-            - num 
-            - num 
-            - num 
-            - num 
-            - num 
-            - num 
-            - num 
-            - num 
+            - num
+            - num
+            - num
+            - num
+            - num
+            - num
+            - num
+            - num
+            - num
+            - num
+            - num
+            - num
+            - num
+            - num
+            - num
+            - num
+            - num
+            - num
+            - num
+            - num
+            - num
+            - num
+            - num
+            - num
+            - num
+            - num
+            - num
+            - num
+            - num
             # Zaehlerstand
-            - num 
-            - num 
-            - num 
-            - num 
-            - num 
-            - num 
-            - num 
-            - num 
-            - num 
-            - num 
+            - num
+            - num
+            - num
+            - num
+            - num
+            - num
+            - num
+            - num
+            - num
+            - num
             # Wertehistorie min/max
-            - num 
-            - num 
-            - num 
-            - num 
-            - num 
-            - num 
-            - num 
-            - num 
-            - num 
-            - num 
-            - num 
-            - num 
-            - num 
-            - num 
-            - num 
-            - num 
-            - num 
-            - num 
-            - num 
-            - num 
-            - num 
-            - num 
-            - num 
-            - num 
-            - num 
-            - num 
-            - num 
-            - num 
-            - num 
-            - num 
-            - num 
-            - num 
-            - num 
-            - num 
-            - num 
-            - num 
-            - num 
-            - num 
+            - num
+            - num
+            - num
+            - num
+            - num
+            - num
+            - num
+            - num
+            - num
+            - num
+            - num
+            - num
+            - num
+            - num
+            - num
+            - num
+            - num
+            - num
+            - num
+            - num
+            - num
+            - num
+            - num
+            - num
+            - num
+            - num
+            - num
+            - num
+            - num
+            - num
+            - num
+            - num
+            - num
+            - num
+            - num
+            - num
+            - num
+            - num
             # Serie
             - list
             - list
@@ -481,12 +481,12 @@ item_attributes:
             - list
             - list
             # Allgemein
-            - num 
+            - num
             - list
             # Komplex
-            - num 
-            - num 
-            - num 
+            - num
+            - num
+            - num
             - list
             - list
 
@@ -516,9 +516,9 @@ item_attributes:
             - 'Startet einen Neuberechnungslauf aller on-demand items -> bool'
             - 'Löscht Plugin-Cache und damit alle im Plugin zwischengespeicherten Werte -> bool'
         valid_list_item_type:
-            - bool 
-            - bool 
-            - bool 
+            - bool
+            - bool
+            - bool
 
     db_addon_params:
         type: str
