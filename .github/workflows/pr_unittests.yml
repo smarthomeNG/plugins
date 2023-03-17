@@ -1,4 +1,4 @@
-name: "Unittests Plugins"
+name: "Unittests Plugins for PRs (disabled)"
 #on: [workflow_dispatch, push]
 on:
   workflow_dispatch:
