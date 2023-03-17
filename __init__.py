@@ -2027,6 +2027,7 @@ class FritzDevice:
         """
         TR-064 service.
         """
+
         def __init__(self, auth, verify, base_url, service_type, service_id, scpdurl, control_url, event_sub_url, description_file):
             # init logger
             self.logger = logging.getLogger(__name__)
@@ -2058,6 +2059,7 @@ class FritzDevice:
             """
             Fetch action Actions.
             """
+
             request = requests.get(f'{self.base_url}{scpdurl}', verify=self.verify)
 
             # self.logger.warning(f"Service _fetch_actions request={request.content}")
@@ -2092,6 +2094,7 @@ class FritzDevice:
         :param str service_id:              Service ID
         :param str control_url:             Control URL
         """
+
         def __init__(self, xml, auth, base_url, name, service_type, service_id, control_url, verify, namespaces):
 
             # init logger
@@ -2109,9 +2112,11 @@ class FritzDevice:
             etree.register_namespace('h', 'http://soap-authentication.org/digest/2001/10/')
 
             self.headers = {'content-type': 'text/xml; charset="utf-8"'}
-            self.envelope = etree.Element('{http://schemas.xmlsoap.org/soap/envelope/}Envelope',
-                                          attrib={'{http://schemas.xmlsoap.org/soap/envelope/}encodingStyle':
-                                                  'http://schemas.xmlsoap.org/soap/encoding/'})
+            self.envelope = etree.Element(
+                '{http://schemas.xmlsoap.org/soap/envelope/}Envelope',
+                attrib={
+                    '{http://schemas.xmlsoap.org/soap/envelope/}encodingStyle':
+                        'http://schemas.xmlsoap.org/soap/encoding/'})
             self.body = etree.SubElement(self.envelope, '{http://schemas.xmlsoap.org/soap/envelope/}Body')
 
             self.in_arguments = {}
@@ -2149,9 +2154,11 @@ class FritzDevice:
 
             # soap._InitChallenge(header)
             data = etree.tostring(self.envelope, encoding='utf-8', xml_declaration=True).decode()
-            request = requests.post(f'{self.base_url}{self.control_url}', headers=self.headers, auth=self.auth, data=data, verify=self.verify)
-
-            # handle response of failed action
+            request = requests.post(f'{self.base_url}{self.control_url}',
+                                    headers=self.headers,
+                                    auth=self.auth,
+                                    data=data,
+                                    verify=self.verify)
             if request.status_code != 200:
                 xml = etree.parse(BytesIO(request.content))
                 try:
@@ -2174,6 +2181,7 @@ class FritzDevice:
         """
         Direct access dict entries like attributes.
         """
+
         def __getattr__(self, name):
             return self[name]
 
