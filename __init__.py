@@ -51,7 +51,6 @@ class AVM(SmartPlugin):
     """
     PLUGIN_VERSION = '2.0.1'
 
-    # Todo: check callmonitor is_call_outgoing -> Status: to be checked
     # Todo: check setting of level to 0 if simpleonoff is off -> Status: Implemented, need to be tested
     # Todo: reactivate avm_data_type starting with wan_current // implementation of igd
     # Todo: implement HSB into AHA
@@ -63,7 +62,7 @@ class AVM(SmartPlugin):
         # Call init code of parent class (SmartPlugin)
         super().__init__()
 
-        self.logger.info('Init AVM Plugin - Testversion 2.0.1. H')
+        self.logger.info('Init AVM Plugin - Testversion 2.0.1. I')
 
         # Enable / Disable debug log generation depending on log level
         self.debug_log = self.logger.isEnabledFor(logging.DEBUG)

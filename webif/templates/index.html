@@ -157,8 +157,8 @@
     {% set tab2title = "hidden" %} 
 {% endif %}
 
-{% if p.fritz_home and len(p.fritz_home._aha_devices) > 0%}
-    {% set tab3title = _("<strong>"'AVM AHA Devices'"</strong> (" ~ len(p.fritz_home._aha_devices) ~ ") ") %}
+{% if p.fritz_home and len(p.fritz_home._devices) > 0%}
+    {% set tab3title = _("<strong>"'AVM AHA Devices'"</strong> (" ~ len(p.fritz_home._devices) ~ ") ") %}
 {% else %}
     {% set tab3title = "hidden" %} 
 {% endif %}
@@ -327,12 +327,12 @@
         </thead>
         <tbody>
             {% if p.fritz_home %}
-                {% for ain in p.fritz_home._aha_devices %}
+                {% for device in p.fritz_home.get_devices() %}
                     <tr>
                         <td></td>
-                        <td class="py-1">{{ ain }}
+                        <td class="py-1">{{ device.ain }}
                         <td class="py-1"></td>
-                        <td class="py-1">{{ p.fritz_home._aha_devices[ain] }}</td>
+                        <td class="py-1">{{ p.fritz_home._devices[device.ain].__dict__ }}</td>
                         
                     </tr>
                 {% endfor %}
