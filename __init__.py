@@ -22,212 +22,27 @@
 #
 #########################################################################
 
+import datetime
+import hashlib
+import logging
 import socket
 import threading
-import datetime
-import logging
-import requests
-import hashlib
 import time
-import lxml.etree as etree
-
-from requests.packages import urllib3
-from requests.auth import HTTPDigestAuth
-from io import BytesIO
-from xml.etree import ElementTree
-from typing import Union
-from typing import Dict
-from enum import IntFlag
 from abc import ABC
+from enum import IntFlag
+from io import BytesIO
 from json.decoder import JSONDecodeError
+from typing import Dict
+from typing import Union
+from xml.etree import ElementTree
+
+import lxml.etree as ET
+import requests
+from requests.auth import HTTPDigestAuth
+from requests.packages import urllib3
 
 from lib.model.smartplugin import SmartPlugin
 from .webif import WebInterface
-
-
-"""
-Definition of attribute value groups of avm_data_type
-"""
-AHA_RO_ATTRIBUTES = ['device_id',
-                     'manufacturer',
-                     'product_name',
-                     'fw_version',
-                     'connected',
-                     'device_name',
-                     'tx_busy',
-                     'device_functions',
-                     'current_temperature',
-                     'temperature_reduced',
-                     'temperature_comfort',
-                     'temperature_offset',
-                     'windowopenactiveendtime',
-                     'boost_active',
-                     'boostactiveendtime',
-                     'summer_active',
-                     'holiday_active',
-                     'battery_low',
-                     'lock',
-                     'device_lock',
-                     'errorcode',
-                     'switch_mode',
-                     'power', 'energy',
-                     'voltage',
-                     'humidity',
-                     'alert_state']
-
-AHA_WO_ATTRIBUTES = ['set_target_temperature',
-                     'set_window_open',
-                     'set_hkr_boost',
-                     'battery_level',
-                     'set_simpleonoff',
-                     'set_level',
-                     'set_levelpercentage',
-                     'set_hue',
-                     'set_saturation',
-                     'set_colortemperature',
-                     'switch_toggle']
-
-AHA_RW_ATTRIBUTES = ['target_temperature',
-                     'window_open',
-                     'hkr_boost',
-                     'simpleonoff',
-                     'level',
-                     'levelpercentage',
-                     'hue',
-                     'saturation',
-                     'colortemperature',
-                     'switch_state']
-
-AHA_ATTRIBUTES = [*AHA_RO_ATTRIBUTES,
-                  *AHA_WO_ATTRIBUTES,
-                  *AHA_RW_ATTRIBUTES]
-
-AVM_RW_ATTRIBUTES = ['wlanconfig',
-                     'tam',
-                     'deflection_enable']
-
-CALL_MONITOR_ATTRIBUTES_GEN = ['call_event',
-                               'call_direction']
-
-CALL_MONITOR_ATTRIBUTES_IN = ['is_call_incoming',
-                              'last_caller_incoming',
-                              'last_call_date_incoming',
-                              'call_event_incoming',
-                              'last_number_incoming',
-                              'last_called_number_incoming']
-
-CALL_MONITOR_ATTRIBUTES_OUT = ['is_call_outgoing',
-                               'last_caller_outgoing',
-                               'last_call_date_outgoing',
-                               'call_event_outgoing',
-                               'last_number_outgoing',
-                               'last_called_number_outgoing']
-
-CALL_MONITOR_ATTRIBUTES_TRIGGER = ['monitor_trigger']
-
-CALL_MONITOR_ATTRIBUTES = [*CALL_MONITOR_ATTRIBUTES_GEN,
-                           *CALL_MONITOR_ATTRIBUTES_IN,
-                           *CALL_MONITOR_ATTRIBUTES_OUT,
-                           *CALL_MONITOR_ATTRIBUTES_TRIGGER]
-
-CALL_DURATION_ATTRIBUTES = ['call_duration_incoming',
-                            'call_duration_outgoing']
-
-WAN_CONNECTION_ATTRIBUTES = ['wan_connection_status',
-                             'wan_connection_error',
-                             'wan_is_connected',
-                             'wan_uptime',
-                             'wan_ip']
-
-TAM_ATTRIBUTES = ['tam',
-                  'tam_name',
-                  'tam_new_message_number',
-                  'tam_old_message_number',
-                  'tam_total_message_number']
-
-WLAN_CONFIG_ATTRIBUTES = ['wlanconfig',
-                          'wlanconfig_ssid',
-                          'wlan_guest_time_remaining',
-                          'wlan_associates',
-                          'wps_active',
-                          'wps_status',
-                          'wps_mode']
-
-WLAN_ATTRIBUTES = ['wlan_total_associates']
-
-WAN_COMMON_INTERFACE_ATTRIBUTES = ['wan_total_packets_sent',
-                                   'wan_total_packets_received',
-                                   'wan_current_packets_sent',
-                                   'wan_current_packets_received',
-                                   'wan_total_bytes_sent',
-                                   'wan_total_bytes_received',
-                                   'wan_current_bytes_sent',
-                                   'wan_current_bytes_received',
-                                   'wan_link']
-
-FRITZ_DEVICE_ATTRIBUTES = ['uptime',
-                           'software_version',
-                           'hardware_version',
-                           'serial_number']
-
-HOST_ATTRIBUTE = ['network_device',
-                  'hosts_count',
-                  'hosts_info',
-                  'mesh_topology']
-
-HOST_CHILD_ATTRIBUTES = ['device_ip',
-                         'device_connection_type',
-                         'device_hostname',
-                         'connection_status']
-
-HOST_ATTRIBUTES = [*HOST_ATTRIBUTE,
-                   *HOST_CHILD_ATTRIBUTES]
-
-DEFLECTION_ATTRIBUTES = ['deflections_details',
-                         'deflection_enable',
-                         'deflection_type',
-                         'deflection_number',
-                         'deflection_to_number',
-                         'deflection_mode',
-                         'deflection_outgoing',
-                         'deflection_phonebook_id']
-
-WAN_DSL_INTERFACE_ATTRIBUTES = ['wan_upstream',
-                                'wan_downstream']
-
-HOMEAUTO_RO_ATTRIBUTES = ['hkr_device',
-                          'set_temperature',
-                          'temperature',
-                          'set_temperature_reduced',
-                          'set_temperature_comfort',
-                          'firmware_version']
-
-HOMEAUTO_RW_ATTRIBUTES = ['aha_device']
-
-HOMEAUTO_ATTRIBUTES = [*HOMEAUTO_RO_ATTRIBUTES,
-                       *HOMEAUTO_RW_ATTRIBUTES]
-
-MYFRITZ_ATTRIBUTES = ['myfritz_status']
-
-DEPRECATED_ATTRIBUTES = ['temperature',
-                         'set_temperature_reduced',
-                         'set_temperature_comfort',
-                         'firmware_version',
-                         'aha_device',
-                         'hkr_device']
-
-TR064_ATTRIBUTES = [*WAN_CONNECTION_ATTRIBUTES,
-                    *TAM_ATTRIBUTES,
-                    *WLAN_CONFIG_ATTRIBUTES,
-                    *WLAN_ATTRIBUTES,
-                    *WAN_COMMON_INTERFACE_ATTRIBUTES,
-                    *FRITZ_DEVICE_ATTRIBUTES,
-                    *HOST_ATTRIBUTES,
-                    *DEFLECTION_ATTRIBUTES,
-                    *WAN_DSL_INTERFACE_ATTRIBUTES,
-                    *HOMEAUTO_ATTRIBUTES,
-                    *MYFRITZ_ATTRIBUTES,
-                    *AVM_RW_ATTRIBUTES]
 
 
 class AVM(SmartPlugin):
@@ -236,12 +51,19 @@ class AVM(SmartPlugin):
     """
     PLUGIN_VERSION = '2.0.1'
 
+    # Todo:
+    # - implement HSB into AHA
+    # - implement HS into AHA
+    # - check callmonitor is_call_incoming
+    # - check setting of level to 0 if simpleonoff is off
+    # - reactivate acm_data_type starting with wan_current
+
     def __init__(self, sh):
         """Initializes the plugin."""
         # Call init code of parent class (SmartPlugin)
         super().__init__()
 
-        self.logger.info('Init AVM Plugin')
+        self.logger.info('Init AVM Plugin - Testversion 2.0.1. H')
 
         # Enable / Disable debug log generation depending on log level
         self.debug_log = self.logger.isEnabledFor(logging.DEBUG)
@@ -305,7 +127,7 @@ class AVM(SmartPlugin):
             self.create_cyclic_scheduler(target='tr064', items=self.fritz_device.item_dict, fct=self.fritz_device.cyclic_item_update, offset=2)
             self.fritz_device.cyclic_item_update(read_all=True)
 
-        if self._aha_http_interface and self.fritz_device.is_fritzbox:
+        if self._aha_http_interface and self.fritz_device is not None and self.fritz_device.is_fritzbox:
             # add scheduler for updating items
             self.create_cyclic_scheduler(target='aha', items=self.fritz_home.item_dict, fct=self.fritz_home.cyclic_item_update, offset=4)
             self.fritz_home.cyclic_item_update(read_all=True)
@@ -611,6 +433,9 @@ class FritzDevice:
     """
     This class encapsulates information related to a specific FritzDevice using TR-064
     """
+
+    from .tr064.client import Client as Tr064_Client
+
     """
     Definition of TR-064 Error Codes
     """
@@ -674,29 +499,31 @@ class FritzDevice:
         self._item_errordict = {}
         self._session = requests.Session()
         self.connected = False
+        self.default_connection_service = None
 
         # get client objects
-        self.client = FritzDevice.Client(self.username, self.password, self.verify, base_url=self._build_url(), description_file=self.FRITZ_TR64_DESC_FILE, plugin_instance=plugin_instance)
-        self.client_igd = FritzDevice.Client(self.username, self.password, self.verify, base_url=self._build_url(), description_file=self.FRITZ_IGD_DESC_FILE, plugin_instance=plugin_instance)
+        # self.client = FritzDevice.Client(self.username, self.password, self.verify, base_url=self._build_url(), description_file=self.FRITZ_TR64_DESC_FILE, plugin_instance=plugin_instance)
+        # self.client_igd = FritzDevice.Client(self.username, self.password, self.verify, base_url=self._build_url(), description_file=self.FRITZ_IGD_DESC_FILE, plugin_instance=plugin_instance)
+
+        self.client = FritzDevice.Tr064_Client(username=self.username, password=self.password, base_url=self._build_url(), description_file=self.FRITZ_TR64_DESC_FILE, verify=self.verify)
+        # ToDo: Reaktivere client_igd  für abfrage von wan_current....
+        #if self.is_fritzbox:
+        #    self.client_igd = Tr064_Client(username=self.username, password=self.password, base_url=self._build_url(), description_file=self.FRITZ_IGD_DESC_FILE, verify=self.verify)
 
         # get GetDefaultConnectionService
-        try:
-            _default_connection_service = self.client.InternetGatewayDevice.Layer3Forwarding.GetDefaultConnectionService()
-        except Exception:
-            _default_connection_service = None
-            pass
-
-        if not isinstance(_default_connection_service, int):
-            self._data_cache['InternetGatewayDevice'] = {'DeviceInfo': {'GetInfo': {}, 'GetSecurityPort': {}}, 'Layer3Forwarding': {}}
-            self._data_cache['InternetGatewayDevice']['Layer3Forwarding']['GetDefaultConnectionService'] = _default_connection_service
+        _default_connection_service = self._get_default_connection_service()
+        if _default_connection_service is None or isinstance(_default_connection_service, str):
+            self.default_connection_service = _default_connection_service
             self.connected = True
             self.logger.debug("FritzDevice alive")
-        else:
+        elif isinstance(_default_connection_service, int):
             self.connected = False
             if _default_connection_service in self.ERROR_CODES:
                 self.logger.error(f"Error {_default_connection_service}-'{self.ERROR_CODES[_default_connection_service]}'")
             else:
-                self.logger.error(f"Unable to determine _default_connection_service. ErrorCode {_default_connection_service}.")
+                self.logger.error(f"Unable to determine default_connection_service. ErrorCode {_default_connection_service}.")
+        else:
+            self.logger.error(f"Unable to determine default_connection_service. Error {_default_connection_service}.")
 
     def register_item(self, item, avm_data_type: str, avm_data_cycle: int):
         """
@@ -886,6 +713,24 @@ class FritzDevice:
 
         return str(mac)
 
+    def _get_default_connection_service(self):
+        try:
+            _default_connection_service = self.client.InternetGatewayDevice.Layer3Forwarding.GetDefaultConnectionService()
+        except Exception as e:
+            self.logger.debug(f"During _get_default_connection_service error {e!r} occurred.")
+            return
+        else:
+            if isinstance(_default_connection_service, dict):
+                _new_default_connection_service = _default_connection_service.get('NewDefaultConnectionService')
+                if _new_default_connection_service is None:
+                    return
+                if 'PPP' in _new_default_connection_service:
+                    return 'PPP'
+                elif 'IP' in _new_default_connection_service:
+                    return 'IP'
+            elif isinstance(_default_connection_service, int):
+                return _default_connection_service
+
     # --------------------------------------
     # Properties of FritzDevice
     # --------------------------------------
@@ -899,42 +744,36 @@ class FritzDevice:
         return list(self._items.keys())
 
     @property
-    def default_connection_service(self):
-        return self._data_cache['InternetGatewayDevice']['Layer3Forwarding']['GetDefaultConnectionService']['NewDefaultConnectionService']
-
-    @property
     def manufacturer_name(self):
-        if not self._data_cache['InternetGatewayDevice']['DeviceInfo']['GetInfo']:
-            self._data_cache['InternetGatewayDevice']['DeviceInfo']['GetInfo'] = self.client.InternetGatewayDevice.DeviceInfo.GetInfo()
-        return self._data_cache['InternetGatewayDevice']['DeviceInfo']['GetInfo']['NewManufacturerName']
+        return self._poll_fritz_device('manufacturer')
 
     @property
     def manufacturer_oui(self):
-        if not self._data_cache['InternetGatewayDevice']['DeviceInfo']['GetInfo']:
-            self._data_cache['InternetGatewayDevice']['DeviceInfo']['GetInfo'] = self.client.InternetGatewayDevice.DeviceInfo.GetInfo()
-        return self._data_cache['InternetGatewayDevice']['DeviceInfo']['GetInfo']['NewManufacturerOUI']
+        return self._poll_fritz_device('manufacturer_oui')
 
     @property
     def model_name(self):
-        if not self._data_cache['InternetGatewayDevice']['DeviceInfo']['GetInfo']:
-            self._data_cache['InternetGatewayDevice']['DeviceInfo']['GetInfo'] = self.client.InternetGatewayDevice.DeviceInfo.GetInfo()
-        return self._data_cache['InternetGatewayDevice']['DeviceInfo']['GetInfo']['NewModelName']
+        return self._poll_fritz_device('model_name')
+
+    @property
+    def product_class(self):
+        return self._poll_fritz_device('product_class')
 
     @property
     def desciption(self):
-        if not self._data_cache['InternetGatewayDevice']['DeviceInfo']['GetInfo']:
-            self._data_cache['InternetGatewayDevice']['DeviceInfo']['GetInfo'] = self.client.InternetGatewayDevice.DeviceInfo.GetInfo()
-        return self._data_cache['InternetGatewayDevice']['DeviceInfo']['GetInfo']['NewDescription']
+        return self._poll_fritz_device('description')
 
     @property
     def safe_port(self):
-        if not self._data_cache['InternetGatewayDevice']['DeviceInfo']['GetSecurityPort']:
-            self._data_cache['InternetGatewayDevice']['DeviceInfo']['GetSecurityPort'] = self.client.InternetGatewayDevice.DeviceInfo.GetSecurityPort()
-        return self._data_cache['InternetGatewayDevice']['DeviceInfo']['GetSecurityPort']['NewSecurityPort']
+        return self._poll_fritz_device('security_port')
 
     @property
     def is_fritzbox(self):
-        return True if 'box' in self.model_name.lower() else False
+        return True if 'box' in self.product_class.lower() else False
+
+    @property
+    def is_repeater(self):
+        return True if 'Repeater' in self.product_class.lower() else False
 
     @property
     def wlan_devices_count(self):
@@ -982,6 +821,10 @@ class FritzDevice:
             lst[3] = current_time + cycle
             self._items[item] = tuple(lst)
 
+            # ToDo: Schließe wan_current aus, damit client_igd nicht verwendet wird
+            if avm_data_type.startswith('wan_current'):
+                continue
+
             # get data and set item value
             if self._update_item_value(item, avm_data_type, index) is False:
                 self.logger.debug(f"{item.id()} caused error, append item to _item_errorlist")
@@ -995,23 +838,23 @@ class FritzDevice:
 
     def _update_item_value(self, item, avm_data_type: str, index: str) -> bool:
         """ Polls data and set item value; Return True if action was successful, else False"""
-        try:
-            data = self._poll_fritz_device(avm_data_type, index)
-        except Exception as e:
-            self.logger.error(f"Error '{e}' occurred during update of item={item} with avm_data_type={avm_data_type} and index={index}. Check item configuration regarding supported/activated function of AVM device. ")
+
+        self.logger.debug(f"_update_item_value: {item=}, {avm_data_type=}, {index=}")
+
+        # ToDo: In case of Error put item to blacklist
+        data = self._poll_fritz_device(avm_data_type, index)
+
+        if data is None:
+            self.logger.info(f"Value for item={item} is None.")
+            return False
+        elif isinstance(data, int) and data in self.ERROR_CODES:
+            self.logger.error(f"Error {data} '{self.ERROR_CODES.get(data, None)}' occurred during update of item={item} with avm_data_type={avm_data_type} and index={index}. Check item configuration regarding supported/activated function of AVM device. ")
             return False
         else:
-            if data is None:
-                self.logger.info(f"Value for item={item} is None.")
-                return False
-            elif isinstance(data, int) and data in self.ERROR_CODES:
-                self.logger.error(f"Error {data} '{self.ERROR_CODES.get(data, None)}' occurred during update of item={item} with avm_data_type={avm_data_type} and index={index}. Check item configuration regarding supported/activated function of AVM device. ")
-                return False
-            else:
-                item(data, self._plugin_instance.get_fullname())
-                return True
+            item(data, self._plugin_instance.get_fullname())
+            return True
 
-    def _poll_fritz_device(self, avm_data_type: str, index=None, enforce_read: bool = False):  # was: -> Union[str, dict, None]:, but incorrect
+    def _poll_fritz_device(self, avm_data_type: str, index=None, enforce_read: bool = False):
         """
         Poll Fritz Device, feed dictionary and return data
 
@@ -1037,11 +880,17 @@ class FritzDevice:
 
         link = {
             # 'avm_data_type':              ('Device',                'Service',                  'Action',                        'In_Argument',      'Out_Argument'),
+            'manufacturer':                 ('InternetGatewayDevice', 'DeviceInfo',               'GetInfo',                        None,              'NewManufacturerName'),
+            'product_class':                ('InternetGatewayDevice', 'DeviceInfo',               'GetInfo',                        None,              'NewProductClass'),
+            'manufacturer_oui':             ('InternetGatewayDevice', 'DeviceInfo',               'GetInfo',                        None,              'NewManufacturerOUI'),
+            'model_name':                   ('InternetGatewayDevice', 'DeviceInfo',               'GetInfo',                        None,              'NewModelName'),
+            'description':                  ('InternetGatewayDevice', 'DeviceInfo',               'GetInfo',                        None,              'NewDescription'),
             'uptime':                       ('InternetGatewayDevice', 'DeviceInfo',               'GetInfo',                        None,              'NewUpTime'),
             'serial_number':                ('InternetGatewayDevice', 'DeviceInfo',               'GetInfo',                        None,              'NewSerialNumber'),
             'software_version':             ('InternetGatewayDevice', 'DeviceInfo',               'GetInfo',                        None,              'NewSoftwareVersion'),
             'hardware_version':             ('InternetGatewayDevice', 'DeviceInfo',               'GetInfo',                        None,              'NewHardwareVersion'),
             'device_log':                   ('InternetGatewayDevice', 'DeviceInfo',               'GetDeviceLog',                   None,              'NewDeviceLog'),
+            'security_port':                ('InternetGatewayDevice', 'DeviceInfo',               'GetSecurityPort',                None,              'NewSecurityPort'),
             'myfritz_status':               ('InternetGatewayDevice', 'X_AVM_DE_MyFritz',         'GetInfo',                        None,              'NewEnabled'),
             'tam':                          ('InternetGatewayDevice', 'X_AVM_DE_TAM',             'GetInfo',                        'NewIndex',        'NewEnable'),
             'tam_name':                     ('InternetGatewayDevice', 'X_AVM_DE_TAM',             'GetInfo',                        'NewIndex',        'NewName'),
@@ -1119,14 +968,16 @@ class FritzDevice:
             'myfritz_status':    '1'
         }
 
-        # Create link dict depending on connection type
-        if 'PPP' in self.default_connection_service:
+        # Update link dict depending on connection type
+        if self.default_connection_service == 'PPP':
             link.update(link_ppp)
-        elif 'IP' in self.default_connection_service:
+        elif self.default_connection_service == 'IP':
             link.update(link_ip)
 
         # define client
         client = 'client' if not avm_data_type.startswith('wan_current') else 'client_igd'
+
+        # self.logger.debug(f"_poll_fritz_device: {avm_data_type=}, {index=}, {enforce_read=} with {client=}")
 
         # check if avm_data_type is linked and gather data
         if avm_data_type in link:
@@ -1151,7 +1002,7 @@ class FritzDevice:
         """
         Get update data for cache dict; poll data if not yet cached from fritz device
         """
-        self.logger.debug(f"_get_update_data called with device={device}, service={service}, action={action}, in_argument={in_argument}, out_argument={out_argument}, in_argument_value={in_argument_value}, enforce_read={enforce_read}")
+        # self.logger.debug(f"_get_update_data called with device={device}, service={service}, action={action}, in_argument={in_argument}, out_argument={out_argument}, in_argument_value={in_argument_value}, enforce_read={enforce_read}")
         data = None
 
         # create cache dict structure
@@ -1249,10 +1100,11 @@ class FritzDevice:
         """
         Clears _data_cache dict and put needed content back
         """
-        _default_connection_service = self._data_cache['InternetGatewayDevice']['Layer3Forwarding']['GetDefaultConnectionService']
+        # ToDo
+        # _default_connection_service = self._data_cache['InternetGatewayDevice']['Layer3Forwarding']['GetDefaultConnectionService']
         self._data_cache.clear()
-        self._data_cache['InternetGatewayDevice'] = {'DeviceInfo': {'GetInfo': {}, 'GetSecurityPort': {}}, 'Layer3Forwarding': {}}
-        self._data_cache['InternetGatewayDevice']['Layer3Forwarding']['GetDefaultConnectionService'] = _default_connection_service
+        # self._data_cache['InternetGatewayDevice'] = {'DeviceInfo': {'GetInfo': {}, 'GetSecurityPort': {}}, 'Layer3Forwarding': {}}
+        # self._data_cache['InternetGatewayDevice']['Layer3Forwarding']['GetDefaultConnectionService'] = _default_connection_service
 
     def _request(self, url: str, timeout: int, verify: bool):
         """
@@ -1270,7 +1122,7 @@ class FritzDevice:
         """
         Parse request response to element object
         """
-        root = etree.fromstring(request.content)
+        root = ET.fromstring(request.content)
         return root
 
     def _lxml_element_to_dict(self, node):
@@ -1806,8 +1658,10 @@ class FritzDevice:
         url = f"{self._build_url()}{hosts_url}"
 
         hosts_xml = self._request_response_to_xml(self._request(url, self._timeout, self.verify))
-        if hosts_xml is not None:
-            return
+        if hosts_xml is None:
+            return {}
+
+        self.logger.warning(f"{hosts_xml=}")
 
         hosts_dict = {}
         for item in hosts_xml:
@@ -1830,10 +1684,8 @@ class FritzDevice:
 
     def get_hosts_count(self):
         """Returns count of hosts"""
-        try:
-            return len(self.get_hosts_dict())
-        except ValueError:
-            pass
+
+        return len(self.get_hosts_dict())
 
     def get_mesh_topology(self) -> Union[dict, None]:
         """Get mesh topology information as dict"""
@@ -1951,7 +1803,7 @@ class FritzDevice:
                 namespaces = FritzDevice.TR064_DEVICE_NAMESPACE
 
             if request.status_code == 200:
-                xml = etree.parse(BytesIO(request.content))
+                xml = ET.parse(BytesIO(request.content))
 
                 for device in xml.findall('.//device', namespaces=namespaces):
                     name = device.findtext('deviceType', namespaces=namespaces).split(':')[-2]
@@ -2065,7 +1917,7 @@ class FritzDevice:
             # self.logger.warning(f"Service _fetch_actions request={request.content}")
 
             if request.status_code == 200:
-                xml = etree.parse(BytesIO(request.content))
+                xml = ET.parse(BytesIO(request.content))
 
                 for action in xml.findall('./actionList/action', namespaces=self.namespaces):
                     name = action.findtext('name', namespaces=self.namespaces)
@@ -2108,16 +1960,16 @@ class FritzDevice:
             self.service_id = service_id
             self.control_url = control_url
 
-            etree.register_namespace('s', 'http://schemas.xmlsoap.org/soap/envelope/')
-            etree.register_namespace('h', 'http://soap-authentication.org/digest/2001/10/')
+            ET.register_namespace('s', 'http://schemas.xmlsoap.org/soap/envelope/')
+            ET.register_namespace('h', 'http://soap-authentication.org/digest/2001/10/')
 
             self.headers = {'content-type': 'text/xml; charset="utf-8"'}
-            self.envelope = etree.Element(
+            self.envelope = ET.Element(
                 '{http://schemas.xmlsoap.org/soap/envelope/}Envelope',
                 attrib={
                     '{http://schemas.xmlsoap.org/soap/envelope/}encodingStyle':
                         'http://schemas.xmlsoap.org/soap/encoding/'})
-            self.body = etree.SubElement(self.envelope, '{http://schemas.xmlsoap.org/soap/envelope/}Body')
+            self.body = ET.SubElement(self.envelope, '{http://schemas.xmlsoap.org/soap/envelope/}Body')
 
             self.in_arguments = {}
             self.out_arguments = {}
@@ -2143,24 +1995,24 @@ class FritzDevice:
 
             # Add SOAP action to header
             self.headers['soapaction'] = f'"{self.service_type}#{self.name}"'
-            etree.register_namespace('u', self.service_type)
+            ET.register_namespace('u', self.service_type)
 
             # Prepare body for request
             self.body.clear()
-            action = etree.SubElement(self.body, f'{{{self.service_type}}}{self.name}')
+            action = ET.SubElement(self.body, f'{{{self.service_type}}}{self.name}')
             for key in kwargs:
-                arg = etree.SubElement(action, self.in_arguments[key])
+                arg = ET.SubElement(action, self.in_arguments[key])
                 arg.text = str(kwargs[key])
 
             # soap._InitChallenge(header)
-            data = etree.tostring(self.envelope, encoding='utf-8', xml_declaration=True).decode()
+            data = ET.tostring(self.envelope, encoding='utf-8', xml_declaration=True).decode()
             request = requests.post(f'{self.base_url}{self.control_url}',
                                     headers=self.headers,
                                     auth=self.auth,
                                     data=data,
                                     verify=self.verify)
             if request.status_code != 200:
-                xml = etree.parse(BytesIO(request.content))
+                xml = ET.parse(BytesIO(request.content))
                 try:
                     error_code = int(xml.find(f".//{{{FritzDevice.TR064_CONTROL_NAMESPACE['']}}}errorCode").text)
                 except Exception:
@@ -2170,7 +2022,7 @@ class FritzDevice:
                 return error_code if error_code is not None else request.status_code
 
             # Translate response and prepare dict
-            xml = etree.parse(BytesIO(request.content))
+            xml = ET.parse(BytesIO(request.content))
             response = FritzDevice.AttributeDict()
             for arg in list(xml.find(f".//{{{self.service_type}}}{self.name}Response")):
                 name = self.out_arguments[arg.tag]
@@ -4444,3 +4296,188 @@ class Callmonitor:
                         self.logger.debug("Stopping Counter for Call Time")
                     self._stop_counter('incoming')
                 self._call_incoming_cid = None
+
+
+"""
+Definition of attribute value groups of avm_data_type
+"""
+AHA_RO_ATTRIBUTES = ['device_id',
+                     'manufacturer',
+                     'product_name',
+                     'fw_version',
+                     'connected',
+                     'device_name',
+                     'tx_busy',
+                     'device_functions',
+                     'current_temperature',
+                     'temperature_reduced',
+                     'temperature_comfort',
+                     'temperature_offset',
+                     'windowopenactiveendtime',
+                     'boost_active',
+                     'boostactiveendtime',
+                     'summer_active',
+                     'holiday_active',
+                     'battery_low',
+                     'lock',
+                     'device_lock',
+                     'errorcode',
+                     'switch_mode',
+                     'power', 'energy',
+                     'voltage',
+                     'humidity',
+                     'alert_state']
+
+AHA_WO_ATTRIBUTES = ['set_target_temperature',
+                     'set_window_open',
+                     'set_hkr_boost',
+                     'battery_level',
+                     'set_simpleonoff',
+                     'set_level',
+                     'set_levelpercentage',
+                     'set_hue',
+                     'set_saturation',
+                     'set_colortemperature',
+                     'switch_toggle']
+
+AHA_RW_ATTRIBUTES = ['target_temperature',
+                     'window_open',
+                     'hkr_boost',
+                     'simpleonoff',
+                     'level',
+                     'levelpercentage',
+                     'hue',
+                     'saturation',
+                     'colortemperature',
+                     'switch_state']
+
+AHA_ATTRIBUTES = [*AHA_RO_ATTRIBUTES,
+                  *AHA_WO_ATTRIBUTES,
+                  *AHA_RW_ATTRIBUTES]
+
+AVM_RW_ATTRIBUTES = ['wlanconfig',
+                     'tam',
+                     'deflection_enable']
+
+CALL_MONITOR_ATTRIBUTES_GEN = ['call_event',
+                               'call_direction']
+
+CALL_MONITOR_ATTRIBUTES_IN = ['is_call_incoming',
+                              'last_caller_incoming',
+                              'last_call_date_incoming',
+                              'call_event_incoming',
+                              'last_number_incoming',
+                              'last_called_number_incoming']
+
+CALL_MONITOR_ATTRIBUTES_OUT = ['is_call_outgoing',
+                               'last_caller_outgoing',
+                               'last_call_date_outgoing',
+                               'call_event_outgoing',
+                               'last_number_outgoing',
+                               'last_called_number_outgoing']
+
+CALL_MONITOR_ATTRIBUTES_TRIGGER = ['monitor_trigger']
+
+CALL_MONITOR_ATTRIBUTES = [*CALL_MONITOR_ATTRIBUTES_GEN,
+                           *CALL_MONITOR_ATTRIBUTES_IN,
+                           *CALL_MONITOR_ATTRIBUTES_OUT,
+                           *CALL_MONITOR_ATTRIBUTES_TRIGGER]
+
+CALL_DURATION_ATTRIBUTES = ['call_duration_incoming',
+                            'call_duration_outgoing']
+
+WAN_CONNECTION_ATTRIBUTES = ['wan_connection_status',
+                             'wan_connection_error',
+                             'wan_is_connected',
+                             'wan_uptime',
+                             'wan_ip']
+
+TAM_ATTRIBUTES = ['tam',
+                  'tam_name',
+                  'tam_new_message_number',
+                  'tam_old_message_number',
+                  'tam_total_message_number']
+
+WLAN_CONFIG_ATTRIBUTES = ['wlanconfig',
+                          'wlanconfig_ssid',
+                          'wlan_guest_time_remaining',
+                          'wlan_associates',
+                          'wps_active',
+                          'wps_status',
+                          'wps_mode']
+
+WLAN_ATTRIBUTES = ['wlan_total_associates']
+
+WAN_COMMON_INTERFACE_ATTRIBUTES = ['wan_total_packets_sent',
+                                   'wan_total_packets_received',
+                                   'wan_current_packets_sent',
+                                   'wan_current_packets_received',
+                                   'wan_total_bytes_sent',
+                                   'wan_total_bytes_received',
+                                   'wan_current_bytes_sent',
+                                   'wan_current_bytes_received',
+                                   'wan_link']
+
+FRITZ_DEVICE_ATTRIBUTES = ['uptime',
+                           'software_version',
+                           'hardware_version',
+                           'serial_number']
+
+HOST_ATTRIBUTE = ['network_device',
+                  'hosts_count',
+                  'hosts_info',
+                  'mesh_topology']
+
+HOST_CHILD_ATTRIBUTES = ['device_ip',
+                         'device_connection_type',
+                         'device_hostname',
+                         'connection_status']
+
+HOST_ATTRIBUTES = [*HOST_ATTRIBUTE,
+                   *HOST_CHILD_ATTRIBUTES]
+
+DEFLECTION_ATTRIBUTES = ['deflections_details',
+                         'deflection_enable',
+                         'deflection_type',
+                         'deflection_number',
+                         'deflection_to_number',
+                         'deflection_mode',
+                         'deflection_outgoing',
+                         'deflection_phonebook_id']
+
+WAN_DSL_INTERFACE_ATTRIBUTES = ['wan_upstream',
+                                'wan_downstream']
+
+HOMEAUTO_RO_ATTRIBUTES = ['hkr_device',
+                          'set_temperature',
+                          'temperature',
+                          'set_temperature_reduced',
+                          'set_temperature_comfort',
+                          'firmware_version']
+
+HOMEAUTO_RW_ATTRIBUTES = ['aha_device']
+
+HOMEAUTO_ATTRIBUTES = [*HOMEAUTO_RO_ATTRIBUTES,
+                       *HOMEAUTO_RW_ATTRIBUTES]
+
+MYFRITZ_ATTRIBUTES = ['myfritz_status']
+
+DEPRECATED_ATTRIBUTES = ['temperature',
+                         'set_temperature_reduced',
+                         'set_temperature_comfort',
+                         'firmware_version',
+                         'aha_device',
+                         'hkr_device']
+
+TR064_ATTRIBUTES = [*WAN_CONNECTION_ATTRIBUTES,
+                    *TAM_ATTRIBUTES,
+                    *WLAN_CONFIG_ATTRIBUTES,
+                    *WLAN_ATTRIBUTES,
+                    *WAN_COMMON_INTERFACE_ATTRIBUTES,
+                    *FRITZ_DEVICE_ATTRIBUTES,
+                    *HOST_ATTRIBUTES,
+                    *DEFLECTION_ATTRIBUTES,
+                    *WAN_DSL_INTERFACE_ATTRIBUTES,
+                    *HOMEAUTO_ATTRIBUTES,
+                    *MYFRITZ_ATTRIBUTES,
+                    *AVM_RW_ATTRIBUTES]
