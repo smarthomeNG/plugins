@@ -838,8 +838,6 @@ class FritzDevice:
     def _update_item_value(self, item, avm_data_type: str, index: str) -> bool:
         """ Polls data and set item value; Return True if action was successful, else False"""
 
-        self.logger.debug(f"_update_item_value: {item=}, {avm_data_type=}, {index=}")
-
         # ToDo: In case of Error put item to blacklist
         data = self._poll_fritz_device(avm_data_type, index)
 
