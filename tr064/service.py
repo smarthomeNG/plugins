@@ -9,7 +9,7 @@ from .exceptions import TR064UnknownActionException
 
 
 # pylint: disable=too-few-public-methods, too-many-instance-attributes
-class Service():
+class Service:
     """TR-064 service."""
 
     # pylint: disable=too-many-arguments
@@ -31,7 +31,7 @@ class Service():
         if name in self.actions:
             return self.actions[name]
 
-        raise TR064UnknownActionException
+        raise TR064UnknownActionException(f"Requested Action Name {name!r} not available.")
 
     def _fetch_actions(self, scpdurl):
         """Fetch action description."""

@@ -702,30 +702,22 @@ class FritzDevice:
         return str(mac)
 
     def _get_default_connection_service(self):
-        try:
-            _default_connection_service = self.client.InternetGatewayDevice.Layer3Forwarding.GetDefaultConnectionService()
-        except Exception as e:
-            self.logger.debug(f"During _get_default_connection_service error {e!r} occurred.")
-            return
 
-        if isinstance(_default_connection_service, dict):
-            _new_default_connection_service = _default_connection_service.get('NewDefaultConnectionService')
+        _default_connection_service = self._poll_fritz_device('default_connection_service', enforce_read=True)
+
+        if isinstance(_default_connection_service, int):
+            self.connected = False
+            self.logger.error(f"Unable to determine default_connection_service. Error {_default_connection_service}.")
+
+        else:
             self.connected = True
             self.logger.debug("FritzDevice alive")
-            if 'PPP' in _new_default_connection_service:
-                return 'PPP'
-            elif 'IP' in _new_default_connection_service:
-                return 'IP'
-            else:
-                return _new_default_connection_service
-        elif isinstance(_default_connection_service, int):
-            self.connected = False
-            if _default_connection_service in self.ERROR_CODES:
-                self.logger.error(f"Error {_default_connection_service}-'{self.ERROR_CODES[_default_connection_service]}'")
-            else:
-                self.logger.error(f"Unable to determine default_connection_service. ErrorCode {_default_connection_service}.")
-        else:
-            self.logger.error(f"Unable to determine default_connection_service. Error {_default_connection_service}.")
+
+            if isinstance(_default_connection_service, str):
+                if 'PPP' in _default_connection_service:
+                    return 'PPP'
+                elif 'IP' in _default_connection_service:
+                    return 'IP'
 
     # --------------------------------------
     # Properties of FritzDevice
@@ -765,11 +757,19 @@ class FritzDevice:
 
     @property
     def is_fritzbox(self):
-        return True if 'box' in self.product_class.lower() else False
+        try:
+            return True if 'box' in self.product_class.lower() else False
+        except AttributeError as e:
+            self.logger.error(f'Could now find out if {self.product_class} represents a Fritzbox')
+            return False
 
     @property
     def is_repeater(self):
-        return True if 'Repeater' in self.product_class.lower() else False
+        try:
+            return True if 'Repeater' in self.product_class.lower() else False
+        except AttributeError as e:
+            self.logger.error(f'Could now find out if {self.product_class} represents a Repeater')
+            return False
 
     @property
     def wlan_devices_count(self):
@@ -913,6 +913,7 @@ class FritzDevice:
             'phonebook_url':                ('InternetGatewayDevice', 'X_AVM_DE_OnTel',           'GetPhonebook',                   'NewPhonebookID',  'NewPhonebookURL'),
             'call_origin':                  ('InternetGatewayDevice', 'X_VoIP',                   'X_AVM_DE_DialGetConfig',         None,              'NewX_AVM_DE_PhoneName'),
             'phone_name':                   ('InternetGatewayDevice', 'X_VoIP',                   'X_AVM_DE_GetPhonePort', '        NewIndex',         'NewX_AVM_DE_PhoneName'),
+            'default_connection_service':   ('InternetGatewayDevice', 'Layer3Forwarding1',         'GetDefaultConnectionService',    None,              'NewDefaultConnectionService'),
             'wan_upstream':                 ('WANDevice',             'WANDSLInterfaceConfig',    'GetInfo',                        None,              'NewUpstreamCurrRate'),
             'wan_downstream':               ('WANDevice',             'WANDSLInterfaceConfig',    'GetInfo',                        None,              'NewDownstreamCurrRate'),
             'wan_total_packets_sent':       ('WANDevice',             'WANCommonInterfaceConfig', 'GetTotalPacketsSent',            None,              'NewTotalPacketsSent'),
@@ -982,7 +983,7 @@ class FritzDevice:
             if in_arg is not None and index is None:
                 self.logger.warning(f"avm_data_type={avm_data_type} used but required index '{in_arg[3:]}' not given. Request will be aborted.")
                 return
-            data = self._get_update_data(client, device, service, action, in_arg, out_arg, index, enforce_read)
+            data = self._poll_data(client, device, service, action, in_arg, out_arg, index, enforce_read)
         elif avm_data_type in link2:
             data = eval(link2[avm_data_type])
         else:
@@ -995,42 +996,49 @@ class FritzDevice:
         # return result
         return data
 
-    def _get_update_data(self, client: str, device: str, service: str, action: str, in_argument=None, out_argument=None, in_argument_value=None, enforce_read: bool = False):
+    def _poll_data(self, client: str, device: str, service: str, action: str, in_argument=None, out_argument=None, in_argument_value=None, enforce_read: bool = False):
         """
         Get update data for cache dict; poll data if not yet cached from fritz device
         """
         # self.logger.debug(f"_get_update_data called with device={device}, service={service}, action={action}, in_argument={in_argument}, out_argument={out_argument}, in_argument_value={in_argument_value}, enforce_read={enforce_read}")
 
         data = None
+        data_string = None
         cache_dict_key = f"{device}_{service}_{action}_{in_argument}_{in_argument_value}"
 
-        # poll data from device or cache dict
+        # create data_string for polling data from tr064 client
         if in_argument is None:
-            # fill cache dicts and/or get data
-            if cache_dict_key not in self._data_cache or enforce_read:
-                data = eval(f"self.{client}.{device}.{service}.{action}()")
-            else:
-                data = self._data_cache.get(cache_dict_key)
+            data_string = f"self.{client}.{device}.{service}.{action}()"
         elif in_argument is not None and in_argument_value is not None:
-            # fill cache dicts and/or get data
-            if cache_dict_key not in self._data_cache or enforce_read:
-                if service.lower().startswith('wlan'):
-                    data = eval(f"self.{client}.{device}.{service}[{in_argument_value}].{action}()")
-                else:
-                    data = eval(f"self.{client}.{device}.{service}.{action}({in_argument}='{in_argument_value}')")
-                self._data_cache[cache_dict_key] = data
+            if service.lower().startswith('wlan'):
+                data_string = f"self.{client}.{device}.{service}[{in_argument_value}].{action}()"
             else:
-                data = self._data_cache.get(cache_dict_key)
+                data_string = f"self.{client}.{device}.{service}.{action}({in_argument}='{in_argument_value}')"
+
+        if data_string is None:
+            return
+
+        # poll data from tr064 client
+        if cache_dict_key not in self._data_cache or enforce_read:
+            try:
+                data = eval(data_string)
+            except Exception as e:
+                self.logger.warning(f"Poll data from TR064 Client caused Error '{e}'")
+                pass
+            else:
+                self._data_cache[cache_dict_key] = data
+        else:
+            data = self._data_cache.get(cache_dict_key)
 
         # return data
         if data is None:
-            self.logger.info(f"No data for 'self.{client}.{device}.{service}.{action}()' received.")
+            self.logger.info(f"No data for {data_string!r} received.")
             return
         elif isinstance(data, int) and 99 < data < 1000:
             self.logger.info(f"Response was ErrorCode: {data} '{self.ERROR_CODES.get(data, None)}' for self.{client}.{device}.{service}.{action}()")
             return data
         else:
-            return data if not out_argument else data[out_argument]
+            return data if not out_argument else data.get(out_argument)
 
     def _set_fritz_device(self, avm_data_type: str, args=None, wlan_index=None):
         """Set AVM Device based on avm_data_type and args"""
@@ -2468,7 +2476,7 @@ class FritzHome:
 
         if plain is None:
             return
-
+        self.last_request = plain
         dom = ElementTree.fromstring(plain)
         return dom.findall(entity_type)
 
@@ -3004,9 +3012,10 @@ class FritzHome:
         BLIND = 0x40000  # Bit 18: Rollladen(Blind) - hoch, runter, stop und level 0% bis 100%
         HUM_SENSOR = 0x100000  # Bit 20: Luftfeuchtigkeitssensor
 
-        # FRITZ!DECT 500    FBM: 237572     -> 111010000000000100   -> bit 2, 13, 15, 16, 17
-        # FRITZ!DECT 300    FBM: 320        -> 101000000            -> bit 6, 8
-        # FRITZ!DECT 100    FBM: 1280       -> 10100000000          -> bit 8, 10
+        # FRITZ!DECT 500    FBM: 237572     -> 111010000000000100       -> bit 2, 13, 15, 16, 17
+        # FRITZ!DECT 300    FBM: 320        -> 101000000                -> bit 6, 8
+        # FRITZ!DECT 100    FBM: 1280       -> 10100000000              -> bit 8, 10
+        # FRITZ!DECT 440    FBM: 1048864    -> 100000000000100100000    -> bit 5, 8, 20
 
     class FritzhomeEntityBase(ABC):
         """The Fritzhome Entity class."""
@@ -3024,6 +3033,7 @@ class FritzHome:
                 self._fritz = fritz
             if node is not None:
                 self._update_from_node(node)
+                self.logger.debug(f'node="{node}"')
             if not self.device_functions:
                 self._update_device_functions()
 
@@ -3151,18 +3161,19 @@ class FritzHome:
             self.fw_version = node.attrib["fwversion"]
             self.manufacturer = node.attrib["manufacturer"]
             self.product_name = node.attrib["productname"]
+
             self.device_name = node.findtext("name")
             self.connected = self.get_node_value_as_int_as_bool(node, "present")
             self.tx_busy = self.get_node_value_as_int_as_bool(node, "txbusy")
 
             try:
                 self.battery_low = self.get_node_value_as_int_as_bool(node, "batterylow")
-            except Exception:
+            except AttributeError:
                 pass
 
             try:
                 self.battery_level = int(self.get_node_value_as_int(node, "battery"))
-            except Exception:
+            except AttributeError:
                 pass
 
         # General
@@ -3223,12 +3234,12 @@ class FritzHome:
 
             try:
                 self.battery_low = self.get_node_value_as_int_as_bool(node, "batterylow")
-            except Exception:
+            except AttributeError:
                 pass
 
             try:
                 self.battery_level = int(self.get_node_value_as_int(node, "battery"))
-            except Exception:
+            except AttributeError:
                 pass
 
         def get_button_by_ain(self, ain):
@@ -3255,26 +3266,25 @@ class FritzHome:
         def _update_from_node(self, node):
 
             self.button_identifier = node.attrib["button_identifier"]
+            self.button_id = node.attrib["id"]
 
-            try:
-                self.ain = node.attrib["identifier"]
-            except ValueError:
-                pass
-
-            try:
-                self.button_id = node.attrib["id"]
-            except ValueError:
-                pass
-
-            self.button_name = node.findtext("name")
-            self.last_pressed = self.get_node_value_as_int(node, "lastpressedtimestamp")
+            self.button_name = self.get_node_value(node, "name")
+            self.last_pressed = self.get_node_value(node, "lastpressedtimestamp")
 
         @staticmethod
         def get_node_value(elem, node):
             return elem.findtext(node)
 
         def get_node_value_as_int(self, elem, node) -> int:
-            return int(self.get_node_value(elem, node))
+            try:
+                value = self.get_node_value(elem, node)
+                if isinstance(value, str):
+                    value = value.strip()
+                rValue = int(value)
+            except ValueError:
+                self.logger.error(f'from elem {elem} at node "{node}" with value "{value}" could not be converted to an integer')
+                return
+            return rValue
 
     class FritzhomeDeviceLightBulb(FritzhomeDeviceBase):
         """The Fritzhome Device class."""
@@ -3396,7 +3406,7 @@ class FritzHome:
         """The Fritzhome Device class."""
 
         temperature_offset = None
-        temperature = None
+        current_temperature = None
 
         def _update_from_node(self, node):
             super()._update_from_node(node)
@@ -3414,10 +3424,12 @@ class FritzHome:
         def _update_temperature_from_node(self, node):
             temperature_element = node.find("temperature")
             if temperature_element is not None:
-                self.temperature_offset = (
-                            self.get_node_value_as_int(temperature_element, "offset") / 10.0)  # value in 0.1 °C
-                self.temperature = (
-                            self.get_node_value_as_int(temperature_element, "celsius") / 10.0)  # value in 0.1 °C
+                self.temperature_offset = (self.get_node_value_as_int(temperature_element, "offset") / 10.0)  # value in 0.1 °C
+                self.current_temperature = (self.get_node_value_as_int(temperature_element, "celsius") / 10.0)  # value in 0.1 °C
+
+        def get_temperature(self):
+            """Get the device temperature value."""
+            return self._fritz.get_temperature(self.ain)
 
     class FritzhomeDeviceThermostat(FritzhomeDeviceBase):
         """The Fritzhome Device class."""

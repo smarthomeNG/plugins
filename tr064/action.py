@@ -1,17 +1,16 @@
 """TR-064 action."""
-
 from io import BytesIO
 import lxml.etree as ET
 import requests
-import logging
 
 from .config import TR064_SERVICE_NAMESPACE
+from .config import TR064_CONTROL_NAMESPACE
 from .exceptions import TR064MissingArgumentException, TR064UnknownArgumentException
 from .attribute_dict import AttributeDict
 
 
 # pylint: disable=too-many-instance-attributes, too-few-public-methods
-class Action():
+class Action:
     """TR-064 action.
 
     :param lxml.etree.Element xml:          XML action element
@@ -87,9 +86,12 @@ class Action():
                                 data=data,
                                 verify=self.verify)
         if request.status_code != 200:
-            xml = ET.parse(BytesIO(request.content))
             try:
-                error_code = int(xml.find(f".//{{{FritzDevice.TR064_CONTROL_NAMESPACE['']}}}errorCode").text)
+                xml = ET.parse(BytesIO(request.content))
+            except Exception:
+                return request.status_code
+            try:
+                error_code = int(xml.find(f".//{{{TR064_CONTROL_NAMESPACE['']}}}errorCode").text)
             except Exception:
                 error_code = None
                 pass

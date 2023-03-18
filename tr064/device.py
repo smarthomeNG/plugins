@@ -1,5 +1,4 @@
 """TR-064 device"""
-
 from .config import TR064_DEVICE_NAMESPACE
 from .exceptions import TR064UnknownServiceException
 from .service import Service
@@ -7,7 +6,7 @@ from .service_list import ServiceList
 
 
 # pylint: disable=too-few-public-methods
-class Device():
+class Device:
     """TR-064 device.
 
     :param lxml.etree.Element xml:
@@ -50,4 +49,4 @@ class Device():
         if name in self.services:
             return self.services[name]
 
-        raise TR064UnknownServiceException
+        raise TR064UnknownServiceException(f"Requested Service Name {name!r} not available.")
