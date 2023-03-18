@@ -145,20 +145,20 @@
 {% set tabcount = 6 %}
 
 <!-- Define tabtitle and if tab should be hidden -->
-{% if p._fritz_device and tr064_item_count > 0 %}
+{% if p.fritz_device and tr064_item_count > 0 %}
     {% set tab1title = _("<strong>"'AVM TR-064 Items'"</strong> (" ~ tr064_item_count ~ ") ") %}
 {% else %}
     {% set tab2title = "hidden" %} 
 {% endif %}
 
-{% if p._fritz_home and aha_item_count > 0 %}
+{% if p.fritz_home and aha_item_count > 0 %}
     {% set tab2title = _("<strong>"'AVM AHA Items'"</strong> (" ~ aha_item_count ~ ") ") %}
 {% else %}
     {% set tab2title = "hidden" %} 
 {% endif %}
 
-{% if p._fritz_home and len(p._fritz_home._aha_devices) > 0%}
-    {% set tab3title = _("<strong>"'AVM AHA Devices'"</strong> (" ~ len(p._fritz_home._aha_devices) ~ ") ") %}
+{% if p.fritz_home and len(p.fritz_home._aha_devices) > 0%}
+    {% set tab3title = _("<strong>"'AVM AHA Devices'"</strong> (" ~ len(p.fritz_home._aha_devices) ~ ") ") %}
 {% else %}
     {% set tab3title = "hidden" %} 
 {% endif %}
@@ -191,7 +191,7 @@
 	<tbody>
 		<tr>
 			<td class="py-1">
-                {% if p._fritz_device  %}
+                {% if p.fritz_device  %}
                 <img src="static/img/lamp_green.png" alt="{{ _('Gerät verfügbar') }}" style="width: 17px;padding-bottom: 3px;"/>
                 {% else %}
                 <img src="static/img/lamp_red.png" alt="{{ _('Gerät nicht verfügbar') }}" style="width: 17px;padding-bottom: 3px;"/>
@@ -199,8 +199,8 @@
                 <strong>{{ _('Verbunden') }}</strong>
             </td>
 			<td class="py-1">
-                {% if p._fritz_device  %}
-                    {{ _('Ja') }}{% if p._fritz_device.ssl %}, SSL{% endif %}
+                {% if p.fritz_device  %}
+                    {{ _('Ja') }}{% if p.fritz_device.ssl %}, SSL{% endif %}
                 {% else %}
                      {{ _('Nein') }}
                 {% endif %}
@@ -224,9 +224,9 @@
 		</tr>
 		<tr>
 			<td class="py-1"><strong>{{ _('Host') }}</strong></td>
-			<td class="py-1"><a class="text-shng" href="http://{{ p._fritz_device.host }}" target="_blank">{{ p._fritz_device.host }}</a></td>
+			<td class="py-1"><a class="text-shng" href="http://{{ p.fritz_device.host }}" target="_blank">{{ p.fritz_device.host }}</a></td>
 			<td class="py-1"><strong>{{ _('Port') }}</strong></td>
-			<td class="py-1">{{ p._fritz_device.port }} {% if p._fritz_device.ssl %}(HTTPS){% endif %}</td>
+			<td class="py-1">{{ p.fritz_device.port }} {% if p.fritz_device.ssl %}(HTTPS){% endif %}</td>
 		</tr>
 	</tbody>
 </table>
@@ -326,13 +326,13 @@
             </tr>
         </thead>
         <tbody>
-            {% if p._fritz_home %}
-                {% for ain in p._fritz_home._aha_devices %}
+            {% if p.fritz_home %}
+                {% for ain in p.fritz_home._aha_devices %}
                     <tr>
                         <td></td>
                         <td class="py-1">{{ ain }}
                         <td class="py-1"></td>
-                        <td class="py-1">{{ p._fritz_home._aha_devices[ain] }}</td>
+                        <td class="py-1">{{ p.fritz_home._aha_devices[ain] }}</td>
                         
                     </tr>
                 {% endfor %}
@@ -473,25 +473,33 @@
                 <td class="py-1">{{ p.fritz_device._item_blacklist }}</td>
             </tr>
             <tr>
-                <td class="py-1">{{ "_fritz_home._items" }}</td>
+                <td class="py-1">{{ "fritz_home._items" }}</td>
                 <td class="py-1">{{ p.fritz_home._items }}</td>
             </tr>
             <tr>
                 <td class="py-1">{{ "self._data_cache" }}</td>
-                <td class="py-1">{{ p._fritz_device._data_cache }}</td>
+                <td class="py-1">{{ p.fritz_device._data_cache }}</td>
+            </tr>
+            <tr>
+                <td class="py-1">{{ "monitoring_service._items_incoming" }}</td>
+                <td class="py-1">{{ p.monitoring_service._items_incoming }}</td>
+            </tr>
+            <tr>
+                <td class="py-1">{{ "monitoring_service._items_outgoing" }}</td>
+                <td class="py-1">{{ p.monitoring_service._items_outgoing }}</td>
             </tr>
             <!-- {#
             <tr>
                 <td class="py-1">{{ "X_AVM_DE_GetClients" }}</td>
-                <td class="py-1">{{ p._fritz_device.client.InternetGatewayDevice.X_VoIP.X_AVM_DE_GetClients() }}</td>
+                <td class="py-1">{{ p.fritz_device.client.InternetGatewayDevice.X_VoIP.X_AVM_DE_GetClients() }}</td>
             </tr>
             <tr>
                 <td class="py-1">{{ "X_AVM_DE_DialSetConfig" }}</td>
-                <td class="py-1">{{ p._fritz_device.client.InternetGatewayDevice.X_VoIP.X_AVM_DE_DialSetConfig(NewX_AVM_DE_PhoneName='Torklingel') }}</td>
+                <td class="py-1">{{ p.fritz_device.client.InternetGatewayDevice.X_VoIP.X_AVM_DE_DialSetConfig(NewX_AVM_DE_PhoneName='Torklingel') }}</td>
             </tr>
             <tr>
-                <td class="py-1">{{ "p._fritz_device.client.InternetGatewayDevice.X_VoIP.X_AVM_DE_DialGetConfig()" }}</td>
-                <td class="py-1">{{ p._fritz_device.client.InternetGatewayDevice.X_VoIP.X_AVM_DE_DialGetConfig() }}</td>
+                <td class="py-1">{{ "p.fritz_device.client.InternetGatewayDevice.X_VoIP.X_AVM_DE_DialGetConfig()" }}</td>
+                <td class="py-1">{{ p.fritz_device.client.InternetGatewayDevice.X_VoIP.X_AVM_DE_DialGetConfig() }}</td>
             </tr>
             #} -->
         </tbody>

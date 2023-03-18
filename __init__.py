@@ -51,7 +51,7 @@ class AVM(SmartPlugin):
     """
     PLUGIN_VERSION = '2.0.1'
 
-    # Todo: check callmonitor is_call_incoming
+    # Todo: check callmonitor is_call_incoming -> Status: fixed, need to be tested
     # Todo: check setting of level to 0 if simpleonoff is off -> Status: Implemented, need to be tested
     # Todo: reactivate avm_data_type starting with wan_current // implementation of igd
     # Todo: implement HSB into AHA
@@ -506,8 +506,7 @@ class FritzDevice:
         # self.client_igd = FritzDevice.Client(self.username, self.password, self.verify, base_url=self._build_url(), description_file=self.FRITZ_IGD_DESC_FILE, plugin_instance=plugin_instance)
 
         self.client = FritzDevice.Tr064_Client(username=self.username, password=self.password, base_url=self._build_url(), description_file=self.FRITZ_TR64_DESC_FILE, verify=self.verify)
-        # ToDo: Reaktivere client_igd  für abfrage von wan_current....
-        #if self.is_fritzbox:
+        # if self.is_fritzbox:
         #    self.client_igd = Tr064_Client(username=self.username, password=self.password, base_url=self._build_url(), description_file=self.FRITZ_IGD_DESC_FILE, verify=self.verify)
 
         # get GetDefaultConnectionService
@@ -3883,7 +3882,6 @@ class Callmonitor:
         self._call_active['outgoing'] = False
         self._call_incoming_cid = dict()
         self._call_outgoing_cid = dict()
-        self._call_monitor_incoming_filter = call_monitor_incoming_filter
         self.conn = None
         self._listen_thread = None
 
@@ -4019,7 +4017,7 @@ class Callmonitor:
                 item('disconnect', self._plugin_instance.get_fullname())
 
             elif avm_data_type == 'is_call_incoming':
-                item(0, self._plugin_instance.get_fullname())
+                item(False, self._plugin_instance.get_fullname())
 
         for item in self._items_outgoing:
             avm_data_type = self._items_outgoing[item][0]
@@ -4060,7 +4058,7 @@ class Callmonitor:
                 item('disconnect', self._plugin_instance.get_fullname())
 
             elif avm_data_type == 'is_call_outgoing':
-                item(0, self._plugin_instance.get_fullname())
+                item(False, self._plugin_instance.get_fullname())
 
         for item in self._items:
             avm_data_type = self._items[item][0]
@@ -4264,7 +4262,8 @@ class Callmonitor:
                 if avm_incoming_allowed == call_from and avm_target_number == call_to:
                     trigger_item(1, self._plugin_instance.get_fullname())
 
-            if self._call_monitor_incoming_filter in call_to:
+            # process incoming call, if caller not in _call_monitor_incoming_filter
+            if call_to not in self._call_monitor_incoming_filter:
                 # set call id for incoming call
                 self._call_incoming_cid = callid
 
