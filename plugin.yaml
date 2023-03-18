@@ -76,8 +76,8 @@ parameters:
         type: str
         default: ''
         description:
-            de: '(optional) Spezielle Rufnummern ausfiltern, die vom Callmonitor ignoriert werden sollen. Es kann ein Filterstring bspw. "12234" angegeben werden. Damit werden alle Anrufnummer, die "12234" enthalten, gefiltert.'
-            en: '(optional) Filter only specific numbers to be watched by call monitor'
+            de: '(optional) Filter, auf welche eigenen Rufnummern (oder Teile davon) der Callmonitor reagieren soll. Ist der Filter leer, werden alle eigenen Rufnummern überwacht. Wird ein Filterstring bspw. "12234" angegeben, werden nur die eigenen Anschlussnummern, die "12234" enthalten, vom CallMonitor verarbeitet.'
+            en: '(optional) Filter, for which numbers (or part of the number) of own telephone connection the Callmonitor should react.'
     avm_home_automation:
         type: bool
         default: false

@@ -51,7 +51,7 @@ class AVM(SmartPlugin):
     """
     PLUGIN_VERSION = '2.0.1'
 
-    # Todo: check callmonitor is_call_incoming -> Status: to be checked
+    # Todo: check callmonitor is_call_outgoing -> Status: to be checked
     # Todo: check setting of level to 0 if simpleonoff is off -> Status: Implemented, need to be tested
     # Todo: reactivate avm_data_type starting with wan_current // implementation of igd
     # Todo: implement HSB into AHA
@@ -4266,7 +4266,7 @@ class Callmonitor:
                     trigger_item(1, self._plugin_instance.get_fullname())
 
             # process incoming call, if caller not in _call_monitor_incoming_filter
-            if self._call_monitor_incoming_filter not in call_to:
+            if self._call_monitor_incoming_filter in call_to:
                 # set call id for incoming call
                 self._call_incoming_cid = callid
 
