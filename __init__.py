@@ -1578,7 +1578,7 @@ class FritzDevice:
         :return: True or False, depending if the host is active on the FritzDevice
         """
         # is_active = self.client.LANDevice.Hosts.GetSpecificHostEntry(NewMACAddress=mac_address)['NewActive']
-        return bool(self._poll_fritz_device('is_host_active', mac_address, enforce_read=True))
+        return bool(int(self._poll_fritz_device('is_host_active', mac_address, enforce_read=True)))
 
     def get_hosts(self, only_active: bool = False) -> list:
         """
