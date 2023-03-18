@@ -820,7 +820,7 @@ class FritzDevice:
             lst[3] = current_time + cycle
             self._items[item] = tuple(lst)
 
-            # ToDo: Schließe wan_current aus, damit client_igd nicht verwendet wird
+            # ToDo: Schließe wan_current aus, damit client_igd nicht verwendet wird / aktuell deaktiviert
             if avm_data_type.startswith('wan_current'):
                 continue
 
@@ -838,8 +838,11 @@ class FritzDevice:
     def _update_item_value(self, item, avm_data_type: str, index: str) -> bool:
         """ Polls data and set item value; Return True if action was successful, else False"""
 
-        # ToDo: In case of Error put item to blacklist
-        data = self._poll_fritz_device(avm_data_type, index)
+        try:
+            data = self._poll_fritz_device(avm_data_type, index)
+        except Exception as e:
+            self.logger.error(f"Error {e!r} occurred during update of item={item} with avm_data_type={avm_data_type} and index={index}. Check item configuration regarding supported/activated function of AVM device. ")
+            return False
 
         if data is None:
             self.logger.info(f"Value for item={item} is None.")

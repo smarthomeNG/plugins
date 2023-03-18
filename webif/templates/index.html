@@ -210,7 +210,7 @@
 		</tr>
 		<tr>
 			<td class="py-1">
-                {% if p._monitoring_service and p._monitoring_service._listen_active %}
+                {% if p.monitoring_service and p.monitoring_service._listen_active %}
                     <img src="static/img/lamp_green.png" alt="{{ _('Call Monitor verbunden') }}" style="width: 17px;padding-bottom: 3px;"/>
                 {% else %}
                     <img src="static/img/lamp_red.png" alt="{{ _('Call Monitor nicht verbunden') }}" style="width: 17px;padding-bottom: 3px;"/>
