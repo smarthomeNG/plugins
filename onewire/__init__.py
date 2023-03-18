@@ -398,7 +398,7 @@ class OneWire(SmartPlugin):
                 items = self.get_items_for_mapping(addr+'-'+key)
                 if path is None:
                     if debugLog:
-                        self.logger.debug(f"_sensor_cycle: path not found for {item.id()}")
+                        self.logger.debug(f"_sensor_cycle: no item path found for mapping '{addr}-{key}'")
                     continue
                 try:
                     value = self.owbase.read('/uncached' + path).decode()
