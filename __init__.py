@@ -56,6 +56,7 @@ class AVM(SmartPlugin):
     # Todo: reactivate avm_data_type starting with wan_current // implementation of igd
     # Todo: implement HSB into AHA
     # Todo: implement HS into AHA
+    # Todo: Update to new smartplugin methods to prepare for plugin being restartable
 
     def __init__(self, sh):
         """Initializes the plugin."""
@@ -1320,7 +1321,7 @@ class FritzDevice:
             return {}
 
     def get_calllist_from_cache(self) -> list:
-        """returns the cached calllist when all items are initialized. The filter set by plugin.conf is applied."""
+        """returns the cached calllist when all items are initialized. The filter set by plugin.yaml is applied."""
         if not self._calllist_cache:
             self._calllist_cache = self.get_calllist(self._call_monitor_incoming_filter)
         elif len(self._calllist_cache) == 0:
@@ -1624,7 +1625,7 @@ class FritzDevice:
                 'ip_address': host_info.get('NewIPAddress'),
                 'address_source': host_info.get('NewAddressSource'),
                 'mac_address': host_info.get('NewMACAddress'),
-                'is_active': bool(host_info.get('NewActive')),
+                'is_active': host_info.get('NewActive'),
                 'lease_time_remaining': host_info.get('NewLeaseTimeRemaining')
             }
             return host
@@ -4264,7 +4265,7 @@ class Callmonitor:
                     trigger_item(1, self._plugin_instance.get_fullname())
 
             # process incoming call, if caller not in _call_monitor_incoming_filter
-            if call_to not in self._call_monitor_incoming_filter:
+            if self._call_monitor_incoming_filter not in call_to:
                 # set call id for incoming call
                 self._call_incoming_cid = callid
 
