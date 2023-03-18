@@ -504,26 +504,14 @@ class FritzDevice:
 
         # get client objects
         # self.client = FritzDevice.Client(self.username, self.password, self.verify, base_url=self._build_url(), description_file=self.FRITZ_TR64_DESC_FILE, plugin_instance=plugin_instance)
-        # self.client_igd = FritzDevice.Client(self.username, self.password, self.verify, base_url=self._build_url(), description_file=self.FRITZ_IGD_DESC_FILE, plugin_instance=plugin_instance)
-
         self.client = FritzDevice.Tr064_Client(username=self.username, password=self.password, base_url=self._build_url(), description_file=self.FRITZ_TR64_DESC_FILE, verify=self.verify)
-        # if self.is_fritzbox:
-        #    self.client_igd = Tr064_Client(username=self.username, password=self.password, base_url=self._build_url(), description_file=self.FRITZ_IGD_DESC_FILE, verify=self.verify)
+        if self.is_fritzbox:
+            # get GetDefaultConnectionService
+            self.default_connection_service = self._get_default_connection_service()
 
-        # get GetDefaultConnectionService
-        _default_connection_service = self._get_default_connection_service()
-        if _default_connection_service is None or isinstance(_default_connection_service, str):
-            self.default_connection_service = _default_connection_service
-            self.connected = True
-            self.logger.debug("FritzDevice alive")
-        elif isinstance(_default_connection_service, int):
-            self.connected = False
-            if _default_connection_service in self.ERROR_CODES:
-                self.logger.error(f"Error {_default_connection_service}-'{self.ERROR_CODES[_default_connection_service]}'")
-            else:
-                self.logger.error(f"Unable to determine default_connection_service. ErrorCode {_default_connection_service}.")
-        else:
-            self.logger.error(f"Unable to determine default_connection_service. Error {_default_connection_service}.")
+            # init client for InternetGatewayDevice
+            # self.client_igd = FritzDevice.Client(self.username, self.password, self.verify, base_url=self._build_url(), description_file=self.FRITZ_IGD_DESC_FILE, plugin_instance=plugin_instance)
+            # self.client_igd = Tr064_Client(username=self.username, password=self.password, base_url=self._build_url(), description_file=self.FRITZ_IGD_DESC_FILE, verify=self.verify)
 
     def register_item(self, item, avm_data_type: str, avm_data_cycle: int):
         """
@@ -719,17 +707,25 @@ class FritzDevice:
         except Exception as e:
             self.logger.debug(f"During _get_default_connection_service error {e!r} occurred.")
             return
+
+        if isinstance(_default_connection_service, dict):
+            _new_default_connection_service = _default_connection_service.get('NewDefaultConnectionService')
+            self.connected = True
+            self.logger.debug("FritzDevice alive")
+            if 'PPP' in _new_default_connection_service:
+                return 'PPP'
+            elif 'IP' in _new_default_connection_service:
+                return 'IP'
+            else:
+                return _new_default_connection_service
+        elif isinstance(_default_connection_service, int):
+            self.connected = False
+            if _default_connection_service in self.ERROR_CODES:
+                self.logger.error(f"Error {_default_connection_service}-'{self.ERROR_CODES[_default_connection_service]}'")
+            else:
+                self.logger.error(f"Unable to determine default_connection_service. ErrorCode {_default_connection_service}.")
         else:
-            if isinstance(_default_connection_service, dict):
-                _new_default_connection_service = _default_connection_service.get('NewDefaultConnectionService')
-                if _new_default_connection_service is None:
-                    return
-                if 'PPP' in _new_default_connection_service:
-                    return 'PPP'
-                elif 'IP' in _new_default_connection_service:
-                    return 'IP'
-            elif isinstance(_default_connection_service, int):
-                return _default_connection_service
+            self.logger.error(f"Unable to determine default_connection_service. Error {_default_connection_service}.")
 
     # --------------------------------------
     # Properties of FritzDevice

@@ -3,6 +3,7 @@
 from io import BytesIO
 import lxml.etree as ET
 import requests
+import logging
 
 from .config import TR064_SERVICE_NAMESPACE
 from .exceptions import TR064MissingArgumentException, TR064UnknownArgumentException
