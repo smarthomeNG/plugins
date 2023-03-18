@@ -51,7 +51,7 @@ class AVM(SmartPlugin):
     """
     PLUGIN_VERSION = '2.0.1'
 
-    # Todo: check callmonitor is_call_incoming -> Status: fixed, need to be tested
+    # Todo: check callmonitor is_call_incoming -> Status: to be checked
     # Todo: check setting of level to 0 if simpleonoff is off -> Status: Implemented, need to be tested
     # Todo: reactivate avm_data_type starting with wan_current // implementation of igd
     # Todo: implement HSB into AHA
@@ -1618,15 +1618,15 @@ class FritzDevice:
         elif isinstance(host_info, int):
             self.logger.info(f"Error {host_info} '{self.ERROR_CODES.get(host_info)}' occurred during getting details of host #{index}.")
             return
-        elif len(host_info) == 7:
+        elif isinstance(host_info, dict) and len(host_info) == 7:
             host = {
                 'name': host_info.get('NewHostName'),
                 'interface_type': host_info.get('NewInterfaceType'),
                 'ip_address': host_info.get('NewIPAddress'),
                 'address_source': host_info.get('NewAddressSource'),
                 'mac_address': host_info.get('NewMACAddress'),
-                'is_active': host_info.get('NewActive'),
-                'lease_time_remaining': host_info.get('NewLeaseTimeRemaining')
+                'is_active': bool(int(host_info.get('NewActive'))),
+                'lease_time_remaining': int(host_info.get('NewLeaseTimeRemaining'))
             }
             return host
 
@@ -1643,6 +1643,7 @@ class FritzDevice:
         hosts_xml = self._request_response_to_xml(self._request(url, self._timeout, self.verify))
         if hosts_xml is None:
             return {}
+
 
         hosts_dict = {}
         for item in hosts_xml:
