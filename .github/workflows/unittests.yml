@@ -29,7 +29,7 @@ jobs:
         run: echo "branch=$(echo ${GITHUB_REF#refs/heads/})" >>$GITHUB_OUTPUT
         id: extract_branch
 
-      - name: Checkout core from branch '${{steps.extract_branch.outputs.branch}}'
+      - name: Checkout core from branch '${{steps.extract_branch.outputs.branch}}' (for push)
         if: github.event_name != 'pull_request'
         uses: actions/checkout@v3
         with:
