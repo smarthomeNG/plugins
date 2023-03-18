@@ -3088,16 +3088,16 @@ class FritzHome:
             return elem.findtext(node)
 
         def get_node_value_as_int(self, elem, node) -> int:
-            if elem is not None:
-                return int(self.get_node_value(elem, node))
+            value = self.get_node_value(elem, node)
+            return None if value is None else int(value)
 
         def get_node_value_as_int_as_bool(self, elem, node) -> bool:
-            if elem is not None:
-                return bool(self.get_node_value_as_int(elem, node))
+            value = self.get_node_value_as_int(elem, node)
+            return None if value is None else bool(value)
 
         def get_temp_from_node(self, elem, node) -> float:
-            if elem is not None:
-                return float(self.get_node_value(elem, node)) / 2
+            value = self.get_node_value_as_int(elem, node)
+            return None if value is None else float(value) / 2
 
     class FritzhomeTemplate(FritzhomeEntityBase):
         """The Fritzhome Template class."""
