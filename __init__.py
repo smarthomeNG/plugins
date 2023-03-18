@@ -912,7 +912,7 @@ class FritzDevice:
             'phonebook_url':                ('InternetGatewayDevice', 'X_AVM_DE_OnTel',           'GetPhonebook',                   'NewPhonebookID',  'NewPhonebookURL'),
             'call_origin':                  ('InternetGatewayDevice', 'X_VoIP',                   'X_AVM_DE_DialGetConfig',         None,              'NewX_AVM_DE_PhoneName'),
             'phone_name':                   ('InternetGatewayDevice', 'X_VoIP',                   'X_AVM_DE_GetPhonePort', '        NewIndex',         'NewX_AVM_DE_PhoneName'),
-            'default_connection_service':   ('InternetGatewayDevice', 'Layer3Forwarding1',         'GetDefaultConnectionService',    None,              'NewDefaultConnectionService'),
+            'default_connection_service':   ('InternetGatewayDevice', 'Layer3Forwarding',         'GetDefaultConnectionService',    None,              'NewDefaultConnectionService'),
             'wan_upstream':                 ('WANDevice',             'WANDSLInterfaceConfig',    'GetInfo',                        None,              'NewUpstreamCurrRate'),
             'wan_downstream':               ('WANDevice',             'WANDSLInterfaceConfig',    'GetInfo',                        None,              'NewDownstreamCurrRate'),
             'wan_total_packets_sent':       ('WANDevice',             'WANCommonInterfaceConfig', 'GetTotalPacketsSent',            None,              'NewTotalPacketsSent'),
@@ -3049,38 +3049,38 @@ class FritzHome:
             self.name = node.findtext("name").strip()
 
         def _update_device_functions(self):
-            self.device_functions.append('hanfun_device') if self._has_feature(
-                FritzHome.FritzhomeDeviceFeatures.HANFUN_DEVICE) else None
-            self.device_functions.append('light') if self._has_feature(
-                FritzHome.FritzhomeDeviceFeatures.LIGHT) else None
-            self.device_functions.append('alarm') if self._has_feature(
-                FritzHome.FritzhomeDeviceFeatures.ALARM) else None
-            self.device_functions.append('button') if self._has_feature(
-                FritzHome.FritzhomeDeviceFeatures.BUTTON) else None
-            self.device_functions.append('thermostat') if self._has_feature(
-                FritzHome.FritzhomeDeviceFeatures.THERMOSTAT) else None
-            self.device_functions.append('powermeter') if self._has_feature(
-                FritzHome.FritzhomeDeviceFeatures.POWER_METER) else None
-            self.device_functions.append('temperature_sensor') if self._has_feature(
-                FritzHome.FritzhomeDeviceFeatures.TEMPERATURE) else None
-            self.device_functions.append('switch') if self._has_feature(
-                FritzHome.FritzhomeDeviceFeatures.SWITCH) else None
-            self.device_functions.append('repeater') if self._has_feature(
-                FritzHome.FritzhomeDeviceFeatures.DECT_REPEATER) else None
-            self.device_functions.append('mic') if self._has_feature(
-                FritzHome.FritzhomeDeviceFeatures.MICROPHONE) else None
-            self.device_functions.append('hanfun_unit') if self._has_feature(
-                FritzHome.FritzhomeDeviceFeatures.HANFUN) else None
-            self.device_functions.append('on_off_device') if self._has_feature(
-                FritzHome.FritzhomeDeviceFeatures.SWITCHABLE) else None
-            self.device_functions.append('dimmable_device') if self._has_feature(
-                FritzHome.FritzhomeDeviceFeatures.LEVEL) else None
-            self.device_functions.append('color_device') if self._has_feature(
-                FritzHome.FritzhomeDeviceFeatures.COLOR) else None
-            self.device_functions.append('blind') if self._has_feature(
-                FritzHome.FritzhomeDeviceFeatures.BLIND) else None
-            self.device_functions.append('humidity_sensor') if self._has_feature(
-                FritzHome.FritzhomeDeviceFeatures.HUM_SENSOR) else None
+            if self._has_feature(FritzHome.FritzhomeDeviceFeatures.HANFUN_DEVICE):
+                self.device_functions.append('hanfun_device')
+            if self._has_feature(FritzHome.FritzhomeDeviceFeatures.LIGHT):
+                self.device_functions.append('light')
+            if self._has_feature(FritzHome.FritzhomeDeviceFeatures.ALARM):
+                self.device_functions.append('alarm')
+            if self._has_feature(FritzHome.FritzhomeDeviceFeatures.BUTTON):
+                self.device_functions.append('button')
+            if self._has_feature(FritzHome.FritzhomeDeviceFeatures.THERMOSTAT):
+                self.device_functions.append('thermostat')
+            if self._has_feature(FritzHome.FritzhomeDeviceFeatures.POWER_METER):
+                self.device_functions.append('powermeter')
+            if self._has_feature( FritzHome.FritzhomeDeviceFeatures.TEMPERATURE):
+                self.device_functions.append('temperature_sensor')
+            if self._has_feature(FritzHome.FritzhomeDeviceFeatures.SWITCH):
+                self.device_functions.append('switch')
+            if self._has_feature(FritzHome.FritzhomeDeviceFeatures.DECT_REPEATER):
+                self.device_functions.append('repeater')
+            if self._has_feature(FritzHome.FritzhomeDeviceFeatures.MICROPHONE):
+                self.device_functions.append('mic')
+            if self._has_feature(FritzHome.FritzhomeDeviceFeatures.HANFUN):
+                self.device_functions.append('hanfun_unit')
+            if self._has_feature(FritzHome.FritzhomeDeviceFeatures.SWITCHABLE):
+                self.device_functions.append('on_off_device')
+            if self._has_feature(FritzHome.FritzhomeDeviceFeatures.LEVEL):
+                self.device_functions.append('dimmable_device')
+            if self._has_feature(FritzHome.FritzhomeDeviceFeatures.COLOR):
+                self.device_functions.append('color_device')
+            if self._has_feature(FritzHome.FritzhomeDeviceFeatures.BLIND):
+                self.device_functions.append('blind')
+            if self._has_feature(FritzHome.FritzhomeDeviceFeatures.HUM_SENSOR):
+                self.device_functions.append('humidity_sensor')
 
         # XML Helpers
         @staticmethod
@@ -3095,7 +3095,7 @@ class FritzHome:
             if elem is not None:
                 return bool(self.get_node_value_as_int(elem, node))
 
-        def get_temp_from_node(self, elem, node):
+        def get_temp_from_node(self, elem, node) -> float:
             if elem is not None:
                 return float(self.get_node_value(elem, node)) / 2
 
