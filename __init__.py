@@ -51,12 +51,11 @@ class AVM(SmartPlugin):
     """
     PLUGIN_VERSION = '2.0.1'
 
-    # Todo:
-    # - implement HSB into AHA
-    # - implement HS into AHA
-    # - check callmonitor is_call_incoming
-    # - check setting of level to 0 if simpleonoff is off
-    # - reactivate acm_data_type starting with wan_current
+    # Todo: check callmonitor is_call_incoming
+    # Todo: check setting of level to 0 if simpleonoff is off -> Status: Implemented, need to be tested
+    # Todo: reactivate avm_data_type starting with wan_current // implementation of igd
+    # Todo: implement HSB into AHA
+    # Todo: implement HS into AHA
 
     def __init__(self, sh):
         """Initializes the plugin."""
@@ -1004,42 +1003,27 @@ class FritzDevice:
         Get update data for cache dict; poll data if not yet cached from fritz device
         """
         # self.logger.debug(f"_get_update_data called with device={device}, service={service}, action={action}, in_argument={in_argument}, out_argument={out_argument}, in_argument_value={in_argument_value}, enforce_read={enforce_read}")
-        data = None
 
-        # create cache dict structure
-        if device not in self._data_cache:
-            self._data_cache[device] = {}
-        if service not in self._data_cache[device]:
-            self._data_cache[device][service] = {}
-        if action not in self._data_cache[device][service]:
-            self._data_cache[device][service][action] = {}
+        data = None
+        cache_dict_key = f"{device}_{service}_{action}_{in_argument}_{in_argument_value}"
 
         # poll data from device or cache dict
         if in_argument is None:
             # fill cache dicts and/or get data
-            if not self._data_cache.get(device, {}).get(device, {}).get(action, None) or enforce_read:
+            if cache_dict_key not in self._data_cache or enforce_read:
                 data = eval(f"self.{client}.{device}.{service}.{action}()")
-                try:
-                    self._data_cache[device][service][action] = data
-                except Exception:
-                    pass
             else:
-                data = self._data_cache.get(device, {}).get(service, {}).get(action)
-
+                data = self._data_cache.get(cache_dict_key)
         elif in_argument is not None and in_argument_value is not None:
             # fill cache dicts and/or get data
-            if not self._data_cache.get(device, {}).get(device, {}).get(action, None) or in_argument_value not in self._data_cache[device][service][action] or enforce_read:
-                self._data_cache[device][service][action][in_argument_value] = {}
+            if cache_dict_key not in self._data_cache or enforce_read:
                 if service.lower().startswith('wlan'):
                     data = eval(f"self.{client}.{device}.{service}[{in_argument_value}].{action}()")
                 else:
                     data = eval(f"self.{client}.{device}.{service}.{action}({in_argument}='{in_argument_value}')")
-                try:
-                    self._data_cache[device][service][action][in_argument_value] = data
-                except Exception:
-                    pass
+                self._data_cache[cache_dict_key] = data
             else:
-                data = self._data_cache.get(device, {}).get(service, {}).get(action, {}).get(in_argument_value)
+                data = self._data_cache.get(cache_dict_key)
 
         # return data
         if data is None:
@@ -1101,11 +1085,8 @@ class FritzDevice:
         """
         Clears _data_cache dict and put needed content back
         """
-        # ToDo
-        # _default_connection_service = self._data_cache['InternetGatewayDevice']['Layer3Forwarding']['GetDefaultConnectionService']
+
         self._data_cache.clear()
-        # self._data_cache['InternetGatewayDevice'] = {'DeviceInfo': {'GetInfo': {}, 'GetSecurityPort': {}}, 'Layer3Forwarding': {}}
-        # self._data_cache['InternetGatewayDevice']['Layer3Forwarding']['GetDefaultConnectionService'] = _default_connection_service
 
     def _request(self, url: str, timeout: int, verify: bool):
         """
