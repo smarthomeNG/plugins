@@ -1,6 +1,17 @@
 
+.. index:: Plugins; avm
+.. index:: avm
+
+===
 avm
 ===
+
+.. image:: webif/static/img/plugin_logo.png
+   :alt: plugin logo
+   :width: 300px
+   :height: 300px
+   :scale: 50 %
+   :align: left
 
 Allgemeine Informationen
 ------------------------
@@ -34,98 +45,12 @@ und Kennwort umgestellt werden" und es sollte ein eigener User für das AVM Plug
 Konfiguration des Plugins
 ---------------------------
 
-Die Konfiguration des Plugins erfolgt über das Admin-Interface.
-Dafür stehen die folgenden Einstellungen zur Verfügung:
-
-- `username`: Required login information
-- `password`: Required login information
-- `host`: Hostname or ip address of the FritzDevice.
-- `port`: Port of the FritzDevice, typically 49433 for https or 49000 for http
-- `cycle`: timeperiod between two update cycles. Default is 300 seconds.
-- `ssl`: True or False => True will add "https", False "http" to the URLs in the plugin
-- `verify`: True or False => Turns certificate verification on or off. Typically False
-- `call_monitor`: True or False => Activates or deactivates the MonitoringService, which connects to the FritzDevice's call monitor
-- `call_monitor_incoming_filter`: Filter only specific numbers to be watched by call monitor
-- `avm_home_automation`: True or False => Activates or deactivates the AHA Interface to communicate with HomeAutomation Devices,
-- `log_entry_count`: Number of Log-Messages, which will be displayed.
-- `instance`: Unique identifier for each FritzDevice / each instance of the plugin
-
-Alternativ kann das Plugin auch manuell konfiguriert werden.
-
-
-.. code-block:: yaml
-
-    fb1:
-        plugin_name: avm
-        username: '...'
-        password: '...'
-        host: fritz.box
-        port: 49443
-        cycle: 300
-        ssl: True
-        verify: False
-        call_monitor: 'True'
-        call_monitor_incoming_filter: '...'
-        avm_home_automation: 'True'
-        instance: fritzbox_7490
-
-    fb2:
-        plugin_name: avm
-        username: '...'
-        password: '...'
-        host: '...'
-        port: 49443
-        cycle: 300
-        ssl: True
-        verify: False
-        call_monitor: 'True'
-        avm_home_automation: 'False'
-        instance: wlan_repeater_1750
+Diese Plugin Parameter und die Informationen zur Item-spezifischen Konfiguration des Plugins sind
+unter :doc:`/plugins_doc/config/avm` beschrieben.
 
 .. note:: Kürzere Updatezyklen können abhängig vom Fritzdevice aufgrund hoher CPU Auslastung zu Problemen (u.a.
 zu Nichterreichbarkeit des Webservice) führen. Wird ein kürzerer Updatezyklus benötigt, sollte das shNG Log beobachtet
 werden. Dort werden entsprechende Fehlermeldungen hinterlegt.
-
-
-Konfiguration des Items
------------------------
-
-Zur Konfiguration der Items stehen folgende Parameter zur Verfügung:
-
-avm_data_type
-~~~~~~~~~~~~~
-This attribute defines supported functions that can be set for an item. Full set see plugin.yaml.
-For most items, the avm_data_type can be bound to an instance via @... . Only in some points the items
-are parsed as child items.
-
-avm_incoming_allowed
-~~~~~~~~~~~~~~~~~~~~
-Definition der erlaubten eingehenden Rufnummer in Items vom avm_data_type `monitor_trigger`.'
-
-avm_target_number
-~~~~~~~~~~~~~~~~~
-Definition der erlaubten angerufenen Rufnummer in Items vom avm_data_type `monitor_trigger`.'
-
-avm_wlan_index
-~~~~~~~~~~~~~~
-Definition des Wlans ueber index: (1: 2.4Ghz, 2: 5Ghz, 3: Gaeste).'
-
-avm_mac
-~~~~~~~
-Definition der MAC Adresse für Items vom avm_data_type `network_device`. Nur für diese Items mandatory!'
-
-avm_ain
-~~~
-Definition der Aktor Identifikationsnummer (AIN)Items für smarthome Items. Nur für diese Items mandatory!'
-
-avm_tam_index
-~~~~~~~~~~~~~
-Index für den Anrufbeantworter, normalerweise für den ersten eine "1". Es werden bis zu 5 Anrufbeantworter vom Gerät
-unterstützt.'
-
-avm_deflection_index
-~~~~~~~~~~~~~~~~~~~~
-Index für die Rufumleitung, normalerweise für die erste eine "1".'
 
 
 item_structs
