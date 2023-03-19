@@ -3174,7 +3174,7 @@ class FritzHome:
                 pass
 
             try:
-                self.battery_level = int(self.get_node_value_as_int(node, "battery"))
+                self.battery_level = self.get_node_value_as_int(node, "battery")
             except AttributeError:
                 pass
 
@@ -3240,7 +3240,7 @@ class FritzHome:
                 pass
 
             try:
-                self.battery_level = int(self.get_node_value_as_int(node, "battery"))
+                self.battery_level = self.get_node_value_as_int(node, "battery")
             except AttributeError:
                 pass
 
@@ -3326,12 +3326,14 @@ class FritzHome:
             powermeter_element = node.find("powermeter")
 
             if powermeter_element is not None:
-                self.power = float(self.get_node_value_as_int(powermeter_element, "power") / 1000)  # value in 0.001W
-                self.power = self.get_node_value_as_int(powermeter_element, "energy")
-                # Todo: Check if plain voltage value should be sent
-                self.voltage = float(
-                    self.get_node_value_as_int(powermeter_element, "voltage") / 1000)  # value in 0.001V
+                # ToDo: Teilen nur bei nicht None
 
+                self.power = self.get_node_value_as_int(powermeter_element, "power") / 1000  # value in 0.001W
+                self.power = self.get_node_value_as_int(powermeter_element, "energy")   # value in 1Wh
+                # Todo: Check if plain voltage value should be sent
+                self.voltage = self.get_node_value_as_int(powermeter_element, "voltage") / 1000  # value in 0.001V
+
+                # ToDo: Nach dem Teilen sind alle nicht int
                 if isinstance(self.power, int) and isinstance(self.voltage, int) and self.voltage > 0:
                     self.current = self.power / self.voltage * 1000
                 else:
@@ -3426,6 +3428,7 @@ class FritzHome:
         def _update_temperature_from_node(self, node):
             temperature_element = node.find("temperature")
             if temperature_element is not None:
+                # Teilen nur bei nicht None
                 self.temperature_offset = (self.get_node_value_as_int(temperature_element, "offset") / 10.0)  # value in 0.1 °C
                 self.current_temperature = (self.get_node_value_as_int(temperature_element, "celsius") / 10.0)  # value in 0.1 °C
 
@@ -3614,14 +3617,6 @@ class FritzHome:
             if state_element is not None:
                 self.simpleonoff = self.get_node_value_as_int_as_bool(state_element, "state")
 
-                # Set Level to zero for consistency, if light is off:
-                if self.simpleonoff is False:
-                    try:
-                        self.level = 0
-                        self.levelpercentage = 0
-                    except:
-                        pass
-
         def set_state_off(self):
             """Switch light bulb off."""
             self.simpleonoff = False
@@ -3660,17 +3655,24 @@ class FritzHome:
             levelcontrol_element = node.find("levelcontrol")
 
             if levelcontrol_element is not None:
-                self.level = self.get_node_value_as_int_as_bool(levelcontrol_element, "level")
-                self.levelpercentage = self.get_node_value_as_int_as_bool(levelcontrol_element, "levelpercentage")
+                self.level = self.get_node_value_as_int(levelcontrol_element, "level")
+                self.levelpercentage = self.get_node_value_as_int(levelcontrol_element, "levelpercentage")
 
             # Set Level to zero for consistency, if light is off:
-            try:
-                onoff = bool(self._fritz.get_state())
-                if onoff is False:
+            # try:
+            #     onoff = bool(self._fritz.get_state(self.ain))
+            #     if onoff is False:
+            #         self.level = 0
+            #         self.levelpercentage = 0
+            # except AttributeError:
+            #     pass
+
+            state_element = node.find("simpleonoff")
+            if state_element is not None:
+                simpleonoff = self.get_node_value_as_int_as_bool(state_element, "state")
+                if simpleonoff is False:
                     self.level = 0
                     self.levelpercentage = 0
-            except AttributeError:
-                pass
 
     class FritzhomeDeviceColor(FritzhomeDeviceBase):
         """The Fritzhome Device class."""
@@ -3705,7 +3707,7 @@ class FritzHome:
             if colorcontrol_element is not None:
 
                 try:
-                    self.color_mode = colorcontrol_element.attrib.get("current_mode")
+                    self.color_mode = int(colorcontrol_element.attrib.get("current_mode"))
                 except ValueError:
                     pass
 
