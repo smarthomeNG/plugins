@@ -52,7 +52,6 @@ class AVM(SmartPlugin):
     PLUGIN_VERSION = '2.0.1'
 
     # Todo: check setting of level to 0 if simpleonoff is off -> Status: Implemented, need to be tested
-    # Todo: reactivate avm_data_type starting with wan_current // implementation of igd -> Status: Implemented, to be tested on Repeater
     # Todo: implement HSB into AHA
     # Todo: implement HS into AHA
     # Todo: Update to new smartplugin methods to prepare for plugin being restartable
@@ -818,10 +817,6 @@ class FritzDevice:
             lst = list(self._items[item])
             lst[3] = current_time + cycle
             self._items[item] = tuple(lst)
-
-            # ToDo: Schließe wan_current aus, damit client_igd nicht verwendet wird / aktuell deaktiviert
-            # if avm_data_type.startswith('wan_current'):
-            #    continue
 
             # get data and set item value
             if self._update_item_value(item, avm_data_type, index) is False:
@@ -3099,15 +3094,23 @@ class FritzHome:
 
         def get_node_value_as_int(self, elem, node) -> int:
             value = self.get_node_value(elem, node)
-            return None if value is None else int(value)
+            return None if value is None else (int(value))
 
         def get_node_value_as_int_as_bool(self, elem, node) -> bool:
             value = self.get_node_value_as_int(elem, node)
-            return None if value is None else bool(value)
+            return None if value is None else (bool(value))
 
         def get_temp_from_node(self, elem, node) -> float:
             value = self.get_node_value_as_int(elem, node)
-            return None if value is None else float(value) / 2
+            return None if value is None else (float(value) / 2)
+
+        def get_node_value_as_float_1000(self, elem, node) -> float:
+            value = self.get_node_value_as_int(elem, node)
+            return None if value is None else (float(value) / 1000)
+
+        def get_node_value_as_float_10(self, elem, node) -> float:
+            value = self.get_node_value_as_int(elem, node)
+            return None if value is None else (float(value) / 10)
 
     class FritzhomeTemplate(FritzhomeEntityBase):
         """The Fritzhome Template class."""
@@ -3325,18 +3328,12 @@ class FritzHome:
             powermeter_element = node.find("powermeter")
 
             if powermeter_element is not None:
-                power = self.get_node_value_as_int(powermeter_element, "power")
-                if power is not None:
-                    self.power = (power / 1000)  # value in 0.001W
+                self.power = self.get_node_value_as_float_1000(powermeter_element, "power")  # raw value in 0.001W
+                self.voltage = self.get_node_value_as_float_1000(powermeter_element, "voltage")  # raw value in 0.001V
+                self.energy = self.get_node_value_as_int(powermeter_element, "energy")   # raw value in 1Wh
 
-                voltage = self.get_node_value_as_int(powermeter_element, "voltage")
-                if voltage is not None:
-                    self.voltage = (voltage / 1000)  # value in 0.001V
-
-                self.energy = self.get_node_value_as_int(powermeter_element, "energy")   # value in 1Wh
-
-                if power is not None and voltage is not None and voltage > 0:
-                    self.current = (power / voltage)
+                if self.power is not None and self.voltage is not None and self.voltage > 0:
+                    self.current = (round(self.power / self.voltage), 1)  # value in A
                 else:
                     self.current = None
 
@@ -3429,18 +3426,8 @@ class FritzHome:
         def _update_temperature_from_node(self, node):
             temperature_element = node.find("temperature")
             if temperature_element is not None:
-
-                temperature_offset = self.get_node_value_as_int(temperature_element, "offset")
-                if temperature_offset is not None:
-                    self.temperature_offset = (temperature_offset / 10.0)  # value in 0.1 °C
-                else:
-                    self.temperature_offset = 0
-
-                current_temperature = self.get_node_value_as_int(temperature_element, "celsius")
-                if current_temperature is not None:
-                    self.current_temperature = (current_temperature / 10.0)  # value in 0.1 °C
-                else:
-                    self.current_temperature = 0
+                self.temperature_offset = self.get_node_value_as_float_10(temperature_element, "offset")  # value in 0.1 °C
+                self.current_temperature = self.get_node_value_as_float_10(temperature_element, "celsius")  # value in 0.1 °C
 
         def get_temperature(self):
             """Get the device temperature value."""
@@ -3811,11 +3798,8 @@ class FritzHome:
         def _update_humidity_from_node(self, node):
             humidity_element = node.find("humidity")
             if humidity_element is not None:
-                try:
-                    self.humidity = self.get_node_value_as_int(humidity_element, "rel_humidity")
-                except ValueError:
-                    pass
-
+                self.humidity = self.get_node_value_as_int(humidity_element, "rel_humidity")
+ 
     class FritzhomeDeviceHanFunUnit(FritzhomeDeviceBase):
         """The Fritzhome Device class."""
 
