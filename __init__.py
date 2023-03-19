@@ -1067,7 +1067,7 @@ class FritzDevice:
             self.logger.debug(f"avm_data_type={avm_data_type} -> {device}.{service}.{action}")
 
         if service.lower().startswith('wlan'):
-            wlan_index = "" if not wlan_index else wlan_index
+            wlan_index = "" if wlan_index is None else wlan_index
             cmd = f"self.client.{device}.{service}[{wlan_index}].{action}({args})"
         elif args is None:
             cmd = f"self.client.{device}.{service}.{action}()"
