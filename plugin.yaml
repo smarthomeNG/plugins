@@ -237,7 +237,7 @@ item_attributes:
           - 'switch_toggle'                           # w/o       bool      Schaltzustand umschalten (toggle)               
                                                       
           - 'power'                                   # r/o       num       Leistung in W (Aktualisierung alle 2 min)       
-          - 'energy'                                  # r/o       num       absoluter Verbrauch seit Inbetriebnahme         
+          - 'energy'                                  # r/o       num       absoluter Verbrauch seit Inbetriebnahme in Wh
           - 'voltage'                                 # r/o       num       Spannung in V (Aktualisierung alle 2 min)       
                                                       
           - 'humidity'                                # r/o       num       Relative Luftfeuchtigkeit in % (FD440)          

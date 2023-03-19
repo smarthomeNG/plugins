@@ -2573,14 +2573,14 @@ class FritzHome:
 
     def get_switch_power(self, ain):
         """
-        Get the switch power consumption.
+        Get the switch power consumption in W.
         """
         value = self._aha_request("getswitchpower", ain=ain, rf='int')
-        return None if value is None else value / 1000   # value in 0.001W
+        return None if value is None else (value / 1000)   # value in 0.001W
 
     def get_switch_energy(self, ain):
         """
-        Get the switch energy.
+        Get the switch energy in Wh.
         """
         return self._aha_request("getswitchenergy", ain=ain, rf='int')
 
@@ -2590,13 +2590,14 @@ class FritzHome:
         """
         Get the device temperature sensor value.
         """
-        return self._aha_request("gettemperature", ain=ain, rf='float') / 10.0
+        value = self._aha_request("gettemperature", ain=ain, rf='int')
+        return None if value is None else (value / 10.0)
 
     def _get_temperature(self, ain, name):
         """
         Get temperature raw value
         """
-        plain = self._aha_request(name, ain=ain, rf='float')
+        plain = self._aha_request(name, ain=ain, rf='int')
         return (plain - 16) / 2 + 8
 
     def get_target_temperature(self, ain):
@@ -3021,8 +3022,8 @@ class FritzHome:
         # FRITZ!DECT 300    FBM: 320        -> 101000000                -> bit 6, 8
         # FRITZ!DECT 100    FBM: 1280       -> 10100000000              -> bit 8, 10
         # FRITZ!DECT 440    FBM: 1048864    -> 100000000000100100000    -> bit 5, 8, 20
-        # FRITZ!DECT 200    FBM: 35712
-        # FRITZ!DECT 210    FBM: 35712
+        # FRITZ!DECT 200    FBM: 35712      -> 1000101110000000         -> bit 7, 8, 9, 11, 15
+        # FRITZ!DECT 210    FBM: 35712      -> 1000101110000000         -> bit 7, 8, 9, 11, 15
 
     class FritzhomeEntityBase(ABC):
         """The Fritzhome Entity class."""
@@ -3438,9 +3439,18 @@ class FritzHome:
         def _update_temperature_from_node(self, node):
             temperature_element = node.find("temperature")
             if temperature_element is not None:
-                # ToDo: Teilen nur bei nicht None
-                self.temperature_offset = (self.get_node_value_as_int(temperature_element, "offset") / 10.0)  # value in 0.1 °C
-                self.current_temperature = (self.get_node_value_as_int(temperature_element, "celsius") / 10.0)  # value in 0.1 °C
+
+                temperature_offset = self.get_node_value_as_int(temperature_element, "offset")
+                if temperature_offset is not None:
+                    self.temperature_offset = (temperature_offset / 10.0)  # value in 0.1 °C
+                else:
+                    self.temperature_offset = 0
+
+                current_temperature = self.get_node_value_as_int(temperature_element, "celsius")
+                if current_temperature is not None:
+                    self.current_temperature = (current_temperature / 10.0)  # value in 0.1 °C
+                else:
+                    self.current_temperature = 0
 
         def get_temperature(self):
             """Get the device temperature value."""
