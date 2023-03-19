@@ -3014,12 +3014,13 @@ class FritzHome:
         BLIND = 0x40000  # Bit 18: Rollladen(Blind) - hoch, runter, stop und level 0% bis 100%
         HUM_SENSOR = 0x100000  # Bit 20: Luftfeuchtigkeitssensor
 
-        # FRITZ!DECT 500    FBM: 237572     -> 111010000000000100       -> bit 2, 13, 15, 16, 17
-        # FRITZ!DECT 300    FBM: 320        -> 101000000                -> bit 6, 8
         # FRITZ!DECT 100    FBM: 1280       -> 10100000000              -> bit 8, 10
-        # FRITZ!DECT 440    FBM: 1048864    -> 100000000000100100000    -> bit 5, 8, 20
         # FRITZ!DECT 200    FBM: 35712      -> 1000101110000000         -> bit 7, 8, 9, 11, 15
         # FRITZ!DECT 210    FBM: 35712      -> 1000101110000000         -> bit 7, 8, 9, 11, 15
+        # FRITZ!DECT 300    FBM: 320        -> 101000000                -> bit 6, 8
+        # Comet DECT        FBM: 320        -> 101000000                -> bit 6, 8
+        # FRITZ!DECT 440    FBM: 1048864    -> 100000000000100100000    -> bit 5, 8, 20
+        # FRITZ!DECT 500    FBM: 237572     -> 111010000000000100       -> bit 2, 13, 15, 16, 17
 
     class FritzhomeEntityBase(ABC):
         """The Fritzhome Entity class."""
@@ -3552,10 +3553,8 @@ class FritzHome:
     class FritzhomeDeviceBlind(FritzhomeDeviceBase):
         """The Fritzhome Device class."""
 
-        mode = None
+        blind_mode = None
         endpositionsset = None
-        level = None
-        levelpercentage = None
 
         def _update_from_node(self, node):
             super()._update_from_node(node)
@@ -3576,7 +3575,7 @@ class FritzHome:
 
             if blind_element is not None:
                 self.endpositionsset = self.get_node_value_as_int_as_bool(blind_element, "endpositionsset")
-                self.mode = self.get_node_value(blind_element, "mode")
+                self.blind_mode = self.get_node_value(blind_element, "mode")
 
         def set_blind_open(self):
             """Open the blind."""
@@ -3709,7 +3708,7 @@ class FritzHome:
                     pass
 
                 try:
-                    self.supported_color_mode = colorcontrol_element.attrib.get("supported_modes")
+                    self.supported_color_mode = int(colorcontrol_element.attrib.get("supported_modes"))
                 except ValueError:
                     pass
 
@@ -3799,7 +3798,7 @@ class FritzHome:
             humidity_element = node.find("humidity")
             if humidity_element is not None:
                 self.humidity = self.get_node_value_as_int(humidity_element, "rel_humidity")
- 
+
     class FritzhomeDeviceHanFunUnit(FritzhomeDeviceBase):
         """The Fritzhome Device class."""
 

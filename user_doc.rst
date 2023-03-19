@@ -57,7 +57,7 @@ Alternativ kann das Plugin auch manuell konfiguriert werden.
 
     fb1:
         plugin_name: avm
-        username: ...    # optional
+        username: '...'
         password: '...'
         host: fritz.box
         port: 49443
@@ -65,13 +65,13 @@ Alternativ kann das Plugin auch manuell konfiguriert werden.
         ssl: True
         verify: False
         call_monitor: 'True'
-        call_monitor_incoming_filter: "...    ## optional, don't set if you don't want to watch only one specific number with your call monitor"
+        call_monitor_incoming_filter: '...'
         avm_home_automation: 'True'
         instance: fritzbox_7490
 
     fb2:
         plugin_name: avm
-        username: ...    # optional
+        username: '...'
         password: '...'
         host: '...'
         port: 49443
@@ -82,7 +82,7 @@ Alternativ kann das Plugin auch manuell konfiguriert werden.
         avm_home_automation: 'False'
         instance: wlan_repeater_1750
 
-.. note:: Kürzere Updatezyklen können abhängig vm Fritzdevice aufgrund von CPU Auslastung und damit zu Problemen (u.a.
+.. note:: Kürzere Updatezyklen können abhängig vom Fritzdevice aufgrund hoher CPU Auslastung zu Problemen (u.a.
 zu Nichterreichbarkeit des Webservice) führen. Wird ein kürzerer Updatezyklus benötigt, sollte das shNG Log beobachtet
 werden. Dort werden entsprechende Fehlermeldungen hinterlegt.
 
@@ -132,19 +132,31 @@ item_structs
 ------------
 Zur Vereinfachung der Einrichtung von Items sind für folgende Item-structs vordefiniert:
 
-- ``info``  -  General Information about Fritzbox
-- ``monitor``  -  Call Monitor
-- ``tam``  -  (für einen) Anrufbeantworter
-- ``deflection``  -  (für eine) Rufumleitung
-- ``wan``  -  WAN Items
-- ``wlan``  -  Wireless Lan Items
-- ``device``  -  Items eines verbundenen Gerätes
-- ``aha_general``  -  Allgemeine Informationen eines AVM HomeAutomation Devices
-- ``aha_hkr``  -  spezifische Informationen eines AVM HomeAutomation Thermostat Devices
-- ``aha_temperatur_sensor``  -  spezifische Informationen eines AVM HomeAutomation Devices mit Temperatursensor
-- ``aha_alert``  -  spezifische Informationen eines AVM HomeAutomation Devices mit Alarmfunktion
-- ``aha_switch``  -  spezifische Informationen eines AVM HomeAutomation Devices mit Schalter
-- ``aha_powermeter``  -  spezifische Informationen eines AVM HomeAutomation Devices mit Strommessung
+Fritz!Box // Fritz!Repeater mit TR-064
+    - ``info``  -  Allgemeine Information zur Fritz!Box oder Fritz!Repeater
+    - ``monitor``  -  Call Monitor (nur Fritz!Box)
+    - ``tam``  -  Anrufbeantworter (nur Fritz!Box)
+    - ``deflection``  -  Rufumleitung (nur Fritz!Box)
+    - ``wan``  -  WAN Verbindung (nur Fritz!Box)
+    - ``wlan``  -  WLAN Verbimdungen (Fritz!Box und Fritz!Repeater)
+    - ``device``  -  Information zu einem bestimmten mit der Fritz!Box oder dem Fritz!Repeater verbundenen Netzwerkgerät (Fritz!Box und Fritz!Repeater)
+
+
+Fritz!DECT mit AHA (FRITZ!DECT 100, FRITZ!DECT 200, FRITZ!DECT 210, FRITZ!DECT 300, FRITZ!DECT 440, FRITZ!DECT 500, Comet DECT)
+    - ``aha_general``  -  Allgemeine Informationen eines AVM HomeAutomation Devices (alle)
+    - ``aha_thermostat``  -  spezifische Informationen eines AVM HomeAutomation Thermostat Devices (thermostat)
+    - ``aha_temperatur_sensor``  -  spezifische Informationen eines AVM HomeAutomation Devices mit Temperatursensor (temperature_sensor)
+    - ``aha_humidity_sensor``  -  spezifische Informationen eines AVM HomeAutomation Devices mit Feuchtigkeitssensor (bspw. FRITZ!DECT 440) (humidity_sensor)
+    - ``aha_alert``  -  spezifische Informationen eines AVM HomeAutomation Devices mit Alarmfunktion (alarm)
+    - ``aha_switch``  -  spezifische Informationen eines AVM HomeAutomation Devices mit Schalter (switch)
+    - ``aha_powermeter``  -  spezifische Informationen eines AVM HomeAutomation Devices mit Strommessung (powermeter)
+    - ``aha_level``  -  spezifische Informationen eines AVM HomeAutomation Devices mit Dimmfunktion oder Höhenverstellung (dimmable_device)
+    - ``aha_blind``  -  spezifische Informationen eines AVM HomeAutomation Devices mit Blind / Rollo (blind)
+    - ``aha_on_off``  -  spezifische Informationen eines AVM HomeAutomation Devices mit An/Aus (on_off_device)
+    - ``aha_button``  -  spezifische Informationen eines AVM HomeAutomation Devices mit Button (bspw. FRITZ!DECT 440) (button)
+    - ``aha_color``  -  spezifische Informationen eines AVM HomeAutomation Devices mit Color (bspw. FRITZ!DECT 500) (color_device)
+
+Welche Funktionen Euer spezifisches Gerät unterstützt, könnt ihr im WebIF im Reiter "AVM AHA Devices" im "Device Details (dict)" unter "device_functions" sehen.
 
 
 Item Beispiel mit Verwendung der structs ohne Instanz
