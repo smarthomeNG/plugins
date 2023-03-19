@@ -504,10 +504,10 @@ class FritzDevice:
         # get client objects
         # self.client = FritzDevice.Client(self.username, self.password, self.verify, base_url=self._build_url(), description_file=self.FRITZ_TR64_DESC_FILE, plugin_instance=plugin_instance)
         self.client = FritzDevice.Tr064_Client(username=self.username, password=self.password, base_url=self._build_url(), description_file=self.FRITZ_TR64_DESC_FILE, verify=self.verify)
+        self.connected = True
         if self.is_fritzbox:
             # get GetDefaultConnectionService
             self.default_connection_service = self._get_default_connection_service()
-
             # init client for InternetGatewayDevice
             # self.client_igd = FritzDevice.Client(self.username, self.password, self.verify, base_url=self._build_url(), description_file=self.FRITZ_IGD_DESC_FILE, plugin_instance=plugin_instance)
             # self.client_igd = Tr064_Client(username=self.username, password=self.password, base_url=self._build_url(), description_file=self.FRITZ_IGD_DESC_FILE, verify=self.verify)
@@ -705,18 +705,13 @@ class FritzDevice:
         _default_connection_service = self._poll_fritz_device('default_connection_service', enforce_read=True)
 
         if isinstance(_default_connection_service, int):
-            self.connected = False
             self.logger.error(f"Unable to determine default_connection_service. Error {_default_connection_service}.")
-
-        else:
-            self.connected = True
-            self.logger.debug("FritzDevice alive")
-
-            if isinstance(_default_connection_service, str):
-                if 'PPP' in _default_connection_service:
-                    return 'PPP'
-                elif 'IP' in _default_connection_service:
-                    return 'IP'
+            return
+        elif isinstance(_default_connection_service, str):
+            if 'PPP' in _default_connection_service:
+                return 'PPP'
+            elif 'IP' in _default_connection_service:
+                return 'IP'
 
     # --------------------------------------
     # Properties of FritzDevice
