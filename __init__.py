@@ -257,7 +257,8 @@ class AVM(SmartPlugin):
             # just in case it already exists...
             if self.scheduler_get(f'poll_{target}'):
                 self.scheduler_remove(f'poll_{target}')
-            self.scheduler_add(f'poll_{target}', fct, cycle=workercycle, prio=5, offset=offset)
+            dt = self.shtime.now() + datetime.timedelta(seconds=workercycle)
+            self.scheduler_add(f'poll_{target}', fct, cycle=workercycle, prio=5, offset=offset, next=dt)
             self.logger.info(f'{target}: Added cyclic worker thread ({workercycle} sec cycle). Shortest item update cycle found: {shortestcycle} sec')
             return True
         else:
@@ -558,7 +559,7 @@ class FritzDevice:
                 self.logger.warning(f"Item {item.id()} with avm attribute found, but 'avm_tam_index' is not defined; Item will be ignored.")
 
         # register item
-        self._items[item] = (avm_data_type, index, avm_data_cycle, time.time())
+        self._items[item] = (avm_data_type, index, avm_data_cycle, int(time.time()))
 
     def handle_updated_item(self, item, avm_data_type: str, readafterwrite: int):
         """Updated Item will be processed and value communicated to AVM Device"""
@@ -802,7 +803,7 @@ class FritzDevice:
                 continue
 
             # read items with cycle == 0 just at init
-            if not read_all and cycle == 0:
+            if read_all is False and cycle == 0:
                 # self.logger.debug(f"Item={item.id()} just read at init. No further update.")
                 continue
 
@@ -2074,7 +2075,7 @@ class FritzHome:
             self.logger.warning(f"Item {item.id()} with avm attribute found, but 'avm_ain' is not defined; Item will be ignored.")
 
         # register item
-        self._items[item] = (avm_data_type, index, avm_data_cycle, time.time())
+        self._items[item] = (avm_data_type, index, avm_data_cycle, int(time.time()))
 
     def cyclic_item_update(self, read_all: bool = False):
         """
@@ -2099,7 +2100,7 @@ class FritzHome:
             next_time = self._items[item][3]
 
             # Just read items with cycle == 0 at init
-            if not read_all and cycle == 0:
+            if read_all is False and cycle == 0:
                 # self.logger.debug(f"Item={item.id()} just read at init. No further update.")
                 continue
 
