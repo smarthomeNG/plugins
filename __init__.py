@@ -4439,7 +4439,14 @@ AHA_RO_ATTRIBUTES = ['device_id',
                      'power', 'energy',
                      'voltage',
                      'humidity',
-                     'alert_state']
+                     'alert_state',
+                     'color_mode',
+                     'supported_color_mode',
+                     'fullcolorsupport',
+                     'mapped',
+                     'blind_mode',
+                     'endpositionsset'
+                     ]
 
 AHA_WO_ATTRIBUTES = ['set_target_temperature',
                      'set_window_open',
@@ -4462,7 +4469,10 @@ AHA_RW_ATTRIBUTES = ['target_temperature',
                      'hue',
                      'saturation',
                      'colortemperature',
-                     'switch_state']
+                     'switch_state',
+                     'unmapped_hue',
+                     'unmapped_saturation'
+                     ]
 
 AHA_ATTRIBUTES = [*AHA_RO_ATTRIBUTES,
                   *AHA_WO_ATTRIBUTES,
