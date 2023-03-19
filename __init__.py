@@ -500,6 +500,8 @@ class FritzDevice:
         self._session = requests.Session()
         self.connected = False
         self.default_connection_service = None
+        self.client = None
+        self.client_igd = None
 
         # get client objects
         try:
@@ -507,7 +509,6 @@ class FritzDevice:
             self.client = FritzDevice.Tr064_Client(username=self.username, password=self.password, base_url=self._build_url(), description_file=self.FRITZ_TR64_DESC_FILE, verify=self.verify)
         except Exception as e:
             self.logger.error(f"Init TR064 Client for {self.FRITZ_TR64_DESC_FILE} caused error {e!r}.")
-            self.client = None
         else:
             self.connected = True
             if self.is_fritzbox:
@@ -520,7 +521,6 @@ class FritzDevice:
                     self.client_igd = FritzDevice.Tr064_Client(username=self.username, password=self.password, base_url=self._build_url(), description_file=self.FRITZ_IGD_DESC_FILE, verify=self.verify)
                 except Exception as e:
                     self.logger.error(f"Init TR064 Client for {self.FRITZ_IGD_DESC_FILE} caused error {e!r}.")
-                    self.client_igd = None
                     pass
 
     def register_item(self, item, avm_data_type: str, avm_data_cycle: int):
@@ -763,7 +763,8 @@ class FritzDevice:
     @property
     def is_fritzbox(self):
         try:
-            return True if 'box' in self.product_class.lower() else False
+            # return True if 'box' in self.product_class.lower() else False
+            return True if 'box' in self.model_name.lower() else False
         except AttributeError as e:
             self.logger.error(f'Could now find out if {self.product_class} represents a Fritzbox. Error {e!r} occurred.')
             return False
