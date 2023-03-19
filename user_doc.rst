@@ -145,7 +145,7 @@ Fritz!Box // Fritz!Repeater mit TR-064
 Fritz!DECT mit AHA (FRITZ!DECT 100, FRITZ!DECT 200, FRITZ!DECT 210, FRITZ!DECT 300, FRITZ!DECT 440, FRITZ!DECT 500, Comet DECT)
     - ``aha_general``  -  Allgemeine Informationen eines AVM HomeAutomation Devices (alle)
     - ``aha_thermostat``  -  spezifische Informationen eines AVM HomeAutomation Thermostat Devices (thermostat)
-    - ``aha_temperatur_sensor``  -  spezifische Informationen eines AVM HomeAutomation Devices mit Temperatursensor (temperature_sensor)
+    - ``aha_temperature_sensor``  -  spezifische Informationen eines AVM HomeAutomation Devices mit Temperatursensor (temperature_sensor)
     - ``aha_humidity_sensor``  -  spezifische Informationen eines AVM HomeAutomation Devices mit Feuchtigkeitssensor (bspw. FRITZ!DECT 440) (humidity_sensor)
     - ``aha_alert``  -  spezifische Informationen eines AVM HomeAutomation Devices mit Alarmfunktion (alarm)
     - ``aha_switch``  -  spezifische Informationen eines AVM HomeAutomation Devices mit Schalter (switch)
@@ -209,7 +209,7 @@ Item Beispiel mit Verwendung der structs ohne Instanz
                 struct:
                   - avm.aha_general
                   - avm.aha_thermostat
-                  - avm.aha_temperatur_sensor
+                  - avm.aha_temperature_sensor
 
 
 Item Beispiel mit Verwendung der structs mit Instanz
