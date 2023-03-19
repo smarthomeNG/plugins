@@ -1073,6 +1073,7 @@ class FritzDevice:
             cmd = f"self.client.{device}.{service}.{action}()"
         else:
             cmd = f"self.client.{device}.{service}.{action}({args})"
+
         response = eval(cmd)
 
         if self.debug_log:
@@ -2363,6 +2364,10 @@ class FritzHome:
             self.logger.error("InvalidError")
             return
 
+        if plain is None:
+            self.logger.debug("Plain is None")
+            return
+
         if rf == 'bool':
             return bool(int(plain))
         elif rf == 'str':
@@ -2570,7 +2575,8 @@ class FritzHome:
         """
         Get the switch power consumption.
         """
-        return self._aha_request("getswitchpower", ain=ain, rf='int')
+        value = self._aha_request("getswitchpower", ain=ain, rf='int')
+        return None if value is None else value / 1000   # value in 0.001W
 
     def get_switch_energy(self, ain):
         """
@@ -3015,6 +3021,8 @@ class FritzHome:
         # FRITZ!DECT 300    FBM: 320        -> 101000000                -> bit 6, 8
         # FRITZ!DECT 100    FBM: 1280       -> 10100000000              -> bit 8, 10
         # FRITZ!DECT 440    FBM: 1048864    -> 100000000000100100000    -> bit 5, 8, 20
+        # FRITZ!DECT 200    FBM: 35712
+        # FRITZ!DECT 210    FBM: 35712
 
     class FritzhomeEntityBase(ABC):
         """The Fritzhome Entity class."""
@@ -3326,16 +3334,18 @@ class FritzHome:
             powermeter_element = node.find("powermeter")
 
             if powermeter_element is not None:
-                # ToDo: Teilen nur bei nicht None
+                power = self.get_node_value_as_int(powermeter_element, "power")
+                if power is not None:
+                    self.power = (power / 1000)  # value in 0.001W
 
-                self.power = self.get_node_value_as_int(powermeter_element, "power") / 1000  # value in 0.001W
-                self.power = self.get_node_value_as_int(powermeter_element, "energy")   # value in 1Wh
-                # Todo: Check if plain voltage value should be sent
-                self.voltage = self.get_node_value_as_int(powermeter_element, "voltage") / 1000  # value in 0.001V
+                voltage = self.get_node_value_as_int(powermeter_element, "voltage")
+                if voltage is not None:
+                    self.voltage = (voltage / 1000)  # value in 0.001V
 
-                # ToDo: Nach dem Teilen sind alle nicht int
-                if isinstance(self.power, int) and isinstance(self.voltage, int) and self.voltage > 0:
-                    self.current = self.power / self.voltage * 1000
+                self.energy = self.get_node_value_as_int(powermeter_element, "energy")   # value in 1Wh
+
+                if power is not None and voltage is not None and voltage > 0:
+                    self.current = (power / voltage)
                 else:
                     self.current = None
 
@@ -3428,7 +3438,7 @@ class FritzHome:
         def _update_temperature_from_node(self, node):
             temperature_element = node.find("temperature")
             if temperature_element is not None:
-                # Teilen nur bei nicht None
+                # ToDo: Teilen nur bei nicht None
                 self.temperature_offset = (self.get_node_value_as_int(temperature_element, "offset") / 10.0)  # value in 0.1 °C
                 self.current_temperature = (self.get_node_value_as_int(temperature_element, "celsius") / 10.0)  # value in 0.1 °C
 
