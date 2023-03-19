@@ -51,6 +51,7 @@ class AVM(SmartPlugin):
     """
     PLUGIN_VERSION = '2.0.1'
 
+    # ToDo: Clean dead code in Fritzdevice
     # Todo: check setting of level to 0 if simpleonoff is off -> Status: Implemented, need to be tested
     # Todo: implement HSB into AHA
     # Todo: implement HS into AHA
@@ -506,6 +507,7 @@ class FritzDevice:
             self.client = FritzDevice.Tr064_Client(username=self.username, password=self.password, base_url=self._build_url(), description_file=self.FRITZ_TR64_DESC_FILE, verify=self.verify)
         except Exception as e:
             self.logger.error(f"Init TR064 Client for {self.FRITZ_TR64_DESC_FILE} caused error {e!r}.")
+            self.client = None
         else:
             self.connected = True
             if self.is_fritzbox:
@@ -518,6 +520,7 @@ class FritzDevice:
                     self.client_igd = FritzDevice.Tr064_Client(username=self.username, password=self.password, base_url=self._build_url(), description_file=self.FRITZ_IGD_DESC_FILE, verify=self.verify)
                 except Exception as e:
                     self.logger.error(f"Init TR064 Client for {self.FRITZ_IGD_DESC_FILE} caused error {e!r}.")
+                    self.client_igd = None
                     pass
 
     def register_item(self, item, avm_data_type: str, avm_data_cycle: int):
@@ -810,6 +813,10 @@ class FritzDevice:
             # check if item is already due
             if next_time > current_time:
                 # self.logger.debug(f"Item={item.id()} is not due, yet.")
+                continue
+
+            # check, if client_igd exists when avm_data_type startswith 'wan_current' are due
+            if avm_data_type.startswith('wan_current') and self.client_igd is None:
                 continue
 
             self.logger.info(f"Item={item.id()} with avm_data_type={avm_data_type} and index={index} will be updated")
