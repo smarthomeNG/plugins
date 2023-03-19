@@ -848,7 +848,7 @@ class FritzDevice:
             return False
 
         if data is None:
-            self.logger.info(f"Value for item={item} is None.")
+            self.logger.debug(f"Value for item={item} is None.")
             return False
         elif isinstance(data, int) and data in self.ERROR_CODES:
             self.logger.error(f"Error {data} '{self.ERROR_CODES.get(data, None)}' occurred during update of item={item} with avm_data_type={avm_data_type} and index={index}. Check item configuration regarding supported/activated function of AVM device. ")
@@ -2094,7 +2094,9 @@ class FritzHome:
             return
 
         # first update aha device data
-        self.update_devices()
+        if not self.update_devices():
+            self.logger.warning("Update of AHA-Devices not successful. No update of item values possible.")
+            return
 
         # get current_time
         current_time = int(time.time())
@@ -2132,7 +2134,7 @@ class FritzHome:
             # get value
             value = self.get_value_by_ain_and_avm_data_type(ain, avm_data_type)
             if value is None:
-                self.logger.warning(f'Attribute={avm_data_type} at device with AIN={ain} to be set to Item={item.id()} is not available.')
+                self.logger.debug(f'Value for attribute={avm_data_type} at device with AIN={ain} to set Item={item.id()} is not available/None.')
                 continue
 
             # set item
@@ -3027,6 +3029,7 @@ class FritzHome:
         # FRITZ!DECT 200    FBM: 35712      -> 1000101110000000         -> bit 7, 8, 9, 11, 15
         # FRITZ!DECT 210    FBM: 35712      -> 1000101110000000         -> bit 7, 8, 9, 11, 15
         # FRITZ!DECT 300    FBM: 320        -> 101000000                -> bit 6, 8
+        # FRITZ!DECT 301    FBM: 320        -> 101000000                -> bit 6, 8
         # Comet DECT        FBM: 320        -> 101000000                -> bit 6, 8
         # FRITZ!DECT 440    FBM: 1048864    -> 100000000000100100000    -> bit 5, 8, 20
         # FRITZ!DECT 500    FBM: 237572     -> 111010000000000100       -> bit 2, 13, 15, 16, 17
