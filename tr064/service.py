@@ -5,6 +5,7 @@ import requests
 
 from .action import Action
 from .config import TR064_SERVICE_NAMESPACE
+from .config import IGD_SERVICE_NAMESPACE
 from .exceptions import TR064UnknownActionException
 
 
@@ -13,7 +14,7 @@ class Service:
     """TR-064 service."""
 
     # pylint: disable=too-many-arguments
-    def __init__(self, auth, base_url, service_type, service_id, scpdurl, control_url, event_sub_url, verify: bool = False):
+    def __init__(self, auth, base_url, service_type, service_id, scpdurl, control_url, event_sub_url, verify: bool = False, description_file='tr64desc.xml'):
         self.auth = auth
         self.base_url = base_url
         self.service_type = service_type
@@ -23,6 +24,8 @@ class Service:
         self.event_sub_url = event_sub_url
         self.actions = {}
         self.verify = verify
+        self.description_file = description_file
+        self.namespaces = IGD_SERVICE_NAMESPACE if 'igd' in description_file else TR064_SERVICE_NAMESPACE
 
     def __getattr__(self, name):
         if name not in self.actions:
@@ -39,8 +42,8 @@ class Service:
         if request.status_code == 200:
             xml = ET.parse(BytesIO(request.content))
 
-            for action in xml.findall('./actionList/action', namespaces=TR064_SERVICE_NAMESPACE):
-                name = action.findtext('name', namespaces=TR064_SERVICE_NAMESPACE)
+            for action in xml.findall('./actionList/action', namespaces=self.namespaces):
+                name = action.findtext('name', namespaces=self.namespaces)
                 canonical_name = name.replace('-', '_')
                 self.actions[canonical_name] = Action(
                     action,
@@ -50,5 +53,6 @@ class Service:
                     self.service_type,
                     self.service_id,
                     self.control_url,
-                    self.verify
+                    self.verify,
+                    self.description_file
                 )

@@ -52,7 +52,7 @@ class AVM(SmartPlugin):
     PLUGIN_VERSION = '2.0.1'
 
     # Todo: check setting of level to 0 if simpleonoff is off -> Status: Implemented, need to be tested
-    # Todo: reactivate avm_data_type starting with wan_current // implementation of igd
+    # Todo: reactivate avm_data_type starting with wan_current // implementation of igd -> Status: Implemented, to be tested on Repeater
     # Todo: implement HSB into AHA
     # Todo: implement HS into AHA
     # Todo: Update to new smartplugin methods to prepare for plugin being restartable
@@ -490,7 +490,6 @@ class FritzDevice:
         self.username = username
         self.password = password
         self._call_monitor_incoming_filter = call_monitor_incoming_filter
-        self.available = True
         self._data_cache = {}
         self._calllist_cache = []
         self._timeout = 10
@@ -502,15 +501,24 @@ class FritzDevice:
         self.default_connection_service = None
 
         # get client objects
-        # self.client = FritzDevice.Client(self.username, self.password, self.verify, base_url=self._build_url(), description_file=self.FRITZ_TR64_DESC_FILE, plugin_instance=plugin_instance)
-        self.client = FritzDevice.Tr064_Client(username=self.username, password=self.password, base_url=self._build_url(), description_file=self.FRITZ_TR64_DESC_FILE, verify=self.verify)
-        self.connected = True
-        if self.is_fritzbox:
-            # get GetDefaultConnectionService
-            self.default_connection_service = self._get_default_connection_service()
-            # init client for InternetGatewayDevice
-            # self.client_igd = FritzDevice.Client(self.username, self.password, self.verify, base_url=self._build_url(), description_file=self.FRITZ_IGD_DESC_FILE, plugin_instance=plugin_instance)
-            # self.client_igd = Tr064_Client(username=self.username, password=self.password, base_url=self._build_url(), description_file=self.FRITZ_IGD_DESC_FILE, verify=self.verify)
+        try:
+            # self.client = FritzDevice.Client(self.username, self.password, self.verify, base_url=self._build_url(), description_file=self.FRITZ_TR64_DESC_FILE, plugin_instance=plugin_instance)
+            self.client = FritzDevice.Tr064_Client(username=self.username, password=self.password, base_url=self._build_url(), description_file=self.FRITZ_TR64_DESC_FILE, verify=self.verify)
+        except Exception as e:
+            self.logger.error(f"Init TR064 Client for {self.FRITZ_TR64_DESC_FILE} caused error {e!r}.")
+        else:
+            self.connected = True
+            if self.is_fritzbox:
+                # get GetDefaultConnectionService
+                self.default_connection_service = self._get_default_connection_service()
+
+                # init client for InternetGatewayDevice
+                try:
+                    # self.client_igd = FritzDevice.Client(self.username, self.password, self.verify, base_url=self._build_url(), description_file=self.FRITZ_IGD_DESC_FILE, plugin_instance=plugin_instance)
+                    self.client_igd = FritzDevice.Tr064_Client(username=self.username, password=self.password, base_url=self._build_url(), description_file=self.FRITZ_IGD_DESC_FILE, verify=self.verify)
+                except Exception as e:
+                    self.logger.error(f"Init TR064 Client for {self.FRITZ_IGD_DESC_FILE} caused error {e!r}.")
+                    pass
 
     def register_item(self, item, avm_data_type: str, avm_data_cycle: int):
         """
@@ -754,7 +762,7 @@ class FritzDevice:
         try:
             return True if 'box' in self.product_class.lower() else False
         except AttributeError as e:
-            self.logger.error(f'Could now find out if {self.product_class} represents a Fritzbox')
+            self.logger.error(f'Could now find out if {self.product_class} represents a Fritzbox. Error {e!r} occurred.')
             return False
 
     @property
@@ -762,7 +770,7 @@ class FritzDevice:
         try:
             return True if 'Repeater' in self.product_class.lower() else False
         except AttributeError as e:
-            self.logger.error(f'Could now find out if {self.product_class} represents a Repeater')
+            self.logger.error(f'Could now find out if {self.product_class} represents a Repeater. Error {e!r} occurred.')
             return False
 
     @property
@@ -812,8 +820,8 @@ class FritzDevice:
             self._items[item] = tuple(lst)
 
             # ToDo: Schließe wan_current aus, damit client_igd nicht verwendet wird / aktuell deaktiviert
-            if avm_data_type.startswith('wan_current'):
-                continue
+            # if avm_data_type.startswith('wan_current'):
+            #    continue
 
             # get data and set item value
             if self._update_item_value(item, avm_data_type, index) is False:
@@ -1642,7 +1650,6 @@ class FritzDevice:
         hosts_xml = self._request_response_to_xml(self._request(url, self._timeout, self.verify))
         if hosts_xml is None:
             return {}
-
 
         hosts_dict = {}
         for item in hosts_xml:
@@ -3236,7 +3243,7 @@ class FritzHome:
 
             for element in node.findall("button"):
                 button = FritzHome.FritzhomeButton(element)
-                self.buttons[button.ain] = button
+                self.buttons[button.button_identifier] = button
 
             try:
                 self.battery_low = self.get_node_value_as_int_as_bool(node, "batterylow")
@@ -3280,17 +3287,6 @@ class FritzHome:
         @staticmethod
         def get_node_value(elem, node):
             return elem.findtext(node)
-
-        def get_node_value_as_int(self, elem, node) -> int:
-            try:
-                value = self.get_node_value(elem, node)
-                if isinstance(value, str):
-                    value = value.strip()
-                rValue = int(value)
-            except ValueError:
-                self.logger.error(f'from elem {elem} at node "{node}" with value "{value}" could not be converted to an integer')
-                return
-            return rValue
 
     class FritzhomeDeviceLightBulb(FritzhomeDeviceBase):
         """The Fritzhome Device class."""

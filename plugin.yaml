@@ -494,6 +494,14 @@ item_structs:
             type: num
             visu_acl: ro
             avm_data_type@instance: wan_total_bytes_received
+        current_bytes_sent:
+          type: num
+          visu_acl: ro
+          avm_data_type@instance: wan_current_bytes_sent
+        current_bytes_receive:
+          type: num
+          visu_acl: ro
+          avm_data_type@instance: wan_current_bytes_received
         link:
             type: bool
             visu_acl: ro
@@ -502,7 +510,6 @@ item_structs:
             type: bool
             visu_acl: rw
             enforce_updates: yes
-
     wlan:
         wlan_1:
             type: bool

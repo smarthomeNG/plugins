@@ -5,6 +5,8 @@ import requests
 
 from .config import TR064_SERVICE_NAMESPACE
 from .config import TR064_CONTROL_NAMESPACE
+from .config import IGD_SERVICE_NAMESPACE
+from .config import IGD_CONTROL_NAMESPACE
 from .exceptions import TR064MissingArgumentException, TR064UnknownArgumentException
 from .attribute_dict import AttributeDict
 
@@ -23,7 +25,7 @@ class Action:
     """
 
     # pylint: disable=too-many-arguments
-    def __init__(self, xml, auth, base_url, name, service_type, service_id, control_url, verify: bool = False):
+    def __init__(self, xml, auth, base_url, name, service_type, service_id, control_url, verify: bool = False, description_file='tr64desc.xml'):
         self.auth = auth
         self.base_url = base_url
         self.name = name
@@ -31,6 +33,9 @@ class Action:
         self.service_id = service_id
         self.control_url = control_url
         self.verify = verify
+        self.description_file = description_file
+        self.namespaces = IGD_SERVICE_NAMESPACE if 'igd' in description_file else TR064_SERVICE_NAMESPACE
+        self.control_namespace = IGD_CONTROL_NAMESPACE if 'igd' in description_file else TR064_CONTROL_NAMESPACE
 
         ET.register_namespace('s', 'http://schemas.xmlsoap.org/soap/envelope/')
         ET.register_namespace('h', 'http://soap-authentication.org/digest/2001/10/')
@@ -46,9 +51,9 @@ class Action:
         self.in_arguments = {}
         self.out_arguments = {}
 
-        for argument in xml.findall('./argumentList/argument', namespaces=TR064_SERVICE_NAMESPACE):
-            name = argument.findtext('name', namespaces=TR064_SERVICE_NAMESPACE)
-            direction = argument.findtext('direction', namespaces=TR064_SERVICE_NAMESPACE)
+        for argument in xml.findall('./argumentList/argument', namespaces=self.namespaces):
+            name = argument.findtext('name', namespaces=self.namespaces)
+            direction = argument.findtext('direction', namespaces=self.namespaces)
 
             if direction == 'in':
                 self.in_arguments[name.replace('-', '_')] = name
@@ -91,7 +96,7 @@ class Action:
             except Exception:
                 return request.status_code
             try:
-                error_code = int(xml.find(f".//{{{TR064_CONTROL_NAMESPACE['']}}}errorCode").text)
+                error_code = int(xml.find(f".//{{{self.control_namespace['']}}}errorCode").text)
             except Exception:
                 error_code = None
                 pass

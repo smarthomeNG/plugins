@@ -5,6 +5,7 @@ import requests
 from requests.auth import HTTPDigestAuth
 
 from .config import TR064_DEVICE_NAMESPACE
+from .config import IGD_DEVICE_NAMESPACE
 from .exceptions import TR064UnknownDeviceException
 from .device import Device
 
@@ -26,6 +27,8 @@ class Client:
         self.verify = verify
         self.devices = {}
 
+        self.namespaces = IGD_DEVICE_NAMESPACE if 'igd' in description_file else TR064_DEVICE_NAMESPACE
+
     def __getattr__(self, name):
         if name not in self.devices:
             self._fetch_devices(self.description_file)
@@ -43,8 +46,8 @@ class Client:
         if request.status_code == 200:
             xml = ET.parse(BytesIO(request.content))
 
-            for device in xml.findall('.//device', namespaces=TR064_DEVICE_NAMESPACE):
-                name = device.findtext('deviceType', namespaces=TR064_DEVICE_NAMESPACE).split(':')[-2]
+            for device in xml.findall('.//device', namespaces=self.namespaces):
+                name = device.findtext('deviceType', namespaces=self.namespaces).split(':')[-2]
 
                 if name not in self.devices:
-                    self.devices[name] = Device(device, self.auth, self.base_url, self.verify)
+                    self.devices[name] = Device(device, self.auth, self.base_url, self.verify, self.description_file)

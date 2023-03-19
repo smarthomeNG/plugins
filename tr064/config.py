@@ -5,7 +5,8 @@ __all__ = [
     'TR064_SERVICE_NAMESPACE',
     'TR064_CONTROL_NAMESPACE',
     'IGD_DEVICE_NAMESPACE',
-    'IGD_SERVICE_NAMESPACE'
+    'IGD_SERVICE_NAMESPACE',
+    'IGD_CONTROL_NAMESPACE'
 ]
 
 TR064_DEVICE_NAMESPACE = {
@@ -28,3 +29,6 @@ IGD_SERVICE_NAMESPACE = {
     '': 'urn:schemas-upnp-org:service-1-0'
 }
 
+IGD_CONTROL_NAMESPACE = {
+    '': 'urn:schemas-upnp-org:service-1-0'
+}
