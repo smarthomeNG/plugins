@@ -62,7 +62,7 @@ class AVM(SmartPlugin):
         # Call init code of parent class (SmartPlugin)
         super().__init__()
 
-        self.logger.info('Init AVM Plugin - Testversion 2.0.1. I')
+        self.logger.info('Init AVM Plugin')
 
         # Enable / Disable debug log generation depending on log level
         self.debug_log = self.logger.isEnabledFor(logging.DEBUG)
@@ -2090,7 +2090,6 @@ class FritzHome:
             return
 
         # first update aha device data
-        # ToDo: update_devices() automatisch abrufen, wenn notwendig
         self.update_devices()
 
         # get current_time
@@ -3072,7 +3071,7 @@ class FritzHome:
                 self.device_functions.append('thermostat')
             if self._has_feature(FritzHome.FritzhomeDeviceFeatures.POWER_METER):
                 self.device_functions.append('powermeter')
-            if self._has_feature( FritzHome.FritzhomeDeviceFeatures.TEMPERATURE):
+            if self._has_feature(FritzHome.FritzhomeDeviceFeatures.TEMPERATURE):
                 self.device_functions.append('temperature_sensor')
             if self._has_feature(FritzHome.FritzhomeDeviceFeatures.SWITCH):
                 self.device_functions.append('switch')
