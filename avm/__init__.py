@@ -30,7 +30,6 @@ import threading
 import time
 from abc import ABC
 from enum import IntFlag
-from io import BytesIO
 from json.decoder import JSONDecodeError
 from typing import Dict
 from typing import Union
@@ -38,7 +37,6 @@ from xml.etree import ElementTree
 
 import lxml.etree as ET
 import requests
-from requests.auth import HTTPDigestAuth
 from requests.packages import urllib3
 
 from lib.model.smartplugin import SmartPlugin
@@ -51,8 +49,6 @@ class AVM(SmartPlugin):
     Main class of the Plugin. Does all plugin specific stuff
     """
     PLUGIN_VERSION = '2.0.2'
-
-    # ToDo: Clean dead code in Fritzdevice
 
     # ToDo: check setting of level to 0 if simpleonoff is off -> Status: Implemented, need to be tested
     # ToDo: FritzHome.handle_updated_item: implement 'saturation'
@@ -475,12 +471,6 @@ class FritzDevice:
     FRITZ_L2TPV3_FILE = "l2tpv3.xml"
     FRITZ_FBOX_DESC_FILE = "fboxdesc.xml"
 
-    IGD_DEVICE_NAMESPACE = {'': 'urn:schemas-upnp-org:device-1-0'}
-    IGD_SERVICE_NAMESPACE = {'': 'urn:schemas-upnp-org:service-1-0'}
-    TR064_DEVICE_NAMESPACE = {'': 'urn:dslforum-org:device-1-0'}
-    TR064_SERVICE_NAMESPACE = {'': 'urn:dslforum-org:service-1-0'}
-    TR064_CONTROL_NAMESPACE = {'': 'urn:dslforum-org:control-1-0'}
-
     def __init__(self, host, port, ssl, verify, username, password, call_monitor_incoming_filter, plugin_instance=None):
         """
         Init class FritzDevice
@@ -511,7 +501,6 @@ class FritzDevice:
 
         # get client objects
         try:
-            # self.client = FritzDevice.Client(self.username, self.password, self.verify, base_url=self._build_url(), description_file=self.FRITZ_TR64_DESC_FILE, plugin_instance=plugin_instance)
             self.client = FritzDevice.Tr064_Client(username=self.username, password=self.password, base_url=self._build_url(), description_file=self.FRITZ_TR64_DESC_FILE, verify=self.verify)
         except Exception as e:
             self.logger.error(f"Init TR064 Client for {self.FRITZ_TR64_DESC_FILE} caused error {e!r}.")
@@ -523,7 +512,6 @@ class FritzDevice:
 
                 # init client for InternetGatewayDevice
                 try:
-                    # self.client_igd = FritzDevice.Client(self.username, self.password, self.verify, base_url=self._build_url(), description_file=self.FRITZ_IGD_DESC_FILE, plugin_instance=plugin_instance)
                     self.client_igd = FritzDevice.Tr064_Client(username=self.username, password=self.password, base_url=self._build_url(), description_file=self.FRITZ_IGD_DESC_FILE, verify=self.verify)
                 except Exception as e:
                     self.logger.error(f"Init TR064 Client for {self.FRITZ_IGD_DESC_FILE} caused error {e!r}.")
@@ -1704,336 +1692,6 @@ class FritzDevice:
                 pass
 
             return mesh
-
-    class Client:
-        """TR-064 client.
-
-        Description file provided by FritzDevice will be read. All DEVICES, SERVICES, ACTIONS definied in that desciption file can be used.
-        Format is: Client.DeviceName.ServiceName.ActionName(Arguments, ...) like Client.LANDevice.Hosts.GetGenericHostEntry
-        Capital and lowercase letters must match with
-
-        If a service is offered multiple times, actions can be accessed by the zero-based square bracket operator:
-        Client.DeviceName.ServiceName[1].ActionName(Arguments, ...)
-
-        If services, actions or arguments contain a minus sign -, it must be replaced with an underscore _.
-
-        # Devices / Services / Actions
-         InternetGatewayDevice
-            DeviceInfo
-                GetInfo
-                SetProvisioningCode
-                GetDeviceLog
-                GetSecurityPort
-            DeviceConfig
-            Layer3Forwarding
-            LANConfigSecurity
-            ManagementServer
-            Time
-            UserInterface
-            X_AVM-DE_Storage
-            X_AVM-DE_WebDAVClient
-            X_AVM-DE_UPnP
-            X_AVM-DE_Speedtest
-            X_AVM-DE_RemoteAccess
-            X_AVM-DE_MyFritz
-            X_VoIP
-            X_AVM-DE_OnTel
-            X_AVM-DE_Dect
-            X_AVM-DE_TAM
-            X_AVM-DE_AppSetup
-            X_AVM-DE_Homeauto
-            X_AVM-DE_Homeplug
-            X_AVM-DE_Filelinks
-            X_AVM-DE_Auth
-            X_AVM-DE_HostFilter
-        LANDevice
-            WLANConfiguration
-            Hosts
-            LANEthernetInterfaceConfig
-            LANHostConfigManagement
-        WANDevice
-            WANCommonInterfaceConfig
-            WANDSLInterfaceConfig
-        WANConnectionDevice
-            WANDSLLinkConfig
-            WANEthernetLinkConfig
-            WANPPPConnection
-            WANIPConnection
-
-        :param str username:            Username with access to router.
-        :param str password:            Passwort to access router.
-        :param str base_url:            URL to router.
-        :param str description_file:    Description File to be read
-        :param plugin_instance:         instance of Plugin
-        """
-        def __init__(self, username, password, verify, base_url='https://192.168.178.1:49443', description_file='tr64desc.xml', plugin_instance=None):
-
-            # handle plugin instance
-            self._plugin_instance = plugin_instance
-            self.logger = self._plugin_instance.logger
-
-            self.base_url = base_url
-            self.auth = HTTPDigestAuth(username, password)
-            self.verify = verify
-            self.description_file = description_file
-
-            self.devices = {}
-            self.logger.debug(f"Init Client for description at url={base_url} with description_file={self.description_file} and plugin_instance={plugin_instance}")
-
-        def __getattr__(self, name):
-            if name not in self.devices:
-                self._fetch_devices(self.description_file)
-
-            if name in self.devices:
-                return self.devices[name]
-
-        def _fetch_devices(self, description_file):
-            """
-            Fetch device description.
-            """
-            self.logger.debug(f"_fetch_devices called for description file={description_file}")
-
-            request = requests.get(f'{self.base_url}/{description_file}', verify=self.verify)
-
-            if description_file == 'igddesc.xml':
-                namespaces = FritzDevice.IGD_DEVICE_NAMESPACE
-            else:
-                namespaces = FritzDevice.TR064_DEVICE_NAMESPACE
-
-            if request.status_code == 200:
-                xml = ET.parse(BytesIO(request.content))
-
-                for device in xml.findall('.//device', namespaces=namespaces):
-                    name = device.findtext('deviceType', namespaces=namespaces).split(':')[-2]
-                    if name not in self.devices:
-                        self.devices[name] = FritzDevice.Device(device, self.auth, self.verify, self.base_url, description_file)
-
-            self.logger.debug(f"Client: {self.description_file} devices={self.devices}")
-
-    class Device:
-        """
-        TR-064 device.
-
-        :param lxml.etree.Element xml:          XML device element
-        :param HTTPBasicAuthHandler auth:       HTTPBasicAuthHandler object, e.g. HTTPDigestAuth
-        :param str base_url:                    URL to router.
-        """
-        def __init__(self, xml, auth, verify, base_url, description_file):
-            # init logger
-            self.logger = logging.getLogger(__name__)
-            self.services = {}
-            self.verify = verify
-
-            if description_file == 'igddesc.xml':
-                namespaces = FritzDevice.IGD_DEVICE_NAMESPACE
-            else:
-                namespaces = FritzDevice.TR064_DEVICE_NAMESPACE
-
-            for service in xml.findall('./serviceList/service', namespaces=namespaces):
-                service_type = service.findtext('serviceType', namespaces=namespaces)
-                service_id = service.findtext('serviceId', namespaces=namespaces)
-                control_url = service.findtext('controlURL', namespaces=namespaces)
-                event_sub_url = service.findtext('eventSubURL', namespaces=namespaces)
-                scpdurl = service.findtext('SCPDURL', namespaces=namespaces)
-
-                name = service_type.split(':')[-2].replace('-', '_')
-                if name not in self.services:
-                    self.services[name] = FritzDevice.ServiceList()
-
-                self.services[name].append(
-                    FritzDevice.Service(
-                        auth,
-                        self.verify,
-                        base_url,
-                        service_type,
-                        service_id,
-                        scpdurl,
-                        control_url,
-                        event_sub_url,
-                        description_file
-                    )
-                )
-
-        def __getattr__(self, name: str):
-            if name in self.services:
-                return self.services[name]
-
-            raise RuntimeError("TR064 unknown service exception")
-
-    class ServiceList(list):
-        """
-        Service list.
-        """
-        def __getattr__(self, name: str):
-            """Direct access to first list entry if brackets omit."""
-            return self[0].__getattr__(name)
-
-        def __getitem__(self, index):
-            """Override bracket operator to return TR-064 exception."""
-            if len(self) > index:
-                return super().__getitem__(index)
-
-    class Service:
-        """
-        TR-064 service.
-        """
-
-        def __init__(self, auth, verify, base_url, service_type, service_id, scpdurl, control_url, event_sub_url, description_file):
-            # init logger
-            self.logger = logging.getLogger(__name__)
-
-            self.auth = auth
-            self.verify = verify
-            self.base_url = base_url
-            self.service_type = service_type
-            self.service_id = service_id
-            self.scpdurl = scpdurl
-            self.control_url = control_url
-            self.event_sub_url = event_sub_url
-            self.actions = {}
-            self.description_file = description_file
-
-            if description_file == 'igddesc.xml':
-                self.namespaces = FritzDevice.IGD_SERVICE_NAMESPACE
-            else:
-                self.namespaces = FritzDevice.TR064_SERVICE_NAMESPACE
-
-        def __getattr__(self, name: str):
-            if name not in self.actions:
-                self._fetch_actions(self.scpdurl)
-
-            if name in self.actions:
-                return self.actions[name]
-
-        def _fetch_actions(self, scpdurl: str):
-            """
-            Fetch action Actions.
-            """
-
-            request = requests.get(f'{self.base_url}{scpdurl}', verify=self.verify)
-
-            # self.logger.warning(f"Service _fetch_actions request={request.content}")
-
-            if request.status_code == 200:
-                xml = ET.parse(BytesIO(request.content))
-
-                for action in xml.findall('./actionList/action', namespaces=self.namespaces):
-                    name = action.findtext('name', namespaces=self.namespaces)
-                    canonical_name = name.replace('-', '_')
-                    self.actions[canonical_name] = FritzDevice.Action(
-                        action,
-                        self.auth,
-                        self.base_url,
-                        name,
-                        self.service_type,
-                        self.service_id,
-                        self.control_url,
-                        self.verify,
-                        self.namespaces
-                    )
-
-    class Action:
-        """
-        TR-064 action.
-
-        :param lxml.etree.Element xml:      XML action element
-        :param HTTPBasicAuthHandler auth:   HTTPBasicAuthHandler object, e.g. HTTPDigestAuth
-        :param str base_url:                URL to router.
-        :param str name:                    Action name
-        :param str service_type:            Service type
-        :param str service_id:              Service ID
-        :param str control_url:             Control URL
-        """
-
-        def __init__(self, xml, auth, base_url, name, service_type, service_id, control_url, verify, namespaces):
-
-            # init logger
-            self.logger = logging.getLogger(__name__)
-
-            self.auth = auth
-            self.verify = verify
-            self.base_url = base_url
-            self.name = name
-            self.service_type = service_type
-            self.service_id = service_id
-            self.control_url = control_url
-
-            ET.register_namespace('s', 'http://schemas.xmlsoap.org/soap/envelope/')
-            ET.register_namespace('h', 'http://soap-authentication.org/digest/2001/10/')
-
-            self.headers = {'content-type': 'text/xml; charset="utf-8"'}
-            self.envelope = ET.Element(
-                '{http://schemas.xmlsoap.org/soap/envelope/}Envelope',
-                attrib={
-                    '{http://schemas.xmlsoap.org/soap/envelope/}encodingStyle':
-                        'http://schemas.xmlsoap.org/soap/encoding/'})
-            self.body = ET.SubElement(self.envelope, '{http://schemas.xmlsoap.org/soap/envelope/}Body')
-
-            self.in_arguments = {}
-            self.out_arguments = {}
-
-            for argument in xml.findall('./argumentList/argument', namespaces=namespaces):
-                name = argument.findtext('name', namespaces=namespaces)
-                direction = argument.findtext('direction', namespaces=namespaces)
-
-                if direction == 'in':
-                    self.in_arguments[name.replace('-', '_')] = name
-
-                if direction == 'out':
-                    self.out_arguments[name] = name.replace('-', '_')
-
-        def __call__(self, **kwargs):
-            missing_arguments = self.in_arguments.keys() - kwargs.keys()
-            if missing_arguments:
-                self.logger.warning('Missing argument(s) \'' + "', '".join(missing_arguments) + '\'')
-
-            unknown_arguments = kwargs.keys() - self.in_arguments.keys()
-            if unknown_arguments:
-                self.logger.warning('Unknown argument(s) \'' + "', '".join(unknown_arguments) + '\'')
-
-            # Add SOAP action to header
-            self.headers['soapaction'] = f'"{self.service_type}#{self.name}"'
-            ET.register_namespace('u', self.service_type)
-
-            # Prepare body for request
-            self.body.clear()
-            action = ET.SubElement(self.body, f'{{{self.service_type}}}{self.name}')
-            for key in kwargs:
-                arg = ET.SubElement(action, self.in_arguments[key])
-                arg.text = str(kwargs[key])
-
-            # soap._InitChallenge(header)
-            data = ET.tostring(self.envelope, encoding='utf-8', xml_declaration=True).decode()
-            request = requests.post(f'{self.base_url}{self.control_url}',
-                                    headers=self.headers,
-                                    auth=self.auth,
-                                    data=data,
-                                    verify=self.verify)
-            if request.status_code != 200:
-                xml = ET.parse(BytesIO(request.content))
-                try:
-                    error_code = int(xml.find(f".//{{{FritzDevice.TR064_CONTROL_NAMESPACE['']}}}errorCode").text)
-                except Exception:
-                    error_code = None
-                    pass
-                # self.logger.debug(f"status_code={request.status_code}, error_code={error_code.text}")
-                return error_code if error_code is not None else request.status_code
-
-            # Translate response and prepare dict
-            xml = ET.parse(BytesIO(request.content))
-            response = FritzDevice.AttributeDict()
-            for arg in list(xml.find(f".//{{{self.service_type}}}{self.name}Response")):
-                name = self.out_arguments[arg.tag]
-                response[name] = arg.text
-            return response
-
-    class AttributeDict(dict):
-        """
-        Direct access dict entries like attributes.
-        """
-
-        def __getattr__(self, name):
-            return self[name]
 
 
 class FritzHome:
