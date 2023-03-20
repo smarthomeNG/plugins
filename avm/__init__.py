@@ -523,37 +523,46 @@ class FritzDevice:
         """
         index = None
 
+        # if fritz device is repeater and avm_data_type is not supported by repeater, return
+        if self.is_repeater and avm_data_type not in ALL_ATTRIBUTES_SUPPORTED_BY_REPEATER:
+            self.logger.warning(f"Item {item.id()} with avm attribute {avm_data_type!r} found, which is not supported by Repeaters; Item will be ignored.")
+            return
+
         # handle wlan items
         if avm_data_type in WLAN_CONFIG_ATTRIBUTES:
             index = self._get_wlan_index(item)
             if index is not None:
-                self.logger.debug(f"Item {item.id()} with avm device attribute and defined 'avm_wlan_index' found; append to list.")
+                self.logger.debug(f"Item {item.id()} with avm device attribute {avm_data_type!r} and defined 'avm_wlan_index' found; append to list.")
             else:
-                self.logger.warning(f"Item {item.id()} with avm attribute found, but 'avm_wlan_index' is not defined; Item will be ignored.")
+                self.logger.warning(f"Item {item.id()} with avm attribute {avm_data_type!r} found, but 'avm_wlan_index' is not defined; Item will be ignored.")
+                return
 
         # handle network_device related items
         elif avm_data_type in HOST_ATTRIBUTES:
             index = self._get_mac(item)
             if index is not None:
-                self.logger.debug(f"Item {item.id()} with avm device attribute and defined 'avm_mac' found; append to list.")
+                self.logger.debug(f"Item {item.id()} with avm device attribute {avm_data_type!r} and defined 'avm_mac' found; append to list.")
             else:
-                self.logger.warning("Item {item.id()} with avm attribute found, but 'avm_mac' is not defined; Item will be ignored.")
+                self.logger.warning(f"Item {item.id()} with avm attribute {avm_data_type!r} found, but 'avm_mac' is not defined; Item will be ignored.")
+                return
 
         # handle tam related items
         elif avm_data_type in TAM_ATTRIBUTES:
             index = self._get_tam_index(item)
             if index is not None:
-                self.logger.debug(f"Item {item.id()} with avm device attribute and defined 'avm_tam_index' found; append to list.")
+                self.logger.debug(f"Item {item.id()} with avm device attribute {avm_data_type!r} and defined 'avm_tam_index' found; append to list.")
             else:
-                self.logger.warning(f"Item {item.id()} with avm attribute found, but 'avm_tam_index' is not defined; Item will be ignored.")
+                self.logger.warning(f"Item {item.id()} with avm attribute {avm_data_type!r} found, but 'avm_tam_index' is not defined; Item will be ignored.")
+                return
 
         # handle deflection related items
         elif avm_data_type in DEFLECTION_ATTRIBUTES:
             index = self._get_deflection_index(item)
             if index is not None:
-                self.logger.debug(f"Item {item.id()} with avm device attribute and defined 'avm_tam_index' found; append to list.")
+                self.logger.debug(f"Item {item.id()} with avm device attribute {avm_data_type!r} and defined 'avm_tam_index' found; append to list.")
             else:
-                self.logger.warning(f"Item {item.id()} with avm attribute found, but 'avm_tam_index' is not defined; Item will be ignored.")
+                self.logger.warning(f"Item {item.id()} with avm attribute {avm_data_type!r} found, but 'avm_tam_index' is not defined; Item will be ignored.")
+                return
 
         # register item
         self._items[item] = (avm_data_type, index, avm_data_cycle, int(time.time()))
