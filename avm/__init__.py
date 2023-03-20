@@ -45,7 +45,7 @@ from lib.model.smartplugin import SmartPlugin
 from .webif import WebInterface
 
 
-class avm(SmartPlugin):
+class AVM(SmartPlugin):
     """
     Main class of the Plugin. Does all plugin specific stuff
     """
