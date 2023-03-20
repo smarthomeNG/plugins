@@ -76,8 +76,8 @@ parameters:
         type: str
         default: ''
         description:
-            de: '(optional) Spezielle Rufnummern ausfiltern, die vom Callmonitor ignoriert werden sollen.'
-            en: '(optional) Filter only specific numbers to be watched by call monitor'
+            de: '(optional) Filter, auf welche eigenen Rufnummern (oder Teile davon) der Callmonitor reagieren soll. Ist der Filter leer, werden alle eigenen Rufnummern überwacht. Wird ein Filterstring bspw. "12234" angegeben, werden nur die eigenen Anschlussnummern, die "12234" enthalten, vom CallMonitor verarbeitet.'
+            en: '(optional) Filter, for which numbers (or part of the number) of own telephone connection the Callmonitor should react.'
     avm_home_automation:
         type: bool
         default: false
@@ -145,8 +145,8 @@ item_attributes:
           - 'wan_current_packets_received'            # r/o       num       WAN Verbindung-Anzahl aktuell empfangener Pakete
           - 'wan_total_bytes_sent'                    # r/o       num       WAN Verbindung-Anzahl insgesamt versendeter Bytes
           - 'wan_total_bytes_received'                # r/o       num       WAN Verbindung-Anzahl insgesamt empfangener Bytes
-          - 'wan_current_bytes_sent'                  # r/o       num       WAN Verbindung-Anzahl insgesamt versendeter Bytes
-          - 'wan_current_bytes_received'              # r/o       num       WAN Verbindung-Anzahl insgesamt empfangener Bytes
+          - 'wan_current_bytes_sent'                  # r/o       num       WAN Verbindung-Anzahl aktuelle Bitrate Senden
+          - 'wan_current_bytes_received'              # r/o       num       WAN Verbindung-Anzahl aktuelle Bitrate Empfangen
           - 'wan_link'                                # r/o       bool      WAN Link
         # WLAN Config Attribute              Hinweis: alle Attribute benötigen zusätzlich das Attribut 'avm_wlan_index'
           - 'wlanconfig'                              # r/w       bool      WLAN An/Aus
@@ -225,23 +225,34 @@ item_attributes:
           - 'level'                                   # w/r       num       Level/Niveau von 0 bis 255 (Setzen & Status)
           - 'set_levelpercentage'                     # w/o       num       Level/Niveau von 0% bis 100% Setzen             
           - 'levelpercentage'                         # w/r       num       Level/Niveau von 0% bis 100% (Setzen & Status)
+          -
           - 'set_hue'                                 # w/o       num       Hue Setzen                                      
           - 'hue'                                     # w/r       num       Hue (Status und Setzen)
           - 'set_saturation'                          # w/o       num       Saturation Setzen                               
           - 'saturation'                              # w/r       num       Saturation (Status und Setzen)
           - 'set_colortemperature'                    # w/o       num       Farbtemperatur Setzen                           
           - 'colortemperature'                        # w/r       num       Farbtemperatur (Status und Setzen)
-                                                      
+          - 'unmapped_hue'                            # w/r       num       Hue (Status und Setzen)
+          - 'unmapped_saturation'                     # w/r       num       Saturation (Status und Setzen)
+          - 'color_mode'                              # r/o       num       Aktueller Farbmodus (1-HueSaturation-Mode; 4-Farbtemperatur-Mode)
+          - 'supported_color_mode'                    # r/o       num       Unterstützer Farbmodus (1-HueSaturation-Mode; 4-Farbtemperatur-Mode)
+          - 'fullcolorsupport'                        # r/o       bool      Lampe unterstützt setunmappedcolor
+          - 'mapped'                                  # r/o       bool      von den Colordefaults abweichend zugeordneter HueSaturation-Wert gesetzt
+
           - 'switch_state'                            # r/w       bool      Schaltzustand Steckdose (Status und Setzen)     
-          - 'switch_mode'                             # r/o       bool      Zeitschaltung oder manuell schalten             
+          - 'switch_mode'                             # r/o       str       Zeitschaltung oder manuell schalten
           - 'switch_toggle'                           # w/o       bool      Schaltzustand umschalten (toggle)               
                                                       
           - 'power'                                   # r/o       num       Leistung in W (Aktualisierung alle 2 min)       
-          - 'energy'                                  # r/o       num       absoluter Verbrauch seit Inbetriebnahme         
+          - 'energy'                                  # r/o       num       absoluter Verbrauch seit Inbetriebnahme in Wh
           - 'voltage'                                 # r/o       num       Spannung in V (Aktualisierung alle 2 min)       
                                                       
-          - 'humidity'                                # r/o       num       Relative Luftfeuchtigkeit in % (FD440)          
-          - 'alert_state'                             # r/o       bool      letzter übermittelter Alarmzustand              
+          - 'humidity'                                # r/o       num       Relative Luftfeuchtigkeit in % (FD440)
+
+          - 'alert_state'                             # r/o       bool      letzter übermittelter Alarmzustand
+
+          - 'blind_mode'                              # r/o       str       automatische Zeitschaltung oder manuell fahren
+          - 'endpositionsset'                         # r/o       bool      ist die Endlage für das Rollo konfiguriert
 
     avm_incoming_allowed:
         type: str
@@ -494,6 +505,14 @@ item_structs:
             type: num
             visu_acl: ro
             avm_data_type@instance: wan_total_bytes_received
+        current_bytes_sent:
+          type: num
+          visu_acl: ro
+          avm_data_type@instance: wan_current_bytes_sent
+        current_bytes_receive:
+          type: num
+          visu_acl: ro
+          avm_data_type@instance: wan_current_bytes_received
         link:
             type: bool
             visu_acl: ro
@@ -658,6 +677,11 @@ item_structs:
             avm_data_type@instance: temperature_offset
             type: num
 
+    aha_humidity_sensor:
+      humidity:
+        avm_data_type@instance: humidity
+        type: num
+
     aha_alert:
         state:
             avm_data_type@instance: alert
@@ -667,6 +691,9 @@ item_structs:
         switch_state:
             avm_data_type@instance: switch_state
             type: bool
+        switch_mode:
+          avm_data_type@instance: switch_mode
+          type: str
         switch_toggle:
             avm_data_type@instance: switch_toggle
             type: bool
@@ -682,6 +709,64 @@ item_structs:
         voltage:
             avm_data_type@instance: voltage
             type: num
+
+    aha_level:
+        level:
+            avm_data_type@instance: level
+            type: num
+        level_percentage:
+            avm_data_type@instance: levelpercentage
+            type: num
+
+    aha_blind:
+      blind_mode:
+        avm_data_type@instance: blind_mode
+        type: str
+      endpositionsset:
+        avm_data_type@instance: endpositionsset
+        type: bool
+
+    aha_on_off:
+        on_off:
+            avm_data_type@instance: simpleonoff
+            type: bool
+
+    aha_button:
+        battery_low:
+            avm_data_type@instance: battery_low
+            type: bool
+        battery_level:
+            avm_data_type@instance: battery_level
+            type: num
+
+    aha_color:
+      color_mode:
+        avm_data_type@instance: color_mode
+        type: num
+      supported_color_mode:
+        avm_data_type@instance: supported_color_mode
+        type: num
+      fullcolorsupport:
+        avm_data_type@instance: fullcolorsupport
+        type: bool
+      mapped:
+        avm_data_type@instance: mapped
+        type: bool
+      hue:
+        avm_data_type@instance: hue
+        type: num
+      saturation:
+        avm_data_type@instance: saturation
+        type: num
+      unmapped_hue:
+        avm_data_type@instance: unmapped_hue
+        type: bool
+      unmapped_saturation:
+        avm_data_type@instance: unmapped_saturation
+        type: bool
+      colortemperature:
+        avm_data_type@instance: colortemperature
+        type: num
 
 #item_attribute_prefixes:
     # Definition of item attributes that only have a common prefix (enter 'item_attribute_prefixes: NONE' or ommit this section, if section should be empty)
