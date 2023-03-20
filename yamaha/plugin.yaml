@@ -8,8 +8,8 @@ plugin:
     maintainer: bmxp
     tester: None
     state: ready
-    keywords: Yamaha receiver music 
-    documentation: http://smarthomeng.de/user/plugins/yamaha/user_doc.html
+    keywords: Yamaha receiver music
+    documentation: ''
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/896468-plugin-yamaha
 
     version: 1.0.3                 # Plugin version

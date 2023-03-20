@@ -292,7 +292,7 @@ class OneWire(SmartPlugin):
                     items = self.get_items_for_mapping(addr + '-' + key)
                     if path is None:
                         if debugLog:
-                            self.logger.debug(f"_io_cycle: path not found for {item.id()}")
+                            self.logger.debug(f"_io_cycle: no item path found for mapping '{addr}-{key}'")
                         continue
                     try:
                         # the following can take a while so if in the meantime the plugin should stop we can abort this process here
@@ -312,7 +312,7 @@ class OneWire(SmartPlugin):
                             self.logger.warning(f"_io_cycle: {self._ios[addr][key]['readerrors']}. problem reading {addr}-{key}, error: {e}")
                         continue
                     if self._ios[addr][key].get('readerrors', 0) >= self.warn_after:
-                        self.logger.notice(f"_io_cycle: Success reading {addr}-{key} {value=}, up to now there were {self._ios[addr][key]['readerrors']} consecutive problems")
+                        self.logger.notice(f"_io_cycle: Success reading '{addr}-{key}' {value=}, up to now there were {self._ios[addr][key]['readerrors']} consecutive problems")
                         self._ios[addr][key]['readerrors'] = 0
                     for item in items:
                         item(value, self.get_shortname(), path)
@@ -398,7 +398,7 @@ class OneWire(SmartPlugin):
                 items = self.get_items_for_mapping(addr+'-'+key)
                 if path is None:
                     if debugLog:
-                        self.logger.debug(f"_sensor_cycle: path not found for {item.id()}")
+                        self.logger.debug(f"_sensor_cycle: no item path found for mapping '{addr}-{key}'")
                     continue
                 try:
                     value = self.owbase.read('/uncached' + path).decode()

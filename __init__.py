@@ -1,5 +1,5 @@
 def plugin_release():
-    return '1.9.3.1'
+    return '1.9.4.1'
 
 def plugin_branch():
     return 'develop'

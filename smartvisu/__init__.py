@@ -45,7 +45,7 @@ from .svinstallwidgets import SmartVisuInstallWidgets
 #########################################################################
 
 class SmartVisu(SmartPlugin):
-    PLUGIN_VERSION="1.8.9"
+    PLUGIN_VERSION="1.8.10"
     ALLOW_MULTIINSTANCE = True
 
     visu_definition = None
@@ -76,6 +76,7 @@ class SmartVisu(SmartPlugin):
         self._handle_widgets = self.get_parameter_value('handle_widgets')
         self._create_masteritem_file = self.get_parameter_value('create_masteritem_file')
         self.list_deprecated_warnings = self.get_parameter_value('list_deprecated_warnings')
+        self.protocol_over_reverseproxy = self.get_parameter_value('protocol_over_reverseproxy')
 
         self.smartvisu_version = self.get_smartvisu_version()
         if self.smartvisu_version == '':
@@ -104,7 +105,7 @@ class SmartVisu(SmartPlugin):
         if self.mod_websocket is not None:
             self.payload_smartvisu = self.mod_websocket.get_payload_protocol_by_id('sv')
             try:
-                self.payload_smartvisu.set_smartvisu_support(protocol_enabled=True, default_acl=self.default_acl, query_definitions=False, series_updatecycle=0)
+                self.payload_smartvisu.set_smartvisu_support(protocol_enabled=True, default_acl=self.default_acl, query_definitions=False, series_updatecycle=0, protocol_over_reverseproxy=self.protocol_over_reverseproxy)
             except:
                 self.logger.exception("Payload protocol 'smartvisu' of module 'websocket' could not be found.")
 

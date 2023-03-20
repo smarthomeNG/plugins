@@ -79,6 +79,7 @@ class WebPush(SmartPlugin):
 
         # get the parameters for the plugin (as defined in metadata plugin.yaml):
         self.groupList = self.get_parameter_value('grouplist')
+        self.varpath = self.get_parameter_value('varpath')
 
         self.groupListItem = None
         self.publicKeyItem = None
@@ -86,8 +87,7 @@ class WebPush(SmartPlugin):
 
         self.alive = False
 
-        self.actualPath = os.getcwd()
-        self.pluginVarPath = self.actualPath + "/var/webpush/"
+        self.pluginVarPath = self.varpath + "/webpush/"
         self.databasePath = self.pluginVarPath + "webpush_database.txt"
         self.keyFilePath = self.pluginVarPath + "webpush_private_key.pem"
 
