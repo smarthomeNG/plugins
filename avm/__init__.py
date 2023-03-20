@@ -43,19 +43,25 @@ from requests.packages import urllib3
 
 from lib.model.smartplugin import SmartPlugin
 from .webif import WebInterface
+from . import item_attributes
 
 
 class AVM(SmartPlugin):
     """
     Main class of the Plugin. Does all plugin specific stuff
     """
-    PLUGIN_VERSION = '2.0.1'
+    PLUGIN_VERSION = '2.0.2'
 
     # ToDo: Clean dead code in Fritzdevice
-    # Todo: check setting of level to 0 if simpleonoff is off -> Status: Implemented, need to be tested
-    # Todo: implement HSB into AHA
-    # Todo: implement HS into AHA
-    # Todo: Update to new smartplugin methods to prepare for plugin being restartable
+
+    # ToDo: check setting of level to 0 if simpleonoff is off -> Status: Implemented, need to be tested
+    # ToDo: FritzHome.handle_updated_item: implement 'saturation'
+    # ToDo: FritzHome.handle_updated_item: implement 'unmapped_hue'
+    # ToDo: FritzHome.handle_updated_item: implement 'unmapped_saturation'
+    # ToDo: FritzHome.handle_updated_item: implement 'hsv'
+    # ToDo: FritzHome.handle_updated_item: implement 'hs'
+
+    # ToDo: Update to new smartplugin methods to prepare for plugin being restartable
 
     def __init__(self, sh):
         """Initializes the plugin."""
@@ -174,31 +180,31 @@ class AVM(SmartPlugin):
             avm_data_cycle = 30 if 1 < avm_data_cycle < 29 else avm_data_cycle
 
             # handle items specific to call monitor
-            if avm_data_type in (CALL_MONITOR_ATTRIBUTES + CALL_DURATION_ATTRIBUTES):
+            if avm_data_type in CALL_MONITOR_ATTRIBUTES:
                 if self.monitoring_service:
                     self.monitoring_service.register_item(item, avm_data_type)
                 else:
-                    self.logger.warning("Items with avm attribute found, which needs Call-Monitoring-Service. This is not available/enabled for that plugin; Item will be ignored.")
+                    self.logger.warning(f"Items with avm attribute {avm_data_type!r} found, which needs Call-Monitoring-Service. This is not available/enabled for that plugin; Item will be ignored.")
 
             # handle smarthome items using aha-interface (new)
             elif avm_data_type in AHA_ATTRIBUTES:
                 if self.fritz_home:
                     self.fritz_home.register_item(item, avm_data_type, avm_data_cycle)
                 else:
-                    self.logger.warning("Items with avm attribute found, which needs aha-http-interface. This is not available/enabled for that plugin; Item will be ignored.")
+                    self.logger.warning(f"Items with avm attribute {avm_data_type!r} found, which needs aha-http-interface. This is not available/enabled for that plugin; Item will be ignored.")
 
             # handle items updated by tr-064 interface
             elif avm_data_type in TR064_ATTRIBUTES:
                 if self.fritz_device:
                     self.fritz_device.register_item(item, avm_data_type, avm_data_cycle)
                 else:
-                    self.logger.warning("Items with avm attribute found, which needs tr064 interface. This is not available/enabled; Item will be ignored.")
+                    self.logger.warning(f"Items with avm attribute {avm_data_type!r} found, which needs tr064 interface. This is not available/enabled; Item will be ignored.")
             # handle anything else
             else:
-                self.logger.warning(f"Item={item.id()} has unknown avm_data_type={avm_data_type}. Item will be ignored.")
+                self.logger.warning(f"Item={item.id()} has unknown avm_data_type {avm_data_type!r}. Item will be ignored.")
 
             # items which can be changed outside the plugin context
-            if avm_data_type in (AVM_RW_ATTRIBUTES + AHA_WO_ATTRIBUTES + AHA_RW_ATTRIBUTES + HOMEAUTO_RW_ATTRIBUTES):
+            if avm_data_type in ALL_ATTRIBUTES_WRITEABLE:
                 return self.update_item
 
     def update_item(self, item, caller=None, source=None, dest=None):
@@ -538,7 +544,7 @@ class FritzDevice:
                 self.logger.warning(f"Item {item.id()} with avm attribute found, but 'avm_wlan_index' is not defined; Item will be ignored.")
 
         # handle network_device related items
-        elif avm_data_type in (HOST_ATTRIBUTE + HOST_CHILD_ATTRIBUTES):
+        elif avm_data_type in HOST_ATTRIBUTES:
             index = self._get_mac(item)
             if index is not None:
                 self.logger.debug(f"Item {item.id()} with avm device attribute and defined 'avm_mac' found; append to list.")
@@ -3980,7 +3986,7 @@ class Callmonitor:
             else:
                 self._trigger_items[item] = (avm_data_type, avm_incoming_allowed, avm_target_number)
 
-        elif avm_data_type in CALL_DURATION_ATTRIBUTES:
+        elif avm_data_type in CALL_MONITOR_ATTRIBUTES_DURATION:
             if avm_data_type == 'call_duration_incoming':
                 self._duration_item_in[item] = (avm_data_type, None)
             else:
@@ -4417,193 +4423,101 @@ class Callmonitor:
 """
 Definition of attribute value groups of avm_data_type
 """
-AHA_RO_ATTRIBUTES = ['device_id',
-                     'manufacturer',
-                     'product_name',
-                     'fw_version',
-                     'connected',
-                     'device_name',
-                     'tx_busy',
-                     'device_functions',
-                     'current_temperature',
-                     'temperature_reduced',
-                     'temperature_comfort',
-                     'temperature_offset',
-                     'windowopenactiveendtime',
-                     'boost_active',
-                     'boostactiveendtime',
-                     'summer_active',
-                     'holiday_active',
-                     'battery_low',
-                     'lock',
-                     'device_lock',
-                     'errorcode',
-                     'switch_mode',
-                     'power', 'energy',
-                     'voltage',
-                     'humidity',
-                     'alert_state',
-                     'color_mode',
-                     'supported_color_mode',
-                     'fullcolorsupport',
-                     'mapped',
-                     'blind_mode',
-                     'endpositionsset'
-                     ]
 
-AHA_WO_ATTRIBUTES = ['set_target_temperature',
-                     'set_window_open',
-                     'set_hkr_boost',
-                     'battery_level',
-                     'set_simpleonoff',
-                     'set_level',
-                     'set_levelpercentage',
-                     'set_hue',
-                     'set_saturation',
-                     'set_colortemperature',
-                     'switch_toggle']
 
-AHA_RW_ATTRIBUTES = ['target_temperature',
-                     'window_open',
-                     'hkr_boost',
-                     'simpleonoff',
-                     'level',
-                     'levelpercentage',
-                     'hue',
-                     'saturation',
-                     'colortemperature',
-                     'switch_state',
-                     'unmapped_hue',
-                     'unmapped_saturation'
-                     ]
+def _get_attributes(sub_dict: dict) -> list:
+    attributes = []
+    for avm_data_type in item_attributes.AVM_DATA_TYPES:
+        if sub_dict.items() <= item_attributes.AVM_DATA_TYPES[avm_data_type].items():
+            attributes.append(avm_data_type)
+    return attributes
 
-AHA_ATTRIBUTES = [*AHA_RO_ATTRIBUTES,
-                  *AHA_WO_ATTRIBUTES,
-                  *AHA_RW_ATTRIBUTES]
 
-AVM_RW_ATTRIBUTES = ['wlanconfig',
-                     'tam',
-                     'deflection_enable']
+ALL_ATTRIBUTES_SUPPORTED_BY_REPEATER = _get_attributes({'supported_by_repeater': True})
 
-CALL_MONITOR_ATTRIBUTES_GEN = ['call_event',
-                               'call_direction']
 
-CALL_MONITOR_ATTRIBUTES_IN = ['is_call_incoming',
-                              'last_caller_incoming',
-                              'last_call_date_incoming',
-                              'call_event_incoming',
-                              'last_number_incoming',
-                              'last_called_number_incoming']
+ALL_ATTRIBUTES_WRITEABLE = _get_attributes({'access': 'wo'}) + _get_attributes({'access': 'rw'})
 
-CALL_MONITOR_ATTRIBUTES_OUT = ['is_call_outgoing',
-                               'last_caller_outgoing',
-                               'last_call_date_outgoing',
-                               'call_event_outgoing',
-                               'last_number_outgoing',
-                               'last_called_number_outgoing']
 
-CALL_MONITOR_ATTRIBUTES_TRIGGER = ['monitor_trigger']
+DEPRECATED_ATTRIBUTES = _get_attributes({'deprecated': True})
 
-CALL_MONITOR_ATTRIBUTES = [*CALL_MONITOR_ATTRIBUTES_GEN,
-                           *CALL_MONITOR_ATTRIBUTES_IN,
-                           *CALL_MONITOR_ATTRIBUTES_OUT,
-                           *CALL_MONITOR_ATTRIBUTES_TRIGGER]
 
-CALL_DURATION_ATTRIBUTES = ['call_duration_incoming',
-                            'call_duration_outgoing']
+AHA_ATTRIBUTES = _get_attributes({'interface': 'aha'})
 
-WAN_CONNECTION_ATTRIBUTES = ['wan_connection_status',
-                             'wan_connection_error',
-                             'wan_is_connected',
-                             'wan_uptime',
-                             'wan_ip']
 
-TAM_ATTRIBUTES = ['tam',
-                  'tam_name',
-                  'tam_new_message_number',
-                  'tam_old_message_number',
-                  'tam_total_message_number']
+AHA_RO_ATTRIBUTES = _get_attributes({'interface': 'aha', 'access': 'ro'})
 
-WLAN_CONFIG_ATTRIBUTES = ['wlanconfig',
-                          'wlanconfig_ssid',
-                          'wlan_guest_time_remaining',
-                          'wlan_associates',
-                          'wps_active',
-                          'wps_status',
-                          'wps_mode']
 
-WLAN_ATTRIBUTES = ['wlan_total_associates']
+AHA_WO_ATTRIBUTES = _get_attributes({'interface': 'aha', 'access': 'wo'})
 
-WAN_COMMON_INTERFACE_ATTRIBUTES = ['wan_total_packets_sent',
-                                   'wan_total_packets_received',
-                                   'wan_current_packets_sent',
-                                   'wan_current_packets_received',
-                                   'wan_total_bytes_sent',
-                                   'wan_total_bytes_received',
-                                   'wan_current_bytes_sent',
-                                   'wan_current_bytes_received',
-                                   'wan_link']
 
-FRITZ_DEVICE_ATTRIBUTES = ['uptime',
-                           'software_version',
-                           'hardware_version',
-                           'serial_number']
+AHA_RW_ATTRIBUTES = _get_attributes({'interface': 'aha', 'access': 'rw'})
 
-HOST_ATTRIBUTE = ['network_device',
-                  'hosts_count',
-                  'hosts_info',
-                  'mesh_topology']
 
-HOST_CHILD_ATTRIBUTES = ['device_ip',
-                         'device_connection_type',
-                         'device_hostname',
-                         'connection_status']
+TR064_ATTRIBUTES = _get_attributes({'interface': 'tr064'})
 
-HOST_ATTRIBUTES = [*HOST_ATTRIBUTE,
-                   *HOST_CHILD_ATTRIBUTES]
 
-DEFLECTION_ATTRIBUTES = ['deflections_details',
-                         'deflection_enable',
-                         'deflection_type',
-                         'deflection_number',
-                         'deflection_to_number',
-                         'deflection_mode',
-                         'deflection_outgoing',
-                         'deflection_phonebook_id']
+AVM_RW_ATTRIBUTES = _get_attributes({'interface': 'tr064', 'access': 'rw'})
 
-WAN_DSL_INTERFACE_ATTRIBUTES = ['wan_upstream',
-                                'wan_downstream']
 
-HOMEAUTO_RO_ATTRIBUTES = ['hkr_device',
-                          'set_temperature',
-                          'temperature',
-                          'set_temperature_reduced',
-                          'set_temperature_comfort',
-                          'firmware_version']
+CALL_MONITOR_ATTRIBUTES = _get_attributes({'interface': 'tr064', 'group': 'call_monitor'})
 
-HOMEAUTO_RW_ATTRIBUTES = ['aha_device']
 
-HOMEAUTO_ATTRIBUTES = [*HOMEAUTO_RO_ATTRIBUTES,
-                       *HOMEAUTO_RW_ATTRIBUTES]
+CALL_MONITOR_ATTRIBUTES_TRIGGER = _get_attributes({'interface': 'tr064', 'group': 'call_monitor', 'sub_group': 'trigger'})
 
-MYFRITZ_ATTRIBUTES = ['myfritz_status']
 
-DEPRECATED_ATTRIBUTES = ['temperature',
-                         'set_temperature_reduced',
-                         'set_temperature_comfort',
-                         'firmware_version',
-                         'aha_device',
-                         'hkr_device']
+CALL_MONITOR_ATTRIBUTES_GEN = _get_attributes({'interface': 'tr064', 'group': 'call_monitor', 'sub_group': 'generic'})
 
-TR064_ATTRIBUTES = [*WAN_CONNECTION_ATTRIBUTES,
-                    *TAM_ATTRIBUTES,
-                    *WLAN_CONFIG_ATTRIBUTES,
-                    *WLAN_ATTRIBUTES,
-                    *WAN_COMMON_INTERFACE_ATTRIBUTES,
-                    *FRITZ_DEVICE_ATTRIBUTES,
-                    *HOST_ATTRIBUTES,
-                    *DEFLECTION_ATTRIBUTES,
-                    *WAN_DSL_INTERFACE_ATTRIBUTES,
-                    *HOMEAUTO_ATTRIBUTES,
-                    *MYFRITZ_ATTRIBUTES,
-                    *AVM_RW_ATTRIBUTES]
+
+CALL_MONITOR_ATTRIBUTES_IN = _get_attributes({'interface': 'tr064', 'group': 'call_monitor', 'sub_group': 'in'})
+
+
+CALL_MONITOR_ATTRIBUTES_OUT = _get_attributes({'interface': 'tr064', 'group': 'call_monitor', 'sub_group': 'out'})
+
+
+CALL_MONITOR_ATTRIBUTES_DURATION = _get_attributes({'interface': 'tr064', 'group': 'call_monitor', 'sub_group': 'duration'})
+
+
+WAN_CONNECTION_ATTRIBUTES = _get_attributes({'interface': 'tr064', 'group': 'wan', 'sub_group': 'connection'})
+
+
+WAN_COMMON_INTERFACE_ATTRIBUTES = _get_attributes({'interface': 'tr064', 'group': 'wan', 'sub_group': 'common_interface'})
+
+
+WAN_DSL_INTERFACE_ATTRIBUTES = _get_attributes({'interface': 'tr064', 'group': 'wan', 'sub_group': 'dsl_interface'})
+
+
+TAM_ATTRIBUTES = _get_attributes({'interface': 'tr064', 'group': 'tam'})
+
+
+WLAN_CONFIG_ATTRIBUTES = _get_attributes({'interface': 'tr064', 'group': 'wlan_config'})
+
+
+WLAN_ATTRIBUTES = _get_attributes({'interface': 'tr064', 'group': 'wlan'})
+
+
+FRITZ_DEVICE_ATTRIBUTES = _get_attributes({'interface': 'tr064', 'group': 'fritz_device'})
+
+
+HOST_ATTRIBUTES = _get_attributes({'interface': 'tr064', 'group': 'host'})
+
+
+HOST_ATTRIBUTES_GEN = _get_attributes({'interface': 'tr064', 'group': 'host', 'sub_group': None})
+
+
+HOST_ATTRIBUTES_CHILD = _get_attributes({'interface': 'tr064', 'group': 'host', 'sub_group': 'child'})
+
+
+DEFLECTION_ATTRIBUTES = _get_attributes({'interface': 'tr064', 'group': 'deflection'})
+
+
+HOMEAUTO_RO_ATTRIBUTES = _get_attributes({'interface': 'tr064', 'group': 'homeauto', 'access': 'ro'})
+
+
+HOMEAUTO_RW_ATTRIBUTES = _get_attributes({'interface': 'tr064', 'group': 'homeauto', 'access': 'rw'})
+
+
+HOMEAUTO_ATTRIBUTES = _get_attributes({'interface': 'tr064', 'group': 'homeauto'})
+
+
+MYFRITZ_ATTRIBUTES = _get_attributes({'interface': 'tr064', 'group': 'myfritz'})
