@@ -49,7 +49,7 @@ class AVM(SmartPlugin):
     """
     Main class of the Plugin. Does all plugin specific stuff
     """
-    PLUGIN_VERSION = '2.0.1'
+    PLUGIN_VERSION = '2.0.2'
 
     # ToDo: Clean dead code in Fritzdevice
     # Todo: check setting of level to 0 if simpleonoff is off -> Status: Implemented, need to be tested
@@ -3609,6 +3609,7 @@ class FritzHome:
         def _update_from_node(self, node):
             super()._update_from_node(node)
             if self.connected is False:
+                self.simpleonoff = False
                 return
 
             if self.has_switchable:
@@ -3649,6 +3650,8 @@ class FritzHome:
         def _update_from_node(self, node):
             super()._update_from_node(node)
             if self.connected is False:
+                self.level = 0
+                self.levelpercentage = 0
                 return
 
             if self.has_level:
@@ -3667,14 +3670,6 @@ class FritzHome:
                 self.levelpercentage = self.get_node_value_as_int(levelcontrol_element, "levelpercentage")
 
             # Set Level to zero for consistency, if light is off:
-            # try:
-            #     onoff = bool(self._fritz.get_state(self.ain))
-            #     if onoff is False:
-            #         self.level = 0
-            #         self.levelpercentage = 0
-            # except AttributeError:
-            #     pass
-
             state_element = node.find("simpleonoff")
             if state_element is not None:
                 simpleonoff = self.get_node_value_as_int_as_bool(state_element, "state")
