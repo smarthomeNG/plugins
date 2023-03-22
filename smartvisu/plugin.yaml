@@ -89,12 +89,12 @@ parameters:
             de: 'Sollen Deprecated- bzw. Removed Warnungen und Fehler einzeln geloggt werden?'
             en: 'Should individual Deprecated/Removed warnings and errors be logged?'
 
-    protocol_over_reverseproxy:
-        type: bool
-        default: False
-        description:
-            de: 'Clients greifen über einen Reverse Proxy auf SmartHomeNG zu'
-            en: 'Clients access SmartHomeNG via a reverse proxy'
+#    protocol_over_reverseproxy:
+#        type: bool
+#        default: False
+#        description:
+#            de: 'Clients greifen über einen Reverse Proxy auf SmartHomeNG zu'
+#            en: 'Clients access SmartHomeNG via a reverse proxy'
 
 item_attributes:
     # Definition of item attributes defined by this plugin
