@@ -55,14 +55,10 @@ class Husky2AutomowerSession(session.AutomowerSession):
         else:
             session._LOGGER.debug("Refresh access token doing relogin")
             self.shLogger.debug("Refresh access token doing relogin")
-            #await self.close()
-            #self.shLogger.debug("Closed old session")
             await asyncio.sleep(5)
             await self.logincc(self.client_secret)
             self.shLogger.debug("Logged in successfully")
             await asyncio.sleep(5)
-            #await self.connect()
-            #self.shLogger.debug("Connected successfully")
 
 
 class Husky2(SmartPlugin):
@@ -75,7 +71,7 @@ class Husky2(SmartPlugin):
     are already available!
     """
 
-    PLUGIN_VERSION = '2.1.0'  # (must match the version specified in plugin.yaml), use '1.0.0' for your initial plugin Release
+    PLUGIN_VERSION = '2.1.1'
 
     ITEM_INFO = "husky_info"
     ITEM_CONTROL = "husky_control"
@@ -318,7 +314,8 @@ class Husky2(SmartPlugin):
                         self.asyncLoop.run_until_complete(task)
                     except CancelledError:
                         pass
-
+            except AttributeError:
+                self.logger.debug("No other running async Tasks to cancel")
             except Exception as e:
                 self.logger.warning(f"husky2_thread: finally *2 - Exception {e}")
             try:
