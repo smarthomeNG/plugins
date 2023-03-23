@@ -307,7 +307,8 @@ class OneWire(SmartPlugin):
                         self.logger.warning(f"_io_cycle: 'raise' {self._ios[addr][key]['readerrors']}. problem connecting to {addr}-{key}, error: {e}")
                         raise
                     except Exception as e:
-                        self.stopevent.wait(0.5)
+                        time.sleep(0.5)
+                        # self.stopevent.wait(0.5)
                         self._ios[addr][key]['readerrors'] = self._ios[addr][key].get('readerrors', 0) + 1
                         if self._ios[addr][key]['readerrors'] % self.warn_after == 0:
                             self.logger.warning(f"_io_cycle: {self._ios[addr][key]['readerrors']}. problem reading {addr}-{key}, error: {e}")
@@ -408,6 +409,7 @@ class OneWire(SmartPlugin):
                         self.logger.error(f"reading {addr} gives error value 85.")
                         continue
                 except Exception as e:
+                    # time.sleep(0.5)
                     self.stopevent.wait(0.5)
                     self._sensors[addr][key]['readerrors'] = self._sensors[addr][key].get('readerrors', 0) + 1
                     if self._sensors[addr][key]['readerrors'] % self.warn_after == 0:

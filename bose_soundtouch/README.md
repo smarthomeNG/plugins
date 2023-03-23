@@ -53,8 +53,7 @@ The following example can be used to setup a device:
 
 ```yaml
 bose_soundtouch:
-    class_name: BoseSoundtouch
-    class_path: plugins.bose_soundtouch
+    plugin_name: bose_soundtouch
     ip: 192.168.2.28
 ```
 

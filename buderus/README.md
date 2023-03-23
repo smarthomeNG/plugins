@@ -49,8 +49,7 @@ The following example can be used to setup a device:
 
 ```yaml
 buderus:
-    class_name: Buderus
-    class_path: plugins.buderus
+    plugin_name: buderus
     host: 192.168.2.28
     key: 90ad52660ce1234551234579d89e25b70b5331ce0e82c5fd1254a317574ec807
 ```
