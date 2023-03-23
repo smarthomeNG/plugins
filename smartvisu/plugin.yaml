@@ -8,8 +8,8 @@ plugin:
     maintainer: msinn
     tester: wvhn
     state: ready
-#    keywords: iot xyz
-    documentation: http://smarthomeng.de/user/plugins/visu_smartvisu/user_doc.html
+    #keywords: iot xyz
+    #documentation: ''
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1586800-support-thread-für-das-smartvisu-plugin
 
     version: 1.8.10                # Plugin version
