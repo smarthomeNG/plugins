@@ -1,11 +1,102 @@
 {% extends "base_plugin.html" %}
 
 {% set logo_frame = false %}
-{% set items_count = items_control|length + items_state|length %}
+
+<!-- if you don't need any buttons in the header, disable them completely-->
+
+
+<!--
+	Additional styles go into this block. Examples are for datatables
+-->
+{% block pluginstyles %}
+<style>
+  table th.value {
+    width: 100px;
+  }
+</style>
+{% endblock pluginstyles %}
+
+<!--
+	Additional script tag for plugin specific javascript code go into this block
+-->
+{% block pluginscripts %}
+<script>
+	function handleUpdatedData(response, dataSet=null) {
+		if (dataSet === 'devices_info' || dataSet === null) {
+			var objResponse = JSON.parse(response);
+			myProto = document.getElementById(dataSet);
+			for (item in objResponse) {
+				/*
+        Parameters for shngInsertText:
+          0: mandatory, ID of the HTML element, e.g. the table cell
+          1: mandatory, Value to be written - taken from the objResponse dict
+          2: optional, If element of parameter 0 is in a (data)table, the ID of the table has to be put here
+          3: optional, If you want a visual highlight effect when a value changes, provide the duration in seconds.
+				shngInsertText (item+'_value', objResponse[item]['value'], 'maintable', 5);
+				*/
+			}
+      // Redraw datatable after cell updates
+      // $('#maintable').DataTable().draw(false);
+		}
+	}
+</script>
+<!--
+	This part is used to implement datatable JS for the tables. It allows resorting tables by column, etc.
+	For each table you have to implement the code part $('#<table_id>').DataTable(..); where the <table_id> matches the id of a table tag
+-->
+<script>
+    $(document).ready( function () {
+		/*
+		loading defaults from /modules/http/webif/gstatic/datatables/datatables.defaults.js
+		You can copy that file, put it in your plugin directory, rename the "bind" function and
+		trigger that function here instead of datatables_defaults if you want to change the behaviour.
+		Of course you can also overwrite defaults by putting the option declarations in {} below.
+		*/
+		$(window).trigger('datatables_defaults');
+		try {
+			/*
+			Copy this part for every datatable on your page. Adjust options if necessary.
+			pageLength and pageResize should be included as they are to adjust it based on the plugin settings
+			*/
+			table_history = $('#history_table').DataTable( {
+			  columnDefs: [{ "targets": [2], "className": "value"}],
+			  pageLength: 50,
+			  pageResize: false,
+              order: [[1, 'desc']]});
+
+            table_control = $('#control_item_table').DataTable( {
+			  columnDefs: [{ "targets": [2], "className": "value"}],
+			  pageLength: -1,
+			  pageResize: true});
+
+            table_state = $('#state_item_table').DataTable( {
+			  columnDefs: [{ "targets": [2], "className": "value"}],
+			  pageLength: -1,
+			  pageResize: true});
+		}
+		catch (e) {
+			console.warn("Datatable JS not loaded, showing standard table without reorder option " + e);
+		}
+	});
+</script>
+<!--
+This is an example on how to update the page refresh method. You can set the dataSet, update interval, special parameters or (de)activate the auto refresh
+In the example the update is deactivated on the 12th of December 2022 (what might make no sense at all)
+<script>
+  var today = new Date();
+  var today_date = String(today.getDate()) + String(today.getMonth() + 1) + today.getFullYear();
+  let test_date = "12122022";
+  if (today_date === test_date)
+      window.refresh.update({dataSet:'test', update_params:'specialitem', update_interval: 2000, update_active:false});
+  </script>
+-->
+{% endblock pluginscripts %}
+
 
 {% block headtable %}
-<table class="table table-striped table-hover pluginList display">
-    <tbody>
+<!-- add a style="min-width:..px;" if you want to define a minimum width for responsive behaviour -->
+<table class="table table-striped table-hover">
+	<tbody>
     <tr>
         <td class="py-1"><strong>Token</strong></td>
         {% if p.getToken() %}
@@ -29,17 +120,7 @@
 
 
 <!--
-	Additional buttons for the web interface (if any are needed) - displayed below the headtable-section
--->
-{% block buttons %}
-{% if 1==2 %}
-<form action="" method="post">
-</form>
-{% endif %}
-{% endblock %}
-
-<!--
-	Define the number of tabs for the body of the web interface (1 - 3)
+	Define the number of tabs for the body of the web interface (1 - 6)
 -->
 {% set tabcount = 2 %}
 
@@ -48,7 +129,7 @@
 	Set the tab that will be visible on start, if another tab that 1 is wanted (1 - 3)
 -->
 {% if item_count==0 %}
-{% set start_tab = 1 %}
+	{% set start_tab = 2 %}
 {% endif %}
 
 
@@ -57,7 +138,9 @@
 -->
 {% set tab1title = "<strong>" ~ p.get_shortname() ~ " Geräte</strong> (" ~ device_count ~ ")" %}
 {% block bodytab1 %}
-<div class="container-fluid m-2">
+<div class="container-fluid m-2 table-resize">
+  <!-- remove this div if not needed -->
+  <div class="mb-2">
     <table class="table">
         <tbody>
         <tr>
@@ -210,121 +293,112 @@
                 </script>
             </td>
         </tr>
-        <tr>
-            <td colspan="2">
-                <h2>{{ p.translate("History") }}</h2>
-                <table id="history_table" class="table table-striped table-hover pluginList display">
-                    <thead>
-                    <tr>
-                        <th>{{ p.translate("Timestamp") }}</th>
-                        <th>{{ p.translate("Timedelta min:sec") }}</th>
-                        <th>{{ p.translate("Activity") }}</th>
-                        <th>{{ p.translate("Battery") }}</th>
-                        <th>{{ p.translate("Coordinates") }}</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-
-                    {% for stamp in p.getTimestamps() %}
-                    <tr>
-                        <td class="py-1">{{ stamp }}</td>
-                        <td class="py-1">{{ p.getTimedeltas()[loop.index0] }}</td>
-                        {% if p.getErrormessages()[loop.index0] == p.translate("No error") %}
-                            <td class="py-1">{{ p.translate(p.getActivities()[loop.index0]) + ", " +
-                                p.translate(p.getErrormessages()[loop.index0]) }}</td>
-                        {% else %}
-                            <td class="py-1" style="color:red">{{ p.translate(p.getActivities()[loop.index0]) + ", " +
-                                p.translate(p.getErrormessages()[loop.index0]) }}</td>
-                        {% endif %}
-                        <td class="py-1">{{ p.getBatterypercents()[loop.index0] }} %</td>
-                        <td class="py-1">{{ p.getLongitudes()[loop.index0] }}, {{ p.getLatitudes()[loop.index0] }}</td>
-                    </tr>
-                    {% endfor %}
-
-                    </tbody>
-                </table>
-            </td>
-        </tr>
         </tbody>
     </table>
+    <h2>{{ p.translate("History") }}</h2>
+  </div>
 
+	<!-- set id accordingly -->
+	<table id="history_table" class="dataTable">
+		<thead>
+			<tr>
+        <!-- You HAVE to add an empty th here for correct implementation of the responsive plugin -->
+        <th></th>
+			    <th>{{ p.translate("Timestamp") }}</th>
+                <th>{{ p.translate("Timedelta min:sec") }}</th>
+                <th>{{ p.translate("Activity") }}</th>
+                <th>{{ p.translate("Battery") }}</th>
+                <th>{{ p.translate("Coordinates") }}</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for stamp in p.getTimestamps() %}
+            <tr>
+                <!-- You HAVE to add an empty td here for correct implementation of the responsive plugin -->
+                <td></td>
+                <td class="py-1">{{ stamp }}</td>
+                <td class="py-1">{{ p.getTimedeltas()[loop.index0] }}</td>
+                {% if p.getErrormessages()[loop.index0] == p.translate("No error") %}
+                    <td class="py-1">{{ p.translate(p.getActivities()[loop.index0]) + ", " +
+                        p.translate(p.getErrormessages()[loop.index0]) }}</td>
+                {% else %}
+                    <td class="py-1" style="color:red">{{ p.translate(p.getActivities()[loop.index0]) + ", " +
+                        p.translate(p.getErrormessages()[loop.index0]) }}</td>
+                {% endif %}
+                <td class="py-1">{{ p.getBatterypercents()[loop.index0] }} %</td>
+                <td class="py-1">{{ p.getLongitudes()[loop.index0] }}, {{ p.getLatitudes()[loop.index0] }}</td>
+            </tr>
+            {% endfor %}
+		</tbody>
+	</table>
 </div>
-
 {% endblock bodytab1 %}
-
 
 <!--
 	Content block for the second tab of the Webinterface
 -->
 {% set tab2title = "<strong>" ~ p.get_shortname() ~ " Items</strong> (" ~ items_count ~ ")" %}
 {% block bodytab2 %}
-<div class="container-fluid m-2">
-
+<div class="container-fluid m-2 table-resize">
     <h2>Control Items</h2>
-    <table id="control_item_table" class="table table-striped table-hover pluginList display pluginList display">
-        <thead>
-        <tr>
-            <th>{{ p.translate("Key") }}</th>
-            <th>{{ p.translate("Description") }}</th>
-            <th>{{ p.translate("Path") }}</th>
-        </tr>
-        </thead>
-        <tbody>
-        {% for key in items_control %}
-        {% for item in items_control[key] %}
-        <tr>
-            <td class="py-1">{{ key }}</td>
-            <td class="py-1">{{ item }}</td>
-            <td class="py-1">{{ item._path }}</td>
-        </tr>
-        {% endfor %}
-        {% endfor %}
-        </tbody>
-    </table>
-
-
+	<!-- set id accordingly -->
+	<table id="control_item_table" class="dataTable">
+		<thead>
+			<tr>
+                <!-- You HAVE to add an empty th here for correct implementation of the responsive plugin -->
+                <th></th>
+			    <th>{{ p.translate("Key") }}</th>
+                <th>{{ p.translate("Description") }}</th>
+                <th>{{ p.translate("Path") }}</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for key in items_control %}
+                {% for item in items_control[key] %}
+                <tr>
+                    <!-- You HAVE to add an empty td here for correct implementation of the responsive plugin -->
+                    <td></td>
+                    <td class="py-1">{{ key }}</td>
+                    <td class="py-1">{{ item.property.name }}</td>
+                    <td class="py-1">{{ item.property.path }}</td>
+                </tr>
+                {% endfor %}
+            {% endfor %}
+		</tbody>
+	</table>
+    <br>
     <h2>State Items</h2>
-    <table id="state_item_table" class="table table-striped table-hover pluginList display pluginList display">
-        <thead>
-        <tr>
-            <th>{{ p.translate("Key") }}</th>
-            <th>{{ p.translate("Path") }}</th>
-            <th>{{ p.translate("Value") }}</th>
-            <th>{{ p.translate("Last Update") }}</th>
-            <th>{{ p.translate("Last Change") }}</th>
-        </tr>
-        </thead>
-        <tbody>
-
-        {% for key in items_state %}
-        {% for item in items_state[key] %}
-        <tr>
-            <td class="py-1">{{ key }}</td>
-            <td class="py-1">{{ item._path }}</td>
-            <td class="py-1">{{ item() }}</td>
-            <td class="py-1">{{ item.last_update().strftime('%d.%m.%Y %H:%M:%S') }}</td>
-            <td class="py-1">{{ item.last_change().strftime('%d.%m.%Y %H:%M:%S') }}</td>
-
-        </tr>
-        {% endfor %}
-        {% endfor %}
-        </tbody>
-    </table>
+    <table id="state_item_table" class="dataTable">
+		<thead>
+			<tr>
+                <!-- You HAVE to add an empty th here for correct implementation of the responsive plugin -->
+                <th></th>
+			    <th>{{ p.translate("Key") }}</th>
+                <th>{{ p.translate("Path") }}</th>
+                <th>{{ p.translate("Value") }}</th>
+                <th>{{ p.translate("Last Update") }}</th>
+                <th>{{ p.translate("Last Change") }}</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for key in items_state %}
+                {% for item in items_state[key] %}
+                <tr>
+                    <!-- You HAVE to add an empty td here for correct implementation of the responsive plugin -->
+                    <td></td>
+                    <td class="py-1">{{ key }}</td>
+                    <td class="py-1">{{ item.property.path }}</td>
+                    {% if item.property.value is iterable and (item.property.value is not string and item.property.value is not mapping) %}
+                        <td class="py-1">---</td>
+                    {% else %}
+                        <td class="py-1">{{ p.translate(item.property.value)}}</td>
+                    {% endif %}
+                    <td class="py-1">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                    <td class="py-1">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                </tr>
+                {% endfor %}
+            {% endfor %}
+		</tbody>
+	</table>
 </div>
 {% endblock bodytab2 %}
-
-{% block pluginscripts %}
-<script>
-    $(document).ready(function () {
-        $(window).trigger('datatables_defaults'); // loading default behaviour
-        try {
-            table_history = $('#history_table').DataTable({}); // put options into {} if needed
-            table_control = $('#control_item_table').DataTable({}); // put options into {} if needed
-            table_state = $('#state_item_table').DataTable({}); // put options into {} if needed
-        } catch (e) {
-            console.log("Datatable JS not loaded, showing standard table without reorder option " + e);
-        }
-    });
-</script>
-{% endblock pluginscripts %}
-
