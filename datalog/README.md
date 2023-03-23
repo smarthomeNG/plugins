@@ -55,8 +55,7 @@ Example:
 
 ```yaml
 datalog:
-   class_name = DataLog
-   class_path = plugins.datalog
+   plugin_name = datalog
    filepatterns = default:{log}-{year}-{month}-{day}.csv | custom:{log}-{year}-{month}-{day}.txt
    logpatterns = csv:{time};{item};{value}\n
 ```

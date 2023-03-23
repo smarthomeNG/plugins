@@ -43,8 +43,6 @@ The plugin can be configured with the following parameters:
 
 | Parameter  | Description | Required
 | ------------- | ------------- | ------------- |
-| class_name  | Must be set to `BoseSoundtouch`  | Yes  |
-| class_path  | Must be set to `plugins.bose_soundtouch`  | Yes  |
 | ip  | IP address of Bose Soundtouch system. e.g. `192.168.2.28`  | Yes  |
 | port  | Port of Bose Soundtouch system. e.g. `8090`  | -  |
 | cycle_time  | Bose Soundtouch system will we queried every X seconds. e.g. `10`  | - |
