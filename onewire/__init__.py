@@ -43,7 +43,7 @@ class OneWire(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.9.2'
+    PLUGIN_VERSION = '1.9.3'
 
     _flip = {0: '1', False: '1', 1: '0', True: '0', '0': True, '1': False}
 
@@ -124,6 +124,7 @@ class OneWire(SmartPlugin):
         self.read_alias_definitions()
 
         self._io_wait = self.get_parameter_value('io_wait')
+        self._parasitic_power_wait = self.get_parameter_value('parasitic_power_wait')
         self._button_wait = self.get_parameter_value('button_wait')
         self._cycle = self.get_parameter_value('cycle')
         self.log_counter_cycle_time = self.get_parameter_value('log_counter_cycle_time')
@@ -307,8 +308,8 @@ class OneWire(SmartPlugin):
                         self.logger.warning(f"_io_cycle: 'raise' {self._ios[addr][key]['readerrors']}. problem connecting to {addr}-{key}, error: {e}")
                         raise
                     except Exception as e:
-                        time.sleep(0.5)
-                        # self.stopevent.wait(0.5)
+                        # time.sleep(self._parasitic_power_wait)
+                        self.stopevent.wait(self._parasitic_power_wait)
                         self._ios[addr][key]['readerrors'] = self._ios[addr][key].get('readerrors', 0) + 1
                         if self._ios[addr][key]['readerrors'] % self.warn_after == 0:
                             self.logger.warning(f"_io_cycle: {self._ios[addr][key]['readerrors']}. problem reading {addr}-{key}, error: {e}")
@@ -352,8 +353,8 @@ class OneWire(SmartPlugin):
             try:
                 entries = self.owbase.dir(path)
             except Exception:
-                #time.sleep(0.5)
-                self.stopevent.wait(0.5)
+                #time.sleep(self._parasitic_power_wait)
+                self.stopevent.wait(self._parasitic_power_wait)
                 error = True
                 continue
             for entry in entries:
@@ -409,8 +410,8 @@ class OneWire(SmartPlugin):
                         self.logger.error(f"reading {addr} gives error value 85.")
                         continue
                 except Exception as e:
-                    # time.sleep(0.5)
-                    self.stopevent.wait(0.5)
+                    # time.sleep(self._parasitic_power_wait)
+                    self.stopevent.wait(self._parasitic_power_wait)
                     self._sensors[addr][key]['readerrors'] = self._sensors[addr][key].get('readerrors', 0) + 1
                     if self._sensors[addr][key]['readerrors'] % self.warn_after == 0:
                         self.logger.warning(f"_sensor_cycle: {self._sensors[addr][key]['readerrors']}. problem reading {addr}-{key}, error: {e}")
