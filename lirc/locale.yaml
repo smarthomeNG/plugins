@@ -8,7 +8,6 @@ plugin_translations:
     'Autoreconnect':        {'de': '=', 'en': '='}
     'Reconnect Details':    {'de': '=', 'en': '='}
     'Retries':              {'de': '=', 'en': '='}
-    'Cycle':                {'de': '=', 'en': '='}
     'Letzte Antwort':       {'de': '=', 'en': 'Last Response'}
     'Senden':               {'de': '=', 'en': 'Send'}
     'Item':                 {'de': '=', 'en': '='}
