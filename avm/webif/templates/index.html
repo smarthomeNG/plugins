@@ -259,12 +259,13 @@
         <tbody>
             {% if tr064_items %}  
                 {% for item in tr064_items %}
+                    {% set item_config = p.fritz_device.items[item] %}
                     <tr>
                         <td></td>
                         <td class="py-1">{{ item.id() }}</td>
                         <td class="py-1">{{ item.property.type }}</td>
-                        <td class="py-1">{{ p.fritz_device.item_dict[item][0] }}</td>
-                        <td class="py-1" style="text-align: right">{{ p.fritz_device.item_dict[item][2] }}</td>
+                        <td class="py-1">{{ item_config[0] }}</td>
+                        <td class="py-1" style="text-align: right">{{ item_config[2] }}</td>
                         <td class="py-1" id="{{ item.id() }}_tr064_value">{{ item.property.value }}</td>
                         <td class="py-1" id="{{ item.id() }}_tr064_last_update" style="text-align: center">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
                         <td class="py-1" id="{{ item.id() }}_tr064_last_change" style="text-align: center">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
@@ -295,12 +296,13 @@
         <tbody>
             {% if aha_items %}   
                 {% for item in aha_items %}
+                    {% set item_config = p.fritz_home.items[item] %}
                     <tr>
                         <td></td>
                         <td class="py-1">{{ item.id() }}</td>
                         <td class="py-1">{{ item.property.type }}</td>
-                        <td class="py-1">{{ p.fritz_home.item_dict[item][0] }}</td>
-                        <td class="py-1" style="text-align: right">{{ p.fritz_home.item_dict[item][2] }}</td>
+                        <td class="py-1">{{ item_config[0] }}</td>
+                        <td class="py-1" style="text-align: right">{{ item_config[2] }}</td>
                         <td class="py-1" id="{{ item.id() }}_aha_value">{{ item.property.value }}</td>
                         <td class="py-1" id="{{ item.id() }}_aha_last_update" style="text-align: center">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
                         <td class="py-1" id="{{ item.id() }}_aha_last_change" style="text-align: center">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
@@ -327,13 +329,13 @@
         </thead>
         <tbody>
             {% if p.fritz_home %}
-                {% for device in p.fritz_home.get_devices() %}
+                {% set devices = p.fritz_home.get_devices() %}
+                {% for device in devices %}
                     <tr>
                         <td></td>
                         <td class="py-1">{{ device.ain }}
                         <td class="py-1"></td>
-                        <td class="py-1">{{ p.fritz_home._devices[device.ain].__dict__ }}</td>
-                        
+                        <td class="py-1">{{ p.fritz_home.get_device_by_ain(device.ain).__dict__ }}</td>
                     </tr>
                 {% endfor %}
             {% endif %}
@@ -465,29 +467,33 @@
         </thead>
         <tbody>
             <tr>
-                <td class="py-1">{{ "fritz_device._items" }}</td>
-                <td class="py-1">{{ p.fritz_device._items }}</td>
+                <td class="py-1">{{ "fritz_device.items" }}</td>
+                <td class="py-1">{{ p.fritz_device.items }}</td>
             </tr>
             <tr>
-                <td class="py-1">{{ "fritz_device._item_blacklist" }}</td>
-                <td class="py-1">{{ p.fritz_device._item_blacklist }}</td>
+                <td class="py-1">{{ "fritz_device.get_tr064_items_blacklisted" }}</td>
+                <td class="py-1">{{ p.fritz_device.get_tr064_items_blacklisted() }}</td>
             </tr>
+            {% if p._fritz_home %}
             <tr>
-                <td class="py-1">{{ "fritz_home._items" }}</td>
-                <td class="py-1">{{ p.fritz_home._items }}</td>
+                <td class="py-1">{{ "fritz_home.items" }}</td>
+                <td class="py-1">{{ p.fritz_home.items }}</td>
             </tr>
             <tr>
                 <td class="py-1">{{ "self._data_cache" }}</td>
                 <td class="py-1">{{ p.fritz_device._data_cache }}</td>
             </tr>
-            <tr>
-                <td class="py-1">{{ "monitoring_service._items_incoming" }}</td>
-                <td class="py-1">{{ p.monitoring_service._items_incoming }}</td>
-            </tr>
-            <tr>
-                <td class="py-1">{{ "monitoring_service._items_outgoing" }}</td>
-                <td class="py-1">{{ p.monitoring_service._items_outgoing }}</td>
-            </tr>
+            {% endif %}
+            {% if p._call_monitor %}
+                <tr>
+                    <td class="py-1">{{ "monitoring_service.item_list_incoming()" }}</td>
+                    <td class="py-1">{{ p.monitoring_service.item_list_incoming() }}</td>
+                </tr>
+                <tr>
+                    <td class="py-1">{{ "monitoring_service.item_list_outgoing()" }}</td>
+                    <td class="py-1">{{ p.monitoring_service.item_list_outgoing() }}</td>
+                </tr>
+            {% endif %}
             <!-- {#
             <tr>
                 <td class="py-1">{{ "X_AVM_DE_GetClients" }}</td>
