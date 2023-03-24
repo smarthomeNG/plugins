@@ -76,7 +76,8 @@ class SmartVisu(SmartPlugin):
         self._handle_widgets = self.get_parameter_value('handle_widgets')
         self._create_masteritem_file = self.get_parameter_value('create_masteritem_file')
         self.list_deprecated_warnings = self.get_parameter_value('list_deprecated_warnings')
-        self.protocol_over_reverseproxy = self.get_parameter_value('protocol_over_reverseproxy')
+        self.protocol_over_reverseproxy = False
+        #self.protocol_over_reverseproxy = self.get_parameter_value('protocol_over_reverseproxy')
 
         self.smartvisu_version = self.get_smartvisu_version()
         if self.smartvisu_version == '':
