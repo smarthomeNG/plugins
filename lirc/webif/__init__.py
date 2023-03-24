@@ -95,7 +95,6 @@ class WebInterface(SmartPluginWebIf):
             for item in self.plugin.get_item_list('lirc', True):
                 data['items'].update({item.id(): {'last_update': item.property.last_update.strftime('%d.%m.%Y %H:%M:%S'), 'last_change': item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')}})
             try:
-                self.logger.error(f"data for webif: {data}")
                 return json.dumps(data)
             except Exception as e:
                 self.logger.error(f"get_data_html exception: {e}")
