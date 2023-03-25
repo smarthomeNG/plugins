@@ -867,7 +867,7 @@ class FritzDevice:
             self.logger.debug(f"Value for item={item} is None.")
             return False
         elif isinstance(data, int) and data in self.ERROR_CODES:
-            self.logger.error(f"Error {data} '{self.ERROR_CODES.get(data, None)}' occurred during update of item={item} with avm_data_type={avm_data_type} and index={index}. Check item configuration regarding supported/activated function of AVM device. ")
+            self.logger.warning(f"Error {data} '{self.ERROR_CODES.get(data, None)}' occurred during update of item={item} with avm_data_type={avm_data_type} and index={index}. Check item configuration regarding supported/activated function of AVM device. ")
             return False
         else:
             item(data, self._plugin_instance.get_fullname())
@@ -1704,7 +1704,7 @@ class FritzHome:
     HOMEAUTO_ROUTE = '/webservices/homeautoswitch.lua'
     INTERNET_STATUS_ROUTE = '/internet/inetstat_monitor.lua?sid='
 
-    def __init__(self, host, ssl, verify, user, password, _log_entry_count, plugin_instance):
+    def __init__(self, host, ssl, verify, user, password, log_entry_count, plugin_instance):
         """
         Init the Class FritzHome
         """
@@ -1723,11 +1723,11 @@ class FritzHome:
         self._devices: Dict[str, FritzHome.FritzhomeDevice] = {}
         self._templates: Dict[str, FritzHome.FritzhomeTemplate] = {}
         self._logged_in = False
-        self.items = dict()
-        self._aha_devices = dict()
         self._session = requests.Session()
+        self.items = dict()
         self.connected = False
-        self._log_entry_count = _log_entry_count
+        self.last_request = None
+        self.log_entry_count = log_entry_count
 
         # Login
         self.login()
@@ -2152,7 +2152,7 @@ class FritzHome:
 
         if plain is None:
             return
-        self.last_request = plain
+        self.last_request = to_str(plain)
         dom = ElementTree.fromstring(to_str(plain))
         return dom.findall(entity_type)
 
@@ -2636,8 +2636,8 @@ class FritzHome:
             data = ''
 
         # cut data if needed
-        if self._log_entry_count:
-            data = data[:self._log_entry_count]
+        if self.log_entry_count:
+            data = data[:self.log_entry_count]
 
         # bring data to needed format
         newlog = []
@@ -2668,8 +2668,8 @@ class FritzHome:
         if isinstance(data, dict):
             data = data.get('mq_log')
             if data is not None:
-                if self._log_entry_count:
-                    data = data[:self._log_entry_count]
+                if self.log_entry_count:
+                    data = data[:self.log_entry_count]
 
                 data_formated = []
                 for entry in data:
