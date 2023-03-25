@@ -231,7 +231,17 @@
 			<td class="py-1">{{ p.get_parameter_value_for_display('password') }}</td>
 		</tr>
 		<tr>
-			<td class="py-1"><strong>{{ _('Host') }}</strong></td>
+			<td class="py-1">
+                <strong>{{ _('Host') }}
+                {% if p.fritz_device.is_fritzbox() %}
+                    {{ _(' is Fritz!Box') }}
+                {% elif p.fritz_device.is_repeater() %}
+                    {{ _(' is Fritz!Repeater') }}
+                {% else %}
+                    {{ _(' -') }}
+                {% endif %}
+                </strong>
+            </td>
 			<td class="py-1"><a class="text-shng" href="http://{{ p.fritz_device.host }}" target="_blank">{{ p.fritz_device.host }}</a></td>
 			<td class="py-1"><strong>{{ _('Port') }}</strong></td>
 			<td class="py-1">{{ p.fritz_device.port }} {% if p.fritz_device.ssl %}(HTTPS){% endif %}</td>
