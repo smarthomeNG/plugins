@@ -182,7 +182,7 @@ class AVM(SmartPlugin):
             self.create_cyclic_scheduler(target='tr064', items=self.fritz_device.items, fct=self.fritz_device.cyclic_item_update, offset=2)
             self.fritz_device.cyclic_item_update(read_all=True)
 
-        if self._aha_http_interface and self.fritz_device is not None and self.fritz_device.is_fritzbox:
+        if self._aha_http_interface and self.fritz_device is not None and self.fritz_device.is_fritzbox():
             # add scheduler for updating items
             self.create_cyclic_scheduler(target='aha', items=self.fritz_home.items, fct=self.fritz_home.cyclic_item_update, offset=4)
             self.fritz_home.cyclic_item_update(read_all=True)
@@ -2943,7 +2943,7 @@ class FritzHome:
 
         def _update_from_node(self, node):
 
-            self.button_identifier = node.attrib["button_identifier"]
+            self.button_identifier = node.attrib["identifier"]
             self.button_id = node.attrib["id"]
 
             self.button_name = get_node_value(node, "name")
