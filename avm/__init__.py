@@ -1036,7 +1036,6 @@ class FritzDevice:
         """
         # self.logger.debug(f"_get_update_data called with device={device}, service={service}, action={action}, in_argument={in_argument}, out_argument={out_argument}, in_argument_value={in_argument_value}, enforce_read={enforce_read}")
 
-        data = self
         data_args = []
         cache_dict_key = f"{device}_{service}_{action}_{in_argument}_{in_argument_value}"
 
@@ -1109,7 +1108,7 @@ class FritzDevice:
         if service.lower().startswith('wlan'):
             if wlan_index is None:
                 return
-            cmd_args = [('attr', 'client'), ('attr', device), ('attr', service), ('sub', 'wlan_index'), ('attr', action), ('arg', args)]
+            cmd_args = [('attr', 'client'), ('attr', device), ('attr', service), ('sub', wlan_index), ('attr', action), ('arg', args)]
         elif args is None:
             cmd_args = [('attr', 'client'), ('attr', device), ('attr', service), ('attr', action), ('arg', None)]
         else:
