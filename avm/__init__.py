@@ -144,7 +144,7 @@ class AVM(SmartPlugin):
         try:
             self.fritz_device = FritzDevice(_host, _port, ssl, _verify, _username, _passwort, _call_monitor_incoming_filter, self)
         except Exception as e:
-            self.logger.warning(f"Error {e!r} establishing connection to Fritzdevice via TR064-Interface.")
+            self.logger.warning(f"Error '{e!r}' establishing connection to Fritzdevice via TR064-Interface.")
             self.fritz_device = None
         else:
             self.logger.debug("Connection to FritzDevice established.")
@@ -153,7 +153,7 @@ class AVM(SmartPlugin):
         try:
             self.fritz_home = FritzHome(_host, ssl, _verify, _username, _passwort, _log_entry_count, self)
         except Exception as e:
-            self.logger.warning(f"Error {e!r} establishing connection to Fritzdevice via AHA-HTTP-Interface.")
+            self.logger.warning(f"Error '{e!r}' establishing connection to Fritzdevice via AHA-HTTP-Interface.")
             self.fritz_home = None
         else:
             self.logger.debug("Connection to FritzDevice via AHA-HTTP-Interface established.")
@@ -163,7 +163,7 @@ class AVM(SmartPlugin):
             try:
                 self.monitoring_service = Callmonitor(_host, 1012, self.fritz_device.get_contact_name_by_phone_number, _call_monitor_incoming_filter, self)
             except Exception as e:
-                self.logger.warning(f"Error {e!r} establishing connection to Fritzdevice CallMonitor.")
+                self.logger.warning(f"Error '{e!r}' establishing connection to Fritzdevice CallMonitor.")
                 self.monitoring_service = None
             else:
                 self.logger.debug("Connection to FritzDevice CallMonitor established.")
@@ -2718,8 +2718,6 @@ class FritzHome:
             self._functionsbitmask = None
             self.device_functions = []
 
-# TODO: wenn fritz is none, ist dann überhaupt Funktionalität gegeben? ggf. abbrechen?
-# --> Abbrechen ist glaube ich besser.
             if not fritz:
                 raise RuntimeError(f'passed object fritz is type {type(fritz)}, not type FritzHome. Aborting.')
             else:
