@@ -94,7 +94,7 @@ parameters:
         type: bool
         default: False
         description:
-            de: '(optional) Wenn aktiv, werden TR064 Items, deren Abfrageergebnis 2x zu einen Fehler geführt hat, werden blacklisted und anschließend nicht mehr abgefragt.'
+            de: '(optional) Wenn aktiv, werden TR064 Items, deren Abfrageergebnis 2x zu einen Fehler geführt hat, blacklisted und anschließend nicht mehr abgefragt.'
             en: '(optional) If active, TR064 Items for which data polling resulted in errors, will be blacklisted and excluded from update cycle'
 
 item_attributes:
