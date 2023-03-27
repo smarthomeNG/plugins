@@ -144,7 +144,7 @@ class AVM(SmartPlugin):
         try:
             self.fritz_device = FritzDevice(_host, _port, ssl, _verify, _username, _passwort, _call_monitor_incoming_filter, self)
         except Exception as e:
-            self.logger.warning(f"Error {e!r} establishing connection to Fritzdevice via TR064-Interface.")
+            self.logger.warning(f"Error '{e!r}' establishing connection to Fritzdevice via TR064-Interface.")
             self.fritz_device = None
         else:
             self.logger.debug("Connection to FritzDevice established.")
@@ -153,7 +153,7 @@ class AVM(SmartPlugin):
         try:
             self.fritz_home = FritzHome(_host, ssl, _verify, _username, _passwort, _log_entry_count, self)
         except Exception as e:
-            self.logger.warning(f"Error {e!r} establishing connection to Fritzdevice via AHA-HTTP-Interface.")
+            self.logger.warning(f"Error '{e!r}' establishing connection to Fritzdevice via AHA-HTTP-Interface.")
             self.fritz_home = None
         else:
             self.logger.debug("Connection to FritzDevice via AHA-HTTP-Interface established.")
@@ -163,7 +163,7 @@ class AVM(SmartPlugin):
             try:
                 self.monitoring_service = Callmonitor(_host, 1012, self.fritz_device.get_contact_name_by_phone_number, _call_monitor_incoming_filter, self)
             except Exception as e:
-                self.logger.warning(f"Error {e!r} establishing connection to Fritzdevice CallMonitor.")
+                self.logger.warning(f"Error '{e!r}' establishing connection to Fritzdevice CallMonitor.")
                 self.monitoring_service = None
             else:
                 self.logger.debug("Connection to FritzDevice CallMonitor established.")
@@ -182,7 +182,7 @@ class AVM(SmartPlugin):
             self.create_cyclic_scheduler(target='tr064', items=self.fritz_device.items, fct=self.fritz_device.cyclic_item_update, offset=2)
             self.fritz_device.cyclic_item_update(read_all=True)
 
-        if self._aha_http_interface and self.fritz_device is not None and self.fritz_device.is_fritzbox:
+        if self._aha_http_interface and self.fritz_device is not None and self.fritz_device.is_fritzbox():
             # add scheduler for updating items
             self.create_cyclic_scheduler(target='aha', items=self.fritz_home.items, fct=self.fritz_home.cyclic_item_update, offset=4)
             self.fritz_home.cyclic_item_update(read_all=True)
@@ -867,7 +867,7 @@ class FritzDevice:
             self.logger.debug(f"Value for item={item} is None.")
             return False
         elif isinstance(data, int) and data in self.ERROR_CODES:
-            self.logger.error(f"Error {data} '{self.ERROR_CODES.get(data, None)}' occurred during update of item={item} with avm_data_type={avm_data_type} and index={index}. Check item configuration regarding supported/activated function of AVM device. ")
+            self.logger.warning(f"Error {data} '{self.ERROR_CODES.get(data, None)}' occurred during update of item={item} with avm_data_type={avm_data_type} and index={index}. Check item configuration regarding supported/activated function of AVM device. ")
             return False
         else:
             item(data, self._plugin_instance.get_fullname())
@@ -1036,7 +1036,6 @@ class FritzDevice:
         """
         # self.logger.debug(f"_get_update_data called with device={device}, service={service}, action={action}, in_argument={in_argument}, out_argument={out_argument}, in_argument_value={in_argument_value}, enforce_read={enforce_read}")
 
-        data = self
         data_args = []
         cache_dict_key = f"{device}_{service}_{action}_{in_argument}_{in_argument_value}"
 
@@ -1109,7 +1108,7 @@ class FritzDevice:
         if service.lower().startswith('wlan'):
             if wlan_index is None:
                 return
-            cmd_args = [('attr', 'client'), ('attr', device), ('attr', service), ('sub', 'wlan_index'), ('attr', action), ('arg', args)]
+            cmd_args = [('attr', 'client'), ('attr', device), ('attr', service), ('sub', wlan_index), ('attr', action), ('arg', args)]
         elif args is None:
             cmd_args = [('attr', 'client'), ('attr', device), ('attr', service), ('attr', action), ('arg', None)]
         else:
@@ -1704,7 +1703,7 @@ class FritzHome:
     HOMEAUTO_ROUTE = '/webservices/homeautoswitch.lua'
     INTERNET_STATUS_ROUTE = '/internet/inetstat_monitor.lua?sid='
 
-    def __init__(self, host, ssl, verify, user, password, _log_entry_count, plugin_instance):
+    def __init__(self, host, ssl, verify, user, password, log_entry_count, plugin_instance):
         """
         Init the Class FritzHome
         """
@@ -1723,11 +1722,11 @@ class FritzHome:
         self._devices: Dict[str, FritzHome.FritzhomeDevice] = {}
         self._templates: Dict[str, FritzHome.FritzhomeTemplate] = {}
         self._logged_in = False
-        self.items = dict()
-        self._aha_devices = dict()
         self._session = requests.Session()
+        self.items = dict()
         self.connected = False
-        self._log_entry_count = _log_entry_count
+        self.last_request = None
+        self.log_entry_count = log_entry_count
 
         # Login
         self.login()
@@ -2152,7 +2151,7 @@ class FritzHome:
 
         if plain is None:
             return
-        self.last_request = plain
+        self.last_request = to_str(plain)
         dom = ElementTree.fromstring(to_str(plain))
         return dom.findall(entity_type)
 
@@ -2636,8 +2635,8 @@ class FritzHome:
             data = ''
 
         # cut data if needed
-        if self._log_entry_count:
-            data = data[:self._log_entry_count]
+        if self.log_entry_count:
+            data = data[:self.log_entry_count]
 
         # bring data to needed format
         newlog = []
@@ -2668,8 +2667,8 @@ class FritzHome:
         if isinstance(data, dict):
             data = data.get('mq_log')
             if data is not None:
-                if self._log_entry_count:
-                    data = data[:self._log_entry_count]
+                if self.log_entry_count:
+                    data = data[:self.log_entry_count]
 
                 data_formated = []
                 for entry in data:
@@ -2719,8 +2718,6 @@ class FritzHome:
             self._functionsbitmask = None
             self.device_functions = []
 
-# TODO: wenn fritz is none, ist dann überhaupt Funktionalität gegeben? ggf. abbrechen?
-# --> Abbrechen ist glaube ich besser.
             if not fritz:
                 raise RuntimeError(f'passed object fritz is type {type(fritz)}, not type FritzHome. Aborting.')
             else:
@@ -2943,7 +2940,7 @@ class FritzHome:
 
         def _update_from_node(self, node):
 
-            self.button_identifier = node.attrib["button_identifier"]
+            self.button_identifier = node.attrib["identifier"]
             self.button_id = node.attrib["id"]
 
             self.button_name = get_node_value(node, "name")
