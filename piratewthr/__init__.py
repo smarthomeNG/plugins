@@ -37,7 +37,7 @@ from .webif import WebInterface
 class PirateWeather(SmartPlugin):
 
 
-    PLUGIN_VERSION = "1.1.0"
+    PLUGIN_VERSION = "1.1.1"
 
     # https://api.pirateweather.net/forecast/[apikey]/[latitude],[longitude]
     _base_url = 'https://api.pirateweather.net/forecast/'
@@ -230,7 +230,7 @@ class PirateWeather(SmartPlugin):
             hour.update({'date': date_entry, 'weekday': day_entry, 'hour': hour_entry, 'icon_visu': self.map_icon(hour['icon'])})
             if json_obj['daily'].get(date_key) is None:
                 json_obj['daily'].update({date_key: {}})
-            elif json_obj['daily'][date_key].get('hours') is None:
+            if json_obj['daily'][date_key].get('hours') is None:
                 json_obj['daily'][date_key].update({'hours': {}})
             json_obj['daily'][date_key]['hours'].update(OrderedDict({hour_entry: hour}))
             json_obj['hourly'].update(OrderedDict({'hour{}'.format(number): hour}))

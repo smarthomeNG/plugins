@@ -1,0 +1,165 @@
+{% extends "base_plugin.html" %}
+{% set update_interval = 2000 %}
+{% block pluginstyles %}
+<style>
+  table th.remote, th.key {
+    width: 140px;
+  }
+  table th.value {
+    width: 50px;
+  }
+  table th.send {
+    width: 50px;
+  }
+  table th.last_value {
+    width: 100px;
+  }
+  table th.last_update, th.last_change {
+    width: 100px;
+  }
+  .shng_button_highlight{
+    background-color: green;
+  }
+</style>
+{% endblock pluginstyles %}
+{% block pluginscripts %}
+<script>
+  $(document).ready( function () {
+    $("#button_pressed").submit(function(e) {
+      console.log('Sending lirc command for ' + $("#button").val());
+        // keine HTML-Aktion ausführen (z.B. Formular senden)
+        e.preventDefault();
+
+        // die Kennung des gedrückten Buttons per AJAX senden
+        $.post('submit', {item: $("#button").val()}, function(data) {
+
+
+        });
+        return false ;
+    });
+    $(window).trigger('datatables_defaults');
+      /* get pagelength from http module or plugin. */
+	    {% if webif_pagelength is defined %}webif_pagelength = {{ webif_pagelength|int }};{% endif %}
+      if (isNaN(parseFloat(webif_pagelength)) || webif_pagelength == 0) {
+        resize = true;
+        webif_pagelength = -1;
+      }
+      else {
+        resize = false;
+      }
+	  console.log("Webif page length " + webif_pagelength + ", pageResize: " + resize);
+
+		try {
+      table = $('#maintable').DataTable( {
+        columnDefs: [
+        { responsivePriority: 1, targets: 1 },
+        { responsivePriority: 2, targets: 4 },
+        { responsivePriority: 3, targets: 5 },
+        {
+          title: '',
+          targets: 0, "className": ""
+        },
+        {
+          title: '{{ _('Item') }}',
+          targets: 1, "className": "item"
+        },
+        {
+          title: '{{ _('Senden') }}',
+          targets: 2, "className": "send"
+        },
+        {
+          title: '{{ _('Remote') }}',
+          targets: 3, "className": "remote"
+        },
+        {
+          title: '{{ _('Key') }}',
+          targets: 4, "className": "key"
+        },
+        {
+          title: '{{ _('Letztes Update') }}',
+          targets: 5, "className": "last_update"
+        },
+        {
+          title: '{{ _('Letzte Änderung') }}',
+          targets: 6, "className": "last_change"
+        }
+        ].concat($.fn.dataTable.defaults.columnDefs),
+        pageLength: webif_pagelength,
+        pageResize: resize});
+		}
+		catch (e) {
+			console.log("Datatable JS not loaded, showing standard table without reorder option " +e);
+    }
+
+  });
+</script>
+<script>
+	function handleUpdatedData(response, dataSet) {
+			var objResponse = JSON.parse(response);
+			myProto = document.getElementById(dataSet);
+      console.log(response);
+      for (var item in objResponse['items']) {
+        shngInsertText (item+'_last_update', objResponse['items'][item]['last_update'], 'maintable', 5);
+        shngInsertText (item+'_last_change', objResponse['items'][item]['last_change'], 'maintable', 5);
+      }
+      shngInsertText ('response', objResponse['response']);
+	}
+</script>
+
+{% endblock pluginscripts %}
+{% set logo_frame = false %}
+
+{% set tab1title = "<strong>" ~ p.get_shortname() ~ " Items</strong> (" ~ item_count ~ ")" %}
+{% set tabcount = 1 %}
+
+{% block headtable %}
+<table class="table table-striped table-hover" style="min-width:550px;">
+  <tbody>
+    <tr>
+      <td class="py-1"><strong>{{ _('Host') }}</strong></td>
+      <td class="py-1" id="host">{{ p._host }}</td>
+      <td class="py-1"><strong>{{ _('Port') }}</strong></td>
+      <td class="py-1" id="port">{{ p._port }}</td>
+    </tr>
+    <tr>
+      <td class="py-1"><strong>{{ _('Version') }}</strong></td>
+      <td class="py-1" id="version">{{ p._lircd_version }}</td>
+      <td class="py-1"><strong>{{ _('Verbindung') }}</strong></td>
+      <td class="py-1" id="alive">{{ p._lirc_server_alive }}</td>
+    </tr>
+    <tr>
+      <td class="py-1"><strong>{{ _('Autoreconnect') }}</strong></td>
+      <td class="py-1" id="autoreconnect">{{ p._autoreconnect }}</td>
+      <td class="py-1">{% if p._autoreconnect == true %}<strong>{{ _('Reconnect Details') }}</strong>{% endif %}</td>
+      <td class="py-1" id="autoreconnect_details">{% if p._autoreconnect == true %}<strong>{{ _('Retries') }}</strong>: {{ p._connect_retries }},
+      <strong>{{ _('Cycle') }}</strong>: {{ p._connect_cycle }}{% endif %}</td>
+    </tr>
+    <tr>
+      <td class="py-1"><strong>{{ _('Letzte Antwort') }}</strong></td>
+      <td class="py-1" colspan="3" id="response">{{ p._responseStr }}</td>
+    </tr>
+  </tbody>
+</table>
+{% endblock headtable %}
+
+{% block bodytab1 %}
+  <table id="maintable" class="dataTableAdditional">
+    <tbody>
+    {% for item in items  %}
+        <tr>
+          <td></td>
+          <td class="py-1">{{ item.property.path }}</td>
+          <td>
+            <button id="{{ item }}_button" type="button" class="btn btn-shng btn-sm" title="{{ _('Senden') }}" onclick=" $('#button').val('{{ item }}');$('#button_pressed').submit();"><i class="fas fa-play"></i></button></td>
+          <td class="py-1">{{ p.get_iattr_value(item.conf, 'lirc_remote') }}</td>
+          <td class="py-1">{{ p.get_iattr_value(item.conf, 'lirc_key') }}</td>
+          <td class="py-1" id="{{ item._path }}_last_update" style="text-align: center">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+          <td class="py-1" id="{{ item._path }}_last_change" style="text-align: center">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <form id="button_pressed" action="" method="post">
+  <input type="hidden" id="button" name="button" value="" />
+  </form>
+{% endblock bodytab1 %}

@@ -7,7 +7,7 @@
 #  https://www.smarthomeNG.de
 #  https://knx-user-forum.de/forum/supportforen/smarthome-py
 #
-#  Part of AVM2 Plugin
+#  Part of AVM Plugin
 #
 #  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -129,6 +129,7 @@ class WebInterface(SmartPluginWebIf):
                     data['tr064_items'][item.id()]['value'] = item()
                     data['tr064_items'][item.id()]['last_update'] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
                     data['tr064_items'][item.id()]['last_change'] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
+                data['tr064_items_blacklistet'] = self.plugin.fritz_device.get_tr064_items_blacklisted()
 
             if self.plugin.fritz_home:
                 data['aha_items'] = {}
@@ -137,6 +138,7 @@ class WebInterface(SmartPluginWebIf):
                     data['aha_items'][item.id()]['value'] = item()
                     data['aha_items'][item.id()]['last_update'] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
                     data['aha_items'][item.id()]['last_change'] = item.property.last_change.strftime('%d.%m.%Y %H:%M:%S')
+                data['aha_last_request'] = self.plugin.fritz_home.last_request
 
             data['maintenance'] = True if self.plugin.log_level <= 20 else False
 
