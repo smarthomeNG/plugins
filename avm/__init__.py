@@ -2625,25 +2625,28 @@ class FritzHome:
 
         # get data
         try:
-            data = self._request(url, params, result='json')['mq_log']
-        except KeyError:
-            data = ''
+            data = self._request(url, params, result='json')
+        except JSONDecodeError:
+            return
 
-        # cut data if needed
-        if self.log_entry_count:
-            data = data[:self.log_entry_count]
+        if isinstance(data, dict):
+            data = data.get('mq_log')
+            if data and isinstance(data, list):
+                # cut data if needed
+                if self.log_entry_count:
+                    data = data[:self.log_entry_count]
 
-        # bring data to needed format
-        newlog = []
-        for text, typ, cat in data:
-            l_date = text[:8]
-            l_time = text[9:17]
-            l_text = text[18:]
-            l_cat = int(cat)
-            l_type = int(typ)
-            l_ts = int(datetime.datetime.timestamp(datetime.datetime.strptime(text[:17], '%d.%m.%y %H:%M:%S')))
-            newlog.append([l_text, l_type, l_cat, l_ts, l_date, l_time])
-        return newlog
+                # bring data to needed format
+                newlog = []
+                for text, typ, cat in data:
+                    l_date = text[:8]
+                    l_time = text[9:17]
+                    l_text = text[18:]
+                    l_cat = int(cat)
+                    l_type = int(typ)
+                    l_ts = int(datetime.datetime.timestamp(datetime.datetime.strptime(text[:17], '%d.%m.%y %H:%M:%S')))
+                    newlog.append([l_text, l_type, l_cat, l_ts, l_date, l_time])
+                return newlog
 
     def get_device_log_from_lua_separated(self):
         """
@@ -2659,15 +2662,16 @@ class FritzHome:
 
         try:
             data = self._request(url, params, result='json')
-        except Exception:
+        except JSONDecodeError:
             return
 
-        if data and isinstance(data, dict):
+        if isinstance(data, dict):
             data = data.get('mq_log')
-            if data is not None:
+            if data and isinstance(data, list):
                 if self.log_entry_count:
                     data = data[:self.log_entry_count]
 
+                # bring data to needed format
                 data_formated = []
                 for entry in data:
                     dt = datetime.datetime.strptime(f"{entry[0]} {entry[1]}", '%d.%m.%y %H:%M:%S').strftime('%d.%m.%Y %H:%M:%S')
