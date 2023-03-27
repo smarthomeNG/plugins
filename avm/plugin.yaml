@@ -90,6 +90,12 @@ parameters:
         description:
             de: '(optional) Anzahl der Log-Messages, die verarbeitet/bereitgestellt werden. 0 = alle'
             en: '(optional) Amount of Log-Messages, witch will be displayed. 0 = all'
+    tr064_item_blacklist:
+        type: bool
+        default: False
+        description:
+            de: '(optional) Wenn aktiv, werden TR064 Items, deren Abfrageergebnis 2x zu einen Fehler geführt hat, werden blacklisted und anschließend nicht mehr abgefragt.'
+            en: '(optional) If active, TR064 Items for which data polling resulted in errors, will be blacklisted and excluded from update cycle'
 
 item_attributes:
     # Definition of item attributes defined by this plugin

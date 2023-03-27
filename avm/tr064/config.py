@@ -10,25 +10,25 @@ __all__ = [
 ]
 
 TR064_DEVICE_NAMESPACE = {
-    None: 'urn:dslforum-org:device-1-0'
+    '': 'urn:dslforum-org:device-1-0'
 }
 
 TR064_SERVICE_NAMESPACE = {
-    None: 'urn:dslforum-org:service-1-0'
+    '': 'urn:dslforum-org:service-1-0'
 }
 
 TR064_CONTROL_NAMESPACE = {
-    None: 'urn:dslforum-org:control-1-0'
+    '': 'urn:dslforum-org:control-1-0'
 }
 
 IGD_DEVICE_NAMESPACE = {
-    None: 'urn:schemas-upnp-org:device-1-0'
+    '': 'urn:schemas-upnp-org:device-1-0'
 }
 
 IGD_SERVICE_NAMESPACE = {
-    None: 'urn:schemas-upnp-org:service-1-0'
+    '': 'urn:schemas-upnp-org:service-1-0'
 }
 
 IGD_CONTROL_NAMESPACE = {
-    None: 'urn:schemas-upnp-org:service-1-0'
+    '': 'urn:schemas-upnp-org:service-1-0'
 }
