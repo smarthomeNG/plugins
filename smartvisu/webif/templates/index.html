@@ -5,7 +5,7 @@
 <!-- set update_interval to a value > 0 (in milliseconds) to enable periodic data updates -->
 {% set update_interval = 10000 %}
 {% set reload_button = false %}
-
+{% set initial_update = true %}
 {% block pluginstyles %}
 <style>
   .visuclient {
@@ -28,6 +28,9 @@
   }
   .hostname {
     width: 200px;
+  }
+  .access {
+    width: 100px;
   }
 </style>
 {% endblock pluginstyles %}
@@ -81,9 +84,11 @@
   				},
   			].concat($.fn.dataTable.defaults.columnDefs),
   			pageLength: webif_pagelength,
-  			pageResize: resize
+  			pageResize: resize,
+        destroy: true
   		});
 
+  	try {
   		itemtable = $('#itemtable').DataTable({
   			columnDefs: [
   				{
@@ -94,6 +99,14 @@
   					title: '{{ _('Typ') }}',
   					targets: [2], "className": "type"
   				},
+          {
+            title: '{{ _('Wert') }}',
+            targets: [3], "className": "value"
+          },
+          {
+            title: '{{ _('Visu Zugriff') }}',
+            targets: [4], "className": "access"
+          }
   			].concat($.fn.dataTable.defaults.columnDefs),
   			pageLength: webif_pagelength,
   			pageResize: resize
@@ -102,6 +115,29 @@
 		catch (e) {
 			console.warn("Datatable Javascript not loaded: " +e);
     }
+
+    logictable = $('#logictable').DataTable({
+      columnDefs: [
+        {
+          title: '{{ _('Logik') }}',
+          targets: [1]
+        },
+        {
+          title: '{{ _('Status') }}',
+          targets: [2], "className": "type"
+        },
+        {
+          title: '{{ _('Visu Zugriff') }}',
+          targets: [3], "className": "access"
+        },
+      ].concat($.fn.dataTable.defaults.columnDefs),
+      pageLength: webif_pagelength,
+      pageResize: resize
+    });
+  }
+  catch (e) {
+    console.warn("Datatable Javascript not loaded: " +e);
+  }
 
   });
 </script>
@@ -241,15 +277,7 @@
 -->
 {% set tab1title = "<strong>" ~ p.get_shortname() ~ " " ~ _('Clients') ~ "</strong> (<span id=clientcount>" ~ clients|length ~ "</span>)" %}
 {% block bodytab1 %}
-
-<script>
-	shngGetUpdatedData();
-</script>
-
-<div class="container-fluid m-2 table-resize">
 	<table id="clienttable"></table>
-</div>
-
 {% endblock %}
 
 
@@ -258,70 +286,35 @@
 -->
 {% set tab2title = "<strong>" ~ p.get_shortname() ~ " " ~ _('Items') ~ "</strong> (" ~ items|length ~ ")" %}
 {% block bodytab2 %}
-<div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
-	<div class="col-sm-12">
-		<table class="table table-striped table-hover pluginList">
-			<thead>
-				<tr>
-					<th>{{ _('Item') }}</th>
-					<th>{{ _('Typ') }}</th>
-					<th>{{ _('Wert') }}</th>
-					<th>{{ _('Visu Zugriff') }}</th>
-					</tr>
-			</thead>
+
+		<table id="itemtable">
+      <tbody>
 			{% for item in items %}
-				<tr>
+				<tr><td></td>
 					<td class="py-1">{{ item._path }}</td>
 					<td class="py-1">{{ item._type }}</td>
 					<td class="py-1">{{ item() }}</td>
 					<td class="py-1">{{ item.conf['visu_acl'] }}</td>
 				</tr>
 			{% endfor %}
+      </tbody>
 		</table>
-	</div>
-</div>
+
 {% endblock bodytab2 %}
 
-
-<!--
-	Content block for the third tab of the Webinterface
-	If wanted, a title for the tab can be defined as:
-		{  % set tab3title = "<strong>" ~ p.get_shortname() ~ " Geräte</strong>" % }
-
-	It has to be defined before (and outside) the block bodytab3
--->
 {% set tab3title = "<strong>" ~ p.get_shortname() ~ " " ~ _('Logiken') ~ "</strong> (" ~ logics|length ~ ")" %}
 {% block bodytab3 %}
-<div class="table-responsive" style="margin-left: 2px; margin-right: 2px;" class="row">
-	<div class="col-sm-12">
-		<table class="table table-striped table-hover pluginList">
-			<thead>
-				<tr>
-					<th>{{ _('Logik') }}</th>
-					<th>{{ _('Status') }}</th>
-					<th>{{ _('Visu Zugriff') }}</th>
-					<th></th>
-				</tr>
-			</thead>
+		<table id="logictable">
+      <tbody>
 			{% for logic in logics %}
-				<tr>
+				<tr><td></td>
 					<td class="py-1">{{ logic.name }}</td>
 					<td class="py-1">{% if logic.enabled %}{{ _('aktiv') }}{% else %}{{ _('nicht aktiv') }}{% endif %}</td>
 					<td class="py-1">{% if logic.visu_access %}{{ _('erlaubt') }}{% else %}{{ _('nicht erlaubt') }}{% endif %}</td>
-					<td></td>
 				</tr>
 			{% endfor %}
+      </tbody>
 		</table>
 	</div>
 </div>
 {% endblock bodytab3 %}
-
-
-<!--
-	Content block for the fourth tab of the Webinterface
--->
-{% set tab4title = "<strong>" ~ p.get_shortname() ~ " " ~ _('Clients') ~ "</strong> (<span id=clientcount>" ~ clients|length ~ "</span>)" %}
-
-{% block bodytab4 %}
-
-{% endblock bodytab4 %}
