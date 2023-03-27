@@ -194,27 +194,73 @@ class SubscriptionHandler(object):
         self._service = service
         self._endpoint = endpoint
         self._event = None
-        self._signal = None
+        self._signal = threading.Event()
         self.logger = logger
         self._threadName = threadName
 
     def subscribe(self):
-        self.logger.debug(f"start subscribe for endpoint {self._endpoint}")
+        self.logger.dbglow(f"start subscribe for endpoint {self._endpoint}")
+        if 'eventAvTransport' in self._threadName:
+            self.logger.dbghigh(f"subscribe(): endpoint av envent detected. Enabling debugging logs")
+            debug = 1
+        else:
+            debug = 0
+
+        if debug:
+            self.logger.dbghigh(f"subscribe(): start for endpoint {self._endpoint}")
+
         with self._lock:
-            self._signal = threading.Event()
+            if debug:
+                self.logger.dbghigh(f"subscribe(): clearing signal Event for endpoint {self._endpoint}")
+            self._signal.clear()
+            
+            # Check if signal was cleared correctly:
+            if self._signal.is_set():
+                self.logger.error(f"subscribe(): Event could not be cleared correctly for service {self._service}")
+            else:
+                self.logger.dbghigh(f"subscribe(): Event cleared successfully. Thread can be started for service {self._service}")
+
             try:
-                # self._event = self._service.subscribe(auto_renew=True)
                 self._event = self._service.subscribe(auto_renew=False)
+                # No benefits of automatic renew could be observed. 
+                # self._event = self._service.subscribe(auto_renew=True)
+
             except Exception as e:
-                self.logger.warning(f"Exception in subscribe(): {e}")
+                self.logger.error(f"Exception in subscribe(): {e}")
             if self._event:
-                self._event.auto_renew_fail = renew_error_callback
-                self._thread = threading.Thread(target=self._endpoint, name=self._threadName, args=(self,))
-                self._thread.setDaemon(True)
-                self._thread.start()
+                if debug:
+                    self.logger.dbghigh(f"subscribe(): event valid, starting new thread for endpoint {self._endpoint}")
+
+                try:
+                    self._event.auto_renew_fail = renew_error_callback
+                    self._thread = threading.Thread(target=self._endpoint, name=self._threadName, args=(self,))
+                    self._thread.setDaemon(True)
+                    self._thread.start()
+                    self.logger.debug(f"start subscribe finished successfully")
+                    if not self._thread.is_alive(): 
+                        self.logger.error("Critical error in subscribe method: Thread could not be startet and is not alive.")
+                    else:
+                        if debug:
+                            self.logger.dbghigh(f"Debug subscribe: Thread startet successfully for service {self._service}")
+
+                except Exception as e:
+                    self.logger.error(f"Exception in subscribe() at point b: {e}")
+
+            else:
+                self.logger.error(f"subscribe(): Error in subscribe for endpoint {self._endpoint}: self._event not valid")
+        if debug:
+            self.logger.dbghigh(f"subscribe() {self._endpoint}: lock released. Self._service is {self._service}")
 
     def unsubscribe(self):
-        self.logger.debug(f"start unsubscribe for endpoint {self._endpoint}")
+        self.logger.dbglow(f"unsubscribe(): start for endpoint {self._endpoint}")
+        if 'eventAvTransport' in self._threadName:
+            self.logger.dbghigh(f"unsubscribe: endpoint av envent detected. Enabling debugging logs")
+            debug = 1
+        else:
+            debug = 0
+        if debug:
+            self.logger.dbghigh(f"unsubscribe(): start for endpoint {self._endpoint}")
+
         with self._lock:
             if self._event:
                 # try to unsubscribe first
@@ -224,13 +270,42 @@ class SubscriptionHandler(object):
                     self.logger.warning(f"Exception in unsubscribe(): {e}")
                 self._signal.set()
                 if self._thread:
-                    self.logger.debug("Preparing to terminate thread")
+                    self.logger.dbglow("Preparing to terminate thread")
+                    if debug:
+                        self.logger.dbghigh(f"unsubscribe(): Preparing to terminate thread for endpoint {self._endpoint}")
                     self._thread.join(2)
+                    if debug:
+                        self.logger.dbghigh(f"unsubscribe(): Thread joined for endpoint {self._endpoint}")
+
                     if not self._thread.is_alive(): 
-                        self.logger.debug("Thread killed")
+                        self.logger.dbglow("Thread killed for enpoint {self._endpoint}")
+                        if debug:
+                            self.logger.dbghigh(f"Thread killed for endpoint {self._endpoint}")
+
                     else:
-                        self.logger.warning("Thread is still alive")
+                        self.logger.error("unsubscibe(): Error, thread is still alive")
+                    self._thread = None
                 self.logger.info(f"Event {self._endpoint} unsubscribed and thread terminated")
+                if debug:
+                    self.logger.dbghigh(f"unsubscribe(): Event {self._endpoint} unsubscribed and thread terminated")
+            else:
+                if debug: 
+                    self.logger.warning(f"unsubscribe(): {self._endpoint}: self._event not valid")
+        if debug:
+            self.logger.dbghigh(f"unsubscribe(): {self._endpoint}: lock released")
+
+
+    @property
+    def eventSignalIsSet(self):
+        if self._signal:
+            return self._signal.is_set()
+        return False
+
+    @property
+    def subscriptionThreadIsActive(self):
+        if self._thread:
+            return self._thread.is_alive()
+        return False
 
     @property
     def signal(self):
@@ -415,6 +490,7 @@ class Speaker(object):
 
     def subscribe_base_events(self):
         if not self._soco:
+            self.logger.error("Error in subscribe_base_events: self._soco not valid.")
             return
         self.logger.debug("Start subscribe base event fct")
         self.zone_subscription.unsubscribe()
@@ -431,6 +507,11 @@ class Speaker(object):
 
         self.render_subscription.unsubscribe()
         self.render_subscription.subscribe()
+
+        # Important note:
+        # av event is not subscribed here because it has special handling in function zone group event. 
+        pass
+        
 
     def refresh_static_properties(self) -> None:
         """
@@ -500,7 +581,7 @@ class Speaker(object):
                         self.night_mode = event.variables['night_mode']
                     if 'dialog_mode' in event.variables:
                         self.dialog_mode = event.variables['dialog_mode']
-                    self.logger.debug(f"{self.uid}: event variables: {event.variables}")
+                    self.logger.debug(f"rendering_control_event: {self.uid}: event variables: {event.variables}")
                     sub_handler.event.events.task_done()
                     del event
                 except Empty:
@@ -618,146 +699,161 @@ class Speaker(object):
         AV event handling
         :param sub_handler: SubscriptionHandler for the av transport event
         """
-        try:
-            self.logger.debug(f"_av_transport_event: {self.uid}: av transport event handler active.")
-            while not sub_handler.signal.wait(1):
-                try:
-                    event = sub_handler.event.events.get(timeout=0.5)
-                    self._av_transport_event = event
+        if sub_handler is None:
+            self.logger.error(f"_av_transport_event: SubscriptionHandler is None.")
 
-                    # set streaming type
-                    if self.soco.is_playing_line_in:
+        self.logger.dbghigh(f"_av_transport_event: {self.uid}: av transport event handler active.")
+        while not sub_handler.signal.wait(1):
+            self.logger.dbgmed(f"_av_transport_event: {self.uid}: start try")
+
+            try:
+                event = sub_handler.event.events.get(timeout=0.5)
+            except Empty:
+                #self.logger.dbglow(f"av_transport_event: got empty exception, which is normal")
+                pass
+            except Exception as e:
+                self.logger.error(f"_av_tranport_event: Exception during events.get(): {e}")
+            else:
+
+                self.logger.dbghigh(f"_av_transport_event: {self.uid}: received event")
+
+                # set streaming type
+                try:
+                    is_playing_line_in = self.soco.is_playing_line_in
+                    is_playing_tv = self.soco.is_playing_tv
+                    is_playing_radio = self.soco.is_playing_radio
+                except Exception as e:
+                    self.logger.error(f"_av_tranport_event: Exception during soco.get functions: {e}")
+                else:
+                    if is_playing_line_in:
                         self.streamtype = "line_in"
-                    elif self.soco.is_playing_tv:
+                    elif is_playing_tv:
                         self.streamtype = "tv"
-                    elif self.soco.is_playing_radio:
+                    elif is_playing_radio:
                         self.streamtype = "radio"
                     else:
                         self.streamtype = "music"
 
-                    if 'transport_state' in event.variables:
-                        transport_state = event.variables['transport_state']
-                        if transport_state:
-                            self.handle_transport_state(transport_state)
-                    if 'current_crossfade_mode' in event.variables:
-                        self.cross_fade = bool(event.variables['current_crossfade_mode'])
-                    if 'sleep_timer_generation' in event.variables:
-                        if int(event.variables['sleep_timer_generation']) > 0:
-                            self.snooze = self.get_snooze()
+                if 'transport_state' in event.variables:
+                    transport_state = event.variables['transport_state']
+                    if transport_state:
+                        self.handle_transport_state(transport_state)
+                if 'current_crossfade_mode' in event.variables:
+                    self.cross_fade = bool(event.variables['current_crossfade_mode'])
+                if 'sleep_timer_generation' in event.variables:
+                    if int(event.variables['sleep_timer_generation']) > 0:
+                        self.snooze = self.get_snooze()
+                    else:
+                        self.snooze = 0
+                if 'current_play_mode' in event.variables:
+                    self.play_mode = event.variables['current_play_mode']
+                if 'current_track_uri' in event.variables:
+                    track_uri = event.variables['current_track_uri']
+                    if re.match(r'^x-rincon:RINCON_', track_uri) is not None:
+                        # slave call, set uri to the coordinator track uri
+                        if self._check_property():
+                            self.track_uri = sonos_speaker[self.coordinator].track_uri
                         else:
-                            self.snooze = 0
-                    if 'current_play_mode' in event.variables:
-                        self.play_mode = event.variables['current_play_mode']
-                    if 'current_track_uri' in event.variables:
-                        track_uri = event.variables['current_track_uri']
-                        if re.match(r'^x-rincon:RINCON_', track_uri) is not None:
-                            # slave call, set uri to the coordinator track uri
-                            if self._check_property():
-                                self.track_uri = sonos_speaker[self.coordinator].track_uri
-                            else:
-                                self.track_uri = ''
+                            self.track_uri = ''
+                    else:
+                        self.track_uri = track_uri
+                    # empty track is a trigger to reset some other props
+                    if not self.track_uri:
+                        self.track_artist = ''
+                        self.track_album = ''
+                        self.track_album_art = ''
+                        self.track_title = ''
+                        self.radio_show = ''
+                        self.radio_station = ''
+                if 'current_track' in event.variables:
+                    self.current_track = event.variables['current_track']
+                else:
+                    self.current_track = 0
+                if 'number_of_tracks' in event.variables:
+                    self.number_of_tracks = event.variables['number_of_tracks']
+                else:
+                    self.number_of_tracks = 0
+                if 'current_track_duration' in event.variables:
+                    self.current_track_duration = event.variables['current_track_duration']
+                else:
+                    self.current_track_duration = ''
+
+                # don't do an else here: these value won't always be updated
+                if 'current_transport_actions' in event.variables:
+                    self.current_transport_actions = event.variables['current_transport_actions']
+                if 'current_valid_play_modes' in event.variables:
+                    self.current_valid_play_modes = event.variables['current_valid_play_modes']
+                if 'current_track_meta_data' in event.variables:
+                    if event.variables['current_track_meta_data']:
+                        # we have some different data structures, handle it
+                        if isinstance(event.variables['current_track_meta_data'], DidlMusicTrack):
+                            metadata = event.variables['current_track_meta_data'].__dict__
+                        elif isinstance(event.variables['current_track_meta_data'], DidlItem):
+                            metadata = event.variables['current_track_meta_data'].__dict__
                         else:
-                            self.track_uri = track_uri
-                        # empty track is a trigger to reset some other props
-                        if not self.track_uri:
+                            metadata = event.variables['current_track_meta_data'].metadata
+                        if 'creator' in metadata:
+                            self.track_artist = metadata['creator']
+                        else:
                             self.track_artist = ''
-                            self.track_album = ''
-                            self.track_album_art = ''
+                        if 'title' in metadata:
+                            # ignore x-sonos-api-stream: radio played, title seems wrong
+                            if re.match(r"^x-sonosapi-stream:", metadata['title']) is None:
+                                self.track_title = metadata['title']
+                        else:
                             self.track_title = ''
-                            self.radio_show = ''
-                            self.radio_station = ''
+                        if 'album' in metadata:
+                            self.track_album = metadata['album']
+                        else:
+                            self.track_album = ''
+                        if 'album_art_uri' in metadata:
+                            cover_url = metadata['album_art_uri']
+                            if not cover_url.startswith(('http:', 'https:')):
+                                self.track_album_art = 'http://' + self.soco.ip_address + ':1400' + cover_url
+                            else:
+                                self.track_album_art = cover_url
+                        else:
+                            self.track_album_art = ''
 
-                    if 'current_track' in event.variables:
-                        self.current_track = event.variables['current_track']
-                    else:
-                        self.current_track = 0
-                    if 'number_of_tracks' in event.variables:
-                        self.number_of_tracks = event.variables['number_of_tracks']
-                    else:
-                        self.number_of_tracks = 0
-                    if 'current_track_duration' in event.variables:
-                        self.current_track_duration = event.variables['current_track_duration']
-                    else:
-                        self.current_track_duration = ''
-
-                    # don't do an else here: these value won't always be updated
-                    if 'current_transport_actions' in event.variables:
-                        self.current_transport_actions = event.variables['current_transport_actions']
-                    if 'current_valid_play_modes' in event.variables:
-                        self.current_valid_play_modes = event.variables['current_valid_play_modes']
-
-                    if 'current_track_meta_data' in event.variables:
-                        if event.variables['current_track_meta_data']:
-                            # we have some different data structures, handle it
-                            if isinstance(event.variables['current_track_meta_data'], DidlMusicTrack):
-                                metadata = event.variables['current_track_meta_data'].__dict__
-                            elif isinstance(event.variables['current_track_meta_data'], DidlItem):
-                                metadata = event.variables['current_track_meta_data'].__dict__
+                        if 'stream_content' in metadata:
+                            stream_content = metadata['stream_content'].title()
+                            if not stream_content.lower() in \
+                                    ['zpstr_buffering', 'zpstr_connecting', 'x-sonosapi-stream']:
+                                self.stream_content = stream_content
                             else:
-                                metadata = event.variables['current_track_meta_data'].metadata
-                            if 'creator' in metadata:
-                                self.track_artist = metadata['creator']
-                            else:
-                                self.track_artist = ''
-                            if 'title' in metadata:
-                                # ignore x-sonos-api-stream: radio played, title seems wrong
-                                if re.match(r"^x-sonosapi-stream:", metadata['title']) is None:
-                                    self.track_title = metadata['title']
-                            else:
-                                self.track_title = ''
-                            if 'album' in metadata:
-                                self.track_album = metadata['album']
-                            else:
-                                self.track_album = ''
-                            if 'album_art_uri' in metadata:
-                                cover_url = metadata['album_art_uri']
-                                if not cover_url.startswith(('http:', 'https:')):
-                                    self.track_album_art = 'http://' + self.soco.ip_address + ':1400' + cover_url
-                                else:
-                                    self.track_album_art = cover_url
-                            else:
-                                self.track_album_art = ''
-
-                            if 'stream_content' in metadata:
-                                stream_content = metadata['stream_content'].title()
-                                if not stream_content.lower() in \
-                                        ['zpstr_buffering', 'zpstr_connecting', 'x-sonosapi-stream']:
-                                    self.stream_content = stream_content
-                                else:
-                                    self.stream_content = ""
-                            else:
-                                self.stream_content = ''
-                            if 'radio_show' in metadata:
-                                radio_show = metadata['radio_show']
-                                if radio_show:
-                                    radio_show = radio_show.split(',p', 1)
-                                    if len(radio_show) > 1:
-                                        self.radio_show = radio_show[0]
-                                else:
-                                    self.radio_show = ''
+                                self.stream_content = ""
+                        else:
+                            self.stream_content = ''
+                        if 'radio_show' in metadata:
+                            radio_show = metadata['radio_show']
+                            if radio_show:
+                                radio_show = radio_show.split(',p', 1)
+                                if len(radio_show) > 1:
+                                    self.radio_show = radio_show[0]
                             else:
                                 self.radio_show = ''
+                        else:
+                            self.radio_show = ''
 
-                    if self.streamtype == 'radio':
-                        # we need the title from 'enqueued_transport_uri_meta_data'
-                        if 'enqueued_transport_uri_meta_data' in event.variables:
-                            radio_metadata = event.variables['enqueued_transport_uri_meta_data']
-                            if isinstance(radio_metadata, str):
-                                radio_station = radio_metadata[radio_metadata.find('<dc:title>') + 10:radio_metadata.find('</dc:title>')]
-                            elif hasattr(radio_metadata, 'title'):
-                                radio_station = str(radio_metadata.title)
-                            else:
-                                radio_station = ""
-                            self.radio_station = radio_station
-                    else:
-                        self.radio_station = ''
+                if self.streamtype == 'radio':
+                    # we need the title from 'enqueued_transport_uri_meta_data'
+                    if 'enqueued_transport_uri_meta_data' in event.variables:
+                        radio_metadata = event.variables['enqueued_transport_uri_meta_data']
+                        if isinstance(radio_metadata, str):
+                            radio_station = radio_metadata[radio_metadata.find('<dc:title>') + 10:radio_metadata.find('</dc:title>')]
+                        elif hasattr(radio_metadata, 'title'):
+                            radio_station = str(radio_metadata.title)
+                        else:
+                            radio_station = ""
+                        self.radio_station = radio_station
+                else:
+                    self.radio_station = ''
+    
+                sub_handler.event.events.task_done()
+                del event
+                self.logger.dbghigh(f"av_transport_event() for {self.uid}: task_done()")
 
-                    sub_handler.event.events.task_done()
-                    del event
-                except Empty:
-                    pass
-        except Exception as ex:
-            self.logger.error(f"_av_transport_event: Error {ex} occurred.")
+        self.logger.dbghigh(f"av_transport_event(): {self.uid}: while loop terminated.")
 
     def _check_property(self):
         if not self.is_initialized:
@@ -1320,7 +1416,7 @@ class Speaker(object):
         :param value: list with uids to set as group members
         """
         if not isinstance(value, list):
-            self.logger.warning(f"zone_group_members: {self.uid}: value={value} for setter zone_group_members must be type of list.")
+            self.logger.error(f"zone_group_members: {self.uid}: value={value} for setter zone_group_members must be type of list.")
             return
         self._members = value
 
@@ -1332,19 +1428,31 @@ class Speaker(object):
 
         if self.is_coordinator:
             for member in self._zone_group_members:
-                self.logger.debug(f"****zone_group_members: {member=}")
+                self.logger.dbglow(f"****zone_group_members: {member=}")
                 if member is not self:
                     try:
-                        self.logger.debug(f"Unsubscribe av event for uid '{self.uid}' in fct zone_group_members")
+                        self.logger.dbghigh(f"zone_group_members(): Unsubscribe av event for uid '{self.uid}' in fct zone_group_members")
                         member.av_subscription.unsubscribe()
                     except Exception as e:
-                        self.logger.info(f"Unsubscribe av event for uid '{self.uid}' in fct zone_group_members caused error {e}")
+                        self.logger.warning(f"Unsubscribe av event for uid '{self.uid}' in fct zone_group_members caused error {e}")
                         pass
                 else:
-                    # Why are the member speakers un- and subscribed again? 
-                    self.logger.debug(f"Un/Subscribe av event for uid '{self.uid}' in fct zone_group_members")
-                    member.av_subscription.unsubscribe()
-                    member.av_subscription.subscribe()
+                    # Register AV event for coordinator speakers: 
+                    #self.logger.dbglow(f"Un/Subscribe av event for uid '{self.uid}' in fct zone_group_members")
+
+                    active = member.av_subscription.subscriptionThreadIsActive
+                    is_subscribed = member.av_subscription.is_subscribed
+                    self.logger.dbghigh(f"zone_group_members(): Subscribe av event for uid '{self.uid}': Status before measure: AV Thread is {active}, subscription is {is_subscribed}, Eventflag: {member.av_subscription.eventSignalIsSet}")
+
+                    if active == False:
+                        self.logger.dbghigh(f"zone_group_members: Subscribe av event for uid '{self.uid}' because thread is not active")
+                        #member.av_subscription.unsubscribe()
+                        #
+                        # Workaround:
+                        # member.av_subscription.update_endpoint(endpoint=self._av_transport_event)
+                        member.av_subscription.subscribe()
+                        self.logger.dbghigh(f"zone_group_members: Subscribe av event for uid '{self.uid}': Status after measure: AV thread is {member.av_subscription.subscriptionThreadIsActive}, subscription {member.av_subscription.is_subscribed}, Eventflag: {member.av_subscription.eventSignalIsSet}")
+                    
 
     @property
     def streamtype(self) -> str:
@@ -2189,6 +2297,7 @@ class Speaker(object):
                 self.logger.warning(msg)
                 return False
             return True
+    
 
     def _play_radio(self, station_name: str, music_service: str = 'TuneIn', start: bool = True) -> tuple:
         """
@@ -2282,6 +2391,7 @@ class Speaker(object):
         self.logger.info(f"Trying 'play_uri()': URI={uri}, Metadata={metadata}")
         self.soco.play_uri(uri=uri, meta=metadata, title=the_station.title, start=start, force_radio=True)
         return True, ""
+
 
     def play_sharelink(self, url: str, start: bool = True) -> None:
         """
@@ -2769,7 +2879,7 @@ class Sonos(SmartPlugin):
     """
     Main class of the Plugin. Does all plugin specific stuff
     """
-    PLUGIN_VERSION = "1.8.1"
+    PLUGIN_VERSION = "1.8.2"
 
     def __init__(self, sh):
         """Initializes the plugin."""
@@ -2813,7 +2923,7 @@ class Sonos(SmartPlugin):
         # init TTS
         if self._tts:
             if self._init_tts(webservice_ip, webservice_port, local_webservice_path, local_webservice_path_snippet):
-                self.logger.info(f"TTS successful enabled")
+                self.logger.info(f"TTS successfully enabled")
             else:
                 self.logger.info(f"TTS initialisation failed.")
                 
@@ -3118,16 +3228,27 @@ class Sonos(SmartPlugin):
         # return unique items in list
         return utils.unique_list(self._speaker_ips)
 
+
+    def debug_speaker(self, uid):
+        self.logger.warning(f"debug_speaker: Starting function for uid {uid}")
+        #sonos_speaker[uid].set_stop()
+        self.logger.warning(f"debug_speaker: check sonos_speaker[uid].av.subscription: {sonos_speaker[uid].av_subscription}")
+        # Event objekt is not callable:
+        #sonos_speaker[uid]._av_transport_event(sonos_speaker[uid].av_subscription) 
+        self.logger.warning(f"debug_speaker: av_subscription: thread active {sonos_speaker[uid].av_subscription.subscriptionThreadIsActive}, eventSignal: {sonos_speaker[uid].av_subscription.eventSignalIsSet}")
+
+
     def get_soco_version(self) -> str:
         """
         Get version of used Soco and return it
         """
-
+        
         try:
             src = io.open('plugins/sonos/soco/__init__.py', encoding='utf-8').read()
             metadata = dict(re.findall("__([a-z]+)__ = \"([^\"]+)\"", src))
-        except Exception:
-            self.logger.warning(f"Version of used Soco module not available")
+        except Exception as e:
+            self.logger.warning(f"Version of used Soco module not available. Exception: {e}")
+            self.logger.warning(f"DEBUG get socoversion: Current dir: {os.getcwd()}")
             return ''
         else:
             soco_version = metadata['version']
@@ -3452,7 +3573,7 @@ class Sonos(SmartPlugin):
             uid = uid.lower()
 
             if self._is_speaker_up(uid, zone.ip_address):
-                self.logger.debug(f"Speaker found: {zone.ip_address}, {uid}")
+                self.logger.dbglow(f"Speaker found: {zone.ip_address}, {uid}")
                 online_speaker_count = online_speaker_count + 1 
                 if uid in sonos_speaker:
                     try:
@@ -3461,11 +3582,11 @@ class Sonos(SmartPlugin):
                         self.logger.warning(f"Exception in discover -> sonos_speaker[uid].soco: {e}")
                     else:
                         if zone is not zone_compare:
-                            self.logger.debug(f"zone is not in speaker list, yet. Adding and subscribing zone {zone}.")
+                            self.logger.dbghigh(f"zone is not in speaker list, yet. Adding and subscribing zone {zone}.")
                             sonos_speaker[uid].soco = zone
                             sonos_speaker[uid].subscribe_base_events()
                         else:
-                            self.logger.debug(f"SoCo instance {zone} already initiated, skipping.")
+                            self.logger.dbglow(f"SoCo instance {zone} already initiated, skipping.")
                             # The following check subscriptions functions triggers an unsubscribe/subscribe. However, this causes
                             # a massive memory leak increasing with every check_subscription call.
                             # self.logger.debug("checking subscriptions")
@@ -3481,15 +3602,15 @@ class Sonos(SmartPlugin):
             else:
                 # Speaker is not online. Disposing...
                 if sonos_speaker[uid].soco is not None:
-                    self.logger.debug(f"Disposing offline speaker: {zone.ip_address}, {uid}")
+                    self.logger.dbghigh(f"Disposing offline speaker: {zone.ip_address}, {uid}")
                     sonos_speaker[uid].dispose()
                 else:
-                    self.logger.debug(f"Ignoring offline speaker: {zone.ip_address}, {uid}")
+                    self.logger.info(f"Ignoring offline speaker: {zone.ip_address}, {uid}")
 
                 sonos_speaker[uid].is_initialized = False
 
             if uid in sonos_speaker:
-                self.logger.debug(f"setting {zone.ip_address}, uid {uid} to handled speaker")
+                self.logger.dbglow(f"setting {zone.ip_address}, uid {uid} to handled speaker")
                 handled_speaker[uid] = sonos_speaker[uid]
             else:
                 self.logger.debug(f"ip {zone.ip_address}, uid {uid} is not in sonos_speaker")
@@ -3497,7 +3618,7 @@ class Sonos(SmartPlugin):
         # dispose every speaker that was not found
         for uid in set(sonos_speaker.keys()) - set(handled_speaker.keys()):
             if sonos_speaker[uid].soco is not None:
-                self.logger.debug(f"Removing undiscovered speaker: {sonos_speaker[uid].ip_address}, {uid}")
+                self.logger.warning(f"Removing/disposing undiscovered speaker: {sonos_speaker[uid].ip_address}, {uid}")
                 sonos_speaker[uid].dispose()
 
         # Extract number of online speakers:
