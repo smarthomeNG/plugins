@@ -132,6 +132,7 @@ class AVM(SmartPlugin):
         _passwort = self.get_parameter_value('password')
         _call_monitor_incoming_filter = self.get_parameter_value('call_monitor_incoming_filter')
         _log_entry_count = self.get_parameter_value('log_entry_count')
+        _use_tr064_backlist = self.get_parameter_value('tr064_item_blacklist')
         self._call_monitor = self.get_parameter_value('call_monitor')
         self._aha_http_interface = self.get_parameter_value('avm_home_automation')
         self._cycle = self.get_parameter_value('cycle')
@@ -142,7 +143,7 @@ class AVM(SmartPlugin):
 
         # init FritzDevice
         try:
-            self.fritz_device = FritzDevice(_host, _port, ssl, _verify, _username, _passwort, _call_monitor_incoming_filter, self)
+            self.fritz_device = FritzDevice(_host, _port, ssl, _verify, _username, _passwort, _call_monitor_incoming_filter, _use_tr064_backlist, self)
         except Exception as e:
             self.logger.warning(f"Error '{e!r}' establishing connection to Fritzdevice via TR064-Interface.")
             self.fritz_device = None
@@ -491,7 +492,7 @@ class FritzDevice:
 
     ERROR_COUNT_TO_BE_BLACKLISTED = 2
 
-    def __init__(self, host, port, ssl, verify, username, password, call_monitor_incoming_filter, plugin_instance=None):
+    def __init__(self, host, port, ssl, verify, username, password, call_monitor_incoming_filter, use_tr064_backlist, plugin_instance=None):
         """
         Init class FritzDevice
         """
@@ -506,6 +507,7 @@ class FritzDevice:
         self.verify = verify
         self.username = username
         self.password = password
+        self.use_tr064_blacklist = use_tr064_backlist
         self._call_monitor_incoming_filter = call_monitor_incoming_filter
         self._data_cache = {}
         self._calllist_cache = []
@@ -843,7 +845,8 @@ class FritzDevice:
             self.logger.info(f"Item={item.path()} with avm_data_type={avm_data_type} and index={index} will be updated")
 
             # get data and set item value
-            if not self._update_item_value(item, avm_data_type, index):
+
+            if not self._update_item_value(item, avm_data_type, index) and self.use_tr064_blacklist:
                 error_count += 1
                 self.logger.debug(f"{item.path()} caused error. New error_count: {error_count}. Item will be blacklisted after more than 2 errors.")
                 item_config.update({'error_count': error_count})
@@ -863,10 +866,7 @@ class FritzDevice:
             self.logger.error(f"Error {e!r} occurred during update of item={item} with avm_data_type={avm_data_type} and index={index}. Check item configuration regarding supported/activated function of AVM device. ")
             return False
 
-        if data is None:
-            self.logger.debug(f"Value for item={item} is None.")
-            return False
-        elif isinstance(data, int) and data in self.ERROR_CODES:
+        if isinstance(data, int) and data in self.ERROR_CODES:
             self.logger.warning(f"Error {data} '{self.ERROR_CODES.get(data, None)}' occurred during update of item={item} with avm_data_type={avm_data_type} and index={index}. Check item configuration regarding supported/activated function of AVM device. ")
             return False
         else:
@@ -999,8 +999,6 @@ class FritzDevice:
         if avm_data_type.startswith('wan_current'):
             client = 'client_igd'
 
-        # self.logger.debug(f"_poll_fritz_device: {avm_data_type=}, {index=}, {enforce_read=} with {client=}")
-
         # check if avm_data_type is linked and gather data
         if avm_data_type in link:
             device, service, action, in_arg, out_arg = link[avm_data_type]
@@ -1064,11 +1062,8 @@ class FritzDevice:
             data = self._data_cache.get(cache_dict_key)
 
         # return data
-        if data is None:
-            self.logger.info(f"No data for {cache_dict_key!r} received.")
-            return
-        elif isinstance(data, int) and 99 < data < 1000:
-            self.logger.info(f"Response was ErrorCode: {data} '{self.ERROR_CODES.get(data, None)}' for self.{client}.{device}.{service}.{action}()")
+        if isinstance(data, int) and 99 < data < 1000:
+            self.logger.info(f"Response was ErrorCode: {data} '{self.ERROR_CODES.get(data, 'unknown')}' for self.{client}.{device}.{service}.{action}()")
             return data
         elif out_argument:
             try:
@@ -2630,25 +2625,28 @@ class FritzHome:
 
         # get data
         try:
-            data = self._request(url, params, result='json')['mq_log']
-        except KeyError:
-            data = ''
+            data = self._request(url, params, result='json')
+        except JSONDecodeError:
+            return
 
-        # cut data if needed
-        if self.log_entry_count:
-            data = data[:self.log_entry_count]
+        if isinstance(data, dict):
+            data = data.get('mq_log')
+            if data and isinstance(data, list):
+                # cut data if needed
+                if self.log_entry_count:
+                    data = data[:self.log_entry_count]
 
-        # bring data to needed format
-        newlog = []
-        for text, typ, cat in data:
-            l_date = text[:8]
-            l_time = text[9:17]
-            l_text = text[18:]
-            l_cat = int(cat)
-            l_type = int(typ)
-            l_ts = int(datetime.datetime.timestamp(datetime.datetime.strptime(text[:17], '%d.%m.%y %H:%M:%S')))
-            newlog.append([l_text, l_type, l_cat, l_ts, l_date, l_time])
-        return newlog
+                # bring data to needed format
+                newlog = []
+                for text, typ, cat in data:
+                    l_date = text[:8]
+                    l_time = text[9:17]
+                    l_text = text[18:]
+                    l_cat = int(cat)
+                    l_type = int(typ)
+                    l_ts = int(datetime.datetime.timestamp(datetime.datetime.strptime(text[:17], '%d.%m.%y %H:%M:%S')))
+                    newlog.append([l_text, l_type, l_cat, l_ts, l_date, l_time])
+                return newlog
 
     def get_device_log_from_lua_separated(self):
         """
@@ -2662,14 +2660,18 @@ class FritzHome:
         url = self._get_prefixed_host() + self.LOG_SEPARATE_ROUTE
         params = {"sid": self._sid}
 
-        data = self._request(url, params, result='json')
+        try:
+            data = self._request(url, params, result='json')
+        except JSONDecodeError:
+            return
 
         if isinstance(data, dict):
             data = data.get('mq_log')
-            if data is not None:
+            if data and isinstance(data, list):
                 if self.log_entry_count:
                     data = data[:self.log_entry_count]
 
+                # bring data to needed format
                 data_formated = []
                 for entry in data:
                     dt = datetime.datetime.strptime(f"{entry[0]} {entry[1]}", '%d.%m.%y %H:%M:%S').strftime('%d.%m.%Y %H:%M:%S')
