@@ -1297,7 +1297,7 @@ class FritzDevice:
             return {}
 
         phonebooks = request_response_to_xml(self._request(phonebook_url, self._timeout, self.verify))
-        if phonebooks:
+        if phonebooks is not None:
             for phonebook in phonebooks.iter('phonebook'):
                 for contact in phonebook.iter('contact'):
                     for real_name in contact.findall('.//realName'):
@@ -1307,7 +1307,8 @@ class FritzDevice:
                                 if number.text:
                                     result_number_dict = dict()
                                     result_number_dict['number'] = number.text.strip()
-                                    result_number_dict['type'] = tel_type[number.attrib["type"]]
+                                    # result_number_dict['type'] = tel_type[number.attrib["type"]]
+                                    result_number_dict['type'] = number.attrib["type"]
                                     result_numbers[real_name.text].append(result_number_dict)
             return result_numbers
         else:
