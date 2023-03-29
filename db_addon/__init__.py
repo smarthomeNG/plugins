@@ -1619,7 +1619,7 @@ class DatabaseAddOn(SmartPlugin):
                 min_val = entry[1]
                 max_val = entry[2]
                 wgt += ((min_val + max(30, max_val) / 2) - threshold)
-            return wgt
+            return int(round(wgt, 0))
 
         # Die modifizierte Berechnung des einfachen Durchschnitts.
         elif method == 1:
@@ -1630,7 +1630,7 @@ class DatabaseAddOn(SmartPlugin):
                 min_val = entry[1]
                 max_val = entry[2]
                 wgt += ((min(threshold, min_val) + max(30, max_val) / 2) - threshold)
-            return wgt
+            return int(round(wgt, 0))
         else:
             self.logger.info(f"Method for 'Wachstumsgradtag' Calculation not defined.'")
 
