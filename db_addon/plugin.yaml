@@ -11,7 +11,7 @@ plugin:
 #    keywords: iot xyz
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1848494-support-thread-databaseaddon-plugin
-    version: 1.0.0                  # Plugin version (must match the version specified in __init__.py)
+    version: 1.1.0                  # Plugin version (must match the version specified in __init__.py)
     sh_minversion: 1.9.3.5          # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     py_minversion: 3.8              # minimum Python version to use for this plugin
@@ -60,435 +60,449 @@ item_attributes:
             de: 'Auswertefunktion des DB-Addon Plugins'
             en: 'Evaluation Function of DB-Addon Plugins'
         valid_list:
-            # Verbrauch
-            - 'verbrauch_heute'                             #num    onchange    Verbrauch am heutigen Tag (Differenz zwischen aktuellem Wert und den Wert am Ende des vorherigen Tages)
-            - 'verbrauch_woche'                             #num    onchange    Verbrauch in der aktuellen Woche
-            - 'verbrauch_monat'                             #num    onchange    Verbrauch im aktuellen Monat
-            - 'verbrauch_jahr'                              #num    onchange    Verbrauch im aktuellen Jahr
-            - 'verbrauch_heute_minus1'                      #num    daily       Verbrauch gestern (heute -1 Tag) (Differenz zwischen Wert am Ende des gestrigen Tages und dem Wert am Ende des Tages danach)
-            - 'verbrauch_heute_minus2'                      #num    daily       Verbrauch vorgestern (heute -2 Tage)
-            - 'verbrauch_heute_minus3'                      #num    daily       Verbrauch heute -3 Tage
-            - 'verbrauch_heute_minus4'                      #num    daily       Verbrauch heute -4 Tage
-            - 'verbrauch_heute_minus5'                      #num    daily       Verbrauch heute -5 Tage
-            - 'verbrauch_heute_minus6'                      #num    daily       Verbrauch heute -6 Tage
-            - 'verbrauch_heute_minus7'                      #num    daily       Verbrauch heute -7 Tage
-            - 'verbrauch_woche_minus1'                      #num    weekly      Verbrauch Vorwoche (aktuelle Woche -1)
-            - 'verbrauch_woche_minus2'                      #num    weekly      Verbrauch aktuelle Woche -2 Wochen
-            - 'verbrauch_woche_minus3'                      #num    weekly      Verbrauch aktuelle Woche -3 Wochen
-            - 'verbrauch_woche_minus4'                      #num    weekly      Verbrauch aktuelle Woche -4 Wochen
-            - 'verbrauch_monat_minus1'                      #num    monthly     Verbrauch Vormonat (aktueller Monat -1)
-            - 'verbrauch_monat_minus2'                      #num    monthly     Verbrauch aktueller Monat -2 Monate
-            - 'verbrauch_monat_minus3'                      #num    monthly     Verbrauch aktueller Monat -3 Monate
-            - 'verbrauch_monat_minus4'                      #num    monthly     Verbrauch aktueller Monat -4 Monate
-            - 'verbrauch_monat_minus12'                     #num    monthly     Verbrauch aktueller Monat -12 Monate
-            - 'verbrauch_jahr_minus1'                       #num    yearly      Verbrauch Vorjahr (aktuelles Jahr -1 Jahr)
-            - 'verbrauch_jahr_minus2'                       #num    yearly      Verbrauch aktuelles Jahr -2 Jahre
-            - 'verbrauch_rolling_12m_heute_minus1'          #num    daily       Verbrauch der letzten 12 Monate ausgehend im Ende des letzten Tages
-            - 'verbrauch_rolling_12m_woche_minus1'          #num    weekly      Verbrauch der letzten 12 Monate ausgehend im Ende der letzten Woche
-            - 'verbrauch_rolling_12m_monat_minus1'          #num    monthly     Verbrauch der letzten 12 Monate ausgehend im Ende des letzten Monats
-            - 'verbrauch_rolling_12m_jahr_minus1'           #num    yearly      Verbrauch der letzten 12 Monate ausgehend im Ende des letzten Jahres
-            - 'verbrauch_jahreszeitraum_minus1'             #num    daily       Verbrauch seit dem 1.1. bis zum heutigen Tag des Vorjahres
-            - 'verbrauch_jahreszeitraum_minus2'             #num    daily       Verbrauch seit dem 1.1. bis zum heutigen Tag vor 2 Jahren
-            - 'verbrauch_jahreszeitraum_minus3'             #num    daily       Verbrauch seit dem 1.1. bis zum heutigen Tag vor 3 Jahren
-            # Zaehlerstand
-            - 'zaehlerstand_heute_minus1'                   #num    daily       Zählerstand / Wert am Ende des letzten Tages (heute -1 Tag)
-            - 'zaehlerstand_woche_minus1'                   #num    weekly      Zählerstand / Wert am Ende der letzten Woche (aktuelle Woche -1 Woche)
-            - 'zaehlerstand_woche_minus2'                   #num    weekly      Zählerstand / Wert am Ende der vorletzten Woche (aktuelle Woche -2 Woche)
-            - 'zaehlerstand_woche_minus3'                   #num    weekly      Zählerstand / Wert am Ende der aktuellen Woche -3 Woche
-            - 'zaehlerstand_monat_minus1'                   #num    monthly     Zählerstand / Wert am Ende des letzten Monates (aktueller Monat -1 Monat)
-            - 'zaehlerstand_monat_minus2'                   #num    monthly     Zählerstand / Wert am Ende des vorletzten Monates (aktueller Monat -2 Monate)
-            - 'zaehlerstand_monat_minus3'                   #num    monthly     Zählerstand / Wert am Ende des aktuellen Monats -3 Monate
-            - 'zaehlerstand_jahr_minus1'                    #num    yearly      Zählerstand / Wert am Ende des letzten Jahres (aktuelles Jahr -1 Jahr)
-            - 'zaehlerstand_jahr_minus2'                    #num    yearly      Zählerstand / Wert am Ende des vorletzten Jahres (aktuelles Jahr -2 Jahre)
-            - 'zaehlerstand_jahr_minus3'                    #num    yearly      Zählerstand / Wert am Ende des aktuellen Jahres -3 Jahre
-            # Wertehistorie min/max
-            - 'minmax_last_24h_min'                         #num    daily       minimaler Wert der letzten 24h
-            - 'minmax_last_24h_max'                         #num    daily       maximaler Wert der letzten 24h
-            - 'minmax_last_24h_avg'                         #num    daily       durchschnittlicher Wert der letzten 24h
-            - 'minmax_last_7d_min'                          #num    daily       minimaler Wert der letzten 7 Tage
-            - 'minmax_last_7d_max'                          #num    daily       maximaler Wert der letzten 7 Tage
-            - 'minmax_last_7d_avg'                          #num    daily       durchschnittlicher Wert der letzten 7 Tage
-            - 'minmax_heute_min'                            #num    onchange    Minimalwert seit Tagesbeginn
-            - 'minmax_heute_max'                            #num    onchange    Maximalwert seit Tagesbeginn
-            - 'minmax_heute_minus1_min'                     #num    daily       Minimalwert gestern (heute -1 Tag)
-            - 'minmax_heute_minus1_max'                     #num    daily       Maximalwert gestern (heute -1 Tag)
-            - 'minmax_heute_minus1_avg'                     #num    daily       Durchschnittswert gestern (heute -1 Tag)
-            - 'minmax_heute_minus2_min'                     #num    daily       Minimalwert vorgestern (heute -2 Tage)
-            - 'minmax_heute_minus2_max'                     #num    daily       Maximalwert vorgestern (heute -2 Tage)
-            - 'minmax_heute_minus2_avg'                     #num    daily       Durchschnittswert vorgestern (heute -2 Tage)
-            - 'minmax_heute_minus3_min'                     #num    daily       Minimalwert heute vor 3 Tagen
-            - 'minmax_heute_minus3_max'                     #num    daily       Maximalwert heute vor 3 Tagen
-            - 'minmax_heute_minus3_avg'                     #num    daily       Durchschnittswert heute vor 3 Tagen
-            - 'minmax_woche_min'                            #num    onchange    Minimalwert seit Wochenbeginn
-            - 'minmax_woche_max'                            #num    onchange    Maximalwert seit Wochenbeginn
-            - 'minmax_woche_minus1_min'                     #num    weekly      Minimalwert Vorwoche (aktuelle Woche -1)
-            - 'minmax_woche_minus1_max'                     #num    weekly      Maximalwert Vorwoche (aktuelle Woche -1)
-            - 'minmax_woche_minus1_avg'                     #num    weekly      Durchschnittswert Vorwoche (aktuelle Woche -1)
-            - 'minmax_woche_minus2_min'                     #num    weekly      Minimalwert aktuelle Woche -2 Wochen
-            - 'minmax_woche_minus2_max'                     #num    weekly      Maximalwert aktuelle Woche -2 Wochen
-            - 'minmax_woche_minus2_avg'                     #num    weekly      Durchschnittswert aktuelle Woche -2 Wochen
-            - 'minmax_monat_min'                            #num    onchange    Minimalwert seit Monatsbeginn
-            - 'minmax_monat_max'                            #num    onchange    Maximalwert seit Monatsbeginn
-            - 'minmax_monat_minus1_min'                     #num    monthly     Minimalwert Vormonat (aktueller Monat -1)
-            - 'minmax_monat_minus1_max'                     #num    monthly     Maximalwert Vormonat (aktueller Monat -1)
-            - 'minmax_monat_minus1_avg'                     #num    monthly     Durchschnittswert Vormonat (aktueller Monat -1)
-            - 'minmax_monat_minus2_min'                     #num    monthly     Minimalwert aktueller Monat -2 Monate
-            - 'minmax_monat_minus2_max'                     #num    monthly     Maximalwert aktueller Monat -2 Monate
-            - 'minmax_monat_minus2_avg'                     #num    monthly     Durchschnittswert aktueller Monat -2 Monate
-            - 'minmax_jahr_min'                             #num    onchange    Minimalwert seit Jahresbeginn
-            - 'minmax_jahr_max'                             #num    onchange    Maximalwert seit Jahresbeginn
-            - 'minmax_jahr_minus1_min'                      #num    yearly      Minimalwert Vorjahr (aktuelles Jahr -1 Jahr)
-            - 'minmax_jahr_minus1_max'                      #num    yearly      Maximalwert Vorjahr (aktuelles Jahr -1 Jahr)
-            - 'minmax_jahr_minus1_avg'                      #num    yearly      Durchschnittswert Vorjahr (aktuelles Jahr -1 Jahr)
-            # Serie
-            - 'serie_minmax_monat_min_15m'                  #list   monthly     monatlicher Minimalwert der letzten 15 Monate (gleitend)
-            - 'serie_minmax_monat_max_15m'                  #list   monthly     monatlicher Maximalwert der letzten 15 Monate (gleitend)
-            - 'serie_minmax_monat_avg_15m'                  #list   monthly     monatlicher Mittelwert der letzten 15 Monate (gleitend)
-            - 'serie_minmax_woche_min_30w'                  #list   weekly      wöchentlicher Minimalwert der letzten 30 Wochen (gleitend)
-            - 'serie_minmax_woche_max_30w'                  #list   weekly      wöchentlicher Maximalwert der letzten 30 Wochen (gleitend)
-            - 'serie_minmax_woche_avg_30w'                  #list   weekly      wöchentlicher Mittelwert der letzten 30 Wochen (gleitend)
-            - 'serie_minmax_tag_min_30d'                    #list   daily       täglicher Minimalwert der letzten 30 Tage (gleitend)
-            - 'serie_minmax_tag_max_30d'                    #list   daily       täglicher Maximalwert der letzten 30 Tage (gleitend)
-            - 'serie_minmax_tag_avg_30d'                    #list   daily       täglicher Mittelwert der letzten 30 Tage (gleitend)
-            - 'serie_verbrauch_tag_30d'                     #list   daily       Verbrauch pro Tag der letzten 30 Tage
-            - 'serie_verbrauch_woche_30w'                   #list   weekly      Verbrauch pro Woche der letzten 30 Wochen
-            - 'serie_verbrauch_monat_18m'                   #list   monthly     Verbrauch pro Monat der letzten 18 Monate
-            - 'serie_zaehlerstand_tag_30d'                  #list   daily       Zählerstand am Tagesende der letzten 30 Tage
-            - 'serie_zaehlerstand_woche_30w'                #list   weekly      Zählerstand am Wochenende der letzten 30 Wochen
-            - 'serie_zaehlerstand_monat_18m'                #list   monthly     Zählerstand am Monatsende der letzten 18 Monate
-            - 'serie_waermesumme_monat_24m'                 #list   monthly     monatliche Wärmesumme der letzten 24 Monate
-            - 'serie_kaeltesumme_monat_24m'                 #list   monthly     monatliche Kältesumme der letzten 24 Monate
-            - 'serie_tagesmittelwert_stunde_0d'             #list   daily       Stundenmittelwert für den aktuellen Tag
-            - 'serie_tagesmittelwert_tag_stunde_30d'        #list   daily       Stundenmittelwert pro Tag der letzten 30 Tage (bspw. zur Berechnung der Tagesmitteltemperatur basierend auf den Mittelwert der Temperatur pro Stunde
-            # Allgemein
-            - 'general_oldest_value'                        #num    ------      Ausgabe des ältesten Wertes des entsprechenden "Parent-Items" mit database Attribut
-            - 'general_oldest_log'                          #list   ------      Ausgabe des Timestamp des ältesten Eintrages des entsprechenden "Parent-Items" mit database Attribut
-            # Komplex                       Hinweis: db_addon_params needed
-            - 'kaeltesumme'                                 #num    daily       Berechnet die Kältesumme für einen Zeitraum, db_addon_params: (year=mandatory, month=optional)
-            - 'waermesumme'                                 #num    daily       Berechnet die Wärmesumme für einen Zeitraum, db_addon_params: (year=mandatory, month=optional)
-            - 'gruenlandtempsumme'                          #num    daily       Berechnet die Grünlandtemperatursumme für einen Zeitraum, db_addon_params: (year=mandatory)
-            - 'tagesmitteltemperatur'                       #list   daily       Berechnet die Tagesmitteltemperatur auf basis der stündlichen Durchschnittswerte eines Tages für die angegebene Anzahl von Tagen (days=optional)
-            - 'db_request'                                  #list  'group'      Abfrage der DB: db_addon_params: (func=mandatory, item=mandatory, timespan=mandatory, start=optional, end=optional, count=optional, group=optional, group2=optional):
-        valid_list_description:  # Beschreibung -> notwendiger Item-Type
-            # Verbrauch
-            - 'Verbrauch am heutigen Tag (Differenz zwischen aktuellem Wert und den Wert am Ende des vorherigen Tages) -> num \n
-               Berechnungszyklus = onchange'
-            - 'Verbrauch in der aktuellen Woche -> num \n
-               Berechnungszyklus = onchange'
-            - 'Verbrauch im aktuellen Monat -> num \n
-               Berechnungszyklus = onchange'
-            - 'Verbrauch im aktuellen Jahr -> num \n
-               Berechnungszyklus = onchange'
-            - 'Verbrauch gestern (heute -1 Tag) (Differenz zwischen Wert am Ende des gestrigen Tages und dem Wert am Ende des Tages danach) -> num \n
-               Berechnungszyklus = täglich'
-            - 'Verbrauch vorgestern (heute -2 Tage) -> num \n
-               Berechnungszyklus = täglich'
-            - 'Verbrauch heute -3 Tage -> num \n
-               Berechnungszyklus = täglich'
-            - 'Verbrauch heute -4 Tage -> num \n
-               Berechnungszyklus = täglich'
-            - 'Verbrauch heute -5 Tage -> num \n
-               Berechnungszyklus = täglich'
-            - 'Verbrauch heute -6 Tage -> num \n
-               Berechnungszyklus = täglich'
-            - 'Verbrauch heute -7 Tage -> num \n
-               Berechnungszyklus = täglich'
-            - 'Verbrauch Vorwoche (aktuelle Woche -1) -> num \n
-               Berechnungszyklus = wöchentlich'
-            - 'Verbrauch aktuelle Woche -2 Wochen) -> num \n
-               Berechnungszyklus = wöchentlich'
-            - 'Verbrauch aktuelle Woche -3 Wochen) -> num \n
-               Berechnungszyklus = wöchentlich'
-            - 'Verbrauch aktuelle Woche -4 Wochen) -> num \n
-               Berechnungszyklus = wöchentlich'
-            - 'Verbrauch Vormonat (aktueller Monat -1) -> num \n
-               Berechnungszyklus = monatlich'
-            - 'Verbrauch aktueller Monat -2 Monate -> num \n
-               Berechnungszyklus = monatlich'
-            - 'Verbrauch aktueller Monat -3 Monate -> num \n
-               Berechnungszyklus = monatlich'
-            - 'Verbrauch aktueller Monat -4 Monate -> num \n
-               Berechnungszyklus = monatlich'
-            - 'Verbrauch aktueller Monat -12 Monate -> num \n
-               Berechnungszyklus = monatlich'
-            - 'Verbrauch Vorjahr (aktuelles Jahr -1 Jahr) -> num \n
-               Berechnungszyklus = jährlich'
-            - 'Verbrauch aktuelles Jahr -2 Jahre) -> num \n
-               Berechnungszyklus = jährlich'
-            - 'Verbrauch der letzten 12 Monate ausgehend im Ende des letzten Tages -> num \n
-               Berechnungszyklus = täglich'
-            - 'Verbrauch der letzten 12 Monate ausgehend im Ende der letzten Woche -> num \n
-               Berechnungszyklus = wöchentlich'
-            - 'Verbrauch der letzten 12 Monate ausgehend im Ende des letzten Monats -> num \n
-               Berechnungszyklus = monatlich'
-            - 'Verbrauch der letzten 12 Monate ausgehend im Ende des letzten Jahres -> num \n
-               Berechnungszyklus = jährlich'
-            - 'Verbrauch seit dem 1.1. bis zum heutigen Tag des Vorjahres -> num \n
-               Berechnungszyklus = täglich'
-            - 'Verbrauch seit dem 1.1. bis zum heutigen Tag vor 2 Jahren -> num \n
-               Berechnungszyklus = täglich'
-            - 'Verbrauch seit dem 1.1. bis zum heutigen Tag vor 3 Jahren -> num \n
-               Berechnungszyklus = täglich'
-            # Zaehlerstand
-            - 'Zählerstand / Wert am Ende des letzten Tages (heute -1 Tag) -> num \n
-               Berechnungszyklus = täglich'
-            - 'Zählerstand / Wert am Ende der letzten Woche (aktuelle Woche -1 Woche) -> num \n
-               Berechnungszyklus = wöchentlich'
-            - 'Zählerstand / Wert am Ende der vorletzten Woche (aktuelle Woche -2 Woche) -> num \n
-               Berechnungszyklus = wöchentlich'
-            - 'Zählerstand / Wert am Ende der aktuellen Woche -3 Woche -> num \n
-               Berechnungszyklus = wöchentlich'
-            - 'Zählerstand / Wert am Ende des letzten Monates (aktueller Monat -1 Monat)) -> num \n
-               Berechnungszyklus = monatlich'
-            - 'Zählerstand / Wert am Ende des vorletzten Monates (aktueller Monat -2 Monate)) -> num \n
-               Berechnungszyklus = monatlich'
-            - 'Zählerstand / Wert am Ende des aktuellen Monats -3 Monate) -> num \n
-               Berechnungszyklus = monatlich'
-            - 'Zählerstand / Wert am Ende des letzten Jahres (aktuelles Jahr -1 Jahr) -> num \n
-               Berechnungszyklus = jährlich'
-            - 'Zählerstand / Wert am Ende des vorletzten Jahres (aktuelles Jahr -2 Jahre) -> num \n
-               Berechnungszyklus = jährlich'
-            - 'Zählerstand / Wert am Ende des aktuellen Jahres -3 Jahre -> num \n
-               Berechnungszyklus = jährlich'
-            # Wertehistorie min/max
-            - 'minimaler Wert der letzten 24h -> num \n
-               Berechnungszyklus = täglich'
-            - 'maximaler Wert der letzten 24h -> num \n
-               Berechnungszyklus = täglich'
-            - 'durchschnittlicher Wert der letzten 24h -> num \n
-               Berechnungszyklus = täglich'
-            - 'minimaler Wert der letzten 7 Tage -> num \n
-               Berechnungszyklus = täglich'
-            - 'maximaler Wert der letzten 7 Tage -> num \n
-               Berechnungszyklus = täglich'
-            - 'durchschnittlicher Wert der letzten 7 Tage -> num \n
-               Berechnungszyklus = täglich'
+            - 'verbrauch_heute'
+            - 'verbrauch_woche'
+            - 'verbrauch_monat'
+            - 'verbrauch_jahr'
+            - 'verbrauch_heute_minus1'
+            - 'verbrauch_heute_minus2'
+            - 'verbrauch_heute_minus3'
+            - 'verbrauch_heute_minus4'
+            - 'verbrauch_heute_minus5'
+            - 'verbrauch_heute_minus6'
+            - 'verbrauch_heute_minus7'
+            - 'verbrauch_woche_minus1'
+            - 'verbrauch_woche_minus2'
+            - 'verbrauch_woche_minus3'
+            - 'verbrauch_woche_minus4'
+            - 'verbrauch_monat_minus1'
+            - 'verbrauch_monat_minus2'
+            - 'verbrauch_monat_minus3'
+            - 'verbrauch_monat_minus4'
+            - 'verbrauch_monat_minus12'
+            - 'verbrauch_jahr_minus1'
+            - 'verbrauch_jahr_minus2'
+            - 'verbrauch_rolling_12m_heute_minus1'
+            - 'verbrauch_rolling_12m_woche_minus1'
+            - 'verbrauch_rolling_12m_monat_minus1'
+            - 'verbrauch_rolling_12m_jahr_minus1'
+            - 'verbrauch_jahreszeitraum_minus1'
+            - 'verbrauch_jahreszeitraum_minus2'
+            - 'verbrauch_jahreszeitraum_minus3'
+            - 'zaehlerstand_heute_minus1'
+            - 'zaehlerstand_heute_minus2'
+            - 'zaehlerstand_heute_minus3'
+            - 'zaehlerstand_woche_minus1'
+            - 'zaehlerstand_woche_minus2'
+            - 'zaehlerstand_woche_minus3'
+            - 'zaehlerstand_monat_minus1'
+            - 'zaehlerstand_monat_minus2'
+            - 'zaehlerstand_monat_minus3'
+            - 'zaehlerstand_jahr_minus1'
+            - 'zaehlerstand_jahr_minus2'
+            - 'zaehlerstand_jahr_minus3'
+            - 'minmax_last_24h_min'
+            - 'minmax_last_24h_max'
+            - 'minmax_last_24h_avg'
+            - 'minmax_last_7d_min'
+            - 'minmax_last_7d_max'
+            - 'minmax_last_7d_avg'
+            - 'minmax_heute_min'
+            - 'minmax_heute_max'
+            - 'minmax_heute_minus1_min'
+            - 'minmax_heute_minus1_max'
+            - 'minmax_heute_minus1_avg'
+            - 'minmax_heute_minus2_min'
+            - 'minmax_heute_minus2_max'
+            - 'minmax_heute_minus2_avg'
+            - 'minmax_heute_minus3_min'
+            - 'minmax_heute_minus3_max'
+            - 'minmax_heute_minus3_avg'
+            - 'minmax_woche_min'
+            - 'minmax_woche_max'
+            - 'minmax_woche_minus1_min'
+            - 'minmax_woche_minus1_max'
+            - 'minmax_woche_minus1_avg'
+            - 'minmax_woche_minus2_min'
+            - 'minmax_woche_minus2_max'
+            - 'minmax_woche_minus2_avg'
+            - 'minmax_monat_min'
+            - 'minmax_monat_max'
+            - 'minmax_monat_minus1_min'
+            - 'minmax_monat_minus1_max'
+            - 'minmax_monat_minus1_avg'
+            - 'minmax_monat_minus2_min'
+            - 'minmax_monat_minus2_max'
+            - 'minmax_monat_minus2_avg'
+            - 'minmax_jahr_min'
+            - 'minmax_jahr_max'
+            - 'minmax_jahr_minus1_min'
+            - 'minmax_jahr_minus1_max'
+            - 'minmax_jahr_minus1_avg'
+            - 'tagesmitteltemperatur_heute'
+            - 'tagesmitteltemperatur_heute_minus1'
+            - 'tagesmitteltemperatur_heute_minus2'
+            - 'tagesmitteltemperatur_heute_minus3'
+            - 'serie_minmax_monat_min_15m'
+            - 'serie_minmax_monat_max_15m'
+            - 'serie_minmax_monat_avg_15m'
+            - 'serie_minmax_woche_min_30w'
+            - 'serie_minmax_woche_max_30w'
+            - 'serie_minmax_woche_avg_30w'
+            - 'serie_minmax_tag_min_30d'
+            - 'serie_minmax_tag_max_30d'
+            - 'serie_minmax_tag_avg_30d'
+            - 'serie_verbrauch_tag_30d'
+            - 'serie_verbrauch_woche_30w'
+            - 'serie_verbrauch_monat_18m'
+            - 'serie_zaehlerstand_tag_30d'
+            - 'serie_zaehlerstand_woche_30w'
+            - 'serie_zaehlerstand_monat_18m'
+            - 'serie_waermesumme_monat_24m'
+            - 'serie_kaeltesumme_monat_24m'
+            - 'serie_tagesmittelwert_stunde_0d'
+            - 'serie_tagesmittelwert_tag_stunde_30d'
+            - 'general_oldest_value'
+            - 'general_oldest_log'
+            - 'kaeltesumme'
+            - 'waermesumme'
+            - 'gruenlandtempsumme'
+            - 'tagesmitteltemperatur'
+            - 'wachstumsgradtage'
+            - 'db_request'
+        valid_list_description:
+            - 'Verbrauch am heutigen Tag (Differenz zwischen aktuellem Wert und den Wert am Ende des vorherigen Tages)'
+            - 'Verbrauch in der aktuellen Woche'
+            - 'Verbrauch im aktuellen Monat'
+            - 'Verbrauch im aktuellen Jahr'
+            - 'Verbrauch gestern (heute -1 Tag) (Differenz zwischen Wert am Ende des gestrigen Tages und dem Wert am Ende des Tages danach)'
+            - 'Verbrauch vorgestern (heute -2 Tage)'
+            - 'Verbrauch heute -3 Tage'
+            - 'Verbrauch heute -4 Tage'
+            - 'Verbrauch heute -5 Tage'
+            - 'Verbrauch heute -6 Tage'
+            - 'Verbrauch heute -7 Tage'
+            - 'Verbrauch Vorwoche (aktuelle Woche -1)'
+            - 'Verbrauch aktuelle Woche -2 Wochen'
+            - 'Verbrauch aktuelle Woche -3 Wochen'
+            - 'Verbrauch aktuelle Woche -4 Wochen'
+            - 'Verbrauch Vormonat (aktueller Monat -1)'
+            - 'Verbrauch aktueller Monat -2 Monate'
+            - 'Verbrauch aktueller Monat -3 Monate'
+            - 'Verbrauch aktueller Monat -4 Monate'
+            - 'Verbrauch aktueller Monat -12 Monate'
+            - 'Verbrauch Vorjahr (aktuelles Jahr -1 Jahr)'
+            - 'Verbrauch aktuelles Jahr -2 Jahre'
+            - 'Verbrauch der letzten 12 Monate ausgehend im Ende des letzten Tages'
+            - 'Verbrauch der letzten 12 Monate ausgehend im Ende der letzten Woche'
+            - 'Verbrauch der letzten 12 Monate ausgehend im Ende des letzten Monats'
+            - 'Verbrauch der letzten 12 Monate ausgehend im Ende des letzten Jahres'
+            - 'Verbrauch seit dem 1.1. bis zum heutigen Tag des Vorjahres'
+            - 'Verbrauch seit dem 1.1. bis zum heutigen Tag vor 2 Jahren'
+            - 'Verbrauch seit dem 1.1. bis zum heutigen Tag vor 3 Jahren'
+            - 'Zählerstand / Wert am Ende des letzten Tages (heute -1 Tag)'
+            - 'Zählerstand / Wert am Ende des vorletzten Tages (heute -2 Tag)'
+            - 'Zählerstand / Wert am Ende des vorvorletzten Tages (heute -3 Tag)'
+            - 'Zählerstand / Wert am Ende der vorvorletzten Woche (aktuelle Woche -1 Woche)'
+            - 'Zählerstand / Wert am Ende der vorletzten Woche (aktuelle Woche -2 Wochen)'
+            - 'Zählerstand / Wert am Ende der aktuellen Woche -3 Wochen'
+            - 'Zählerstand / Wert am Ende des letzten Monates (aktueller Monat -1 Monat)'
+            - 'Zählerstand / Wert am Ende des vorletzten Monates (aktueller Monat -2 Monate)'
+            - 'Zählerstand / Wert am Ende des aktuellen Monats -3 Monate'
+            - 'Zählerstand / Wert am Ende des letzten Jahres (aktuelles Jahr -1 Jahr)'
+            - 'Zählerstand / Wert am Ende des vorletzten Jahres (aktuelles Jahr -2 Jahre)'
+            - 'Zählerstand / Wert am Ende des aktuellen Jahres -3 Jahre'
+            - 'minimaler Wert der letzten 24h'
+            - 'maximaler Wert der letzten 24h'
+            - 'durchschnittlicher Wert der letzten 24h'
+            - 'minimaler Wert der letzten 7 Tage'
+            - 'maximaler Wert der letzten 7 Tage'
+            - 'durchschnittlicher Wert der letzten 7 Tage'
             - 'Minimalwert seit Tagesbeginn'
             - 'Maximalwert seit Tagesbeginn'
-            - 'Minimalwert gestern (heute -1 Tag) -> num \n
-               Berechnungszyklus = täglich'
-            - 'Maximalwert gestern (heute -1 Tag) -> num \n
-               Berechnungszyklus = täglich'
-            - 'Durchschnittswert gestern (heute -1 Tag) -> num \n
-               Berechnungszyklus = täglich'
-            - 'Minimalwert vorgestern (heute -2 Tage) -> num \n
-               Berechnungszyklus = täglich'
-            - 'Maximalwert vorgestern (heute -2 Tage) -> num \n
-               Berechnungszyklus = täglich'
-            - 'Durchschnittswert vorgestern (heute -2 Tage) -> num \n
-               Berechnungszyklus = täglich'
-            - 'Minimalwert heute vor 3 Tagen -> num \n
-               Berechnungszyklus = täglich'
-            - 'Maximalwert heute vor 3 Tagen -> num \n
-               Berechnungszyklus = täglich'
-            - 'Durchschnittswert heute vor 3 Tagen -> num \n
-               Berechnungszyklus = täglich'
-            - 'Minimalwert seit Wochenbeginn -> num \n
-               Berechnungszyklus = onchange'
-            - 'Maximalwert seit Wochenbeginn -> num \n
-               Berechnungszyklus = onchange'
-            - 'Minimalwert Vorwoche (aktuelle Woche -1) -> num \n
-               Berechnungszyklus = wöchentlich'
-            - 'Maximalwert Vorwoche (aktuelle Woche -1) -> num \n
-               Berechnungszyklus = wöchentlich'
-            - 'Durchschnittswert Vorwoche (aktuelle Woche -1) -> num \n
-               Berechnungszyklus = wöchentlich'
-            - 'Minimalwert aktuelle Woche -2 Wochen -> num \n
-               Berechnungszyklus = wöchentlich'
-            - 'Maximalwert aktuelle Woche -2 Wochen -> num \n
-               Berechnungszyklus = wöchentlich'
-            - 'Durchschnittswert aktuelle Woche -2 Wochen -> num \n
-               Berechnungszyklus = wöchentlich'
-            - 'Minimalwert seit Monatsbeginn -> num \n
-               Berechnungszyklus = onchange'
-            - 'Maximalwert seit Monatsbeginn -> num \n
-               Berechnungszyklus = onchange'
-            - 'Minimalwert Vormonat (aktueller Monat -1) -> num \n
-               Berechnungszyklus = monatlich'
-            - 'Maximalwert Vormonat (aktueller Monat -1) -> num \n
-               Berechnungszyklus = monatlich'
-            - 'Durchschnittswert Vormonat (aktueller Monat -1) -> num \n
-               Berechnungszyklus = monatlich'
-            - 'Minimalwert aktueller Monat -2 Monate -> num \n
-               Berechnungszyklus = monatlich'
-            - 'Maximalwert aktueller Monat -2 Monate -> num \n
-               Berechnungszyklus = monatlich'
-            - 'Durchschnittswert aktueller Monat -2 Monate -> num \n
-               Berechnungszyklus = monatlich'
-            - 'Minimalwert seit Jahresbeginn -> num \n
-               Berechnungszyklus = onchange'
-            - 'Maximalwert seit Jahresbeginn -> num \n
-               Berechnungszyklus = onchange'
-            - 'Minimalwert Vorjahr (aktuelles Jahr -1 Jahr) -> num \n
-               Berechnungszyklus = jährlich'
-            - 'Maximalwert Vorjahr (aktuelles Jahr -1 Jahr) -> num \n
-               Berechnungszyklus = jährlich'
-            - 'Durchschnittswert Vorjahr (aktuelles Jahr -1 Jahr) -> num \n
-               Berechnungszyklus = jährlich'
-            # Serie
-            - 'monatlicher Minimalwert der letzten 15 Monate (gleitend) -> list \n
-               Berechnungszyklus = monatlich'
-            - 'monatlicher Maximalwert der letzten 15 Monate (gleitend) -> list \n
-               Berechnungszyklus = monatlich'
-            - 'monatlicher Mittelwert der letzten 15 Monate (gleitend) -> list \n
-               Berechnungszyklus = monatlich'
-            - 'wöchentlicher Minimalwert der letzten 30 Wochen (gleitend) -> list \n
-               Berechnungszyklus = wöchentlich'
-            - 'wöchentlicher Maximalwert der letzten 30 Wochen (gleitend) -> list \n
-               Berechnungszyklus = wöchentlich'
-            - 'wöchentlicher Mittelwert der letzten 30 Wochen (gleitend) -> list \n
-               Berechnungszyklus = wöchentlich'
-            - 'täglicher Minimalwert der letzten 30 Tage (gleitend) -> list \n
-               Berechnungszyklus = täglich'
-            - 'täglicher Maximalwert der letzten 30 Tage (gleitend)) -> list \n
-               Berechnungszyklus = täglich'
-            - 'täglicher Mittelwert der letzten 30 Tage (gleitend)) -> list \n
-               Berechnungszyklus = täglich'
-            - 'Verbrauch pro Tag der letzten 30 Tage) -> list \n
-               Berechnungszyklus = täglich'
-            - 'Verbrauch pro Woche der letzten 30 Wochen) -> list \n
-               Berechnungszyklus = wöchentlich'
-            - 'Verbrauch pro Monat der letzten 18 Monate) -> list \n
-               Berechnungszyklus = monatlich'
-            - 'Zählerstand am Tagesende der letzten 30 Tage) -> list \n
-               Berechnungszyklus = täglich'
-            - 'Zählerstand am Wochenende der letzten 30 Wochen) -> list \n
-               Berechnungszyklus = wöchentlich'
-            - 'Zählerstand am Monatsende der letzten 18 Monate) -> list \n
-               Berechnungszyklus = monatlich'
-            - 'monatliche Wärmesumme der letzten 24 Monate) -> list \n
-               Berechnungszyklus = monatlich'
-            - 'monatliche Kältesumme der letzten 24 Monate) -> list \n
-               Berechnungszyklus = monatlich'
-            - 'Stundenmittelwert für den aktuellen Tag) -> list \n
-               Berechnungszyklus = täglich'
-            - 'Stundenmittelwert pro Tag der letzten 30 Tage (bspw. zur Berechnung der Tagesmitteltemperatur basierend auf den Mittelwert der Temperatur pro Stunde) -> list \n
-               Berechnungszyklus = täglich'
-            # Allgemein
-            - 'Ausgabe des ältesten Wertes des entsprechenden "Parent-Items" mit database Attribut -> num'
-            - 'Ausgabe des Timestamp des ältesten Eintrages des entsprechenden "Parent-Items" mit database Attribut -> list'
-            # Komplex
-            - 'Berechnet die Kältesumme für einen Zeitraum, db_addon_params sind für die Definition des Zeitraums notwendig (year=optional, month=optional) -> num \n
-               Berechnungszyklus = täglich'
-            - 'Berechnet die Wärmesumme für einen Zeitraum, db_addon_params sind für die Definition des Zeitraums notwendig (year=optional, month=optional) -> num \n
-               Berechnungszyklus = täglich'
-            - 'Berechnet die Grünlandtemperatursumme für einen Zeitraum, db_addon_params sind für die Definition des Zeitraums notwendig (year=optional) siehe https://de.wikipedia.org/wiki/Gr%C3%BCnlandtemperatursumme -> num \n
-               Berechnungszyklus = täglich'
-            - 'Berechnet die Tagesmitteltemperatur auf basis der stündlichen Durchschnittswerte eines Tages für die angegebene Anzahl von Tagen (days=optional) -> num \n
-               Berechnungszyklus = täglich'
-            - 'Abfrage der DB mit db_addon_params (func=mandatory, item=mandatory, timespan=mandatory, start=optional, end=optional, count=optional, group=optional, group2=optional) -> foo \n
-               Berechnungszyklus = group'
-
+            - 'Minimalwert gestern (heute -1 Tag)'
+            - 'Maximalwert gestern (heute -1 Tag)'
+            - 'Durchschnittswert gestern (heute -1 Tag)'
+            - 'Minimalwert vorgestern (heute -2 Tage)'
+            - 'Maximalwert vorgestern (heute -2 Tage)'
+            - 'Durchschnittswert vorgestern (heute -2 Tage)'
+            - 'Minimalwert heute vor 3 Tagen'
+            - 'Maximalwert heute vor 3 Tagen'
+            - 'Durchschnittswert heute vor 3 Tagen'
+            - 'Minimalwert seit Wochenbeginn'
+            - 'Maximalwert seit Wochenbeginn'
+            - 'Minimalwert Vorwoche (aktuelle Woche -1)'
+            - 'Maximalwert Vorwoche (aktuelle Woche -1)'
+            - 'Durchschnittswert Vorwoche (aktuelle Woche -1)'
+            - 'Minimalwert aktuelle Woche -2 Wochen'
+            - 'Maximalwert aktuelle Woche -2 Wochen'
+            - 'Durchschnittswert aktuelle Woche -2 Wochen'
+            - 'Minimalwert seit Monatsbeginn'
+            - 'Maximalwert seit Monatsbeginn'
+            - 'Minimalwert Vormonat (aktueller Monat -1)'
+            - 'Maximalwert Vormonat (aktueller Monat -1)'
+            - 'Durchschnittswert Vormonat (aktueller Monat -1)'
+            - 'Minimalwert aktueller Monat -2 Monate'
+            - 'Maximalwert aktueller Monat -2 Monate'
+            - 'Durchschnittswert aktueller Monat -2 Monate'
+            - 'Minimalwert seit Jahresbeginn'
+            - 'Maximalwert seit Jahresbeginn'
+            - 'Minimalwert Vorjahr (aktuelles Jahr -1 Jahr)'
+            - 'Maximalwert Vorjahr (aktuelles Jahr -1 Jahr)'
+            - 'Durchschnittswert Vorjahr (aktuelles Jahr -1 Jahr)'
+            - 'Tagesmitteltemperatur heute'
+            - 'Tagesmitteltemperatur des letzten Tages (heute -1 Tag)'
+            - 'Tagesmitteltemperatur des vorletzten Tages (heute -2 Tag)'
+            - 'Tagesmitteltemperatur des vorvorletzten Tages (heute -3 Tag)'
+            - 'monatlicher Minimalwert der letzten 15 Monate (gleitend)'
+            - 'monatlicher Maximalwert der letzten 15 Monate (gleitend)'
+            - 'monatlicher Mittelwert der letzten 15 Monate (gleitend)'
+            - 'wöchentlicher Minimalwert der letzten 30 Wochen (gleitend)'
+            - 'wöchentlicher Maximalwert der letzten 30 Wochen (gleitend)'
+            - 'wöchentlicher Mittelwert der letzten 30 Wochen (gleitend)'
+            - 'täglicher Minimalwert der letzten 30 Tage (gleitend)'
+            - 'täglicher Maximalwert der letzten 30 Tage (gleitend)'
+            - 'täglicher Mittelwert der letzten 30 Tage (gleitend)'
+            - 'Verbrauch pro Tag der letzten 30 Tage'
+            - 'Verbrauch pro Woche der letzten 30 Wochen'
+            - 'Verbrauch pro Monat der letzten 18 Monate'
+            - 'Zählerstand am Tagesende der letzten 30 Tage'
+            - 'Zählerstand am Wochenende der letzten 30 Wochen'
+            - 'Zählerstand am Monatsende der letzten 18 Monate'
+            - 'monatliche Wärmesumme der letzten 24 Monate'
+            - 'monatliche Kältesumme der letzten 24 Monate'
+            - 'Stundenmittelwert für den aktuellen Tag'
+            - 'Stundenmittelwert pro Tag der letzten 30 Tage (bspw. zur Berechnung der Tagesmitteltemperatur basierend auf den Mittelwert der Temperatur pro Stunde'
+            - 'Ausgabe des ältesten Wertes des entsprechenden "Parent-Items" mit database Attribut'
+            - 'Ausgabe des Timestamp des ältesten Eintrages des entsprechenden "Parent-Items" mit database Attribut'
+            - 'Berechnet die Kältesumme für einen Zeitraum, db_addon_params: (year=mandatory: int, month=optional: str)'
+            - 'Berechnet die Wärmesumme für einen Zeitraum, db_addon_params: (year=mandatory: int, month=optional: str, threshold=optional: int)'
+            - 'Berechnet die Grünlandtemperatursumme für einen Zeitraum, db_addon_params: (year=mandatory)'
+            - 'Berechnet die Tagesmitteltemperatur auf Basis der stündlichen Durchschnittswerte eines Tages für die angegebene Anzahl von Tagen (timeframe=day, count=integer)'
+            - 'Berechnet die Wachstumsgradtage auf Basis der stündlichen Durchschnittswerte eines Tages für das laufende Jahr mit an Angabe des Temperaturschwellenwertes (threshold=Schwellentemperatur: int)'
+            - 'Abfrage der DB: db_addon_params: (func=mandatory, item=mandatory, timespan=mandatory, start=optional, end=optional, count=optional, group=optional, group2=optional)'
         valid_list_item_type:
-            # Verbrauch
-            - num
-            - num
-            - num
-            - num
-            - num
-            - num
-            - num
-            - num
-            - num
-            - num
-            - num
-            - num
-            - num
-            - num
-            - num
-            - num
-            - num
-            - num
-            - num
-            - num
-            - num
-            - num
-            - num
-            - num
-            - num
-            - num
-            - num
-            - num
-            - num
-            # Zaehlerstand
-            - num
-            - num
-            - num
-            - num
-            - num
-            - num
-            - num
-            - num
-            - num
-            - num
-            # Wertehistorie min/max
-            - num
-            - num
-            - num
-            - num
-            - num
-            - num
-            - num
-            - num
-            - num
-            - num
-            - num
-            - num
-            - num
-            - num
-            - num
-            - num
-            - num
-            - num
-            - num
-            - num
-            - num
-            - num
-            - num
-            - num
-            - num
-            - num
-            - num
-            - num
-            - num
-            - num
-            - num
-            - num
-            - num
-            - num
-            - num
-            - num
-            - num
-            - num
-            # Serie
-            - list
-            - list
-            - list
-            - list
-            - list
-            - list
-            - list
-            - list
-            - list
-            - list
-            - list
-            - list
-            - list
-            - list
-            - list
-            - list
-            - list
-            - list
-            - list
-            # Allgemein
-            - num
-            - list
-            # Komplex
-            - num
-            - num
-            - num
-            - list
-            - list
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'list'
+            - 'list'
+            - 'list'
+            - 'list'
+            - 'list'
+            - 'list'
+            - 'list'
+            - 'list'
+            - 'list'
+            - 'list'
+            - 'list'
+            - 'list'
+            - 'list'
+            - 'list'
+            - 'list'
+            - 'list'
+            - 'list'
+            - 'list'
+            - 'list'
+            - 'num '
+            - 'list'
+            - 'num'
+            - 'num'
+            - 'num'
+            - 'list'
+            - 'num'
+            - 'list'
+        valid_list_calculation:
+            - 'onchange'
+            - 'onchange'
+            - 'onchange'
+            - 'onchange'
+            - 'daily'
+            - 'daily'
+            - 'daily'
+            - 'daily'
+            - 'daily'
+            - 'daily'
+            - 'daily'
+            - 'weekly'
+            - 'weekly'
+            - 'weekly'
+            - 'weekly'
+            - 'monthly'
+            - 'monthly'
+            - 'monthly'
+            - 'monthly'
+            - 'monthly'
+            - 'yearly'
+            - 'yearly'
+            - 'daily'
+            - 'weekly'
+            - 'monthly'
+            - 'yearly'
+            - 'daily'
+            - 'daily'
+            - 'daily'
+            - 'daily'
+            - 'daily'
+            - 'daily'
+            - 'weekly'
+            - 'weekly'
+            - 'weekly'
+            - 'monthly'
+            - 'monthly'
+            - 'monthly'
+            - 'yearly'
+            - 'yearly'
+            - 'yearly'
+            - 'daily'
+            - 'daily'
+            - 'daily'
+            - 'daily'
+            - 'daily'
+            - 'daily'
+            - 'onchange'
+            - 'onchange'
+            - 'daily'
+            - 'daily'
+            - 'daily'
+            - 'daily'
+            - 'daily'
+            - 'daily'
+            - 'daily'
+            - 'daily'
+            - 'daily'
+            - 'onchange'
+            - 'onchange'
+            - 'weekly'
+            - 'weekly'
+            - 'weekly'
+            - 'weekly'
+            - 'weekly'
+            - 'weekly'
+            - 'onchange'
+            - 'onchange'
+            - 'monthly'
+            - 'monthly'
+            - 'monthly'
+            - 'monthly'
+            - 'monthly'
+            - 'monthly'
+            - 'onchange'
+            - 'onchange'
+            - 'yearly'
+            - 'yearly'
+            - 'yearly'
+            - 'onchange'
+            - 'daily'
+            - 'daily'
+            - 'daily'
+            - 'monthly'
+            - 'monthly'
+            - 'monthly'
+            - 'weekly'
+            - 'weekly'
+            - 'weekly'
+            - 'daily'
+            - 'daily'
+            - 'daily'
+            - 'daily'
+            - 'weekly'
+            - 'monthly'
+            - 'daily'
+            - 'weekly'
+            - 'monthly'
+            - 'monthly'
+            - 'monthly'
+            - 'daily'
+            - 'daily'
+            - 'False'
+            - 'False'
+            - 'daily'
+            - 'daily'
+            - 'daily'
+            - 'daily'
+            - 'daily'
+            - 'group'
 
     db_addon_info:
         type: str
@@ -496,11 +510,11 @@ item_attributes:
             de: 'Info-Funktion des DB-Addon Plugins'
             en: 'Info-Function of DB-Addon Plugins'
         valid_list:
-            - 'db_version'                                  #str    ------      Version der verbundenen Datenbank
+            - 'db_version'
         valid_list_description:
-            - 'Version der verbundenen Datenbank -> str'
+            - 'Version der verbundenen Datenbank'
         valid_list_item_type:
-            - str
+            - 'str'
 
     db_addon_admin:
         type: str
@@ -508,17 +522,17 @@ item_attributes:
             de: 'Admin-Funktion des DB-Addon Plugins'
             en: 'Admin-Function of DB-Addon Plugins'
         valid_list:
-            - 'suspend'                                     #bool   ------      unterbricht die Aktivitäten des Plugin
-            - 'recalc_all'                                  #bool   ------      Startet einen Neuberechnungslauf aller on-demand items
-            - 'clean_cache_values'                          #bool   ------      Löscht Plugin-Cache und damit alle im Plugin zwischengespeicherten Werte
+            - 'suspend'
+            - 'recalc_all'
+            - 'clean_cache_values'
         valid_list_description:
             - 'unterbricht die Aktivitäten des Plugin -> bool'
             - 'Startet einen Neuberechnungslauf aller on-demand items -> bool'
             - 'Löscht Plugin-Cache und damit alle im Plugin zwischengespeicherten Werte -> bool'
         valid_list_item_type:
-            - bool
-            - bool
-            - bool
+            - 'bool'
+            - 'bool'
+            - 'bool'
 
     db_addon_params:
         type: str
@@ -537,6 +551,12 @@ item_attributes:
         description:
             de: 'Wert der bei Abfrage bzw. Auswertung der Datenbank für diese Item ignoriert werden soll'
             en: 'Value which will be ignored at database query'
+
+    db_addon_database_item:
+        type: str
+        description:
+            de: 'Optional: Pfad des zu verwendenden Items mit Database Attribut'
+            en: 'Optional: Path of item with database attribut to be used'
 
 item_structs:
     verbrauch_1:

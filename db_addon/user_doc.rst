@@ -21,10 +21,13 @@ Diese Auswertungen werden zyklisch zum Tageswechsel, Wochenwechsel, Monatswechse
 der Funktion erzeugt.
 Um die Zugriffe auf die Datenbank zu minimieren, werden diverse Daten zwischengespeichert.
 
-Die Items mit einem DatabaseAddon-Attribut müssen im gleichen Pfad sein, wie das Item, für das das Database Attribut
-konfiguriert ist.
-Bedeutet: Die Items mit dem DatabaseAddon-Attribute müssen Kinder oder Kindeskinder oder Kindeskinderkinder des Items
-sein, für das das Database Attribut konfiguriert ist
+Sind Items mit einem DatabaseAddon-Attribut im gleichen Pfad, wie das Item, für das das Database Attribut
+konfiguriert ist, wird dieses Item automatisch ermittelt. Bedeutet: Sind die Items mit dem DatabaseAddon-Attribute Kinder
+oder Kindeskinder oder Kindeskinderkinder des Items, für das das Database Attribut konfiguriert ist, wird dieses automatisch
+ermittelt.
+
+Alternativ kann mit dem Attribute "db_addon_database_item"  auch der absolute Pfad des Items angegeben werden,  für das
+das Database Attribut konfiguriert ist.
 
 Bsp:
 
@@ -45,6 +48,12 @@ Bsp:
             gestern_max:
                 type: num
                 db_addon_fct: heute_minus1_max
+
+
+    tagesmitteltemperatur_gestern:
+        type: num
+        db_addon_fct: heute_minus1_avg
+        db_addon_database_item: 'temperatur'
 
 |
 
@@ -182,3 +191,52 @@ db_addon Maintenance
 
 Das Webinterface zeigt detaillierte Informationen über die im Plugin verfügbaren Daten an.
 Dies dient der Maintenance bzw. Fehlersuche. Dieser Tab ist nur bei Log-Level "Debug" verfügbar.
+
+
+Erläuterungen zu Temperatursummen
+=================================
+
+
+Grünlandtemperatursumme
+-----------------------
+
+Beim Grünland wird die Wärmesumme nach Ernst und Loeper benutzt, um den Vegetationsbeginn und somit den Termin von Düngungsmaßnahmen zu bestimmen. 
+Dabei erfolgt die Aufsummierung der Tagesmitteltemperaturen über 0 °C, wobei der Januar mit 0.5 und der Februar mit 0.75 gewichtet wird. 
+Bei einer Wärmesumme von 200 Grad ist eine Düngung angesagt.
+
+siehe: https://de.wikipedia.org/wiki/Gr%C3%BCnlandtemperatursumme
+
+
+Wachstumsgradtag
+----------------
+Der Begriff Wachstumsgradtage (WGT) ist ein Überbegriff für verschiedene Größen. 
+Gemeinsam ist ihnen, daß zur Berechnung eine Lufttemperatur von einem Schwellenwert subtrahiert wird. 
+Je nach Fragestellung und Pflanzenart werden der Schwellenwert unterschiedlich gewählt und die Temperatur unterschiedlich bestimmt. 
+Verfügbar sind die Berechnung über "einfachen Durchschnitt der Tagestemperaturen" und "modifizierten Durchschnitt der Tagestemperaturen".
+
+siehe https://de.wikipedia.org/wiki/Wachstumsgradtag
+
+
+Wärmesumme
+----------
+
+Die Wärmesumme soll eine Aussage über den Sommer und die Pflanzenreife liefern. Es gibt keine eindeutige Definition dier Größe "Wärmesumme".
+Berechnet wird die Wärmesumme als Summe aller Tagesmitteltemperaturen über einem Schwellenwert ab dem 1.1. des Jahres. 
+
+siehe https://de.wikipedia.org/wiki/W%C3%A4rmesumme
+
+
+Kältesumme
+----------
+
+Die Kältesumme soll eine Aussage über die Härte des Winters liefern. 
+Berechnet wird die Kältesumme als Summe aller negtiven Tagesmitteltemperaturenab dem 21.9. des Jahres bis 31.3. des Folgejahres. 
+
+siehe https://de.wikipedia.org/wiki/K%C3%A4ltesumme
+
+
+
+Tagesmitteltemperatur
+---------------------
+
+Die Tagesmitteltemperatur wird auf Basis der stündlichen Durchschnittswerte eines Tages (aller in der DB enthaltenen Datensätze) für die angegebene Anzahl von Tagen (days=optional) berechnet.
