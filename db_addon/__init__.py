@@ -309,10 +309,12 @@ class DatabaseAddOn(SmartPlugin):
             elif db_addon_fct == 'wachstumsgradtage':
                 DEFAULT_THRESHOLD = 10
                 db_addon_params = params_to_dict(self.get_iattr_value(item.conf, 'db_addon_params'))
-                if db_addon_params is None or 'threshold' not in db_addon_params:
+                if db_addon_params is None or 'year' not in db_addon_params:
+                    self.logger.info(f"No 'year' for evaluation via 'db_addon_params' of item {item.path()} for function {db_addon_fct} given. Default with 'current year' will be used.")
+                    db_addon_params = {'year': 'current'}
+                if 'threshold' not in db_addon_params:
                     self.logger.info(f"No 'threshold' for evaluation via 'db_addon_params' of item {item.path()} for function {db_addon_fct} given. Default with {DEFAULT_THRESHOLD} will be used.")
-                    db_addon_params = {'threshold': DEFAULT_THRESHOLD} if db_addon_params is None else db_addon_params
-
+                    db_addon_params.update({'threshold': DEFAULT_THRESHOLD})
                 if not isinstance(db_addon_params['threshold'], int):
                     threshold = to_int(db_addon_params['threshold'])
                     db_addon_params['threshold'] = DEFAULT_THRESHOLD if threshold is None else threshold
@@ -1428,6 +1430,7 @@ class DatabaseAddOn(SmartPlugin):
             if raw_data == [[None, None]]:
                 return
 
+            # akkumulieren alle negativen Werte
             ks = 0
             for entry in raw_data:
                 if entry[1] < 0:
@@ -1495,9 +1498,10 @@ class DatabaseAddOn(SmartPlugin):
             if raw_data == [[None, None]]:
                 return
 
+            # akkumulieren alle Werte, größer/gleich Schwellenwert
             ws = 0
             for entry in raw_data:
-                if entry[1] > threshold:
+                if entry[1] >= threshold:
                     ws += entry[1]
             return int(round(ws, 0))
 
@@ -1548,21 +1552,22 @@ class DatabaseAddOn(SmartPlugin):
             if raw_data == [[None, None]]:
                 return
 
+            # akkumulieren alle Werte, größer/gleich Schwellenwert, im Januar gewichtet mit 50%, im Februar mit 75%
             try:
                 gts = 0
                 for entry in raw_data:
-                    dt = datetime.datetime.fromtimestamp(entry[0] / 1000)
+                    timestamp, value = entry
+                    dt = datetime.datetime.fromtimestamp(timestamp / 1000)
                     if dt.month == 1:
-                        gts += (entry[1] * 0.5)
+                        value = value * 0.5
                     elif dt.month == 2:
-                        gts += (entry[1] * 0.75)
-                    else:
-                        gts += entry[1]
+                        value = value * 0.75
+                    gts += value
                 return int(round(gts, 0))
             except Exception as e:
                 self.logger.error(f"Error {e} occurred during calculation of gruenlandtemperatursumme with {raw_data=} for {database_item.path()=}")
 
-    def _handle_wachstumsgradtage(self, database_item: Item, year: Union[int, str], method: int = 0, threshold: int = 10) -> Union[int, None]:
+    def _handle_wachstumsgradtage(self, database_item: Item, year: Union[int, str], method: int = 0, threshold: int = 10):
         """
         Calculate "wachstumsgradtage" for given year with temperature thershold
         https://de.wikipedia.org/wiki/Wachstumsgradtag
@@ -1610,29 +1615,37 @@ class DatabaseAddOn(SmartPlugin):
             if raw_data == [[None, None]]:
                 return
 
-        # Die Berechnung des einfachen Durchschnitts.
-        if method == 0:
+        # Die Berechnung des einfachen Durchschnitts // akkumuliere positive Differenz aus Mittelwert aus Tagesminimaltemperatur und Tagesmaximaltemperatur limitiert auf 30°C und Schwellenwert
+        wgte = 0
+        wgte_list = []
+        if method == 0 or method == 10:
             self.logger.info(f"Caluclate 'Wachstumsgradtag' according to 'Berechnung des einfachen Durchschnitts'.")
-            wgt = 0
             for entry in raw_data:
-                timestamp = entry[0]
-                min_val = entry[1]
-                max_val = entry[2]
-                wgt += ((min_val + max(30, max_val) / 2) - threshold)
-            return int(round(wgt, 0))
+                timestamp, min_val, max_val = entry
+                wgt = (((min_val + min(30, max_val)) / 2) - threshold)
+                if wgt > 0:
+                    wgte += wgt
+                wgte_list.append([timestamp, int(round(wgte, 0))])
+            if method == 0:
+                return int(round(wgte, 0))
+            else:
+                return wgte_list
 
-        # Die modifizierte Berechnung des einfachen Durchschnitts.
-        elif method == 1:
+        # Die modifizierte Berechnung des einfachen Durchschnitts. // akkumuliere positive Differenz aus Mittelwert aus Tagesminimaltemperatur mit mind Schwellentemperatur und Tagesmaximaltemperatur limitiert auf 30°C und Schwellenwert
+        elif method == 1 or method == 11:
             self.logger.info(f"Caluclate 'Wachstumsgradtag' according to 'Modifizierte Berechnung des einfachen Durchschnitts'.")
-            wgt = 0
             for entry in raw_data:
-                timestamp = entry[0]
-                min_val = entry[1]
-                max_val = entry[2]
-                wgt += ((min(threshold, min_val) + max(30, max_val) / 2) - threshold)
-            return int(round(wgt, 0))
+                timestamp, min_val, max_val = entry
+                wgt = (((max(threshold, min_val) + min(30.0, max_val)) / 2) - threshold)
+                if wgt > 0:
+                    wgte += wgt
+                wgte_list.append([timestamp, int(round(wgte, 0))])
+            if method == 1:
+                return int(round(wgte, 0))
+            else:
+                return wgte_list
         else:
-            self.logger.info(f"Method for 'Wachstumsgradtag' Calculation not defined.'")
+            self.logger.info(f"Method for 'Wachstumsgradtag' calculation not defined.'")
 
     def _prepare_temperature_list(self, database_item: Item, start: int, end: int = 0, ignore_value=None, version: str = 'hour') -> list:
 
