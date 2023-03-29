@@ -206,6 +206,13 @@ Bei einer Wärmesumme von 200 Grad ist eine Düngung angesagt.
 
 siehe: https://de.wikipedia.org/wiki/Gr%C3%BCnlandtemperatursumme
 
+Folgende Parameter sind möglich / notwendig:
+
+.. code-block:: yaml
+    db_addon_params: "year=current"
+
+- year: Jahreszahl (str oder int), für das die Berechnung ausgeführt werden soll oder "current" für aktuelles Jahr  (default: 'current')
+
 
 Wachstumsgradtag
 ----------------
@@ -216,27 +223,54 @@ Verfügbar sind die Berechnung über "einfachen Durchschnitt der Tagestemperatur
 
 siehe https://de.wikipedia.org/wiki/Wachstumsgradtag
 
+Folgende Parameter sind möglich / notwendig:
+
+.. code-block:: yaml
+    db_addon_params: "year=current, method=1, threshold=10"
+
+- year: Jahreszahl (str oder int), für das die Berechnung ausgeführt werden soll oder "current" für aktuelles Jahr  (default: 'current')
+- method: 0-Berechnung über "einfachen Durchschnitt der Tagestemperaturen", 1-Berechnung über "modifizierten Durchschnitt (default: 0)
+der Tagestemperaturen" // 10, 11 Ausgabe aus Zeitserie
+- threshold: Schwellentemperatur in °C (int) (default: 10)
+
 
 Wärmesumme
 ----------
 
-Die Wärmesumme soll eine Aussage über den Sommer und die Pflanzenreife liefern. Es gibt keine eindeutige Definition dier Größe "Wärmesumme".
+Die Wärmesumme soll eine Aussage über den Sommer und die Pflanzenreife liefern. Es gibt keine eindeutige Definition der Größe "Wärmesumme".
 Berechnet wird die Wärmesumme als Summe aller Tagesmitteltemperaturen über einem Schwellenwert ab dem 1.1. des Jahres. 
 
 siehe https://de.wikipedia.org/wiki/W%C3%A4rmesumme
+
+Folgende Parameter sind möglich / notwendig:
+
+.. code-block:: yaml
+    db_addon_params: "year=current, month=1, threshold=10"
+
+- year: Jahreszahl (str oder int), für das die Berechnung ausgeführt werden soll oder "current" für aktuelles Jahr (default: 'current')
+- month: Monat (int) des Jahres, für das die Berechnung ausgeführt werden soll (optional) (default: None)
+- threshold: Schwellentemperatur in °C (int) (default: 10)
 
 
 Kältesumme
 ----------
 
 Die Kältesumme soll eine Aussage über die Härte des Winters liefern. 
-Berechnet wird die Kältesumme als Summe aller negtiven Tagesmitteltemperaturenab dem 21.9. des Jahres bis 31.3. des Folgejahres. 
+Berechnet wird die Kältesumme als Summe aller negativen Tagesmitteltemperaturen ab dem 21.9. des Jahres bis 31.3. des Folgejahres.
 
 siehe https://de.wikipedia.org/wiki/K%C3%A4ltesumme
 
+Folgende Parameter sind möglich / notwendig:
+
+.. code-block:: yaml
+    db_addon_params: "year=current, month=1"
+
+- year: Jahreszahl (str oder int), für das die Berechnung ausgeführt werden soll oder "current" für aktuelles Jahr (default: 'current')
+- month: Monat (int) des Jahres, für das die Berechnung ausgeführt werden soll (optional) (default: None)
 
 
 Tagesmitteltemperatur
 ---------------------
 
-Die Tagesmitteltemperatur wird auf Basis der stündlichen Durchschnittswerte eines Tages (aller in der DB enthaltenen Datensätze) für die angegebene Anzahl von Tagen (days=optional) berechnet.
+Die Tagesmitteltemperatur wird auf Basis der stündlichen Durchschnittswerte eines Tages (aller in der DB enthaltenen Datensätze)
+für die angegebene Anzahl von Tagen (days=optional) berechnet.

@@ -279,7 +279,7 @@ item_attributes:
             - 'Berechnet die Wärmesumme für einen Zeitraum, db_addon_params: (year=mandatory: int, month=optional: str, threshold=optional: int)'
             - 'Berechnet die Grünlandtemperatursumme für einen Zeitraum, db_addon_params: (year=mandatory)'
             - 'Berechnet die Tagesmitteltemperatur auf Basis der stündlichen Durchschnittswerte eines Tages für die angegebene Anzahl von Tagen (timeframe=day, count=integer)'
-            - 'Berechnet die Wachstumsgradtage auf Basis der stündlichen Durchschnittswerte eines Tages für das laufende Jahr mit an Angabe des Temperaturschwellenwertes (threshold=Schwellentemperatur: int)'
+            - 'Berechnet die Wachstumsgradtage auf Basis der stündlichen Durchschnittswerte eines Tages für das laufende Jahr mit an Angabe des Temperaturschwellenwertes (year=Jahr: int, method=0/1: int, threshold=Schwellentemperatur: int)'
             - 'Abfrage der DB: db_addon_params: (func=mandatory, item=mandatory, timespan=mandatory, start=optional, end=optional, count=optional, group=optional, group2=optional)'
         valid_list_item_type:
             - 'num'
