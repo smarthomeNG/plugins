@@ -1109,20 +1109,20 @@ class FritzDevice:
         else:
             cmd_args = [('attr', 'client'), ('attr', device), ('attr', service), ('attr', action), ('arg', args)]
 
-        response = walk_nodes(self, cmd_args)
+        try:
+            response = walk_nodes(self, cmd_args)
+        except Exception as e:
+            self.logger.warning(f"Set FritzDevice with TR064 Client caused Error '{e}'")
+            return
 
         if self.debug_log:
             self.logger.debug(f"response={response} for cmd={cmd_args}.")
 
         # return response
-        if not response:
-            self.logger.info(f"No response for cmd={cmd_args} received.")
-            return
-        elif isinstance(response, int) and 99 < response < 1000:
+        if isinstance(response, int) and 99 < response < 1000:
             self.logger.info(f"Response was ErrorCode: {response} '{self.ERROR_CODES.get(response, None)}' for cmd={cmd_args}")
             return
-        else:
-            return response
+        return response
 
     def _clear_data_cache(self):
         """
