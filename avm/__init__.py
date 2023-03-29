@@ -601,37 +601,37 @@ class FritzDevice:
     def handle_updated_item(self, item, avm_data_type: str, readafterwrite: int):
         """Updated Item will be processed and value communicated to AVM Device"""
         # get index
-        _index = self.items[item]['index']
+        index = self.items[item]['index']
 
         # to be set value
         to_be_set_value = item()
 
         # define command per avm_data_type
-        _dispatcher = {'wlanconfig': (self.set_wlan, ('set_wlan', f"NewEnable={int(to_be_set_value)}", _index)),
-                       'wps_active': (self.set_wps, ('set_wps', f"NewX_AVM_DE_WPSEnable={int(to_be_set_value)}", _index)),
-                       'tam': (self.set_tam, ('set_tam', f"NewIndex={_index}, NewEnable={int(to_be_set_value)}", None)),
-                       'deflection_enable': (self.set_deflection, ('set_deflection', f"NewDeflectionId={_index}, NewEnable={int(to_be_set_value)}", None)),
+        _dispatcher = {'wlanconfig':        ('set_wlan',       {'NewEnable': int(to_be_set_value)},                                index),
+                       'wps_active':        ('set_wps',        {'NewX_AVM_DE_WPSEnable': int(to_be_set_value)},                    index),
+                       'tam':               ('set_tam',        {'NewIndex': int(index), 'NewEnable': int(to_be_set_value)},        None),
+                       'deflection_enable': ('set_deflection', {'NewDeflectionId': int(index), 'NewEnable': int(to_be_set_value)}, None),
                        }
 
         # do logging
         if self.debug_log:
-            self.logger.debug(f"Item {item.path()} with avm_data_type={avm_data_type} has changed for index {_index}; New value={to_be_set_value}")
+            self.logger.debug(f"Item {item.path()} with avm_data_type={avm_data_type} has changed for index {index}; New value={to_be_set_value}")
 
         # call setting method
-        cmd, args, index = _dispatcher[avm_data_type][1]
-        response = self._set_fritz_device(cmd, args, index)
+        cmd, args, wlan_index = _dispatcher[avm_data_type]
+        self._set_fritz_device(cmd, args, wlan_index)
         if self.debug_log:
-            self.logger.debug(f"Setting AVM Device with successful with response={response}.")
+            self.logger.debug(f"Setting AVM Device with successful.")
 
         # handle readafterwrite
         if readafterwrite:
-            self._read_after_write(item, avm_data_type, _index, readafterwrite, to_be_set_value)
+            self._read_after_write(item, avm_data_type, index, readafterwrite, to_be_set_value)
 
     def _read_after_write(self, item, avm_data_type, _index, delay, to_be_set_value):
         """read the new item value and compares with to_be_set_value, update item to confirm correct value"""
         # do logging
         if self.debug_log:
-            self.logger.warning(f"_readafterwrite called with: item={item.path()}, avm_data_type={avm_data_type}, index={_index}; delay={delay}, to_be_set_value={to_be_set_value}")
+            self.logger.debug(f"_readafterwrite called with: item={item.path()}, avm_data_type={avm_data_type}, index={_index}; delay={delay}, to_be_set_value={to_be_set_value}")
 
         # sleep
         time.sleep(delay)
@@ -842,7 +842,7 @@ class FritzDevice:
                 self.logger.debug(f"Skipping item {item} with wan_current and no client_igd")
                 continue
 
-            self.logger.info(f"Item={item.path()} with avm_data_type={avm_data_type} and index={index} will be updated")
+            self.logger.debug(f"Item={item.path()} with avm_data_type={avm_data_type} and index={index} will be updated")
 
             # get data and set item value
 
@@ -1076,21 +1076,21 @@ class FritzDevice:
     def _set_fritz_device(self, avm_data_type: str, args=None, wlan_index=None):
         """Set AVM Device based on avm_data_type and args"""
         if self.debug_log:
-            self.logger.debug(f"_set_fritz_device called: avm_data_type={avm_data_type}, args={args}, wlan_index={wlan_index}")
+            self.logger.debug(f"_set_fritz_device called: avm_data_type={avm_data_type}, args={args}, wlan_index{wlan_index}")
 
         link = {
-            'set_call_origin': ('InternetGatewayDevice', 'X_VoIP', 'X_AVM_DE_DialSetConfig'),
-            'set_tam': ('InternetGatewayDevice', 'X_AVM_DE_TAM', 'SetEnable'),
-            'set_aha_device': ('InternetGatewayDevice', 'X_AVM_DE_Homeauto', 'SetSwitch'),
-            'set_deflection': ('InternetGatewayDevice', 'X_AVM_DE_OnTel', 'SetDeflectionEnable'),
-            'set_wlan': ('LANDevice', 'WLANConfiguration', 'SetEnable'),
-            'set_wps': ('LANDevice', 'WLANConfiguration', 'X_AVM_DE_SetWPSEnable'),
-            'reboot': ('InternetGatewayDevice', 'DeviceConfig', 'Reboot'),
-            'wol': ('LanDevice', 'Hosts', 'X_AVM_DE_GetAutoWakeOnLANByMACAddress'),
-            'reconnect_ppp': ('WANConnectionDevice', 'WANPPPConnection', 'ForceTermination'),
-            'reconnect_ipp': ('WANConnectionDevice', 'WANIPPConnection', 'ForceTermination'),
-            'start_call': ('InternetGatewayDevice', 'X_VoIP', 'X_AVM_DE_DialNumber'),
-            'cancel_call': ('InternetGatewayDevice', 'X_VoIP', 'X_AVM_DE_DialHangup'),
+            'set_call_origin': ('InternetGatewayDevice', 'X_VoIP',              'X_AVM_DE_DialSetConfig'),
+            'set_tam':         ('InternetGatewayDevice', 'X_AVM_DE_TAM',        'SetEnable'),
+            'set_aha_device':  ('InternetGatewayDevice', 'X_AVM_DE_Homeauto',   'SetSwitch'),
+            'set_deflection':  ('InternetGatewayDevice', 'X_AVM_DE_OnTel',      'SetDeflectionEnable'),
+            'set_wlan':        ('LANDevice',             'WLANConfiguration',   'SetEnable'),
+            'set_wps':         ('LANDevice',             'WLANConfiguration',   'X_AVM_DE_SetWPSEnable'),
+            'reboot':          ('InternetGatewayDevice', 'DeviceConfig',        'Reboot'),
+            'wol':             ('LanDevice',             'Hosts',               'X_AVM_DE_GetAutoWakeOnLANByMACAddress'),
+            'reconnect_ppp':   ('WANConnectionDevice',   'WANPPPConnection',    'ForceTermination'),
+            'reconnect_ipp':   ('WANConnectionDevice',   'WANIPPConnection',    'ForceTermination'),
+            'start_call':      ('InternetGatewayDevice', 'X_VoIP',              'X_AVM_DE_DialNumber'),
+            'cancel_call':     ('InternetGatewayDevice', 'X_VoIP',              'X_AVM_DE_DialHangup'),
         }
 
         if avm_data_type not in link:
@@ -1109,19 +1109,19 @@ class FritzDevice:
         else:
             cmd_args = [('attr', 'client'), ('attr', device), ('attr', service), ('attr', action), ('arg', args)]
 
-        response = walk_nodes(self, cmd_args)
+        try:
+            response = walk_nodes(self, cmd_args)
+        except Exception as e:
+            self.logger.warning(f"Set FritzDevice with TR064 Client caused Error '{e}'")
+            return
 
         if self.debug_log:
             self.logger.debug(f"response={response} for cmd={cmd_args}.")
 
         # return response
-        if response is None:
-            self.logger.info(f"No response for cmd={cmd_args} received.")
-            return
-        elif isinstance(response, int) and 99 < response < 1000:
+        if isinstance(response, int) and 99 < response < 1000:
             self.logger.info(f"Response was ErrorCode: {response} '{self.ERROR_CODES.get(response, None)}' for cmd={cmd_args}")
             return
-
         return response
 
     def _clear_data_cache(self):
@@ -1297,7 +1297,7 @@ class FritzDevice:
             return {}
 
         phonebooks = request_response_to_xml(self._request(phonebook_url, self._timeout, self.verify))
-        if phonebooks:
+        if phonebooks is not None:
             for phonebook in phonebooks.iter('phonebook'):
                 for contact in phonebook.iter('contact'):
                     for real_name in contact.findall('.//realName'):
@@ -1307,7 +1307,8 @@ class FritzDevice:
                                 if number.text:
                                     result_number_dict = dict()
                                     result_number_dict['number'] = number.text.strip()
-                                    result_number_dict['type'] = tel_type[number.attrib["type"]]
+                                    # result_number_dict['type'] = tel_type[number.attrib["type"]]
+                                    result_number_dict['type'] = number.attrib["type"]
                                     result_numbers[real_name.text].append(result_number_dict)
             return result_numbers
         else:
@@ -1786,7 +1787,7 @@ class FritzHome:
                 # self.logger.debug(f"Item={item.path()} is not due, yet.")
                 continue
 
-            self.logger.info(f"Item={item.path()} with avm_data_type={avm_data_type} and ain={ain} will be updated")
+            self.logger.debug(f"Item={item.path()} with avm_data_type={avm_data_type} and ain={ain} will be updated")
 
             # Attributes that are write-only commands with no corresponding read commands are excluded from status updates via update black list:
             update_black_list = ALL_ATTRIBUTES_WRITEONLY
@@ -1815,16 +1816,16 @@ class FritzHome:
         Updated Item will be processed and value communicated to AVM Device
         """
         # define set method per avm_data_type
-        _dispatcher = {'window_open': (self.set_window_open, self.get_window_open),
+        _dispatcher = {'window_open':        (self.set_window_open, self.get_window_open),
                        'target_temperature': (self.set_target_temperature, self.get_target_temperature),
-                       'hkr_boost': (self.set_boost, self.get_boost),
-                       'simpleonoff': (self.set_state, self.get_state),
-                       'level': (self.set_level, self.get_level),
-                       'levelpercentage': (self.set_level_percentage, self.get_level_percentage),
-                       'switch_state': (self.set_switch_state, self.get_switch_state),
-                       'switch_toggle': (self.set_switch_state_toggle, self.get_switch_state),
-                       'colortemperature': (self.set_color_temp, self.get_color_temp),
-                       'hue': (self.set_color_discrete, self.get_hue),
+                       'hkr_boost':          (self.set_boost, self.get_boost),
+                       'simpleonoff':        (self.set_state, self.get_state),
+                       'level':              (self.set_level, self.get_level),
+                       'levelpercentage':    (self.set_level_percentage, self.get_level_percentage),
+                       'switch_state':       (self.set_switch_state, self.get_switch_state),
+                       'switch_toggle':      (self.set_switch_state_toggle, self.get_switch_state),
+                       'colortemperature':   (self.set_color_temp, self.get_color_temp),
+                       'hue':                (self.set_color_discrete, self.get_hue),
                        }
 
         # get AIN
@@ -2122,7 +2123,7 @@ class FritzHome:
         Updating AHA Devices respective dictionary
         """
 
-        self.logger.info("Updating Devices ...")
+        self.logger.info("Updating AHA Devices ...")
         elements = self.get_device_elements()
 
         if elements is None:
@@ -2130,7 +2131,7 @@ class FritzHome:
 
         for element in elements:
             if element.attrib["identifier"] in self._devices.keys():
-                self.logger.info("Updating already existing Device " + element.attrib["identifier"])
+                self.logger.debug("Updating already existing Device " + element.attrib["identifier"])
                 self._devices[element.attrib["identifier"]].update_from_node(element)
             else:
                 self.logger.info("Adding new Device " + element.attrib["identifier"])
