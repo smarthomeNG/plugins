@@ -2334,7 +2334,7 @@ class DatabaseAddOn(SmartPlugin):
         query = 'SELECT sqlite_version()' if self.db_driver.lower() == 'sqlite3' else 'SELECT VERSION()'
         return self._fetchone(query)[0]
 
-    def _get_db_connect_timeout(self) -> str:
+    def _get_db_connect_timeout(self) -> list:
         """
         Query database timeout
         """
@@ -2342,7 +2342,7 @@ class DatabaseAddOn(SmartPlugin):
         query = "SHOW GLOBAL VARIABLES LIKE 'connect_timeout'"
         return self._fetchone(query)
 
-    def _get_db_net_read_timeout(self) -> str:
+    def _get_db_net_read_timeout(self) -> list:
         """
         Query database timeout net_read_timeout
         """
@@ -2372,7 +2372,7 @@ class DatabaseAddOn(SmartPlugin):
 
         return self._query(self._db.fetchall, query, params, cur)
 
-    def _query(self, fetch, query: str, params: dict = None, cur=None) -> list:
+    def _query(self, fetch, query: str, params: dict = None, cur=None) -> Union[None, list]:
         if params is None:
             params = {}
 
