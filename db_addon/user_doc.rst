@@ -219,7 +219,8 @@ Wachstumsgradtag
 Der Begriff Wachstumsgradtage (WGT) ist ein Überbegriff für verschiedene Größen. 
 Gemeinsam ist ihnen, daß zur Berechnung eine Lufttemperatur von einem Schwellenwert subtrahiert wird. 
 Je nach Fragestellung und Pflanzenart werden der Schwellenwert unterschiedlich gewählt und die Temperatur unterschiedlich bestimmt. 
-Verfügbar sind die Berechnung über "einfachen Durchschnitt der Tagestemperaturen" und "modifizierten Durchschnitt der Tagestemperaturen".
+Verfügbar sind die Berechnung über 0) "einfachen Durchschnitt der Tagestemperaturen", 1) "modifizierten Durchschnitt der Tagestemperaturen" 
+und 2) Anzahl der Tage, deren Mitteltempertatur oberhalb der Schwellentemperatur lag.
 
 siehe https://de.wikipedia.org/wiki/Wachstumsgradtag
 
@@ -230,7 +231,7 @@ Folgende Parameter sind möglich / notwendig:
 
 - year: Jahreszahl (str oder int), für das die Berechnung ausgeführt werden soll oder "current" für aktuelles Jahr  (default: 'current')
 - method: 0-Berechnung über "einfachen Durchschnitt der Tagestemperaturen", 1-Berechnung über "modifizierten Durchschnitt (default: 0)
-der Tagestemperaturen" // 10, 11 Ausgabe aus Zeitserie
+der Tagestemperaturen" 2-Anzahl der Tage, mit Mitteltempertatur oberhalb Schwellentemperatur// 10, 11 Ausgabe aus Zeitserie
 - threshold: Schwellentemperatur in °C (int) (default: 10)
 
 

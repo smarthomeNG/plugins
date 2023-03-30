@@ -880,7 +880,6 @@ class DatabaseAddOn(SmartPlugin):
 
         :param item_path: item object or item_id for which the query should be done
         :param year: year the gruenlandtemperatursumme should be calculated for
-
         :return: gruenlandtemperatursumme
         """
 
@@ -897,9 +896,9 @@ class DatabaseAddOn(SmartPlugin):
         :param year: year the waermesumme should be calculated for
         :param month: month the waermesumme should be calculated for
         :param threshold: threshold for temperature
-
         :return: waermesumme
         """
+
         item = self.items.return_item(item_path)
         if item:
             return self._handle_waermesumme(item, year, month, threshold)
@@ -912,9 +911,9 @@ class DatabaseAddOn(SmartPlugin):
         :param item_path: item object or item_id for which the query should be done
         :param year: year the kaeltesumme should be calculated for
         :param month: month the kaeltesumme should be calculated for
-
         :return: kaeltesumme
         """
+
         item = self.items.return_item(item_path)
         if item:
             return self._handle_kaeltesumme(item, year, month)
@@ -927,7 +926,6 @@ class DatabaseAddOn(SmartPlugin):
         :param item_path: item object or item_id for which the query should be done
         :param timeframe: timeincrement for determination
         :param count: number of time increments starting from now to the left (into the past)
-
         :return: tagesmitteltemperatur
         """
 
@@ -955,6 +953,21 @@ class DatabaseAddOn(SmartPlugin):
         item = self.items.return_item(item_path)
         if item:
             return self._handle_wachstumsgradtage(item, year, threshold)
+
+    def temperaturserie(self, item_path: str, year: Union[int, str], method: str) -> Union[list, None]:
+        """
+        Query database for wachstumsgradtage
+        https://de.wikipedia.org/wiki/Wachstumsgradtag
+
+        :param item_path: item object or item_id for which the query should be done
+        :param year: year the wachstumsgradtage should be calculated for
+        :param method: Calculation method
+        :return: wachstumsgradtage
+        """
+
+        item = self.items.return_item(item_path)
+        if item:
+            return self._handle_temperaturserie(item, year, method)
 
     def query_item(self, func: str, item_path: str, timeframe: str, start: int = None, end: int = 0, group: str = None, group2: str = None, ignore_value=None) -> list:
         item = self.items.return_item(item_path)
@@ -1349,15 +1362,14 @@ class DatabaseAddOn(SmartPlugin):
 
         # handle 'serie_tagesmittelwert_group2_start_endgroup' like 'serie_tagesmittelwert_stunde_30_0d'
         elif db_addon_fct.startswith('serie_') and len(_var) == 5:
-            func = 'avg1'
             timeframe = 'day'
-            log_text = 'serie_tagesmittelwert_group2_start_endgroup'
+            method = 'raw'
             start = to_int(_var[3])
             end = to_int(_var[4][:-1])
-            group = 'hour'
-            group2 = convert_timeframe(_var[4][len(_var[4]) - 1])
-            if group2 is None or start is None or end is None:
+            if start is None or end is None:
                 return []
+
+            return self._prepare_temperature_list(database_item=database_item, timeframe=timeframe, start=start, end=end, method=method)
 
         # handle everything else
         else:
@@ -1421,15 +1433,14 @@ class DatabaseAddOn(SmartPlugin):
 
         # get raw data as list
         self.logger.debug("_handle_kaeltesumme: Try to get raw data")
-        raw_data = self._prepare_temperature_list(database_item=database_item, start=start, end=end, version='raw')
+        raw_data = self._prepare_temperature_list(database_item=database_item, timeframe='day', start=start, end=end, method='raw')
         if self.execute_debug:
             self.logger.debug(f"_handle_kaeltesumme: raw_value_list={raw_data=}")
 
         # calculate value
-        if raw_data and isinstance(raw_data, list):
-            if raw_data == [[None, None]]:
-                return
-
+        if raw_data is None:
+            return
+        elif isinstance(raw_data, list):
             # akkumulieren alle negativen Werte
             ks = 0
             for entry in raw_data:
@@ -1486,18 +1497,17 @@ class DatabaseAddOn(SmartPlugin):
             return
 
         # get raw data as list
-        raw_data = self._prepare_temperature_list(database_item=database_item, start=start, end=end, version='raw')
+        raw_data = self._prepare_temperature_list(database_item=database_item, timeframe='day',  start=start, end=end, method='raw')
         if self.execute_debug:
             self.logger.debug(f"_handle_waermesumme: raw_value_list={raw_data=}")
 
         # set threshold to min 0
-        threshold = min(0, threshold)
+        threshold = max(0, threshold)
 
         # calculate value
-        if raw_data and isinstance(raw_data, list):
-            if raw_data == [[None, None]]:
-                return
-
+        if raw_data is None:
+            return
+        elif isinstance(raw_data, list):
             # akkumulieren alle Werte, größer/gleich Schwellenwert
             ws = 0
             for entry in raw_data:
@@ -1543,15 +1553,14 @@ class DatabaseAddOn(SmartPlugin):
             return
 
         # get raw data as list
-        raw_data = self._prepare_temperature_list(database_item=database_item, start=start, end=end, version='raw')
+        raw_data = self._prepare_temperature_list(database_item=database_item, timeframe='day',  start=start, end=end, method='raw')
         if self.execute_debug:
             self.logger.debug(f"_handle_gruenlandtemperatursumme: raw_value_list={raw_data}")
 
         # calculate value
-        if raw_data and isinstance(raw_data, list):
-            if raw_data == [[None, None]]:
-                return
-
+        if raw_data is None:
+            return
+        elif isinstance(raw_data, list):
             # akkumulieren alle positiven Tagesmitteltemperaturen, im Januar gewichtet mit 50%, im Februar mit 75%
             gts = 0
             for entry in raw_data:
@@ -1572,6 +1581,7 @@ class DatabaseAddOn(SmartPlugin):
 
         :param database_item: item object or item_id for which the query should be done
         :param year: year the wachstumsgradtage should be calculated for
+        :param method: calculation method to be used
         :param threshold: temperature in °C as threshold for evaluation
         :return: wachstumsgradtage
         """
@@ -1604,55 +1614,129 @@ class DatabaseAddOn(SmartPlugin):
             return
 
         # get raw data as list
-        raw_data = self._prepare_temperature_list(database_item=database_item, start=start, end=end, version='minmax')
+        raw_data = self._prepare_temperature_list(database_item=database_item, timeframe='day',  start=start, end=end, method='minmax')
         if self.execute_debug:
             self.logger.debug(f"_handle_wachstumsgradtage: raw_value_list={raw_data}")
 
         # calculate value
-        if raw_data and isinstance(raw_data, list):
-            if raw_data == [[None, None]]:
-                return
+        if raw_data is None:
+            return
 
-        # Die Berechnung des einfachen Durchschnitts // akkumuliere positive Differenz aus Mittelwert aus Tagesminimaltemperatur und Tagesmaximaltemperatur limitiert auf 30°C und Schwellenwert
-        wgte = 0
-        wgte_list = []
-        if method == 0 or method == 10:
-            self.logger.info(f"Caluclate 'Wachstumsgradtag' according to 'Berechnung des einfachen Durchschnitts'.")
-            for entry in raw_data:
-                timestamp, min_val, max_val = entry
-                wgt = (((min_val + min(30, max_val)) / 2) - threshold)
-                if wgt > 0:
-                    wgte += wgt
-                wgte_list.append([timestamp, int(round(wgte, 0))])
-            if method == 0:
-                return int(round(wgte, 0))
+        elif isinstance(raw_data, list):
+            # Die Berechnung des einfachen Durchschnitts // akkumuliere positive Differenz aus Mittelwert aus Tagesminimaltemperatur und Tagesmaximaltemperatur limitiert auf 30°C und Schwellenwert
+            wgte = 0
+            wgte_list = []
+            if method == 0 or method == 10:
+                self.logger.info(f"Caluclate 'Wachstumsgradtag' according to 'Berechnung des einfachen Durchschnitts'.")
+                for entry in raw_data:
+                    timestamp, min_val, max_val = entry
+                    wgt = (((min_val + min(30, max_val)) / 2) - threshold)
+                    if wgt > 0:
+                        wgte += wgt
+                    wgte_list.append([timestamp, int(round(wgte, 0))])
+                if method == 0:
+                    return int(round(wgte, 0))
+                else:
+                    return wgte_list
+
+            # Die modifizierte Berechnung des einfachen Durchschnitts. // akkumuliere positive Differenz aus Mittelwert aus Tagesminimaltemperatur mit mind Schwellentemperatur und Tagesmaximaltemperatur limitiert auf 30°C und Schwellenwert
+            elif method == 1 or method == 11:
+                self.logger.info(f"Caluclate 'Wachstumsgradtag' according to 'Modifizierte Berechnung des einfachen Durchschnitts'.")
+                for entry in raw_data:
+                    timestamp, min_val, max_val = entry
+                    wgt = (((max(threshold, min_val) + min(30.0, max_val)) / 2) - threshold)
+                    if wgt > 0:
+                        wgte += wgt
+                    wgte_list.append([timestamp, int(round(wgte, 0))])
+                if method == 1:
+                    return int(round(wgte, 0))
+                else:
+                    return wgte_list
+
+            # Zähle Tage, bei denen die Tagesmitteltemperatur oberhalb des Schwellenwertes lag
+            elif method == 2 or method == 12:
+                self.logger.info(f"Caluclate 'Wachstumsgradtag' according to 'Anzahl der Tage, bei denen die Tagesmitteltemperatur oberhalb des Schwellenwertes lag'.")
+                for entry in raw_data:
+                    timestamp, min_val, max_val = entry
+                    wgt = (((min_val + min(30, max_val)) / 2) - threshold)
+                    if wgt > 0:
+                        wgte += 1
+                    wgte_list.append([timestamp, wgte])
+                if method == 0:
+                    return wgte
+                else:
+                    return wgte_list
+
             else:
-                return wgte_list
+                self.logger.info(f"Method for 'Wachstumsgradtag' calculation not defined.'")
 
-        # Die modifizierte Berechnung des einfachen Durchschnitts. // akkumuliere positive Differenz aus Mittelwert aus Tagesminimaltemperatur mit mind Schwellentemperatur und Tagesmaximaltemperatur limitiert auf 30°C und Schwellenwert
-        elif method == 1 or method == 11:
-            self.logger.info(f"Caluclate 'Wachstumsgradtag' according to 'Modifizierte Berechnung des einfachen Durchschnitts'.")
-            for entry in raw_data:
-                timestamp, min_val, max_val = entry
-                wgt = (((max(threshold, min_val) + min(30.0, max_val)) / 2) - threshold)
-                if wgt > 0:
-                    wgte += wgt
-                wgte_list.append([timestamp, int(round(wgte, 0))])
-            if method == 1:
-                return int(round(wgte, 0))
-            else:
-                return wgte_list
-        else:
-            self.logger.info(f"Method for 'Wachstumsgradtag' calculation not defined.'")
+    def _handle_temperaturserie(self, database_item: Item, year: Union[int, str], method: str = 'raw'):
+        """
+        provide list of lists having timestamp and temperature(s) per day
 
-    def _prepare_temperature_list(self, database_item: Item, start: int, end: int = 0, ignore_value=None, version: str = 'hour') -> list:
+        :param database_item: item object or item_id for which the query should be done
+        :param year: year the wachstumsgradtage should be calculated for
+        :param method: calculation method to be used
+        :return: list of temperatures
+        """
 
-        self.logger.debug(f"_prepare_temperature_list called with {database_item=}, {start=}, {end=}, {ignore_value=}, {version=}")
+        if not valid_year(year):
+            self.logger.error(f"_handle_temepraturserie: Year for item={database_item.path()} was {year}. This is not a valid year. Query cancelled.")
+            return
+
+        # define year
+        if year == 'current':
+            year = datetime.date.today().year
+
+        # define start_date, end_date
+        start_date = datetime.date(int(year), 1, 1)
+        end_date = datetime.date(int(year), 12, 31)
+
+        # check start_date
+        today = datetime.date.today()
+        if start_date > today:
+            self.logger.info(f"_handle_temepraturserie: Start time for query of item={database_item.path()} is in future. Query cancelled.")
+            return
+
+        # define start / end
+        start = (today - start_date).days
+        end = (today - end_date).days if end_date < today else 0
+
+        # check end
+        if start < end:
+            self.logger.error(f"_handle_temepraturserie: End time for query of item={database_item.path()} is before start time. Query cancelled.")
+            return
+
+        # check method
+        if method not in ['hour', 'raw', 'minmax']:
+            self.logger.error(f"_handle_temepraturserie: Calculation method {method!r} unknown. Need to be 'hour', 'raw' or 'minmax'. Query cancelled.")
+            return
+
+        # get raw data as list
+        temp_list = self._prepare_temperature_list(database_item=database_item, timeframe='day',  start=start, end=end, method=method)
+        if self.execute_debug:
+            self.logger.debug(f"_handle_temepraturserie: {temp_list=}")
+
+        return temp_list
+
+    def _prepare_temperature_list(self, database_item: Item, timeframe: str, start: int, end: int = 0, ignore_value=None, method: str = 'hour') -> Union[list, None]:
+        """
+        returns list of lists having timestamp and temperature(s) per day
+
+        :param database_item: item object or item_id for which the query should be done
+        :param timeframe: tiemfram for query
+        :param start: increments for timeframe from now to start
+        :param end: increments for timeframe from now to end
+        :param ignore_value: value to be ignored during query
+        :param method:  Calculation method
+        :return: list of temperatures
+        """
 
         def _create_temp_dict() -> dict:
             """create dict based on database query result like {'date1': {'hour1': [temp values], 'hour2': [temp values], ...}, 'date2': {'hour1': [temp values], 'hour2': [temp values], ...}, ...}"""
+
             _temp_dict = {}
-            for _entry in raw_value_list:
+            for _entry in raw_data:
                 dt = datetime.datetime.utcfromtimestamp(_entry[0] / 1000)
                 date = dt.strftime('%Y-%m-%d')
                 hour = dt.strftime('%H')
@@ -1665,6 +1749,7 @@ class DatabaseAddOn(SmartPlugin):
 
         def _calculate_hourly_average():
             """ calculate hourly average based on list of temperatures and update temp_dict"""
+
             for _date in temp_dict:
                 for hour in temp_dict[_date]:
                     hour_raw_value_list = temp_dict[_date][hour]
@@ -1674,6 +1759,7 @@ class DatabaseAddOn(SmartPlugin):
 
         def _create_list_timestamp_avgtemp() -> list:
             """Create list of list with [[timestamp1, value1], [timestamp2, value2], ...] based on temp_dict"""
+
             _temp_list = []
             for _date in temp_dict:
 
@@ -1697,6 +1783,7 @@ class DatabaseAddOn(SmartPlugin):
 
         def _create_list_timestamp_minmaxtemp() -> list:
             """Create list of list with [[timestamp1, min value1, max_value1], [timestamp2, min value2, max_value2], ...] based on temp_dict"""
+
             _temp_list = []
             for _date in temp_dict:
                 _timestamp = datetime_to_timestamp(datetime.datetime.strptime(_date, '%Y-%m-%d'))
@@ -1704,50 +1791,62 @@ class DatabaseAddOn(SmartPlugin):
                 _temp_list.append([_timestamp, min(_day_values), max(_day_values)])
             return _temp_list
 
-        if version == 'hour':
-            raw_value_list = self._query_item(func='avg', item=database_item, timeframe='day', start=start, end=end, group='hour', ignore_value=ignore_value)
-            self.logger.debug(f"{raw_value_list=}")
+        # temp_list = [[timestamp1, avg-value1], [timestamp2, avg-value2], [timestamp3, avg-value3], ...]  Tagesmitteltemperatur pro Stunde wird in der Datenbank per avg ermittelt
+        if method == 'hour':
+            raw_data = self._query_item(func='avg', item=database_item, timeframe=timeframe, start=start, end=end, group='hour', ignore_value=ignore_value)
+            self.logger.debug(f"{raw_data=}")
 
-            # create nested dict with temps
-            temp_dict = _create_temp_dict()
+            if raw_data and isinstance(raw_data, list):
+                if raw_data == [[None, None]]:
+                    return
 
-            # create list of list like database query response
-            temp_list = _create_list_timestamp_avgtemp()
-            self.logger.debug(f"{temp_list=}")
-            return temp_list
+                # create nested dict with temps
+                temp_dict = _create_temp_dict()
 
-        elif version == 'raw':
-            raw_value_list = self._query_item(func='raw', item=database_item, timeframe='day', start=start, end=end, ignore_value=ignore_value)
-            self.logger.debug(f"{raw_value_list=}")
+                # create list of list like database query response
+                temp_list = _create_list_timestamp_avgtemp()
+                self.logger.debug(f"{temp_list=}")
+                return temp_list
 
-            # create nested dict with temps
-            temp_dict = _create_temp_dict()
-            self.logger.debug(f"raw: {temp_dict=}")
+        # temp_list = [[timestamp1, avg-value1], [timestamp2, avg-value2], [timestamp3, avg-value3], ...]  Tagesmitteltemperatur pro Stunde wird hier im Plugin ermittelt ermittelt
+        elif method == 'raw':
+            raw_data = self._query_item(func='raw', item=database_item, timeframe=timeframe, start=start, end=end, ignore_value=ignore_value)
+            self.logger.debug(f"{raw_data=}")
 
-            # calculate 'tagesdurchschnitt' and create list of list like database query response
-            _calculate_hourly_average()
-            self.logger.debug(f"raw: {temp_dict=}")
+            if raw_data and isinstance(raw_data, list):
+                if raw_data == [[None, None]]:
+                    return
 
-            # create list of list like database query response
-            temp_list = _create_list_timestamp_avgtemp()
-            self.logger.debug(f"{temp_list=}")
-            return temp_list
+                # create nested dict with temps
+                temp_dict = _create_temp_dict()
+                self.logger.debug(f"raw: {temp_dict=}")
 
-        elif version == 'minmax':
-            raw_value_list = self._query_item(func='raw', item=database_item, timeframe='day', start=start, end=end, ignore_value=ignore_value)
-            self.logger.debug(f"{raw_value_list=}")
+                # calculate 'tagesdurchschnitt' and create list of list like database query response
+                _calculate_hourly_average()
+                self.logger.debug(f"raw: {temp_dict=}")
 
-            # create nested dict with temps
-            temp_dict = _create_temp_dict()
-            self.logger.debug(f"raw: {temp_dict=}")
+                # create list of list like database query response
+                temp_list = _create_list_timestamp_avgtemp()
+                self.logger.debug(f"{temp_list=}")
+                return temp_list
 
-            # create list of list like database query response
-            temp_list = _create_list_timestamp_minmaxtemp()
-            self.logger.debug(f"{temp_list=}")
-            return temp_list
+        # temp_list = [[timestamp1, min-value1, max-value1], [timestamp2, min-value2, max-value2], [timestamp3, min-value3, max-value3], ...]
+        elif method == 'minmax':
+            raw_data = self._query_item(func='raw', item=database_item, timeframe=timeframe, start=start, end=end, ignore_value=ignore_value)
+            self.logger.debug(f"{raw_data=}")
 
-        else:
-            return []
+            if raw_data and isinstance(raw_data, list):
+                if raw_data == [[None, None]]:
+                    return
+
+                # create nested dict with temps
+                temp_dict = _create_temp_dict()
+                self.logger.debug(f"raw: {temp_dict=}")
+
+                # create list of list like database query response
+                temp_list = _create_list_timestamp_minmaxtemp()
+                self.logger.debug(f"{temp_list=}")
+                return temp_list
 
     def _create_due_items(self) -> list:
         """
