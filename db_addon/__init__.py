@@ -1724,7 +1724,7 @@ class DatabaseAddOn(SmartPlugin):
         returns list of lists having timestamp and temperature(s) per day
 
         :param database_item: item object or item_id for which the query should be done
-        :param timeframe: tiemfram for query
+        :param timeframe: timeframe for query
         :param start: increments for timeframe from now to start
         :param end: increments for timeframe from now to end
         :param ignore_value: value to be ignored during query
