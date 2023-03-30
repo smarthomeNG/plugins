@@ -1552,20 +1552,18 @@ class DatabaseAddOn(SmartPlugin):
             if raw_data == [[None, None]]:
                 return
 
-            # akkumulieren alle Werte, größer/gleich Schwellenwert, im Januar gewichtet mit 50%, im Februar mit 75%
-            try:
-                gts = 0
-                for entry in raw_data:
-                    timestamp, value = entry
+            # akkumulieren alle positiven Tagesmitteltemperaturen, im Januar gewichtet mit 50%, im Februar mit 75%
+            gts = 0
+            for entry in raw_data:
+                timestamp, value = entry
+                if value > 0:
                     dt = datetime.datetime.fromtimestamp(timestamp / 1000)
                     if dt.month == 1:
                         value = value * 0.5
                     elif dt.month == 2:
                         value = value * 0.75
                     gts += value
-                return int(round(gts, 0))
-            except Exception as e:
-                self.logger.error(f"Error {e} occurred during calculation of gruenlandtemperatursumme with {raw_data=} for {database_item.path()=}")
+            return int(round(gts, 0))
 
     def _handle_wachstumsgradtage(self, database_item: Item, year: Union[int, str], method: int = 0, threshold: int = 10):
         """
