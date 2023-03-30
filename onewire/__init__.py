@@ -405,13 +405,14 @@ class OneWire(SmartPlugin):
                     continue
                 try:
                     value = self.owbase.read('/uncached' + path).decode()
+                    self.stopevent.wait(self._parasitic_power_wait)
                     value = float(value)
                     if key.startswith('T') and value == 85:
                         self.logger.error(f"reading {addr} gives error value 85.")
                         continue
                 except Exception as e:
                     # time.sleep(self._parasitic_power_wait)
-                    self.stopevent.wait(self._parasitic_power_wait)
+                    #self.stopevent.wait(self._parasitic_power_wait)
                     self._sensors[addr][key]['readerrors'] = self._sensors[addr][key].get('readerrors', 0) + 1
                     if self._sensors[addr][key]['readerrors'] % self.warn_after == 0:
                         self.logger.warning(f"_sensor_cycle: {self._sensors[addr][key]['readerrors']}. problem reading {addr}-{key}, error: {e}")
