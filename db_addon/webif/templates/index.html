@@ -160,12 +160,8 @@
               targets: [1], "className": "dict"
             },
             {
-              title: '{{ _('count') }}',
-              targets: [2], "className": "count"
-            },
-            {
               title: '{{ _('content') }}',
-              targets: [3], "className": "content"
+              targets: [2], "className": "content"
             }].concat($.fn.dataTable.defaults.columnDefs),
             pageLength: webif_pagelength,
             pageResize: resize});
@@ -284,7 +280,7 @@
                 <td></td>
                 <td class="py-1">{{ item._path }}</td>
                 <td class="py-1">{{ item._type }}</td>
-                <td class="py-1">{{ p.get_item_config(item._path)['attribute'] }}</td>
+                <td class="py-1">{{ p.get_item_config(item._path)['db_addon_fct'] }}</td>
                 <td class="py-1" style="text-align: center">{{ _(p.get_item_config(item)['cycle']|string) }}</td>
                 <td class="py-1" style="text-align: center">{% if p.get_item_config(item)['startup'] %}{{ _('Ja') }}{% else %}{{ _('Nein') }}{% endif %}</td>
                 <td class="py-1" id="{{ item._path }}_value" style="text-align: right">{{ item._value | float }}</td>
@@ -303,112 +299,90 @@
     <tbody>
         <tr><td></td>
             <td class="py-1">{{ _('00_items') }}</td>
-            <td class="py-1">{{ len(p.get_item_path_list('database_addon', True)) }}</td>
             <td class="py-1">{{ p.get_item_path_list('database_addon', True) }}</td>
         </tr>
         <tr><td></td>
             <td class="py-1">{{ _('02_admin_items') }}</td>
-            <td class="py-1">{{ len(p.get_item_path_list('database_addon', 'admin')) }}</td>
             <td class="py-1">{{ p.get_item_path_list('database_addon', 'admin') }}</td>
         </tr>
         <tr><td></td>
             <td class="py-1">{{ _('10_daily_items') }}</td>
-            <td class="py-1">{{ len(p._daily_items()) }}</td>
             <td class="py-1">{{ p._daily_items() }}</td>
         </tr>
         <tr><td></td>
             <td class="py-1">{{ _('11_weekly_items') }}</td>
-            <td class="py-1">{{ len(p._weekly_items()) }}</td>
             <td class="py-1">{{ p._weekly_items() }}</td>
         </tr>
         <tr><td></td>
             <td class="py-1">{{ _('12_monthly_items') }}</td>
-            <td class="py-1">{{ len(p._monthly_items()) }}</td>
             <td class="py-1">{{ p._monthly_items() }}</td>
         </tr>
         <tr><td></td>
             <td class="py-1">{{ _('13_yearly_items') }}</td>
-            <td class="py-1">{{ len(p._yearly_items()) }}</td>
             <td class="py-1">{{ p._yearly_items() }}</td>
         </tr>
         <tr><td></td>
             <td class="py-1">{{ _('14_onchange_items') }}</td>
-            <td class="py-1">{{ len(p._onchange_items()) }}</td>
             <td class="py-1">{{ p._onchange_items() }}</td>
         </tr>
         <tr><td></td>
             <td class="py-1">{{ _('15_startup_items') }}</td>
-            <td class="py-1">{{ len(p._startup_items()) }}</td>
             <td class="py-1">{{ p._startup_items() }}</td>
         </tr>
         <tr><td></td>
             <td class="py-1">{{ _('17_database_items') }}</td>
-            <td class="py-1">{{ len(p._database_items()) }}</td>
             <td class="py-1">{{ p._database_items() }}</td>
         </tr>
         <tr><td></td>
             <td class="py-1">{{ _('16_static_items') }}</td>
-            <td class="py-1">{{ len(p._static_items()) }}</td>
             <td class="py-1">{{ p._static_items() }}</td>
         </tr>
         <tr><td></td>
             <td class="py-1">{{ _('32_item_cache') }}</td>
-            <td class="py-1">{{ len(p.item_cache) }}</td>
             <td class="py-1">{{ p.item_cache }}</td>
         </tr>
         <tr><td></td>
             <td class="py-1">{{ _('20_tageswert_dict') }}</td>
-            <td class="py-1">{{ len(p.current_values['day']) }}</td>
             <td class="py-1">{{ p.current_values['day'] }}</td>
         </tr>
         <tr><td></td>
             <td class="py-1">{{ _('21_wochenwert_dict') }}</td>
-            <td class="py-1">{{ len(p.current_values['week']) }}</td>
             <td class="py-1">{{ p.current_values['week'] }}</td>
         </tr>
         <tr><td></td>
             <td class="py-1">{{ _('22_monatswert_dict') }}</td>
-            <td class="py-1">{{ len(p.current_values['month']) }}</td>
             <td class="py-1">{{ p.current_values['month'] }}</td>
         </tr>
         <tr><td></td>
             <td class="py-1">{{ _('23_jahreswert_dict') }}</td>
-            <td class="py-1">{{ len(p.current_values['year']) }}</td>
             <td class="py-1">{{ p.current_values['year'] }}</td>
         </tr>
         <tr><td></td>
             <td class="py-1">{{ _('24_vortagsendwert_dict') }}</td>
-            <td class="py-1">{{ len(p.previous_values['day']) }}</td>
             <td class="py-1">{{ p.previous_values['day'] }}</td>
         </tr>
         <tr><td></td>
             <td class="py-1">{{ _('25_vorwochenendwert_dict') }}</td>
-            <td class="py-1">{{ len(p.previous_values['week']) }}</td>
             <td class="py-1">{{ p.previous_values['week'] }}</td>
         </tr>
         <tr><td></td>
             <td class="py-1">{{ _('26_vormonatsendwert_dict') }}</td>
-            <td class="py-1">{{ len(p.previous_values['month']) }}</td>
             <td class="py-1">{{ p.previous_values['month'] }}</td>
         </tr>
         <tr><td></td>
             <td class="py-1">{{ _('27_vorjahresendwert_dict') }}</td>
-            <td class="py-1">{{ len(p.previous_values['year']) }}</td>
             <td class="py-1">{{ p.previous_values['year'] }}</td>
         </tr>
         <tr><td></td>
             <td class="py-1">{{ _('get_item_list') }}</td>
-            <td class="py-1">{{ len(p.get_item_list('database_addon', True)) }}</td>
             <td class="py-1">{{ p.get_item_list('database_addon', True) }}</td>
         </tr>
         <tr><td></td>
             <td class="py-1">{{ _('_plg_item_dict') }}</td>
-            <td class="py-1">{{ len(p._plg_item_dict) }}</td>
             <td class="py-1">{{ p._plg_item_dict }}</td>
         </tr>
         <tr><td></td>
             <td class="py-1">{{ _('work_item_queue_thread') }}</td>
-            <td class="py-1">{{ len(p._plg_item_dict) }}</td>
             <td class="py-1">{% if p.work_item_queue_thread != None %}{{ p.work_item_queue_thread.is_alive() }}{% endif %}</td>
         </tr>
     </tbody>
