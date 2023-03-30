@@ -64,7 +64,7 @@ class Indego4shNG(SmartPlugin):
     Main class of the Indego Plugin. Does all plugin specific stuff and provides
     the update functions for the items
     """
-    PLUGIN_VERSION = '3.0.2'
+    PLUGIN_VERSION = '4.0.0'
 
     def __init__(self, sh, *args, **kwargs):
         """
@@ -141,6 +141,10 @@ class Indego4shNG(SmartPlugin):
         self.providers = {}
         self.mowertype = {}
         
+        self._refresh_token = ''
+        self._bearer        = ''
+        self.token_expires  = ''
+        
         # The following part of the __init__ method is only needed, if a webinterface is being implemented:
 
         # if plugin should start even without web interface
@@ -162,15 +166,16 @@ class Indego4shNG(SmartPlugin):
             self.password = self.credentials.split(":")[1]
         # taken from Init of the plugin
         if (self.user != '' and self.password != ''):
-            self._auth()
-            self.logged_in = self._check_auth()
+            # self._auth() deprecated
+            self.logged_in = self._login2Bosch()
 
         # start the refresh timers
         self.scheduler_add('operating_data',self._get_operating_data,cycle = 300)
         self.scheduler_add('get_state', self._get_state, cycle = self.cycle)
         self.scheduler_add('alert', self.alert, cycle=300)
         self.scheduler_add('get_all_calendars', self._get_all_calendars, cycle=300)
-        self.scheduler_add('check_login_state', self._check_login_state, cycle=130)
+        #self.scheduler_add('check_login_state', self._check_login_state, cycle=130)
+        self.scheduler_add('refresh_token', self._getrefreshToken, cycle=self.token_expires-100)
         self.scheduler_add('device_data', self._device_data, cycle=120)
         self.scheduler_add('get_weather', self._get_weather, cycle=600)
         self.scheduler_add('get_next_time', self._get_next_time, cycle=300)
@@ -188,7 +193,8 @@ class Indego4shNG(SmartPlugin):
         self.scheduler_remove('get_state')
         self.scheduler_remove('alert')
         self.scheduler_remove('get_all_calendars')
-        self.scheduler_remove('check_login_state')
+        #self.scheduler_remove('check_login_state')
+        self.scheduler_remove('refresh_token')
         self.scheduler_remove('device_date')
         self.scheduler_remove('get_weather')
         self.scheduler_remove('get_next_time')
@@ -830,9 +836,12 @@ class Indego4shNG(SmartPlugin):
             myCouner += 1
             time.sleep(2)
             
-        headers = {
-                   'x-im-context-id' : self.context_id
-                  }
+        headers = {'accept-encoding' : 'gzip',
+                    'authorization' : 'Bearer '+ self._bearer,
+                    'connection' : 'Keep-Alive',
+                    'host'  : 'api.indego-cloud.iot.bosch-si.com',
+                    'user-agent' : 'Indego-Connect_4.0.0.12253'
+                    }
         response = False
         try:
             response = requests.delete(url, headers=headers, auth=auth)
@@ -861,16 +870,19 @@ class Indego4shNG(SmartPlugin):
             myCouner += 1
             time.sleep(2)
             
-        headers = {
-                   'x-im-context-id' : self.context_id
-                  }
+        headers = {'accept-encoding' : 'gzip',
+                    'authorization' : 'Bearer '+ self._bearer,
+                    'connection' : 'Keep-Alive',
+                    'host'  : 'api.indego-cloud.iot.bosch-si.com',
+                    'user-agent' : 'Indego-Connect_4.0.0.12253'
+                    }
         response = False
         try:
             if auth == None:
                 response = requests.get(url, headers=headers)
             else:
                 response = requests.get(url, headers=headers, auth=auth)
-            self._log_communication('get   ', url, response.status_code)
+            self._log_communication('GET   ', url, response.status_code)
         except Exception as e:
             self.logger.warning("Problem fetching {}: {}".format(url, e))
             return False
@@ -902,12 +914,12 @@ class Indego4shNG(SmartPlugin):
             myCouner += 1
             time.sleep(2)
             
-        if (contextid != None and contextid != ""):
-            headers = {
-                       'x-im-context-id' : self.context_id
-                      }
-        else:
-            headers = ""
+        headers = {'accept-encoding' : 'gzip',
+                    'authorization' : 'Bearer '+ self._bearer,
+                    'connection' : 'Keep-Alive',
+                    'host'  : 'api.indego-cloud.iot.bosch-si.com',
+                    'user-agent' : 'Indego-Connect_4.0.0.12253'
+                    }
         
         response = False
         try:
@@ -937,9 +949,12 @@ class Indego4shNG(SmartPlugin):
             myCouner += 1
             time.sleep(2)
             
-        headers = {
-                   'x-im-context-id' : contextid
-                  }
+        headers = {'accept-encoding' : 'gzip',
+                    'authorization' : 'Bearer '+ self._bearer,
+                    'connection' : 'Keep-Alive',
+                    'host'  : 'api.indego-cloud.iot.bosch-si.com',
+                    'user-agent' : 'Indego-Connect_4.0.0.12253'
+                    }
         
         response = False
         try:
@@ -1071,6 +1086,449 @@ class Indego4shNG(SmartPlugin):
             self.alm_sn = auth_response['alm_sn']
             self.logger.info("Serial received : {}".format(self.alm_sn))
             self._log_communication('Auth  ', 'Expiration time {}'.format(expiration_timestamp), str(auth_response))
+    
+    def _getrefreshToken(self):
+        myUrl = 'https://prodindego.b2clogin.com/prodindego.onmicrosoft.com/b2c_1a_signup_signin/oauth2/v2.0/token'
+        mySession = requests.session()
+        mySession.headers['accept'] = 'application/json'
+        mySession.headers['accept-encoding'] = 'gzip'
+        mySession.headers['connection'] = 'Keep-Alive'
+        mySession.headers['content-type'] = 'application/x-www-form-urlencoded'
+        mySession.headers['host'] = 'prodindego.b2clogin.com'
+        mySession.headers['user-agent'] = 'Dalvik/2.1.0 (Linux; U; Android 11; sdk_gphone_x86_arm Build/RSR1.201013.001)'
+        params = {
+          "grant_type":"refresh_token",
+          "refresh_token": self._refresh_token
+        }
+    
+        response = requests.post(myUrl, data=params)
+        self._log_communication('POST  ', myUrl, response.status_code)
+        
+        myJson = json.loads (response.content.decode())
+        self._refresh_token = myJson['refresh_token']
+        self._bearer        = myJson['access_token']
+        self.token_expires  = myJson['expires_in']
+        self.last_login_timestamp = datetime.timestamp(datetime.now())
+        self.expiration_timestamp = self.last_login_timestamp + self.token_expires
+
+    def _login2Bosch(self):
+        # Standardvalues
+        self.login_pending = True
+        code_challenge  = 'iGz3HXMCebCh65NomBE5BbfSTBWE40xLew2JeSrDrF4'
+        code_verifier   = '9aOBN3dvc634eBaj7F8iUnppHeqgUTwG7_3sxYMfpcjlIt7Uuv2n2tQlMLhsd0geWMNZPoryk_bGPmeZKjzbwA'
+        nonce           = 'LtRKgCy_l1abdbKPuf5vhA'
+        myClientID      = '65bb8c9d-1070-4fb4-aa95-853618acc876'         # that the Client-ID for the Bosch-App
+    
+        myPerfPayload ={
+          "navigation": {
+            "type": 0,
+            "redirectCount": 0
+          },
+          "timing": {
+            "connectStart": 1678187315976,
+            "navigationStart": 1678187315876,
+            "loadEventEnd": 1678187317001,
+            "domLoading": 1678187316710,
+            "secureConnectionStart": 1678187315994,
+            "fetchStart": 1678187315958,
+            "domContentLoadedEventStart": 1678187316973,
+            "responseStart": 1678187316262,
+            "responseEnd": 1678187316322,
+            "domInteractive": 1678187316973,
+            "domainLookupEnd": 1678187315958,
+            "redirectStart": 0,
+            "requestStart": 1678187316010,
+            "unloadEventEnd": 0,
+            "unloadEventStart": 0,
+            "domComplete": 1678187317001,
+            "domainLookupStart": 1678187315958,
+            "loadEventStart": 1678187317001,
+            "domContentLoadedEventEnd": 1678187316977,
+            "redirectEnd": 0,
+            "connectEnd": 1678187316002
+          },
+          "entries": [
+            {
+              "name": "https://prodindego.b2clogin.com/prodindego.onmicrosoft.com/b2c_1a_signup_signin/oauth2/v2.0/authorize?redirect_uri=com.bosch.indegoconnect%3A%2F%2Flogin&client_id=65bb8c9d-1070-4fb4-aa95-853618acc876&response_type=code&state=j1A8L2zQMbolEja6yqbj4w&nonce=LtRKgCy_l1abdbKPuf5vhA&scope=openid%20profile%20email%20offline_access%20https%3A%2F%2Fprodindego.onmicrosoft.com%2Findego-mobile-api%2FIndego.Mower.User&code_challenge={}&code_challenge_method=S256".format(code_challenge),
+              "entryType": "navigation",
+              "startTime": 0,
+              "duration": 1125.3999999999849,
+              "initiatorType": "navigation",
+              "nextHopProtocol": "http/1.1",
+              "workerStart": 0,
+              "redirectStart": 0,
+              "redirectEnd": 0,
+              "fetchStart": 82.29999999997517,
+              "domainLookupStart": 82.29999999997517,
+              "domainLookupEnd": 82.29999999997517,
+              "connectStart": 99.99999999999432,
+              "connectEnd": 126.29999999998631,
+              "secureConnectionStart": 117.4999999999784,
+              "requestStart": 133.7999999999795,
+              "responseStart": 385.5999999999824,
+              "responseEnd": 445.699999999988,
+              "transferSize": 66955,
+              "encodedBodySize": 64581,
+              "decodedBodySize": 155950,
+              "serverTiming": [],
+              "workerTiming": [],
+              "unloadEventStart": 0,
+              "unloadEventEnd": 0,
+              "domInteractive": 1097.29999999999,
+              "domContentLoadedEventStart": 1097.29999999999,
+              "domContentLoadedEventEnd": 1100.999999999999,
+              "domComplete": 1125.2999999999815,
+              "loadEventStart": 1125.3999999999849,
+              "loadEventEnd": 1125.3999999999849,
+              "type": "navigate",
+              "redirectCount": 0
+            },
+            {
+              "name": "https://swsasharedprodb2c.blob.core.windows.net/b2c-templates/bosch/unified.html",
+              "entryType": "resource",
+              "startTime": 1038.0999999999858,
+              "duration": 21.600000000006503,
+              "initiatorType": "xmlhttprequest",
+              "nextHopProtocol": "",
+              "workerStart": 0,
+              "redirectStart": 0,
+              "redirectEnd": 0,
+              "fetchStart": 1038.0999999999858,
+              "domainLookupStart": 0,
+              "domainLookupEnd": 0,
+              "connectStart": 0,
+              "connectEnd": 0,
+              "secureConnectionStart": 0,
+              "requestStart": 0,
+              "responseStart": 0,
+              "responseEnd": 1059.6999999999923,
+              "transferSize": 0,
+              "encodedBodySize": 0,
+              "decodedBodySize": 0,
+              "serverTiming": [],
+              "workerTiming": []
+            },
+            {
+              "name": "https://swsasharedprodb2c.blob.core.windows.net/b2c-templates/bosch/bosch-header.png",
+              "entryType": "resource",
+              "startTime": 1312.7999999999815,
+              "duration": 7.900000000006457,
+              "initiatorType": "css",
+              "nextHopProtocol": "",
+              "workerStart": 0,
+              "redirectStart": 0,
+              "redirectEnd": 0,
+              "fetchStart": 1312.7999999999815,
+              "domainLookupStart": 0,
+              "domainLookupEnd": 0,
+              "connectStart": 0,
+              "connectEnd": 0,
+              "secureConnectionStart": 0,
+              "requestStart": 0,
+              "responseStart": 0,
+              "responseEnd": 1320.699999999988,
+              "transferSize": 0,
+              "encodedBodySize": 0,
+              "decodedBodySize": 0,
+              "serverTiming": [],
+              "workerTiming": []
+            }
+          ],
+          "connection": {
+            "onchange": None,
+            "effectiveType": "4g",
+            "rtt": 150,
+            "downlink": 1.6,
+            "saveData": False,
+            "downlinkMax": None,
+            "type": "unknown",
+            "ontypechange": None
+          }
+        }
+    
+        myReqPayload = {
+           "pageViewId":'',
+           "pageId":"CombinedSigninAndSignup",
+           "trace":[
+              {
+                 "ac":"T005",
+                 "acST":1678187316,
+                 "acD":7
+              },
+              {
+                 "ac":"T021 - URL:https://swsasharedprodb2c.blob.core.windows.net/b2c-templates/bosch/unified.html",
+                 "acST":1678187316,
+                 "acD":119
+              },
+              {
+                 "ac":"T019",
+                 "acST":1678187317,
+                 "acD":44
+              },
+              {
+                 "ac":"T004",
+                 "acST":1678187317,
+                 "acD":19
+              },
+              {
+                 "ac":"T003",
+                 "acST":1678187317,
+                 "acD":5
+              },
+              {
+                 "ac":"T035",
+                 "acST":1678187317,
+                 "acD":0
+              },
+              {
+                 "ac":"T030Online",
+                 "acST":1678187317,
+                 "acD":0
+              },
+              {
+                 "ac":"T002",
+                 "acST":1678187328,
+                 "acD":0
+              }
+           ]
+        }
+        # Create a session
+        mySession = requests.session()
+    
+        # Collect some Cookies
+    
+        url = 'https://prodindego.b2clogin.com/prodindego.onmicrosoft.com/b2c_1a_signup_signin/oauth2/v2.0/authorize?redirect_uri=com.bosch.indegoconnect%3A%2F%2Flogin&client_id={}&response_type=code&state=j1A8L2zQMbolEja6yqbj4w&nonce=LtRKgCy_l1abdbKPuf5vhA&scope=openid%20profile%20email%20offline_access%20https%3A%2F%2Fprodindego.onmicrosoft.com%2Findego-mobile-api%2FIndego.Mower.User&code_challenge={}&code_challenge_method=S256'.format(myClientID,code_challenge)
+    
+        myHeader = {'accept'          : 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
+                   'accept-encoding' : 'gzip, deflate, br',
+                   'accept-language' : 'en-US',
+                   'connection'      : 'keep-alive',
+                   'host'            : 'prodindego.b2clogin.com',
+                   'user-agent'      : 'Mozilla/5.0 (Linux; Android 11; sdk_gphone_x86_arm) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.106 Mobile Safari/537.36'
+                   }
+        mySession.headers = myHeader
+    
+        response = mySession.get(url, allow_redirects=True )
+        self._log_communication('GET   ', url, response.status_code)
+        
+        myText= response.content.decode()
+        myText1 = myText[myText.find('"csrf"')+8:myText.find('"csrf"')+300]
+        myCsrf =  (myText1[:myText1.find(',')-1])
+    
+        myText1 = myText[myText.find('nonce'):myText.find('nonce')+40]
+        myNonce = myText1.split('"')[1]
+    
+        myText1      = myText[myText.find('pageViewId'):myText.find('pageViewId')+60]
+        myPageViewID = myText1.split('"')[2]
+    
+        myReqPayload['pageViewId']=myPageViewID
+        
+        mySession.headers['x-csrf-token'] = myCsrf
+        mySession.headers['referer'] = url
+        mySession.headers['origin'] = 'https://prodindego.b2clogin.com'
+        mySession.headers['host'] = 'prodindego.b2clogin.com'
+        mySession.headers['x-requested-with'] = 'XMLHttpRequest'
+        mySession.headers['content-length'] = str(len(json.dumps(myPerfPayload)))
+        mySession.headers['content-type'] = 'application/json; charset=UTF-8'
+        mySession.headers['accept-language'] = 'en-US,en;q=0.9'
+    
+    
+        myState = mySession.cookies['x-ms-cpim-trans']
+        myCookie = json.loads(base64.b64decode(myState).decode())
+        myNewState = '{"TID":"'+myCookie['C_ID']+'"}'
+        myNewState = base64.b64encode(myNewState.encode()).decode()[:-2]
+        #'{"TID":"8912c0e6-defb-4d58-858b-27d1cfbbe8f5"}'
+        #eyJUSUQiOiI4OTEyYzBlNi1kZWZiLTRkNTgtODU4Yi0yN2QxY2ZiYmU4ZjUifQ
+    
+    
+        myUrl = 'https://prodindego.b2clogin.com/prodindego.onmicrosoft.com/B2C_1A_signup_signin/client/perftrace?tx=StateProperties={}&p=B2C_1A_signup_signin'.format(myNewState)
+        response=mySession.post(myUrl,data=json.dumps(myPerfPayload))
+        self._log_communication('GET   ', myUrl, response.status_code)
+    
+    
+        myUrl = 'https://prodindego.b2clogin.com/prodindego.onmicrosoft.com/B2C_1A_signup_signin/api/CombinedSigninAndSignup/unified'
+        mySession.headers['accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9'
+        mySession.headers['accept-encoding'] = 'gzip, deflate, br'
+        mySession.headers['upgrade-insecure-requests'] = '1'
+        mySession.headers['sec-fetch-mode'] = 'navigate'
+        mySession.headers['sec-fetch-dest'] = 'document'
+        mySession.headers['sec-fetch-user'] = '?1'
+        mySession.headers['sec-fetch-site'] = 'same-origin'
+    
+        del mySession.headers['content-length']
+        del mySession.headers['content-type']
+        del mySession.headers['x-requested-with']
+        del mySession.headers['x-csrf-token']
+        del mySession.headers['origin']
+    
+        myParams = {
+            'claimsexchange': 'BoschIDExchange',
+            'csrf_token': myCsrf,
+            'tx': 'StateProperties=' + myNewState,
+            'p': 'B2C_1A_signup_signin',
+            'diags': myReqPayload
+            }
+        # Get the redirect-URI
+        response = mySession.get(myUrl,allow_redirects=False,params=myParams)
+        self._log_communication('GET   ', myUrl, response.status_code)
+        try:
+            if (response.status_code == 302):
+                myText = response.content.decode()
+                myText1 = myText[myText.find('href') + 6:]
+                myNewUrl = myText1.split('"')[0].replace('&amp;','&')
+            else:
+                pass
+        except:
+            pass
+    
+        mySession.headers['sec-fetch-site'] = 'cross-site'
+        mySession.headers['host'] = 'identity.bosch.com'
+    
+        # Get the CIAMIDS
+        response = mySession.get(myNewUrl,allow_redirects=True)
+        self._log_communication('GET   ', myNewUrl, response.status_code)
+        try:
+            if (response.history[0].status_code != 302):
+                pass
+            else:
+                myNewUrl = response.history[0].headers['location']
+        except:
+            pass
+    
+        # Signin to Session
+        response = mySession.get(myNewUrl,allow_redirects=False)
+        self._log_communication('GET   ', myNewUrl, response.status_code)
+        
+        # Authorize -IDS
+        myNewUrl = response.headers['location']
+        mySession.headers['host'] = 'identity-myprofile.bosch.com'
+        mySession.headers['upgrade-insecure-requests']='1'
+        cookie_obj = requests.cookies.create_cookie(domain="identity-myprofile.bosch.com",name=".AspNetCore.Identity.Application",value="CfDJ8BbTLtgL3GFMvpWDXN913TQqlMWfpnzYNGGcX0qV3_e1mcxyuYndGzcNXVwoAHCyvY3Ad_1bkYnLsg-J56IdLUNQVMguFnS_KWkPbzib4u6SQtdCZfbiIPV_ZUh4xK-Pd-LgJ61Fi4ljxbb4CewKJRAaDyOhS7KPUu68EVdzte3mEYGm2z8PeSvViW6cGgQeIIOcJ1G3f7XG_s2synfm4o6MDA49a1WnkBIk1kXBodq-vKYXZNMLHOtNGVNE2aZ_k5b9E4mGQVeuncw6SupEku9dCXgO0tRRFK0qUX-41JVrgQdz5v4c_4NB--i1U1b7LUmoZrTtkv0a5KcGPTGz9cZqV5D_Ki4p5uoQxZCmDBPbyecSe6xF3m4yGpEC6hTfrOEJR4LdX6mnppjnXMSc1Y9Pr0Lui3FGeBGuK8GyT4QXJ-pnFrLyF8dh6g2ovkeRvI8MlS5DLSLy_d0s2nOgUxVQPxDsVCxtIMJhE14tSUnC9oRDB_6YUxOqMTEJ_dFacHt-s4iLD2ClBLtA6MsDQcF5pYe4ZOt9zLMuLcoO1NqD3Ca0r00Y0qdkGFGvckp5Xqf7QndkcZxKMPE3GtfH8o6uMsFd7hs1xstxBlT2pgrp0fjjk5R8ugOzJDv-BXarCbjXTzLJtAMVYO4dzorJ7xnXAZDK4IczfXIgxZliwOnTCBvwGIx5CHZfnkYlfhS1PbOE0bwR-sqvJXCS8Jmh6BjmSPHcoKxWxJbLa_wok5HsYmOJgQhVE49WgwuBV88sFvoxpnK_pp1IRR0jFfnV4stT905lkd8hNj5D8o3aZ35sHZDuNPYEXFNUPDORoFnfHkNAP33r126a00n-fLLjaBhFa7W5PnPDaD-M-luVP7nIL-c2tlVon_XRZRC5KMzO4FuOqCeCFwsh3jTtpJk5_iUS4EpHvHT5ldZtRVShC2uzZQ63N_LWl5KZwVlWXPCaLECCZwsGfaAJz0HKDlC-vgXuWL7odJKInmIsi4BJeM9xe280pPDwD6FNUhSOAM2GZgCAW2jilScn5hA2pS1HsLD9yLV0-80Rk9UR9RmRt7USsIOf_7qFMnijAV3MZq9wNKt7ZTBDCI40dxQ1WCYSUV0")
+        mySession.cookies.set_cookie(cookie_obj)
+        response = mySession.get(myNewUrl,allow_redirects=False)
+        self._log_communication('GET   ', myNewUrl, response.status_code)
+    
+        # Get the login page with redirect URI
+        returnUrl = myNewUrl
+        myNewUrl='https://identity-myprofile.bosch.com/ids/login?ReturnUrl='+returnUrl
+        response=mySession.get(myNewUrl,allow_redirects=True)
+        self._log_communication('GET', myNewUrl, response.status_code)
+        myText = response.content.decode()
+        # find all the needed values
+        RequestVerificationToken = myText[myText.find('__RequestVerificationToken'):myText.find('__RequestVerificationToken')+300].split('"')[4]
+        postData = {
+            'meta-information' : '',
+            'uEmail' : self.user,
+            'uPassword' : self.password,
+            'ReturnUrl' : returnUrl[36:58]+'/callback'+returnUrl[58:],
+            '__RequestVerificationToken' : RequestVerificationToken
+        }
+        mySession.headers['content-type'] = 'application/x-www-form-urlencoded'
+        mySession.headers['sec-fetch-sites'] = 'same-origin'
+        mySession.headers['origin'] = ''
+        response=mySession.post(myNewUrl,data=postData,allow_redirects=True)
+        self._log_communication('POST  ', myNewUrl, response.status_code)
+    
+        #########################################
+        mySession.headers['pragma'] = 'no-cache'
+        mySession.headers['request-context'] = response.history[0].headers['request-context']
+        mySession.headers['host'] = 'identity.bosch.com'
+        myNewUrl = response.history[1].headers['location']
+    
+        # Collect next Cookie
+        response = mySession.get(myNewUrl,allow_redirects=False)
+        self._log_communication('GET   ', myNewUrl, response.status_code)
+    
+        #Get Location for autorization
+        myNewUrl = 'https://identity.bosch.com/callback'
+        response=mySession.get(myNewUrl,allow_redirects=False)
+        self._log_communication('GET', myNewUrl, response.status_code)
+        myNewUrl = response.headers['location']
+    
+        #Get Authorize-Informations
+        response = mySession.get(myNewUrl,allow_redirects=False)
+        self._log_communication('GET   ', myNewUrl, response.status_code)
+    
+        # Get the post-Fields
+        myText= response.content.decode()
+        myCode = myText[myText.find('"code"')+14:myText.find('"code"')+300].split('"')[0]
+        mySessionState = myText[myText.find('"session_state"')+23:myText.find('"session_state"')+300].split('"')[0]
+        myState = myText[myText.find('"state"')+15:myText.find('"state"')+300].split('"')[0]
+    
+        request_body =  {"code" : myCode, "state" : myState,  "session_state=" : mySessionState }
+    
+        mySession.headers['host'] = 'prodindego.b2clogin.com'
+        mySession.headers['origin'] = 'https://identity.bosch.com'
+        mySession.headers['content-type'] = 'application/x-www-form-urlencoded'
+        mySession.headers['cache-control'] = 'max-age=0'
+    
+        del mySession.headers['pragma']
+        del mySession.headers['request-context']
+    
+        myNewUrl='https://prodindego.b2clogin.com/prodindego.onmicrosoft.com/oauth2/authresp'
+        response = mySession.post(myNewUrl,data=request_body,allow_redirects=False)
+        self._log_communication('POST  ', myNewUrl, response.status_code)
+        myNewUrl = response.headers['location']
+    
+        myFinalCode = myNewUrl.split("code")[1].split("=")[1]
+    
+    
+        # Get the new Login-Page
+        url = 'https://prodindego.b2clogin.com/prodindego.onmicrosoft.com/b2c_1a_signup_signin/oauth2/v2.0/authorize?redirect_uri=com.bosch.indegoconnect%3A%2F%2Flogin&client_id={}&response_type=code&state=j1A8L2zQMbolEja6yqbj4w&nonce=LtRKgCy_l1abdbKPuf5vhA&scope=openid%20profile%20email%20offline_access%20https%3A%2F%2Fprodindego.onmicrosoft.com%2Findego-mobile-api%2FIndego.Mower.User&code_challenge={}&code_challenge_method=S256'.format(myClientID,code_challenge)
+        mySession.headers['host'] = 'prodindego.b2clogin.com'
+        del mySession.headers['content-type']
+        del mySession.headers['origin']
+        del mySession.headers['referer']
+        response = mySession.get(url,allow_redirects=False)
+        self._log_communication('GET   ', url, response.status_code)
+    
+        # Now Post for a token
+        mySession.close()
+        request_body = {
+                        'code' : myFinalCode,
+                        'grant_type' : 'authorization_code',
+                        'redirect_uri' : 'com.bosch.indegoconnect://login',
+                        'code_verifier' : code_verifier,
+                        'client_id' : myClientID
+                        }
+        url = 'https://prodindego.b2clogin.com/prodindego.onmicrosoft.com/b2c_1a_signup_signin/oauth2/v2.0/token'
+        mySession = requests.session()
+        mySession.headers['accept'] = 'application/json'
+        mySession.headers['accept-encoding'] = 'gzip'
+        mySession.headers['connection'] = 'Keep-Alive'
+        mySession.headers['content-type'] = 'application/x-www-form-urlencoded'
+        mySession.headers['host'] = 'prodindego.b2clogin.com'
+        mySession.headers['user-agent'] = 'Dalvik/2.1.0 (Linux; U; Android 11; sdk_gphone_x86_arm Build/RSR1.201013.001)'
+    
+        response = mySession.post(url,data=request_body)
+        self._log_communication('POST  ', url, response.status_code)
+        myJson = json.loads (response.content.decode())
+        self._refresh_token = myJson['refresh_token']
+        self._bearer        = myJson['access_token']
+        self.token_expires  = myJson['expires_in']
+       
+    
+    
+        url='https://api.indego-cloud.iot.bosch-si.com/api/v1/alms'
+        myHeader = {'accept-encoding' : 'gzip',
+                    'authorization' : 'Bearer '+ myJson['access_token'],
+                    'connection' : 'Keep-Alive',
+                    'host'  : 'api.indego-cloud.iot.bosch-si.com',
+                    'user-agent' : 'Indego-Connect_4.0.0.12253'
+                    }
+        response = requests.get(url, headers=myHeader,allow_redirects=True )
+        self._log_communication('GET   ', url, response.status_code)
+        if (response.status_code == 200):
+            myJson = json.loads (response.content.decode())
+            self.alm_sn = myJson[0]['alm_sn']
+            self.login_pending = False
+            self.last_login_timestamp = datetime.timestamp(datetime.now())
+            self.expiration_timestamp = self.last_login_timestamp + self.token_expires 
+            return True
+        else:
+            return False
+
+
     
     def _get_predictive_calendar(self):
         '''
