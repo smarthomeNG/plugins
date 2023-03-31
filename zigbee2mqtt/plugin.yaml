@@ -9,7 +9,7 @@ plugin:
     tester: Michael Wenzel         # Who tests this plugin?
     state: develop                 # change to ready when done with development
     keywords: iot
-    documentation: http://smarthomeng.de/user/plugins/zigbee2mqtt/user_doc.html
+    documentation: ''
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1856775-support-thread-f%C3%BCr-das-zigbee2mqtt-plugin
 
     version: 1.1.2                 # Plugin version
