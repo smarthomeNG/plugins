@@ -43,7 +43,7 @@ class OneWire(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.9.3'
+    PLUGIN_VERSION = '1.9.4'
 
     _flip = {0: '1', False: '1', 1: '0', True: '0', '0': True, '1': False}
 
@@ -304,12 +304,13 @@ class OneWire(SmartPlugin):
                             value = (addr in entries)
                         else:
                             value = self._flip[self.owbase.read('/uncached' + path).decode()]
+                        self.stopevent.wait(self._parasitic_power_wait)
                     except ConnectionError as e:
                         self.logger.warning(f"_io_cycle: 'raise' {self._ios[addr][key]['readerrors']}. problem connecting to {addr}-{key}, error: {e}")
                         raise
                     except Exception as e:
                         # time.sleep(self._parasitic_power_wait)
-                        self.stopevent.wait(self._parasitic_power_wait)
+                        #self.stopevent.wait(self._parasitic_power_wait)
                         self._ios[addr][key]['readerrors'] = self._ios[addr][key].get('readerrors', 0) + 1
                         if self._ios[addr][key]['readerrors'] % self.warn_after == 0:
                             self.logger.warning(f"_io_cycle: {self._ios[addr][key]['readerrors']}. problem reading {addr}-{key}, error: {e}")
