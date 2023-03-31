@@ -1,7 +1,7 @@
 {% extends "base_plugin.html" %}
 {% set logo_frame = false %}
-{% if tr064_items %}
-    {% set update_interval = [(((10 * (tr064_items | length)) / 1000) | round | int) * 1000, 5000]|max %}
+{% if tr064_item_count > 0 %}
+    {% set update_interval = [(((10 * (tr064_item_count)) / 1000) | round | int) * 1000, 5000]|max %}
 {% else %}
     {% set update_interval = 5 %}
 {% endif %}
@@ -104,6 +104,11 @@
         pageResize: resize
         } );
         console.log("Init smarthome_devicetable for page length -1, pageResize: " + resize);
+      maintenance_table = $('#maintenance_table').DataTable( {
+        pageLength: -1,
+        pageResize: resize
+        } );
+        console.log("Init maintenance_table for page length -1, pageResize: " + resize);
     }
     catch (e) {
         console.log("Datatable JS not loaded, showing standard table without reorder option " +e);
@@ -131,6 +136,9 @@
 				shngInsertText (item+'_call_last_update', objResponse['call_monitor'][item]['last_update'], 'call_monitortable');
 				shngInsertText (item+'_call_last_change', objResponse['call_monitor'][item]['last_change'], 'call_monitortable');
 			}
+			shngInsertText ('tr064_blacklisted', objResponse['tr064_items_blacklistet'], 'maintenance_table', 5);
+			shngInsertText ('aha_last_request', objResponse['aha_last_request'], 'maintenance_table', 5);
+
 		}
 	}
 </script>
@@ -145,20 +153,20 @@
 {% set tabcount = 6 %}
 
 <!-- Define tabtitle and if tab should be hidden -->
-{% if p._fritz_device and tr064_item_count > 0 %}
+{% if p.fritz_device and tr064_item_count > 0 %}
     {% set tab1title = _("<strong>"'AVM TR-064 Items'"</strong> (" ~ tr064_item_count ~ ") ") %}
 {% else %}
     {% set tab2title = "hidden" %} 
 {% endif %}
 
-{% if p._fritz_home and aha_item_count > 0 %}
+{% if p.fritz_home and aha_item_count > 0 %}
     {% set tab2title = _("<strong>"'AVM AHA Items'"</strong> (" ~ aha_item_count ~ ") ") %}
 {% else %}
     {% set tab2title = "hidden" %} 
 {% endif %}
 
-{% if p._fritz_home and len(p._fritz_home._aha_devices) > 0%}
-    {% set tab3title = _("<strong>"'AVM AHA Devices'"</strong> (" ~ len(p._fritz_home._aha_devices) ~ ") ") %}
+{% if p.fritz_home and len(p.fritz_home._devices) > 0%}
+    {% set tab3title = _("<strong>"'AVM AHA Devices'"</strong> (" ~ len(p.fritz_home._devices) ~ ") ") %}
 {% else %}
     {% set tab3title = "hidden" %} 
 {% endif %}
@@ -191,7 +199,7 @@
 	<tbody>
 		<tr>
 			<td class="py-1">
-                {% if p._fritz_device  %}
+                {% if p.fritz_device  %}
                 <img src="static/img/lamp_green.png" alt="{{ _('Gerät verfügbar') }}" style="width: 17px;padding-bottom: 3px;"/>
                 {% else %}
                 <img src="static/img/lamp_red.png" alt="{{ _('Gerät nicht verfügbar') }}" style="width: 17px;padding-bottom: 3px;"/>
@@ -199,8 +207,8 @@
                 <strong>{{ _('Verbunden') }}</strong>
             </td>
 			<td class="py-1">
-                {% if p._fritz_device  %}
-                    {{ _('Ja') }}{% if p._fritz_device.ssl %}, SSL{% endif %}
+                {% if p.fritz_device  %}
+                    {{ _('Ja') }}{% if p.fritz_device.ssl %}, SSL{% endif %}
                 {% else %}
                      {{ _('Nein') }}
                 {% endif %}
@@ -210,7 +218,7 @@
 		</tr>
 		<tr>
 			<td class="py-1">
-                {% if p._monitoring_service and p._monitoring_service._listen_active %}
+                {% if p.monitoring_service and p.monitoring_service._listen_active %}
                     <img src="static/img/lamp_green.png" alt="{{ _('Call Monitor verbunden') }}" style="width: 17px;padding-bottom: 3px;"/>
                 {% else %}
                     <img src="static/img/lamp_red.png" alt="{{ _('Call Monitor nicht verbunden') }}" style="width: 17px;padding-bottom: 3px;"/>
@@ -223,10 +231,20 @@
 			<td class="py-1">{{ p.get_parameter_value_for_display('password') }}</td>
 		</tr>
 		<tr>
-			<td class="py-1"><strong>{{ _('Host') }}</strong></td>
-			<td class="py-1"><a class="text-shng" href="http://{{ p._fritz_device.host }}" target="_blank">{{ p._fritz_device.host }}</a></td>
+			<td class="py-1">
+                <strong>{{ _('Host') }}
+                {% if p.fritz_device.is_fritzbox() %}
+                    {{ _(' is Fritz!Box') }}
+                {% elif p.fritz_device.is_repeater() %}
+                    {{ _(' is Fritz!Repeater') }}
+                {% else %}
+                    {{ _(' -') }}
+                {% endif %}
+                </strong>
+            </td>
+			<td class="py-1"><a class="text-shng" href="http://{{ p.fritz_device.host }}" target="_blank">{{ p.fritz_device.host }}</a></td>
 			<td class="py-1"><strong>{{ _('Port') }}</strong></td>
-			<td class="py-1">{{ p._fritz_device.port }} {% if p._fritz_device.ssl %}(HTTPS){% endif %}</td>
+			<td class="py-1">{{ p.fritz_device.port }} {% if p.fritz_device.ssl %}(HTTPS){% endif %}</td>
 		</tr>
 	</tbody>
 </table>
@@ -242,184 +260,174 @@
 
 <!-- Define Bodytab1 -->
 {% block bodytab1 %}
-<div class="container-fluid m-2 table-resize">
-    <table id="itemtable">
-        <thead>
-            <tr>
-                <th></th>
-                <th class="item">{{ _('Pfad') }}</th>
-                <th class="type">{{ _('Typ') }}</th>
-                <th class="datatype">{{ _('AVM Datentyp') }}</th>
-                <th class="cycle" style="text-align: right">{{ _('Cycle') }}</th>
-                <th class="value">{{ _('Wert') }}</th>
-                <th class="update" style="text-align: center">{{ _('Letztes Update') }}</th>
-                <th class="update" style="text-align: center">{{ _('Letzter Change') }}</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% if tr064_items %}  
-                {% for item in tr064_items %}
-                    <tr>
-                        <td></td>
-                        <td class="py-1">{{ item.id() }}</td>
-                        <td class="py-1">{{ item.property.type }}</td>
-                        <td class="py-1">{{ p.fritz_device.item_dict[item][0] }}</td>
-                        <td class="py-1" style="text-align: right">{{ p.fritz_device.item_dict[item][2] }}</td>
-                        <td class="py-1" id="{{ item.id() }}_tr064_value">{{ item.property.value }}</td>
-                        <td class="py-1" id="{{ item.id() }}_tr064_last_update" style="text-align: center">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
-                        <td class="py-1" id="{{ item.id() }}_tr064_last_change" style="text-align: center">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
-                    </tr>
-                {% endfor %}
-            {% endif %}
-        </tbody>
-    </table>
-</div>
+<table id="itemtable">
+    <thead>
+        <tr>
+            <th></th>
+            <th class="item">{{ _('Pfad') }}</th>
+            <th class="type">{{ _('Typ') }}</th>
+            <th class="datatype">{{ _('AVM Datentyp') }}</th>
+            <th class="cycle" style="text-align: right">{{ _('Cycle') }}</th>
+            <th class="value">{{ _('Wert') }}</th>
+            <th class="update" style="text-align: center">{{ _('Letztes Update') }}</th>
+            <th class="update" style="text-align: center">{{ _('Letzter Change') }}</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% if tr064_items %}
+            {% for item in tr064_items %}
+                {% set item_config = p.fritz_device.items[item] %}
+                <tr>
+                    <td></td>
+                    <td class="py-1">{{ item.id() }}</td>
+                    <td class="py-1">{{ item.property.type }}</td>
+                    <td class="py-1">{{ item_config[0] }}</td>
+                    <td class="py-1" style="text-align: right">{{ item_config[2] }}</td>
+                    <td class="py-1" id="{{ item.id() }}_tr064_value">{{ item.property.value }}</td>
+                    <td class="py-1" id="{{ item.id() }}_tr064_last_update" style="text-align: center">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                    <td class="py-1" id="{{ item.id() }}_tr064_last_change" style="text-align: center">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                </tr>
+            {% endfor %}
+        {% endif %}
+    </tbody>
+</table>
 {% endblock %}
 
 
 {% block bodytab2 %}
-<div class="container-fluid m-2 table-resize">
-    <table id="smarthomeitemtable">
-        <thead>
-            <tr>
-                <th></th>
-                <th class="item">{{ _('Pfad') }}</th>
-                <th class="type">{{ _('Typ') }}</th>
-                <th class="datatype">{{ _('AVM Datentyp') }}</th>
-                <th class="cycle" style="text-align: right">{{ _('Cycle') }}</th>
-                <th class="value">{{ _('Wert') }}</th>
-                <th class="update" style="text-align: center">{{ _('Letztes Update') }}</th>
-                <th class="update" style="text-align: center">{{ _('Letzter Change') }}</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% if aha_items %}   
-                {% for item in aha_items %}
-                    <tr>
-                        <td></td>
-                        <td class="py-1">{{ item.id() }}</td>
-                        <td class="py-1">{{ item.property.type }}</td>
-                        <td class="py-1">{{ p.fritz_home.item_dict[item][0] }}</td>
-                        <td class="py-1" style="text-align: right">{{ p.fritz_home.item_dict[item][2] }}</td>
-                        <td class="py-1" id="{{ item.id() }}_aha_value">{{ item.property.value }}</td>
-                        <td class="py-1" id="{{ item.id() }}_aha_last_update" style="text-align: center">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
-                        <td class="py-1" id="{{ item.id() }}_aha_last_change" style="text-align: center">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
-                    </tr>
-                {% endfor %}
-            {% endif %}
-        </tbody>
-    </table>
-</div>
+<table id="smarthomeitemtable">
+    <thead>
+        <tr>
+            <th></th>
+            <th class="item">{{ _('Pfad') }}</th>
+            <th class="type">{{ _('Typ') }}</th>
+            <th class="datatype">{{ _('AVM Datentyp') }}</th>
+            <th class="cycle" style="text-align: right">{{ _('Cycle') }}</th>
+            <th class="value">{{ _('Wert') }}</th>
+            <th class="update" style="text-align: center">{{ _('Letztes Update') }}</th>
+            <th class="update" style="text-align: center">{{ _('Letzter Change') }}</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% if aha_items %}
+            {% for item in aha_items %}
+                {% set item_config = p.fritz_home.items[item] %}
+                <tr>
+                    <td></td>
+                    <td class="py-1">{{ item.id() }}</td>
+                    <td class="py-1">{{ item.property.type }}</td>
+                    <td class="py-1">{{ item_config[0] }}</td>
+                    <td class="py-1" style="text-align: right">{{ item_config[2] }}</td>
+                    <td class="py-1" id="{{ item.id() }}_aha_value">{{ item.property.value }}</td>
+                    <td class="py-1" id="{{ item.id() }}_aha_last_update" style="text-align: center">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                    <td class="py-1" id="{{ item.id() }}_aha_last_change" style="text-align: center">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                </tr>
+            {% endfor %}
+        {% endif %}
+    </tbody>
+</table>
 {% endblock %}
 
 
 {% block bodytab3 %}
-<div class="container-fluid m-2 table-resize">
-    <table id="smarthome_devicetable">
-        <thead>
-            <tr>
-                <th></th>
-                <th class="ain">{{ 'Device AIN' }}</th>
-                <th>{{ '' }}</th>
-                <th>{{ 'Device Details (dict)' }}</th>
-                
-            </tr>
-        </thead>
-        <tbody>
-            {% if p._fritz_home %}
-                {% for ain in p._fritz_home._aha_devices %}
-                    <tr>
-                        <td></td>
-                        <td class="py-1">{{ ain }}
-                        <td class="py-1"></td>
-                        <td class="py-1">{{ p._fritz_home._aha_devices[ain] }}</td>
-                        
-                    </tr>
-                {% endfor %}
-            {% endif %}
-        </tbody>
-    </table>
-</div>
+<table id="smarthome_devicetable">
+    <thead>
+        <tr>
+            <th></th>
+            <th class="ain">{{ 'Device AIN' }}</th>
+            <th>{{ '' }}</th>
+            <th>{{ 'Device Details (dict)' }}</th>
+
+        </tr>
+    </thead>
+    <tbody>
+        {% if p.fritz_home %}
+            {% set devices = p.fritz_home.get_devices() %}
+            {% for device in devices %}
+                <tr>
+                    <td></td>
+                    <td class="py-1">{{ device.ain }}
+                    <td class="py-1"></td>
+                    <td class="py-1">{{ p.fritz_home.get_device_by_ain(device.ain).__dict__ }}</td>
+                </tr>
+            {% endfor %}
+        {% endif %}
+    </tbody>
+</table>
 {% endblock %}
 
 
 {% block bodytab4 %}
-<div class="container-fluid m-2 table-resize">
-    <table id="call_monitortable">
-        <thead>
-            <tr class="shng_heading">
-                <th></th>
-                <th class="item">{{ _('Pfad') }}</th>
-                <th class="type">{{ _('Typ') }}</th>
-                <th class="datatype">{{ _('AVM Datentyp') }}</th>
-                <th class="value">{{ _('Wert') }}</th>
-                <th style="text-align: center">{{ _('Letztes Update') }}</th>
-                <th style="text-align: center">{{ _('Letzter Change') }}</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% if call_monitor_items %}
-                {% for item in call_monitor_items %}
-                    {% set item_id = item.id() %}
-                    {% if p.get_instance_name() %}
-                        {% set instance_key = "avm_data_type@"+p.get_instance_name() %}
-                    {% else %}
-                        {% set instance_key = "avm_data_type" %}
-                    {% endif %}
-                    <tr>
-                        <td></td>
-                        <td class="py-1">{{ item_id }}</td>
-                        <td class="py-1">{{ item.property.type }}</td>
-                        <td class="py-1">{{ item.conf[instance_key]}}</td>
-                        <td class="py-1" id="{{ item_id }}_call_value">{{ item.property.value }}</td>
-                        <td class="py-1" id="{{ item_id }}_call_last_update" style="text-align: center">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
-                        <td class="py-1" id="{{ item_id }}_call_last_change" style="text-align: center">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
-                    </tr>
-                {% endfor %}
-            {% endif %}
-        </tbody>
-    </table>
-</div>
+<table id="call_monitortable">
+    <thead>
+        <tr class="shng_heading">
+            <th></th>
+            <th class="item">{{ _('Pfad') }}</th>
+            <th class="type">{{ _('Typ') }}</th>
+            <th class="datatype">{{ _('AVM Datentyp') }}</th>
+            <th class="value">{{ _('Wert') }}</th>
+            <th style="text-align: center">{{ _('Letztes Update') }}</th>
+            <th style="text-align: center">{{ _('Letzter Change') }}</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% if call_monitor_items %}
+            {% for item in call_monitor_items %}
+                {% set item_id = item.id() %}
+                {% if p.get_instance_name() %}
+                    {% set instance_key = "avm_data_type@"+p.get_instance_name() %}
+                {% else %}
+                    {% set instance_key = "avm_data_type" %}
+                {% endif %}
+                <tr>
+                    <td></td>
+                    <td class="py-1">{{ item_id }}</td>
+                    <td class="py-1">{{ item.property.type }}</td>
+                    <td class="py-1">{{ item.conf[instance_key]}}</td>
+                    <td class="py-1" id="{{ item_id }}_call_value">{{ item.property.value }}</td>
+                    <td class="py-1" id="{{ item_id }}_call_last_update" style="text-align: center">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                    <td class="py-1" id="{{ item_id }}_call_last_change" style="text-align: center">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                </tr>
+            {% endfor %}
+        {% endif %}
+    </tbody>
+</table>
 {% endblock %}
 
 
 {% block bodytab5 %}
-<div class="container-fluid m-2 table-resize">
-    <table id="logtable">
-        <thead>
-            <tr>
-                <th></th>
-                <th class="datetime">{{ 'Datum/Uhrzeit' }}</th>
-                <th>{{ 'Meldung' }}</th>
-                <th class="logtype" style="text-align: center">{{ 'Typ' }}</th>
-                <th class="type">{{ 'Kategorie' }}</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% if logentries %}
-                {% for logentry in logentries%}
-                    <tr>
-                        <td></td>
-                        <td class="py-1">{{ logentry[0] }}</td>
-                        <td class="py-1">{{ logentry[1] }}</td>
-                        <td class="py-1" style="text-align: center">
-                            <a class="text-shng" target="_blank" href="https://service.avm.de/help/de/FRITZ-Box-7590/019/hilfe_syslog_{{ logentry[2] }}">
-                                {{ logentry[2] }}
-                            </a>
-                        </td>
-                        <td class="py-1">{{ _('cat_'+logentry[3]|string) }}</td>
-                    </tr>
-                {% endfor %}
-            {% endif %}
-        </tbody>
-    </table>
-
-</div>
+<table id="logtable">
+    <thead>
+        <tr>
+            <th></th>
+            <th class="datetime">{{ 'Datum/Uhrzeit' }}</th>
+            <th>{{ 'Meldung' }}</th>
+            <th class="logtype" style="text-align: center">{{ 'Typ' }}</th>
+            <th class="type">{{ 'Kategorie' }}</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% if logentries %}
+            {% for logentry in logentries%}
+                <tr>
+                    <td></td>
+                    <td class="py-1">{{ logentry[0] }}</td>
+                    <td class="py-1">{{ logentry[1] }}</td>
+                    <td class="py-1" style="text-align: center">
+                        <a class="text-shng" target="_blank" href="https://service.avm.de/help/de/FRITZ-Box-7590/019/hilfe_syslog_{{ logentry[2] }}">
+                            {{ logentry[2] }}
+                        </a>
+                    </td>
+                    <td class="py-1">{{ _('cat_'+logentry[3]|string) }}</td>
+                </tr>
+            {% endfor %}
+        {% endif %}
+    </tbody>
+</table>
 {% endblock %}
 
 
 {% block bodytab6 %}
-<div class="container-fluid m-2 table-resize">
     {% if not maintenance %}
         {%  for function, dict in p.metadata.plugin_functions.items() %}
             <div class="card-header p-2">
@@ -456,46 +464,53 @@
     {% endif %}
 
     {% if maintenance %}
-    <table id="" class="table table-striped table-hover">
-        <thead>
-            <tr>
-                <th class="type">{{ 'Befehl' }}</th>
-                <th class="type">{{ 'Ergebnis' }}</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td class="py-1">{{ "fritz_device._items" }}</td>
-                <td class="py-1">{{ p.fritz_device._items }}</td>
-            </tr>
-            <tr>
-                <td class="py-1">{{ "fritz_device._item_blacklist" }}</td>
-                <td class="py-1">{{ p.fritz_device._item_blacklist }}</td>
-            </tr>
-            <tr>
-                <td class="py-1">{{ "_fritz_home._items" }}</td>
-                <td class="py-1">{{ p.fritz_home._items }}</td>
-            </tr>
-            <tr>
-                <td class="py-1">{{ "self._data_cache" }}</td>
-                <td class="py-1">{{ p._fritz_device._data_cache }}</td>
-            </tr>
-            <!-- {#
-            <tr>
-                <td class="py-1">{{ "X_AVM_DE_GetClients" }}</td>
-                <td class="py-1">{{ p._fritz_device.client.InternetGatewayDevice.X_VoIP.X_AVM_DE_GetClients() }}</td>
-            </tr>
-            <tr>
-                <td class="py-1">{{ "X_AVM_DE_DialSetConfig" }}</td>
-                <td class="py-1">{{ p._fritz_device.client.InternetGatewayDevice.X_VoIP.X_AVM_DE_DialSetConfig(NewX_AVM_DE_PhoneName='Torklingel') }}</td>
-            </tr>
-            <tr>
-                <td class="py-1">{{ "p._fritz_device.client.InternetGatewayDevice.X_VoIP.X_AVM_DE_DialGetConfig()" }}</td>
-                <td class="py-1">{{ p._fritz_device.client.InternetGatewayDevice.X_VoIP.X_AVM_DE_DialGetConfig() }}</td>
-            </tr>
-            #} -->
-        </tbody>
-    </table>
+        <table id="maintenance_table">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% if p.fritz_device %}
+                <tr>
+                    <td></td>
+                    <td class="py-1">{{ "01 TR064 Items @ Fritz_Device" }}</td>
+                    <td class="py-1">{{ p.fritz_device.items }}</td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td class="py-1">{{ "02 TR064 Blacklisted Items @ Fritz_Device " }}</td>
+                    <td class="py-1" id="tr064_blacklisted">{{ p.fritz_device.get_tr064_items_blacklisted() }}</td>
+                </tr>
+                {% endif %}
+                {% if p.fritz_home %}
+                <tr>
+                    <td></td>
+                    <td class="py-1">{{ "03 AHA Items @ Fritz_Home" }}</td>
+                    <td class="py-1">{{ p.fritz_home.items }}</td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td class="py-1">{{ " 04 AHA LastRequest XML" }}</td>
+                    <td class="py-1" id="aha_last_request">{{ p.fritz_home.last_request | string }}</td>
+                </tr>
+                {% endif %}
+                {% if p.monitoring_service %}
+                    <tr>
+                        <td></td>
+                        <td class="py-1">{{ " 05 CM Items @ CallMonitor Incoming" }}</td>
+                        <td class="py-1">{{ p.monitoring_service.item_list_incoming() }}</td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td class="py-1">{{ " 06 CM Items @ CallMonitor Outgoing" }}</td>
+                        <td class="py-1">{{ p.monitoring_service.item_list_outgoing() }}</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
     {% endif %}
-</div>
 {% endblock %}

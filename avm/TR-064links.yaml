@@ -1,0 +1,975 @@
+InternetGatewayDevice:
+    DeviceInfo:
+        https://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/deviceinfoSCPD.pdf
+        GetInfo:
+            NewManufacturerName out ManufacturerName
+            NewManufacturerOUI out ManufacturerOUI
+            NewModelName out ModelName
+            NewDescription out Description
+            NewProductClass out ProductClass
+            NewSerialNumber out SerialNumber
+            NewSoftwareVersion out SoftwareVersion
+            NewHardwareVersion out HardwareVersion
+            NewSpecVersion out SpecVersion
+            NewProvisioningCode out ProvisioningCode
+            NewUpTime out UpTime
+            NewDeviceLog out DeviceLog
+        SetProvisioningCode:
+            NewProvisioningCode
+        GetDeviceLog:
+            NewDeviceLog
+        GetSecurityPort:
+            NewSecurityPort
+    DeviceConfig:
+        https://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/deviceconfigSCPD.pdf
+        GetPersistentData:
+            NewPersistentData
+    Layer3Forwarding:
+        https://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/layer3forwardingSCPD.pdf
+    LANConfigSecurity:
+        https://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/lanconfigsecuritySCPD.pdf
+        GetInfo:
+            NewMaxCharsPassword out MaxCharsPassword
+            NewMinCharsPassword out MinCharsPassword
+            NewAllowedCharsPassword out AllowedCharsPassword
+    ManagementServer:
+        https://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/mgmsrvSCPD.pdf
+        GetInfo:
+            NewURL out URL
+            NewUsername out Username
+            NewPeriodicInformEnable out PeriodicInformEnable
+            NewPeriodicInformInterval out PeriodicInformInterval
+            NewPeriodicInformTime out PeriodicInformTime
+            NewParameterKey out ParameterKey
+            NewParameterHash out ParameterHash
+            NewConnectionRequestURL out ConnectionRequestURL
+            NewConnectionRequestUsername out ConnectionRequestUsername
+            NewUpgradesManaged out UpgradesManaged 
+    Time:
+        https://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/timeSCPD.pdf
+        GetInfo:
+            NewNTPServer1 out NTPServer1
+            NewNTPServer2 out NTPServer2
+            NewCurrentLocalTime out CurrentLocalTime
+            NewLocalTimeZone out LocalTimeZone not supported
+            NewLocalTimeZoneName out LocalTimeZoneName not supported
+            NewDaylightSavingsUsed out DaylightSavingsUsed not supported
+            NewDaylightSavingsStart out DaylightSavingsStart not supported
+            NewDaylightSavingsEnd out DaylightSavingsEnd not supported 
+    UserInterface:
+        https://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/userifSCPD.pdf
+        GetInfo:
+            NewUpgradeAvailable out UpgradeAvailable
+            NewPasswordRequired out PasswordRequired
+            NewPasswordUserSelectable out PasswordUserSelectable
+            NewWarrantyDate out WarrantyDate Not supported. Returns
+            Default string.
+            NewX_AVM-DE_Version out X_AVM-DE_Version
+            NewX_AVM-DE_DownloadURL out X_AVM-DE_DownloadURL
+            NewX_AVM-DE_InfoURL out X_AVM-DE_InfoURL
+            NewX_AVM-DE_UpdateState out X_AVM-DE_UpdateState
+            NewX_AVM-DE_LaborVersion out X_AVM-DE_LaborVersion 
+    X_AVM-DE_Storage:
+        https://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/x_storageSCPD.pdf
+    X_AVM-DE_WebDAVClient:
+        https://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/x_webdavSCPD.pdf
+    X_AVM-DE_UPnP:
+        https://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/x_upnp.pdf
+    X_AVM-DE_Speedtest:
+        https://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/x_speedtestSCPD.pdf
+        GetInfo:
+            NewEnableTcp out EnableTcp
+            NewEnableUdp out EnableUdp
+            NewEnableUdpBidirect out EnableUdpBidirect
+            NewWANEnableTcp out WANEnableTcp
+            NewWANEnableUdp out WANEnableUdp
+            NewPortTcp out PortTcp
+            NewPortUdp out PortUdp
+            NewPortUdpBidirect out PortUdpBidirect
+        SetConfig:
+            NewEnableTcp in EnableTcp
+            NewEnableUdp in EnableUdp
+            NewEnableUdpBidirect in EnableUdpBidirect
+            NewWANEnableTcp in WANEnableTcp
+            NewWANEnableUdp in WANEnableUdp
+    X_AVM-DE_RemoteAccess:
+        https://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/x_remoteSCPD.pdf
+    X_AVM-DE_MyFritz:
+        https://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/x_myfritzSCPD.pdf
+        GetInfo:
+            NewEnabled out Enabled
+            NewDynDNSName out DynDNSName
+            NewPort out Port
+            NewDeviceRegistered out DeviceRegistered 
+        GetNumberOfServices:
+            NewNumberOfServices
+        GetServiceByIndex:
+    X_VoIP:
+        https://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/x_voip-avm.pdf
+        GetInfo:
+            NewFaxT38Enable out FaxT38Enable
+            NewVoiceCoding out VoiceCoding
+        GetInfoEx:
+            NewVoIPNumberMinChars out VoIPNumberMinChars
+            NewVoIPNumberMaxChars out VoIPNumberMaxChars
+            NewVoIPNumberAllowedChars out VoIPNumberAllowedChars
+            NewVoIPUsernameMinChars out VoIPUsernameMinChars
+            NewVoIPUsernameMaxChars out VoIPUsernameMaxChars
+            NewVoIPUsernameAllowedChars out VoIPUsernameAllowedChars
+            NewVoIPPasswordMinChars out VoIPPasswordMinChars
+            NewVoIPPasswordMaxChars out VoIPPasswordMaxChars
+            NewVoIPPasswordAllowedChars out VoIPPasswordAllowedChars
+            NewVoIPRegistrarMinChars out VoIPRegistrarMinChars
+            NewVoIPRegistrarMaxChars out VoIPRegistrarMaxChars
+            NewVoIPRegistrarAllowedChars out VoIPRegistrarAllowedChars
+            NewVoIPSTUNServerMinChars out VoIPSTUNServerMinChars
+            NewVoIPSTUNServerMaxChars out VoIPSTUNServerMaxChars
+            NewVoIPSTUNServerAllowedChars out VoIPSTUNServerAllowedChars
+            NewX_AVM-DE_ClientUsernameMinChars out X_AVM-DE_ClientUsernameMinChars
+            NewX_AVM-DE_ClientUsernameMaxChars out X_AVM-DE_ClientUsernameMaxChars
+            NewX_AVM-DE_ClientUsernameAllowedChars out X_AVM-DE_ClientUsernameAllowedChars
+            NewX_AVM-DE_ClientPasswordMinChars out X_AVM-DE_ClientPasswordMinChars
+            NewX_AVM-DE_ClientPasswordMaxChars out X_AVM-DE_ClientPasswordMaxChars
+            NewX_AVM-DE_ClientPasswordAllowedChars out X_AVM-DE_ClientPasswordAllowedChars 
+        GetExistingVoIPNumbers:
+            NewExistingVoIPNumbers 
+        GetMaxVoIPNumbers:
+        GetVoIPCommonAreaCode:
+        GetVoIPEnableAreaCode:
+        SetVoIPEnableAreaCode:
+        SetVoIPCommonAreaCode:
+        GetVoIPCommonCountryCode:
+        GetVoIPEnableCountryCode:
+        SetConfig:
+        SetVoIPCommonCountryCode:
+        SetVoIPEnableCountryCode:
+        X_AVM-DE_AddVoIPAccount:
+        X_AVM-DE_DeleteClient:
+        X_AVM-DE_DelVoIPAccount:
+        X_AVM-DE_DialGetConfig:
+        X_AVM-DE_DialHangup:
+        X_AVM-DE_DialNumber:
+            NewX_AVM-DE_PhoneNumber
+        X_AVM-DE_DialSetConfig:
+        X_AVM-DE_GetNumberOfClients:
+            NewX_AVM-DE_NumberOfClients 
+        X_AVM-DE_GetClient:
+        X_AVM-DE_GetClient2:
+        X_AVM-DE_GetClient3:
+        X_AVM-DE_GetClientByClientId:
+        X_AVM-DE_GetClients:
+        X_AVM-DE_GetNumberOfNumbers:
+        X_AVM-DE_GetNumbers:
+        X_AVM-DE_GetPhonePort:
+        X_AVM-DE_GetVoIPAccount:
+        X_AVM-DE_SetClient:
+        X_AVM-DE_SetClient2:
+        X_AVM-DE_SetClient3:
+        X_AVM-DE_SetClient4:
+        X_AVM-DE_SetDelayedCallNotification:
+        X_AVM-DE_SetVoIPCommonCountryCode:
+        X_AVM-DE_GetVoIPCommonCountryCode:
+        X_AVM-DE_SetVoIPCommonAreaCode:
+        X_AVM-DE_GetVoIPCommonAreaCode:
+        X_AVM-DE_GetAlarmClock:
+            NewIndex in Index
+            NewX_AVM-DE_AlarmClockEnable out X_AVM-DE_AlarmClockEnable
+            NewX_AVM-DE_AlarmClockName out X_AVM-DE_AlarmClockName
+            NewX_AVM-DE_AlarmClockTime out X_AVM-DE_AlarmClockTime
+            NewX_AVM-DE_AlarmClockWeekdays out X_AVM-DE_AlarmClockWeekdays
+            NewX_AVM-DE_AlarmClockPhoneName out X_AVM-DE_AlarmClockPhoneName
+        X_AVM-DE_GetNumberOfAlarmClocks:
+            NewX_AVM-DE_NumberOfAlarmClocks
+        X_AVM-DE_SetAlarmClockEnable:
+            NewIndex in Index
+            NewX_AVM-DE_AlarmClockEnable in X_AVM-DE_AlarmClockEnable 
+        
+    X_AVM-DE_OnTel:
+        https://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/x_contactSCPD.pdf
+        GetInfo:
+            NewEnable out Enable
+            NewStatus out Status
+            NewLastConnect out LastConnect
+            NewUrl out Url
+            NewServiceId out ServiceId
+            NewUsername out Username
+            NewName out Name
+        SetEnable:
+            NewEnable
+        SetConfig:
+            NewEnable in Enable
+            NewUrl in Url
+            NewServiceId in ServiceId
+            NewUsername in Username
+            NewPassword in Password
+            NewName in Name Telephone book name
+        GetInfoByIndex:
+            NewIndex in Index
+            NewEnable out Enable
+            NewStatus out Status
+            NewLastConnect out LastConnect
+            NewUrl out Url
+            NewServiceId out ServiceId
+            NewUsername out Username
+            NewName out Name 
+        SetEnableByIndex:
+            NewIndex in Index
+            NewEnable in Enable 
+        SetConfigByIndex:
+            NewIndex in Index
+            NewEnable in Enable
+            NewUrl in Url
+            NewServiceId in ServiceId
+            NewUsername in Username
+            NewPassword in Password
+            NewName in Name Telephone book name 
+        GetNumberOfEntries:
+            NewOntelNumberOfEntries
+        GetCallList:
+            NewCallListURL
+        GetPhonebookList:
+            NewPhonebookList
+        GetPhonebook:
+            NewPhonebookID in PhonebookID
+            NewPhonebookURL out PhonebookURL
+            NewPhonebookName out PhonebookName
+            NewPhonebookExtraID out PhonebookExtraID
+        GetPhonebookEntry:
+            NewPhonebookID in PhonebookID
+            NewPhonebookEntryID in PhonebookEntryID
+            NewPhonebookEntryData out PhonebookEntryData
+        GetNumberOfDeflections:
+            NewNumberOfDeflections
+        GetDeflection:
+            NewDeflectionId in DeflectionId
+            NewEnable out Enable
+            NewType out Type
+            NewNumber out Number
+            NewDeflectionToNumber out DeflectionToNumber
+            NewMode out Mode
+            NewOutgoing out Outgoing
+            NewPhonebookID out PhonebookID
+        GetDeflections:
+            NewDeflectionList
+        SetDeflectionEnable:
+            NewDeflectionId in DeflectionId
+            NewEnable in Enable
+        GetDECTHandsetList:
+            NewDectIDList
+    X_AVM-DE_Dect:
+        https://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/x_dectSCPD.pdf
+        GetNumberOfDectEntries:
+            NewNumberOfEntries
+        GetGenericDectEntry:
+            NewIndex in NumberOfEntries
+            NewID out ID
+            NewActive out Active
+            NewName out Name
+            NewModel out Model
+            NewUpdateAvailable out UpdateAvailable
+            NewUpdateSuccessful out UpdateSuccessful
+            NewUpdateInfo out UpdateInfo
+        GetSpecificDectEntry:
+            NewID in ID
+            NewActive out Active
+            NewName out Name
+            NewModel out Model
+            NewUpdateAvailable out UpdateAvailable
+            NewUpdateSuccessful out UpdateSuccessful
+            NewUpdateInfo out UpdateInfo
+        DectDoUpdate:
+            NewID
+    X_AVM-DE_TAM:
+        https://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/x_tam.pdf
+        GetInfo:
+            NewIndex in Index
+            NewEnable out Enable
+            NewName out Name
+            NewTAMRunning out TAMRunning
+            NewStick out Stick
+            NewStatus out Status
+            NewCapacity out Capacity Remaining minutes.
+            NewMode out Mode
+            NewRingSeconds out RingSeconds
+            NewPhoneNumbers out PhoneNumbers
+        SetEnable:
+            NewIndex in Index
+            NewEnable in Enable
+        GetMessageList:
+            NewIndex in Index
+            NewURL out URL 
+        GetList:
+            NewTAMList
+    X_AVM-DE_AppSetup:
+        https://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/x_appsetup.pdf
+    X_AVM-DE_Homeauto:
+        https://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/x_homeauto.pdf
+        GetInfo:
+            NewAllowedCharsAIN out String with all allowed chars for state
+            variable AIN
+            string
+            MaxCharsAIN out ui2
+            MinCharsAIN out ui2
+            MaxCharsDeviceName out ui2
+            MinCharsDeviceName out ui2
+        GetGenericDeviceInfos:
+            NewIndex in Index homeautomation device list ui2
+            NewAIN out Device identifier string
+            NewDeviceId out Device ID ui2
+            NewFunctionBitMask out Device function information ui2
+            NewFirmwareVersion out FRITZ!OS version string
+            NewManufacturer out Manufacturer information string
+            NewProductName out Devicetype, eg. “Group”, “Template”, “HAN-FUN”, “AVM DECT Telefon C3”, “Comet DECT”, “FRITZ!DECT 200”, “FRITZ!DECT Repeater 100”, “unknown” string
+            NewDeviceName out Devicename string
+            NewPresent out Connection status PresentEnum
+            NewMultimeterIsEnabled out Feature is supported EnabledEnum
+            NewMultimeterIsValid out Value is valid ValidEnum
+            NewMultimeterPower out Power value [1/100 W] ui4
+            NewMultimeterEnergy out Energy value [Wh] ui4
+            NewTemperatureIsEnabled out Feature is supported EnabledEnum
+            NewTemperatureIsValid out Value is valid ValidEnum
+            NewTemperatureCelsius out Temperature [1/10°C] i4
+            NewTemperatureOffset out Temperature offset [1/10°C] i4
+            NewSwitchIsEnabled out Feature is supported EnabledEnum
+            NewSwitchIsValid out Value is valid ValidEnum
+            NewSwitchState out Switch status SwStateEnum
+            NewSwitchMode out Switch timer control SwModeEnum
+            NewSwitchLock out Switch keylock bool
+            NewHkrIsEnabled out HKR feature is supported EnabledEnum
+            NewHkrIsValid out HKR values are valid ValidEnum
+            NewHkrIsTemperature out Value is temperature [1/10 °C] i4
+            NewHkrSetVentilStatus out HKR set valve status VentilEnum
+            NewHkrSetTemperature out Value set temperature [1/10 °C] i4
+            NewHkrReduceVentilStatus out HKR reduce valve status VentilEnum
+            NewHkrReduceTemperature out Value reduce temperature [1/10 °C] i4
+            NewHkrComfortVentilStatus out HKR comfort valve status VentilEnum
+            NewHkrComfortTemperature out Value comfort temperature [1/10 °C] i4
+        GetSpecificDeviceInfos:
+            NewAIN in Device identifier string
+            NewDeviceId out Device ID ui2
+            NewFunctionBitMask out Device function information ui2
+            NewFirmwareVersion out FRITZ!OS version string
+            NewManufacturer out Manufacturer information string
+            NewProductName out Devicetype, eg. “Group”, “Template”, “HAN-FUN”, “AVM DECT Telefon C3”, “Comet DECT”, “FRITZ!DECT 200”, “FRITZ!DECT Repeater 100”, “unknown” string
+            NewDeviceName out Devicename string
+            NewPresent out Connection status PresentEnum
+            NewMultimeterIsEnabled out Feature is supported EnabledEnum
+            NewMultimeterIsValid out Value is valid ValidEnum
+            NewMultimeterPower out Power value [1/100 W] ui4
+            NewMultimeterEnergy out Energy value [Wh] ui4
+            NewTemperatureIsEnabled out Feature is supported EnabledEnum
+            NewTemperatureIsValid out Value is valid ValidEnum
+            NewTemperatureCelsius out Temperature [1/10°C] i4
+            NewTemperatureOffset out Temperature offset [1/10°C] i4
+            NewSwitchIsEnabled out Feature is supported EnabledEnum
+            NewSwitchIsValid out Value is valid ValidEnum
+            NewSwitchState out Switch status SwStateEnum
+            NewSwitchMode out Switch timer control SwModeEnum
+            NewSwitchLock out Switch keylock bool
+            NewHkrIsEnabled out HKR feature is supported EnabledEnum
+            NewHkrIsValid out HKR values are valid ValidEnum
+            NewHkrIsTemperature out Value is temperature [1/10 °C] i4
+            NewHkrSetVentilStatus out HKR set valve status VentilEnum
+            NewHkrSetTemperature out Value set temperature [1/10 °C] i4
+            NewHkrReduceVentilStatus out HKR reduce valve status VentilEnum
+            NewHkrReduceTemperature out Value reduce temperature [1/10 °C] i4
+            NewHkrComfortVentilStatus out HKR comfort valve status VentilEnum
+            NewHkrComfortTemperature out Value comfort temperature [1/10 °C] i4
+        SetDeviceName:
+            NewAIN
+            NewDeviceName 
+        SetSwitch:
+            NewAIN
+            NewSwitchState 
+    X_AVM-DE_Homeplug:
+        https://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/x_homeplugSCPD.pdf
+        GetNumberOfDeviceEntries:
+            NewNumberOfEntries
+        GetGenericDeviceEntry:
+            NewIndex in NumberOfEntries
+            NewMACAddress out MACAddress
+            NewActive out Active
+            NewName out Name
+            NewModel out Model
+            NewUpdateAvailable out UpdateAvailable
+            NewUpdateSuccessful out UpdateSuccessful
+        GetSpecificDeviceEntry:
+            NewMACAddress out MACAddress
+            NewActive out Active
+            NewName out Name
+            NewModel out Model
+            NewUpdateAvailable out UpdateAvailable
+            NewUpdateSuccessful out UpdateSuccessful
+        DeviceDoUpdate:
+            NewMACAddress
+  
+    X_AVM-DE_Filelinks:
+        https://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/x_filelinksSCPD.pdf
+    X_AVM-DE_Auth:
+        https://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/x_auth.pdf
+    X_AVM-DE_HostFilter:
+        https://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/x_hostfilterSCPD.pdf
+    GetAddonInfos:
+        https://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/IGD1.pdf
+        NewByteSendRate out ByteSendRate
+        NewByteReceiveRate out ByteReceiveRate
+        NewPacketSendRate out PacketSendRate
+        NewPacketReceiveRate out PacketReceiveRate
+        NewTotalBytesSent out TotalBytesSent
+        NewTotalBytesReceived out TotalBytesReceived
+        NewAutoDisconnectTime out AutoDisconnectTime
+        NewIdleDisconnectTime out IdleDisconnectTime
+        NewDNSServer1 out DNSServer1
+        NewDNSServer2 out DNSServer2
+        NewVoipDNSServer1 out VoipDNSServer1
+        NewVoipDNSServer2 out VoipDNSServer2
+        NewUpnpControlEnabled out UpnpControlEnabled True, if portmappings allowed
+        NewRoutedBridgedModeBoth out RoutedBridgedModeBoth
+        NeWX_AVM_DE_TotalBytesSent64 out X_AVM_DE_TotalBytesSent64
+        NeWX_AVM_DE_TotalBytesReceived64 out X_AVM_DE_TotalBytesReceived64
+        NeWX_AVM_DE_WANAccessType out X_AVM_DE_WANAccessType
+LANDevice:
+    WLANConfiguration:
+        https://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/wlanconfigSCPD.pdf
+        SetEnable:
+            NewEnable
+        GetInfo:
+            NewEnable out Enable
+            NewStatus out Status
+            NewMaxBitRate out MaxBitRate Not supported. Returns
+            default string.
+            NewChannel out Channel
+            NewSSID out SSID
+            NewBeaconType out BeaconType
+            NewX_AVMDE_PossibleBeaconTypes
+            out X_AVMDE_PossibleBeaconTypes
+            NewMACAddressControlEnabled out MACAddressControlEnabled
+            NewStandard out Standard Only the highest of the active
+            modes is returned.
+            NewBSSID out BSSID
+            NewBasicEncryptionModes out BasicEncryptionModes
+            NewBasicAuthenticationMode out BasicAuthenticationMode Returns fixed string “none”.
+            NewMaxCharsSSID out MaxCharsSSID
+            NewMinCharsSSID out MinCharsSSID
+            NewAllowedCharsSSID out AllowedCharsSSID
+            NewMinCharsPSK out MinCharsPSK
+            NewMaxCharsPSK out MaxCharsPSK
+            NewAllowedCharsPSK out AllowedCharsPSK
+        SetConfig:
+            NewMaxBitRate in MaxBitRate
+            NewChannel in Channel
+            NewSSID in SSID
+            NewBeaconType in BeaconType Determines WLANencryption to be used.
+            NewMacAddressControlEnabled in MacAddressControlEnabled
+            NewBasicEncryptionModes in BasicEncryptionModes
+            NewBasicAuthenticationMode
+        GetGenericAssociatedDeviceInfo:
+            NewAssociatedDeviceMACAddress in AssociatedDeviceMACAddress
+            NewAssociatedDeviceIPAddress out AssociatedDeviceIPAddress
+            NewAssociatedDeviceAuthState out AssociatedDeviceAuthState
+            NewX_AVM-DE_Speed out X_AVM-DE_Speed 19.09.11
+            NewX_AVM-DE_SignalStrength out X_AVM-DE_SignalStrength 19.09.11
+        X_AVM-DE_GetSpecificAssociatedDeviceInfoByIp:
+            NewAssociatedDeviceIPAddress in AssociatedDeviceIPAddress
+            NewAssociatedDeviceMACAddress out AssociatedDeviceMACAddress
+            NewAssociatedDeviceAuthState out AssociatedDeviceAuthState
+            NewX_AVM-DE_Speed out X_AVM-DE_Speed
+            NewX_AVM-DE_SignalStrength out X_AVM-DE_SignalStrength
+        GetStatistics:
+            NewTotalPacketsSent
+            NewTotalPacketsReceived
+        GetPacketStatistics:
+            NewTotalPacketsSent
+            NewTotalPacketsReceived
+        X_AVM-DE_GetWLANHybridMode:
+            NewEnable out Enable
+            NewBeaconType out BeaconType
+            NewKeyPassphrase out KeyPassphrase
+            NewSSID out SSID
+            NewBSSID out BSSID
+            NewTrafficMode out TrafficMode
+            NewManualSpeed out ManualSpeed
+            NewMaxSpeedDS out MaxSpeedDS
+            NewMaxSpeedUS out MaxSpeedUS
+        X_AVM-DE_GetWLANExtInfo:
+            NewX_AVM-DE_APEnabled out X_AVM-DE_APEnabled
+            NewX_AVM-DE_APType out X_AVM-DE_APType
+            NewX_AVM-DE_TimeoutActive out X_AVM-DE_TimeoutActive
+            NewX_AVM-DE_Timeout out X_AVM-DE_Timeout
+            NewX_AVM-DE_TimeRemain out X_AVM-DE_TimeRemain
+            NewX_AVM-DE_NoForcedOff out X_AVM-DE_NoForcedOff
+            NewX_AVM-DE_UserIsolation out X_AVM-DE_UserIsolation
+            NewX_AVM-DE_EncryptionMode out X_AVM-DE_EncryptionMode
+            NewX_AVM-DE_LastChangedStamp out X_AVM-DE_LastChangedStam
+         X_AVM-DE_GetWLANConnectionInfo:
+            NewAssociatedDeviceMACAddress out AssociatedDeviceMACAddress
+            NewSSID out SSID
+            NewBSSID out BSSID
+            NewBeaconType out BeaconType
+            NewChannel out Channel
+            NewStandard out Standard
+            NewX_AVM-DE_SignalStrength out X_AVM-DE_SignalStrength
+            NewX_AVM-DE_Speed out X_AVM-DE_Speed
+            NewX_AVM-DE_SpeedRX out X_AVM-DE_SpeedRX
+            NewX_AVM-DE_SpeedMax out X_AVM-DE_SpeedMax
+            NewX_AVM-DE_SpeedRXMax out X_AVM-DE_SpeedRXMax
+    Hosts:
+        https://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/hostsSCPD.pdf
+        GetHostNumberOfEntries:
+            NewHostNumberOfEntries
+        GetSpecificHostEntry:
+            NewMACAddress in MACAddress
+            NewIPAddress out IPAddress
+            NewAddressSource out AddressSource
+            NewLeaseTimeRemaining out LeaseTimeRemaining
+            NewInterfaceType out InterfaceType
+            NewActive out Active
+            NewHostName out HostName
+        GetGenericHostEntry:
+            NewIndex in HostNumberOfEntries
+            NewMACAddress out MACAddress
+            NewIPAddress out IPAddress
+            NewAddressSource out AddressSource
+            NewLeaseTimeRemaining out LeaseTimeRemaining
+            NewInterfaceType out InterfaceType
+            NewActive out Active
+            NewHostName out HostName
+        X_AVM-DE_GetSpecificHostEntryByIp:
+            NewIPAddress in IPAddress
+            NewMACAddress out MACAddress
+            NewActive out Active
+            NewHostName out HostName
+            NewInterfaceType out InterfaceType
+            NewX_AVM-DE_Port out X_AVM-DE_Port
+            NewX_AVM-DE_Speed out X_AVM-DE_Speed
+            NewX_AVM-DE_UpdateAvailable out X_AVM-DE_UpdateAvailable
+            NewX_AVM-DE_UpdateSuccessful out X_AVMDE_UpdateSuccessful
+            NewX_AVM-DE_InfoURL out X_AVM-DE_InfoURL
+            NewX_AVM-DE_Model out X_AVM-DE_Model
+            NewX_AVM-DE_URL out X_AVM-DE_URL
+    LANEthernetInterfaceConfig:
+        https://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/lanifconfigSCPD.pdf
+        SetEnable:
+            NewEnable
+        GetInfo:
+            NewEnable out Enable Writeable but internally ignored.
+            NewStatus out Status
+            NewMACAddress out MACAddress
+            NewMaxBitRate out MaxBitRate
+            NewDuplexMode out DuplexMode
+        GetStatistics:
+            NewBytesSent out Stats.BytesSent
+            NewBytesReceived out Stats.BytesReceived
+            NewPacketsSent out Stats.PacketsSent
+            NewPacketsReceived out Stats.PacketsReceived
+    LANHostConfigManagement:
+        https://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/lanhostconfigmgmSCPD.pdf
+        GetInfo:
+            NewDHCPServerConfigurable out DHCPServerConfigurable
+            NewDHCPRelay out DHCPRelay
+            NewMinAddress out MinAddress
+            NewMaxAddress out MaxAddress
+            NewReservedAddresses out ReservedAddresses
+            NewDHCPServerEnable out DHCPServerEnable
+            NewDNSServers out DNSServers
+            NewDomainName out DomainName 2009-03-06
+            NewIPRouters out IPRouters 2009-03-06
+            NewSubnetMask out SubnetMask 2009-03-06
+WANDevice:
+    WANCommonInterfaceConfig:
+        GetCommonLinkProperties:
+            NewWANAccessType
+            NewLayer1UpstreamMaxBitRate
+            NewLayer1DownstreamMaxBitRate
+            NewPhysicalLinkStatus
+        GetTotalBytesSent:
+            NewTotalBytesSent
+        GetTotalBytesReceived:
+            NewTotalBytesReceived
+        GetTotalPacketsSent:
+            NewTotalPacketsSent
+        GetTotalPacketsReceived:
+            NewTotalPacketsReceived
+        X_AVM-DE_GetOnlineMonitor:
+            NewSyncGroupIndex
+            NewTotalNumberSyncGroups
+            NewSyncGroupName
+            NewSyncGroupMode out SyncGroupMode
+            Newmax_ds
+            Newmax_us
+            Newds_current_bps
+            Newmc_current_bps
+            Newus_current_bps
+            Newprio_realtime_bps
+            Newprio_high_bps out
+            Newprio_default_bps
+            Newprio_low_bps
+    WANDSLInterfaceConfig:
+        GetInfo:
+            NewEnable
+            NewStatus
+            NewDataPath
+            NewUpstreamCurrRate
+            NewDownstreamCurrRate
+            NewUpstreamMaxRate
+            NewDownstreamMaxRate
+            NewUpstreamNoiseMargin
+            NewDownstreamNoiseMargin
+            NewUpstreamAttenuation
+            NewDownstreamAttenuation
+            NewATURVendor
+            NewATURCountry
+            NewUpstreamPower
+            NewDownstreamPower
+        GetStatisticsTotal:
+            NewReceiveBlocks
+            NewTransmitBlocks
+            NewCellDelin
+            NewLinkRetrain
+            NewInitErrors
+            NewInitTimeouts
+            NewLossOfFraming
+            NewErroredSecs
+            NewSeverelyErroredSecs
+            NewFECErrors
+            NewATUCFECErrors
+            NewHECErrors
+            NewATUCHECErrors
+            NewATUCCRCErrors
+            NewCRCErrors
+        X_AVM-DE_GetDSLDiagnoseInfo:
+            NewX_AVM-DE_DSLDigagnoseState
+            NewX_AVM-DE_CableNokDistance
+            NewX_AVM-DE_DSLLastDiagnoseTime
+            NewX_AVM-DE_DSLSignalLossTime
+            NewX_AVM-DE_DSLActive
+            NewX_AVM-DE_DSLSync
+WANConnectionDevice:
+    WANDSLLinkConfig:
+        https://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/wandslifconfigSCPD.pdf
+        GetInfo:
+            NewEnable 
+            NewLinkStatus 
+            NewLinkType 
+            NewDestinationAddress 
+            NewATMEncapsulation 
+            NewAutoConfig 
+            NewATMQoS 
+            NewATMPeakCellRate 
+            NewATMSustainableCellRate 
+        SetEnable:
+            NewEnable
+        GetDSLLinkInfo:
+            NewLinkType
+            NewLinkStatus
+        GetDestinationAddress:
+            NewDestinationAddress
+        GetStatistics:
+            NewATMTransmittedBlocks
+            NewATMReceivedBlocks 
+            NewAAL5CRCErrors 
+            NewATMCRCErrors 
+    WANEthernetLinkConfig:
+        https://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/wanethlinkconfigSCPD.pdf
+        GetEthernetLinkStatus:
+            NewEthernetLinkStatus
+    WANPPPConnection:
+        https://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/wanpppconnSCPD.pdf
+        GetInfo:
+            NewEnable
+            NewConnectionStatus
+            NewPossibleConnectionTypes
+            NewConnectionType
+            NewName
+            NewUptime
+            NewUpstreamMaxBitRate
+            NewDownstreamMaxBitRate
+            NewLastConnectionError
+            NewIdleDisconnectTime
+            NewRSIPAvailable
+            NewUserName
+            NewNATEnabled
+            NewExternalIPAddress
+            NewDNSServers
+            NewMACAddress
+            NewLastAuthErrorInfo
+            NewConnectionTrigger
+            NewMaxCharsUsername
+            NewMinCharsUsername
+            NewAllowedCharsUsername
+            NewMaxCharsPassword
+            NewMinCharsPassword
+            NewAllowedCharsPassword
+            NewTransportType
+            NewRouteProtocolRx
+            NewPPPoEServiceName
+            NewRemoteIPAddress
+            NewPPPoEACName
+            NewDNSEnabled
+            NewDNSOverrideAllowed
+        GetConnectionTypeInfo:
+            NewConnectionType
+            NewPossibleConnectionTypes
+        SetConnectionType:
+            NewConnectionType
+        GetStatusInfo:
+            NewConnectionStatus
+            NewLastConnectionError
+            NewUptime
+        GetGenericPortMappingEntry:
+            NewPortMappingIndex
+            NewRemoteHost
+            NewExternalPort
+            NewProtocol
+            NewInternalPort
+            NewInternalClient
+            NewEnabled
+            NewPortMappingDescription
+            NewLeaseDuration
+        GetSpecificPortMappingEntry:
+            NewExternalPort
+            NewProtocol
+            NewInternalPort
+            NewInternalClient
+            NewEnabled
+            NewPortMappingDescription
+            NewLeaseDuration
+        GetExternalIPAddress:
+            NewExternalIPAddress
+    WANIPConnection:
+        https://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/wanipconnSCPD.pdf
+        GetInfo:
+            NewEnable
+            NewConnectionStatus
+            NewPossibleConnectionTypes
+            NewConnectionType
+            NewName
+            NewUptime
+            NewLastConnectionError
+            NewRSIPAvailable
+            NewNATEnabled
+            NewExternalIPAddress
+            NewDNSServers
+            NewMACAddress
+            NewConnectionTrigger
+            NewRouteProtocolRx
+            NewDNSEnabled
+            NewDNSOverrideAllowed
+        GetConnectionTypeInfo:
+            NewConnectionType
+            NewPossibleConnectionTypes
+        GetStatusInfo:
+            NewConnectionStatus
+            NewLastConnectionError
+            NewUptime
+        GetGenericPortMappingEntry:
+            NewPortMappingIndex
+            NewRemoteHost
+            NewExternalPort
+            NewProtocol
+            NewInternalPort
+            NewInternalClient
+            NewEnabled
+            NewPortMappingDescription
+            NewLeaseDuration
+        GetSpecificPortMappingEntry:
+            NewExternalPort
+            NewProtocol
+            NewInternalPort
+            NewInternalClient
+            NewEnabled
+            NewPortMappingDescription
+            NewLeaseDuration
+        GetExternalIPAddress:
+            NewExternalIPAddress
+
+
+Fritzdevice Attribute:
+    - 'uptime'                      # r/o   InternetGatewayDevice, DeviceInfo, GetInfo, NewUpTime
+    - 'serial_number'               # r/o   InternetGatewayDevice, DeviceInfo, GetInfo, NewSerialNumber
+    - 'software_version'            # r/o   InternetGatewayDevice, DeviceInfo, GetInfo, NewSoftwareVersion
+    - 'hardware_version'            # r/o   InternetGatewayDevice, DeviceInfo, GetInfo, NewHardwareVersion
+Myfritz Attribute:
+    - 'myfritz_status'              # r/o   InternetGatewayDevice, X_AVM-DE_MyFritz, GetInfo, NewEnabled
+Call Monitor Attribute:
+    - 'monitor_trigger'             # r/o
+    - 'is_call_incoming'            # r/o
+    - 'call_duration_incoming'      # r/o
+    - 'last_caller_incoming'        # r/o
+    - 'last_number_incoming'        # r/o
+    - 'last_called_number_incoming' # r/o
+    - 'last_call_date_incoming'     # r/o
+    - 'call_event_incoming'         # r/o
+    - 'is_call_outgoing'            # r/o
+    - 'call_duration_outgoing'      # r/o
+    - 'last_caller_outgoing'        # r/o
+    - 'last_number_outgoing'        # r/o    
+    - 'last_called_number_outgoing' # r/o
+    - 'last_call_date_outgoing'     # r/o
+    - 'call_event_outgoing'         # r/o
+    - 'call_direction'              # r/o    
+    - 'call_event'                  # r/o
+TAM Attribute:
+    - 'tam'                         # r/w   InternetGatewayDevice, X_AVM-DE_TAM, GetInfo, NewEnabled
+    - 'tam_name'                    # r/o   InternetGatewayDevice, X_AVM-DE_TAM, GetInfo, NewName
+    - 'tam_old_message_number'      # r/o 
+    - 'tam_new_message_number'      # r/o
+    - 'tam_total_message_number'    # r/o   InternetGatewayDevice, X_AVM-DE_TAM, GetInfo, NewName  
+WAN Attribute:
+    - 'wan_connection_status'       # r/o   WANConnectionDevice, WANIPConnection, GetInfo, NewConnectionStatus
+    - 'wan_connection_error'        # r/o   WANConnectionDevice, WANIPConnection, GetInfo, NewLastConnectionError
+    - 'wan_is_connected'            # r/o                                                   
+    - 'wan_uptime'                  # r/o   WANConnectionDevice, WANIPConnection, GetInfo, NewUptime
+    - 'wan_ip'                      # r/o   WANConnectionDevice, WANIPConnection, GetExternalIPAddress, NewExternalIPAddress
+    - 'wan_upstream'                # r/o    
+    - 'wan_downstream'              # r/o
+    - 'wan_total_packets_sent'      # r/o
+    - 'wan_total_packets_received'  # r/o
+    - 'wan_current_packets_sent'    # r/o    
+    - 'wan_current_packets_received' # r/o
+    - 'wan_total_bytes_sent'        # r/o
+    - 'wan_total_bytes_received'    # r/o    
+    - 'wan_current_bytes_sent'      # r/o
+    - 'wan_current_bytes_received'  # r/o
+    - 'wan_link'                    # r/o
+WLAN Attribute:
+    - 'wlanconfig'                  # r/w
+    - 'wlanconfig_ssid'             # r/o
+    - 'wlan_guest_time_remaining'   # r/o
+Host Attribute:
+    - 'network_device'              # r/o    
+    - 'device_ip'                   # r/o    
+    - 'device_connection_type'      # r/o    
+    - 'device_hostname'             # r/o    
+    - 'connection_status'           # r/o    
+Smarthome Attribute via TR-064:
+    - 'aha_device'                  # r/w    
+    - 'hkr_device'                  # r/o    
+    - 'set_temperature'             # r/o    
+    - 'temperature'                 # r/o    
+    - 'set_temperature_reduced'     # r/o    
+    - 'set_temperature_comfort'     # r/o    
+    - 'firmware_version'            # r/o    
+Deflections:
+    - 'number_of_deflections'       # r/o    
+    - 'deflection_details'          # r/o    
+    - 'deflections_details'         # r/o    
+    - 'deflection_enable'           # r/w    
+    - 'deflection_type'             # r/o    
+    - 'deflection_number'           # r/o    
+    - 'deflection_to_number'        # r/o    
+    - 'deflection_mode'             # r/o    
+    - 'deflection_outgoing'         # r/o    
+    - 'deflection_phonebook_id'     # r/o    
+
+InternetGatewayDevice = {
+        'DeviceInfo': {
+            'GetInfo': {},
+            'GetSecurityPort': {},
+        },
+        'DeviceConfig': {
+            'GetPersistentData': {},
+        },
+        'X_AVM-DE_MyFritz': {
+            'GetInfo': {},
+            'GetNumberOfServices': {},
+        },
+        'X_VoIP': {
+            'GetInfoEx': {},
+        },
+        'X_AVM-DE_OnTel': {
+            'GetInfo': {},
+            'GetInfoByIndex': {},
+            'GetNumberOfEntries': {},
+            'GetCallList': {},
+            'GetPhonebookList': {},
+            'GetPhonebook': {},
+            'GetNumberOfDeflections': {},
+            'GetDeflection': {},
+            'GetDeflections': {},
+            'GetDECTHandsetList': {},
+        },
+        'X_AVM-DE_Dect': {
+            'GetNumberOfDectEntries': {},
+            'GetGenericDectEntry': {},
+            'GetSpecificDectEntry': {},
+        },
+        'X_AVM-DE_TAM': {
+            'GetInfo': {},
+            'GetMessageList': {},
+            'GetList': {},
+        },
+        'X_AVM-DE_Homeauto': {
+            'GetInfo': {},
+            'GetGenericDeviceInfos': {},
+            'GetSpecificDeviceInfos': {},
+        },
+    }
+
+LANDevice = {
+        'WLANConfiguration': {
+            'GetInfo': {},
+            'GetGenericAssociatedDeviceInfo': {},
+            'X_AVM-DE_GetSpecificAssociatedDeviceInfoByIp': {},
+            'GetStatistics': {},
+            'GetPacketStatistics': {},
+            'X_AVM-DE_GetWLANHybridMode': {},
+            'X_AVM-DE_GetWLANExtInfo': {},  
+        },
+        'Hosts': {
+            'GetHostNumberOfEntries': {},
+            'GetSpecificHostEntry': {},
+            'GetGenericHostEntry': {},
+            'X_AVM-DE_GetSpecificHostEntryByIp': {},
+        },
+        'LANEthernetInterfaceConfig': {
+            'GetInfo': {},
+            'GetStatistics': {},
+        },
+        'LANHostConfigManagement': {
+            'GetInfo': {},
+        },
+    }
+
+WANDevice = {
+        'WANCommonInterfaceConfig': {
+            'GetCommonLinkProperties': {},
+            'GetTotalBytesSent': {},
+            'GetTotalBytesReceived': {},
+            'GetTotalPacketsSent': {},
+            'GetTotalPacketsReceived': {},
+            'X_AVM-DE_GetOnlineMonitor': {},               
+        },
+        'WANDSLInterfaceConfig': {
+            'GetInfo': {},
+            'GetStatisticsTotal': {},
+            'X_AVM-DE_GetDSLDiagnoseInfo': {},
+        },
+    }
+
+WANConnectionDevice = {
+        'WANDSLLinkConfig': {
+            'GetInfo': {},
+            'GetDSLLinkInfo': {},
+            'GetDestinationAddress': {}          
+        },
+        'WANEthernetLinkConfig': {
+            'GetEthernetLinkStatus': {}          
+        },
+        'WANPPPConnection': {
+            'GetInfo': {},
+            'GetConnectionTypeInfo': {},
+            'GetStatusInfo': {},
+            'GetGenericPortMappingEntry': {},
+            'GetSpecificPortMappingEntry': {},
+            'GetExternalIPAddress': {}        
+        },
+        'WANIPConnection': {
+            'GetInfo': {},
+            'GetConnectionTypeInfo': {},
+            'GetStatusInfo': {},
+            'GetGenericPortMappingEntry': {},
+            'GetSpecificPortMappingEntry': {},
+            'GetExternalIPAddress': {}        
+        },
+    }

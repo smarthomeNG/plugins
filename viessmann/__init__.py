@@ -1414,8 +1414,9 @@ class Viessmann(SmartPlugin):
         self.logger.debug(f'Response decoded to: commandcode: {commandcode}, responsedatacode: {responsedatacode}, valuebytecount: {valuebytecount}, responsetypecode: {responsetypecode}')
         self.logger.debug(f'Rawdatabytes formatted: {self._bytes2hexstring(rawdatabytes)} and unformatted: {rawdatabytes}')
 
-        # Process response for items if read response and not error
-        if responsedatacode == 1 and responsetypecode != 3:
+        # Process response for items if response and not error
+        # added: only in P300 or if read_response is set, do not try if KW replies with 0x00 (OK)
+        if responsedatacode == 1 and responsetypecode != 3  and (self._protocol == 'P300' or read_response):
 
             # parse response if command config is available
             commandname = self._commandname_by_commandcode(commandcode)

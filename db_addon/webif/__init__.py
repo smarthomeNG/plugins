@@ -104,7 +104,7 @@ class WebInterface(SmartPluginWebIf):
 
             data['plugin_suspended'] = self.plugin.suspended
             data['maintenance'] = True if self.plugin.log_level == 10 else False
-            data['queue_length'] = self.plugin.queue_backlog
+            data['queue_length'] = self.plugin.queue_backlog()
             data['active_queue_item'] = self.plugin.active_queue_item
 
             try:
