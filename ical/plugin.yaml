@@ -14,7 +14,7 @@ plugin:
             '
 
     maintainer: onkelandy, cmalo (mknx)
-    tester: ?
+    tester: '?'
     state: ready
     keywords: ical ics calendar
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
