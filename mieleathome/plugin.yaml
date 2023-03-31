@@ -1,0 +1,465 @@
+# Metadata for the plugin
+plugin:
+    # Global plugin attributes
+    type: gateway                   # plugin type (gateway, interface, protocol, system, web)
+    description:
+        de: 'Miele@Home-Anbindung'
+        en: 'Connect Miele@Home'
+    maintainer: sipple, AndreK01
+#    tester:                         # Who tests this plugin?
+    state: develop                   # change to ready when done with development
+    keywords: iot Miele Home 
+#    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1512798-miele-home-mit-mqtt
+
+    version: 1.0.0                  # Plugin version (must match the version specified in __init__.py)
+    sh_minversion: 1.5              # minimum shNG version to use this plugin
+#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+#    py_minversion: 3.6             # minimum Python version to use for this plugin
+#    py_maxversion:                 # maximum Python version to use for this plugin (leave empty if latest)
+    multi_instance: False           # plugin supports multi instance
+    restartable: true
+    classname: mieleathome             # class containing the plugin
+
+parameters: 
+    # Definition of parameters to be configured in etc/plugin.yaml (enter 'parameters: NONE', if section should be empty)
+    miele_cycle:
+        type: int
+        default: 300
+        description:
+            de: 'Zeitlicher Abstand zwischen zwei Verbindungen zur API'
+            en: 'Time between two connects to the API'
+    miele_client_id:
+        type: str
+        default: ''
+        description:
+            de: 'Client ID der Miele API'
+            en: 'Client ID for the Miele-API'
+    miele_client_secret:
+        type: str
+        default: ''
+        description:
+            de: 'Client Secret der Miele API'
+            en: 'Client secret for the Miele-API'
+    miele_client_country:
+        type: str
+        default: 'de-DE'
+        description:
+            de: 'Länderkennung der Miele-API'
+            en: 'Counry to use for the Miele-API'
+    miele_user:
+        type: str
+        default: ''
+        description:
+            de: 'Zugangsdaten User'
+            en: 'Credentials User'
+    miele_pwd:
+        type: str
+        default: ''
+        description:
+            de: 'Zugangsdaten Passwort'
+            en: 'Credentials password'            
+
+item_attributes:
+    # Definition of item attributes defined by this plugin (enter 'item_attributes: NONE', if section should be empty)
+    miele_deviceid:
+        type: str
+        mandatory: False
+        description:
+            de: 'Die DeviceId der Miele-cloud'
+            en: 'deviceId of the Miele-cloud'
+    miele_command:
+        type: str
+        mandatory: False
+        description:
+            de: 'Eine interne Funktion des Miele@Home-Plugins'
+            en: 'internal function of the Miele@Home-Plugin'
+    miele_visu_function:
+        type: str
+        mandatory: False
+        description:
+            de: 'Eine interne Funktion des Miele@Home-Plugins'
+            en: 'internal function of the Miele@Home-Plugin'
+    miele_parse_item:
+        type: bool
+        mandatory: False
+        description:
+            de: 'Eine interne Funktion des Miele@Home-Plugins'
+            en: 'internal function of the Miele@Home-Plugin'            
+item_structs:
+    # Definition of item-structure templates for this plugin (enter 'item_structs: NONE', if section should be empty)
+    child:
+        name: Vorlage Struktur Miele Geräte
+        ident:
+            device_type:
+                value_raw:
+                   type: num
+                   cache: 'on'
+                value_localized:
+                    type: str
+                    cache: 'on'
+            deviceName:
+                type: str
+                cache: 'on'
+            deviceIdentLabel:
+                fabNumber:
+                    type: str
+                    cache: 'on'
+                fabIndex:
+                    type: str
+                    cache: 'on'
+                techType:
+                    type: str
+                    cache: 'on'
+                matNumber:
+                    type: str
+                    cache: 'on'                   
+            xkmIdentLabel:
+                techType:
+                    type: str
+                    cache: 'on'
+                releaseVersion:
+                    type: str
+                    cache: 'on'
+        state:
+            ProgramID:
+                value_localized:
+                    type: str
+                    cache: 'on'
+            status:
+                value_localized:
+                    type: str
+                    cache: 'on'
+                    enforce_updates: yes                    
+                value_raw:
+                    type: num
+                    cache: 'on'                
+                    enforce_updates: yes                    
+            programType:
+                value_localized:
+                    type: str
+                    cache: 'on'
+            programPhase:
+                value_localized:
+                    type: str
+                    cache: 'on'                                                                                
+            remainingTime:
+                type: list
+                cache: 'on'
+                enforce_updates: yes                
+            startTime:
+                type: list
+                cache: 'on'
+                enforce_updates: yes                 
+            targetTemperature:
+                type: list
+                cache: 'on'          
+                miele_parse_item: true
+                enforce_updates: yes
+            temperature:
+                type: list
+                cache: 'on'          
+                miele_parse_item: true                
+            signalInfo:
+                type: bool
+                cache: 'on'
+                enforce_updates: yes                
+            signalFailure:
+                type: bool
+                cache: 'on'
+                enforce_updates: yes                
+            signalDoor:
+                type: bool
+                cache: 'on'
+                enforce_updates: yes                
+            dryingStep:
+                value_localized:
+                    type: str
+                    cache: 'on'   
+                    enforce_updates: yes                              
+                value_raw:
+                    type: num
+                    cache: 'on'                                            
+                    enforce_updates: yes                    
+            elapsedTime:
+                type: list
+                cache: 'on'                          
+                enforce_updates: yes                
+            ecoFeedback:
+                currentWaterConsumption:
+                    unit:
+                        type: str
+                        cache: 'on'
+                    value:
+                        type: num
+                        cache: 'on'
+                currentEnergyConsumption:
+                    unit:
+                        type: str
+                        cache: 'on'
+                    value:
+                        type: num
+                        cache: 'on'
+                waterForecast:
+                    type: num
+                    cache: 'on'
+                energyForecast:
+                    type: num
+                    cache: 'on'                    
+            batteryLevel:
+                type: num
+                cache: 'on'
+
+
+        actions:
+            processAction:
+                type: list
+                cache: 'on'
+            light:
+                type: list
+                cache: 'on'            
+            ventilationStep:
+                type: list
+                cache: 'on'                        
+            programId:
+                type: list
+                cache: 'on'                            
+            targetTemperature:
+                type: list
+                cache: 'on'
+                miele_parse_item: true
+                enforce_updates: yes                
+            startTime:
+                type: list
+                cache: 'on'
+            deviceName:    
+                type: bool
+                cache: 'on'
+            powerOn:
+                type: bool
+                cache: 'on'            
+            powerOff:
+                type: bool
+                cache: 'on'            
+            modes:
+                type: list             
+                cache: 'on'                                               
+            
+                    
+        visu:
+            times:
+                scheduled_startTime:
+                    visu_acl: rw                
+                    type: str
+                    eval_trigger: ....state.startTime
+                    eval: str("%0.2d"%sh.....state.startTime()[0])+":"+str("%0.2d"%sh.....state.startTime()[1])
+                    miele_parse_item: true                    
+                startTime:
+                    visu_acl: rw                
+                    type: str
+                    initial_value: "00:00:00"
+                    miele_parse_item: true                    
+                stopTime:
+                    visu_acl: rw                
+                    type: str
+                    initial_value: "00:00:00"                    
+                    miele_parse_item: true                                        
+                elapsedTime:
+                    type: str
+                    eval_trigger: ....state.elapsedTime
+                    eval: str("%0.2d"%sh.....state.elapsedTime()[0])+":"+str("%0.2d"%sh.....state.elapsedTime()[1]) if len(sh.....state.elapsedTime()) >0 else '00:00'
+                remainingTime:
+                    type: str
+                    eval_trigger: ....state.remainingTime
+                    eval: str("%0.2d"%sh.....state.remainingTime()[0])+":"+str("%0.2d"%sh.....state.remainingTime()[1]) if len(sh.....state.remainingTime()) >0 else '00:00'
+            values:
+                    temperatur_zone_1:
+                        target_temperature:
+                            type: num
+                            visu_acl: rw
+                            cache: 'on'
+                            miele_command: '{"targetTemperature": [ { "zone": 1, "value": %1 } ]}'                            
+                        temperature:
+                            type: num
+                            visu_acl: rw
+                            cache: 'on'
+                        unit:
+                            type: str
+                            visu_acl: rw
+                            cache: 'on'                            
+                    temperatur_zone_2:
+                        target_temperature:
+                            type: num
+                            visu_acl: rw
+                            cache: 'on'
+                            miele_command: '{"targetTemperature": [ { "zone": 2, "value": %1 } ]}'                            
+                        temperature:
+                            type: num
+                            visu_acl: rw
+                            cache: 'on'
+                        unit:
+                            type: str
+                            visu_acl: rw
+                            cache: 'on'                                                        
+                    temperatur_zone_3:
+                        target_temperature:
+                            type: num
+                            visu_acl: rw
+                            cache: 'on'
+                            miele_command: '{"targetTemperature": [ { "zone": 3, "value": %1 } ]}'                                                        
+                        temperature:
+                            type: num
+                            visu_acl: rw
+                            cache: 'on'
+                        unit:
+                            type: str
+                            visu_acl: rw
+                            cache: 'on'                            
+
+            allowed_actions:
+                start:
+                    type: bool
+                    visu_acl: rw
+
+                stop:
+                    type: bool
+                    visu_acl: rw
+
+                pause:
+                    type: bool
+                    visu_acl: rw                    
+
+                start_superfreezing:
+                    type: bool
+                    visu_acl: rw                    
+
+                stop_superfreezing:
+                    type: bool
+                    visu_acl: rw                    
+
+                start_supercooling:
+                    type: bool
+                    visu_acl: rw                    
+
+                stop_supercooling:
+                    type: bool
+                    visu_acl: rw                    
+
+                deviceName:
+                    type: bool
+                    visu_acl: rw                  
+
+                powerOn:
+                    type: bool
+                    visu_acl: rw
+                    eval_trigger: ....actions.powerOn
+                    eval: sh.....actions.powerOn()                                        
+                powerOff:
+                    type: bool
+                    visu_acl: rw
+                    eval_trigger: ....actions.powerOff
+                    eval: sh.....actions.powerOff()
+                temp_Zone1:
+                    type: bool
+                    visu_acl: rw
+                    eval_trigger: ....visu.values.temperatur_zone_1.target_temperature
+                    eval: 1 if sh.....visu.values.temperatur_zone_1.target_temperature() != 0 else 0
+                temp_Zone2:
+                    type: bool
+                    visu_acl: rw
+                    eval_trigger: ....visu.values.temperatur_zone_2.target_temperature
+                    eval: 1 if sh.....visu.values.temperatur_zone_2.target_temperature() != 0 else 0
+                temp_Zone3:
+                    type: bool
+                    visu_acl: rw
+                    eval_trigger: ....visu.values.temperatur_zone_3.target_temperature
+                    eval: 1 if sh.....visu.values.temperatur_zone_3.target_temperature() != 0 else 0                                        
+
+
+
+            action_buttons:
+                start:
+                    type: bool
+                    visu_acl: rw
+                    autotimer: 1 = False
+                    miele_command: '{"processAction": 1}'
+                    enforce_updates: yes                    
+                stop:
+                    type: bool
+                    visu_acl: rw
+                    autotimer: 1 = False
+                    miele_command: '{"processAction": 2}'
+                    enforce_updates: yes                    
+                pause:
+                    type: bool
+                    visu_acl: rw                    
+                    autotimer: 1 = False
+                    miele_command: '{"processAction": 3}'
+                    enforce_updates: yes                    
+                start_superfreezing:
+                    type: bool
+                    visu_acl: rw                    
+                    autotimer: 1 = False
+                    miele_command: '{"processAction": 4}'
+                    enforce_updates: yes                    
+                stop_superfreezing:
+                    type: bool
+                    visu_acl: rw                    
+                    autotimer: 1 = False
+                    miele_command: '{"processAction": 5}'
+                    enforce_updates: yes                    
+                start_supercooling:
+                    type: bool
+                    visu_acl: rw                    
+                    autotimer: 1 = False
+                    miele_command: '{"processAction": 6}'
+                    enforce_updates: yes                    
+                stop_supercooling:
+                    type: bool
+                    visu_acl: rw                    
+                    autotimer: 1 = False
+                    miele_command: '{"processAction": 7}'
+                    enforce_updates: yes                    
+                powerOn:
+                    type: bool
+                    visu_acl: rw
+                    miele_command: '{"powerOn":true}'
+                    enforce_updates: yes                    
+                powerOff:
+                    type: bool
+                    visu_acl: rw
+                    miele_command: '{"powerOff":true}'
+                    enforce_updates: yes                    
+
+        values:
+            temperatur_zone_1:
+                  range_index:
+                      type: list
+                      visu_acl: rw
+                  range_description:
+                      type: list
+                      visu_acl: rw
+            temperatur_zone_2:
+                  range_index:
+                      type: list
+                      visu_acl: rw
+                  range_description:
+                      type: list
+                      visu_acl: rw
+            temperatur_zone_3:
+                  range_index:
+                      type: list
+                      visu_acl: rw
+                  range_description:
+                      type: list
+                      visu_acl: rw                                                                    
+
+#item_attribute_prefixes:
+    # Definition of item attributes that only have a common prefix (enter 'item_attribute_prefixes: NONE' or ommit this section, if section should be empty)
+    # NOTE: This section should only be used, if really nessesary (e.g. for the stateengine plugin)
+
+plugin_functions:
+    # Definition of plugin functions defined by this plugin (enter 'plugin_functions: NONE', if section should be empty)
+
+logic_parameters:
+    # Definition of logic parameters defined by this plugin (enter 'logic_parameters: NONE', if section should be empty)

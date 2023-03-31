@@ -1,0 +1,3 @@
+apiurl|/api/behaviors/preview
+description|Test für Announce mit Doorbell
+json|{"behaviorId": "PREVIEW", "sequenceJson": {"@type": "com.amazon.alexa.behaviors.model.Sequence", "startNode": {"type": "AlexaAnnouncement", "@type": "com.amazon.alexa.behaviors.model.OpaquePayloadOperationNode", "operationPayload": {"customerId": "<deviceOwnerCustomerId>", "content": [{"display": {"title": "smartHomeNG", "body": "Hallo"}, "speak": {"type": "text", "value": "<mValue>"}, "locale": "de-DE"}], "expireAfter": "PT10S", "target": {"customerId": "<deviceOwnerCustomerId>", "devices": [{"deviceSerialNumber": "<serialNumber>", "deviceTypeId": "<deviceType>"}]}}}}, "status": "ENABLED"}
