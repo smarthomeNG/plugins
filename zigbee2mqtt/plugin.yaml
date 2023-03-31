@@ -9,10 +9,10 @@ plugin:
     tester: Michael Wenzel         # Who tests this plugin?
     state: develop                 # change to ready when done with development
     keywords: iot
-    documentation:
-    support:
+    documentation: ''
+    support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1856775-support-thread-f%C3%BCr-das-zigbee2mqtt-plugin
 
-    version: 1.1.1                 # Plugin version
+    version: 1.1.2                 # Plugin version
     sh_minversion: 1.8.2           # minimum shNG version to use this plugin
 #    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
     py_minversion: 3.8             # minimum Python version to use for this plugin
