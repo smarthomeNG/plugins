@@ -43,7 +43,7 @@ und Kennwort umgestellt werden" und es sollte ein eigener User für das AVM Plug
 
 
 Konfiguration des Plugins
----------------------------
+-------------------------
 
 Diese Plugin Parameter und die Informationen zur Item-spezifischen Konfiguration des Plugins sind
 unter :doc:`/plugins_doc/config/avm` beschrieben.
@@ -377,7 +377,7 @@ Auflistung der mit der Fritzbox verbundenen AVM HomeAutomation Geräte
    :class: screenshot
 
 AVM Call Monitor Items
-~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
 
 Tabellarische Auflistung des Anrufmonitors (nur wenn dieser konfiguriert ist)
 
@@ -385,7 +385,7 @@ Tabellarische Auflistung des Anrufmonitors (nur wenn dieser konfiguriert ist)
    :class: screenshot
 
 AVM Log-Einträge
-~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~
 
 Listung der Logeinträge der Fritzbox
 
@@ -393,7 +393,7 @@ Listung der Logeinträge der Fritzbox
    :class: screenshot
 
 AVM Plugin-API
-~~~~~~~~~~
+~~~~~~~~~~~~~~
 
 Beschreibung der Plugin-API
 
