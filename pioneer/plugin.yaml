@@ -11,7 +11,7 @@ plugin:
     py_minversion: 3.6
     multi_instance: false
     restartable: true
-    classname: sdp_pioneer
+    classname: pioneer
 
 parameters:
 

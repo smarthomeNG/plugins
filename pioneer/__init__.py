@@ -48,7 +48,7 @@ if not SDP_standalone:
     pass
 
 
-class sdp_pioneer(SmartDevicePlugin):
+class pioneer(SmartDevicePlugin):
     """ Device class for Pioneer AV function.
 
     Most of the work is done by the base class, so we only set default parameters
@@ -82,4 +82,4 @@ class sdp_pioneer(SmartDevicePlugin):
 
 
 if __name__ == '__main__':
-    s = Standalone(sdp_pioneer, sys.argv[0])
+    s = Standalone(pioneer, sys.argv[0])
