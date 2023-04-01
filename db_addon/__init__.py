@@ -1078,7 +1078,7 @@ class DatabaseAddOn(SmartPlugin):
         return self.suspended
 
     ##############################
-    #   Support stuff / Using Item Object
+    #   Calculation methods / Using Item Object
     ##############################
 
     def _handle_min_max(self, database_item: Item, db_addon_fct: str, ignore_value_list=None) -> Union[list, None]:
@@ -1490,45 +1490,8 @@ class DatabaseAddOn(SmartPlugin):
         :return: waermesumme
         """
 
-        # start: links / älterer Termin          end: rechts / jüngerer Termin
-
-        # check validity of given year
-        if not valid_year(year):
-            self.logger.error(f"_handle_waermesumme: Year for item={database_item.path()} was {year}. This is not a valid year. Query cancelled.")
-            return
-
-        # define year
-        if year == 'current':
-            year = datetime.date.today().year
-
-        # define start_date, end_date
-        if month is None:
-            start_date = datetime.date(int(year), 1, 1)
-            end_date = datetime.date(int(year), 9, 21)
-        elif valid_month(month):
-            start_date = datetime.date(int(year), int(month), 1)
-            end_date = start_date + relativedelta(months=+1) - datetime.timedelta(days=1)
-        else:
-            self.logger.error(f"_handle_waermesumme: Month for item={database_item.path()} was {month}. This is not a valid month. Query cancelled.")
-            return
-
-        # check start_date
-        today = datetime.date.today()
-        if start_date > today:
-            self.logger.info(f"_handle_waermesumme: Start time for query of item={database_item.path()} is in future. Query cancelled.")
-            return
-
-        # define start / end
-        start = (today - start_date).days
-        end = (today - end_date).days if end_date < today else 0
-
-        # check end
-        if start < end:
-            self.logger.error(f"_handle_waermesumme: End time for query of item={database_item.path()} is before start time. Query cancelled.")
-            return
-
         # get raw data as list
-        raw_data = self._prepare_temperature_list(database_item=database_item, timeframe='day',  start=start, end=end, method='raw')
+        raw_data = self._prepare_waermesumme(database_item=database_item, year=year, month=month)
         if self.execute_debug:
             self.logger.debug(f"_handle_waermesumme: raw_value_list={raw_data=}")
 
@@ -1556,41 +1519,15 @@ class DatabaseAddOn(SmartPlugin):
         :return: gruenlandtemperatursumme
         """
 
-        if not valid_year(year):
-            self.logger.error(f"_handle_gruenlandtemperatursumme: Year for item={database_item.path()} was {year}. This is not a valid year. Query cancelled.")
-            return
-
-        # define year
-        if year == 'current':
-            year = datetime.date.today().year
-
-        # define start_date, end_date
-        start_date = datetime.date(int(year), 1, 1)
-        end_date = datetime.date(int(year), 9, 21)
-
-        # check start_date
-        today = datetime.date.today()
-        if start_date > today:
-            self.logger.info(f"_handle_gruenlandtemperatursumme: Start time for query of item={database_item.path()} is in future. Query cancelled.")
-            return
-
-        # define start / end
-        start = (today - start_date).days
-        end = (today - end_date).days if end_date < today else 0
-
-        # check end
-        if start < end:
-            self.logger.error(f"_handle_gruenlandtemperatursumme: End time for query of item={database_item.path()} is before start time. Query cancelled.")
-            return
-
         # get raw data as list
-        raw_data = self._prepare_temperature_list(database_item=database_item, timeframe='day',  start=start, end=end, method='raw')
+        raw_data = self._prepare_waermesumme(database_item=database_item, year=year)
         if self.execute_debug:
-            self.logger.debug(f"_handle_gruenlandtemperatursumme: raw_value_list={raw_data}")
+            self.logger.debug(f"_handle_gruenlandtemperatursumme: raw_data={raw_data}")
 
         # calculate value
         if raw_data is None:
             return
+
         elif isinstance(raw_data, list):
             # akkumulieren alle positiven Tagesmitteltemperaturen, im Januar gewichtet mit 50%, im Februar mit 75%
             gts = 0
@@ -1750,6 +1687,47 @@ class DatabaseAddOn(SmartPlugin):
 
         return temp_list
 
+    def _prepare_waermesumme(self, database_item: Item, year: Union[int, str], month: Union[int, str] = None):
+        """Prepares raw data for waermesumme"""
+
+        # check validity of given year
+        if not valid_year(year):
+            self.logger.error(f"Year for item={database_item.path()} was {year}. This is not a valid year. Query cancelled.")
+            return
+
+        # define year
+        if year == 'current':
+            year = datetime.date.today().year
+
+        # define start_date, end_date
+        if month is None:
+            start_date = datetime.date(int(year), 1, 1)
+            end_date = datetime.date(int(year), 9, 21)
+        elif valid_month(month):
+            start_date = datetime.date(int(year), int(month), 1)
+            end_date = start_date + relativedelta(months=+1) - datetime.timedelta(days=1)
+        else:
+            self.logger.error(f"Month for item={database_item.path()} was {month}. This is not a valid month. Query cancelled.")
+            return
+
+        # check start_date
+        today = datetime.date.today()
+        if start_date > today:
+            self.logger.info(f"Start time for query of item={database_item.path()} is in future. Query cancelled.")
+            return
+
+        # define start / end
+        start = (today - start_date).days
+        end = (today - end_date).days if end_date < today else 0
+
+        # check end
+        if start < end:
+            self.logger.error(f"End time for query of item={database_item.path()} is before start time. Query cancelled.")
+            return
+
+        # return raw data as list
+        return self._prepare_temperature_list(database_item=database_item, timeframe='day',  start=start, end=end, method='raw')
+
     def _prepare_temperature_list(self, database_item: Item, timeframe: str, start: int, end: int = 0, ignore_value_list=None, method: str = 'hour') -> Union[list, None]:
         """
         returns list of lists having timestamp and temperature(s) per day
@@ -1878,6 +1856,10 @@ class DatabaseAddOn(SmartPlugin):
                 temp_list = _create_list_timestamp_minmaxtemp()
                 self.logger.debug(f"{temp_list=}")
                 return temp_list
+
+    ##############################
+    #   Support stuff
+    ##############################
 
     def _create_due_items(self) -> list:
         """
