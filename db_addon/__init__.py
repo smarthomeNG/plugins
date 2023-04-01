@@ -53,7 +53,7 @@ class DatabaseAddOn(SmartPlugin):
     Main class of the Plugin. Does all plugin specific stuff and provides the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.1.0'
+    PLUGIN_VERSION = '1.1.1'
 
     def __init__(self, sh):
         """
@@ -2496,9 +2496,9 @@ class DatabaseAddOn(SmartPlugin):
             if self._db.verify(5) == 0:
                 self.logger.error("_query: Connection to database not recovered.")
                 return None
-            # if not self._db.lock(300):
-            #    self.logger.error("_query: Can't query due to fail to acquire lock.")
-            #     return None
+            if not self._db.lock(300):
+                self.logger.error("_query: Can't query due to fail to acquire lock.")
+                return None
 
         query_readable = re.sub(r':([a-z_]+)', r'{\1}', query).format(**params)
 
@@ -2510,9 +2510,9 @@ class DatabaseAddOn(SmartPlugin):
             if self.sql_debug:
                 self.logger.debug(f"_query: Result of '{query_readable}': {tuples}")
             return tuples
-        # finally:
-        #    if cur is None:
-        #         self._db.release()
+        finally:
+            if cur is None:
+                self._db.release()
 
 
 ##############################
