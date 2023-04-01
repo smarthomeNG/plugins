@@ -145,7 +145,7 @@ class AVM(SmartPlugin):
         try:
             self.fritz_device = FritzDevice(_host, _port, ssl, _verify, _username, _passwort, _call_monitor_incoming_filter, _use_tr064_backlist, self)
         except Exception as e:
-            self.logger.warning(f"Error '{e!r}' establishing connection to Fritzdevice via TR064-Interface.")
+            self.logger.warning(f"{e} occurred during establishing connection to FritzDevice via TR064-Interface. Not connected.")
             self.fritz_device = None
         else:
             self.logger.debug("Connection to FritzDevice established.")
@@ -154,7 +154,7 @@ class AVM(SmartPlugin):
         try:
             self.fritz_home = FritzHome(_host, ssl, _verify, _username, _passwort, _log_entry_count, self)
         except Exception as e:
-            self.logger.warning(f"Error '{e!r}' establishing connection to Fritzdevice via AHA-HTTP-Interface.")
+            self.logger.warning(f"{e} occurred during establishing connection to FritzDevice via AHA-HTTP-Interface. Not connected.")
             self.fritz_home = None
         else:
             self.logger.debug("Connection to FritzDevice via AHA-HTTP-Interface established.")
@@ -164,7 +164,7 @@ class AVM(SmartPlugin):
             try:
                 self.monitoring_service = Callmonitor(_host, 1012, self.fritz_device.get_contact_name_by_phone_number, _call_monitor_incoming_filter, self)
             except Exception as e:
-                self.logger.warning(f"Error '{e!r}' establishing connection to Fritzdevice CallMonitor.")
+                self.logger.warning(f"{e} occurred during establishing connection to FritzDevice CallMonitor. Not connected.")
                 self.monitoring_service = None
             else:
                 self.logger.debug("Connection to FritzDevice CallMonitor established.")
@@ -525,6 +525,11 @@ class FritzDevice:
         except Exception as e:
             self.logger.error(f"Init TR064 Client for {self.FRITZ_TR64_DESC_FILE} caused error {e!r}.")
         else:
+            # check connection:
+            conn_test_result = self.model_name()
+            if isinstance(conn_test_result, int):
+                raise Exception(f"Error {conn_test_result}-'{self.ERROR_CODES.get(conn_test_result, 'unknown')}'")
+
             self.connected = True
             if self.is_fritzbox():
                 # get GetDefaultConnectionService
@@ -783,14 +788,14 @@ class FritzDevice:
         try:
             return 'box' in self.model_name().lower()
         except AttributeError as e:
-            self.logger.error(f'Could now find out if {self.product_class()} represents a Fritzbox. Error {e!r} occurred.')
+            self.logger.error(f"Could now find out if '{self.product_class()}' represents a Fritzbox. Error {e!r} occurred.")
             return False
 
     def is_repeater(self):
         try:
             return 'repeater' in self.product_class().lower()
         except AttributeError as e:
-            self.logger.error(f'Could now find out if {self.product_class()} represents a Repeater. Error {e!r} occurred.')
+            self.logger.error(f"Could now find out if '{self.product_class()}' represents a Repeater. Error {e!r} occurred.")
             return False
 
     def wlan_devices_count(self):
@@ -1032,7 +1037,7 @@ class FritzDevice:
         """
         Get update data for cache dict; poll data if not yet cached from fritz device
         """
-        # self.logger.debug(f"_get_update_data called with device={device}, service={service}, action={action}, in_argument={in_argument}, out_argument={out_argument}, in_argument_value={in_argument_value}, enforce_read={enforce_read}")
+        # self.logger.warning(f"_get_update_data called with device={device}, service={service}, action={action}, in_argument={in_argument}, out_argument={out_argument}, in_argument_value={in_argument_value}, enforce_read={enforce_read}")
 
         data_args = []
         cache_dict_key = f"{device}_{service}_{action}_{in_argument}_{in_argument_value}"
@@ -1726,6 +1731,8 @@ class FritzHome:
 
         # Login
         self.login()
+        if not self._logged_in:
+            raise Exception("Error 'Login failed'")
 
     def register_item(self, item, item_config: dict):
         """
@@ -2064,12 +2071,12 @@ class FritzHome:
                     challenge_response = self._calculate_md5_response(challenge, self.password)
                 (sid2, challenge, blocktime) = self._login_request(username=self.user, challenge_response=challenge_response)
                 if sid2 == "0000000000000000":
-                    self.logger.warning(f"login failed {sid2}")
-                    self.logger.error(f"LoginError for User {self.user}")
+                    self.logger.debug(f"Login failed for sid2={sid2}")
+                    self.logger.warning(f"Login failed for user '{self.user}'")
                     return
                 self._sid = sid2
         except Exception as e:
-            self.logger.error(f"LoginError {e} occurred for User {self.user}")
+            self.logger.error(f"LoginError {e!r} occurred for user {self.user}")
         else:
             self._logged_in = True
 
@@ -3492,7 +3499,10 @@ class Callmonitor:
         self.conn = None
         self._listen_thread = None
 
+        # connect
         self.connect()
+        if not self.conn:
+            raise Exception("Connection Error")
 
     def connect(self):
         """
@@ -3510,8 +3520,7 @@ class Callmonitor:
             self._listen_thread = threading.Thread(target=self._listen, name=_name).start()
         except Exception as e:
             self.conn = None
-            self.logger.error(
-                f"MonitoringService: Cannot connect to {self.host} on port: {self.port}, CallMonitor activated by #96*5*? - Error: {e}")
+            self.logger.error(f"MonitoringService: Cannot connect to {self.host} on port: {self.port}, CallMonitor activated by #96*5*? - Error: {e}")
         else:
             if self.debug_log:
                 self.logger.debug("MonitoringService: connection established")

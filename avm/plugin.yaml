@@ -38,7 +38,7 @@ parameters:
             en: '(optional) Password for login. Is normally always needed and recommended due to security reasons'
     host:
         type: str
-        default: 'fritz.box'
+        mandatory: True
         description:
             de: '(optional) Hostname oder IP-Adresse des FritzDevice.'
             en: '(optional) Hostname or ip address of the FritzDevice.'
