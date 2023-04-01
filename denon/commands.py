@@ -10,7 +10,7 @@ lookups.
 
 models = {
     'ALL': ['general.custom_inputnames', 'general.power', 'general.setupmenu', 'general.soundmode', 'general.inputsignal', 'general.inputrate', 'general.inputformat', 'general.inputresolution', 'general.outputresolution', 'general.ecomode',
-            'tuner.preset', 'tuner.presetup', 'tuner.presetdown', 'tuner.frequency', 'tuner.frequencyup', 'tuner.frequencydown', 'tuner.band',
+            'tuner.preset', 'tuner.presetup', 'tuner.presetdown', 'tuner.frequency', 'tuner.frequencyup', 'tuner.frequencydown', 'tuner.band', 'tuner.tuningmode',
             'zone1.control',
             'zone1.settings.sound.general.audioinput', 'zone1.settings.sound.general.cinema_eq', 'zone1.settings.sound.general.hdmiaudioout', 'zone1.settings.sound.general.dynamicrange', 'zone1.settings.sound.general.subwoofertoggle', 'zone1.settings.sound.general.subwoofer', 'zone1.settings.sound.general.subwooferup', 'zone1.settings.sound.general.subwooferdown', 'zone1.settings.sound.general.lfe', 'zone1.settings.sound.general.lfeup', 'zone1.settings.sound.general.lfedown', 'zone1.settings.sound.tone_control',
             'zone1.settings.sound.channel_level.front_left', 'zone1.settings.sound.channel_level.front_right', 'zone1.settings.sound.channel_level.front_height_left', 'zone1.settings.sound.channel_level.front_height_right', 'zone1.settings.sound.channel_level.front_center', 'zone1.settings.sound.channel_level.surround_left', 'zone1.settings.sound.channel_level.surround_right', 'zone1.settings.sound.channel_level.surroundback_left', 'zone1.settings.sound.channel_level.surroundback_right', 'zone1.settings.sound.channel_level.rear_height_left', 'zone1.settings.sound.channel_level.rear_height_right', 'zone1.settings.sound.channel_level.subwoofer',

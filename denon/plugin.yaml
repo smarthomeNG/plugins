@@ -610,6 +610,14 @@ item_structs:
             -   tuner
             denon_read_initial: true
 
+        tuningmode:
+            type: str
+            denon_command: tuner.tuningmode
+            denon_read: true
+            denon_write: true
+            denon_read_group:
+            -   tuner
+
         hd:
 
             read:
@@ -1898,6 +1906,15 @@ item_structs:
                 -   ALL.tuner
                 denon_read_initial: true
 
+            tuningmode:
+                type: str
+                denon_command: tuner.tuningmode
+                denon_read: true
+                denon_write: true
+                denon_read_group:
+                -   ALL
+                -   ALL.tuner
+
         zone1:
 
             read:
@@ -2901,6 +2918,15 @@ item_structs:
                 -   AVR-X6300H
                 -   AVR-X6300H.tuner
                 denon_read_initial: true
+
+            tuningmode:
+                type: str
+                denon_command: tuner.tuningmode
+                denon_read: true
+                denon_write: true
+                denon_read_group:
+                -   AVR-X6300H
+                -   AVR-X6300H.tuner
 
             hd:
 
@@ -4179,6 +4205,15 @@ item_structs:
                 -   AVR-X4300H.tuner
                 denon_read_initial: true
 
+            tuningmode:
+                type: str
+                denon_command: tuner.tuningmode
+                denon_read: true
+                denon_write: true
+                denon_read_group:
+                -   AVR-X4300H
+                -   AVR-X4300H.tuner
+
         zone1:
 
             read:
@@ -5432,6 +5467,15 @@ item_structs:
                 -   AVR-X3300W.tuner
                 denon_read_initial: true
 
+            tuningmode:
+                type: str
+                denon_command: tuner.tuningmode
+                denon_read: true
+                denon_write: true
+                denon_read_group:
+                -   AVR-X3300W
+                -   AVR-X3300W.tuner
+
         zone1:
 
             read:
@@ -6451,6 +6495,15 @@ item_structs:
                 -   AVR-X2300W.tuner
                 denon_read_initial: true
 
+            tuningmode:
+                type: str
+                denon_command: tuner.tuningmode
+                denon_read: true
+                denon_write: true
+                denon_read_group:
+                -   AVR-X2300W
+                -   AVR-X2300W.tuner
+
         zone1:
 
             read:
@@ -7401,6 +7454,15 @@ item_structs:
                 -   AVR-X1300W
                 -   AVR-X1300W.tuner
                 denon_read_initial: true
+
+            tuningmode:
+                type: str
+                denon_command: tuner.tuningmode
+                denon_read: true
+                denon_write: true
+                denon_read_group:
+                -   AVR-X1300W
+                -   AVR-X1300W.tuner
 
         zone1:
 

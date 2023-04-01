@@ -44,7 +44,8 @@ from lib.model.sdp.globals import (PLUGIN_ATTR_NET_HOST, PLUGIN_ATTR_CONNECTION,
 from lib.model.smartdeviceplugin import SmartDevicePlugin, Standalone
 
 if not SDP_standalone:
-    from .webif import WebInterface
+    #from .webif import WebInterface
+    pass
 
 CUSTOM_INPUT_NAME_COMMAND = 'custom_inputnames'
 
