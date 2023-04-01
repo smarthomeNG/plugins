@@ -229,7 +229,7 @@ class DatabaseAddOn(SmartPlugin):
                     return True
             return False
 
-        def format_db_addon_ignore_value_list() -> bool:
+        def format_db_addon_ignore_value_list() -> Union[None, list]:
             """ Check of list of comparison operators is formally valid """
 
             OPERATOR_LIST = ['<=', '<>', '!=', '>=', '<=', '=', '>', '<']
