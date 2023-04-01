@@ -13,7 +13,7 @@ commands = {
     'database': {
         'rescan': {
             'start': {'read': False, 'write': True, 'write_cmd': 'rescan {VALUE}', 'item_type': 'str', 'dev_datatype': 'str', 'cmd_settings': {'valid_list': ['playlists', 'onlinelibrary', 'external', 'full']}, 'item_attrs': {'attributes': {'remark': 'playlists|onlinelibrary|external|full|full file://some/path'}, 'custom1': ''}},
-            'running': {'read': True, 'write': False, 'read_cmd': 'rescan ?', 'item_type': 'bool', 'dev_datatype': 'LMSRescan', 'reply_pattern': 'rescan (.*)', 'item_attrs': {'cycle': '60 = True', 'initial': True, 'custom1': ''}},
+            'running': {'read': True, 'write': False, 'read_cmd': 'rescan ?', 'item_type': 'bool', 'dev_datatype': 'LMSRescan', 'reply_pattern': 'rescan (.*)', 'item_attrs': {'cycle': '60', 'initial': True, 'custom1': ''}},
             'progress': {'read': True, 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': 'scanner notify progress:(.*)', 'item_attrs': {'custom1': ''}},
             'runningtime': {'read': True, 'read_cmd': 'rescanprogress totaltime', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': 'rescanprogress totaltime .* rescan:([0-9]{2}:[0-9]{2}:[0-9]{2})', 'item_attrs': {'custom1': ''}},
             'fail': {'read': True, 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': 'rescanprogress totaltime rescan:0 lastscanfailed:(.*)', 'item_attrs': {'custom1': ''}},
@@ -122,7 +122,7 @@ item_templates = {
                 'type': 'bool',
                 'eval': 'True if sh....playmode() == "play" else None',
                 'enforce_updates': True,
-                'cycle': '10 = True',
+                'cycle': '10',
                 'sqb_read_group_trigger': 'player.control.time_poll'
             }
     },

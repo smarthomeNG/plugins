@@ -274,6 +274,7 @@ item_structs:
                 sqb_read: false
                 sqb_write: true
                 sqb_custom1: ''
+                remark: playlists|onlinelibrary|external|full|full file://some/path
 
             running:
                 type: bool
@@ -284,6 +285,7 @@ item_structs:
                 -   database
                 -   database.rescan
                 sqb_read_initial: true
+                sqb_read_cycle: '60'
                 sqb_custom1: ''
 
             progress:
@@ -344,6 +346,11 @@ item_structs:
             sqb_read_initial: true
             sqb_custom1: ''
 
+            duration_format:
+                type: str
+                eval: "'{}d {}h {}i {}s'.format(int(sh...()//86400), int((sh...()%86400)//3600), int((sh...()%3600)//60), round((sh...()%3600)%60))"
+                eval_trigger: ..
+
         totalartists:
             type: num
             sqb_command: database.totalartists
@@ -396,6 +403,7 @@ item_structs:
                 sqb_read_group:
                 -   player
                 -   player.control
+                enforce_updates: true
                 sqb_read_initial: true
 
             playmode:
@@ -406,6 +414,7 @@ item_structs:
                 sqb_read_group:
                 -   player
                 -   player.control
+                enforce_updates: true
                 sqb_read_initial: true
 
             playpause:
@@ -413,12 +422,14 @@ item_structs:
                 sqb_command: player.control.playpause
                 sqb_read: true
                 sqb_write: true
+                enforce_updates: true
 
             stop:
                 type: bool
                 sqb_command: player.control.stop
                 sqb_read: true
                 sqb_write: true
+                enforce_updates: true
 
             mute:
                 type: bool
@@ -428,6 +439,7 @@ item_structs:
                 sqb_read_group:
                 -   player
                 -   player.control
+                enforce_updates: true
                 sqb_read_initial: true
 
             volume:
@@ -524,6 +536,7 @@ item_structs:
                 sqb_command: player.control.unsync
                 sqb_read: false
                 sqb_write: true
+                autotimer: 1s = 0
 
             display:
                 type: str
@@ -540,12 +553,14 @@ item_structs:
                 sqb_command: player.control.connect
                 sqb_read: true
                 sqb_write: true
+                remark: ip|www.mysqueezebox.com|www.test.mysqueezebox.com
 
             disconnect:
                 type: str
                 sqb_command: player.control.disconnect
                 sqb_read: true
                 sqb_write: true
+                remark: ip|www.mysqueezebox.com|www.test.mysqueezebox.com
 
             time:
                 type: num
@@ -562,7 +577,7 @@ item_structs:
                     type: bool
                     eval: True if sh....playmode() == "play" else None
                     enforce_updates: 'true'
-                    cycle: 10 = True
+                    cycle: '10'
                     sqb_read_group_trigger: player.control.time_poll
 
             forward:
@@ -586,6 +601,7 @@ item_structs:
                 sqb_command: player.control.playsong
                 sqb_read: false
                 sqb_write: true
+                remark: song URL, playlist or directory
 
             sleep:
                 type: num
@@ -634,6 +650,15 @@ item_structs:
                     type: list
                     sqb_lookup: SHUFFLE#list
 
+            count:
+                type: num
+                sqb_command: player.playlist.count
+                sqb_read: true
+                sqb_write: false
+                sqb_read_group:
+                -   player
+                -   player.playlist
+
             index:
                 type: str
                 sqb_command: player.playlist.index
@@ -648,20 +673,11 @@ item_structs:
                 type: str
                 sqb_command: player.playlist.name
                 sqb_read: true
-                sqb_write: false
-                sqb_read_group:
-                -   player
-                -   player.playlist
-                sqb_read_initial: true
-
-            count:
-                type: num
-                sqb_command: player.playlist.count
-                sqb_read: true
                 sqb_write: true
                 sqb_read_group:
                 -   player
                 -   player.playlist
+                sqb_read_initial: true
 
             id:
                 type: num
@@ -677,54 +693,63 @@ item_structs:
                 sqb_command: player.playlist.save
                 sqb_read: true
                 sqb_write: true
+                enforce_updates: true
 
             load:
                 type: str
                 sqb_command: player.playlist.load
                 sqb_read: true
                 sqb_write: true
+                enforce_updates: true
 
             loadalbum:
                 type: str
                 sqb_command: player.playlist.loadalbum
                 sqb_read: true
                 sqb_write: true
+                enforce_updates: true
 
             loadtracks:
                 type: str
                 sqb_command: player.playlist.loadtracks
                 sqb_read: true
                 sqb_write: true
+                enforce_updates: true
 
             add:
                 type: str
                 sqb_command: player.playlist.add
                 sqb_read: true
                 sqb_write: true
+                enforce_updates: true
 
             addalbum:
                 type: str
                 sqb_command: player.playlist.addalbum
                 sqb_read: true
                 sqb_write: true
+                enforce_updates: true
 
             addtracks:
                 type: str
                 sqb_command: player.playlist.addtracks
                 sqb_read: true
                 sqb_write: true
+                enforce_updates: true
 
             insertalbum:
                 type: str
                 sqb_command: player.playlist.insertalbum
                 sqb_read: true
                 sqb_write: true
+                enforce_updates: true
 
             inserttracks:
                 type: str
                 sqb_command: player.playlist.inserttracks
                 sqb_read: true
                 sqb_write: true
+                enforce_updates: true
 
             tracks:
                 type: num
@@ -749,18 +774,21 @@ item_structs:
                 sqb_command: player.playlist.delete
                 sqb_read: true
                 sqb_write: true
+                enforce_updates: true
 
             deleteitem:
                 type: str
                 sqb_command: player.playlist.deleteitem
                 sqb_read: true
                 sqb_write: true
+                enforce_updates: true
 
             deletealbum:
                 type: str
                 sqb_command: player.playlist.deletealbum
                 sqb_read: true
                 sqb_write: true
+                enforce_updates: true
 
             preview:
                 type: str
@@ -963,6 +991,7 @@ item_structs:
                     sqb_read: false
                     sqb_write: true
                     sqb_custom1: ''
+                    remark: playlists|onlinelibrary|external|full|full file://some/path
 
                 running:
                     type: bool
@@ -974,6 +1003,7 @@ item_structs:
                     -   ALL.database
                     -   ALL.database.rescan
                     sqb_read_initial: true
+                    sqb_read_cycle: '60'
                     sqb_custom1: ''
 
                 progress:
@@ -1037,6 +1067,11 @@ item_structs:
                 sqb_read_initial: true
                 sqb_custom1: ''
 
+                duration_format:
+                    type: str
+                    eval: "'{}d {}h {}i {}s'.format(int(sh...()//86400), int((sh...()%86400)//3600), int((sh...()%3600)//60), round((sh...()%3600)%60))"
+                    eval_trigger: ..
+
             totalartists:
                 type: num
                 sqb_command: database.totalartists
@@ -1093,6 +1128,7 @@ item_structs:
                     -   ALL
                     -   ALL.player
                     -   ALL.player.control
+                    enforce_updates: true
                     sqb_read_initial: true
 
                 playmode:
@@ -1104,6 +1140,7 @@ item_structs:
                     -   ALL
                     -   ALL.player
                     -   ALL.player.control
+                    enforce_updates: true
                     sqb_read_initial: true
 
                 playpause:
@@ -1111,12 +1148,14 @@ item_structs:
                     sqb_command: player.control.playpause
                     sqb_read: true
                     sqb_write: true
+                    enforce_updates: true
 
                 stop:
                     type: bool
                     sqb_command: player.control.stop
                     sqb_read: true
                     sqb_write: true
+                    enforce_updates: true
 
                 mute:
                     type: bool
@@ -1127,6 +1166,7 @@ item_structs:
                     -   ALL
                     -   ALL.player
                     -   ALL.player.control
+                    enforce_updates: true
                     sqb_read_initial: true
 
                 volume:
@@ -1226,6 +1266,7 @@ item_structs:
                     sqb_command: player.control.unsync
                     sqb_read: false
                     sqb_write: true
+                    autotimer: 1s = 0
 
                 display:
                     type: str
@@ -1243,12 +1284,14 @@ item_structs:
                     sqb_command: player.control.connect
                     sqb_read: true
                     sqb_write: true
+                    remark: ip|www.mysqueezebox.com|www.test.mysqueezebox.com
 
                 disconnect:
                     type: str
                     sqb_command: player.control.disconnect
                     sqb_read: true
                     sqb_write: true
+                    remark: ip|www.mysqueezebox.com|www.test.mysqueezebox.com
 
                 time:
                     type: num
@@ -1266,7 +1309,7 @@ item_structs:
                         type: bool
                         eval: True if sh....playmode() == "play" else None
                         enforce_updates: 'true'
-                        cycle: 10 = True
+                        cycle: '10'
                         sqb_read_group_trigger: player.control.time_poll
 
                 forward:
@@ -1290,6 +1333,7 @@ item_structs:
                     sqb_command: player.control.playsong
                     sqb_read: false
                     sqb_write: true
+                    remark: song URL, playlist or directory
 
                 sleep:
                     type: num
@@ -1341,6 +1385,16 @@ item_structs:
                         type: list
                         sqb_lookup: SHUFFLE#list
 
+                count:
+                    type: num
+                    sqb_command: player.playlist.count
+                    sqb_read: true
+                    sqb_write: false
+                    sqb_read_group:
+                    -   ALL
+                    -   ALL.player
+                    -   ALL.player.playlist
+
                 index:
                     type: str
                     sqb_command: player.playlist.index
@@ -1373,68 +1427,68 @@ item_structs:
                     -   ALL.player
                     -   ALL.player.playlist
 
-                count:
-                    type: num
-                    sqb_command: player.playlist.count
-                    sqb_read: true
-                    sqb_write: true
-                    sqb_read_group:
-                    -   ALL.player
-                    -   ALL.player.playlist
-
                 save:
                     type: str
                     sqb_command: player.playlist.save
                     sqb_read: true
                     sqb_write: true
+                    enforce_updates: true
 
                 load:
                     type: str
                     sqb_command: player.playlist.load
                     sqb_read: true
                     sqb_write: true
+                    enforce_updates: true
 
                 loadalbum:
                     type: str
                     sqb_command: player.playlist.loadalbum
                     sqb_read: true
                     sqb_write: true
+                    enforce_updates: true
 
                 loadtracks:
                     type: str
                     sqb_command: player.playlist.loadtracks
                     sqb_read: true
                     sqb_write: true
+                    enforce_updates: true
 
                 add:
                     type: str
                     sqb_command: player.playlist.add
                     sqb_read: true
                     sqb_write: true
+                    enforce_updates: true
 
                 addalbum:
                     type: str
                     sqb_command: player.playlist.addalbum
                     sqb_read: true
                     sqb_write: true
+                    enforce_updates: true
 
                 addtracks:
                     type: str
                     sqb_command: player.playlist.addtracks
                     sqb_read: true
                     sqb_write: true
+                    enforce_updates: true
 
                 insertalbum:
                     type: str
                     sqb_command: player.playlist.insertalbum
                     sqb_read: true
                     sqb_write: true
+                    enforce_updates: true
 
                 inserttracks:
                     type: str
                     sqb_command: player.playlist.inserttracks
                     sqb_read: true
                     sqb_write: true
+                    enforce_updates: true
 
                 tracks:
                     type: num
@@ -1460,18 +1514,21 @@ item_structs:
                     sqb_command: player.playlist.delete
                     sqb_read: true
                     sqb_write: true
+                    enforce_updates: true
 
                 deleteitem:
                     type: str
                     sqb_command: player.playlist.deleteitem
                     sqb_read: true
                     sqb_write: true
+                    enforce_updates: true
 
                 deletealbum:
                     type: str
                     sqb_command: player.playlist.deletealbum
                     sqb_read: true
                     sqb_write: true
+                    enforce_updates: true
 
                 preview:
                     type: str
