@@ -54,6 +54,8 @@ class DatabaseAddOn(SmartPlugin):
     """
 
     PLUGIN_VERSION = '1.1.1'
+    # ToDo: allow list of ignore_values and <>
+    # ToDo: cache temperatureseries raw data
 
     def __init__(self, sh):
         """
@@ -254,6 +256,8 @@ class DatabaseAddOn(SmartPlugin):
                 database_item = database_item_path
             else:
                 database_item = get_database_item()
+                if database_item:
+                    db_addon_startup = bool(self.get_iattr_value(database_item.conf, 'db_addon_startup'))
             if database_item is None:
                 self.logger.warning(f"No database item found for {item.path()}: Item ignored. Maybe you should check instance of database plugin.")
                 return
@@ -818,6 +822,9 @@ class DatabaseAddOn(SmartPlugin):
                 self.remove_item(item)
             else:
                 item_config.update({'database_item': database_item})
+                db_addon_startup = bool(self.get_iattr_value(database_item.conf, 'db_addon_startup'))
+                if db_addon_startup:
+                    item_config.update({'startup': True})
 
     @property
     def log_level(self):
