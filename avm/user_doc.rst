@@ -48,7 +48,8 @@ Konfiguration des Plugins
 Diese Plugin Parameter und die Informationen zur Item-spezifischen Konfiguration des Plugins sind
 unter :doc:`/plugins_doc/config/avm` beschrieben.
 
-.. note:: Kürzere Updatezyklen können abhängig vom Fritzdevice aufgrund hoher CPU Auslastung zu Problemen (u.a.
+
+.. note:: Kürzere Updatezyklen können abhängig vom FritzDevice aufgrund hoher CPU Auslastung zu Problemen (u.a.
 zu Nichterreichbarkeit des Webservice) führen. Wird ein kürzerer Updatezyklus benötigt, sollte das shNG Log beobachtet
 werden. Dort werden entsprechende Fehlermeldungen hinterlegt.
 
