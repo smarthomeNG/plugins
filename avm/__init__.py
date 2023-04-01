@@ -4022,6 +4022,8 @@ def get_node_value_as_int(elem, node) -> int:
         return int(value)
     except TypeError:
         return 0
+    except ValueError:
+        return 0
 
 
 def get_node_value_as_int_as_bool(elem, node) -> bool:
