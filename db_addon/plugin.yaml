@@ -552,6 +552,12 @@ item_attributes:
             de: 'Wert der bei Abfrage bzw. Auswertung der Datenbank für diese Item ignoriert werden soll'
             en: 'Value which will be ignored at database query'
 
+    db_addon_ignore_value_list:
+        type: list(str)
+        description:
+            de: "Liste von Vergleichsoperatoren, die bei Abfrage bzw. Auswertung der Datenbank für dieses Item berücksichtigt werden sollen. Bsp: ['> 0', '< 35']"
+            en: "List of comparison operators which will be used at database query"
+
     db_addon_database_item:
         type: str
         description:
