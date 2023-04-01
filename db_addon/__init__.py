@@ -54,7 +54,6 @@ class DatabaseAddOn(SmartPlugin):
     """
 
     PLUGIN_VERSION = '1.1.1'
-    # ToDo: allow list of ignore_values and <>
     # ToDo: cache temperatureseries raw data
 
     def __init__(self, sh):
