@@ -44,6 +44,12 @@ parameters:
             en: "At items having a entry of that list in path, val_num=0 will be ignored for database queries. 
                 Example: temp | hum"
 
+    filter_values:
+        type: dict
+        description:
+            de: "Definition von Filtern als Wörterbuch {'Teil des Itempfades: [Liste von Vergleichsoperatoren als String]} Bsp: {'temp': ['> -10', '< 85'], 'hum': ['>= 0', '<= 100']}"
+            en: "Definition of filters as dict {'part of item path': [List of comparison operators als string]} Example: {'temp': ['> -10', '< 85'], 'hum': ['>= 0', '<= 100']}"
+
     use_oldest_entry:
         type: bool
         default: False

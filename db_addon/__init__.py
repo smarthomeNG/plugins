@@ -104,6 +104,7 @@ class DatabaseAddOn(SmartPlugin):
         self.db_configname = self.get_parameter_value('database_plugin_config')
         self.startup_run_delay = self.get_parameter_value('startup_run_delay')
         self.ignore_0 = self.get_parameter_value('ignore_0')
+        self.filter_values = self.get_parameter_value('filter_values')
         self.use_oldest_entry = self.get_parameter_value('use_oldest_entry')
 
         # init cache dicts
@@ -271,6 +272,10 @@ class DatabaseAddOn(SmartPlugin):
                 if not db_addon_ignore_value_list:
                     db_addon_ignore_value_list = []
                 db_addon_ignore_value_list.append("!= 0")
+            if self.filter_values:
+                for entry in list(self.filter_values.keys()):
+                    if entry in str(item.path()):
+                        db_addon_ignore_value_list.extend(self.filter_values[entry])
             if db_addon_ignore_value_list:
                 db_addon_ignore_value_list = format_db_addon_ignore_value_list()
 
@@ -605,7 +610,7 @@ class DatabaseAddOn(SmartPlugin):
             if self.execute_debug:
                 self.logger.debug(f"handle_ondemand: 'zaehlerstand' detected.")
 
-            result = self._handle_zaehlerstand(database_item, db_addon_fct, ignore_value_list)
+            result = self._handle_zaehlerstand(database_item, db_addon_fct, ignore_value_list)[0][1]
 
         # handle item starting with 'minmax_'
         elif db_addon_fct in ALL_HISTORIE_ATTRIBUTES:
