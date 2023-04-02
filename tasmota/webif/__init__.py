@@ -69,10 +69,12 @@ class WebInterface(SmartPluginWebIf):
         pagelength = self.plugin.get_parameter_value('webif_pagelength')
         tmpl = self.tplenv.get_template('index.html')
 
+        items = self.plugin.get_item_list()
+
         return tmpl.render(p=self.plugin,
                            webif_pagelength=pagelength,
-                           items=self.plugin.tasmota_items,
-                           item_count=len(self.plugin.tasmota_items),
+                           items=items,
+                           item_count=len(items),
                            plugin_shortname=self.plugin.get_shortname(),
                            plugin_version=self.plugin.get_version(),
                            plugin_info=self.plugin.get_info(),
@@ -97,7 +99,7 @@ class WebInterface(SmartPluginWebIf):
             data['broker_uptime'] = self.plugin.broker_uptime()
 
             data['item_values'] = {}
-            for item in self.plugin.tasmota_items:
+            for item in self.plugin.get_item_list():
                 data['item_values'][item.id()] = {}
                 data['item_values'][item.id()]['value'] = item.property.value
                 data['item_values'][item.id()]['last_update'] = item.property.last_update.strftime('%d.%m.%Y %H:%M:%S')
