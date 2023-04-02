@@ -1394,9 +1394,7 @@ class Tasmota(MqttPlugin):
 
         self.logger.info(f"Interview of all known tasmota devices started.")
 
-        tasmota_device_list = list(set(list(self.tasmota_device + self.discovered_device)))
-
-        for device in tasmota_device_list:
+        for device in self.tasmota_device():
             self.logger.debug(f"Interview {device}.")
             self._interview_device(device)
             self.logger.debug(f"Set Telemetry period for {device}.")
