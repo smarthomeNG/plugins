@@ -537,7 +537,7 @@ class DatabaseAddOn(SmartPlugin):
         while self.alive:
             try:
                 queue_entry = self.item_queue.get(True, 10)
-                self.logger.info(f"     Queue Entry: '{queue_entry}' received.")
+                # self.logger.info(f"     Queue Entry: '{queue_entry}' received.")
             except queue.Empty:
                 self.active_queue_item = '-'
                 pass
@@ -809,13 +809,13 @@ class DatabaseAddOn(SmartPlugin):
                     self.logger.info(f"Received value={value} is not influencing min / max value. Therefore item {item.path()} will not be changed.")
 
             # handle verbrauch on-change items ending with heute, woche, monat, jahr
-            elif _db_addon_fct.startswith('verbrauch') and len(_var) == 2 and _var[1] in ['heute', 'woche', 'monat', 'jahr']:
+            elif len(_var) == 2 and _var[0] == 'verbrauch' and _var[1] in ['heute', 'woche', 'monat', 'jahr']:
                 _timeframe = convert_timeframe(_var[1])
-                _cache_dict = self.previous_values[_timeframe]
                 if _timeframe is None:
                     return
 
                 # make sure, that database item is in cache dict
+                _cache_dict = self.previous_values[_timeframe]
                 if _database_item not in _cache_dict:
                     _query_params = {'func': 'max', 'item': _database_item, 'timeframe': _timeframe, 'start': 1, 'end': 1, 'ignore_value_list': _ignore_value_list}
                     _cached_value = self._query_item(**_query_params)[0][1]
@@ -2185,7 +2185,7 @@ class DatabaseAddOn(SmartPlugin):
         result = _handle_query_result(self._query_log_timestamp(**query_params))
 
         if self.prepare_debug:
-            self.logger.debug(f"_query_item: value for item={item.path()} with {timeframe=}, {func=}: {result}")
+            self.logger.debug(f"_query_item: value for item={item.path()} with {query_params=}: {result}")
 
         return result
 
@@ -2274,17 +2274,17 @@ class DatabaseAddOn(SmartPlugin):
 
         # define query parts
         _select = {
-            'avg':         'time, ROUND(AVG(val_num * duration) / AVG(duration), 1) as value ',
-            'avg1':        'time, ROUND(AVG(value), 1) as value FROM (SELECT time, ROUND(AVG(val_num), 1) as value ',
-            'min':         'time, ROUND(MIN(val_num), 1) as value ',
-            'max':         'time, ROUND(MAX(val_num), 1) as value ',
-            'max1':        'time, ROUND(MAX(value), 1) as value FROM (SELECT time, ROUND(MAX(val_num), 1) as value ',
-            'sum':         'time, ROUND(SUM(val_num), 1) as value ',
-            'on':          'time, ROUND(SUM(val_bool * duration) / SUM(duration), 1) as value ',
-            'integrate':   'time, ROUND(SUM(val_num * duration),1) as value ',
-            'sum_max':     'time, ROUND(SUM(value), 1) as value FROM (SELECT time, ROUND(MAX(val_num), 1) as value ',
-            'sum_avg':     'time, ROUND(SUM(value), 1) as value FROM (SELECT time, ROUND(AVG(val_num * duration) / AVG(duration), 1) as value ',
-            'sum_min_neg': 'time, ROUND(SUM(value), 1) as value FROM (SELECT time, IF(min(val_num) < 0, ROUND(MIN(val_num), 1), 0) as value ',
+            'avg':         'time, AVG(val_num * duration) / AVG(duration) as value ',
+            'avg1':        'time, AVG(value) as value FROM (SELECT time, ROUND(AVG(val_num), 1) as value ',
+            'min':         'time, MIN(val_num) as value ',
+            'max':         'time, MAX(val_num) as value ',
+            'max1':        'time, MAX(value) as value FROM (SELECT time, ROUND(MAX(val_num), 1) as value ',
+            'sum':         'time, SUM(val_num) as value ',
+            'on':          'time, SUM(val_bool * duration) / SUM(duration) as value ',
+            'integrate':   'time, SUM(val_num * duration) as value ',
+            'sum_max':     'time, SUM(value) as value FROM (SELECT time, ROUND(MAX(val_num), 1) as value ',
+            'sum_avg':     'time, SUM(value) as value FROM (SELECT time, ROUND(AVG(val_num * duration) / AVG(duration), 1) as value ',
+            'sum_min_neg': 'time, SUM(value) as value FROM (SELECT time, IF(min(val_num) < 0, ROUND(MIN(val_num), 1), 0) as value ',
             'diff_max':    'time, value1 - LAG(value1) OVER (ORDER BY time) AS value FROM (SELECT time, ROUND(MAX(val_num), 1) as value1 ',
             'next':        'time, val_num as value ',
             'raw':         'time, val_num as value '
