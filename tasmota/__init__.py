@@ -1636,78 +1636,66 @@ class Tasmota(MqttPlugin):
     def log_level(self):
         return self.logger.getEffectiveLevel()
 
-    @property
     def retained_msg_count(self):
         return self._broker.retained_messages
 
-    @property
     def tasmota_device(self):
         return list(self.tasmota_devices.keys())
 
-    @property
     def has_zigbee(self):
         for tasmota_topic in self.tasmota_devices:
             if self.tasmota_devices[tasmota_topic]['zigbee']:
                 return True
         return False
 
-    @property
     def has_lights(self):
         for tasmota_topic in self.tasmota_devices:
             if self.tasmota_devices[tasmota_topic]['lights']:
                 return True
         return False
 
-    @property
     def has_rf(self):
         for tasmota_topic in self.tasmota_devices:
             if self.tasmota_devices[tasmota_topic]['rf']:
                 return True
         return False
 
-    @property
     def has_relais(self):
         for tasmota_topic in self.tasmota_devices:
             if self.tasmota_devices[tasmota_topic]['relais']:
                 return True
         return False
 
-    @property
     def has_energy_sensor(self):
         for tasmota_topic in self.tasmota_devices:
             if 'ENERGY' in self.tasmota_devices[tasmota_topic]['sensors']:
                 return True
         return False
 
-    @property
     def has_env_sensor(self):
         for tasmota_topic in self.tasmota_devices:
             if any([i in self.tasmota_devices[tasmota_topic]['sensors'] for i in self.ENV_SENSOR]):
                 return True
         return False
 
-    @property
     def has_ds18b20_sensor(self):
         for tasmota_topic in self.tasmota_devices:
             if 'DS18B20' in self.tasmota_devices[tasmota_topic]['sensors']:
                 return True
         return False
 
-    @property
     def has_am2301_sensor(self):
         for tasmota_topic in self.tasmota_devices:
             if 'AM2301' in self.tasmota_devices[tasmota_topic]['sensors']:
                 return True
         return False
 
-    @property
     def has_sht3x_sensor(self):
         for tasmota_topic in self.tasmota_devices:
             if 'SHT3X' in self.tasmota_devices[tasmota_topic]['sensors']:
                 return True
         return False
 
-    @property
     def has_other_sensor(self):
         for tasmota_topic in self.tasmota_devices:
             for sensor in self.tasmota_devices[tasmota_topic]['sensors']:
