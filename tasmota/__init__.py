@@ -194,16 +194,14 @@ class Tasmota(MqttPlugin):
                 if tasmota_attr == 'relay':
                     if not tasmota_relay:
                         tasmota_relay = 1
-                    item_type = f'{tasmota_attr}.{tasmota_relay}'
-
+                    item_mapping = f'{tasmota_topic}.{tasmota_attr}.{tasmota_relay}'
                 elif tasmota_attr == 'rf_key' and tasmota_rf_details:
-                    item_type = f'{tasmota_attr}.{tasmota_rf_details}'
-
+                    item_mapping = f'{tasmota_topic}.{tasmota_attr}.{tasmota_rf_details}'
                 else:
-                    item_type = tasmota_attr
+                    item_mapping = f'{tasmota_topic}.{tasmota_attr}'
 
                 # define item_config
-                item_config_data_dict = {'function': 'classic', 'attr': tasmota_attr, 'item_type': item_type}
+                item_config_data_dict = {'function': 'standard', 'attr': tasmota_attr}
 
             # handle tasmota zigbee
             elif tasmota_zb_device and tasmota_zb_attr:
@@ -220,21 +218,27 @@ class Tasmota(MqttPlugin):
                     pass
 
                 # define item_config
-                item_config_data_dict = {'function': 'zigbee', 'device': tasmota_zb_device, 'attr': tasmota_zb_attr, 'item_type': f'{tasmota_zb_device}.{tasmota_zb_attr}'}
+                item_mapping = f'{tasmota_topic}.{tasmota_zb_device}.{tasmota_zb_attr}'
+                item_config_data_dict = {'function': 'zigbee', 'device': tasmota_zb_device, 'attr': tasmota_zb_attr}
 
             # handle tasmota zigbee groups
             elif tasmota_zb_group and tasmota_zb_attr:
                 self.logger.info(f"Item={item.path()} identified for Tasmota Zigbee with tasmota_zb_group={tasmota_zb_group} and tasmota_zb_attr={tasmota_zb_attr}")
                 tasmota_zb_attr = tasmota_zb_attr.lower()
 
-                item_config_data_dict = {'function': 'zigbee_group', 'group': tasmota_zb_group, 'attr': tasmota_zb_attr, 'item_type': f'{tasmota_zb_group}.{tasmota_zb_attr}'}
+                # define item_config
+                item_mapping = f'{tasmota_topic}.{tasmota_zb_group}.{tasmota_zb_attr}'
+                item_config_data_dict = {'function': 'zigbee_group', 'group': tasmota_zb_group, 'attr': tasmota_zb_attr}
 
             # handle tasmota smartmeter
             elif tasmota_sml_device and tasmota_sml_attr:
                 self.logger.info(f"Item={item.path()} identified for Tasmota SML with tasmota_sml_device={tasmota_sml_device} and tasmota_sml_attr={tasmota_sml_attr}")
                 tasmota_sml_attr = tasmota_sml_attr.lower()
 
-                item_config_data_dict = {'function': 'sml', 'device': tasmota_sml_device, 'attr': tasmota_sml_attr, 'item_type': f'{tasmota_sml_device}.{tasmota_sml_attr}'}
+                item_mapping = f'{tasmota_topic}.{tasmota_sml_device}.{tasmota_sml_attr}'
+
+                # define item_config
+                item_config_data_dict = {'function': 'sml', 'device': tasmota_sml_device, 'attr': tasmota_sml_attr}
 
             # handle everything else
             else:
@@ -250,7 +254,7 @@ class Tasmota(MqttPlugin):
             self.tasmota_devices[tasmota_topic]['connected_to_item'] = True
 
             # add item to plugin item dict
-            self.add_item(item, mapping=tasmota_topic, config_data_dict=item_config_data_dict)
+            self.add_item(item, mapping=item_mapping, config_data_dict=item_config_data_dict)
 
             return self.update_item
 
@@ -1458,10 +1462,13 @@ class Tasmota(MqttPlugin):
         src = f"{tasmota_topic}:{info_topic}" if info_topic != '' else f"{tasmota_topic}"
 
         # get item
-        item_list = self.get_item_list('item_type', item_type)
+        item_list = self.get_items_for_mapping(f'{tasmota_topic}.{item_type}')
         if not item_list:
             self.logger.debug(f"{tasmota_topic}: No item for item_type '{item_type}' defined to set to '{value}' provided by '{src}'.")
             return
+
+        if len(item_list) > 1:
+            self.logger.info(f"{tasmota_topic}: More than one item for item_type '{item_type}' found to be set to '{value}' provided by '{src}'. First one will be used.")
 
         item = item_list[0]
         tasmota_rf_details = self.get_iattr_value(item.conf, 'tasmota_rf_key')
@@ -1479,7 +1486,7 @@ class Tasmota(MqttPlugin):
                 return
 
         # set item value
-        self.logger.info(f"Item '{item.path()}' via itemtype '{item_type}' set to value '{value}' provided by '{src}'.")
+        self.logger.info(f"Item '{item.path()}' via item_type '{item_type}' set to value '{value}' provided by '{src}'.")
         item(value, self.get_shortname(), src)
 
     def _handle_new_discovered_device(self, tasmota_topic):
