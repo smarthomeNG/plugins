@@ -236,11 +236,11 @@ class DatabaseAddOn(SmartPlugin):
             OPERATOR_LIST = ['<=', '<>', '!=', '>=', '<=', '=', '>', '<']
 
             db_addon_ignore_value_list_formatted = []
-            for entry in db_addon_ignore_value_list:
-                entry = entry.strip()
+            for _entry in db_addon_ignore_value_list:
+                _entry = _entry.strip()
                 for op in OPERATOR_LIST:
-                    if op in entry:
-                        var = entry.split(op, 1)
+                    if op in _entry:
+                        var = _entry.split(op, 1)
                         value = var[1].strip()
                         if value.isdigit() or to_float(value):
                             db_addon_ignore_value_list_formatted.append(f"{op} {value}")
