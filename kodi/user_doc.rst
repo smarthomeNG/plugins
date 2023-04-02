@@ -124,7 +124,8 @@ Ein Auszug der wichtigsten Aktionen:
 Struct Vorlagen
 ===============
 
-Ab smarthomeNG 1.6 können Vorlagen aus dem Plugin einfach eingebunden werden. Dabei stehen folgende Vorlagen zur Verfügung:
+Ab smarthomeNG 1.6 können Vorlagen aus dem Plugin einfach eingebunden werden. Dabei stehen aktuell folgende Vorlagen zur Verfügung:
 
-- query: Enthält Funktionen, die zur Abfrage von Kodi Infos dienen.
+- info: Enthält Funktionen, die zur Abfrage von Kodi Infos dienen.
 - control: Enthält Funktionen, mit denen Kodi gesteuert werden kann. Hier sind auch die wichtigsten input Befehle als eigene Items hinterlegt (play, pause, next, etc.)
+- examples: Vorlage-Struktur mit weiteren Beispielen
