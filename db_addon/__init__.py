@@ -1155,7 +1155,7 @@ class DatabaseAddOn(SmartPlugin):
         group2 = None
 
         # handle functions starting with 'zaehlerstand' like 'zaehlerstand_heute_minus1'
-        if len(_var) == 3 and _var[1] == 'zaehlerstand':
+        if len(_var) == 3 and _var[0] == 'zaehlerstand':
             func = 'max'
             timeframe = convert_timeframe(_var[1])
             start = to_int(_var[2][-1])
@@ -1165,7 +1165,7 @@ class DatabaseAddOn(SmartPlugin):
                 return
 
         # handle all functions 'serie_min/max/avg' in format 'serie_minmax_timeframe_func_count_group' like 'serie_zaehlerstand_tag_30d'
-        elif _var[0] == 'serie' and _var[1] == 'zaehlerstand':
+        elif len(_var) == 4 and _var[0] == 'serie' and _var[1] == 'zaehlerstand':
             func = 'max'
             timeframe = convert_timeframe(_var[2])
             start = to_int(_var[3][:-1])
