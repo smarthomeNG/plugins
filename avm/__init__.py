@@ -492,7 +492,7 @@ class FritzDevice:
 
     ERROR_COUNT_TO_BE_BLACKLISTED = 2
 
-    def __init__(self, host, port, ssl, verify, username, password, call_monitor_incoming_filter, use_tr064_backlist, plugin_instance=None):
+    def __init__(self, host, port, ssl, verify, username, password, call_monitor_incoming_filter, use_tr064_backlist, plugin_instance):
         """
         Init class FritzDevice
         """
@@ -805,6 +805,10 @@ class FritzDevice:
     # ----------------------------------
     def cyclic_item_update(self, read_all: bool = False):
         """Updates Item Values"""
+
+        if not self._plugin_instance.alive:
+            return
+
         if not self.connected:
             self.logger.warning("FritzDevice not connected. No update of item values possible.")
             return
@@ -813,6 +817,9 @@ class FritzDevice:
 
         # iterate over items and get data
         for item in self.items:
+
+            if not self._plugin_instance.alive:
+                return
 
             # get item config
             item_config = self.items[item]
