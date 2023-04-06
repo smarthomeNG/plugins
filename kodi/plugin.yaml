@@ -8,15 +8,15 @@ plugin:
     requirements:
         de: 'Es ist eine Kodi Installation v12 oder höher notwendig, bei der in den Einstellungen "Allow programs on other systems to control Kodi" aktiviert ist.'
         en: 'You need one or more Kodi (12 a.k.a. Frodo or above) with system-settings-service "Allow programs on other systems to control Kodi" enabled.'
-    maintainer: onkelandy
-    tester: psilo, Morg
+    maintainer: Morg, onkelandy
+    tester: psilo
     state: ready
     keywords: mediacenter kodi xmbc
     documentation: http://smarthomeng.de/user/plugins/kodi/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1364598-supportthread-für-kodi-plugin
 
 # Following entries are for Smart-Plugins:
-    version: 1.6.0                 # Plugin version
+    version: 1.6.1                 # Plugin version
     sh_minversion: 1.4            # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True
