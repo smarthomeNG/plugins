@@ -211,12 +211,15 @@ class RCS1000N:
         '''
         try:
             rfdevice = RFDevice(self.gpio)
+        except Exception as err:
+            logging.error('Error: during instantiation of object: {}'.format(err))
+        else:
             rfdevice.enable_tx()
             rfdevice.tx_repeat = 10
             values = self.prepareCodes(systemCode, btn_code, status)
             send_code = self.calc_DecimalCode_python_style(*values)
             self.config['code'] = send_code
             rfdevice.tx_code(**self.config)
-
-        finally:
             rfdevice.cleanup()
+        finally:
+            pass
