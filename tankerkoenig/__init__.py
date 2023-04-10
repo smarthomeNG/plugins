@@ -37,7 +37,7 @@ from .webif import WebInterface
 
 
 class TankerKoenig(SmartPlugin):
-    PLUGIN_VERSION = "2.0.1"
+    PLUGIN_VERSION = "2.0.2"
 
     _base_url = 'https://creativecommons.tankerkoenig.de/json'
     _detail_url_suffix = 'detail.php'
@@ -199,7 +199,7 @@ class TankerKoenig(SmartPlugin):
         json_obj = self._request_stations(lat=lat, lon=lon, price=price, sort=sort, rad=rad)
 
         keys = ['place', 'brand', 'houseNumber', 'street', 'id', 'lng', 'name', 'lat', 'price', 'dist', 'isOpen', 'postCode']
-        if json_obj.get('stations', None) is None:
+        if json_obj is None or json_obj.get('stations', None) is None:
             self.logger.warning(f"Plugin '{self.get_fullname()}': Tankerkönig didn't return any station")
         else:
             for i in json_obj['stations']:
