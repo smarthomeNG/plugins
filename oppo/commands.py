@@ -24,16 +24,16 @@ commands = {
             'trackremaining': {'read': True, 'write': False, 'read_cmd': '#QTR', 'item_type': 'str', 'dev_datatype': 'raw', 'reply_pattern': r'@QTR OK (.*)'}
         },
         'firmware': {'read': True, 'write': False, 'read_cmd': '#QVR', 'item_type': 'str', 'dev_datatype': 'raw', 'reply_pattern': '@QVR OK (.*)', 'item_attrs': {'initial': True}},
-        'status': {'read': True, 'write': False, 'read_cmd': '#QPL', 'item_type': 'str', 'dev_datatype': 'raw', 'reply_pattern': ['@QPL OK {LOOKUP}', '@UPL {LOOKUP}', '@OK {LOOKUP}'], 'item_attrs': {'initial': True}, 'lookup': 'STATUS'},
-        'disctype': {'read': True, 'write': False, 'read_cmd': '#QDT', 'item_type': 'str', 'dev_datatype': 'raw', 'reply_pattern': ['@QDT (?:OK\s)?{LOOKUP}', '@UDT {LOOKUP}', '@OK {LOOKUP}'], 'item_attrs': {'initial': True}, 'lookup': 'DISCTYPE'},
+        'status': {'read': True, 'write': False, 'read_cmd': '#QPL', 'item_type': 'str', 'dev_datatype': 'raw', 'reply_pattern': ['@QPL OK {LOOKUP}$', '@UPL {LOOKUP}$', '@OK {LOOKUP}$'], 'item_attrs': {'initial': True}, 'lookup': 'STATUS'},
+        'disctype': {'read': True, 'write': False, 'read_cmd': '#QDT', 'item_type': 'str', 'dev_datatype': 'raw', 'reply_pattern': ['@QDT (?:OK\s)?{LOOKUP}$', '@UDT {LOOKUP}$', '@OK {LOOKUP}$'], 'item_attrs': {'initial': True}, 'lookup': 'DISCTYPE'},
         'totaltracks': {'read': True, 'write': False, 'read_cmd': '#QTK', 'item_type': 'num', 'dev_datatype': 'raw', 'reply_pattern': [r'@QTK OK (?:\d{2})/(\d{2})', r'@OK (?:\d{2})/(\d{2})', r'@UAT (?:.*) (?:\d{2})/(\d{2}) (?:[A-Z]{3}) (?:\d).(?:\d)'], 'item_attrs': {'initial': True}},
         'displaytype': {'read': True, 'write': True, 'write_cmd': '#STC {RAW_VALUE_UPPER}', 'item_type': 'str', 'dev_datatype': 'raw', 'reply_pattern': '@STC OK (.*)'},
-        'audiotype': {'read': True, 'write': False, 'read_cmd': '#QAT', 'item_type': 'str', 'dev_datatype': 'raw', 'reply_pattern': [r'@QAT OK {LOOKUP}', r'@UAT {LOOKUP}'], 'item_attrs': {'initial': True}, 'lookup': 'AUDIOTYPE'},
+        'audiotype': {'read': True, 'write': False, 'read_cmd': '#QAT', 'item_type': 'str', 'dev_datatype': 'raw', 'reply_pattern': [r'@QAT OK {LOOKUP}$', r'@UAT {LOOKUP}$'], 'item_attrs': {'initial': True}, 'lookup': 'AUDIOTYPE'},
         'channels': {'read': True, 'write': False, 'read_cmd': '#QAT', 'item_type': 'str', 'dev_datatype': 'raw', 'reply_pattern': r'@UAT (?:[A-Z]{2}) (?:\d{2})/(?:\d{2}) (?:[A-Z]{3}) (.*)'},
         'trackinfo': {'read': True, 'write': False, 'read_cmd': '#QTK', 'item_type': 'num', 'dev_datatype': 'raw', 'reply_pattern': '@UTC (.*)'},
         'inputresolution': {'read': True, 'write': False, 'item_type': 'str', 'dev_datatype': 'raw', 'reply_pattern': '@UVO (?:_?)([a-zA-Z0-9])(?:_?)(?:\s.*)'},
         'outputresolution': {'read': True, 'write': False, 'item_type': 'str', 'dev_datatype': 'raw', 'reply_pattern': '@UVO (?:.*)(?:\s_?)([a-zA-Z0-9])(?:_?)'},
-        'aspectratio': {'read': True, 'write': False, 'item_type': 'str', 'dev_datatype': 'raw', 'reply_pattern': '@UAR {LOOKUP}', 'lookup': 'ASPECT'},
+        'aspectratio': {'read': True, 'write': False, 'item_type': 'str', 'dev_datatype': 'raw', 'reply_pattern': '@UAR {LOOKUP}$', 'lookup': 'ASPECT'},
         'U3D': {'read': True, 'write': False, 'item_type': 'str', 'dev_datatype': 'raw', 'reply_pattern': '@U3D (2D|3D)'},
     },
     'general': {
@@ -43,8 +43,8 @@ commands = {
     'control': {
         'power': {'read': True, 'write': True, 'read_cmd': '#QPW', 'write_cmd': '#P{VALUE}', 'item_type': 'bool', 'dev_datatype': 'onoff', 'reply_pattern': ['@POFF OK (OFF)', '@PON OK (ON)', '@QPW OK (ON|OFF)', '@UPW (0|1)'], 'item_attrs': {'initial': True}},
         'pureaudio': {'read': True, 'write': True, 'write_cmd': '#PUR', 'item_type': 'bool', 'dev_datatype': 'onoff', 'reply_pattern': '@PUR OK (ON|OFF)', 'item_attrs': {'initial': True}},
-        'playpause': {'read': True, 'write': True, 'read_cmd': '#QPL', 'write_cmd': '{VALUE}', 'item_type': 'bool', 'dev_datatype': 'playpause', 'reply_pattern': ['@PLA OK {LOOKUP}', '@PAU OK {LOOKUP}'], 'lookup': 'PLAY'},
-        'stop': {'read': True, 'write': True, 'read_cmd': '#QPL', 'write_cmd': '#STP', 'item_type': 'bool', 'dev_datatype': 'raw', 'reply_pattern': ['@STP OK (?:(FULL\s)?){LOOKUP}'], 'lookup': 'STOP'},
+        'playpause': {'read': True, 'write': True, 'read_cmd': '#QPL', 'write_cmd': '{VALUE}', 'item_type': 'bool', 'dev_datatype': 'playpause', 'reply_pattern': ['@PLA OK {LOOKUP}$', '@PAU OK {LOOKUP}$'], 'lookup': 'PLAY'},
+        'stop': {'read': True, 'write': True, 'read_cmd': '#QPL', 'write_cmd': '#STP', 'item_type': 'bool', 'dev_datatype': 'raw', 'reply_pattern': ['@STP OK (?:(FULL\s)?){LOOKUP}$'], 'lookup': 'STOP'},
         'eject': {'read': True, 'write': True, 'write_cmd': '#EJT', 'item_type': 'bool', 'dev_datatype': 'openclose', 'reply_pattern': ['@UPL (OPEN|CLOS)', '@EJT OK (OPEN|CLOSE)'], 'item_attrs': {'initial': True}},
         'chapter': {'read': True, 'write': True, 'read_cmd': '#QCH', 'write_cmd': '#SCH {RAW_VALUE:02}', 'item_type': 'num', 'dev_datatype': 'raw', 'reply_pattern': [r'@QCH OK (\d{2})/(?:\d{2})']},
         'title': {'read': True, 'write': True, 'read_cmd': '#QTK', 'write_cmd': '#SRH T{RAW_VALUE:03}', 'item_type': 'num', 'dev_datatype': 'raw', 'reply_pattern': [r'@QTK OK (\d{2})/(?:\d{2})', '@SRH OK', r'@UAT (?:.*) (\d{2})/(?:\d{2}) (?:[A-Z]{3}) (?:\d).(?:\d)']},
@@ -56,7 +56,7 @@ commands = {
         'reverse': {'read': True, 'write': True, 'write_cmd': '#REV', 'item_type': 'bool', 'dev_datatype': 'ok', 'reply_pattern': ['@REV (.*) 1x']},
         'audio': {'read': True, 'write': True, 'write_cmd': '#AUD', 'item_type': 'bool', 'dev_datatype': 'ok', 'reply_pattern': ['@AUD (.*)']},
         'subtitle': {'read': True, 'write': True, 'write_cmd': '#SUB', 'item_type': 'bool', 'dev_datatype': 'ok', 'reply_pattern': ['@SUB (.*)']},
-        'repeat': {'read': True, 'write': True, 'write_cmd': '#RPT', 'item_type': 'num', 'dev_datatype': 'raw', 'reply_pattern': ['@RPT OK {LOOKUP}'], 'lookup': 'REPEAT'},
+        'repeat': {'read': True, 'write': True, 'write_cmd': '#RPT', 'item_type': 'num', 'dev_datatype': 'raw', 'reply_pattern': ['@RPT OK {LOOKUP}$'], 'lookup': 'REPEAT'},
         'input': {'read': True, 'write': True, 'write_cmd': '#SRC\r#NU{VALUE}', 'item_type': 'num', 'dev_datatype': 'ok', 'reply_pattern': ['@SRC (.*)']},
     },
     'menu': {
@@ -160,27 +160,5 @@ lookups = {
             'SVCD': 'SVCD',
             'UNKW': 'Unknown',
         },
-    }
-}
-
-item_templates = {
-    'custom_inputnames': {
-        'cache': True,
-        'reverse': {
-            'type': 'dict',
-            'eval': '{} if sh...() == {} else {v: k for (k, v) in sh...().items()}',
-            'update': {
-                'type': 'bool',
-                'eval': 'sh...timer(2, {})',
-                'eval_trigger': '...'
-            }
-        }
-    },
-    'input': {
-        'on_change': [".custom_name = '' if sh.....general.custom_inputnames() == {} else sh.....general.custom_inputnames()[value]",],
-        'custom_name': {
-            'type': 'str',
-            'on_change': ".. = '' if sh......general.custom_inputnames.reverse() == {} else sh......general.custom_inputnames.reverse()[value]"
-        }
     }
 }
