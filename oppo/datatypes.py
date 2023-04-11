@@ -17,7 +17,7 @@ class DT_playpause(DT.Datatype):
 
 class DT_ok(DT.Datatype):
     def get_shng_data(self, data, type=None, **kwargs):
-        return True if data == "OK" else False
+        return True if data == "OK" else False if data.startswith("ER ") else data
 
 class DT_openclose(DT.Datatype):
     def get_shng_data(self, data, type=None, **kwargs):

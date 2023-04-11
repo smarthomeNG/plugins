@@ -250,23 +250,73 @@ item_structs:
                 -   info
                 -   info.time
 
-            trackelapsed:
+            titleelapsed:
                 type: str
-                oppo_command: info.time.trackelapsed
+                oppo_command: info.time.titleelapsed
                 oppo_read: true
                 oppo_write: false
                 oppo_read_group:
                 -   info
                 -   info.time
 
-            trackremaining:
+            titleremaining:
                 type: str
-                oppo_command: info.time.trackremaining
+                oppo_command: info.time.titleremaining
                 oppo_read: true
                 oppo_write: false
                 oppo_read_group:
                 -   info
                 -   info.time
+
+        audio:
+
+            read:
+                type: bool
+                enforce_updates: true
+                oppo_read_group_trigger: info.audio
+
+            current:
+                type: num
+                oppo_command: info.audio.current
+                oppo_read: true
+                oppo_write: false
+
+            available:
+                type: num
+                oppo_command: info.audio.available
+                oppo_read: true
+                oppo_write: false
+
+            language:
+                type: str
+                oppo_command: info.audio.language
+                oppo_read: true
+                oppo_write: false
+
+        subtitle:
+
+            read:
+                type: bool
+                enforce_updates: true
+                oppo_read_group_trigger: info.subtitle
+
+            current:
+                type: num
+                oppo_command: info.subtitle.current
+                oppo_read: true
+                oppo_write: false
+
+            available:
+                type: num
+                oppo_command: info.subtitle.available
+                oppo_read: true
+                oppo_write: false
+
+            language:
+                type: str
+                oppo_command: info.subtitle.language
+                oppo_read: true
+                oppo_write: false
 
         firmware:
             type: str
@@ -429,6 +479,7 @@ item_structs:
             oppo_command: control.eject
             oppo_read: true
             oppo_write: true
+            enforce_updates: true
             oppo_read_initial: true
 
         chapter:
@@ -447,49 +498,47 @@ item_structs:
             oppo_read_group:
             -   control
 
-        track:
-            type: num
-            oppo_command: control.track
-            oppo_read: true
-            oppo_write: true
-            oppo_read_group:
-            -   control
-
         next:
             type: bool
             oppo_command: control.next
             oppo_read: true
             oppo_write: true
+            enforce_updates: true
 
         previous:
             type: bool
             oppo_command: control.previous
             oppo_read: true
             oppo_write: true
+            enforce_updates: true
 
         forward:
             type: bool
             oppo_command: control.forward
             oppo_read: true
             oppo_write: true
+            enforce_updates: true
 
         reverse:
             type: bool
             oppo_command: control.reverse
             oppo_read: true
             oppo_write: true
+            enforce_updates: true
 
         audio:
             type: bool
             oppo_command: control.audio
             oppo_read: true
             oppo_write: true
+            enforce_updates: true
 
         subtitle:
             type: bool
             oppo_command: control.subtitle
             oppo_read: true
             oppo_write: true
+            enforce_updates: true
 
         repeat:
             type: num
@@ -515,114 +564,133 @@ item_structs:
             oppo_command: menu.home
             oppo_read: true
             oppo_write: true
+            enforce_updates: true
 
         setup:
             type: bool
             oppo_command: menu.setup
             oppo_read: true
             oppo_write: true
+            enforce_updates: true
 
         option:
             type: bool
             oppo_command: menu.option
             oppo_read: true
             oppo_write: true
+            enforce_updates: true
 
         info:
             type: bool
             oppo_command: menu.info
             oppo_read: true
             oppo_write: true
+            enforce_updates: true
 
         popup:
             type: bool
             oppo_command: menu.popup
             oppo_read: true
             oppo_write: true
+            enforce_updates: true
 
         top:
             type: bool
             oppo_command: menu.top
             oppo_read: true
             oppo_write: true
+            enforce_updates: true
 
         osd:
             type: bool
             oppo_command: menu.osd
             oppo_read: true
             oppo_write: true
+            enforce_updates: true
 
         pageup:
             type: bool
             oppo_command: menu.pageup
             oppo_read: true
             oppo_write: true
+            enforce_updates: true
 
         pagedown:
             type: bool
             oppo_command: menu.pagedown
             oppo_read: true
             oppo_write: true
+            enforce_updates: true
 
         up:
             type: bool
             oppo_command: menu.up
             oppo_read: true
             oppo_write: true
+            enforce_updates: true
 
         down:
             type: bool
             oppo_command: menu.down
             oppo_read: true
             oppo_write: true
+            enforce_updates: true
 
         left:
             type: bool
             oppo_command: menu.left
             oppo_read: true
             oppo_write: true
+            enforce_updates: true
 
         right:
             type: bool
             oppo_command: menu.right
             oppo_read: true
             oppo_write: true
+            enforce_updates: true
 
         select:
             type: bool
             oppo_command: menu.select
             oppo_read: true
             oppo_write: true
+            enforce_updates: true
 
         return:
             type: bool
             oppo_command: menu.return
             oppo_read: true
             oppo_write: true
+            enforce_updates: true
 
         red:
             type: bool
             oppo_command: menu.red
             oppo_read: true
             oppo_write: true
+            enforce_updates: true
 
         green:
             type: bool
             oppo_command: menu.green
             oppo_read: true
             oppo_write: true
+            enforce_updates: true
 
         blue:
             type: bool
             oppo_command: menu.blue
             oppo_read: true
             oppo_write: true
+            enforce_updates: true
 
         yellow:
             type: bool
             oppo_command: menu.yellow
             oppo_read: true
             oppo_write: true
+            enforce_updates: true
 
     ALL:
 
@@ -685,9 +753,9 @@ item_structs:
                     -   ALL.info
                     -   ALL.info.time
 
-                trackelapsed:
+                titleelapsed:
                     type: str
-                    oppo_command: info.time.trackelapsed
+                    oppo_command: info.time.titleelapsed
                     oppo_read: true
                     oppo_write: false
                     oppo_read_group:
@@ -695,15 +763,65 @@ item_structs:
                     -   ALL.info
                     -   ALL.info.time
 
-                trackremaining:
+                titleremaining:
                     type: str
-                    oppo_command: info.time.trackremaining
+                    oppo_command: info.time.titleremaining
                     oppo_read: true
                     oppo_write: false
                     oppo_read_group:
                     -   ALL
                     -   ALL.info
                     -   ALL.info.time
+
+            audio:
+
+                read:
+                    type: bool
+                    enforce_updates: true
+                    oppo_read_group_trigger: ALL.info.audio
+
+                current:
+                    type: num
+                    oppo_command: info.audio.current
+                    oppo_read: true
+                    oppo_write: false
+
+                available:
+                    type: num
+                    oppo_command: info.audio.available
+                    oppo_read: true
+                    oppo_write: false
+
+                language:
+                    type: str
+                    oppo_command: info.audio.language
+                    oppo_read: true
+                    oppo_write: false
+
+            subtitle:
+
+                read:
+                    type: bool
+                    enforce_updates: true
+                    oppo_read_group_trigger: ALL.info.subtitle
+
+                current:
+                    type: num
+                    oppo_command: info.subtitle.current
+                    oppo_read: true
+                    oppo_write: false
+
+                available:
+                    type: num
+                    oppo_command: info.subtitle.available
+                    oppo_read: true
+                    oppo_write: false
+
+                language:
+                    type: str
+                    oppo_command: info.subtitle.language
+                    oppo_read: true
+                    oppo_write: false
 
             firmware:
                 type: str
@@ -878,6 +996,7 @@ item_structs:
                 oppo_command: control.eject
                 oppo_read: true
                 oppo_write: true
+                enforce_updates: true
                 oppo_read_initial: true
 
             chapter:
@@ -898,50 +1017,47 @@ item_structs:
                 -   ALL
                 -   ALL.control
 
-            track:
-                type: num
-                oppo_command: control.track
-                oppo_read: true
-                oppo_write: true
-                oppo_read_group:
-                -   ALL
-                -   ALL.control
-
             next:
                 type: bool
                 oppo_command: control.next
                 oppo_read: true
                 oppo_write: true
+                enforce_updates: true
 
             previous:
                 type: bool
                 oppo_command: control.previous
                 oppo_read: true
                 oppo_write: true
+                enforce_updates: true
 
             forward:
                 type: bool
                 oppo_command: control.forward
                 oppo_read: true
                 oppo_write: true
+                enforce_updates: true
 
             reverse:
                 type: bool
                 oppo_command: control.reverse
                 oppo_read: true
                 oppo_write: true
+                enforce_updates: true
 
             audio:
                 type: bool
                 oppo_command: control.audio
                 oppo_read: true
                 oppo_write: true
+                enforce_updates: true
 
             subtitle:
                 type: bool
                 oppo_command: control.subtitle
                 oppo_read: true
                 oppo_write: true
+                enforce_updates: true
 
             repeat:
                 type: num
@@ -967,114 +1083,133 @@ item_structs:
                 oppo_command: menu.home
                 oppo_read: true
                 oppo_write: true
+                enforce_updates: true
 
             setup:
                 type: bool
                 oppo_command: menu.setup
                 oppo_read: true
                 oppo_write: true
+                enforce_updates: true
 
             option:
                 type: bool
                 oppo_command: menu.option
                 oppo_read: true
                 oppo_write: true
+                enforce_updates: true
 
             info:
                 type: bool
                 oppo_command: menu.info
                 oppo_read: true
                 oppo_write: true
+                enforce_updates: true
 
             popup:
                 type: bool
                 oppo_command: menu.popup
                 oppo_read: true
                 oppo_write: true
+                enforce_updates: true
 
             top:
                 type: bool
                 oppo_command: menu.top
                 oppo_read: true
                 oppo_write: true
+                enforce_updates: true
 
             osd:
                 type: bool
                 oppo_command: menu.osd
                 oppo_read: true
                 oppo_write: true
+                enforce_updates: true
 
             pageup:
                 type: bool
                 oppo_command: menu.pageup
                 oppo_read: true
                 oppo_write: true
+                enforce_updates: true
 
             pagedown:
                 type: bool
                 oppo_command: menu.pagedown
                 oppo_read: true
                 oppo_write: true
+                enforce_updates: true
 
             up:
                 type: bool
                 oppo_command: menu.up
                 oppo_read: true
                 oppo_write: true
+                enforce_updates: true
 
             down:
                 type: bool
                 oppo_command: menu.down
                 oppo_read: true
                 oppo_write: true
+                enforce_updates: true
 
             left:
                 type: bool
                 oppo_command: menu.left
                 oppo_read: true
                 oppo_write: true
+                enforce_updates: true
 
             right:
                 type: bool
                 oppo_command: menu.right
                 oppo_read: true
                 oppo_write: true
+                enforce_updates: true
 
             select:
                 type: bool
                 oppo_command: menu.select
                 oppo_read: true
                 oppo_write: true
+                enforce_updates: true
 
             return:
                 type: bool
                 oppo_command: menu.return
                 oppo_read: true
                 oppo_write: true
+                enforce_updates: true
 
             red:
                 type: bool
                 oppo_command: menu.red
                 oppo_read: true
                 oppo_write: true
+                enforce_updates: true
 
             green:
                 type: bool
                 oppo_command: menu.green
                 oppo_read: true
                 oppo_write: true
+                enforce_updates: true
 
             blue:
                 type: bool
                 oppo_command: menu.blue
                 oppo_read: true
                 oppo_write: true
+                enforce_updates: true
 
             yellow:
                 type: bool
                 oppo_command: menu.yellow
                 oppo_read: true
                 oppo_write: true
+                enforce_updates: true
 
     UDP-203:
 
@@ -1137,9 +1272,9 @@ item_structs:
                     -   UDP-203.info
                     -   UDP-203.info.time
 
-                trackelapsed:
+                titleelapsed:
                     type: str
-                    oppo_command: info.time.trackelapsed
+                    oppo_command: info.time.titleelapsed
                     oppo_read: true
                     oppo_write: false
                     oppo_read_group:
@@ -1147,15 +1282,65 @@ item_structs:
                     -   UDP-203.info
                     -   UDP-203.info.time
 
-                trackremaining:
+                titleremaining:
                     type: str
-                    oppo_command: info.time.trackremaining
+                    oppo_command: info.time.titleremaining
                     oppo_read: true
                     oppo_write: false
                     oppo_read_group:
                     -   UDP-203
                     -   UDP-203.info
                     -   UDP-203.info.time
+
+            audio:
+
+                read:
+                    type: bool
+                    enforce_updates: true
+                    oppo_read_group_trigger: UDP-203.info.audio
+
+                current:
+                    type: num
+                    oppo_command: info.audio.current
+                    oppo_read: true
+                    oppo_write: false
+
+                available:
+                    type: num
+                    oppo_command: info.audio.available
+                    oppo_read: true
+                    oppo_write: false
+
+                language:
+                    type: str
+                    oppo_command: info.audio.language
+                    oppo_read: true
+                    oppo_write: false
+
+            subtitle:
+
+                read:
+                    type: bool
+                    enforce_updates: true
+                    oppo_read_group_trigger: UDP-203.info.subtitle
+
+                current:
+                    type: num
+                    oppo_command: info.subtitle.current
+                    oppo_read: true
+                    oppo_write: false
+
+                available:
+                    type: num
+                    oppo_command: info.subtitle.available
+                    oppo_read: true
+                    oppo_write: false
+
+                language:
+                    type: str
+                    oppo_command: info.subtitle.language
+                    oppo_read: true
+                    oppo_write: false
 
             firmware:
                 type: str
@@ -1330,6 +1515,7 @@ item_structs:
                 oppo_command: control.eject
                 oppo_read: true
                 oppo_write: true
+                enforce_updates: true
                 oppo_read_initial: true
 
             chapter:
@@ -1350,50 +1536,47 @@ item_structs:
                 -   UDP-203
                 -   UDP-203.control
 
-            track:
-                type: num
-                oppo_command: control.track
-                oppo_read: true
-                oppo_write: true
-                oppo_read_group:
-                -   UDP-203
-                -   UDP-203.control
-
             next:
                 type: bool
                 oppo_command: control.next
                 oppo_read: true
                 oppo_write: true
+                enforce_updates: true
 
             previous:
                 type: bool
                 oppo_command: control.previous
                 oppo_read: true
                 oppo_write: true
+                enforce_updates: true
 
             forward:
                 type: bool
                 oppo_command: control.forward
                 oppo_read: true
                 oppo_write: true
+                enforce_updates: true
 
             reverse:
                 type: bool
                 oppo_command: control.reverse
                 oppo_read: true
                 oppo_write: true
+                enforce_updates: true
 
             audio:
                 type: bool
                 oppo_command: control.audio
                 oppo_read: true
                 oppo_write: true
+                enforce_updates: true
 
             subtitle:
                 type: bool
                 oppo_command: control.subtitle
                 oppo_read: true
                 oppo_write: true
+                enforce_updates: true
 
             repeat:
                 type: num
@@ -1419,113 +1602,132 @@ item_structs:
                 oppo_command: menu.home
                 oppo_read: true
                 oppo_write: true
+                enforce_updates: true
 
             setup:
                 type: bool
                 oppo_command: menu.setup
                 oppo_read: true
                 oppo_write: true
+                enforce_updates: true
 
             option:
                 type: bool
                 oppo_command: menu.option
                 oppo_read: true
                 oppo_write: true
+                enforce_updates: true
 
             info:
                 type: bool
                 oppo_command: menu.info
                 oppo_read: true
                 oppo_write: true
+                enforce_updates: true
 
             popup:
                 type: bool
                 oppo_command: menu.popup
                 oppo_read: true
                 oppo_write: true
+                enforce_updates: true
 
             top:
                 type: bool
                 oppo_command: menu.top
                 oppo_read: true
                 oppo_write: true
+                enforce_updates: true
 
             osd:
                 type: bool
                 oppo_command: menu.osd
                 oppo_read: true
                 oppo_write: true
+                enforce_updates: true
 
             pageup:
                 type: bool
                 oppo_command: menu.pageup
                 oppo_read: true
                 oppo_write: true
+                enforce_updates: true
 
             pagedown:
                 type: bool
                 oppo_command: menu.pagedown
                 oppo_read: true
                 oppo_write: true
+                enforce_updates: true
 
             up:
                 type: bool
                 oppo_command: menu.up
                 oppo_read: true
                 oppo_write: true
+                enforce_updates: true
 
             down:
                 type: bool
                 oppo_command: menu.down
                 oppo_read: true
                 oppo_write: true
+                enforce_updates: true
 
             left:
                 type: bool
                 oppo_command: menu.left
                 oppo_read: true
                 oppo_write: true
+                enforce_updates: true
 
             right:
                 type: bool
                 oppo_command: menu.right
                 oppo_read: true
                 oppo_write: true
+                enforce_updates: true
 
             select:
                 type: bool
                 oppo_command: menu.select
                 oppo_read: true
                 oppo_write: true
+                enforce_updates: true
 
             return:
                 type: bool
                 oppo_command: menu.return
                 oppo_read: true
                 oppo_write: true
+                enforce_updates: true
 
             red:
                 type: bool
                 oppo_command: menu.red
                 oppo_read: true
                 oppo_write: true
+                enforce_updates: true
 
             green:
                 type: bool
                 oppo_command: menu.green
                 oppo_read: true
                 oppo_write: true
+                enforce_updates: true
 
             blue:
                 type: bool
                 oppo_command: menu.blue
                 oppo_read: true
                 oppo_write: true
+                enforce_updates: true
 
             yellow:
                 type: bool
                 oppo_command: menu.yellow
                 oppo_read: true
                 oppo_write: true
+                enforce_updates: true
 plugin_functions: NONE
 logic_parameters: NONE
