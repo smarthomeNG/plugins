@@ -74,6 +74,7 @@ class oppo(SmartDevicePlugin):
             b = b.decode('unicode-escape').encode()
             self._parameters[PLUGIN_ATTR_CONN_TERMINATOR] = b
         self._use_callbacks = True
+        self._last_command = ''
 
     def on_connect(self, by=None):
         verbose = self.get_items_for_mapping('general.verbose')[0].property.value
@@ -86,6 +87,10 @@ class oppo(SmartDevicePlugin):
         return None
 
     def _transform_send_data(self, data=None, **kwargs):
+        try:
+            self._last_command = kwargs['cmd']
+        except Exception:
+            pass
         if data:
             try:
                 data['limit_response'] = self._parameters.get(PLUGIN_ATTR_CONN_TERMINATOR, b'\r')
@@ -94,19 +99,7 @@ class oppo(SmartDevicePlugin):
                 self.logger.error(f'ERROR {e}')
         return data
 
-    def _process_dispatch_data(self, by=None):
-        return False if by == 'plugins.oppo' else True
-
     def _process_additional_data(self, command, data, value, custom, by):
-
-        def _dispatch(command, value, custom=None, send=False, by='oppo'):
-            if custom:
-                command = command + CUSTOM_SEP + custom
-            self.logger.debug(f"Dispatch: {command} with value {value}. Data: {data}, by {by}")
-            if send:
-                self.send_command(command, value)
-            else:
-                self._dispatch_callback(command, value, by)
 
         def _trigger_read(command, custom=None):
             if custom:
@@ -114,36 +107,41 @@ class oppo(SmartDevicePlugin):
             self.logger.debug(f"Sending read command for {command}")
             self.send_command(command)
 
-        # set album art URL
+        if value == "ER INVALID":
+            self.logger.warning(f"Command {command} with data {data} and value {value} did not work, got error response. Last Command: {self._last_command}")
+            try:
+                last_item = self.get_items_for_mapping(self._last_command)[0]
+                prev_val = last_item.property.prev_value
+                self._dispatch_callback(self._last_command, prev_val)
+                self.logger.debug(f"Item {last_item} set to previous value {prev_val}")
+            except Exception as e:
+                self.logger.debug(f"Last value could not be set")
+
         if command == 'info.status':
             self.logger.debug(f"Got status {command} data {data} value {value} custom {custom} by {by}")
             if value == 'PLAY':
-                _dispatch('control.playpause', True, None, False, 'plugins.oppo')
-                _dispatch('control.stop', False, None, False, 'plugins.oppo')
+                self._dispatch_callback('control.playpause', True)
+                self._dispatch_callback('control.stop', False)
             elif value.startswith('PAUS'):
-                _dispatch('control.playpause', False, None, False, 'plugins.oppo')
-                _dispatch('control.stop', False, None, False, 'plugins.oppo')
+                self._dispatch_callback('control.playpause', False)
+                self._dispatch_callback('control.stop', False)
             elif value == 'STOP':
-                _dispatch('control.playpause', False, None, False, 'plugins.oppo')
-                _dispatch('control.stop', True, None, False, 'plugins.oppo')
+                self._dispatch_callback('control.playpause', False)
+                self._dispatch_callback('control.stop', True)
         if command == 'info.trackinfo':
             self.logger.debug(f"Got trackinfo {command} data {data} value {value} custom {custom} by {by}")
             val = value.split(" ")
-            _dispatch('control.title', val[0], None, False, 'plugins.oppo')
-            _dispatch('control.track', val[1], None, False, 'plugins.oppo')
-            _dispatch('info.displaytype', val[2], None, False, 'plugins.oppo')
+            self._dispatch_callback('control.title', val[0])
+            self._dispatch_callback('control.chapter', val[1])
+            self._dispatch_callback('info.displaytype', val[2])
             if val[2] == 'E':
-                _dispatch('info.time.totalelapsed', val[3], None, False, 'plugins.oppo')
+                self._dispatch_callback('info.time.totalelapsed', val[3])
             elif val[2] == 'R':
-                _dispatch('info.time.totalremaining', val[3], None, False, 'plugins.oppo')
-            elif val[2] == 'T':
-                _dispatch('info.time.titleelapsed', val[3], None, False, 'plugins.oppo')
-            elif val[2] == 'X':
-                _dispatch('info.time.titleremaining', val[3], None, False, 'plugins.oppo')
-            elif val[2] == 'C':
-                _dispatch('info.time.trackelapsed', val[3], None, False, 'plugins.oppo')
-            elif val[2] == 'K':
-                _dispatch('info.time.trackremaining', val[3], None, False, 'plugins.oppo')
+                self._dispatch_callback('info.time.totalremaining', val[3])
+            elif val[2] == 'T' or val[2] == 'C':
+                self._dispatch_callback('info.time.titleelapsed', val[3])
+            elif val[2] == 'X' or val[2] == 'K':
+                self._dispatch_callback('info.time.titleremaining', val[3])
 
 if __name__ == '__main__':
     s = Standalone(oppo, sys.argv[0])
