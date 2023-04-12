@@ -47,7 +47,7 @@ commands = {
         'U3D': {'read': True, 'write': False, 'item_type': 'str', 'dev_datatype': 'raw', 'reply_pattern': '@U3D (2D|3D)'},
     },
     'general': {
-        'verbose': {'read': True, 'write': True, 'read_cmd': '#QVM', 'write_cmd': '#SVM {VALUE}', 'item_type': 'num', 'dev_datatype': 'raw', 'reply_pattern': ['@QVM OK (0|1|2|3)', '@SVM OK (0|1|2|3)'], 'item_attrs': {'attributes': {'cache': True, 'initial_value': 2}}},
+        'verbose': {'read': True, 'write': True, 'read_cmd': '#QVM', 'write_cmd': '#SVM {VALUE}', 'item_type': 'num', 'dev_datatype': 'raw', 'reply_pattern': ['@QVM OK (0|1|2|3)', '@SVM OK (0|1|2|3)'], 'cmd_settings': {'force_min': 1, 'force_max': 3}, 'item_attrs': {'attributes': {'cache': True, 'initial_value': 2}}},
         'hdmiresolution': {'read': True, 'write': True, 'read_cmd': '#QHD', 'write_cmd': '#SHD {RAW_VALUE_UPPER}', 'item_type': 'str', 'dev_datatype': 'raw', 'reply_pattern': ['@SHD OK (.*)', '@QHD OK (.*)'], 'cmd_settings': {'valid_list': ['480I', '480P', '576I', '576P', '720P50', '720P60', '1080I50', '1080I60', '1080P24', '1080P50', '1080P60', '1080PAUTO', 'UHD24', 'UHD50', 'UHD60', 'UHD_AUTO', 'AUTO', 'Source Direct']}, 'item_attrs': {'initial': True}},
     },
     'control': {
