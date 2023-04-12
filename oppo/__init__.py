@@ -21,34 +21,12 @@
 #  along with SmartHomeNG  If not, see <http://www.gnu.org/licenses/>.
 #########################################################################
 
-import builtins
-import os
 import sys
 
-if __name__ == '__main__':
-    builtins.SDP_standalone = True
-
-    class SmartPlugin():
-        pass
-
-    class SmartPluginWebIf():
-        pass
-
-    BASE = os.path.sep.join(os.path.realpath(__file__).split(os.path.sep)[:-3])
-    sys.path.insert(0, BASE)
-
-else:
-    builtins.SDP_standalone = False
-
 from lib.model.sdp.globals import (PLUGIN_ATTR_NET_HOST, PLUGIN_ATTR_CONNECTION, PLUGIN_ATTR_SERIAL_PORT, PLUGIN_ATTR_CONN_TERMINATOR, CONN_NET_TCP_CLI, CONN_SER_ASYNC)
-from lib.model.smartdeviceplugin import SmartDevicePlugin, Standalone
-
-if not SDP_standalone:
-    #from .webif import WebInterface
-    pass
+from lib.model.smartdeviceplugin import SmartDevicePlugin
 
 CUSTOM_INPUT_NAME_COMMAND = 'custom_inputnames'
-
 
 class oppo(SmartDevicePlugin):
     """ Device class for Oppo.
@@ -69,10 +47,10 @@ class oppo(SmartDevicePlugin):
             self._parameters[PLUGIN_ATTR_CONNECTION] = CONN_NET_TCP_CLI
         elif PLUGIN_ATTR_SERIAL_PORT in self._parameters and self._parameters[PLUGIN_ATTR_SERIAL_PORT]:
             self._parameters[PLUGIN_ATTR_CONNECTION] = CONN_SER_ASYNC
-        if PLUGIN_ATTR_CONN_TERMINATOR in self._parameters:
-            b = self._parameters[PLUGIN_ATTR_CONN_TERMINATOR].encode()
-            b = b.decode('unicode-escape').encode()
-            self._parameters[PLUGIN_ATTR_CONN_TERMINATOR] = b
+
+        b = self._parameters[PLUGIN_ATTR_CONN_TERMINATOR].encode()
+        b = b.decode('unicode-escape').encode()
+        self._parameters[PLUGIN_ATTR_CONN_TERMINATOR] = b
         self._use_callbacks = True
         self._last_command = ''
 
@@ -84,38 +62,18 @@ class oppo(SmartDevicePlugin):
     def _send(self, data_dict):
         self.logger.debug(f"Sending data_dict {data_dict}")
         self._connection.send(data_dict)
-        return None
 
     def _transform_send_data(self, data=None, **kwargs):
-        try:
-            self._last_command = kwargs['cmd']
-        except Exception:
-            pass
-        if data:
-            try:
-                data['limit_response'] = self._parameters.get(PLUGIN_ATTR_CONN_TERMINATOR, b'\r')
-                data['payload'] = f'{data.get("payload")}\r'
-            except Exception as e:
-                self.logger.error(f'ERROR {e}')
+        if isinstance(data, dict):
+            data['limit_response'] = self._parameters[PLUGIN_ATTR_CONN_TERMINATOR]
+            data['payload'] = f'{data.get("payload", "")}\r'
         return data
 
     def _process_additional_data(self, command, data, value, custom, by):
 
-        def _trigger_read(command, custom=None):
-            if custom:
-                command = command + CUSTOM_SEP + custom
-            self.logger.debug(f"Sending read command for {command}")
-            self.send_command(command)
-
         if value == "ER INVALID":
-            self.logger.warning(f"Command {command} with data {data} and value {value} did not work, got error response. Last Command: {self._last_command}")
-            try:
-                last_item = self.get_items_for_mapping(self._last_command)[0]
-                prev_val = last_item.property.prev_value
-                self._dispatch_callback(self._last_command, prev_val)
-                self.logger.debug(f"Item {last_item} set to previous value {prev_val}")
-            except Exception as e:
-                self.logger.debug(f"Last value could not be set")
+            self.logger.warning(f"Command {command} did not work, got error response {value}. Querying current value.")
+            self.send_command(command)
 
         if command == 'info.status':
             self.logger.debug(f"Got status {command} data {data} value {value} custom {custom} by {by}")
@@ -130,18 +88,20 @@ class oppo(SmartDevicePlugin):
                 self._dispatch_callback('control.stop', True)
         if command == 'info.trackinfo':
             self.logger.debug(f"Got trackinfo {command} data {data} value {value} custom {custom} by {by}")
-            val = value.split(" ")
-            self._dispatch_callback('control.title', val[0])
-            self._dispatch_callback('control.chapter', val[1])
-            self._dispatch_callback('info.displaytype', val[2])
-            if val[2] == 'E':
-                self._dispatch_callback('info.time.totalelapsed', val[3])
-            elif val[2] == 'R':
-                self._dispatch_callback('info.time.totalremaining', val[3])
-            elif val[2] == 'T' or val[2] == 'C':
-                self._dispatch_callback('info.time.titleelapsed', val[3])
-            elif val[2] == 'X' or val[2] == 'K':
-                self._dispatch_callback('info.time.titleremaining', val[3])
-
-if __name__ == '__main__':
-    s = Standalone(oppo, sys.argv[0])
+            try:
+                ct, cc, id, it  = value.split(" ")
+            except ValueError:
+                pass
+            else:
+                self._dispatch_callback('control.title', ct)
+                self._dispatch_callback('control.chapter', cc)
+                self._dispatch_callback('info.displaytype', id)
+                time_type = {
+                    'E': 'info.time.totalelapsed',
+                    'R': 'info.time.totalremaining',
+                    'T': 'info.time.titleelapsed',
+                    'C': 'info.time.titleelapsed',
+                    'K': 'info.time.titleremaining'
+                }
+                if id in time_type:
+                    self._dispatch_callback(time_type[id], it)
