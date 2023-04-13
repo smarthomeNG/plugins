@@ -22,30 +22,12 @@
 #########################################################################
 
 import builtins
-import os
-import sys
-
-if __name__ == '__main__':
-    builtins.SDP_standalone = True
-
-    class SmartPlugin():
-        pass
-
-    class SmartPluginWebIf():
-        pass
-
-    BASE = os.path.sep.join(os.path.realpath(__file__).split(os.path.sep)[:-3])
-    sys.path.insert(0, BASE)
-
-else:
-    builtins.SDP_standalone = False
 
 from lib.model.sdp.globals import JSON_MOVE_KEYS
-from lib.model.smartdeviceplugin import SmartDevicePlugin, Standalone
+from lib.model.smartdeviceplugin import SmartDevicePlugin
+# from .webif import WebInterface
 
-if not SDP_standalone:
-    from .webif import WebInterface
-
+builtins.SDP_standalone = False
 
 class sdp_kodi(SmartDevicePlugin):
     """
@@ -93,7 +75,7 @@ class sdp_kodi(SmartDevicePlugin):
         self._playerid = 0
 
         # these commands are not meant to control the kodi device, but to
-        # communicate with the device class, e.g. triggering updating
+        # communicate with the plugin, e.g. triggering updating
         # player info or returning the player_id. As these commands are not
         # sent (directly) to the device, they should not be processed via
         # the SDPCommands class and not listed in commands.py
@@ -121,7 +103,7 @@ class sdp_kodi(SmartDevicePlugin):
             self.logger.error(f'received data {data} not in JSON (dict) format, ignoring')
 
         if 'error' in data:
-            # errors are handled on connection level
+            # errors are handled on protocol level
             return
 
         try:
@@ -411,7 +393,3 @@ class sdp_kodi(SmartDevicePlugin):
             if self._playerid:
                 self.send_command('status.get_status_play', None)
                 self.send_command('status.get_item', None)
-
-
-if __name__ == '__main__':
-    s = Standalone(sdp_kodi, sys.argv[0])

@@ -5,10 +5,10 @@ plugin:
     maintainer: Morg
     tester: OnkelAndy
     state: develop
-    keywords: iot device
+    keywords: iot device mediacenter kodi xmbc sdp
     version: 1.7.0
-    sh_minversion: 1.9.3.1
-    py_minversion: 3.6
+    sh_minversion: 1.9.5
+    py_minversion: 3.7
     multi_instance: false
     restartable: true
     classname: sdp_kodi
@@ -38,14 +38,6 @@ parameters:
         description:
             de: Zeilen-/Antwortbegrenzer
             en: line or reply terminator
-
-    binary:
-        type: bool
-        default: false
-
-        description:
-            de: Binärer Übertragungsmodus
-            en: binary communication mode
 
     autoreconnect:
         type: bool
@@ -108,12 +100,7 @@ parameters:
         default: net_tcp_client
         valid_list:
         -   ''
-        -   net_tcp_request
         -   net_tcp_client
-        -   net_tcp_jsonrpc
-        -   net_udp_server
-        -   serial
-        -   serial_async
 
         description:
             de: Verbindungstyp
@@ -125,7 +112,6 @@ parameters:
         valid_list:
         -   ''
         -   jsonrpc
-        -   viessmann
 
         description:
             de: Protokolltyp für Verbindung
@@ -136,10 +122,7 @@ parameters:
         default: SDPCommandJSON
         valid_list:
         -   SDPCommand
-        -   SDPCommandStr
-        -   SDPCommandParseStr
         -   SDPCommandJSON
-        -   SDPCommandViessmann
 
         description:
             de: Klasse für Verarbeitung von Kommandos
@@ -627,5 +610,6 @@ item_structs:
                 kodi_command: control.action
                 kodi_read: true
                 kodi_write: true
+
 plugin_functions: NONE
 logic_parameters: NONE

@@ -1415,7 +1415,9 @@ class Viessmann(SmartPlugin):
         self.logger.debug(f'Rawdatabytes formatted: {self._bytes2hexstring(rawdatabytes)} and unformatted: {rawdatabytes}')
 
         # Process response for items if read response and not error
-        if responsedatacode == 1 and responsetypecode != 3:
+        # responsetypecode: 0x00 = query, 0x01 = reply, 0x03 = error
+        # responsedatacode: 0x01 = ReadData, 0x02 = WriteData, 0x07 = Function Call
+        if responsedatacode == 1 and responsetypecode != 3 and (self._protocol == 'P300' or read_response):
 
             # parse response if command config is available
             commandname = self._commandname_by_commandcode(commandcode)
