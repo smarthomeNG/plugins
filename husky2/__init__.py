@@ -55,14 +55,10 @@ class Husky2AutomowerSession(session.AutomowerSession):
         else:
             session._LOGGER.debug("Refresh access token doing relogin")
             self.shLogger.debug("Refresh access token doing relogin")
-            #await self.close()
-            #self.shLogger.debug("Closed old session")
             await asyncio.sleep(5)
             await self.logincc(self.client_secret)
             self.shLogger.debug("Logged in successfully")
             await asyncio.sleep(5)
-            #await self.connect()
-            #self.shLogger.debug("Connected successfully")
 
 
 class Husky2(SmartPlugin):
@@ -75,7 +71,7 @@ class Husky2(SmartPlugin):
     are already available!
     """
 
-    PLUGIN_VERSION = '2.1.0'  # (must match the version specified in plugin.yaml), use '1.0.0' for your initial plugin Release
+    PLUGIN_VERSION = '2.1.1'
 
     ITEM_INFO = "husky_info"
     ITEM_CONTROL = "husky_control"
@@ -318,7 +314,8 @@ class Husky2(SmartPlugin):
                         self.asyncLoop.run_until_complete(task)
                     except CancelledError:
                         pass
-
+            except AttributeError:
+                self.logger.debug("No other running async Tasks to cancel")
             except Exception as e:
                 self.logger.warning(f"husky2_thread: finally *2 - Exception {e}")
             try:
@@ -732,7 +729,7 @@ class Husky2(SmartPlugin):
         for data in self.mowerTimestamp.get_list():
             min = int((now - (data / 1000.0)) / 60.0)
             sec = int((now - (data / 1000.0)) % 60.0)
-            deltas.append(f"{min}:{sec}")
+            deltas.append(f"{min}:{sec:02d}")
         return deltas
 
     def getErrormessages(self):
@@ -824,9 +821,11 @@ class WebInterface(SmartPluginWebIf):
         """
         tmpl = self.tplenv.get_template('index.html')
 
+        items_count = len(self.plugin._items_control) + len(self.plugin._items_state)
+
         # add values to be passed to the Jinja2 template eg: tmpl.render(p=self.plugin, interface=interface, ...)
-        return tmpl.render(p=self.plugin, device_count=self.plugin.mowerCount, items_control=self.plugin._items_control,
-                           items_state=self.plugin._items_state)
+        return tmpl.render(p=self.plugin, device_count=self.plugin.mowerCount, items_count=items_count,
+                           items_control=self.plugin._items_control, items_state=self.plugin._items_state)
 
     @cherrypy.expose
     def mower_park(self):

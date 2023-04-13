@@ -109,7 +109,8 @@ Bei den "Kleinen" gibt es folgende Einschränkungen:
 
 folgende Einträge werden in der "./etc/plugin.yaml" benötigt.
 
-* `plugin_name: indego4shng`:  fix "indego4shng"
+* `plugin_name: Indego4shNG`:  fix "Indego4shNG"
+* `class_path: plugins.indego4shng`:  fix "plugins.indego4shng"
 * `path_2_weather_pics: XXXXXXX`: ist der Pfad zu den Bilder des Wetter-Widgets.
 (default ="/smartvisu/lib/weather/pics/")
 * `img_pfad: XXXXXXX`:  ist der Pfad unter dem die Gartenkarte gespeichert wird. 
@@ -128,7 +129,8 @@ Beispiel:
 
 ```yaml
 Indego4shNG:
-    plugin_name: indego4shng
+    plugin_name: Indego4shNG
+    class_path: plugins.indego4shng
     path_2_weather_pics: /smartvisu/lib/weather/pics/
     img_pfad: /tmp/garden.svg
     indego_credentials:

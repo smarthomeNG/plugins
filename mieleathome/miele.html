@@ -1,0 +1,284 @@
+/**
+* -----------------------------------------------------------------------------
+* @package     smartVISU
+* @author      Andre Kohler
+* @copyright   2020
+* @license     GPL [http://www.gnu.de]
+* -----------------------------------------------------------------------------
+*/
+
+{% extends "rooms.html" %}
+
+{% import "lib.html" as lib %}
+{% import "basic.html" as basic %}
+{% import "calendar.html" as calendar %}
+{% import "clock.html" as clock %}
+{% import "device.html" as device %}
+{% import "icon.html" as icon %}
+{% import "multimedia.html" as multimedia %}
+{% import "phone.html" as phone %}
+{% import "plot.html" as plot %}
+{% import "popup.html" as popup %}
+{% import "status.html" as status %}
+{% import "weather.html" as weather %}
+{% import "quad.html" as quad %}
+
+
+
+{% block content %}
+<style>
+.ui-midi {
+  width:100px;
+}
+</style>
+    <div class="block" style=" min-height:20px">
+			<div class="set-2" data-role="collapsible-set" data-theme="c" data-content-theme="a" data-mini="true">
+				<div data-role="collapsible" data-collapsed="false" >
+					<h3>Miele Control Center (Dryer)</h3>
+				
+          <table width="100%">
+						<tbody>
+							<tr>
+								<td align="left">Gerätetyp:</td>
+								<td align="right">{{ basic.print('', 'MieleDevices.Dryer.ident.device_type.value_localized', 'text') }}</td>
+							</tr><tr>
+								<td align="left">Typenbezeichnung:</td>
+								<td align="right">{{ basic.print('', 'MieleDevices.Dryer.ident.deviceIdentLabel.techType','text') }}</td>
+							</tr><tr>
+								<td align="left">Materialnummer:</td>
+								<td align="right">{{ basic.print('', 'MieleDevices.Dryer.ident.deviceIdentLabel.matNumber', 'text') }}</td>
+							</tr><tr>
+								<td align="left">fabNummer:</td>
+								<td align="right">{{ basic.print('Serial', 'MieleDevices.Dryer.ident.deviceIdentLabel.fabNumber', '') }}</td>
+							</tr><tr>
+								<td align="left">Gerätestatus:</td>
+								<td align="right">{{ basic.print('', 'MieleDevices.Dryer.state.status.value_localized','') }}</td>
+							</tr><tr>
+								<td align="left">Programm:</td>
+								<td align="right">{{ basic.print('', 'MieleDevices.Dryer.state.programType.value_localized', '') }}</td>
+							</tr><tr>
+								<td align="left">Trockenstufe:</td>
+								<td align="right">{{ basic.print('', 'MieleDevices.Dryer.state.dryingStep.value_localized', '') }}</td>
+							</tr><tr>
+								<td align="left">Programm Phase:</td>
+								<td align="right">{{ basic.print('', 'MieleDevices.Dryer.state.programPhase.value_localized', 'text') }}</td>
+							</tr><tr>
+								<td align="left">Energieverbrauch Forecast:</td>
+								<td align="right">{{ basic.print('', 'MieleDevices.Dryer.state.ecoFeedback.energyForecast', 'text') }}
+								                  {{ basic.print('', 'MieleDevices.Dryer.state.ecoFeedback.currentEnergyConsumption.unit', 'text') }}
+								</td>
+							</tr><tr>
+								<td align="left">Gerätetür:</td>
+								<td align="right">{{basic.symbol('','MieleDevices.Dryer.state.signalDoor',['offen','geschlossen'],['fts_door_unlocked','fts_door_locked'],['1','0'],'',['red','green'],'','','','')}}</td>
+							</tr><tr>
+								<td align="left">verbleibende Zeit:</td>
+								<td align="right">{{ basic.print('', 'MieleDevices.Dryer.visu.times.remainingTime', 'text') }}</td>
+							</tr>
+								<td align="left">verstrichene Zeit:</td>
+								<td align="right">{{ basic.print('', 'MieleDevices.Dryer.visu.times.elapsedTime', 'text') }}</td>
+							</tr><tr>
+								<td align="left">Start-Zeit:</td>
+								<td align="right">{{ basic.input('', 'MieleDevices.Dryer.visu.times.startTime', 'time') }}</td>
+							</tr><tr>
+								<td align="left">End-Zeit:</td>
+								<td align="right">{{ basic.input('', 'MieleDevices.Dryer.visu.times.stopTime', 'time') }}</td>
+							</tr>
+						</tbody>
+					</table>
+
+				<table style="margin-left:auto; margin-right:auto;">
+				<tr>
+				<td>
+				{{ status.collapse('Control_1', 'MieleDevices.Dryer.visu.allowed_actions.start', 0) }}				
+				<div class="hide" data-bind="Control_1">        
+          {{basic.stateswitch('','MieleDevices.Dryer.visu.action_buttons.start','midi',[0,1],'audio_play','Start',['icon0','icon1'],'','','','')}}
+        </div>
+        </td><td>
+				{{ status.collapse('Control_2', 'MieleDevices.Dryer.visu.allowed_actions.stop', 0) }}				        
+				<div class="hide" data-bind="Control_2">                
+          {{basic.stateswitch('','MieleDevices.Dryer.visu.action_buttons.stop','midi',[0,1],'audio_stop','Stop',['icon0','icon1'],'','','','')}}
+        </div>        
+        </td><td>
+				{{ status.collapse('Control_3', 'MieleDevices.Dryer.visu.allowed_actions.pause', 0) }}
+				<div class="hide" data-bind="Control_3">
+          {{basic.stateswitch('','MieleDevices.Dryer.visu.action_buttons.pause','midi',[0,1],'audio_pause','Pause',['icon0','icon1'],'','','','')}} 
+        </div>                  
+        </td><td>
+				{{ status.collapse('Control_4', 'MieleDevices.Dryer.visu.allowed_actions.start_supercooling', 0) }}				        
+				<div class="hide" data-bind="Control_4">                
+          {{basic.stateswitch('','MieleDevices.Dryer.visu.action_buttons.start_supercooling','midi',[0,1],'weather_snow','Cooling',['red','red'],'','','','')}}
+        </div>          
+        </td><td>
+				{{ status.collapse('Control_5', 'MieleDevices.Dryer.visu.allowed_actions.stop_supercooling', 0) }}				                
+				<div class="hide" data-bind="Control_5">                          
+          {{basic.stateswitch('','MieleDevices.Dryer.visu.action_buttons.stop_supercooling','midi',[0,1],'weather_snow','Cooling',['green','green'],'','','','')}}
+        </div>          
+        </td><td>
+				{{ status.collapse('Control_6', 'MieleDevices.Dryer.visu.allowed_actions.start_superfreezing', 0) }}				                        
+				<div class="hide" data-bind="Control_6">                          
+          {{basic.stateswitch('','MieleDevices.Dryer.visu.action_buttons.start_superfreezing','midi',[0,1],'weather_frost','Freezing',['red','red'],'','','','')}}
+        </div>          
+        </td><td>
+				{{ status.collapse('Control_7', 'MieleDevices.Dryer.visu.allowed_actions.stop_superfreezing', 0) }}				                        
+				<div class="hide" data-bind="Control_7">                          
+        {{basic.stateswitch('','MieleDevices.Dryer.visu.action_buttons.stop_superfreezing','midi',[0,1],'weather_frost','Freezing',['green','green'],'','','','')}}
+        </div>          
+        </td><td>
+				{{ status.collapse('Control_8', 'MieleDevices.Dryer.visu.allowed_actions.powerOn', 0) }}				                        
+				<div class="hide" data-bind="Control_8">                          
+        {{basic.stateswitch('','MieleDevices.Dryer.visu.action_buttons.powerOn','midi',[0,1],'info_ack','Power On',['red','red'],'','','')}}
+        </div>          
+        </td><td>
+				{{ status.collapse('Control_9', 'MieleDevices.Dryer.visu.allowed_actions.powerOff', 0) }}				                        
+				<div class="hide" data-bind="Control_9">                          
+        {{basic.stateswitch('','MieleDevices.Dryer.visu.action_buttons.powerOff','midi',[0,1],'info_error','Power Off',['green','green'],'','','')}}
+        </div>          
+        </td>
+        </tr>
+        </table>
+        {{ status.collapse('Dryer_device_failure', 'MieleDevices.Dryer.state.signalFailure') }}
+        <div class="hide" data-bind="Dryer_device_failure" style="color:red">
+            {{ basic.symbol('','','','info_warning','','','red','','','') }}
+            Fehler am Gerät
+				</div>
+        {{ status.collapse('Dryer_device_info', 'MieleDevices.Dryer.state.signalInfo') }}
+        <div class="hide" data-bind="Dryer_device_info" style="color:orange">
+            {{ basic.symbol('','','','info_attention','','','orange','','','') }}
+				    Info am Gerät
+				</div>        				        
+        
+ 			</div>
+		</div>
+    </div>
+
+    <div class="block" style=" min-height:20px">
+			<div class="set-2" data-role="collapsible-set" data-theme="c" data-content-theme="a" data-mini="true">
+				<div data-role="collapsible" data-collapsed="false" >
+					<h3>Miele Control Center (Freezer)</h3>
+          <table width="100%">
+						<tbody>
+							<tr>
+								<td align="left">Gerätetyp:</td>
+								<td align="right">{{ basic.print('', 'MieleDevices.Freezer.ident.device_type.value_localized', 'text') }}</td>
+							</tr><tr>
+								<td align="left">Typenbezeichnung:</td>
+								<td align="right">{{ basic.print('', 'MieleDevices.Freezer.ident.deviceIdentLabel.techType','text') }}</td>
+							</tr><tr>
+								<td align="left">Materialnummer:</td>
+								<td align="right">{{ basic.print('', 'MieleDevices.Freezer.ident.deviceIdentLabel.matNumber', 'text') }}</td>
+							</tr><tr>
+								<td align="left">fabNummer:</td>
+								<td align="right">{{ basic.print('Serial', 'MieleDevices.Freezer.ident.deviceIdentLabel.fabNumber', '') }}</td>
+							</tr><tr>
+								<td align="left">Gerätestatus:</td>
+								<td align="right">{{ basic.print('', 'MieleDevices.Freezer.state.status.value_localized','') }}</td>
+							</tr><tr>
+								<td align="left">Ist-Temperatur Zone 1:</td>
+								<td align="right">{{ basic.print('', 'MieleDevices.Freezer.visu.values.temperatur_zone_1.temperature', '°') }}</td>
+							</tr><tr>
+								<td align="left">Soll-Temperatur Zone 1:</td>
+								<td align="right">         {{  basic.select('','MieleDevices.Freezer.visu.values.temperatur_zone_1.target_temperature','','','','','','horizontal',
+         'MieleDevices.Freezer.values.temperatur_zone_1.range_index','MieleDevices.Freezer.values.temperatur_zone_1.range_description')  }}</td>
+							</tr><tr>
+								<td align="left">Gerätetür:</td>
+								<td align="right">{{basic.symbol('','MieleDevices.Freezer.state.signalDoor',['offen','geschlossen'],['fts_door_unlocked','fts_door_locked'],['1','0'],'',['red','green'],'','','','')}}</td>
+							</tr>
+							
+							
+							
+						</tbody>
+					</table>					
+				<table style="margin-left:auto; margin-right:auto;">
+				<tr>
+				<td>
+				{{ status.collapse('Control_Freezer_1', 'MieleDevices.Freezer.visu.allowed_actions.start', 0) }}				
+				<div class="hide" data-bind="Control_Freezer_1">        
+          {{basic.stateswitch('','MieleDevices.Freezer.visu.action_buttons.start','midi',[0,1],'audio_play','Start',['icon0','icon1'],'','','','')}}
+        </div>
+        </td><td>
+				{{ status.collapse('Control_Freezer_2', 'MieleDevices.Freezer.visu.allowed_actions.stop', 0) }}				        
+				<div class="hide" data-bind="Control_Freezer_2">                
+          {{basic.stateswitch('','MieleDevices.Freezer.visu.action_buttons.stop','midi',[0,1],'audio_stop','Stop',['icon0','icon1'],'','','','')}}
+        </div>        
+        </td><td>
+				{{ status.collapse('Control_Freezer_3', 'MieleDevices.Freezer.visu.allowed_actions.pause', 0) }}
+				<div class="hide" data-bind="Control_Freezer_3">
+          {{basic.stateswitch('','MieleDevices.Freezer.visu.action_buttons.pause','midi',[0,1],'audio_pause','Pause',['icon0','icon1'],'','','','')}} 
+        </div>                  
+        </td><td>
+				{{ status.collapse('Control_Freezer_4', 'MieleDevices.Freezer.visu.allowed_actions.start_supercooling', 0) }}				        
+				<div class="hide" data-bind="Control_Freezer_4">                
+          {{basic.stateswitch('','MieleDevices.Freezer.visu.action_buttons.start_supercooling','midi',[0,1],'weather_snow','Start Super Cooling',['red','red'],'','','','')}}
+        </div>          
+        </td><td>
+				{{ status.collapse('Control_Freezer_5', 'MieleDevices.Freezer.visu.allowed_actions.stop_supercooling', 0) }}				                
+				<div class="hide" data-bind="Control_Freezer_5">                          
+          {{basic.stateswitch('','MieleDevices.Freezer.visu.action_buttons.stop_supercooling','midi',[0,1],'weather_snow','Stop Super Cooling',['green','green'],'','','','')}}
+        </div>          
+        </td><td>
+				{{ status.collapse('Control_Freezer_6', 'MieleDevices.Freezer.visu.allowed_actions.start_superfreezing', 0) }}				                        
+				<div class="hide" data-bind="Control_Freezer_6">                          
+          {{basic.stateswitch('','MieleDevices.Freezer.visu.action_buttons.start_superfreezing','midi',[0,1],'weather_frost','Start Super Freezing',['red','red'],'','','','')}}
+        </div>          
+        </td><td>
+				{{ status.collapse('Control_Freezer_7', 'MieleDevices.Freezer.visu.allowed_actions.stop_superfreezing', 0) }}				                        
+				<div class="hide" data-bind="Control_Freezer_7">                          
+        {{basic.stateswitch('','MieleDevices.Freezer.visu.action_buttons.stop_superfreezing','midi',[0,1],'weather_frost','Stop Super Freezing',['green','green'],'','','','')}}
+        </div>          
+        </td><td>
+				{{ status.collapse('Control_Freezer_8', 'MieleDevices.Freezer.visu.allowed_actions.powerOn', 0) }}				                        
+				<div class="hide" data-bind="Control_Freezer_8">                          
+        {{basic.stateswitch('','MieleDevices.Freezer.visu.action_buttons.powerOn','midi',[0,1],'info_ack','Power On',['red','red'],'','','')}}
+        </div>          
+        </td><td>
+				{{ status.collapse('Control_Freezer_9', 'MieleDevices.Freezer.visu.allowed_actions.powerOff', 0) }}				                        
+				<div class="hide" data-bind="Control_Freezer_9">                          
+        {{basic.stateswitch('','MieleDevices.Freezer.visu.action_buttons.powerOff','midi',[0,1],'info_error','Power Off',['green','green'],'','','')}}
+        </div>          
+        </td>
+        </tr>
+        </table>
+
+        {{ status.collapse('Freezer_device_failure', 'MieleDevices.Freezer.state.signalFailure') }}
+        <div class="hide" data-bind="Freezer_device_failure" style="color:red">
+            {{ basic.symbol('','','','info_warning','','','red','','','') }}
+				    Fehler am Gerät
+				</div>
+        {{ status.collapse('Freezer_device_info', 'MieleDevices.Freezer.state.signalInfo') }}
+        <div class="hide" data-bind="Freezer_device_info" style="color:orange">
+            {{ basic.symbol('','','','info_attention','','','orange','','','') }}
+				    Info am Gerät
+				</div>        				        
+
+<!--
+        <table style="width:250px">
+        <tr>
+        <td style="width:50%"> Zone 1 :</td>
+        <td>
+         {{  basic.select('','MieleDevices.Freezer.visu.values.temperatur_zone_1.target_temperature','','','','','','horizontal',
+         'MieleDevices.Freezer.values.temperatur_zone_1.range_index','MieleDevices.Freezer.values.temperatur_zone_1.range_description')  }}
+        </td>
+        </tr>
+        <tr>
+        <td style="width:50%"> Zone 2:</td>
+        <td>
+         {{  basic.select('','MieleDevices.Freezer.visu.values.temperatur_zone_2.target_temperature','','','','','','horizontal',
+         'MieleDevices.Freezer.values.temperatur_zone_2.range_index','MieleDevices.Freezer.values.temperatur_zone_2.range_description')  }}
+        </td>        
+
+        </tr>
+        </table>          
+-->       
+ 			</div>
+		</div>
+    </div>
+
+
+
+
+
+{% endblock %}
+
+
+
+

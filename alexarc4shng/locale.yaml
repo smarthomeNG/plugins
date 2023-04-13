@@ -1,48 +1,39 @@
 plugin_translations:
     # Translations for the plugin specially for the web interface
-    'allowed IP':                    {'de': 'erlaubte IP', 'en': '=', 'fr': 'Adresses IP aprouvées'}
-    'last Session':                  {'de': 'letzte Sitzung', 'en': '=', 'fr': 'Dernière session'}
-    'Stream-Modifiers':              {'de': 'Stream-Modikatoren', 'en': '=', 'fr': '='}
-    'last Session duration':         {'de': 'letzte Sitzungs- dauer', 'en': '=', 'fr': '='}
-    'Sessions total':                {'de': 'Sitzungen gesamt', 'en': '=', 'fr': '='}
-    'Settings':                      {'de': 'Einstellungen', 'en': '=', 'fr': '='}
-    'Credentials:':                  {'de': 'Zugangsdaten:', 'en': '=', 'fr': '='}
-    'delete Protocol':               {'de': 'Protokoll löschen:', 'en': '=', 'fr': '='}
-    'Real-URL':                      {'de': 'tatsächliche URL', 'en': '=', 'fr': '='}
-    'Commit Changes':                {'de': 'Änderungen speichern', 'en': '=', 'fr': '='}
-    'Store to Config':               {'de': 'in Konfiguration speichern', 'en': '=', 'fr': '='}
-    'Settings / Cam-Info':           {'de': 'Einstellungen / Kamera-Infos', 'en': '=', 'fr': '='}
-    'Communication-Log':             {'de': 'Kommunikations-Log', 'en': '=', 'fr': '='}
-    'active Camera Threads':         {'de': 'aktive Kamera-Threads', 'en': '=', 'fr': '='}
-    'SSL Certificate Info':          {'de': 'SSL Zertifikas Info', 'en': '=', 'fr': '='}
-    'Proxy-Credentials':             {'de': 'Proxy-Zugangsdaten', 'en': '=', 'fr': '='}
-    'Proxy-Authorization':           {'de': 'Proxy-Authorisierungs-Typ', 'en': '=', 'fr': '='}
-    'Video-Buffer-Size :':           {'de': 'Video-Puffer-Grösse', 'en': '=', 'fr': '='}
-    'Authorization :':               {'de': 'Authorisierungs-Typ', 'en': '=', 'fr': '='}
-    'Encode':                        {'de': 'enkodieren', 'en': '=', 'fr': 'Encoder'}
-    'encoded Cred.:':                {'de': 'enkodierte Zugangsdaten', 'en': '=', 'fr': 'Cred. encodés'}
-    'Result :':                      {'de': 'Ergebnis', 'en': '=', 'fr': 'Résultat'}
-    'Value':                         {'de': 'Wert', 'en': '=', 'fr': 'Valeur'}
-    'Property':                      {'de': 'Eigenschaft', 'en': '=', 'fr': 'Prioriété'}
-    'Threads existing ...':          {'de': 'existierende Threads', 'en': '=', 'fr': '='}
-    'Auto Update ( 2 sec.)':         {'de': 'Auto Update ( 2 Sek.)', 'en': '=', 'fr': '='}
-    'last/next Auto-Login' :         {'de': 'letztes/nächstes Auto-Login', 'en': '=', 'fr': '='}
-    'selected Device'      :         {'de': 'gwähltes Gerät', 'en': '=', 'fr': '='}
-    'No. of Alexa-Devices':          {'de': 'Anzahl Alexa-Geräte', 'en': '=', 'fr': '='}
-    'LogOff':                        {'de': 'Ausloggen', 'en': '=', 'fr': 'Déconnection'}
-    'LogIn':                         {'de': 'Einloggen', 'en': '=', 'fr': 'Connection'}
-    'Store Cookie':                  {'de': 'Cookie speichern', 'en': '=', 'fr': 'Sauvegarder Cookie'}
-    'Paste the Cookie-File here':    {'de': 'Cookie File hier einfügen', 'en': '=', 'fr': 'Coller le fichier cookie ici'}
-    'existing Commands':             {'de': 'existierende Kommandos', 'en': '=', 'fr': '='}
-    'Command-Name':                  {'de': 'Kommando-Name', 'en': '=', 'fr': '='}
-
-
-#    '':      {'de': 'Proxy-Authorisierungs-Typ', 'en': '=', 'fr': ''}
-
-
-
-
-
-
-
-
+    'allowed IP'                : {'de': 'erlaubte IP', 'en': '=', 'fr': 'Adresses IP aprouvées'}
+    'last Session'              : {'de': 'letzte Sitzung', 'en': '=', 'fr': 'Dernière session'}
+    'Stream-Modifiers'          : {'de': 'Stream-Modikatoren', 'en': '=', 'fr': 'Modificateurs de flux'}
+    'last Session duration'     : {'de': 'letzte Sitzungs- dauer', 'en': '=', 'fr': 'durèe de la dernière session'}
+    'Sessions total'            : {'de': 'Sitzungen gesamt', 'en': '=', 'fr': 'Nombre de sessions'}
+    'Settings'                  : {'de': 'Einstellungen', 'en': '=', 'fr': 'Réglages'}
+    'Credentials:'              : {'de': 'Zugangsdaten:', 'en': '=', 'fr': "Données d'accès"}
+    'delete Protocol'           : {'de': 'Protokoll löschen:', 'en': '=', 'fr': 'Supprimer journal'}
+    'Real-URL'                  : {'de' : 'tatsächliche URL', 'en': '=', 'fr': 'URL réelle'}
+    'Commit Changes'            : {'de': 'Änderungen speichern', 'en': '=', 'fr': 'Sauvegarder modifications'}
+    'Store to Config'           : {'de': 'in Konfiguration speichern', 'en': '=', 'fr': 'Sauvegarder la config'}
+    'Settings / Cam-Info'       : {'de': 'Einstellungen / Kamera-Infos', 'en': '=', 'fr': 'Règlages / Infos caméra'}
+    'Communication-Log'         : {'de': 'Kommunikations-Log', 'en': '=', 'fr': 'Journal de communication'}
+    'active Camera Threads'     : {'de': 'aktive Kamera-Threads', 'en': '=', 'fr': 'Threads de caméra actifs'}
+    'SSL Certificate Info'      : {'de': 'SSL Zertifikas Info', 'en': '=', 'fr': 'Infos sur le certificat SSL'}
+    'Proxy-Credentials'         : {'de': 'Proxy-Zugangsdaten', 'en': '=', 'fr': "Données d'accès du proxy"}
+    'Proxy-Authorization'       : {'de': 'Proxy-Authorisierungs-Typ', 'en': '=', 'fr': "Type d'autentification du proxy"}
+    'Video-Buffer-Size:'        : {'de': 'Video-Puffer-Grösse', 'en': '=', 'fr': 'Taille de la mémoire tampon vidéo'}
+    'Authorization :'           : {'de': 'Authorisierungs-Typ', 'en': '=', 'fr': "Type d'autentification"}
+    'Encode, save and login'    : {'de': 'enkodieren,speichern und einloggen', 'en': '=', 'fr': 'Encoder, sauvegarder et connexion'}
+    'encoded Cred.:'            : {'de': 'enkodierte Zugangsdaten', 'en': '=', 'fr': 'Cred. encodés'}
+    'Result :'                  : {'de': 'Ergebnis', 'en': '=', 'fr': 'Résultat'}
+    'Value'                     : {'de': 'Wert', 'en': '=', 'fr': 'Valeur'}
+    'Property'                  : {'de': 'Eigenschaft', 'en': '=', 'fr': 'Prioriété'}
+    'Threads existing ...'      : {'de': 'existierende Threads', 'en': '=', 'fr': 'Threads existants'}
+    'Auto Update ( 2 sec.)'     : {'de': 'Auto Update ( 2 Sek.)', 'en': '=', 'fr': 'Màj automatique ( 2 sec. )'}
+    'last/next Auto-Login'      : {'de': 'letztes/nächstes Auto-Login', 'en': '=', 'fr': 'Dernière / prochaine connexion'}
+    'selected Device'           : {'de': 'gewähltes Gerät', 'en': '=', 'fr': 'Appareil choisi'}
+    'No. of Alexa-Devices'      : {'de': 'Anzahl Alexa-Geräte', 'en': '=', 'fr': "Nombre d'appareils Alexa"}
+    'LogOff'                    : {'de': 'Ausloggen', 'en': '=', 'fr': 'Déconnection'}
+    'LogIn'                     : {'de': 'Einloggen', 'en': '=', 'fr': 'Connection'}
+    'Store Cookie'              : {'de': 'Cookie speichern', 'en': '=', 'fr': 'Sauvegarder Cookie'}
+    'Paste the Cookie-File here': {'de': 'Cookie File hier einfügen', 'en': '=', 'fr': 'Coller le fichier cookie ici'}
+    'existing Commands'         : {'de': 'existierende Kommandos', 'en': '=', 'fr': 'Commandes existantes'}
+    'Command-Name'              : {'de': 'Kommando-Name', 'en': '=', 'fr': 'Nom de la commande'}
+    'Step'                      : {'de': 'Schritt', 'en': '=', 'fr': 'Étape'}
+    'Reload Page'               : {'de': 'Seite neu laden', 'en': '=', 'fr': 'Recharger page'}

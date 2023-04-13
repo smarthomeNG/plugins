@@ -12,7 +12,7 @@ plugin:
   documentation: https://github.com/smarthomeNG/plugins/blob/master/sonos/README.md
   support: https://knx-user-forum.de/forum/supportforen/smarthome-py/25151-sonos-anbindung
 
-  version: 1.8.1                 # Plugin version
+  version: 1.8.2                 # Plugin version
   sh_minversion: 1.5.1           # minimum shNG version to use this plugin
   py_minversion: 3.8             # minimum Python version to use for this plugin
   multi_instance: False          # plugin supports multi instance
@@ -85,6 +85,27 @@ parameters:
       de: "(optional) Verlängert die Dauer von Snippet Audio Dateien um einen festen Offset in Sekunden."
       en: "(optional) Extend snippet duration by a fixed offset specified in seconds"
 
+  webif_pagelength:
+    type: int
+    default: 0
+    valid_list:
+      - -1
+      - 0
+      - 25
+      - 50
+      - 100
+    description:
+      de: 'Anzahl an Items, die standardmäßig in einer Web Interface Tabelle pro Seite angezeigt werden.
+           0 = automatisch, -1 = alle'
+      en: 'Amount of items being listed in a web interface table per page by default.
+           0 = automatic, -1 = all'
+    description_long:
+      de: 'Anzahl an Items, die standardmäßig in einer Web Interface Tabelle pro Seite angezeigt werden.\n
+           Bei 0 wird die Tabelle automatisch an die Höhe des Browserfensters angepasst.\n
+           Bei -1 werden alle Tabelleneinträge auf einer Seite angezeigt.'
+      en: 'Amount of items being listed in a web interface table per page by default.\n
+           0 adjusts the table height automatically based on the height of the browser windows.\n
+           -1 shows all table entries on one page.'
 
 item_attributes:
   sonos_uid:
@@ -356,12 +377,12 @@ item_structs:
       type: num
       sonos_recv: snooze
       sonos_send: snooze
-
+      
     status_light:
       type: bool
       sonos_recv: status_light
       sonos_send: status_light
-
+      
     join:
       type: str
       sonos_send: join
@@ -539,17 +560,17 @@ item_structs:
     type: str
     sonos_send: play_tts
     enforce_updates: True
-
+    
     tts_language:
       type: str
       initial_value: de
       sonos_attrib: tts_language
-
+    
     tts_volume:
       type: num
       initial_value: -1
       sonos_attrib: tts_volume
-
+    
     tts_fade_in:
       type: bool
       sonos_attrib: tts_fade_in
@@ -558,12 +579,12 @@ item_structs:
     type: str
     sonos_send: play_snippet
     enforce_updates: True
-
+    
     snippet_volume:
       type: num
       initial_value: 25
       sonos_attrib: snippet_volume
-
+    
     snippet_fade_in:
       type: bool
       initial_value: True

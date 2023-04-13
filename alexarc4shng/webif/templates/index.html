@@ -11,11 +11,17 @@ font-size: 12px;
 
 {% set logo_frame = false %}
 {% set use_bodytabs = true %}
-{% set tabcount = 4 %}
-{% set tab1title = 'Cookie Handling' %}
-{% set tab2title = 'Alexa Devices' %}
-{% set tab3title = 'Command Handling' %}
-{% set tab4title = 'Communication-Protocol' %}
+{% set tabcount = 5 %}
+{% set tab1title = 'Cookie Handling / Standard Login' %}
+{% if pyOTP == false %}
+  {% set tab2title = ' <i id="MFA_OK" class="fas fa-check-circle" style="visibility: visible; margin-left: 20px; font-size: 20px; color: green;"></i>&nbsp&nbspMFA Login' %}
+{% else %}
+  {% set tab2title = ' <i id="MFA_OK" class="fas fa-exclamation-triangle" style="visibility: visible; margin-left: 20px; font-size: 20px; color: red;"></i>&nbsp&nbspMFA Login' %}
+{% endif %}
+
+{% set tab3title = 'Alexa Devices' %}
+{% set tab4title = 'Command Handling' %}
+{% set tab5title = 'Communication-Protocol' %}
 
 {% block headtable %}
 <table class="table table-striped table-hover">
@@ -49,59 +55,50 @@ font-size: 12px;
 
 {% block bodytab1 %}
 <div class="table-responsive" style="margin-left: 2px; margin-right: 2px; margin-bottom: 5px;margin-top: 5px;" class="row">
-<!--<form name="input" action="storecookie.html" method="POST" enctype="multipart/form-data">-->
-
 	<table class="table table-striped table-hover">
 			<tr style="height: 10px;font-size: 12px" valign = "middle">
-				<td style="width: 10%; vertical-align:middle;align:left">{{ _('Credentials:') }}</td>
-				<td style="width: 15%" valign = "middle" align="left">
-			          <input type="input" style="margin-bottom: 1px; margin-left: 5px; width: 100%;font-size: 12px" class="form-control" name="txtUser" id="txtUser" placeholder="{{ _('Amazon-User') }}" value="">			
+				<td style="width: 20%; vertical-align:middle;align:left">
+				  {{ _('Credentials:') }}
 				</td>
-				<td style="width: 10%" valign = "middle" align="left">
-			          <input type="input" style="margin-bottom: 1px; margin-left: 5px; width: 100%;font-size: 12px" class="form-control" name="txtPwd" id="txtPwd" placeholder="{{ _('Password') }}" value="">			
+				<td style="width: 20%" valign = "middle" align="left">
+          <input type="input" style="margin-bottom: 1px; margin-left: 5px; width: 100%;font-size: 12px" class="form-control" name="txtUser" id="txtUser" placeholder="{{ _('Amazon-User') }}" value="">			
 				</td>
-				<td style="width: 10%; vertical-align:middle;align:left">
-				<div class="custom-control custom-checkbox" style =" vertical-align:middle;align:left">
-				    <input type="checkbox" class="custom-control-input" id="store_2_config" name="store_2_config">
-				    <label class="custom-control-label" for="store_2_config">{{ _('Store to Config') }}</label>
-				</div>
-                </td>
-                <td style="width:10%">
-			          <button type="button" onclick="BtnEncode()"style="margin-left : 5px" class="btn btn-shng btn-sm" value="btnEncode" id="btnEncode">&nbsp;{{ _('Encode') }}</button>
-                <td>
-				<td style="width: 10%; vertical-align:middle;align:left">{{ _('encoded Cred.:') }}
-                </td>
-                <td style="width: 45%; vertical-align:middle;align:left">
-			          <input type="input" style="margin-bottom: 1px; margin-left: 5px; width: 100%;font-size: 12px" class="form-control" name="txtEncoded" id="txtEncoded" placeholder="{{ _('Encoded Credentials') }}" value="">			
+				<td style="width: 20%" valign = "middle" align="left">
+          <input type="input" style="margin-bottom: 1px; margin-left: 5px; width: 100%;font-size: 12px" class="form-control" name="txtPwd" id="txtPwd" placeholder="{{ _('Password') }}" value="">			
 				</td>
-			</tr>
+        <td style="width:40%">
+        <button type="button" onclick="BtnEncode()"style="margin-left : 5px" class="btn btn-shng btn-sm" value="btnEncode" id="btnEncode">&nbsp;{{ _('Encode, save and login') }}</button>
+        </td>
+      </tr>
+			<tr style="height: 10px;font-size: 12px">      
+				<td style="vertical-align: middle;text-align: center;"> 
+			          <button type="button" onclick="BtnLogOff()"style="margin-left : 5px" class="btn btn-shng btn-sm" value="btnLogOff" id="btn-logoff">&nbsp;{{ _('LogOff') }}</button>
+				</td>
+				<td style="vertical-align: middle;text-align: center;"> 
+			          <button type="button" onclick="BtnLogIn()"style="margin-left : 5px" class="btn btn-shng btn-sm" value="btnLogIn" id="btn-login">&nbsp;{{ _('LogIn') }}</button>
+				</td>
+ 				<td style="vertical-align: middle;text-align: center;"> 
+				  <strong>Result :</strong>
+				</td>			
+				<td style="width: 75%;margin-top: 5px;margin-bottom: 5px; margin-left : 5px;margin-right: 5px; height : 120px;font-size: 12px;" valign = "middle" align="left" colspan=2>
+					<textarea type="input" rows="5" style="width: 100%;height: 100%;font-size: 12px;" class="form-control" name="txt_Result" id="txt_Result" placeholder="{{ _('...') }}" disabled >{{ txt_Result }}</textarea>
 
-
-
+				</td>				
+      </tr>			
 	</table>
-<!--</form>-->
 </div>
 
 <div class="table-responsive" style="margin-left: 2px; margin-right: 2px; margin-bottom: 5px;margin-top: 5px;" class="row">
-<form name="input" action="storecookie.html" method="POST" enctype="multipart/form-data">
+<form name="input" action="storecookie.html" method="GET" enctype="multipart/form-data">
 	<table class="table table-striped table-hover">
 
-			<tr style="height: 76px">
+			<tr>
 				<td style="width: 10%"> 
-				  <input name="save" value="{{ _('Store Cookie') }}" type="submit" class="btn btn-shng btn-sm"></br>
-				</td>
-				<td style="width: 10%"> 
-			          <button type="button" onclick="BtnLogOff()"style="margin-left : 5px" class="btn btn-shng btn-sm" value="btnLogOff" id="btn-logoff">&nbsp;{{ _('LogOff') }}</button>
+				  <input name="save" value="{{ _('Store Cookie') }}" onclick="BtnStoreCookie()"  class="btn btn-shng btn-sm"></br>
 				</td>
 				<td style="width: 10%"> 
-			          <button type="button" onclick="BtnLogIn()"style="margin-left : 5px" class="btn btn-shng btn-sm" value="btnLogIn" id="btn-login">&nbsp;{{ _('LogIn') }}</button>
-				</td>
-				<td style="width: 10%" valign = "middle" align="left"><strong>Result :</strong></td>
-				<td style="width: 75%;margin-top: 5px;margin-bottom: 5px; margin-left : 5px;margin-right: 5px; height : 120px;font-size: 12px;" valign = "middle" align="left">
-
-					<textarea type="input" rows="5" style="width: 100%;height: 100%;font-size: 12px;" class="form-control" name="txt_Result" id="txt_Result" placeholder="{{ _('...') }}" disabled >{{ txt_Result }}</textarea>
-
-				</td>
+				  <input id="reloadPage" name="reloadPage" value="{{ _('Reload Page') }}" onclick="document.getElementById('reload').click()"  class="btn btn-shng btn-sm" style="visibility:hidden; background-color:lightgreen; color:black">
+				</td>				
 			</tr>
 	</table>
 
@@ -143,6 +140,188 @@ font-size: 12px;
 {% endblock bodytab1 %}
 
 {% block bodytab2 %}
+<br>
+<br>
+
+<div class="table-responsive" id="MFA_Steps"  onclick="SelectDevice();" style="margin-left: 2px; margin-right: 2px;" class="row">
+
+ <div class="col-sm-12">
+
+  <div id="Tooltip" style="position:fixed;bottom:10px;right: 5%;max-width:50%;display:block" class="mb-2 alert alert-success alert-dismissible fade show" role="alert">
+    <div>
+     <strong>Enter Credentials</strong><br>
+     Enter your credentials for the alexa.amazon-Website<br>Press the button to continue
+    </div>
+ </div>
+<!-- Alert if no pyotp installed -->
+{% if pyOTP == true %}
+ <div id="pyotpAlert" style="position:fixed;bottom:10px;left: 5%;max-width:50%;display:block;background-color: red;" class="mb-2 alert alert-success alert-dismissible fade show" role="alert">
+  <div>
+   <strong>no pyOTP installed</strong><br>
+     you can not use MFA - please install pyOTP <br>
+     you can use <br>
+     "cd /usr/local/smarthome"<br>
+     "pip3 install -r ./plugins/alexarc4shng/requirements.txt --user"
+  </div>
+ </div>
+{% endif %}
+ 
+
+	<table class="table table-striped table-hover">
+  <div class="card-text" style="">
+    <div id="MFAcardOverlay" class="cardOverlay">
+        <div style="position: relative; top: 50%; left:50%;">
+            <span id="reload-element" class="fas fa-sync fa-4x"/>
+        </div>
+    </div>
+  </div>    
+<!-- Step 1 -->
+			<tr style="height: 10px;font-size: 12px; width:100%" valign = "middle">
+      <td style="width: 10%; vertical-align:middle;background-color:#709cc2;border-radius: 10px;padding: .25rem .5rem;color: white;text-align: center;font-size: large;">
+        {{ _('Schritt') }} 1 :
+      </td>
+				<td style="width: 10%; vertical-align:middle;text-align:left;padding-left: 40px;">{{ _('Credentials:') }}</td>
+				<td style="width: 25%" valign = "middle" align="left">
+			          <input type="input" style="margin-bottom: 1px; margin-left: 5px; width: 100%;font-size: 12px" class="form-control" name="txtMFAUser" id="txtMFAUser" placeholder="{{ _('Amazon-User') }}" value="">			
+				</td>
+				<td style="width: 25%" valign = "middle" align="left">
+			          <input type="input" style="margin-bottom: 1px; margin-left: 5px; width: 100%;font-size: 12px" class="form-control" name="txtMFAPwd" id="txtMFAPwd" placeholder="{{ _('Password') }}" value="">			
+				</td>
+        <td style="width:20%">
+          <button type="button" onclick="BtnHandleMFA(1)"style="margin-left : 5px;width:250px" class="btn btn-shng btn-sm"> {{ _('Speichern') }} </button>
+        </td>
+        <td  style="width:20%; text-align:right">
+          <i id="Status_1" class="fas" style="visibility: visible; margin-left: 20px; font-size: 35px; color: green;"></i>        
+        </td>
+			</tr>
+
+<!-- Step 2 -->
+			<tr style="height: 10px;font-size: 12px; visibility:hidden" valign = "middle" id="Line_2">
+      <td style="vertical-align:middle;background-color:#709cc2;border-radius: 10px;padding: .25rem .5rem;color: white;text-align: center;font-size: large;">
+        {{ _('Schritt') }} 2 :
+      </td>
+				<td style="vertical-align:middle;text-align:left;padding-left: 40px;"  colspan=3>
+				  {{ _('Amazon Seite öffnen und erstelle eine neue APP') }}
+				</td>      
+        <td style="">
+          <button type="button" onclick="BtnHandleMFA(2)"style="margin-left : 5px;width:250px" class="btn btn-shng btn-sm" value="btnEncode" id="btnEncode">&nbsp;{{ _('öffne amazon.de ') }}</button>
+        </td>
+        <td  style="text-align:right">
+          <i id="Status_2" class="fas" style="visibility: visible; margin-left: 20px; font-size: 35px; color: red;"></i>
+        </td>        				
+        
+			</tr>
+
+<!-- Step 3 -->
+			<tr style="height: 10px;font-size: 12px; visibility:hidden" valign = "middle" id="Line_3">
+      <td style="vertical-align:middle;background-color:#709cc2;border-radius: 10px;padding: .25rem .5rem;color: white;text-align: center;font-size: large;">
+        {{ _('Schritt') }} 3 :
+      </td>
+				<td style="vertical-align:middle;text-align:left;padding-left: 40px;">{{ _('MFA-Secret:') }}</td>      
+				<td style="" valign = "middle" align="left" colspan=2>
+			          <input type="input" style="margin-bottom: 1px; margin-left: 5px; width: 100%;font-size: 12px" class="form-control" name="txtMFA" id="txtMFA" placeholder="{{ _('your Secret') }}" value="">			
+				</td>
+
+        <td style="">
+          <button type="button" onclick="BtnHandleMFA(3)"style="margin-left : 5px;width:250px" class="btn btn-shng btn-sm">{{ _('Code berechnen') }}</button>
+        </td>
+        <td  style="text-align:right">
+          <i id="Status_3" class="fas" style="visibility: visible; margin-left: 20px; font-size: 35px; color: red;"></i>
+        </td>        				
+        
+			</tr>
+
+<!-- Step 4 -->
+			<tr style="height: 10px;font-size: 12px; visibility:hidden" valign = "middle" id="Line_4">
+      <td style="vertical-align:middle;background-color:#709cc2;border-radius: 10px;padding: .25rem .5rem;color: white;text-align: center;font-size: large;">
+        {{ _('Schritt') }} 4 :
+      </td>			
+			<td style="vertical-align:middle;text-align:left;padding-left: 40px;">{{ _('OTP-Code:') }}</td>      
+			<td style="" valign = "middle" align="left" colspan=2>
+			   <input type="input" disabled style="margin-bottom: 1px; margin-left: 5px; width: 100%;font-size: 12px" class="form-control" name="txtOTP" id="txtOTP" placeholder="{{ _('your calculated OTP-Code') }}" value="">			
+			</td>
+      <td>
+          <button type="button" onclick="BtnHandleMFA(4)"style="margin-left : 5px;width:250px" class="btn btn-shng btn-sm">{{ _('Code erfolgreich angegeben') }}</button>
+      </td>
+      <td  style="text-align:right">
+        <i id="Status_4" class="fas" style="visibility: visible; margin-left: 20px; font-size: 35px; color: red;"></i>
+      </td>        				      				
+			</tr>			
+
+<!-- Step 5 -->
+			<tr style="height: 10px;font-size: 12px; visibility:hidden" valign = "middle" id="Line_5">
+      <td style="vertical-align:middle;background-color:#709cc2;border-radius: 10px;padding: .25rem .5rem;color: white;text-align: center;font-size: large;">
+        {{ _('Schritt') }} 5 :
+      </td>
+				<td style="vertical-align:middle;text-align:left;padding-left: 40px;"  colspan=3>
+				  {{ _('MFA-Code in /etc/plugin.yaml speichern') }}
+				</td>      
+        <td style="">
+          <button type="button" onclick="BtnHandleMFA(5)"style="margin-left : 5px;width:250px" class="btn btn-shng btn-sm"> {{ _('speichern') }}</button>
+        </td>
+        <td  style="text-align:right">
+          <i id="Status_5" class="fas" style="visibility: visible; margin-left: 20px; font-size: 35px; color: red;"></i>
+        </td>        				
+        
+			</tr>
+
+<!-- Step 6 -->
+			<tr style="height: 10px;font-size: 12px; visibility:hidden" valign = "middle" id="Line_6">
+      <td style="vertical-align:middle;background-color:#709cc2;border-radius: 10px;padding: .25rem .5rem;color: white;text-align: center;font-size: large;">
+        {{ _('Schritt') }} 6 :
+      </td>
+				<td style="vertical-align:middle;text-align:left;padding-left: 40px;"  colspan=3>
+				  {{ _('Einloggen mit MFA - Setup prüfen') }}
+				</td>      
+        <td style="">
+          <button type="button" onclick="BtnHandleMFA(6)"style="margin-left : 5px;width:250px" class="btn btn-shng btn-sm"> {{ _('Login') }}</button>
+        </td>
+        <td  style="text-align:right">
+          <i id="Status_6" class="fas" style="visibility: visible; margin-left: 20px; font-size: 35px; color: red;"></i>
+        </td>        				
+			</tr>			
+
+<!-- Step 7 -->
+			<tr style="height: 10px;font-size: 12px; visibility:hidden" valign = "middle" id="Line_7">
+      <td style="border-radius: 10px;padding: .25rem .5rem;text-align: center; vertical-align: middle;">
+        <i id="Status_7" class="fas fa-check-circle" style="font-size: 45px; color: green; "></i>
+      </td>
+			<td id="goal" style="vertical-align:middle;text-align:center;padding-left: 40px;font-size:35px"  colspan=2>
+			  congratulations<br>You did it !
+			</td>
+			<td style="height: 7em;">
+			  <img id="img_goal" src="static/img/alexa_cookie_good.png" alt="Got good cookie" style="height: 100%;"> 
+			</td>
+
+        <td style="vertical-align: middle;">
+          <button type="button" onclick="mfaReset()"style="margin-left : 5px;width:250px; visibility:hidden" class="btn btn-shng btn-sm" id="btnMfaReset">{{ _('Reset') }}</button>
+          <button type="button" onclick="document.getElementById('reload').click()" style="margin-left : 5px;width:250px; visibility:hidden;background-color: green;" class="btn btn-shng btn-sm" id="btnMfaReload"> {{ _('Reload Page') }}</button>
+        </td>
+      <td style="border-radius: 10px;padding: .25rem .5rem;text-align: right; vertical-align: middle;">
+        <i id="Status_7_1" class="fas fa-check-circle" style="font-size: 45px; color: green;"></i>
+      </td>				                
+		
+        
+			</tr>						
+	</table>
+  </div>
+</div>
+
+<script>
+  function ToggleTooltip() {
+    var div = document.getElementById('Tooltip');
+    div.style.display = div.style.display == "none" ? "block" : "none";
+  }
+
+  function HideTooltip() {
+    document.getElementById('Tooltip').style.display = "none";
+  }
+</script>
+{% endblock bodytab2 %}
+
+
+
+{% block bodytab3 %}
 <div class="table-responsive" id="AlexaDevices"  onclick="SelectDevice();" style="margin-left: 2px; margin-right: 2px;" class="row">
         <div class="col-sm-12">
             <table class="table table-striped table-hover pluginList">
@@ -187,12 +366,9 @@ $('#AlexaDevices').on('click', 'tr',function()
   });
 
 </script>
+{% endblock bodytab3 %}
 
-
-
-{% endblock bodytab2 %}
-
-{% block bodytab3 %}
+{% block bodytab4 %}
 <style>
 li.L0, li.L1, li.L2, li.L3,
 li.L5, li.L6, li.L7, li.L8
@@ -245,7 +421,7 @@ li.L5, li.L6, li.L7, li.L8
           <button onclick="BtnTest()" style="margin-left : 5px" type="submit" class="btn btn-shng btn-sm" value="btnTest" id="btn-test"><i class="far fa-play-circle"></i></i>&nbsp;{{ _('Test') }}</input>
           <button onclick="BtnDelete()" style="margin-left :5px" type="submit" class="btn btn-shng btn-sm" value="btnDelete" id="btn-delete"><i class="far fa-trash-alt"></i>&nbsp;{{ _('Delete') }}</input>
 
-	  <button id="resultOK" style="visibility:hidden; margin-left:20px; font-size: 35px;color:green"   class="far fa-check-circle"></button>
+	  <button id="resultOK" style="visibility:hidden; margin-left:20px; font-size: 35px;color:green"   class="fas fa-check-circle"></button>
 	  <button id="resultNOK" style="visibility:hidden; margin-left:1px; font-size: 35px;color:red"   class="fas fa-exclamation-triangle"></button>
 
 	  <textarea type="input" style="width:350px;margin-bottom: 5px; margin-left : 5px;margin-right: 5px; height : 50px;font-size: 12px;" class="form-control" name="txtresult" id="txtresult" placeholder="{{ _('...') }}"  disabled>{{ txtResult }}</textarea><br/>
@@ -297,7 +473,7 @@ li.L5, li.L6, li.L7, li.L8
         rulers.push({color: '#eee', column: i * 4, lineStyle: "dashed"});
      }
 
-     var myCodeMirrorConf = CodeMirror.fromTextArea(document.getElementById("txt_payload"), {
+     var myCodeMirrorPayload = CodeMirror.fromTextArea(document.getElementById("txt_payload"), {
         lineNumbers: true,
         lineSeparator: '\n',
         indentUnit: 4,
@@ -309,11 +485,11 @@ li.L5, li.L6, li.L7, li.L8
      });
 
      function resizeCodeMirrors() {
-        if (!myCodeMirrorConf.getOption("fullScreen")) {
+        if (!myCodeMirrorPayload.getOption("fullScreen")) {
             var browserHeight = $( window ).height();
             offsetTop = $('.CodeMirror').offset().top;
-            myCodeMirrorConf.getScrollerElement().style.maxHeight = ((-1)*(offsetTop) -300 + browserHeight)+ 'px';
-            myCodeMirrorConf.refresh();
+            myCodeMirrorPayload.getScrollerElement().style.maxHeight = ((-1)*(offsetTop) -300 + browserHeight)+ 'px';
+            myCodeMirrorPayload.refresh();
         }
 
      }
@@ -326,20 +502,37 @@ li.L5, li.L6, li.L7, li.L8
 	  mycsrf = document.getElementById("csrfCookie").innerHTML;
 	  if (mycsrf != "N/A") //N/A
 	   {
-    	    $('.nav-tabs a[href="#bodytab_3"]').tab('show');
+    	    $('.nav-tabs a[href="#bodytab_4"]').tab('show');
 	   }
 	  else
 	   {
 	    myTest= document.getElementById("bodytab_1").innerHTML;
 	   }
+	   try
+	     {
+	    	  var otpOK = document.getElementById("pyotpAlert");
+	    	  if (otpOK != null)
+	    	    {
+	    	      document.getElementById("BtnHandleMFA_1").disabled = true;
+  	    	    console.log("OTP-Check: no-OTP disable Buttons")	    	      
+	    	    }
+	    	  else
+	    	    {
+	    	      document.getElementById("BtnHandleMFA_1").disabled = false;
+  	    	    console.log("OTP-Check: OTP installed enable Buttons")	    	      	    	      
+	    	    }
+	     }
+  	catch (e)
+    	  {
+    	  }
     });
 </script>
 
-{% endblock bodytab3 %}
+{% endblock bodytab4 %}
 
 
 
-{% block bodytab4 %}
+{% block bodytab5 %}
 <!--
 <table class="table table-striped table-hover">
 	<tbody>
@@ -357,6 +550,8 @@ li.L5, li.L6, li.L7, li.L8
     </tbody>
 </table>
 -->
+<br>
+<br>
 <div class="container-fluid" style="overflow: none; border-left: 1px solid #ccc;height: 60%">
     <div style="margin-bottom: 10px;">
         {% if log_file %}<textarea autocomplete="off" id="log_file" name="log_file" >{% for line in log_file %}{% if not loop.last %}{{ line }}{% else %}{{ line  | replace('\n', '') }}{% endif %}{% endfor %}</textarea>{% else %}{{ _('no data available') }}{% endif %}
@@ -364,6 +559,24 @@ li.L5, li.L6, li.L7, li.L8
 </div>
 
 <script type="text/javascript" language="javascript">
+
+
+function SetCookiePic()
+{
+ 	myImage=document.getElementsByTagName("img")[0];
+	myPath = myImage.src;
+	myPath = myPath.replace("plugin_logo.png","alexa_cookie_bad.png");
+	myImage.src = myPath;
+}
+/*
+$( document ).ready(function() {
+  SetCookiePic()
+});
+*/
+  
+
+
+
 var logCodeMirror = CodeMirror.fromTextArea(document.getElementById("log_file"),
  {
     lineNumbers: true,
@@ -382,14 +595,14 @@ logCodeMirror.refresh();
 
 $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
   var target = $(e.target).attr("href") // activated tab
-  if (target == "#bodytab_4")
+  if (target == "#bodytab_5")
         { logCodeMirror.refresh(); }
 
 });
 
 </script>
 
-{% endblock bodytab4 %}
+{% endblock bodytab5 %}
 
 
 

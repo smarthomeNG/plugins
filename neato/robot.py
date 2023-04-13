@@ -158,13 +158,13 @@ class Robot:
                 self.logger.warning(f"Command returned {str(responseJson['result'])}: Retry starting with non-persistent-map")
                 return self.robot_command(command = 'start_non-persistent-map')
             else:
-                self.logger.error("Sending command failed. Result: {0}".format(str(responseJson['result']) ))
+                self.logger.error("Sending command {command} failed. Result: {0}".format(str(responseJson['result']) ))
                 self.logger.error("Debug: send command response: {0}".format(start_cleaning_response.text))
         else:
             if 'message' in responseJson:
-                self.logger.error("Sending command failed. Message: {0}".format(str(responseJson['message'])))
+                self.logger.error("Sending command {command} failed. Message: {0}".format(str(responseJson['message'])))
             if 'error' in responseJson:
-                self.logger.error("Sending command failed. Error: {0}".format(str(responseJson['error'])))
+                self.logger.error("Sending command {command} failed. Error: {0}".format(str(responseJson['error'])))
 
         # - NOT on Charge BASE
         return start_cleaning_response
