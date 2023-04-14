@@ -37,7 +37,7 @@ from .webif import WebInterface
 class PirateWeather(SmartPlugin):
 
 
-    PLUGIN_VERSION = "1.1.1"
+    PLUGIN_VERSION = "1.1.2"
 
     # https://api.pirateweather.net/forecast/[apikey]/[latitude],[longitude]
     _base_url = 'https://api.pirateweather.net/forecast/'
@@ -103,7 +103,7 @@ class PirateWeather(SmartPlugin):
         """
         forecast = self.get_forecast()
         if forecast is None:
-            self.logger.error("Forecast is None! Perhaps server did not reply?")
+            self.logger.info("Forecast is None! Server did not answer or sent an invalid reply?")
             return
         self._jsonData = forecast
         for s, matchStringItems in self._items.items():
@@ -178,32 +178,27 @@ class PirateWeather(SmartPlugin):
         try:
             response = self._session.get(self._build_url())
         except Exception as e:
-            self.logger.warning("get_forecast: Exception when sending GET"
-                                " request for get_forecast: {}".format(e))
+            self.logger.warning(f"get_forecast: Exception when sending GET request: {e}")
             return
         try:
             json_obj = response.json()
         except Exception as e:
-            self.logger.warning("get_forecast: Response {} is no valid"
-                                " json format: {}".format(response, e))
+            self.logger.warning(f"get_forecast: Response '{response}' is no valid json format: {e}")
             return
         self.logger.info(f"get_forecast: json response={json_obj}")
         daily_data = OrderedDict()
         if not json_obj.get('daily', False):
-            self.logger.warning("get_forecast: Response {} has no info for daily values."
-                                " Ignoring response.".format(response))
+            self.logger.warning(f"get_forecast: Response '{response}' has no info for daily values. Ignoring response.")
             return
         if not json_obj.get('hourly', False):
-            self.logger.warning("get_forecast: Response {} has no info for hourly values."
-                                " Ignoring response.".format(response))
+            self.logger.warning(f"get_forecast: Response '{response}' has no info for hourly values. Ignoring response.")
             return
 
         # add icon_visu, date and day to daily and currently
         json_obj['daily'].update({'icon_visu': self.map_icon(json_obj['daily']['icon'])})
         json_obj['hourly'].update({'icon_visu': self.map_icon(json_obj['hourly']['icon'])})
         if not json_obj.get('currently'):
-            self.logger.warning("get_forecast: Response {} has no info for current values."
-                                " Skipping update for currently values.".format(response))
+            self.logger.warning(f"get_forecast: Response {response} has no info for current values. Skipping update for currently values.")
         else:
             date_entry = datetime.datetime.fromtimestamp(json_obj['currently']['time']).strftime('%d.%m.%Y')
             day_entry = datetime.datetime.fromtimestamp(json_obj['currently']['time']).strftime('%A')
