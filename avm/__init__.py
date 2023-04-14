@@ -144,7 +144,7 @@ class AVM(SmartPlugin):
         # init FritzDevice
         try:
             self.fritz_device = FritzDevice(_host, _port, ssl, _verify, _username, _passwort, _call_monitor_incoming_filter, _use_tr064_backlist, self)
-        except Exception as e:
+        except IOError as e:
             self.logger.warning(f"{e} occurred during establishing connection to FritzDevice via TR064-Interface. Not connected.")
             self.fritz_device = None
         else:
@@ -153,7 +153,7 @@ class AVM(SmartPlugin):
         # init FritzHome
         try:
             self.fritz_home = FritzHome(_host, ssl, _verify, _username, _passwort, _log_entry_count, self)
-        except Exception as e:
+        except IOError as e:
             self.logger.warning(f"{e} occurred during establishing connection to FritzDevice via AHA-HTTP-Interface. Not connected.")
             self.fritz_home = None
         else:
@@ -163,7 +163,7 @@ class AVM(SmartPlugin):
         if self._call_monitor and self.fritz_device and self.fritz_device.connected:
             try:
                 self.monitoring_service = Callmonitor(_host, 1012, self.fritz_device.get_contact_name_by_phone_number, _call_monitor_incoming_filter, self)
-            except Exception as e:
+            except IOError as e:
                 self.logger.warning(f"{e} occurred during establishing connection to FritzDevice CallMonitor. Not connected.")
                 self.monitoring_service = None
             else:
@@ -492,7 +492,7 @@ class FritzDevice:
 
     ERROR_COUNT_TO_BE_BLACKLISTED = 2
 
-    def __init__(self, host, port, ssl, verify, username, password, call_monitor_incoming_filter, use_tr064_backlist, plugin_instance=None):
+    def __init__(self, host, port, ssl, verify, username, password, call_monitor_incoming_filter, use_tr064_backlist, plugin_instance):
         """
         Init class FritzDevice
         """
@@ -528,7 +528,7 @@ class FritzDevice:
             # check connection:
             conn_test_result = self.model_name()
             if isinstance(conn_test_result, int):
-                raise Exception(f"Error {conn_test_result}-'{self.ERROR_CODES.get(conn_test_result, 'unknown')}'")
+                raise IOError(f"Error {conn_test_result}-'{self.ERROR_CODES.get(conn_test_result, 'unknown')}'")
 
             self.connected = True
             if self.is_fritzbox():
@@ -810,6 +810,10 @@ class FritzDevice:
     # ----------------------------------
     def cyclic_item_update(self, read_all: bool = False):
         """Updates Item Values"""
+
+        if not self._plugin_instance.alive:
+            return
+
         if not self.connected:
             self.logger.warning("FritzDevice not connected. No update of item values possible.")
             return
@@ -818,6 +822,9 @@ class FritzDevice:
 
         # iterate over items and get data
         for item in self.items:
+
+            if not self._plugin_instance.alive:
+                return
 
             # get item config
             item_config = self.items[item]
@@ -1685,7 +1692,7 @@ class FritzDevice:
         if mesh_response:
             try:
                 mesh = mesh_response.json()
-            except Exception:
+            except ValueError:
                 mesh = None
 
             return mesh
@@ -1732,7 +1739,7 @@ class FritzHome:
         # Login
         self.login()
         if not self._logged_in:
-            raise Exception("Error 'Login failed'")
+            raise IOError("Error 'Login failed'")
 
     def register_item(self, item, item_config: dict):
         """
@@ -3502,7 +3509,7 @@ class Callmonitor:
         # connect
         self.connect()
         if not self.conn:
-            raise Exception("Connection Error")
+            raise IOError("Connection Error")
 
     def connect(self):
         """
@@ -4030,6 +4037,8 @@ def get_node_value_as_int(elem, node) -> int:
     try:
         return int(value)
     except TypeError:
+        return 0
+    except ValueError:
         return 0
 
 
