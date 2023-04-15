@@ -62,7 +62,7 @@
 <!--
 	Define the number of tabs for the body of the web interface (1 - 3)
 -->
-{% set tabcount = 4 %}
+{% set tabcount = 5 %}
 
 <!--
 	Set the tab that will be visible on start, if another tab that 1 is wanted (1 - 3)
@@ -103,6 +103,9 @@
 </div>
 {% endblock bodytab1 %}
 
+<!--
+	Content block for the 2. tab of the Webinterface
+-->
 {% set tab2title = "<strong>Input Items</strong>"%}
 {% block bodytab2 %}
 <div class="container-fluid m-2 table-resize">
@@ -130,6 +133,10 @@
 		</table>
 </div>
 {% endblock bodytab2 %}
+
+<!--
+	Content block for the 3. tab of the Webinterface
+-->
 {% set tab3title = "<strong>Telegram Control</strong>"%}
 {% block bodytab3 %}
 <div class="container-fluid m-2 table-resize">
@@ -159,32 +166,12 @@
 </div>
 {% endblock bodytab3 %}
 
-
 <!--
-	Content block for the second tab of the Webinterface
+	Content block for the 4. tab of the Webinterface
 -->
 {% set tab4title = "<strong>Telegram Infos</strong>" %}
 {% block bodytab4 %}
-<strong>Chat-IDs</strong>
 <div class="container-fluid m-2 table-resize">
-		<table class="dataTableAdditional" id="table_chatids">
-			<thead>
-				<tr class="shng_heading"><th></th>
-					<th>{{ _('Registrierte Chat-ID') }}</th>
-					<th>{{ _('Zugriff') }}</th>
-				</tr>
-			</thead>
-			<tbody>
-				{% for key in p._chat_ids_item() %}
-					<tr id="{{ loop.index }}_click"><td></td>
-						<td class="py-1">{{ key }}</td>
-						<td class="py-1">{{ p._chat_ids_item()[key] }}</td>
-					</tr>
-				{% endfor %}
-			</tbody>
-		</table>
-
-<strong>Telegram Infos</strong>
 		<table class="dataTableAdditional" id="table_info">
 			<thead>
 				<tr class="shng_heading"><th></th>
@@ -203,3 +190,28 @@
 		</table>
 	</div>
 {% endblock bodytab4 %}
+
+<!--
+	Content block for the 5. tab of the Webinterface
+-->
+{% set tab5title = "<strong>Chat-ID's</strong>" %}
+{% block bodytab5 %}
+<div class="container-fluid m-2 table-resize">
+		<table class="dataTableAdditional" id="table_chatids">
+			<thead>
+				<tr class="shng_heading"><th></th>
+					<th>{{ _('Registrierte Chat-ID') }}</th>
+					<th>{{ _('Zugriff') }}</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for key in p._chat_ids_item() %}
+					<tr id="{{ loop.index }}_click"><td></td>
+						<td class="py-1">{{ key }}</td>
+						<td class="py-1">{{ p._chat_ids_item()[key] }}</td>
+					</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+        </div>
+{% endblock bodytab5 %}
