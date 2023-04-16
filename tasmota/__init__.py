@@ -174,7 +174,7 @@ class Tasmota(MqttPlugin):
 
             tasmota_attr = self.get_iattr_value(item.conf, 'tasmota_attr')
             tasmota_relay = self.get_iattr_value(item.conf, 'tasmota_relay')
-            tasmota_rf_details = self.get_iattr_value(item.conf, 'tasmota_rf_key')
+            tasmota_rf_details = self.get_iattr_value(item.conf, 'tasmota_rf_details')
             tasmota_zb_device = self.get_iattr_value(item.conf, 'tasmota_zb_device')
             tasmota_zb_group = self.get_iattr_value(item.conf, 'tasmota_zb_group')
             tasmota_zb_attr = self.get_iattr_value(item.conf, 'tasmota_zb_attr')
@@ -211,11 +211,12 @@ class Tasmota(MqttPlugin):
                 # check if zigbee device short name has been used without parentheses; if so this will be normally parsed to a number and therefore mismatch with definition
                 try:
                     tasmota_zb_device = int(tasmota_zb_device)
+                except ValueError:
+                    pass
+                else:
                     self.logger.warning(f"Probably for item {item.path()} the device short name as been used for attribute 'tasmota_zb_device'. Trying to make that work but it will cause exceptions. To prevent this, the short name need to be defined as string by using parentheses")
                     tasmota_zb_device = str(hex(tasmota_zb_device))
                     tasmota_zb_device = tasmota_zb_device[0:2] + tasmota_zb_device[2:len(tasmota_zb_device)].upper()
-                except Exception as e:
-                    pass
 
                 # define item_config
                 item_mapping = f'{tasmota_topic}.{tasmota_zb_device}.{tasmota_zb_attr}'
@@ -354,8 +355,15 @@ class Tasmota(MqttPlugin):
                         return
 
                 elif tasmota_attr == 'rf_key_send':
-                    detail = f"{detail}{value}"
-                    value = 1
+                    # send learned RF data per defined / selected Key
+                    detail = f"{detail}{value}"  # RfKey<x>;  <x> number of key in range 1:17
+                    # 1 = send default RF data for RfKey<x> using RfSync, RfLow, RfHigh and RfHost parameters
+                    # 2 = learn RF data for RfKey<x>
+                    # 3 = unlearn RF data for RfKey<x>
+                    # 4 = save RF data using RfSync, RfLow, RfHigh and last RfCode parameters
+                    # 5 = show default or learned RF data
+                    # 6 = send learned RF data
+                    value = 6
 
                 elif tasmota_attr == 'rf_key':
                     if not tasmota_rf_details:
@@ -366,6 +374,8 @@ class Tasmota(MqttPlugin):
                         var = tasmota_rf_details.split('=')
                         if len(var) == 2:
                             tasmota_rf_details, tasmota_rf_key_param = var
+                        else:
+                            return
 
                     detail = f"{detail}{tasmota_rf_details}"
                     value = 1
@@ -1469,9 +1479,13 @@ class Tasmota(MqttPlugin):
             self.logger.info(f"{tasmota_topic}: More than one item for item_type '{item_type}' found to be set to '{value}' provided by '{src}'. First one will be used.")
 
         item = item_list[0]
-        tasmota_rf_details = self.get_iattr_value(item.conf, 'tasmota_rf_key')
+        tasmota_rf_details = self.get_iattr_value(item.conf, 'tasmota_rf_details')
         if tasmota_rf_details and '=' in tasmota_rf_details:
-            tasmota_rf_key, tasmota_rf_key_param = tasmota_rf_details.split('=')
+            var = tasmota_rf_details.split('=')
+            if len(var) == 2:
+                tasmota_rf_details, tasmota_rf_key_param = var
+            else:
+                return
 
             if tasmota_rf_key_param.lower() == 'true':
                 value = True
@@ -1480,7 +1494,7 @@ class Tasmota(MqttPlugin):
             elif tasmota_rf_key_param.lower() == 'toggle':
                 value = not(item())
             else:
-                self.logger.warning(f"Parameter of tasmota_rf_key unknown, Need to be True, False, Toggle")
+                self.logger.warning(f"Parameter of tasmota_rf_key unknown, Need to be 'True', 'False', 'Toggle'")
                 return
 
         # set item value
@@ -1583,7 +1597,7 @@ class Tasmota(MqttPlugin):
         """
         Configures Zigbee Bridge settings
 
-        :param device:          Zigbee bridge to be set to get MQTT Messages in right format")
+        :param device:          Zigbee bridge to be set to get MQTT Messages in right format
         """
 
         self.logger.info(f"_configure_zigbee_bridge_settings: Do settings of ZigbeeBridge {device}")

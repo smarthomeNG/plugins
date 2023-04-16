@@ -129,9 +129,8 @@ item_attributes:
 
     tasmota_rf_details:
         type: str
-        default: 1
         description:
-            de: "Nummer des auszulösenden RF Keys im Tasmota Device=Aktion bei Empfang"
+            de: "Nummer des auszulösenden RF Keys im Tasmota Device und Aktion bei Empfang als String; bspw: '16=true' - Bei Empfang des Key16, setze Item auf True"
             en: "Number of rf keys to be used for sending command"
 
     tasmota_zb_device:
