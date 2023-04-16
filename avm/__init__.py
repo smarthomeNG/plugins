@@ -148,7 +148,7 @@ class AVM(SmartPlugin):
             self.logger.warning(f"{e} occurred during establishing connection to FritzDevice via TR064-Interface. Not connected.")
             self.fritz_device = None
         else:
-            self.logger.debug("Connection to FritzDevice established.")
+            self.logger.debug("Connection to FritzDevice via TR064-Interface established.")
 
         # init FritzHome
         try:
@@ -183,7 +183,7 @@ class AVM(SmartPlugin):
             self.create_cyclic_scheduler(target='tr064', items=self.fritz_device.items, fct=self.fritz_device.cyclic_item_update, offset=2)
             self.fritz_device.cyclic_item_update(read_all=True)
 
-        if self._aha_http_interface and self.fritz_device is not None and self.fritz_device.is_fritzbox():
+        if self._aha_http_interface and self.fritz_device and self.fritz_device.is_fritzbox() and self.fritz_home:
             # add scheduler for updating items
             self.create_cyclic_scheduler(target='aha', items=self.fritz_home.items, fct=self.fritz_home.cyclic_item_update, offset=4)
             self.fritz_home.cyclic_item_update(read_all=True)
@@ -201,7 +201,7 @@ class AVM(SmartPlugin):
         """
         self.logger.debug("Stop method called")
         self.scheduler_remove('poll_tr064')
-        if self._aha_http_interface:
+        if self.fritz_home:
             self.scheduler_remove('poll_aha')
             self.scheduler_remove('check_sid')
             self.fritz_home.logout()
