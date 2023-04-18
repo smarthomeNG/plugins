@@ -53,7 +53,7 @@ ITEM_ATTR_CONDITION       = 'telegram_condition'          # when to send the mes
 ITEM_ATTR_INFO            = 'telegram_info'               # read items with specific item-values
 ITEM_ATTR_TEXT            = 'telegram_text'               # write message-text into the item
 ITEM_ATTR_MATCHREGEX      = 'telegram_value_match_regex'  # check a value against a condition before sending a message
-ITEM_ATTR_CHAT_IDS        = 'telegram_chat_ids'
+ITEM_ATTR_CHAT_IDS        = 'telegram_chat_ids'           # specifying chat IDs and write access
 ITEM_ATTR_MSG_ID          = 'telegram_message_chat_id'    # chat_id the message should be sent to
 ITEM_ATTR_CONTROL         = 'telegram_control'            # control(=change) item-values (bool/num)
 
@@ -72,10 +72,10 @@ class Telegram(SmartPlugin):
     _items = []               # all items using attribute ``telegram_message``
     _items_info = {}          # dict used whith the info-command: key = attribute_value, val= item_list telegram_info
     _items_text_message = []  # items in which the text message is written ITEM_ATTR_TEXT
-    _items_control = {}        # dict used whith the control-command:
+    _items_control = {}       # dict used whith the control-command:
     _chat_ids_item = {}       # an item with a dict of chat_id and write access
     _waitAnswer = None        # wait a specific answer Yes/No - or num (change_item)
-    _queue = None
+    _queue = None             # queue for the messages to be sent
 
     def __init__(self, sh):
         """
@@ -101,7 +101,7 @@ class Telegram(SmartPlugin):
             return
 
         self._loop = asyncio.get_event_loop()
-        
+
         self.alive = False
         self._name = self.get_parameter_value('name')
         self._token = self.get_parameter_value('token')
@@ -113,7 +113,6 @@ class Telegram(SmartPlugin):
         self._long_polling_timeout = self.get_parameter_value('long_polling_timeout')
         self._pretty_thread_names = self.get_parameter_value('pretty_thread_names')
         
-        self._application = None
         self._bot =  None
         self._queue = Queue()
         
@@ -187,18 +186,25 @@ class Telegram(SmartPlugin):
             self.logger.error(f"could not send bye message [{e}]")
         
         time.sleep(1)
-
+        self.alive = False  # Clears the infiniti loop in sendQueue
         try:
-            self._taskConn.cancel()
-            self._taskQueue.cancel()
-
+            # if not self._taskConn.done():
+            #     if self.debug_enabled:
+            #         self.logger.debug("taskConn not done")
+            #     self._taskConn.cancel()
+            # if not self._taskQueue.done():
+            #     if self.debug_enabled:
+            #         self.logger.debug("taskQueue not done")
+            #     self._taskQueue.cancel()
             asyncio.gather(self._taskConn,  self._taskQueue)
             self.disconnect()
 
-            while self._loop.is_running():
-                asyncio.sleep(0.1)
+            if self._loop.is_running():
+                if self.debug_enabled:
+                    self.logger.debug("stop telegram _loop.is_running")
+                while self._loop.is_running():
+                    asyncio.sleep(0.1)
             self._loop.close()
-            self.alive = False
         except Exception as e:
             self.logger.error(f"An error occurred while stopping the plugin [{e}]")
 
@@ -210,7 +216,7 @@ class Telegram(SmartPlugin):
         This method run multiple coroutines concurrently using asyncio
         """
         self._taskConn = asyncio.create_task(self.connect())
-        self._taskQueue = asyncio.create_task(self.startSendQueue())
+        self._taskQueue = asyncio.create_task(self.sendQueue())
         await asyncio.gather(self._taskConn, self._taskQueue)
     
     async def connect(self):
@@ -223,7 +229,7 @@ class Telegram(SmartPlugin):
             await self._application.initialize()
             await self._application.start()
             self._updater = self._application.updater
-            
+
             q = await self._updater.start_polling(timeout=self._long_polling_timeout)
                 
             if self.debug_enabled:
@@ -244,27 +250,29 @@ class Telegram(SmartPlugin):
         if self.debug_enabled:
             self.logger.debug("connect method end")
     
-    async def startSendQueue(self):
+    async def sendQueue(self):
         """
         Waiting for messages to be sent in the queue and sending them to Telegram.
         The queue expects a dictionary with various parameters
         """
         if self.debug_enabled:
-            self.logger.debug(f"startSendQueue called - queue: [{self._queue}]")
-        while True:
+            self.logger.debug(f"sendQueue called - queue: [{self._queue}]")
+        while self.alive:           # infinite loop until self.alive = False
             try:
                 message = self._queue.get_nowait()
-            except queue.Empty:   # Keine Nachricht in der Queue
+            except queue.Empty:     # no message to send in the queue
                 await asyncio.sleep(1)
             except Exception as e:
                 self.logger.debug(f"messageQueue Exception [{e}]")
-            else:
+            else:                   # message to be sent in the queue
                 if self.debug_enabled:
                     self.logger.debug(f"message queue {message}")
                 if message["msgType"] == "Text":
                     await self.async_msg_broadcast(message["msg"], message["chat_id"], message["reply_markup"], message["parse_mode"])
                 if message["msgType"] == "Photo":
                     await self.async_photo_broadcast(message["photofile_or_url"], message["caption"], message["chat_id"], message["local_prepare"])
+        if self.debug_enabled:
+            self.logger.debug("sendQueue method end")
 
     async def disconnect(self):
         """
