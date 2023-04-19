@@ -1,0 +1,150 @@
+# Metadata for the Smart-Plugin
+plugin:
+    # Global plugin attributes
+    type: gateway
+    description:
+        de: 'Plugin zur Geräte-Anbindung über ModBus an SmartHomeNG übernommen von modbus_tcp Plugin'
+        en: 'Plugin to connect via modbus with SmartHomeNG applied from modbus_tcp plugin'
+    maintainer: gruberth
+    tester: 'n/a'
+    state: develop
+    keywords: modbus_rtu
+    version: 1.0.0                 # Plugin version
+    sh_minversion: 1.8             # minimum shNG version to use this plugin
+    py_minversion: 3.6
+    multi_instance: True           # plugin supports multi instance
+    restartable: unknown
+    classname: modbus_rtu          # class containing the plugin
+
+parameters:
+    tty:
+        type: str
+        default: '/dev/ttyUSB0'
+        description:
+            de: 'Geräte Adresse des Modbus-Geraetes'
+            en: 'Device address from the modbus-device'
+
+    baud:
+        type: int
+        default: 1200
+        description:
+            de: 'Baudrate für lesen'
+            en: 'Baud for reading'
+
+    parity:
+        type: str
+        default: 'None'
+        valid_list: ['None', 'Even', 'Odd']
+        description:
+            de: 'Parität Even=Gerade, Odd=Ungerade, None=Keine'
+            en: 'parity'
+
+    stopbits:
+        type: int
+        default: 1
+        description:
+            de: 'Anzahl der Stopbits'
+            en: 'Number of stopbits'
+
+    cycle:
+        type: int
+        default: 300
+        description:
+            de: 'Update Zyklus in Sekunden'
+            en: 'Update cycle in seconds'
+
+    ignoreList:
+        type: list
+        default: []
+        description:
+            de: 'Geräte Adressen die ignoriert werden sollen'
+            en: 'Geräte Adressen die ignoriert werden sollen'
+
+item_attributes:
+    modBusRtuObjectType:
+        type: str
+        default: 'HoldingRegister'
+        description:
+            de: 'Auswahl welcher Objekt-Type gelesen werden soll'
+            en: 'Selection of which object type should be read '
+        valid_list:
+        - 'Coil'
+        - 'DiscreteInput'
+        - 'InputRegister'
+        - 'HoldingRegister'
+
+    modBusRtuAddress:
+        type: num
+        description:
+            de: 'Register Adresse welche gelesen werden soll'
+            en: 'register address to read'
+
+    modBusRtuUnit:
+        type: num
+        default: 1
+        description:
+            de: 'Slave-Addresse der zu lesenden Modbus-Einheit'
+            en: 'slave-address of the Modbus-Unit to read'
+
+    modBusRtuDataType:
+        type: str
+        default: 'uint16'
+        description:
+            de: 'Datentyp vom zu lesenden Register (bit, int16 uint16 int32 uint32 float32 string16 stringNN)'
+            en: 'datatype from register to read (bit, int16 uint16 int32 uint32 float32 string16 stringNN)'
+
+    modBusRtuDirection:
+        type: str
+        default: 'read'
+        description:
+            de: 'Datenrichtung'
+            en: 'data direction'
+        valid_list:
+        - 'read'
+        - 'read_write'
+        - 'write'
+
+    modBusRtuByteOrder:
+        type: str
+        default: 'Endian.Big'
+        description:
+            de: 'Endian.Big oder Endian.Little'
+            en: 'Endian.Big or Endian.Little'
+        valid_list:
+        - 'Endian.Big'
+        - 'Endian.Little'
+
+    modBusRtuWordOrder:
+        type: str
+        default: 'Endian.Big'
+        description:
+            de: 'Endian.Big oder Endian.Little'
+            en: 'Endian.Big or Endian.Little'
+        valid_list:
+        - 'Endian.Big'
+        - 'Endian.Little'
+
+    modBusRtuFactor:
+        type: num
+        default: 1
+        description:
+            de: 'Faktor mit welchem der gelesene Register-Wert multipliziert wird'
+            en: 'Factor by which the read register value is multiplied'
+
+item_structs: NONE
+
+plugin_functions:
+    sendAllWriteReg:
+        type: mixed
+        description:
+            de: "Sendet alle write Register zum Slave"
+            en: "Sends all write registers to the slave"
+        parameters:
+            returnval:
+                type: mixed
+                default: None
+                description:
+                    de: "Return-Wert der Funktion"
+                    en: "Return value of the function"
+
+logic_parameters: NONE
