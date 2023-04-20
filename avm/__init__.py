@@ -1208,7 +1208,8 @@ class FritzDevice:
         :param mac_address: MAC address of the device to wake up
         """
         # self.client.LanDevice.Hosts.X_AVM_DE_GetAutoWakeOnLANByMACAddress(NewMACAddress=mac_address)
-        return self._set_fritz_device('wol', f"NewMACAddress='{mac_address}'")
+        args = {'NewMACAddress': mac_address}
+        return self._set_fritz_device('wol', args)
 
     # ----------------------------------
     # caller methods
@@ -1252,7 +1253,8 @@ class FritzDevice:
         :param phone_name: full phone identifier, could be e.g. '**610' for an internal device
         """
         # self.client.InternetGatewayDevice.X_VoIP.X_AVM_DE_DialSetConfig(NewX_AVM_DE_PhoneName=phone_name.strip())
-        return self._set_fritz_device('set_call_origin', f"NewX_AVM_DE_PhoneName='{phone_name.strip()}'")
+        args = {'NewX_AVM_DE_PhoneName': phone_name.strip()}
+        return self._set_fritz_device('set_call_origin', args)
 
     def start_call(self, phone_number: str):
         """
@@ -1263,7 +1265,8 @@ class FritzDevice:
         :param phone_number: full phone number to call
         """
         # self.client.InternetGatewayDevice.X_VoIP.X_AVM_DE_DialNumber(NewX_AVM_DE_PhoneNumber=phone_number.strip())
-        return self._set_fritz_device('start_call', f"NewX_AVM_DE_PhoneNumber='{phone_number.strip()}'")
+        args = {'NewX_AVM_DE_PhoneNumber': phone_number.strip()}
+        return self._set_fritz_device('start_call', args)
 
     def cancel_call(self):
         """
@@ -1406,7 +1409,8 @@ class FritzDevice:
             self.logger.debug(f"set_wlan called: wlan_index={wlan_index}, new_enable={new_enable}")
 
         # self.client.LANDevice.WLANConfiguration[wlan_index].SetEnable(NewEnable=int(new_enable))
-        response = self._set_fritz_device('set_wlan', f"NewEnable='{int(new_enable)}'", wlan_index)
+        args = {'NewEnable': int(new_enable)}
+        response = self._set_fritz_device('set_wlan', args, wlan_index)
 
         # check if remaining time is set as item
         self.set_wlan_time_remaining(wlan_index)
@@ -1457,7 +1461,8 @@ class FritzDevice:
             self.logger.debug(f"set_wps called: wlan_index={wlan_index}, wps_enable={wps_enable}")
 
         # self.client.LANDevice.WLANConfiguration[wlan_index].X_AVM_DE_SetWPSEnable(NewX_AVM_DE_WPSEnable=int(wps_enable))
-        return self._set_fritz_device('set_wps', f"NewX_AVM_DE_WPSEnable='{int(wps_enable)}'", wlan_index)
+        args = {'NewX_AVM_DE_WPSEnable': int(wps_enable)}
+        return self._set_fritz_device('set_wps', args, wlan_index)
 
     def get_wps(self, wlan_index: int):
         """
@@ -1482,7 +1487,8 @@ class FritzDevice:
         uses: https://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/x_tam.pdf
         """
         # self.client.InternetGatewayDevice.X_AVM_DE_TAM.SetEnable(NewIndex=tam_index, NewEnable=int(new_enable))
-        return self._set_fritz_device('set_tam', f"NewIndex={tam_index}, NewEnable='{int(new_enable)}'")
+        args = {'NewIndex': tam_index, 'NewEnable': int(new_enable)}
+        return self._set_fritz_device('set_tam', args)
 
     def get_tam(self, tam_index: int = 0):
         """
@@ -1540,7 +1546,8 @@ class FritzDevice:
             switch_state = "ON"
 
         # self.client.InternetGatewayDevice.X_AVM_DE_Homeauto.SetSwitch(NewAIN=ain, NewSwitchState=switch_state)
-        return self._set_fritz_device('set_aha_device', f"NewAIN={ain}, NewSwitchState='{switch_state}'")
+        args = {'NewAIN': ain, 'NewSwitchState': switch_state}
+        return self._set_fritz_device('set_aha_device', args)
 
     # ----------------------------------
     # deflection
@@ -1555,7 +1562,8 @@ class FritzDevice:
         :param new_enable: new enable (default: False)
         """
         # self.client.InternetGatewayDevice.X_AVM_DE_OnTel.SetDeflectionEnable(NewDeflectionId=deflection_id, NewEnable=int(new_enable))
-        return self._set_fritz_device('set_deflection', f"NewDeflectionId='{deflection_id}', NewEnable='{int(new_enable)}'")
+        args = {'NewDeflectionId': deflection_id, 'NewEnable': int(new_enable)}
+        return self._set_fritz_device('set_deflection', args)
 
     def get_deflection(self, deflection_id: int = 0):
         """Get Deflection state of deflection_id"""
