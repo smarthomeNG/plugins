@@ -35,7 +35,16 @@ from pymodbus.constants import Endian
 from pymodbus.payload import BinaryPayloadDecoder
 from pymodbus.payload import BinaryPayloadBuilder
 
-from pymodbus.client.serial import ModbusSerialClient
+from pymodbus.version import version
+
+pymodbus_baseversion = int(version.short().split('.')[0])
+
+if pymodbus_baseversion > 2:
+    # for newer versions of pymodbus
+    from pymodbus.client.serial import ModbusSerialClient
+else:
+    # for older versions of pymodbus
+    from pymodbus.client.sync import ModbusSerialClient
 
 AttrAddress = 'modBusRtuAddress'
 AttrType = 'modBusRtuDataType'
@@ -79,7 +88,7 @@ class modbus_rtu(SmartPlugin):
             self.logger.warning("Invalid parity {0} given -> default(None) is used".format(self._parity, ))
             self._parity = 'None'
 
-        self._Mclient = ModbusSerialClient(port=self._tty, baudrate=self._baud,
+        self._Mclient = ModbusSerialClient(method='rtu', port=self._tty, baudrate=self._baud,
                                            parity=self._parity[0], stopbits=self._stopbits)
         self.lock = threading.Lock()
 
@@ -438,7 +447,6 @@ class modbus_rtu(SmartPlugin):
             regPara['write_value'] = value
         else:
             regPara.update({'write_value': value})
-
 
     def __read_Registers(self, regPara):
         objectType = regPara['objectType']
