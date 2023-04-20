@@ -10,17 +10,21 @@ $.widget("sv.husky2", $.sv.widget, {
     _create: function () {
         this._super();
 
-        const scriptPromise = new Promise((resolve, reject) => {
-            const script = document.createElement('script');
-            document.head.appendChild(script);
-            script.onload = resolve;
-            script.onerror = reject;
-            script.async = true;
-            script.src = 'https://maps.googleapis.com/maps/api/js?key=' + this.options.mapskey + '&callback=Function.prototype';
-        });
-        scriptPromise.then(() => {
-            this._create_map()
-        });
+        // First check if the script already exists on the dom by searching for an id
+        if (document.getElementById('googleMapsScript') === null) {
+            const scriptPromise = new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.id = 'googleMapsScript';
+                script.onload = resolve;
+                script.onerror = reject;
+                script.async = true;
+                script.src = 'https://maps.googleapis.com/maps/api/js?key=' + this.options.mapskey + '&callback=Function.prototype';
+                document.body.appendChild(script);
+            });
+            scriptPromise.then(() => {
+                this._create_map();
+            });
+        }
     },
 
     _create_map: function () {
