@@ -100,7 +100,7 @@ class modbus_rtu(SmartPlugin):
         """
         Run method for the plugin
         """
-        self._sh.scheduler.add('modbusrtu_poll_device', self.poll_device, cycle=self._cycle)
+        self.scheduler_add('poll_device_' + self._tty, self.poll_device, cycle=self._cycle, prio=5)
         self.alive = True
 
     def stop(self):
@@ -109,7 +109,7 @@ class modbus_rtu(SmartPlugin):
         """
         self.alive = False
         self.logger.debug("stop modbus_rtu plugin")
-        self.scheduler_remove('modbusrtu_poll_device')
+        self.scheduler_remove('poll_device_' + self._tty)
         self._Mclient.close()
         self.connected = False
 
