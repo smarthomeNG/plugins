@@ -263,8 +263,8 @@ class DatabaseAddOn(SmartPlugin):
 
             # get/create list of comparison operators and check it
             db_addon_ignore_value_list = self.get_iattr_value(item.conf, 'db_addon_ignore_value_list')
-            if self.has_iattr(item.conf, 'database_ignore_value'):
-                db_addon_ignore_value = self.get_iattr_value(item.conf, 'database_ignore_value')
+            if self.has_iattr(item.conf, 'db_addon_ignore_value'):
+                db_addon_ignore_value = self.get_iattr_value(item.conf, 'db_addon_ignore_value')
                 if not db_addon_ignore_value_list:
                     db_addon_ignore_value_list = []
                 db_addon_ignore_value_list.append(f"!= {db_addon_ignore_value}")
