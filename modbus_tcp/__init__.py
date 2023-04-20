@@ -95,7 +95,7 @@ class modbus_tcp(SmartPlugin):
         """
         Run method for the plugin
         """
-        self._sh.scheduler.add('modbusTCP_poll_device', self.poll_device, cycle=self._cycle)
+        self.scheduler_add('poll_device_' + self._host, self.poll_device, cycle=self._cycle, prio=5)
         self.alive = True
 
     def stop(self):
@@ -104,7 +104,7 @@ class modbus_tcp(SmartPlugin):
         """
         self.alive = False
         self.logger.debug("stop modbus_tcp plugin")
-        self.scheduler_remove('modbusTCP_poll_device')
+        self.scheduler_remove('poll_device_' + self._host)
         self._Mclient.close()
         self.connected = False
 
