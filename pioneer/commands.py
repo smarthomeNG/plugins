@@ -3,14 +3,14 @@
 
 # commands for dev pioneer
 models = {
-    'ALL':      ['general.pqls', 'general.dimmer', 'general.sleep', 'general.display', 'general.error', 'general.multizone', 'tuner', 'zone1', 'zone2.control', 'hdzone'],
-    'SC-LX87':  ['general.amp', 'zone2.settings.sound.channel_level', 'zone2.settings.sound.tone_control', 'zone3'],
-    'SC-LX77':  ['general.amp', 'zone2.settings.sound.channel_level', 'zone2.settings.sound.tone_control', 'zone3'],
-    'SC-LX57':  ['general.amp', 'zone2.settings.sound.channel_level', 'zone2.settings.sound.tone_control', 'zone3'],
-    'SC-2023':  ['zone2.settings.sound.channel_level', 'zone2.settings.sound.tone_control', 'zone3'],
-    'SC-1223':  ['zone2.settings.sound.channel_level', 'zone2.settings.sound.tone_control'],
+    'ALL': ['general.pqls', 'general.dimmer', 'general.sleep', 'general.display', 'general.error', 'general.multizone', 'tuner', 'zone1', 'zone2.control', 'hdzone'],
+    'SC-LX87': ['general.amp', 'zone2.settings.sound.channel_level', 'zone2.settings.sound.tone_control', 'zone3'],
+    'SC-LX77': ['general.amp', 'zone2.settings.sound.channel_level', 'zone2.settings.sound.tone_control', 'zone3'],
+    'SC-LX57': ['general.amp', 'zone2.settings.sound.channel_level', 'zone2.settings.sound.tone_control', 'zone3'],
+    'SC-2023': ['zone2.settings.sound.channel_level', 'zone2.settings.sound.tone_control', 'zone3'],
+    'SC-1223': ['zone2.settings.sound.channel_level', 'zone2.settings.sound.tone_control'],
     'VSX-1123': [],
-    'VSX-923':  []
+    'VSX-923': []
 }
 
 commands = {
