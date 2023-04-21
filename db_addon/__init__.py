@@ -90,7 +90,7 @@ class DatabaseAddOn(SmartPlugin):
         self.active_queue_item: str = '-'            # String holding item path of currently executed item
 
         # define debug logs
-        self.parse_debug = False                     # Enable / Disable debug logging for method 'parse item'
+        self.parse_debug = True                     # Enable / Disable debug logging for method 'parse item'
         self.execute_debug = False                   # Enable / Disable debug logging for method 'execute items'
         self.sql_debug = False                       # Enable / Disable debug logging for sql stuff
         self.onchange_debug = False                  # Enable / Disable debug logging for method 'handle_onchange'
@@ -189,6 +189,27 @@ class DatabaseAddOn(SmartPlugin):
                         can be sent to the knx with a knx write function within the knx plugin.
         """
 
+        def get_database_item_path() -> Item:
+            """
+            Returns item from shNG config which is an item with database attribut valid for current db_addon item
+            """
+
+            _lookup_item = item
+
+            self.logger.debug(f"get_database_item_path called with item = {item.path()}")
+
+            for i in range(3):
+                if self.has_iattr(_lookup_item.conf, 'db_addon_database_item'):
+                    self.logger.debug(f"Attribut 'db_addon_database_item' has been found for item={item.path()} {i + 1} level above item.")
+                    _database_item_path = self.get_iattr_value(item.conf, 'db_addon_database_item')
+                    _startup = bool(self.get_iattr_value(_lookup_item.conf, 'db_addon_startup'))
+                    self.logger.debug(f"get_database_item_path: {_database_item_path=}, {_startup=}")
+
+                    return _database_item_path, _startup
+                else:
+                    _lookup_item = _lookup_item.return_parent()
+                    return None, None
+
         def get_database_item() -> Item:
             """
             Returns item from shNG config which is an item with database attribut valid for current db_addon item
@@ -199,9 +220,11 @@ class DatabaseAddOn(SmartPlugin):
             for i in range(2):
                 if self.has_iattr(_lookup_item.conf, self.item_attribute_search_str):
                     self.logger.debug(f"Attribut '{self.item_attribute_search_str}' has been found for item={item.path()} {i + 1} level above item.")
-                    return _lookup_item
+                    _startup = bool(self.get_iattr_value(_lookup_item.conf, 'db_addon_startup'))
+                    return _lookup_item, _startup
                 else:
                     _lookup_item = _lookup_item.return_parent()
+                    return None, None
 
         def has_db_addon_item() -> bool:
             """Returns item from shNG config which is item with db_addon attribut valid for database item"""
@@ -249,6 +272,70 @@ class DatabaseAddOn(SmartPlugin):
                 return
             return db_addon_ignore_value_list_formatted
 
+        def optimize_db_addon_ignore_value_list(comp_list: list) -> list:
+            value_l = None
+            value_h = None
+            value_le = None
+            value_he = None
+            values_ue = []
+            low_end = None, None
+            high_end = None, None
+
+            # find low, low_e, high, high_e
+            for comp in comp_list:
+                op, value = comp.split(' ')
+                value = int(value)
+                if op == '<':
+                    if value_l is None or (value < value_l):
+                        value_l = value
+                elif op == '<=':
+                    if value_le is None or (value < value_le):
+                        value_le = value
+                elif op == '>':
+                    if value_h is None or (value > value_h):
+                        value_h = value
+                elif op == '>=':
+                    if value_he is None or (value > value_he):
+                        value_he = value
+                elif op == '!=':
+                    values_ue.append(value)
+                elif op == '==':
+                    self.logger.debug(f"Comparison to '{comp}' will be ignored.")
+
+            self.logger.debug(f"optimize_db_addon_ignore_value_list: {value_l=}, {value_le=}, {value_h=}, {value_he=}, {values_ue=}")
+
+            # find low and high
+            if value_l and not value_le:
+                low_end = ('<', value_l)
+            elif not value_l and value_le:
+                low_end = ('<=', value_le)
+            elif value_l and value_le:
+                low_end = ('<=', value_le) if value_le < value_l else ('<', value_l)
+            self.logger.debug(f"low_end={low_end[0]} {low_end[1]}")
+
+            if value_h and not value_he:
+                high_end = ('<', value_h)
+            elif not value_h and value_he:
+                high_end = ('<=', value_he)
+            elif value_h and value_he:
+                 high_end = ('>=', value_he) if value_he > value_h else ('>', value_h)
+            self.logger.debug(f"high_end={high_end[0]} {high_end[1]}")
+
+            # generate comp_list
+            db_addon_ignore_value_list_optimized = []
+            if low_end != (None, None):
+                db_addon_ignore_value_list_optimized.append(f"{low_end[0]} {low_end[1]}")
+            if high_end != (None, None):
+                db_addon_ignore_value_list_optimized.append(f"{high_end[0]} {high_end[1]}")
+            if values_ue:
+                for v in values_ue:
+                    if low_end[1] and v > low_end[1]:
+                        db_addon_ignore_value_list_optimized.append(f'!= {v}')
+                    elif high_end[1] and v < high_end[1]:
+                        db_addon_ignore_value_list_optimized.append(f'!= {v}')
+
+            return db_addon_ignore_value_list_optimized
+
         # handle all items with db_addon_fct
         if self.has_iattr(item.conf, 'db_addon_fct'):
 
@@ -258,8 +345,13 @@ class DatabaseAddOn(SmartPlugin):
             # get db_addon_fct attribute value
             db_addon_fct = self.get_iattr_value(item.conf, 'db_addon_fct').lower()
 
-            # get attribute value if item should be calculated at plugin startup
-            db_addon_startup = bool(self.get_iattr_value(item.conf, 'db_addon_startup'))
+            # get database item (and attribute value if item should be calculated at plugin startup) and return if not available
+            database_item, db_addon_startup = get_database_item_path()
+            if database_item is None:
+                database_item, db_addon_startup = get_database_item()
+            if database_item is None:
+                self.logger.warning(f"No database item found for {item.path()}: Item ignored. Maybe you should check instance of database plugin.")
+                return
 
             # get/create list of comparison operators and check it
             db_addon_ignore_value_list = self.get_iattr_value(item.conf, 'db_addon_ignore_value_list')
@@ -279,58 +371,37 @@ class DatabaseAddOn(SmartPlugin):
             if db_addon_ignore_value_list:
                 db_addon_ignore_value_list = format_db_addon_ignore_value_list()
 
-            # get database item and return if not available
-            database_item_path = self.get_iattr_value(item.conf, 'db_addon_database_item')
-            if database_item_path is not None:
-                database_item = database_item_path
-            else:
-                database_item = get_database_item()
-                if database_item:
-                    db_addon_startup = bool(self.get_iattr_value(database_item.conf, 'db_addon_startup'))
-            if database_item is None:
-                self.logger.warning(f"No database item found for {item.path()}: Item ignored. Maybe you should check instance of database plugin.")
-                return
-
-            # return if mandatory params for ad_addon_fct not given.
+            # check if mandatory params for ad_addon_fct are given
             if db_addon_fct in ALL_NEED_PARAMS_ATTRIBUTES and not self.has_iattr(item.conf, 'db_addon_params'):
                 self.logger.warning(f"Item '{item.path()}' with db_addon_fct={db_addon_fct} ignored, since parameter using 'db_addon_params' not given. Item will be ignored.")
                 return
 
             # create standard items config
             item_config_data_dict = {'db_addon': 'function', 'db_addon_fct': db_addon_fct, 'database_item': database_item, 'ignore_value_list': db_addon_ignore_value_list}
-            if database_item_path is not None:
+            if isinstance(database_item, str):
                 item_config_data_dict.update({'database_item_path': True})
             else:
-                database_item_path = database_item.path()
+                database_item = database_item.path()
 
+            # do logging
             if self.parse_debug:
-                self.logger.debug(f"Item '{item.path()}' added with db_addon_fct={db_addon_fct} and database_item={database_item_path}")
+                self.logger.debug(f"Item '{item.path()}' added with db_addon_fct={db_addon_fct} and database_item={database_item}")
 
-            # handle daily items
+            # add cycle for item groups
             if db_addon_fct in ALL_DAILY_ATTRIBUTES:
                 item_config_data_dict.update({'cycle': 'daily'})
-
-            # handle weekly items
             elif db_addon_fct in ALL_WEEKLY_ATTRIBUTES:
                 item_config_data_dict.update({'cycle': 'weekly'})
-
-            # handle monthly items
             elif db_addon_fct in ALL_MONTHLY_ATTRIBUTES:
                 item_config_data_dict.update({'cycle': 'monthly'})
-
-            # handle yearly items
             elif db_addon_fct in ALL_YEARLY_ATTRIBUTES:
                 item_config_data_dict.update({'cycle': 'yearly'})
-
-            # handle static items
             elif db_addon_fct in ALL_GEN_ATTRIBUTES:
                 item_config_data_dict.update({'cycle': 'static'})
-
-            # handle on-change items
             elif db_addon_fct in ALL_ONCHANGE_ATTRIBUTES:
                 item_config_data_dict.update({'cycle': 'on-change'})
 
-            # handle all functions with 'summe' like waermesumme, kaeltesumme, gruenlandtemperatursumme
+            # create item config for all functions with 'summe' like waermesumme, kaeltesumme, gruenlandtemperatursumme
             if 'summe' in db_addon_fct:
                 db_addon_params = params_to_dict(self.get_iattr_value(item.conf, 'db_addon_params'))
                 if db_addon_params is None or 'year' not in db_addon_params:
@@ -338,7 +409,7 @@ class DatabaseAddOn(SmartPlugin):
                     db_addon_params = {'year': 'current'}
                 item_config_data_dict.update({'params': db_addon_params})
 
-            # handle wachstumsgradtage function
+            # create item config for wachstumsgradtage function
             elif db_addon_fct == 'wachstumsgradtage':
                 DEFAULT_THRESHOLD = 10
                 db_addon_params = params_to_dict(self.get_iattr_value(item.conf, 'db_addon_params'))
@@ -353,7 +424,7 @@ class DatabaseAddOn(SmartPlugin):
                     db_addon_params['threshold'] = DEFAULT_THRESHOLD if threshold is None else threshold
                 item_config_data_dict.update({'params': db_addon_params})
 
-            # handle tagesmitteltemperatur
+            # create item config for tagesmitteltemperatur
             elif db_addon_fct == 'tagesmitteltemperatur':
                 if not self.has_iattr(item.conf, 'db_addon_params'):
                     self.logger.warning(f"Item '{item.path()}' with db_addon_fct={db_addon_fct} ignored, since parameter using 'db_addon_params' not given. Item will be ignored.")
@@ -365,7 +436,7 @@ class DatabaseAddOn(SmartPlugin):
                     return
                 item_config_data_dict.update({'params': db_addon_params})
 
-            # handle db_request
+            # create item config for db_request
             elif db_addon_fct == 'db_request':
                 if not self.has_iattr(item.conf, 'db_addon_params'):
                     self.logger.warning(f"Item '{item.path()}' with db_addon_fct={db_addon_fct} ignored, since parameter using 'db_addon_params' not given. Item will be ignored")
@@ -398,11 +469,11 @@ class DatabaseAddOn(SmartPlugin):
 
                 item_config_data_dict.update({'params': db_addon_params, 'cycle': update_cycle})
 
-            # debug log item cycle
+            # do logging
             if self.parse_debug:
                 self.logger.debug(f"Item '{item.path()}' added to be run {item_config_data_dict['cycle']}.")
 
-            # handle item to be run on startup (onchange_items shall not be run at startup, but at first noticed change of item value; therefore remove for list of items to be run at startup)
+            # create item config for item to be run on startup (onchange_items shall not be run at startup, but at first noticed change of item value; therefore remove for list of items to be run at startup)
             if (db_addon_startup and db_addon_fct not in ALL_ONCHANGE_ATTRIBUTES) or db_addon_fct in ALL_GEN_ATTRIBUTES:
                 if self.parse_debug:
                     self.logger.debug(f"Item '{item.path()}' added to be run on startup")
