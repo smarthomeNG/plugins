@@ -1,34 +1,18 @@
 $.widget("sv.husky2", $.sv.widget, {
     initSelector: 'div[data-widget="husky2.map"]',
 
+    map: null,
+
     options: {
-        mapskey: '',
         zoomlevel: 19,
         pathcolor: '#3afd02',
     },
 
     _create: function () {
         this._super();
-
-        // First check if the script already exists on the dom by searching for an id
-        if (document.getElementById('googleMapsScript') === null) {
-            const scriptPromise = new Promise((resolve, reject) => {
-                const script = document.createElement('script');
-                script.id = 'googleMapsScript';
-                script.onload = resolve;
-                script.onerror = reject;
-                script.async = true;
-                script.src = 'https://maps.googleapis.com/maps/api/js?key=' + this.options.mapskey + '&callback=Function.prototype';
-                document.body.appendChild(script);
-            });
-            scriptPromise.then(() => {
-                this._create_map();
-            });
-        }
     },
 
     _create_map: function () {
-
         this.map = new google.maps.Map(this.element[0], {
             zoom: this.options.zoomlevel,
             mapTypeId: 'hybrid',
@@ -50,16 +34,19 @@ $.widget("sv.husky2", $.sv.widget, {
             strokeWeight: 2,
             map: this.map
         });
-
     },
 
     _update: function (response) {
-        if (!this.map) {
-            var that = this;
-            window.setTimeout(function () {
-                that._update(response)
-            }, 500)
-            return;
+        if (this.map === null) {
+            if (typeof google == 'undefined') {
+                var that = this;
+                window.setTimeout(function () {
+                    that._update(response)
+                }, 500)
+                return;
+            } else {
+                this._create_map();
+            }
         }
 
         this.marker_myself.setTitle(response[3]);
