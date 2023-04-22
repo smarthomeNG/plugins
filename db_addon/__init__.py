@@ -196,19 +196,19 @@ class DatabaseAddOn(SmartPlugin):
 
             _lookup_item = item
 
-            self.logger.debug(f"get_database_item_path called with item = {item.path()}")
+            self.logger.debug(f"get_database_item_path called for item = {item.path()}")
 
             for i in range(3):
                 if self.has_iattr(_lookup_item.conf, 'db_addon_database_item'):
-                    self.logger.debug(f"Attribut 'db_addon_database_item' has been found for item={item.path()} {i + 1} level above item.")
-                    _database_item_path = self.get_iattr_value(item.conf, 'db_addon_database_item')
+                    self.logger.debug(f"Attribut 'db_addon_database_item' for item='{item.path()}' has been found {i + 1} level above item at '{_lookup_item.path()}'.")
+                    _database_item_path = self.get_iattr_value(_lookup_item.conf, 'db_addon_database_item')
                     _startup = bool(self.get_iattr_value(_lookup_item.conf, 'db_addon_startup'))
                     self.logger.debug(f"get_database_item_path: {_database_item_path=}, {_startup=}")
-
                     return _database_item_path, _startup
                 else:
                     _lookup_item = _lookup_item.return_parent()
-                    return None, None
+
+            return None, None
 
         def get_database_item() -> Item:
             """
@@ -217,14 +217,17 @@ class DatabaseAddOn(SmartPlugin):
 
             _lookup_item = item.return_parent()
 
+            self.logger.debug(f"get_database_item called for item = {item.path()}")
+
             for i in range(2):
                 if self.has_iattr(_lookup_item.conf, self.item_attribute_search_str):
-                    self.logger.debug(f"Attribut '{self.item_attribute_search_str}' has been found for item={item.path()} {i + 1} level above item.")
+                    self.logger.debug(f"Attribut '{self.item_attribute_search_str}' for item='{item.path()}'  has been found {i + 1} level above item at '{_lookup_item.path()}'.")
                     _startup = bool(self.get_iattr_value(_lookup_item.conf, 'db_addon_startup'))
                     return _lookup_item, _startup
                 else:
                     _lookup_item = _lookup_item.return_parent()
-                    return None, None
+
+            return None, None
 
         def has_db_addon_item() -> bool:
             """Returns item from shNG config which is item with db_addon attribut valid for database item"""
@@ -256,7 +259,7 @@ class DatabaseAddOn(SmartPlugin):
         def format_db_addon_ignore_value_list() -> Union[None, list]:
             """ Check of list of comparison operators is formally valid """
 
-            OPERATOR_LIST = ['<=', '<>', '!=', '>=', '<=', '=', '>', '<']
+            OPERATOR_LIST = ['!=', '>=', '<=', '>', '<']
 
             db_addon_ignore_value_list_formatted = []
             for _entry in db_addon_ignore_value_list:
@@ -270,7 +273,7 @@ class DatabaseAddOn(SmartPlugin):
                         break
             if not db_addon_ignore_value_list_formatted:
                 return
-            return db_addon_ignore_value_list_formatted
+            return optimize_db_addon_ignore_value_list(db_addon_ignore_value_list_formatted)
 
         def optimize_db_addon_ignore_value_list(comp_list: list) -> list:
             value_l = None
@@ -278,8 +281,6 @@ class DatabaseAddOn(SmartPlugin):
             value_le = None
             value_he = None
             values_ue = []
-            low_end = None, None
-            high_end = None, None
 
             # find low, low_e, high, high_e
             for comp in comp_list:
@@ -304,22 +305,25 @@ class DatabaseAddOn(SmartPlugin):
 
             self.logger.debug(f"optimize_db_addon_ignore_value_list: {value_l=}, {value_le=}, {value_h=}, {value_he=}, {values_ue=}")
 
-            # find low and high
+            # find low end
             if value_l and not value_le:
                 low_end = ('<', value_l)
             elif not value_l and value_le:
                 low_end = ('<=', value_le)
             elif value_l and value_le:
                 low_end = ('<=', value_le) if value_le < value_l else ('<', value_l)
-            self.logger.debug(f"low_end={low_end[0]} {low_end[1]}")
+            else:
+                low_end = (None, None)
 
+            # find high end
             if value_h and not value_he:
                 high_end = ('<', value_h)
             elif not value_h and value_he:
                 high_end = ('<=', value_he)
             elif value_h and value_he:
                  high_end = ('>=', value_he) if value_he > value_h else ('>', value_h)
-            self.logger.debug(f"high_end={high_end[0]} {high_end[1]}")
+            else:
+                high_end = (None, None)
 
             # generate comp_list
             db_addon_ignore_value_list_optimized = []
