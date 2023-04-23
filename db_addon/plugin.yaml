@@ -44,11 +44,18 @@ parameters:
             en: "At items having a entry of that list in path, val_num=0 will be ignored for database queries. 
                 Example: temp | hum"
 
-    filter_values:
+    value_filter:
         type: dict
         description:
             de: "Definition von Wertefiltern als Wörterbuch {'Teil des Itempfades: [Liste von Vergleichsoperatoren als String]} Bsp: {'temp': ['> -10', '< 85'], 'hum': ['>= 0', '<= 100']}"
             en: "Definition of value filters as dict {'part of item path': [List of comparison operators als string]} Example: {'temp': ['> -10', '< 85'], 'hum': ['>= 0', '<= 100']}"
+
+    optimize_value_filter:
+        type: bool
+        default: True
+        description:
+            de: "Optimierung der gesetzen als Plugin-Parameter oder/und Item-Attribute gesetzten Wertefilter."
+            en: "Optimize value filters set as plugin parameter or/and item attribute"
 
     use_oldest_entry:
         type: bool

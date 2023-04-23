@@ -104,7 +104,8 @@ class DatabaseAddOn(SmartPlugin):
         self.db_configname = self.get_parameter_value('database_plugin_config')
         self.startup_run_delay = self.get_parameter_value('startup_run_delay')
         self.ignore_0 = self.get_parameter_value('ignore_0')
-        self.filter_values = self.get_parameter_value('filter_values')
+        self.value_filter = self.get_parameter_value('value_filter')
+        self.optimize_value_filter = self.get_parameter_value('optimize_value_filter')
         self.use_oldest_entry = self.get_parameter_value('use_oldest_entry')
 
         # init cache dicts
@@ -196,14 +197,11 @@ class DatabaseAddOn(SmartPlugin):
 
             _lookup_item = item
 
-            self.logger.debug(f"get_database_item_path called for item = {item.path()}")
-
             for i in range(3):
                 if self.has_iattr(_lookup_item.conf, 'db_addon_database_item'):
                     self.logger.debug(f"Attribut 'db_addon_database_item' for item='{item.path()}' has been found {i + 1} level above item at '{_lookup_item.path()}'.")
                     _database_item_path = self.get_iattr_value(_lookup_item.conf, 'db_addon_database_item')
                     _startup = bool(self.get_iattr_value(_lookup_item.conf, 'db_addon_startup'))
-                    self.logger.debug(f"get_database_item_path: {_database_item_path=}, {_startup=}")
                     return _database_item_path, _startup
                 else:
                     _lookup_item = _lookup_item.return_parent()
@@ -216,8 +214,6 @@ class DatabaseAddOn(SmartPlugin):
             """
 
             _lookup_item = item.return_parent()
-
-            self.logger.debug(f"get_database_item called for item = {item.path()}")
 
             for i in range(2):
                 if self.has_iattr(_lookup_item.conf, self.item_attribute_search_str):
@@ -252,92 +248,65 @@ class DatabaseAddOn(SmartPlugin):
             """
             if self.has_iattr(check_item.conf, 'db_addon_fct'):
                 if self.get_iattr_value(check_item.conf, 'db_addon_fct').lower() in ALL_ONCHANGE_ATTRIBUTES:
-                    self.logger.debug(f"db_addon item for database item {item.path()} found.")
                     return True
             return False
 
-        def format_db_addon_ignore_value_list() -> Union[None, list]:
+        def format_db_addon_ignore_value_list(optimize: bool = self.optimize_value_filter):
             """ Check of list of comparison operators is formally valid """
 
-            OPERATOR_LIST = ['!=', '>=', '<=', '>', '<']
-
+            max_values = {'!=': [], '>=': [], '<=': [], '>': [], '<': []}
             db_addon_ignore_value_list_formatted = []
+
             for _entry in db_addon_ignore_value_list:
                 _entry = _entry.strip()
-                for op in OPERATOR_LIST:
+                for op in max_values.keys():
                     if op in _entry:
                         var = _entry.split(op, 1)
                         value = var[1].strip()
-                        if value.isdigit() or to_float(value):
-                            db_addon_ignore_value_list_formatted.append(f"{op} {value}")
-                        break
+                        value = to_int_float(value)
+                        if value is None:
+                            continue
+                        db_addon_ignore_value_list_formatted.append(f"{op} {value}")
+                        max_values[op].append(value)
+
+            self.logger.info(f"Summarized 'ignore_value_list' for item {item.path()}: {db_addon_ignore_value_list_formatted}")
+
             if not db_addon_ignore_value_list_formatted:
                 return
-            return optimize_db_addon_ignore_value_list(db_addon_ignore_value_list_formatted)
 
-        def optimize_db_addon_ignore_value_list(comp_list: list) -> list:
-            value_l = None
-            value_h = None
-            value_le = None
-            value_he = None
-            values_ue = []
+            if not optimize:
+                return db_addon_ignore_value_list_formatted
 
-            # find low, low_e, high, high_e
-            for comp in comp_list:
-                op, value = comp.split(' ')
-                value = int(value)
-                if op == '<':
-                    if value_l is None or (value < value_l):
-                        value_l = value
-                elif op == '<=':
-                    if value_le is None or (value < value_le):
-                        value_le = value
-                elif op == '>':
-                    if value_h is None or (value > value_h):
-                        value_h = value
-                elif op == '>=':
-                    if value_he is None or (value > value_he):
-                        value_he = value
-                elif op == '!=':
-                    values_ue.append(value)
-                elif op == '==':
-                    self.logger.debug(f"Comparison to '{comp}' will be ignored.")
-
-            self.logger.debug(f"optimize_db_addon_ignore_value_list: {value_l=}, {value_le=}, {value_h=}, {value_he=}, {values_ue=}")
-
-            # find low end
-            if value_l and not value_le:
-                low_end = ('<', value_l)
-            elif not value_l and value_le:
-                low_end = ('<=', value_le)
-            elif value_l and value_le:
-                low_end = ('<=', value_le) if value_le < value_l else ('<', value_l)
+            self.logger.info(f"Optimizing 'ignore_value_list' for item {item.path()} active.")
+            # find low
+            lower_value_list = max_values['<'] + max_values['<=']
+            if lower_value_list:
+                max_lower_value = max(lower_value_list)
+                lower_op = '<' if max_lower_value in max_values['<'] else '<='
+                lower_end = (lower_op, max_lower_value)
             else:
-                low_end = (None, None)
-
-            # find high end
-            if value_h and not value_he:
-                high_end = ('<', value_h)
-            elif not value_h and value_he:
-                high_end = ('<=', value_he)
-            elif value_h and value_he:
-                 high_end = ('>=', value_he) if value_he > value_h else ('>', value_h)
+                lower_end = (None, None)
+            # find high
+            upper_value_list = max_values['>'] + max_values['>=']
+            if upper_value_list:
+                min_upper_value = min(upper_value_list)
+                upper_op = '>' if min_upper_value in max_values['>'] else '>='
+                upper_end = (upper_op, min_upper_value)
             else:
-                high_end = (None, None)
+                upper_end = (None, None)
 
             # generate comp_list
             db_addon_ignore_value_list_optimized = []
-            if low_end != (None, None):
-                db_addon_ignore_value_list_optimized.append(f"{low_end[0]} {low_end[1]}")
-            if high_end != (None, None):
-                db_addon_ignore_value_list_optimized.append(f"{high_end[0]} {high_end[1]}")
-            if values_ue:
-                for v in values_ue:
-                    if low_end[1] and v > low_end[1]:
-                        db_addon_ignore_value_list_optimized.append(f'!= {v}')
-                    elif high_end[1] and v < high_end[1]:
+            if lower_end[0]:
+                db_addon_ignore_value_list_optimized.append(f"{lower_end[0]} {lower_end[1]}")
+            if upper_end[0]:
+                db_addon_ignore_value_list_optimized.append(f"{upper_end[0]} {upper_end[1]}")
+            if max_values['!=']:
+                for v in max_values['!=']:
+                    if (lower_end[0] and v >= lower_end[1]) or (upper_end[0] and v <= upper_end[1]):
                         db_addon_ignore_value_list_optimized.append(f'!= {v}')
 
+            self.logger.info(f"Optimized 'ignore_value_list' for item {item.path()}: {db_addon_ignore_value_list_optimized}")
             return db_addon_ignore_value_list_optimized
 
         # handle all items with db_addon_fct
@@ -368,10 +337,10 @@ class DatabaseAddOn(SmartPlugin):
                 if not db_addon_ignore_value_list:
                     db_addon_ignore_value_list = []
                 db_addon_ignore_value_list.append("!= 0")
-            if self.filter_values:
-                for entry in list(self.filter_values.keys()):
+            if self.value_filter:
+                for entry in list(self.value_filter.keys()):
                     if entry in str(item.path()):
-                        db_addon_ignore_value_list.extend(self.filter_values[entry])
+                        db_addon_ignore_value_list.extend(self.value_filter[entry])
             if db_addon_ignore_value_list:
                 db_addon_ignore_value_list = format_db_addon_ignore_value_list()
 
@@ -2896,6 +2865,12 @@ def to_float(arg) -> Union[float, None]:
         return float(arg)
     except (ValueError, TypeError):
         return None
+
+def to_int_float(arg):
+    try:
+        return int(arg)
+    except (ValueError, TypeError):
+        return to_float(arg)
 
 
 ALLOWED_QUERY_TIMEFRAMES = ['year', 'month', 'week', 'day', 'hour']
