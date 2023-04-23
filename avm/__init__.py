@@ -143,7 +143,7 @@ class AVM(SmartPlugin):
 
         # init FritzDevice
         try:
-            self.fritz_device = FritzDevice(_host, _port, ssl, _verify, _username, _passwort, _call_monitor_incoming_filter, _use_tr064_backlist, self)
+            self.fritz_device = FritzDevice(_host, _port, ssl, _verify, _username, _passwort, _call_monitor_incoming_filter, _use_tr064_backlist, _log_entry_count, self)
         except IOError as e:
             self.logger.warning(f"{e} occurred during establishing connection to FritzDevice via TR064-Interface. Not connected.")
             self.fritz_device = None
@@ -492,7 +492,7 @@ class FritzDevice:
 
     ERROR_COUNT_TO_BE_BLACKLISTED = 2
 
-    def __init__(self, host, port, ssl, verify, username, password, call_monitor_incoming_filter, use_tr064_backlist, plugin_instance):
+    def __init__(self, host, port, ssl, verify, username, password, call_monitor_incoming_filter, use_tr064_backlist, log_entry_count, plugin_instance):
         """
         Init class FritzDevice
         """
@@ -508,6 +508,7 @@ class FritzDevice:
         self.username = username
         self.password = password
         self.use_tr064_blacklist = use_tr064_backlist
+        self.log_entry_count = log_entry_count
         self._call_monitor_incoming_filter = call_monitor_incoming_filter
         self._data_cache = {}
         self._calllist_cache = []
@@ -1396,6 +1397,28 @@ class FritzDevice:
         else:
             return device_log
 
+    def get_device_log_from_tr064_separated(self):
+
+        data = self.get_device_log_from_tr064()
+
+        if data and isinstance(data, list):
+            # cut data if needed
+            if self.log_entry_count:
+                data = data[:self.log_entry_count]
+
+            # bring data to needed format
+            log_list = []
+            for text in data:
+                l_date = text[:8]
+                l_time = text[9:17]
+                l_text = text[18:]
+                l_cat = '-'
+                l_type = '-'
+                l_ts = int(datetime.datetime.timestamp(datetime.datetime.strptime(text[:17], '%d.%m.%y %H:%M:%S')))
+                log_list.append([l_text, l_type, l_cat, l_ts, l_date, l_time])
+
+            return log_list
+
     # ----------------------------------
     # wlan methods
     # ----------------------------------
@@ -1739,6 +1762,7 @@ class FritzHome:
         self._templates: Dict[str, FritzHome.FritzhomeTemplate] = {}
         self._logged_in = False
         self._session = requests.Session()
+        self._timeout = 10
         self.items = dict()
         self.connected = False
         self.last_request = None
@@ -1941,18 +1965,24 @@ class FritzHome:
     def item_list(self):
         return list(self.items.keys())
 
-    def _request(self, url: str, params=None, timeout: int = 10, result: str = 'text'):
+    def _request(self, url: str, params=None, result: str = 'text'):
         """
         Send a request with parameters.
 
         :param url:          URL to be requested
         :param params:       params for request
-        :param timeout:      timeout
         :param result:       type of result
         :return:             request response
         """
         try:
-            rsp = self._session.get(url, params=params, timeout=timeout, verify=self.verify)
+            rsp = self._session.get(url, params=params, timeout=self._timeout, verify=self.verify)
+        except requests.exceptions.Timeout:
+            if self._timeout < 31:
+                self._timeout += 5
+                self.logger.info(f"request timed out. timeout extended by 5s to {self._timeout}")
+            else:
+                self.logger.debug(f"get request timeout.")
+            return
         except Exception as e:
             self.logger.error(f"Error during GET request {e} occurred.")
         else:
@@ -2647,10 +2677,7 @@ class FritzHome:
         params = {"sid": self._sid}
 
         # get data
-        try:
-            data = self._request(url, params, result='json')
-        except JSONDecodeError:
-            return
+        data = self._request(url, params, result='json')
 
         if isinstance(data, dict):
             data = data.get('mq_log')
@@ -2660,16 +2687,16 @@ class FritzHome:
                     data = data[:self.log_entry_count]
 
                 # bring data to needed format
-                newlog = []
-                for text, typ, cat in data:
+                log_list = []
+                for text, typ, cat, val in data:
                     l_date = text[:8]
                     l_time = text[9:17]
                     l_text = text[18:]
                     l_cat = int(cat)
                     l_type = int(typ)
                     l_ts = int(datetime.datetime.timestamp(datetime.datetime.strptime(text[:17], '%d.%m.%y %H:%M:%S')))
-                    newlog.append([l_text, l_type, l_cat, l_ts, l_date, l_time])
-                return newlog
+                    log_list.append([l_text, l_type, l_cat, l_ts, l_date, l_time])
+                return log_list
 
     def get_device_log_from_lua_separated(self):
         """
@@ -2683,10 +2710,8 @@ class FritzHome:
         url = self._get_prefixed_host() + self.LOG_SEPARATE_ROUTE
         params = {"sid": self._sid}
 
-        try:
-            data = self._request(url, params, result='json')
-        except JSONDecodeError:
-            return
+        # get data
+        data = self._request(url, params, result='json')
 
         if isinstance(data, dict):
             data = data.get('mq_log')
@@ -2695,11 +2720,11 @@ class FritzHome:
                     data = data[:self.log_entry_count]
 
                 # bring data to needed format
-                data_formated = []
+                data_formatted = []
                 for entry in data:
                     dt = datetime.datetime.strptime(f"{entry[0]} {entry[1]}", '%d.%m.%y %H:%M:%S').strftime('%d.%m.%Y %H:%M:%S')
-                    data_formated.append([dt, entry[2], entry[3], entry[4]])
-                return data_formated
+                    data_formatted.append([dt, entry[2], entry[3], entry[4]])
+                return data_formatted
 
     # FritzhomeDevice classes
 
