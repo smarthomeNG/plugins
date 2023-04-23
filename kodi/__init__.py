@@ -22,12 +22,28 @@
 #########################################################################
 
 import builtins
+import os
+import sys
+
+if __name__ == '__main__':
+    builtins.SDP_standalone = True
+
+    class SmartPlugin():
+        pass
+
+    class SmartPluginWebIf():
+        pass
+
+    BASE = os.path.sep.join(os.path.realpath(__file__).split(os.path.sep)[:-3])
+    sys.path.insert(0, BASE)
+
+else:
+    builtins.SDP_standalone = False
 
 from lib.model.sdp.globals import JSON_MOVE_KEYS
-from lib.model.smartdeviceplugin import SmartDevicePlugin
-# from .webif import WebInterface
+from lib.model.smartdeviceplugin import SmartDevicePlugin, Standalone
 
-builtins.SDP_standalone = False
+# from .webif import WebInterface
 
 
 class kodi(SmartDevicePlugin):
@@ -394,3 +410,7 @@ class kodi(SmartDevicePlugin):
             if self._playerid:
                 self.send_command('status.get_status_play', None)
                 self.send_command('status.get_item', None)
+
+
+if __name__ == '__main__':
+    s = Standalone(kodi, sys.argv[0])
