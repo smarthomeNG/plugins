@@ -891,6 +891,12 @@ item_structs:
                 -   player
                 -   player.info
 
+            trackstat:
+                type: str
+                sqb_command: player.info.trackstat
+                sqb_read: true
+                sqb_write: false
+
             albumarturl:
                 type: str
                 sqb_command: player.info.albumarturl
@@ -1642,6 +1648,12 @@ item_structs:
                     -   ALL
                     -   ALL.player
                     -   ALL.player.info
+
+                trackstat:
+                    type: str
+                    sqb_command: player.info.trackstat
+                    sqb_read: true
+                    sqb_write: false
 
                 albumarturl:
                     type: str
