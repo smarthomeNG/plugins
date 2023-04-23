@@ -120,7 +120,7 @@ class WebInterface(SmartPluginWebIf):
     @cherrypy.expose
     def clean_cache_dicts(self):
         self.logger.debug(f"_clean_cache_dicts called")
-        self.plugin._clean_cache_dicts()
+        self.plugin._init_cache_dicts()
 
     @cherrypy.expose
     def clear_queue(self):
