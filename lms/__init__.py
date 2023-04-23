@@ -96,8 +96,11 @@ class lms(SmartDevicePlugin):
         if command == 'player.playlist.load':
             self.logger.debug(f"Got command load {command} data {data} value {value} custom {custom} by {by}")
             trigger_read('player.playlist.id')
-            trigger_read('player.playlist.name')
             trigger_read('player.control.playmode')
+
+        if command == 'player.playlist.id':
+            self.logger.debug(f"Got command id {command} data {data} value {value} custom {custom} by {by}")
+            trigger_read('player.playlist.name')
 
         # update on new song
         if command == 'player.info.title':
