@@ -372,7 +372,6 @@ item_structs:
                 -   player
                 -   player.control
                 enforce_updates: true
-                sqb_read_initial: true
 
             playmode:
                 type: str
@@ -383,7 +382,6 @@ item_structs:
                 -   player
                 -   player.control
                 enforce_updates: true
-                sqb_read_initial: true
 
             playpause:
                 type: bool
@@ -418,7 +416,6 @@ item_structs:
                 sqb_read_group:
                 -   player
                 -   player.control
-                sqb_read_initial: true
 
             volume_fading:
                 type: num
@@ -596,7 +593,6 @@ item_structs:
                 sqb_read_group:
                 -   player
                 -   player.playlist
-                sqb_read_initial: true
                 remark: 0 = Off, 1 = Song, 2 = Playlist
 
                 lookup:
@@ -611,21 +607,11 @@ item_structs:
                 sqb_read_group:
                 -   player
                 -   player.playlist
-                sqb_read_initial: true
                 remark: 0 = Off, 1 = Song, 2 = Album
 
                 lookup:
                     type: list
                     sqb_lookup: SHUFFLE#list
-
-            count:
-                type: num
-                sqb_command: player.playlist.count
-                sqb_read: true
-                sqb_write: false
-                sqb_read_group:
-                -   player
-                -   player.playlist
 
             index:
                 type: str
@@ -727,7 +713,6 @@ item_structs:
                 sqb_read_group:
                 -   player
                 -   player.playlist
-                sqb_read_initial: true
 
             clear:
                 type: bool
@@ -794,6 +779,16 @@ item_structs:
                 enforce_updates: true
                 sqb_read_group_trigger: player.info
 
+            status:
+                type: str
+                sqb_command: player.info.status
+                sqb_read: true
+                sqb_write: false
+                sqb_read_group:
+                -   player
+                -   player.info
+                sqb_read_initial: true
+
             connected:
                 type: bool
                 sqb_command: player.info.connected
@@ -802,7 +797,15 @@ item_structs:
                 sqb_read_group:
                 -   player
                 -   player.info
-                sqb_read_initial: true
+
+            ip:
+                type: str
+                sqb_command: player.info.ip
+                sqb_read: true
+                sqb_write: false
+                sqb_read_group:
+                -   player
+                -   player.info
 
             name:
                 type: str
@@ -812,7 +815,6 @@ item_structs:
                 sqb_read_group:
                 -   player
                 -   player.info
-                sqb_read_initial: true
 
             syncgroups:
                 type: num
@@ -832,7 +834,6 @@ item_structs:
                 sqb_read_group:
                 -   player
                 -   player.info
-                sqb_read_initial: true
 
             genre:
                 type: str
@@ -889,6 +890,12 @@ item_structs:
                 sqb_read_group:
                 -   player
                 -   player.info
+
+            trackstat:
+                type: str
+                sqb_command: player.info.trackstat
+                sqb_read: true
+                sqb_write: false
 
             albumarturl:
                 type: str
@@ -1097,7 +1104,6 @@ item_structs:
                     -   ALL.player
                     -   ALL.player.control
                     enforce_updates: true
-                    sqb_read_initial: true
 
                 playmode:
                     type: str
@@ -1109,7 +1115,6 @@ item_structs:
                     -   ALL.player
                     -   ALL.player.control
                     enforce_updates: true
-                    sqb_read_initial: true
 
                 playpause:
                     type: bool
@@ -1146,7 +1151,6 @@ item_structs:
                     -   ALL
                     -   ALL.player
                     -   ALL.player.control
-                    sqb_read_initial: true
 
                 volume_fading:
                     type: num
@@ -1330,7 +1334,6 @@ item_structs:
                     -   ALL
                     -   ALL.player
                     -   ALL.player.playlist
-                    sqb_read_initial: true
                     remark: 0 = Off, 1 = Song, 2 = Playlist
 
                     lookup:
@@ -1346,22 +1349,11 @@ item_structs:
                     -   ALL
                     -   ALL.player
                     -   ALL.player.playlist
-                    sqb_read_initial: true
                     remark: 0 = Off, 1 = Song, 2 = Album
 
                     lookup:
                         type: list
                         sqb_lookup: SHUFFLE#list
-
-                count:
-                    type: num
-                    sqb_command: player.playlist.count
-                    sqb_read: true
-                    sqb_write: false
-                    sqb_read_group:
-                    -   ALL
-                    -   ALL.player
-                    -   ALL.player.playlist
 
                 index:
                     type: str
@@ -1467,7 +1459,6 @@ item_structs:
                     -   ALL
                     -   ALL.player
                     -   ALL.player.playlist
-                    sqb_read_initial: true
 
                 clear:
                     type: bool
@@ -1534,6 +1525,17 @@ item_structs:
                     enforce_updates: true
                     sqb_read_group_trigger: ALL.player.info
 
+                status:
+                    type: str
+                    sqb_command: player.info.status
+                    sqb_read: true
+                    sqb_write: false
+                    sqb_read_group:
+                    -   ALL
+                    -   ALL.player
+                    -   ALL.player.info
+                    sqb_read_initial: true
+
                 connected:
                     type: bool
                     sqb_command: player.info.connected
@@ -1543,7 +1545,16 @@ item_structs:
                     -   ALL
                     -   ALL.player
                     -   ALL.player.info
-                    sqb_read_initial: true
+
+                ip:
+                    type: str
+                    sqb_command: player.info.ip
+                    sqb_read: true
+                    sqb_write: false
+                    sqb_read_group:
+                    -   ALL
+                    -   ALL.player
+                    -   ALL.player.info
 
                 name:
                     type: str
@@ -1554,7 +1565,6 @@ item_structs:
                     -   ALL
                     -   ALL.player
                     -   ALL.player.info
-                    sqb_read_initial: true
 
                 syncgroups:
                     type: num
@@ -1576,7 +1586,6 @@ item_structs:
                     -   ALL
                     -   ALL.player
                     -   ALL.player.info
-                    sqb_read_initial: true
 
                 genre:
                     type: str
@@ -1639,6 +1648,12 @@ item_structs:
                     -   ALL
                     -   ALL.player
                     -   ALL.player.info
+
+                trackstat:
+                    type: str
+                    sqb_command: player.info.trackstat
+                    sqb_read: true
+                    sqb_write: false
 
                 albumarturl:
                     type: str

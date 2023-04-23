@@ -22,14 +22,25 @@
 #########################################################################
 
 import builtins
+import os
+import sys
+
+if __name__ == '__main__':
+
+    class SmartPlugin():
+        pass
+
+    class SmartPluginWebIf():
+        pass
+
+    BASE = os.path.sep.join(os.path.realpath(__file__).split(os.path.sep)[:-3])
+    sys.path.insert(0, BASE)
+
+
+from lib.model.sdp.globals import (PLUGIN_ATTR_NET_HOST, PLUGIN_ATTR_CONNECTION, PLUGIN_ATTR_SERIAL_PORT, PLUGIN_ATTR_CONN_TERMINATOR, CONN_NULL, CONN_NET_TCP_CLI, CONN_SER_ASYNC)
+from lib.model.smartdeviceplugin import SmartDevicePlugin, Standalone
+
 import urllib.parse
-
-from lib.model.sdp.globals import (CUSTOM_SEP, PLUGIN_ATTR_NET_HOST, PLUGIN_ATTR_RECURSIVE, PLUGIN_ATTR_CONN_TERMINATOR)
-from lib.model.smartdeviceplugin import SmartDevicePlugin
-
-# from .webif import WebInterface
-
-builtins.SDP_standalone = False
 
 
 class lms(SmartDevicePlugin):
@@ -96,8 +107,11 @@ class lms(SmartDevicePlugin):
         if command == 'player.playlist.load':
             self.logger.debug(f"Got command load {command} data {data} value {value} custom {custom} by {by}")
             trigger_read('player.playlist.id')
-            trigger_read('player.playlist.name')
             trigger_read('player.control.playmode')
+
+        if command == 'player.playlist.id':
+            self.logger.debug(f"Got command id {command} data {data} value {value} custom {custom} by {by}")
+            trigger_read('player.playlist.name')
 
         # update on new song
         if command == 'player.info.title':
@@ -149,3 +163,7 @@ class lms(SmartDevicePlugin):
         if command == 'player.control.stop' or (command == 'player.control.playpause' and not value):
             self.logger.debug(f"Got command stop or pause {command} data {data} value {value} custom {custom} by {by}")
             trigger_read('player.control.playmode')
+
+
+if __name__ == '__main__':
+    s = Standalone(lms, sys.argv[0])
