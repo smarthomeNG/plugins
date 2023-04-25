@@ -17,6 +17,7 @@ $.widget("sv.husky2", $.sv.widget, {
             zoom: this.options.zoomlevel,
             mapTypeId: 'hybrid',
             center: new google.maps.LatLng(0.0, 0.0),
+            streetViewControl: false,
         });
 
         this.marker_myself = new google.maps.Marker({
