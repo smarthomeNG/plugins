@@ -64,7 +64,6 @@ MESSAGE_TAG_CALLER        = '[CALLER]'
 MESSAGE_TAG_SOURCE        = '[SOURCE]'
 MESSAGE_TAG_DEST          = '[DEST]'
 
-
 class Telegram(SmartPlugin):
 
     PLUGIN_VERSION = "1.8.0"
@@ -100,7 +99,8 @@ class Telegram(SmartPlugin):
             self.logger.error(f"{self.get_fullname()}: Unable to import Python package 'python-telegram-bot' [{REQUIRED_PACKAGE_IMPORTED}]")
             return
 
-        self._loop = asyncio.get_event_loop()
+        self._loop = asyncio.new_event_loop()   # new_event is required for multi-instance
+        asyncio.set_event_loop(self._loop)
 
         self.alive = False
         self._name = self.get_parameter_value('name')
@@ -188,14 +188,6 @@ class Telegram(SmartPlugin):
         time.sleep(1)
         self.alive = False  # Clears the infiniti loop in sendQueue
         try:
-            # if not self._taskConn.done():
-            #     if self.debug_enabled:
-            #         self.logger.debug("taskConn not done")
-            #     self._taskConn.cancel()
-            # if not self._taskQueue.done():
-            #     if self.debug_enabled:
-            #         self.logger.debug("taskQueue not done")
-            #     self._taskQueue.cancel()
             asyncio.gather(self._taskConn,  self._taskQueue)
             self.disconnect()
 
@@ -229,11 +221,11 @@ class Telegram(SmartPlugin):
             await self._application.initialize()
             await self._application.start()
             self._updater = self._application.updater
-
+            
             q = await self._updater.start_polling(timeout=self._long_polling_timeout)
-                
+
             if self.debug_enabled:
-                self.logger.debug(f"started polling the updater, Queue is {q}")
+                self.logger.debug(f"started polling the updater, Queue is {q}, event_loop: {event_loop}")
 
             self._bot = self._updater.bot
             self.logger.info(f"Telegram bot is listening: {await self._updater.bot.getMe()}")
@@ -254,6 +246,8 @@ class Telegram(SmartPlugin):
         """
         Waiting for messages to be sent in the queue and sending them to Telegram.
         The queue expects a dictionary with various parameters
+        dict txt:   {"msgType":"Text", "msg":msg, "chat_id":chat_id, "reply_markup":reply_markup, "parse_mode":parse_mode }
+        dict photo: {"msgType":"Photo", "photofile_or_url":photofile_or_url, "chat_id":chat_id, "caption":caption, "local_prepare":local_prepare} 
         """
         if self.debug_enabled:
             self.logger.debug(f"sendQueue called - queue: [{self._queue}]")
