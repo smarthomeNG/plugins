@@ -225,7 +225,7 @@ class Telegram(SmartPlugin):
             q = await self._updater.start_polling(timeout=self._long_polling_timeout)
 
             if self.debug_enabled:
-                self.logger.debug(f"started polling the updater, Queue is {q}, event_loop: {event_loop}")
+                self.logger.debug(f"started polling the updater, Queue is {q}")
 
             self._bot = self._updater.bot
             self.logger.info(f"Telegram bot is listening: {await self._updater.bot.getMe()}")
