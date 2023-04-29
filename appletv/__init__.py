@@ -28,6 +28,7 @@ import cherrypy
 from lib.module import Modules
 from lib.model.smartplugin import *
 from lib.item import Items
+from .webif import WebInterface
 
 import asyncio
 import datetime
@@ -89,7 +90,7 @@ class AppleTV(SmartPlugin):
         self._atv_pwc = None
 
 
-        self.init_webinterface()
+        self.init_webinterface(WebInterface)
         return
 
     def run(self):
