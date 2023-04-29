@@ -5,8 +5,7 @@
 #########################################################################
 #  This file is part of SmartHomeNG.
 #
-#  Sample plugin for new plugins to run with SmartHomeNG version 1.4 and
-#  upwards.
+#  AppleTV plugin
 #
 #  SmartHomeNG is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -51,7 +50,7 @@ class AppleTV(SmartPlugin):
     the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.6.1'
+    PLUGIN_VERSION = '1.6.2'
 
     def __init__(self, sh):
         """
@@ -108,11 +107,14 @@ class AppleTV(SmartPlugin):
         """
         self.logger.debug(
             "Plugin '{}': stop method called".format(self.get_fullname()))
-        self._loop.stop()
-        while self._loop.is_running():
-            pass
-        self._loop.run_until_complete(self.disconnect())
-        self._loop.close()
+        try:
+            self._loop.stop()
+            while self._loop.is_running():
+                pass
+            self._loop.run_until_complete(self.disconnect())
+            self._loop.close()
+        except Exception as e:
+            self.logger.warning(f"Issues stopping AppleTV plugin: {e}")
         self.alive = False
 
     def parse_item(self, item):
@@ -224,7 +226,7 @@ class AppleTV(SmartPlugin):
 
     async def discover(self):
         """
-        Discovers Apple TV's on local mdns domain       
+        Discovers Apple TV's on local mdns domain
         """
         self.logger.debug("Discovering Apple TV's in your network for {} seconds...".format(
             int(self._atv_scan_timeout)))
@@ -243,7 +245,7 @@ class AppleTV(SmartPlugin):
 
     async def connect(self):
         """
-        Connects to this instance's Apple TV     
+        Connects to this instance's Apple TV
         """
         if not self._atv:
             if len(self._atvs) > 0:
@@ -260,7 +262,7 @@ class AppleTV(SmartPlugin):
             self._update_items('mac', self._atv.device_info.mac)
         if self._atv.device_info.model:
             self._update_items('model', str(self._atv.device_info.model).replace('DeviceModel.',''))
-        if self._atv.device_info.operating_system.TvOS:
+        if self._atv.device_info.operating_system.TvOS and self._atv.device_info.version is not None:
             self._update_items('os', 'TvOS ' + self._atv.device_info.version)
         else:
             self._update_items('os', self._atv.device_info.version)
@@ -269,10 +271,13 @@ class AppleTV(SmartPlugin):
         self._device = await pyatv.connect(self._atv, self._loop)
         self._atv_rc = self._device.remote_control
         self._atv_pwc = self._device.power
-        if self._atv_pwc.power_state == pyatv.const.PowerState.On:
-            self._update_items('power', True)
-        else:
-            self._update_items('power', False)
+        try:
+            if self._atv_pwc.power_state == pyatv.const.PowerState.On:
+                self._update_items('power', True)
+            else:
+                self._update_items('power', False)
+        except Exception as e:
+            self.logger.error(f"Could not query power state. Error: {e}")
         self._push_listener_thread = threading.Thread(
             target=self._push_listener_thread_worker, name='ATV listener')
         self._push_listener_thread.start()
@@ -280,11 +285,14 @@ class AppleTV(SmartPlugin):
 
     async def disconnect(self):
         """
-        Stop listening to push updates and logout of this istances Apple TV     
+        Stop listening to push updates and logout of this istances Apple TV
         """
         self.logger.info("Disconnecting from '{0}'".format(self._atv.name))
-        self._device.push_updater.stop()
-        self._device.close()
+        try:
+            self._device.push_updater.stop()
+            self._device.close()
+        except Exception as e:
+            self.logger.info(f"Could not disconnect from AppleTV. Error: {e}")
 
     async def update_artwork(self):
         try:
@@ -313,13 +321,13 @@ class AppleTV(SmartPlugin):
             self._position = new_position
             self._position_timestamp = datetime.datetime.now()
         self._update_items('playing_position', new_position)
-        if new_position > 0 and self._state['playing_total_time'] > 0:   
+        if new_position > 0 and self._state['playing_total_time'] > 0:
             self._update_items('playing_position_percent', int(round(new_position / self._state['playing_total_time'] * 100)))
         else:
             self._update_items('playing_position_percent', 0)
 
     def handle_async_exception(self, loop, context):
-        self.logger.error('*** ASYNC EXCEPTIONM ***')
+        self.logger.error('*** ASYNC EXCEPTION ***')
         self.logger.error('Context: {}'.format(context))
         raise
 
@@ -328,7 +336,10 @@ class AppleTV(SmartPlugin):
         Thread to run asyncio loop. This avoids blocking the main plugin thread
         """
         asyncio.set_event_loop(self._loop)
-        self._loop.set_exception_handler(self.handle_async_exception)
+        try:
+            self._loop.set_exception_handler(self.handle_async_exception)
+        except Exception as e:
+            self.logger.error(f"Issue with exception handler: {e}")
         self._device.push_updater.listener = self
         self._device.push_updater.start()
         self._device.power.listener = self
@@ -367,6 +378,7 @@ class AppleTV(SmartPlugin):
             self._update_items('playing_app_identifier', _app.identifier if _app.identifier else '---')
         except:
             pass
+
         self._update_items('playing_state', playstatus.device_state.value)
         self._update_items('playing_state_text', pyatv.convert.device_state_str(playstatus.device_state))
         self._update_items('playing_fingerprint', playstatus.hash)
@@ -382,10 +394,13 @@ class AppleTV(SmartPlugin):
             self._update_items('playing_position_percent', round(playstatus.position / playstatus.total_time * 100))
         else:
             self._update_items('playing_position_percent', 0)
-        self._update_items('playing_repeat', playstatus.repeat.value)
-        self._update_items('playing_repeat_text', pyatv.convert.repeat_str(playstatus.repeat))
-        self._update_items('playing_shuffle', playstatus.shuffle.value)
-        self._update_items('playing_shuffle_text', pyatv.convert.shuffle_str(playstatus.shuffle))
+        try:
+            self._update_items('playing_repeat', playstatus.repeat.value)
+            self._update_items('playing_repeat_text', pyatv.convert.repeat_str(playstatus.repeat))
+            self._update_items('playing_shuffle', playstatus.shuffle.value)
+            self._update_items('playing_shuffle_text', pyatv.convert.shuffle_str(playstatus.shuffle))
+        except Exception as e:
+            self.logger.warning(f"Could not query repeat and/or shuffle state. Error: {e}")
 
     def playstatus_error(self, updater, exception):
         """
