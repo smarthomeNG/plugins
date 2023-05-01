@@ -34,9 +34,7 @@ import datetime
 import os
 import threading
 import base64
-import json
-from random import randint
-from time import sleep
+
 import pyatv
 from pyatv.const import Protocol
 
