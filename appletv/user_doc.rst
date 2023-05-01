@@ -57,13 +57,13 @@ Der aktuelle Abspielstatus als Integer. Derzeit unterstützte Abspielzustände:
 * 5: Medien werden vorgespult
 * 6: Medien werden zurückgespult
 
-play_state_string (String)
+play_state_text (String)
 ----------------------------
 Der aktuelle Status der Wiedergabe als Text.
 
 playing (bool)
 --------------
-`True` wenn play\_state 4 ist (Medium wird abgespielt), `False` für alle anderen play_states.
+`True` wenn play_state 4 ist (Medium wird abgespielt), `False` für alle anderen play_states.
 
 media_type (Ganzzahl)
 -----------------------
@@ -74,7 +74,7 @@ Der aktuelle Abspielstatus als Integer. Derzeit unterstützte Abspielzustände:
 * 3: Medientyp ist Musik
 * 4: Medientyp ist TV
 
-media_type_string (String)
+media_type_text (String)
 ----------------------------
 Der aktuelle Medientyp als Text.
 
@@ -114,7 +114,7 @@ Der aktuelle Status des ausgewählten Wiederholungsmodus. Derzeit unterstützte 
 * 1: Wiederholung des aktuellen Titels
 * 2: Alle Spuren wiederholen
 
-repeat_string (String)
+repeat_text (String)
 ----------------------
 Der aktuell gewählte Typ des Wiederholungsmodus als String.
 
@@ -210,7 +210,7 @@ Wenn SmartVISU als Visualisierung verwendet wird, kann folgender HTML-Code in ei
     <div class="block">
         <div class="set-2" data-role="collapsible-set" data-theme="c" data-content-theme="a" data-mini="true">
             <div data-role="collapsible" data-collapsed="false">
-                <h3>Apple TV {{ basic.print('', 'atv.wohnzimmer.name') }} ({{ basic.print('', 'atv.wohnzimmer.media_type_string') }} {{ basic.print('', 'atv.wohnzimmer.play_state_string') }})</h3>
+                <h3>Apple TV {{ basic.print('', 'atv.wohnzimmer.name') }} ({{ basic.print('', 'atv.wohnzimmer.media_type_text') }} {{ basic.print('', 'atv.wohnzimmer.play_state_text') }})</h3>
                 <table width="100%">
                     <tr>
                         <td>
