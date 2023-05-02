@@ -391,7 +391,13 @@ class PirateWeather(SmartPlugin):
         return direction_array[index]
 
 
-    def get_location_name(self, lat, lon):
+    def get_location_name(self, lat=None, lon=None):
+
+        if lat is None:
+            lat = self._lat
+        if lon is None:
+            lon = self._lon
+
         if lat == 0 or lon == 0:
             self.logger.debug(f"lat or lon are zero, not sending request: {lat=}, {lon=}")
             return
