@@ -6632,13 +6632,13 @@ plugin_functions:
         parameters:
             lat:
                 type: num
-                default: None*
+                default: None
                 description:
                     de: "Latitude, falls nicht angegeben wird die Latitude des piratewthr Plugins benutzt"
                     en: "latitude, if omitted the configured latitude of the piratewthr plugin is used"
             lon:
                 type: num
-                default: None*
+                default: None
                 description:
                     de: "Longitude, falls nicht angegeben wird die Longitude des piratewthr Plugins benutzt"
                     en: "longitude, if omitted the configured longitude of the piratewthr plugin is used"
