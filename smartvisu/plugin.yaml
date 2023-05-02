@@ -32,7 +32,7 @@ parameters:
 
     generate_pages:
         type: bool
-        default: True
+        default: False
         description:
             de: 'Falls True, werden Seiten für smartVISU generiert'
             en: 'If True, pages for smartVISU are generated'
