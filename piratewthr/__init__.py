@@ -389,3 +389,32 @@ class PirateWeather(SmartPlugin):
 
         index = int( (deg % 360 + 11.25) / 22.5)
         return direction_array[index]
+
+
+    def get_location_name(self, lat, lon):
+        if lat == 0 or lon == 0:
+            self.logger.debug(f"lat or lon are zero, not sending request: {lat=}, {lon=}")
+            return
+
+        # api documentation: https://nominatim.org/release-docs/develop/api/Reverse/
+        request_str = f"https://nominatim.openstreetmap.org/reverse?lat={lat}&lon={lon}&format=jsonv2"
+
+        try:
+            response = requests.get(request_str)
+        except Exception as e:
+            self.logger.warning(f"get_location_name: Exception when sending GET request: {e}")
+            return
+
+        try:
+            json_obj = response.json()
+        except Exception as e:
+            self.logger.warning(f"get_location_name: Response '{response}' is no valid json format: {e}")
+            return ''
+
+        if response.status_code >= 500:
+            self.logger.warning(f"get_location_name: {self.get_location_name(response.status_code)}")
+            return ''
+
+        #self.logger.notice(f"{json_obj['display_name']}")
+        #self.logger.notice(f"{json_obj['address']}")
+        return json_obj['address']['suburb']

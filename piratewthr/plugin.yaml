@@ -77,17 +77,26 @@ item_structs:
     weather:
         name: Complete weather report from pirateweather.net - Current weather and forecasts are written to database
 
-        latitude:
-            type: num
-            pw_matchstring@instance: latitude
+        locals:
 
-        longitude:
-            type: num
-            pw_matchstring@instance: longitude
+            lat:
+                type: num
+                pw_matchstring@instance: latitude
 
-        timezone:
-            type: str
-            pw_matchstring@instance: timezone
+            lon:
+                type: num
+                pw_matchstring@instance: longitude
+
+            timezone:
+                type: str
+                pw_matchstring@instance: timezone
+
+            location:
+                type: str
+                eval_trigger:
+                  - ..lon
+                eval: sh.plugins.get('piratewthr').get_location_name(sh...lat(), sh...lon())
+
 
         struct:
             - piratewthr.current_weather
@@ -400,7 +409,6 @@ item_structs:
             windDirectionString:
                 type: str
                 eval_trigger: ..windBearing
-                #eval: "'N' if sh...windBearing() < 22.5 else 'NO' if sh...windBearing() < 67.5 else 'O' if sh...windBearing() < 112.5 else 'SO' if sh...windBearing() < 157.5 else 'S' if sh...windBearing() < 202.5 else 'SW' if sh...windBearing() < 247.5 else 'W' if sh...windBearing() < 292.5 else 'NW' if sh...windBearing() < 337.5 else 'N'"
                 eval: sh.plugins.get('piratewthr').get_wind_direction16(sh...windBearing())
 
             cloudCover:
