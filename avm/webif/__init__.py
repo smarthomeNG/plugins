@@ -74,7 +74,10 @@ class WebInterface(SmartPluginWebIf):
         else:
             aha_items = None
             aha_item_count = None
-            logentries = None
+            if self.plugin.fritz_device:
+                logentries = self.plugin.get_device_log_from_tr064_separated()
+            else:
+                logentries = None
 
         if self.plugin.monitoring_service:
             call_monitor_items = self.plugin.monitoring_service.item_list()

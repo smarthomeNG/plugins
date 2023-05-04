@@ -106,7 +106,7 @@ class AVM(SmartPlugin):
     """
     Main class of the Plugin. Does all plugin specific stuff
     """
-    PLUGIN_VERSION = '2.0.2'
+    PLUGIN_VERSION = '2.0.3'
 
     # ToDo: FritzHome.handle_updated_item: implement 'saturation'
     # ToDo: FritzHome.handle_updated_item: implement 'unmapped_hue'
@@ -143,18 +143,18 @@ class AVM(SmartPlugin):
 
         # init FritzDevice
         try:
-            self.fritz_device = FritzDevice(_host, _port, ssl, _verify, _username, _passwort, _call_monitor_incoming_filter, _use_tr064_backlist, self)
-        except Exception as e:
-            self.logger.warning(f"Error '{e!r}' establishing connection to Fritzdevice via TR064-Interface.")
+            self.fritz_device = FritzDevice(_host, _port, ssl, _verify, _username, _passwort, _call_monitor_incoming_filter, _use_tr064_backlist, _log_entry_count, self)
+        except IOError as e:
+            self.logger.warning(f"{e} occurred during establishing connection to FritzDevice via TR064-Interface. Not connected.")
             self.fritz_device = None
         else:
-            self.logger.debug("Connection to FritzDevice established.")
+            self.logger.debug("Connection to FritzDevice via TR064-Interface established.")
 
         # init FritzHome
         try:
             self.fritz_home = FritzHome(_host, ssl, _verify, _username, _passwort, _log_entry_count, self)
-        except Exception as e:
-            self.logger.warning(f"Error '{e!r}' establishing connection to Fritzdevice via AHA-HTTP-Interface.")
+        except IOError as e:
+            self.logger.warning(f"{e} occurred during establishing connection to FritzDevice via AHA-HTTP-Interface. Not connected.")
             self.fritz_home = None
         else:
             self.logger.debug("Connection to FritzDevice via AHA-HTTP-Interface established.")
@@ -163,8 +163,8 @@ class AVM(SmartPlugin):
         if self._call_monitor and self.fritz_device and self.fritz_device.connected:
             try:
                 self.monitoring_service = Callmonitor(_host, 1012, self.fritz_device.get_contact_name_by_phone_number, _call_monitor_incoming_filter, self)
-            except Exception as e:
-                self.logger.warning(f"Error '{e!r}' establishing connection to Fritzdevice CallMonitor.")
+            except IOError as e:
+                self.logger.warning(f"{e} occurred during establishing connection to FritzDevice CallMonitor. Not connected.")
                 self.monitoring_service = None
             else:
                 self.logger.debug("Connection to FritzDevice CallMonitor established.")
@@ -183,7 +183,7 @@ class AVM(SmartPlugin):
             self.create_cyclic_scheduler(target='tr064', items=self.fritz_device.items, fct=self.fritz_device.cyclic_item_update, offset=2)
             self.fritz_device.cyclic_item_update(read_all=True)
 
-        if self._aha_http_interface and self.fritz_device is not None and self.fritz_device.is_fritzbox():
+        if self._aha_http_interface and self.fritz_device and self.fritz_device.is_fritzbox() and self.fritz_home:
             # add scheduler for updating items
             self.create_cyclic_scheduler(target='aha', items=self.fritz_home.items, fct=self.fritz_home.cyclic_item_update, offset=4)
             self.fritz_home.cyclic_item_update(read_all=True)
@@ -201,7 +201,7 @@ class AVM(SmartPlugin):
         """
         self.logger.debug("Stop method called")
         self.scheduler_remove('poll_tr064')
-        if self._aha_http_interface:
+        if self.fritz_home:
             self.scheduler_remove('poll_aha')
             self.scheduler_remove('check_sid')
             self.fritz_home.logout()
@@ -492,7 +492,7 @@ class FritzDevice:
 
     ERROR_COUNT_TO_BE_BLACKLISTED = 2
 
-    def __init__(self, host, port, ssl, verify, username, password, call_monitor_incoming_filter, use_tr064_backlist, plugin_instance):
+    def __init__(self, host, port, ssl, verify, username, password, call_monitor_incoming_filter, use_tr064_backlist, log_entry_count, plugin_instance):
         """
         Init class FritzDevice
         """
@@ -508,6 +508,7 @@ class FritzDevice:
         self.username = username
         self.password = password
         self.use_tr064_blacklist = use_tr064_backlist
+        self.log_entry_count = log_entry_count
         self._call_monitor_incoming_filter = call_monitor_incoming_filter
         self._data_cache = {}
         self._calllist_cache = []
@@ -525,6 +526,11 @@ class FritzDevice:
         except Exception as e:
             self.logger.error(f"Init TR064 Client for {self.FRITZ_TR64_DESC_FILE} caused error {e!r}.")
         else:
+            # check connection:
+            conn_test_result = self.model_name()
+            if isinstance(conn_test_result, int):
+                raise IOError(f"Error {conn_test_result}-'{self.ERROR_CODES.get(conn_test_result, 'unknown')}'")
+
             self.connected = True
             if self.is_fritzbox():
                 # get GetDefaultConnectionService
@@ -783,14 +789,14 @@ class FritzDevice:
         try:
             return 'box' in self.model_name().lower()
         except AttributeError as e:
-            self.logger.error(f'Could now find out if {self.product_class()} represents a Fritzbox. Error {e!r} occurred.')
+            self.logger.error(f"Could now find out if '{self.product_class()}' represents a Fritzbox. Error {e!r} occurred.")
             return False
 
     def is_repeater(self):
         try:
             return 'repeater' in self.product_class().lower()
         except AttributeError as e:
-            self.logger.error(f'Could now find out if {self.product_class()} represents a Repeater. Error {e!r} occurred.')
+            self.logger.error(f"Could now find out if '{self.product_class()}' represents a Repeater. Error {e!r} occurred.")
             return False
 
     def wlan_devices_count(self):
@@ -1039,7 +1045,7 @@ class FritzDevice:
         """
         Get update data for cache dict; poll data if not yet cached from fritz device
         """
-        # self.logger.debug(f"_get_update_data called with device={device}, service={service}, action={action}, in_argument={in_argument}, out_argument={out_argument}, in_argument_value={in_argument_value}, enforce_read={enforce_read}")
+        # self.logger.warning(f"_get_update_data called with device={device}, service={service}, action={action}, in_argument={in_argument}, out_argument={out_argument}, in_argument_value={in_argument_value}, enforce_read={enforce_read}")
 
         data_args = []
         cache_dict_key = f"{device}_{service}_{action}_{in_argument}_{in_argument_value}"
@@ -1203,7 +1209,8 @@ class FritzDevice:
         :param mac_address: MAC address of the device to wake up
         """
         # self.client.LanDevice.Hosts.X_AVM_DE_GetAutoWakeOnLANByMACAddress(NewMACAddress=mac_address)
-        return self._set_fritz_device('wol', f"NewMACAddress='{mac_address}'")
+        args = {'NewMACAddress': mac_address}
+        return self._set_fritz_device('wol', args)
 
     # ----------------------------------
     # caller methods
@@ -1247,7 +1254,8 @@ class FritzDevice:
         :param phone_name: full phone identifier, could be e.g. '**610' for an internal device
         """
         # self.client.InternetGatewayDevice.X_VoIP.X_AVM_DE_DialSetConfig(NewX_AVM_DE_PhoneName=phone_name.strip())
-        return self._set_fritz_device('set_call_origin', f"NewX_AVM_DE_PhoneName='{phone_name.strip()}'")
+        args = {'NewX_AVM_DE_PhoneName': phone_name.strip()}
+        return self._set_fritz_device('set_call_origin', args)
 
     def start_call(self, phone_number: str):
         """
@@ -1258,7 +1266,8 @@ class FritzDevice:
         :param phone_number: full phone number to call
         """
         # self.client.InternetGatewayDevice.X_VoIP.X_AVM_DE_DialNumber(NewX_AVM_DE_PhoneNumber=phone_number.strip())
-        return self._set_fritz_device('start_call', f"NewX_AVM_DE_PhoneNumber='{phone_number.strip()}'")
+        args = {'NewX_AVM_DE_PhoneNumber': phone_number.strip()}
+        return self._set_fritz_device('start_call', args)
 
     def cancel_call(self):
         """
@@ -1388,6 +1397,28 @@ class FritzDevice:
         else:
             return device_log
 
+    def get_device_log_from_tr064_separated(self):
+
+        data = self.get_device_log_from_tr064()
+
+        if data and isinstance(data, list):
+            # cut data if needed
+            if self.log_entry_count:
+                data = data[:self.log_entry_count]
+
+            # bring data to needed format
+            log_list = []
+            for text in data:
+                l_date = text[:8]
+                l_time = text[9:17]
+                l_text = text[18:]
+                l_cat = '-'
+                l_type = '-'
+                l_ts = int(datetime.datetime.timestamp(datetime.datetime.strptime(text[:17], '%d.%m.%y %H:%M:%S')))
+                log_list.append([l_text, l_type, l_cat, l_ts, l_date, l_time])
+
+            return log_list
+
     # ----------------------------------
     # wlan methods
     # ----------------------------------
@@ -1401,7 +1432,8 @@ class FritzDevice:
             self.logger.debug(f"set_wlan called: wlan_index={wlan_index}, new_enable={new_enable}")
 
         # self.client.LANDevice.WLANConfiguration[wlan_index].SetEnable(NewEnable=int(new_enable))
-        response = self._set_fritz_device('set_wlan', f"NewEnable='{int(new_enable)}'", wlan_index)
+        args = {'NewEnable': int(new_enable)}
+        response = self._set_fritz_device('set_wlan', args, wlan_index)
 
         # check if remaining time is set as item
         self.set_wlan_time_remaining(wlan_index)
@@ -1452,7 +1484,8 @@ class FritzDevice:
             self.logger.debug(f"set_wps called: wlan_index={wlan_index}, wps_enable={wps_enable}")
 
         # self.client.LANDevice.WLANConfiguration[wlan_index].X_AVM_DE_SetWPSEnable(NewX_AVM_DE_WPSEnable=int(wps_enable))
-        return self._set_fritz_device('set_wps', f"NewX_AVM_DE_WPSEnable='{int(wps_enable)}'", wlan_index)
+        args = {'NewX_AVM_DE_WPSEnable': int(wps_enable)}
+        return self._set_fritz_device('set_wps', args, wlan_index)
 
     def get_wps(self, wlan_index: int):
         """
@@ -1477,7 +1510,8 @@ class FritzDevice:
         uses: https://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/x_tam.pdf
         """
         # self.client.InternetGatewayDevice.X_AVM_DE_TAM.SetEnable(NewIndex=tam_index, NewEnable=int(new_enable))
-        return self._set_fritz_device('set_tam', f"NewIndex={tam_index}, NewEnable='{int(new_enable)}'")
+        args = {'NewIndex': tam_index, 'NewEnable': int(new_enable)}
+        return self._set_fritz_device('set_tam', args)
 
     def get_tam(self, tam_index: int = 0):
         """
@@ -1535,7 +1569,8 @@ class FritzDevice:
             switch_state = "ON"
 
         # self.client.InternetGatewayDevice.X_AVM_DE_Homeauto.SetSwitch(NewAIN=ain, NewSwitchState=switch_state)
-        return self._set_fritz_device('set_aha_device', f"NewAIN={ain}, NewSwitchState='{switch_state}'")
+        args = {'NewAIN': ain, 'NewSwitchState': switch_state}
+        return self._set_fritz_device('set_aha_device', args)
 
     # ----------------------------------
     # deflection
@@ -1550,7 +1585,8 @@ class FritzDevice:
         :param new_enable: new enable (default: False)
         """
         # self.client.InternetGatewayDevice.X_AVM_DE_OnTel.SetDeflectionEnable(NewDeflectionId=deflection_id, NewEnable=int(new_enable))
-        return self._set_fritz_device('set_deflection', f"NewDeflectionId='{deflection_id}', NewEnable='{int(new_enable)}'")
+        args = {'NewDeflectionId': deflection_id, 'NewEnable': int(new_enable)}
+        return self._set_fritz_device('set_deflection', args)
 
     def get_deflection(self, deflection_id: int = 0):
         """Get Deflection state of deflection_id"""
@@ -1687,7 +1723,7 @@ class FritzDevice:
         if mesh_response:
             try:
                 mesh = mesh_response.json()
-            except Exception:
+            except ValueError:
                 mesh = None
 
             return mesh
@@ -1726,6 +1762,7 @@ class FritzHome:
         self._templates: Dict[str, FritzHome.FritzhomeTemplate] = {}
         self._logged_in = False
         self._session = requests.Session()
+        self._timeout = 10
         self.items = dict()
         self.connected = False
         self.last_request = None
@@ -1733,6 +1770,8 @@ class FritzHome:
 
         # Login
         self.login()
+        if not self._logged_in:
+            raise IOError("Error 'Login failed'")
 
     def register_item(self, item, item_config: dict):
         """
@@ -1926,18 +1965,24 @@ class FritzHome:
     def item_list(self):
         return list(self.items.keys())
 
-    def _request(self, url: str, params=None, timeout: int = 10, result: str = 'text'):
+    def _request(self, url: str, params=None, result: str = 'text'):
         """
         Send a request with parameters.
 
         :param url:          URL to be requested
         :param params:       params for request
-        :param timeout:      timeout
         :param result:       type of result
         :return:             request response
         """
         try:
-            rsp = self._session.get(url, params=params, timeout=timeout, verify=self.verify)
+            rsp = self._session.get(url, params=params, timeout=self._timeout, verify=self.verify)
+        except requests.exceptions.Timeout:
+            if self._timeout < 31:
+                self._timeout += 5
+                self.logger.info(f"request timed out. timeout extended by 5s to {self._timeout}")
+            else:
+                self.logger.debug(f"get request timeout.")
+            return
         except Exception as e:
             self.logger.error(f"Error during GET request {e} occurred.")
         else:
@@ -2071,12 +2116,12 @@ class FritzHome:
                     challenge_response = self._calculate_md5_response(challenge, self.password)
                 (sid2, challenge, blocktime) = self._login_request(username=self.user, challenge_response=challenge_response)
                 if sid2 == "0000000000000000":
-                    self.logger.warning(f"login failed {sid2}")
-                    self.logger.error(f"LoginError for User {self.user}")
+                    self.logger.debug(f"Login failed for sid2={sid2}")
+                    self.logger.warning(f"Login failed for user '{self.user}'")
                     return
                 self._sid = sid2
         except Exception as e:
-            self.logger.error(f"LoginError {e} occurred for User {self.user}")
+            self.logger.error(f"LoginError {e!r} occurred for user {self.user}")
         else:
             self._logged_in = True
 
@@ -2632,10 +2677,7 @@ class FritzHome:
         params = {"sid": self._sid}
 
         # get data
-        try:
-            data = self._request(url, params, result='json')
-        except JSONDecodeError:
-            return
+        data = self._request(url, params, result='json')
 
         if isinstance(data, dict):
             data = data.get('mq_log')
@@ -2645,16 +2687,16 @@ class FritzHome:
                     data = data[:self.log_entry_count]
 
                 # bring data to needed format
-                newlog = []
-                for text, typ, cat in data:
+                log_list = []
+                for text, typ, cat, val in data:
                     l_date = text[:8]
                     l_time = text[9:17]
                     l_text = text[18:]
                     l_cat = int(cat)
                     l_type = int(typ)
                     l_ts = int(datetime.datetime.timestamp(datetime.datetime.strptime(text[:17], '%d.%m.%y %H:%M:%S')))
-                    newlog.append([l_text, l_type, l_cat, l_ts, l_date, l_time])
-                return newlog
+                    log_list.append([l_text, l_type, l_cat, l_ts, l_date, l_time])
+                return log_list
 
     def get_device_log_from_lua_separated(self):
         """
@@ -2668,10 +2710,8 @@ class FritzHome:
         url = self._get_prefixed_host() + self.LOG_SEPARATE_ROUTE
         params = {"sid": self._sid}
 
-        try:
-            data = self._request(url, params, result='json')
-        except JSONDecodeError:
-            return
+        # get data
+        data = self._request(url, params, result='json')
 
         if isinstance(data, dict):
             data = data.get('mq_log')
@@ -2680,11 +2720,11 @@ class FritzHome:
                     data = data[:self.log_entry_count]
 
                 # bring data to needed format
-                data_formated = []
+                data_formatted = []
                 for entry in data:
                     dt = datetime.datetime.strptime(f"{entry[0]} {entry[1]}", '%d.%m.%y %H:%M:%S').strftime('%d.%m.%Y %H:%M:%S')
-                    data_formated.append([dt, entry[2], entry[3], entry[4]])
-                return data_formated
+                    data_formatted.append([dt, entry[2], entry[3], entry[4]])
+                return data_formatted
 
     # FritzhomeDevice classes
 
@@ -3499,7 +3539,10 @@ class Callmonitor:
         self.conn = None
         self._listen_thread = None
 
+        # connect
         self.connect()
+        if not self.conn:
+            raise IOError("Connection Error")
 
     def connect(self):
         """
@@ -3517,8 +3560,7 @@ class Callmonitor:
             self._listen_thread = threading.Thread(target=self._listen, name=_name).start()
         except Exception as e:
             self.conn = None
-            self.logger.error(
-                f"MonitoringService: Cannot connect to {self.host} on port: {self.port}, CallMonitor activated by #96*5*? - Error: {e}")
+            self.logger.error(f"MonitoringService: Cannot connect to {self.host} on port: {self.port}, CallMonitor activated by #96*5*? - Error: {e}")
         else:
             if self.debug_log:
                 self.logger.debug("MonitoringService: connection established")
