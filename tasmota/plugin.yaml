@@ -12,7 +12,7 @@ plugin:
     documentation: http://smarthomeng.de/user/plugins/tasmota/user_doc.html
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1520293-support-thread-für-das-tasmota-plugin
 
-    version: 1.4.0                 # Plugin version
+    version: 1.5.0                 # Plugin version
     sh_minversion: 1.9.3           # minimum shNG version to use this plugin
 #    sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
 #    py_minversion:                # minimum Python version to use for this plugin
@@ -129,9 +129,8 @@ item_attributes:
 
     tasmota_rf_details:
         type: str
-        default: 1
         description:
-            de: "Nummer des auszulösenden RF Keys im Tasmota Device=Aktion bei Empfang"
+            de: "Nummer des auszulösenden RF Keys im Tasmota Device und Aktion bei Empfang als String; bspw: '16=true' - Bei Empfang des Key16, setze Item auf True"
             en: "Number of rf keys to be used for sending command"
 
     tasmota_zb_device:
