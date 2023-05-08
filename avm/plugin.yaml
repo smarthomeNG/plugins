@@ -40,8 +40,8 @@ parameters:
         type: str
         mandatory: True
         description:
-            de: '(optional) Hostname oder IP-Adresse des FritzDevice.'
-            en: '(optional) Hostname or ip address of the FritzDevice.'
+            de: 'Hostname oder IP-Adresse des FritzDevice.'
+            en: 'Hostname or ip address of the FritzDevice.'
     port:
         type: int
         default: 49443
