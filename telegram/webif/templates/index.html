@@ -77,30 +77,28 @@
 -->
 {% set tab1title = "<strong>Output Items</strong>"%}
 {% block bodytab1 %}
-<div class="container-fluid m-2 table-resize">
-		<table class="dataTableAdditional" id="table_out">
-			<thead>
-				<tr class="shng_heading"><th></th>
-					<th>{{ _('Pfad') }}</th>
-					<th>{{ _('Typ') }}</th>
-					<th>{{ _('Wert') }}</th>
-					<th>{{ _('Letztes Update') }}</th>
-					<th>{{ _('Letzter Change') }}</th>
-				</tr>
-			</thead>
-			<tbody>
-				{% for item in p._items %}
-					<tr id="{{ loop.index }}_click"><td></td>
-						<td class="py-1">{{ item.property.path }}</td>
-						<td class="py-1">{{ item.property.type }}</td>
-						<td class="py-1">{{ item() }}</td>
-						<td class="py-1">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
-						<td class="py-1">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
-					</tr>
-				{% endfor %}
-			</tbody>
-		</table>
-</div>
+    <table class="dataTableAdditional" id="table_out">
+        <thead>
+            <tr class="shng_heading"><th></th>
+                <th>{{ _('Pfad') }}</th>
+                <th>{{ _('Typ') }}</th>
+                <th>{{ _('Wert') }}</th>
+                <th>{{ _('Letztes Update') }}</th>
+                <th>{{ _('Letzter Change') }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in p._items %}
+                <tr id="{{ loop.index }}_click"><td></td>
+                    <td class="py-1">{{ item.property.path }}</td>
+                    <td class="py-1">{{ item.property.type }}</td>
+                    <td class="py-1">{{ item() }}</td>
+                    <td class="py-1">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                    <td class="py-1">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 {% endblock bodytab1 %}
 
 <!--
@@ -108,30 +106,28 @@
 -->
 {% set tab2title = "<strong>Input Items</strong>"%}
 {% block bodytab2 %}
-<div class="container-fluid m-2 table-resize">
-		<table class="dataTableAdditional" id="table_in">
-			<thead>
-				<tr class="shng_heading"><th></th>
-					<th>{{ _('Pfad') }}</th>
-					<th>{{ _('Typ') }}</th>
-					<th>{{ _('Wert') }}</th>
-					<th>{{ _('Letztes Update') }}</th>
-					<th>{{ _('Letzter Change') }}</th>
-				</tr>
-			</thead>
-			<tbody>
-				{% for item in p._items_text_message %}
-					<tr id="{{ loop.index }}_click"><td></td>
-						<td class="py-1">{{ item.property.path }}</td>
-						<td class="py-1">{{ item.property.type }}</td>
-						<td class="py-1">{{ item() }}</td>
-						<td class="py-1">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
-						<td class="py-1">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
-					</tr>
-				{% endfor %}
-			</tbody>
-		</table>
-</div>
+    <table class="dataTableAdditional" id="table_in">
+        <thead>
+            <tr class="shng_heading"><th></th>
+                <th>{{ _('Pfad') }}</th>
+                <th>{{ _('Typ') }}</th>
+                <th>{{ _('Wert') }}</th>
+                <th>{{ _('Letztes Update') }}</th>
+                <th>{{ _('Letzter Change') }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in p._items_text_message %}
+                <tr id="{{ loop.index }}_click"><td></td>
+                    <td class="py-1">{{ item.property.path }}</td>
+                    <td class="py-1">{{ item.property.type }}</td>
+                    <td class="py-1">{{ item() }}</td>
+                    <td class="py-1">{{ item.property.last_update.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                    <td class="py-1">{{ item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 {% endblock bodytab2 %}
 
 <!--
@@ -139,31 +135,29 @@
 -->
 {% set tab3title = "<strong>Telegram Control</strong>"%}
 {% block bodytab3 %}
-<div class="container-fluid m-2 table-resize">
-		<table class="dataTableAdditional" id="table_control">
-			<thead>
-				<tr class="shng_heading"><th></th>
-					<th>{{ _('Control') }}</th>
-          <th>{{ _('Pfad') }}</th>
-					<th>{{ _('Typ') }}</th>
-					<th>{{ _('Wert') }}</th>
-					<th>{{ _('Letzter Change') }}</th>
-          <th>{{ _('letzter Wert') }}</th>
-			</thead>
-			<tbody>
-				{% for key in p._items_control %}
-          <tr id="{{ loop.index }}_click"><td></td>
-            <td class="py-1">{{ key }}</td>
-            <td class="py-1">{{ p._items_control[key].item.property.path }}</td>
-						<td class="py-1">{{ p._items_control[key].item.property.type }}</td>
-						<td class="py-1">{{ p._items_control[key].item() }}</td>
-						<td class="py-1">{{ p._items_control[key].item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
-            <td class="py-1">{{ p._items_control[key].item.property.last_value }}</td>
-					</tr>
-				{% endfor %}
-			</tbody>
-		</table>
-</div>
+    <table class="dataTableAdditional" id="table_control">
+        <thead>
+            <tr class="shng_heading"><th></th>
+                <th>{{ _('Control') }}</th>
+      <th>{{ _('Pfad') }}</th>
+                <th>{{ _('Typ') }}</th>
+                <th>{{ _('Wert') }}</th>
+                <th>{{ _('Letzter Change') }}</th>
+      <th>{{ _('letzter Wert') }}</th>
+        </thead>
+        <tbody>
+            {% for key in p._items_control %}
+      <tr id="{{ loop.index }}_click"><td></td>
+        <td class="py-1">{{ key }}</td>
+        <td class="py-1">{{ p._items_control[key].item.property.path }}</td>
+                    <td class="py-1">{{ p._items_control[key].item.property.type }}</td>
+                    <td class="py-1">{{ p._items_control[key].item() }}</td>
+                    <td class="py-1">{{ p._items_control[key].item.property.last_change.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+        <td class="py-1">{{ p._items_control[key].item.property.last_value }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 {% endblock bodytab3 %}
 
 <!--
@@ -171,47 +165,43 @@
 -->
 {% set tab4title = "<strong>Telegram Infos</strong>" %}
 {% block bodytab4 %}
-<div class="container-fluid m-2 table-resize">
-		<table class="dataTableAdditional" id="table_info">
-			<thead>
-				<tr class="shng_heading"><th></th>
-					<th>{{ _('Info') }}</th>
-					<th>{{ _('Info-Items') }}</th>
-				</tr>
-			</thead>
-			<tbody>
-				{% for key in p._items_info %}
-					<tr id="{{ loop.index }}_click"><td></td>
-						<td class="py-1">{{ key }}</td>
-						<td class="py-1">{{ p._items_info[key] }}</td>
-					</tr>
-				{% endfor %}
-			</tbody>
-		</table>
-	</div>
+    <table class="dataTableAdditional" id="table_info">
+        <thead>
+            <tr class="shng_heading"><th></th>
+                <th>{{ _('Info') }}</th>
+                <th>{{ _('Info-Items') }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for key in p._items_info %}
+                <tr id="{{ loop.index }}_click"><td></td>
+                    <td class="py-1">{{ key }}</td>
+                    <td class="py-1">{{ p._items_info[key] }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 {% endblock bodytab4 %}
 
 <!--
 	Content block for the 5. tab of the Webinterface
 -->
-{% set tab5title = "<strong>Chat-ID's</strong>" %}
+{% set tab5title = "<strong>Chat-IDs</strong>" %}
 {% block bodytab5 %}
-<div class="container-fluid m-2 table-resize">
-		<table class="dataTableAdditional" id="table_chatids">
-			<thead>
-				<tr class="shng_heading"><th></th>
-					<th>{{ _('Registrierte Chat-ID') }}</th>
-					<th>{{ _('Zugriff') }}</th>
-				</tr>
-			</thead>
-			<tbody>
-				{% for key in p._chat_ids_item() %}
-					<tr id="{{ loop.index }}_click"><td></td>
-						<td class="py-1">{{ key }}</td>
-						<td class="py-1">{{ p._chat_ids_item()[key] }}</td>
-					</tr>
-				{% endfor %}
-			</tbody>
-		</table>
-        </div>
+    <table class="dataTableAdditional" id="table_chatids">
+        <thead>
+            <tr class="shng_heading"><th></th>
+                <th>{{ _('Registrierte Chat-ID') }}</th>
+                <th>{{ _('Zugriff') }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for key in p._chat_ids_item() %}
+                <tr id="{{ loop.index }}_click"><td></td>
+                    <td class="py-1">{{ key }}</td>
+                    <td class="py-1">{{ p._chat_ids_item()[key] }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 {% endblock bodytab5 %}
