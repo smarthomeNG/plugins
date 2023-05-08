@@ -19,6 +19,45 @@
 #  along with this plugin. If not, see <http://www.gnu.org/licenses/>.
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
+import ruamel.yaml
+
+FILENAME_ATTRIBUTES = 'item_attributes.py'
+
+FILENAME_PLUGIN = 'plugin.yaml'
+
+HEADER = """\
+# !/usr/bin/env python
+# vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# Copyright 2023 Michael Wenzel
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+#  AVM for SmartHomeNG.  https://github.com/smarthomeNG//
+#
+#  This plugin is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  This plugin is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this plugin. If not, see <http://www.gnu.org/licenses/>.
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+#
+#
+#                                 THIS FILE IS AUTOMATICALLY CREATED BY USING item_attributs_master.py
+#
+#
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+"""
+
 #     'avm_data_type':                {'interface': 'tr064',        'group': '',                'sub_group': None,                 'access': '',    'type': '',      'deprecated': False,  'supported_by_repeater': False,   'description': ''},
 
 AVM_DATA_TYPES = {
@@ -132,7 +171,7 @@ AVM_DATA_TYPES = {
       'window_open':                  {'interface': 'aha',          'group': 'hkr',             'sub_group': None,                 'access': 'rw',  'type': 'bool',  'deprecated': False,  'supported_by_repeater': False,   'description': '"Window Open" Funktion (Status und Setzen)'},
       'windowopenactiveendtime':      {'interface': 'aha',          'group': 'hkr',             'sub_group': None,                 'access': 'ro',  'type': 'num ',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Zeitliches Ende der "Window Open" Funktion'},
       'set_hkr_boost':                {'interface': 'aha',          'group': 'hkr',             'sub_group': None,                 'access': 'wo',  'type': 'bool',  'deprecated': False,  'supported_by_repeater': False,   'description': '"Boost" Funktion Setzen'},
-      'hkr_boost':                    {'interface': 'aha',          'group': 'hkr',             'sub_group': None,                 'access': 'rw',  'type': 'bool',  'deprecated': False,  'supported_by_repeater': False,   'description': '"Boost" Funktion (Status aund Setzen)'},
+      'hkr_boost':                    {'interface': 'aha',          'group': 'hkr',             'sub_group': None,                 'access': 'rw',  'type': 'bool',  'deprecated': False,  'supported_by_repeater': False,   'description': '"Boost" Funktion (Status und Setzen)'},
       'boost_active':                 {'interface': 'aha',          'group': 'hkr',             'sub_group': None,                 'access': 'ro',  'type': 'bool',  'deprecated': True,   'supported_by_repeater': False,   'description': 'Status der "Boost" Funktion'},
       'boostactiveendtime':           {'interface': 'aha',          'group': 'hkr',             'sub_group': None,                 'access': 'ro',  'type': 'num ',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Zeitliches Ende der "Boost" Funktion'},
       'summer_active':                {'interface': 'aha',          'group': 'hkr',             'sub_group': None,                 'access': 'ro',  'type': 'bool',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Status der "Sommer" Funktion'},
@@ -143,19 +182,19 @@ AVM_DATA_TYPES = {
       'device_lock':                  {'interface': 'aha',          'group': 'hkr',             'sub_group': None,                 'access': 'ro',  'type': 'bool',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Tastensperre direkt am Gerät ein'},
       'errorcode':                    {'interface': 'aha',          'group': 'hkr',             'sub_group': None,                 'access': 'ro',  'type': 'num ',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Fehlercodes die der HKR liefert'},
       'set_simpleonoff':              {'interface': 'aha',          'group': 'simpleonoff',     'sub_group': None,                 'access': 'wo',  'type': 'bool',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Gerät/Aktor/Lampe an-/ausschalten'},
-      'simpleonoff':                  {'interface': 'aha',          'group': 'simpleonoff',     'sub_group': None,                 'access': 'wr',  'type': 'bool',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Gerät/Aktor/Lampe (Status und Setzen)'},
+      'simpleonoff':                  {'interface': 'aha',          'group': 'simpleonoff',     'sub_group': None,                 'access': 'rw',  'type': 'bool',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Gerät/Aktor/Lampe (Status und Setzen)'},
       'set_level':                    {'interface': 'aha',          'group': 'level',           'sub_group': None,                 'access': 'wo',  'type': 'num ',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Level/Niveau von 0 bis 255 Setzen'},
-      'level':                        {'interface': 'aha',          'group': 'level',           'sub_group': None,                 'access': 'wr',  'type': 'num ',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Level/Niveau von 0 bis 255 (Setzen & Status)'},
+      'level':                        {'interface': 'aha',          'group': 'level',           'sub_group': None,                 'access': 'rw',  'type': 'num ',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Level/Niveau von 0 bis 255 (Setzen & Status)'},
       'set_levelpercentage':          {'interface': 'aha',          'group': 'level',           'sub_group': None,                 'access': 'wo',  'type': 'num ',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Level/Niveau von 0% bis 100% Setzen'},
-      'levelpercentage':              {'interface': 'aha',          'group': 'level',           'sub_group': None,                 'access': 'wr',  'type': 'num ',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Level/Niveau von 0% bis 100% (Setzen & Status)'},
+      'levelpercentage':              {'interface': 'aha',          'group': 'level',           'sub_group': None,                 'access': 'rw',  'type': 'num ',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Level/Niveau von 0% bis 100% (Setzen & Status)'},
       'set_hue':                      {'interface': 'aha',          'group': 'color',           'sub_group': None,                 'access': 'wo',  'type': 'num ',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Hue Setzen'},
-      'hue':                          {'interface': 'aha',          'group': 'color',           'sub_group': None,                 'access': 'wr',  'type': 'num ',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Hue (Status und Setzen)'},
+      'hue':                          {'interface': 'aha',          'group': 'color',           'sub_group': None,                 'access': 'rw',  'type': 'num ',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Hue (Status und Setzen)'},
       'set_saturation':               {'interface': 'aha',          'group': 'color',           'sub_group': None,                 'access': 'wo',  'type': 'num ',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Saturation Setzen'},
-      'saturation':                   {'interface': 'aha',          'group': 'color',           'sub_group': None,                 'access': 'wr',  'type': 'num ',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Saturation (Status und Setzen)'},
+      'saturation':                   {'interface': 'aha',          'group': 'color',           'sub_group': None,                 'access': 'rw',  'type': 'num ',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Saturation (Status und Setzen)'},
       'set_colortemperature':         {'interface': 'aha',          'group': 'color',           'sub_group': None,                 'access': 'wo',  'type': 'num ',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Farbtemperatur Setzen'},
-      'colortemperature':             {'interface': 'aha',          'group': 'color',           'sub_group': None,                 'access': 'wr',  'type': 'num ',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Farbtemperatur (Status und Setzen)'},
-      'unmapped_hue':                 {'interface': 'aha',          'group': 'color',           'sub_group': None,                 'access': 'wr',  'type': 'num ',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Hue (Status und Setzen)'},
-      'unmapped_saturation':          {'interface': 'aha',          'group': 'color',           'sub_group': None,                 'access': 'wr',  'type': 'num ',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Saturation (Status und Setzen)'},
+      'colortemperature':             {'interface': 'aha',          'group': 'color',           'sub_group': None,                 'access': 'rw',  'type': 'num ',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Farbtemperatur (Status und Setzen)'},
+      'unmapped_hue':                 {'interface': 'aha',          'group': 'color',           'sub_group': None,                 'access': 'rw',  'type': 'num ',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Hue (Status und Setzen)'},
+      'unmapped_saturation':          {'interface': 'aha',          'group': 'color',           'sub_group': None,                 'access': 'rw',  'type': 'num ',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Saturation (Status und Setzen)'},
       'color_mode':                   {'interface': 'aha',          'group': 'color',           'sub_group': None,                 'access': 'ro',  'type': 'num ',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Aktueller Farbmodus (1-HueSaturation-Mode; 4-Farbtemperatur-Mode)'},
       'supported_color_mode':         {'interface': 'aha',          'group': 'color',           'sub_group': None,                 'access': 'ro',  'type': 'num ',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Unterstützer Farbmodus (1-HueSaturation-Mode; 4-Farbtemperatur-Mode)'},
       'fullcolorsupport':             {'interface': 'aha',          'group': 'color',           'sub_group': None,                 'access': 'ro',  'type': 'bool',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Lampe unterstützt setunmappedcolor'},
@@ -173,8 +212,9 @@ AVM_DATA_TYPES = {
     }
 }
 
+ATTRIBUTES_LIST = ['tr064', 'aha']
 
-def get_attrs(ifaces: list = ['tr064', 'aha'], sub_dict: dict = {}) -> list:
+def get_attrs(ifaces: list = ATTRIBUTES_LIST, sub_dict: dict = {}) -> list:
     attributes = []
     for iface in ifaces:
         for avm_data_type in AVM_DATA_TYPES[iface]:
@@ -182,8 +222,8 @@ def get_attrs(ifaces: list = ['tr064', 'aha'], sub_dict: dict = {}) -> list:
                 attributes.append(avm_data_type)
     return attributes
 
-def export_avm_data():
-    ATTRS = {}
+def export_item_attributs_py():
+    ATTRS = dict()
     ATTRS['ALL_ATTRIBUTES_SUPPORTED_BY_REPEATER'] = get_attrs(sub_dict={'supported_by_repeater': True})
     ATTRS['ALL_ATTRIBUTES_WRITEABLE'] = get_attrs(sub_dict={'access': 'wo'}) + get_attrs(sub_dict={'access': 'rw'})
     ATTRS['ALL_ATTRIBUTES_WRITEONLY'] = get_attrs(sub_dict={'access': 'wo'})
@@ -207,7 +247,7 @@ def export_avm_data():
     ATTRS['WLAN_CONFIG_ATTRIBUTES'] = get_attrs(['tr064'], {'group': 'wlan_config'})
     ATTRS['WLAN_ATTRIBUTES'] = get_attrs(['tr064'], {'group': 'wlan'})
     ATTRS['FRITZ_DEVICE_ATTRIBUTES'] = get_attrs(['tr064'], {'group': 'fritz_device'})
-    ATTRS['HOST_ATTRIBUTES'] = get_attrs(['tr064'], {'group': 'host', 'sub_group': 'info'})
+    ATTRS['HOST_ATTRIBUTES'] = get_attrs(['tr064'], {'group': 'host', 'sub_group': 'host'})
     ATTRS['HOSTS_ATTRIBUTES'] = get_attrs(['tr064'], {'group': 'host', 'sub_group': 'gen'})
     ATTRS['HOST_ATTRIBUTES_CHILD'] = get_attrs(['tr064'], {'group': 'host', 'sub_group': 'child'})
     ATTRS['DEFLECTION_ATTRIBUTES'] = get_attrs(['tr064'], {'group': 'deflection'})
@@ -216,8 +256,72 @@ def export_avm_data():
     ATTRS['HOMEAUTO_ATTRIBUTES'] = get_attrs(['tr064'], {'group': 'homeauto'})
     ATTRS['MYFRITZ_ATTRIBUTES'] = get_attrs(['tr064'], {'group': 'myfritz'})
 
+
+    # create file and write header
+    f = open(FILENAME_ATTRIBUTES, "w")
+    f.write(HEADER)
+    f.close()
+
+    # write avm_data_types
     for attr, alist in ATTRS.items():
-        print(f'{attr} = {alist!r}')
+        with open(FILENAME_ATTRIBUTES, "a") as f:
+            print (f'{attr} = {alist!r}', file=f)
+
+    print('item_attributs.py successfully created!')
+
+def create_plugin_yaml_avm_data_type_valid_list(ifaces: list = ATTRIBUTES_LIST):
+    """Create valid_list of avm_data_type based on master dict"""
+
+    interface_group = None
+    valid_list_str = """\
+            type: str
+            mandatory: True
+            description:
+                de: 'AVM Datentyp des jeweiligen Items.'
+                en: 'AVM Data Type of the respective item.'
+            valid_list:         # NOTE: valid_list is automatically created by using item_attributes_master.py"""
+
+    for iface in ifaces:
+        valid_list_str = f"{valid_list_str}\n            # {iface} Attributes"
+        for avm_data_type in AVM_DATA_TYPES[iface]:
+            interface_group_new = f"{AVM_DATA_TYPES[iface][avm_data_type]['interface']}-{AVM_DATA_TYPES[iface][avm_data_type]['group']}"
+            if interface_group_new != interface_group:
+                interface_group = interface_group_new
+                valid_list_str = f"""{valid_list_str}\n\
+              # {interface_group} Attributes"""
+            valid_list_str = f"""{valid_list_str}\n\
+              - {avm_data_type!r:<40}# {AVM_DATA_TYPES[iface][avm_data_type]['access']:<5}{AVM_DATA_TYPES[iface][avm_data_type]['type']:<5}\t{AVM_DATA_TYPES[iface][avm_data_type]['description']:<}"""
+
+    return valid_list_str
+
+def update_plugin_yaml_avm_data_type_valid_list():
+    yaml = ruamel.yaml.YAML()
+    yaml.indent(mapping=4, sequence=4, offset=4)
+    yaml.width = 150
+
+    valid_list_str = create_plugin_yaml_avm_data_type_valid_list()
+    valid_list_yaml = yaml.load(valid_list_str)
+
+    with open(FILENAME_PLUGIN, 'r') as f:
+        data = yaml.load(f)
+    avm_data_type = data.get('item_attributes', {}).get('avm_data_type')
+
+    if avm_data_type:
+        data['item_attributes']['avm_data_type'] = valid_list_yaml
+        with open(FILENAME_PLUGIN, 'w') as f:
+            yaml.dump(data, f)
+        print('valid_list of avm_data_type successfully updated!')
+    else:
+        print('Error during updating valid_list of avm_data_type!')
+
 
 if __name__ == '__main__':
-    export_avm_data()
+    # Run main to export item_attributes.py and update a´valid_list of avm_data_type in plugin.yaml
+    export_item_attributs_py()
+    update_plugin_yaml_avm_data_type_valid_list()
+
+
+# Notes:
+#   - HOST_ATTRIBUTES: host index needed
+#   - HOSTS_ATTRIBUTES: no index needed
+#   - HOST_ATTRIBUTES_CHILD: avm_mac needed
