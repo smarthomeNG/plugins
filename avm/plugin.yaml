@@ -182,16 +182,16 @@ item_attributes:
             - hosts_count                               # ro   num  
             - hosts_info                                # ro   dict 
             - mesh_topology                             # ro   dict 
-            - number_of_hosts                           # ro   bool 
-            - hosts_url                                 # ro   bool 
-            - mesh_url                                  # ro   bool 
+            - number_of_hosts                           # ro   num  
+            - hosts_url                                 # ro   str  
+            - mesh_url                                  # ro   str  
             - network_device                            # ro   bool 
             - device_ip                                 # ro   str  
             - device_connection_type                    # ro   str  
             - device_hostname                           # ro   str  
             - connection_status                         # ro   bool 
             - is_host_active                            # ro   bool 
-            - host_info                                 # ro   bool 
+            - host_info                                 # ro   str  
               # tr064-deflection Attributes
             - number_of_deflections                     # ro   num  
             - deflections_details                       # ro   dict 
@@ -351,16 +351,16 @@ item_attributes:
             - Anzahl der Hosts
             - Informationen über die Hosts
             - Topologie des Mesh
-            - Verbindungsstatus (Muss Child von "network_device" sein
-            - Verbindungsstatus (Muss Child von "network_device" sein
-            - Verbindungsstatus (Muss Child von "network_device" sein
-            - Verbindungsstatus // Defines Network device via MAC-Adresse
-            - Geräte-IP (Muss Child von "network_device" sein
-            - Verbindungstyp (Muss Child von "network_device" sein
+            - Anzahl der verbundenen Hosts (Muss Child von "network_device" sein)
+            - URL zu Hosts (Muss Child von "network_device" sein)
+            - URL zum Mesh (Muss Child von "network_device" sein)
+            - Verbindungsstatus des Gerätes // Defines Network device via MAC-Adresse
+            - Geräte-IP (Muss Child von "network_device" sein)
+            - Verbindungstyp (Muss Child von "network_device" sein)
             - Gerätename (Muss Child von "network_device" sein
-            - Verbindungsstatus (Muss Child von "network_device" sein
-            - Verbindungsstatus (Muss Child von "network_device" sein
-            - Verbindungsstatus (Muss Child von "network_device" sein
+            - Verbindungsstatus (Muss Child von "network_device" sein)
+            - Host aktiv? (Muss Child von "network_device" sein)
+            - Informationen zum Host (Muss Child von "network_device" sein)
               # tr064-deflection Attributes
             - Anzahl der eingestellten Rufumleitungen
             - Details zu allen Rufumleitung (als dict)
