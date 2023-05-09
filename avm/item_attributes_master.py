@@ -63,9 +63,9 @@ HEADER = """\
 AVM_DATA_TYPES = {
     'tr064': {
       'uptime':                       {'interface': 'tr064',        'group': 'fritz_device',    'sub_group': None,                 'access': 'ro',  'type': 'num',   'deprecated': False,  'supported_by_repeater': True,    'description': 'Laufzeit des Fritzdevice in Sekunden'},
-      'software_version':             {'interface': 'tr064',        'group': 'fritz_device',    'sub_group': None,                 'access': 'ro',  'type': 'str',   'deprecated': False,  'supported_by_repeater': True,    'description': 'Serialnummer des Fritzdevice'},
-      'hardware_version':             {'interface': 'tr064',        'group': 'fritz_device',    'sub_group': None,                 'access': 'ro',  'type': 'str',   'deprecated': False,  'supported_by_repeater': True,    'description': 'Software Version'},
-      'serial_number':                {'interface': 'tr064',        'group': 'fritz_device',    'sub_group': None,                 'access': 'ro',  'type': 'str',   'deprecated': False,  'supported_by_repeater': True,    'description': 'Hardware Version'},
+      'serial_number':                {'interface': 'tr064',        'group': 'fritz_device',    'sub_group': None,                 'access': 'ro',  'type': 'str',   'deprecated': False,  'supported_by_repeater': True,    'description': 'Serialnummer des Fritzdevice'},
+      'software_version':             {'interface': 'tr064',        'group': 'fritz_device',    'sub_group': None,                 'access': 'ro',  'type': 'str',   'deprecated': False,  'supported_by_repeater': True,    'description': 'Software Version'},
+      'hardware_version':             {'interface': 'tr064',        'group': 'fritz_device',    'sub_group': None,                 'access': 'ro',  'type': 'str',   'deprecated': False,  'supported_by_repeater': True,    'description': 'Hardware Version'},
       'manufacturer':                 {'interface': 'tr064',        'group': 'fritz_device',    'sub_group': None,                 'access': 'ro',  'type': 'str',   'deprecated': False,  'supported_by_repeater': True,    'description': 'Hersteller'},
       'product_class':                {'interface': 'tr064',        'group': 'fritz_device',    'sub_group': None,                 'access': 'ro',  'type': 'str',   'deprecated': False,  'supported_by_repeater': True,    'description': 'Produktklasse'},
       'manufacturer_oui':             {'interface': 'tr064',        'group': 'fritz_device',    'sub_group': None,                 'access': 'ro',  'type': 'str',   'deprecated': False,  'supported_by_repeater': True,    'description': 'Hersteller OUI'},
@@ -269,57 +269,64 @@ def export_item_attributs_py():
 
     print('item_attributs.py successfully created!')
 
-def create_plugin_yaml_avm_data_type_valid_list(ifaces: list = ATTRIBUTES_LIST):
+def create_plugin_yaml_avm_data_type_valids(ifaces: list = ATTRIBUTES_LIST):
     """Create valid_list of avm_data_type based on master dict"""
 
     interface_group = None
-    valid_list_str = """\
-            type: str
-            mandatory: True
-            description:
-                de: 'AVM Datentyp des jeweiligen Items.'
-                en: 'AVM Data Type of the respective item.'
-            valid_list:         # NOTE: valid_list is automatically created by using item_attributes_master.py"""
+    valid_list_str =      """        # NOTE: valid_list is automatically created by using item_attributes_master.py"""
+    valid_list_desc_str = """        # NOTE: valid_list_description is automatically created by using item_attributes_master.py"""
 
     for iface in ifaces:
         valid_list_str = f"{valid_list_str}\n            # {iface} Attributes"
+        valid_list_desc_str = f"{valid_list_desc_str}\n            # {iface} Attributes"
+
         for avm_data_type in AVM_DATA_TYPES[iface]:
             interface_group_new = f"{AVM_DATA_TYPES[iface][avm_data_type]['interface']}-{AVM_DATA_TYPES[iface][avm_data_type]['group']}"
             if interface_group_new != interface_group:
                 interface_group = interface_group_new
+
                 valid_list_str = f"""{valid_list_str}\n\
               # {interface_group} Attributes"""
+
+                valid_list_desc_str = f"""{valid_list_desc_str}\n\
+              # {interface_group} Attributes"""
+
             valid_list_str = f"""{valid_list_str}\n\
-              - {avm_data_type!r:<40}# {AVM_DATA_TYPES[iface][avm_data_type]['access']:<5}{AVM_DATA_TYPES[iface][avm_data_type]['type']:<5}\t{AVM_DATA_TYPES[iface][avm_data_type]['description']:<}"""
+              - {avm_data_type!r:<40}# {AVM_DATA_TYPES[iface][avm_data_type]['access']:<5}{AVM_DATA_TYPES[iface][avm_data_type]['type']:<5}"""
 
-    return valid_list_str
+            valid_list_desc_str = f"""{valid_list_desc_str}\n\
+                          - '{AVM_DATA_TYPES[iface][avm_data_type]['description']:<}'"""
 
-def update_plugin_yaml_avm_data_type_valid_list():
+    return valid_list_str, valid_list_desc_str
+
+def update_plugin_yaml_avm_data_type():
+    """Update ´'valid_list' and 'valid_list_description' of 'avm_data_type´ in plugin.yaml"""
+
     yaml = ruamel.yaml.YAML()
     yaml.indent(mapping=4, sequence=4, offset=4)
-    yaml.width = 150
+    yaml.width = 200
+    yaml.allow_unicode = True
 
-    valid_list_str = create_plugin_yaml_avm_data_type_valid_list()
-    valid_list_yaml = yaml.load(valid_list_str)
+    valid_list_str, valid_list_description_str = create_plugin_yaml_avm_data_type_valids()
 
     with open(FILENAME_PLUGIN, 'r') as f:
         data = yaml.load(f)
-    avm_data_type = data.get('item_attributes', {}).get('avm_data_type')
 
-    if avm_data_type:
-        data['item_attributes']['avm_data_type'] = valid_list_yaml
-        with open(FILENAME_PLUGIN, 'w') as f:
+    if data.get('item_attributes', {}).get('avm_data_type'):
+        data['item_attributes']['avm_data_type']['valid_list'] = yaml.load(valid_list_str)
+        data['item_attributes']['avm_data_type']['valid_list_description'] = yaml.load(valid_list_description_str)
+
+        with open(FILENAME_PLUGIN, 'w', encoding="utf-8") as f:
             yaml.dump(data, f)
-        print('valid_list of avm_data_type successfully updated!')
+        print('valid_list and valid_list_description of avm_data_type successfully updated in plugin.yaml!')
     else:
-        print('Error during updating valid_list of avm_data_type!')
+        print('Attribut "avm_data_type" not defined in plugin.yaml')
 
 
 if __name__ == '__main__':
-    # Run main to export item_attributes.py and update a´valid_list of avm_data_type in plugin.yaml
+    # Run main to export item_attributes.py and update ´valid_list and valid_list_description of avm_data_type in plugin.yaml
     export_item_attributs_py()
-    update_plugin_yaml_avm_data_type_valid_list()
-
+    update_plugin_yaml_avm_data_type()
 
 # Notes:
 #   - HOST_ATTRIBUTES: host index needed
