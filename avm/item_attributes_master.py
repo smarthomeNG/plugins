@@ -69,8 +69,8 @@ AVM_DATA_TYPES = {
       'manufacturer':                 {'interface': 'tr064',        'group': 'fritz_device',    'sub_group': None,                 'access': 'ro',  'type': 'str',   'deprecated': False,  'supported_by_repeater': True,    'description': 'Hersteller'},
       'product_class':                {'interface': 'tr064',        'group': 'fritz_device',    'sub_group': None,                 'access': 'ro',  'type': 'str',   'deprecated': False,  'supported_by_repeater': True,    'description': 'Produktklasse'},
       'manufacturer_oui':             {'interface': 'tr064',        'group': 'fritz_device',    'sub_group': None,                 'access': 'ro',  'type': 'str',   'deprecated': False,  'supported_by_repeater': True,    'description': 'Hersteller OUI'},
-      'model_name':                   {'interface': 'tr064',        'group': 'fritz_device',    'sub_group': None,                 'access': 'ro',  'type': 'str',   'deprecated': False,  'supported_by_repeater': True,    'description': 'Modelname'},
-      'description':                  {'interface': 'tr064',        'group': 'fritz_device',    'sub_group': None,                 'access': 'ro',  'type': 'str',   'deprecated': False,  'supported_by_repeater': True,    'description': 'Modelbeschreibung'},
+      'model_name':                   {'interface': 'tr064',        'group': 'fritz_device',    'sub_group': None,                 'access': 'ro',  'type': 'str',   'deprecated': False,  'supported_by_repeater': True,    'description': 'Modellname'},
+      'description':                  {'interface': 'tr064',        'group': 'fritz_device',    'sub_group': None,                 'access': 'ro',  'type': 'str',   'deprecated': False,  'supported_by_repeater': True,    'description': 'Modellbeschreibung'},
       'device_log':                   {'interface': 'tr064',        'group': 'fritz_device',    'sub_group': None,                 'access': 'ro',  'type': 'str',   'deprecated': False,  'supported_by_repeater': True,    'description': 'Geräte Log'},
       'security_port':                {'interface': 'tr064',        'group': 'fritz_device',    'sub_group': None,                 'access': 'ro',  'type': 'str',   'deprecated': False,  'supported_by_repeater': True,    'description': 'Security Port'},
       'reboot':                       {'interface': 'tr064',        'group': 'fritz_device',    'sub_group': None,                 'access': 'wo',  'type': 'bool',  'deprecated': False,  'supported_by_repeater': True,    'description': 'Startet das Gerät neu'},
@@ -167,31 +167,31 @@ AVM_DATA_TYPES = {
       'temperature_reduced':          {'interface': 'aha',          'group': 'hkr',             'sub_group': None,                 'access': 'ro',  'type': 'num ',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Eingestellte reduzierte Temperatur'},
       'temperature_comfort':          {'interface': 'aha',          'group': 'hkr',             'sub_group': None,                 'access': 'ro',  'type': 'num ',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Eingestellte Komfort-Temperatur'},
       'temperature_offset':           {'interface': 'aha',          'group': 'hkr',             'sub_group': None,                 'access': 'ro',  'type': 'num ',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Eingestellter Temperatur-Offset'},
-      'set_window_open':              {'interface': 'aha',          'group': 'hkr',             'sub_group': None,                 'access': 'wo',  'type': 'bool',  'deprecated': False,  'supported_by_repeater': False,   'description': '"Window Open" Funktionen Setzen'},
-      'window_open':                  {'interface': 'aha',          'group': 'hkr',             'sub_group': None,                 'access': 'rw',  'type': 'bool',  'deprecated': False,  'supported_by_repeater': False,   'description': '"Window Open" Funktion (Status und Setzen)'},
+      'set_window_open':              {'interface': 'aha',          'group': 'hkr',             'sub_group': None,                 'access': 'wo',  'type': 'bool',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Window-Open-Funktion (Setzen)'},
+      'window_open':                  {'interface': 'aha',          'group': 'hkr',             'sub_group': None,                 'access': 'rw',  'type': 'bool',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Window-Open-Funktion (Status und Setzen)'},
       'windowopenactiveendtime':      {'interface': 'aha',          'group': 'hkr',             'sub_group': None,                 'access': 'ro',  'type': 'num ',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Zeitliches Ende der "Window Open" Funktion'},
-      'set_hkr_boost':                {'interface': 'aha',          'group': 'hkr',             'sub_group': None,                 'access': 'wo',  'type': 'bool',  'deprecated': False,  'supported_by_repeater': False,   'description': '"Boost" Funktion Setzen'},
-      'hkr_boost':                    {'interface': 'aha',          'group': 'hkr',             'sub_group': None,                 'access': 'rw',  'type': 'bool',  'deprecated': False,  'supported_by_repeater': False,   'description': '"Boost" Funktion (Status und Setzen)'},
+      'set_hkr_boost':                {'interface': 'aha',          'group': 'hkr',             'sub_group': None,                 'access': 'wo',  'type': 'bool',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Boost-Funktion (Setzen)'},
+      'hkr_boost':                    {'interface': 'aha',          'group': 'hkr',             'sub_group': None,                 'access': 'rw',  'type': 'bool',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Boost-Funktion (Status und Setzen)'},
       'boost_active':                 {'interface': 'aha',          'group': 'hkr',             'sub_group': None,                 'access': 'ro',  'type': 'bool',  'deprecated': True,   'supported_by_repeater': False,   'description': 'Status der "Boost" Funktion'},
-      'boostactiveendtime':           {'interface': 'aha',          'group': 'hkr',             'sub_group': None,                 'access': 'ro',  'type': 'num ',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Zeitliches Ende der "Boost" Funktion'},
+      'boostactiveendtime':           {'interface': 'aha',          'group': 'hkr',             'sub_group': None,                 'access': 'ro',  'type': 'num ',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Zeitliches Ende der Boost Funktion'},
       'summer_active':                {'interface': 'aha',          'group': 'hkr',             'sub_group': None,                 'access': 'ro',  'type': 'bool',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Status der "Sommer" Funktion'},
       'holiday_active':               {'interface': 'aha',          'group': 'hkr',             'sub_group': None,                 'access': 'ro',  'type': 'bool',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Status der "Holiday" Funktion'},
-      'battery_low':                  {'interface': 'aha',          'group': 'hkr',             'sub_group': None,                 'access': 'ro',  'type': 'bool',  'deprecated': False,  'supported_by_repeater': False,   'description': '"Battery low" Status'},
+      'battery_low':                  {'interface': 'aha',          'group': 'hkr',             'sub_group': None,                 'access': 'ro',  'type': 'bool',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Battery-low Status'},
       'battery_level':                {'interface': 'aha',          'group': 'hkr',             'sub_group': None,                 'access': 'ro',  'type': 'num ',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Batterie-Status in %'},
       'lock':                         {'interface': 'aha',          'group': 'hkr',             'sub_group': None,                 'access': 'ro',  'type': 'bool',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Tastensperre über UI/API aktiv'},
       'device_lock':                  {'interface': 'aha',          'group': 'hkr',             'sub_group': None,                 'access': 'ro',  'type': 'bool',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Tastensperre direkt am Gerät ein'},
       'errorcode':                    {'interface': 'aha',          'group': 'hkr',             'sub_group': None,                 'access': 'ro',  'type': 'num ',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Fehlercodes die der HKR liefert'},
       'set_simpleonoff':              {'interface': 'aha',          'group': 'simpleonoff',     'sub_group': None,                 'access': 'wo',  'type': 'bool',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Gerät/Aktor/Lampe an-/ausschalten'},
       'simpleonoff':                  {'interface': 'aha',          'group': 'simpleonoff',     'sub_group': None,                 'access': 'rw',  'type': 'bool',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Gerät/Aktor/Lampe (Status und Setzen)'},
-      'set_level':                    {'interface': 'aha',          'group': 'level',           'sub_group': None,                 'access': 'wo',  'type': 'num ',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Level/Niveau von 0 bis 255 Setzen'},
+      'set_level':                    {'interface': 'aha',          'group': 'level',           'sub_group': None,                 'access': 'wo',  'type': 'num ',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Level/Niveau von 0 bis 255 (Setzen)'},
       'level':                        {'interface': 'aha',          'group': 'level',           'sub_group': None,                 'access': 'rw',  'type': 'num ',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Level/Niveau von 0 bis 255 (Setzen & Status)'},
-      'set_levelpercentage':          {'interface': 'aha',          'group': 'level',           'sub_group': None,                 'access': 'wo',  'type': 'num ',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Level/Niveau von 0% bis 100% Setzen'},
+      'set_levelpercentage':          {'interface': 'aha',          'group': 'level',           'sub_group': None,                 'access': 'wo',  'type': 'num ',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Level/Niveau von 0% bis 100% (Setzen)'},
       'levelpercentage':              {'interface': 'aha',          'group': 'level',           'sub_group': None,                 'access': 'rw',  'type': 'num ',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Level/Niveau von 0% bis 100% (Setzen & Status)'},
-      'set_hue':                      {'interface': 'aha',          'group': 'color',           'sub_group': None,                 'access': 'wo',  'type': 'num ',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Hue Setzen'},
+      'set_hue':                      {'interface': 'aha',          'group': 'color',           'sub_group': None,                 'access': 'wo',  'type': 'num ',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Hue (Setzen)'},
       'hue':                          {'interface': 'aha',          'group': 'color',           'sub_group': None,                 'access': 'rw',  'type': 'num ',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Hue (Status und Setzen)'},
-      'set_saturation':               {'interface': 'aha',          'group': 'color',           'sub_group': None,                 'access': 'wo',  'type': 'num ',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Saturation Setzen'},
+      'set_saturation':               {'interface': 'aha',          'group': 'color',           'sub_group': None,                 'access': 'wo',  'type': 'num ',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Saturation (Setzen)'},
       'saturation':                   {'interface': 'aha',          'group': 'color',           'sub_group': None,                 'access': 'rw',  'type': 'num ',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Saturation (Status und Setzen)'},
-      'set_colortemperature':         {'interface': 'aha',          'group': 'color',           'sub_group': None,                 'access': 'wo',  'type': 'num ',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Farbtemperatur Setzen'},
+      'set_colortemperature':         {'interface': 'aha',          'group': 'color',           'sub_group': None,                 'access': 'wo',  'type': 'num ',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Farbtemperatur (Setzen)'},
       'colortemperature':             {'interface': 'aha',          'group': 'color',           'sub_group': None,                 'access': 'rw',  'type': 'num ',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Farbtemperatur (Status und Setzen)'},
       'unmapped_hue':                 {'interface': 'aha',          'group': 'color',           'sub_group': None,                 'access': 'rw',  'type': 'num ',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Hue (Status und Setzen)'},
       'unmapped_saturation':          {'interface': 'aha',          'group': 'color',           'sub_group': None,                 'access': 'rw',  'type': 'num ',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Saturation (Status und Setzen)'},
@@ -297,6 +297,8 @@ def create_plugin_yaml_avm_data_type_valids(ifaces: list = ATTRIBUTES_LIST):
             valid_list_desc_str = f"""{valid_list_desc_str}\n\
                           - '{AVM_DATA_TYPES[iface][avm_data_type]['description']:<}'"""
 
+    valid_list_desc_str = f"""{valid_list_desc_str}\n\r"""
+
     return valid_list_str, valid_list_desc_str
 
 def update_plugin_yaml_avm_data_type():
@@ -306,10 +308,11 @@ def update_plugin_yaml_avm_data_type():
     yaml.indent(mapping=4, sequence=4, offset=4)
     yaml.width = 200
     yaml.allow_unicode = True
+    yaml.preserve_quotes = False
 
     valid_list_str, valid_list_description_str = create_plugin_yaml_avm_data_type_valids()
 
-    with open(FILENAME_PLUGIN, 'r') as f:
+    with open(FILENAME_PLUGIN, 'r', encoding="utf-8") as f:
         data = yaml.load(f)
 
     if data.get('item_attributes', {}).get('avm_data_type'):

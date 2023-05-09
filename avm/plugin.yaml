@@ -1,7 +1,7 @@
 # Metadata for the plugin
 plugin:
     # Global plugin attributes
-    type: interface                   # plugin type (gateway, interface, protocol, system, web)
+    type: interface                 # plugin type (gateway, interface, protocol, system, web)
     description:
         de: Ansteuerung von AVM FRITZ!Boxen, WLAN-Repeatern, DECT Steckdosen, etc.
         en: Get and send data from/to AVM devices such as the FRITZ!Box, Wifi Repeaters or DECT sockets.
@@ -27,15 +27,15 @@ parameters:
         type: str
         default: ''
         description:
-            de: (optional) Nutzername fÃ¼r den Login. Kann fÃ¼r manche Features benÃ¶tigt werden! (Speziell fÃ¼r Fritz!OS 7 ist die Konfiguration der Fritz!Box auf `Anmeldung mit FRITZ!Box-Benutzernamen
-                und Kennwort` notwendig
-            en: (optional) Login information (user). Can be needed to use some features of the AVM device. (Specially for Firtz!OS 7 the Fritz!Box should be configured for login with username and password
+            de: (optional) Nutzername für den Login. Kann für manche Features benötigt werden! (Speziell für Fritz!OS 7 ist die Konfiguration der Fritz!Box auf `Anmeldung mit FRITZ!Box-Benutzernamen und
+                Kennwort` notwendig
+            en: (optional) Login information (user). Can be needed to use some features of the AVM device. (Specially for Fritz!OS 7 the Fritz!Box should be configured for login with username and password
     password:
         type: str
         default: ''
         hide: true
         description:
-            de: (optional) Passwort fÃ¼r den Login. Wird in der Regel immer benÃ¶tigt und aus SicherheitsgrÃ¼nden empfohlen.
+            de: (optional) Passwort für den Login. Wird in der Regel immer benötigt und aus Sicherheitsgründen empfohlen.
             en: (optional) Password for login. Is normally always needed and recommended due to security reasons
     host:
         type: str
@@ -47,7 +47,7 @@ parameters:
         type: int
         default: 49443
         description:
-            de: (optional) Port des FritzDevice, normalerweise 49443 fÃ¼r https oder 49000 fÃ¼r http
+            de: (optional) Port des FritzDevice, normalerweise 49443 für https oder 49000 für http
             en: (optional) Port of the FritzDevice, typically 49443 for https or 49000 for http
     cycle:
         type: int
@@ -65,28 +65,28 @@ parameters:
         type: bool
         default: false
         description:
-            de: (optional) Schaltet die Zertifikate-PrÃ¼fung an oder aus. Normalerweise False.
+            de: (optional) Schaltet die Zertifikate-Prüfung an oder aus. Normalerweise False.
             en: (optional) Turns certificate verification on or off. Typically False
     call_monitor:
         type: bool
         default: false
         description:
-            de: '(optional) Aktiviert oder deaktiviert den MonitoringService, welcher auf den Call Monitor des FritzDevice verbindet. Der Call Monitor muss Ã¼ber ein verbundenes Telefon via #96*5* aktiviert
-                sein.'
-            en: '(optional) Activates or deactivates the MonitoringService, which connects to the FritzDevice`s call monitor. The call monitor has to be activated before by a connected telephone via calling
-                #96*5*'
+            de: (optional) Aktiviert oder deaktiviert den MonitoringService, welcher auf den Call Monitor des FritzDevice verbindet. Der Call Monitor muss über ein verbundenes Telefon via '#96*5*' aktiviert
+                sein.
+            en: (optional) Activates or deactivates the MonitoringService, which connects to the FritzDevice`s call monitor. The call monitor has to be activated before by a connected telephone via calling
+                ''#96*5*'
     call_monitor_incoming_filter:
         type: str
         default: ''
         description:
-            de: (optional) Filter, auf welche eigenen Rufnummern (oder Teile davon) der Callmonitor reagieren soll. Ist der Filter leer, werden alle eigenen Rufnummern Ã¼berwacht. Wird ein Filterstring
-                bspw. "12234" angegeben, werden nur die eigenen Anschlussnummern, die "12234" enthalten, vom CallMonitor verarbeitet.
+            de: (optional) Filter, auf welche eigenen Rufnummern (oder Teile davon) der Callmonitor reagieren soll. Ist der Filter leer, werden alle eigenen Rufnummern überwacht. Wird ein Filterstring bspw.
+                "12234" angegeben, werden nur die eigenen Anschlussnummern, die "12234" enthalten, vom CallMonitor verarbeitet.
             en: (optional) Filter, for which numbers (or part of the number) of own telephone connection the Callmonitor should react.
     avm_home_automation:
         type: bool
         default: false
         description:
-            de: (optional) Aktiviert oder deaktiviert den Zugriff auf AVM Smarthome GerÃ¤te mit dem AHA HTTP Interface.
+            de: (optional) Aktiviert oder deaktiviert den Zugriff auf AVM Smarthome Geräte mit dem AHA HTTP Interface.
             en: (optional) Activates or deactivates access to AVM smarthome devices via AHA HTTP interface
     log_entry_count:
         type: int
@@ -98,7 +98,7 @@ parameters:
         type: bool
         default: false
         description:
-            de: (optional) Wenn aktiv, werden TR064 Items, deren Abfrageergebnis 2x zu einen Fehler gefÃ¼hrt hat, blacklisted und anschlieÃŸend nicht mehr abgefragt.
+            de: (optional) Wenn aktiv, werden TR064 Items, deren Abfrageergebnis 2x zu einen Fehler geführt hat, blacklisted und anschließend nicht mehr abgefragt.
             en: (optional) If active, TR064 Items for which data polling resulted in errors, will be blacklisted and excluded from update cycle
 
 item_attributes:
@@ -109,7 +109,8 @@ item_attributes:
         description:
             de: AVM Datentyp des jeweiligen Items.
             en: AVM Data Type of the respective item.
-        valid_list:             # NOTE: valid_list is automatically created by using item_attributes_master.py
+        valid_list:
+        # NOTE: valid_list is automatically created by using item_attributes_master.py
             # tr064 Attributes
               # tr064-fritz_device Attributes
             - uptime                                    # ro   num  
@@ -288,8 +289,8 @@ item_attributes:
             - Hersteller
             - Produktklasse
             - Hersteller OUI
-            - Modelname
-            - Modelbeschreibung
+            - Modellname
+            - Modellbeschreibung
             - Geräte Log
             - Security Port
             - Startet das Gerät neu
@@ -396,16 +397,16 @@ item_attributes:
             - Eingestellte reduzierte Temperatur
             - Eingestellte Komfort-Temperatur
             - Eingestellter Temperatur-Offset
-            - '"Window Open" Funktionen Setzen'
-            - '"Window Open" Funktion (Status und Setzen)'
+            - Window-Open-Funktion (Setzen)
+            - Window-Open-Funktion (Status und Setzen)
             - Zeitliches Ende der "Window Open" Funktion
-            - '"Boost" Funktion Setzen'
-            - '"Boost" Funktion (Status und Setzen)'
+            - Boost-Funktion (Setzen)
+            - Boost-Funktion (Status und Setzen)
             - Status der "Boost" Funktion
-            - Zeitliches Ende der "Boost" Funktion
+            - Zeitliches Ende der Boost Funktion
             - Status der "Sommer" Funktion
             - Status der "Holiday" Funktion
-            - '"Battery low" Status'
+            - Battery-low Status
             - Batterie-Status in %
             - Tastensperre über UI/API aktiv
             - Tastensperre direkt am Gerät ein
@@ -414,16 +415,16 @@ item_attributes:
             - Gerät/Aktor/Lampe an-/ausschalten
             - Gerät/Aktor/Lampe (Status und Setzen)
               # aha-level Attributes
-            - Level/Niveau von 0 bis 255 Setzen
+            - Level/Niveau von 0 bis 255 (Setzen)
             - Level/Niveau von 0 bis 255 (Setzen & Status)
-            - Level/Niveau von 0% bis 100% Setzen
+            - Level/Niveau von 0% bis 100% (Setzen)
             - Level/Niveau von 0% bis 100% (Setzen & Status)
               # aha-color Attributes
-            - Hue Setzen
+            - Hue (Setzen)
             - Hue (Status und Setzen)
-            - Saturation Setzen
+            - Saturation (Setzen)
             - Saturation (Status und Setzen)
-            - Farbtemperatur Setzen
+            - Farbtemperatur (Setzen)
             - Farbtemperatur (Status und Setzen)
             - Hue (Status und Setzen)
             - Saturation (Status und Setzen)
@@ -463,8 +464,8 @@ item_attributes:
     avm_wlan_index:
         type: int
         description:
-            de: '(optional) Definition des Wlans ueber index: (1: 2.4Ghz, 2: 5Ghz, 3: Gaeste).'
-            en: '(optional) Definition of WiFi via index: (1: 2.4GHz, 2: 5GHz, 3: Guest)'
+            de: '(optional) Definition des Wlans über index (1: 2.4Ghz, 2: 5Ghz, 3: Gäste)'
+            en: '(optional) Definition of WiFi via index (1: 2.4GHz, 2: 5GHz, 3: Guest)'
         valid_min: 1
         valid_max: 3
 
@@ -472,22 +473,22 @@ item_attributes:
         type: mac
         mandatory: false
         description:
-            de: (optional) Definition der MAC Adresse fÃ¼r Items vom avm_data_type `network_device`. Nur fÃ¼r diese Items mandatory!
+            de: (optional) Definition der MAC Adresse für Items vom avm_data_type `network_device`. Nur für diese Items mandatory!
             en: (optional) Definition of the MAC address for items of avm_data_type `network_device`. Only mandatory for these items!
 
     avm_ain:
         type: str
         mandatory: false
         description:
-            de: (optional) Definition der AktorIdentifikationsNummer (AIN) Items vom avm_data_types fÃ¼r `AHA-Interface`. Nur fÃ¼r diese Items mandatory!
+            de: (optional) Definition der AktorIdentifikationsNummer (AIN) Items vom avm_data_types für `AHA-Interface`. Nur für diese Items mandatory!
             en: (optional) Definition of the ActorIdentificationNumber (AIN) for items of avm_data_types `AHA-Interface`. Only mandatory for these items!
 
     avm_tam_index:
         type: int
         mandatory: false
         description:
-            de: (optional) Index fÃ¼r den Anrufbeantworter, normalerweise fÃ¼r den ersten eine "1". Es werden bis zu 5 Anrufbeantworter vom GerÃ¤t unterstÃ¼tzt.
-            en: (optional) Index fÃ¼r the answering machine, normally a "1" for the first one. Supported are up to 5 answering machines.
+            de: (optional) Index für den Anrufbeantworter, normalerweise für den ersten eine "1". Es werden bis zu 5 Anrufbeantworter vom GerÃ¤t unterstützt.
+            en: (optional) Index for the answering machine, normally a "1" for the first one. Supported are up to 5 answering machines.
         valid_min: 1
         valid_max: 5
 
@@ -495,7 +496,7 @@ item_attributes:
         type: int
         mandatory: false
         description:
-            de: (optional) Index fÃ¼r die Rufumleitung, normalerweise fÃ¼r die erste eine "1".
+            de: (optional) Index für die Rufumleitung, normalerweise für die erste eine "1".
             en: (optional) Index deflection, normally a "1" for the first one.
         valid_min: 1
         valid_max: 32
@@ -503,14 +504,14 @@ item_attributes:
     avm_read_after_write:
         type: int
         description:
-            de: (optional) Konfiguriert eine VerzÃ¶gerung in Sekunden nachdem ein Lesekommando nach einem Schreibkommando gesendet wird.
+            de: (optional) Konfiguriert eine Verzögerung in Sekunden nachdem ein Lesekommando nach einem Schreibkommando gesendet wird.
             en: (optional) Configures delay in seconds to issue a read command after write command
 
     avm_data_cycle:
         type: int
         mandatory: false
         description:
-            de: Poll-Zyklus des AVM Datentypes des jeweiligen Items. 0-Nur beim Initialisieren Lesen; 10+ - Zyklisch Lesen
+            de: Poll-Zyklus des AVM Datentyps des jeweiligen Items. 0-Nur beim Initialisieren Lesen; 10+ - Zyklisch Lesen
             en: Poll cycle of AVM Data Type of the respective item. 0-Just read at init; 10+ - cyclic reading
 
 item_structs:
@@ -977,7 +978,7 @@ plugin_functions:
     get_call_origin:
         type: str
         description:
-            de: Gib den Namen des Telefons zurÃ¼ck, das aktuell als 'call origin' gesetzt ist.
+            de: Gib den Namen des Telefons zurück, das aktuell als 'call origin' gesetzt ist.
             en: Gets the phone name, currently set as 'call origin'.
         parameters:
         # This function has no parameters
@@ -985,7 +986,7 @@ plugin_functions:
     get_calllist:
         type: list(dict(str))
         description:
-            de: Ermittelt ein Array mit dicts aller EintrÃ¤ge der Anrufliste (Attribute 'Id', 'Type', 'Caller', 'Called', 'CalledNumber', 'Name', 'Numbertype', 'Device', 'Port', 'Date',' Duration' (einige
+            de: Ermittelt ein Array mit dicts aller Einträge der Anrufliste (Attribute 'Id', 'Type', 'Caller', 'Called', 'CalledNumber', 'Name', 'Numbertype', 'Device', 'Port', 'Date',' Duration' (einige
                 optional)).
             en: Returns an array of dicts with all calllist entries (attributes 'Id', 'Type', 'Caller', 'Called', 'CalledNumber', 'Name', 'Numbertype', 'Device', 'Port', 'Date', 'Duration' (some optional)).
         parameters:
@@ -993,7 +994,7 @@ plugin_functions:
                 type: str
                 default: ''
                 description:
-                    de: Filter, um nur die Anrufe zu erhalten, die zu einer bestimmten angerufenen Nummer gehÃ¶ren.
+                    de: Filter, um nur die Anrufe zu erhalten, die zu einer bestimmten angerufenen Nummer gehÃƒÂ¶ren.
                     en: Filter to filter calls to a specific destination phone number.
             phonebook_id:
                 type: int
@@ -1005,13 +1006,13 @@ plugin_functions:
     get_contact_name_by_phone_number:
         type: str
         description:
-            de: Durchsucht das Telefonbuch mit einer (vollstÃ¤ndigen) Telefonnummer nach Kontakten. Falls kein Name gefunden wird, wird die Telefonnummer zurÃ¼ckgeliefert.
+            de: Durchsucht das Telefonbuch mit einer (vollständigen) Telefonnummer nach Kontakten. Falls kein Name gefunden wird, wird die Telefonnummer zurückgeliefert.
             en: Searches the phonebook for a contact by a given (complete) phone number. In case no name is found, the phone number is returned.
         parameters:
             phone_number:
                 type: str
                 description:
-                    de: VollstÃ¤ndige Telefonnummer
+                    de: Vollständige Telefonnummer
                     en: Complete phone number
             phonebook_id:
                 type: int
@@ -1023,7 +1024,7 @@ plugin_functions:
     get_device_log_from_lua:
         type: list(list(str))
         description:
-            de: Ermittelt die LogeintrÃ¤ge auf dem GerÃ¤t Ã¼ber die LUA Schnittstelle /query.lua?mq_log=logger:status/log.
+            de: Ermittelt die Logeinträge auf dem Gerät über die LUA Schnittstelle /query.lua?mq_log=logger:status/log.
             en: Gets the log entries on the device via the LUA interface /query.lua?mq_log=logger:status/log.
         parameters:
         # This function has no parameters
@@ -1031,7 +1032,7 @@ plugin_functions:
     get_device_log_from_tr064:
         type: list(str)
         description:
-            de: Ermittelt die LogeintrÃ¤ge auf dem GerÃ¤t Ã¼ber die TR-064 Schnittstelle.
+            de: Ermittelt die Logeinträge auf dem Gerät über die TR-064 Schnittstelle.
             en: Gets the log entries on the device via the TR-064 interface.
         parameters:
         # This function has no parameters
@@ -1057,14 +1058,14 @@ plugin_functions:
             only_active:
                 type: bool
                 description:
-                    de: True, wenn nur aktuell aktive Hosts zurÃ¼ckgegeben werden sollen.
+                    de: True, wenn nur aktuell aktive Hosts zurückgegeben werden sollen.
                     en: True, if only active hosts shall be returned.
 
     get_phone_name:
         type: str
         description:
-            de: Gibt den Namen eines Telefons an einem Index zurÃ¼ck. Der zurÃ¼ckgegebene Wert kann in 'set_call_origin' verwendet werden.
-            en: Get the phone name at a specific index. The returend value can be used as phone_name for set_call_origin.
+            de: Gibt den Namen eines Telefons an einem Index zurück. Der zurückgegebene Wert kann in 'set_call_origin' verwendet werden.
+            en: Get the phone name at a specific index. The returned value can be used as phone_name for set_call_origin.
         parameters:
             index:
                 type: int
@@ -1075,13 +1076,13 @@ plugin_functions:
     get_phone_numbers_by_name:
         type: dict(dict(str))
         description:
-            de: Durchsucht das Telefonbuch mit einem Namen nach nach Kontakten und liefert die zugehÃ¶rigen Telefonnummern.
+            de: Durchsucht das Telefonbuch mit einem Namen nach nach Kontakten und liefert die zugehörigen Telefonnummern.
             en: Searches the phonebook for a contact by a given name and returns the corresponding phone numbers.
         parameters:
             name:
                 type: str
                 description:
-                    de: Anteiliger oder vollstÃ¤ndiger Name des Kontakts.
+                    de: Anteiliger oder vollständiger Name des Kontakts.
                     en: Partial or full name of the contact.
             phonebook_id:
                 type: int
@@ -1093,7 +1094,7 @@ plugin_functions:
     is_host_active:
         type: bool
         description:
-            de: PrÃ¼ft, ob eine MAC Adresse auf dem GerÃ¤t aktiv ist. Das kann bspw. fÃ¼r die Umsetzung einer PrÃ¤senzerkennung genutzt werden.
+            de: Prüft, ob eine MAC Adresse auf dem Gerät aktiv ist. Das kann bspw. für die Umsetzung einer Präsenzerkennung genutzt werden.
             en: Checks if a MAC address is active on the FritzDevice, e.g. the status can be used for simple presence detection.
         parameters:
             mac_address:
@@ -1105,13 +1106,13 @@ plugin_functions:
     reboot:
         type: void
         description:
-            de: Startet das GerÃ¤t neu.
+            de: Startet das Gerät neu.
             en: Reboots the device.
 
     reconnect:
         type: void
         description:
-            de: Verbindet das GerÃ¤t neu mit dem WAN (Wide Area Network).
+            de: Verbindet das Gerät neu mit dem WAN (Wide Area Network).
             en: Reconnects the device to the WAN (Wide Area Network).
 
     set_call_origin:
@@ -1123,19 +1124,19 @@ plugin_functions:
             phone_name:
                 type: mac
                 description:
-                    de: Identifikator des Telefons, dass als 'call origin' gesetzt werden soll. bspw. zwei Sterne gefolgt von '610' fÃ¼r ein internes GerÃ¤t.
+                    de: Identifikator des Telefons, dass als 'call origin' gesetzt werden soll. bspw. zwei Sterne gefolgt von '610' für ein internes Gerät.
                     en: Full phone identifier, could be e.g. two asterisk followed by '610' for an internal device.
 
     start_call:
         type: void
         description:
-            de: Startet einen Anruf an eine Ã¼bergebene Telefonnummer (intern oder extern).
+            de: Startet einen Anruf an eine übergebene Telefonnummer (intern oder extern).
             en: Starts a call for a given phone number (internal or external).
         parameters:
             phone_number:
                 type: str
                 description:
-                    de: VollstÃ¤ndige Telefonnummer, die angerufen werden soll.
+                    de: Vollständige Telefonnummer, die angerufen werden soll.
                     en: Full phone number to call
 
     wol:
@@ -1153,7 +1154,7 @@ plugin_functions:
     get_number_of_deflections:
         type: bool
         description:
-            de: Liefert die Anzahl der Rufumleitungen zurÃ¼ck.
+            de: Liefert die Anzahl der Rufumleitungen zurück.
             en: Returns Number of set deflections.
         parameters:
         # This function has no parameters
@@ -1161,7 +1162,7 @@ plugin_functions:
     get_deflection:
         type: bool
         description:
-            de: Liefert die Details der Rufumleitung der angegebenen ID zurÃ¼ck (Default-ID = 0)
+            de: Liefert die Details der Rufumleitung der angegebenen ID zurück (Default-ID = 0)
             en: Returns details of deflection with given deflection_id (default id = 0)
         parameters:
             deflection_id:
@@ -1173,7 +1174,7 @@ plugin_functions:
     get_deflections:
         type: bool
         description:
-            de: Liefert die Details aller Rufumleitungen zurÃ¼ck.
+            de: Liefert die Details aller Rufumleitungen zurück.
             en: Returns details of all deflections.
         parameters:
         # This function has no parameters
