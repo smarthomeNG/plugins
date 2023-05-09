@@ -25,7 +25,7 @@ FILENAME_ATTRIBUTES = 'item_attributes.py'
 
 FILENAME_PLUGIN = 'plugin.yaml'
 
-HEADER = """\
+FILE_HEADER = """\
 # !/usr/bin/env python
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -58,8 +58,8 @@ HEADER = """\
 
 """
 
+# Note: change / add information of avm_data_type within the following dict according to the given scheme
 #     'avm_data_type':                {'interface': 'tr064',        'group': '',                'sub_group': None,                 'access': '',    'type': '',      'deprecated': False,  'supported_by_repeater': False,   'description': ''},
-
 AVM_DATA_TYPES = {
     'tr064': {
       'uptime':                       {'interface': 'tr064',        'group': 'fritz_device',    'sub_group': None,                 'access': 'ro',  'type': 'num',   'deprecated': False,  'supported_by_repeater': True,    'description': 'Laufzeit des Fritzdevice in Sekunden'},
@@ -259,7 +259,7 @@ def export_item_attributs_py():
 
     # create file and write header
     f = open(FILENAME_ATTRIBUTES, "w")
-    f.write(HEADER)
+    f.write(FILE_HEADER)
     f.close()
 
     # write avm_data_types
