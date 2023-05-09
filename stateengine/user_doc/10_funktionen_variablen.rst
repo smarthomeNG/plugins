@@ -213,15 +213,10 @@ auf das passende Unteritem in licht1.automatik.settings.
 **current.state_id:**
 *Die Id des Status, der gerade geprüft wird*
 
-Diese Variable wird leer, sobald die Statusevaluierung beendet wurde, noch bevor die Aktionen des
-zuletzt eingenommenen Zustands ausgeführt werden. Sie kann daher nur in der Evaluierung, nicht aber
-in on_enter(_or_stay) genutzt werden. Hierfür wird stattdessen ``se_eval.get_relative_itemvalue('..state_id')`` genutzt.
+Diese Variable wird während der Statusevaluierung befüllt. Die Werte bleiben bis zum nächsten Statuswechsel gleich.
 
 **current.state_name:**
 *Der Name des Status, der gerade geprüft wird*
-
-Wie die state_id Variable wird diese nur während der Statusevaluierung entsprechend befüllt und sofort beim Eintritt
-in einen neuen Zustand geleert (noch vor dem Durchführen der Aktionen).
 
 Das angeführte Beispiel zeigt, wie eine Bedingung mit einem Wert abgeglichen
 werden kann, der in einem passenden Settingitem hinterlegt ist. Konkret
