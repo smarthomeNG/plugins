@@ -415,7 +415,7 @@ class SeValue(StateEngineTools.SeItemChild):
                     if i is not None:
                         self._log_debug("{0} from variable: {1}", self.__name, i)
             else:
-                self._log_debug("{0} from item: {1}", self.__name, self.__varname)
+                self._log_debug("{0} from variable: {1}", self.__name, self.__varname)
 
     # Get Text (similar to logger text)
     # prefix: Prefix for text

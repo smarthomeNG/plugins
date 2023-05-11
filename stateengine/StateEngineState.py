@@ -267,8 +267,7 @@ class SeState(StateEngineTools.SeItemChild):
     # Read configuration from item and populate data in class
     # item_state: item to read from
     # recursion_depth: current recursion_depth (recursion is canceled after five levels)
-    # item_stateengine: StateEngine-Item defining items for conditions
-    # abitem_object: Related SeItem instance for later determination of current age and current delay
+    # se_use: If se_use Attribute is used or not
     def __fill(self, item_state, recursion_depth, se_use=None):
         if recursion_depth > 5:
             self._log_error("{0}/{1}: too many levels of 'use'", self.id, item_state.property.path)
