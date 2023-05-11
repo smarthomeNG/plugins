@@ -116,6 +116,8 @@ class SeState(StateEngineTools.SeItemChild):
         self._log_info("State {0}:", self.id)
         self._log_increase_indent()
         self.update_name(self.__item)
+        self._abitem.set_variable("current.state_name", self.name)
+        self._abitem.set_variable("current.state_id", self.id)
         self.__text.write_to_logger()
         self._log_info("Updating Web Interface...")
         self._log_increase_indent()
@@ -165,7 +167,8 @@ class SeState(StateEngineTools.SeItemChild):
             self.__actions_leave.write_to_logger()
             self._log_decrease_indent()
             self._abitem.update_webif([self.id, 'actions_leave'], self.__actions_leave.dict_actions)
-
+        self._abitem.set_variable("current.state_name", "")
+        self._abitem.set_variable("current.state_id", "")
         self._log_decrease_indent()
 
     # run actions when entering the state
