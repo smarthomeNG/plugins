@@ -1,1 +1,2 @@
-pyatv==0.7.0
+pyatv==0.7.0;python_version<'3.9'
+pyatv==0.10.3;python_version>='3.9'
