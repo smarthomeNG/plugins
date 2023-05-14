@@ -14,9 +14,6 @@ plugin:
 
     version: 2.0.0                  # Plugin version
     sh_minversion: 1.9.5            # minimum shNG version to use this plugin
-    # sh_maxversion:                # maximum shNG version to use this plugin (leave empty if latest)
-    py_minversion: 3.6              # minimum Python version to use for this plugin
-    # py_maxversion:                # maximum Python version to use for this plugin (leave empty if latest)
     multi_instance: True            # plugin supports multi instance
     restartable: True
     classname: Telegram             # class containing the plugin
