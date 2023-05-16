@@ -921,6 +921,7 @@ class FritzDevice:
         current_time = int(time.time())
 
         # iterate over items and get data
+        item_count = 0
         for item in self.item_list():
 
             if not self._plugin_instance.alive:
@@ -933,6 +934,7 @@ class FritzDevice:
             cycle = item_config['avm_data_cycle']
             next_time = item_config['next_update']
             error_count = item_config['error_count']
+            item_count += 1
 
             # check if item is blacklisted
             if error_count >= ERROR_COUNT_TO_BE_BLACKLISTED:
@@ -946,7 +948,7 @@ class FritzDevice:
 
             # check if item is already due
             if next_time > current_time and not read_all:
-                self.logger.debug(f"Item {item.path()} is not due yet.")
+                # self.logger.debug(f"Item {item.path()} is not due yet.")
                 continue
 
             # check, if client_igd exists when avm_data_type startswith 'wan_current' are due
@@ -954,7 +956,7 @@ class FritzDevice:
                 self.logger.debug(f"Skipping item {item} with wan_current and no client_igd")
                 continue
 
-            self.logger.debug(f"Item={item.path()} with avm_data_type={avm_data_type} and index={index} will be updated")
+            # self.logger.debug(f"Item={item.path()} with avm_data_type={avm_data_type} and index={index} will be updated")
 
             # get data and set item value
 
@@ -968,6 +970,8 @@ class FritzDevice:
 
         # clear data cache dict after update cycle
         self._clear_data_cache()
+
+        self.logger.debug(f"Update of {item_count} TR064-Items took {int(time.time()) - current_time}s")
 
     def _update_item_value(self, item, avm_data_type: str, index: str) -> bool:
         """ Polls data and set item value; Return True if action was successful, else False"""
@@ -1868,24 +1872,26 @@ class FritzHome:
     # item-related methods
 
     def cyclic_item_update(self, read_all: bool = False):
-        """
-        Update smarthome item values using information from dict '_aha_devices'
-        """
+        """Update aha item values using information"""
+
         if not self._logged_in:
             self.logger.warning("No connection to FritzDevice via AHA-HTTP-Interface. No update of item values possible.")
             return
+
+        start_time = int(time.time())
 
         # first update aha device data
         if not self.update_devices():
             self.logger.warning("Update of AHA-Devices not successful. No update of item values possible.")
             return
 
-        # get current_time
-        current_time = int(time.time())
+        update_time = int(time.time())
+        self.logger.debug(f"Update of AHA-Device data took {start_time - update_time}s")
+        item_count = 0
 
         # add device statistics to devices if activated and due
-        if self.use_device_statistics and (self.last_device_statistics_update + self.device_statistics_min_grid) <= current_time:
-            self.last_device_statistics_update = current_time
+        if self.use_device_statistics and (self.last_device_statistics_update + self.device_statistics_min_grid) <= update_time:
+            self.last_device_statistics_update = update_time
             self.add_device_statistics_to_devices()
 
         # iterate over items and get data
@@ -1896,6 +1902,7 @@ class FritzHome:
             ain = item_config['index']
             cycle = item_config['avm_data_cycle']
             next_time = item_config['next_update']
+            item_count += 1
 
             # Just read items with cycle == 0 at init
             if not read_all and not cycle:
@@ -1903,11 +1910,11 @@ class FritzHome:
                 continue
 
             # check if item is already due
-            if next_time > current_time:
+            if next_time > update_time:
                 # self.logger.debug(f"Item={item.path()} is not due, yet.")
                 continue
 
-            self.logger.debug(f"Item={item.path()} with avm_data_type={avm_data_type} and ain={ain} will be updated")
+            # self.logger.debug(f"Item={item.path()} with avm_data_type={avm_data_type} and ain={ain} will be updated")
 
             # Attributes that are write-only commands with no corresponding read commands are excluded from status updates via update black list:
             update_black_list = ALL_ATTRIBUTES_WRITEONLY
@@ -1929,9 +1936,12 @@ class FritzHome:
             item(value, self._plugin_instance.get_fullname())
 
             # set next due date
-            item_config['next_update'] = current_time + cycle
+            item_config['next_update'] = update_time + cycle
+
+        self.logger.debug(f"Update of {item_count} AHA-Items took {int(time.time()) - update_time}s")
 
     def update_items_of_ain(self, ain):
+        """Update all items connected to an ain"""
 
         # get relevant items
         items = self._plugin_instance.get_item_list(filter_key='index', filter_value=ain)
