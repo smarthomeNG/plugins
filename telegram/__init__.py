@@ -223,7 +223,7 @@ class Telegram(SmartPlugin):
             await self._application.start()
             self._updater = self._application.updater
             
-            q = await self._updater.start_polling(timeout=self._long_polling_timeout)
+            q = await self._updater.start_polling(timeout=self._long_polling_timeout, error_callback=self.error_handler)
 
             if self.logger.isEnabledFor(logging.DEBUG):
                 self.logger.debug(f"started polling the updater, Queue is {q}")
@@ -243,6 +243,15 @@ class Telegram(SmartPlugin):
         if self.logger.isEnabledFor(logging.DEBUG):
             self.logger.debug("connect method end")
     
+    def error_handler(self, update, context):
+        """
+        Just logs an error in case of a problem
+        """
+        try:
+            self.logger.warning(f'Update {update} caused error {context.error}')
+        except Exception:
+            pass
+
     async def sendQueue(self):
         """
         Waiting for messages to be sent in the queue and sending them to Telegram.
