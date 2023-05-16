@@ -7,13 +7,13 @@ plugin:
         en: 'Controls an Apple TV'
         fr: 'Contrôle un Apple TV'
     maintainer: Foxi352
-    tester: Foxi352
+    tester: onkelandy
     state: ready
     keywords: appletv media
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1223483-plugin-apple-tv
 
-    version: 1.6.1                  # Plugin version
+    version: 1.6.2                  # Plugin version
     sh_minversion: 1.6              # minimum shNG version to use this plugin
     multi_instance: True            # plugin supports multi instance
     restartable: unknown
@@ -35,43 +35,208 @@ parameters:
             en: 'Timeout in seconds to scan the local network for AppleTV devices'
             fr: "Délai d'attente en secondes du scan réseau pour trouver les appareils AppleTV"
 
-item_attributes: NONE
-    # Definition of item attributes defined by this plugin
+item_attributes:
+    appletv:
+        type: str
+        description:
+            de: 'ATV Funktion'
+            en: 'ATV function'
+        valid_list_description:
+          de:
+            - 'AppleTV Name'
+            - 'AppleTV IP Adresse'
+            - 'AppleTV MAC'
+            - 'AppleTV Modell'
+            - 'AppleTV OS Version'
+            - 'Einschaltstatus'
+            - 'Applikationsidentifikation'
+            - 'Applikationsname'
+            - 'Abspielstatus als Zahl'
+            - 'Abspielstatus als Text'
+            - 'Fingerprint des aktuellen Mediums'
+            - 'Aktuelles Genre'
+            - 'Aktueller Künstler'
+            - 'Aktuelles Album'
+            - 'Aktueller Titel'
+            - 'Aktueller Medientyp als Zahl'
+            - 'Aktueller Medientyp als Text'
+            - 'Aktuelle Zeitposition'
+            - 'Aktuelle Gesamtspielzeit'
+            - 'Aktuelle Abspielposition in Prozent'
+            - 'Aktueller Wiederholmodus als Zahl'
+            - 'Aktueller Wiederholmodus als Text'
+            - 'Aktueller Shuffle Modus als Zahl'
+            - 'Aktueller Shuffle Modus als Text'
+            - 'Breite des aktuellen Artworks in Pixel'
+            - 'Höhe des aktuellen Artworks in Pixel'
+            - 'Mimetype des aktuellen Artorks'
+            - 'Tatsächliches aktuelles Artwork'
+            - 'Topmenü Taste'
+            - 'Home Taste'
+            - 'Hold home Taste'
+            - 'Menü Taste'
+            - 'Auswählen Taste'
+            - 'Nächster Titel'
+            - 'Vorheriger Titel'
+            - 'Abspielen'
+            - 'Pause'
+            - 'Stop'
+            - 'Umschalten zwischen Play und Pause'
+            - 'Hinunter Taste'
+            - 'Hinauf Taste'
+            - 'Links Taste'
+            - 'Rechts Taste'
+            - 'Abspielposition setzen'
+            - 'Wiederholmodus setzen'
+            - 'Shuffle Modus setzen'
+            - 'Rückwärts springen'
+            - 'Vorwärts springen'
+            - 'Lautstärke verringern'
+            - 'Lautstärke erhöhen'
+            - 'Suspend Modus'
+            - 'Aufwecken'
+          en:
+            - 'AppleTV name'
+            - 'AppleTV IP address'
+            - 'AppleTV MAC'
+            - 'AppleTV Model'
+            - 'AppleTV OS version'
+            - 'Power State'
+            - 'App identifier of playing application'
+            - 'App name of playing application'
+            - 'Playing State as number'
+            - 'Playing State as text'
+            - 'Fingerprint of currently played media'
+            - 'Currently playing genre'
+            - 'Currently playing artist'
+            - 'Currently playing album'
+            - 'Currently playing title'
+            - 'Currently playing media type as number'
+            - 'Currently playing media type as text'
+            - 'Current time position'
+            - 'Current total time'
+            - 'Current playing position in percent'
+            - 'Current repeat setting as number'
+            - 'Current repeat setting as text'
+            - 'Current shuffle setting as number'
+            - 'Current shuffle setting as text'
+            - 'Width in pixels of current art work'
+            - 'Height in pixels of current art work'
+            - 'Mimetype of current art work'
+            - 'Actual playing artwork'
+            - 'Top menu key'
+            - 'Home key'
+            - 'Hold home key'
+            - 'Menu key'
+            - 'Select key'
+            - 'Next'
+            - 'Previous'
+            - 'Play'
+            - 'Pause'
+            - 'Stop'
+            - 'Toggle play/pause'
+            - 'Down key'
+            - 'Up key'
+            - 'Left key'
+            - 'Right key'
+            - 'Set play position'
+            - 'Set repeat mode'
+            - 'Set shuffle mode'
+            - 'Skip backward'
+            - 'Skip forward'
+            - 'Volume down'
+            - 'Volume up'
+            - 'Suspend mode'
+            - 'Wake up'
+        valid_list:
+          - 'name'
+          - 'ip'
+          - 'mac'
+          - 'model'
+          - 'os'
+          - 'power'
+          - 'playing_app_identifier'
+          - 'playing_app_name'
+          - 'playing_state'
+          - 'playing_state_text'
+          - 'playing_fingerprint'
+          - 'playing_genre'
+          - 'playing_artist'
+          - 'playing_album'
+          - 'playing_title'
+          - 'playing_type'
+          - 'playing_type_text'
+          - 'playing_position'
+          - 'playing_total_time'
+          - 'playing_position_percent'
+          - 'playing_repeat'
+          - 'playing_repeat_text'
+          - 'playing_shuffle'
+          - 'playing_shuffle_text'
+          - 'artwork_width'
+          - 'artwork_height'
+          - 'artwork_mimetype'
+          - 'artwork_base64'
+          - 'rc_top_menu'
+          - 'rc_home'
+          - 'rc_home_hold'
+          - 'rc_menu'
+          - 'rc_select'
+          - 'rc_next'
+          - 'rc_previous'
+          - 'rc_play'
+          - 'rc_pause'
+          - 'rc_stop'
+          - 'rc_play_pause'
+          - 'rc_down'
+          - 'rc_up'
+          - 'rc_left'
+          - 'rc_right'
+          - 'rc_set_position'
+          - 'rc_set_repeat'
+          - 'rc_set_shuffle'
+          - 'rc_skip_backward'
+          - 'rc_skip_forward'
+          - 'rc_volume_down'
+          - 'rc_volume_up'
+          - 'rc_suspend'
+          - 'rc_wakeup'
+
 
 item_structs:
     device:
-        name:
-            name: Name of device
+        remark:
+            remark: Name of device
             type: str
             visu_acl: ro
-            cache: Yes
+            cache: True
             appletv@instance: name
         ip:
-            name: IP address of device
+            remark: IP address of device
             type: str
             visu_acl: ro
-            cache: Yes
+            cache: True
             appletv@instance: ip
         mac:
-            name: MAC address of device
+            remark: MAC address of device
             type: str
             visu_acl: ro
-            cache: Yes
+            cache: True
             appletv@instance: mac
         model:
-            name: MAC address of device
+            remark: MAC address of device
             type: str
             visu_acl: ro
-            cache: Yes
+            cache: True
             appletv@instance: model
         os:
-            name: MAC address of device
+            remark: MAC address of device
             type: str
             visu_acl: ro
-            cache: Yes
+            cache: True
             appletv@instance: os
         power:
-            name: Power state of the device
+            remark: Power state of the device
             type: bool
             visu_acl: rw
             appletv@instance: power
@@ -80,234 +245,234 @@ item_structs:
             identifier:
                 type: str
                 visu_acl: ro
-                cache: Yes
+                cache: True
                 appletv@instance: playing_app_identifier
-            name:
+            remark:
                 type: str
                 visu_acl: ro
-                cache: Yes
+                cache: True
                 appletv@instance: playing_app_name
         state:
             type: num
             visu_acl: ro
-            cache: Yes
+            cache: True
             appletv@instance: playing_state
         state_text:
             type: str
             visu_acl: ro
-            cache: Yes
+            cache: True
             appletv@instance: playing_state_text
         fingerprint:
             type: str
             visu_acl: ro
-            cache: Yes
+            cache: True
             appletv@instance: playing_fingerprint
         genre:
             type: str
             visu_acl: ro
-            cache: Yes
+            cache: True
             appletv@instance: playing_genre
         artist:
             type: str
             visu_acl: ro
-            cache: Yes
+            cache: True
             appletv@instance: playing_artist
         album:
             type: str
             visu_acl: ro
-            cache: Yes
+            cache: True
             appletv@instance: playing_album
         title:
             type: str
             visu_acl: ro
-            cache: Yes
+            cache: True
             appletv@instance: playing_title
-        type:
+        media_type:
             type: num
             visu_acl: ro
-            cache: Yes
+            cache: True
             appletv@instance: playing_type
-        type_text:
+        media_type_text:
             type: str
             visu_acl: ro
-            cache: Yes
+            cache: True
             appletv@instance: playing_type_text
         position:
             type: num
             visu_acl: ro
-            cache: Yes
+            cache: True
             appletv@instance: playing_position
         totaltime:
             type: num
             visu_acl: ro
-            cache: Yes
+            cache: True
             appletv@instance: playing_total_time
         position_percent:
             type: num
             visu_acl: rw
-            cache: Yes
+            cache: True
             appletv@instance: playing_position_percent
         repeat:
             type: num
             visu_acl: rw
-            cache: Yes
-            enfore_updates: Yes
+            cache: True
+            enforce_updates: True
             appletv@instance: playing_repeat
         repeat_text:
             type: str
             visu_acl: ro
-            cache: Yes
+            cache: True
             appletv@instance: playing_repeat_text
         shuffle:
             type: num
             visu_acl: rw
-            cache: Yes
-            enfore_updates: Yes
+            cache: True
+            enforce_updates: True
             appletv@instance: playing_shuffle
         shuffle_text:
             type: str
             visu_acl: ro
-            cache: Yes
+            cache: True
             appletv@instance: playing_shuffle_text
         artwork:
             width:
-                name: Width of the currently playing artwork
+                remark: Width of the currently playing artwork
                 type: num
                 visu_acl: ro
                 appletv@instance: artwork_width
             height:
-                name: Height of the currently playing artwork
+                remark: Height of the currently playing artwork
                 type: num
                 visu_acl: ro
                 appletv@instance: artwork_height
             mimetype:
-                name: Mimetype of the currently playing artwork
+                remark: Mimetype of the currently playing artwork
                 type: str
                 visu_acl: ro
                 appletv@instance: artwork_mimetype
             base64:
-                name: The actual playing artwork in base64
+                remark: The actual playing artwork in base64
                 type: foo
                 visu_acl: ro
                 appletv@instance: artwork_base64
     commands:
         top_menu:
-            name: RC top menu key
+            remark: RC top menu key
             type: bool
             visu_acl: rw
             appletv@instance: rc_top_menu
         home:
-            name: RC kome key
+            remark: RC kome key
             type: bool
             visu_acl: rw
             appletv@instance: rc_home
         home_hold:
-            name: RC hold home key
+            remark: RC hold home key
             type: bool
             visu_acl: rw
             appletv@instance: rc_home_hold
         menu:
-            name: RC menu key
+            remark: RC menu key
             type: bool
             visu_acl: rw
             appletv@instance: rc_menu
         select:
-            name: RC select key
+            remark: RC select key
             type: bool
             visu_acl: rw
             appletv@instance: rc_select
         next:
-            name: RC next key
+            remark: RC next key
             type: bool
             visu_acl: rw
             appletv@instance: rc_next
         previous:
-            name: RC previous key
+            remark: RC previous key
             type: bool
             visu_acl: rw
             appletv@instance: rc_previous
         pause:
-            name: RC pause key
+            remark: RC pause key
             type: bool
             visu_acl: rw
             appletv@instance: rc_pause
         play:
-            name: RC play key
+            remark: RC play key
             type: bool
             visu_acl: rw
             appletv@instance: rc_play
         play_pause:
-            name: RC toggle between play and pause
+            remark: RC toggle between play and pause
             type: bool
             visu_acl: rw
             appletv@instance: rc_play_pause
         stop:
-            name: RC stop key
+            remark: RC stop key
             type: bool
             visu_acl: rw
             appletv@instance: rc_stop
         down:
-            name: RC down key
+            remark: RC down key
             type: bool
             visu_acl: rw
             appletv@instance: rc_down
         up:
-            name: RC up key
+            remark: RC up key
             type: bool
             visu_acl: rw
             appletv@instance: rc_up
         right:
-            name: RC right key
+            remark: RC right key
             type: bool
             visu_acl: rw
             appletv@instance: rc_right
         left:
-            name: RC left key
+            remark: RC left key
             type: bool
             visu_acl: rw
             appletv@instance: rc_left
         set_position:
-            name: RC set position
+            remark: RC set position
             type: num
             visu_acl: rw
             appletv@instance: rc_set_position
         set_repeat:
-            name: RC set repeat mode
+            remark: RC set repeat mode
             type: num
             visu_acl: rw
             appletv@instance: rc_set_repeat
         set_shuffle:
-            name: RC set shuffle mode
+            remark: RC set shuffle mode
             type: num
             visu_acl: rw
             appletv@instance: rc_set_shuffle
         skip_backward:
-            name: RC skip backward key
+            remark: RC skip backward key
             type: bool
             visu_acl: rw
             appletv@instance: rc_skip_backward
         skip_forward:
-            name: RC skip forward key
+            remark: RC skip forward key
             type: bool
             visu_acl: rw
             appletv@instance: rc_skip_forward
         volume_down:
-            name: RC volume down key
+            remark: RC volume down key
             type: bool
             visu_acl: rw
             appletv@instance: rc_volume_down
         volume_up:
-            name: RC volume up key
+            remark: RC volume up key
             type: bool
             visu_acl: rw
             appletv@instance: rc_volume_up
         suspend:
-            name: RC suspend key
+            remark: RC suspend key
             type: bool
             visu_acl: rw
             appletv@instance: rc_suspend
         wakeup:
-            name: RC wakeup key
+            remark: RC wakeup key
             type: bool
             visu_acl: rw
             appletv@instance: rc_wakeup

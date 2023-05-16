@@ -11,8 +11,8 @@ plugin:
     keywords: weather sun wind rain precipitation
     #documentation: ''
     support: 'https://knx-user-forum.de/forum/supportforen/smarthome-py/1852685'
-    version: 1.1.2                # Plugin version
-    sh_minversion: 1.9.3.4         # minimum shNG version to use this plugin
+    version: 1.2.0                # Plugin version
+    sh_minversion: 1.9.5.2        # minimum shNG version to use this plugin
     #sh_maxversion:               # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: True          # plugin supports multi instance
     restartable: True
@@ -57,10 +57,10 @@ parameters:
     cycle:
         type: int
         mandatory: False
-        default: 300
+        default: 900
         description:
-            de: '(optional) Zeit zwischen zwei Updateläufen. Default ist 300 Sekunden.'
-            en: '(optional) Time period between two update cycles. Default is 300 seconds.'
+            de: '(optional) Zeit zwischen zwei Updateläufen. Default ist 900 Sekunden.'
+            en: '(optional) Time period between two update cycles. Default is 900 seconds.'
 
 
 
@@ -77,17 +77,26 @@ item_structs:
     weather:
         name: Complete weather report from pirateweather.net - Current weather and forecasts are written to database
 
-        latitude:
-            type: num
-            pw_matchstring@instance: latitude
+        locals:
 
-        longitude:
-            type: num
-            pw_matchstring@instance: longitude
+            lat:
+                type: num
+                pw_matchstring@instance: latitude
 
-        timezone:
-            type: str
-            pw_matchstring@instance: timezone
+            lon:
+                type: num
+                pw_matchstring@instance: longitude
+
+            timezone:
+                type: str
+                pw_matchstring@instance: timezone
+
+            location:
+                type: str
+                eval_trigger:
+                  - ..lon
+                eval: sh.plugins.get('piratewthr').get_location_name(sh...lat(), sh...lon())
+
 
         struct:
             - piratewthr.current_weather
@@ -343,7 +352,6 @@ item_structs:
                 type: num
                 pw_matchstring@instance: currently/precipIntensity
                 database: init
-                database_maxage: 731    # 2 Jahre
 
             precipIntensityError:
                 type: num
@@ -353,7 +361,6 @@ item_structs:
                 type: num
                 pw_matchstring@instance: currently/precipProbability
                 database: init
-                database_maxage: 731    # 2 Jahre
 
             precipType:
                 type: str
@@ -363,85 +370,76 @@ item_structs:
                 type: num
                 pw_matchstring@instance: currently/temperature
                 database: init
-                database_maxage: 731    # 2 Jahre
 
             apparenttemperature:
                 type: num
                 pw_matchstring@instance: currently/apparentTemperature
                 database: init
-                database_maxage: 731    # 2 Jahre
 
             dewpoint:
                 type: num
                 pw_matchstring@instance: currently/dewPoint
                 database: init
-                database_maxage: 731    # 2 Jahre
 
             humidity:
                 type: num
                 pw_matchstring@instance: currently/humidity
                 database: init
-                database_maxage: 731    # 2 Jahre
 
             pressure:
                 type: num
                 pw_matchstring@instance: currently/pressure
                 database: init
-                database_maxage: 731    # 2 Jahre
 
             windSpeed:
                 type: num
                 pw_matchstring@instance: currently/windSpeed
                 database: init
-                database_maxage: 731    # 2 Jahre
 
             windGust:
                 type: num
                 pw_matchstring@instance: currently/windGust
                 database: init
-                database_maxage: 731    # 2 Jahre
 
             windBearing:
                 type: num
                 pw_matchstring@instance: currently/windBearing
                 database: init
-                database_maxage: 731    # 2 Jahre
+
+            windDirectionString:
+                type: str
+                eval_trigger: ..windBearing
+                eval: sh.plugins.get('piratewthr').get_wind_direction16(sh...windBearing())
 
             cloudCover:
                 type: num
                 pw_matchstring@instance: currently/cloudCover
                 database: init
-                database_maxage: 731    # 2 Jahre
 
             uvIndex:
                 type: num
                 pw_matchstring@instance: currently/uvIndex
                 database: init
-                database_maxage: 731    # 2 Jahre
 
             visibility:
                 type: num
                 pw_matchstring@instance: currently/visibility
                 database: init
-                database_maxage: 731    # 2 Jahre
 
             ozone:
                 type: num
                 pw_matchstring@instance: currently/ozone
                 database: init
-                database_maxage: 731    # 2 Jahre
 
             date:
                 type: str
                 pw_matchstring@instance: currently/date
                 database: init
-                database_maxage: 731    # 2 Jahre
 
             day:
                 type: num
                 pw_matchstring@instance: currently/day
                 database: init
-                database_maxage: 731    # 2 Jahre
 
     forecast_hourly:
         name: Hourly forcast of Weather report from pirateweather.net - Data is written do database
@@ -6601,3 +6599,47 @@ plugin_functions:
                 description:
                     de: "Icon als String."
                     en: "Icon as string."
+
+    get_wind_direction8:
+        type: str
+        description:
+            de: "Bestimmung der Windrichtung als String (NO, ...) aus der Gradzahl (8 Richtungen)"
+            en: "Getting the wind direction as strint (NE, ...) from degrees (8 directions)"
+        parameters:
+            degrees:
+                type: num
+                description:
+                    de: "Windrichtung in Grad"
+                    en: "Wind direction in degrees"
+
+    get_wind_direction16:
+        type: str
+        description:
+            de: "Bestimmung der Windrichtung als String (NO, ...) aus der Gradzahl (16 Richtungen)"
+            en: "Getting the wind direction as strint (NE, ...) from degrees (16 directions)"
+        parameters:
+            degrees:
+                type: num
+                description:
+                    de: "Windrichtung in Grad"
+                    en: "Wind direction in degrees"
+
+    get_location_name:
+        type: str
+        description:
+            de: "Bestimmung des Ortsnamens (Vorort) aus latitude und longitude"
+            en: "Getting location name (suburb) from latitude and longitude"
+        parameters:
+            lat:
+                type: num
+                default: None
+                description:
+                    de: "Latitude, falls nicht angegeben wird die Latitude des piratewthr Plugins benutzt"
+                    en: "latitude, if omitted the configured latitude of the piratewthr plugin is used"
+            lon:
+                type: num
+                default: None
+                description:
+                    de: "Longitude, falls nicht angegeben wird die Longitude des piratewthr Plugins benutzt"
+                    en: "longitude, if omitted the configured longitude of the piratewthr plugin is used"
+

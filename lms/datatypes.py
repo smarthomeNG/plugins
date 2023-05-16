@@ -20,7 +20,7 @@ class DT_LMSPlay(DT.Datatype):
         return "play 3" if data is True else "pause 3"
 
     def get_shng_data(self, data, type=None, **kwargs):
-        return True if data == "play" else False
+        return True if data in ["play", "0"] else False
 
 
 class DT_LMSAlarms(DT.Datatype):

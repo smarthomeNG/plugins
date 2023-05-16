@@ -37,7 +37,7 @@ from .webif import WebInterface
 
 
 class TankerKoenig(SmartPlugin):
-    PLUGIN_VERSION = "2.0.2"
+    PLUGIN_VERSION = "2.0.3"
 
     _base_url = 'https://creativecommons.tankerkoenig.de/json'
     _detail_url_suffix = 'detail.php'
@@ -324,7 +324,11 @@ class TankerKoenig(SmartPlugin):
             self.logger.debug(f"set_item_status_values: handle item {item} type {item.type()}")
             station_id = self.item_dict[item]['station_id']
             tankerkoenig_attr = self.item_dict[item]['tankerkoenig_attr']
-            value = self.station_prices.get(station_id, None).get(tankerkoenig_attr, None)
+            if self.station_prices.get(station_id, None) is not None:
+                value = self.station_prices.get(station_id, None).get(tankerkoenig_attr, None)
+            else:
+                self.logger.error(
+                    f"set_item_status_values: station_id with {station_id} does not exist in station_prices.")
             self.logger.debug(f"set_item_status_values: station_id={station_id}, tankerkoenig_attr={tankerkoenig_attr}, value={value}")
             if value:
                 item(value, self.get_shortname())
@@ -337,7 +341,11 @@ class TankerKoenig(SmartPlugin):
         for item in self.item_dict:
             station_id = self.item_dict[item]['station_id']
             tankerkoenig_attr = self.item_dict[item]['tankerkoenig_attr']
-            value = self.station_details.get(station_id, None).get(tankerkoenig_attr, None)
+            if self.station_details.get(station_id, None) is not None:
+                value = self.station_details.get(station_id, None).get(tankerkoenig_attr, None)
+            else:
+                self.logger.error(
+                    f"set_item_status_values: station_id with {station_id} does not exist in station_details.")
             self.logger.debug(f"set_item_detail_values: station_id={station_id}, tankerkoenig_attr={tankerkoenig_attr}, value={value}")
             if value:
                 item(value, self.get_shortname())

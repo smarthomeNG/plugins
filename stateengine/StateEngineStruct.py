@@ -72,7 +72,7 @@ class SeStruct(StateEngineTools.SeItemChild):
         self.convert()
 
     def __repr__(self):
-        return "SeStruct {}".format(self.struct_path, self._conf)
+        return "SeStruct {}".format(self.struct_path)
 
     @staticmethod
     # Usage: dict_get(mydict, 'some.deeply.nested.value', 'my default')
@@ -113,7 +113,7 @@ class SeStructMain(SeStruct):
         #self._log_debug("Struct path {} for {}", self.struct_path, __class__.__name__)
 
     def __repr__(self):
-        return "SeStructMain {}".format(self.struct_path, self._conf)
+        return "SeStructMain {}".format(self.struct_path)
 
     def create_parent(self):
         try:
@@ -171,7 +171,7 @@ class SeStructChild(SeStruct):
         #self._log_debug("Struct path {} for {}", self.struct_path, __class__.__name__)
 
     def __repr__(self):
-        return "SeStructChild {}".format(self.struct_path, self._conf)
+        return "SeStructChild {}".format(self.struct_path)
 
     def get(self):
         try:

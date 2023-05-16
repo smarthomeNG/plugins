@@ -5,10 +5,10 @@ plugin:
     maintainer: OnkelAndy
     tester: Morg
     state: develop
-    keywords: iot device
-    version: 1.5.0
-    sh_minversion: 1.9.5.1
-    py_minversion: 3.6
+    keywords: iot device logitechmediaserver lms sdp av
+    version: 1.5.1
+    sh_minversion: 1.9.5
+    py_minversion: 3.7
     multi_instance: false
     restartable: true
     classname: lms
@@ -17,7 +17,7 @@ parameters:
 
     host:
         type: str
-        mandatory: false
+        mandatory: true
 
         description:
             de: Netzwerkziel/-host
@@ -46,14 +46,6 @@ parameters:
         description:
             de: Zeilen-/Antwortbegrenzer
             en: line or reply terminator
-
-    binary:
-        type: bool
-        default: false
-
-        description:
-            de: Binärer Übertragungsmodus
-            en: binary communication mode
 
     autoreconnect:
         type: bool
@@ -87,22 +79,6 @@ parameters:
             de: Pause zwischen Verbindungsversuchen
             en: wait time between connect retries
 
-    message_timeout:
-        type: num
-        default: 5
-
-        description:
-            de: Timeout für Antwort auf Protokollebene
-            en: timeout for reply at protocol level
-
-    message_repeat:
-        type: num
-        default: 3
-
-        description:
-            de: Anzahl Sendewiederholungen auf Protokollebene
-            en: number of message retries at protocol level
-
     web_port:
         type: int
         default: 9000
@@ -124,12 +100,7 @@ parameters:
         default: net_tcp_client
         valid_list:
         -   ''
-        -   net_tcp_request
         -   net_tcp_client
-        -   net_tcp_jsonrpc
-        -   net_udp_server
-        -   serial
-        -   serial_async
 
         description:
             de: Verbindungstyp
@@ -140,10 +111,7 @@ parameters:
         default: SDPCommandParseStr
         valid_list:
         -   SDPCommand
-        -   SDPCommandStr
         -   SDPCommandParseStr
-        -   SDPCommandJSON
-        -   SDPCommandViessmann
 
         description:
             de: Klasse für Verarbeitung von Kommandos
@@ -404,7 +372,6 @@ item_structs:
                 -   player
                 -   player.control
                 enforce_updates: true
-                sqb_read_initial: true
 
             playmode:
                 type: str
@@ -415,7 +382,6 @@ item_structs:
                 -   player
                 -   player.control
                 enforce_updates: true
-                sqb_read_initial: true
 
             playpause:
                 type: bool
@@ -450,7 +416,6 @@ item_structs:
                 sqb_read_group:
                 -   player
                 -   player.control
-                sqb_read_initial: true
 
             volume_fading:
                 type: num
@@ -628,7 +593,6 @@ item_structs:
                 sqb_read_group:
                 -   player
                 -   player.playlist
-                sqb_read_initial: true
                 remark: 0 = Off, 1 = Song, 2 = Playlist
 
                 lookup:
@@ -643,21 +607,11 @@ item_structs:
                 sqb_read_group:
                 -   player
                 -   player.playlist
-                sqb_read_initial: true
                 remark: 0 = Off, 1 = Song, 2 = Album
 
                 lookup:
                     type: list
                     sqb_lookup: SHUFFLE#list
-
-            count:
-                type: num
-                sqb_command: player.playlist.count
-                sqb_read: true
-                sqb_write: false
-                sqb_read_group:
-                -   player
-                -   player.playlist
 
             index:
                 type: str
@@ -759,7 +713,6 @@ item_structs:
                 sqb_read_group:
                 -   player
                 -   player.playlist
-                sqb_read_initial: true
 
             clear:
                 type: bool
@@ -826,6 +779,16 @@ item_structs:
                 enforce_updates: true
                 sqb_read_group_trigger: player.info
 
+            status:
+                type: str
+                sqb_command: player.info.status
+                sqb_read: true
+                sqb_write: false
+                sqb_read_group:
+                -   player
+                -   player.info
+                sqb_read_initial: true
+
             connected:
                 type: bool
                 sqb_command: player.info.connected
@@ -834,7 +797,15 @@ item_structs:
                 sqb_read_group:
                 -   player
                 -   player.info
-                sqb_read_initial: true
+
+            ip:
+                type: str
+                sqb_command: player.info.ip
+                sqb_read: true
+                sqb_write: false
+                sqb_read_group:
+                -   player
+                -   player.info
 
             name:
                 type: str
@@ -844,7 +815,6 @@ item_structs:
                 sqb_read_group:
                 -   player
                 -   player.info
-                sqb_read_initial: true
 
             syncgroups:
                 type: num
@@ -864,7 +834,6 @@ item_structs:
                 sqb_read_group:
                 -   player
                 -   player.info
-                sqb_read_initial: true
 
             genre:
                 type: str
@@ -921,6 +890,12 @@ item_structs:
                 sqb_read_group:
                 -   player
                 -   player.info
+
+            trackstat:
+                type: str
+                sqb_command: player.info.trackstat
+                sqb_read: true
+                sqb_write: false
 
             albumarturl:
                 type: str
@@ -1129,7 +1104,6 @@ item_structs:
                     -   ALL.player
                     -   ALL.player.control
                     enforce_updates: true
-                    sqb_read_initial: true
 
                 playmode:
                     type: str
@@ -1141,7 +1115,6 @@ item_structs:
                     -   ALL.player
                     -   ALL.player.control
                     enforce_updates: true
-                    sqb_read_initial: true
 
                 playpause:
                     type: bool
@@ -1178,7 +1151,6 @@ item_structs:
                     -   ALL
                     -   ALL.player
                     -   ALL.player.control
-                    sqb_read_initial: true
 
                 volume_fading:
                     type: num
@@ -1362,7 +1334,6 @@ item_structs:
                     -   ALL
                     -   ALL.player
                     -   ALL.player.playlist
-                    sqb_read_initial: true
                     remark: 0 = Off, 1 = Song, 2 = Playlist
 
                     lookup:
@@ -1378,22 +1349,11 @@ item_structs:
                     -   ALL
                     -   ALL.player
                     -   ALL.player.playlist
-                    sqb_read_initial: true
                     remark: 0 = Off, 1 = Song, 2 = Album
 
                     lookup:
                         type: list
                         sqb_lookup: SHUFFLE#list
-
-                count:
-                    type: num
-                    sqb_command: player.playlist.count
-                    sqb_read: true
-                    sqb_write: false
-                    sqb_read_group:
-                    -   ALL
-                    -   ALL.player
-                    -   ALL.player.playlist
 
                 index:
                     type: str
@@ -1499,7 +1459,6 @@ item_structs:
                     -   ALL
                     -   ALL.player
                     -   ALL.player.playlist
-                    sqb_read_initial: true
 
                 clear:
                     type: bool
@@ -1566,6 +1525,17 @@ item_structs:
                     enforce_updates: true
                     sqb_read_group_trigger: ALL.player.info
 
+                status:
+                    type: str
+                    sqb_command: player.info.status
+                    sqb_read: true
+                    sqb_write: false
+                    sqb_read_group:
+                    -   ALL
+                    -   ALL.player
+                    -   ALL.player.info
+                    sqb_read_initial: true
+
                 connected:
                     type: bool
                     sqb_command: player.info.connected
@@ -1575,7 +1545,16 @@ item_structs:
                     -   ALL
                     -   ALL.player
                     -   ALL.player.info
-                    sqb_read_initial: true
+
+                ip:
+                    type: str
+                    sqb_command: player.info.ip
+                    sqb_read: true
+                    sqb_write: false
+                    sqb_read_group:
+                    -   ALL
+                    -   ALL.player
+                    -   ALL.player.info
 
                 name:
                     type: str
@@ -1586,7 +1565,6 @@ item_structs:
                     -   ALL
                     -   ALL.player
                     -   ALL.player.info
-                    sqb_read_initial: true
 
                 syncgroups:
                     type: num
@@ -1608,7 +1586,6 @@ item_structs:
                     -   ALL
                     -   ALL.player
                     -   ALL.player.info
-                    sqb_read_initial: true
 
                 genre:
                     type: str
@@ -1671,6 +1648,12 @@ item_structs:
                     -   ALL
                     -   ALL.player
                     -   ALL.player.info
+
+                trackstat:
+                    type: str
+                    sqb_command: player.info.trackstat
+                    sqb_read: true
+                    sqb_write: false
 
                 albumarturl:
                     type: str
