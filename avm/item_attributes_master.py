@@ -212,6 +212,10 @@ AVM_DATA_TYPES = {
       'blind_mode':                   {'interface': 'aha',          'group': 'blind',           'sub_group': None,                 'access': 'ro',  'type': 'str ',  'deprecated': False,  'supported_by_repeater': False,   'description': 'automatische Zeitschaltung oder manuell fahren'},
       'endpositionsset':              {'interface': 'aha',          'group': 'blind',           'sub_group': None,                 'access': 'ro',  'type': 'bool',  'deprecated': False,  'supported_by_repeater': False,   'description': 'ist die Endlage für das Rollo konfiguriert'},
       'statistics_temp':              {'interface': 'aha',          'group': 'device',          'sub_group': 'statistics',         'access': 'ro',  'type': 'list',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Wertestatistik für Temperatur'},
+      'statistics_hum':               {'interface': 'aha',          'group': 'device',          'sub_group': 'statistics',         'access': 'ro',  'type': 'list',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Wertestatistik für Feuchtigkeit'},
+      'statistics_voltage':           {'interface': 'aha',          'group': 'device',          'sub_group': 'statistics',         'access': 'ro',  'type': 'list',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Wertestatistik für Spannung'},
+      'statistics_power':             {'interface': 'aha',          'group': 'device',          'sub_group': 'statistics',         'access': 'ro',  'type': 'list',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Wertestatistik für Leistung'},
+      'statistics_energy':            {'interface': 'aha',          'group': 'device',          'sub_group': 'statistics',         'access': 'ro',  'type': 'list',  'deprecated': False,  'supported_by_repeater': False,   'description': 'Wertestatistik für Energie'},
     }
 }
 
@@ -235,6 +239,7 @@ def export_item_attributs_py():
     ATTRS['AHA_RO_ATTRIBUTES'] = get_attrs(['aha'], {'access': 'ro'})
     ATTRS['AHA_WO_ATTRIBUTES'] = get_attrs(['aha'], {'access': 'wo'})
     ATTRS['AHA_RW_ATTRIBUTES'] = get_attrs(['aha'], {'access': 'rw'})
+    ATTRS['AHA_STATS_ATTRIBUTES'] = get_attrs(['aha'], {'sub_group': 'statistics'})
     ATTRS['TR064_ATTRIBUTES'] = get_attrs(['tr064'])
     ATTRS['AVM_RW_ATTRIBUTES'] = get_attrs(['tr064'], {'access': 'rw'})
     ATTRS['CALL_MONITOR_ATTRIBUTES'] = get_attrs(['tr064'], {'group': 'call_monitor'})

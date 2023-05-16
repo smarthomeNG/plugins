@@ -42,12 +42,7 @@ from requests.packages import urllib3
 
 from lib.model.smartplugin import SmartPlugin
 from .webif import WebInterface
-from .item_attributes import \
-    ALL_ATTRIBUTES_SUPPORTED_BY_REPEATER, ALL_ATTRIBUTES_WRITEABLE, AHA_ATTRIBUTES, \
-    TR064_ATTRIBUTES, CALL_MONITOR_ATTRIBUTES, CALL_MONITOR_ATTRIBUTES_TRIGGER, \
-    CALL_MONITOR_ATTRIBUTES_GEN, CALL_MONITOR_ATTRIBUTES_IN, CALL_MONITOR_ATTRIBUTES_OUT, \
-    CALL_MONITOR_ATTRIBUTES_DURATION, TAM_ATTRIBUTES, WLAN_CONFIG_ATTRIBUTES, \
-    HOST_ATTRIBUTES_CHILD, DEFLECTION_ATTRIBUTES, ALL_ATTRIBUTES_WRITEONLY
+from .item_attributes import *
 
 ERROR_COUNT_TO_BE_BLACKLISTED = 2
 
@@ -506,6 +501,9 @@ class AVM(SmartPlugin):
 
                 if not get_aha_index():
                     return
+
+                if avm_data_type in AHA_STATS_ATTRIBUTES:
+                    self.fritz_home.use_device_statistics = True
 
             # handle items updated by tr-064 interface
             elif avm_data_type in TR064_ATTRIBUTES:
@@ -1819,15 +1817,15 @@ class FritzHome:
     """
     Fritzhome object to communicate with the device via AHA-HTTP Interface.
     """
-    """
-    Definition of AHA Routes
-    """
+
+    # Definition of AHA Routes
     LOGIN_ROUTE = '/login_sid.lua?version=2'
     LOG_ROUTE = '/query.lua?mq_log=logger:status/log'
     LOG_SEPARATE_ROUTE = '/query.lua?mq_log=logger:status/log_separate'
     HOMEAUTO_ROUTE = '/webservices/homeautoswitch.lua'
     INTERNET_STATUS_ROUTE = '/internet/inetstat_monitor.lua?sid='
 
+    # Definition of valid value ranges
     HUE_RANGE = {'min': 0, 'max': 359}
     SATURATION_RANGE = {'min': 0, 'max': 255}
     LEVEL_RANGE = {'min': 0, 'max': 255}
@@ -1848,6 +1846,9 @@ class FritzHome:
         self.verify = verify
         self.user = user
         self.password = password
+        self.use_device_statistics = False
+        self.last_device_statistics_update = 0
+        self.device_statistics_min_grid = 0
 
         self._sid = None
         self._devices: Dict[str, FritzHome.FritzhomeDevice] = {}
@@ -1881,6 +1882,11 @@ class FritzHome:
 
         # get current_time
         current_time = int(time.time())
+
+        # add device statistics to devices if activated and due
+        if self.use_device_statistics and (self.last_device_statistics_update + self.device_statistics_min_grid) <= current_time:
+            self.last_device_statistics_update = current_time
+            self.add_device_statistics_to_devices()
 
         # iterate over items and get data
         for item in self.item_list():
@@ -2337,6 +2343,64 @@ class FritzHome:
         Get the device name.
         """
         return self._aha_request("getswitchname", ain=ain)
+
+    def get_device_statistics(self, ain: str, func: str = None):
+        """
+        Get device statistics of device as list of lists for smartvisu like [[timestamp1, value1], [timestamp2, value2], ...]
+        """
+
+        def get_series(_func):
+            element = dom.find(_func)
+            if element is not None:
+                stats = element.find("stats")
+                if stats is not None:
+                    series = []
+                    count = to_int(stats.attrib.get('count'))
+                    grid = to_int(stats.attrib.get('grid'))
+                    if self.device_statistics_min_grid == 0 or grid < self.device_statistics_min_grid:
+                        self.device_statistics_min_grid = grid
+                    datatime = to_int(stats.attrib.get('datatime'))
+                    raw_values = stats.text.split(',')
+                    raw_values = list(map(to_int, raw_values))
+                    values = [val / scales[_func] for val in raw_values]
+                    for value in values:
+                        count -= 1
+                        series.append([datatime - count * grid, value])
+                    return series
+
+        scales = {
+            'temperature': 10,  # Die Genauigkeit/Einheit der <temperature>-Werte ist 0,1°C.
+            'voltage': 1000,    # Die Genauigkeit/Einheit der <voltage>-Werte ist 0,001V.
+            'power': 100,       # Die Genauigkeit/Einheit der <power>-Werte ist 0,01W.
+            'energy': 1,        # Die Genauigkeit/Einheit der <energy>-Werte ist 1 Wh.
+            'humidity': 1,      # Die Genauigkeit/Einheit der <humidity>-Werte ist Prozent.
+        }
+
+        plain = self._aha_request("getbasicdevicestats", ain=ain)
+        if plain is None:
+            return
+
+        dom = ElementTree.fromstring(plain)
+
+        if func in ['temperature', 'humidity', 'voltage', 'power', 'energy']:
+            return get_series(func)
+
+        elif func == 'powermeter':
+            stats_voltage = get_series('voltage')
+            stats_power = get_series('power')
+            stats_energy = get_series('energy')
+            return stats_voltage, stats_power, stats_energy
+
+    def add_device_statistics_to_devices(self):
+        """Add device statistics to self._devices"""
+
+        for device in self.get_devices():
+            if device.has_temperature_sensor:
+                device.statistics_temp = self.get_device_statistics(ain=device.ain, func='temperature')
+            elif device.has_humidity_sensor:
+                device.statistics_hum = self.get_device_statistics(ain=device.ain, func='humidity')
+            elif device.has_powermeter:
+                device.statistics_voltage, device.statistics_power, device.statistics_energy = self.get_device_statistics(ain=device.ain, func='powermeter')
 
     # switch-related commands
 
@@ -4426,7 +4490,5 @@ def lxml_element_to_dict(node):
 
 
 def request_response_to_xml(request):
-    """
-    Parse request response to element object
-    """
+    """Parse request response to element object"""
     return ET.fromstring(request.content)
