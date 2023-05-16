@@ -931,7 +931,6 @@ class FritzDevice:
             cycle = item_config['avm_data_cycle']
             next_time = item_config['next_update']
             error_count = item_config['error_count']
-            item_count += 1
 
             # check if item is blacklisted
             if error_count >= ERROR_COUNT_TO_BE_BLACKLISTED:
@@ -956,7 +955,7 @@ class FritzDevice:
             # self.logger.debug(f"Item={item.path()} with avm_data_type={avm_data_type} and index={index} will be updated")
 
             # get data and set item value
-
+            item_count += 1
             if not self._update_item_value(item, avm_data_type, index) and self.use_tr064_blacklist:
                 error_count += 1
                 self.logger.debug(f"{item.path()} caused error. New error_count: {error_count}. Item will be blacklisted after more than 2 errors.")
@@ -1882,7 +1881,7 @@ class FritzHome:
             return
 
         update_time = int(time.time())
-        self.logger.debug(f"Update of AHA-Device data took {start_time - update_time}s")
+        self.logger.debug(f"Update of AHA-Device data took {update_time - start_time}s")
         item_count = 0
 
         # add device statistics to devices if activated and due
@@ -1898,7 +1897,6 @@ class FritzHome:
             ain = item_config['index']
             cycle = item_config['avm_data_cycle']
             next_time = item_config['next_update']
-            item_count += 1
 
             # Just read items with cycle == 0 at init
             if not read_all and not cycle:
@@ -1923,6 +1921,7 @@ class FritzHome:
                 avm_data_type = avm_data_type[len('set_'):]
 
             # get value
+            item_count += 1
             value = getattr(self.get_devices_as_dict().get(ain), avm_data_type, None)
             if value is None:
                 self.logger.debug(f'Value for attribute={avm_data_type} at device with AIN={ain} to set Item={item.path()} is not available/None.')
