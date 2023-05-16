@@ -111,6 +111,8 @@ class Telegram(SmartPlugin):
         self._no_write_access_msg = self.get_parameter_value('no_write_access_msg')
         self._long_polling_timeout = self.get_parameter_value('long_polling_timeout')
         self._pretty_thread_names = self.get_parameter_value('pretty_thread_names')
+        self._resend_delay = self.get_parameter_value('resend_delay')
+        self._resend_attemps = self.get_parameter_value('resend_attemps')
         
         self._bot =  None
         self._queue = Queue()
@@ -232,7 +234,7 @@ class Telegram(SmartPlugin):
                 if self.logger.isEnabledFor(logging.DEBUG):
                     self.logger.debug(f"sent welcome message {self._welcome_msg}")
                 cids = [key for key, value in self._chat_ids_item().items() if value == 1]
-                await self.async_msg_broadcast(self._welcome_msg, chat_id=cids)
+                self.msg_broadcast(self._welcome_msg, chat_id=cids)
                 
         except TelegramError as e:
             # catch Unauthorized errors due to an invalid token
@@ -258,12 +260,44 @@ class Telegram(SmartPlugin):
             except Exception as e:
                 self.logger.debug(f"messageQueue Exception [{e}]")
             else:                   # message to be sent in the queue
-                if self.logger.isEnabledFor(logging.DEBUG):
-                    self.logger.debug(f"message queue {message}")
-                if message["msgType"] == "Text":
-                    await self.async_msg_broadcast(message["msg"], message["chat_id"], message["reply_markup"], message["parse_mode"])
-                if message["msgType"] == "Photo":
-                    await self.async_photo_broadcast(message["photofile_or_url"], message["caption"], message["chat_id"], message["local_prepare"])
+                resendDelay = 0
+                resendAttemps = 0
+                if "resendDelay" in message:
+                    resendDelay = message["resendDelay"]
+                if "resendAttemps" in message:
+                    resendAttemps =  message["resendAttemps"]
+                
+                if resendDelay <= 0:
+                    if self.logger.isEnabledFor(logging.DEBUG):
+                        self.logger.debug(f"message queue {message}")
+                    if message["msgType"] == "Text":
+                        result = await self.async_msg_broadcast(message["msg"], message["chat_id"], message["reply_markup"], message["parse_mode"])
+                    elif message["msgType"] == "Photo":
+                        result = await self.async_photo_broadcast(message["photofile_or_url"], message["caption"], message["chat_id"], message["local_prepare"])
+                    
+                    # An error occurred while sending - result: list containing the dic of the failed send attempt
+                    if result:      
+                        for res in result:
+                            resendAttemps+=1
+                            if resendAttemps > self._resend_attemps:
+                                if self.logger.isEnabledFor(logging.DEBUG):
+                                    self.logger.debug(f"don't initiate any further send attempts for: {res}")
+                                break  
+                            else:
+                                resendDelay =  self._resend_delay
+                            
+                            # Including the sendDelay and sendAttempts in the queue message for the next send attempt.
+                            res["resendDelay"] = resendDelay
+                            res["resendAttemps"] = resendAttemps
+
+                            if self.logger.isEnabledFor(logging.DEBUG):
+                                self.logger.debug(f"new send attempt by placing it in the queue. sendAttemps:{resendAttemps} sendDelay:{resendDelay} [{res}]")
+                            self._queue.put(res) # new send attempt by replacing the message in the queue
+                else:
+                    message["resendDelay"] = resendDelay - 1
+                    await asyncio.sleep(1)
+                    self._queue.put(message)    # new send attempt by replacing the message in the queue
+
         if self.logger.isEnabledFor(logging.DEBUG):
             self.logger.debug("sendQueue method end")
 
@@ -476,6 +510,7 @@ class Telegram(SmartPlugin):
         :param reply_markup:
         :param parse_mode:
         """
+        sendResult = []
         if self.logger.isEnabledFor(logging.DEBUG):
             self.logger.debug(f"async msg_broadcast called")
         
@@ -486,12 +521,20 @@ class Telegram(SmartPlugin):
                     if self.logger.isEnabledFor(logging.DEBUG):
                         self.logger.debug(f"Message sent:[{msg}] to Chat_ID:[{cid}] Bot:[{self._bot.bot}] response:[{response}]")
                 else:
+                    sendResult.append({"msgType":"Text", "msg":msg, "chat_id":cid, "reply_markup":reply_markup, "parse_mode":parse_mode })
                     self.logger.error(f"could not broadcast to chat id [{cid}] response: {response}")
             except TelegramError as e:
+                sendResult.append({"msgType":"Text", "msg":msg, "chat_id":cid, "reply_markup":reply_markup, "parse_mode":parse_mode })
                 self.logger.error(f"could not broadcast to chat id [{cid}] due to error {e}")
             except Exception as e:
+                sendResult.append({"msgType":"Text", "msg":msg, "chat_id":cid, "reply_markup":reply_markup, "parse_mode":parse_mode })
                 if self.logger.isEnabledFor(logging.DEBUG):
                     self.logger.debug(f"Exception '{e}' occurred, please inform plugin maintainer!")
+        if not sendResult:
+            return None
+        else:
+            return sendResult
+        
 
     def msg_broadcast(self, msg, chat_id=None, reply_markup=None, parse_mode=None):
         if self.alive:
@@ -512,19 +555,31 @@ class Telegram(SmartPlugin):
         :param caption: caption of image to send
         :param chat_id: a chat id or a list of chat ids to identificate the chat(s)
         """
+        sendResult = []
         for cid in self.get_chat_id_list(chat_id):
             try:
                 if photofile_or_url.startswith("http"):
                     if local_prepare:
                         photo_raw = requests.get(photofile_or_url)
                         photo_data = BytesIO(photo_raw.content)
-                        await self._bot.send_photo(chat_id=cid, photo=photo_data, caption=caption)
+                        response = await self._bot.send_photo(chat_id=cid, photo=photo_data, caption=caption)
                     else:
-                        await self._bot.send_photo(chat_id=cid, photo=photofile_or_url, caption=caption)
+                        response = await self._bot.send_photo(chat_id=cid, photo=photofile_or_url, caption=caption)
                 else:
-                    await self._bot.send_photo(chat_id=cid, photo=open(str(photofile_or_url), 'rb'), caption=caption)
+                    response = await self._bot.send_photo(chat_id=cid, photo=open(str(photofile_or_url), 'rb'), caption=caption)
+                if response:
+                    if self.logger.isEnabledFor(logging.DEBUG):
+                        self.logger.debug(f"Photo sent to Chat_ID:[{cid}] Bot:[{self._bot.bot}] response:[{response}]")
+                else:
+                    sendResult.append({"msgType":"Photo", "photofile_or_url":photofile_or_url, "chat_id":cid, "caption":caption, "local_prepare":local_prepare })
+                    self.logger.error(f"could not broadcast to chat id [{cid}] response: {response}")
             except Exception as e:
+                sendResult.append({"msgType":"Photo", "photofile_or_url":photofile_or_url, "chat_id":cid, "caption":caption, "local_prepare":local_prepare })
                 self.logger.error(f"Error '{e}' could not send image {photofile_or_url} to chat id {cid}")
+        if not sendResult:
+            return None
+        else:
+            return sendResult
 
     def photo_broadcast(self, photofile_or_url, caption=None, chat_id=None, local_prepare=True):
         """
