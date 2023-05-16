@@ -177,7 +177,11 @@
     {% set tab4title = "hidden" %} 
 {% endif %}
 
-{% set tab5title = _("<strong>"'AVM Log-Einträge'"</strong>") %}
+{% if p.fritz_home %}
+    {% set tab5title = _("<strong>"'AVM Log-Einträge'"</strong>") %}
+{% else %}
+    {% set tab5title = "hidden" %}
+{% endif %}
 
 {% if not maintenance %}
     {% set tab6title = _("<strong>"'AVM Plugin-API'"</strong>") %}

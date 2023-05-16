@@ -11,7 +11,7 @@ plugin:
 #    keywords: iot xyz
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
     support: https://knx-user-forum.de/forum/supportforen/smarthome-py/1848494-support-thread-databaseaddon-plugin
-    version: 1.1.0                  # Plugin version (must match the version specified in __init__.py)
+    version: 1.1.1                  # Plugin version (must match the version specified in __init__.py)
     sh_minversion: 1.9.3.5          # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     py_minversion: 3.8              # minimum Python version to use for this plugin
@@ -43,6 +43,19 @@ parameters:
                 Beispieleintrag: temp | hum"
             en: "At items having a entry of that list in path, val_num=0 will be ignored for database queries. 
                 Example: temp | hum"
+
+    value_filter:
+        type: dict
+        description:
+            de: "Definition von Wertefiltern als Wörterbuch {'Teil des Itempfades: [Liste von Vergleichsoperatoren als String]} Bsp: {'temp': ['> -10', '< 85'], 'hum': ['>= 0', '<= 100']}"
+            en: "Definition of value filters as dict {'part of item path': [List of comparison operators als string]} Example: {'temp': ['> -10', '< 85'], 'hum': ['>= 0', '<= 100']}"
+
+    optimize_value_filter:
+        type: bool
+        default: True
+        description:
+            de: "Optimierung der gesetzen als Plugin-Parameter oder/und Item-Attribute gesetzten Wertefilter."
+            en: "Optimize value filters set as plugin parameter or/and item attribute"
 
     use_oldest_entry:
         type: bool
@@ -551,6 +564,12 @@ item_attributes:
         description:
             de: 'Wert der bei Abfrage bzw. Auswertung der Datenbank für diese Item ignoriert werden soll'
             en: 'Value which will be ignored at database query'
+
+    db_addon_ignore_value_list:
+        type: list(str)
+        description:
+            de: "Liste von Vergleichsoperatoren, die bei Abfrage bzw. Auswertung der Datenbank für dieses Item berücksichtigt werden sollen. Bsp: ['> 0', '< 35']"
+            en: "List of comparison operators which will be used at database query"
 
     db_addon_database_item:
         type: str
