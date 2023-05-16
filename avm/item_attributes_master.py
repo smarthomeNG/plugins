@@ -241,7 +241,7 @@ def export_item_attributs_py():
     ATTRS['AHA_RW_ATTRIBUTES'] = get_attrs(['aha'], {'access': 'rw'})
     ATTRS['AHA_STATS_ATTRIBUTES'] = get_attrs(['aha'], {'sub_group': 'statistics'})
     ATTRS['TR064_ATTRIBUTES'] = get_attrs(['tr064'])
-    ATTRS['AVM_RW_ATTRIBUTES'] = get_attrs(['tr064'], {'access': 'rw'})
+    ATTRS['TR064_RW_ATTRIBUTES'] = get_attrs(['tr064'], {'access': 'rw'})
     ATTRS['CALL_MONITOR_ATTRIBUTES'] = get_attrs(['tr064'], {'group': 'call_monitor'})
     ATTRS['CALL_MONITOR_ATTRIBUTES_TRIGGER'] = get_attrs(['tr064'], {'group': 'call_monitor', 'sub_group': 'trigger'})
     ATTRS['CALL_MONITOR_ATTRIBUTES_GEN'] = get_attrs(['tr064'], {'group': 'call_monitor', 'sub_group': 'generic'})
@@ -333,11 +333,11 @@ def update_plugin_yaml_avm_data_type():
     else:
         print('Attribut "avm_data_type" not defined in plugin.yaml')
 
-
 if __name__ == '__main__':
     # Run main to export item_attributes.py and update ´valid_list and valid_list_description of avm_data_type in plugin.yaml
     export_item_attributs_py()
     update_plugin_yaml_avm_data_type()
+
 
 # Notes:
 #   - HOST_ATTRIBUTES: host index needed

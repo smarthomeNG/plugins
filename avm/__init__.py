@@ -29,16 +29,16 @@ import socket
 import threading
 import time
 import functools
+import lxml.etree as ET
+import requests
+import urllib3
 
 from abc import ABC
 from enum import IntFlag
 from json.decoder import JSONDecodeError
-from typing import Dict
-from typing import Union
+from typing import Dict, Union
 from xml.etree import ElementTree
-import lxml.etree as ET
-import requests
-from requests.packages import urllib3
+from urllib3.exceptions import InsecureRequestWarning
 
 from lib.model.smartplugin import SmartPlugin
 from .webif import WebInterface
@@ -125,11 +125,6 @@ class AVM(SmartPlugin):
     """
     PLUGIN_VERSION = '2.0.5'
 
-    # ToDo: Auswertung des response auf _aha_request in den einzelnen Methoden
-    # ToDo: check_sid ersetzen; Wenn request Antwort 403, neues Login
-    # ToDO: if not logged_in vereinheitlichen
-    # ToDo: get_request in fritz_home aus async umstellen
-
     def __init__(self, sh):
         """Initializes the plugin."""
         # Call init code of parent class (SmartPlugin)
@@ -155,7 +150,7 @@ class AVM(SmartPlugin):
         self.alive = False
         ssl = self.get_parameter_value('ssl')
         if ssl and not _verify:
-            urllib3.disable_warnings()
+            urllib3.disable_warnings(InsecureRequestWarning)
 
         # init FritzDevice
         try:
@@ -548,7 +543,7 @@ class AVM(SmartPlugin):
                     self.logger.debug(f'Attempting read after write for item: {item.path()}, avm_data_type: {avm_data_type}, delay: {readafterwrite}s')
 
             # handle items updated by tr-064 interface
-            if avm_data_type in TR064_ATTRIBUTES:
+            if avm_data_type in TR064_RW_ATTRIBUTES:
                 if self.fritz_device:
                     if self.debug_log:
                         self.logger.debug(f"Updated item={item.path()} with avm_data_type={avm_data_type} identified as part of 'TR064_ATTRIBUTES'")
@@ -557,7 +552,7 @@ class AVM(SmartPlugin):
                     self.logger.warning(f"AVM TR064 Interface not activated or not available. Update for {avm_data_type} will not be executed.")
 
             # handle items updated by AHA_ATTRIBUTES
-            elif avm_data_type in AHA_ATTRIBUTES:
+            elif avm_data_type in AHA_RW_ATTRIBUTES + AHA_WO_ATTRIBUTES:
                 if self.fritz_home:
                     if self.debug_log:
                         self.logger.debug(f"Updated item={item.path()} with avm_data_type={avm_data_type} identified as part of 'AHA_ATTRIBUTES'")
@@ -787,17 +782,19 @@ class FritzDevice:
 
     def handle_updated_item(self, item, avm_data_type: str, readafterwrite: int):
         """Updated Item will be processed and value communicated to AVM Device"""
+
         # get index
         index = self._plugin_instance.get_item_config(item)['index']
 
         # to be set value
         to_be_set_value = item()
 
-        # define command per avm_data_type
-        _dispatcher = {'wlanconfig':        ('set_wlan',       {'NewEnable': int(to_be_set_value)},                                index),
-                       'wps_active':        ('set_wps',        {'NewX_AVM_DE_WPSEnable': int(to_be_set_value)},                    index),
-                       'tam':               ('set_tam',        {'NewIndex': int(index), 'NewEnable': int(to_be_set_value)},        None),
-                       'deflection_enable': ('set_deflection', {'NewDeflectionId': int(index), 'NewEnable': int(to_be_set_value)}, None),
+        # define command per avm_data_type // all avm_data_type of TR064_RW_ATTRIBUTES must be defined here
+        _dispatcher = {'wlanconfig':        ('set_wlan',       {'NewEnable': int(to_be_set_value)},                                     index),
+                       'wps_active':        ('set_wps',        {'NewX_AVM_DE_WPSEnable': int(to_be_set_value)},                         index),
+                       'tam':               ('set_tam',        {'NewIndex': int(index), 'NewEnable': int(to_be_set_value)},             None),
+                       'deflection_enable': ('set_deflection', {'NewDeflectionId': int(index), 'NewEnable': int(to_be_set_value)},      None),
+                       'aha_device':        ('set_aha_device', {'NewAIN': index, 'NewSwitchState': 'ON' if to_be_set_value else 'OFF'}, None)
                        }
 
         # do logging
@@ -1466,8 +1463,7 @@ class FritzDevice:
     # ----------------------------------
     # logs methods
     # ----------------------------------
-# TODO: rewrite to -> list[str]?
-# --> das ist Bestandscode und diente zur Anzeige von "Fließtext" in der Visu
+
     def get_device_log_from_tr064(self):
         """
         uses: https://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/deviceinfoSCPD.pdf
@@ -1982,7 +1978,7 @@ class FritzHome:
         Updated Item will be processed and value communicated to AVM Device
         """
 
-        # define set method per avm_data_type
+        # define set method per avm_data_type // all avm_data_types of AHA_WO_ATTRIBUTES + AHA_RW_ATTRIBUTES must be defined here
         _dispatcher = {'window_open':        (self.set_window_open, {'seconds': item()}, self.get_window_open),
                        'target_temperature': (self.set_target_temperature, {'temperature': item()}, self.get_target_temperature),
                        'hkr_boost':          (self.set_boost, {'seconds': item()}, self.get_boost),
@@ -1999,6 +1995,10 @@ class FritzHome:
                        'color':              (self.set_color, {'hs': item(), 'duration': 1, 'mapped': False}, self.get_color),
                        'hsv':                (self.set_hsv, {'hsv': item(), 'duration': 1, 'mapped': False}, self.get_hsv),
                        }
+
+        # Remove "set_" prefix of AHA_WO_ATTRIBUTES Items:
+        if avm_data_type.startswith('set_'):
+            avm_data_type = avm_data_type[len('set_'):]
 
         setter, setter_params, getter = _dispatcher[avm_data_type]
         to_be_set_value = item()
