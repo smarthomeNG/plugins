@@ -99,6 +99,13 @@ def to_int_to_bool(arg) -> bool:
     except (ValueError, TypeError):
         return False
 
+
+def clamp(n, min_n, max_n):
+    try:
+        return max(min(max_n, n), min_n)
+    except (ValueError, TypeError):
+        return 0
+
 def walk_nodes(root, nodes: list):
     data = root
     for atype, arg in nodes:
@@ -123,11 +130,10 @@ class AVM(SmartPlugin):
     """
     PLUGIN_VERSION = '2.0.5'
 
-    # ToDo: FritzHome.handle_updated_item: implement 'saturation'
-    # ToDo: FritzHome.handle_updated_item: implement 'unmapped_hue'
-    # ToDo: FritzHome.handle_updated_item: implement 'unmapped_saturation'
-    # ToDo: FritzHome.handle_updated_item: implement 'hsv'
-    # ToDo: FritzHome.handle_updated_item: implement 'hs'
+    # ToDo: Auswertung des response auf _aha_request in den einzelnen Methoden
+    # ToDo: check_sid ersetzen; Wenn request Antwort 403, neues Login
+    # ToDO: if not logged_in vereinheitlichen
+    # ToDo: get_request in fritz_home aus async umstellen
 
     def __init__(self, sh):
         """Initializes the plugin."""
@@ -1822,6 +1828,12 @@ class FritzHome:
     HOMEAUTO_ROUTE = '/webservices/homeautoswitch.lua'
     INTERNET_STATUS_ROUTE = '/internet/inetstat_monitor.lua?sid='
 
+    HUE_RANGE = {'min': 0, 'max': 359}
+    SATURATION_RANGE = {'min': 0, 'max': 255}
+    LEVEL_RANGE = {'min': 0, 'max': 255}
+    LEVEL_PERCENTAGE_RANGE = {'min': 0, 'max': 100}
+    COLOR_TEMP_RANGE = {'min': 2700, 'max': 6500}
+
     def __init__(self, host, ssl, verify, user, password, log_entry_count, plugin_instance):
         """
         Init the Class FritzHome
@@ -1831,7 +1843,6 @@ class FritzHome:
         self.debug_log = self._plugin_instance.debug_log
         self.logger.debug("Init Fritzhome")
 
-        self.host = host
         self.ssl = ssl
         self.prefixed_host = self._get_prefixed_host(host)
         self.verify = verify
@@ -1956,34 +1967,34 @@ class FritzHome:
         """
 
         # define set method per avm_data_type
-        _dispatcher = {'window_open':        (self.set_window_open, self.get_window_open),
-                       'target_temperature': (self.set_target_temperature, self.get_target_temperature),
-                       'hkr_boost':          (self.set_boost, self.get_boost),
-                       'simpleonoff':        (self.set_state, self.get_state),
-                       'level':              (self.set_level, self.get_level),
-                       'levelpercentage':    (self.set_level_percentage, self.get_level_percentage),
-                       'switch_state':       (self.set_switch_state, self.get_switch_state),
-                       'switch_toggle':      (self.set_switch_state_toggle, self.get_switch_state),
-                       'colortemperature':   (self.set_color_temp, self.get_color_temp),
-                       'hue':                (self.set_color_discrete, self.get_hue),
-                       'unmapped_saturation':(self.set_unmapped_saturation, self.get_unmapped_saturation),
-                       'unmapped_hue':       (self.set_unmapped_hue, self.get_unmapped_hue)
+        _dispatcher = {'window_open':        (self.set_window_open, {'seconds': item()}, self.get_window_open),
+                       'target_temperature': (self.set_target_temperature, {'temperature': item()}, self.get_target_temperature),
+                       'hkr_boost':          (self.set_boost, {'seconds': item()}, self.get_boost),
+                       'simpleonoff':        (self.set_state, {'state': item()}, self.get_state),
+                       'level':              (self.set_level, {'level': item()}, self.get_level),
+                       'levelpercentage':    (self.set_level_percentage, {'level': item()}, self.get_level_percentage),
+                       'switch_state':       (self.set_switch_state, {'state': item()}, self.get_switch_state),
+                       'switch_toggle':      (self.set_switch_state_toggle, {}, self.get_switch_state),
+                       'colortemperature':   (self.set_color_temp, {'temperature': item(), 'duration': 1}, self.get_color_temp),
+                       'hue':                (self.set_hue, {'hue': int(), 'duration': 1}, self.get_hue),
+                       'saturation':         (self.set_saturation, {'hue': int(), 'duration': 1}, self.get_saturation),
+                       'unmapped_hue':       (self.set_unmapped_hue, {'hue': item()}, self.get_unmapped_hue),
+                       'unmapped_saturation':(self.set_unmapped_saturation, {'saturation': item()}, self.get_unmapped_saturation),
+                       'color':              (self.set_color, {'hs': item(), 'duration': 1, 'mapped': False}, self.get_color),
+                       'hsv':                (self.set_hsv, {'hsv': item(), 'duration': 1, 'mapped': False}, self.get_hsv),
                        }
+
+        setter, setter_params, getter = _dispatcher[avm_data_type]
+        to_be_set_value = item()
 
         # get AIN
         ain = self._plugin_instance.get_item_config(item)['index']
 
-        # logs message for upcoming/limited functionality
-        if avm_data_type == 'hue' or avm_data_type == 'saturation':
-            # Full RGB hue will be supported by Fritzbox approximately from Q2 2022 on:
-            # Currently, only use default RGB colors that are supported by default (getcolordefaults)
-            # These default colors have given saturation values.
-            self.logger.info("Full RGB hue will be supported by Fritzbox approximately from Q2 2022. Limited functionality.")
+        # add ain to setter_params
+        setter_params.update({'ain': ain})
 
-        # Call set method per avm_data_type
-        to_be_set_value = item()
         try:
-            _dispatcher[avm_data_type][0](ain, to_be_set_value)
+            result = setter(**setter_params)
         except KeyError:
             self.logger.error(f"{avm_data_type} is not defined to be updated.")
             result = False
@@ -1998,7 +2009,7 @@ class FritzHome:
             wait = float(readafterwrite)
             time.sleep(wait)
             try:
-                set_value = _dispatcher[avm_data_type][1](ain)
+                set_value = getter(ain)
             # only handle avm_data_type not present in _dispatcher
             except KeyError:
                 self.logger.error(f"{avm_data_type} is not defined to be read.")
@@ -2009,22 +2020,6 @@ class FritzHome:
                 else:
                     if self.debug_log:
                         self.logger.debug(f"Setting AVM Device defined in Item={item.path()} with avm_data_type={avm_data_type} to value={to_be_set_value} successful!")
-
-    def get_value_by_ain_and_avm_data_type(self, ain, avm_data_type):
-        """
-        get value for given ain and avm_data_type
-        """
-
-        # get device sub-dict from dict
-        device = self.get_device_by_ain(ain)
-        # device = self._devices.get(ain, None)
-
-        if device is None:
-            self.logger.warning(f'No values for device with AIN={ain} available.')
-            return
-
-        # return value
-        return getattr(device, avm_data_type, None)
 
     def item_list(self):
         return self._plugin_instance.get_aha_items()
@@ -2428,7 +2423,6 @@ class FritzHome:
         except TypeError:
             return False
 
-
     def get_target_temperature(self, ain: str):
         """
         Get the thermostate target temperature.
@@ -2548,12 +2542,14 @@ class FritzHome:
         """
         Set level/brightness/height in interval [0,255].
         """
-        if level < 0:
-            level = 0  # 0%
-        elif level > 255:
-            level = 255  # 100 %
 
-        self._aha_request("setlevel", ain=ain, param={'level': int(level)})
+        if not self.LEVEL_RANGE['min'] <= level <= self.LEVEL_RANGE['max']:
+            level = clamp(level, self.LEVEL_RANGE['min'], self.LEVEL_RANGE['max'])
+            self.logger.warning(f"set_level: level value must be between {self.LEVEL_RANGE['min']} and {self.LEVEL_RANGE['max']}; hue will be set to {level}")
+        else:
+            level = int(level)
+
+        return self._aha_request("setlevel", ain=ain, param={'level': level}, result_type='int')
 
     @NoKeyOrAttributeError
     def get_level(self, ain: str):
@@ -2566,8 +2562,13 @@ class FritzHome:
         """
         Set level/brightness/height in interval [0,100].
         """
-        # Scale percentage to [0,255] interval
-        self.set_level(ain, int(level * 2.55))
+        if not self.LEVEL_PERCENTAGE_RANGE['min'] <= level <= self.LEVEL_PERCENTAGE_RANGE['max']:
+            level = clamp(level, self.LEVEL_PERCENTAGE_RANGE['min'], self.LEVEL_PERCENTAGE_RANGE['max'])
+            self.logger.warning(f"set_level_percentage: level value must be between {self.LEVEL_PERCENTAGE_RANGE['min']} and {self.LEVEL_PERCENTAGE_RANGE['max']}; hue will be set to {level}")
+        else:
+            level = int(level)
+
+        return self._aha_request("setlevelpercentage", ain=ain, param={'level': level}, result_type='int')
 
     @NoKeyOrAttributeError
     def get_level_percentage(self, ain: str):
@@ -2583,12 +2584,57 @@ class FritzHome:
         Get colour defaults
         """
         plain = self._aha_request("getcolordefaults", ain=ain)
-        return ElementTree.fromstring(to_str(plain))
 
-    def get_unmapped_hue(self, ain):
+        if plain is None:
+            return
+
+        return ElementTree.fromstring(plain)
+
+    @NoKeyOrAttributeError
+    def get_hue(self, ain: str) -> int:
+        """get hue value represented in hsv domain as integer value between [0,359]."""
+        return self.get_devices_as_dict()[ain].hue
+
+    def set_hue(self, ain: str, hue: int) -> bool:
+        """set hue value (0-359)"""
+        self.logger.debug(f"set_unmapped_hue called with value={hue}")
+
+        if (hue < 0) or hue > 359:
+            self.logger.error(f"set_unmapped_hue, hue value must be between 0 and 359")
+            return False
+
+        saturation = getattr(self.get_devices_as_dict()[ain], 'saturation', None)
+        if saturation:
+            self.logger.debug(f"set_hue: set_unmapped_hue, hue {hue}, saturation is {saturation}")
+            # saturation variable is scaled to 0-100. Scale to 0-255 for AVM AHA interface
+            self.set_color(ain, [hue, saturation], mapped=False)
+            return True
+
+    @NoKeyOrAttributeError
+    def get_saturation(self, ain: str) -> int:
+        """get saturation as integer value between 0-100."""
+        return self.get_devices_as_dict()[ain].saturation
+
+    def set_saturation(self, ain: str, saturation: int) -> bool:
         """
-        get unmapped hue value represented in hsv domain as integer value between [0,359].
+        set saturation value
+        saturation defined in range (0-100)
         """
+        self.logger.debug(f" set_unmapped_saturation is called with value={saturation} defined in range 0-100")
+
+        if (saturation < 0) or saturation > 100:
+            self.logger.error(f"set_unmapped_saturation: value must be between 0 and 100")
+            return False
+
+        hue = getattr(self.get_devices_as_dict()[ain], 'hue', None)
+        if hue:
+            self.logger.debug(f"success: set_saturation: value is {saturation} (0-100), hue {hue}")
+            # Plugin handels saturation value in the range of 0-100. AVM function expect saturation to be within 0-255. Therefore, scale value:
+            self.set_color(ain, [hue, int(saturation*2.55)], mapped=False)
+
+    @NoKeyOrAttributeError
+    def get_unmapped_hue(self, ain: str) -> int:
+        """get unmapped hue value represented in hsv domain as integer value between [0,359]."""
         self.logger.debug("get_unmapped_hue called.")
         return self.get_devices_as_dict()[ain].unmapped_hue
 
@@ -2657,55 +2703,99 @@ class FritzHome:
             colors[name] = values
         return colors
 
-    def set_color(self, ain: str, hsv: list, duration: int = 1, mapped: bool = True) -> bool:
+    def set_color(self, ain: str, hs: list, duration: int = 1, mapped: bool = True) -> bool:
         """
         Set hue and saturation.
-        hsv: HUE colorspace element obtained from get_colors()
-        hsv is an array including hue, saturation and level
+        hs: colorspace element obtained from get_colors()
+        hs is an array including hue, saturation and level
                  hue must be within range 0-359
-                 saturation must be within range 0-255
+                 saturation must be within range 0-100
         duration: Speed of change in seconds, 0 = instant
-        mapped = True uses the AVM setcolor function. It only
-                 supports pre-defined colors that can be obtained
-                 by the get_colors function.
-        mapped = False uses the AVM setunmappedcolor function, featured
-                 by AVM firmwareversion since approximately Q2 2022. It
-                 supports every combination if hue/saturation/level
+        mapped = True uses the AVM setcolor function. It only supports pre-defined colors that can be obtained by the get_colors function.
+        mapped = False uses the AVM setunmappedcolor function, featured by AVM firmwareversion since approximately Q2 2022. It supports every combination if hue/saturation/level
         """
-        success = False
-        params = {
-            'hue': int(hsv[0]),
-            'saturation': int(hsv[1]),
-            "duration": int(duration) * 10
-        }
+
+        if len(hs) != 2:
+            self.logger.warning(f"set_color: hsv={hs} does to much or to less entries. hue and saturation needed.")
+            return False
+
+        hue  = to_int(hs[0])
+        saturation = int(to_int(hs[1])*2.55)
+        duration = to_int(duration) * 10
 
         # Range checks:
-        hue = int(hsv[0])
-        if (hue < 0) or hue > 359:
-            self.logger.error(f"set_color, hue value must be between 0 and 359")
-            return False
-        saturation = int(hsv[1])
-        if (saturation < 0) or saturation > 255:
-            self.logger.error(f"set_color, saturation value must be between 0 and 255")
-            return False
+        if not self.HUE_RANGE['min'] <= hue <= self.HUE_RANGE['max']:
+            hue = clamp(hue, self.HUE_RANGE['min'], self.HUE_RANGE['max'])
+            self.logger.warning(f"set_color: hue value must be between {self.HUE_RANGE['min']} and {self.HUE_RANGE['max']}; hue will be set to {hue}")
 
-        self.logger.debug(f"set_color called with mapped {mapped} and hs(v): {int(hsv[0])}, {int(hsv[1])}")
+        if not self.SATURATION_RANGE['min'] <= saturation <= self.SATURATION_RANGE['max']:
+            saturation = clamp(saturation, self.SATURATION_RANGE['min'], self.SATURATION_RANGE['max'])
+            self.logger.warning(f"set_color: saturation value must be between {self.SATURATION_RANGE['min']} and {self.SATURATION_RANGE['max']}; hue will be set to {saturation}")
+
+        self.logger.debug(f"set_color called with mapped={mapped} and hs: {hue}, {saturation}")
+
+        param = {
+            'hue': hue,
+            'saturation': saturation,
+            'duration': duration,
+        }
 
         # special mode for white color (hue=0, saturation=0):
-        if (int(hsv[0]) == 0) and (int(hsv[1]) == 0):
+        if (hue == 0) and (saturation == 0):
             self.logger.debug(f"set_color, warm white color selected")
-            success = self.set_color_temp(ain, temperature=2700, duration=1)
-            return success
+            return self.set_color_temp(ain, temperature=self.COLOR_TEMP_RANGE['min'], duration=1)
 
         if mapped:
-            success = self._aha_request("setcolor", ain=ain, param=params)
+            result = self._set_mapped_color(ain, param)
         else:
-            success = self._aha_request("setunmappedcolor", ain=ain, param=params)
+            result = self._set_unmapped_color(ain, param)
 
-        self.logger.debug(f"set_color in mapped {mapped} mode: success: {success}")
-        return success
+        self.logger.debug(f"set_color in mapped={mapped} with result={result}")
+        return result
 
-    def set_color_discrete(self, ain, hue, duration=0):
+    def set_hsv(self, ain: str, hsv: list, duration: int = 1, mapped: bool = True) -> bool:
+        """
+        Set hue, saturation, level.
+        hsv: colorspace element obtained from get_colors()
+        hsv is an array including hue, saturation and level
+                 hue must be within range 0-359
+                 saturation must be within range 0-100
+                 value must be within range 0-100
+        duration: Speed of change in seconds, 0 = instant
+        mapped = True uses the AVM setcolor function. It only supports pre-defined colors that can be obtained by the get_colors function.
+        mapped = False uses the AVM setunmappedcolor function, featured by AVM firmwareversion since approximately Q2 2022. It supports every combination if hue/saturation/level
+        """
+
+        if len(hsv) != 3:
+            self.logger.warning(f"set_color: hsv={hsv} does to much or to less entries. hue, saturation and level needed.")
+            return False
+
+        hue, saturation, level = hsv
+
+        result_hs = self.set_color(ain, [hue, saturation], duration, mapped)
+        result_l = self.set_level_percentage(ain, level)
+
+        self.logger.debug(f"set_hsv: in mapped '{mapped}': result_hs={result_hs}, result_l={result_l}")
+        return result_hs & result_l
+
+    @NoKeyOrAttributeError
+    def get_color(self, ain: str) -> list:
+        """get hue, saturation value as list"""
+        return self.get_devices_as_dict()[ain].color
+
+    def get_hsv(self, ain: str) -> list:
+        """get hue, saturation, level value as list"""
+        hsv = self.get_color(ain)
+        hsv.append(self.get_level_percentage(ain))
+        return hsv
+
+    def _set_mapped_color(self, ain: str, param: dict):
+        return self._aha_request("setcolor", ain=ain, param=param, result_type='int')
+
+    def _set_unmapped_color(self, ain: str, param: dict):
+        return self._aha_request("setunmappedcolor", ain=ain, param=param, result_type='int')
+
+    def set_color_discrete(self, ain: str, hue: int, duration: int = 0):
         """
         Set Led color to the closest discrete hue value.
         """
@@ -2751,13 +2841,6 @@ class FritzHome:
 
         return self._aha_request("setcolor", ain=ain, param=param, result_type='int')
 
-    @NoKeyOrAttributeError
-    def get_hue(self, ain):
-        """
-        Get Hue value.
-        """
-        return self.get_devices_as_dict()[ain].hue
-
     def get_color_temps(self, ain: str) -> list:
         """
         Get temperatures supported by this lightbulb.
@@ -2774,12 +2857,17 @@ class FritzHome:
         temperature: temperature element obtained from get_temperatures()
         duration: Speed of change in seconds, 0 = instant
         """
-        params = {
+
+        if not self.COLOR_TEMP_RANGE['min'] <= temperature <= self.COLOR_TEMP_RANGE['max']:
+            temperature = clamp(temperature, self.COLOR_TEMP_RANGE['min'], self.COLOR_TEMP_RANGE['max'])
+            self.logger.warning(f"set_color_temp: temperature value must be between {self.COLOR_TEMP_RANGE['min']} and {self.COLOR_TEMP_RANGE['max']}; temperature will be set to {temperature}")
+
+        param = {
             'temperature': int(temperature),
             'duration': int(duration) * 10
             }
 
-        return self._aha_request("setcolortemperature", ain=ain, param=params, result_type='int')
+        return self._aha_request("setcolortemperature", ain=ain, param=param, result_type='int')
 
     @NoKeyOrAttributeError
     def get_color_temp(self, ain: str) -> int:
@@ -3560,7 +3648,9 @@ class FritzHome:
         unmapped_hue = None
         unmapped_saturation = None
         colortemperature = None
-        
+        color = None
+        hsv = None
+
         logger = logging.getLogger(__name__)
 
         def _update_from_node(self, node):
@@ -3635,6 +3725,25 @@ class FritzHome:
                     self.colortemperature = get_node_value_as_int(colorcontrol_element, "temperature")
                 except ValueError:
                     self.colortemperature = 0
+
+                if self.mapped:
+                    if self.hue and self.saturation:
+                        self.color = [self.hue, self.saturation]
+                    else:
+                        self.color = [0, 0]
+                else:
+                    if self.unmapped_hue and self.unmapped_saturation:
+                        self.color = [self.unmapped_hue, self.unmapped_saturation]
+                    else:
+                        self.color = [0, 0]
+                self.logger.debug(f"FritzColor: created color={self.color} with mapped={self.mapped}")
+
+                # get levelpercentage and add it to color to get hsv
+                levelcontrol_element = node.find("levelcontrol")
+                if levelcontrol_element is not None:
+                    levelpercentage = get_node_value_as_int(levelcontrol_element, "levelpercentage")
+                    self.hsv = self.color.copy()
+                    self.hsv.append(levelpercentage)
 
         def get_colors(self):
             """Get the supported colors."""

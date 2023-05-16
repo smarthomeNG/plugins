@@ -255,10 +255,12 @@ item_attributes:
             - hue                                       # rw   num  
             - set_saturation                            # wo   num  
             - saturation                                # rw   num  
-            - set_colortemperature                      # wo   num  
-            - colortemperature                          # rw   num  
             - unmapped_hue                              # rw   num  
             - unmapped_saturation                       # rw   num  
+            - color                                     # rw   list 
+            - hsv                                       # rw   list 
+            - set_colortemperature                      # wo   num  
+            - colortemperature                          # rw   num  
             - color_mode                                # ro   num  
             - supported_color_mode                      # ro   num  
             - fullcolorsupport                          # ro   bool 
@@ -278,6 +280,8 @@ item_attributes:
               # aha-blind Attributes
             - blind_mode                                # ro   str  
             - endpositionsset                           # ro   bool 
+              # aha-device Attributes
+            - statistics_temp                           # ro   list 
         valid_list_description:
         # NOTE: valid_list_description is automatically created by using item_attributes_master.py
             # tr064 Attributes
@@ -424,10 +428,12 @@ item_attributes:
             - Hue (Status und Setzen)
             - Saturation (Setzen)
             - Saturation (Status und Setzen)
+            - Hue (unmapped) (Status und Setzen)
+            - Saturation (unmapped)  (Status und Setzen)
+            - Farbwerte als Liste h,s (Status und Setzen)
+            - Farbwerte und Helligkeit als Liste h,s,v (Status und Setzen)
             - Farbtemperatur (Setzen)
             - Farbtemperatur (Status und Setzen)
-            - Hue (Status und Setzen)
-            - Saturation (Status und Setzen)
             - Aktueller Farbmodus (1-HueSaturation-Mode; 4-Farbtemperatur-Mode)
             - Unterstützer Farbmodus (1-HueSaturation-Mode; 4-Farbtemperatur-Mode)
             - Lampe unterstützt setunmappedcolor
@@ -447,6 +453,8 @@ item_attributes:
               # aha-blind Attributes
             - automatische Zeitschaltung oder manuell fahren
             - ist die Endlage für das Rollo konfiguriert
+              # aha-device Attributes
+            - Wertestatistik für Temperatur
     avm_incoming_allowed:
         type: str
         mandatory: false
