@@ -3730,7 +3730,6 @@ class Callmonitor:
 
         self._call_monitor_incoming_filter = call_monitor_incoming_filter
         self._callback = callback
-        self.items = dict()                # item dict
         self._call_active = dict()
         self._listen_active = False
         self._call_active['incoming'] = False
@@ -3775,15 +3774,19 @@ class Callmonitor:
         self._stop_counter('incoming')
         self._stop_counter('outgoing')
 
-        try:
-            self._listen_thread.join(1)
-        except Exception:
-            pass
+        if self._listen_thread:
+            try:
+                self._listen_thread.join(1)
+            except Exception as e:   # AttributeError
+                self.logger.debug(f"Error {e!r} occurred during disconnecting of Callmonitor.")
+                pass
 
-        try:
-            self.conn.shutdown(2)
-        except Exception:
-            pass
+        if self.conn:
+            try:
+                self.conn.shutdown(2)
+            except Exception as e:
+                self.logger.debug(f"Error {e!r} occurred during shutdown of Callmonitor.")
+                pass
 
     def reconnect(self):
         """
@@ -3791,53 +3794,6 @@ class Callmonitor:
         """
         self.disconnect()
         self.connect()
-
-    def register_item(self, item, item_config: dict):
-        """
-        Registers an item to the CallMonitoringService
-
-        :param item: item to register
-        :param item_config: item config dict of item to be registered
-        """
-        avm_data_type = item_config['avm_data_type']
-
-        # handle CALL_MONITOR_ATTRIBUTES_IN
-        if avm_data_type in CALL_MONITOR_ATTRIBUTES_IN:
-            item_config.update({'monitor_item_type': 'incoming'})
-
-        elif avm_data_type in CALL_MONITOR_ATTRIBUTES_OUT:
-            item_config.update({'monitor_item_type': 'outgoing'})
-
-        elif avm_data_type in CALL_MONITOR_ATTRIBUTES_GEN:
-            item_config.update({'monitor_item_type': 'generic'})
-
-        elif avm_data_type in CALL_MONITOR_ATTRIBUTES_TRIGGER:
-            avm_incoming_allowed = self._plugin_instance.get_iattr_value(item.conf, 'avm_incoming_allowed')
-            avm_target_number = self._plugin_instance.get_iattr_value(item.conf, 'avm_target_number')
-
-            if not avm_incoming_allowed or not avm_target_number:
-                self.logger.error(f"For Trigger-item={item.path()} both 'avm_incoming_allowed' and 'avm_target_number' must be specified as attributes. Item will be ignored.")
-            else:
-                item_config.update({'monitor_item_type': 'trigger', 'avm_incoming_allowed': avm_incoming_allowed, 'avm_target_number': avm_target_number})
-
-        elif avm_data_type in CALL_MONITOR_ATTRIBUTES_DURATION:
-            if avm_data_type == 'call_duration_incoming':
-                item_config.update({'monitor_item_type': 'duration_in'})
-            else:
-                item_config.update({'monitor_item_type': 'duration_out'})
-
-        else:
-            item_config.update({'monitor_item_type': 'generic'})
-
-        # register item
-        self.items[item] = item_config
-
-    def unregister_item(self, item):
-        """ remove item from instance """
-        try:
-            del self.items[item]
-        except KeyError:
-            pass
 
     def set_callmonitor_item_values_initially(self):
         """
@@ -3848,8 +3804,10 @@ class Callmonitor:
         if not _calllist:
             return
 
-        for item in self.items:
-            avm_data_type = self.items[item]['avm_data_type']
+        for item in self.item_list():
+            # get item config
+            item_config = self._plugin_instance.get_item_config(item)
+            avm_data_type = item_config['avm_data_type']
 
             if avm_data_type == 'last_caller_incoming':
                 for element in _calllist:
@@ -3956,44 +3914,40 @@ class Callmonitor:
                         break
 
     def item_list(self):
-        return list(self.items.keys())
+        """Returns duration item list of all monitor items """
+        return self._plugin_instance.get_monitor_items()
 
     def item_list_gen(self) -> list:
-        return self._get_item_list({'monitor_item_type': 'generic'})
+        """Returns duration item list of items for generic use"""
+        return self._plugin_instance.get_item_list(filter_key='monitor_item_type', filter_value='generic')
 
     def item_list_incoming(self) -> list:
-        return self._get_item_list({'monitor_item_type': 'incoming'})
+        """Returns duration item list of items for incoming direction"""
+        return self._plugin_instance.get_item_list(filter_key='monitor_item_type', filter_value='incoming')
 
     def item_list_outgoing(self) -> list:
-        return self._get_item_list({'monitor_item_type': 'outgoing'})
+        """Returns duration item list of items for outgoing direction"""
+        return self._plugin_instance.get_item_list(filter_key='monitor_item_type', filter_value='outgoing')
 
     def item_list_trigger(self) -> list:
-        return self._get_item_list({'monitor_item_type': 'trigger'})
+        """Returns duration item list of trigger items"""
+        return self._plugin_instance.get_item_list(filter_key='monitor_item_type', filter_value='trigger')
 
     def duration_item_in(self):
-        item_list = self._get_item_list({'monitor_item_type': 'duration_in'})
+        """Returns duration item for in-direction"""
+        item_list = self._plugin_instance.get_item_list(filter_key='monitor_item_type', filter_value='duration_in')
         if item_list:
             return item_list[0]
 
     def duration_item_out(self):
-        item_list = self._get_item_list({'monitor_item_type': 'duration_out'})
+        """Returns duration item for out-direction"""
+        item_list = self._plugin_instance.get_item_list(filter_key='monitor_item_type', filter_value='duration_out')
         if item_list:
             return item_list[0]
 
-    def _get_item_list(self, sub_dict: dict) -> list:
-        item_list = []
-        for item in self.items:
-            if sub_dict.items() <= self.items[item].items():
-                item_list.append(item)
-        return item_list
-
     def item_count_total(self):
-        """
-        Returns number of added items (all items of MonitoringService service)
-
-        :return: number of items hold by the MonitoringService
-        """
-        return len(self.items)
+        """Returns number of monitor items (all items of MonitoringService service)"""
+        return len(self.item_list())
 
     def _listen(self, recv_buffer: int = 4096):
         """
@@ -4042,7 +3996,8 @@ class Callmonitor:
                     self._duration_counter_thread_incoming.join(1)
                 elif direction == 'outgoing':
                     self._duration_counter_thread_outgoing.join(1)
-            except Exception:
+            except Exception as e:
+                self.logger.warning(f"Error {e!r} occurred during stopping counter of Callmonitor")
                 pass
 
     def _count_duration_incoming(self):
@@ -4074,7 +4029,7 @@ class Callmonitor:
         Data Format:
         Ausgehende Anrufe: datum;CALL;ConnectionID;Nebenstelle;GenutzteNummer;AngerufeneNummer;SIP+Nummer
         Eingehende Anrufe: datum;RING;ConnectionID;Anrufer-Nr;Angerufene-Nummer;SIP+Nummer
-        zustandegekommene Verbindung: datum;CONNECT;ConnectionID;Nebenstelle;Nummer;
+        zustande gekommene Verbindung: datum;CONNECT;ConnectionID;Nebenstelle;Nummer;
         Ende der Verbindung: datum;DISCONNECT;ConnectionID;dauerInSekunden;
 
         :param line: data line which is parsed
@@ -4105,7 +4060,9 @@ class Callmonitor:
 
         # set generic item value
         for item in self.item_list_gen():
-            avm_data_type = self.items[item]['avm_data_type']
+            item_config = self._plugin_instance.get_item_config(item)
+            avm_data_type = item_config['avm_data_type']
+
             if avm_data_type == 'call_event':
                 item(event.lower(), self._plugin_instance.get_fullname())
             if avm_data_type == 'call_direction':
@@ -4118,9 +4075,11 @@ class Callmonitor:
         if event == 'RING':
             # process "trigger items"
             for trigger_item in self.item_list_trigger():
-                avm_data_type = self.items[trigger_item]['avm_data_type']
-                avm_incoming_allowed = self.items[trigger_item]['avm_incoming_allowed']
-                avm_target_number = self.items[trigger_item]['avm_target_number']
+                item_config = self._plugin_instance.get_item_config(trigger_item)
+                avm_data_type = item_config['avm_data_type']
+                avm_incoming_allowed = item_config['avm_incoming_allowed']
+                avm_target_number = item_config['avm_target_number']
+
                 trigger_item(0, self._plugin_instance.get_fullname())
                 if self.debug_log:
                     self.logger.debug(f"{avm_data_type} {call_from} {call_to}")
@@ -4138,7 +4097,9 @@ class Callmonitor:
 
                 # process items specific to incoming calls
                 for item in self.item_list_incoming():
-                    avm_data_type = self.items[item]['avm_data_type']
+                    item_config = self._plugin_instance.get_item_config(item)
+                    avm_data_type = item_config['avm_data_type']
+
                     if avm_data_type == 'is_call_incoming':
                         if self.debug_log:
                             self.logger.debug("Setting is_call_incoming: True")
@@ -4180,7 +4141,9 @@ class Callmonitor:
 
             # process items specific to outgoing calls
             for item in self.item_list_outgoing():
-                avm_data_type = self.items[item]['avm_data_type']
+                item_config = self._plugin_instance.get_item_config(item)
+                avm_data_type = item_config['avm_data_type']
+
                 if avm_data_type == 'is_call_outgoing':
                     item(True, self._plugin_instance.get_fullname())
                 elif avm_data_type == 'last_caller_outgoing':
@@ -4206,7 +4169,9 @@ class Callmonitor:
                     self._stop_counter('outgoing')  # stop potential running counter for parallel (older) outgoing call
                     self._start_counter(dt, 'outgoing')
                 for item in self.item_list_outgoing():
-                    avm_data_type = self.items[item]['avm_data_type']
+                    item_config = self._plugin_instance.get_item_config(item)
+                    avm_data_type = item_config['avm_data_type']
+
                     if avm_data_type == 'call_event_outgoing':
                         item(event.lower(), self._plugin_instance.get_fullname())
                         break
@@ -4219,7 +4184,9 @@ class Callmonitor:
                         self.logger.debug("Starting Counter for Call Time")
                     self._start_counter(dt, 'incoming')
                 for item in self.item_list_incoming():
-                    avm_data_type = self.items[item]['avm_data_type']
+                    item_config = self._plugin_instance.get_item_config(item)
+                    avm_data_type = item_config['avm_data_type']
+
                     if avm_data_type == 'call_event_incoming':
                         if self.debug_log:
                             self.logger.debug(f"Setting call_event_incoming: {event.lower()}")
@@ -4230,7 +4197,9 @@ class Callmonitor:
             # handle OUTGOING calls
             if callid == self._call_outgoing_cid:
                 for item in self.item_list_outgoing():
-                    avm_data_type = self.items[item]['avm_data_type']
+                    item_config = self._plugin_instance.get_item_config(item)
+                    avm_data_type = item_config['avm_data_type']
+
                     if avm_data_type == 'call_event_outgoing':
                         item(event.lower(), self._plugin_instance.get_fullname())
                     elif avm_data_type == 'is_call_outgoing':
@@ -4242,7 +4211,9 @@ class Callmonitor:
             # handle INCOMING calls
             elif callid == self._call_incoming_cid:
                 for item in self.item_list_incoming():
-                    avm_data_type = self.items[item]['avm_data_type']
+                    item_config = self._plugin_instance.get_item_config(item)
+                    avm_data_type = item_config['avm_data_type']
+
                     if avm_data_type == 'call_event_incoming':
                         if self.debug_log:
                             self.logger.debug(f"Setting call_event_incoming: {event.lower()}")
