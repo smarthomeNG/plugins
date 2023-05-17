@@ -6,7 +6,7 @@ plugin:
     tester: Morg
     state: develop
     keywords: iot device av pioneer sdp
-    version: 1.0.1
+    version: 1.0.2
     sh_minversion: 1.9.5
     py_minversion: 3.7
     multi_instance: false
@@ -301,6 +301,154 @@ item_structs:
             pioneer_read: false
             pioneer_write: true
 
+        settings:
+
+            read:
+                type: bool
+                enforce_updates: true
+                pioneer_read_group_trigger: general.settings
+
+            language:
+                type: str
+                pioneer_command: general.settings.language
+                pioneer_read: true
+                pioneer_write: true
+                pioneer_read_group:
+                -   general
+                -   general.settings
+                pioneer_read_initial: true
+
+            name:
+                type: str
+                pioneer_command: general.settings.name
+                pioneer_read: true
+                pioneer_write: true
+                pioneer_read_group:
+                -   general
+                -   general.settings
+                pioneer_read_initial: true
+
+            speakersystem:
+                type: str
+                pioneer_command: general.settings.speakersystem
+                pioneer_read: true
+                pioneer_write: true
+                pioneer_read_group:
+                -   general
+                -   general.settings
+                pioneer_read_initial: true
+
+            surroundposition:
+                type: str
+                pioneer_command: general.settings.surroundposition
+                pioneer_read: true
+                pioneer_write: true
+                pioneer_read_group:
+                -   general
+                -   general.settings
+                pioneer_read_initial: true
+
+            xover:
+                type: str
+                pioneer_command: general.settings.xover
+                pioneer_read: true
+                pioneer_write: true
+                pioneer_read_group:
+                -   general
+                -   general.settings
+                pioneer_read_initial: true
+
+            xcurve:
+                type: str
+                pioneer_command: general.settings.xcurve
+                pioneer_read: true
+                pioneer_write: true
+                pioneer_read_group:
+                -   general
+                -   general.settings
+                pioneer_read_initial: true
+
+            loudness:
+                type: bool
+                pioneer_command: general.settings.loudness
+                pioneer_read: true
+                pioneer_write: true
+                pioneer_read_group:
+                -   general
+                -   general.settings
+                pioneer_read_initial: true
+
+            initialvolume:
+                type: num
+                pioneer_command: general.settings.initialvolume
+                pioneer_read: true
+                pioneer_write: true
+                pioneer_read_group:
+                -   general
+                -   general.settings
+                pioneer_read_initial: true
+
+            mutelevel:
+                type: num
+                pioneer_command: general.settings.mutelevel
+                pioneer_read: true
+                pioneer_write: true
+                pioneer_read_group:
+                -   general
+                -   general.settings
+                pioneer_read_initial: true
+
+            hdmi:
+
+                read:
+                    type: bool
+                    enforce_updates: true
+                    pioneer_read_group_trigger: general.settings.hdmi
+
+                control:
+                    type: bool
+                    pioneer_command: general.settings.hdmi.control
+                    pioneer_read: true
+                    pioneer_write: true
+                    pioneer_read_group:
+                    -   general
+                    -   general.settings
+                    -   general.settings.hdmi
+                    pioneer_read_initial: true
+
+                controlmode:
+                    type: bool
+                    pioneer_command: general.settings.hdmi.controlmode
+                    pioneer_read: true
+                    pioneer_write: true
+                    pioneer_read_group:
+                    -   general
+                    -   general.settings
+                    -   general.settings.hdmi
+                    pioneer_read_initial: true
+
+                arc:
+                    type: bool
+                    pioneer_command: general.settings.hdmi.arc
+                    pioneer_read: true
+                    pioneer_write: true
+                    pioneer_read_group:
+                    -   general
+                    -   general.settings
+                    -   general.settings.hdmi
+                    pioneer_read_initial: true
+
+                standbythrough:
+                    type: str
+                    pioneer_command: general.settings.hdmi.standbythrough
+                    pioneer_read: true
+                    pioneer_write: true
+                    pioneer_read_group:
+                    -   general
+                    -   general.settings
+                    -   general.settings.hdmi
+                    pioneer_read_initial: true
+
     tuner:
 
         read:
@@ -437,6 +585,17 @@ item_structs:
                 type: bool
                 enforce_updates: true
                 pioneer_read_group_trigger: zone1.settings
+
+            standby:
+                type: num
+                pioneer_command: zone1.settings.standby
+                pioneer_read: true
+                pioneer_write: true
+                pioneer_read_group:
+                -   zone1
+                -   zone1.settings
+                pioneer_read_initial: true
+                remark: 0 = OFF, 15 = 15 minutes, 30 = 30 minutes, 60 = 60 minutes
 
             sound:
 
@@ -832,6 +991,17 @@ item_structs:
                 enforce_updates: true
                 pioneer_read_group_trigger: zone2.settings
 
+            standby:
+                type: num
+                pioneer_command: zone2.settings.standby
+                pioneer_read: true
+                pioneer_write: true
+                pioneer_read_group:
+                -   zone2
+                -   zone2.settings
+                pioneer_read_initial: true
+                remark: 0 = OFF, 0.5 = 30 minutes, 1 = 1 hour, 3 = 3 hours, 6 = 6 hours, 9 = 9 hours
+
             sound:
 
                 read:
@@ -1002,6 +1172,17 @@ item_structs:
                 enforce_updates: true
                 pioneer_read_group_trigger: zone3.settings
 
+            standby:
+                type: num
+                pioneer_command: zone3.settings.standby
+                pioneer_read: true
+                pioneer_write: true
+                pioneer_read_group:
+                -   zone3
+                -   zone3.settings
+                pioneer_read_initial: true
+                remark: 0 = OFF, 0.5 = 30 minutes, 1 = 1 hour, 3 = 3 hours, 6 = 6 hours, 9 = 9 hours
+
             sound:
 
                 read:
@@ -1073,6 +1254,24 @@ item_structs:
                 lookup:
                     type: list
                     pioneer_lookup: INPUTHD#list
+
+        settings:
+
+            read:
+                type: bool
+                enforce_updates: true
+                pioneer_read_group_trigger: hdzone.settings
+
+            standby:
+                type: num
+                pioneer_command: hdzone.settings.standby
+                pioneer_read: true
+                pioneer_write: true
+                pioneer_read_group:
+                -   hdzone
+                -   hdzone.settings
+                pioneer_read_initial: true
+                remark: 0 = OFF, 0.5 = 30 minutes, 1 = 1 hour, 3 = 3 hours, 6 = 6 hours, 9 = 9 hours
 
     ALL:
 
@@ -1276,6 +1475,18 @@ item_structs:
                     type: bool
                     enforce_updates: true
                     pioneer_read_group_trigger: ALL.zone1.settings
+
+                standby:
+                    type: num
+                    pioneer_command: zone1.settings.standby
+                    pioneer_read: true
+                    pioneer_write: true
+                    pioneer_read_group:
+                    -   ALL
+                    -   ALL.zone1
+                    -   ALL.zone1.settings
+                    pioneer_read_initial: true
+                    remark: 0 = OFF, 15 = 15 minutes, 30 = 30 minutes, 60 = 60 minutes
 
                 sound:
 
@@ -1725,6 +1936,25 @@ item_structs:
                         type: list
                         pioneer_lookup: INPUTHD#list
 
+            settings:
+
+                read:
+                    type: bool
+                    enforce_updates: true
+                    pioneer_read_group_trigger: ALL.hdzone.settings
+
+                standby:
+                    type: num
+                    pioneer_command: hdzone.settings.standby
+                    pioneer_read: true
+                    pioneer_write: true
+                    pioneer_read_group:
+                    -   ALL
+                    -   ALL.hdzone
+                    -   ALL.hdzone.settings
+                    pioneer_read_initial: true
+                    remark: 0 = OFF, 0.5 = 30 minutes, 1 = 1 hour, 3 = 3 hours, 6 = 6 hours, 9 = 9 hours
+
     SC-LX87:
 
         read:
@@ -1941,6 +2171,18 @@ item_structs:
                     type: bool
                     enforce_updates: true
                     pioneer_read_group_trigger: SC-LX87.zone1.settings
+
+                standby:
+                    type: num
+                    pioneer_command: zone1.settings.standby
+                    pioneer_read: true
+                    pioneer_write: true
+                    pioneer_read_group:
+                    -   SC-LX87
+                    -   SC-LX87.zone1
+                    -   SC-LX87.zone1.settings
+                    pioneer_read_initial: true
+                    remark: 0 = OFF, 15 = 15 minutes, 30 = 30 minutes, 60 = 60 minutes
 
                 sound:
 
@@ -2538,6 +2780,18 @@ item_structs:
                     enforce_updates: true
                     pioneer_read_group_trigger: SC-LX87.zone3.settings
 
+                standby:
+                    type: num
+                    pioneer_command: zone3.settings.standby
+                    pioneer_read: true
+                    pioneer_write: true
+                    pioneer_read_group:
+                    -   SC-LX87
+                    -   SC-LX87.zone3
+                    -   SC-LX87.zone3.settings
+                    pioneer_read_initial: true
+                    remark: 0 = OFF, 0.5 = 30 minutes, 1 = 1 hour, 3 = 3 hours, 6 = 6 hours, 9 = 9 hours
+
                 sound:
 
                     read:
@@ -2613,6 +2867,25 @@ item_structs:
                     lookup:
                         type: list
                         pioneer_lookup: INPUTHD#list
+
+            settings:
+
+                read:
+                    type: bool
+                    enforce_updates: true
+                    pioneer_read_group_trigger: SC-LX87.hdzone.settings
+
+                standby:
+                    type: num
+                    pioneer_command: hdzone.settings.standby
+                    pioneer_read: true
+                    pioneer_write: true
+                    pioneer_read_group:
+                    -   SC-LX87
+                    -   SC-LX87.hdzone
+                    -   SC-LX87.hdzone.settings
+                    pioneer_read_initial: true
+                    remark: 0 = OFF, 0.5 = 30 minutes, 1 = 1 hour, 3 = 3 hours, 6 = 6 hours, 9 = 9 hours
 
     SC-LX77:
 
@@ -2830,6 +3103,18 @@ item_structs:
                     type: bool
                     enforce_updates: true
                     pioneer_read_group_trigger: SC-LX77.zone1.settings
+
+                standby:
+                    type: num
+                    pioneer_command: zone1.settings.standby
+                    pioneer_read: true
+                    pioneer_write: true
+                    pioneer_read_group:
+                    -   SC-LX77
+                    -   SC-LX77.zone1
+                    -   SC-LX77.zone1.settings
+                    pioneer_read_initial: true
+                    remark: 0 = OFF, 15 = 15 minutes, 30 = 30 minutes, 60 = 60 minutes
 
                 sound:
 
@@ -3427,6 +3712,18 @@ item_structs:
                     enforce_updates: true
                     pioneer_read_group_trigger: SC-LX77.zone3.settings
 
+                standby:
+                    type: num
+                    pioneer_command: zone3.settings.standby
+                    pioneer_read: true
+                    pioneer_write: true
+                    pioneer_read_group:
+                    -   SC-LX77
+                    -   SC-LX77.zone3
+                    -   SC-LX77.zone3.settings
+                    pioneer_read_initial: true
+                    remark: 0 = OFF, 0.5 = 30 minutes, 1 = 1 hour, 3 = 3 hours, 6 = 6 hours, 9 = 9 hours
+
                 sound:
 
                     read:
@@ -3502,6 +3799,25 @@ item_structs:
                     lookup:
                         type: list
                         pioneer_lookup: INPUTHD#list
+
+            settings:
+
+                read:
+                    type: bool
+                    enforce_updates: true
+                    pioneer_read_group_trigger: SC-LX77.hdzone.settings
+
+                standby:
+                    type: num
+                    pioneer_command: hdzone.settings.standby
+                    pioneer_read: true
+                    pioneer_write: true
+                    pioneer_read_group:
+                    -   SC-LX77
+                    -   SC-LX77.hdzone
+                    -   SC-LX77.hdzone.settings
+                    pioneer_read_initial: true
+                    remark: 0 = OFF, 0.5 = 30 minutes, 1 = 1 hour, 3 = 3 hours, 6 = 6 hours, 9 = 9 hours
 
     SC-LX57:
 
@@ -3719,6 +4035,18 @@ item_structs:
                     type: bool
                     enforce_updates: true
                     pioneer_read_group_trigger: SC-LX57.zone1.settings
+
+                standby:
+                    type: num
+                    pioneer_command: zone1.settings.standby
+                    pioneer_read: true
+                    pioneer_write: true
+                    pioneer_read_group:
+                    -   SC-LX57
+                    -   SC-LX57.zone1
+                    -   SC-LX57.zone1.settings
+                    pioneer_read_initial: true
+                    remark: 0 = OFF, 15 = 15 minutes, 30 = 30 minutes, 60 = 60 minutes
 
                 sound:
 
@@ -4316,6 +4644,18 @@ item_structs:
                     enforce_updates: true
                     pioneer_read_group_trigger: SC-LX57.zone3.settings
 
+                standby:
+                    type: num
+                    pioneer_command: zone3.settings.standby
+                    pioneer_read: true
+                    pioneer_write: true
+                    pioneer_read_group:
+                    -   SC-LX57
+                    -   SC-LX57.zone3
+                    -   SC-LX57.zone3.settings
+                    pioneer_read_initial: true
+                    remark: 0 = OFF, 0.5 = 30 minutes, 1 = 1 hour, 3 = 3 hours, 6 = 6 hours, 9 = 9 hours
+
                 sound:
 
                     read:
@@ -4391,6 +4731,25 @@ item_structs:
                     lookup:
                         type: list
                         pioneer_lookup: INPUTHD#list
+
+            settings:
+
+                read:
+                    type: bool
+                    enforce_updates: true
+                    pioneer_read_group_trigger: SC-LX57.hdzone.settings
+
+                standby:
+                    type: num
+                    pioneer_command: hdzone.settings.standby
+                    pioneer_read: true
+                    pioneer_write: true
+                    pioneer_read_group:
+                    -   SC-LX57
+                    -   SC-LX57.hdzone
+                    -   SC-LX57.hdzone.settings
+                    pioneer_read_initial: true
+                    remark: 0 = OFF, 0.5 = 30 minutes, 1 = 1 hour, 3 = 3 hours, 6 = 6 hours, 9 = 9 hours
 
     SC-2023:
 
@@ -4594,6 +4953,18 @@ item_structs:
                     type: bool
                     enforce_updates: true
                     pioneer_read_group_trigger: SC-2023.zone1.settings
+
+                standby:
+                    type: num
+                    pioneer_command: zone1.settings.standby
+                    pioneer_read: true
+                    pioneer_write: true
+                    pioneer_read_group:
+                    -   SC-2023
+                    -   SC-2023.zone1
+                    -   SC-2023.zone1.settings
+                    pioneer_read_initial: true
+                    remark: 0 = OFF, 15 = 15 minutes, 30 = 30 minutes, 60 = 60 minutes
 
                 sound:
 
@@ -5191,6 +5562,18 @@ item_structs:
                     enforce_updates: true
                     pioneer_read_group_trigger: SC-2023.zone3.settings
 
+                standby:
+                    type: num
+                    pioneer_command: zone3.settings.standby
+                    pioneer_read: true
+                    pioneer_write: true
+                    pioneer_read_group:
+                    -   SC-2023
+                    -   SC-2023.zone3
+                    -   SC-2023.zone3.settings
+                    pioneer_read_initial: true
+                    remark: 0 = OFF, 0.5 = 30 minutes, 1 = 1 hour, 3 = 3 hours, 6 = 6 hours, 9 = 9 hours
+
                 sound:
 
                     read:
@@ -5266,6 +5649,25 @@ item_structs:
                     lookup:
                         type: list
                         pioneer_lookup: INPUTHD#list
+
+            settings:
+
+                read:
+                    type: bool
+                    enforce_updates: true
+                    pioneer_read_group_trigger: SC-2023.hdzone.settings
+
+                standby:
+                    type: num
+                    pioneer_command: hdzone.settings.standby
+                    pioneer_read: true
+                    pioneer_write: true
+                    pioneer_read_group:
+                    -   SC-2023
+                    -   SC-2023.hdzone
+                    -   SC-2023.hdzone.settings
+                    pioneer_read_initial: true
+                    remark: 0 = OFF, 0.5 = 30 minutes, 1 = 1 hour, 3 = 3 hours, 6 = 6 hours, 9 = 9 hours
 
     SC-1223:
 
@@ -5469,6 +5871,18 @@ item_structs:
                     type: bool
                     enforce_updates: true
                     pioneer_read_group_trigger: SC-1223.zone1.settings
+
+                standby:
+                    type: num
+                    pioneer_command: zone1.settings.standby
+                    pioneer_read: true
+                    pioneer_write: true
+                    pioneer_read_group:
+                    -   SC-1223
+                    -   SC-1223.zone1
+                    -   SC-1223.zone1.settings
+                    pioneer_read_initial: true
+                    remark: 0 = OFF, 15 = 15 minutes, 30 = 30 minutes, 60 = 60 minutes
 
                 sound:
 
@@ -6008,6 +6422,25 @@ item_structs:
                         type: list
                         pioneer_lookup: INPUTHD#list
 
+            settings:
+
+                read:
+                    type: bool
+                    enforce_updates: true
+                    pioneer_read_group_trigger: SC-1223.hdzone.settings
+
+                standby:
+                    type: num
+                    pioneer_command: hdzone.settings.standby
+                    pioneer_read: true
+                    pioneer_write: true
+                    pioneer_read_group:
+                    -   SC-1223
+                    -   SC-1223.hdzone
+                    -   SC-1223.hdzone.settings
+                    pioneer_read_initial: true
+                    remark: 0 = OFF, 0.5 = 30 minutes, 1 = 1 hour, 3 = 3 hours, 6 = 6 hours, 9 = 9 hours
+
     VSX-1123:
 
         read:
@@ -6210,6 +6643,18 @@ item_structs:
                     type: bool
                     enforce_updates: true
                     pioneer_read_group_trigger: VSX-1123.zone1.settings
+
+                standby:
+                    type: num
+                    pioneer_command: zone1.settings.standby
+                    pioneer_read: true
+                    pioneer_write: true
+                    pioneer_read_group:
+                    -   VSX-1123
+                    -   VSX-1123.zone1
+                    -   VSX-1123.zone1.settings
+                    pioneer_read_initial: true
+                    remark: 0 = OFF, 15 = 15 minutes, 30 = 30 minutes, 60 = 60 minutes
 
                 sound:
 
@@ -6659,6 +7104,25 @@ item_structs:
                         type: list
                         pioneer_lookup: INPUTHD#list
 
+            settings:
+
+                read:
+                    type: bool
+                    enforce_updates: true
+                    pioneer_read_group_trigger: VSX-1123.hdzone.settings
+
+                standby:
+                    type: num
+                    pioneer_command: hdzone.settings.standby
+                    pioneer_read: true
+                    pioneer_write: true
+                    pioneer_read_group:
+                    -   VSX-1123
+                    -   VSX-1123.hdzone
+                    -   VSX-1123.hdzone.settings
+                    pioneer_read_initial: true
+                    remark: 0 = OFF, 0.5 = 30 minutes, 1 = 1 hour, 3 = 3 hours, 6 = 6 hours, 9 = 9 hours
+
     VSX-923:
 
         read:
@@ -6861,6 +7325,18 @@ item_structs:
                     type: bool
                     enforce_updates: true
                     pioneer_read_group_trigger: VSX-923.zone1.settings
+
+                standby:
+                    type: num
+                    pioneer_command: zone1.settings.standby
+                    pioneer_read: true
+                    pioneer_write: true
+                    pioneer_read_group:
+                    -   VSX-923
+                    -   VSX-923.zone1
+                    -   VSX-923.zone1.settings
+                    pioneer_read_initial: true
+                    remark: 0 = OFF, 15 = 15 minutes, 30 = 30 minutes, 60 = 60 minutes
 
                 sound:
 
@@ -7309,5 +7785,24 @@ item_structs:
                     lookup:
                         type: list
                         pioneer_lookup: INPUTHD#list
+
+            settings:
+
+                read:
+                    type: bool
+                    enforce_updates: true
+                    pioneer_read_group_trigger: VSX-923.hdzone.settings
+
+                standby:
+                    type: num
+                    pioneer_command: hdzone.settings.standby
+                    pioneer_read: true
+                    pioneer_write: true
+                    pioneer_read_group:
+                    -   VSX-923
+                    -   VSX-923.hdzone
+                    -   VSX-923.hdzone.settings
+                    pioneer_read_initial: true
+                    remark: 0 = OFF, 0.5 = 30 minutes, 1 = 1 hour, 3 = 3 hours, 6 = 6 hours, 9 = 9 hours
 plugin_functions: NONE
 logic_parameters: NONE
