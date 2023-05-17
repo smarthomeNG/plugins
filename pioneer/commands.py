@@ -3,10 +3,10 @@
 
 # commands for dev pioneer
 models = {
-    'ALL': ['general.pqls', 'general.dimmer', 'general.sleep', 'general.display', 'general.error', 'general.multizone', 'tuner', 'zone1', 'zone2.control', 'hdzone'],
-    'SC-LX87': ['general.amp', 'zone2.settings.sound.channel_level', 'zone2.settings.sound.tone_control', 'zone3'],
-    'SC-LX77': ['general.amp', 'zone2.settings.sound.channel_level', 'zone2.settings.sound.tone_control', 'zone3'],
-    'SC-LX57': ['general.amp', 'zone2.settings.sound.channel_level', 'zone2.settings.sound.tone_control', 'zone3'],
+    'ALL': ['general.pqls', 'general.setup.surroundposition', 'general.setup.speakersystem', 'general.setup.xcurve', 'general.setup.xover', 'general.setup.hdmi', 'general.setup.name', 'general.setup.language', 'general.dimmer', 'general.sleep', 'general.display', 'general.error', 'general.multizone', 'tuner', 'zone1', 'zone2.control', 'hdzone'],
+    'SC-LX87': ['general.amp', 'general.setup.loudness', 'zone2.settings.sound.channel_level', 'zone2.settings.sound.tone_control', 'zone3'],
+    'SC-LX77': ['general.amp', 'general.setup.loudness', 'zone2.settings.sound.channel_level', 'zone2.settings.sound.tone_control', 'zone3'],
+    'SC-LX57': ['general.amp', 'general.setup.loudness', 'zone2.settings.sound.channel_level', 'zone2.settings.sound.tone_control', 'zone3'],
     'SC-2023': ['zone2.settings.sound.channel_level', 'zone2.settings.sound.tone_control', 'zone3'],
     'SC-1223': ['zone2.settings.sound.channel_level', 'zone2.settings.sound.tone_control'],
     'VSX-1123': [],
@@ -21,7 +21,25 @@ commands = {
         'dimmer': {'read': True, 'write': True, 'write_cmd': '{RAW_VALUE}SAA', 'cmd_settings': {'force_min': 0, 'force_max': 3}, 'item_type': 'num', 'dev_datatype': 'str', 'reply_pattern': r'SAA(\d)', 'item_attrs': {'attributes': {'remark': '0 = very bright, 1 = bright, 2 = dark, 3 = off'}}},
         'sleep': {'read': True, 'write': True, 'read_cmd': '?SAB', 'write_cmd': '{VALUE}SAB', 'item_type': 'num', 'dev_datatype': 'PioSleep', 'reply_pattern': r'SAB(\d{3})', 'item_attrs': {'attributes': {'remark': '0 = off, 30 = 30 minutes, 60 = 60 minutes, 90 = 90 minutes'}}},
         'amp': {'read': True, 'write': True, 'read_cmd': '?SAC', 'write_cmd': '{VALUE}SAC', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'SAC{LOOKUP}', 'lookup': 'AMP', 'item_attrs': {'attributes': {'remark': '0 = AMP, 1 = THR'}, 'lookup_item': True}},
-        'multizone': {'read': False, 'write': True, 'write_cmd': 'ZZ', 'item_type': 'str', 'dev_datatype': 'str'}
+        'multizone': {'read': False, 'write': True, 'write_cmd': 'ZZ', 'item_type': 'str', 'dev_datatype': 'str'},
+        'settings': {
+            'language': {'read': True, 'write': True, 'read_cmd': '?SSE', 'write_cmd': '{RAW_VALUE:02}SSE', 'item_type': 'str', 'dev_datatype': 'raw', 'reply_pattern': r'SSE{LOOKUP}', 'lookup': 'LANGUAGE', 'item_attrs': {'initial': True}},
+            'name': {'read': True, 'write': True, 'read_cmd': '?SSO', 'write_cmd': '{VALUE}SSO', 'item_type': 'str', 'dev_datatype': 'PioName', 'reply_pattern': r'SSO(?:\d{2})(.*)', 'item_attrs': {'initial': True}},
+            'speakersystem': {'read': True, 'write': True, 'read_cmd': '?SSF', 'write_cmd': '{RAW_VALUE:02}SSF', 'item_type': 'str', 'dev_datatype': 'raw', 'reply_pattern': r'SSF{LOOKUP}', 'lookup': 'SPEAKERSYSTEM', 'item_attrs': {'initial': True}},
+            'surroundposition': {'read': True, 'write': True, 'read_cmd': '?SSP', 'write_cmd': '{RAW_VALUE:01}SSP', 'item_type': 'str', 'dev_datatype': 'raw', 'reply_pattern': r'SSP{LOOKUP}', 'lookup': 'SURROUNDPOSITION', 'item_attrs': {'initial': True}},
+            'xover': {'read': True, 'write': True, 'read_cmd': '?SSQ', 'write_cmd': '{RAW_VALUE:01}SSQ', 'item_type': 'str', 'dev_datatype': 'raw', 'reply_pattern': r'SSQ{LOOKUP}', 'lookup': 'XOVER', 'item_attrs': {'initial': True}},
+            'xcurve': {'read': True, 'write': True, 'read_cmd': '?SST', 'write_cmd': '{RAW_VALUE:01}SST', 'item_type': 'str', 'dev_datatype': 'raw', 'reply_pattern': r'SST{LOOKUP}', 'lookup': 'XCURVE', 'item_attrs': {'initial': True}},
+            'loudness': {'read': True, 'write': True, 'read_cmd': '?SSU', 'write_cmd': '{RAW_VALUE:01}SSU', 'item_type': 'bool', 'dev_datatype': 'raw', 'reply_pattern': r'SSU(\d{1})', 'item_attrs': {'initial': True}},
+            'initialvolume': {'read': True, 'write': True, 'read_cmd': '?SUC', 'write_cmd': '{VALUE}SUC', 'item_type': 'num', 'dev_datatype': 'PioInitVol', 'reply_pattern': r'SUC(\d{3})', 'item_attrs': {'initial': True}},
+            'mutelevel': {'read': True, 'write': True, 'read_cmd': '?SUE', 'write_cmd': '{RAW_VALUE:01}SUE', 'item_type': 'num', 'dev_datatype': 'raw', 'reply_pattern': r'SUE{LOOKUP}', 'lookup': 'MUTELEVEL', 'item_attrs': {'initial': True}},
+            'hdmi': {
+                'control': {'read': True, 'write': True, 'read_cmd': '?STQ', 'write_cmd': '{RAW_VALUE:01}STQ', 'item_type': 'bool', 'dev_datatype': 'raw', 'reply_pattern': r'STQ(\d{1})', 'item_attrs': {'initial': True}},
+                'controlmode': {'read': True, 'write': True, 'read_cmd': '?STR', 'write_cmd': '{RAW_VALUE:01}STR', 'item_type': 'bool', 'dev_datatype': 'raw', 'reply_pattern': r'STR(\d{1})', 'item_attrs': {'initial': True}},
+                'arc': {'read': True, 'write': True, 'read_cmd': '?STT', 'write_cmd': '{RAW_VALUE:01}STT', 'item_type': 'bool', 'dev_datatype': 'raw', 'reply_pattern': r'STT(\d{1})', 'item_attrs': {'initial': True}},
+                'standbythrough': {'read': True, 'write': True, 'read_cmd': '?STU', 'write_cmd': '{RAW_VALUE:02}STU', 'item_type': 'str', 'dev_datatype': 'raw', 'reply_pattern': r'STU{LOOKUP})', 'lookup': 'STANDBYTHROUGH', 'item_attrs': {'initial': True}}
+            }
+
+    }
     },
     'tuner': {
         'tunerpreset': {'read': True, 'write': True, 'read_cmd': '?PR', 'item_type': 'num', 'write_cmd': '{RAW_VALUE}PR', 'item_type': 'num', 'dev_datatype': 'str', 'reply_pattern': r'PR([A-Ga-g]\d{2})'},
@@ -43,6 +61,7 @@ commands = {
             'inputdown': {'read': False, 'write': True, 'write_cmd': 'FD', 'item_type': 'bool', 'dev_datatype': 'raw'}
         },
         'settings': {
+            'standby': {'read': True, 'write': True, 'read_cmd': '?STY', 'write_cmd': '{VALUE}STY', 'item_type': 'num', 'dev_datatype': 'PioStandby', 'reply_pattern': r'STY(\d{4})', 'item_attrs': {'attributes': {'remark': '0 = OFF, 15 = 15 minutes, 30 = 30 minutes, 60 = 60 minutes'}, 'initial': True}},
             'sound': {
                 'channel_level': {
                     'front_left': {'read': True, 'write': True, 'read_cmd': '?L__CLV', 'item_type': 'num', 'cmd_settings': {'force_min': -12.0, 'valid_max': 12.0}, 'write_cmd': 'L__{VALUE}CLV', 'dev_datatype': 'PioChannelVol', 'reply_pattern': r'CLVL__(\d{2})'},
@@ -90,6 +109,7 @@ commands = {
             'inputdown': {'read': False, 'write': True, 'write_cmd': 'ZSFD', 'item_type': 'bool', 'dev_datatype': 'raw'}
         },
         'settings': {
+            'standby': {'read': True, 'write': True, 'read_cmd': '?STZ', 'write_cmd': '{VALUE}STZ', 'item_type': 'num', 'dev_datatype': 'PioStandby2', 'reply_pattern': r'STZ(\d{4})', 'item_attrs': {'attributes': {'remark': '0 = OFF, 0.5 = 30 minutes, 1 = 1 hour, 3 = 3 hours, 6 = 6 hours, 9 = 9 hours'}, 'initial': True}},
             'sound': {
                 'channel_level': {
                     'front_left': {'read': True, 'write': True, 'read_cmd': '?ZGEL___', 'item_type': 'num', 'cmd_settings': {'force_min': -12.0, 'valid_max': 12.0}, 'write_cmd': 'L__{VALUE}ZGE', 'dev_datatype': 'PioChannelVol', 'reply_pattern': r'ZGEL__(\d{2})'},
@@ -115,6 +135,7 @@ commands = {
             'inputdown': {'read': False, 'write': True, 'write_cmd': 'ZTFD', 'item_type': 'bool', 'dev_datatype': 'raw'}
         },
         'settings': {
+            'standby': {'read': True, 'write': True, 'read_cmd': '?SUA', 'write_cmd': '{VALUE}SUA', 'item_type': 'num', 'dev_datatype': 'PioStandby2', 'reply_pattern': r'SUA(\d{4})', 'item_attrs': {'attributes': {'remark': '0 = OFF, 0.5 = 30 minutes, 1 = 1 hour, 3 = 3 hours, 6 = 6 hours, 9 = 9 hours'}, 'initial': True}},
             'sound': {
                 'channel_level': {
                     'front_left': {'read': True, 'write': True, 'read_cmd': '?ZHEL___', 'item_type': 'num', 'cmd_settings': {'force_min': -12.0, 'valid_max': 12.0}, 'write_cmd': 'L__{VALUE}ZHE', 'dev_datatype': 'PioChannelVol', 'reply_pattern': r'ZHEL__(\d{2})'},
@@ -127,6 +148,9 @@ commands = {
         'control': {
             'power': {'read': True, 'write': True, 'read_cmd': '?ZEP', 'write_cmd': 'ZE{VALUE}', 'item_type': 'bool', 'dev_datatype': 'onoff', 'reply_pattern': r'ZEP(\d{1})'},
             'input': {'read': True, 'write': True, 'read_cmd': '?ZEA', 'write_cmd': '{VALUE}ZEA', 'item_type': 'str', 'dev_datatype': 'str', 'reply_pattern': r'ZEA{LOOKUP}', 'lookup': 'INPUTHD', 'item_attrs': {'lookup_item': True}}
+        },
+        'settings': {
+            'standby': {'read': True, 'write': True, 'read_cmd': '?SUB', 'write_cmd': '{VALUE}SUB', 'item_type': 'num', 'dev_datatype': 'PioStandby2', 'reply_pattern': r'SUB(\d{4})', 'item_attrs': {'attributes': {'remark': '0 = OFF, 0.5 = 30 minutes, 1 = 1 hour, 3 = 3 hours, 6 = 6 hours, 9 = 9 hours'}, 'initial': True}},
         }
     }
 }
@@ -151,6 +175,52 @@ lookups = {
             '1': 'THRU',
             '9': 'HDMI AUDIO (cyclic)'
         },
+        'MUTELEVEL': {
+            '0': 'Full',
+            '1': '-40db',
+            '2': '-20db'
+        },
+        'XOVER': {
+            '0': '50Hz',
+            '1': '80Hz',
+            '2': '100Hz',
+            '3': '150Hz',
+            '4': '200Hz'
+        },
+        'XCURVE': {
+            '0': 'OFF',
+            '1': '-0.5db',
+            '2': '-1.0db',
+            '3': '-1,5db',
+            '4': '-2.0db',
+            '5': '-2.5db',
+            '6': '-3.0db'
+        },
+        'STANDBYTHROUGH': {
+            '00': 'OFF',
+            '01': 'LAST',
+            '02': 'BD',
+            '03': 'HDMI 1',
+            '04': 'HDMI 2',
+            '05': 'HDMI 3',
+            '06': 'HDMI 4',
+            '07': 'HDMI 5',
+            '08': 'HDMI 6',
+            '09': 'HDMI 7',
+            '10': 'HDMI 8'
+        },
+        'LANGUAGE': {
+            '00': 'English',
+            '01': 'French',
+            '03': 'German',
+            '04': 'Italian',
+            '05': 'Spanish',
+            '06': 'Dutch',
+            '07': 'Russian',
+            '08': 'Chinese1',
+            '09': 'Chinese2',
+            '10': 'Japanese'
+        },
         'AMP': {
             '00': 'AMP ON',
             '01': 'AMP Front OFF',
@@ -158,6 +228,17 @@ lookups = {
             '03': 'AMP OFF',
             '98': 'DOWN (cyclic)',
             '99': 'UP (cyclic)'
+        },
+        'SPEAKERSYSTEM': {
+            '00': 'Normal(SB/FH)',
+            '01': 'Normal(SB/FW)',
+            '02': 'Speaker B',
+            '03': 'Front Bi-Amp',
+            '04': 'Zone2'
+        },
+        'SURROUNDPOSITION': {
+            '0': 'ON SIDE',
+            '1': 'IN REAR'
         },
         'TONE': {
             '00': 6,
@@ -450,6 +531,20 @@ lookups = {
             '10': 'VIDEO 1 (VIDEO)',
             '35': 'HDMI 8'
         },
+        'SPEAKERSYSTEM': {
+            '10': '9.1ch FH/FW',
+            '11': '7.1ch + Speaker B',
+            '12': '7.1ch Front Bi-Amp',
+            '13': '7.1ch + Zone2',
+            '14': '7.1ch FH/FW + Zone2',
+            '15': '5.1ch Bi-Amp + Zone2',
+            '16': '5.1ch + Zone 2+3',
+            '17': '5.1ch + SP-B Bi-Amp',
+            '18': '5.1ch F+Surr Bi-Amp',
+            '19': '5.1ch F+C Bi-Amp',
+            '20': '5.1ch C+Surr Bi-Amp',
+            '21': 'Multi-ZONE Music'
+        },
         'LISTENINGMODE': {
             '0050': 'THX (cyclic)',
             '0051': 'PROLOGIC + THX CINEMA',
@@ -517,6 +612,20 @@ lookups = {
             '10': 'VIDEO 1 (VIDEO)',
             '35': 'HDMI 8'
         },
+        'SPEAKERSYSTEM': {
+            '10': '9.1ch FH/FW',
+            '11': '7.1ch + Speaker B',
+            '12': '7.1ch Front Bi-Amp',
+            '13': '7.1ch + Zone2',
+            '14': '7.1ch FH/FW + Zone2',
+            '15': '5.1ch Bi-Amp + Zone2',
+            '16': '5.1ch + Zone 2+3',
+            '17': '5.1ch + SP-B Bi-Amp',
+            '18': '5.1ch F+Surr Bi-Amp',
+            '19': '5.1ch F+C Bi-Amp',
+            '20': '5.1ch C+Surr Bi-Amp',
+            '21': 'Multi-ZONE Music'
+        },
         'LISTENINGMODE': {
             '0050': 'THX (cyclic)',
             '0051': 'PROLOGIC + THX CINEMA',
@@ -575,6 +684,20 @@ lookups = {
         'INPUTHD': {
             '10': 'VIDEO 1 (VIDEO)',
             '35': 'HDMI 8'
+        },
+        'SPEAKERSYSTEM': {
+            '10': '9.1ch FH/FW',
+            '11': '7.1ch + Speaker B',
+            '12': '7.1ch Front Bi-Amp',
+            '13': '7.1ch + Zone2',
+            '14': '7.1ch FH/FW + Zone2',
+            '15': '5.1ch Bi-Amp + Zone2',
+            '16': '5.1ch + Zone 2+3',
+            '17': '5.1ch + SP-B Bi-Amp',
+            '18': '5.1ch F+Surr Bi-Amp',
+            '19': '5.1ch F+C Bi-Amp',
+            '20': '5.1ch C+Surr Bi-Amp',
+            '21': 'Multi-ZONE Music'
         },
         'LISTENINGMODE': {
             '0050': 'THX (cyclic)',
