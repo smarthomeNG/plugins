@@ -1,41 +1,52 @@
+.. index:: Plugins; jsonread
+.. index:: jsonread
+
+========
 jsonread
 ========
+
+.. image:: webif/static/img/plugin_logo.svg
+   :alt: plugin logo
+   :width: 300px
+   :height: 300px
+   :scale: 50 %
+   :align: center
 
 Das vorliegende Plugin ist in der Lage aus einer Datei oder von einer URL JSON Daten zu lesen
 und anhand einer Abfrageanweisung einen Datenpunkt an ein Item zu übergeben.
 
 Anforderungen
--------------
+=============
 
 Für die Auswertung des JSON Datensatzes wird der flexible JSON Prozessor
 `JQ <https://stedolan.github.io/jq/>`_ verwendet.
 
 Notwendige Software
-~~~~~~~~~~~~~~~~~~~
+-------------------
 
 * requests
 * requests-file
 * `pyjq <https://stedolan.github.io/jq/>`_
 
 Unterstützte Geräte
-~~~~~~~~~~~~~~~~~~~~~
+-------------------
 
 Jede Webseite die JSON formatierte Daten liefern kann oder jede Datei die JSON formatierte
 Daten enthält kann als Datenquelle für das Plugin verwendet werden
 
 
 Konfiguration
--------------
+=============
 
 plugin.yaml
-~~~~~~~~~~~
+-----------
 
 Bitte die Dokumentation lesen, die aus den Metadaten der plugin.yaml erzeugt wurde.
 
 Es können beliebig viele Instanzen des Plugins erstellt werden. Für jede Datenquelle muß eine Instanz konfiguriert werden.
 
 URL
-^^^
+---
 
 Der Ursprung der Daten. Aktuell werden ``http://``, ``https://`` und ``file://`` Schemen unterstützt.
 
@@ -44,9 +55,9 @@ Der Ursprung der Daten. Aktuell werden ``http://``, ``https://`` und ``file://``
     relative Pfadangabe für Dateien wie in ``file://relativer/pfad/hier`` enthalten **2** Schrägstriche
 
 Beispiele verschiedener Datenquellen
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+------------------------------------
 
-Die folgenden Beispiele nutzen openweathermap `openweathermap <https://openweathermap.org/current>`_  und den Beispiel API Schlüssel. 
+Die folgenden Beispiele nutzen openweathermap `openweathermap <https://openweathermap.org/current>`_  und den Beispiel API Schlüssel.
 Der Schlüssel sollte wirklich **nur** für Testzwecke verwendet werden
 
 **http Quelle**
@@ -83,14 +94,14 @@ Der Schlüssel sollte wirklich **nur** für Testzwecke verwendet werden
 
 
 items.yaml
-~~~~~~~~~~
+----------
 
 Bitte die Dokumentation lesen, die aus den Metadaten der plugin.yaml erzeugt wurde.
 
 Beispiel Klimaabfrage
-^^^^^^^^^^^^^^^^^^^^^
+---------------------
 
-Die Abfrage ``https://samples.openweathermap.org/data/2.5/weather?q=London,uk&appid=b6907d289e10d714a6e88b30761fae22`` 
+Die Abfrage ``https://samples.openweathermap.org/data/2.5/weather?q=London,uk&appid=b6907d289e10d714a6e88b30761fae22``
 ergibt ein Ergebnis in etwa wie folgt:
 
 .. code:: json
@@ -138,7 +149,7 @@ ergibt ein Ergebnis in etwa wie folgt:
     "cod": 200
     }
 
-Mit der Definition 
+Mit der Definition
 
 .. code:: yaml
 
@@ -178,7 +189,7 @@ könnte es einfacher sein diese Filter auf der Kommandozeile zu entwickeln:
 Es lohnt ein Blick ins `Tutorial für jq <https://stedolan.github.io/jq/tutorial/>`_ um für die Verwendung der Filter einen Eindruck zu bekommen.
 
 Beispiel Batteriedaten
-^^^^^^^^^^^^^^^^^^^^^^
+----------------------
 
 In der ``etc/plugin.yaml`` wird das Plugin definiert als:
 
@@ -211,7 +222,7 @@ die Datei ``/tmp/BMSData.shtml`` wird dabei vom Prozess ``receiveBLE.py`` auf ei
         }
     }
 
-Um die Spannung, den aktuellen Ladestrom und die Ladeleistung zu erhalten, werden folgende Items für 
+Um die Spannung, den aktuellen Ladestrom und die Ladeleistung zu erhalten, werden folgende Items für
 die Instanz ``myreserve`` definiert:
 
 .. code:: yaml
@@ -227,11 +238,11 @@ die Instanz ``myreserve`` definiert:
             remark: etwas einfache Mathematik kann verwendet werden:
             type: num
             jsonread_filter@myreserve: (.FData.VBat * .FData.IBat * -1)
-    
-    
+
+
 
 Beispiel Energiemanager
-^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------
 
 In der ``etc/plugin.yaml`` wird das Plugin definiert als:
 
@@ -245,8 +256,8 @@ In der ``etc/plugin.yaml`` wird das Plugin definiert als:
 
 Die Abfrage der URL liefert ein ziemliche grosses JSON Datenpaket mit mehr als
 4500 Zeilen. Ein Auszug ist im folgenden dargestellt:
-      
-      
+
+
 .. code::json
 
     {
@@ -263,7 +274,7 @@ Die Abfrage der URL liefert ein ziemliche grosses JSON Datenpaket mit mehr als
             }
         ]
     }
-    
+
 Um die aktuelle Inverter AC Ausgangsleistung zu erhalten wird folgendes Item mit einem komplexen Filter definiert:
 
 .. code:: yaml
@@ -273,10 +284,10 @@ Um die aktuelle Inverter AC Ausgangsleistung zu erhalten wird folgendes Item mit
         jsonread_filter@swem: (.result.items[] | select(.guid == "urn:your-inverter-guid").tagValues.PowerACOut.value)
 
 Auswählen des Arrays ``.result.items``, dann auswählen des Zweiges bei dem das Element ``guid`` mit dem eigenen
-``your-inverter-guid`` übereinstimmt und im Zweig weitergehen und den Wert von ``.tagValues.PowerACOut.value`` 
+``your-inverter-guid`` übereinstimmt und im Zweig weitergehen und den Wert von ``.tagValues.PowerACOut.value``
 abfragen und ins Item schreiben.
 
-Das ``jsonread_filter`` Attribut kann mit Hilfe des `Blockstils für mehrzeilige Strings <https://yaml-multiline.info/>`_ 
+Das ``jsonread_filter`` Attribut kann mit Hilfe des `Blockstils für mehrzeilige Strings <https://yaml-multiline.info/>`_
 eben auf auf mehrere Zeilen aufgeteilt werden. So ist folgende komplexe Berechnung über einen Filter möglich:
 
 .. code:: yaml
@@ -289,21 +300,68 @@ eben auf auf mehrere Zeilen aufgeteilt werden. So ist folgende komplexe Berechnu
             (.result.items[] |
             select(.deviceModel[].deviceClass == "com.kiwigrid.devices.solarwatt.MyReservePowermeter").tagValues.PowerIn.value)
 
+Beispiel Splitten der JSON Daten
+--------------------------------
+
+.. code::json
+
+    {
+      "object": "list",
+      "data": [
+        {
+          "start_timestamp": 1684188000000,
+          "end_timestamp": 1684191600000,
+          "marketprice": 78.96,
+          "unit": "Eur/MWh"
+        },
+        {
+          "start_timestamp": 1684191600000,
+          "end_timestamp": 1684195200000,
+          "marketprice": 73.1,
+          "unit": "Eur/MWh"
+        }
+      ]
+    }
+
+Es kann nun der komplette Inhalt der JSON Datei in ein "Überitem" gespeichert werden. Die gewünschten
+Werte werden dann über evals in entsprechende Unteritems gespeichert.
+
+.. code:: yaml
+
+    jsonitem:
+      type: list
+      jsonread_filter: .data
+
+    hour1:
+      type: num
+      eval_trigger: ..
+      eval: sh...()[0]["marketprice"]
+
+    hour2:
+      type: num
+      eval_trigger: ..
+      eval: sh...()[1]["marketprice"]
+
+    cleanlist:
+      type: list
+      eval_trigger: ..
+      eval: [sh...()[0]["marketprice"],sh...()[1]["marketprice"]]
+
 
 logic.yaml
-~~~~~~~~~~
+----------
 
 Bitte die Dokumentation lesen, die aus den Metadaten der plugin.yaml erzeugt wurde.
 
 
 Funktionen
-~~~~~~~~~~
+==========
 
 Bitte die Dokumentation lesen, die aus den Metadaten der plugin.yaml erzeugt wurde.
 
 
 Web Interface
--------------
+=============
 
-Todo: Im Webinterface wird das Ergebnis der letzten Abfrage der Quelle dargestellt sowie die Items mit dem entsprechenden 
-``jsonread_filter`` Attribut und dem aktuell zugewiesenen Wert.
+Todo: Im Webinterface wird das Ergebnis der letzten Abfrage der Quelle dargestellt
+sowie die Items mit dem entsprechenden ``jsonread_filter`` Attribut und dem aktuell zugewiesenen Wert.
