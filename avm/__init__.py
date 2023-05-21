@@ -223,7 +223,7 @@ class AVM(SmartPlugin):
             create_cyclic_scheduler(target='aha', items=self.get_aha_items(), fct=self.fritz_home.cyclic_item_update, offset=4)
             self.fritz_home.cyclic_item_update(read_all=True)
             # add scheduler for checking validity of session id
-            self.scheduler_add('check_sid', self.fritz_home.check_sid, prio=5, cycle=900, offset=30)
+            # self.scheduler_add('check_sid', self.fritz_home.check_sid, prio=5, cycle=900, offset=30)
 
         if self.monitoring_service:
             self.monitoring_service.set_callmonitor_item_values_initially()
@@ -300,7 +300,7 @@ class AVM(SmartPlugin):
             """
             wlan_index = None
             lookup_item = item
-            for _ in range(2):
+            for i in range(2):
                 attribute = 'avm_wlan_index'
 
                 wlan_index = self.get_iattr_value(lookup_item.conf, attribute)
@@ -323,7 +323,7 @@ class AVM(SmartPlugin):
             """
             tam_index = None
             lookup_item = item
-            for _ in range(2):
+            for i in range(2):
                 attribute = 'avm_tam_index'
 
                 tam_index = self.get_iattr_value(lookup_item.conf, attribute)
@@ -346,7 +346,7 @@ class AVM(SmartPlugin):
             """
             deflection_index = None
             lookup_item = item
-            for _ in range(2):
+            for i in range(2):
                 attribute = 'avm_deflection_index'
 
                 deflection_index = self.get_iattr_value(lookup_item.conf, attribute)
@@ -369,7 +369,7 @@ class AVM(SmartPlugin):
             """
             mac = None
             lookup_item = item
-            for _ in range(2):
+            for i in range(2):
                 attribute = 'avm_mac'
 
                 mac = self.get_iattr_value(lookup_item.conf, attribute)
@@ -679,7 +679,7 @@ class AVM(SmartPlugin):
         """
         Clean/reset item blacklist
         """
-        for item in self._plg_item_dict():
+        for item in self.get_item_list():
             self.get_item_config(item)['error_count'] = 0
         self.logger.info(f"Item Blacklist reset. item_blacklist={self.get_tr064_items_blacklisted()}")
 
@@ -1830,6 +1830,8 @@ class FritzHome:
     LEVEL_RANGE = {'min': 0, 'max': 255}
     LEVEL_PERCENTAGE_RANGE = {'min': 0, 'max': 100}
     COLOR_TEMP_RANGE = {'min': 2700, 'max': 6500}
+    HKR_TEMP_RANGE = {'min': 8, 'max': 28, 'discrete': {0: 253, 100: 254}}
+    HKR_MODES = ['on', 'comfort', 'standby', 'eco', 'frost', 'off']
 
     def __init__(self, host, ssl, verify, user, password, log_entry_count, plugin_instance):
         """
@@ -1861,8 +1863,6 @@ class FritzHome:
 
         # Login
         self.login()
-        if not self._logged_in:
-            raise IOError("Error 'Login failed'")
 
     # item-related methods
 
@@ -1870,8 +1870,10 @@ class FritzHome:
         """Update aha item values using information"""
 
         if not self._logged_in:
-            self.logger.warning("No connection to FritzDevice via AHA-HTTP-Interface. No update of item values possible.")
-            return
+            self.logger.warning("No connection to FritzDevice via AHA-HTTP-Interface. Try to reconnect.")
+            self.login()
+            if not self._logged_in:
+                raise IOError("Error 'Login failed'")
 
         start_time = int(time.time())
 
@@ -1993,6 +1995,8 @@ class FritzHome:
                        'unmapped_saturation':(self.set_unmapped_saturation, {'saturation': item()}, self.get_unmapped_saturation),
                        'color':              (self.set_color, {'hs': item(), 'duration': 1, 'mapped': False}, self.get_color),
                        'hsv':                (self.set_hsv, {'hsv': item(), 'duration': 1, 'mapped': False}, self.get_hsv),
+                       'hkr_mode':           (self.set_hkr_mode, {'state': item()}, self.get_hkr_mode),
+                       'hkr_mode_str':       (self.set_hkr_mode, {'state': item()}, self.get_hkr_mode),
                        }
 
         # Remove "set_" prefix of AHA_WO_ATTRIBUTES Items:
@@ -2025,7 +2029,6 @@ class FritzHome:
             time.sleep(wait)
             try:
                 set_value = getter(ain)
-            # only handle avm_data_type not present in _dispatcher
             except KeyError:
                 self.logger.error(f"{avm_data_type} is not defined to be read.")
             else:
@@ -2048,7 +2051,7 @@ class FritzHome:
         :param url:          URL to be requested
         :param params:       params for request
         :param result_type:  type of result; implemented 'json', 'str', None;  default return als string
-        :return:             request response if status_code == 200, else False
+        :return:             request response if status_code == 200, True if status_code == 403, else False
         """
 
         self.logger.debug(f"Sending HTTP request with url={url}, params={params}")
@@ -2089,21 +2092,25 @@ class FritzHome:
                 return False
             elif status_code == 403:
                 self.logger.info(f"Error {status_code!r} Forbidden: 'Session-ID ungültig oder Benutzer nicht autorisiert'")
+                self.logger.info(f"Try to generate new 'Session-ID'")
                 if self.debug_log:
                     self.logger.debug(f"URL: {url}, params: {params}")
-                return False
+                self.logout()
+                self.login()
+                return True
             elif status_code == 500:
                 self.logger.info(f"Error {status_code!r}  Internal Server Error: 'Interner Fehler'")
                 if self.debug_log:
                     self.logger.debug(f"URL: {url}, params: {params}")
                 return False
+            return False
 
     def _aha_request(self, cmd: str, ain: str = None, param: dict = None, result_type: str = None):
         """Send an AHA request.
 
         :param cmd: CMD to be sent
         :param ain: AktorIdentifikationsNummer
-        :param param: Dict having need params
+        :param param: Dict having needed params
         :param result_type: type the return should be transformed to; implemented 'bool', 'int', 'float', None = default resulting in str
         :return: returns transformed result if request was successful else None
 
@@ -2118,9 +2125,12 @@ class FritzHome:
 
         plain = self._request(url=url, params=params, result_type='str')
 
-        if plain is None:
+        if plain is False:
             self.logger.debug("Something went wrong during get-request")
             return None
+        elif plain is True:
+            self.logger.debug("SID was expired, New one has been generated, repeat last cmd.")
+            self._aha_request(cmd, ain, param, result_type)
         elif plain == "inval":
             self.logger.error(f"InvalidError for params={params}")
             return None
@@ -2148,9 +2158,9 @@ class FritzHome:
             if challenge_response:
                 params["response"] = challenge_response
 
-            plain = self._request(url, params)
+            plain = self._request(url, params, result_type='str')
 
-            if plain is None:
+            if not isinstance(plain, str):
                 return
 
             dom = ElementTree.fromstring(plain)
@@ -2198,10 +2208,10 @@ class FritzHome:
 
         if sid == "0000000000000000":
             if challenge.startswith('2$'):
-                self.logger.debug("PBKDF2 supported")
+                self.logger.debug("AHA-Login: PBKDF2 supported")
                 challenge_response = calculate_pbkdf2_response()
             else:
-                self.logger.debug("Falling back to MD5")
+                self.logger.debug("AHA-Login: Falling back to MD5")
                 challenge_response = calculate_md5_response()
 
             sid2, challenge, blocktime = login_request(username=self.user)
@@ -2209,7 +2219,8 @@ class FritzHome:
             if sid2 == "0000000000000000":
                 self.logger.warning(f"Login failed for user '{self.user}'")
                 self.logger.debug(f"Login failed with sid2={sid2}")
-                return
+                raise IOError("Error 'Login failed'")
+
             self._sid = sid2
             self._logged_in = True
 
@@ -2235,9 +2246,9 @@ class FritzHome:
 
         url = f"{self.prefixed_host}{self.LOGIN_ROUTE}"
         params = {"sid": self._sid}
-        plain = self._request(url, params)
+        plain = self._request(url, params, result_type='str')
 
-        if plain is None:
+        if not isinstance(plain, str):
             return
 
         dom = ElementTree.fromstring(plain)
@@ -2294,7 +2305,7 @@ class FritzHome:
         """
         plain = self._aha_request(f"get{entity_type}listinfos")
 
-        if plain is None:
+        if not isinstance(plain, str):
             return
 
         self.last_request = plain
@@ -2386,7 +2397,8 @@ class FritzHome:
         }
 
         plain = self._aha_request("getbasicdevicestats", ain=ain)
-        if plain is None:
+
+        if not isinstance(plain, str):
             return
 
         dom = ElementTree.fromstring(plain)
@@ -2471,30 +2483,33 @@ class FritzHome:
     def get_temperature(self, ain: str):
         """
         Get the device temperature sensor value.
+
+        Temperatur-Wert in 0,1 °C, negative und positive Werte möglich, Bsp. „200“ bedeutet 20°C
         """
         value = self._aha_request("gettemperature", ain=ain, result_type='int')
 
-        if value is None:
-            return
+        if isinstance(value, int):
+            return value / 10
 
-        try:
-            return value / 10.0
-        except TypeError:
-            return False
-
-    def _get_temperature(self, ain: str, name):
+    def _get_temperature(self, ain: str, cmd: str):
         """
         Get temperature raw value
-        """
-        value = self._aha_request(name, ain=ain, result_type='int')
 
-        if value is None:
+        Temperatur-Wert in 0,5 °C:
+            Wertebereich: 16 – 56 mit 8 bis 28°C, 16 <= 8°C, 17 = 8,5°C...... 56 >= 28°C
+            254 = ON , 253 = OFF
+        """
+        value = self._aha_request(cmd, ain=ain, result_type='int')
+
+        if not isinstance(value, int):
             return
 
-        try:
+        if value == 253:
+            return 0
+        elif value == 254:
+            return 30
+        else:
             return (value - 16) / 2 + 8
-        except TypeError:
-            return False
 
     def get_target_temperature(self, ain: str):
         """
@@ -2502,17 +2517,21 @@ class FritzHome:
         """
         return self._get_temperature(ain, "gethkrtsoll")
 
-    def set_target_temperature(self, ain: str, temperature):
+    def set_target_temperature(self, ain: str, temperature: float):
         """
         Set the thermostate target temperature.
+
+        Temperatur-Wert in 0,5 °C,
+        Wertebereich: 16 – 56 mit 8 bis 28°C, 16 <= 8°C, 17 = 8,5°C...... 56 >= 28°C, 100°C --> 254 = ON , 0°C --> 253 = OFF
         """
-        temp = int(16 + ((float(temperature) - 8) * 2))
 
-        if temp < min(range(16, 56)):
-            temp = 253
-        elif (temp > max(range(16, 56))) and (temp != 253):
-            temp = 254
+        if temperature in self.HKR_TEMP_RANGE['discrete']:
+            temp = self.HKR_TEMP_RANGE['discrete'][int(temperature)]
+        else:
+            temperature = clamp(temperature, self.HKR_TEMP_RANGE['min'], self.HKR_TEMP_RANGE['max'])
+            temp = int(16 + ((float(temperature) - 8) * 2))
 
+        self.logger.debug(f"set_target_temperature: {temp} will be set")
         return self._aha_request("sethkrtsoll", ain=ain, param={'param': temp}, result_type='int')
 
     def set_window_open(self, ain: str, seconds: Union[bool, int]):
@@ -2572,6 +2591,29 @@ class FritzHome:
         Get the thermostate eco temperature.
         """
         return self._get_temperature(ain, "gethkrabsenk")
+
+    def get_hkr_mode(self, ain: str):
+        """
+        Get HKR to certain state
+        """
+        return self.get_devices_as_dict()[ain].get_hkr_mode()
+
+    def set_hkr_mode(self, ain: str, mode: Union[int, str]):
+        """
+        Set HKR to certain state
+        """
+        mode_new = None
+
+        if isinstance(mode, str) and mode.isdigit():
+            mode = int(mode)
+
+        if isinstance(mode, str) and mode.lower() in self.HKR_MODES:
+            mode_new = mode
+        elif isinstance(mode, int) and mode <= len(self.HKR_MODES):
+            mode_new = self.HKR_MODES[int(mode)]
+
+        if mode_new:
+            return self.get_devices_as_dict()[ain].set_hkr_mode(mode_new)
 
     # Switch-related methods
 
@@ -3022,7 +3064,10 @@ class FritzHome:
         # get data
         data = self._request(url, params, result_type='json')
 
-        if isinstance(data, dict):
+        if data is True:
+            self.logger.debug("SID was expired, New one has been generated, repeat last cmd.")
+            self.get_device_log_from_lua()
+        elif isinstance(data, dict):
             data = data.get('mq_log')
             if data and isinstance(data, list):
                 # cut data if needed
@@ -3056,7 +3101,10 @@ class FritzHome:
         # get data
         data = self._request(url, params, result_type='json')
 
-        if isinstance(data, dict):
+        if data is True:
+            self.logger.debug("SID was expired, New one has been generated, repeat last cmd.")
+            self.get_device_log_from_lua_separated()
+        elif isinstance(data, dict):
             data = data.get('mq_log')
             if data and isinstance(data, list):
                 if self.log_entry_count:
@@ -3117,7 +3165,6 @@ class FritzHome:
                 self._fritz = fritz
             if node is not None:
                 self._update_from_node(node)
-                self.logger.debug(f'node="{node}"')
             if not self.device_functions:
                 self._update_device_functions()
 
@@ -3486,6 +3533,7 @@ class FritzHome:
 
         current_temperature = None
         target_temperature = None
+        target_temperature_raw = None
         temperature_reduced = None
         temperature_comfort = None
         device_lock = None
@@ -3503,6 +3551,7 @@ class FritzHome:
         boostactiveendtime = None
         adaptiveHeatingActive = None
         adaptiveHeatingRunning = None
+        hkr_mode = None
 
         def _update_from_node(self, node):
             super()._update_from_node(node)
@@ -3520,7 +3569,7 @@ class FritzHome:
             hkr_element = node.find("hkr")
             if hkr_element is not None:
                 self.current_temperature = get_temp_from_node(hkr_element, "tist")
-                self.target_temperature = get_temp_from_node(hkr_element, "tsoll")
+                self.target_temperature_raw = get_temp_from_node(hkr_element, "tsoll")
                 self.temperature_comfort = get_temp_from_node(hkr_element, "komfort")
                 self.temperature_reduced = get_temp_from_node(hkr_element, "absenk")
                 self.battery_low = get_node_value_as_int_as_bool(hkr_element, "batterylow")
@@ -3536,6 +3585,14 @@ class FritzHome:
                 self.lock = get_node_value_as_int_as_bool(hkr_element, "lock")
                 self.device_lock = get_node_value_as_int_as_bool(hkr_element, "devicelock")
                 self.errorcode = get_node_value_as_int(hkr_element, "errorcode")
+                self.hkr_mode = self.get_hkr_mode()
+
+                if self.hkr_mode == self._fritz.HKR_MODES[0]:
+                    self.target_temperature = 100
+                elif self.hkr_mode == self._fritz.HKR_MODES[5]:
+                    self.target_temperature = 0
+                else:
+                    self.target_temperature = self.target_temperature_raw
 
             nextchange_element = hkr_element.find("nextchange")
             if nextchange_element:
@@ -3570,27 +3627,29 @@ class FritzHome:
             """Get the thermostate eco temperature."""
             return self._fritz.get_eco_temperature(self.ain)
 
-        def get_hkr_state(self):
+        def get_hkr_mode(self):
             """Get the thermostate state."""
-            return {126.5: "off",
-                    127.0: "on",
-                    self.temperature_reduced: "eco",
-                    self.temperature_comfort: "comfort",
-                    }.get(self.target_temperature, "manual")
 
-        def set_hkr_state(self, state):
-            """Set the state of the thermostat.
-            Possible values for state are: 'on', 'off', 'comfort', 'eco'.
-            """
-            value = {"off": 0,
-                     "on": 100,
-                     "eco": self.temperature_reduced,
-                     "comfort": self.temperature_comfort,
-                     }.get(state)
+            hkr_temp_to_mode = {127.0: self._fritz.HKR_MODES[0],
+                                self.temperature_comfort: self._fritz.HKR_MODES[1],
+                                self.temperature_comfort - 2: self._fritz.HKR_MODES[2],
+                                self.temperature_reduced: self._fritz.HKR_MODES[3],
+                                8.0: self._fritz.HKR_MODES[4],
+                                126.5: self._fritz.HKR_MODES[5],
+                                }
+            return hkr_temp_to_mode.get(self.target_temperature_raw, "manual")
 
-            # check for None as value can be 0
-            if value is not None:
-                self.set_target_temperature(value)
+        def set_hkr_mode(self, state: str):
+            """Set the state of the thermostat."""
+
+            hkr_mode_to_temp = {self._fritz.HKR_MODES[0]: 100.0,
+                                self._fritz.HKR_MODES[1]: self.temperature_comfort,
+                                self._fritz.HKR_MODES[2]: self.temperature_comfort - 2,
+                                self._fritz.HKR_MODES[3]: self.temperature_reduced,
+                                self._fritz.HKR_MODES[4]: 8.0,
+                                self._fritz.HKR_MODES[5]: 0.0,
+                                }
+            return self.set_target_temperature(hkr_mode_to_temp[state.lower()])
 
     class FritzhomeDeviceBlind(FritzhomeDeviceBase):
         """The Fritzhome Device class."""
@@ -4163,12 +4222,13 @@ class Callmonitor:
         buffer = ""
         while self._listen_active:
             data = self.conn.recv(recv_buffer)
-            if data == "":
-                self.logger.error("CallMonitor connection not open anymore.")
+            if data.decode('utf-8') == "" and self._listen_active:
+                self.logger.warning("CallMonitor connection not open anymore. Try to reconnect")
+                self.reconnect()
             else:
                 if self.debug_log:
-                    self.logger.debug(f"Data Received from CallMonitor: {data.decode('utf-8').strip()}")
-            buffer += data.decode("utf-8")
+                    self.logger.debug(f"Data Received from CallMonitor: '{data.decode('utf-8')}'")
+            buffer += data.decode('utf-8')
             while buffer.find("\n") != -1:
                 line, buffer = buffer.split("\n", 1)
                 if line:

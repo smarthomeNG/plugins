@@ -233,6 +233,7 @@ item_attributes:
             - windowopenactiveendtime                   # ro   num  
             - set_hkr_boost                             # wo   bool 
             - hkr_boost                                 # rw   bool 
+            - hkr_mode                                  # rw   str  
             - boost_active                              # ro   bool 
             - boostactiveendtime                        # ro   num  
             - summer_active                             # ro   bool 
@@ -282,6 +283,10 @@ item_attributes:
             - endpositionsset                           # ro   bool 
               # aha-device Attributes
             - statistics_temp                           # ro   list 
+            - statistics_hum                            # ro   list 
+            - statistics_voltage                        # ro   list 
+            - statistics_power                          # ro   list 
+            - statistics_energy                         # ro   list 
         valid_list_description:
         # NOTE: valid_list_description is automatically created by using item_attributes_master.py
             # tr064 Attributes
@@ -406,6 +411,7 @@ item_attributes:
             - Zeitliches Ende der "Window Open" Funktion
             - Boost-Funktion (Setzen)
             - Boost-Funktion (Status und Setzen)
+            - Modus (on, off, eco, comfort) des HKR (Status und Setzen)
             - Status der "Boost" Funktion
             - Zeitliches Ende der Boost Funktion
             - Status der "Sommer" Funktion
@@ -455,6 +461,10 @@ item_attributes:
             - ist die Endlage für das Rollo konfiguriert
               # aha-device Attributes
             - Wertestatistik für Temperatur
+            - Wertestatistik für Feuchtigkeit
+            - Wertestatistik für Spannung
+            - Wertestatistik für Leistung
+            - Wertestatistik für Energie
     avm_incoming_allowed:
         type: str
         mandatory: false
@@ -828,7 +838,7 @@ item_structs:
     aha_thermostat:
         target_temperature:
             avm_data_type@instance: target_temperature
-            avm_read_after_write@instance: 5
+            # avm_read_after_write@instance: 5
             type: num
         comfort_temperature:
             avm_data_type@instance: temperature_comfort
@@ -836,6 +846,10 @@ item_structs:
         eco_temperature:
             avm_data_type@instance: temperature_reduced
             type: num
+        mode:
+            avm_data_type@instance: hkr_mode
+            # avm_read_after_write@instance: 5
+            type: str
         battery_low:
             avm_data_type@instance: battery_low
             type: bool
