@@ -233,7 +233,8 @@ item_attributes:
             - windowopenactiveendtime                   # ro   num  
             - set_hkr_boost                             # wo   bool 
             - hkr_boost                                 # rw   bool 
-            - hkr_mode                                  # rw   str  
+            - hkr_mode_str                              # rw   str  
+            - hkr_mode                                  # rw   int  
             - boost_active                              # ro   bool 
             - boostactiveendtime                        # ro   num  
             - summer_active                             # ro   bool 
@@ -411,7 +412,8 @@ item_attributes:
             - Zeitliches Ende der "Window Open" Funktion
             - Boost-Funktion (Setzen)
             - Boost-Funktion (Status und Setzen)
-            - Modus (on, off, eco, comfort) des HKR (Status und Setzen)
+            - HKR Modus (on, comfort, standby, eco, frost, off) (Status und Setzen)
+            - HKR Modus (0-on, 1-comfort, 2-standby, 3-eco, 4-frost, 5-off) (Status und Setzen)
             - Status der "Boost" Funktion
             - Zeitliches Ende der Boost Funktion
             - Status der "Sommer" Funktion

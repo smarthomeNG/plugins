@@ -35,7 +35,6 @@ import urllib3
 
 from abc import ABC
 from enum import IntFlag
-from json.decoder import JSONDecodeError
 from typing import Dict, Union
 from xml.etree import ElementTree
 from urllib3.exceptions import InsecureRequestWarning
@@ -155,30 +154,30 @@ class AVM(SmartPlugin):
         # init FritzDevice
         try:
             self.fritz_device = FritzDevice(_host, _port, ssl, _verify, _username, _passwort, _call_monitor_incoming_filter, _use_tr064_backlist, _log_entry_count, self)
-        except IOError as e:
+        except FritzAuthorizationError as e:
             self.logger.warning(f"{e} occurred during establishing connection to FritzDevice via TR064-Interface. Not connected.")
             self.fritz_device = None
         else:
-            self.logger.debug("Connection to FritzDevice via TR064-Interface established.")
+            self.logger.info("Connection to FritzDevice via TR064-Interface established.")
 
         # init FritzHome
         try:
             self.fritz_home = FritzHome(_host, ssl, _verify, _username, _passwort, _log_entry_count, self)
-        except IOError as e:
+        except FritzAuthorizationError as e:
             self.logger.warning(f"{e} occurred during establishing connection to FritzDevice via AHA-HTTP-Interface. Not connected.")
             self.fritz_home = None
         else:
-            self.logger.debug("Connection to FritzDevice via AHA-HTTP-Interface established.")
+            self.logger.info("Connection to FritzDevice via AHA-HTTP-Interface established.")
 
         # init Call Monitor
         if self._call_monitor and self.fritz_device and self.fritz_device.connected:
             try:
                 self.monitoring_service = Callmonitor(_host, 1012, self.fritz_device.get_contact_name_by_phone_number, _call_monitor_incoming_filter, self)
-            except IOError as e:
+            except FritzAuthorizationError as e:
                 self.logger.warning(f"{e} occurred during establishing connection to FritzDevice CallMonitor. Not connected.")
                 self.monitoring_service = None
             else:
-                self.logger.debug("Connection to FritzDevice CallMonitor established.")
+                self.logger.info("Connection to FritzDevice CallMonitor established.")
         else:
             self.monitoring_service = None
 
@@ -222,8 +221,6 @@ class AVM(SmartPlugin):
             # add scheduler for updating items
             create_cyclic_scheduler(target='aha', items=self.get_aha_items(), fct=self.fritz_home.cyclic_item_update, offset=4)
             self.fritz_home.cyclic_item_update(read_all=True)
-            # add scheduler for checking validity of session id
-            # self.scheduler_add('check_sid', self.fritz_home.check_sid, prio=5, cycle=900, offset=30)
 
         if self.monitoring_service:
             self.monitoring_service.set_callmonitor_item_values_initially()
@@ -238,7 +235,6 @@ class AVM(SmartPlugin):
         self.scheduler_remove('poll_tr064')
         if self.fritz_home:
             self.scheduler_remove('poll_aha')
-            self.scheduler_remove('check_sid')
             self.fritz_home.logout()
         if self.monitoring_service:
             self.monitoring_service.disconnect()
@@ -766,7 +762,7 @@ class FritzDevice:
             # check connection:
             conn_test_result = self.model_name()
             if isinstance(conn_test_result, int):
-                raise IOError(f"Error {conn_test_result}-'{self.ERROR_CODES.get(conn_test_result, 'unknown')}'")
+                raise FritzAuthorizationError(f"Error {conn_test_result}-'{self.ERROR_CODES.get(conn_test_result, 'unknown')}'")
 
             self.connected = True
             if self.is_fritzbox():
@@ -1175,7 +1171,7 @@ class FritzDevice:
 
         # return data
         if isinstance(data, int) and 99 < data < 1000:
-            self.logger.info(f"Response was ErrorCode: {data} '{self.ERROR_CODES.get(data, 'unknown')}' for self.{client}.{device}.{service}.{action}()")
+            self.logger.info(f"ErrorCode: {data} '{self.ERROR_CODES.get(data, 'unknown')}' for self.{client}.{device}.{service}.{action}()")
             return data
         elif out_argument:
             try:
@@ -1232,7 +1228,7 @@ class FritzDevice:
 
         # return response
         if isinstance(response, int) and 99 < response < 1000:
-            self.logger.info(f"Response was ErrorCode: {response} '{self.ERROR_CODES.get(response, None)}' for cmd={cmd_args}")
+            self.logger.info(f"ErrorCode: {response} '{self.ERROR_CODES.get(response, None)}' for cmd={cmd_args}")
             return
         return response
 
@@ -1841,39 +1837,30 @@ class FritzHome:
         self.logger = self._plugin_instance.logger
         self.debug_log = self._plugin_instance.debug_log
         self.logger.debug("Init Fritzhome")
-
         self.ssl = ssl
         self.prefixed_host = self._get_prefixed_host(host)
         self.verify = verify
         self.user = user
         self.password = password
-        self.use_device_statistics = False
-        self.last_device_statistics_update = 0
-        self.device_statistics_min_grid = 0
 
         self._sid = None
         self._devices: Dict[str, FritzHome.FritzhomeDevice] = {}
         self._templates: Dict[str, FritzHome.FritzhomeTemplate] = {}
-        self._logged_in = False
         self._session = requests.Session()
         self._timeout = 10
-        self.connected = False
         self.last_request = None
         self.log_entry_count = log_entry_count
+        self.use_device_statistics = False
+        self.last_device_statistics_update = 0
+        self.device_statistics_min_grid = 0
 
-        # Login
+        # Login to test, if login is possible and get first sid
         self.login()
 
     # item-related methods
 
     def cyclic_item_update(self, read_all: bool = False):
         """Update aha item values using information"""
-
-        if not self._logged_in:
-            self.logger.warning("No connection to FritzDevice via AHA-HTTP-Interface. Try to reconnect.")
-            self.login()
-            if not self._logged_in:
-                raise IOError("Error 'Login failed'")
 
         start_time = int(time.time())
 
@@ -2044,68 +2031,64 @@ class FritzHome:
 
     # request-related methods
 
-    def _request(self, url: str, params=None, result_type: str = 'str'):
+    def _request(self, url: str, params: dict = None):
         """
-        Send a request with parameters.
+        Send a get request with parameters and return response as tuple with (content_type, response)
+        Raises FritzHttpTimeoutError on timeout
+        Raises a FritzHttpRequestError if the device does not support the command or arguments.
+        Raises FritzHttpInterfaceError on missing rights.
+        Raises a FritzAuthorizationError if server error occurred.
 
         :param url:          URL to be requested
         :param params:       params for request
-        :param result_type:  type of result; implemented 'json', 'str', None;  default return als string
-        :return:             request response if status_code == 200, True if status_code == 403, else False
+        :return:             tuple with content_type, response (as text or json depending on content_type)
         """
 
-        self.logger.debug(f"Sending HTTP request with url={url}, params={params}")
+        def get_sid():
+            """
+            Generator to provide the sid two times in case the first try failed. 
+            This can happen on an invalide or expired sid. In this case the sid gets regenerated for the second try.
+            """
+            yield self._sid
+            self.login()
+            yield self._sid
 
-        try:
-            rsp = self._session.get(url, params=params, timeout=self._timeout, verify=self.verify)
-        except requests.exceptions.Timeout:
-            if self._timeout < 31:
-                self._timeout += 5
-                self.logger.info(f"HTTP request timed out. timeout extended by 5s to {self._timeout}")
-            else:
-                self.logger.debug(f"HTTP request timeout.")
-            return False
-        except Exception as e:
-            self.logger.error(f"Error during HTTP request {e} occurred.")
-            return False
-        else:
-            status_code = rsp.status_code
-            if status_code == 200:
-                if self.debug_log:
-                    self.logger.debug("Received valid HTTP request response")
-                if result_type == 'json':
-                    try:
-                        data = rsp.json()
-                    except JSONDecodeError:
-                        self.logger.error('Error occurred during parsing HTTP request response to json')
-                        return False
-                    else:
-                        return data
-                elif result_type == 'str':
-                    return rsp.text.strip()
+        for sid in get_sid():
+            params['sid'] = sid
+
+            try:
+                response = self._session.get(url=url, params=params, verify=self.verify)
+            except requests.exceptions.Timeout:
+                if self._timeout < 31:
+                    self._timeout += 5
+                    msg = f"HTTP request timed out. Timeout extended by 5s to {self._timeout}"
                 else:
-                    return rsp.content
-            elif status_code == 400:
-                self.logger.info(f"Error {status_code!r} Bad Request: 'HTTP Request fehlerhaft - Parameter sind ungültig, nicht vorhanden oder der Wertebereich wurde überschritten'")
-                if self.debug_log:
-                    self.logger.debug(f"URL: {url}, params: {params}")
-                return False
-            elif status_code == 403:
-                self.logger.info(f"Error {status_code!r} Forbidden: 'Session-ID ungültig oder Benutzer nicht autorisiert'")
-                self.logger.info(f"Try to generate new 'Session-ID'")
-                if self.debug_log:
-                    self.logger.debug(f"URL: {url}, params: {params}")
-                self.logout()
-                self.login()
-                return True
-            elif status_code == 500:
-                self.logger.info(f"Error {status_code!r}  Internal Server Error: 'Interner Fehler'")
-                if self.debug_log:
-                    self.logger.debug(f"URL: {url}, params: {params}")
-                return False
-            return False
+                    msg = f"HTTP request timed out."
+                self.logger.info(msg)
+                raise FritzHttpTimeoutError(msg)
 
-    def _aha_request(self, cmd: str, ain: str = None, param: dict = None, result_type: str = None):
+            if response.status_code == 200:
+                content_type = response.headers.get('content-type')
+                if 'json' in content_type:
+                    return content_type, response.json()
+                return content_type, response.text
+
+        if response.status_code == 403:
+            msg = f"{response.status_code!r} Forbidden: 'Session-ID ungültig oder Benutzer nicht autorisiert'"
+            self.logger.info(msg)
+            raise FritzHttpInterfaceError(msg)
+
+        elif response.status_code == 400:
+            msg = f"{response.status_code!r} HTTP Request fehlerhaft, Parameter sind ungültig, nicht vorhanden oder Wertebereich überschritten"
+            self.logger.info(f"Error {msg}, params: {params}")
+            raise FritzHttpRequestError(msg)
+
+        else:
+            msg = f"Error {response.status_code!r} Internal Server Error: 'Interner Fehler'"
+            self.logger.info(f"{msg}, params: {params}")
+            raise FritzAuthorizationError(msg)
+
+    def aha_request(self, cmd: str, ain: str = None, param: dict = None, result_type: str = None):
         """Send an AHA request.
 
         :param cmd: CMD to be sent
@@ -2117,34 +2100,38 @@ class FritzHome:
         """
         url = f"{self.prefixed_host}{self.HOMEAUTO_ROUTE}"
 
-        params = {"switchcmd": cmd, "sid": self._sid}
+        params = {"switchcmd": cmd, 'ain': ain}
         if param:
             params.update(param)
-        if ain:
-            params.update({'ain': ain})
 
-        plain = self._request(url=url, params=params, result_type='str')
-
-        if plain is False:
-            self.logger.debug("Something went wrong during get-request")
-            return None
-        elif plain is True:
-            self.logger.debug("SID was expired, New one has been generated, repeat last cmd.")
-            self._aha_request(cmd, ain, param, result_type)
-        elif plain == "inval":
-            self.logger.error(f"InvalidError for params={params}")
+        try:
+            header, content = self._request(url=url, params=params)
+        except (FritzAuthorizationError, FritzHttpTimeoutError, FritzHttpInterfaceError, FritzHttpRequestError) as e:
+            self.logger.warning(f"Error '{e}' occurred during requesting AHA Interface")
             return None
 
-        if result_type == 'bool':
-            return to_int_to_bool(plain)
-        elif result_type == 'int':
-            return to_int(plain)
-        elif result_type == 'float':
-            return to_float(plain)
-        else:
-            return plain
+        content_type, charset = [item.strip() for item in header.split(";")]
+        # encoding = charset.split("=")[-1].strip()
 
-    def login(self):
+        if content_type == 'text/xml':
+            self.last_request = content
+            return ElementTree.fromstring(content)
+
+        elif content_type == 'text/plain':
+            if content == "inval":
+                self.logger.error(f"InvalidError for params={params}")
+                return None
+
+            if result_type == 'bool':
+                return to_int_to_bool(content)
+            elif result_type == 'int':
+                return to_int(content)
+            elif result_type == 'float':
+                return to_float(content)
+            else:
+                return content
+
+    def login(self) -> None:
         """Login and get a valid session ID."""
 
         def login_request(username=None):
@@ -2155,51 +2142,29 @@ class FritzHome:
             params = {}
             if username:
                 params["username"] = username
-            if challenge_response:
-                params["response"] = challenge_response
+            if challenge_hash:
+                params["response"] = challenge_hash
 
-            plain = self._request(url, params, result_type='str')
+            with self._session.get(url, params=params, verify=self.verify) as response:
+                dom = ElementTree.fromstring(response.text)
 
-            if not isinstance(plain, str):
-                return
+            return dom.findtext("SID"), dom.findtext("Challenge"), to_int(dom.findtext("BlockTime"))
 
-            dom = ElementTree.fromstring(plain)
+        def get_pbkdf2_hash():
+            """Returns the vendor-recommended pbkdf2 challenge hash."""
+            _, iterations_1, salt_1, iterations_2, salt_2 = challenge.split('$')
+            static_hash = hashlib.pbkdf2_hmac("sha256", self.password.encode(), bytes.fromhex(salt_1), int(iterations_1))
+            dynamic_hash = hashlib.pbkdf2_hmac("sha256", static_hash, bytes.fromhex(salt_2), int(iterations_2))
+            return f"{salt_2}${dynamic_hash.hex()}"
 
-            _sid = dom.findtext("SID")
-            _challenge = dom.findtext("Challenge")
-            _blocktime = to_int(dom.findtext("BlockTime"))
-
-            return _sid, _challenge, _blocktime
-
-        def calculate_pbkdf2_response() -> str:
-            """Calculate the response for a given challenge via PBKDF2"""
-            challenge_parts = challenge.split("$")
-            # Extract all necessary values encoded into the challenge
-            iter1 = int(challenge_parts[1])
-            salt1 = bytes.fromhex(challenge_parts[2])
-            iter2 = int(challenge_parts[3])
-            salt2 = bytes.fromhex(challenge_parts[4])
-            # Hash twice, once with static salt...
-            hash1 = hashlib.pbkdf2_hmac("sha256", self.password.encode(), salt1, iter1)
-            # Once with dynamic salt.
-            hash2 = hashlib.pbkdf2_hmac("sha256", hash1, salt2, iter2)
-            return f"{challenge_parts[4]}${hash2.hex()}"
-
-        def calculate_md5_response() -> str:
-            """
-            Calculate the response for a challenge using legacy MD5
-            """
-            response = f"{challenge}-{self.password}"
-            # the legacy response needs utf_16_le encoding
-            response = response.encode("utf_16_le")
-            md5_sum = hashlib.md5()
-            md5_sum.update(response)
-            response = f"{challenge}-{md5_sum.hexdigest()}"
-            return response
+        def get_md5_hash() -> str:
+            """Returns the legathy md5 challenge hash."""
+            md5_sum = hashlib.md5(f"{challenge}-{self.password}".encode("utf_16_le"))
+            return f"{challenge}-{md5_sum.hexdigest()}"
 
         self.logger.debug("AHA login called")
 
-        challenge_response = None
+        challenge_hash = None
         sid, challenge, blocktime = login_request()
 
         if blocktime > 0:
@@ -2208,37 +2173,37 @@ class FritzHome:
 
         if sid == "0000000000000000":
             if challenge.startswith('2$'):
-                self.logger.debug("AHA-Login: PBKDF2 supported")
-                challenge_response = calculate_pbkdf2_response()
+                self.logger.debug("AHA Login: PBKDF2 supported")
+                challenge_hash = get_pbkdf2_hash()
             else:
-                self.logger.debug("AHA-Login: Falling back to MD5")
-                challenge_response = calculate_md5_response()
+                self.logger.debug("AHA Login: Falling back to MD5")
+                challenge_hash = get_md5_hash()
 
             sid2, challenge, blocktime = login_request(username=self.user)
 
             if sid2 == "0000000000000000":
                 self.logger.warning(f"Login failed for user '{self.user}'")
-                self.logger.debug(f"Login failed with sid2={sid2}")
-                raise IOError("Error 'Login failed'")
+                raise FritzAuthorizationError(f"Error 'AHA Login failed for user '{self.user}''")
 
             self._sid = sid2
-            self._logged_in = True
 
-    def logout(self):
+    def logout(self) -> None:
         """Logout."""
 
         self.logger.debug("AHA logout called")
 
         url = f"{self.prefixed_host}{self.LOGIN_ROUTE}"
         params = {"logout": "1", "sid": self._sid}
-        result = self._request(url, params)
 
-        self.logger.debug(f"logout: result={result}")
+        with self._session.get(url, params=params, verify=self.verify) as response:
+            if response.status_code == 200:
+                self.logger.info('AHA logout successful')
+            else:
+                self.logger.info('AHA logout NOT successful')
 
         self._sid = None
-        self._logged_in = False
 
-    def check_sid(self):
+    def check_sid(self) -> bool:
         """
         Check if known Session ID is still valid
         """
@@ -2246,19 +2211,16 @@ class FritzHome:
 
         url = f"{self.prefixed_host}{self.LOGIN_ROUTE}"
         params = {"sid": self._sid}
-        plain = self._request(url, params, result_type='str')
 
-        if not isinstance(plain, str):
-            return
-
-        dom = ElementTree.fromstring(plain)
-        sid = dom.findtext("SID")
+        with self._session.get(url, params=params, verify=self.verify) as response:
+            sid = ElementTree.fromstring(response.text).findtext("SID")
 
         if sid == "0000000000000000":
             self.logger.warning("Session ID is invalid. Try to generate new one.")
-            self.login()
+            return False
         else:
             self.logger.info("Session ID is still valid.")
+            return True
 
     def _get_prefixed_host(self, host):
         """
@@ -2303,15 +2265,9 @@ class FritzHome:
         """
         Get the DOM elements for the entity list.
         """
-        plain = self._aha_request(f"get{entity_type}listinfos")
-
-        if not isinstance(plain, str):
-            return
-
-        self.last_request = plain
-
-        dom = ElementTree.fromstring(plain)
-        return dom.findall(entity_type)
+        result = self.aha_request(f"get{entity_type}listinfos")
+        if result:
+            return result.findall(entity_type)
 
     def get_device_elements(self):
         """
@@ -2356,13 +2312,13 @@ class FritzHome:
         """
         Get the device presence.
         """
-        return self._aha_request("getswitchpresent", ain=ain, result_type='bool')
+        return self.aha_request("getswitchpresent", ain=ain, result_type='bool')
 
     def get_device_name(self, ain: str):
         """
         Get the device name.
         """
-        return self._aha_request("getswitchname", ain=ain)
+        return self.aha_request("getswitchname", ain=ain)
 
     def get_device_statistics(self, ain: str, func: str = None):
         """
@@ -2396,21 +2352,17 @@ class FritzHome:
             'humidity': 1,      # Die Genauigkeit/Einheit der <humidity>-Werte ist Prozent.
         }
 
-        plain = self._aha_request("getbasicdevicestats", ain=ain)
+        dom = self.aha_request("getbasicdevicestats", ain=ain)
 
-        if not isinstance(plain, str):
-            return
+        if dom:
+            if func in ['temperature', 'humidity', 'voltage', 'power', 'energy']:
+                return get_series(func)
 
-        dom = ElementTree.fromstring(plain)
-
-        if func in ['temperature', 'humidity', 'voltage', 'power', 'energy']:
-            return get_series(func)
-
-        elif func == 'powermeter':
-            stats_voltage = get_series('voltage')
-            stats_power = get_series('power')
-            stats_energy = get_series('energy')
-            return stats_voltage, stats_power, stats_energy
+            elif func == 'powermeter':
+                stats_voltage = get_series('voltage')
+                stats_power = get_series('power')
+                stats_energy = get_series('energy')
+                return stats_voltage, stats_power, stats_energy
 
     def add_device_statistics_to_devices(self):
         """Add device statistics to self._devices"""
@@ -2429,25 +2381,25 @@ class FritzHome:
         """
         Get the switch state.
         """
-        return self._aha_request("getswitchstate", ain=ain, result_type='bool')
+        return self.aha_request("getswitchstate", ain=ain, result_type='bool')
 
     def set_switch_state_on(self, ain: str):
         """
         Set the switch to on state.
         """
-        return self._aha_request("setswitchon", ain=ain, result_type='bool')
+        return self.aha_request("setswitchon", ain=ain, result_type='bool')
 
     def set_switch_state_off(self, ain: str):
         """
         Set the switch to off state.
         """
-        return self._aha_request("setswitchoff", ain=ain, result_type='bool')
+        return self.aha_request("setswitchoff", ain=ain, result_type='bool')
 
     def set_switch_state_toggle(self, ain: str):
         """
         Toggle the switch state.
         """
-        return self._aha_request("setswitchtoggle", ain=ain, result_type='bool')
+        return self.aha_request("setswitchtoggle", ain=ain, result_type='bool')
 
     def set_switch_state(self, ain: str, state):
         """
@@ -2462,21 +2414,16 @@ class FritzHome:
         """
         Get the switch power consumption in W.
         """
-        value = self._aha_request("getswitchpower", ain=ain, result_type='int')
+        value = self.aha_request("getswitchpower", ain=ain, result_type='int')
 
-        if value is None:
-            return
-
-        try:
+        if isinstance(value, int):
             return value / 1000  # value in 0.001W
-        except TypeError:
-            return False
 
     def get_switch_energy(self, ain: str):
         """
         Get the switch energy in Wh.
         """
-        return self._aha_request("getswitchenergy", ain=ain, result_type='int')
+        return self.aha_request("getswitchenergy", ain=ain, result_type='int')
 
     # thermostat-related methods
 
@@ -2486,7 +2433,7 @@ class FritzHome:
 
         Temperatur-Wert in 0,1 °C, negative und positive Werte möglich, Bsp. „200“ bedeutet 20°C
         """
-        value = self._aha_request("gettemperature", ain=ain, result_type='int')
+        value = self.aha_request("gettemperature", ain=ain, result_type='int')
 
         if isinstance(value, int):
             return value / 10
@@ -2499,17 +2446,15 @@ class FritzHome:
             Wertebereich: 16 – 56 mit 8 bis 28°C, 16 <= 8°C, 17 = 8,5°C...... 56 >= 28°C
             254 = ON , 253 = OFF
         """
-        value = self._aha_request(cmd, ain=ain, result_type='int')
+        value = self.aha_request(cmd, ain=ain, result_type='int')
 
-        if not isinstance(value, int):
-            return
-
-        if value == 253:
-            return 0
-        elif value == 254:
-            return 30
-        else:
-            return (value - 16) / 2 + 8
+        if isinstance(value, int):
+            if value == 253:
+                return 0
+            elif value == 254:
+                return 30
+            else:
+                return (value - 16) / 2 + 8
 
     def get_target_temperature(self, ain: str):
         """
@@ -2532,7 +2477,7 @@ class FritzHome:
             temp = int(16 + ((float(temperature) - 8) * 2))
 
         self.logger.debug(f"set_target_temperature: {temp} will be set")
-        return self._aha_request("sethkrtsoll", ain=ain, param={'param': temp}, result_type='int')
+        return self.aha_request("sethkrtsoll", ain=ain, param={'param': temp}, result_type='int')
 
     def set_window_open(self, ain: str, seconds: Union[bool, int]):
         """
@@ -2548,7 +2493,7 @@ class FritzHome:
             if seconds > 0:
                 endtimestamp = int(time.time() + seconds)
         if endtimestamp >= 0:
-            return self._aha_request("sethkrwindowopen", ain=ain, param={'endtimestamp': endtimestamp}, result_type='int')
+            return self.aha_request("sethkrwindowopen", ain=ain, param={'endtimestamp': endtimestamp}, result_type='int')
 
     @NoAttributeError
     def get_window_open(self, ain: str):
@@ -2571,7 +2516,7 @@ class FritzHome:
             if seconds > 0:
                 endtimestamp = int(time.time() + seconds)
         if endtimestamp >= 0:
-            return self._aha_request(cmd="sethkrboost", ain=ain, param={'endtimestamp': endtimestamp}, result_type='int')
+            return self.aha_request(cmd="sethkrboost", ain=ain, param={'endtimestamp': endtimestamp}, result_type='int')
 
     @NoKeyOrAttributeError
     def get_boost(self, ain: str):
@@ -2621,19 +2566,19 @@ class FritzHome:
         """
         Set the switch/actuator/lightbulb to on state.
         """
-        return self._aha_request("setsimpleonoff", ain=ain, param={'onoff': 0}, result_type='bool')
+        return self.aha_request("setsimpleonoff", ain=ain, param={'onoff': 0}, result_type='bool')
 
     def set_state_on(self, ain):
         """
         Set the switch/actuator/lightbulb to on state.
         """
-        return self._aha_request("setsimpleonoff", ain=ain, param={'onoff': 1}, result_type='bool')
+        return self.aha_request("setsimpleonoff", ain=ain, param={'onoff': 1}, result_type='bool')
 
     def set_state_toggle(self, ain: str):
         """
         Toggle the switch/actuator/lightbulb state.
         """
-        return self._aha_request("setsimpleonoff", ain=ain, param={'onoff': 2}, result_type='bool')
+        return self.aha_request("setsimpleonoff", ain=ain, param={'onoff': 2}, result_type='bool')
 
     def set_state(self, ain: str, state):
         """
@@ -2664,7 +2609,7 @@ class FritzHome:
         else:
             level = int(level)
 
-        return self._aha_request("setlevel", ain=ain, param={'level': level}, result_type='int')
+        return self.aha_request("setlevel", ain=ain, param={'level': level}, result_type='int')
 
     @NoKeyOrAttributeError
     def get_level(self, ain: str):
@@ -2683,7 +2628,7 @@ class FritzHome:
         else:
             level = int(level)
 
-        return self._aha_request("setlevelpercentage", ain=ain, param={'level': level}, result_type='int')
+        return self.aha_request("setlevelpercentage", ain=ain, param={'level': level}, result_type='int')
 
     @NoKeyOrAttributeError
     def get_level_percentage(self, ain: str):
@@ -2698,12 +2643,7 @@ class FritzHome:
         """
         Get colour defaults
         """
-        plain = self._aha_request("getcolordefaults", ain=ain)
-
-        if plain is None:
-            return
-
-        return ElementTree.fromstring(plain)
+        return self.aha_request("getcolordefaults", ain=ain)
 
     @NoKeyOrAttributeError
     def get_hue(self, ain: str) -> int:
@@ -2905,10 +2845,10 @@ class FritzHome:
         return hsv
 
     def _set_mapped_color(self, ain: str, param: dict):
-        return self._aha_request("setcolor", ain=ain, param=param, result_type='int')
+        return self.aha_request("setcolor", ain=ain, param=param, result_type='int')
 
     def _set_unmapped_color(self, ain: str, param: dict):
-        return self._aha_request("setunmappedcolor", ain=ain, param=param, result_type='int')
+        return self.aha_request("setunmappedcolor", ain=ain, param=param, result_type='int')
 
     def set_color_discrete(self, ain: str, hue: int, duration: int = 0):
         """
@@ -2954,7 +2894,7 @@ class FritzHome:
             self.logger.error(f'setcolor hue out of range (hue={hue})')
             return
 
-        return self._aha_request("setcolor", ain=ain, param=param, result_type='int')
+        return self.aha_request("setcolor", ain=ain, param=param, result_type='int')
 
     def get_color_temps(self, ain: str) -> list:
         """
@@ -2982,7 +2922,7 @@ class FritzHome:
             'duration': int(duration) * 10
             }
 
-        return self._aha_request("setcolortemperature", ain=ain, param=param, result_type='int')
+        return self.aha_request("setcolortemperature", ain=ain, param=param, result_type='int')
 
     @NoKeyOrAttributeError
     def get_color_temp(self, ain: str) -> int:
@@ -3045,30 +2985,28 @@ class FritzHome:
         """
         Applies a template.
         """
-        return self._aha_request("applytemplate", ain=ain)
+        return self.aha_request("applytemplate", ain=ain)
 
     # Log-related methods
 
-    def get_device_log_from_lua(self):
+    def get_device_log_from_lua(self) -> Union[None, list]:
         """
         Gets the Device Log from the LUA HTTP Interface via LUA Scripts (more complete than the get_device_log TR-064 version).
 
-        :return: Array of Device Log Entries (text, type, category, timestamp, date, time)
+        :return: Array of Device Log Entries (text, type, category, timestamp, date, time) if response, else None
         """
-        if not self._logged_in:
-            self.login()
 
         url = f"{self.prefixed_host}{self.LOG_ROUTE}"
-        params = {"sid": self._sid}
 
         # get data
-        data = self._request(url, params, result_type='json')
+        try:
+            header, content = self._request(url=url, params={})
+        except (FritzAuthorizationError, FritzHttpTimeoutError, FritzHttpInterfaceError, FritzHttpRequestError) as e:
+            self.logger.warning(f"Error '{e}' occurred during requesting AHA Interface")
+            return None
 
-        if data is True:
-            self.logger.debug("SID was expired, New one has been generated, repeat last cmd.")
-            self.get_device_log_from_lua()
-        elif isinstance(data, dict):
-            data = data.get('mq_log')
+        if isinstance(content, dict):
+            data = content.get('mq_log')
             if data and isinstance(data, list):
                 # cut data if needed
                 if self.log_entry_count:
@@ -3086,26 +3024,24 @@ class FritzHome:
                     log_list.append([l_text, l_type, l_cat, l_ts, l_date, l_time])
                 return log_list
 
-    def get_device_log_from_lua_separated(self):
+    def get_device_log_from_lua_separated(self) -> Union[None, list]:
         """
         Gets the Device Log from the LUA HTTP Interface via LUA Scripts (more complete than the get_device_log TR-064 version).
 
-        :return: list of device logs list (datetime, log, type, category)
+        :return: list of device logs list (datetime, log, type, category) if response, else None
         """
-        if not self._logged_in:
-            self.login()
 
         url = f"{self.prefixed_host}{self.LOG_SEPARATE_ROUTE}"
-        params = {"sid": self._sid}
 
         # get data
-        data = self._request(url, params, result_type='json')
+        try:
+            header, content = self._request(url=url, params={})
+        except (FritzAuthorizationError, FritzHttpTimeoutError, FritzHttpInterfaceError, FritzHttpRequestError) as e:
+            self.logger.warning(f"Error '{e}' occurred during requesting AHA Interface")
+            return None
 
-        if data is True:
-            self.logger.debug("SID was expired, New one has been generated, repeat last cmd.")
-            self.get_device_log_from_lua_separated()
-        elif isinstance(data, dict):
-            data = data.get('mq_log')
+        if isinstance(content, dict):
+            data = content.get('mq_log')
             if data and isinstance(data, list):
                 if self.log_entry_count:
                     data = data[:self.log_entry_count]
@@ -3819,26 +3755,26 @@ class FritzHome:
 
                 try:
                     self.mapped = bool(colorcontrol_element.attrib.get("mapped"))
-                    self.logger.debug(f"FritzColor: received mapped value {self.mapped}")
+                    # self.logger.debug(f"FritzColor: received mapped value {self.mapped}")
                 except ValueError:
                     pass
 
                 try:
                     self.hue = get_node_value_as_int(colorcontrol_element, "hue")
-                    self.logger.debug(f"FritzColor: received hue value {self.hue}")
+                    # self.logger.debug(f"FritzColor: received hue value {self.hue}")
                 except ValueError:
                     self.hue = 0
 
                 try:
                     value = get_node_value_as_int(colorcontrol_element, "saturation")
                     self.saturation = int(value/2.55)
-                    self.logger.debug(f"FritzColor: received saturation value {value}, scaled to {self.saturation}")
+                    # self.logger.debug(f"FritzColor: received saturation value {value}, scaled to {self.saturation}")
                 except ValueError:
                     self.saturation = 0
 
                 try:
                     self.unmapped_hue = get_node_value_as_int(colorcontrol_element, "unmapped_hue")
-                    self.logger.debug(f"FritzColor: received unmapped_hue value {self.unmapped_hue}")
+                    # self.logger.debug(f"FritzColor: received unmapped_hue value {self.unmapped_hue}")
                 except ValueError:
                     self.unmapped_hue = 0
                 except Exception as e:
@@ -3847,7 +3783,7 @@ class FritzHome:
                 try:
                     value = get_node_value_as_int(colorcontrol_element, "unmapped_saturation")
                     self.unmapped_saturation = int(value/2.55)
-                    self.logger.debug(f"FritzColor: received unmapped_saturation value {value}, scaled to {self.unmapped_saturation}")
+                    # self.logger.debug(f"FritzColor: received unmapped_saturation value {value}, scaled to {self.unmapped_saturation}")
                 except ValueError:
                     self.unmapped_saturation = 0
                 except Exception as e:
@@ -3977,7 +3913,6 @@ class FritzHome:
         def update_from_node(self, node):
             super()._update_from_node(node)
 
-
 class Callmonitor:
 
     def __init__(self, host, port, callback, call_monitor_incoming_filter, plugin_instance):
@@ -4007,7 +3942,7 @@ class Callmonitor:
         # connect
         self.connect()
         if not self.conn:
-            raise IOError("Connection Error")
+            raise FritzAuthorizationError("Callmonitor Connection Error")
 
     def connect(self):
         """
@@ -4494,6 +4429,25 @@ class Callmonitor:
                     self._stop_counter('incoming')
                 self._call_incoming_cid = None
 
+class FritzHttpInterfaceError(Exception):
+    """
+    Exception raised on calling the aha-interface and getting a response with a status-code other than 200.
+    """
+
+class FritzHttpRequestError(Exception):
+    """
+    Exception raised on calling the aha-interface with non-valid parameters
+    """
+
+class FritzHttpTimeoutError(Exception):
+    """
+    Exception raised on calling the aha-interface and getting a timeout
+    """
+
+class FritzAuthorizationError(Exception):
+    """
+    Authentication error. Not allowed to access the box at all.
+    """
 
 #
 # static XML helpers
