@@ -696,27 +696,6 @@
 
 
 {% block bodytab6 %}
-<!--
-<div class="container-fluid m-2">
-    <table id="" class="table table-striped table-hover pluginList">
-        <thead>
-            <tr class="shng_heading">
-                <th>{{ _('Tasmota Device') }}</th>
-                <th>{{ _('Tasmota Device Details') }}</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for device in p.tasmota_objects_dict %}
-                <tr>
-                    <td>{{ device }}</td>
-                    <td>{{ p.tasmota_objects_dict[device] }}</td>
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
--->
-
 <div class="container-fluid m-2">
     <table id="" class="table table-striped table-hover pluginList">
         <thead>
@@ -732,13 +711,34 @@
                     <td>{{ p.tasmota_devices[device] }}</td>
                 </tr>
             {% endfor %}
-            <tr>
-                <td>{{ '_plg_item_dict' }}</td>
-                <td>{{ p._plg_item_dict }}</td>
-            </tr>
         </tbody>
     </table>
 </div>
+
+</br>
+</br>
+
+<div class="container-fluid m-2">
+    <table id="" class="table table-striped table-hover pluginList">
+        <thead>
+            <tr class="shng_heading">
+                <th>{{ _('Tasmota Items') }}</th>
+                <th>{{ _('Tasmota Item Config') }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in p.get_item_list() %}
+                <tr>
+                    <td>{{ item }}</td>
+                    <td>{{ p.get_item_config(item) }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+</br>
+</br>
 
 <div class="container-fluid m-2">
     <table id="" class="table table-striped table-hover pluginList">
