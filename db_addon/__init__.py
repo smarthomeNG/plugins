@@ -40,6 +40,7 @@ from lib.item.item import Item
 from lib.shtime import Shtime
 from lib.plugin import Plugins
 from .webif import WebInterface
+from .item_attributes import *
 import lib.db
 
 DAY = 'day'
@@ -53,7 +54,7 @@ class DatabaseAddOn(SmartPlugin):
     Main class of the Plugin. Does all plugin specific stuff and provides the update functions for the items
     """
 
-    PLUGIN_VERSION = '1.1.1'
+    PLUGIN_VERSION = '1.1.2'
     # ToDo: cache temperatureseries raw data
 
     def __init__(self, sh):
@@ -2875,19 +2876,6 @@ def to_int_float(arg):
 
 ALLOWED_QUERY_TIMEFRAMES = ['year', 'month', 'week', 'day', 'hour']
 ALLOWED_MINMAX_FUNCS = ['min', 'max', 'avg']
-ALL_ONCHANGE_ATTRIBUTES = ['verbrauch_heute', 'verbrauch_woche', 'verbrauch_monat', 'verbrauch_jahr', 'minmax_heute_min', 'minmax_heute_max', 'minmax_woche_min', 'minmax_woche_max', 'minmax_monat_min', 'minmax_monat_max', 'minmax_jahr_min', 'minmax_jahr_max', 'tagesmitteltemperatur_heute']
-ALL_DAILY_ATTRIBUTES = ['verbrauch_heute_minus1', 'verbrauch_heute_minus2', 'verbrauch_heute_minus3', 'verbrauch_heute_minus4', 'verbrauch_heute_minus5', 'verbrauch_heute_minus6', 'verbrauch_heute_minus7', 'verbrauch_rolling_12m_heute_minus1', 'verbrauch_jahreszeitraum_minus1', 'verbrauch_jahreszeitraum_minus2', 'verbrauch_jahreszeitraum_minus3', 'zaehlerstand_heute_minus1', 'zaehlerstand_heute_minus2', 'zaehlerstand_heute_minus3', 'minmax_last_24h_min', 'minmax_last_24h_max', 'minmax_last_24h_avg', 'minmax_last_7d_min', 'minmax_last_7d_max', 'minmax_last_7d_avg', 'minmax_heute_minus1_min', 'minmax_heute_minus1_max', 'minmax_heute_minus1_avg', 'minmax_heute_minus2_min', 'minmax_heute_minus2_max', 'minmax_heute_minus2_avg', 'minmax_heute_minus3_min', 'minmax_heute_minus3_max', 'minmax_heute_minus3_avg', 'tagesmitteltemperatur_heute_minus1', 'tagesmitteltemperatur_heute_minus2', 'tagesmitteltemperatur_heute_minus3', 'serie_minmax_tag_min_30d', 'serie_minmax_tag_max_30d', 'serie_minmax_tag_avg_30d', 'serie_verbrauch_tag_30d', 'serie_zaehlerstand_tag_30d', 'serie_tagesmittelwert_stunde_0d', 'serie_tagesmittelwert_tag_stunde_30d', 'kaeltesumme', 'waermesumme', 'gruenlandtempsumme', 'tagesmitteltemperatur', 'wachstumsgradtage']
-ALL_WEEKLY_ATTRIBUTES = ['verbrauch_woche_minus1', 'verbrauch_woche_minus2', 'verbrauch_woche_minus3', 'verbrauch_woche_minus4', 'verbrauch_rolling_12m_woche_minus1', 'zaehlerstand_woche_minus1', 'zaehlerstand_woche_minus2', 'zaehlerstand_woche_minus3', 'minmax_woche_minus1_min', 'minmax_woche_minus1_max', 'minmax_woche_minus1_avg', 'minmax_woche_minus2_min', 'minmax_woche_minus2_max', 'minmax_woche_minus2_avg', 'serie_minmax_woche_min_30w', 'serie_minmax_woche_max_30w', 'serie_minmax_woche_avg_30w', 'serie_verbrauch_woche_30w', 'serie_zaehlerstand_woche_30w']
-ALL_MONTHLY_ATTRIBUTES = ['verbrauch_monat_minus1', 'verbrauch_monat_minus2', 'verbrauch_monat_minus3', 'verbrauch_monat_minus4', 'verbrauch_monat_minus12', 'verbrauch_rolling_12m_monat_minus1', 'zaehlerstand_monat_minus1', 'zaehlerstand_monat_minus2', 'zaehlerstand_monat_minus3', 'minmax_monat_minus1_min', 'minmax_monat_minus1_max', 'minmax_monat_minus1_avg', 'minmax_monat_minus2_min', 'minmax_monat_minus2_max', 'minmax_monat_minus2_avg', 'serie_minmax_monat_min_15m', 'serie_minmax_monat_max_15m', 'serie_minmax_monat_avg_15m', 'serie_verbrauch_monat_18m', 'serie_zaehlerstand_monat_18m', 'serie_waermesumme_monat_24m', 'serie_kaeltesumme_monat_24m']
-ALL_YEARLY_ATTRIBUTES = ['verbrauch_jahr_minus1', 'verbrauch_jahr_minus2', 'verbrauch_rolling_12m_jahr_minus1', 'zaehlerstand_jahr_minus1', 'zaehlerstand_jahr_minus2', 'zaehlerstand_jahr_minus3', 'minmax_jahr_minus1_min', 'minmax_jahr_minus1_max', 'minmax_jahr_minus1_avg']
-ALL_NEED_PARAMS_ATTRIBUTES = ['kaeltesumme', 'waermesumme', 'gruenlandtempsumme', 'tagesmitteltemperatur', 'wachstumsgradtage', 'db_request']
-ALL_VERBRAUCH_ATTRIBUTES = ['verbrauch_heute', 'verbrauch_woche', 'verbrauch_monat', 'verbrauch_jahr', 'verbrauch_heute_minus1', 'verbrauch_heute_minus2', 'verbrauch_heute_minus3', 'verbrauch_heute_minus4', 'verbrauch_heute_minus5', 'verbrauch_heute_minus6', 'verbrauch_heute_minus7', 'verbrauch_woche_minus1', 'verbrauch_woche_minus2', 'verbrauch_woche_minus3', 'verbrauch_woche_minus4', 'verbrauch_monat_minus1', 'verbrauch_monat_minus2', 'verbrauch_monat_minus3', 'verbrauch_monat_minus4', 'verbrauch_monat_minus12', 'verbrauch_jahr_minus1', 'verbrauch_jahr_minus2', 'verbrauch_rolling_12m_heute_minus1', 'verbrauch_rolling_12m_woche_minus1', 'verbrauch_rolling_12m_monat_minus1', 'verbrauch_rolling_12m_jahr_minus1', 'verbrauch_jahreszeitraum_minus1', 'verbrauch_jahreszeitraum_minus2', 'verbrauch_jahreszeitraum_minus3']
-ALL_ZAEHLERSTAND_ATTRIBUTES = ['zaehlerstand_heute_minus1', 'zaehlerstand_heute_minus2', 'zaehlerstand_heute_minus3', 'zaehlerstand_woche_minus1', 'zaehlerstand_woche_minus2', 'zaehlerstand_woche_minus3', 'zaehlerstand_monat_minus1', 'zaehlerstand_monat_minus2', 'zaehlerstand_monat_minus3', 'zaehlerstand_jahr_minus1', 'zaehlerstand_jahr_minus2', 'zaehlerstand_jahr_minus3']
-ALL_HISTORIE_ATTRIBUTES = ['minmax_last_24h_min', 'minmax_last_24h_max', 'minmax_last_24h_avg', 'minmax_last_7d_min', 'minmax_last_7d_max', 'minmax_last_7d_avg', 'minmax_heute_min', 'minmax_heute_max', 'minmax_heute_minus1_min', 'minmax_heute_minus1_max', 'minmax_heute_minus1_avg', 'minmax_heute_minus2_min', 'minmax_heute_minus2_max', 'minmax_heute_minus2_avg', 'minmax_heute_minus3_min', 'minmax_heute_minus3_max', 'minmax_heute_minus3_avg', 'minmax_woche_min', 'minmax_woche_max', 'minmax_woche_minus1_min', 'minmax_woche_minus1_max', 'minmax_woche_minus1_avg', 'minmax_woche_minus2_min', 'minmax_woche_minus2_max', 'minmax_woche_minus2_avg', 'minmax_monat_min', 'minmax_monat_max', 'minmax_monat_minus1_min', 'minmax_monat_minus1_max', 'minmax_monat_minus1_avg', 'minmax_monat_minus2_min', 'minmax_monat_minus2_max', 'minmax_monat_minus2_avg', 'minmax_jahr_min', 'minmax_jahr_max', 'minmax_jahr_minus1_min', 'minmax_jahr_minus1_max', 'minmax_jahr_minus1_avg']
-ALL_TAGESMITTEL_ATTRIBUTES = ['tagesmitteltemperatur_heute', 'tagesmitteltemperatur_heute_minus1', 'tagesmitteltemperatur_heute_minus2', 'tagesmitteltemperatur_heute_minus3']
-ALL_SERIE_ATTRIBUTES = ['serie_minmax_monat_min_15m', 'serie_minmax_monat_max_15m', 'serie_minmax_monat_avg_15m', 'serie_minmax_woche_min_30w', 'serie_minmax_woche_max_30w', 'serie_minmax_woche_avg_30w', 'serie_minmax_tag_min_30d', 'serie_minmax_tag_max_30d', 'serie_minmax_tag_avg_30d', 'serie_verbrauch_tag_30d', 'serie_verbrauch_woche_30w', 'serie_verbrauch_monat_18m', 'serie_zaehlerstand_tag_30d', 'serie_zaehlerstand_woche_30w', 'serie_zaehlerstand_monat_18m', 'serie_waermesumme_monat_24m', 'serie_kaeltesumme_monat_24m', 'serie_tagesmittelwert_stunde_0d', 'serie_tagesmittelwert_tag_stunde_30d']
-ALL_GEN_ATTRIBUTES = ['general_oldest_value', 'general_oldest_log']
-ALL_COMPLEX_ATTRIBUTES = ['kaeltesumme', 'waermesumme', 'gruenlandtempsumme', 'tagesmitteltemperatur', 'wachstumsgradtage', 'db_request']
 
 
 """

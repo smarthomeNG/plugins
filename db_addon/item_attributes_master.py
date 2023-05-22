@@ -19,8 +19,14 @@
 #  along with this plugin. If not, see <http://www.gnu.org/licenses/>.
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
+import ruamel.yaml
+
+FILENAME_ATTRIBUTES = 'item_attributes.py'
+
+FILENAME_PLUGIN = 'plugin.yaml'
+
 ITEM_ATTRIBUTS = {
-    'DB_ADDON_FCTS': {
+    'db_addon_fct': {
         'verbrauch_heute':                         {'cat': 'verbrauch',       'item_type': 'num',   'calc': 'onchange',  'params': False,  'description': 'Verbrauch am heutigen Tag (Differenz zwischen aktuellem Wert und den Wert am Ende des vorherigen Tages)'},
         'verbrauch_woche':                         {'cat': 'verbrauch',       'item_type': 'num',   'calc': 'onchange',  'params': False,  'description': 'Verbrauch in der aktuellen Woche'},
         'verbrauch_monat':                         {'cat': 'verbrauch',       'item_type': 'num',   'calc': 'onchange',  'params': False,  'description': 'Verbrauch im aktuellen Monat'},
@@ -123,8 +129,8 @@ ITEM_ATTRIBUTS = {
         'serie_kaeltesumme_monat_24m':             {'cat': 'serie',           'item_type': 'list',  'calc': 'monthly',   'params': False,  'description': 'monatliche Kältesumme der letzten 24 Monate'},
         'serie_tagesmittelwert_stunde_0d':         {'cat': 'serie',           'item_type': 'list',  'calc': 'daily',     'params': False,  'description': 'Stundenmittelwert für den aktuellen Tag'},
         'serie_tagesmittelwert_tag_stunde_30d':    {'cat': 'serie',           'item_type': 'list',  'calc': 'daily',     'params': False,  'description': 'Stundenmittelwert pro Tag der letzten 30 Tage (bspw. zur Berechnung der Tagesmitteltemperatur basierend auf den Mittelwert der Temperatur pro Stunde'},
-        'general_oldest_value':                    {'cat': 'gen',             'item_type': 'num ',  'calc': False,       'params': False,  'description': 'Ausgabe des ältesten Wertes des entsprechenden "Parent-Items" mit database Attribut'},
-        'general_oldest_log':                      {'cat': 'gen',             'item_type': 'list',  'calc': False,       'params': False,  'description': 'Ausgabe des Timestamp des ältesten Eintrages des entsprechenden "Parent-Items" mit database Attribut'},
+        'general_oldest_value':                    {'cat': 'gen',             'item_type': 'num',   'calc': 'no',        'params': False,  'description': 'Ausgabe des ältesten Wertes des entsprechenden "Parent-Items" mit database Attribut'},
+        'general_oldest_log':                      {'cat': 'gen',             'item_type': 'list',  'calc': 'no',        'params': False,  'description': 'Ausgabe des Timestamp des ältesten Eintrages des entsprechenden "Parent-Items" mit database Attribut'},
         'kaeltesumme':                             {'cat': 'complex',         'item_type': 'num',   'calc': 'daily',     'params': True,   'description': 'Berechnet die Kältesumme für einen Zeitraum, db_addon_params: (year=mandatory, month=optional)'},
         'waermesumme':                             {'cat': 'complex',         'item_type': 'num',   'calc': 'daily',     'params': True,   'description': 'Berechnet die Wärmesumme für einen Zeitraum, db_addon_params: (year=mandatory, month=optional)'},
         'gruenlandtempsumme':                      {'cat': 'complex',         'item_type': 'num',   'calc': 'daily',     'params': True,   'description': 'Berechnet die Grünlandtemperatursumme für einen Zeitraum, db_addon_params: (year=mandatory)'},
@@ -132,16 +138,48 @@ ITEM_ATTRIBUTS = {
         'wachstumsgradtage':                       {'cat': 'complex',         'item_type': 'num',   'calc': 'daily',     'params': True,   'description': 'Berechnet die Wachstumsgradtage auf Basis der stündlichen Durchschnittswerte eines Tages für das laufende Jahr mit an Angabe des Temperaturschwellenwertes (threshold=Schwellentemperatur)'},
         'db_request':                              {'cat': 'complex',         'item_type': 'list',  'calc': 'group',     'params': True,   'description': 'Abfrage der DB: db_addon_params: (func=mandatory, item=mandatory, timespan=mandatory, start=optional, end=optional, count=optional, group=optional, group2=optional)'},
     },
-    'DB_ADDON_INFO': {
-        'db_version':                              {'cat': 'info',            'item_type': 'str',   'calc': False,       'params': False,  'description': 'Version der verbundenen Datenbank'},
+    'db_addon_info': {
+        'db_version':                              {'cat': 'info',            'item_type': 'str',   'calc': 'no',        'params': False,  'description': 'Version der verbundenen Datenbank'},
     },
-    'DB_ADDON_ADMIN': {
-        'suspend':                                 {'cat': 'admin',           'item_type': 'bool',  'calc': False,       'params': False,  'description': 'Unterbricht die Aktivitäten des Plugin'},
-        'recalc_all':                              {'cat': 'admin',           'item_type': 'bool',  'calc': False,       'params': False,  'description': 'Startet einen Neuberechnungslauf aller on-demand Items'},
-        'clean_cache_values':                      {'cat': 'admin',           'item_type': 'bool',  'calc': False,       'params': False,  'description': 'Löscht Plugin-Cache und damit alle im Plugin zwischengespeicherten Werte'},
+    'db_addon_admin': {
+        'suspend':                                 {'cat': 'admin',           'item_type': 'bool',  'calc': 'no',        'params': False,  'description': 'Unterbricht die Aktivitäten des Plugin'},
+        'recalc_all':                              {'cat': 'admin',           'item_type': 'bool',  'calc': 'no',        'params': False,  'description': 'Startet einen Neuberechnungslauf aller on-demand Items'},
+        'clean_cache_values':                      {'cat': 'admin',           'item_type': 'bool',  'calc': 'no',        'params': False,  'description': 'Löscht Plugin-Cache und damit alle im Plugin zwischengespeicherten Werte'},
     },
 }
 
+FILE_HEADER = """\
+# !/usr/bin/env python
+# vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# Copyright 2023 Michael Wenzel
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+#  DatabaseAddOn for SmartHomeNG.  https://github.com/smarthomeNG//
+#
+#  This plugin is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  This plugin is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this plugin. If not, see <http://www.gnu.org/licenses/>.
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+#
+#
+#                                 THIS FILE IS AUTOMATICALLY CREATED BY USING item_attributs_master.py
+#
+#
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+"""
 
 def get_attrs(sub_dict: dict = {}) -> list:
     attributes = []
@@ -151,9 +189,8 @@ def get_attrs(sub_dict: dict = {}) -> list:
                 attributes.append(db_addon_fct)
     return attributes
 
-
-def export_db_addon_data():
-    ATTRS = {}
+def export_item_attributs_py():
+    ATTRS = dict()
     ATTRS['ALL_ONCHANGE_ATTRIBUTES'] = get_attrs(sub_dict={'calc': 'onchange'})
     ATTRS['ALL_DAILY_ATTRIBUTES'] = get_attrs(sub_dict={'calc': 'daily'})
     ATTRS['ALL_WEEKLY_ATTRIBUTES'] = get_attrs(sub_dict={'calc': 'weekly'})
@@ -168,27 +205,70 @@ def export_db_addon_data():
     ATTRS['ALL_GEN_ATTRIBUTES'] = get_attrs(sub_dict={'cat': 'gen'})
     ATTRS['ALL_COMPLEX_ATTRIBUTES'] = get_attrs(sub_dict={'cat': 'complex'})
 
+    # create file and write header
+    f = open(FILENAME_ATTRIBUTES, "w")
+    f.write(FILE_HEADER)
+    f.close()
+
+    # write avm_data_types
     for attr, alist in ATTRS.items():
-        print(f'{attr} = {alist!r}')
+        with open(FILENAME_ATTRIBUTES, "a") as f:
+            print (f'{attr} = {alist!r}', file=f)
 
+    print('item_attributs.py successfully created!')
 
-def export_for_plugin_yaml():
-    for entry in ITEM_ATTRIBUTS:
-        print(f'{entry}:')
-        print('valid_list:')
-        for func in ITEM_ATTRIBUTS[entry]:
-            print(f"    - '{func}'")
+def create_plugin_yaml_item_attribute_valids():
+    """Create valid_list of db_addon_fct based on master dict"""
 
-        for title in ['description', 'item_type', 'calc']:
-            print(f'valid_list_{entry}:')
-            for func in ITEM_ATTRIBUTS[entry]:
-                print(f"    - '{ITEM_ATTRIBUTS[entry][func][title]}'")
-        print()
+    valid_list_str =         """        # NOTE: valid_list is automatically created by using item_attributes_master.py"""
+    valid_list_desc_str =    """        # NOTE: valid_list_description is automatically created by using item_attributes_master.py"""
+    valid_list_item_type =   """        # NOTE: valid_list_item_type is automatically created by using item_attributes_master.py"""
+    valid_list_calculation = """        # NOTE: valid_list_calculation is automatically created by using item_attributes_master.py"""
 
+    for db_addon_fct in ITEM_ATTRIBUTS[attribute]:
+        valid_list_str = f"""{valid_list_str}\n\
+          - {db_addon_fct!r:<40}"""
+
+        valid_list_desc_str = f"""{valid_list_desc_str}\n\
+          - '{ITEM_ATTRIBUTS[attribute][db_addon_fct]['description']:<}'"""
+
+        valid_list_item_type = f"""{valid_list_item_type}\n\
+          - '{ITEM_ATTRIBUTS[attribute][db_addon_fct]['item_type']:<}'"""
+
+        valid_list_calculation = f"""{valid_list_calculation}\n\
+          - '{ITEM_ATTRIBUTS[attribute][db_addon_fct]['calc']:<}'"""
+
+    valid_list_calculation = f"""{valid_list_calculation}\n\r"""
+
+    return valid_list_str, valid_list_desc_str, valid_list_item_type, valid_list_calculation
+
+def update_plugin_yaml_avm_data_type():
+    """Update ´'valid_list', 'valid_list_description', 'valid_list_item_type' and 'valid_list_calculation' of item attributes in plugin.yaml"""
+
+    yaml = ruamel.yaml.YAML()
+    yaml.indent(mapping=4, sequence=4, offset=4)
+    yaml.width = 200
+    yaml.allow_unicode = True
+    yaml.preserve_quotes = False
+
+    valid_list_str, valid_list_desc_str, valid_list_item_type_str, valid_list_calc_str = create_plugin_yaml_item_attribute_valids()
+
+    with open(FILENAME_PLUGIN, 'r', encoding="utf-8") as f:
+        data = yaml.load(f)
+
+    if data.get('item_attributes', {}).get(attribute):
+        data['item_attributes'][attribute]['valid_list'] = yaml.load(valid_list_str)
+        data['item_attributes'][attribute]['valid_list_description'] = yaml.load(valid_list_desc_str)
+        data['item_attributes'][attribute]['valid_list_item_type'] = yaml.load(valid_list_item_type_str)
+        data['item_attributes'][attribute]['valid_list_calculation'] = yaml.load(valid_list_calc_str)
+
+        with open(FILENAME_PLUGIN, 'w', encoding="utf-8") as f:
+            yaml.dump(data, f)
+        print(f"Successfully updated Attribut '{attribute}' in plugin.yaml!")
+    else:
+        print(f"Attribut '{attribute}' not defined in plugin.yaml")
 
 if __name__ == '__main__':
-    export_db_addon_data()
-    print()
-    print('--------------------------------------------------------------')
-    print()
-    export_for_plugin_yaml()
+    export_item_attributs_py()
+    for attribute in ITEM_ATTRIBUTS:
+        update_plugin_yaml_avm_data_type()

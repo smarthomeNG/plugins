@@ -119,7 +119,8 @@ Hinweise
  - Für die Auswertung kann es nützlich sein, bestimmte Werte aus der Datenbank bei der Berechnung auszublenden. Hierfür stehen
    2 Möglichkeiten zur Verfügung:
     - Plugin-Attribut `ignore_0`: (list of strings) Bei Items, bei denen ein String aus der Liste im Pfadnamen vorkommt,
-      werden 0-Werte (val_num = 0) bei Datenbankauswertungen ignoriert. Hat also das Attribut den Wert ['temp'] werden bei allen Items mit 'temp' im Pfadnamen die 0-Werte bei der Auswertung ignoriert.
+      werden 0-Werte (val_num = 0) bei Datenbankauswertungen ignoriert. Hat also das Attribut den Wert ['temp'] werden bei allen Items mit
+      'temp' im Pfadnamen die 0-Werte bei der Auswertung ignoriert.
     - Item-Attribut `db_addon_ignore_value`: (num) Dieser Wert wird bei der Abfrage bzw. Auswertung der Datenbank für diese
       Item ignoriert.
 
@@ -295,3 +296,20 @@ Tagesmitteltemperatur
 
 Die Tagesmitteltemperatur wird auf Basis der stündlichen Durchschnittswerte eines Tages (aller in der DB enthaltenen Datensätze)
 für die angegebene Anzahl von Tagen (days=optional) berechnet.
+
+
+
+Vorgehen bei Funktionserweiterung des Plugins bzw. Ergänzung weiterer Werte für Item-Attribute
+----------------------------------------------------------------------------------------------
+
+Augrund der Vielzahl der möglichen Werte der Itemattribute, insbesondere des Itemattributes`db_addon_fct`, wurde die Erstellung/Update
+der entsprechenden Teile der `plugin.yam` sowie die Erstellung der Datei `item_attributes.py`, die vom Plugin verwendet wird, automatisiert.
+
+Die Masterinformationen für alle Itemattributs sowie die Skripte zum Erstellen/Update der beiden Dateien sind in der
+Datei `item_attributes_master.py` enthalten.
+
+.. important::
+
+    Korrekturen, Erweiterungen etc. der Itemattribute sollten nur in der Datei `item_attributes_master.py`
+    im Dict der Variable `ITEM_ATTRIBUTS` vorgenommen werden. Das Ausführen der Datei `item_attributes_master.py` (main)
+    erstellt die `item_attributes.py` und aktualisiert die `plugin.yaml` entsprechend.
