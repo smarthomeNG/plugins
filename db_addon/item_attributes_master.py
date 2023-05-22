@@ -25,7 +25,7 @@ FILENAME_ATTRIBUTES = 'item_attributes.py'
 
 FILENAME_PLUGIN = 'plugin.yaml'
 
-ITEM_ATTRIBUTS = {
+ITEM_ATTRIBUTES = {
     'db_addon_fct': {
         'verbrauch_heute':                         {'cat': 'verbrauch',       'item_type': 'num',   'calc': 'onchange',  'params': False,  'description': 'Verbrauch am heutigen Tag (Differenz zwischen aktuellem Wert und den Wert am Ende des vorherigen Tages)'},
         'verbrauch_woche':                         {'cat': 'verbrauch',       'item_type': 'num',   'calc': 'onchange',  'params': False,  'description': 'Verbrauch in der aktuellen Woche'},
@@ -174,7 +174,7 @@ FILE_HEADER = """\
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #
 #
-#                                 THIS FILE IS AUTOMATICALLY CREATED BY USING item_attributs_master.py
+#                                 THIS FILE IS AUTOMATICALLY CREATED BY USING item_attributes_master.py
 #
 #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -183,13 +183,13 @@ FILE_HEADER = """\
 
 def get_attrs(sub_dict: dict = {}) -> list:
     attributes = []
-    for entry in ITEM_ATTRIBUTS:
-        for db_addon_fct in ITEM_ATTRIBUTS[entry]:
-            if sub_dict.items() <= ITEM_ATTRIBUTS[entry][db_addon_fct].items():
+    for entry in ITEM_ATTRIBUTES:
+        for db_addon_fct in ITEM_ATTRIBUTES[entry]:
+            if sub_dict.items() <= ITEM_ATTRIBUTES[entry][db_addon_fct].items():
                 attributes.append(db_addon_fct)
     return attributes
 
-def export_item_attributs_py():
+def export_item_attributes_py():
     ATTRS = dict()
     ATTRS['ALL_ONCHANGE_ATTRIBUTES'] = get_attrs(sub_dict={'calc': 'onchange'})
     ATTRS['ALL_DAILY_ATTRIBUTES'] = get_attrs(sub_dict={'calc': 'daily'})
@@ -215,7 +215,7 @@ def export_item_attributs_py():
         with open(FILENAME_ATTRIBUTES, "a") as f:
             print (f'{attr} = {alist!r}', file=f)
 
-    print('item_attributs.py successfully created!')
+    print('item_attributes.py successfully created!')
 
 def create_plugin_yaml_item_attribute_valids():
     """Create valid_list of db_addon_fct based on master dict"""
@@ -225,25 +225,25 @@ def create_plugin_yaml_item_attribute_valids():
     valid_list_item_type =   """        # NOTE: valid_list_item_type is automatically created by using item_attributes_master.py"""
     valid_list_calculation = """        # NOTE: valid_list_calculation is automatically created by using item_attributes_master.py"""
 
-    for db_addon_fct in ITEM_ATTRIBUTS[attribute]:
+    for db_addon_fct in ITEM_ATTRIBUTES[attribute]:
         valid_list_str = f"""{valid_list_str}\n\
           - {db_addon_fct!r:<40}"""
 
         valid_list_desc_str = f"""{valid_list_desc_str}\n\
-          - '{ITEM_ATTRIBUTS[attribute][db_addon_fct]['description']:<}'"""
+          - '{ITEM_ATTRIBUTES[attribute][db_addon_fct]['description']:<}'"""
 
         valid_list_item_type = f"""{valid_list_item_type}\n\
-          - '{ITEM_ATTRIBUTS[attribute][db_addon_fct]['item_type']:<}'"""
+          - '{ITEM_ATTRIBUTES[attribute][db_addon_fct]['item_type']:<}'"""
 
         valid_list_calculation = f"""{valid_list_calculation}\n\
-          - '{ITEM_ATTRIBUTS[attribute][db_addon_fct]['calc']:<}'"""
+          - '{ITEM_ATTRIBUTES[attribute][db_addon_fct]['calc']:<}'"""
 
     valid_list_calculation = f"""{valid_list_calculation}\n\r"""
 
     return valid_list_str, valid_list_desc_str, valid_list_item_type, valid_list_calculation
 
-def update_plugin_yaml_avm_data_type():
-    """Update ´'valid_list', 'valid_list_description', 'valid_list_item_type' and 'valid_list_calculation' of item attributes in plugin.yaml"""
+def update_plugin_yaml_item_attributes():
+    """Update 'valid_list', 'valid_list_description', 'valid_list_item_type' and 'valid_list_calculation' of item attributes in plugin.yaml"""
 
     yaml = ruamel.yaml.YAML()
     yaml.indent(mapping=4, sequence=4, offset=4)
@@ -264,11 +264,11 @@ def update_plugin_yaml_avm_data_type():
 
         with open(FILENAME_PLUGIN, 'w', encoding="utf-8") as f:
             yaml.dump(data, f)
-        print(f"Successfully updated Attribut '{attribute}' in plugin.yaml!")
+        print(f"Successfully updated Attribute '{attribute}' in plugin.yaml!")
     else:
-        print(f"Attribut '{attribute}' not defined in plugin.yaml")
+        print(f"Attribute '{attribute}' not defined in plugin.yaml")
 
 if __name__ == '__main__':
-    export_item_attributs_py()
-    for attribute in ITEM_ATTRIBUTS:
-        update_plugin_yaml_avm_data_type()
+    export_item_attributes_py()
+    for attribute in ITEM_ATTRIBUTES:
+        update_plugin_yaml_item_attributes()
