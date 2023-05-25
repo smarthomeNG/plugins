@@ -41,7 +41,6 @@ class PirateWeather(SmartPlugin):
 
     # https://api.pirateweather.net/forecast/[apikey]/[latitude],[longitude]
     _base_url = 'https://api.pirateweather.net/forecast/'
-    _base_forecast_url = _base_url + '%s/%s,%s'
 
     _http_response = {
         500: 'Internal Server Error',
@@ -365,13 +364,14 @@ class PirateWeather(SmartPlugin):
         """
         url = ''
         if url_type == 'forecast':
-            url = self._base_forecast_url % (self._key, self._lat, self._lon)
-            parameters = "?lang=%s" % self._lang
+            #url = self._base_forecast_url % (self._key, self._lat, self._lon)
+            url = self._base_url + f"{self._key}/{self._lat},{self._lon}"
+            parameters = f"?lang={self._lang}"
             if self._units is not None:
-                parameters = "%s&units=%s" % (parameters, self._units)
-            url = '%s%s' % (url, parameters)
+                parameters += "&units={self._units}"
+            url += parameters
         else:
-            self.logger.error('_build_url: Wrong url type specified: %s' %url_type)
+            self.logger.error(f"_build_url: Wrong url type specified: {url_type}")
         return url
 
 
