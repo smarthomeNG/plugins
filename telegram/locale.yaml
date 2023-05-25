@@ -1,15 +1,34 @@
 plugin_translations:
-    # Translations for the plugin specially for the web interface
+    # Translations for the plugin
     'choose':                   {'de': 'Auswählen', 'en': '=', 'fr': 'Choisissez parmi'}
     'I will hide the keyboard': {'de': 'Ich blende die Bedientasten aus', 'en': '=', 'fr': 'Je cache le clavier'}
     'Info from the items:':    {'de': 'Infos von den Items:', 'en': '=', 'fr': 'Info sur les Items:'}
     'unknown command %s':       {'de': 'Unbekanntes Kommando %s:', 'en': '=', 'fr': 'commande inconnue %s:'}
     'no items found with the attribute %s':       {'de': 'Keine Items mit Attribut %s gefunden', 'en': '=', 'fr': 'Ne pas trouvée une Item avec %s'}
-    'insert a value':       {'de': 'Wert eingeben', 'en': '=', 'fr': 'insérer une valeur'}
-
-    # Alternative format for translations of longer texts:
-#    'Hier kommt der Inhalt des Webinterfaces hin.':
-#        de: '='
-#        en: 'Here goes the content of the web interface.'
-#        fr: 'Le contenu de l'interface web vient ici.'
-
+    'Control/Change item-values:':  {'de': 'Item-Werte schalten/ändern:', 'en': '=', 'fr': 'Contrôle/Modification des valeurs des Item:'}
+    'Your chat id is:':     {'de': 'Deine Chat-ID lautet:', 'en': '=', 'fr': 'Votre identifiant de chat est :'}
+    'you have write access':  {'de': 'Du hast Schreibzugriff', 'en': '=', 'fr': 'Vous avez accès en écriture'}
+    'you have read access':   {'de': 'Du hast Lesezugriff', 'en': '=', 'fr': 'Vous avez accès en lecture'}
+    'unknown control-command': {'de': 'Unbekanntes Control-Kommando', 'en': '=', 'fr': 'commande de contrôle inconnue'}
+    'insert a value': {'de': 'Wert eingeben', 'en': '=', 'fr': 'Insérer une valeur'}
+    'please add it to the list of trusted chat ids to get access':  
+     de: 'Bitte füge es zur Liste der vertrauenswürdigen Chat-IDs hinzu, um Zugriff zu erhalten'
+     en: '='
+     fr: "Veuillez l'ajouter à la liste des identifiants de chat de confiance pour obtenir l'accès"
+    'no items have attribute telegram_control!':
+     de: 'Keine Items haben das Attribut "telegram_control"!'
+     en: '='
+     fr: "Aucun Items n'a l'attribut 'telegram_control'!"
+    'no items have attribute telegram_info!':
+     de: 'Keine Items haben das Attribut "telegram_info"!'
+     en: '='
+     fr: "Aucun Items n'a l'attribut 'telegram_info'!"
+    'no item found with the attribute':
+     de: 'Kein Item mit dem Attribut gefunden:'
+     en: '='
+     fr: "Aucun Item trouvé avec l'attribut"
+    # Translations for the plugin web interface 
+    'Long Polling Timeout':                 {'de': '=', 'en': '=', 'fr': "Délai d'attente du long polling"}
+    'Welcome message':                      {'de': 'Willkommensnachricht', 'en': '=', 'fr': 'essage de bienvenue'}
+    'plugin stop message':                  {'de': 'Ende Nachricht', 'en': '=', 'fr': 'Message de fin'}
+    'seconds':                              {'de': 'Sekunden', 'en': '=', 'fr': 'secondes'}

@@ -69,10 +69,7 @@ Im Dictionary sind Paare von Chat-ID und Berechtigung gespeichert.
     # es wird dann der letzte Wert geladen
     cache: 'True'
     # Beispiel value: '{ 3234123342: 1, 9234123341: 0 }'
-    # Ein Dictionary mit chat id und:
-    # 2 für Lese und Schreibzugriff ohne Willkommens- und Ende Nachricht
-    # 1 für Lese und Schreibzugriff 
-    # 0 für einen nur Lese-Zugriff
+    # Ein Dictionary mit chat id und 1 für Lese und Schreibzugriff oder 0 für einen nur Lese-Zugriff
     # Nachfolgend ein Chat dem Lese- und Schreibrechte gewährt werden
     value: '{ 3234123342: 1 }'
 
@@ -379,25 +376,23 @@ Die folgende Beispiellogik zeigt einige Nutzungsmöglichkeiten für die Funktion
 
 .. code:: python
 
-   telegram_plugin = sh.plugins.return_plugin('telegram') 
-   
    # Eine Nachricht `Hello world!` wird an alle vertrauten Chat Ids gesendet
    msg = "Hello world!"
-   telegram_plugin.msg_broadcast(msg)
+   sh.telegram.msg_broadcast(msg)
 
    # Ein Bild von einem externen Server soll gesendet werden.
    # Nur die URL wird an Telegram gesendet und keine Daten lokal aufbereitet
-   telegram_plugin.photo_broadcast("https://cdn.pixabay.com/photo/2018/10/09/16/20/dog-3735336_960_720.jpg", "A dog", None, False)
+   sh.telegram.photo_broadcast("https://cdn.pixabay.com/photo/2018/10/09/16/20/dog-3735336_960_720.jpg", "A dog", None, False)
 
    # Bild auf lokalem Server mit aktueller Zeit an Telegram senden
    my_webcam_url = "http:// .... bitte lokale URL hier einfügen zum Test ..."
-   telegram_plugin.photo_broadcast(my_webcam_url, "My webcam at {:%Y-%m-%d %H:%M:%S}".format(sh.shtime.now()))
+   sh.telegram.photo_broadcast(my_webcam_url, "My webcam at {:%Y-%m-%d %H:%M:%S}".format(sh.shtime.now()))
 
    # Bild senden aber den Inhalt lokal vorbereiten
-   telegram_plugin.photo_broadcast("https://cdn.pixabay.com/photo/2018/10/09/16/20/dog-3735336_960_720.jpg", "The dog again (data locally prepared)")
+   sh.telegram.photo_broadcast("https://cdn.pixabay.com/photo/2018/10/09/16/20/dog-3735336_960_720.jpg", "The dog again (data locally prepared)")
 
    local_file = "/usr/local/smarthome/var/ ... bitte eine lokal gespeicherte Datei angeben ..."
-   telegram_plugin.photo_broadcast(local_file, local_file)
+   sh.telegram.photo_broadcast(local_file, local_file)
 
 
 Anwendungen
